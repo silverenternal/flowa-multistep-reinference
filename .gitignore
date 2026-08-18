@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+artifacts/
+checkpoints/
+outputs/
+data/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.so
+*.o
+*.a
