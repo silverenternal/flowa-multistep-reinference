@@ -1,0 +1,805 @@
+{
+  "schema_version": "flowa_adaptive_reflow_dynamic_transfer_bias_todo_v2",
+  "component": "inference.adaptive_reflow",
+  "component_repository": "silverenternal/flowa-multistep-reinference",
+  "status": "partial_implementation_phase1",
+  "purpose": "\u628a\u975e\u7d27\u5019\u9009\u7a7a\u95f4\u4e2d\u7684\u566a\u58f0\u9009\u62e9\u95ee\u9898\u663e\u5f0f\u5f15\u5165\u591a\u8f6e Flow Matching re-inference\uff1a\u4e0a\u4e00\u8f6e\u7ed3\u679c\u53ea\u6709\u5728\u5c40\u90e8\u8bc1\u636e\u3001\u5168\u5c40\u5c3e\u90e8\u63a7\u5236\u548c\u8865\u96c6\u6392\u9664\u5171\u540c\u6210\u7acb\u65f6\uff0c\u624d\u4ee5\u53ef\u6821\u51c6\u3001\u901a\u9053\u4e00\u81f4\u3001\u5168\u5c40\u6709\u754c\u4e14\u53ef\u64a4\u9500\u7684\u52a8\u6001\u6743\u91cd\u8fdb\u5165\u4e0b\u4e00\u8f6e restart distribution\u3002\u8be5\u673a\u5236\u53ea\u6539\u53d8 inference-external ODE condition \u548c restart distribution\uff0c\u7edd\u4e0d\u66ff\u4ee3 FlowA ODE \u4e3b\u7ebf\u3001\u6a21\u578b\u6743\u91cd\u3001checkpoint \u6216\u7ec8\u7aef\u8bc4\u4f30\u3002",
+  "research_input": {
+    "lean_project": "docs/formal_architecture_lean4/Research/NoiseSelectedRectification/",
+    "jmaa_manuscript": "paper_submission/noise_selected_rectification/NoiseSelectedRectification_EN.md",
+    "additional_lean_sources": [
+      {
+        "path": "docs/formal_architecture_lean4/Research/NoiseSelectedRectification/MATRIX_GAUSSIAN_SELECTION.md",
+        "usable_boundary": "\u5728\u53d7\u9650\u6b63\u4ea4\u9ad8\u65af\u8c31\u7c7b\u4e2d\uff0c\u65e0\u754c\u5c3e\u90e8\u7d2f\u8ba1\u7269\u7406\u566a\u58f0\u8d28\u91cf\u7ed9\u51fa\u89d2\u5ea6\u6536\u7f29\uff1b\u5176 sharp summable obstruction \u53ea\u80fd\u6307\u5bfc schedule stress tests \u4e0e\u7d2f\u8ba1\u91cf\u8d26\u672c\u3002"
+      },
+      {
+        "path": "docs/formal_architecture_lean4/Research/FlowOEExpertAggregation/SBVC.lean",
+        "usable_boundary": "\u4e25\u683c margin \u4e0e\u5b8c\u6574 germ \u4ecd\u4e0d\u80fd\u63a7\u5236 phase bias\uff1b\u72ec\u7acb selector \u7684\u4e00\u81f4\u6027\u9700\u8981\u663e\u5f0f phase schedule\u3001\u8bef\u5dee\u754c\u548c\u8bed\u4e49\u3002"
+      },
+      {
+        "path": "docs/formal_architecture_lean4/Research/FlowOEExpertAggregation/BLUEPRINT.md",
+        "usable_boundary": "\u6709\u9650\u89c6\u754c continuation law \u51b3\u5b9a\u6700\u5c0f phase memory\uff1b\u5f53\u524d endpoint \u4e0d\u662f\u81ea\u52a8\u5145\u5206\u7edf\u8ba1\u91cf\u3002"
+      },
+      {
+        "path": "docs/formal_architecture_lean4/Research/CommutatorSafeChannelFreezing/ORDER_SENSITIVE_BRACKET_CALIBRATION.md",
+        "usable_boundary": "\u76f8\u540c\u5199\u5165\u91cf\u4e0e dwell \u7684 AB/BA \u975e\u4ea4\u6362\u64cd\u4f5c\u6709\u4e0d\u540c\u7aef\u70b9\uff0c\u516c\u5171\u63a5\u53e3\u5fc5\u987b\u643a\u5e26\u7ec4\u5408\u987a\u5e8f\u548c\u5fc5\u8981\u7684 order-sensitive replay\u3002"
+      },
+      {
+        "path": "docs/formal_architecture_lean4/Research/StratifiedChemicalTransport/BLUEPRINT.md",
+        "usable_boundary": "\u5206\u652f\u5728 uncertainty boundary layer \u5185\u4e0d\u80fd\u88ab\u4efb\u610f\u6807\u4f5c first\uff1b\u53ef\u526a\u679d\u6761\u4ef6\u5e94\u662f gap/calibrated-error\uff0c\u800c\u4e0d\u662f\u566a\u58f0\u5206\u6570\u7b26\u53f7\u3002"
+      },
+      {
+        "path": "docs/formal_architecture_lean4/Research/NoiseSelectedRectification/HERMITE_HODGE_SPECTRUM.md",
+        "usable_boundary": "\u9ad8\u9636\u7ebf\u6027\u5316 OU mode \u7684\u8bca\u65ad\u6027\u6536\u7f29\u53ef\u542f\u53d1\u6b8b\u5dee band logging\uff0c\u4f46\u4e00\u822c adaptive reflow \u7684\u8c31\u8bc6\u522b\u5c1a\u672a\u8bc1\u660e\uff0c\u6545\u4e0d\u8d4b\u4e88\u63a7\u5236\u6743\u3002"
+      }
+    ],
+    "usable_conclusions": [
+      "\u7ed3\u679c\u9009\u62e9\u5fc5\u987b\u6bd4\u8f83\u5f52\u4e00\u5316\u540e\u7684\u90bb\u57df\u8bc1\u636e\uff0c\u4e0d\u53ef\u6309\u67d0\u4e00\u5019\u9009\u7684\u5355\u70b9\u6b8b\u5dee\u3001\u5355\u6b21 evaluator \u5206\u6570\u6216\u5c40\u90e8\u6b63\u5219\u6027\u76f4\u63a5\u786e\u5b9a\u4f20\u9012\u6743\u91cd\u3002",
+      "\u7ade\u4e89\u5206\u652f\u7684\u5c40\u90e8\u8bc1\u636e\u53ea\u6709\u5728\u7edf\u4e00\u5c40\u90e8\u5c3a\u5ea6\u3001\u53ef\u63a7\u4e92\u65a5/\u5206\u914d\u3001\u53ef\u6c42\u548c\u7684\u5168\u5c40\u5c3e\u90e8\u548c\u53d7\u6291\u5236\u7684\u8865\u96c6\u540c\u65f6\u6210\u7acb\u65f6\uff0c\u624d\u53ef\u7ec4\u6210\u53ef\u9760\u7684\u5168\u5c40\u9009\u62e9\u3002",
+      "\u4e0d\u540c\u6709\u6548\u652f\u6301\u5c3a\u5ea6\u7684\u7ed3\u679c\u4e0d\u80fd\u7528\u56fa\u5b9a\u7cfb\u6570\u76f8\u52a0\uff1b\u5f31\u8bc1\u636e\u3001\u9000\u5316\u8bc1\u636e\u6216\u672a\u53d7\u63a7\u7684\u7ade\u4e89\u7ed3\u679c\u5fc5\u987b\u6536\u7f29\u5176\u5f71\u54cd\u3002",
+      "\u5c40\u90e8\u770b\u4f3c\u89c4\u5219\u4f46\u7f3a\u5c11\u5168\u5c40\u63a7\u5236\u65f6\u4f1a\u51fa\u73b0 escaping mass\uff1b\u5de5\u7a0b\u5bf9\u5e94\u7269\u662f\u5927\u91cf\u540c\u6e90\u3001\u8fc7\u671f\u3001\u4f4e\u7a33\u5b9a\u6216\u5206\u6b67\u7ed3\u679c\u5728\u591a\u8f6e\u4e2d\u7d2f\u79ef\u5e76\u9501\u5b9a\u9519\u8bef\u72b6\u6001\u3002",
+      "GaussianScheduleSelection \u7684\u53d7\u9650\u9ad8\u65af\u7ed3\u679c\u8868\u660e\uff1a\u53ea\u6709\u6bcf\u4e2a\u5c3e\u90e8\u90fd\u4fdd\u6709\u65e0\u754c\u7d2f\u8ba1\u7269\u7406\u566a\u58f0\u8d28\u91cf\u65f6\uff0c\u7279\u5b9a\u6b63\u4ea4\u8c31\u89d2\u624d\u6301\u7eed\u6536\u7f29\uff1bGaussianSummableObstruction \u7ed9\u51fa\u6b63\u800c\u53ef\u548c\u7684\u566a\u58f0\u65e5\u7a0b\u4ecd\u4fdd\u7559\u975e\u6700\u4f18\u89d2\u7684\u53cd\u4f8b\u3002\u5de5\u7a0b\u4e0a\u53ea\u5c06\u5176\u7528\u4f5c fresh-noise cumulative-mass ledger \u7684\u53cd\u4f8b\u9a71\u52a8\u8bbe\u8ba1\uff0c\u7edd\u4e0d\u628a\u5b83\u5916\u63a8\u4e3a\u4efb\u610f Flow Matching \u6a21\u578b\u7684\u6536\u655b\u5b9a\u7406\u3002",
+      "FlowOEExpertAggregation \u7684\u6709\u9650\u6a21\u578b\u8868\u660e\uff1a\u76f8\u540c\u539f\u5b50\u89c4\u5f8b\u6216\u4e25\u683c\u5206\u6570 margin \u4e0d\u80fd\u6d88\u9664 switching phase bias\uff1b\u5f53\u524d\u72b6\u6001\u4e0d\u8db3\u4ee5\u6807\u8bc6\u672a\u6765 continuation \u65f6\uff0cphase/cycle memory \u662f\u5fc5\u8981\u7684\u3002",
+      "CommutatorSafeChannelFreezing \u7684\u7cbe\u786e\u77e9\u9635\u6821\u51c6\u8868\u660e\uff1a\u76f8\u540c\u901a\u9053\u5199\u5165\u91cf\u4e0e\u9a7b\u7559\u65f6\u95f4\u7684 AB/BA \u65e5\u7a0b\u53ef\u56e0\u975e\u4ea4\u6362\u9879\u5f97\u5230\u4e0d\u540c\u7aef\u70b9\u3002\u91cd\u542f\u504f\u7f6e\u3001condition delta \u4e0e channel freeze \u7684\u7ec4\u5408\u6b21\u5e8f\u5fc5\u987b\u662f\u63a5\u53e3\u8bed\u4e49\uff0c\u800c\u4e0d\u662f\u5b9e\u73b0\u7ec6\u8282\u3002",
+      "StratifiedChemicalTransport \u7684\u6709\u9650\u5206\u652f\u7ed3\u679c\u8868\u660e\uff1a\u5f53\u591a\u4e2a\u51fa\u53e3\u5728\u4e0d\u786e\u5b9a\u5ea6\u534a\u5f84\u5185\u4e0d\u53ef\u533a\u5206\u65f6\uff0c\u552f\u4e00 deterministic branch \u4e0d\u5e94\u88ab\u4f2a\u9020\uff1b\u53ef\u4fdd\u7559\u65e0\u6807\u7b7e\u52a0\u6743\u5206\u652f\uff0c\u53ea\u6709 dominance gap \u8d85\u8fc7\u5df2\u6821\u51c6\u8bef\u5dee\u624d\u53ef\u526a\u679d\u3002"
+    ],
+    "core_noncompact_noise_selection_translation": {
+      "paper_mechanism": "JMAA \u7a3f\u4ef6\u5e76\u975e\u53ea\u8bf4\u5c40\u90e8\u566a\u58f0\u53ef\u4fee\u6b63\uff0c\u800c\u662f\u6bd4\u8f83\u4e0d\u540c\u7ade\u4e89\u533a\u57df\u5728 noise scale \u4e0b\u7684\u5f52\u4e00\u5316\u8bc1\u636e\uff1a\u6700\u4f4e\u6709\u6548 normal scale \u7684\u533a\u57df\u53ea\u6709\u5728\u7edf\u4e00\u5c40\u90e8 coercivity\u3001\u53ef\u6c42\u548c\u7684\u5168\u5c40\u5c3e\u90e8\u548c\u8865\u96c6\u4f4e\u80fd\u91cf\u6392\u9664\u540c\u65f6\u6210\u7acb\u65f6\u624d\u88ab\u9009\u62e9\uff1b\u53cd\u4f8b\u8868\u660e\u6bcf\u4e2a\u5206\u652f\u5c40\u90e8\u89c4\u5219\u4ecd\u53ef\u80fd\u628a\u5f52\u4e00\u5316\u8d28\u91cf\u9001\u5411\u65e0\u7a77\u8fdc\u3002",
+      "runtime_problem": "\u591a\u8f6e reflow \u7684\u5019\u9009\u5206\u5b50/endpoint archive \u662f\u975e\u7d27\u7684\uff1a\u5750\u6807\u5c3a\u5ea6\u3001\u8fdc\u79bb pocket \u7684\u6784\u8c61\u3001\u539f\u5b50\u6570/\u56fe\u590d\u6742\u5ea6\u3001pair-state \u9000\u5316\u548c evaluator failure modes \u90fd\u53ef\u4e0d\u65ad\u5411\u65b0\u533a\u57df\u6269\u5c55\u3002\u5355\u8f6e\u4f4e energy\u3001\u5355\u6b21 GNINA\u3001\u6216\u4e0a\u4e00\u8f6e\u6bd4\u524d\u4e00\u8f6e\u597d\uff0c\u5747\u4e0d\u662f\u4e0b\u4e00\u8f6e\u5e94\u8be5\u4fdd\u7559\u8be5 endpoint \u7684\u5145\u5206\u6761\u4ef6\u3002",
+      "required_translation": [
+        "\u6bcf\u4e2a run \u5728\u9009\u62e9\u566a\u58f0\u524d\u51bb\u7ed3 compact-envelope exhaustion ladder\uff1b\u5148\u4ece\u4e0e round noise \u65e0\u5173\u7684\u7269\u7406/\u5316\u5b66 envelope \u9009\u62e9\u8303\u56f4\u548c tail budget\uff0c\u518d\u5141\u8bb8 round-specific noise\uff0c\u7981\u6b62\u6839\u636e\u5f53\u524d\u8d62\u5bb6\u7684\u5206\u6570\u4e34\u65f6\u6269\u5927\u4fdd\u62a4\u533a\u3002",
+        "\u6bcf\u4e00 source bundle \u540c\u65f6\u7ed9\u51fa local transfer evidence\u3001tail admissibility \u548c complement exclusion\u3002\u7f3a\u5176\u4e2d\u4efb\u4e00\u9879\u65f6\u4e0d\u80fd\u83b7\u5f97\u6b63\u5411 restart memory\u3002",
+        "candidate archive \u7684\u540c\u6e90\u53bb\u91cd\u3001\u603b\u8d28\u91cf\u4e0a\u9650\u548c remote-tail budget \u662f\u5de5\u7a0b\u7248\u7684\u53ef\u6c42\u548c/\u7d27\u6027\u6761\u4ef6\uff1b\u5b83\u4eec\u662f\u53ef\u5ba1\u8ba1\u5fc5\u8981\u95e8\u69db\uff0c\u4e0d\u662f\u628a\u6709\u9650\u5019\u9009\u5217\u8868\u88c5\u9970\u6027 softmax \u540e\u5c31\u53ef\u7701\u7565\u3002",
+        "finite-round molecular run \u4e0d\u80fd\u8bc1\u660e\u975e\u7d27\u6e10\u8fd1\u9009\u62e9\u3002\u5b83\u53ea\u80fd\u62a5\u544a fixed-envelope \u5185\u7684\u7ecf\u9a8c tail diagnostics\u3001\u9884\u7b97\u548c\u53cd\u4f8b\uff1b\u4efb\u4f55 general selection claim \u4ecd\u53d7 Lean/JMAA \u7684\u6570\u5b66\u8fb9\u754c\u9650\u5236\u3002"
+      ]
+    },
+    "cosine_schedule_research_boundary": {
+      "candidate_use": "\u4f59\u5f26\u9000\u706b\u7528\u4e8e\u5916\u5c42 re-inference cycle \u7684 fresh-noise budget\uff0c\u800c\u4e0d\u662f\u76f4\u63a5\u4fee\u6539\u5df2\u8bad\u7ec3 Flow Matching ODE \u7684\u5185\u90e8\u65f6\u95f4\u53c2\u6570\u5316\u6216\u628a SGD \u5b66\u4e60\u7387\u65e5\u7a0b\u5f53\u4f5c\u7406\u8bba\u8bc1\u660e\u3002",
+      "references": [
+        "Loshchilov and Hutter, SGDR: Stochastic Gradient Descent with Warm Restarts (ICLR 2017): cosine cycles are an optimization heuristic, not a posterior-selection theorem.",
+        "Nichol and Dhariwal, Improved Denoising Diffusion Probabilistic Models (ICML 2021): cosine alpha-bar schedule motivates smooth noise allocation, but it is a diffusion training/sampling design and requires separate validation for outer Flow Matching restart noise."
+      ],
+      "non_claim": "\u4e0d\u5b58\u5728\u4ece SGDR \u6216 diffusion cosine schedule \u5230 FlowA noncompact endpoint selection \u7684\u76f4\u63a5\u7406\u8bba\u63a8\u8bba\uff1bcosine \u53ea\u4f5c\u4e3a\u9884\u6ce8\u518c\u3001\u53ef\u4e0e linear/constant/learned budget \u5bf9\u7167\u7684\u5e73\u6ed1 schedule family\u3002"
+    },
+    "non_claims": [
+      "JMAA \u5b9a\u7406\u4e0d\u8bc1\u660e\u4efb\u4f55 Flow Matching\u3001\u5206\u5b50\u751f\u6210\u3001GNINA\u3001PoseBusters\u3001QED/ADMET \u6216\u52a8\u6001\u6743\u91cd\u63d0\u5347\u7ed3\u8bba\u3002",
+      "\u8bba\u6587\u4e2d\u7684 posterior\u3001normal codimension\u3001coarea Jacobian \u4e0e epsilon \u6e10\u8fd1\u5f0f\u4e0d\u80fd\u88ab\u89e3\u91ca\u4e3a\u6a21\u578b attention\u3001\u7f51\u7edc\u6982\u7387\u3001evaluator score \u6216\u7ecf\u9a8c\u6743\u91cd\u7684\u771f\u5b9e\u89e3\u6790\u8868\u8fbe\u5f0f\u3002",
+      "\u672c\u4efb\u52a1\u4f7f\u7528\u8be5\u8bba\u6587\u4f5c\u4e3a fail-closed \u7684\u9009\u62e9\u548c\u805a\u5408\u8bbe\u8ba1\u539f\u5219\uff1b\u4efb\u4f55\u6548\u679c\u53ea\u80fd\u7531\u540e\u7eed target-disjoint\u3001paired\u3001round-to-round \u5b9e\u9a8c\u9a8c\u8bc1\u3002"
+    ]
+  },
+  "current_implementation_facts": {
+    "component_entrypoints": [
+      "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/control_policy.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/external_metric_feedback.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/orchestration.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/reinference_plan.py"
+    ],
+    "runtime_consumers": [
+      "pocket_modules/flowa_core/transport/adaptive_reflow_runtime.py",
+      "pocket_modules/mechanisms/inference/denovo_generation/proxy_reflow.py"
+    ],
+    "lower_level_dependencies": [
+      "pocket_modules/mechanisms/inference/noise_bias/restart_bias.py supplies the current metric-delta to alpha/beta ledger primitive and is imported by adaptive_reflow/mechanism_adapter.py.",
+      "pocket_modules/mechanisms/inference/noise_bias/spectral_budget.py supplies exact-Gaussian and finite-prefix diagnostics; it is not currently the runtime authority for adaptive-reflow sampler controls."
+    ],
+    "existing_guarantees": [
+      "\u4e0a\u4e00\u8f6e coordinate\u3001charge\u3001raw pair \u548c projected pair state \u4ee5 detached restart memory \u65b9\u5f0f\u4f20\u5165\u4e0b\u4e00\u8f6e\uff1bcoordinate restart \u4fdd\u6301 fresh prior RMS\u3002",
+      "memory_fraction\u3001charge_memory_fraction\u3001pair_memory_fraction \u5df2\u5206\u901a\u9053\u8bb0\u5f55\uff0c\u4e14 input range\u3001round index\u3001\u771f\u5b9e evaluator feedback \u6a21\u5f0f\u548c freeze controls \u5df2\u6709 fail-closed \u9a8c\u8bc1\u3002",
+      "\u6bcf\u8f6e\u5df2\u6709 condition_delta\u3001restart bias\u3001freeze mask\u3001metric target\u3001evaluator provenance \u548c acceptance reason \u7684 trace \u4e49\u52a1\u3002",
+      "noise_bias/spectral_budget.py \u5df2\u5c06 exact Gaussian inequality \u4e0e molecular local-linearization proxy \u5206\u5f00\uff0c\u5e76\u58f0\u660e finite prefix cannot certify tail selection\u3002",
+      "\u771f\u5b9e evaluator feedback \u9ed8\u8ba4\u4ec5\u9650 inference-external diagnostic \u6216\u6388\u6743\u8bad\u7ec3\u534f\u8bae\uff1bgeneration-local proxy \u4ecd\u662f diagnostic\u3002"
+    ],
+    "gaps_to_close": [
+      "external_metric_feedback.py \u7684\u4e3b\u8981\u63a7\u5236\u5206\u652f\u542b\u56fa\u5b9a\u76ee\u6807\u533a\u95f4\u548c\u542f\u53d1\u5f0f\u5e38\u6570\uff1bmetric_trust \u4e3b\u8981\u5f71\u54cd metric priority\uff0c\u4e0d\u5b8c\u6574\u51b3\u5b9a channel restart weight\u3002",
+      "flowa_core/transport/adaptive_reflow_runtime.py \u5bf9\u52a8\u6001 memory control \u91c7\u7528 max(current, dynamic) \u5408\u5e76\uff0c\u5929\u7136\u4e0d\u80fd\u8868\u8fbe\u56e0\u65b0\u8bc1\u636e\u53d8\u5dee\u3001\u5206\u6b67\u6216\u64a4\u9500\u800c\u4e3b\u52a8\u964d\u6743\u3002",
+      "\u5f53\u524d\u7ed3\u679c\u4f20\u9012\u4e3b\u8981\u4ece immediately previous endpoint \u8bfb\u53d6\uff1b\u82e5\u4ee5\u540e\u4f7f\u7528 best/history candidate\uff0c\u5c1a\u65e0\u539f\u5b50 bundle\u3001\u540c\u6e90\u53bb\u91cd\u3001\u8de8\u8f6e\u5168\u5c40\u8d28\u91cf\u9884\u7b97\u6216\u907f\u514d Frankenstein state \u7684\u5408\u540c\u3002",
+      "\u5f53\u524d ledger \u672a\u5c06\u6bcf\u4e2a channel \u7684 evidence components\u3001calibration version\u3001candidate competition\u3001raw score\u3001bounded score \u548c\u6700\u7ec8\u5199\u5165 fraction \u4e00\u5e76\u7ed1\u5b9a\u3002",
+      "adaptive_reflow \u4e0e noise_bias \u90fd\u53ef\u4f5c\u4e3a\u72ec\u7acb mechanism \u5199\u5165 restart_bias/sampler_controls\uff1b\u82e5\u4e24\u8005\u5728\u540c\u4e00 run \u6fc0\u6d3b\uff0c\u76ee\u524d\u6ca1\u6709 single-writer arbitration\uff0c\u53ef\u80fd\u53d1\u751f\u53cc\u91cd\u7f29\u653e\u3001\u9759\u9ed8\u8986\u76d6\u6216\u65e0\u6cd5\u89e3\u91ca\u7684 max merge\u3002"
+    ]
+  },
+  "target_design": {
+    "scope": "\u516c\u5171\u5f15\u64ce\u53ea\u5904\u7406\u540c\u4e00 sample\u3001\u540c\u4e00 run\u3001\u540c\u4e00 checkpoint lineage \u5185\u7684 round r -> r+1 restart distribution \u4e0e ODE condition update\uff1b\u4e0d\u505a\u8de8 sample\u3001\u8de8 target\u3001\u8de8 checkpoint \u6216\u8de8 run memory\u3002\u6a21\u578b\u9002\u914d\u5668\u53ef\u652f\u6301\u6761\u4ef6\u6216\u65e0\u6761\u4ef6 Flow Matching\uff0c\u4f46\u4e0d\u5c06\u6ca1\u6709\u53ef\u9a8c\u8bc1\u8fde\u7eed ODE sampling surface \u7684\u65b9\u6cd5\u4f2a\u88c5\u6210\u517c\u5bb9\u6a21\u578b\u3002",
+    "public_flow_matching_ode_interface": {
+      "mathematical_boundary": "\u516c\u5171\u8bed\u4e49\u4e3a z_dot(t)=v_theta(z(t), t; c_r)\uff0c\u5176\u4e2d adapter \u8d1f\u8d23\u6a21\u578b\u539f\u751f state\u3001condition \u4e0e integrator\uff0cengine \u53ea\u5728\u5b8c\u6574\u4e00\u8f6e\u7aef\u70b9\u540e\u6784\u9020 c_(r+1)=compose_condition(c_r, delta_c_r) \u548c z_(r+1)(0)~restart_distribution(prior_r, detached endpoint_r, beta_r)\u3002\u516c\u5171\u63a5\u53e3\u4e0d\u5f97\u4fee\u6539 checkpoint\u3001theta\u3001\u8bad\u7ec3 noise path \u6216\u6a21\u578b\u5185\u90e8 flow-time parameterization\u3002",
+      "engine_owned_contracts": [
+        "RunIdentity, RoundIdentity, PhaseState, FrozenEnvelopeManifest, DynamicRestartTransferLedger, RestartPolicy, ODEConditionDelta, operation_order and ODEIntegratorTrace schema\u3002",
+        "\u539f\u5b50 source bundle\u3001\u975e\u7d27 tail/complement gate\u3001\u8bc1\u636e\u6821\u51c6\u3001beta cap/floor\u3001cosine fresh-noise capacity\u3001\u56de\u6eda\u3001\u8de8\u6a21\u578b\u8bc4\u6d4b\u9884\u7b97\u548c provenance\u3002",
+        "\u6240\u6709\u975e\u96f6\u4f20\u9012\u90fd\u53d1\u751f\u5728 adapter \u660e\u793a\u7684 restart boundary\uff1bengine \u4ece\u4e0d\u63a2\u6d4b\u6216\u91cd\u5199\u7b2c\u4e09\u65b9\u79c1\u6709\u5f20\u91cf\u3002"
+      ],
+      "adapter_protocol": [
+        "capabilities(): \u58f0\u660e continuous/discrete state channels\u3001condition injection\u3001restart boundary\u3001trajectory availability\u3001deterministic seed support\u3001native integrator\u3001materialization route \u4e0e\u4e0d\u53ef\u652f\u6301\u80fd\u529b\u3002",
+        "build_initial_state(prior_spec, seed) / export_endpoint(native_state): \u5728\u4e0d\u4e22\u5931 shape\u3001mask\u3001normalization\u3001frame \u4e0e\u79bb\u6563\u8bed\u4e49\u7684\u524d\u63d0\u4e0b\u521b\u5efa\u6216\u5bfc\u51fa StateBundle\u3002",
+        "detach_and_validate_endpoint(endpoint) / apply_restart_distribution(prior_state, source_bundle, beta_by_channel): adapter \u4fdd\u8bc1 detached\u3001\u540c\u4e00 bundle\u3001\u6a21\u578b\u539f\u751f\u7ea6\u675f\u4e0e fresh-noise floor\uff1b\u4e0d\u652f\u6301\u7684 channel \u5fc5\u987b\u660e\u786e\u62d2\u7edd\u3002",
+        "compose_condition(base_condition, condition_delta) / solve_ode(initial_state, condition, integrator_request): \u4f7f\u7528\u6a21\u578b\u539f\u751f ODE sampling path\uff0c\u5e76\u8fd4\u56de endpoint\u3001integrator trace \u548c\u4e0d\u53ef\u53d8 configuration digest\u3002",
+        "observe_endpoint(endpoint, context): \u4ea7\u751f materialization\u3001\u51e0\u4f55\u3001\u72b6\u6001\u4e00\u81f4\u6027\u3001\u53ef\u9009 evaluator-request descriptor\uff1b\u516c\u5171 engine \u4e0d\u628a model-local proxy \u5347\u683c\u4e3a\u5916\u90e8\u771f\u5b9e metric\u3002"
+      ],
+      "canonical_state_contract": "StateBundle \u4f7f\u7528 named continuous/discrete channels\u3001masks\u3001batch/sample identity\u3001reference frame/normalization\u3001source round\u3001tensor detach proof\u3001native-state digest \u4e0e immutable provenance\u3002\u5b83\u5141\u8bb8\u5750\u6807\u3001\u7c7b\u522b\u3001pair/edge\u3001latent \u7b49\u901a\u9053\uff0c\u4f46\u7981\u6b62\u628a\u4e0d\u540c endpoint \u6216\u4e0d\u540c adapter \u7684\u901a\u9053\u62fc\u6210\u4e00\u4e2a restart state\u3002",
+      "operation_semantics": "\u9ed8\u8ba4\u4e14\u5fc5\u987b\u5199\u5165 trace \u7684\u7ec4\u5408\u6b21\u5e8f\u662f validate source -> choose bundle -> apply restart distribution -> compose condition delta -> apply declared channel freeze -> solve ODE -> observe endpoint\u3002\u4efb\u4f55 adapter \u9700\u8981\u5176\u4ed6\u6b21\u5e8f\uff0c\u5fc5\u987b\u58f0\u660e operation_order_version\u3001\u7ed9\u51fa paired order-reversal test \u548c commutator-residual diagnostic\uff1bunknown order fail closed\u3002",
+      "compatibility_boundary": "\u8fd9\u662f inference plugin contract\uff0c\u4e0d\u662f\u7edf\u4e00\u6a21\u578b\u7c7b\u6216\u7edf\u4e00\u5206\u5b50\u8868\u793a\u3002\u7b2c\u4e09\u65b9\u4ed3\u5e93\u53ea\u8bfb\u53d6\u3001\u6309\u56fa\u5b9a commit \u8c03\u7528\uff1b\u6240\u6709 glue\u3001schema \u548c tests \u7559\u5728\u672c\u4ed3\u5e93\u3002adapter \u5728 parity route \u4e0b\u5fc5\u987b\u590d\u73b0\u5bf9\u65b9\u539f\u751f single-round sampling\uff0c\u800c\u4e0d\u662f\u901a\u8fc7 monkey patch \u58f0\u79f0\u9002\u914d\u6210\u529f\u3002"
+    },
+    "layered_ownership": {
+      "noise_bias": "\u4fdd\u7559\u4e3a\u65e0\u72b6\u6001\u3001\u6a21\u578b\u65e0\u5173\u7684 calculation and diagnostics library\uff1ametric-direction normalization\u3001\u5019\u9009 alpha/beta ledger\u3001fresh-noise cumulative-mass/spectral diagnostics\u3002\u5b83\u4e0d\u5f97\u9009\u62e9 source bundle\u3001\u51b3\u5b9a channel gate\u3001\u5199\u5165 runtime sampler_controls\u3001\u8bbe\u7f6e freeze \u6216 condition_delta\u3002",
+      "adaptive_reflow": "\u552f\u4e00\u7684 policy owner\uff1a\u4ece atomic source bundle\u3001\u975e\u7d27 evidence/tail/complement gate\u3001phase/order state \u548c frozen schedule \u5f97\u51fa\u6bcf\u901a\u9053\u6700\u7ec8 beta\u3001condition_delta \u4e0e freeze admission\uff1b\u5b83\u662f\u552f\u4e00\u5141\u8bb8\u751f\u6210 executable RestartPolicy \u7684 mechanism\u3002",
+      "flowa_core_runtime": "\u53ea\u9a8c\u8bc1\u5e76\u6267\u884c\u4e00\u4e2a immutable FinalRestartPolicy\uff1b\u4e0d\u5f97\u91cd\u65b0\u4ece noise_bias \u6216\u5176\u4ed6 mechanism \u63a8\u5bfc/\u5408\u5e76 memory fraction\uff0c\u4e5f\u4e0d\u5f97\u4ee5 max \u5f62\u5f0f\u8986\u76d6 policy \u7684\u53d7\u63a7\u964d\u6743\u3002",
+      "migration_rule": "\u65e7 noise_bias standalone mechanism \u5728\u4e0e adaptive_reflow \u540c run \u65f6\u53ea\u53ef\u8f93\u51fa diagnostic ledger\u3002\u82e5\u5355\u72ec\u542f\u7528 legacy route\uff0c\u5fc5\u987b\u663e\u5f0f legacy mode\u3001\u4e92\u65a5 feature flag \u548c\u72ec\u7acb trace namespace\uff1b\u4e24\u4e2a writer \u540c\u65f6\u8bf7\u6c42 sampler_controls \u5fc5\u987b fail closed\u3002"
+    },
+    "phase_and_branch_contract": {
+      "phase_state": "PhaseState \u81f3\u5c11\u8bb0\u5f55 outer_cycle_id\u3001round_in_cycle\u3001schedule_phase\u3001previous_trigger\u3001operation_order_version\u3001source-selection procedure\u3001\u968f\u673a\u79cd\u5b50 lineage \u548c horizon_remaining\u3002\u5b83\u662f restart policy \u7684\u5fc5\u9700\u8f93\u5165\uff0c\u4e0d\u5f97\u4ece endpoint score \u9690\u5f0f\u63a8\u65ad\u3002",
+      "horizon_requirement": "\u6821\u51c6\u548c candidate ranking \u5fc5\u987b\u58f0\u660e\u540e\u7eed horizon H\uff1bH=1 \u8bc1\u636e\u4e0d\u5f97\u8bc1\u660e H>1 continuation \u8db3\u591f\u3002\u82e5\u6700\u5c0f continuation class \u968f H \u6539\u53d8\uff0cengine \u5fc5\u987b\u4fdd\u7559\u8db3\u591f phase memory \u6216\u62d2\u7edd\u8be5 schedule\u3002",
+      "branch_ambiguity": "\u5728 score gap \u5c0f\u4e8e\u7b49\u4e8e calibrated uncertainty radius \u65f6\uff0c\u4fdd\u7559 bounded unordered candidate set \u5e76\u4ee4\u6b63\u5411 transfer \u4e3a\u96f6\u6216\u53d7\u4fdd\u62a4 fresh-noise\uff1b\u53ea\u6709 dominance gap \u4e25\u683c\u5927\u4e8e\u8bef\u5dee\u754c\u3001\u72ec\u7acb selector \u4e00\u81f4\u4e14\u5b8c\u6574 provenance \u5b58\u5728\u65f6\u624d\u53ef deterministic prune\u3002\u5206\u6570 margin \u81ea\u8eab\u4e0d\u80fd\u8986\u76d6 phase bias\u3002"
+    },
+    "cross_model_adapter_program": {
+      "first_verified_candidate": "external_baselines/FlowMol at git commit 77cae22174b7792b0e25e9e0414038420736d841. Its FlowMol3 readme identifies a 2025 preprint and code exposes integrate/step over x/a/c/e features. It is an unconditional 3D generator, so it validates public state/restart mechanics but cannot alone validate pocket-conditioned claims.",
+      "candidate_admission": "\u6bcf\u4e2a 2025/2026 candidate \u5148\u767b\u8bb0 paper/repository/license/commit/date\u3001\u6a21\u578b\u4efb\u52a1\u3001\u6570\u636e\u548c\u539f\u8bba\u6587\u6307\u6807\uff1b\u518d\u505a\u4ee3\u7801\u7ea7\u8d44\u683c\u5ba1\u8ba1\uff1a\u5b9e\u9645 ODE/vector-field integration call\u3001prior/state export\u3001condition injection boundary\u3001\u8fde\u7eed\u4e0e\u79bb\u6563\u901a\u9053\u3001detached restart \u53ef\u5b9e\u73b0\u6027\u3001\u79cd\u5b50/\u8f68\u8ff9\u53ef\u8ffd\u6eaf\u6027\u548c\u53ef\u7528\u8bc4\u6d4b\u3002\u7f3a\u4efb\u4f55\u9879\u5373\u4e3a unsupported\uff0c\u4e0d\u7528 marketing/SOTA \u6807\u7b7e\u8865\u8db3\u3002",
+      "adapter_parity_gate": "\u6bcf\u4e2a adapter \u5fc5\u987b\u5148\u901a\u8fc7\uff1abeta=0 \u7684\u539f\u751f single-round parity\uff1b\u56fa\u5b9a seed \u7684 endpoint/trace digest\uff1b\u6b63 beta \u4ec5\u6539\u53d8\u58f0\u660e restart boundary\uff1bsource detach\uff1b\u9519\u8bef shape/channel/order \u5931\u8d25\u5173\u95ed\uff1b\u4e0d\u4fee\u6539\u7b2c\u4e09\u65b9\u5de5\u4f5c\u6811\uff1b\u76f8\u540c compute/round budget \u4e0b\u7684 disabled/fixed/dynamic paired controls\u3002",
+      "generality_claim_gate": "\u53ea\u6709\u5728\u81f3\u5c11\u4e00\u4e2a\u53e3\u888b\u6761\u4ef6\u6a21\u578b\u4e0e\u4e00\u4e2a\u4e0d\u540c state/integrator family \u7684\u6a21\u578b\u90fd\u901a\u8fc7 parity\u3001\u5408\u540c\u548c target-disjoint paired evaluation \u540e\uff0c\u624d\u53ef\u79f0\u4e3a\u8de8\u6a21\u578b inference-interface evidence\u3002\u65e0\u6761\u4ef6 FlowMol3 \u53ea\u53ef\u79f0\u4e3a\u63a5\u53e3\u673a\u5236\u7684\u8fc1\u79fb\u9a8c\u8bc1\uff0c\u4e0d\u5f97\u7528\u4e8e\u53e3\u888b\u836f\u7269\u751f\u6210\u6027\u80fd\u6216 2025/2026 SOTA \u6cdb\u5316\u58f0\u660e\u3002"
+    },
+    "two_planes": {
+      "integrity_plane": "\u4fdd\u7559\u73b0\u6709 detached source state\u3001source_round\u3001evaluator provenance\u3001condition trace\u3001freeze contract \u4e0e\u6240\u6709\u539f\u59cb metric \u8bb0\u5f55\u3002\u6743\u91cd\u4e0d\u5f97\u7be1\u6539\u3001\u5220\u9664\u6216\u628a proxy \u5347\u683c\u4e3a\u771f\u5b9e metric\u3002",
+      "influence_plane": "\u52a8\u6001\u6743\u91cd\u53ea\u7f29\u653e coordinate/charge/pair \u7684 restart memory fraction\u3001freeze admission \u4e0e\u4e0b\u4e00\u8f6e condition-delta \u4e0a\u9650\uff1b\u4e0d\u80fd\u76f4\u63a5\u6539\u5199\u7ec8\u7aef\u5019\u9009\u9009\u62e9\u3001\u539f\u59cb ODE velocity \u6216\u6a21\u578b\u53c2\u6570\u3002"
+    },
+    "atomic_source_bundle": "\u6bcf\u4e2a\u53ef\u7528 source \u5fc5\u987b\u662f\u540c\u4e00 source_round \u7684 RoundResultBundle\uff0c\u5305\u542b coordinate\u3001charge\u3001raw pair\u3001projected pair\u3001materialization/evaluator evidence\u3001trace digest \u548c provenance\u3002\u4e0d\u5f97\u628a round A \u7684 coordinates \u4e0e round B \u7684 pair/charge state \u91cd\u65b0\u62fc\u63a5\uff1b\u901a\u9053\u7ea7 gate \u53ef\u4ee5\u7f6e\u96f6\uff0c\u4f46\u975e\u96f6\u901a\u9053\u5fc5\u987b\u5f15\u7528\u540c\u4e00\u5df2\u9009 bundle\u3002",
+    "channel_evidence": {
+      "coordinate": [
+        "materialization success and geometry/PoseBusters evidence",
+        "coordinate perturbation stability and condition-sensitivity observable evidence",
+        "external metric uncertainty or proxy-only boundary"
+      ],
+      "charge": [
+        "sanitization/formal-charge validity",
+        "charge probability margin or entropy-derived reliability",
+        "source bundle and freeze lineage"
+      ],
+      "pair": [
+        "raw/projected pair coherence, valence/topology and materialization evidence",
+        "pair margin/reliability, local freeze mask lineage and projection-loss penalty",
+        "source bundle and freeze lineage"
+      ]
+    },
+    "noncompact_noise_selection_contract": {
+      "frozen_envelope_ladder": "\u5728 run \u5f00\u59cb\u3001\u4efb\u4f55 endpoint score \u4ea7\u751f\u4e4b\u524d\uff0c\u6309 target pocket \u548c\u914d\u7f6e\u51bb\u7ed3 K_0 subset K_1 ... \u7684 compact-envelope ladder\u3002\u6bcf\u5c42\u540c\u65f6\u7ea6\u675f coordinate RMS/extent\u3001pocket-distance/contact support\u3001atom-count/graph complexity\u3001valence/sanitization\u3001pair entropy/projection loss \u548c internal geometry\u3002\u9608\u503c\u3001\u6765\u6e90\u7edf\u8ba1\u3001\u7248\u672c\u548c hash \u5fc5\u987b\u5199\u5165 manifest\u3002",
+      "local_uniformity_analogue": "\u5bf9\u6bcf\u4e2a source/channel\uff0c\u5728\u5c0f\u7684\u53d7\u63a7 restart perturbation \u4e0b\u6d4b\u91cf materialization/geometry/metric response \u7684\u7a33\u5b9a\u4e0b\u754c\u548c condition-sensitivity observable\u3002\u4f4e margin\u3001\u51e0\u4e4e\u5e73\u5766\u4f46\u8bef\u5dee\u5927\u7684\u54cd\u5e94\u3001\u6216\u8de8 seed \u7b26\u53f7\u7ffb\u8f6c\u5747\u662f degeneracy\uff0c\u800c\u975e\u53ef\u88ab\u9ad8\u5355\u70b9\u5206\u6570\u62b5\u6d88\u7684\u5c40\u90e8\u6210\u529f\u3002",
+      "tail_budget": "\u5bf9\u6bcf\u8f6e archive \u8ba1\u7b97\u6bcf\u5c42\u4e4b\u5916\u7684\u5019\u9009\u6570\u3001\u53bb\u91cd\u540e\u7684 transfer-score mass\u3001restart-write mass \u548c evaluator/missing-evidence mass\u3002\u53ea\u6709\u5728\u51bb\u7ed3\u5c42\u7684 tail budget \u8fbe\u6807\u3001\u6216\u6309\u9884\u6ce8\u518c ladder \u6269\u5c55\u540e\u4ecd\u8fbe\u6807\uff0c\u624d\u5141\u8bb8 selection\uff1b\u4e0d\u5f97\u4ee5\u5f53\u524d noise/score \u4e34\u65f6\u5b9a\u4e49\u4e00\u4e2a epsilon-dependent compact set\u3002",
+      "complement_exclusion": "\u6240\u6709\u4e0d\u5728\u5df2\u5206\u914d valid bundle/envelope \u7684 endpoint \u5fc5\u987b\u6709\u660e\u786e blocker\uff1amaterialization/geometry failure\u3001metric provenance missing\u3001out-of-envelope\u3001lineage invalid \u6216 unresolved. \u672a\u5206\u7c7b complement \u4e0d\u662f\u96f6\u8d28\u91cf\uff0c\u5fc5\u987b\u963b\u6b62\u6b63\u5411 transfer\u3002",
+      "finite_prefix_boundary": "round \u6570\u6709\u9650\u65f6\u4ec5\u62a5\u544a empirical envelope concentration \u4e0e tail-budget status\uff1b\u7981\u6b62\u8f93\u51fa tail_selection_certified=true\uff0c\u9664\u975e\u672a\u6765\u5b58\u5728\u4e0e exact Gaussian hypotheses \u76f8\u5339\u914d\u7684\u72ec\u7acb\u8bc1\u660e\u3002"
+    },
+    "cosine_annealed_restart_noise_budget": {
+      "schedule_family": "For a frozen outer cycle of length L, propose a fresh-noise cap n_cap(r)=n_min+(n_max-n_min)*(1+cos(pi*u_r))/2, u_r=r/(L-1) for L>1. Thus exploration noise is high at cycle start and smoothly anneals; restart-memory cap is derived only through a separately calibrated mixing map, never assumed equal to 1-n_cap because the current prior-RMS-preserving mixer renormalizes states.",
+      "dynamic_gate": "Let q(r,c) be the noncompact transfer evidence for channel c. The actual memory coefficient is beta(r,c)=mixing_cap(n_cap(r), c)*q(r,c), then constrained by symmetric per-round delta caps and a fresh-noise floor. q=0 forces beta=0. The cosine schedule supplies capacity; it never overrides a failed gate.",
+      "warm_restart": "A new high-noise cosine cycle may be triggered only by predeclared events: tail-budget violation, complement-unclassified mass, materialization/geometry regression, calibration drift, or repeated no-progress under valid evidence. It resets source selection to fresh prior/no prior endpoint and records trigger, cycle id and discarded source lineage. It is not triggered by an evaluator score alone.",
+      "required_controls": "Compare constant, linear, cosine-no-restart, cosine-with-guarded-restart and learned schedule families under the same outer-round budget. Schedule endpoints, cycle length and restart triggers are frozen before target-disjoint evaluation."
+    },
+    "proposed_weight_rule": {
+      "definition": "For source bundle b and channel c, define g(b,c) in {0,1} from complete provenance, valid detached state, eligible feedback mode, matching source_round/trace, finite fields, and no revocation. If g=0, beta(b,c)=0. Otherwise e(b,c)=calibration_lower_bound * perturbation_stability_lower_bound * support_coverage * (1-ambiguity) * (1-degeneracy_penalty) * recency_decay, with every factor in [0,1].",
+      "selection": "Deduplicate candidates by their upstream evidence/source bundle. Rank only valid bundles by a deterministic evidence score, retain a bounded diverse set, then choose one source bundle per target round. The first rollout may expose only the previous bundle, but its evidence score must still be computed and audited rather than assumed to be one.",
+      "write_rule": "For each channel, beta_target[c] = mixing_cap(fresh_noise_cap[round], c) * e(selected_bundle,c). The mapping from fresh-noise cap to the current RMS-preserving mix must be empirically calibrated and versioned; it must not assume alpha=1-beta is a physical variance identity. Apply an explicit symmetric bounded update and a per-channel fresh-noise floor. A missing or invalid evidence component must drive beta_target[c] to zero, not to a default positive prior-memory fraction.",
+      "normalization_and_budget": "The candidate-level evidence score is a selection score, not a posterior probability. Normalize only over the eligible deduplicated candidate set for auditing; cap total source influence, per-source influence and per-channel memory. No duplicate derived metric row may increase a bundle's mass."
+    },
+    "required_invariants": [
+      "All restart states remain detached and only write the ODE restart distribution/declared state channels; multirate clocks and read-only cross-attention semantics remain unchanged.",
+      "No dynamic path may increase a channel memory fraction when its gate is false, its new uncertainty/stability/ambiguity evidence is invalid, or its source lineage is incomplete.",
+      "The controller must be able to decrease as well as increase a prior round's fraction; any merge rule that takes max(previous, dynamic) without an explicit authority contract is rejected for this policy.",
+      "A true metric may influence weight only with configured evaluator provenance and an allowed inference feedback mode. Proxy-only inputs may produce diagnostic scores but cannot silently activate a claim-grade transfer policy.",
+      "Every nonzero channel fraction must be reproducible from one immutable ledger row: raw evidence, bounded factors, calibration artifact hash, selected source bundle, pre/post bounded update, final alpha/beta and all caps.",
+      "adaptive_reflow is the only dynamic policy writer for executable restart/noise controls. noise_bias rows are input diagnostics and may not independently create or overwrite sampler_controls, condition_delta, freeze masks, or a final beta.",
+      "No runtime effect is admitted unless condition_delta or restart/noise bias changes are logged and condition_sensitivity_observable_gate has an eligible evidence path.",
+      "All envelope cutoffs, tail budgets, cosine endpoints, cycle lengths and restart triggers are frozen before the run; current-round metric values cannot redefine the compact set or noise schedule that judges them.",
+      "A finite cycle may emit empirical tail-budget diagnostics only. It may not claim certified noncompact selection, asymptotic tightness, or theorem-backed tail control for molecular trajectories."
+    ]
+  },
+  "tasks": [
+    {
+      "id": "DTB-R0",
+      "title": "\u51bb\u7ed3\u6570\u5b66\u5230 reflow \u7684\u8bbe\u8ba1\u8fb9\u754c\u548c\u53cd\u4f8b\u76ee\u5f55",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "implementation": [
+        "\u65b0\u589e\u7ec4\u4ef6\u5185\u8bbe\u8ba1\u8bf4\u660e\uff0c\u9010\u6761\u6620\u5c04 NSR \u7684\u5c40\u90e8/\u5168\u5c40\u9009\u62e9\u539f\u5219\u3001\u975e\u7ed3\u8bba\u548c FlowA \u8fd0\u884c\u65f6\u9650\u5236\uff1b\u4e0d\u5f97\u5c06\u5176\u8868\u8ff0\u4e3a neural posterior \u6216\u6027\u80fd\u7406\u8bba\u3002",
+        "\u8bb0\u5f55\u81f3\u5c11\u516d\u4e2a hostile cases\uff1a\u5355\u6b21\u9ad8 GNINA \u4f46\u51e0\u4f55\u5931\u8d25\u3001\u4f4e\u4e0d\u786e\u5b9a\u5ea6\u5374\u8de8 seed \u4e0d\u7a33\u5b9a\u3001\u540c\u6e90\u591a\u6307\u6807\u91cd\u590d\u653e\u5927\u3001\u5386\u53f2 best \u4e0e\u5f53\u524d state \u7684\u62fc\u63a5\u3001\u64a4\u9500/\u5199\u5165\u5931\u8d25\u7684 source\u3001\u672a materialize proxy \u7684\u4f2a\u9ad8 confidence\u3002",
+        "\u9501\u5b9a\u7b2c\u4e00\u671f\u8303\u56f4\u4e3a previous-round atomic bundle\uff0c\u4e0d\u6269\u5927\u5230\u8de8 sample memory \u6216\u8de8 target candidate retrieval\u3002"
+      ],
+      "acceptance": [
+        "\u6587\u6863\u660e\u786e\u6240\u6709 external evaluator\u3001proxy\u3001claim \u548c raw-model \u8fb9\u754c\u3002",
+        "\u6bcf\u4e2a hostile case \u5bf9\u5e94\u4e00\u4e2a fail-closed test fixture \u548c\u9884\u671f ledger/audit code\u3002",
+        "\u4e0d\u6539\u53d8\u73b0\u6709 inference-external/non-mainline Lean contract\u3002"
+      ],
+      "completion_evidence": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/DESIGN_BOUNDARY.md"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-NC1",
+      "title": "\u5b9a\u4e49\u975e\u7d27 endpoint archive \u7684 fixed-envelope\u3001tail budget \u4e0e\u8865\u96c6\u95e8",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
+      "depends_on": [
+        "DTB-R0"
+      ],
+      "implementation": [
+        "\u5b9a\u4e49 run-start FrozenEnvelopeManifest \u548c\u9884\u6ce8\u518c K_0 subset K_1 ... exhaustion ladder\uff1b\u6bcf\u5c42\u9608\u503c\u5fc5\u987b\u6765\u81ea\u8bad\u7ec3/\u5f00\u53d1\u671f\u56fa\u5b9a\u7edf\u8ba1\u548c target pocket \u8f93\u5165\uff0c\u4e0d\u80fd\u8bfb\u53d6\u8be5 run \u7684 winner metric \u540e\u518d\u786e\u5b9a\u3002",
+        "\u5b9e\u73b0 endpoint \u7684 envelope classification\uff1acoordinate extent/RMS\u3001pocket-contact support\u3001graph/atom complexity\u3001sanitization/valence\u3001pair entropy/projection loss\u3001internal geometry \u548c evaluator provenance\u3002\u6bcf\u4e2a endpoint \u5fc5\u987b\u6070\u597d\u5c5e\u4e8e\u4e00\u4e2a allocated valid bundle \u6216\u4e00\u4e2a\u660e\u786e complement blocker\u3002",
+        "\u5b9e\u73b0 per-round/per-cycle tail budget\uff1aarchive count\u3001deduplicated transfer-score mass\u3001requested and accepted restart-write mass\u3001unknown/missing-evidence mass\u3001\u6bcf\u4e2a envelope layer \u7684\u8d85\u754c\u8d28\u91cf\uff1b\u8d85\u9884\u7b97\u65f6\u963b\u6b62 positive transfer \u6216\u89e6\u53d1\u53d7\u63a7 fresh-noise restart\u3002",
+        "\u660e\u786e\u8be5\u6a21\u5757\u53ea\u4ea7\u751f empirical noncompact diagnostics\u3002\u8fd0\u884c\u6b21\u6570\u6709\u9650\u65f6\uff0c\u4e0d\u5f97\u5c06\u4efb\u4f55 tail budget \u547d\u540d\u4e3a posterior tightness \u6216 certified selection\u3002"
+      ],
+      "files": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory.py",
+        "pocket_modules/mechanisms/inference/adaptive_reflow/orchestration.py",
+        "pocket_modules/mechanisms/inference/adaptive_reflow/reinference_plan.py",
+        "pocket_modules/flowa_core/transport/adaptive_reflow_runtime.py",
+        "docs/ITERATIVE_ODE_CONDITION_TRACE_SCHEMA.json"
+      ],
+      "acceptance": [
+        "\u540c\u4e00 input/config \u5728\u4e0d\u540c round score \u4e0b\u5f97\u5230\u76f8\u540c envelope ladder\uff1b\u4e0d\u4f1a\u53d1\u751f score-dependent cutoff \u6f02\u79fb\u3002",
+        "out-of-envelope\u3001\u672a\u5206\u7c7b\u6216\u7f3a\u5c11 provenance \u7684 endpoint \u5747\u4ea7\u751f blocker\uff0c\u4e14 beta=0\u3002",
+        "duplicate evidence/candidate \u4e0d\u589e\u52a0 tail-budget allowance\uff1barchive \u589e\u957f\u4e0d\u5141\u8bb8\u7ed5\u8fc7\u603b\u8d28\u91cf\u4e0a\u9650\u3002",
+        "ledger \u660e\u786e\u5199\u5165 empirical_only \u548c finite_prefix_only\uff0c\u7981\u6b62\u751f\u6210 tail_selection_certified \u5b57\u6bb5\u3002"
+      ],
+      "completion_evidence": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/envelope_manifest.py"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-R1",
+      "title": "\u5efa\u7acb typed RoundResultBundle \u548c channel evidence \u5408\u540c",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-R0"
+      ],
+      "implementation": [
+        "\u5728 adaptive_reflow \u6a21\u5757\u5b9a\u4e49 dataclass/schema\uff1aRoundResultBundle\u3001ChannelTransferEvidence\u3001ChannelTransferDecision \u548c DynamicRestartTransferLedger\u3002",
+        "\u8981\u6c42 source_round\u3001round_count\u3001sample/run identity\u3001state tensor shape/detach status\u3001metric/evaluator provenance\u3001condition and trace digest\u3001feedback mode\u3001calibration artifact ref\u3001raw/projected pair coherence \u5168\u90e8\u53ef\u9a8c\u8bc1\u3002",
+        "\u628a coordinate/charge/pair \u4f5c\u4e3a\u663e\u5f0f\u901a\u9053\uff1b\u4e0d\u63a5\u53d7\u4efb\u610f dict\u3001bool-as-float\u3001NaN/infinity\u3001\u672a\u77e5 schema\u3001\u672a\u6765 source round\u3001\u91cd\u590d bundle id \u6216\u4e0d\u5339\u914d\u7684 state shape\u3002"
+      ],
+      "files": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory.py",
+        "pocket_modules/mechanisms/inference/adaptive_reflow/reinference_plan.py",
+        "pocket_modules/mechanisms/inference/adaptive_reflow/orchestration.py",
+        "tests/test_adaptive_reflow_restart_memory_migration.py",
+        "tests/test_adaptive_reflow_reinference_plan_contract.py"
+      ],
+      "acceptance": [
+        "\u6240\u6709\u975e\u96f6 restart write \u90fd\u80fd\u56de\u6307\u4e00\u4e2a\u552f\u4e00 atomic source bundle\uff1b\u6d4b\u8bd5\u8bc1\u660e\u4e0d\u80fd\u8de8 round \u62fc\u63a5 state\u3002",
+        "\u672a\u901a\u8fc7 contract \u7684 bundle \u4e0d\u4ea7\u751f sampler controls\uff0c\u4e14 ledger \u660e\u786e\u8bb0\u5f55 blocker\u3002",
+        "\u65e7 payload \u5728 feature disabled \u65f6\u4fdd\u6301\u884c\u4e3a\u4e0e\u5b57\u6bb5\u517c\u5bb9\u3002"
+      ],
+      "completion_evidence": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory_types.py"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-R2",
+      "title": "\u5b9e\u73b0\u53ef\u6821\u51c6\u7684\u901a\u9053\u7ea7\u52a8\u6001\u6536\u7f29\u89c4\u5219",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-R1"
+      ],
+      "implementation": [
+        "\u5b9e\u73b0\u7eaf\u51fd\u6570\uff0c\u8f93\u5165\u5df2\u9a8c\u8bc1\u7684 bundle/evidence/policy\uff0c\u8f93\u51fa per-channel gate\u3001raw factors\u3001evidence score\u3001scheduled cap\u3001bounded target fraction\u3001fresh-noise floor \u548c audit reason\u3002",
+        "calibration_lower_bound \u5fc5\u987b\u6765\u81ea\u51bb\u7ed3\u7684\u3001\u65f6\u95f4\u5207\u5206\u7684 calibration artifact\uff1bstability_lower_bound \u6765\u81ea\u540c\u4e00 target/condition \u5bb6\u65cf\u4e0b\u7684\u53d7\u63a7 seed/condition perturbation\uff1b\u6837\u672c\u4e0d\u8db3\u65f6\u5408\u5e76\u5230\u4fdd\u5b88\u7236\u6876\u6216 gate=0\u3002",
+        "ambiguity \u7531\u72ec\u7acb evaluator/proxy/seed \u5206\u6b67\u548c condition-sensitivity \u4e0d\u4e00\u81f4\u7ed9\u51fa\uff1bdegeneracy penalty \u8986\u76d6\u4f4e pair margin\u3001large projection loss\u3001materialization failure\u3001geometry failure \u548c\u8fc7\u671f source\u3002",
+        "\u628a\u65e7 schedule \u89e3\u91ca\u4e3a cap \u800c\u975e\u9ed8\u8ba4\u4fdd\u7559\u989d\u5ea6\uff1a\u65e0\u8bc1\u636e\u6216\u88ab\u62d2 source \u7684 beta \u4e3a\u96f6\uff0c\u907f\u514d\u56fa\u5b9a memory \u5728\u5931\u8d25\u540e\u7ee7\u7eed\u5199\u56de\u3002"
+      ],
+      "acceptance": [
+        "\u6240\u6709 factor \u90fd\u5728 [0,1]\uff0c\u5e76\u5177\u5907\u5355\u8c03\u6d4b\u8bd5\uff1a\u589e\u52a0\u4e0d\u786e\u5b9a\u6027\u3001\u5206\u6b67\u3001\u9000\u5316\u6216 source age \u4e0d\u80fd\u63d0\u9ad8 beta\uff1b\u63d0\u9ad8\u7a33\u5b9a\u6027/\u6821\u51c6\u4e0b\u754c\u5728\u5176\u4ed6\u5b57\u6bb5\u4e0d\u53d8\u65f6\u4e0d\u80fd\u964d\u4f4e beta\u3002",
+        "\u65e0 calibration\u3001proxy-only claim mode\u3001missing materialization\u3001failed sensitivity gate \u6216\u5b8c\u6574\u6027\u9519\u8bef\u5747\u4ea7\u751f beta=0\u3002",
+        "final coordinate restart \u4ecd\u6ee1\u8db3\u73b0\u6709 prior-RMS-preserving contract\uff0ccharge/pair \u7684 freeze \u8bed\u4e49\u4e0d\u88ab\u6539\u53d8\u3002"
+      ],
+      "completion_evidence": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/channel_rule.py"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-NC2",
+      "title": "\u628a\u975e\u7d27\u5c3e\u90e8\u53ef\u63a5\u53d7\u6027\u63a5\u5165\u52a8\u6001\u4f20\u9012\u6743\u91cd",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-NC1",
+        "DTB-R2"
+      ],
+      "implementation": [
+        "\u5c06 tail_admissibility\u3001complement_excluded\u3001frozen_envelope_manifest_hash\u3001tail_budget_row_ref \u548c finite_prefix_only \u7eb3\u5165 ChannelTransferEvidence \u4e0e DynamicRestartTransferLedger\u3002",
+        "\u5c06 e(bundle, channel) \u6539\u6210 local calibrated evidence \u4e0e global tail admissibility \u7684\u4e58\u6027 gate\uff1blocal high score \u4e0d\u80fd\u8865\u507f tail budget\u3001complement \u6216 lineage \u7684\u5931\u8d25\u3002",
+        "\u4e3a\u4f4e\u5c40\u90e8 coercivity \u7684\u5de5\u7a0b\u7c7b\u6bd4\u6dfb\u52a0\u9000\u5316\u68c0\u6d4b\uff1a\u53d7\u63a7 restart perturbation \u5bf9 endpoint metric/materialization \u4ea7\u751f\u4e0d\u7a33\u5b9a\u3001\u7b26\u53f7\u53cd\u8f6c\u3001\u6781\u4f4e margin \u6216 large projection loss \u65f6\uff0c\u589e\u52a0 degeneracy penalty \u5e76\u7981\u6b62 freeze admission\u3002",
+        "\u5728 same-sample archive \u542f\u7528\u524d\uff0cprevious endpoint \u4e5f\u5fc5\u987b\u7ecf\u8fc7\u4e0a\u8ff0 tail/complement gate\uff0c\u907f\u514d\u628a immediate previous \u8bef\u5f53\u4f5c\u5929\u7136\u7d27\u7684\u5355\u4e00\u5019\u9009\u3002"
+      ],
+      "acceptance": [
+        "\u540c\u6837\u7684 local metric \u8bc1\u636e\u5728 tail budget \u8fbe\u6807\u4e0e\u4e0d\u8fbe\u6807\u4e24\u79cd fixture \u4e0b\u4ea7\u751f\u4e0d\u540c\u4e14\u53ef\u89e3\u91ca\u7684 beta\uff1b\u540e\u8005\u5fc5\u987b\u4e3a\u96f6\u3002",
+        "\u672a\u77e5 complement\u3001flat/unstable perturbation response\u3001\u7f3a envelope hash \u548c\u6709\u9650 prefix \u90fd\u4e0d\u80fd\u88ab\u5e8f\u5217\u5316\u4e3a\u6b63\u5411\u8d28\u91cf\u51ed\u8bc1\u3002",
+        "\u6bcf\u4e2a gate/factor \u90fd\u5728 trace \u5185\u53ef\u590d\u7b97\uff0c\u5e76\u4fdd\u7559 source/evaluator provenance\u3002"
+      ],
+      "completion_evidence": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/envelope_manifest.py"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-NA1",
+      "title": "\u7814\u7a76\u5e76\u5b9e\u73b0 guarded cosine annealed outer restart-noise budget",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
+      "depends_on": [
+        "DTB-NC2"
+      ],
+      "implementation": [
+        "\u65b0\u589e outer restart noise schedule \u7684\u7eaf\u51fd\u6570\u548c versioned config\uff1aconstant\u3001linear\u3001cosine\u3001cosine-with-guarded-restart\u3002cosine \u5bf9 fresh-noise capacity \u9000\u706b\uff0c\u4e0d\u80fd\u4fee\u6539\u8bad\u7ec3\u65f6 flow-time/noise interpolation \u6216\u4f2a\u79f0\u4e3a diffusion scheduler\u3002",
+        "\u5148\u4ee5 controlled synthetic tensors \u6821\u51c6 current prior-RMS-preserving mixer \u4e2d fresh_noise_cap\u3001alpha_noise\u3001beta_memory\u3001\u5b9e\u9645 restart RMS/dispersion \u7684\u5173\u7cfb\uff1b\u5728\u672a\u6821\u51c6\u524d\uff0c\u7981\u6b62\u5c06 1-beta \u5f53\u4f5c\u7269\u7406\u566a\u58f0\u65b9\u5dee\u3002",
+        "\u4e3a\u6bcf\u4e2a cycle \u9884\u5148\u51bb\u7ed3 n_min/n_max\u3001cycle length\u3001per-channel caps\u3001fresh-noise floor\u3001symmetric delta caps \u548c\u5141\u8bb8 restart trigger\u3002\u4ec5 tail-budget violation\u3001unclassified complement\u3001materialization/geometry regression\u3001calibration drift \u6216 valid-evidence no-progress \u53ef\u89e6\u53d1 high-noise restart\u3002",
+        "restart \u65f6\u6e05\u9664 prior endpoint transfer eligibility\uff0c\u91cd\u65b0\u4ece fresh prior \u5f00\u59cb cycle\uff1b\u5199\u5165 cycle_id\u3001trigger\u3001discarded source bundle ids\u3001noise capacity before/after \u548c\u672a\u89e3\u51b3 metric deficit\u3002"
+      ],
+      "files": [
+        "pocket_modules/mechanisms/inference/noise_bias/restart_bias.py",
+        "pocket_modules/mechanisms/inference/noise_bias/spectral_budget.py",
+        "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory.py",
+        "pocket_modules/mechanisms/inference/adaptive_reflow/orchestration.py",
+        "pocket_modules/flowa_core/transport/adaptive_reflow_runtime.py",
+        "tests/test_noise_bias_spectral_budget.py",
+        "tests/test_adaptive_reflow_orchestration_contract.py"
+      ],
+      "acceptance": [
+        "cosine endpoints\u3001\u5355\u8c03 cycle \u5185\u53d8\u5316\u3001L=1 edge case\u3001restart reset\u3001\u6240\u6709 cap/floor/delta conflict \u5747\u6709 deterministic tests\u3002",
+        "failed dynamic-transfer gate \u65f6 cosine capacity \u4e0d\u80fd\u5199\u5165 previous state\uff1b\u4ec5\u5141\u8bb8\u65b0\u7684 fresh noise\u3002",
+        "spectral_budget.py \u4ecd\u660e\u786e\u5c06 physical smoothing variance \u4e0e restart-memory coefficient \u5206\u5f00\uff0c\u4e14 finite prefix \u4e0d\u5f97\u5347\u7ea7\u4e3a tail certificate\u3002",
+        "disabled/constant schedule \u4e0e\u73b0\u6709\u884c\u4e3a\u517c\u5bb9\uff1bcosine route \u4ec5\u7531\u663e\u5f0f config \u542f\u7528\u3002"
+      ],
+      "completion_evidence": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/cosine_schedule.py"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-R3",
+      "title": "\u66ff\u6362\u53ea\u589e\u4e0d\u51cf\u7684 dynamic-control \u5408\u5e76\u5e76\u8bf7\u6c42 core runtime \u63a5\u7ebf",
+      "priority": "P0",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
+      "depends_on": [
+        "DTB-R2"
+      ],
+      "implementation": [
+        "\u5728\u672c\u7ec4\u4ef6\u63d0\u4f9b\u552f\u4e00\u7684 merge authority\uff1ascheduled cap\u3001dynamic transfer decision \u548c safety floor \u4ee5\u660e\u786e\u987a\u5e8f\u7ec4\u5408\uff0c\u652f\u6301\u53d7\u9650\u4e0a\u5347\u548c\u53d7\u9650\u4e0b\u964d\uff0c\u7981\u6b62\u5bf9 dynamic fraction \u4f7f\u7528\u65e0\u6761\u4ef6 max\u3002noise_bias \u53ea\u80fd\u63d0\u4f9b\u5df2\u6807\u6ce8\u4e3a diagnostic/calculation-input \u7684\u5019\u9009 ledger\uff0c\u4e0d\u5f97\u4f5c\u4e3a\u7b2c\u4e8c\u4e2a merge authority\u3002",
+        "\u5411 flowa-denovo-core \u63d0\u4ea4\u53ea\u8bfb handoff\uff0c\u66ff\u6362 transport/adaptive_reflow_runtime.py \u548c denovo_generation/proxy_reflow.py \u4e2d\u5bf9 dynamic memory fractions \u7684 max \u5408\u5e76\uff1bcore owner \u53ea\u63a5\u53d7 immutable FinalRestartPolicy \u5e76\u8d1f\u8d23\u8fd0\u884c\u65f6\u63a5\u7ebf\u4e0e\u517c\u5bb9\u6d4b\u8bd5\u3002",
+        "\u4fdd\u7559 disabled compatibility route\uff0c\u786e\u4fdd\u672a\u542f\u7528 feature \u65f6 current schedule/closed-loop \u884c\u4e3a\u4e0d\u53d8\uff1b\u4e0d\u5f97\u5728 adaptive reflow \u7ec4\u4ef6\u8de8 owner \u4fee\u6539 core runtime\u3002"
+      ],
+      "acceptance": [
+        "\u6d4b\u8bd5\u5c55\u793a\u5f53\u65b0\u8bc1\u636e\u53d8\u5dee\u3001\u88ab\u64a4\u9500\u6216\u5206\u6b67\u4e0a\u5347\u65f6 memory/charge/pair fraction \u80fd\u4e0b\u964d\uff0c\u5e76\u53d7\u6bcf\u8f6e delta cap \u548c fresh-noise floor \u9650\u5236\u3002",
+        "\u6ca1\u6709\u91cd\u590d\u7f29\u653e\uff1a\u6700\u7ec8 sampler fraction\u3001noise-bias ledger \u548c restart-memory beta \u5b8c\u5168\u4e00\u81f4\u3002",
+        "\u540c\u4e00 run \u4e2d adaptive_reflow \u4e0e standalone noise_bias \u90fd\u8bf7\u6c42 executable sampler_controls \u65f6\u660e\u786e\u62d2\u7edd\uff1bdiagnostic-only noise_bias \u4e0d\u6539\u53d8 FinalRestartPolicy\u3002",
+        "cross-component handoff \u8bb0\u8f7d schema\u3001\u8d23\u4efb\u3001\u517c\u5bb9\u8def\u5f84\u3001\u56de\u6eda flag \u548c\u76ee\u6807\u6d4b\u8bd5\u3002"
+      ]
+    },
+    {
+      "id": "DTB-R4",
+      "title": "\u5b9e\u73b0\u591a\u5019\u9009\u5168\u5c40\u8d28\u91cf\u9884\u7b97\u4f46\u4fdd\u6301 bundle \u4e00\u81f4\u6027",
+      "priority": "P1",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-NC1",
+        "DTB-NC2",
+        "DTB-R2"
+      ],
+      "implementation": [
+        "\u5728 previous-round \u6a21\u5f0f\u7a33\u5b9a\u540e\uff0c\u589e\u52a0\u53ef\u9009\u7684 same-sample round archive\uff0c\u5019\u9009\u6309 source bundle/evidence dependency \u805a\u7c7b\u53bb\u91cd\uff0c\u800c\u975e\u6309\u6307\u6807\u6570\u91cf\u8ba1\u7968\u3002",
+        "\u5019\u9009\u9009\u62e9\u5fc5\u987b\u5148\u51b3\u5b9a\u4e00\u4e2a source bundle\uff0c\u518d\u51b3\u5b9a\u5404\u901a\u9053 gate\uff1b\u4e0d\u5f97\u628a\u4e0d\u540c round \u7684 coordinate\u3001charge \u4e0e pair state \u5206\u522b\u6311\u9009\u3002",
+        "\u8bbe\u7f6e\u6700\u5927 archive size\u3001\u6bcf source \u6700\u5927 influence\u3001\u6700\u5c0f fresh-noise mass\u3001\u6700\u5927\u8fde\u7eed reuse \u8f6e\u6570\u4e0e deterministic tie-break\uff1b\u4efb\u4f55\u672a\u9009\u62e9\u5019\u9009\u4fdd\u7559\u5ba1\u8ba1\u4f46\u4e0d\u5199\u5165 sampler\u3002"
+      ],
+      "acceptance": [
+        "\u590d\u5236\u540c\u4e00 source \u7684 metric/evidence \u884c\u4e0d\u4f1a\u589e\u52a0\u5176 influence\uff0c\u4e14 candidate \u603b\u91cf\u589e\u957f\u4e0d\u4f1a\u7a81\u7834 token/memory/runtime budget\u3002",
+        "best GNINA \u4e0e best QED \u6765\u81ea\u4e0d\u540c\u751f\u6210\u5bf9\u8c61\u65f6\uff0c\u4e0d\u4f1a\u5f62\u6210\u6df7\u5408 restart state\u3002",
+        "archive \u53ea\u5728\u5355 sample\u3001\u5355 run\u3001\u5355 checkpoint\u3001\u5355 trace lineage \u5185\u6709\u6548\u3002"
+      ]
+    },
+    {
+      "id": "DTB-R5",
+      "title": "\u6269\u5c55 per-round provenance \u4e0e condition trace \u8bc1\u636e",
+      "priority": "P0",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference_then_flowa-denovo-core_then_lean-contract-owner",
+      "depends_on": [
+        "DTB-R1",
+        "DTB-R2"
+      ],
+      "implementation": [
+        "\u5c06 DynamicRestartTransferLedger \u5199\u5165 reinference_round_plan\u3001topology ledger \u548c condition trace\uff1asource bundle id/round, selected/rejected candidates, each factor, raw vs bounded fraction, alpha/beta, fresh-noise floor, calibration artifact hash, feedback mode, blockers and acceptance reason\u3002\u6bcf\u6761 noise_bias input row \u5fc5\u987b\u5e26 producer\u3001diagnostic/legacy mode\u3001\u662f\u5426\u88ab policy \u91c7\u7528\u548c\u6700\u7ec8 writer id\u3002",
+        "\u5347\u7ea7\u6216\u65b0\u589e versioned trace schema\uff0c\u4fdd\u7559 flowa_iterative_ode_condition_trace_schema_v2 \u7684\u8bfb\u53d6\u517c\u5bb9\uff1b\u4e0d\u5f97\u91cd\u5199\u5386\u53f2 artifact\u3002",
+        "\u5411 Lean architecture-contract owner \u63d0\u51fa\u6700\u5c0f\u65b0\u589e\u547d\u9898\uff1are-inference records transfer-weight provenance\u3001requires atomic previous-generated-object bundle\u3001dynamic bias remains controlled ODE external conditioning\u3002"
+      ],
+      "acceptance": [
+        "\u6bcf\u4e2a nonzero beta \u53ef\u7531\u5355\u4e2a ledger row \u72ec\u7acb\u590d\u7b97\uff0c\u4e14 row \u4e2d source round \u548c final sampler diagnostics \u4e00\u81f4\u3002",
+        "trace \u6070\u6709\u4e00\u4e2a final_policy_writer=adaptive_reflow\uff1blegacy-only run \u660e\u786e\u4e3a legacy writer\uff0c\u7981\u6b62\u4e24\u4e2a executable writer \u5e76\u5b58\u3002",
+        "trace \u7f3a\u5b57\u6bb5\u3001hash mismatch\u3001\u975e\u6709\u9650\u503c\u6216 condition unchanged \u65f6\uff0c\u673a\u5236\u62d2\u7edd runtime write\u3002",
+        "Lean \u53d8\u66f4\u4fdd\u6301\u4e3a\u67b6\u6784/\u6765\u6e90\u5951\u7ea6\uff0c\u4e0d\u58f0\u79f0\u7ecf\u9a8c\u836f\u6548\u6216\u52a8\u6001\u6743\u91cd\u6027\u80fd\u3002"
+      ]
+    },
+    {
+      "id": "DTB-R6",
+      "title": "\u8865\u9f50 focused contract \u548c\u6027\u8d28\u6d4b\u8bd5",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-R2",
+        "DTB-R3",
+        "DTB-R5"
+      ],
+      "implementation": [
+        "\u589e\u52a0 unit/property tests\uff1a\u65e0\u6548 range\u3001NaN\u3001schema drift\u3001\u9519\u8bef round/trace\u3001\u672a detach tensor\u3001source state shape mismatch\u3001proxy misuse\u3001missing calibration\u3001metric uncertainty increase\u3001ambiguity increase\u3001source revocation\u3001duplicate source \u548c cap/floor conflicts\u3002",
+        "\u589e\u52a0 end-to-end two/three-round torch contract\uff1adisabled parity\uff1b\u96f6 gate \u4e0d\u4f20\u9012\uff1b\u6709\u6548\u9ad8\u8d28\u91cf evidence \u4ec5\u5728 cap \u5185\u4f20\u9012\uff1b\u6076\u5316 evidence \u4e3b\u52a8\u964d\u6743\uff1bfreeze \u4ecd\u53ea\u9501 declared write channels\u3002",
+        "\u7ef4\u62a4 noise_bias calculation/diagnostic ledger \u4e0e adaptive_reflow final-policy diagnostics \u7684\u8f93\u5165\u91c7\u7528\u5173\u7cfb\uff1b\u8986\u76d6 standalone legacy\u3001diagnostic-only coexistence\u3001dual executable writer rejection\u3001\u91cd\u590d\u7f29\u653e\u548c stale writer replay\u3002"
+      ],
+      "files": [
+        "tests/test_adaptive_reflow_orchestration_contract.py",
+        "tests/test_adaptive_reflow_restart_memory_migration.py",
+        "tests/test_adaptive_reflow_condition_sensitivity_gate.py",
+        "tests/test_noise_bias_runtime_boundary.py",
+        "tests/model_core/test_denovo_v3_torch_contract.py"
+      ],
+      "acceptance": [
+        "\u6240\u6709\u9519\u8bef\u8f93\u5165 fail closed\uff0c\u4e14\u4e0d\u751f\u6210 partial sampler control write\u3002",
+        "disabled profile \u7684\u73b0\u6709 snapshots/diagnostics \u4e0d\u53d8\u3002",
+        "\u65b0\u6d4b\u8bd5\u4e0d\u8bfb\u53d6\u5171\u4eab\u6570\u636e\u96c6\u3001native ligand\u3001ground truth \u6216 GPU\u3002"
+      ],
+      "suggested_commands": [
+        "source tools/pocket311_env.sh && export PYTHONPATH=\"$(pwd)\" && POCKET_TORCH_DEVICE=cpu python -m pytest tests/test_adaptive_reflow_orchestration_contract.py tests/test_adaptive_reflow_restart_memory_migration.py tests/test_adaptive_reflow_condition_sensitivity_gate.py tests/test_noise_bias_runtime_boundary.py",
+        "source tools/pocket311_env.sh && export PYTHONPATH=\"$(pwd)\" && ruff check pocket_modules/mechanisms/inference/adaptive_reflow pocket_modules/mechanisms/inference/noise_bias"
+      ],
+      "completion_evidence": [
+        "tests/test_adaptive_reflow_typed_bundle_contract.py"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-R7",
+      "title": "\u5efa\u7acb\u51bb\u7ed3\u6821\u51c6\u4e0e round-to-round paired \u8bc4\u6d4b\u534f\u8bae",
+      "priority": "P1",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference_then_evaluation-services",
+      "depends_on": [
+        "DTB-R5",
+        "DTB-R6",
+        "DTB-NA1"
+      ],
+      "implementation": [
+        "\u5b9a\u4e49 calibration dataset/time split\u3001per-metric/per-channel bucket\u3001\u6700\u5c0f\u6837\u672c\u91cf\u3001Wilson/Beta lower bound\u3001stability perturbation protocol \u548c calibration artifact manifest\uff1b\u8fd0\u884c\u65f6\u53ea\u80fd\u8bfb\u53d6\u5df2\u51bb\u7ed3 artifact\u3002",
+        "\u9884\u6ce8\u518c paired comparison\uff1adisabled\u3001\u5f53\u524d fixed/scheduled control\u3001dynamic uncalibrated diagnostic\u3001dynamic calibrated gate\u3001linear fresh-noise budget\u3001cosine without restart\u3001cosine with guarded restart\uff1b\u540c checkpoint\u3001target\u3001seed\u3001round count\u3001budget\u3001evaluator version \u548c materialization route\u3002",
+        "\u4e3b\u8981\u5b89\u5168\u6307\u6807\u4e3a materialization/geometry regression\u3001\u9519\u8bef freeze \u6216 stale-state reuse\u3001round-to-round oscillation\u3001fresh-noise collapse\u3001condition sensitivity\u3001fixed-envelope tail-budget violation/unclassified complement \u548c\u6bcf\u8f6e\u6210\u672c\uff1bGNINA/QED/ADMET \u4ec5\u5728\u5176 evaluator provenance \u5b8c\u6574\u65f6\u62a5\u544a\u3002"
+      ],
+      "acceptance": [
+        "\u6bcf\u4e2a\u5b9e\u9a8c\u8bb0\u5f55 GPU provenance\u3001checkpoint hash\u3001data/split manifest\u3001config hash\u3001source/evaluator version\u3001round trace \u548c\u5b8c\u6574\u5931\u8d25\u5206\u6bcd\u3002",
+        "\u6ca1\u6709 fresh target-disjoint paired evidence \u65f6\uff0c\u4e0d\u5141\u8bb8\u58f0\u660e\u52a8\u6001 bias \u6539\u5584\u4efb\u4f55\u6700\u7ec8\u836f\u7269\u8bbe\u8ba1\u6307\u6807\u3002",
+        "\u5fc5\u987b\u5206\u522b\u62a5\u544a\u6bcf\u79cd schedule \u7684 cycle/restart \u6b21\u6570\u3001tail-budget diagnostics\u3001noise-capacity trajectory\u3001\u5931\u8d25\u89e6\u53d1\u548c\u6709\u9650\u524d\u7f00\u8fb9\u754c\uff1b\u4e0d\u5f97\u5c06\u8f83\u597d\u5e73\u5747\u5206\u6570\u89e3\u91ca\u4e3a\u975e\u7d27\u9009\u62e9\u5b9a\u7406\u3002",
+        "\u82e5\u52a8\u6001\u7b56\u7565\u6076\u5316\u9884\u6ce8\u518c\u5b89\u5168\u6307\u6807\u6216\u7f6e\u4fe1\u533a\u95f4\u4e0d\u652f\u6301\u6536\u76ca\uff0ccanonical route \u4fdd\u6301 disabled \u5e76\u5f52\u6863\u8bca\u65ad\u3002"
+      ]
+    },
+    {
+      "id": "DTB-R8",
+      "title": "\u53d7\u63a7\u63a8\u5e7f\u3001\u56de\u6eda\u548c claim gate",
+      "priority": "P1",
+      "status": "pending",
+      "owner": "flowa-denovo-core_integrator",
+      "depends_on": [
+        "DTB-R7"
+      ],
+      "implementation": [
+        "\u4ec5\u5728\u6240\u6709 contract\u3001calibration \u548c paired evidence \u901a\u8fc7\u540e\uff0c\u5c06 feature \u653e\u5165\u72ec\u7acb\u663e\u5f0f config\uff1b\u9ed8\u8ba4 raw generation \u548c\u73b0\u6709 canonical profile \u7ee7\u7eed\u5173\u95ed\u3002",
+        "\u4e3a\u6bcf\u6b21\u8fd0\u884c\u8bb0\u5f55 policy version/hash\uff0c\u5e76\u63d0\u4f9b\u5355\u4e00 disabled flag \u4f5c\u4e3a\u65e0\u72b6\u6001\u56de\u6eda\uff1b\u4e0d\u5f97\u4fee\u6539 checkpoint \u6216\u8fc1\u79fb\u5386\u53f2 artifacts\u3002",
+        "\u5c06 claim release \u4e0e raw generation\u3001adaptive reflow\u3001postprocess-assisted \u4e09\u5c42\u8bc1\u636e\u5206\u5f00\uff0c\u9075\u5faa\u73b0\u6709 layered metric panel protocol\u3002"
+      ],
+      "acceptance": [
+        "promotion report \u540c\u65f6\u5305\u542b\u6536\u76ca\u3001\u65e0\u6548\u6837\u672c\u3001\u6210\u672c\u3001\u5931\u8d25\u6a21\u5f0f\u3001\u6821\u51c6\u6f02\u79fb\u4e0e disabled baseline\u3002",
+        "\u65e0\u6cd5\u6ee1\u8db3 gate \u65f6\u56de\u6eda\u5230 disabled\uff0c\u4e0d\u628a diagnostic proxy \u6216\u5c40\u90e8 case \u5199\u6210\u6027\u80fd\u7ed3\u8bba\u3002",
+        "\u6240\u6709\u914d\u7f6e\u3001artifact \u548c GPU provenance \u6ee1\u8db3\u5f53\u524d\u7814\u7a76\u5de5\u4f5c\u6d41\u3002"
+      ]
+    },
+    {
+      "id": "DTB-L1",
+      "title": "\u628a phase memory\u3001horizon coverage \u4e0e\u5206\u652f\u4e0d\u786e\u5b9a\u6027\u7eb3\u5165 policy",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-R1",
+        "DTB-NC2"
+      ],
+      "implementation": [
+        "\u65b0\u589e versioned PhaseState \u5e76\u5c06 outer_cycle_id\u3001round_in_cycle\u3001cosine phase\u3001previous trigger\u3001source-selector procedure\u3001seed lineage\u3001operation_order_version \u548c remaining horizon \u56fa\u5316\u5230\u6bcf\u8f6e ledger\uff1b\u4e0d\u5f97\u8ba9 controller \u53ea\u51ed endpoint/state tensor \u91cd\u5efa phase\u3002",
+        "\u5bf9 H=1\u30012\u30013 \u7684 controlled continuation trace \u505a\u6700\u5c0f\u8bb0\u5fc6\u5ba1\u8ba1\uff1a\u82e5\u540c\u4e00 endpoint \u5728\u4e0d\u540c phase \u4e0b\u672a\u6765\u6709\u6548 policy \u4e0d\u540c\uff0c\u5219 endpoint-only cache \u4e0d\u53ef\u590d\u7528\uff0c\u5fc5\u987b\u4fdd\u7559 phase state \u6216\u62d2\u7edd archive transfer\u3002",
+        "\u5b9e\u73b0 ambiguity band\uff1adominance gap \u672a\u4e25\u683c\u8d8a\u8fc7 calibrated uncertainty \u65f6\uff0c\u4e0d\u9009\u5355\u4e00 winner\uff1b\u4fdd\u7559\u65e0\u6807\u7b7e\u5019\u9009\u96c6\u5408\u4f9b\u5ba1\u8ba1\u5e76\u4ee4\u6b63\u5411 memory \u4e3a\u96f6/\u53d7\u4fdd\u62a4 fresh-noise\u3002strict score margin \u4e0e\u5b8c\u6574 germ \u4e0d\u80fd\u4f5c\u4e3a phase-bias \u7684\u66ff\u4ee3\u8bc1\u660e\u3002"
+      ],
+      "acceptance": [
+        "\u76f8\u540c endpoint\u3001\u4e0d\u540c phase \u7684 fixture \u82e5\u4ea7\u751f\u4e0d\u540c\u4e0b\u4e00\u8f6e controls\uff0ctrace \u53ef\u533a\u5206\u4e14\u6240\u6709 state cache key \u5305\u542b phase digest\u3002",
+        "H=1 calibration artifact \u4e0d\u80fd\u88ab H>1 policy \u8bfb\u53d6\uff0c\u9664\u975e\u663e\u5f0f horizon coverage \u8bc1\u660e\u5b58\u5728\u3002",
+        "\u4e34\u754c score-gap\u3001selector disagreement\u3001\u672a\u77e5 phase \u6216\u65e0 horizon coverage \u5747 fail closed\uff0c\u4e0d\u9690\u5f0f\u4f9d\u8d56 tie-break \u987a\u5e8f\u3002"
+      ],
+      "completion_evidence": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/phase_state.py"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-L2",
+      "title": "\u9501\u5b9a restart\u3001condition \u4e0e freeze \u7684\u975e\u4ea4\u6362\u64cd\u4f5c\u8bed\u4e49",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
+      "depends_on": [
+        "DTB-R1",
+        "DTB-R3"
+      ],
+      "implementation": [
+        "\u53d1\u5e03 OperationCompositionContract\uff0c\u5b9a\u4e49\u552f\u4e00\u9ed8\u8ba4\u987a\u5e8f\uff1avalidate -> select -> restart distribution -> condition delta -> declared freeze -> native ODE solve -> endpoint observation\uff0c\u5e76\u5728 RoundTrace \u5199\u5165 operation_order_version \u4e0e\u6bcf\u4e00\u6b65 input/output digest\u3002",
+        "\u4e3a\u53ef\u80fd\u91cd\u6392\u5e8f\u7684 adapter \u5b9a\u4e49 order-reversal paired test \u548c bounded commutator-residual diagnostic\u3002\u4e0d\u80fd\u8bc1\u660e\u4e92\u6362\u7b49\u4ef7\u65f6\uff0c\u7981\u6b62\u628a\u4e24\u4e2a controller \u7684 per-channel beta\u3001dwell \u6216\u603b noise mass \u89c6\u4e3a\u53ef\u6bd4\u8f83\u7684\u540c\u4e00 policy\u3002",
+        "\u5c06 condition update\u3001restart injection \u548c freeze mask \u7684\u65f6\u95f4\u8fb9\u754c\u6620\u5c04\u5230 adapter \u7684\u539f\u751f sampling events\uff1b\u672a\u80fd\u5b9a\u4f4d\u8fb9\u754c\u7684\u7b2c\u4e09\u65b9\u6a21\u578b\u4e0d\u5f97\u63a5\u5165\u52a8\u6001\u8def\u5f84\u3002"
+      ],
+      "acceptance": [
+        "\u9ed8\u8ba4 FlowA route \u7684 operation order \u5728 replay \u4e2d\u9010\u9879\u76f8\u540c\uff1b\u672a\u77e5\u6216\u7f3a\u5931 order version \u4e0d\u80fd runtime write\u3002",
+        "\u81f3\u5c11\u4e00\u4e2a\u975e\u4ea4\u6362 synthetic fixture \u8bc1\u660e AB \u4e0e BA \u88ab trace \u533a\u5206\uff1b\u5728 commuting fixture \u4e0a diagnostic \u4e3a\u96f6\u800c\u4e0d\u88ab\u8bef\u5224\u3002",
+        "adapter parity \u548c dynamic comparison \u90fd\u7ed1\u5b9a\u76f8\u540c composition contract hash\u3002"
+      ],
+      "completion_evidence": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/operation_composition.py"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-L3",
+      "title": "\u5b9e\u73b0\u5206\u5c42\u5019\u9009\u4e0e\u4e0d\u786e\u5b9a\u5ea6\u6bd4\u526a\u679d\u95e8",
+      "priority": "P1",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-NC1",
+        "DTB-R4",
+        "DTB-L1"
+      ],
+      "implementation": [
+        "\u5c06 endpoint \u5148\u6309\u53ef\u4f20\u9012 state class \u5206\u5c42\uff1a\u8fde\u7eed\u51e0\u4f55/\u53c2\u8003\u7cfb\u3001\u539f\u5b50\u4e0e\u7535\u8377 support\u3001pair/topology support\u3001materialization status\u3001condition lineage\u3002\u4e0d\u540c strata \u7684 state \u4e0d\u53ef\u6df7\u5408\uff0c\u4e5f\u4e0d\u5f97\u4ee5\u4e00\u4e2a\u5168\u5c40 scalar score \u5f3a\u884c\u9009\u62e9\u3002",
+        "\u4e3a\u540c\u4e00 stratum \u5185\u7684\u5019\u9009\u8ba1\u7b97 dimensionless dominance ratio=score_gap/calibrated_error\uff1b\u4ec5 ratio \u8d85\u8fc7\u9884\u6ce8\u518c\u9608\u503c\u65f6\u624d prune\u3002\u76f8\u90bb\u6216\u5bf9\u79f0\u5206\u652f\u4fdd\u7559 canonical unordered weights \u4e0e provenance\uff0c\u7981\u6b62\u7531\u6570\u7ec4\u4f4d\u7f6e\u5236\u9020 first branch\u3002",
+        "\u5c06\u5206\u652f\u6570\u3001gap\u3001uncertainty\u3001prune/reject \u539f\u56e0\u5199\u5165 envelope/tail ledger\uff1bbranch growth \u548c\u672a\u5206\u914d branch \u90fd\u8ba1\u5165 complement mass\u3002"
+      ],
+      "acceptance": [
+        "\u4e0d\u540c state class \u7684 best coordinate/best topology \u4e0d\u80fd\u751f\u6210 Frankenstein restart bundle\u3002",
+        "gap \u7b49\u4e8e\u6216\u5c0f\u4e8e calibrated error \u65f6\u4e0d\u53d1\u751f deterministic branch prune\uff1bbranch swap \u4e0d\u6539\u53d8 unordered audit result\u3002",
+        "branch-count\u3001stratum \u548c prune gate \u53ef\u7531\u79bb\u7ebf ledger \u91cd\u653e\u3002"
+      ]
+    },
+    {
+      "id": "DTB-L4",
+      "title": "\u5c06\u7d2f\u8ba1 fresh-noise mass \u4e0e\u8c31\u6b8b\u5dee\u4ec5\u4f5c\u4e3a\u8bca\u65ad\u8d26\u672c",
+      "priority": "P1",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-NA1",
+        "DTB-R5"
+      ],
+      "implementation": [
+        "\u5728\u6bcf\u4e2a cycle \u8bb0\u5f55\u6a21\u578b\u65e0\u5173\u7684 fresh-noise capacity\u3001\u5df2\u6821\u51c6\u5b9e\u9645 restart dispersion\u3001\u5c3e\u90e8\u7d2f\u8ba1\u91cf\u548c per-channel write mass\uff1b\u660e\u786e physical-noise proxy\u3001RMS-preserving mixing coefficient \u4e0e exact spectral variance \u4e09\u8005\u4e0d\u662f\u540c\u4e00\u91cf\u3002",
+        "\u9488\u5bf9 constant/linear/cosine/guarded-restart \u8f93\u51fa finite-prefix cumulative-mass curve\u3001\u8c31\u6b8b\u5dee band proxy \u548c tail status\u3002\u628a\u6b63\u800c\u53ef\u548c schedule \u53ef\u80fd\u505c\u6ede\u89c6\u4e3a adversarial test case\uff0c\u800c\u975e\u628a\u65e0\u754c\u7d2f\u8ba1\u8d28\u91cf\u5199\u6210\u4e00\u822c\u6a21\u578b\u6536\u655b\u8bc1\u660e\u3002",
+        "\u53ea\u6709\u5728 adapter \u7ed9\u51fa\u76f8\u5e94\u7ebf\u6027\u9ad8\u65af\u8bc6\u522b\u548c\u53ef\u9a8c\u8bc1\u8c31\u5bf9\u8c61\u65f6\u624d\u542f\u7528 spectral-residual route\uff1b\u5176\u4ed6\u6a21\u578b\u4ec5\u4fdd\u7559 generic noise ledger\u3002"
+      ],
+      "acceptance": [
+        "\u4efb\u4f55\u62a5\u544a\u90fd\u4e0d\u4f1a\u5c06 cumulative fresh-noise capacity \u6807\u4e3a theorem-certified selection \u6216 physical variance\uff0c\u9664\u975e\u72ec\u7acb\u6a21\u578b\u7279\u5f02\u8bc1\u660e\u5b58\u5728\u3002",
+        "\u53ef\u548c/\u975e\u53ef\u548c synthetic schedule\u3001L=1\u3001warm restart \u548c gate=0 \u5206\u652f\u5747\u6709 deterministic diagnostic tests\u3002",
+        "spectral proxy \u4e0d\u5f71\u54cd beta\u3001candidate pruning \u6216 claim gate\uff0c\u9664\u975e\u672a\u6765\u72ec\u7acb\u4efb\u52a1\u7ed9\u51fa calibrated authority contract\u3002"
+      ]
+    },
+    {
+      "id": "DTB-S1",
+      "title": "\u6536\u655b adaptive_reflow \u4e0e noise_bias \u7684\u5199\u5165\u6240\u6709\u6743",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference_then_mechanism-runtime_then_flowa-denovo-core",
+      "depends_on": [
+        "DTB-R1"
+      ],
+      "implementation": [
+        "\u53d1\u5e03 versioned RestartPolicyAuthorityContract\uff1anoise_bias \u91cd\u6784\u4e3a\u65e0\u72b6\u6001 calculation/diagnostic provider\uff0cadaptive_reflow \u4e3a\u552f\u4e00 executable policy writer\uff0cflowa_core runtime \u53ea\u6d88\u8d39 immutable FinalRestartPolicy\u3002",
+        "\u4e3a\u73b0\u6709 noise_bias standalone mechanism \u589e\u52a0\u663e\u5f0f\u6a21\u5f0f\uff1adiagnostic_only \u6216 legacy_standalone\u3002\u4e0e adaptive_reflow \u540c run \u65f6\u524d\u8005\u53ef\u5171\u5b58\u4f46\u65e0 runtime write\uff0c\u540e\u8005\u5fc5\u987b\u7531 feature flag \u4e0e adaptive_reflow \u4e92\u65a5\uff1b\u672a\u58f0\u660e\u6a21\u5f0f\u4e00\u5f8b\u62d2\u7edd\u3002",
+        "\u7edf\u4e00 restart_bias namespace\uff1acandidate noise-bias ledger\u3001adaptive transfer decision\u3001FinalRestartPolicy \u548c applied runtime controls \u5206\u5f00\u5b58\u50a8\u3002\u5220\u9664\u4f9d\u9760 mapping merge \u987a\u5e8f\u3001last writer wins \u6216 max(current,dynamic) \u7684\u9690\u5f0f\u4ef2\u88c1\u3002",
+        "\u5728 runtime \u8fb9\u754c\u9a8c\u8bc1 writer id\u3001policy hash\u3001round/sample/checkpoint lineage \u548c policy-to-applied equality\uff1b\u4efb\u4f55\u7b2c\u4e8c\u4e2a executable writer\u3001\u91cd\u590d application\u3001\u65e7 schema \u4f2a\u88c5 final policy \u6216 diagnostic row \u8bf7\u6c42 sampler_controls \u5747 fail closed\u3002",
+        "\u4fdd\u7559 legacy-only disabled-compatible route\uff0c\u5e76\u63d0\u4f9b migration adapter/read compatibility\uff1b\u4e0d\u5f97\u91cd\u5199\u5386\u53f2 trace \u6216\u5c06\u5386\u53f2 noise_bias ledger \u8bef\u6807\u4e3a adaptive policy\u3002"
+      ],
+      "files": [
+        "pocket_modules/mechanisms/inference/noise_bias/mechanism_adapter.py",
+        "pocket_modules/mechanisms/inference/noise_bias/restart_bias.py",
+        "pocket_modules/mechanisms/inference/adaptive_reflow/mechanism_adapter.py",
+        "pocket_modules/mechanisms/inference/adaptive_reflow/reinference_plan.py",
+        "pocket_modules/flowa_core/transport/adaptive_reflow_runtime.py",
+        "docs/ITERATIVE_ODE_CONDITION_TRACE_SCHEMA.json",
+        "tests/test_noise_bias_runtime_boundary.py",
+        "tests/test_adaptive_reflow_orchestration_contract.py"
+      ],
+      "acceptance": [
+        "\u540c run \u7684 dual executable writer fixture \u5728\u91c7\u6837\u524d\u5931\u8d25\uff0c\u5e76\u62a5\u544a\u4e24\u4e2a mechanism id\u3001round \u4e0e\u51b2\u7a81\u5b57\u6bb5\uff1b\u4e0d\u4f1a\u7559\u4e0b partial sampler write\u3002",
+        "diagnostic-only noise_bias \u53ef\u4e0e adaptive_reflow \u5171\u5b58\uff0c\u4e14 FinalRestartPolicy \u7684 byte/hash \u4e0e\u672a\u52a0\u8f7d\u8be5 diagnostic \u65f6\u76f8\u540c\u3002",
+        "legacy_standalone noise_bias \u4e0e disabled adaptive_reflow \u4fdd\u6301\u73b0\u6709 single-writer \u884c\u4e3a\uff1b\u6fc0\u6d3b adaptive_reflow \u65f6\u88ab\u663e\u5f0f\u62d2\u7edd\u800c\u975e\u9759\u9ed8\u4f18\u5148\u3002",
+        "\u6bcf\u4e2a applied beta\u3001condition delta \u548c freeze mask \u90fd\u80fd\u8ffd\u6eaf\u5230\u552f\u4e00 final writer\u3001policy hash \u548c\u91c7\u7528\u7684 input ledger ids\u3002"
+      ],
+      "completion_evidence": [
+        "pocket_modules/mechanisms/inference/adaptive_reflow/policy_authority.py",
+        "pocket_modules/mechanisms/inference/adaptive_reflow/policy_orchestrator.py"
+      ],
+      "completed_at": "2026-08-25T16:00:00+08:00"
+    },
+    {
+      "id": "DTB-G1",
+      "title": "\u5efa\u7acb\u516c\u5171 Flow Matching ODE re-inference engine \u4e0e adapter \u5408\u540c",
+      "priority": "P0",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
+      "depends_on": [
+        "DTB-R1",
+        "DTB-R2",
+        "DTB-L1",
+        "DTB-L2",
+        "DTB-S1"
+      ],
+      "implementation": [
+        "\u5728 adaptive_reflow \u4e0b\u5b9a\u4e49\u6700\u5c0f Python Protocol/schema\uff1aFlowMatchingODEAdapter\u3001StateBundle\u3001ODEConditionDelta\u3001RestartPolicy\u3001PhaseState\u3001ODEIntegratorTrace \u548c AdapterCapabilities\u3002\u516c\u5171 engine \u53ea\u7f16\u6392 round loop\u3001policy \u4e0e provenance\uff0c\u6240\u6709 native tensors\u3001model invocation \u548c integrator \u7559\u7ed9 adapter\u3002",
+        "\u63d0\u4f9b FlowA adapter \u4f5c\u4e3a reference implementation\uff1b\u4fdd\u6301 disabled parity\uff0c\u4e14\u4e0d\u79fb\u52a8 model weights\u3001checkpoint format\u3001training loss\u3001cross-attention ownership \u6216 multirate clock semantics\u3002",
+        "\u80fd\u529b\u63e1\u624b\u5fc5\u987b\u5206\u522b\u58f0\u660e\uff1aODE integration surface\u3001prior/state export\u3001condition injection\u3001restart boundary\u3001continuous/discrete channels\u3001trajectory digest\u3001deterministic seed\u3001materialization\u3002\u4efb\u4f55\u7f3a\u5931\u80fd\u529b\u53ea\u5141\u8bb8 diagnostic registration\uff0c\u4e0d\u5141\u8bb8 dynamic re-inference\u3002",
+        "\u516c\u5171\u5b9e\u73b0\u53ca\u914d\u7f6e\u7559\u5728\u672c\u4ed3\u5e93\uff1b\u7b2c\u4e09\u65b9\u4ed3\u5e93\u56fa\u5b9a commit \u53ea\u8bfb\u3002\u7981\u6b62 monkey patch\u3001import-time mutation \u6216\u628a\u6a21\u578b\u79c1\u6709 tensor \u5047\u5b9a\u4e3a\u901a\u7528\u63a5\u53e3\u3002"
+      ],
+      "acceptance": [
+        "reference FlowA adapter \u7684 beta=0 single-round output/trace \u4e0e\u73b0\u6709 canonical path parity\uff0cfeature disabled \u65f6\u65e0\u884c\u4e3a\u6539\u53d8\u3002",
+        "\u9519\u8bef capability\u3001\u672a\u77e5 channel\u3001shape/frame/normalization mismatch\u3001\u975e detached endpoint\u3001condition delta \u65e0 effect \u6216 integrator trace \u7f3a\u5931\u5747 fail closed\u3002",
+        "public engine \u7684 tests \u4f7f\u7528 synthetic adapter \u8986\u76d6\u8fde\u7eed\u3001\u79bb\u6563\u3001mixed-channel \u548c unsupported capability\uff0c\u4e0d\u4f9d\u8d56 GPU \u6216\u5171\u4eab\u6570\u636e\u3002"
+      ]
+    },
+    {
+      "id": "DTB-G2",
+      "title": "\u5bf9 2025/2026 \u672c\u5730 Flow Matching \u5019\u9009\u6267\u884c\u6765\u6e90\u5ba1\u8ba1\u548c\u63d2\u4ef6\u9002\u914d",
+      "priority": "P1",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference_then_external-baseline-maintainers",
+      "depends_on": [
+        "DTB-G1",
+        "DTB-L2",
+        "DTB-R6"
+      ],
+      "implementation": [
+        "\u65b0\u589e\u53ea\u8bfb candidate registry\u3002\u6bcf\u9879\u56fa\u5b9a repository URL\u3001commit\u3001license\u3001paper identifier/date\u3001\u4efb\u52a1\u6761\u4ef6\u3001dataset/split\u3001\u539f\u751f metric protocol\u3001ODE/vector-field call site\u3001state/condition/restart boundary\u3001\u517c\u5bb9 channels\u3001\u53ef\u7528 checkpoint \u548c adapter status\u3002registry \u4e0d\u4ee5 SOTA \u6392\u540d\u4f5c admission \u4f9d\u636e\u3002",
+        "\u7b2c\u4e00\u9879\u4e3a\u672c\u5730 FlowMol3 commit 77cae22174b7792b0e25e9e0414038420736d841\uff1a\u901a\u8fc7\u5176 integrate/step \u7684 x/a/c/e mixed-state surface \u9a8c\u8bc1 generic adapter\uff1b\u6807\u6ce8\u5176\u65e0\u6761\u4ef6\u4efb\u52a1\u9650\u5236\u3002\u968f\u540e\u6309\u540c\u4e00\u5ba1\u8ba1\u6a21\u677f\u7b5b\u9009\u672c\u5730 2025/2026 \u53e3\u888b\u6761\u4ef6 Flow Matching \u9879\u76ee\uff0c\u672a\u53d1\u73b0 source \u6216\u4e0d\u5177 ODE boundary \u65f6\u8bb0 unsupported\u3002",
+        "\u6bcf\u4e2a\u5408\u683c\u6a21\u578b\u5728\u672c\u4ed3\u5e93\u589e\u52a0\u72ec\u7acb adapter\uff0c\u4e0d\u66f4\u6539\u7b2c\u4e09\u65b9\u6e90\u7801\u3002\u5148\u8dd1 beta=0 parity\u3001source detach\u3001positive-beta boundary\u3001operation-order\u3001seed/trace \u548c materialization tests\uff0c\u518d\u5728\u5404\u81ea\u539f\u751f\u534f\u8bae\u4e0b\u505a target-disjoint paired disabled/fixed/dynamic evaluation\u3002",
+        "\u8de8\u6a21\u578b\u62a5\u544a\u5206\u5f00\u5217\u51fa\u6a21\u578b\u3001\u4efb\u52a1\u3001\u6570\u636e\u3001\u6761\u4ef6\u3001state/integrator family \u548c\u5931\u8d25\u5206\u6bcd\uff1b\u4e0d\u5f97\u628a\u65e0\u6761\u4ef6 3D generation \u7684\u6210\u529f\u5916\u63a8\u4e3a\u53e3\u888b\u6761\u4ef6\u836f\u7269\u8bbe\u8ba1\u7684\u6cdb\u5316\u3002"
+      ],
+      "acceptance": [
+        "\u6bcf\u4e2a claimed compatible model \u90fd\u6709\u53ef\u590d\u73b0 commit\u3001code-level ODE evidence\u3001capability manifest \u4e0e parity report\uff1b\u5176\u4f59\u5019\u9009\u660e\u786e\u5217\u4e3a unsupported/blocked \u5e76\u7ed9\u51fa\u539f\u56e0\u3002",
+        "FlowMol3 \u53ea\u901a\u8fc7 public-interface mechanics gate \u540e\u624d\u53ef\u8fdb\u5165\u5b9e\u9a8c\uff0c\u4e0d\u4ea7\u751f pocket-conditioned efficacy claim\u3002",
+        "\u4efb\u4f55 universal/generalizable \u8868\u8ff0\u81f3\u5c11\u8981\u6c42\u4e00\u4e2a\u53e3\u888b\u6761\u4ef6\u6a21\u578b\u548c\u4e00\u4e2a\u4e0d\u540c state/integrator family \u7684 target-disjoint paired evidence\uff0c\u4e14\u6240\u6709 runs \u91c7\u7528\u76f8\u540c compute/round/evaluator budget\u3002"
+      ]
+    }
+  ],
+  "open_decisions_for_review": [
+    {
+      "id": "DTB-Q1",
+      "question": "\u7b2c\u4e00\u7248\u662f\u5426\u53ea\u5141\u8bb8 immediate previous round \u4f5c\u4e3a source\uff0c\u8fd8\u662f\u540c\u65f6\u5f15\u5165\u540c\u4e00 sample \u7684 best-so-far archive\uff1f",
+      "recommended_default": "\u53ea\u5141\u8bb8 immediate previous bundle\u3002\u5148\u9a8c\u8bc1\u52a8\u6001\u7f29\u653e\u672c\u8eab\uff1barchive \u4f1a\u5f15\u5165\u5019\u9009\u9009\u62e9\u3001\u5386\u53f2\u504f\u5dee\u548c bundle \u4e00\u81f4\u6027\u7684\u65b0\u53d8\u91cf\u3002",
+      "resolution": "immediate_previous_only",
+      "resolved_at": "2026-08-25T16:00:00+08:00",
+      "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
+    },
+    {
+      "id": "DTB-Q2",
+      "question": "calibration lower bound \u7684\u7b2c\u4e00\u7248\u6807\u7b7e\u5e94\u53ea\u91c7\u7528 external evaluator \u91cd\u590d\u4e00\u81f4\u6027\uff0c\u8fd8\u662f\u5141\u8bb8 generation-local proxy \u53c2\u4e0e\uff1f",
+      "recommended_default": "\u771f\u5b9e metric route \u53ea\u7528 evaluator provenance \u5b8c\u6574\u7684\u91cd\u590d\u4e00\u81f4\u6027\u3002proxy \u53ea\u53ef\u4f5c diagnostic factor\uff0c\u4e0d\u80fd\u89e3\u9664 gate \u6216\u4ea7\u751f claim-grade nonzero transfer\u3002",
+      "resolution": "real_metric_only",
+      "resolved_at": "2026-08-25T16:00:00+08:00",
+      "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
+    },
+    {
+      "id": "DTB-Q3",
+      "question": "\u52a8\u6001\u7b56\u7565\u5e94\u53ef\u5426\u964d\u4f4e scheduled cap \u4ee5\u4e0b\u7684 memory fraction\uff1f",
+      "recommended_default": "\u53ef\u4ee5\u3002scheduled \u503c\u6539\u4f5c cap\uff1b\u82e5 evidence \u4e0d\u8db3\u5e94\u56de\u5f52 fresh prior\uff0c\u800c\u4e0d\u662f\u4fdd\u7559\u56fa\u5b9a\u6b63\u5411 previous-result bias\u3002",
+      "resolution": "cap_reducible",
+      "resolved_at": "2026-08-25T16:00:00+08:00",
+      "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
+    },
+    {
+      "id": "DTB-Q4",
+      "question": "coordinate\u3001charge\u3001pair \u662f\u5426\u5141\u8bb8\u91c7\u7528\u4e0d\u540c beta\uff1f",
+      "recommended_default": "\u5141\u8bb8\u901a\u9053\u7ea7 beta\uff0c\u4f46\u5fc5\u987b\u4ece\u540c\u4e00 atomic source bundle \u8bfb\u53d6\uff0c\u4e14 coordinate/pair/charge \u5404\u6709\u72ec\u7acb\u7684\u8d28\u91cf gate \u548c\u5b8c\u6574 provenance\u3002",
+      "resolution": "channel_level_beta",
+      "resolved_at": "2026-08-25T16:00:00+08:00",
+      "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
+    },
+    {
+      "id": "DTB-Q5",
+      "question": "\u516c\u5171\u63a5\u53e3\u7684\u7b2c\u4e00\u671f\u662f\u5426\u53ea\u627f\u8bfa deterministic ODE sampler\uff0c\u8fd8\u662f\u540c\u65f6\u7eb3\u5165 stochastic/CTMC \u66f4\u65b0\uff1f",
+      "recommended_default": "\u7b2c\u4e00\u671f\u53ea\u627f\u8bfa adapter \u53ef\u5b9a\u4f4d\u7684\u8fde\u7eed ODE restart boundary\uff1bmixed discrete/CTMC \u6a21\u578b\u53ef\u6ce8\u518c\u5176\u79bb\u6563\u901a\u9053\uff0c\u4f46\u53ea\u6709\u5728 adapter \u80fd\u7ed9\u51fa\u72ec\u7acb\u539f\u751f\u91cd\u542f\u8bed\u4e49\u548c parity \u6d4b\u8bd5\u65f6\u624d\u542f\u7528\u52a8\u6001\u4f20\u9012\u3002",
+      "resolution": "deterministic_ode_first",
+      "resolved_at": "2026-08-25T16:00:00+08:00",
+      "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
+    },
+    {
+      "id": "DTB-Q6",
+      "question": "\u8de8\u6a21\u578b\u901a\u7528\u6027 claim \u7684\u6700\u4f4e\u8bc1\u636e\u7ec4\u5408\u662f\u4ec0\u4e48\uff1f",
+      "recommended_default": "\u5148\u4ee5 FlowA reference adapter \u52a0 FlowMol3 mechanics adapter \u9a8c\u8bc1\u63a5\u53e3\uff0c\u518d\u81f3\u5c11\u52a0\u5165\u4e00\u4e2a\u672c\u5730\u3001\u53ef\u5ba1\u8ba1\u7684\u53e3\u888b\u6761\u4ef6 Flow Matching \u6a21\u578b\uff0c\u5e76\u5728\u4e0d\u540c state/integrator family \u4e0a\u83b7\u5f97 target-disjoint paired evidence\uff1b\u5426\u5219\u53ea\u79f0\u5de5\u7a0b\u517c\u5bb9\u6027\uff0c\u4e0d\u79f0\u901a\u7528\u6548\u679c\u3002",
+      "resolution": "pocket_conditioned_plus_other_state_required",
+      "resolved_at": "2026-08-25T16:00:00+08:00",
+      "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
+    },
+    {
+      "id": "DTB-Q7",
+      "question": "\u662f\u5426\u4fdd\u7559 noise_bias \u7684 standalone legacy mechanism\uff1f",
+      "recommended_default": "\u4fdd\u7559\u4e00\u6bb5\u663e\u5f0f legacy_standalone \u517c\u5bb9\u671f\uff0c\u4f9b\u5386\u53f2\u5b9e\u9a8c\u53ef\u91cd\u653e\uff1b\u65b0\u516c\u5171 re-inference \u8def\u7ebf\u53ea\u80fd\u5c06 noise_bias \u4f5c\u4e3a diagnostic/calculation provider\u3002\u4e24\u8005\u540c run \u7edd\u4e0d\u5141\u8bb8\u540c\u65f6\u62e5\u6709 executable writer \u6743\u9650\u3002",
+      "resolution": "legacy_standalone_compatibility_window",
+      "resolved_at": "2026-08-25T16:00:00+08:00",
+      "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
+    }
+  ],
+  "verification_ladder": [
+    "JSON/schema and focused CPU unit tests",
+    "single-writer authority, diagnostic coexistence and legacy mutual-exclusion contract tests",
+    "FlowA reference-adapter disabled parity plus synthetic continuous/discrete/mixed adapter contract tests",
+    "two/three-round restart-memory, phase-state, operation-order and condition-trace contract tests",
+    "core-runtime handoff integration tests and Lean architecture-contract review",
+    "frozen offline calibration with provenance manifest",
+    "fixed-commit external-adapter parity and source-audit reports",
+    "target-disjoint paired round-to-round evaluation per admitted model",
+    "claim gate promotion or disabled rollback"
+  ],
+  "updated_at": "2026-08-25T17:00:00+08:00",
+  "implementation_progress": {
+    "phase": "phase_1_immediate_previous_only",
+    "completed_tasks": [
+      "DTB-L1",
+      "DTB-L2",
+      "DTB-NA1",
+      "DTB-NC1",
+      "DTB-NC2",
+      "DTB-R0",
+      "DTB-R1",
+      "DTB-R2",
+      "DTB-R6",
+      "DTB-S1"
+    ],
+    "remaining_tasks": [
+      "DTB-R3",
+      "DTB-R4",
+      "DTB-R5",
+      "DTB-R7",
+      "DTB-R8",
+      "DTB-L3",
+      "DTB-L4",
+      "DTB-G1",
+      "DTB-G2"
+    ],
+    "non_claim_boundary_enforced": true,
+    "tail_selection_certified_emitted": false,
+    "new_modules": [
+      "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory_types.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/envelope_manifest.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/channel_rule.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/cosine_schedule.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/phase_state.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/operation_composition.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/policy_authority.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/policy_orchestrator.py",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/CONTRACTS.md",
+      "pocket_modules/mechanisms/inference/adaptive_reflow/DESIGN_BOUNDARY.md"
+    ],
+    "new_tests": [
+      "tests/test_adaptive_reflow_typed_bundle_contract.py"
+    ],
+    "test_count": 33,
+    "ruff_status": "passing",
+    "torch_required": false,
+    "notes": "phase 1 implements the immediate-previous-only path; DTB-R3/R5 require handoff to flowa-denovo-core and Lean owners (out-of-component by design); DTB-R7/R8 require GPU evaluation runs (out of scope for code-only phase)."
+  }
+}
