@@ -1,0 +1,12 @@
+{
+  "expected": 1e-12,
+  "inputs": {
+    "cap": 1.0,
+    "delta_cap_down": 1.0,
+    "delta_cap_up": 1.0,
+    "dynamic": 1e-12,
+    "floor": 0.0,
+    "prev": 0.0
+  },
+  "name": "tiny_dynamic_zero_floor"
+}

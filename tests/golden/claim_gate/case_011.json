@@ -1,0 +1,39 @@
+{
+  "expected": {
+    "decision": "defer",
+    "evaluated_at_round": 8,
+    "evidence_summary": {
+      "deferred_reason": "claim gate promotion deferred pending R7 GPU data; structural evaluation returns 'defer' whenever any required condition is missing or has not been satisfied",
+      "evaluation_window_rounds": 0,
+      "gate_enabled": true,
+      "minimum_confidence_interval_coverage": 0.0,
+      "required_calibration_artifact_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "required_contracts_passing": [],
+      "required_paired_evidence_count": 0
+    },
+    "gate_conditions_failed": [],
+    "gate_conditions_passed": [
+      "calibration_artifact",
+      "confidence_interval_coverage",
+      "evaluation_window_rounds",
+      "paired_evidence_count"
+    ]
+  },
+  "inputs": {
+    "config": {
+      "evaluation_window_rounds": 0,
+      "gate_enabled": true,
+      "minimum_confidence_interval_coverage": 0.0,
+      "required_calibration_artifact_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "required_contracts_passing": [],
+      "required_paired_evidence_count": 0
+    },
+    "evaluated_at_round": 8,
+    "evidence": {
+      "calibration_artifact": {
+        "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
+  },
+  "name": "calibration_artifact_match"
+}

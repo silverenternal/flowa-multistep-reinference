@@ -1,0 +1,18 @@
+{
+  "_comment": "Initial perf budgets. Values are *not enforced yet* — check_budgets.py reads this file plus docs/benchmarks.json and only flags regressions once the runner has produced a baseline.",
+  "schema": "flowa.bench.budgets/v1",
+  "currency": "microseconds",
+  "regression_threshold_pct": 20,
+  "budgets": {
+    "bounded_merge_us_p95": 50,
+    "compute_channel_decision_us_p95": 200,
+    "evaluate_claim_gate_us_p95": 100,
+    "engine_round_loop_us_p95": 1000
+  },
+  "metric_sources": {
+    "bounded_merge_us_p95": "tests/perf/test_kernel_benchmarks.py::test_bounded_merge_kernel",
+    "compute_channel_decision_us_p95": "tests/perf/test_kernel_benchmarks.py::test_compute_channel_decision_kernel",
+    "evaluate_claim_gate_us_p95": "tests/perf/test_kernel_benchmarks.py::test_evaluate_claim_gate_kernel",
+    "engine_round_loop_us_p95": "tools/bench/runner.py (docs/benchmarks.json)"
+  }
+}

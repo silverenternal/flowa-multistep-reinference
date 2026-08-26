@@ -1,0 +1,12 @@
+{
+  "expected": 0.4,
+  "inputs": {
+    "cap": 1.0,
+    "delta_cap_down": 0.5,
+    "delta_cap_up": 0.5,
+    "dynamic": 0.3,
+    "floor": 0.4,
+    "prev": 0.4
+  },
+  "name": "floor_exact_match"
+}

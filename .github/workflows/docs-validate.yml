@@ -1,0 +1,56 @@
+name: docs-validate
+
+# Pre-merge gate for the three invariants that keep the docs and the
+# code from drifting apart:
+#
+#   1. ruff must be clean over adaptive_reflow/ and tests/
+#      (the per-file-ignores in pyproject.toml define what "clean"
+#      means for the quarantined legacy/ subpackage).
+#   2. tools/check_docs_against_code.py must exit 0 -- every concrete
+#      class / function / path / inline-symbol claim in the governance
+#      docs still resolves against the codebase.
+#   3. the full pytest suite must pass.
+#
+# The project has no [project] table in pyproject.toml and is imported
+# via PYTHONPATH=. rather than installed, so the install step only
+# needs the two tools themselves.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install uv
+          uv pip install --system ruff pytest
+
+      - name: Run ruff
+        run: |
+          ruff check adaptive_reflow/ tests/
+
+      - name: Run docs scanner
+        run: |
+          PYTHONPATH=. python tools/check_docs_against_code.py
+
+      - name: Run tests
+        run: |
+          PYTHONPATH=. python -m pytest tests/ -q

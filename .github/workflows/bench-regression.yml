@@ -1,0 +1,28 @@
+name: bench-regression
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install pytest hypothesis pytest-benchmark
+      - name: Run benchmarks
+        run: PYTHONPATH=. python -m pytest tests/perf/ --benchmark-only --benchmark-json=docs/benchmarks.json --no-header -q
+      - name: Check benchmark budgets
+        run: python tools/bench/check_budgets.py
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks-json
+          path: docs/benchmarks.json
+          if-no-files-found: error

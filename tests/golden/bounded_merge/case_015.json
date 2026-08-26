@@ -1,0 +1,12 @@
+{
+  "expected": 0.6,
+  "inputs": {
+    "cap": 1.0,
+    "delta_cap_down": 0.9,
+    "delta_cap_up": 0.1,
+    "dynamic": 0.9,
+    "floor": 0.0,
+    "prev": 0.5
+  },
+  "name": "asymmetric_up_tight"
+}

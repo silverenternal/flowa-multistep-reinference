@@ -1,0 +1,12 @@
+{
+  "expected": 1.0,
+  "inputs": {
+    "cap": 1.0,
+    "delta_cap_down": 0.5,
+    "delta_cap_up": 1.0,
+    "dynamic": 1.0,
+    "floor": 0.0,
+    "prev": 0.0
+  },
+  "name": "prev_zero_dyn_full"
+}

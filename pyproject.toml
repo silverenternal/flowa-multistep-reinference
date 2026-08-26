@@ -1,0 +1,158 @@
+[tool.pytest.ini_options]
+# Pytest configuration for adaptive_reflow. ``markers`` documents the
+# custom markers the suite relies on; ``addopts`` makes pytest fail on
+# unknown markers (``--strict-markers``) so a typo in a marker name is
+# caught at collection time rather than silently filtered.
+markers = [
+    "slow: slow tests (deselect with -m 'not slow')",
+    "benchmark: benchmark tests (run with --benchmark-only)",
+    "property: property-based tests",
+    "adversarial: adversarial-case tests",
+]
+addopts = [
+    "-ra",
+    "--strict-markers",
+]
+
+[tool.pytest-benchmark]
+# Default tuning for pytest-benchmark across the suite. These defaults
+# trade wall-clock for statistical confidence: ``min_rounds`` guarantees
+# we capture at least five rounds even when each round is fast, and
+# ``max_time`` bounds the total wall-clock budget so a CI run never
+# blows up. ``warmup`` runs ten pre-iterations that are excluded from
+# the reported statistics — this keeps the JIT / first-cache-warm-up
+# noise out of ``mean``/``median``.
+min_rounds = 5
+max_time = 5.0
+warmup = true
+warmup_iterations = 10
+sort = "mean"
+columns = ["min", "median", "mean", "max", "stddev", "rounds", "iterations"]
+show_relativ = true
+
+[tool.hypothesis]
+# Property-based test profile. ``max_examples=200`` gives broad coverage
+# of the typed-contracts core without making CI unmanageably slow;
+# ``deadline=5000`` ms accommodates the slower ``mypy --strict``-typed
+# universal/molecular code paths (round-trip shrink of
+# ``RestartMixer`` sketches can take >1s on first compile); the
+# ``too_slow`` health check is suppressed because the universal
+# ``RoundResultBundle`` round-trip can legitimately exceed Hypothesis's
+# default 1.5 example/s throughput on Windows where file IO is slower.
+max_examples = 200
+deadline = 5000
+suppress_health_check = ["too_slow"]
+
+[tool.ruff]
+# Govern the flowa-multistep-reinference package layout. See
+# ARCHITECTURE.md for the dependency-direction rules and
+# FILE_MAPPING.md for the file inventory.
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+    ".venv",
+    "docs",
+    "ARCHITECTURE*.md",
+    "FILE_MAPPING.md",
+    "SPLIT_NOTES.md",
+    "CONTRACTS.md",
+    "DESIGN_BOUNDARY.md",
+    "STATUS.md",
+    "README.md",
+    "todo.json",
+]
+
+[tool.ruff.lint]
+# Project-specific lint selection. The default rule set is too noisy for
+# a typed-contracts framework; we keep the rules that catch real defects
+# and silence the ones that don't.
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (undefined names, unused imports)
+    "I",   # isort (import order)
+    "B",   # flake8-bugbear (likely bugs)
+    "UP",  # pyupgrade (modern syntax)
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "F401", # unused-import in __init__.py re-exports (handled via per-file-ignores)
+    "E501", # line too long (handled by formatter)
+    "B008", # function-call-in-default-argument (used intentionally for callable defaults)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# `__init__.py` re-exports are intentional public API surface; ruff
+# sees them as "unused" but they are required.
+"**/__init__.py" = ["F401", "E402"]
+# Tests frequently import from adaptive_reflow.* without using every
+# symbol; that's normal in test fixtures. E402 is allowed because
+# test files sometimes split imports by section (e.g. ``# Imports``
+# vs ``# Fixtures``) and may place a lazy import between fixtures.
+"tests/**/*.py" = ["F401", "F811", "F821", "B008", "E402"]
+# The legacy subpackage is quarantined; new lint rules are not enforced
+# there until each file is modernized.
+"adaptive_reflow/legacy/**/*.py" = ["F", "B", "SIM", "UP", "TRY", "BLE"]
+# The contracts subpackage re-exports its public API from each split
+# file; forward references between sibling modules (PhaseState in
+# bundle.py, FinalRestartPolicy in hashes.py, etc.) are intentional
+# and rely on `from __future__ import annotations`. ruff 0.16's F821
+# reports these as false positives. E402 is allowed for the lazy
+# ``__getattr__`` re-export shim of the molecule-aware atomic source
+# bundle (``RoundResultBundle``) which breaks the import cycle between
+# ``contracts.bundle`` and ``molecular.bundle``.
+"adaptive_reflow/contracts/**/*.py" = ["F401", "F821", "E402"]
+# The universal subpackage is the model-family-agnostic core; it uses
+# ``__getattr__`` lazy re-exports and forward references (e.g.
+# ``AdapterCapabilities`` inside ``StateBundle``) that ruff cannot
+# resolve at parse time. F401 covers the intentional re-exports in
+# ``__init__.py``; F821 covers the forward references; E402 covers the
+# lazy ``__getattr__`` re-export shims.
+"adaptive_reflow/universal/**/*.py" = ["F401", "F821", "E402"]
+# The molecular subpackage is the molecule concrete layer. It uses
+# lazy ``__getattr__`` re-exports and forward references between
+# sibling modules (``molecular.bundle`` ↔ ``molecular.channels``). F401
+# covers the intentional re-exports; F821 covers the forward references;
+# E402 covers the lazy import shims that break the
+# ``molecular.*`` ↔ ``contracts.*`` import cycle. E402 also covers
+# the lazy ``_hash_trace_digest`` and ``_hash_artifact_func`` helpers
+# that defer the ``contracts.hashes`` import.
+"adaptive_reflow/molecular/**/*.py" = ["F401", "F821", "E402"]
+
+# --- mypy --strict configuration -------------------------------------------
+# The contracts and universal subpackages are the typed-contracts core; we
+# run ``mypy --strict`` against them and silence only the categories that
+# are noise (per project policy: ``type-arg`` for bare tuple/dict/list
+# generics in NewType return types and helper signatures; ``no-any-return``
+# for the ``RestartMixer`` skeleton whose ``native_blend_fn`` is
+# adapter-supplied and intentionally untyped). Everything else (missing
+# annotations, name-defined, arg-type) is treated as a real defect.
+[tool.mypy]
+python_version = "3.11"
+strict = true
+explicit_package_bases = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["adaptive_reflow.contracts.*", "adaptive_reflow.universal.*"]
+disable_error_code = [
+    "type-arg",
+    "no-any-return",
+]
+
+# The ``legacy`` subpackage is quarantined: it predates the typed-contracts
+# refactor and will be modernized file-by-file. Until then, silence the
+# three error categories that the legacy ``defensive parsing`` helpers
+# routinely produce (``arg-type`` for ``float()/int()`` over dynamically-
+# typed ``Mapping[str, Any]`` payloads; ``var-annotated`` for the empty
+# ``policy`` branch in ``condition_policy_parameters_from_feedback``;
+# ``assignment`` for the same ``Mapping → dict`` narrowing on the same
+# branch).
+[[tool.mypy.overrides]]
+module = ["adaptive_reflow.legacy.metric_feedback"]
+disable_error_code = [
+    "arg-type",
+    "var-annotated",
+    "assignment",
+]
+

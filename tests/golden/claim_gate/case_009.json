@@ -1,0 +1,37 @@
+{
+  "expected": {
+    "decision": "defer",
+    "evaluated_at_round": 6,
+    "evidence_summary": {
+      "deferred_reason": "claim gate promotion deferred pending R7 GPU data; structural evaluation returns 'defer' whenever any required condition is missing or has not been satisfied",
+      "evaluation_window_rounds": 0,
+      "gate_enabled": true,
+      "minimum_confidence_interval_coverage": 0.95,
+      "required_calibration_artifact_hash": null,
+      "required_contracts_passing": [],
+      "required_paired_evidence_count": 0
+    },
+    "gate_conditions_failed": [
+      "confidence_interval_coverage:insufficient"
+    ],
+    "gate_conditions_passed": [
+      "evaluation_window_rounds",
+      "paired_evidence_count"
+    ]
+  },
+  "inputs": {
+    "config": {
+      "evaluation_window_rounds": 0,
+      "gate_enabled": true,
+      "minimum_confidence_interval_coverage": 0.95,
+      "required_calibration_artifact_hash": null,
+      "required_contracts_passing": [],
+      "required_paired_evidence_count": 0
+    },
+    "evaluated_at_round": 6,
+    "evidence": {
+      "confidence_interval_coverage": 0.5
+    }
+  },
+  "name": "insufficient_ci_coverage"
+}

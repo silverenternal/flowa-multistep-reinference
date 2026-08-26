@@ -1,0 +1,12 @@
+{
+  "expected": 0.9,
+  "inputs": {
+    "cap": 1.0,
+    "delta_cap_down": 0.5,
+    "delta_cap_up": 0.5,
+    "dynamic": 0.9,
+    "floor": 0.5,
+    "prev": 0.6
+  },
+  "name": "floor_high_increase_within"
+}

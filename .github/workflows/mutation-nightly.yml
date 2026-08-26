@@ -1,0 +1,26 @@
+name: mutation-nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  mutate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install pytest hypothesis mutmut
+      - name: Run mutmut
+        run: bash tools/mutate/run_mutmut.sh
+      - name: Upload mutmut report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutmut-report
+          path: mutmut_report.html
+          if-no-files-found: error

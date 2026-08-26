@@ -1,0 +1,12 @@
+{
+  "expected": 0.2,
+  "inputs": {
+    "cap": 0.2,
+    "delta_cap_down": 1.0,
+    "delta_cap_up": 1.0,
+    "dynamic": 1.0,
+    "floor": 0.0,
+    "prev": 0.0
+  },
+  "name": "tight_envelope_increase"
+}

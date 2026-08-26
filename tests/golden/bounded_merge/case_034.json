@@ -1,0 +1,12 @@
+{
+  "expected": 1.0,
+  "inputs": {
+    "cap": 1.0,
+    "delta_cap_down": 1.0,
+    "delta_cap_up": 1.0,
+    "dynamic": 1.0,
+    "floor": 0.0,
+    "prev": 0.0
+  },
+  "name": "delta_caps_one_full_swing_up"
+}

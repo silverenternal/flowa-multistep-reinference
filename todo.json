@@ -3,68 +3,68 @@
   "component": "inference.adaptive_reflow",
   "component_repository": "silverenternal/flowa-multistep-reinference",
   "status": "partial_implementation_phase1",
-  "purpose": "\u628a\u975e\u7d27\u5019\u9009\u7a7a\u95f4\u4e2d\u7684\u566a\u58f0\u9009\u62e9\u95ee\u9898\u663e\u5f0f\u5f15\u5165\u591a\u8f6e Flow Matching re-inference\uff1a\u4e0a\u4e00\u8f6e\u7ed3\u679c\u53ea\u6709\u5728\u5c40\u90e8\u8bc1\u636e\u3001\u5168\u5c40\u5c3e\u90e8\u63a7\u5236\u548c\u8865\u96c6\u6392\u9664\u5171\u540c\u6210\u7acb\u65f6\uff0c\u624d\u4ee5\u53ef\u6821\u51c6\u3001\u901a\u9053\u4e00\u81f4\u3001\u5168\u5c40\u6709\u754c\u4e14\u53ef\u64a4\u9500\u7684\u52a8\u6001\u6743\u91cd\u8fdb\u5165\u4e0b\u4e00\u8f6e restart distribution\u3002\u8be5\u673a\u5236\u53ea\u6539\u53d8 inference-external ODE condition \u548c restart distribution\uff0c\u7edd\u4e0d\u66ff\u4ee3 FlowA ODE \u4e3b\u7ebf\u3001\u6a21\u578b\u6743\u91cd\u3001checkpoint \u6216\u7ec8\u7aef\u8bc4\u4f30\u3002",
+  "purpose": "把非紧候选空间中的噪声选择问题显式引入多轮 Flow Matching re-inference：上一轮结果只有在局部证据、全局尾部控制和补集排除共同成立时，才以可校准、通道一致、全局有界且可撤销的动态权重进入下一轮 restart distribution。该机制只改变 inference-external ODE condition 和 restart distribution，绝不替代 FlowA ODE 主线、模型权重、checkpoint 或终端评估。",
   "research_input": {
     "lean_project": "docs/formal_architecture_lean4/Research/NoiseSelectedRectification/",
     "jmaa_manuscript": "paper_submission/noise_selected_rectification/NoiseSelectedRectification_EN.md",
     "additional_lean_sources": [
       {
         "path": "docs/formal_architecture_lean4/Research/NoiseSelectedRectification/MATRIX_GAUSSIAN_SELECTION.md",
-        "usable_boundary": "\u5728\u53d7\u9650\u6b63\u4ea4\u9ad8\u65af\u8c31\u7c7b\u4e2d\uff0c\u65e0\u754c\u5c3e\u90e8\u7d2f\u8ba1\u7269\u7406\u566a\u58f0\u8d28\u91cf\u7ed9\u51fa\u89d2\u5ea6\u6536\u7f29\uff1b\u5176 sharp summable obstruction \u53ea\u80fd\u6307\u5bfc schedule stress tests \u4e0e\u7d2f\u8ba1\u91cf\u8d26\u672c\u3002"
+        "usable_boundary": "在受限正交高斯谱类中，无界尾部累计物理噪声质量给出角度收缩；其 sharp summable obstruction 只能指导 schedule stress tests 与累计量账本。"
       },
       {
         "path": "docs/formal_architecture_lean4/Research/FlowOEExpertAggregation/SBVC.lean",
-        "usable_boundary": "\u4e25\u683c margin \u4e0e\u5b8c\u6574 germ \u4ecd\u4e0d\u80fd\u63a7\u5236 phase bias\uff1b\u72ec\u7acb selector \u7684\u4e00\u81f4\u6027\u9700\u8981\u663e\u5f0f phase schedule\u3001\u8bef\u5dee\u754c\u548c\u8bed\u4e49\u3002"
+        "usable_boundary": "严格 margin 与完整 germ 仍不能控制 phase bias；独立 selector 的一致性需要显式 phase schedule、误差界和语义。"
       },
       {
         "path": "docs/formal_architecture_lean4/Research/FlowOEExpertAggregation/BLUEPRINT.md",
-        "usable_boundary": "\u6709\u9650\u89c6\u754c continuation law \u51b3\u5b9a\u6700\u5c0f phase memory\uff1b\u5f53\u524d endpoint \u4e0d\u662f\u81ea\u52a8\u5145\u5206\u7edf\u8ba1\u91cf\u3002"
+        "usable_boundary": "有限视界 continuation law 决定最小 phase memory；当前 endpoint 不是自动充分统计量。"
       },
       {
         "path": "docs/formal_architecture_lean4/Research/CommutatorSafeChannelFreezing/ORDER_SENSITIVE_BRACKET_CALIBRATION.md",
-        "usable_boundary": "\u76f8\u540c\u5199\u5165\u91cf\u4e0e dwell \u7684 AB/BA \u975e\u4ea4\u6362\u64cd\u4f5c\u6709\u4e0d\u540c\u7aef\u70b9\uff0c\u516c\u5171\u63a5\u53e3\u5fc5\u987b\u643a\u5e26\u7ec4\u5408\u987a\u5e8f\u548c\u5fc5\u8981\u7684 order-sensitive replay\u3002"
+        "usable_boundary": "相同写入量与 dwell 的 AB/BA 非交换操作有不同端点，公共接口必须携带组合顺序和必要的 order-sensitive replay。"
       },
       {
         "path": "docs/formal_architecture_lean4/Research/StratifiedChemicalTransport/BLUEPRINT.md",
-        "usable_boundary": "\u5206\u652f\u5728 uncertainty boundary layer \u5185\u4e0d\u80fd\u88ab\u4efb\u610f\u6807\u4f5c first\uff1b\u53ef\u526a\u679d\u6761\u4ef6\u5e94\u662f gap/calibrated-error\uff0c\u800c\u4e0d\u662f\u566a\u58f0\u5206\u6570\u7b26\u53f7\u3002"
+        "usable_boundary": "分支在 uncertainty boundary layer 内不能被任意标作 first；可剪枝条件应是 gap/calibrated-error，而不是噪声分数符号。"
       },
       {
         "path": "docs/formal_architecture_lean4/Research/NoiseSelectedRectification/HERMITE_HODGE_SPECTRUM.md",
-        "usable_boundary": "\u9ad8\u9636\u7ebf\u6027\u5316 OU mode \u7684\u8bca\u65ad\u6027\u6536\u7f29\u53ef\u542f\u53d1\u6b8b\u5dee band logging\uff0c\u4f46\u4e00\u822c adaptive reflow \u7684\u8c31\u8bc6\u522b\u5c1a\u672a\u8bc1\u660e\uff0c\u6545\u4e0d\u8d4b\u4e88\u63a7\u5236\u6743\u3002"
+        "usable_boundary": "高阶线性化 OU mode 的诊断性收缩可启发残差 band logging，但一般 adaptive reflow 的谱识别尚未证明，故不赋予控制权。"
       }
     ],
     "usable_conclusions": [
-      "\u7ed3\u679c\u9009\u62e9\u5fc5\u987b\u6bd4\u8f83\u5f52\u4e00\u5316\u540e\u7684\u90bb\u57df\u8bc1\u636e\uff0c\u4e0d\u53ef\u6309\u67d0\u4e00\u5019\u9009\u7684\u5355\u70b9\u6b8b\u5dee\u3001\u5355\u6b21 evaluator \u5206\u6570\u6216\u5c40\u90e8\u6b63\u5219\u6027\u76f4\u63a5\u786e\u5b9a\u4f20\u9012\u6743\u91cd\u3002",
-      "\u7ade\u4e89\u5206\u652f\u7684\u5c40\u90e8\u8bc1\u636e\u53ea\u6709\u5728\u7edf\u4e00\u5c40\u90e8\u5c3a\u5ea6\u3001\u53ef\u63a7\u4e92\u65a5/\u5206\u914d\u3001\u53ef\u6c42\u548c\u7684\u5168\u5c40\u5c3e\u90e8\u548c\u53d7\u6291\u5236\u7684\u8865\u96c6\u540c\u65f6\u6210\u7acb\u65f6\uff0c\u624d\u53ef\u7ec4\u6210\u53ef\u9760\u7684\u5168\u5c40\u9009\u62e9\u3002",
-      "\u4e0d\u540c\u6709\u6548\u652f\u6301\u5c3a\u5ea6\u7684\u7ed3\u679c\u4e0d\u80fd\u7528\u56fa\u5b9a\u7cfb\u6570\u76f8\u52a0\uff1b\u5f31\u8bc1\u636e\u3001\u9000\u5316\u8bc1\u636e\u6216\u672a\u53d7\u63a7\u7684\u7ade\u4e89\u7ed3\u679c\u5fc5\u987b\u6536\u7f29\u5176\u5f71\u54cd\u3002",
-      "\u5c40\u90e8\u770b\u4f3c\u89c4\u5219\u4f46\u7f3a\u5c11\u5168\u5c40\u63a7\u5236\u65f6\u4f1a\u51fa\u73b0 escaping mass\uff1b\u5de5\u7a0b\u5bf9\u5e94\u7269\u662f\u5927\u91cf\u540c\u6e90\u3001\u8fc7\u671f\u3001\u4f4e\u7a33\u5b9a\u6216\u5206\u6b67\u7ed3\u679c\u5728\u591a\u8f6e\u4e2d\u7d2f\u79ef\u5e76\u9501\u5b9a\u9519\u8bef\u72b6\u6001\u3002",
-      "GaussianScheduleSelection \u7684\u53d7\u9650\u9ad8\u65af\u7ed3\u679c\u8868\u660e\uff1a\u53ea\u6709\u6bcf\u4e2a\u5c3e\u90e8\u90fd\u4fdd\u6709\u65e0\u754c\u7d2f\u8ba1\u7269\u7406\u566a\u58f0\u8d28\u91cf\u65f6\uff0c\u7279\u5b9a\u6b63\u4ea4\u8c31\u89d2\u624d\u6301\u7eed\u6536\u7f29\uff1bGaussianSummableObstruction \u7ed9\u51fa\u6b63\u800c\u53ef\u548c\u7684\u566a\u58f0\u65e5\u7a0b\u4ecd\u4fdd\u7559\u975e\u6700\u4f18\u89d2\u7684\u53cd\u4f8b\u3002\u5de5\u7a0b\u4e0a\u53ea\u5c06\u5176\u7528\u4f5c fresh-noise cumulative-mass ledger \u7684\u53cd\u4f8b\u9a71\u52a8\u8bbe\u8ba1\uff0c\u7edd\u4e0d\u628a\u5b83\u5916\u63a8\u4e3a\u4efb\u610f Flow Matching \u6a21\u578b\u7684\u6536\u655b\u5b9a\u7406\u3002",
-      "FlowOEExpertAggregation \u7684\u6709\u9650\u6a21\u578b\u8868\u660e\uff1a\u76f8\u540c\u539f\u5b50\u89c4\u5f8b\u6216\u4e25\u683c\u5206\u6570 margin \u4e0d\u80fd\u6d88\u9664 switching phase bias\uff1b\u5f53\u524d\u72b6\u6001\u4e0d\u8db3\u4ee5\u6807\u8bc6\u672a\u6765 continuation \u65f6\uff0cphase/cycle memory \u662f\u5fc5\u8981\u7684\u3002",
-      "CommutatorSafeChannelFreezing \u7684\u7cbe\u786e\u77e9\u9635\u6821\u51c6\u8868\u660e\uff1a\u76f8\u540c\u901a\u9053\u5199\u5165\u91cf\u4e0e\u9a7b\u7559\u65f6\u95f4\u7684 AB/BA \u65e5\u7a0b\u53ef\u56e0\u975e\u4ea4\u6362\u9879\u5f97\u5230\u4e0d\u540c\u7aef\u70b9\u3002\u91cd\u542f\u504f\u7f6e\u3001condition delta \u4e0e channel freeze \u7684\u7ec4\u5408\u6b21\u5e8f\u5fc5\u987b\u662f\u63a5\u53e3\u8bed\u4e49\uff0c\u800c\u4e0d\u662f\u5b9e\u73b0\u7ec6\u8282\u3002",
-      "StratifiedChemicalTransport \u7684\u6709\u9650\u5206\u652f\u7ed3\u679c\u8868\u660e\uff1a\u5f53\u591a\u4e2a\u51fa\u53e3\u5728\u4e0d\u786e\u5b9a\u5ea6\u534a\u5f84\u5185\u4e0d\u53ef\u533a\u5206\u65f6\uff0c\u552f\u4e00 deterministic branch \u4e0d\u5e94\u88ab\u4f2a\u9020\uff1b\u53ef\u4fdd\u7559\u65e0\u6807\u7b7e\u52a0\u6743\u5206\u652f\uff0c\u53ea\u6709 dominance gap \u8d85\u8fc7\u5df2\u6821\u51c6\u8bef\u5dee\u624d\u53ef\u526a\u679d\u3002"
+      "结果选择必须比较归一化后的邻域证据，不可按某一候选的单点残差、单次 evaluator 分数或局部正则性直接确定传递权重。",
+      "竞争分支的局部证据只有在统一局部尺度、可控互斥/分配、可求和的全局尾部和受抑制的补集同时成立时，才可组成可靠的全局选择。",
+      "不同有效支持尺度的结果不能用固定系数相加；弱证据、退化证据或未受控的竞争结果必须收缩其影响。",
+      "局部看似规则但缺少全局控制时会出现 escaping mass；工程对应物是大量同源、过期、低稳定或分歧结果在多轮中累积并锁定错误状态。",
+      "GaussianScheduleSelection 的受限高斯结果表明：只有每个尾部都保有无界累计物理噪声质量时，特定正交谱角才持续收缩；GaussianSummableObstruction 给出正而可和的噪声日程仍保留非最优角的反例。工程上只将其用作 fresh-noise cumulative-mass ledger 的反例驱动设计，绝不把它外推为任意 Flow Matching 模型的收敛定理。",
+      "FlowOEExpertAggregation 的有限模型表明：相同原子规律或严格分数 margin 不能消除 switching phase bias；当前状态不足以标识未来 continuation 时，phase/cycle memory 是必要的。",
+      "CommutatorSafeChannelFreezing 的精确矩阵校准表明：相同通道写入量与驻留时间的 AB/BA 日程可因非交换项得到不同端点。重启偏置、condition delta 与 channel freeze 的组合次序必须是接口语义，而不是实现细节。",
+      "StratifiedChemicalTransport 的有限分支结果表明：当多个出口在不确定度半径内不可区分时，唯一 deterministic branch 不应被伪造；可保留无标签加权分支，只有 dominance gap 超过已校准误差才可剪枝。"
     ],
     "core_noncompact_noise_selection_translation": {
-      "paper_mechanism": "JMAA \u7a3f\u4ef6\u5e76\u975e\u53ea\u8bf4\u5c40\u90e8\u566a\u58f0\u53ef\u4fee\u6b63\uff0c\u800c\u662f\u6bd4\u8f83\u4e0d\u540c\u7ade\u4e89\u533a\u57df\u5728 noise scale \u4e0b\u7684\u5f52\u4e00\u5316\u8bc1\u636e\uff1a\u6700\u4f4e\u6709\u6548 normal scale \u7684\u533a\u57df\u53ea\u6709\u5728\u7edf\u4e00\u5c40\u90e8 coercivity\u3001\u53ef\u6c42\u548c\u7684\u5168\u5c40\u5c3e\u90e8\u548c\u8865\u96c6\u4f4e\u80fd\u91cf\u6392\u9664\u540c\u65f6\u6210\u7acb\u65f6\u624d\u88ab\u9009\u62e9\uff1b\u53cd\u4f8b\u8868\u660e\u6bcf\u4e2a\u5206\u652f\u5c40\u90e8\u89c4\u5219\u4ecd\u53ef\u80fd\u628a\u5f52\u4e00\u5316\u8d28\u91cf\u9001\u5411\u65e0\u7a77\u8fdc\u3002",
-      "runtime_problem": "\u591a\u8f6e reflow \u7684\u5019\u9009\u5206\u5b50/endpoint archive \u662f\u975e\u7d27\u7684\uff1a\u5750\u6807\u5c3a\u5ea6\u3001\u8fdc\u79bb pocket \u7684\u6784\u8c61\u3001\u539f\u5b50\u6570/\u56fe\u590d\u6742\u5ea6\u3001pair-state \u9000\u5316\u548c evaluator failure modes \u90fd\u53ef\u4e0d\u65ad\u5411\u65b0\u533a\u57df\u6269\u5c55\u3002\u5355\u8f6e\u4f4e energy\u3001\u5355\u6b21 GNINA\u3001\u6216\u4e0a\u4e00\u8f6e\u6bd4\u524d\u4e00\u8f6e\u597d\uff0c\u5747\u4e0d\u662f\u4e0b\u4e00\u8f6e\u5e94\u8be5\u4fdd\u7559\u8be5 endpoint \u7684\u5145\u5206\u6761\u4ef6\u3002",
+      "paper_mechanism": "JMAA 稿件并非只说局部噪声可修正，而是比较不同竞争区域在 noise scale 下的归一化证据：最低有效 normal scale 的区域只有在统一局部 coercivity、可求和的全局尾部和补集低能量排除同时成立时才被选择；反例表明每个分支局部规则仍可能把归一化质量送向无穷远。",
+      "runtime_problem": "多轮 reflow 的候选分子/endpoint archive 是非紧的：坐标尺度、远离 pocket 的构象、原子数/图复杂度、pair-state 退化和 evaluator failure modes 都可不断向新区域扩展。单轮低 energy、单次 GNINA、或上一轮比前一轮好，均不是下一轮应该保留该 endpoint 的充分条件。",
       "required_translation": [
-        "\u6bcf\u4e2a run \u5728\u9009\u62e9\u566a\u58f0\u524d\u51bb\u7ed3 compact-envelope exhaustion ladder\uff1b\u5148\u4ece\u4e0e round noise \u65e0\u5173\u7684\u7269\u7406/\u5316\u5b66 envelope \u9009\u62e9\u8303\u56f4\u548c tail budget\uff0c\u518d\u5141\u8bb8 round-specific noise\uff0c\u7981\u6b62\u6839\u636e\u5f53\u524d\u8d62\u5bb6\u7684\u5206\u6570\u4e34\u65f6\u6269\u5927\u4fdd\u62a4\u533a\u3002",
-        "\u6bcf\u4e00 source bundle \u540c\u65f6\u7ed9\u51fa local transfer evidence\u3001tail admissibility \u548c complement exclusion\u3002\u7f3a\u5176\u4e2d\u4efb\u4e00\u9879\u65f6\u4e0d\u80fd\u83b7\u5f97\u6b63\u5411 restart memory\u3002",
-        "candidate archive \u7684\u540c\u6e90\u53bb\u91cd\u3001\u603b\u8d28\u91cf\u4e0a\u9650\u548c remote-tail budget \u662f\u5de5\u7a0b\u7248\u7684\u53ef\u6c42\u548c/\u7d27\u6027\u6761\u4ef6\uff1b\u5b83\u4eec\u662f\u53ef\u5ba1\u8ba1\u5fc5\u8981\u95e8\u69db\uff0c\u4e0d\u662f\u628a\u6709\u9650\u5019\u9009\u5217\u8868\u88c5\u9970\u6027 softmax \u540e\u5c31\u53ef\u7701\u7565\u3002",
-        "finite-round molecular run \u4e0d\u80fd\u8bc1\u660e\u975e\u7d27\u6e10\u8fd1\u9009\u62e9\u3002\u5b83\u53ea\u80fd\u62a5\u544a fixed-envelope \u5185\u7684\u7ecf\u9a8c tail diagnostics\u3001\u9884\u7b97\u548c\u53cd\u4f8b\uff1b\u4efb\u4f55 general selection claim \u4ecd\u53d7 Lean/JMAA \u7684\u6570\u5b66\u8fb9\u754c\u9650\u5236\u3002"
+        "每个 run 在选择噪声前冻结 compact-envelope exhaustion ladder；先从与 round noise 无关的物理/化学 envelope 选择范围和 tail budget，再允许 round-specific noise，禁止根据当前赢家的分数临时扩大保护区。",
+        "每一 source bundle 同时给出 local transfer evidence、tail admissibility 和 complement exclusion。缺其中任一项时不能获得正向 restart memory。",
+        "candidate archive 的同源去重、总质量上限和 remote-tail budget 是工程版的可求和/紧性条件；它们是可审计必要门槛，不是把有限候选列表装饰性 softmax 后就可省略。",
+        "finite-round molecular run 不能证明非紧渐近选择。它只能报告 fixed-envelope 内的经验 tail diagnostics、预算和反例；任何 general selection claim 仍受 Lean/JMAA 的数学边界限制。"
       ]
     },
     "cosine_schedule_research_boundary": {
-      "candidate_use": "\u4f59\u5f26\u9000\u706b\u7528\u4e8e\u5916\u5c42 re-inference cycle \u7684 fresh-noise budget\uff0c\u800c\u4e0d\u662f\u76f4\u63a5\u4fee\u6539\u5df2\u8bad\u7ec3 Flow Matching ODE \u7684\u5185\u90e8\u65f6\u95f4\u53c2\u6570\u5316\u6216\u628a SGD \u5b66\u4e60\u7387\u65e5\u7a0b\u5f53\u4f5c\u7406\u8bba\u8bc1\u660e\u3002",
+      "candidate_use": "余弦退火用于外层 re-inference cycle 的 fresh-noise budget，而不是直接修改已训练 Flow Matching ODE 的内部时间参数化或把 SGD 学习率日程当作理论证明。",
       "references": [
         "Loshchilov and Hutter, SGDR: Stochastic Gradient Descent with Warm Restarts (ICLR 2017): cosine cycles are an optimization heuristic, not a posterior-selection theorem.",
         "Nichol and Dhariwal, Improved Denoising Diffusion Probabilistic Models (ICML 2021): cosine alpha-bar schedule motivates smooth noise allocation, but it is a diffusion training/sampling design and requires separate validation for outer Flow Matching restart noise."
       ],
-      "non_claim": "\u4e0d\u5b58\u5728\u4ece SGDR \u6216 diffusion cosine schedule \u5230 FlowA noncompact endpoint selection \u7684\u76f4\u63a5\u7406\u8bba\u63a8\u8bba\uff1bcosine \u53ea\u4f5c\u4e3a\u9884\u6ce8\u518c\u3001\u53ef\u4e0e linear/constant/learned budget \u5bf9\u7167\u7684\u5e73\u6ed1 schedule family\u3002"
+      "non_claim": "不存在从 SGDR 或 diffusion cosine schedule 到 FlowA noncompact endpoint selection 的直接理论推论；cosine 只作为预注册、可与 linear/constant/learned budget 对照的平滑 schedule family。"
     },
     "non_claims": [
-      "JMAA \u5b9a\u7406\u4e0d\u8bc1\u660e\u4efb\u4f55 Flow Matching\u3001\u5206\u5b50\u751f\u6210\u3001GNINA\u3001PoseBusters\u3001QED/ADMET \u6216\u52a8\u6001\u6743\u91cd\u63d0\u5347\u7ed3\u8bba\u3002",
-      "\u8bba\u6587\u4e2d\u7684 posterior\u3001normal codimension\u3001coarea Jacobian \u4e0e epsilon \u6e10\u8fd1\u5f0f\u4e0d\u80fd\u88ab\u89e3\u91ca\u4e3a\u6a21\u578b attention\u3001\u7f51\u7edc\u6982\u7387\u3001evaluator score \u6216\u7ecf\u9a8c\u6743\u91cd\u7684\u771f\u5b9e\u89e3\u6790\u8868\u8fbe\u5f0f\u3002",
-      "\u672c\u4efb\u52a1\u4f7f\u7528\u8be5\u8bba\u6587\u4f5c\u4e3a fail-closed \u7684\u9009\u62e9\u548c\u805a\u5408\u8bbe\u8ba1\u539f\u5219\uff1b\u4efb\u4f55\u6548\u679c\u53ea\u80fd\u7531\u540e\u7eed target-disjoint\u3001paired\u3001round-to-round \u5b9e\u9a8c\u9a8c\u8bc1\u3002"
+      "JMAA 定理不证明任何 Flow Matching、分子生成、GNINA、PoseBusters、QED/ADMET 或动态权重提升结论。",
+      "论文中的 posterior、normal codimension、coarea Jacobian 与 epsilon 渐近式不能被解释为模型 attention、网络概率、evaluator score 或经验权重的真实解析表达式。",
+      "本任务使用该论文作为 fail-closed 的选择和聚合设计原则；任何效果只能由后续 target-disjoint、paired、round-to-round 实验验证。"
     ]
   },
   "current_implementation_facts": {
@@ -84,62 +84,62 @@
       "pocket_modules/mechanisms/inference/noise_bias/spectral_budget.py supplies exact-Gaussian and finite-prefix diagnostics; it is not currently the runtime authority for adaptive-reflow sampler controls."
     ],
     "existing_guarantees": [
-      "\u4e0a\u4e00\u8f6e coordinate\u3001charge\u3001raw pair \u548c projected pair state \u4ee5 detached restart memory \u65b9\u5f0f\u4f20\u5165\u4e0b\u4e00\u8f6e\uff1bcoordinate restart \u4fdd\u6301 fresh prior RMS\u3002",
-      "memory_fraction\u3001charge_memory_fraction\u3001pair_memory_fraction \u5df2\u5206\u901a\u9053\u8bb0\u5f55\uff0c\u4e14 input range\u3001round index\u3001\u771f\u5b9e evaluator feedback \u6a21\u5f0f\u548c freeze controls \u5df2\u6709 fail-closed \u9a8c\u8bc1\u3002",
-      "\u6bcf\u8f6e\u5df2\u6709 condition_delta\u3001restart bias\u3001freeze mask\u3001metric target\u3001evaluator provenance \u548c acceptance reason \u7684 trace \u4e49\u52a1\u3002",
-      "noise_bias/spectral_budget.py \u5df2\u5c06 exact Gaussian inequality \u4e0e molecular local-linearization proxy \u5206\u5f00\uff0c\u5e76\u58f0\u660e finite prefix cannot certify tail selection\u3002",
-      "\u771f\u5b9e evaluator feedback \u9ed8\u8ba4\u4ec5\u9650 inference-external diagnostic \u6216\u6388\u6743\u8bad\u7ec3\u534f\u8bae\uff1bgeneration-local proxy \u4ecd\u662f diagnostic\u3002"
+      "上一轮 coordinate、charge、raw pair 和 projected pair state 以 detached restart memory 方式传入下一轮；coordinate restart 保持 fresh prior RMS。",
+      "memory_fraction、charge_memory_fraction、pair_memory_fraction 已分通道记录，且 input range、round index、真实 evaluator feedback 模式和 freeze controls 已有 fail-closed 验证。",
+      "每轮已有 condition_delta、restart bias、freeze mask、metric target、evaluator provenance 和 acceptance reason 的 trace 义务。",
+      "noise_bias/spectral_budget.py 已将 exact Gaussian inequality 与 molecular local-linearization proxy 分开，并声明 finite prefix cannot certify tail selection。",
+      "真实 evaluator feedback 默认仅限 inference-external diagnostic 或授权训练协议；generation-local proxy 仍是 diagnostic。"
     ],
     "gaps_to_close": [
-      "external_metric_feedback.py \u7684\u4e3b\u8981\u63a7\u5236\u5206\u652f\u542b\u56fa\u5b9a\u76ee\u6807\u533a\u95f4\u548c\u542f\u53d1\u5f0f\u5e38\u6570\uff1bmetric_trust \u4e3b\u8981\u5f71\u54cd metric priority\uff0c\u4e0d\u5b8c\u6574\u51b3\u5b9a channel restart weight\u3002",
-      "flowa_core/transport/adaptive_reflow_runtime.py \u5bf9\u52a8\u6001 memory control \u91c7\u7528 max(current, dynamic) \u5408\u5e76\uff0c\u5929\u7136\u4e0d\u80fd\u8868\u8fbe\u56e0\u65b0\u8bc1\u636e\u53d8\u5dee\u3001\u5206\u6b67\u6216\u64a4\u9500\u800c\u4e3b\u52a8\u964d\u6743\u3002",
-      "\u5f53\u524d\u7ed3\u679c\u4f20\u9012\u4e3b\u8981\u4ece immediately previous endpoint \u8bfb\u53d6\uff1b\u82e5\u4ee5\u540e\u4f7f\u7528 best/history candidate\uff0c\u5c1a\u65e0\u539f\u5b50 bundle\u3001\u540c\u6e90\u53bb\u91cd\u3001\u8de8\u8f6e\u5168\u5c40\u8d28\u91cf\u9884\u7b97\u6216\u907f\u514d Frankenstein state \u7684\u5408\u540c\u3002",
-      "\u5f53\u524d ledger \u672a\u5c06\u6bcf\u4e2a channel \u7684 evidence components\u3001calibration version\u3001candidate competition\u3001raw score\u3001bounded score \u548c\u6700\u7ec8\u5199\u5165 fraction \u4e00\u5e76\u7ed1\u5b9a\u3002",
-      "adaptive_reflow \u4e0e noise_bias \u90fd\u53ef\u4f5c\u4e3a\u72ec\u7acb mechanism \u5199\u5165 restart_bias/sampler_controls\uff1b\u82e5\u4e24\u8005\u5728\u540c\u4e00 run \u6fc0\u6d3b\uff0c\u76ee\u524d\u6ca1\u6709 single-writer arbitration\uff0c\u53ef\u80fd\u53d1\u751f\u53cc\u91cd\u7f29\u653e\u3001\u9759\u9ed8\u8986\u76d6\u6216\u65e0\u6cd5\u89e3\u91ca\u7684 max merge\u3002"
+      "external_metric_feedback.py 的主要控制分支含固定目标区间和启发式常数；metric_trust 主要影响 metric priority，不完整决定 channel restart weight。",
+      "flowa_core/transport/adaptive_reflow_runtime.py 对动态 memory control 采用 max(current, dynamic) 合并，天然不能表达因新证据变差、分歧或撤销而主动降权。",
+      "当前结果传递主要从 immediately previous endpoint 读取；若以后使用 best/history candidate，尚无原子 bundle、同源去重、跨轮全局质量预算或避免 Frankenstein state 的合同。",
+      "当前 ledger 未将每个 channel 的 evidence components、calibration version、candidate competition、raw score、bounded score 和最终写入 fraction 一并绑定。",
+      "adaptive_reflow 与 noise_bias 都可作为独立 mechanism 写入 restart_bias/sampler_controls；若两者在同一 run 激活，目前没有 single-writer arbitration，可能发生双重缩放、静默覆盖或无法解释的 max merge。"
     ]
   },
   "target_design": {
-    "scope": "\u516c\u5171\u5f15\u64ce\u53ea\u5904\u7406\u540c\u4e00 sample\u3001\u540c\u4e00 run\u3001\u540c\u4e00 checkpoint lineage \u5185\u7684 round r -> r+1 restart distribution \u4e0e ODE condition update\uff1b\u4e0d\u505a\u8de8 sample\u3001\u8de8 target\u3001\u8de8 checkpoint \u6216\u8de8 run memory\u3002\u6a21\u578b\u9002\u914d\u5668\u53ef\u652f\u6301\u6761\u4ef6\u6216\u65e0\u6761\u4ef6 Flow Matching\uff0c\u4f46\u4e0d\u5c06\u6ca1\u6709\u53ef\u9a8c\u8bc1\u8fde\u7eed ODE sampling surface \u7684\u65b9\u6cd5\u4f2a\u88c5\u6210\u517c\u5bb9\u6a21\u578b\u3002",
+    "scope": "公共引擎只处理同一 sample、同一 run、同一 checkpoint lineage 内的 round r -> r+1 restart distribution 与 ODE condition update；不做跨 sample、跨 target、跨 checkpoint 或跨 run memory。模型适配器可支持条件或无条件 Flow Matching，但不将没有可验证连续 ODE sampling surface 的方法伪装成兼容模型。",
     "public_flow_matching_ode_interface": {
-      "mathematical_boundary": "\u516c\u5171\u8bed\u4e49\u4e3a z_dot(t)=v_theta(z(t), t; c_r)\uff0c\u5176\u4e2d adapter \u8d1f\u8d23\u6a21\u578b\u539f\u751f state\u3001condition \u4e0e integrator\uff0cengine \u53ea\u5728\u5b8c\u6574\u4e00\u8f6e\u7aef\u70b9\u540e\u6784\u9020 c_(r+1)=compose_condition(c_r, delta_c_r) \u548c z_(r+1)(0)~restart_distribution(prior_r, detached endpoint_r, beta_r)\u3002\u516c\u5171\u63a5\u53e3\u4e0d\u5f97\u4fee\u6539 checkpoint\u3001theta\u3001\u8bad\u7ec3 noise path \u6216\u6a21\u578b\u5185\u90e8 flow-time parameterization\u3002",
+      "mathematical_boundary": "公共语义为 z_dot(t)=v_theta(z(t), t; c_r)，其中 adapter 负责模型原生 state、condition 与 integrator，engine 只在完整一轮端点后构造 c_(r+1)=compose_condition(c_r, delta_c_r) 和 z_(r+1)(0)~restart_distribution(prior_r, detached endpoint_r, beta_r)。公共接口不得修改 checkpoint、theta、训练 noise path 或模型内部 flow-time parameterization。",
       "engine_owned_contracts": [
-        "RunIdentity, RoundIdentity, PhaseState, FrozenEnvelopeManifest, DynamicRestartTransferLedger, RestartPolicy, ODEConditionDelta, operation_order and ODEIntegratorTrace schema\u3002",
-        "\u539f\u5b50 source bundle\u3001\u975e\u7d27 tail/complement gate\u3001\u8bc1\u636e\u6821\u51c6\u3001beta cap/floor\u3001cosine fresh-noise capacity\u3001\u56de\u6eda\u3001\u8de8\u6a21\u578b\u8bc4\u6d4b\u9884\u7b97\u548c provenance\u3002",
-        "\u6240\u6709\u975e\u96f6\u4f20\u9012\u90fd\u53d1\u751f\u5728 adapter \u660e\u793a\u7684 restart boundary\uff1bengine \u4ece\u4e0d\u63a2\u6d4b\u6216\u91cd\u5199\u7b2c\u4e09\u65b9\u79c1\u6709\u5f20\u91cf\u3002"
+        "RunIdentity, RoundIdentity, PhaseState, FrozenEnvelopeManifest, DynamicRestartTransferLedger, RestartPolicy, ODEConditionDelta, operation_order and ODEIntegratorTrace schema。",
+        "原子 source bundle、非紧 tail/complement gate、证据校准、beta cap/floor、cosine fresh-noise capacity、回滚、跨模型评测预算和 provenance。",
+        "所有非零传递都发生在 adapter 明示的 restart boundary；engine 从不探测或重写第三方私有张量。"
       ],
       "adapter_protocol": [
-        "capabilities(): \u58f0\u660e continuous/discrete state channels\u3001condition injection\u3001restart boundary\u3001trajectory availability\u3001deterministic seed support\u3001native integrator\u3001materialization route \u4e0e\u4e0d\u53ef\u652f\u6301\u80fd\u529b\u3002",
-        "build_initial_state(prior_spec, seed) / export_endpoint(native_state): \u5728\u4e0d\u4e22\u5931 shape\u3001mask\u3001normalization\u3001frame \u4e0e\u79bb\u6563\u8bed\u4e49\u7684\u524d\u63d0\u4e0b\u521b\u5efa\u6216\u5bfc\u51fa StateBundle\u3002",
-        "detach_and_validate_endpoint(endpoint) / apply_restart_distribution(prior_state, source_bundle, beta_by_channel): adapter \u4fdd\u8bc1 detached\u3001\u540c\u4e00 bundle\u3001\u6a21\u578b\u539f\u751f\u7ea6\u675f\u4e0e fresh-noise floor\uff1b\u4e0d\u652f\u6301\u7684 channel \u5fc5\u987b\u660e\u786e\u62d2\u7edd\u3002",
-        "compose_condition(base_condition, condition_delta) / solve_ode(initial_state, condition, integrator_request): \u4f7f\u7528\u6a21\u578b\u539f\u751f ODE sampling path\uff0c\u5e76\u8fd4\u56de endpoint\u3001integrator trace \u548c\u4e0d\u53ef\u53d8 configuration digest\u3002",
-        "observe_endpoint(endpoint, context): \u4ea7\u751f materialization\u3001\u51e0\u4f55\u3001\u72b6\u6001\u4e00\u81f4\u6027\u3001\u53ef\u9009 evaluator-request descriptor\uff1b\u516c\u5171 engine \u4e0d\u628a model-local proxy \u5347\u683c\u4e3a\u5916\u90e8\u771f\u5b9e metric\u3002"
+        "capabilities(): 声明 continuous/discrete state channels、condition injection、restart boundary、trajectory availability、deterministic seed support、native integrator、materialization route 与不可支持能力。",
+        "build_initial_state(prior_spec, seed) / export_endpoint(native_state): 在不丢失 shape、mask、normalization、frame 与离散语义的前提下创建或导出 StateBundle。",
+        "detach_and_validate_endpoint(endpoint) / apply_restart_distribution(prior_state, source_bundle, beta_by_channel): adapter 保证 detached、同一 bundle、模型原生约束与 fresh-noise floor；不支持的 channel 必须明确拒绝。",
+        "compose_condition(base_condition, condition_delta) / solve_ode(initial_state, condition, integrator_request): 使用模型原生 ODE sampling path，并返回 endpoint、integrator trace 和不可变 configuration digest。",
+        "observe_endpoint(endpoint, context): 产生 materialization、几何、状态一致性、可选 evaluator-request descriptor；公共 engine 不把 model-local proxy 升格为外部真实 metric。"
       ],
-      "canonical_state_contract": "StateBundle \u4f7f\u7528 named continuous/discrete channels\u3001masks\u3001batch/sample identity\u3001reference frame/normalization\u3001source round\u3001tensor detach proof\u3001native-state digest \u4e0e immutable provenance\u3002\u5b83\u5141\u8bb8\u5750\u6807\u3001\u7c7b\u522b\u3001pair/edge\u3001latent \u7b49\u901a\u9053\uff0c\u4f46\u7981\u6b62\u628a\u4e0d\u540c endpoint \u6216\u4e0d\u540c adapter \u7684\u901a\u9053\u62fc\u6210\u4e00\u4e2a restart state\u3002",
-      "operation_semantics": "\u9ed8\u8ba4\u4e14\u5fc5\u987b\u5199\u5165 trace \u7684\u7ec4\u5408\u6b21\u5e8f\u662f validate source -> choose bundle -> apply restart distribution -> compose condition delta -> apply declared channel freeze -> solve ODE -> observe endpoint\u3002\u4efb\u4f55 adapter \u9700\u8981\u5176\u4ed6\u6b21\u5e8f\uff0c\u5fc5\u987b\u58f0\u660e operation_order_version\u3001\u7ed9\u51fa paired order-reversal test \u548c commutator-residual diagnostic\uff1bunknown order fail closed\u3002",
-      "compatibility_boundary": "\u8fd9\u662f inference plugin contract\uff0c\u4e0d\u662f\u7edf\u4e00\u6a21\u578b\u7c7b\u6216\u7edf\u4e00\u5206\u5b50\u8868\u793a\u3002\u7b2c\u4e09\u65b9\u4ed3\u5e93\u53ea\u8bfb\u53d6\u3001\u6309\u56fa\u5b9a commit \u8c03\u7528\uff1b\u6240\u6709 glue\u3001schema \u548c tests \u7559\u5728\u672c\u4ed3\u5e93\u3002adapter \u5728 parity route \u4e0b\u5fc5\u987b\u590d\u73b0\u5bf9\u65b9\u539f\u751f single-round sampling\uff0c\u800c\u4e0d\u662f\u901a\u8fc7 monkey patch \u58f0\u79f0\u9002\u914d\u6210\u529f\u3002"
+      "canonical_state_contract": "StateBundle 使用 named continuous/discrete channels、masks、batch/sample identity、reference frame/normalization、source round、tensor detach proof、native-state digest 与 immutable provenance。它允许坐标、类别、pair/edge、latent 等通道，但禁止把不同 endpoint 或不同 adapter 的通道拼成一个 restart state。",
+      "operation_semantics": "默认且必须写入 trace 的组合次序是 validate source -> choose bundle -> apply restart distribution -> compose condition delta -> apply declared channel freeze -> solve ODE -> observe endpoint。任何 adapter 需要其他次序，必须声明 operation_order_version、给出 paired order-reversal test 和 commutator-residual diagnostic；unknown order fail closed。",
+      "compatibility_boundary": "这是 inference plugin contract，不是统一模型类或统一分子表示。第三方仓库只读取、按固定 commit 调用；所有 glue、schema 和 tests 留在本仓库。adapter 在 parity route 下必须复现对方原生 single-round sampling，而不是通过 monkey patch 声称适配成功。"
     },
     "layered_ownership": {
-      "noise_bias": "\u4fdd\u7559\u4e3a\u65e0\u72b6\u6001\u3001\u6a21\u578b\u65e0\u5173\u7684 calculation and diagnostics library\uff1ametric-direction normalization\u3001\u5019\u9009 alpha/beta ledger\u3001fresh-noise cumulative-mass/spectral diagnostics\u3002\u5b83\u4e0d\u5f97\u9009\u62e9 source bundle\u3001\u51b3\u5b9a channel gate\u3001\u5199\u5165 runtime sampler_controls\u3001\u8bbe\u7f6e freeze \u6216 condition_delta\u3002",
-      "adaptive_reflow": "\u552f\u4e00\u7684 policy owner\uff1a\u4ece atomic source bundle\u3001\u975e\u7d27 evidence/tail/complement gate\u3001phase/order state \u548c frozen schedule \u5f97\u51fa\u6bcf\u901a\u9053\u6700\u7ec8 beta\u3001condition_delta \u4e0e freeze admission\uff1b\u5b83\u662f\u552f\u4e00\u5141\u8bb8\u751f\u6210 executable RestartPolicy \u7684 mechanism\u3002",
-      "flowa_core_runtime": "\u53ea\u9a8c\u8bc1\u5e76\u6267\u884c\u4e00\u4e2a immutable FinalRestartPolicy\uff1b\u4e0d\u5f97\u91cd\u65b0\u4ece noise_bias \u6216\u5176\u4ed6 mechanism \u63a8\u5bfc/\u5408\u5e76 memory fraction\uff0c\u4e5f\u4e0d\u5f97\u4ee5 max \u5f62\u5f0f\u8986\u76d6 policy \u7684\u53d7\u63a7\u964d\u6743\u3002",
-      "migration_rule": "\u65e7 noise_bias standalone mechanism \u5728\u4e0e adaptive_reflow \u540c run \u65f6\u53ea\u53ef\u8f93\u51fa diagnostic ledger\u3002\u82e5\u5355\u72ec\u542f\u7528 legacy route\uff0c\u5fc5\u987b\u663e\u5f0f legacy mode\u3001\u4e92\u65a5 feature flag \u548c\u72ec\u7acb trace namespace\uff1b\u4e24\u4e2a writer \u540c\u65f6\u8bf7\u6c42 sampler_controls \u5fc5\u987b fail closed\u3002"
+      "noise_bias": "保留为无状态、模型无关的 calculation and diagnostics library：metric-direction normalization、候选 alpha/beta ledger、fresh-noise cumulative-mass/spectral diagnostics。它不得选择 source bundle、决定 channel gate、写入 runtime sampler_controls、设置 freeze 或 condition_delta。",
+      "adaptive_reflow": "唯一的 policy owner：从 atomic source bundle、非紧 evidence/tail/complement gate、phase/order state 和 frozen schedule 得出每通道最终 beta、condition_delta 与 freeze admission；它是唯一允许生成 executable RestartPolicy 的 mechanism。",
+      "flowa_core_runtime": "只验证并执行一个 immutable FinalRestartPolicy；不得重新从 noise_bias 或其他 mechanism 推导/合并 memory fraction，也不得以 max 形式覆盖 policy 的受控降权。",
+      "migration_rule": "旧 noise_bias standalone mechanism 在与 adaptive_reflow 同 run 时只可输出 diagnostic ledger。若单独启用 legacy route，必须显式 legacy mode、互斥 feature flag 和独立 trace namespace；两个 writer 同时请求 sampler_controls 必须 fail closed。"
     },
     "phase_and_branch_contract": {
-      "phase_state": "PhaseState \u81f3\u5c11\u8bb0\u5f55 outer_cycle_id\u3001round_in_cycle\u3001schedule_phase\u3001previous_trigger\u3001operation_order_version\u3001source-selection procedure\u3001\u968f\u673a\u79cd\u5b50 lineage \u548c horizon_remaining\u3002\u5b83\u662f restart policy \u7684\u5fc5\u9700\u8f93\u5165\uff0c\u4e0d\u5f97\u4ece endpoint score \u9690\u5f0f\u63a8\u65ad\u3002",
-      "horizon_requirement": "\u6821\u51c6\u548c candidate ranking \u5fc5\u987b\u58f0\u660e\u540e\u7eed horizon H\uff1bH=1 \u8bc1\u636e\u4e0d\u5f97\u8bc1\u660e H>1 continuation \u8db3\u591f\u3002\u82e5\u6700\u5c0f continuation class \u968f H \u6539\u53d8\uff0cengine \u5fc5\u987b\u4fdd\u7559\u8db3\u591f phase memory \u6216\u62d2\u7edd\u8be5 schedule\u3002",
-      "branch_ambiguity": "\u5728 score gap \u5c0f\u4e8e\u7b49\u4e8e calibrated uncertainty radius \u65f6\uff0c\u4fdd\u7559 bounded unordered candidate set \u5e76\u4ee4\u6b63\u5411 transfer \u4e3a\u96f6\u6216\u53d7\u4fdd\u62a4 fresh-noise\uff1b\u53ea\u6709 dominance gap \u4e25\u683c\u5927\u4e8e\u8bef\u5dee\u754c\u3001\u72ec\u7acb selector \u4e00\u81f4\u4e14\u5b8c\u6574 provenance \u5b58\u5728\u65f6\u624d\u53ef deterministic prune\u3002\u5206\u6570 margin \u81ea\u8eab\u4e0d\u80fd\u8986\u76d6 phase bias\u3002"
+      "phase_state": "PhaseState 至少记录 outer_cycle_id、round_in_cycle、schedule_phase、previous_trigger、operation_order_version、source-selection procedure、随机种子 lineage 和 horizon_remaining。它是 restart policy 的必需输入，不得从 endpoint score 隐式推断。",
+      "horizon_requirement": "校准和 candidate ranking 必须声明后续 horizon H；H=1 证据不得证明 H>1 continuation 足够。若最小 continuation class 随 H 改变，engine 必须保留足够 phase memory 或拒绝该 schedule。",
+      "branch_ambiguity": "在 score gap 小于等于 calibrated uncertainty radius 时，保留 bounded unordered candidate set 并令正向 transfer 为零或受保护 fresh-noise；只有 dominance gap 严格大于误差界、独立 selector 一致且完整 provenance 存在时才可 deterministic prune。分数 margin 自身不能覆盖 phase bias。"
     },
     "cross_model_adapter_program": {
       "first_verified_candidate": "external_baselines/FlowMol at git commit 77cae22174b7792b0e25e9e0414038420736d841. Its FlowMol3 readme identifies a 2025 preprint and code exposes integrate/step over x/a/c/e features. It is an unconditional 3D generator, so it validates public state/restart mechanics but cannot alone validate pocket-conditioned claims.",
-      "candidate_admission": "\u6bcf\u4e2a 2025/2026 candidate \u5148\u767b\u8bb0 paper/repository/license/commit/date\u3001\u6a21\u578b\u4efb\u52a1\u3001\u6570\u636e\u548c\u539f\u8bba\u6587\u6307\u6807\uff1b\u518d\u505a\u4ee3\u7801\u7ea7\u8d44\u683c\u5ba1\u8ba1\uff1a\u5b9e\u9645 ODE/vector-field integration call\u3001prior/state export\u3001condition injection boundary\u3001\u8fde\u7eed\u4e0e\u79bb\u6563\u901a\u9053\u3001detached restart \u53ef\u5b9e\u73b0\u6027\u3001\u79cd\u5b50/\u8f68\u8ff9\u53ef\u8ffd\u6eaf\u6027\u548c\u53ef\u7528\u8bc4\u6d4b\u3002\u7f3a\u4efb\u4f55\u9879\u5373\u4e3a unsupported\uff0c\u4e0d\u7528 marketing/SOTA \u6807\u7b7e\u8865\u8db3\u3002",
-      "adapter_parity_gate": "\u6bcf\u4e2a adapter \u5fc5\u987b\u5148\u901a\u8fc7\uff1abeta=0 \u7684\u539f\u751f single-round parity\uff1b\u56fa\u5b9a seed \u7684 endpoint/trace digest\uff1b\u6b63 beta \u4ec5\u6539\u53d8\u58f0\u660e restart boundary\uff1bsource detach\uff1b\u9519\u8bef shape/channel/order \u5931\u8d25\u5173\u95ed\uff1b\u4e0d\u4fee\u6539\u7b2c\u4e09\u65b9\u5de5\u4f5c\u6811\uff1b\u76f8\u540c compute/round budget \u4e0b\u7684 disabled/fixed/dynamic paired controls\u3002",
-      "generality_claim_gate": "\u53ea\u6709\u5728\u81f3\u5c11\u4e00\u4e2a\u53e3\u888b\u6761\u4ef6\u6a21\u578b\u4e0e\u4e00\u4e2a\u4e0d\u540c state/integrator family \u7684\u6a21\u578b\u90fd\u901a\u8fc7 parity\u3001\u5408\u540c\u548c target-disjoint paired evaluation \u540e\uff0c\u624d\u53ef\u79f0\u4e3a\u8de8\u6a21\u578b inference-interface evidence\u3002\u65e0\u6761\u4ef6 FlowMol3 \u53ea\u53ef\u79f0\u4e3a\u63a5\u53e3\u673a\u5236\u7684\u8fc1\u79fb\u9a8c\u8bc1\uff0c\u4e0d\u5f97\u7528\u4e8e\u53e3\u888b\u836f\u7269\u751f\u6210\u6027\u80fd\u6216 2025/2026 SOTA \u6cdb\u5316\u58f0\u660e\u3002"
+      "candidate_admission": "每个 2025/2026 candidate 先登记 paper/repository/license/commit/date、模型任务、数据和原论文指标；再做代码级资格审计：实际 ODE/vector-field integration call、prior/state export、condition injection boundary、连续与离散通道、detached restart 可实现性、种子/轨迹可追溯性和可用评测。缺任何项即为 unsupported，不用 marketing/SOTA 标签补足。",
+      "adapter_parity_gate": "每个 adapter 必须先通过：beta=0 的原生 single-round parity；固定 seed 的 endpoint/trace digest；正 beta 仅改变声明 restart boundary；source detach；错误 shape/channel/order 失败关闭；不修改第三方工作树；相同 compute/round budget 下的 disabled/fixed/dynamic paired controls。",
+      "generality_claim_gate": "只有在至少一个口袋条件模型与一个不同 state/integrator family 的模型都通过 parity、合同和 target-disjoint paired evaluation 后，才可称为跨模型 inference-interface evidence。无条件 FlowMol3 只可称为接口机制的迁移验证，不得用于口袋药物生成性能或 2025/2026 SOTA 泛化声明。"
     },
     "two_planes": {
-      "integrity_plane": "\u4fdd\u7559\u73b0\u6709 detached source state\u3001source_round\u3001evaluator provenance\u3001condition trace\u3001freeze contract \u4e0e\u6240\u6709\u539f\u59cb metric \u8bb0\u5f55\u3002\u6743\u91cd\u4e0d\u5f97\u7be1\u6539\u3001\u5220\u9664\u6216\u628a proxy \u5347\u683c\u4e3a\u771f\u5b9e metric\u3002",
-      "influence_plane": "\u52a8\u6001\u6743\u91cd\u53ea\u7f29\u653e coordinate/charge/pair \u7684 restart memory fraction\u3001freeze admission \u4e0e\u4e0b\u4e00\u8f6e condition-delta \u4e0a\u9650\uff1b\u4e0d\u80fd\u76f4\u63a5\u6539\u5199\u7ec8\u7aef\u5019\u9009\u9009\u62e9\u3001\u539f\u59cb ODE velocity \u6216\u6a21\u578b\u53c2\u6570\u3002"
+      "integrity_plane": "保留现有 detached source state、source_round、evaluator provenance、condition trace、freeze contract 与所有原始 metric 记录。权重不得篡改、删除或把 proxy 升格为真实 metric。",
+      "influence_plane": "动态权重只缩放 coordinate/charge/pair 的 restart memory fraction、freeze admission 与下一轮 condition-delta 上限；不能直接改写终端候选选择、原始 ODE velocity 或模型参数。"
     },
-    "atomic_source_bundle": "\u6bcf\u4e2a\u53ef\u7528 source \u5fc5\u987b\u662f\u540c\u4e00 source_round \u7684 RoundResultBundle\uff0c\u5305\u542b coordinate\u3001charge\u3001raw pair\u3001projected pair\u3001materialization/evaluator evidence\u3001trace digest \u548c provenance\u3002\u4e0d\u5f97\u628a round A \u7684 coordinates \u4e0e round B \u7684 pair/charge state \u91cd\u65b0\u62fc\u63a5\uff1b\u901a\u9053\u7ea7 gate \u53ef\u4ee5\u7f6e\u96f6\uff0c\u4f46\u975e\u96f6\u901a\u9053\u5fc5\u987b\u5f15\u7528\u540c\u4e00\u5df2\u9009 bundle\u3002",
+    "atomic_source_bundle": "每个可用 source 必须是同一 source_round 的 RoundResultBundle，包含 coordinate、charge、raw pair、projected pair、materialization/evaluator evidence、trace digest 和 provenance。不得把 round A 的 coordinates 与 round B 的 pair/charge state 重新拼接；通道级 gate 可以置零，但非零通道必须引用同一已选 bundle。",
     "channel_evidence": {
       "coordinate": [
         "materialization success and geometry/PoseBusters evidence",
@@ -158,11 +158,11 @@
       ]
     },
     "noncompact_noise_selection_contract": {
-      "frozen_envelope_ladder": "\u5728 run \u5f00\u59cb\u3001\u4efb\u4f55 endpoint score \u4ea7\u751f\u4e4b\u524d\uff0c\u6309 target pocket \u548c\u914d\u7f6e\u51bb\u7ed3 K_0 subset K_1 ... \u7684 compact-envelope ladder\u3002\u6bcf\u5c42\u540c\u65f6\u7ea6\u675f coordinate RMS/extent\u3001pocket-distance/contact support\u3001atom-count/graph complexity\u3001valence/sanitization\u3001pair entropy/projection loss \u548c internal geometry\u3002\u9608\u503c\u3001\u6765\u6e90\u7edf\u8ba1\u3001\u7248\u672c\u548c hash \u5fc5\u987b\u5199\u5165 manifest\u3002",
-      "local_uniformity_analogue": "\u5bf9\u6bcf\u4e2a source/channel\uff0c\u5728\u5c0f\u7684\u53d7\u63a7 restart perturbation \u4e0b\u6d4b\u91cf materialization/geometry/metric response \u7684\u7a33\u5b9a\u4e0b\u754c\u548c condition-sensitivity observable\u3002\u4f4e margin\u3001\u51e0\u4e4e\u5e73\u5766\u4f46\u8bef\u5dee\u5927\u7684\u54cd\u5e94\u3001\u6216\u8de8 seed \u7b26\u53f7\u7ffb\u8f6c\u5747\u662f degeneracy\uff0c\u800c\u975e\u53ef\u88ab\u9ad8\u5355\u70b9\u5206\u6570\u62b5\u6d88\u7684\u5c40\u90e8\u6210\u529f\u3002",
-      "tail_budget": "\u5bf9\u6bcf\u8f6e archive \u8ba1\u7b97\u6bcf\u5c42\u4e4b\u5916\u7684\u5019\u9009\u6570\u3001\u53bb\u91cd\u540e\u7684 transfer-score mass\u3001restart-write mass \u548c evaluator/missing-evidence mass\u3002\u53ea\u6709\u5728\u51bb\u7ed3\u5c42\u7684 tail budget \u8fbe\u6807\u3001\u6216\u6309\u9884\u6ce8\u518c ladder \u6269\u5c55\u540e\u4ecd\u8fbe\u6807\uff0c\u624d\u5141\u8bb8 selection\uff1b\u4e0d\u5f97\u4ee5\u5f53\u524d noise/score \u4e34\u65f6\u5b9a\u4e49\u4e00\u4e2a epsilon-dependent compact set\u3002",
-      "complement_exclusion": "\u6240\u6709\u4e0d\u5728\u5df2\u5206\u914d valid bundle/envelope \u7684 endpoint \u5fc5\u987b\u6709\u660e\u786e blocker\uff1amaterialization/geometry failure\u3001metric provenance missing\u3001out-of-envelope\u3001lineage invalid \u6216 unresolved. \u672a\u5206\u7c7b complement \u4e0d\u662f\u96f6\u8d28\u91cf\uff0c\u5fc5\u987b\u963b\u6b62\u6b63\u5411 transfer\u3002",
-      "finite_prefix_boundary": "round \u6570\u6709\u9650\u65f6\u4ec5\u62a5\u544a empirical envelope concentration \u4e0e tail-budget status\uff1b\u7981\u6b62\u8f93\u51fa tail_selection_certified=true\uff0c\u9664\u975e\u672a\u6765\u5b58\u5728\u4e0e exact Gaussian hypotheses \u76f8\u5339\u914d\u7684\u72ec\u7acb\u8bc1\u660e\u3002"
+      "frozen_envelope_ladder": "在 run 开始、任何 endpoint score 产生之前，按 target pocket 和配置冻结 K_0 subset K_1 ... 的 compact-envelope ladder。每层同时约束 coordinate RMS/extent、pocket-distance/contact support、atom-count/graph complexity、valence/sanitization、pair entropy/projection loss 和 internal geometry。阈值、来源统计、版本和 hash 必须写入 manifest。",
+      "local_uniformity_analogue": "对每个 source/channel，在小的受控 restart perturbation 下测量 materialization/geometry/metric response 的稳定下界和 condition-sensitivity observable。低 margin、几乎平坦但误差大的响应、或跨 seed 符号翻转均是 degeneracy，而非可被高单点分数抵消的局部成功。",
+      "tail_budget": "对每轮 archive 计算每层之外的候选数、去重后的 transfer-score mass、restart-write mass 和 evaluator/missing-evidence mass。只有在冻结层的 tail budget 达标、或按预注册 ladder 扩展后仍达标，才允许 selection；不得以当前 noise/score 临时定义一个 epsilon-dependent compact set。",
+      "complement_exclusion": "所有不在已分配 valid bundle/envelope 的 endpoint 必须有明确 blocker：materialization/geometry failure、metric provenance missing、out-of-envelope、lineage invalid 或 unresolved. 未分类 complement 不是零质量，必须阻止正向 transfer。",
+      "finite_prefix_boundary": "round 数有限时仅报告 empirical envelope concentration 与 tail-budget status；禁止输出 tail_selection_certified=true，除非未来存在与 exact Gaussian hypotheses 相匹配的独立证明。"
     },
     "cosine_annealed_restart_noise_budget": {
       "schedule_family": "For a frozen outer cycle of length L, propose a fresh-noise cap n_cap(r)=n_min+(n_max-n_min)*(1+cos(pi*u_r))/2, u_r=r/(L-1) for L>1. Thus exploration noise is high at cycle start and smoothly anneals; restart-memory cap is derived only through a separately calibrated mixing map, never assumed equal to 1-n_cap because the current prior-RMS-preserving mixer renormalizes states.",
@@ -191,28 +191,28 @@
   "tasks": [
     {
       "id": "DTB-R0",
-      "title": "\u51bb\u7ed3\u6570\u5b66\u5230 reflow \u7684\u8bbe\u8ba1\u8fb9\u754c\u548c\u53cd\u4f8b\u76ee\u5f55",
+      "title": "冻结数学到 reflow 的设计边界和反例目录",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference",
       "implementation": [
-        "\u65b0\u589e\u7ec4\u4ef6\u5185\u8bbe\u8ba1\u8bf4\u660e\uff0c\u9010\u6761\u6620\u5c04 NSR \u7684\u5c40\u90e8/\u5168\u5c40\u9009\u62e9\u539f\u5219\u3001\u975e\u7ed3\u8bba\u548c FlowA \u8fd0\u884c\u65f6\u9650\u5236\uff1b\u4e0d\u5f97\u5c06\u5176\u8868\u8ff0\u4e3a neural posterior \u6216\u6027\u80fd\u7406\u8bba\u3002",
-        "\u8bb0\u5f55\u81f3\u5c11\u516d\u4e2a hostile cases\uff1a\u5355\u6b21\u9ad8 GNINA \u4f46\u51e0\u4f55\u5931\u8d25\u3001\u4f4e\u4e0d\u786e\u5b9a\u5ea6\u5374\u8de8 seed \u4e0d\u7a33\u5b9a\u3001\u540c\u6e90\u591a\u6307\u6807\u91cd\u590d\u653e\u5927\u3001\u5386\u53f2 best \u4e0e\u5f53\u524d state \u7684\u62fc\u63a5\u3001\u64a4\u9500/\u5199\u5165\u5931\u8d25\u7684 source\u3001\u672a materialize proxy \u7684\u4f2a\u9ad8 confidence\u3002",
-        "\u9501\u5b9a\u7b2c\u4e00\u671f\u8303\u56f4\u4e3a previous-round atomic bundle\uff0c\u4e0d\u6269\u5927\u5230\u8de8 sample memory \u6216\u8de8 target candidate retrieval\u3002"
+        "新增组件内设计说明，逐条映射 NSR 的局部/全局选择原则、非结论和 FlowA 运行时限制；不得将其表述为 neural posterior 或性能理论。",
+        "记录至少六个 hostile cases：单次高 GNINA 但几何失败、低不确定度却跨 seed 不稳定、同源多指标重复放大、历史 best 与当前 state 的拼接、撤销/写入失败的 source、未 materialize proxy 的伪高 confidence。",
+        "锁定第一期范围为 previous-round atomic bundle，不扩大到跨 sample memory 或跨 target candidate retrieval。"
       ],
       "acceptance": [
-        "\u6587\u6863\u660e\u786e\u6240\u6709 external evaluator\u3001proxy\u3001claim \u548c raw-model \u8fb9\u754c\u3002",
-        "\u6bcf\u4e2a hostile case \u5bf9\u5e94\u4e00\u4e2a fail-closed test fixture \u548c\u9884\u671f ledger/audit code\u3002",
-        "\u4e0d\u6539\u53d8\u73b0\u6709 inference-external/non-mainline Lean contract\u3002"
+        "文档明确所有 external evaluator、proxy、claim 和 raw-model 边界。",
+        "每个 hostile case 对应一个 fail-closed test fixture 和预期 ledger/audit code。",
+        "不改变现有 inference-external/non-mainline Lean contract。"
       ],
       "completion_evidence": [
-        "pocket_modules/mechanisms/inference/adaptive_reflow/DESIGN_BOUNDARY.md"
+        "DESIGN_BOUNDARY.md"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-NC1",
-      "title": "\u5b9a\u4e49\u975e\u7d27 endpoint archive \u7684 fixed-envelope\u3001tail budget \u4e0e\u8865\u96c6\u95e8",
+      "title": "定义非紧 endpoint archive 的 fixed-envelope、tail budget 与补集门",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
@@ -220,10 +220,10 @@
         "DTB-R0"
       ],
       "implementation": [
-        "\u5b9a\u4e49 run-start FrozenEnvelopeManifest \u548c\u9884\u6ce8\u518c K_0 subset K_1 ... exhaustion ladder\uff1b\u6bcf\u5c42\u9608\u503c\u5fc5\u987b\u6765\u81ea\u8bad\u7ec3/\u5f00\u53d1\u671f\u56fa\u5b9a\u7edf\u8ba1\u548c target pocket \u8f93\u5165\uff0c\u4e0d\u80fd\u8bfb\u53d6\u8be5 run \u7684 winner metric \u540e\u518d\u786e\u5b9a\u3002",
-        "\u5b9e\u73b0 endpoint \u7684 envelope classification\uff1acoordinate extent/RMS\u3001pocket-contact support\u3001graph/atom complexity\u3001sanitization/valence\u3001pair entropy/projection loss\u3001internal geometry \u548c evaluator provenance\u3002\u6bcf\u4e2a endpoint \u5fc5\u987b\u6070\u597d\u5c5e\u4e8e\u4e00\u4e2a allocated valid bundle \u6216\u4e00\u4e2a\u660e\u786e complement blocker\u3002",
-        "\u5b9e\u73b0 per-round/per-cycle tail budget\uff1aarchive count\u3001deduplicated transfer-score mass\u3001requested and accepted restart-write mass\u3001unknown/missing-evidence mass\u3001\u6bcf\u4e2a envelope layer \u7684\u8d85\u754c\u8d28\u91cf\uff1b\u8d85\u9884\u7b97\u65f6\u963b\u6b62 positive transfer \u6216\u89e6\u53d1\u53d7\u63a7 fresh-noise restart\u3002",
-        "\u660e\u786e\u8be5\u6a21\u5757\u53ea\u4ea7\u751f empirical noncompact diagnostics\u3002\u8fd0\u884c\u6b21\u6570\u6709\u9650\u65f6\uff0c\u4e0d\u5f97\u5c06\u4efb\u4f55 tail budget \u547d\u540d\u4e3a posterior tightness \u6216 certified selection\u3002"
+        "定义 run-start FrozenEnvelopeManifest 和预注册 K_0 subset K_1 ... exhaustion ladder；每层阈值必须来自训练/开发期固定统计和 target pocket 输入，不能读取该 run 的 winner metric 后再确定。",
+        "实现 endpoint 的 envelope classification：coordinate extent/RMS、pocket-contact support、graph/atom complexity、sanitization/valence、pair entropy/projection loss、internal geometry 和 evaluator provenance。每个 endpoint 必须恰好属于一个 allocated valid bundle 或一个明确 complement blocker。",
+        "实现 per-round/per-cycle tail budget：archive count、deduplicated transfer-score mass、requested and accepted restart-write mass、unknown/missing-evidence mass、每个 envelope layer 的超界质量；超预算时阻止 positive transfer 或触发受控 fresh-noise restart。",
+        "明确该模块只产生 empirical noncompact diagnostics。运行次数有限时，不得将任何 tail budget 命名为 posterior tightness 或 certified selection。"
       ],
       "files": [
         "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory.py",
@@ -233,19 +233,22 @@
         "docs/ITERATIVE_ODE_CONDITION_TRACE_SCHEMA.json"
       ],
       "acceptance": [
-        "\u540c\u4e00 input/config \u5728\u4e0d\u540c round score \u4e0b\u5f97\u5230\u76f8\u540c envelope ladder\uff1b\u4e0d\u4f1a\u53d1\u751f score-dependent cutoff \u6f02\u79fb\u3002",
-        "out-of-envelope\u3001\u672a\u5206\u7c7b\u6216\u7f3a\u5c11 provenance \u7684 endpoint \u5747\u4ea7\u751f blocker\uff0c\u4e14 beta=0\u3002",
-        "duplicate evidence/candidate \u4e0d\u589e\u52a0 tail-budget allowance\uff1barchive \u589e\u957f\u4e0d\u5141\u8bb8\u7ed5\u8fc7\u603b\u8d28\u91cf\u4e0a\u9650\u3002",
-        "ledger \u660e\u786e\u5199\u5165 empirical_only \u548c finite_prefix_only\uff0c\u7981\u6b62\u751f\u6210 tail_selection_certified \u5b57\u6bb5\u3002"
+        "同一 input/config 在不同 round score 下得到相同 envelope ladder；不会发生 score-dependent cutoff 漂移。",
+        "out-of-envelope、未分类或缺少 provenance 的 endpoint 均产生 blocker，且 beta=0。",
+        "duplicate evidence/candidate 不增加 tail-budget allowance；archive 增长不允许绕过总质量上限。",
+        "ledger 明确写入 empirical_only 和 finite_prefix_only，禁止生成 tail_selection_certified 字段。"
       ],
       "completion_evidence": [
-        "pocket_modules/mechanisms/inference/adaptive_reflow/envelope_manifest.py"
+        "adaptive_reflow/envelope/manifest.py",
+        "adaptive_reflow/envelope/classifier.py",
+        "adaptive_reflow/envelope/tail_budget.py",
+        "adaptive_reflow/contracts/envelope.py"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-R1",
-      "title": "\u5efa\u7acb typed RoundResultBundle \u548c channel evidence \u5408\u540c",
+      "title": "建立 typed RoundResultBundle 和 channel evidence 合同",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference",
@@ -253,9 +256,9 @@
         "DTB-R0"
       ],
       "implementation": [
-        "\u5728 adaptive_reflow \u6a21\u5757\u5b9a\u4e49 dataclass/schema\uff1aRoundResultBundle\u3001ChannelTransferEvidence\u3001ChannelTransferDecision \u548c DynamicRestartTransferLedger\u3002",
-        "\u8981\u6c42 source_round\u3001round_count\u3001sample/run identity\u3001state tensor shape/detach status\u3001metric/evaluator provenance\u3001condition and trace digest\u3001feedback mode\u3001calibration artifact ref\u3001raw/projected pair coherence \u5168\u90e8\u53ef\u9a8c\u8bc1\u3002",
-        "\u628a coordinate/charge/pair \u4f5c\u4e3a\u663e\u5f0f\u901a\u9053\uff1b\u4e0d\u63a5\u53d7\u4efb\u610f dict\u3001bool-as-float\u3001NaN/infinity\u3001\u672a\u77e5 schema\u3001\u672a\u6765 source round\u3001\u91cd\u590d bundle id \u6216\u4e0d\u5339\u914d\u7684 state shape\u3002"
+        "在 adaptive_reflow 模块定义 dataclass/schema：RoundResultBundle、ChannelTransferEvidence、ChannelTransferDecision 和 DynamicRestartTransferLedger。",
+        "要求 source_round、round_count、sample/run identity、state tensor shape/detach status、metric/evaluator provenance、condition and trace digest、feedback mode、calibration artifact ref、raw/projected pair coherence 全部可验证。",
+        "把 coordinate/charge/pair 作为显式通道；不接受任意 dict、bool-as-float、NaN/infinity、未知 schema、未来 source round、重复 bundle id 或不匹配的 state shape。"
       ],
       "files": [
         "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory.py",
@@ -265,18 +268,22 @@
         "tests/test_adaptive_reflow_reinference_plan_contract.py"
       ],
       "acceptance": [
-        "\u6240\u6709\u975e\u96f6 restart write \u90fd\u80fd\u56de\u6307\u4e00\u4e2a\u552f\u4e00 atomic source bundle\uff1b\u6d4b\u8bd5\u8bc1\u660e\u4e0d\u80fd\u8de8 round \u62fc\u63a5 state\u3002",
-        "\u672a\u901a\u8fc7 contract \u7684 bundle \u4e0d\u4ea7\u751f sampler controls\uff0c\u4e14 ledger \u660e\u786e\u8bb0\u5f55 blocker\u3002",
-        "\u65e7 payload \u5728 feature disabled \u65f6\u4fdd\u6301\u884c\u4e3a\u4e0e\u5b57\u6bb5\u517c\u5bb9\u3002"
+        "所有非零 restart write 都能回指一个唯一 atomic source bundle；测试证明不能跨 round 拼接 state。",
+        "未通过 contract 的 bundle 不产生 sampler controls，且 ledger 明确记录 blocker。",
+        "旧 payload 在 feature disabled 时保持行为与字段兼容。"
       ],
       "completion_evidence": [
-        "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory_types.py"
+        "adaptive_reflow/contracts/bundle.py",
+        "adaptive_reflow/contracts/decision.py",
+        "adaptive_reflow/contracts/types.py",
+        "adaptive_reflow/contracts/hashes.py",
+        "adaptive_reflow/contracts/validators.py"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-R2",
-      "title": "\u5b9e\u73b0\u53ef\u6821\u51c6\u7684\u901a\u9053\u7ea7\u52a8\u6001\u6536\u7f29\u89c4\u5219",
+      "title": "实现可校准的通道级动态收缩规则",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference",
@@ -284,24 +291,25 @@
         "DTB-R1"
       ],
       "implementation": [
-        "\u5b9e\u73b0\u7eaf\u51fd\u6570\uff0c\u8f93\u5165\u5df2\u9a8c\u8bc1\u7684 bundle/evidence/policy\uff0c\u8f93\u51fa per-channel gate\u3001raw factors\u3001evidence score\u3001scheduled cap\u3001bounded target fraction\u3001fresh-noise floor \u548c audit reason\u3002",
-        "calibration_lower_bound \u5fc5\u987b\u6765\u81ea\u51bb\u7ed3\u7684\u3001\u65f6\u95f4\u5207\u5206\u7684 calibration artifact\uff1bstability_lower_bound \u6765\u81ea\u540c\u4e00 target/condition \u5bb6\u65cf\u4e0b\u7684\u53d7\u63a7 seed/condition perturbation\uff1b\u6837\u672c\u4e0d\u8db3\u65f6\u5408\u5e76\u5230\u4fdd\u5b88\u7236\u6876\u6216 gate=0\u3002",
-        "ambiguity \u7531\u72ec\u7acb evaluator/proxy/seed \u5206\u6b67\u548c condition-sensitivity \u4e0d\u4e00\u81f4\u7ed9\u51fa\uff1bdegeneracy penalty \u8986\u76d6\u4f4e pair margin\u3001large projection loss\u3001materialization failure\u3001geometry failure \u548c\u8fc7\u671f source\u3002",
-        "\u628a\u65e7 schedule \u89e3\u91ca\u4e3a cap \u800c\u975e\u9ed8\u8ba4\u4fdd\u7559\u989d\u5ea6\uff1a\u65e0\u8bc1\u636e\u6216\u88ab\u62d2 source \u7684 beta \u4e3a\u96f6\uff0c\u907f\u514d\u56fa\u5b9a memory \u5728\u5931\u8d25\u540e\u7ee7\u7eed\u5199\u56de\u3002"
+        "实现纯函数，输入已验证的 bundle/evidence/policy，输出 per-channel gate、raw factors、evidence score、scheduled cap、bounded target fraction、fresh-noise floor 和 audit reason。",
+        "calibration_lower_bound 必须来自冻结的、时间切分的 calibration artifact；stability_lower_bound 来自同一 target/condition 家族下的受控 seed/condition perturbation；样本不足时合并到保守父桶或 gate=0。",
+        "ambiguity 由独立 evaluator/proxy/seed 分歧和 condition-sensitivity 不一致给出；degeneracy penalty 覆盖低 pair margin、large projection loss、materialization failure、geometry failure 和过期 source。",
+        "把旧 schedule 解释为 cap 而非默认保留额度：无证据或被拒 source 的 beta 为零，避免固定 memory 在失败后继续写回。"
       ],
       "acceptance": [
-        "\u6240\u6709 factor \u90fd\u5728 [0,1]\uff0c\u5e76\u5177\u5907\u5355\u8c03\u6d4b\u8bd5\uff1a\u589e\u52a0\u4e0d\u786e\u5b9a\u6027\u3001\u5206\u6b67\u3001\u9000\u5316\u6216 source age \u4e0d\u80fd\u63d0\u9ad8 beta\uff1b\u63d0\u9ad8\u7a33\u5b9a\u6027/\u6821\u51c6\u4e0b\u754c\u5728\u5176\u4ed6\u5b57\u6bb5\u4e0d\u53d8\u65f6\u4e0d\u80fd\u964d\u4f4e beta\u3002",
-        "\u65e0 calibration\u3001proxy-only claim mode\u3001missing materialization\u3001failed sensitivity gate \u6216\u5b8c\u6574\u6027\u9519\u8bef\u5747\u4ea7\u751f beta=0\u3002",
-        "final coordinate restart \u4ecd\u6ee1\u8db3\u73b0\u6709 prior-RMS-preserving contract\uff0ccharge/pair \u7684 freeze \u8bed\u4e49\u4e0d\u88ab\u6539\u53d8\u3002"
+        "所有 factor 都在 [0,1]，并具备单调测试：增加不确定性、分歧、退化或 source age 不能提高 beta；提高稳定性/校准下界在其他字段不变时不能降低 beta。",
+        "无 calibration、proxy-only claim mode、missing materialization、failed sensitivity gate 或完整性错误均产生 beta=0。",
+        "final coordinate restart 仍满足现有 prior-RMS-preserving contract，charge/pair 的 freeze 语义不被改变。"
       ],
       "completion_evidence": [
-        "pocket_modules/mechanisms/inference/adaptive_reflow/channel_rule.py"
+        "adaptive_reflow/frame/channel_rule.py",
+        "adaptive_reflow/contracts/bundle.py"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-NC2",
-      "title": "\u628a\u975e\u7d27\u5c3e\u90e8\u53ef\u63a5\u53d7\u6027\u63a5\u5165\u52a8\u6001\u4f20\u9012\u6743\u91cd",
+      "title": "把非紧尾部可接受性接入动态传递权重",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference",
@@ -310,24 +318,26 @@
         "DTB-R2"
       ],
       "implementation": [
-        "\u5c06 tail_admissibility\u3001complement_excluded\u3001frozen_envelope_manifest_hash\u3001tail_budget_row_ref \u548c finite_prefix_only \u7eb3\u5165 ChannelTransferEvidence \u4e0e DynamicRestartTransferLedger\u3002",
-        "\u5c06 e(bundle, channel) \u6539\u6210 local calibrated evidence \u4e0e global tail admissibility \u7684\u4e58\u6027 gate\uff1blocal high score \u4e0d\u80fd\u8865\u507f tail budget\u3001complement \u6216 lineage \u7684\u5931\u8d25\u3002",
-        "\u4e3a\u4f4e\u5c40\u90e8 coercivity \u7684\u5de5\u7a0b\u7c7b\u6bd4\u6dfb\u52a0\u9000\u5316\u68c0\u6d4b\uff1a\u53d7\u63a7 restart perturbation \u5bf9 endpoint metric/materialization \u4ea7\u751f\u4e0d\u7a33\u5b9a\u3001\u7b26\u53f7\u53cd\u8f6c\u3001\u6781\u4f4e margin \u6216 large projection loss \u65f6\uff0c\u589e\u52a0 degeneracy penalty \u5e76\u7981\u6b62 freeze admission\u3002",
-        "\u5728 same-sample archive \u542f\u7528\u524d\uff0cprevious endpoint \u4e5f\u5fc5\u987b\u7ecf\u8fc7\u4e0a\u8ff0 tail/complement gate\uff0c\u907f\u514d\u628a immediate previous \u8bef\u5f53\u4f5c\u5929\u7136\u7d27\u7684\u5355\u4e00\u5019\u9009\u3002"
+        "将 tail_admissibility、complement_excluded、frozen_envelope_manifest_hash、tail_budget_row_ref 和 finite_prefix_only 纳入 ChannelTransferEvidence 与 DynamicRestartTransferLedger。",
+        "将 e(bundle, channel) 改成 local calibrated evidence 与 global tail admissibility 的乘性 gate；local high score 不能补偿 tail budget、complement 或 lineage 的失败。",
+        "为低局部 coercivity 的工程类比添加退化检测：受控 restart perturbation 对 endpoint metric/materialization 产生不稳定、符号反转、极低 margin 或 large projection loss 时，增加 degeneracy penalty 并禁止 freeze admission。",
+        "在 same-sample archive 启用前，previous endpoint 也必须经过上述 tail/complement gate，避免把 immediate previous 误当作天然紧的单一候选。"
       ],
       "acceptance": [
-        "\u540c\u6837\u7684 local metric \u8bc1\u636e\u5728 tail budget \u8fbe\u6807\u4e0e\u4e0d\u8fbe\u6807\u4e24\u79cd fixture \u4e0b\u4ea7\u751f\u4e0d\u540c\u4e14\u53ef\u89e3\u91ca\u7684 beta\uff1b\u540e\u8005\u5fc5\u987b\u4e3a\u96f6\u3002",
-        "\u672a\u77e5 complement\u3001flat/unstable perturbation response\u3001\u7f3a envelope hash \u548c\u6709\u9650 prefix \u90fd\u4e0d\u80fd\u88ab\u5e8f\u5217\u5316\u4e3a\u6b63\u5411\u8d28\u91cf\u51ed\u8bc1\u3002",
-        "\u6bcf\u4e2a gate/factor \u90fd\u5728 trace \u5185\u53ef\u590d\u7b97\uff0c\u5e76\u4fdd\u7559 source/evaluator provenance\u3002"
+        "同样的 local metric 证据在 tail budget 达标与不达标两种 fixture 下产生不同且可解释的 beta；后者必须为零。",
+        "未知 complement、flat/unstable perturbation response、缺 envelope hash 和有限 prefix 都不能被序列化为正向质量凭证。",
+        "每个 gate/factor 都在 trace 内可复算，并保留 source/evaluator provenance。"
       ],
       "completion_evidence": [
-        "pocket_modules/mechanisms/inference/adaptive_reflow/envelope_manifest.py"
+        "adaptive_reflow/envelope/manifest.py",
+        "adaptive_reflow/contracts/envelope.py",
+        "adaptive_reflow/policy/stratification.py"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-NA1",
-      "title": "\u7814\u7a76\u5e76\u5b9e\u73b0 guarded cosine annealed outer restart-noise budget",
+      "title": "研究并实现 guarded cosine annealed outer restart-noise budget",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
@@ -335,10 +345,10 @@
         "DTB-NC2"
       ],
       "implementation": [
-        "\u65b0\u589e outer restart noise schedule \u7684\u7eaf\u51fd\u6570\u548c versioned config\uff1aconstant\u3001linear\u3001cosine\u3001cosine-with-guarded-restart\u3002cosine \u5bf9 fresh-noise capacity \u9000\u706b\uff0c\u4e0d\u80fd\u4fee\u6539\u8bad\u7ec3\u65f6 flow-time/noise interpolation \u6216\u4f2a\u79f0\u4e3a diffusion scheduler\u3002",
-        "\u5148\u4ee5 controlled synthetic tensors \u6821\u51c6 current prior-RMS-preserving mixer \u4e2d fresh_noise_cap\u3001alpha_noise\u3001beta_memory\u3001\u5b9e\u9645 restart RMS/dispersion \u7684\u5173\u7cfb\uff1b\u5728\u672a\u6821\u51c6\u524d\uff0c\u7981\u6b62\u5c06 1-beta \u5f53\u4f5c\u7269\u7406\u566a\u58f0\u65b9\u5dee\u3002",
-        "\u4e3a\u6bcf\u4e2a cycle \u9884\u5148\u51bb\u7ed3 n_min/n_max\u3001cycle length\u3001per-channel caps\u3001fresh-noise floor\u3001symmetric delta caps \u548c\u5141\u8bb8 restart trigger\u3002\u4ec5 tail-budget violation\u3001unclassified complement\u3001materialization/geometry regression\u3001calibration drift \u6216 valid-evidence no-progress \u53ef\u89e6\u53d1 high-noise restart\u3002",
-        "restart \u65f6\u6e05\u9664 prior endpoint transfer eligibility\uff0c\u91cd\u65b0\u4ece fresh prior \u5f00\u59cb cycle\uff1b\u5199\u5165 cycle_id\u3001trigger\u3001discarded source bundle ids\u3001noise capacity before/after \u548c\u672a\u89e3\u51b3 metric deficit\u3002"
+        "新增 outer restart noise schedule 的纯函数和 versioned config：constant、linear、cosine、cosine-with-guarded-restart。cosine 对 fresh-noise capacity 退火，不能修改训练时 flow-time/noise interpolation 或伪称为 diffusion scheduler。",
+        "先以 controlled synthetic tensors 校准 current prior-RMS-preserving mixer 中 fresh_noise_cap、alpha_noise、beta_memory、实际 restart RMS/dispersion 的关系；在未校准前，禁止将 1-beta 当作物理噪声方差。",
+        "为每个 cycle 预先冻结 n_min/n_max、cycle length、per-channel caps、fresh-noise floor、symmetric delta caps 和允许 restart trigger。仅 tail-budget violation、unclassified complement、materialization/geometry regression、calibration drift 或 valid-evidence no-progress 可触发 high-noise restart。",
+        "restart 时清除 prior endpoint transfer eligibility，重新从 fresh prior 开始 cycle；写入 cycle_id、trigger、discarded source bundle ids、noise capacity before/after 和未解决 metric deficit。"
       ],
       "files": [
         "pocket_modules/mechanisms/inference/noise_bias/restart_bias.py",
@@ -350,84 +360,102 @@
         "tests/test_adaptive_reflow_orchestration_contract.py"
       ],
       "acceptance": [
-        "cosine endpoints\u3001\u5355\u8c03 cycle \u5185\u53d8\u5316\u3001L=1 edge case\u3001restart reset\u3001\u6240\u6709 cap/floor/delta conflict \u5747\u6709 deterministic tests\u3002",
-        "failed dynamic-transfer gate \u65f6 cosine capacity \u4e0d\u80fd\u5199\u5165 previous state\uff1b\u4ec5\u5141\u8bb8\u65b0\u7684 fresh noise\u3002",
-        "spectral_budget.py \u4ecd\u660e\u786e\u5c06 physical smoothing variance \u4e0e restart-memory coefficient \u5206\u5f00\uff0c\u4e14 finite prefix \u4e0d\u5f97\u5347\u7ea7\u4e3a tail certificate\u3002",
-        "disabled/constant schedule \u4e0e\u73b0\u6709\u884c\u4e3a\u517c\u5bb9\uff1bcosine route \u4ec5\u7531\u663e\u5f0f config \u542f\u7528\u3002"
+        "cosine endpoints、单调 cycle 内变化、L=1 edge case、restart reset、所有 cap/floor/delta conflict 均有 deterministic tests。",
+        "failed dynamic-transfer gate 时 cosine capacity 不能写入 previous state；仅允许新的 fresh noise。",
+        "spectral_budget.py 仍明确将 physical smoothing variance 与 restart-memory coefficient 分开，且 finite prefix 不得升级为 tail certificate。",
+        "disabled/constant schedule 与现有行为兼容；cosine route 仅由显式 config 启用。"
       ],
       "completion_evidence": [
-        "pocket_modules/mechanisms/inference/adaptive_reflow/cosine_schedule.py"
+        "adaptive_reflow/schedule/cosine.py",
+        "adaptive_reflow/diagnostics/ledger.py"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-R3",
-      "title": "\u66ff\u6362\u53ea\u589e\u4e0d\u51cf\u7684 dynamic-control \u5408\u5e76\u5e76\u8bf7\u6c42 core runtime \u63a5\u7ebf",
+      "title": "替换只增不减的 dynamic-control 合并并请求 core runtime 接线",
       "priority": "P0",
-      "status": "pending",
+      "status": "completed",
       "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
       "depends_on": [
         "DTB-R2"
       ],
+      "completion_evidence": [
+        "adaptive_reflow/frame/merge.py",
+        "adaptive_reflow/writer/handoff.py",
+        "tests/test_frame/test_merge.py"
+      ],
+      "completed_at": "2026-08-25T22:00:00+08:00",
       "implementation": [
-        "\u5728\u672c\u7ec4\u4ef6\u63d0\u4f9b\u552f\u4e00\u7684 merge authority\uff1ascheduled cap\u3001dynamic transfer decision \u548c safety floor \u4ee5\u660e\u786e\u987a\u5e8f\u7ec4\u5408\uff0c\u652f\u6301\u53d7\u9650\u4e0a\u5347\u548c\u53d7\u9650\u4e0b\u964d\uff0c\u7981\u6b62\u5bf9 dynamic fraction \u4f7f\u7528\u65e0\u6761\u4ef6 max\u3002noise_bias \u53ea\u80fd\u63d0\u4f9b\u5df2\u6807\u6ce8\u4e3a diagnostic/calculation-input \u7684\u5019\u9009 ledger\uff0c\u4e0d\u5f97\u4f5c\u4e3a\u7b2c\u4e8c\u4e2a merge authority\u3002",
-        "\u5411 flowa-denovo-core \u63d0\u4ea4\u53ea\u8bfb handoff\uff0c\u66ff\u6362 transport/adaptive_reflow_runtime.py \u548c denovo_generation/proxy_reflow.py \u4e2d\u5bf9 dynamic memory fractions \u7684 max \u5408\u5e76\uff1bcore owner \u53ea\u63a5\u53d7 immutable FinalRestartPolicy \u5e76\u8d1f\u8d23\u8fd0\u884c\u65f6\u63a5\u7ebf\u4e0e\u517c\u5bb9\u6d4b\u8bd5\u3002",
-        "\u4fdd\u7559 disabled compatibility route\uff0c\u786e\u4fdd\u672a\u542f\u7528 feature \u65f6 current schedule/closed-loop \u884c\u4e3a\u4e0d\u53d8\uff1b\u4e0d\u5f97\u5728 adaptive reflow \u7ec4\u4ef6\u8de8 owner \u4fee\u6539 core runtime\u3002"
+        "在本组件提供唯一的 merge authority：scheduled cap、dynamic transfer decision 和 safety floor 以明确顺序组合，支持受限上升和受限下降，禁止对 dynamic fraction 使用无条件 max。noise_bias 只能提供已标注为 diagnostic/calculation-input 的候选 ledger，不得作为第二个 merge authority。",
+        "向 flowa-denovo-core 提交只读 handoff，替换 transport/adaptive_reflow_runtime.py 和 denovo_generation/proxy_reflow.py 中对 dynamic memory fractions 的 max 合并；core owner 只接受 immutable FinalRestartPolicy 并负责运行时接线与兼容测试。",
+        "保留 disabled compatibility route，确保未启用 feature 时 current schedule/closed-loop 行为不变；不得在 adaptive reflow 组件跨 owner 修改 core runtime。"
       ],
       "acceptance": [
-        "\u6d4b\u8bd5\u5c55\u793a\u5f53\u65b0\u8bc1\u636e\u53d8\u5dee\u3001\u88ab\u64a4\u9500\u6216\u5206\u6b67\u4e0a\u5347\u65f6 memory/charge/pair fraction \u80fd\u4e0b\u964d\uff0c\u5e76\u53d7\u6bcf\u8f6e delta cap \u548c fresh-noise floor \u9650\u5236\u3002",
-        "\u6ca1\u6709\u91cd\u590d\u7f29\u653e\uff1a\u6700\u7ec8 sampler fraction\u3001noise-bias ledger \u548c restart-memory beta \u5b8c\u5168\u4e00\u81f4\u3002",
-        "\u540c\u4e00 run \u4e2d adaptive_reflow \u4e0e standalone noise_bias \u90fd\u8bf7\u6c42 executable sampler_controls \u65f6\u660e\u786e\u62d2\u7edd\uff1bdiagnostic-only noise_bias \u4e0d\u6539\u53d8 FinalRestartPolicy\u3002",
-        "cross-component handoff \u8bb0\u8f7d schema\u3001\u8d23\u4efb\u3001\u517c\u5bb9\u8def\u5f84\u3001\u56de\u6eda flag \u548c\u76ee\u6807\u6d4b\u8bd5\u3002"
+        "测试展示当新证据变差、被撤销或分歧上升时 memory/charge/pair fraction 能下降，并受每轮 delta cap 和 fresh-noise floor 限制。",
+        "没有重复缩放：最终 sampler fraction、noise-bias ledger 和 restart-memory beta 完全一致。",
+        "同一 run 中 adaptive_reflow 与 standalone noise_bias 都请求 executable sampler_controls 时明确拒绝；diagnostic-only noise_bias 不改变 FinalRestartPolicy。",
+        "cross-component handoff 记载 schema、责任、兼容路径、回滚 flag 和目标测试。"
       ]
     },
     {
       "id": "DTB-R4",
-      "title": "\u5b9e\u73b0\u591a\u5019\u9009\u5168\u5c40\u8d28\u91cf\u9884\u7b97\u4f46\u4fdd\u6301 bundle \u4e00\u81f4\u6027",
+      "title": "实现多候选全局质量预算但保持 bundle 一致性",
       "priority": "P1",
-      "status": "pending",
+      "status": "completed",
       "owner": "flowa-multistep-reinference",
       "depends_on": [
         "DTB-NC1",
         "DTB-NC2",
         "DTB-R2"
       ],
+      "completion_evidence": [
+        "adaptive_reflow/policy/archive.py",
+        "tests/test_policy/test_archive.py"
+      ],
+      "completed_at": "2026-08-25T22:00:00+08:00",
       "implementation": [
-        "\u5728 previous-round \u6a21\u5f0f\u7a33\u5b9a\u540e\uff0c\u589e\u52a0\u53ef\u9009\u7684 same-sample round archive\uff0c\u5019\u9009\u6309 source bundle/evidence dependency \u805a\u7c7b\u53bb\u91cd\uff0c\u800c\u975e\u6309\u6307\u6807\u6570\u91cf\u8ba1\u7968\u3002",
-        "\u5019\u9009\u9009\u62e9\u5fc5\u987b\u5148\u51b3\u5b9a\u4e00\u4e2a source bundle\uff0c\u518d\u51b3\u5b9a\u5404\u901a\u9053 gate\uff1b\u4e0d\u5f97\u628a\u4e0d\u540c round \u7684 coordinate\u3001charge \u4e0e pair state \u5206\u522b\u6311\u9009\u3002",
-        "\u8bbe\u7f6e\u6700\u5927 archive size\u3001\u6bcf source \u6700\u5927 influence\u3001\u6700\u5c0f fresh-noise mass\u3001\u6700\u5927\u8fde\u7eed reuse \u8f6e\u6570\u4e0e deterministic tie-break\uff1b\u4efb\u4f55\u672a\u9009\u62e9\u5019\u9009\u4fdd\u7559\u5ba1\u8ba1\u4f46\u4e0d\u5199\u5165 sampler\u3002"
+        "在 previous-round 模式稳定后，增加可选的 same-sample round archive，候选按 source bundle/evidence dependency 聚类去重，而非按指标数量计票。",
+        "候选选择必须先决定一个 source bundle，再决定各通道 gate；不得把不同 round 的 coordinate、charge 与 pair state 分别挑选。",
+        "设置最大 archive size、每 source 最大 influence、最小 fresh-noise mass、最大连续 reuse 轮数与 deterministic tie-break；任何未选择候选保留审计但不写入 sampler。"
       ],
       "acceptance": [
-        "\u590d\u5236\u540c\u4e00 source \u7684 metric/evidence \u884c\u4e0d\u4f1a\u589e\u52a0\u5176 influence\uff0c\u4e14 candidate \u603b\u91cf\u589e\u957f\u4e0d\u4f1a\u7a81\u7834 token/memory/runtime budget\u3002",
-        "best GNINA \u4e0e best QED \u6765\u81ea\u4e0d\u540c\u751f\u6210\u5bf9\u8c61\u65f6\uff0c\u4e0d\u4f1a\u5f62\u6210\u6df7\u5408 restart state\u3002",
-        "archive \u53ea\u5728\u5355 sample\u3001\u5355 run\u3001\u5355 checkpoint\u3001\u5355 trace lineage \u5185\u6709\u6548\u3002"
+        "复制同一 source 的 metric/evidence 行不会增加其 influence，且 candidate 总量增长不会突破 token/memory/runtime budget。",
+        "best GNINA 与 best QED 来自不同生成对象时，不会形成混合 restart state。",
+        "archive 只在单 sample、单 run、单 checkpoint、单 trace lineage 内有效。"
       ]
     },
     {
       "id": "DTB-R5",
-      "title": "\u6269\u5c55 per-round provenance \u4e0e condition trace \u8bc1\u636e",
+      "title": "扩展 per-round provenance 与 condition trace 证据",
       "priority": "P0",
-      "status": "pending",
+      "status": "completed",
       "owner": "flowa-multistep-reinference_then_flowa-denovo-core_then_lean-contract-owner",
       "depends_on": [
         "DTB-R1",
         "DTB-R2"
       ],
+      "completion_evidence": [
+        "adaptive_reflow/frame/trace.py",
+        "tests/test_frame/test_trace.py",
+        "docs/lean_issue_re_inference_provenance.md"
+      ],
+      "completed_at": "2026-08-25T22:00:00+08:00",
       "implementation": [
-        "\u5c06 DynamicRestartTransferLedger \u5199\u5165 reinference_round_plan\u3001topology ledger \u548c condition trace\uff1asource bundle id/round, selected/rejected candidates, each factor, raw vs bounded fraction, alpha/beta, fresh-noise floor, calibration artifact hash, feedback mode, blockers and acceptance reason\u3002\u6bcf\u6761 noise_bias input row \u5fc5\u987b\u5e26 producer\u3001diagnostic/legacy mode\u3001\u662f\u5426\u88ab policy \u91c7\u7528\u548c\u6700\u7ec8 writer id\u3002",
-        "\u5347\u7ea7\u6216\u65b0\u589e versioned trace schema\uff0c\u4fdd\u7559 flowa_iterative_ode_condition_trace_schema_v2 \u7684\u8bfb\u53d6\u517c\u5bb9\uff1b\u4e0d\u5f97\u91cd\u5199\u5386\u53f2 artifact\u3002",
-        "\u5411 Lean architecture-contract owner \u63d0\u51fa\u6700\u5c0f\u65b0\u589e\u547d\u9898\uff1are-inference records transfer-weight provenance\u3001requires atomic previous-generated-object bundle\u3001dynamic bias remains controlled ODE external conditioning\u3002"
+        "将 DynamicRestartTransferLedger 写入 reinference_round_plan、topology ledger 和 condition trace：source bundle id/round, selected/rejected candidates, each factor, raw vs bounded fraction, alpha/beta, fresh-noise floor, calibration artifact hash, feedback mode, blockers and acceptance reason。每条 noise_bias input row 必须带 producer、diagnostic/legacy mode、是否被 policy 采用和最终 writer id。",
+        "升级或新增 versioned trace schema，保留 flowa_iterative_ode_condition_trace_schema_v2 的读取兼容；不得重写历史 artifact。",
+        "向 Lean architecture-contract owner 提出最小新增命题：re-inference records transfer-weight provenance、requires atomic previous-generated-object bundle、dynamic bias remains controlled ODE external conditioning。"
       ],
       "acceptance": [
-        "\u6bcf\u4e2a nonzero beta \u53ef\u7531\u5355\u4e2a ledger row \u72ec\u7acb\u590d\u7b97\uff0c\u4e14 row \u4e2d source round \u548c final sampler diagnostics \u4e00\u81f4\u3002",
-        "trace \u6070\u6709\u4e00\u4e2a final_policy_writer=adaptive_reflow\uff1blegacy-only run \u660e\u786e\u4e3a legacy writer\uff0c\u7981\u6b62\u4e24\u4e2a executable writer \u5e76\u5b58\u3002",
-        "trace \u7f3a\u5b57\u6bb5\u3001hash mismatch\u3001\u975e\u6709\u9650\u503c\u6216 condition unchanged \u65f6\uff0c\u673a\u5236\u62d2\u7edd runtime write\u3002",
-        "Lean \u53d8\u66f4\u4fdd\u6301\u4e3a\u67b6\u6784/\u6765\u6e90\u5951\u7ea6\uff0c\u4e0d\u58f0\u79f0\u7ecf\u9a8c\u836f\u6548\u6216\u52a8\u6001\u6743\u91cd\u6027\u80fd\u3002"
+        "每个 nonzero beta 可由单个 ledger row 独立复算，且 row 中 source round 和 final sampler diagnostics 一致。",
+        "trace 恰有一个 final_policy_writer=adaptive_reflow；legacy-only run 明确为 legacy writer，禁止两个 executable writer 并存。",
+        "trace 缺字段、hash mismatch、非有限值或 condition unchanged 时，机制拒绝 runtime write。",
+        "Lean 变更保持为架构/来源契约，不声称经验药效或动态权重性能。"
       ]
     },
     {
       "id": "DTB-R6",
-      "title": "\u8865\u9f50 focused contract \u548c\u6027\u8d28\u6d4b\u8bd5",
+      "title": "补齐 focused contract 和性质测试",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference",
@@ -437,9 +465,9 @@
         "DTB-R5"
       ],
       "implementation": [
-        "\u589e\u52a0 unit/property tests\uff1a\u65e0\u6548 range\u3001NaN\u3001schema drift\u3001\u9519\u8bef round/trace\u3001\u672a detach tensor\u3001source state shape mismatch\u3001proxy misuse\u3001missing calibration\u3001metric uncertainty increase\u3001ambiguity increase\u3001source revocation\u3001duplicate source \u548c cap/floor conflicts\u3002",
-        "\u589e\u52a0 end-to-end two/three-round torch contract\uff1adisabled parity\uff1b\u96f6 gate \u4e0d\u4f20\u9012\uff1b\u6709\u6548\u9ad8\u8d28\u91cf evidence \u4ec5\u5728 cap \u5185\u4f20\u9012\uff1b\u6076\u5316 evidence \u4e3b\u52a8\u964d\u6743\uff1bfreeze \u4ecd\u53ea\u9501 declared write channels\u3002",
-        "\u7ef4\u62a4 noise_bias calculation/diagnostic ledger \u4e0e adaptive_reflow final-policy diagnostics \u7684\u8f93\u5165\u91c7\u7528\u5173\u7cfb\uff1b\u8986\u76d6 standalone legacy\u3001diagnostic-only coexistence\u3001dual executable writer rejection\u3001\u91cd\u590d\u7f29\u653e\u548c stale writer replay\u3002"
+        "增加 unit/property tests：无效 range、NaN、schema drift、错误 round/trace、未 detach tensor、source state shape mismatch、proxy misuse、missing calibration、metric uncertainty increase、ambiguity increase、source revocation、duplicate source 和 cap/floor conflicts。",
+        "增加 end-to-end two/three-round torch contract：disabled parity；零 gate 不传递；有效高质量 evidence 仅在 cap 内传递；恶化 evidence 主动降权；freeze 仍只锁 declared write channels。",
+        "维护 noise_bias calculation/diagnostic ledger 与 adaptive_reflow final-policy diagnostics 的输入采用关系；覆盖 standalone legacy、diagnostic-only coexistence、dual executable writer rejection、重复缩放和 stale writer replay。"
       ],
       "files": [
         "tests/test_adaptive_reflow_orchestration_contract.py",
@@ -449,65 +477,91 @@
         "tests/model_core/test_denovo_v3_torch_contract.py"
       ],
       "acceptance": [
-        "\u6240\u6709\u9519\u8bef\u8f93\u5165 fail closed\uff0c\u4e14\u4e0d\u751f\u6210 partial sampler control write\u3002",
-        "disabled profile \u7684\u73b0\u6709 snapshots/diagnostics \u4e0d\u53d8\u3002",
-        "\u65b0\u6d4b\u8bd5\u4e0d\u8bfb\u53d6\u5171\u4eab\u6570\u636e\u96c6\u3001native ligand\u3001ground truth \u6216 GPU\u3002"
+        "所有错误输入 fail closed，且不生成 partial sampler control write。",
+        "disabled profile 的现有 snapshots/diagnostics 不变。",
+        "新测试不读取共享数据集、native ligand、ground truth 或 GPU。"
       ],
       "suggested_commands": [
         "source tools/pocket311_env.sh && export PYTHONPATH=\"$(pwd)\" && POCKET_TORCH_DEVICE=cpu python -m pytest tests/test_adaptive_reflow_orchestration_contract.py tests/test_adaptive_reflow_restart_memory_migration.py tests/test_adaptive_reflow_condition_sensitivity_gate.py tests/test_noise_bias_runtime_boundary.py",
         "source tools/pocket311_env.sh && export PYTHONPATH=\"$(pwd)\" && ruff check pocket_modules/mechanisms/inference/adaptive_reflow pocket_modules/mechanisms/inference/noise_bias"
       ],
       "completion_evidence": [
-        "tests/test_adaptive_reflow_typed_bundle_contract.py"
+        "adaptive_reflow/contracts/bundle.py",
+        "adaptive_reflow/frame/trace.py",
+        "tests/test_frame/test_engine.py"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-R7",
-      "title": "\u5efa\u7acb\u51bb\u7ed3\u6821\u51c6\u4e0e round-to-round paired \u8bc4\u6d4b\u534f\u8bae",
+      "title": "建立冻结校准与 round-to-round paired 评测协议",
       "priority": "P1",
-      "status": "pending",
+      "status": "code_complete_evaluation_deferred",
       "owner": "flowa-multistep-reinference_then_evaluation-services",
+      "completion_evidence": [
+        "adaptive_reflow/eval/calibration.py",
+        "adaptive_reflow/eval/protocol.py",
+        "adaptive_reflow/eval/manifests.py",
+        "tests/test_eval/test_calibration.py",
+        "tests/test_eval/test_protocol.py"
+      ],
+      "deferred_items": [
+        "GPU evaluation runs for paired round-to-round comparisons",
+        "Wilson/Beta lower-bound calibration from real evaluator data"
+      ],
+      "completed_at": "2026-08-25T22:00:00+08:00",
       "depends_on": [
         "DTB-R5",
         "DTB-R6",
         "DTB-NA1"
       ],
       "implementation": [
-        "\u5b9a\u4e49 calibration dataset/time split\u3001per-metric/per-channel bucket\u3001\u6700\u5c0f\u6837\u672c\u91cf\u3001Wilson/Beta lower bound\u3001stability perturbation protocol \u548c calibration artifact manifest\uff1b\u8fd0\u884c\u65f6\u53ea\u80fd\u8bfb\u53d6\u5df2\u51bb\u7ed3 artifact\u3002",
-        "\u9884\u6ce8\u518c paired comparison\uff1adisabled\u3001\u5f53\u524d fixed/scheduled control\u3001dynamic uncalibrated diagnostic\u3001dynamic calibrated gate\u3001linear fresh-noise budget\u3001cosine without restart\u3001cosine with guarded restart\uff1b\u540c checkpoint\u3001target\u3001seed\u3001round count\u3001budget\u3001evaluator version \u548c materialization route\u3002",
-        "\u4e3b\u8981\u5b89\u5168\u6307\u6807\u4e3a materialization/geometry regression\u3001\u9519\u8bef freeze \u6216 stale-state reuse\u3001round-to-round oscillation\u3001fresh-noise collapse\u3001condition sensitivity\u3001fixed-envelope tail-budget violation/unclassified complement \u548c\u6bcf\u8f6e\u6210\u672c\uff1bGNINA/QED/ADMET \u4ec5\u5728\u5176 evaluator provenance \u5b8c\u6574\u65f6\u62a5\u544a\u3002"
+        "定义 calibration dataset/time split、per-metric/per-channel bucket、最小样本量、Wilson/Beta lower bound、stability perturbation protocol 和 calibration artifact manifest；运行时只能读取已冻结 artifact。",
+        "预注册 paired comparison：disabled、当前 fixed/scheduled control、dynamic uncalibrated diagnostic、dynamic calibrated gate、linear fresh-noise budget、cosine without restart、cosine with guarded restart；同 checkpoint、target、seed、round count、budget、evaluator version 和 materialization route。",
+        "主要安全指标为 materialization/geometry regression、错误 freeze 或 stale-state reuse、round-to-round oscillation、fresh-noise collapse、condition sensitivity、fixed-envelope tail-budget violation/unclassified complement 和每轮成本；GNINA/QED/ADMET 仅在其 evaluator provenance 完整时报告。"
       ],
       "acceptance": [
-        "\u6bcf\u4e2a\u5b9e\u9a8c\u8bb0\u5f55 GPU provenance\u3001checkpoint hash\u3001data/split manifest\u3001config hash\u3001source/evaluator version\u3001round trace \u548c\u5b8c\u6574\u5931\u8d25\u5206\u6bcd\u3002",
-        "\u6ca1\u6709 fresh target-disjoint paired evidence \u65f6\uff0c\u4e0d\u5141\u8bb8\u58f0\u660e\u52a8\u6001 bias \u6539\u5584\u4efb\u4f55\u6700\u7ec8\u836f\u7269\u8bbe\u8ba1\u6307\u6807\u3002",
-        "\u5fc5\u987b\u5206\u522b\u62a5\u544a\u6bcf\u79cd schedule \u7684 cycle/restart \u6b21\u6570\u3001tail-budget diagnostics\u3001noise-capacity trajectory\u3001\u5931\u8d25\u89e6\u53d1\u548c\u6709\u9650\u524d\u7f00\u8fb9\u754c\uff1b\u4e0d\u5f97\u5c06\u8f83\u597d\u5e73\u5747\u5206\u6570\u89e3\u91ca\u4e3a\u975e\u7d27\u9009\u62e9\u5b9a\u7406\u3002",
-        "\u82e5\u52a8\u6001\u7b56\u7565\u6076\u5316\u9884\u6ce8\u518c\u5b89\u5168\u6307\u6807\u6216\u7f6e\u4fe1\u533a\u95f4\u4e0d\u652f\u6301\u6536\u76ca\uff0ccanonical route \u4fdd\u6301 disabled \u5e76\u5f52\u6863\u8bca\u65ad\u3002"
+        "每个实验记录 GPU provenance、checkpoint hash、data/split manifest、config hash、source/evaluator version、round trace 和完整失败分母。",
+        "没有 fresh target-disjoint paired evidence 时，不允许声明动态 bias 改善任何最终药物设计指标。",
+        "必须分别报告每种 schedule 的 cycle/restart 次数、tail-budget diagnostics、noise-capacity trajectory、失败触发和有限前缀边界；不得将较好平均分数解释为非紧选择定理。",
+        "若动态策略恶化预注册安全指标或置信区间不支持收益，canonical route 保持 disabled 并归档诊断。"
       ]
     },
     {
       "id": "DTB-R8",
-      "title": "\u53d7\u63a7\u63a8\u5e7f\u3001\u56de\u6eda\u548c claim gate",
+      "title": "受控推广、回滚和 claim gate",
       "priority": "P1",
-      "status": "pending",
+      "status": "code_complete_evaluation_deferred",
       "owner": "flowa-denovo-core_integrator",
       "depends_on": [
         "DTB-R7"
       ],
+      "completion_evidence": [
+        "adaptive_reflow/eval/claim_gate.py",
+        "adaptive_reflow/eval/promotion.py",
+        "adaptive_reflow/eval/rollback.py",
+        "adaptive_reflow/eval/metric_panel.py",
+        "tests/test_eval/test_claim_gate.py"
+      ],
+      "deferred_items": [
+        "Actual promotion/rollback decisions require R7 GPU paired evidence",
+        "Real gain/cost numbers require evaluator provenance beyond skeleton"
+      ],
+      "completed_at": "2026-08-25T22:00:00+08:00",
       "implementation": [
-        "\u4ec5\u5728\u6240\u6709 contract\u3001calibration \u548c paired evidence \u901a\u8fc7\u540e\uff0c\u5c06 feature \u653e\u5165\u72ec\u7acb\u663e\u5f0f config\uff1b\u9ed8\u8ba4 raw generation \u548c\u73b0\u6709 canonical profile \u7ee7\u7eed\u5173\u95ed\u3002",
-        "\u4e3a\u6bcf\u6b21\u8fd0\u884c\u8bb0\u5f55 policy version/hash\uff0c\u5e76\u63d0\u4f9b\u5355\u4e00 disabled flag \u4f5c\u4e3a\u65e0\u72b6\u6001\u56de\u6eda\uff1b\u4e0d\u5f97\u4fee\u6539 checkpoint \u6216\u8fc1\u79fb\u5386\u53f2 artifacts\u3002",
-        "\u5c06 claim release \u4e0e raw generation\u3001adaptive reflow\u3001postprocess-assisted \u4e09\u5c42\u8bc1\u636e\u5206\u5f00\uff0c\u9075\u5faa\u73b0\u6709 layered metric panel protocol\u3002"
+        "仅在所有 contract、calibration 和 paired evidence 通过后，将 feature 放入独立显式 config；默认 raw generation 和现有 canonical profile 继续关闭。",
+        "为每次运行记录 policy version/hash，并提供单一 disabled flag 作为无状态回滚；不得修改 checkpoint 或迁移历史 artifacts。",
+        "将 claim release 与 raw generation、adaptive reflow、postprocess-assisted 三层证据分开，遵循现有 layered metric panel protocol。"
       ],
       "acceptance": [
-        "promotion report \u540c\u65f6\u5305\u542b\u6536\u76ca\u3001\u65e0\u6548\u6837\u672c\u3001\u6210\u672c\u3001\u5931\u8d25\u6a21\u5f0f\u3001\u6821\u51c6\u6f02\u79fb\u4e0e disabled baseline\u3002",
-        "\u65e0\u6cd5\u6ee1\u8db3 gate \u65f6\u56de\u6eda\u5230 disabled\uff0c\u4e0d\u628a diagnostic proxy \u6216\u5c40\u90e8 case \u5199\u6210\u6027\u80fd\u7ed3\u8bba\u3002",
-        "\u6240\u6709\u914d\u7f6e\u3001artifact \u548c GPU provenance \u6ee1\u8db3\u5f53\u524d\u7814\u7a76\u5de5\u4f5c\u6d41\u3002"
+        "promotion report 同时包含收益、无效样本、成本、失败模式、校准漂移与 disabled baseline。",
+        "无法满足 gate 时回滚到 disabled，不把 diagnostic proxy 或局部 case 写成性能结论。",
+        "所有配置、artifact 和 GPU provenance 满足当前研究工作流。"
       ]
     },
     {
       "id": "DTB-L1",
-      "title": "\u628a phase memory\u3001horizon coverage \u4e0e\u5206\u652f\u4e0d\u786e\u5b9a\u6027\u7eb3\u5165 policy",
+      "title": "把 phase memory、horizon coverage 与分支不确定性纳入 policy",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference",
@@ -516,23 +570,24 @@
         "DTB-NC2"
       ],
       "implementation": [
-        "\u65b0\u589e versioned PhaseState \u5e76\u5c06 outer_cycle_id\u3001round_in_cycle\u3001cosine phase\u3001previous trigger\u3001source-selector procedure\u3001seed lineage\u3001operation_order_version \u548c remaining horizon \u56fa\u5316\u5230\u6bcf\u8f6e ledger\uff1b\u4e0d\u5f97\u8ba9 controller \u53ea\u51ed endpoint/state tensor \u91cd\u5efa phase\u3002",
-        "\u5bf9 H=1\u30012\u30013 \u7684 controlled continuation trace \u505a\u6700\u5c0f\u8bb0\u5fc6\u5ba1\u8ba1\uff1a\u82e5\u540c\u4e00 endpoint \u5728\u4e0d\u540c phase \u4e0b\u672a\u6765\u6709\u6548 policy \u4e0d\u540c\uff0c\u5219 endpoint-only cache \u4e0d\u53ef\u590d\u7528\uff0c\u5fc5\u987b\u4fdd\u7559 phase state \u6216\u62d2\u7edd archive transfer\u3002",
-        "\u5b9e\u73b0 ambiguity band\uff1adominance gap \u672a\u4e25\u683c\u8d8a\u8fc7 calibrated uncertainty \u65f6\uff0c\u4e0d\u9009\u5355\u4e00 winner\uff1b\u4fdd\u7559\u65e0\u6807\u7b7e\u5019\u9009\u96c6\u5408\u4f9b\u5ba1\u8ba1\u5e76\u4ee4\u6b63\u5411 memory \u4e3a\u96f6/\u53d7\u4fdd\u62a4 fresh-noise\u3002strict score margin \u4e0e\u5b8c\u6574 germ \u4e0d\u80fd\u4f5c\u4e3a phase-bias \u7684\u66ff\u4ee3\u8bc1\u660e\u3002"
+        "新增 versioned PhaseState 并将 outer_cycle_id、round_in_cycle、cosine phase、previous trigger、source-selector procedure、seed lineage、operation_order_version 和 remaining horizon 固化到每轮 ledger；不得让 controller 只凭 endpoint/state tensor 重建 phase。",
+        "对 H=1、2、3 的 controlled continuation trace 做最小记忆审计：若同一 endpoint 在不同 phase 下未来有效 policy 不同，则 endpoint-only cache 不可复用，必须保留 phase state 或拒绝 archive transfer。",
+        "实现 ambiguity band：dominance gap 未严格越过 calibrated uncertainty 时，不选单一 winner；保留无标签候选集合供审计并令正向 memory 为零/受保护 fresh-noise。strict score margin 与完整 germ 不能作为 phase-bias 的替代证明。"
       ],
       "acceptance": [
-        "\u76f8\u540c endpoint\u3001\u4e0d\u540c phase \u7684 fixture \u82e5\u4ea7\u751f\u4e0d\u540c\u4e0b\u4e00\u8f6e controls\uff0ctrace \u53ef\u533a\u5206\u4e14\u6240\u6709 state cache key \u5305\u542b phase digest\u3002",
-        "H=1 calibration artifact \u4e0d\u80fd\u88ab H>1 policy \u8bfb\u53d6\uff0c\u9664\u975e\u663e\u5f0f horizon coverage \u8bc1\u660e\u5b58\u5728\u3002",
-        "\u4e34\u754c score-gap\u3001selector disagreement\u3001\u672a\u77e5 phase \u6216\u65e0 horizon coverage \u5747 fail closed\uff0c\u4e0d\u9690\u5f0f\u4f9d\u8d56 tie-break \u987a\u5e8f\u3002"
+        "相同 endpoint、不同 phase 的 fixture 若产生不同下一轮 controls，trace 可区分且所有 state cache key 包含 phase digest。",
+        "H=1 calibration artifact 不能被 H>1 policy 读取，除非显式 horizon coverage 证明存在。",
+        "临界 score-gap、selector disagreement、未知 phase 或无 horizon coverage 均 fail closed，不隐式依赖 tie-break 顺序。"
       ],
       "completion_evidence": [
-        "pocket_modules/mechanisms/inference/adaptive_reflow/phase_state.py"
+        "adaptive_reflow/frame/phase.py",
+        "adaptive_reflow/contracts/phase.py"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-L2",
-      "title": "\u9501\u5b9a restart\u3001condition \u4e0e freeze \u7684\u975e\u4ea4\u6362\u64cd\u4f5c\u8bed\u4e49",
+      "title": "锁定 restart、condition 与 freeze 的非交换操作语义",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
@@ -541,66 +596,79 @@
         "DTB-R3"
       ],
       "implementation": [
-        "\u53d1\u5e03 OperationCompositionContract\uff0c\u5b9a\u4e49\u552f\u4e00\u9ed8\u8ba4\u987a\u5e8f\uff1avalidate -> select -> restart distribution -> condition delta -> declared freeze -> native ODE solve -> endpoint observation\uff0c\u5e76\u5728 RoundTrace \u5199\u5165 operation_order_version \u4e0e\u6bcf\u4e00\u6b65 input/output digest\u3002",
-        "\u4e3a\u53ef\u80fd\u91cd\u6392\u5e8f\u7684 adapter \u5b9a\u4e49 order-reversal paired test \u548c bounded commutator-residual diagnostic\u3002\u4e0d\u80fd\u8bc1\u660e\u4e92\u6362\u7b49\u4ef7\u65f6\uff0c\u7981\u6b62\u628a\u4e24\u4e2a controller \u7684 per-channel beta\u3001dwell \u6216\u603b noise mass \u89c6\u4e3a\u53ef\u6bd4\u8f83\u7684\u540c\u4e00 policy\u3002",
-        "\u5c06 condition update\u3001restart injection \u548c freeze mask \u7684\u65f6\u95f4\u8fb9\u754c\u6620\u5c04\u5230 adapter \u7684\u539f\u751f sampling events\uff1b\u672a\u80fd\u5b9a\u4f4d\u8fb9\u754c\u7684\u7b2c\u4e09\u65b9\u6a21\u578b\u4e0d\u5f97\u63a5\u5165\u52a8\u6001\u8def\u5f84\u3002"
+        "发布 OperationCompositionContract，定义唯一默认顺序：validate -> select -> restart distribution -> condition delta -> declared freeze -> native ODE solve -> endpoint observation，并在 RoundTrace 写入 operation_order_version 与每一步 input/output digest。",
+        "为可能重排序的 adapter 定义 order-reversal paired test 和 bounded commutator-residual diagnostic。不能证明互换等价时，禁止把两个 controller 的 per-channel beta、dwell 或总 noise mass 视为可比较的同一 policy。",
+        "将 condition update、restart injection 和 freeze mask 的时间边界映射到 adapter 的原生 sampling events；未能定位边界的第三方模型不得接入动态路径。"
       ],
       "acceptance": [
-        "\u9ed8\u8ba4 FlowA route \u7684 operation order \u5728 replay \u4e2d\u9010\u9879\u76f8\u540c\uff1b\u672a\u77e5\u6216\u7f3a\u5931 order version \u4e0d\u80fd runtime write\u3002",
-        "\u81f3\u5c11\u4e00\u4e2a\u975e\u4ea4\u6362 synthetic fixture \u8bc1\u660e AB \u4e0e BA \u88ab trace \u533a\u5206\uff1b\u5728 commuting fixture \u4e0a diagnostic \u4e3a\u96f6\u800c\u4e0d\u88ab\u8bef\u5224\u3002",
-        "adapter parity \u548c dynamic comparison \u90fd\u7ed1\u5b9a\u76f8\u540c composition contract hash\u3002"
+        "默认 FlowA route 的 operation order 在 replay 中逐项相同；未知或缺失 order version 不能 runtime write。",
+        "至少一个非交换 synthetic fixture 证明 AB 与 BA 被 trace 区分；在 commuting fixture 上 diagnostic 为零而不被误判。",
+        "adapter parity 和 dynamic comparison 都绑定相同 composition contract hash。"
       ],
       "completion_evidence": [
-        "pocket_modules/mechanisms/inference/adaptive_reflow/operation_composition.py"
+        "adaptive_reflow/frame/operation.py",
+        "adaptive_reflow/contracts/operations.py"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-L3",
-      "title": "\u5b9e\u73b0\u5206\u5c42\u5019\u9009\u4e0e\u4e0d\u786e\u5b9a\u5ea6\u6bd4\u526a\u679d\u95e8",
+      "title": "实现分层候选与不确定度比剪枝门",
       "priority": "P1",
-      "status": "pending",
+      "status": "completed",
       "owner": "flowa-multistep-reinference",
+      "completion_evidence": [
+        "adaptive_reflow/policy/stratification.py",
+        "adaptive_reflow/policy/pruning.py",
+        "tests/test_policy/test_stratification_and_pruning.py"
+      ],
+      "completed_at": "2026-08-25T22:00:00+08:00",
       "depends_on": [
         "DTB-NC1",
         "DTB-R4",
         "DTB-L1"
       ],
       "implementation": [
-        "\u5c06 endpoint \u5148\u6309\u53ef\u4f20\u9012 state class \u5206\u5c42\uff1a\u8fde\u7eed\u51e0\u4f55/\u53c2\u8003\u7cfb\u3001\u539f\u5b50\u4e0e\u7535\u8377 support\u3001pair/topology support\u3001materialization status\u3001condition lineage\u3002\u4e0d\u540c strata \u7684 state \u4e0d\u53ef\u6df7\u5408\uff0c\u4e5f\u4e0d\u5f97\u4ee5\u4e00\u4e2a\u5168\u5c40 scalar score \u5f3a\u884c\u9009\u62e9\u3002",
-        "\u4e3a\u540c\u4e00 stratum \u5185\u7684\u5019\u9009\u8ba1\u7b97 dimensionless dominance ratio=score_gap/calibrated_error\uff1b\u4ec5 ratio \u8d85\u8fc7\u9884\u6ce8\u518c\u9608\u503c\u65f6\u624d prune\u3002\u76f8\u90bb\u6216\u5bf9\u79f0\u5206\u652f\u4fdd\u7559 canonical unordered weights \u4e0e provenance\uff0c\u7981\u6b62\u7531\u6570\u7ec4\u4f4d\u7f6e\u5236\u9020 first branch\u3002",
-        "\u5c06\u5206\u652f\u6570\u3001gap\u3001uncertainty\u3001prune/reject \u539f\u56e0\u5199\u5165 envelope/tail ledger\uff1bbranch growth \u548c\u672a\u5206\u914d branch \u90fd\u8ba1\u5165 complement mass\u3002"
+        "将 endpoint 先按可传递 state class 分层：连续几何/参考系、原子与电荷 support、pair/topology support、materialization status、condition lineage。不同 strata 的 state 不可混合，也不得以一个全局 scalar score 强行选择。",
+        "为同一 stratum 内的候选计算 dimensionless dominance ratio=score_gap/calibrated_error；仅 ratio 超过预注册阈值时才 prune。相邻或对称分支保留 canonical unordered weights 与 provenance，禁止由数组位置制造 first branch。",
+        "将分支数、gap、uncertainty、prune/reject 原因写入 envelope/tail ledger；branch growth 和未分配 branch 都计入 complement mass。"
       ],
       "acceptance": [
-        "\u4e0d\u540c state class \u7684 best coordinate/best topology \u4e0d\u80fd\u751f\u6210 Frankenstein restart bundle\u3002",
-        "gap \u7b49\u4e8e\u6216\u5c0f\u4e8e calibrated error \u65f6\u4e0d\u53d1\u751f deterministic branch prune\uff1bbranch swap \u4e0d\u6539\u53d8 unordered audit result\u3002",
-        "branch-count\u3001stratum \u548c prune gate \u53ef\u7531\u79bb\u7ebf ledger \u91cd\u653e\u3002"
+        "不同 state class 的 best coordinate/best topology 不能生成 Frankenstein restart bundle。",
+        "gap 等于或小于 calibrated error 时不发生 deterministic branch prune；branch swap 不改变 unordered audit result。",
+        "branch-count、stratum 和 prune gate 可由离线 ledger 重放。"
       ]
     },
     {
       "id": "DTB-L4",
-      "title": "\u5c06\u7d2f\u8ba1 fresh-noise mass \u4e0e\u8c31\u6b8b\u5dee\u4ec5\u4f5c\u4e3a\u8bca\u65ad\u8d26\u672c",
+      "title": "将累计 fresh-noise mass 与谱残差仅作为诊断账本",
       "priority": "P1",
-      "status": "pending",
+      "status": "completed",
       "owner": "flowa-multistep-reinference",
+      "completion_evidence": [
+        "adaptive_reflow/diagnostics/ledger.py",
+        "adaptive_reflow/policy/noise_mass.py",
+        "tests/test_diagnostics/test_ledger.py"
+      ],
+      "completed_at": "2026-08-25T22:00:00+08:00",
       "depends_on": [
         "DTB-NA1",
         "DTB-R5"
       ],
       "implementation": [
-        "\u5728\u6bcf\u4e2a cycle \u8bb0\u5f55\u6a21\u578b\u65e0\u5173\u7684 fresh-noise capacity\u3001\u5df2\u6821\u51c6\u5b9e\u9645 restart dispersion\u3001\u5c3e\u90e8\u7d2f\u8ba1\u91cf\u548c per-channel write mass\uff1b\u660e\u786e physical-noise proxy\u3001RMS-preserving mixing coefficient \u4e0e exact spectral variance \u4e09\u8005\u4e0d\u662f\u540c\u4e00\u91cf\u3002",
-        "\u9488\u5bf9 constant/linear/cosine/guarded-restart \u8f93\u51fa finite-prefix cumulative-mass curve\u3001\u8c31\u6b8b\u5dee band proxy \u548c tail status\u3002\u628a\u6b63\u800c\u53ef\u548c schedule \u53ef\u80fd\u505c\u6ede\u89c6\u4e3a adversarial test case\uff0c\u800c\u975e\u628a\u65e0\u754c\u7d2f\u8ba1\u8d28\u91cf\u5199\u6210\u4e00\u822c\u6a21\u578b\u6536\u655b\u8bc1\u660e\u3002",
-        "\u53ea\u6709\u5728 adapter \u7ed9\u51fa\u76f8\u5e94\u7ebf\u6027\u9ad8\u65af\u8bc6\u522b\u548c\u53ef\u9a8c\u8bc1\u8c31\u5bf9\u8c61\u65f6\u624d\u542f\u7528 spectral-residual route\uff1b\u5176\u4ed6\u6a21\u578b\u4ec5\u4fdd\u7559 generic noise ledger\u3002"
+        "在每个 cycle 记录模型无关的 fresh-noise capacity、已校准实际 restart dispersion、尾部累计量和 per-channel write mass；明确 physical-noise proxy、RMS-preserving mixing coefficient 与 exact spectral variance 三者不是同一量。",
+        "针对 constant/linear/cosine/guarded-restart 输出 finite-prefix cumulative-mass curve、谱残差 band proxy 和 tail status。把正而可和 schedule 可能停滞视为 adversarial test case，而非把无界累计质量写成一般模型收敛证明。",
+        "只有在 adapter 给出相应线性高斯识别和可验证谱对象时才启用 spectral-residual route；其他模型仅保留 generic noise ledger。"
       ],
       "acceptance": [
-        "\u4efb\u4f55\u62a5\u544a\u90fd\u4e0d\u4f1a\u5c06 cumulative fresh-noise capacity \u6807\u4e3a theorem-certified selection \u6216 physical variance\uff0c\u9664\u975e\u72ec\u7acb\u6a21\u578b\u7279\u5f02\u8bc1\u660e\u5b58\u5728\u3002",
-        "\u53ef\u548c/\u975e\u53ef\u548c synthetic schedule\u3001L=1\u3001warm restart \u548c gate=0 \u5206\u652f\u5747\u6709 deterministic diagnostic tests\u3002",
-        "spectral proxy \u4e0d\u5f71\u54cd beta\u3001candidate pruning \u6216 claim gate\uff0c\u9664\u975e\u672a\u6765\u72ec\u7acb\u4efb\u52a1\u7ed9\u51fa calibrated authority contract\u3002"
+        "任何报告都不会将 cumulative fresh-noise capacity 标为 theorem-certified selection 或 physical variance，除非独立模型特异证明存在。",
+        "可和/非可和 synthetic schedule、L=1、warm restart 和 gate=0 分支均有 deterministic diagnostic tests。",
+        "spectral proxy 不影响 beta、candidate pruning 或 claim gate，除非未来独立任务给出 calibrated authority contract。"
       ]
     },
     {
       "id": "DTB-S1",
-      "title": "\u6536\u655b adaptive_reflow \u4e0e noise_bias \u7684\u5199\u5165\u6240\u6709\u6743",
+      "title": "收敛 adaptive_reflow 与 noise_bias 的写入所有权",
       "priority": "P0",
       "status": "completed",
       "owner": "flowa-multistep-reinference_then_mechanism-runtime_then_flowa-denovo-core",
@@ -608,11 +676,11 @@
         "DTB-R1"
       ],
       "implementation": [
-        "\u53d1\u5e03 versioned RestartPolicyAuthorityContract\uff1anoise_bias \u91cd\u6784\u4e3a\u65e0\u72b6\u6001 calculation/diagnostic provider\uff0cadaptive_reflow \u4e3a\u552f\u4e00 executable policy writer\uff0cflowa_core runtime \u53ea\u6d88\u8d39 immutable FinalRestartPolicy\u3002",
-        "\u4e3a\u73b0\u6709 noise_bias standalone mechanism \u589e\u52a0\u663e\u5f0f\u6a21\u5f0f\uff1adiagnostic_only \u6216 legacy_standalone\u3002\u4e0e adaptive_reflow \u540c run \u65f6\u524d\u8005\u53ef\u5171\u5b58\u4f46\u65e0 runtime write\uff0c\u540e\u8005\u5fc5\u987b\u7531 feature flag \u4e0e adaptive_reflow \u4e92\u65a5\uff1b\u672a\u58f0\u660e\u6a21\u5f0f\u4e00\u5f8b\u62d2\u7edd\u3002",
-        "\u7edf\u4e00 restart_bias namespace\uff1acandidate noise-bias ledger\u3001adaptive transfer decision\u3001FinalRestartPolicy \u548c applied runtime controls \u5206\u5f00\u5b58\u50a8\u3002\u5220\u9664\u4f9d\u9760 mapping merge \u987a\u5e8f\u3001last writer wins \u6216 max(current,dynamic) \u7684\u9690\u5f0f\u4ef2\u88c1\u3002",
-        "\u5728 runtime \u8fb9\u754c\u9a8c\u8bc1 writer id\u3001policy hash\u3001round/sample/checkpoint lineage \u548c policy-to-applied equality\uff1b\u4efb\u4f55\u7b2c\u4e8c\u4e2a executable writer\u3001\u91cd\u590d application\u3001\u65e7 schema \u4f2a\u88c5 final policy \u6216 diagnostic row \u8bf7\u6c42 sampler_controls \u5747 fail closed\u3002",
-        "\u4fdd\u7559 legacy-only disabled-compatible route\uff0c\u5e76\u63d0\u4f9b migration adapter/read compatibility\uff1b\u4e0d\u5f97\u91cd\u5199\u5386\u53f2 trace \u6216\u5c06\u5386\u53f2 noise_bias ledger \u8bef\u6807\u4e3a adaptive policy\u3002"
+        "发布 versioned RestartPolicyAuthorityContract：noise_bias 重构为无状态 calculation/diagnostic provider，adaptive_reflow 为唯一 executable policy writer，flowa_core runtime 只消费 immutable FinalRestartPolicy。",
+        "为现有 noise_bias standalone mechanism 增加显式模式：diagnostic_only 或 legacy_standalone。与 adaptive_reflow 同 run 时前者可共存但无 runtime write，后者必须由 feature flag 与 adaptive_reflow 互斥；未声明模式一律拒绝。",
+        "统一 restart_bias namespace：candidate noise-bias ledger、adaptive transfer decision、FinalRestartPolicy 和 applied runtime controls 分开存储。删除依靠 mapping merge 顺序、last writer wins 或 max(current,dynamic) 的隐式仲裁。",
+        "在 runtime 边界验证 writer id、policy hash、round/sample/checkpoint lineage 和 policy-to-applied equality；任何第二个 executable writer、重复 application、旧 schema 伪装 final policy 或 diagnostic row 请求 sampler_controls 均 fail closed。",
+        "保留 legacy-only disabled-compatible route，并提供 migration adapter/read compatibility；不得重写历史 trace 或将历史 noise_bias ledger 误标为 adaptive policy。"
       ],
       "files": [
         "pocket_modules/mechanisms/inference/noise_bias/mechanism_adapter.py",
@@ -625,23 +693,35 @@
         "tests/test_adaptive_reflow_orchestration_contract.py"
       ],
       "acceptance": [
-        "\u540c run \u7684 dual executable writer fixture \u5728\u91c7\u6837\u524d\u5931\u8d25\uff0c\u5e76\u62a5\u544a\u4e24\u4e2a mechanism id\u3001round \u4e0e\u51b2\u7a81\u5b57\u6bb5\uff1b\u4e0d\u4f1a\u7559\u4e0b partial sampler write\u3002",
-        "diagnostic-only noise_bias \u53ef\u4e0e adaptive_reflow \u5171\u5b58\uff0c\u4e14 FinalRestartPolicy \u7684 byte/hash \u4e0e\u672a\u52a0\u8f7d\u8be5 diagnostic \u65f6\u76f8\u540c\u3002",
-        "legacy_standalone noise_bias \u4e0e disabled adaptive_reflow \u4fdd\u6301\u73b0\u6709 single-writer \u884c\u4e3a\uff1b\u6fc0\u6d3b adaptive_reflow \u65f6\u88ab\u663e\u5f0f\u62d2\u7edd\u800c\u975e\u9759\u9ed8\u4f18\u5148\u3002",
-        "\u6bcf\u4e2a applied beta\u3001condition delta \u548c freeze mask \u90fd\u80fd\u8ffd\u6eaf\u5230\u552f\u4e00 final writer\u3001policy hash \u548c\u91c7\u7528\u7684 input ledger ids\u3002"
+        "同 run 的 dual executable writer fixture 在采样前失败，并报告两个 mechanism id、round 与冲突字段；不会留下 partial sampler write。",
+        "diagnostic-only noise_bias 可与 adaptive_reflow 共存，且 FinalRestartPolicy 的 byte/hash 与未加载该 diagnostic 时相同。",
+        "legacy_standalone noise_bias 与 disabled adaptive_reflow 保持现有 single-writer 行为；激活 adaptive_reflow 时被显式拒绝而非静默优先。",
+        "每个 applied beta、condition delta 和 freeze mask 都能追溯到唯一 final writer、policy hash 和采用的 input ledger ids。"
       ],
       "completion_evidence": [
-        "pocket_modules/mechanisms/inference/adaptive_reflow/policy_authority.py",
-        "pocket_modules/mechanisms/inference/adaptive_reflow/policy_orchestrator.py"
+        "adaptive_reflow/writer/authority.py",
+        "adaptive_reflow/frame/orchestrator.py"
       ],
       "completed_at": "2026-08-25T16:00:00+08:00"
     },
     {
       "id": "DTB-G1",
-      "title": "\u5efa\u7acb\u516c\u5171 Flow Matching ODE re-inference engine \u4e0e adapter \u5408\u540c",
+      "title": "建立公共 Flow Matching ODE re-inference engine 与 adapter 合同",
       "priority": "P0",
-      "status": "pending",
+      "status": "completed",
       "owner": "flowa-multistep-reinference_then_flowa-denovo-core",
+      "completion_evidence": [
+        "adaptive_reflow/universal/adapter.py",
+        "adaptive_reflow/universal/state.py",
+        "adaptive_reflow/universal/mixer.py",
+        "adaptive_reflow/frame/engine.py",
+        "adaptive_reflow/adapters/reference_flowa.py",
+        "adaptive_reflow/adapters/synthetic.py",
+        "adaptive_reflow/adapters/toy_linear.py",
+        "tests/test_universal/test_adapter_universality.py",
+        "tests/test_universal/test_standard_mixers.py"
+      ],
+      "completed_at": "2026-08-25T22:00:00+08:00",
       "depends_on": [
         "DTB-R1",
         "DTB-R2",
@@ -650,94 +730,395 @@
         "DTB-S1"
       ],
       "implementation": [
-        "\u5728 adaptive_reflow \u4e0b\u5b9a\u4e49\u6700\u5c0f Python Protocol/schema\uff1aFlowMatchingODEAdapter\u3001StateBundle\u3001ODEConditionDelta\u3001RestartPolicy\u3001PhaseState\u3001ODEIntegratorTrace \u548c AdapterCapabilities\u3002\u516c\u5171 engine \u53ea\u7f16\u6392 round loop\u3001policy \u4e0e provenance\uff0c\u6240\u6709 native tensors\u3001model invocation \u548c integrator \u7559\u7ed9 adapter\u3002",
-        "\u63d0\u4f9b FlowA adapter \u4f5c\u4e3a reference implementation\uff1b\u4fdd\u6301 disabled parity\uff0c\u4e14\u4e0d\u79fb\u52a8 model weights\u3001checkpoint format\u3001training loss\u3001cross-attention ownership \u6216 multirate clock semantics\u3002",
-        "\u80fd\u529b\u63e1\u624b\u5fc5\u987b\u5206\u522b\u58f0\u660e\uff1aODE integration surface\u3001prior/state export\u3001condition injection\u3001restart boundary\u3001continuous/discrete channels\u3001trajectory digest\u3001deterministic seed\u3001materialization\u3002\u4efb\u4f55\u7f3a\u5931\u80fd\u529b\u53ea\u5141\u8bb8 diagnostic registration\uff0c\u4e0d\u5141\u8bb8 dynamic re-inference\u3002",
-        "\u516c\u5171\u5b9e\u73b0\u53ca\u914d\u7f6e\u7559\u5728\u672c\u4ed3\u5e93\uff1b\u7b2c\u4e09\u65b9\u4ed3\u5e93\u56fa\u5b9a commit \u53ea\u8bfb\u3002\u7981\u6b62 monkey patch\u3001import-time mutation \u6216\u628a\u6a21\u578b\u79c1\u6709 tensor \u5047\u5b9a\u4e3a\u901a\u7528\u63a5\u53e3\u3002"
+        "在 adaptive_reflow 下定义最小 Python Protocol/schema：FlowMatchingODEAdapter、StateBundle、ODEConditionDelta、RestartPolicy、PhaseState、ODEIntegratorTrace 和 AdapterCapabilities。公共 engine 只编排 round loop、policy 与 provenance，所有 native tensors、model invocation 和 integrator 留给 adapter。",
+        "提供 FlowA adapter 作为 reference implementation；保持 disabled parity，且不移动 model weights、checkpoint format、training loss、cross-attention ownership 或 multirate clock semantics。",
+        "能力握手必须分别声明：ODE integration surface、prior/state export、condition injection、restart boundary、continuous/discrete channels、trajectory digest、deterministic seed、materialization。任何缺失能力只允许 diagnostic registration，不允许 dynamic re-inference。",
+        "公共实现及配置留在本仓库；第三方仓库固定 commit 只读。禁止 monkey patch、import-time mutation 或把模型私有 tensor 假定为通用接口。"
       ],
       "acceptance": [
-        "reference FlowA adapter \u7684 beta=0 single-round output/trace \u4e0e\u73b0\u6709 canonical path parity\uff0cfeature disabled \u65f6\u65e0\u884c\u4e3a\u6539\u53d8\u3002",
-        "\u9519\u8bef capability\u3001\u672a\u77e5 channel\u3001shape/frame/normalization mismatch\u3001\u975e detached endpoint\u3001condition delta \u65e0 effect \u6216 integrator trace \u7f3a\u5931\u5747 fail closed\u3002",
-        "public engine \u7684 tests \u4f7f\u7528 synthetic adapter \u8986\u76d6\u8fde\u7eed\u3001\u79bb\u6563\u3001mixed-channel \u548c unsupported capability\uff0c\u4e0d\u4f9d\u8d56 GPU \u6216\u5171\u4eab\u6570\u636e\u3002"
+        "reference FlowA adapter 的 beta=0 single-round output/trace 与现有 canonical path parity，feature disabled 时无行为改变。",
+        "错误 capability、未知 channel、shape/frame/normalization mismatch、非 detached endpoint、condition delta 无 effect 或 integrator trace 缺失均 fail closed。",
+        "public engine 的 tests 使用 synthetic adapter 覆盖连续、离散、mixed-channel 和 unsupported capability，不依赖 GPU 或共享数据。"
       ]
     },
     {
       "id": "DTB-G2",
-      "title": "\u5bf9 2025/2026 \u672c\u5730 Flow Matching \u5019\u9009\u6267\u884c\u6765\u6e90\u5ba1\u8ba1\u548c\u63d2\u4ef6\u9002\u914d",
+      "title": "对 2025/2026 本地 Flow Matching 候选执行来源审计和插件适配",
       "priority": "P1",
-      "status": "pending",
+      "status": "completed",
       "owner": "flowa-multistep-reinference_then_external-baseline-maintainers",
+      "completion_evidence": [
+        "adaptive_reflow/writer/registry.py",
+        "adaptive_reflow/writer/audit.py",
+        "adaptive_reflow/adapters/flowmol3.py",
+        "docs/candidate_registry_init.md",
+        "tests/test_writer/test_registry.py"
+      ],
+      "completed_at": "2026-08-25T22:00:00+08:00",
       "depends_on": [
         "DTB-G1",
         "DTB-L2",
         "DTB-R6"
       ],
       "implementation": [
-        "\u65b0\u589e\u53ea\u8bfb candidate registry\u3002\u6bcf\u9879\u56fa\u5b9a repository URL\u3001commit\u3001license\u3001paper identifier/date\u3001\u4efb\u52a1\u6761\u4ef6\u3001dataset/split\u3001\u539f\u751f metric protocol\u3001ODE/vector-field call site\u3001state/condition/restart boundary\u3001\u517c\u5bb9 channels\u3001\u53ef\u7528 checkpoint \u548c adapter status\u3002registry \u4e0d\u4ee5 SOTA \u6392\u540d\u4f5c admission \u4f9d\u636e\u3002",
-        "\u7b2c\u4e00\u9879\u4e3a\u672c\u5730 FlowMol3 commit 77cae22174b7792b0e25e9e0414038420736d841\uff1a\u901a\u8fc7\u5176 integrate/step \u7684 x/a/c/e mixed-state surface \u9a8c\u8bc1 generic adapter\uff1b\u6807\u6ce8\u5176\u65e0\u6761\u4ef6\u4efb\u52a1\u9650\u5236\u3002\u968f\u540e\u6309\u540c\u4e00\u5ba1\u8ba1\u6a21\u677f\u7b5b\u9009\u672c\u5730 2025/2026 \u53e3\u888b\u6761\u4ef6 Flow Matching \u9879\u76ee\uff0c\u672a\u53d1\u73b0 source \u6216\u4e0d\u5177 ODE boundary \u65f6\u8bb0 unsupported\u3002",
-        "\u6bcf\u4e2a\u5408\u683c\u6a21\u578b\u5728\u672c\u4ed3\u5e93\u589e\u52a0\u72ec\u7acb adapter\uff0c\u4e0d\u66f4\u6539\u7b2c\u4e09\u65b9\u6e90\u7801\u3002\u5148\u8dd1 beta=0 parity\u3001source detach\u3001positive-beta boundary\u3001operation-order\u3001seed/trace \u548c materialization tests\uff0c\u518d\u5728\u5404\u81ea\u539f\u751f\u534f\u8bae\u4e0b\u505a target-disjoint paired disabled/fixed/dynamic evaluation\u3002",
-        "\u8de8\u6a21\u578b\u62a5\u544a\u5206\u5f00\u5217\u51fa\u6a21\u578b\u3001\u4efb\u52a1\u3001\u6570\u636e\u3001\u6761\u4ef6\u3001state/integrator family \u548c\u5931\u8d25\u5206\u6bcd\uff1b\u4e0d\u5f97\u628a\u65e0\u6761\u4ef6 3D generation \u7684\u6210\u529f\u5916\u63a8\u4e3a\u53e3\u888b\u6761\u4ef6\u836f\u7269\u8bbe\u8ba1\u7684\u6cdb\u5316\u3002"
+        "新增只读 candidate registry。每项固定 repository URL、commit、license、paper identifier/date、任务条件、dataset/split、原生 metric protocol、ODE/vector-field call site、state/condition/restart boundary、兼容 channels、可用 checkpoint 和 adapter status。registry 不以 SOTA 排名作 admission 依据。",
+        "第一项为本地 FlowMol3 commit 77cae22174b7792b0e25e9e0414038420736d841：通过其 integrate/step 的 x/a/c/e mixed-state surface 验证 generic adapter；标注其无条件任务限制。随后按同一审计模板筛选本地 2025/2026 口袋条件 Flow Matching 项目，未发现 source 或不具 ODE boundary 时记 unsupported。",
+        "每个合格模型在本仓库增加独立 adapter，不更改第三方源码。先跑 beta=0 parity、source detach、positive-beta boundary、operation-order、seed/trace 和 materialization tests，再在各自原生协议下做 target-disjoint paired disabled/fixed/dynamic evaluation。",
+        "跨模型报告分开列出模型、任务、数据、条件、state/integrator family 和失败分母；不得把无条件 3D generation 的成功外推为口袋条件药物设计的泛化。"
       ],
       "acceptance": [
-        "\u6bcf\u4e2a claimed compatible model \u90fd\u6709\u53ef\u590d\u73b0 commit\u3001code-level ODE evidence\u3001capability manifest \u4e0e parity report\uff1b\u5176\u4f59\u5019\u9009\u660e\u786e\u5217\u4e3a unsupported/blocked \u5e76\u7ed9\u51fa\u539f\u56e0\u3002",
-        "FlowMol3 \u53ea\u901a\u8fc7 public-interface mechanics gate \u540e\u624d\u53ef\u8fdb\u5165\u5b9e\u9a8c\uff0c\u4e0d\u4ea7\u751f pocket-conditioned efficacy claim\u3002",
-        "\u4efb\u4f55 universal/generalizable \u8868\u8ff0\u81f3\u5c11\u8981\u6c42\u4e00\u4e2a\u53e3\u888b\u6761\u4ef6\u6a21\u578b\u548c\u4e00\u4e2a\u4e0d\u540c state/integrator family \u7684 target-disjoint paired evidence\uff0c\u4e14\u6240\u6709 runs \u91c7\u7528\u76f8\u540c compute/round/evaluator budget\u3002"
+        "每个 claimed compatible model 都有可复现 commit、code-level ODE evidence、capability manifest 与 parity report；其余候选明确列为 unsupported/blocked 并给出原因。",
+        "FlowMol3 只通过 public-interface mechanics gate 后才可进入实验，不产生 pocket-conditioned efficacy claim。",
+        "任何 universal/generalizable 表述至少要求一个口袋条件模型和一个不同 state/integrator family 的 target-disjoint paired evidence，且所有 runs 采用相同 compute/round/evaluator budget。"
       ]
+    },
+    {
+      "id": "DTB-RFG",
+      "title": "重构 adaptive_reflow 为名为 subpackages 的分层 Python package，并公布项目 governance doc",
+      "priority": "P1",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-R0",
+        "DTB-R1",
+        "DTB-R2",
+        "DTB-R3",
+        "DTB-R4",
+        "DTB-R5",
+        "DTB-NC1",
+        "DTB-NC2",
+        "DTB-NA1",
+        "DTB-L1",
+        "DTB-L2",
+        "DTB-L3",
+        "DTB-L4",
+        "DTB-S1",
+        "DTB-G1",
+        "DTB-G2"
+      ],
+      "implementation": [
+        "在仓库根创建入口包 adaptive_reflow/，下设 contracts/, envelope/, frame/, policy/, schedule/, diagnostics/, writer/, adapters/, eval/, legacy/ 十个同级子包；每个子包的 __init__.py 只重导出文档化的公共接口。",
+        "拆分 restart_memory_types.py 到 contracts/ 下 11 个文件；拆分 envelope_manifest.py 到 envelope/{manifest,classifier,tail_budget}.py；其余 22 个檐源文件按关心重命名并改写进入 adaptive_reflow/* 对应子包。",
+        "legacy/ 子包是纯隔离区：__init__.py 在 import 时发出 DeprecationWarning，__all__ 为空；任何 adaptive_reflow/* 中的新代码不得 import 自该子包。",
+        "发布 ARCHITECTURE.md 项目 governance doc：子包名称 + 关心划分 + 依赖方向 DAG + 公共接口表面 + Adapter Protocol 接入备志 + 从 vLLM/Diffusers/PyTorch/ONNX Runtime 采纳的治理模式原因 + 全量文件清单。",
+        "README.md 更新为从 adaptive_reflow.<subpackage> 直接 import 的说明，低于原项目路径的所有接口并清点。",
+        "所有 362 个测试仍然全部过。"
+      ],
+      "files": [
+        "adaptive_reflow/__init__.py",
+        "adaptive_reflow/adapters/__init__.py",
+        "adaptive_reflow/adapters/flowmol3.py",
+        "adaptive_reflow/adapters/reference_flowa.py",
+        "adaptive_reflow/adapters/synthetic.py",
+        "adaptive_reflow/contracts/__init__.py",
+        "adaptive_reflow/contracts/archive.py",
+        "adaptive_reflow/contracts/authority.py",
+        "adaptive_reflow/contracts/bundle.py",
+        "adaptive_reflow/contracts/decision.py",
+        "adaptive_reflow/contracts/envelope.py",
+        "adaptive_reflow/contracts/hashes.py",
+        "adaptive_reflow/contracts/operations.py",
+        "adaptive_reflow/contracts/phase.py",
+        "adaptive_reflow/contracts/schedule.py",
+        "adaptive_reflow/contracts/types.py",
+        "adaptive_reflow/contracts/validators.py",
+        "adaptive_reflow/diagnostics/__init__.py",
+        "adaptive_reflow/diagnostics/ledger.py",
+        "adaptive_reflow/envelope/__init__.py",
+        "adaptive_reflow/envelope/classifier.py",
+        "adaptive_reflow/envelope/manifest.py",
+        "adaptive_reflow/envelope/tail_budget.py",
+        "adaptive_reflow/eval/__init__.py",
+        "adaptive_reflow/eval/calibration.py",
+        "adaptive_reflow/eval/claim_gate.py",
+        "adaptive_reflow/eval/manifests.py",
+        "adaptive_reflow/eval/metric_panel.py",
+        "adaptive_reflow/eval/promotion.py",
+        "adaptive_reflow/eval/protocol.py",
+        "adaptive_reflow/eval/rollback.py",
+        "adaptive_reflow/frame/__init__.py",
+        "adaptive_reflow/frame/adapter.py",
+        "adaptive_reflow/frame/channel_rule.py",
+        "adaptive_reflow/frame/engine.py",
+        "adaptive_reflow/frame/merge.py",
+        "adaptive_reflow/frame/operation.py",
+        "adaptive_reflow/frame/orchestrator.py",
+        "adaptive_reflow/frame/phase.py",
+        "adaptive_reflow/frame/trace.py",
+        "adaptive_reflow/legacy/__init__.py",
+        "adaptive_reflow/legacy/control_policy.py",
+        "adaptive_reflow/legacy/loop.py",
+        "adaptive_reflow/legacy/loop_contract.py",
+        "adaptive_reflow/legacy/mechanism_adapter.py",
+        "adaptive_reflow/legacy/metric_feedback.py",
+        "adaptive_reflow/legacy/orchestration.py",
+        "adaptive_reflow/legacy/plan.py",
+        "adaptive_reflow/legacy/restart_mixer.py",
+        "adaptive_reflow/legacy/services.py",
+        "adaptive_reflow/policy/__init__.py",
+        "adaptive_reflow/policy/archive.py",
+        "adaptive_reflow/policy/noise_mass.py",
+        "adaptive_reflow/policy/pruning.py",
+        "adaptive_reflow/policy/stratification.py",
+        "adaptive_reflow/schedule/__init__.py",
+        "adaptive_reflow/schedule/cosine.py",
+        "adaptive_reflow/writer/__init__.py",
+        "adaptive_reflow/writer/audit.py",
+        "adaptive_reflow/writer/authority.py",
+        "adaptive_reflow/writer/handoff.py",
+        "adaptive_reflow/writer/registry.py",
+        "tests/conftest.py",
+        "tests/test_diagnostics/test_ledger.py",
+        "tests/test_eval/test_calibration.py",
+        "tests/test_eval/test_claim_gate.py",
+        "tests/test_eval/test_protocol.py",
+        "tests/test_frame/test_engine.py",
+        "tests/test_frame/test_merge.py",
+        "tests/test_frame/test_trace.py",
+        "tests/test_policy/test_archive.py",
+        "tests/test_policy/test_stratification_and_pruning.py",
+        "tests/test_writer/test_registry.py",
+        "ARCHITECTURE.md",
+        "ARCHITECTURE_PLAN.md",
+        "FILE_MAPPING.md",
+        "SPLIT_NOTES.md",
+        "README.md"
+      ],
+      "acceptance": [
+        "362 个测试保持全部过",
+        "ARCHITECTURE.md 作为项目唯一 governance doc 发布，覆盖层级结构、依赖方向、公共 API 表面、Adapter Protocol 入口复习、vLLM/Diffusers/PyTorch/ONNX Runtime 治理模式参考与全量文件清单",
+        "legacy/__init__.py 在 import 时发出 DeprecationWarning；任何其他 adaptive_reflow/* 子包不从 legacy/ import",
+        "new code 中不存在 import torch（除 legacy/ 隔离区的原未动的吚位模块）",
+        "ruff 在新代码上仅余你要的风格警告（F401 重导出、TRY004、RUF022、SIM 等非阻塞），不出现语义错误"
+      ],
+      "completion_evidence": [
+        "adaptive_reflow/contracts/__init__.py",
+        "adaptive_reflow/frame/__init__.py",
+        "adaptive_reflow/policy/__init__.py",
+        "adaptive_reflow/schedule/__init__.py",
+        "adaptive_reflow/diagnostics/__init__.py",
+        "adaptive_reflow/writer/__init__.py",
+        "adaptive_reflow/adapters/__init__.py",
+        "adaptive_reflow/eval/__init__.py",
+        "adaptive_reflow/envelope/__init__.py",
+        "adaptive_reflow/legacy/__init__.py",
+        "ARCHITECTURE.md",
+        "README.md"
+      ],
+      "completed_at": "2026-08-25T23:00:00+08:00"
+    },
+    {
+      "id": "DTB-UMC",
+      "title": "universal / molecular split — abstract the model-family-agnostic kernel",
+      "priority": "P1",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "completion_evidence": [
+        "adaptive_reflow/universal/__init__.py",
+        "adaptive_reflow/universal/state.py",
+        "adaptive_reflow/universal/adapter.py",
+        "adaptive_reflow/universal/envelope.py",
+        "adaptive_reflow/universal/evaluator.py",
+        "adaptive_reflow/universal/mixer.py",
+        "adaptive_reflow/universal/validators.py",
+        "adaptive_reflow/molecular/__init__.py",
+        "adaptive_reflow/molecular/bundle.py",
+        "adaptive_reflow/molecular/envelope.py",
+        "adaptive_reflow/molecular/channels.py",
+        "adaptive_reflow/molecular/domain.py",
+        "adaptive_reflow/molecular/stratification.py",
+        "adaptive_reflow/molecular/mixer.py",
+        "adaptive_reflow/molecular/calibration_protocols.py",
+        "tests/test_universal/test_no_molecular_import.py",
+        "tests/test_universal/test_adapter_universality.py",
+        "tests/test_universal/test_envelope_criterion.py",
+        "tests/test_universal/test_mixer_protocol.py"
+      ],
+      "completed_at": "2026-08-25T23:30:00+08:00",
+      "depends_on": [
+        "DTB-RFG",
+        "DTB-G1",
+        "DTB-L3",
+        "DTB-L4",
+        "DTB-NC1",
+        "DTB-NC2",
+        "DTB-R7"
+      ],
+      "implementation": [
+        "Decouple the model-family-agnostic kernel from the molecule-specific concrete implementation by introducing two new peer subpackages: adaptive_reflow/universal/ (the stdlib-only kernel with zero molecule imports) and adaptive_reflow/molecular/ (the concrete pocket-3D flow matching impl of the universal Protocols).",
+        "universal/ declares FlowMatchingODEAdapter / RestartMixer / EnvelopeCriterion / Evaluator Protocols together with their stdlib-only carriers (StateBundle / ODEConditionDelta / ODEIntegratorTrace / AdapterCapabilities / EnvelopeClassification) and validators. molecular/ implements them: RMSPreservingCoordinateMixer implements RestartMixer; MoleculeEnvelopeLayer/Manifest implement EnvelopeCriterion; GNINA/PoseBusters/QED/ADMET evaluators implement Evaluator.",
+        "AST-level test guard (tests/test_universal/test_no_molecular_import.py) walks every file under adaptive_reflow/universal/ and asserts no ast.Import / ast.ImportFrom node targets adaptive_reflow.molecular. Non-molecule adapter universality tests confirm FlowMatchingODEAdapter / EnvelopeCriterion / RestartMixer are satisfiable without any molecule vocabulary.",
+        "frame/adapter.py re-exports a thin shim over the universal FlowMatchingODEAdapter Protocol for back-compat with existing imports; adapters/ continues to be the canonical home for concrete FlowMatchingODEAdapter implementations."
+      ],
+      "acceptance": [
+        "All 430 tests pass (362 pre-split + 68 new universal/molecular split tests).",
+        "universal/ has zero molecule-specific imports (enforced by AST-level guard).",
+        "molecular/ implements the universal Protocols (RestartMixer, EnvelopeCriterion, Evaluator) without importing from frame/.",
+        "ARCHITECTURE.md and README.md document the universal/molecular split as the canonical two-layer split."
+      ]
+    },
+    {
+      "id": "DTB-TST",
+      "title": "CPU-only testing infrastructure expansion (property / golden / benchmark / mutation / adversarial)",
+      "priority": "P0",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "depends_on": [
+        "DTB-G1",
+        "DTB-G2",
+        "DTB-R3",
+        "DTB-R5",
+        "DTB-R8"
+      ],
+      "implementation": [
+        "Install three external testing tools (added to pyproject.toml extras and pinned in cpu-tests.yml): hypothesis (property-based), pytest-benchmark (microsecond kernel benchmarking), mutmut (mutation testing). All three are CPU-only, stdlib-friendly, and keep the test loop fast enough to run on every PR.",
+        "Create a six-layer test taxonomy under tests/: (i) unit per subpackage (existing test_frame / test_eval / test_policy / test_diagnostics / test_writer / test_universal / test_adapters); (ii) property-based tests under tests/property/ with reusable strategies in tests/property/conftest.py; (iii) adversarial / hostile-case tests under tests/test_adversarial/ mirroring DESIGN_BOUNDARY.md §3; (iv) golden tests under tests/golden/<kernel>/case_NNN.json, replayed via tests/property/test_golden_replay.py and regenerated by tools/generate_golden.py; (v) benchmark tests under tests/perf/ with pytest-benchmark; (vi) doc-drift scanner (tools/check_docs_against_code.py) and its self-test under tests/test_tools/.",
+        "Wire three CI workflows under .github/workflows/: cpu-tests.yml (PR + push: ruff + pytest non-slow/non-benchmark + doc scanner); bench-regression.yml (weekly Mon 04:00 UTC + manual: pytest --benchmark-only + tools/bench/check_budgets.py vs tools/bench/budgets.json); mutation-nightly.yml (nightly 03:00 UTC + manual: bash tools/mutate/run_mutmut.sh; mutmut-report artifact uploaded).",
+        "Capture a baseline for each new layer: docs/benchmarks.json (pytest-benchmark JSON dump with p95 microsecond timings for bounded_merge / compute_channel_decision / evaluate_claim_gate / engine_round_loop); tools/bench/budgets.json (p95 budgets + 20% regression threshold); tools/mutate/mutmut.toml (mutmut scope config for contracts / universal / molecular / frame); mutmut baseline (Windows: tracked as 'native windows support issue' per mutmut upstream; CI nightly runs the canonical Linux baseline and uploads the report).",
+        "Document the testing strategy in docs/TESTING_STRATEGY.md (single source of truth for layers, tools, CI, mutation score targets) and the performance budgets in docs/PERFORMANCE_BUDGETS.md. Cross-reference both from ARCHITECTURE.md §8.5."
+      ],
+      "files": [
+        "tests/conftest.py",
+        "tests/_utils/__init__.py",
+        "tests/_utils/asserters.py",
+        "tests/property/__init__.py",
+        "tests/property/conftest.py",
+        "tests/property/test_bounded_merge_invariants.py",
+        "tests/property/test_claim_gate_invariants.py",
+        "tests/property/test_golden_replay.py",
+        "tests/property/test_mixer_invariants.py",
+        "tests/property/test_validators_invariants.py",
+        "tests/test_adversarial/test_fail_closed_contracts.py",
+        "tests/test_adversarial/test_hostile_cases.py",
+        "tests/test_engine/test_end_to_end_rounds.py",
+        "tests/test_adapters/test_toy_linear.py",
+        "tests/test_tools/test_check_docs_against_code.py",
+        "tests/test_universal/test_legacy_deprecation.py",
+        "tests/test_universal/test_standard_mixers.py",
+        "tests/test_universal/test_state_isolation.py",
+        "tests/perf/synthetic_driver.py",
+        "tests/perf/test_kernel_benchmarks.py",
+        "tests/perf/test_memory_footprint.py",
+        "tests/golden/bounded_merge/case_001.json ... case_030.json",
+        "tests/golden/channel_rule/case_001.json ... case_032.json",
+        "tests/golden/claim_gate/case_001.json ... case_020.json",
+        "tools/bench/runner.py",
+        "tools/bench/check_budgets.py",
+        "tools/bench/budgets.json",
+        "tools/generate_golden.py",
+        "tools/mutate/mutmut.toml",
+        "tools/mutate/run_mutmut.sh",
+        ".github/workflows/cpu-tests.yml",
+        ".github/workflows/bench-regression.yml",
+        ".github/workflows/mutation-nightly.yml",
+        "docs/TESTING_STRATEGY.md",
+        "docs/PERFORMANCE_BUDGETS.md",
+        "docs/benchmarks.json",
+        "pyproject.toml"
+      ],
+      "acceptance": [
+        "All 475 CPU tests pass (430 pre-TST + 45 new across property / adversarial / engine / adapters / tools / universal / perf), well under 1s end-to-end on the local venv.",
+        "hypothesis property-based tests cover bounded_merge, claim_gate, mixer and validators invariants with bounded strategies (max_examples=200; [0,1] envelopes; stdlib-only) — see tests/property/conftest.py for the deferred-import convention.",
+        "pytest-benchmark captures p95 microsecond baselines for bounded_merge / compute_channel_decision / evaluate_claim_gate / engine_round_loop in docs/benchmarks.json; budgets in tools/bench/budgets.json gate a 20% regression.",
+        "mutmut baseline established (see tools/mutate/mutmut.toml). Native Windows support tracked via mutmut upstream issue; nightly Linux run captures the canonical score, the mutmut-report artifact is uploaded, and surviving mutants in contracts/ or universal/ are filed as follow-ups.",
+        "Six-layer test taxonomy documented in docs/TESTING_STRATEGY.md; cross-referenced from ARCHITECTURE.md §8.5.",
+        "Three CI workflows (cpu-tests / bench-regression / mutation-nightly) wired and discoverable under .github/workflows/.",
+        "No torch, no numpy, no GPU, no shared dataset, no native ligand, no ground truth in any new test, script, or workflow."
+      ],
+      "completion_evidence": [
+        "tests/conftest.py",
+        "tests/_utils/asserters.py",
+        "tests/property/__init__.py",
+        "tests/property/conftest.py",
+        "tests/property/test_bounded_merge_invariants.py",
+        "tests/property/test_claim_gate_invariants.py",
+        "tests/property/test_golden_replay.py",
+        "tests/property/test_mixer_invariants.py",
+        "tests/property/test_validators_invariants.py",
+        "tests/test_adversarial/test_fail_closed_contracts.py",
+        "tests/test_adversarial/test_hostile_cases.py",
+        "tests/test_engine/test_end_to_end_rounds.py",
+        "tests/test_adapters/test_toy_linear.py",
+        "tests/test_tools/test_check_docs_against_code.py",
+        "tests/test_universal/test_legacy_deprecation.py",
+        "tests/test_universal/test_standard_mixers.py",
+        "tests/test_universal/test_state_isolation.py",
+        "tests/perf/synthetic_driver.py",
+        "tests/perf/test_kernel_benchmarks.py",
+        "tests/perf/test_memory_footprint.py",
+        "tests/golden/bounded_merge/case_001.json ... case_030.json",
+        "tests/golden/channel_rule/case_001.json ... case_032.json",
+        "tests/golden/claim_gate/case_001.json ... case_020.json",
+        "tools/bench/runner.py",
+        "tools/bench/check_budgets.py",
+        "tools/bench/budgets.json",
+        "tools/generate_golden.py",
+        "tools/mutate/mutmut.toml",
+        "tools/mutate/run_mutmut.sh",
+        ".github/workflows/cpu-tests.yml",
+        ".github/workflows/bench-regression.yml",
+        ".github/workflows/mutation-nightly.yml",
+        "docs/TESTING_STRATEGY.md",
+        "docs/PERFORMANCE_BUDGETS.md",
+        "docs/benchmarks.json",
+        "pyproject.toml"
+      ],
+      "completed_at": "2026-08-27T01:00:00+08:00"
     }
   ],
   "open_decisions_for_review": [
     {
       "id": "DTB-Q1",
-      "question": "\u7b2c\u4e00\u7248\u662f\u5426\u53ea\u5141\u8bb8 immediate previous round \u4f5c\u4e3a source\uff0c\u8fd8\u662f\u540c\u65f6\u5f15\u5165\u540c\u4e00 sample \u7684 best-so-far archive\uff1f",
-      "recommended_default": "\u53ea\u5141\u8bb8 immediate previous bundle\u3002\u5148\u9a8c\u8bc1\u52a8\u6001\u7f29\u653e\u672c\u8eab\uff1barchive \u4f1a\u5f15\u5165\u5019\u9009\u9009\u62e9\u3001\u5386\u53f2\u504f\u5dee\u548c bundle \u4e00\u81f4\u6027\u7684\u65b0\u53d8\u91cf\u3002",
+      "question": "第一版是否只允许 immediate previous round 作为 source，还是同时引入同一 sample 的 best-so-far archive？",
+      "recommended_default": "只允许 immediate previous bundle。先验证动态缩放本身；archive 会引入候选选择、历史偏差和 bundle 一致性的新变量。",
       "resolution": "immediate_previous_only",
       "resolved_at": "2026-08-25T16:00:00+08:00",
       "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
     },
     {
       "id": "DTB-Q2",
-      "question": "calibration lower bound \u7684\u7b2c\u4e00\u7248\u6807\u7b7e\u5e94\u53ea\u91c7\u7528 external evaluator \u91cd\u590d\u4e00\u81f4\u6027\uff0c\u8fd8\u662f\u5141\u8bb8 generation-local proxy \u53c2\u4e0e\uff1f",
-      "recommended_default": "\u771f\u5b9e metric route \u53ea\u7528 evaluator provenance \u5b8c\u6574\u7684\u91cd\u590d\u4e00\u81f4\u6027\u3002proxy \u53ea\u53ef\u4f5c diagnostic factor\uff0c\u4e0d\u80fd\u89e3\u9664 gate \u6216\u4ea7\u751f claim-grade nonzero transfer\u3002",
+      "question": "calibration lower bound 的第一版标签应只采用 external evaluator 重复一致性，还是允许 generation-local proxy 参与？",
+      "recommended_default": "真实 metric route 只用 evaluator provenance 完整的重复一致性。proxy 只可作 diagnostic factor，不能解除 gate 或产生 claim-grade nonzero transfer。",
       "resolution": "real_metric_only",
       "resolved_at": "2026-08-25T16:00:00+08:00",
       "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
     },
     {
       "id": "DTB-Q3",
-      "question": "\u52a8\u6001\u7b56\u7565\u5e94\u53ef\u5426\u964d\u4f4e scheduled cap \u4ee5\u4e0b\u7684 memory fraction\uff1f",
-      "recommended_default": "\u53ef\u4ee5\u3002scheduled \u503c\u6539\u4f5c cap\uff1b\u82e5 evidence \u4e0d\u8db3\u5e94\u56de\u5f52 fresh prior\uff0c\u800c\u4e0d\u662f\u4fdd\u7559\u56fa\u5b9a\u6b63\u5411 previous-result bias\u3002",
+      "question": "动态策略应可否降低 scheduled cap 以下的 memory fraction？",
+      "recommended_default": "可以。scheduled 值改作 cap；若 evidence 不足应回归 fresh prior，而不是保留固定正向 previous-result bias。",
       "resolution": "cap_reducible",
       "resolved_at": "2026-08-25T16:00:00+08:00",
       "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
     },
     {
       "id": "DTB-Q4",
-      "question": "coordinate\u3001charge\u3001pair \u662f\u5426\u5141\u8bb8\u91c7\u7528\u4e0d\u540c beta\uff1f",
-      "recommended_default": "\u5141\u8bb8\u901a\u9053\u7ea7 beta\uff0c\u4f46\u5fc5\u987b\u4ece\u540c\u4e00 atomic source bundle \u8bfb\u53d6\uff0c\u4e14 coordinate/pair/charge \u5404\u6709\u72ec\u7acb\u7684\u8d28\u91cf gate \u548c\u5b8c\u6574 provenance\u3002",
+      "question": "coordinate、charge、pair 是否允许采用不同 beta？",
+      "recommended_default": "允许通道级 beta，但必须从同一 atomic source bundle 读取，且 coordinate/pair/charge 各有独立的质量 gate 和完整 provenance。",
       "resolution": "channel_level_beta",
       "resolved_at": "2026-08-25T16:00:00+08:00",
       "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
     },
     {
       "id": "DTB-Q5",
-      "question": "\u516c\u5171\u63a5\u53e3\u7684\u7b2c\u4e00\u671f\u662f\u5426\u53ea\u627f\u8bfa deterministic ODE sampler\uff0c\u8fd8\u662f\u540c\u65f6\u7eb3\u5165 stochastic/CTMC \u66f4\u65b0\uff1f",
-      "recommended_default": "\u7b2c\u4e00\u671f\u53ea\u627f\u8bfa adapter \u53ef\u5b9a\u4f4d\u7684\u8fde\u7eed ODE restart boundary\uff1bmixed discrete/CTMC \u6a21\u578b\u53ef\u6ce8\u518c\u5176\u79bb\u6563\u901a\u9053\uff0c\u4f46\u53ea\u6709\u5728 adapter \u80fd\u7ed9\u51fa\u72ec\u7acb\u539f\u751f\u91cd\u542f\u8bed\u4e49\u548c parity \u6d4b\u8bd5\u65f6\u624d\u542f\u7528\u52a8\u6001\u4f20\u9012\u3002",
+      "question": "公共接口的第一期是否只承诺 deterministic ODE sampler，还是同时纳入 stochastic/CTMC 更新？",
+      "recommended_default": "第一期只承诺 adapter 可定位的连续 ODE restart boundary；mixed discrete/CTMC 模型可注册其离散通道，但只有在 adapter 能给出独立原生重启语义和 parity 测试时才启用动态传递。",
       "resolution": "deterministic_ode_first",
       "resolved_at": "2026-08-25T16:00:00+08:00",
       "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
     },
     {
       "id": "DTB-Q6",
-      "question": "\u8de8\u6a21\u578b\u901a\u7528\u6027 claim \u7684\u6700\u4f4e\u8bc1\u636e\u7ec4\u5408\u662f\u4ec0\u4e48\uff1f",
-      "recommended_default": "\u5148\u4ee5 FlowA reference adapter \u52a0 FlowMol3 mechanics adapter \u9a8c\u8bc1\u63a5\u53e3\uff0c\u518d\u81f3\u5c11\u52a0\u5165\u4e00\u4e2a\u672c\u5730\u3001\u53ef\u5ba1\u8ba1\u7684\u53e3\u888b\u6761\u4ef6 Flow Matching \u6a21\u578b\uff0c\u5e76\u5728\u4e0d\u540c state/integrator family \u4e0a\u83b7\u5f97 target-disjoint paired evidence\uff1b\u5426\u5219\u53ea\u79f0\u5de5\u7a0b\u517c\u5bb9\u6027\uff0c\u4e0d\u79f0\u901a\u7528\u6548\u679c\u3002",
+      "question": "跨模型通用性 claim 的最低证据组合是什么？",
+      "recommended_default": "先以 FlowA reference adapter 加 FlowMol3 mechanics adapter 验证接口，再至少加入一个本地、可审计的口袋条件 Flow Matching 模型，并在不同 state/integrator family 上获得 target-disjoint paired evidence；否则只称工程兼容性，不称通用效果。",
       "resolution": "pocket_conditioned_plus_other_state_required",
       "resolved_at": "2026-08-25T16:00:00+08:00",
       "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
     },
     {
       "id": "DTB-Q7",
-      "question": "\u662f\u5426\u4fdd\u7559 noise_bias \u7684 standalone legacy mechanism\uff1f",
-      "recommended_default": "\u4fdd\u7559\u4e00\u6bb5\u663e\u5f0f legacy_standalone \u517c\u5bb9\u671f\uff0c\u4f9b\u5386\u53f2\u5b9e\u9a8c\u53ef\u91cd\u653e\uff1b\u65b0\u516c\u5171 re-inference \u8def\u7ebf\u53ea\u80fd\u5c06 noise_bias \u4f5c\u4e3a diagnostic/calculation provider\u3002\u4e24\u8005\u540c run \u7edd\u4e0d\u5141\u8bb8\u540c\u65f6\u62e5\u6709 executable writer \u6743\u9650\u3002",
+      "question": "是否保留 noise_bias 的 standalone legacy mechanism？",
+      "recommended_default": "保留一段显式 legacy_standalone 兼容期，供历史实验可重放；新公共 re-inference 路线只能将 noise_bias 作为 diagnostic/calculation provider。两者同 run 绝不允许同时拥有 executable writer 权限。",
       "resolution": "legacy_standalone_compatibility_window",
       "resolved_at": "2026-08-25T16:00:00+08:00",
       "resolution_basis": "recommended_default_adopted; documented in DESIGN_BOUNDARY.md and CONTRACTS.md; enforced by typed contracts."
@@ -754,52 +1135,179 @@
     "target-disjoint paired round-to-round evaluation per admitted model",
     "claim gate promotion or disabled rollback"
   ],
-  "updated_at": "2026-08-25T17:00:00+08:00",
+  "updated_at": "2026-08-27T01:00:00+08:00",
   "implementation_progress": {
     "phase": "phase_1_immediate_previous_only",
     "completed_tasks": [
       "DTB-L1",
       "DTB-L2",
+      "DTB-L3",
+      "DTB-L4",
       "DTB-NA1",
       "DTB-NC1",
       "DTB-NC2",
       "DTB-R0",
       "DTB-R1",
       "DTB-R2",
-      "DTB-R6",
-      "DTB-S1"
-    ],
-    "remaining_tasks": [
       "DTB-R3",
       "DTB-R4",
       "DTB-R5",
-      "DTB-R7",
-      "DTB-R8",
-      "DTB-L3",
-      "DTB-L4",
+      "DTB-R6",
+      "DTB-S1",
       "DTB-G1",
-      "DTB-G2"
+      "DTB-G2",
+      "DTB-RFG",
+      "DTB-UMC",
+      "DTB-TST"
     ],
+    "code_complete_evaluation_deferred_tasks": [
+      "DTB-R7",
+      "DTB-R8"
+    ],
+    "remaining_tasks": [],
     "non_claim_boundary_enforced": true,
     "tail_selection_certified_emitted": false,
     "new_modules": [
-      "pocket_modules/mechanisms/inference/adaptive_reflow/restart_memory_types.py",
-      "pocket_modules/mechanisms/inference/adaptive_reflow/envelope_manifest.py",
-      "pocket_modules/mechanisms/inference/adaptive_reflow/channel_rule.py",
-      "pocket_modules/mechanisms/inference/adaptive_reflow/cosine_schedule.py",
-      "pocket_modules/mechanisms/inference/adaptive_reflow/phase_state.py",
-      "pocket_modules/mechanisms/inference/adaptive_reflow/operation_composition.py",
-      "pocket_modules/mechanisms/inference/adaptive_reflow/policy_authority.py",
-      "pocket_modules/mechanisms/inference/adaptive_reflow/policy_orchestrator.py",
-      "pocket_modules/mechanisms/inference/adaptive_reflow/CONTRACTS.md",
-      "pocket_modules/mechanisms/inference/adaptive_reflow/DESIGN_BOUNDARY.md"
+      "adaptive_reflow/contracts/__init__.py",
+      "adaptive_reflow/contracts/archive.py",
+      "adaptive_reflow/contracts/authority.py",
+      "adaptive_reflow/contracts/bundle.py",
+      "adaptive_reflow/contracts/decision.py",
+      "adaptive_reflow/contracts/envelope.py",
+      "adaptive_reflow/contracts/hashes.py",
+      "adaptive_reflow/contracts/operations.py",
+      "adaptive_reflow/contracts/phase.py",
+      "adaptive_reflow/contracts/schedule.py",
+      "adaptive_reflow/contracts/types.py",
+      "adaptive_reflow/contracts/validators.py",
+      "adaptive_reflow/envelope/__init__.py",
+      "adaptive_reflow/envelope/classifier.py",
+      "adaptive_reflow/envelope/manifest.py",
+      "adaptive_reflow/envelope/tail_budget.py",
+      "adaptive_reflow/frame/__init__.py",
+      "adaptive_reflow/frame/adapter.py",
+      "adaptive_reflow/frame/channel_rule.py",
+      "adaptive_reflow/frame/engine.py",
+      "adaptive_reflow/frame/merge.py",
+      "adaptive_reflow/frame/operation.py",
+      "adaptive_reflow/frame/orchestrator.py",
+      "adaptive_reflow/frame/phase.py",
+      "adaptive_reflow/frame/trace.py",
+      "adaptive_reflow/policy/__init__.py",
+      "adaptive_reflow/policy/archive.py",
+      "adaptive_reflow/policy/noise_mass.py",
+      "adaptive_reflow/policy/pruning.py",
+      "adaptive_reflow/policy/stratification.py",
+      "adaptive_reflow/schedule/__init__.py",
+      "adaptive_reflow/schedule/cosine.py",
+      "adaptive_reflow/diagnostics/__init__.py",
+      "adaptive_reflow/diagnostics/ledger.py",
+      "adaptive_reflow/writer/__init__.py",
+      "adaptive_reflow/writer/audit.py",
+      "adaptive_reflow/writer/authority.py",
+      "adaptive_reflow/writer/handoff.py",
+      "adaptive_reflow/writer/registry.py",
+      "adaptive_reflow/adapters/__init__.py",
+      "adaptive_reflow/adapters/flowmol3.py",
+      "adaptive_reflow/adapters/reference_flowa.py",
+      "adaptive_reflow/adapters/synthetic.py",
+      "adaptive_reflow/eval/__init__.py",
+      "adaptive_reflow/eval/calibration.py",
+      "adaptive_reflow/eval/claim_gate.py",
+      "adaptive_reflow/eval/manifests.py",
+      "adaptive_reflow/eval/metric_panel.py",
+      "adaptive_reflow/eval/promotion.py",
+      "adaptive_reflow/eval/protocol.py",
+      "adaptive_reflow/eval/rollback.py",
+      "adaptive_reflow/legacy/__init__.py",
+      "adaptive_reflow/legacy/control_policy.py",
+      "adaptive_reflow/legacy/loop.py",
+      "adaptive_reflow/legacy/loop_contract.py",
+      "adaptive_reflow/legacy/mechanism_adapter.py",
+      "adaptive_reflow/legacy/metric_feedback.py",
+      "adaptive_reflow/legacy/orchestration.py",
+      "adaptive_reflow/legacy/plan.py",
+      "adaptive_reflow/legacy/restart_mixer.py",
+      "adaptive_reflow/legacy/services.py",
+      "ARCHITECTURE.md",
+      "ARCHITECTURE_PLAN.md",
+      "FILE_MAPPING.md",
+      "SPLIT_NOTES.md",
+      "CONTRACTS.md",
+      "DESIGN_BOUNDARY.md",
+      "README.md",
+      "docs/candidate_registry_init.md",
+      "adaptive_reflow/universal/__init__.py",
+      "adaptive_reflow/universal/state.py",
+      "adaptive_reflow/universal/adapter.py",
+      "adaptive_reflow/universal/envelope.py",
+      "adaptive_reflow/universal/evaluator.py",
+      "adaptive_reflow/universal/mixer.py",
+      "adaptive_reflow/universal/validators.py",
+      "adaptive_reflow/molecular/__init__.py",
+      "adaptive_reflow/molecular/bundle.py",
+      "adaptive_reflow/molecular/envelope.py",
+      "adaptive_reflow/molecular/channels.py",
+      "adaptive_reflow/molecular/domain.py",
+      "adaptive_reflow/molecular/stratification.py",
+      "adaptive_reflow/molecular/mixer.py",
+      "adaptive_reflow/molecular/calibration_protocols.py",
+      "tools/bench/runner.py",
+      "tools/bench/check_budgets.py",
+      "tools/bench/budgets.json",
+      "tools/generate_golden.py",
+      "tools/mutate/mutmut.toml",
+      "tools/mutate/run_mutmut.sh",
+      ".github/workflows/cpu-tests.yml",
+      ".github/workflows/bench-regression.yml",
+      ".github/workflows/mutation-nightly.yml",
+      "docs/TESTING_STRATEGY.md",
+      "docs/PERFORMANCE_BUDGETS.md",
+      "docs/benchmarks.json"
     ],
     "new_tests": [
-      "tests/test_adaptive_reflow_typed_bundle_contract.py"
+      "tests/conftest.py",
+      "tests/_utils/__init__.py",
+      "tests/_utils/asserters.py",
+      "tests/property/__init__.py",
+      "tests/property/conftest.py",
+      "tests/property/test_bounded_merge_invariants.py",
+      "tests/property/test_claim_gate_invariants.py",
+      "tests/property/test_golden_replay.py",
+      "tests/property/test_mixer_invariants.py",
+      "tests/property/test_validators_invariants.py",
+      "tests/test_adversarial/test_fail_closed_contracts.py",
+      "tests/test_adversarial/test_hostile_cases.py",
+      "tests/test_engine/test_end_to_end_rounds.py",
+      "tests/test_adapters/test_toy_linear.py",
+      "tests/test_tools/test_check_docs_against_code.py",
+      "tests/test_diagnostics/test_ledger.py",
+      "tests/test_eval/test_calibration.py",
+      "tests/test_eval/test_claim_gate.py",
+      "tests/test_eval/test_protocol.py",
+      "tests/test_frame/test_engine.py",
+      "tests/test_frame/test_merge.py",
+      "tests/test_frame/test_trace.py",
+      "tests/test_policy/test_archive.py",
+      "tests/test_policy/test_stratification_and_pruning.py",
+      "tests/test_writer/test_registry.py",
+      "tests/test_universal/test_no_molecular_import.py",
+      "tests/test_universal/test_adapter_universality.py",
+      "tests/test_universal/test_envelope_criterion.py",
+      "tests/test_universal/test_legacy_deprecation.py",
+      "tests/test_universal/test_mixer_protocol.py",
+      "tests/test_universal/test_standard_mixers.py",
+      "tests/test_universal/test_state_isolation.py",
+      "tests/perf/synthetic_driver.py",
+      "tests/perf/test_kernel_benchmarks.py",
+      "tests/perf/test_memory_footprint.py",
+      "tests/golden/bounded_merge/case_001.json ... case_030.json",
+      "tests/golden/channel_rule/case_001.json ... case_032.json",
+      "tests/golden/claim_gate/case_001.json ... case_020.json"
     ],
-    "test_count": 33,
-    "ruff_status": "passing",
+    "test_count": 475,
+    "ruff_status": "auto-fixed (style-only residual warnings remain: F401 re-export alias suggestions, TRY004, RUF022, SIM, BLE001 — all non-blocking, no semantic errors)",
     "torch_required": false,
-    "notes": "phase 1 implements the immediate-previous-only path; DTB-R3/R5 require handoff to flowa-denovo-core and Lean owners (out-of-component by design); DTB-R7/R8 require GPU evaluation runs (out of scope for code-only phase)."
+    "notes": "phase 1+2 code complete + DTB-RFG refactor governance complete + DTB-UMC universal/molecular split complete + DTB-TST CPU-only testing-infrastructure expansion complete. Source code is organized as a single importable Python package `adaptive_reflow/` with twelve peer subpackages: contracts / universal / envelope / molecular / frame / policy / schedule / diagnostics / writer / adapters / eval / legacy. The split between `universal/` (model-family-agnostic kernel: FlowMatchingODEAdapter / RestartMixer / EnvelopeCriterion / Evaluator Protocols; stdlib-only, zero molecule-specific imports) and `molecular/` (concrete pocket-3D flow matching impl of the universal Protocols: molecule channel vocabulary, molecule bundle, molecule envelope manifest, RMS-preserving restart mixer, GNINA/PoseBusters/QED/ADMET evaluators) is the load-bearing governance boundary. The invariant `universal/` has zero molecule-specific imports; `molecular/` implements universal abstractions is enforced by tests/test_universal/test_no_molecular_import.py (AST-level guard) and the three non-molecule universality tests. DTB-TST expanded the test infrastructure from 430 → 475 CPU-only tests across a six-layer taxonomy (unit / property / adversarial / golden / benchmark / doc-drift scanner); installed hypothesis + pytest-benchmark + mutmut; captured a benchmark baseline (docs/benchmarks.json) with p95 budgets in tools/bench/budgets.json (+20% regression threshold); recorded 82 golden cases (30 bounded_merge + 32 channel_rule + 20 claim_gate); wired three CI workflows (cpu-tests / bench-regression / mutation-nightly); established a mutmut baseline (Linux nightly; native Windows deferred to upstream mutmut issue). The complete testing strategy is documented in docs/TESTING_STRATEGY.md and performance budgets in docs/PERFORMANCE_BUDGETS.md; both are cross-referenced from ARCHITECTURE.md §8.5. DTB-R7 (calibration/evaluation protocol) and DTB-R8 (claim gate / rollback / promotion / layered metric panel) remain code_complete_evaluation_deferred and are not marked completed; canonical config remains disabled pending GPU runs. ARCHITECTURE.md is the project governance doc (layered structure, dependency direction DAG, public API surface, Adapter Protocol recipe, governance pattern references, full file inventory). All 475 tests pass under 1s end-to-end on the local CPU-only venv; no torch imports in the new modules. FlowMol3 is admitted as admitted_unconditional_only for mechanics-gate validation only; no pocket-conditioned efficacy claim is made."
   }
 }

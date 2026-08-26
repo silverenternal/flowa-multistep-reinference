@@ -1,0 +1,54 @@
+{
+  "expected": {
+    "decision": "defer",
+    "evaluated_at_round": 2,
+    "evidence_summary": {
+      "deferred_reason": "claim gate promotion deferred pending R7 GPU data; structural evaluation returns 'defer' whenever any required condition is missing or has not been satisfied",
+      "evaluation_window_rounds": 1,
+      "gate_enabled": true,
+      "minimum_confidence_interval_coverage": 0.5,
+      "required_calibration_artifact_hash": null,
+      "required_contracts_passing": [
+        "contract_a",
+        "contract_b"
+      ],
+      "required_paired_evidence_count": 2
+    },
+    "gate_conditions_failed": [],
+    "gate_conditions_passed": [
+      "confidence_interval_coverage",
+      "contract:contract_a",
+      "contract:contract_b",
+      "evaluation_window_rounds",
+      "paired_evidence_count"
+    ]
+  },
+  "inputs": {
+    "config": {
+      "evaluation_window_rounds": 1,
+      "gate_enabled": true,
+      "minimum_confidence_interval_coverage": 0.5,
+      "required_calibration_artifact_hash": null,
+      "required_contracts_passing": [
+        "contract_a",
+        "contract_b"
+      ],
+      "required_paired_evidence_count": 2
+    },
+    "evaluated_at_round": 2,
+    "evidence": {
+      "confidence_interval_coverage": 0.9,
+      "contract_a": {
+        "passed": true,
+        "summary": "ok"
+      },
+      "contract_b": {
+        "passed": true,
+        "summary": "ok"
+      },
+      "evaluation_window_rounds": 3,
+      "paired_evidence_count": 5
+    }
+  },
+  "name": "gate_enabled_all_pass"
+}

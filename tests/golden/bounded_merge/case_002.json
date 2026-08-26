@@ -1,0 +1,12 @@
+{
+  "expected": 0.5,
+  "inputs": {
+    "cap": 1.0,
+    "delta_cap_down": 0.5,
+    "delta_cap_up": 0.5,
+    "dynamic": 0.5,
+    "floor": 0.0,
+    "prev": 0.5
+  },
+  "name": "baseline_match_mid"
+}

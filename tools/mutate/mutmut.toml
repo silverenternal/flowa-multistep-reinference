@@ -1,0 +1,12 @@
+[mutmut]
+paths_to_mutate = [
+    "adaptive_reflow/contracts/validators.py",
+    "adaptive_reflow/frame/merge.py",
+    "adaptive_reflow/frame/channel_rule.py",
+    "adaptive_reflow/eval/claim_gate.py",
+]
+tests_dir = "tests/property/"
+runner = "python -m pytest tests/property/ -x -q"
+backup = false
+tests_per_run = 50
+dict_in_generated_args = true

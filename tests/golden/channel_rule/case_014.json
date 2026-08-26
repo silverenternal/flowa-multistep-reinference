@@ -1,0 +1,115 @@
+{
+  "expected": {
+    "alpha": 1.0,
+    "audit_reason": "required_factor_out_of_unit_interval:perturbation_stability_lower_bound",
+    "beta": 0.0,
+    "blocker_codes": [
+      "required_factor_out_of_unit_interval:perturbation_stability_lower_bound"
+    ],
+    "bounded_target_fraction": 0.0,
+    "bundle_id": "b-1",
+    "channel": "coordinate",
+    "evidence_score": 0.0,
+    "fresh_noise_floor": 0.0,
+    "gate": false,
+    "raw_factors": [
+      0.9,
+      2.0,
+      0.7,
+      0.1,
+      0.1,
+      0.95
+    ],
+    "scheduled_cap": 0.5
+  },
+  "inputs": {
+    "ambiguity": 0.1,
+    "bundle": {
+      "bundle_id": "b-1",
+      "calibration_artifact_hash": "55bb767792be0916fe093550615d7dc3c5825215e659e20feb78ff9f335a48f9",
+      "charge_channel": null,
+      "condition_digest": "d4483ff5b5b548d1b1aa3f51d34318024c520ffabb42335db1f1fb2c4f164b85",
+      "coordinate_channel": {
+        "source_round": 1
+      },
+      "created_at_round": 1,
+      "evaluator_provenance": null,
+      "feedback_evidence": null,
+      "feedback_mode": "adaptive_reflow_executable",
+      "frame_spec": {},
+      "materialization_evidence": null,
+      "observed_channels": {
+        "coordinate": {
+          "source_round": 1
+        }
+      },
+      "projected_pair_channel": null,
+      "provenance": [
+        "test.producer"
+      ],
+      "raw_pair_channel": null,
+      "revoked": false,
+      "round_count": 2,
+      "run_id": "run-1",
+      "sample_id": "sample-1",
+      "shape_spec": {},
+      "source_round": 1,
+      "state_lock_is_detached": true,
+      "trace_digest": "5a3d731e409856d25364fc603243e8701043f6a5c45f8536ec240079079cbcc1",
+      "update_scope": "ode_restart_distribution_only"
+    },
+    "calibration_lower_bound": 0.9,
+    "complement_excluded": false,
+    "degeneracy_penalty": 0.1,
+    "delta_cap_down": 0.5,
+    "delta_cap_up": 0.5,
+    "evidence": {
+      "ambiguity": 0.1,
+      "bounded_score": 0.5,
+      "bundle_id": "b-1",
+      "calibration_lower_bound": 0.9,
+      "channel": "coordinate",
+      "condition_sensitivity_observable_pass": true,
+      "degeneracy_penalty": 0.1,
+      "external_metric_uncertainty": null,
+      "geometry_pass": true,
+      "materialization_pass": true,
+      "perturbation_stability_lower_bound": 2.0,
+      "provenance": [
+        "test.producer"
+      ],
+      "proxy_only_evidence": false,
+      "raw_score": 0.5,
+      "recency_decay": 0.95,
+      "support_coverage": 0.7,
+      "validation_errors": []
+    },
+    "finite_prefix_only": true,
+    "fresh_noise_floor": 0.0,
+    "frozen_envelope_manifest_hash": "env-hash",
+    "horizon_coverage_proven": true,
+    "mixing_cap": 0.5,
+    "perturbation_stability_lower_bound": 2.0,
+    "phase_state": {
+      "ambiguity_band_active": false,
+      "horizon_coverage_proven": true,
+      "horizon_remaining": 1,
+      "operation_order_version": "v1",
+      "outer_cycle_id": 0,
+      "phase_state_digest": "a5e9b86d50f5e1faee3504152209ba6245cc5af87493e46948c63d100b7ddcb0",
+      "previous_trigger": null,
+      "recorded_at_round": 0,
+      "round_in_cycle": 0,
+      "schedule_phase": "high_noise",
+      "schedule_phase_index": 0,
+      "seed_lineage_digest": "451e6f018b3066414f2bd7e41b63ac21eda5f4aedfee7378e9d3a7631d34079f",
+      "source_selector_procedure": "deterministic.previous_round"
+    },
+    "recency_decay": 0.95,
+    "scheduled_cap": 0.5,
+    "selected_bundle_id": "b-1",
+    "support_coverage": 0.7,
+    "tail_admissibility": true
+  },
+  "name": "blocker_factor_out_of_unit_stability_high"
+}

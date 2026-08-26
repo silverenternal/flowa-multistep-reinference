@@ -1,0 +1,12 @@
+{
+  "expected": 0.0,
+  "inputs": {
+    "cap": 1.0,
+    "delta_cap_down": 0.5,
+    "delta_cap_up": 0.5,
+    "dynamic": -1.0,
+    "floor": 0.0,
+    "prev": 0.5
+  },
+  "name": "dynamic_below_floor_clamps_to_floor"
+}
