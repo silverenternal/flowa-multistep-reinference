@@ -1,0 +1,14 @@
+{
+  "expected": {
+    "bounded_score": 0.3921414839569479,
+    "calibration_lower_bound": 0.729718956630677,
+    "perturbation_stability_lower_bound": 0.7433624366647563,
+    "raw_score": 0.3921414839569479
+  },
+  "inputs": {
+    "channel": "raw_pair",
+    "digest": "abcdef0123456789",
+    "seed": 0
+  },
+  "name": "channel_raw_pair_seed_zero"
+}

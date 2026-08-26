@@ -34,7 +34,52 @@ from .stratification import (
     dominance_ratio,
 )
 
+# DTB-R0 §3 case 2 audit / floor constants live in
+# :mod:`adaptive_reflow.frame.channel_rule`. We re-export them under
+# :mod:`adaptive_reflow.policy` for callers that historically reach
+# into the ``policy`` namespace, but the import is deliberately lazy
+# to avoid a ``policy`` -> ``frame`` -> ``orchestrator`` -> ``envelope``
+# -> ``policy`` cycle.
+_FRAME_REEXPORT = frozenset({"AUDIT_STABILITY_COLLAPSE", "PERTURBATION_STABILITY_FLOOR"})
+
+# DTB-R0 §3 case 5 audit code (source revocation) lives in
+# :mod:`adaptive_reflow.contracts.validators` and is re-exported here
+# for callers that reach into the ``policy`` namespace. Lazy-loaded
+# to keep ``policy`` free of eager ``contracts`` imports that could
+# re-introduce the molecule-import cycle.
+_CONTRACTS_REEXPORT = frozenset({"AUDIT_SOURCE_REVOKED"})
+
+
+def __getattr__(name: str):
+    """Lazy-load DTB-R0 §3 re-exports.
+
+    * ``AUDIT_STABILITY_COLLAPSE`` / ``PERTURBATION_STABILITY_FLOOR`` from
+      :mod:`frame.channel_rule` (case 2).
+    * ``AUDIT_SOURCE_REVOKED`` from :mod:`contracts` (case 5).
+    """
+    if name in _FRAME_REEXPORT:
+        from ..frame import channel_rule as _channel_rule  # noqa: PLC0415
+
+        value = getattr(_channel_rule, name)
+        globals()[name] = value
+        return value
+    if name in _CONTRACTS_REEXPORT:
+        from .. import contracts as _contracts  # noqa: PLC0415
+
+        value = getattr(_contracts, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(
+        f"module {__name__!r} has no attribute {name!r}"
+    )
+
+
 __all__ = [
+    # DTB-R0 §3 case 2 audit / floor (re-exported from frame.channel_rule).
+    "AUDIT_STABILITY_COLLAPSE",
+    "PERTURBATION_STABILITY_FLOOR",
+    # DTB-R0 §3 case 5 audit (re-exported from contracts).
+    "AUDIT_SOURCE_REVOKED",
     "ERR_BETA_INPUT_INVALID",
     "ERR_CURVE_ENTRY_NOT_FINITE",
     "ERR_CURVE_NOT_SEQUENCE",

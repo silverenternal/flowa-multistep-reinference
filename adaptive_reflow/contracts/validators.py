@@ -24,6 +24,19 @@ def _err(*messages: str) -> ValidationResult:
 
 
 # ---------------------------------------------------------------------------
+# Canonical audit codes (deterministic, ASCII only, no spaces)
+# ---------------------------------------------------------------------------
+
+#: Audit code emitted when the source bundle has been revoked after
+#: registration (e.g. evaluator provenance retracted). The
+#: :func:`adaptive_reflow.molecular.bundle.validate_molecule_round_result_bundle`
+#: (accessible via ``validate_round_result_bundle``) emits this code in
+#: its errors tuple and the channel-rule revocation wrapper emits it in
+#: its ``audit_reason`` so a downstream consumer can surface the cause.
+AUDIT_SOURCE_REVOKED: str = "source_revoked"
+
+
+# ---------------------------------------------------------------------------
 # Numeric / scalar validators
 # ---------------------------------------------------------------------------
 

@@ -1,0 +1,13 @@
+{
+  "expected": {
+    "perturbation_stability_lower_bound_max": 0.95,
+    "perturbation_stability_lower_bound_min": 0.3,
+    "value": 0.9368141448823735
+  },
+  "inputs": {
+    "channel": "coordinate",
+    "digest": "0000000000000000",
+    "seed": 0
+  },
+  "name": "stability_range_lower_bound"
+}

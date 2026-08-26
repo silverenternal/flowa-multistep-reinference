@@ -1,0 +1,11 @@
+{
+  "expected": {
+    "audit_reason": "synthetic_evaluator:closed_form"
+  },
+  "inputs": {
+    "channel": "coordinate",
+    "digest": "abcdef0123456789",
+    "seed": 0
+  },
+  "name": "audit_reason_constant"
+}

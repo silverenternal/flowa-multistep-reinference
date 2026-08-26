@@ -170,6 +170,7 @@ from .types import (
 
 # ---- Validators + ValidationResult ----
 from .validators import (
+    AUDIT_SOURCE_REVOKED,
     ValidationResult,
     validate_nonneg_int,
     validate_positive_int,
@@ -215,6 +216,7 @@ from .operations import (
 
 __all__ = [
     "AUTHORITY_MODES",
+    "AUDIT_SOURCE_REVOKED",
     "ArchiveAuditTrail",
     "ArchiveQuota",
     "ArtifactHash",

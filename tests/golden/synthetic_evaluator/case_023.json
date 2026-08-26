@@ -1,0 +1,11 @@
+{
+  "expected": {
+    "bounded_equals_clip": true
+  },
+  "inputs": {
+    "channel": "coordinate",
+    "digest": "abcdef0123456789",
+    "seed": 0
+  },
+  "name": "bounded_score_equals_clipped_raw_score"
+}

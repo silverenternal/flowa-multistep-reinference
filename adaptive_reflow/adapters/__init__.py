@@ -22,6 +22,12 @@ from .synthetic import (
     SyntheticMixedChannelAdapter,
     SyntheticUnsupportedAdapter,
 )
+from .toy_gaussian import (
+    GaussianAdapterCapabilities,
+    ToyGaussianAdapter,
+    default_toy_gaussian_adapter,
+    gauss_score,
+)
 from .toy_linear import (
     CHANNEL_DOMAINS as TOY_LINEAR_CHANNEL_DOMAINS,
 )

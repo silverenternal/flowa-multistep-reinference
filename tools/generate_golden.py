@@ -2,11 +2,12 @@
 
 This script imports the canonical implementations from
 ``adaptive_reflow`` and writes a curated set of test cases to
-``tests/golden/<subject>/case_NNN.json`` for three subjects:
+``tests/golden/<subject>/case_NNN.json`` for the following subjects:
 
 * ``bounded_merge``        — :func:`adaptive_reflow.frame.bounded_merge`
 * ``channel_rule``         — :func:`adaptive_reflow.frame.compute_channel_decision`
 * ``claim_gate``           — :func:`adaptive_reflow.eval.evaluate_claim_gate`
+* ``synthetic_evaluator``  — :class:`adaptive_reflow.eval.synthetic_oracle.SyntheticEvaluator`
 
 The generated JSON files are the *source of truth* for property-test
 replay (``tests/property/test_golden_replay.py``). They are
@@ -16,12 +17,19 @@ in isolation from the implementations.
 Usage::
 
     PYTHONPATH=. python tools/generate_golden.py
+    PYTHONPATH=. python tools/generate_golden.py --synthetic-evaluator
+    PYTHONPATH=. python tools/generate_golden.py --only synthetic_evaluator
 
-Run from the repository root. The script is idempotent: re-running it
-overwrites all golden files deterministically.
+The ``--synthetic-evaluator`` flag (or the ``--only`` selector
+``synthetic_evaluator``) restricts generation to the
+``synthetic_evaluator`` subject so the closed-form CPU oracle can be
+regenerated in isolation. The default invocation generates every
+subject; the script is idempotent: re-running it overwrites all
+selected golden files deterministically.
 """
 from __future__ import annotations
 
+import argparse
 import dataclasses
 import json
 import math
@@ -73,12 +81,23 @@ from adaptive_reflow.eval import (  # noqa: E402
     build_default_claim_gate_config,
     evaluate_claim_gate,
 )
+from adaptive_reflow.eval.synthetic_oracle import (  # noqa: E402
+    SYNTHETIC_AUDIT_REASON,
+    SyntheticEvaluator,
+)
 from adaptive_reflow.frame import (  # noqa: E402
     bounded_merge,
     compute_channel_decision,
 )
 from adaptive_reflow.molecular.bundle import (  # noqa: E402
     RoundResultBundle,
+)
+from adaptive_reflow.universal.adapter import (  # noqa: E402
+    AdapterCapabilities,
+)
+from adaptive_reflow.universal.state import (  # noqa: E402
+    StateBundle,
+    TensorRef,
 )
 
 GOLDEN_ROOT = _REPO_ROOT / "tests" / "golden"
@@ -877,6 +896,208 @@ def _serialise_evaluation(eval_: ClaimGateEvaluation) -> dict[str, Any]:
 
 
 # ===========================================================================
+# synthetic_evaluator cases
+# ===========================================================================
+
+
+#: Canonical synthetic digest prefix used by the golden generator. Eight
+#: hex pairs = 8 bytes that feed the little-endian ``uint64`` fold.
+_SYNTHETIC_CHANNELS: tuple[ChannelName, ...] = (
+    ChannelName("coordinate"),
+    ChannelName("charge"),
+    ChannelName("raw_pair"),
+    ChannelName("projected_pair"),
+)
+
+
+def _make_synthetic_state_bundle(
+    digest: str,
+    *,
+    sample_id: str = "sample-synthetic",
+) -> StateBundle:
+    """Build a minimal valid :class:`StateBundle` for the synthetic oracle."""
+    coord_channel = ChannelName("coordinate")
+    return StateBundle(
+        channels={coord_channel: TensorRef("coord-tensor-ref-golden")},
+        masks={},
+        batch_id="batch-synthetic",
+        sample_id=sample_id,
+        reference_frame="world",
+        normalization="none",
+        source_round=0,
+        detach_proof=True,
+        native_state_digest=digest,
+        provenance=("test.synthetic_oracle_generator",),
+        capability_token=AdapterCapabilities(
+            has_ode_integration_surface=False,
+            has_prior_export=False,
+            has_state_export=False,
+            has_condition_injection=False,
+            has_restart_boundary=False,
+            has_continuous_channels=True,
+            has_discrete_channels=False,
+            has_trajectory_digest=False,
+            has_deterministic_seed=True,
+            has_materialization_route=False,
+            supported_channels=(coord_channel,),
+            channel_domains={coord_channel: "continuous"},
+        ),
+    )
+
+
+def _synthetic_evaluator_cases() -> list[dict[str, Any]]:
+    """Build the ``synthetic_evaluator`` golden cases.
+
+    Covers the canonical closed-form outputs across digest seeds,
+    channels, and seeds; the oracle-equals-evaluate byte-for-byte
+    contract; the published perturbation deltas; and the published
+    stability-range contract (``[0.3, 0.95]``).
+    """
+    cases: list[dict[str, Any]] = []
+    evaluator = SyntheticEvaluator()
+
+    # ---- baseline: fixed digest, fixed seed, one channel ----
+    digest = "abcdef0123456789"
+    bundle = _make_synthetic_state_bundle(digest)
+    oracle = evaluator.oracle(bundle, channel=ChannelName("coordinate"), seed=0)
+    cases.append(
+        {
+            "name": "baseline_coordinate_seed_zero",
+            "inputs": {
+                "digest": digest,
+                "channel": "coordinate",
+                "seed": 0,
+            },
+            "expected": _serialise_oracle(oracle),
+        }
+    )
+
+    # ---- every canonical channel, fixed seed + digest ----
+    for channel_name in _SYNTHETIC_CHANNELS:
+        oracle = evaluator.oracle(bundle, channel=channel_name, seed=0)
+        cases.append(
+            {
+                "name": f"channel_{channel_name}_seed_zero",
+                "inputs": {
+                    "digest": digest,
+                    "channel": str(channel_name),
+                    "seed": 0,
+                },
+                "expected": _serialise_oracle(oracle),
+            }
+        )
+
+    # ---- seed sweep: fixed digest, varying seeds ----
+    for seed in (1, 2, 7, 17, 42, 1234, 9999, 0xDEAD):
+        oracle = evaluator.oracle(bundle, channel=ChannelName("coordinate"), seed=seed)
+        cases.append(
+            {
+                "name": f"seed_sweep_{seed}",
+                "inputs": {
+                    "digest": digest,
+                    "channel": "coordinate",
+                    "seed": int(seed),
+                },
+                "expected": _serialise_oracle(oracle),
+            }
+        )
+
+    # ---- digest sweep: fixed seed, varying digests ----
+    digests = [
+        "0000000000000000",
+        "0000000000000001",
+        "0100000000000000",
+        "ffffffffffffffff",
+        "deadbeefcafebabe",
+        "feedfacefeedface",
+    ]
+    for d in digests:
+        b = _make_synthetic_state_bundle(d)
+        oracle = evaluator.oracle(b, channel=ChannelName("coordinate"), seed=0)
+        cases.append(
+            {
+                "name": f"digest_sweep_{d}",
+                "inputs": {
+                    "digest": d,
+                    "channel": "coordinate",
+                    "seed": 0,
+                },
+                "expected": _serialise_oracle(oracle),
+            }
+        )
+
+    # ---- perturbation oracle: seed vs seed + 1 differ ----
+    oracle_a = evaluator.oracle(bundle, channel=ChannelName("coordinate"), seed=10)
+    oracle_b = evaluator.oracle(bundle, channel=ChannelName("coordinate"), seed=11)
+    cases.append(
+        {
+            "name": "perturbation_seed_vs_seed_plus_one",
+            "inputs": {
+                "digest": digest,
+                "channel": "coordinate",
+                "seed_a": 10,
+                "seed_b": 11,
+            },
+            "expected": {
+                "seed_a": _serialise_oracle(oracle_a),
+                "seed_b": _serialise_oracle(oracle_b),
+                "raw_score_diff": float(oracle_b["raw_score"] - oracle_a["raw_score"]),
+            },
+        }
+    )
+
+    # ---- stability range contract: [0.3, 0.95] for every digest ----
+    cases.append(
+        {
+            "name": "stability_range_lower_bound",
+            "inputs": {
+                "digest": "0000000000000000",
+                "channel": "coordinate",
+                "seed": 0,
+            },
+            "expected": {
+                "perturbation_stability_lower_bound_min": 0.3,
+                "perturbation_stability_lower_bound_max": 0.95,
+                "value": float(
+                    evaluator.oracle(
+                        _make_synthetic_state_bundle("0000000000000000"),
+                        channel=ChannelName("coordinate"),
+                        seed=0,
+                    )["perturbation_stability_lower_bound"]
+                ),
+            },
+        }
+    )
+
+    # ---- audit-reason contract ----
+    cases.append(
+        {
+            "name": "audit_reason_constant",
+            "inputs": {"digest": digest, "channel": "coordinate", "seed": 0},
+            "expected": {"audit_reason": SYNTHETIC_AUDIT_REASON},
+        }
+    )
+
+    # ---- bounded_score == clip(raw_score) ----
+    cases.append(
+        {
+            "name": "bounded_score_equals_clipped_raw_score",
+            "inputs": {"digest": digest, "channel": "coordinate", "seed": 0},
+            "expected": {
+                "bounded_equals_clip": True,
+            },
+        }
+    )
+
+    return cases
+
+
+def _serialise_oracle(oracle: Mapping[str, float]) -> dict[str, float]:
+    """Convert an oracle mapping to a JSON-friendly dict (preserves keys)."""
+    return {str(k): float(v) for k, v in oracle.items()}
+
+
+# ===========================================================================
 # Driver
 # ===========================================================================
 
@@ -890,20 +1111,57 @@ def _write_cases(subject: str, cases: list[dict[str, Any]]) -> None:
     print(f"  -> wrote {len(cases):>3d} cases to {out_dir.relative_to(_REPO_ROOT)}")
 
 
-def main() -> int:
+def main(argv: tuple[str, ...] | None = None) -> int:
+    """Generate the golden matrices; respects ``--synthetic-evaluator`` / ``--only``."""
+    parser = argparse.ArgumentParser(
+        description="Regenerate the tests/golden JSON matrices deterministically.",
+    )
+    parser.add_argument(
+        "--synthetic-evaluator",
+        action="store_true",
+        help="Generate only the ``synthetic_evaluator`` subject goldens.",
+    )
+    parser.add_argument(
+        "--only",
+        action="append",
+        choices=("bounded_merge", "channel_rule", "claim_gate", "synthetic_evaluator"),
+        help=(
+            "Restrict generation to the named subject(s). May be passed "
+            "multiple times. Overrides --synthetic-evaluator."
+        ),
+    )
+    args = parser.parse_args(argv)
+
+    selected: set[str]
+    if args.only:
+        selected = set(args.only)
+    elif args.synthetic_evaluator:
+        selected = {"synthetic_evaluator"}
+    else:
+        selected = {"bounded_merge", "channel_rule", "claim_gate", "synthetic_evaluator"}
+
     print(f"Generating golden matrices under {GOLDEN_ROOT.relative_to(_REPO_ROOT)}")
+    print(f"  selected subjects: {sorted(selected)}")
 
-    bm = _bm_cases()
-    _write_cases("bounded_merge", bm)
-    assert len(bm) >= 40, f"expected >= 40 bounded_merge cases, got {len(bm)}"
+    if "bounded_merge" in selected:
+        bm = _bm_cases()
+        _write_cases("bounded_merge", bm)
+        assert len(bm) >= 40, f"expected >= 40 bounded_merge cases, got {len(bm)}"
 
-    cr = _channel_rule_cases()
-    _write_cases("channel_rule", cr)
-    assert len(cr) >= 30, f"expected >= 30 channel_rule cases, got {len(cr)}"
+    if "channel_rule" in selected:
+        cr = _channel_rule_cases()
+        _write_cases("channel_rule", cr)
+        assert len(cr) >= 30, f"expected >= 30 channel_rule cases, got {len(cr)}"
 
-    cg = _claim_gate_cases()
-    _write_cases("claim_gate", cg)
-    assert len(cg) >= 20, f"expected >= 20 claim_gate cases, got {len(cg)}"
+    if "claim_gate" in selected:
+        cg = _claim_gate_cases()
+        _write_cases("claim_gate", cg)
+        assert len(cg) >= 20, f"expected >= 20 claim_gate cases, got {len(cg)}"
+
+    if "synthetic_evaluator" in selected:
+        se = _synthetic_evaluator_cases()
+        _write_cases("synthetic_evaluator", se)
+        assert len(se) >= 10, f"expected >= 10 synthetic_evaluator cases, got {len(se)}"
 
     print("done.")
     return 0

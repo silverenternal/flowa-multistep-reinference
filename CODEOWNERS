@@ -1,0 +1,40 @@
+# CODEOWNERS
+# Single-maintainer research project. The boundaries below carry the
+# load-bearing invariants documented in docs/adr/0002, docs/adr/0003,
+# docs/adr/0004, and docs/adr/0005. Everything else inherits the same
+# owner.
+#
+# Pattern syntax: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-customizations/customizing-your-repository/about-code-owners
+
+# --- Default: everything in the repo is owned by the maintainer. ---
+* @flowa-maintainer
+
+# --- Load-bearing boundaries (explicit, so reviewers cannot miss them). ---
+# Typed contracts core: leaf subpackage; stdlib-only; every other subpackage
+# imports from here but the reverse is forbidden (ADR-0002).
+/adaptive_reflow/contracts/ @flowa-maintainer
+
+# Universal model-family-agnostic kernel: zero molecule-specific imports
+# is enforced by tests/test_universal/test_no_molecular_import.py; any
+# change here must clear an AST-level guard (ADR-0003).
+/adaptive_reflow/universal/ @flowa-maintainer
+
+# Engine seven-step operation order lives in adaptive_reflow/frame/engine.py
+# and is pinned by ADR-0004. Reordering the canonical
+# DEFAULT_OPERATION_STEPS tuple requires a new ADR.
+/adaptive_reflow/frame/engine.py @flowa-maintainer
+
+# --- Audit-code policy surface (ADR-0005) ---
+# The public __init__.py files are where the AUDIT_* constants must be
+# re-exported so the docs scanner can verify them.
+/adaptive_reflow/contracts/__init__.py @flowa-maintainer
+/adaptive_reflow/frame/__init__.py @flowa-maintainer
+
+# --- Documentation governance ---
+# The doc-drift scanner catalogue; ARCHITECTURE.md; CHANGELOG.md;
+# ROADMAP.md; and the ADR index. A drift in any of these files blocks CI.
+/tools/check_docs_against_code.py @flowa-maintainer
+/ARCHITECTURE.md @flowa-maintainer
+/CHANGELOG.md @flowa-maintainer
+/ROADMAP.md @flowa-maintainer
+/docs/adr/ @flowa-maintainer

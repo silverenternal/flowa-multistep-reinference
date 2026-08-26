@@ -53,6 +53,7 @@ from __future__ import annotations
 import math
 
 from adaptive_reflow.contracts import (
+    AUDIT_SOURCE_REVOKED,
     ChannelRuleInputs,
     ChannelRuleOutputs,
     ChannelTransferDecision,
@@ -109,6 +110,24 @@ BLOCKER_MISSING_FACTOR = "required_factor_missing"
 BLOCKER_NON_FINITE = "required_factor_not_real"
 BLOCKER_NAN_OR_INF = "required_factor_not_finite"
 BLOCKER_FACTOR_OUT_OF_UNIT_INTERVAL = "required_factor_out_of_unit_interval"
+
+
+# ---------------------------------------------------------------------------
+# DTB-R0 §3 case 2 — stability-collapse gate closure
+# ---------------------------------------------------------------------------
+#: Module-level constant (public). ``perturbation_stability_lower_bound``
+#: values strictly below this floor close the gate and emit
+#: ``AUDIT_STABILITY_COLLAPSE`` in the audit trail. The value is the
+#: canonical DTB-R0 §3 floor; ``compute_channel_decision`` does not
+#: silently override it.
+PERTURBATION_STABILITY_FLOOR: float = 0.5
+
+#: Audit reason emitted when the channel rule closes the gate because
+#: ``perturbation_stability_lower_bound < PERTURBATION_STABILITY_FLOOR``
+#: (DTB-R0 §3 case 2 — monotonic-uncertainty / cross-seed instability).
+#: The string is stable, lowercase snake-case, no spaces, and is used
+#: verbatim in :attr:`ChannelTransferDecision.audit_reason`.
+AUDIT_STABILITY_COLLAPSE: str = "perturbation_stability_below_threshold"
 
 
 # ---------------------------------------------------------------------------
@@ -315,6 +334,77 @@ def _audit_reason_for(blockers: tuple[str, ...]) -> str:
     return ";".join(blockers)
 
 
+def _stability_floor_breached(inputs: ChannelRuleInputs) -> bool:
+    """Return True iff ``perturbation_stability_lower_bound`` is below the floor.
+
+    DTB-R0 §3 case 2: a point estimate that looks confident but whose
+    ``perturbation_stability_lower_bound`` collapses on seed / condition
+    perturbation must close the gate regardless of the raw score. The
+    floor is the module-level constant :data:`PERTURBATION_STABILITY_FLOOR`.
+
+    Non-finite values (``NaN``, ``+/-inf``) are treated as "below the
+    floor" so the fail-closed branch is also exercised on adversarial
+    inputs. ``None`` is treated as missing and also breaches the floor
+    (the rule already surfaces the more specific missing-factor blocker
+    via :func:`_collect_blockers`; this helper exists to gate the
+    collapse decision specifically on the numeric comparison).
+    """
+    value = inputs.perturbation_stability_lower_bound
+    if value is None:
+        return True
+    try:
+        f = _coerce_factor(value)
+    except (TypeError, ValueError):
+        return True
+    if not math.isfinite(f):
+        return True
+    return float(f) < float(PERTURBATION_STABILITY_FLOOR)
+
+
+def _build_stability_collapse_outputs(
+    inputs: ChannelRuleInputs,
+    raw_factors: tuple[FactorValue, ...],
+) -> ChannelRuleOutputs | None:
+    """Return a fail-closed :class:`ChannelRuleOutputs` on stability collapse.
+
+    Returns ``None`` when ``inputs.perturbation_stability_lower_bound``
+    is at or above :data:`PERTURBATION_STABILITY_FLOOR` so the caller
+    can fall through to the normal gate-evaluation branch. Otherwise it
+    builds the same shape as a normal fail-closed decision (``gate=False``,
+    ``beta=0``, ``alpha=1``, ``bounded_target_fraction=0``,
+    ``evidence_score=0``) but threads :data:`AUDIT_STABILITY_COLLAPSE`
+    through ``audit_reason`` and ``blocker_codes`` so the audit trail
+    names the DTB-R0 §3 cause explicitly.
+    """
+    if not _stability_floor_breached(inputs):
+        return None
+
+    # All cap / floor fields have already passed validation in
+    # _collect_blockers, so coercion is safe here.
+    scheduled_cap = _coerce_factor(inputs.scheduled_cap)
+    fresh_noise_floor = _coerce_factor(inputs.fresh_noise_floor)
+
+    decision = ChannelTransferDecision(
+        bundle_id=inputs.bundle.bundle_id,
+        channel=inputs.evidence.channel,
+        gate=False,
+        raw_factors=raw_factors,
+        evidence_score=FactorValue(0.0),
+        scheduled_cap=FactorValue(float(scheduled_cap)),
+        bounded_target_fraction=FactorValue(0.0),
+        fresh_noise_floor=FactorValue(float(fresh_noise_floor)),
+        alpha=FactorValue(1.0),
+        beta=FactorValue(0.0),
+        audit_reason=AUDIT_STABILITY_COLLAPSE,
+        blocker_codes=(AUDIT_STABILITY_COLLAPSE,),
+    )
+    return ChannelRuleOutputs(
+        decision=decision,
+        monotonicity_check_passed=False,
+        validation_errors=(AUDIT_STABILITY_COLLAPSE,),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -335,10 +425,27 @@ def compute_channel_decision(
     precise reason. When the gate is open, ``alpha = 1 - beta`` is a
     label-only invariant for the mixer primitive (no physical variance
     equality is assumed).
+
+    DTB-R0 §3 case 2 — stability-collapse gate closure runs *before*
+    the generic blocker collection: a
+    ``perturbation_stability_lower_bound`` strictly below
+    :data:`PERTURBATION_STABILITY_FLOOR` closes the gate with the
+    dedicated ``AUDIT_STABILITY_COLLAPSE`` audit code regardless of
+    the rest of the evidence.
     """
+    raw_factors = _raw_factors_tuple(inputs)
+
+    # DTB-R0 §3 case 2: stability-collapse short-circuit. A confidence
+    # estimate that collapses on seed / condition perturbation must
+    # close the gate even when every other factor looks fine. This
+    # branch deliberately runs before the generic blocker collection
+    # so the audit trail surfaces the dedicated audit code.
+    stability_collapse = _build_stability_collapse_outputs(inputs, raw_factors)
+    if stability_collapse is not None:
+        return stability_collapse
+
     blockers = _collect_blockers(inputs)
     gate = len(blockers) == 0
-    raw_factors = _raw_factors_tuple(inputs)
 
     # All cap / floor fields have already passed the validation in
     # _collect_blockers, so coercion is safe here.
@@ -402,6 +509,69 @@ def compute_channel_decision(
     )
 
 
+def evaluate_channel_evidence_with_revocation(
+    inputs: ChannelRuleInputs,
+) -> ChannelRuleOutputs:
+    """Channel-rule wrapper that enforces source-bundle revocation (DTB-R0 §3 case 5).
+
+    This is the canonical entry point for callers that want the channel
+    rule's fail-closed behaviour on ``inputs.bundle.revoked == True``.
+    When the source bundle has been revoked after registration (e.g.
+    evaluator provenance retracted), the gate MUST close with
+    ``gate=False``, ``beta=0.0``, ``alpha=1.0`` and the audit reason
+    MUST carry :data:`AUDIT_SOURCE_REVOKED`. The check runs before
+    :func:`compute_channel_decision` so the revocation audit trail is
+    not polluted by downstream blockers.
+
+    When the bundle is not revoked, this function delegates to
+    :func:`compute_channel_decision` and returns its output verbatim
+    (so the wrapper is transparent for the happy path).
+
+    The function is pure: no I/O, no mutation of ``inputs``, no global
+    state. The same ``ChannelRuleInputs`` always yields the same
+    ``ChannelRuleOutputs``.
+    """
+    bundle = inputs.bundle
+    revoked = bool(getattr(bundle, "revoked", False))
+    raw_factors = _raw_factors_tuple(inputs)
+
+    if revoked:
+        # Coerce cap / floor fields if present; fall back to 0.0 when
+        # the inputs are partially malformed so the audit surface
+        # remains finite. The downstream consumer is expected to consult
+        # ``audit_reason`` for the precise cause.
+        try:
+            scheduled_cap = _coerce_factor(inputs.scheduled_cap)
+        except (TypeError, ValueError):
+            scheduled_cap = 0.0
+        try:
+            fresh_noise_floor = _coerce_factor(inputs.fresh_noise_floor)
+        except (TypeError, ValueError):
+            fresh_noise_floor = 0.0
+
+        decision = ChannelTransferDecision(
+            bundle_id=inputs.bundle.bundle_id,
+            channel=inputs.evidence.channel,
+            gate=False,
+            raw_factors=raw_factors,
+            evidence_score=FactorValue(0.0),
+            scheduled_cap=FactorValue(float(scheduled_cap)),
+            bounded_target_fraction=FactorValue(0.0),
+            fresh_noise_floor=FactorValue(float(fresh_noise_floor)),
+            alpha=FactorValue(1.0),
+            beta=FactorValue(0.0),
+            audit_reason=AUDIT_SOURCE_REVOKED,
+            blocker_codes=(AUDIT_SOURCE_REVOKED,),
+        )
+        return ChannelRuleOutputs(
+            decision=decision,
+            monotonicity_check_passed=False,
+            validation_errors=(AUDIT_SOURCE_REVOKED,),
+        )
+
+    return compute_channel_decision(inputs)
+
+
 def check_monotonicity_property(
     family: str,
     baseline: ChannelRuleInputs,
@@ -446,6 +616,11 @@ def check_monotonicity_property(
 
 
 __all__ = [
+    # DTB-R0 §3 case 2 audit / floor constants (must stay before BLOCKER_*).
+    "AUDIT_STABILITY_COLLAPSE",
+    "PERTURBATION_STABILITY_FLOOR",
+    # DTB-R0 §3 case 5 audit (re-exported from contracts).
+    "AUDIT_SOURCE_REVOKED",
     "BLOCKER_COMPLEMENT_EXCLUDED",
     "BLOCKER_ENVELOPE_HASH_MISSING",
     "BLOCKER_FACTOR_OUT_OF_UNIT_INTERVAL",
@@ -462,5 +637,6 @@ __all__ = [
     "check_monotonicity_property",
     # Public API
     "compute_channel_decision",
+    "evaluate_channel_evidence_with_revocation",
     "required_factors_in_unit_interval",
 ]

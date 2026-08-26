@@ -56,7 +56,11 @@ from adaptive_reflow.contracts.types import (
     ShapeSpec,
     TraceDigest,
 )
-from adaptive_reflow.contracts.validators import ValidationResult, _ok
+from adaptive_reflow.contracts.validators import (
+    AUDIT_SOURCE_REVOKED,
+    ValidationResult,
+    _ok,
+)
 
 
 def _hash_trace_digest(
@@ -201,6 +205,8 @@ def _channel_source_round(channel: Mapping[str, Any] | None) -> int | None:
 
 def validate_molecule_round_result_bundle(
     b: MoleculeRoundResultBundle,
+    *,
+    check_revocation: bool = True,
 ) -> ValidationResult:
     """Validate :class:`MoleculeRoundResultBundle` per the molecule invariants.
 
@@ -211,7 +217,21 @@ def validate_molecule_round_result_bundle(
     ``calibration_artifact_hash`` is empty, ``trace_digest`` does not match
     the deterministic recompute, ``created_at_round > source_round``, or
     the round/run/sample identifiers are empty or non-integer.
+
+    When ``check_revocation=True`` (the default) and ``b.revoked`` is
+    ``True``, the validator immediately returns
+    ``(False, (AUDIT_SOURCE_REVOKED,))`` and skips the rest of the
+    structural checks. This is the fail-closed path for DTB-R0 §3 case
+    5: a bundle that has been revoked after registration must NOT
+    participate in any per-channel decision regardless of how clean the
+    other invariants look. Pass ``check_revocation=False`` only for
+    callers that need to inspect the structural surface independently
+    (e.g. legacy diagnostics).
     """
+    # Fast path: revocation closes every gate, before any other check.
+    if check_revocation and b.revoked:
+        return (False, (AUDIT_SOURCE_REVOKED,))
+
     errors: list[str] = []
 
     if not b.state_lock_is_detached:

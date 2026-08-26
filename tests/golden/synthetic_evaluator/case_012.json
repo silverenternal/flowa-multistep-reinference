@@ -1,0 +1,14 @@
+{
+  "expected": {
+    "bounded_score": 0.3921397584490478,
+    "calibration_lower_bound": 0.7297208013478667,
+    "perturbation_stability_lower_bound": 0.7433639453724026,
+    "raw_score": 0.3921397584490478
+  },
+  "inputs": {
+    "channel": "coordinate",
+    "digest": "abcdef0123456789",
+    "seed": 9999
+  },
+  "name": "seed_sweep_9999"
+}

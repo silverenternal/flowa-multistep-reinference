@@ -1,0 +1,14 @@
+{
+  "expected": {
+    "bounded_score": 0.3921111458912492,
+    "calibration_lower_bound": 0.7296883787494153,
+    "perturbation_stability_lower_bound": 0.7433825435349717,
+    "raw_score": 0.3921111458912492
+  },
+  "inputs": {
+    "channel": "coordinate",
+    "digest": "deadbeefcafebabe",
+    "seed": 0
+  },
+  "name": "digest_sweep_deadbeefcafebabe"
+}

@@ -1,3 +1,27 @@
+[project]
+# Minimal project metadata so PEP-621 tools (pip, hatch, etc.) can
+# resolve optional-dependency groups. The package itself is intentionally
+# metadata-light: ``name`` is required for ``pip install -e .`` to work;
+# ``version`` is bumped by hand; ``optional-dependencies.dev`` carries
+# the doc-build toolchain (mkdocs + mkdocstrings) that the CI / pre-merge
+# pipeline uses to render the auto-generated API reference under
+# ``docs/api/``.
+name = "flowa-multistep-reinference"
+version = "0.1.0"
+description = "Typed-contracts framework + Flow Matching ODE re-inference engine."
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+# Doc-build dev toolchain. ``mkdocstrings[python]`` pulls in the Python
+# handler that auto-renders module-level docstrings + typed signatures
+# from the ``adaptive_reflow.*`` subpackages. Pinned with ``>=`` so
+# minor upgrades flow through automatically (the docs build is
+# hermetic and any breaking change will fail ``mkdocs build --strict``).
+dev = [
+    "mkdocs>=1.5",
+    "mkdocstrings[python]>=0.24",
+]
+
 [tool.pytest.ini_options]
 # Pytest configuration for adaptive_reflow. ``markers`` documents the
 # custom markers the suite relies on; ``addopts`` makes pytest fail on
@@ -8,6 +32,7 @@ markers = [
     "benchmark: benchmark tests (run with --benchmark-only)",
     "property: property-based tests",
     "adversarial: adversarial-case tests",
+    "stress: long-horizon tests that run on stress-nightly CI only",
 ]
 addopts = [
     "-ra",
@@ -31,17 +56,37 @@ columns = ["min", "median", "mean", "max", "stddev", "rounds", "iterations"]
 show_relativ = true
 
 [tool.hypothesis]
-# Property-based test profile. ``max_examples=200`` gives broad coverage
+# Property-based test profile. ``max_examples=500`` gives broad coverage
 # of the typed-contracts core without making CI unmanageably slow;
-# ``deadline=5000`` ms accommodates the slower ``mypy --strict``-typed
+# ``deadline=2000`` ms accommodates the slower ``mypy --strict``-typed
 # universal/molecular code paths (round-trip shrink of
 # ``RestartMixer`` sketches can take >1s on first compile); the
 # ``too_slow`` health check is suppressed because the universal
 # ``RoundResultBundle`` round-trip can legitimately exceed Hypothesis's
 # default 1.5 example/s throughput on Windows where file IO is slower.
-max_examples = 200
-deadline = 5000
+max_examples = 500
+deadline = 2000
 suppress_health_check = ["too_slow"]
+
+[tool.hypothesis.profiles."slow"]
+# Slower Hypothesis profile used for tests marked ``slow``. Halves the
+# example count to keep PR-time CI within budget while still exploring
+# deeper property boundaries on the typed-contracts shrink logic; the
+# ``deadline`` health check is also suppressed because long-running
+# shrink attempts routinely exceed 2 s on Windows.
+max_examples = 200
+deadline = 30000
+suppress_health_check = ["too_slow", "deadline"]
+
+[tool.hypothesis.profiles."stress"]
+# Stress profile reserved for the ``stress`` marker and the
+# stress-nightly workflow. Example count is intentionally small (50) but
+# the per-example deadline balloons to 60 s so adversarial boundary
+# cases in the universal/molecular round-trip machinery get a fair
+# chance to shrink rather than being filtered out.
+max_examples = 50
+deadline = 60000
+suppress_health_check = ["too_slow", "deadline", "filter_too_much"]
 
 [tool.ruff]
 # Govern the flowa-multistep-reinference package layout. See

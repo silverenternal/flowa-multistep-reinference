@@ -24,3 +24,113 @@ jobs:
           name: mutmut-report
           path: mutmut_report.html
           if-no-files-found: error
+
+      # Mutation-score gate. Parses mutmut_results.txt (and the JSON
+      # snapshot) to compute killed/total. Fails the run when either:
+      #   * whole-project mutation score < 0.50, OR
+      #   * contracts/universal mutation score  < 0.75.
+      # The contracts/universal threshold is intentionally stricter
+      # because these are the load-bearing typed-contracts modules;
+      # regressions there silently weaken the universal contract's
+      # compositional guarantees.
+      - name: Compute mutation-score gate
+        run: |
+          set -u
+          set -o pipefail
+
+          python - <<'PY'
+          import json, re, sys
+          from pathlib import Path
+
+          RESULTS_TXT = Path("mutmut_results.txt")
+          RESULTS_JSON = Path("mutmut_results.json")
+
+          WHOLE_THRESHOLD = 0.50
+          CORE_THRESHOLD = 0.75
+
+          killed = survived = no_tests = timeout = total = 0
+          if RESULTS_JSON.exists():
+              try:
+                  data = json.loads(RESULTS_JSON.read_text(encoding="utf-8"))
+              except Exception:
+                  data = {}
+              if isinstance(data, dict):
+                  if "killed" in data and isinstance(data["killed"], list):
+                      killed = len(data["killed"])
+                  if "survived" in data and isinstance(data["survived"], list):
+                      survived = len(data["survived"])
+                  if "no_tests" in data and isinstance(data["no_tests"], list):
+                      no_tests = len(data["no_tests"])
+                  if "timeout" in data and isinstance(data["timeout"], list):
+                      timeout = len(data["timeout"])
+                  if not any(k in data for k in ("killed", "survived", "no_tests", "timeout")):
+                      # dict-of-id -> status form
+                      killed = sum(1 for v in data.values() if isinstance(v, str) and v.lower().startswith("killed"))
+                      survived = sum(1 for v in data.values() if isinstance(v, str) and v.lower().startswith("survived"))
+                      no_tests = sum(1 for v in data.values() if isinstance(v, str) and v.lower().startswith("no"))
+                      timeout = sum(1 for v in data.values() if isinstance(v, str) and v.lower().startswith("timeout"))
+
+          total = killed + survived + no_tests + timeout
+
+          if total <= 0 and RESULTS_TXT.exists():
+              # Fallback: parse the human-readable mutmut results.
+              text = RESULTS_TXT.read_text(encoding="utf-8", errors="replace")
+              for line in text.splitlines():
+                  stripped = line.strip().lower()
+                  if stripped.startswith("killed"):
+                      killed += 1
+                  elif stripped.startswith("survived"):
+                      survived += 1
+                  elif stripped.startswith("no") and "tests" in stripped:
+                      no_tests += 1
+                  elif stripped.startswith("timeout"):
+                      timeout += 1
+              total = killed + survived + no_tests + timeout
+
+          def ratio(k, t):
+              return (k / t) if t > 0 else 0.0
+
+          whole_score = ratio(killed, total)
+
+          # Per-module scores for the contracts/universal core. We
+          # approximate this by inspecting the mutmut results file for
+          # mutant paths that live under contracts/ or universal/ and
+          # counting how many of those mutants were killed.
+          core_killed = core_total = 0
+          if RESULTS_JSON.exists():
+              try:
+                  data = json.loads(RESULTS_JSON.read_text(encoding="utf-8"))
+              except Exception:
+                  data = {}
+              if isinstance(data, dict):
+                  # 2.x form: list of mutant id strings
+                  for key in ("killed", "survived", "no_tests", "timeout"):
+                      values = data.get(key, [])
+                      if isinstance(values, list):
+                          for v in values:
+                              s = str(v)
+                              if "/contracts/" in s or "/universal/" in s or "\\contracts\\" in s or "\\universal\\" in s:
+                                  if key == "killed":
+                                      core_killed += 1
+                                  core_total += 1
+
+          core_score = ratio(core_killed, core_total)
+
+          print(f"::group::Mutation-score summary")
+          print(f"killed={killed} survived={survived} no_tests={no_tests} timeout={timeout} total={total}")
+          print(f"whole_score={whole_score:.3f} (threshold {WHOLE_THRESHOLD:.2f})")
+          print(f"contracts/universal killed={core_killed}/{core_total} score={core_score:.3f} (threshold {CORE_THRESHOLD:.2f})")
+          print("::endgroup::")
+
+          fail = False
+          if whole_score < WHOLE_THRESHOLD:
+              print(f"::error::whole-project mutation score {whole_score:.3f} below threshold {WHOLE_THRESHOLD:.2f}")
+              fail = True
+          if core_total > 0 and core_score < CORE_THRESHOLD:
+              print(f"::error::contracts/universal mutation score {core_score:.3f} below threshold {CORE_THRESHOLD:.2f}")
+              fail = True
+
+          if fail:
+              sys.exit(1)
+          print("[mutation-score gate] PASS")
+          PY

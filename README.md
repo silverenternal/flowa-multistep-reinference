@@ -226,6 +226,26 @@ sampler controls. `legacy_standalone` mode is mutually exclusive with
 See `DESIGN_BOUNDARY.md`, `CONTRACTS.md`, and `ARCHITECTURE.md` for the full
 contracts, governance rules, and post-refactor package layout.
 
+## Documentation
+
+The full doc set is the single source of truth for the package. Start
+here, then drill down based on what you need.
+
+| Doc | Read it for… |
+| --- | --- |
+| [`QUICKSTART.md`](QUICKSTART.md) | Five-minute on-ramp: install, run the suite, walk one round against `ToyGaussianAdapter`, capture a golden, run the docs scanner. |
+| [`TUTORIAL.md`](TUTORIAL.md) | Hands-on walk-through of one round end-to-end. |
+| [`FAQ.md`](FAQ.md) | Twenty short answers to the questions that come up most often. |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Package layout, dependency DAG, governance invariants, the Adapter Protocol recipe for adding a new model, the file inventory. |
+| [`docs/adr/`](docs/adr/) | Load-bearing boundary decisions (universal/molecular split, typed-contracts core boundary, engine operation order, fail-closed audit-code policy). |
+| [`docs/ADAPTER_INTERFACE_SPEC.md`](docs/ADAPTER_INTERFACE_SPEC.md) | The authoritative spec for adapter authors (DTB-G1). |
+| [docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md) | What the six test layers cover and what bars a change has to clear before merge. |
+| [docs/PERFORMANCE_BUDGETS.md](docs/PERFORMANCE_BUDGETS.md) | Kernel p95 budgets, the bench runner, the regression gate. |
+
+Every claim in these docs is verified against the source tree by
+[`tools/check_docs_against_code.py`](tools/check_docs_against_code.py)
+on every CI run.
+
 ## Tests
 
 ```bash

@@ -44,6 +44,13 @@ if str(_REPO_ROOT) not in sys.path:
 
 import pytest
 
+try:  # pragma: no cover - hypothesis is optional but available
+    from hypothesis import HealthCheck, given, settings
+    from hypothesis import strategies as st
+    HAS_HYPOTHESIS = True
+except ImportError:  # pragma: no cover
+    HAS_HYPOTHESIS = False
+
 from adaptive_reflow.contracts import (
     ArtifactHash,
     BundleId,
@@ -67,7 +74,9 @@ from adaptive_reflow.frame import (
     PolicyOrchestratorValidationError,
 )
 from adaptive_reflow.frame.channel_rule import (
+    AUDIT_STABILITY_COLLAPSE,
     BLOCKER_PROXY_ONLY,
+    PERTURBATION_STABILITY_FLOOR,
     compute_channel_decision,
 )
 from adaptive_reflow.frame.orchestrator import WRITER_ID
@@ -382,14 +391,6 @@ def test_geometry_failure_closes_gate_and_emits_geometry_failure_audit_code():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    reason=(
-        "DTB-R0 §3 case 2: channel rule currently multiplies "
-        "perturbation_stability_lower_bound into the evidence score "
-        "but does not close the gate on collapse. Implementation gap."
-    ),
-    strict=True,
-)
 def test_monotonic_uncertainty_closes_gate_when_stability_collapses():
     """A point estimate that looks confident but whose
     ``perturbation_stability_lower_bound`` collapses on seed /
@@ -399,12 +400,12 @@ def test_monotonic_uncertainty_closes_gate_when_stability_collapses():
 
     Per DESIGN_BOUNDARY.md §3 (case 2): the rule must close the gate
     on perturbation instability regardless of ``raw_score``. The
-    current channel rule treats ``perturbation_stability_lower_bound``
-    as a multiplicative factor in the evidence score — a low value
-    shrinks the score but does NOT close the gate. The expected
-    ``perturbation_stability_below_threshold`` audit code is not yet
-    wired into the channel rule; this fixture documents the design
-    expectation so the implementation gap is visible.
+    channel rule now runs a dedicated stability-collapse short-circuit
+    (``compute_channel_decision`` -> ``_build_stability_collapse_outputs``)
+    before the generic blocker collection; the
+    :data:`AUDIT_STABILITY_COLLAPSE` audit code is wired into the
+    ``audit_reason`` and ``blocker_codes`` fields so the downstream
+    consumer can surface the cause.
     """
     bundle = _make_bundle()
     evidence = _make_evidence(
@@ -431,8 +432,187 @@ def test_monotonic_uncertainty_closes_gate_when_stability_collapses():
         if str(d.channel) == "coordinate"
     )
     assert coord_decision.gate is False
-    assert "perturbation_stability_below_threshold" in coord_decision.audit_reason
+    assert AUDIT_STABILITY_COLLAPSE in coord_decision.audit_reason
+    assert AUDIT_STABILITY_COLLAPSE in coord_decision.blocker_codes
     assert float(coord_decision.beta) == 0.0
+    assert float(coord_decision.alpha) == 1.0
+
+
+# ---------------------------------------------------------------------------
+# 2a. TestStabilityCollapseBelowFloor — strict-less-than boundary tests
+# ---------------------------------------------------------------------------
+
+
+def test_stability_collapse_closes_gate_below_floor():
+    """``perturbation_stability_lower_bound`` strictly below
+    :data:`PERTURBATION_STABILITY_FLOOR` must close the gate with the
+    ``AUDIT_STABILITY_COLLAPSE`` audit code. The reference value is the
+    canonical ``0.49``; we expect ``gate=False``, ``beta=0.0``, and
+    the audit reason / blocker code to carry the stability-collapse
+    sentinel.
+    """
+    assert PERTURBATION_STABILITY_FLOOR == 0.5
+
+    bundle = _make_bundle()
+    evidence = _make_evidence(
+        bundle,
+        ChannelName("coordinate"),
+        calibration=0.9,
+        perturbation_stability_lower_bound=0.49,
+        raw_score=0.9,
+    )
+
+    orchestrator = _make_orchestrator()
+    orchestrator.register_phase(
+        make_default_phase_state(
+            horizon_coverage_proven=True,
+            operation_order_version="1.0.0",
+        )
+    )
+    evidence_by_channel = _all_channels(bundle)
+    evidence_by_channel[ChannelName("coordinate")] = evidence
+    ledger = orchestrator.evaluate_bundle(bundle, evidence_by_channel)
+
+    coord_decision = next(
+        d for d in ledger.per_channel_decision
+        if str(d.channel) == "coordinate"
+    )
+    assert coord_decision.gate is False
+    assert float(coord_decision.beta) == 0.0
+    assert AUDIT_STABILITY_COLLAPSE in coord_decision.audit_reason
+    assert AUDIT_STABILITY_COLLAPSE in coord_decision.blocker_codes
+
+
+def test_stability_collapse_does_not_close_gate_at_or_above_floor():
+    """``perturbation_stability_lower_bound`` at or above
+    :data:`PERTURBATION_STABILITY_FLOOR` must NOT trigger the stability
+    collapse short-circuit. The boundary is closed-on-the-low-side, so
+    ``0.5`` and ``0.51`` are both expected to leave the gate open (the
+    other evidence factors drive the rest of the decision).
+    """
+    bundle = _make_bundle()
+    orchestrator = _make_orchestrator()
+    orchestrator.register_phase(
+        make_default_phase_state(
+            horizon_coverage_proven=True,
+            operation_order_version="1.0.0",
+        )
+    )
+
+    for stability in (0.5, 0.51):
+        evidence = _make_evidence(
+            bundle,
+            ChannelName("coordinate"),
+            calibration=0.9,
+            perturbation_stability_lower_bound=stability,
+            raw_score=0.9,
+        )
+        evidence_by_channel = _all_channels(bundle)
+        evidence_by_channel[ChannelName("coordinate")] = evidence
+        ledger = orchestrator.evaluate_bundle(bundle, evidence_by_channel)
+
+        coord_decision = next(
+            d for d in ledger.per_channel_decision
+            if str(d.channel) == "coordinate"
+        )
+        assert coord_decision.gate is True, (
+            f"stability={stability} unexpectedly closed the gate: "
+            f"{coord_decision.audit_reason!r}"
+        )
+        assert AUDIT_STABILITY_COLLAPSE not in coord_decision.audit_reason
+        assert AUDIT_STABILITY_COLLAPSE not in coord_decision.blocker_codes
+
+
+def test_stability_collapse_audit_reason_is_deterministic():
+    """Two consecutive evaluations with identical inputs must yield
+    byte-identical ``audit_reason`` strings. The stability-collapse
+    audit code is a fixed literal (``AUDIT_STABILITY_COLLAPSE``); the
+    rule must not inject any per-run noise.
+    """
+    bundle = _make_bundle()
+    evidence = _make_evidence(
+        bundle,
+        ChannelName("coordinate"),
+        calibration=0.9,
+        perturbation_stability_lower_bound=0.0,
+        raw_score=0.9,
+    )
+
+    orchestrator_a = _make_orchestrator()
+    orchestrator_a.register_phase(
+        make_default_phase_state(
+            horizon_coverage_proven=True,
+            operation_order_version="1.0.0",
+        )
+    )
+    evidence_by_channel_a = _all_channels(bundle)
+    evidence_by_channel_a[ChannelName("coordinate")] = evidence
+    ledger_a = orchestrator_a.evaluate_bundle(bundle, evidence_by_channel_a)
+    reason_a = next(
+        d for d in ledger_a.per_channel_decision
+        if str(d.channel) == "coordinate"
+    ).audit_reason
+
+    orchestrator_b = _make_orchestrator()
+    orchestrator_b.register_phase(
+        make_default_phase_state(
+            horizon_coverage_proven=True,
+            operation_order_version="1.0.0",
+        )
+    )
+    evidence_by_channel_b = _all_channels(bundle)
+    evidence_by_channel_b[ChannelName("coordinate")] = evidence
+    ledger_b = orchestrator_b.evaluate_bundle(bundle, evidence_by_channel_b)
+    reason_b = next(
+        d for d in ledger_b.per_channel_decision
+        if str(d.channel) == "coordinate"
+    ).audit_reason
+
+    assert reason_a == reason_b
+    assert reason_a == AUDIT_STABILITY_COLLAPSE
+
+
+def test_stability_collapse_overrides_positive_evidence():
+    """Even when the rest of the evidence looks maximally positive
+    (``raw_score=0.99``, ``calibration=0.9``, ``support_coverage=0.9``,
+    ``recency_decay=0.9``, low ``ambiguity`` and ``degeneracy_penalty``),
+    a ``perturbation_stability_lower_bound`` strictly below the floor
+    must still close the gate. The stability collapse short-circuit
+    runs before the evidence-score product and overrides positive
+    evidence.
+    """
+    bundle = _make_bundle()
+    evidence = _make_evidence(
+        bundle,
+        ChannelName("coordinate"),
+        calibration=0.9,
+        support=0.9,
+        perturbation_stability_lower_bound=0.1,  # collapses on perturbation
+        raw_score=0.99,                          # maximally positive raw score
+        ambiguity=0.0,
+        degeneracy=0.0,
+        recency=0.9,
+    )
+
+    orchestrator = _make_orchestrator()
+    orchestrator.register_phase(
+        make_default_phase_state(
+            horizon_coverage_proven=True,
+            operation_order_version="1.0.0",
+        )
+    )
+    evidence_by_channel = _all_channels(bundle)
+    evidence_by_channel[ChannelName("coordinate")] = evidence
+    ledger = orchestrator.evaluate_bundle(bundle, evidence_by_channel)
+
+    coord_decision = next(
+        d for d in ledger.per_channel_decision
+        if str(d.channel) == "coordinate"
+    )
+    assert coord_decision.gate is False
+    assert float(coord_decision.beta) == 0.0
+    assert AUDIT_STABILITY_COLLAPSE in coord_decision.audit_reason
+    assert AUDIT_STABILITY_COLLAPSE in coord_decision.blocker_codes
 
 
 # ---------------------------------------------------------------------------
@@ -555,22 +735,36 @@ def test_cross_round_stitch_rejects_bundle_at_validation():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    reason=(
-        "DTB-R0 §3 case 5: neither validate_round_result_bundle nor "
-        "the channel rule currently inspect bundle.revoked. The "
-        "expected source_revoked audit code is not yet wired in."
-    ),
-    strict=True,
-)
 def test_source_revocation_closes_subsequent_gate():
     """A bundle marked ``revoked=True`` after a later round detects
     revocation (e.g. evaluator provenance retracted) must produce
     ``gate=False`` for every subsequent ``ChannelTransferEvidence``
     referencing that bundle. The audit reason must carry
     ``source_revoked``.
+
+    The fail-closed surface is the validator: the orchestrator must
+    refuse to register the bundle (via the
+    ``PolicyOrchestratorValidationError`` path) because
+    ``validate_round_result_bundle`` returns ``ok=False`` with
+    ``source_revoked`` in its errors tuple. As a backup, the channel-
+    rule wrapper :func:`evaluate_channel_evidence_with_revocation`
+    must also close the gate and surface the audit code so any
+    downstream consumer that bypasses the validator still fails
+    closed.
     """
+    from adaptive_reflow.contracts import AUDIT_SOURCE_REVOKED, validate_round_result_bundle
+
+    assert AUDIT_SOURCE_REVOKED == "source_revoked"
+
     bundle = _make_bundle(revoked=True)
+
+    # 1. The validator must fail closed on a revoked bundle.
+    ok, errors = validate_round_result_bundle(bundle)
+    assert ok is False
+    assert "source_revoked" in errors
+    assert errors == (AUDIT_SOURCE_REVOKED,)
+
+    # 2. The orchestrator must refuse to register the revoked bundle.
     orchestrator = _make_orchestrator()
     orchestrator.register_phase(
         make_default_phase_state(
@@ -587,14 +781,129 @@ def test_source_revocation_closes_subsequent_gate():
     except PolicyOrchestratorValidationError as exc:
         # Acceptable fail-closed surface: rejection at registration.
         assert "source_revoked" in str(exc) or "revoked" in str(exc).lower()
-        return
+    else:
+        # If the orchestrator accepted the bundle (e.g. it bypassed the
+        # registered-validator path) the per-channel decisions must
+        # still close every gate with the source_revoked audit code.
+        for decision in ledger.per_channel_decision:
+            assert decision.gate is False
+            assert "source_revoked" in decision.audit_reason
+            assert float(decision.beta) == 0.0
 
-    # Otherwise: ledger was emitted; every per-channel decision must
-    # carry the source_revoked audit code and beta must be zero.
-    for decision in ledger.per_channel_decision:
-        assert decision.gate is False
-        assert "source_revoked" in decision.audit_reason
-        assert float(decision.beta) == 0.0
+
+# ---------------------------------------------------------------------------
+# 5b. Revocation tests at the validator + channel-rule level
+# ---------------------------------------------------------------------------
+
+
+def test_revoked_bundle_is_rejected_at_validator_level():
+    """``validate_round_result_bundle`` must return ``ok=False`` with
+    ``source_revoked`` in the errors tuple for any bundle whose
+    ``revoked=True``. This is the canonical fail-closed path at the
+    validator layer.
+    """
+    from adaptive_reflow.contracts import validate_round_result_bundle
+
+    bundle = _make_bundle(revoked=True)
+    ok, errors = validate_round_result_bundle(bundle)
+    assert ok is False
+    assert "source_revoked" in errors
+    assert errors == ("source_revoked",)
+
+
+def test_unrevoked_bundle_passes_through_unchanged():
+    """``validate_round_result_bundle`` must return ``ok=True`` with an
+    empty errors tuple for a bundle whose ``revoked=False`` (and whose
+    other invariants are otherwise valid). The revocation check must
+    not perturb the happy path.
+    """
+    from adaptive_reflow.contracts import validate_round_result_bundle
+
+    bundle = _make_bundle(revoked=False)
+    ok, errors = validate_round_result_bundle(bundle)
+    assert ok is True
+    assert errors == ()
+
+
+def test_revocation_audit_reason_is_deterministic():
+    """The audit reason emitted on revocation must be the exact
+    constant string ``"source_revoked"`` — not a derived format
+    string, not a localised message, not a tuple of length != 1.
+    The constant must be stable so downstream consumers can match on
+    it.
+    """
+    from adaptive_reflow.contracts import (
+        AUDIT_SOURCE_REVOKED,
+        validate_round_result_bundle,
+    )
+
+    assert AUDIT_SOURCE_REVOKED == "source_revoked"
+
+    bundle = _make_bundle(revoked=True)
+    ok, errors = validate_round_result_bundle(bundle)
+    assert ok is False
+    # Exactly one error, and it equals the canonical constant.
+    assert errors == (AUDIT_SOURCE_REVOKED,)
+    # Two invocations on the same bundle yield the same errors tuple
+    # (deterministic, byte-stable).
+    ok2, errors2 = validate_round_result_bundle(bundle)
+    assert ok2 is False
+    assert errors2 == errors
+
+
+def test_revocation_propagates_to_channel_rule():
+    """A call to :func:`evaluate_channel_evidence_with_revocation`
+    whose source bundle has ``revoked=True`` must close the gate with
+    ``gate=False``, ``beta=0.0``, and ``AUDIT_SOURCE_REVOKED`` in the
+    audit reason. The wrapper must short-circuit before any of the
+    downstream channel-rule logic so the audit trail is not polluted
+    by side-effects of other factors.
+    """
+    from adaptive_reflow.contracts import (
+        ChannelRuleInputs,
+        make_default_phase_state,
+    )
+    from adaptive_reflow.frame.channel_rule import (
+        AUDIT_SOURCE_REVOKED,
+        evaluate_channel_evidence_with_revocation,
+    )
+
+    bundle = _make_bundle(revoked=True)
+    evidence = _make_evidence(bundle, ChannelName("coordinate"))
+    inputs = ChannelRuleInputs(
+        bundle=bundle,
+        evidence=evidence,
+        phase_state=make_default_phase_state(
+            horizon_coverage_proven=True,
+            operation_order_version="1.0.0",
+        ),
+        scheduled_cap=FactorValue(0.5),
+        mixing_cap=FactorValue(0.5),
+        fresh_noise_floor=FactorValue(0.0),
+        delta_cap_up=FactorValue(0.5),
+        delta_cap_down=FactorValue(0.5),
+        tail_admissibility=True,
+        complement_excluded=False,
+        frozen_envelope_manifest_hash=ArtifactHash("env-hash"),
+        finite_prefix_only=True,
+        calibration_lower_bound=FactorValue(0.9),
+        perturbation_stability_lower_bound=FactorValue(0.9),
+        support_coverage=FactorValue(0.9),
+        ambiguity=FactorValue(0.1),
+        degeneracy_penalty=FactorValue(0.1),
+        recency_decay=FactorValue(0.9),
+        horizon_coverage_proven=True,
+        selected_bundle_id=bundle.bundle_id,
+    )
+    outputs = evaluate_channel_evidence_with_revocation(inputs)
+    decision = outputs.decision
+
+    assert decision.gate is False
+    assert float(decision.beta) == 0.0
+    assert float(decision.alpha) == 1.0
+    assert AUDIT_SOURCE_REVOKED in decision.audit_reason
+    assert AUDIT_SOURCE_REVOKED in decision.blocker_codes
+    assert outputs.validation_errors == (AUDIT_SOURCE_REVOKED,)
 
 
 # ---------------------------------------------------------------------------
@@ -648,3 +957,49 @@ def test_proxy_only_evidence_cannot_satisfy_calibration_lower_bound():
             f"non-proxy channel {decision.channel} unexpectedly closed: "
             f"{decision.audit_reason!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# 7. Property-based test for the revocation validator path
+# ---------------------------------------------------------------------------
+
+
+if HAS_HYPOTHESIS:
+
+    @pytest.mark.skipif(not HAS_HYPOTHESIS, reason="hypothesis not installed")
+    @given(
+        bundle_id=st.text(
+            min_size=1,
+            max_size=32,
+            alphabet=st.characters(
+                whitelist_categories=("Lu", "Ll", "Nd"),
+                whitelist_characters=("_", "-"),
+            ),
+        ),
+        source_round=st.integers(min_value=0, max_value=10**6),
+    )
+    @settings(max_examples=25, suppress_health_check=[HealthCheck.too_slow])
+    def test_property_revoked_bundle_always_emits_source_revoked(
+        bundle_id: str, source_round: int,
+    ) -> None:
+        """Property: any :class:`RoundResultBundle` with
+        ``revoked=True`` must be rejected by
+        ``validate_round_result_bundle`` with
+        ``ok=False`` and ``"source_revoked"`` in the errors tuple.
+
+        This sweeps a wide range of ``bundle_id`` strings and
+        ``source_round`` integers to confirm the revocation check
+        is invariant under bundle identity. The check runs BEFORE
+        every other structural invariant so it is independent of
+        the rest of the bundle's surface.
+        """
+        from adaptive_reflow.contracts import validate_round_result_bundle
+
+        bundle = _make_bundle(
+            bundle_id=f"bundle-{bundle_id}",
+            source_round=int(source_round),
+            revoked=True,
+        )
+        ok, errors = validate_round_result_bundle(bundle)
+        assert ok is False
+        assert "source_revoked" in errors

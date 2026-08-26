@@ -1,0 +1,24 @@
+{
+  "expected": {
+    "raw_score_diff": -2.3283064365386963e-10,
+    "seed_a": {
+      "bounded_score": 0.39214148628525436,
+      "calibration_lower_bound": 0.7297189543023705,
+      "perturbation_stability_lower_bound": 0.7433624351513571,
+      "raw_score": 0.39214148628525436
+    },
+    "seed_b": {
+      "bounded_score": 0.3921414860524237,
+      "calibration_lower_bound": 0.7297189545352012,
+      "perturbation_stability_lower_bound": 0.7433624350000172,
+      "raw_score": 0.3921414860524237
+    }
+  },
+  "inputs": {
+    "channel": "coordinate",
+    "digest": "abcdef0123456789",
+    "seed_a": 10,
+    "seed_b": 11
+  },
+  "name": "perturbation_seed_vs_seed_plus_one"
+}

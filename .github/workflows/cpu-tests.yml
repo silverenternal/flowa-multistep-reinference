@@ -23,5 +23,7 @@ jobs:
         run: ruff check adaptive_reflow/ tests/
       - name: Run pytest (non-slow, non-benchmark)
         run: PYTHONPATH=. python -m pytest tests/ -m "not slow and not benchmark" --no-header -q
+      - name: Run universal-import guard
+        run: PYTHONPATH=. python -m pytest tests/test_universal/test_universal_imports_no_molecular.py --no-header -q
       - name: Check docs against code
         run: PYTHONPATH=. python tools/check_docs_against_code.py

@@ -1,0 +1,14 @@
+{
+  "expected": {
+    "bounded_score": 0.39217218151316047,
+    "calibration_lower_bound": 0.729627343127504,
+    "perturbation_stability_lower_bound": 0.7433428703807294,
+    "raw_score": 0.39217218151316047
+  },
+  "inputs": {
+    "channel": "coordinate",
+    "digest": "feedfacefeedface",
+    "seed": 0
+  },
+  "name": "digest_sweep_feedfacefeedface"
+}

@@ -492,14 +492,24 @@ class TestEdgeCases:
         This is the boundary between "closed because invalid" and "open
         but produces nothing". The audit reason must be ``"ok"`` and the
         blocker tuple must be empty.
+
+        DTB-R0 §3 case 2 caveat: ``perturbation_stability_lower_bound``
+        is anchored at :data:`PERTURBATION_STABILITY_FLOOR` rather than
+        ``0.0`` here so this test still verifies the "all factors valid
+        in [0,1] -> gate stays open" invariant without triggering the
+        dedicated stability-collapse short-circuit. The dedicated
+        collapse path is exercised in
+        ``tests/test_adversarial/test_hostile_cases.py``.
         """
+        from adaptive_reflow.frame.channel_rule import PERTURBATION_STABILITY_FLOOR
+
         bundle = _make_bundle()
         evidence = _make_evidence(
             bundle,
             ChannelName("coordinate"),
             calibration=0.0,
             support=0.0,
-            perturbation_stability_lower_bound=0.0,
+            perturbation_stability_lower_bound=float(PERTURBATION_STABILITY_FLOOR),
             ambiguity=0.0,
             degeneracy=0.0,
             recency=0.0,
@@ -510,7 +520,7 @@ class TestEdgeCases:
             evidence=evidence,
             calibration=0.0,
             support_coverage=0.0,
-            perturbation_stability_lower_bound=0.0,
+            perturbation_stability_lower_bound=float(PERTURBATION_STABILITY_FLOOR),
             ambiguity=0.0,
             degeneracy_penalty=0.0,
             recency_decay=0.0,

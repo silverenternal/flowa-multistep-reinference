@@ -12,7 +12,7 @@
     "gate": true,
     "raw_factors": [
       0.0,
-      0.0,
+      0.5,
       0.0,
       0.0,
       0.0,
@@ -72,7 +72,7 @@
       "external_metric_uncertainty": null,
       "geometry_pass": true,
       "materialization_pass": true,
-      "perturbation_stability_lower_bound": 0.0,
+      "perturbation_stability_lower_bound": 0.5,
       "provenance": [
         "test.producer"
       ],
@@ -87,7 +87,7 @@
     "frozen_envelope_manifest_hash": "env-hash",
     "horizon_coverage_proven": true,
     "mixing_cap": 0.5,
-    "perturbation_stability_lower_bound": 0.0,
+    "perturbation_stability_lower_bound": 0.5,
     "phase_state": {
       "ambiguity_band_active": false,
       "horizon_coverage_proven": true,

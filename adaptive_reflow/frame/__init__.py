@@ -23,6 +23,8 @@ from .adapter import (
     validate_state_bundle,
 )
 from .channel_rule import (
+    AUDIT_SOURCE_REVOKED,
+    AUDIT_STABILITY_COLLAPSE,
     BLOCKER_COMPLEMENT_EXCLUDED,
     BLOCKER_ENVELOPE_HASH_MISSING,
     BLOCKER_FACTOR_OUT_OF_UNIT_INTERVAL,
@@ -34,8 +36,10 @@ from .channel_rule import (
     BLOCKER_PROXY_ONLY,
     BLOCKER_TAIL_INADMISSIBLE,
     CANONICAL_FACTOR_ORDER,
+    PERTURBATION_STABILITY_FLOOR,
     check_monotonicity_property,
     compute_channel_decision,
+    evaluate_channel_evidence_with_revocation,
     required_factors_in_unit_interval,
 )
 from .engine import (
