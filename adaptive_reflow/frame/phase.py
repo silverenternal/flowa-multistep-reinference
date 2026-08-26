@@ -35,6 +35,8 @@ endpoint score alone.
 
 from __future__ import annotations
 
+from typing import Literal, cast
+
 from adaptive_reflow.contracts import (
     SCHEDULE_PHASES,
     ArtifactHash,
@@ -62,7 +64,7 @@ __all__ = [
 def _infer_schedule_phase(
     schedule_phase_index: int,
     previous_trigger: RestartTriggerEvent | None,
-) -> str:
+) -> Literal["high_noise", "anneal", "low_noise", "post_restart"]:
     """Infer the canonical ``schedule_phase`` label from the schedule index.
 
     The mapping mirrors CONTRACTS.md §4/§5 schedule semantics:
@@ -202,7 +204,9 @@ def build_phase_state(
                 f"schedule_phase must be one of {SCHEDULE_PHASES!r}, "
                 f"got {schedule_phase!r}"
             )
-        resolved_phase = schedule_phase
+        resolved_phase = cast(
+            Literal["high_noise", "anneal", "low_noise", "post_restart"], schedule_phase
+        )
     else:
         resolved_phase = _infer_schedule_phase(schedule_phase_index, previous_trigger)
 

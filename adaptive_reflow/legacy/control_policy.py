@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 from pocket_modules.core.models.multirate_flow import pair_chemical_decision_views
 from pocket_modules.core.models.property_adapters import PROPERTY_NAMES
@@ -13,7 +13,7 @@ from pocket_modules.mechanisms.inference.adaptive_reflow import external_metric_
 try:
     import torch
 except Exception:  # pragma: no cover - optional dependency
-    torch = None  # type: ignore[assignment]
+    torch = None
 
 
 def require_torch() -> None:
@@ -38,7 +38,7 @@ def adaptive_reflow_external_metric_controls(
     gnina_target_score: float = -4.0,
     qed_target: float = 0.65,
 ) -> dict[str, Any]:
-    return external_metric_feedback.adaptive_reflow_external_metric_controls(
+    result = external_metric_feedback.adaptive_reflow_external_metric_controls(
         external_feedback,
         round_proxy,
         round_memory_fraction=round_memory_fraction,
@@ -55,6 +55,8 @@ def adaptive_reflow_external_metric_controls(
         gnina_target_score=gnina_target_score,
         qed_target=qed_target,
     )
+    return cast(dict[str, Any], result)
+
 
 def adaptive_reflow_lightweight_proxy(result: Any) -> dict[str, Any]:
     """Score whether a detached round state is safe to preserve next round.
@@ -215,7 +217,7 @@ def _strict_proxy_edge_target(proxy: Mapping[str, Any]) -> float:
     return target
 
 
-def adaptive_reflow_proxy_confidence(proxy: Mapping[str, Any]) -> dict[str, float]:
+def adaptive_reflow_proxy_confidence(proxy: Mapping[str, Any]) -> dict[str, str | float]:
     """Convert generation-local proxy channels into a smooth trust signal.
 
     Literature-guided inference should not hinge on one hand-picked threshold.
@@ -404,7 +406,7 @@ def adaptive_reflow_metric_priority_controls(
         },
     ]
     active_rows = [row for row in difficulty_rows if bool(row["active"])]
-    selected = min(active_rows or [difficulty_rows[-1]], key=lambda row: int(row["rank"]))
+    selected = min(active_rows or [difficulty_rows[-1]], key=lambda row: int(str(row["rank"])))
     selected_metric = str(selected["metric"])
 
     base_condition = _strict_property_preference_mapping(
@@ -519,9 +521,9 @@ def adaptive_reflow_metric_priority_controls(
         "difficulty_order": [
             {
                 "metric": str(row["metric"]),
-                "rank": int(row["rank"]),
+                "rank": int(str(row["rank"])),
                 "active": bool(row["active"]),
-                "severity": float(row["severity"]),
+                "severity": float(str(row["severity"])),
                 "reason": str(row["reason"]),
             }
             for row in difficulty_rows

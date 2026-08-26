@@ -290,10 +290,6 @@ def _coerce_artifact_hash(value: Any) -> ArtifactHash | None:
         if value == "":
             return None
         return ArtifactHash(value)
-    if isinstance(value, ArtifactHash):
-        if str(value) == "":
-            return None
-        return ArtifactHash(str(value))
     raise ClaimGateArgumentError(
         f"{ERR_ARTIFACT_HASH_TYPE}: expected ArtifactHash or None, "
         f"got {type(value).__name__}"
@@ -327,8 +323,8 @@ def build_default_claim_gate_config(
         )
     contracts_tuple = tuple(str(c) for c in required_contracts_passing)
     # De-duplicate while preserving order so equality is stable.
-    seen: set = set()
-    deduped: list = []
+    seen: set[str] = set()
+    deduped: list[str] = []
     for c in contracts_tuple:
         if c not in seen:
             seen.add(c)
@@ -417,8 +413,8 @@ def evaluate_claim_gate(
         )
     _coerce_non_negative_int("evaluated_at_round", evaluated_at_round)
 
-    passed: list = []
-    failed: list = []
+    passed: list[str] = []
+    failed: list[str] = []
 
     # 0. Missing-evidence marker: when the evidence mapping is empty
     #    the structural evaluator cannot satisfy any condition; we
@@ -502,7 +498,7 @@ def evaluate_claim_gate(
         else:
             failed.append("evaluation_window_rounds:insufficient")
 
-    summary: dict = {
+    summary: dict[str, Any] = {
         "required_contracts_passing": list(config.required_contracts_passing),
         "required_paired_evidence_count": int(
             config.required_paired_evidence_count

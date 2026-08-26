@@ -20,26 +20,23 @@
            REFERENCE_FRAMES,
        )
 
-   The four molecule-specific channel aliases (``coordinate`` / ``charge``
-   / ``raw_pair`` / ``projected_pair``) and the per-channel domain table
-   live in :mod:`adaptive_reflow.molecular.channels` and
-   :mod:`adaptive_reflow.molecular.domain` respectively.
+   The molecule-specific channel vocabulary lives in
+   :mod:`adaptive_reflow.molecular.channels` and the per-channel domain
+   fallback table (for molecule-aware callers) in
+   :mod:`adaptive_reflow.molecular.domain`. Universal code MUST NOT
+   reach into the molecule layer; each adapter declares its own
+   ``AdapterCapabilities.channel_domains`` instead.
 """
 
 from __future__ import annotations
 
-# ---------------------------------------------------------------------------
-# Back-compat molecule-channel domain table
-# ---------------------------------------------------------------------------
-# The original ``DOMAIN_BY_CHANNEL`` literal mapped the four molecule
-# channel names to their ``continuous`` / ``discrete`` domain kind. The
-# canonical source of truth at the universal layer is now each adapter's
-# own ``AdapterCapabilities.channel_domains`` declaration; the molecule
-# table lives in :mod:`adaptive_reflow.molecular.domain` and is re-exported
-# here for callers that have not yet migrated.
-from adaptive_reflow.molecular.domain import MOLECULE_DOMAIN_BY_CHANNEL
-
 # Canonical home: universal adapter protocol + pure-data carriers.
+# NOTE: this module is intentionally molecule-free. The legacy
+# ``DOMAIN_BY_CHANNEL`` constant that used to live here was a
+# molecule-only fallback table and has been removed; per-channel
+# domain resolution is now the adapter's responsibility via
+# ``AdapterCapabilities.channel_domains``. Molecule-aware callers may
+# consult :data:`adaptive_reflow.molecular.domain.MOLECULE_DOMAIN_BY_CHANNEL`.
 from adaptive_reflow.universal.adapter import (
     AdapterCapabilities,
     CapabilityMismatchError,
@@ -61,13 +58,7 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 
-# Preserve the historical name; the molecule table exposes a richer
-# per-channel dict (without the legacy ``.continuous`` / ``.discrete``
-# suffix-duplicate keys).
-DOMAIN_BY_CHANNEL = MOLECULE_DOMAIN_BY_CHANNEL
-
 __all__ = [
-    "DOMAIN_BY_CHANNEL",
     "NORMALIZATION_KINDS",
     "REFERENCE_FRAMES",
     "AdapterCapabilities",

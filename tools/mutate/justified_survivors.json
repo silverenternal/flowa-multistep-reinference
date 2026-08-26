@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "captured_at": "2026-08-27",
+  "platform": "linux",
+  "_note": "Justified-survivor ledger for the mutation-testing gate. Each entry records a mutant that mutmut cannot kill and a one-line justification explaining why the surviving mutation is an acceptable equivalent mutant (the test suite does not exercise that distinction by design). Add entries here when a real mutation run produces a surviving mutant in a critical path that you have decided to leave alone. The mutation-nightly workflow deducts justified survivors from the survived-count when computing the gate score so they do not fail the build.",
+  "survivors": []
+}

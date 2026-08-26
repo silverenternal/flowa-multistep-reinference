@@ -37,6 +37,7 @@ from dataclasses import dataclass
 from adaptive_reflow.contracts import (
     ArchiveAuditTrail,
     ArchiveQuota,
+    ArtifactHash,
     BundleId,
     FactorValue,
     RoundResultBundle,
@@ -117,7 +118,7 @@ class ArchiveEntry:
 # ---------------------------------------------------------------------------
 
 
-def _safe_factor(x, *, default: float) -> float:
+def _safe_factor(x: object, *, default: float) -> float:
     """Coerce ``x`` to a finite float in ``[0, 1]``; fall back to ``default``."""
     try:
         if isinstance(x, bool):
@@ -334,7 +335,7 @@ class SameSampleArchive:
         self.trace_lineage: TraceDigest = trace_lineage
         self.checkpoint_id: str = str(checkpoint_id)
         self._entries: list[ArchiveEntry] = []
-        self._seen_bundle_ids: set = set()
+        self._seen_bundle_ids: set[BundleId] = set()
         self._stats: _ArchiveStats = _ArchiveStats()
         self._last_selected_bundle_id: BundleId | None = None
         self._audit_trail: ArchiveAuditTrail = self._empty_audit()
@@ -419,7 +420,7 @@ class SameSampleArchive:
                 "refusing to insert additional candidate"
             )
         self._entries.append(entry)
-        self._seen_bundle_ids.add(bundle_id)
+        self._seen_bundle_ids.add(BundleId(bundle_id))
         return entry
 
     def select_one_bundle(
@@ -512,8 +513,8 @@ class SameSampleArchive:
 
         # Build the audit trail. Rejected = every non-chosen entry that
         # was eligible for selection this round.
-        rejected = tuple(
-            str(entry.bundle.bundle_id)
+        rejected_ids: tuple[BundleId, ...] = tuple(
+            BundleId(str(entry.bundle.bundle_id))
             for entry in sorted_entries
             if str(entry.bundle.bundle_id) != str(chosen.bundle.bundle_id)
         )
@@ -527,7 +528,7 @@ class SameSampleArchive:
         )
         self._audit_trail = ArchiveAuditTrail(
             selected_bundle_id=BundleId(str(chosen.bundle.bundle_id)),
-            rejected_bundle_ids=tuple(rejected),
+            rejected_bundle_ids=rejected_ids,
             dedup_count=int(self._stats.dedup_count),
             total_influence_kept=float(self._stats.total_influence_kept),
             archive_size=len(self._entries),
@@ -536,14 +537,16 @@ class SameSampleArchive:
             consecutive_reuse_count=chosen_count,
             max_consecutive_reuse_rounds=int(max_reuse),
             current_round=int(current_round),
-            audit_hash=_archive_audit_hash(
-                run_id=self.run_id,
-                sample_id=self.sample_id,
-                trace_lineage=self.trace_lineage,
-                selected_bundle_id=BundleId(str(chosen.bundle.bundle_id)),
-                rejected_bundle_ids=rejected,
-                dedup_count=int(self._stats.dedup_count),
-                total_influence_kept=float(self._stats.total_influence_kept),
+            audit_hash=ArtifactHash(
+                _archive_audit_hash(
+                    run_id=self.run_id,
+                    sample_id=self.sample_id,
+                    trace_lineage=self.trace_lineage,
+                    selected_bundle_id=BundleId(str(chosen.bundle.bundle_id)),
+                    rejected_bundle_ids=rejected_ids,
+                    dedup_count=int(self._stats.dedup_count),
+                    total_influence_kept=float(self._stats.total_influence_kept),
+                )
             ),
         )
         self._last_selected_bundle_id = chosen.bundle.bundle_id
@@ -595,14 +598,16 @@ class SameSampleArchive:
                 self.quota.max_consecutive_reuse_rounds
             ),
             current_round=0,
-            audit_hash=_archive_audit_hash(
-                run_id=self.run_id,
-                sample_id=self.sample_id,
-                trace_lineage=self.trace_lineage,
-                selected_bundle_id=None,
-                rejected_bundle_ids=(),
-                dedup_count=int(self._stats.dedup_count),
-                total_influence_kept=float(self._stats.total_influence_kept),
+            audit_hash=ArtifactHash(
+                _archive_audit_hash(
+                    run_id=self.run_id,
+                    sample_id=self.sample_id,
+                    trace_lineage=self.trace_lineage,
+                    selected_bundle_id=None,
+                    rejected_bundle_ids=(),
+                    dedup_count=int(self._stats.dedup_count),
+                    total_influence_kept=float(self._stats.total_influence_kept),
+                )
             ),
         )
 

@@ -135,7 +135,7 @@ AUDIT_STABILITY_COLLAPSE: str = "perturbation_stability_below_threshold"
 # ---------------------------------------------------------------------------
 
 
-def _coerce_factor(x) -> float:
+def _coerce_factor(x: object) -> float:
     """Coerce a ``FactorValue``-like to a Python ``float``.
 
     Booleans are treated as integers (``True`` = 1, ``False`` = 0).
@@ -185,7 +185,7 @@ def required_factors_in_unit_interval(
     return tuple(failed)
 
 
-def _classify_failed_factor(name: str, value) -> str:
+def _classify_failed_factor(name: str, value: object) -> str:
     """Map a single failed factor to its canonical blocker-code suffix."""
     if value is None:
         return f"{BLOCKER_MISSING_FACTOR}:{name}"

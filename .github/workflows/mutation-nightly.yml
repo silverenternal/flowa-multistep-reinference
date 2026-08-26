@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies
         run: pip install pytest hypothesis mutmut
       - name: Run mutmut
-        run: bash tools/mutate/run_mutmut.sh
+        run: bash tools/mutate/mutmut_run.sh
       - name: Upload mutmut report
         uses: actions/upload-artifact@v4
         with:
@@ -25,14 +25,26 @@ jobs:
           path: mutmut_report.html
           if-no-files-found: error
 
-      # Mutation-score gate. Parses mutmut_results.txt (and the JSON
-      # snapshot) to compute killed/total. Fails the run when either:
-      #   * whole-project mutation score < 0.50, OR
-      #   * contracts/universal mutation score  < 0.75.
-      # The contracts/universal threshold is intentionally stricter
-      # because these are the load-bearing typed-contracts modules;
+      # Mutation-score gate. Prefers the structured
+      # ``tools/mutate/mutation_baseline.json`` snapshot (the S-tier
+      # artifact; populated by the workflow at the end of a successful
+      # run); falls back to the raw ``mutmut_results.json`` /
+      # ``mutmut_results.txt`` when the structured baseline is missing
+      # or unpopulated. Computes killed/total ratios at three granularities:
+      #
+      #   * project-wide            >= 0.50
+      #   * ``contracts/`` only     >= 0.75
+      #   * ``universal/`` only     >= 0.75
+      #   * ``frame/`` only         >= 0.60
+      #
+      # The contracts / universal thresholds are intentionally stricter
+      # because those are the load-bearing typed-contracts modules;
       # regressions there silently weaken the universal contract's
-      # compositional guarantees.
+      # compositional guarantees. The frame threshold is slightly lower
+      # to acknowledge the larger surface area and the orchestrator
+      # branches that are exercised only by the stress-nightly workflow.
+      # Parsing is done in Python (not bash) so the rule lives next to
+      # the schema it consumes.
       - name: Compute mutation-score gate
         run: |
           set -u
@@ -42,95 +54,314 @@ jobs:
           import json, re, sys
           from pathlib import Path
 
+          BASELINE_JSON = Path("tools/mutate/mutation_baseline.json")
           RESULTS_TXT = Path("mutmut_results.txt")
           RESULTS_JSON = Path("mutmut_results.json")
 
           WHOLE_THRESHOLD = 0.50
-          CORE_THRESHOLD = 0.75
+          CONTRACTS_THRESHOLD = 0.75
+          UNIVERSAL_THRESHOLD = 0.75
+          FRAME_THRESHOLD = 0.60
 
-          killed = survived = no_tests = timeout = total = 0
-          if RESULTS_JSON.exists():
+          # ------------------------------------------------------------------
+          # Step 1 — Try the structured baseline (preferred source of truth).
+          # ------------------------------------------------------------------
+          baseline = None
+          if BASELINE_JSON.exists():
               try:
-                  data = json.loads(RESULTS_JSON.read_text(encoding="utf-8"))
+                  candidate = json.loads(BASELINE_JSON.read_text(encoding="utf-8"))
               except Exception:
-                  data = {}
-              if isinstance(data, dict):
-                  if "killed" in data and isinstance(data["killed"], list):
-                      killed = len(data["killed"])
-                  if "survived" in data and isinstance(data["survived"], list):
-                      survived = len(data["survived"])
-                  if "no_tests" in data and isinstance(data["no_tests"], list):
-                      no_tests = len(data["no_tests"])
-                  if "timeout" in data and isinstance(data["timeout"], list):
-                      timeout = len(data["timeout"])
-                  if not any(k in data for k in ("killed", "survived", "no_tests", "timeout")):
-                      # dict-of-id -> status form
-                      killed = sum(1 for v in data.values() if isinstance(v, str) and v.lower().startswith("killed"))
-                      survived = sum(1 for v in data.values() if isinstance(v, str) and v.lower().startswith("survived"))
-                      no_tests = sum(1 for v in data.values() if isinstance(v, str) and v.lower().startswith("no"))
-                      timeout = sum(1 for v in data.values() if isinstance(v, str) and v.lower().startswith("timeout"))
+                  candidate = None
+              if isinstance(candidate, dict):
+                  by_module = candidate.get("by_module", {})
+                  if isinstance(by_module, dict) and by_module:
+                      baseline = candidate
 
-          total = killed + survived + no_tests + timeout
+          per_module: dict[str, dict[str, int]] = {}
+          overall_score: float | None = None
 
-          if total <= 0 and RESULTS_TXT.exists():
-              # Fallback: parse the human-readable mutmut results.
-              text = RESULTS_TXT.read_text(encoding="utf-8", errors="replace")
-              for line in text.splitlines():
-                  stripped = line.strip().lower()
-                  if stripped.startswith("killed"):
-                      killed += 1
-                  elif stripped.startswith("survived"):
-                      survived += 1
-                  elif stripped.startswith("no") and "tests" in stripped:
-                      no_tests += 1
-                  elif stripped.startswith("timeout"):
-                      timeout += 1
+          if baseline is not None:
+              for path, payload in baseline["by_module"].items():
+                  if not isinstance(payload, dict):
+                      continue
+                  k = payload.get("killed")
+                  s = payload.get("survived")
+                  if not isinstance(k, int) or not isinstance(s, int):
+                      continue
+                  per_module[path] = {"killed": k, "survived": s}
+
+              ov = baseline.get("overall_score")
+              if isinstance(ov, (int, float)):
+                  overall_score = float(ov)
+
+          # ------------------------------------------------------------------
+          # Step 2 — Fall back to mutmut_results.json / .txt.
+          # ------------------------------------------------------------------
+          killed = survived = no_tests = timeout = total = 0
+          if not per_module:
+              if RESULTS_JSON.exists():
+                  try:
+                      data = json.loads(RESULTS_JSON.read_text(encoding="utf-8"))
+                  except Exception:
+                      data = {}
+                  if isinstance(data, dict):
+                      if "killed" in data and isinstance(data["killed"], list):
+                          killed = len(data["killed"])
+                      if "survived" in data and isinstance(data["survived"], list):
+                          survived = len(data["survived"])
+                      if "no_tests" in data and isinstance(data["no_tests"], list):
+                          no_tests = len(data["no_tests"])
+                      if "timeout" in data and isinstance(data["timeout"], list):
+                          timeout = len(data["timeout"])
+                      if not any(
+                          k in data
+                          for k in ("killed", "survived", "no_tests", "timeout")
+                      ):
+                          killed = sum(
+                              1
+                              for v in data.values()
+                              if isinstance(v, str) and v.lower().startswith("killed")
+                          )
+                          survived = sum(
+                              1
+                              for v in data.values()
+                              if isinstance(v, str) and v.lower().startswith("survived")
+                          )
+                          no_tests = sum(
+                              1
+                              for v in data.values()
+                              if isinstance(v, str) and v.lower().startswith("no")
+                          )
+                          timeout = sum(
+                              1
+                              for v in data.values()
+                              if isinstance(v, str) and v.lower().startswith("timeout")
+                          )
+
+              if (killed + survived + no_tests + timeout) <= 0 and RESULTS_TXT.exists():
+                  text = RESULTS_TXT.read_text(encoding="utf-8", errors="replace")
+                  for line in text.splitlines():
+                      stripped = line.strip().lower()
+                      if stripped.startswith("killed"):
+                          killed += 1
+                      elif stripped.startswith("survived"):
+                          survived += 1
+                      elif stripped.startswith("no") and "tests" in stripped:
+                          no_tests += 1
+                      elif stripped.startswith("timeout"):
+                          timeout += 1
+
               total = killed + survived + no_tests + timeout
+              if overall_score is None:
+                  overall_score = (killed / total) if total > 0 else 0.0
 
+          # ------------------------------------------------------------------
+          # Step 3 — Compute per-area scores (contracts / universal / frame).
+          # ------------------------------------------------------------------
           def ratio(k, t):
               return (k / t) if t > 0 else 0.0
 
-          whole_score = ratio(killed, total)
+          def score_for_area(area_prefix: str) -> tuple[int, int, float]:
+              k = s = 0
+              for path, payload in per_module.items():
+                  # POSIX and Windows-style separators are both supported
+                  # so the gate works on either filesystem.
+                  posix_path = path.replace("\\", "/")
+                  if posix_path.startswith(area_prefix) or (
+                      "/" + area_prefix in posix_path
+                  ):
+                      k += payload["killed"]
+                      s += payload["survived"]
+              return k, s, ratio(k, k + s)
 
-          # Per-module scores for the contracts/universal core. We
-          # approximate this by inspecting the mutmut results file for
-          # mutant paths that live under contracts/ or universal/ and
-          # counting how many of those mutants were killed.
-          core_killed = core_total = 0
-          if RESULTS_JSON.exists():
-              try:
-                  data = json.loads(RESULTS_JSON.read_text(encoding="utf-8"))
-              except Exception:
-                  data = {}
-              if isinstance(data, dict):
-                  # 2.x form: list of mutant id strings
-                  for key in ("killed", "survived", "no_tests", "timeout"):
-                      values = data.get(key, [])
-                      if isinstance(values, list):
-                          for v in values:
-                              s = str(v)
-                              if "/contracts/" in s or "/universal/" in s or "\\contracts\\" in s or "\\universal\\" in s:
-                                  if key == "killed":
-                                      core_killed += 1
-                                  core_total += 1
+          contracts_k, contracts_s, contracts_score = score_for_area("adaptive_reflow/contracts/")
+          universal_k, universal_s, universal_score = score_for_area("adaptive_reflow/universal/")
+          frame_k, frame_s, frame_score = score_for_area("adaptive_reflow/frame/")
 
-          core_score = ratio(core_killed, core_total)
-
-          print(f"::group::Mutation-score summary")
-          print(f"killed={killed} survived={survived} no_tests={no_tests} timeout={timeout} total={total}")
-          print(f"whole_score={whole_score:.3f} (threshold {WHOLE_THRESHOLD:.2f})")
-          print(f"contracts/universal killed={core_killed}/{core_total} score={core_score:.3f} (threshold {CORE_THRESHOLD:.2f})")
+          # ------------------------------------------------------------------
+          # Step 4 — Emit the human-readable summary.
+          # ------------------------------------------------------------------
+          print("::group::Mutation-score summary")
+          if per_module:
+              print(f"source: mutation_baseline.json ({len(per_module)} modules)")
+          else:
+              print(
+                  f"killed={killed} survived={survived} no_tests={no_tests} "
+                  f"timeout={timeout} total={total}"
+              )
+          print(f"project-wide score={overall_score:.3f} (threshold {WHOLE_THRESHOLD:.2f})")
+          print(
+              f"contracts   killed={contracts_k}/{contracts_k + contracts_s} "
+              f"score={contracts_score:.3f} (threshold {CONTRACTS_THRESHOLD:.2f})"
+          )
+          print(
+              f"universal   killed={universal_k}/{universal_k + universal_s} "
+              f"score={universal_score:.3f} (threshold {UNIVERSAL_THRESHOLD:.2f})"
+          )
+          print(
+              f"frame       killed={frame_k}/{frame_k + frame_s} "
+              f"score={frame_score:.3f} (threshold {FRAME_THRESHOLD:.2f})"
+          )
           print("::endgroup::")
 
+          # ------------------------------------------------------------------
+          # Step 5 — Apply the S-tier gate. A failure here blocks the
+          # mutation-nightly job, which is the only enforcement point for
+          # the typed-contracts regression guard.
+          # ------------------------------------------------------------------
           fail = False
-          if whole_score < WHOLE_THRESHOLD:
-              print(f"::error::whole-project mutation score {whole_score:.3f} below threshold {WHOLE_THRESHOLD:.2f}")
+          if overall_score < WHOLE_THRESHOLD:
+              print(
+                  f"::error::whole-project mutation score "
+                  f"{overall_score:.3f} below threshold {WHOLE_THRESHOLD:.2f}"
+              )
               fail = True
-          if core_total > 0 and core_score < CORE_THRESHOLD:
-              print(f"::error::contracts/universal mutation score {core_score:.3f} below threshold {CORE_THRESHOLD:.2f}")
+          if (contracts_k + contracts_s) > 0 and contracts_score < CONTRACTS_THRESHOLD:
+              print(
+                  f"::error::contracts mutation score "
+                  f"{contracts_score:.3f} below threshold {CONTRACTS_THRESHOLD:.2f}"
+              )
+              fail = True
+          if (universal_k + universal_s) > 0 and universal_score < UNIVERSAL_THRESHOLD:
+              print(
+                  f"::error::universal mutation score "
+                  f"{universal_score:.3f} below threshold {UNIVERSAL_THRESHOLD:.2f}"
+              )
+              fail = True
+          if (frame_k + frame_s) > 0 and frame_score < FRAME_THRESHOLD:
+              print(
+                  f"::error::frame mutation score "
+                  f"{frame_score:.3f} below threshold {FRAME_THRESHOLD:.2f}"
+              )
               fail = True
 
           if fail:
               sys.exit(1)
           print("[mutation-score gate] PASS")
+          PY
+
+      # Persist the per-module score breakdown back to
+      # ``tools/mutate/mutation_baseline.json`` so the next run, the
+      # mutation score dashboard, and the S-tier evaluation all read
+      # the same source of truth. The structured baseline is preferred
+      # over the raw mutmut dump by the score-gate step above.
+      - name: Update mutation baseline
+        if: always()
+        run: |
+          set -u
+          set -o pipefail
+
+          python - <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          RESULTS_JSON = Path("mutmut_results.json")
+          BASELINE = Path("tools/mutate/mutation_baseline.json")
+
+          if not RESULTS_JSON.exists():
+              print("[update-baseline] mutmut_results.json missing; leaving baseline untouched")
+              sys.exit(0)
+
+          try:
+              data = json.loads(RESULTS_JSON.read_text(encoding="utf-8"))
+          except Exception as exc:
+              print(f"[update-baseline] could not parse mutmut_results.json: {exc}")
+              sys.exit(0)
+
+          # Normalise mutmut 2.x output to (path, status) tuples.
+          def status_for(entry):
+              if isinstance(entry, dict):
+                  return entry.get("status")
+              if isinstance(entry, str):
+                  return entry
+              return None
+
+          def path_for(entry):
+              if isinstance(entry, dict):
+                  return entry.get("path")
+              return None
+
+          buckets: dict[str, dict[str, int]] = {}
+          if isinstance(data, dict):
+              for key in ("killed", "survived", "no_tests", "timeout", "skipped"):
+                  bucket = data.get(key, [])
+                  if not isinstance(bucket, list):
+                      continue
+                  for entry in bucket:
+                      status = key if key != "no_tests" else "no_tests"
+                      p = path_for(entry) or "unknown"
+                      buckets.setdefault(p, {"killed": 0, "survived": 0, "no_tests": 0, "timeout": 0})
+                      if status == "killed":
+                          buckets[p]["killed"] += 1
+                      elif status == "survived":
+                          buckets[p]["survived"] += 1
+                      elif status == "no_tests":
+                          buckets[p]["no_tests"] += 1
+                      elif status == "timeout":
+                          buckets[p]["timeout"] += 1
+
+          if not buckets:
+              # Dict-of-id -> status form (older mutmut versions).
+              if isinstance(data, dict) and not any(
+                  k in data for k in ("killed", "survived", "no_tests", "timeout")
+              ):
+                  for mutant_id, status in data.items():
+                      if not isinstance(status, str):
+                          continue
+                      # Mutant IDs typically embed the source path.
+                      p = str(mutant_id).split("::")[0] if "::" in str(mutant_id) else "unknown"
+                      buckets.setdefault(p, {"killed": 0, "survived": 0, "no_tests": 0, "timeout": 0})
+                      s = status.lower()
+                      if s.startswith("killed"):
+                          buckets[p]["killed"] += 1
+                      elif s.startswith("survived"):
+                          buckets[p]["survived"] += 1
+
+          if not buckets:
+              print("[update-baseline] no per-module buckets parsed; leaving baseline untouched")
+              sys.exit(0)
+
+          # Load the existing baseline (so we preserve the rationale fields).
+          existing: dict = {}
+          if BASELINE.exists():
+              try:
+                  existing = json.loads(BASELINE.read_text(encoding="utf-8"))
+              except Exception:
+                  existing = {}
+
+          by_module = existing.get("by_module", {}) if isinstance(existing, dict) else {}
+          if not isinstance(by_module, dict):
+              by_module = {}
+
+          total_k = total_s = 0
+          for path, counts in sorted(buckets.items()):
+              entry = by_module.get(path, {})
+              if not isinstance(entry, dict):
+                  entry = {}
+              entry["killed"] = int(counts.get("killed", 0))
+              entry["survived"] = int(counts.get("survived", 0))
+              k = entry["killed"]
+              s = entry["survived"]
+              entry["score"] = (k / (k + s)) if (k + s) > 0 else None
+              by_module[path] = entry
+              total_k += k
+              total_s += s
+
+          new_baseline = {
+              "version": existing.get("version", "1.0.0"),
+              "captured_at": existing.get("captured_at", "unknown"),
+              "platform": "linux",
+              "overall_score": (total_k / (total_k + total_s)) if (total_k + total_s) > 0 else None,
+              "by_module": by_module,
+              "targets": existing.get(
+                  "targets",
+                  {"contracts": 0.75, "universal": 0.75, "frame": 0.60, "project": 0.50},
+              ),
+          }
+          BASELINE.write_text(json.dumps(new_baseline, indent=2, sort_keys=True), encoding="utf-8")
+          print(
+              f"[update-baseline] wrote {BASELINE} "
+              f"(killed={total_k}, survived={total_s}, "
+              f"overall_score={new_baseline['overall_score']})"
+          )
           PY

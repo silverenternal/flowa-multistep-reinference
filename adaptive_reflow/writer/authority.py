@@ -51,7 +51,7 @@ from __future__ import annotations
 import dataclasses
 import math
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 from adaptive_reflow.contracts import (
     ArtifactHash,
@@ -157,7 +157,7 @@ class WriterArgumentError(ValueError):
 # ---------------------------------------------------------------------------
 
 
-def _sorted_mapping_items(mapping: Mapping[Any, Any]) -> list:
+def _sorted_mapping_items(mapping: Mapping[Any, Any]) -> list[list[Any]]:
     """Return ``mapping`` as a sorted list of ``[str(key), value]`` pairs.
 
     Mirrors the helper used by :func:`hash_policy_hash` so that the
@@ -252,9 +252,9 @@ def build_default_authority_contract() -> RestartPolicyAuthorityContract:
     # (which excludes the placeholder hash itself).
     contract = RestartPolicyAuthorityContract(
         contract_version=DEFAULT_AUTHORITY_CONTRACT_VERSION,
-        executable_writer_id=EXECUTABLE_WRITER_MECHANISM_ID,
+        executable_writer_id=cast(Any, EXECUTABLE_WRITER_MECHANISM_ID),
         diagnostic_writer_ids=(MechanismId(DIAGNOSTIC_WRITER_MECHANISM_ID),),
-        consumer_writer_id=CONSUMER_WRITER_ID,
+        consumer_writer_id=cast(Any, CONSUMER_WRITER_ID),
         mode_flags=DEFAULT_MODE_FLAGS,
         legacy_compatibility_window=legacy_window,
         contract_hash=ArtifactHash(""),
@@ -600,13 +600,15 @@ def build_final_restart_policy(
         floor_name = f"fresh_noise_floor_by_channel[{k!r}]"
         # Validate beta first; we don't need to keep the coerced value
         # because the dataclass will store the original Mapping as-is.
-        _validate_unit_factor(beta_by_channel[k], beta_name)
-        _validate_unit_factor(alpha_by_channel[k], alpha_name)
-        _validate_unit_factor(fresh_noise_floor_by_channel[k], floor_name)
+        _validate_unit_factor(beta_by_channel[cast(ChannelName, k)], beta_name)
+        _validate_unit_factor(alpha_by_channel[cast(ChannelName, k)], alpha_name)
+        _validate_unit_factor(
+            fresh_noise_floor_by_channel[cast(ChannelName, k)], floor_name
+        )
 
     # Freeze admission must be a bool per channel.
     for k in sorted_keys:
-        v = freeze_admission_by_channel[k]
+        v = freeze_admission_by_channel[cast(ChannelName, k)]
         if isinstance(v, bool):
             continue
         # Accept 0/1 integers as canonical bool encoding.

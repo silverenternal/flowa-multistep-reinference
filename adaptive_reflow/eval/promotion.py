@@ -34,7 +34,7 @@ Tasks satisfied:
 from __future__ import annotations
 
 import dataclasses
-from typing import Any
+from typing import Any, cast
 
 from adaptive_reflow.contracts import (
     ArtifactHash,
@@ -218,7 +218,7 @@ def _coerce_decision(value: Any) -> ClaimGateDecision:
             f"{ERR_DECISION_VALUE}: expected one of "
             f"('promote', 'rollback', 'defer'), got {value!r}"
         )
-    return value  # type: ignore[return-value]
+    return cast(ClaimGateDecision, value)
 
 
 def _coerce_failure_modes(value: Any) -> tuple[str, ...]:
@@ -327,7 +327,7 @@ class PolicyVersionHashRecorder:
     def __init__(self) -> None:
         # Each entry is a tuple
         # ``(run_id, policy_version, policy_hash, at_round)``.
-        self._records: list[tuple] = []
+        self._records: list[tuple[Any, ...]] = []
 
     # ---- public API ----------------------------------------------------
 
@@ -376,7 +376,7 @@ class PolicyVersionHashRecorder:
             )
         )
 
-    def get_records_for_run(self, run_id: RunId) -> tuple[tuple, ...]:
+    def get_records_for_run(self, run_id: RunId) -> tuple[tuple[Any, ...], ...]:
         """Return all records for ``run_id`` in insertion order.
 
         Returns an empty tuple when no records exist for the run.

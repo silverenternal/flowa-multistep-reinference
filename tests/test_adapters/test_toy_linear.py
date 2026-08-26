@@ -88,24 +88,49 @@ class TestToyLinearLifecycle:
 
     def test_observation(self, adapter):
         s = adapter.build_initial_state("b", "s")
-        assert adapter.observe_endpoint(s) is s
+        from adaptive_reflow.universal.state import ODEIntegratorTrace
+        trace = ODEIntegratorTrace(
+            steps=1, accept_rate=1.0, native_state_digest="x", integrator_config_hash="y"
+        )
+        assert adapter.observe_endpoint(trace, s) is s
 
     def test_solve_ode_produces_trace(self, adapter):
+        from adaptive_reflow.universal.state import ODEConditionDelta
         s = adapter.build_initial_state("b", "s")
-        ns, trace = adapter.solve_ode(s, seed=42, steps=10)
+        delta = ODEConditionDelta(
+            delta_spec={"x": "ignored"},
+            source="test",
+            target_round=1,
+            calibration_artifact_hash="a" * 64,
+        )
+        trace = adapter.solve_ode(s, delta, seed=42, steps=10)
         assert trace.steps == 10
         assert 0.0 <= trace.accept_rate <= 1.0
         assert trace.native_state_digest is not None
 
     def test_solve_ode_rejects_zero_steps(self, adapter):
+        from adaptive_reflow.universal.state import ODEConditionDelta
         s = adapter.build_initial_state("b", "s")
+        delta = ODEConditionDelta(
+            delta_spec={"x": "ignored"},
+            source="test",
+            target_round=1,
+            calibration_artifact_hash="a" * 64,
+        )
         with pytest.raises(ValueError):
-            adapter.solve_ode(s, seed=0, steps=0)
+            adapter.solve_ode(s, delta, seed=0, steps=0)
 
     def test_solve_ode_is_deterministic(self, adapter):
+        from adaptive_reflow.universal.state import ODEConditionDelta
         s = adapter.build_initial_state("b", "s")
-        _, t1 = adapter.solve_ode(s, seed=42, steps=5)
-        _, t2 = adapter.solve_ode(s, seed=42, steps=5)
+        delta = ODEConditionDelta(
+            delta_spec={"x": "ignored"},
+            source="test",
+            target_round=1,
+            calibration_artifact_hash="a" * 64,
+        )
+        t1 = adapter.solve_ode(s, delta, seed=42, steps=5)
+        t2 = adapter.solve_ode(s, delta, seed=42, steps=5)
         assert t1.native_state_digest == t2.native_state_digest
 
 

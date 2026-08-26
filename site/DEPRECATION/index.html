@@ -1,0 +1,804 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Deprecation Policy - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#deprecation-policy" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Deprecation Policy
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deprecation-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deprecation table
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#naming-convention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naming convention
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-legacy-quarantine-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the legacy/ quarantine works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-a-quarantine-not-a-deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a quarantine, not a deletion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-cadence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update cadence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="deprecation-policy">Deprecation Policy<a class="headerlink" href="#deprecation-policy" title="Permanent link">&para;</a></h1>
+<p>This document is the authoritative record of every deprecation in
+<code>flowa-multistep-reinference</code>. The versioned table at the top tracks
+<strong>what</strong> is deprecated and <strong>when</strong> it will be removed; the narrative
+below explains <strong>how</strong> the policy works in practice and <strong>why</strong> we
+quarantined <code>adaptive_reflow.legacy/</code> rather than deleting it.</p>
+<h2 id="deprecation-table">Deprecation table<a class="headerlink" href="#deprecation-table" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th style="text-align: right;">Introduced version</th>
+<th>Deprecated in</th>
+<th style="text-align: right;">Sunset version</th>
+<th>Replacement</th>
+<th style="text-align: right;">Removal version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>adaptive_reflow.legacy.control_policy</code></td>
+<td style="text-align: right;">pre-refactor</td>
+<td>S-tier governance upgrade (Unreleased)</td>
+<td style="text-align: right;">next minor (TBD)</td>
+<td><code>adaptive_reflow.policy.noise_mass</code> + <code>adaptive_reflow.writer.authority</code></td>
+<td style="text-align: right;">next minor +1 (TBD)</td>
+</tr>
+<tr>
+<td><code>adaptive_reflow.legacy.loop</code></td>
+<td style="text-align: right;">pre-refactor</td>
+<td>S-tier governance upgrade (Unreleased)</td>
+<td style="text-align: right;">next minor (TBD)</td>
+<td><code>adaptive_reflow.frame.engine.Engine</code></td>
+<td style="text-align: right;">next minor +1 (TBD)</td>
+</tr>
+<tr>
+<td><code>adaptive_reflow.legacy.loop_contract</code></td>
+<td style="text-align: right;">pre-refactor</td>
+<td>S-tier governance upgrade (Unreleased)</td>
+<td style="text-align: right;">next minor (TBD)</td>
+<td><code>adaptive_reflow.frame.operation.OperationCompositionContract</code></td>
+<td style="text-align: right;">next minor +1 (TBD)</td>
+</tr>
+<tr>
+<td><code>adaptive_reflow.legacy.mechanism_adapter</code></td>
+<td style="text-align: right;">pre-refactor</td>
+<td>S-tier governance upgrade (Unreleased)</td>
+<td style="text-align: right;">next minor (TBD)</td>
+<td><code>adaptive_reflow.universal.adapter.FlowMatchingODEAdapter</code></td>
+<td style="text-align: right;">next minor +1 (TBD)</td>
+</tr>
+<tr>
+<td><code>adaptive_reflow.legacy.metric_feedback</code> (ex <code>external_metric_feedback.py</code>)</td>
+<td style="text-align: right;">pre-refactor</td>
+<td>S-tier governance upgrade (Unreleased)</td>
+<td style="text-align: right;">next minor (TBD)</td>
+<td><code>adaptive_reflow.eval.protocol</code> + <code>adaptive_reflow.eval.calibration</code></td>
+<td style="text-align: right;">next minor +1 (TBD)</td>
+</tr>
+<tr>
+<td><code>adaptive_reflow.legacy.orchestration</code></td>
+<td style="text-align: right;">pre-refactor</td>
+<td>S-tier governance upgrade (Unreleased)</td>
+<td style="text-align: right;">next minor (TBD)</td>
+<td><code>adaptive_reflow.frame.orchestrator.AdaptiveReflowPolicyOrchestrator</code></td>
+<td style="text-align: right;">next minor +1 (TBD)</td>
+</tr>
+<tr>
+<td><code>adaptive_reflow.legacy.plan</code> (ex <code>reinference_plan.py</code>)</td>
+<td style="text-align: right;">pre-refactor</td>
+<td>S-tier governance upgrade (Unreleased)</td>
+<td style="text-align: right;">next minor (TBD)</td>
+<td><code>adaptive_reflow.schedule.cosine.CosineScheduleSampler</code></td>
+<td style="text-align: right;">next minor +1 (TBD)</td>
+</tr>
+<tr>
+<td><code>adaptive_reflow.legacy.restart_mixer</code> (ex <code>restart_memory.py</code>)</td>
+<td style="text-align: right;">pre-refactor</td>
+<td>S-tier governance upgrade (Unreleased)</td>
+<td style="text-align: right;">next minor (TBD)</td>
+<td><code>adaptive_reflow.molecular.mixer.RMSPreservingCoordinateMixer</code></td>
+<td style="text-align: right;">next minor +1 (TBD)</td>
+</tr>
+<tr>
+<td><code>adaptive_reflow.legacy.services</code></td>
+<td style="text-align: right;">pre-refactor</td>
+<td>S-tier governance upgrade (Unreleased)</td>
+<td style="text-align: right;">next minor (TBD)</td>
+<td><code>adaptive_reflow.writer.handoff.CoreRuntimeHandoff</code></td>
+<td style="text-align: right;">next minor +1 (TBD)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>No symbols removed yet.</strong> The table documents the policy; the
+removal versions are marked <code>TBD</code> because the S-tier upgrade is the
+first release that announces the deprecation. A concrete sunset tag
+will be added when each replacement lands its first non-preview
+release.</p>
+</blockquote>
+<h2 id="naming-convention">Naming convention<a class="headerlink" href="#naming-convention" title="Permanent link">&para;</a></h2>
+<p>A row in the table has five date-shaped cells:</p>
+<ul>
+<li><strong>Introduced version</strong> — the first release that shipped the feature.
+  Pre-refactor modules were carried over from the in-tree monolithic
+  Python file layout; they have no formal version.</li>
+<li><strong>Deprecated in</strong> — the first release that emits the
+  <code>DeprecationWarning</code>. Today: "S-tier governance upgrade (Unreleased)".</li>
+<li><strong>Sunset version</strong> — the first release in which the feature still
+  works but is officially end-of-life. Code that still imports the
+  feature in this version is <em>expected</em> to break in the next release.</li>
+<li><strong>Replacement</strong> — the public-API symbol or subpackage that supersedes
+  the deprecated feature. The replacement must already exist and be
+  covered by tests before the deprecation is announced.</li>
+<li><strong>Removal version</strong> — the first release in which the symbol no
+  longer exists. Importing it raises a Python import error at
+  import time.</li>
+</ul>
+<p>A "no symbols removed yet" project uses the table as a forward-looking
+ledger, not a backward-looking one. Rows are added when a feature is
+first marked deprecated; rows are <em>not</em> removed when the removal
+version is reached. The removal is recorded as a CHANGELOG entry instead.</p>
+<h2 id="how-the-legacy-quarantine-works">How the <code>legacy/</code> quarantine works<a class="headerlink" href="#how-the-legacy-quarantine-works" title="Permanent link">&para;</a></h2>
+<p><code>adaptive_reflow.legacy/</code> is the destination for every pre-refactor
+module that still has consumer code we have not yet migrated. The
+quarantine policy is:</p>
+<ol>
+<li><strong>Empty <code>__all__</code>.</strong> Nothing in <code>legacy/</code> is re-exported from the
+   package <code>__init__.py</code>. To reach a legacy symbol, callers must use
+   the explicit form <code>from adaptive_reflow.legacy import plan</code>.</li>
+<li><strong><code>DeprecationWarning</code> on import.</strong> The <code>legacy/__init__.py</code>
+   module emits <code>DeprecationWarning</code> so any code path that accidentally
+   reaches in is warned at import time.</li>
+<li><strong>No new code may depend on <code>legacy/</code>.</strong> The dependency-direction
+   rules in <code>ARCHITECTURE.md</code> §3 are enforced by code review and by
+   the doc scanner (<code>tools/check_docs_against_code.py</code>).</li>
+<li><strong>Each legacy module has a replacement.</strong> The table above names
+   the replacement for every legacy module; the replacement is
+   already shipped and tested before the deprecation is announced.</li>
+<li><strong>Removal is staged.</strong> A legacy module is removed in the release
+   <em>after</em> its consumer code has been migrated off it. The migration
+   itself is a separate PR so the diff stays auditable.</li>
+</ol>
+<h2 id="why-a-quarantine-not-a-deletion">Why a quarantine, not a deletion<a class="headerlink" href="#why-a-quarantine-not-a-deletion" title="Permanent link">&para;</a></h2>
+<p>The pre-refactor code is functionally a duplicate of the new public
+surface — the eight modules in <code>legacy/</code> each have a one-to-one
+replacement under <code>adaptive_reflow/frame/</code>, <code>adaptive_reflow/policy/</code>,
+<code>adaptive_reflow/schedule/</code>, <code>adaptive_reflow/universal/</code>,
+<code>adaptive_reflow/writer/</code>, or <code>adaptive_reflow/eval/</code>. The reason for
+quarantining rather than deleting is that the legacy modules still
+have <strong>out-of-tree consumers</strong> — the upstream <code>pocket_modules</code>
+integration that owns the runtime executable path. Deleting the legacy
+modules today would orphan those consumers before they migrate.</p>
+<p>The quarantine therefore buys the migration window without:</p>
+<ul>
+<li>Forcing a hard fork at refactor time.</li>
+<li>Letting new in-tree code accidentally depend on the legacy surface.</li>
+<li>Letting the doc scanner catalog stale claims.</li>
+</ul>
+<h2 id="update-cadence">Update cadence<a class="headerlink" href="#update-cadence" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>At every release tag</strong>, this file is reviewed and any row whose
+  sunset version has passed is annotated as <code>ready_for_removal</code>. The
+  actual removal happens in a separate PR (see point 5 above).</li>
+<li><strong>At every ADR that deprecates a new feature</strong>, a row is added to
+  the table and the relevant section of <code>CHANGELOG.md</code> is updated.</li>
+<li><strong>At every legacy module's replacement landing</strong>, the row's
+  <code>Sunset version</code> and <code>Removal version</code> cells are filled in with
+  concrete tag names.</li>
+</ul>
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><a href="../ARCHITECTURE.md">ARCHITECTURE.md</a> §3</strong> — dependency-direction
+  rules that forbid new code from importing <code>legacy/</code>.</li>
+<li><strong><a href="../adr/0001-record-architecture-decisions/">docs/adr/0001</a></strong> — the
+  meta-ADR that defines how deprecation decisions are recorded.</li>
+<li><strong><a href="../CHANGELOG.md">CHANGELOG.md</a></strong> — every deprecation appears as a
+  <code>Deprecated:</code> entry on the release that introduced it.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

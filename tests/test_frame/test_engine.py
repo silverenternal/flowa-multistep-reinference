@@ -41,7 +41,6 @@ from adaptive_reflow.contracts import (
 )
 from adaptive_reflow.frame import (
     DEFAULT_OPERATION_STEPS,
-    DOMAIN_BY_CHANNEL,
     ENGINE_VERSION,
     ERR_ADAPTER_NONE,
     ERR_BUNDLE_NONE,
@@ -886,23 +885,55 @@ def test_engine_emits_ledger_row_and_next_phase_state() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Tests: domain resolution table
+# Tests: domain resolution is now adapter-declared
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "channel, expected",
-    [
-        ("coordinate", "continuous"),
-        ("charge", "continuous"),
-        ("raw_pair", "discrete"),
-        ("projected_pair", "discrete"),
-        ("coordinate.continuous", "continuous"),
-        ("raw_pair.discrete", "discrete"),
-    ],
-)
-def test_domain_by_channel_lookup(channel: str, expected: str) -> None:
-    assert DOMAIN_BY_CHANNEL[channel] == expected
+def test_adapter_capabilities_carries_per_channel_domains() -> None:
+    """The universal engine resolves channel domains via each adapter's
+    own ``AdapterCapabilities.channel_domains`` declaration — the legacy
+    ``frame.adapter.DOMAIN_BY_CHANNEL`` molecule-only fallback table is
+    gone. ``ReferenceFlowAAdapter`` declares its own four-channel
+    mapping; this is the canonical example the engine validates
+    against."""
+    caps = ReferenceFlowAAdapter().capabilities()
+    assert caps.channel_domains == {
+        "coordinate": "continuous",
+        "charge": "continuous",
+        "raw_pair": "discrete",
+        "projected_pair": "discrete",
+    }
+
+
+def test_synthetic_continuous_adapter_declares_channel_domains() -> None:
+    """Continuous-only synthetic adapter declares its channels as
+    ``continuous`` so the engine's domain-mismatch gate can validate."""
+    caps = SyntheticContinuousAdapter().capabilities()
+    assert caps.channel_domains == {
+        "coordinate": "continuous",
+        "charge": "continuous",
+        "coordinate.continuous": "continuous",
+        "charge.continuous": "continuous",
+    }
+
+
+def test_synthetic_discrete_adapter_declares_channel_domains() -> None:
+    """Discrete-only synthetic adapter declares its channels as
+    ``discrete``."""
+    caps = SyntheticDiscreteAdapter().capabilities()
+    assert caps.channel_domains == {
+        "raw_pair": "discrete",
+        "projected_pair": "discrete",
+        "raw_pair.discrete": "discrete",
+        "projected_pair.discrete": "discrete",
+    }
+
+
+def test_synthetic_mixed_adapter_declares_channel_domains() -> None:
+    """Mixed-channel synthetic adapter declares continuous + discrete."""
+    caps = SyntheticMixedChannelAdapter().capabilities()
+    assert caps.channel_domains["coordinate"] == "continuous"
+    assert caps.channel_domains["raw_pair"] == "discrete"
 
 
 def test_reference_frames_and_normalization_are_frozen() -> None:

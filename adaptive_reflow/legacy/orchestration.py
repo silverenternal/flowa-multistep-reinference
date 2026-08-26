@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, cast
 
 # DTB-R3: ``merge_controls_fn`` is retained for backward compatibility
 # but is being replaced by the orchestrator's
@@ -181,13 +181,16 @@ def _route_merge(
         }
 
     # Legacy / backward-compatible path.
-    return merge_controls_fn(
-        scheduled_memory_fraction=scheduled_memory_fraction,
-        scheduled_charge_memory_fraction=scheduled_charge_memory_fraction,
-        scheduled_pair_memory_fraction=scheduled_pair_memory_fraction,
-        scheduled_freeze_charge_state=scheduled_freeze_charge_state,
-        scheduled_freeze_pair_chemical_state=scheduled_freeze_pair_chemical_state,
-        dynamic_control_delta=dynamic_control_delta,
+    return cast(
+        dict[str, Any],
+        merge_controls_fn(
+            scheduled_memory_fraction=scheduled_memory_fraction,
+            scheduled_charge_memory_fraction=scheduled_charge_memory_fraction,
+            scheduled_pair_memory_fraction=scheduled_pair_memory_fraction,
+            scheduled_freeze_charge_state=scheduled_freeze_charge_state,
+            scheduled_freeze_pair_chemical_state=scheduled_freeze_pair_chemical_state,
+            dynamic_control_delta=dynamic_control_delta,
+        ),
     )
 
 

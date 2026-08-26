@@ -3,6 +3,10 @@
 Stateless decision logic that is not itself a frame piece (archive selection,
 stratification, pruning, noise accounting). No torch; no I/O.
 """
+from __future__ import annotations
+
+from typing import Any
+
 from .archive import (
     ArchiveEntry,
     CandidateArchiveError,
@@ -50,7 +54,7 @@ _FRAME_REEXPORT = frozenset({"AUDIT_STABILITY_COLLAPSE", "PERTURBATION_STABILITY
 _CONTRACTS_REEXPORT = frozenset({"AUDIT_SOURCE_REVOKED"})
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """Lazy-load DTB-R0 §3 re-exports.
 
     * ``AUDIT_STABILITY_COLLAPSE`` / ``PERTURBATION_STABILITY_FLOOR`` from

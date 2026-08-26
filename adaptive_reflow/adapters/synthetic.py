@@ -26,7 +26,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from adaptive_reflow.contracts import FinalRestartPolicy
 from adaptive_reflow.frame.adapter import (
@@ -37,6 +37,8 @@ from adaptive_reflow.frame.adapter import (
     StateBundle,
     TensorRef,
 )
+from adaptive_reflow.universal.adapter import ChannelDomain
+from adaptive_reflow.universal.state import ChannelName
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -64,6 +66,30 @@ ALL_SYNTHETIC_CHANNELS: tuple[str, ...] = (
 )
 
 
+# Per-channel domain-kind declaration for synthetic adapters. The
+# universal engine routes per-channel validation through each adapter's
+# own ``AdapterCapabilities.channel_domains`` declaration; this
+# module-level mapping is the per-adapter replacement for the legacy
+# ``frame.adapter.DOMAIN_BY_CHANNEL`` table.
+_SYNTHETIC_CHANNEL_DOMAINS: dict[ChannelName, ChannelDomain] = cast(
+    dict[ChannelName, ChannelDomain],
+    {
+        "coordinate": "continuous",
+        "charge": "continuous",
+        "coordinate.continuous": "continuous",
+        "charge.continuous": "continuous",
+        "raw_pair": "discrete",
+        "projected_pair": "discrete",
+        "raw_pair.discrete": "discrete",
+        "projected_pair.discrete": "discrete",
+        "synthetic.coordinate": "continuous",
+        "synthetic.charge": "continuous",
+        "synthetic.raw_pair": "discrete",
+        "synthetic.projected_pair": "discrete",
+    },
+)
+
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -81,10 +107,12 @@ def _tensor_ref(name: str, salt: str) -> TensorRef:
     return TensorRef(f"syn://{name}:{salt}")
 
 
-def _canonicalise(channels: Mapping[str, TensorRef], supported: tuple[str, ...]) -> dict[str, TensorRef]:
-    out: dict[str, TensorRef] = {}
+def _canonicalise(
+    channels: Mapping[str, TensorRef], supported: tuple[str, ...]
+) -> dict[ChannelName, TensorRef]:
+    out: dict[ChannelName, TensorRef] = {}
     for channel in supported:
-        out[channel] = channels.get(channel, _tensor_ref(channel, "absent"))
+        out[ChannelName(channel)] = channels.get(channel, _tensor_ref(channel, "absent"))
     return out
 
 
@@ -94,6 +122,14 @@ def _capabilities(
     continuous: bool,
     discrete: bool,
 ) -> AdapterCapabilities:
+    channel_domains: dict[ChannelName, ChannelDomain] = cast(
+        "dict[ChannelName, ChannelDomain]",
+        {
+            cast(ChannelName, ch): _SYNTHETIC_CHANNEL_DOMAINS[cast(ChannelName, ch)]
+            for ch in supported
+            if ch in _SYNTHETIC_CHANNEL_DOMAINS
+        },
+    )
     return AdapterCapabilities(
         has_ode_integration_surface=True,
         has_prior_export=True,
@@ -106,6 +142,7 @@ def _capabilities(
         has_deterministic_seed=True,
         has_materialization_route=True,
         supported_channels=supported,
+        channel_domains=channel_domains,
     )
 
 

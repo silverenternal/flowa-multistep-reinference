@@ -25,7 +25,7 @@ import math
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import NewType
+from typing import Any, NewType, cast
 
 from adaptive_reflow.contracts import (
     ArtifactHash,
@@ -225,8 +225,8 @@ class FrozenEnvelopeManifestBuilder:
 
         return FrozenEnvelopeManifest(
             manifest_id=manifest_id,
-            run_id=RunIdPlaceholder,
-            sample_id=SampleIdPlaceholder,
+            run_id=cast(Any, RunIdPlaceholder),
+            sample_id=cast(Any, SampleIdPlaceholder),
             target_pocket_hash=target_pocket_hash,
             config_hash=config_hash,
             created_at_round=0,

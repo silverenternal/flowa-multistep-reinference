@@ -333,7 +333,7 @@ def adversarial_stagnation_test(
     schedule_curve: Any,
     *,
     tolerance: float = 1.0e-9,
-) -> dict:
+) -> dict[str, Any]:
     """Run the adversarial stagnation test on a positive summable schedule.
 
     The test treats a *summable* positive schedule curve ``(a_0, a_1, ...)``

@@ -32,7 +32,7 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from adaptive_reflow.contracts import FinalRestartPolicy
 from adaptive_reflow.frame.adapter import (
@@ -42,6 +42,8 @@ from adaptive_reflow.frame.adapter import (
     StateBundle,
     TensorRef,
 )
+from adaptive_reflow.universal.adapter import ChannelDomain
+from adaptive_reflow.universal.state import ChannelName
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -55,6 +57,22 @@ REFERENCE_FLOWA_CHANNELS: tuple[str, ...] = (
     "charge",
     "raw_pair",
     "projected_pair",
+)
+
+
+# Per-channel domain-kind declaration for the Flow-A reference adapter.
+# This is the per-adapter replacement for the legacy
+# ``frame.adapter.DOMAIN_BY_CHANNEL`` molecule-only table; the universal
+# engine routes per-channel validation through each adapter's own
+# ``AdapterCapabilities.channel_domains`` declaration.
+REFERENCE_FLOWA_CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = cast(
+    Mapping[ChannelName, ChannelDomain],
+    {
+        "coordinate": "continuous",
+        "charge": "continuous",
+        "raw_pair": "discrete",
+        "projected_pair": "discrete",
+    },
 )
 
 # Deterministic placeholder digest prefix used by every endpoint
@@ -85,7 +103,9 @@ def _placeholder_tensor_ref(name: str, salt: str) -> TensorRef:
     return TensorRef(f"ref://{name}:{salt}")
 
 
-def _canonicalise_channels(channels: Mapping[str, TensorRef]) -> dict[str, TensorRef]:
+def _canonicalise_channels(
+    channels: Mapping[str, TensorRef],
+) -> dict[ChannelName, TensorRef]:
     """Return a stable mapping of channels -> placeholder tensor refs.
 
     The mapping is keyed by every entry in
@@ -93,9 +113,11 @@ def _canonicalise_channels(channels: Mapping[str, TensorRef]) -> dict[str, Tenso
     four-channel set). Missing channels are filled with a deterministic
     placeholder so the bundle is structurally complete.
     """
-    out: dict[str, TensorRef] = {}
+    out: dict[ChannelName, TensorRef] = {}
     for channel in REFERENCE_FLOWA_CHANNELS:
-        out[channel] = channels.get(channel, _placeholder_tensor_ref(channel, "absent"))
+        out[ChannelName(channel)] = channels.get(
+            channel, _placeholder_tensor_ref(channel, "absent")
+        )
     return out
 
 
@@ -128,6 +150,7 @@ class ReferenceFlowAAdapter:
             has_deterministic_seed=True,
             has_materialization_route=True,
             supported_channels=REFERENCE_FLOWA_CHANNELS,
+            channel_domains=REFERENCE_FLOWA_CHANNEL_DOMAINS,
         )
 
     def build_initial_state(self, *, batch_id: str, sample_id: str) -> StateBundle:
@@ -297,6 +320,7 @@ class ReferenceFlowAAdapter:
 
 
 __all__ = [
+    "REFERENCE_FLOWA_CHANNEL_DOMAINS",
     "REFERENCE_FLOWA_CHANNELS",
     "ReferenceFlowAAdapter",
 ]

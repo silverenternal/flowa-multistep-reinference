@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pocket_modules.mechanisms.library_contracts import service_catalog
 
 SERVICE_MODULES = ("control_policy", "external_metric_feedback", "orchestration", "restart_memory")
@@ -12,7 +14,7 @@ SERVICE_ENTRYPOINTS = (
 )
 
 
-def available_services():
+def available_services() -> Any:
     return service_catalog(
         package=__package__ or "",
         modules=SERVICE_MODULES,

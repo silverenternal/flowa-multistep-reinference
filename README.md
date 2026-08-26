@@ -231,6 +231,12 @@ contracts, governance rules, and post-refactor package layout.
 The full doc set is the single source of truth for the package. Start
 here, then drill down based on what you need.
 
+The auto-generated API reference (rendered by mkdocs + mkdocstrings from
+every module-level docstring and typed signature under `adaptive_reflow/`)
+is published to GitHub Pages:
+
+- **<https://silverenternal.github.io/flowa-multistep-reinference/>**
+
 | Doc | Read it for… |
 | --- | --- |
 | [`QUICKSTART.md`](QUICKSTART.md) | Five-minute on-ramp: install, run the suite, walk one round against `ToyGaussianAdapter`, capture a golden, run the docs scanner. |

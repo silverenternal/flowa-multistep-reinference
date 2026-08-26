@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "captured_at": "2026-08-27",
+  "platform": "linux",
+  "overall_score": null,
+  "_note": "Initial baseline placeholder. mutmut cannot run natively on Windows (see WINDOWS_LIMITATION.md; upstream issue boxed/mutmut#397), so this file was generated from structural analysis on a Windows checkout. The 'mutants_total' field per module is the AST-derived count of mutmut-style mutation operators (arithmetic, comparison, boolean, unary, constant, return) and is included so the mutation-nightly workflow can compute per-module ratios even before the first Linux CI run. The 'killed' / 'survived' / 'score' fields per module are populated by the next successful run of .github/workflows/mutation-nightly.yml; treat null as 'unmeasured' rather than 'zero'. When the Linux workflow overwrites this file on its first run, the overall_score and module scores will be the authoritative S-tier gate measurement.",
+  "targets": {
+    "contracts": 0.75,
+    "universal": 0.75,
+    "frame": 0.60,
+    "project": 0.50
+  },
+  "by_module": {
+    "adaptive_reflow/contracts/validators.py": {
+      "killed": null,
+      "survived": null,
+      "score": null,
+      "mutants_total": 74,
+      "rationale": "Covered by tests/property/test_validators_invariants.py (5 Hypothesis templates + 11 unit tests across validate_unit_float / validate_unit_factor / validate_positive_int / validate_nonneg_int). Expected mutation score: high."
+    },
+    "adaptive_reflow/frame/merge.py": {
+      "killed": null,
+      "survived": null,
+      "score": null,
+      "mutants_total": 168,
+      "rationale": "Covered by tests/property/test_bounded_merge_invariants.py (8 Hypothesis templates) + tests/test_frame/test_merge.py. Fail-closed branches on cap/floor ordering are heavily exercised; the empty-interval collapse path is also property-tested. Expected mutation score: high."
+    },
+    "adaptive_reflow/frame/channel_rule.py": {
+      "killed": null,
+      "survived": null,
+      "score": null,
+      "mutants_total": 205,
+      "rationale": "Covered by tests/property/test_channel_rule_properties.py (stability-collapse template) + tests/test_frame/test_engine.py + tests/test_frame/test_merge_golden_agreement.py. DTB-R0 §3 case 2 stability-collapse is property-tested; generic blocker collection and bounded_target_fraction are unit-tested. Expected mutation score: moderate-to-high."
+    },
+    "adaptive_reflow/eval/claim_gate.py": {
+      "killed": null,
+      "survived": null,
+      "score": null,
+      "mutants_total": 138,
+      "rationale": "Covered by tests/property/test_claim_gate_invariants.py (Hypothesis templates for st_claim_config + st_claim_evidence) + tests/test_eval/test_claim_gate.py + tests/test_eval/test_protocol.py. Structural 'defer' path is exercised on every condition failure. Expected mutation score: moderate-to-high."
+    }
+  },
+  "thresholds_enforced": {
+    "project_wide_min_score": 0.50,
+    "contracts_min_score": 0.75,
+    "universal_min_score": 0.75,
+    "frame_min_score": 0.60
+  },
+  "next_capture": {
+    "workflow": ".github/workflows/mutation-nightly.yml",
+    "runner": "ubuntu-latest",
+    "expected_path": "tools/mutate/mutation_baseline.json (overwritten by the workflow on the first successful run)"
+  }
+}

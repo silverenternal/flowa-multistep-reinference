@@ -17,14 +17,15 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from adaptive_reflow.adapters import (
+    FLOWMOL3_CHANNEL_DOMAINS,
     FLOWMOL3_CHANNELS,
     default_flowmol3_adapter,
 )
 from adaptive_reflow.frame import (
-    DOMAIN_BY_CHANNEL,
     CapabilityMissingError,
     validate_state_bundle,
 )
+from adaptive_reflow.molecular.domain import MOLECULE_DOMAIN_BY_CHANNEL
 from adaptive_reflow.writer import (
     DEFAULT_AUDIT_TEMPLATE,
     FLOWMOL3_PINNED_COMMIT,
@@ -288,7 +289,7 @@ def test_validate_audit_completeness_fails_for_non_https_url():
 
 def test_validate_audit_completeness_fails_for_unknown_channel():
     # __post_init__ itself doesn't check the channel against
-    # DOMAIN_BY_CHANNEL; only validate_audit_completeness does. So we
+    # MOLECULE_DOMAIN_BY_CHANNEL; only validate_audit_completeness does. So we
     # build the entry then validate.
     entry = CandidateEntry(
         repo_url="https://example.com",
@@ -364,9 +365,12 @@ def test_flowmol3_adapter_capabilities_match_engine_protocol():
     assert caps.has_condition_injection is False  # unconditional
     assert caps.has_trajectory_digest is False  # placeholder
     assert caps.supported_channels == FLOWMOL3_CHANNELS
-    # All channels must be routable through the engine's domain table.
+    # All channels must be declared in the adapter's own channel_domains
+    # (the per-adapter replacement for the legacy
+    # frame.adapter.DOMAIN_BY_CHANNEL molecule-only table).
+    assert caps.channel_domains == FLOWMOL3_CHANNEL_DOMAINS
     for ch in caps.supported_channels:
-        assert ch in DOMAIN_BY_CHANNEL
+        assert ch in caps.channel_domains
 
 
 def test_flowmol3_build_initial_state_validates():

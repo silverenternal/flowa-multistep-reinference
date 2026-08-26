@@ -244,7 +244,9 @@ flowa-multistep-reinference/
 │   │   ├── adapter.py                   <- DTB-G1: FlowMatchingODEAdapter Protocol, StateBundle,
 │   │   │                                  ODEConditionDelta, ODEIntegratorTrace,
 │   │   │                                  AdapterCapabilities, TensorRef, validators,
-│   │   │                                  DOMAIN_BY_CHANNEL, NORMALIZATION_KINDS, REFERENCE_FRAMES
+│   │   │                                  NORMALIZATION_KINDS, REFERENCE_FRAMES
+│   │   │                                  (no DOMAIN_BY_CHANNEL — domain resolution is
+│   │   │                                  per-adapter via AdapterCapabilities.channel_domains)
 │   │   ├── channel_rule.py              <- DTB-R2: compute_channel_decision,
 │   │   │                                  check_monotonicity_property, blocker codes,
 │   │   │                                  CANONICAL_FACTOR_ORDER
@@ -546,9 +548,14 @@ from adaptive_reflow.frame import (
     FlowMatchingODEAdapter, StateBundle, ODEConditionDelta,
     ODEIntegratorTrace, AdapterCapabilities, TensorRef,
     RestartPolicy, CapabilityMismatchError, CapabilityMissingError,
-    DOMAIN_BY_CHANNEL, NORMALIZATION_KINDS, REFERENCE_FRAMES,
+    NORMALIZATION_KINDS, REFERENCE_FRAMES,
     validate_capabilities, validate_condition_delta,
     validate_integrator_trace, validate_state_bundle,
+    # NOTE: per-channel domain resolution is adapter-driven via
+    # ``AdapterCapabilities.channel_domains``; the legacy molecule-only
+    # per-channel domain table has been removed from ``frame/`` (see
+    # ``adaptive_reflow.molecular.domain`` for the molecule-layer
+    # fallback).
     # --- engine ---
     Engine, EngineRoundResult, RoundTrace, LedgerRow, PhaseState,
     ENGINE_VERSION, DEFAULT_OPERATION_STEPS, FEATURE_FLAG_KEY, ERR_*,

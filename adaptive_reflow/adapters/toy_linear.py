@@ -21,6 +21,7 @@ from adaptive_reflow.universal import (
     AdapterCapabilities,
     ArtifactHash,
     CapabilityMissingError,
+    ChannelDomain,
     FlowMatchingODEAdapter,
     NoOpMixer,
     RestartMixer,
@@ -40,7 +41,7 @@ from adaptive_reflow.universal.state import (
 
 
 SUPPORTED_CHANNELS: tuple[ChannelName, ...] = (ChannelName("x"),)
-CHANNEL_DOMAINS: Mapping[ChannelName, str] = {ChannelName("x"): "continuous"}
+CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = {ChannelName("x"): "continuous"}
 NATIVE_CONFIG_HASH: ArtifactHash = ArtifactHash("toy:cfg:v1")
 NATIVE_CONFIG_VERSION = "1.0.0"
 
@@ -192,15 +193,15 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
 
     def compose_condition(
         self,
-        state: StateBundle,
+        bundle: StateBundle,
         delta: ODEConditionDelta,
-    ) -> StateBundle:
+    ) -> ODEConditionDelta:
         if not self.capabilities().has_condition_injection:
             raise CapabilityMissingError(
                 "has_condition_injection",
                 context="ToyLinearAdapter is unconditional",
             )
-        return state
+        return delta
 
     # ------------------------------------------------------------------
     # 7. solve_ode (required by has_ode_integration_surface=True)
@@ -209,10 +210,11 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
     def solve_ode(
         self,
         state: StateBundle,
-        seed: int,
+        condition: ODEConditionDelta,
         *,
+        seed: int,
         steps: int = 1,
-    ) -> tuple[StateBundle, ODEIntegratorTrace]:
+    ) -> ODEIntegratorTrace:
         if steps <= 0:
             raise ValueError("steps_must_be_positive")
         ok, errs = validate_state_bundle(state)
@@ -220,29 +222,14 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "validate_state_bundle", context=",".join(errs)
             )
-        # Deterministic: same (state.native_state_digest, seed, steps) → same next state.
+        # Deterministic: same (state.native_state_digest, seed, steps) → same trace.
         next_digest = _make_ref(
-            "post_step", source=state.native_state_digest, seed=seed, steps=steps
+            "post_step",
+            source=state.native_state_digest,
+            seed=seed,
+            steps=steps,
         )
-        next_state = StateBundle(
-            channels={
-                ch: _make_ref(
-                    "post_step", source=ref, seed=seed, steps=steps
-                )
-                for ch, ref in state.channels.items()
-            },
-            masks=dict(state.masks),
-            batch_id=state.batch_id,
-            sample_id=state.sample_id,
-            reference_frame=state.reference_frame,
-            normalization=state.normalization,
-            source_round=state.source_round,
-            detach_proof=True,
-            native_state_digest=next_digest,
-            provenance=state.provenance + ("toy_linear_step",),
-            capability_token=state.capability_token,
-        )
-        trace = ODEIntegratorTrace(
+        return ODEIntegratorTrace(
             steps=int(steps),
             accept_rate=1.0,
             native_state_digest=next_digest,
@@ -250,13 +237,16 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
                 "integrator_config", seed=seed, steps=steps
             ),
         )
-        return next_state, trace
 
     # ------------------------------------------------------------------
     # 8. observe_endpoint (always required)
     # ------------------------------------------------------------------
 
-    def observe_endpoint(self, state: StateBundle) -> StateBundle:
+    def observe_endpoint(
+        self,
+        trace: ODEIntegratorTrace,
+        state: StateBundle,
+    ) -> StateBundle:
         ok, errs = validate_state_bundle(state)
         if not ok:
             raise CapabilityMissingError(

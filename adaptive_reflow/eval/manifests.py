@@ -38,7 +38,7 @@ from __future__ import annotations
 import dataclasses
 import json
 from collections.abc import Mapping
-from typing import Any, NewType
+from typing import Any, NewType, cast
 
 from adaptive_reflow.contracts import (
     ArtifactHash,
@@ -196,7 +196,7 @@ def _payload_to_manifest(payload: Mapping[str, Any]) -> CalibrationManifest:
             sample_count=int(entry.get("sample_count", 0)),
             lower_bound_value=FactorValue(float(entry.get("lower_bound_value", 0.0))),
             lower_bound_confidence=float(entry.get("lower_bound_confidence", 0.95)),
-            computed_at=str(entry.get("computed_at", "")),
+            computed_at=cast(Any, str(entry.get("computed_at", ""))),
             source_stats_hash=ArtifactHash(str(entry.get("source_stats_hash", ""))),
         )
         grouped.setdefault(metric_name, []).append(bucket)
@@ -211,7 +211,7 @@ def _payload_to_manifest(payload: Mapping[str, Any]) -> CalibrationManifest:
 
     manifest = CalibrationManifest(
         manifest_id=ManifestId(str(payload.get("manifest_id", ""))),
-        calibration_dataset=str(payload.get("calibration_dataset", "")),
+        calibration_dataset=cast(Any, str(payload.get("calibration_dataset", ""))),
         time_split=time_split,
         per_metric_buckets=per_metric_buckets,
         min_sample_count=int(payload.get("min_sample_count", 0)),

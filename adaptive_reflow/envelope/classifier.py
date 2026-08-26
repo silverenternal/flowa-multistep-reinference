@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
+from typing import Any
 
 from adaptive_reflow.contracts import (
     ComplementBlockerCode,
@@ -64,7 +65,7 @@ def _coerce_bool(value: object) -> bool | None:
     return None
 
 
-def _read_observables(bundle) -> dict[str, object]:
+def _read_observables(bundle: Any) -> dict[str, object]:
     """Collect observable fields from a bundle. Missing fields stay missing."""
     obs: dict[str, object] = {}
 

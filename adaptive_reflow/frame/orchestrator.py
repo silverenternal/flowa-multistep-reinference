@@ -25,6 +25,10 @@ Cross-contract invariants enforced here (delegated where appropriate):
   emitted ledger row. (The literal field ``tail_selection_certified``
   is not on :class:`DynamicRestartTransferLedger` and is **never**
   emitted in the orchestrator's outputs.)
+* Revoked bundles (DTB-R0 §3 case 5) are fail-closed at the channel
+  rule via :func:`channel_rule.evaluate_channel_evidence_with_revocation`,
+  not at registration: :meth:`evaluate_bundle` emits a ledger with
+  ``gate=False`` / ``AUDIT_SOURCE_REVOKED`` instead of raising.
 * ``operation_order_version`` on a registered :class:`PhaseState` must
   equal ``OperationCompositionContract.version``; mismatch fails closed
   (cross-contract invariant in CONTRACTS.md §Cross-Contract Invariants).
@@ -60,7 +64,7 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Mapping
 from contextlib import suppress
-from typing import Any
+from typing import Any, cast
 
 from adaptive_reflow.contracts import (
     ArtifactHash,
@@ -77,6 +81,7 @@ from adaptive_reflow.contracts import (
     LedgerRowId,
     OperationCompositionContract,
     PhaseState,
+    ProvenanceChain,
     RestartPolicyAuthorityContract,
     RoundResultBundle,
     hash_artifact,
@@ -86,7 +91,9 @@ from adaptive_reflow.contracts import (
     validate_round_result_bundle,
 )
 from adaptive_reflow.envelope.manifest import classify_endpoint
-from adaptive_reflow.frame.channel_rule import compute_channel_decision
+from adaptive_reflow.frame.channel_rule import (
+    evaluate_channel_evidence_with_revocation,
+)
 from adaptive_reflow.frame.merge import bounded_merge
 from adaptive_reflow.frame.operation import build_default_composition_contract
 from adaptive_reflow.schedule.cosine import CosineScheduleSampler
@@ -208,7 +215,7 @@ def _coerce_factor_value(x: Any) -> float:
     return float(x)
 
 
-def _safe_factor_value(x: Any, *, default: float) -> float:
+def _safe_factor_value(x: Any, *, default: float) -> FactorValue:
     """Return ``_coerce_factor_value(x)`` or ``default`` on bad input.
 
     Used only when extracting optional/defaulted factors from caller
@@ -216,9 +223,9 @@ def _safe_factor_value(x: Any, *, default: float) -> float:
     Real validator failures are caught by the registered evidence.
     """
     try:
-        return _coerce_factor_value(x)
+        return FactorValue(_coerce_factor_value(x))
     except PolicyOrchestratorValidationError:
-        return float(default)
+        return FactorValue(float(default))
 
 
 def _as_factor(x: Any) -> FactorValue:
@@ -250,8 +257,10 @@ class AdaptiveReflowPolicyOrchestrator:
       and per-channel :class:`ChannelTransferEvidence` rows;
     * classifies each bundle against the frozen envelope and checks tail
       admissibility from that classification;
-    * invokes :func:`channel_rule.compute_channel_decision` per channel
-      with a fully-built :class:`ChannelRuleInputs`;
+    * invokes :func:`channel_rule.evaluate_channel_evidence_with_revocation`
+      per channel with a fully-built :class:`ChannelRuleInputs` (which
+      delegates to :func:`channel_rule.compute_channel_decision` for
+      non-revoked bundles);
     * emits an immutable :class:`DynamicRestartTransferLedger` row with
       ``empirical_only=True`` and ``finite_prefix_only=True`` (the
       literal field ``tail_selection_certified`` is not present on this
@@ -498,9 +507,12 @@ class AdaptiveReflowPolicyOrchestrator:
 
         Steps:
 
-        1. Validate ``bundle`` and every evidence row. On any
-           validation failure a :class:`PolicyOrchestratorValidationError`
-           is raised.
+        1. Validate ``bundle`` (skipping when ``bundle.revoked=True`` per
+           DTB-R0 §3 case 5) and every evidence row. On any
+           non-revocation validation failure a
+           :class:`PolicyOrchestratorValidationError` is raised; a
+           revoked bundle is fail-closed at the channel-rule wrapper
+           instead.
         2. Classify ``bundle`` against the frozen envelope via
            :func:`envelope_manifest.classify_endpoint`.
         3. Derive ``tail_admissibility`` (True iff the bundle matched a
@@ -512,9 +524,11 @@ class AdaptiveReflowPolicyOrchestrator:
            ``(0, 0)``.
         5. For each canonical channel:
               * look up the evidence (else use an empty stub that fails
-                closed inside :func:`compute_channel_decision`);
+                closed inside :func:`evaluate_channel_evidence_with_revocation`);
               * build a :class:`ChannelRuleInputs`;
-              * call :func:`channel_rule.compute_channel_decision`;
+              * call :func:`channel_rule.evaluate_channel_evidence_with_revocation`
+                (which closes every gate with ``AUDIT_SOURCE_REVOKED``
+                when ``bundle.revoked=True``);
               * capture the decision.
         6. Auto-register the canonical
            ``inference.noise_bias`` diagnostic writer with
@@ -546,10 +560,28 @@ class AdaptiveReflowPolicyOrchestrator:
         Raises
         ------
         PolicyOrchestratorValidationError
-            On any validation failure.
+            On any validation failure for non-revoked bundles. A
+            revoked bundle (DTB-R0 §3 case 5) is *not* a validation
+            failure of the caller's input — the caller knows the
+            bundle is revoked — so the orchestrator translates it
+            into a ledger with ``gate=False`` decisions carrying
+            ``AUDIT_SOURCE_REVOKED`` instead of raising.
         """
         # --- 1. validate the bundle itself first ---
-        self.register_bundle(bundle)
+        # DTB-R0 §3 case 5 — source-revocation short-circuit. A
+        # bundle whose ``revoked=True`` is fail-closed at the
+        # channel-rule wrapper rather than at registration. The
+        # validator (validate_round_result_bundle) correctly returns
+        # (False, ("source_revoked",)); we deliberately skip
+        # register_bundle so the rejection is surfaced as a ledger
+        # with gate=False decisions carrying AUDIT_SOURCE_REVOKED, not
+        # as a raised exception. The per-channel decision loop below
+        # routes every channel through evaluate_channel_evidence_with_revocation,
+        # which is the canonical entry point that handles revocation.
+        if bool(getattr(bundle, "revoked", False)):
+            pass
+        else:
+            self.register_bundle(bundle)
 
         # --- 2. classify the bundle against the envelope ---
         classification = classify_endpoint(bundle, self._envelope_manifest)
@@ -616,7 +648,7 @@ class AdaptiveReflowPolicyOrchestrator:
                     calibration_lower_bound=FactorValue(0.0),
                     raw_score=0.0,
                     bounded_score=0.0,
-                    provenance=(),
+                    provenance=ProvenanceChain(()),
                     validation_errors=("synthetic_no_evidence_registered",),
                 )
             else:
@@ -700,7 +732,7 @@ class AdaptiveReflowPolicyOrchestrator:
                 selected_bundle_id=bundle.bundle_id,
             )
 
-            outputs = compute_channel_decision(rule_inputs)
+            outputs = evaluate_channel_evidence_with_revocation(rule_inputs)
             decision = outputs.decision
 
             per_channel_evidence.append(evidence)
@@ -808,7 +840,7 @@ class AdaptiveReflowPolicyOrchestrator:
             finite_prefix_only=True,
             empirical_only=True,
             feedback_mode=bundle.feedback_mode,
-            writer_id=WRITER_ID,
+            writer_id=cast(Any, WRITER_ID),
             provenance=bundle.provenance,
             validation_errors=(),
             created_at_round=int(target_round),
@@ -893,7 +925,7 @@ class AdaptiveReflowPolicyOrchestrator:
 
         # Build the policy.
         policy = build_final_restart_policy(
-            policy_id=LedgerRowId(str(ledger.ledger_row_id)),
+            policy_id=cast(Any, LedgerRowId(str(ledger.ledger_row_id))),
             run_id=ledger.run_id,
             target_round=int(ledger.target_round),
             outer_cycle_id=int(ledger.outer_cycle_id),
@@ -1009,26 +1041,30 @@ class AdaptiveReflowPolicyOrchestrator:
             try:
                 prev_value = _safe_factor_value(prev, default=0.0)
             except PolicyOrchestratorValidationError:
-                prev_value = 0.0
-            prev_value = float(max(0.0, min(1.0, prev_value)))
+                prev_value = FactorValue(0.0)
+            prev_value = FactorValue(
+                float(max(0.0, min(1.0, float(prev_value))))
+            )
         else:
             cached_prev = self._last_bounded_fraction.get(channel)
             if cached_prev is not None:
-                prev_value = float(cached_prev)
+                prev_value = FactorValue(float(cached_prev))
             elif schedule_sample is not None:
-                prev_value = float(
-                    min(
-                        1.0,
-                        max(
-                            0.0,
-                            _safe_factor_value(
-                                schedule_sample.n_cap, default=0.0
+                prev_value = FactorValue(
+                    float(
+                        min(
+                            1.0,
+                            max(
+                                0.0,
+                                _safe_factor_value(
+                                    schedule_sample.n_cap, default=0.0
+                                ),
                             ),
-                        ),
+                        )
                     )
                 )
             else:
-                prev_value = 0.0
+                prev_value = FactorValue(0.0)
 
         merged = bounded_merge(
             prev=prev_value,
@@ -1070,7 +1106,7 @@ class AdaptiveReflowPolicyOrchestrator:
         # its property is the documented way to "clear the schedule
         # sampler cache" — the dataclass is immutable so we use the
         # private slot. This module is the sole caller.
-        self._schedule_sampler._last_sample = None  # type: ignore[attr-defined]
+        self._schedule_sampler._last_sample = None
 
 
 # ---------------------------------------------------------------------------
@@ -1108,7 +1144,7 @@ def _empty_phase_state_for_eval() -> PhaseState:
 
 def _sorted_mapping(
     mapping: Mapping[ChannelName, FactorValue]
-) -> list:
+) -> list[list[Any]]:
     """Return ``mapping`` as a sorted list of ``[str(key), value]`` pairs.
 
     Mirrors the helper used by ``hash_policy_hash`` and

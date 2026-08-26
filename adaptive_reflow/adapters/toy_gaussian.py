@@ -24,13 +24,14 @@ import hashlib
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     ArtifactHash,
     CapabilityMissingError,
+    ChannelDomain,
     FlowMatchingODEAdapter,
     NoOpMixer,
 )
@@ -49,7 +50,7 @@ from adaptive_reflow.universal.state import (
 
 
 SUPPORTED_CHANNELS: tuple[ChannelName, ...] = (ChannelName("x"),)
-CHANNEL_DOMAINS: Mapping[ChannelName, str] = {ChannelName("x"): "continuous"}
+CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = {ChannelName("x"): "continuous"}
 NATIVE_CONFIG_HASH: ArtifactHash = ArtifactHash("toy:gaussian:cfg:v1")
 NATIVE_CONFIG_VERSION = "1.0.0"
 
@@ -108,7 +109,7 @@ def _memory_fraction_from_policy(policy: RestartPolicy) -> float:
     Falls back to ``0.0`` (full restart) when the ``x`` channel is not
     present in the policy mapping.
     """
-    beta = policy.beta_by_channel.get(ChannelName("x"))
+    beta = policy.beta_by_channel.get(cast(Any, ChannelName("x")))
     if beta is None:
         return 0.0
     return 1.0 - float(beta)

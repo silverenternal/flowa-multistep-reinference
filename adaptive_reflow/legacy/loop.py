@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 if __package__ in {None, ""}:
     for parent in Path(__file__).resolve().parents:
@@ -22,14 +22,17 @@ from .mechanism_adapter import AdaptiveReflowMechanism
 
 
 def run_local_loop(payload: Mapping[str, Any] | None = None, metrics: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    return run_package_local_loop(
-        mechanism=AdaptiveReflowMechanism(),
-        payload=payload,
-        metrics=metrics,
-        kernel_cls=FlowKernel,
-        panel_cls=FlowPanel,
-        adapter_cls=MechanismAdapter,
-        loop_cls=MechanismLoop,
+    return cast(
+        dict[str, Any],
+        run_package_local_loop(
+            mechanism=AdaptiveReflowMechanism(),
+            payload=payload,
+            metrics=metrics,
+            kernel_cls=FlowKernel,
+            panel_cls=FlowPanel,
+            adapter_cls=MechanismAdapter,
+            loop_cls=MechanismLoop,
+        ),
     )
 
 

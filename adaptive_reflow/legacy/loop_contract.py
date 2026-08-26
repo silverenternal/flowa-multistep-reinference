@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pocket_modules.mechanisms.library_contracts import build_local_loop_contract
 
 
-def build_loop_contract():
+def build_loop_contract() -> Any:
     return build_local_loop_contract(
         mechanism_id="inference.adaptive_reflow",
         metric_family="binding_gnina",

@@ -742,53 +742,76 @@ def test_source_revocation_closes_subsequent_gate():
     referencing that bundle. The audit reason must carry
     ``source_revoked``.
 
-    The fail-closed surface is the validator: the orchestrator must
-    refuse to register the bundle (via the
-    ``PolicyOrchestratorValidationError`` path) because
-    ``validate_round_result_bundle`` returns ``ok=False`` with
-    ``source_revoked`` in its errors tuple. As a backup, the channel-
-    rule wrapper :func:`evaluate_channel_evidence_with_revocation`
-    must also close the gate and surface the audit code so any
-    downstream consumer that bypasses the validator still fails
-    closed.
+    This is a **deterministic** hard assertion (no soft "accept either"
+    branch). The two canonical fail-closed surfaces are pinned:
+
+    1. ``validate_round_result_bundle(revoked_bundle)`` MUST return
+       ``(False, ("source_revoked",))`` — the validator's contract.
+    2. :func:`evaluate_channel_evidence_with_revocation` called with the
+       revoked bundle MUST return a :class:`ChannelTransferDecision`
+       whose ``gate is False`` and ``audit_reason`` contains
+       ``AUDIT_SOURCE_REVOKED`` and whose ``beta == 0.0`` — the
+       channel-rule wrapper's contract.
+
+    No ``try/except PolicyOrchestratorValidationError``: both surfaces
+    are tested directly so a regression on either path fails this test
+    immediately.
     """
-    from adaptive_reflow.contracts import AUDIT_SOURCE_REVOKED, validate_round_result_bundle
+    from adaptive_reflow.contracts import (
+        AUDIT_SOURCE_REVOKED,
+        ChannelRuleInputs,
+        make_default_phase_state,
+        validate_round_result_bundle,
+    )
+    from adaptive_reflow.frame.channel_rule import (
+        evaluate_channel_evidence_with_revocation,
+    )
 
     assert AUDIT_SOURCE_REVOKED == "source_revoked"
 
     bundle = _make_bundle(revoked=True)
 
-    # 1. The validator must fail closed on a revoked bundle.
+    # 1. The validator MUST return (False, ("source_revoked",)).
     ok, errors = validate_round_result_bundle(bundle)
     assert ok is False
-    assert "source_revoked" in errors
     assert errors == (AUDIT_SOURCE_REVOKED,)
 
-    # 2. The orchestrator must refuse to register the revoked bundle.
-    orchestrator = _make_orchestrator()
-    orchestrator.register_phase(
-        make_default_phase_state(
+    # 2. The channel-rule wrapper MUST close the gate with
+    #    AUDIT_SOURCE_REVOKED in audit_reason, gate=False, beta=0.0.
+    evidence = _make_evidence(bundle, ChannelName("coordinate"))
+    inputs = ChannelRuleInputs(
+        bundle=bundle,
+        evidence=evidence,
+        phase_state=make_default_phase_state(
             horizon_coverage_proven=True,
             operation_order_version="1.0.0",
-        )
+        ),
+        scheduled_cap=FactorValue(0.5),
+        mixing_cap=FactorValue(0.5),
+        fresh_noise_floor=FactorValue(0.0),
+        delta_cap_up=FactorValue(0.5),
+        delta_cap_down=FactorValue(0.5),
+        tail_admissibility=True,
+        complement_excluded=False,
+        frozen_envelope_manifest_hash=ArtifactHash("env-hash"),
+        finite_prefix_only=True,
+        calibration_lower_bound=FactorValue(0.9),
+        perturbation_stability_lower_bound=FactorValue(0.9),
+        support_coverage=FactorValue(0.9),
+        ambiguity=FactorValue(0.1),
+        degeneracy_penalty=FactorValue(0.1),
+        recency_decay=FactorValue(0.9),
+        horizon_coverage_proven=True,
+        selected_bundle_id=bundle.bundle_id,
     )
+    outputs = evaluate_channel_evidence_with_revocation(inputs)
+    decision = outputs.decision
 
-    # Attempt to evaluate the revoked bundle. The orchestrator must
-    # fail closed: either refuse registration or close every per-channel
-    # gate with the ``source_revoked`` audit code.
-    try:
-        ledger = orchestrator.evaluate_bundle(bundle, _all_channels(bundle))
-    except PolicyOrchestratorValidationError as exc:
-        # Acceptable fail-closed surface: rejection at registration.
-        assert "source_revoked" in str(exc) or "revoked" in str(exc).lower()
-    else:
-        # If the orchestrator accepted the bundle (e.g. it bypassed the
-        # registered-validator path) the per-channel decisions must
-        # still close every gate with the source_revoked audit code.
-        for decision in ledger.per_channel_decision:
-            assert decision.gate is False
-            assert "source_revoked" in decision.audit_reason
-            assert float(decision.beta) == 0.0
+    # Hard assertions — no soft "either branch accepted".
+    assert decision.gate is False
+    assert AUDIT_SOURCE_REVOKED in decision.audit_reason
+    assert float(decision.beta) == 0.0
+    assert outputs.validation_errors == (AUDIT_SOURCE_REVOKED,)
 
 
 # ---------------------------------------------------------------------------

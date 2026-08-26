@@ -30,6 +30,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from types import MappingProxyType
+from typing import Any, cast
 
 from adaptive_reflow.contracts import (
     CHANNEL_NAMES,
@@ -53,10 +54,11 @@ from adaptive_reflow.contracts import (
 # MUST NOT influence the schedule computation. If the module is unavailable
 # (e.g. partial checkout, partial install), the schedule logic still works;
 # the diagnostic hook degrades to a no-op.
+FreshNoiseCumulativeMassRecord: Any
 try:  # pragma: no cover - import-time branching
     from adaptive_reflow.diagnostics.ledger import FreshNoiseCumulativeMassRecord
 except Exception:  # noqa: BLE001
-    FreshNoiseCumulativeMassRecord = None  # type: ignore[assignment]
+    FreshNoiseCumulativeMassRecord = None
 
 
 # ---------------------------------------------------------------------------
@@ -85,7 +87,7 @@ ERR_NOT_FROZEN_BEFORE_EVAL = "frozen_before_evaluation_must_be_true"
 # ---------------------------------------------------------------------------
 
 
-def _coerce_factor_value(x) -> float:
+def _coerce_factor_value(x: object) -> float:
     """Coerce ``x`` to a Python ``float`` (booleans become 0/1)."""
     if isinstance(x, bool):
         return float(int(x))
@@ -105,7 +107,7 @@ def _clip_unit_finite(x: float) -> float:
     return float(x)
 
 
-def _coerce_int_nonneg(x, name: str) -> int:
+def _coerce_int_nonneg(x: object, name: str) -> int:
     """Coerce ``x`` to a non-negative ``int`` or raise :exc:`ValueError`."""
     if isinstance(x, bool) or not isinstance(x, int):
         raise ValueError(f"{name} must be int, got {x!r}")
@@ -114,7 +116,7 @@ def _coerce_int_nonneg(x, name: str) -> int:
     return int(x)
 
 
-def _is_unit_factor(x) -> tuple[bool, str | None]:
+def _is_unit_factor(x: object) -> tuple[bool, str | None]:
     """Return ``(ok, message_or_None)`` for a value claimed to be a unit factor."""
     if isinstance(x, bool):
         # Booleans are not valid unit factors: they encode a different type
@@ -351,7 +353,7 @@ def default_floor_by_channel(
             if channel not in raw:
                 continue
             try:
-                v = _coerce_factor_value(raw[channel])
+                v = _coerce_factor_value(raw[cast(ChannelName, channel)])
             except (TypeError, ValueError):
                 continue
             try:
@@ -592,7 +594,7 @@ def _capacity_curve_for_cycle(
 def build_fresh_noise_diagnostics(
     config: CosineScheduleConfig,
     outer_cycle_id: int,
-) -> dict:
+) -> dict[str, Any]:
     """Build a returnable diagnostics dict for the cycle (DTB-L4 hook).
 
     The returned dict has the shape::
@@ -638,7 +640,7 @@ def build_fresh_noise_diagnostics(
         cumulative.append(running)
     cumulative_tuple = tuple(cumulative)
 
-    per_round_records = "unavailable"
+    per_round_records: Any = "unavailable"
     if FreshNoiseCumulativeMassRecord is not None:
         per_round_records = {}
         for (r, n), cum in zip(curve, cumulative_tuple, strict=False):

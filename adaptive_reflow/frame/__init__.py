@@ -3,9 +3,14 @@
 Engine + adapter protocol + bounded merge + channel rule + operation order +
 phase transitions + round-trace v3 + orchestrator. The ``frame`` subpackage
 is the universal driver of one round end-to-end.
+
+The legacy ``DOMAIN_BY_CHANNEL`` constant that used to live here has been
+removed; per-channel domain resolution is now each adapter's responsibility
+via ``AdapterCapabilities.channel_domains``. The molecule-only fallback
+table remains at ``adaptive_reflow.molecular.domain.MOLECULE_DOMAIN_BY_CHANNEL``
+for molecule-aware callers.
 """
 from .adapter import (
-    DOMAIN_BY_CHANNEL,
     NORMALIZATION_KINDS,
     REFERENCE_FRAMES,
     AdapterCapabilities,

@@ -40,8 +40,8 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, cast
 
 from adaptive_reflow.frame.adapter import (
     AdapterCapabilities,
@@ -51,6 +51,8 @@ from adaptive_reflow.frame.adapter import (
     TensorRef,
     validate_state_bundle,
 )
+from adaptive_reflow.universal.adapter import ChannelDomain
+from adaptive_reflow.universal.state import ChannelName
 from adaptive_reflow.writer.registry import (
     FLOWMOL3_PINNED_COMMIT,
     make_default_flowmol3_entry,
@@ -64,7 +66,8 @@ from adaptive_reflow.writer.registry import (
 # FlowMol3 mixed state channels — declared in the engine's domain
 # vocabulary. FlowMol3's native state is ``(x, a, c, e)``; we expose it
 # via the engine's existing channel names so the public engine + adapter
-# protocol (DTB-G1) can route them through ``DOMAIN_BY_CHANNEL``:
+# protocol (DTB-G1) can route them through each adapter's own
+# ``AdapterCapabilities.channel_domains`` declaration:
 #
 #   x (position)         -> coordinate    (continuous)
 #   c (formal charge)    -> charge        (continuous)
@@ -75,6 +78,23 @@ from adaptive_reflow.writer.registry import (
 # documented in the registry entry's ``audit_notes``.
 FLOWMOL3_CHANNELS: tuple[str, ...] = ("coordinate", "charge", "raw_pair")
 """Engine-domain channel names exposed by the FlowMol3 adapter."""
+
+
+FLOWMOL3_CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = cast(
+    Mapping[ChannelName, ChannelDomain],
+    {
+        "coordinate": "continuous",
+        "charge": "continuous",
+        "raw_pair": "discrete",
+    },
+)
+"""Per-channel domain-kind declaration for FlowMol3 (molecule-specific).
+
+This is the per-adapter replacement for the legacy
+``frame.adapter.DOMAIN_BY_CHANNEL`` table; the universal engine routes
+through each adapter's own ``AdapterCapabilities.channel_domains``
+declaration.
+"""
 
 
 @dataclass(frozen=True)
@@ -98,6 +118,12 @@ class FlowMol3Capabilities:
     has_deterministic_seed: bool = True
     has_materialization_route: bool = False  # No pocket materialization.
     supported_channels: tuple[str, ...] = FLOWMOL3_CHANNELS
+    channel_domains: Mapping[str, str] = field(
+        default_factory=lambda: cast(
+            "Mapping[str, str]",
+            {str(k): v for k, v in FLOWMOL3_CHANNEL_DOMAINS.items()},
+        )
+    )
 
     def to_engine_caps(self) -> AdapterCapabilities:
         """Project this token into the engine's ``AdapterCapabilities``."""
@@ -113,6 +139,10 @@ class FlowMol3Capabilities:
             has_deterministic_seed=self.has_deterministic_seed,
             has_materialization_route=self.has_materialization_route,
             supported_channels=self.supported_channels,
+            channel_domains=cast(
+                "Mapping[ChannelName, ChannelDomain]",
+                dict(self.channel_domains),
+            ),
         )
 
 
@@ -171,7 +201,7 @@ class FlowMol3Adapter:
             for ch in FLOWMOL3_CHANNELS
         }
         bundle = StateBundle(
-            channels=channels,
+            channels=cast(Mapping[ChannelName, TensorRef], channels),
             masks=masks,
             batch_id=str(batch_id),
             sample_id=str(sample_id),
@@ -353,6 +383,7 @@ def flowmol3_registry_entry() -> Any:
 
 __all__ = [
     "FLOWMOL3_CHANNELS",
+    "FLOWMOL3_CHANNEL_DOMAINS",
     "FlowMol3Adapter",
     "FlowMol3Capabilities",
     "default_flowmol3_adapter",

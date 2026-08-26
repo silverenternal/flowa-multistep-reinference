@@ -153,7 +153,7 @@ def _canonical_json(payload: Any) -> str:
 
 
 def _json_default(obj: Any) -> Any:
-    if dataclasses.is_dataclass(obj):
+    if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
         return asdict(obj)
     if isinstance(obj, Mapping):
         return {k: v for k, v in obj.items()}

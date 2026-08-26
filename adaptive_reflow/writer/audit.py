@@ -151,20 +151,21 @@ def validate_audit_completeness(
     if not entry.audit_notes:
         errors.append("audit_notes_non_empty_failed")
     # compatible_channels must include only names the engine routes through
-    # DOMAIN_BY_CHANNEL (resolved inside adaptive_reflow.frame.adapter) — but
+    # the molecule-layer domain fallback table
+    # (``adaptive_reflow.molecular.domain.MOLECULE_DOMAIN_BY_CHANNEL``) — but
     # only for entries that will actually participate in engine-driven round
     # loops. ``admitted_unconditional_only`` entries are admitted only for
     # mechanics validation and may carry channels the engine doesn't route
     # directly; the engine handshake still fails closed at runtime.
     if entry.adapter_status != "admitted_unconditional_only":
         try:
-            from adaptive_reflow.frame.adapter import DOMAIN_BY_CHANNEL  # type: ignore
+            from adaptive_reflow.molecular.domain import MOLECULE_DOMAIN_BY_CHANNEL
 
             for ch in entry.compatible_channels:
-                if ch not in DOMAIN_BY_CHANNEL:
+                if ch not in MOLECULE_DOMAIN_BY_CHANNEL:
                     errors.append(f"compatible_channels_unknown:{ch}")
         except ImportError:
-            # If the engine module is unavailable at import time, the
+            # If the molecular module is unavailable at import time, the
             # downstream handshake re-validates this anyway.
             pass
 

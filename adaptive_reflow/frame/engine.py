@@ -47,7 +47,6 @@ from typing import Any
 
 from adaptive_reflow.contracts import FinalRestartPolicy, hash_policy_hash
 from adaptive_reflow.frame.adapter import (
-    DOMAIN_BY_CHANNEL,
     AdapterCapabilities,
     CapabilityMismatchError,
     CapabilityMissingError,
@@ -275,23 +274,21 @@ def _digest_condition(delta: ODEConditionDelta | None) -> str:
     return _digest(payload)
 
 
-def _channel_domain_lookup(channel: str) -> str | None:
-    """Return the domain for ``channel`` from :data:`DOMAIN_BY_CHANNEL`.
+def _channel_domain_lookup(channel: str, caps: AdapterCapabilities) -> str | None:
+    """Return the domain for ``channel`` from ``caps.channel_domains``.
 
-    Falls back to a deterministic ``"<channel>.<domain>"`` suffix lookup
-    so adapters that ship their own ``coordinate.continuous`` style
-    channels are routed correctly. Returns ``None`` when the channel is
-    unknown.
+    Domain resolution is the adapter's responsibility via its
+    :attr:`AdapterCapabilities.channel_domains` declaration. The engine
+    never consults a molecule-only fallback table; channels whose
+    domain is undeclared simply produce no domain-mismatch audit code
+    (they pass through silently). Returns ``None`` when the channel is
+    not declared in ``caps.channel_domains``.
     """
-    if channel in DOMAIN_BY_CHANNEL:
-        return DOMAIN_BY_CHANNEL[channel]
-    # Allow adapters to publish channels with explicit ``.continuous`` or
-    # ``.discrete`` suffixes. Anything else is unknown.
-    if channel.endswith(".continuous"):
-        return "continuous"
-    if channel.endswith(".discrete"):
-        return "discrete"
-    return None
+    from typing import cast
+
+    from adaptive_reflow.universal.state import ChannelName
+
+    return caps.channel_domains.get(cast(ChannelName, channel))
 
 
 def _ledger_row_id(round_index: int, policy_hash: str, bundle_digest: str) -> str:
@@ -550,7 +547,7 @@ class Engine:
                 if channel not in caps.supported_channels:
                     audit_codes.append(f"{ERR_CHANNEL_UNSUPPORTED}:{channel}")
                 else:
-                    expected = _channel_domain_lookup(channel)
+                    expected = _channel_domain_lookup(channel, caps)
                     advertised_continuous = caps.has_continuous_channels
                     advertised_discrete = caps.has_discrete_channels
                     if expected == "continuous" and not advertised_continuous or expected == "discrete" and not advertised_discrete:
@@ -600,6 +597,11 @@ class Engine:
             )
 
         # ---- happy path: drive the protocol surface -------------------------
+        # The pre-flight validation above guarantees non-None for these.
+        assert bundle is not None  # noqa: S101 — fail-closed precondition
+        assert policy is not None  # noqa: S101 — fail-closed precondition
+        assert condition_delta is not None  # noqa: S101 — fail-closed precondition
+
         # 1. Build initial state.
         initial_state = adapter.build_initial_state(
             batch_id=bundle.batch_id,

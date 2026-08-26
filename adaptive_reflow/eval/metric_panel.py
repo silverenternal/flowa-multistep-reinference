@@ -154,7 +154,7 @@ class LayeredMetricPanel:
 # ---------------------------------------------------------------------------
 
 
-def _tier_keys(mapping: Mapping[str, Any]) -> set:
+def _tier_keys(mapping: Mapping[str, Any]) -> set[str]:
     """Return the stringified key set of ``mapping``."""
     return {str(k) for k in mapping}
 
@@ -197,7 +197,7 @@ def enforce_separation(
     adaptive_keys = _tier_keys(panel.adaptive_reflow_metrics)
     post_keys = _tier_keys(panel.postprocess_assisted_metrics)
 
-    overlap: set = set()
+    overlap: set[str] = set()
     # raw_generation vs adaptive_reflow
     overlap.update(raw_keys.intersection(adaptive_keys))
     # raw_generation vs postprocess_assisted

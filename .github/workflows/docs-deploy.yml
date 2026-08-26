@@ -1,0 +1,68 @@
+name: docs-deploy
+
+# GitHub Pages deployment for the auto-generated mkdocs API reference.
+#
+# The build pipeline is the same ``mkdocs build --strict`` that the
+# pre-merge ``docs-validate`` workflow runs; this job only adds the
+# ``upload-pages-artifact`` + ``deploy-pages`` pair so the rendered site
+# is published to GitHub Pages. ``--strict`` is non-negotiable: a broken
+# internal link or an unresolved mkdocstrings reference fails the build
+# and blocks the deploy.
+#
+# Triggers are narrowly scoped to the input set mkdocs actually reads:
+# the config file, the doc source tree, and the top-level governance
+# docs that are exposed via the ``docs/`` junction (ARCHITECTURE.md,
+# QUICKSTART.md, TUTORIAL.md, FAQ.md, README.md). Code-only changes do
+# not redeploy.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - mkdocs.yml
+      - docs/**
+      - README.md
+      - QUICKSTART.md
+      - TUTORIAL.md
+      - FAQ.md
+      - ARCHITECTURE.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write  # OIDC for the GitHub Pages deployment token
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package + doc toolchain
+        run: pip install -e '.[dev]'
+
+      - name: Build mkdocs site (strict)
+        run: mkdocs build --strict
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

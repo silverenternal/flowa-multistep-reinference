@@ -5,13 +5,18 @@ fixtures live here (not in ``tests/``) so external parity harnesses can
 import them too.
 """
 from .flowmol3 import (
+    FLOWMOL3_CHANNEL_DOMAINS,
     FLOWMOL3_CHANNELS,
     FlowMol3Adapter,
     FlowMol3Capabilities,
     default_flowmol3_adapter,
     flowmol3_registry_entry,
 )
-from .reference_flowa import REFERENCE_FLOWA_CHANNELS, ReferenceFlowAAdapter
+from .reference_flowa import (
+    REFERENCE_FLOWA_CHANNEL_DOMAINS,
+    REFERENCE_FLOWA_CHANNELS,
+    ReferenceFlowAAdapter,
+)
 from .synthetic import (
     ALL_SYNTHETIC_CHANNELS,
     CONTINUOUS_CHANNELS,

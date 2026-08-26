@@ -428,8 +428,8 @@ class StabilityPerturbationProtocol:
                 )
         if not self.condition_perturbations:
             raise ValueError("condition_perturbations must be non-empty")
-        for s in self.condition_perturbations:
-            if not isinstance(s, str) or not s:
+        for s_str in self.condition_perturbations:
+            if not isinstance(s_str, str) or not s_str:
                 raise ValueError(
                     "condition_perturbations entries must be non-empty str"
                 )
