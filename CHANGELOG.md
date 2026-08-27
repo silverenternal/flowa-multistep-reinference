@@ -78,6 +78,32 @@ on a fixed cadence. Version markers in commit messages follow the
 
 ---
 
+## [Unreleased] - Algorithmic Gap Closure
+
+### Fixed
+
+- A1: channel_rule stability-collapse is fail-closed on malformed inputs
+- A2: bounded_merge_with_schedule honors per-channel floor config
+- A3: bounded_merge uses prev anchored to last_emitted, not scheduled_cap
+- A4: engine.run_round coerces round_index on all paths
+- A5: engine emits ERR_CHANNEL_DOMAIN_UNDECLARED for undeclared domains
+- B1: CosineScheduleSampler split compute/record for purity
+- B2: engine wraps all adapter calls in _safe_adapter_call
+- B3: claim_gate delegates to _resolve_decision helper (R7-ready)
+- B5: bounded_merge emits MERGE_DEGENERATE_INTERVAL audit code
+- C1: RMSPreservingCoordinateMixer renamed to EqualRmsCoordinateMixer with back-compat alias
+- C2: bounded_merge_with_schedule rejects prev=None with ERR_PREV_REQUIRED
+- C3: engine coerces bundle.source_round
+
+### Added
+
+- ADR-0006: engine-wraps-adapter pattern
+- ADR-0007: prev-anchored bounded-merge
+- ADR-0008: claim-gate deferral placeholder
+- ADR-0009: mixer RMS-preservation precondition
+
+---
+
 ## How to read this changelog
 
 * Items in **Added** are user-visible additions to the public surface or

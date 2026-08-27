@@ -134,6 +134,16 @@ AUDIT_STABILITY_COLLAPSE: str = "perturbation_stability_below_threshold"
 # Helpers
 # ---------------------------------------------------------------------------
 
+#: Module-level constant (public). Audit code emitted when a cap / floor
+#: field on :class:`ChannelRuleInputs` (``scheduled_cap`` or
+#: ``fresh_noise_floor``) is malformed at coercion time (the dynamic-
+#: compute branch in :func:`evaluate_channel_evidence_with_revocation`
+#: and the stability-collapse branch in
+#: :func:`_build_stability_collapse_outputs`). Fail-closed fallback
+#: coerces the offending field to ``0.0`` so the audit trail remains
+#: finite; the suffix ``:<field_name>`` carries the precise field.
+ERR_INPUT_FACTOR_TYPE: str = "channel_rule_input_factor_type"
+
 
 def _coerce_factor(x: object) -> float:
     """Coerce a ``FactorValue``-like to a Python ``float``.
@@ -147,6 +157,29 @@ def _coerce_factor(x: object) -> float:
     if not isinstance(x, (int, float)):
         raise TypeError(f"expected a real number, got {type(x).__name__}")
     return float(x)
+
+
+def _coerce_factor_or_zero(
+    inputs: ChannelRuleInputs,
+    field_name: str,
+    audit_codes: list[str],
+) -> float:
+    """Coerce ``inputs.<field_name>`` to ``float``; fall back to ``0.0`` on Type/Value.
+
+    The fail-closed audit code :data:`ERR_INPUT_FACTOR_TYPE` is appended
+    (suffixed with the field name) when the coercion raises so the
+    dynamic-compute and stability-collapse branches never propagate a
+    ``TypeError`` out of the rule. Used for cap / floor fields that the
+    rule is required to surface in the audit row even when they are
+    malformed — the gate has already been declared closed elsewhere and
+    the consumer needs a finite ``scheduled_cap`` / ``fresh_noise_floor``
+    on the decision object.
+    """
+    try:
+        return _coerce_factor(getattr(inputs, field_name))
+    except (TypeError, ValueError):
+        audit_codes.append(f"{ERR_INPUT_FACTOR_TYPE}:{field_name}")
+        return 0.0
 
 
 def required_factors_in_unit_interval(
@@ -380,9 +413,24 @@ def _build_stability_collapse_outputs(
         return None
 
     # All cap / floor fields have already passed validation in
-    # _collect_blockers, so coercion is safe here.
-    scheduled_cap = _coerce_factor(inputs.scheduled_cap)
-    fresh_noise_floor = _coerce_factor(inputs.fresh_noise_floor)
+    # _collect_blockers, so coercion is safe here. The helper still
+    # falls back to ``0.0`` with an audit code so an adversarial call
+    # that bypasses validation cannot propagate a ``TypeError`` out of
+    # the rule.
+    collapse_audit_codes: list[str] = []
+    scheduled_cap = _coerce_factor_or_zero(
+        inputs, "scheduled_cap", collapse_audit_codes
+    )
+    fresh_noise_floor = _coerce_factor_or_zero(
+        inputs, "fresh_noise_floor", collapse_audit_codes
+    )
+
+    # Thread any helper-emitted audit codes through ``audit_reason`` /
+    # ``blocker_codes`` so the consumer can see the malformed-field
+    # cause alongside the DTB-R0 §3 case 2 cause. Stable order:
+    # stability-collapse first, then the helper codes.
+    collapse_codes: tuple[str, ...] = (AUDIT_STABILITY_COLLAPSE, *collapse_audit_codes)
+    audit_reason = ";".join(collapse_codes)
 
     decision = ChannelTransferDecision(
         bundle_id=inputs.bundle.bundle_id,
@@ -395,13 +443,13 @@ def _build_stability_collapse_outputs(
         fresh_noise_floor=FactorValue(float(fresh_noise_floor)),
         alpha=FactorValue(1.0),
         beta=FactorValue(0.0),
-        audit_reason=AUDIT_STABILITY_COLLAPSE,
-        blocker_codes=(AUDIT_STABILITY_COLLAPSE,),
+        audit_reason=audit_reason,
+        blocker_codes=collapse_codes,
     )
     return ChannelRuleOutputs(
         decision=decision,
         monotonicity_check_passed=False,
-        validation_errors=(AUDIT_STABILITY_COLLAPSE,),
+        validation_errors=collapse_codes,
     )
 
 
@@ -540,14 +588,23 @@ def evaluate_channel_evidence_with_revocation(
         # the inputs are partially malformed so the audit surface
         # remains finite. The downstream consumer is expected to consult
         # ``audit_reason`` for the precise cause.
-        try:
-            scheduled_cap = _coerce_factor(inputs.scheduled_cap)
-        except (TypeError, ValueError):
-            scheduled_cap = 0.0
-        try:
-            fresh_noise_floor = _coerce_factor(inputs.fresh_noise_floor)
-        except (TypeError, ValueError):
-            fresh_noise_floor = 0.0
+        revocation_audit_codes: list[str] = []
+        scheduled_cap = _coerce_factor_or_zero(
+            inputs, "scheduled_cap", revocation_audit_codes
+        )
+        fresh_noise_floor = _coerce_factor_or_zero(
+            inputs, "fresh_noise_floor", revocation_audit_codes
+        )
+
+        # Thread any helper-emitted audit codes through ``audit_reason``
+        # / ``blocker_codes`` so the consumer can see the malformed-field
+        # cause alongside the DTB-R0 §3 case 5 cause. Stable order:
+        # source-revoked first, then the helper codes.
+        revocation_codes: tuple[str, ...] = (
+            AUDIT_SOURCE_REVOKED,
+            *revocation_audit_codes,
+        )
+        audit_reason = ";".join(revocation_codes)
 
         decision = ChannelTransferDecision(
             bundle_id=inputs.bundle.bundle_id,
@@ -560,13 +617,13 @@ def evaluate_channel_evidence_with_revocation(
             fresh_noise_floor=FactorValue(float(fresh_noise_floor)),
             alpha=FactorValue(1.0),
             beta=FactorValue(0.0),
-            audit_reason=AUDIT_SOURCE_REVOKED,
-            blocker_codes=(AUDIT_SOURCE_REVOKED,),
+            audit_reason=audit_reason,
+            blocker_codes=revocation_codes,
         )
         return ChannelRuleOutputs(
             decision=decision,
             monotonicity_check_passed=False,
-            validation_errors=(AUDIT_SOURCE_REVOKED,),
+            validation_errors=revocation_codes,
         )
 
     return compute_channel_decision(inputs)
@@ -621,6 +678,9 @@ __all__ = [
     "PERTURBATION_STABILITY_FLOOR",
     # DTB-R0 §3 case 5 audit (re-exported from contracts).
     "AUDIT_SOURCE_REVOKED",
+    # ERR_* audit codes (fail-closed fallback in dynamic-compute /
+    # stability-collapse branches).
+    "ERR_INPUT_FACTOR_TYPE",
     "BLOCKER_COMPLEMENT_EXCLUDED",
     "BLOCKER_ENVELOPE_HASH_MISSING",
     "BLOCKER_FACTOR_OUT_OF_UNIT_INTERVAL",

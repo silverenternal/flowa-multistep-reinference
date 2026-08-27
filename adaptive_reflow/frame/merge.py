@@ -52,8 +52,12 @@ from adaptive_reflow.contracts import (
 )
 
 __all__ = [
+    "ERR_PREV_REQUIRED",
     "MERGE_AUTHORITY_SCHEMA_NAME",
     "MERGE_AUTHORITY_SCHEMA_VERSION",
+    "MERGE_DEGENERATE_INTERVAL",
+    "MERGE_FLOOR_FALLBACK",
+    "MERGE_PREV_ANCHORED_TO_LAST_EMITTED",
     "MergeAuthorityError",
     "bounded_merge",
     "bounded_merge_with_schedule",
@@ -93,6 +97,31 @@ class MergeAuthorityError(ValueError):
 # Canonical error codes (deterministic, ASCII only)
 # ---------------------------------------------------------------------------
 
+
+#: Audit code emitted when the per-round delta interval collapses to
+#: an empty range (``hi < lo``) so the merge returns the floor. The
+#: code carries the envelope values so a downstream audit reader can
+#: reproduce the degenerate configuration.
+MERGE_DEGENERATE_INTERVAL: str = "merge_degenerate_interval"
+
+#: Audit code emitted when the per-channel fresh-noise floor has to
+#: fall back to the schedule's ``n_cap`` (or ``0.0`` when no sample
+#: was supplied). This signals that the config-level per-channel
+#: floor mapping was missing for the requested channel.
+MERGE_FLOOR_FALLBACK: str = "merge_floor_fallback_to_schedule_default"
+
+#: Audit code emitted whenever the orchestrator-driven merge is
+#: anchored on a ``prev`` value that came from the previous round's
+#: emitted ``bounded_target_fraction`` (i.e. not from the schedule's
+#: ``n_cap``). The schedule value is the cap, never the prev.
+MERGE_PREV_ANCHORED_TO_LAST_EMITTED: str = "merge_prev_anchored_to_last_emitted"
+
+#: Error code raised when the orchestrator-driven merge path is
+#: asked to merge without supplying ``prev``. The schedule's
+#: ``n_cap`` is the cap; the prev must come from the previous
+#: round's emitted ``bounded_target_fraction``. See
+#: :class:`MergeAuthorityError`.
+ERR_PREV_REQUIRED: str = "merge_prev_required"
 
 _ERR_PREV_NONE: str = "merge_prev_required"
 _ERR_PREV_NOT_FINITE: str = "merge_prev_not_finite"
@@ -166,6 +195,7 @@ def bounded_merge(
     floor: float,
     delta_cap_up: float,
     delta_cap_down: float,
+    audit_codes: list[str] | None = None,
 ) -> float:
     """Return a bounded merge of ``prev`` and ``dynamic``.
 
@@ -189,6 +219,11 @@ def bounded_merge(
     delta-caps collapse the interval below the floor) the function
     returns the floor; this is the documented fail-closed behaviour so
     the merge is total and never raises on legitimate call patterns.
+    When ``audit_codes`` is supplied, the merge appends
+    :data:`MERGE_DEGENERATE_INTERVAL` (with the envelope values
+    embedded for forensic reconstruction) before returning the floor;
+    when ``audit_codes`` is ``None`` the collapse is silent for
+    back-compat with callers that do not opt into audit emission.
 
     Parameters
     ----------
@@ -206,6 +241,13 @@ def bounded_merge(
         Maximum per-round increase (must be finite, in ``[0, 1]``).
     delta_cap_down:
         Maximum per-round decrease (must be finite, in ``[0, 1]``).
+    audit_codes:
+        Optional mutable list that the merge appends diagnostic codes
+        to. When the per-round delta interval is empty (i.e. the
+        bounded merge collapses to the floor) the merge appends
+        :data:`MERGE_DEGENERATE_INTERVAL` with the envelope values
+        embedded. When ``None``, no codes are emitted (the collapse
+        is silent for back-compat).
 
     Returns
     -------
@@ -277,8 +319,16 @@ def bounded_merge(
 
     # Defensive: collapse an empty interval to the floor. This is the
     # documented fail-closed path; the merge never raises on legitimate
-    # call patterns and never returns a value below the floor.
+    # call patterns and never returns a value below the floor. When
+    # the caller opted into audit emission, we surface the collapse so
+    # downstream consumers can audit-replay it.
     if hi < lo:
+        if audit_codes is not None:
+            audit_codes.append(
+                f"{MERGE_DEGENERATE_INTERVAL}:floor={floor_f:.6f}"
+                f":cap={cap_f:.6f}:prev={prev_f:.6f}"
+                f":up={up_f:.6f}:down={down_f:.6f}"
+            )
         return float(floor_f)
 
     return float(max(lo, min(hi, target)))
@@ -315,18 +365,43 @@ def _delta_caps_for_channel(
 
 
 def _floor_for_channel(
+    fresh_noise_floor: float | None,
     fresh_noise_floor_by_channel: Mapping[ChannelName, float] | None,
     schedule_sample: CosineScheduleSample | None,
     channel: ChannelName,
+    audit_codes: list[str] | None = None,
 ) -> float:
-    """Return the per-channel fresh-noise floor.
+    """Return the per-channel fresh-noise floor with explicit precedence.
 
-    Priority:
+    Priority (highest first):
 
-    1. ``fresh_noise_floor_by_channel[channel]`` if supplied and valid.
-    2. ``schedule_sample.n_cap`` if supplied (conservative default).
-    3. ``0.0``.
+    1. ``fresh_noise_floor`` arg, when supplied as a non-``None`` value
+       that is finite and in ``[0, 1]``. The caller-supplied argument
+       is the authoritative override (e.g. an explicit
+       ``floor_for_channel(channel)`` value forwarded by the
+       orchestrator's decision).
+    2. ``fresh_noise_floor_by_channel[channel]``, when the mapping
+       supplies a finite value in ``[0, 1]``. The config-level
+       per-channel floor is the canonical "no override" default.
+    3. ``schedule_sample.n_cap``, when a schedule sample is supplied
+       and its ``n_cap`` is finite and in ``[0, 1]``. This is the
+       conservative "no override, no config" default; the audit code
+       :data:`MERGE_FLOOR_FALLBACK` is appended so the fallback is
+       observable.
+    4. ``0.0`` as the last-resort default. The audit code
+       :data:`MERGE_FLOOR_FALLBACK` is appended.
     """
+    # Step 1 — explicit ``fresh_noise_floor`` argument.
+    if fresh_noise_floor is not None:
+        try:
+            f_floor = _coerce_factor_value(
+                fresh_noise_floor, name="fresh_noise_floor"
+            )
+        except MergeAuthorityError:
+            f_floor = None
+        if f_floor is not None and math.isfinite(f_floor) and 0.0 <= f_floor <= 1.0:
+            return float(f_floor)
+    # Step 2 — config-level per-channel mapping.
     if fresh_noise_floor_by_channel is not None:
         value = fresh_noise_floor_by_channel.get(channel)
         if value is not None:
@@ -338,13 +413,19 @@ def _floor_for_channel(
                 f = None
             if f is not None and math.isfinite(f) and 0.0 <= f <= 1.0:
                 return float(f)
+    # Step 3 — schedule_sample.n_cap as the conservative default.
     if schedule_sample is not None:
         try:
             n_cap = _coerce_factor_value(schedule_sample.n_cap, name="schedule.n_cap")
             if math.isfinite(n_cap) and 0.0 <= n_cap <= 1.0:
+                if audit_codes is not None:
+                    audit_codes.append(MERGE_FLOOR_FALLBACK)
                 return float(n_cap)
         except MergeAuthorityError:
             pass
+    # Step 4 — last-resort default; still surface the fallback.
+    if audit_codes is not None:
+        audit_codes.append(MERGE_FLOOR_FALLBACK)
     return 0.0
 
 
@@ -367,41 +448,38 @@ def _cap_for_channel(
     return float(min(1.0, n_cap))
 
 
-def _prev_for_channel(
-    schedule_sample: CosineScheduleSample | None,
-) -> float:
-    """Return the previous-round fraction for ``channel``.
-
-    Falls back to ``0.0`` when no sample is supplied (the merge then
-    behaves as a one-shot bounded update from zero).
-    """
-    if schedule_sample is None:
-        return 0.0
-    try:
-        n_cap = _coerce_factor_value(schedule_sample.n_cap, name="schedule.n_cap")
-    except MergeAuthorityError:
-        return 0.0
-    if not math.isfinite(n_cap):
-        return 0.0
-    return float(max(0.0, min(1.0, n_cap)))
-
-
 def bounded_merge_with_schedule(
     *,
     channel: ChannelName,
     dynamic: float,
     schedule_sample: CosineScheduleSample | None,
-    fresh_noise_floor: float,
+    fresh_noise_floor: float | None,
     delta_caps_by_channel: Mapping[ChannelName, float] | None,
+    fresh_noise_floor_by_channel: Mapping[ChannelName, float] | None = None,
     prev: float | None = None,
+    audit_codes: list[str] | None = None,
 ) -> FactorValue:
     """Convenience wrapper that threads a schedule sample through the merge.
 
-    The helper extracts ``prev``, ``cap`` and ``floor`` from the supplied
-    schedule sample (or falls back to defaults) and forwards to
+    The helper extracts ``cap`` from the supplied schedule sample and
+    the floor from the per-channel fresh-noise floor mapping (or the
+    ``fresh_noise_floor`` override), then forwards to
     :func:`bounded_merge`. The result is wrapped in
     :class:`FactorValue` so the orchestrator can store it directly in
     its per-channel mapping.
+
+    The helper enforces two structural invariants on the orchestrator
+    path:
+
+    * The **cap** always comes from ``schedule_sample.n_cap`` (or
+      ``1.0`` when no sample is supplied); the schedule value is the
+      cap, never the prev.
+    * The **prev** must come from the previous round's emitted
+      ``bounded_target_fraction``. ``prev=None`` is rejected with
+      :class:`MergeAuthorityError` (``ERR_PREV_REQUIRED``); the helper
+      does NOT silently fall back to the schedule's ``n_cap`` because
+      doing so would double-count the schedule value (as both the cap
+      and the prev) and erase any ledger-driven information.
 
     Parameters
     ----------
@@ -416,41 +494,63 @@ def bounded_merge_with_schedule(
         Optional :class:`CosineScheduleSample`. ``None`` is allowed and
         uses the conservative defaults.
     fresh_noise_floor:
-        Per-channel fresh-noise floor. Must be finite and in ``[0, 1]``.
-        When supplied as a non-``None`` value it overrides the
-        per-channel mapping lookup.
+        Optional explicit fresh-noise floor override. When non-``None``
+        it overrides the per-channel mapping lookup. ``None`` lets the
+        helper consult ``fresh_noise_floor_by_channel`` instead.
     delta_caps_by_channel:
         Optional per-channel symmetric delta cap mapping. Used to look
         up ``delta_cap_up`` / ``delta_cap_down``; defaults to ``0.5``.
+    fresh_noise_floor_by_channel:
+        Optional config-level per-channel fresh-noise floor mapping.
+        Used when ``fresh_noise_floor`` is ``None`` to honour the
+        configured floor rather than silently ignoring it.
     prev:
-        Optional explicit previous-round fraction. ``None`` falls back
-        to ``schedule_sample.n_cap`` (or ``0.0`` when no sample is
-        supplied). The explicit override exists so the helper can be
-        called from a ledger-driven orchestrator loop where the
-        previous round's emitted ``bounded_target_fraction`` is the
-        natural ``prev``.
+        The previous round's emitted ``bounded_target_fraction`` for
+        ``channel``. ``None`` is rejected with
+        :class:`MergeAuthorityError` (``ERR_PREV_REQUIRED``) when the
+        caller has opted into ``audit_codes``; otherwise the helper
+        refuses by raising unconditionally. The caller (engine /
+        orchestrator) is responsible for surfacing the error in its
+        :class:`EngineRoundResult` audit trail.
+    audit_codes:
+        Optional mutable list that the merge appends diagnostic codes
+        to. ``MERGE_PREV_ANCHORED_TO_LAST_EMITTED`` is appended when
+        ``prev`` is supplied (so a downstream audit reader can confirm
+        the prev came from the previous round's emitted fraction, not
+        the schedule).
 
     Returns
     -------
     FactorValue
         ``FactorValue(bounded_merge(...))``.
+
+    Raises
+    ------
+    MergeAuthorityError
+        When ``prev`` is ``None`` and ``audit_codes`` is supplied
+        (``ERR_PREV_REQUIRED`` is appended to ``audit_codes`` before
+        the error is raised); also raised on any underlying bounded
+        merge validation failure.
     """
     delta_up, delta_down = _delta_caps_for_channel(delta_caps_by_channel, channel)
     cap = _cap_for_channel(schedule_sample)
-    floor = _floor_for_channel(None, schedule_sample, channel)
-    if fresh_noise_floor is not None:
-        try:
-            floor_f = _coerce_finite_real(
-                fresh_noise_floor, name="fresh_noise_floor"
-            )
-            if math.isfinite(floor_f) and 0.0 <= floor_f <= 1.0:
-                floor = floor_f
-        except MergeAuthorityError:
-            pass
+    floor = _floor_for_channel(
+        fresh_noise_floor,
+        fresh_noise_floor_by_channel,
+        schedule_sample,
+        channel,
+        audit_codes=audit_codes,
+    )
     if prev is None:
-        prev_v = _prev_for_channel(schedule_sample)
-    else:
-        prev_v = _coerce_finite_real(prev, name="prev")
+        if audit_codes is not None:
+            audit_codes.append(ERR_PREV_REQUIRED)
+        raise MergeAuthorityError(
+            "prev is required for orchestrator-driven merge; "
+            "the schedule value is the cap, not the prev"
+        )
+    prev_v = _coerce_finite_real(prev, name="prev")
+    if audit_codes is not None:
+        audit_codes.append(MERGE_PREV_ANCHORED_TO_LAST_EMITTED)
 
     merged = bounded_merge(
         prev=prev_v,
@@ -459,5 +559,6 @@ def bounded_merge_with_schedule(
         floor=floor,
         delta_cap_up=delta_up,
         delta_cap_down=delta_down,
+        audit_codes=audit_codes,
     )
     return FactorValue(float(merged))

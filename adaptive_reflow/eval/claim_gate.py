@@ -66,6 +66,7 @@ __all__ = [
     "ClaimGateConfig",
     "ClaimGateDecision",
     "ClaimGateEvaluation",
+    "_resolve_decision",
     "evaluate_claim_gate",
 ]
 
@@ -351,6 +352,44 @@ def build_default_claim_gate_config(
 
 
 # ---------------------------------------------------------------------------
+# Decision resolver (R7 deferral placeholder)
+# ---------------------------------------------------------------------------
+
+
+def _resolve_decision(
+    passed: tuple[str, ...],
+    failed: tuple[str, ...],
+) -> ClaimGateDecision:
+    """Resolve the claim-gate decision from structural passed/failed tuples.
+
+    Today (DTB-R8 deferred until R7 GPU data lands) the helper
+    always returns ``"defer"``. When R7 lands, this is the only
+    function that changes — the public :class:`ClaimGateEvaluation`
+    dataclass is unchanged. The helper is exposed at module level so
+    callers can wire it externally and so R7 wiring is a one-line
+    body replacement.
+
+    Parameters
+    ----------
+    passed:
+        Sorted tuple of condition names that passed. Today this is
+        accepted-but-unused; once R7 lands it drives the structural
+        promotion / rollback decision.
+    failed:
+        Sorted tuple of condition names that failed. Today this is
+        accepted-but-unused; once R7 lands any non-empty entry here
+        forces a ``"defer"``.
+
+    Returns
+    -------
+    ClaimGateDecision
+        Always ``"defer"`` in this module; see :data:`DEFERRED_R8_REASON`.
+    """
+    del passed, failed  # structural inputs unused until R7 lands
+    return "defer"
+
+
+# ---------------------------------------------------------------------------
 # Evaluator (DTB-R8, structural only)
 # ---------------------------------------------------------------------------
 
@@ -518,8 +557,13 @@ def evaluate_claim_gate(
 
     # Structural decision: with R7 data unavailable the only
     # structural value is "defer". We never emit "promote" or
-    # "rollback" from this module.
-    decision: ClaimGateDecision = "defer"
+    # "rollback" from this module. The decision is delegated to the
+    # module-level ``_resolve_decision`` helper so R7 wiring is a
+    # one-line body change.
+    decision: ClaimGateDecision = _resolve_decision(
+        passed=tuple(sorted(passed)),
+        failed=tuple(sorted(failed)),
+    )
 
     return ClaimGateEvaluation(
         decision=decision,

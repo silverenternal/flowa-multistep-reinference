@@ -373,17 +373,29 @@ class CosineScheduleSampler:
 
     The sampler is a thin facade over :func:`n_cap_for_round` plus a cache of
     the most recent sample. The cache is consulted by
-    :meth:`restart_trigger_event` to derive the *before* capacity without
-    requiring the caller to thread the previous round's n_cap through the
-    call site. The sampler never writes a ``beta`` value — the channel rule
-    is the only consumer allowed to translate capacity into ``beta``.
+    :meth:`compute_restart_event` (and the legacy
+    :meth:`restart_trigger_event` wrapper) to derive the *before* capacity
+    without requiring the caller to thread the previous round's n_cap
+    through the call site. The sampler never writes a ``beta`` value — the
+    channel rule is the only consumer allowed to translate capacity into
+    ``beta``.
 
     Invariants:
 
     * ``self.last_sample`` is the most recent :class:`CosineScheduleSample`
-      emitted by :meth:`sample`. It is ``None`` until the first sample is
-      taken and is updated atomically by :meth:`sample` and
-      :meth:`restart_trigger_event`.
+      emitted by :meth:`sample` or committed via
+      :meth:`record_restart_event`. It is ``None`` until the first sample
+      is taken.
+    * :meth:`compute_restart_event` is **pure** w.r.t. ``self._last_sample``:
+      it reads ``self._last_sample`` for ``noise_capacity_before`` and
+      computes a fresh after-sample internally, but does NOT mutate the
+      cache. Two consecutive ``compute_restart_event`` calls with identical
+      arguments see the same ``self._last_sample`` value (BEFORE state on
+      both calls).
+    * :meth:`record_restart_event` commits the after-sample embedded in a
+      previously-computed event to ``self._last_sample``. It is idempotent:
+      calling it twice with the same event leaves ``self._last_sample``
+      equal to the embedded sample both times.
     * The sampler never mutates ``config``; it is a frozen dataclass.
     """
 
@@ -454,18 +466,73 @@ class CosineScheduleSampler:
         recorded_at_round: int | None = None,
         provenance: ProvenanceChain | None = None,
     ) -> RestartTriggerEvent:
-        """Build a :class:`RestartTriggerEvent` with before/after capacities.
+        """Back-compat wrapper around :meth:`compute_restart_event` +
+        :meth:`record_restart_event`.
+
+        .. deprecated::
+            This convenience wrapper is retained for backward compatibility
+            only. New code should call :meth:`compute_restart_event` (pure)
+            first, then :meth:`record_restart_event` (mutation) explicitly,
+            so the mutating boundary is visible at the call site. The
+            wrapper hides the split, which is exactly the algorithmic gap
+            (B1) the split was introduced to expose.
+
+        Behaviorally equivalent to the pre-split single call: it builds
+        the event via :meth:`compute_restart_event` and commits the
+        embedded after-sample to ``self._last_sample`` via
+        :meth:`record_restart_event` before returning the event.
+
+        See :meth:`compute_restart_event` for argument and validation
+        semantics.
+        """
+        event = self.compute_restart_event(
+            trigger_code,
+            outer_cycle_id_old,
+            outer_cycle_id_new,
+            discarded_bundle_ids,
+            trigger_metric_snapshot,
+            unresolved_metric_deficit,
+            target_round=target_round,
+            recorded_at_round=recorded_at_round,
+            provenance=provenance,
+        )
+        self.record_restart_event(event)
+        return event
+
+    def compute_restart_event(
+        self,
+        trigger_code: RestartTriggerCode,
+        outer_cycle_id_old: int,
+        outer_cycle_id_new: int,
+        discarded_bundle_ids: tuple[BundleId, ...],
+        trigger_metric_snapshot: Mapping[str, float],
+        unresolved_metric_deficit: Mapping[str, float],
+        *,
+        target_round: int | None = None,
+        recorded_at_round: int | None = None,
+        provenance: ProvenanceChain | None = None,
+    ) -> RestartTriggerEvent:
+        """Build a :class:`RestartTriggerEvent` WITHOUT mutating
+        ``self._last_sample`` (B1 fix: purity boundary).
 
         ``noise_capacity_before`` is taken from the most recent
         :meth:`sample` call (or ``config.n_max`` if no sample was taken
-        yet). ``noise_capacity_after`` is taken by actually sampling at the
-        start of the new cycle: ``(outer_cycle_id_new, round_in_cycle=0)``,
-        which yields ``n_max`` for every closed-form family. The *after*
-        sample becomes the new cached last sample so subsequent calls see
-        the correct baseline.
+        yet). ``noise_capacity_after`` is taken by sampling at the start
+        of the new cycle — ``(outer_cycle_id_new, round_in_cycle=0)``,
+        which yields ``n_max`` for every closed-form family — **but the
+        sample is NOT cached on the sampler**. The after-sample is
+        embedded as a private ``_after_sample`` attribute on the returned
+        event so that :meth:`record_restart_event` can commit it later.
 
-        ``recorded_at_round`` defaults to the most recent sample's
-        ``computed_at_round`` (or ``0`` if no sample was taken).
+        Two consecutive ``compute_restart_event`` calls with identical
+        arguments therefore see the same ``self._last_sample`` value
+        (BEFORE state on both calls). This is the gap B1 fix: callers can
+        now reason about the schedule without the sampler silently
+        rewinding its own baseline.
+
+        ``recorded_at_round`` defaults to ``target_round``, which itself
+        defaults to the most recent sample's ``computed_at_round`` (or
+        ``0`` if no sample was taken).
 
         The ``provenance`` argument is optional and defaults to an empty
         :data:`ProvenanceChain`; the caller is expected to thread a
@@ -498,7 +565,8 @@ class CosineScheduleSampler:
         else:
             target_round = _coerce_int_nonneg(target_round, "target_round")
 
-        # noise_capacity_before: from cached last sample, or n_max fallback.
+        # noise_capacity_before: from cached last sample (READ-ONLY), or
+        # n_max fallback. We deliberately do NOT mutate self._last_sample.
         if self._last_sample is not None:
             noise_capacity_before = self._last_sample.n_cap
         else:
@@ -506,8 +574,11 @@ class CosineScheduleSampler:
                 _clip_unit_finite(_coerce_factor_value(self._config.n_max))
             )
 
-        # noise_capacity_after: actual sample at (cycle_new, 0, target_round).
-        after_sample = self.sample(outer_cycle_id_new, 0, target_round)
+        # noise_capacity_after: sample at (cycle_new, 0, target_round) but
+        # DO NOT cache the sample on the sampler.
+        after_sample = self._build_sample_without_cache(
+            outer_cycle_id_new, 0, target_round
+        )
         noise_capacity_after = after_sample.n_cap
 
         # recorded_at_round: prefer explicit kwarg, else target_round.
@@ -536,7 +607,7 @@ class CosineScheduleSampler:
             )
         )
 
-        return RestartTriggerEvent(
+        event = RestartTriggerEvent(
             trigger_id=trigger_id,
             outer_cycle_id_old=outer_cycle_id_old,
             outer_cycle_id_new=outer_cycle_id_new,
@@ -553,6 +624,79 @@ class CosineScheduleSampler:
             ),
             recorded_at_round=recorded_at_round,
         )
+        # Embed the after-sample as a private attribute on the event so
+        # :meth:`record_restart_event` can commit it later. The dataclass
+        # is frozen, so we bypass the freeze via object.__setattr__; this
+        # does not affect equality or hash of the event (the public
+        # fields are unchanged).
+        object.__setattr__(event, "_after_sample", after_sample)
+        return event
+
+    def _build_sample_without_cache(
+        self,
+        outer_cycle_id: int,
+        round_in_cycle: int,
+        target_round: int,
+    ) -> CosineScheduleSample:
+        """Build a :class:`CosineScheduleSample` without writing
+        ``self._last_sample``.
+
+        Mirrors the construction in :meth:`sample` but does not mutate
+        the sampler's cache. Used by :meth:`compute_restart_event` to
+        derive ``noise_capacity_after` for a fresh cycle while
+        preserving the *before* baseline for the caller.
+        """
+        outer_cycle_id = _coerce_int_nonneg(outer_cycle_id, "outer_cycle_id")
+        target_round = _coerce_int_nonneg(target_round, "target_round")
+
+        n_cap = n_cap_for_round(self._config, round_in_cycle)
+        L = int(self._config.cycle_length)
+        u_r = float(round_in_cycle) / max(L - 1, 1)
+
+        return CosineScheduleSample(
+            schedule_hash=ArtifactHash(str(self._config.config_hash)),
+            outer_cycle_id=outer_cycle_id,
+            round_in_cycle=int(round_in_cycle),
+            cycle_length=int(L),
+            n_cap=n_cap,
+            n_min=FactorValue(_coerce_factor_value(self._config.n_min)),
+            n_max=FactorValue(_coerce_factor_value(self._config.n_max)),
+            u_r=u_r,
+            family=str(self._config.schedule_family),
+            computed_at_round=target_round,
+        )
+
+    def record_restart_event(self, event: RestartTriggerEvent) -> None:
+        """Commit the after-sample embedded in ``event`` to
+        ``self._last_sample`` (B1 fix: explicit mutation boundary).
+
+        The event MUST have been produced by :meth:`compute_restart_event`
+        (or the legacy :meth:`restart_trigger_event` wrapper); it carries
+        the after-sample as a private ``_after_sample`` attribute. If the
+        attribute is missing, the event did not originate from the
+        scheduler and the call is rejected so a stray caller cannot
+        silently overwrite ``self._last_sample`` with a bogus value.
+
+        Idempotent w.r.t. ``event``: calling this method twice with the
+        same event leaves ``self._last_sample`` equal to the embedded
+        sample both times. The after-sample object is preserved across
+        calls, so ``self._last_sample is event._after_sample`` holds
+        before and after a no-op repeat.
+
+        Raises:
+            ValueError: ``event`` does not carry an ``_after_sample``
+                attribute (i.e. it was not produced by
+                :meth:`compute_restart_event`).
+        """
+        after_sample = getattr(event, "_after_sample", None)
+        if after_sample is None:
+            raise ValueError(
+                "RestartTriggerEvent was not produced by "
+                "CosineScheduleSampler.compute_restart_event; missing "
+                "_after_sample attribute. Refusing to mutate "
+                "self._last_sample with an untrusted event."
+            )
+        self._last_sample = after_sample
 
 
 # ---------------------------------------------------------------------------

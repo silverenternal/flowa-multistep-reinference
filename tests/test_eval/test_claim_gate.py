@@ -273,6 +273,65 @@ class TestClaimGateAllOrNothing:
         assert evaluation.decision in ("promote", "rollback", "defer")
         assert evaluation.decision == "defer"
 
+    def test_evaluate_claim_gate_returns_defer_with_passed_failed(self):
+        """Gap B3: evaluator surfaces non-empty passed/failed tuples.
+
+        Construct a scenario where one structural condition passes and
+        another fails (so both ``gate_conditions_passed`` and
+        ``gate_conditions_failed`` are non-empty) and assert the
+        decision is still ``"defer"``.
+        """
+        from adaptive_reflow.eval.claim_gate import _resolve_decision
+        config = _enabled_config()
+        evidence = _passing_evidence()
+        # Force a single contract failure so both passed and failed
+        # tuples are non-empty.
+        evidence["contract_b"] = {"passed": False, "summary": "fail"}
+        evaluation = evaluate_claim_gate(
+            config, evidence, evaluated_at_round=12
+        )
+        assert evaluation.decision == "defer"
+        assert evaluation.gate_conditions_passed, (
+            "expected non-empty gate_conditions_passed"
+        )
+        assert evaluation.gate_conditions_failed, (
+            "expected non-empty gate_conditions_failed"
+        )
+        # The decision is delegated to _resolve_decision.
+        assert evaluation.decision == _resolve_decision(
+            passed=evaluation.gate_conditions_passed,
+            failed=evaluation.gate_conditions_failed,
+        )
+
+    def test_resolve_decision_signature_is_stable(self):
+        """Gap B3: ``_resolve_decision`` signature is the R7 wire-point.
+
+        The helper must be callable from outside the module (no name
+        mangling) with the documented signature and must always
+        return ``"defer"`` today. When R7 lands, only the helper
+        body changes — every caller continues to work unchanged.
+        """
+        from adaptive_reflow.eval.claim_gate import _resolve_decision
+        assert callable(_resolve_decision)
+        # Empty tuples -> still defers.
+        assert _resolve_decision(passed=(), failed=()) == "defer"
+        # Non-empty tuples -> still defers today.
+        assert (
+            _resolve_decision(
+                passed=("contract:contract_a",),
+                failed=("contract_failed:contract_b",),
+            )
+            == "defer"
+        )
+        # Keyword-only style mirrors what ``evaluate_claim_gate`` uses.
+        assert (
+            _resolve_decision(
+                passed=tuple(sorted(["contract:contract_a"])),
+                failed=tuple(sorted(["contract_failed:contract_b"])),
+            )
+            == "defer"
+        )
+
     def test_evaluation_summary_contains_required_fields(self):
         config = _enabled_config()
         evidence = _passing_evidence()

@@ -23,7 +23,7 @@ Module boundary
   :class:`MoleculeStratum` / :class:`MoleculeStratumAssignment` /
   :func:`dominance_ratio` / :func:`cross_stratum_mix_rejected`.
 * :mod:`adaptive_reflow.molecular.mixer` —
-  :class:`RMSPreservingCoordinateMixer` (concrete ``RestartMixer``)
+  :class:`EqualRmsCoordinateMixer` (concrete ``RestartMixer``)
   + back-compat :func:`adaptive_reflow_memory_restart_coords`.
 * :mod:`adaptive_reflow.molecular.calibration_protocols` — concrete
   :class:`Evaluator` implementations for the four molecule evaluator
@@ -57,7 +57,8 @@ Pure-data carriers
     :class:`MoleculeStratumAssignment`
 
 Restart mixer (concrete ``RestartMixer`` Protocol)
-    :class:`RMSPreservingCoordinateMixer`
+    :class:`EqualRmsCoordinateMixer`
+    :class:`RMSPreservingCoordinateMixer` (deprecated alias)
     :func:`adaptive_reflow_memory_restart_coords`
 
 Evaluator factories (concrete ``Evaluator`` Protocol)
@@ -137,6 +138,8 @@ from .envelope import (
     validate_molecule_tail_budget_row,
 )
 from .mixer import (
+    MIXER_RMS_PRECEDENCE_FAIL,
+    EqualRmsCoordinateMixer,
     RestartMemoryState,
     RMSPreservingCoordinateMixer,
     adaptive_reflow_memory_restart_coords,
@@ -330,8 +333,10 @@ __all__ = [
     "dominance_ratio",
     "cross_stratum_mix_rejected",
     # Restart mixer
+    "EqualRmsCoordinateMixer",
     "RMSPreservingCoordinateMixer",
     "RestartMemoryState",
+    "MIXER_RMS_PRECEDENCE_FAIL",
     "adaptive_reflow_memory_restart_coords",
     "require_torch",
     # Concrete Evaluator classes

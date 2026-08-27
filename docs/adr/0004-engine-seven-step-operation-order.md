@@ -92,11 +92,10 @@ Negative:
 
 The decision is confirmed when:
 
-* `tests/frame/test_engine.py` asserts the literal value of
+* `tests/test_frame/test_engine.py` asserts the literal value of
   `DEFAULT_OPERATION_STEPS` (a tuple-equality test).
-* `tests/property/test_operation_order_invariants.py` (if added)
-  asserts that `replay_default_order` produces the same step names
-  in the same order.
+* A property test (when added) asserts that `replay_default_order`
+  produces the same step names in the same order.
 * The bench budget for `engine_round_loop` references the seven-step
   sequence by name (see `docs/PERFORMANCE_BUDGETS.md`).
 
@@ -111,3 +110,14 @@ The decision is confirmed when:
   pinned tuple constant.
 * `adaptive_reflow/contracts/operations.py::OperationCompositionContract`
   — the migration marker that bumps when the order changes.
+
+## Related Future ADRs
+
+* **ADR-0008 (planned)** — *Claim-gate deferral placeholder.* The
+  DTB-R8 claim gate's structural evaluator currently always returns
+  ``"defer"`` (see `adaptive_reflow/eval/claim_gate.py`). The
+  promote/rollback branches depend on R7 GPU data which has not
+  landed yet. The future ADR will author the R7 wiring for the
+  module-level ``_resolve_decision(passed, failed) -> ClaimGateDecision``
+  helper, which is exposed today precisely so that R7 wiring becomes a
+  one-line body replacement rather than a public-surface change.

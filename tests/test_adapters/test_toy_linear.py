@@ -175,5 +175,124 @@ class TestToyLinearFailClosed:
             adapter.apply_restart_distribution(s, policy)
 
 
+# ---------------------------------------------------------------------------
+# Gap B2: engine must absorb adapter exceptions via _safe_adapter_call
+# ---------------------------------------------------------------------------
+
+
+def test_adapter_raising_in_solve_ode_emits_audit() -> None:
+    """Gap B2: a misbehaving ``solve_ode`` (raises ``RuntimeError``)
+    must not propagate out of ``run_round``; the engine must emit
+    ``ERR_ADAPTER_RAISED:solve_ode:RuntimeError`` in
+    ``round_trace.audit_codes`` and return a fail-closed
+    :class:`EngineRoundResult` instead of crashing.
+
+    The toy-linear adapter does NOT advertise ``has_restart_boundary``
+    or ``has_condition_injection``, so the engine cannot drive a happy
+    path through it without mocking. We instead exercise the engine's
+    :func:`_safe_adapter_call` wrapper by subclassing the synthetic
+    continuous adapter and raising inside ``solve_ode``.
+    """
+    from adaptive_reflow.adapters import SyntheticContinuousAdapter
+    from adaptive_reflow.frame import (
+        ERR_ADAPTER_RAISED,
+        ERR_INTEGRATOR_TRACE_MISSING,
+        Engine,
+        EngineRoundResult,
+    )
+
+    class _RaisingAdapter(SyntheticContinuousAdapter):
+        """Synthetic continuous adapter that raises on ``solve_ode``."""
+
+        def solve_ode(self, state, condition, *, seed):  # type: ignore[override]
+            raise RuntimeError("simulated solver explosion")
+
+    # Build a valid bundle / policy / phase-state the engine accepts.
+    adapter = _RaisingAdapter()
+    s = adapter.build_initial_state(
+        batch_id="batch-1", sample_id="sample-1"
+    )
+    # Build a minimal FinalRestartPolicy directly (avoids importing the
+    # test-frame helpers).
+    from dataclasses import replace as _dc_replace
+
+    from adaptive_reflow.contracts import (
+        ArtifactHash,
+        ChannelName,
+        FactorValue,
+        LedgerRowId,
+        PolicyId,
+        RunId,
+    )
+    from adaptive_reflow.contracts.authority import FinalRestartPolicy as FRP
+    from adaptive_reflow.contracts.hashes import hash_policy_hash
+
+    policy_no_hash = FRP(
+        policy_id=PolicyId("policy-raise"),
+        writer_id="test",
+        run_id=RunId("run-1"),
+        target_round=1,
+        outer_cycle_id=0,
+        beta_by_channel={ChannelName("coordinate"): FactorValue(0.0)},
+        alpha_by_channel={ChannelName("coordinate"): FactorValue(1.0)},
+        fresh_noise_floor_by_channel={
+            ChannelName("coordinate"): FactorValue(0.0)
+        },
+        schedule_sample=None,
+        freeze_admission_by_channel={ChannelName("coordinate"): True},
+        ledger_row_id=LedgerRowId("lr-raise"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+    )
+    policy = _dc_replace(
+        policy_no_hash, policy_hash=hash_policy_hash(policy_no_hash)
+    )
+
+    delta = ODEConditionDelta(
+        delta_spec={"coordinate": "1.0"},
+        source="test",
+        target_round=1,
+        calibration_artifact_hash="a" * 64,
+    )
+
+    engine = Engine()
+    result = engine.run_round(
+        round_index=1,
+        phase_state=engine_handshake_dummy_phase_state(),
+        bundle=s,
+        adapter=adapter,
+        policy=policy,
+        condition_delta=delta,
+    )
+    assert isinstance(result, EngineRoundResult)
+    codes = result.round_trace.audit_codes
+    # The adapter-raised audit code is present (step_name + exc type).
+    assert any(
+        c.startswith(ERR_ADAPTER_RAISED + ":solve_ode:RuntimeError")
+        for c in codes
+    ), f"expected ERR_ADAPTER_RAISED:solve_ode:RuntimeError in {codes!r}"
+    # Engine never reached the trace-validation gate.
+    assert ERR_INTEGRATOR_TRACE_MISSING in codes
+    # Round is fail-closed: detached=False, integrator_trace=None.
+    assert result.round_trace.detached is False
+    assert result.round_trace.integrator_trace is None
+
+
+def engine_handshake_dummy_phase_state():
+    """Local helper: build the engine-side ``PhaseState`` used by the
+    above Gap B2 test without importing test-frame helpers."""
+    from adaptive_reflow.frame import PhaseState
+
+    return PhaseState(
+        outer_cycle_id=0,
+        round_in_cycle=0,
+        schedule_phase="high_noise",
+        schedule_phase_index=0,
+        horizon_remaining=2,
+        seed_lineage_digest="seed-lineage-placeholder",
+        recorded_at_round=0,
+    )
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-x", "--no-header", "-q"]))

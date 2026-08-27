@@ -88,15 +88,19 @@ ERR_BUNDLE_INVALID: str = "bundle_validation_failed"
 ERR_POLICY_NONE: str = "policy_must_not_be_none"
 ERR_PHASE_STATE_NONE: str = "phase_state_must_not_be_none"
 ERR_ROUND_INDEX_NEGATIVE: str = "round_index_must_be_non_negative"
+ERR_ROUND_INDEX_NON_INT: str = "round_index_must_be_int"
 ERR_ADAPTER_NONE: str = "adapter_must_not_be_none"
 ERR_CAPABILITIES_INVALID: str = "capabilities_invalid"
 ERR_CHANNEL_UNSUPPORTED: str = "channel_not_in_supported_channels"
 ERR_CHANNEL_DOMAIN_MISMATCH: str = "channel_domain_mismatch"
+ERR_CHANNEL_DOMAIN_UNDECLARED: str = "channel_domain_undeclared"
 ERR_DETACH_PROOF_FAILED: str = "endpoint_not_detached"
 ERR_CONDITION_DELTA_NO_EFFECT: str = "condition_delta_no_effect"
 ERR_INTEGRATOR_TRACE_MISSING: str = "integrator_trace_missing"
 ERR_SHAPE_FRAME_NORMALIZATION_MISMATCH: str = "shape_frame_normalization_mismatch"
 ERR_FEATURE_DISABLED: str = "feature_flag_disabled"
+ERR_ADAPTER_RAISED: str = "adapter_raised_exception"
+ERR_SOURCE_ROUND_NON_INT: str = "source_round_must_be_int"
 
 
 # ---------------------------------------------------------------------------
@@ -243,9 +247,21 @@ def _digest(payload: Any) -> str:
 
 
 def _digest_state(bundle: StateBundle | None) -> str:
-    """Return a deterministic digest for ``bundle`` (or empty-string sentinel)."""
+    """Return a deterministic digest for ``bundle`` (or empty-string sentinel).
+
+    ``bundle.source_round`` is coerced defensively: a non-int / negative
+    value would otherwise raise ``TypeError`` here before the engine has
+    a chance to emit ``ERR_SOURCE_ROUND_NON_INT``. The coercion is
+    silent at this level because audit emission lives in
+    :func:`_coerce_nonneg_int`; this function only owns the digest.
+    """
     if bundle is None:
         return ""
+    sr = bundle.source_round
+    if isinstance(sr, bool) or not isinstance(sr, int) or sr < 0:
+        sr_repr = type(sr).__name__
+    else:
+        sr_repr = str(sr)
     payload = {
         "channels": {k: str(v) for k, v in sorted(bundle.channels.items())},
         "masks": {k: str(v) for k, v in sorted(bundle.masks.items())},
@@ -253,7 +269,7 @@ def _digest_state(bundle: StateBundle | None) -> str:
         "sample_id": str(bundle.sample_id),
         "reference_frame": str(bundle.reference_frame),
         "normalization": str(bundle.normalization),
-        "source_round": int(bundle.source_round),
+        "source_round": sr_repr,
         "detach_proof": bool(bundle.detach_proof),
         "native_state_digest": str(bundle.native_state_digest),
         "provenance": list(bundle.provenance),
@@ -317,6 +333,81 @@ def _next_phase_state(current: PhaseState, *, round_index: int) -> PhaseState:
         seed_lineage_digest=str(current.seed_lineage_digest),
         recorded_at_round=int(round_index),
     )
+
+
+def _coerce_nonneg_int(
+    value: Any,
+    name: str,
+    audit_codes: list[str],
+    default: int = 0,
+) -> int:
+    """Coerce ``value`` to a non-negative ``int`` with audit-trail errors.
+
+    The helper is the single boundary at which the engine tolerates
+    non-int / negative ``round_index`` and ``source_round`` values:
+    it appends a fail-closed audit code (``ERR_ROUND_INDEX_NON_INT`` /
+    ``ERR_SOURCE_ROUND_NON_INT`` for non-int, ``ERR_ROUND_INDEX_NEGATIVE``
+    for negative ``round_index``) and returns ``default`` so downstream
+    ledger-row digest computation always has a valid int.
+    """
+    # bool is a subclass of int in Python — treat as non-int explicitly.
+    if isinstance(value, bool) or not isinstance(value, int):
+        code = ERR_ROUND_INDEX_NON_INT if name == "round_index" else ERR_SOURCE_ROUND_NON_INT
+        audit_codes.append(f"{code}:{name}:{type(value).__name__}")
+        return default
+    if value < 0:
+        # Negative ints are only meaningful for ``round_index``; for
+        # ``source_round`` we still surface the canonical
+        # ERR_SOURCE_ROUND_NON_INT code (the contract is "must be int").
+        if name == "round_index":
+            audit_codes.append(ERR_ROUND_INDEX_NEGATIVE)
+        else:
+            audit_codes.append(ERR_SOURCE_ROUND_NON_INT + f":{name}:negative")
+        return default
+    return int(value)
+
+
+def _safe_source_round(bundle: StateBundle | None, audit_codes: list[str]) -> int:
+    """Return ``bundle.source_round`` as a non-negative ``int``.
+
+    Single-call site used at every :class:`LedgerRow` construction in
+    the engine: handles ``None`` bundles (returns ``0``), non-int
+    ``source_round`` values (emits ``ERR_SOURCE_ROUND_NON_INT`` and
+    returns ``0``), and never raises. The accompanying :func:`_digest_state`
+    is also defensive against malformed bundles; this helper exists so
+    the ledger row's ``source_round`` field itself stays an ``int``.
+    """
+    if bundle is None:
+        return 0
+    return _coerce_nonneg_int(
+        getattr(bundle, "source_round", 0), "source_round", audit_codes
+    )
+
+
+def _safe_adapter_call(
+    step_name: str,
+    audit_codes: list[str],
+    fn: Any,
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    """Wrap an adapter call so a stray ``Exception`` cannot crash the round.
+
+    On any raised exception, append
+    ``f"{ERR_ADAPTER_RAISED}:{step_name}:{ExceptionType}:{message[:80]}"``
+    to ``audit_codes`` and return ``None``. The engine then emits a
+    fail-closed round trace rather than propagating the exception to the
+    caller. ``Exception`` (not ``BaseException``) is intentional:
+    ``KeyboardInterrupt`` / ``SystemExit`` must still propagate.
+    """
+    try:
+        return fn(*args, **kwargs)
+    except Exception as exc:
+        message = str(exc)[:80]
+        audit_codes.append(
+            f"{ERR_ADAPTER_RAISED}:{step_name}:{type(exc).__name__}:{message}"
+        )
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -402,6 +493,83 @@ class Engine:
                 raise CapabilityMissingError(required, context="Engine.handshake")
         return caps
 
+    @staticmethod
+    def _emit_fail_closed(
+        *,
+        round_index: int,
+        bundle: StateBundle,
+        audit_codes: list[str],
+        applied_policy_hash: str,
+        phase_state: PhaseState,
+        initial_state: StateBundle | None,
+        composed: ODEConditionDelta | None,
+        integrator_trace: ODEIntegratorTrace | None,
+        detached: StateBundle | None,
+        condition_delta: ODEConditionDelta | None,
+    ) -> EngineRoundResult:
+        """Build a fail-closed :class:`EngineRoundResult` for the happy path.
+
+        Invoked from :meth:`run_round` whenever one of the six
+        :func:`_safe_adapter_call` wrappers returns ``None`` (the adapter
+        raised, was misbehaved, or returned an unexpected ``None``).
+        The audit trail already carries the
+        :data:`ERR_ADAPTER_RAISED` / :data:`ERR_INTEGRATOR_TRACE_MISSING`
+        code; this helper only packages the round trace and ledger row
+        so the caller can return without further branching. The ledger
+        ``source_round`` is sourced through :func:`_coerce_nonneg_int`
+        so a malformed bundle never raises here either.
+        """
+        # Coerce source_round BEFORE freezing the audit_codes tuple so a
+        # malformed bundle surfaces ERR_SOURCE_ROUND_NON_INT in both the
+        # RoundTrace and the LedgerRow (closes Gap C3 in the fail-closed
+        # adapter-raised path).
+        _coerce_nonneg_int(
+            getattr(bundle, "source_round", 0), "source_round", audit_codes
+        )
+        codes = tuple(audit_codes)
+        trace = RoundTrace(
+            round_index=int(round_index),
+            operation_steps=DEFAULT_OPERATION_STEPS,
+            source_bundle_digest=_digest_state(bundle),
+            applied_policy_hash=applied_policy_hash,
+            initial_state_digest=(
+                _digest_state(initial_state) if initial_state is not None else ""
+            ),
+            condition_digest=_digest_condition(composed)
+            if composed is not None
+            else _digest_condition(condition_delta),
+            integrator_trace=integrator_trace,
+            endpoint_digest=(
+                _digest_state(detached) if detached is not None else ""
+            ),
+            detached=bool(detached.detach_proof) if detached is not None else False,
+            audit_codes=codes,
+            extras={"feature_flag": True, "engine_version": ENGINE_VERSION},
+        )
+        ledger = LedgerRow(
+            ledger_row_id=_ledger_row_id(
+                round_index, applied_policy_hash, _digest_state(bundle)
+            ),
+            round_index=int(round_index),
+            source_round=int(bundle.source_round)
+            if isinstance(getattr(bundle, "source_round", 0), int)
+            and not isinstance(getattr(bundle, "source_round", 0), bool)
+            and getattr(bundle, "source_round", 0) >= 0
+            else 0,
+            target_round=int(round_index),
+            applied_policy_hash=applied_policy_hash,
+            selected_bundle_digest=_digest_state(bundle),
+            audit_codes=codes,
+            per_channel_decision={},
+        )
+        next_state = _next_phase_state(phase_state, round_index=round_index)
+        return EngineRoundResult(
+            round_trace=trace,
+            next_phase_state=next_state,
+            ledger_row=ledger,
+            applied_policy_hash=applied_policy_hash,
+        )
+
     def run_round(
         self,
         round_index: int,
@@ -472,8 +640,22 @@ class Engine:
         * ``feature_flag_disabled``
         """
         audit_codes: list[str] = []
+        # Coerce round_index BEFORE the feature-flag check so the
+        # short-circuit path always sees a non-negative int (closes
+        # Gap A4: int(round_index) on a negative value would propagate
+        # a negative digest seed; on a bool it would silently coerce
+        # to 0/1 without emitting any audit code).
+        round_index = _coerce_nonneg_int(
+            round_index, "round_index", audit_codes
+        )
         if not self._feature_flag:
             audit_codes.append(ERR_FEATURE_DISABLED)
+            # Coerce source_round BEFORE capturing audit_codes into the
+            # RoundTrace so a malformed bundle surfaces ERR_SOURCE_ROUND_NON_INT
+            # consistently across both carriers.
+            _coerce_nonneg_int(
+                getattr(bundle, "source_round", 0), "source_round", audit_codes
+            )
             trace = RoundTrace(
                 round_index=int(round_index),
                 operation_steps=self._operation_steps,
@@ -490,7 +672,7 @@ class Engine:
             ledger = LedgerRow(
                 ledger_row_id=_ledger_row_id(round_index, "", _digest_state(bundle)),
                 round_index=int(round_index),
-                source_round=int(bundle.source_round) if bundle is not None else 0,
+                source_round=_safe_source_round(bundle, audit_codes),
                 target_round=int(round_index),
                 applied_policy_hash="",
                 selected_bundle_digest=_digest_state(bundle),
@@ -510,11 +692,6 @@ class Engine:
             raise RuntimeError(ERR_ADAPTER_NONE)
         if phase_state is None:
             audit_codes.append(ERR_PHASE_STATE_NONE)
-        if isinstance(round_index, bool) or not isinstance(round_index, int):
-            audit_codes.append(ERR_ROUND_INDEX_NEGATIVE)
-            round_index = 0
-        elif round_index < 0:
-            audit_codes.append(ERR_ROUND_INDEX_NEGATIVE)
         if policy is None:
             audit_codes.append(ERR_POLICY_NONE)
         if bundle is None:
@@ -550,8 +727,26 @@ class Engine:
                     expected = _channel_domain_lookup(channel, caps)
                     advertised_continuous = caps.has_continuous_channels
                     advertised_discrete = caps.has_discrete_channels
-                    if expected == "continuous" and not advertised_continuous or expected == "discrete" and not advertised_discrete:
-                        audit_codes.append(f"{ERR_CHANNEL_DOMAIN_MISMATCH}:{channel}")
+                    if expected is None:
+                        # Channel is in ``supported_channels`` but the
+                        # adapter did NOT declare a domain in
+                        # ``caps.channel_domains``. The old code
+                        # silently passed this case (the adapter could
+                        # advertise any domain); the new code emits
+                        # ``ERR_CHANNEL_DOMAIN_UNDECLARED`` so the
+                        # downstream consumer can surface the gap
+                        # (closes Gap A5).
+                        audit_codes.append(
+                            f"{ERR_CHANNEL_DOMAIN_UNDECLARED}:{channel}"
+                        )
+                    elif (
+                        expected == "continuous" and not advertised_continuous
+                    ) or (
+                        expected == "discrete" and not advertised_discrete
+                    ):
+                        audit_codes.append(
+                            f"{ERR_CHANNEL_DOMAIN_MISMATCH}:{channel}"
+                        )
 
         # Fail closed on missing condition delta.
         if condition_delta is None:
@@ -565,6 +760,13 @@ class Engine:
 
         # Short-circuit native calls when gates already fired.
         if audit_codes:
+            # Coerce source_round BEFORE freezing the audit_codes into
+            # the RoundTrace / LedgerRow tuples so any ERR_SOURCE_ROUND_NON_INT
+            # lands in both carriers (closes Gap C3: a malformed bundle
+            # must surface the audit code consistently).
+            _coerce_nonneg_int(
+                getattr(bundle, "source_round", 0), "source_round", audit_codes
+            )
             trace = RoundTrace(
                 round_index=int(round_index),
                 operation_steps=self._operation_steps,
@@ -581,7 +783,7 @@ class Engine:
             ledger = LedgerRow(
                 ledger_row_id=_ledger_row_id(round_index, applied_policy_hash, _digest_state(bundle)),
                 round_index=int(round_index),
-                source_round=int(bundle.source_round) if bundle is not None else 0,
+                source_round=_safe_source_round(bundle, audit_codes),
                 target_round=int(round_index),
                 applied_policy_hash=applied_policy_hash,
                 selected_bundle_digest=_digest_state(bundle),
@@ -602,17 +804,72 @@ class Engine:
         assert policy is not None  # noqa: S101 — fail-closed precondition
         assert condition_delta is not None  # noqa: S101 — fail-closed precondition
 
-        # 1. Build initial state.
-        initial_state = adapter.build_initial_state(
+        # 1. Build initial state. Wrapped in _safe_adapter_call so a
+        #    misbehaving adapter never crashes the round (Gap B2).
+        initial_state = _safe_adapter_call(
+            "build_initial_state",
+            audit_codes,
+            adapter.build_initial_state,
             batch_id=bundle.batch_id,
             sample_id=bundle.sample_id,
         )
+        if initial_state is None:
+            return self._emit_fail_closed(
+                round_index=round_index,
+                bundle=bundle,
+                audit_codes=audit_codes,
+                applied_policy_hash=applied_policy_hash,
+                phase_state=phase_state,
+                initial_state=None,
+                composed=None,
+                integrator_trace=None,
+                detached=None,
+                condition_delta=condition_delta,
+            )
 
         # 2. Apply restart distribution (beta=0 preserves the prior).
-        post_state = adapter.apply_restart_distribution(initial_state, policy)
+        post_state = _safe_adapter_call(
+            "apply_restart_distribution",
+            audit_codes,
+            adapter.apply_restart_distribution,
+            initial_state,
+            policy,
+        )
+        if post_state is None:
+            return self._emit_fail_closed(
+                round_index=round_index,
+                bundle=bundle,
+                audit_codes=audit_codes,
+                applied_policy_hash=applied_policy_hash,
+                phase_state=phase_state,
+                initial_state=initial_state,
+                composed=None,
+                integrator_trace=None,
+                detached=None,
+                condition_delta=condition_delta,
+            )
 
         # 3. Compose condition.
-        composed = adapter.compose_condition(post_state, condition_delta)
+        composed = _safe_adapter_call(
+            "compose_condition",
+            audit_codes,
+            adapter.compose_condition,
+            post_state,
+            condition_delta,
+        )
+        if composed is None:
+            return self._emit_fail_closed(
+                round_index=round_index,
+                bundle=bundle,
+                audit_codes=audit_codes,
+                applied_policy_hash=applied_policy_hash,
+                phase_state=phase_state,
+                initial_state=initial_state,
+                composed=None,
+                integrator_trace=None,
+                detached=None,
+                condition_delta=condition_delta,
+            )
 
         # 4. Shape / frame / normalization mismatch gate.
         # The adapter must produce a condition whose target_round matches
@@ -624,6 +881,9 @@ class Engine:
         )
         if not composed_ok:
             audit_codes.append(ERR_SHAPE_FRAME_NORMALIZATION_MISMATCH)
+            _coerce_nonneg_int(
+                getattr(bundle, "source_round", 0), "source_round", audit_codes
+            )
             trace = RoundTrace(
                 round_index=int(round_index),
                 operation_steps=self._operation_steps,
@@ -640,7 +900,7 @@ class Engine:
             ledger = LedgerRow(
                 ledger_row_id=_ledger_row_id(round_index, applied_policy_hash, _digest_state(bundle)),
                 round_index=int(round_index),
-                source_round=int(bundle.source_round),
+                source_round=_safe_source_round(bundle, audit_codes),
                 target_round=int(round_index),
                 applied_policy_hash=applied_policy_hash,
                 selected_bundle_digest=_digest_state(bundle),
@@ -656,38 +916,27 @@ class Engine:
             )
 
         # 5. Solve the ODE.
-        integrator_trace = adapter.solve_ode(post_state, composed, seed=int(seed))
+        integrator_trace = _safe_adapter_call(
+            "solve_ode",
+            audit_codes,
+            adapter.solve_ode,
+            post_state,
+            composed,
+            seed=int(seed),
+        )
         if integrator_trace is None:
             audit_codes.append(ERR_INTEGRATOR_TRACE_MISSING)
-            trace = RoundTrace(
-                round_index=int(round_index),
-                operation_steps=self._operation_steps,
-                source_bundle_digest=_digest_state(bundle),
+            return self._emit_fail_closed(
+                round_index=round_index,
+                bundle=bundle,
+                audit_codes=audit_codes,
                 applied_policy_hash=applied_policy_hash,
-                initial_state_digest=_digest_state(initial_state),
-                condition_digest=_digest_condition(composed),
+                phase_state=phase_state,
+                initial_state=initial_state,
+                composed=composed,
                 integrator_trace=None,
-                endpoint_digest="",
-                detached=False,
-                audit_codes=tuple(audit_codes),
-                extras={"feature_flag": True, "engine_version": ENGINE_VERSION},
-            )
-            ledger = LedgerRow(
-                ledger_row_id=_ledger_row_id(round_index, applied_policy_hash, _digest_state(bundle)),
-                round_index=int(round_index),
-                source_round=int(bundle.source_round),
-                target_round=int(round_index),
-                applied_policy_hash=applied_policy_hash,
-                selected_bundle_digest=_digest_state(bundle),
-                audit_codes=tuple(audit_codes),
-                per_channel_decision={},
-            )
-            next_state = _next_phase_state(phase_state, round_index=round_index)
-            return EngineRoundResult(
-                round_trace=trace,
-                next_phase_state=next_state,
-                ledger_row=ledger,
-                applied_policy_hash=applied_policy_hash,
+                detached=None,
+                condition_delta=condition_delta,
             )
 
         ok, errors = validate_integrator_trace(integrator_trace)
@@ -697,11 +946,68 @@ class Engine:
                 audit_codes.append(f"{ERR_INTEGRATOR_TRACE_MISSING}:{code}")
 
         # 6. Observe endpoint.
-        observed = adapter.observe_endpoint(integrator_trace, post_state)
+        observed = _safe_adapter_call(
+            "observe_endpoint",
+            audit_codes,
+            adapter.observe_endpoint,
+            integrator_trace,
+            post_state,
+        )
+        if observed is None:
+            return self._emit_fail_closed(
+                round_index=round_index,
+                bundle=bundle,
+                audit_codes=audit_codes,
+                applied_policy_hash=applied_policy_hash,
+                phase_state=phase_state,
+                initial_state=initial_state,
+                composed=composed,
+                integrator_trace=integrator_trace,
+                detached=None,
+                condition_delta=condition_delta,
+            )
 
-        # 7. Export + detach + validate.
-        exported = adapter.export_endpoint(observed)
-        detached = adapter.detach_and_validate_endpoint(exported)
+        # 7. Export endpoint. Wrapped separately so a raised exception
+        #    is captured with the correct ``step_name``.
+        exported = _safe_adapter_call(
+            "export_endpoint",
+            audit_codes,
+            adapter.export_endpoint,
+            observed,
+        )
+        if exported is None:
+            return self._emit_fail_closed(
+                round_index=round_index,
+                bundle=bundle,
+                audit_codes=audit_codes,
+                applied_policy_hash=applied_policy_hash,
+                phase_state=phase_state,
+                initial_state=initial_state,
+                composed=composed,
+                integrator_trace=integrator_trace,
+                detached=None,
+                condition_delta=condition_delta,
+            )
+
+        detached = _safe_adapter_call(
+            "detach_and_validate_endpoint",
+            audit_codes,
+            adapter.detach_and_validate_endpoint,
+            exported,
+        )
+        if detached is None:
+            return self._emit_fail_closed(
+                round_index=round_index,
+                bundle=bundle,
+                audit_codes=audit_codes,
+                applied_policy_hash=applied_policy_hash,
+                phase_state=phase_state,
+                initial_state=initial_state,
+                composed=composed,
+                integrator_trace=integrator_trace,
+                detached=None,
+                condition_delta=condition_delta,
+            )
 
         if not detached.detach_proof:
             audit_codes.append(ERR_DETACH_PROOF_FAILED)
@@ -722,7 +1028,7 @@ class Engine:
         ledger = LedgerRow(
             ledger_row_id=_ledger_row_id(round_index, applied_policy_hash, _digest_state(bundle)),
             round_index=int(round_index),
-            source_round=int(bundle.source_round),
+            source_round=_safe_source_round(bundle, audit_codes),
             target_round=int(round_index),
             applied_policy_hash=applied_policy_hash,
             selected_bundle_digest=_digest_state(bundle),
@@ -750,11 +1056,13 @@ __all__ = [
     # Constants
     "ENGINE_VERSION",
     "ERR_ADAPTER_NONE",
+    "ERR_ADAPTER_RAISED",
     "ERR_BUNDLE_INVALID",
     # Error codes
     "ERR_BUNDLE_NONE",
     "ERR_CAPABILITIES_INVALID",
     "ERR_CHANNEL_DOMAIN_MISMATCH",
+    "ERR_CHANNEL_DOMAIN_UNDECLARED",
     "ERR_CHANNEL_UNSUPPORTED",
     "ERR_CONDITION_DELTA_NO_EFFECT",
     "ERR_DETACH_PROOF_FAILED",
@@ -763,7 +1071,9 @@ __all__ = [
     "ERR_PHASE_STATE_NONE",
     "ERR_POLICY_NONE",
     "ERR_ROUND_INDEX_NEGATIVE",
+    "ERR_ROUND_INDEX_NON_INT",
     "ERR_SHAPE_FRAME_NORMALIZATION_MISMATCH",
+    "ERR_SOURCE_ROUND_NON_INT",
     "FEATURE_FLAG_KEY",
     # Engine
     "Engine",

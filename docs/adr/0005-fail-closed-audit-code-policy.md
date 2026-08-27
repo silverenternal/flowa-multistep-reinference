@@ -113,6 +113,53 @@ The decision is enforced by:
 * The `CODEOWNERS` rule that pins the public `__init__.py` files
   to the maintainer.
 
+## Audit-code catalogue (canonical list)
+
+The following audit codes are part of the public surface and are
+re-exported from the relevant `__init__.py`. Every code is a
+SCREAMING_SNAKE_CASE constant that appears in
+`tools/check_docs_against_code.py`'s symbol index; renaming any of
+them surfaces as a doc-scanner drift failure.
+
+### Engine audit codes (`adaptive_reflow.frame.engine`)
+
+| Constant | String value | Fires when |
+|----------|--------------|------------|
+| `ERR_INPUT_FACTOR_TYPE` | `channel_rule_input_factor_type` | The channel rule's cap / floor coercion helper encounters a non-numeric value on `scheduled_cap` / `fresh_noise_floor` and falls back to `0.0` instead of raising. |
+| `ERR_ROUND_INDEX_NON_INT` | `round_index_must_be_int` | `Engine.run_round` receives a `round_index` that is not a non-negative `int` (bool is rejected explicitly). |
+| `ERR_CHANNEL_DOMAIN_UNDECLARED` | `channel_domain_undeclared` | A channel in `bundle.channels` is in `caps.supported_channels` but is missing from `caps.channel_domains` — the adapter never declared its domain. |
+| `ERR_ADAPTER_RAISED` | `adapter_raised_exception` | An `_safe_adapter_call`-wrapped adapter method raised an `Exception`; the wrapped code captures `{step}:{ExcType}:{msg[:80]}` and returns `None`. |
+| `ERR_SOURCE_ROUND_NON_INT` | `source_round_must_be_int` | The source `StateBundle.source_round` is not a non-negative `int`; the engine coerces it to `0` and emits the code so the audit trail stays consistent. |
+
+### Merge audit codes (`adaptive_reflow.frame.merge`)
+
+| Constant | String value | Fires when |
+|----------|--------------|------------|
+| `MERGE_DEGENERATE_INTERVAL` | `merge_degenerate_interval` | The bounded merge's per-round delta interval collapses (`hi < lo`) and the merge falls back to the floor (fail-closed total function). |
+| `MERGE_FLOOR_FALLBACK` | `merge_floor_fallback_to_schedule_default` | The orchestrator-driven merge path could not find a per-channel fresh-noise floor and fell back to the schedule's `n_cap` (or `0.0`). |
+| `MERGE_PREV_ANCHORED_TO_LAST_EMITTED` | `merge_prev_anchored_to_last_emitted` | The orchestrator-driven merge is anchored on a `prev` value that came from the previous round's emitted `bounded_target_fraction` (not the schedule's `n_cap`). |
+| `ERR_PREV_REQUIRED` | `merge_prev_required` | The orchestrator-driven merge was called with `prev=None`; the merge refuses silently rather than substituting the schedule value as a default. |
+
+### Mixer audit codes (`adaptive_reflow.molecular.mixer`)
+
+| Constant | String value | Fires when |
+|----------|--------------|------------|
+| `MIXER_RMS_PRECEDENCE_FAIL` | `mixer_rms_precondition_fail` | `EqualRmsCoordinateMixer.mix` was given inputs whose per-axis RMS norms are not equal within `1e-6`; the mix is rejected and the audit code is appended to the returned ledger. |
+
+### Summary
+
+The audit-code constants are first-class citizens of the package's
+public API: they appear in `__all__`, in the curated `__init__.py`
+re-export layer, and in the docs scanner symbol index. A new audit
+code MUST be added in three places to satisfy the policy:
+
+1. The module that emits it (e.g. `frame/engine.py`).
+2. The curated re-export layer (`frame/__init__.py`,
+   `molecular/__init__.py`, ...).
+3. This ADR (the catalogue table) and `tools/check_docs_against_code.py`
+   (the symbol index picks it up automatically once the docs reference
+   it).
+
 ## More Information
 
 * [docs/TESTING_STRATEGY.md §2.3](../TESTING_STRATEGY.md) — the
@@ -123,3 +170,12 @@ The decision is enforced by:
   public surface of `contracts/`.
 * [ROADMAP.md](../../ROADMAP.md) — the Now-bucket entry that closes
   DTB-R0 §3 case 2 and case 5 by 2026-09-15.
+* [docs/adr/0006](0006-engine-wraps-adapter-pattern.md) — the
+  `_safe_adapter_call` wrapper that emits `ERR_ADAPTER_RAISED`.
+* [docs/adr/0007](0007-prev-anchored-bounded-merge.md) — the
+  `prev` anchoring rule that emits `ERR_PREV_REQUIRED` /
+  `MERGE_PREV_ANCHORED_TO_LAST_EMITTED`.
+* [docs/adr/0008](0008-claim-gate-deferral-placeholder.md) — the
+  deferral placeholder for the R7 claim-gate decision helper.
+* [docs/adr/0009](0009-mixer-rms-precondition.md) — the
+  RMS-precondition rule that emits `MIXER_RMS_PRECEDENCE_FAIL`.

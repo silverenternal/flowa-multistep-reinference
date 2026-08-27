@@ -92,6 +92,11 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         "TypeError", "ValueError", "AssertionError", "RuntimeError",
         "AttributeError", "KeyError", "NotImplementedError", "OSError",
         "IOError", "DeprecationWarning", "UserWarning", "FileNotFoundError",
+        # base / system exceptions used in ADR prose discussions
+        "Exception", "BaseException", "KeyboardInterrupt", "SystemExit",
+        "MemoryError", "StopIteration", "GeneratorExit", "OverflowError",
+        "ZeroDivisionError", "ImportError", "ModuleNotFoundError",
+        "NameError", "IndexError", "RecursionError",
         # common stdlib module names that show up inside code-block imports
         "math", "hashlib", "dataclasses", "dataclass", "annotations",
         # short CamelCase that's prose not code
@@ -118,6 +123,7 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         "ADAPTER_INTERFACE_SPEC", "ARCHITECTURE_PLAN", "FILE_MAPPING",
         "DESIGN_BOUNDARY", "SPLIT_NOTES", "REFACTOR_PLAN_V2",
         "UNIVERSAL_CONTRACT_NOTES", "UNIVERSAL_MOLECULAR_MAPPING",
+        "FINAL_STATUS", "PERFORMANCE_BUDGETS", "SCREAMING_SNAKE_CASE",
         # Misc prose CamelCase.
         "Envelope", "ChannelKind",
         "CommutatorSafeChannelFreezing", "FlowOEExpertAggregation",
@@ -126,6 +132,8 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         "EvaluatorNotCalibratedError", "MoleculeFrozenEnvelopeManifestBuilder",
         "TargetConditionHash", "Import", "ImportFrom", "Inf", "NaN",
         "Types",
+        # Prose sentence-starters / adverbs commonly backticked in ADRs.
+        "Today", "Toward", "Hence", "Thereafter", "Otherwise",
         # Inlined per CONTRACTS.md (TypedDicts / Literal / Callable inlined
         # where used, not exposed as separate top-level types).
         "ChannelRule", "OperationStep", "AuthorityMode",
@@ -717,11 +725,13 @@ def _report(
 def _iter_markdown_files() -> Iterable[Path]:
     """Yield every markdown file the tool is configured to scan.
 
-    Order: the five governance docs first, then every ``docs/*.md``.
-    Other top-level ``*.md`` files (FILE_MAPPING.md, ARCHITECTURE_PLAN.md,
-    SPLIT_NOTES.md, ...) are historical planning notes and are not in the
-    "is my doc still accurate?" set -- they are excluded by default and
-    can be re-enabled with ``--all-top-level-md``.
+    Order: the five governance docs first, then every ``docs/*.md`` and
+    every ``docs/adr/*.md`` (the authoritative architecture-decision-
+    records subdirectory). Other top-level ``*.md`` files
+    (FILE_MAPPING.md, ARCHITECTURE_PLAN.md, SPLIT_NOTES.md, ...) are
+    historical planning notes and are not in the "is my doc still
+    accurate?" set -- they are excluded by default and can be re-enabled
+    with ``--all-top-level-md``.
     """
     emitted: set[Path] = set()
     for name in ROOT_GOVERNANCE_DOCS:
@@ -736,6 +746,13 @@ def _iter_markdown_files() -> Iterable[Path]:
                 continue
             emitted.add(candidate)
             yield candidate
+        adr_root = docs_root / "adr"
+        if adr_root.is_dir():
+            for candidate in sorted(adr_root.glob("*.md")):
+                if candidate in emitted:
+                    continue
+                emitted.add(candidate)
+                yield candidate
 
 
 def collect_claims(

@@ -1292,6 +1292,10 @@ indexed today include:
   `perturbation_stability_below_threshold` — DTB-R0 §3 case 2.
 * `AUDIT_SOURCE_REVOKED` (`adaptive_reflow.contracts.validators`) =
   `source_revoked` — DTB-R0 §3 case 5.
+* `ERR_INPUT_FACTOR_TYPE` (`adaptive_reflow.frame.channel_rule`) =
+  `channel_rule_input_factor_type` — fail-closed fallback for malformed
+  cap / floor fields in the dynamic-compute / stability-collapse
+  branches (suffix `:<field_name>`).
 * `BLOCKER_PROXY_ONLY` = `proxy_only_cannot_satisfy_calibration` —
   DTB-R0 §3 case 6.
 * `COMPLEMENT_BLOCKER_CODES`, `RESTART_TRIGGER_CODES`, `FEEDBACK_MODES`

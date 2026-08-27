@@ -43,16 +43,21 @@ from adaptive_reflow.frame import (
     DEFAULT_OPERATION_STEPS,
     ENGINE_VERSION,
     ERR_ADAPTER_NONE,
+    ERR_ADAPTER_RAISED,
     ERR_BUNDLE_NONE,
     ERR_CAPABILITIES_INVALID,
     ERR_CHANNEL_DOMAIN_MISMATCH,
+    ERR_CHANNEL_DOMAIN_UNDECLARED,
     ERR_CHANNEL_UNSUPPORTED,
     ERR_CONDITION_DELTA_NO_EFFECT,
     ERR_DETACH_PROOF_FAILED,
     ERR_FEATURE_DISABLED,
     ERR_INTEGRATOR_TRACE_MISSING,
     ERR_POLICY_NONE,
+    ERR_ROUND_INDEX_NEGATIVE,
+    ERR_ROUND_INDEX_NON_INT,
     ERR_SHAPE_FRAME_NORMALIZATION_MISMATCH,
+    ERR_SOURCE_ROUND_NON_INT,
     NORMALIZATION_KINDS,
     REFERENCE_FRAMES,
     AdapterCapabilities,
@@ -849,6 +854,165 @@ def test_channel_domain_mismatch_fails_closed() -> None:
     assert any(c.startswith(ERR_CHANNEL_DOMAIN_MISMATCH + ":raw_pair") for c in codes) or any(
         c.startswith(ERR_CHANNEL_UNSUPPORTED + ":raw_pair") for c in codes
     )
+
+
+# ---------------------------------------------------------------------------
+# Tests: Gap A4 / A5 / B2 / C3 fix coverage
+# ---------------------------------------------------------------------------
+
+
+def test_run_round_rejects_negative_round_index() -> None:
+    """Gap A4: a negative ``round_index`` must be coerced to ``0`` so
+    the ``ledger_row_id`` digest is well-defined and the audit trail
+    carries ``ERR_ROUND_INDEX_NEGATIVE``.
+
+    The helper now runs at the very top of :meth:`run_round` (before
+    the feature-flag check), so the feature-disabled short-circuit also
+    benefits from the coercion.
+    """
+    adapter = ReferenceFlowAAdapter()
+    caps = adapter.capabilities()
+    bundle = _make_state_bundle(adapter_caps=caps)
+    policy = _make_final_policy()
+    engine = Engine()
+    result = engine.run_round(
+        round_index=-1,
+        phase_state=_make_phase_state(),
+        bundle=bundle,
+        adapter=adapter,
+        policy=policy,
+        condition_delta=_make_condition_delta(),
+    )
+    codes = result.round_trace.audit_codes
+    assert ERR_ROUND_INDEX_NEGATIVE in codes
+    # ledger_row_id derived from coerced 0 — deterministic.
+    assert result.ledger_row.round_index == 0
+    # ledger_row_id is a non-empty deterministic string.
+    assert isinstance(result.ledger_row.ledger_row_id, str)
+    assert result.ledger_row.ledger_row_id != ""
+    # Same coerced round_index across the round trace and ledger row.
+    assert result.round_trace.round_index == 0
+
+
+def test_run_round_rejects_bool_round_index() -> None:
+    """Gap A4: a ``bool`` (subclass of ``int``) ``round_index`` must NOT
+    silently coerce to ``0`` / ``1``; the engine must emit
+    ``ERR_ROUND_INDEX_NON_INT`` so the downstream consumer can surface
+    the malformed-input class.
+    """
+    adapter = ReferenceFlowAAdapter()
+    caps = adapter.capabilities()
+    bundle = _make_state_bundle(adapter_caps=caps)
+    policy = _make_final_policy()
+    engine = Engine()
+    result = engine.run_round(
+        round_index=True,  # bool, not int
+        phase_state=_make_phase_state(),
+        bundle=bundle,
+        adapter=adapter,
+        policy=policy,
+        condition_delta=_make_condition_delta(),
+    )
+    codes = result.round_trace.audit_codes
+    assert any(
+        code.startswith(ERR_ROUND_INDEX_NON_INT + ":round_index:bool")
+        for code in codes
+    )
+    # Coerced to 0 so digest computation is safe.
+    assert result.round_trace.round_index == 0
+    assert result.ledger_row.round_index == 0
+
+
+def test_engine_rejects_channel_with_undeclared_domain() -> None:
+    """Gap A5: a channel that is in ``supported_channels`` but whose
+    domain is NOT declared in ``caps.channel_domains`` must surface the
+    new ``ERR_CHANNEL_DOMAIN_UNDECLARED`` audit code.
+
+    Previously the engine silently passed (no domain-mismatch audit)
+    when ``_channel_domain_lookup`` returned ``None`` for an undeclared
+    channel. The fix distinguishes *undeclared* from *mismatch*.
+    """
+    # Adapter that lists a channel in supported_channels but does NOT
+    # declare its domain in channel_domains. We build a synthetic
+    # adapter for this.
+    class _UndeclaredDomainAdapter(SyntheticContinuousAdapter):
+        def capabilities(self) -> AdapterCapabilities:
+            caps = super().capabilities()
+            # Drop channel_domains entirely so the engine must emit the
+            # new undeclared-domain audit code for every channel.
+            return AdapterCapabilities(
+                has_ode_integration_surface=caps.has_ode_integration_surface,
+                has_prior_export=caps.has_prior_export,
+                has_state_export=caps.has_state_export,
+                has_condition_injection=caps.has_condition_injection,
+                has_restart_boundary=caps.has_restart_boundary,
+                has_continuous_channels=caps.has_continuous_channels,
+                has_discrete_channels=caps.has_discrete_channels,
+                has_trajectory_digest=caps.has_trajectory_digest,
+                has_deterministic_seed=caps.has_deterministic_seed,
+                has_materialization_route=caps.has_materialization_route,
+                supported_channels=caps.supported_channels,
+                channel_domains={},
+            )
+
+    adapter = _UndeclaredDomainAdapter()
+    caps = adapter.capabilities()
+    bundle = _make_state_bundle(adapter_caps=caps)
+    policy = _make_final_policy(
+        beta_by_channel={"coordinate": 0.0, "charge": 0.0},
+        alpha_by_channel={"coordinate": 1.0, "charge": 1.0},
+        fresh_noise_floor_by_channel={"coordinate": 0.0, "charge": 0.0},
+        freeze_admission_by_channel={"coordinate": True, "charge": True},
+        policy_id="policy-undeclared-domain",
+    )
+    engine = Engine()
+    result = engine.run_round(
+        round_index=1,
+        phase_state=_make_phase_state(),
+        bundle=bundle,
+        adapter=adapter,
+        policy=policy,
+        condition_delta=_make_condition_delta(),
+    )
+    codes = result.round_trace.audit_codes
+    # At least one undeclared-domain audit code is emitted.
+    assert any(c.startswith(ERR_CHANNEL_DOMAIN_UNDECLARED + ":") for c in codes), (
+        f"expected {ERR_CHANNEL_DOMAIN_UNDECLARED} in {codes!r}"
+    )
+
+
+def test_engine_rejects_malformed_source_round() -> None:
+    """Gap C3: a ``source_round`` value that is neither ``int`` nor
+    ``bool=False`` must surface the new ``ERR_SOURCE_ROUND_NON_INT``
+    audit code instead of raising ``TypeError`` from ``int(...)``.
+
+    The test bypasses the public :class:`StateBundle` constructor
+    (which would reject non-int values at the dataclass layer) by
+    constructing a fresh bundle with ``source_round="abc"``.
+    """
+    from dataclasses import replace as _dc_replace
+
+    adapter = ReferenceFlowAAdapter()
+    caps = adapter.capabilities()
+    valid_bundle = _make_state_bundle(adapter_caps=caps)
+    malformed_bundle = _dc_replace(valid_bundle, source_round="abc")  # type: ignore[arg-type]
+    policy = _make_final_policy()
+    engine = Engine()
+    result = engine.run_round(
+        round_index=1,
+        phase_state=_make_phase_state(),
+        bundle=malformed_bundle,
+        adapter=adapter,
+        policy=policy,
+        condition_delta=_make_condition_delta(),
+    )
+    codes = result.round_trace.audit_codes
+    assert any(
+        code.startswith(ERR_SOURCE_ROUND_NON_INT + ":source_round")
+        for code in codes
+    ), f"expected {ERR_SOURCE_ROUND_NON_INT} in {codes!r}"
+    # Ledger row source_round coerced to 0 so the ledger is consistent.
+    assert result.ledger_row.source_round == 0
 
 
 # ---------------------------------------------------------------------------

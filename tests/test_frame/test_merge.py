@@ -36,6 +36,7 @@ from adaptive_reflow.contracts import (
     BundleId,
     ChannelName,
     ChannelTransferEvidence,
+    CosineScheduleSample,
     EnvelopeLayer,
     FactorValue,
     FrozenEnvelopeManifest,
@@ -49,12 +50,17 @@ from adaptive_reflow.contracts import (
     hash_trace_digest,
 )
 from adaptive_reflow.frame import (
+    ERR_PREV_REQUIRED,
     MERGE_AUTHORITY_SCHEMA_NAME,
     MERGE_AUTHORITY_SCHEMA_VERSION,
+    MERGE_DEGENERATE_INTERVAL,
+    MERGE_FLOOR_FALLBACK,
+    MERGE_PREV_ANCHORED_TO_LAST_EMITTED,
     WRITER_ID,
     AdaptiveReflowPolicyOrchestrator,
     MergeAuthorityError,
     bounded_merge,
+    bounded_merge_with_schedule,
 )
 from adaptive_reflow.schedule import CosineScheduleSampler
 from adaptive_reflow.writer import (
@@ -823,3 +829,159 @@ def test_orchestrator_emits_strictly_decreasing_fraction_on_worse_evidence():
             f"channel {ch}: next={next_value} must be <= prev={prev_value} "
             f"under DTB-R3 bounded merge"
         )
+
+
+# ---------------------------------------------------------------------------
+# 10. Audit-code emission on degenerate interval (gap B5)
+# ---------------------------------------------------------------------------
+
+
+def test_bounded_merge_emits_degenerate_interval_audit():
+    """When ``hi < lo`` the merge returns the floor AND emits the
+    :data:`MERGE_DEGENERATE_INTERVAL` audit code with the envelope
+    values embedded so a downstream audit reader can replay the
+    collapse.
+
+    We force the collapse with ``prev > cap`` and ``delta_cap_up ==
+    delta_cap_down == 0``: ``lo = max(floor, prev) = 1.0``,
+    ``hi = min(cap, prev) = 0.6`` -> ``hi < lo`` -> collapse to floor.
+    """
+    audit_codes: list[str] = []
+    result = bounded_merge(
+        prev=1.0,
+        dynamic=0.5,
+        cap=0.6,
+        floor=0.0,
+        delta_cap_up=0.0,
+        delta_cap_down=0.0,
+        audit_codes=audit_codes,
+    )
+    # lo = max(0.0, 1.0 - 0.0) = 1.0; hi = min(0.6, 1.0 + 0.0) = 0.6;
+    # hi < lo so collapse to floor == 0.0.
+    assert result == pytest.approx(0.0)
+    assert any(
+        code.startswith(MERGE_DEGENERATE_INTERVAL) for code in audit_codes
+    ), f"expected MERGE_DEGENERATE_INTERVAL in {audit_codes!r}"
+    # The audit code must carry the envelope values so a reader can
+    # replay the collapse.
+    matching = [
+        code for code in audit_codes if code.startswith(MERGE_DEGENERATE_INTERVAL)
+    ]
+    assert matching, "MERGE_DEGENERATE_INTERVAL missing from audit_codes"
+    payload = matching[0]
+    for token in ("floor=0.000000", "cap=0.600000", "prev=1.000000"):
+        assert token in payload, (
+            f"audit payload {payload!r} must carry {token!r}"
+        )
+
+
+def test_bounded_merge_no_audit_when_kwarg_omitted():
+    """When ``audit_codes`` is omitted (back-compat path) the merge
+    silently returns the floor without raising. The collapse is
+    observable only via the returned value, never via an audit code.
+    """
+    # Same collapsed envelope as the previous test, no audit_codes.
+    result = bounded_merge(
+        prev=1.0,
+        dynamic=0.5,
+        cap=0.6,
+        floor=0.0,
+        delta_cap_up=0.0,
+        delta_cap_down=0.0,
+    )
+    assert result == pytest.approx(0.0)
+
+
+# ---------------------------------------------------------------------------
+# 11. Audit-code emission on per-channel floor lookup (gap A2)
+# ---------------------------------------------------------------------------
+
+
+def _make_schedule_sample(
+    *,
+    n_cap: float = 0.5,
+) -> CosineScheduleSample:
+    """Build a minimal :class:`CosineScheduleSample` for tests."""
+    from adaptive_reflow.contracts import ArtifactHash
+
+    return CosineScheduleSample(
+        schedule_hash=ArtifactHash("sched-test"),
+        outer_cycle_id=0,
+        round_in_cycle=0,
+        cycle_length=4,
+        n_cap=FactorValue(n_cap),
+        n_min=FactorValue(0.0),
+        n_max=FactorValue(n_cap),
+        u_r=0.0,
+        family="cosine_no_restart",
+        computed_at_round=0,
+    )
+
+
+def test_bounded_merge_with_schedule_uses_per_channel_floor():
+    """When the ``fresh_noise_floor`` arg is ``None``, the helper
+    consults the ``fresh_noise_floor_by_channel`` mapping. The mapping
+    entry must be honoured, not silently ignored.
+
+    Concretely, with n_cap=0.8 and a per-channel mapping entry of
+    0.3, the floor must be 0.3 (the mapping value), not 0.8
+    (the schedule's n_cap) and not 0.0 (the last-resort default).
+    """
+    sample = _make_schedule_sample(n_cap=0.8)
+    mapping = {ChannelName("c0"): 0.3}
+    audit_codes: list[str] = []
+    # cap = 0.8 (n_cap), floor = 0.3 (per-channel mapping).
+    # prev is the previous round's emitted fraction (e.g. 0.4).
+    result = bounded_merge_with_schedule(
+        channel=ChannelName("c0"),
+        dynamic=0.4,
+        schedule_sample=sample,
+        fresh_noise_floor=None,
+        delta_caps_by_channel={ChannelName("c0"): 0.5},
+        fresh_noise_floor_by_channel=mapping,
+        prev=0.4,
+        audit_codes=audit_codes,
+    )
+    # The merge's effective floor must be the per-channel mapping
+    # value (0.3), not the schedule's n_cap (0.8). With cap=0.8,
+    # floor=0.3, prev=0.4, deltas=0.5: lo=max(0.3, -0.1)=0.3,
+    # hi=min(0.8, 0.9)=0.8, target=clamp(0.4, 0.3, 0.8)=0.4 ->
+    # result=clamp(0.4, 0.3, 0.8)=0.4.
+    assert float(result) == pytest.approx(0.4)
+    # The MERGE_FLOOR_FALLBACK code must NOT be appended when the
+    # config-level mapping supplied the floor.
+    assert MERGE_FLOOR_FALLBACK not in audit_codes, (
+        f"MERGE_FLOOR_FALLBACK must not fire when mapping supplied "
+        f"the floor; got audit_codes={audit_codes!r}"
+    )
+    # The prev anchor must be surfaced.
+    assert MERGE_PREV_ANCHORED_TO_LAST_EMITTED in audit_codes
+
+
+def test_bounded_merge_with_schedule_rejects_missing_prev():
+    """``prev=None`` is fail-closed: the helper appends
+    :data:`ERR_PREV_REQUIRED` and raises :class:`MergeAuthorityError`.
+    The schedule's ``n_cap`` is the cap, never the prev.
+    """
+    sample = _make_schedule_sample(n_cap=0.5)
+    audit_codes: list[str] = []
+    with pytest.raises(MergeAuthorityError) as excinfo:
+        bounded_merge_with_schedule(
+            channel=ChannelName("c0"),
+            dynamic=0.5,
+            schedule_sample=sample,
+            fresh_noise_floor=None,
+            delta_caps_by_channel=None,
+            fresh_noise_floor_by_channel=None,
+            prev=None,
+            audit_codes=audit_codes,
+        )
+    # ERR_PREV_REQUIRED must be appended before the raise.
+    assert ERR_PREV_REQUIRED in audit_codes, (
+        f"ERR_PREV_REQUIRED must be appended to audit_codes; got {audit_codes!r}"
+    )
+    # The exception message must mention the cap-vs-prev distinction.
+    msg = str(excinfo.value)
+    assert "cap" in msg and "prev" in msg, (
+        f"exception message must explain the cap-vs-prev invariant; got {msg!r}"
+    )

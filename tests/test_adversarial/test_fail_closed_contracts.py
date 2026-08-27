@@ -76,7 +76,9 @@ from adaptive_reflow.frame.channel_rule import (
     BLOCKER_NAN_OR_INF,
     BLOCKER_NON_FINITE,
     BLOCKER_TAIL_INADMISSIBLE,
+    ERR_INPUT_FACTOR_TYPE,
     compute_channel_decision,
+    evaluate_channel_evidence_with_revocation,
     required_factors_in_unit_interval,
 )
 from adaptive_reflow.frame.merge import (
@@ -1119,6 +1121,104 @@ class TestUnsupportedScenarios:
         )
         failed = required_factors_in_unit_interval(inputs)
         assert "calibration_lower_bound" in failed
+
+    # -----------------------------------------------------------------------
+
+    def test_stability_collapse_handles_malformed_scheduled_cap(self) -> None:
+        """Algorithmic gap A1 (fail-closed): ``_build_stability_collapse_outputs``
+        must coerce a malformed ``scheduled_cap`` to ``0.0`` instead of
+        propagating the underlying :exc:`TypeError`.
+
+        With ``perturbation_stability_lower_bound`` below the
+        :data:`PERTURBATION_STABILITY_FLOOR` the stability-collapse branch
+        fires. Injecting ``scheduled_cap="not-a-float"`` (a non-numeric
+        string) must NOT raise — the rule returns a
+        :class:`ChannelRuleOutputs` with ``gate=False`` and surfaces the
+        :data:`ERR_INPUT_FACTOR_TYPE` audit code so the consumer can
+        recognise the malformed-field cause.
+        """
+        bundle = _make_bundle()
+        evidence = _make_evidence(bundle, ChannelName("coordinate"))
+        inputs = _make_channel_rule_inputs(
+            bundle=bundle,
+            evidence=evidence,
+            # Below the floor -> the stability-collapse branch fires.
+            perturbation_stability_lower_bound=0.1,
+        )
+        # dataclass(frozen=True) — bypass the type guard via
+        # object.__setattr__ to inject a malformed value.
+        object.__setattr__(inputs, "scheduled_cap", "not-a-float")
+
+        # Must NOT raise; the helper coerces-or-zeroes.
+        outputs = evaluate_channel_evidence_with_revocation(inputs)
+        assert outputs.decision.gate is False
+        # Audit trail must surface the canonical ERR_INPUT_FACTOR_TYPE
+        # code with the field-name suffix so the consumer can pinpoint
+        # the offending field.
+        assert (
+            f"{ERR_INPUT_FACTOR_TYPE}:scheduled_cap"
+            in outputs.decision.audit_reason
+        ) or any(
+            code == f"{ERR_INPUT_FACTOR_TYPE}:scheduled_cap"
+            for code in outputs.decision.blocker_codes
+        )
+        # The collapse-branch audit code stays present so the consumer
+        # can still recognise the DTB-R0 §3 case 2 cause.
+        assert outputs.decision.audit_reason.startswith(
+            "perturbation_stability_below_threshold"
+        )
+        # scheduled_cap was coerced to 0.0; alpha=1, beta=0 by design.
+        assert float(outputs.decision.scheduled_cap) == 0.0
+        assert float(outputs.decision.beta) == 0.0
+        assert float(outputs.decision.alpha) == 1.0
+
+    # -----------------------------------------------------------------------
+
+    def test_revocation_handles_malformed_fresh_noise_floor(self) -> None:
+        """Algorithmic gap A1 (fail-closed): the dynamic-compute branch
+        in :func:`evaluate_channel_evidence_with_revocation` must coerce
+        a malformed ``fresh_noise_floor`` (``None``) to ``0.0`` instead
+        of propagating the underlying :exc:`TypeError`.
+
+        With ``bundle.revoked=True`` the dynamic-compute branch fires
+        (before any gate evaluation). Injecting ``fresh_noise_floor=None``
+        must NOT raise — the rule returns a :class:`ChannelRuleOutputs`
+        with ``gate=False`` and surfaces the :data:`ERR_INPUT_FACTOR_TYPE`
+        audit code so the consumer can recognise the malformed-field
+        cause.
+        """
+        bundle = _make_bundle()
+        # dataclass(frozen=True) — flip the revocation flag via
+        # object.__setattr__ so the dynamic-compute branch fires.
+        object.__setattr__(bundle, "revoked", True)
+        evidence = _make_evidence(bundle, ChannelName("coordinate"))
+        inputs = _make_channel_rule_inputs(
+            bundle=bundle,
+            evidence=evidence,
+        )
+        # dataclass(frozen=True) — bypass the type guard via
+        # object.__setattr__ to inject a malformed value.
+        object.__setattr__(inputs, "fresh_noise_floor", None)
+
+        # Must NOT raise; the helper coerces-or-zeroes.
+        outputs = evaluate_channel_evidence_with_revocation(inputs)
+        assert outputs.decision.gate is False
+        # Audit trail must surface the canonical ERR_INPUT_FACTOR_TYPE
+        # code with the field-name suffix.
+        assert (
+            f"{ERR_INPUT_FACTOR_TYPE}:fresh_noise_floor"
+            in outputs.decision.audit_reason
+        ) or any(
+            code == f"{ERR_INPUT_FACTOR_TYPE}:fresh_noise_floor"
+            for code in outputs.decision.blocker_codes
+        )
+        # The revocation audit code stays present so the consumer can
+        # still recognise the DTB-R0 §3 case 5 cause.
+        assert "source_revoked" in outputs.decision.audit_reason
+        # fresh_noise_floor was coerced to 0.0.
+        assert float(outputs.decision.fresh_noise_floor) == 0.0
+        assert float(outputs.decision.beta) == 0.0
+        assert float(outputs.decision.alpha) == 1.0
 
 
 # ===========================================================================
