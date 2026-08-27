@@ -25,6 +25,16 @@ They are reviewed at every release tag and updated when an item closes.
       configs (`pyproject.toml` `requires-python` / ruff `target-version`
       / mypy `python_version`, and every `.github/workflows/*.yml`
       `python-version`)
+- [x] Cosine annealing drives memory fraction — closed 2026-08-27
+      [ADR-0010]. `memory_fraction_from_schedule` helper added in
+      `adaptive_reflow/schedule/cosine.py`; `Frame.engine.run_round` now
+      wires `schedule.n_cap` to `policy.beta_by_channel` per round when
+      `FinalRestartPolicy.beta_from_schedule = True`. Empirical toy
+      ablation recorded in `docs/ABLATION.md`: on `eight_gaussians` the
+      cosine schedule cut final W2 by `0.2115` and lifted final coverage
+      by `+0.250` vs the constant-`beta=0.5` baseline; on `two_moons`
+      the constant-beta baseline tied cosine on coverage and was
+      slightly tighter on W2.
 
 ## Next (2026-Q4 — October through December)
 

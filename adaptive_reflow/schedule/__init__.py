@@ -21,6 +21,7 @@ from .cosine import (
     CosineScheduleSampler,
     build_fresh_noise_diagnostics,
     default_floor_by_channel,
+    memory_fraction_from_schedule,
     n_cap_for_round,
     validate_cosine_schedule_config,
 )

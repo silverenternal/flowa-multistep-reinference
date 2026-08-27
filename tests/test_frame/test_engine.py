@@ -32,6 +32,7 @@ from adaptive_reflow.adapters import (
 from adaptive_reflow.contracts import (
     ArtifactHash,
     ChannelName,
+    CosineScheduleSample,
     FactorValue,
     FinalRestartPolicy,
     LedgerRowId,
@@ -1140,3 +1141,197 @@ def _impl_replace(self: FinalRestartPolicy) -> FinalRestartPolicy:
 
 
 FinalRestartPolicy._replace_with_hash = _impl_replace  # type: ignore[attr-defined]
+
+
+# ---------------------------------------------------------------------------
+# Tests: ADR-0010 — cosine-driven memory fraction
+# ---------------------------------------------------------------------------
+#
+# End-to-end wiring: a :class:`CosineScheduleConfig` flows through
+# :class:`Engine.run_round` and reaches
+# :meth:`apply_restart_distribution` with ``beta_by_channel`` set to
+# the schedule's per-round ``n_cap``. The test uses the
+# :class:`SyntheticContinuousAdapter` so no ``.npz`` weights file is
+# required and the wiring is observable from the captured policy.
+
+
+def _make_cosine_sample(
+    *,
+    cycle_length: int,
+    round_in_cycle: int,
+    n_min: float,
+    n_max: float,
+    family: str = "cosine_no_restart",
+    schedule_hash: str = "engine-cosine-wiring-test",
+) -> CosineScheduleSample:
+    """Build a :class:`CosineScheduleSample` for the wiring test."""
+    from adaptive_reflow.contracts import (
+        ArtifactHash,
+        CosineScheduleConfig,
+        CosineScheduleSample,
+        FactorValue,
+    )
+    from adaptive_reflow.schedule.cosine import n_cap_for_round
+
+    config = CosineScheduleConfig(
+        schedule_family=family,  # type: ignore[arg-type]
+        cycle_length=int(cycle_length),
+        n_min=FactorValue(float(n_min)),
+        n_max=FactorValue(float(n_max)),
+        per_channel_caps={},
+        fresh_noise_floor_by_channel={},
+        symmetric_delta_caps_by_channel={},
+        restart_triggers_allowed=("tail_budget_violation",),
+        config_hash=ArtifactHash(schedule_hash),
+        frozen_before_evaluation=True,
+    )
+    n_cap = n_cap_for_round(config, round_in_cycle)
+    L = int(cycle_length)
+    return CosineScheduleSample(
+        schedule_hash=ArtifactHash(schedule_hash),
+        outer_cycle_id=0,
+        round_in_cycle=int(round_in_cycle),
+        cycle_length=int(L),
+        n_cap=n_cap,
+        n_min=FactorValue(float(n_min)),
+        n_max=FactorValue(float(n_max)),
+        u_r=float(round_in_cycle) / max(L - 1, 1),
+        family=str(family),
+        computed_at_round=int(round_in_cycle),
+    )
+
+
+def _make_final_policy_with_schedule(
+    *,
+    schedule_sample: CosineScheduleSample,
+    beta: float = 0.5,
+    beta_from_schedule: bool = True,
+    policy_id: str = "policy-cosine-wiring",
+) -> FinalRestartPolicy:
+    """Build a :class:`FinalRestartPolicy` carrying ``schedule_sample``."""
+    from dataclasses import replace as _dc_replace
+
+    base = _make_final_policy(policy_id=policy_id)
+    overridden = _dc_replace(
+        base,
+        beta_by_channel={
+            ch: FactorValue(float(beta)) for ch in REFERENCE_FLOWA_CHANNELS
+        },
+        schedule_sample=schedule_sample,
+        beta_from_schedule=bool(beta_from_schedule),
+    )
+    return _dc_replace(overridden, policy_hash=hash_policy_hash(overridden))
+
+
+def test_engine_passes_cosine_schedule_through_to_restart() -> None:
+    """End-to-end: a ``CosineScheduleConfig`` flows from policy into
+    :meth:`apply_restart_distribution` via :meth:`Engine.run_round`.
+
+    The synthetic adapter records every ``apply_restart_distribution``
+    call's ``policy.beta_by_channel`` value so we can verify the
+    cosine-derived beta reaches the adapter. We run four rounds; the
+    captured betas must match the closed-form ``n_cap`` at each round.
+    """
+    from dataclasses import replace as _dc_replace
+
+    cycle_length = 4
+    n_min = 0.2
+    n_max = 0.8
+
+    # Build a policy per round with the matching schedule sample.
+    samples = [
+        _make_cosine_sample(
+            cycle_length=cycle_length,
+            round_in_cycle=r,
+            n_min=n_min,
+            n_max=n_max,
+        )
+        for r in range(cycle_length)
+    ]
+    policies = [
+        _make_final_policy_with_schedule(
+            schedule_sample=samples[r],
+            beta=0.0,  # deliberately wrong; engine overrides
+            beta_from_schedule=True,
+            policy_id=f"policy-cosine-wiring-{r}",
+        )
+        for r in range(cycle_length)
+    ]
+
+    # Build a fresh adapter for each round so the synthetic state is
+    # deterministic across rounds. We capture the per-call policy
+    # beta the adapter sees by monkey-patching ``apply_restart_distribution``
+    # on the adapter class to record the input on every call.
+    captured: list[FinalRestartPolicy] = []
+
+    original_apply = SyntheticContinuousAdapter.apply_restart_distribution
+
+    def _hooked(
+        self, state: StateBundle, policy: FinalRestartPolicy
+    ) -> StateBundle:
+        captured.append(policy)
+        return original_apply(self, state, policy)
+
+    SyntheticContinuousAdapter.apply_restart_distribution = _hooked  # type: ignore[method-assign]
+    try:
+        caps = SyntheticContinuousAdapter().capabilities()
+        bundle = _make_state_bundle(adapter_caps=caps)
+        engine = Engine()
+        phase_state = _make_phase_state(horizon_remaining=cycle_length + 2)
+
+        for r in range(cycle_length):
+            condition = _make_condition_delta(target_round=r)
+            result = engine.run_round(
+                round_index=r,
+                phase_state=phase_state,
+                bundle=bundle,
+                adapter=SyntheticContinuousAdapter(),
+                policy=policies[r],
+                condition_delta=condition,
+            )
+            assert result.round_trace.audit_codes == (), (
+                f"round {r}: expected empty audit_codes; "
+                f"got {result.round_trace.audit_codes!r}"
+            )
+            phase_state = result.next_phase_state
+            # Each round is driven on a fresh adapter; reset the captured
+            # list scope is the adapter instance, so we just keep appending
+            # and verify the *last* captured policy per round below.
+
+        # Per round: find the captured policy whose
+        # ``schedule_sample.round_in_cycle`` matches ``r``; the
+        # adapter must have seen ``beta = n_cap`` for the channels in
+        # REFERENCE_FLOWA_CHANNELS.
+        captured_by_round: dict[int, FinalRestartPolicy] = {}
+        for p in captured:
+            sample = p.schedule_sample
+            if sample is None:
+                continue
+            r = int(sample.round_in_cycle)
+            if r in captured_by_round:
+                # First-wins; we drive each round with a fresh adapter
+                # so we should only see one capture per round.
+                continue
+            captured_by_round[r] = p
+
+        for r in range(cycle_length):
+            assert r in captured_by_round, (
+                f"round {r}: no captured policy found"
+            )
+            captured_policy = captured_by_round[r]
+            expected_beta = max(0.0, min(1.0, float(samples[r].n_cap)))
+            for ch in REFERENCE_FLOWA_CHANNELS:
+                actual_beta = float(
+                    captured_policy.beta_by_channel.get(ch, -1.0)
+                )
+                assert actual_beta == pytest.approx(expected_beta, abs=1e-12), (
+                    f"round {r} channel {ch}: adapter received "
+                    f"beta={actual_beta:.6f}; expected n_cap="
+                    f"{expected_beta:.6f}"
+                )
+    finally:
+        # Restore the original (unhooked) method on the class so other
+        # tests in the same process are not affected.
+        SyntheticContinuousAdapter.apply_restart_distribution = (  # type: ignore[method-assign]
+            original_apply
+        )

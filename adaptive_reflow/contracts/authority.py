@@ -68,6 +68,16 @@ class FinalRestartPolicy:
     ledger_row_id: LedgerRowId
     policy_hash: ArtifactHash
     created_at_round: int
+    # ADR-0010 — cosine-driven memory fraction. When ``True`` (default)
+    # the framework derives ``beta_by_channel`` from the schedule's
+    # ``n_cap`` (``beta = n_cap`` so ``memory_fraction = 1 - n_cap``).
+    # When ``False`` the explicit ``beta_by_channel`` is preserved
+    # verbatim (back-compat for callers that want to lock beta
+    # independently of the schedule). The flag is read by
+    # :meth:`adaptive_reflow.frame.engine.Engine.run_round` and is
+    # included in the canonical ``policy_hash`` recompute so two
+    # policies that differ only by this flag hash differently.
+    beta_from_schedule: bool = True
 
 
 # ---------------------------------------------------------------------------

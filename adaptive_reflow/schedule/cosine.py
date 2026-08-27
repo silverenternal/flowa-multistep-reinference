@@ -9,6 +9,9 @@ imports ``torch`` and never writes a ``beta`` value.
 Public surface:
 
 * :func:`n_cap_for_round` — closed-form capacity function. Pure, deterministic.
+* :func:`memory_fraction_from_schedule` — translate a schedule sample into
+  the per-round memory fraction ``m = 1 - n_cap`` consumed by the engine
+  and the universal ``apply_restart_distribution`` boundary.
 * :class:`CosineScheduleSampler` — records a fresh :class:`CosineScheduleSample`
   and a :class:`RestartTriggerEvent` when an outer cycle restarts.
 * :func:`validate_cosine_schedule_config` — deterministic config validator.
@@ -227,6 +230,67 @@ def n_cap_for_round(
 
     # 9. Clip to [0, 1] and require finite (defensive against roundoff).
     return FactorValue(_clip_unit_finite(n_cap))
+
+
+# ---------------------------------------------------------------------------
+# Memory fraction (per-round, derived from the schedule)
+# ---------------------------------------------------------------------------
+
+
+def memory_fraction_from_schedule(
+    schedule_sample: CosineScheduleSample,
+) -> float:
+    """Return the per-round memory fraction derived from ``schedule_sample``.
+
+    The per-round memory fraction is the share of the prior endpoint that
+    should be retained when restarting at ``schedule_sample.round_in_cycle``.
+    It is the natural complement of the schedule's fresh-noise capacity:
+
+        memory_fraction = 1.0 - n_cap
+
+    so at round 0 with ``n_cap = n_max`` (large), the memory fraction is
+    small (lots of fresh noise for exploration); at round L-1 with
+    ``n_cap = n_min`` (small), the memory fraction is large (preserve
+    the prior and refine). For a "coarse to fine" drug-design
+    intuition this matches the annealed restart schedule.
+
+    The complement relationship is the canonical wiring the framework
+    exposes to the universal :class:`FlowMatchingODEAdapter` boundary
+    (see :func:`adaptive_reflow.frame.engine.Engine.run_round`,
+    ADR-0010). The helper is pure: identical inputs always yield
+    identical outputs; the result is clipped to ``[0, 1]`` and
+    refuses non-finite or non-numeric ``n_cap`` inputs.
+
+    Parameters
+    ----------
+    schedule_sample:
+        A :class:`CosineScheduleSample` produced by
+        :func:`n_cap_for_round` (directly or via
+        :class:`CosineScheduleSampler`).
+
+    Returns
+    -------
+    float
+        The per-round memory fraction in ``[0, 1]``.
+
+    Raises
+    ------
+    ValueError
+        On a ``None`` ``schedule_sample``, a non-numeric ``n_cap``, or a
+        non-finite ``n_cap``.
+    """
+    if schedule_sample is None:
+        raise ValueError("schedule_sample must not be None")
+    n_cap_raw = schedule_sample.n_cap
+    if isinstance(n_cap_raw, bool) or not isinstance(n_cap_raw, (int, float)):
+        raise ValueError(
+            f"schedule_sample.n_cap must be a real number, got "
+            f"{type(n_cap_raw).__name__}"
+        )
+    n_cap = float(n_cap_raw)
+    if not math.isfinite(n_cap):
+        raise ValueError(f"schedule_sample.n_cap must be finite, got {n_cap!r}")
+    return float(max(0.0, min(1.0, 1.0 - n_cap)))
 
 
 # ---------------------------------------------------------------------------
@@ -839,6 +903,7 @@ __all__ = [
     "build_fresh_noise_diagnostics",
     "default_floor_by_channel",
     # Public API
+    "memory_fraction_from_schedule",
     "n_cap_for_round",
     "validate_cosine_schedule_config",
 ]

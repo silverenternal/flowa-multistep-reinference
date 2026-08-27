@@ -502,6 +502,7 @@ def build_final_restart_policy(
     freeze_admission_by_channel: Mapping[ChannelName, bool],
     ledger_row_id: LedgerRowId,
     created_at_round: int,
+    beta_from_schedule: bool = True,
 ) -> FinalRestartPolicy:
     """Build a fully-validated :class:`FinalRestartPolicy`.
 
@@ -546,6 +547,12 @@ def build_final_restart_policy(
     created_at_round:
         Round at which this policy was assembled (must be a
         non-negative int).
+    beta_from_schedule:
+        When ``True`` (default, ADR-0010) the framework derives
+        ``beta_by_channel`` from the cosine schedule's ``n_cap`` at
+        runtime. When ``False`` the explicit ``beta_by_channel`` is
+        preserved verbatim. The flag is included in the canonical
+        ``policy_hash`` recompute.
 
     Returns
     -------
@@ -636,6 +643,7 @@ def build_final_restart_policy(
         ledger_row_id=LedgerRowId(str(ledger_row_id)),
         policy_hash=ArtifactHash(""),
         created_at_round=int(created_at_round),
+        beta_from_schedule=bool(beta_from_schedule),
     )
     policy_hash = hash_policy_hash(placeholder)
     if str(policy_hash) == "":

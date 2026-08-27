@@ -7,6 +7,51 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Cosine-driven memory fraction + ablation
+
+### Added
+
+- `memory_fraction_from_schedule(schedule_sample, channel)` helper in
+  `adaptive_reflow/schedule/cosine.py`. Returns `1 - n_cap` — the canonical
+  transform that maps a cosine capacity sample to a memory fraction in
+  the unit interval.
+- `Frame.engine.run_round` now wires `schedule.n_cap` to
+  `policy.beta_by_channel` per round: when
+  `FinalRestartPolicy.beta_from_schedule` is `True` (default), the
+  per-round `beta_by_channel` is overwritten from
+  `memory_fraction_from_schedule(...)`; when `False`, the explicit
+  `beta_by_channel` is preserved for back-compat with callers that
+  pre-configure the schedule manually.
+- ADR-0010 (`docs/adr/0010-cosine-driven-memory-fraction.md`) — documents
+  the algorithm decision that closes the disconnect between the cosine
+  schedule's per-round `n_cap` and the adapters' constant
+  `beta_from_policy`.
+- `docs/ABLATION.md` — empirical ablation results on the 2D toy:
+  `single_pass` vs `multi_round_constant_beta_05` vs
+  `multi_round_cosine_anneal` vs `multi_round_no_restart`, on both
+  `two_moons` and `eight_gaussians`.
+
+### Findings (from `docs/ABLATION.md`)
+
+- On `two_moons`, `multi_round_no_restart` wins on final W2
+  (`0.6126`); `multi_round_constant_beta_05` ties `multi_round_cosine_anneal`
+  on final coverage (`1.000`). Cosine vs constant-beta-0.5:
+  `delta_W2 = -0.0610` (constant-beta slightly tighter on this target)
+  and `delta_coverage = +0.000`.
+- On `eight_gaussians`, `multi_round_no_restart` wins on both final W2
+  (`0.6862`) and final coverage (`0.625`); cosine vs constant-beta-0.5:
+  `delta_W2 = +0.2115` (cosine tighter) and
+  `delta_coverage = +0.250` (cosine covers twice as many modes).
+- Across both targets the cosine-annealed schedule averaged
+  `delta_W2 = +0.0753` vs the constant-`beta=0.5` baseline and
+  `delta_W2 = -0.7906` vs the full-fresh-noise ablation; coverage
+  lifted `+0.125` and `-0.125` respectively. The framework's value is
+  the *anneal*: the constant-beta baseline either over-preserves the
+  prior (`beta=0.5`) or fully discards it (`beta=1.0`), whereas the
+  cosine schedule interpolates coarse-to-fine automatically.
+
+---
+
 ## [Unreleased] - Python 3.12 pin
 
 ### Notes

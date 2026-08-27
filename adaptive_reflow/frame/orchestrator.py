@@ -936,6 +936,10 @@ class AdaptiveReflowPolicyOrchestrator:
             freeze_admission_by_channel=record.freeze_admission_by_channel,
             ledger_row_id=ledger.ledger_row_id,
             created_at_round=int(ledger.created_at_round),
+            # ADR-0010: orchestrator-built policies default to the
+            # schedule-driven beta override. Callers that want to lock
+            # beta independently of the schedule can flip this off.
+            beta_from_schedule=True,
         )
 
         # Verify. This is the boundary check the brief asks for; a

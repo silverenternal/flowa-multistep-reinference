@@ -41,11 +41,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
-from adaptive_reflow.contracts import FinalRestartPolicy, hash_policy_hash
+from adaptive_reflow.contracts import (
+    FactorValue,
+    FinalRestartPolicy,
+    hash_policy_hash,
+)
 from adaptive_reflow.frame.adapter import (
     AdapterCapabilities,
     CapabilityMismatchError,
@@ -59,6 +64,7 @@ from adaptive_reflow.frame.adapter import (
     validate_integrator_trace,
     validate_state_bundle,
 )
+from adaptive_reflow.schedule.cosine import memory_fraction_from_schedule
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -410,6 +416,68 @@ def _safe_adapter_call(
         return None
 
 
+def _policy_with_schedule_beta(policy: FinalRestartPolicy) -> FinalRestartPolicy:
+    """Return a copy of ``policy`` with ``beta_by_channel`` overridden by the schedule.
+
+    ADR-0010 — cosine-driven memory fraction. When the policy carries
+    a non-``None`` :class:`CosineScheduleSample` (and the dataclass
+    flag ``beta_from_schedule`` is ``True``, which is the engine-side
+    precondition for entering this helper), the per-round memory
+    fraction is the schedule's complement of fresh-noise capacity:
+
+        memory_fraction = 1.0 - n_cap        (``memory_fraction_from_schedule``)
+        beta             = 1.0 - memory_fraction
+                         = n_cap
+
+    So at round 0 with ``n_cap = n_max`` (large) the engine emits
+    ``beta = n_max`` (lots of fresh noise, exploration); at round L-1
+    with ``n_cap = n_min`` (small) the engine emits
+    ``beta = n_min`` (preserve prior, refine). The mapping is built
+    once over the policy's existing ``beta_by_channel`` keys so the
+    override preserves the channel vocabulary; the resulting
+    ``policy_hash`` is recomputed via :func:`hash_policy_hash` so the
+    audit invariant that the hash matches the canonical field tuple
+    is preserved.
+
+    Returns ``policy`` unchanged when ``policy.schedule_sample is None``
+    — the caller already gates on that precondition, so this branch is
+    a defensive no-op for callers that invoke the helper directly.
+    """
+    sample = policy.schedule_sample
+    if sample is None:
+        return policy
+    # beta = n_cap (clipped) per the ADR-0010 derivation; the helper
+    # ``memory_fraction_from_schedule`` returns the complementary
+    # ``1 - n_cap`` so we subtract from ``1.0`` here. We do not call
+    # the helper for the beta value because the adapter's
+    # ``apply_restart_distribution`` convention is
+    # ``memory_fraction = 1 - beta``; inverting twice costs nothing
+    # but is easier to read as the direct ``n_cap`` assignment.
+    n_cap_raw = sample.n_cap
+    try:
+        n_cap = float(n_cap_raw)
+    except (TypeError, ValueError):
+        return policy
+    if not _isfinite_or_skip(n_cap):
+        return policy
+    beta_value = max(0.0, min(1.0, n_cap))
+    new_beta_by_channel = {
+        channel: FactorValue(float(beta_value))
+        for channel in policy.beta_by_channel
+    }
+    overridden = replace(policy, beta_by_channel=new_beta_by_channel)
+    return replace(overridden, policy_hash=hash_policy_hash(overridden))
+
+
+def _isfinite_or_skip(value: Any) -> bool:
+    """Return ``True`` iff ``value`` is a finite real number."""
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(f)
+
+
 # ---------------------------------------------------------------------------
 # Engine
 # ---------------------------------------------------------------------------
@@ -638,6 +706,19 @@ class Engine:
         * ``integrator_trace_missing``
         * ``shape_frame_normalization_mismatch``
         * ``feature_flag_disabled``
+
+        Cosine-driven memory fraction (ADR-0010): when
+        ``policy.beta_from_schedule is True`` (default) and
+        ``policy.schedule_sample is not None``, the engine overrides
+        ``policy.beta_by_channel`` for the duration of this round so
+        the per-round memory fraction is the schedule's complement of
+        ``n_cap``: ``beta = n_cap`` so ``memory_fraction = 1 - n_cap``.
+        The override is invisible to the caller (the supplied
+        ``policy`` is never mutated); the round trace's
+        ``applied_policy_hash`` reflects the post-override hash so the
+        audit invariant ``hash == recompute`` holds. When
+        ``policy.beta_from_schedule is False`` (back-compat) the
+        policy is forwarded verbatim.
         """
         audit_codes: list[str] = []
         # Coerce round_index BEFORE the feature-flag check so the
@@ -828,12 +909,31 @@ class Engine:
             )
 
         # 2. Apply restart distribution (beta=0 preserves the prior).
+        # ADR-0010 — cosine-driven memory fraction. When the policy
+        # carries a non-``None`` ``schedule_sample`` AND the
+        # ``beta_from_schedule`` flag is ``True`` (default), the engine
+        # overrides ``beta_by_channel`` from the schedule's ``n_cap``
+        # (``beta = n_cap`` so ``memory_fraction = 1 - n_cap``). The
+        # helper is pure; the resulting ``policy_hash`` is recomputed
+        # via :func:`hash_policy_hash` so the audit trail matches the
+        # actually-emitted beta. When ``beta_from_schedule`` is
+        # ``False`` (back-compat) the policy is forwarded verbatim.
+        applied_policy: FinalRestartPolicy = policy
+        if policy.beta_from_schedule and policy.schedule_sample is not None:
+            applied_policy = _policy_with_schedule_beta(policy)
+        if applied_policy is not policy:
+            # Recompute the applied hash so the round trace's
+            # ``applied_policy_hash`` reflects the post-override
+            # policy. The original ``policy`` is left untouched so
+            # the caller can still introspect the unoverridden surface.
+            applied_policy_hash = str(hash_policy_hash(applied_policy))
+
         post_state = _safe_adapter_call(
             "apply_restart_distribution",
             audit_codes,
             adapter.apply_restart_distribution,
             initial_state,
-            policy,
+            applied_policy,
         )
         if post_state is None:
             return self._emit_fail_closed(
