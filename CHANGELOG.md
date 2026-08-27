@@ -40,6 +40,11 @@ on a fixed cadence. Version markers in commit messages follow the
   loading `.npz` weights, building an `Engine`, running five rounds
   with `restart_beta=0.5`, computing `support_coverage` via
   `TwoDimFMEvaluator`, and plotting the endpoint samples.
+- `pyproject.toml [tool.mypy] exclude` and
+  `[[tool.mypy.overrides]]` — exclude NumPy 2.x stubs (broken `type`
+  statement that mypy 1.x cannot parse on Python 3.11); document the
+  limitation in this changelog. Tests, ruff, and docs scanner are
+  unaffected.
 
 ## [Unreleased] — S-tier governance upgrade
 
