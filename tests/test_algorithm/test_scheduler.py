@@ -10,6 +10,7 @@ import pytest
 
 from adaptive_reflow.algorithm import (
     SCHEDULER_REGISTRY,
+    CodimensionSheetScheduler,
     ConstantScheduler,
     ConvergenceAdaptiveScheduler,
     CosineAnnealScheduler,
@@ -22,6 +23,7 @@ from adaptive_reflow.algorithm import (
     build_scheduler,
     default_cosine_scheduler,
 )
+from adaptive_reflow.algorithm.scheduler import _paper_evidence_balance
 from adaptive_reflow.schedule.cosine import CosineScheduleSampler
 
 
@@ -410,6 +412,7 @@ def test_build_scheduler_dispatches_polynomial_and_sigmoid() -> None:
 def test_all_schedulers_conform_to_protocol() -> None:
     """Every registered scheduler class must satisfy SchedulerProtocol structurally."""
     assert set(SCHEDULER_REGISTRY) == {
+        "codimension_sheet",
         "cosine",
         "constant",
         "linear",
@@ -426,6 +429,7 @@ def test_all_schedulers_conform_to_protocol() -> None:
         PolynomialScheduler(cycle_length=5),
         SigmoidScheduler(cycle_length=5),
         ConvergenceAdaptiveScheduler(),
+        CodimensionSheetScheduler(cycle_length=5),
     ]
     for instance in instances:
         assert isinstance(instance, SchedulerProtocol)
@@ -668,6 +672,7 @@ def test_all_schedulers_have_noop_record_round_feedback() -> None:
         PolynomialScheduler(cycle_length=5),
         SigmoidScheduler(cycle_length=5),
         ConvergenceAdaptiveScheduler(),
+        CodimensionSheetScheduler(cycle_length=5),
     ]
     for s in schedulers:
         assert hasattr(s, "record_round_feedback")
@@ -676,3 +681,232 @@ def test_all_schedulers_have_noop_record_round_feedback() -> None:
         assert s.record_round_feedback(0, {"W2": 1.0}) is None
         # Resetting still works after a feedback call.
         s.reset()
+
+
+# ---------------------------------------------------------------------------
+# CodimensionSheetScheduler — paper Theorem 1 / Lemmas 2 + 3
+# ---------------------------------------------------------------------------
+
+
+def _noop_profile(x: float) -> float:
+    """Identity-free residual profile for codimension-scheduler tests."""
+    return float(x)
+
+
+def test_paper_evidence_balance_helper_closed_form() -> None:
+    """_paper_evidence_balance matches the closed form in the ADR."""
+    eps = 0.1
+    for n_base in (0.0, 0.25, 0.5, 0.75, 1.0):
+        sheet = 1.0 / max(n_base, eps)
+        cell = (1.0 - n_base) ** 2 / (eps * eps)
+        expected = sheet / (sheet + cell)
+        got = _paper_evidence_balance(n_base, eps)
+        assert got == pytest.approx(expected, rel=1e-12)
+
+
+def test_paper_evidence_balance_helper_rejects_invalid_eps() -> None:
+    """The helper refuses non-finite or non-positive eps_implicit."""
+    with pytest.raises(ValueError, match="finite"):
+        _paper_evidence_balance(0.5, float("nan"))
+    with pytest.raises(ValueError, match="eps_implicit"):
+        _paper_evidence_balance(0.5, 0.0)
+    with pytest.raises(ValueError, match="eps_implicit"):
+        _paper_evidence_balance(0.5, -0.01)
+
+
+def test_codimension_sheet_scheduler_high_eps_stays_close_to_cosine() -> None:
+    """At eps_implicit=1.0 the codim scheduler tracks the base cosine shape.
+
+    With eps=1.0 the formula maps ``n_cap_base in [0, 1]`` to
+    ``n_cap_out in [0.5, 1.0]`` (the formula's natural range at that
+    scale). The codim output is monotonic in the base schedule's
+    ``n_cap_base`` so the two schedules produce samples that correlate
+    round-by-round (within a bounded offset).
+    """
+    base = default_cosine_scheduler(cycle_length=10, n_min=0.0, n_max=1.0)
+    codim = CodimensionSheetScheduler(
+        cycle_length=10, n_min=0.0, n_max=1.0, eps_implicit=1.0
+    )
+    base_caps = [base.sample(0, r, r).n_cap for r in range(10)]
+    codim_caps = [codim.sample(0, r, r).n_cap for r in range(10)]
+    # Both are monotonic-decreasing in r for the cosine family; the codim
+    # scheduler must preserve the same monotonic direction at eps=1.0.
+    for b_prev, b_curr, c_prev, c_curr in zip(
+        base_caps[:-1], base_caps[1:], codim_caps[:-1], codim_caps[1:],
+        strict=True,
+    ):
+        if b_curr > b_prev:
+            assert c_curr >= c_prev
+    # Codim output stays within the formula's natural range at eps=1.0
+    # ([0.5, 1.0] for n_min=0, n_max=1).
+    for n in codim_caps:
+        assert 0.5 - 1e-9 <= n <= 1.0 + 1e-9
+    # Round-by-round the codim scheduler tracks the base within a
+    # bounded offset; worst case is r=0 (base=0 -> codim=0.5).
+    for b, c in zip(base_caps, codim_caps, strict=True):
+        assert abs(c - b) < 0.6
+
+
+def test_codimension_sheet_scheduler_low_eps_amplifies_selection() -> None:
+    """At eps_implicit=0.01 the codim scheduler compresses n_cap toward n_min.
+
+    With a small eps the cell-evidence term dominates the denominator
+    at every non-trivial base n_cap, so the ratio collapses toward 0
+    and n_cap_out sits near n_min (closed-form paper Lemma 3 bound
+    realised). The mid-cycle output must therefore be much smaller
+    than the same round's base cosine n_cap.
+    """
+    base = default_cosine_scheduler(cycle_length=10, n_min=0.0, n_max=1.0)
+    codim = CodimensionSheetScheduler(
+        cycle_length=10, n_min=0.0, n_max=1.0, eps_implicit=0.01
+    )
+    base_mid = base.sample(0, 5, 5).n_cap
+    codim_mid = codim.sample(0, 5, 5).n_cap
+    # The cosine baseline at the midpoint is well above 0.4.
+    assert base_mid > 0.4
+    # And the codim scheduler compresses it strongly toward n_min.
+    assert codim_mid < 0.05
+    # The low-eps compression holds across the cycle: in every round
+    # where the base cosine is non-trivial, the codim scheduler output
+    # is at most 0.2 (the r=0 special case is exempt because base=1
+    # makes cell evidence vanish entirely there).
+    small_compression_count = 0
+    for r in range(10):
+        c = codim.sample(0, r, r).n_cap
+        if r != 0:
+            assert c < 0.2
+            small_compression_count += 1
+    assert small_compression_count >= 8
+
+
+def test_codimension_sheet_scheduler_handles_degenerate_base() -> None:
+    """When the base cosine emits 0 (cycle terminal round), n_cap ~ n_min.
+
+    With ``n_cap_base=0`` the closed form is
+    ``ratio = 1 / (1 + 1/eps_implicit)``. For ``eps_implicit=0.05``
+    that is ``1/21 ~= 0.0476`` and the n_cap output is 0.0476 -- small
+    but not identically 0 (the formula's degenerate case has nonzero
+    sheet evidence).
+    """
+    codim = CodimensionSheetScheduler(
+        cycle_length=4, n_min=0.0, n_max=1.0, eps_implicit=0.05
+    )
+    # r=3 is the cycle terminal round; the cosine base with n_min=0
+    # emits exactly 0.0 at this slot.
+    sample = codim.sample(0, 3, 3)
+    assert sample.n_cap == pytest.approx(1.0 / 21.0, abs=1e-9)
+    # The helper matches.
+    expected_ratio = _paper_evidence_balance(0.0, 0.05)
+    assert expected_ratio == pytest.approx(1.0 / 21.0, abs=1e-9)
+    # And with a large enough n_min + larger eps the degeneracy is
+    # squarely in cell-evidence territory.
+    big_codim = CodimensionSheetScheduler(
+        cycle_length=2, n_min=0.5, n_max=1.0, eps_implicit=1.0
+    )
+    # n_cap_base = 0 at r=1; sheet=1/1=1, cell=1/1=1, ratio=0.5.
+    sample = big_codim.sample(0, 1, 1)
+    assert sample.n_cap == pytest.approx(0.75, abs=1e-9)
+
+
+def test_codimension_sheet_scheduler_is_byte_deterministic() -> None:
+    """Two CodimensionSheetScheduler instances with identical kwargs agree."""
+    kwargs = dict(
+        cycle_length=12,
+        n_min=0.1,
+        n_max=0.9,
+        profile_residual_fn=_noop_profile,
+        eps_implicit=0.07,
+        seed=42,
+    )
+    a = CodimensionSheetScheduler(**kwargs)
+    b = CodimensionSheetScheduler(**kwargs)
+    for r in range(12):
+        sa = a.sample(0, r, r)
+        sb = b.sample(0, r, r)
+        assert sa.n_cap == pytest.approx(sb.n_cap)
+        assert sa.u_r == pytest.approx(sb.u_r)
+        assert sa.family == sb.family == "codimension_sheet"
+        assert sa.schedule_hash == sb.schedule_hash
+        assert sa.memory_fraction() == pytest.approx(sb.memory_fraction())
+
+
+def test_codimension_sheet_scheduler_config_hash_includes_eps_implicit_and_profile_signature() -> None:
+    """The config_hash captures both eps_implicit and profile identity."""
+    base_kwargs = dict(
+        cycle_length=10,
+        n_min=0.0,
+        n_max=1.0,
+        profile_residual_fn=None,
+        seed=0,
+    )
+    h0 = CodimensionSheetScheduler(**base_kwargs).config_hash()
+    # Vary eps_implicit.
+    h_lo = CodimensionSheetScheduler(
+        **{**base_kwargs, "eps_implicit": 0.01}
+    ).config_hash()
+    h_hi = CodimensionSheetScheduler(
+        **{**base_kwargs, "eps_implicit": 0.07}
+    ).config_hash()
+    assert h_lo != h0
+    assert h_hi != h0
+    assert h_lo != h_hi
+    # Vary the profile callable.
+    h_prof = CodimensionSheetScheduler(
+        **{**base_kwargs, "profile_residual_fn": _noop_profile}
+    ).config_hash()
+    assert h_prof != h0
+    # Same callable -> same hash (signature is qualname-derived).
+    h_prof_again = CodimensionSheetScheduler(
+        **{**base_kwargs, "profile_residual_fn": _noop_profile}
+    ).config_hash()
+    assert h_prof == h_prof_again
+    # The profile_signature accessor exposes the same identifier string.
+    scheduler = CodimensionSheetScheduler(
+        **{**base_kwargs, "profile_residual_fn": _noop_profile}
+    )
+    assert scheduler.profile_signature.endswith("_noop_profile")
+    # And a None profile yields the canonical "default_sheet" signature.
+    none_scheduler = CodimensionSheetScheduler(**base_kwargs)
+    assert none_scheduler.profile_signature == "default_sheet"
+
+
+def test_codimension_sheet_scheduler_clip_in_unit_interval() -> None:
+    """n_cap stays in [n_min, n_max] (and therefore in [0, 1]) for every round."""
+    codim = CodimensionSheetScheduler(
+        cycle_length=20, n_min=0.0, n_max=1.0, eps_implicit=0.05
+    )
+    for r in range(20):
+        sample = codim.sample(0, r, r)
+        assert 0.0 <= sample.n_cap <= 1.0
+        # And via the canonical memory-fraction transform.
+        assert 0.0 <= sample.memory_fraction() <= 1.0
+    # Even with extreme eps (the closed form keeps the ratio in [0, 1]).
+    extreme_low = CodimensionSheetScheduler(cycle_length=10, eps_implicit=1e-12)
+    extreme_high = CodimensionSheetScheduler(cycle_length=10, eps_implicit=1e6)
+    for r in range(10):
+        s_lo = extreme_low.sample(0, r, r)
+        s_hi = extreme_high.sample(0, r, r)
+        assert 0.0 <= s_lo.n_cap <= 1.0
+        assert 0.0 <= s_hi.n_cap <= 1.0
+
+
+def test_codimension_sheet_scheduler_build_scheduler_factory() -> None:
+    """build_scheduler('codimension_sheet') returns the codim class."""
+    scheduler = build_scheduler(
+        "codimension_sheet",
+        cycle_length=8,
+        eps_implicit=0.05,
+    )
+    assert isinstance(scheduler, CodimensionSheetScheduler)
+    assert scheduler.schedule_family() == "codimension_sheet"
+    # And the registry is case- and whitespace-insensitive.
+    scheduler = build_scheduler("  CODIMENSION_SHEET  ", cycle_length=8)
+    assert isinstance(scheduler, CodimensionSheetScheduler)
+    # profile_residual_fn passes through the factory.
+    scheduler = build_scheduler(
+        "codimension_sheet",
+        cycle_length=8,
+        eps_implicit=0.05,
+        profile_residual_fn=_noop_profile,
+    )
+    assert scheduler.profile_signature.endswith("_noop_profile")

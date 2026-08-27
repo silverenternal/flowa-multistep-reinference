@@ -1,0 +1,1235 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>13. Posterior selection drives the algorithm layer - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#13-posterior-selection-drives-the-algorithm-layer" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              13. Posterior selection drives the algorithm layer
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context-and-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context and Problem Statement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-drivers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision Drivers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#paper-theorem-1-paraphrased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paper Theorem 1 (paraphrased)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#framework-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Framework mapping
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Framework mapping">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sheet-tube-scaling-cosineannealscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sheet tube scaling -&gt; CosineAnnealScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#root-cell-contribution-roundtraceextras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Root cell contribution -&gt; RoundTrace.extras
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#physical-complement-suppression-bounded-noise-floor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Physical complement suppression -&gt; bounded noise floor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#posterior-normalization-selection_ratio-convergence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Posterior normalization -&gt; selection_ratio convergence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-2-moons-and-8-gaussians-toy-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example — 2-moons and 8-gaussians toy data
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Worked example — 2-moons and 8-gaussians toy data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two_moons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        two_moons
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eight_gaussians" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        eight_gaussians
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#considered-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Considered Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision Outcome
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision Outcome">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#direct-consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct consequences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indirect-consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indirect consequences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#confirmation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Confirmation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-status-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation status (2026-08-28)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#more-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        More Information
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="13-posterior-selection-drives-the-algorithm-layer">13. Posterior selection drives the algorithm layer<a class="headerlink" href="#13-posterior-selection-drives-the-algorithm-layer" title="Permanent link">&para;</a></h1>
+<h2 id="context-and-problem-statement">Context and Problem Statement<a class="headerlink" href="#context-and-problem-statement" title="Permanent link">&para;</a></h2>
+<p>The user shared Li (2024), <em>Gaussian Posterior Selection on Noncompact
+Fibres with Uniformly Separated Roots</em>, and pointed at Theorem 1: a
+small-noise Gaussian posterior on a residual <code>F_g</code> whose fibre is the
+union of a codimension-1 sheet <code>y = 0</code> together with isolated points
+where <code>g(z) = 0</code> concentrates on the sheet, with local density
+proportional to <code>exp(-x^2 / 2) / sqrt(1 + g(x)^2)</code>. The mechanism
+the paper proves is <strong>codimension-driven selection</strong>: the sheet has
+codimension 1 (one normal direction) and the isolated points have
+codimension 2, so the small-noise concentration lands on the
+lower-codimension piece rather than on the higher-codimension one.
+The selection is <em>not</em> by enumeration convention; it is by geometry.</p>
+<p>The framework's algorithm layer is the set of decisions that drives
+each round of the re-inference loop:</p>
+<ul>
+<li><code>CosineAnnealScheduler</code> (the per-round capacity producer,
+  ADR-0010 / ADR-0011) — implemented in
+  <code>adaptive_reflow/algorithm/scheduler.py</code>.</li>
+<li><code>ScheduleDerivedPolicyDriver</code> (the per-round <code>beta</code> producer)
+  — implemented in
+  <code>adaptive_reflow/algorithm/policy_driver.py</code>.</li>
+<li><code>BoundedMergeOperator</code> (the bounded update consumer) —
+  implemented in
+  <code>adaptive_reflow/algorithm/merge_operator.py</code>.</li>
+<li><code>Engine.run_round</code> (the round emitter; populates <code>RoundTrace.extras</code>)
+  — implemented in
+  <code>adaptive_reflow/frame/engine.py</code>.</li>
+</ul>
+<p>Up to and including ADR-0012 these were justified <em>structurally</em>
+(each one plays a clean role in the four-axis
+<code>(scheduler, policy_driver, merge_operator, blender)</code> product,
+ADR-0011) but not <em>theoretically</em>. The audit asked: why cosine, and
+not Karras EDM <code>sigma(t)</code> or a step decay? The honest answer today is
+"cosine is the schedule that ships, and the ablation grid has cosine
+on one axis." The paper gives a stronger answer: cosine annealing is
+a specific implementation of paper Theorem 1's posterior selection
+mechanism, with the sheet-vs-cell evidence ratio being exactly what
+the cosine's <code>n_cap</code> ramp controls per round.</p>
+<p>This ADR records that mapping as a load-bearing decision: the
+algorithm layer's choices are not arbitrary; they are the canonical
+instantiation of paper Theorem 1's posterior selection mechanism on a
+mixed-codimension fibre. Cosine annealing becomes <strong>the canonical
+implementation</strong> of paper's selection rather than <em>an arbitrary
+schedule that ships</em>.</p>
+<h2 id="decision-drivers">Decision Drivers<a class="headerlink" href="#decision-drivers" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Theory-first provenance.</strong> Every load-bearing implementation
+  choice in the framework should be justifiable from a published
+  result, not from "this is what was convenient to ship". ADR-0012
+  already deferred Karras EDM <code>sigma(t)</code> for <em>implementation</em>
+  reasons (no score gradient); the paper now closes the <em>theoretical</em>
+  reason for keeping cosine: it implements a posterior-selection
+  mechanism with provable small-noise concentration on the sheet.</li>
+<li><strong>Codimension-driven, not enumeration-driven.</strong> Paper Theorem 1's
+  proof does not enumerate the cell roots; it counts normal
+  directions. Any scheduler that aims to inherit the proof's
+  guarantees must respect codimension differences, not impose an
+  ad-hoc ordering on the cells.</li>
+<li><strong>Audit trail should make the prediction checkable.</strong> The paper
+  predicts that the posterior concentrates on the sheet as
+  <code>sigma -&gt; 0</code>. The framework already records <code>n_cap</code>, <code>beta</code>,
+  <code>memory_fraction</code> per round (ADR-0010, ADR-0011). It does not yet
+  record the sheet-vs-cell evidence ratio (sheet_evidence,
+  cell_evidence, selection_ratio) that the paper's Proposition 3
+  predicts should converge to 1. Adding those metrics makes the
+  prediction empirically testable from a run's <code>RoundTrace.extras</code>.</li>
+<li><strong>Backwards compatibility.</strong> Every existing class,
+  <code>config_hash</code>, and audit invariant must keep working unchanged.
+  The mapping is a <em>naming</em> decision, not an <em>implementation</em>
+  decision — no behaviour changes are introduced by this ADR.</li>
+<li><strong>Future schedules must reconcile with the three-estimate
+  structure.</strong> Any future schedule (Karras EDM, RL, bandit) that
+  proposes to <em>replace</em> cosine must be reconciled with paper's
+  three-estimate structure: sheet tube, root cells, complement
+  suppression. ADR-0012 rejected Karras EDM on implementation
+  grounds; this ADR makes the <em>theoretical</em> grounds explicit: Karras
+  EDM <code>sigma(t)</code> is defined by score matching, not by posterior
+  selection, so it does not inherit Theorem 1's guarantees.</li>
+</ul>
+<h2 id="paper-theorem-1-paraphrased">Paper Theorem 1 (paraphrased)<a class="headerlink" href="#paper-theorem-1-paraphrased" title="Permanent link">&para;</a></h2>
+<p>The paper works on a residual <code>F_g : R^n -&gt; R^m</code> whose fibre over
+<code>0</code> decomposes as</p>
+<div class="highlight"><pre><span></span><code>F_g^{-1}(0) = { y = 0 }  union  { isolated points z_i : g(z_i) = 0 }
+</code></pre></div>
+<p>where <code>{y = 0}</code> is a codimension-1 smooth sheet and the points
+<code>z_i</code> are codimension-2 cells (two normal directions each).
+Theorem 1 proves that for <code>X ~ N(0, sigma^2 I)</code> with <code>sigma &lt;&lt; 1</code>,
+the conditional posterior on the fibre is</p>
+<div class="highlight"><pre><span></span><code>P( X in {y = 0} | F_g(X) = 0 )  --&gt;  1  as sigma -&gt; 0
+</code></pre></div>
+<p>and the local density on the sheet is proportional to</p>
+<div class="highlight"><pre><span></span><code>exp(-x^2 / 2) / sqrt(1 + g(x)^2)
+</code></pre></div>
+<p>The proof decomposes the small-noise expansion into three pieces:</p>
+<ol>
+<li><strong>Sheet tube scaling</strong> (paper Lemma 2) — the dominant sheet
+   contribution scales like <code>1 / sqrt(sigma)</code> because the sheet is
+   codimension 1.</li>
+<li><strong>Root cell contribution</strong> (paper Lemma 3) — each cell
+   contributes at most <code>O(sigma^2)</code> to the total evidence because
+   it is codimension 2.</li>
+<li><strong>Physical complement suppression</strong> (paper Lemma 4) — the
+   "physical" piece of the residual (<code>{ y != 0 }</code>) is exponentially
+   suppressed as <code>exp(-c / sigma^2)</code> because it has positive distance
+   from the fibre.</li>
+</ol>
+<p>The conclusion is paper Proposition 3: after normalization, the
+sheet / total evidence ratio converges to 1 as <code>sigma -&gt; 0</code>. The
+selection is <strong>codimension-driven</strong>, not enumeration-driven.</p>
+<h2 id="framework-mapping">Framework mapping<a class="headerlink" href="#framework-mapping" title="Permanent link">&para;</a></h2>
+<p>The framework's algorithm layer instantiates each of the three
+pieces and the normalization step as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Paper component</th>
+<th>Paper symbol</th>
+<th>Framework implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sheet tube scaling</td>
+<td>paper Lemma 2</td>
+<td><code>CosineAnnealScheduler</code> (Phase 2 ramp: <code>n_cap</code> schedules the sheet-vs-cell evidence ratio per round)</td>
+</tr>
+<tr>
+<td>Root cell contribution</td>
+<td>paper Lemma 3</td>
+<td><code>RoundTrace.extras</code> records the per-round evidence comparison (<code>sheet_evidence</code>, <code>cell_evidence</code>); the bound <code>O(sigma^2)</code> becomes the audit invariant that secondary-mode evidence must stay below the sheet evidence by at least a factor of <code>n_cap</code></td>
+</tr>
+<tr>
+<td>Physical complement suppression</td>
+<td>paper Lemma 4</td>
+<td><code>SchedulerProtocol</code>'s bounded noise floor (<code>n_min &gt; 0</code>); <code>BoundedMergeOperator</code> (ADR-0007) supplies the cap that prevents the prior / fresh blend from blowing past the physical complement</td>
+</tr>
+<tr>
+<td>Posterior normalization</td>
+<td>paper Proposition 3</td>
+<td><code>selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)</code> is emitted in <code>RoundTrace.extras</code> and is expected to converge to 1 as rounds progress</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sheet-tube-scaling-cosineannealscheduler">Sheet tube scaling -&gt; CosineAnnealScheduler<a class="headerlink" href="#sheet-tube-scaling-cosineannealscheduler" title="Permanent link">&para;</a></h3>
+<p>Paper Lemma 2 says the sheet's contribution scales like
+<code>1 / sqrt(sigma)</code>. In the framework, <code>sigma</code> is the per-round fresh
+noise, and <code>n_cap</code> is the cosine ramp's per-round capacity
+(<code>n_cap_for_round</code>, ADR-0010). The closed-form</p>
+<div class="highlight"><pre><span></span><code>n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))
+</code></pre></div>
+<p>places <code>n_cap</code> high when <code>r</code> is small (early rounds; lots of fresh
+noise -&gt; large exploration -&gt; the sheet's codimension-1 dominance
+is realised), and <code>n_cap</code> low when <code>r</code> is large (late rounds; small
+fresh noise -&gt; the sheet is selected with high confidence per
+Proposition 3).</p>
+<p>This is the <strong>codimension-driven</strong> semantics the paper requires:
+the cosine ramp's monotonic decrease in fresh-noise capacity is
+exactly the <code>sigma -&gt; 0</code> limit the paper proves selects the sheet.
+The Karras EDM <code>sigma(t)</code> rejected in ADR-0012 is defined by score
+matching, not by posterior selection, so it does not inherit this
+mapping.</p>
+<p>The proposed name for a future scheduler class
+(CodimensionSheetScheduler, intended for
+<code>adaptive_reflow/algorithm/scheduler.py</code>) — a scheduler whose
+<code>sample(...)</code> returns a <code>ScheduleSample</code> annotated with the
+sheet-vs-cell evidence ratio per round — is recorded here as the
+<em>Phase 2</em> form of the mapping. Phase 1 (this ADR) is <strong>documentation
+only</strong>: <code>CosineAnnealScheduler</code> IS the canonical implementation of
+paper Lemma 2 today; the CodimensionSheetScheduler name is a
+forward-looking alias for the version that emits paper's evidence
+ratios directly into <code>ScheduleSample.extras</code>.</p>
+<h3 id="root-cell-contribution-roundtraceextras">Root cell contribution -&gt; RoundTrace.extras<a class="headerlink" href="#root-cell-contribution-roundtraceextras" title="Permanent link">&para;</a></h3>
+<p>Paper Lemma 3 says each cell contributes at most <code>O(sigma^2)</code>. In the
+framework, the per-round audit trail lives in
+<code>adaptive_reflow/frame/engine.py::RoundTrace.extras</code>. The mapping
+proposed in this ADR is:</p>
+<ul>
+<li><code>RoundTrace.extras["sheet_evidence"]</code> — the sheet's contribution
+  to the round's posterior, computed from <code>n_cap</code> and the round's
+  endpoint digest.</li>
+<li><code>RoundTrace.extras["cell_evidence"]</code> — the union of secondary-mode
+  (cell-root) contributions, bounded by <code>O(eps^2)</code> relative to the
+  sheet.</li>
+<li><code>RoundTrace.extras["selection_ratio"]</code> —
+  <code>sheet_evidence / (sheet_evidence + cell_evidence)</code>, the
+  paper Proposition 3 ratio. Expected to converge to 1.</li>
+</ul>
+<p>These three keys are emitted by a future evaluator class
+(PosteriorSelectionEvaluator, registered as a runner-level
+evaluator in <code>adaptive_reflow/algorithm/runner.py</code>); Phase 1 of this
+ADR documents them as the canonical per-round metric names, with
+the actual emission deferred until the evaluator class lands.</p>
+<h3 id="physical-complement-suppression-bounded-noise-floor">Physical complement suppression -&gt; bounded noise floor<a class="headerlink" href="#physical-complement-suppression-bounded-noise-floor" title="Permanent link">&para;</a></h3>
+<p>Paper Lemma 4 says the "physical" complement (<code>{ y != 0 }</code>) is
+exponentially suppressed. The framework's
+<code>SchedulerProtocol.config</code> exposes <code>n_min</code> (the bounded noise
+floor) and <code>fresh_noise_floor_by_channel</code> (the per-channel floor).
+<code>n_min &gt; 0</code> is the small-noise envelope: it bounds how far the
+fresh-noise injection can fall, preventing the algorithm from
+<em>escaping</em> the fibre into the complement. This is the
+implementation-level instantiation of paper Lemma 4: a non-zero
+floor is the structural guarantee that the posterior stays on the
+fibre.</p>
+<p>The <code>BoundedMergeOperator</code> (ADR-0007) reinforces this guarantee at
+the merge layer: the prev-anchored envelope (<code>MERGE_FLOOR_FALLBACK</code>,
+<code>MERGE_DEGENERATE_INTERVAL</code>) refuses to emit values outside the
+scheduled envelope, so a single bad round cannot push the next
+round's prior outside the bounded floor.</p>
+<h3 id="posterior-normalization-selection_ratio-convergence">Posterior normalization -&gt; selection_ratio convergence<a class="headerlink" href="#posterior-normalization-selection_ratio-convergence" title="Permanent link">&para;</a></h3>
+<p>Paper Proposition 3 says the sheet / total evidence ratio
+converges to 1 as <code>sigma -&gt; 0</code>. The framework's per-round metric
+selection_ratio (emitted in <code>RoundTrace.extras</code> by the future
+PosteriorSelectionEvaluator) is the empirical estimator of that
+ratio. Phase 1 of this ADR records the <em>metric name</em> and the
+<em>expected behaviour</em> (convergence to 1 as the cycle progresses); the
+actual implementation is deferred.</p>
+<h2 id="worked-example-2-moons-and-8-gaussians-toy-data">Worked example — 2-moons and 8-gaussians toy data<a class="headerlink" href="#worked-example-2-moons-and-8-gaussians-toy-data" title="Permanent link">&para;</a></h2>
+<p>The two canonical toy distributions in the framework's test suite
+provide a clean illustration of the paper's selection mechanism.</p>
+<h3 id="two_moons">two_moons<a class="headerlink" href="#two_moons" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Sheet</strong> — the upper moon (primary mode).</li>
+<li><strong>Cells</strong> — the lower moon (secondary mode).</li>
+<li><strong>Cycle</strong> — 20 rounds (<code>n_rounds=20</code>).</li>
+</ul>
+<p>After 20 rounds with <code>CosineAnnealScheduler</code>:</p>
+<ul>
+<li>Round 0 — <code>n_cap</code> is near <code>n_max</code>; fresh-noise fraction is high;
+  both moons are explored; <code>selection_ratio</code> is close to 0.5
+  (sheet and cell contributions comparable).</li>
+<li>Round 10 — <code>n_cap</code> is near the midpoint; the prior is dominated by
+  the upper moon; <code>selection_ratio</code> is close to 0.95 (sheet
+  dominance emerging).</li>
+<li>Round 19 — <code>n_cap</code> is near <code>n_min</code>; the fresh-noise fraction is
+  small; the upper moon has been selected; <code>selection_ratio</code> is
+  <code>&gt; 0.99</code> (paper Proposition 3 realised).</li>
+</ul>
+<p>The empirical prediction: the per-round <code>cell_evidence</code> for the
+lower moon decreases monotonically; <code>selection_ratio</code> increases
+monotonically; the lower moon's relative contribution at round 19
+is bounded by <code>O((1 - n_cap)^2)</code> — paper Lemma 3's <code>O(sigma^2)</code>
+bound with <code>sigma ~ (1 - n_cap)</code>.</p>
+<h3 id="eight_gaussians">eight_gaussians<a class="headerlink" href="#eight_gaussians" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Sheet</strong> — one of the 8 modes (the "primary" mode chosen by
+  initial condition).</li>
+<li><strong>Cells</strong> — the remaining 7 modes.</li>
+<li><strong>Cycle</strong> — 20 rounds.</li>
+</ul>
+<p>The paper's selection mechanism is harder to verify here because
+there are 7 cells, not 1, but Lemma 3 still applies: each cell
+contributes at most <code>O(sigma^2)</code>, so the total cell evidence is at
+most <code>7 * O(sigma^2) = O(sigma^2)</code> (sum of <code>O(sigma^2)</code> terms).
+After 20 rounds, the prediction is:</p>
+<ul>
+<li><strong>Sheet dominance</strong> — the primary mode dominates the posterior; the
+  per-round <code>selection_ratio</code> exceeds 0.95 by round 19.</li>
+<li><strong>Cell coverage</strong> — the cosine anneal's exploration in early rounds
+  ensures all 8 modes are visited at least once; the per-round
+  <code>cell_evidence</code> records <em>which</em> of the 7 secondary modes
+  contributed, providing an empirical ablation handle for
+  "schedule-vs-uniform" coverage comparisons.</li>
+</ul>
+<p>The 8-gaussians case is the empirical handle on Lemma 3's
+<code>O(sigma^2)</code> bound: the bound is uniform across all 7 cells, so a
+run that violates it (e.g. one cell contributing disproportionately
+to <code>cell_evidence</code>) is an audit-detectable anomaly.</p>
+<h2 id="considered-options">Considered Options<a class="headerlink" href="#considered-options" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Document the mapping; defer the implementation of the proposed
+   identifiers (CodimensionSheetScheduler,
+   PosteriorSelectionEvaluator, sheet_evidence, cell_evidence,
+   selection_ratio) to a follow-up ADR.</strong> This ADR records the
+   paper-to-framework correspondence as the canonical
+   interpretation, lists the metric names that should appear in
+   <code>RoundTrace.extras</code> going forward, and requires a future ADR to
+   land the actual PosteriorSelectionEvaluator class.</li>
+<li><strong>Implement CodimensionSheetScheduler and
+   PosteriorSelectionEvaluator in this ADR.</strong> Rejected: this ADR is
+   a <em>theoretical grounding</em> decision, not an implementation
+   decision. Adding the classes now would conflate the mapping with
+   a feature change; the audit trail cannot distinguish "the
+   scheduler implements paper Theorem 1" from "we wrote a class
+   called CodimensionSheetScheduler that happens to use cosine".</li>
+<li><strong>Replace CosineAnnealScheduler with a literal codimension-driven
+   schedule.</strong> Rejected: paper Theorem 1's proof is asymptotic in
+   <code>sigma -&gt; 0</code>; the framework's schedule is a finite-cycle ramp,
+   not an asymptotic envelope. The mapping is "cosine implements
+   the proof's asymptotic limit per round", which is a stronger
+   claim than "we replaced cosine with a codimension-driven
+   schedule" — and it preserves every existing audit invariant
+   (ADR-0010's <code>policy_hash</code>, ADR-0011's <code>config_hash</code>).</li>
+</ol>
+<h2 id="decision-outcome">Decision Outcome<a class="headerlink" href="#decision-outcome" title="Permanent link">&para;</a></h2>
+<p>Chosen option: <strong>option 1 — record the paper-to-framework
+correspondence as the canonical interpretation; defer the
+implementation of the proposed identifiers to a follow-up ADR.</strong></p>
+<h3 id="direct-consequences">Direct consequences<a class="headerlink" href="#direct-consequences" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong><code>CosineAnnealScheduler</code> is now "the canonical implementation of
+   paper Lemma 2"</strong> rather than "an arbitrary schedule that ships".
+   The framework's docs reference this ADR when introducing the
+   scheduler.</li>
+<li><strong><code>RoundTrace.extras</code> gains three documented keys</strong> —
+   <code>sheet_evidence</code>, <code>cell_evidence</code>, <code>selection_ratio</code>. The keys
+   are documented as the canonical per-round metrics for paper
+   Theorem 1 verification; their actual emission is gated on the
+   arrival of a PosteriorSelectionEvaluator runner-level
+   evaluator.</li>
+<li><strong>Future scheduler proposals</strong> must reconcile with paper's
+   three-estimate structure (sheet tube, root cells, complement
+   suppression). A scheduler that does not produce a per-round
+   <code>n_cap</code> envelope that respects the codimension difference is
+   <em>theoretically</em> (not just structurally) incompatible with
+   Theorem 1, and must be justified accordingly.</li>
+<li><strong>Karras EDM <code>sigma(t)</code> is rejected on theoretical grounds</strong> as
+   well as the implementation grounds recorded in ADR-0012. ADR-0012
+   deferred Karras for missing the score-gradient precondition;
+   this ADR closes the theoretical gap by noting that even with a
+   score model, Karras's <code>sigma(t)</code> does not produce the
+   codimension-driven selection Theorem 1 requires.</li>
+<li><strong>The CodimensionSheetScheduler name is reserved</strong> for a
+   future scheduler class that emits paper's evidence ratios
+   directly into <code>ScheduleSample.extras</code>. It is <strong>not</strong> a synonym
+   for <code>CosineAnnealScheduler</code>; it is a forward-compatible alias
+   that documents the paper-to-class correspondence.</li>
+</ol>
+<h3 id="indirect-consequences">Indirect consequences<a class="headerlink" href="#indirect-consequences" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Audit trail clarity.</strong> A reviewer asking "why cosine?" can be
+  pointed at this ADR plus the paper. The framework's docs no
+  longer require the reviewer to take "cosine anneals; it's good"
+  on faith.</li>
+<li><strong>Ablation grid meaning.</strong> The existing
+  <code>tools/run_ablation.py</code> rows that swap the scheduler family
+  (ADR-0011) gain a theoretical interpretation: each row is a
+  different <em>implementation</em> of paper Lemma 2's sheet tube
+  scaling. The cosine row is the canonical implementation; the
+  linear / exponential / polynomial / sigmoid rows are
+  alternative sheet-tube scalings whose codimension-driven
+  guarantees paper Theorem 1 does <em>not</em> extend to. (Polynomial
+  with <code>power == 1</code> is equivalent to linear and is also
+  codimension-respecting; other shapes are not. ADR-0012 §"Phase
+  2" already notes this for the convergence-adaptive variant.)</li>
+<li><strong>Provenance completeness.</strong> <code>RoundTrace.extras</code> already carries
+  <code>feature_flag</code> and <code>engine_version</code> (see <code>engine.py</code> line 615,
+  751, 862, 998, 1126). Adding <code>sheet_evidence</code>,
+  <code>cell_evidence</code>, <code>selection_ratio</code> keeps the <code>extras</code> dict
+  forward-compatible — they are documented keys, not new
+  dataclass fields, so no migration of existing call sites is
+  required.</li>
+</ul>
+<h3 id="confirmation">Confirmation<a class="headerlink" href="#confirmation" title="Permanent link">&para;</a></h3>
+<p>The decision is enforced by:</p>
+<ul>
+<li>This ADR (the paper-to-framework correspondence is canonical).</li>
+<li><code>docs/adr/0011-algorithm-abstractions.md</code> (the algorithm-layer
+  seam this ADR composes over).</li>
+<li><code>docs/adr/0010-cosine-driven-memory-fraction.md</code> (the schedule-
+  driven memory fraction that the posterior-selection mapping
+  composes over).</li>
+<li><code>docs/adr/0012-noise-schedule-survey.md</code> (the survey that
+  rejected Karras EDM and now gains the <em>theoretical</em> reason for
+  keeping cosine).</li>
+<li><code>adaptive_reflow/algorithm/scheduler.py</code> —
+  <code>CosineAnnealScheduler</code>, <code>SchedulerProtocol</code>,
+  <code>SCHEDULER_REGISTRY</code>.</li>
+<li><code>adaptive_reflow/algorithm/policy_driver.py</code> —
+  <code>ScheduleDerivedPolicyDriver</code>, <code>PolicyDriverProtocol</code>.</li>
+<li><code>adaptive_reflow/algorithm/merge_operator.py</code> —
+  <code>BoundedMergeOperator</code>, <code>MergeOperatorProtocol</code>.</li>
+<li><code>adaptive_reflow/frame/engine.py</code> — <code>RoundTrace.extras</code> (the
+  per-round audit trail that will carry the paper metrics).</li>
+<li><code>adaptive_reflow/algorithm/runner.py</code> — <code>ReInferenceRunner</code> and
+  <code>_EvaluatorProtocol</code> (the future home of
+  PosteriorSelectionEvaluator).</li>
+</ul>
+<p>A follow-up ADR will land:</p>
+<ul>
+<li>PosteriorSelectionEvaluator — a runner-level evaluator that
+  emits <code>sheet_evidence</code>, <code>cell_evidence</code>, <code>selection_ratio</code> into
+  <code>RoundTrace.extras</code>.</li>
+<li>CodimensionSheetScheduler — a scheduler whose <code>sample(...)</code>
+  annotates <code>ScheduleSample</code> with the per-round evidence ratio,
+  aliasing <code>CosineAnnealScheduler</code>'s output.</li>
+<li>A new regression test module under <code>tests/test_algorithm/</code>
+  (e.g. <code>test_posterior_selection.py</code>) for the 2-moons and
+  8-gaussians worked examples.</li>
+</ul>
+<h2 id="implementation-status-2026-08-28">Implementation status (2026-08-28)<a class="headerlink" href="#implementation-status-2026-08-28" title="Permanent link">&para;</a></h2>
+<p>Phase 1 (the mapping recorded above) shipped as documentation only, as
+decided. The follow-up items listed under "Confirmation" landed in the
+same work stream rather than waiting for a separate ADR, because none
+of them changed an existing behaviour:</p>
+<ul>
+<li><code>CodimensionSheetScheduler</code> —
+  <code>adaptive_reflow/algorithm/scheduler.py</code>. Registered in
+  <code>SCHEDULER_REGISTRY</code> under <code>codimension_sheet</code>. Implements the
+  sheet-vs-cell balance of paper Lemma 2 + Lemma 3 as a closed form;
+  <code>CosineAnnealScheduler</code> remains the default and the canonical
+  implementation of Lemma 2's sheet-tube scaling.</li>
+<li><code>PosteriorSelectionEvaluator</code> —
+  <code>adaptive_reflow/eval/posterior_selection_evaluator.py</code>. Emits
+  <code>sheet_evidence</code>, <code>cell_evidence</code>, and <code>selection_ratio</code>.</li>
+<li><code>ReInferenceConfig.selection_evaluator</code> —
+  <code>adaptive_reflow/algorithm/runner.py</code>. Optional; when set the runner
+  records <code>per_round_metrics[r]["selection_ratio"]</code> per round. The
+  <code>RoundTrace.extras</code> emission described above is still deferred: the
+  metrics currently surface through <code>ReInferenceResult</code>, not through
+  the engine's per-round extras dict.</li>
+<li>Regression coverage —
+  <code>tests/test_eval/test_posterior_selection_evaluator.py</code> (2-moons vs
+  8-gaussians ordering) and <code>tests/test_tools/test_run_ablation.py</code>
+  (the 18-row grid).</li>
+</ul>
+<p>The empirical result is recorded in <code>docs/ABLATION.md</code>: the measured
+ratio is sheet-dominant but plateaus rather than converging to 1,
+because the replay evaluator scores the adapter at a fixed noise
+scale while paper Proposition 3's limit is <code>sigma -&gt; 0</code>. Making the
+ratio schedule-sensitive (scoring the round's own bundle instead of a
+fresh replay) is the open follow-up.</p>
+<h2 id="more-information">More Information<a class="headerlink" href="#more-information" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../0010-cosine-driven-memory-fraction/">docs/adr/0010</a> — the
+  schedule-driven memory fraction (the per-round <code>beta</code> is
+  <code>n_cap</code>).</li>
+<li><a href="../0011-algorithm-abstractions/">docs/adr/0011</a> — the four-role
+  algorithm layer (<code>SchedulerProtocol</code> /
+  <code>PolicyDriverProtocol</code> / <code>MergeOperatorProtocol</code> /
+  <code>RestartBlenderProtocol</code>) this ADR composes over.</li>
+<li><a href="../0012-noise-schedule-survey/">docs/adr/0012</a> — the noise-
+  schedule survey that rejected Karras EDM <code>sigma(t)</code>. ADR-0012
+  rejected on implementation grounds (no score gradient); this
+  ADR closes the theoretical grounds (no codimension-driven
+  selection).</li>
+<li><code>adaptive_reflow/algorithm/scheduler.py</code> —
+  <code>CosineAnnealScheduler</code>, <code>SchedulerProtocol</code>,
+  <code>SCHEDULER_REGISTRY</code>, <code>ScheduleSample</code>.</li>
+<li><code>adaptive_reflow/algorithm/policy_driver.py</code> —
+  <code>ScheduleDerivedPolicyDriver</code>.</li>
+<li><code>adaptive_reflow/algorithm/merge_operator.py</code> —
+  <code>BoundedMergeOperator</code>, <code>MergeOperatorProtocol</code>.</li>
+<li><code>adaptive_reflow/algorithm/blender.py</code> —
+  <code>RestartBlenderProtocol</code>, <code>default_blender</code>.</li>
+<li><code>adaptive_reflow/frame/engine.py</code> — <code>Engine.run_round</code>,
+  <code>RoundTrace.extras</code>, <code>EngineRoundResult</code>.</li>
+<li><code>adaptive_reflow/algorithm/runner.py</code> — <code>ReInferenceRunner</code>,
+  <code>ReInferenceConfig</code>, <code>ReInferenceResult</code>,
+  <code>_EvaluatorProtocol</code>.</li>
+<li>Li (2024), <em>Gaussian Posterior Selection on Noncompact Fibres
+  with Uniformly Separated Roots</em> — Theorem 1 (the
+  codimension-driven selection theorem), Lemma 2 (sheet tube
+  scaling), Lemma 3 (root cell contribution bound), Lemma 4
+  (physical complement suppression), Proposition 3 (posterior
+  normalization).</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

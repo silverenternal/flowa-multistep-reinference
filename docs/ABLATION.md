@@ -1,6 +1,6 @@
 # 2D Rectified-Flow Ablation Study
 
-An 8 x 2 ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by `TwoDimFMAdapter`. Every cell is run with `seed=42`, `rounds=20`, and `num_steps=30` (RK4). Total wall-clock: 1.3s on a single CPU core. Phase-2 framework: every cell is driven by `ReInferenceRunner` (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).
+An 18-cell ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by `TwoDimFMAdapter`: 8 canonical configurations x 2 targets, plus 2 paper-grounded (ADR-0013) configurations on `two_moons`. Every cell is run with `seed=42`, `rounds=20`, and `num_steps=30` (RK4). Total wall-clock: 28.5s on a single CPU core. Phase-2 framework: every cell is driven by `ReInferenceRunner` (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).
 
 ## Configurations
 
@@ -12,6 +12,8 @@ An 8 x 2 ablation that contrasts the restart regimes the framework exposes again
 - **multi_round_sigmoid_schedule_derived** -- 20 rounds, `SigmoidScheduler(steepness=10, midpoint=0.5)` + `ScheduleDerivedPolicyDriver`. Near-step transition at the cycle midpoint; `beta` stays low for the first half of the cycle and jumps to high for the second half.
 - **multi_round_convergence_adaptive_schedule_derived** -- 20 rounds, `ConvergenceAdaptiveScheduler(base=CosineAnnealScheduler, kp=0.1, kd=0.05, shift_max=0.15)` + `ScheduleDerivedPolicyDriver`. PID-lite feedback shifts the effective `u_r` per round based on the cumulative W2 history; this cell drives the runner's loop directly so per-round W2 can be fed back to the scheduler.
 - **multi_round_cosine_adaptive_driver** -- 20 rounds, cosine scheduler + `AdaptivePolicyDriver`. The driver ignores the schedule's `n_cap` so `beta` is driven by the prior endpoint's digest instead. This row exercises the (scheduler, driver) composability the new framework unlocks.
+- **multi_round_codimension_sheet_posterior_selection** -- 20 rounds on `two_moons`, `CodimensionSheetScheduler(eps_implicit=0.05)` + `ScheduleDerivedPolicyDriver` + `PosteriorSelectionEvaluator` (ADR-0013). `n_cap` is derived from the closed-form sheet-vs-cell evidence balance (paper Lemma 2 + Lemma 3) rather than from a fixed ramp shape, and the runner emits the per-round `selection_ratio`.
+- **multi_round_cosine_posterior_selection** -- 20 rounds on `two_moons`, cosine scheduler + `ScheduleDerivedPolicyDriver` + `PosteriorSelectionEvaluator`. The paper-grounded baseline: ADR-0013 records cosine annealing as the canonical implementation of paper Lemma 2's sheet-tube scaling, so this is the reference the codimension row is measured against.
 
 ## Targets
 
@@ -24,6 +26,7 @@ An 8 x 2 ablation that contrasts the restart regimes the framework exposes again
 - **Mean W2** -- mean W2 over the last 5 rounds (smoothness indicator). Lower is better.
 - **Final coverage** -- fraction of Voronoi cells (one per target mode) covered by the final-round endpoints at the canonical `TWODIM_FM_COVERAGE_RADIUS = 0.3`. Higher is better.
 - **Mean coverage** -- mean coverage over the last 5 rounds. Higher is better.
+- **Selection ratio** -- paper Theorem 1 / Proposition 3 `sheet_evidence / (sheet_evidence + cell_evidence)`, emitted per round by `PosteriorSelectionEvaluator` (`n_gen=100` replays per round) and recorded by `ReInferenceRunner` as `per_round_metrics[r]["selection_ratio"]`. Only the two paper-grounded rows carry it. Higher is better; the paper predicts it rises toward 1 as the noise scale shrinks.
 
 ## Results
 
@@ -37,6 +40,8 @@ An 8 x 2 ablation that contrasts the restart regimes the framework exposes again
 | multi_round_sigmoid_schedule_derived | two_moons | 0.9397 | 1.0716 | 1.000 | 1.000 |
 | multi_round_convergence_adaptive_schedule_derived | two_moons | 0.8973 | 0.6947 | 1.000 | 1.000 |
 | multi_round_cosine_adaptive_driver | two_moons | 0.8140 | 0.8955 | 1.000 | 1.000 |
+| multi_round_codimension_sheet_posterior_selection | two_moons | 1.1140 | 1.2378 | 1.000 | 1.000 |
+| multi_round_cosine_posterior_selection | two_moons | 0.8140 | 0.8955 | 1.000 | 1.000 |
 | single_pass | eight_gaussians | 1.7358 | 1.7358 | 0.125 | 0.125 |
 | multi_round_constant_beta_05 | eight_gaussians | 1.9298 | 2.0894 | 0.375 | 0.375 |
 | multi_round_cosine_anneal | eight_gaussians | 1.9298 | 2.0894 | 0.375 | 0.375 |
@@ -45,6 +50,17 @@ An 8 x 2 ablation that contrasts the restart regimes the framework exposes again
 | multi_round_sigmoid_schedule_derived | eight_gaussians | 2.2849 | 2.5385 | 0.375 | 0.375 |
 | multi_round_convergence_adaptive_schedule_derived | eight_gaussians | 1.1688 | 1.2374 | 0.625 | 0.625 |
 | multi_round_cosine_adaptive_driver | eight_gaussians | 1.9298 | 2.0894 | 0.375 | 0.375 |
+
+## Selection ratio (paper Theorem 1, ADR-0013)
+
+`PosteriorSelectionEvaluator` emits `sheet_evidence / (sheet_evidence + cell_evidence)` per round; `ReInferenceRunner` records it as `per_round_metrics[r]["selection_ratio"]`. Paper Proposition 3 predicts the ratio converges to 1 as the noise scale shrinks.
+
+| Config | Round-0 selection_ratio | Final selection_ratio | Mean selection_ratio (last 5) |
+|---|---:|---:|---:|
+| multi_round_codimension_sheet_posterior_selection | 0.8061 | 0.8185 | 0.8135 |
+| multi_round_cosine_posterior_selection | 0.8061 | 0.8185 | 0.8135 |
+
+Both rows run on `two_moons` for `20` rounds with `n_gen=100` replays per round.
 
 ## Findings
 
@@ -92,98 +108,31 @@ Comparing the four schedule families paired with `ScheduleDerivedPolicyDriver` (
 
 `ConvergenceAdaptiveScheduler` consumes a W2 value per round. In this ablation the W2 is computed externally (closed-form 2D Wasserstein via `scipy.stats.wasserstein_distance` on each axis against `n_ref=1000` analytic target samples) so the feedback is exact but costs roughly the same as the runner's per-round ODE solve. **For real-world use we would need a W2 estimator that is faster than the current bootstrap-1000 evaluation** -- e.g. a sliced-W2 lower bound, a deterministic short-rank Wasserstein estimator, or a learned surrogate. Until such an estimator is available, the `ConvergenceAdaptiveScheduler` is best treated as an ablation-only knob rather than a production scheduler.
 
-## New findings: schedule families (ADR-0012, 2026-08-28)
+## New findings: schedule families (ADR-0012)
 
-ADR-0012 extended the algorithm layer with three new
-`SchedulerProtocol` implementations: `PolynomialScheduler`,
-`SigmoidScheduler`, and `ConvergenceAdaptiveScheduler`. The
-ablation grid grew from 8 to **16 rows** (8 configs x 2
-targets), and the new rows answer two questions the old
-grid could not:
+ADR-0012 extended the algorithm layer with three new `SchedulerProtocol` implementations: `PolynomialScheduler`, `SigmoidScheduler`, and `ConvergenceAdaptiveScheduler`. The rows below answer two questions the pre-ADR-0012 grid could not: does schedule *shape* matter (cosine vs polynomial vs sigmoid), and does feedback-driven *shift* help (cosine vs convergence-adaptive)?
 
-* **Does schedule shape matter?** — comparing
-  `cosine`, `polynomial` (concave, `power=2`),
-  `sigmoid` (plateau + step, `steepness=10, midpoint=0.5`),
-  all paired with `ScheduleDerivedPolicyDriver`.
-* **Does feedback-driven shift help?** — comparing
-  `cosine` (no feedback) against
-  `convergence_adaptive_cosine` (PID-lite feedback from
-  per-round `W2`).
+- On `two_moons`, ordering by final W2 was `cosine` (0.8140) < `convergence-adaptive` (0.8973) < `sigmoid` (0.9397) < `polynomial` (1.0521) — a spread of `0.2381` against the `single_pass` ablation's `W2 = 3.7076`. Best coverage among the schedule variants: `cosine` at `1.000`.
+- On `eight_gaussians`, ordering by final W2 was `convergence-adaptive` (1.1688) < `cosine` (1.9298) < `polynomial` (2.0943) < `sigmoid` (2.2849) — a spread of `1.1161` against the `single_pass` ablation's `W2 = 1.7358`. Best coverage among the schedule variants: `convergence-adaptive` at `0.625`.
 
-### Schedule shape axis (cosine vs polynomial vs sigmoid)
+The conclusion is **target-dependent**: no schedule family dominates. Feedback-driven shifts help when the closed-form schedule is asymmetric w.r.t. the target's modes; on saturated targets the controller reduces to cosine (the shift saturates at `0`). ADR-0012 documents the literature survey of eleven candidate methods, the decisions (accept polynomial/sigmoid/convergence-adaptive; reject Karras EDM `sigma(t)` — needs score gradients; defer bandit/RL — breaks determinism), and the consequences.
 
-Across both targets, the closed-form schedule family
-cosine / polynomial (concave, `power=2`) / sigmoid
-(`steepness=10, midpoint=0.5`) had target-dependent
-ordering but no family dominated:
+## New findings: posterior selection (ADR-0013)
 
-* On `two_moons` (`coverage = 1.000` from every family —
-  coverage is a saturated metric here), `multi_round_cosine_anneal`
-  was tightest on W2 (`0.8140`), polynomial was loosest
-  (`1.0521`), and sigmoid sat between
-  (`0.9397`). The gap on W2 is `0.2381` from cosine to
-  polynomial — small relative to the `single_pass`
-  ablation's W2 of `3.7076`.
-* On `eight_gaussians` (the harder mode-balancing
-  problem, coverage unsaturated), the ordering changed:
-  `convergence_adaptive` won (`1.1688`), `cosine` came
-  next (`1.9298`), and `polynomial` and `sigmoid`
-  trailed (`2.0943` and `2.2849`). Cosine had the best
-  coverage of the three closed-form families
-  (`0.375`); polynomial reached `0.500`. The
-  sigmoid's plateau-and-step ramp front-loads
-  refinement, which costs coverage here.
+ADR-0013 maps paper Theorem 1 (Gaussian posterior selection on noncompact fibres) onto the algorithm layer: the sheet is codimension 1 and scales like `eps^-1` (paper Lemma 2), the competing cell roots are codimension 2 and scale like `eps^2` (paper Lemma 3), and Proposition 3 predicts the normalised selection ratio converges to 1. `CodimensionSheetScheduler` implements that balance directly; `PosteriorSelectionEvaluator` measures it; `ReInferenceRunner` now emits it per round.
 
-### Feedback axis (cosine vs convergence-adaptive)
+### Does the ratio converge to 1?
 
-`ConvergenceAdaptiveScheduler(kp=0.10, kd=0.05,
-shift_max=0.15)` was the **most interesting
-non-ablation finding in this round**:
+**Partly.** On `two_moons` the measured ratio is sheet-dominant from the first round — it starts at `0.8061`, ends at `0.8185`, and stays inside `[0.7926, 0.8185]` across all `20` rounds. The sheet therefore carries the majority of the evidence (`ratio > 0.5`) exactly as paper Theorem 1 predicts, which is the qualitative claim. The *quantitative* claim (`ratio -> 1`) is **not** observed: neither row reaches `0.95` (codimension row: never; cosine row: never). The reason is structural rather than a refutation: `PosteriorSelectionEvaluator` is a replay-through-adapter estimator, so each round is scored against freshly generated adapter endpoints at the adapter's *fixed* noise scale. Paper Proposition 3's limit is `sigma -> 0`; a fixed-`sigma` estimator can only report the plateau that `sigma` implies, which is what the flat curve shows.
 
-* On `two_moons`: `delta_W2 = -0.0833` (positive =>
-  adaptive wins) and `delta_coverage = +0.000`. The
-  PID-lite controller learned nothing the fixed cosine
-  did not already encode — both endpoints saturate
-  coverage and the convergence target is loose enough
-  that the cosine ramp captures nearly all of the gain.
-* On `eight_gaussians`: `delta_W2 = +0.7610`
-  (positive => adaptive wins) and
-  `delta_coverage = +0.250` (positive => adaptive
-  wins). On the harder mode-balancing target the
-  PID-lite controller **dramatically improved** over
-  the fixed cosine: a `0.7610` W2 gap, and `0.625` vs
-  `0.375` coverage (1.7x). The feedback informed the
-  shift to spend more refinement budget on the late
-  modes that cosine's fixed ramp under-explored.
+The plateau is also target-sensitive in the direction the paper predicts: `two_moons` has a single competing cell root and plateaus near `0.82`, whereas `eight_gaussians` has seven and plateaus materially lower (pinned by `tests/test_eval/test_posterior_selection_evaluator.py::test_evaluator_8_gaussians_ratio_lower_than_2_moons`). More competing modes means harder selection, which is exactly paper Lemma 3's `sum over cells` term growing.
 
-The conclusion is **target-dependent**: feedback-driven
-shifts help when the closed-form schedule is
-asymmetric w.r.t. the target's modes; on saturated
-targets the controller reduces to cosine (shift
-saturates at `0`).
+### CosineAnneal vs CodimensionSheet
 
-### Caveat and forward work
-
-The gains documented above come from the *closed-loop*
-oracle (closed-form 2D Wasserstein), so the W2 feedback
-is exact. **For real-world use we would need a W2
-estimator that is faster than the current
-bootstrap-1000 evaluation** -- e.g. a sliced-W2 lower
-bound, a deterministic short-rank Wasserstein
-estimator, or a learned surrogate. Until such an
-estimator is available, the
-`ConvergenceAdaptiveScheduler` is best treated as an
-ablation-only knob rather than a production scheduler.
-
-ADR-0012 documents the literature survey of **eleven**
-candidate methods, the decisions (accept
-polynomial/sigmoid/convergence-adaptive; reject Karras
-EDM `sigma(t)` — needs score gradients; defer
-bandit/RL — breaks determinism), and the consequences
-(scheduler families now at 7; ablation grid now at 16
-rows; `record_round_feedback` is an optional Protocol
-extension).
+- `delta_selection_ratio = +0.0000` (positive => codimension wins), `delta_W2 = -0.3000` (positive => codimension wins), `delta_coverage = +0.000` (positive => codimension wins).
+- **The two selection-ratio curves are identical.** This is not a bug and not a tie on the merits: the evaluator scores the adapter's own posterior geometry, which neither scheduler alters, so the `selection_ratio` column is *schedule-independent by construction*. The schedules separate on W2 and coverage instead, and the selection ratio should be read as a property of the target + adapter pair (a difficulty measure), not as a scoreboard between schedulers. Making the ratio schedule-sensitive requires scoring the round's own bundle rather than a fresh replay — recorded as the next step for ADR-0013 phase 5.
+- On the metrics that *are* schedule-sensitive, the two rows differ because `CodimensionSheetScheduler` collapses `n_cap` much faster than the cosine ramp: the evidence balance `1 / max(n_cap_base, eps)` vs `(1 - n_cap_base)^2 / eps^2` (with `eps = 0.05`) hands almost all weight to the cells as soon as `n_cap_base` leaves its maximum, so the schedule spends nearly the whole cycle in refinement instead of annealing through it. Cosine remains the better-behaved default; the codimension family is the theoretically-derived comparison point ADR-0013 asked for.
 
 ## Reproducibility
 
-Deterministic for fixed `seed` (default `42`). Run via `python tools/run_ablation.py` (or with `--rounds N` to override the round count, `--quick` for the 5-round smoke configuration used by `tests/test_tools/test_run_ablation.py`). The eight canonical configurations are all driven by `ReInferenceRunner` (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).
+Deterministic for fixed `seed` (default `42`). Run via `python tools/run_ablation.py` (or with `--rounds N` to override the round count, `--quick` for the 5-round smoke configuration used by `tests/test_tools/test_run_ablation.py`). All 18 cells are driven by `ReInferenceRunner` (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler); the two paper-grounded cells additionally pass a `PosteriorSelectionEvaluator` through `ReInferenceConfig.selection_evaluator`.

@@ -39,7 +39,7 @@ Tasks satisfied:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
@@ -78,6 +78,11 @@ from adaptive_reflow.frame.engine import (
     RoundTrace,
 )
 from adaptive_reflow.universal.state import StateBundle
+
+if TYPE_CHECKING:  # pragma: no cover — typing-only import (avoids a cycle)
+    from adaptive_reflow.eval.posterior_selection_evaluator import (
+        PosteriorSelectionEvaluator,
+    )
 
 # ---------------------------------------------------------------------------
 # Evaluator protocol (duck-typed; both Real + Synthetic evaluators satisfy it)
@@ -124,6 +129,14 @@ class ReInferenceConfig:
         ``apply_restart_distribution`` and to the evaluator's
         ``oracle`` call. The first channel is the *primary* channel
         the runner asks the policy driver to compute on.
+    selection_evaluator:
+        Optional :class:`PosteriorSelectionEvaluator` (ADR-0013). When
+        supplied, the runner asks it for the paper-Theorem-1
+        sheet-vs-cell evidence ratio once per round and emits the
+        result as ``per_round_metrics[r]["selection_ratio"]``
+        alongside the ``W2`` / ``coverage`` pair promoted from the
+        main evaluator. ``None`` (the default) keeps the runner's
+        behaviour byte-for-byte identical to ADR-0011 / ADR-0012.
     """
 
     n_rounds: int = 20
@@ -131,6 +144,7 @@ class ReInferenceConfig:
     target_round: int = 0
     seed: int = 42
     channels: tuple[str, ...] = ("xy",)
+    selection_evaluator: PosteriorSelectionEvaluator | None = None
 
 
 @dataclass(frozen=True)
@@ -154,7 +168,9 @@ class ReInferenceResult:
         ``round_index -> {key: value}`` mapping. Always contains the
         algorithm scalars ``n_cap``, ``memory_fraction``, ``beta``;
         when an evaluator is configured, also contains the evaluator's
-        oracle keys plus the promoted ``W2`` and ``coverage``.
+        oracle keys plus the promoted ``W2`` and ``coverage``; when
+        ``ReInferenceConfig.selection_evaluator`` is configured, also
+        contains ``selection_ratio`` (ADR-0013).
     algorithm_signatures:
         ``{component_name: config_hash}`` provenance mapping for the
         scheduler, policy driver, merge operator, and blender.
@@ -375,6 +391,9 @@ class ReInferenceRunner:
         4. Collect the :class:`RoundTrace` and the per-round metrics
            (``evaluator.oracle`` for W2/coverage plus ``beta`` /
            ``memory_fraction`` / ``n_cap`` from the schedule + policy).
+        5. When ``config.selection_evaluator`` is set, ask it for the
+           paper-Theorem-1 ``selection_ratio`` and record it in the
+           round's metric dict (ADR-0013).
         """
         n_rounds = int(config.n_rounds)
         if n_rounds < 1:
@@ -465,6 +484,17 @@ class ReInferenceRunner:
                 )
                 metric["coverage"] = float(
                     oracle_metrics.get("bounded_score", 0.0)
+                )
+            # Optional paper-Theorem-1 (ADR-0013) selection metric. The
+            # ``PosteriorSelectionEvaluator`` measures the round's
+            # sheet-vs-cell evidence ratio; paper Proposition 3 predicts
+            # it rises toward 1 as the fresh-noise scale shrinks.
+            if config.selection_evaluator is not None and bundle is not None:
+                selection_metrics = config.selection_evaluator.oracle(
+                    bundle, channel=primary_channel, seed=int(config.seed) + r
+                )
+                metric["selection_ratio"] = float(
+                    selection_metrics.get("selection_ratio", 0.0)
                 )
             per_round_metrics[r] = metric
 

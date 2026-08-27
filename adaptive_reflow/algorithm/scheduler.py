@@ -1540,8 +1540,391 @@ class ConvergenceAdaptiveScheduler:
 
 
 # ---------------------------------------------------------------------------
+# Codimension-sheet scheduler — paper Theorem 1 / Lemma 2 + Lemma 3
+# ---------------------------------------------------------------------------
+
+
+def _paper_evidence_balance(n_cap_base: float, eps_implicit: float) -> float:
+    """Closed-form sheet-vs-cell evidence ratio (paper Lemma 2 + Lemma 3).
+
+    Paper Lemma 2 says the sheet's contribution to the round's posterior
+    scales like ``eps^{-1}``; paper Lemma 3 says each root cell contributes
+    at most ``O(eps^2)``. The framework's ``n_cap`` is the per-round
+    capacity, and the *implicit noise scale* is identified with
+    ``max(n_cap_base, eps_implicit)`` (so ``eps`` is the floor of the
+    scheduler's capacity). Concretely:
+
+        sheet = 1 / max(n_cap_base, eps_implicit)
+        cell  = (1 - n_cap_base) ** 2 / (eps_implicit ** 2)
+        ratio = sheet / (sheet + cell)
+
+    :returns: ``ratio`` in ``[0, 1]``. ``ratio == 1`` means sheet evidence
+        dominates the round; ``ratio == 0`` means cell evidence dominates.
+    """
+    eps = float(eps_implicit)
+    if not math.isfinite(eps):
+        raise ValueError(f"eps_implicit must be finite, got {eps_implicit!r}")
+    if eps <= 0.0:
+        raise ValueError(f"eps_implicit must be > 0, got {eps_implicit!r}")
+    n = float(n_cap_base)
+    if not math.isfinite(n):
+        raise ValueError(f"n_cap_base must be finite, got {n_cap_base!r}")
+    n_clipped = max(0.0, min(1.0, n))
+
+    sheet = 1.0 / max(n_clipped, eps)
+    cell = (1.0 - n_clipped) ** 2 / (eps * eps)
+    denom = sheet + cell
+    if denom <= 0.0:
+        # Both pieces vanished (only reachable when eps = 0 and n_clipped = 0,
+        # which the input validation rules out); default to sheet-dominant.
+        return 1.0
+    return float(sheet / denom)
+
+
+class CodimensionSheetScheduler:
+    """Codimension-driven :class:`SchedulerProtocol` implementation.
+
+    Direct instantiation of paper Theorem 1's posterior-selection mechanism
+    (ADR-0013, "Posterior selection drives the algorithm layer"). The
+    per-round ``n_cap`` is derived from a closed-form balance between sheet
+    evidence (paper Lemma 2, scales like ``eps^-1``) and cell evidence
+    (paper Lemma 3, bounded by ``O(eps^2)``); see
+    :func:`_paper_evidence_balance` for the closed form.
+
+    Mathematically:
+
+        n_cap_base(r) — closed-form cosine value for round ``r``
+                        (the "underlying base schedule").
+        ratio(r)      = sheet / (sheet + cell)  ∈ [0, 1]
+        n_cap(r)      = n_min + (n_max - n_min) * ratio(r)
+
+    The :class:`Callable` ``profile_residual_fn`` maps state ``x`` to the
+    residual profile ``g(x)`` (paper Lemma 2's coarea weight
+    ``1 / sqrt(1 + g(x)^2)``). The scheduler stores the callable for
+    provenance and includes its identity in :attr:`config_hash`; the
+    per-round closed-form above does not invoke it directly (the closed
+    form supplies the selection ratio per round, not the coarea
+    integral), but two schedulers configured with different profiles
+    must be distinguishable in the audit trail.
+
+    Conforms to :class:`SchedulerProtocol`. Pure w.r.t. arguments.
+    """
+
+    def __init__(
+        self,
+        *,
+        cycle_length: int = 20,
+        n_min: float = 0.0,
+        n_max: float = 1.0,
+        profile_residual_fn: Callable[[float], float] | None = None,
+        eps_implicit: float = 0.05,
+        seed: int = 0,
+    ) -> None:
+        """Construct the codimension-driven scheduler.
+
+        :param cycle_length: number of rounds in one outer cycle (``>= 1``).
+        :param n_min: capacity floor (output lower bound). Must lie in
+            ``[0, 1]``.
+        :param n_max: capacity ceiling (output upper bound). Must lie in
+            ``[0, 1]``.
+        :param profile_residual_fn: callable mapping ``x -> g(x)``, the
+            residual profile. Its identity is recorded in
+            :attr:`config_hash`. Optional; ``None`` is permitted and
+            yields the default ``"default_sheet"`` profile signature.
+        :param eps_implicit: implicit noise scale in evidence units;
+            must satisfy ``eps_implicit > 0``. Paper's Theorem 1 says
+            the sheet dominates as ``eps -> 0``; this scheduler treats
+            ``eps_implicit`` as a hyperparameter that drives the
+            scheduler's sensitivity to the sheet-vs-cell trade-off.
+        :param seed: included for protocol signature parity with
+            stochastic schedulers; the codimension family is
+            deterministic and only participates in the frozen
+            :attr:`config_hash`.
+        """
+        if isinstance(cycle_length, bool) or not isinstance(cycle_length, int):
+            raise ValueError(
+                f"cycle_length must be int, got {cycle_length!r}"
+            )
+        if int(cycle_length) < 1:
+            raise ValueError(
+                f"cycle_length must be >= 1, got {cycle_length!r}"
+            )
+        for nm, val in (("n_min", n_min), ("n_max", n_max)):
+            if isinstance(val, bool) or not isinstance(val, (int, float)):
+                raise ValueError(f"{nm} must be a real number, got {val!r}")
+            fv = float(val)
+            if not math.isfinite(fv):
+                raise ValueError(f"{nm} must be finite, got {val!r}")
+            if not (0.0 <= fv <= 1.0):
+                raise ValueError(f"{nm} must lie in [0, 1], got {fv!r}")
+        if isinstance(eps_implicit, bool) or not isinstance(
+            eps_implicit, (int, float)
+        ):
+            raise ValueError(
+                f"eps_implicit must be a real number, got {eps_implicit!r}"
+            )
+        eps_f = float(eps_implicit)
+        if not math.isfinite(eps_f):
+            raise ValueError(
+                f"eps_implicit must be finite, got {eps_implicit!r}"
+            )
+        if eps_f <= 0.0:
+            raise ValueError(
+                f"eps_implicit must be > 0, got {eps_f!r}"
+            )
+        if profile_residual_fn is not None and not callable(
+            profile_residual_fn
+        ):
+            raise ValueError(
+                f"profile_residual_fn must be callable or None, "
+                f"got {profile_residual_fn!r}"
+            )
+
+        self._cycle_length = int(cycle_length)
+        self._n_min = float(n_min)
+        self._n_max = float(n_max)
+        self._eps_implicit = float(eps_f)
+        self._seed = int(seed)
+        self._profile_residual_fn = profile_residual_fn
+        self._profile_signature = self._compute_profile_signature(
+            profile_residual_fn
+        )
+
+        # Underlying base schedule. We use the framework's canonical
+        # cosine annealing (ADR-0010) as the n_cap_base source so that
+        # the codimension scheduler composes over the same closed form
+        # used by every other scheduler — no second source of truth.
+        self._base: CosineAnnealScheduler = default_cosine_scheduler(
+            cycle_length=self._cycle_length,
+            n_min=0.0,
+            n_max=1.0,
+        )
+
+        self._last_sample: ScheduleSample | None = None
+        self._config_hash_value = hash_artifact(
+            {
+                "algorithm": "codimension_sheet",
+                "schedule_family": "codimension_sheet",
+                "cycle_length": int(self._cycle_length),
+                "n_min": float(self._n_min),
+                "n_max": float(self._n_max),
+                "eps_implicit": float(self._eps_implicit),
+                "seed": int(self._seed),
+                "profile_signature": str(self._profile_signature),
+                "base_config_hash": str(self._base.config_hash()),
+            }
+        )
+
+    # -- accessors ---------------------------------------------------------
+
+    @property
+    def eps_implicit(self) -> float:
+        """Return the implicit noise scale in evidence units."""
+        return float(self._eps_implicit)
+
+    @property
+    def profile_residual_fn(self) -> Callable[[float], float] | None:
+        """Return the configured residual profile callable (or ``None``)."""
+        return self._profile_residual_fn
+
+    @property
+    def profile_signature(self) -> str:
+        """Return the stable identifier of the configured residual profile.
+
+        Two :class:`CodimensionSheetScheduler` instances configured with
+        the same ``profile_residual_fn`` (compared by ``module`` and
+        ``qualname``) produce the same ``profile_signature``; different
+        callables produce different signatures. ``None`` yields the
+        canonical ``"default_sheet"`` signature.
+        """
+        return str(self._profile_signature)
+
+    @property
+    def base(self) -> CosineAnnealScheduler:
+        """Return the underlying cosine base scheduler."""
+        return self._base
+
+    @property
+    def seed(self) -> int:
+        """Return the seed used for provenance hashing."""
+        return int(self._seed)
+
+    @property
+    def last_sample(self) -> ScheduleSample | None:
+        """Return the most recent sample, or ``None`` after :meth:`reset`."""
+        return self._last_sample
+
+    # -- SchedulerProtocol -------------------------------------------------
+
+    def sample(
+        self,
+        outer_cycle_id: int,
+        round_in_cycle: int,
+        target_round: int,
+    ) -> ScheduleSample:
+        """Return the codimension-driven capacity sample for one round.
+
+        Pipeline:
+
+        1. Ask the underlying cosine base for ``n_cap_base(r)`` (canonical
+           closed form, ADR-0010).
+        2. Compute the sheet-vs-cell evidence ratio
+           ``r_ratio = _paper_evidence_balance(n_cap_base, eps_implicit)``.
+        3. Map the ratio into the configured ``[n_min, n_max]`` envelope
+           and clip into ``[0, 1]`` defensively.
+        """
+        outer_cycle_id = _coerce_int_nonneg(outer_cycle_id, "outer_cycle_id")
+        target_round = _coerce_int_nonneg(target_round, "target_round")
+        length = int(self._cycle_length)
+        if length > 1 and not (
+            0 <= int(round_in_cycle) <= length - 1
+        ):
+            raise ValueError(
+                f"round_in_cycle must be in [0, {length - 1}] for "
+                f"cycle_length={length}, got {round_in_cycle!r}"
+            )
+
+        if length == 1:
+            # Single-round edge: mirror the cosine family's deterministic
+            # behaviour and return n_max (the cycle's only capacity slot).
+            u_r = 0.5
+            n_cap_base = float(self._n_max)
+        else:
+            u_r = float(round_in_cycle) / (length - 1)
+            n_cap_base = float(
+                n_cap_for_round(self._base.config, int(round_in_cycle))
+            )
+
+        ratio = float(
+            _paper_evidence_balance(n_cap_base, self._eps_implicit)
+        )
+        raw = self._n_min + (self._n_max - self._n_min) * ratio
+        if not math.isfinite(raw):
+            raise ValueError(
+                f"codimension closed form produced a non-finite n_cap={raw!r}"
+            )
+        n_cap = float(max(0.0, min(1.0, raw)))
+
+        sample = ScheduleSample(
+            outer_cycle_id=outer_cycle_id,
+            round_in_cycle=int(round_in_cycle),
+            cycle_length=length,
+            n_cap=n_cap,
+            n_min=float(self._n_min),
+            n_max=float(self._n_max),
+            u_r=u_r,
+            family="codimension_sheet",
+            computed_at_round=target_round,
+            schedule_hash=str(self._config_hash_value),
+        )
+        self._last_sample = sample
+        return sample
+
+    def cycle_length(self) -> int:
+        """Return the configured cycle length."""
+        return int(self._cycle_length)
+
+    def schedule_family(self) -> str:
+        """Return ``"codimension_sheet"``."""
+        return "codimension_sheet"
+
+    def config_hash(self) -> str:
+        """Return a stable identifier for this algorithm + config choice.
+
+        The hash captures every configuration input including
+        ``eps_implicit`` and the ``profile_signature`` (so two
+        schedulers configured with different profiles produce different
+        hashes, even when all numeric inputs match).
+        """
+        return str(self._config_hash_value)
+
+    def reset(self) -> None:
+        """Drop the cached sample so a re-run starts from a clean state."""
+        self._last_sample = None
+        self._base.reset()
+
+    def record_round_feedback(
+        self,
+        round_in_cycle: int,
+        metrics: Mapping[str, float],
+    ) -> None:
+        """Default no-op: the codimension scheduler is open-loop on rounds."""
+        return None
+
+    # -- derived -----------------------------------------------------------
+
+    def memory_fraction_for(
+        self,
+        outer_cycle_id: int,
+        round_in_cycle: int,
+        target_round: int,
+    ) -> float:
+        """Return ``1 - n_cap`` for one round, via the canonical helper."""
+        sample = self.sample(outer_cycle_id, round_in_cycle, target_round)
+        return memory_fraction_from_schedule(sample.as_cosine_schedule_sample())
+
+    # -- helpers -----------------------------------------------------------
+
+    @staticmethod
+    def _compute_profile_signature(
+        fn: Callable[[float], float] | None,
+    ) -> str:
+        """Return a stable string identifier for ``fn``'s identity.
+
+        Two callables with the same ``module`` and ``qualname`` yield
+        the same signature; lambdas and callables lacking
+        ``__module__`` / ``__qualname__`` fall back to ``repr(fn)``
+        truncated to 64 characters.
+        """
+        if fn is None:
+            return "default_sheet"
+        try:
+            qualname = getattr(fn, "__qualname__", None)
+            if qualname is None:
+                qualname = getattr(fn, "__name__", None)
+            module = getattr(fn, "__module__", None)
+        except Exception:
+            qualname, module = None, None
+        if qualname and module:
+            return f"{module}.{qualname}"
+        if qualname:
+            return str(qualname)
+        try:
+            return repr(fn)[:64]
+        except Exception:
+            return "<unsignable_profile>"
+
+
+# ---------------------------------------------------------------------------
 # Registry + factory
 # ---------------------------------------------------------------------------
+
+
+def _codimension_sheet_factory(
+    *,
+    cycle_length: int = 20,
+    n_min: float = 0.0,
+    n_max: float = 1.0,
+    profile_residual_fn: Callable[[float], float] | None = None,
+    eps_implicit: float = 0.05,
+    seed: int = 0,
+) -> CodimensionSheetScheduler:
+    """Factory for :class:`CodimensionSheetScheduler`.
+
+    Registered in :data:`SCHEDULER_REGISTRY` under the key
+    ``"codimension_sheet"``. Mirrors the kwargs of
+    :class:`CodimensionSheetScheduler` so that
+    :func:`build_scheduler("codimension_sheet", **kwargs)` works
+    directly.
+    """
+    return CodimensionSheetScheduler(
+        cycle_length=cycle_length,
+        n_min=n_min,
+        n_max=n_max,
+        profile_residual_fn=profile_residual_fn,
+        eps_implicit=eps_implicit,
+        seed=seed,
+    )
 
 
 SCHEDULER_REGISTRY: dict[str, Callable[..., SchedulerProtocol]] = {
@@ -1552,6 +1935,7 @@ SCHEDULER_REGISTRY: dict[str, Callable[..., SchedulerProtocol]] = {
     "polynomial": PolynomialScheduler,
     "sigmoid": SigmoidScheduler,
     "convergence_adaptive": ConvergenceAdaptiveScheduler,
+    "codimension_sheet": _codimension_sheet_factory,
 }
 """Mapping from schedule family name to its :class:`SchedulerProtocol` factory.
 
@@ -1593,6 +1977,7 @@ def build_scheduler(family: str, **kwargs: object) -> SchedulerProtocol:
 
 
 __all__ = [
+    "CodimensionSheetScheduler",
     "ConstantScheduler",
     "ConvergenceAdaptiveScheduler",
     "CosineAnnealScheduler",
@@ -1604,6 +1989,7 @@ __all__ = [
     "ScheduleSampleProtocol",
     "SchedulerProtocol",
     "SigmoidScheduler",
+    "_paper_evidence_balance",
     "build_scheduler",
     "default_cosine_scheduler",
 ]

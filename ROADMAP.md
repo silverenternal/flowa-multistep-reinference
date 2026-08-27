@@ -25,6 +25,22 @@ They are reviewed at every release tag and updated when an item closes.
       configs (`pyproject.toml` `requires-python` / ruff `target-version`
       / mypy `python_version`, and every `.github/workflows/*.yml`
       `python-version`)
+- [x] Paper-grounded algorithm layer — closed 2026-08-28 [ADR-0013].
+      Li (2024) *Gaussian Posterior Selection on Noncompact Fibres with
+      Uniformly Separated Roots*, Theorem 1, is now mapped onto the
+      algorithm layer: the paper's three-estimate proof architecture
+      (Lemma 2 sheet tube, Lemma 3 root cells, Lemma 4 complement
+      suppression) is the structure the three algorithm abstractions
+      already had. Cosine annealing is upgraded from "the default
+      schedule" to **the canonical implementation** of paper Lemma 2's
+      sheet-tube scaling. `CodimensionSheetScheduler` implements the
+      sheet-vs-cell evidence balance directly
+      (`sheet = 1 / max(n_cap_base, eps)`,
+      `cell = (1 - n_cap_base)^2 / eps^2`);
+      `PosteriorSelectionEvaluator` measures the resulting
+      `selection_ratio` empirically; `ReInferenceRunner` optionally
+      emits it per round via `ReInferenceConfig.selection_evaluator`.
+      Ablation grid extended from 16 to **18 rows**.
 - [x] Algorithm abstractions — closed 2026-08-28 [ADR-0011]. The
       algorithm layer (scheduler, policy driver, merge operator,
       restart blender) is now abstract and optional: four `Protocol`s

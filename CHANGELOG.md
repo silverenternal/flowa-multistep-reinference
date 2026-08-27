@@ -7,6 +7,29 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Paper-grounded algorithm layer
+
+### Added
+
+- `docs/adr/0013-posterior-selection-drives-algorithm.md` — maps Li (2024) *Gaussian Posterior Selection on Noncompact Fibres with Uniformly Separated Roots*, Theorem 1, onto the framework's algorithm layer. The paper's three-estimate proof architecture (Lemma 2 sheet-tube scaling, Lemma 3 root-cell bound, Lemma 4 complement suppression) is the structure the three algorithm abstractions (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`) already have; the ADR records the correspondence as load-bearing rather than incidental.
+- `CodimensionSheetScheduler` — a `SchedulerProtocol` implementation of paper Lemma 2-4 directly, rather than of a fixed ramp shape. `n_cap(r) = n_min + (n_max - n_min) * ratio` where `ratio = sheet_evidence / (sheet_evidence + cell_evidence)`, `sheet_evidence = 1 / max(n_cap_base, eps_implicit)` (paper Lemma 2: the codimension-1 sheet scales like `eps^-1`) and `cell_evidence = (1 - n_cap_base)^2 / eps_implicit^2` (paper Lemma 3: each codimension-2 cell is bounded by `O(eps^2)`). When `n_cap_base` is high the sheet dominates and `n_cap` stays high; when `n_cap_base` falls the cells dominate and `n_cap` falls faster than the base ramp. Family identifier `codimension_sheet`; registered in `SCHEDULER_REGISTRY` under `"codimension_sheet"`.
+- `PosteriorSelectionEvaluator` (`adaptive_reflow/eval/posterior_selection_evaluator.py`) — empirical validator for paper Theorem 1's prediction. Measures the per-round `sheet_evidence` / `cell_evidence` pair by replaying the 2D-FM adapter and reports `selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)` as both `raw_score` and (clipped to `[0, 1]`) `bounded_score`; the audit reason on every emitted evidence row contains `posterior_selection`. Regression tests confirm `eight_gaussians` scores a lower ratio than `two_moons` — more competing modes means harder selection, which is paper Lemma 3's per-cell sum growing.
+- `ReInferenceConfig.selection_evaluator` — optional `PosteriorSelectionEvaluator`. When supplied, `ReInferenceRunner.run` emits `per_round_metrics[r]["selection_ratio"]` alongside the promoted `W2` / `coverage` pair. `None` (the default) leaves the runner byte-for-byte identical to its ADR-0012 behaviour.
+- `tools/run_ablation.py` — two new ablation rows: `multi_round_codimension_sheet_posterior_selection` (`CodimensionSheetScheduler(eps_implicit=0.05)` + `ScheduleDerivedPolicyDriver` + `PosteriorSelectionEvaluator`) and `multi_round_cosine_posterior_selection` (the paper-grounded cosine baseline with the same evaluator). The grid grows from 16 to **18 rows** (8 canonical configs x 2 targets, plus the 2 paper-grounded rows on `two_moons` — the minimal instance of paper Theorem 1's fibre geometry).
+- `docs/ABLATION.md` — a `Selection ratio (paper Theorem 1, ADR-0013)` table and a `New findings: posterior selection (ADR-0013)` section. Empirical result: the ratio is sheet-dominant from round 0 (`0.806` rising to `0.819` on `two_moons`) but does **not** reach 1 — the replay estimator scores the adapter at a *fixed* noise scale, and paper Proposition 3's limit is `sigma -> 0`. The ratio is also schedule-independent by construction, so cosine and codimension report the same curve and separate on W2 / coverage instead (`delta_W2 = -0.3000` in cosine's favour at 20 rounds).
+
+### Changed
+
+- Cosine annealing's status is upgraded from "the default schedule" to **the paper-grounded canonical implementation** of paper Lemma 2's sheet-tube scaling. ADR-0012 rejected Karras EDM `sigma(t)` on implementation grounds (no score gradient); ADR-0013 closes the theoretical gap — Karras `sigma(t)` is defined by score matching, not by posterior selection, so it does not inherit Theorem 1's guarantees.
+- `adaptive_reflow/algorithm/runner.py` — one optional evaluator call after the per-round W2 / coverage promotion, plus the new `ReInferenceConfig` field.
+- `adaptive_reflow/algorithm/scheduler.py::SCHEDULER_REGISTRY` — extended with `"codimension_sheet"`.
+- `tools/run_ablation.py` — the `docs/ABLATION.md` findings prose for both ADR-0012 and ADR-0013 is now *generated from the row data* rather than hand-written, so the narrative cannot drift away from the table above it.
+- `tests/test_tools/test_run_ablation.py` — asserts the 18-row grid and the presence of the selection-ratio table.
+
+### Compatibility
+
+- Backwards compatibility is total. `ReInferenceConfig.selection_evaluator` defaults to `None`, and every pre-existing scheduler, policy driver, merge operator, blender, `config_hash`, and audit invariant is unchanged. Runs configured without a selection evaluator emit exactly the metric keys they emitted before.
+
 ## [Unreleased] - New scheduler families
 
 ### Added

@@ -38,7 +38,18 @@ EXPECTED_CONFIGS: tuple[str, ...] = (
     "multi_round_convergence_adaptive_schedule_derived",
     "multi_round_cosine_adaptive_driver",
 )
+#: The two ADR-0013 paper-grounded configurations. They only run
+#: against :data:`PAPER_GROUNDED_TARGET`, so the grid is
+#: ``8 * 2 + 2 = 18`` rows rather than ``10 * 2 = 20``.
+EXPECTED_PAPER_CONFIGS: tuple[str, ...] = (
+    "multi_round_codimension_sheet_posterior_selection",
+    "multi_round_cosine_posterior_selection",
+)
 EXPECTED_TARGETS: tuple[str, ...] = ("two_moons", "eight_gaussians")
+PAPER_GROUNDED_TARGET: str = "two_moons"
+EXPECTED_ROW_COUNT: int = (
+    len(EXPECTED_CONFIGS) * len(EXPECTED_TARGETS) + len(EXPECTED_PAPER_CONFIGS)
+)
 
 TABLE_HEADER: str = "| Config | Target | Final W2 | Mean W2 | Final coverage | Mean coverage |"
 ROW_PATTERN = re.compile(
@@ -82,8 +93,9 @@ def test_run_ablation_quick_generates_table(
     The test exercises the full CLI surface: argument parsing, the
     ``Engine.run_round`` loop for every (config, target) cell, and the
     markdown emission to ``--out``.  It asserts the rendered table is
-    complete (8 rows, 4 configs x 2 targets) and every numeric column
-    is a real number -- not a placeholder.
+    complete (18 rows: 8 canonical configs x 2 targets plus the 2
+    ADR-0013 paper-grounded rows on ``two_moons``) and every numeric
+    column is a real number -- not a placeholder.
     """
     env = os.environ.copy()
     # Force UTF-8 stdout on Windows so the progress prints don't choke.
@@ -127,18 +139,42 @@ def test_run_ablation_quick_generates_table(
             rows.append(m.groupdict())
     expected_rows = {
         (config, target) for config in EXPECTED_CONFIGS for target in EXPECTED_TARGETS
+    } | {
+        (config, PAPER_GROUNDED_TARGET) for config in EXPECTED_PAPER_CONFIGS
     }
     seen = {(r["config"], r["target"]) for r in rows}
     assert seen == expected_rows, (
         f"missing rows: {expected_rows - seen}; extra rows: {seen - expected_rows}"
     )
 
-    # 2a. The 8 x 2 = 16 rows should all be present (the canonical
-    # smoke test count for the extended scheduler ablation).
-    assert len(rows) == len(EXPECTED_CONFIGS) * len(EXPECTED_TARGETS), (
-        f"expected {len(EXPECTED_CONFIGS) * len(EXPECTED_TARGETS)} rows "
-        f"(8 configs x 2 targets), got {len(rows)}"
+    # 2a. The 8 x 2 + 2 = 18 rows should all be present (the canonical
+    # smoke test count for the paper-grounded ablation).
+    assert len(rows) == EXPECTED_ROW_COUNT, (
+        f"expected {EXPECTED_ROW_COUNT} rows (8 configs x 2 targets + 2 "
+        f"paper-grounded rows), got {len(rows)}"
     )
+
+    # 2b. The ADR-0013 selection-ratio table is present and both
+    #     paper-grounded rows report a ratio in ``[0, 1]``.
+    assert "## Selection ratio (paper Theorem 1, ADR-0013)" in text
+    assert "## New findings: posterior selection (ADR-0013)" in text
+    for config in EXPECTED_PAPER_CONFIGS:
+        ratio_line = next(
+            (
+                line
+                for line in text.splitlines()
+                if line.startswith(f"| {config} |") and line.count("|") == 5
+            ),
+            None,
+        )
+        assert ratio_line is not None, (
+            f"no selection-ratio row for {config}; text:\n{text}"
+        )
+        cells = [c.strip() for c in ratio_line.strip("|").split("|")]
+        for value in cells[1:]:
+            assert 0.0 <= float(value) <= 1.0, (
+                f"{config}: selection_ratio {value} outside [0, 1]"
+            )
 
     # 3. Every numeric column parses to a finite real number; the
     #    ``Final Coverage`` and ``Mean Coverage`` columns must lie in

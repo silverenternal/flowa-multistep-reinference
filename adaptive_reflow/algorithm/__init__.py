@@ -52,6 +52,7 @@ from .runner import (
 )
 from .scheduler import (
     SCHEDULER_REGISTRY,
+    CodimensionSheetScheduler,
     ConstantScheduler,
     ConvergenceAdaptiveScheduler,
     CosineAnnealScheduler,
@@ -71,6 +72,7 @@ __all__ = [
     "AdaptivePolicyDriver",
     "BoundedMergeOperator",
     "CONSTANT_FAMILY",
+    "CodimensionSheetScheduler",
     "ConstantPolicyDriver",
     "ConstantScheduler",
     "ConvergenceAdaptiveScheduler",

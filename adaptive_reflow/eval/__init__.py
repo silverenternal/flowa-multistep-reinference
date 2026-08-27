@@ -47,6 +47,22 @@ from .metric_panel import (
     build_default_layered_metric_panel,
     enforce_separation,
 )
+from .posterior_selection_evaluator import (
+    POSTERIOR_SELECTION_AUDIT_REASON,
+    POSTERIOR_SELECTION_BUNDLE_ID_PREFIX,
+    POSTERIOR_SELECTION_CALIBRATION,
+    POSTERIOR_SELECTION_CELLS_FOR_TARGET,
+    POSTERIOR_SELECTION_CHANNELS,
+    POSTERIOR_SELECTION_PERTURBATION,
+    POSTERIOR_SELECTION_SHEET_FOR_TARGET,
+    POSTERIOR_SELECTION_TARGETS,
+    PosteriorSelectionEvaluator,
+    cell_evidence,
+    mode_centers_for,
+    selection_ratio,
+    sheet_cell_centers,
+    sheet_evidence,
+)
 from .promotion import (
     DEFERRED_COST,
     DEFERRED_GAIN,
