@@ -14,6 +14,12 @@ Module boundary:
 * The legacy ``max(previous, dynamic)`` operator is **never** invoked
   inside this module. Any legacy caller must be ported to use
   :func:`bounded_merge` (or :func:`bounded_merge_with_schedule`).
+* The bounded merge is delegated to the algorithm-layer
+  :class:`~adaptive_reflow.algorithm.BoundedMergeOperator` via
+  :func:`~adaptive_reflow.algorithm.default_bounded_merge_operator`;
+  this module is the legacy public entry point and stays bit-compatible
+  with the original signature so existing callers (and existing tests)
+  continue to work unchanged.
 
 Tasks satisfied:
 
@@ -24,11 +30,14 @@ Public surface:
 
 * :data:`MERGE_AUTHORITY_SCHEMA_NAME`
 * :data:`MERGE_AUTHORITY_SCHEMA_VERSION`
-* :func:`bounded_merge` — symmetric, capped, floor-aware merge of a
-  previous-round fraction and a dynamic evidence-derived fraction.
+* :func:`bounded_merge` — thin wrapper around
+  :meth:`~adaptive_reflow.algorithm.BoundedMergeOperator.merge`.
 * :func:`bounded_merge_with_schedule` — orchestrator-level helper that
   wires the bounded merge to a :class:`CosineScheduleSample` and a
   per-channel delta-cap mapping.
+* Re-exports of the algorithm-layer operator types for back-compat:
+  :class:`MergeOperatorProtocol`, :class:`BoundedMergeOperator`,
+  :class:`MergeAuthorityError`, and the canonical audit / error codes.
 
 Failure modes
 -------------
@@ -45,6 +54,30 @@ import math
 from collections.abc import Mapping
 from typing import Any
 
+from adaptive_reflow.algorithm import (
+    ERR_PREV_REQUIRED as _ERR_PREV_REQUIRED,
+)
+from adaptive_reflow.algorithm import (
+    MERGE_DEGENERATE_INTERVAL as _MERGE_DEGENERATE_INTERVAL,
+)
+from adaptive_reflow.algorithm import (
+    MERGE_FLOOR_FALLBACK as _MERGE_FLOOR_FALLBACK,
+)
+from adaptive_reflow.algorithm import (
+    MERGE_PREV_ANCHORED_TO_LAST_EMITTED as _MERGE_PREV_ANCHORED_TO_LAST_EMITTED,
+)
+from adaptive_reflow.algorithm import (
+    BoundedMergeOperator as _BoundedMergeOperator,
+)
+from adaptive_reflow.algorithm import (
+    MergeAuthorityError as _MergeAuthorityError,
+)
+from adaptive_reflow.algorithm import (
+    MergeOperatorProtocol as _MergeOperatorProtocol,
+)
+from adaptive_reflow.algorithm import (
+    default_bounded_merge_operator as _default_bounded_merge_operator,
+)
 from adaptive_reflow.contracts import (
     ChannelName,
     CosineScheduleSample,
@@ -58,7 +91,9 @@ __all__ = [
     "MERGE_DEGENERATE_INTERVAL",
     "MERGE_FLOOR_FALLBACK",
     "MERGE_PREV_ANCHORED_TO_LAST_EMITTED",
+    "BoundedMergeOperator",
     "MergeAuthorityError",
+    "MergeOperatorProtocol",
     "bounded_merge",
     "bounded_merge_with_schedule",
 ]
@@ -77,90 +112,22 @@ MERGE_AUTHORITY_SCHEMA_NAME: str = "adaptive_reflow.bounded_merge_authority"
 #: changes to the clamp / delta-cap semantics.
 MERGE_AUTHORITY_SCHEMA_VERSION: str = "1.0.0"
 
-
-# ---------------------------------------------------------------------------
-# Exceptions (fail-closed; surface bad caller input)
-# ---------------------------------------------------------------------------
-
-
-class MergeAuthorityError(ValueError):
-    """Raised when :func:`bounded_merge` rejects its arguments.
-
-    Inherits from :exc:`ValueError` so existing
-    ``pytest.raises(ValueError)`` patterns continue to work; the specific
-    subclass is exposed via :data:`__all__` for callers that want to
-    narrow their ``except`` clauses.
-    """
+# Re-export the algorithm-layer constants under their historical names
+# so existing callers (and tests) that import them from
+# ``adaptive_reflow.frame`` keep working.
+ERR_PREV_REQUIRED: str = _ERR_PREV_REQUIRED
+MERGE_DEGENERATE_INTERVAL: str = _MERGE_DEGENERATE_INTERVAL
+MERGE_FLOOR_FALLBACK: str = _MERGE_FLOOR_FALLBACK
+MERGE_PREV_ANCHORED_TO_LAST_EMITTED: str = _MERGE_PREV_ANCHORED_TO_LAST_EMITTED
+MergeAuthorityError = _MergeAuthorityError
+MergeOperatorProtocol = _MergeOperatorProtocol
+BoundedMergeOperator = _BoundedMergeOperator
 
 
 # ---------------------------------------------------------------------------
-# Canonical error codes (deterministic, ASCII only)
+# Internal coercion helpers (kept here so bounded_merge_with_schedule
+# stays self-contained; the operator's own helper is private).
 # ---------------------------------------------------------------------------
-
-
-#: Audit code emitted when the per-round delta interval collapses to
-#: an empty range (``hi < lo``) so the merge returns the floor. The
-#: code carries the envelope values so a downstream audit reader can
-#: reproduce the degenerate configuration.
-MERGE_DEGENERATE_INTERVAL: str = "merge_degenerate_interval"
-
-#: Audit code emitted when the per-channel fresh-noise floor has to
-#: fall back to the schedule's ``n_cap`` (or ``0.0`` when no sample
-#: was supplied). This signals that the config-level per-channel
-#: floor mapping was missing for the requested channel.
-MERGE_FLOOR_FALLBACK: str = "merge_floor_fallback_to_schedule_default"
-
-#: Audit code emitted whenever the orchestrator-driven merge is
-#: anchored on a ``prev`` value that came from the previous round's
-#: emitted ``bounded_target_fraction`` (i.e. not from the schedule's
-#: ``n_cap``). The schedule value is the cap, never the prev.
-MERGE_PREV_ANCHORED_TO_LAST_EMITTED: str = "merge_prev_anchored_to_last_emitted"
-
-#: Error code raised when the orchestrator-driven merge path is
-#: asked to merge without supplying ``prev``. The schedule's
-#: ``n_cap`` is the cap; the prev must come from the previous
-#: round's emitted ``bounded_target_fraction``. See
-#: :class:`MergeAuthorityError`.
-ERR_PREV_REQUIRED: str = "merge_prev_required"
-
-_ERR_PREV_NONE: str = "merge_prev_required"
-_ERR_PREV_NOT_FINITE: str = "merge_prev_not_finite"
-_ERR_DYNAMIC_NONE: str = "merge_dynamic_required"
-_ERR_DYNAMIC_NOT_FINITE: str = "merge_dynamic_not_finite"
-_ERR_CAP_NEGATIVE: str = "merge_cap_below_zero"
-_ERR_CAP_ABOVE_ONE: str = "merge_cap_above_one"
-_ERR_FLOOR_NEGATIVE: str = "merge_floor_below_zero"
-_ERR_FLOOR_ABOVE_ONE: str = "merge_floor_above_one"
-_ERR_CAP_BELOW_FLOOR: str = "merge_cap_below_floor"
-_ERR_DELTA_UP_NEGATIVE: str = "merge_delta_cap_up_below_zero"
-_ERR_DELTA_UP_ABOVE_ONE: str = "merge_delta_cap_up_above_one"
-_ERR_DELTA_DOWN_NEGATIVE: str = "merge_delta_cap_down_below_zero"
-_ERR_DELTA_DOWN_ABOVE_ONE: str = "merge_delta_cap_down_above_one"
-
-
-# ---------------------------------------------------------------------------
-# Internal coercion helpers
-# ---------------------------------------------------------------------------
-
-
-def _coerce_finite_real(x: Any, *, name: str) -> float:
-    """Return ``float(x)``; raise :exc:`MergeAuthorityError` on bad input.
-
-    Booleans are coerced to 0/1 (this matches the policy_authority and
-    restart_memory_types coercion conventions). ``None`` is rejected.
-    """
-    if x is None:
-        raise MergeAuthorityError(f"{name}: required (got None)")
-    if isinstance(x, bool):
-        return float(int(x))
-    if not isinstance(x, (int, float)):
-        raise MergeAuthorityError(
-            f"{name}: expected a real number, got {type(x).__name__}"
-        )
-    fx = float(x)
-    if not math.isfinite(fx):
-        raise MergeAuthorityError(f"{name}: must be finite, got {fx!r}")
-    return fx
 
 
 def _coerce_factor_value(x: Any, *, name: str) -> float:
@@ -183,7 +150,7 @@ def _coerce_factor_value(x: Any, *, name: str) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Bounded merge
+# Bounded merge (thin wrapper around the canonical operator)
 # ---------------------------------------------------------------------------
 
 
@@ -199,139 +166,26 @@ def bounded_merge(
 ) -> float:
     """Return a bounded merge of ``prev`` and ``dynamic``.
 
-    The merge is the canonical replacement for the legacy
-    ``max(prev, dynamic)`` operator used in the
-    ``adaptive_reflow_soft_closed_loop_controls`` heuristic. It can
-    both *increase* and *decrease* the prior-round fraction, while
-    respecting:
+    This function is the legacy public entry point and a thin wrapper
+    around
+    :meth:`adaptive_reflow.algorithm.BoundedMergeOperator.merge`. It
+    exists for back-compat with callers (and tests) that pre-date the
+    algorithm-layer :class:`MergeOperatorProtocol` abstraction; new
+    callers should instantiate :class:`BoundedMergeOperator` directly.
 
-    * a hard envelope ``[floor, cap]`` (default ``[0.0, 1.0]``);
-    * per-round ``delta_cap_up`` (max increase relative to ``prev``);
-    * per-round ``delta_cap_down`` (max decrease relative to ``prev``).
-
-    Concretely, let ``target = clamp(dynamic, floor, cap)``. The
-    returned value is
-
-        result = clamp(target, max(floor, prev - delta_cap_down),
-                       min(cap, prev + delta_cap_up))
-
-    When the bound interval is empty (e.g. ``floor > cap`` or the two
-    delta-caps collapse the interval below the floor) the function
-    returns the floor; this is the documented fail-closed behaviour so
-    the merge is total and never raises on legitimate call patterns.
-    When ``audit_codes`` is supplied, the merge appends
-    :data:`MERGE_DEGENERATE_INTERVAL` (with the envelope values
-    embedded for forensic reconstruction) before returning the floor;
-    when ``audit_codes`` is ``None`` the collapse is silent for
-    back-compat with callers that do not opt into audit emission.
-
-    Parameters
-    ----------
-    prev:
-        Previous-round fraction. Must be finite.
-    dynamic:
-        Dynamic evidence-derived fraction. Must be finite.
-    cap:
-        Hard upper envelope (must be finite, in ``[0, 1]``, and
-        ``>= floor``).
-    floor:
-        Hard lower envelope / fresh-noise floor (must be finite, in
-        ``[0, 1]``, and ``<= cap``).
-    delta_cap_up:
-        Maximum per-round increase (must be finite, in ``[0, 1]``).
-    delta_cap_down:
-        Maximum per-round decrease (must be finite, in ``[0, 1]``).
-    audit_codes:
-        Optional mutable list that the merge appends diagnostic codes
-        to. When the per-round delta interval is empty (i.e. the
-        bounded merge collapses to the floor) the merge appends
-        :data:`MERGE_DEGENERATE_INTERVAL` with the envelope values
-        embedded. When ``None``, no codes are emitted (the collapse
-        is silent for back-compat).
-
-    Returns
-    -------
-    float
-        The bounded, clamped merge result in ``[floor, cap]``.
-
-    Raises
-    ------
-    MergeAuthorityError
-        On any non-finite input, on ``cap < floor``, or on any cap/floor
-        value outside ``[0, 1]``.
+    See :class:`BoundedMergeOperator` for the full semantic
+    specification (cap / floor / delta-cap envelope, degenerate-interval
+    collapse to the floor, audit-code emission).
     """
-    prev_f = _coerce_finite_real(prev, name="prev")
-    dynamic_f = _coerce_finite_real(dynamic, name="dynamic")
-    cap_f = _coerce_finite_real(cap, name="cap")
-    floor_f = _coerce_finite_real(floor, name="floor")
-    up_f = _coerce_finite_real(delta_cap_up, name="delta_cap_up")
-    down_f = _coerce_finite_real(delta_cap_down, name="delta_cap_down")
-
-    # Reject impossible configurations before any clamping so callers
-    # see a deterministic, named error code.
-    if cap_f < 0.0:
-        raise MergeAuthorityError(
-            f"{_ERR_CAP_NEGATIVE}: cap must be >= 0, got {cap_f!r}"
-        )
-    if cap_f > 1.0:
-        raise MergeAuthorityError(
-            f"{_ERR_CAP_ABOVE_ONE}: cap must be <= 1, got {cap_f!r}"
-        )
-    if floor_f < 0.0:
-        raise MergeAuthorityError(
-            f"{_ERR_FLOOR_NEGATIVE}: floor must be >= 0, got {floor_f!r}"
-        )
-    if floor_f > 1.0:
-        raise MergeAuthorityError(
-            f"{_ERR_FLOOR_ABOVE_ONE}: floor must be <= 1, got {floor_f!r}"
-        )
-    if cap_f < floor_f:
-        raise MergeAuthorityError(
-            f"{_ERR_CAP_BELOW_FLOOR}: cap ({cap_f!r}) must be >= "
-            f"floor ({floor_f!r})"
-        )
-    if up_f < 0.0:
-        raise MergeAuthorityError(
-            f"{_ERR_DELTA_UP_NEGATIVE}: delta_cap_up must be >= 0, got {up_f!r}"
-        )
-    if up_f > 1.0:
-        raise MergeAuthorityError(
-            f"{_ERR_DELTA_UP_ABOVE_ONE}: delta_cap_up must be <= 1, got {up_f!r}"
-        )
-    if down_f < 0.0:
-        raise MergeAuthorityError(
-            f"{_ERR_DELTA_DOWN_NEGATIVE}: delta_cap_down must be >= 0, "
-            f"got {down_f!r}"
-        )
-    if down_f > 1.0:
-        raise MergeAuthorityError(
-            f"{_ERR_DELTA_DOWN_ABOVE_ONE}: delta_cap_down must be <= 1, "
-            f"got {down_f!r}"
-        )
-
-    # Step 1 — clamp the dynamic value to the envelope.
-    target = max(floor_f, min(cap_f, dynamic_f))
-
-    # Step 2 — bound the per-round delta. The interval is
-    # [max(floor, prev - delta_cap_down), min(cap, prev + delta_cap_up)].
-    lo = max(floor_f, prev_f - down_f)
-    hi = min(cap_f, prev_f + up_f)
-
-    # Defensive: collapse an empty interval to the floor. This is the
-    # documented fail-closed path; the merge never raises on legitimate
-    # call patterns and never returns a value below the floor. When
-    # the caller opted into audit emission, we surface the collapse so
-    # downstream consumers can audit-replay it.
-    if hi < lo:
-        if audit_codes is not None:
-            audit_codes.append(
-                f"{MERGE_DEGENERATE_INTERVAL}:floor={floor_f:.6f}"
-                f":cap={cap_f:.6f}:prev={prev_f:.6f}"
-                f":up={up_f:.6f}:down={down_f:.6f}"
-            )
-        return float(floor_f)
-
-    return float(max(lo, min(hi, target)))
+    return _default_bounded_merge_operator().merge(
+        prev=prev,
+        dynamic=dynamic,
+        cap=cap,
+        floor=floor,
+        delta_cap_up=delta_cap_up,
+        delta_cap_down=delta_cap_down,
+        audit_codes=audit_codes,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -548,6 +402,8 @@ def bounded_merge_with_schedule(
             "prev is required for orchestrator-driven merge; "
             "the schedule value is the cap, not the prev"
         )
+    from adaptive_reflow.algorithm.merge_operator import _coerce_finite_real
+
     prev_v = _coerce_finite_real(prev, name="prev")
     if audit_codes is not None:
         audit_codes.append(MERGE_PREV_ANCHORED_TO_LAST_EMITTED)

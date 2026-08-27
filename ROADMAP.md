@@ -25,6 +25,15 @@ They are reviewed at every release tag and updated when an item closes.
       configs (`pyproject.toml` `requires-python` / ruff `target-version`
       / mypy `python_version`, and every `.github/workflows/*.yml`
       `python-version`)
+- [x] Algorithm abstractions — closed 2026-08-28 [ADR-0011]. The
+      algorithm layer (scheduler, policy driver, merge operator,
+      restart blender) is now abstract and optional: four `Protocol`s
+      in `adaptive_reflow/algorithm/` with 2-4 implementations each,
+      composed by the `ReInferenceRunner` outer framework. Cosine
+      annealing is one option (`CosineAnnealScheduler`), no longer the
+      framework. `tools/run_ablation.py` gained a mixed
+      cosine-scheduler + `ConstantPolicyDriver` row that the old code
+      could not express.
 - [x] Cosine annealing drives memory fraction — closed 2026-08-27
       [ADR-0010]. `memory_fraction_from_schedule` helper added in
       `adaptive_reflow/schedule/cosine.py`; `Frame.engine.run_round` now

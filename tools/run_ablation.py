@@ -1,17 +1,24 @@
 """Standalone ablation study for the 2D rectified-flow adapter (DTB-G3).
 
-Runs a 4 x 2 ablation grid that contrasts the four operational regimes
-the framework exposes:
+Runs a 5 x 2 ablation grid that contrasts the operational regimes the
+framework exposes (DTB-R5 — outer framework runner):
 
 * ``single_pass``                       -- 1 round; fresh noise only.
-* ``multi_round_constant_beta_05``      -- 20 rounds; constant ``beta = 0.5``.
+* ``multi_round_constant_beta_05``      -- 20 rounds; constant ``beta = 0.5``
+  via :class:`ConstantPolicyDriver` + constant scheduler.
 * ``multi_round_cosine_anneal``         -- 20 rounds; ``beta`` derived from
-  a cosine-annealed memory_fraction schedule (``n_min=0``,
-  ``n_max=1``).  This is the *new code path* (ADR-0010): the engine
-  reads the schedule's ``n_cap`` and overrides ``beta_by_channel``
-  per round.
+  a cosine-annealed memory_fraction schedule via the *default*
+  :class:`ScheduleDerivedPolicyDriver` + cosine scheduler
+  (``n_min=0``, ``n_max=1``; ADR-0010).
 * ``multi_round_no_restart``            -- 20 rounds; constant ``beta = 1``
-  (i.e. full fresh noise every round, no prior retention).
+  via :class:`ConstantPolicyDriver` (full fresh noise every round).
+* ``multi_round_cosine_constant_driver`` -- 20 rounds; cosine scheduler
+  paired with :class:`ConstantPolicyDriver(beta=0.5)`. A *mixed*
+  configuration that was IMPOSSIBLE in the old code (the old engine
+  either applied the schedule-driven ``beta = n_cap`` or used the
+  caller-supplied ``beta`` constant — never the cross-product); the
+  new :class:`ReInferenceRunner` composes ``(scheduler, driver)``
+  freely, so this row exercises the framework's expressivity.
 
 Each row is evaluated against the two analytic targets
 ``two_moons`` and ``eight_gaussians`` via :class:`TwoDimFMEvaluator`,
@@ -36,7 +43,6 @@ from __future__ import annotations
 import argparse
 import sys
 import time
-from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -49,26 +55,19 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter  # noqa: E402
-from adaptive_reflow.contracts import (  # noqa: E402
-    ArtifactHash,
-    CosineScheduleConfig,
-    CosineScheduleSample,
-    FactorValue,
-    FinalRestartPolicy,
-    LedgerRowId,
-    PolicyId,
-    RunId,
-    hash_policy_hash,
+from adaptive_reflow.algorithm import (  # noqa: E402
+    ConstantPolicyDriver,
+    ReInferenceConfig,
+    ReInferenceRunner,
+    SchedulerProtocol,
+    default_cosine_scheduler,
 )
+from adaptive_reflow.algorithm.scheduler import ConstantScheduler  # noqa: E402
 from adaptive_reflow.eval.twodim_fm_evaluator import (  # noqa: E402
     analytic_samples,
     coverage_score,
     voronoi_grid,
 )
-from adaptive_reflow.frame import Engine, PhaseState  # noqa: E402
-from adaptive_reflow.frame.adapter import ODEConditionDelta  # noqa: E402
-from adaptive_reflow.schedule.cosine import CosineScheduleSampler  # noqa: E402
-from adaptive_reflow.universal.state import ChannelName  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -80,6 +79,7 @@ CANONICAL_CONFIGURATIONS: tuple[str, ...] = (
     "multi_round_constant_beta_05",
     "multi_round_cosine_anneal",
     "multi_round_no_restart",
+    "multi_round_cosine_constant_driver",
 )
 DEFAULT_SEED: int = 42
 DEFAULT_ROUNDS: int = 20
@@ -94,279 +94,152 @@ COSINE_N_MAX: float = 1.0
 
 
 # ---------------------------------------------------------------------------
-# Policy factory (mirrors tests/test_adapters/test_twodim_fm.py)
+# Scheduler + driver factories (one per configuration)
 # ---------------------------------------------------------------------------
 
 
-def _make_policy(
+def _build_components(
+    config: str,
     *,
-    policy_id: str,
-    run_id: str,
-    beta: float | None,
-    target_round: int,
-    schedule_sample: CosineScheduleSample | None,
-    beta_from_schedule: bool,
-) -> FinalRestartPolicy:
-    """Build a :class:`FinalRestartPolicy` with the requested beta wiring."""
-    # ``beta=None`` is a sentinel meaning "explicit beta_from_schedule=False";
-    # we still need *some* numeric value to populate ``beta_by_channel``
-    # because the field is non-optional.  The constant-1.0 below is
-    # overwritten by the engine's cosine-driven path when
-    # ``beta_from_schedule`` is True, so the value does not influence
-    # the multi-round cosine-anneal run.
-    seed_beta = 1.0 if beta is None else float(beta)
-    policy = FinalRestartPolicy(
-        policy_id=PolicyId(policy_id),
-        writer_id="inference.adaptive_reflow",
-        run_id=RunId(run_id),
-        target_round=int(target_round),
-        outer_cycle_id=0,
-        beta_by_channel={
-            ChannelName(k): FactorValue(seed_beta) for k in TWODIM_FM_CHANNELS
-        },
-        alpha_by_channel={
-            ChannelName(k): FactorValue(1.0) for k in TWODIM_FM_CHANNELS
-        },
-        fresh_noise_floor_by_channel={
-            ChannelName(k): FactorValue(0.0) for k in TWODIM_FM_CHANNELS
-        },
-        schedule_sample=schedule_sample,
-        freeze_admission_by_channel={
-            ChannelName(k): True for k in TWODIM_FM_CHANNELS
-        },
-        ledger_row_id=LedgerRowId(f"ledger-{policy_id}"),
-        policy_hash=ArtifactHash(""),
-        created_at_round=0,
-        beta_from_schedule=bool(beta_from_schedule),
-    )
-    return replace(policy, policy_hash=hash_policy_hash(policy))
+    rounds: int,
+) -> tuple[SchedulerProtocol, Any, int]:
+    """Return ``(scheduler, driver, n_rounds)`` for a given config.
 
-
-def _make_phase_state(*, horizon_remaining: int) -> PhaseState:
-    """Build a deterministic :class:`PhaseState`."""
-    return PhaseState(
-        outer_cycle_id=0,
-        round_in_cycle=0,
-        schedule_phase="ablation",
-        schedule_phase_index=0,
-        horizon_remaining=int(horizon_remaining),
-        seed_lineage_digest="ablation-lineage",
-        recorded_at_round=0,
-    )
-
-
-def _make_condition_delta(
-    *,
-    target_round: int,
-    num_steps: int = DEFAULT_NUM_STEPS,
-) -> ODEConditionDelta:
-    """Build a deterministic :class:`ODEConditionDelta` for one round."""
-    return ODEConditionDelta(
-        delta_spec={"num_steps": int(num_steps)},
-        source="tools.run_ablation",
-        target_round=int(target_round),
-        calibration_artifact_hash="cal-ablation",
-    )
+    ``n_rounds`` is ``1`` for the single-pass config and ``rounds``
+    otherwise; ``scheduler`` is the :class:`SchedulerProtocol`
+    instance the runner will sample from; ``driver`` is the
+    :class:`PolicyDriverProtocol` instance the runner will dispatch
+    through.
+    """
+    if config == "single_pass":
+        # Single round; any scheduler / driver combo works because
+        # only round 0 is executed. Use the canonical cosine scheduler
+        # + default driver so the round trace is well-defined.
+        return default_cosine_scheduler(cycle_length=1), ConstantPolicyDriver(beta=0.0), 1
+    if config == "multi_round_constant_beta_05":
+        return (
+            default_cosine_scheduler(cycle_length=rounds),
+            ConstantPolicyDriver(beta=0.5),
+            int(rounds),
+        )
+    if config == "multi_round_cosine_anneal":
+        # Default scheduler + default driver — the runner reproduces
+        # the engine's inline ``_policy_with_schedule_beta`` override
+        # via :class:`ScheduleDerivedPolicyDriver`.
+        return (
+            default_cosine_scheduler(
+                cycle_length=rounds, n_min=COSINE_N_MIN, n_max=COSINE_N_MAX
+            ),
+            "default",
+            int(rounds),
+        )
+    if config == "multi_round_no_restart":
+        # Constant ``beta = 1.0`` -> ``memory_fraction = 0`` -> full
+        # fresh noise every round (no restart). The scheduler is
+        # ignored by the constant driver; we pass a constant
+        # scheduler so the schedule's config_hash is meaningful.
+        return (
+            ConstantScheduler(cycle_length=rounds, n_cap=1.0),
+            ConstantPolicyDriver(beta=1.0),
+            int(rounds),
+        )
+    if config == "multi_round_cosine_constant_driver":
+        # Mixed configuration: cosine scheduler + constant
+        # driver(beta=0.5). The driver ignores the schedule's
+        # ``n_cap`` so the per-round ``beta`` stays at 0.5 even
+        # though the schedule is varying — this row exercises the
+        # expressivity the new framework unlocks.
+        return (
+            default_cosine_scheduler(
+                cycle_length=rounds, n_min=COSINE_N_MIN, n_max=COSINE_N_MAX
+            ),
+            ConstantPolicyDriver(beta=0.5),
+            int(rounds),
+        )
+    raise ValueError(f"unknown_config:{config}")
 
 
 # ---------------------------------------------------------------------------
-# Runners (one per configuration)
+# Runner helpers
 # ---------------------------------------------------------------------------
 
 
-def _run_single_pass(
-    *,
+def _run_one(
+    config: str,
     target: str,
     weights_path: Path,
+    *,
     seed: int,
+    rounds: int,
     num_steps: int,
-) -> tuple[NDArray[np.float64], list[float], list[float]]:
-    """1 round, no restart. Returns (endpoints, w2_per_round, cov_per_round)."""
+) -> dict[str, float]:
+    """Run a single (config, target) cell and return the metric dict.
+
+    Uses :class:`ReInferenceRunner` to drive the inner engine loop.
+    The runner collects the per-round endpoints into
+    ``result.endpoints``; we score those endpoints with the same W2
+    and Voronoi-coverage helpers the original script used.
+    """
+    del num_steps  # The runner drives ``num_steps`` internally; kept for CLI parity.
+    scheduler, driver, n_rounds = _build_components(config, rounds=rounds)
     adapter = TwoDimFMAdapter(weights_path=weights_path, target=target)
-    phase_state = _make_phase_state(horizon_remaining=1)
-    bundle = adapter.build_initial_state(
-        batch_id=f"ablation-singlepass-{target}",
-        sample_id=f"sample-singlepass-{target}",
-    )
-    # Single round: any beta value will do (no restart applied).
-    policy = _make_policy(
-        policy_id=f"ablation-sp-{target}",
-        run_id=f"run-sp-{target}",
-        beta=0.0,
-        target_round=0,
-        schedule_sample=None,
-        beta_from_schedule=False,
-    )
-    condition = _make_condition_delta(target_round=0, num_steps=num_steps)
-    engine = Engine()
-    result = engine.run_round(
-        round_index=0,
-        phase_state=phase_state,
-        bundle=bundle,
+    runner = ReInferenceRunner(
         adapter=adapter,
-        policy=policy,
-        condition_delta=condition,
-        seed=int(seed),
+        scheduler=scheduler,
+        policy_driver=driver,  # type: ignore[arg-type] — "default" sentinel handled below
     )
-    if result.round_trace.audit_codes:
-        raise RuntimeError(
-            f"single_pass audit_codes: {result.round_trace.audit_codes!r}"
-        )
-    endpoints = _extract_endpoints(adapter, [result], count=1)
-    w2, cov = _score_round(
-        target=target,
-        endpoints=endpoints,
-        seed=int(seed),
-    )
-    return endpoints, [w2], [cov]
+    # Resolve the "default" driver sentinel to a concrete instance.
+    if driver == "default":  # type: ignore[comparison-overlap]
+        # Re-build the runner with the default driver so the
+        # ``algorithm_signatures`` mapping is correct.
+        from adaptive_reflow.algorithm import default_policy_driver
 
-
-def _run_multi_round_constant(
-    *,
-    target: str,
-    weights_path: Path,
-    seed: int,
-    rounds: int,
-    beta: float,
-    num_steps: int,
-) -> tuple[NDArray[np.float64], list[float], list[float]]:
-    """``rounds`` rounds of constant ``beta`` (no schedule wiring)."""
-    adapter = TwoDimFMAdapter(weights_path=weights_path, target=target)
-    engine = Engine()
-    phase_state = _make_phase_state(horizon_remaining=rounds)
-    bundle = adapter.build_initial_state(
-        batch_id=f"ablation-const-{beta}-{target}",
-        sample_id=f"sample-const-{beta}-{target}",
-    )
-    results = []
-    for r in range(int(rounds)):
-        policy = _make_policy(
-            policy_id=f"ablation-const-{beta}-{target}-{r}",
-            run_id=f"run-const-{beta}-{target}",
-            beta=float(beta),
-            target_round=r,
-            schedule_sample=None,
-            beta_from_schedule=False,
-        )
-        condition = _make_condition_delta(target_round=r, num_steps=num_steps)
-        result = engine.run_round(
-            round_index=r,
-            phase_state=phase_state,
-            bundle=bundle,
+        runner = ReInferenceRunner(
             adapter=adapter,
-            policy=policy,
-            condition_delta=condition,
-            seed=int(seed) + r,
+            scheduler=scheduler,
+            policy_driver=default_policy_driver(),
         )
-        if result.round_trace.audit_codes:
-            raise RuntimeError(
-                f"constant_beta audit_codes at r={r}: "
-                f"{result.round_trace.audit_codes!r}"
-            )
-        results.append(result)
-        phase_state = result.next_phase_state
-        # Carry the detached endpoint forward as the next source bundle
-        # so the engine sees a properly ``detach_proof=True`` input.
-        bundle = adapter.observe_endpoint(
-            result.round_trace.integrator_trace,
-            bundle,
-        )
-    endpoints = _extract_endpoints(adapter, results, count=int(rounds))
-    w2s, covs = _score_per_round(target=target, endpoints=endpoints, seed=int(seed))
-    return endpoints, w2s, covs
 
+    runner_config = ReInferenceConfig(
+        n_rounds=n_rounds,
+        outer_cycle_id=0,
+        target_round=0,
+        seed=int(seed),
+        channels=TWODIM_FM_CHANNELS,
+    )
+    result = runner.run(runner_config)
 
-def _run_multi_round_cosine(
-    *,
-    target: str,
-    weights_path: Path,
-    seed: int,
-    rounds: int,
-    num_steps: int,
-) -> tuple[NDArray[np.float64], list[float], list[float]]:
-    """``rounds`` rounds with ``beta`` derived from a cosine schedule."""
-    config = CosineScheduleConfig(
-        schedule_family="cosine_no_restart",
-        cycle_length=int(rounds),
-        n_min=FactorValue(COSINE_N_MIN),
-        n_max=FactorValue(COSINE_N_MAX),
-        per_channel_caps={},
-        fresh_noise_floor_by_channel={},
-        symmetric_delta_caps_by_channel={},
-        restart_triggers_allowed=(),
-        config_hash=ArtifactHash("ablation-cosine-cfg"),
-        frozen_before_evaluation=True,
-    )
-    sampler = CosineScheduleSampler(config)
-    adapter = TwoDimFMAdapter(weights_path=weights_path, target=target)
-    engine = Engine()
-    phase_state = _make_phase_state(horizon_remaining=int(rounds))
-    bundle = adapter.build_initial_state(
-        batch_id=f"ablation-cosine-{target}",
-        sample_id=f"sample-cosine-{target}",
-    )
-    results = []
-    for r in range(int(rounds)):
-        sample = sampler.sample(
-            outer_cycle_id=0, round_in_cycle=r, target_round=r
-        )
-        # ``beta_from_schedule=True`` lets the engine override
-        # ``beta_by_channel`` with ``n_cap`` from the sample (the
-        # canonical ADR-0010 wiring).  ``schedule_sample`` is non-None
-        # so the engine enters the override branch.
-        policy = _make_policy(
-            policy_id=f"ablation-cosine-{target}-{r}",
-            run_id=f"run-cosine-{target}",
-            beta=None,
-            target_round=r,
-            schedule_sample=sample,
-            beta_from_schedule=True,
-        )
-        condition = _make_condition_delta(target_round=r, num_steps=num_steps)
-        result = engine.run_round(
-            round_index=r,
-            phase_state=phase_state,
-            bundle=bundle,
-            adapter=adapter,
-            policy=policy,
-            condition_delta=condition,
-            seed=int(seed) + r,
-        )
-        if result.round_trace.audit_codes:
+    # Audit the round traces (the original script raised on non-empty
+    # ``audit_codes``; preserve that fail-closed invariant).
+    for r, trace in enumerate(result.round_traces):
+        if trace.audit_codes:
             raise RuntimeError(
-                f"cosine_anneal audit_codes at r={r}: "
-                f"{result.round_trace.audit_codes!r}"
+                f"{config} audit_codes at r={r}: {trace.audit_codes!r}"
             )
-        results.append(result)
-        phase_state = result.next_phase_state
-        bundle = adapter.observe_endpoint(
-            result.round_trace.integrator_trace,
-            bundle,
-        )
-    endpoints = _extract_endpoints(adapter, results, count=int(rounds))
-    w2s, covs = _score_per_round(target=target, endpoints=endpoints, seed=int(seed))
-    return endpoints, w2s, covs
+
+    # Compute the canonical W2 / coverage curves using the existing
+    # helpers — the runner collects endpoints, the script scores them.
+    w2s, covs = _score_per_round(
+        target=target, endpoints=result.endpoints, seed=int(seed)
+    )
+    return {
+        "config": config,
+        "target": target,
+        "final_w2": float(w2s[-1]),
+        "mean_w2": _summarize_tail(w2s, tail=5),
+        "final_coverage": float(covs[-1]),
+        "mean_coverage": _summarize_tail(covs, tail=5),
+        # Diagnostic extras (not in the markdown table):
+        "w2_curve": list(w2s),
+        "cov_curve": list(covs),
+    }
 
 
 # ---------------------------------------------------------------------------
-# Evaluation helpers
+# Evaluation helpers (custom scoring — the runner emits endpoints, the
+# script applies the W2 / Voronoi-coverage scoring that the
+# ``TwoDimFMEvaluator`` oracle emits).
 # ---------------------------------------------------------------------------
-
-
-def _extract_endpoints(
-    adapter: TwoDimFMAdapter,
-    results: list[Any],
-    *,
-    count: int,
-) -> NDArray[np.float64]:
-    """Stack the final trajectory point from each engine round result."""
-    out = np.empty((int(count), 2), dtype=np.float64)
-    for i, result in enumerate(results[: int(count)]):
-        traj = adapter._native_states[
-            result.round_trace.integrator_trace.native_state_digest
-        ]["trajectory"]
-        out[i] = np.asarray(traj[-1], dtype=np.float64).reshape(2)
-    return out
 
 
 def _wasserstein_2d(
@@ -468,71 +341,18 @@ def _summarize_tail(values: list[float], *, tail: int = 5) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Driver
+# Weights path
 # ---------------------------------------------------------------------------
-
-
-def _run_one(
-    config: str,
-    target: str,
-    weights_path: Path,
-    *,
-    seed: int,
-    rounds: int,
-    num_steps: int,
-) -> dict[str, float]:
-    """Run a single (config, target) cell and return the metric dict."""
-    if config == "single_pass":
-        _endpoints, w2s, covs = _run_single_pass(
-            target=target,
-            weights_path=weights_path,
-            seed=seed,
-            num_steps=num_steps,
-        )
-    elif config == "multi_round_constant_beta_05":
-        _endpoints, w2s, covs = _run_multi_round_constant(
-            target=target,
-            weights_path=weights_path,
-            seed=seed,
-            rounds=rounds,
-            beta=0.5,
-            num_steps=num_steps,
-        )
-    elif config == "multi_round_cosine_anneal":
-        _endpoints, w2s, covs = _run_multi_round_cosine(
-            target=target,
-            weights_path=weights_path,
-            seed=seed,
-            rounds=rounds,
-            num_steps=num_steps,
-        )
-    elif config == "multi_round_no_restart":
-        _endpoints, w2s, covs = _run_multi_round_constant(
-            target=target,
-            weights_path=weights_path,
-            seed=seed,
-            rounds=rounds,
-            beta=1.0,  # beta=1.0 -> memory_fraction=0 -> full fresh noise.
-            num_steps=num_steps,
-        )
-    else:
-        raise ValueError(f"unknown_config:{config}")
-    return {
-        "config": config,
-        "target": target,
-        "final_w2": float(w2s[-1]),
-        "mean_w2": _summarize_tail(w2s, tail=5),
-        "final_coverage": float(covs[-1]),
-        "mean_coverage": _summarize_tail(covs, tail=5),
-        # Diagnostic extras (not in the markdown table):
-        "w2_curve": list(w2s),
-        "cov_curve": list(covs),
-    }
 
 
 def _weights_path(target: str) -> Path:
     """Canonical ``data/twodim_fm_<target>.npz`` path."""
     return REPO_ROOT / "data" / f"twodim_fm_{target}.npz"
+
+
+# ---------------------------------------------------------------------------
+# Markdown emitter
+# ---------------------------------------------------------------------------
 
 
 def _format_markdown(
@@ -547,12 +367,15 @@ def _format_markdown(
     lines.append("# 2D Rectified-Flow Ablation Study")
     lines.append("")
     lines.append(
-        "A 4 x 2 ablation that contrasts the four restart regimes the "
+        "A 5 x 2 ablation that contrasts the restart regimes the "
         "framework exposes against the two analytic target distributions "
         "supported by `TwoDimFMAdapter`. Every cell is run with "
         f"`seed={seed}`, `rounds={rounds}`, and `num_steps="
         f"{DEFAULT_NUM_STEPS}` (RK4). Total wall-clock: "
-        f"{elapsed_s:.1f}s on a single CPU core."
+        f"{elapsed_s:.1f}s on a single CPU core. Phase-2 framework: "
+        "every cell is driven by `ReInferenceRunner` so the "
+        "scheduler + policy driver composition is composable "
+        "(including the `cosine_constant_driver` mixed row)."
     )
     lines.append("")
     lines.append("## Configurations")
@@ -562,21 +385,33 @@ def _format_markdown(
     )
     lines.append(
         "- **multi_round_constant_beta_05** -- "
-        f"{rounds} rounds, constant `beta = 0.5` "
+        f"{rounds} rounds, constant `beta = 0.5` via "
+        "`ConstantPolicyDriver(beta=0.5)` + cosine scheduler "
         "(50/50 prior / fresh noise blend)."
     )
     lines.append(
         "- **multi_round_cosine_anneal** -- "
         f"{rounds} rounds, `beta` derived from a cosine-annealed memory-"
         "fraction schedule with `n_min=0` and `n_max=1` (ADR-0010). "
-        "At round 0 the engine emits `beta = n_max` (full fresh noise for "
-        "exploration); at the final round it emits `beta = n_min` (preserve "
-        "the prior and refine)."
+        "Driver is the default `ScheduleDerivedPolicyDriver`, so the "
+        "runner emits `beta = n_cap` per round (the engine's inline "
+        "`_policy_with_schedule_beta` override is now driven by the "
+        "driver)."
     )
     lines.append(
         "- **multi_round_no_restart** -- "
-        f"{rounds} rounds, constant `beta = 1.0` (memory fraction 0; full "
+        f"{rounds} rounds, constant `beta = 1.0` via "
+        "`ConstantPolicyDriver(beta=1.0)` (memory fraction 0; full "
         "fresh noise every round). Worst-case ablation."
+    )
+    lines.append(
+        "- **multi_round_cosine_constant_driver** -- "
+        f"{rounds} rounds, cosine scheduler + "
+        "`ConstantPolicyDriver(beta=0.5)`. The driver ignores the "
+        "schedule so `beta` stays at 0.5 even though the schedule's "
+        "`n_cap` is varying. This row exercises the (scheduler, driver) "
+        "composability the new framework unlocks; it was IMPOSSIBLE in "
+        "the old code."
     )
     lines.append("")
     lines.append("## Targets")
@@ -653,6 +488,14 @@ def _format_markdown(
             ),
             None,
         )
+        mixed_row = next(
+            (
+                r
+                for r in per_target
+                if r["config"] == "multi_round_cosine_constant_driver"
+            ),
+            None,
+        )
         if cosine_row is not None and const_row is not None:
             dw2 = float(const_row["final_w2"]) - float(cosine_row["final_w2"])
             dcov = float(cosine_row["final_coverage"]) - float(const_row["final_coverage"])
@@ -660,6 +503,18 @@ def _format_markdown(
                 "- **Cosine vs constant-beta-0.5**: `delta_W2 = "
                 f"{dw2:+.4f}` (positive => cosine wins), "
                 f"`delta_coverage = {dcov:+.3f}` (positive => cosine wins)."
+            )
+        if cosine_row is not None and mixed_row is not None:
+            dmw2 = float(mixed_row["final_w2"]) - float(cosine_row["final_w2"])
+            dmcov = float(cosine_row["final_coverage"]) - float(mixed_row["final_coverage"])
+            lines.append(
+                "- **Cosine + constant-driver vs cosine**: "
+                "`delta_W2 = "
+                f"{dmw2:+.4f}`, "
+                f"`delta_coverage = {dmcov:+.3f}`. The mixed "
+                "configuration diverges from the cosine-anneal baseline "
+                "because the constant driver flattens `beta` to 0.5 "
+                "regardless of the schedule's `n_cap`."
             )
         lines.append("")
     lines.append("### Cross-config insight")
@@ -718,7 +573,9 @@ def _format_markdown(
         "Deterministic for fixed `seed` (default `42`). Run via "
         "`python tools/run_ablation.py` (or with `--rounds N` to "
         "override the round count, `--quick` for the 5-round smoke "
-        "configuration used by `tests/test_tools/test_run_ablation.py`)."
+        "configuration used by `tests/test_tools/test_run_ablation.py`). "
+        "The four canonical configurations + the new mixed "
+        "configuration are all driven by `ReInferenceRunner`."
     )
     lines.append("")
     return "\n".join(lines)

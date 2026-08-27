@@ -33,6 +33,7 @@ EXPECTED_CONFIGS: tuple[str, ...] = (
     "multi_round_constant_beta_05",
     "multi_round_cosine_anneal",
     "multi_round_no_restart",
+    "multi_round_cosine_constant_driver",
 )
 EXPECTED_TARGETS: tuple[str, ...] = ("two_moons", "eight_gaussians")
 

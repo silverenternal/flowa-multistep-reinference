@@ -120,6 +120,7 @@ strict: true
 # this site (they live at the repo root and are read directly from
 # disk by the doc-claim linter, not by mkdocs).
 not_in_nav: |
+  ABLATION.md
   ADAPTER_INTERFACE_SPEC.md
   DEPRECATION.md
   PERFORMANCE_BUDGETS.md

@@ -1,0 +1,857 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>10. Cosine-driven memory fraction - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#10-cosine-driven-memory-fraction" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              10. Cosine-driven memory fraction
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context-and-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context and Problem Statement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-drivers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision Drivers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#considered-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Considered Options
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision Outcome
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision Outcome">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#confirmation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Confirmation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#more-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        More Information
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="10-cosine-driven-memory-fraction">10. Cosine-driven memory fraction<a class="headerlink" href="#10-cosine-driven-memory-fraction" title="Permanent link">&para;</a></h1>
+<h2 id="context-and-problem-statement">Context and Problem Statement<a class="headerlink" href="#context-and-problem-statement" title="Permanent link">&para;</a></h2>
+<p>The <code>adaptive_reflow</code> framework's <code>apply_restart_distribution</code>
+boundary (the universal <code>FlowMatchingODEAdapter</code> Protocol hook that
+every adapter implements) blends the prior endpoint with fresh noise
+via a per-round <code>memory_fraction</code>. The adapter implements the blend
+as</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>memory_fraction = 1.0 - beta
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>x0_new = memory_fraction * prior + (1 - memory_fraction) * fresh
+</code></pre></div>
+<p>where <code>beta</code> is read from <code>policy.beta_by_channel[channel]</code>. The
+canonical algorithm described in the framework documentation says the
+per-round <code>memory_fraction</code> should be <em>driven by the cosine
+schedule</em> — specifically, the schedule's <code>n_cap</code> (fresh-noise
+capacity) is the per-round fresh-noise fraction, and the memory
+fraction is its complement.</p>
+<p>Before this ADR the cosine schedule's <code>n_cap</code> did <em>not</em> drive the
+adapter-level memory fraction. The schedule's <code>n_cap</code> was consumed
+only at the <em>bounded merge</em> layer (<code>adaptive_reflow.frame.merge.
+bounded_merge_with_schedule</code>), where it served as the <em>cap</em> on a
+bounded update over <code>prev</code> and <code>dynamic</code> fractions. The
+adapter-level blend, by contrast, read <code>beta</code> directly from the
+caller-supplied <code>policy.beta_by_channel</code> and never consulted the
+schedule. Callers who wanted cosine-annealed memory fractions had
+to compute the per-round beta themselves and thread it through a
+freshly minted <code>FinalRestartPolicy</code> every round — exactly the kind
+of plumbing the framework's closed schedule family is supposed to
+eliminate.</p>
+<p>The user's audit asked three questions:</p>
+<ol>
+<li>Where is <code>policy.beta_by_channel["xy"]</code> set? <em>Externally, in
+   tests, as a constant per round.</em></li>
+<li>Where is <code>cosine_schedule.n_cap</code> produced? <em>In
+   <code>n_cap_for_round</code> and consumed only by <code>bounded_merge_with_schedule</code>.</em></li>
+<li>Where is the actual blend? <em>In
+   <code>TwoDimFMAdapter.apply_restart_distribution</code> /
+   <code>ToyGaussianAdapter.apply_restart_distribution</code>, where <code>beta</code> is
+   read from the supplied policy verbatim.</em></li>
+</ol>
+<p>The audit confirmed the algorithmic gap: the cosine schedule did
+not drive the per-round memory fraction; the framework's
+documented behavior was not wired.</p>
+<h2 id="decision-drivers">Decision Drivers<a class="headerlink" href="#decision-drivers" title="Permanent link">&para;</a></h2>
+<ul>
+<li>The framework's closed schedule family
+  (<code>constant</code> / <code>linear</code> / <code>cosine_no_restart</code> /
+  <code>cosine_guarded_restart</code>) is the canonical source of per-round
+  capacity. The user-supplied <code>policy.beta_by_channel</code> is supposed
+  to <em>carry</em> the schedule-derived values, not supply them ad hoc.</li>
+<li>The "coarse-to-fine" drug-design intuition (lots of fresh noise
+  for exploration early, preserve the prior for refinement late)
+  matches the cosine-annealed schedule directly: at round 0 with
+  <code>n_cap = n_max</code> (large), the memory fraction is small (lots of
+  fresh noise); at round <code>L-1</code> with <code>n_cap = n_min</code> (small), the
+  memory fraction is large (preserve the prior). The math is the
+  natural complement: <code>memory_fraction = 1 - n_cap</code>.</li>
+<li>Backward compatibility matters: existing callers (and the entire
+  test surface) supply an explicit <code>beta</code> and expect it to be used
+  verbatim when the policy does not carry a schedule sample. The
+  default must be "framework drives beta" so the new behavior
+  activates whenever the caller sets <code>schedule_sample</code>; the
+  escape hatch (back-compat) is a single <code>bool</code> flag the caller
+  can flip.</li>
+<li>The <code>policy_hash</code> audit invariant (<code>policy_hash ==
+  hash_policy_hash(policy)</code>) must continue to hold <em>after</em> the
+  override. The hash already covers <code>beta_by_channel</code>, so
+  recomputing the hash against the post-override <code>beta_by_channel</code>
+  is sufficient — no new field needs to be added to the hash
+  <em>payload</em>, but adding <code>beta_from_schedule</code> to the payload
+  preserves the invariant that two policies that differ only by
+  this flag hash differently.</li>
+</ul>
+<h2 id="considered-options">Considered Options<a class="headerlink" href="#considered-options" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong><code>memory_fraction_from_schedule(schedule_sample) -&gt; float</code> in
+   <code>adaptive_reflow/schedule/cosine.py</code>; the engine overrides
+   <code>beta_by_channel</code> so <code>beta = n_cap</code> whenever
+   <code>policy.beta_from_schedule is True</code> (default) and
+   <code>policy.schedule_sample is not None</code>; <code>FinalRestartPolicy</code> adds
+   the <code>beta_from_schedule: bool = True</code> field; <code>hash_policy_hash</code>
+   includes the flag in its payload.</strong></li>
+<li><strong>Add the per-round memory fraction computation directly to
+   <code>apply_restart_distribution</code></strong> (every adapter re-derives
+   <code>memory_fraction</code> from the schedule's <code>n_cap</code> inline). Rejected
+   because the universal Protocol is supposed to consume the
+   policy as-is; the adapter is not the right place for schedule
+   arithmetic, and there are adapters outside this repo
+   (molecular, etc.) that would need to be patched in lockstep.</li>
+<li><strong>Compute the memory fraction only in the orchestrator's
+   <code>evaluate_bundle</code></strong> (the policy is built with the schedule-
+   derived beta and the engine forwards it verbatim). Rejected
+   because the engine is the canonical entry point for every
+   adapter-driven round; the wiring should happen at the engine so
+   <code>apply_restart_distribution</code> consumers see the schedule-driven
+   beta without depending on the orchestrator.</li>
+</ol>
+<h2 id="decision-outcome">Decision Outcome<a class="headerlink" href="#decision-outcome" title="Permanent link">&para;</a></h2>
+<p>Chosen option: <strong>add <code>memory_fraction_from_schedule</code> to the
+schedule module, add <code>beta_from_schedule: bool = True</code> to
+<code>FinalRestartPolicy</code>, and override <code>beta_by_channel</code> in
+<code>Engine.run_round</code> before the <code>apply_restart_distribution</code> call.
+The override is invisible to the caller (the supplied <code>policy</code> is
+never mutated) and the round trace's <code>applied_policy_hash</code> is
+recomputed via <code>hash_policy_hash</code> so the audit invariant holds.</strong></p>
+<p>The wiring is structural:</p>
+<ul>
+<li><code>adaptive_reflow.schedule.cosine.memory_fraction_from_schedule</code>
+  returns <code>1.0 - n_cap</code> (clipped to <code>[0, 1]</code>); raises on
+  non-finite or non-numeric <code>n_cap</code>; refuses <code>None</code>
+  <code>schedule_sample</code>. Exported from <code>adaptive_reflow.schedule</code>.</li>
+<li><code>FinalRestartPolicy.beta_from_schedule: bool = True</code> (default).
+  When <code>True</code> the framework derives <code>beta_by_channel</code> from the
+  schedule; when <code>False</code> the caller-supplied <code>beta_by_channel</code> is
+  preserved verbatim (back-compat).</li>
+<li>
+<p><code>Engine.run_round</code> calls the new helper
+  <code>adaptive_reflow.frame.engine._policy_with_schedule_beta</code> before
+  forwarding the policy to <code>adapter.apply_restart_distribution</code>.
+  The helper:</p>
+</li>
+<li>
+<p>Reads <code>policy.schedule_sample.n_cap</code>.</p>
+</li>
+<li>Builds a new <code>beta_by_channel</code> mapping where every channel
+     carries <code>FactorValue(n_cap)</code>.</li>
+<li>Replaces <code>beta_by_channel</code> on the policy and recomputes
+     <code>policy_hash</code> via <code>hash_policy_hash</code>.</li>
+</ul>
+<p>When <code>policy.schedule_sample is None</code> (no schedule attached) the
+  helper is a no-op and the policy is forwarded verbatim — this is
+  the back-compat path every existing test relies on.</p>
+<ul>
+<li><code>hash_policy_hash</code> includes <code>beta_from_schedule</code> in its payload
+  so two policies that differ only by this flag hash differently;
+  the recompute remains deterministic.</li>
+<li><code>build_final_restart_policy</code> accepts a <code>beta_from_schedule</code> kwarg
+  (default <code>True</code>); the orchestrator's <code>build_final_policy</code> calls
+  it with <code>beta_from_schedule=True</code> so the orchestrator-built
+  policies also benefit from the new wiring when the caller opts in
+  via <code>schedule_sample</code>.</li>
+</ul>
+<h3 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h3>
+<p>Positive:</p>
+<ul>
+<li>The per-round memory fraction is now schedule-derived by default.
+  An ablation that compares "schedule-driven beta" against
+  "fixed beta" reduces to "supply vs omit <code>schedule_sample</code>".</li>
+<li>The audit invariant <code>policy_hash == hash_policy_hash(policy)</code> is
+  preserved through the override (the recompute runs after the
+  override, not before).</li>
+<li>Backward compatibility is total: every existing test supplies
+  <code>schedule_sample=None</code> and continues to see the explicit beta
+  they set; the override is dormant until the caller opts in.</li>
+<li>The wiring lives at the engine, the single canonical entry
+  point for every adapter-driven round; the universal Protocol is
+  not modified.</li>
+</ul>
+<p>Negative:</p>
+<ul>
+<li>The <code>FinalRestartPolicy</code> dataclass grows by one field
+  (<code>beta_from_schedule</code>). Adding a field to a frozen dataclass
+  requires <code>dataclasses.replace</code> callsites to keep working (every
+  site that builds a policy by position has to add the new field).
+  Existing sites use keyword arguments so no migration is needed;
+  the field defaults to <code>True</code> so old code is forward-compatible.</li>
+<li>The <code>hash_policy_hash</code> payload grows by one entry. Any cached
+  hash that was computed before this change is invalidated; this
+  is intentional — the new hash is the canonical one.</li>
+<li>The override branch in <code>run_round</code> runs on every round when
+  <code>beta_from_schedule=True</code>. The cost is a <code>dataclasses.replace</code>
+  plus a <code>hash_policy_hash</code> call per round (the latter is O(F)
+  where F is the total factor count). For the canonical 4-channel
+  policy the overhead is sub-microsecond; for the perf-test 1000-
+  round horizons it is invisible against the integrator cost.</li>
+</ul>
+<h3 id="confirmation">Confirmation<a class="headerlink" href="#confirmation" title="Permanent link">&para;</a></h3>
+<p>The decision is enforced by:</p>
+<ul>
+<li><code>adaptive_reflow/schedule/cosine.py::memory_fraction_from_schedule</code>
+  — the canonical derivation.</li>
+<li><code>adaptive_reflow/contracts/authority.py::FinalRestartPolicy</code> —
+  the <code>beta_from_schedule</code> field.</li>
+<li><code>adaptive_reflow/contracts/hashes.py::hash_policy_hash</code> — the
+  payload that includes the flag.</li>
+<li><code>adaptive_reflow/frame/engine.py::_policy_with_schedule_beta</code> and
+  <code>Engine.run_round</code> — the override wiring.</li>
+<li><code>tests/test_adapters/test_twodim_fm.py</code> —
+  <code>test_cosine_schedule_drives_per_round_memory_fraction</code>,
+  <code>test_first_round_is_mostly_fresh_noise</code>,
+  <code>test_last_round_is_mostly_prior</code>,
+  <code>test_policy_beta_override_supersedes_schedule</code> — the four new
+  regression tests.</li>
+</ul>
+<h2 id="more-information">More Information<a class="headerlink" href="#more-information" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../0005-fail-closed-audit-code-policy/">docs/adr/0005</a> — the
+  audit-code catalogue that the round trace's
+  <code>applied_policy_hash</code> recompute depends on.</li>
+<li><a href="../0007-prev-anchored-bounded-merge/">docs/adr/0007</a> — the
+  bounded-merge authority that consumes the schedule's <code>n_cap</code> as
+  the <em>cap</em>, never the <em>prev</em>. The new wiring is the <em>memory
+  fraction</em> counterpart: the schedule drives <code>beta</code> (the prior
+  retention) directly, while the bounded merge drives <code>cap</code> (the
+  per-round delta envelope).</li>
+<li><code>adaptive_reflow/schedule/cosine.py::n_cap_for_round</code> — the
+  closed-form cosine capacity function.</li>
+<li><code>adaptive_reflow/frame/engine.py::Engine.run_round</code> — the
+  override wiring.</li>
+<li><code>adaptive_reflow/adapters/twodim_fm.py::TwoDimFMAdapter.
+  apply_restart_distribution</code> — the universal Protocol consumer
+  that the override activates.</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -31,6 +31,7 @@ Tasks satisfied:
 from __future__ import annotations
 
 import math
+import warnings
 from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Any, cast
@@ -433,7 +434,19 @@ def default_floor_by_channel(
 
 
 class CosineScheduleSampler:
-    """Stateful sampler that records the most recent :class:`CosineScheduleSample`.
+    """Deprecated stateful sampler — thin shim over
+    :class:`adaptive_reflow.algorithm.CosineAnnealScheduler`.
+
+    .. deprecated::
+        The algorithm layer is now abstract: depend on
+        :class:`adaptive_reflow.algorithm.SchedulerProtocol` and construct a
+        concrete scheduler (``default_cosine_scheduler()`` for the cosine
+        default). This class is retained so existing
+        ``from adaptive_reflow.schedule.cosine import CosineScheduleSampler``
+        imports keep working; instantiating it emits a
+        :exc:`DeprecationWarning`. It delegates all capacity computation to
+        :class:`~adaptive_reflow.algorithm.CosineAnnealScheduler` and keeps
+        the restart-event surface unchanged.
 
     The sampler is a thin facade over :func:`n_cap_for_round` plus a cache of
     the most recent sample. The cache is consulted by
@@ -464,7 +477,20 @@ class CosineScheduleSampler:
     """
 
     def __init__(self, config: CosineScheduleConfig) -> None:
+        warnings.warn(
+            "CosineScheduleSampler is deprecated; use "
+            "adaptive_reflow.algorithm.CosineAnnealScheduler (or "
+            "default_cosine_scheduler()) behind SchedulerProtocol instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        # Deferred import: adaptive_reflow.algorithm.scheduler imports this
+        # module for n_cap_for_round / memory_fraction_from_schedule, so the
+        # dependency must only be resolved at call time.
+        from adaptive_reflow.algorithm.scheduler import CosineAnnealScheduler
+
         self._config = config
+        self._scheduler = CosineAnnealScheduler(config)
         self._last_sample: CosineScheduleSample | None = None
 
     @property
@@ -498,22 +524,9 @@ class CosineScheduleSampler:
         # round_in_cycle coercion is delegated to n_cap_for_round, which
         # also enforces the cycle-length range.
 
-        n_cap = n_cap_for_round(self._config, round_in_cycle)
-        L = int(self._config.cycle_length)
-        u_r = float(round_in_cycle) / max(L - 1, 1)
-
-        sample = CosineScheduleSample(
-            schedule_hash=ArtifactHash(str(self._config.config_hash)),
-            outer_cycle_id=outer_cycle_id,
-            round_in_cycle=int(round_in_cycle),
-            cycle_length=int(L),
-            n_cap=n_cap,
-            n_min=FactorValue(_coerce_factor_value(self._config.n_min)),
-            n_max=FactorValue(_coerce_factor_value(self._config.n_max)),
-            u_r=u_r,
-            family=str(self._config.schedule_family),
-            computed_at_round=target_round,
-        )
+        sample = self._scheduler.sample(
+            outer_cycle_id, round_in_cycle, target_round
+        ).as_cosine_schedule_sample()
         self._last_sample = sample
         return sample
 
@@ -713,22 +726,11 @@ class CosineScheduleSampler:
         outer_cycle_id = _coerce_int_nonneg(outer_cycle_id, "outer_cycle_id")
         target_round = _coerce_int_nonneg(target_round, "target_round")
 
-        n_cap = n_cap_for_round(self._config, round_in_cycle)
-        L = int(self._config.cycle_length)
-        u_r = float(round_in_cycle) / max(L - 1, 1)
-
-        return CosineScheduleSample(
-            schedule_hash=ArtifactHash(str(self._config.config_hash)),
-            outer_cycle_id=outer_cycle_id,
-            round_in_cycle=int(round_in_cycle),
-            cycle_length=int(L),
-            n_cap=n_cap,
-            n_min=FactorValue(_coerce_factor_value(self._config.n_min)),
-            n_max=FactorValue(_coerce_factor_value(self._config.n_max)),
-            u_r=u_r,
-            family=str(self._config.schedule_family),
-            computed_at_round=target_round,
-        )
+        # The delegate caches its own last sample; the legacy sampler's
+        # ``self._last_sample`` is deliberately left untouched here (B1).
+        return self._scheduler.sample(
+            outer_cycle_id, round_in_cycle, target_round
+        ).as_cosine_schedule_sample()
 
     def record_restart_event(self, event: RestartTriggerEvent) -> None:
         """Commit the after-sample embedded in ``event`` to

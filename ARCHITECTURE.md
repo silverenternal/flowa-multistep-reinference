@@ -22,6 +22,47 @@ a follow-up pass.
 
 ---
 
+## Architecture layers (top-down)
+
+- **Outer framework:** `ReInferenceRunner`
+  (`adaptive_reflow/algorithm/runner.py`) orchestrates the multi-round
+  re-inference loop with pluggable algorithms. It owns the loop, not
+  the algorithm: per round it samples the scheduler, asks the policy
+  driver for the applied policy, calls the inner engine, and asks the
+  evaluator for the oracle — emitting a `ReInferenceResult` with round
+  traces, per-round metrics, and `algorithm_signatures` provenance.
+- **Algorithm layer** (`adaptive_reflow/algorithm/`):
+  `SchedulerProtocol`, `MergeOperatorProtocol`, `PolicyDriverProtocol`,
+  `RestartBlenderProtocol`. Each role has 2-4 implementations —
+  `CosineAnnealScheduler` / `ConstantScheduler` / `LinearScheduler` /
+  `ExponentialScheduler`; `BoundedMergeOperator` / `IdentityOperator` /
+  `EMAOperator`; `ScheduleDerivedPolicyDriver` / `ConstantPolicyDriver`
+  / `AdaptivePolicyDriver`; `LinearBlender` / `DistanceDecayBlender`.
+  The first named in each group is the default. Cosine annealing is one
+  option here, not a framework requirement (ADR-0011).
+- **Protocol layer:** `FlowMatchingODEAdapter` (8 methods —
+  `capabilities`, `build_initial_state`, `export_endpoint`,
+  `detach_and_validate_endpoint`, `apply_restart_distribution`,
+  `compose_condition`, `solve_ode`, `observe_endpoint`), `Engine`
+  (`run_round` — one round through the adapter), and `Evaluator`
+  (`evaluate` / `score`, plus the duck-typed `oracle` surface the
+  runner consumes).
+- **Contracts layer:** frozen data classes — `StateBundle`,
+  `EngineRoundResult`, `RoundTrace`, `ScheduleSample`,
+  `CosineScheduleSample`, `FinalRestartPolicy`, `PhaseState`, and the
+  rest of `adaptive_reflow/contracts/`.
+- **Foundation layer:** typing primitives, hash helpers, and
+  validators (`adaptive_reflow/contracts/types.py`,
+  `adaptive_reflow/contracts/hashes.py`,
+  `adaptive_reflow/contracts/validators.py`).
+
+Each layer depends only on the layers below it. The outer framework is
+substitutable (drive `Engine` directly if you want one round); the
+algorithm layer is substitutable (any conforming `Protocol`); the
+protocol layer is what a new domain implements.
+
+---
+
 ## 0. Universal core vs molecular concrete implementation
 
 `adaptive_reflow/` is organised as a **two-layer split** between a

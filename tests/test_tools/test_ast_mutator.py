@@ -210,7 +210,15 @@ def test_sites_are_deterministic() -> None:
 
 
 def test_every_site_yields_compilable_distinct_source() -> None:
-    """No site may produce a no-op or an uncompilable mutant."""
+    """No site may produce a no-op or an uncompilable mutant.
+
+    As of the MergeOperatorProtocol refactor, ``frame/merge.py`` is a
+    thin wrapper around ``algorithm/merge_operator.py``. The bulk of
+    the bounded-merge mutation surface moved to the algorithm layer
+    (see :func:`test_algorithm_merge_operator_has_substantial_surface`).
+    The threshold here is set to match the new wrapper responsibilities
+    (envelope / floor / cap helpers + delegating call site).
+    """
     source = Path("adaptive_reflow/frame/merge.py").read_text(encoding="utf-8")
     applied = 0
     for site in ast_mutator.collect_sites(source):
@@ -219,7 +227,30 @@ def test_every_site_yields_compilable_distinct_source() -> None:
             continue
         compile(mutated, "<mutant>", "exec")
         applied += 1
-    assert applied > 100, f"expected a substantial mutation surface, got {applied}"
+    assert applied > 50, f"expected a substantial mutation surface, got {applied}"
+
+
+def test_algorithm_merge_operator_has_substantial_surface() -> None:
+    """The algorithm-layer operator module owns the bulk of the merge
+    mutation surface after the MergeOperatorProtocol refactor. The
+    operator's merge logic, validation, and audit emission must
+    produce a substantial mutation surface — this is the canonical
+    location for bounded-merge mutation testing.
+    """
+    source = Path(
+        "adaptive_reflow/algorithm/merge_operator.py"
+    ).read_text(encoding="utf-8")
+    applied = 0
+    for site in ast_mutator.collect_sites(source):
+        mutated = ast_mutator.apply_site(source, site)
+        if mutated is None:
+            continue
+        compile(mutated, "<mutant>", "exec")
+        applied += 1
+    assert applied > 80, (
+        f"expected a substantial mutation surface in the algorithm "
+        f"merge_operator module, got {applied}"
+    )
 
 
 # ---------------------------------------------------------------------------

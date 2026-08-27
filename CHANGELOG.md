@@ -7,6 +7,66 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Algorithm abstractions
+
+### Added
+
+- `adaptive_reflow/algorithm/` package — the algorithm layer is now
+  abstract and optional. Four roles, four `Protocol`s:
+  `SchedulerProtocol` (per-round capacity), `MergeOperatorProtocol`
+  (bounded update operator), `PolicyDriverProtocol` (per-round policy
+  generator), and `RestartBlenderProtocol` (prior + fresh blend).
+- 4 default implementations that preserve existing behaviour:
+  `CosineAnnealScheduler`, `BoundedMergeOperator`,
+  `ScheduleDerivedPolicyDriver`, and `LinearBlender` — reachable via the
+  `default_cosine_scheduler` / `default_bounded_merge_operator` /
+  `default_policy_driver` / `default_blender` factories.
+- 6 alternative implementations: `ConstantScheduler`, `LinearScheduler`,
+  and `ExponentialScheduler` (schedulers); `IdentityOperator` and
+  `EMAOperator` (merge operators); `ConstantPolicyDriver` and
+  `AdaptivePolicyDriver` (policy drivers); `DistanceDecayBlender`
+  (blender).
+- `SCHEDULER_REGISTRY` + `build_scheduler(family, **kwargs)` — select a
+  schedule family by string (config file, CLI flag, ablation sweep).
+- `ReInferenceRunner` outer framework in
+  `adaptive_reflow/algorithm/runner.py`. It orchestrates the scheduler,
+  policy driver, merge operator, blender, and evaluator across N rounds
+  around the inner `Engine`, and emits a `ReInferenceResult` carrying
+  the per-round `RoundTrace` tuple, the endpoints array,
+  `per_round_metrics`, and `algorithm_signatures` (the
+  `{component: config_hash}` provenance map).
+- `tests/test_algorithm/` — per-role conformance, determinism, and
+  equivalence-to-legacy regression coverage for all ten
+  implementations plus the runner.
+- ADR-0011 (`docs/adr/0011-algorithm-abstractions.md`) — documents the
+  architecture decision: cosine annealing is now *one option*, not the
+  framework.
+
+### Changed
+
+- `tools/run_ablation.py` now drives the grid through
+  `ReInferenceRunner` instead of hand-building policies against
+  `Engine`, and adds a new mixed-configuration row —
+  `multi_round_cosine_constant_driver` (cosine scheduler paired with
+  `ConstantPolicyDriver`) — that was impossible to express in the old
+  code, where the schedule and the policy were the same decision.
+
+### Compatibility
+
+- Backwards compatibility is total: `CosineScheduleSampler`,
+  `n_cap_for_round`, `bounded_merge`, and `bounded_merge_with_schedule`
+  remain importable from their existing modules with unchanged
+  behaviour, and the ADR-0010 engine-level `beta` override still fires
+  for callers who drive `Engine.run_round` directly.
+
+### Deprecated
+
+- `CosineScheduleSampler` now delegates to `CosineAnnealScheduler` and
+  emits a `DeprecationWarning` pointing at the algorithm-layer
+  replacement (`adaptive_reflow.algorithm.CosineAnnealScheduler`, or
+  `default_cosine_scheduler()` behind `SchedulerProtocol`). Its
+  computed values are unchanged.
+
 ## [Unreleased] - Cosine-driven memory fraction + ablation
 
 ### Added

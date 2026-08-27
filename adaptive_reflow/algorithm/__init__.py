@@ -1,0 +1,109 @@
+"""Adaptive reflow — abstract algorithm layer.
+
+The framework depends on :class:`SchedulerProtocol`,
+:class:`MergeOperatorProtocol`, and :class:`PolicyDriverProtocol`,
+not on any single schedule family, merge authority, or per-round
+restart philosophy. :class:`CosineAnnealScheduler`,
+:class:`BoundedMergeOperator`, and :class:`ScheduleDerivedPolicyDriver`
+are the default implementations; linear ramp, exponential decay, and
+constant schedules can be substituted by conforming to the same
+Protocol; constant-``beta`` and adaptive ``beta`` drivers can be
+substituted via :class:`PolicyDriverProtocol`.
+"""
+from .blender import (
+    DEFAULT_DISTANCE_DECAY_CONFIG_HASH,
+    DEFAULT_DISTANCE_DECAY_TEMPERATURE,
+    DEFAULT_LINEAR_CONFIG_HASH,
+    DISTANCE_DECAY_FAMILY,
+    LINEAR_FAMILY,
+    DistanceDecayBlender,
+    LinearBlender,
+    RestartBlenderProtocol,
+    default_blender,
+)
+from .merge_operator import (
+    ERR_PREV_REQUIRED,
+    MERGE_DEGENERATE_INTERVAL,
+    MERGE_FLOOR_FALLBACK,
+    MERGE_PREV_ANCHORED_TO_LAST_EMITTED,
+    BoundedMergeOperator,
+    EMAOperator,
+    IdentityOperator,
+    MergeAuthorityError,
+    MergeOperatorProtocol,
+    default_bounded_merge_operator,
+)
+from .policy_driver import (
+    ADAPTIVE_FAMILY,
+    CONSTANT_FAMILY,
+    DEFAULT_ADAPTIVE_TARGET_ESTIMATE,
+    DEFAULT_CONSTANT_BETA,
+    SCHEDULE_DERIVED_FAMILY,
+    AdaptivePolicyDriver,
+    ConstantPolicyDriver,
+    PolicyDriverProtocol,
+    ScheduleDerivedPolicyDriver,
+    default_policy_driver,
+)
+from .runner import (
+    ReInferenceConfig,
+    ReInferenceResult,
+    ReInferenceRunner,
+)
+from .scheduler import (
+    SCHEDULER_REGISTRY,
+    ConstantScheduler,
+    CosineAnnealScheduler,
+    ExponentialScheduler,
+    LinearScheduler,
+    SchedulerProtocol,
+    ScheduleSample,
+    ScheduleSampleProtocol,
+    build_scheduler,
+    default_cosine_scheduler,
+)
+
+__all__ = [
+    "ADAPTIVE_FAMILY",
+    "AdaptivePolicyDriver",
+    "BoundedMergeOperator",
+    "CONSTANT_FAMILY",
+    "ConstantPolicyDriver",
+    "ConstantScheduler",
+    "CosineAnnealScheduler",
+    "DEFAULT_ADAPTIVE_TARGET_ESTIMATE",
+    "DEFAULT_CONSTANT_BETA",
+    "DEFAULT_DISTANCE_DECAY_CONFIG_HASH",
+    "DEFAULT_DISTANCE_DECAY_TEMPERATURE",
+    "DEFAULT_LINEAR_CONFIG_HASH",
+    "DISTANCE_DECAY_FAMILY",
+    "DistanceDecayBlender",
+    "EMAOperator",
+    "ERR_PREV_REQUIRED",
+    "ExponentialScheduler",
+    "IdentityOperator",
+    "LINEAR_FAMILY",
+    "LinearBlender",
+    "LinearScheduler",
+    "MERGE_DEGENERATE_INTERVAL",
+    "MERGE_FLOOR_FALLBACK",
+    "MERGE_PREV_ANCHORED_TO_LAST_EMITTED",
+    "MergeAuthorityError",
+    "MergeOperatorProtocol",
+    "PolicyDriverProtocol",
+    "RestartBlenderProtocol",
+    "ReInferenceConfig",
+    "ReInferenceResult",
+    "ReInferenceRunner",
+    "SCHEDULER_REGISTRY",
+    "SCHEDULE_DERIVED_FAMILY",
+    "ScheduleDerivedPolicyDriver",
+    "ScheduleSample",
+    "ScheduleSampleProtocol",
+    "SchedulerProtocol",
+    "build_scheduler",
+    "default_blender",
+    "default_bounded_merge_operator",
+    "default_cosine_scheduler",
+    "default_policy_driver",
+]
