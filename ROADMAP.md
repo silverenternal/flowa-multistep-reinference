@@ -81,6 +81,24 @@ They are reviewed at every release tag and updated when an item closes.
       by `+0.250` vs the constant-`beta=0.5` baseline; on `two_moons`
       the constant-beta baseline tied cosine on coverage and was
       slightly tighter on W2.
+- [x] Paper-grounded framework alignment — closed 2026-08-28.
+      Four paper quantities (`A_g`, `B_g`, `C_g`, `e_rho`) from
+      Li (2024) Theorem 1 are formalized as framework contracts in
+      `adaptive_reflow/contracts/paper_quantities.py`, with
+      dedicated tests in
+      `tests/test_contracts/test_paper_quantities.py`. The
+      `PosteriorSelectionEvaluator` is renamed to
+      `EvidenceScaleGapMetric` (the legacy name remains as a
+      deprecated alias); the audit reason literal moves from
+      `posterior_selection_evaluator:sheet_vs_cell_ratio` to
+      `evidence_scale_gap:sheet_vs_cells_O_eps_1_vs_O_eps_2`.
+      `docs/audit/EPSILON_DIRECTION.md` records the framework's
+      round-direction vs the paper's `eps -> 0` asymptotic and the
+      `CodimensionSheetScheduler` alignment flip. ADR-0013 and
+      `docs/INSIGHTS.md` were restructured with explicit "what the
+      paper does NOT claim" sections and the `selection_ratio` is
+      reframed as a framework-internal heuristic, not a paper
+      quantity.
 
 ## Next (2026-Q4 — October through December)
 

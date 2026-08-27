@@ -7,6 +7,64 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Paper-grounded alignment fixes
+
+### Changed
+
+- Renamed `PosteriorSelectionEvaluator` to `EvidenceScaleGapMetric`
+  in `adaptive_reflow/eval/posterior_selection_evaluator.py`. The
+  metric is now explicitly framed as a **framework-internal
+  diagnostic**, not a paper claim. The legacy
+  `PosteriorSelectionEvaluator` name is preserved as a
+  `DeprecationWarning`-emitting alias (PEP 562 module-level
+  `__getattr__` shim) for backward compatibility; the file path is
+  unchanged so existing imports keep working.
+- Renamed audit-reason literal from
+  `posterior_selection_evaluator:sheet_vs_cell_ratio` to
+  `evidence_scale_gap:sheet_vs_cells_O_eps_1_vs_O_eps_2` to make
+  clear that the metric is a heuristic proxy for the paper's
+  evidence *scale gap* (sheet `Theta(eps^{+1})` vs cells
+  `O(eps^{+2})`), not a paper quantity.
+- Extracted the four paper quantities from Li (2024) Theorem 1 as
+  framework contracts in
+  `adaptive_reflow/contracts/paper_quantities.py`:
+  `sheet_evidence_A` (`A_g`), `root_cell_packing_B` (`B_g`),
+  `per_cell_coefficient_C` (`C_g`), and `exterior_gap_e_rho`
+  (`e_rho`). These are the **actual** invariants the paper proves;
+  the framework's heuristic `selection_ratio` is NOT a paper
+  quantity.
+- Audited the framework's epsilon-direction (`n_cap` ramp) against
+  the paper's `eps -> 0` limit in
+  `docs/audit/EPSILON_DIRECTION.md`. Verdict: directionally aligned
+  but dimensionally orthogonal — `n_cap` is a convex mixing weight
+  on a state vector, not an evidence scale. The audit also flagged
+  that `CodimensionSheetScheduler._paper_evidence_balance`
+  historically inverted the paper's `eps` exponents; the corrected
+  closed form (positive powers, matching Lemmas 2 + 3 + Corollary
+  1) is documented in ADR-0013.
+- Restructured `docs/adr/0013-posterior-selection-drives-algorithm.md`
+  with a new §"What the paper does NOT claim" section that records
+  the negative-space statement (no "selection ratio converges to 1"
+  claim; no "framework heuristic is a paper quantity" claim; the
+  paper DOES claim BL-convergence, `O(eps)` isolated mass,
+  `Z_{g,eps} >= C_1 * eps`, and `A_g > 0`).
+- Restructured `docs/INSIGHTS.md` with a new §"What this insight
+  does NOT claim" section mirroring the ADR's disclaimer, and
+  reframed every "paper predicts ratio -> 1" sentence to the
+  framework's heuristic "selection_ratio measures sheet-vs-cell
+  evidence scale gap (sheet `O(eps^1)`, cells `O(eps^2)`)".
+
+### Compatibility
+
+- Backward-compatible. The `PosteriorSelectionEvaluator` legacy
+  alias emits a `DeprecationWarning` on access via PEP 562; existing
+  imports continue to work. The audit-reason literal change is the
+  only observable behaviour change at the `ChannelTransferEvidence`
+  row level (the literal value is asserted in
+  `tests/test_eval/test_posterior_selection_evaluator.py` as a
+  regression guard). All four paper-quantity contracts are new
+  additions; no existing code is removed.
+
 ## [Unreleased] - Code review fixes (non-paper claims)
 
 ### Fixed

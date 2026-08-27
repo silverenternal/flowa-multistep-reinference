@@ -121,6 +121,7 @@ strict: true
 # disk by the doc-claim linter, not by mkdocs).
 not_in_nav: |
   ABLATION.md
+  ABLATION_METRIC_PROBE.md
   ADAPTER_INTERFACE_SPEC.md
   DEPRECATION.md
   PERFORMANCE_BUDGETS.md

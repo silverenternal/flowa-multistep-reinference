@@ -46,8 +46,8 @@ not Karras EDM `sigma(t)` or a step decay? The honest answer today is
 "cosine is the schedule that ships, and the ablation grid has cosine
 on one axis." The paper gives a stronger answer: cosine annealing is
 a specific implementation of paper Theorem 1's posterior selection
-mechanism, with the sheet-vs-cell evidence ratio being exactly what
-the cosine's `n_cap` ramp controls per round.
+mechanism on a mixed-codimension fibre, with the monotonic decrease
+in fresh-noise capacity mirroring the paper's `sigma -> 0` limit.
 
 This ADR records that mapping as a load-bearing decision: the
 algorithm layer's choices are not arbitrary; they are the canonical
@@ -70,14 +70,14 @@ schedule that ships*.
   directions. Any scheduler that aims to inherit the proof's
   guarantees must respect codimension differences, not impose an
   ad-hoc ordering on the cells.
-* **Audit trail should make the prediction checkable.** The paper
-  predicts that the posterior concentrates on the sheet as
-  `sigma -> 0`. The framework already records `n_cap`, `beta`,
-  `memory_fraction` per round (ADR-0010, ADR-0011). It does not yet
-  record the sheet-vs-cell evidence ratio (sheet_evidence,
-  cell_evidence, selection_ratio) that the paper's Proposition 3
-  predicts should converge to 1. Adding those metrics makes the
-  prediction empirically testable from a run's `RoundTrace.extras`.
+* **Audit trail should record paper quantities, not proxies.** The
+  paper proves bounded-Lipschitz convergence `mu_{g,eps} --BL--> nu_g`
+  with the explicit constants `A_g`, `B_g`, `C_g`, `e_rho` and
+  Corollary 1's `Z_{g,eps} >= C_1 * eps` lower bound. The framework
+  records `n_cap`, `beta`, `memory_fraction` per round (ADR-0010,
+  ADR-0011) but not the four paper quantities; extracting them as
+  framework contracts is the right way to make the proof checkable
+  from a run's audit trail.
 * **Backwards compatibility.** Every existing class,
   `config_hash`, and audit invariant must keep working unchanged.
   The mapping is a *naming* decision, not an *implementation*
@@ -236,10 +236,14 @@ proposed in this ADR is:
   paper Proposition 3 ratio. Expected to converge to 1.
 
 These three keys are emitted by a future evaluator class
-(PosteriorSelectionEvaluator, registered as a runner-level
-evaluator in `adaptive_reflow/algorithm/runner.py`); Phase 1 of this
-ADR documents them as the canonical per-round metric names, with
-the actual emission deferred until the evaluator class lands.
+(`EvidenceScaleGapMetric`, formerly `PosteriorSelectionEvaluator`,
+registered as a runner-level evaluator in
+`adaptive_reflow/algorithm/runner.py`); Phase 1 of this ADR
+documents them as the canonical per-round metric names, with the
+actual emission deferred until the evaluator class lands. The
+metric is a **framework-internal heuristic** (see
+§"Framework-internal heuristic: the `selection_ratio` metric"
+below) and is NOT a paper quantity.
 
 ### Physical complement suppression -> bounded noise floor
 
@@ -260,19 +264,60 @@ the merge layer: the prev-anchored envelope (`MERGE_FLOOR_FALLBACK`,
 scheduled envelope, so a single bad round cannot push the next
 round's prior outside the bounded floor.
 
-### Posterior normalization -> selection_ratio convergence
+### Posterior normalization -> selection_ratio convergence (framework-internal heuristic)
+
+> **Framework-internal heuristic.** This subsection describes a
+> framework-internal monitoring signal. It is NOT a paper claim and
+> is NOT a paper quantity. See the dedicated
+> §"Framework-internal heuristic: the `selection_ratio` metric"
+> below for the full disclaimer, and §"What the paper does NOT
+> claim" at the end of this ADR for the negative-space statement.
 
 Paper Proposition 3 says the sheet / total evidence ratio
-converges to 1 as `sigma -> 0`. The framework's per-round metric
-`selection_ratio` (emitted in `per_round_metrics[r]` by
-`PosteriorSelectionEvaluator`) is the empirical estimator of that
-ratio **for the future endpoint-conditioned metric**; the
-shipped replay-based metric is documented in §"Selection metric
-status" below as a *difficulty constant*, not as a convergence
-curve. Phase 1 of this ADR records the *metric name*; the
-*convergence-to-1* prediction applies to the
+converges to 1 as `eps -> 0` for an *endpoint-conditioned* metric
+that scores the round's own bundle. The framework's per-round
+metric `selection_ratio` (emitted in `per_round_metrics[r]` by
+`EvidenceScaleGapMetric`, formerly `PosteriorSelectionEvaluator`)
+is the empirical estimator of that ratio **for the future
+endpoint-conditioned metric**; the shipped replay-based metric is
+documented in §"Selection metric status" below as a *difficulty
+constant*, not as a convergence curve. Phase 1 of this ADR records
+the *metric name*; the *convergence-to-1* prediction applies to the
 endpoint-conditioned variant, which is deferred behind the open
 decision recorded below.
+
+### Framework-internal heuristic: the `selection_ratio` metric
+
+The framework exposes a metric
+`selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)`
+emitted by `EvidenceScaleGapMetric` (formerly
+`PosteriorSelectionEvaluator`,
+`adaptive_reflow/eval/posterior_selection_evaluator.py`). This is
+**NOT a paper quantity and NOT claimed by the paper**. The paper
+proves BL-convergence of the ambient posterior `mu_{g,eps}` to
+`nu_g`; it does not single out a ratio of two evidence components
+and claim it converges to 1. The metric is a heuristic proxy for
+monitoring whether the framework's behaviour is consistent with the
+paper's evidence ordering (sheet `Theta(eps^{+1})` vs cells
+`O(eps^{+2})`); it is schedule-independent by construction at the
+adapter's fixed noise scale and plateaus rather than converging to
+1. The empirical plateau values are pinned by regression tests in
+`tests/test_eval/test_posterior_selection_evaluator.py`:
+
+* `two_moons`: heuristic `selection_ratio` plateaus near 0.82
+  (sheet dominates by a wide margin in the framework's
+  closed-form Gaussian estimate).
+* `eight_gaussians`: heuristic `selection_ratio` plateaus near 0.55
+  (seven cell-root centres dominate the closed-form sum).
+
+These are *framework-side observations*, not paper claims. The
+metric was renamed from `PosteriorSelectionEvaluator` to
+`EvidenceScaleGapMetric` in this work stream specifically to make
+its framework-internal nature explicit. The legacy name is kept as
+a deprecated alias that emits a `DeprecationWarning` on import;
+the audit reason literal on every emitted evidence row is
+`evidence_scale_gap:sheet_vs_cells_O_eps_1_vs_O_eps_2` (was
+`posterior_selection_evaluator:sheet_vs_cell_ratio`).
 
 ## Worked example — 2-moons and 8-gaussians toy data
 
@@ -336,14 +381,15 @@ to `cell_evidence`) is an audit-detectable anomaly.
 
 1. **Document the mapping; defer the implementation of the proposed
    identifiers (CodimensionSheetScheduler,
-   PosteriorSelectionEvaluator, sheet_evidence, cell_evidence,
+   EvidenceScaleGapMetric, sheet_evidence, cell_evidence,
    selection_ratio) to a follow-up ADR.** This ADR records the
    paper-to-framework correspondence as the canonical
    interpretation, lists the metric names that should appear in
    `RoundTrace.extras` going forward, and requires a future ADR to
-   land the actual PosteriorSelectionEvaluator class.
+   land the actual `EvidenceScaleGapMetric` class (formerly
+   `PosteriorSelectionEvaluator`).
 2. **Implement CodimensionSheetScheduler and
-   PosteriorSelectionEvaluator in this ADR.** Rejected: this ADR is
+   `EvidenceScaleGapMetric` in this ADR.** Rejected: this ADR is
    a *theoretical grounding* decision, not an implementation
    decision. Adding the classes now would conflate the mapping with
    a feature change; the audit trail cannot distinguish "the
@@ -372,10 +418,11 @@ implementation of the proposed identifiers to a follow-up ADR.**
    scheduler.
 2. **`RoundTrace.extras` gains three documented keys** —
    `sheet_evidence`, `cell_evidence`, `selection_ratio`. The keys
-   are documented as the canonical per-round metrics for paper
-   Theorem 1 verification; their actual emission is gated on the
-   arrival of a PosteriorSelectionEvaluator runner-level
-   evaluator.
+   are documented as the canonical per-round metrics for the
+   framework-internal `EvidenceScaleGapMetric` (formerly
+   `PosteriorSelectionEvaluator`) heuristic; their emission is
+   gated on the runner-level evaluator being configured. They are
+   **NOT** paper quantities.
 3. **Future scheduler proposals** must reconcile with paper's
    three-estimate structure (sheet tube, root cells, complement
    suppression). A scheduler that does not produce a per-round
@@ -443,13 +490,15 @@ The decision is enforced by:
   per-round audit trail that will carry the paper metrics).
 * `adaptive_reflow/algorithm/runner.py` — `ReInferenceRunner` and
   `_EvaluatorProtocol` (the future home of
-  PosteriorSelectionEvaluator).
+  `EvidenceScaleGapMetric`).
 
 A follow-up ADR will land:
 
-* PosteriorSelectionEvaluator — a runner-level evaluator that
-  emits `sheet_evidence`, `cell_evidence`, `selection_ratio` into
-  `RoundTrace.extras`.
+* `EvidenceScaleGapMetric` — a runner-level evaluator that emits
+  the framework-internal heuristic `sheet_evidence`,
+  `cell_evidence`, `selection_ratio` into `RoundTrace.extras`,
+  explicitly framed as a heuristic proxy and NOT a paper
+  quantity.
 * CodimensionSheetScheduler — a scheduler whose `sample(...)`
   annotates `ScheduleSample` with the per-round evidence ratio,
   aliasing `CosineAnnealScheduler`'s output.
@@ -470,19 +519,28 @@ of them changed an existing behaviour:
   sheet-vs-cell balance of paper Lemma 2 + Lemma 3 as a closed form;
   `CosineAnnealScheduler` remains the default and the canonical
   implementation of Lemma 2's sheet-tube scaling.
-* `PosteriorSelectionEvaluator` —
+* `EvidenceScaleGapMetric` (formerly `PosteriorSelectionEvaluator`) —
   `adaptive_reflow/eval/posterior_selection_evaluator.py`. Emits
-  `sheet_evidence`, `cell_evidence`, and `selection_ratio`.
+  the framework-internal heuristic `sheet_evidence`,
+  `cell_evidence`, and `selection_ratio` (NOT a paper quantity).
+  The legacy `PosteriorSelectionEvaluator` name is kept as a
+  deprecated alias that emits a `DeprecationWarning` on import.
 * `ReInferenceConfig.selection_evaluator` —
   `adaptive_reflow/algorithm/runner.py`. Optional; when set the runner
   records `per_round_metrics[r]["selection_ratio"]` per round. The
   `RoundTrace.extras` emission described above is still deferred: the
   metrics currently surface through `ReInferenceResult`, not through
-  the engine's per-round extras dict.
+  the engine's per-round extras dict. The recorded value is a
+  framework heuristic, NOT a paper claim.
 * Regression coverage —
-  `tests/test_eval/test_posterior_selection_evaluator.py` (2-moons vs
-  8-gaussians ordering) and `tests/test_tools/test_run_ablation.py`
-  (the 18-row grid).
+  `tests/test_eval/test_posterior_selection_evaluator.py`
+  (conceptually grouped under `TestEvidenceScaleGapMetric`;
+  2-moons vs 8-gaussians ordering;
+  `test_metric_classification_does_not_claim_paper_theorem` pins
+  the explicit "NOT a paper claim" disclaimer in the class
+  docstring; `test_legacy_alias_emits_deprecation_warning` pins
+  the deprecation behaviour of the legacy name) and
+  `tests/test_tools/test_run_ablation.py` (the 18-row grid).
 
 The empirical result is recorded in `docs/ABLATION.md`: the measured
 ratio is sheet-dominant but plateaus rather than converging to 1,
@@ -498,8 +556,9 @@ A code-review pass (B5) investigated the claim that the shipped
 expectation that this would paper-validate Proposition 3. The
 investigation, recorded in `docs/review/B5-VERIFICATION.md`, found:
 
-* **The shipped metric is inert to loop state.** `PosteriorSelectionEvaluator.oracle()`
-  ignores its `bundle` parameter; the arithmetic is delegated to
+* **The shipped metric is inert to loop state.** `EvidenceScaleGapMetric.oracle()`
+  (formerly `PosteriorSelectionEvaluator.oracle()`) ignores its
+  `bundle` parameter; the arithmetic is delegated to
   `_compute_metrics(seed=...)`, which re-samples from the
   evaluator's *private* adapter instance against a fixed
   unconditional prior. The result is invariant to `beta`, `n_cap`,
@@ -516,16 +575,18 @@ investigation, recorded in `docs/review/B5-VERIFICATION.md`, found:
   fibre concentrates on the sheet); the shipped metric measures a
   static property of the `(adapter weights, target)` pair, which is
   why both ablation rows report identical selection ratios to four
-  decimal places.
+  decimal places. The shipped metric is a framework-internal
+  heuristic, NOT a paper claim.
 
 **Implication for this ADR.** Lines 139 and 269 of the prior version
 predicted "convergence to 1" and "exceeds 0.95 by round 19" of the
 shipped metric. Those predictions are demoted: they apply to a
 *future* endpoint-conditioned metric, not to the
-replay-based metric that `PosteriorSelectionEvaluator.oracle()` ships
+replay-based metric that `EvidenceScaleGapMetric.oracle()` ships
 today. The shipped metric's empirical reading is the
 schedule-independent difficulty constant already documented in
-`docs/ABLATION.md`.
+`docs/ABLATION.md`. The metric is a framework-internal heuristic,
+NOT a paper quantity.
 
 **Open decision (deferred pending human review).** Closing the gap
 between the shipped metric and paper Proposition 3 requires scoring
@@ -578,4 +639,106 @@ behaviour are revised to match what it actually measures.
   codimension-driven selection theorem), Lemma 2 (sheet tube
   scaling), Lemma 3 (root cell contribution bound), Lemma 4
   (physical complement suppression), Proposition 3 (posterior
-  normalization).
+  normalization), Corollary 1 (quantitative allocation after
+  normalization with the constants `A_g`, `B_g`, `C_g`, `e_rho`).
+
+## What the paper does NOT claim
+
+The framework has historically over-claimed certain things as
+"paper Theorem 1 predictions" that are not in the paper. This
+section records the negative space explicitly so a reviewer does
+not have to reconstruct it from the proof.
+
+The paper does NOT claim:
+
+* **The paper does NOT claim that any "selection ratio" converges
+  to 1.** Proposition 3 + Corollary 1 prove BL-convergence of the
+  full ambient posterior `mu_{g,eps}` to `nu_g` and the
+  `O(eps)` / `O(eps^2)` / `exp(-e_rho / (2 eps^2))` tail bounds.
+  They do not single out a ratio of two evidence components and
+  claim it converges to 1. The framework's heuristic
+  `selection_ratio = sheet_evidence / (sheet_evidence +
+  cell_evidence)` (emitted by `EvidenceScaleGapMetric`) is a
+  framework-internal diagnostic, NOT a paper quantity.
+* **The paper does NOT claim that the framework's
+  `EvidenceScaleGapMetric` (formerly `PosteriorSelectionEvaluator`)
+  is a paper quantity.** The metric emits a heuristic
+  `selection_ratio` based on closed-form Gaussian densities; the
+  paper proves no such ratio. The metric is a framework-internal
+  diagnostic for monitoring whether the framework's behaviour is
+  consistent with the paper's evidence ordering (sheet
+  `Theta(eps^{+1})` vs cells `O(eps^{+2})`). It is NOT claimed
+  to converge to 1; it plateaus at a fixed-noise replay.
+* **The paper does NOT claim that the framework's
+  `CodimensionSheetScheduler._paper_evidence_balance` helper
+  implements the proof's exponent structure as originally
+  written.** The audit at `docs/audit/EPSILON_DIRECTION.md` §4.2
+  documents that the prototype helper inverted the exponents
+  (claiming `sheet = eps^{-1}` and `cell = eps^{-2}`); the
+  paper's Lemma 2 + Lemma 3 + Corollary 1 establish *positive*
+  powers (`sheet = Theta(eps^{+1})`, `cell = O(eps^{+2})`). The
+  corrected helper uses positive powers; the historical
+  inversion is recorded only so a future reader does not
+  re-introduce it.
+* **The paper does NOT claim that any framework-specific
+  schedule implements Theorem 1's evidence competition at the
+  magnitude level.** The framework's `n_cap` ramp is a convex
+  mixing weight on a state vector; it is *directionally* aligned
+  with the paper's `eps -> 0` limit (round progression mirrors
+  the noise-shrink direction) but it does not produce the
+  `Theta(eps^{+1})` / `O(eps^{+2})` evidence competition the
+  paper proves. The framework's `eps_implicit` parameter is a
+  tunable hyperparameter, not the paper's `eps`.
+
+The paper DOES claim:
+
+* **Bounded-Lipschitz convergence.** `mu_{g,eps} --BL--> nu_g`
+  as `eps -> 0` (Theorem 1, line 88-91 of the paper). The
+  limiting measure is supported on the codimension-1 sheet with
+  local density `q_g(x) / Q_g = exp(-x^2 / 2) / (sqrt(1 + g(x)^2)
+  * Q_g)`.
+* **Posterior mass on isolated cells is `O(eps)`.**
+  `mu_{g,eps}(union_z I_z) <= C_2 * eps` for sufficiently small
+  `eps` (Corollary 1, line 165-168). This is the *normalised*
+  mass statement, derived from the *unnormalised* Lemma 3 bound
+  `int_{I_z} p_eps <= C_g e^{-z^2/4} eps^2` divided by Corollary
+  1's `C_1 * eps` lower bound.
+* **Normalisation lower bound.** `Z_{g,eps} >= C_1 * eps` for
+  sufficiently small `eps` (Corollary 1, line 165). The constant
+  `C_1` is derived from the positive limit
+  `A_g = (2*pi)^{-1/2} int_R exp(-s^2/2) / sqrt(1 + g(s)^2) ds`
+  (Proposition 3 / line 161).
+* **Positive limit `A_g > 0`.** `eps^{-1} Z_{g,eps} -> A_g > 0`
+  (Proposition 3, line 116-117 + line 161). The positivity is
+  what makes `Z_{g,eps} >= C_1 * eps` hold for small `eps`.
+* **Sheet-tube limit.** `eps^{-1} int_T phi p_eps -> (2*pi)^{-1/2}
+  int_R phi(s, 0) exp(-s^2/2) / sqrt(1 + g(s)^2) ds` for every
+  bounded continuous `phi` (Lemma 2, line 101-103).
+* **Per-cell bound.** `int_{I_z} p_eps <= C_g e^{-z^2/4} eps^2`
+  for every `z in Z_g` (Lemma 3, line 107); the coefficient
+  `C_g = e^{rho^2/2} / a` is literal and explicit (Lemma 3 proof,
+  line 191).
+* **Gaussian packing.** `B_g = sum_{z in Z_g} e^{-z^2/4} <
+  infinity` (Lemma 5 / line 159). The summability is derived,
+  not assumed.
+* **Physical exterior gap.** `int_{T^c \setminus union_z I_z}
+  p_eps <= exp(-e_rho / (2 eps^2))` with `e_rho = min{rho^4,
+  (1 - rho)^2 eta^2}` (Lemma 4 / Lemma 5, line 110-112 + line
+  128). The exponential bound is the `o(eps)` tail that
+  Corollary 1 divides by the `C_1 * eps` lower bound to obtain
+  the physical complement's `C_3 * eps^{-1} * exp(-e_rho / (2
+  eps^2))` posterior mass.
+
+These are the **actual paper claims**. Any framework metric,
+invariant, or runtime check that cannot be derived from one of
+these statements is by definition a framework-side addition, not
+a paper claim. The framework's heuristic `selection_ratio` is
+exactly such an addition; it is documented as a heuristic proxy
+for monitoring the framework's qualitative evidence ordering,
+and its convergence to 1 is NOT predicted by the paper and is
+NOT observed empirically (the metric plateaus at a fixed-noise
+replay). See `docs/INSIGHTS.md` for the narrative companion to
+this ADR and `docs/ABLATION.md` for the empirical data, and
+`adaptive_reflow/contracts/paper_quantities.py` for the four
+paper-quantity contracts (`A_g`, `B_g`, `C_g`, `e_rho`) that
+*are* paper invariants.

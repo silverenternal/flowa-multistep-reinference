@@ -549,6 +549,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#7-what-this-insight-does-not-claim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. What this insight does NOT claim
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. What this insight does NOT claim">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-what-the-paper-does-not-claim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 What the paper does NOT claim
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-what-the-paper-does-claim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 What the paper DOES claim
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-what-the-frameworks-heuristic-selection_ratio-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 What the framework's heuristic selection_ratio IS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -576,7 +626,16 @@ Related: ADR-0013 (<code>docs/adr/0013-posterior-selection-drives-algorithm.md</
 <p>ADR-0013 closes that gap by grounding the layer in Li (2024), <em>Gaussian Posterior Selection on Noncompact Fibres with Uniformly Separated Roots</em>, Theorem 1. The paper proves that a small-noise Gaussian posterior on a residual whose fibre is the union of a codimension-1 sheet <code>y = 0</code> together with isolated codimension-2 root points concentrates on the sheet rather than on the cells, with local sheet density proportional to <code>exp(-x^2 / 2) / sqrt(1 + g(x)^2)</code>. The proof decomposes into three estimates (sheet-tube scaling, root-cell bound, physical-complement suppression) and one normalisation step (Proposition 3). The framework's algorithm abstractions instantiate those four pieces directly: <code>SchedulerProtocol</code> produces the per-round <code>n_cap</code> that drives the sheet-vs-cell evidence balance, <code>PolicyDriverProtocol</code> derives <code>beta = n_cap</code> (ADR-0010's canonical transform), <code>MergeOperatorProtocol</code> enforces the bounded noise floor that prevents escape from the fibre, and <code>RestartBlenderProtocol</code> keeps the prior / fresh blend inside the scheduled envelope.</p>
 <p>The default scheduler, <code>CosineAnnealScheduler</code>, is not an arbitrary "default" any more — it is the canonical implementation of paper Lemma 2's sheet-tube scaling, with the monotonic decrease in fresh-noise capacity mapping exactly to the <code>sigma -&gt; 0</code> limit the paper proves selects the sheet. The new <code>CodimensionSheetScheduler</code> exposes that mapping as a first-class implementation: <code>n_cap(r) = n_min + (n_max - n_min) * ratio(r)</code> where <code>ratio(r) = sheet / (sheet + cell)</code> is the closed-form evidence balance from Lemma 2 + Lemma 3 with <code>sheet = 1 / max(n_cap_base, eps)</code> and <code>cell = (1 - n_cap_base)^2 / eps^2</code>. Both schedulers are derived from the same paper proof; the difference is whether the sheet-vs-cell balance is <em>named</em> (cosine is the canonical closed form; codimension is the explicit Lemma-2-plus-Lemma-3 closed form).</p>
 <p>This transforms the algorithm layer from "exploratory engineering" to "theory-backed design." Future scheduler proposals must now reconcile with paper's three-estimate structure: a scheduler whose per-round <code>n_cap</code> envelope does not respect the codimension difference between sheet and cells is <em>theoretically</em> (not just structurally) incompatible with Theorem 1. The framework gains a clear theoretical bar — sheet vs cells, codimension difference, tail control — alongside the structural bar (per-role conformance, determinism, audit invariants) that ADR-0011 already enforces. The two bars are complementary: ADR-0011 asks "does the algorithm fit the framework?", ADR-0013 asks "does the algorithm fit the paper?". A scheduler that fails either test is rejected; a scheduler that passes both is accepted as paper-grounded.</p>
-<p>The empirical validation lives in <code>PosteriorSelectionEvaluator</code> (<code>adaptive_reflow/eval/posterior_selection_evaluator.py</code>), which measures the per-round <code>selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)</code> by replaying the 2D-FM adapter against the analytic mode-centre set for <code>two_moons</code> and <code>eight_gaussians</code>. The evaluator's <code>oracle()</code> method surfaces the three paper metrics (<code>sheet_evidence</code>, <code>cell_evidence</code>, <code>selection_ratio</code>) alongside the canonical <code>ChannelTransferEvidence</code> diagnostics; <code>ReInferenceConfig.selection_evaluator</code> plumbs the evaluator through the runner, and <code>ReInferenceResult.per_round_metrics[r]["selection_ratio"]</code> records the per-round value. The 18-row ablation in <code>tools/run_ablation.py</code> adds two paper-grounded rows (<code>multi_round_codimension_sheet_posterior_selection</code> and <code>multi_round_cosine_posterior_selection</code>) that measure the ratio directly. The result — recorded in <code>docs/ABLATION.md</code> — is sheet-dominant from round 0 (<code>selection_ratio = 0.806</code> rising to <code>0.819</code> on <code>two_moons</code>), exactly the qualitative claim Theorem 1 makes. The quantitative claim (<code>ratio -&gt; 1</code>) does not yet appear because the replay evaluator scores the adapter at a fixed noise scale; making the ratio schedule-sensitive and converging to 1 is the open follow-up recorded at the end of this document.</p>
+<p>The empirical validation lives in <code>EvidenceScaleGapMetric</code> (formerly <code>PosteriorSelectionEvaluator</code>, <code>adaptive_reflow/eval/posterior_selection_evaluator.py</code>), which measures the framework-internal heuristic <code>selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)</code> by replaying the 2D-FM adapter against the analytic mode-centre set for <code>two_moons</code> and <code>eight_gaussians</code>. The evaluator's <code>oracle()</code> method surfaces the three diagnostic metrics (<code>sheet_evidence</code>, <code>cell_evidence</code>, <code>selection_ratio</code>) alongside the canonical <code>ChannelTransferEvidence</code> diagnostics; <code>ReInferenceConfig.selection_evaluator</code> plumbs the evaluator through the runner, and <code>ReInferenceResult.per_round_metrics[r]["selection_ratio"]</code> records the per-round value. The 18-row ablation in <code>tools/run_ablation.py</code> adds two paper-grounded rows (<code>multi_round_codimension_sheet_posterior_selection</code> and <code>multi_round_cosine_posterior_selection</code>) that measure the ratio directly. The result — recorded in <code>docs/ABLATION.md</code> — is sheet-dominant from round 0 (<code>selection_ratio = 0.806</code> rising to <code>0.819</code> on <code>two_moons</code>), exactly the qualitative claim Theorem 1 makes about the <em>direction</em> of selection. The quantitative claim (<code>ratio -&gt; 1</code>) does not appear because the replay evaluator scores the adapter at a fixed noise scale; the framework's heuristic proxy measures sheet-vs-cell evidence scale gap (sheet <code>O(eps^1)</code>, cells <code>O(eps^2)</code>), and that scale gap at the <em>closed-form</em> level (the adapter's training noise) plateaus rather than approaching 1. Making the ratio schedule-sensitive and converging to 1 is the open follow-up recorded at the end of this document.</p>
+<blockquote>
+<p><strong>Framework-internal heuristic, NOT a paper quantity.</strong> The
+<code>selection_ratio</code> emitted by <code>EvidenceScaleGapMetric</code> is a
+framework-side diagnostic for monitoring whether the framework's
+behaviour is consistent with the paper's evidence ordering. It is
+NOT a paper quantity, and convergence to 1 is NOT a paper claim.
+See §"What this insight does NOT claim" below for the full
+disclaimer.</p>
+</blockquote>
 <hr />
 <h2 id="2-the-paper-to-framework-correspondence">2. The paper-to-framework correspondence<a class="headerlink" href="#2-the-paper-to-framework-correspondence" title="Permanent link">&para;</a></h2>
 <p>The mapping below mirrors ADR-0013's framework-mapping table; the right-hand column adds the empirical handle (which test, which metric, which ablation row) that lets a reviewer verify each paper claim from a run's audit trail.</p>
@@ -592,52 +651,104 @@ Related: ADR-0013 (<code>docs/adr/0013-posterior-selection-drives-algorithm.md</
 <tbody>
 <tr>
 <td>Codimension-driven selection (Theorem 1)</td>
-<td><code>P(X in {y = 0} \| F_g(X) = 0) -&gt; 1</code> as <code>sigma -&gt; 0</code></td>
+<td><code>mu_{g,eps} --BL--&gt; nu_g</code> as <code>eps -&gt; 0</code>; <code>mu_{g,eps}(union_z I_z) = O(eps)</code></td>
 <td>The four <code>Protocol</code>s composed by <code>ReInferenceRunner</code>; the sheet is the primary mode, cells are the secondary modes</td>
-<td><code>PosteriorSelectionEvaluator</code> + <code>multi_round_codimension_sheet_posterior_selection</code> / <code>multi_round_cosine_posterior_selection</code> rows</td>
+<td><code>EvidenceScaleGapMetric</code> (formerly <code>PosteriorSelectionEvaluator</code>) + <code>multi_round_codimension_sheet_posterior_selection</code> / <code>multi_round_cosine_posterior_selection</code> rows</td>
 </tr>
 <tr>
 <td>Lemma 2 — sheet tube scaling</td>
-<td><code>eps^-1</code> per normal direction</td>
-<td><code>CosineAnnealScheduler</code> (ADR-0010's <code>n_cap</code> ramp) — closed-form <code>n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))</code>; also <code>CodimensionSheetScheduler._paper_evidence_balance</code> with <code>sheet = 1 / max(n_cap_base, eps_implicit)</code></td>
-<td><code>CosineAnnealScheduler.sample(...)</code> produces <code>n_cap</code>; per-round <code>selection_ratio</code> (the sheet evidence contribution scales like <code>1 / max(n_cap_base, eps)</code>)</td>
+<td><code>Theta(eps^{+1})</code> per normal direction (one normal direction, codimension 1)</td>
+<td><code>CosineAnnealScheduler</code> (ADR-0010's <code>n_cap</code> ramp) — closed-form <code>n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))</code>; direction-aligned with <code>eps -&gt; 0</code> per <code>docs/audit/EPSILON_DIRECTION.md</code></td>
+<td><code>CosineAnnealScheduler.sample(...)</code> produces <code>n_cap</code>; the per-round sheet-vs-cell evidence <em>scale gap</em> is monitored by the framework heuristic <code>selection_ratio</code> (NOT a paper quantity)</td>
 </tr>
 <tr>
 <td>Lemma 3 — root cell bound</td>
-<td><code>O(eps^2)</code> per cell</td>
-<td><code>CodimensionSheetScheduler._paper_evidence_balance</code> with <code>cell = (1 - n_cap_base)^2 / eps_implicit^2</code>; the <code>cell_evidence</code> sum grows with the number of competing modes</td>
+<td><code>O(eps^{+2})</code> per cell (two normal directions, codimension 2); full isolated family sums to <code>O(eps^2)</code> by Gaussian packing</td>
+<td><code>CodimensionSheetScheduler._paper_evidence_balance</code> (corrected: positive powers, not inverted) with <code>cell = (1 - n_cap_base)^2 * eps_implicit^2</code>; the framework heuristic <code>cell_evidence</code> sum grows with the number of competing modes</td>
 <td><code>tests/test_eval/test_posterior_selection_evaluator.py::test_evaluator_8_gaussians_ratio_lower_than_2_moons</code> (7 cells vs 1 cell)</td>
 </tr>
 <tr>
 <td>Lemma 4 — physical complement suppression</td>
-<td><code>exp(-c / eps^2)</code> for <code>{ y != 0 }</code></td>
-<td><code>SchedulerProtocol.config.n_min &gt; 0</code> (bounded noise floor) + <code>BoundedMergeOperator</code> (ADR-0007) cap, refuses to emit values outside the scheduled envelope</td>
+<td><code>exp(-e_rho / (2 eps^2)) = o(eps)</code> for <code>{ y != 0 }</code>, with <code>e_rho = min{rho^4, (1 - rho)^2 eta^2}</code></td>
+<td><code>SchedulerProtocol.config.n_min &gt; 0</code> (bounded noise floor) + <code>BoundedMergeOperator</code> (ADR-0007) cap, refuses to emit values outside the scheduled envelope; the literal constant <code>e_rho</code> lives in <code>paper_quantities.exterior_gap_e_rho</code></td>
 <td><code>MERGE_FLOOR_FALLBACK</code>, <code>MERGE_DEGENERATE_INTERVAL</code> audit codes; <code>n_min</code> recorded in every <code>ScheduleSample</code></td>
 </tr>
 <tr>
-<td>Proposition 3 — posterior normalisation</td>
-<td><code>sheet_evidence / (sheet_evidence + cell_evidence) -&gt; 1</code></td>
-<td><code>selection_ratio</code> emitted by <code>PosteriorSelectionEvaluator</code> into <code>ReInferenceResult.per_round_metrics[r]</code>; <code>bounded_score</code> in <code>ChannelTransferEvidence</code> is the clipped ratio</td>
-<td><code>selection_ratio</code> column in <code>docs/ABLATION.md</code>'s <code>Selection ratio (paper Theorem 1, ADR-0013)</code> table</td>
+<td>Proposition 3 + Corollary 1 — posterior normalisation</td>
+<td><code>eps^{-1} Z_{g,eps} -&gt; A_g &gt; 0</code>; <code>Z_{g,eps} &gt;= C_1 * eps</code>; <code>mu_{g,eps}(union_z I_z) &lt;= C_2 * eps</code></td>
+<td><code>paper_quantities.sheet_evidence_A</code> (the literal <code>A_g</code> integral) and <code>paper_quantities.root_cell_packing_B</code> (the literal Gaussian packing sum <code>B_g</code>); the framework heuristic <code>selection_ratio</code> is emitted by <code>EvidenceScaleGapMetric</code> into <code>ReInferenceResult.per_round_metrics[r]</code> but is NOT a paper quantity</td>
+<td><code>selection_ratio</code> column in <code>docs/ABLATION.md</code>'s heuristic table (NOT paper-quantity table)</td>
 </tr>
 </tbody>
 </table>
-<p>The correspondence is not an analogy — it is a derivation. Paper Lemma 2's <code>eps^-1</code> scaling is the per-round capacity envelope the cosine ramp produces; paper Lemma 3's <code>O(eps^2)</code> cell bound is the audit invariant that secondary-mode evidence must stay below the sheet evidence by at least a factor of <code>n_cap</code>; paper Lemma 4's exponential suppression is the bounded noise floor that prevents the algorithm from escaping the fibre; paper Proposition 3's selection ratio is the per-round metric the new evaluator emits. A reviewer who wants to argue that any of these mappings is wrong must argue against a specific line of the paper's proof, not against an arbitrary engineering choice.</p>
+<p>The correspondence is not an analogy — it is a derivation at the <em>direction</em> level for Lemma 2 (cosine ramp is <code>eps -&gt; 0</code>-aligned) and a derivation at the <em>exponent</em> level for Lemmas 3 and 4 (the literal <code>C_g</code>, <code>B_g</code>, <code>e_rho</code> constants are extracted as framework contracts in <code>adaptive_reflow/contracts/paper_quantities.py</code>). Paper Lemma 2's <code>Theta(eps^{+1})</code> scaling is the per-round capacity envelope the cosine ramp produces <em>directionally</em>; paper Lemma 3's <code>O(eps^2)</code> cell bound is the audit invariant that secondary-mode evidence must stay below the sheet evidence by at least a factor of <code>n_cap</code>; paper Lemma 4's exponential suppression is the bounded noise floor that prevents the algorithm from escaping the fibre; paper Proposition 3's normalisation is encoded in the literal <code>A_g</code>, <code>B_g</code> constants. A reviewer who wants to argue that any of these mappings is wrong must argue against a specific line of the paper's proof, not against an arbitrary engineering choice.</p>
+<blockquote>
+<p><strong>What the framework does NOT derive from the paper.</strong> The
+<code>selection_ratio = sheet_evidence / (sheet_evidence +
+cell_evidence)</code> emitted by <code>EvidenceScaleGapMetric</code> is a
+framework-internal diagnostic for the sheet-vs-cell evidence
+<em>scale gap</em> (sheet <code>O(eps^1)</code>, cells <code>O(eps^2)</code>). It is NOT a
+paper quantity; the paper proves BL-convergence and tail
+bounds, not a ratio converging to 1. See §"What this insight
+does NOT claim" below.</p>
+</blockquote>
 <hr />
 <h2 id="3-the-ablation-findings">3. The ablation findings<a class="headerlink" href="#3-the-ablation-findings" title="Permanent link">&para;</a></h2>
 <p>The 18-row ablation in <code>tools/run_ablation.py</code> (8 canonical configs x 2 targets, plus 2 paper-grounded rows on <code>two_moons</code>) measures the sheet-vs-cell <code>selection_ratio</code> directly. The empirical finding is <strong>sheet-dominant from round 0</strong> on both targets — exactly the qualitative claim Theorem 1 makes. On <code>two_moons</code> the ratio opens at <code>0.8061</code> and closes at <code>0.8185</code>, sitting inside <code>[0.7926, 0.8185]</code> across all 20 rounds; on <code>eight_gaussians</code> the ratio is materially lower (<code>0.531 -&gt; 0.547</code>, pinned by the regression <code>test_evaluator_8_gaussians_ratio_lower_than_2_moons</code>). The <code>two_moons</code> plateau near <code>0.82</code> reflects one competing cell root (Lemma 3's per-cell sum has a single <code>O(eps^2)</code> term); the <code>eight_gaussians</code> plateau reflects seven competing cell roots (Lemma 3's per-cell sum has seven <code>O(eps^2)</code> terms, dragging the sheet contribution down). This target-sensitivity is exactly the qualitative prediction Lemma 3 makes — more competing modes means harder selection — and it is the strongest empirical evidence that the framework's algorithm layer instantiates the paper's codimension-driven mechanism rather than some unrelated balancing heuristic.</p>
 <p>The quantitative claim (<code>ratio -&gt; 1</code> as <code>sigma -&gt; 0</code>) is <strong>not</strong> observed. Neither row reaches <code>0.95</code> (codimension row: never; cosine row: never). The reason is structural rather than a refutation: <code>PosteriorSelectionEvaluator</code> is a replay-through-adapter estimator, so each round is scored against freshly generated adapter endpoints at the adapter's <em>fixed</em> noise scale. Paper Proposition 3's limit is <code>sigma -&gt; 0</code>; a fixed-<code>sigma</code> estimator can only report the plateau that <code>sigma</code> implies, which is what the flat curve shows. The ratio is also schedule-independent by construction — both rows report <code>delta_selection_ratio = +0.0000</code> — because the evaluator scores the adapter's own posterior geometry, which neither scheduler alters. The schedules separate on W2 and coverage instead: <code>delta_W2 = -0.3000</code> in cosine's favour (cosine wins), <code>delta_coverage = +0.000</code> (tie). The interpretation is that the <code>selection_ratio</code> column is a <em>property of the target + adapter pair</em> (a difficulty measure), not a scoreboard between schedulers; making it schedule-sensitive requires scoring the round's own bundle rather than a fresh replay, which is the open follow-up.</p>
-<p>The cosine-vs-codimension comparison also confirms the paper's prediction that cosine is the "right" schedule: cosine's smoother <code>n_cap</code> ramp gives the better-behaved default (<code>W2 = 0.8140</code> vs codimension's <code>1.1140</code> at 20 rounds), while codimension's Lemma-2-plus-Lemma-3 closed form spends nearly the whole cycle in refinement (the evidence balance <code>1 / max(n_cap_base, eps)</code> vs <code>(1 - n_cap_base)^2 / eps^2</code> collapses <code>n_cap</code> much faster than the cosine ramp once <code>n_cap_base</code> leaves its maximum). Codimension is the theoretically-derived comparison point ADR-0013 asked for; cosine is the better-behaved default. Both implement Lemma 2; cosine is the implementation that Theorem 1's selection rate is <em>optimal under</em>.</p>
+<p>The cosine-vs-codimension comparison also confirms the paper's prediction that cosine is the "right" schedule at the direction level: cosine's smoother <code>n_cap</code> ramp gives the better-behaved default (<code>W2 = 0.8140</code> vs codimension's <code>1.1140</code> at 20 rounds), while codimension's Lemma-2-plus-Lemma-3 closed form spends nearly the whole cycle in refinement. Codimension is the theoretically-derived comparison point ADR-0013 asked for; cosine is the better-behaved default. Both implement Lemma 2 at the <em>direction</em> level; cosine is the implementation whose <code>n_cap</code> ramp is closest to a monotone <code>eps -&gt; 0</code> surrogate.</p>
+<blockquote>
+<p><strong>Note on the evidence balance.</strong> The audit at
+<code>docs/audit/EPSILON_DIRECTION.md</code> §4.2 documents that the
+prototype <code>CodimensionSheetScheduler._paper_evidence_balance</code>
+helper historically inverted the paper's <code>eps</code> exponents
+(claiming <code>sheet = eps^{-1}</code>, <code>cell = eps^{-2}</code> where the paper
+uses <code>eps^{+1}</code>, <code>eps^{+2}</code>). The corrected helper uses positive
+powers and is documented in ADR-0013 §"Sheet tube scaling -&gt;
+CosineAnnealScheduler".</p>
+</blockquote>
 <hr />
 <h2 id="4-the-new-capability">4. The new capability<a class="headerlink" href="#4-the-new-capability" title="Permanent link">&para;</a></h2>
-<p>Before this work the framework was a "general flow matching restart framework" — any schedule that conformed to <code>SchedulerProtocol</code> worked, none was theory-backed, and the audit question "why cosine?" was answered with "cosine is the default." After this work the framework has three load-bearing additions. First, a paper-grounded scheduler (<code>CodimensionSheetScheduler</code>) that exposes paper Lemma 2 + Lemma 3 as a first-class <code>SchedulerProtocol</code> implementation, with the sheet-vs-cell evidence ratio closed-form in <code>_paper_evidence_balance</code> and the profile-residual callable stored for provenance. Second, a paper-validating evaluator (<code>PosteriorSelectionEvaluator</code>) that measures the per-round <code>selection_ratio</code> against the analytic mode-centre set for <code>two_moons</code> and <code>eight_gaussians</code>, emits the three paper metrics (<code>sheet_evidence</code>, <code>cell_evidence</code>, <code>selection_ratio</code>) alongside the canonical <code>ChannelTransferEvidence</code> diagnostics, and plugs into the runner through <code>ReInferenceConfig.selection_evaluator</code>. Third, an ADR (0013) that locks the theory-framework correspondence as load-bearing rather than incidental, codifies the cosine-canonical-implementation claim, and gives future scheduler proposals a clear theoretical bar: must respect paper's Lemma 2-4 (sheet vs cells, codimension difference, tail control).</p>
-<p>The net effect is that the algorithm layer now carries a <em>theoretical</em> provenance in addition to its <em>structural</em> provenance. A reviewer asking "is this scheduler paper-grounded?" can be pointed at <code>config_hash()</code> (the audit invariant) and <code>docs/INSIGHTS.md</code> §2 (the paper-to-framework mapping). A reviewer asking "does this scheduler match the paper's proof?" can run the 18-row ablation, look at the <code>selection_ratio</code> column, and read off the answer. The framework gains a quality bar that lives outside the codebase: any future scheduler that claims to implement Theorem 1 must reproduce the empirical pattern (sheet-dominant ratio, target-sensitive plateau, schedule-independent by construction at fixed <code>sigma</code>).</p>
+<p>Before this work the framework was a "general flow matching restart framework" — any schedule that conformed to <code>SchedulerProtocol</code> worked, none was theory-backed, and the audit question "why cosine?" was answered with "cosine is the default." After this work the framework has three load-bearing additions. First, a paper-grounded scheduler (<code>CodimensionSheetScheduler</code>) that exposes paper Lemma 2 + Lemma 3 as a first-class <code>SchedulerProtocol</code> implementation, with the sheet-vs-cell evidence scale-gap closed-form in <code>_paper_evidence_balance</code> (corrected to use positive <code>eps</code> powers per the audit) and the profile-residual callable stored for provenance. Second, a framework-internal evaluator (<code>EvidenceScaleGapMetric</code>, formerly <code>PosteriorSelectionEvaluator</code>) that measures the per-round heuristic <code>selection_ratio</code> against the analytic mode-centre set for <code>two_moons</code> and <code>eight_gaussians</code>, emits the three diagnostic metrics (<code>sheet_evidence</code>, <code>cell_evidence</code>, <code>selection_ratio</code>) alongside the canonical <code>ChannelTransferEvidence</code> diagnostics, and plugs into the runner through <code>ReInferenceConfig.selection_evaluator</code>. <strong>The metric is a framework-internal diagnostic, NOT a paper claim.</strong> Third, an ADR (0013) that locks the theory-framework correspondence as load-bearing rather than incidental, codifies the cosine-canonical-implementation claim at the <em>direction</em> level, and gives future scheduler proposals a clear theoretical bar: must respect paper's Lemma 2-4 (sheet vs cells, codimension difference, tail control).</p>
+<p>The net effect is that the algorithm layer now carries a <em>theoretical</em> provenance in addition to its <em>structural</em> provenance. A reviewer asking "is this scheduler paper-grounded?" can be pointed at <code>config_hash()</code> (the audit invariant) and <code>docs/INSIGHTS.md</code> §2 (the paper-to-framework mapping). A reviewer asking "does this scheduler match the paper's proof?" can run the 18-row ablation, look at the heuristic <code>selection_ratio</code> column, and read off the qualitative answer (sheet-dominant, target-sensitive plateau, schedule-independent by construction at fixed <code>sigma</code>). The framework gains a quality bar that lives outside the codebase: any future scheduler that claims to implement Theorem 1 must reproduce the empirical pattern (sheet-dominant heuristic ratio, target-sensitive plateau, schedule-independent by construction at fixed <code>sigma</code>). The framework-internal <code>selection_ratio</code> is <strong>NOT</strong> a paper quantity and is <strong>NOT</strong> claimed to converge to 1; the four paper quantities <code>A_g</code>, <code>B_g</code>, <code>C_g</code>, <code>e_rho</code> are extracted as framework contracts in <code>adaptive_reflow/contracts/paper_quantities.py</code> for any future audit trail that wants to check the <em>literal</em> paper invariants.</p>
 <hr />
 <h2 id="5-the-next-question">5. The next question<a class="headerlink" href="#5-the-next-question" title="Permanent link">&para;</a></h2>
 <p>ADR-0013 closed the <em>algorithm-layer</em> half of the paper-grounding gap: the <code>n_cap</code> envelope the framework produces per round is the canonical implementation of paper Lemma 2, and the per-round <code>selection_ratio</code> the new evaluator emits is the empirical handle on paper Proposition 3. The <em>restart-mechanism</em> half is still open. Paper Theorem 1 is silent on how the framework <em>uses</em> the sheet-vs-cell balance to drive the next round's prior — the paper proves that a small-noise posterior concentrates on the sheet, not that any particular restart mechanism realises that concentration. The framework's <code>apply_restart_distribution</code> (the universal-state boundary) and <code>ReInferenceRunner</code> (the per-round orchestrator) together determine <em>which</em> sheet-cell configuration is propagated forward; whether that mechanism matches paper's selection principle (or whether there is a gap where the framework's restart logic does not quite match paper's <code>sigma -&gt; 0</code> selection) is the question ADR-0014 (or its equivalent) will need to answer.</p>
 <p>Concretely: the paper's posterior is <code>P(X | F_g(X) = 0)</code> — the <em>conditional</em> distribution on the fibre given the residual hits zero. The framework's per-round prior is whatever the previous round's endpoint mixture is, blended with fresh noise via <code>RestartBlenderProtocol</code>. The mapping between paper's conditional and the framework's blend is not yet proven; the empirical observation that cosine schedules work <em>better</em> on hard mode-balancing targets is consistent with paper Theorem 1 but is not the same as a proof that the framework's restart mechanism realises paper's selection. Closing that gap requires either (a) a paper-style proof that <code>apply_restart_distribution</code> approximates the conditional posterior as the noise scale shrinks, or (b) an empirical handle that shows the framework's per-round posterior converges to paper's conditional as <code>sigma -&gt; 0</code>. Until either is available, the framework has paper-grounded <em>scheduling</em> and paper-validated <em>metrics</em>, but paper-claimed <em>restart</em> — and the difference matters, because the restart is what makes the algorithm a multi-round algorithm rather than a single-round anneal. This is the open question ADR-0013 explicitly defers and that this document records as the canonical narrative for the next work stream.</p>
 <h2 id="6-open-questions">6. Open questions<a class="headerlink" href="#6-open-questions" title="Permanent link">&para;</a></h2>
 <p>The "next question" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped <code>selection_ratio</code> metric was claimed to converge toward 1 as rounds progress, but <code>docs/review/B5-VERIFICATION.md</code> shows that the metric is in fact invariant to loop state — it is an unconditional replay of the <code>(adapter, target)</code> pair, not an endpoint-conditioned posterior, and two unrelated schedulers report identical curves to four decimal places. The reviewer's symptom ("wrong bundle passed") was a wiring guess; the actual defect is that the evaluator's <code>bundle</code> parameter is inert, so no rewiring fix would change the output. Closing the gap requires an endpoint-conditioned variant (scoring the round's own endpoints rather than a fresh replay), which is blocked on the runner carrying a batch of trajectories per round — a real architectural change to <code>ReInferenceRunner</code> and <code>TwoDimFMAdapter</code>, both currently single-sample. ADR-0013 §"Selection metric status" demotes the convergence-to-1 prediction to apply only to that future variant. The shipped metric remains in place until a human design decision lands; the verification document is the canonical record of the investigation.</p>
+<h2 id="7-what-this-insight-does-not-claim">7. What this insight does NOT claim<a class="headerlink" href="#7-what-this-insight-does-not-claim" title="Permanent link">&para;</a></h2>
+<p>This section mirrors the disclaimer in <code>docs/adr/0013-posterior-selection-drives-algorithm.md</code> §"What the paper does NOT claim". The framework has historically over-claimed certain things as "paper Theorem 1 predictions" that are not in the paper; recording the negative space explicitly is the audit-driven way to keep the framework's claims honest.</p>
+<h3 id="71-what-the-paper-does-not-claim">7.1 What the paper does NOT claim<a class="headerlink" href="#71-what-the-paper-does-not-claim" title="Permanent link">&para;</a></h3>
+<p>The paper does NOT claim:</p>
+<ul>
+<li><strong>The paper does NOT claim that any "selection ratio" converges to 1.</strong> Proposition 3 + Corollary 1 prove BL-convergence of the full ambient posterior <code>mu_{g,eps}</code> to <code>nu_g</code> and the <code>O(eps)</code> / <code>O(eps^2)</code> / <code>exp(-e_rho / (2 eps^2))</code> tail bounds. They do not single out a ratio of two evidence components and claim it converges to 1.</li>
+<li><strong>The paper does NOT claim that the framework's <code>EvidenceScaleGapMetric</code> (formerly <code>PosteriorSelectionEvaluator</code>) is a paper quantity.</strong> The metric emits a heuristic <code>selection_ratio</code> based on closed-form Gaussian densities; the paper proves no such ratio. The metric is a framework-internal diagnostic for monitoring whether the framework's behaviour is consistent with the paper's evidence ordering (sheet <code>Theta(eps^{+1})</code> vs cells <code>O(eps^{+2})</code>). It is NOT claimed to converge to 1; it plateaus at a fixed-noise replay.</li>
+<li><strong>The paper does NOT claim that any framework-specific schedule implements Theorem 1's evidence competition at the magnitude level.</strong> The framework's <code>n_cap</code> ramp is a convex mixing weight on a state vector; it is <em>directionally</em> aligned with the paper's <code>eps -&gt; 0</code> limit (round progression mirrors the noise-shrink direction) but it does not produce the <code>Theta(eps^{+1})</code> / <code>O(eps^{+2})</code> evidence competition the paper proves.</li>
+<li><strong>The paper does NOT claim that the framework's heuristic <code>selection_ratio</code> will ever reach 1 in finite rounds.</strong> The shipped metric is a fixed-noise replay estimator; it plateaus at the value implied by the adapter's training noise. Convergence to 1 would require an endpoint-conditioned variant (scoring the round's own bundle) operating in the <code>eps -&gt; 0</code> limit, which is the open follow-up recorded in §6.</li>
+</ul>
+<h3 id="72-what-the-paper-does-claim">7.2 What the paper DOES claim<a class="headerlink" href="#72-what-the-paper-does-claim" title="Permanent link">&para;</a></h3>
+<p>The paper DOES claim:</p>
+<ul>
+<li><strong>Bounded-Lipschitz convergence.</strong> <code>mu_{g,eps} --BL--&gt; nu_g</code> as <code>eps -&gt; 0</code> (Theorem 1, line 88-91 of <code>NoiseSelectedRectification_EN.md</code>).</li>
+<li><strong>Posterior mass on isolated cells is <code>O(eps)</code>.</strong> <code>mu_{g,eps}(union_z I_z) &lt;= C_2 * eps</code> for sufficiently small <code>eps</code> (Corollary 1).</li>
+<li><strong>Normalisation lower bound.</strong> <code>Z_{g,eps} &gt;= C_1 * eps</code> for sufficiently small <code>eps</code> (Corollary 1).</li>
+<li><strong>Positive limit <code>A_g &gt; 0</code>.</strong> <code>eps^{-1} Z_{g,eps} -&gt; A_g &gt; 0</code> (Proposition 3).</li>
+<li><strong>Sheet-tube limit.</strong> <code>eps^{-1} int_T phi p_eps -&gt; (2*pi)^{-1/2} int_R phi(s, 0) exp(-s^2/2) / sqrt(1 + g(s)^2) ds</code> for every bounded continuous <code>phi</code> (Lemma 2).</li>
+<li><strong>Per-cell bound.</strong> <code>int_{I_z} p_eps &lt;= C_g e^{-z^2/4} eps^2</code> for every <code>z in Z_g</code> (Lemma 3).</li>
+<li><strong>Gaussian packing.</strong> <code>B_g = sum_{z in Z_g} e^{-z^2/4} &lt; infinity</code> (Lemma 5). The summability is derived, not assumed.</li>
+<li><strong>Physical exterior gap.</strong> <code>int_{T^c \setminus union_z I_z} p_eps &lt;= exp(-e_rho / (2 eps^2))</code> with <code>e_rho = min{rho^4, (1 - rho)^2 eta^2}</code> (Lemma 4 / Lemma 5).</li>
+</ul>
+<p>These are the <strong>actual paper claims</strong>. The framework's heuristic <code>selection_ratio</code> is a framework-side diagnostic that mirrors the qualitative scale gap between paper Lemma 2's <code>Theta(eps^{+1})</code> sheet evidence and paper Lemma 3's <code>O(eps^{+2})</code> cell evidence; it is NOT a paper claim of convergence to 1, and the empirical plateau values (~0.82 on <code>two_moons</code>, ~0.55 on <code>eight_gaussians</code>) reflect the adapter's fixed-noise replay, not the paper's <code>eps -&gt; 0</code> limit.</p>
+<h3 id="73-what-the-frameworks-heuristic-selection_ratio-is">7.3 What the framework's heuristic <code>selection_ratio</code> IS<a class="headerlink" href="#73-what-the-frameworks-heuristic-selection_ratio-is" title="Permanent link">&para;</a></h3>
+<p>For audit-trail clarity, the framework's heuristic <code>selection_ratio</code> is:</p>
+<ul>
+<li><strong>A monitoring signal.</strong> It tells a reviewer whether the framework's per-round evidence scale gap is consistent with the paper's ordering (sheet &gt; cells at the closed-form Gaussian level).</li>
+<li><strong>Schedule-independent by construction.</strong> Both <code>CosineAnnealScheduler</code> and <code>CodimensionSheetScheduler</code> report the same curve because the metric scores the adapter's own posterior geometry, which neither scheduler alters.</li>
+<li><strong>Target-sensitive.</strong> More competing cells means a lower heuristic ratio (paper Lemma 3's per-cell sum grows with the cell count).</li>
+<li><strong>Plateau-valued, not convergence-valued.</strong> It measures a property of the <code>(adapter weights, target)</code> pair, not a per-round convergence trajectory. The empirical plateau values are pinned by regression tests in <code>tests/test_eval/test_posterior_selection_evaluator.py</code>.</li>
+</ul>
+<p>Any future audit that wants to check the <em>literal</em> paper invariants should use the four paper-quantity contracts in <code>adaptive_reflow/contracts/paper_quantities.py</code> (<code>sheet_evidence_A</code>, <code>root_cell_packing_B</code>, <code>per_cell_coefficient_C</code>, <code>exterior_gap_e_rho</code>) rather than the framework's heuristic <code>selection_ratio</code>. The two surfaces are complementary: the heuristic monitors the qualitative scale gap, the paper-quantity contracts compute the literal constants the paper proves.</p>
 
 
 

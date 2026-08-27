@@ -124,6 +124,18 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         "DESIGN_BOUNDARY", "SPLIT_NOTES", "REFACTOR_PLAN_V2",
         "UNIVERSAL_CONTRACT_NOTES", "UNIVERSAL_MOLECULAR_MAPPING",
         "FINAL_STATUS", "PERFORMANCE_BUDGETS", "SCREAMING_SNAKE_CASE",
+        # External / paper artefacts referenced inline in ADRs and
+        # research notes. These are prose pointers to companion files,
+        # not project-internal symbols.
+        "EPSILON_DIRECTION", "NoiseSelectedRectification_EN",
+        # Deprecated back-compat alias for ``EvidenceScaleGapMetric``
+        # (renamed 2026-08-28). The alias is still importable from
+        # ``adaptive_reflow.eval.posterior_selection_evaluator`` (with
+        # a ``DeprecationWarning`` via PEP 562 ``__getattr__``) but the
+        # docs scanner cannot see the dynamic alias; the denylist
+        # entry keeps ADR prose that mentions the legacy name from
+        # triggering false-positive missing claims.
+        "PosteriorSelectionEvaluator",
         # Misc prose CamelCase.
         "Envelope", "ChannelKind",
         "CommutatorSafeChannelFreezing", "FlowOEExpertAggregation",

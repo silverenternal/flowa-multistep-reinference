@@ -329,10 +329,15 @@ def selection_ratio(
 ) -> tuple[float, float, float]:
     """Return ``(sheet_evidence, cell_evidence, selection_ratio)``.
 
-    The selection ratio is paper Proposition 3's
-    ``sheet_evidence / (sheet_evidence + cell_evidence)``, clipped to
-    ``[0, 1]``. Returns ``(0.0, 0.0, 0.0)`` for empty inputs (degenerate
-    case where neither sheet nor cells contribute).
+    Framework-internal heuristic, NOT a paper claim. The
+    ``selection_ratio`` is
+    ``sheet_evidence / (sheet_evidence + cell_evidence)``,
+    clipped to ``[0, 1]``. It mirrors the qualitative scale gap
+    between paper Lemma 2's ``Theta(eps^{+1})`` sheet evidence and
+    paper Lemma 3's ``O(eps^{+2})`` cell evidence; it is NOT a paper
+    quantity and is NOT claimed to converge to 1 as rounds progress.
+    Returns ``(0.0, 0.0, 0.0)`` for empty inputs (degenerate case
+    where neither sheet nor cells contribute).
     """
     s_ev = sheet_evidence(endpoints)
     c_ev = cell_evidence(cells)
@@ -365,31 +370,46 @@ def _clip_unit(value: float) -> float:
 
 
 # ---------------------------------------------------------------------------
-# PosteriorSelectionEvaluator
+# EvidenceScaleGapMetric
 # ---------------------------------------------------------------------------
 
 
-class PosteriorSelectionEvaluator:
-    """Replay-through-adapter :class:`Evaluator` for paper Theorem 1.
+class EvidenceScaleGapMetric:
+    """Framework-internal evidence scale-gap diagnostic.
+
+    NOT a paper claim. This evaluator is a heuristic proxy for paper
+    Lemma 2 / Lemma 3 evidence scale ordering (sheet ``Theta(eps^{+1})``
+    vs cells ``O(eps^{+2})``). The paper proves **bounded-Lipschitz
+    convergence** ``mu_{g,eps} --BL--> nu_g`` as ``eps -> 0``;
+    this metric does NOT implement that limit. Instead it measures
+    the qualitative scale gap between sheet and cell evidence at a
+    *fixed* noise scale (the adapter's training noise), and the
+    resulting ratio plateaus rather than converging to 1.
+
+    The class was renamed from ``PosteriorSelectionEvaluator`` (now a
+    deprecated alias) to make the framework-internal nature explicit.
+    The four ACTUAL paper quantities (``A_g``, ``B_g``, ``C_g``,
+    ``e_rho``) live in
+    ``adaptive_reflow/contracts/paper_quantities.py``.
 
     The evaluator owns a single :class:`TwoDimFMAdapter` instance
     (with weights loaded once from the canonical ``.npz`` file). Each
     evaluation call generates ``n_gen`` endpoints by replaying through
-    the adapter's :meth:`TwoDimFMAdapter.solve_ode` and computes paper
-    Theorem 1's selection ratio against the analytic mode-centre set
-    for the chosen ``target``.
+    the adapter's :meth:`TwoDimFMAdapter.solve_ode` and computes the
+    evidence scale gap against the analytic mode-centre set for the
+    chosen ``target``.
 
-    The three paper-Theorem-1 metrics are emitted:
+    The three diagnostic metrics are emitted:
 
-    * ``sheet_evidence`` — the mean per-endpoint sheet density
+    * ``sheet_evidence`` -- the mean per-endpoint sheet density
       ``exp(-x^2 / 2)`` evaluated at the closest sheet point (i.e.
       ``(x, 0)`` after projecting ``y -> 0``).
-    * ``cell_evidence`` — the sum over all cell-root mode centres of
+    * ``cell_evidence`` -- the sum over all cell-root mode centres of
       ``exp(-|z|^2 / 2) / (2pi)``.
-    * ``selection_ratio`` —
+    * ``selection_ratio`` --
       ``sheet_evidence / (sheet_evidence + cell_evidence)``,
-      clipped to ``[0, 1]``. Paper Proposition 3 predicts this
-      converges to 1 as ``sigma -> 0``.
+      clipped to ``[0, 1]``. Framework heuristic only -- NOT a paper
+      claim of convergence to 1.
 
     The four canonical :class:`ChannelTransferEvidence` diagnostics
     are filled from the selection ratio:
@@ -404,11 +424,12 @@ class PosteriorSelectionEvaluator:
     implicit-regularisation constant stored on the evaluator. It is
     surfaced in :meth:`oracle` as ``eps_implicit`` for traceability
     but does not currently alter the closed-form math (the sheet and
-    cell evidence formulas are paper-Theorem-1 canonical); future
-    variants may fold ``eps_implicit`` into a Jacobian-floor or a
-    selection-ratio softening without breaking the byte-for-byte
-    equality contract between :meth:`evaluate` and :meth:`oracle` for
-    the same ``eps_implicit`` value.
+    cell evidence formulas are heuristic, framework-internal
+    closed-form approximations); future variants may fold
+    ``eps_implicit`` into a Jacobian-floor or a selection-ratio
+    softening without breaking the byte-for-byte equality contract
+    between :meth:`evaluate` and :meth:`oracle` for the same
+    ``eps_implicit`` value.
     """
 
     __slots__ = (
@@ -478,9 +499,9 @@ class PosteriorSelectionEvaluator:
         """
         if not self.channel_supported(channel):
             raise NotImplementedError(
-                f"PosteriorSelectionEvaluator does not support channel "
+                f"EvidenceScaleGapMetric does not support channel "
                 f"{str(channel)!r}; supported: "
-                f"{[str(c) for c in POSTERIOR_SELECTION_CHANNELS]}"
+                f"{[str(c) for c in EVIDENCE_SCALE_GAP_CHANNELS]}"
             )
         (
             sheet_ev,
@@ -493,8 +514,8 @@ class PosteriorSelectionEvaluator:
         bundle_id = self._derive_bundle_id(bundle)
         provenance = ProvenanceChain(
             (
-                MechanismId("posterior_selection_evaluator"),
-                MechanismId(POSTERIOR_SELECTION_AUDIT_REASON),
+                MechanismId("evidence_scale_gap_metric"),
+                MechanismId(EVIDENCE_SCALE_GAP_AUDIT_REASON),
             )
         )
         return ChannelTransferEvidence(
@@ -541,9 +562,9 @@ class PosteriorSelectionEvaluator:
         """
         if not self.channel_supported(channel):
             raise NotImplementedError(
-                f"PosteriorSelectionEvaluator does not support channel "
+                f"EvidenceScaleGapMetric does not support channel "
                 f"{str(channel)!r}; supported: "
-                f"{[str(c) for c in POSTERIOR_SELECTION_CHANNELS]}"
+                f"{[str(c) for c in EVIDENCE_SCALE_GAP_CHANNELS]}"
             )
         (
             sheet_ev,
@@ -577,7 +598,7 @@ class PosteriorSelectionEvaluator:
 
     def channel_supported(self, channel: ChannelName) -> bool:
         """Return ``True`` iff ``channel`` is in the evaluator's channel vocabulary."""
-        return str(channel) in {str(c) for c in POSTERIOR_SELECTION_CHANNELS}
+        return str(channel) in {str(c) for c in EVIDENCE_SCALE_GAP_CHANNELS}
 
     # ---- private math (shared by evaluate + oracle) -----------------
 
@@ -628,7 +649,7 @@ class PosteriorSelectionEvaluator:
         native_states = self._adapter._native_states  # noqa: SLF001 — test seam
         for i in range(n_gen):
             sample_id = (
-                f"posterior_selection::{self._target}::seed{seed}::idx{i}"
+                f"evidence_scale_gap::{self._target}::seed{seed}::idx{i}"
             )
             initial = self._adapter.build_initial_state(
                 batch_id=_INTERNAL_BATCH_ID,
@@ -638,7 +659,7 @@ class PosteriorSelectionEvaluator:
             traj_entry = native_states.get(trace.native_state_digest)
             if traj_entry is None:
                 raise RuntimeError(
-                    "posterior_selection_evaluator:missing_trajectory_entry"
+                    "evidence_scale_gap_metric:missing_trajectory_entry"
                 )
             endpoints[i] = np.asarray(
                 traj_entry["trajectory"][-1], dtype=np.float64
@@ -660,11 +681,39 @@ class PosteriorSelectionEvaluator:
 
 
 # ---------------------------------------------------------------------------
+# Backward-compatibility alias
+# ---------------------------------------------------------------------------
+
+
+def __getattr__(name: str) -> Any:  # pragma: no cover - simple shim
+    """PEP 562 module-level ``__getattr__`` for back-compat aliases.
+
+    Returns :class:`EvidenceScaleGapMetric` under the legacy
+    ``PosteriorSelectionEvaluator`` name with a :class:`DeprecationWarning`.
+    Any other name is treated as a real :class:`AttributeError`.
+    """
+    if name == "PosteriorSelectionEvaluator":
+        warnings.warn(
+            "PosteriorSelectionEvaluator has been renamed to "
+            "EvidenceScaleGapMetric; the old name is a deprecated "
+            "alias and will be removed in a future release. Update "
+            "imports to use EvidenceScaleGapMetric directly.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return EvidenceScaleGapMetric
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+# ---------------------------------------------------------------------------
 # Public surface
 # ---------------------------------------------------------------------------
 
 
 __all__ = [
+    "EVIDENCE_SCALE_GAP_AUDIT_REASON",
+    "EVIDENCE_SCALE_GAP_CHANNELS",
+    "EvidenceScaleGapMetric",
     "POSTERIOR_SELECTION_AUDIT_REASON",
     "POSTERIOR_SELECTION_BUNDLE_ID_PREFIX",
     "POSTERIOR_SELECTION_CALIBRATION",
@@ -673,7 +722,6 @@ __all__ = [
     "POSTERIOR_SELECTION_PERTURBATION",
     "POSTERIOR_SELECTION_SHEET_FOR_TARGET",
     "POSTERIOR_SELECTION_TARGETS",
-    "PosteriorSelectionEvaluator",
     "cell_evidence",
     "mode_centers_for",
     "selection_ratio",

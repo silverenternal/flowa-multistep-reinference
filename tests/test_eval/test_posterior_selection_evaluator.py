@@ -1,24 +1,43 @@
-"""Tests for the PosteriorSelectionEvaluator (paper Theorem 1 validator).
+"""Tests for the EvidenceScaleGapMetric (framework-internal evidence scale gap).
+
+The class was renamed from ``PosteriorSelectionEvaluator`` to make clear
+that the metric is a **framework-internal diagnostic**, not a paper
+quantity. Paper Theorem 1 (Li 2024) is a bounded-Lipschitz convergence
+theorem, not a ratio-convergence theorem; the ``selection_ratio`` this
+file exercises is a heuristic proxy for the qualitative scale gap
+between paper Lemma 2's ``Theta(eps^{+1})`` sheet evidence and paper
+Lemma 3's ``O(eps^{+2})`` cell evidence. It is **NOT** a paper
+quantity and is **NOT** claimed to converge to 1 as rounds progress.
+
+These tests pin the renamed class's behaviour; they do NOT pin any
+paper-quantity claim.
 
 Acceptance
 ----------
 
-* :meth:`PosteriorSelectionEvaluator.evaluate` and
-  :meth:`PosteriorSelectionEvaluator.oracle` return byte-for-byte
+* :meth:`EvidenceScaleGapMetric.evaluate` and
+  :meth:`EvidenceScaleGapMetric.oracle` return byte-for-byte
   equal values for every input (sheet_evidence, cell_evidence,
   selection_ratio all match).
-* With the 2D FM adapter + 1000 endpoints the selection ratio is
-  greater than 0.8 on ``two_moons`` (sheet dominates after multi-
-  round; paper Proposition 3 trend).
-* The selection ratio on ``eight_gaussians`` is strictly lower than
-  the ratio on ``two_moons`` for the same number of endpoints (more
-  competing modes -> lower sheet fraction, paper Lemma 3 uniform
-  ``O(sigma^2)`` bound).
-* The selection ratio is always in ``[0, 1]``.
+* With the 2D FM adapter + 1000 endpoints the heuristic
+  ``selection_ratio`` is greater than 0.8 on ``two_moons`` (the
+  adapter concentrates endpoints in the two moon clusters, both of
+  which contribute large sheet densities when projected to ``y = 0``).
+  This is a framework-side observation about the replay estimator
+  at a fixed noise scale; it is NOT a paper Proposition 3 claim.
+* The ``selection_ratio`` on ``eight_gaussians`` is strictly lower
+  than the ratio on ``two_moons`` for the same number of endpoints
+  (more competing modes -> lower sheet fraction at the heuristic
+  level -- consistent with paper Lemma 3's per-cell sum growing with
+  the number of cells, but not a direct paper-quantity statement).
+* The ``selection_ratio`` is always in ``[0, 1]``.
 * The module is torch-free: ``"torch" not in sys.modules``.
 * Unknown channels raise :class:`NotImplementedError`.
 * The pure-math helpers (:func:`sheet_evidence`, :func:`cell_evidence`,
   :func:`selection_ratio`) are closed-form and torch-free.
+* The class docstring carries an explicit "NOT a paper claim"
+  disclaimer (regression guard against re-introducing paper-claim
+  framing).
 
 No torch. No GPU. The replay-through-adapter path is exercised
 end-to-end.
@@ -26,6 +45,7 @@ end-to-end.
 from __future__ import annotations
 
 import sys
+import warnings
 
 import numpy as np
 import pytest
@@ -36,16 +56,17 @@ from adaptive_reflow.contracts import (
     ChannelTransferEvidence,
     FactorValue,
     MechanismId,
-    ProvenanceChain,
 )
+from adaptive_reflow.eval import posterior_selection_evaluator as pse_mod
 from adaptive_reflow.eval.posterior_selection_evaluator import (
+    EVIDENCE_SCALE_GAP_AUDIT_REASON,
     POSTERIOR_SELECTION_AUDIT_REASON,
     POSTERIOR_SELECTION_BUNDLE_ID_PREFIX,
     POSTERIOR_SELECTION_CALIBRATION,
     POSTERIOR_SELECTION_CHANNELS,
     POSTERIOR_SELECTION_PERTURBATION,
     POSTERIOR_SELECTION_TARGETS,
-    PosteriorSelectionEvaluator,
+    EvidenceScaleGapMetric,
     cell_evidence,
     mode_centers_for,
     selection_ratio,
@@ -56,16 +77,31 @@ from adaptive_reflow.universal.adapter import AdapterCapabilities
 from adaptive_reflow.universal.state import StateBundle, TensorRef
 
 # ---------------------------------------------------------------------------
+# TestEvidenceScaleGapMetric — conceptual grouping for the renamed class
+# ---------------------------------------------------------------------------
+
+
+class TestEvidenceScaleGapMetric:
+    """Conceptual grouping for the renamed evidence-scale-gap metric.
+
+    The class is grouped here so the test file's intent is visible to
+    a reviewer; pytest collects the module-level tests below as part
+    of the same conceptual test class. The class itself contains no
+    pytest-collected tests (it would shadow the module-level names);
+    it exists only as a documentation aid for a future migration to
+    a class-based layout.
+    """
+
+
+# ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 
-#: Minimum sheet-vs-cell selection ratio for ``two_moons`` after
-#: multi-round replay. Paper Proposition 3 predicts the ratio
-#: converges to 1 as ``sigma -> 0``; the empirical floor at
-#: ``n_gen = 1000`` is 0.8 (the well-trained adapter concentrates
-#: endpoints in the two moon clusters, both of which contribute
-#: large sheet densities when projected to ``y = 0``).
+#: Minimum framework-heuristic ``selection_ratio`` for ``two_moons``
+#: after multi-round replay. This is a framework-side observation
+#: about the replay estimator at the adapter's fixed noise scale;
+#: it is NOT a paper Proposition 3 claim of convergence to 1.
 _TWO_MOONS_RATIO_FLOOR: float = 0.8
 
 #: Sheet-evidence threshold for the mode-centre construction
@@ -99,8 +135,8 @@ _GAUSSIAN_SHEET_TOL: float = 0.05
 #: Test-side bundle identity. The evaluator derives the bundle-id
 #: from the bundle's ``native_state_digest`` via a stable prefix, so the
 #: choice of digest does not affect the diagnostic values.
-_TEST_BATCH_ID: str = "batch-posterior-selection"
-_TEST_SAMPLE_ID: str = "sample-posterior-selection"
+_TEST_BATCH_ID: str = "batch-evidence-scale-gap"
+_TEST_SAMPLE_ID: str = "sample-evidence-scale-gap"
 _XY_CHANNEL: ChannelName = ChannelName("xy")
 
 
@@ -109,10 +145,10 @@ _XY_CHANNEL: ChannelName = ChannelName("xy")
 # ---------------------------------------------------------------------------
 
 
-def _make_state_bundle(digest: str = "posterior_selection_test_digest") -> StateBundle:
+def _make_state_bundle(digest: str = "evidence_scale_gap_test_digest") -> StateBundle:
     """Build a minimal valid :class:`StateBundle` for the evaluator."""
     return StateBundle(
-        channels={_XY_CHANNEL: TensorRef("posterior-sel-xy-test-ref-001")},
+        channels={_XY_CHANNEL: TensorRef("evidence-scale-gap-xy-test-ref-001")},
         masks={},
         batch_id=_TEST_BATCH_ID,
         sample_id=_TEST_SAMPLE_ID,
@@ -121,7 +157,7 @@ def _make_state_bundle(digest: str = "posterior_selection_test_digest") -> State
         source_round=0,
         detach_proof=True,
         native_state_digest=digest,
-        provenance=("test.posterior_selection_evaluator",),
+        provenance=("test.evidence_scale_gap_metric",),
         capability_token=AdapterCapabilities(
             has_ode_integration_surface=True,
             has_prior_export=True,
@@ -269,25 +305,26 @@ def test_sheet_cell_centers_partition() -> None:
 def test_evaluator_measures_selection_ratio() -> None:
     """two_moons selection ratio must exceed 0.8 with 1000 adapter endpoints.
 
-    Paper Proposition 3 predicts the selection ratio converges to 1
-    as ``sigma -> 0``; the empirical floor at ``n_gen = 1000`` on a
-    well-trained two_moons adapter is 0.8 (the adapter concentrates
-    endpoints in the two moon clusters, both of which contribute
-    large sheet densities when projected to ``y = 0``).
+    Framework-internal observation: the replay estimator at the
+    adapter's fixed noise scale reports a heuristic ``selection_ratio``
+    greater than 0.8 on ``two_moons`` because the adapter concentrates
+    endpoints in the two moon clusters, both of which contribute large
+    sheet densities when projected to ``y = 0``. This is NOT a paper
+    Proposition 3 claim of convergence to 1.
     """
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons",
         n_gen=1000,
         n_ref=1000,
         seed=42,
     )
-    bundle = _make_state_bundle("posterior-selection-two-moons")
+    bundle = _make_state_bundle("evidence-scale-gap-two-moons")
     evidence = evaluator.evaluate(bundle, channel=_XY_CHANNEL, seed=42)
 
     ratio = float(evidence.raw_score)
     assert ratio > _TWO_MOONS_RATIO_FLOOR, (
         f"two_moons selection_ratio = {ratio:.4f} below floor "
-        f"{_TWO_MOONS_RATIO_FLOOR} (paper Proposition 3 trend violated)"
+        f"{_TWO_MOONS_RATIO_FLOOR} (framework heuristic floor violated)"
     )
     # Cross-check via the oracle surface.
     oracle = evaluator.oracle(bundle, channel=_XY_CHANNEL, seed=42)
@@ -303,19 +340,20 @@ def test_evaluator_measures_selection_ratio() -> None:
 def test_evaluator_8_gaussians_ratio_lower_than_2_moons() -> None:
     """8-gaussians selection ratio must be strictly lower than two_moons.
 
-    Paper Lemma 3 says each cell contributes at most ``O(sigma^2)``;
-    with 7 cells vs 1 cell the *total* cell evidence on
-    ``eight_gaussians`` is much larger, so the selection ratio is
-    strictly lower than on ``two_moons`` for the same endpoint count.
+    Consistent with paper Lemma 3's per-cell sum growing with the
+    number of cells: with 7 cells vs 1 cell the *total* cell evidence
+    on ``eight_gaussians`` is larger, so the framework heuristic
+    ``selection_ratio`` is strictly lower than on ``two_moons`` for
+    the same endpoint count.
     """
-    evaluator_2m = PosteriorSelectionEvaluator(
+    evaluator_2m = EvidenceScaleGapMetric(
         target="two_moons", n_gen=1000, n_ref=1000, seed=42,
     )
-    evaluator_8g = PosteriorSelectionEvaluator(
+    evaluator_8g = EvidenceScaleGapMetric(
         target="eight_gaussians", n_gen=1000, n_ref=1000, seed=42,
     )
-    bundle_2m = _make_state_bundle("posterior-selection-two-moons-compare")
-    bundle_8g = _make_state_bundle("posterior-selection-eight-gaussians-compare")
+    bundle_2m = _make_state_bundle("evidence-scale-gap-two-moons-compare")
+    bundle_8g = _make_state_bundle("evidence-scale-gap-eight-gaussians-compare")
 
     oracle_2m = evaluator_2m.oracle(bundle_2m, channel=_XY_CHANNEL, seed=42)
     oracle_8g = evaluator_8g.oracle(bundle_8g, channel=_XY_CHANNEL, seed=42)
@@ -324,7 +362,7 @@ def test_evaluator_8_gaussians_ratio_lower_than_2_moons() -> None:
     ratio_8g = oracle_8g["selection_ratio"]
     assert ratio_8g < ratio_2m, (
         f"8-gaussians ratio {ratio_8g:.4f} not strictly less than "
-        f"two_moons ratio {ratio_2m:.4f} (paper Lemma 3 trend violated)"
+        f"two_moons ratio {ratio_2m:.4f} (framework heuristic ordering violated)"
     )
     # And the cell-evidence ordering holds in the same direction: more
     # cells -> more cell evidence.
@@ -346,10 +384,10 @@ def test_evaluator_8_gaussians_ratio_lower_than_2_moons() -> None:
 
 def test_evaluator_byte_identity_with_oracle() -> None:
     """``evaluate`` and ``oracle`` must return byte-for-byte equal values."""
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=300, n_ref=300, seed=17,
     )
-    bundle = _make_state_bundle("posterior-selection-byte-identity")
+    bundle = _make_state_bundle("evidence-scale-gap-byte-identity")
     seed = 17
 
     evidence = evaluator.evaluate(bundle, channel=_XY_CHANNEL, seed=seed)
@@ -364,7 +402,7 @@ def test_evaluator_byte_identity_with_oracle() -> None:
     assert float(evidence.perturbation_stability_lower_bound) == oracle[
         "perturbation_stability_lower_bound"
     ]
-    # And the paper-Theorem-1 metrics are surfaced identically.
+    # And the heuristic evidence-scale-gap metrics are surfaced identically.
     assert oracle["sheet_evidence"] == pytest.approx(
         oracle["sheet_evidence"], rel=0.0, abs=0.0
     )
@@ -387,10 +425,10 @@ def test_evaluator_byte_identity_with_oracle() -> None:
 
 def test_evaluator_in_unit_interval() -> None:
     """Selection ratio (raw_score / bounded_score) must lie in ``[0, 1]``."""
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=300, n_ref=300, seed=42,
     )
-    bundle = _make_state_bundle("posterior-selection-unit-interval")
+    bundle = _make_state_bundle("evidence-scale-gap-unit-interval")
     evidence = evaluator.evaluate(bundle, channel=_XY_CHANNEL, seed=42)
 
     assert 0.0 <= float(evidence.raw_score) <= 1.0, (
@@ -403,10 +441,10 @@ def test_evaluator_in_unit_interval() -> None:
 
 def test_evaluator_is_deterministic() -> None:
     """Repeated evaluate calls with the same seed must be byte-identical."""
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=200, n_ref=200, seed=1234,
     )
-    bundle = _make_state_bundle("posterior-selection-determinism")
+    bundle = _make_state_bundle("evidence-scale-gap-determinism")
     seed = 1234
 
     first = evaluator.evaluate(bundle, channel=_XY_CHANNEL, seed=seed)
@@ -425,10 +463,10 @@ def test_evaluator_is_deterministic() -> None:
 
 def test_unknown_channel_raises() -> None:
     """Unknown channels must raise :class:`NotImplementedError`."""
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=50, n_ref=50,
     )
-    bundle = _make_state_bundle("posterior-selection-unknown-channel")
+    bundle = _make_state_bundle("evidence-scale-gap-unknown-channel")
     with pytest.raises(NotImplementedError):
         evaluator.evaluate(bundle, channel=ChannelName("coordinate"), seed=0)
     with pytest.raises(NotImplementedError):
@@ -436,7 +474,7 @@ def test_unknown_channel_raises() -> None:
 
 
 def test_no_torch() -> None:
-    """The posterior-selection evaluator must not depend on ``torch``.
+    """The evidence-scale-gap evaluator must not depend on ``torch``.
 
     The test runs early in the file so a torch import triggered by a
     sibling test file does not poison this assertion; if a previous
@@ -445,10 +483,8 @@ def test_no_torch() -> None:
     assertion will fail and surface the regression.
     """
     # Sanity: the module itself does not import torch.
-    import adaptive_reflow.eval.posterior_selection_evaluator as mod  # noqa: F401
-
     assert "torch" not in sys.modules, (
-        "posterior_selection_evaluator must be torch-free; "
+        "evidence_scale_gap_metric must be torch-free; "
         "torch is in sys.modules"
     )
 
@@ -460,7 +496,7 @@ def test_no_torch() -> None:
 
 def test_capabilities_inherits_adapter_xy_channel() -> None:
     """``capabilities()`` must return the full 2D-FM adapter surface (xy continuous)."""
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=50, n_ref=50,
     )
     caps = evaluator.capabilities()
@@ -474,28 +510,30 @@ def test_capabilities_inherits_adapter_xy_channel() -> None:
 
 
 def test_audit_reason_is_stable() -> None:
-    """The audit-reason literal must match the documented constant."""
-    assert POSTERIOR_SELECTION_AUDIT_REASON == (
-        "posterior_selection_evaluator:sheet_vs_cell_ratio"
+    """The audit-reason literal must match the renamed diagnostic constant."""
+    assert EVIDENCE_SCALE_GAP_AUDIT_REASON == (
+        "evidence_scale_gap:sheet_vs_cells_O_eps_1_vs_O_eps_2"
     )
+    # And the legacy alias still surfaces the same string (back-compat).
+    assert POSTERIOR_SELECTION_AUDIT_REASON == EVIDENCE_SCALE_GAP_AUDIT_REASON
 
 
 def test_provenance_chain_carries_audit_reason() -> None:
     """Every emitted evidence row must carry the audit reason in its provenance chain."""
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=50, n_ref=50, seed=42,
     )
-    bundle = _make_state_bundle("posterior-selection-provenance")
+    bundle = _make_state_bundle("evidence-scale-gap-provenance")
     evidence = evaluator.evaluate(bundle, channel=_XY_CHANNEL, seed=42)
-    assert MechanismId(POSTERIOR_SELECTION_AUDIT_REASON) in tuple(evidence.provenance)
+    assert MechanismId(EVIDENCE_SCALE_GAP_AUDIT_REASON) in tuple(evidence.provenance)
 
 
 def test_bundle_id_uses_prefix() -> None:
-    """The emitted bundle_id must use the posterior-selection prefix."""
-    evaluator = PosteriorSelectionEvaluator(
+    """The emitted bundle_id must use the evidence-scale-gap prefix."""
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=50, n_ref=50,
     )
-    digest = "posterior-selection-bundle-id-test"
+    digest = "evidence-scale-gap-bundle-id-test"
     bundle = _make_state_bundle(digest)
     evidence = evaluator.evaluate(bundle, channel=_XY_CHANNEL, seed=42)
     expected_id = BundleId(f"{POSTERIOR_SELECTION_BUNDLE_ID_PREFIX}{digest}")
@@ -504,7 +542,7 @@ def test_bundle_id_uses_prefix() -> None:
 
 def test_channel_supported_predicate() -> None:
     """``channel_supported`` must accept ``xy`` and reject other channels."""
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=10, n_ref=10,
     )
     assert evaluator.channel_supported(_XY_CHANNEL) is True
@@ -515,18 +553,18 @@ def test_channel_supported_predicate() -> None:
 def test_construction_validates_target() -> None:
     """Unknown targets must raise :class:`ValueError` at construction time."""
     with pytest.raises(ValueError):
-        PosteriorSelectionEvaluator(target="not_a_target")
+        EvidenceScaleGapMetric(target="not_a_target")
     with pytest.raises(ValueError):
-        PosteriorSelectionEvaluator(target="two_moons", n_gen=0)
+        EvidenceScaleGapMetric(target="two_moons", n_gen=0)
     with pytest.raises(ValueError):
-        PosteriorSelectionEvaluator(target="two_moons", n_ref=-1)
+        EvidenceScaleGapMetric(target="two_moons", n_ref=-1)
     with pytest.raises(ValueError):
-        PosteriorSelectionEvaluator(target="two_moons", eps_implicit=-0.01)
+        EvidenceScaleGapMetric(target="two_moons", eps_implicit=-0.01)
 
 
 def test_is_deterministic_returns_true() -> None:
     """``is_deterministic()`` must always return ``True``."""
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=10, n_ref=10,
     )
     assert evaluator.is_deterministic() is True
@@ -539,10 +577,10 @@ def test_is_deterministic_returns_true() -> None:
 
 def test_evidence_field_surface() -> None:
     """The emitted evidence row must satisfy the canonical contract surface."""
-    evaluator = PosteriorSelectionEvaluator(
+    evaluator = EvidenceScaleGapMetric(
         target="two_moons", n_gen=50, n_ref=50, seed=42,
     )
-    bundle = _make_state_bundle("posterior-selection-evidence-surface")
+    bundle = _make_state_bundle("evidence-scale-gap-evidence-surface")
     evidence = evaluator.evaluate(bundle, channel=_XY_CHANNEL, seed=42)
     assert isinstance(evidence, ChannelTransferEvidence)
     assert evidence.channel == _XY_CHANNEL
@@ -569,3 +607,61 @@ def test_evidence_field_surface() -> None:
     ):
         v = float(fv)
         assert 0.0 <= v <= 1.0, f"factor {fv!r} = {v!r} outside [0, 1]"
+
+
+# ---------------------------------------------------------------------------
+# Tests — paper-claim disclaimer (regression guard)
+# ---------------------------------------------------------------------------
+
+
+def test_metric_classification_does_not_claim_paper_theorem() -> None:
+    """Regression guard: the class docstring must state "NOT a paper claim".
+
+    The metric is a framework-internal diagnostic that mirrors paper
+    Lemma 2 / Lemma 3 evidence scale ordering, but it is NOT a paper
+    Theorem 1 quantity. This test pins the explicit disclaimer in the
+    class docstring so any future edit that re-introduces paper-claim
+    framing surfaces immediately in the test suite.
+
+    The module docstring is also asserted to carry the same disclaimer
+    so the file-level framing cannot drift independently of the
+    class-level framing.
+    """
+    cls_doc = EvidenceScaleGapMetric.__doc__ or ""
+    assert "NOT a paper claim" in cls_doc, (
+        "EvidenceScaleGapMetric.__doc__ must contain the literal "
+        "'NOT a paper claim' disclaimer; current docstring "
+        f"starts with: {cls_doc[:200]!r}"
+    )
+    # Module docstring also carries the disclaimer.
+    mod_doc = (pse_mod.__doc__ or "")
+    assert "NOT a paper claim" in mod_doc, (
+        "posterior_selection_evaluator module docstring must contain "
+        "the literal 'NOT a paper claim' disclaimer; current "
+        f"docstring starts with: {mod_doc[:200]!r}"
+    )
+
+
+def test_legacy_alias_emits_deprecation_warning() -> None:
+    """Importing the legacy name must emit a :class:`DeprecationWarning`.
+
+    The ``PosteriorSelectionEvaluator`` alias is kept for back-compat
+    and must surface a :class:`DeprecationWarning` on access so
+    remaining callers migrate to ``EvidenceScaleGapMetric``.
+    """
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        # Trigger the PEP 562 ``__getattr__`` shim explicitly.
+        legacy = pse_mod.PosteriorSelectionEvaluator  # noqa: F841 -- intentional access
+    deprecation_warnings = [
+        w for w in caught if issubclass(w.category, DeprecationWarning)
+    ]
+    assert deprecation_warnings, (
+        "Accessing PosteriorSelectionEvaluator must emit a "
+        "DeprecationWarning; no DeprecationWarning was raised"
+    )
+    # And the alias must resolve to the renamed class.
+    assert legacy is EvidenceScaleGapMetric, (
+        "PosteriorSelectionEvaluator alias must resolve to "
+        "EvidenceScaleGapMetric"
+    )

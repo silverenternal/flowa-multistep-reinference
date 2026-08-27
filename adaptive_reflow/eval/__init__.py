@@ -48,6 +48,8 @@ from .metric_panel import (
     enforce_separation,
 )
 from .posterior_selection_evaluator import (
+    EVIDENCE_SCALE_GAP_AUDIT_REASON,
+    EVIDENCE_SCALE_GAP_CHANNELS,
     POSTERIOR_SELECTION_AUDIT_REASON,
     POSTERIOR_SELECTION_BUNDLE_ID_PREFIX,
     POSTERIOR_SELECTION_CALIBRATION,
@@ -56,7 +58,7 @@ from .posterior_selection_evaluator import (
     POSTERIOR_SELECTION_PERTURBATION,
     POSTERIOR_SELECTION_SHEET_FOR_TARGET,
     POSTERIOR_SELECTION_TARGETS,
-    PosteriorSelectionEvaluator,
+    EvidenceScaleGapMetric,
     cell_evidence,
     mode_centers_for,
     selection_ratio,
@@ -110,3 +112,10 @@ from .twodim_fm_evaluator import (
     energy_distance,
     voronoi_grid,
 )
+
+# Note: ``PosteriorSelectionEvaluator`` is the deprecated alias for
+# :class:`EvidenceScaleGapMetric`. Accessing it on
+# ``adaptive_reflow.eval.posterior_selection_evaluator`` triggers a
+# :class:`DeprecationWarning` via the PEP 562 module-level
+# ``__getattr__`` defined in that submodule. Downstream callers
+# should switch to ``EvidenceScaleGapMetric`` directly.
