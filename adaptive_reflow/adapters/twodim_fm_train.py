@@ -36,16 +36,28 @@ from pathlib import Path
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.data.target_distributions import (
+    EIGHT_GAUSSIANS_SAMPLER_CENTERS,
+    EIGHT_GAUSSIANS_SAMPLER_RADIUS,
+    EIGHT_GAUSSIANS_SAMPLER_STDDEV,
+    TWO_MOONS_NOISE,
+)
+
 Array = NDArray[np.float64]
 Weights = tuple[Array, Array, Array, Array, Array, Array]
 
 TARGETS: tuple[str, ...] = ("two_moons", "eight_gaussians")
 WEIGHT_KEYS: tuple[str, ...] = ("W1", "b1", "W2", "b2", "W3", "b3")
 
-# Geometry constants for the two target distributions.
-TWO_MOONS_NOISE = 0.08
-EIGHT_GAUSSIANS_RADIUS = 2.0
-EIGHT_GAUSSIANS_STDDEV = 0.15
+# Re-export the canonical geometry constants under their historical
+# trainer-local names so external callers that imported them from this
+# module (e.g. ``adaptive_reflow.adapters.twodim_fm_train.TWO_MOONS_NOISE``)
+# keep working. The actual definitions live in
+# :mod:`adaptive_reflow.data.target_distributions` (single source of
+# truth; ADR-DTB-R7-B2).
+TWO_MOONS_NOISE = TWO_MOONS_NOISE  # noqa: PLW0127 — re-export alias
+EIGHT_GAUSSIANS_RADIUS = EIGHT_GAUSSIANS_SAMPLER_RADIUS
+EIGHT_GAUSSIANS_STDDEV = EIGHT_GAUSSIANS_SAMPLER_STDDEV
 
 
 # ---------------------------------------------------------------------------
@@ -77,12 +89,10 @@ def sample_eight_gaussians(n: int, rng: np.random.Generator) -> Array:
     """Sample ``n`` points from eight Gaussians on a circle of radius 2."""
     if n <= 0:
         raise ValueError("n_must_be_positive")
-    angles = np.arange(8, dtype=np.float64) * (2.0 * np.pi / 8.0)
-    centers = EIGHT_GAUSSIANS_RADIUS * np.stack(
-        [np.cos(angles), np.sin(angles)], axis=1
-    )
     which = rng.integers(0, 8, size=n)
-    out = centers[which] + EIGHT_GAUSSIANS_STDDEV * rng.standard_normal((n, 2))
+    out = EIGHT_GAUSSIANS_SAMPLER_CENTERS[which] + (
+        EIGHT_GAUSSIANS_SAMPLER_STDDEV * rng.standard_normal((n, 2))
+    )
     return np.asarray(out, dtype=np.float64)
 
 

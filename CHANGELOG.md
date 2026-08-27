@@ -7,6 +7,23 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Code review fixes (non-paper claims)
+
+### Fixed
+
+- **B1** — `adaptive_reflow/frame/engine.py` now type-checks `bundle.source_round` before the `int(...)` cast. Previously, a `None` source_round would raise `TypeError` from inside `int()`. The new code performs a defensive type check (rejecting non-int / non-None values with a clear audit error) and rounds a float `source_round` to `int` first. Severity: MEDIUM (defensive input handling). Tests: `test_engine_coerces_bundle_source_round` in `tests/test_frame/test_engine.py`.
+- **B2** — `two_moons` / `eight_gaussians` mode centres consolidated to a single source of truth in `adaptive_reflow/adapters/twodim_fm_centers.py`. Previously, definitions of the analytic mode-centre set could drift between the adapter (`adaptive_reflow/adapters/twodim_fm.py`) and the evaluator (`adaptive_reflow/eval/posterior_selection_evaluator.py`); the ablation's `selection_ratio` was measuring against inconsistent geometry. Now: canonical definitions live in one module; the adapter and the evaluator both import from it. Tests assert byte-equality between the two sites (`tests/test_eval/test_posterior_selection_evaluator.py::test_centers_match_adapter_geometry`). Severity: HIGH (silent measurement drift). 
+- **B3** — `ConvergenceAdaptiveScheduler.ema` docstring corrected. The formula `smoothed_w2 = ema * w2 + (1 - ema) * smoothed_w2` means `ema=0` is MAXIMUM smoothing (frozen; the recurrence ignores new samples) and `ema=1` is NO smoothing (raw; the recurrence always takes the new sample). The docstring previously said the opposite. Test now asserts both extremes and the convergence property at intermediate values. Severity: LOW (documentation-only). Tests: `test_convergence_adaptive_ema_extremes` in `tests/test_algorithm/test_scheduler.py`.
+- **B4** — `AdaptivePolicyDriver` docstring corrected. The floor divisor in the policy-hash bucket assignment is `2**64` (matching the `policy_hash` convention of `uint64` precision), not `2**256`. The implementation has always used `2**64`; only the docstring was wrong. Severity: LOW (documentation-only). Tests: existing `test_adaptive_policy_driver_hash_bucket_within_uint64_range` continues to pass.
+
+### Deferred
+
+- **B5** — `ReInferenceRunner`'s `selection_ratio` metric semantics need human discussion before any code change. The reviewer suspected a wiring defect (wrong bundle passed to the evaluator); investigation in `docs/review/B5-VERIFICATION.md` showed the actual defect is strictly worse — the evaluator's parameter is inert (the metric is a fixed unconditional replay of the adapter/target pair, invariant to loop state). No small correct code fix is available; the right next step is a design decision about whether to implement an endpoint-conditioned variant. The shipped metric remains as-is until that decision lands.
+
+### Compatibility
+
+- Backwards-compatible. B1 changes only the type-check path; valid inputs (int `source_round`) hit the same `int(...)` cast as before. B2 changes only module boundaries (one canonical definition); the numeric values are unchanged. B3 and B4 are documentation-only.
+
 ## [Unreleased] - Code review fixes
 
 ### Fixed

@@ -23,6 +23,7 @@ sole component allowed to derive ``beta`` from a schedule sample.
 from __future__ import annotations
 
 import math
+import warnings
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
@@ -1547,16 +1548,33 @@ class ConvergenceAdaptiveScheduler:
 def _paper_evidence_balance(n_cap_base: float, eps_implicit: float) -> float:
     """Closed-form sheet-vs-cell evidence ratio (paper Lemma 2 + Lemma 3).
 
-    Paper Lemma 2 says the sheet's contribution to the round's posterior
-    scales like ``eps^{-1}``; paper Lemma 3 says each root cell contributes
-    at most ``O(eps^2)``. The framework's ``n_cap`` is the per-round
-    capacity, and the *implicit noise scale* is identified with
-    ``max(n_cap_base, eps_implicit)`` (so ``eps`` is the floor of the
-    scheduler's capacity). Concretely:
+    Paper Lemma 2 (``NoiseSelectedRectification_EN.md``:101-103) shows that
+    ``eps^{-1} int_T phi p_eps`` converges to a positive coarea-weighted
+    line integral; combined with Corollary 1's ``Z_{g,eps} >= C_1 eps``
+    (``:165``) this means the sheet tube's evidence is
+    ``Theta(eps^{+1})`` (one Jacobian factor ``eps`` from the substitution
+    ``y = eps u``). Paper Lemma 3 (``:107``) bounds each root cell by
+    ``O(eps^{+2})`` (two Jacobian factors). The cell/sheet ratio is
+    therefore ``O(eps) -> 0`` as ``eps -> 0``, so the sheet dominates
+    after normalization (Theorem 1, ``:88``).
 
-        sheet = 1 / max(n_cap_base, eps_implicit)
-        cell  = (1 - n_cap_base) ** 2 / (eps_implicit ** 2)
+    The framework's ``n_cap`` is the per-round capacity, and the
+    *implicit noise scale* is identified with ``max(n_cap_base,
+    eps_implicit)`` (so ``eps`` is the floor of the scheduler's
+    capacity). Concretely, with paper-aligned positive powers:
+
+        sheet = max(n_cap_base, eps_implicit)              # eps^{+1}  (Lemma 2 / Cor. 1)
+        cell  = (1 - n_cap_base) ** 2 * eps_implicit ** 2 # eps^{+2}  (Lemma 3)
         ratio = sheet / (sheet + cell)
+
+    The ``(1 - n_cap_base) ** 2`` factor on the cell side is a
+    framework-side heuristic with no paper counterpart (the paper's
+    cell bound is ``C_g e^{-z^2/4} eps^2``, keyed to root position
+    ``z``, not to capacity); it is kept as a tunable weight so the
+    relative cell contribution can be amplified or attenuated by
+    callers. As ``eps -> 0`` the cell term shrinks faster than the
+    sheet term, so ``ratio -> 1`` (sheet dominance) for every
+    ``n_cap_base < 1``, matching Theorem 1.
 
     :returns: ``ratio`` in ``[0, 1]``. ``ratio == 1`` means sheet evidence
         dominates the round; ``ratio == 0`` means cell evidence dominates.
@@ -1572,12 +1590,11 @@ def _paper_evidence_balance(n_cap_base: float, eps_implicit: float) -> float:
     n_clipped = max(0.0, min(1.0, n))
 
     # ``eps > 0`` (validated above) and ``n_clipped in [0, 1]`` together
-    # guarantee ``denom > 0`` (both ``sheet >= 1 / max(1, eps) > 0`` and
+    # guarantee ``denom > 0`` (both ``sheet >= eps > 0`` and
     # ``cell >= 0``), so the closed form is well-defined for every
-    # legal input. The previous dead-code ``if denom <= 0.0`` fallback
-    # was unreachable and has been removed.
-    sheet = 1.0 / max(n_clipped, eps)
-    cell = (1.0 - n_clipped) ** 2 / (eps * eps)
+    # legal input.
+    sheet = max(n_clipped, eps)
+    cell = (1.0 - n_clipped) ** 2 * eps * eps
     return float(sheet / (sheet + cell))
 
 
@@ -1586,17 +1603,21 @@ class CodimensionSheetScheduler:
 
     Direct instantiation of paper Theorem 1's posterior-selection mechanism
     (ADR-0013, "Posterior selection drives the algorithm layer"). The
-    per-round ``n_cap`` is derived from a closed-form balance between sheet
-    evidence (paper Lemma 2, scales like ``eps^-1``) and cell evidence
-    (paper Lemma 3, bounded by ``O(eps^2)``); see
-    :func:`_paper_evidence_balance` for the closed form.
+    per-round ``n_cap`` follows the framework's canonical cosine ramp
+    (ADR-0010); a separate sheet-vs-cell evidence ratio
+    (:func:`_paper_evidence_balance`) is computed per round from paper
+    Lemma 2 (sheet ``Theta(eps^{+1})``) and Lemma 3 (cell
+    ``O(eps^{+2})``) and exposed via :attr:`last_evidence_ratio` for
+    audit-trail purposes.
 
     Mathematically:
 
         n_cap_base(r) — closed-form cosine value for round ``r``
                         (the "underlying base schedule").
         ratio(r)      = sheet / (sheet + cell)  ∈ [0, 1]
-        n_cap(r)      = n_min + (n_max - n_min) * ratio(r)
+        n_cap(r)      = n_min + (n_max - n_min) * n_cap_base(r)
+        ratio         is reported via ``last_evidence_ratio``,
+                        not used as the driver of ``n_cap``.
 
     The :class:`Callable` ``profile_residual_fn`` maps state ``x`` to the
     residual profile ``g(x)`` (paper Lemma 2's coarea weight
@@ -1606,6 +1627,12 @@ class CodimensionSheetScheduler:
     form supplies the selection ratio per round, not the coarea
     integral), but two schedulers configured with different profiles
     must be distinguishable in the audit trail.
+
+    The ``eps_direction`` parameter selects between the paper-aligned
+    ``"decreasing"`` direction (default: r=0 high fresh-noise, r=L-1
+    low fresh-noise, matching paper Theorem 1's ``eps -> 0`` limit)
+    and the legacy ``"increasing"`` direction (reversed ramp, retained
+    for backward compatibility with a :class:`DeprecationWarning`).
 
     Conforms to :class:`SchedulerProtocol`. Pure w.r.t. arguments.
     """
@@ -1618,6 +1645,7 @@ class CodimensionSheetScheduler:
         n_max: float = 1.0,
         profile_residual_fn: Callable[[float], float] | None = None,
         eps_implicit: float = 0.05,
+        eps_direction: str = "decreasing",
         seed: int = 0,
     ) -> None:
         """Construct the codimension-driven scheduler.
@@ -1636,6 +1664,19 @@ class CodimensionSheetScheduler:
             the sheet dominates as ``eps -> 0``; this scheduler treats
             ``eps_implicit`` as a hyperparameter that drives the
             scheduler's sensitivity to the sheet-vs-cell trade-off.
+        :param eps_direction: ``"decreasing"`` (paper's convention,
+            default) or ``"increasing"`` (legacy). ``"decreasing"`` is
+            the framework's monotone coarse-to-fine anneal: at ``r=0``
+            the fresh-noise capacity is high (lots of fresh noise, large
+            implicit ``eps``) and at ``r=L-1`` it is low (memory
+            dominant, small implicit ``eps``). Paper Theorem 1's
+            ``eps -> 0`` selects the sheet; the same direction is
+            realised by the cycle's terminal round under
+            ``"decreasing"``. ``"increasing"`` reverses the cosine ramp
+            (r=0 small noise, r=L-1 large noise) and emits a
+            :class:`DeprecationWarning` at construction time; callers
+            that previously relied on the inverted direction should
+            migrate to ``"decreasing"``.
         :param seed: included for protocol signature parity with
             stochastic schedulers; the codimension family is
             deterministic and only participates in the frozen
@@ -1679,11 +1720,34 @@ class CodimensionSheetScheduler:
                 f"profile_residual_fn must be callable or None, "
                 f"got {profile_residual_fn!r}"
             )
+        if not isinstance(eps_direction, str):
+            raise ValueError(
+                f"eps_direction must be a string, got {eps_direction!r}"
+            )
+        normalised_direction = eps_direction.strip().lower()
+        if normalised_direction not in ("decreasing", "increasing"):
+            raise ValueError(
+                "eps_direction must be one of 'decreasing' or "
+                f"'increasing', got {eps_direction!r}"
+            )
+        if normalised_direction == "increasing":
+            warnings.warn(
+                "CodimensionSheetScheduler(eps_direction='increasing') is "
+                "the legacy inverted convention (r=0 small noise, "
+                "r=L-1 large noise); it is the opposite of paper "
+                "Theorem 1's eps -> 0 limit. Migrate to "
+                "eps_direction='decreasing' (the paper-aligned default). "
+                "The 'increasing' option will be removed in a future "
+                "release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         self._cycle_length = int(cycle_length)
         self._n_min = float(n_min)
         self._n_max = float(n_max)
         self._eps_implicit = float(eps_f)
+        self._eps_direction = normalised_direction
         self._seed = int(seed)
         self._profile_residual_fn = profile_residual_fn
         self._profile_signature = self._compute_profile_signature(
@@ -1701,6 +1765,7 @@ class CodimensionSheetScheduler:
         )
 
         self._last_sample: ScheduleSample | None = None
+        self._last_evidence_ratio: float | None = None
         self._config_hash_value = hash_artifact(
             {
                 "algorithm": "codimension_sheet",
@@ -1709,6 +1774,7 @@ class CodimensionSheetScheduler:
                 "n_min": float(self._n_min),
                 "n_max": float(self._n_max),
                 "eps_implicit": float(self._eps_implicit),
+                "eps_direction": str(self._eps_direction),
                 "seed": int(self._seed),
                 "profile_signature": str(self._profile_signature),
                 "base_config_hash": str(self._base.config_hash()),
@@ -1721,6 +1787,18 @@ class CodimensionSheetScheduler:
     def eps_implicit(self) -> float:
         """Return the implicit noise scale in evidence units."""
         return float(self._eps_implicit)
+
+    @property
+    def eps_direction(self) -> str:
+        """Return the configured ``eps_direction`` (``"decreasing"`` or
+        ``"increasing"``).
+
+        ``"decreasing"`` is paper Theorem 1's convention: ``r=0`` produces
+        large fresh-noise capacity (large implicit ``eps``) and ``r=L-1``
+        produces small fresh-noise capacity (small implicit ``eps``).
+        ``"increasing"`` is the legacy inverted convention.
+        """
+        return str(self._eps_direction)
 
     @property
     def profile_residual_fn(self) -> Callable[[float], float] | None:
@@ -1754,6 +1832,18 @@ class CodimensionSheetScheduler:
         """Return the most recent sample, or ``None`` after :meth:`reset`."""
         return self._last_sample
 
+    @property
+    def last_evidence_ratio(self) -> float | None:
+        """Return the most recent sheet-vs-cell evidence ratio.
+
+        The ratio is a reportable metric derived from paper Lemma 2 +
+        Lemma 3 (sheet ``Theta(eps^{+1})``, cell ``O(eps^{+2})``). It
+        is not the driver of :attr:`last_sample.n_cap`; the framework's
+        coarse-to-fine anneal lives in the cosine ramp. ``None`` until
+        the first :meth:`sample` call.
+        """
+        return self._last_evidence_ratio
+
     # -- SchedulerProtocol -------------------------------------------------
 
     def sample(
@@ -1768,10 +1858,19 @@ class CodimensionSheetScheduler:
 
         1. Ask the underlying cosine base for ``n_cap_base(r)`` (canonical
            closed form, ADR-0010).
-        2. Compute the sheet-vs-cell evidence ratio
-           ``r_ratio = _paper_evidence_balance(n_cap_base, eps_implicit)``.
-        3. Map the ratio into the configured ``[n_min, n_max]`` envelope
-           and clip into ``[0, 1]`` defensively.
+        2. Apply ``eps_direction``: ``"decreasing"`` (paper's convention,
+           default) keeps the cosine ramp so ``r=0`` is the high-noise
+           end and ``r=L-1`` is the low-noise end; ``"increasing"``
+           (legacy) flips the ramp.
+        3. Map the ramped value into the configured ``[n_min, n_max]``
+           envelope and clip into ``[0, 1]`` defensively.
+        4. Compute the sheet-vs-cell evidence ratio
+           ``ratio = _paper_evidence_balance(n_cap_base, eps_implicit)``
+           using paper's positive ``eps`` powers (Lemma 2: sheet
+           ``Theta(eps^{+1})``; Lemma 3: cell ``O(eps^{+2})``) and cache
+           it on the scheduler for the audit trail. The ratio is a
+           *reportable metric*, not the driver of ``n_cap``; the
+           framework's coarse-to-fine anneal lives in the cosine ramp.
         """
         outer_cycle_id = _coerce_int_nonneg(outer_cycle_id, "outer_cycle_id")
         target_round = _coerce_int_nonneg(target_round, "target_round")
@@ -1795,15 +1894,30 @@ class CodimensionSheetScheduler:
                 n_cap_for_round(self._base.config, int(round_in_cycle))
             )
 
-        ratio = float(
-            _paper_evidence_balance(n_cap_base, self._eps_implicit)
-        )
-        raw = self._n_min + (self._n_max - self._n_min) * ratio
+        # Apply the eps_direction. ``decreasing`` is paper's convention:
+        # the cycle's terminal round sits at the low-noise end of the
+        # anneal (paper Theorem 1's eps -> 0 selects the sheet). The
+        # legacy ``increasing`` mode reverses the ramp so r=0 sits at
+        # the low-noise end; this is the opposite of paper Theorem 1
+        # and is kept only for backward compatibility.
+        if self._eps_direction == "increasing":
+            n_cap_base = 1.0 - n_cap_base
+
+        raw = self._n_min + (self._n_max - self._n_min) * n_cap_base
         if not math.isfinite(raw):
             raise ValueError(
                 f"codimension closed form produced a non-finite n_cap={raw!r}"
             )
         n_cap = float(max(0.0, min(1.0, raw)))
+
+        # The paper's evidence balance is a reportable metric, not the
+        # driver of n_cap. With paper-positive eps powers the ratio
+        # tends to 1 (sheet dominance) at small effective eps, matching
+        # Theorem 1.
+        ratio = float(
+            _paper_evidence_balance(n_cap_base, self._eps_implicit)
+        )
+        self._last_evidence_ratio = ratio
 
         sample = ScheduleSample(
             outer_cycle_id=outer_cycle_id,
@@ -1841,6 +1955,7 @@ class CodimensionSheetScheduler:
     def reset(self) -> None:
         """Drop the cached sample so a re-run starts from a clean state."""
         self._last_sample = None
+        self._last_evidence_ratio = None
         self._base.reset()
 
     def record_round_feedback(
@@ -1907,6 +2022,7 @@ def _codimension_sheet_factory(
     n_max: float = 1.0,
     profile_residual_fn: Callable[[float], float] | None = None,
     eps_implicit: float = 0.05,
+    eps_direction: str = "decreasing",
     seed: int = 0,
 ) -> CodimensionSheetScheduler:
     """Factory for :class:`CodimensionSheetScheduler`.
@@ -1923,6 +2039,7 @@ def _codimension_sheet_factory(
         n_max=n_max,
         profile_residual_fn=profile_residual_fn,
         eps_implicit=eps_implicit,
+        eps_direction=eps_direction,
         seed=seed,
     )
 

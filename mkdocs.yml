@@ -128,6 +128,9 @@ not_in_nav: |
   candidate_registry_init.md
   lean_issue_re_inference_provenance.md
   adr/*.md
+  INSIGHTS.md
+  audit/*.md
+  review/*.md
 
 validation:
   nav:

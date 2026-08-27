@@ -96,6 +96,9 @@ from adaptive_reflow.algorithm.scheduler import (  # noqa: E402
     PolynomialScheduler,
     SigmoidScheduler,
 )
+from adaptive_reflow.data.target_distributions import (  # noqa: E402
+    mode_centers_for_target,
+)
 from adaptive_reflow.eval.posterior_selection_evaluator import (  # noqa: E402
     PosteriorSelectionEvaluator,
 )
@@ -620,17 +623,13 @@ def _coverage_at_round(
 
 
 def _mode_centers_for(target: str) -> NDArray[np.float64]:
-    """Re-export the evaluator's mode centres for the chosen target."""
-    from adaptive_reflow.eval.twodim_fm_evaluator import (
-        _EIGHT_GAUSSIANS_MODE_CENTERS,
-        _TWO_MOONS_MODE_CENTERS,
-    )
+    """Return the canonical coverage-mode centres for ``target``.
 
-    if target == "two_moons":
-        return _TWO_MOONS_MODE_CENTERS
-    if target == "eight_gaussians":
-        return _EIGHT_GAUSSIANS_MODE_CENTERS
-    raise ValueError(f"unknown_target:{target}")
+    Pulled directly from :mod:`adaptive_reflow.data.target_distributions`
+    (the single source of truth; ADR-DTB-R7-B2). Same array reference
+    that the 2D-FM evaluator's Voronoi coverage uses.
+    """
+    return mode_centers_for_target(target)
 
 
 def _score_round(

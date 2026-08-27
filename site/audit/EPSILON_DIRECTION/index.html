@@ -1,0 +1,1283 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Epsilon-direction audit: CosineAnnealScheduler vs. paper Theorem 1 - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#epsilon-direction-audit-cosineannealscheduler-vs-paper-theorem-1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Epsilon-direction audit: CosineAnnealScheduler vs. paper Theorem 1
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#section-1-the-papers-epsilon-direction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 1 — The paper's epsilon-direction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 1 — The paper&#39;s epsilon-direction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-what-eps-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 What eps is
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-the-limit-statement-theorem-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 The limit statement (Theorem 1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-the-three-scale-facts-that-define-the-direction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 The three scale facts that define the direction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-the-geometric-meaning-of-small-eps-lemma-2s-rescaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 The geometric meaning of small eps (Lemma 2's rescaling)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-2-the-frameworks-round-direction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 2 — The framework's round-direction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 2 — The framework&#39;s round-direction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-n_capr-the-exact-closed-form" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 n_cap(r): the exact closed form
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-which-convention-is-it-memory_fraction-1-n_cap-or" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Which convention is it: memory_fraction = 1 - n_cap or
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-where-n_cap-is-consumed-runner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Where n_cap is consumed (runner)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-physical-reading-of-the-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Physical reading of the endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-3-comparison-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 3 — Comparison table
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-4-verdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 4 — Verdict
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 4 — Verdict">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-cosineannealscheduler-aligned-with-a-caveat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 CosineAnnealScheduler: ALIGNED (with a caveat)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-codimensionsheetscheduler_paper_evidence_balance-reversed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 CodimensionSheetScheduler._paper_evidence_balance: REVERSED
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-5-proposal-minimal-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 5 — Proposal (minimal changes)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 5 — Proposal (minimal changes)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-fix-the-inverted-exponents-in-_paper_evidence_balance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Fix the inverted exponents in _paper_evidence_balance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-no-rename-needed-one-docstring-precision-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 No rename needed; one docstring precision fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-optional-assert-the-direction-in-a-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Optional: assert the direction in a test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="epsilon-direction-audit-cosineannealscheduler-vs-paper-theorem-1">Epsilon-direction audit: <code>CosineAnnealScheduler</code> vs. paper Theorem 1<a class="headerlink" href="#epsilon-direction-audit-cosineannealscheduler-vs-paper-theorem-1" title="Permanent link">&para;</a></h1>
+<p><strong>Scope.</strong> Does the framework's per-round progression <code>r = 0 .. L-1</code> move in the
+same direction as the paper's asymptotic parameter <code>eps -&gt; 0</code>?</p>
+<p><strong>Sources.</strong>
+* Paper: <code>NoiseSelectedRectification_EN.md</code> (repo root).
+* Code: <code>adaptive_reflow/algorithm/scheduler.py</code>,
+  <code>adaptive_reflow/schedule/cosine.py</code>,
+  <code>adaptive_reflow/algorithm/policy_driver.py</code>,
+  <code>adaptive_reflow/algorithm/runner.py</code>,
+  <code>adaptive_reflow/adapters/twodim_fm.py</code>.</p>
+<p><strong>Method.</strong> Read the paper in full; traced <code>n_cap</code> from its closed form through
+the policy driver, the runner, and into the adapter's restart blend; then
+compared the two "start -&gt; end" directions. No code was modified.</p>
+<hr />
+<h2 id="section-1-the-papers-epsilon-direction">Section 1 — The paper's epsilon-direction<a class="headerlink" href="#section-1-the-papers-epsilon-direction" title="Permanent link">&para;</a></h2>
+<h3 id="11-what-eps-is">1.1 What <code>eps</code> is<a class="headerlink" href="#11-what-eps-is" title="Permanent link">&para;</a></h3>
+<p><code>NoiseSelectedRectification_EN.md:77-80</code> — the posterior is</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mu_{g,eps}(A) = (1/Z_{g,eps}) * int_A phi_2(z) exp[-|F_g(z)|^2 / (2 eps^2)] dz
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Z_{g,eps}     = int_{R^2} phi_2(z) exp[-|F_g(z)|^2 / (2 eps^2)] dz
+</code></pre></div>
+<p><code>eps</code> is the <strong>observation-noise level</strong> on the constraint <code>F(z) = 0</code>
+(<code>:20</code>, "imposed with noise level <code>eps &gt; 0</code>"). It is <em>not</em> a step index and
+not a temperature on the prior — it multiplies only the residual/likelihood
+term. Small <code>eps</code> = tight constraint = strong selection.</p>
+<h3 id="12-the-limit-statement-theorem-1">1.2 The limit statement (Theorem 1)<a class="headerlink" href="#12-the-limit-statement-theorem-1" title="Permanent link">&para;</a></h3>
+<p><code>:88-91</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mu_{g,eps}  --BL--&gt;  nu_g          as eps ↓ 0
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>mu_{g,eps}( U_z I_z ) = O(eps)     as eps ↓ 0
+</code></pre></div>
+<p>with the limit law (<code>:82-83</code>) supported on the codimension-1 sheet:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>q_g(x) = e^{-x^2/2} / sqrt(1 + g(x)^2),   int phi dnu_g = Q_g^{-1} int phi(x,0) q_g(x) dx
+</code></pre></div>
+<p>So <strong><code>eps ↓ 0</code> is the direction of increasing selection</strong>: mass concentrates on
+the chosen codimension-1 component and the countable codimension-2 family is
+starved.</p>
+<h3 id="13-the-three-scale-facts-that-define-the-direction">1.3 The three scale facts that define the direction<a class="headerlink" href="#13-the-three-scale-facts-that-define-the-direction" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Object</th>
+<th>Statement</th>
+<th>Location</th>
+<th>Scaling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sheet tube</td>
+<td><code>eps^{-1} int_T phi p_eps -&gt; (2pi)^{-1/2} int phi(s,0) e^{-s^2/2}/sqrt(1+g(s)^2) ds</code></td>
+<td>Lemma 2, <code>:101-103</code></td>
+<td><code>int_T p_eps = Theta(eps^{+1})</code></td>
+</tr>
+<tr>
+<td>Root cells</td>
+<td><code>int_{I_z} p_eps &lt;= C_g e^{-z^2/4} eps^2</code>; total <code>O(eps^2)</code></td>
+<td>Lemma 3, <code>:107</code></td>
+<td><code>O(eps^{+2})</code></td>
+</tr>
+<tr>
+<td>Evidence</td>
+<td><code>Z_{g,eps} &gt;= C_1 eps</code>; <code>mu(U I_z) &lt;= C_2 eps</code></td>
+<td>Corollary 1, <code>:165-168</code></td>
+<td>denominator <code>Theta(eps^{+1})</code></td>
+</tr>
+<tr>
+<td>Complement</td>
+<td><code>&lt;= e^{-e_rho/(2 eps^2)} = o(eps)</code></td>
+<td>Lemma 4, <code>:111-112</code></td>
+<td>exponentially small</td>
+</tr>
+</tbody>
+</table>
+<p>All exponents are <strong>positive powers of <code>eps</code></strong>. The mechanism (<code>:153</code>):</p>
+<blockquote>
+<p>"The sheet has only one normal direction and has evidence of order <code>eps</code>.
+This difference of normal dimension is the selection mechanism."</p>
+</blockquote>
+<p>The cell/sheet ratio is <code>O(eps^2)/Theta(eps) = O(eps) -&gt; 0</code>.</p>
+<h3 id="14-the-geometric-meaning-of-small-eps-lemma-2s-rescaling">1.4 The geometric meaning of small <code>eps</code> (Lemma 2's rescaling)<a class="headerlink" href="#14-the-geometric-meaning-of-small-eps-lemma-2s-rescaling" title="Permanent link">&para;</a></h3>
+<p><code>:180-184</code> — the substitution in the sheet tube <code>T = {|y| &lt;= 1/2}</code> is</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>x = s,  y = eps * u          (quoted: "On T = {|y| &lt;= 1/2} use x = s, y = eps u.")
+</code></pre></div>
+<p>The tube in the <em>ambient</em> <code>y</code> coordinate has width <code>~eps</code>. <strong>Small <code>eps</code> = thin
+tube</strong>; the single Jacobian factor <code>eps</code> from <code>dy = eps du</code> is exactly the
+<code>eps^{+1}</code> sheet evidence. An isolated cell gets <em>two</em> such factors
+(<code>:156</code>, "The sheet-tube substitution has one Jacobian factor <code>eps</code>, whereas an
+isolated cell has two"), which is why it decays faster.</p>
+<p><strong>Paper's direction, one line:</strong> <code>eps</code> large -&gt; diffuse ambient posterior, no
+selection; <code>eps ↓ 0</code> -&gt; thin tube, sheet selected, cells <code>O(eps)</code> after
+normalization.</p>
+<hr />
+<h2 id="section-2-the-frameworks-round-direction">Section 2 — The framework's round-direction<a class="headerlink" href="#section-2-the-frameworks-round-direction" title="Permanent link">&para;</a></h2>
+<h3 id="21-n_capr-the-exact-closed-form">2.1 <code>n_cap(r)</code>: the exact closed form<a class="headerlink" href="#21-n_capr-the-exact-closed-form" title="Permanent link">&para;</a></h3>
+<p><code>CosineAnnealScheduler.sample</code> does not implement the formula itself; it
+delegates (<code>adaptive_reflow/algorithm/scheduler.py:224</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">n_cap</span> <span class="o">=</span> <span class="n">n_cap_for_round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">,</span> <span class="n">round_in_cycle</span><span class="p">)</span>
+</code></pre></div>
+<p>The canonical closed form is <code>adaptive_reflow/schedule/cosine.py:219-227</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">u_r</span> <span class="o">=</span> <span class="n">r</span> <span class="o">/</span> <span class="p">(</span><span class="n">L</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>                                                  <span class="c1"># :219</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="o">...</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">n_cap</span> <span class="o">=</span> <span class="n">n_min</span> <span class="o">+</span> <span class="p">(</span><span class="n">n_max</span> <span class="o">-</span> <span class="n">n_min</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">u_r</span><span class="p">))</span> <span class="o">/</span> <span class="mf">2.0</span>   <span class="c1"># :227</span>
+</code></pre></div>
+<p>i.e.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>n_cap(r) = n_min + (n_max - n_min) * (1 + cos(pi * r / (L - 1))) / 2
+</code></pre></div>
+<p>with the deterministic edge case <code>L == 1 -&gt; n_max</code> (<code>cosine.py:194-195</code>) and
+a defensive clip to <code>[0, 1]</code> (<code>cosine.py:233</code>). <code>scheduler.py:226</code> recomputes
+<code>u_r = r / max(L-1, 1)</code> for the sample record.</p>
+<p>Endpoints (defaults <code>n_min = 0.0</code>, <code>n_max = 1.0</code>,
+<code>default_cosine_scheduler</code>, <code>scheduler.py:296-303</code>):</p>
+<ul>
+<li><code>r = 0</code>   -&gt; <code>u_r = 0</code>, <code>cos(0) = +1</code>  -&gt; <strong><code>n_cap = n_max = 1.0</code></strong></li>
+<li><code>r = L-1</code> -&gt; <code>u_r = 1</code>, <code>cos(pi) = -1</code> -&gt; <strong><code>n_cap = n_min = 0.0</code></strong></li>
+</ul>
+<p>Measured, <code>L = 8</code>:</p>
+<table>
+<thead>
+<tr>
+<th>r</th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>n_cap</code></td>
+<td>1.0000</td>
+<td>0.9505</td>
+<td>0.8117</td>
+<td>0.6113</td>
+<td>0.3887</td>
+<td>0.1883</td>
+<td>0.0495</td>
+<td>0.0000</td>
+</tr>
+<tr>
+<td><code>memory_fraction</code></td>
+<td>0.0000</td>
+<td>0.0495</td>
+<td>0.1883</td>
+<td>0.3887</td>
+<td>0.6113</td>
+<td>0.8117</td>
+<td>0.9505</td>
+<td>1.0000</td>
+</tr>
+</tbody>
+</table>
+<p>Strictly decreasing in <code>r</code>.</p>
+<h3 id="22-which-convention-is-it-memory_fraction-1-n_cap-or">2.2 Which convention is it: <code>memory_fraction = 1 - n_cap</code> or<a class="headerlink" href="#22-which-convention-is-it-memory_fraction-1-n_cap-or" title="Permanent link">&para;</a></h3>
+<p><code>fresh_noise_fraction = n_cap</code>? — <strong>Both; they are the same statement.</strong></p>
+<p>Verified end-to-end, not assumed:</p>
+<ol>
+<li><code>ScheduleSample.memory_fraction()</code> returns <code>1 - n_cap</code> clipped
+   (<code>scheduler.py:68-78</code>); the canonical helper agrees
+   (<code>cosine.py:294</code>: <code>return float(max(0.0, min(1.0, 1.0 - n_cap)))</code>).</li>
+<li>The default policy driver sets <code>beta = n_cap</code>
+   (<code>policy_driver.py:284-294</code>: <code>n_cap_raw = schedule_sample.n_cap</code> ...
+   <code>_override_beta_by_channel(base_policy, beta_value=clipped, ...)</code>).</li>
+<li>The adapter converts back: <code>adapters/twodim_fm.py:514-515</code>
+   <code>beta = float(beta_raw)</code> / <code>memory_fraction = 1.0 - beta</code>.</li>
+<li>The blend, <code>adapters/twodim_fm.py:523</code> with
+   <code>_blend_endpoint_with_prior</code> (<code>:290-299</code>):</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">blended_x0</span> <span class="o">=</span> <span class="n">_blend_endpoint_with_prior</span><span class="p">(</span><span class="n">fresh_x0</span><span class="p">,</span> <span class="n">prior_x0</span><span class="p">,</span> <span class="n">memory_fraction</span><span class="p">)</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># def _blend_endpoint_with_prior(endpoint, prior, m): return m * prior + (1 - m) * endpoint</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># =&gt; blended_x0 = memory_fraction * prior_x0 + (1 - memory_fraction) * fresh_x0</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1">#              = (1 - n_cap)       * prior_x0 + n_cap                 * fresh_x0</span>
+</code></pre></div>
+<p><code>fresh_x0</code> is drawn <code>N(0, I_2)</code> at <code>twodim_fm.py:522</code>. The generic blender
+carries identical math (<code>algorithm/blender.py:194-209</code>,
+<code>m*prior + (1-m)*fresh</code>), as does the toy adapter
+(<code>adapters/toy_gaussian.py:104-106</code>, <code>325-333</code>).</p>
+<p><strong>Verdict on the convention:</strong>
+<code>n_cap</code> <strong>is</strong> the fresh-noise fraction — the literal coefficient multiplying
+the freshly sampled <code>N(0, I)</code> draw. <code>1 - n_cap</code> is the retained-prior
+(memory) fraction. Both docstring claims are correct and mutually consistent.</p>
+<h3 id="23-where-n_cap-is-consumed-runner">2.3 Where <code>n_cap</code> is consumed (runner)<a class="headerlink" href="#23-where-n_cap-is-consumed-runner" title="Permanent link">&para;</a></h3>
+<p><code>adaptive_reflow/algorithm/runner.py</code>:</p>
+<ul>
+<li><code>:453-455</code> — <code>sample = self._scheduler.sample(outer_cycle_id, r, target_round + r)</code>.</li>
+<li><code>:456-462</code> — base policy built with placeholder <code>beta = 0.0</code>,
+  <code>beta_from_schedule=True</code>.</li>
+<li><code>:463-468</code> — <code>applied_policy = self._driver.compute_policy(sample.as_cosine_schedule_sample(), ...)</code>;
+  with the default <code>ScheduleDerivedPolicyDriver</code> this stamps
+  <code>beta_by_channel[c] = n_cap</code> for every channel.</li>
+<li><code>:480-488</code> — <code>Engine.run_round(...)</code> receives that policy; the adapter's
+  <code>apply_restart_distribution</code> performs the blend of §2.2.</li>
+<li><code>:509-515</code> — the round's metric dict records <code>n_cap</code>,
+  <code>memory_fraction = 1 - n_cap</code>, and <code>beta</code>.</li>
+<li><code>:532-538</code> — optional <code>selection_ratio</code> from <code>PosteriorSelectionEvaluator</code>.</li>
+<li><code>:545-546</code> — <code>record_round_feedback(r, metric)</code> for adaptive families.</li>
+</ul>
+<p><strong>Fresh-noise injection amount per round</strong> = <code>n_cap(r)</code> — the weight on
+<code>fresh_x0 ~ N(0, I_2)</code> — falling from <code>1.0</code> at <code>r = 0</code> to <code>0.0</code> at
+<code>r = L-1</code>.</p>
+<h3 id="24-physical-reading-of-the-endpoints">2.4 Physical reading of the endpoints<a class="headerlink" href="#24-physical-reading-of-the-endpoints" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>r = 0</code>, <code>n_cap = 1.0</code>: the blend is <code>0*prior + 1*fresh</code> — the prior endpoint
+  is <strong>entirely discarded</strong>, the round restarts from pure <code>N(0, I)</code>. Maximum
+  exploration, zero memory.</li>
+<li><code>r = L-1</code>, <code>n_cap = 0.0</code>: the blend is <code>1*prior + 0*fresh</code> — <strong>no fresh noise
+  at all</strong>, the prior endpoint is carried forward verbatim. Maximum
+  refinement, full memory.</li>
+</ul>
+<p>This is a monotone coarse-to-fine anneal, exactly as
+<code>cosine.py:244-257</code> and ADR-0010 describe.</p>
+<hr />
+<h2 id="section-3-comparison-table">Section 3 — Comparison table<a class="headerlink" href="#section-3-comparison-table" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Paper (<code>eps</code>)</th>
+<th>Framework (round <code>r</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Control parameter</td>
+<td>noise level <code>eps &gt; 0</code> on the residual (<code>:77-80</code>)</td>
+<td>fresh-noise fraction <code>n_cap(r) in [0,1]</code> (<code>cosine.py:227</code>)</td>
+</tr>
+<tr>
+<td>Where it acts</td>
+<td>divides the residual: <code>exp(-|F|^2 / 2 eps^2)</code></td>
+<td>multiplies the fresh <code>N(0,I)</code> draw: <code>n_cap*fresh + (1-n_cap)*prior</code> (<code>twodim_fm.py:290-299, 523</code>)</td>
+</tr>
+<tr>
+<td><strong>Start</strong></td>
+<td><code>eps</code> large: fat tube, no selection, posterior ~ ambient prior</td>
+<td><code>r = 0</code>: <code>n_cap = n_max = 1.0</code>, <code>memory_fraction = 0</code>, blend = pure fresh noise</td>
+</tr>
+<tr>
+<td><strong>End</strong></td>
+<td><code>eps ↓ 0</code>: tube width <code>~eps</code> (<code>y = eps u</code>, <code>:180</code>), sheet selected, cells <code>O(eps)</code> (<code>:88</code>)</td>
+<td><code>r = L-1</code>: <code>n_cap = n_min = 0.0</code>, <code>memory_fraction = 1.0</code>, blend = pure prior, no injection</td>
+</tr>
+<tr>
+<td>Monotonicity</td>
+<td><code>eps</code> decreases toward 0</td>
+<td><code>n_cap(r)</code> strictly decreases toward <code>n_min</code></td>
+</tr>
+<tr>
+<td>Selected object grows</td>
+<td>sheet posterior mass -&gt; 1</td>
+<td>prior/memory weight -&gt; 1 (state stops being perturbed)</td>
+</tr>
+<tr>
+<td>Competing object shrinks</td>
+<td>root-cell mass <code>O(eps) -&gt; 0</code> (Cor. 1, <code>:166</code>)</td>
+<td>fresh-noise perturbation <code>-&gt; 0</code></td>
+</tr>
+<tr>
+<td>Normalizer / denominator</td>
+<td><code>Z_{g,eps} &gt;= C_1 eps -&gt; 0</code> linearly (<code>:165</code>)</td>
+<td>no analogue — the framework normalizes nothing per round</td>
+</tr>
+<tr>
+<td>Governing exponents</td>
+<td>sheet <code>eps^{+1}</code>, cell <code>eps^{+2}</code> (Lemmas 2, 3)</td>
+<td>none — <code>n_cap</code> is a linear mixing weight, not an evidence scale</td>
+</tr>
+</tbody>
+</table>
+<p>Correspondence: <strong><code>eps ~ n_cap(r)</code></strong>, i.e. <code>r</code> increasing plays the role of
+<code>eps ↓ 0</code>.</p>
+<hr />
+<h2 id="section-4-verdict">Section 4 — Verdict<a class="headerlink" href="#section-4-verdict" title="Permanent link">&para;</a></h2>
+<h3 id="41-cosineannealscheduler-aligned-with-a-caveat">4.1 <code>CosineAnnealScheduler</code>: <strong>ALIGNED</strong> (with a caveat)<a class="headerlink" href="#41-cosineannealscheduler-aligned-with-a-caveat" title="Permanent link">&para;</a></h3>
+<p>The round progression <code>r: 0 -&gt; L-1</code> drives <code>n_cap: n_max -&gt; n_min</code>, i.e.
+monotonically <em>less</em> fresh noise, which is the same sense as the paper's
+<code>eps ↓ 0</code>. Under the identification <code>eps ~ n_cap</code>:</p>
+<ul>
+<li>start of cycle &lt;-&gt; large <code>eps</code> &lt;-&gt; weak selection: correct;</li>
+<li>end of cycle &lt;-&gt; <code>eps -&gt; 0</code> &lt;-&gt; strong selection / concentration: correct;</li>
+<li>the loop's terminal state (<code>n_cap = 0</code>, pure memory, no injection) is the
+  fixed point corresponding to <code>eps = 0</code>: correct.</li>
+</ul>
+<p>No flip is required in <code>CosineAnnealScheduler</code>, <code>n_cap_for_round</code>,
+<code>memory_fraction_from_schedule</code>, <code>ScheduleDerivedPolicyDriver</code>, or the adapter
+blend. The naming is also self-consistent: <code>n_cap</code> = fresh-noise capacity,
+<code>1 - n_cap</code> = memory.</p>
+<p><strong>Caveat (why this is alignment of <em>sense</em>, not of <em>magnitude</em>).</strong> The
+correspondence <code>eps ~ n_cap</code> is qualitative only. The paper's <code>eps</code> sits inside
+<code>exp(-|F|^2 / 2 eps^2)</code> and produces the <code>eps^1</code> / <code>eps^2</code> evidence orders that
+<em>are</em> the selection mechanism; the framework's <code>n_cap</code> is a convex mixing weight
+on a state vector. Nothing in the framework computes an evidence integral, so
+no round carries an <code>eps^1</code>-vs-<code>eps^2</code> competition. The scheduler is therefore
+<strong>directionally aligned but dimensionally orthogonal</strong>: it is a plausible
+surrogate for the <code>eps</code> axis, not an instantiation of it. Claims of the form
+"round <code>L-1</code> realizes Theorem 1's limit" are not supported by the code as
+written; only "round <code>L-1</code> is the low-noise end of a monotone anneal" is.</p>
+<h3 id="42-codimensionsheetscheduler_paper_evidence_balance-reversed">4.2 <code>CodimensionSheetScheduler._paper_evidence_balance</code>: <strong>REVERSED</strong><a class="headerlink" href="#42-codimensionsheetscheduler_paper_evidence_balance-reversed" title="Permanent link">&para;</a></h3>
+<p>This is the one place that explicitly claims to instantiate Theorem 1, and its
+<code>eps</code> exponents are inverted relative to the paper.</p>
+<p><code>scheduler.py:1591-1592</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">sheet</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_clipped</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>          <span class="c1"># eps^{-1}</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">cell</span>  <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">n_clipped</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">eps</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>   <span class="c1"># eps^{-2}</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">sheet</span> <span class="o">/</span> <span class="p">(</span><span class="n">sheet</span> <span class="o">+</span> <span class="n">cell</span><span class="p">))</span>
+</code></pre></div>
+<p>and the docstring at <code>scheduler.py:1564-1566</code>:</p>
+<blockquote>
+<p>"Paper Lemma 2 says the sheet's contribution to the round's posterior scales
+like <code>eps^{-1}</code>; paper Lemma 3 says each root cell contributes at most
+<code>O(eps^2)</code>."</p>
+</blockquote>
+<p>Both halves are wrong or mismatched against the source:</p>
+<ol>
+<li><strong>Lemma 2 does not say the sheet scales like <code>eps^{-1}</code>.</strong> It says
+   <code>eps^{-1} int_T phi p_eps</code> <em>converges to a finite positive constant</em>
+   (<code>:101-103</code>), hence <code>int_T p_eps = Theta(eps^{+1})</code>. The <code>eps^{-1}</code> is the
+   rescaling applied to expose the limit, not the sheet's evidence.
+   Corollary 1's <code>Z_{g,eps} &gt;= C_1 eps</code> (<code>:165</code>) states the same positive power.</li>
+<li><strong>Lemma 3's bound is <code>&lt;= C_g e^{-z^2/4} eps^2</code></strong> (<code>:107</code>), a positive power,
+   but the code divides by <code>eps^2</code>, turning the paper's <em>faster-decaying</em>
+   competitor into the <em>faster-growing</em> one.</li>
+</ol>
+<p>Consequence — the ratio moves the wrong way:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>paper:  cell/sheet = O(eps^2)/Theta(eps) = O(eps)      -&gt; 0   as eps -&gt; 0  (sheet wins)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>code:   cell/sheet = [(1-n)^2/eps^2] / [1/eps] = (1-n)^2/eps -&gt; inf as eps -&gt; 0  (cell wins)
+</code></pre></div>
+<p>Measured <code>_paper_evidence_balance(n_cap_base=0.5, eps)</code>:</p>
+<table>
+<thead>
+<tr>
+<th><code>eps</code></th>
+<th>0.5</th>
+<th>0.2</th>
+<th>0.1</th>
+<th>0.05</th>
+<th>0.01</th>
+<th>0.001</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ratio (claims "sheet share")</td>
+<td>0.6667</td>
+<td>0.2424</td>
+<td>0.0741</td>
+<td>0.0196</td>
+<td>0.0008</td>
+<td>0.000008</td>
+</tr>
+</tbody>
+</table>
+<p>The paper requires this column to tend to <strong>1</strong> as <code>eps ↓ 0</code>
+(Theorem 1, <code>:88</code>). It tends to <strong>0</strong>. Since the value is documented as
+"<code>ratio == 1</code> means sheet evidence dominates" (<code>scheduler.py:1573-1574</code>), the
+scheduler currently reports maximal <em>cell</em> dominance in precisely the regime
+where the paper proves the sheet is selected.</p>
+<p>A second, downstream symptom: because the ratio is non-monotone in
+<code>n_cap_base</code>, the resulting schedule is non-monotone in <code>r</code>. Measured, <code>L = 8</code>,
+defaults:</p>
+<table>
+<thead>
+<tr>
+<th>r</th>
+<th>0</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>n_cap</code></td>
+<td>1.0000</td>
+<td>0.5176</td>
+<td>0.0800</td>
+<td>0.0264</td>
+<td><strong>0.0169</strong></td>
+<td>0.0198</td>
+<td>0.0524</td>
+<td>0.0476</td>
+</tr>
+</tbody>
+</table>
+<p>Capacity bottoms out at <code>r = 4</code> and then <em>rises</em> — fresh-noise injection
+increases again in the second half of the cycle, and <code>r = L-1</code> is not the
+minimum. That contradicts both the cosine base it composes over and the paper's
+monotone <code>eps ↓ 0</code> picture.</p>
+<p><code>scheduler.py:1645-1650</code> also documents <code>eps_implicit</code> as "Paper's Theorem 1
+says the sheet dominates as <code>eps -&gt; 0</code>; this scheduler treats <code>eps_implicit</code> as
+a hyperparameter that drives the scheduler's sensitivity" — the first clause is
+right, the implementation contradicts it.</p>
+<h3 id="43-summary">4.3 Summary<a class="headerlink" href="#43-summary" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>n_cap_for_round</code> / <code>CosineAnnealScheduler</code> round-direction</td>
+<td><strong>Aligned</strong> in sense; orthogonal in mechanism</td>
+</tr>
+<tr>
+<td><code>memory_fraction = 1 - n_cap</code>; <code>n_cap</code> = fresh-noise weight</td>
+<td>Consistent, verified end-to-end</td>
+</tr>
+<tr>
+<td><code>ScheduleDerivedPolicyDriver</code> (<code>beta = n_cap</code>)</td>
+<td>Aligned</td>
+</tr>
+<tr>
+<td><code>LinearScheduler</code>, <code>ExponentialScheduler</code></td>
+<td>Aligned (both non-increasing in <code>r</code>)</td>
+</tr>
+<tr>
+<td><code>PolynomialScheduler</code>, <code>SigmoidScheduler</code></td>
+<td>Aligned / direction-configurable (sigmoid flips with negative <code>steepness</code>)</td>
+</tr>
+<tr>
+<td><code>_paper_evidence_balance</code> / <code>CodimensionSheetScheduler</code></td>
+<td><strong>Reversed</strong> — <code>eps</code> exponents inverted vs. Lemmas 2, 3, Cor. 1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="section-5-proposal-minimal-changes">Section 5 — Proposal (minimal changes)<a class="headerlink" href="#section-5-proposal-minimal-changes" title="Permanent link">&para;</a></h2>
+<p><code>CosineAnnealScheduler</code> needs no change. Two changes are proposed, one
+substantive and one documentary. <strong>Neither is applied — this audit is
+read-only.</strong></p>
+<h3 id="51-fix-the-inverted-exponents-in-_paper_evidence_balance">5.1 Fix the inverted exponents in <code>_paper_evidence_balance</code><a class="headerlink" href="#51-fix-the-inverted-exponents-in-_paper_evidence_balance" title="Permanent link">&para;</a></h3>
+<p><strong>File:</strong> <code>adaptive_reflow/algorithm/scheduler.py</code>
+<strong>Lines:</strong> <code>1591-1592</code> (the two expressions), plus the docstring <code>1564-1574</code>.</p>
+<p>Current:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">sheet</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_clipped</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>              <span class="c1"># scheduler.py:1591</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">cell</span>  <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">n_clipped</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">eps</span> <span class="o">*</span> <span class="n">eps</span><span class="p">)</span>   <span class="c1"># scheduler.py:1592</span>
+</code></pre></div>
+<p>Minimal fix — restore the paper's positive powers (Lemma 2: sheet
+<code>Theta(eps^1)</code>; Lemma 3: cell <code>O(eps^2)</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">sheet</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_clipped</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>                    <span class="c1"># eps^{+1}  (Lemma 2 / Cor. 1)</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">cell</span>  <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">n_clipped</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">eps</span> <span class="o">*</span> <span class="n">eps</span>     <span class="c1"># eps^{+2}  (Lemma 3)</span>
+</code></pre></div>
+<p><code>ratio = sheet / (sheet + cell)</code> then tends to <code>1</code> as <code>eps -&gt; 0</code> for every
+<code>n_clipped &lt; 1</code>, matching Theorem 1 (<code>:88</code>) and Corollary 1's
+<code>mu(U I_z) &lt;= C_2 eps</code> (<code>:166</code>). The guard at <code>1586-1590</code> remains valid:
+<code>sheet &gt;= eps &gt; 0</code>, <code>cell &gt;= 0</code>, so the denominator stays positive; the
+<code>if denom &lt;= 0.0</code> branch stays correctly absent.</p>
+<p>Also correct the docstring claim at <code>scheduler.py:1564-1566</code> to:</p>
+<blockquote>
+<p>Paper Lemma 2 gives the sheet tube evidence <code>Theta(eps)</code>
+(<code>eps^{-1} int_T p_eps</code> converges to a positive constant); paper Lemma 3
+bounds each root cell by <code>O(eps^2)</code>. The cell/sheet ratio is therefore
+<code>O(eps)</code> and vanishes as <code>eps -&gt; 0</code>.</p>
+</blockquote>
+<p>The <code>(1 - n_clipped)^2</code> factor is a framework-side heuristic with no paper
+counterpart (the paper's cell bound is <code>C_g e^{-z^2/4} eps^2</code>, keyed to root
+position <code>z</code>, not to capacity). It can stay as a tunable weight, but the
+docstring should say so rather than attributing it to Lemma 3.</p>
+<p><strong>Blast radius.</strong> <code>_paper_evidence_balance</code> is exported
+(<code>scheduler.py:2004</code>) and used only by <code>CodimensionSheetScheduler.sample</code>
+(<code>scheduler.py:1810-1812</code>) and its tests. Any test asserting the current
+decreasing-in-<code>eps</code> behaviour encodes the inversion and must be updated
+alongside. <code>PosteriorSelectionEvaluator</code> computes its <code>selection_ratio</code> from
+Gaussian mode densities and does not call this helper, so it is unaffected.</p>
+<h3 id="52-no-rename-needed-one-docstring-precision-fix">5.2 No rename needed; one docstring precision fix<a class="headerlink" href="#52-no-rename-needed-one-docstring-precision-fix" title="Permanent link">&para;</a></h3>
+<p><code>n_cap</code> / <code>memory_fraction</code> are already coherent and already point the same way
+as <code>eps ↓ 0</code>. Renaming (e.g. <code>n_cap -&gt; fresh_noise_fraction</code>) would be churn
+across <code>contracts</code>, ADR-0010, the ledger schema
+(<code>FreshNoiseCumulativeMassRecord</code>), and every scheduler — not minimal, and not
+required for alignment.</p>
+<p>The one wording change worth making, for honesty about §4.1's caveat, is at
+<code>adaptive_reflow/schedule/cosine.py:244-257</code> and
+<code>adaptive_reflow/algorithm/scheduler.py:15-20</code>: state that the cycle's
+<code>n_cap</code> ramp is a <em>monotone surrogate</em> for the paper's <code>eps</code> axis — same
+direction, not the same quantity — so that ADR-0013's "posterior selection
+drives the algorithm layer" framing is not read as an implementation of
+Theorem 1's evidence competition.</p>
+<h3 id="53-optional-assert-the-direction-in-a-test">5.3 Optional: assert the direction in a test<a class="headerlink" href="#53-optional-assert-the-direction-in-a-test" title="Permanent link">&para;</a></h3>
+<p>A cheap regression guard that would have caught §4.2:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>for eps in [0.5, 0.1, 0.01, 0.001]:  ratio(n, eps) must be non-decreasing as eps decreases
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>ratio(n, eps) -&gt; 1 as eps -&gt; 0 for any n &lt; 1        # Theorem 1
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>CodimensionSheetScheduler.sample(...).n_cap must be non-increasing in r  # monotone anneal
+</code></pre></div>
+<p>The third assertion currently fails at <code>r = 4 -&gt; 5</code> (0.0169 -&gt; 0.0198).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

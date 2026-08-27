@@ -694,14 +694,44 @@ def _noop_profile(x: float) -> float:
 
 
 def test_paper_evidence_balance_helper_closed_form() -> None:
-    """_paper_evidence_balance matches the closed form in the ADR."""
+    """_paper_evidence_balance matches the paper-aligned closed form.
+
+    The formula uses the paper's *positive* eps powers: sheet
+    ``Theta(eps^{+1})`` (Lemma 2 / Cor. 1) and cell ``O(eps^{+2})``
+    (Lemma 3). As ``eps -> 0`` with ``n_clipped < 1`` the cell term
+    shrinks faster, so the ratio tends to 1 (sheet dominance),
+    matching Theorem 1.
+    """
     eps = 0.1
     for n_base in (0.0, 0.25, 0.5, 0.75, 1.0):
-        sheet = 1.0 / max(n_base, eps)
-        cell = (1.0 - n_base) ** 2 / (eps * eps)
+        n_clipped = max(0.0, min(1.0, n_base))
+        sheet = max(n_clipped, eps)
+        cell = (1.0 - n_clipped) ** 2 * eps * eps
         expected = sheet / (sheet + cell)
         got = _paper_evidence_balance(n_base, eps)
         assert got == pytest.approx(expected, rel=1e-12)
+
+
+def test_paper_evidence_balance_helper_paper_eps_zero_limit() -> None:
+    """The ratio tends to 1 as eps -> 0 for every n_clipped < 1.
+
+    Paper Theorem 1 (``:88``) requires the sheet to dominate after
+    normalization as the noise level vanishes. The helper must realise
+    this monotonic direction: the ratio is non-decreasing as eps
+    decreases toward 0 (and approaches 1 in the limit) for every
+    ``n_clipped in [0, 1)``.
+    """
+    for n_base in (0.0, 0.25, 0.5, 0.75):
+        prev_ratio = -1.0
+        for eps in (0.5, 0.1, 0.05, 0.01, 0.001, 1e-6):
+            ratio = _paper_evidence_balance(n_base, eps)
+            # Ratio is non-decreasing as eps decreases (Theorem 1
+            # direction) and approaches 1 in the limit.
+            assert ratio >= prev_ratio - 1e-12
+            assert 0.0 <= ratio <= 1.0
+            prev_ratio = ratio
+        # And in the limit the ratio is essentially 1.
+        assert prev_ratio == pytest.approx(1.0, abs=1e-6)
 
 
 def test_paper_evidence_balance_helper_rejects_invalid_eps() -> None:
@@ -714,79 +744,55 @@ def test_paper_evidence_balance_helper_rejects_invalid_eps() -> None:
         _paper_evidence_balance(0.5, -0.01)
 
 
-def test_codimension_sheet_scheduler_high_eps_stays_close_to_cosine() -> None:
-    """At eps_implicit=1.0 the codim scheduler tracks the base cosine shape.
+def test_codimension_sheet_scheduler_n_cap_tracks_cosine_ramp() -> None:
+    """``n_cap`` follows the cosine ramp; the evidence ratio is separate.
 
-    With eps=1.0 the formula maps ``n_cap_base in [0, 1]`` to
-    ``n_cap_out in [0.5, 1.0]`` (the formula's natural range at that
-    scale). The codim output is monotonic in the base schedule's
-    ``n_cap_base`` so the two schedules produce samples that correlate
-    round-by-round (within a bounded offset).
+    The framework's coarse-to-fine anneal is driven by the cosine base
+    (ADR-0010), not by the paper's evidence ratio. The codimension
+    scheduler composes over the cosine ramp and exposes the
+    sheet-vs-cell evidence ratio as a separate metric via
+    :attr:`last_evidence_ratio`. At any ``eps_implicit`` the n_cap
+    output matches the cosine base round-by-round.
     """
     base = default_cosine_scheduler(cycle_length=10, n_min=0.0, n_max=1.0)
-    codim = CodimensionSheetScheduler(
-        cycle_length=10, n_min=0.0, n_max=1.0, eps_implicit=1.0
-    )
-    base_caps = [base.sample(0, r, r).n_cap for r in range(10)]
-    codim_caps = [codim.sample(0, r, r).n_cap for r in range(10)]
-    # Both are monotonic-decreasing in r for the cosine family; the codim
-    # scheduler must preserve the same monotonic direction at eps=1.0.
-    for b_prev, b_curr, c_prev, c_curr in zip(
-        base_caps[:-1], base_caps[1:], codim_caps[:-1], codim_caps[1:],
-        strict=True,
-    ):
-        if b_curr > b_prev:
-            assert c_curr >= c_prev
-    # Codim output stays within the formula's natural range at eps=1.0
-    # ([0.5, 1.0] for n_min=0, n_max=1).
-    for n in codim_caps:
-        assert 0.5 - 1e-9 <= n <= 1.0 + 1e-9
-    # Round-by-round the codim scheduler tracks the base within a
-    # bounded offset; worst case is r=0 (base=0 -> codim=0.5).
-    for b, c in zip(base_caps, codim_caps, strict=True):
-        assert abs(c - b) < 0.6
+    for eps in (1.0, 0.05, 0.01):
+        codim = CodimensionSheetScheduler(
+            cycle_length=10, n_min=0.0, n_max=1.0, eps_implicit=eps
+        )
+        for r in range(10):
+            base_cap = base.sample(0, r, r).n_cap
+            codim_cap = codim.sample(0, r, r).n_cap
+            # n_cap follows the cosine ramp (eps_implicit does not
+            # modulate n_cap; it only drives the reportable ratio).
+            assert codim_cap == pytest.approx(base_cap, abs=1e-12)
 
 
-def test_codimension_sheet_scheduler_low_eps_amplifies_selection() -> None:
-    """At eps_implicit=0.01 the codim scheduler compresses n_cap toward n_min.
+def test_codimension_sheet_scheduler_evidence_ratio_low_eps_near_one() -> None:
+    """At low ``eps_implicit`` the evidence ratio is near 1 (sheet dominance).
 
-    With a small eps the cell-evidence term dominates the denominator
-    at every non-trivial base n_cap, so the ratio collapses toward 0
-    and n_cap_out sits near n_min (closed-form paper Lemma 3 bound
-    realised). The mid-cycle output must therefore be much smaller
-    than the same round's base cosine n_cap.
+    With a small ``eps_implicit`` the cell-evidence term
+    (``(1-n)^2 * eps^2``) is small relative to the sheet term
+    (``max(n, eps)``), so the ratio tends to 1 across the cycle
+    (paper Theorem 1, ``eps -> 0`` selects the sheet).
     """
-    base = default_cosine_scheduler(cycle_length=10, n_min=0.0, n_max=1.0)
     codim = CodimensionSheetScheduler(
         cycle_length=10, n_min=0.0, n_max=1.0, eps_implicit=0.01
     )
-    base_mid = base.sample(0, 5, 5).n_cap
-    codim_mid = codim.sample(0, 5, 5).n_cap
-    # The cosine baseline at the midpoint is well above 0.4.
-    assert base_mid > 0.4
-    # And the codim scheduler compresses it strongly toward n_min.
-    assert codim_mid < 0.05
-    # The low-eps compression holds across the cycle: in every round
-    # where the base cosine is non-trivial, the codim scheduler output
-    # is at most 0.2 (the r=0 special case is exempt because base=1
-    # makes cell evidence vanish entirely there).
-    small_compression_count = 0
     for r in range(10):
-        c = codim.sample(0, r, r).n_cap
-        if r != 0:
-            assert c < 0.2
-            small_compression_count += 1
-    assert small_compression_count >= 8
+        codim.sample(0, r, r)
+        assert codim.last_evidence_ratio is not None
+        # At low eps the ratio is close to 1 everywhere.
+        assert codim.last_evidence_ratio > 0.9
 
 
 def test_codimension_sheet_scheduler_handles_degenerate_base() -> None:
-    """When the base cosine emits 0 (cycle terminal round), n_cap ~ n_min.
+    """When the base cosine emits 0 (cycle terminal round), n_cap is 0.
 
-    With ``n_cap_base=0`` the closed form is
-    ``ratio = 1 / (1 + 1/eps_implicit)``. For ``eps_implicit=0.05``
-    that is ``1/21 ~= 0.0476`` and the n_cap output is 0.0476 -- small
-    but not identically 0 (the formula's degenerate case has nonzero
-    sheet evidence).
+    The n_cap output follows the cosine ramp directly (not the
+    evidence ratio). At the terminal round the cosine base with
+    n_min=0 emits exactly 0.0, and so does the codimension scheduler.
+    The evidence ratio at that point is ``eps / (eps + eps^2)``,
+    which is near 1 (sheet dominance) per Theorem 1.
     """
     codim = CodimensionSheetScheduler(
         cycle_length=4, n_min=0.0, n_max=1.0, eps_implicit=0.05
@@ -794,18 +800,19 @@ def test_codimension_sheet_scheduler_handles_degenerate_base() -> None:
     # r=3 is the cycle terminal round; the cosine base with n_min=0
     # emits exactly 0.0 at this slot.
     sample = codim.sample(0, 3, 3)
-    assert sample.n_cap == pytest.approx(1.0 / 21.0, abs=1e-9)
-    # The helper matches.
-    expected_ratio = _paper_evidence_balance(0.0, 0.05)
-    assert expected_ratio == pytest.approx(1.0 / 21.0, abs=1e-9)
-    # And with a large enough n_min + larger eps the degeneracy is
-    # squarely in cell-evidence territory.
+    assert sample.n_cap == pytest.approx(0.0, abs=1e-9)
+    # The evidence ratio at the terminal round is
+    # ``eps / (eps + eps^2) = 1 / (1 + eps)``, near 1 for small eps.
+    assert codim.last_evidence_ratio == pytest.approx(1.0 / 1.05, abs=1e-9)
+    # And with a large eps the ratio is more balanced.
     big_codim = CodimensionSheetScheduler(
         cycle_length=2, n_min=0.5, n_max=1.0, eps_implicit=1.0
     )
-    # n_cap_base = 0 at r=1; sheet=1/1=1, cell=1/1=1, ratio=0.5.
     sample = big_codim.sample(0, 1, 1)
-    assert sample.n_cap == pytest.approx(0.75, abs=1e-9)
+    # n_cap_base = 0 at r=1; the cosine ramp gives n_cap = 0.5.
+    assert sample.n_cap == pytest.approx(0.5, abs=1e-9)
+    # And the evidence ratio at this point is 0.5 (sheet == cell).
+    assert big_codim.last_evidence_ratio == pytest.approx(0.5, abs=1e-9)
 
 
 def test_codimension_sheet_scheduler_is_byte_deterministic() -> None:
@@ -910,3 +917,85 @@ def test_codimension_sheet_scheduler_build_scheduler_factory() -> None:
         profile_residual_fn=_noop_profile,
     )
     assert scheduler.profile_signature.endswith("_noop_profile")
+
+
+def test_codimension_sheet_scheduler_eps_direction_default_matches_paper() -> None:
+    """Default ``eps_direction='decreasing'`` realises paper Theorem 1.
+
+    The paper's ``eps -> 0`` selects the sheet; the framework's
+    cycle maps the same direction onto ``r -> L-1`` (terminal round =
+    small noise = sheet dominance). At default settings,
+    ``r=0`` emits a large ``n_cap`` (lots of fresh noise) and
+    ``r=L-1`` emits a small ``n_cap`` (memory dominant).
+    """
+    scheduler = CodimensionSheetScheduler(
+        cycle_length=8, n_min=0.0, n_max=1.0, eps_implicit=0.05
+    )
+    assert scheduler.eps_direction == "decreasing"
+    caps = [scheduler.sample(0, r, r).n_cap for r in range(8)]
+    # Paper-aligned: r=0 -> lots of fresh noise (n_cap near 1), r=L-1
+    # -> almost pure (n_cap near 0).
+    assert caps[0] == pytest.approx(1.0, abs=1e-9)
+    assert caps[-1] < 0.05
+    # And the output is monotone non-increasing in r (cosine base
+    # composed with paper-positive powers).
+    for prev, curr in pairwise(caps):
+        assert curr <= prev + 1e-9
+
+
+def test_codimension_sheet_scheduler_eps_direction_increasing_legacy_warns() -> None:
+    """``eps_direction='increasing'`` emits a DeprecationWarning and reverses.
+
+    The legacy ``'increasing'`` mode is the opposite of paper Theorem
+    1's ``eps -> 0`` limit (r=0 small noise, r=L-1 large noise). It is
+    retained only for backward compatibility and emits a
+    :class:`DeprecationWarning` at construction time so callers can
+    migrate to the paper-aligned default.
+    """
+    with pytest.warns(DeprecationWarning, match="legacy inverted convention"):
+        scheduler = CodimensionSheetScheduler(
+            cycle_length=8, n_min=0.0, n_max=1.0, eps_direction="increasing"
+        )
+    assert scheduler.eps_direction == "increasing"
+    caps = [scheduler.sample(0, r, r).n_cap for r in range(8)]
+    # Reversed: r=0 -> small n_cap (no fresh noise), r=L-1 -> large
+    # n_cap (lots of fresh noise). This is the opposite of the
+    # paper-aligned default.
+    assert caps[0] < 0.05
+    assert caps[-1] == pytest.approx(1.0, abs=1e-9)
+
+
+def test_codimension_sheet_scheduler_eps_direction_case_insensitive() -> None:
+    """``eps_direction`` accepts mixed case and surrounding whitespace."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        scheduler = CodimensionSheetScheduler(
+            cycle_length=4, eps_direction="  DECREASING  "
+        )
+    assert scheduler.eps_direction == "decreasing"
+
+
+def test_codimension_sheet_scheduler_eps_direction_rejects_invalid() -> None:
+    """``eps_direction`` rejects strings outside the documented set."""
+    with pytest.raises(ValueError, match="eps_direction"):
+        CodimensionSheetScheduler(cycle_length=4, eps_direction="sideways")
+    with pytest.raises(ValueError, match="eps_direction"):
+        CodimensionSheetScheduler(cycle_length=4, eps_direction="")
+
+
+def test_codimension_sheet_scheduler_config_hash_includes_eps_direction() -> None:
+    """``config_hash`` captures the ``eps_direction`` choice."""
+    base_kwargs = dict(
+        cycle_length=10,
+        n_min=0.0,
+        n_max=1.0,
+        profile_residual_fn=None,
+        seed=0,
+    )
+    h_dec = CodimensionSheetScheduler(**base_kwargs).config_hash()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        h_inc = CodimensionSheetScheduler(
+            **{**base_kwargs, "eps_direction": "increasing"}
+        ).config_hash()
+    assert h_dec != h_inc

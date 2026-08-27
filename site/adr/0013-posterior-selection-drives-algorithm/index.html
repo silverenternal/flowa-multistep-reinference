@@ -537,6 +537,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Sheet tube scaling -&gt; CosineAnnealScheduler">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#eps-0-r-l-1-direction-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        eps -&gt; 0 ↔ r -&gt; L - 1 direction mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_paper_evidence_balance-the-formula-flip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        _paper_evidence_balance: the formula flip
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -689,6 +717,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#selection-metric-status-2026-08-28-post-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selection metric status (2026-08-28, post-review)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#more-information" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -805,26 +844,27 @@ schedule that ships</em>.</p>
 <code>z_i</code> are codimension-2 cells (two normal directions each).
 Theorem 1 proves that for <code>X ~ N(0, sigma^2 I)</code> with <code>sigma &lt;&lt; 1</code>,
 the conditional posterior on the fibre is</p>
-<div class="highlight"><pre><span></span><code>P( X in {y = 0} | F_g(X) = 0 )  --&gt;  1  as sigma -&gt; 0
+<div class="highlight"><pre><span></span><code>P( X in {y = 0} | F_g(X) = 0 )  --&gt;  1  as sigma -&gt; 0   (paper :88)
 </code></pre></div>
 <p>and the local density on the sheet is proportional to</p>
-<div class="highlight"><pre><span></span><code>exp(-x^2 / 2) / sqrt(1 + g(x)^2)
+<div class="highlight"><pre><span></span><code>exp(-x^2 / 2) / sqrt(1 + g(x)^2)                          (paper :82-83)
 </code></pre></div>
 <p>The proof decomposes the small-noise expansion into three pieces:</p>
 <ol>
-<li><strong>Sheet tube scaling</strong> (paper Lemma 2) — the dominant sheet
-   contribution scales like <code>1 / sqrt(sigma)</code> because the sheet is
-   codimension 1.</li>
-<li><strong>Root cell contribution</strong> (paper Lemma 3) — each cell
-   contributes at most <code>O(sigma^2)</code> to the total evidence because
-   it is codimension 2.</li>
-<li><strong>Physical complement suppression</strong> (paper Lemma 4) — the
-   "physical" piece of the residual (<code>{ y != 0 }</code>) is exponentially
-   suppressed as <code>exp(-c / sigma^2)</code> because it has positive distance
-   from the fibre.</li>
+<li><strong>Sheet tube scaling</strong> (paper Lemma 2, <code>:101-103</code>) — the sheet
+   tube evidence is <code>Theta(eps^{+1})</code>; the substitution <code>y = eps u</code>
+   contributes one Jacobian factor <code>eps</code>, and Corollary 1 (<code>:165</code>)
+   shows <code>Z_{g,eps} &gt;= C_1 eps</code> (sheet-evidence lower bound).</li>
+<li><strong>Root cell contribution</strong> (paper Lemma 3, <code>:107</code>) — each cell
+   contributes at most <code>O(eps^{+2})</code> to the total evidence because
+   it is codimension 2 (two Jacobian factors).</li>
+<li><strong>Physical complement suppression</strong> (paper Lemma 4, <code>:111-112</code>)
+   — the "physical" piece of the residual (<code>{ y != 0 }</code>) is
+   exponentially suppressed as <code>exp(-e_rho / (2 eps^2)) = o(eps)</code>.</li>
 </ol>
-<p>The conclusion is paper Proposition 3: after normalization, the
-sheet / total evidence ratio converges to 1 as <code>sigma -&gt; 0</code>. The
+<p>The conclusion is paper Proposition 3 (<code>:115-118</code>): after
+normalization, the sheet / total evidence ratio converges to 1 as
+<code>eps -&gt; 0</code>. The cell/sheet evidence ratio is <code>O(eps) -&gt; 0</code>. The
 selection is <strong>codimension-driven</strong>, not enumeration-driven.</p>
 <h2 id="framework-mapping">Framework mapping<a class="headerlink" href="#framework-mapping" title="Permanent link">&para;</a></h2>
 <p>The framework's algorithm layer instantiates each of the three
@@ -856,7 +896,7 @@ pieces and the normalization step as follows:</p>
 <tr>
 <td>Posterior normalization</td>
 <td>paper Proposition 3</td>
-<td><code>selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)</code> is emitted in <code>RoundTrace.extras</code> and is expected to converge to 1 as rounds progress</td>
+<td><code>selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)</code> is emitted in <code>per_round_metrics[r]</code> for use as a <em>difficulty constant</em> (see caveat below)</td>
 </tr>
 </tbody>
 </table>
@@ -888,6 +928,46 @@ only</strong>: <code>CosineAnnealScheduler</code> IS the canonical implementatio
 paper Lemma 2 today; the CodimensionSheetScheduler name is a
 forward-looking alias for the version that emits paper's evidence
 ratios directly into <code>ScheduleSample.extras</code>.</p>
+<h4 id="eps-0-r-l-1-direction-mapping"><code>eps -&gt; 0</code> ↔ <code>r -&gt; L - 1</code> direction mapping<a class="headerlink" href="#eps-0-r-l-1-direction-mapping" title="Permanent link">&para;</a></h4>
+<p>Paper Theorem 1's limit is <strong><code>eps -&gt; 0</code></strong>; the framework's cycle
+maps the same direction onto <strong><code>r -&gt; L - 1</code></strong> (terminal round). With
+<code>eps_direction="decreasing"</code> (the paper-aligned default), the
+<code>CodimensionSheetScheduler</code> realises this mapping:</p>
+<ul>
+<li><code>r = 0</code> ↔ large <code>eps</code> ↔ weak selection ↔ large <code>n_cap</code> (lots of
+  fresh noise; exploration dominates).</li>
+<li><code>r = L - 1</code> ↔ <code>eps -&gt; 0</code> ↔ strong selection ↔ small <code>n_cap</code>
+  (memory dominant; the sheet's codimension-1 dominance is realised
+  per Proposition 3).</li>
+</ul>
+<p>The audit (docs/audit/EPSILON_DIRECTION.md) verified that this
+mapping is <em>directionally aligned but dimensionally orthogonal</em>:
+the framework's <code>n_cap</code> is a convex mixing weight on a state
+vector, while the paper's <code>eps</code> is an evidence-scale factor inside
+<code>exp(-|F|^2 / 2 eps^2)</code>. The scheduler's <code>n_cap</code> ramp is therefore
+a <em>monotone surrogate</em> for the paper's <code>eps</code> axis — same direction,
+not the same quantity.</p>
+<h4 id="_paper_evidence_balance-the-formula-flip"><code>_paper_evidence_balance</code>: the formula flip<a class="headerlink" href="#_paper_evidence_balance-the-formula-flip" title="Permanent link">&para;</a></h4>
+<p>The audit also found that
+<code>adaptive_reflow/algorithm/scheduler.py::_paper_evidence_balance</code>
+had the paper's <code>eps</code> exponents <em>inverted</em> (it was using <code>eps^{-1}</code>
+and <code>eps^{-2}</code> where the paper uses <code>eps^{+1}</code> and <code>eps^{+2}</code>). The
+fixed closed form, matching Lemmas 2 + 3 + Corollary 1, is:</p>
+<div class="highlight"><pre><span></span><code>sheet = max(n_cap_base, eps_implicit)              # eps^{+1}  (Lemma 2 / Cor. 1)
+cell  = (1 - n_cap_base) ** 2 * eps_implicit ** 2 # eps^{+2}  (Lemma 3)
+ratio = sheet / (sheet + cell)
+</code></pre></div>
+<p>With the corrected formula, <code>ratio -&gt; 1</code> as <code>eps -&gt; 0</code> for every
+<code>n_cap_base &lt; 1</code>, matching Theorem 1 (<code>:88</code>). The ratio is a
+<em>reportable metric</em> exposed via
+<code>CodimensionSheetScheduler.last_evidence_ratio</code>; the <code>n_cap</code> output
+of <code>sample()</code> is driven by the cosine ramp (with <code>eps_direction</code>
+controlling the ramp direction), not by the ratio. This separation
+preserves the framework's coarse-to-fine anneal while still
+emitting the paper's evidence scale for the audit trail.</p>
+<p>The legacy "increasing" <code>eps_direction</code> (reversed ramp) is retained
+for backward compatibility with a <code>DeprecationWarning</code>; new callers
+should use the paper-aligned default.</p>
 <h3 id="root-cell-contribution-roundtraceextras">Root cell contribution -&gt; RoundTrace.extras<a class="headerlink" href="#root-cell-contribution-roundtraceextras" title="Permanent link">&para;</a></h3>
 <p>Paper Lemma 3 says each cell contributes at most <code>O(sigma^2)</code>. In the
 framework, the per-round audit trail lives in
@@ -928,11 +1008,15 @@ round's prior outside the bounded floor.</p>
 <h3 id="posterior-normalization-selection_ratio-convergence">Posterior normalization -&gt; selection_ratio convergence<a class="headerlink" href="#posterior-normalization-selection_ratio-convergence" title="Permanent link">&para;</a></h3>
 <p>Paper Proposition 3 says the sheet / total evidence ratio
 converges to 1 as <code>sigma -&gt; 0</code>. The framework's per-round metric
-selection_ratio (emitted in <code>RoundTrace.extras</code> by the future
-PosteriorSelectionEvaluator) is the empirical estimator of that
-ratio. Phase 1 of this ADR records the <em>metric name</em> and the
-<em>expected behaviour</em> (convergence to 1 as the cycle progresses); the
-actual implementation is deferred.</p>
+<code>selection_ratio</code> (emitted in <code>per_round_metrics[r]</code> by
+<code>PosteriorSelectionEvaluator</code>) is the empirical estimator of that
+ratio <strong>for the future endpoint-conditioned metric</strong>; the
+shipped replay-based metric is documented in §"Selection metric
+status" below as a <em>difficulty constant</em>, not as a convergence
+curve. Phase 1 of this ADR records the <em>metric name</em>; the
+<em>convergence-to-1</em> prediction applies to the
+endpoint-conditioned variant, which is deferred behind the open
+decision recorded below.</p>
 <h2 id="worked-example-2-moons-and-8-gaussians-toy-data">Worked example — 2-moons and 8-gaussians toy data<a class="headerlink" href="#worked-example-2-moons-and-8-gaussians-toy-data" title="Permanent link">&para;</a></h2>
 <p>The two canonical toy distributions in the framework's test suite
 provide a clean illustration of the paper's selection mechanism.</p>
@@ -951,14 +1035,16 @@ provide a clean illustration of the paper's selection mechanism.</p>
   the upper moon; <code>selection_ratio</code> is close to 0.95 (sheet
   dominance emerging).</li>
 <li>Round 19 — <code>n_cap</code> is near <code>n_min</code>; the fresh-noise fraction is
-  small; the upper moon has been selected; <code>selection_ratio</code> is
+  small; the upper moon has been selected; under the <strong>endpoint-
+  conditioned</strong> metric predicted below, <code>selection_ratio</code> is
   <code>&gt; 0.99</code> (paper Proposition 3 realised).</li>
 </ul>
-<p>The empirical prediction: the per-round <code>cell_evidence</code> for the
-lower moon decreases monotonically; <code>selection_ratio</code> increases
-monotonically; the lower moon's relative contribution at round 19
-is bounded by <code>O((1 - n_cap)^2)</code> — paper Lemma 3's <code>O(sigma^2)</code>
-bound with <code>sigma ~ (1 - n_cap)</code>.</p>
+<p>The empirical prediction (under the endpoint-conditioned metric
+introduced in §"Selection metric status" below): the per-round
+<code>cell_evidence</code> for the lower moon decreases monotonically;
+<code>selection_ratio</code> increases monotonically; the lower moon's relative
+contribution at round 19 is bounded by <code>O((1 - n_cap)^2)</code> — paper
+Lemma 3's <code>O(sigma^2)</code> bound with <code>sigma ~ (1 - n_cap)</code>.</p>
 <h3 id="eight_gaussians">eight_gaussians<a class="headerlink" href="#eight_gaussians" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Sheet</strong> — one of the 8 modes (the "primary" mode chosen by
@@ -972,8 +1058,9 @@ contributes at most <code>O(sigma^2)</code>, so the total cell evidence is at
 most <code>7 * O(sigma^2) = O(sigma^2)</code> (sum of <code>O(sigma^2)</code> terms).
 After 20 rounds, the prediction is:</p>
 <ul>
-<li><strong>Sheet dominance</strong> — the primary mode dominates the posterior; the
-  per-round <code>selection_ratio</code> exceeds 0.95 by round 19.</li>
+<li><strong>Sheet dominance</strong> — the primary mode dominates the posterior; under
+  the <strong>endpoint-conditioned</strong> metric predicted below, the per-round
+  <code>selection_ratio</code> is expected to exceed 0.95 by round 19.</li>
 <li><strong>Cell coverage</strong> — the cosine anneal's exploration in early rounds
   ensures all 8 modes are visited at least once; the per-round
   <code>cell_evidence</code> records <em>which</em> of the 7 secondary modes
@@ -1138,6 +1225,56 @@ because the replay evaluator scores the adapter at a fixed noise
 scale while paper Proposition 3's limit is <code>sigma -&gt; 0</code>. Making the
 ratio schedule-sensitive (scoring the round's own bundle instead of a
 fresh replay) is the open follow-up.</p>
+<h2 id="selection-metric-status-2026-08-28-post-review">Selection metric status (2026-08-28, post-review)<a class="headerlink" href="#selection-metric-status-2026-08-28-post-review" title="Permanent link">&para;</a></h2>
+<p>A code-review pass (B5) investigated the claim that the shipped
+<code>selection_ratio</code> converges toward 1 as rounds progress, on the
+expectation that this would paper-validate Proposition 3. The
+investigation, recorded in <code>docs/review/B5-VERIFICATION.md</code>, found:</p>
+<ul>
+<li><strong>The shipped metric is inert to loop state.</strong> <code>PosteriorSelectionEvaluator.oracle()</code>
+  ignores its <code>bundle</code> parameter; the arithmetic is delegated to
+  <code>_compute_metrics(seed=...)</code>, which re-samples from the
+  evaluator's <em>private</em> adapter instance against a fixed
+  unconditional prior. The result is invariant to <code>beta</code>, <code>n_cap</code>,
+  <code>memory_fraction</code>, the merge operator, the blender, the scheduler,
+  and every bundle the loop produces.</li>
+<li><strong>The metric is an unconditional adapter/target difficulty
+  constant</strong>, not an endpoint-conditioned posterior. <code>cell_evidence</code>
+  is a closed-form constant over the fixed analytic mode centres;
+  <code>sheet_evidence</code> is the Monte-Carlo mean of <code>exp(-x^2 / 2)</code> over
+  <code>n_gen</code> fresh draws against the adapter's <em>unconditional</em> prior.</li>
+<li><strong>Convergence-to-1 is not a claim about the shipped metric.</strong> The
+  "ratio -&gt; 1" prediction is a property of an <strong>endpoint-conditioned</strong>
+  metric (paper Proposition 3 says the <em>conditional</em> posterior on the
+  fibre concentrates on the sheet); the shipped metric measures a
+  static property of the <code>(adapter weights, target)</code> pair, which is
+  why both ablation rows report identical selection ratios to four
+  decimal places.</li>
+</ul>
+<p><strong>Implication for this ADR.</strong> Lines 139 and 269 of the prior version
+predicted "convergence to 1" and "exceeds 0.95 by round 19" of the
+shipped metric. Those predictions are demoted: they apply to a
+<em>future</em> endpoint-conditioned metric, not to the
+replay-based metric that <code>PosteriorSelectionEvaluator.oracle()</code> ships
+today. The shipped metric's empirical reading is the
+schedule-independent difficulty constant already documented in
+<code>docs/ABLATION.md</code>.</p>
+<p><strong>Open decision (deferred pending human review).</strong> Closing the gap
+between the shipped metric and paper Proposition 3 requires scoring
+the round's <em>endpoint</em> (not a fresh replay). The pure helper
+<code>selection_ratio(endpoints, cells)</code> already takes an array and
+needs no change; the missing piece is an <code>endpoints</code> array at the
+runner call site. Today the runner produces one endpoint per round;
+scoring a single sample's <code>exp(-x^2 / 2)</code> is variance-too-high to
+read a trend from. Implementing a meaningful
+endpoint-conditioned metric therefore requires the runner to carry
+a <em>batch</em> of trajectories per round — a real architectural change
+to <code>ReInferenceRunner</code> and <code>TwoDimFMAdapter</code> (both currently
+single-sample). That decision is deferred and is <strong>not</strong> fixed by
+this ADR.</p>
+<p><strong>No code changes ship with this clarification.</strong> The metric
+emission path is unchanged; only the predictive claims about its
+behaviour are revised to match what it actually measures.</p>
 <h2 id="more-information">More Information<a class="headerlink" href="#more-information" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../0010-cosine-driven-memory-fraction/">docs/adr/0010</a> — the

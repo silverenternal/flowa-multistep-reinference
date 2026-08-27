@@ -108,6 +108,10 @@ from adaptive_reflow.contracts import (
     MechanismId,
     ProvenanceChain,
 )
+from adaptive_reflow.data.target_distributions import (
+    EIGHT_GAUSSIANS_MODE_CENTERS,
+    TWO_MOONS_MODE_CENTERS,
+)
 from adaptive_reflow.universal.state import (
     ODEConditionDelta,
     StateBundle,
@@ -187,16 +191,15 @@ _INTERNAL_CALIBRATION_HASH: str = "twodim_fm_evaluator_calibration"
 #: Mode centres for the two target distributions. ``coverage_score``
 #: partitions the Voronoi grid by the nearest mode centre; coverage is
 #: the fraction of cells that contain at least one covered grid point.
-_TWO_MOONS_MODE_CENTERS: NDArray[np.float64] = np.asarray(
-    [[0.0, 1.0], [1.0, -0.5]], dtype=np.float64
-)
-_EIGHT_GAUSSIANS_ANGLES: NDArray[np.float64] = np.asarray(
-    np.arange(8, dtype=np.float64) * (2.0 * np.pi / 8.0)
-)
-_EIGHT_GAUSSIANS_MODE_CENTERS: NDArray[np.float64] = 2.0 * np.stack(
-    [np.cos(_EIGHT_GAUSSIANS_ANGLES), np.sin(_EIGHT_GAUSSIANS_ANGLES)],
-    axis=1,
-)
+#:
+#: Both arrays are re-exports of the canonical constants defined in
+#: :mod:`adaptive_reflow.data.target_distributions` (single source of
+#: truth; ADR-DTB-R7-B2). The leading underscore keeps them off the
+#: public surface (callers should go through
+#: :func:`_mode_centers_for`); the aliases remain so existing tests
+#: that import these names directly keep working.
+_TWO_MOONS_MODE_CENTERS: NDArray[np.float64] = TWO_MOONS_MODE_CENTERS
+_EIGHT_GAUSSIANS_MODE_CENTERS: NDArray[np.float64] = EIGHT_GAUSSIANS_MODE_CENTERS
 
 
 def _sampler_for(target: str):
@@ -211,9 +214,9 @@ def _sampler_for(target: str):
 def _mode_centers_for(target: str) -> NDArray[np.float64]:
     """Return the canonical mode centres for ``target`` as ``(n_modes, 2)``."""
     if target == "two_moons":
-        return _TWO_MOONS_MODE_CENTERS
+        return TWO_MOONS_MODE_CENTERS
     if target == "eight_gaussians":
-        return _EIGHT_GAUSSIANS_MODE_CENTERS
+        return EIGHT_GAUSSIANS_MODE_CENTERS
     raise ValueError(f"unknown_target:{target}")
 
 

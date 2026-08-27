@@ -1,0 +1,973 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>B5 verification — "selection_ratio computed on source bundle, not the round's endpoint" - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#b5-verification-selection_ratio-computed-on-source-bundle-not-the-rounds-endpoint" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              B5 verification — "selection_ratio computed on source bundle, not the round's endpoint"
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-call-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The call site
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-signature-of-the-evaluator-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Signature of the evaluator surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-which-object-is-actually-passed-and-what-is-actually-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Which object is actually passed — and what is actually measured
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Which object is actually passed — and what is actually measured">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#3a-the-variable-binding-reviewers-claim-narrowly-correct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3a. The variable binding (reviewer's claim, narrowly correct)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3b-what-the-evaluator-does-with-it-the-decisive-fact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3b. What the evaluator does with it — the decisive fact
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3c-empirical-confirmation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3c. Empirical confirmation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3d-verdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3d. Verdict
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-impact-on-the-paper-claim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Impact on the paper claim
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Impact on the paper claim">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prior-art-in-repo-this-is-partially-known" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prior art in-repo — this is partially known
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-recommendation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Recommendation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Recommendation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#immediate-documentation-no-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Immediate (documentation, no code)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#if-the-endpoint-conditioned-metric-is-actually-wanted-real-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        If the endpoint-conditioned metric is actually wanted (real fix)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files-examined" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files examined
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="b5-verification-selection_ratio-computed-on-source-bundle-not-the-rounds-endpoint">B5 verification — "selection_ratio computed on source bundle, not the round's endpoint"<a class="headerlink" href="#b5-verification-selection_ratio-computed-on-source-bundle-not-the-rounds-endpoint" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> reviewer's symptom confirmed, reviewer's mechanism <strong>wrong</strong>. The
+true defect is <strong>strictly worse</strong> than claimed. Verdict: <strong>case (c)</strong>.</p>
+<p><strong>Verified:</strong> 2026-08-28. No code modified.</p>
+<hr />
+<h2 id="1-the-call-site">1. The call site<a class="headerlink" href="#1-the-call-site" title="Permanent link">&para;</a></h2>
+<p><code>adaptive_reflow/algorithm/runner.py:528-538</code> — inside the per-round loop of
+<code>ReInferenceRunner.run</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Optional paper-Theorem-1 (ADR-0013) selection metric. The</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># ``PosteriorSelectionEvaluator`` measures the round's</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># sheet-vs-cell evidence ratio; paper Proposition 3 predicts</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># it rises toward 1 as the fresh-noise scale shrinks.</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">selection_evaluator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">bundle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">selection_metrics</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">selection_evaluator</span><span class="o">.</span><span class="n">oracle</span><span class="p">(</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        <span class="n">bundle</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">primary_channel</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span> <span class="o">+</span> <span class="n">r</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">metric</span><span class="p">[</span><span class="s2">"selection_ratio"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="n">selection_metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"selection_ratio"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="p">)</span>
+</code></pre></div>
+<p>First correction to the review: the runner calls <strong><code>.oracle(...)</code></strong>, not
+<code>.evaluate(...)</code>. The review names a method the runner never invokes on this
+object. <code>evaluate()</code> is dead code on this path.</p>
+<h2 id="2-signature-of-the-evaluator-surface">2. Signature of the evaluator surface<a class="headerlink" href="#2-signature-of-the-evaluator-surface" title="Permanent link">&para;</a></h2>
+<p><code>adaptive_reflow/eval/posterior_selection_evaluator.py:487-493</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">oracle</span><span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">bundle</span><span class="p">:</span> <span class="n">StateBundle</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">channel</span><span class="p">:</span> <span class="n">ChannelName</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+</code></pre></div>
+<p>and <code>posterior_selection_evaluator.py:422-428</code> for the sibling:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">bundle</span><span class="p">:</span> <span class="n">StateBundle</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">channel</span><span class="p">:</span> <span class="n">ChannelName</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChannelTransferEvidence</span><span class="p">:</span>
+</code></pre></div>
+<p>Both take a <code>StateBundle</code>. Neither takes an endpoints array or a source-round
+id. So far, consistent with the review's framing.</p>
+<h2 id="3-which-object-is-actually-passed-and-what-is-actually-measured">3. Which object is actually passed — and what is actually measured<a class="headerlink" href="#3-which-object-is-actually-passed-and-what-is-actually-measured" title="Permanent link">&para;</a></h2>
+<h3 id="3a-the-variable-binding-reviewers-claim-narrowly-correct">3a. The variable binding (reviewer's claim, narrowly correct)<a class="headerlink" href="#3a-the-variable-binding-reviewers-claim-narrowly-correct" title="Permanent link">&para;</a></h3>
+<p>At <code>runner.py:534</code> the name <code>bundle</code> holds:</p>
+<ul>
+<li><strong>round 0</strong> — the fresh initial state from <code>runner.py:474-478</code>
+  (<code>build_initial_state</code>, <code>source_round=0</code>);</li>
+<li><strong>round r &gt; 0</strong> — the value assigned at the <em>end of the previous iteration</em>,
+  <code>runner.py:551-555</code>:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Carry the detached endpoint forward as the next source bundle.</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">if</span> <span class="n">trace</span><span class="o">.</span><span class="n">integrator_trace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">bundle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">bundle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter</span><span class="o">.</span><span class="n">observe_endpoint</span><span class="p">(</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="n">trace</span><span class="o">.</span><span class="n">integrator_trace</span><span class="p">,</span> <span class="n">bundle</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="p">)</span>
+</code></pre></div>
+<p>That assignment sits at line 552, <strong>after</strong> the metric block at line 532. So at
+round <code>r</code> the variable holds round <code>r-1</code>'s endpoint — i.e. round <code>r</code>'s <em>source</em>,
+with <code>bundle.source_round == r</code> (<code>twodim_fm.py:702</code>, <code>next_round = source_round + 1</code>).
+The review is right that the object in scope is the source bundle.</p>
+<h3 id="3b-what-the-evaluator-does-with-it-the-decisive-fact">3b. What the evaluator does with it — the decisive fact<a class="headerlink" href="#3b-what-the-evaluator-does-with-it-the-decisive-fact" title="Permanent link">&para;</a></h3>
+<p><strong>It ignores it.</strong> <code>oracle()</code> reads <code>bundle</code> only to type-check the parameter;
+the arithmetic is delegated to <code>_compute_metrics(seed=...)</code>, which never
+receives the bundle. <code>posterior_selection_evaluator.py:549-570</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_compute_metrics</span><span class="p">(</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="o">...</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">endpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_endpoints</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">))</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">_sheet_arr</span><span class="p">,</span> <span class="n">cells_arr</span> <span class="o">=</span> <span class="n">sheet_cell_centers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">s_ev</span><span class="p">,</span> <span class="n">c_ev</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="n">selection_ratio</span><span class="p">(</span><span class="n">endpoints</span><span class="p">,</span> <span class="n">cells_arr</span><span class="p">)</span>
+</code></pre></div>
+<p>and <code>_generate_endpoints</code> (<code>posterior_selection_evaluator.py:594-611</code>) throws
+away all loop state and re-samples from scratch against the evaluator's <em>own
+private adapter instance</em> (constructed at <code>posterior_selection_evaluator.py:410-412</code>,
+a different object from the runner's adapter):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_gen</span><span class="p">):</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">sample_id</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>        <span class="sa">f</span><span class="s2">"posterior_selection::</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="si">}</span><span class="s2">::seed</span><span class="si">{</span><span class="n">seed</span><span class="si">}</span><span class="s2">::idx</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">initial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter</span><span class="o">.</span><span class="n">build_initial_state</span><span class="p">(</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="n">batch_id</span><span class="o">=</span><span class="n">_INTERNAL_BATCH_ID</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="n">sample_id</span><span class="o">=</span><span class="n">sample_id</span><span class="p">,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="p">)</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">trace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adapter</span><span class="o">.</span><span class="n">solve_ode</span><span class="p">(</span><span class="n">initial</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">))</span>
+</code></pre></div>
+<p><code>bundle</code> appears exactly once in the whole class body outside a signature:
+<code>_derive_bundle_id</code> (<code>posterior_selection_evaluator.py:613-624</code>), which is used
+by <code>evaluate()</code> for a provenance label only — and <code>evaluate()</code> is not on the
+runner path at all.</p>
+<h3 id="3c-empirical-confirmation">3c. Empirical confirmation<a class="headerlink" href="#3c-empirical-confirmation" title="Permanent link">&para;</a></h3>
+<p>Two structurally unrelated bundles, same seed, produce a bit-identical row:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>SAME SEED, DIFFERENT BUNDLES:
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  b1 (batch='B1', sample='S1')                  selection_ratio = 0.8102482213565426
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  b2 (batch='TOTALLY-DIFFERENT', sample='XYZ-999') selection_ratio = 0.8102482213565426
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  IDENTICAL: True
+</code></pre></div>
+<p>Across rounds as the runner drives it (<code>seed = 42 + r</code>, <code>n_gen=200</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>r=0  sel=0.804649  sheet=0.578526  cell=0.140454
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>r=1  sel=0.811001  sheet=0.602693  cell=0.140454
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>r=2  sel=0.807762  sheet=0.590169  cell=0.140454
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>r=3  sel=0.803144  sheet=0.573032  cell=0.140454
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>r=4  sel=0.809911  sheet=0.598431  cell=0.140454
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>r=5  sel=0.806825  sheet=0.586628  cell=0.140454
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>r=6  sel=0.807320  sheet=0.588495  cell=0.140454
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>r=7  sel=0.811363  sheet=0.604117  cell=0.140454
+</code></pre></div>
+<p><code>cell_evidence</code> is a <strong>compile-time constant</strong> — <code>cell_evidence()</code>
+(<code>posterior_selection_evaluator.py:270-288</code>) is a closed form over the fixed
+analytic mode centres and has no data argument at all. <code>sheet_evidence</code> is the
+mean of <code>exp(-x^2/2)</code> over 200 i.i.d. fresh draws. The per-round variation is
+pure Monte-Carlo noise of order <code>1/sqrt(n_gen)</code> around a fixed population value.
+There is no trend and no mechanism by which a trend could arise.</p>
+<p>The existing test suite ratifies this: <code>tests/test_eval/test_posterior_selection_evaluator.py:112</code>
+builds bundles via <code>_make_state_bundle(digest)</code> with arbitrary digests such as
+<code>"posterior-selection-two-moons"</code> that are <strong>not present in any adapter's
+<code>_native_states</code> map</strong>. A bundle that cannot be resolved to any state still
+yields a passing evidence row — only possible because the bundle is never read.</p>
+<h3 id="3d-verdict">3d. Verdict<a class="headerlink" href="#3d-verdict" title="Permanent link">&para;</a></h3>
+<p><strong>Case (c).</strong> Not (a) and not (b). The measured quantity is neither the source
+bundle's evidence nor the round-<code>r</code> endpoint's evidence — it is a fresh
+<code>n_gen</code>-sample replay of the adapter's <em>unconditional prior-to-target map</em>,
+computed on a separate adapter instance, with <code>seed</code> as the only round-varying
+input. The metric is invariant to <code>beta</code>, <code>n_cap</code>, <code>memory_fraction</code>, the merge
+operator, the blender, the scheduler, and every bundle the loop produces.</p>
+<p>The reviewer diagnosed a wiring error ("wrong bundle passed"). The actual defect
+is that the parameter is inert, so <strong>no choice of bundle would change the
+output</strong>. Rewiring line 534 to pass a round-<code>r</code> endpoint bundle would be a
+no-op — a fix that appears to address B5 while changing nothing.</p>
+<h2 id="4-impact-on-the-paper-claim">4. Impact on the paper claim<a class="headerlink" href="#4-impact-on-the-paper-claim" title="Permanent link">&para;</a></h2>
+<p>The <code>selection_ratio</code> column cannot support any convergence claim.</p>
+<p>Claims currently resting on it:</p>
+<ul>
+<li><code>docs/adr/0013-posterior-selection-drives-algorithm.md:139</code> — "<em>is expected to
+  converge to 1 as rounds progress</em>"</li>
+<li><code>docs/adr/0013-posterior-selection-drives-algorithm.md:269</code> — "<em>the per-round
+  <code>selection_ratio</code> exceeds 0.95 by round 19</em>"</li>
+<li><code>docs/ABLATION.md:56</code> — "<em>Paper Proposition 3 predicts the ratio converges to 1
+  as the noise scale shrinks</em>"</li>
+</ul>
+<p>The committed ablation table (<code>docs/ABLATION.md:58-62</code>) is the falsification:</p>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th style="text-align: right;">Round-0</th>
+<th style="text-align: right;">Final</th>
+<th style="text-align: right;">Mean (last 5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>multi_round_codimension_sheet_posterior_selection</td>
+<td style="text-align: right;">0.8061</td>
+<td style="text-align: right;">0.8169</td>
+<td style="text-align: right;">0.8088</td>
+</tr>
+<tr>
+<td>multi_round_cosine_posterior_selection</td>
+<td style="text-align: right;">0.8061</td>
+<td style="text-align: right;">0.8169</td>
+<td style="text-align: right;">0.8088</td>
+</tr>
+</tbody>
+</table>
+<p>Two different schedulers, identical to four decimal places in every column. The
+<code>+0.0108</code> round-0-to-final drift is sampling noise, not convergence, and it is
+below the noise floor demonstrated in 3c.</p>
+<p>The theory point in the task brief holds and sharpens the finding: paper
+Theorem 1 is about concentration of the <strong>endpoint</strong> posterior on the sheet.
+Measuring a fixed unconditional replay estimates a static property of the
+<code>(adapter weights, target)</code> pair — a <em>difficulty</em> constant — and can never
+exhibit the round-indexed concentration Proposition 3 describes.</p>
+<h3 id="prior-art-in-repo-this-is-partially-known">Prior art in-repo — this is partially known<a class="headerlink" href="#prior-art-in-repo-this-is-partially-known" title="Permanent link">&para;</a></h3>
+<p><code>docs/ABLATION.md:133</code> already records it, and records it accurately:</p>
+<blockquote>
+<p><strong>The two selection-ratio curves are identical.</strong> This is not a bug and not a
+tie on the merits: the evaluator scores the adapter's own posterior geometry,
+which neither scheduler alters, so the <code>selection_ratio</code> column is
+<em>schedule-independent by construction</em>. [...] Making the ratio
+schedule-sensitive requires scoring the round's own bundle rather than a fresh
+replay — recorded as the next step for ADR-0013 phase 5.</p>
+</blockquote>
+<p>So the <em>behaviour</em> is documented. What is <strong>not</strong> reconciled is that ADR-0013
+(lines 139, 269) still asserts convergence-to-1 as a live prediction of the
+shipped metric. The repo simultaneously documents "schedule-independent by
+construction" and "expected to converge to 1 as rounds progress." Those cannot
+both be true. That contradiction, not the wiring, is the real defect surface.</p>
+<p>Also minor doc drift: ADR-0013:187 specifies emission into
+<code>RoundTrace.extras["selection_ratio"]</code>; the runner instead writes
+<code>per_round_metrics[r]["selection_ratio"]</code> (<code>runner.py:536</code>).</p>
+<h2 id="5-recommendation">5. Recommendation<a class="headerlink" href="#5-recommendation" title="Permanent link">&para;</a></h2>
+<p><strong>Document now; fix only behind a deliberate design decision.</strong> Reasons:</p>
+<ol>
+<li>The narrow "pass the other bundle" fix implied by the review is a no-op
+   (see 3d) and would be actively harmful — it would close B5 while leaving the
+   metric exactly as inert, with a commit message claiming otherwise.</li>
+<li><code>docs/ABLATION.md:133</code> already states the correct interpretation. The cheap,
+   correct, immediate action is to make ADR-0013 agree with it.</li>
+</ol>
+<h3 id="immediate-documentation-no-code">Immediate (documentation, no code)<a class="headerlink" href="#immediate-documentation-no-code" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Amend <code>docs/adr/0013-posterior-selection-drives-algorithm.md:139</code> and <code>:269</code>:
+  demote "expected to converge to 1" / "exceeds 0.95 by round 19" from claims
+  about the shipped metric to <em>predictions about a future endpoint-conditioned
+  metric that is not yet implemented</em>.</li>
+<li>State plainly in the ADR that the shipped <code>selection_ratio</code> is an
+  <strong>unconditional adapter/target difficulty constant</strong>, invariant to loop state
+  by construction, and is not evidence for Proposition 3.</li>
+<li>Rename on emission to something non-misleading — e.g.
+  <code>adapter_selection_ratio_reference</code> — so no downstream reader mistakes a
+  constant for a convergence curve. (<code>tools/run_ablation.py:739-774</code> renders it
+  under a heading that invites exactly that misreading.)</li>
+</ul>
+<h3 id="if-the-endpoint-conditioned-metric-is-actually-wanted-real-fix">If the endpoint-conditioned metric is actually wanted (real fix)<a class="headerlink" href="#if-the-endpoint-conditioned-metric-is-actually-wanted-real-fix" title="Permanent link">&para;</a></h3>
+<p>The runner already has the round-<code>r</code> endpoint in hand <em>before</em> the metric block:
+it is captured into <code>endpoints[r]</code> at <code>runner.py:497-506</code>, 26 lines above the
+call site. The fix is therefore cheap in plumbing but has a genuine statistical
+obstacle:</p>
+<ul>
+<li>Add an endpoints-array entry point to the evaluator, e.g.
+  <code>score_endpoints(endpoints: NDArray) -&gt; dict[str, float]</code>, reusing the
+  existing pure <code>selection_ratio(endpoints, cells)</code> helper
+  (<code>posterior_selection_evaluator.py:291-309</code>) — which already takes an array
+  and needs no change.</li>
+<li><strong>Blocker to resolve first:</strong> the runner produces exactly <strong>one</strong> endpoint per
+  round (a single 2-vector, <code>runner.py:505-506</code>). <code>sheet_evidence</code> over <code>n=1</code> is
+  <code>exp(-x^2/2)</code> for a single sample — variance far too high to read a trend
+  from. Making this metric meaningful requires the runner to carry a <em>batch</em> of
+  trajectories per round, which is a real architectural change to
+  <code>ReInferenceRunner</code> and <code>TwoDimFMAdapter</code> (both are currently single-sample:
+  <code>build_initial_state</code> draws <code>rng.standard_normal(2)</code>, <code>twodim_fm.py:423</code>),
+  not a rewiring.</li>
+</ul>
+<p>That scope is why "document now" is the right call, and why the review's
+severity ranking (highest-impact, implying a quick high-value fix) is
+misleading: the finding is real and its blast radius on the paper claims is
+large, but there is no small correct code fix available.</p>
+<h2 id="files-examined">Files examined<a class="headerlink" href="#files-examined" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>C:\Users\31472\codes\flowa-multistep-reinference\adaptive_reflow\algorithm\runner.py</code></li>
+<li><code>C:\Users\31472\codes\flowa-multistep-reinference\adaptive_reflow\eval\posterior_selection_evaluator.py</code></li>
+<li><code>C:\Users\31472\codes\flowa-multistep-reinference\adaptive_reflow\adapters\twodim_fm.py</code></li>
+<li><code>C:\Users\31472\codes\flowa-multistep-reinference\tests\test_eval\test_posterior_selection_evaluator.py</code></li>
+<li><code>C:\Users\31472\codes\flowa-multistep-reinference\docs\ABLATION.md</code></li>
+<li><code>C:\Users\31472\codes\flowa-multistep-reinference\docs\adr\0013-posterior-selection-drives-algorithm.md</code></li>
+<li><code>C:\Users\31472\codes\flowa-multistep-reinference\tools\run_ablation.py</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

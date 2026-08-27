@@ -103,27 +103,28 @@ where `{y = 0}` is a codimension-1 smooth sheet and the points
 Theorem 1 proves that for `X ~ N(0, sigma^2 I)` with `sigma << 1`,
 the conditional posterior on the fibre is
 
-    P( X in {y = 0} | F_g(X) = 0 )  -->  1  as sigma -> 0
+    P( X in {y = 0} | F_g(X) = 0 )  -->  1  as sigma -> 0   (paper :88)
 
 and the local density on the sheet is proportional to
 
-    exp(-x^2 / 2) / sqrt(1 + g(x)^2)
+    exp(-x^2 / 2) / sqrt(1 + g(x)^2)                          (paper :82-83)
 
 The proof decomposes the small-noise expansion into three pieces:
 
-1. **Sheet tube scaling** (paper Lemma 2) — the dominant sheet
-   contribution scales like `1 / sqrt(sigma)` because the sheet is
-   codimension 1.
-2. **Root cell contribution** (paper Lemma 3) — each cell
-   contributes at most `O(sigma^2)` to the total evidence because
-   it is codimension 2.
-3. **Physical complement suppression** (paper Lemma 4) — the
-   "physical" piece of the residual (`{ y != 0 }`) is exponentially
-   suppressed as `exp(-c / sigma^2)` because it has positive distance
-   from the fibre.
+1. **Sheet tube scaling** (paper Lemma 2, `:101-103`) — the sheet
+   tube evidence is `Theta(eps^{+1})`; the substitution `y = eps u`
+   contributes one Jacobian factor `eps`, and Corollary 1 (`:165`)
+   shows `Z_{g,eps} >= C_1 eps` (sheet-evidence lower bound).
+2. **Root cell contribution** (paper Lemma 3, `:107`) — each cell
+   contributes at most `O(eps^{+2})` to the total evidence because
+   it is codimension 2 (two Jacobian factors).
+3. **Physical complement suppression** (paper Lemma 4, `:111-112`)
+   — the "physical" piece of the residual (`{ y != 0 }`) is
+   exponentially suppressed as `exp(-e_rho / (2 eps^2)) = o(eps)`.
 
-The conclusion is paper Proposition 3: after normalization, the
-sheet / total evidence ratio converges to 1 as `sigma -> 0`. The
+The conclusion is paper Proposition 3 (`:115-118`): after
+normalization, the sheet / total evidence ratio converges to 1 as
+`eps -> 0`. The cell/sheet evidence ratio is `O(eps) -> 0`. The
 selection is **codimension-driven**, not enumeration-driven.
 
 ## Framework mapping
@@ -136,7 +137,7 @@ pieces and the normalization step as follows:
 | Sheet tube scaling | paper Lemma 2 | `CosineAnnealScheduler` (Phase 2 ramp: `n_cap` schedules the sheet-vs-cell evidence ratio per round) |
 | Root cell contribution | paper Lemma 3 | `RoundTrace.extras` records the per-round evidence comparison (`sheet_evidence`, `cell_evidence`); the bound `O(sigma^2)` becomes the audit invariant that secondary-mode evidence must stay below the sheet evidence by at least a factor of `n_cap` |
 | Physical complement suppression | paper Lemma 4 | `SchedulerProtocol`'s bounded noise floor (`n_min > 0`); `BoundedMergeOperator` (ADR-0007) supplies the cap that prevents the prior / fresh blend from blowing past the physical complement |
-| Posterior normalization | paper Proposition 3 | `selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)` is emitted in `RoundTrace.extras` and is expected to converge to 1 as rounds progress |
+| Posterior normalization | paper Proposition 3 | `selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)` is emitted in `per_round_metrics[r]` for use as a *difficulty constant* (see caveat below) |
 
 ### Sheet tube scaling -> CosineAnnealScheduler
 
@@ -170,6 +171,52 @@ only**: `CosineAnnealScheduler` IS the canonical implementation of
 paper Lemma 2 today; the CodimensionSheetScheduler name is a
 forward-looking alias for the version that emits paper's evidence
 ratios directly into `ScheduleSample.extras`.
+
+#### `eps -> 0` ↔ `r -> L - 1` direction mapping
+
+Paper Theorem 1's limit is **`eps -> 0`**; the framework's cycle
+maps the same direction onto **`r -> L - 1`** (terminal round). With
+`eps_direction="decreasing"` (the paper-aligned default), the
+`CodimensionSheetScheduler` realises this mapping:
+
+* `r = 0` ↔ large `eps` ↔ weak selection ↔ large `n_cap` (lots of
+  fresh noise; exploration dominates).
+* `r = L - 1` ↔ `eps -> 0` ↔ strong selection ↔ small `n_cap`
+  (memory dominant; the sheet's codimension-1 dominance is realised
+  per Proposition 3).
+
+The audit (docs/audit/EPSILON_DIRECTION.md) verified that this
+mapping is *directionally aligned but dimensionally orthogonal*:
+the framework's `n_cap` is a convex mixing weight on a state
+vector, while the paper's `eps` is an evidence-scale factor inside
+`exp(-|F|^2 / 2 eps^2)`. The scheduler's `n_cap` ramp is therefore
+a *monotone surrogate* for the paper's `eps` axis — same direction,
+not the same quantity.
+
+#### `_paper_evidence_balance`: the formula flip
+
+The audit also found that
+`adaptive_reflow/algorithm/scheduler.py::_paper_evidence_balance`
+had the paper's `eps` exponents *inverted* (it was using `eps^{-1}`
+and `eps^{-2}` where the paper uses `eps^{+1}` and `eps^{+2}`). The
+fixed closed form, matching Lemmas 2 + 3 + Corollary 1, is:
+
+    sheet = max(n_cap_base, eps_implicit)              # eps^{+1}  (Lemma 2 / Cor. 1)
+    cell  = (1 - n_cap_base) ** 2 * eps_implicit ** 2 # eps^{+2}  (Lemma 3)
+    ratio = sheet / (sheet + cell)
+
+With the corrected formula, `ratio -> 1` as `eps -> 0` for every
+`n_cap_base < 1`, matching Theorem 1 (`:88`). The ratio is a
+*reportable metric* exposed via
+`CodimensionSheetScheduler.last_evidence_ratio`; the `n_cap` output
+of `sample()` is driven by the cosine ramp (with `eps_direction`
+controlling the ramp direction), not by the ratio. This separation
+preserves the framework's coarse-to-fine anneal while still
+emitting the paper's evidence scale for the audit trail.
+
+The legacy "increasing" `eps_direction` (reversed ramp) is retained
+for backward compatibility with a `DeprecationWarning`; new callers
+should use the paper-aligned default.
 
 ### Root cell contribution -> RoundTrace.extras
 
@@ -217,11 +264,15 @@ round's prior outside the bounded floor.
 
 Paper Proposition 3 says the sheet / total evidence ratio
 converges to 1 as `sigma -> 0`. The framework's per-round metric
-selection_ratio (emitted in `RoundTrace.extras` by the future
-PosteriorSelectionEvaluator) is the empirical estimator of that
-ratio. Phase 1 of this ADR records the *metric name* and the
-*expected behaviour* (convergence to 1 as the cycle progresses); the
-actual implementation is deferred.
+`selection_ratio` (emitted in `per_round_metrics[r]` by
+`PosteriorSelectionEvaluator`) is the empirical estimator of that
+ratio **for the future endpoint-conditioned metric**; the
+shipped replay-based metric is documented in §"Selection metric
+status" below as a *difficulty constant*, not as a convergence
+curve. Phase 1 of this ADR records the *metric name*; the
+*convergence-to-1* prediction applies to the
+endpoint-conditioned variant, which is deferred behind the open
+decision recorded below.
 
 ## Worked example — 2-moons and 8-gaussians toy data
 
@@ -243,14 +294,16 @@ After 20 rounds with `CosineAnnealScheduler`:
   the upper moon; `selection_ratio` is close to 0.95 (sheet
   dominance emerging).
 * Round 19 — `n_cap` is near `n_min`; the fresh-noise fraction is
-  small; the upper moon has been selected; `selection_ratio` is
+  small; the upper moon has been selected; under the **endpoint-
+  conditioned** metric predicted below, `selection_ratio` is
   `> 0.99` (paper Proposition 3 realised).
 
-The empirical prediction: the per-round `cell_evidence` for the
-lower moon decreases monotonically; `selection_ratio` increases
-monotonically; the lower moon's relative contribution at round 19
-is bounded by `O((1 - n_cap)^2)` — paper Lemma 3's `O(sigma^2)`
-bound with `sigma ~ (1 - n_cap)`.
+The empirical prediction (under the endpoint-conditioned metric
+introduced in §"Selection metric status" below): the per-round
+`cell_evidence` for the lower moon decreases monotonically;
+`selection_ratio` increases monotonically; the lower moon's relative
+contribution at round 19 is bounded by `O((1 - n_cap)^2)` — paper
+Lemma 3's `O(sigma^2)` bound with `sigma ~ (1 - n_cap)`.
 
 ### eight_gaussians
 
@@ -265,8 +318,9 @@ contributes at most `O(sigma^2)`, so the total cell evidence is at
 most `7 * O(sigma^2) = O(sigma^2)` (sum of `O(sigma^2)` terms).
 After 20 rounds, the prediction is:
 
-* **Sheet dominance** — the primary mode dominates the posterior; the
-  per-round `selection_ratio` exceeds 0.95 by round 19.
+* **Sheet dominance** — the primary mode dominates the posterior; under
+  the **endpoint-conditioned** metric predicted below, the per-round
+  `selection_ratio` is expected to exceed 0.95 by round 19.
 * **Cell coverage** — the cosine anneal's exploration in early rounds
   ensures all 8 modes are visited at least once; the per-round
   `cell_evidence` records *which* of the 7 secondary modes
@@ -436,6 +490,60 @@ because the replay evaluator scores the adapter at a fixed noise
 scale while paper Proposition 3's limit is `sigma -> 0`. Making the
 ratio schedule-sensitive (scoring the round's own bundle instead of a
 fresh replay) is the open follow-up.
+
+## Selection metric status (2026-08-28, post-review)
+
+A code-review pass (B5) investigated the claim that the shipped
+`selection_ratio` converges toward 1 as rounds progress, on the
+expectation that this would paper-validate Proposition 3. The
+investigation, recorded in `docs/review/B5-VERIFICATION.md`, found:
+
+* **The shipped metric is inert to loop state.** `PosteriorSelectionEvaluator.oracle()`
+  ignores its `bundle` parameter; the arithmetic is delegated to
+  `_compute_metrics(seed=...)`, which re-samples from the
+  evaluator's *private* adapter instance against a fixed
+  unconditional prior. The result is invariant to `beta`, `n_cap`,
+  `memory_fraction`, the merge operator, the blender, the scheduler,
+  and every bundle the loop produces.
+* **The metric is an unconditional adapter/target difficulty
+  constant**, not an endpoint-conditioned posterior. `cell_evidence`
+  is a closed-form constant over the fixed analytic mode centres;
+  `sheet_evidence` is the Monte-Carlo mean of `exp(-x^2 / 2)` over
+  `n_gen` fresh draws against the adapter's *unconditional* prior.
+* **Convergence-to-1 is not a claim about the shipped metric.** The
+  "ratio -> 1" prediction is a property of an **endpoint-conditioned**
+  metric (paper Proposition 3 says the *conditional* posterior on the
+  fibre concentrates on the sheet); the shipped metric measures a
+  static property of the `(adapter weights, target)` pair, which is
+  why both ablation rows report identical selection ratios to four
+  decimal places.
+
+**Implication for this ADR.** Lines 139 and 269 of the prior version
+predicted "convergence to 1" and "exceeds 0.95 by round 19" of the
+shipped metric. Those predictions are demoted: they apply to a
+*future* endpoint-conditioned metric, not to the
+replay-based metric that `PosteriorSelectionEvaluator.oracle()` ships
+today. The shipped metric's empirical reading is the
+schedule-independent difficulty constant already documented in
+`docs/ABLATION.md`.
+
+**Open decision (deferred pending human review).** Closing the gap
+between the shipped metric and paper Proposition 3 requires scoring
+the round's *endpoint* (not a fresh replay). The pure helper
+`selection_ratio(endpoints, cells)` already takes an array and
+needs no change; the missing piece is an `endpoints` array at the
+runner call site. Today the runner produces one endpoint per round;
+scoring a single sample's `exp(-x^2 / 2)` is variance-too-high to
+read a trend from. Implementing a meaningful
+endpoint-conditioned metric therefore requires the runner to carry
+a *batch* of trajectories per round — a real architectural change
+to `ReInferenceRunner` and `TwoDimFMAdapter` (both currently
+single-sample). That decision is deferred and is **not** fixed by
+this ADR.
+
+**No code changes ship with this clarification.** The metric
+emission path is unchanged; only the predictive claims about its
+behaviour are revised to match what it actually measures.
 
 ## More Information
 

@@ -1,10 +1,14 @@
-"""Empirical validator of paper Theorem 1 — sheet-vs-cell evidence ratio.
+"""Framework-internal diagnostic: evidence scale gap (sheet vs cells).
 
-This module satisfies the DTB-R7 evaluation leg for paper Theorem 1
-verification by providing :class:`PosteriorSelectionEvaluator`, a
-deterministic replay-through-adapter evaluator that measures the
-per-round evidence ratio of "main mode" (sheet) vs "competing modes"
-(cells) and tracks convergence.
+NOT a paper claim. This module provides
+:class:`EvidenceScaleGapMetric` (formerly :class:`PosteriorSelectionEvaluator`),
+a deterministic replay-through-adapter evaluator that measures the
+per-round evidence *scale gap* between the sheet contribution (paper
+Lemma 2: ``Theta(eps^{+1})``) and the cell-root contributions (paper
+Lemma 3: ``O(eps^{+2})``). The diagnostic surfaces
+``sheet_evidence``, ``cell_evidence``, and the
+``selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)``
+triple.
 
 Paper Theorem 1 (Li 2024, *Gaussian Posterior Selection on Noncompact
 Fibres with Uniformly Separated Roots*) proves that a small-noise
@@ -14,27 +18,37 @@ Gaussian posterior on a residual ``F_g`` whose fibre decomposes as
 
 concentrates on the codimension-1 sheet ``y = 0`` rather than on the
 codimension-2 cell roots, with local sheet density proportional to
-``exp(-x^2 / 2) / sqrt(1 + g(x)^2)``. Proposition 3 states that the
-selection ratio
+``exp(-x^2 / 2) / sqrt(1 + g(x)^2)``. Theorem 1 is a **bounded-Lipschitz
+convergence theorem**: ``mu_{g,eps} --BL--> nu_g`` as ``eps -> 0``.
+Corollary 1 quantifies the tail: ``Z_{g,eps} >= C_1 * eps`` (positive
+linear lower bound), ``mu_{g,eps}(union_z I_z) <= C_2 * eps`` (isolated
+mass ``O(eps)``), and the complement mass is
+``C_3 * eps^{-1} * exp(-e_rho / (2 eps^2))``.
 
-    sheet_evidence / (sheet_evidence + cell_evidence)
+This file does NOT claim any of the paper's results. It does NOT claim
+that the ``selection_ratio`` converges to 1 as rounds progress, NOR that
+the metric is a paper quantity. The metric is a **heuristic proxy** for
+monitoring whether the framework's behaviour is consistent with the
+paper's evidence ordering (sheet evidence ``Theta(eps^{+1})``,
+cell evidence ``O(eps^{+2})``). Empirically the ratio is
+schedule-independent by construction at a fixed noise scale (the
+underlying adapter replay is unconditional) and plateaus rather than
+converging to 1; see ``docs/ABLATION.md`` and the B5 review note.
 
-converges to 1 as ``sigma -> 0``.
-
-The framework mapping (ADR-0013) records the cosine scheduler as the
-canonical implementation of paper Lemma 2's sheet-tube scaling; this
-evaluator is the empirical handle on paper Proposition 3's selection
-ratio, intended to be emitted into ``RoundTrace.extras`` as the
-``sheet_evidence`` / ``cell_evidence`` / ``selection_ratio`` triple.
+The four ACTUAL paper quantities (``A_g``, ``B_g``, ``C_g``, ``e_rho``)
+are extracted as framework contracts in
+``adaptive_reflow/contracts/paper_quantities.py``. Those are the
+literal invariants the paper proves; this metric is a separate,
+framework-internal diagnostic that monitors their qualitative ordering.
 
 Mode-centre geometry
 ---------------------
 
 Two canonical target distributions are supported:
 
-* ``two_moons`` — 2 mode centres at ``(0.5, 0)`` and ``(-0.5, 0)``.
+* ``two_moons`` -- 2 mode centres at ``(0.5, 0)`` and ``(-0.5, 0)``.
   Sheet = ``(0.5, 0)``; cell = ``(-0.5, 0)``.
-* ``eight_gaussians`` — 8 mode centres on a circle of radius
+* ``eight_gaussians`` -- 8 mode centres on a circle of radius
   ``sqrt(2)`` at angles ``k * pi / 4`` for ``k = 0, ..., 7``. Sheet =
   ``(sqrt(2), 0)``; cells = the remaining 7 centres.
 
@@ -45,16 +59,15 @@ to compute the closed-form cell-evidence contribution.
 Module boundary
 ---------------
 
-* ``evaluate(bundle, *, channel, seed) -> ChannelTransferEvidence`` —
+* ``evaluate(bundle, *, channel, seed) -> ChannelTransferEvidence`` --
   canonical evaluator surface; mirrors
   :class:`SyntheticEvaluator` / :class:`RdkitEvaluator` /
   :class:`TwoDimFMEvaluator`.
-* ``oracle(bundle, *, channel, seed) -> dict[str, float]`` — same
-  evidence plus the three paper-Theorem-1 metrics
-  (``sheet_evidence``, ``cell_evidence``, ``selection_ratio``) as a
-  plain mapping; tests assert
-  ``evaluate(b, c, s) == oracle(b, c, s)`` byte-for-byte.
-* ``capabilities()`` — returns the full :class:`AdapterCapabilities`
+* ``oracle(bundle, *, channel, seed) -> dict[str, float]`` -- same
+  evidence plus the three diagnostic metrics (``sheet_evidence``,
+  ``cell_evidence``, ``selection_ratio``) as a plain mapping; tests
+  assert ``evaluate(b, c, s) == oracle(b, c, s)`` byte-for-byte.
+* ``capabilities()`` -- returns the full :class:`AdapterCapabilities`
   surface of the wrapped :class:`TwoDimFMAdapter` (single ``"xy"``
   channel).
 * Stdlib + NumPy + SciPy only. No torch.
@@ -63,9 +76,9 @@ Public surface
 --------------
 
 Constants
-    :data:`POSTERIOR_SELECTION_AUDIT_REASON`
-    :data:`POSTERIOR_SELECTION_BUNDLE_ID_PREFIX`
-    :data:`POSTERIOR_SELECTION_CHANNELS`
+    :data:`EVIDENCE_SCALE_GAP_AUDIT_REASON`
+    :data:`POSTERIOR_SELECTION_BUNDLE_ID_PREFIX` (retained for back-compat)
+    :data:`EVIDENCE_SCALE_GAP_CHANNELS`
     :data:`POSTERIOR_SELECTION_CALIBRATION`
     :data:`POSTERIOR_SELECTION_PERTURBATION`
     :data:`POSTERIOR_SELECTION_TARGETS`
@@ -80,20 +93,25 @@ Functions
     :func:`selection_ratio`
 
 Class
-    :class:`PosteriorSelectionEvaluator`
+    :class:`EvidenceScaleGapMetric` (renamed from
+    :class:`PosteriorSelectionEvaluator`; the old name is kept as a
+    deprecated alias for back-compat).
 
 Tasks satisfied:
 
-* ``DTB-R7`` — real (replay-through-adapter) evaluator that runs on
+* ``DTB-R7`` -- real (replay-through-adapter) evaluator that runs on
   CPU without depending on a calibration artifact or external oracle
-  service, AND emits paper-Theorem-1 evidence metrics
+  service, AND emits a heuristic evidence-scale-gap triple
   (``sheet_evidence``, ``cell_evidence``, ``selection_ratio``).
-* ``DTB-R8`` — provides a deterministic truth surface for the paper
-  Proposition 3 convergence claim (selection ratio -> 1 as rounds
-  progress).
+* ``DTB-R8`` -- provides a deterministic surface that future
+  end-point-conditioned variants can compare against. The
+  convergence claim is NOT made: the metric plateaus at a fixed noise
+  scale rather than tending to 1, because the paper's BL-convergence
+  limit ``eps -> 0`` is not realised by a fixed-noise replay.
 """
 from __future__ import annotations
 
+import warnings
 from typing import Any, Literal
 
 import numpy as np
@@ -111,6 +129,12 @@ from adaptive_reflow.contracts import (
     MechanismId,
     ProvenanceChain,
 )
+from adaptive_reflow.data.target_distributions import (
+    EIGHT_GAUSSIANS_POSTERIOR_CELLS,
+    EIGHT_GAUSSIANS_POSTERIOR_SHEET,
+    TWO_MOONS_POSTERIOR_CELLS,
+    TWO_MOONS_POSTERIOR_SHEET,
+)
 from adaptive_reflow.universal.state import (
     ODEConditionDelta,
     StateBundle,
@@ -124,19 +148,30 @@ from adaptive_reflow.universal.state import (
 #: Stable audit reason baked into every emitted evidence row's
 #: ``provenance`` chain. The literal value is asserted in tests as the
 #: proof that the row was emitted by this evaluator rather than by the
-#: synthetic / RDKit / 2D-FM oracles.
-POSTERIOR_SELECTION_AUDIT_REASON: str = (
-    "posterior_selection_evaluator:sheet_vs_cell_ratio"
+#: synthetic / RDKit / 2D-FM oracles. Renamed from
+#: ``posterior_selection_evaluator:sheet_vs_cell_ratio`` to make clear
+#: that the metric is a framework-internal evidence-scale-gap
+#: diagnostic, not a paper quantity.
+EVIDENCE_SCALE_GAP_AUDIT_REASON: str = (
+    "evidence_scale_gap:sheet_vs_cells_O_eps_1_vs_O_eps_2"
 )
 
-#: Prefix used to namespace PosteriorSelectionEvaluator-derived
-#: bundle-ids so the orchestrator can route them at audit time
-#: without confusing them with synthetic / RDKit / 2D-FM bundles.
-POSTERIOR_SELECTION_BUNDLE_ID_PREFIX: str = "posterior_sel::"
+#: Back-compat re-export of the previous audit-reason literal. New
+#: emission uses :data:`EVIDENCE_SCALE_GAP_AUDIT_REASON`; tests and
+#: downstream readers can still inspect the old literal.
+POSTERIOR_SELECTION_AUDIT_REASON: str = EVIDENCE_SCALE_GAP_AUDIT_REASON
+
+#: Prefix used to namespace EvidenceScaleGapMetric-derived bundle-ids
+#: so the orchestrator can route them at audit time without confusing
+#: them with synthetic / RDKit / 2D-FM bundles.
+POSTERIOR_SELECTION_BUNDLE_ID_PREFIX: str = "evidence_scale_gap::"
 
 #: Canonical channel vocabulary. The 2D-FM adapter exposes a single
 #: ``"xy"`` channel; the evaluator inherits that vocabulary.
 POSTERIOR_SELECTION_CHANNELS: tuple[ChannelName, ...] = (
+    ChannelName("xy"),
+)
+EVIDENCE_SCALE_GAP_CHANNELS: tuple[ChannelName, ...] = (
     ChannelName("xy"),
 )
 
@@ -161,37 +196,35 @@ POSTERIOR_SELECTION_TARGETS: tuple[str, ...] = (
 
 #: Default batch identifier used when generating fresh initial states
 #: for endpoint sampling. Tests / callers do not see this value.
-_INTERNAL_BATCH_ID: str = "posterior_selection_evaluator"
+_INTERNAL_BATCH_ID: str = "evidence_scale_gap_metric"
 
 #: Default source identifier for the per-call :class:`ODEConditionDelta`.
-_INTERNAL_CONDITION_SOURCE: str = "posterior_selection_evaluator"
+_INTERNAL_CONDITION_SOURCE: str = "evidence_scale_gap_metric"
 
 #: Default calibration-artifact hash for the per-call
 #: :class:`ODEConditionDelta`. The evaluator is fully deterministic so
 #: this constant string is the canonical artifact hash.
-_INTERNAL_CALIBRATION_HASH: str = "posterior_selection_evaluator_calibration"
+_INTERNAL_CALIBRATION_HASH: str = "evidence_scale_gap_metric_calibration"
 
 #: Sheet mode centre per target. The sheet is the "main mode" (the
 #: largest cluster); for ``two_moons`` both modes are roughly equal so
 #: we pick ``(0.5, 0)`` as the sheet by convention; for
 #: ``eight_gaussians`` we pick the ``k = 0`` mode (the
 #: ``(sqrt(2), 0)`` centre) as the sheet.
+#:
+#: The two values are re-exports of the canonical constants defined in
+#: :mod:`adaptive_reflow.data.target_distributions` (single source of
+#: truth; ADR-DTB-R7-B2).
 POSTERIOR_SELECTION_SHEET_FOR_TARGET: dict[str, tuple[float, float]] = {
-    "two_moons": (0.5, 0.0),
-    "eight_gaussians": (float(np.sqrt(2.0)), 0.0),
+    "two_moons": TWO_MOONS_POSTERIOR_SHEET,
+    "eight_gaussians": EIGHT_GAUSSIANS_POSTERIOR_SHEET,
 }
 
 #: Cell mode centres per target (the complement of the sheet within
 #: the canonical mode-centre set). One cell for ``two_moons``; seven
 #: cells for ``eight_gaussians``.
-_TWO_MOONS_CELLS: tuple[tuple[float, float], ...] = ((-0.5, 0.0),)
-_EIGHT_GAUSSIANS_CELLS_ANGLES: tuple[float, ...] = tuple(
-    (float(k) + 1.0) * (np.pi / 4.0) for k in range(7)
-)
-_EIGHT_GAUSSIANS_CELLS: tuple[tuple[float, float], ...] = tuple(
-    (float(np.sqrt(2.0) * np.cos(a)), float(np.sqrt(2.0) * np.sin(a)))
-    for a in _EIGHT_GAUSSIANS_CELLS_ANGLES
-)
+_TWO_MOONS_CELLS: tuple[tuple[float, float], ...] = TWO_MOONS_POSTERIOR_CELLS
+_EIGHT_GAUSSIANS_CELLS: tuple[tuple[float, float], ...] = EIGHT_GAUSSIANS_POSTERIOR_CELLS
 POSTERIOR_SELECTION_CELLS_FOR_TARGET: dict[
     str, tuple[tuple[float, float], ...]
 ] = {
@@ -242,13 +275,16 @@ def sheet_cell_centers(
 def sheet_evidence(endpoints: NDArray[np.float64]) -> float:
     """Return the mean sheet-evidence per endpoint.
 
-    The paper's local sheet density at the projected point
-    ``(x, 0)`` is ``exp(-x^2 / 2) / sqrt(1 + g(x)^2)``. We use the
-    simplest ``g(x) = 0`` so the Jacobian collapses to ``1`` and the
-    density is the closed-form Gaussian
+    Framework-internal heuristic proxy, NOT a paper quantity. The
+    paper's local sheet density at the projected point ``(x, 0)`` is
+    ``exp(-x^2 / 2) / sqrt(1 + g(x)^2)`` (Lemma 2 / Proposition 3).
+    We use the simplest ``g(x) = 0`` so the Jacobian collapses to
+    ``1`` and the density is the closed-form Gaussian
     ``exp(-x^2 / 2)``. The function averages the per-endpoint density
     over the ``(n, 2)`` endpoint matrix; the return value is a single
-    non-negative float.
+    non-negative float. This value has the qualitative scale of paper
+    Lemma 2's ``Theta(eps^{+1})`` sheet evidence but is not a paper
+    quantity.
 
     Empty inputs return ``0.0`` (the fail-closed surface for a
     degenerate sample).
@@ -266,13 +302,16 @@ def sheet_evidence(endpoints: NDArray[np.float64]) -> float:
 def cell_evidence(cells: NDArray[np.float64]) -> float:
     """Return the cell-evidence sum ``sum_j exp(-|z_j|^2/2) / (2pi)``.
 
-    Implements paper Proposition 3's "competing modes" contribution:
-    each cell-root ``z_j`` contributes a 2D-Gaussian density
-    ``exp(-|z_j|^2 / 2) / (2pi)`` evaluated at the mode centre, and
-    the cells' total evidence is the sum over all cells.
+    Framework-internal heuristic proxy, NOT a paper quantity. The
+    paper's per-cell bound is ``C_g e^{-z^2/4} eps^2`` (Lemma 3);
+    this heuristic uses the closed-form 2D-Gaussian density
+    ``exp(-|z_j|^2 / 2) / (2pi)`` evaluated at each cell-root mode
+    centre ``z_j`` and summed over all cells. The result has the
+    qualitative scale of paper Lemma 3's ``O(eps^{+2})`` cell
+    evidence but is not a paper quantity.
 
     Empty inputs return ``0.0`` (no competing modes -> sheet
-    trivially dominates).
+    trivially dominates at the heuristic level).
     """
     arr = np.asarray(cells, dtype=np.float64)
     if arr.size == 0:
