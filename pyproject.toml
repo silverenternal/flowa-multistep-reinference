@@ -36,9 +36,12 @@ chemistry = [
 # the velocity-field MLP and SciPy for the sampling/diagnostic helpers.
 # The rest of the framework is stdlib-only, so this stays an opt-in
 # model-specific extra (same pattern as ``chemistry``) rather than a
-# dev-dependency.
+# dev-dependency. NumPy is pinned ``<2.5`` because NumPy 2.5+ ships a
+# PEP 695 ``type`` statement in ``__init__.pyi`` that mypy 1.x cannot
+# parse on Python 3.11; NumPy 2.0.x through 2.4.x are syntactically
+# compatible with mypy 1.x.
 flow_matching = [
-    "numpy>=1.24",
+    "numpy>=2.0,<2.5",
     "scipy>=1.10",
 ]
 
@@ -206,6 +209,7 @@ exclude = [
     "\\.venv/",
     "(^|/)rdkit-stubs/.*",
     "(^|/)site-packages/rdkit/.*",
+    "(^|/)site-packages/numpy.*",
     "numpy",
     "site-packages.numpy.*",
     "(^|/)adaptive_reflow/eval/rdkit_oracle\\.py",
@@ -239,7 +243,11 @@ disable_error_code = [
 
 # RDKit ships a stub file with a known upstream syntax error
 # (rdMolDescriptors.pyi:10 — PEP 613). mypy aborts the whole run when
-# it cannot parse a stub, so skip the entire rdkit-stubs tree.
+# it cannot parse a stub, so skip the entire rdkit-stubs tree. (Other
+# RDKit stubs are syntactically valid; only rdMolDescriptors.pyi trips
+# mypy 1.x.) numpy 2.0.x stubs no longer ship the PEP 695 ``type``
+# statement that mypy 1.x cannot parse, so no numpy exclude is needed
+# as long as we pin ``numpy>=2.0,<2.5`` in CI.
 [[tool.mypy.overrides]]
 module = ["rdkit.*", "rdkit_stubs.*"]
 follow_imports = "skip"
