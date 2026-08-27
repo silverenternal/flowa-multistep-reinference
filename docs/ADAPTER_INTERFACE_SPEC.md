@@ -750,3 +750,258 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
   exceptions, standard mixers.
 - `adaptive_reflow.molecular` — molecule concrete implementation as a
   worked example.
+
+---
+
+## 16. Real-Model Adapters: TwoDimFMAdapter
+
+The toy worked example in §13 is **self-contained** but uses synthetic
+state values; it is intentionally too simple to exercise the integration
+loop, the restart semantics, or the per-channel envelope gating. For a
+non-toy, CPU-runnable, **real-model** worked example the project ships
+`TwoDimFMAdapter`: a 2D rectified-flow adapter that runs end-to-end on
+any laptop in a few seconds, uses pre-trained weights checked into
+`data/`, and exercises every Protocol capability the engine calls.
+
+This section is the canonical reference for adapter authors who want to
+port the universal contract to a new model family — the
+`TwoDimFMAdapter` is the smallest non-trivial real-model example in
+the codebase.
+
+### 16.1 Architecture diagram
+
+```
+   ┌─────────────────┐
+   │   N(0, I_2)     │   source distribution (2D standard normal)
+   │   build_initial │
+   │      _state     │
+   └────────┬────────┘
+            │ x_0 ∈ R^2
+            ▼
+   ┌─────────────────┐
+   │   MLP velocity  │   v_theta(x, t): 3 -> 64 -> 64 -> 2
+   │      field      │   input  = [x_1, x_2, t]
+   │                 │   hidden = Tanh activations
+   │                 │   output = linear projection
+   └────────┬────────┘
+            │ v(x, t) ∈ R^2
+            ▼
+   ┌─────────────────┐
+   │   RK4 / DP(45)  │   t_grid = linspace(0, 1, num_steps+1)
+   │   integrator    │   default: RK4 (byte-deterministic)
+   │   solve_ode     │   alternative: Dormand-Prince (adaptive)
+   └────────┬────────┘
+            │ trajectory (num_steps+1, 2)
+            ▼
+   ┌─────────────────┐
+   │   observe_      │   endpoint = trajectory[-1]
+   │    endpoint     │   clamp: |endpoint| <= 5.0
+   └────────┬────────┘
+            │ x_final ∈ R^2
+            ▼
+       restart blend
+       (memory_fraction = 1 - beta)
+       → next round's x_0
+```
+
+The adapter is **bidirectional** at the round boundary: the endpoint of
+round ``r`` becomes (after the restart-blend) the initial state of
+round ``r+1``. The engine never inspects the ``(x, t)`` values — it
+only propagates `native_state_digest` strings.
+
+### 16.2 Source and target distributions
+
+The adapter fixes two distributions and exposes a third as the
+configurable target:
+
+| Distribution | Role | Definition |
+|---|---|---|
+| Source | Always | `N(0, I_2)` (standard 2D normal). Sampled by `numpy.random.default_rng` seeded from `(batch_id, sample_id, source_round)`. |
+| Target `two_moons` | Default | Two interlocking half-circles; mode centres at `(0, 1)` and `(1, -0.5)`; isotropic Gaussian noise `stddev = 0.08`. |
+| Target `eight_gaussians` | Optional | Eight Gaussians on a circle of radius `2.0`; each mode is a Gaussian with `stddev = 0.15`; mode angles are evenly spaced at `2πk / 8`. |
+
+The target is selected at adapter construction time
+(`TwoDimFMAdapter(target=...)`); the trainer at
+`adaptive_reflow.adapters.twodim_fm_train` ships one `.npz` per
+target. Both target samplers live as pure helpers in
+`twodim_fm_train.sample_two_moons` and
+`twodim_fm_train.sample_eight_gaussians` and are re-imported by the
+runtime adapter (and by `TwoDimFMEvaluator`) so the byte-for-byte
+sampler equality contract holds across the model-evaluation surface.
+
+### 16.3 Channel vocabulary and capabilities
+
+The adapter exposes a single channel:
+
+```python
+TWODIM_FM_CHANNELS: tuple[ChannelName, ...] = (ChannelName("xy"),)
+TWODIM_FM_CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = {
+    ChannelName("xy"): "continuous",
+}
+```
+
+`TwoDimFMCapabilities` (the adapter's `AdapterCapabilities` subclass)
+declares the full universal surface:
+
+| Capability | Value | Why |
+|---|---|---|
+| `has_ode_integration_surface` | `True` | The adapter owns the RK4 / DP(45) integration. |
+| `has_prior_export` | `True` | `build_initial_state` samples from `N(0, I_2)`. |
+| `has_state_export` | `True` | `export_endpoint` returns the detached endpoint. |
+| `has_condition_injection` | `True` | `compose_condition` injects `target_distribution` and `integrator_config_hash`. |
+| `has_restart_boundary` | `True` | `apply_restart_distribution` blends prior endpoint with fresh `N(0, I_2)`. |
+| `has_continuous_channels` | `True` | The `xy` channel is continuous. |
+| `has_discrete_channels` | `False` | The model carries no discrete state. |
+| `has_trajectory_digest` | `True` | A SHA-256 trajectory digest is emitted per round. |
+| `has_deterministic_seed` | `True` | All RNG streams are seeded by SHA-256 hash digests. |
+| `has_materialization_route` | `True` | Trajectory arrays are stored by digest and readable from `observe_endpoint`. |
+
+The adapter declares `NoOpMixer` as the mixer class. The `xy` channel
+does its own blend inside `apply_restart_distribution` (linear blend
+against fresh `N(0, I_2)`), so the universal mixer's identity blend
+is the correct fallback at the engine boundary.
+
+### 16.4 Restart semantics — memory fraction blend
+
+The adapter implements restart distribution directly inside
+`apply_restart_distribution`:
+
+```text
+m         = 1 - beta_by_channel["xy"]        # memory fraction in [0, 1]
+x_fresh   ~ N(0, I_2)                        # fresh noise
+x_blend   = m * x_prior + (1 - m) * x_fresh  # linear blend
+```
+
+So:
+
+- `beta = 0.0` → `m = 1.0` → pure prior endpoint (no fresh noise).
+- `beta = 0.5` → `m = 0.5` → half memory, half fresh.
+- `beta = 1.0` → `m = 0.0` → pure fresh noise (memory fully replaced).
+
+The blend formula is encoded in `_blend_endpoint_with_prior` and is
+clamped to `[0, 1]` so out-of-range beta values cannot produce NaN
+endpoints. The audit constant `AUDIT_RESTART_BLEND = "twodim_fm_restart_blend"`
+is appended to the resulting `StateBundle.provenance` chain whenever
+the restart boundary fires, providing a per-bundle proof that the
+blend happened.
+
+The engine never sees the formula — it only sees the new
+`StateBundle.native_state_digest`. This is the *exact* same contract
+any other restart-boundary-capable adapter would satisfy: opaque state
+in, opaque state out, provenance tagged for audit.
+
+### 16.5 Velocity-field MLP — 3 -> 64 -> 64 -> 2
+
+The trained network is intentionally tiny:
+
+```text
+Layer   Input   Output   Activation   Parameters
+input   3       64       Tanh         3*64 + 64      =   256
+hidden  64      64       Tanh         64*64 + 64     =  4160
+output  64      2        linear       64*2 + 2       =   130
+                                                       -----
+                                                       4546
+```
+
+Wait — the shipped adapter is `3 -> 64 -> 64 -> 2` with **Tanh**
+activations; the offline trainer ships an identically shaped MLP with
+**ReLU** activations. Both are byte-compatible at the `(.npz)` layer
+because the keys (`W1, b1, W2, b2, W3, b3`) and shapes are identical;
+the runtime adapter re-binds the activation in `_velocity_field`. The
+runtime count is therefore ~5.4 k parameters per `.npz` file (~2 kB
+serialized to disk).
+
+### 16.6 Integrators
+
+The adapter supports two deterministic integrators:
+
+| Integrator | Default? | Byte-deterministic? | Use case |
+|---|---|---|---|
+| `rk4` | Yes | Yes (closed-form RK4 stages over a fixed grid) | Default `solve_ode` path; round-to-round paired comparison. |
+| `dormand_prince` | No | Yes for fixed `(weights, x0, t0, t1, rtol, atol, max_steps)` | Adaptive alternative with overflow clamp; useful when the velocity field has stiff regions. |
+
+Both integrators clamp the trajectory to `[-TWODIM_FM_CLAMP, TWODIM_FM_CLAMP]^2`
+(`TWODIM_FM_CLAMP = 5.0`) and emit the audit code
+`ERR_INTEGRATOR_OVERFLOW = "twodim_fm_integrator_overflow"` whenever
+the clamp fires. The audit code is propagated through
+`observe_endpoint` into the resulting `StateBundle.provenance`.
+
+The Dormand-Prince implementation in
+`_integrate_dormand_prince` is **not** a SciPy `solve_ivp` wrapper;
+it is a hand-rolled RK45 with the standard Dormand-Prince tableau
+and an embedded lower-order error estimator, with safety-factor step
+control (`min=0.2, max=5.0`). This keeps the runtime stdlib-plus-NumPy
+with no SciPy dependency on the *adapter* code path itself; SciPy is
+only consumed by `TwoDimFMEvaluator` (see §16.8).
+
+### 16.7 Implementation size
+
+The runtime adapter (`adaptive_reflow/adapters/twodim_fm.py`) is
+**~520 LOC** including:
+
+- ~50 LOC of channel-vocabulary / capability dataclasses.
+- ~120 LOC of NumPy helpers (`_features`, `_velocity_field`, RK4 / DP integrators, blend).
+- ~250 LOC for the eight Protocol methods + the `TwoDimFMAdapter` class shell.
+- ~50 LOC of factory / `__all__` surface.
+- ~50 LOC of `_load_weights` / `_default_weights_path` / module-level constants.
+
+This is the **canonical size budget** for a non-toy universal adapter
+in this project — anything larger should be justified by an explicit
+model-family requirement; anything smaller is almost certainly a toy.
+
+### 16.8 Evaluator companion — TwoDimFMEvaluator
+
+The adapter is paired with `TwoDimFMEvaluator`
+(`adaptive_reflow/eval/twodim_fm_evaluator.py`), a deterministic
+numerical evaluator that satisfies the DTB-R7 "real replay-through-
+adapter" leg. Three numerical diagnostics are published:
+
+| Diagnostic | Definition |
+|---|---|
+| `wasserstein_2d` | `sqrt(W2_x^2 + W2_y^2)` via `scipy.stats.wasserstein_distance` on each axis. |
+| `support_coverage` | Fraction of Voronoi cells (one per target mode) that contain at least one grid point within `TWODIM_FM_COVERAGE_RADIUS` of a generated endpoint. |
+| `energy_distance` | Squared energy distance `E^2` via `scipy.spatial.distance.cdist` / `pdist`. |
+
+The four `ChannelTransferEvidence` diagnostics are filled from these:
+
+```text
+raw_score                          = 1 - W2 / W2_max            (W2_max = 2.0)
+bounded_score                      = clip(raw_score, 0, 1)
+calibration_lower_bound            = 0.95
+perturbation_stability_lower_bound = 0.85
+```
+
+`TwoDimFMEvaluator` ships the canonical `evaluate(bundle, *, channel, seed)`
+and `oracle(bundle, *, channel, seed)` surface; both are
+byte-for-byte equal for the same inputs (the byte-equality is asserted
+in `tests/test_eval/test_twodim_fm_evaluator.py`).
+
+### 16.9 Pre-trained weights and reproducibility
+
+Pre-trained weights ship as NumPy `.npz` files under `data/`:
+
+| File | Size | Target |
+|---|---|---|
+| `data/twodim_fm_two_moons.npz` | ~2 kB | `target="two_moons"`. |
+| `data/twodim_fm_eight_gaussians.npz` | ~2 kB | `target="eight_gaussians"`. |
+
+Both files were produced by running
+`python -m adaptive_reflow.adapters.twodim_fm_train --target <name> --steps 2000 --out data/<name>.npz`
+and pinned via `data/twodim_fm/` checksums (see
+`tools/materialize_twodim_fm.py` for the canonical regeneration
+script). The trainer is a hand-rolled NumPy Adam optimizer; no
+PyTorch, no autograd, no SciPy — only `numpy`.
+
+The default path resolution in `_default_weights_path` looks at the
+repo-root `data/` directory. Pass an explicit `weights_path=` to
+override.
+
+### 16.10 References
+
+- Adapter source: `adaptive_reflow/adapters/twodim_fm.py` (~520 LOC).
+- Trainer source: `adaptive_reflow/adapters/twodim_fm_train.py`.
+- Evaluator source: `adaptive_reflow/eval/twodim_fm_evaluator.py`.
+- Adapter tests: `tests/test_adapters/test_twodim_fm.py`.
+- Evaluator tests: `tests/test_eval/test_twodim_fm_evaluator.py`.
+- Materialize script: `tools/materialize_twodim_fm.py`.
+- Worked end-to-end example: [TUTORIAL.md](../TUTORIAL.md).

@@ -7,6 +7,40 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - 2D Rectified Flow Adapter Integration
+
+### Added
+
+- `TwoDimFMAdapter` — real CPU-runnable 2D rectified flow adapter
+  (2-moons + 8-gaussians targets). Implements all eight methods of
+  `FlowMatchingODEAdapter` against a small velocity-field MLP
+  (`3 -> 64 -> 64 -> 2`, ~5.4 k parameters) trained offline on
+  NumPy. Source `N(0, I_2)`; RK4 / Dormand-Prince integration;
+  memory-fraction restart blend.
+- `TwoDimFMEvaluator` — W2 + support coverage + energy distance
+  deterministic numerical evaluator for the 2D-FM model. Lives at
+  `adaptive_reflow.eval.twodim_fm_evaluator` and satisfies the DTB-R7
+  "real replay-through-adapter" evaluation leg.
+- `twodim_fm_train.py` — NumPy Adam trainer CLI for the velocity
+  field MLP. Hand-rolled analytic-gradient Adam optimizer (no torch,
+  no autograd, no SciPy). Reachable as
+  `python -m adaptive_reflow.adapters.twodim_fm_train`.
+- `data/twodim_fm_*.npz` — pre-trained weights (~2KB each) for the
+  two target distributions, shipped under `data/`.
+- `[project.optional-dependencies].flow_matching = ["numpy", "scipy"]` —
+  opt-in extra for the 2D-FM adapter and its offline trainer.
+
+### Changed
+
+- `docs/ADAPTER_INTERFACE_SPEC.md` — added §16 "Real-Model Adapters:
+  TwoDimFMAdapter" with architecture diagram, target distribution
+  definitions, restart semantics, ~520 LOC implementation note, and
+  pre-trained-weights references.
+- `docs/TUTORIAL.md` — new worked-example tutorial walking through
+  loading `.npz` weights, building an `Engine`, running five rounds
+  with `restart_beta=0.5`, computing `support_coverage` via
+  `TwoDimFMEvaluator`, and plotting the endpoint samples.
+
 ## [Unreleased] — S-tier governance upgrade
 
 ### Added

@@ -78,3 +78,19 @@ from .rollback import (
     apply_rollback,
     build_disabled_rollback_flag,
 )
+from .twodim_fm_evaluator import (
+    TWODIM_FM_COVERAGE_RADIUS,
+    TWODIM_FM_EVALUATOR_AUDIT_REASON,
+    TWODIM_FM_EVALUATOR_BUNDLE_ID_PREFIX,
+    TWODIM_FM_EVALUATOR_CALIBRATION,
+    TWODIM_FM_EVALUATOR_CHANNELS,
+    TWODIM_FM_EVALUATOR_PERTURBATION,
+    TWODIM_FM_GRID_BOUND,
+    TWODIM_FM_GRID_RESOLUTION,
+    TWODIM_FM_W2_MAX,
+    TwoDimFMEvaluator,
+    analytic_samples,
+    coverage_score,
+    energy_distance,
+    voronoi_grid,
+)

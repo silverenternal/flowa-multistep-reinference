@@ -49,3 +49,12 @@ from .toy_linear import (
     ToyLinearAdapter,
     default_toy_linear_adapter,
 )
+from .twodim_fm import (
+    AUDIT_RESTART_BLEND,
+    ERR_INTEGRATOR_OVERFLOW,
+    TWODIM_FM_CHANNELS,
+    TWODIM_FM_CONFIG_HASH,
+    TWODIM_FM_CONFIG_VERSION,
+    TwoDimFMAdapter,
+    default_twodim_fm_adapter,
+)
