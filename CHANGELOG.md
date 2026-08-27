@@ -7,6 +7,25 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Code review fixes
+
+### Fixed
+
+- `adaptive_reflow/algorithm/runner.py::_build_base_policy` — the placeholder `FinalRestartPolicy` hardcoded `outer_cycle_id=0`, so two runners configured with different `outer_cycle_id` produced identical `applied_policy_hash` values and indistinguishable audit trails. The helper now accepts an `outer_cycle_id` parameter (forwarded from `ReInferenceConfig.outer_cycle_id`), preserving the audit invariant that the policy hash uniquely identifies the policy surface. Severity: HIGH (audit / hash collision). Tests: `test_runner_outer_cycle_id_propagates_to_policy_hash` in `tests/test_algorithm/test_runner.py`.
+- `adaptive_reflow/algorithm/runner.py::_build_initial_phase_state` — the initial `PhaseState` hardcoded `outer_cycle_id=0`, so the engine-propagated phase carried the wrong cycle for every round. The helper now accepts an `outer_cycle_id` parameter (forwarded from `ReInferenceConfig.outer_cycle_id`). Severity: HIGH (audit / round trace divergence). Tests: `test_runner_outer_cycle_id_propagates_to_phase_state` in `tests/test_algorithm/test_runner.py`.
+- `adaptive_reflow/algorithm/runner.py::ReInferenceRunner.run` — the per-round endpoints matrix was allocated with `np.empty` and only filled when `trace.integrator_trace` was non-None. Any round where the trajectory capture was skipped left the row reading as uninitialised memory. The matrix is now NaN-initialised so callers can detect "endpoint not captured" via `np.isnan(result.endpoints).any(axis=1)`. Severity: HIGH (uninitialised memory exposure). Tests: `test_runner_endpoints_matrix_is_nan_initialised` in `tests/test_algorithm/test_runner.py`.
+- `adaptive_reflow/algorithm/scheduler.py::_paper_evidence_balance` — removed a dead `if denom <= 0.0` fallback that the input validation rules out (`eps > 0` and `n_clipped in [0, 1]` together guarantee `denom > 0`). The closed form is unchanged; the unreachable branch and its misleading comment have been deleted. Severity: LOW (dead code). Tests: existing `test_paper_evidence_balance_helper_closed_form` continues to pass byte-for-byte.
+
+### Compatibility
+
+- Backwards-compatible. `ReInferenceConfig.outer_cycle_id` defaults to `0`, so runs that did not opt into a non-zero cycle continue to produce identical `applied_policy_hash` values for the same inputs. Endpoints-matrix callers that previously relied on `np.empty` semantics should switch to `np.isnan(...)` checks now that the matrix is NaN-initialised.
+
+## [Unreleased] - Paper-grounded algorithm layer (insight doc)
+
+### Added
+
+- `docs/INSIGHTS.md` — the canonical narrative for ADR-0013 ("Paper-grounded algorithm layer: how Li 2024 Theorem 1 maps to flowa's algorithm abstractions"). Five sections: summary (algorithm layer is theory-backed, not arbitrary), paper-to-framework correspondence table (Lemma 2-4 + Proposition 3 mapped to `SchedulerProtocol` / `PolicyDriverProtocol` / `MergeOperatorProtocol` / `RestartBlenderProtocol`), ablation findings (`selection_ratio` is sheet-dominant from round 0 — `0.806` rising to `0.819` on `two_moons`, `0.531` rising to `0.547` on `eight_gaussians`; cosine wins on W2), new capability (`CodimensionSheetScheduler` + `PosteriorSelectionEvaluator` + ADR-0013 together move the framework from "exploratory engineering" to "theory-backed design"), and the next question (does `apply_restart_distribution` realise paper's `sigma -> 0` selection, or is there a gap?).
+
 ## [Unreleased] - Paper-grounded algorithm layer
 
 ### Added

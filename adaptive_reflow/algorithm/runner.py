@@ -117,8 +117,16 @@ class ReInferenceConfig:
     n_rounds:
         Number of inner re-inference rounds (``>= 1``).
     outer_cycle_id:
-        Identifier of the outer cycle (forwarded to the scheduler's
-        ``sample`` method).
+        Identifier of the outer cycle. Forwarded to:
+
+        * the scheduler's ``sample`` method (so the
+          :class:`ScheduleSample` carries the caller's cycle),
+        * the per-round base :class:`FinalRestartPolicy` placeholder
+          (so the policy's ``outer_cycle_id`` and ``policy_hash``
+          reflect the caller's cycle — see :func:`hash_policy_hash`),
+        * the initial :class:`PhaseState` (the engine propagates
+          ``outer_cycle_id`` through ``next_phase_state`` so the
+          audit trail is consistent across rounds).
     target_round:
         Initial ``target_round`` forwarded to the scheduler; advanced
         one per round for the per-round condition delta.
@@ -195,6 +203,7 @@ def _build_base_policy(
     beta: float,
     channel: ChannelName,
     target_round: int,
+    outer_cycle_id: int = 0,
 ) -> FinalRestartPolicy:
     """Build a deterministic :class:`FinalRestartPolicy` for one round.
 
@@ -206,13 +215,21 @@ def _build_base_policy(
     ``beta_by_channel``). The driver *also* applies the override, so
     the engine's inline override is a no-op redundant re-application;
     both produce the same ``applied_policy_hash`` for the same inputs.
+
+    The ``outer_cycle_id`` parameter is forwarded into the placeholder
+    so the resulting ``policy_hash`` (which includes
+    ``outer_cycle_id``, see :func:`hash_policy_hash`) reflects the
+    caller's cycle. Two runners configured with different
+    ``outer_cycle_id`` values therefore produce distinguishable policies
+    instead of silently collapsing to ``outer_cycle_id=0`` (the bug
+    this parameter was added to fix).
     """
     placeholder = FinalRestartPolicy(
         policy_id=PolicyId(f"runner-{target_round}"),
         writer_id=MechanismId("inference.adaptive_reflow"),
         run_id=RunId("runner-run"),
         target_round=int(target_round),
-        outer_cycle_id=0,
+        outer_cycle_id=int(outer_cycle_id),
         beta_by_channel={channel: FactorValue(float(beta))},
         alpha_by_channel={channel: FactorValue(1.0)},
         fresh_noise_floor_by_channel={channel: FactorValue(0.0)},
@@ -242,10 +259,21 @@ def _build_condition_delta(
     )
 
 
-def _build_initial_phase_state(*, horizon_remaining: int) -> PhaseState:
-    """Build a deterministic initial :class:`PhaseState` for round 0."""
+def _build_initial_phase_state(
+    *,
+    horizon_remaining: int,
+    outer_cycle_id: int = 0,
+) -> PhaseState:
+    """Build a deterministic initial :class:`PhaseState` for round 0.
+
+    The ``outer_cycle_id`` is forwarded into the initial state so the
+    audit trail carries the caller's cycle from the first round
+    instead of silently collapsing to ``0``. The engine propagates
+    ``outer_cycle_id`` through ``next_phase_state``, so supplying the
+    correct value here is enough — every later round inherits it.
+    """
     return PhaseState(
-        outer_cycle_id=0,
+        outer_cycle_id=int(outer_cycle_id),
         round_in_cycle=0,
         schedule_phase="runner",
         schedule_phase_index=0,
@@ -405,8 +433,19 @@ class ReInferenceRunner:
 
         round_traces: list[RoundTrace] = []
         per_round_metrics: dict[int, dict[str, float]] = {}
-        endpoints: NDArray[np.float64] = np.empty((n_rounds, 2), dtype=np.float64)
-        phase_state = _build_initial_phase_state(horizon_remaining=n_rounds)
+        # Initialise the per-round endpoint matrix with NaN so any row
+        # left untouched by the capture block below (because
+        # ``integrator_trace`` was ``None`` for that round) carries an
+        # explicit sentinel rather than reading as uninitialised memory.
+        # Callers can detect "endpoint not captured" via
+        # ``np.isnan(result.endpoints).any(axis=1)``.
+        endpoints: NDArray[np.float64] = np.full(
+            (n_rounds, 2), np.nan, dtype=np.float64
+        )
+        phase_state = _build_initial_phase_state(
+            horizon_remaining=n_rounds,
+            outer_cycle_id=int(config.outer_cycle_id),
+        )
         bundle: StateBundle | None = None
         prior_endpoint_digest = ""
 
@@ -419,6 +458,7 @@ class ReInferenceRunner:
                 beta=0.0,
                 channel=primary_channel,
                 target_round=int(config.target_round) + r,
+                outer_cycle_id=int(config.outer_cycle_id),
             )
             applied_policy = self._driver.compute_policy(
                 sample.as_cosine_schedule_sample(),

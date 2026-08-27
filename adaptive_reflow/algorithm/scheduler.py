@@ -1571,14 +1571,14 @@ def _paper_evidence_balance(n_cap_base: float, eps_implicit: float) -> float:
         raise ValueError(f"n_cap_base must be finite, got {n_cap_base!r}")
     n_clipped = max(0.0, min(1.0, n))
 
+    # ``eps > 0`` (validated above) and ``n_clipped in [0, 1]`` together
+    # guarantee ``denom > 0`` (both ``sheet >= 1 / max(1, eps) > 0`` and
+    # ``cell >= 0``), so the closed form is well-defined for every
+    # legal input. The previous dead-code ``if denom <= 0.0`` fallback
+    # was unreachable and has been removed.
     sheet = 1.0 / max(n_clipped, eps)
     cell = (1.0 - n_clipped) ** 2 / (eps * eps)
-    denom = sheet + cell
-    if denom <= 0.0:
-        # Both pieces vanished (only reachable when eps = 0 and n_clipped = 0,
-        # which the input validation rules out); default to sheet-dominant.
-        return 1.0
-    return float(sheet / denom)
+    return float(sheet / (sheet + cell))
 
 
 class CodimensionSheetScheduler:

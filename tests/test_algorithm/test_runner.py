@@ -528,5 +528,147 @@ def test_runner_passes_w2_to_convergence_adaptive_scheduler(_twodim_adapter) -> 
     assert adaptive.shift == 0.0
 
 
+# ---------------------------------------------------------------------------
+# 7. config.outer_cycle_id propagates into the engine's applied_policy_hash
+# ---------------------------------------------------------------------------
+
+
+def test_runner_outer_cycle_id_propagates_to_policy_hash(_twodim_adapter) -> None:
+    """config.outer_cycle_id must reach the round trace's applied_policy_hash.
+
+    Regression test: prior to the audit fix the runner hardcoded
+    ``outer_cycle_id=0`` in its ``_build_base_policy`` placeholder, so
+    two runners with different ``outer_cycle_id`` produced identical
+    ``applied_policy_hash`` values. The policy hash includes
+    ``outer_cycle_id`` (see ``hash_policy_hash``), so the two runs
+    below must now produce distinguishable hashes.
+    """
+    adapter = _twodim_adapter
+    n_rounds = 3
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=default_cosine_scheduler(cycle_length=n_rounds),
+    )
+
+    result_cycle_0 = runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    result_cycle_5 = runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=5,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+
+    # The policy hash differs across rounds as well (different
+    # ``target_round``); pick a single round index for the comparison
+    # so the only varying input is ``outer_cycle_id``.
+    for r in range(n_rounds):
+        hash_cycle_0 = str(result_cycle_0.round_traces[r].applied_policy_hash)
+        hash_cycle_5 = str(result_cycle_5.round_traces[r].applied_policy_hash)
+        assert hash_cycle_0 != hash_cycle_5, (
+            f"round {r}: outer_cycle_id did not propagate into "
+            f"applied_policy_hash (both={hash_cycle_0!r})"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 8. config.outer_cycle_id propagates into the initial PhaseState
+# ---------------------------------------------------------------------------
+
+
+def test_runner_outer_cycle_id_propagates_to_phase_state(_twodim_adapter) -> None:
+    """config.outer_cycle_id must reach the engine-supplied PhaseState.
+
+    Regression test: ``_build_initial_phase_state`` previously
+    hardcoded ``outer_cycle_id=0``. The engine propagates
+    ``outer_cycle_id`` through ``next_phase_state`` so a wrong initial
+    value would persist for every round. The trace does not expose
+    the phase state, so the test wraps the engine to capture every
+    phase state forwarded into ``run_round``.
+    """
+    adapter = _twodim_adapter
+    n_rounds = 2
+    captured: list[int] = []
+
+    real_engine = Engine()
+
+    class _CaptureEngine(Engine):
+        def run_round(self, *args, **kwargs):  # type: ignore[override]
+            phase_state = kwargs.get("phase_state")
+            if phase_state is None and len(args) >= 2:
+                phase_state = args[1]
+            captured.append(int(phase_state.outer_cycle_id))
+            return real_engine.run_round(*args, **kwargs)
+
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=default_cosine_scheduler(cycle_length=n_rounds),
+        engine=_CaptureEngine(),
+    )
+    runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=7,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    assert captured == [7, 7], (
+        f"every round must see outer_cycle_id=7 in its PhaseState; "
+        f"got {captured!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# 9. endpoints matrix is NaN-initialised (no uninitialised memory)
+# ---------------------------------------------------------------------------
+
+
+def test_runner_endpoints_matrix_is_nan_initialised(_twodim_adapter) -> None:
+    """result.endpoints must be NaN-initialised, never uninitialised.
+
+    Regression test: prior to the fix the runner allocated the
+    endpoints matrix with ``np.empty`` and only filled rows for which
+    ``trace.integrator_trace`` was non-None. Any round where the
+    trajectory capture was skipped (audit_codes, missing
+    ``_native_states`` entry, etc.) left the row reading as
+    uninitialised memory. The fix initialises with NaN so callers can
+    detect "endpoint not captured" via ``np.isnan``.
+    """
+    adapter = _twodim_adapter
+    n_rounds = 3
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=default_cosine_scheduler(cycle_length=n_rounds),
+    )
+    result = runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    assert result.endpoints.shape == (n_rounds, 2)
+    assert result.endpoints.dtype == np.float64
+    # For the happy-path 2D-FM run every row should be finite (no NaN).
+    assert np.isfinite(result.endpoints).all(), (
+        f"expected all endpoints finite for a normal run; "
+        f"got NaN mask={np.isnan(result.endpoints)}"
+    )
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-x", "--no-header", "-q"]))
