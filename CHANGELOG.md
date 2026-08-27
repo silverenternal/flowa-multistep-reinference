@@ -7,6 +7,40 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Python 3.12 pin
+
+### Notes
+
+- All S-tier polish items completed. Final verification on this tree:
+  1028 tests passed / 7 skipped, mypy strict clean over 79 source
+  files, ruff clean, `tools/check_docs_against_code.py` verified 1802
+  doc claims, and `mkdocs build --strict` builds without warnings.
+  `tools/mutate/mutation_baseline.json` carries a real captured
+  baseline (overall score 0.6705, per-module `killed`/`survived`
+  counts, all four threshold gates satisfied) and the griffe-backed
+  `docs/api/*.md` pages render internal modules, not just
+  `__init__.py` re-exports.
+
+### Changed
+
+- `requires-python = ">=3.12"` (was `">=3.11"`).
+- ruff `target-version = "py312"` (was `"py311"`).
+- mypy `python_version = "3.12"` (was `"3.11"`).
+- All CI workflows now use `python-version: '3.12'` — `cpu-tests.yml`,
+  `bench-regression.yml`, `docs-validate.yml`, `docs-deploy.yml`,
+  `mutation-nightly.yml`, and `stress-nightly.yml`.
+- The numpy PEP 695 workaround comment is removed (we now pin
+  `numpy<2.5`, so the broken stub is unreachable). The
+  `[[tool.mypy.overrides]]` entry for `numpy.*` itself is retained and
+  re-documented: it keeps strict-mode runs independent of the installed
+  numpy version rather than working around an unparseable stub.
+- `UP040` added to `[tool.ruff.lint].ignore`. The rule activates at
+  `target-version = "py312"` and flags two deliberate import-cycle
+  breakers (`universal.adapter.RestartPolicy`,
+  `molecular.contracts_RoundResultBundle`) whose paired runtime
+  placeholder / lazy resolution a PEP 695 `type` statement would change
+  the semantics of.
+
 ## [Unreleased] - 2D Rectified Flow Adapter Integration
 
 ### Added

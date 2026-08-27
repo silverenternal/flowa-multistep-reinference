@@ -80,6 +80,17 @@ plugins:
             # its default so the nav tree shows the same name as the
             # class itself.
             heading_level: 1
+            # Walk ``__mro__`` so inherited dataclass fields, Protocol
+            # methods inherited from the stdlib (``Protocol``,
+            # ``RuntimeCheckable``), and ``__init__`` overrides pulled
+            # in from a base class appear in the rendered reference --
+            # the Python handler uses griffe to enumerate members and
+            # this flag is what turns on the inherited portion of the
+            # walk. Per-internal-module directives under
+            # ``docs/api/*.md`` rely on this so symbols that are not
+            # re-exported at the subpackage ``__init__.py`` level still
+            # show up.
+            inherited_members: true
 
 markdown_extensions:
   - admonition
@@ -112,6 +123,7 @@ not_in_nav: |
   ADAPTER_INTERFACE_SPEC.md
   DEPRECATION.md
   PERFORMANCE_BUDGETS.md
+  TUTORIAL.md
   candidate_registry_init.md
   lean_issue_re_inference_provenance.md
   adr/*.md

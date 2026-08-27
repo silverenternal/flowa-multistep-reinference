@@ -3296,6 +3296,10 @@ indexed today include:</p>
   <code>perturbation_stability_below_threshold</code> — DTB-R0 §3 case 2.</li>
 <li><code>AUDIT_SOURCE_REVOKED</code> (<code>adaptive_reflow.contracts.validators</code>) =
   <code>source_revoked</code> — DTB-R0 §3 case 5.</li>
+<li><code>ERR_INPUT_FACTOR_TYPE</code> (<code>adaptive_reflow.frame.channel_rule</code>) =
+  <code>channel_rule_input_factor_type</code> — fail-closed fallback for malformed
+  cap / floor fields in the dynamic-compute / stability-collapse
+  branches (suffix <code>:&lt;field_name&gt;</code>).</li>
 <li><code>BLOCKER_PROXY_ONLY</code> = <code>proxy_only_cannot_satisfy_calibration</code> —
   DTB-R0 §3 case 6.</li>
 <li><code>COMPLEMENT_BLOCKER_CODES</code>, <code>RESTART_TRIGGER_CODES</code>, <code>FEEDBACK_MODES</code>
@@ -3487,7 +3491,7 @@ recorded here first.</p>
 </tr>
 <tr>
 <td>Hands-on walk-through</td>
-<td><a href="TUTORIAL.md"><code>TUTORIAL.md</code></a></td>
+<td><a href="../TUTORIAL/"><code>TUTORIAL.md</code></a></td>
 <td>Step-by-step tutorial: mental model, the seven-step engine round, writing an adapter, hostile-case tests, golden snapshots, property-based tests, mutation testing, performance budgets, contributing.</td>
 </tr>
 </tbody>

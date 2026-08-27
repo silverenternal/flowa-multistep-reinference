@@ -29,7 +29,7 @@ round, see [`TUTORIAL.md`](TUTORIAL.md).
 
 ## 2. Install
 
-The package is pip-install-free by design. Python 3.11+ is the only
+The package is pip-install-free by design. Python 3.12+ is the only
 runtime requirement; `pytest`, `hypothesis`, and `pytest-benchmark` are
 the test-time dependencies pinned in `pyproject.toml`.
 

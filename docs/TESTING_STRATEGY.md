@@ -22,7 +22,7 @@ layer *is* the product, the test suite is built around the contracts
 themselves, not around empirical model behaviour.
 
 The suite is **CPU-only by design**: the package is stdlib-only
-Python 3.11 -- no `torch`, no `numpy`, no I/O -- so every test runs
+Python 3.12 -- no `torch`, no `numpy`, no I/O -- so every test runs
 in plain Python and CI does not need GPU runners. The full suite
 runs locally in well under a second (475 tests in ~0.65 s), which
 keeps mutation testing (`mutmut`) and property-based testing

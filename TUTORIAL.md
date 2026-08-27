@@ -8,7 +8,7 @@ harness with a hostile-case, property, golden, mutation, or bench test,
 and (d) know which governance files to read before opening a PR.
 
 The package is **CPU-only and stdlib-only**. Everything you read below
-runs in plain Python 3.11 with no `torch`, no `numpy`, no I/O, no
+runs in plain Python 3.12 with no `torch`, no `numpy`, no I/O, no
 network. If a snippet appears to use a third-party library, it is a
 type-hint only and is not imported at runtime.
 

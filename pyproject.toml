@@ -9,17 +9,25 @@
 name = "flowa-multistep-reinference"
 version = "0.1.0"
 description = "Typed-contracts framework + Flow Matching ODE re-inference engine."
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 [project.optional-dependencies]
 # Doc-build dev toolchain. ``mkdocstrings[python]`` pulls in the Python
 # handler that auto-renders module-level docstrings + typed signatures
-# from the ``adaptive_reflow.*`` subpackages. Pinned with ``>=`` so
-# minor upgrades flow through automatically (the docs build is
-# hermetic and any breaking change will fail ``mkdocs build --strict``).
+# from the ``adaptive_reflow.*`` subpackages. ``griffe`` is mkdocstrings'
+# signature-extraction back-end (transitive dependency of
+# ``mkdocstrings[python]``) but is declared explicitly so the
+# per-internal-module directives that reach into ``adaptive_reflow.frame.merge``,
+# ``adaptive_reflow.contracts.bundle``, etc. (rather than only the public
+# ``__init__`` re-exports) are visible in the rendered reference -- the
+# Python handler uses griffe to walk the AST and pull symbols that are
+# not re-exported at the top level. Pinned with ``>=`` so minor upgrades
+# flow through automatically (the docs build is hermetic and any
+# breaking change will fail ``mkdocs build --strict``).
 dev = [
     "mkdocs>=1.5",
     "mkdocstrings[python]>=0.24",
+    "griffe>=1.0",
 ]
 # Chemistry-only extra: RDKit is a heavyweight dependency (~25 MB
 # compiled wheel + numpy + Pillow) that only the
@@ -38,7 +46,7 @@ chemistry = [
 # model-specific extra (same pattern as ``chemistry``) rather than a
 # dev-dependency. NumPy is pinned ``<2.5`` because NumPy 2.5+ ships a
 # PEP 695 ``type`` statement in ``__init__.pyi`` that mypy 1.x cannot
-# parse on Python 3.11; NumPy 2.0.x through 2.4.x are syntactically
+# parse; NumPy 2.0.x through 2.4.x are syntactically
 # compatible with mypy 1.x.
 flow_matching = [
     "numpy>=2.0,<2.5",
@@ -116,7 +124,7 @@ suppress_health_check = ["too_slow", "deadline", "filter_too_much"]
 # ARCHITECTURE.md for the dependency-direction rules and
 # FILE_MAPPING.md for the file inventory.
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 extend-exclude = [
     ".venv",
     "docs",
@@ -147,6 +155,17 @@ ignore = [
     "F401", # unused-import in __init__.py re-exports (handled via per-file-ignores)
     "E501", # line too long (handled by formatter)
     "B008", # function-call-in-default-argument (used intentionally for callable defaults)
+    # UP040 (PEP 695 ``type`` statement) became active with
+    # ``target-version = "py312"``. The two ``TypeAlias`` declarations it
+    # flags -- ``universal.adapter.RestartPolicy`` and
+    # ``molecular.contracts_RoundResultBundle`` -- are deliberate
+    # import-cycle breakers, not stale syntax: both are paired with a
+    # runtime placeholder / lazy resolution that a PEP 695 ``type``
+    # statement (a lazily-evaluated ``TypeAliasType``, not a plain
+    # assignment) would change the runtime semantics of. ruff classes the
+    # rewrite as an unsafe fix for the same reason. Revisit only alongside
+    # the contracts <-> molecular cycle removal tracked in ROADMAP.md.
+    "UP040",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -196,7 +215,7 @@ ignore = [
 # adapter-supplied and intentionally untyped). Everything else (missing
 # annotations, name-defined, arg-type) is treated as a real defect.
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 explicit_package_bases = true
 ignore_missing_imports = true
@@ -245,9 +264,7 @@ disable_error_code = [
 # (rdMolDescriptors.pyi:10 — PEP 613). mypy aborts the whole run when
 # it cannot parse a stub, so skip the entire rdkit-stubs tree. (Other
 # RDKit stubs are syntactically valid; only rdMolDescriptors.pyi trips
-# mypy 1.x.) numpy 2.0.x stubs no longer ship the PEP 695 ``type``
-# statement that mypy 1.x cannot parse, so no numpy exclude is needed
-# as long as we pin ``numpy>=2.0,<2.5`` in CI.
+# mypy 1.x.)
 [[tool.mypy.overrides]]
 module = ["rdkit.*", "rdkit_stubs.*"]
 follow_imports = "skip"
@@ -264,10 +281,10 @@ ignore_errors = true
 module = ["adaptive_reflow.eval.rdkit_oracle"]
 ignore_errors = true
 
-# NumPy 2.x ships a ``type`` statement in __init__.pyi that mypy 1.x
-# cannot parse (it requires Python 3.12+ at parse time, while the project
-# pins 3.11). Skip the numpy package entirely; the rest of the project
-# is typed against numpy's pre-2.x stubs and ``npt.NDArray`` annotations.
+# numpy ships typed stubs, but the project only consumes it through the
+# opt-in [flow_matching] extra and annotates against ``npt.NDArray``;
+# skipping the package keeps strict-mode runs independent of the
+# installed numpy version.
 [[tool.mypy.overrides]]
 module = ["numpy.*"]
 follow_imports = "skip"

@@ -556,6 +556,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#audit-code-catalogue-canonical-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit-code catalogue (canonical list)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Audit-code catalogue (canonical list)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#engine-audit-codes-adaptive_reflowframeengine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Engine audit codes (adaptive_reflow.frame.engine)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#merge-audit-codes-adaptive_reflowframemerge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merge audit codes (adaptive_reflow.frame.merge)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixer-audit-codes-adaptive_reflowmolecularmixer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixer audit codes (adaptive_reflow.molecular.mixer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#more-information" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -681,6 +742,111 @@ against the AST-built symbol table.</p>
 <li>The <code>CODEOWNERS</code> rule that pins the public <code>__init__.py</code> files
   to the maintainer.</li>
 </ul>
+<h2 id="audit-code-catalogue-canonical-list">Audit-code catalogue (canonical list)<a class="headerlink" href="#audit-code-catalogue-canonical-list" title="Permanent link">&para;</a></h2>
+<p>The following audit codes are part of the public surface and are
+re-exported from the relevant <code>__init__.py</code>. Every code is a
+SCREAMING_SNAKE_CASE constant that appears in
+<code>tools/check_docs_against_code.py</code>'s symbol index; renaming any of
+them surfaces as a doc-scanner drift failure.</p>
+<h3 id="engine-audit-codes-adaptive_reflowframeengine">Engine audit codes (<code>adaptive_reflow.frame.engine</code>)<a class="headerlink" href="#engine-audit-codes-adaptive_reflowframeengine" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>String value</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ERR_INPUT_FACTOR_TYPE</code></td>
+<td><code>channel_rule_input_factor_type</code></td>
+<td>The channel rule's cap / floor coercion helper encounters a non-numeric value on <code>scheduled_cap</code> / <code>fresh_noise_floor</code> and falls back to <code>0.0</code> instead of raising.</td>
+</tr>
+<tr>
+<td><code>ERR_ROUND_INDEX_NON_INT</code></td>
+<td><code>round_index_must_be_int</code></td>
+<td><code>Engine.run_round</code> receives a <code>round_index</code> that is not a non-negative <code>int</code> (bool is rejected explicitly).</td>
+</tr>
+<tr>
+<td><code>ERR_CHANNEL_DOMAIN_UNDECLARED</code></td>
+<td><code>channel_domain_undeclared</code></td>
+<td>A channel in <code>bundle.channels</code> is in <code>caps.supported_channels</code> but is missing from <code>caps.channel_domains</code> — the adapter never declared its domain.</td>
+</tr>
+<tr>
+<td><code>ERR_ADAPTER_RAISED</code></td>
+<td><code>adapter_raised_exception</code></td>
+<td>An <code>_safe_adapter_call</code>-wrapped adapter method raised an <code>Exception</code>; the wrapped code captures <code>{step}:{ExcType}:{msg[:80]}</code> and returns <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>ERR_SOURCE_ROUND_NON_INT</code></td>
+<td><code>source_round_must_be_int</code></td>
+<td>The source <code>StateBundle.source_round</code> is not a non-negative <code>int</code>; the engine coerces it to <code>0</code> and emits the code so the audit trail stays consistent.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="merge-audit-codes-adaptive_reflowframemerge">Merge audit codes (<code>adaptive_reflow.frame.merge</code>)<a class="headerlink" href="#merge-audit-codes-adaptive_reflowframemerge" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>String value</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MERGE_DEGENERATE_INTERVAL</code></td>
+<td><code>merge_degenerate_interval</code></td>
+<td>The bounded merge's per-round delta interval collapses (<code>hi &lt; lo</code>) and the merge falls back to the floor (fail-closed total function).</td>
+</tr>
+<tr>
+<td><code>MERGE_FLOOR_FALLBACK</code></td>
+<td><code>merge_floor_fallback_to_schedule_default</code></td>
+<td>The orchestrator-driven merge path could not find a per-channel fresh-noise floor and fell back to the schedule's <code>n_cap</code> (or <code>0.0</code>).</td>
+</tr>
+<tr>
+<td><code>MERGE_PREV_ANCHORED_TO_LAST_EMITTED</code></td>
+<td><code>merge_prev_anchored_to_last_emitted</code></td>
+<td>The orchestrator-driven merge is anchored on a <code>prev</code> value that came from the previous round's emitted <code>bounded_target_fraction</code> (not the schedule's <code>n_cap</code>).</td>
+</tr>
+<tr>
+<td><code>ERR_PREV_REQUIRED</code></td>
+<td><code>merge_prev_required</code></td>
+<td>The orchestrator-driven merge was called with <code>prev=None</code>; the merge refuses silently rather than substituting the schedule value as a default.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mixer-audit-codes-adaptive_reflowmolecularmixer">Mixer audit codes (<code>adaptive_reflow.molecular.mixer</code>)<a class="headerlink" href="#mixer-audit-codes-adaptive_reflowmolecularmixer" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>String value</th>
+<th>Fires when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MIXER_RMS_PRECEDENCE_FAIL</code></td>
+<td><code>mixer_rms_precondition_fail</code></td>
+<td><code>EqualRmsCoordinateMixer.mix</code> was given inputs whose per-axis RMS norms are not equal within <code>1e-6</code>; the mix is rejected and the audit code is appended to the returned ledger.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h3>
+<p>The audit-code constants are first-class citizens of the package's
+public API: they appear in <code>__all__</code>, in the curated <code>__init__.py</code>
+re-export layer, and in the docs scanner symbol index. A new audit
+code MUST be added in three places to satisfy the policy:</p>
+<ol>
+<li>The module that emits it (e.g. <code>frame/engine.py</code>).</li>
+<li>The curated re-export layer (<code>frame/__init__.py</code>,
+   <code>molecular/__init__.py</code>, ...).</li>
+<li>This ADR (the catalogue table) and <code>tools/check_docs_against_code.py</code>
+   (the symbol index picks it up automatically once the docs reference
+   it).</li>
+</ol>
 <h2 id="more-information">More Information<a class="headerlink" href="#more-information" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../TESTING_STRATEGY/">docs/TESTING_STRATEGY.md §2.3</a> — the
@@ -691,6 +857,15 @@ against the AST-built symbol table.</p>
   public surface of <code>contracts/</code>.</li>
 <li><a href="../../ROADMAP.md">ROADMAP.md</a> — the Now-bucket entry that closes
   DTB-R0 §3 case 2 and case 5 by 2026-09-15.</li>
+<li><a href="../0006-engine-wraps-adapter-pattern/">docs/adr/0006</a> — the
+  <code>_safe_adapter_call</code> wrapper that emits <code>ERR_ADAPTER_RAISED</code>.</li>
+<li><a href="../0007-prev-anchored-bounded-merge/">docs/adr/0007</a> — the
+  <code>prev</code> anchoring rule that emits <code>ERR_PREV_REQUIRED</code> /
+  <code>MERGE_PREV_ANCHORED_TO_LAST_EMITTED</code>.</li>
+<li><a href="../0008-claim-gate-deferral-placeholder/">docs/adr/0008</a> — the
+  deferral placeholder for the R7 claim-gate decision helper.</li>
+<li><a href="../0009-mixer-rms-precondition/">docs/adr/0009</a> — the
+  RMS-precondition rule that emits <code>MIXER_RMS_PRECEDENCE_FAIL</code>.</li>
 </ul>
 
 

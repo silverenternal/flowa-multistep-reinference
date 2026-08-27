@@ -921,6 +921,133 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#16-real-model-adapters-twodimfmadapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Real-Model Adapters: TwoDimFMAdapter
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16. Real-Model Adapters: TwoDimFMAdapter">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#161-architecture-diagram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.1 Architecture diagram
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#162-source-and-target-distributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.2 Source and target distributions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#163-channel-vocabulary-and-capabilities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.3 Channel vocabulary and capabilities
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#164-restart-semantics-memory-fraction-blend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.4 Restart semantics — memory fraction blend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#165-velocity-field-mlp-3-64-64-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.5 Velocity-field MLP — 3 -&gt; 64 -&gt; 64 -&gt; 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#166-integrators" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.6 Integrators
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#167-implementation-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.7 Implementation size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#168-evaluator-companion-twodimfmevaluator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.8 Evaluator companion — TwoDimFMEvaluator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#169-pre-trained-weights-and-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.9 Pre-trained weights and reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1610-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16.10 References
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1725,6 +1852,336 @@ and declare <code>native_config_version</code> accordingly.</p>
   exceptions, standard mixers.</li>
 <li><code>adaptive_reflow.molecular</code> — molecule concrete implementation as a
   worked example.</li>
+</ul>
+<hr />
+<h2 id="16-real-model-adapters-twodimfmadapter">16. Real-Model Adapters: TwoDimFMAdapter<a class="headerlink" href="#16-real-model-adapters-twodimfmadapter" title="Permanent link">&para;</a></h2>
+<p>The toy worked example in §13 is <strong>self-contained</strong> but uses synthetic
+state values; it is intentionally too simple to exercise the integration
+loop, the restart semantics, or the per-channel envelope gating. For a
+non-toy, CPU-runnable, <strong>real-model</strong> worked example the project ships
+<code>TwoDimFMAdapter</code>: a 2D rectified-flow adapter that runs end-to-end on
+any laptop in a few seconds, uses pre-trained weights checked into
+<code>data/</code>, and exercises every Protocol capability the engine calls.</p>
+<p>This section is the canonical reference for adapter authors who want to
+port the universal contract to a new model family — the
+<code>TwoDimFMAdapter</code> is the smallest non-trivial real-model example in
+the codebase.</p>
+<h3 id="161-architecture-diagram">16.1 Architecture diagram<a class="headerlink" href="#161-architecture-diagram" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>   ┌─────────────────┐
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>   │   N(0, I_2)     │   source distribution (2D standard normal)
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>   │   build_initial │
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>   │      _state     │
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>   └────────┬────────┘
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>            │ x_0 ∈ R^2
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>            ▼
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>   ┌─────────────────┐
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>   │   MLP velocity  │   v_theta(x, t): 3 -&gt; 64 -&gt; 64 -&gt; 2
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>   │      field      │   input  = [x_1, x_2, t]
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>   │                 │   hidden = Tanh activations
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>   │                 │   output = linear projection
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>   └────────┬────────┘
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>            │ v(x, t) ∈ R^2
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>            ▼
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>   ┌─────────────────┐
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a>   │   RK4 / DP(45)  │   t_grid = linspace(0, 1, num_steps+1)
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a>   │   integrator    │   default: RK4 (byte-deterministic)
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a>   │   solve_ode     │   alternative: Dormand-Prince (adaptive)
+<a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a>   └────────┬────────┘
+<a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a>            │ trajectory (num_steps+1, 2)
+<a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a>            ▼
+<a id="__codelineno-18-23" name="__codelineno-18-23" href="#__codelineno-18-23"></a>   ┌─────────────────┐
+<a id="__codelineno-18-24" name="__codelineno-18-24" href="#__codelineno-18-24"></a>   │   observe_      │   endpoint = trajectory[-1]
+<a id="__codelineno-18-25" name="__codelineno-18-25" href="#__codelineno-18-25"></a>   │    endpoint     │   clamp: |endpoint| &lt;= 5.0
+<a id="__codelineno-18-26" name="__codelineno-18-26" href="#__codelineno-18-26"></a>   └────────┬────────┘
+<a id="__codelineno-18-27" name="__codelineno-18-27" href="#__codelineno-18-27"></a>            │ x_final ∈ R^2
+<a id="__codelineno-18-28" name="__codelineno-18-28" href="#__codelineno-18-28"></a>            ▼
+<a id="__codelineno-18-29" name="__codelineno-18-29" href="#__codelineno-18-29"></a>       restart blend
+<a id="__codelineno-18-30" name="__codelineno-18-30" href="#__codelineno-18-30"></a>       (memory_fraction = 1 - beta)
+<a id="__codelineno-18-31" name="__codelineno-18-31" href="#__codelineno-18-31"></a>       → next round's x_0
+</code></pre></div>
+<p>The adapter is <strong>bidirectional</strong> at the round boundary: the endpoint of
+round <code>r</code> becomes (after the restart-blend) the initial state of
+round <code>r+1</code>. The engine never inspects the <code>(x, t)</code> values — it
+only propagates <code>native_state_digest</code> strings.</p>
+<h3 id="162-source-and-target-distributions">16.2 Source and target distributions<a class="headerlink" href="#162-source-and-target-distributions" title="Permanent link">&para;</a></h3>
+<p>The adapter fixes two distributions and exposes a third as the
+configurable target:</p>
+<table>
+<thead>
+<tr>
+<th>Distribution</th>
+<th>Role</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source</td>
+<td>Always</td>
+<td><code>N(0, I_2)</code> (standard 2D normal). Sampled by <code>numpy.random.default_rng</code> seeded from <code>(batch_id, sample_id, source_round)</code>.</td>
+</tr>
+<tr>
+<td>Target <code>two_moons</code></td>
+<td>Default</td>
+<td>Two interlocking half-circles; mode centres at <code>(0, 1)</code> and <code>(1, -0.5)</code>; isotropic Gaussian noise <code>stddev = 0.08</code>.</td>
+</tr>
+<tr>
+<td>Target <code>eight_gaussians</code></td>
+<td>Optional</td>
+<td>Eight Gaussians on a circle of radius <code>2.0</code>; each mode is a Gaussian with <code>stddev = 0.15</code>; mode angles are evenly spaced at <code>2πk / 8</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The target is selected at adapter construction time
+(<code>TwoDimFMAdapter(target=...)</code>); the trainer at
+<code>adaptive_reflow.adapters.twodim_fm_train</code> ships one <code>.npz</code> per
+target. Both target samplers live as pure helpers in
+<code>twodim_fm_train.sample_two_moons</code> and
+<code>twodim_fm_train.sample_eight_gaussians</code> and are re-imported by the
+runtime adapter (and by <code>TwoDimFMEvaluator</code>) so the byte-for-byte
+sampler equality contract holds across the model-evaluation surface.</p>
+<h3 id="163-channel-vocabulary-and-capabilities">16.3 Channel vocabulary and capabilities<a class="headerlink" href="#163-channel-vocabulary-and-capabilities" title="Permanent link">&para;</a></h3>
+<p>The adapter exposes a single channel:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">TWODIM_FM_CHANNELS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ChannelName</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"xy"</span><span class="p">),)</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="n">TWODIM_FM_CHANNEL_DOMAINS</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">ChannelName</span><span class="p">,</span> <span class="n">ChannelDomain</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="n">ChannelName</span><span class="p">(</span><span class="s2">"xy"</span><span class="p">):</span> <span class="s2">"continuous"</span><span class="p">,</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="p">}</span>
+</code></pre></div>
+<p><code>TwoDimFMCapabilities</code> (the adapter's <code>AdapterCapabilities</code> subclass)
+declares the full universal surface:</p>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Value</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>has_ode_integration_surface</code></td>
+<td><code>True</code></td>
+<td>The adapter owns the RK4 / DP(45) integration.</td>
+</tr>
+<tr>
+<td><code>has_prior_export</code></td>
+<td><code>True</code></td>
+<td><code>build_initial_state</code> samples from <code>N(0, I_2)</code>.</td>
+</tr>
+<tr>
+<td><code>has_state_export</code></td>
+<td><code>True</code></td>
+<td><code>export_endpoint</code> returns the detached endpoint.</td>
+</tr>
+<tr>
+<td><code>has_condition_injection</code></td>
+<td><code>True</code></td>
+<td><code>compose_condition</code> injects <code>target_distribution</code> and <code>integrator_config_hash</code>.</td>
+</tr>
+<tr>
+<td><code>has_restart_boundary</code></td>
+<td><code>True</code></td>
+<td><code>apply_restart_distribution</code> blends prior endpoint with fresh <code>N(0, I_2)</code>.</td>
+</tr>
+<tr>
+<td><code>has_continuous_channels</code></td>
+<td><code>True</code></td>
+<td>The <code>xy</code> channel is continuous.</td>
+</tr>
+<tr>
+<td><code>has_discrete_channels</code></td>
+<td><code>False</code></td>
+<td>The model carries no discrete state.</td>
+</tr>
+<tr>
+<td><code>has_trajectory_digest</code></td>
+<td><code>True</code></td>
+<td>A SHA-256 trajectory digest is emitted per round.</td>
+</tr>
+<tr>
+<td><code>has_deterministic_seed</code></td>
+<td><code>True</code></td>
+<td>All RNG streams are seeded by SHA-256 hash digests.</td>
+</tr>
+<tr>
+<td><code>has_materialization_route</code></td>
+<td><code>True</code></td>
+<td>Trajectory arrays are stored by digest and readable from <code>observe_endpoint</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The adapter declares <code>NoOpMixer</code> as the mixer class. The <code>xy</code> channel
+does its own blend inside <code>apply_restart_distribution</code> (linear blend
+against fresh <code>N(0, I_2)</code>), so the universal mixer's identity blend
+is the correct fallback at the engine boundary.</p>
+<h3 id="164-restart-semantics-memory-fraction-blend">16.4 Restart semantics — memory fraction blend<a class="headerlink" href="#164-restart-semantics-memory-fraction-blend" title="Permanent link">&para;</a></h3>
+<p>The adapter implements restart distribution directly inside
+<code>apply_restart_distribution</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>m         = 1 - beta_by_channel["xy"]        # memory fraction in [0, 1]
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>x_fresh   ~ N(0, I_2)                        # fresh noise
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>x_blend   = m * x_prior + (1 - m) * x_fresh  # linear blend
+</code></pre></div>
+<p>So:</p>
+<ul>
+<li><code>beta = 0.0</code> → <code>m = 1.0</code> → pure prior endpoint (no fresh noise).</li>
+<li><code>beta = 0.5</code> → <code>m = 0.5</code> → half memory, half fresh.</li>
+<li><code>beta = 1.0</code> → <code>m = 0.0</code> → pure fresh noise (memory fully replaced).</li>
+</ul>
+<p>The blend formula is encoded in <code>_blend_endpoint_with_prior</code> and is
+clamped to <code>[0, 1]</code> so out-of-range beta values cannot produce NaN
+endpoints. The audit constant <code>AUDIT_RESTART_BLEND = "twodim_fm_restart_blend"</code>
+is appended to the resulting <code>StateBundle.provenance</code> chain whenever
+the restart boundary fires, providing a per-bundle proof that the
+blend happened.</p>
+<p>The engine never sees the formula — it only sees the new
+<code>StateBundle.native_state_digest</code>. This is the <em>exact</em> same contract
+any other restart-boundary-capable adapter would satisfy: opaque state
+in, opaque state out, provenance tagged for audit.</p>
+<h3 id="165-velocity-field-mlp-3-64-64-2">16.5 Velocity-field MLP — 3 -&gt; 64 -&gt; 64 -&gt; 2<a class="headerlink" href="#165-velocity-field-mlp-3-64-64-2" title="Permanent link">&para;</a></h3>
+<p>The trained network is intentionally tiny:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Layer   Input   Output   Activation   Parameters
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>input   3       64       Tanh         3*64 + 64      =   256
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>hidden  64      64       Tanh         64*64 + 64     =  4160
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>output  64      2        linear       64*2 + 2       =   130
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>                                                       -----
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>                                                       4546
+</code></pre></div>
+<p>Wait — the shipped adapter is <code>3 -&gt; 64 -&gt; 64 -&gt; 2</code> with <strong>Tanh</strong>
+activations; the offline trainer ships an identically shaped MLP with
+<strong>ReLU</strong> activations. Both are byte-compatible at the <code>(.npz)</code> layer
+because the keys (<code>W1, b1, W2, b2, W3, b3</code>) and shapes are identical;
+the runtime adapter re-binds the activation in <code>_velocity_field</code>. The
+runtime count is therefore ~5.4 k parameters per <code>.npz</code> file (~2 kB
+serialized to disk).</p>
+<h3 id="166-integrators">16.6 Integrators<a class="headerlink" href="#166-integrators" title="Permanent link">&para;</a></h3>
+<p>The adapter supports two deterministic integrators:</p>
+<table>
+<thead>
+<tr>
+<th>Integrator</th>
+<th>Default?</th>
+<th>Byte-deterministic?</th>
+<th>Use case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rk4</code></td>
+<td>Yes</td>
+<td>Yes (closed-form RK4 stages over a fixed grid)</td>
+<td>Default <code>solve_ode</code> path; round-to-round paired comparison.</td>
+</tr>
+<tr>
+<td><code>dormand_prince</code></td>
+<td>No</td>
+<td>Yes for fixed <code>(weights, x0, t0, t1, rtol, atol, max_steps)</code></td>
+<td>Adaptive alternative with overflow clamp; useful when the velocity field has stiff regions.</td>
+</tr>
+</tbody>
+</table>
+<p>Both integrators clamp the trajectory to <code>[-TWODIM_FM_CLAMP, TWODIM_FM_CLAMP]^2</code>
+(<code>TWODIM_FM_CLAMP = 5.0</code>) and emit the audit code
+<code>ERR_INTEGRATOR_OVERFLOW = "twodim_fm_integrator_overflow"</code> whenever
+the clamp fires. The audit code is propagated through
+<code>observe_endpoint</code> into the resulting <code>StateBundle.provenance</code>.</p>
+<p>The Dormand-Prince implementation in
+<code>_integrate_dormand_prince</code> is <strong>not</strong> a SciPy <code>solve_ivp</code> wrapper;
+it is a hand-rolled RK45 with the standard Dormand-Prince tableau
+and an embedded lower-order error estimator, with safety-factor step
+control (<code>min=0.2, max=5.0</code>). This keeps the runtime stdlib-plus-NumPy
+with no SciPy dependency on the <em>adapter</em> code path itself; SciPy is
+only consumed by <code>TwoDimFMEvaluator</code> (see §16.8).</p>
+<h3 id="167-implementation-size">16.7 Implementation size<a class="headerlink" href="#167-implementation-size" title="Permanent link">&para;</a></h3>
+<p>The runtime adapter (<code>adaptive_reflow/adapters/twodim_fm.py</code>) is
+<strong>~520 LOC</strong> including:</p>
+<ul>
+<li>~50 LOC of channel-vocabulary / capability dataclasses.</li>
+<li>~120 LOC of NumPy helpers (<code>_features</code>, <code>_velocity_field</code>, RK4 / DP integrators, blend).</li>
+<li>~250 LOC for the eight Protocol methods + the <code>TwoDimFMAdapter</code> class shell.</li>
+<li>~50 LOC of factory / <code>__all__</code> surface.</li>
+<li>~50 LOC of <code>_load_weights</code> / <code>_default_weights_path</code> / module-level constants.</li>
+</ul>
+<p>This is the <strong>canonical size budget</strong> for a non-toy universal adapter
+in this project — anything larger should be justified by an explicit
+model-family requirement; anything smaller is almost certainly a toy.</p>
+<h3 id="168-evaluator-companion-twodimfmevaluator">16.8 Evaluator companion — TwoDimFMEvaluator<a class="headerlink" href="#168-evaluator-companion-twodimfmevaluator" title="Permanent link">&para;</a></h3>
+<p>The adapter is paired with <code>TwoDimFMEvaluator</code>
+(<code>adaptive_reflow/eval/twodim_fm_evaluator.py</code>), a deterministic
+numerical evaluator that satisfies the DTB-R7 "real replay-through-
+adapter" leg. Three numerical diagnostics are published:</p>
+<table>
+<thead>
+<tr>
+<th>Diagnostic</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wasserstein_2d</code></td>
+<td><code>sqrt(W2_x^2 + W2_y^2)</code> via <code>scipy.stats.wasserstein_distance</code> on each axis.</td>
+</tr>
+<tr>
+<td><code>support_coverage</code></td>
+<td>Fraction of Voronoi cells (one per target mode) that contain at least one grid point within <code>TWODIM_FM_COVERAGE_RADIUS</code> of a generated endpoint.</td>
+</tr>
+<tr>
+<td><code>energy_distance</code></td>
+<td>Squared energy distance <code>E^2</code> via <code>scipy.spatial.distance.cdist</code> / <code>pdist</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The four <code>ChannelTransferEvidence</code> diagnostics are filled from these:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>raw_score                          = 1 - W2 / W2_max            (W2_max = 2.0)
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>bounded_score                      = clip(raw_score, 0, 1)
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>calibration_lower_bound            = 0.95
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>perturbation_stability_lower_bound = 0.85
+</code></pre></div>
+<p><code>TwoDimFMEvaluator</code> ships the canonical <code>evaluate(bundle, *, channel, seed)</code>
+and <code>oracle(bundle, *, channel, seed)</code> surface; both are
+byte-for-byte equal for the same inputs (the byte-equality is asserted
+in <code>tests/test_eval/test_twodim_fm_evaluator.py</code>).</p>
+<h3 id="169-pre-trained-weights-and-reproducibility">16.9 Pre-trained weights and reproducibility<a class="headerlink" href="#169-pre-trained-weights-and-reproducibility" title="Permanent link">&para;</a></h3>
+<p>Pre-trained weights ship as NumPy <code>.npz</code> files under <code>data/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Size</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data/twodim_fm_two_moons.npz</code></td>
+<td>~2 kB</td>
+<td><code>target="two_moons"</code>.</td>
+</tr>
+<tr>
+<td><code>data/twodim_fm_eight_gaussians.npz</code></td>
+<td>~2 kB</td>
+<td><code>target="eight_gaussians"</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Both files were produced by running
+<code>python -m adaptive_reflow.adapters.twodim_fm_train --target &lt;name&gt; --steps 2000 --out data/&lt;name&gt;.npz</code>
+and pinned via <code>data/twodim_fm/</code> checksums (see
+<code>tools/materialize_twodim_fm.py</code> for the canonical regeneration
+script). The trainer is a hand-rolled NumPy Adam optimizer; no
+PyTorch, no autograd, no SciPy — only <code>numpy</code>.</p>
+<p>The default path resolution in <code>_default_weights_path</code> looks at the
+repo-root <code>data/</code> directory. Pass an explicit <code>weights_path=</code> to
+override.</p>
+<h3 id="1610-references">16.10 References<a class="headerlink" href="#1610-references" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Adapter source: <code>adaptive_reflow/adapters/twodim_fm.py</code> (~520 LOC).</li>
+<li>Trainer source: <code>adaptive_reflow/adapters/twodim_fm_train.py</code>.</li>
+<li>Evaluator source: <code>adaptive_reflow/eval/twodim_fm_evaluator.py</code>.</li>
+<li>Adapter tests: <code>tests/test_adapters/test_twodim_fm.py</code>.</li>
+<li>Evaluator tests: <code>tests/test_eval/test_twodim_fm_evaluator.py</code>.</li>
+<li>Materialize script: <code>tools/materialize_twodim_fm.py</code>.</li>
+<li>Worked end-to-end example: <a href="../TUTORIAL.md">TUTORIAL.md</a>.</li>
 </ul>
 
 

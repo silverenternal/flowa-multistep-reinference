@@ -21,7 +21,7 @@
     
     
       
-        <title>4. Engine seven-step operation order - flowa-multistep-reinference API</title>
+        <title>9. Mixer RMS-preservation precondition - flowa-multistep-reinference API</title>
       
     
     
@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#4-engine-seven-step-operation-order" class="md-skip">
+        <a href="#9-mixer-rms-preservation-precondition" class="md-skip">
           Skip to content
         </a>
       
@@ -100,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              4. Engine seven-step operation order
+              9. Mixer RMS-preservation precondition
             
           </span>
         </div>
@@ -566,17 +566,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#related-future-adrs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related Future ADRs
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -594,110 +583,161 @@
 
 
 
-<h1 id="4-engine-seven-step-operation-order">4. Engine seven-step operation order<a class="headerlink" href="#4-engine-seven-step-operation-order" title="Permanent link">&para;</a></h1>
+<h1 id="9-mixer-rms-preservation-precondition">9. Mixer RMS-preservation precondition<a class="headerlink" href="#9-mixer-rms-preservation-precondition" title="Permanent link">&para;</a></h1>
 <h2 id="context-and-problem-statement">Context and Problem Statement<a class="headerlink" href="#context-and-problem-statement" title="Permanent link">&para;</a></h2>
-<p><code>adaptive_reflow.frame.engine.Engine.run_round</code> is a 7-step operation.
-The canonical order is captured as a tuple constant:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>DEFAULT_OPERATION_STEPS = (
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    "capabilities_handshake",
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    "build_initial_state",
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    "apply_restart_distribution",
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    "compose_condition",
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    "solve_ode",
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    "observe_endpoint",
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    "detach_and_validate_endpoint",
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>)
-</code></pre></div>
-<p>The order is load-bearing: each step assumes the previous step's
-output is well-formed, and the round trace produced at the end is the
-canonical record of <em>what</em> was called and in <em>what</em> order. Reordering
-a step silently breaks the trace contract, the
-<code>OperationCompositionContract.operation_order_version</code>, and every
-golden replay test.</p>
+<p><code>adaptive_reflow.molecular.mixer.EqualRmsCoordinateMixer</code> is the
+concrete molecule implementation of the universal
+<code>RestartMixer</code> Protocol. The mixer's job is to blend a fresh prior
+state with a detached endpoint memory state, preserving the fresh
+prior's RMS around its center. The legacy class name
+<code>RMSPreservingCoordinateMixer</code> was misleading: the RMS of the
+<em>blend</em> is preserved only when the two input tensors have equal
+centred RMS within <code>1e-6</code>. When they differ by more than the
+tolerance, the legacy implementation silently rescaled the inputs
+to make the RMS values match, erasing the diagnostic value of the
+mismatch.</p>
+<p>The risk is twofold:</p>
+<ol>
+<li><strong>Naming</strong>: the legacy <code>RMSPreservingCoordinateMixer</code> name
+   implies RMS preservation is unconditional, hiding the
+   precondition from a future caller.</li>
+<li><strong>Silent rescaling</strong>: a large RMS mismatch is a real defect
+   (the prior and memory states are not calibrated to the same
+   variance regime), and silently rescaling them produces a
+   plausible-looking but undiagnosed blend.</li>
+</ol>
+<p>The decision answers three questions:</p>
+<ol>
+<li><strong>What is the canonical class name?</strong> <code>EqualRmsCoordinateMixer</code>.</li>
+<li><strong>What happens when the precondition fails?</strong> The audit code
+   <code>MIXER_RMS_PRECEDENCE_FAIL</code> is appended to the returned ledger's
+   <code>audit_codes</code> list; the blend is still computed (the behaviour is
+   observable, not silent), but the caller must inspect the audit
+   trail.</li>
+<li><strong>How is back-compat preserved?</strong> The legacy name
+   <code>RMSPreservingCoordinateMixer</code> is kept as a module-level alias
+   to <code>EqualRmsCoordinateMixer</code>; importing it emits a
+   <code>DeprecationWarning</code>.</li>
+</ol>
 <h2 id="decision-drivers">Decision Drivers<a class="headerlink" href="#decision-drivers" title="Permanent link">&para;</a></h2>
 <ul>
-<li>The operation order is part of the public surface: it appears in
-  <code>EngineRoundResult.round_trace_v3.operation_order</code>, in
-  <code>OperationCompositionContract.version</code>, and in the kernel
-  benchmarks under <code>tests/perf/</code>.</li>
-<li>The order is also a <em>correctness</em> invariant: stepping past
-  <code>compose_condition</code> before <code>apply_restart_distribution</code> would mean
-  the ODE condition delta was applied to a non-restarted state, which
-  is not what the engine is supposed to do.</li>
-<li>The seven steps are not negotiable as a <em>set</em> — every step exists
-  for a documented reason. The order between them is the question.</li>
+<li>The mixer's RMS preservation is conditional on an input
+  precondition (RMS-equal within <code>1e-6</code>). A class name that omits
+  the precondition is misleading; the new name
+  <code>EqualRmsCoordinateMixer</code> puts the precondition in the name.</li>
+<li>The audit trail must distinguish "well-behaved blend" from
+  "precondition failed" from "legacy silent rescale". The first
+  case carries no audit code; the second carries
+  <code>MIXER_RMS_PRECEDENCE_FAIL</code>; the third is no longer reachable
+  after the rename.</li>
+<li>The back-compat alias is the load-bearing migration tool: every
+  test, doc, and downstream consumer that references the legacy
+  name must keep working until they migrate. The
+  <code>DeprecationWarning</code> is the migration signal.</li>
 </ul>
 <h2 id="considered-options">Considered Options<a class="headerlink" href="#considered-options" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Fix the 7-step order as a constant; changes require a new ADR.</strong></li>
-<li><strong>Make the order pluggable.</strong> Each adapter author supplies their
-   own step list. Rejected because the round trace contract would
-   then be adapter-dependent and the trace v3 content hash would not
-   be comparable across adapters.</li>
-<li><strong>Drop the canonical order entirely; rely on docstrings.</strong> Rejected
-   because the trace and the contract both consume the tuple.</li>
+<li><strong>Rename to <code>EqualRmsCoordinateMixer</code>. Keep
+   <code>RMSPreservingCoordinateMixer</code> as a back-compat alias that emits
+   a <code>DeprecationWarning</code>. Append <code>MIXER_RMS_PRECEDENCE_FAIL</code> to
+   the ledger when the precondition fails; never silently
+   rescale.</strong></li>
+<li><strong>Rename and drop the legacy alias.</strong> Rejected because the
+   legacy name appears in tests, docs, and (potentially) external
+   consumer code; dropping it is a breaking change for no benefit.</li>
+<li><strong>Keep the legacy name and document the precondition in the
+   docstring.</strong> Rejected because the name is misleading and the
+   <code>DeprecationWarning</code> is the migration signal.</li>
 </ol>
 <h2 id="decision-outcome">Decision Outcome<a class="headerlink" href="#decision-outcome" title="Permanent link">&para;</a></h2>
-<p>Chosen option: <strong>The seven-step order is fixed and is the single
-canonical order. Changing it requires a new ADR that names the new
-step, the new position, and the migration path for every existing
-golden and benchmark.</strong></p>
-<p>The tuple <code>DEFAULT_OPERATION_STEPS</code> lives in
-<code>adaptive_reflow/frame/engine.py</code> and is re-exported as
-<code>adaptive_reflow.frame.DEFAULT_OPERATION_STEPS</code>. The
-<code>OperationCompositionContract.version</code> constant
-(<code>DEFAULT_OPERATION_COMPOSITION_VERSION</code>) is bumped in the same
-commit that introduces the new order.</p>
+<p>Chosen option: <strong><code>EqualRmsCoordinateMixer</code> is the canonical class
+name. <code>RMSPreservingCoordinateMixer</code> is preserved as a back-compat
+alias that emits a <code>DeprecationWarning</code> on import. RMS is preserved
+only when inputs are RMS-equal within <code>1e-6</code>; otherwise the helper
+<code>adaptive_reflow_memory_restart_coords</code> appends
+<code>MIXER_RMS_PRECEDENCE_FAIL</code> to the returned ledger's <code>audit_codes</code>
+list. The blend is still computed (the behaviour is observable,
+not silent); callers that depend on the equality precondition must
+inspect <code>ledger["audit_codes"]</code>.</strong></p>
+<p>The decision is structural:</p>
+<ul>
+<li><code>class EqualRmsCoordinateMixer:</code> — the canonical implementation
+  that wraps <code>adaptive_reflow_memory_restart_coords</code> and reshapes
+  its return to the universal <code>(state, ledger)</code> contract.</li>
+<li><code>RMSPreservingCoordinateMixer = EqualRmsCoordinateMixer</code>
+  immediately followed by
+  <code>warnings.warn("RMSPreservingCoordinateMixer is deprecated; use
+  EqualRmsCoordinateMixer", DeprecationWarning, stacklevel=2)</code> —
+  the back-compat alias.</li>
+<li><code>MIXER_RMS_PRECEDENCE_FAIL</code> is the module-level constant in
+  <code>adaptive_reflow/molecular/mixer.py</code>, re-exported in
+  <code>molecular/__init__.py</code>.</li>
+<li><code>_require_equal_rms(memory, restart, *, tolerance=1e-6,
+  audit_codes=None)</code> is the helper that computes the two RMS
+  values and appends <code>MIXER_RMS_PRECEDENCE_FAIL</code> when the
+  difference exceeds the tolerance.</li>
+</ul>
+<p>The audit-code policy is preserved: <code>MIXER_RMS_PRECEDENCE_FAIL</code> is
+added to the catalogue in
+<a href="../0005-fail-closed-audit-code-policy/">ADR-0005</a>.</p>
 <h3 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h3>
 <p>Positive:</p>
 <ul>
-<li>The round trace is comparable across runs and across adapters — the
-  <code>operation_order</code> field is always one of the seven canonical names.</li>
-<li>The kernel benchmark under <code>tests/perf/</code> has a stable call graph.</li>
-<li>The doc scanner can resolve every reference to the seven step names
-  to a real symbol or a documented literal.</li>
+<li>The class name carries the precondition. A future caller cannot
+  read the name and conclude "RMS is preserved unconditionally".</li>
+<li>The precondition failure is observable on the audit trail.
+  Callers that depend on RMS preservation must inspect
+  <code>ledger["audit_codes"]</code> and surface the failure; callers that do
+  not depend on it (e.g. a research prototype) can ignore the audit
+  code without changing the blend's numeric output.</li>
+<li>The back-compat alias lets existing tests, docs, and downstream
+  consumers migrate at their own pace; the <code>DeprecationWarning</code> is
+  the migration signal.</li>
 </ul>
 <p>Negative:</p>
 <ul>
-<li>A future operation that does not fit the seven steps must either be
-  appended (requires an ADR) or implemented <em>within</em> an existing step
-  (requires documenting the new sub-step in the step's docstring).</li>
-<li>The <code>operation_order_version</code> constant is a public migration marker;
-  bumping it is a breaking change for any consumer that compares the
-  string directly.</li>
+<li>The <code>DeprecationWarning</code> is emitted <em>at import time</em> (not at
+  call time) because the alias is a module-level rebinding. A
+  consumer that imports <code>RMSPreservingCoordinateMixer</code> once at the
+  top of a long-lived process will see exactly one warning. A
+  consumer that imports it conditionally inside a function will see
+  one warning per import; for a research codebase this is the
+  intended behaviour.</li>
+<li>The <code>1e-6</code> tolerance is hard-coded inside
+  <code>_require_equal_rms</code>. A future caller that needs a tighter or
+  looser tolerance cannot override it without editing the helper.</li>
 </ul>
 <h3 id="confirmation">Confirmation<a class="headerlink" href="#confirmation" title="Permanent link">&para;</a></h3>
-<p>The decision is confirmed when:</p>
+<p>The decision is enforced by:</p>
 <ul>
-<li><code>tests/test_frame/test_engine.py</code> asserts the literal value of
-  <code>DEFAULT_OPERATION_STEPS</code> (a tuple-equality test).</li>
-<li>A property test (when added) asserts that <code>replay_default_order</code>
-  produces the same step names in the same order.</li>
-<li>The bench budget for <code>engine_round_loop</code> references the seven-step
-  sequence by name (see <code>docs/PERFORMANCE_BUDGETS.md</code>).</li>
+<li><code>tests/test_molecular/test_mixer.py</code> — the property test that
+  asserts <code>EqualRmsCoordinateMixer</code> returns a ledger with
+  <code>audit_codes == [MIXER_RMS_PRECEDENCE_FAIL]</code> when the input RMS
+  values differ by more than <code>1e-6</code>.</li>
+<li><code>tests/test_molecular/test_mixer.py</code> — the deprecation-warning
+  test that asserts <code>RMSPreservingCoordinateMixer</code> is a function
+  alias of <code>EqualRmsCoordinateMixer</code> and emits a
+  <code>DeprecationWarning</code> on import.</li>
+<li><code>tools/check_docs_against_code.py</code> — every reference to
+  <code>EqualRmsCoordinateMixer</code>, <code>RMSPreservingCoordinateMixer</code>, and
+  <code>MIXER_RMS_PRECEDENCE_FAIL</code> in the docs resolves to a real
+  symbol.</li>
 </ul>
 <h2 id="more-information">More Information<a class="headerlink" href="#more-information" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../ARCHITECTURE.md">ARCHITECTURE.md §5.5</a> — the
-  per-round contract that the seven steps implement.</li>
-<li><a href="../../PERFORMANCE_BUDGETS/">docs/PERFORMANCE_BUDGETS.md</a> — the
-  <code>engine_round_loop_us_p95</code> budget that gates the seven-step call
-  graph.</li>
-<li><code>adaptive_reflow/frame/engine.py::DEFAULT_OPERATION_STEPS</code> — the
-  pinned tuple constant.</li>
-<li><code>adaptive_reflow/contracts/operations.py::OperationCompositionContract</code>
-  — the migration marker that bumps when the order changes.</li>
-</ul>
-<h2 id="related-future-adrs">Related Future ADRs<a class="headerlink" href="#related-future-adrs" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>ADR-0008 (planned)</strong> — <em>Claim-gate deferral placeholder.</em> The
-  DTB-R8 claim gate's structural evaluator currently always returns
-  <code>"defer"</code> (see <code>adaptive_reflow/eval/claim_gate.py</code>). The
-  promote/rollback branches depend on R7 GPU data which has not
-  landed yet. The future ADR will author the R7 wiring for the
-  module-level <code>_resolve_decision(passed, failed) -&gt; ClaimGateDecision</code>
-  helper, which is exposed today precisely so that R7 wiring becomes a
-  one-line body replacement rather than a public-surface change.</li>
+<li><a href="../0005-fail-closed-audit-code-policy/">docs/adr/0005</a> — the
+  audit-code catalogue that lists <code>MIXER_RMS_PRECEDENCE_FAIL</code>.</li>
+<li><code>adaptive_reflow/molecular/mixer.py::EqualRmsCoordinateMixer</code> —
+  the canonical mixer.</li>
+<li><code>adaptive_reflow/molecular/mixer.py::RMSPreservingCoordinateMixer</code> —
+  the back-compat alias that emits a <code>DeprecationWarning</code>.</li>
+<li><code>adaptive_reflow/molecular/mixer.py::adaptive_reflow_memory_restart_coords</code> —
+  the free function that performs the blend and emits the audit
+  code.</li>
+<li><code>adaptive_reflow/molecular/mixer.py::MIXER_RMS_PRECEDENCE_FAIL</code> —
+  the module-level audit-code constant.</li>
+<li><code>adaptive_reflow/molecular/__init__.py</code> — the curated re-export
+  layer that exposes both names plus the audit-code constant.</li>
 </ul>
 
 

@@ -21,6 +21,10 @@ They are reviewed at every release tag and updated when an item closes.
       2026-09-30 [ADR-0004]
 - [ ] Update reader docs (`README.md`, `ARCHITECTURE.md` §5) to reflect
       the ToyGaussianAdapter recipe by 2026-09-30 [ADR-0003]
+- [x] Python 3.12 + `numpy<2.5` pin enforced across all declarative
+      configs (`pyproject.toml` `requires-python` / ruff `target-version`
+      / mypy `python_version`, and every `.github/workflows/*.yml`
+      `python-version`)
 
 ## Next (2026-Q4 — October through December)
 

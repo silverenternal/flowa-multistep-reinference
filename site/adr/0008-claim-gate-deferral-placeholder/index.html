@@ -21,7 +21,7 @@
     
     
       
-        <title>4. Engine seven-step operation order - flowa-multistep-reinference API</title>
+        <title>8. Claim-gate deferral placeholder - flowa-multistep-reinference API</title>
       
     
     
@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#4-engine-seven-step-operation-order" class="md-skip">
+        <a href="#8-claim-gate-deferral-placeholder" class="md-skip">
           Skip to content
         </a>
       
@@ -100,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              4. Engine seven-step operation order
+              8. Claim-gate deferral placeholder
             
           </span>
         </div>
@@ -566,17 +566,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#related-future-adrs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related Future ADRs
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -594,110 +583,121 @@
 
 
 
-<h1 id="4-engine-seven-step-operation-order">4. Engine seven-step operation order<a class="headerlink" href="#4-engine-seven-step-operation-order" title="Permanent link">&para;</a></h1>
+<h1 id="8-claim-gate-deferral-placeholder">8. Claim-gate deferral placeholder<a class="headerlink" href="#8-claim-gate-deferral-placeholder" title="Permanent link">&para;</a></h1>
 <h2 id="context-and-problem-statement">Context and Problem Statement<a class="headerlink" href="#context-and-problem-statement" title="Permanent link">&para;</a></h2>
-<p><code>adaptive_reflow.frame.engine.Engine.run_round</code> is a 7-step operation.
-The canonical order is captured as a tuple constant:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>DEFAULT_OPERATION_STEPS = (
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    "capabilities_handshake",
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    "build_initial_state",
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    "apply_restart_distribution",
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    "compose_condition",
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    "solve_ode",
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    "observe_endpoint",
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    "detach_and_validate_endpoint",
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>)
-</code></pre></div>
-<p>The order is load-bearing: each step assumes the previous step's
-output is well-formed, and the round trace produced at the end is the
-canonical record of <em>what</em> was called and in <em>what</em> order. Reordering
-a step silently breaks the trace contract, the
-<code>OperationCompositionContract.operation_order_version</code>, and every
-golden replay test.</p>
+<p><code>adaptive_reflow.eval.claim_gate.evaluate_claim_gate</code> is the
+structural evaluator that decides whether a candidate claim passes,
+fails, or is deferred for human review. The promote/rollback branches
+of the decision depend on R7 GPU calibration data which has not yet
+landed in the project. Until R7 lands, the evaluator cannot make a
+principled promote/rollback decision and the function must return
+<code>"defer"</code> for every call.</p>
+<p>The risk is that the deferral is implicit: an empty <code>if</code> branch
+or a <code>return "defer"</code> line at the bottom of <code>evaluate_claim_gate</code>
+would hide the deferral behind the public surface. A future R7
+maintainer would then have to read the whole function body to find
+the deferral and would be tempted to inline the new logic into the
+existing body — a refactor that <em>should</em> be a one-line body
+replacement becomes a public-surface change.</p>
+<p>The decision answers two questions:</p>
+<ol>
+<li><strong>Where</strong> does the deferral live? Inside a module-level helper
+   named <code>_resolve_decision(passed, failed) -&gt; ClaimGateDecision</code>
+   that <code>evaluate_claim_gate</code> calls.</li>
+<li><strong>What</strong> does the helper do today? It returns <code>"defer"</code>
+   structurally. When R7 lands, only the body of <code>_resolve_decision</code>
+   needs to change — the public surface of <code>evaluate_claim_gate</code> and
+   the contract on <code>ClaimGateDecision</code> stay the same.</li>
+</ol>
 <h2 id="decision-drivers">Decision Drivers<a class="headerlink" href="#decision-drivers" title="Permanent link">&para;</a></h2>
 <ul>
-<li>The operation order is part of the public surface: it appears in
-  <code>EngineRoundResult.round_trace_v3.operation_order</code>, in
-  <code>OperationCompositionContract.version</code>, and in the kernel
-  benchmarks under <code>tests/perf/</code>.</li>
-<li>The order is also a <em>correctness</em> invariant: stepping past
-  <code>compose_condition</code> before <code>apply_restart_distribution</code> would mean
-  the ODE condition delta was applied to a non-restarted state, which
-  is not what the engine is supposed to do.</li>
-<li>The seven steps are not negotiable as a <em>set</em> — every step exists
-  for a documented reason. The order between them is the question.</li>
+<li>The deferral must be visible to a future maintainer who is wiring
+  R7. The name <code>_resolve_decision</code> and the signature
+  <code>(passed, failed) -&gt; ClaimGateDecision</code> are deliberate: they tell
+  the maintainer exactly where the new logic lands.</li>
+<li>The public surface of <code>evaluate_claim_gate</code> — its signature, the
+  shape of <code>ClaimGateDecision</code>, and the audit-trail emission — must
+  stay stable so the wiring change is purely a body replacement.</li>
+<li>The deferral must not be silent on the audit trail. The
+  <code>ClaimGateDecision</code> carries a <code>reason</code> field that names the
+  deferral so a downstream consumer can grep for it.</li>
 </ul>
 <h2 id="considered-options">Considered Options<a class="headerlink" href="#considered-options" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Fix the 7-step order as a constant; changes require a new ADR.</strong></li>
-<li><strong>Make the order pluggable.</strong> Each adapter author supplies their
-   own step list. Rejected because the round trace contract would
-   then be adapter-dependent and the trace v3 content hash would not
-   be comparable across adapters.</li>
-<li><strong>Drop the canonical order entirely; rely on docstrings.</strong> Rejected
-   because the trace and the contract both consume the tuple.</li>
+<li><strong>Delegate the resolve to a module-level helper
+   <code>_resolve_decision(passed, failed) -&gt; ClaimGateDecision</code>. Today
+   the helper returns <code>"defer"</code> structurally with a <code>reason</code>
+   describing the missing R7 data.</strong></li>
+<li><strong>Inline the deferral in <code>evaluate_claim_gate</code>.</strong> Rejected
+   because a future R7 maintainer would have to read the whole
+   function to find the deferral and would be tempted to refactor
+   the public surface.</li>
+<li><strong>Raise <code>NotImplementedError</code> until R7 lands.</strong> Rejected because
+   the helper is consumed by the orchestrator in the present
+   release; a raised exception would crash the round.</li>
 </ol>
 <h2 id="decision-outcome">Decision Outcome<a class="headerlink" href="#decision-outcome" title="Permanent link">&para;</a></h2>
-<p>Chosen option: <strong>The seven-step order is fixed and is the single
-canonical order. Changing it requires a new ADR that names the new
-step, the new position, and the migration path for every existing
-golden and benchmark.</strong></p>
-<p>The tuple <code>DEFAULT_OPERATION_STEPS</code> lives in
-<code>adaptive_reflow/frame/engine.py</code> and is re-exported as
-<code>adaptive_reflow.frame.DEFAULT_OPERATION_STEPS</code>. The
-<code>OperationCompositionContract.version</code> constant
-(<code>DEFAULT_OPERATION_COMPOSITION_VERSION</code>) is bumped in the same
-commit that introduces the new order.</p>
+<p>Chosen option: <strong><code>evaluate_claim_gate</code> delegates decision resolution
+to the module-level helper <code>_resolve_decision(passed, failed) -&gt;
+ClaimGateDecision</code>. Today the helper returns <code>ClaimGateDecision(
+verdict="defer", reason="r7_calibration_pending")</code> structurally.
+When R7 lands, the helper body is the only function that changes:
+<code>_resolve_decision</code> is replaced with the real promote/rollback
+logic, and <code>evaluate_claim_gate</code> keeps the same public surface.</strong></p>
+<p>The structural deferral is exposed in two places:</p>
+<ul>
+<li>The helper signature, which is the search anchor for a future R7
+  maintainer.</li>
+<li>The <code>reason</code> field of the returned <code>ClaimGateDecision</code>, which is
+  the audit-trail anchor for downstream consumers.</li>
+</ul>
+<p>The orchestrator-side invariant is documented in
+<code>adaptive_reflow/eval/claim_gate.py</code> as the
+<code>evaluate_claim_gate</code> public surface; any consumer of the claim gate
+must tolerate <code>"defer"</code> verdicts today and may need to update when
+R7 lands.</p>
 <h3 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h3>
 <p>Positive:</p>
 <ul>
-<li>The round trace is comparable across runs and across adapters — the
-  <code>operation_order</code> field is always one of the seven canonical names.</li>
-<li>The kernel benchmark under <code>tests/perf/</code> has a stable call graph.</li>
-<li>The doc scanner can resolve every reference to the seven step names
-  to a real symbol or a documented literal.</li>
+<li>The R7 wiring is a one-line body replacement. A future maintainer
+  finds the helper by its name, sees the structural deferral, and
+  knows exactly where to add the real logic.</li>
+<li>The public surface of <code>evaluate_claim_gate</code> and the shape of
+  <code>ClaimGateDecision</code> are stable across the R7 transition.</li>
+<li>The deferral is observable on the audit trail via the <code>reason</code>
+  field.</li>
 </ul>
 <p>Negative:</p>
 <ul>
-<li>A future operation that does not fit the seven steps must either be
-  appended (requires an ADR) or implemented <em>within</em> an existing step
-  (requires documenting the new sub-step in the step's docstring).</li>
-<li>The <code>operation_order_version</code> constant is a public migration marker;
-  bumping it is a breaking change for any consumer that compares the
-  string directly.</li>
+<li>The orchestrator must tolerate <code>"defer"</code> verdicts today. This is
+  a real constraint: the orchestrator cannot promote a claim until
+  R7 lands, so any "promote" branch in the orchestrator's round
+  loop is gated on a non-<code>"defer"</code> verdict.</li>
+<li>The deferral's <code>reason</code> string (<code>"r7_calibration_pending"</code>) is
+  part of the public surface; renaming it is a breaking change for
+  any consumer that greps the audit trail by reason.</li>
 </ul>
 <h3 id="confirmation">Confirmation<a class="headerlink" href="#confirmation" title="Permanent link">&para;</a></h3>
-<p>The decision is confirmed when:</p>
+<p>The decision is enforced by:</p>
 <ul>
-<li><code>tests/test_frame/test_engine.py</code> asserts the literal value of
-  <code>DEFAULT_OPERATION_STEPS</code> (a tuple-equality test).</li>
-<li>A property test (when added) asserts that <code>replay_default_order</code>
-  produces the same step names in the same order.</li>
-<li>The bench budget for <code>engine_round_loop</code> references the seven-step
-  sequence by name (see <code>docs/PERFORMANCE_BUDGETS.md</code>).</li>
+<li><code>tests/test_eval/test_claim_gate.py</code> — the property test that
+  asserts <code>evaluate_claim_gate</code> returns a <code>"defer"</code> verdict with
+  reason <code>"r7_calibration_pending"</code> for every input today.</li>
+<li><code>tools/check_docs_against_code.py</code> — every reference to
+  <code>_resolve_decision</code> and <code>evaluate_claim_gate</code> in the docs
+  resolves to a real symbol.</li>
 </ul>
 <h2 id="more-information">More Information<a class="headerlink" href="#more-information" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../ARCHITECTURE.md">ARCHITECTURE.md §5.5</a> — the
-  per-round contract that the seven steps implement.</li>
-<li><a href="../../PERFORMANCE_BUDGETS/">docs/PERFORMANCE_BUDGETS.md</a> — the
-  <code>engine_round_loop_us_p95</code> budget that gates the seven-step call
-  graph.</li>
-<li><code>adaptive_reflow/frame/engine.py::DEFAULT_OPERATION_STEPS</code> — the
-  pinned tuple constant.</li>
-<li><code>adaptive_reflow/contracts/operations.py::OperationCompositionContract</code>
-  — the migration marker that bumps when the order changes.</li>
-</ul>
-<h2 id="related-future-adrs">Related Future ADRs<a class="headerlink" href="#related-future-adrs" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>ADR-0008 (planned)</strong> — <em>Claim-gate deferral placeholder.</em> The
-  DTB-R8 claim gate's structural evaluator currently always returns
-  <code>"defer"</code> (see <code>adaptive_reflow/eval/claim_gate.py</code>). The
-  promote/rollback branches depend on R7 GPU data which has not
-  landed yet. The future ADR will author the R7 wiring for the
-  module-level <code>_resolve_decision(passed, failed) -&gt; ClaimGateDecision</code>
-  helper, which is exposed today precisely so that R7 wiring becomes a
-  one-line body replacement rather than a public-surface change.</li>
+<li><a href="../0004-engine-seven-step-operation-order/">docs/adr/0004</a> — the
+  related future ADR that ADR-0004 cross-references; both ADRs name
+  the same R7 milestone.</li>
+<li><code>adaptive_reflow/eval/claim_gate.py::_resolve_decision</code> — the
+  helper that is the structural deferral.</li>
+<li><code>adaptive_reflow/eval/claim_gate.py::evaluate_claim_gate</code> — the
+  public function that delegates to the helper.</li>
+<li><code>ROADMAP.md</code> — the R7 entry that names the milestone that
+  unblocks the helper body.</li>
 </ul>
 
 

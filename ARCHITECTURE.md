@@ -1184,6 +1184,7 @@ possible (`isinstance(adapter, FlowMatchingODEAdapter)`).
 | `SPLIT_NOTES.md`                | Historical — per-symbol placement for the `restart_memory_types.py` and `envelope_manifest.py` splits. |
 | `todo.json`                     | Canonical task list (DTB-R0/R1/.../DTB-RFG).                                      |
 | `docs/`                         | Project-internal research notes (candidate-registry init + Lean provenance).      |
+| `docs/api/*.md` | Auto-generated, **griffe-driven** API reference. Each page drills into per-internal-module directives (`::: adaptive_reflow.frame.merge`, `::: adaptive_reflow.contracts.bundle`, `::: adaptive_reflow.universal.adapter`, ...) rather than stopping at the subpackage `__init__.py` re-exports, so symbols that live only in the split files (error sentinels, validator helpers, audit-code constants, per-adapter `*_CHANNELS` tables) appear in the rendered reference. mkdocstrings' Python handler uses [griffe](https://mkdocstrings.github.io/griffe/) as its signature-extraction back-end (declared as an explicit `griffe>=1.0` pin in `[project.optional-dependencies].dev`); `mkdocs.yml` sets `inherited_members: true` so inherited dataclass fields and Protocol methods show up under each class heading. Build via `python -m mkdocs build --strict` (use the `.venv` interpreter the project pins); `--strict` fails the build on missing nav entries, broken cross-references, and unresolved mkdocstrings directives so doc drift is caught at PR time. |
 
 ---
 

@@ -1,0 +1,933 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Tutorial — Writing your own adapter - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tutorial-writing-your-own-adapter" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tutorial — Writing your own adapter
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#worked-example-twodimfmadapter-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example — TwoDimFMAdapter end-to-end
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Worked example — TwoDimFMAdapter end-to-end">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#worked-example-step-1-install-the-optional-extra" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example — Step 1. Install the optional extra
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worked-example-step-2-load-the-pre-trained-npz-weights" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example — Step 2. Load the pre-trained .npz weights
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worked-example-step-3-build-the-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example — Step 3. Build the adapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worked-example-step-4-build-the-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example — Step 4. Build the engine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worked-example-step-5-run-five-rounds-with-restart_beta05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example — Step 5. Run five rounds with restart_beta=0.5
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worked-example-step-6-score-the-round-with-twodimfmevaluator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example — Step 6. Score the round with TwoDimFMEvaluator
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#worked-example-step-7-plot-the-endpoint-samples-text-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Worked example — Step 7. Plot the endpoint samples (text description)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's next?
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="tutorial-writing-your-own-adapter">Tutorial — Writing your own adapter<a class="headerlink" href="#tutorial-writing-your-own-adapter" title="Permanent link">&para;</a></h1>
+<p>This is the <strong>worked-example</strong> companion to
+<a href="../ADAPTER_INTERFACE_SPEC/">ADAPTER_INTERFACE_SPEC.md</a>. The spec
+describes the universal contract every adapter must satisfy; this
+tutorial walks through one <strong>non-toy, real-model, CPU-runnable</strong>
+adapter end-to-end — <code>TwoDimFMAdapter</code> — so adapter authors can see
+how the contract is wired up against a real velocity-field network.</p>
+<p>The tutorial is organised as a single worked example that progressively
+goes from "load pre-trained weights" to "score the round with a real
+evaluator". Each step is self-contained; you can stop after any step
+and still have a runnable adapter.</p>
+<hr />
+<h2 id="worked-example-twodimfmadapter-end-to-end">Worked example — <code>TwoDimFMAdapter</code> end-to-end<a class="headerlink" href="#worked-example-twodimfmadapter-end-to-end" title="Permanent link">&para;</a></h2>
+<p>This example uses the canonical pre-trained weights shipped under
+<code>data/</code> and the canonical evaluator shipped under
+<code>adaptive_reflow.eval.twodim_fm_evaluator</code>. The whole pipeline runs on
+a laptop CPU in a few seconds; no GPU, no PyTorch, no external
+services.</p>
+<h3 id="worked-example-step-1-install-the-optional-extra">Worked example — Step 1. Install the optional extra<a class="headerlink" href="#worked-example-step-1-install-the-optional-extra" title="Permanent link">&para;</a></h3>
+<p><code>TwoDimFMAdapter</code> is the only module under <code>adaptive_reflow.adapters</code>
+that imports NumPy at runtime, so the framework keeps NumPy / SciPy
+behind an opt-in extra. Install it with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>flow_matching<span class="o">]</span>
+</code></pre></div>
+<p>This installs <code>numpy&gt;=1.24</code> and <code>scipy&gt;=1.10</code> (see
+<code>pyproject.toml [project.optional-dependencies].flow_matching</code>). The
+rest of the framework remains stdlib-only.</p>
+<h3 id="worked-example-step-2-load-the-pre-trained-npz-weights">Worked example — Step 2. Load the pre-trained <code>.npz</code> weights<a class="headerlink" href="#worked-example-step-2-load-the-pre-trained-npz-weights" title="Permanent link">&para;</a></h3>
+<p>The shipped <code>data/twodim_fm_*.npz</code> files are the <strong>only</strong> artifact the
+runtime adapter consumes at module load. Each file holds six NumPy
+arrays (<code>W1, b1, W2, b2, W3, b3</code>) that define the velocity-field MLP:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">weights_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"data/twodim_fm_two_moons.npz"</span><span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">weights_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">data</span><span class="p">:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">W1</span><span class="p">,</span> <span class="n">b1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"W1"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"b1"</span><span class="p">]</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">W2</span><span class="p">,</span> <span class="n">b2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"W2"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"b2"</span><span class="p">]</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">W3</span><span class="p">,</span> <span class="n">b3</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"W3"</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"b3"</span><span class="p">]</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">assert</span> <span class="n">W1</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span> <span class="ow">and</span> <span class="n">W3</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="s2">"Unexpected velocity-MLP shape — did the trainer change?"</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">)</span>
+</code></pre></div>
+<p><code>TwoDimFMAdapter</code> re-binds the activation between ReLU (trainer) and
+Tanh (runtime), but the weight shapes and key names are identical, so
+the <code>.npz</code> files are byte-compatible across the trainer/runtime
+boundary. The two shipped files are ~2 kB each:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Target distribution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data/twodim_fm_two_moons.npz</code></td>
+<td><code>target="two_moons"</code></td>
+</tr>
+<tr>
+<td><code>data/twodim_fm_eight_gaussians.npz</code></td>
+<td><code>target="eight_gaussians"</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="worked-example-step-3-build-the-adapter">Worked example — Step 3. Build the adapter<a class="headerlink" href="#worked-example-step-3-build-the-adapter" title="Permanent link">&para;</a></h3>
+<p><code>TwoDimFMAdapter</code> is the standard concrete implementation of
+<code>FlowMatchingODEAdapter</code> for the 2D rectified-flow model. It exposes
+all eight Protocol methods (<code>build_initial_state</code>,
+<code>export_endpoint</code>, <code>detach_and_validate_endpoint</code>,
+<code>apply_restart_distribution</code>, <code>compose_condition</code>, <code>solve_ode</code>,
+<code>observe_endpoint</code>, <code>capabilities</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.adapters.twodim_fm</span><span class="w"> </span><span class="kn">import</span> <span class="n">TwoDimFMAdapter</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">adapter</span> <span class="o">=</span> <span class="n">TwoDimFMAdapter</span><span class="p">(</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">weights_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"data/twodim_fm_two_moons.npz"</span><span class="p">),</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">target</span><span class="o">=</span><span class="s2">"two_moons"</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">integrator</span><span class="o">=</span><span class="s2">"rk4"</span><span class="p">,</span>       <span class="c1"># "rk4" (default) or "dormand_prince"</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">num_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>          <span class="c1"># integration steps on t ∈ [0, 1]</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Capability handshake: the engine calls this exactly once at registration.</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">caps</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">capabilities</span><span class="p">()</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="k">assert</span> <span class="n">caps</span><span class="o">.</span><span class="n">has_ode_integration_surface</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="k">assert</span> <span class="n">caps</span><span class="o">.</span><span class="n">has_restart_boundary</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="k">assert</span> <span class="n">caps</span><span class="o">.</span><span class="n">supported_channels</span> <span class="o">==</span> <span class="p">(</span><span class="s2">"xy"</span><span class="p">,)</span>
+</code></pre></div>
+<p>The constructor fails closed on unknown targets, unknown integrators,
+or non-positive step counts. The default weight path resolution looks
+under <code>data/</code> when <code>weights_path=None</code>.</p>
+<h3 id="worked-example-step-4-build-the-engine">Worked example — Step 4. Build the engine<a class="headerlink" href="#worked-example-step-4-build-the-engine" title="Permanent link">&para;</a></h3>
+<p><code>Engine</code> is the model-family-agnostic orchestrator. It accepts the
+adapter via its capability handshake and drives one round at a time:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.frame.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">Engine</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">()</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Run the capability handshake exactly once at registration.</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">caps</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">handshake</span><span class="p">(</span><span class="n">adapter</span><span class="p">)</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">assert</span> <span class="n">caps</span><span class="o">.</span><span class="n">native_config_hash</span> <span class="o">==</span> <span class="s2">"twodim_fm:cfg:v1"</span>
+</code></pre></div>
+<p><code>Engine</code> is <strong>stateless</strong>: each <code>run_round</code> invocation is a pure
+function of its inputs plus the adapter's Protocol surface. This
+property is what makes round-to-round paired evaluation
+(DTB-R7 / DTB-R8) reproducible.</p>
+<h3 id="worked-example-step-5-run-five-rounds-with-restart_beta05">Worked example — Step 5. Run five rounds with <code>restart_beta=0.5</code><a class="headerlink" href="#worked-example-step-5-run-five-rounds-with-restart_beta05" title="Permanent link">&para;</a></h3>
+<p>The <code>FinalRestartPolicy</code> is the per-channel beta schedule. We pin
+<code>beta_by_channel["xy"] = 0.5</code> so the engine blends <strong>50% memory +
+50% fresh noise</strong> at each round boundary (the adapter's
+<code>_blend_endpoint_with_prior</code> formula maps <code>m = 1 - beta</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.contracts.authority</span><span class="w"> </span><span class="kn">import</span> <span class="n">FinalRestartPolicy</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelName</span><span class="p">,</span> <span class="n">FactorValue</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">policy</span> <span class="o">=</span> <span class="n">FinalRestartPolicy</span><span class="p">(</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">policy_id</span><span class="o">=</span><span class="s2">"tutorial-twodim-policy"</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">run_id</span><span class="o">=</span><span class="s2">"tutorial-twodim-run"</span><span class="p">,</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">beta_by_channel</span><span class="o">=</span><span class="p">{</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"xy"</span><span class="p">):</span> <span class="n">FactorValue</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)},</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">alpha_by_channel</span><span class="o">=</span><span class="p">{</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"xy"</span><span class="p">):</span> <span class="n">FactorValue</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)},</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">fresh_noise_floor_by_channel</span><span class="o">=</span><span class="p">{</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"xy"</span><span class="p">):</span> <span class="n">FactorValue</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)},</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1"># Initial state: source N(0, I_2), seeded by (batch_id, sample_id).</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="n">bundle</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">build_initial_state</span><span class="p">(</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">batch_id</span><span class="o">=</span><span class="s2">"tutorial-batch"</span><span class="p">,</span> <span class="n">sample_id</span><span class="o">=</span><span class="s2">"tutorial-sample"</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="p">)</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="c1"># PhaseState + condition_delta are the other two engine.run_round inputs;</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="c1"># see tests/test_adapters/test_twodim_fm.py for the canonical construction.</span>
+</code></pre></div>
+<p>Run five rounds in a loop:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.adapters.twodim_fm</span><span class="w"> </span><span class="kn">import</span> <span class="n">TWODIM_FM_NUM_STEPS</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">endpoints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run_round</span><span class="p">(</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="n">round_index</span><span class="o">=</span><span class="n">r</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="n">phase_state</span><span class="o">=...</span><span class="p">,</span>                 <span class="c1"># your phase-state fixture</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="n">bundle</span><span class="o">=</span><span class="n">bundle</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>        <span class="n">adapter</span><span class="o">=</span><span class="n">adapter</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>        <span class="n">policy</span><span class="o">=</span><span class="n">policy</span><span class="p">,</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        <span class="n">condition_delta</span><span class="o">=...</span><span class="p">,</span>             <span class="c1"># num_steps=TWODIM_FM_NUM_STEPS</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>        <span class="n">seed</span><span class="o">=</span><span class="mi">42</span> <span class="o">+</span> <span class="n">r</span><span class="p">,</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="p">)</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="c1"># The engine returns an `EngineRoundResult`; the round trace carries</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="c1"># the integrator trace, the audit codes, and the detached flag.</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">round_trace</span><span class="o">.</span><span class="n">detached</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>    <span class="n">endpoints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>        <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">endpoint_xy</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">endpoint_xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>    <span class="p">)</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>    <span class="n">bundle</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">next_bundle</span>  <span class="c1"># for the next round's input</span>
+</code></pre></div>
+<p>After five rounds the adapter has produced five endpoints sampled from
+the (approximate) two-moons distribution. Each endpoint is finite and
+inside the bounding box <code>[-3, 3]^2</code> because of the
+<code>TWODIM_FM_CLAMP = 5.0</code> overflow clamp and the RK4 integrator's
+byte-deterministic stability.</p>
+<h3 id="worked-example-step-6-score-the-round-with-twodimfmevaluator">Worked example — Step 6. Score the round with <code>TwoDimFMEvaluator</code><a class="headerlink" href="#worked-example-step-6-score-the-round-with-twodimfmevaluator" title="Permanent link">&para;</a></h3>
+<p><code>TwoDimFMEvaluator</code> is the canonical "real replay-through-adapter"
+evaluator. It owns one <code>TwoDimFMAdapter</code> instance (with the same
+weights) and, on every <code>evaluate</code> call, replays the adapter's
+<code>solve_ode</code> for <code>n_gen</code> endpoints and compares them against <code>n_ref</code>
+analytic samples from the same target distribution.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.eval.twodim_fm_evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">TwoDimFMEvaluator</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">evaluator</span> <span class="o">=</span> <span class="n">TwoDimFMEvaluator</span><span class="p">(</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">target</span><span class="o">=</span><span class="s2">"two_moons"</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">n_gen</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>     <span class="c1"># endpoints generated by replaying solve_ode</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">n_ref</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>     <span class="c1"># analytic samples drawn from the target sampler</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">)</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="n">evidence</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">bundle</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"xy"</span><span class="p">),</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="p">)</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1"># `support_coverage` is a FactorValue in the canonical four-evidence</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="c1"># surface; the numerical `coverage_score` helper is the underlying</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="c1"># Voronoi-fraction computation.</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"W2 ="</span><span class="p">,</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">evidence</span><span class="o">.</span><span class="n">raw_score</span><span class="p">)))</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"bounded_score ="</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">evidence</span><span class="o">.</span><span class="n">bounded_score</span><span class="p">))</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"support_coverage ="</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">evidence</span><span class="o">.</span><span class="n">support_coverage</span><span class="p">))</span>
+</code></pre></div>
+<p>The three numerical diagnostics are computed as:</p>
+<table>
+<thead>
+<tr>
+<th>Diagnostic</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wasserstein_2d</code></td>
+<td><code>sqrt(W2_x^2 + W2_y^2)</code> — closed-form 2D Wasserstein distance via <code>scipy.stats.wasserstein_distance</code>.</td>
+</tr>
+<tr>
+<td><code>support_coverage</code></td>
+<td>Fraction of Voronoi cells (one per target mode) covered by at least one generated endpoint within <code>TWODIM_FM_COVERAGE_RADIUS = 0.3</code>.</td>
+</tr>
+<tr>
+<td><code>energy_distance</code></td>
+<td>Squared energy distance <code>E^2</code> via <code>scipy.spatial.distance.cdist</code> / <code>pdist</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The four <code>ChannelTransferEvidence</code> diagnostics are derived from these
+as <code>raw_score = 1 - W2 / TWODIM_FM_W2_MAX</code> (with <code>TWODIM_FM_W2_MAX = 2.0</code>),
+<code>bounded_score = clip(raw_score, 0, 1)</code>, <code>calibration_lower_bound = 0.95</code>,
+and <code>perturbation_stability_lower_bound = 0.85</code>. The <code>oracle</code> method
+exposes the same values as a plain dict, and the byte-for-byte equality
+contract between <code>evaluate</code> and <code>oracle</code> is asserted in
+<code>tests/test_eval/test_twodim_fm_evaluator.py</code>.</p>
+<h3 id="worked-example-step-7-plot-the-endpoint-samples-text-description">Worked example — Step 7. Plot the endpoint samples (text description)<a class="headerlink" href="#worked-example-step-7-plot-the-endpoint-samples-text-description" title="Permanent link">&para;</a></h3>
+<p>The framework deliberately ships <strong>no</strong> plotting dependency — NumPy and
+SciPy are the only optional extras. To eyeball the trajectory you
+either:</p>
+<ol>
+<li><strong>Save the endpoints to disk</strong> as <code>.npy</code> / <code>.csv</code> and import them
+   into your favourite plotting tool (<code>matplotlib</code>, <code>plotly</code>, <code>vega</code>).
+   The adapter's stored trajectory is keyed by <code>native_state_digest</code>
+   and is reachable from the engine's <code>EngineRoundResult</code> via the
+   adapter's internal state, so a small script can dump the full
+   trajectory.</li>
+<li><strong>Print a textual summary</strong>: for each round, print the endpoint
+   coordinates and the W2 / coverage / energy diagnostics.</li>
+</ol>
+<p>A minimal textual summary looks like this (the numerical values are
+illustrative):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>round 0 endpoint = (0.91, -0.42)   W2=0.18   coverage=0.50   energy=0.07
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>round 1 endpoint = (0.83, -0.51)   W2=0.17   coverage=0.50   energy=0.06
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>round 2 endpoint = (1.02, -0.39)   W2=0.18   coverage=0.50   energy=0.07
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>round 3 endpoint = (0.88, -0.47)   W2=0.18   coverage=0.50   energy=0.07
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>round 4 endpoint = (0.79, -0.55)   W2=0.18   coverage=0.50   energy=0.07
+</code></pre></div>
+<p>For visual diagnostics, the recommended pattern is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">endpoints_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">endpoints</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>  <span class="c1"># shape (5, 2)</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"endpoints.npy"</span><span class="p">,</span> <span class="n">endpoints_arr</span><span class="p">)</span>
+</code></pre></div>
+<p>Then drop <code>endpoints.npy</code> into a notebook cell with <code>matplotlib.pyplot.scatter</code>.</p>
+<hr />
+<h2 id="whats-next">What's next?<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
+<p>Once you have a runnable <code>TwoDimFMAdapter</code> you have seen every load-
+bearing piece of the universal contract: the capability handshake, the
+eight Protocol methods, the channel vocabulary, the mixer selection
+(<code>NoOpMixer</code>), the restart distribution, and the evaluator. Porting
+the same shape to a new model family — Stable Diffusion 3 latent,
+CTMC over discrete states, graph-flow over molecular graphs — is a
+matter of:</p>
+<ol>
+<li><strong>Pick the channel vocabulary</strong> — see
+   <a href="../ADAPTER_INTERFACE_SPEC/">ADAPTER_INTERFACE_SPEC.md §9</a> "Adding a
+   new model — step-by-step recipe".</li>
+<li><strong>Pick the right mixer</strong> — <code>NoOpMixer</code>, <code>LatentConvexMixer</code>,
+   <code>DiscreteIdentityMixer</code>, or a custom <code>RestartMixer</code> subclass.</li>
+<li><strong>Implement the eight Protocol methods</strong> — every method is total,
+   deterministic, non-mutating, and raises <code>CapabilityMissingError</code> for
+   capabilities the adapter does not advertise.</li>
+<li><strong>Wire up the envelope / evaluator</strong> — register them via
+   <code>exposed_envelope_criteria</code> and <code>exposed_evaluators</code> in the
+   <code>AdapterCapabilities</code> declaration.</li>
+<li><strong>Run the test battery</strong> —
+   <code>tests/test_universal/test_adapter_universality.py</code> is the canonical
+   pass condition.</li>
+</ol>
+<p>The <code>TwoDimFMAdapter</code> is the smallest non-trivial real-model
+implementation in the codebase; it is the <strong>proof artifact</strong> for
+DTB-G3 phase 1 (real-model runtime) and the canonical reference for
+adapter authors.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
