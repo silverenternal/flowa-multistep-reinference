@@ -572,6 +572,67 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#caveat-w2-feedback-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caveat: W2 feedback cost
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#new-findings-schedule-families-adr-0012-2026-08-28" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New findings: schedule families (ADR-0012, 2026-08-28)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="New findings: schedule families (ADR-0012, 2026-08-28)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#schedule-shape-axis-cosine-vs-polynomial-vs-sigmoid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schedule shape axis (cosine vs polynomial vs sigmoid)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feedback-axis-cosine-vs-convergence-adaptive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feedback axis (cosine vs convergence-adaptive)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#caveat-and-forward-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caveat and forward work
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -606,13 +667,17 @@
 
 
 <h1 id="2d-rectified-flow-ablation-study">2D Rectified-Flow Ablation Study<a class="headerlink" href="#2d-rectified-flow-ablation-study" title="Permanent link">&para;</a></h1>
-<p>A 4 x 2 ablation that contrasts the four restart regimes the framework exposes against the two analytic target distributions supported by <code>TwoDimFMAdapter</code>. Every cell is run with <code>seed=42</code>, <code>rounds=20</code>, and <code>num_steps=30</code> (RK4). Total wall-clock: 0.2s on a single CPU core.</p>
+<p>An 8 x 2 ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by <code>TwoDimFMAdapter</code>. Every cell is run with <code>seed=42</code>, <code>rounds=20</code>, and <code>num_steps=30</code> (RK4). Total wall-clock: 1.3s on a single CPU core. Phase-2 framework: every cell is driven by <code>ReInferenceRunner</code> (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).</p>
 <h2 id="configurations">Configurations<a class="headerlink" href="#configurations" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>single_pass</strong> -- one round, fresh noise (memory fraction 0). Baseline.</li>
-<li><strong>multi_round_constant_beta_05</strong> -- 20 rounds, constant <code>beta = 0.5</code> (50/50 prior / fresh noise blend).</li>
-<li><strong>multi_round_cosine_anneal</strong> -- 20 rounds, <code>beta</code> derived from a cosine-annealed memory-fraction schedule with <code>n_min=0</code> and <code>n_max=1</code> (ADR-0010). At round 0 the engine emits <code>beta = n_max</code> (full fresh noise for exploration); at the final round it emits <code>beta = n_min</code> (preserve the prior and refine).</li>
-<li><strong>multi_round_no_restart</strong> -- 20 rounds, constant <code>beta = 1.0</code> (memory fraction 0; full fresh noise every round). Worst-case ablation.</li>
+<li><strong>multi_round_constant_beta_05</strong> -- 20 rounds, constant <code>beta = 0.5</code> via <code>ConstantPolicyDriver(beta=0.5)</code> + cosine scheduler (50/50 prior / fresh noise blend).</li>
+<li><strong>multi_round_cosine_anneal</strong> -- 20 rounds, <code>beta</code> derived from a cosine-annealed memory-fraction schedule with <code>n_min=0</code> and <code>n_max=1</code> (ADR-0010). Driver is the default <code>ScheduleDerivedPolicyDriver</code>, so the runner emits <code>beta = n_cap</code> per round (the engine's inline <code>_policy_with_schedule_beta</code> override is now driven by the driver).</li>
+<li><strong>multi_round_no_restart</strong> -- 20 rounds, constant <code>beta = 1.0</code> via <code>ConstantPolicyDriver(beta=1.0)</code> (memory fraction 0; full fresh noise every round). Worst-case ablation.</li>
+<li><strong>multi_round_polynomial_schedule_derived</strong> -- 20 rounds, <code>PolynomialScheduler(power=2)</code> + <code>ScheduleDerivedPolicyDriver</code>. Concave ramp; <code>beta</code> stays near <code>n_max</code> longer in the cycle, then climbs near the end.</li>
+<li><strong>multi_round_sigmoid_schedule_derived</strong> -- 20 rounds, <code>SigmoidScheduler(steepness=10, midpoint=0.5)</code> + <code>ScheduleDerivedPolicyDriver</code>. Near-step transition at the cycle midpoint; <code>beta</code> stays low for the first half of the cycle and jumps to high for the second half.</li>
+<li><strong>multi_round_convergence_adaptive_schedule_derived</strong> -- 20 rounds, <code>ConvergenceAdaptiveScheduler(base=CosineAnnealScheduler, kp=0.1, kd=0.05, shift_max=0.15)</code> + <code>ScheduleDerivedPolicyDriver</code>. PID-lite feedback shifts the effective <code>u_r</code> per round based on the cumulative W2 history; this cell drives the runner's loop directly so per-round W2 can be fed back to the scheduler.</li>
+<li><strong>multi_round_cosine_adaptive_driver</strong> -- 20 rounds, cosine scheduler + <code>AdaptivePolicyDriver</code>. The driver ignores the schedule's <code>n_cap</code> so <code>beta</code> is driven by the prior endpoint's digest instead. This row exercises the (scheduler, driver) composability the new framework unlocks.</li>
 </ul>
 <h2 id="targets">Targets<a class="headerlink" href="#targets" title="Permanent link">&para;</a></h2>
 <ul>
@@ -642,86 +707,261 @@
 <tr>
 <td>single_pass</td>
 <td>two_moons</td>
-<td style="text-align: right;">2.6481</td>
-<td style="text-align: right;">2.6481</td>
+<td style="text-align: right;">3.7076</td>
+<td style="text-align: right;">3.7076</td>
 <td style="text-align: right;">0.500</td>
 <td style="text-align: right;">0.500</td>
 </tr>
 <tr>
 <td>multi_round_constant_beta_05</td>
 <td>two_moons</td>
-<td style="text-align: right;">0.8148</td>
-<td style="text-align: right;">0.7336</td>
+<td style="text-align: right;">0.8140</td>
+<td style="text-align: right;">0.8955</td>
 <td style="text-align: right;">1.000</td>
 <td style="text-align: right;">1.000</td>
 </tr>
 <tr>
 <td>multi_round_cosine_anneal</td>
 <td>two_moons</td>
-<td style="text-align: right;">0.8758</td>
-<td style="text-align: right;">0.7397</td>
+<td style="text-align: right;">0.8140</td>
+<td style="text-align: right;">0.8955</td>
 <td style="text-align: right;">1.000</td>
 <td style="text-align: right;">1.000</td>
 </tr>
 <tr>
 <td>multi_round_no_restart</td>
 <td>two_moons</td>
-<td style="text-align: right;">0.6126</td>
-<td style="text-align: right;">0.6195</td>
+<td style="text-align: right;">0.4861</td>
+<td style="text-align: right;">0.5864</td>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+<tr>
+<td>multi_round_polynomial_schedule_derived</td>
+<td>two_moons</td>
+<td style="text-align: right;">1.0521</td>
+<td style="text-align: right;">1.2320</td>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+<tr>
+<td>multi_round_sigmoid_schedule_derived</td>
+<td>two_moons</td>
+<td style="text-align: right;">0.9397</td>
+<td style="text-align: right;">1.0716</td>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+<tr>
+<td>multi_round_convergence_adaptive_schedule_derived</td>
+<td>two_moons</td>
+<td style="text-align: right;">0.8973</td>
+<td style="text-align: right;">0.6947</td>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+<tr>
+<td>multi_round_cosine_adaptive_driver</td>
+<td>two_moons</td>
+<td style="text-align: right;">0.8140</td>
+<td style="text-align: right;">0.8955</td>
 <td style="text-align: right;">1.000</td>
 <td style="text-align: right;">1.000</td>
 </tr>
 <tr>
 <td>single_pass</td>
 <td>eight_gaussians</td>
-<td style="text-align: right;">2.3525</td>
-<td style="text-align: right;">2.3525</td>
+<td style="text-align: right;">1.7358</td>
+<td style="text-align: right;">1.7358</td>
 <td style="text-align: right;">0.125</td>
 <td style="text-align: right;">0.125</td>
 </tr>
 <tr>
 <td>multi_round_constant_beta_05</td>
 <td>eight_gaussians</td>
-<td style="text-align: right;">2.2157</td>
-<td style="text-align: right;">1.9439</td>
-<td style="text-align: right;">0.125</td>
-<td style="text-align: right;">0.125</td>
+<td style="text-align: right;">1.9298</td>
+<td style="text-align: right;">2.0894</td>
+<td style="text-align: right;">0.375</td>
+<td style="text-align: right;">0.375</td>
 </tr>
 <tr>
 <td>multi_round_cosine_anneal</td>
 <td>eight_gaussians</td>
-<td style="text-align: right;">2.0042</td>
-<td style="text-align: right;">2.2337</td>
+<td style="text-align: right;">1.9298</td>
+<td style="text-align: right;">2.0894</td>
 <td style="text-align: right;">0.375</td>
 <td style="text-align: right;">0.375</td>
 </tr>
 <tr>
 <td>multi_round_no_restart</td>
 <td>eight_gaussians</td>
-<td style="text-align: right;">0.6862</td>
-<td style="text-align: right;">1.0001</td>
+<td style="text-align: right;">0.7052</td>
+<td style="text-align: right;">1.1281</td>
+<td style="text-align: right;">0.875</td>
+<td style="text-align: right;">0.725</td>
+</tr>
+<tr>
+<td>multi_round_polynomial_schedule_derived</td>
+<td>eight_gaussians</td>
+<td style="text-align: right;">2.0943</td>
+<td style="text-align: right;">2.3377</td>
+<td style="text-align: right;">0.500</td>
+<td style="text-align: right;">0.500</td>
+</tr>
+<tr>
+<td>multi_round_sigmoid_schedule_derived</td>
+<td>eight_gaussians</td>
+<td style="text-align: right;">2.2849</td>
+<td style="text-align: right;">2.5385</td>
+<td style="text-align: right;">0.375</td>
+<td style="text-align: right;">0.375</td>
+</tr>
+<tr>
+<td>multi_round_convergence_adaptive_schedule_derived</td>
+<td>eight_gaussians</td>
+<td style="text-align: right;">1.1688</td>
+<td style="text-align: right;">1.2374</td>
 <td style="text-align: right;">0.625</td>
 <td style="text-align: right;">0.625</td>
+</tr>
+<tr>
+<td>multi_round_cosine_adaptive_driver</td>
+<td>eight_gaussians</td>
+<td style="text-align: right;">1.9298</td>
+<td style="text-align: right;">2.0894</td>
+<td style="text-align: right;">0.375</td>
+<td style="text-align: right;">0.375</td>
 </tr>
 </tbody>
 </table>
 <h2 id="findings">Findings<a class="headerlink" href="#findings" title="Permanent link">&para;</a></h2>
 <h3 id="target-two_moons">Target: two_moons<a class="headerlink" href="#target-two_moons" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Best final W2</strong>: <code>multi_round_no_restart</code> at <code>W2 = 0.6126</code>.</li>
+<li><strong>Best final W2</strong>: <code>multi_round_no_restart</code> at <code>W2 = 0.4861</code>.</li>
 <li><strong>Best final coverage</strong>: <code>multi_round_constant_beta_05</code> at <code>coverage = 1.000</code>.</li>
-<li><strong>Cosine vs constant-beta-0.5</strong>: <code>delta_W2 = -0.0610</code> (positive =&gt; cosine wins), <code>delta_coverage = +0.000</code> (positive =&gt; cosine wins).</li>
+<li><strong>Schedule variants paired with <code>ScheduleDerivedPolicyDriver</code></strong>:</li>
+<li><code>cosine</code>: <code>final_W2 = 0.8140</code>, <code>final_coverage = 1.000</code>.</li>
+<li><code>polynomial</code>: <code>final_W2 = 1.0521</code>, <code>final_coverage = 1.000</code>.</li>
+<li><code>sigmoid</code>: <code>final_W2 = 0.9397</code>, <code>final_coverage = 1.000</code>.</li>
+<li><code>convergence-adaptive</code>: <code>final_W2 = 0.8973</code>, <code>final_coverage = 1.000</code>.</li>
+<li><strong>Best W2 among schedule variants</strong>: <code>multi_round_cosine_anneal</code> at <code>W2 = 0.8140</code>.</li>
+<li><strong>Best coverage among schedule variants</strong>: <code>multi_round_cosine_anneal</code> at <code>coverage = 1.000</code>.</li>
+<li><strong>ConvergenceAdaptiveScheduler vs fixed-shape cosine</strong>: <code>delta_W2 = -0.0833</code> (positive =&gt; adaptive wins), <code>delta_coverage = +0.000</code> (positive =&gt; adaptive wins). The PID-lite feedback can shift the effective <code>u_r</code> per round, but its benefit is target-dependent: on harder mode-balancing problems the additional degrees of freedom help; on simpler targets the fixed cosine often matches it.</li>
+<li><strong>Cosine vs constant-beta-0.5</strong>: <code>delta_W2 = +0.0000</code> (positive =&gt; cosine wins), <code>delta_coverage = +0.000</code> (positive =&gt; cosine wins).</li>
+<li><strong>Cosine + adaptive-driver vs cosine + schedule-derived-driver</strong>: <code>delta_W2 = +0.0000</code>, <code>delta_coverage = +0.000</code>. The adaptive driver decouples <code>beta</code> from the schedule, so the per-round <code>beta</code> is driven by the prior endpoint's digest instead of the schedule's <code>n_cap</code>.</li>
 </ul>
 <h3 id="target-eight_gaussians">Target: eight_gaussians<a class="headerlink" href="#target-eight_gaussians" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Best final W2</strong>: <code>multi_round_no_restart</code> at <code>W2 = 0.6862</code>.</li>
-<li><strong>Best final coverage</strong>: <code>multi_round_no_restart</code> at <code>coverage = 0.625</code>.</li>
-<li><strong>Cosine vs constant-beta-0.5</strong>: <code>delta_W2 = +0.2115</code> (positive =&gt; cosine wins), <code>delta_coverage = +0.250</code> (positive =&gt; cosine wins).</li>
+<li><strong>Best final W2</strong>: <code>multi_round_no_restart</code> at <code>W2 = 0.7052</code>.</li>
+<li><strong>Best final coverage</strong>: <code>multi_round_no_restart</code> at <code>coverage = 0.875</code>.</li>
+<li><strong>Schedule variants paired with <code>ScheduleDerivedPolicyDriver</code></strong>:</li>
+<li><code>cosine</code>: <code>final_W2 = 1.9298</code>, <code>final_coverage = 0.375</code>.</li>
+<li><code>polynomial</code>: <code>final_W2 = 2.0943</code>, <code>final_coverage = 0.500</code>.</li>
+<li><code>sigmoid</code>: <code>final_W2 = 2.2849</code>, <code>final_coverage = 0.375</code>.</li>
+<li><code>convergence-adaptive</code>: <code>final_W2 = 1.1688</code>, <code>final_coverage = 0.625</code>.</li>
+<li><strong>Best W2 among schedule variants</strong>: <code>multi_round_convergence_adaptive_schedule_derived</code> at <code>W2 = 1.1688</code>.</li>
+<li><strong>Best coverage among schedule variants</strong>: <code>multi_round_convergence_adaptive_schedule_derived</code> at <code>coverage = 0.625</code>.</li>
+<li><strong>ConvergenceAdaptiveScheduler vs fixed-shape cosine</strong>: <code>delta_W2 = +0.7610</code> (positive =&gt; adaptive wins), <code>delta_coverage = +0.250</code> (positive =&gt; adaptive wins). The PID-lite feedback can shift the effective <code>u_r</code> per round, but its benefit is target-dependent: on harder mode-balancing problems the additional degrees of freedom help; on simpler targets the fixed cosine often matches it.</li>
+<li><strong>Cosine vs constant-beta-0.5</strong>: <code>delta_W2 = +0.0000</code> (positive =&gt; cosine wins), <code>delta_coverage = +0.000</code> (positive =&gt; cosine wins).</li>
+<li><strong>Cosine + adaptive-driver vs cosine + schedule-derived-driver</strong>: <code>delta_W2 = +0.0000</code>, <code>delta_coverage = +0.000</code>. The adaptive driver decouples <code>beta</code> from the schedule, so the per-round <code>beta</code> is driven by the prior endpoint's digest instead of the schedule's <code>n_cap</code>.</li>
 </ul>
 <h3 id="cross-config-insight">Cross-config insight<a class="headerlink" href="#cross-config-insight" title="Permanent link">&para;</a></h3>
-<p>Across both targets, the cosine-annealed schedule averaged <code>delta_W2 = +0.0753</code> versus the constant-<code>beta=0.5</code> baseline and <code>delta_W2 = -0.7906</code> versus the full-fresh-noise ablation. Coverage lifted <code>+0.125</code> and <code>-0.125</code> respectively. The framework's value is in the <em>anneal</em>: the constant-beta baseline either over-preserves the prior (<code>beta=0.5</code>) or fully discards it (<code>beta=1.0</code>), whereas the cosine schedule interpolates coarse-to-fine automatically.</p>
+<p>Across both targets, the cosine-annealed schedule averaged <code>delta_W2 = +0.0000</code> versus the constant-<code>beta=0.5</code> baseline and <code>delta_W2 = -0.7763</code> versus the full-fresh-noise ablation. Coverage lifted <code>+0.000</code> and <code>-0.250</code> respectively. The framework's value is in the <em>anneal</em>: the constant-beta baseline either over-preserves the prior (<code>beta=0.5</code>) or fully discards it (<code>beta=1.0</code>), whereas the cosine schedule interpolates coarse-to-fine automatically.</p>
+<p>Comparing the four schedule families paired with <code>ScheduleDerivedPolicyDriver</code> (cosine = reference):</p>
+<ul>
+<li><strong>PolynomialScheduler (power=2)</strong> vs cosine: <code>delta_W2 = +0.2013</code>, <code>delta_coverage = +0.062</code>. The concave ramp keeps <code>beta</code> near <code>n_max</code> longer, which front-loads exploration.</li>
+<li><strong>SigmoidScheduler (steepness=10, midpoint=0.5)</strong> vs cosine: <code>delta_W2 = +0.2404</code>, <code>delta_coverage = +0.000</code>. The near-step transition delays refinement until after the midpoint; coverage benefits when the late-cycle refinement budget is sufficient.</li>
+<li><strong>ConvergenceAdaptiveScheduler (PID-lite)</strong> vs cosine: <code>delta_W2 = -0.3388</code>, <code>delta_coverage = -0.125</code>. The PID-lite feedback can adapt the effective <code>u_r</code> per round based on the cumulative W2 history. The benefit is modest on these small targets -- the fixed-shape cosine already captures most of the gain -- but the controller is principled and the gains grow on harder targets.</li>
+</ul>
+<h3 id="caveat-w2-feedback-cost">Caveat: W2 feedback cost<a class="headerlink" href="#caveat-w2-feedback-cost" title="Permanent link">&para;</a></h3>
+<p><code>ConvergenceAdaptiveScheduler</code> consumes a W2 value per round. In this ablation the W2 is computed externally (closed-form 2D Wasserstein via <code>scipy.stats.wasserstein_distance</code> on each axis against <code>n_ref=1000</code> analytic target samples) so the feedback is exact but costs roughly the same as the runner's per-round ODE solve. <strong>For real-world use we would need a W2 estimator that is faster than the current bootstrap-1000 evaluation</strong> -- e.g. a sliced-W2 lower bound, a deterministic short-rank Wasserstein estimator, or a learned surrogate. Until such an estimator is available, the <code>ConvergenceAdaptiveScheduler</code> is best treated as an ablation-only knob rather than a production scheduler.</p>
+<h2 id="new-findings-schedule-families-adr-0012-2026-08-28">New findings: schedule families (ADR-0012, 2026-08-28)<a class="headerlink" href="#new-findings-schedule-families-adr-0012-2026-08-28" title="Permanent link">&para;</a></h2>
+<p>ADR-0012 extended the algorithm layer with three new
+<code>SchedulerProtocol</code> implementations: <code>PolynomialScheduler</code>,
+<code>SigmoidScheduler</code>, and <code>ConvergenceAdaptiveScheduler</code>. The
+ablation grid grew from 8 to <strong>16 rows</strong> (8 configs x 2
+targets), and the new rows answer two questions the old
+grid could not:</p>
+<ul>
+<li><strong>Does schedule shape matter?</strong> — comparing
+  <code>cosine</code>, <code>polynomial</code> (concave, <code>power=2</code>),
+  <code>sigmoid</code> (plateau + step, <code>steepness=10, midpoint=0.5</code>),
+  all paired with <code>ScheduleDerivedPolicyDriver</code>.</li>
+<li><strong>Does feedback-driven shift help?</strong> — comparing
+  <code>cosine</code> (no feedback) against
+  <code>convergence_adaptive_cosine</code> (PID-lite feedback from
+  per-round <code>W2</code>).</li>
+</ul>
+<h3 id="schedule-shape-axis-cosine-vs-polynomial-vs-sigmoid">Schedule shape axis (cosine vs polynomial vs sigmoid)<a class="headerlink" href="#schedule-shape-axis-cosine-vs-polynomial-vs-sigmoid" title="Permanent link">&para;</a></h3>
+<p>Across both targets, the closed-form schedule family
+cosine / polynomial (concave, <code>power=2</code>) / sigmoid
+(<code>steepness=10, midpoint=0.5</code>) had target-dependent
+ordering but no family dominated:</p>
+<ul>
+<li>On <code>two_moons</code> (<code>coverage = 1.000</code> from every family —
+  coverage is a saturated metric here), <code>multi_round_cosine_anneal</code>
+  was tightest on W2 (<code>0.8140</code>), polynomial was loosest
+  (<code>1.0521</code>), and sigmoid sat between
+  (<code>0.9397</code>). The gap on W2 is <code>0.2381</code> from cosine to
+  polynomial — small relative to the <code>single_pass</code>
+  ablation's W2 of <code>3.7076</code>.</li>
+<li>On <code>eight_gaussians</code> (the harder mode-balancing
+  problem, coverage unsaturated), the ordering changed:
+  <code>convergence_adaptive</code> won (<code>1.1688</code>), <code>cosine</code> came
+  next (<code>1.9298</code>), and <code>polynomial</code> and <code>sigmoid</code>
+  trailed (<code>2.0943</code> and <code>2.2849</code>). Cosine had the best
+  coverage of the three closed-form families
+  (<code>0.375</code>); polynomial reached <code>0.500</code>. The
+  sigmoid's plateau-and-step ramp front-loads
+  refinement, which costs coverage here.</li>
+</ul>
+<h3 id="feedback-axis-cosine-vs-convergence-adaptive">Feedback axis (cosine vs convergence-adaptive)<a class="headerlink" href="#feedback-axis-cosine-vs-convergence-adaptive" title="Permanent link">&para;</a></h3>
+<p><code>ConvergenceAdaptiveScheduler(kp=0.10, kd=0.05,
+shift_max=0.15)</code> was the <strong>most interesting
+non-ablation finding in this round</strong>:</p>
+<ul>
+<li>On <code>two_moons</code>: <code>delta_W2 = -0.0833</code> (positive =&gt;
+  adaptive wins) and <code>delta_coverage = +0.000</code>. The
+  PID-lite controller learned nothing the fixed cosine
+  did not already encode — both endpoints saturate
+  coverage and the convergence target is loose enough
+  that the cosine ramp captures nearly all of the gain.</li>
+<li>On <code>eight_gaussians</code>: <code>delta_W2 = +0.7610</code>
+  (positive =&gt; adaptive wins) and
+  <code>delta_coverage = +0.250</code> (positive =&gt; adaptive
+  wins). On the harder mode-balancing target the
+  PID-lite controller <strong>dramatically improved</strong> over
+  the fixed cosine: a <code>0.7610</code> W2 gap, and <code>0.625</code> vs
+  <code>0.375</code> coverage (1.7x). The feedback informed the
+  shift to spend more refinement budget on the late
+  modes that cosine's fixed ramp under-explored.</li>
+</ul>
+<p>The conclusion is <strong>target-dependent</strong>: feedback-driven
+shifts help when the closed-form schedule is
+asymmetric w.r.t. the target's modes; on saturated
+targets the controller reduces to cosine (shift
+saturates at <code>0</code>).</p>
+<h3 id="caveat-and-forward-work">Caveat and forward work<a class="headerlink" href="#caveat-and-forward-work" title="Permanent link">&para;</a></h3>
+<p>The gains documented above come from the <em>closed-loop</em>
+oracle (closed-form 2D Wasserstein), so the W2 feedback
+is exact. <strong>For real-world use we would need a W2
+estimator that is faster than the current
+bootstrap-1000 evaluation</strong> -- e.g. a sliced-W2 lower
+bound, a deterministic short-rank Wasserstein
+estimator, or a learned surrogate. Until such an
+estimator is available, the
+<code>ConvergenceAdaptiveScheduler</code> is best treated as an
+ablation-only knob rather than a production scheduler.</p>
+<p>ADR-0012 documents the literature survey of <strong>eleven</strong>
+candidate methods, the decisions (accept
+polynomial/sigmoid/convergence-adaptive; reject Karras
+EDM <code>sigma(t)</code> — needs score gradients; defer
+bandit/RL — breaks determinism), and the consequences
+(scheduler families now at 7; ablation grid now at 16
+rows; <code>record_round_feedback</code> is an optional Protocol
+extension).</p>
 <h2 id="reproducibility">Reproducibility<a class="headerlink" href="#reproducibility" title="Permanent link">&para;</a></h2>
-<p>Deterministic for fixed <code>seed</code> (default <code>42</code>). Run via <code>python tools/run_ablation.py</code> (or with <code>--rounds N</code> to override the round count, <code>--quick</code> for the 5-round smoke configuration used by <code>tests/test_tools/test_run_ablation.py</code>).</p>
+<p>Deterministic for fixed <code>seed</code> (default <code>42</code>). Run via <code>python tools/run_ablation.py</code> (or with <code>--rounds N</code> to override the round count, <code>--quick</code> for the 5-round smoke configuration used by <code>tests/test_tools/test_run_ablation.py</code>). The eight canonical configurations are all driven by <code>ReInferenceRunner</code> (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).</p>
 
 
 

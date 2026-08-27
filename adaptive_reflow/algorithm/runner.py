@@ -468,6 +468,13 @@ class ReInferenceRunner:
                 )
             per_round_metrics[r] = metric
 
+            # Feed the round's W2 / coverage back into adaptive schedulers
+            # (e.g. ConvergenceAdaptiveScheduler). The ``hasattr`` guard
+            # keeps backward compatibility with schedulers that do not
+            # implement the optional feedback hook.
+            if hasattr(self._scheduler, "record_round_feedback"):
+                self._scheduler.record_round_feedback(r, metric)
+
             phase_state = result.next_phase_state
             prior_endpoint_digest = str(trace.endpoint_digest)
 

@@ -33,7 +33,10 @@ EXPECTED_CONFIGS: tuple[str, ...] = (
     "multi_round_constant_beta_05",
     "multi_round_cosine_anneal",
     "multi_round_no_restart",
-    "multi_round_cosine_constant_driver",
+    "multi_round_polynomial_schedule_derived",
+    "multi_round_sigmoid_schedule_derived",
+    "multi_round_convergence_adaptive_schedule_derived",
+    "multi_round_cosine_adaptive_driver",
 )
 EXPECTED_TARGETS: tuple[str, ...] = ("two_moons", "eight_gaussians")
 
@@ -128,6 +131,13 @@ def test_run_ablation_quick_generates_table(
     seen = {(r["config"], r["target"]) for r in rows}
     assert seen == expected_rows, (
         f"missing rows: {expected_rows - seen}; extra rows: {seen - expected_rows}"
+    )
+
+    # 2a. The 8 x 2 = 16 rows should all be present (the canonical
+    # smoke test count for the extended scheduler ablation).
+    assert len(rows) == len(EXPECTED_CONFIGS) * len(EXPECTED_TARGETS), (
+        f"expected {len(EXPECTED_CONFIGS) * len(EXPECTED_TARGETS)} rows "
+        f"(8 configs x 2 targets), got {len(rows)}"
     )
 
     # 3. Every numeric column parses to a finite real number; the

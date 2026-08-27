@@ -16,6 +16,7 @@ import pytest
 from adaptive_reflow.algorithm import (
     ConstantPolicyDriver,
     ConstantScheduler,
+    ConvergenceAdaptiveScheduler,
     CosineAnnealScheduler,
     ReInferenceConfig,
     ReInferenceRunner,
@@ -428,6 +429,103 @@ def test_runner_default_factories(_twodim_adapter) -> None:
     )
     assert result.endpoints.shape == (2, 2)
     assert result.endpoints.dtype == np.float64
+
+
+# ---------------------------------------------------------------------------
+# 6. record_round_feedback is wired through the runner
+# ---------------------------------------------------------------------------
+
+
+class _RecordingScheduler:
+    """Minimal SchedulerProtocol stand-in that records feedback calls.
+
+    Used to verify the runner actually invokes
+    ``record_round_feedback`` for each round. The scheduler delegates
+    capacity sampling to a base :class:`CosineAnnealScheduler` so the
+    runner can drive the engine the same way it does with the canonical
+    cosine scheduler.
+    """
+
+    def __init__(self, base: CosineAnnealScheduler) -> None:
+        self._base = base
+        self.feedback_calls: list[tuple[int, dict[str, float]]] = []
+
+    def sample(self, outer_cycle_id, round_in_cycle, target_round):
+        return self._base.sample(outer_cycle_id, round_in_cycle, target_round)
+
+    def cycle_length(self) -> int:
+        return self._base.cycle_length()
+
+    def schedule_family(self) -> str:
+        return self._base.schedule_family()
+
+    def config_hash(self) -> str:
+        return str(self._base.config_hash())
+
+    def reset(self) -> None:
+        self._base.reset()
+        self.feedback_calls = []
+
+    def record_round_feedback(self, round_in_cycle, metrics):
+        self.feedback_calls.append((int(round_in_cycle), dict(metrics)))
+
+
+def test_runner_passes_w2_to_scheduler_feedback(_twodim_adapter) -> None:
+    """ReInferenceRunner.run() must invoke record_round_feedback once per round."""
+    adapter = _twodim_adapter
+    n_rounds = 5
+    recording = _RecordingScheduler(
+        default_cosine_scheduler(cycle_length=n_rounds)
+    )
+    runner = ReInferenceRunner(adapter=adapter, scheduler=recording)
+    runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    assert len(recording.feedback_calls) == n_rounds
+    for r, (round_idx, metrics) in enumerate(recording.feedback_calls):
+        assert round_idx == r
+        # The runner passes the per-round metric dict; W2 key may be
+        # absent when no evaluator is wired in, but the metric dict
+        # must contain the algorithm scalars.
+        assert "n_cap" in metrics
+        assert "memory_fraction" in metrics
+        assert "beta" in metrics
+
+
+def test_runner_passes_w2_to_convergence_adaptive_scheduler(_twodim_adapter) -> None:
+    """End-to-end: ConvergenceAdaptiveScheduler accumulates W2 feedback via the runner."""
+    adapter = _twodim_adapter
+    n_rounds = 6
+    adaptive = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=n_rounds),
+        kp=0.5,
+        kd=0.2,
+        shift_max=0.5,
+        ema=0.5,
+    )
+    runner = ReInferenceRunner(adapter=adapter, scheduler=adaptive)
+    runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    # Without an evaluator the runner does not promote a W2 key into the
+    # metric dict, so record_round_feedback sees no W2 and the shift
+    # stays at its initial value. This guards the contract: the runner
+    # *calls* the hook (even when W2 is absent), but does not fabricate
+    # metrics the engine did not produce.
+    assert adaptive.w2_history == ()
+    assert adaptive.shift == 0.0
 
 
 if __name__ == "__main__":

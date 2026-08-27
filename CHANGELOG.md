@@ -7,6 +7,30 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - New scheduler families
+
+### Added
+
+- `PolynomialScheduler` — power-law ramp `n_cap = n_min + (n_max - n_min) * (1 - u_r^p)` with `p > 0`. Convex ramp (front-loaded exploration, then plateau) for `0 < p < 1`; concave ramp (capacity stays high longer, then climbs late) for `p > 1`. Cosine is the `p = 2` approximate; the family lets us sweep the convex/concave shape without changing the cycle family. Family identifier `polynomial`; registered in `SCHEDULER_REGISTRY` under `"polynomial"`.
+- `SigmoidScheduler` — logit curve `n_cap = n_min + (n_max - n_min) * sigmoid(k * (u_r - m))` with configurable `steepness` and `midpoint`. Plateau + step ramp; large `k` approaches a step function at the chosen `midpoint`. Family identifier `sigmoid`; registered in `SCHEDULER_REGISTRY` under `"sigmoid"`.
+- `ConvergenceAdaptiveScheduler` — PID-lite feedback-driven wrapper around a base `CosineAnnealScheduler`. Maintains a bounded shift on the cosine's effective `u_r`; updated by per-round `W2` series. `shift_update = kp * (1.0 - ratio) - kd * delta`; bounded in `[-shift_max, +shift_max]` (default `0.15`). When W2 is improving, shift grows (push toward refinement); when W2 is worsening, shift shrinks (push toward exploration); when W2 stalls, shift holds. **Deterministic and no-train** — no gradient, no bandit arm, no online learning step. Falls back to plain cosine when no feedback is provided. Family identifier `convergence_adaptive_cosine`; registered in `SCHEDULER_REGISTRY` under `"convergence_adaptive"`.
+- `SchedulerProtocol.record_round_feedback(round_in_cycle, metrics)` — optional hook on the `SchedulerProtocol` surface; default no-op so non-adaptive schedulers continue to work unchanged. `ConvergenceAdaptiveScheduler` overrides it to consume the `W2` metric.
+- `ReInferenceRunner` wires feedback: after each round's metric promotion, the runner calls `self._scheduler.record_round_feedback(r, metric)` gated on `hasattr` for backwards compatibility.
+- `tools/run_ablation.py` — four new ablation rows: `multi_round_polynomial_schedule_derived`, `multi_round_sigmoid_schedule_derived`, `multi_round_convergence_adaptive_schedule_derived`, and `multi_round_cosine_adaptive_driver`. The grid grows from 8 to **16 rows** (8 configs x 2 targets). The convergence-adaptive row mirrors the runner's loop inline so the evaluator's W2 can be fed back to the scheduler via `record_round_feedback`.
+- `docs/ABLATION.md` — empirical findings on the schedule-shape axis (`cosine` vs `polynomial` vs `sigmoid` vs `convergence-adaptive`, all paired with `ScheduleDerivedPolicyDriver`).
+- `docs/adr/0012-noise-schedule-survey.md` — ADR documenting the literature survey of 11 candidate methods, the decisions, and the deferred candidates (Karras EDM `sigma(t)`, bandit, RL).
+
+### Changed
+
+- `tools/run_ablation.py` — the convergence-adaptive cell drives the runner's loop directly (so per-round W2 can be fed back to the scheduler).
+- `adaptive_reflow/algorithm/scheduler.py::SCHEDULER_REGISTRY` — extended with `"polynomial"`, `"sigmoid"`, `"convergence_adaptive"`.
+- `adaptive_reflow/algorithm/scheduler.py::__all__` — extended with `PolynomialScheduler`, `SigmoidScheduler`, `ConvergenceAdaptiveScheduler`.
+- `adaptive_reflow/algorithm/runner.py` — one-line feedback call after per-round W2 promotion (line 475, gated on `hasattr`).
+
+### Compatibility
+
+- Backwards compatibility is total: the four pre-existing families (`cosine`, `constant`, `linear`, `exponential`) continue to work unchanged. `record_round_feedback` is a default no-op on the four pre-existing implementations and the two new trivial implementations, so the runner's behaviour in the absence of an adaptive scheduler is identical to ADR-0011's behaviour.
+
 ## [Unreleased] - Algorithm abstractions
 
 ### Added

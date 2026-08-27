@@ -34,6 +34,27 @@ They are reviewed at every release tag and updated when an item closes.
       framework. `tools/run_ablation.py` gained a mixed
       cosine-scheduler + `ConstantPolicyDriver` row that the old code
       could not express.
+- [x] New scheduler families — closed 2026-08-28 [ADR-0012]. Three
+      new deterministic `SchedulerProtocol` implementations:
+      `PolynomialScheduler` (power-law ramp, `p > 0`),
+      `SigmoidScheduler` (logit curve with configurable steepness +
+      midpoint), and `ConvergenceAdaptiveScheduler` (PID-lite
+      feedback-driven shift on a base cosine — no-train, bounded in
+      `[-shift_max, +shift_max]`). `SchedulerProtocol` extended with
+      an optional `record_round_feedback(round_in_cycle, metrics)`
+      hook (default no-op on the four pre-existing families and the
+      two new trivial families). `ReInferenceRunner` wires feedback
+      gated on `hasattr`. Ablation grid extended from 8 to **16 rows**
+      (8 configs x 2 targets). `tools/run_ablation.py` gained
+      `multi_round_polynomial_schedule_derived`,
+      `multi_round_sigmoid_schedule_derived`,
+      `multi_round_convergence_adaptive_schedule_derived`, and
+      `multi_round_cosine_adaptive_driver`. ADR-0012 documents the
+      literature survey of 11 candidate methods and the decisions
+      (accept polynomial/sigmoid/convergence-adaptive; reject
+      Karras EDM `sigma(t)` — needs score gradients; defer
+      bandit/RL — breaks determinism; defer cyclical and step —
+      subsumed by sigmoid or incompatible).
 - [x] Cosine annealing drives memory fraction — closed 2026-08-27
       [ADR-0010]. `memory_fraction_from_schedule` helper added in
       `adaptive_reflow/schedule/cosine.py`; `Frame.engine.run_round` now
