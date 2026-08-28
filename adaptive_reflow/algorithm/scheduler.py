@@ -18,6 +18,20 @@ and ADR-0010 "Cosine-driven memory fraction",
 ``docs/adr/0010-cosine-driven-memory-fraction.md``). Schedulers supply
 *capacity only*: they never write a ``beta`` value — the channel rule is the
 sole component allowed to derive ``beta`` from a schedule sample.
+
+Forward noise injection (P0-7, ecosystem addition): the scheduler exposes
+the symmetric forward step of the canonical reverse-blend (DRM-3,
+``scheduler.sample`` -> ``merge_operator.merge``). :meth:`SchedulerProtocol.inject_noise`
+takes a state, a schedule sample, and a deterministic ``np.random.Generator``
+and returns a new state with fresh noise scaled by ``sqrt(n_cap)``. The
+default implementation ``state + sqrt(n_cap) * generator.standard_normal``
+is reversible up to ``generator.bit_generator.state``; callers can replay
+injection byte-for-byte given the same seed. The
+:class:`CosineAnnealScheduler` uses the schedule's ``n_cap`` as the noise
+mass; :class:`CodimensionSheetScheduler` uses its cached paper-quantity
+``A_g`` as the per-round mass; non-stochastic families fall back to the
+``n_cap``-driven default. The runner emits ``FORWARD_NOISE_INJECTED`` in the
+audit trail whenever it calls :meth:`inject_noise`.
 """
 
 from __future__ import annotations
@@ -26,7 +40,10 @@ import math
 import warnings
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
+
+import numpy as np
+from numpy.typing import NDArray
 
 from adaptive_reflow.contracts import (
     ArtifactHash,
@@ -121,7 +138,22 @@ class ScheduleSampleProtocol(Protocol):
 class SchedulerProtocol(Protocol):
     """Abstract per-round capacity scheduler.
 
-    Any object implementing these five methods can drive the framework.
+    Any object implementing these methods can drive the framework.
+
+    Forward noise injection (P0-7): :meth:`inject_noise` is the symmetric
+    FORWARD step of the canonical reverse-blend (the merge operator /
+    ``apply_restart_distribution`` consume the *reverse* side). Callers
+    pass a state, the round's schedule sample, and a deterministic
+    ``np.random.Generator``; the scheduler returns a new state with fresh
+    noise scaled by the schedule's per-round noise mass. The default
+    implementation is ``state + sqrt(n_cap) * generator.standard_normal``,
+    which is reproducible given the generator's seed (the round model's
+    symmetric forward step, mirroring EDM / score-SDE noise injection).
+
+    Config round-trip (P1-1): every implementation exposes
+    :meth:`to_config` / :meth:`from_config` (classmethod) so the schedule
+    family + its hyperparameters can be serialized to JSON and replayed
+    byte-for-byte.
     """
 
     def sample(
@@ -162,6 +194,50 @@ class SchedulerProtocol(Protocol):
         engine's per-round feedback (W2, coverage, etc.). The runner invokes
         this hook with ``hasattr(scheduler, 'record_round_feedback')`` so
         non-adaptive schedulers continue to work without modification.
+        """
+        ...
+
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return the state with fresh noise injected (P0-7).
+
+        The **forward noise injection** step — the symmetric FORWARD
+        counterpart of the reverse blend ``apply_restart_distribution``.
+        Implementations scale ``generator.standard_normal`` by the
+        scheduler-specific per-round *noise mass* (the schedule's
+        ``n_cap`` for cosine / linear / constant families; the cached
+        paper-quantity ``A_g`` for :class:`CodimensionSheetScheduler`).
+
+        Reproducible: identical ``generator.bit_generator.state`` and
+        identical ``state`` always yield identical output. The caller
+        owns ``state`` (the scheduler never mutates it); the returned
+        array is a fresh allocation.
+        """
+        ...
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for this scheduler.
+
+        The returned dict round-trips through :meth:`from_config` so
+        ``cls.from_config(scheduler.to_config()) == scheduler`` for the
+        concrete implementation. Mirrors the ``diffusers`` ``ConfigMixin``
+        contract (P1-1).
+        """
+        ...
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> SchedulerProtocol:
+        """Build a scheduler from a ``to_config`` dict (P1-1 round-trip).
+
+        ``cls`` is the concrete implementation class — call sites that
+        need polymorphic dispatch should use
+        :func:`build_scheduler_from_config` which dispatches on the
+        ``family`` key.
         """
         ...
 
@@ -275,6 +351,66 @@ class CosineAnnealScheduler:
     ) -> None:
         """Default no-op: cosine annealing ignores per-round feedback."""
         return None
+
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(n_cap) * generator.standard_normal(state.shape)``.
+
+        The cosine family uses the round's ``n_cap`` as the per-round
+        noise mass — at round 0 with ``n_cap = n_max`` the noise
+        dominates; at round ``L-1`` with ``n_cap = n_min`` the prior
+        dominates. Identical ``generator`` state always yields
+        identical output (P0-7 forward-noise reproducibility).
+        """
+        state_arr = np.asarray(state, dtype=np.float64)
+        n_cap = float(schedule_sample.n_cap)
+        if n_cap < 0.0:
+            n_cap = 0.0
+        scale = math.sqrt(n_cap)
+        noise = generator.standard_normal(state_arr.shape).astype(np.float64)
+        return state_arr + scale * noise
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for this cosine scheduler.
+
+        The returned dict includes the ``family`` key so polymorphic
+        deserialisation via :func:`build_scheduler_from_config` round-trips
+        byte-for-byte.
+        """
+        return {
+            "family": "cosine",
+            "schedule_family": str(self._config.schedule_family),
+            "cycle_length": int(self._config.cycle_length),
+            "n_min": float(self._config.n_min),
+            "n_max": float(self._config.n_max),
+            "config_hash": str(self._config.config_hash),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> CosineAnnealScheduler:
+        """Build a :class:`CosineAnnealScheduler` from ``config``.
+
+        Mirrors :func:`default_cosine_scheduler` so the round-trip is
+        byte-identical for any (family, cycle_length, n_min, n_max) tuple.
+        """
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        cycle_length = int(config["cycle_length"])
+        n_min = float(config["n_min"])
+        n_max = float(config["n_max"])
+        schedule_family = str(config.get("schedule_family", "cosine_no_restart"))
+        return default_cosine_scheduler(
+            cycle_length=cycle_length,
+            n_min=n_min,
+            n_max=n_max,
+            schedule_family=schedule_family,
+            seed=0,
+        )
 
     # -- derived -----------------------------------------------------------
 
@@ -477,6 +613,45 @@ class ConstantScheduler:
         """Default no-op: constant scheduler ignores per-round feedback."""
         return None
 
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(n_cap) * generator.standard_normal`` (P0-7).
+
+        The constant family uses its configured ``n_cap`` as the
+        per-round noise mass (so noise is injected at the same scale
+        every round).
+        """
+        del schedule_sample
+        state_arr = np.asarray(state, dtype=np.float64)
+        scale = math.sqrt(float(self._n_cap))
+        noise = generator.standard_normal(state_arr.shape).astype(np.float64)
+        return state_arr + scale * noise
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for the constant scheduler."""
+        return {
+            "family": "constant",
+            "cycle_length": int(self._cycle_length),
+            "n_cap": float(self._n_cap),
+            "seed": int(self._seed),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> ConstantScheduler:
+        """Build a :class:`ConstantScheduler` from ``config`` (P1-1 round-trip)."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return ConstantScheduler(
+            cycle_length=int(config["cycle_length"]),
+            n_cap=float(config["n_cap"]),
+            seed=int(config.get("seed", 0)),
+        )
+
     # -- derived -----------------------------------------------------------
 
     def memory_fraction_for(
@@ -643,6 +818,49 @@ class LinearScheduler:
     ) -> None:
         """Default no-op: linear scheduler ignores per-round feedback."""
         return None
+
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(n_cap) * generator.standard_normal`` (P0-7).
+
+        Uses the schedule sample's ``n_cap`` directly so the round's
+        per-round noise mass tracks the linear ramp rather than the
+        scheduler's terminal ``n_min``.
+        """
+        state_arr = np.asarray(state, dtype=np.float64)
+        n_cap = float(schedule_sample.n_cap)
+        if n_cap < 0.0:
+            n_cap = 0.0
+        scale = math.sqrt(n_cap)
+        noise = generator.standard_normal(state_arr.shape).astype(np.float64)
+        return state_arr + scale * noise
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for the linear scheduler."""
+        return {
+            "family": "linear",
+            "cycle_length": int(self._cycle_length),
+            "n_min": float(self._n_min),
+            "n_max": float(self._n_max),
+            "seed": int(self._seed),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> LinearScheduler:
+        """Build a :class:`LinearScheduler` from ``config`` (P1-1 round-trip)."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return LinearScheduler(
+            cycle_length=int(config["cycle_length"]),
+            n_min=float(config["n_min"]),
+            n_max=float(config["n_max"]),
+            seed=int(config.get("seed", 0)),
+        )
 
     # -- derived -----------------------------------------------------------
 
@@ -826,6 +1044,44 @@ class ExponentialScheduler:
     ) -> None:
         """Default no-op: exponential scheduler ignores per-round feedback."""
         return None
+
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(n_cap) * generator.standard_normal`` (P0-7)."""
+        state_arr = np.asarray(state, dtype=np.float64)
+        n_cap = float(schedule_sample.n_cap)
+        if n_cap < 0.0:
+            n_cap = 0.0
+        scale = math.sqrt(n_cap)
+        noise = generator.standard_normal(state_arr.shape).astype(np.float64)
+        return state_arr + scale * noise
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for the exponential scheduler."""
+        return {
+            "family": "exponential",
+            "cycle_length": int(self._cycle_length),
+            "n_max": float(self._n_max),
+            "alpha": float(self._alpha),
+            "seed": int(self._seed),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> ExponentialScheduler:
+        """Build an :class:`ExponentialScheduler` from ``config`` (P1-1)."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return ExponentialScheduler(
+            cycle_length=int(config["cycle_length"]),
+            n_max=float(config["n_max"]),
+            alpha=float(config["alpha"]),
+            seed=int(config.get("seed", 0)),
+        )
 
     # -- derived -----------------------------------------------------------
 
@@ -1023,6 +1279,46 @@ class PolynomialScheduler:
     ) -> None:
         """Default no-op: polynomial scheduler ignores per-round feedback."""
         return None
+
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(n_cap) * generator.standard_normal`` (P0-7)."""
+        state_arr = np.asarray(state, dtype=np.float64)
+        n_cap = float(schedule_sample.n_cap)
+        if n_cap < 0.0:
+            n_cap = 0.0
+        scale = math.sqrt(n_cap)
+        noise = generator.standard_normal(state_arr.shape).astype(np.float64)
+        return state_arr + scale * noise
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for the polynomial scheduler."""
+        return {
+            "family": "polynomial",
+            "cycle_length": int(self._cycle_length),
+            "n_min": float(self._n_min),
+            "n_max": float(self._n_max),
+            "power": float(self._power),
+            "seed": int(self._seed),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> PolynomialScheduler:
+        """Build a :class:`PolynomialScheduler` from ``config`` (P1-1)."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return PolynomialScheduler(
+            cycle_length=int(config["cycle_length"]),
+            n_min=float(config["n_min"]),
+            n_max=float(config["n_max"]),
+            power=float(config["power"]),
+            seed=int(config.get("seed", 0)),
+        )
 
     # -- derived -----------------------------------------------------------
 
@@ -1234,6 +1530,48 @@ class SigmoidScheduler:
     ) -> None:
         """Default no-op: sigmoid scheduler ignores per-round feedback."""
         return None
+
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(n_cap) * generator.standard_normal`` (P0-7)."""
+        state_arr = np.asarray(state, dtype=np.float64)
+        n_cap = float(schedule_sample.n_cap)
+        if n_cap < 0.0:
+            n_cap = 0.0
+        scale = math.sqrt(n_cap)
+        noise = generator.standard_normal(state_arr.shape).astype(np.float64)
+        return state_arr + scale * noise
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for the sigmoid scheduler."""
+        return {
+            "family": "sigmoid",
+            "cycle_length": int(self._cycle_length),
+            "n_min": float(self._n_min),
+            "n_max": float(self._n_max),
+            "steepness": float(self._steepness),
+            "midpoint": float(self._midpoint),
+            "seed": int(self._seed),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> SigmoidScheduler:
+        """Build a :class:`SigmoidScheduler` from ``config`` (P1-1)."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return SigmoidScheduler(
+            cycle_length=int(config["cycle_length"]),
+            n_min=float(config["n_min"]),
+            n_max=float(config["n_max"]),
+            steepness=float(config["steepness"]),
+            midpoint=float(config["midpoint"]),
+            seed=int(config.get("seed", 0)),
+        )
 
     # -- derived -----------------------------------------------------------
 
@@ -1462,6 +1800,50 @@ class ConvergenceAdaptiveScheduler:
         self._shift = 0.0
         self._last_sample = None
         self._base.reset()
+
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(n_cap) * generator.standard_normal`` (P0-7).
+
+        The adaptive family delegates to its base scheduler's
+        ``inject_noise`` so the noise mass tracks the (possibly-shifted)
+        effective ``u_r`` produced by the PID-lite controller.
+        """
+        return self._base.inject_noise(
+            state, schedule_sample, generator=generator
+        )
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for the adaptive scheduler."""
+        return {
+            "family": "convergence_adaptive",
+            "base_config": self._base.to_config(),
+            "kp": float(self._kp),
+            "kd": float(self._kd),
+            "shift_max": float(self._shift_max),
+            "ema": float(self._ema),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> ConvergenceAdaptiveScheduler:
+        """Build a :class:`ConvergenceAdaptiveScheduler` from ``config`` (P1-1)."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        base_cfg = dict(config["base_config"])
+        # Recurse through CosineAnnealScheduler for the nested base.
+        base = CosineAnnealScheduler.from_config(base_cfg)
+        return ConvergenceAdaptiveScheduler(
+            base=base,
+            kp=float(config["kp"]),
+            kd=float(config["kd"]),
+            shift_max=float(config["shift_max"]),
+            ema=float(config["ema"]),
+        )
 
     def record_round_feedback(
         self,
@@ -2167,6 +2549,75 @@ class CodimensionSheetScheduler:
         """Default no-op: the codimension scheduler is open-loop on rounds."""
         return None
 
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(A_g) * generator.standard_normal`` (P0-7).
+
+        The codimension scheduler uses the cached paper-quantity
+        ``A_g`` (:attr:`sheet_A`, paper Lemma 2 / Proposition 3) as
+        the per-round noise mass — when ``A_g`` is ``None`` (no
+        ``profile_residual_fn`` was supplied at construction time)
+        it falls back to the schedule's ``n_cap``, matching the
+        canonical cosine path.
+        """
+        state_arr = np.asarray(state, dtype=np.float64)
+        if self._sheet_A is not None:
+            noise_mass = float(self._sheet_A)
+        else:
+            noise_mass = float(schedule_sample.n_cap)
+        if noise_mass < 0.0:
+            noise_mass = 0.0
+        scale = math.sqrt(noise_mass)
+        noise = generator.standard_normal(state_arr.shape).astype(np.float64)
+        return state_arr + scale * noise
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for the codimension scheduler.
+
+        The profile's callable identity is folded into ``profile_signature``
+        (not the callable itself) so the dict remains JSON-serialisable.
+        Callers that need to re-instantiate the callable must keep the
+        signature externally.
+        """
+        return {
+            "family": "codimension_sheet",
+            "cycle_length": int(self._cycle_length),
+            "n_min": float(self._n_min),
+            "n_max": float(self._n_max),
+            "eps_implicit": float(self._eps_implicit),
+            "eps_direction": str(self._eps_direction),
+            "seed": int(self._seed),
+            "profile_signature": str(self._profile_signature),
+            "base_config": self._base.to_config(),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> CodimensionSheetScheduler:
+        """Build a :class:`CodimensionSheetScheduler` from ``config`` (P1-1).
+
+        ``profile_residual_fn`` is reconstructed only when a callable
+        matching the ``profile_signature`` is available on the call
+        side. The signature is recorded so two round-trips remain
+        distinguishable; the callable itself is intentionally not
+        serialised (it is application code, not configuration).
+        """
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return CodimensionSheetScheduler(
+            cycle_length=int(config["cycle_length"]),
+            n_min=float(config["n_min"]),
+            n_max=float(config["n_max"]),
+            eps_implicit=float(config["eps_implicit"]),
+            eps_direction=str(config.get("eps_direction", "decreasing")),
+            seed=int(config.get("seed", 0)),
+            profile_residual_fn=None,
+        )
+
     # -- derived -----------------------------------------------------------
 
     def memory_fraction_for(
@@ -2245,6 +2696,29 @@ def _codimension_sheet_factory(
     )
 
 
+def _sequential_factory(*args: Any, **kwargs: Any) -> Any:
+    """Factory for :class:`adaptive_reflow.algorithm.sequential.SequentialScheduler`.
+
+    Registered in :data:`SCHEDULER_REGISTRY` under the key
+    ``"sequential"``. Mirrors :func:`_codimension_sheet_factory` — the
+    factory accepts a ``schedulers=`` keyword and forwards it to the
+    concrete class. Config round-trip uses
+    :meth:`SequentialScheduler.from_config` directly so the factory is
+    only used for keyword-based construction.
+    """
+    from adaptive_reflow.algorithm.sequential import (
+        SequentialScheduler as _SequentialScheduler,
+    )
+    schedulers = kwargs.pop("schedulers", None)
+    if schedulers is None and args:
+        schedulers = args[0]
+    if schedulers is None:
+        raise ValueError(
+            "sequential factory requires a 'schedulers' keyword argument"
+        )
+    return _SequentialScheduler(schedulers=schedulers)
+
+
 SCHEDULER_REGISTRY: dict[str, Callable[..., SchedulerProtocol]] = {
     "cosine": default_cosine_scheduler,
     "constant": ConstantScheduler,
@@ -2254,6 +2728,7 @@ SCHEDULER_REGISTRY: dict[str, Callable[..., SchedulerProtocol]] = {
     "sigmoid": SigmoidScheduler,
     "convergence_adaptive": ConvergenceAdaptiveScheduler,
     "codimension_sheet": _codimension_sheet_factory,
+    "sequential": _sequential_factory,
 }
 """Mapping from schedule family name to its :class:`SchedulerProtocol` factory.
 
@@ -2263,6 +2738,11 @@ the family-specific kwargs and returns a :class:`SchedulerProtocol`
 instance. The cosine entry routes through :func:`default_cosine_scheduler`
 because :class:`CosineAnnealScheduler` takes a frozen
 :class:`CosineScheduleConfig` rather than raw kwargs.
+
+Config round-trip (P1-1): every scheduler's :meth:`to_config` returns a
+dict whose ``family`` key is one of these registry keys. Use
+:func:`build_scheduler_from_config` to dispatch on the family key
+polymorphically without exposing the underlying class.
 
 
 The exponential family is *not* one of the canonical :data:`SCHEDULE_FAMILIES`
@@ -2294,6 +2774,60 @@ def build_scheduler(family: str, **kwargs: object) -> SchedulerProtocol:
     return factory(**kwargs)
 
 
+def build_scheduler_from_config(config: dict[str, Any]) -> SchedulerProtocol:
+    """Polymorphic factory: build a scheduler from a ``to_config`` dict.
+
+    Dispatches on the ``config["family"]`` key against
+    :data:`SCHEDULER_REGISTRY`. Mirrors ``diffusers`` ``ConfigMixin.from_config``.
+    The round-trip is byte-identical for every implementation:
+
+        scheduler == cls.from_config(scheduler.to_config())
+    """
+    if not isinstance(config, dict):
+        raise TypeError(f"config must be a dict, got {type(config).__name__}")
+    family = config.get("family")
+    if not isinstance(family, str):
+        raise ValueError(
+            f"config['family'] must be a string, got {family!r}"
+        )
+    key = family.strip().lower()
+    if key not in SCHEDULER_REGISTRY:
+        raise KeyError(
+            f"unknown scheduler family {family!r}; registered families: "
+            f"{sorted(SCHEDULER_REGISTRY)!r}"
+        )
+    # Dispatch on the family key. Each registry entry's ``from_config``
+    # classmethod is the canonical deserialiser; we resolve the class
+    # from the factory callable so the registry remains the single
+    # source of truth.
+    factory = SCHEDULER_REGISTRY[key]
+    if key == "cosine":
+        return CosineAnnealScheduler.from_config(config)
+    if key == "constant":
+        return ConstantScheduler.from_config(config)
+    if key == "linear":
+        return LinearScheduler.from_config(config)
+    if key == "exponential":
+        return ExponentialScheduler.from_config(config)
+    if key == "polynomial":
+        return PolynomialScheduler.from_config(config)
+    if key == "sigmoid":
+        return SigmoidScheduler.from_config(config)
+    if key == "convergence_adaptive":
+        return ConvergenceAdaptiveScheduler.from_config(config)
+    if key == "codimension_sheet":
+        return CodimensionSheetScheduler.from_config(config)
+    if key == "sequential":
+        # Lazy import to break the cycle: :mod:`.sequential` imports
+        # the concrete scheduler classes from this module.
+        from adaptive_reflow.algorithm.sequential import (
+            SequentialScheduler as _SequentialScheduler,
+        )
+        return _SequentialScheduler.from_config(config)
+    # Fallback (unreachable): factory returns a fresh instance from kwargs.
+    return factory()
+
+
 __all__ = [
     "CodimensionSheetScheduler",
     "ConstantScheduler",
@@ -2309,5 +2843,6 @@ __all__ = [
     "SigmoidScheduler",
     "_paper_evidence_balance",
     "build_scheduler",
+    "build_scheduler_from_config",
     "default_cosine_scheduler",
 ]

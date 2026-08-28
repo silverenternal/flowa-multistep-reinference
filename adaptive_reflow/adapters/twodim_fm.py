@@ -754,7 +754,32 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         )
 
     # ------------------------------------------------------------------
-    # 9. batched_integrate (B5 metric population; RK4-only)
+    # 9. export_trajectory (P0-7 — public trajectory export)
+    # ------------------------------------------------------------------
+
+    def export_trajectory(
+        self, trace: ODEIntegratorTrace
+    ) -> ArrayF64 | None:
+        """Return the native ``(K, 2)`` trajectory for ``trace``.
+
+        Closes P0-7: the runner used to reach into the adapter's
+        private ``_native_states`` dict; it now calls this public
+        method. The trajectory is looked up by
+        ``trace.native_state_digest`` (the digest returned from the
+        most recent :meth:`solve_ode` call). Returns ``None`` when no
+        trajectory is stored under that digest (e.g. the trace refers
+        to a digest emitted by another adapter instance).
+        """
+        entry = self._native_states.get(trace.native_state_digest)
+        if entry is None:
+            return None
+        traj = entry.get("trajectory")
+        if traj is None:
+            return None
+        return np.asarray(traj, dtype=np.float64)
+
+    # ------------------------------------------------------------------
+    # 10. batched_integrate (B5 metric population; RK4-only)
     # ------------------------------------------------------------------
 
     def batched_integrate(

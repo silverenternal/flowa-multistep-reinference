@@ -19,12 +19,15 @@ Covers:
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from adaptive_reflow.algorithm import (
     BoundedMergeOperator,
     EMAOperator,
     IdentityOperator,
+    MergeAuthorityError,
     MergeOperatorProtocol,
     default_bounded_merge_operator,
 )
@@ -248,3 +251,323 @@ def test_operators_are_swapable() -> None:
     assert bounded_result != identity_result
     assert bounded_result != ema_result
     assert identity_result != ema_result
+
+
+# ---------------------------------------------------------------------------
+# 6. P0-3 — operators MUST return a finite float in [0, 1]; no raising on
+# legitimate caller inputs.
+# ---------------------------------------------------------------------------
+
+
+def test_p0_3_bounded_merge_operator_clips_cap_above_one() -> None:
+    """P0-3: ``cap > 1`` clips to ``1.0`` and emits
+    :data:`MERGE_DEGENERATE_INTERVAL` (or the canonical cap audit
+    code) rather than raising :exc:`MergeAuthorityError`."""
+    op = BoundedMergeOperator()
+    audit: list[str] = []
+    result = op.merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=1.5,  # out of [0, 1] -> clipped to 1.0
+        floor=0.0,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    # Result is in [0, 1].
+    assert 0.0 <= result <= 1.0
+    # Audit trail carries the canonical cap-out-of-range code (the
+    # cap is clipped so we observe its clipped value).
+    assert any("merge_cap_out_of_range" in code for code in audit)
+    # The degenerate interval path should NOT fire because
+    # cap=1.0 > prev=0.5 with delta_cap_down=0.5 keeps the interval
+    # non-empty.
+    assert not any("merge_degenerate_interval" in code for code in audit)
+
+
+def test_p0_3_bounded_merge_operator_clips_cap_below_floor() -> None:
+    """P0-3: ``cap < floor`` swaps the envelope and emits the
+    canonical ``merge_cap_below_floor`` audit code rather than
+    raising."""
+    op = BoundedMergeOperator()
+    audit: list[str] = []
+    result = op.merge(
+        prev=0.3,
+        dynamic=0.5,
+        cap=0.2,
+        floor=0.7,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert 0.0 <= result <= 1.0
+    # ``cap < floor`` is the configuration error path; after clipping
+    # the swap the merge is total and the audit line is recorded.
+    assert any("merge_cap_below_floor" in code for code in audit)
+
+
+def test_p0_3_bounded_merge_operator_never_raises_on_finite_inputs() -> None:
+    """P0-3: no legitimate (numeric, finite) input raises; the
+    operator only raises on ``None`` / non-numeric types at the
+    coercion boundary.
+    """
+    op = BoundedMergeOperator()
+    for prev, dynamic, cap, floor, up, down in [
+        # envelope edge cases
+        (0.5, 0.5, 1.5, 0.0, 1.0, 1.0),
+        (0.5, 0.5, 0.5, 1.5, 1.0, 1.0),
+        (0.5, 0.5, 0.2, 0.7, 1.0, 1.0),
+        (0.5, 0.5, 1.0, -0.1, 1.0, 1.0),
+        (0.5, 0.5, 1.0, 0.0, 1.5, 1.0),
+        (0.5, 0.5, 1.0, 0.0, 1.0, -0.1),
+    ]:
+        result = op.merge(
+            prev=prev,
+            dynamic=dynamic,
+            cap=cap,
+            floor=floor,
+            delta_cap_up=up,
+            delta_cap_down=down,
+        )
+        assert 0.0 <= result <= 1.0
+        assert math.isfinite(result)
+
+
+def test_p0_3_bounded_merge_operator_raises_only_on_non_numeric() -> None:
+    """P0-3: the coercion boundary (non-numeric ``None`` / string)
+    is the only point that may raise :exc:`MergeAuthorityError`.
+    """
+    op = BoundedMergeOperator()
+    with pytest.raises(MergeAuthorityError):
+        op.merge(
+            prev=None,
+            dynamic=0.5,
+            cap=1.0,
+            floor=0.0,
+            delta_cap_up=0.5,
+            delta_cap_down=0.5,
+        )
+    with pytest.raises(MergeAuthorityError):
+        op.merge(
+            prev=0.5,
+            dynamic=0.5,
+            cap="not-a-number",
+            floor=0.0,
+            delta_cap_up=0.5,
+            delta_cap_down=0.5,
+        )
+
+
+def test_p0_3_bounded_merge_operator_non_finite_prev_clipped() -> None:
+    """P0-3: non-finite ``prev`` is clipped into ``[0, 1]`` and the
+    canonical :data:`MERGE_NONFINITE_PREV_CLIPPED` audit code is
+    appended.
+    """
+    import math
+
+    op = BoundedMergeOperator()
+    audit: list[str] = []
+    # ``prev = nan`` triggers the non-finite prev clip path.
+    result = op.merge(
+        prev=float("nan"),
+        dynamic=0.5,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert 0.0 <= result <= 1.0
+    assert math.isfinite(result)
+    assert any("merge_nonfinite_prev_clipped" in code for code in audit)
+
+
+def test_p0_3_identity_operator_clips_non_finite_dynamic() -> None:
+    """P0-3: ``IdentityOperator.merge`` clips non-finite / out-of-range
+    ``dynamic`` into ``[0, 1]`` rather than raising. ``NaN``
+    becomes ``0.0`` and ``inf`` becomes ``1.0``.
+    """
+    import math
+
+    op = IdentityOperator()
+    audit: list[str] = []
+    # ``NaN`` -> ``0.0``.
+    result_nan = op.merge(
+        prev=0.5,
+        dynamic=float("nan"),
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert result_nan == pytest.approx(0.0)
+    assert any("merge_nonfinite_dynamic_clipped" in code for code in audit)
+    # ``inf`` -> ``1.0``.
+    audit.clear()
+    result_inf = op.merge(
+        prev=0.5,
+        dynamic=float("inf"),
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert result_inf == pytest.approx(1.0)
+    assert any("merge_nonfinite_dynamic_clipped" in code for code in audit)
+    # Out-of-range ``1.5`` -> ``1.0``.
+    audit.clear()
+    result_high = op.merge(
+        prev=0.5,
+        dynamic=1.5,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert result_high == pytest.approx(1.0)
+    # ``-0.1`` -> ``0.0``.
+    audit.clear()
+    result_low = op.merge(
+        prev=0.5,
+        dynamic=-0.1,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert result_low == pytest.approx(0.0)
+
+
+def test_p0_3_ema_operator_clips_non_finite_inputs() -> None:
+    """P0-3: ``EMAOperator.merge`` clips non-finite / out-of-range
+    ``prev`` and ``dynamic`` into ``[0, 1]`` rather than producing
+    a NaN EMA value.
+    """
+    import math
+
+    op = EMAOperator()
+    audit: list[str] = []
+    # ``prev = NaN, dynamic = 0.5``: ``prev`` clips to ``0.0``; EMA
+    # step ``0.0 + 0.1 * (0.5 - 0.0) = 0.05``.
+    result = op.merge(
+        prev=float("nan"),
+        dynamic=0.5,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert 0.0 <= result <= 1.0
+    assert math.isfinite(result)
+    assert pytest.approx(0.05) == result
+    assert any("merge_nonfinite_prev_clipped" in code for code in audit)
+    # ``dynamic = NaN`` also clips to ``0.0``; EMA step
+    # ``prev + 0.1 * (0.0 - prev) = 0.9 * prev``. With ``prev = 0.5``
+    # the result is ``0.45``.
+    audit.clear()
+    result2 = op.merge(
+        prev=0.5,
+        dynamic=float("nan"),
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert 0.0 <= result2 <= 1.0
+    assert any("merge_nonfinite_dynamic_clipped" in code for code in audit)
+
+
+# ---------------------------------------------------------------------------
+# 7. P0-3 — protocol contract declaration (the contract is documented on
+# the Protocol class; the unit tests below verify the contract is honoured
+# by all three operators.
+# ---------------------------------------------------------------------------
+
+
+def test_p0_3_all_operators_return_finite_float_in_unit_interval() -> None:
+    """P0-3 contract: every ``MergeOperatorProtocol`` implementation
+    MUST return a finite ``float`` in ``[0, 1]`` for any combination
+    of legitimate (numeric) caller inputs.
+    """
+    import math
+
+    cases = [
+        # (prev, dynamic, cap, floor, up, down)
+        (0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        (1.0, 1.0, 1.0, 1.0, 1.0, 1.0),
+        (0.5, 0.5, 1.0, 0.0, 0.5, 0.5),
+        (0.7, 0.2, 0.5, 0.1, 0.5, 0.5),
+        # extreme envelopes (clipped, not raised)
+        (0.5, 0.5, 2.0, -1.0, 2.0, -1.0),
+    ]
+    for op in (
+        BoundedMergeOperator(),
+        IdentityOperator(),
+        EMAOperator(),
+    ):
+        for prev, dynamic, cap, floor, up, down in cases:
+            result = op.merge(
+                prev=prev,
+                dynamic=dynamic,
+                cap=cap,
+                floor=floor,
+                delta_cap_up=up,
+                delta_cap_down=down,
+            )
+            assert isinstance(result, float)
+            assert math.isfinite(result)
+            assert 0.0 <= result <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# from_config / to_config round-trip (P1-1) — merge operators
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "operator",
+    [
+        BoundedMergeOperator(tolerance=1e-9),
+        BoundedMergeOperator(tolerance=1e-6),
+        IdentityOperator(),
+        EMAOperator(alpha=0.2),
+        EMAOperator(),  # default
+    ],
+)
+def test_merge_operator_config_round_trip(operator) -> None:
+    """``operator == cls.from_config(operator.to_config())`` byte-for-byte."""
+    config = operator.to_config()
+    if isinstance(operator, BoundedMergeOperator):
+        rebuilt = BoundedMergeOperator.from_config(config)
+    elif isinstance(operator, IdentityOperator):
+        rebuilt = IdentityOperator.from_config(config)
+    elif isinstance(operator, EMAOperator):
+        rebuilt = EMAOperator.from_config(config)
+    else:  # pragma: no cover
+        raise AssertionError("unhandled operator")
+    assert type(rebuilt) is type(operator)
+    assert rebuilt.to_config() == config
+    # ``merge`` outputs agree on a canonical input.
+    result_orig = operator.merge(
+        prev=0.3,
+        dynamic=0.7,
+        cap=0.5,
+        floor=0.1,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+    )
+    result_rebuilt = rebuilt.merge(
+        prev=0.3,
+        dynamic=0.7,
+        cap=0.5,
+        floor=0.1,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+    )
+    assert result_orig == pytest.approx(result_rebuilt)

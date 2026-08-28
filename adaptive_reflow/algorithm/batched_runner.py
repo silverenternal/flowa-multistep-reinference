@@ -132,6 +132,12 @@ class BatchedRunnerConfig:
     seed:
         Base seed. Per-trajectory effective seed is
         ``seed + r * T + t`` for round ``r`` and trajectory ``t``.
+    outer_cycle_id:
+        Identifier of the outer cycle. Forwarded to
+        ``scheduler.sample`` as its first positional argument so two
+        runners configured with different cycle IDs but the same
+        ``seed`` produce distinguishable endpoint populations. The
+        default ``0`` preserves the legacy hard-coded behaviour.
     """
 
     cycle_length: int = 20
@@ -142,6 +148,7 @@ class BatchedRunnerConfig:
     blender: RestartBlenderProtocol | None = None
     selection_evaluator: EvidenceScaleGapMetric | None = None
     seed: int = 42
+    outer_cycle_id: int = 0
 
 
 @dataclass(frozen=True)
@@ -228,6 +235,7 @@ def _config_hash(cfg: BatchedRunnerConfig) -> str:
         "trajectories_per_round": int(cfg.trajectories_per_round),
         "endpoints_per_trajectory": int(cfg.endpoints_per_trajectory),
         "seed": int(cfg.seed),
+        "outer_cycle_id": int(cfg.outer_cycle_id),
         "scheduler": str(cfg.scheduler.config_hash())
         if cfg.scheduler is not None
         else None,
@@ -407,22 +415,27 @@ class BatchedTrajectoryRunner:
             raise RuntimeError("scheduler_required")
 
         for r in range(int(cfg.cycle_length)):
-            sample = scheduler.sample(0, r, r)
+            sample = scheduler.sample(int(cfg.outer_cycle_id), r, r)
             n_cap_r = float(sample.n_cap)
             round_endpoints: list[NDArray[np.float64]] = []
             for t in range(T):
-                # Bind the per-trajectory seed to ``n_cap_r`` so two
-                # schedulers that emit different ``n_cap`` trajectories
-                # also yield different endpoint populations (and hence
+                # Bind the per-trajectory seed to ``n_cap_r`` AND
+                # ``outer_cycle_id`` so two schedulers that emit
+                # different ``n_cap`` trajectories, or two runners
+                # configured with different ``outer_cycle_id`` values,
+                # yield different endpoint populations (and hence
                 # different selection ratios). The ``1_000_000`` scale
                 # keeps ``n_cap`` within the low-integer range so the
                 # seed space remains disjoint across distinct
-                # capacities.
+                # capacities. The ``+ cfg.outer_cycle_id * 100_000_000``
+                # term carves out an entirely disjoint seed range per
+                # outer cycle so the populations do not collide.
                 seed_r = (
                     int(cfg.seed)
                     + r * T
                     + t
                     + int(round(n_cap_r * 1_000_000))
+                    + int(cfg.outer_cycle_id) * 100_000_000
                 )
                 traj_arr = self._adapter.generate_trajectory(
                     n_trajectories=1,

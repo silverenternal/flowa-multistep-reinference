@@ -6,7 +6,7 @@ consulted: N/A
 informed: N/A
 ---
 
-# 10. Cosine-driven memory fraction
+# 10. Cosine-driven memory fraction (driver → runner → engine)
 
 ## Context and Problem Statement
 
@@ -27,6 +27,15 @@ per-round `memory_fraction` should be *driven by the cosine
 schedule* — specifically, the schedule's `n_cap` (fresh-noise
 capacity) is the per-round fresh-noise fraction, and the memory
 fraction is its complement.
+
+The schedule supplies the *capacity*; **the driver transforms `n_cap`
+into `beta`**; **the runner runs the merge operator over the
+driver's `beta`**; **the engine applies the policy verbatim** (the
+engine is no longer the source of `beta_by_channel` — it only
+validates that the policy is well-formed). This split is the
+canonical driver ↔ runner ↔ engine chain; the engine override is a
+legacy back-compat path that has been removed from the canonical
+driver path.
 
 Before this ADR the cosine schedule's `n_cap` did *not* drive the
 adapter-level memory fraction. The schedule's `n_cap` was consumed
@@ -112,13 +121,37 @@ documented behavior was not wired.
 
 ## Decision Outcome
 
-Chosen option: **add `memory_fraction_from_schedule` to the
-schedule module, add `beta_from_schedule: bool = True` to
-`FinalRestartPolicy`, and override `beta_by_channel` in
-`Engine.run_round` before the `apply_restart_distribution` call.
-The override is invisible to the caller (the supplied `policy` is
-never mutated) and the round trace's `applied_policy_hash` is
-recomputed via `hash_policy_hash` so the audit invariant holds.**
+Chosen option: **delegate the `beta_by_channel` mutation to the
+algorithm-layer driver + runner path** and demote the engine's
+inline `_policy_with_schedule_beta` helper to a *legacy back-compat
+path that fires only when no driver has set the dedup flag*. The
+canonical chain is:
+
+1. **Schedule** — supplies `n_cap` (the fresh-noise capacity) for
+   the round via `ScheduleSample.n_cap` / `n_min`.
+2. **Driver** — transforms `n_cap` into `beta` via
+   `PolicyDriverProtocol.compute_policy`. The canonical driver is
+   `ScheduleDerivedPolicyDriver` which writes `beta = n_cap`. The
+   driver sets `policy.driver_computed_beta = True` so the engine
+   skips its inline re-override (Contract 1.2).
+3. **Runner** — calls `MergeOperatorProtocol.merge` to produce the
+   final `beta`. The merge step uses
+   `prev = previous_round_emitted_beta`,
+   `dynamic = driver.beta_by_channel[channel]`,
+   `cap = schedule.n_cap`,
+   `floor = schedule.n_min`,
+   `delta_cap_up = delta_cap_down = 1.0`
+   so the bounded merge collapses to `clamp(dynamic, floor, cap)`;
+   the runner records the merge audit codes in
+   `per_round_metrics[r]["merge_audit_codes"]` (Contract 2.4).
+4. **Engine** — receives the post-merge `policy` and forwards it
+   to `adapter.apply_restart_distribution` verbatim. The engine's
+   legacy `_policy_with_schedule_beta` helper still exists but
+   only fires when `policy.beta_from_schedule is True` AND
+   `policy.driver_computed_beta is False` (i.e. the caller
+   constructed the policy without using the driver abstraction);
+   this preserves backward compatibility with legacy
+   `FinalRestartPolicy` shapes.
 
 The wiring is structural:
 
@@ -127,67 +160,71 @@ The wiring is structural:
   non-finite or non-numeric `n_cap`; refuses `None`
   `schedule_sample`. Exported from `adaptive_reflow.schedule`.
 * `FinalRestartPolicy.beta_from_schedule: bool = True` (default).
-  When `True` the framework derives `beta_by_channel` from the
-  schedule; when `False` the caller-supplied `beta_by_channel` is
-  preserved verbatim (back-compat).
-* `Engine.run_round` calls the new helper
-  `adaptive_reflow.frame.engine._policy_with_schedule_beta` before
-  forwarding the policy to `adapter.apply_restart_distribution`.
-  The helper:
-
-  1. Reads `policy.schedule_sample.n_cap`.
-  2. Builds a new `beta_by_channel` mapping where every channel
-     carries `FactorValue(n_cap)`.
-  3. Replaces `beta_by_channel` on the policy and recomputes
-     `policy_hash` via `hash_policy_hash`.
-
-  When `policy.schedule_sample is None` (no schedule attached) the
-  helper is a no-op and the policy is forwarded verbatim — this is
-  the back-compat path every existing test relies on.
-
-* `hash_policy_hash` includes `beta_from_schedule` in its payload
-  so two policies that differ only by this flag hash differently;
-  the recompute remains deterministic.
-* `build_final_restart_policy` accepts a `beta_from_schedule` kwarg
-  (default `True`); the orchestrator's `build_final_policy` calls
-  it with `beta_from_schedule=True` so the orchestrator-built
-  policies also benefit from the new wiring when the caller opts in
-  via `schedule_sample`.
+  When `True` and the schedule sample is attached and
+  `driver_computed_beta is False`, the engine applies its legacy
+  inline `_policy_with_schedule_beta` helper. When
+  `driver_computed_beta is True`, the engine SKIPS its inline
+  helper (Contract 1.2).
+* `FinalRestartPolicy.driver_computed_beta: bool = False`
+  (default). Drivers that mutate `beta_by_channel` (e.g.
+  `ScheduleDerivedPolicyDriver.compute_policy`) MUST set this to
+  `True` via `dataclasses.replace(..., driver_computed_beta=True)`.
+  The canonical helper
+  `adaptive_reflow.algorithm.policy_driver._override_beta_by_channel`
+  sets the flag automatically.
+* `hash_policy_hash` includes `beta_from_schedule` and
+  `driver_computed_beta` in its payload so two policies that
+  differ only by these flags hash differently; the recompute
+  remains deterministic.
+* `Engine.run_round` checks `policy.beta_from_schedule and not
+  policy.driver_computed_beta` before calling
+  `_policy_with_schedule_beta`. When `driver_computed_beta is True`
+  the engine forwards the policy verbatim. When the helper fires
+  it sets `applied_policy_hash` to the post-override recompute.
 
 ### Consequences
 
 Positive:
 
-* The per-round memory fraction is now schedule-derived by default.
-  An ablation that compares "schedule-driven beta" against
-  "fixed beta" reduces to "supply vs omit `schedule_sample`".
+* The `beta_by_channel` source of truth is the canonical
+  `PolicyDriverProtocol` — switching drivers plugs in a new beta
+  philosophy without touching the engine, the adapter, or the
+  schedule. The engine re-override is now a back-compat path
+  used only when `driver_computed_beta=False`.
+* The runner is the canonical site for the merge step
+  (Contract 2.4); the bounded merge is observable in
+  `per_round_metrics[r]["beta"]`, `driver_beta`, and
+  `merge_audit_codes` so a downstream audit reader can
+  audit-replay every per-round restart decision.
 * The audit invariant `policy_hash == hash_policy_hash(policy)` is
-  preserved through the override (the recompute runs after the
-  override, not before).
-* Backward compatibility is total: every existing test supplies
-  `schedule_sample=None` and continues to see the explicit beta
-  they set; the override is dormant until the caller opts in.
-* The wiring lives at the engine, the single canonical entry
-  point for every adapter-driven round; the universal Protocol is
-  not modified.
+  preserved through both the driver mutation (the driver's
+  `_override_beta_by_channel` helper recomputes the hash) and the
+  runner's post-merge replace (the runner recomputes the hash
+  after applying the merge step).
+* Backward compatibility is total: every existing test that
+  builds a `FinalRestartPolicy` with `driver_computed_beta=False`
+  continues to see the legacy engine-driven override; tests that
+  use the runner see the canonical driver-driven chain.
+* The wiring lives at the engine + runner, the two canonical
+  entry points for every adapter-driven round; the universal
+  Protocol is not modified.
 
 Negative:
 
 * The `FinalRestartPolicy` dataclass grows by one field
-  (`beta_from_schedule`). Adding a field to a frozen dataclass
+  (`driver_computed_beta`). Adding a field to a frozen dataclass
   requires `dataclasses.replace` callsites to keep working (every
   site that builds a policy by position has to add the new field).
   Existing sites use keyword arguments so no migration is needed;
-  the field defaults to `True` so old code is forward-compatible.
-* The `hash_policy_hash` payload grows by one entry. Any cached
-  hash that was computed before this change is invalidated; this
-  is intentional — the new hash is the canonical one.
-* The override branch in `run_round` runs on every round when
-  `beta_from_schedule=True`. The cost is a `dataclasses.replace`
-  plus a `hash_policy_hash` call per round (the latter is O(F)
-  where F is the total factor count). For the canonical 4-channel
-  policy the overhead is sub-microsecond; for the perf-test 1000-
-  round horizons it is invisible against the integrator cost.
+  the field defaults to `False` so old code is forward-compatible.
+* The `hash_policy_hash` payload grows by two entries
+  (`beta_from_schedule` and `driver_computed_beta`). Any cached
+  hash computed before this change is invalidated; this is
+  intentional — the new hash is the canonical one.
+* The runner now performs a merge step + a `dataclasses.replace`
+  per round; the cost is sub-microsecond per round on the
+  canonical 4-channel policy and remains invisible against the
+  integrator cost.
 
 ### Confirmation
 
@@ -196,17 +233,33 @@ The decision is enforced by:
 * `adaptive_reflow/schedule/cosine.py::memory_fraction_from_schedule`
   — the canonical derivation.
 * `adaptive_reflow/contracts/authority.py::FinalRestartPolicy` —
-  the `beta_from_schedule` field.
-* `adaptive_reflow/contracts/hashes.py::hash_policy_hash` — the
-  payload that includes the flag.
-* `adaptive_reflow/frame/engine.py::_policy_with_schedule_beta` and
-  `Engine.run_round` — the override wiring.
-* `tests/test_adapters/test_twodim_fm.py` —
-  `test_cosine_schedule_drives_per_round_memory_fraction`,
-  `test_first_round_is_mostly_fresh_noise`,
-  `test_last_round_is_mostly_prior`,
-  `test_policy_beta_override_supersedes_schedule` — the four new
-  regression tests.
+  the `beta_from_schedule` and `driver_computed_beta` fields.
+* `adaptive_reflow/contracts/hashes.py::hash_policy_hash` —
+  the payload that includes both flags.
+* `adaptive_reflow/algorithm/policy_driver.py::PolicyDriverProtocol`
+  and `ScheduleDerivedPolicyDriver.compute_policy` —
+  the driver that writes `beta = n_cap` and sets
+  `driver_computed_beta=True`.
+* `adaptive_reflow/algorithm/runner.py::ReInferenceRunner.run` —
+  the merge step that calls
+  `self._merge.merge(prev, dynamic, cap, floor, ...)` between
+  policy emission and `engine.run_round`.
+* `adaptive_reflow/frame/engine.py::Engine.run_round` —
+  the engine-side dispatch that skips the inline override when
+  `driver_computed_beta=True`.
+* `tests/test_algorithm/test_runner.py` —
+  `test_runner_calls_merge_operator_between_policy_and_engine`,
+  `test_runner_merge_step_observable_in_beta_trajectory`,
+  `test_runner_with_identity_operator_passes_dynamic_through`
+  — the new Contract 2.4 regression tests.
+* `tests/test_algorithm/test_policy_driver.py` —
+  `test_schedule_derived_driver_matches_engine_override` — the
+  updated Contract 1.2 / Contract 3.1 regression test.
+* `tests/test_algorithm/test_blender.py` —
+  `test_blender_direction_memory_fraction_not_beta` — the new
+  Contract 3.1 direction test.
+* `tests/test_algorithm/test_merge_operator.py` — the P0-3
+  regression suite (`test_p0_3_*`).
 
 ## More Information
 

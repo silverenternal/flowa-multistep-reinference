@@ -300,6 +300,20 @@ class ReferenceFlowAAdapter:
             capability_token=self.capability_token_for(state),
         )
 
+    def export_trajectory(self, trace: ODEIntegratorTrace) -> Any:
+        """Reference adapter: no native trajectory preserved (P0-7).
+
+        The reference adapter is a stdlib-only placeholder that does
+        not store a real trajectory. The runner catches
+        :class:`NotImplementedError` here and records the failure in
+        the round's metric dict under ``endpoint_export_failed``; the
+        endpoint row is left as ``NaN`` so the caller can detect
+        "endpoint not captured" via ``np.isnan``.
+        """
+        raise NotImplementedError(
+            "ReferenceFlowAAdapter does not preserve a native trajectory"
+        )
+
     # -- helpers -----------------------------------------------------------
 
     def capability_token_for(self, state: StateBundle) -> AdapterCapabilities:

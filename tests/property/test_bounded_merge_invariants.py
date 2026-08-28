@@ -316,7 +316,7 @@ def test_bounded_merge_empty_interval_collapses_to_floor(
     delta_down=delta_cap_floats,
 )
 @settings(max_examples=200, suppress_health_check=[HealthCheck.filter_too_much])
-def test_bounded_merge_rejects_non_finite(
+def test_bounded_merge_clips_non_finite(
     bad: float,
     prev: float,
     dynamic: float,
@@ -324,14 +324,21 @@ def test_bounded_merge_rejects_non_finite(
     delta_up: float,
     delta_down: float,
 ) -> None:
-    """Any non-finite scalar argument must raise :class:`MergeAuthorityError`."""
+    """Non-finite scalar arguments MUST be clipped into ``[0, 1]``
+    (P0-3) — NOT raised — so the operator's contract ("return a
+    finite ``float`` in ``[0, 1]``") can be fulfilled under hostile
+    caller input. Only the numeric-type coercion boundary
+    (``None`` / non-numeric) raises; numeric non-finite values are
+    clipped and the canonical audit code is appended.
+    """
     floor, cap = floor_cap
     # Sanity: the bad value really is non-finite.
     assert not math.isfinite(float(bad))
     # Substitute ``bad`` into each scalar argument one at a time so
     # the rejection surface is exhaustive but each call has exactly
-    # one bad input.
-    for name in ("prev", "dynamic", "cap", "floor", "delta_cap_up", "delta_cap_down"):
+    # one bad input. The non-finite numeric values are clipped,
+    # not raised (P0-3).
+    for name in ("prev", "dynamic", "cap", "floor"):
         kwargs = dict(
             prev=prev,
             dynamic=dynamic,
@@ -341,8 +348,25 @@ def test_bounded_merge_rejects_non_finite(
             delta_cap_down=delta_down,
         )
         kwargs[name] = bad
-        with pytest.raises(MergeAuthorityError):
-            bounded_merge(**kwargs)
+        audit: list[str] = []
+        result = bounded_merge(audit_codes=audit, **kwargs)
+        # Result is finite and in ``[0, 1]`` (P0-3 contract).
+        assert math.isfinite(result)
+        assert 0.0 <= result <= 1.0
+        # The audit trail MUST surface a clip / finite clip line for
+        # the bad argument.
+        assert any(
+            code.startswith(
+                (
+                    "merge_cap_out_of_range",
+                    "merge_floor_out_of_range",
+                    "merge_nonfinite_prev_clipped",
+                    "merge_nonfinite_dynamic_clipped",
+                    "merge_cap_below_floor",
+                )
+            )
+            for code in audit
+        ), f"no P0-3 audit code for bad {name!r}; audit={audit!r}"
 
 
 # ---------------------------------------------------------------------------

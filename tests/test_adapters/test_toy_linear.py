@@ -195,17 +195,28 @@ def test_adapter_raising_in_solve_ode_emits_audit() -> None:
     """
     from adaptive_reflow.adapters import SyntheticContinuousAdapter
     from adaptive_reflow.frame import (
-        ERR_ADAPTER_RAISED,
+        ERR_ADAPTER_CONFIGURATION_ERROR,
         ERR_INTEGRATOR_TRACE_MISSING,
         Engine,
         EngineRoundResult,
     )
 
     class _RaisingAdapter(SyntheticContinuousAdapter):
-        """Synthetic continuous adapter that raises on ``solve_ode``."""
+        """Synthetic continuous adapter that raises on ``solve_ode``.
+
+        P0-1: the engine's ``_safe_adapter_call`` wrapper now only
+        catches the typed engine-internal
+        :class:`AdapterConfigurationError` plus the two adapter-protocol
+        exceptions. ``RuntimeError`` is no longer swallowed; the test
+        adapter therefore raises
+        :class:`AdapterConfigurationError` so the engine still emits
+        a fail-closed audit trail rather than crashing the round.
+        """
 
         def solve_ode(self, state, condition, *, seed):  # type: ignore[override]
-            raise RuntimeError("simulated solver explosion")
+            from adaptive_reflow.frame import AdapterConfigurationError
+
+            raise AdapterConfigurationError("simulated solver explosion")
 
     # Build a valid bundle / policy / phase-state the engine accepts.
     adapter = _RaisingAdapter()
@@ -267,10 +278,14 @@ def test_adapter_raising_in_solve_ode_emits_audit() -> None:
     assert isinstance(result, EngineRoundResult)
     codes = result.round_trace.audit_codes
     # The adapter-raised audit code is present (step_name + exc type).
+    # P0-1: the engine's _safe_adapter_call now catches the typed
+    # ``AdapterConfigurationError`` and emits
+    # ``ERR_ADAPTER_CONFIGURATION_ERROR`` (replacing the old
+    # ``ERR_ADAPTER_RAISED`` swallow-all Exception path).
     assert any(
-        c.startswith(ERR_ADAPTER_RAISED + ":solve_ode:RuntimeError")
+        c.startswith(ERR_ADAPTER_CONFIGURATION_ERROR + ":solve_ode:AdapterConfigurationError")
         for c in codes
-    ), f"expected ERR_ADAPTER_RAISED:solve_ode:RuntimeError in {codes!r}"
+    ), f"expected ERR_ADAPTER_CONFIGURATION_ERROR:solve_ode:AdapterConfigurationError in {codes!r}"
     # Engine never reached the trace-validation gate.
     assert ERR_INTEGRATOR_TRACE_MISSING in codes
     # Round is fail-closed: detached=False, integrator_trace=None.

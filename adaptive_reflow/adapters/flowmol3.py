@@ -365,6 +365,12 @@ class FlowMol3Adapter:
             )
         return state
 
+    def export_trajectory(self, trace: ODEIntegratorTrace) -> Any:
+        """FlowMol3 adapter: no native trajectory preserved (P0-7)."""
+        raise NotImplementedError(
+            "FlowMol3Adapter does not preserve a native trajectory"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Convenience

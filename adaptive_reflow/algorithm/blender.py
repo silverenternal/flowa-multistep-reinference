@@ -386,42 +386,17 @@ class RestartBlenderProtocol(Protocol):
     canonical signatures is accepted as a blender (mirrors the
     ``MergeOperatorProtocol`` / ``SchedulerProtocol`` /
     ``PolicyDriverProtocol`` pattern).
+
+    CONTRACT 3.1 — driver ↔ blender direction: the blender's
+    ``memory_fraction`` argument is the **memory coefficient**
+    (``m = 1 - beta``; higher means more prior retention). The
+    :class:`PolicyDriverProtocol` writes the *noise coefficient*
+    ``beta`` into ``policy.beta_by_channel``; the runner (or
+    adapter wiring) converts ``beta -> memory_fraction`` at the
+    blender boundary. Callers MUST NOT pass ``beta`` directly to
+    ``blender.blend(...)`` as ``memory_fraction``; the two values
+    have opposite polarity and would silently invert the blend.
     """
-
-    def blend(
-        self,
-        prior_state: Any,
-        fresh_state: Any,
-        *,
-        memory_fraction: float,
-        channel: str,
-    ) -> StateBundle:
-        """Return the blended :class:`StateBundle` for one round.
-
-        Parameters
-        ----------
-        prior_state:
-            The prior endpoint (opaque carrier exposing the channel
-            value via :func:`_extract_channel_value`).
-        fresh_state:
-            The freshly-sampled noise carrier (same extraction
-            contract as ``prior_state``).
-        memory_fraction:
-            ``m ∈ [0, 1]``. Values outside the unit interval are
-            clamped; non-finite or non-numeric values raise
-            :class:`ValueError`.
-        channel:
-            Adapter-supplied channel name. Used to key the
-            ``channels`` mapping on the returned bundle and to label
-            the digest payload.
-
-        Returns
-        -------
-        :class:`StateBundle`
-            A new bundle with ``detach_proof=True`` and the blended
-            value encoded in ``native_state_digest``.
-        """
-        ...
 
     def blender_family(self) -> str:
         """Return the blender family identifier (e.g. ``"linear"``)."""
@@ -499,6 +474,17 @@ class LinearBlender:
     def config_hash(self) -> str:
         """Return the canonical linear-blender config hash."""
         return DEFAULT_LINEAR_CONFIG_HASH
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict (P1-1 round-trip)."""
+        return {"family": LINEAR_FAMILY}
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> LinearBlender:
+        """Build a :class:`LinearBlender` from ``config``."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return LinearBlender()
 
 
 # ---------------------------------------------------------------------------
@@ -592,6 +578,21 @@ class DistanceDecayBlender:
     def config_hash(self) -> str:
         """Return the canonical distance-decay-blender config hash."""
         return DEFAULT_DISTANCE_DECAY_CONFIG_HASH
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict (P1-1 round-trip)."""
+        return {"family": DISTANCE_DECAY_FAMILY, "temperature": float(self._temperature)}
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> DistanceDecayBlender:
+        """Build a :class:`DistanceDecayBlender` from ``config``."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return DistanceDecayBlender(
+            temperature=float(
+                config.get("temperature", DEFAULT_DISTANCE_DECAY_TEMPERATURE)
+            )
+        )
 
 
 # ---------------------------------------------------------------------------

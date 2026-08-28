@@ -21,7 +21,7 @@
     
     
       
-        <title>10. Cosine-driven memory fraction - flowa-multistep-reinference API</title>
+        <title>10. Cosine-driven memory fraction (driver → runner → engine) - flowa-multistep-reinference API</title>
       
     
     
@@ -64,7 +64,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#10-cosine-driven-memory-fraction" class="md-skip">
+        <a href="#10-cosine-driven-memory-fraction-driver-runner-engine" class="md-skip">
           Skip to content
         </a>
       
@@ -100,7 +100,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              10. Cosine-driven memory fraction
+              10. Cosine-driven memory fraction (driver → runner → engine)
             
           </span>
         </div>
@@ -583,7 +583,7 @@
 
 
 
-<h1 id="10-cosine-driven-memory-fraction">10. Cosine-driven memory fraction<a class="headerlink" href="#10-cosine-driven-memory-fraction" title="Permanent link">&para;</a></h1>
+<h1 id="10-cosine-driven-memory-fraction-driver-runner-engine">10. Cosine-driven memory fraction (driver → runner → engine)<a class="headerlink" href="#10-cosine-driven-memory-fraction-driver-runner-engine" title="Permanent link">&para;</a></h1>
 <h2 id="context-and-problem-statement">Context and Problem Statement<a class="headerlink" href="#context-and-problem-statement" title="Permanent link">&para;</a></h2>
 <p>The <code>adaptive_reflow</code> framework's <code>apply_restart_distribution</code>
 boundary (the universal <code>FlowMatchingODEAdapter</code> Protocol hook that
@@ -599,6 +599,14 @@ per-round <code>memory_fraction</code> should be <em>driven by the cosine
 schedule</em> — specifically, the schedule's <code>n_cap</code> (fresh-noise
 capacity) is the per-round fresh-noise fraction, and the memory
 fraction is its complement.</p>
+<p>The schedule supplies the <em>capacity</em>; <strong>the driver transforms <code>n_cap</code>
+into <code>beta</code></strong>; <strong>the runner runs the merge operator over the
+driver's <code>beta</code></strong>; <strong>the engine applies the policy verbatim</strong> (the
+engine is no longer the source of <code>beta_by_channel</code> — it only
+validates that the policy is well-formed). This split is the
+canonical driver ↔ runner ↔ engine chain; the engine override is a
+legacy back-compat path that has been removed from the canonical
+driver path.</p>
 <p>Before this ADR the cosine schedule's <code>n_cap</code> did <em>not</em> drive the
 adapter-level memory fraction. The schedule's <code>n_cap</code> was consumed
 only at the <em>bounded merge</em> layer (<code>adaptive_reflow.frame.merge.
@@ -680,13 +688,38 @@ documented behavior was not wired.</p>
    beta without depending on the orchestrator.</li>
 </ol>
 <h2 id="decision-outcome">Decision Outcome<a class="headerlink" href="#decision-outcome" title="Permanent link">&para;</a></h2>
-<p>Chosen option: <strong>add <code>memory_fraction_from_schedule</code> to the
-schedule module, add <code>beta_from_schedule: bool = True</code> to
-<code>FinalRestartPolicy</code>, and override <code>beta_by_channel</code> in
-<code>Engine.run_round</code> before the <code>apply_restart_distribution</code> call.
-The override is invisible to the caller (the supplied <code>policy</code> is
-never mutated) and the round trace's <code>applied_policy_hash</code> is
-recomputed via <code>hash_policy_hash</code> so the audit invariant holds.</strong></p>
+<p>Chosen option: <strong>delegate the <code>beta_by_channel</code> mutation to the
+algorithm-layer driver + runner path</strong> and demote the engine's
+inline <code>_policy_with_schedule_beta</code> helper to a <em>legacy back-compat
+path that fires only when no driver has set the dedup flag</em>. The
+canonical chain is:</p>
+<ol>
+<li><strong>Schedule</strong> — supplies <code>n_cap</code> (the fresh-noise capacity) for
+   the round via <code>ScheduleSample.n_cap</code> / <code>n_min</code>.</li>
+<li><strong>Driver</strong> — transforms <code>n_cap</code> into <code>beta</code> via
+   <code>PolicyDriverProtocol.compute_policy</code>. The canonical driver is
+   <code>ScheduleDerivedPolicyDriver</code> which writes <code>beta = n_cap</code>. The
+   driver sets <code>policy.driver_computed_beta = True</code> so the engine
+   skips its inline re-override (Contract 1.2).</li>
+<li><strong>Runner</strong> — calls <code>MergeOperatorProtocol.merge</code> to produce the
+   final <code>beta</code>. The merge step uses
+   <code>prev = previous_round_emitted_beta</code>,
+   <code>dynamic = driver.beta_by_channel[channel]</code>,
+   <code>cap = schedule.n_cap</code>,
+   <code>floor = schedule.n_min</code>,
+   <code>delta_cap_up = delta_cap_down = 1.0</code>
+   so the bounded merge collapses to <code>clamp(dynamic, floor, cap)</code>;
+   the runner records the merge audit codes in
+   <code>per_round_metrics[r]["merge_audit_codes"]</code> (Contract 2.4).</li>
+<li><strong>Engine</strong> — receives the post-merge <code>policy</code> and forwards it
+   to <code>adapter.apply_restart_distribution</code> verbatim. The engine's
+   legacy <code>_policy_with_schedule_beta</code> helper still exists but
+   only fires when <code>policy.beta_from_schedule is True</code> AND
+   <code>policy.driver_computed_beta is False</code> (i.e. the caller
+   constructed the policy without using the driver abstraction);
+   this preserves backward compatibility with legacy
+   <code>FinalRestartPolicy</code> shapes.</li>
+</ol>
 <p>The wiring is structural:</p>
 <ul>
 <li><code>adaptive_reflow.schedule.cosine.memory_fraction_from_schedule</code>
@@ -694,69 +727,70 @@ recomputed via <code>hash_policy_hash</code> so the audit invariant holds.</stro
   non-finite or non-numeric <code>n_cap</code>; refuses <code>None</code>
   <code>schedule_sample</code>. Exported from <code>adaptive_reflow.schedule</code>.</li>
 <li><code>FinalRestartPolicy.beta_from_schedule: bool = True</code> (default).
-  When <code>True</code> the framework derives <code>beta_by_channel</code> from the
-  schedule; when <code>False</code> the caller-supplied <code>beta_by_channel</code> is
-  preserved verbatim (back-compat).</li>
-<li>
-<p><code>Engine.run_round</code> calls the new helper
-  <code>adaptive_reflow.frame.engine._policy_with_schedule_beta</code> before
-  forwarding the policy to <code>adapter.apply_restart_distribution</code>.
-  The helper:</p>
-</li>
-<li>
-<p>Reads <code>policy.schedule_sample.n_cap</code>.</p>
-</li>
-<li>Builds a new <code>beta_by_channel</code> mapping where every channel
-     carries <code>FactorValue(n_cap)</code>.</li>
-<li>Replaces <code>beta_by_channel</code> on the policy and recomputes
-     <code>policy_hash</code> via <code>hash_policy_hash</code>.</li>
-</ul>
-<p>When <code>policy.schedule_sample is None</code> (no schedule attached) the
-  helper is a no-op and the policy is forwarded verbatim — this is
-  the back-compat path every existing test relies on.</p>
-<ul>
-<li><code>hash_policy_hash</code> includes <code>beta_from_schedule</code> in its payload
-  so two policies that differ only by this flag hash differently;
-  the recompute remains deterministic.</li>
-<li><code>build_final_restart_policy</code> accepts a <code>beta_from_schedule</code> kwarg
-  (default <code>True</code>); the orchestrator's <code>build_final_policy</code> calls
-  it with <code>beta_from_schedule=True</code> so the orchestrator-built
-  policies also benefit from the new wiring when the caller opts in
-  via <code>schedule_sample</code>.</li>
+  When <code>True</code> and the schedule sample is attached and
+  <code>driver_computed_beta is False</code>, the engine applies its legacy
+  inline <code>_policy_with_schedule_beta</code> helper. When
+  <code>driver_computed_beta is True</code>, the engine SKIPS its inline
+  helper (Contract 1.2).</li>
+<li><code>FinalRestartPolicy.driver_computed_beta: bool = False</code>
+  (default). Drivers that mutate <code>beta_by_channel</code> (e.g.
+  <code>ScheduleDerivedPolicyDriver.compute_policy</code>) MUST set this to
+  <code>True</code> via <code>dataclasses.replace(..., driver_computed_beta=True)</code>.
+  The canonical helper
+  <code>adaptive_reflow.algorithm.policy_driver._override_beta_by_channel</code>
+  sets the flag automatically.</li>
+<li><code>hash_policy_hash</code> includes <code>beta_from_schedule</code> and
+  <code>driver_computed_beta</code> in its payload so two policies that
+  differ only by these flags hash differently; the recompute
+  remains deterministic.</li>
+<li><code>Engine.run_round</code> checks <code>policy.beta_from_schedule and not
+  policy.driver_computed_beta</code> before calling
+  <code>_policy_with_schedule_beta</code>. When <code>driver_computed_beta is True</code>
+  the engine forwards the policy verbatim. When the helper fires
+  it sets <code>applied_policy_hash</code> to the post-override recompute.</li>
 </ul>
 <h3 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h3>
 <p>Positive:</p>
 <ul>
-<li>The per-round memory fraction is now schedule-derived by default.
-  An ablation that compares "schedule-driven beta" against
-  "fixed beta" reduces to "supply vs omit <code>schedule_sample</code>".</li>
+<li>The <code>beta_by_channel</code> source of truth is the canonical
+  <code>PolicyDriverProtocol</code> — switching drivers plugs in a new beta
+  philosophy without touching the engine, the adapter, or the
+  schedule. The engine re-override is now a back-compat path
+  used only when <code>driver_computed_beta=False</code>.</li>
+<li>The runner is the canonical site for the merge step
+  (Contract 2.4); the bounded merge is observable in
+  <code>per_round_metrics[r]["beta"]</code>, <code>driver_beta</code>, and
+  <code>merge_audit_codes</code> so a downstream audit reader can
+  audit-replay every per-round restart decision.</li>
 <li>The audit invariant <code>policy_hash == hash_policy_hash(policy)</code> is
-  preserved through the override (the recompute runs after the
-  override, not before).</li>
-<li>Backward compatibility is total: every existing test supplies
-  <code>schedule_sample=None</code> and continues to see the explicit beta
-  they set; the override is dormant until the caller opts in.</li>
-<li>The wiring lives at the engine, the single canonical entry
-  point for every adapter-driven round; the universal Protocol is
-  not modified.</li>
+  preserved through both the driver mutation (the driver's
+  <code>_override_beta_by_channel</code> helper recomputes the hash) and the
+  runner's post-merge replace (the runner recomputes the hash
+  after applying the merge step).</li>
+<li>Backward compatibility is total: every existing test that
+  builds a <code>FinalRestartPolicy</code> with <code>driver_computed_beta=False</code>
+  continues to see the legacy engine-driven override; tests that
+  use the runner see the canonical driver-driven chain.</li>
+<li>The wiring lives at the engine + runner, the two canonical
+  entry points for every adapter-driven round; the universal
+  Protocol is not modified.</li>
 </ul>
 <p>Negative:</p>
 <ul>
 <li>The <code>FinalRestartPolicy</code> dataclass grows by one field
-  (<code>beta_from_schedule</code>). Adding a field to a frozen dataclass
+  (<code>driver_computed_beta</code>). Adding a field to a frozen dataclass
   requires <code>dataclasses.replace</code> callsites to keep working (every
   site that builds a policy by position has to add the new field).
   Existing sites use keyword arguments so no migration is needed;
-  the field defaults to <code>True</code> so old code is forward-compatible.</li>
-<li>The <code>hash_policy_hash</code> payload grows by one entry. Any cached
-  hash that was computed before this change is invalidated; this
-  is intentional — the new hash is the canonical one.</li>
-<li>The override branch in <code>run_round</code> runs on every round when
-  <code>beta_from_schedule=True</code>. The cost is a <code>dataclasses.replace</code>
-  plus a <code>hash_policy_hash</code> call per round (the latter is O(F)
-  where F is the total factor count). For the canonical 4-channel
-  policy the overhead is sub-microsecond; for the perf-test 1000-
-  round horizons it is invisible against the integrator cost.</li>
+  the field defaults to <code>False</code> so old code is forward-compatible.</li>
+<li>The <code>hash_policy_hash</code> payload grows by two entries
+  (<code>beta_from_schedule</code> and <code>driver_computed_beta</code>). Any cached
+  hash computed before this change is invalidated; this is
+  intentional — the new hash is the canonical one.</li>
+<li>The runner now performs a merge step + a <code>dataclasses.replace</code>
+  per round; the cost is sub-microsecond per round on the
+  canonical 4-channel policy and remains invisible against the
+  integrator cost.</li>
 </ul>
 <h3 id="confirmation">Confirmation<a class="headerlink" href="#confirmation" title="Permanent link">&para;</a></h3>
 <p>The decision is enforced by:</p>
@@ -764,17 +798,33 @@ recomputed via <code>hash_policy_hash</code> so the audit invariant holds.</stro
 <li><code>adaptive_reflow/schedule/cosine.py::memory_fraction_from_schedule</code>
   — the canonical derivation.</li>
 <li><code>adaptive_reflow/contracts/authority.py::FinalRestartPolicy</code> —
-  the <code>beta_from_schedule</code> field.</li>
-<li><code>adaptive_reflow/contracts/hashes.py::hash_policy_hash</code> — the
-  payload that includes the flag.</li>
-<li><code>adaptive_reflow/frame/engine.py::_policy_with_schedule_beta</code> and
-  <code>Engine.run_round</code> — the override wiring.</li>
-<li><code>tests/test_adapters/test_twodim_fm.py</code> —
-  <code>test_cosine_schedule_drives_per_round_memory_fraction</code>,
-  <code>test_first_round_is_mostly_fresh_noise</code>,
-  <code>test_last_round_is_mostly_prior</code>,
-  <code>test_policy_beta_override_supersedes_schedule</code> — the four new
-  regression tests.</li>
+  the <code>beta_from_schedule</code> and <code>driver_computed_beta</code> fields.</li>
+<li><code>adaptive_reflow/contracts/hashes.py::hash_policy_hash</code> —
+  the payload that includes both flags.</li>
+<li><code>adaptive_reflow/algorithm/policy_driver.py::PolicyDriverProtocol</code>
+  and <code>ScheduleDerivedPolicyDriver.compute_policy</code> —
+  the driver that writes <code>beta = n_cap</code> and sets
+  <code>driver_computed_beta=True</code>.</li>
+<li><code>adaptive_reflow/algorithm/runner.py::ReInferenceRunner.run</code> —
+  the merge step that calls
+  <code>self._merge.merge(prev, dynamic, cap, floor, ...)</code> between
+  policy emission and <code>engine.run_round</code>.</li>
+<li><code>adaptive_reflow/frame/engine.py::Engine.run_round</code> —
+  the engine-side dispatch that skips the inline override when
+  <code>driver_computed_beta=True</code>.</li>
+<li><code>tests/test_algorithm/test_runner.py</code> —
+  <code>test_runner_calls_merge_operator_between_policy_and_engine</code>,
+  <code>test_runner_merge_step_observable_in_beta_trajectory</code>,
+  <code>test_runner_with_identity_operator_passes_dynamic_through</code>
+  — the new Contract 2.4 regression tests.</li>
+<li><code>tests/test_algorithm/test_policy_driver.py</code> —
+  <code>test_schedule_derived_driver_matches_engine_override</code> — the
+  updated Contract 1.2 / Contract 3.1 regression test.</li>
+<li><code>tests/test_algorithm/test_blender.py</code> —
+  <code>test_blender_direction_memory_fraction_not_beta</code> — the new
+  Contract 3.1 direction test.</li>
+<li><code>tests/test_algorithm/test_merge_operator.py</code> — the P0-3
+  regression suite (<code>test_p0_3_*</code>).</li>
 </ul>
 <h2 id="more-information">More Information<a class="headerlink" href="#more-information" title="Permanent link">&para;</a></h2>
 <ul>

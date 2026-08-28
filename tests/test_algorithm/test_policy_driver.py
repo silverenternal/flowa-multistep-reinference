@@ -135,14 +135,27 @@ def test_policy_driver_protocol_runtime_checkable() -> None:
 
 
 def test_schedule_derived_driver_matches_engine_override() -> None:
-    """``ScheduleDerivedPolicyDriver`` reproduces ``engine._policy_with_schedule_beta``."""
+    """``ScheduleDerivedPolicyDriver`` reproduces
+    ``engine._policy_with_schedule_beta`` (Contract 1.2 + Contract 3.1).
+
+    Both writers compute ``beta = n_cap``, but they differ in one
+    meta field: the driver sets ``driver_computed_beta=True`` (so the
+    engine skips its re-override) while the engine helper leaves it
+    ``False`` (so it can apply the inline override itself). The
+    ``policy_hash`` therefore differs across the two paths even
+    though the resulting ``beta`` value is identical. The test
+    asserts the ``beta`` equality and the ``driver_computed_beta``
+    delta — NOT the ``policy_hash`` equality.
+    """
     from adaptive_reflow.frame.engine import _policy_with_schedule_beta
 
     base_policy = _make_base_policy(beta=0.0)
     sample = _make_schedule_sample(n_cap=0.7, round_in_cycle=1)
 
     # Reference: the engine's existing inline helper.
-    engine_policy = _policy_with_schedule_beta(replace(base_policy, schedule_sample=sample))
+    engine_policy = _policy_with_schedule_beta(
+        replace(base_policy, schedule_sample=sample)
+    )
 
     # Driver: the schedule-derived driver fed the same arguments.
     driver = ScheduleDerivedPolicyDriver()
@@ -154,12 +167,28 @@ def test_schedule_derived_driver_matches_engine_override() -> None:
     )
 
     # Both override ``beta_by_channel`` to ``n_cap`` and recompute the
-    # policy hash; the resulting ``beta`` and ``policy_hash`` must match.
+    # policy hash; the resulting ``beta`` MUST match (Contract 3.1).
     assert _beta_value(driver_policy) == pytest.approx(0.7)
     assert _beta_value(driver_policy) == pytest.approx(_beta_value(engine_policy))
-    assert str(driver_policy.policy_hash) == str(engine_policy.policy_hash)
+    # Contract 1.2: the driver sets ``driver_computed_beta=True`` so
+    # the engine skips its re-override; the legacy engine path leaves
+    # the flag at ``False`` so it applies the inline override. The
+    # flags MUST differ across paths.
+    assert driver_policy.driver_computed_beta is True
+    assert engine_policy.driver_computed_beta is False
+    # The ``policy_hash`` differs because ``driver_computed_beta`` is
+    # part of the canonical payload (deliberate — preserves the audit
+    # invariant that the hash uniquely identifies the policy
+    # surface).
+    assert str(driver_policy.policy_hash) != str(engine_policy.policy_hash)
 
-    # ``None`` schedule: both return ``base_policy`` verbatim.
+    # ``None`` schedule: the driver returns ``base_policy`` verbatim
+    # (no schedule-driven override possible). The engine now (closes P0-5)
+    # fails closed: when ``beta_from_schedule`` is ``True`` and
+    # ``schedule_sample`` is ``None``, the helper emits
+    # ``ERR_SCHEDULE_SAMPLE_MISSING`` and returns a NEW policy with all
+    # ``beta_by_channel`` zeroed (it is NOT the same object as the
+    # base policy).
     unchanged_driver = driver.compute_policy(
         None,
         base_policy=base_policy,
@@ -167,9 +196,16 @@ def test_schedule_derived_driver_matches_engine_override() -> None:
         prior_endpoint_digest="some-digest",
     )
     assert unchanged_driver is base_policy
+    # The driver never sets the dedup flag when the schedule is absent.
+    assert unchanged_driver.driver_computed_beta is False
 
-    unchanged_engine = _policy_with_schedule_beta(base_policy)
-    assert unchanged_engine is base_policy
+    audit_codes: list[str] = []
+    fail_closed_engine = _policy_with_schedule_beta(base_policy, audit_codes)
+    # Engine returned a NEW (not the same) policy with all beta zeroed,
+    # and emitted ERR_SCHEDULE_SAMPLE_MISSING into the audit trail.
+    assert fail_closed_engine is not base_policy
+    assert any("schedule_sample_missing" in code for code in audit_codes)
+    assert _beta_value(fail_closed_engine) == 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -522,3 +558,36 @@ def test_adaptive_policy_driver_config_hash_varies_with_per_cell_coefficient_C()
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-x", "--no-header", "-q"]))
+
+
+# ---------------------------------------------------------------------------
+# from_config / to_config round-trip (P1-1) — drivers
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "driver",
+    [
+        ScheduleDerivedPolicyDriver(),
+        ConstantPolicyDriver(beta=0.7),
+        AdaptivePolicyDriver(target_estimate=0.4),
+        AdaptivePolicyDriver(
+            target_estimate=0.4, per_cell_coefficient_C=1.3
+        ),
+    ],
+)
+def test_driver_config_round_trip(driver) -> None:
+    """``driver == cls.from_config(driver.to_config())`` byte-for-byte."""
+    config = driver.to_config()
+    if isinstance(driver, ScheduleDerivedPolicyDriver):
+        rebuilt = ScheduleDerivedPolicyDriver.from_config(config)
+    elif isinstance(driver, ConstantPolicyDriver):
+        rebuilt = ConstantPolicyDriver.from_config(config)
+    elif isinstance(driver, AdaptivePolicyDriver):
+        rebuilt = AdaptivePolicyDriver.from_config(config)
+    else:  # pragma: no cover
+        raise AssertionError("unhandled driver")
+    assert type(rebuilt) is type(driver)
+    assert rebuilt.driver_family() == driver.driver_family()
+    assert rebuilt.config_hash() == driver.config_hash()
+    assert rebuilt.to_config() == config

@@ -16083,7 +16083,32 @@ Dormand-Prince are deterministic for fixed
 <span class="normal"><a href="#__codelineno-0-876">876</a></span>
 <span class="normal"><a href="#__codelineno-0-877">877</a></span>
 <span class="normal"><a href="#__codelineno-0-878">878</a></span>
-<span class="normal"><a href="#__codelineno-0-879">879</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-394" name="__codelineno-0-394"></a><span class="k">class</span><span class="w"> </span><span class="nc">TwoDimFMAdapter</span><span class="p">(</span><span class="n">FlowMatchingODEAdapter</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-879">879</a></span>
+<span class="normal"><a href="#__codelineno-0-880">880</a></span>
+<span class="normal"><a href="#__codelineno-0-881">881</a></span>
+<span class="normal"><a href="#__codelineno-0-882">882</a></span>
+<span class="normal"><a href="#__codelineno-0-883">883</a></span>
+<span class="normal"><a href="#__codelineno-0-884">884</a></span>
+<span class="normal"><a href="#__codelineno-0-885">885</a></span>
+<span class="normal"><a href="#__codelineno-0-886">886</a></span>
+<span class="normal"><a href="#__codelineno-0-887">887</a></span>
+<span class="normal"><a href="#__codelineno-0-888">888</a></span>
+<span class="normal"><a href="#__codelineno-0-889">889</a></span>
+<span class="normal"><a href="#__codelineno-0-890">890</a></span>
+<span class="normal"><a href="#__codelineno-0-891">891</a></span>
+<span class="normal"><a href="#__codelineno-0-892">892</a></span>
+<span class="normal"><a href="#__codelineno-0-893">893</a></span>
+<span class="normal"><a href="#__codelineno-0-894">894</a></span>
+<span class="normal"><a href="#__codelineno-0-895">895</a></span>
+<span class="normal"><a href="#__codelineno-0-896">896</a></span>
+<span class="normal"><a href="#__codelineno-0-897">897</a></span>
+<span class="normal"><a href="#__codelineno-0-898">898</a></span>
+<span class="normal"><a href="#__codelineno-0-899">899</a></span>
+<span class="normal"><a href="#__codelineno-0-900">900</a></span>
+<span class="normal"><a href="#__codelineno-0-901">901</a></span>
+<span class="normal"><a href="#__codelineno-0-902">902</a></span>
+<span class="normal"><a href="#__codelineno-0-903">903</a></span>
+<span class="normal"><a href="#__codelineno-0-904">904</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-394" name="__codelineno-0-394"></a><span class="k">class</span><span class="w"> </span><span class="nc">TwoDimFMAdapter</span><span class="p">(</span><span class="n">FlowMatchingODEAdapter</span><span class="p">):</span>
 <a id="__codelineno-0-395" name="__codelineno-0-395"></a><span class="w">    </span><span class="sd">"""2D rectified flow adapter (CPU, NumPy).</span>
 <a id="__codelineno-0-396" name="__codelineno-0-396"></a>
 <a id="__codelineno-0-397" name="__codelineno-0-397"></a><span class="sd">    Implements all eight methods of :class:`FlowMatchingODEAdapter`</span>
@@ -16446,129 +16471,154 @@ Dormand-Prince are deterministic for fixed
 <a id="__codelineno-0-754" name="__codelineno-0-754"></a>        <span class="p">)</span>
 <a id="__codelineno-0-755" name="__codelineno-0-755"></a>
 <a id="__codelineno-0-756" name="__codelineno-0-756"></a>    <span class="c1"># ------------------------------------------------------------------</span>
-<a id="__codelineno-0-757" name="__codelineno-0-757"></a>    <span class="c1"># 9. batched_integrate (B5 metric population; RK4-only)</span>
+<a id="__codelineno-0-757" name="__codelineno-0-757"></a>    <span class="c1"># 9. export_trajectory (P0-7 — public trajectory export)</span>
 <a id="__codelineno-0-758" name="__codelineno-0-758"></a>    <span class="c1"># ------------------------------------------------------------------</span>
 <a id="__codelineno-0-759" name="__codelineno-0-759"></a>
-<a id="__codelineno-0-760" name="__codelineno-0-760"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">batched_integrate</span><span class="p">(</span>
-<a id="__codelineno-0-761" name="__codelineno-0-761"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-762" name="__codelineno-0-762"></a>        <span class="n">x0_batch</span><span class="p">:</span> <span class="n">ArrayF64</span><span class="p">,</span>
-<a id="__codelineno-0-763" name="__codelineno-0-763"></a>        <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-764" name="__codelineno-0-764"></a>        <span class="n">t_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-<a id="__codelineno-0-765" name="__codelineno-0-765"></a>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-766" name="__codelineno-0-766"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span><span class="p">:</span>
-<a id="__codelineno-0-767" name="__codelineno-0-767"></a><span class="w">        </span><span class="sd">"""Batched RK4 integration returning ``(batch, t_steps + 1, 2)``.</span>
-<a id="__codelineno-0-768" name="__codelineno-0-768"></a>
-<a id="__codelineno-0-769" name="__codelineno-0-769"></a><span class="sd">        RK4-only path: raises :class:`NotImplementedError` on a</span>
-<a id="__codelineno-0-770" name="__codelineno-0-770"></a><span class="sd">        ``dormand_prince`` adapter because the per-sample adaptive</span>
-<a id="__codelineno-0-771" name="__codelineno-0-771"></a><span class="sd">        step-size controller does not vectorise (designed per-sample,</span>
-<a id="__codelineno-0-772" name="__codelineno-0-772"></a><span class="sd">        see ``_integrate_dormand_prince``). The default ``t_steps=5``</span>
-<a id="__codelineno-0-773" name="__codelineno-0-773"></a><span class="sd">        is appropriate for the B5 metric *population* use case: a smooth</span>
-<a id="__codelineno-0-774" name="__codelineno-0-774"></a><span class="sd">        average over many endpoints absorbs the discretisation error</span>
-<a id="__codelineno-0-775" name="__codelineno-0-775"></a><span class="sd">        (the difference vs a 100-step grid is below machine epsilon on</span>
-<a id="__codelineno-0-776" name="__codelineno-0-776"></a><span class="sd">        the per-endpoint sheet density). The *lineage* path</span>
-<a id="__codelineno-0-777" name="__codelineno-0-777"></a><span class="sd">        (:meth:`solve_ode`) keeps the adapter's pinned</span>
-<a id="__codelineno-0-778" name="__codelineno-0-778"></a><span class="sd">        ``num_steps`` (``TWODIM_FM_NUM_STEPS = 100``) so endpoint</span>
-<a id="__codelineno-0-779" name="__codelineno-0-779"></a><span class="sd">        digests and W2 values stay byte-comparable to the legacy</span>
-<a id="__codelineno-0-780" name="__codelineno-0-780"></a><span class="sd">        path.</span>
-<a id="__codelineno-0-781" name="__codelineno-0-781"></a>
-<a id="__codelineno-0-782" name="__codelineno-0-782"></a><span class="sd">        Byte-determinism note (design doc C1 / D1): the same</span>
-<a id="__codelineno-0-783" name="__codelineno-0-783"></a><span class="sd">        ``(x0_batch, seed)`` and same batch shape yield bit-identical</span>
-<a id="__codelineno-0-784" name="__codelineno-0-784"></a><span class="sd">        output. Cross-shape comparison tolerates a 1e-14 boundary</span>
-<a id="__codelineno-0-785" name="__codelineno-0-785"></a><span class="sd">        because NumPy's BLAS dispatches different kernels by operand</span>
-<a id="__codelineno-0-786" name="__codelineno-0-786"></a><span class="sd">        shape; the runner therefore folds the batch shape into its</span>
-<a id="__codelineno-0-787" name="__codelineno-0-787"></a><span class="sd">        ``config_hash``.</span>
-<a id="__codelineno-0-788" name="__codelineno-0-788"></a><span class="sd">        """</span>
-<a id="__codelineno-0-789" name="__codelineno-0-789"></a>        <span class="k">del</span> <span class="n">seed</span>  <span class="c1"># batched RK4 is deterministic from x0_batch alone</span>
-<a id="__codelineno-0-790" name="__codelineno-0-790"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_integrator</span> <span class="o">!=</span> <span class="s2">"rk4"</span><span class="p">:</span>
-<a id="__codelineno-0-791" name="__codelineno-0-791"></a>            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-<a id="__codelineno-0-792" name="__codelineno-0-792"></a>                <span class="s2">"batched_integrate is RK4-only; Dormand-Prince uses a "</span>
-<a id="__codelineno-0-793" name="__codelineno-0-793"></a>                <span class="s2">"per-sample adaptive step controller that does not "</span>
-<a id="__codelineno-0-794" name="__codelineno-0-794"></a>                <span class="s2">"vectorise."</span>
-<a id="__codelineno-0-795" name="__codelineno-0-795"></a>            <span class="p">)</span>
-<a id="__codelineno-0-796" name="__codelineno-0-796"></a>        <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-797" name="__codelineno-0-797"></a>        <span class="k">if</span> <span class="n">x0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-<a id="__codelineno-0-798" name="__codelineno-0-798"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x0_batch_must_have_shape_n_2"</span><span class="p">)</span>
-<a id="__codelineno-0-799" name="__codelineno-0-799"></a>        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_steps</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-800" name="__codelineno-0-800"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"t_steps_must_be_positive"</span><span class="p">)</span>
-<a id="__codelineno-0-801" name="__codelineno-0-801"></a>        <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_steps</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-802" name="__codelineno-0-802"></a>        <span class="n">batch</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-803" name="__codelineno-0-803"></a>        <span class="n">traj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">batch</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-804" name="__codelineno-0-804"></a>        <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<a id="__codelineno-0-805" name="__codelineno-0-805"></a>        <span class="n">traj</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x_cur</span>
-<a id="__codelineno-0-806" name="__codelineno-0-806"></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-<a id="__codelineno-0-807" name="__codelineno-0-807"></a>            <span class="n">t_cur</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
-<a id="__codelineno-0-808" name="__codelineno-0-808"></a>            <span class="n">t_next</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-<a id="__codelineno-0-809" name="__codelineno-0-809"></a>            <span class="n">h</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t_next</span> <span class="o">-</span> <span class="n">t_cur</span><span class="p">)</span>
-<a id="__codelineno-0-810" name="__codelineno-0-810"></a>            <span class="n">k1</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span><span class="p">,</span> <span class="n">t_cur</span><span class="p">)</span>
-<a id="__codelineno-0-811" name="__codelineno-0-811"></a>            <span class="n">k2</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k1</span><span class="p">,</span> <span class="n">t_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
-<a id="__codelineno-0-812" name="__codelineno-0-812"></a>            <span class="n">k3</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k2</span><span class="p">,</span> <span class="n">t_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
-<a id="__codelineno-0-813" name="__codelineno-0-813"></a>            <span class="n">k4</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k3</span><span class="p">,</span> <span class="n">t_next</span><span class="p">)</span>
-<a id="__codelineno-0-814" name="__codelineno-0-814"></a>            <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">k1</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">k2</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">k3</span> <span class="o">+</span> <span class="n">k4</span><span class="p">)</span>
-<a id="__codelineno-0-815" name="__codelineno-0-815"></a>            <span class="n">traj</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x_cur</span>
-<a id="__codelineno-0-816" name="__codelineno-0-816"></a>        <span class="k">return</span> <span class="n">traj</span>
-<a id="__codelineno-0-817" name="__codelineno-0-817"></a>
-<a id="__codelineno-0-818" name="__codelineno-0-818"></a>    <span class="c1"># ------------------------------------------------------------------</span>
-<a id="__codelineno-0-819" name="__codelineno-0-819"></a>    <span class="c1"># 10. generate_trajectory (B5 batched runner)</span>
-<a id="__codelineno-0-820" name="__codelineno-0-820"></a>    <span class="c1"># ------------------------------------------------------------------</span>
-<a id="__codelineno-0-821" name="__codelineno-0-821"></a>
-<a id="__codelineno-0-822" name="__codelineno-0-822"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">generate_trajectory</span><span class="p">(</span>
-<a id="__codelineno-0-823" name="__codelineno-0-823"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-824" name="__codelineno-0-824"></a>        <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-825" name="__codelineno-0-825"></a>        <span class="n">n_trajectories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-826" name="__codelineno-0-826"></a>        <span class="n">endpoints_per_trajectory</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-827" name="__codelineno-0-827"></a>        <span class="n">n_gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-828" name="__codelineno-0-828"></a>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-829" name="__codelineno-0-829"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span><span class="p">:</span>
-<a id="__codelineno-0-830" name="__codelineno-0-830"></a><span class="w">        </span><span class="sd">"""Generate ``(n_trajectories, endpoints_per_trajectory, n_gen, 2)``.</span>
-<a id="__codelineno-0-831" name="__codelineno-0-831"></a>
-<a id="__codelineno-0-832" name="__codelineno-0-832"></a><span class="sd">        Per trajectory:</span>
-<a id="__codelineno-0-833" name="__codelineno-0-833"></a>
-<a id="__codelineno-0-834" name="__codelineno-0-834"></a><span class="sd">        1. Sample a fresh ``x0 ~ N(0, I_2)`` and integrate forward over</span>
-<a id="__codelineno-0-835" name="__codelineno-0-835"></a><span class="sd">           ``TWODIM_FM_NUM_STEPS`` (lineage-equivalent grid) for the</span>
-<a id="__codelineno-0-836" name="__codelineno-0-836"></a><span class="sd">           trajectory's lineage endpoint.</span>
-<a id="__codelineno-0-837" name="__codelineno-0-837"></a><span class="sd">        2. For each of ``endpoints_per_trajectory`` slots, sample</span>
-<a id="__codelineno-0-838" name="__codelineno-0-838"></a><span class="sd">           ``n_gen`` fresh prior draws ``x0_k ~ N(0, I_2)`` and</span>
-<a id="__codelineno-0-839" name="__codelineno-0-839"></a><span class="sd">           integrate each forward over ``TWODIM_FM_NUM_STEPS``; stack</span>
-<a id="__codelineno-0-840" name="__codelineno-0-840"></a><span class="sd">           the final states into the slot's ``(n_gen, 2)`` block.</span>
-<a id="__codelineno-0-841" name="__codelineno-0-841"></a>
-<a id="__codelineno-0-842" name="__codelineno-0-842"></a><span class="sd">        Byte-deterministic for a fixed ``seed`` (every random draw</span>
-<a id="__codelineno-0-843" name="__codelineno-0-843"></a><span class="sd">        flows through ``np.random.default_rng(seed)`` so two calls</span>
-<a id="__codelineno-0-844" name="__codelineno-0-844"></a><span class="sd">        with the same seed produce identical arrays).</span>
-<a id="__codelineno-0-845" name="__codelineno-0-845"></a><span class="sd">        """</span>
-<a id="__codelineno-0-846" name="__codelineno-0-846"></a>        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-847" name="__codelineno-0-847"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_trajectories_must_be_positive"</span><span class="p">)</span>
-<a id="__codelineno-0-848" name="__codelineno-0-848"></a>        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-849" name="__codelineno-0-849"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"endpoints_per_trajectory_must_be_positive"</span><span class="p">)</span>
-<a id="__codelineno-0-850" name="__codelineno-0-850"></a>        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-851" name="__codelineno-0-851"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_gen_must_be_positive"</span><span class="p">)</span>
-<a id="__codelineno-0-852" name="__codelineno-0-852"></a>        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">))</span>
-<a id="__codelineno-0-853" name="__codelineno-0-853"></a>        <span class="n">n_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_steps</span><span class="p">)</span>
-<a id="__codelineno-0-854" name="__codelineno-0-854"></a>        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
-<a id="__codelineno-0-855" name="__codelineno-0-855"></a>            <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>
-<a id="__codelineno-0-856" name="__codelineno-0-856"></a>            <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
-<a id="__codelineno-0-857" name="__codelineno-0-857"></a>        <span class="p">)</span>
-<a id="__codelineno-0-858" name="__codelineno-0-858"></a>        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">)):</span>
-<a id="__codelineno-0-859" name="__codelineno-0-859"></a>            <span class="c1"># Per-trajectory fresh prior draw (lineage-equivalent</span>
-<a id="__codelineno-0-860" name="__codelineno-0-860"></a>            <span class="c1"># x0 ~ N(0, I_2)). Used here only to advance the RNG</span>
-<a id="__codelineno-0-861" name="__codelineno-0-861"></a>            <span class="c1"># state so the population is byte-deterministic across</span>
-<a id="__codelineno-0-862" name="__codelineno-0-862"></a>            <span class="c1"># runs with the same seed; the per-trajectory "lineage"</span>
-<a id="__codelineno-0-863" name="__codelineno-0-863"></a>            <span class="c1"># endpoint happens to coincide with the first slot's</span>
-<a id="__codelineno-0-864" name="__codelineno-0-864"></a>            <span class="c1"># final state at the same RNG state, but we never rely</span>
-<a id="__codelineno-0-865" name="__codelineno-0-865"></a>            <span class="c1"># on that identity here.</span>
-<a id="__codelineno-0-866" name="__codelineno-0-866"></a>            <span class="n">_</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-867" name="__codelineno-0-867"></a>            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">)):</span>
-<a id="__codelineno-0-868" name="__codelineno-0-868"></a>                <span class="c1"># Draw ``n_gen`` fresh initial states in one shot and</span>
-<a id="__codelineno-0-869" name="__codelineno-0-869"></a>                <span class="c1"># integrate the batch forward via batched RK4 over</span>
-<a id="__codelineno-0-870" name="__codelineno-0-870"></a>                <span class="c1"># the same ``n_steps`` the engine uses for</span>
-<a id="__codelineno-0-871" name="__codelineno-0-871"></a>                <span class="c1"># ``solve_ode`` (lineage grid).</span>
-<a id="__codelineno-0-872" name="__codelineno-0-872"></a>                <span class="n">x0_batch</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span>
-<a id="__codelineno-0-873" name="__codelineno-0-873"></a>                    <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
-<a id="__codelineno-0-874" name="__codelineno-0-874"></a>                <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-875" name="__codelineno-0-875"></a>                <span class="n">final_states</span> <span class="o">=</span> <span class="n">_batched_integrate_rk4</span><span class="p">(</span>
-<a id="__codelineno-0-876" name="__codelineno-0-876"></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x0_batch</span><span class="p">,</span> <span class="n">n_steps</span>
-<a id="__codelineno-0-877" name="__codelineno-0-877"></a>                <span class="p">)</span>
-<a id="__codelineno-0-878" name="__codelineno-0-878"></a>                <span class="n">out</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">final_states</span>
-<a id="__codelineno-0-879" name="__codelineno-0-879"></a>        <span class="k">return</span> <span class="n">out</span>
+<a id="__codelineno-0-760" name="__codelineno-0-760"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">export_trajectory</span><span class="p">(</span>
+<a id="__codelineno-0-761" name="__codelineno-0-761"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">trace</span><span class="p">:</span> <span class="n">ODEIntegratorTrace</span>
+<a id="__codelineno-0-762" name="__codelineno-0-762"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-763" name="__codelineno-0-763"></a><span class="w">        </span><span class="sd">"""Return the native ``(K, 2)`` trajectory for ``trace``.</span>
+<a id="__codelineno-0-764" name="__codelineno-0-764"></a>
+<a id="__codelineno-0-765" name="__codelineno-0-765"></a><span class="sd">        Closes P0-7: the runner used to reach into the adapter's</span>
+<a id="__codelineno-0-766" name="__codelineno-0-766"></a><span class="sd">        private ``_native_states`` dict; it now calls this public</span>
+<a id="__codelineno-0-767" name="__codelineno-0-767"></a><span class="sd">        method. The trajectory is looked up by</span>
+<a id="__codelineno-0-768" name="__codelineno-0-768"></a><span class="sd">        ``trace.native_state_digest`` (the digest returned from the</span>
+<a id="__codelineno-0-769" name="__codelineno-0-769"></a><span class="sd">        most recent :meth:`solve_ode` call). Returns ``None`` when no</span>
+<a id="__codelineno-0-770" name="__codelineno-0-770"></a><span class="sd">        trajectory is stored under that digest (e.g. the trace refers</span>
+<a id="__codelineno-0-771" name="__codelineno-0-771"></a><span class="sd">        to a digest emitted by another adapter instance).</span>
+<a id="__codelineno-0-772" name="__codelineno-0-772"></a><span class="sd">        """</span>
+<a id="__codelineno-0-773" name="__codelineno-0-773"></a>        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">trace</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">)</span>
+<a id="__codelineno-0-774" name="__codelineno-0-774"></a>        <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-775" name="__codelineno-0-775"></a>            <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-776" name="__codelineno-0-776"></a>        <span class="n">traj</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"trajectory"</span><span class="p">)</span>
+<a id="__codelineno-0-777" name="__codelineno-0-777"></a>        <span class="k">if</span> <span class="n">traj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-778" name="__codelineno-0-778"></a>            <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-779" name="__codelineno-0-779"></a>        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">traj</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-780" name="__codelineno-0-780"></a>
+<a id="__codelineno-0-781" name="__codelineno-0-781"></a>    <span class="c1"># ------------------------------------------------------------------</span>
+<a id="__codelineno-0-782" name="__codelineno-0-782"></a>    <span class="c1"># 10. batched_integrate (B5 metric population; RK4-only)</span>
+<a id="__codelineno-0-783" name="__codelineno-0-783"></a>    <span class="c1"># ------------------------------------------------------------------</span>
+<a id="__codelineno-0-784" name="__codelineno-0-784"></a>
+<a id="__codelineno-0-785" name="__codelineno-0-785"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">batched_integrate</span><span class="p">(</span>
+<a id="__codelineno-0-786" name="__codelineno-0-786"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-787" name="__codelineno-0-787"></a>        <span class="n">x0_batch</span><span class="p">:</span> <span class="n">ArrayF64</span><span class="p">,</span>
+<a id="__codelineno-0-788" name="__codelineno-0-788"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-789" name="__codelineno-0-789"></a>        <span class="n">t_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-0-790" name="__codelineno-0-790"></a>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-791" name="__codelineno-0-791"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span><span class="p">:</span>
+<a id="__codelineno-0-792" name="__codelineno-0-792"></a><span class="w">        </span><span class="sd">"""Batched RK4 integration returning ``(batch, t_steps + 1, 2)``.</span>
+<a id="__codelineno-0-793" name="__codelineno-0-793"></a>
+<a id="__codelineno-0-794" name="__codelineno-0-794"></a><span class="sd">        RK4-only path: raises :class:`NotImplementedError` on a</span>
+<a id="__codelineno-0-795" name="__codelineno-0-795"></a><span class="sd">        ``dormand_prince`` adapter because the per-sample adaptive</span>
+<a id="__codelineno-0-796" name="__codelineno-0-796"></a><span class="sd">        step-size controller does not vectorise (designed per-sample,</span>
+<a id="__codelineno-0-797" name="__codelineno-0-797"></a><span class="sd">        see ``_integrate_dormand_prince``). The default ``t_steps=5``</span>
+<a id="__codelineno-0-798" name="__codelineno-0-798"></a><span class="sd">        is appropriate for the B5 metric *population* use case: a smooth</span>
+<a id="__codelineno-0-799" name="__codelineno-0-799"></a><span class="sd">        average over many endpoints absorbs the discretisation error</span>
+<a id="__codelineno-0-800" name="__codelineno-0-800"></a><span class="sd">        (the difference vs a 100-step grid is below machine epsilon on</span>
+<a id="__codelineno-0-801" name="__codelineno-0-801"></a><span class="sd">        the per-endpoint sheet density). The *lineage* path</span>
+<a id="__codelineno-0-802" name="__codelineno-0-802"></a><span class="sd">        (:meth:`solve_ode`) keeps the adapter's pinned</span>
+<a id="__codelineno-0-803" name="__codelineno-0-803"></a><span class="sd">        ``num_steps`` (``TWODIM_FM_NUM_STEPS = 100``) so endpoint</span>
+<a id="__codelineno-0-804" name="__codelineno-0-804"></a><span class="sd">        digests and W2 values stay byte-comparable to the legacy</span>
+<a id="__codelineno-0-805" name="__codelineno-0-805"></a><span class="sd">        path.</span>
+<a id="__codelineno-0-806" name="__codelineno-0-806"></a>
+<a id="__codelineno-0-807" name="__codelineno-0-807"></a><span class="sd">        Byte-determinism note (design doc C1 / D1): the same</span>
+<a id="__codelineno-0-808" name="__codelineno-0-808"></a><span class="sd">        ``(x0_batch, seed)`` and same batch shape yield bit-identical</span>
+<a id="__codelineno-0-809" name="__codelineno-0-809"></a><span class="sd">        output. Cross-shape comparison tolerates a 1e-14 boundary</span>
+<a id="__codelineno-0-810" name="__codelineno-0-810"></a><span class="sd">        because NumPy's BLAS dispatches different kernels by operand</span>
+<a id="__codelineno-0-811" name="__codelineno-0-811"></a><span class="sd">        shape; the runner therefore folds the batch shape into its</span>
+<a id="__codelineno-0-812" name="__codelineno-0-812"></a><span class="sd">        ``config_hash``.</span>
+<a id="__codelineno-0-813" name="__codelineno-0-813"></a><span class="sd">        """</span>
+<a id="__codelineno-0-814" name="__codelineno-0-814"></a>        <span class="k">del</span> <span class="n">seed</span>  <span class="c1"># batched RK4 is deterministic from x0_batch alone</span>
+<a id="__codelineno-0-815" name="__codelineno-0-815"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_integrator</span> <span class="o">!=</span> <span class="s2">"rk4"</span><span class="p">:</span>
+<a id="__codelineno-0-816" name="__codelineno-0-816"></a>            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+<a id="__codelineno-0-817" name="__codelineno-0-817"></a>                <span class="s2">"batched_integrate is RK4-only; Dormand-Prince uses a "</span>
+<a id="__codelineno-0-818" name="__codelineno-0-818"></a>                <span class="s2">"per-sample adaptive step controller that does not "</span>
+<a id="__codelineno-0-819" name="__codelineno-0-819"></a>                <span class="s2">"vectorise."</span>
+<a id="__codelineno-0-820" name="__codelineno-0-820"></a>            <span class="p">)</span>
+<a id="__codelineno-0-821" name="__codelineno-0-821"></a>        <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-822" name="__codelineno-0-822"></a>        <span class="k">if</span> <span class="n">x0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+<a id="__codelineno-0-823" name="__codelineno-0-823"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x0_batch_must_have_shape_n_2"</span><span class="p">)</span>
+<a id="__codelineno-0-824" name="__codelineno-0-824"></a>        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_steps</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-825" name="__codelineno-0-825"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"t_steps_must_be_positive"</span><span class="p">)</span>
+<a id="__codelineno-0-826" name="__codelineno-0-826"></a>        <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_steps</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-827" name="__codelineno-0-827"></a>        <span class="n">batch</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-828" name="__codelineno-0-828"></a>        <span class="n">traj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">batch</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-829" name="__codelineno-0-829"></a>        <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<a id="__codelineno-0-830" name="__codelineno-0-830"></a>        <span class="n">traj</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x_cur</span>
+<a id="__codelineno-0-831" name="__codelineno-0-831"></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+<a id="__codelineno-0-832" name="__codelineno-0-832"></a>            <span class="n">t_cur</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+<a id="__codelineno-0-833" name="__codelineno-0-833"></a>            <span class="n">t_next</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<a id="__codelineno-0-834" name="__codelineno-0-834"></a>            <span class="n">h</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t_next</span> <span class="o">-</span> <span class="n">t_cur</span><span class="p">)</span>
+<a id="__codelineno-0-835" name="__codelineno-0-835"></a>            <span class="n">k1</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span><span class="p">,</span> <span class="n">t_cur</span><span class="p">)</span>
+<a id="__codelineno-0-836" name="__codelineno-0-836"></a>            <span class="n">k2</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k1</span><span class="p">,</span> <span class="n">t_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+<a id="__codelineno-0-837" name="__codelineno-0-837"></a>            <span class="n">k3</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k2</span><span class="p">,</span> <span class="n">t_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+<a id="__codelineno-0-838" name="__codelineno-0-838"></a>            <span class="n">k4</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k3</span><span class="p">,</span> <span class="n">t_next</span><span class="p">)</span>
+<a id="__codelineno-0-839" name="__codelineno-0-839"></a>            <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">k1</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">k2</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">k3</span> <span class="o">+</span> <span class="n">k4</span><span class="p">)</span>
+<a id="__codelineno-0-840" name="__codelineno-0-840"></a>            <span class="n">traj</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x_cur</span>
+<a id="__codelineno-0-841" name="__codelineno-0-841"></a>        <span class="k">return</span> <span class="n">traj</span>
+<a id="__codelineno-0-842" name="__codelineno-0-842"></a>
+<a id="__codelineno-0-843" name="__codelineno-0-843"></a>    <span class="c1"># ------------------------------------------------------------------</span>
+<a id="__codelineno-0-844" name="__codelineno-0-844"></a>    <span class="c1"># 10. generate_trajectory (B5 batched runner)</span>
+<a id="__codelineno-0-845" name="__codelineno-0-845"></a>    <span class="c1"># ------------------------------------------------------------------</span>
+<a id="__codelineno-0-846" name="__codelineno-0-846"></a>
+<a id="__codelineno-0-847" name="__codelineno-0-847"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">generate_trajectory</span><span class="p">(</span>
+<a id="__codelineno-0-848" name="__codelineno-0-848"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-849" name="__codelineno-0-849"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-850" name="__codelineno-0-850"></a>        <span class="n">n_trajectories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-851" name="__codelineno-0-851"></a>        <span class="n">endpoints_per_trajectory</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-852" name="__codelineno-0-852"></a>        <span class="n">n_gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-853" name="__codelineno-0-853"></a>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-854" name="__codelineno-0-854"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span><span class="p">:</span>
+<a id="__codelineno-0-855" name="__codelineno-0-855"></a><span class="w">        </span><span class="sd">"""Generate ``(n_trajectories, endpoints_per_trajectory, n_gen, 2)``.</span>
+<a id="__codelineno-0-856" name="__codelineno-0-856"></a>
+<a id="__codelineno-0-857" name="__codelineno-0-857"></a><span class="sd">        Per trajectory:</span>
+<a id="__codelineno-0-858" name="__codelineno-0-858"></a>
+<a id="__codelineno-0-859" name="__codelineno-0-859"></a><span class="sd">        1. Sample a fresh ``x0 ~ N(0, I_2)`` and integrate forward over</span>
+<a id="__codelineno-0-860" name="__codelineno-0-860"></a><span class="sd">           ``TWODIM_FM_NUM_STEPS`` (lineage-equivalent grid) for the</span>
+<a id="__codelineno-0-861" name="__codelineno-0-861"></a><span class="sd">           trajectory's lineage endpoint.</span>
+<a id="__codelineno-0-862" name="__codelineno-0-862"></a><span class="sd">        2. For each of ``endpoints_per_trajectory`` slots, sample</span>
+<a id="__codelineno-0-863" name="__codelineno-0-863"></a><span class="sd">           ``n_gen`` fresh prior draws ``x0_k ~ N(0, I_2)`` and</span>
+<a id="__codelineno-0-864" name="__codelineno-0-864"></a><span class="sd">           integrate each forward over ``TWODIM_FM_NUM_STEPS``; stack</span>
+<a id="__codelineno-0-865" name="__codelineno-0-865"></a><span class="sd">           the final states into the slot's ``(n_gen, 2)`` block.</span>
+<a id="__codelineno-0-866" name="__codelineno-0-866"></a>
+<a id="__codelineno-0-867" name="__codelineno-0-867"></a><span class="sd">        Byte-deterministic for a fixed ``seed`` (every random draw</span>
+<a id="__codelineno-0-868" name="__codelineno-0-868"></a><span class="sd">        flows through ``np.random.default_rng(seed)`` so two calls</span>
+<a id="__codelineno-0-869" name="__codelineno-0-869"></a><span class="sd">        with the same seed produce identical arrays).</span>
+<a id="__codelineno-0-870" name="__codelineno-0-870"></a><span class="sd">        """</span>
+<a id="__codelineno-0-871" name="__codelineno-0-871"></a>        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-872" name="__codelineno-0-872"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_trajectories_must_be_positive"</span><span class="p">)</span>
+<a id="__codelineno-0-873" name="__codelineno-0-873"></a>        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-874" name="__codelineno-0-874"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"endpoints_per_trajectory_must_be_positive"</span><span class="p">)</span>
+<a id="__codelineno-0-875" name="__codelineno-0-875"></a>        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-876" name="__codelineno-0-876"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_gen_must_be_positive"</span><span class="p">)</span>
+<a id="__codelineno-0-877" name="__codelineno-0-877"></a>        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">))</span>
+<a id="__codelineno-0-878" name="__codelineno-0-878"></a>        <span class="n">n_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_steps</span><span class="p">)</span>
+<a id="__codelineno-0-879" name="__codelineno-0-879"></a>        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+<a id="__codelineno-0-880" name="__codelineno-0-880"></a>            <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>
+<a id="__codelineno-0-881" name="__codelineno-0-881"></a>            <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+<a id="__codelineno-0-882" name="__codelineno-0-882"></a>        <span class="p">)</span>
+<a id="__codelineno-0-883" name="__codelineno-0-883"></a>        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">)):</span>
+<a id="__codelineno-0-884" name="__codelineno-0-884"></a>            <span class="c1"># Per-trajectory fresh prior draw (lineage-equivalent</span>
+<a id="__codelineno-0-885" name="__codelineno-0-885"></a>            <span class="c1"># x0 ~ N(0, I_2)). Used here only to advance the RNG</span>
+<a id="__codelineno-0-886" name="__codelineno-0-886"></a>            <span class="c1"># state so the population is byte-deterministic across</span>
+<a id="__codelineno-0-887" name="__codelineno-0-887"></a>            <span class="c1"># runs with the same seed; the per-trajectory "lineage"</span>
+<a id="__codelineno-0-888" name="__codelineno-0-888"></a>            <span class="c1"># endpoint happens to coincide with the first slot's</span>
+<a id="__codelineno-0-889" name="__codelineno-0-889"></a>            <span class="c1"># final state at the same RNG state, but we never rely</span>
+<a id="__codelineno-0-890" name="__codelineno-0-890"></a>            <span class="c1"># on that identity here.</span>
+<a id="__codelineno-0-891" name="__codelineno-0-891"></a>            <span class="n">_</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-892" name="__codelineno-0-892"></a>            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">)):</span>
+<a id="__codelineno-0-893" name="__codelineno-0-893"></a>                <span class="c1"># Draw ``n_gen`` fresh initial states in one shot and</span>
+<a id="__codelineno-0-894" name="__codelineno-0-894"></a>                <span class="c1"># integrate the batch forward via batched RK4 over</span>
+<a id="__codelineno-0-895" name="__codelineno-0-895"></a>                <span class="c1"># the same ``n_steps`` the engine uses for</span>
+<a id="__codelineno-0-896" name="__codelineno-0-896"></a>                <span class="c1"># ``solve_ode`` (lineage grid).</span>
+<a id="__codelineno-0-897" name="__codelineno-0-897"></a>                <span class="n">x0_batch</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span>
+<a id="__codelineno-0-898" name="__codelineno-0-898"></a>                    <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-0-899" name="__codelineno-0-899"></a>                <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-900" name="__codelineno-0-900"></a>                <span class="n">final_states</span> <span class="o">=</span> <span class="n">_batched_integrate_rk4</span><span class="p">(</span>
+<a id="__codelineno-0-901" name="__codelineno-0-901"></a>                    <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x0_batch</span><span class="p">,</span> <span class="n">n_steps</span>
+<a id="__codelineno-0-902" name="__codelineno-0-902"></a>                <span class="p">)</span>
+<a id="__codelineno-0-903" name="__codelineno-0-903"></a>                <span class="n">out</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">final_states</span>
+<a id="__codelineno-0-904" name="__codelineno-0-904"></a>        <span class="k">return</span> <span class="n">out</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -16613,6 +16663,78 @@ Dormand-Prince are deterministic for fixed
 <div class="doc doc-object doc-function">
 
 
+<h3 id="adaptive_reflow.eval.twodim_fm_evaluator.TwoDimFMAdapter.export_trajectory" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">export_trajectory</span>
+
+
+<a href="#adaptive_reflow.eval.twodim_fm_evaluator.TwoDimFMAdapter.export_trajectory" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">export_trajectory</span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">trace</span><span class="p">:</span> <span class="n">ODEIntegratorTrace</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the native <code>(K, 2)</code> trajectory for <code>trace</code>.</p>
+<p>Closes P0-7: the runner used to reach into the adapter's
+private <code>_native_states</code> dict; it now calls this public
+method. The trajectory is looked up by
+<code>trace.native_state_digest</code> (the digest returned from the
+most recent :meth:<code>solve_ode</code> call). Returns <code>None</code> when no
+trajectory is stored under that digest (e.g. the trace refers
+to a digest emitted by another adapter instance).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>adaptive_reflow\adapters\twodim_fm.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-760">760</a></span>
+<span class="normal"><a href="#__codelineno-0-761">761</a></span>
+<span class="normal"><a href="#__codelineno-0-762">762</a></span>
+<span class="normal"><a href="#__codelineno-0-763">763</a></span>
+<span class="normal"><a href="#__codelineno-0-764">764</a></span>
+<span class="normal"><a href="#__codelineno-0-765">765</a></span>
+<span class="normal"><a href="#__codelineno-0-766">766</a></span>
+<span class="normal"><a href="#__codelineno-0-767">767</a></span>
+<span class="normal"><a href="#__codelineno-0-768">768</a></span>
+<span class="normal"><a href="#__codelineno-0-769">769</a></span>
+<span class="normal"><a href="#__codelineno-0-770">770</a></span>
+<span class="normal"><a href="#__codelineno-0-771">771</a></span>
+<span class="normal"><a href="#__codelineno-0-772">772</a></span>
+<span class="normal"><a href="#__codelineno-0-773">773</a></span>
+<span class="normal"><a href="#__codelineno-0-774">774</a></span>
+<span class="normal"><a href="#__codelineno-0-775">775</a></span>
+<span class="normal"><a href="#__codelineno-0-776">776</a></span>
+<span class="normal"><a href="#__codelineno-0-777">777</a></span>
+<span class="normal"><a href="#__codelineno-0-778">778</a></span>
+<span class="normal"><a href="#__codelineno-0-779">779</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-760" name="__codelineno-0-760"></a><span class="k">def</span><span class="w"> </span><span class="nf">export_trajectory</span><span class="p">(</span>
+<a id="__codelineno-0-761" name="__codelineno-0-761"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">trace</span><span class="p">:</span> <span class="n">ODEIntegratorTrace</span>
+<a id="__codelineno-0-762" name="__codelineno-0-762"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-763" name="__codelineno-0-763"></a><span class="w">    </span><span class="sd">"""Return the native ``(K, 2)`` trajectory for ``trace``.</span>
+<a id="__codelineno-0-764" name="__codelineno-0-764"></a>
+<a id="__codelineno-0-765" name="__codelineno-0-765"></a><span class="sd">    Closes P0-7: the runner used to reach into the adapter's</span>
+<a id="__codelineno-0-766" name="__codelineno-0-766"></a><span class="sd">    private ``_native_states`` dict; it now calls this public</span>
+<a id="__codelineno-0-767" name="__codelineno-0-767"></a><span class="sd">    method. The trajectory is looked up by</span>
+<a id="__codelineno-0-768" name="__codelineno-0-768"></a><span class="sd">    ``trace.native_state_digest`` (the digest returned from the</span>
+<a id="__codelineno-0-769" name="__codelineno-0-769"></a><span class="sd">    most recent :meth:`solve_ode` call). Returns ``None`` when no</span>
+<a id="__codelineno-0-770" name="__codelineno-0-770"></a><span class="sd">    trajectory is stored under that digest (e.g. the trace refers</span>
+<a id="__codelineno-0-771" name="__codelineno-0-771"></a><span class="sd">    to a digest emitted by another adapter instance).</span>
+<a id="__codelineno-0-772" name="__codelineno-0-772"></a><span class="sd">    """</span>
+<a id="__codelineno-0-773" name="__codelineno-0-773"></a>    <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">trace</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">)</span>
+<a id="__codelineno-0-774" name="__codelineno-0-774"></a>    <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-775" name="__codelineno-0-775"></a>        <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-776" name="__codelineno-0-776"></a>    <span class="n">traj</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"trajectory"</span><span class="p">)</span>
+<a id="__codelineno-0-777" name="__codelineno-0-777"></a>    <span class="k">if</span> <span class="n">traj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-778" name="__codelineno-0-778"></a>        <span class="k">return</span> <span class="kc">None</span>
+<a id="__codelineno-0-779" name="__codelineno-0-779"></a>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">traj</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="adaptive_reflow.eval.twodim_fm_evaluator.TwoDimFMAdapter.batched_integrate" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">batched_integrate</span>
 
@@ -16648,32 +16770,7 @@ shape; the runner therefore folds the batch shape into its
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>adaptive_reflow\adapters\twodim_fm.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-760">760</a></span>
-<span class="normal"><a href="#__codelineno-0-761">761</a></span>
-<span class="normal"><a href="#__codelineno-0-762">762</a></span>
-<span class="normal"><a href="#__codelineno-0-763">763</a></span>
-<span class="normal"><a href="#__codelineno-0-764">764</a></span>
-<span class="normal"><a href="#__codelineno-0-765">765</a></span>
-<span class="normal"><a href="#__codelineno-0-766">766</a></span>
-<span class="normal"><a href="#__codelineno-0-767">767</a></span>
-<span class="normal"><a href="#__codelineno-0-768">768</a></span>
-<span class="normal"><a href="#__codelineno-0-769">769</a></span>
-<span class="normal"><a href="#__codelineno-0-770">770</a></span>
-<span class="normal"><a href="#__codelineno-0-771">771</a></span>
-<span class="normal"><a href="#__codelineno-0-772">772</a></span>
-<span class="normal"><a href="#__codelineno-0-773">773</a></span>
-<span class="normal"><a href="#__codelineno-0-774">774</a></span>
-<span class="normal"><a href="#__codelineno-0-775">775</a></span>
-<span class="normal"><a href="#__codelineno-0-776">776</a></span>
-<span class="normal"><a href="#__codelineno-0-777">777</a></span>
-<span class="normal"><a href="#__codelineno-0-778">778</a></span>
-<span class="normal"><a href="#__codelineno-0-779">779</a></span>
-<span class="normal"><a href="#__codelineno-0-780">780</a></span>
-<span class="normal"><a href="#__codelineno-0-781">781</a></span>
-<span class="normal"><a href="#__codelineno-0-782">782</a></span>
-<span class="normal"><a href="#__codelineno-0-783">783</a></span>
-<span class="normal"><a href="#__codelineno-0-784">784</a></span>
-<span class="normal"><a href="#__codelineno-0-785">785</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-785">785</a></span>
 <span class="normal"><a href="#__codelineno-0-786">786</a></span>
 <span class="normal"><a href="#__codelineno-0-787">787</a></span>
 <span class="normal"><a href="#__codelineno-0-788">788</a></span>
@@ -16704,63 +16801,88 @@ shape; the runner therefore folds the batch shape into its
 <span class="normal"><a href="#__codelineno-0-813">813</a></span>
 <span class="normal"><a href="#__codelineno-0-814">814</a></span>
 <span class="normal"><a href="#__codelineno-0-815">815</a></span>
-<span class="normal"><a href="#__codelineno-0-816">816</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-760" name="__codelineno-0-760"></a><span class="k">def</span><span class="w"> </span><span class="nf">batched_integrate</span><span class="p">(</span>
-<a id="__codelineno-0-761" name="__codelineno-0-761"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-762" name="__codelineno-0-762"></a>    <span class="n">x0_batch</span><span class="p">:</span> <span class="n">ArrayF64</span><span class="p">,</span>
-<a id="__codelineno-0-763" name="__codelineno-0-763"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-764" name="__codelineno-0-764"></a>    <span class="n">t_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-<a id="__codelineno-0-765" name="__codelineno-0-765"></a>    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-766" name="__codelineno-0-766"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span><span class="p">:</span>
-<a id="__codelineno-0-767" name="__codelineno-0-767"></a><span class="w">    </span><span class="sd">"""Batched RK4 integration returning ``(batch, t_steps + 1, 2)``.</span>
-<a id="__codelineno-0-768" name="__codelineno-0-768"></a>
-<a id="__codelineno-0-769" name="__codelineno-0-769"></a><span class="sd">    RK4-only path: raises :class:`NotImplementedError` on a</span>
-<a id="__codelineno-0-770" name="__codelineno-0-770"></a><span class="sd">    ``dormand_prince`` adapter because the per-sample adaptive</span>
-<a id="__codelineno-0-771" name="__codelineno-0-771"></a><span class="sd">    step-size controller does not vectorise (designed per-sample,</span>
-<a id="__codelineno-0-772" name="__codelineno-0-772"></a><span class="sd">    see ``_integrate_dormand_prince``). The default ``t_steps=5``</span>
-<a id="__codelineno-0-773" name="__codelineno-0-773"></a><span class="sd">    is appropriate for the B5 metric *population* use case: a smooth</span>
-<a id="__codelineno-0-774" name="__codelineno-0-774"></a><span class="sd">    average over many endpoints absorbs the discretisation error</span>
-<a id="__codelineno-0-775" name="__codelineno-0-775"></a><span class="sd">    (the difference vs a 100-step grid is below machine epsilon on</span>
-<a id="__codelineno-0-776" name="__codelineno-0-776"></a><span class="sd">    the per-endpoint sheet density). The *lineage* path</span>
-<a id="__codelineno-0-777" name="__codelineno-0-777"></a><span class="sd">    (:meth:`solve_ode`) keeps the adapter's pinned</span>
-<a id="__codelineno-0-778" name="__codelineno-0-778"></a><span class="sd">    ``num_steps`` (``TWODIM_FM_NUM_STEPS = 100``) so endpoint</span>
-<a id="__codelineno-0-779" name="__codelineno-0-779"></a><span class="sd">    digests and W2 values stay byte-comparable to the legacy</span>
-<a id="__codelineno-0-780" name="__codelineno-0-780"></a><span class="sd">    path.</span>
-<a id="__codelineno-0-781" name="__codelineno-0-781"></a>
-<a id="__codelineno-0-782" name="__codelineno-0-782"></a><span class="sd">    Byte-determinism note (design doc C1 / D1): the same</span>
-<a id="__codelineno-0-783" name="__codelineno-0-783"></a><span class="sd">    ``(x0_batch, seed)`` and same batch shape yield bit-identical</span>
-<a id="__codelineno-0-784" name="__codelineno-0-784"></a><span class="sd">    output. Cross-shape comparison tolerates a 1e-14 boundary</span>
-<a id="__codelineno-0-785" name="__codelineno-0-785"></a><span class="sd">    because NumPy's BLAS dispatches different kernels by operand</span>
-<a id="__codelineno-0-786" name="__codelineno-0-786"></a><span class="sd">    shape; the runner therefore folds the batch shape into its</span>
-<a id="__codelineno-0-787" name="__codelineno-0-787"></a><span class="sd">    ``config_hash``.</span>
-<a id="__codelineno-0-788" name="__codelineno-0-788"></a><span class="sd">    """</span>
-<a id="__codelineno-0-789" name="__codelineno-0-789"></a>    <span class="k">del</span> <span class="n">seed</span>  <span class="c1"># batched RK4 is deterministic from x0_batch alone</span>
-<a id="__codelineno-0-790" name="__codelineno-0-790"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_integrator</span> <span class="o">!=</span> <span class="s2">"rk4"</span><span class="p">:</span>
-<a id="__codelineno-0-791" name="__codelineno-0-791"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-<a id="__codelineno-0-792" name="__codelineno-0-792"></a>            <span class="s2">"batched_integrate is RK4-only; Dormand-Prince uses a "</span>
-<a id="__codelineno-0-793" name="__codelineno-0-793"></a>            <span class="s2">"per-sample adaptive step controller that does not "</span>
-<a id="__codelineno-0-794" name="__codelineno-0-794"></a>            <span class="s2">"vectorise."</span>
-<a id="__codelineno-0-795" name="__codelineno-0-795"></a>        <span class="p">)</span>
-<a id="__codelineno-0-796" name="__codelineno-0-796"></a>    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-797" name="__codelineno-0-797"></a>    <span class="k">if</span> <span class="n">x0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-<a id="__codelineno-0-798" name="__codelineno-0-798"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x0_batch_must_have_shape_n_2"</span><span class="p">)</span>
-<a id="__codelineno-0-799" name="__codelineno-0-799"></a>    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_steps</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-800" name="__codelineno-0-800"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"t_steps_must_be_positive"</span><span class="p">)</span>
-<a id="__codelineno-0-801" name="__codelineno-0-801"></a>    <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_steps</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-802" name="__codelineno-0-802"></a>    <span class="n">batch</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-803" name="__codelineno-0-803"></a>    <span class="n">traj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">batch</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-804" name="__codelineno-0-804"></a>    <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<a id="__codelineno-0-805" name="__codelineno-0-805"></a>    <span class="n">traj</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x_cur</span>
-<a id="__codelineno-0-806" name="__codelineno-0-806"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
-<a id="__codelineno-0-807" name="__codelineno-0-807"></a>        <span class="n">t_cur</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
-<a id="__codelineno-0-808" name="__codelineno-0-808"></a>        <span class="n">t_next</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-<a id="__codelineno-0-809" name="__codelineno-0-809"></a>        <span class="n">h</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t_next</span> <span class="o">-</span> <span class="n">t_cur</span><span class="p">)</span>
-<a id="__codelineno-0-810" name="__codelineno-0-810"></a>        <span class="n">k1</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span><span class="p">,</span> <span class="n">t_cur</span><span class="p">)</span>
-<a id="__codelineno-0-811" name="__codelineno-0-811"></a>        <span class="n">k2</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k1</span><span class="p">,</span> <span class="n">t_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
-<a id="__codelineno-0-812" name="__codelineno-0-812"></a>        <span class="n">k3</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k2</span><span class="p">,</span> <span class="n">t_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
-<a id="__codelineno-0-813" name="__codelineno-0-813"></a>        <span class="n">k4</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k3</span><span class="p">,</span> <span class="n">t_next</span><span class="p">)</span>
-<a id="__codelineno-0-814" name="__codelineno-0-814"></a>        <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">k1</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">k2</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">k3</span> <span class="o">+</span> <span class="n">k4</span><span class="p">)</span>
-<a id="__codelineno-0-815" name="__codelineno-0-815"></a>        <span class="n">traj</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x_cur</span>
-<a id="__codelineno-0-816" name="__codelineno-0-816"></a>    <span class="k">return</span> <span class="n">traj</span>
+<span class="normal"><a href="#__codelineno-0-816">816</a></span>
+<span class="normal"><a href="#__codelineno-0-817">817</a></span>
+<span class="normal"><a href="#__codelineno-0-818">818</a></span>
+<span class="normal"><a href="#__codelineno-0-819">819</a></span>
+<span class="normal"><a href="#__codelineno-0-820">820</a></span>
+<span class="normal"><a href="#__codelineno-0-821">821</a></span>
+<span class="normal"><a href="#__codelineno-0-822">822</a></span>
+<span class="normal"><a href="#__codelineno-0-823">823</a></span>
+<span class="normal"><a href="#__codelineno-0-824">824</a></span>
+<span class="normal"><a href="#__codelineno-0-825">825</a></span>
+<span class="normal"><a href="#__codelineno-0-826">826</a></span>
+<span class="normal"><a href="#__codelineno-0-827">827</a></span>
+<span class="normal"><a href="#__codelineno-0-828">828</a></span>
+<span class="normal"><a href="#__codelineno-0-829">829</a></span>
+<span class="normal"><a href="#__codelineno-0-830">830</a></span>
+<span class="normal"><a href="#__codelineno-0-831">831</a></span>
+<span class="normal"><a href="#__codelineno-0-832">832</a></span>
+<span class="normal"><a href="#__codelineno-0-833">833</a></span>
+<span class="normal"><a href="#__codelineno-0-834">834</a></span>
+<span class="normal"><a href="#__codelineno-0-835">835</a></span>
+<span class="normal"><a href="#__codelineno-0-836">836</a></span>
+<span class="normal"><a href="#__codelineno-0-837">837</a></span>
+<span class="normal"><a href="#__codelineno-0-838">838</a></span>
+<span class="normal"><a href="#__codelineno-0-839">839</a></span>
+<span class="normal"><a href="#__codelineno-0-840">840</a></span>
+<span class="normal"><a href="#__codelineno-0-841">841</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-785" name="__codelineno-0-785"></a><span class="k">def</span><span class="w"> </span><span class="nf">batched_integrate</span><span class="p">(</span>
+<a id="__codelineno-0-786" name="__codelineno-0-786"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-787" name="__codelineno-0-787"></a>    <span class="n">x0_batch</span><span class="p">:</span> <span class="n">ArrayF64</span><span class="p">,</span>
+<a id="__codelineno-0-788" name="__codelineno-0-788"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-789" name="__codelineno-0-789"></a>    <span class="n">t_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-0-790" name="__codelineno-0-790"></a>    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-791" name="__codelineno-0-791"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span><span class="p">:</span>
+<a id="__codelineno-0-792" name="__codelineno-0-792"></a><span class="w">    </span><span class="sd">"""Batched RK4 integration returning ``(batch, t_steps + 1, 2)``.</span>
+<a id="__codelineno-0-793" name="__codelineno-0-793"></a>
+<a id="__codelineno-0-794" name="__codelineno-0-794"></a><span class="sd">    RK4-only path: raises :class:`NotImplementedError` on a</span>
+<a id="__codelineno-0-795" name="__codelineno-0-795"></a><span class="sd">    ``dormand_prince`` adapter because the per-sample adaptive</span>
+<a id="__codelineno-0-796" name="__codelineno-0-796"></a><span class="sd">    step-size controller does not vectorise (designed per-sample,</span>
+<a id="__codelineno-0-797" name="__codelineno-0-797"></a><span class="sd">    see ``_integrate_dormand_prince``). The default ``t_steps=5``</span>
+<a id="__codelineno-0-798" name="__codelineno-0-798"></a><span class="sd">    is appropriate for the B5 metric *population* use case: a smooth</span>
+<a id="__codelineno-0-799" name="__codelineno-0-799"></a><span class="sd">    average over many endpoints absorbs the discretisation error</span>
+<a id="__codelineno-0-800" name="__codelineno-0-800"></a><span class="sd">    (the difference vs a 100-step grid is below machine epsilon on</span>
+<a id="__codelineno-0-801" name="__codelineno-0-801"></a><span class="sd">    the per-endpoint sheet density). The *lineage* path</span>
+<a id="__codelineno-0-802" name="__codelineno-0-802"></a><span class="sd">    (:meth:`solve_ode`) keeps the adapter's pinned</span>
+<a id="__codelineno-0-803" name="__codelineno-0-803"></a><span class="sd">    ``num_steps`` (``TWODIM_FM_NUM_STEPS = 100``) so endpoint</span>
+<a id="__codelineno-0-804" name="__codelineno-0-804"></a><span class="sd">    digests and W2 values stay byte-comparable to the legacy</span>
+<a id="__codelineno-0-805" name="__codelineno-0-805"></a><span class="sd">    path.</span>
+<a id="__codelineno-0-806" name="__codelineno-0-806"></a>
+<a id="__codelineno-0-807" name="__codelineno-0-807"></a><span class="sd">    Byte-determinism note (design doc C1 / D1): the same</span>
+<a id="__codelineno-0-808" name="__codelineno-0-808"></a><span class="sd">    ``(x0_batch, seed)`` and same batch shape yield bit-identical</span>
+<a id="__codelineno-0-809" name="__codelineno-0-809"></a><span class="sd">    output. Cross-shape comparison tolerates a 1e-14 boundary</span>
+<a id="__codelineno-0-810" name="__codelineno-0-810"></a><span class="sd">    because NumPy's BLAS dispatches different kernels by operand</span>
+<a id="__codelineno-0-811" name="__codelineno-0-811"></a><span class="sd">    shape; the runner therefore folds the batch shape into its</span>
+<a id="__codelineno-0-812" name="__codelineno-0-812"></a><span class="sd">    ``config_hash``.</span>
+<a id="__codelineno-0-813" name="__codelineno-0-813"></a><span class="sd">    """</span>
+<a id="__codelineno-0-814" name="__codelineno-0-814"></a>    <span class="k">del</span> <span class="n">seed</span>  <span class="c1"># batched RK4 is deterministic from x0_batch alone</span>
+<a id="__codelineno-0-815" name="__codelineno-0-815"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_integrator</span> <span class="o">!=</span> <span class="s2">"rk4"</span><span class="p">:</span>
+<a id="__codelineno-0-816" name="__codelineno-0-816"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+<a id="__codelineno-0-817" name="__codelineno-0-817"></a>            <span class="s2">"batched_integrate is RK4-only; Dormand-Prince uses a "</span>
+<a id="__codelineno-0-818" name="__codelineno-0-818"></a>            <span class="s2">"per-sample adaptive step controller that does not "</span>
+<a id="__codelineno-0-819" name="__codelineno-0-819"></a>            <span class="s2">"vectorise."</span>
+<a id="__codelineno-0-820" name="__codelineno-0-820"></a>        <span class="p">)</span>
+<a id="__codelineno-0-821" name="__codelineno-0-821"></a>    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-822" name="__codelineno-0-822"></a>    <span class="k">if</span> <span class="n">x0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+<a id="__codelineno-0-823" name="__codelineno-0-823"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"x0_batch_must_have_shape_n_2"</span><span class="p">)</span>
+<a id="__codelineno-0-824" name="__codelineno-0-824"></a>    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_steps</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-825" name="__codelineno-0-825"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"t_steps_must_be_positive"</span><span class="p">)</span>
+<a id="__codelineno-0-826" name="__codelineno-0-826"></a>    <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">t_steps</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-827" name="__codelineno-0-827"></a>    <span class="n">batch</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-828" name="__codelineno-0-828"></a>    <span class="n">traj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">batch</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-829" name="__codelineno-0-829"></a>    <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<a id="__codelineno-0-830" name="__codelineno-0-830"></a>    <span class="n">traj</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x_cur</span>
+<a id="__codelineno-0-831" name="__codelineno-0-831"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+<a id="__codelineno-0-832" name="__codelineno-0-832"></a>        <span class="n">t_cur</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+<a id="__codelineno-0-833" name="__codelineno-0-833"></a>        <span class="n">t_next</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<a id="__codelineno-0-834" name="__codelineno-0-834"></a>        <span class="n">h</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t_next</span> <span class="o">-</span> <span class="n">t_cur</span><span class="p">)</span>
+<a id="__codelineno-0-835" name="__codelineno-0-835"></a>        <span class="n">k1</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span><span class="p">,</span> <span class="n">t_cur</span><span class="p">)</span>
+<a id="__codelineno-0-836" name="__codelineno-0-836"></a>        <span class="n">k2</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k1</span><span class="p">,</span> <span class="n">t_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+<a id="__codelineno-0-837" name="__codelineno-0-837"></a>        <span class="n">k3</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k2</span><span class="p">,</span> <span class="n">t_cur</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+<a id="__codelineno-0-838" name="__codelineno-0-838"></a>        <span class="n">k4</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="n">h</span> <span class="o">*</span> <span class="n">k3</span><span class="p">,</span> <span class="n">t_next</span><span class="p">)</span>
+<a id="__codelineno-0-839" name="__codelineno-0-839"></a>        <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="p">(</span><span class="n">h</span> <span class="o">/</span> <span class="mf">6.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">k1</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">k2</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">k3</span> <span class="o">+</span> <span class="n">k4</span><span class="p">)</span>
+<a id="__codelineno-0-840" name="__codelineno-0-840"></a>        <span class="n">traj</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">x_cur</span>
+<a id="__codelineno-0-841" name="__codelineno-0-841"></a>    <span class="k">return</span> <span class="n">traj</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -16804,32 +16926,7 @@ with the same seed produce identical arrays).</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>adaptive_reflow\adapters\twodim_fm.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-822">822</a></span>
-<span class="normal"><a href="#__codelineno-0-823">823</a></span>
-<span class="normal"><a href="#__codelineno-0-824">824</a></span>
-<span class="normal"><a href="#__codelineno-0-825">825</a></span>
-<span class="normal"><a href="#__codelineno-0-826">826</a></span>
-<span class="normal"><a href="#__codelineno-0-827">827</a></span>
-<span class="normal"><a href="#__codelineno-0-828">828</a></span>
-<span class="normal"><a href="#__codelineno-0-829">829</a></span>
-<span class="normal"><a href="#__codelineno-0-830">830</a></span>
-<span class="normal"><a href="#__codelineno-0-831">831</a></span>
-<span class="normal"><a href="#__codelineno-0-832">832</a></span>
-<span class="normal"><a href="#__codelineno-0-833">833</a></span>
-<span class="normal"><a href="#__codelineno-0-834">834</a></span>
-<span class="normal"><a href="#__codelineno-0-835">835</a></span>
-<span class="normal"><a href="#__codelineno-0-836">836</a></span>
-<span class="normal"><a href="#__codelineno-0-837">837</a></span>
-<span class="normal"><a href="#__codelineno-0-838">838</a></span>
-<span class="normal"><a href="#__codelineno-0-839">839</a></span>
-<span class="normal"><a href="#__codelineno-0-840">840</a></span>
-<span class="normal"><a href="#__codelineno-0-841">841</a></span>
-<span class="normal"><a href="#__codelineno-0-842">842</a></span>
-<span class="normal"><a href="#__codelineno-0-843">843</a></span>
-<span class="normal"><a href="#__codelineno-0-844">844</a></span>
-<span class="normal"><a href="#__codelineno-0-845">845</a></span>
-<span class="normal"><a href="#__codelineno-0-846">846</a></span>
-<span class="normal"><a href="#__codelineno-0-847">847</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-847">847</a></span>
 <span class="normal"><a href="#__codelineno-0-848">848</a></span>
 <span class="normal"><a href="#__codelineno-0-849">849</a></span>
 <span class="normal"><a href="#__codelineno-0-850">850</a></span>
@@ -16861,64 +16958,89 @@ with the same seed produce identical arrays).</p>
 <span class="normal"><a href="#__codelineno-0-876">876</a></span>
 <span class="normal"><a href="#__codelineno-0-877">877</a></span>
 <span class="normal"><a href="#__codelineno-0-878">878</a></span>
-<span class="normal"><a href="#__codelineno-0-879">879</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-822" name="__codelineno-0-822"></a><span class="k">def</span><span class="w"> </span><span class="nf">generate_trajectory</span><span class="p">(</span>
-<a id="__codelineno-0-823" name="__codelineno-0-823"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-824" name="__codelineno-0-824"></a>    <span class="o">*</span><span class="p">,</span>
-<a id="__codelineno-0-825" name="__codelineno-0-825"></a>    <span class="n">n_trajectories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-826" name="__codelineno-0-826"></a>    <span class="n">endpoints_per_trajectory</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-827" name="__codelineno-0-827"></a>    <span class="n">n_gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-828" name="__codelineno-0-828"></a>    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<a id="__codelineno-0-829" name="__codelineno-0-829"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span><span class="p">:</span>
-<a id="__codelineno-0-830" name="__codelineno-0-830"></a><span class="w">    </span><span class="sd">"""Generate ``(n_trajectories, endpoints_per_trajectory, n_gen, 2)``.</span>
-<a id="__codelineno-0-831" name="__codelineno-0-831"></a>
-<a id="__codelineno-0-832" name="__codelineno-0-832"></a><span class="sd">    Per trajectory:</span>
-<a id="__codelineno-0-833" name="__codelineno-0-833"></a>
-<a id="__codelineno-0-834" name="__codelineno-0-834"></a><span class="sd">    1. Sample a fresh ``x0 ~ N(0, I_2)`` and integrate forward over</span>
-<a id="__codelineno-0-835" name="__codelineno-0-835"></a><span class="sd">       ``TWODIM_FM_NUM_STEPS`` (lineage-equivalent grid) for the</span>
-<a id="__codelineno-0-836" name="__codelineno-0-836"></a><span class="sd">       trajectory's lineage endpoint.</span>
-<a id="__codelineno-0-837" name="__codelineno-0-837"></a><span class="sd">    2. For each of ``endpoints_per_trajectory`` slots, sample</span>
-<a id="__codelineno-0-838" name="__codelineno-0-838"></a><span class="sd">       ``n_gen`` fresh prior draws ``x0_k ~ N(0, I_2)`` and</span>
-<a id="__codelineno-0-839" name="__codelineno-0-839"></a><span class="sd">       integrate each forward over ``TWODIM_FM_NUM_STEPS``; stack</span>
-<a id="__codelineno-0-840" name="__codelineno-0-840"></a><span class="sd">       the final states into the slot's ``(n_gen, 2)`` block.</span>
-<a id="__codelineno-0-841" name="__codelineno-0-841"></a>
-<a id="__codelineno-0-842" name="__codelineno-0-842"></a><span class="sd">    Byte-deterministic for a fixed ``seed`` (every random draw</span>
-<a id="__codelineno-0-843" name="__codelineno-0-843"></a><span class="sd">    flows through ``np.random.default_rng(seed)`` so two calls</span>
-<a id="__codelineno-0-844" name="__codelineno-0-844"></a><span class="sd">    with the same seed produce identical arrays).</span>
-<a id="__codelineno-0-845" name="__codelineno-0-845"></a><span class="sd">    """</span>
-<a id="__codelineno-0-846" name="__codelineno-0-846"></a>    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-847" name="__codelineno-0-847"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_trajectories_must_be_positive"</span><span class="p">)</span>
-<a id="__codelineno-0-848" name="__codelineno-0-848"></a>    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-849" name="__codelineno-0-849"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"endpoints_per_trajectory_must_be_positive"</span><span class="p">)</span>
-<a id="__codelineno-0-850" name="__codelineno-0-850"></a>    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-<a id="__codelineno-0-851" name="__codelineno-0-851"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_gen_must_be_positive"</span><span class="p">)</span>
-<a id="__codelineno-0-852" name="__codelineno-0-852"></a>    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">))</span>
-<a id="__codelineno-0-853" name="__codelineno-0-853"></a>    <span class="n">n_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_steps</span><span class="p">)</span>
-<a id="__codelineno-0-854" name="__codelineno-0-854"></a>    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
-<a id="__codelineno-0-855" name="__codelineno-0-855"></a>        <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>
-<a id="__codelineno-0-856" name="__codelineno-0-856"></a>        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
-<a id="__codelineno-0-857" name="__codelineno-0-857"></a>    <span class="p">)</span>
-<a id="__codelineno-0-858" name="__codelineno-0-858"></a>    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">)):</span>
-<a id="__codelineno-0-859" name="__codelineno-0-859"></a>        <span class="c1"># Per-trajectory fresh prior draw (lineage-equivalent</span>
-<a id="__codelineno-0-860" name="__codelineno-0-860"></a>        <span class="c1"># x0 ~ N(0, I_2)). Used here only to advance the RNG</span>
-<a id="__codelineno-0-861" name="__codelineno-0-861"></a>        <span class="c1"># state so the population is byte-deterministic across</span>
-<a id="__codelineno-0-862" name="__codelineno-0-862"></a>        <span class="c1"># runs with the same seed; the per-trajectory "lineage"</span>
-<a id="__codelineno-0-863" name="__codelineno-0-863"></a>        <span class="c1"># endpoint happens to coincide with the first slot's</span>
-<a id="__codelineno-0-864" name="__codelineno-0-864"></a>        <span class="c1"># final state at the same RNG state, but we never rely</span>
-<a id="__codelineno-0-865" name="__codelineno-0-865"></a>        <span class="c1"># on that identity here.</span>
-<a id="__codelineno-0-866" name="__codelineno-0-866"></a>        <span class="n">_</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-867" name="__codelineno-0-867"></a>        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">)):</span>
-<a id="__codelineno-0-868" name="__codelineno-0-868"></a>            <span class="c1"># Draw ``n_gen`` fresh initial states in one shot and</span>
-<a id="__codelineno-0-869" name="__codelineno-0-869"></a>            <span class="c1"># integrate the batch forward via batched RK4 over</span>
-<a id="__codelineno-0-870" name="__codelineno-0-870"></a>            <span class="c1"># the same ``n_steps`` the engine uses for</span>
-<a id="__codelineno-0-871" name="__codelineno-0-871"></a>            <span class="c1"># ``solve_ode`` (lineage grid).</span>
-<a id="__codelineno-0-872" name="__codelineno-0-872"></a>            <span class="n">x0_batch</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span>
-<a id="__codelineno-0-873" name="__codelineno-0-873"></a>                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
-<a id="__codelineno-0-874" name="__codelineno-0-874"></a>            <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-<a id="__codelineno-0-875" name="__codelineno-0-875"></a>            <span class="n">final_states</span> <span class="o">=</span> <span class="n">_batched_integrate_rk4</span><span class="p">(</span>
-<a id="__codelineno-0-876" name="__codelineno-0-876"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x0_batch</span><span class="p">,</span> <span class="n">n_steps</span>
-<a id="__codelineno-0-877" name="__codelineno-0-877"></a>            <span class="p">)</span>
-<a id="__codelineno-0-878" name="__codelineno-0-878"></a>            <span class="n">out</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">final_states</span>
-<a id="__codelineno-0-879" name="__codelineno-0-879"></a>    <span class="k">return</span> <span class="n">out</span>
+<span class="normal"><a href="#__codelineno-0-879">879</a></span>
+<span class="normal"><a href="#__codelineno-0-880">880</a></span>
+<span class="normal"><a href="#__codelineno-0-881">881</a></span>
+<span class="normal"><a href="#__codelineno-0-882">882</a></span>
+<span class="normal"><a href="#__codelineno-0-883">883</a></span>
+<span class="normal"><a href="#__codelineno-0-884">884</a></span>
+<span class="normal"><a href="#__codelineno-0-885">885</a></span>
+<span class="normal"><a href="#__codelineno-0-886">886</a></span>
+<span class="normal"><a href="#__codelineno-0-887">887</a></span>
+<span class="normal"><a href="#__codelineno-0-888">888</a></span>
+<span class="normal"><a href="#__codelineno-0-889">889</a></span>
+<span class="normal"><a href="#__codelineno-0-890">890</a></span>
+<span class="normal"><a href="#__codelineno-0-891">891</a></span>
+<span class="normal"><a href="#__codelineno-0-892">892</a></span>
+<span class="normal"><a href="#__codelineno-0-893">893</a></span>
+<span class="normal"><a href="#__codelineno-0-894">894</a></span>
+<span class="normal"><a href="#__codelineno-0-895">895</a></span>
+<span class="normal"><a href="#__codelineno-0-896">896</a></span>
+<span class="normal"><a href="#__codelineno-0-897">897</a></span>
+<span class="normal"><a href="#__codelineno-0-898">898</a></span>
+<span class="normal"><a href="#__codelineno-0-899">899</a></span>
+<span class="normal"><a href="#__codelineno-0-900">900</a></span>
+<span class="normal"><a href="#__codelineno-0-901">901</a></span>
+<span class="normal"><a href="#__codelineno-0-902">902</a></span>
+<span class="normal"><a href="#__codelineno-0-903">903</a></span>
+<span class="normal"><a href="#__codelineno-0-904">904</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-847" name="__codelineno-0-847"></a><span class="k">def</span><span class="w"> </span><span class="nf">generate_trajectory</span><span class="p">(</span>
+<a id="__codelineno-0-848" name="__codelineno-0-848"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-849" name="__codelineno-0-849"></a>    <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-850" name="__codelineno-0-850"></a>    <span class="n">n_trajectories</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-851" name="__codelineno-0-851"></a>    <span class="n">endpoints_per_trajectory</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-852" name="__codelineno-0-852"></a>    <span class="n">n_gen</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-853" name="__codelineno-0-853"></a>    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-854" name="__codelineno-0-854"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayF64</span><span class="p">:</span>
+<a id="__codelineno-0-855" name="__codelineno-0-855"></a><span class="w">    </span><span class="sd">"""Generate ``(n_trajectories, endpoints_per_trajectory, n_gen, 2)``.</span>
+<a id="__codelineno-0-856" name="__codelineno-0-856"></a>
+<a id="__codelineno-0-857" name="__codelineno-0-857"></a><span class="sd">    Per trajectory:</span>
+<a id="__codelineno-0-858" name="__codelineno-0-858"></a>
+<a id="__codelineno-0-859" name="__codelineno-0-859"></a><span class="sd">    1. Sample a fresh ``x0 ~ N(0, I_2)`` and integrate forward over</span>
+<a id="__codelineno-0-860" name="__codelineno-0-860"></a><span class="sd">       ``TWODIM_FM_NUM_STEPS`` (lineage-equivalent grid) for the</span>
+<a id="__codelineno-0-861" name="__codelineno-0-861"></a><span class="sd">       trajectory's lineage endpoint.</span>
+<a id="__codelineno-0-862" name="__codelineno-0-862"></a><span class="sd">    2. For each of ``endpoints_per_trajectory`` slots, sample</span>
+<a id="__codelineno-0-863" name="__codelineno-0-863"></a><span class="sd">       ``n_gen`` fresh prior draws ``x0_k ~ N(0, I_2)`` and</span>
+<a id="__codelineno-0-864" name="__codelineno-0-864"></a><span class="sd">       integrate each forward over ``TWODIM_FM_NUM_STEPS``; stack</span>
+<a id="__codelineno-0-865" name="__codelineno-0-865"></a><span class="sd">       the final states into the slot's ``(n_gen, 2)`` block.</span>
+<a id="__codelineno-0-866" name="__codelineno-0-866"></a>
+<a id="__codelineno-0-867" name="__codelineno-0-867"></a><span class="sd">    Byte-deterministic for a fixed ``seed`` (every random draw</span>
+<a id="__codelineno-0-868" name="__codelineno-0-868"></a><span class="sd">    flows through ``np.random.default_rng(seed)`` so two calls</span>
+<a id="__codelineno-0-869" name="__codelineno-0-869"></a><span class="sd">    with the same seed produce identical arrays).</span>
+<a id="__codelineno-0-870" name="__codelineno-0-870"></a><span class="sd">    """</span>
+<a id="__codelineno-0-871" name="__codelineno-0-871"></a>    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-872" name="__codelineno-0-872"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_trajectories_must_be_positive"</span><span class="p">)</span>
+<a id="__codelineno-0-873" name="__codelineno-0-873"></a>    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-874" name="__codelineno-0-874"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"endpoints_per_trajectory_must_be_positive"</span><span class="p">)</span>
+<a id="__codelineno-0-875" name="__codelineno-0-875"></a>    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+<a id="__codelineno-0-876" name="__codelineno-0-876"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_gen_must_be_positive"</span><span class="p">)</span>
+<a id="__codelineno-0-877" name="__codelineno-0-877"></a>    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">))</span>
+<a id="__codelineno-0-878" name="__codelineno-0-878"></a>    <span class="n">n_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_steps</span><span class="p">)</span>
+<a id="__codelineno-0-879" name="__codelineno-0-879"></a>    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+<a id="__codelineno-0-880" name="__codelineno-0-880"></a>        <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>
+<a id="__codelineno-0-881" name="__codelineno-0-881"></a>        <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
+<a id="__codelineno-0-882" name="__codelineno-0-882"></a>    <span class="p">)</span>
+<a id="__codelineno-0-883" name="__codelineno-0-883"></a>    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_trajectories</span><span class="p">)):</span>
+<a id="__codelineno-0-884" name="__codelineno-0-884"></a>        <span class="c1"># Per-trajectory fresh prior draw (lineage-equivalent</span>
+<a id="__codelineno-0-885" name="__codelineno-0-885"></a>        <span class="c1"># x0 ~ N(0, I_2)). Used here only to advance the RNG</span>
+<a id="__codelineno-0-886" name="__codelineno-0-886"></a>        <span class="c1"># state so the population is byte-deterministic across</span>
+<a id="__codelineno-0-887" name="__codelineno-0-887"></a>        <span class="c1"># runs with the same seed; the per-trajectory "lineage"</span>
+<a id="__codelineno-0-888" name="__codelineno-0-888"></a>        <span class="c1"># endpoint happens to coincide with the first slot's</span>
+<a id="__codelineno-0-889" name="__codelineno-0-889"></a>        <span class="c1"># final state at the same RNG state, but we never rely</span>
+<a id="__codelineno-0-890" name="__codelineno-0-890"></a>        <span class="c1"># on that identity here.</span>
+<a id="__codelineno-0-891" name="__codelineno-0-891"></a>        <span class="n">_</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-892" name="__codelineno-0-892"></a>        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">endpoints_per_trajectory</span><span class="p">)):</span>
+<a id="__codelineno-0-893" name="__codelineno-0-893"></a>            <span class="c1"># Draw ``n_gen`` fresh initial states in one shot and</span>
+<a id="__codelineno-0-894" name="__codelineno-0-894"></a>            <span class="c1"># integrate the batch forward via batched RK4 over</span>
+<a id="__codelineno-0-895" name="__codelineno-0-895"></a>            <span class="c1"># the same ``n_steps`` the engine uses for</span>
+<a id="__codelineno-0-896" name="__codelineno-0-896"></a>            <span class="c1"># ``solve_ode`` (lineage grid).</span>
+<a id="__codelineno-0-897" name="__codelineno-0-897"></a>            <span class="n">x0_batch</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span>
+<a id="__codelineno-0-898" name="__codelineno-0-898"></a>                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_gen</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-0-899" name="__codelineno-0-899"></a>            <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-0-900" name="__codelineno-0-900"></a>            <span class="n">final_states</span> <span class="o">=</span> <span class="n">_batched_integrate_rk4</span><span class="p">(</span>
+<a id="__codelineno-0-901" name="__codelineno-0-901"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x0_batch</span><span class="p">,</span> <span class="n">n_steps</span>
+<a id="__codelineno-0-902" name="__codelineno-0-902"></a>            <span class="p">)</span>
+<a id="__codelineno-0-903" name="__codelineno-0-903"></a>            <span class="n">out</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">final_states</span>
+<a id="__codelineno-0-904" name="__codelineno-0-904"></a>    <span class="k">return</span> <span class="n">out</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -18190,15 +18312,15 @@ reaching into dataclass internals.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>adaptive_reflow\adapters\twodim_fm.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-887">887</a></span>
-<span class="normal"><a href="#__codelineno-0-888">888</a></span>
-<span class="normal"><a href="#__codelineno-0-889">889</a></span>
-<span class="normal"><a href="#__codelineno-0-890">890</a></span>
-<span class="normal"><a href="#__codelineno-0-891">891</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-887" name="__codelineno-0-887"></a><span class="k">def</span><span class="w"> </span><span class="nf">default_twodim_fm_adapter</span><span class="p">(</span>
-<a id="__codelineno-0-888" name="__codelineno-0-888"></a>    <span class="n">target</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"two_moons"</span><span class="p">,</span> <span class="s2">"eight_gaussians"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"two_moons"</span><span class="p">,</span>
-<a id="__codelineno-0-889" name="__codelineno-0-889"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TwoDimFMAdapter</span><span class="p">:</span>
-<a id="__codelineno-0-890" name="__codelineno-0-890"></a><span class="w">    </span><span class="sd">"""Return a fresh :class:`TwoDimFMAdapter` configured for ``target``."""</span>
-<a id="__codelineno-0-891" name="__codelineno-0-891"></a>    <span class="k">return</span> <span class="n">TwoDimFMAdapter</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-912">912</a></span>
+<span class="normal"><a href="#__codelineno-0-913">913</a></span>
+<span class="normal"><a href="#__codelineno-0-914">914</a></span>
+<span class="normal"><a href="#__codelineno-0-915">915</a></span>
+<span class="normal"><a href="#__codelineno-0-916">916</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-912" name="__codelineno-0-912"></a><span class="k">def</span><span class="w"> </span><span class="nf">default_twodim_fm_adapter</span><span class="p">(</span>
+<a id="__codelineno-0-913" name="__codelineno-0-913"></a>    <span class="n">target</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"two_moons"</span><span class="p">,</span> <span class="s2">"eight_gaussians"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"two_moons"</span><span class="p">,</span>
+<a id="__codelineno-0-914" name="__codelineno-0-914"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TwoDimFMAdapter</span><span class="p">:</span>
+<a id="__codelineno-0-915" name="__codelineno-0-915"></a><span class="w">    </span><span class="sd">"""Return a fresh :class:`TwoDimFMAdapter` configured for ``target``."""</span>
+<a id="__codelineno-0-916" name="__codelineno-0-916"></a>    <span class="k">return</span> <span class="n">TwoDimFMAdapter</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

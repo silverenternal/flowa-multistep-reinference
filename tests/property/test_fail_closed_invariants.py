@@ -70,6 +70,7 @@ from adaptive_reflow.contracts import (
     hash_policy_hash,
 )
 from adaptive_reflow.frame import (
+    ERR_ADAPTER_CONFIGURATION_ERROR,
     ERR_ADAPTER_RAISED,
     ERR_BUNDLE_INVALID,
     ERR_BUNDLE_NONE,
@@ -205,6 +206,11 @@ def _make_final_policy() -> FinalRestartPolicy:
         ledger_row_id=LedgerRowId("ledger-fc"),
         policy_hash=ArtifactHash(""),
         created_at_round=0,
+        # P0-5: ``beta_from_schedule=False`` so the engine doesn't emit
+        # ``ERR_SCHEDULE_SAMPLE_MISSING`` (the fail-closed-invariants
+        # tests assert that *specific* codes are reachable and don't
+        # want the schedule-missing code polluting the audit trail).
+        beta_from_schedule=False,
     )
     return replace(policy, policy_hash=hash_policy_hash(policy))
 
@@ -616,25 +622,28 @@ def test_engine_never_raises_on_malformed_bundle_none() -> None:
     assert isinstance(result, EngineRoundResult)
 
 
-def test_engine_raises_runtime_error_when_adapter_is_none() -> None:
-    """Sanity: ``adapter=None`` raises :exc:`RuntimeError` carrying the
-    canonical ``adapter_must_not_be_none`` code. This is the one
-    documented exception path; the fail-closed contract is about
-    ``EngineRoundResult`` for everything else."""
+def test_engine_fails_closed_when_adapter_is_none() -> None:
+    """P0-4: ``adapter=None`` no longer raises :exc:`RuntimeError`; the
+    engine now fails closed like every other argument gate. The audit
+    code ``adapter_must_not_be_none`` is emitted in
+    ``round_trace.audit_codes`` instead of propagating the exception,
+    so the ledger row is never silently dropped.
+    """
     engine = Engine()
     bundle = _make_state_bundle()
     phase_state = _make_phase_state()
     policy = _make_final_policy()
     condition_delta = _make_condition_delta()
-    with pytest.raises(RuntimeError, match="adapter_must_not_be_none"):
-        engine.run_round(
-            round_index=0,
-            phase_state=phase_state,
-            bundle=bundle,
-            adapter=None,  # type: ignore[arg-type]
-            policy=policy,
-            condition_delta=condition_delta,
-        )
+    result = engine.run_round(
+        round_index=0,
+        phase_state=phase_state,
+        bundle=bundle,
+        adapter=None,  # type: ignore[arg-type]
+        policy=policy,
+        condition_delta=condition_delta,
+    )
+    codes = result.round_trace.audit_codes
+    assert any(code.startswith("adapter_must_not_be_none") for code in codes)
 
 
 # ---------------------------------------------------------------------------
@@ -845,9 +854,9 @@ _AUDIT_CODE_FIXTURES: tuple[tuple[str, str, callable], ...] = (
         lambda: _err_detach_proof_failed_audit_codes(),
     ),
     (
-        "ERR_ADAPTER_RAISED",
-        ERR_ADAPTER_RAISED,
-        lambda: _err_adapter_raised_audit_codes(),
+        "ERR_ADAPTER_CONFIGURATION_ERROR",
+        ERR_ADAPTER_CONFIGURATION_ERROR,
+        lambda: _err_adapter_configuration_error_audit_codes(),
     ),
     # ---- channel rule BLOCKER_* / AUDIT_* codes ----------------------------
     (
@@ -1025,12 +1034,23 @@ def _err_detach_proof_failed_audit_codes() -> tuple[str, ...]:
     ).round_trace.audit_codes
 
 
-def _err_adapter_raised_audit_codes() -> tuple[str, ...]:
-    """Construct an input that triggers :data:`ERR_ADAPTER_RAISED`."""
+def _err_adapter_configuration_error_audit_codes() -> tuple[str, ...]:
+    """Construct an input that triggers :data:`ERR_ADAPTER_CONFIGURATION_ERROR`.
+
+    P0-1: the engine now only catches the typed engine-internal
+    :class:`AdapterConfigurationError` (plus the two adapter-protocol
+    exceptions) inside :func:`_safe_adapter_call`. ``RuntimeError``
+    raised by an adapter is no longer swallowed — it propagates and
+    crashes the round. The reachability check therefore raises
+    :class:`AdapterConfigurationError` and asserts the engine emits
+    the corresponding audit code.
+    """
 
     class _RaisingAdapter(SyntheticContinuousAdapter):
         def build_initial_state(self, *, batch_id: str, sample_id: str):  # type: ignore[override]
-            raise RuntimeError("synthetic-fault")
+            from adaptive_reflow.frame.engine import AdapterConfigurationError
+
+            raise AdapterConfigurationError("synthetic-fault")
 
     engine = Engine()
     try:
@@ -1260,7 +1280,6 @@ __all__ = [
     "test_engine_never_raises_on_malformed_round_index",
     "test_engine_never_raises_on_malformed_policy_none",
     "test_engine_never_raises_on_malformed_condition_delta_none",
-    "test_engine_raises_runtime_error_when_adapter_is_none",
     "test_engine_phase_state_none_emits_audit_before_crashing",
     "test_engine_policy_non_typed_raises_attribute_error",
     "test_engine_condition_delta_non_typed_raises_attribute_error",

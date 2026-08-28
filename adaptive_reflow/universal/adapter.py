@@ -48,7 +48,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal, Protocol, TypeAlias, runtime_checkable
+from typing import TYPE_CHECKING, Any, Literal, Protocol, TypeAlias, runtime_checkable
 
 from .state import (
     ChannelName,
@@ -285,6 +285,25 @@ class FlowMatchingODEAdapter(Protocol):
         trace: ODEIntegratorTrace,
         state: StateBundle,
     ) -> StateBundle: ...
+
+    def export_trajectory(
+        self, trace: ODEIntegratorTrace
+    ) -> Any | None:
+        """Return the adapter's native trajectory for ``trace`` (or ``None``).
+
+        Closes P0-7: the runner must call this public method instead of
+        reaching into the adapter's private ``_native_states`` dict.
+        Implementations that store a native trajectory under
+        ``trace.native_state_digest`` (e.g. :class:`TwoDimFMAdapter`)
+        return it here. Implementations that do not preserve the
+        trajectory across the ``solve_ode`` boundary (e.g.
+        :class:`ReferenceFlowAAdapter`, the synthetic adapters) raise
+        :class:`NotImplementedError` — the runner catches this and
+        records an audit-code-style note in the round's metric dict
+        rather than crashing. Returning ``None`` is also accepted as a
+        valid "no trajectory available" signal.
+        """
+        ...
 
 
 # ---------------------------------------------------------------------------

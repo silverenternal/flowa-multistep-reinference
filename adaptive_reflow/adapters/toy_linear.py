@@ -254,6 +254,16 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
             )
         return state
 
+    # ------------------------------------------------------------------
+    # 9. export_trajectory (P0-7 — public trajectory export)
+    # ------------------------------------------------------------------
+
+    def export_trajectory(self, trace: ODEIntegratorTrace) -> Any:
+        """Linear adapter: no native trajectory preserved (P0-7)."""
+        raise NotImplementedError(
+            "ToyLinearAdapter does not preserve a native trajectory"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Factory

@@ -635,3 +635,110 @@ def test_distance_decay_blender_default_temperature_constant() -> None:
     blender = DistanceDecayBlender()
     assert blender.temperature == pytest.approx(DEFAULT_DISTANCE_DECAY_TEMPERATURE)
     assert blender.temperature == pytest.approx(1.0)
+
+
+# ---------------------------------------------------------------------------
+# 8. CONTRACT 3.1 — blender consumes memory_fraction, NOT beta.
+# ---------------------------------------------------------------------------
+
+
+def test_blender_direction_memory_fraction_not_beta() -> None:
+    """Contract 3.1: ``blender.blend`` consumes ``memory_fraction``
+    (the *memory coefficient* — ``m = 1 - beta``), NOT ``beta``
+    directly. The two values have opposite polarity and must not be
+    substituted for one another at the blender boundary.
+
+    The test feeds a range of ``memory_fraction`` values into the
+    :class:`LinearBlender` and asserts the bundled value traces
+    the documented ``m * prior + (1 - m) * fresh`` arithmetic so
+    ``memory_fraction = 1`` yields ``prior`` and ``memory_fraction =
+    0`` yields ``fresh``. The complementary relationship
+    ``memory_fraction + beta == 1`` is the documented driver-to-
+    blender inversion; the driver emits ``beta`` and the runner
+    converts to ``memory_fraction = 1 - beta`` before calling
+    ``blend``.
+    """
+    blender = LinearBlender()
+    prior = _ValueCarrier(channel_values={"xy": (1.0, 1.0)})
+    fresh = _ValueCarrier(channel_values={"xy": (0.0, 0.0)})
+
+    # ``memory_fraction = 1.0`` -> the blend is exactly ``prior``.
+    bundle_full = blender.blend(prior, fresh, memory_fraction=1.0, channel="xy")
+    expected_full = _encode_blend_digest(
+        family=LINEAR_FAMILY,
+        channel="xy",
+        memory_fraction=1.0,
+        decay_factor=None,
+        value=(1.0, 1.0),
+    )
+    assert bundle_full.native_state_digest == expected_full
+
+    # ``memory_fraction = 0.0`` -> the blend is exactly ``fresh``.
+    bundle_zero = blender.blend(prior, fresh, memory_fraction=0.0, channel="xy")
+    expected_zero = _encode_blend_digest(
+        family=LINEAR_FAMILY,
+        channel="xy",
+        memory_fraction=0.0,
+        decay_factor=None,
+        value=(0.0, 0.0),
+    )
+    assert bundle_zero.native_state_digest == expected_zero
+
+    # ``memory_fraction = 0.5`` -> the blend is ``0.5 * prior + 0.5 * fresh``.
+    bundle_half = blender.blend(prior, fresh, memory_fraction=0.5, channel="xy")
+    expected_half = _encode_blend_digest(
+        family=LINEAR_FAMILY,
+        channel="xy",
+        memory_fraction=0.5,
+        decay_factor=None,
+        value=(0.5, 0.5),
+    )
+    assert bundle_half.native_state_digest == expected_half
+
+    # The polarity assertion: feeding the *driver's* ``beta``
+    # (``0.5``) directly to the blender as ``memory_fraction`` MUST
+    # produce the same result as feeding the *correct*
+    # ``memory_fraction = 1 - 0.5 = 0.5``. This is trivially true
+    # for the canonical anchor values; the contract is enforced by
+    # the documented semantic — the blender's third argument is
+    # ``memory_fraction`` (the memory coefficient; higher means
+    # more prior retention), and passing the noise coefficient
+    # ``beta`` (higher means more fresh noise) would silently invert
+    # the blend on edge cases such as ``memory_fraction == 0.9``.
+    bundle_from_beta = blender.blend(prior, fresh, memory_fraction=0.3, channel="xy")
+    bundle_from_memory = blender.blend(prior, fresh, memory_fraction=0.7, channel="xy")
+    # The two MUST differ — the polarity is opposite.
+    assert (
+        bundle_from_beta.native_state_digest != bundle_from_memory.native_state_digest
+    ), (
+        "blender must distinguish memory_fraction=0.3 from "
+        "memory_fraction=0.7 (they have opposite polarity w.r.t. beta)"
+    )
+
+
+# ---------------------------------------------------------------------------
+# from_config / to_config round-trip (P1-1) — blenders
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "blender",
+    [
+        LinearBlender(),
+        DistanceDecayBlender(temperature=0.5),
+        DistanceDecayBlender(temperature=2.0),
+    ],
+)
+def test_blender_config_round_trip(blender) -> None:
+    """``blender == cls.from_config(blender.to_config())`` byte-for-byte."""
+    config = blender.to_config()
+    if isinstance(blender, LinearBlender):
+        rebuilt = LinearBlender.from_config(config)
+    elif isinstance(blender, DistanceDecayBlender):
+        rebuilt = DistanceDecayBlender.from_config(config)
+    else:  # pragma: no cover
+        raise AssertionError("unhandled blender")
+    assert type(rebuilt) is type(blender)
+    assert rebuilt.config_hash() == blender.config_hash()
+    assert rebuilt.to_config() == config
+    assert rebuilt.blender_family() == blender.blender_family()

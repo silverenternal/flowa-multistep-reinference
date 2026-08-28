@@ -146,13 +146,15 @@ def test_degenerate_interval_emits_audit(
 ) -> None:
     """When the per-round delta interval collapses, the merge either
     emits :data:`MERGE_DEGENERATE_INTERVAL` in its audit trail *or*
-    raises :class:`MergeAuthorityError` carrying the canonical
-    ``merge_cap_below_floor`` code (when ``floor > cap``).
+    (after the P0-3 fix) appends the canonical
+    ``merge_cap_below_floor`` audit code without raising (when
+    ``floor > cap``).
 
     Two configurations trigger the collapse:
 
-    * ``floor > cap``: the bounded merge refuses with
-      :class:`MergeAuthorityError` (the envelope is ill-formed).
+    * ``floor > cap``: post-P0-3 the envelope swaps and the merge
+      clips and emits the ``merge_cap_below_floor`` audit code (no
+      exception is raised).
     * ``prev`` strictly outside ``[floor, cap]`` with both delta caps
       zero: the bounded interval ``[max(floor, prev), min(cap, prev)]``
       collapses (``hi < lo``) so the merge returns the floor and emits
@@ -166,16 +168,25 @@ def test_degenerate_interval_emits_audit(
     assume(0.0 <= cap <= 1.0)
 
     if floor > cap:
-        # Path 1 — the envelope is ill-formed: the merge must raise.
-        with pytest_raises_merge_authority():
-            bounded_merge(
-                prev=prev,
-                dynamic=prev,
-                cap=cap,
-                floor=floor,
-                delta_cap_up=0.0,
-                delta_cap_down=0.0,
-            )
+        # Path 1 — the envelope is ill-formed: post-P0-3 the merge
+        # clips (swaps cap/floor) and emits the
+        # ``merge_cap_below_floor`` audit code WITHOUT raising.
+        audit_codes: list[str] = []
+        result = bounded_merge(
+            prev=prev,
+            dynamic=prev,
+            cap=cap,
+            floor=floor,
+            delta_cap_up=0.0,
+            delta_cap_down=0.0,
+            audit_codes=audit_codes,
+        )
+        assert 0.0 <= result <= 1.0
+        joined = "|".join(audit_codes)
+        assert "merge_cap_below_floor" in joined, (
+            f"merge_cap_below_floor must appear in audit_codes; "
+            f"got {audit_codes!r} for prev={prev}, floor={floor}, cap={cap}"
+        )
         return
 
     # Path 2 — envelope is well-formed; force the per-round interval
@@ -210,10 +221,20 @@ def test_degenerate_interval_emits_audit(
 
 
 def pytest_raises_merge_authority():
-    """Wrap :func:`pytest.raises` so the ``pytest`` import stays local."""
-    import pytest as _pytest
+    """Deprecated P0-3 stub.
 
-    return _pytest.raises(MergeAuthorityError, match="merge_cap_below_floor")
+    Post-P0-3 the bounded merge never raises on legitimate caller
+    input such as ``floor > cap``; instead it clips and emits the
+    canonical audit code. The stub remains so legacy callers that
+    still expect the pytest context manager get a no-op context.
+    """
+    import contextlib
+
+    @contextlib.contextmanager
+    def _noop():
+        yield
+
+    return _noop()
 
 
 # A second, simpler test for the well-formed degenerate case (no

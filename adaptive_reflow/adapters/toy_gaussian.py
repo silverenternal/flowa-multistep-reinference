@@ -477,6 +477,23 @@ class ToyGaussianAdapter(FlowMatchingODEAdapter):
             capability_token=self.capabilities(),
         )
 
+    # ------------------------------------------------------------------
+    # 9. export_trajectory (P0-7 — public trajectory export)
+    # ------------------------------------------------------------------
+
+    def export_trajectory(
+        self, trace: ODEIntegratorTrace
+    ) -> Any | None:
+        """Return the native trajectory for ``trace`` (or ``None``).
+
+        Closes P0-7: the runner used to reach into the adapter's
+        private ``_native_states`` dict via ``getattr``; it now calls
+        this public method. ``ToyGaussianAdapter`` does not preserve
+        the trajectory by default (the native state is scalar /
+        descriptor-only), so this returns ``None``.
+        """
+        return None
+
 
 # ---------------------------------------------------------------------------
 # Factory

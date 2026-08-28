@@ -136,6 +136,8 @@ not_in_nav: |
   INSIGHTS.md
   audit/*.md
   review/*.md
+  distinguishing-from-reflow.md
+  schedule-theory.md
 
 validation:
   nav:

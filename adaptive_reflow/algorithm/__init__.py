@@ -28,8 +28,12 @@ from .blender import (
 )
 from .merge_operator import (
     ERR_PREV_REQUIRED,
+    MERGE_CAP_OUT_OF_RANGE,
     MERGE_DEGENERATE_INTERVAL,
     MERGE_FLOOR_FALLBACK,
+    MERGE_FLOOR_OUT_OF_RANGE,
+    MERGE_NONFINITE_DYNAMIC_CLIPPED,
+    MERGE_NONFINITE_PREV_CLIPPED,
     MERGE_PREV_ANCHORED_TO_LAST_EMITTED,
     BoundedMergeOperator,
     EMAOperator,
@@ -51,6 +55,7 @@ from .policy_driver import (
     default_policy_driver,
 )
 from .runner import (
+    FORWARD_NOISE_INJECTED,
     ReInferenceConfig,
     ReInferenceResult,
     ReInferenceRunner,
@@ -69,7 +74,13 @@ from .scheduler import (
     ScheduleSampleProtocol,
     SigmoidScheduler,
     build_scheduler,
+    build_scheduler_from_config,
     default_cosine_scheduler,
+)
+from .sequential import (
+    SEQUENTIAL_FAMILY,
+    SequentialScheduler,
+    SequentialSlot,
 )
 
 __all__ = [
@@ -93,14 +104,19 @@ __all__ = [
     "DISTANCE_DECAY_FAMILY",
     "DistanceDecayBlender",
     "EMAOperator",
+    "FORWARD_NOISE_INJECTED",
     "ERR_PREV_REQUIRED",
     "ExponentialScheduler",
     "IdentityOperator",
     "LINEAR_FAMILY",
     "LinearBlender",
     "LinearScheduler",
+    "MERGE_CAP_OUT_OF_RANGE",
     "MERGE_DEGENERATE_INTERVAL",
     "MERGE_FLOOR_FALLBACK",
+    "MERGE_FLOOR_OUT_OF_RANGE",
+    "MERGE_NONFINITE_DYNAMIC_CLIPPED",
+    "MERGE_NONFINITE_PREV_CLIPPED",
     "MERGE_PREV_ANCHORED_TO_LAST_EMITTED",
     "MergeAuthorityError",
     "MergeOperatorProtocol",
@@ -116,8 +132,11 @@ __all__ = [
     "ScheduleSample",
     "ScheduleSampleProtocol",
     "SchedulerProtocol",
+    "SequentialScheduler",
+    "SequentialSlot",
     "SigmoidScheduler",
     "build_scheduler",
+    "build_scheduler_from_config",
     "default_blender",
     "default_bounded_merge_operator",
     "default_cosine_scheduler",

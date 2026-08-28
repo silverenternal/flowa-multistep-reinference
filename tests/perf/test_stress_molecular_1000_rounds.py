@@ -191,6 +191,10 @@ def _make_final_policy(
         ledger_row_id=LedgerRowId(f"ledger-{policy_id}"),
         policy_hash=ArtifactHash(""),
         created_at_round=0,
+        # P0-5: ``beta_from_schedule=False`` so the engine doesn't emit
+        # ``ERR_SCHEDULE_SAMPLE_MISSING`` (the stress test asserts that
+        # every round is fail-clean).
+        beta_from_schedule=False,
     )
     return replace(policy, policy_hash=hash_policy_hash(policy))
 

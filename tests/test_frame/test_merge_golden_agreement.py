@@ -85,39 +85,57 @@ def _spec_bounded_merge(
     floor: float,
     delta_cap_up: float,
     delta_cap_down: float,
+    audit_codes: list[str] | None = None,
 ) -> float:
-    """Spec-faithful re-implementation of ``bounded_merge``.
+    """Spec-faithful re-implementation of ``bounded_merge`` (P0-3).
 
-    The algorithm follows the docstring of the production function
-    line-by-line:
+    After the P0-3 contract fix the spec mirrors the production
+    "clip-and-audit" semantics:
 
-    1. Validate every argument is a finite real number.
-    2. Reject impossible configurations (cap/floor outside ``[0, 1]``,
-       ``cap < floor``, delta caps outside ``[0, 1]``).
-    3. ``target = clamp(dynamic, floor, cap)``.
-    4. ``lo = max(floor, prev - delta_cap_down)``,
+    1. Validate every argument is a real number (numeric type / ``None``
+       still raise :exc:`MergeAuthorityError`).
+    2. Clip ``cap`` / ``floor`` / ``delta_cap_up`` /
+       ``delta_cap_down`` into ``[0, 1]``. Out-of-range / non-finite
+       numeric inputs trigger the canonical audit codes; only the
+       numeric-type coercion boundary raises.
+    3. If ``cap < floor`` after clipping, swap them and emit the
+       ``merge_cap_below_floor`` audit code (so the comparison holds).
+    4. ``target = clamp(dynamic, floor, cap)`` (dynamic is also clipped).
+    5. ``lo = max(floor, prev - delta_cap_down)``,
        ``hi = min(cap, prev + delta_cap_up)``.
-    5. Empty interval ⇒ return ``floor``.
-    6. Otherwise return ``clamp(target, lo, hi)``.
+    6. Empty interval ⇒ return ``floor`` and emit
+       ``MERGE_DEGENERATE_INTERVAL``.
+    7. Otherwise return ``clamp(target, lo, hi)``.
     """
     prev_f = _spec_finite(prev, name="prev")
     dynamic_f = _spec_finite(dynamic, name="dynamic")
-    cap_f = _spec_finite(cap, name="cap")
-    floor_f = _spec_finite(floor, name="floor")
-    up_f = _spec_finite(delta_cap_up, name="delta_cap_up")
-    down_f = _spec_finite(delta_cap_down, name="delta_cap_down")
 
-    # Step 2 — reject impossible configurations.
-    if not (0.0 <= cap_f <= 1.0):
-        raise MergeAuthorityError(f"cap out of [0,1]: {cap_f!r}")
-    if not (0.0 <= floor_f <= 1.0):
-        raise MergeAuthorityError(f"floor out of [0,1]: {floor_f!r}")
-    if not (0.0 <= up_f <= 1.0):
-        raise MergeAuthorityError(f"delta_cap_up out of [0,1]: {up_f!r}")
-    if not (0.0 <= down_f <= 1.0):
-        raise MergeAuthorityError(f"delta_cap_down out of [0,1]: {down_f!r}")
+    def _clip_unit(x: float, *, name: str, audit_code: str | None = None) -> float:
+        if math.isfinite(x) and 0.0 <= x <= 1.0:
+            return x
+        clipped = 0.0 if (not math.isfinite(x) or x < 0.0) else 1.0
+        if audit_codes is not None and audit_code is not None:
+            audit_codes.append(f"{audit_code}:{name}={x!r}")
+        return clipped
+
+    cap_f = _clip_unit(float(cap), name="cap", audit_code="merge_cap_out_of_range")
+    floor_f = _clip_unit(
+        float(floor), name="floor", audit_code="merge_floor_out_of_range"
+    )
+    up_f = max(0.0, min(1.0, float(delta_cap_up)))
+    down_f = max(0.0, min(1.0, float(delta_cap_down)))
+
+    # Inverted envelope after clipping.
     if cap_f < floor_f:
-        raise MergeAuthorityError(f"cap < floor: {cap_f!r} < {floor_f!r}")
+        if audit_codes is not None:
+            audit_codes.append(
+                f"merge_cap_below_floor:cap={cap_f:.6f}:floor={floor_f:.6f}"
+            )
+        cap_f, floor_f = floor_f, cap_f
+
+    # Clip prev / dynamic so the spec also honours the P0-3 contract.
+    prev_f = max(0.0, min(1.0, prev_f))
+    dynamic_f = max(0.0, min(1.0, dynamic_f))
 
     # Step 3 — clamp dynamic to envelope.
     target = max(floor_f, min(cap_f, dynamic_f))
@@ -128,6 +146,12 @@ def _spec_bounded_merge(
 
     # Step 5 — empty interval collapses to floor.
     if hi < lo:
+        if audit_codes is not None:
+            audit_codes.append(
+                f"merge_degenerate_interval:floor={floor_f:.6f}"
+                f":cap={cap_f:.6f}:prev={prev_f:.6f}"
+                f":up={up_f:.6f}:down={down_f:.6f}"
+            )
         return float(floor_f)
 
     # Step 6 — final clamp.
@@ -300,20 +324,53 @@ _HOSTILE_CASES: list[tuple[str, dict[str, float]]] = [
     _HOSTILE_CASES,
     ids=[n for n, _ in _HOSTILE_CASES],
 )
-def test_production_raises_on_hostile(
+def test_production_clips_on_hostile(
     name: str,
     inputs: dict[str, float],
 ) -> None:
-    """Production raises :exc:`MergeAuthorityError` on hostile input."""
-    with pytest.raises(MergeAuthorityError):
-        bounded_merge(
-            inputs["prev"],
-            inputs["dynamic"],
-            cap=inputs["cap"],
-            floor=inputs["floor"],
-            delta_cap_up=inputs["delta_cap_up"],
-            delta_cap_down=inputs["delta_cap_down"],
-        )
+    """Production clips on hostile input (P0-3) and emits a canonical
+    audit code where the contract mandates one. The result is a
+    finite ``float`` in ``[0, 1]`` rather than an exception
+    (closes P0-3).
+
+    For ``cap > 1``, ``floor < 0``, ``floor > 1``, or
+    ``cap < floor`` the operator MUST emit an audit code; for
+    ``delta_cap_up > 1`` / ``delta_cap_down < 0`` the operator
+    silently clips so the legacy per-round delta-envelope math is
+    preserved. The test asserts the audit-code presence for the
+    envelope-mismatch cases and the result-finiteness for all.
+    """
+    audit: list[str] = []
+    result = bounded_merge(
+        inputs["prev"],
+        inputs["dynamic"],
+        cap=inputs["cap"],
+        floor=inputs["floor"],
+        delta_cap_up=inputs["delta_cap_up"],
+        delta_cap_down=inputs["delta_cap_down"],
+        audit_codes=audit,
+    )
+    assert 0.0 <= result <= 1.0
+    # The envelope-mismatch cases are required to emit a P0-3 audit
+    # code; the delta-cap cases are silently clipped to keep the
+    # legacy bounded-merge math byte-identical.
+    if name in (
+        "cap_negative",
+        "cap_above_one",
+        "floor_negative",
+        "floor_above_one",
+        "cap_below_floor",
+    ):
+        assert any(
+            code.startswith(
+                (
+                    "merge_cap_out_of_range",
+                    "merge_floor_out_of_range",
+                    "merge_cap_below_floor",
+                )
+            )
+            for code in audit
+        ), f"no P0-3 audit code emitted for {name}: audit={audit!r}"
 
 
 @pytest.mark.parametrize(
@@ -321,20 +378,40 @@ def test_production_raises_on_hostile(
     _HOSTILE_CASES,
     ids=[n for n, _ in _HOSTILE_CASES],
 )
-def test_spec_raises_on_hostile(
+def test_spec_clips_on_hostile(
     name: str,
     inputs: dict[str, float],
 ) -> None:
-    """Spec implementation raises the same error class on hostile input."""
-    with pytest.raises(MergeAuthorityError):
-        _spec_bounded_merge(
-            inputs["prev"],
-            inputs["dynamic"],
-            cap=inputs["cap"],
-            floor=inputs["floor"],
-            delta_cap_up=inputs["delta_cap_up"],
-            delta_cap_down=inputs["delta_cap_down"],
-        )
+    """Spec implementation clips hostile input to ``[0, 1]`` (P0-3)."""
+    audit: list[str] = []
+    result = _spec_bounded_merge(
+        inputs["prev"],
+        inputs["dynamic"],
+        cap=inputs["cap"],
+        floor=inputs["floor"],
+        delta_cap_up=inputs["delta_cap_up"],
+        delta_cap_down=inputs["delta_cap_down"],
+        audit_codes=audit,
+    )
+    assert 0.0 <= result <= 1.0
+    if name in (
+        "cap_negative",
+        "cap_above_one",
+        "floor_negative",
+        "floor_above_one",
+        "cap_below_floor",
+    ):
+        assert any(
+            code.startswith(
+                (
+                    "merge_cap_out_of_range",
+                    "merge_floor_out_of_range",
+                    "merge_cap_below_floor",
+                    "merge_degenerate_interval",
+                )
+            )
+            for code in audit
+        ), f"no P0-3 audit code emitted for {name}: audit={audit!r}"
 
 
 # ---------------------------------------------------------------------------

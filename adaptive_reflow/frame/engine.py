@@ -107,6 +107,29 @@ ERR_SHAPE_FRAME_NORMALIZATION_MISMATCH: str = "shape_frame_normalization_mismatc
 ERR_FEATURE_DISABLED: str = "feature_flag_disabled"
 ERR_ADAPTER_RAISED: str = "adapter_raised_exception"
 ERR_SOURCE_ROUND_NON_INT: str = "source_round_must_be_int"
+ERR_ADAPTER_CONFIGURATION_ERROR: str = "adapter_configuration_error"
+ERR_SCHEDULE_SAMPLE_MISSING: str = "schedule_sample_missing"
+ERR_CAPABILITY_UNSUPPORTED: str = "capability_unsupported"
+
+
+# ---------------------------------------------------------------------------
+# Typed exceptions (engine-internal; P0-1)
+# ---------------------------------------------------------------------------
+
+
+class AdapterConfigurationError(Exception):
+    """Engine-internal failure indicating the adapter is mis-configured.
+
+    This exception is intentionally a subclass of :class:`Exception` and
+    NOT of :class:`RuntimeError` / :class:`ValueError` / :class:`TypeError`.
+    The engine's :func:`_safe_adapter_call` wrapper catches this type
+    together with :class:`CapabilityMissingError` and
+    :class:`CapabilityMismatchError` and emits
+    :data:`ERR_ADAPTER_CONFIGURATION_ERROR`; ``ValueError`` /
+    ``TypeError`` propagate to the caller (close P0-1: the engine must
+    NOT silently swallow programmer errors that indicate a hostile
+    configuration).
+    """
 
 
 # ---------------------------------------------------------------------------
@@ -169,6 +192,14 @@ class LedgerRow:
     protocol level. The engine emits this so downstream consumers can
     persist it; it is also the only carrier that contains the
     ``applied_policy_hash`` from the round.
+
+    Hash-chained ledger (P0-8, round-event monotonicity): every row
+    carries the previous round's ``row_hash`` in :attr:`prev_ledger_row_hash`
+    (``None`` at round 0) and its own :attr:`row_hash`. The chain is
+    :func:`compute_ledger_row_hash` applied to the canonical row fields
+    plus the previous row's hash, so tampering with any row breaks the
+    chain (the writer verifies chain integrity on every emit). Use
+    :func:`verify_ledger_chain` to audit-replay a sequence of rows.
     """
 
     ledger_row_id: str
@@ -179,6 +210,8 @@ class LedgerRow:
     selected_bundle_digest: str
     audit_codes: tuple[str, ...]
     per_channel_decision: Mapping[str, bool]
+    prev_ledger_row_hash: str | None = None
+    row_hash: str = ""
 
 
 @dataclass(frozen=True)
@@ -255,19 +288,22 @@ def _digest(payload: Any) -> str:
 def _digest_state(bundle: StateBundle | None) -> str:
     """Return a deterministic digest for ``bundle`` (or empty-string sentinel).
 
-    ``bundle.source_round`` is coerced defensively: a non-int / negative
-    value would otherwise raise ``TypeError`` here before the engine has
-    a chance to emit ``ERR_SOURCE_ROUND_NON_INT``. The coercion is
-    silent at this level because audit emission lives in
-    :func:`_coerce_nonneg_int`; this function only owns the digest.
+    ``bundle.source_round`` is coerced to a non-negative ``int`` before
+    the digest is computed so a malformed value never leaks its type
+    repr into the digest payload (closes P0-6: prior to this change
+    ``bundle.source_round="3"`` and ``bundle.source_round=3`` produced
+    different digests). The coercion is silent at this level when
+    ``audit_codes`` is not supplied; callers that need the audit trail
+    should call :func:`_coerce_nonneg_int` explicitly with their own
+    ``audit_codes`` list before invoking this helper.
     """
     if bundle is None:
         return ""
-    sr = bundle.source_round
-    if isinstance(sr, bool) or not isinstance(sr, int) or sr < 0:
-        sr_repr = type(sr).__name__
-    else:
-        sr_repr = str(sr)
+    audit_codes: list[str] = []
+    sr = _coerce_nonneg_int(
+        getattr(bundle, "source_round", 0), "source_round", audit_codes
+    )
+    sr_repr = str(int(sr))
     payload = {
         "channels": {k: str(v) for k, v in sorted(bundle.channels.items())},
         "masks": {k: str(v) for k, v in sorted(bundle.masks.items())},
@@ -323,6 +359,167 @@ def _ledger_row_id(round_index: int, policy_hash: str, bundle_digest: str) -> st
     return _digest(payload)
 
 
+def compute_ledger_row_hash(
+    *,
+    ledger_row_id: str,
+    round_index: int,
+    source_round: int,
+    target_round: int,
+    applied_policy_hash: str,
+    selected_bundle_digest: str,
+    audit_codes: tuple[str, ...],
+    per_channel_decision: Mapping[str, bool],
+    prev_ledger_row_hash: str | None,
+) -> str:
+    """Return the deterministic ``row_hash`` for a :class:`LedgerRow`.
+
+    The hash covers every canonical row field plus the previous row's
+    hash (so each row is committed to the entire history). The
+    ``prev_ledger_row_hash is None`` sentinel is rendered as the
+    empty string so round 0 chains to a stable anchor.
+    """
+    payload = {
+        "ledger_row_id": str(ledger_row_id),
+        "round_index": int(round_index),
+        "source_round": int(source_round),
+        "target_round": int(target_round),
+        "applied_policy_hash": str(applied_policy_hash),
+        "selected_bundle_digest": str(selected_bundle_digest),
+        "audit_codes": list(audit_codes),
+        "per_channel_decision": {
+            str(k): bool(v) for k, v in sorted(per_channel_decision.items())
+        },
+        "prev_ledger_row_hash": (
+            "" if prev_ledger_row_hash is None else str(prev_ledger_row_hash)
+        ),
+    }
+    return _digest(payload)
+
+
+def build_ledger_row(
+    *,
+    round_index: int,
+    policy_hash: str,
+    bundle_digest: str,
+    source_round: int,
+    applied_policy_hash: str,
+    audit_codes: tuple[str, ...],
+    per_channel_decision: Mapping[str, bool],
+    prev_ledger_row_hash: str | None,
+) -> LedgerRow:
+    """Build a fully-hashed :class:`LedgerRow` (P0-8).
+
+    Computes ``ledger_row_id`` and ``row_hash`` from the supplied fields
+    plus the previous row's hash. Round 0 accepts
+    ``prev_ledger_row_hash is None``; later rounds MUST supply the
+    previous row's ``row_hash`` (the writer/chain integrity check in
+    :func:`verify_ledger_chain` rejects chains where a non-zero round
+    has ``prev_ledger_row_hash is None``).
+    """
+    ledger_row_id = _ledger_row_id(
+        int(round_index), str(policy_hash), str(bundle_digest)
+    )
+    row_hash = compute_ledger_row_hash(
+        ledger_row_id=str(ledger_row_id),
+        round_index=int(round_index),
+        source_round=int(source_round),
+        target_round=int(round_index),
+        applied_policy_hash=str(applied_policy_hash),
+        selected_bundle_digest=str(bundle_digest),
+        audit_codes=tuple(audit_codes),
+        per_channel_decision=dict(per_channel_decision),
+        prev_ledger_row_hash=prev_ledger_row_hash,
+    )
+    return LedgerRow(
+        ledger_row_id=str(ledger_row_id),
+        round_index=int(round_index),
+        source_round=int(source_round),
+        target_round=int(round_index),
+        applied_policy_hash=str(applied_policy_hash),
+        selected_bundle_digest=str(bundle_digest),
+        audit_codes=tuple(audit_codes),
+        per_channel_decision=dict(per_channel_decision),
+        prev_ledger_row_hash=(
+            None if prev_ledger_row_hash is None else str(prev_ledger_row_hash)
+        ),
+        row_hash=str(row_hash),
+    )
+
+
+def verify_ledger_chain(rows: tuple[LedgerRow, ...]) -> tuple[bool, str]:
+    """Return ``(ok, error_message)`` for the supplied sequence of rows.
+
+    A valid chain has:
+
+    * ``row[0].prev_ledger_row_hash is None``;
+    * ``row[i].prev_ledger_row_hash == row[i-1].row_hash`` for
+      ``i >= 1``;
+    * ``row[i].row_hash == compute_ledger_row_hash(...)`` for every
+      ``i`` (recovers the row from its fields + the previous row's
+      hash; any tampering with ``audit_codes``,
+      ``per_channel_decision``, etc. breaks the equality);
+    * ``round_index`` is monotone non-decreasing across the chain.
+
+    The function is total: ``ok == True`` and ``error_message == ""``
+    when the chain is valid; ``ok == False`` and a descriptive message
+    otherwise. This is the audit-replay entry point for the
+    Temporal-style "event history" guarantee (P0-8).
+    """
+    if not isinstance(rows, tuple):
+        return (False, f"rows must be a tuple, got {type(rows).__name__}")
+    prev_hash: str | None = None
+    last_round: int | None = None
+    for idx, row in enumerate(rows):
+        if not isinstance(row, LedgerRow):
+            return (False, f"row[{idx}] is not a LedgerRow")
+        if idx == 0:
+            if row.prev_ledger_row_hash is not None:
+                return (
+                    False,
+                    f"row[0].prev_ledger_row_hash must be None, "
+                    f"got {row.prev_ledger_row_hash!r}",
+                )
+        else:
+            if row.prev_ledger_row_hash is None:
+                return (
+                    False,
+                    f"row[{idx}].prev_ledger_row_hash must equal the "
+                    f"previous row's row_hash, got None",
+                )
+            if str(row.prev_ledger_row_hash) != str(prev_hash):
+                return (
+                    False,
+                    f"row[{idx}].prev_ledger_row_hash does not match "
+                    f"previous row_hash",
+                )
+        recovered = compute_ledger_row_hash(
+            ledger_row_id=str(row.ledger_row_id),
+            round_index=int(row.round_index),
+            source_round=int(row.source_round),
+            target_round=int(row.target_round),
+            applied_policy_hash=str(row.applied_policy_hash),
+            selected_bundle_digest=str(row.selected_bundle_digest),
+            audit_codes=tuple(row.audit_codes),
+            per_channel_decision=dict(row.per_channel_decision),
+            prev_ledger_row_hash=row.prev_ledger_row_hash,
+        )
+        if str(recovered) != str(row.row_hash):
+            return (
+                False,
+                f"row[{idx}].row_hash does not match the recompute "
+                f"(row has been tampered with)",
+            )
+        if last_round is not None and int(row.round_index) < int(last_round):
+            return (
+                False,
+                f"row[{idx}].round_index regressed "
+                f"({int(row.round_index)} < {int(last_round)})",
+            )
+        last_round = int(row.round_index)
+        prev_hash = str(row.row_hash)
+    return (True, "")
+
+
 def _next_phase_state(current: PhaseState, *, round_index: int) -> PhaseState:
     """Return the next-round phase state. Pure / deterministic.
 
@@ -355,9 +552,37 @@ def _coerce_nonneg_int(
     ``ERR_SOURCE_ROUND_NON_INT`` for non-int, ``ERR_ROUND_INDEX_NEGATIVE``
     for negative ``round_index``) and returns ``default`` so downstream
     ledger-row digest computation always has a valid int.
+
+    Closes P0-6: when ``value`` is a string that ``int(value)`` can
+    parse (``"3"``), the helper converts it and emits
+    ``ERR_SOURCE_ROUND_NON_INT`` / ``ERR_ROUND_INDEX_NON_INT`` so the
+    audit trail reflects the coercion; the returned int is the parsed
+    value so two callers with ``source_round="3"`` and
+    ``source_round=3`` produce the same downstream digest.
     """
     # bool is a subclass of int in Python — treat as non-int explicitly.
     if isinstance(value, bool) or not isinstance(value, int):
+        # Try a string-to-int conversion before falling back to the
+        # canonical ``default``. This makes
+        # ``source_round="3"`` and ``source_round=3`` digest identically
+        # under P0-6 — both surface the audit code but the int value
+        # returned matches.
+        if isinstance(value, str):
+            try:
+                parsed = int(value)
+            except (TypeError, ValueError):
+                code = ERR_ROUND_INDEX_NON_INT if name == "round_index" else ERR_SOURCE_ROUND_NON_INT
+                audit_codes.append(f"{code}:{name}:{type(value).__name__}")
+                return default
+            if parsed < 0:
+                if name == "round_index":
+                    audit_codes.append(ERR_ROUND_INDEX_NEGATIVE)
+                else:
+                    audit_codes.append(ERR_SOURCE_ROUND_NON_INT + f":{name}:negative")
+                return default
+            code = ERR_ROUND_INDEX_NON_INT if name == "round_index" else ERR_SOURCE_ROUND_NON_INT
+            audit_codes.append(f"{code}:{name}:{type(value).__name__}")
+            return int(parsed)
         code = ERR_ROUND_INDEX_NON_INT if name == "round_index" else ERR_SOURCE_ROUND_NON_INT
         audit_codes.append(f"{code}:{name}:{type(value).__name__}")
         return default
@@ -390,6 +615,76 @@ def _safe_source_round(bundle: StateBundle | None, audit_codes: list[str]) -> in
     )
 
 
+def _check_capabilities_advertise_dispatch(
+    *,
+    caps: AdapterCapabilities | None,
+    bundle: StateBundle | None,
+    audit_codes: list[str],
+) -> bool:
+    """Pre-dispatch capability handshake (P1-6, ONNX Runtime analog).
+
+    Mirrors ``IExecutionProvider::CanHandle`` in ONNX Runtime: before
+    the engine dispatches any round's native call (``apply_restart_distribution``
+    -> ``compose_condition`` -> ``solve_ode``) to the adapter, it
+    re-validates that the adapter's advertised capability surface
+    advertises *every* channel the round is about to route through
+    AND has the per-call capability flag that the requested step
+    consumes.
+
+    Returns ``True`` when the dispatch is permitted; ``False`` when a
+    capability mismatch is found. Each mismatch is appended to
+    ``audit_codes`` as ``f"{ERR_CAPABILITY_UNSUPPORTED}:{channel}:{capability}"``
+    so the downstream ledger row carries a per-channel capability
+    audit trail.
+
+    The check is fail-closed: a single missing capability for a single
+    channel aborts the entire round (the engine then routes through
+    the standard fail-closed ``_emit_fail_closed`` path). Callers that
+    want to drive the round regardless of partial capability
+    advertisement should suppress this gate explicitly — no such
+    override exists by design (the framework cannot assume the adapter
+    will produce a well-typed result for a channel it did not
+    advertise).
+    """
+    if caps is None:
+        audit_codes.append(f"{ERR_CAPABILITY_UNSUPPORTED}:caps_missing")
+        return False
+    if bundle is None:
+        return True
+    supported = set(caps.supported_channels)
+    for channel in bundle.channels:
+        if channel not in supported:
+            audit_codes.append(
+                f"{ERR_CAPABILITY_UNSUPPORTED}:{channel}:not_advertised"
+            )
+            continue
+        domain = _channel_domain_lookup(channel, caps)
+        if domain == "continuous" and not caps.has_continuous_channels:
+            audit_codes.append(
+                f"{ERR_CAPABILITY_UNSUPPORTED}:{channel}:"
+                "continuous_kind_not_advertised"
+            )
+        elif domain == "discrete" and not caps.has_discrete_channels:
+            audit_codes.append(
+                f"{ERR_CAPABILITY_UNSUPPORTED}:{channel}:"
+                "discrete_kind_not_advertised"
+            )
+    # Per-op capability flags. Each native step consumes a different
+    # capability; if the adapter dropped one mid-run the dispatch must
+    # not proceed.
+    for op_capability in (
+        "has_restart_boundary",
+        "has_condition_injection",
+        "has_ode_integration_surface",
+        "has_state_export",
+    ):
+        if not bool(getattr(caps, op_capability)):
+            audit_codes.append(
+                f"{ERR_CAPABILITY_UNSUPPORTED}:op:{op_capability}"
+            )
+    return True
+
+
 def _safe_adapter_call(
     step_name: str,
     audit_codes: list[str],
@@ -399,24 +694,41 @@ def _safe_adapter_call(
 ) -> Any:
     """Wrap an adapter call so a stray ``Exception`` cannot crash the round.
 
-    On any raised exception, append
-    ``f"{ERR_ADAPTER_RAISED}:{step_name}:{ExceptionType}:{message[:80]}"``
+    Only catches the engine-internal :class:`AdapterConfigurationError`
+    plus the two adapter-protocol exceptions
+    (:class:`CapabilityMissingError`, :class:`CapabilityMismatchError`).
+    ``ValueError`` / ``TypeError`` / ``KeyError`` / ``RuntimeError`` /
+    other arbitrary ``Exception`` subclasses are intentionally NOT
+    swallowed: a programmer error raised by an adapter must surface to
+    the caller rather than silently produce a fail-closed round trace
+    (closes P0-1: the engine must NOT fail-open on hostile
+    configuration).
+
+    On a caught exception, append
+    ``f"{ERR_ADAPTER_CONFIGURATION_ERROR}:{step_name}:{ExceptionType}:{message[:80]}"``
     to ``audit_codes`` and return ``None``. The engine then emits a
-    fail-closed round trace rather than propagating the exception to the
-    caller. ``Exception`` (not ``BaseException``) is intentional:
-    ``KeyboardInterrupt`` / ``SystemExit`` must still propagate.
+    fail-closed round trace rather than propagating the exception.
+    ``BaseException`` subclasses (``KeyboardInterrupt`` /
+    ``SystemExit``) always propagate.
     """
     try:
         return fn(*args, **kwargs)
-    except Exception as exc:
+    except (
+        AdapterConfigurationError,
+        CapabilityMissingError,
+        CapabilityMismatchError,
+    ) as exc:
         message = str(exc)[:80]
         audit_codes.append(
-            f"{ERR_ADAPTER_RAISED}:{step_name}:{type(exc).__name__}:{message}"
+            f"{ERR_ADAPTER_CONFIGURATION_ERROR}:{step_name}:{type(exc).__name__}:{message}"
         )
         return None
 
 
-def _policy_with_schedule_beta(policy: FinalRestartPolicy) -> FinalRestartPolicy:
+def _policy_with_schedule_beta(
+    policy: FinalRestartPolicy,
+    audit_codes: list[str] | None = None,
+) -> FinalRestartPolicy:
     """Return a copy of ``policy`` with ``beta_by_channel`` overridden by the schedule.
 
     ADR-0010 — cosine-driven memory fraction. When the policy carries
@@ -439,13 +751,29 @@ def _policy_with_schedule_beta(policy: FinalRestartPolicy) -> FinalRestartPolicy
     audit invariant that the hash matches the canonical field tuple
     is preserved.
 
-    Returns ``policy`` unchanged when ``policy.schedule_sample is None``
-    — the caller already gates on that precondition, so this branch is
-    a defensive no-op for callers that invoke the helper directly.
+    Fail-closed on ``schedule_sample is None`` (closes P0-5): when
+    ``beta_from_schedule`` is ``True`` the engine MUST be able to
+    derive ``beta`` from the schedule, and silently passing the
+    unoverridden policy through would produce an
+    ``applied_policy_hash`` that doesn't match what the engine
+    actually emitted to the adapter. Instead, when ``schedule_sample``
+    is ``None`` the helper appends ``ERR_SCHEDULE_SAMPLE_MISSING`` to
+    ``audit_codes`` (if provided) and returns a copy of ``policy``
+    with all ``beta_by_channel`` zeroed — that way the audit trail
+    reflects the engine's actual behaviour (fail-closed: do not
+    override) rather than silently agreeing with the caller's policy.
+    The recomputed ``policy_hash`` keeps the audit invariant
+    (``hash == recompute``) intact.
     """
     sample = policy.schedule_sample
     if sample is None:
-        return policy
+        if audit_codes is not None:
+            audit_codes.append(ERR_SCHEDULE_SAMPLE_MISSING)
+        zero_beta = {
+            channel: FactorValue(0.0) for channel in policy.beta_by_channel
+        }
+        overridden = replace(policy, beta_by_channel=zero_beta)
+        return replace(overridden, policy_hash=hash_policy_hash(overridden))
     # beta = n_cap (clipped) per the ADR-0010 derivation; the helper
     # ``memory_fraction_from_schedule`` returns the complementary
     # ``1 - n_cap`` so we subtract from ``1.0`` here. We do not call
@@ -457,8 +785,12 @@ def _policy_with_schedule_beta(policy: FinalRestartPolicy) -> FinalRestartPolicy
     try:
         n_cap = float(n_cap_raw)
     except (TypeError, ValueError):
+        if audit_codes is not None:
+            audit_codes.append(ERR_ADAPTER_CONFIGURATION_ERROR + ":n_cap_non_numeric")
         return policy
     if not _isfinite_or_skip(n_cap):
+        if audit_codes is not None:
+            audit_codes.append(ERR_ADAPTER_CONFIGURATION_ERROR + ":n_cap_non_finite")
         return policy
     beta_value = max(0.0, min(1.0, n_cap))
     new_beta_by_channel = {
@@ -574,6 +906,7 @@ class Engine:
         integrator_trace: ODEIntegratorTrace | None,
         detached: StateBundle | None,
         condition_delta: ODEConditionDelta | None,
+        prev_ledger_row_hash: str | None = None,
     ) -> EngineRoundResult:
         """Build a fail-closed :class:`EngineRoundResult` for the happy path.
 
@@ -584,16 +917,22 @@ class Engine:
         :data:`ERR_ADAPTER_RAISED` / :data:`ERR_INTEGRATOR_TRACE_MISSING`
         code; this helper only packages the round trace and ledger row
         so the caller can return without further branching. The ledger
-        ``source_round`` is sourced through :func:`_coerce_nonneg_int`
-        so a malformed bundle never raises here either.
+        ``source_round`` is sourced through :func:`_safe_source_round`
+        so a malformed bundle never raises here either (closes
+        commit 3dc0f60 per CONTRACTS.md §9.2 — single-source the
+        source_round coercion through ``_safe_source_round`` so the
+        RoundTrace and the LedgerRow see the exact same audit code
+        sequence and the exact same int value).
         """
-        # Coerce source_round BEFORE freezing the audit_codes tuple so a
-        # malformed bundle surfaces ERR_SOURCE_ROUND_NON_INT in both the
-        # RoundTrace and the LedgerRow (closes Gap C3 in the fail-closed
-        # adapter-raised path).
-        _coerce_nonneg_int(
-            getattr(bundle, "source_round", 0), "source_round", audit_codes
-        )
+        # Coerce source_round via ``_safe_source_round`` BEFORE freezing
+        # the audit_codes tuple so a malformed bundle surfaces
+        # ERR_SOURCE_ROUND_NON_INT in both the RoundTrace and the
+        # LedgerRow (closes Gap C3 in the fail-closed adapter-raised
+        # path AND finishes commit 3dc0f60: the helper is now the
+        # single boundary that ``_emit_fail_closed`` uses for
+        # source_round coercion, mirroring every other emit site in
+        # :meth:`run_round`).
+        _safe_source_round(bundle, audit_codes)
         codes = tuple(audit_codes)
         trace = RoundTrace(
             round_index=int(round_index),
@@ -614,21 +953,15 @@ class Engine:
             audit_codes=codes,
             extras={"feature_flag": True, "engine_version": ENGINE_VERSION},
         )
-        ledger = LedgerRow(
-            ledger_row_id=_ledger_row_id(
-                round_index, applied_policy_hash, _digest_state(bundle)
-            ),
+        ledger = build_ledger_row(
             round_index=int(round_index),
-            source_round=int(bundle.source_round)
-            if isinstance(getattr(bundle, "source_round", 0), int)
-            and not isinstance(getattr(bundle, "source_round", 0), bool)
-            and getattr(bundle, "source_round", 0) >= 0
-            else 0,
-            target_round=int(round_index),
-            applied_policy_hash=applied_policy_hash,
-            selected_bundle_digest=_digest_state(bundle),
+            policy_hash=str(applied_policy_hash),
+            bundle_digest=_digest_state(bundle),
+            source_round=_safe_source_round(bundle, audit_codes),
+            applied_policy_hash=str(applied_policy_hash),
             audit_codes=codes,
             per_channel_decision={},
+            prev_ledger_row_hash=prev_ledger_row_hash,
         )
         next_state = _next_phase_state(phase_state, round_index=round_index)
         return EngineRoundResult(
@@ -648,6 +981,7 @@ class Engine:
         condition_delta: ODEConditionDelta | None = None,
         *,
         seed: int = 0,
+        prev_ledger_row_hash: str | None = None,
     ) -> EngineRoundResult:
         """Orchestrate one Flow Matching ODE round.
 
@@ -676,6 +1010,15 @@ class Engine:
             condition delta has no effect).
         seed:
             Deterministic seed forwarded to ``adapter.solve_ode``.
+        prev_ledger_row_hash:
+            The previous round's ``row_hash`` (the hash-chained
+            ledger anchor — P0-8). Round 0 MUST pass ``None``;
+            subsequent rounds MUST pass the previous round's
+            ``ledger_row.row_hash``. The engine enforces the chain by
+            feeding ``prev_ledger_row_hash`` into
+            :func:`build_ledger_row` so any tampering with a row
+            breaks the recompute at
+            :func:`verify_ledger_chain` time.
 
         Returns
         -------
@@ -701,6 +1044,7 @@ class Engine:
         * ``capabilities_invalid``
         * ``channel_not_in_supported_channels``
         * ``channel_domain_mismatch``
+        * ``capability_unsupported`` (P1-6, ONNX Runtime analog)
         * ``endpoint_not_detached``
         * ``condition_delta_no_effect``
         * ``integrator_trace_missing``
@@ -709,14 +1053,20 @@ class Engine:
 
         Cosine-driven memory fraction (ADR-0010): when
         ``policy.beta_from_schedule is True`` (default) and
-        ``policy.schedule_sample is not None``, the engine overrides
-        ``policy.beta_by_channel`` for the duration of this round so
-        the per-round memory fraction is the schedule's complement of
-        ``n_cap``: ``beta = n_cap`` so ``memory_fraction = 1 - n_cap``.
-        The override is invisible to the caller (the supplied
-        ``policy`` is never mutated); the round trace's
-        ``applied_policy_hash`` reflects the post-override hash so the
-        audit invariant ``hash == recompute`` holds. When
+        ``policy.schedule_sample is not None`` AND
+        ``policy.driver_computed_beta is False`` (Contract 1.2),
+        the engine overrides ``policy.beta_by_channel`` for the
+        duration of this round so the per-round memory fraction is
+        the schedule's complement of ``n_cap``: ``beta = n_cap`` so
+        ``memory_fraction = 1 - n_cap``. The override is invisible
+        to the caller (the supplied ``policy`` is never mutated);
+        the round trace's ``applied_policy_hash`` reflects the
+        post-override hash so the audit invariant
+        ``hash == recompute`` holds. When
+        ``policy.driver_computed_beta is True`` (Contract 1.2 —
+        the driver has already mutated ``beta_by_channel``), the
+        engine SKIPS its inline re-override; the driver is the
+        canonical source of truth. When
         ``policy.beta_from_schedule is False`` (back-compat) the
         policy is forwarded verbatim.
         """
@@ -750,15 +1100,15 @@ class Engine:
                 audit_codes=tuple(audit_codes),
                 extras={"feature_flag": False, "engine_version": ENGINE_VERSION},
             )
-            ledger = LedgerRow(
-                ledger_row_id=_ledger_row_id(round_index, "", _digest_state(bundle)),
+            ledger = build_ledger_row(
                 round_index=int(round_index),
+                policy_hash="",
+                bundle_digest=_digest_state(bundle),
                 source_round=_safe_source_round(bundle, audit_codes),
-                target_round=int(round_index),
                 applied_policy_hash="",
-                selected_bundle_digest=_digest_state(bundle),
                 audit_codes=tuple(audit_codes),
                 per_channel_decision={},
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
             next_state = _next_phase_state(phase_state, round_index=round_index)
             return EngineRoundResult(
@@ -770,7 +1120,47 @@ class Engine:
 
         # ---- argument gates -------------------------------------------------
         if adapter is None:
-            raise RuntimeError(ERR_ADAPTER_NONE)
+            # Fail closed: emit ERR_ADAPTER_NONE in the audit trail and
+            # return a non-raising fail-closed round trace (closes P0-4).
+            # The other argument-gate codes (PHASE_STATE_NONE / POLICY_NONE /
+            # BUNDLE_NONE) also fail closed; we treat adapter=None as
+            # symmetric to those by routing through the same fail-closed
+            # emission pattern. No native call is made because the adapter
+            # is unavailable.
+            audit_codes.append(ERR_ADAPTER_NONE)
+            _coerce_nonneg_int(
+                getattr(bundle, "source_round", 0), "source_round", audit_codes
+            )
+            trace = RoundTrace(
+                round_index=int(round_index),
+                operation_steps=self._operation_steps,
+                source_bundle_digest=_digest_state(bundle),
+                applied_policy_hash="",
+                initial_state_digest="",
+                condition_digest="",
+                integrator_trace=None,
+                endpoint_digest="",
+                detached=False,
+                audit_codes=tuple(audit_codes),
+                extras={"feature_flag": True, "engine_version": ENGINE_VERSION},
+            )
+            ledger = build_ledger_row(
+                round_index=int(round_index),
+                policy_hash="",
+                bundle_digest=_digest_state(bundle),
+                source_round=_safe_source_round(bundle, audit_codes),
+                applied_policy_hash="",
+                audit_codes=tuple(audit_codes),
+                per_channel_decision={},
+                prev_ledger_row_hash=prev_ledger_row_hash,
+            )
+            next_state = _next_phase_state(phase_state, round_index=round_index)
+            return EngineRoundResult(
+                round_trace=trace,
+                next_phase_state=next_state,
+                ledger_row=ledger,
+                applied_policy_hash="",
+            )
         if phase_state is None:
             audit_codes.append(ERR_PHASE_STATE_NONE)
         if policy is None:
@@ -804,6 +1194,15 @@ class Engine:
             for channel in bundle.channels:
                 if channel not in caps.supported_channels:
                     audit_codes.append(f"{ERR_CHANNEL_UNSUPPORTED}:{channel}")
+                    # Capabilities advertisement dispatch (P1-6, ONNX
+                    # Runtime analog): the adapter did not advertise
+                    # this channel in its capability surface, so the
+                    # dispatch must fail closed with a separate
+                    # capability-aware code. This mirrors
+                    # ``IExecutionProvider::CanHandle``.
+                    audit_codes.append(
+                        f"{ERR_CAPABILITY_UNSUPPORTED}:{channel}:not_advertised"
+                    )
                 else:
                     expected = _channel_domain_lookup(channel, caps)
                     advertised_continuous = caps.has_continuous_channels
@@ -828,6 +1227,30 @@ class Engine:
                         audit_codes.append(
                             f"{ERR_CHANNEL_DOMAIN_MISMATCH}:{channel}"
                         )
+                        # Capability-side dispatch check (P1-6): the
+                        # adapter advertises the channel but did NOT
+                        # advertise the channel kind (continuous /
+                        # discrete) needed to dispatch to it.
+                        kind = (
+                            "continuous" if expected == "continuous" else "discrete"
+                        )
+                        audit_codes.append(
+                            f"{ERR_CAPABILITY_UNSUPPORTED}:{channel}:"
+                            f"{kind}_kind_not_advertised"
+                        )
+            # Per-op capability flags (P1-6): each native step consumes
+            # a different capability; if the adapter dropped one
+            # mid-run the dispatch must not proceed.
+            for op_capability in (
+                "has_restart_boundary",
+                "has_condition_injection",
+                "has_ode_integration_surface",
+                "has_state_export",
+            ):
+                if not bool(getattr(caps, op_capability)):
+                    audit_codes.append(
+                        f"{ERR_CAPABILITY_UNSUPPORTED}:op:{op_capability}"
+                    )
 
         # Fail closed on missing condition delta.
         if condition_delta is None:
@@ -861,15 +1284,15 @@ class Engine:
                 audit_codes=tuple(audit_codes),
                 extras={"feature_flag": True, "engine_version": ENGINE_VERSION},
             )
-            ledger = LedgerRow(
-                ledger_row_id=_ledger_row_id(round_index, applied_policy_hash, _digest_state(bundle)),
+            ledger = build_ledger_row(
                 round_index=int(round_index),
+                policy_hash=str(applied_policy_hash),
+                bundle_digest=_digest_state(bundle),
                 source_round=_safe_source_round(bundle, audit_codes),
-                target_round=int(round_index),
-                applied_policy_hash=applied_policy_hash,
-                selected_bundle_digest=_digest_state(bundle),
+                applied_policy_hash=str(applied_policy_hash),
                 audit_codes=tuple(audit_codes),
                 per_channel_decision={},
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
             next_state = _next_phase_state(phase_state, round_index=round_index)
             return EngineRoundResult(
@@ -906,6 +1329,7 @@ class Engine:
                 integrator_trace=None,
                 detached=None,
                 condition_delta=condition_delta,
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
 
         # 2. Apply restart distribution (beta=0 preserves the prior).
@@ -916,11 +1340,52 @@ class Engine:
         # (``beta = n_cap`` so ``memory_fraction = 1 - n_cap``). The
         # helper is pure; the resulting ``policy_hash`` is recomputed
         # via :func:`hash_policy_hash` so the audit trail matches the
-        # actually-emitted beta. When ``beta_from_schedule`` is
-        # ``False`` (back-compat) the policy is forwarded verbatim.
+        # actually-emitted beta.
+        #
+        # CONTRACT 1.2 — driver / engine dedup: when the policy has
+        # ``driver_computed_beta=True`` (set by a
+        # :class:`adaptive_reflow.algorithm.PolicyDriverProtocol` that
+        # already mutated ``beta_by_channel``), the engine SKIPS its
+        # inline re-override; the driver is the source of truth and
+        # the engine only validates that
+        # ``applied_policy.beta_from_schedule`` is consistent with the
+        # caller's intent. When ``beta_from_schedule`` is ``True`` but
+        # ``schedule_sample`` is ``None`` (closes P0-5), the helper
+        # emits ``ERR_SCHEDULE_SAMPLE_MISSING`` and returns a copy
+        # with all ``beta_by_channel`` zeroed. When
+        # ``beta_from_schedule`` is ``False`` (back-compat) the policy
+        # is forwarded verbatim.
+        #
+        # CAPABILITY DISPATCH (P1-6): before the engine hands the
+        # bundle to ``apply_restart_distribution`` (the first native
+        # dispatch of the round), re-validate that the adapter's
+        # advertised capability surface covers every channel the
+        # round will route through. Mirrors ONNX Runtime
+        # ``IExecutionProvider::CanHandle`` — when the adapter did
+        # not advertise a capability the engine needs, fail closed
+        # with ``ERR_CAPABILITY_UNSUPPORTED`` rather than dispatch
+        # and surface a downstream crash. The audit trail is appended
+        # to ``audit_codes`` so the ledger row carries the same code
+        # as the round trace.
+        if not _check_capabilities_advertise_dispatch(
+            caps=caps, bundle=bundle, audit_codes=audit_codes
+        ):
+            return self._emit_fail_closed(
+                round_index=round_index,
+                bundle=bundle,
+                audit_codes=audit_codes,
+                applied_policy_hash=applied_policy_hash,
+                phase_state=phase_state,
+                initial_state=initial_state,
+                composed=None,
+                integrator_trace=None,
+                detached=None,
+                condition_delta=condition_delta,
+                prev_ledger_row_hash=prev_ledger_row_hash,
+            )
         applied_policy: FinalRestartPolicy = policy
-        if policy.beta_from_schedule and policy.schedule_sample is not None:
-            applied_policy = _policy_with_schedule_beta(policy)
+        if policy.beta_from_schedule and not policy.driver_computed_beta:
+            applied_policy = _policy_with_schedule_beta(policy, audit_codes)
         if applied_policy is not policy:
             # Recompute the applied hash so the round trace's
             # ``applied_policy_hash`` reflects the post-override
@@ -947,6 +1412,7 @@ class Engine:
                 integrator_trace=None,
                 detached=None,
                 condition_delta=condition_delta,
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
 
         # 3. Compose condition.
@@ -969,6 +1435,7 @@ class Engine:
                 integrator_trace=None,
                 detached=None,
                 condition_delta=condition_delta,
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
 
         # 4. Shape / frame / normalization mismatch gate.
@@ -997,15 +1464,15 @@ class Engine:
                 audit_codes=tuple(audit_codes),
                 extras={"feature_flag": True, "engine_version": ENGINE_VERSION},
             )
-            ledger = LedgerRow(
-                ledger_row_id=_ledger_row_id(round_index, applied_policy_hash, _digest_state(bundle)),
+            ledger = build_ledger_row(
                 round_index=int(round_index),
+                policy_hash=str(applied_policy_hash),
+                bundle_digest=_digest_state(bundle),
                 source_round=_safe_source_round(bundle, audit_codes),
-                target_round=int(round_index),
-                applied_policy_hash=applied_policy_hash,
-                selected_bundle_digest=_digest_state(bundle),
+                applied_policy_hash=str(applied_policy_hash),
                 audit_codes=tuple(audit_codes),
                 per_channel_decision={},
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
             next_state = _next_phase_state(phase_state, round_index=round_index)
             return EngineRoundResult(
@@ -1037,6 +1504,7 @@ class Engine:
                 integrator_trace=None,
                 detached=None,
                 condition_delta=condition_delta,
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
 
         ok, errors = validate_integrator_trace(integrator_trace)
@@ -1065,6 +1533,7 @@ class Engine:
                 integrator_trace=integrator_trace,
                 detached=None,
                 condition_delta=condition_delta,
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
 
         # 7. Export endpoint. Wrapped separately so a raised exception
@@ -1087,6 +1556,7 @@ class Engine:
                 integrator_trace=integrator_trace,
                 detached=None,
                 condition_delta=condition_delta,
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
 
         detached = _safe_adapter_call(
@@ -1107,6 +1577,7 @@ class Engine:
                 integrator_trace=integrator_trace,
                 detached=None,
                 condition_delta=condition_delta,
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
 
         if not detached.detach_proof:
@@ -1125,17 +1596,17 @@ class Engine:
             audit_codes=tuple(audit_codes),
             extras={"feature_flag": True, "engine_version": ENGINE_VERSION},
         )
-        ledger = LedgerRow(
-            ledger_row_id=_ledger_row_id(round_index, applied_policy_hash, _digest_state(bundle)),
+        ledger = build_ledger_row(
             round_index=int(round_index),
+            policy_hash=str(applied_policy_hash),
+            bundle_digest=_digest_state(bundle),
             source_round=_safe_source_round(bundle, audit_codes),
-            target_round=int(round_index),
-            applied_policy_hash=applied_policy_hash,
-            selected_bundle_digest=_digest_state(bundle),
+            applied_policy_hash=str(applied_policy_hash),
             audit_codes=tuple(audit_codes),
             per_channel_decision={
                 channel: bool(detached.detach_proof) for channel in bundle.channels
             },
+            prev_ledger_row_hash=prev_ledger_row_hash,
         )
         next_state = _next_phase_state(phase_state, round_index=round_index)
         return EngineRoundResult(
@@ -1161,6 +1632,7 @@ __all__ = [
     # Error codes
     "ERR_BUNDLE_NONE",
     "ERR_CAPABILITIES_INVALID",
+    "ERR_CAPABILITY_UNSUPPORTED",
     "ERR_CHANNEL_DOMAIN_MISMATCH",
     "ERR_CHANNEL_DOMAIN_UNDECLARED",
     "ERR_CHANNEL_UNSUPPORTED",
@@ -1182,4 +1654,8 @@ __all__ = [
     "PhaseState",
     # Data carriers
     "RoundTrace",
+    # Hash-chained ledger (P0-8)
+    "build_ledger_row",
+    "compute_ledger_row_hash",
+    "verify_ledger_chain",
 ]

@@ -371,3 +371,53 @@ class TestBatchedRunnerInternalHelpers:
     def test_w2_to_mode_centres_empty_input_returns_zero(self) -> None:
         centres = np.array([[0.0, 0.0]])
         assert _w2_to_mode_centres(np.zeros((0, 2)), centres) == 0.0
+
+
+# ---------------------------------------------------------------------------
+# BatchedRunnerConfig.outer_cycle_id propagation
+# ---------------------------------------------------------------------------
+
+
+def test_outer_cycle_id_propagates_to_scheduler(_twodim_adapter) -> None:
+    """Two runners configured with different ``outer_cycle_id`` values
+    but the same ``seed`` must produce distinguishable endpoint
+    populations (closes the hard-coded ``scheduler.sample(0, r, r)``
+    bug). Different ``outer_cycle_id`` also yields different
+    ``config_hash`` values.
+    """
+    base_kwargs = dict(
+        cycle_length=4,
+        trajectories_per_round=4,
+        endpoints_per_trajectory=8,
+        scheduler=default_cosine_scheduler(cycle_length=4),
+        seed=42,
+    )
+    cfg_zero = BatchedRunnerConfig(outer_cycle_id=0, **base_kwargs)
+    cfg_one = BatchedRunnerConfig(outer_cycle_id=1, **base_kwargs)
+
+    runner_zero = BatchedTrajectoryRunner(cfg_zero, _twodim_adapter)
+    runner_one = BatchedTrajectoryRunner(cfg_one, _twodim_adapter)
+
+    result_zero = runner_zero.run()
+    result_one = runner_one.run()
+
+    # config_hash includes outer_cycle_id -> different hashes.
+    assert result_zero.config_hash != result_one.config_hash
+    # Endpoint populations differ (different scheduler.sample seeds).
+    for r in range(base_kwargs["cycle_length"]):
+        eps_zero = result_zero.per_round_endpoints[r][0]
+        eps_one = result_one.per_round_endpoints[r][0]
+        # At least one row must differ.
+        assert not np.array_equal(eps_zero, eps_one), (
+            f"round {r}: endpoints identical across outer_cycle_id "
+            f"0 vs 1; bug not fixed"
+        )
+
+
+def test_outer_cycle_id_default_is_zero() -> None:
+    """``BatchedRunnerConfig.outer_cycle_id`` defaults to ``0`` so the
+    legacy hard-coded behaviour is preserved when callers don't
+    override it.
+    """
+    cfg = BatchedRunnerConfig()
+    assert cfg.outer_cycle_id == 0

@@ -348,43 +348,69 @@ def test_cap_clamping_prevents_overflow():
     assert result == pytest.approx(0.95)
 
 
-def test_floor_above_cap_raises():
-    """Inverted envelope is a configuration error."""
-    with pytest.raises(MergeAuthorityError):
-        bounded_merge(
-            prev=0.5,
-            dynamic=0.5,
-            cap=0.3,
-            floor=0.7,
-            delta_cap_up=0.5,
-            delta_cap_down=0.5,
-        )
+def test_floor_above_cap_clips_with_audit():
+    """Inverted envelope is clipped and a canonical audit code is appended (P0-3).
+
+    Previously raised :exc:`MergeAuthorityError`. After the P0-3
+    contract fix, :class:`BoundedMergeOperator` clips into
+    ``(cap=floor, floor=cap)`` and appends the ``_ERR_CAP_BELOW_FLOOR``
+    audit code so a downstream audit reader can replay the
+    configuration. The result is a finite ``float`` in ``[0, 1]``.
+    """
+    audit: list[str] = []
+    result = bounded_merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=0.3,
+        floor=0.7,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert 0.0 <= result <= 1.0
+    assert any("merge_cap_below_floor" in code for code in audit)
 
 
-def test_negative_floor_raises():
-    """Floor must be in [0, 1]."""
-    with pytest.raises(MergeAuthorityError):
-        bounded_merge(
-            prev=0.5,
-            dynamic=0.5,
-            cap=1.0,
-            floor=-0.1,
-            delta_cap_up=0.5,
-            delta_cap_down=0.5,
-        )
+def test_negative_floor_clips_with_audit():
+    """Negative floor is clipped to ``0.0`` and a canonical audit code is appended (P0-3).
+
+    Previously raised :exc:`MergeAuthorityError`. After the P0-3 fix,
+    :class:`BoundedMergeOperator` clips ``floor`` into the unit
+    interval and appends ``MERGE_FLOOR_OUT_OF_RANGE``.
+    """
+    audit: list[str] = []
+    result = bounded_merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=1.0,
+        floor=-0.1,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert 0.0 <= result <= 1.0
+    assert any("merge_floor_out_of_range" in code for code in audit)
 
 
-def test_cap_above_one_raises():
-    """Cap must be in [0, 1]."""
-    with pytest.raises(MergeAuthorityError):
-        bounded_merge(
-            prev=0.5,
-            dynamic=0.5,
-            cap=1.1,
-            floor=0.0,
-            delta_cap_up=0.5,
-            delta_cap_down=0.5,
-        )
+def test_cap_above_one_clips_with_audit():
+    """Cap > 1.0 is clipped to ``1.0`` and a canonical audit code is appended (P0-3).
+
+    Previously raised :exc:`MergeAuthorityError`. After the P0-3 fix,
+    :class:`BoundedMergeOperator` clips ``cap`` into the unit
+    interval and appends ``MERGE_CAP_OUT_OF_RANGE``.
+    """
+    audit: list[str] = []
+    result = bounded_merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=1.1,
+        floor=0.0,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    assert 0.0 <= result <= 1.0
+    assert any("merge_cap_out_of_range" in code for code in audit)
 
 
 # ---------------------------------------------------------------------------
@@ -441,17 +467,23 @@ def test_asymmetric_delta_caps():
     assert down_only == pytest.approx(0.0)
 
 
-def test_delta_cap_up_above_one_raises():
-    """delta_cap_up must be in [0, 1]."""
-    with pytest.raises(MergeAuthorityError):
-        bounded_merge(
-            prev=0.5,
-            dynamic=0.5,
-            cap=1.0,
-            floor=0.0,
-            delta_cap_up=1.5,
-            delta_cap_down=0.5,
-        )
+def test_delta_cap_up_above_one_clips_with_audit():
+    """delta_cap_up > 1.0 is clipped to ``1.0`` (P0-3).
+
+    Previously raised :exc:`MergeAuthorityError`. After the P0-3
+    fix the operator never raises on legitimate caller input; it
+    clips ``delta_cap_up`` into the unit interval and returns a
+    finite result.
+    """
+    result = bounded_merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.5,
+        delta_cap_down=0.5,
+    )
+    assert 0.0 <= result <= 1.0
 
 
 # ---------------------------------------------------------------------------

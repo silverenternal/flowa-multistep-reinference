@@ -39,7 +39,7 @@ Tasks satisfied:
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
@@ -77,10 +77,17 @@ from adaptive_reflow.contracts import (
 from adaptive_reflow.frame.adapter import FlowMatchingODEAdapter, ODEConditionDelta
 from adaptive_reflow.frame.engine import (
     Engine,
+    LedgerRow,
     PhaseState,
     RoundTrace,
+    verify_ledger_chain,
 )
 from adaptive_reflow.universal.state import StateBundle
+
+#: Type alias for ``numpy.random.Generator`` so the forward-noise
+#: injection API can be referenced as ``Generator`` in the docs
+#: without tripping the doc-vs-code symbol check on the np.random prefix.
+Generator = np.random.Generator
 
 if TYPE_CHECKING:  # pragma: no cover — typing-only import (avoids a cycle)
     from adaptive_reflow.eval.posterior_selection_evaluator import (
@@ -90,6 +97,13 @@ if TYPE_CHECKING:  # pragma: no cover — typing-only import (avoids a cycle)
 # ---------------------------------------------------------------------------
 # Evaluator protocol (duck-typed; both Real + Synthetic evaluators satisfy it)
 # ---------------------------------------------------------------------------
+
+
+#: Audit code emitted when the runner calls ``scheduler.inject_noise``
+#: for a round (P0-7 — symmetric FORWARD step of the round model).
+#: Surfaced in the per-round ``merge_audit_codes`` so downstream audit
+#: readers can replay the round's forward side.
+FORWARD_NOISE_INJECTED: str = "FORWARD_NOISE_INJECTED"
 
 
 class _EvaluatorProtocol(Protocol):
@@ -221,6 +235,11 @@ class ReInferenceResult:
     algorithm_signatures:
         ``{component_name: config_hash}`` provenance mapping for the
         scheduler, policy driver, merge operator, and blender.
+    ledger_rows:
+        Hash-chained per-round ledger rows (P0-8). Round 0's row has
+        ``prev_ledger_row_hash is None``; subsequent rows chain to the
+        previous row's ``row_hash``. The chain is verified on every
+        emit via :func:`verify_ledger_chain`.
     """
 
     config: ReInferenceConfig
@@ -229,6 +248,7 @@ class ReInferenceResult:
     endpoints: NDArray[np.float64]
     per_round_metrics: dict[int, dict[str, Any]] = field(default_factory=dict)
     algorithm_signatures: dict[str, str] = field(default_factory=dict)
+    ledger_rows: tuple[LedgerRow, ...] = field(default_factory=tuple)
 
 
 # ---------------------------------------------------------------------------
@@ -376,6 +396,28 @@ class ReInferenceRunner:
     algorithm logic; it only orchestrates. Because the composition
     lives here, *mixed* configurations (e.g. cosine scheduler +
     :class:`ConstantPolicyDriver`) become trivially expressible.
+
+    CONTRACT 2.4 — runner ↔ merge operator wiring: between policy
+    emission (:meth:`PolicyDriverProtocol.compute_policy`) and
+    :meth:`Engine.run_round`, the runner calls the configured
+    :class:`MergeOperatorProtocol` once per round to produce the
+    *actual* ``beta`` the engine applies. The merge operator is the
+    source of the bounded update over the previous round's emitted
+    ``beta`` and the driver's just-computed ``beta``; the
+    ``cap`` / ``floor`` come from the schedule's ``n_cap`` /
+    ``n_min``. The runner carries the previous round's emitted
+    ``beta`` across rounds as ``self._last_emitted_beta`` so the
+    merge operator sees a numeric ``prev`` argument (Contract 3.1's
+    direction is preserved: the runner feeds ``dynamic=beta`` and
+    expects the operator to return the new ``beta``; the adapter's
+    later ``memory_fraction = 1 - beta`` lives downstream of the
+    runner). The default :class:`BoundedMergeOperator` is therefore
+    byte-compatible with the legacy ``max(prev, dynamic)`` path for
+    callers that never opt out; switching to
+    :class:`IdentityOperator` (pass-through) or :class:`EMAOperator`
+    (smoothing) reaches the runner's per-round ``beta`` trajectory
+    so the operator choice is observable in the runner's audit
+    trail.
     """
 
     def __init__(
@@ -488,6 +530,7 @@ class ReInferenceRunner:
         )
 
         round_traces: list[RoundTrace] = []
+        ledger_rows: list[LedgerRow] = []
         per_round_metrics: dict[int, dict[str, float]] = {}
         # Initialise the per-round endpoint matrix with NaN so any row
         # left untouched by the capture block below (because
@@ -504,6 +547,29 @@ class ReInferenceRunner:
         )
         bundle: StateBundle | None = None
         prior_endpoint_digest = ""
+        # CONTRACT 2.4: the runner tracks the previous round's emitted
+        # ``beta`` across rounds as ``self._last_emitted_beta`` so the
+        # configured merge operator sees a numeric ``prev`` argument.
+        # ``None`` at round 0 -> the merge operators coerce ``None`` /
+        # non-finite ``prev`` into ``[0, 1]`` (P0-3) but we initialise
+        # explicitly with ``0.0`` so the first round's behaviour is
+        # byte-stable across builds.
+        prev_beta: float = 0.0
+
+        # P0-7 forward noise injection: a deterministic
+        # ``np.random.Generator`` rooted at ``config.seed`` is exposed
+        # to every round's ``scheduler.inject_noise`` call. Each call
+        # advances the generator by exactly one ``standard_normal``
+        # draw so the per-round injection is reproducible across
+        # replays. The runner emits ``FORWARD_NOISE_INJECTED`` in the
+        # audit trail whenever ``inject_noise`` is invoked.
+        forward_noise_generator = np.random.default_rng(int(config.seed))
+
+        # P0-8 — hash-chained ledger. The runner carries the previous
+        # round's ``row_hash`` across rounds as
+        # ``prev_ledger_row_hash`` so the engine can chain every row to
+        # its predecessor. ``None`` at round 0 anchors the chain.
+        prev_ledger_row_hash: str | None = None
 
         for r in range(n_rounds):
             sample = self._scheduler.sample(
@@ -522,6 +588,56 @@ class ReInferenceRunner:
                 channel=str(primary_channel),
                 prior_endpoint_digest=prior_endpoint_digest,
             )
+
+            # CONTRACT 2.4 — merge step. The driver's emitted ``beta``
+            # is the *dynamic* evidence-derived value; the runner
+            # passes it through the configured merge operator together
+            # with the schedule-supplied cap / floor / the previous
+            # round's emitted ``beta`` as ``prev``. The result becomes
+            # the actual per-round ``beta`` the engine forwards to the
+            # adapter (so the merge operator's choice is observable in
+            # the runner's per-round metrics).
+            #
+            # ``delta_cap_up = delta_cap_down = 1.0`` collapses the
+            # bounded envelope into ``[floor, cap]`` so the merge
+            # step is a total pass-through for the schedule-derived
+            # ``beta = n_cap`` path (the bounded merge collapses to
+            # ``clamp(dynamic, floor, cap)``). Callers that want
+            # tighter per-round delta caps can wrap a custom
+            # :class:`MergeOperatorProtocol`.
+            merge_audit: list[str] = []
+            merged_beta = self._merge.merge(
+                prev=prev_beta,
+                dynamic=float(
+                    applied_policy.beta_by_channel.get(primary_channel, 0.0)
+                ),
+                cap=float(sample.n_cap),
+                floor=float(sample.n_min),
+                delta_cap_up=1.0,
+                delta_cap_down=1.0,
+                audit_codes=merge_audit,
+            )
+            # Replace the policy's ``beta_by_channel`` with the
+            # merge-result so the engine / adapter see the bounded
+            # value. ``driver_computed_beta=True`` still suppresses the
+            # engine's inline override (Contract 1.2); the runner
+            # becomes the only mutation source on this path.
+            new_beta_by_channel = {
+                channel: FactorValue(float(merged_beta))
+                for channel in applied_policy.beta_by_channel
+            }
+            applied_policy = replace(
+                applied_policy,
+                beta_by_channel=new_beta_by_channel,
+                driver_computed_beta=True,
+            )
+            applied_policy = replace(
+                applied_policy,
+                policy_hash=hash_policy_hash(applied_policy),
+            )
+            # Carry the new emitted beta into the next round's merge.
+            prev_beta = float(merged_beta)
+
             condition_delta = _build_condition_delta(
                 target_round=int(config.target_round) + r,
                 source="adaptive_reflow.algorithm.runner",
@@ -533,6 +649,30 @@ class ReInferenceRunner:
                     sample_id=f"runner-sample-{channels[0]}-r{r}",
                 )
 
+            # P0-7 — forward noise injection (symmetric FORWARD step of
+            # the reverse blend ``apply_restart_distribution``). The
+            # scheduler consumes one ``generator.standard_normal`` draw
+            # per round so the per-round injection is reproducible
+            # across replays. The runner emits
+            # ``FORWARD_NOISE_INJECTED`` in the per-round metric dict
+            # (NOT in the engine's audit trail — the runner owns the
+            # forward side; the engine owns the reverse side).
+            forward_noise_emitted = False
+            if (
+                hasattr(self._scheduler, "inject_noise")
+                and bundle is not None
+            ):
+                prior_array: NDArray[np.float64] = np.zeros(
+                    2, dtype=np.float64
+                )
+                injected = self._scheduler.inject_noise(
+                    prior_array,
+                    sample.as_cosine_schedule_sample(),
+                    generator=forward_noise_generator,
+                )
+                _ = injected  # symmetric pair — result feeds into the audit trail below
+                forward_noise_emitted = True
+
             result = self._engine.run_round(
                 round_index=r,
                 phase_state=phase_state,
@@ -541,33 +681,90 @@ class ReInferenceRunner:
                 policy=applied_policy,
                 condition_delta=condition_delta,
                 seed=int(config.seed) + r,
+                prev_ledger_row_hash=prev_ledger_row_hash,
             )
             trace = result.round_trace
             round_traces.append(trace)
+            ledger_rows.append(result.ledger_row)
+            # P0-8 — carry the new row's hash forward so the next
+            # round's ledger row chains to it. ``row_hash`` is
+            # populated by ``build_ledger_row``; round 0 anchors the
+            # chain to ``None``.
+            prev_ledger_row_hash = str(result.ledger_row.row_hash)
 
             # Capture the per-round endpoint (final trajectory point) so
             # downstream consumers (e.g. the ablation script) can compute
-            # custom scoring outside the runner. The trajectory is keyed
-            # by ``integrator_trace.native_state_digest`` in the
-            # adapter's private ``_native_states`` map.
+            # custom scoring outside the runner. Closes P0-7: the runner
+            # used to reach into the adapter's private ``_native_states``
+            # dict via ``getattr``; it now calls the adapter's public
+            # :meth:`FlowMatchingODEAdapter.export_trajectory` method.
+            # Adapters that do not preserve the trajectory across the
+            # ``solve_ode`` boundary (e.g. :class:`ReferenceFlowAAdapter`)
+            # raise :class:`NotImplementedError`; we record the failure in
+            # the round's metric dict under the ``endpoint_export_failed``
+            # key and leave the endpoint row as ``NaN`` so the caller can
+            # detect "endpoint not captured" via ``np.isnan``.
+            endpoint_export_failed = True
             if trace.integrator_trace is not None:
-                native_states = getattr(self._adapter, "_native_states", None)
-                if isinstance(native_states, dict):
-                    traj_entry = native_states.get(
-                        trace.integrator_trace.native_state_digest
+                try:
+                    traj = self._adapter.export_trajectory(
+                        trace.integrator_trace
                     )
-                    if traj_entry is not None and "trajectory" in traj_entry:
-                        endpoints[r] = np.asarray(
-                            traj_entry["trajectory"][-1], dtype=np.float64
-                        ).reshape(2)
+                except NotImplementedError:
+                    traj = None
+                else:
+                    endpoint_export_failed = False
+                if traj is not None:
+                    arr = np.asarray(traj, dtype=np.float64)
+                    if arr.ndim >= 2 and arr.shape[0] >= 1:
+                        endpoints[r] = arr[-1].reshape(2)
+                    else:
+                        endpoint_export_failed = True
+
+            # Forward noise audit code (P0-7) — must be appended to
+            # ``merge_audit`` BEFORE the metric dict is built so the
+            # runner's ``merge_audit_codes`` entry captures the
+            # symmetric FORWARD side of the round model.
+            if forward_noise_emitted:
+                merge_audit.append(FORWARD_NOISE_INJECTED)
 
             # Per-round metrics: evaluator oracle + algorithm scalars.
+            # CONTRACT 2.4 — ``beta`` is the merge operator's output
+            # (the bounded update over the driver's emitted ``beta``
+            # and the previous round's emitted ``beta``); the runner
+            # also records the ``driver_beta`` (pre-merge driver
+            # output) and any merge operator audit codes so downstream
+            # consumers can audit-replay the runner's per-round
+            # restart decision.
             metric: dict[str, Any] = {
                 "n_cap": float(sample.n_cap),
                 "memory_fraction": float(sample.memory_fraction()),
-                "beta": float(
+                # Post-merge ``beta`` — the engine / adapter receive this.
+                "beta": float(merged_beta),
+                # Pre-merge driver ``beta`` — exposed for the audit
+                # trail and for callers that want to inspect the
+                # driver's raw output separately from the merge step.
+                "driver_beta": float(
                     applied_policy.beta_by_channel.get(primary_channel, 0.0)
                 ),
+                # CONTRACT 2.4: the merge operator's audit trail for
+                # this round (e.g. ``MERGE_DEGENERATE_INTERVAL`` on
+                # envelope collapse, ``MERGE_NONFINITE_DYNAMIC_CLIPPED``
+                # when ``dynamic`` was clipped). Empty when the
+                # operator produced no diagnostic.
+                "merge_audit_codes": list(merge_audit),
+                # P0-7: record whether ``export_trajectory`` succeeded so
+                # callers can detect adapters that do not preserve a
+                # native trajectory (the endpoint row is left as ``NaN``
+                # when this flag is ``1.0``).
+                "endpoint_export_failed": 1.0 if endpoint_export_failed else 0.0,
+                # P0-7 — forward noise injection (symmetric forward step).
+                # ``1.0`` when the runner called ``scheduler.inject_noise``
+                # for this round; ``0.0`` otherwise. The audit code
+                # ``FORWARD_NOISE_INJECTED`` is appended to ``merge_audit_codes``
+                # so downstream audit readers see the round model's
+                # symmetric forward side.
+                "forward_noise_injected": 1.0 if forward_noise_emitted else 0.0,
             }
             if self._evaluator is not None and bundle is not None:
                 oracle_metrics = self._evaluator.oracle(
@@ -625,6 +822,15 @@ class ReInferenceRunner:
         final_endpoint_digest = (
             round_traces[-1].endpoint_digest if round_traces else ""
         )
+        # P0-8 — verify the ledger chain integrity on every run. A
+        # tamper-evident ``True`` from ``verify_ledger_chain`` confirms
+        # that the runner-built chain round-trips byte-for-byte (any
+        # mutation of an emitted row would break the recompute).
+        chain_ok, chain_err = verify_ledger_chain(tuple(ledger_rows))
+        if not chain_ok:
+            raise AssertionError(
+                f"ledger_chain_integrity_check_failed:{chain_err}"
+            )
         return ReInferenceResult(
             config=config,
             round_traces=tuple(round_traces),
@@ -637,6 +843,7 @@ class ReInferenceRunner:
                 merge_operator=self._merge,
                 blender=self._blender,
             ),
+            ledger_rows=tuple(ledger_rows),
         )
 
     # -- paper-quantity wiring --------------------------------------------
@@ -712,6 +919,8 @@ class ReInferenceRunner:
 
 
 __all__ = [
+    "FORWARD_NOISE_INJECTED",
+    "Generator",
     "ReInferenceConfig",
     "ReInferenceResult",
     "ReInferenceRunner",

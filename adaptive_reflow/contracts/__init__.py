@@ -79,6 +79,16 @@ _prepopulate_molecule_bundle_names()
 
 # ---- NewType aliases ----
 # ---- DTB-R1 + DTB-R2 contract (universal carriers) ----
+# ---- Audit-code typed structure + chain consistency (CONTRACTS.md §9.1-§9.2) ----
+from .audit import (
+    AuditCode,
+    coerce_audit_code,
+    coerce_audit_codes,
+    make_audit_code,
+    parse_audit_code,
+    validate_audit_chain,
+    validate_audit_code,
+)
 from .bundle import (
     ChannelRuleInputs,
     ChannelRuleOutputs,
@@ -218,6 +228,7 @@ __all__ = [
     "AUTHORITY_MODES",
     "AUDIT_SOURCE_REVOKED",
     "ArchiveAuditTrail",
+    "AuditCode",
     "ArchiveQuota",
     "ArtifactHash",
     "BundleId",
@@ -284,6 +295,8 @@ __all__ = [
     "make_default_phase_state",
     "make_default_phase_state_digest",
     "validate_archive_quota",
+    "validate_audit_chain",
+    "validate_audit_code",
     "validate_channel_evidence",
     "validate_final_restart_policy",
     "validate_nonneg_int",
@@ -291,6 +304,11 @@ __all__ = [
     "validate_round_result_bundle",
     "validate_unit_factor",
     "validate_unit_float",
+    # Audit-code typed structure (CONTRACTS.md §9.1-§9.2)
+    "coerce_audit_code",
+    "coerce_audit_codes",
+    "make_audit_code",
+    "parse_audit_code",
     # Envelope (molecule-aware)
     "EnvelopeClassification",
     "EnvelopeLayer",

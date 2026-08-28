@@ -125,12 +125,16 @@ def hash_policy_hash(policy: FinalRestartPolicy) -> ArtifactHash:
     Recomputes from the canonical field tuple
     ``(policy_id, writer_id, run_id, target_round, outer_cycle_id,
     beta_by_channel, alpha_by_channel, fresh_noise_floor_by_channel,
-    freeze_admission_by_channel, beta_from_schedule)``.
+    freeze_admission_by_channel, beta_from_schedule,
+    driver_computed_beta)``.
 
     ``beta_from_schedule`` (ADR-0010) is included so two policies that
-    differ only by the schedule-driven override flag hash differently,
-    preserving the audit invariant that the hash uniquely identifies
-    the policy surface.
+    differ only by the schedule-driven override flag hash differently.
+    ``driver_computed_beta`` (Contract 1.2) is included so a policy
+    whose driver has mutated ``beta_by_channel`` hashes differently
+    from a policy whose ``beta_by_channel`` is the caller's verbatim
+    value, preserving the audit invariant that the hash uniquely
+    identifies the policy surface.
     """
     payload = {
         "policy_id": str(policy.policy_id),
@@ -147,6 +151,7 @@ def hash_policy_hash(policy: FinalRestartPolicy) -> ArtifactHash:
             {k: bool(v) for k, v in policy.freeze_admission_by_channel.items()}
         ),
         "beta_from_schedule": bool(policy.beta_from_schedule),
+        "driver_computed_beta": bool(policy.driver_computed_beta),
     }
     return hash_artifact(payload)
 

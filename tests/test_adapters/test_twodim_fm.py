@@ -125,6 +125,7 @@ def _make_final_policy(
     beta: float,
     channels: tuple[str, ...] = TWODIM_FM_CHANNELS,
     target_round: int = 0,
+    beta_from_schedule: bool = False,
 ) -> FinalRestartPolicy:
     from adaptive_reflow.contracts import (
         ArtifactHash,
@@ -153,6 +154,11 @@ def _make_final_policy(
         ledger_row_id=LedgerRowId(f"ledger-{policy_id}"),
         policy_hash=ArtifactHash(""),
         created_at_round=0,
+        # P0-5: ``beta_from_schedule=False`` so the engine doesn't emit
+        # ``ERR_SCHEDULE_SAMPLE_MISSING`` when ``schedule_sample`` is
+        # ``None``; the legacy parity path under test is the inline
+        # ``beta_by_channel`` value, not the schedule-derived override.
+        beta_from_schedule=bool(beta_from_schedule),
     )
     return replace(policy, policy_hash=hash_policy_hash(policy))
 

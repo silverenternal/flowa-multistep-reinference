@@ -164,6 +164,14 @@ class _NonMoleculeAdapter:
     ) -> StateBundle:
         return state
 
+    def export_trajectory(
+        self, trace: ODEIntegratorTrace
+    ) -> Any | None:
+        """P0-7: non-molecule adapter implements the public trajectory
+        export entry point. Returns ``None`` because this synthetic
+        adapter does not preserve a native trajectory."""
+        return None
+
 
 # ---------------------------------------------------------------------------
 # Tests

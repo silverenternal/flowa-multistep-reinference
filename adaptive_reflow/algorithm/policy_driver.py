@@ -120,7 +120,11 @@ def _override_beta_by_channel(
     and ``schedule_sample`` are forwarded verbatim. The returned
     policy's :attr:`FinalRestartPolicy.policy_hash` is recomputed via
     :func:`hash_policy_hash` so the audit invariant
-    ``policy_hash == hash_policy_hash(policy)`` holds.
+    ``policy_hash == hash_policy_hash(policy)`` holds. The helper
+    also sets ``driver_computed_beta=True`` on the returned policy
+    (closes Contract 1.2: the driver is the source of truth for
+    ``beta_by_channel`` so the engine skips its inline re-override
+    when the flag is set).
 
     The ``channel`` argument is accepted for protocol signature parity;
     the override writes to *every* key in the policy's vocabulary so
@@ -143,7 +147,9 @@ def _override_beta_by_channel(
     new_beta_by_channel: Mapping[Any, Any] = {
         k: type(base_policy.beta_by_channel[k])(clipped) for k in keys
     }
-    overridden = replace(base_policy, beta_by_channel=new_beta_by_channel)
+    overridden = replace(
+        base_policy, beta_by_channel=new_beta_by_channel, driver_computed_beta=True
+    )
     return replace(overridden, policy_hash=hash_policy_hash(overridden))
 
 
@@ -168,6 +174,23 @@ class PolicyDriverProtocol(Protocol):
       (ablation baseline).
     * :class:`AdaptivePolicyDriver` — ``beta`` depends on the prior
       endpoint's digest (adaptive exploration vs. refinement).
+
+    CONTRACT 3.1 — driver ↔ blender direction: the output of
+    :meth:`compute_policy` is the **per-round ``beta``** (the noise
+    coefficient; higher means more fresh noise). The
+    :class:`RestartBlenderProtocol` consumes ``memory_fraction =
+    1 - beta`` at the adapter boundary; callers MUST NOT pass
+    ``beta`` directly to ``blender.blend(...)`` as ``memory_fraction``.
+    Drivers MUST NOT produce a negative ``beta``; the canonical
+    ``_override_beta_by_channel`` helper clips to ``[0, 1]``.
+
+    CONTRACT 1.2 — driver / engine dedup: drivers that mutate
+    ``beta_by_channel`` MUST mark the returned policy with
+    ``driver_computed_beta=True`` so the engine's inline
+    ``_policy_with_schedule_beta`` re-override is suppressed. The
+    shared helper :func:`_override_beta_by_channel` already sets the
+    flag; drivers that build their own override MUST set it manually
+    via ``dataclasses.replace(..., driver_computed_beta=True)``.
     """
 
     def compute_policy(
@@ -206,7 +229,13 @@ class PolicyDriverProtocol(Protocol):
         -------
         FinalRestartPolicy
             A policy whose :attr:`policy_hash` is the deterministic
-            recompute of the canonical field tuple.
+            recompute of the canonical field tuple. The returned
+            ``beta_by_channel`` is the **per-round ``beta``** (the
+            noise coefficient; ``memory_fraction = 1 - beta`` lives
+            downstream at the blender boundary — Contract 3.1).
+            Drivers that mutate ``beta_by_channel`` MUST set
+            ``driver_computed_beta=True`` so the engine skips its
+            inline re-override (Contract 1.2).
         """
         ...
 
@@ -310,6 +339,23 @@ class ScheduleDerivedPolicyDriver:
         }
         return _stable_digest(payload)
 
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict (P1-1 round-trip)."""
+        return {"family": SCHEDULE_DERIVED_FAMILY}
+
+    @classmethod
+    def from_config(
+        cls, config: dict[str, Any]
+    ) -> ScheduleDerivedPolicyDriver:
+        """Build a :class:`ScheduleDerivedPolicyDriver` from ``config``.
+
+        The driver has no knobs; ``config["family"]`` MUST equal
+        ``"schedule_derived"``.
+        """
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return ScheduleDerivedPolicyDriver()
+
 
 # ---------------------------------------------------------------------------
 # Constant-beta driver (ablation baseline)
@@ -391,6 +437,17 @@ class ConstantPolicyDriver:
             "beta": float(self._beta),
         }
         return _stable_digest(payload)
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict (P1-1 round-trip)."""
+        return {"family": CONSTANT_FAMILY, "beta": float(self._beta)}
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> ConstantPolicyDriver:
+        """Build a :class:`ConstantPolicyDriver` from ``config``."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return ConstantPolicyDriver(beta=float(config["beta"]))
 
 
 # ---------------------------------------------------------------------------
@@ -560,6 +617,31 @@ class AdaptivePolicyDriver:
                 self._per_cell_coefficient_C
             )
         return _stable_digest(payload)
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict (P1-1 round-trip)."""
+        return {
+            "family": ADAPTIVE_FAMILY,
+            "target_estimate": float(self._target),
+            "per_cell_coefficient_C": (
+                None
+                if self._per_cell_coefficient_C is None
+                else float(self._per_cell_coefficient_C)
+            ),
+        }
+
+    @classmethod
+    def from_config(cls, config: dict[str, Any]) -> AdaptivePolicyDriver:
+        """Build an :class:`AdaptivePolicyDriver` from ``config``."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        per_cell = config.get("per_cell_coefficient_C")
+        if per_cell is not None:
+            per_cell = float(per_cell)
+        return AdaptivePolicyDriver(
+            target_estimate=float(config["target_estimate"]),
+            per_cell_coefficient_C=per_cell,
+        )
 
 
 # ---------------------------------------------------------------------------

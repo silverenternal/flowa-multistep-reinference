@@ -1207,7 +1207,17 @@ and validates the structural / metadata invariants below.</p>
 <span class="normal"><a href="#__codelineno-0-77">77</a></span>
 <span class="normal"><a href="#__codelineno-0-78">78</a></span>
 <span class="normal"><a href="#__codelineno-0-79">79</a></span>
-<span class="normal"><a href="#__codelineno-0-80">80</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-80">80</a></span>
+<span class="normal"><a href="#__codelineno-0-81">81</a></span>
+<span class="normal"><a href="#__codelineno-0-82">82</a></span>
+<span class="normal"><a href="#__codelineno-0-83">83</a></span>
+<span class="normal"><a href="#__codelineno-0-84">84</a></span>
+<span class="normal"><a href="#__codelineno-0-85">85</a></span>
+<span class="normal"><a href="#__codelineno-0-86">86</a></span>
+<span class="normal"><a href="#__codelineno-0-87">87</a></span>
+<span class="normal"><a href="#__codelineno-0-88">88</a></span>
+<span class="normal"><a href="#__codelineno-0-89">89</a></span>
+<span class="normal"><a href="#__codelineno-0-90">90</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="k">class</span><span class="w"> </span><span class="nc">FinalRestartPolicy</span><span class="p">:</span>
 <a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="w">    </span><span class="sd">"""Immutable final restart policy consumed by ``flowa_core_runtime``."""</span>
 <a id="__codelineno-0-57" name="__codelineno-0-57"></a>
@@ -1225,15 +1235,25 @@ and validates the structural / metadata invariants below.</p>
 <a id="__codelineno-0-69" name="__codelineno-0-69"></a>    <span class="n">policy_hash</span><span class="p">:</span> <span class="n">ArtifactHash</span>
 <a id="__codelineno-0-70" name="__codelineno-0-70"></a>    <span class="n">created_at_round</span><span class="p">:</span> <span class="nb">int</span>
 <a id="__codelineno-0-71" name="__codelineno-0-71"></a>    <span class="c1"># ADR-0010 — cosine-driven memory fraction. When ``True`` (default)</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="c1"># the framework derives ``beta_by_channel`` from the schedule's</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>    <span class="c1"># the engine derives ``beta_by_channel`` from the schedule's</span>
 <a id="__codelineno-0-73" name="__codelineno-0-73"></a>    <span class="c1"># ``n_cap`` (``beta = n_cap`` so ``memory_fraction = 1 - n_cap``).</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="c1"># When ``False`` the explicit ``beta_by_channel`` is preserved</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>    <span class="c1"># When ``False`` the caller-supplied ``beta_by_channel`` is preserved</span>
 <a id="__codelineno-0-75" name="__codelineno-0-75"></a>    <span class="c1"># verbatim (back-compat for callers that want to lock beta</span>
 <a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="c1"># independently of the schedule). The flag is read by</span>
 <a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="c1"># :meth:`adaptive_reflow.frame.engine.Engine.run_round` and is</span>
 <a id="__codelineno-0-78" name="__codelineno-0-78"></a>    <span class="c1"># included in the canonical ``policy_hash`` recompute so two</span>
 <a id="__codelineno-0-79" name="__codelineno-0-79"></a>    <span class="c1"># policies that differ only by this flag hash differently.</span>
 <a id="__codelineno-0-80" name="__codelineno-0-80"></a>    <span class="n">beta_from_schedule</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="c1"># Contract 1.2 — driver / engine dedup. When ``True`` the</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="c1"># :class:`adaptive_reflow.algorithm.PolicyDriverProtocol` has</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="c1"># already mutated ``beta_by_channel`` (e.g. a</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="c1"># :class:`ScheduleDerivedPolicyDriver` writing ``beta = n_cap``).</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="c1"># The engine reads this flag and SKIPS the inline</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a>    <span class="c1"># ``_policy_with_schedule_beta`` re-override so the per-round</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>    <span class="c1"># ``beta`` is set by exactly one source of truth (the driver).</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>    <span class="c1"># ``False`` (the default) preserves the legacy engine-driven</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="c1"># path for callers that opt out of the driver abstraction.</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>    <span class="n">driver_computed_beta</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1655,7 +1675,26 @@ boundary as either a :class:<code>StateBundle</code> or a :class:<code>TensorRef
 <span class="normal"><a href="#__codelineno-0-284">284</a></span>
 <span class="normal"><a href="#__codelineno-0-285">285</a></span>
 <span class="normal"><a href="#__codelineno-0-286">286</a></span>
-<span class="normal"><a href="#__codelineno-0-287">287</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="nd">@runtime_checkable</span>
+<span class="normal"><a href="#__codelineno-0-287">287</a></span>
+<span class="normal"><a href="#__codelineno-0-288">288</a></span>
+<span class="normal"><a href="#__codelineno-0-289">289</a></span>
+<span class="normal"><a href="#__codelineno-0-290">290</a></span>
+<span class="normal"><a href="#__codelineno-0-291">291</a></span>
+<span class="normal"><a href="#__codelineno-0-292">292</a></span>
+<span class="normal"><a href="#__codelineno-0-293">293</a></span>
+<span class="normal"><a href="#__codelineno-0-294">294</a></span>
+<span class="normal"><a href="#__codelineno-0-295">295</a></span>
+<span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span>
+<span class="normal"><a href="#__codelineno-0-299">299</a></span>
+<span class="normal"><a href="#__codelineno-0-300">300</a></span>
+<span class="normal"><a href="#__codelineno-0-301">301</a></span>
+<span class="normal"><a href="#__codelineno-0-302">302</a></span>
+<span class="normal"><a href="#__codelineno-0-303">303</a></span>
+<span class="normal"><a href="#__codelineno-0-304">304</a></span>
+<span class="normal"><a href="#__codelineno-0-305">305</a></span>
+<span class="normal"><a href="#__codelineno-0-306">306</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="nd">@runtime_checkable</span>
 <a id="__codelineno-0-235" name="__codelineno-0-235"></a><span class="k">class</span><span class="w"> </span><span class="nc">FlowMatchingODEAdapter</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="w">    </span><span class="sd">"""Public protocol surface between the engine and a Flow Matching ODE.</span>
 <a id="__codelineno-0-237" name="__codelineno-0-237"></a>
@@ -1709,6 +1748,25 @@ boundary as either a :class:<code>StateBundle</code> or a :class:<code>TensorRef
 <a id="__codelineno-0-285" name="__codelineno-0-285"></a>        <span class="n">trace</span><span class="p">:</span> <span class="n">ODEIntegratorTrace</span><span class="p">,</span>
 <a id="__codelineno-0-286" name="__codelineno-0-286"></a>        <span class="n">state</span><span class="p">:</span> <span class="n">StateBundle</span><span class="p">,</span>
 <a id="__codelineno-0-287" name="__codelineno-0-287"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateBundle</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-0-288" name="__codelineno-0-288"></a>
+<a id="__codelineno-0-289" name="__codelineno-0-289"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">export_trajectory</span><span class="p">(</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">trace</span><span class="p">:</span> <span class="n">ODEIntegratorTrace</span>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a><span class="w">        </span><span class="sd">"""Return the adapter's native trajectory for ``trace`` (or ``None``).</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a><span class="sd">        Closes P0-7: the runner must call this public method instead of</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a><span class="sd">        reaching into the adapter's private ``_native_states`` dict.</span>
+<a id="__codelineno-0-296" name="__codelineno-0-296"></a><span class="sd">        Implementations that store a native trajectory under</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="sd">        ``trace.native_state_digest`` (e.g. :class:`TwoDimFMAdapter`)</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="sd">        return it here. Implementations that do not preserve the</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">        trajectory across the ``solve_ode`` boundary (e.g.</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">        :class:`ReferenceFlowAAdapter`, the synthetic adapters) raise</span>
+<a id="__codelineno-0-301" name="__codelineno-0-301"></a><span class="sd">        :class:`NotImplementedError` — the runner catches this and</span>
+<a id="__codelineno-0-302" name="__codelineno-0-302"></a><span class="sd">        records an audit-code-style note in the round's metric dict</span>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">        rather than crashing. Returning ``None`` is also accepted as a</span>
+<a id="__codelineno-0-304" name="__codelineno-0-304"></a><span class="sd">        valid "no trajectory available" signal.</span>
+<a id="__codelineno-0-305" name="__codelineno-0-305"></a><span class="sd">        """</span>
+<a id="__codelineno-0-306" name="__codelineno-0-306"></a>        <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1724,6 +1782,76 @@ boundary as either a :class:<code>StateBundle</code> or a :class:<code>TensorRef
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="adaptive_reflow.universal.adapter.FlowMatchingODEAdapter.export_trajectory" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">export_trajectory</span>
+
+
+<a href="#adaptive_reflow.universal.adapter.FlowMatchingODEAdapter.export_trajectory" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">export_trajectory</span><span class="p">(</span><span class="n">trace</span><span class="p">:</span> <span class="n">ODEIntegratorTrace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the adapter's native trajectory for <code>trace</code> (or <code>None</code>).</p>
+<p>Closes P0-7: the runner must call this public method instead of
+reaching into the adapter's private <code>_native_states</code> dict.
+Implementations that store a native trajectory under
+<code>trace.native_state_digest</code> (e.g. :class:<code>TwoDimFMAdapter</code>)
+return it here. Implementations that do not preserve the
+trajectory across the <code>solve_ode</code> boundary (e.g.
+:class:<code>ReferenceFlowAAdapter</code>, the synthetic adapters) raise
+:class:<code>NotImplementedError</code> — the runner catches this and
+records an audit-code-style note in the round's metric dict
+rather than crashing. Returning <code>None</code> is also accepted as a
+valid "no trajectory available" signal.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>adaptive_reflow\universal\adapter.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-289">289</a></span>
+<span class="normal"><a href="#__codelineno-0-290">290</a></span>
+<span class="normal"><a href="#__codelineno-0-291">291</a></span>
+<span class="normal"><a href="#__codelineno-0-292">292</a></span>
+<span class="normal"><a href="#__codelineno-0-293">293</a></span>
+<span class="normal"><a href="#__codelineno-0-294">294</a></span>
+<span class="normal"><a href="#__codelineno-0-295">295</a></span>
+<span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span>
+<span class="normal"><a href="#__codelineno-0-299">299</a></span>
+<span class="normal"><a href="#__codelineno-0-300">300</a></span>
+<span class="normal"><a href="#__codelineno-0-301">301</a></span>
+<span class="normal"><a href="#__codelineno-0-302">302</a></span>
+<span class="normal"><a href="#__codelineno-0-303">303</a></span>
+<span class="normal"><a href="#__codelineno-0-304">304</a></span>
+<span class="normal"><a href="#__codelineno-0-305">305</a></span>
+<span class="normal"><a href="#__codelineno-0-306">306</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-289" name="__codelineno-0-289"></a><span class="k">def</span><span class="w"> </span><span class="nf">export_trajectory</span><span class="p">(</span>
+<a id="__codelineno-0-290" name="__codelineno-0-290"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">trace</span><span class="p">:</span> <span class="n">ODEIntegratorTrace</span>
+<a id="__codelineno-0-291" name="__codelineno-0-291"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-292" name="__codelineno-0-292"></a><span class="w">    </span><span class="sd">"""Return the adapter's native trajectory for ``trace`` (or ``None``).</span>
+<a id="__codelineno-0-293" name="__codelineno-0-293"></a>
+<a id="__codelineno-0-294" name="__codelineno-0-294"></a><span class="sd">    Closes P0-7: the runner must call this public method instead of</span>
+<a id="__codelineno-0-295" name="__codelineno-0-295"></a><span class="sd">    reaching into the adapter's private ``_native_states`` dict.</span>
+<a id="__codelineno-0-296" name="__codelineno-0-296"></a><span class="sd">    Implementations that store a native trajectory under</span>
+<a id="__codelineno-0-297" name="__codelineno-0-297"></a><span class="sd">    ``trace.native_state_digest`` (e.g. :class:`TwoDimFMAdapter`)</span>
+<a id="__codelineno-0-298" name="__codelineno-0-298"></a><span class="sd">    return it here. Implementations that do not preserve the</span>
+<a id="__codelineno-0-299" name="__codelineno-0-299"></a><span class="sd">    trajectory across the ``solve_ode`` boundary (e.g.</span>
+<a id="__codelineno-0-300" name="__codelineno-0-300"></a><span class="sd">    :class:`ReferenceFlowAAdapter`, the synthetic adapters) raise</span>
+<a id="__codelineno-0-301" name="__codelineno-0-301"></a><span class="sd">    :class:`NotImplementedError` — the runner catches this and</span>
+<a id="__codelineno-0-302" name="__codelineno-0-302"></a><span class="sd">    records an audit-code-style note in the round's metric dict</span>
+<a id="__codelineno-0-303" name="__codelineno-0-303"></a><span class="sd">    rather than crashing. Returning ``None`` is also accepted as a</span>
+<a id="__codelineno-0-304" name="__codelineno-0-304"></a><span class="sd">    valid "no trajectory available" signal.</span>
+<a id="__codelineno-0-305" name="__codelineno-0-305"></a><span class="sd">    """</span>
+<a id="__codelineno-0-306" name="__codelineno-0-306"></a>    <span class="o">...</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
 
 
 

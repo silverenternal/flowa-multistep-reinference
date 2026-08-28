@@ -69,15 +69,25 @@ class FinalRestartPolicy:
     policy_hash: ArtifactHash
     created_at_round: int
     # ADR-0010 — cosine-driven memory fraction. When ``True`` (default)
-    # the framework derives ``beta_by_channel`` from the schedule's
+    # the engine derives ``beta_by_channel`` from the schedule's
     # ``n_cap`` (``beta = n_cap`` so ``memory_fraction = 1 - n_cap``).
-    # When ``False`` the explicit ``beta_by_channel`` is preserved
+    # When ``False`` the caller-supplied ``beta_by_channel`` is preserved
     # verbatim (back-compat for callers that want to lock beta
     # independently of the schedule). The flag is read by
     # :meth:`adaptive_reflow.frame.engine.Engine.run_round` and is
     # included in the canonical ``policy_hash`` recompute so two
     # policies that differ only by this flag hash differently.
     beta_from_schedule: bool = True
+    # Contract 1.2 — driver / engine dedup. When ``True`` the
+    # :class:`adaptive_reflow.algorithm.PolicyDriverProtocol` has
+    # already mutated ``beta_by_channel`` (e.g. a
+    # :class:`ScheduleDerivedPolicyDriver` writing ``beta = n_cap``).
+    # The engine reads this flag and SKIPS the inline
+    # ``_policy_with_schedule_beta`` re-override so the per-round
+    # ``beta`` is set by exactly one source of truth (the driver).
+    # ``False`` (the default) preserves the legacy engine-driven
+    # path for callers that opt out of the driver abstraction.
+    driver_computed_beta: bool = False
 
 
 # ---------------------------------------------------------------------------

@@ -116,6 +116,10 @@ def _make_final_policy() -> FinalRestartPolicy:
         ledger_row_id=LedgerRowId("ledger-det"),
         policy_hash=ArtifactHash(""),
         created_at_round=0,
+        # P0-5: disable the schedule-derived beta override; the
+        # determinism tests assert byte-for-byte parity on the inline
+        # ``beta_by_channel`` value, not on the schedule-derived one.
+        beta_from_schedule=False,
     )
     return replace(policy, policy_hash=hash_policy_hash(policy))
 

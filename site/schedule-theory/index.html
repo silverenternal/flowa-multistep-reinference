@@ -1,0 +1,762 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Schedule theory — cosine annealing and its analog to EDM / Nichol-Dhariwal - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#schedule-theory-cosine-annealing-and-its-analog-to-edm-nichol-dhariwal" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Schedule theory — cosine annealing and its analog to EDM / Nichol-Dhariwal
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-closed-form" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The closed form
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-analogy-to-nichol-dhariwal-arxiv210209672" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Analogy to Nichol-Dhariwal (arXiv:2102.09672)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-analogy-to-karras-edm-arxiv220600364" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Analogy to Karras EDM (arXiv:2206.00364)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-why-cosine-and-not-edms-polynomial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Why cosine (and not EDM's polynomial)?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-capacity-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Capacity ↔ memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-forward-noise-injection-as-the-edm-side-symmetric-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Forward noise injection as the EDM-side symmetric step
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="schedule-theory-cosine-annealing-and-its-analog-to-edm-nichol-dhariwal">Schedule theory — cosine annealing and its analog to EDM / Nichol-Dhariwal<a class="headerlink" href="#schedule-theory-cosine-annealing-and-its-analog-to-edm-nichol-dhariwal" title="Permanent link">&para;</a></h1>
+<p>This page is the one-page reference for the cosine schedule family used by
+<code>adaptive_reflow</code>'s outer-cycle scheduler. It explains how the closed-form
+<code>n_cap_for_round</code> mirrors the Nichol-Dhariwal cosine schedule and Karras's
+EDM polynomial noise scale, then states the closed form the framework
+consumes.</p>
+<h2 id="1-the-closed-form">1. The closed form<a class="headerlink" href="#1-the-closed-form" title="Permanent link">&para;</a></h2>
+<p>For an outer cycle of length <code>L</code> with <code>n_min</code>, <code>n_max</code>, and round index <code>r ∈ {0, 1, …, L-1}</code>,
+the canonical cosine schedule's fresh-noise capacity is</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>n_cap(r) = n_min + (n_max − n_min) · (1 − cos(π · r / (L − 1))) / 2
+</code></pre></div>
+<p>with the single-round degenerate edge case (<code>L == 1</code>) returning <code>n_max</code>
+deterministically. The companion memory fraction is the complement</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>memory_fraction(r) = 1 − n_cap(r).
+</code></pre></div>
+<p>This is the closed form
+<a href="../../adaptive_reflow/schedule/cosine.py"><code>adaptive_reflow.schedule.cosine.n_cap_for_round</code></a>
+and the constant-time closed form consumed by every
+<code>SchedulerProtocol</code> implementation in
+<a href="../../adaptive_reflow/algorithm/scheduler.py"><code>adaptive_reflow.algorithm.scheduler</code></a>.</p>
+<h2 id="2-analogy-to-nichol-dhariwal-arxiv210209672">2. Analogy to Nichol-Dhariwal (arXiv:2102.09672)<a class="headerlink" href="#2-analogy-to-nichol-dhariwal-arxiv210209672" title="Permanent link">&para;</a></h2>
+<p>Nichol &amp; Dhariwal's "Improved Denoising Diffusion Probabilistic Models"
+introduced the cosine noise schedule for diffusion models (Section 3.2,
+eq. 8):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ᾱ(t) = cos²( (t/T + s) / (1 + s) · π / 2 )
+</code></pre></div>
+<p>with a small offset <code>s</code> to prevent <code>ᾱ</code> from vanishing too quickly at <code>t = 0</code>.
+The signal-rate <code>ᾱ(t)</code> is monotone-decreasing in <code>t</code>; the noise-rate
+<code>β_diff(t)</code> (their instantaneous noise coefficient, <strong>not</strong> the framework's
+<code>beta_by_channel</code> restart coefficient) is</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>β_diff(t) = 1 − ᾱ(t) / ᾱ(t−1).
+</code></pre></div>
+<p>The framework's <code>n_cap(r)</code> is the same monotone-decreasing curve evaluated
+at the round index <code>r / (L − 1)</code> and rescaled into the canonical <code>[n_min,
+n_max]</code> envelope. <strong>The functional form is identical</strong>: a half-cosine
+scaled into <code>[0, 1]</code>. The frame's <code>n_cap</code> plays the role of the
+"fresh-noise capacity" the way Nichol-Dhariwal's <code>1 − ᾱ(t)</code> plays the
+role of the cumulative-noise fraction.</p>
+<blockquote>
+<p>Nichol, A., Dhariwal, P. (2021). <em>Improved Denoising Diffusion
+Probabilistic Models.</em> arXiv:2102.09672.</p>
+</blockquote>
+<h2 id="3-analogy-to-karras-edm-arxiv220600364">3. Analogy to Karras EDM (arXiv:2206.00364)<a class="headerlink" href="#3-analogy-to-karras-edm-arxiv220600364" title="Permanent link">&para;</a></h2>
+<p>Karras et al.'s "Elucidating the Design Space of Diffusion-Based
+Generative Models" (EDM) parameterises the forward noise injection as</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>x_t = x_0 + σ(t) · ε,        ε ~ N(0, I),
+</code></pre></div>
+<p>with a polynomial noise scale</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>σ(t) = t
+</code></pre></div>
+<p>(or, in the more elaborate sampling pipeline, a geometric progression
+over <code>t ∈ [σ_min, σ_max]</code>). EDM's <code>σ</code> is the "noise level" used to scale
+the standard normal; the framework's <code>n_cap</code> plays exactly the same role
+when fed to the symmetric forward step</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>state' = state + sqrt(n_cap) · generator.standard_normal(shape).
+</code></pre></div>
+<p>The framework's <code>SchedulerProtocol.inject_noise</code> is therefore the EDM
+"forward noise injection" closed form, with <code>n_cap</code> standing in for
+<code>σ²</code>. At round <code>0</code> with <code>n_cap = n_max</code> the framework is at EDM's
+<code>σ_max</code> (high noise / exploration); at round <code>L-1</code> with <code>n_cap = n_min</code>
+the framework is at EDM's <code>σ_min</code> (low noise / refinement). The
+coarse-to-fine anneal is the analog of EDM's noise schedule collapse
+toward zero.</p>
+<blockquote>
+<p>Karras, T., Aittala, M., Aila, T., Laine, S. (2022). <em>Elucidating the
+Design Space of Diffusion-Based Generative Models.</em> arXiv:2206.00364.</p>
+</blockquote>
+<h2 id="4-why-cosine-and-not-edms-polynomial">4. Why cosine (and not EDM's polynomial)?<a class="headerlink" href="#4-why-cosine-and-not-edms-polynomial" title="Permanent link">&para;</a></h2>
+<p>Three reasons:</p>
+<ol>
+<li><strong>Smooth envelope.</strong> The cosine is C¹ and monotone-decreasing on the
+   whole cycle; EDM's geometric progression is only monotone-decreasing
+   on <code>[σ_min, σ_max]</code> and introduces staircase artefacts at the
+   endpoints when the cycle is small.</li>
+<li><strong>Single tunable knob.</strong> <code>n_min</code> and <code>n_max</code> are the only envelope
+   knobs; the inner cosine profile is determined by the closed form.
+   EDM requires per-call rescaling to a chosen noise range, which adds a
+   second source of truth.</li>
+<li><strong>Natural round-at-midpoint.</strong> <code>r = (L-1)/2</code> lands exactly at the
+   midpoint <code>n_cap = (n_min + n_max) / 2</code>, mirroring EDM's
+   "balanced" round.</li>
+</ol>
+<p>The framework nevertheless exposes <code>PolynomialScheduler</code>,
+<code>ExponentialScheduler</code>, and <code>SigmoidScheduler</code> so callers who want a
+closer EDM-style ramp can swap them in without changing the protocol
+surface.</p>
+<h2 id="5-capacity-memory">5. Capacity ↔ memory<a class="headerlink" href="#5-capacity-memory" title="Permanent link">&para;</a></h2>
+<p>The framework's canonical transform is</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>memory_fraction = 1 − n_cap
+</code></pre></div>
+<p>so a high-capacity round (large <code>n_cap</code>) carries a low memory
+fraction (lots of fresh noise, exploratory); a low-capacity round
+(small <code>n_cap</code>) carries a high memory fraction (preserve the prior,
+refine). This is the engine-side override
+<a href="../../adaptive_reflow/frame/engine.py"><code>_policy_with_schedule_beta</code></a>
+and the driver-side override
+<a href="../../adaptive_reflow/algorithm/policy_driver.py"><code>ScheduleDerivedPolicyDriver.compute_policy</code></a>.</p>
+<p>The closed form is byte-identical across both paths; ADR-0010 documents
+the canonical chain (<code>scheduler → driver → runner → engine → adapter</code>)
+and Contract 1.2 documents the dedup invariant
+(<code>driver_computed_beta=True</code> suppresses the engine's inline override).</p>
+<h2 id="6-forward-noise-injection-as-the-edm-side-symmetric-step">6. Forward noise injection as the EDM-side symmetric step<a class="headerlink" href="#6-forward-noise-injection-as-the-edm-side-symmetric-step" title="Permanent link">&para;</a></h2>
+<p><code>SchedulerProtocol.inject_noise</code> is the EDM / score-SDE symmetric
+forward step. For every round <code>r</code>, the runner advances a deterministic
+<code>np.random.Generator</code> by exactly one <code>standard_normal</code> draw so the
+per-round injection is reproducible across replays; the runner emits
+<code>FORWARD_NOISE_INJECTED</code> in the audit trail whenever the call is
+made. The reverse step is the engine-side
+<code>apply_restart_distribution</code> (the convex blend
+<code>memory_fraction · prior + (1 − memory_fraction) · fresh</code>). Together
+they form the round model's symmetric pair — the analog of EDM's
+forward / reverse (denoising) steps under the cosine capacity profile.</p>
+<h2 id="7-references">7. References<a class="headerlink" href="#7-references" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Nichol, A., Dhariwal, P. (2021). <em>Improved Denoising Diffusion
+  Probabilistic Models.</em> arXiv:2102.09672. Section 3.2, eq. 8.</li>
+<li>Karras, T., Aittala, M., Aila, T., Laine, S. (2022). <em>Elucidating the
+  Design Space of Diffusion-Based Generative Models.</em> arXiv:2206.00364.
+  Section 5.2 (forward noise injection) and Section 5.3 (sampling).</li>
+<li><a href="../adr/0010-cosine-driven-memory-fraction/"><code>docs/adr/0010-cosine-driven-memory-fraction.md</code></a>
+  — the framework's canonical schedule wiring.</li>
+<li><a href="../adaptive_reflow/algorithm/scheduler.py"><code>adaptive_reflow/algorithm/scheduler.py</code></a> —
+  the <code>SchedulerProtocol</code> definition and all concrete schedulers.</li>
+<li><a href="../adaptive_reflow/schedule/cosine.py"><code>adaptive_reflow/schedule/cosine.py</code></a> —
+  the closed-form <code>n_cap_for_round</code> helper.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

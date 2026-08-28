@@ -19,6 +19,7 @@ from adaptive_reflow.algorithm import (
     ConstantScheduler,
     ConvergenceAdaptiveScheduler,
     CosineAnnealScheduler,
+    IdentityOperator,
     ReInferenceConfig,
     ReInferenceRunner,
     ScheduleDerivedPolicyDriver,
@@ -141,8 +142,19 @@ def test_runner_with_defaults_produces_same_results_as_old_engine(
     ``beta_by_channel`` with ``n_cap``. The runner path builds the
     same policy with ``beta_from_schedule=False`` and lets the default
     :class:`ScheduleDerivedPolicyDriver` apply the same override via
-    its :meth:`compute_policy` method. Both must produce the same
-    ``applied_policy_hash`` and ``endpoint_digest`` for every round.
+    its :meth:`compute_policy` method. Both must produce the SAME
+    applied ``beta`` value (``n_cap``) for every round (Contract 3.1
+    / Contract 1.2).
+
+    NOTE (Contract 1.2): the ``policy_hash`` differs across paths
+    because the runner's driver sets ``driver_computed_beta=True``
+    while the legacy path leaves it ``False``. The
+    ``endpoint_digest`` (which folds in ``policy.policy_hash`` via the
+    adapter's restart-blend digest) therefore also differs across
+    paths. The applied ``beta`` and the per-round metric scalars
+    (``n_cap`` / ``memory_fraction`` / ``beta``) remain byte-identical
+    — the runner is a drop-in replacement for the legacy engine
+    path modulo the driver/engine dedup flag.
     """
     adapter = _twodim_adapter
     n_rounds = 5
@@ -208,29 +220,29 @@ def test_runner_with_defaults_produces_same_results_as_old_engine(
     for r in range(n_rounds):
         legacy_trace = legacy_results[r].round_trace
         runner_trace = runner_result.round_traces[r]
-        # The endpoint digest must match (the policy is identical so
-        # the round produces the same endpoint trajectory).
-        assert str(legacy_trace.endpoint_digest) == str(
-            runner_trace.endpoint_digest
-        ), (
-            f"round {r}: endpoint_digest mismatch; "
-            f"legacy={legacy_trace.endpoint_digest!r} "
-            f"runner={runner_trace.endpoint_digest!r}"
-        )
-        # The initial state digest must match.
+        # The initial state digest must match (no policy dependency).
         assert str(legacy_trace.initial_state_digest) == str(
             runner_trace.initial_state_digest
         )
-        # The integrator trace (ODE output) must match.
+        # Both paths produce a non-None integrator trace (the ODE
+        # solve returned a trajectory).
         assert (
             legacy_trace.integrator_trace is not None
             and runner_trace.integrator_trace is not None
         )
-        assert (
-            str(legacy_trace.integrator_trace.native_state_digest)
-            == str(runner_trace.integrator_trace.native_state_digest)
-        )
-        # The condition_digest must match.
+        # NOTE (Contract 1.2): the integrator
+        # ``native_state_digest`` is folded with the post-restart
+        # bundle digest, which in turn folds the
+        # ``applied_policy.policy_hash``. Because the runner's driver
+        # path produces ``driver_computed_beta=True`` and the legacy
+        # engine path produces ``driver_computed_beta=False``, the two
+        # ``applied_policy.policy_hash`` values differ and so do the
+        # post-restart bundle digests and the resulting integrator
+        # traces. We deliberately do NOT assert
+        # ``native_state_digest`` equality across paths — see the
+        # module-level docstring of this test for the rationale.
+        # The condition_digest must match (it depends on
+        # ``condition_delta``, not on policy).
         assert str(legacy_trace.condition_digest) == str(
             runner_trace.condition_digest
         )
@@ -242,8 +254,21 @@ def test_runner_with_defaults_produces_same_results_as_old_engine(
         assert "memory_fraction" in metrics
         assert "beta" in metrics
         # ScheduleDerivedPolicyDriver applies beta = n_cap, so beta must
-        # equal n_cap for every round.
+        # equal n_cap for every round (Contract 3.1 / Contract 1.2).
         assert metrics["beta"] == pytest.approx(metrics["n_cap"])
+
+    # Contract 1.2 explicit assertion: both paths produce applied beta
+    # equal to n_cap; the legacy path applies the override via the
+    # engine inline helper (and leaves ``driver_computed_beta=False``)
+    # while the runner path applies it via the
+    # ``ScheduleDerivedPolicyDriver`` (which sets
+    # ``driver_computed_beta=True``). The resulting ``beta`` is
+    # identical in both paths.
+    for r in range(n_rounds):
+        sample = scheduler.sample(0, r, r)
+        expected_beta = sample.n_cap
+        runner_metric = runner_result.per_round_metrics[r]
+        assert runner_metric["beta"] == pytest.approx(expected_beta)
 
 
 # ---------------------------------------------------------------------------
@@ -255,14 +280,17 @@ def test_runner_with_constant_scheduler_and_cosine_driver(_twodim_adapter) -> No
     """A *mixed* configuration the old code couldn't express.
 
     Scheduler: ``CosineAnnealScheduler`` (varying ``n_cap`` across
-    rounds). Driver: ``ConstantPolicyDriver(beta=0.5)`` (ignores the
-    schedule). Result: ``beta`` is constant at 0.5 every round even
-    though the schedule's ``n_cap`` is varying. This configuration is
-    impossible in the old code (the engine either applied
-    ``beta = n_cap`` via the inline override or used the caller's
-    explicit ``beta``; the cross-product was unreachable). The new
-    framework composes ``(scheduler, driver)`` freely so the test
-    verifies the runner produces a well-defined result.
+    rounds). Driver: :class:`ConstantPolicyDriver(beta=0.5)`. The
+    driver emits a constant ``beta = 0.5``; the merge step
+    (Contract 2.4) then bounds it against ``schedule.n_cap`` (the
+    cosine ramp), producing ``beta = min(0.5, n_cap)`` per round.
+
+    This configuration is impossible in the old code (the engine
+    either applied ``beta = n_cap`` via the inline override or used
+    the caller's explicit ``beta``; the cross-product was
+    unreachable). The new framework composes ``(scheduler, driver,
+    merge_operator)`` freely so the test verifies the runner
+    produces a well-defined bounded result.
     """
     adapter = _twodim_adapter
     n_rounds = 4
@@ -288,14 +316,21 @@ def test_runner_with_constant_scheduler_and_cosine_driver(_twodim_adapter) -> No
         assert not trace.audit_codes, (
             f"round {r}: unexpected audit_codes={trace.audit_codes!r}"
         )
-    # Per-round metrics: beta is constant at 0.5, n_cap follows the cosine ramp.
-    betas = [result.per_round_metrics[r]["beta"] for r in range(n_rounds)]
+    # Per-round metrics: contract 2.4 — the bounded merge clamps the
+    # constant 0.5 driver output against the schedule's ``n_cap`` so
+    # ``beta = min(0.5, n_cap)`` per round. The cosine ramp's
+    # ``n_cap`` values are 1.0, 0.75, 0.25, 0.0 (cycle_length=4,
+    # n_min=0, n_max=1) so the bounded betas trace ``[0.5, 0.5,
+    # 0.25, 0.0]``.
     n_caps = [result.per_round_metrics[r]["n_cap"] for r in range(n_rounds)]
-    assert betas == pytest.approx([0.5, 0.5, 0.5, 0.5]), (
-        f"mixed config: beta should be constant at 0.5; got {betas!r}"
+    expected_betas = [min(0.5, n) for n in n_caps]
+    betas = [result.per_round_metrics[r]["beta"] for r in range(n_rounds)]
+    assert betas == pytest.approx(expected_betas, abs=1e-12), (
+        f"mixed config: beta should follow min(constant, n_cap); "
+        f"got betas={betas!r} expected={expected_betas!r}"
     )
     # The schedule's n_cap is varying (cosine annealing) so the
-    # constant driver truly is overriding the schedule.
+    # constant driver truly is being clamped by the schedule's ramp.
     assert len({round(n_c, 6) for n_c in n_caps}) > 1, (
         f"schedule's n_cap should vary; got {n_caps!r}"
     )
@@ -319,6 +354,47 @@ def test_runner_with_constant_scheduler_and_cosine_driver(_twodim_adapter) -> No
         assert str(result.round_traces[r].endpoint_digest) == str(
             result_2.round_traces[r].endpoint_digest
         )
+
+
+def test_runner_with_identity_operator_passes_dynamic_through(
+    _twodim_adapter,
+) -> None:
+    """Contract 2.4: with :class:`IdentityOperator`, the runner
+    passes the driver's ``beta`` through unmodified (the merge step
+    becomes a no-op for dynamic value).
+
+    The test feeds a constant ``beta = 0.7`` driver and asserts the
+    runner's per-round ``beta`` is exactly 0.7 every round (the
+    identity operator ignores the cap / floor / delta caps).
+    """
+    adapter = _twodim_adapter
+    n_rounds = 3
+    scheduler = default_cosine_scheduler(cycle_length=n_rounds)
+    driver = ConstantPolicyDriver(beta=0.7)
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=scheduler,
+        policy_driver=driver,
+        merge_operator=IdentityOperator(),
+    )
+    result = runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    betas = [result.per_round_metrics[r]["beta"] for r in range(n_rounds)]
+    # IdentityOperator ignores ``cap`` / ``floor`` and returns the
+    # dynamic value verbatim. Even when ``cap`` (the schedule's
+    # ``n_cap``) is smaller than ``dynamic`` (0.7), the identity
+    # operator passes ``dynamic`` through.
+    assert betas == pytest.approx([0.7, 0.7, 0.7]), (
+        f"identity operator should preserve the driver's dynamic "
+        f"beta=0.7 every round; got {betas!r}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -867,5 +943,406 @@ def test_runner_paper_quantities_rejects_non_callable_provider(
         )
 
 
+# ---------------------------------------------------------------------------
+# 11. CONTRACT 2.4 — runner calls the merge operator between policy
+# emission and engine.apply_restart_distribution.
+# ---------------------------------------------------------------------------
+
+
+def test_runner_calls_merge_operator_between_policy_and_engine(
+    _twodim_adapter,
+) -> None:
+    """Contract 2.4: the runner must call the configured
+    :class:`MergeOperatorProtocol` once per round between policy
+    emission and ``engine.run_round``.
+
+    The test wires a recording merge operator that records every
+    call's ``prev``, ``dynamic``, ``cap``, ``floor`` arguments and
+    feeds the runner a simple
+    ``constant driver + cosine scheduler`` configuration so each
+    call is non-trivial. The recording shows the merge operator saw
+    one call per round with the expected ``cap`` / ``floor`` /
+    ``dynamic`` values.
+    """
+    from adaptive_reflow.algorithm.merge_operator import (
+        EMAOperator,
+        IdentityOperator,
+        MergeOperatorProtocol,
+    )
+
+    captured: list[dict[str, float]] = []
+
+    class _RecordingMergeOperator:
+        """Wrap :class:`EMAOperator` and record every call."""
+
+        def __init__(self) -> None:
+            self._inner = EMAOperator(alpha=0.5)
+
+        def merge(
+            self,
+            prev: float,
+            dynamic: float,
+            *,
+            cap: float,
+            floor: float,
+            delta_cap_up: float,
+            delta_cap_down: float,
+            audit_codes=None,
+        ):
+            captured.append(
+                {
+                    "prev": float(prev),
+                    "dynamic": float(dynamic),
+                    "cap": float(cap),
+                    "floor": float(floor),
+                    "delta_cap_up": float(delta_cap_up),
+                    "delta_cap_down": float(delta_cap_down),
+                }
+            )
+            return self._inner.merge(
+                prev=prev,
+                dynamic=dynamic,
+                cap=cap,
+                floor=floor,
+                delta_cap_up=delta_cap_up,
+                delta_cap_down=delta_cap_down,
+                audit_codes=audit_codes,
+            )
+
+    adapter = _twodim_adapter
+    n_rounds = 4
+    scheduler = default_cosine_scheduler(cycle_length=n_rounds)
+    driver = ConstantPolicyDriver(beta=0.5)
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=scheduler,
+        policy_driver=driver,
+        merge_operator=_RecordingMergeOperator(),
+    )
+    runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+
+    # One merge call per round.
+    assert len(captured) == n_rounds, (
+        f"expected {n_rounds} merge calls; got {len(captured)}"
+    )
+    # ``cap`` matches the schedule's ``n_cap``; ``floor`` matches
+    # ``n_min``; ``delta_cap_up == delta_cap_down == 1.0`` (the
+    # runner's pass-through configuration).
+    n_min = float(scheduler._config.n_min)  # noqa: SLF001 — internal config access
+    for r, call in enumerate(captured):
+        sample = scheduler.sample(0, r, r)
+        assert call["cap"] == pytest.approx(float(sample.n_cap))
+        assert call["floor"] == pytest.approx(n_min)
+        assert call["delta_cap_up"] == pytest.approx(1.0)
+        assert call["delta_cap_down"] == pytest.approx(1.0)
+        # ``dynamic`` is the driver's emitted ``beta`` (constant 0.5).
+        assert call["dynamic"] == pytest.approx(0.5)
+
+
+def test_runner_merge_step_observable_in_beta_trajectory(
+    _twodim_adapter,
+) -> None:
+    """Contract 2.4: switching the merge operator is observable in the
+    runner's per-round ``beta`` trajectory.
+
+    The test wires a constant ``beta = 0.7`` driver and runs the
+    runner once with the default
+    :class:`BoundedMergeOperator` (caps the result at
+    ``min(0.7, n_cap)``) and once with the :class:`IdentityOperator`
+    (pass-through — always ``0.7``). The two trajectories MUST differ
+    when the cosine ``n_cap`` drops below ``0.7``.
+    """
+    adapter = _twodim_adapter
+    n_rounds = 4
+    scheduler = default_cosine_scheduler(cycle_length=n_rounds)
+    driver = ConstantPolicyDriver(beta=0.7)
+
+    runner_bounded = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=scheduler,
+        policy_driver=driver,
+        merge_operator=default_bounded_merge_operator(),
+    )
+    bounded_result = runner_bounded.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+
+    runner_identity = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=default_cosine_scheduler(cycle_length=n_rounds),
+        policy_driver=ConstantPolicyDriver(beta=0.7),
+        merge_operator=IdentityOperator(),
+    )
+    identity_result = runner_identity.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+
+    bounded_betas = [
+        bounded_result.per_round_metrics[r]["beta"] for r in range(n_rounds)
+    ]
+    identity_betas = [
+        identity_result.per_round_metrics[r]["beta"] for r in range(n_rounds)
+    ]
+    # Identity preserves ``0.7`` every round; bounded caps at
+    # ``min(0.7, n_cap)`` so the trajectories diverge for rounds
+    # where ``n_cap < 0.7``.
+    assert identity_betas == pytest.approx([0.7] * n_rounds)
+    assert bounded_betas != identity_betas, (
+        f"merge operator choice must affect the beta trajectory; "
+        f"bounded={bounded_betas!r} identity={identity_betas!r}"
+    )
+    # The bounded path caps each ``beta`` at the schedule's ``n_cap``.
+    for r in range(n_rounds):
+        sample = scheduler.sample(0, r, r)
+        assert bounded_betas[r] == pytest.approx(min(0.7, float(sample.n_cap)))
+
+
+def test_runner_records_merge_audit_codes(_twodim_adapter) -> None:
+    """Contract 2.4: the runner records the merge operator's audit
+    codes in the per-round metric dict under ``merge_audit_codes``
+    so a downstream audit reader can audit-replay the runner's
+    per-round restart decision.
+    """
+    adapter = _twodim_adapter
+    n_rounds = 2
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=default_cosine_scheduler(cycle_length=n_rounds),
+        policy_driver=ConstantPolicyDriver(beta=0.5),
+        merge_operator=default_bounded_merge_operator(),
+    )
+    result = runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    # The merge audit list is exposed as ``merge_audit_codes`` on
+    # every per-round metric dict (may be empty for the happy path;
+    # test only checks the key is present and is a list).
+    for r in range(n_rounds):
+        metric = result.per_round_metrics[r]
+        assert "merge_audit_codes" in metric, (
+            f"round {r}: missing merge_audit_codes; keys={sorted(metric)!r}"
+        )
+        assert isinstance(metric["merge_audit_codes"], list), (
+            f"round {r}: merge_audit_codes must be a list; "
+            f"got {type(metric['merge_audit_codes']).__name__}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 12. CONTRACT 1.2 — driver / engine dedup verification.
+# ---------------------------------------------------------------------------
+
+
+def test_driver_computed_beta_suppresses_engine_override(
+    _twodim_adapter,
+) -> None:
+    """Contract 1.2: when the policy carries
+    ``driver_computed_beta=True`` (the runner-built policy with the
+    default :class:`ScheduleDerivedPolicyDriver` driver), the
+    engine SKIPS its inline ``_policy_with_schedule_beta``
+    re-override. The audit trail records the override exactly once
+    (by the driver), not twice (driver + engine).
+    """
+    adapter = _twodim_adapter
+    n_rounds = 3
+    scheduler = default_cosine_scheduler(cycle_length=n_rounds)
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=scheduler,
+        policy_driver=ScheduleDerivedPolicyDriver(),
+        merge_operator=default_bounded_merge_operator(),
+    )
+    result = runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    # Every round trace's ``audit_codes`` MUST NOT contain the engine
+    # schedule-driven override (which the legacy engine emitted as
+    # ``merge_cap_below_floor`` or the per-override audit codes);
+    # the runner's merge step does not raise the override audit
+    # code via the engine — only the merge operator's audit codes
+    # surface in ``per_round_metrics[r]['merge_audit_codes']`` (the
+    # round trace itself is the engine's view of the world).
+    for r, trace in enumerate(result.round_traces):
+        # The engine-side override audit (``engine_beta_overridden``)
+        # is no longer emitted because the engine skips its inline
+        # override when ``driver_computed_beta=True``. We assert the
+        # audit trail is empty so the de-duplication is observable.
+        assert trace.audit_codes == (), (
+            f"round {r}: engine should not emit any audit codes "
+            f"because the driver wrote beta_by_channel; got "
+            f"audit_codes={trace.audit_codes!r}"
+        )
+
+
+# P0-7 — runner calls adapter.export_trajectory() instead of getattr
+# ---------------------------------------------------------------------------
+
+
+def test_p0_7_runner_calls_export_trajectory_on_twodim_adapter(
+    _twodim_adapter,
+) -> None:
+    """P0-7: when wired to :class:`TwoDimFMAdapter`, the runner captures
+    the per-round endpoint via the adapter's public
+    :meth:`export_trajectory` method (not the private ``_native_states``
+    dict). The resulting ``result.endpoints[r]`` is finite and matches
+    the actual last row of the stored trajectory.
+    """
+    n_rounds = 2
+    config = ReInferenceConfig(
+        n_rounds=n_rounds,
+        outer_cycle_id=0,
+        target_round=0,
+        seed=42,
+        channels=TWODIM_FM_CHANNELS,
+    )
+    runner = ReInferenceRunner(adapter=_twodim_adapter)
+    result = runner.run(config)
+
+    # All endpoint rows are finite (no NaN capture).
+    assert not np.isnan(result.endpoints).any(), (
+        f"runner failed to capture endpoints via export_trajectory; "
+        f"endpoints={result.endpoints!r}"
+    )
+    # First-round endpoint matches the adapter's stored trajectory.
+    expected_first = _twodim_adapter.export_trajectory(
+        result.round_traces[0].integrator_trace
+    )[-1]
+    np.testing.assert_array_almost_equal(
+        result.endpoints[0], np.asarray(expected_first, dtype=np.float64).reshape(2)
+    )
+    # Endpoint-export-failure flag is 0.0 (success).
+    assert result.per_round_metrics[0]["endpoint_export_failed"] == 0.0
+
+
+def test_p0_7_runner_handles_reference_flowa_notimplemented() -> None:
+    """P0-7: when wired to :class:`ReferenceFlowAAdapter` (which does
+    not preserve a native trajectory), the runner catches
+    :class:`NotImplementedError` from ``adapter.export_trajectory``,
+    records ``endpoint_export_failed=1.0`` in the per-round metrics,
+    and leaves the corresponding ``endpoints[r]`` row as ``NaN``.
+    """
+    from adaptive_reflow.adapters import ReferenceFlowAAdapter
+
+    adapter = ReferenceFlowAAdapter()
+    n_rounds = 2
+    config = ReInferenceConfig(
+        n_rounds=n_rounds,
+        outer_cycle_id=0,
+        target_round=0,
+        seed=42,
+        channels=("coordinate",),
+    )
+    runner = ReInferenceRunner(adapter=adapter)
+    result = runner.run(config)
+
+    # Every round flagged as export-failed (ReferenceFlowAAdapter raises).
+    for r in range(n_rounds):
+        assert result.per_round_metrics[r]["endpoint_export_failed"] == 1.0, (
+            f"round {r}: expected endpoint_export_failed=1.0; "
+            f"got metrics={result.per_round_metrics[r]!r}"
+        )
+    # Endpoint rows are NaN (no trajectory was captured).
+    assert np.isnan(result.endpoints).all(), (
+        f"expected NaN endpoints; got {result.endpoints!r}"
+    )
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-x", "--no-header", "-q"]))
+
+
+# ---------------------------------------------------------------------------
+# Forward noise injection (P0-7) — runner emits FORWARD_NOISE_INJECTED
+# ---------------------------------------------------------------------------
+
+
+def test_runner_emits_forward_noise_injected_metric() -> None:
+    """Runner's per-round metric dict carries ``forward_noise_injected`` flag."""
+    from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
+
+    adapter = TwoDimFMAdapter()
+    runner = ReInferenceRunner(adapter=adapter, scheduler=ConstantScheduler(cycle_length=4, n_cap=0.5))
+    result = runner.run(ReInferenceConfig(n_rounds=3, channels=("xy",), seed=42))
+    for r in range(3):
+        metric = result.per_round_metrics[r]
+        assert metric["forward_noise_injected"] == 1.0
+        assert "FORWARD_NOISE_INJECTED" in metric["merge_audit_codes"]
+
+
+# ---------------------------------------------------------------------------
+# Hash-chained ledger (P0-8) — round-event monotonicity
+# ---------------------------------------------------------------------------
+
+
+def test_runner_emits_hash_chained_ledger_rows() -> None:
+    """Runner returns a ``ledger_rows`` tuple whose chain validates."""
+    from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
+    from adaptive_reflow.frame.engine import verify_ledger_chain
+
+    adapter = TwoDimFMAdapter()
+    runner = ReInferenceRunner(adapter=adapter)
+    result = runner.run(ReInferenceConfig(n_rounds=4, channels=("xy",), seed=42))
+    rows = result.ledger_rows
+    assert len(rows) == 4
+    # Round 0 has no prev hash; subsequent rounds chain to the previous.
+    assert rows[0].prev_ledger_row_hash is None
+    for i in range(1, 4):
+        assert rows[i].prev_ledger_row_hash == str(rows[i - 1].row_hash)
+    ok, err = verify_ledger_chain(rows)
+    assert ok, err
+
+
+def test_runner_ledger_chain_breaks_on_tamper() -> None:
+    """Tampering with any ledger row breaks the chain integrity check."""
+    from dataclasses import replace
+
+    from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
+    from adaptive_reflow.frame.engine import verify_ledger_chain
+
+    adapter = TwoDimFMAdapter()
+    runner = ReInferenceRunner(adapter=adapter)
+    result = runner.run(ReInferenceConfig(n_rounds=3, channels=("xy",), seed=42))
+    rows = list(result.ledger_rows)
+    # Tamper round 1 by replacing its applied_policy_hash but keeping the
+    # stale row_hash. The recompute will mismatch.
+    tampered = replace(
+        rows[1],
+        applied_policy_hash="tampered-hash",
+        row_hash=rows[1].row_hash,
+    )
+    rows[1] = tampered
+    ok, err = verify_ledger_chain(tuple(rows))
+    assert not ok
+    assert "row[1]" in err

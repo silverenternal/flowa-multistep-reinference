@@ -113,6 +113,11 @@ def _make_final_policy(
         ledger_row_id=LedgerRowId(f"ledger-{policy_id}"),
         policy_hash=ArtifactHash(""),
         created_at_round=0,
+        # P0-5: ``beta_from_schedule=False`` so the engine doesn't emit
+        # ``ERR_SCHEDULE_SAMPLE_MISSING`` when ``schedule_sample`` is
+        # ``None``; these tests exercise the inline ``beta_by_channel``
+        # surface, not the schedule-derived override.
+        beta_from_schedule=False,
     )
     return replace(policy, policy_hash=hash_policy_hash(policy))
 
@@ -400,6 +405,9 @@ policy = FinalRestartPolicy(
     ledger_row_id=LedgerRowId("ledger-no-mol"),
     policy_hash=ArtifactHash(""),
     created_at_round=0,
+    # P0-5: ``beta_from_schedule=False`` so the engine doesn't emit
+    # ``ERR_SCHEDULE_SAMPLE_MISSING`` when ``schedule_sample`` is None.
+    beta_from_schedule=False,
 )
 policy = replace(policy, policy_hash=hash_policy_hash(policy))
 condition = ODEConditionDelta(

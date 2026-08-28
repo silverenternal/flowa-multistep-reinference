@@ -282,6 +282,12 @@ class SyntheticContinuousAdapter(FlowMatchingODEAdapter):
             capability_token=self.capabilities(),
         )
 
+    def export_trajectory(self, trace: ODEIntegratorTrace) -> Any:
+        """Synthetic adapters do not preserve a native trajectory (P0-7)."""
+        raise NotImplementedError(
+            "SyntheticContinuousAdapter does not preserve a native trajectory"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Synthetic discrete
@@ -406,6 +412,12 @@ class SyntheticDiscreteAdapter(FlowMatchingODEAdapter):
             provenance=tuple(state.provenance)
             + ("SyntheticDiscreteAdapter.observe_endpoint",),
             capability_token=self.capabilities(),
+        )
+
+    def export_trajectory(self, trace: ODEIntegratorTrace) -> Any:
+        """Synthetic adapters do not preserve a native trajectory (P0-7)."""
+        raise NotImplementedError(
+            "SyntheticDiscreteAdapter does not preserve a native trajectory"
         )
 
 
@@ -538,6 +550,12 @@ class SyntheticMixedChannelAdapter(FlowMatchingODEAdapter):
             capability_token=self.capabilities(),
         )
 
+    def export_trajectory(self, trace: ODEIntegratorTrace) -> Any:
+        """Synthetic adapters do not preserve a native trajectory (P0-7)."""
+        raise NotImplementedError(
+            "SyntheticMixedChannelAdapter does not preserve a native trajectory"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Synthetic unsupported
@@ -611,6 +629,12 @@ class SyntheticUnsupportedAdapter(FlowMatchingODEAdapter):
         state: StateBundle,
     ) -> StateBundle:
         raise AssertionError("SyntheticUnsupportedAdapter.observe_endpoint must not be called")
+
+    def export_trajectory(self, trace: ODEIntegratorTrace) -> Any:
+        """Unsupported adapter: native trajectory is unavailable (P0-7)."""
+        raise NotImplementedError(
+            "SyntheticUnsupportedAdapter does not preserve a native trajectory"
+        )
 
 
 # ---------------------------------------------------------------------------
