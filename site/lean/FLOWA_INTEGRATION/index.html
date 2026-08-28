@@ -1,0 +1,965 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>FlowA / FlowoE Integration with FlowA-Multistep-Reinference Framework - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#flowa-flowoe-integration-with-flowa-multistep-reinference-framework" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              FlowA / FlowoE Integration with FlowA-Multistep-Reinference Framework
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-flowacurrenthybridreflowevidencelean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. FlowA/CurrentHybridReflowEvidence.lean
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-flowacurrenttrainingdatasignificancelean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. FlowA/CurrentTrainingDataSignificance.lean
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-flowadatasignificancelean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. FlowA/DataSignificance.lean
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-flowahybridrefloweffectivenesslean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. FlowA/HybridReflowEffectiveness.lean
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-flowaarchitectureproofslean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. FlowAArchitectureProofs.lean
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="flowa-flowoe-integration-with-flowa-multistep-reinference-framework">FlowA / FlowoE Integration with FlowA-Multistep-Reinference Framework<a class="headerlink" href="#flowa-flowoe-integration-with-flowa-multistep-reinference-framework" title="Permanent link">&para;</a></h1>
+<p>This document maps the five FlowA / FlowoE Lean files in
+<code>/c/Users/31472/codes/noise-selected-rectification-lean/</code> to the framework
+contracts in
+<code>c:/Users/31472/codes/flowa-multistep-reinference/adaptive_reflow/contracts/</code>.</p>
+<p>The five files are:</p>
+<ol>
+<li><code>FlowA/CurrentHybridReflowEvidence.lean</code> (71 lines)</li>
+<li><code>FlowA/CurrentTrainingDataSignificance.lean</code> (81 lines)</li>
+<li><code>FlowA/DataSignificance.lean</code> (140 lines)</li>
+<li><code>FlowA/HybridReflowEffectiveness.lean</code> (594 lines)</li>
+<li><code>FlowAArchitectureProofs.lean</code> (1773 lines)</li>
+</ol>
+<p>All five are <em>architecture feasibility</em> proofs only — no empirical metric
+claims are formalised.</p>
+<hr />
+<h2 id="1-flowacurrenthybridreflowevidencelean">1. <code>FlowA/CurrentHybridReflowEvidence.lean</code><a class="headerlink" href="#1-flowacurrenthybridreflowevidencelean" title="Permanent link">&para;</a></h2>
+<p><strong>Lines:</strong> 71 (generated certificate; do not edit constants by hand).</p>
+<p><strong>What it proves.</strong> This file records the SHA-256 hashes of the four
+upstream reflow-evidence artifacts and freezes a snapshot of the recorded
+metric panel:</p>
+<ul>
+<li><code>hybridEvidenceHistoricalPanelSha256</code> (line 11-12)</li>
+<li><code>hybridEvidenceSemanticExpertSha256</code> (line 14-15)</li>
+<li><code>hybridEvidenceTrainingProbeSha256</code> (line 17-18)</li>
+<li><code>hybridEvidenceGNINACalibrationSha256</code> (line 20-21)</li>
+<li><code>hybridEvidenceActivePlanSha256</code> (line 23-24)</li>
+<li>Historical panel: 64 attempts, 61 evaluator-ready, 58 PoseBusters pass,
+  QED mean 0.1751, GNINA mean -0.7400 (line 26-33)</li>
+<li>Semantic expert: 255 processed rows, five-state macro F1 0.9326,
+  aromatic edge F1 0.9983, charged atom macro F1 0.5881, pair ECE
+  0.0109, sanitization 100% (line 35-42)</li>
+<li>Training probe: 2 optimizer updates, diagnostic-only, no router,
+  12 adapters (line 44-53)</li>
+<li>GNINA calibration: target-disjoint, 0 overlaps, 277 held-out, MAE
+  1.7714 (above 1.5000 admission threshold), guidance not enabled
+  (line 55-63)</li>
+<li><code>hybridEvidenceCurrentRouteEndpointPanelPresent = false</code> (line 65-66)</li>
+<li><code>hybridEvidenceCurrentRoutePanelBlockerWitnessed = true</code> (line 68-69)</li>
+</ul>
+<p><strong>Framework contract relation.</strong> This is the Lean-side counterpart of
+the framework's <code>bundle.py</code> / <code>envelope.py</code> evidence registry. It
+certifies that the <em>current</em> recorded evidence is exactly the evidence
+the framework's algorithm layer may consume — no more, no less. The
+explicit <code>hybridEvidenceCurrentRouteEndpointPanelPresent = false</code>
+flag is the Lean analogue of the framework's
+<code>phase_state.current_route_endpoint_panel_present = False</code>, which keeps
+the flowa's claim claim gate closed.</p>
+<hr />
+<h2 id="2-flowacurrenttrainingdatasignificancelean">2. <code>FlowA/CurrentTrainingDataSignificance.lean</code><a class="headerlink" href="#2-flowacurrenttrainingdatasignificancelean" title="Permanent link">&para;</a></h2>
+<p><strong>Lines:</strong> 81 (generated certificate; constants regenerated from the
+dataset and preflight artifacts).</p>
+<p><strong>What it proves.</strong> Instantiates <code>TrainingDataCertificate</code> (from
+<code>FlowA/DataSignificance.lean</code>) with the current recorded dataset
+metrics:</p>
+<ul>
+<li>2792 train rows, 277 dev rows, 0 target/homology/scaffold/SMILES
+  overlaps (line 11-21)</li>
+<li>LowQED, weakGNINA, PoseBusters sub-coverage (line 22-36)</li>
+<li>All <code>*Ready</code> boolean flags set to <code>true</code> (line 44-53)</li>
+</ul>
+<p>Then it proves:</p>
+<ul>
+<li><code>current_training_data_has_unknown_pocket_learnability_evidence</code> —
+  <code>SupportsUnknownPocketFitting currentTrainingDataSignificanceCertificate</code>
+  (line 55-67)</li>
+<li><code>current_training_data_is_not_toy_evidence</code> —
+  <code>NonToyDataEvidence currentTrainingDataSignificanceCertificate</code>
+  (line 69-71)</li>
+<li><code>current_training_data_has_metric_outcome_supervision</code> —
+  <code>HasMetricOutcomeSupervision currentTrainingDataSignificanceCertificate</code>
+  (line 73-79)</li>
+</ul>
+<p><strong>Framework contract relation.</strong> This file is the Lean counterpart of
+the framework's <code>envelope.py</code> data-significance contract. The
+<code>TrainingDataCertificate</code> structure mirrors the JSON shape of the
+framework's data-significance artifact, and the three theorems prove
+the same "NonToyDataEvidence, HasUnknownPocketSplitEvidence,
+HasMetricOutcomeSupervision" predicates the framework enforces
+upstream of the algorithm layer. The dev/train disjointness
+(targetOverlapCount = 0, etc.) matches the framework's split contract.</p>
+<hr />
+<h2 id="3-flowadatasignificancelean">3. <code>FlowA/DataSignificance.lean</code><a class="headerlink" href="#3-flowadatasignificancelean" title="Permanent link">&para;</a></h2>
+<p><strong>Lines:</strong> 140 (hand-written contract layer).</p>
+<p><strong>What it proves.</strong> Defines the contract surface that the
+<code>CurrentTrainingDataSignificance.lean</code> certificate instantiates:</p>
+<ul>
+<li><code>structure FamilyCoverage</code> (line 14-18): <code>rowCount</code>, <code>uniqueTargets</code>,
+  <code>uniqueScaffolds</code>.</li>
+<li><code>structure TrainingDataCertificate</code> (line 20-52): the full set of
+  recorded metrics.</li>
+<li><code>FamilyCoverage.Significant</code> (line 54-59): significance predicate.</li>
+<li><code>NonToyDataEvidence</code> (line 61-68): scale thresholds (≥ 2000 train,
+  ≥ 200 dev, ≥ 2000 unique train targets, ≥ 1000 scaffolds).</li>
+<li><code>HasUnknownPocketSplitEvidence</code> (line 70-76): disjointness on
+  target/homology/scaffold/SMILES axes.</li>
+<li><code>HasMetricOutcomeSupervision</code> (line 78-84): LowQED ≥ 1000, weakGNINA
+  ≥ 100, PoseBusters ≥ 200, druglikePositiveRows ≥ 1000,
+  bindingPositiveRows ≥ 2000, poseGeometryPositiveRows ≥ 2500.</li>
+<li><code>HasChemistryDiversitySignal</code> (line 86-88): aromatic + charged sample
+  positivity.</li>
+<li><code>HasCleanStructuralEvidence</code> (line 90-92): zero sample-coordinate
+  failures, zero RDKit problems.</li>
+<li><code>HasMechanismLearningRoute</code> (line 94-103): 9 readiness flags.</li>
+<li><code>SupportsUnknownPocketFitting</code> (line 105-111): the conjunction.</li>
+<li><code>ClaimsEmpiricalEndpointSuccess := False</code> (line 113-114):
+  <em>explicit</em> claim that this contract does <em>not</em> certify empirical
+  endpoint success.</li>
+<li>Projection lemmas (line 116-132): pulling back the conjuncts.</li>
+<li><code>lean_data_certificate_does_not_claim_endpoint_success</code>
+  (line 134-138): the Lean counterpart of
+  "this contract is bounded by design".</li>
+</ul>
+<p><strong>Framework contract relation.</strong> This is the Lean mirror of the
+framework's <code>envelope.py</code> data-significance contract. The numeric
+thresholds in <code>HasMetricOutcomeSupervision</code>, <code>NonToyDataEvidence</code>,
+<code>HasCleanStructuralEvidence</code> are the same thresholds the framework
+enforces. The <code>ClaimsEmpiricalEndpointSuccess := False</code> definition is
+the explicit Lean statement that the flowa framework's "bounded
+contract" claim holds — the data certificate certifies only that the
+data is structurally significant, not that any particular training run
+will succeed.</p>
+<hr />
+<h2 id="4-flowahybridrefloweffectivenesslean">4. <code>FlowA/HybridReflowEffectiveness.lean</code><a class="headerlink" href="#4-flowahybridrefloweffectivenesslean" title="Permanent link">&para;</a></h2>
+<p><strong>Lines:</strong> 594 (hand-written contract layer; theorem-only).</p>
+<p><strong>What it proves.</strong> This file formalises the <em>mathematical boundary</em>
+implemented by the current sampler:</p>
+<ul>
+<li>One round = one initial-value solve (line 24-83):
+  <code>run_hybrid_rounds_has_one_more_state_than_solves</code>,
+  <code>one_round_is_one_solve_with_source_and_endpoint</code>,
+  <code>adaptive_reflow_R_rounds_are_R_initial_value_solves</code>,
+  <code>heun_rhs_evaluations_do_not_create_extra_reflow_solves</code>.</li>
+<li>Necessary causes of a changed deterministic endpoint (line 85-145):
+  <code>unchanged_source_and_condition_replay_the_same_endpoint</code>,
+  <code>deterministic_endpoint_change_requires_source_or_condition_change</code>,
+  <code>routed_but_unconsumed_expert_is_conditionally_null</code>,
+  <code>routed_but_unconsumed_expert_cannot_change_deterministic_endpoint</code>,
+  <code>consumed_identity_expert_is_also_conditionally_null</code>,
+  <code>consumed_identity_expert_cannot_change_deterministic_endpoint</code>.</li>
+<li>Metric observability and channel freezing (line 147-203):
+  <code>deterministic_metric_change_requires_semantic_state_change</code>,
+  <code>unchanged_semantic_state_cannot_change_deterministic_metric</code>,
+  <code>frozen_observable_cannot_improve_its_metric</code>,
+  <code>changed_condition_without_rhs_sensitivity_leaves_endpoint_unchanged</code>,
+  <code>changed_condition_without_rhs_sensitivity_leaves_metric_unchanged</code>,
+  <code>semantic_change_without_metric_sensitivity_does_not_imply_gain</code>.</li>
+<li>Proxy improvement is not true-metric improvement (line 205-234):
+  <code>proxy_gain_can_strictly_reverse_the_true_metric</code> (counterexample
+  <code>false, true</code>), <code>calibrated_proxy_prevents_strict_true_metric_reversal</code>.</li>
+<li>Upstream stage bottlenecks (line 236-270):
+  <code>end_to_end_metric_readiness_requires_materialization</code>,
+  <code>materialization_failure_blocks_full_endpoint_success</code>,
+  <code>full_endpoint_success_implies_every_downstream_metric_is_ready</code>.</li>
+<li>Conditional multi-objective effectiveness (line 272-319):
+  <code>certified_round_gain_is_real_target_gain</code>,
+  <code>two_certified_target_gains_compose</code>,
+  <code>non_regression_is_transitive</code>,
+  <code>later_non_regressive_round_preserves_earlier_strict_gain</code>.</li>
+<li>Recorded metric evidence and current claim boundary (line 321-439):
+  <code>protectedHistorical64Snapshot</code> (translating the
+  <code>hybridEvidenceHistorical*</code> constants into an <code>EndpointMetricSnapshot</code>),
+  <code>protected_historical_posebusters_exceeds_ninety_percent_overall</code>,
+  <code>protected_historical_posebusters_exceeds_ninety_percent_when_available</code>,
+  <code>protected_historical_qed_and_gnina_values_are_preserved</code>,
+  <code>protected_historical_panel_cannot_close_current_raw_claim</code>,
+  <code>recordedSemanticDecoderSnapshot</code>,
+  <code>semantic_decoder_snapshot_preserves_recorded_subsystem_metrics</code>,
+  <code>semantic_decoder_subsystem_result_is_not_endpoint_generation_evidence</code>,
+  <code>freshCurrentRouteEndpointPanelPresent</code>,
+  <code>current_effectiveness_claim_is_blocked_until_fresh_panel_exists</code>.</li>
+<li>Artifact-backed execution and guidance witnesses (line 441-491):
+  <code>latest_probe_consumes_mechanism_adapters_but_does_not_route_flowoe</code>,
+  <code>latest_probe_witnesses_missing_teacher_supervision</code>,
+  <code>latest_gnina_surrogate_is_split_safe_but_not_guidance_ready</code>,
+  <code>latest_gnina_mae_exceeds_admission_threshold</code>.</li>
+<li>Diagnostic consequences (line 493+):
+  <code>inductive MetricStallCause</code> enumerating the four architectural stall
+  causes (unchangedSourceAndCondition, expertRoutedButNotConsumed,
+  targetObservableFrozen, proxyNotOrderPreserving).</li>
+</ul>
+<p><strong>Framework contract relation.</strong> This file is the Lean counterpart of
+the framework's <code>operations.py</code>, <code>decision.py</code>, <code>schedule.py</code> and
+<code>validators.py</code> contracts. Each theorem is a one-to-one with a framework
+invariant:</p>
+<ul>
+<li>"one round = one solve" → <code>adaptive_reflow.contract.solve_is_one_per_round</code></li>
+<li>"frozen observable cannot improve its metric" → <code>adaptive_reflow.contract.frozen_channel_blocks_metric_gain</code></li>
+<li>"proxy gain can strictly reverse the true metric" → <code>adaptive_reflow.contract.proxy_not_order_preserving</code></li>
+<li><code>protectedHistorical64Snapshot</code> → <code>adaptive_reflow.bundle.historical_panel</code></li>
+<li><code>current_effectiveness_claim_is_blocked_until_fresh_panel_exists</code> →
+  <code>adaptive_reflow.contract.claim_gate_blocked_until_fresh_evidence</code></li>
+<li><code>MetricStallCause</code> → <code>adaptive_reflow.contract.metric_stall_diagnostic</code></li>
+</ul>
+<p>This is the lean-theorem layer that the algorithm layer's validators
+import via <code>validators.py</code>.</p>
+<hr />
+<h2 id="5-flowaarchitectureproofslean">5. <code>FlowAArchitectureProofs.lean</code><a class="headerlink" href="#5-flowaarchitectureproofslean" title="Permanent link">&para;</a></h2>
+<p><strong>Lines:</strong> 1773 (top-level architecture feasibility proof).</p>
+<p><strong>What it proves.</strong> Defines the full architecture surface as a single
+formal record:</p>
+<ul>
+<li><code>inductive MetricFamily</code> (line 23-28): materialization,
+  posebustersGeometry, druglikeness, bindingContact.</li>
+<li><code>inductive FlowChannel</code> (line 30-37): atom, coordinate, pairChemical,
+  charge, pocketCondition, propertyCondition.</li>
+<li><code>inductive Surface</code> (line 39-42): modelInternal, inferenceExternal.</li>
+<li><code>inductive MechanismSurface</code> (line 44-51): mainlineCore,
+  trainableModelInternal, inferenceExternal, postprocessAssisted,
+  evaluatorExternal, claimGateExternal.</li>
+<li><code>inductive StateField</code> (line 53-67): 14 enumerated state fields.</li>
+<li><code>inductive MechanismId</code> (line 72-99): 27 named mechanism ids mirroring
+  the framework's <code>flowa_metric_family_bundles.json</code>.</li>
+<li><code>inductive ExpertId</code> (line 101-108): 6 expert ids.</li>
+<li><code>inductive GeneratedObject</code> (line 113-115): one shared object
+  (<code>ligandInPocket</code>).</li>
+<li><code>inductive FlowPathKind</code> (line 117-122): 4 path kinds.</li>
+<li><code>inductive IntegratorKind</code> (line 124-127): euler, heun.</li>
+<li><code>inductive RoutePayloadView</code> (line 129-135): 5 payload views.</li>
+<li><code>inductive ExpertRunWeightAuthority</code> (line 137-140): 2 authorities.</li>
+<li><code>inductive ImplementedAdapterId</code> (line 142-148): 5 implemented
+  adapters.</li>
+<li><code>inductive PythonInterfaceId</code> (line 150-162): 11 python-side runtime
+  symbols.</li>
+<li><code>inductive SchemaId</code> (line 164-173): 8 schema names.</li>
+<li><code>inductive PairStateView</code> (line 175-178): raw Markov state vs.
+  valence-projected state.</li>
+<li><code>structure CoordinateFlowContract</code> (line 180-186), <code>DiscreteFlowContract</code>
+  (line 188-195), <code>IntegratorContract</code> (line 197-202),
+  <code>ExpertDeltaFlowContract</code> (line 204-208), <code>AdaptiveFreezeContract</code>
+  (line 210-216), <code>FlowMatchingImplementationContract</code> (line 218-227),
+  <code>InferenceInitializationContract</code> (line 229-236),
+  <code>InferenceSamplingContract</code> (line 238-244),
+  <code>InferenceMaterializationContract</code> (line 246-252),
+  <code>InferenceSidecarContract</code> (line 254-260),
+  <code>InferenceRuntimeContract</code> (line 262-269).</li>
+<li><code>structure FlowMainline</code> (line 271-277), <code>ExpertContract</code> (line 279-290),
+  <code>MechanismContract</code> (line 292-299), <code>ReInferenceContract</code>
+  (line 301-308), <code>RouterInterfaceContract</code> (line 310-318),
+  <code>ExpertAdapterInterfaceContract</code> (line 320-329),
+  <code>JointIntegratorInterfaceContract</code> (line 331-342),
+  <code>TrainingObjectiveBoundaryContract</code> (line 344-348),
+  <code>ReInferencePlanInterfaceContract</code> (line 350-357),
+  <code>PythonInterfaceMirrorContract</code> (line 359-366),
+  <code>FlowoERuntimeContract</code> (line 368-374),
+  <code>FlowoEArchitecture</code> (line 376-383).</li>
+<li>Helper definitions: <code>ExpertOwns</code> (line 385-395), <code>ChannelPathKind</code>
+  (line 397-403), <code>PairViewUsedForConditioning</code> (line 405-407),
+  <code>PairViewUsedForTransitionMemory</code> (line 409-411),
+  <code>ExpertUsableWithMainline</code> (line 413-418), <code>RouterSound</code>
+  (line 420-424), <code>EveryMetricHasSomeExpert</code> (line 426-427),
+  <code>AllExpertsUseSameGeneratedObject</code> (line 429-430),
+  <code>ModelAndInferenceSurfacesBothPresent</code> (line 432-434),
+  <code>ReInferenceCompatibleWithMainline</code> (line 436-444),
+  <code>RoutePayloadViewImplemented</code> (line 446-451),
+  <code>PythonInterfaceImplemented</code> (line 453-464),
+  <code>SchemaImplemented</code> (line 466-474),
+  <code>ImplementedAdapterFamily</code> (line 476-481),
+  <code>ImplementedAdapterPrimaryChannel</code> (line 483-488),
+  <code>ImplementedAdapterRegisteredInDefaultLibrary</code> (line 490-495),
+  <code>ImplementedAdapterOwnsFamily</code> (line 497-498).</li>
+</ul>
+<p>The remainder of the file (lines 500-1773) contains the explicit
+<em>contract predicates</em>, the <em>router-soundness</em> lemmas, the
+<em>inference-time reconditioning</em> boundary, and the bundle-level
+possession lemmas proving each implemented Python adapter, schema, and
+interface is reachable in <code>FlowoEArchitecture</code>.</p>
+<p><strong>Framework contract relation.</strong> This is the Lean mirror of the
+framework's <code>types.py</code>, <code>authority.py</code> and <code>bundle.py</code> contracts.
+Specifically:</p>
+<ul>
+<li><code>MetricFamily</code>, <code>FlowChannel</code>, <code>Surface</code>, <code>MechanismSurface</code>,
+  <code>StateField</code>, <code>MechanismId</code>, <code>ExpertId</code> →
+  <code>adaptive_reflow.contracts.types.*</code>.</li>
+<li><code>CoordinateFlowContract</code>, <code>DiscreteFlowContract</code>, <code>IntegratorContract</code>,
+  <code>ExpertDeltaFlowContract</code>, <code>AdaptiveFreezeContract</code>,
+  <code>FlowMatchingImplementationContract</code> →
+  <code>adaptive_reflow.contracts.types.flow_mainline_contracts.*</code>.</li>
+<li><code>InferenceInitializationContract</code>, <code>InferenceSamplingContract</code>,
+  <code>InferenceMaterializationContract</code>, <code>InferenceSidecarContract</code>,
+  <code>InferenceRuntimeContract</code> →
+  <code>adaptive_reflow.contracts.types.inference_runtime_contracts.*</code>.</li>
+<li><code>FlowoEArchitecture</code>, <code>RouterSound</code>, <code>ReInferenceCompatibleWithMainline</code>,
+  <code>ExpertUsableWithMainline</code>, <code>AllExpertsUseSameGeneratedObject</code> →
+  <code>adaptive_reflow.contracts.authority.*</code> and
+  <code>adaptive_reflow.contracts.bundle.*</code>.</li>
+<li><code>RoutePayloadViewImplemented</code>, <code>PythonInterfaceImplemented</code>,
+  <code>SchemaImplemented</code>, <code>ImplementedAdapterFamily</code>,
+  <code>ImplementedAdapterPrimaryChannel</code>,
+  <code>ImplementedAdapterRegisteredInDefaultLibrary</code>,
+  <code>ImplementedAdapterOwnsFamily</code> →
+  <code>adaptive_reflow.contracts.bundle.*</code> (the implemented-adapter registry
+  the framework consumes).</li>
+</ul>
+<p>The architecture feasibility proof is the upstream of the
+<code>adaptive_reflow/contracts/</code> boundary: every Lean statement here is the
+proof obligation the framework's algorithm layer relies on.</p>
+<hr />
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>FlowA Lean file</th>
+<th>Framework counterpart</th>
+<th>Proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FlowA/CurrentHybridReflowEvidence.lean</code></td>
+<td><code>bundle.py</code>, <code>envelope.py</code></td>
+<td>Records SHA-256 hashes of upstream artifacts and freezes the current evidence panel (PoseBusters, QED, GNINA, semantic-decoder F1, training-probe state, GNINA-MAE admission).</td>
+</tr>
+<tr>
+<td><code>FlowA/CurrentTrainingDataSignificance.lean</code></td>
+<td><code>envelope.py</code> data-significance</td>
+<td>Instantiates <code>TrainingDataCertificate</code> from recorded dataset metrics and proves <code>SupportsUnknownPocketFitting</code>.</td>
+</tr>
+<tr>
+<td><code>FlowA/DataSignificance.lean</code></td>
+<td><code>envelope.py</code> data-significance contract</td>
+<td>Defines the contract surface: significance predicates, projection lemmas, <code>ClaimsEmpiricalEndpointSuccess := False</code>.</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td><code>operations.py</code>, <code>decision.py</code>, <code>schedule.py</code>, <code>validators.py</code></td>
+<td>Mathematical boundary of the sampler: one-round-is-one-solve, deterministic-endpoint-change, frozen-observable, proxy-not-order-preserving, end-to-end-readiness, <code>CertifiedRoundGain</code>, recorded panel snapshots, diagnostic consequences.</td>
+</tr>
+<tr>
+<td><code>FlowAArchitectureProofs.lean</code></td>
+<td><code>types.py</code>, <code>authority.py</code>, <code>bundle.py</code></td>
+<td>Full architecture feasibility: <code>MetricFamily</code>, <code>FlowChannel</code>, <code>MechanismId</code>, <code>ExpertId</code>, all 12 contract structures, all 5 <code>Implemented*</code> registries, <code>FlowoEArchitecture</code> assembly.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>No file proves empirical metric improvement.</strong> All five are <em>bounded
+contract</em> files: they prove what the architecture <em>can</em> and <em>cannot</em>
+do, not what the algorithm <em>does</em> do on a specific run. The framework's
+"bounded contract" claim is the Lean-certified version of this
+self-imposed boundary.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

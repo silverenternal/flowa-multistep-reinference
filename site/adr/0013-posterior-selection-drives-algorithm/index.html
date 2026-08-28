@@ -728,6 +728,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#paper_quantities-as-algorithm-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        paper_quantities as algorithm input
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="paper_quantities as algorithm input">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#consumers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consumers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diagnostic-emission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostic emission
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backward compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regression-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regression coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#selection-metric-status-2026-08-28-post-review" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -784,12 +845,13 @@ Fibres with Uniformly Separated Roots</em>, and pointed at Theorem 1: a
 small-noise Gaussian posterior on a residual <code>F_g</code> whose fibre is the
 union of a codimension-1 sheet <code>y = 0</code> together with isolated points
 where <code>g(z) = 0</code> concentrates on the sheet, with local density
-proportional to <code>exp(-x^2 / 2) / sqrt(1 + g(x)^2)</code>. The mechanism
-the paper proves is <strong>codimension-driven selection</strong>: the sheet has
-codimension 1 (one normal direction) and the isolated points have
-codimension 2, so the small-noise concentration lands on the
-lower-codimension piece rather than on the higher-codimension one.
-The selection is <em>not</em> by enumeration convention; it is by geometry.</p>
+proportional to <code>exp(-x^2 / 2) / sqrt(1 + g(x)^2)</code> [CLM-012]. The
+mechanism the paper proves is <strong>codimension-driven selection</strong>: the
+sheet has codimension 1 (one normal direction) [CLM-001] and the
+isolated points have codimension 2 [CLM-002], so the small-noise
+concentration lands on the lower-codimension piece rather than on
+the higher-codimension one. The selection is <em>not</em> by enumeration
+convention; it is by geometry.</p>
 <p>The framework's algorithm layer is the set of decisions that drives
 each round of the re-inference loop:</p>
 <ul>
@@ -820,8 +882,8 @@ in fresh-noise capacity mirroring the paper's <code>sigma -&gt; 0</code> limit.<
 algorithm layer's choices are not arbitrary; they are the canonical
 instantiation of paper Theorem 1's posterior selection mechanism on a
 mixed-codimension fibre. Cosine annealing becomes <strong>the canonical
-implementation</strong> of paper's selection rather than <em>an arbitrary
-schedule that ships</em>.</p>
+implementation</strong> of paper's selection [CLM-005] rather than <em>an
+arbitrary schedule that ships</em>.</p>
 <h2 id="decision-drivers">Decision Drivers<a class="headerlink" href="#decision-drivers" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Theory-first provenance.</strong> Every load-bearing implementation
@@ -838,12 +900,12 @@ schedule that ships</em>.</p>
   ad-hoc ordering on the cells.</li>
 <li><strong>Audit trail should record paper quantities, not proxies.</strong> The
   paper proves bounded-Lipschitz convergence <code>mu_{g,eps} --BL--&gt; nu_g</code>
-  with the explicit constants <code>A_g</code>, <code>B_g</code>, <code>C_g</code>, <code>e_rho</code> and
-  Corollary 1's <code>Z_{g,eps} &gt;= C_1 * eps</code> lower bound. The framework
-  records <code>n_cap</code>, <code>beta</code>, <code>memory_fraction</code> per round (ADR-0010,
-  ADR-0011) but not the four paper quantities; extracting them as
-  framework contracts is the right way to make the proof checkable
-  from a run's audit trail.</li>
+  [CLM-012] with the explicit constants <code>A_g</code>, <code>B_g</code>, <code>C_g</code>, <code>e_rho</code>
+  [CLM-011] and Corollary 1's <code>Z_{g,eps} &gt;= C_1 * eps</code> lower bound
+  [CLM-013]. The framework records <code>n_cap</code>, <code>beta</code>, <code>memory_fraction</code>
+  per round (ADR-0010, ADR-0011) but not the four paper quantities;
+  extracting them as framework contracts is the right way to make
+  the proof checkable from a run's audit trail.</li>
 <li><strong>Backwards compatibility.</strong> Every existing class,
   <code>config_hash</code>, and audit invariant must keep working unchanged.
   The mapping is a <em>naming</em> decision, not an <em>implementation</em>
@@ -866,22 +928,23 @@ schedule that ships</em>.</p>
 <code>z_i</code> are codimension-2 cells (two normal directions each).
 Theorem 1 proves that for <code>X ~ N(0, sigma^2 I)</code> with <code>sigma &lt;&lt; 1</code>,
 the conditional posterior on the fibre is</p>
-<div class="highlight"><pre><span></span><code>P( X in {y = 0} | F_g(X) = 0 )  --&gt;  1  as sigma -&gt; 0   (paper :88)
+<div class="highlight"><pre><span></span><code>P( X in {y = 0} | F_g(X) = 0 )  --&gt;  1  as sigma -&gt; 0   (paper :88) [CLM-017]
 </code></pre></div>
 <p>and the local density on the sheet is proportional to</p>
 <div class="highlight"><pre><span></span><code>exp(-x^2 / 2) / sqrt(1 + g(x)^2)                          (paper :82-83)
 </code></pre></div>
 <p>The proof decomposes the small-noise expansion into three pieces:</p>
 <ol>
-<li><strong>Sheet tube scaling</strong> (paper Lemma 2, <code>:101-103</code>) — the sheet
-   tube evidence is <code>Theta(eps^{+1})</code>; the substitution <code>y = eps u</code>
-   contributes one Jacobian factor <code>eps</code>, and Corollary 1 (<code>:165</code>)
-   shows <code>Z_{g,eps} &gt;= C_1 eps</code> (sheet-evidence lower bound).</li>
-<li><strong>Root cell contribution</strong> (paper Lemma 3, <code>:107</code>) — each cell
-   contributes at most <code>O(eps^{+2})</code> to the total evidence because
-   it is codimension 2 (two Jacobian factors).</li>
+<li><strong>Sheet tube scaling</strong> (paper Lemma 2, <code>:101-103</code>) [CLM-001] —
+   the sheet tube evidence is <code>Theta(eps^{+1})</code>; the substitution
+   <code>y = eps u</code> contributes one Jacobian factor <code>eps</code>, and Corollary 1
+   (<code>:165</code>) shows <code>Z_{g,eps} &gt;= C_1 eps</code> (sheet-evidence lower bound
+   [CLM-013]).</li>
+<li><strong>Root cell contribution</strong> (paper Lemma 3, <code>:107</code>) [CLM-002] —
+   each cell contributes at most <code>O(eps^{+2})</code> to the total evidence
+   because it is codimension 2 (two Jacobian factors).</li>
 <li><strong>Physical complement suppression</strong> (paper Lemma 4, <code>:111-112</code>)
-   — the "physical" piece of the residual (<code>{ y != 0 }</code>) is
+   [CLM-007] — the "physical" piece of the residual (<code>{ y != 0 }</code>) is
    exponentially suppressed as <code>exp(-e_rho / (2 eps^2)) = o(eps)</code>.</li>
 </ol>
 <p>The conclusion is paper Proposition 3 (<code>:115-118</code>): after
@@ -902,23 +965,23 @@ pieces and the normalization step as follows:</p>
 <tbody>
 <tr>
 <td>Sheet tube scaling</td>
-<td>paper Lemma 2</td>
-<td><code>CosineAnnealScheduler</code> (Phase 2 ramp: <code>n_cap</code> schedules the sheet-vs-cell evidence ratio per round)</td>
+<td>paper Lemma 2 [CLM-001]</td>
+<td><code>CosineAnnealScheduler</code> [CLM-005] (Phase 2 ramp: <code>n_cap</code> schedules the sheet-vs-cell evidence ratio per round)</td>
 </tr>
 <tr>
 <td>Root cell contribution</td>
-<td>paper Lemma 3</td>
+<td>paper Lemma 3 [CLM-002]</td>
 <td><code>RoundTrace.extras</code> records the per-round evidence comparison (<code>sheet_evidence</code>, <code>cell_evidence</code>); the bound <code>O(sigma^2)</code> becomes the audit invariant that secondary-mode evidence must stay below the sheet evidence by at least a factor of <code>n_cap</code></td>
 </tr>
 <tr>
 <td>Physical complement suppression</td>
-<td>paper Lemma 4</td>
-<td><code>SchedulerProtocol</code>'s bounded noise floor (<code>n_min &gt; 0</code>); <code>BoundedMergeOperator</code> (ADR-0007) supplies the cap that prevents the prior / fresh blend from blowing past the physical complement</td>
+<td>paper Lemma 4 [CLM-007]</td>
+<td><code>SchedulerProtocol</code>'s bounded noise floor (<code>n_min &gt; 0</code>) [CLM-010]; <code>BoundedMergeOperator</code> (ADR-0007) supplies the cap that prevents the prior / fresh blend from blowing past the physical complement</td>
 </tr>
 <tr>
 <td>Posterior normalization</td>
-<td>paper Proposition 3</td>
-<td><code>selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)</code> is emitted in <code>per_round_metrics[r]</code> for use as a <em>difficulty constant</em> (see caveat below)</td>
+<td>paper Proposition 3 [CLM-013]</td>
+<td><code>selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)</code> is emitted in <code>per_round_metrics[r]</code> for use as a <em>difficulty constant</em> [CLM-008] (see caveat below)</td>
 </tr>
 </tbody>
 </table>
@@ -936,10 +999,10 @@ fresh noise -&gt; the sheet is selected with high confidence per
 Proposition 3).</p>
 <p>This is the <strong>codimension-driven</strong> semantics the paper requires:
 the cosine ramp's monotonic decrease in fresh-noise capacity is
-exactly the <code>sigma -&gt; 0</code> limit the paper proves selects the sheet.
-The Karras EDM <code>sigma(t)</code> rejected in ADR-0012 is defined by score
-matching, not by posterior selection, so it does not inherit this
-mapping.</p>
+exactly the <code>sigma -&gt; 0</code> limit the paper proves selects the sheet
+[CLM-012]. The Karras EDM <code>sigma(t)</code> rejected in ADR-0012 is defined
+by score matching, not by posterior selection, so it does not inherit
+this mapping.</p>
 <p>The proposed name for a future scheduler class
 (CodimensionSheetScheduler, intended for
 <code>adaptive_reflow/algorithm/scheduler.py</code>) — a scheduler whose
@@ -973,15 +1036,16 @@ not the same quantity.</p>
 <p>The audit also found that
 <code>adaptive_reflow/algorithm/scheduler.py::_paper_evidence_balance</code>
 had the paper's <code>eps</code> exponents <em>inverted</em> (it was using <code>eps^{-1}</code>
-and <code>eps^{-2}</code> where the paper uses <code>eps^{+1}</code> and <code>eps^{+2}</code>). The
-fixed closed form, matching Lemmas 2 + 3 + Corollary 1, is:</p>
+and <code>eps^{-2}</code> where the paper uses <code>eps^{+1}</code> and <code>eps^{+2}</code>)
+[CLM-016 DEPRECATED]. The fixed closed form, matching Lemmas 2 + 3 +
+Corollary 1 [CLM-013], is:</p>
 <div class="highlight"><pre><span></span><code>sheet = max(n_cap_base, eps_implicit)              # eps^{+1}  (Lemma 2 / Cor. 1)
 cell  = (1 - n_cap_base) ** 2 * eps_implicit ** 2 # eps^{+2}  (Lemma 3)
 ratio = sheet / (sheet + cell)
 </code></pre></div>
 <p>With the corrected formula, <code>ratio -&gt; 1</code> as <code>eps -&gt; 0</code> for every
-<code>n_cap_base &lt; 1</code>, matching Theorem 1 (<code>:88</code>). The ratio is a
-<em>reportable metric</em> exposed via
+<code>n_cap_base &lt; 1</code>, matching Theorem 1 (<code>:88</code>) [CLM-017]. The
+ratio is a <em>reportable metric</em> exposed via
 <code>CodimensionSheetScheduler.last_evidence_ratio</code>; the <code>n_cap</code> output
 of <code>sample()</code> is driven by the cosine ramp (with <code>eps_direction</code>
 controlling the ramp direction), not by the ratio. This separation
@@ -991,8 +1055,8 @@ emitting the paper's evidence scale for the audit trail.</p>
 for backward compatibility with a <code>DeprecationWarning</code>; new callers
 should use the paper-aligned default.</p>
 <h3 id="root-cell-contribution-roundtraceextras">Root cell contribution -&gt; RoundTrace.extras<a class="headerlink" href="#root-cell-contribution-roundtraceextras" title="Permanent link">&para;</a></h3>
-<p>Paper Lemma 3 says each cell contributes at most <code>O(sigma^2)</code>. In the
-framework, the per-round audit trail lives in
+<p>Paper Lemma 3 says each cell contributes at most <code>O(sigma^2)</code>
+[CLM-002]. In the framework, the per-round audit trail lives in
 <code>adaptive_reflow/frame/engine.py::RoundTrace.extras</code>. The mapping
 proposed in this ADR is:</p>
 <ul>
@@ -1000,11 +1064,14 @@ proposed in this ADR is:</p>
   to the round's posterior, computed from <code>n_cap</code> and the round's
   endpoint digest.</li>
 <li><code>RoundTrace.extras["cell_evidence"]</code> — the union of secondary-mode
-  (cell-root) contributions, bounded by <code>O(eps^2)</code> relative to the
-  sheet.</li>
+  (cell-root) contributions, bounded by <code>O(eps^2)</code> [CLM-002] relative
+  to the sheet.</li>
 <li><code>RoundTrace.extras["selection_ratio"]</code> —
   <code>sheet_evidence / (sheet_evidence + cell_evidence)</code>, the
-  paper Proposition 3 ratio. Expected to converge to 1.</li>
+  framework-internal heuristic proxy for paper Proposition 3 ratio
+  [CLM-008]. The "expected to converge to 1" prediction applies
+  only to a future endpoint-conditioned variant [CLM-017];
+  the shipped metric plateaus [CLM-004].</li>
 </ul>
 <p>These three keys are emitted by a future evaluator class
 (<code>EvidenceScaleGapMetric</code>, formerly <code>PosteriorSelectionEvaluator</code>,
@@ -1017,63 +1084,64 @@ metric is a <strong>framework-internal heuristic</strong> (see
 below) and is NOT a paper quantity.</p>
 <h3 id="physical-complement-suppression-bounded-noise-floor">Physical complement suppression -&gt; bounded noise floor<a class="headerlink" href="#physical-complement-suppression-bounded-noise-floor" title="Permanent link">&para;</a></h3>
 <p>Paper Lemma 4 says the "physical" complement (<code>{ y != 0 }</code>) is
-exponentially suppressed. The framework's
+exponentially suppressed [CLM-007]. The framework's
 <code>SchedulerProtocol.config</code> exposes <code>n_min</code> (the bounded noise
 floor) and <code>fresh_noise_floor_by_channel</code> (the per-channel floor).
-<code>n_min &gt; 0</code> is the small-noise envelope: it bounds how far the
-fresh-noise injection can fall, preventing the algorithm from
+<code>n_min &gt; 0</code> is the small-noise envelope [CLM-010]: it bounds how far
+the fresh-noise injection can fall, preventing the algorithm from
 <em>escaping</em> the fibre into the complement. This is the
 implementation-level instantiation of paper Lemma 4: a non-zero
 floor is the structural guarantee that the posterior stays on the
 fibre.</p>
 <p>The <code>BoundedMergeOperator</code> (ADR-0007) reinforces this guarantee at
-the merge layer: the prev-anchored envelope (<code>MERGE_FLOOR_FALLBACK</code>,
-<code>MERGE_DEGENERATE_INTERVAL</code>) refuses to emit values outside the
-scheduled envelope, so a single bad round cannot push the next
-round's prior outside the bounded floor.</p>
+the merge layer [CLM-010]: the prev-anchored envelope
+(<code>MERGE_FLOOR_FALLBACK</code>, <code>MERGE_DEGENERATE_INTERVAL</code>) refuses to
+emit values outside the scheduled envelope, so a single bad round
+cannot push the next round's prior outside the bounded floor.</p>
 <h3 id="posterior-normalization-selection_ratio-convergence-framework-internal-heuristic">Posterior normalization -&gt; selection_ratio convergence (framework-internal heuristic)<a class="headerlink" href="#posterior-normalization-selection_ratio-convergence-framework-internal-heuristic" title="Permanent link">&para;</a></h3>
 <blockquote>
-<p><strong>Framework-internal heuristic.</strong> This subsection describes a
-framework-internal monitoring signal. It is NOT a paper claim and
-is NOT a paper quantity. See the dedicated
+<p><strong>Framework-internal heuristic.</strong> [CLM-008] This subsection
+describes a framework-internal monitoring signal. It is NOT a
+paper claim and is NOT a paper quantity. See the dedicated
 §"Framework-internal heuristic: the <code>selection_ratio</code> metric"
 below for the full disclaimer, and §"What the paper does NOT
 claim" at the end of this ADR for the negative-space statement.</p>
 </blockquote>
-<p>Paper Proposition 3 says the sheet / total evidence ratio
+<p>Paper Proposition 3 [CLM-013] says the sheet / total evidence ratio
 converges to 1 as <code>eps -&gt; 0</code> for an <em>endpoint-conditioned</em> metric
-that scores the round's own bundle. The framework's per-round
-metric <code>selection_ratio</code> (emitted in <code>per_round_metrics[r]</code> by
-<code>EvidenceScaleGapMetric</code>, formerly <code>PosteriorSelectionEvaluator</code>)
-is the empirical estimator of that ratio <strong>for the future
-endpoint-conditioned metric</strong>; the shipped replay-based metric is
-documented in §"Selection metric status" below as a <em>difficulty
-constant</em>, not as a convergence curve. Phase 1 of this ADR records
-the <em>metric name</em>; the <em>convergence-to-1</em> prediction applies to the
-endpoint-conditioned variant, which is deferred behind the open
-decision recorded below.</p>
+that scores the round's own bundle [CLM-017]. The
+framework's per-round metric <code>selection_ratio</code> (emitted in
+<code>per_round_metrics[r]</code> by <code>EvidenceScaleGapMetric</code>, formerly
+<code>PosteriorSelectionEvaluator</code>) is the empirical estimator of that
+ratio <strong>for the future endpoint-conditioned metric</strong>; the shipped
+replay-based metric is documented in §"Selection metric status"
+below as a <em>difficulty constant</em> [CLM-004], not as a convergence
+curve. Phase 1 of this ADR records the <em>metric name</em>; the
+<em>convergence-to-1</em> prediction applies to the endpoint-conditioned
+variant, which is deferred behind the open decision recorded below.</p>
 <h3 id="framework-internal-heuristic-the-selection_ratio-metric">Framework-internal heuristic: the <code>selection_ratio</code> metric<a class="headerlink" href="#framework-internal-heuristic-the-selection_ratio-metric" title="Permanent link">&para;</a></h3>
 <p>The framework exposes a metric
 <code>selection_ratio = sheet_evidence / (sheet_evidence + cell_evidence)</code>
 emitted by <code>EvidenceScaleGapMetric</code> (formerly
 <code>PosteriorSelectionEvaluator</code>,
 <code>adaptive_reflow/eval/posterior_selection_evaluator.py</code>). This is
-<strong>NOT a paper quantity and NOT claimed by the paper</strong>. The paper
-proves BL-convergence of the ambient posterior <code>mu_{g,eps}</code> to
-<code>nu_g</code>; it does not single out a ratio of two evidence components
-and claim it converges to 1. The metric is a heuristic proxy for
-monitoring whether the framework's behaviour is consistent with the
-paper's evidence ordering (sheet <code>Theta(eps^{+1})</code> vs cells
-<code>O(eps^{+2})</code>); it is schedule-independent by construction at the
-adapter's fixed noise scale and plateaus rather than converging to
-1. The empirical plateau values are pinned by regression tests in
+<strong>NOT a paper quantity and NOT claimed by the paper</strong> [CLM-008]. The
+paper proves BL-convergence of the ambient posterior <code>mu_{g,eps}</code> to
+<code>nu_g</code> [CLM-012]; it does not single out a ratio of two evidence
+components and claim it converges to 1 [CLM-017]. The
+metric is a heuristic proxy for monitoring whether the framework's
+behaviour is consistent with the paper's evidence ordering (sheet
+<code>Theta(eps^{+1})</code> [CLM-001] vs cells <code>O(eps^{+2})</code> [CLM-002]); it is
+schedule-independent by construction at the adapter's fixed noise
+scale [CLM-003] and plateaus rather than converging to 1 [CLM-004].
+The empirical plateau values are pinned by regression tests in
 <code>tests/test_eval/test_posterior_selection_evaluator.py</code>:</p>
 <ul>
 <li><code>two_moons</code>: heuristic <code>selection_ratio</code> plateaus near 0.82
   (sheet dominates by a wide margin in the framework's
   closed-form Gaussian estimate).</li>
 <li><code>eight_gaussians</code>: heuristic <code>selection_ratio</code> plateaus near 0.55
-  (seven cell-root centres dominate the closed-form sum).</li>
+  [CLM-009] (seven cell-root centres dominate the closed-form sum).</li>
 </ul>
 <p>These are <em>framework-side observations</em>, not paper claims. The
 metric was renamed from <code>PosteriorSelectionEvaluator</code> to
@@ -1298,12 +1366,107 @@ of them changed an existing behaviour:</p>
   the deprecation behaviour of the legacy name) and
   <code>tests/test_tools/test_run_ablation.py</code> (the 18-row grid).</li>
 </ul>
+<h2 id="paper_quantities-as-algorithm-input">paper_quantities as algorithm input<a class="headerlink" href="#paper_quantities-as-algorithm-input" title="Permanent link">&para;</a></h2>
+<p>The four paper quantities <code>A_g</code>, <code>B_g</code>, <code>C_g</code>, <code>e_rho</code> extracted as
+framework contracts [CLM-011] in
+<code>adaptive_reflow/contracts/paper_quantities.py</code> are no longer
+decorative containers — they are first-class algorithm-layer inputs
+that the framework consumes end-to-end.</p>
+<h3 id="consumers">Consumers<a class="headerlink" href="#consumers" title="Permanent link">&para;</a></h3>
+<p>The wiring lives in three concrete places:</p>
+<ol>
+<li><strong><code>CodimensionSheetScheduler</code></strong> —
+   <code>adaptive_reflow/algorithm/scheduler.py:1844-1854</code>. When the
+   scheduler is constructed with a <code>profile_residual_fn</code>, it imports
+   <code>paper_quantities</code> lazily at construction time and computes
+   <code>A_g = sheet_evidence_A(profile)</code>,
+   <code>B_g = root_cell_packing_B(profile)</code>,
+   <code>C_g = per_cell_coefficient_C()</code>,
+   <code>e_rho = exterior_gap_e_rho()</code> exactly once, caching the four
+   values on <code>self._sheet_A</code>, <code>self._packing_B</code>, <code>self._cell_C</code>,
+   <code>self._exterior_gap_e_rho</code> (exposed via the public accessors
+   <code>sheet_A</code>, <code>packing_B</code>, <code>cell_C</code>, <code>exterior_gap_e_rho</code>).</li>
+</ol>
+<p>The per-round <code>_paper_evidence_balance</code> call
+   (<code>scheduler.py:1967-1975</code>) then forwards the cached
+   <code>sheet_A</code> / <code>packing_B</code> / <code>cell_C</code> into the helper's
+   "paper-quantity-augmented" path, replacing the framework-side
+   heuristic with the literal paper constants
+   <code>sheet = A_g * eps</code>, <code>cell = C_g * B_g * eps ** 2</code>. When no
+   <code>profile_residual_fn</code> is supplied the scheduler falls back to
+   the legacy inline formula (backward compat) and the four
+   accessors return <code>None</code>.</p>
+<ol>
+<li>
+<p><strong><code>AdaptivePolicyDriver</code></strong> —
+   <code>adaptive_reflow/algorithm/policy_driver.py:485-490</code>. The driver
+   gains an optional <code>per_cell_coefficient_C: float | None</code> parameter
+   (validated as a positive real at construction time). When set, the
+   <code>compute_policy</code> method computes
+   <code>beta = clip((1 - |p - t|) / C_g, 0, 1)</code>
+   (<code>policy_driver.py:520-530</code>), normalising the legacy adaptive
+   envelope to paper Lemma 3's per-cell evidence scale. When
+   <code>None</code>, the legacy <code>beta = clip(1 - |p - t|, 0, 1)</code> formula is
+   preserved byte-for-byte (backward compat).</p>
+</li>
+<li>
+<p><strong><code>ReInferenceRunner</code></strong> —
+   <code>adaptive_reflow/algorithm/runner.py:155</code>. The runner's
+   <code>ReInferenceConfig</code> gains an optional
+   <code>paper_quantities_provider: Callable[[float], float] | None</code>
+   parameter. When supplied, <code>ReInferenceRunner.run()</code>
+   (<code>runner.py:478-525</code>) calls <code>_apply_paper_quantities_rewiring</code>
+   (<code>runner.py:579-619</code>) once per <code>run</code> invocation: it computes the
+   four paper quantities via <code>paper_quantities.*</code>, and if the
+   scheduler is a <code>CodimensionSheetScheduler</code> (resp. the policy
+   driver is an <code>AdaptivePolicyDriver</code>) the runner replaces it
+   in-place with one constructed with <code>profile_residual_fn=provider</code>
+   (resp. <code>per_cell_coefficient_C=C_g</code>). The four paper quantities
+   are then recorded per round in
+   <code>per_round_metrics[r]["paper_quantity_diagnostics"]</code> as
+   <code>{"sheet_A", "packing_B", "cell_C", "exterior_gap_e_rho"}</code> for
+   empirical verification.</p>
+</li>
+</ol>
+<h3 id="diagnostic-emission">Diagnostic emission<a class="headerlink" href="#diagnostic-emission" title="Permanent link">&para;</a></h3>
+<p>The per-round <code>paper_quantity_diagnostics</code> entry is the empirical
+handle this ADR asks for: a reviewer can pull the audit trail from a
+runner-driven run and read off the literal <code>A_g</code>, <code>B_g</code>, <code>C_g</code>,
+<code>e_rho</code> values the framework computed from the residual profile, no
+longer needing to recompute them from the paper. The diagnostics are
+independent of the heuristic <code>selection_ratio</code> (which is a
+framework-side diagnostic, NOT a paper quantity).</p>
+<h3 id="backward-compatibility">Backward compatibility<a class="headerlink" href="#backward-compatibility" title="Permanent link">&para;</a></h3>
+<p>Every existing call site continues to work unchanged: when no
+<code>profile_residual_fn</code> is supplied to the scheduler, no
+<code>per_cell_coefficient_C</code> to the driver, and no
+<code>paper_quantities_provider</code> to the runner, the framework falls back
+to the legacy inline formulas byte-for-byte. The new wiring is
+opt-in via configuration; no audit invariant is broken.</p>
+<h3 id="regression-coverage">Regression coverage<a class="headerlink" href="#regression-coverage" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>tests/test_algorithm/test_scheduler.py</code>:
+  <code>test_codimension_sheet_scheduler_with_profile_uses_paper_quantities</code>,
+  <code>test_codimension_sheet_scheduler_without_profile_uses_inline_formula</code>,
+  <code>test_codimension_sheet_scheduler_paper_quantity_diagnostics_emitted</code>,
+  <code>test_codimension_sheet_scheduler_paper_quantity_path_matches_paper_quantities_module</code>.</li>
+<li><code>tests/test_algorithm/test_policy_driver.py</code>:
+  <code>test_adaptive_policy_driver_with_paper_quantities_uses_C</code>,
+  <code>test_adaptive_policy_driver_without_paper_quantities_legacy_behavior</code>,
+  <code>test_adaptive_policy_driver_rejects_invalid_per_cell_coefficient_C</code>,
+  <code>test_adaptive_policy_driver_config_hash_varies_with_per_cell_coefficient_C</code>.</li>
+<li><code>tests/test_algorithm/test_runner.py</code>:
+  <code>test_runner_with_paper_quantities_emits_diagnostics</code>,
+  <code>test_runner_without_paper_quantities_legacy_behavior</code>,
+  <code>test_runner_paper_quantities_upgrade_adaptive_driver</code>,
+  <code>test_runner_paper_quantities_rejects_non_callable_provider</code>.</li>
+</ul>
 <p>The empirical result is recorded in <code>docs/ABLATION.md</code>: the measured
-ratio is sheet-dominant but plateaus rather than converging to 1,
-because the replay evaluator scores the adapter at a fixed noise
-scale while paper Proposition 3's limit is <code>sigma -&gt; 0</code>. Making the
-ratio schedule-sensitive (scoring the round's own bundle instead of a
-fresh replay) is the open follow-up.</p>
+ratio is sheet-dominant but plateaus rather than converging to 1
+[CLM-004], because the replay evaluator scores the adapter at a fixed
+noise scale while paper Proposition 3's limit is <code>sigma -&gt; 0</code>. Making
+the ratio schedule-sensitive (scoring the round's own bundle instead
+of a fresh replay) is the open follow-up.</p>
 <h2 id="selection-metric-status-2026-08-28-post-review">Selection metric status (2026-08-28, post-review)<a class="headerlink" href="#selection-metric-status-2026-08-28-post-review" title="Permanent link">&para;</a></h2>
 <p>A code-review pass (B5) investigated the claim that the shipped
 <code>selection_ratio</code> converges toward 1 as rounds progress, on the
@@ -1334,13 +1497,12 @@ investigation, recorded in <code>docs/review/B5-VERIFICATION.md</code>, found:</
 </ul>
 <p><strong>Implication for this ADR.</strong> Lines 139 and 269 of the prior version
 predicted "convergence to 1" and "exceeds 0.95 by round 19" of the
-shipped metric. Those predictions are demoted: they apply to a
-<em>future</em> endpoint-conditioned metric, not to the
-replay-based metric that <code>EvidenceScaleGapMetric.oracle()</code> ships
-today. The shipped metric's empirical reading is the
+shipped metric. Those predictions are demoted <a class="autorefs autorefs-internal" title="CLM-004: Framework " href="../../CLAIMS/#CLM-004">CLM-017</a>: they apply to a <em>future</em> endpoint-conditioned metric, not
+to the replay-based metric that <code>EvidenceScaleGapMetric.oracle()</code>
+ships today. The shipped metric's empirical reading is the
 schedule-independent difficulty constant already documented in
-<code>docs/ABLATION.md</code>. The metric is a framework-internal heuristic,
-NOT a paper quantity.</p>
+<code>docs/ABLATION.md</code> [CLM-003]. The metric is a framework-internal
+heuristic, NOT a paper quantity [CLM-008].</p>
 <p><strong>Open decision (deferred pending human review).</strong> Closing the gap
 between the shipped metric and paper Proposition 3 requires scoring
 the round's <em>endpoint</em> (not a fresh replay). The pure helper
@@ -1397,100 +1559,107 @@ behaviour are revised to match what it actually measures.</p>
 <p>The framework has historically over-claimed certain things as
 "paper Theorem 1 predictions" that are not in the paper. This
 section records the negative space explicitly so a reviewer does
-not have to reconstruct it from the proof.</p>
-<p>The paper does NOT claim:</p>
+not have to reconstruct it from the proof. Each item below is
+recorded as a <code>CLM-NNN</code> claim marked <code>DEPRECATED</code> in
+<code>docs/CLAIMS.md</code>; the single source of truth for the negative
+space is the canonical ledger, not this prose recap.</p>
+<p>DEPRECATED claims (the canonical record lives in <code>docs/CLAIMS.md</code>):</p>
 <ul>
-<li><strong>The paper does NOT claim that any "selection ratio" converges
-  to 1.</strong> Proposition 3 + Corollary 1 prove BL-convergence of the
-  full ambient posterior <code>mu_{g,eps}</code> to <code>nu_g</code> and the
-  <code>O(eps)</code> / <code>O(eps^2)</code> / <code>exp(-e_rho / (2 eps^2))</code> tail bounds.
-  They do not single out a ratio of two evidence components and
-  claim it converges to 1. The framework's heuristic
-  <code>selection_ratio = sheet_evidence / (sheet_evidence +
+<li><strong>[CLM-017]</strong> The paper does NOT claim that any
+  "selection ratio" converges to 1. Proposition 3 + Corollary 1
+  prove BL-convergence of the full ambient posterior
+  <code>mu_{g,eps}</code> to <code>nu_g</code> [CLM-012] and the <code>O(eps)</code> [CLM-014] /
+  <code>O(eps^2)</code> [CLM-002] / <code>exp(-e_rho / (2 eps^2))</code> [CLM-007] tail
+  bounds. They do not single out a ratio of two evidence
+  components and claim it converges to 1. The framework's
+  heuristic <code>selection_ratio = sheet_evidence / (sheet_evidence +
   cell_evidence)</code> (emitted by <code>EvidenceScaleGapMetric</code>) is a
-  framework-internal diagnostic, NOT a paper quantity.</li>
-<li><strong>The paper does NOT claim that the framework's
-  <code>EvidenceScaleGapMetric</code> (formerly <code>PosteriorSelectionEvaluator</code>)
-  is a paper quantity.</strong> The metric emits a heuristic
-  <code>selection_ratio</code> based on closed-form Gaussian densities; the
-  paper proves no such ratio. The metric is a framework-internal
-  diagnostic for monitoring whether the framework's behaviour is
-  consistent with the paper's evidence ordering (sheet
-  <code>Theta(eps^{+1})</code> vs cells <code>O(eps^{+2})</code>). It is NOT claimed
-  to converge to 1; it plateaus at a fixed-noise replay.</li>
-<li><strong>The paper does NOT claim that the framework's
-  <code>CodimensionSheetScheduler._paper_evidence_balance</code> helper
-  implements the proof's exponent structure as originally
-  written.</strong> The audit at <code>docs/audit/EPSILON_DIRECTION.md</code> §4.2
+  framework-internal diagnostic [CLM-008], NOT a paper quantity.</li>
+<li><strong>[CLM-008]</strong> The paper does NOT claim that the framework's
+  <code>EvidenceScaleGapMetric</code> (formerly
+  <code>PosteriorSelectionEvaluator</code>) is a paper quantity. The metric
+  emits a heuristic <code>selection_ratio</code> based on closed-form
+  Gaussian densities; the paper proves no such ratio. The metric
+  is a framework-internal diagnostic for monitoring whether the
+  framework's behaviour is consistent with the paper's evidence
+  ordering (sheet <code>Theta(eps^{+1})</code> [CLM-001] vs cells
+  <code>O(eps^{+2})</code> [CLM-002]). It is NOT claimed to converge to 1
+  [CLM-017]; it plateaus at a fixed-noise replay
+  [CLM-004].</li>
+<li><strong>[CLM-016 DEPRECATED]</strong> The paper does NOT claim that the
+  framework's <code>CodimensionSheetScheduler._paper_evidence_balance</code>
+  helper implements the proof's exponent structure as originally
+  written. The audit at <code>docs/audit/EPSILON_DIRECTION.md</code> §4.2
   documents that the prototype helper inverted the exponents
   (claiming <code>sheet = eps^{-1}</code> and <code>cell = eps^{-2}</code>); the
-  paper's Lemma 2 + Lemma 3 + Corollary 1 establish <em>positive</em>
-  powers (<code>sheet = Theta(eps^{+1})</code>, <code>cell = O(eps^{+2})</code>). The
-  corrected helper uses positive powers; the historical
-  inversion is recorded only so a future reader does not
-  re-introduce it.</li>
-<li><strong>The paper does NOT claim that any framework-specific
-  schedule implements Theorem 1's evidence competition at the
-  magnitude level.</strong> The framework's <code>n_cap</code> ramp is a convex
-  mixing weight on a state vector; it is <em>directionally</em> aligned
-  with the paper's <code>eps -&gt; 0</code> limit (round progression mirrors
-  the noise-shrink direction) but it does not produce the
-  <code>Theta(eps^{+1})</code> / <code>O(eps^{+2})</code> evidence competition the
+  paper's Lemma 2 [CLM-001] + Lemma 3 [CLM-002] + Corollary 1
+  [CLM-013] establish <em>positive</em> powers (<code>sheet = Theta(eps^{+1})</code>,
+  <code>cell = O(eps^{+2})</code>). The corrected helper uses positive
+  powers; the historical inversion is recorded only so a future
+  reader does not re-introduce it.</li>
+<li><strong>[CLM-015]</strong> The paper does NOT claim that any framework-
+  specific schedule implements Theorem 1's evidence competition
+  at the magnitude level. The framework's <code>n_cap</code> ramp is a
+  convex mixing weight on a state vector; it is <em>directionally</em>
+  aligned with the paper's <code>eps -&gt; 0</code> limit (round progression
+  mirrors the noise-shrink direction) but it does not produce
+  the <code>Theta(eps^{+1})</code> / <code>O(eps^{+2})</code> evidence competition the
   paper proves. The framework's <code>eps_implicit</code> parameter is a
   tunable hyperparameter, not the paper's <code>eps</code>.</li>
 </ul>
 <p>The paper DOES claim:</p>
 <ul>
-<li><strong>Bounded-Lipschitz convergence.</strong> <code>mu_{g,eps} --BL--&gt; nu_g</code>
-  as <code>eps -&gt; 0</code> (Theorem 1, line 88-91 of the paper). The
-  limiting measure is supported on the codimension-1 sheet with
-  local density `q_g(x) / Q_g = exp(-x^2 / 2) / (sqrt(1 + g(x)^2)</li>
-<li>Q_g)`.</li>
-<li><strong>Posterior mass on isolated cells is <code>O(eps)</code>.</strong>
+<li><strong>Bounded-Lipschitz convergence.</strong> [CLM-012] <code>mu_{g,eps}
+  --BL--&gt; nu_g</code> as <code>eps -&gt; 0</code> (Theorem 1, line 88-91 of the
+  paper). The limiting measure is supported on the
+  codimension-1 sheet with local density <code>q_g(x) / Q_g =
+  exp(-x^2 / 2) / (sqrt(1 + g(x)^2) * Q_g)</code>.</li>
+<li><strong>Posterior mass on isolated cells is <code>O(eps)</code>.</strong> [CLM-014]
   <code>mu_{g,eps}(union_z I_z) &lt;= C_2 * eps</code> for sufficiently small
   <code>eps</code> (Corollary 1, line 165-168). This is the <em>normalised</em>
   mass statement, derived from the <em>unnormalised</em> Lemma 3 bound
-  <code>int_{I_z} p_eps &lt;= C_g e^{-z^2/4} eps^2</code> divided by Corollary
-  1's <code>C_1 * eps</code> lower bound.</li>
-<li><strong>Normalisation lower bound.</strong> <code>Z_{g,eps} &gt;= C_1 * eps</code> for
-  sufficiently small <code>eps</code> (Corollary 1, line 165). The constant
-  <code>C_1</code> is derived from the positive limit
-  <code>A_g = (2*pi)^{-1/2} int_R exp(-s^2/2) / sqrt(1 + g(s)^2) ds</code>
+  <code>int_{I_z} p_eps &lt;= C_g e^{-z^2/4} eps^2</code> [CLM-002] divided by
+  Corollary 1's <code>C_1 * eps</code> lower bound [CLM-013].</li>
+<li><strong>Normalisation lower bound.</strong> [CLM-013] <code>Z_{g,eps} &gt;= C_1 *
+  eps</code> for sufficiently small <code>eps</code> (Corollary 1, line 165). The
+  constant <code>C_1</code> is derived from the positive limit <code>A_g =
+  (2*pi)^{-1/2} int_R exp(-s^2/2) / sqrt(1 + g(s)^2) ds</code>
   (Proposition 3 / line 161).</li>
-<li><strong>Positive limit <code>A_g &gt; 0</code>.</strong> <code>eps^{-1} Z_{g,eps} -&gt; A_g &gt; 0</code>
-  (Proposition 3, line 116-117 + line 161). The positivity is
-  what makes <code>Z_{g,eps} &gt;= C_1 * eps</code> hold for small <code>eps</code>.</li>
-<li><strong>Sheet-tube limit.</strong> <code>eps^{-1} int_T phi p_eps -&gt; (2*pi)^{-1/2}
-  int_R phi(s, 0) exp(-s^2/2) / sqrt(1 + g(s)^2) ds</code> for every
-  bounded continuous <code>phi</code> (Lemma 2, line 101-103).</li>
-<li><strong>Per-cell bound.</strong> <code>int_{I_z} p_eps &lt;= C_g e^{-z^2/4} eps^2</code>
-  for every <code>z in Z_g</code> (Lemma 3, line 107); the coefficient
-  <code>C_g = e^{rho^2/2} / a</code> is literal and explicit (Lemma 3 proof,
-  line 191).</li>
-<li><strong>Gaussian packing.</strong> <code>B_g = sum_{z in Z_g} e^{-z^2/4} &lt;
-  infinity</code> (Lemma 5 / line 159). The summability is derived,
-  not assumed.</li>
-<li><strong>Physical exterior gap.</strong> <code>int_{T^c \setminus union_z I_z}
-  p_eps &lt;= exp(-e_rho / (2 eps^2))</code> with <code>e_rho = min{rho^4,
-  (1 - rho)^2 eta^2}</code> (Lemma 4 / Lemma 5, line 110-112 + line
-  128). The exponential bound is the <code>o(eps)</code> tail that
-  Corollary 1 divides by the <code>C_1 * eps</code> lower bound to obtain
-  the physical complement's <code>C_3 * eps^{-1} * exp(-e_rho / (2
-  eps^2))</code> posterior mass.</li>
+<li><strong>Positive limit <code>A_g &gt; 0</code>.</strong> [CLM-013] <code>eps^{-1} Z_{g,eps} -&gt;
+  A_g &gt; 0</code> (Proposition 3, line 116-117 + line 161). The
+  positivity is what makes <code>Z_{g,eps} &gt;= C_1 * eps</code> hold for small
+  <code>eps</code>.</li>
+<li><strong>Sheet-tube limit.</strong> [CLM-001] <code>eps^{-1} int_T phi p_eps -&gt;
+  (2*pi)^{-1/2} int_R phi(s, 0) exp(-s^2/2) / sqrt(1 + g(s)^2) ds</code>
+  for every bounded continuous <code>phi</code> (Lemma 2, line 101-103).</li>
+<li><strong>Per-cell bound.</strong> [CLM-002] <code>int_{I_z} p_eps &lt;= C_g
+  e^{-z^2/4} eps^2</code> for every <code>z in Z_g</code> (Lemma 3, line 107);
+  the coefficient <code>C_g = e^{rho^2/2} / a</code> is literal and explicit
+  (Lemma 3 proof, line 191).</li>
+<li><strong>Gaussian packing.</strong> [CLM-011] <code>B_g = sum_{z in Z_g}
+  e^{-z^2/4} &lt; infinity</code> (Lemma 5 / line 159). The summability
+  is derived, not assumed.</li>
+<li><strong>Physical exterior gap.</strong> [CLM-007] <code>int_{T^c \setminus
+  union_z I_z} p_eps &lt;= exp(-e_rho / (2 eps^2))</code> with <code>e_rho =
+  min{rho^4, (1 - rho)^2 eta^2}</code> (Lemma 4 / Lemma 5, line
+  110-112 + line 128). The exponential bound is the <code>o(eps)</code> tail
+  that Corollary 1 divides by the <code>C_1 * eps</code> lower bound to
+  obtain the physical complement's <code>C_3 * eps^{-1} * exp(-e_rho /
+  (2 eps^2))</code> posterior mass.</li>
 </ul>
 <p>These are the <strong>actual paper claims</strong>. Any framework metric,
 invariant, or runtime check that cannot be derived from one of
 these statements is by definition a framework-side addition, not
 a paper claim. The framework's heuristic <code>selection_ratio</code> is
 exactly such an addition; it is documented as a heuristic proxy
-for monitoring the framework's qualitative evidence ordering,
-and its convergence to 1 is NOT predicted by the paper and is
-NOT observed empirically (the metric plateaus at a fixed-noise
-replay). See <code>docs/INSIGHTS.md</code> for the narrative companion to
-this ADR and <code>docs/ABLATION.md</code> for the empirical data, and
-<code>adaptive_reflow/contracts/paper_quantities.py</code> for the four
-paper-quantity contracts (<code>A_g</code>, <code>B_g</code>, <code>C_g</code>, <code>e_rho</code>) that
-<em>are</em> paper invariants.</p>
+[CLM-008] for monitoring the framework's qualitative evidence
+ordering, and its convergence to 1 is NOT predicted by the paper
+[CLM-017] and is NOT observed empirically (the metric
+plateaus at a fixed-noise replay) [CLM-004]. See <code>docs/INSIGHTS.md</code>
+for the narrative companion to this ADR and <code>docs/ABLATION.md</code> for
+the empirical data, and <code>adaptive_reflow/contracts/paper_quantities.py</code>
+for the four paper-quantity contracts (<code>A_g</code>, <code>B_g</code>, <code>C_g</code>, <code>e_rho</code>)
+[CLM-011] that <em>are</em> paper invariants.</p>
 
 
 

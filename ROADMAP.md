@@ -1,12 +1,17 @@
 # Roadmap
 
-`flowa-multistep-reinference` is a single-maintainer research project. The
+`flowa-multistep-reinference` is a single-maintainer research prototype. The
 roadmap below tracks the items currently open in `todo.json` and the
-planned governance work for the S-tier upgrade. Every entry is a one-line
+planned governance work. Every entry is a one-line
 imperative with a target date and an ADR ID where one applies.
 
 The "Now / Next / Later" buckets are calendar quarters, not promises.
 They are reviewed at every release tag and updated when an item closes.
+
+Status vocabulary: `[ ]` is open; `[x]` means **implemented and available
+in this tree** — it does not mean production-hardened, benchmarked at
+scale, or feature-frozen. Items whose surface exists but is opt-in / not
+wired into a default path are labelled inline.
 
 ## Now (2026-Q3 — July through September)
 
@@ -25,23 +30,25 @@ They are reviewed at every release tag and updated when an item closes.
       configs (`pyproject.toml` `requires-python` / ruff `target-version`
       / mypy `python_version`, and every `.github/workflows/*.yml`
       `python-version`)
-- [x] Paper-grounded algorithm layer — closed 2026-08-28 [ADR-0013].
+- [x] Paper-grounded algorithm layer — implemented 2026-08-28 [ADR-0013].
       Li (2024) *Gaussian Posterior Selection on Noncompact Fibres with
       Uniformly Separated Roots*, Theorem 1, is now mapped onto the
       algorithm layer: the paper's three-estimate proof architecture
       (Lemma 2 sheet tube, Lemma 3 root cells, Lemma 4 complement
       suppression) is the structure the three algorithm abstractions
-      already had. Cosine annealing is upgraded from "the default
-      schedule" to **the canonical implementation** of paper Lemma 2's
-      sheet-tube scaling. `CodimensionSheetScheduler` implements the
-      sheet-vs-cell evidence balance directly
-      (`sheet = 1 / max(n_cap_base, eps)`,
-      `cell = (1 - n_cap_base)^2 / eps^2`);
-      `PosteriorSelectionEvaluator` measures the resulting
-      `selection_ratio` empirically; `ReInferenceRunner` optionally
+      already had. Cosine annealing is documented as the canonical
+      implementation of paper Lemma 2's sheet-tube scaling **at the
+      direction level only** — see `docs/audit/EPSILON_DIRECTION.md`; it
+      is not claimed to reproduce the paper's evidence competition at the
+      magnitude level. `CodimensionSheetScheduler` implements the
+      sheet-vs-cell evidence balance in
+      `_paper_evidence_balance` (positive `eps` powers, per the audit
+      correction); `EvidenceScaleGapMetric` measures the resulting
+      `selection_ratio`, which is a framework-internal heuristic and not
+      a paper quantity; `ReInferenceRunner` optionally
       emits it per round via `ReInferenceConfig.selection_evaluator`.
       Ablation grid extended from 16 to **18 rows**.
-- [x] Algorithm abstractions — closed 2026-08-28 [ADR-0011]. The
+- [x] Algorithm abstractions — implemented 2026-08-28 [ADR-0011]. The
       algorithm layer (scheduler, policy driver, merge operator,
       restart blender) is now abstract and optional: four `Protocol`s
       in `adaptive_reflow/algorithm/` with 2-4 implementations each,
@@ -50,7 +57,7 @@ They are reviewed at every release tag and updated when an item closes.
       framework. `tools/run_ablation.py` gained a mixed
       cosine-scheduler + `ConstantPolicyDriver` row that the old code
       could not express.
-- [x] New scheduler families — closed 2026-08-28 [ADR-0012]. Three
+- [x] New scheduler families — implemented 2026-08-28 [ADR-0012]. Three
       new deterministic `SchedulerProtocol` implementations:
       `PolynomialScheduler` (power-law ramp, `p > 0`),
       `SigmoidScheduler` (logit curve with configurable steepness +
@@ -71,7 +78,7 @@ They are reviewed at every release tag and updated when an item closes.
       Karras EDM `sigma(t)` — needs score gradients; defer
       bandit/RL — breaks determinism; defer cyclical and step —
       subsumed by sigmoid or incompatible).
-- [x] Cosine annealing drives memory fraction — closed 2026-08-27
+- [x] Cosine annealing drives memory fraction — implemented 2026-08-27
       [ADR-0010]. `memory_fraction_from_schedule` helper added in
       `adaptive_reflow/schedule/cosine.py`; `Frame.engine.run_round` now
       wires `schedule.n_cap` to `policy.beta_by_channel` per round when
@@ -81,7 +88,7 @@ They are reviewed at every release tag and updated when an item closes.
       by `+0.250` vs the constant-`beta=0.5` baseline; on `two_moons`
       the constant-beta baseline tied cosine on coverage and was
       slightly tighter on W2.
-- [x] Paper-grounded framework alignment — closed 2026-08-28.
+- [x] Paper-grounded framework alignment — implemented 2026-08-28.
       Four paper quantities (`A_g`, `B_g`, `C_g`, `e_rho`) from
       Li (2024) Theorem 1 are formalized as framework contracts in
       `adaptive_reflow/contracts/paper_quantities.py`, with
@@ -99,6 +106,32 @@ They are reviewed at every release tag and updated when an item closes.
       paper does NOT claim" sections and the `selection_ratio` is
       reframed as a framework-internal heuristic, not a paper
       quantity.
+      **Wiring status:** the four paper quantities are now consumed
+      by `CodimensionSheetScheduler.profile_residual_fn` (ground
+      truth for `_paper_evidence_balance`), by
+      `AdaptivePolicyDriver.per_cell_coefficient_C` (normalisation
+      constant), and by `ReInferenceRunner` (per-round diagnostic
+      emission into `per_round_metrics[r]["paper_quantity_diagnostics"]`).
+      `ReInferenceConfig.paper_quantities_provider` upgrades the
+      scheduler / driver in-place via
+      `ReInferenceRunner._apply_paper_quantities_rewiring`; without
+      the provider the legacy inline formula is used (regression
+      coverage in `tests/test_algorithm/test_legacy_fallback.py`).
+      The ablation (`tools/run_ablation.py`) records the
+      round-by-round diagnostics; see `docs/ABLATION.md`
+      §"paper_quantities as algorithm input" for the table and the
+      non-triviality check.
+- [x] Close 3 identified gaps — implemented 2026-08-28. Phase 1
+      wires paper quantities into the algorithm layer (above);
+      Phase 2 introduces `docs/CLAIMS.md` + `tools/check_claims_consistency.py`
+      to enforce cross-doc claim consistency (16 ACTIVE / 0
+      PROVISIONAL / 2 DEPRECATED, no drift on the latest run);
+      Phase 3 removes the "S-tier" / "A+ library" /
+      "production-ready" framing from `README.md`, `CHANGELOG.md`,
+      `ROADMAP.md`, and `FINAL_STATUS.md` (which is annotated as
+      a stale snapshot, not a live status). All six gates green:
+      pytest 1235 passed / 7 skipped, ruff 0, mypy 0, docs scanner
+      2251, claims sync clean, mkdocs `--strict` clean.
 
 ## Next (2026-Q4 — October through December)
 

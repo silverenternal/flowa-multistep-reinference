@@ -1,0 +1,1708 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>B5 architecture fix — batched trajectories for an endpoint-conditioned evidence metric - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#b5-architecture-fix-batched-trajectories-for-an-endpoint-conditioned-evidence-metric" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              B5 architecture fix — batched trajectories for an endpoint-conditioned evidence metric
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Problem statement
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Problem statement">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-measured-evidence-that-a-batch-fixes-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Measured evidence that a batch fixes it
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-design-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Design constraints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Design constraints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#c1-byte-determinism-no-randomness-without-a-seed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C1 — Byte-determinism (no randomness without a seed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-keep-the-memory-contract-intact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2 — Keep the memory contract intact
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c3-backward-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C3 — Backward compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-proposed-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Proposed API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Proposed API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-placement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Placement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-the-three-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 The three types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-how-a-round-executes-and-how-the-memory-contract-stays-intact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 How a round executes (and how the memory contract stays intact)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-evidence_at_round-and-a-fourth-correction-to-the-brief" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 evidence_at_round — and a fourth correction to the brief
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-twodimfmadapter-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. TwoDimFMAdapter changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. TwoDimFMAdapter changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-batched_integrate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 batched_integrate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-generate_trajectory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 generate_trajectory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-evidencescalegapmetric-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. EvidenceScaleGapMetric update
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. EvidenceScaleGapMetric update">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-new-entry-point-not-a-changed-one" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 New entry point, not a changed one
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-per-round-computation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Per-round computation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-the-half-fix-that-must-be-declared" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 The half-fix that must be declared
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-what-this-does-and-does-not-license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 What this does and does not license
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-migration-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Migration path
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Migration path">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-a-additive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase A — additive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-b-dual-surface-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase B — dual-surface metric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-c-reinferencerunner-becomes-a-thin-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase C — ReInferenceRunner becomes a thin wrapper
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-type-signature-sketch-pseudocode-no-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Type-signature sketch (pseudocode — no implementation)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Type-signature sketch (pseudocode — no implementation)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-runner-skeleton-pseudocode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Runner skeleton — pseudocode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-adapter-additions-pseudocode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Adapter additions — pseudocode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-metric-additions-and-closed-form-helper-pseudocode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Metric additions and closed-form helper — pseudocode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-open-questions-deliberately-not-decided-here" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Open questions (deliberately not decided here)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-complexity-estimate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Complexity estimate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#files-examined" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files examined
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="b5-architecture-fix-batched-trajectories-for-an-endpoint-conditioned-evidence-metric">B5 architecture fix — batched trajectories for an endpoint-conditioned evidence metric<a class="headerlink" href="#b5-architecture-fix-batched-trajectories-for-an-endpoint-conditioned-evidence-metric" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> design only. No code written, no code modified.
+<strong>Date:</strong> 2026-08-28.
+<strong>Supersedes nothing.</strong> Companion to <code>docs/review/B5-VERIFICATION.md</code> (the case-(c)
+diagnosis) and ADR-0013.</p>
+<blockquote>
+<p><strong>Naming note.</strong> Every class name proposed here is deliberately written in
+<strong>bold</strong>, not in backticks. <code>tools/check_docs_against_code.py</code> treats a
+backticked CamelCase token as a verifiable claim that the symbol exists under
+<code>adaptive_reflow/</code>; these symbols do not exist yet. Bold keeps the doc linter
+green until Phase A lands. Existing symbols are backticked as usual.</p>
+</blockquote>
+<hr />
+<h2 id="1-problem-statement">1. Problem statement<a class="headerlink" href="#1-problem-statement" title="Permanent link">&para;</a></h2>
+<p><code>docs/review/B5-VERIFICATION.md</code> establishes <strong>case (c)</strong>: the shipped
+<code>selection_ratio</code> is not the wrong bundle's evidence — it is <em>nobody's</em> evidence.</p>
+<p>Three facts from that verification, restated as the requirements this design
+must satisfy:</p>
+<ol>
+<li><strong>The bundle parameter is inert.</strong> <code>EvidenceScaleGapMetric.oracle</code> reads
+   <code>bundle</code> only to type-check it and to derive a provenance label; the
+   arithmetic runs in <code>_compute_metrics(seed=...)</code>, which never receives the
+   bundle (<code>adaptive_reflow/eval/posterior_selection_evaluator.py:605-626</code>).
+   <code>_generate_endpoints</code> (<code>:628-667</code>) re-samples <code>n_gen</code> fresh endpoints from
+   the metric's <strong>own private adapter instance</strong> (constructed at <code>:466-468</code>, a
+   different object from the runner's adapter). Rewiring the call site to pass a
+   round-<code>r</code> endpoint bundle is a no-op.</li>
+<li><strong>The result is invariant to every algorithm knob.</strong> Two structurally
+   unrelated bundles at the same seed give a bit-identical row; two different
+   schedulers give an ablation table identical to four decimals
+   (<code>docs/ABLATION.md:58-62</code>). <code>cell_evidence</code> is worse than invariant — it is a
+   compile-time constant, a closed form over fixed analytic mode centres with no
+   data argument at all (<code>posterior_selection_evaluator.py:302-323</code>).</li>
+<li><strong>The blocker is architectural, not a wiring bug.</strong> The runner produces
+   exactly <strong>one</strong> endpoint per round — a single 2-vector captured into
+   <code>endpoints[r]</code> at <code>adaptive_reflow/algorithm/runner.py:497-506</code>. Sheet
+   evidence over <code>n = 1</code> is <code>exp(-x^2/2)</code> for one sample. B5-VERIFICATION.md §5
+   concludes: <em>"Making this metric meaningful requires the runner to carry a
+   batch of trajectories per round, which is a real architectural change to</em>
+   <code>ReInferenceRunner</code> <em>and</em> <code>TwoDimFMAdapter</code> <em>… not a rewiring."</em></li>
+</ol>
+<p>That batch is what this document designs.</p>
+<h3 id="11-measured-evidence-that-a-batch-fixes-it">1.1 Measured evidence that a batch fixes it<a class="headerlink" href="#11-measured-evidence-that-a-batch-fixes-it" title="Permanent link">&para;</a></h3>
+<p>Two experiments were run against the shipped adapter (read-only, throwaway
+scripts; RK4, <code>two_moons</code>, coarse 5-step grid) to check that the proposed fix
+actually buys a schedule-sensitive metric before any code is committed to.</p>
+<p><strong>Effect size</strong> — endpoint-conditioned ratio as the memory fraction <code>m</code> varies,
+batch of 2048 endpoints per cell:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;"><code>m</code> (memory fraction)</th>
+<th style="text-align: right;">sheet evidence</th>
+<th style="text-align: right;">cell evidence</th>
+<th style="text-align: right;">ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.595322</td>
+<td style="text-align: right;">0.140454</td>
+<td style="text-align: right;">0.809108</td>
+</tr>
+<tr>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.654612</td>
+<td style="text-align: right;">0.140454</td>
+<td style="text-align: right;">0.823343</td>
+</tr>
+<tr>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.626032</td>
+<td style="text-align: right;">0.140454</td>
+<td style="text-align: right;">0.816756</td>
+</tr>
+<tr>
+<td style="text-align: right;">0.75</td>
+<td style="text-align: right;">0.517390</td>
+<td style="text-align: right;">0.140454</td>
+<td style="text-align: right;">0.786494</td>
+</tr>
+<tr>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.407367</td>
+<td style="text-align: right;">0.140454</td>
+<td style="text-align: right;">0.743614</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Noise floor</strong> — Monte-Carlo standard error of the ratio at batch size <code>B</code>
+(endpoint population: mean sheet density 0.594938, std 0.285666, <code>n = 20000</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;"><code>B</code> endpoints/round</th>
+<th style="text-align: right;">ratio std-error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1 (today)</td>
+<td style="text-align: right;">0.074</td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.0185</td>
+</tr>
+<tr>
+<td style="text-align: right;"><strong>128</strong> (proposed default, 8 x 16)</td>
+<td style="text-align: right;"><strong>0.0065</strong></td>
+</tr>
+<tr>
+<td style="text-align: right;">1000</td>
+<td style="text-align: right;">0.0023</td>
+</tr>
+<tr>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">0.0016</td>
+</tr>
+</tbody>
+</table>
+<p>Three conclusions that shape the rest of this design:</p>
+<ul>
+<li><strong>The fix works.</strong> The endpoint-conditioned ratio spans ~0.066 across the
+  memory-fraction range — a quantity the scheduler, driver, and blender jointly
+  control. The current metric spans 0.000.</li>
+<li><strong>128 endpoints/round is enough.</strong> Effect size 0.066 against a 0.0065 noise
+  floor is ~10:1. <code>B = 1</code> (today) has a noise floor of 0.074 — <em>larger than the
+  entire effect</em>, which is exactly why the shipped column looks like flat noise.</li>
+<li><strong>It is responsive, not convergent.</strong> The ratio is <strong>non-monotone</strong> in <code>m</code>
+  (peak at <code>m = 0.25</code>, minimum at <code>m = 1.00</code>). This design therefore does <strong>not</strong>
+  license the ADR-0013:139 / :269 claims ("converges to 1", "exceeds 0.95 by
+  round 19"). See §5.4 — that contradiction must be resolved in the ADR
+  regardless of whether this design is built.</li>
+</ul>
+<hr />
+<h2 id="2-design-constraints">2. Design constraints<a class="headerlink" href="#2-design-constraints" title="Permanent link">&para;</a></h2>
+<h3 id="c1-byte-determinism-no-randomness-without-a-seed">C1 — Byte-determinism (no randomness without a seed)<a class="headerlink" href="#c1-byte-determinism-no-randomness-without-a-seed" title="Permanent link">&para;</a></h3>
+<p>Every new entry point takes an explicit <code>seed</code> and derives all randomness from
+<code>np.random.default_rng(seed)</code>, matching <code>build_initial_state</code>
+(<code>adaptive_reflow/adapters/twodim_fm.py:417-423</code>) and
+<code>apply_restart_distribution</code> (<code>:518-523</code>, seed derived from
+<code>(policy_hash, source_round + 1)</code>).</p>
+<p><strong>A measured caveat that constrains the whole design.</strong> Vectorising RK4 over a
+batch axis is <em>not</em> bit-identical to the current per-sample loop, because
+NumPy's matmul dispatches different kernels and accumulation orders by operand
+shape. Measured, comparing per-row endpoints against a single <code>B = 512</code>
+integration of the same 512 initial conditions:</p>
+<table>
+<thead>
+<tr>
+<th>batch shape</th>
+<th>bit-identical to <code>B = 512</code>?</th>
+<th style="text-align: right;">max abs diff</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>B = 1</code></td>
+<td>no</td>
+<td style="text-align: right;">8.88e-16</td>
+</tr>
+<tr>
+<td><code>B = 2</code></td>
+<td>no</td>
+<td style="text-align: right;">8.88e-16</td>
+</tr>
+<tr>
+<td><code>B = 3</code></td>
+<td>no</td>
+<td style="text-align: right;">8.88e-16</td>
+</tr>
+<tr>
+<td><code>B = 8</code></td>
+<td><strong>yes</strong></td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr>
+<td><code>B = 17</code></td>
+<td>no</td>
+<td style="text-align: right;">4.44e-16</td>
+</tr>
+<tr>
+<td><code>B = 64</code></td>
+<td><strong>yes</strong></td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr>
+<td><code>B = 128</code></td>
+<td><strong>yes</strong></td>
+<td style="text-align: right;">0.0</td>
+</tr>
+</tbody>
+</table>
+<p>The pattern is BLAS-blocking dependent and non-monotone — it cannot be relied
+on. Determinism must therefore be specified in three separate tiers:</p>
+<ul>
+<li><strong>D1 — reproducibility (required, achievable).</strong> Same config (<em>including the
+  batch shape</em>), same seed, same BLAS ⇒ bit-identical output. Verified: a
+  re-run at fixed shape is bit-identical.</li>
+<li><strong>D2 — cross-shape invariance (NOT achievable, must not be claimed).</strong>
+  Endpoints depend on <code>trajectories_per_round x endpoints_per_trajectory</code> at the
+  ~1e-15 level. Consequence: the batch shape <strong>must</strong> enter the runner's
+  <code>config_hash</code> / algorithm-signature payload, and golden files must be keyed to
+  a pinned shape. Cross-shape comparisons get a documented <code>1e-14</code> tolerance,
+  never <code>assert_array_equal</code>.</li>
+<li><strong>D3 — legacy parity (required, achievable).</strong> Measured: a <code>B = 1</code> batched
+  integration <strong>is</strong> bit-identical to <code>_integrate_rk4</code> on the same <code>x0</code>, because
+  <code>_velocity_field</code> already reshapes a 1-D input to <code>(1, 2)</code> before the matmul
+  (<code>twodim_fm.py:122-140</code>). This is the linchpin of Phase C (§6): the legacy
+  wrapper is byte-safe <strong>only if</strong> a batch-of-1 request is integrated as a
+  literal <code>B = 1</code> call and never coalesced with other work.</li>
+</ul>
+<h3 id="c2-keep-the-memory-contract-intact">C2 — Keep the memory contract intact<a class="headerlink" href="#c2-keep-the-memory-contract-intact" title="Permanent link">&para;</a></h3>
+<p>The four algorithm protocol surfaces named in the runner's module docstring
+(<code>runner.py:3-6</code>) are frozen: <code>SchedulerProtocol</code>, <code>PolicyDriverProtocol</code>,
+<code>MergeOperatorProtocol</code>, <code>RestartBlenderProtocol</code>. Nothing in this design adds,
+removes, or changes a method on any of them. All existing implementations keep
+working untouched:</p>
+<table>
+<thead>
+<tr>
+<th>surface</th>
+<th>implementations that must keep working</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SchedulerProtocol</code></td>
+<td><code>CosineAnnealScheduler</code>, <code>ConstantScheduler</code>, <code>LinearScheduler</code>, <code>ExponentialScheduler</code>, <code>PolynomialScheduler</code>, <code>SigmoidScheduler</code>, <code>ConvergenceAdaptiveScheduler</code>, <code>CodimensionSheetScheduler</code> (8)</td>
+</tr>
+<tr>
+<td><code>PolicyDriverProtocol</code></td>
+<td><code>ScheduleDerivedPolicyDriver</code>, <code>ConstantPolicyDriver</code>, <code>AdaptivePolicyDriver</code> (3)</td>
+</tr>
+<tr>
+<td><code>MergeOperatorProtocol</code></td>
+<td><code>BoundedMergeOperator</code>, <code>IdentityOperator</code>, <code>EMAOperator</code> (3)</td>
+</tr>
+<tr>
+<td><code>RestartBlenderProtocol</code></td>
+<td><code>LinearBlender</code>, <code>DistanceDecayBlender</code> (2)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Two corrections to the task brief.</strong> (a) The brief says "4 scheduler
+protocols"; there are <strong>4 protocol surfaces</strong> and <strong>8</strong> scheduler
+implementations — the table above is the real inventory. (b) There is no
+<strong>MemoryContract</strong> class anywhere under <code>adaptive_reflow/</code>; the name appears
+only in <code>docs/lean/GAPS.md:283</code>. "Keep the memory contract intact" is read
+here as: the four protocol surfaces above, plus the capacity → memory
+transform <code>memory_fraction = 1 - n_cap</code> (<code>ScheduleSample.memory_fraction</code>) and
+the restart-blend semantics <code>m * prior + (1 - m) * fresh</code>
+(<code>_blend_endpoint_with_prior</code>, <code>twodim_fm.py:290-299</code>).</p>
+</blockquote>
+<p><strong>A pre-existing fact this design must confront.</strong> In the current runner, the
+merge operator and the blender are <em>provenance-only</em>: <code>self._merge</code> and
+<code>self._blender</code> are referenced nowhere in <code>run()</code> except
+<code>_algorithm_signatures</code> (<code>runner.py:566-571</code>). The per-round blend actually
+happens inside the adapter's <code>apply_restart_distribution</code>, which the engine
+calls. So a batched runner that wants the blender to genuinely influence the
+batch has two options; §3.3 picks one and says why.</p>
+<h3 id="c3-backward-compatibility">C3 — Backward compatibility<a class="headerlink" href="#c3-backward-compatibility" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>ReInferenceRunner</code>, <code>ReInferenceConfig</code>, <code>ReInferenceResult</code> keep their exact
+  current signatures and semantics through Phases A and B.</li>
+<li><code>EvidenceScaleGapMetric.evaluate</code> / <code>.oracle</code> keep accepting a <code>StateBundle</code>
+  and returning what they return today. The byte-for-byte equality contract
+  between <code>evaluate</code> and <code>oracle</code> (asserted by tests) is preserved on the legacy
+  path.</li>
+<li>No existing golden file, ablation column, or ADR-quoted number changes value
+  in Phase A. New behaviour arrives only through new entry points.</li>
+</ul>
+<hr />
+<h2 id="3-proposed-api">3. Proposed API<a class="headerlink" href="#3-proposed-api" title="Permanent link">&para;</a></h2>
+<h3 id="31-placement">3.1 Placement<a class="headerlink" href="#31-placement" title="Permanent link">&para;</a></h3>
+<p>All three new types live in <code>adaptive_reflow/algorithm/runner.py</code>, alongside the
+existing trio, and are added to that module's <code>__all__</code>. The runner module is
+the right home because it is already "the only place that decides the
+<code>(scheduler, policy_driver)</code> composition" (<code>runner.py:20-25</code>) — the batch axis
+is a composition concern, not an engine concern.</p>
+<h3 id="32-the-three-types">3.2 The three types<a class="headerlink" href="#32-the-three-types" title="Permanent link">&para;</a></h3>
+<p><strong>BatchedRunnerConfig</strong> — a frozen dataclass that is a superset of
+<code>ReInferenceConfig</code>, adding exactly two fields plus one determinism field the
+brief did not ask for but C1/D2 requires:</p>
+<ul>
+<li><code>trajectories_per_round: int = 8</code></li>
+<li><code>endpoints_per_trajectory: int = 16</code></li>
+<li><code>integration_chunk_size: int = 0</code> — <code>0</code> means "one matmul over the whole
+  round's batch". Non-zero pins the chunk width so D1 survives a memory-driven
+  change of chunking. It enters the config hash.</li>
+</ul>
+<p>Everything else (<code>n_rounds</code>, <code>outer_cycle_id</code>, <code>target_round</code>, <code>seed</code>,
+<code>channels</code>, <code>selection_evaluator</code>) carries over unchanged.</p>
+<p><strong>BatchedTrajectoryRunner</strong> — constructed keyword-only per the brief:
+<code>(*, config, scheduler, policy_driver, blender, evaluator)</code>.</p>
+<blockquote>
+<p><strong>A third correction to the brief.</strong> The brief's signature omits the
+<code>adapter</code>, which the runner cannot work without (<code>ReInferenceRunner.__init__</code>
+raises <code>ValueError("adapter_required")</code> on a missing adapter,
+<code>runner.py:353-355</code>), and omits <code>merge_operator</code>, which is needed for the
+algorithm-signature payload (<code>_algorithm_signatures</code> takes all four
+components). The recommended signature is therefore
+<code>(*, config, adapter, scheduler=None, policy_driver=None, merge_operator=None,
+blender=None, evaluator=None, engine=None)</code> — adapter required, the rest
+defaulting exactly as <code>ReInferenceRunner.__init__</code> does. Also note the brief
+puts <code>config</code> on the constructor while <code>ReInferenceRunner</code> takes it on
+<code>run()</code>; this design accepts <code>config</code> on the constructor <strong>and</strong> keeps
+<code>run(seed)</code> per the brief, with <code>run()</code> overriding only the seed.</p>
+</blockquote>
+<p><strong>BatchedTrajectoryResult</strong> — frozen dataclass with the attributes the brief
+specifies:</p>
+<ul>
+<li><code>per_round_endpoints: list[list[np.ndarray]]</code> — round → trajectory → array of
+  shape <code>(endpoints_per_trajectory, dim)</code>.</li>
+<li><code>per_round_w2: list[float]</code> — one genuine per-round W2. Worth noting what this
+  fixes: <code>tools/run_ablation.py:651-668</code> currently scores round <code>r</code> on the
+  <em>cumulative prefix</em> <code>endpoints[:r+1]</code> precisely because one endpoint per round
+  is unscoreable. With a batch per round, W2 becomes a real per-round quantity
+  and the cumulative-prefix workaround can be retired.</li>
+<li><code>per_round_metric: dict[str, list[float]]</code> — metric name → per-round list.
+  Carries <code>selection_ratio</code> plus <code>n_cap</code>, <code>memory_fraction</code>, <code>beta</code>, <code>W2</code>,
+  <code>coverage</code>. Note this is the transpose of <code>ReInferenceResult.per_round_metrics</code>
+  (<code>dict[int, dict[str, float]]</code>); the transposed shape is what plotting and
+  the ablation renderer want. A <code>to_legacy_per_round_metrics()</code> helper converts.</li>
+<li><code>evidence_at_round(r, eps) -&gt; tuple[float, float, float]</code> — see §3.4.</li>
+<li>Plus, for parity with the legacy result: <code>config</code>, <code>round_traces</code>,
+  <code>final_endpoint_digest</code>, <code>algorithm_signatures</code>.</li>
+</ul>
+<h3 id="33-how-a-round-executes-and-how-the-memory-contract-stays-intact">3.3 How a round executes (and how the memory contract stays intact)<a class="headerlink" href="#33-how-a-round-executes-and-how-the-memory-contract-stays-intact" title="Permanent link">&para;</a></h3>
+<p>Per round <code>r</code>, for each of <code>trajectories_per_round</code> trajectories <code>j</code>:</p>
+<ol>
+<li>The scheduler is sampled <strong>once per round</strong>, not per trajectory:
+   <code>scheduler.sample(outer_cycle_id, r, target_round + r)</code>. One capacity per
+   round is what makes the round's batch a population under a <em>single</em> policy —
+   which is the whole point of the metric. Same for <code>driver.compute_policy</code>.</li>
+<li>Each trajectory <code>j</code> owns an independent bundle lineage, seeded by
+   <code>sample_id = f"runner-sample-{channel}-r{r}-t{j}"</code>. Because
+   <code>_seed_from_ids</code> hashes <code>(batch_id, sample_id, source_round)</code>
+   (<code>twodim_fm.py:90-94</code>), distinct <code>j</code> give independent, reproducible <code>x0</code>.</li>
+<li><code>Engine.run_round</code> is called <strong>once per trajectory</strong> with that trajectory's
+   bundle. This is the key decision: the batch axis lives in the runner's loop,
+   <em>not</em> inside the engine. The engine's fail-closed 6-step call order
+   (<code>build_initial_state -&gt; apply_restart_distribution -&gt; compose_condition -&gt;
+   solve_ode -&gt; observe_endpoint -&gt; detach_and_validate_endpoint</code>,
+   <code>frame/engine.py:8-10</code>) is exercised unchanged per trajectory, so every
+   protocol, audit code, and ledger row keeps its current meaning. C2 is
+   satisfied by construction rather than by argument.</li>
+<li>The <code>endpoints_per_trajectory</code> axis is served by the adapter's new batched
+   surface (§4), not by <code>endpoints_per_trajectory</code> separate engine calls. Each
+   trajectory's engine round yields one <em>lineage</em> endpoint (the one that
+   carries provenance forward); the batched integration yields the
+   <code>endpoints_per_trajectory</code> <em>population</em> endpoints that the metric scores.
+   Keeping these two distinct is what preserves D3 and keeps round traces
+   comparable to the legacy runner's.</li>
+<li>Feedback: <code>record_round_feedback(r, metric)</code> is invoked once per round with
+   the round's <em>aggregated</em> metric dict, guarded by <code>hasattr</code> exactly as today
+   (<code>runner.py:545-546</code>). Adaptive schedulers therefore see a low-variance W2
+   instead of a one-sample W2 — a real improvement in their input signal, and a
+   behaviour change that must be called out in the ADR.</li>
+</ol>
+<p>On the blender: this design keeps the blend where it is (inside
+<code>apply_restart_distribution</code>, driven by the policy's <code>beta</code>) so that Phase A
+changes no numbers. Making the blender a first-class participant in the batch is
+a <strong>separate, later</strong> decision, deliberately out of scope here; §7 records it as
+an open question rather than smuggling it in.</p>
+<h3 id="34-evidence_at_round-and-a-fourth-correction-to-the-brief">3.4 <code>evidence_at_round</code> — and a fourth correction to the brief<a class="headerlink" href="#34-evidence_at_round-and-a-fourth-correction-to-the-brief" title="Permanent link">&para;</a></h3>
+<p>The brief asks for <code>evidence_at_round(r, eps) -&gt; (sheet, cell, ratio)</code>
+"using <code>_paper_evidence_balance(n_cap[r], eps=current n_cap)</code>". Two problems:</p>
+<ol>
+<li><strong><code>_paper_evidence_balance</code> returns a scalar, not a triple.</strong> Its signature
+   is <code>_paper_evidence_balance(n_cap_base: float, eps_implicit: float) -&gt; float</code>
+   and it returns only <code>sheet / (sheet + cell)</code>
+   (<code>adaptive_reflow/algorithm/scheduler.py:1548-1598</code>). The two terms are local
+   variables. To return a triple, either (a) add a sibling helper in
+   <code>scheduler.py</code> that returns all three and re-express the existing function as
+   a projection of it — one authority for the arithmetic, no drift — or (b)
+   recompute <code>sheet = max(n_cap, eps)</code> and <code>cell = (1 - n_cap)^2 * eps^2</code> at the
+   call site, duplicating the closed form. <strong>Recommend (a).</strong></li>
+<li><strong><code>eps = current n_cap</code> collapses the two axes.</strong> The closed form already
+   treats <code>eps_implicit</code> as a noise scale <em>distinct</em> from capacity, with
+   <code>sheet = max(n_cap_base, eps)</code>. Setting <code>eps = n_cap</code> gives
+   <code>ratio = 1 / (1 + (1 - n)^2 * n)</code>, a pure function of <code>n_cap</code> — defensible as
+   "the round's own capacity is the noise scale", but it silently discards the
+   scheduler's configured <code>eps_implicit</code>. <strong>Recommend</strong> <code>eps</code> default to the
+   scheduler's own <code>eps_implicit</code> when it exposes one, with the brief's
+   <code>eps = n_cap</code> available as an explicit opt-in.</li>
+</ol>
+<p><strong>The most important point about this method: it is not the B5 fix.</strong>
+<code>evidence_at_round</code> is a <em>closed-form, schedule-conditioned prediction</em> — it
+never looks at an endpoint. The B5 fix is the <em>empirical, endpoint-conditioned</em>
+ratio in <code>per_round_metric["selection_ratio"]</code>. The design carries both, in
+deliberately separate namespaces, because comparing them is the actual
+falsifiable test:</p>
+<table>
+<thead>
+<tr>
+<th>quantity</th>
+<th>source</th>
+<th>conditioned on</th>
+<th>key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>empirical ratio</td>
+<td>the round's endpoint batch</td>
+<td>endpoints, hence scheduler/driver/blender</td>
+<td><code>per_round_metric["selection_ratio"]</code></td>
+</tr>
+<tr>
+<td>closed-form ratio</td>
+<td><code>_paper_evidence_balance</code></td>
+<td><code>n_cap</code>, <code>eps</code> only</td>
+<td><code>evidence_at_round(r, eps)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Reporting the closed form as if it were a measurement is precisely the error
+that produced the ADR-0013 contradiction B5-VERIFICATION.md §4 documents. The
+two must never share a column name.</p>
+<hr />
+<h2 id="4-twodimfmadapter-changes">4. <code>TwoDimFMAdapter</code> changes<a class="headerlink" href="#4-twodimfmadapter-changes" title="Permanent link">&para;</a></h2>
+<p>Both additions are <strong>new methods</strong>; no existing method's behaviour changes.</p>
+<h3 id="41-batched_integrate">4.1 <code>batched_integrate</code><a class="headerlink" href="#41-batched_integrate" title="Permanent link">&para;</a></h3>
+<p><code>batched_integrate(self, x0_batch, *, t_steps=5, seed) -&gt; array of shape
+(batch, t_steps + 1, dim)</code>.</p>
+<p>Implementation route: a batched sibling of <code>_integrate_rk4</code>
+(<code>twodim_fm.py:143-166</code>). The existing <code>_velocity_field</code> <strong>already accepts
+<code>(n, 2)</code> input</strong> (<code>:122-140</code>), so the only change is that the new integrator
+must not reshape <code>x0</code> to <code>(2,)</code>. Roughly 25 lines. Dormand-Prince is
+deliberately <strong>not</strong> batched in Phase A: its step-size controller is per-sample
+adaptive (<code>:235-286</code>), so batching it requires either lockstep stepping (changes
+results) or per-sample loops (no speedup). The batched path is RK4-only and must
+raise on a <code>dormand_prince</code> adapter rather than silently falling back.</p>
+<p><strong>On the <code>t_steps=5</code> default.</strong> The adapter's pinned default is 100
+(<code>TWODIM_FM_NUM_STEPS</code>, <code>pinned_num_steps</code>). Measured difference between a
+5-step and a 100-step grid on the same 64 initial conditions:</p>
+<ul>
+<li>endpoints: mean abs diff 1.67e-4, max 5.57e-4;</li>
+<li><code>sheet_evidence</code>: 0.6414466698 (5 steps) vs 0.6414467583 (100 steps) — 7
+  matching decimals.</li>
+</ul>
+<p>So <code>t_steps=5</code> is fine for the <strong>metric population</strong> (a smooth average over
+many endpoints absorbs the discretisation error) and <strong>not</strong> fine for anything
+that feeds an endpoint digest, W2, or a golden file. Recommendation: keep the
+brief's <code>t_steps=5</code> default on <code>batched_integrate</code> because its caller is the
+metric, but the runner's lineage endpoints must continue to use
+<code>condition.delta_spec["num_steps"]</code> = 100 via <code>solve_ode</code>. Document the split;
+do not let 5 leak into the lineage path.</p>
+<h3 id="42-generate_trajectory">4.2 <code>generate_trajectory</code><a class="headerlink" href="#42-generate_trajectory" title="Permanent link">&para;</a></h3>
+<p><code>generate_trajectory(self, *, n_trajectories=8, endpoints_per_trajectory=16,
+n_gen=1000, seed) -&gt; array of shape (n_trajectories, endpoints_per_trajectory,
+n_gen, dim)</code>.</p>
+<p>Semantics per the brief: for each round, <code>n_trajectories</code> independent ODE
+integrations; each trajectory emits <code>endpoints_per_trajectory</code> endpoint samples;
+each endpoint slot carries <code>n_gen</code> samples.</p>
+<p><strong>Cost analysis — the default is not affordable as written.</strong> The tensor implies
+<code>8 x 16 x 1000 = 128,000</code> integrations per round. Measured throughput:</p>
+<table>
+<thead>
+<tr>
+<th>path</th>
+<th style="text-align: right;">per sample</th>
+<th style="text-align: right;">128,000/round</th>
+<th style="text-align: right;">x20 rounds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>current per-sample loop, 100 steps</td>
+<td style="text-align: right;">4.37 ms</td>
+<td style="text-align: right;">9.3 min</td>
+<td style="text-align: right;">3.1 h</td>
+</tr>
+<tr>
+<td>batched, 100 steps</td>
+<td style="text-align: right;">437 us</td>
+<td style="text-align: right;">55.9 s</td>
+<td style="text-align: right;">18.6 min</td>
+</tr>
+<tr>
+<td>batched, 5 steps</td>
+<td style="text-align: right;">22.5 us</td>
+<td style="text-align: right;">2.89 s</td>
+<td style="text-align: right;"><strong>0.96 min</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The ablation matrix is ~10 configurations x 2 targets (the CANONICAL_TARGETS /
+CANONICAL_CONFIGURATIONS tuples in <code>tools/run_ablation.py:115-120</code> — tool-level
+constants, not <code>adaptive_reflow/</code> symbols), so multiply the last column by ~20
+cells: <strong>~19 min</strong> total at 5 steps, <strong>~6.2 h</strong> at 100 steps,
+<strong>~62 h</strong> on the current unbatched path. Batching is a 19x throughput win and is
+what makes any of this viable.</p>
+<p>But note the noise-floor table in §1.1: <code>B = 128</code> already gives a 10:1 SNR.
+<code>n_gen = 1000</code> buys 40:1 for 1000x the compute. Therefore:</p>
+<ul>
+<li><strong>Recommend <code>n_gen = 1</code> as the shipped default</strong>, with the 4-D shape retained
+  exactly as the brief specifies so the axis exists for a variance-audit mode
+  (<code>n_gen &gt; 1</code> answers "how much of the round-to-round wiggle is Monte-Carlo
+  noise?", which is worth being able to ask once, not every run).</li>
+<li>At <code>n_gen = 1</code> the round's population is <code>8 x 16 = 128</code> endpoints,
+  <code>~2.9 ms/round</code> at 5 steps — free.</li>
+<li>The 4-D tensor at the brief's defaults is 2.05 MB/round, 41 MB for 20 rounds,
+  held live in <code>per_round_endpoints</code>. At <code>n_gen = 1</code> it is 41 KB. The doc should
+  state the memory budget either way; <code>docs/PERFORMANCE_BUDGETS.md</code> will need a
+  row.</li>
+</ul>
+<hr />
+<h2 id="5-evidencescalegapmetric-update">5. <code>EvidenceScaleGapMetric</code> update<a class="headerlink" href="#5-evidencescalegapmetric-update" title="Permanent link">&para;</a></h2>
+<h3 id="51-new-entry-point-not-a-changed-one">5.1 New entry point, not a changed one<a class="headerlink" href="#51-new-entry-point-not-a-changed-one" title="Permanent link">&para;</a></h3>
+<p>The brief says "<code>evaluate()</code> now takes a batched result instead of a bundle". A
+straight signature swap would break the <code>evaluate</code>/<code>oracle</code> byte-equality tests,
+the <code>_EvaluatorProtocol</code> duck-type the runner depends on (<code>runner.py:92-103</code>),
+and every existing caller. Instead:</p>
+<ul>
+<li><strong>Add</strong> <code>score_endpoints(endpoints, *, target=None) -&gt; dict[str, float]</code> — a
+  thin wrapper over the <em>already-pure, already-array-shaped</em>
+  <code>selection_ratio(endpoints, cells)</code> helper
+  (<code>posterior_selection_evaluator.py:326-349</code>). No new math. This is the honest
+  minimum: the pure helper needs no change at all, as B5-VERIFICATION.md §5
+  already notes.</li>
+<li><strong>Add</strong> <code>evaluate_batched(result, *, channel, round_index, seed)</code> and
+  <code>oracle_batched(...)</code> returning <code>ChannelTransferEvidence</code> and a metric dict
+  respectively, preserving the byte-equality contract <em>within</em> the new pair.</li>
+<li><strong>Keep</strong> <code>evaluate</code> / <code>oracle</code> exactly as they are. They become explicitly
+  labelled as the unconditional adapter/target difficulty reference.</li>
+</ul>
+<h3 id="52-per-round-computation">5.2 Per-round computation<a class="headerlink" href="#52-per-round-computation" title="Permanent link">&para;</a></h3>
+<p>For round <code>r</code>: take the round's endpoint population (aggregate over all
+<code>trajectories_per_round</code> trajectories by default — 128 endpoints beats 16, and
+§1.1 shows the noise floor difference matters; per-trajectory scoring stays
+available for variance diagnostics). Then</p>
+<ul>
+<li><code>sheet = mean(exp(-x^2 / 2))</code> over the population — <code>sheet_evidence</code>, unchanged;</li>
+<li><code>cell = sum_j exp(-|z_j|^2 / 2) / (2 pi)</code> over competing modes — <code>cell_evidence</code>, unchanged;</li>
+<li><code>ratio = sheet / (sheet + cell)</code> — <code>selection_ratio</code>, unchanged.</li>
+</ul>
+<h3 id="53-the-half-fix-that-must-be-declared">5.3 The half-fix that must be declared<a class="headerlink" href="#53-the-half-fix-that-must-be-declared" title="Permanent link">&para;</a></h3>
+<p>With the brief's formula, <strong>only the numerator becomes endpoint-conditioned.</strong>
+<code>cell_evidence</code> takes <code>cells</code>, not endpoints; it is a closed form over fixed
+analytic mode centres (<code>:302-323</code>). §1.1 confirms it empirically: cell evidence
+is exactly 0.140454 at every memory fraction.</p>
+<p>So "truly endpoint-conditioned" is, under the brief's formula, precisely
+half-true, and the doc/ADR wording must say so. The option that would close the
+gap — evaluating cell evidence <em>at the endpoints</em>, e.g. the endpoint mass
+falling within <code>rho</code>-neighbourhoods of the cell centres, which is much closer to
+paper Lemma 3's <code>int_{I_z} p_eps</code> than a density evaluated at a centre — is a
+change to the metric's <em>definition</em>, not its plumbing. It is listed in §7 as an
+open question and deliberately excluded from Phases A–C.</p>
+<h3 id="54-what-this-does-and-does-not-license">5.4 What this does and does not license<a class="headerlink" href="#54-what-this-does-and-does-not-license" title="Permanent link">&para;</a></h3>
+<p>It licenses: "the per-round <code>selection_ratio</code> responds to the scheduler,
+driver, and memory fraction, with a ~10:1 signal-to-noise ratio at the default
+batch size."</p>
+<p>It does <strong>not</strong> license ADR-0013:139 ("expected to converge to 1 as rounds
+progress") or ADR-0013:269 ("exceeds 0.95 by round 19"). The measured ratio is
+non-monotone in memory fraction and lives near 0.74–0.82 (§1.1). Landing this
+design without amending those two lines would reproduce the exact defect
+B5-VERIFICATION.md §4 identifies — the repo asserting convergence and
+schedule-independence simultaneously. <strong>The ADR amendment is a required
+deliverable of Phase A, not a follow-up.</strong></p>
+<hr />
+<h2 id="6-migration-path">6. Migration path<a class="headerlink" href="#6-migration-path" title="Permanent link">&para;</a></h2>
+<h3 id="phase-a-additive">Phase A — additive<a class="headerlink" href="#phase-a-additive" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add the three new types to <code>adaptive_reflow/algorithm/runner.py</code>; add
+  <code>batched_integrate</code> + <code>generate_trajectory</code> to
+  <code>adaptive_reflow/adapters/twodim_fm.py</code>.</li>
+<li><code>ReInferenceRunner</code> untouched. Zero existing numbers move; zero golden files
+  change.</li>
+<li>New tests: D1 reproducibility at pinned shape; D3 <code>B = 1</code> parity against
+  <code>_integrate_rk4</code> (bit-exact — measured achievable); a shape-sensitivity test
+  that <em>asserts the 1e-14 tolerance</em> rather than equality, so D2 is encoded as a
+  known property instead of discovered later as a flake; a
+  scheduler-sensitivity test asserting the ratio differs between two schedulers
+  (the test that would have caught B5 originally).</li>
+<li>Amend ADR-0013:139 and :269 per §5.4. Add a <code>docs/PERFORMANCE_BUDGETS.md</code> row.</li>
+<li>Also needed: <code>mkdocs.yml</code>'s <code>not_in_nav</code> list covers <code>adr/*.md</code>, <code>audit/*.md</code>,
+  and <code>review/*.md</code> but <strong>not</strong> <code>design/*.md</code> (<code>mkdocs.yml:122-134</code>), so this
+  file will trip the <code>omitted_files: warn</code> validation until <code>design/*.md</code> is
+  added. Not done here — this design touches no configuration.</li>
+</ul>
+<h3 id="phase-b-dual-surface-metric">Phase B — dual-surface metric<a class="headerlink" href="#phase-b-dual-surface-metric" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>EvidenceScaleGapMetric</code> supports both the legacy <code>StateBundle</code> path and the
+  new batched-result path, per §5.1. Both live side by side; the legacy pair
+  keeps its byte-equality contract.</li>
+<li><code>tools/run_ablation.py</code> grows an opt-in batched cell so the two selection-ratio
+  curves (empirical vs closed-form, §3.4) can be rendered next to each other and
+  the flat-line claim is refuted with data in the committed table.</li>
+<li>Emission naming: the unconditional reference should be renamed on emission
+  (B5-VERIFICATION.md §5 suggests <code>adapter_selection_ratio_reference</code>) so no
+  reader mistakes a constant for a curve once a real curve exists alongside it.</li>
+</ul>
+<h3 id="phase-c-reinferencerunner-becomes-a-thin-wrapper">Phase C — <code>ReInferenceRunner</code> becomes a thin wrapper<a class="headerlink" href="#phase-c-reinferencerunner-becomes-a-thin-wrapper" title="Permanent link">&para;</a></h3>
+<p>Legal only because of D3: <code>B = 1</code> is bit-identical to the per-sample path
+(measured). Conditions that must hold, and must be asserted by test:</p>
+<ul>
+<li><code>trajectories_per_round = 1</code>, <code>endpoints_per_trajectory = 1</code>, <code>n_gen = 1</code>;</li>
+<li>the batch=1 request is integrated as a literal <code>B = 1</code> call, never coalesced
+  with other trajectories (coalescing would silently change results at 1e-15 and
+  break golden files);</li>
+<li>the lineage path keeps <code>num_steps = 100</code>, never <code>t_steps = 5</code>;</li>
+<li><code>ReInferenceResult</code> is reconstructed from the batched result, including the
+  <code>NaN</code>-sentinel semantics for uncaptured endpoints (<code>runner.py:436-444</code>) and the
+  untransposed <code>per_round_metrics</code> shape.</li>
+</ul>
+<p>If any of those cannot be met, <strong>Phase C should be abandoned</strong> and the two
+runners left side by side. The value of Phase C is deduplication only; it is not
+worth a single changed digit in a published table. This is a genuine
+"stop and reassess" gate, not a formality.</p>
+<hr />
+<h2 id="7-type-signature-sketch-pseudocode-no-implementation">7. Type-signature sketch (pseudocode — no implementation)<a class="headerlink" href="#7-type-signature-sketch-pseudocode-no-implementation" title="Permanent link">&para;</a></h2>
+<p>The blocks below are illustrative signatures only. None of these symbols exist
+under <code>adaptive_reflow/</code> yet; bodies are elided.</p>
+<h3 id="71-runner-skeleton-pseudocode">7.1 Runner skeleton — pseudocode<a class="headerlink" href="#71-runner-skeleton-pseudocode" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">BatchedRunnerConfig</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">n_rounds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">outer_cycle_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">target_round</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">channels</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"xy"</span><span class="p">,)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">selection_evaluator</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="c1"># -- new --</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">trajectories_per_round</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">endpoints_per_trajectory</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">integration_chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>       <span class="c1"># 0 = whole-batch; pinned for D1</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">endpoint_t_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>           <span class="c1"># lineage grid; NOT the metric's 5</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="k">class</span><span class="w"> </span><span class="nc">BatchedTrajectoryResult</span><span class="p">:</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="n">config</span><span class="p">:</span> <span class="n">BatchedRunnerConfig</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">round_traces</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">final_endpoint_digest</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">per_round_endpoints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="s2">"np.ndarray"</span><span class="p">]]</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">per_round_w2</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">per_round_metric</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    <span class="n">algorithm_signatures</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">evidence_at_round</span><span class="p">(</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>        <span class="n">r</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>        <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">        </span><span class="sd">"""Closed-form (sheet, cell, ratio); NOT endpoint-conditioned."""</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">endpoints_for_round</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray"</span><span class="p">:</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">        </span><span class="sd">"""Flatten trajectories -&gt; (n_traj * endpoints_per_traj, dim)."""</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_legacy_per_round_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">        </span><span class="sd">"""Transpose to ReInferenceResult's metric shape."""</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="k">class</span><span class="w"> </span><span class="nc">BatchedTrajectoryRunner</span><span class="p">:</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>        <span class="n">config</span><span class="p">:</span> <span class="n">BatchedRunnerConfig</span><span class="p">,</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>        <span class="n">adapter</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>                      <span class="c1"># FlowMatchingODEAdapter, required</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>        <span class="n">scheduler</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>        <span class="n">policy_driver</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>        <span class="n">merge_operator</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>        <span class="n">blender</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>        <span class="n">evaluator</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>        <span class="n">engine</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchedTrajectoryResult</span><span class="p">:</span> <span class="o">...</span>
+</code></pre></div>
+<h3 id="72-adapter-additions-pseudocode">7.2 Adapter additions — pseudocode<a class="headerlink" href="#72-adapter-additions-pseudocode" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">BatchedTwoDimFMSketch</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">batched_integrate</span><span class="p">(</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="n">x0_batch</span><span class="p">:</span> <span class="s2">"np.ndarray"</span><span class="p">,</span>               <span class="c1"># (batch, dim)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="n">t_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray"</span><span class="p">:</span>                        <span class="c1"># (batch, t_steps + 1, dim)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">        </span><span class="sd">"""RK4 only. Raises on a dormand_prince adapter."""</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">generate_trajectory</span><span class="p">(</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="n">n_trajectories</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        <span class="n">endpoints_per_trajectory</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="n">n_gen</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>                       <span class="c1"># brief says 1000; see section 4.2</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray"</span><span class="p">:</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">        </span><span class="sd">"""(n_trajectories, endpoints_per_trajectory, n_gen, dim)."""</span>
+</code></pre></div>
+<h3 id="73-metric-additions-and-closed-form-helper-pseudocode">7.3 Metric additions and closed-form helper — pseudocode<a class="headerlink" href="#73-metric-additions-and-closed-form-helper-pseudocode" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">EvidenceScaleGapSketch</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">score_endpoints</span><span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="n">endpoints</span><span class="p">:</span> <span class="s2">"np.ndarray"</span><span class="p">,</span>              <span class="c1"># (n, 2)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="n">target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">        </span><span class="sd">"""Thin wrapper over the existing pure selection_ratio helper."""</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">oracle_batched</span><span class="p">(</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="n">result</span><span class="p">:</span> <span class="s2">"BatchedTrajectoryResult"</span><span class="p">,</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="n">round_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span> <span class="o">...</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_batched</span><span class="p">(</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>        <span class="n">result</span><span class="p">:</span> <span class="s2">"BatchedTrajectoryResult"</span><span class="p">,</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>        <span class="n">channel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>        <span class="n">round_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span> <span class="o">...</span>                          <span class="c1"># ChannelTransferEvidence</span>
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="k">def</span><span class="w"> </span><span class="nf">paper_evidence_balance_terms</span><span class="p">(</span>
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>    <span class="n">n_cap_base</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>    <span class="n">eps_implicit</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="w">    </span><span class="sd">"""(sheet, cell, ratio) in scheduler.py; the existing scalar helper</span>
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a><span class="sd">    becomes a projection of this so there is one authority."""</span>
+</code></pre></div>
+<hr />
+<h2 id="8-open-questions-deliberately-not-decided-here">8. Open questions (deliberately not decided here)<a class="headerlink" href="#8-open-questions-deliberately-not-decided-here" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Cell evidence at endpoints</strong> (§5.3) — the change that would make the metric
+   <em>fully</em> endpoint-conditioned. Changes the metric's definition; needs its own
+   ADR and its own falsification test.</li>
+<li><strong>Blender as a first-class batch participant</strong> (§3.3) — today the blender is
+   provenance-only on the runner path. Making it drive per-trajectory mixing
+   would change numbers and needs a separate decision.</li>
+<li><strong>Per-trajectory vs aggregate scoring</strong> (§5.2) — aggregate is the default;
+   whether per-trajectory spread is worth emitting as a column is unresolved.</li>
+<li><strong><code>eps</code> semantics</strong> (§3.4) — capacity-as-noise-scale vs the scheduler's
+   configured <code>eps_implicit</code>.</li>
+<li><strong>Dormand-Prince batching</strong> (§4.1) — out of scope; the adaptive controller is
+   per-sample by construction.</li>
+</ol>
+<h2 id="9-complexity-estimate">9. Complexity estimate<a class="headerlink" href="#9-complexity-estimate" title="Permanent link">&para;</a></h2>
+<p><strong>Medium.</strong> Phase A is ~250–350 LOC of new code (one batched RK4 ~25 LOC, two
+adapter methods, three dataclasses, one run loop that is a batched
+transliteration of the existing one) plus ~200 LOC of tests, with <strong>no
+modifications to existing code paths</strong>. The engineering is bounded and the
+prototypes in §1.1/§4.2 already exercise the load-bearing parts.</p>
+<p>The cost is not in the lines; it is in three places where care is
+non-negotiable: the D2 cross-shape determinism boundary (which must be encoded
+as a tolerance test, not discovered as a flake), the <code>t_steps</code> split between the
+metric population and the lineage endpoints, and the ADR-0013 amendment without
+which the fix re-creates the contradiction it exists to remove. Phase C is
+optional and should be gated as described in §6.</p>
+<h2 id="files-examined">Files examined<a class="headerlink" href="#files-examined" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>adaptive_reflow/algorithm/runner.py</code></li>
+<li><code>adaptive_reflow/adapters/twodim_fm.py</code></li>
+<li><code>adaptive_reflow/eval/posterior_selection_evaluator.py</code></li>
+<li><code>adaptive_reflow/contracts/paper_quantities.py</code></li>
+<li><code>adaptive_reflow/contracts/bundle.py</code> (the task brief cited
+  <code>contracts/evidence.py</code>; the <code>ChannelTransferEvidence</code> contract actually lives
+  in <code>bundle.py:113-132</code>)</li>
+<li><code>adaptive_reflow/algorithm/scheduler.py</code></li>
+<li><code>adaptive_reflow/algorithm/blender.py</code></li>
+<li><code>adaptive_reflow/algorithm/merge_operator.py</code></li>
+<li><code>adaptive_reflow/algorithm/policy_driver.py</code></li>
+<li><code>adaptive_reflow/frame/engine.py</code></li>
+<li><code>tools/run_ablation.py</code></li>
+<li><code>tools/check_docs_against_code.py</code></li>
+<li><code>docs/review/B5-VERIFICATION.md</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

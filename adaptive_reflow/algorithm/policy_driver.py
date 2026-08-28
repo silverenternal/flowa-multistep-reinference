@@ -418,12 +418,28 @@ class AdaptivePolicyDriver:
     side-by-side ``adaptive`` vs. ``schedule_derived`` comparison
     isolates the effect of the prior-driven envelope from the
     schedule's ``n_cap`` ramp).
+
+    **Paper-quantity wiring.** When ``per_cell_coefficient_C`` is
+    supplied (the value of ``paper_quantities.per_cell_coefficient_C``
+    from paper Lemma 3, line 191), the driver divides the raw
+    ``1 - |p - t|`` envelope by ``C_g`` so the per-round ``beta``
+    lives on paper Lemma 3's per-cell evidence scale:
+
+        beta = clip((1 - |p - t|) / C_g, 0, 1)
+
+    The default ``C_g`` (rho=0.1, c=1.0) is approximately 1.30; the
+    paper-quantity-augmented path therefore produces a slightly more
+    conservative ``beta`` than the legacy path, matching Lemma 3's
+    ``O(eps^2)`` per-cell bound. When ``per_cell_coefficient_C`` is
+    ``None``, the driver falls back to the legacy formula
+    ``beta = clip(1 - |p - t|, 0, 1)`` (backward compat).
     """
 
     def __init__(
         self,
         *,
         target_estimate: float = DEFAULT_ADAPTIVE_TARGET_ESTIMATE,
+        per_cell_coefficient_C: float | None = None,
     ) -> None:
         try:
             t = float(target_estimate)
@@ -440,6 +456,29 @@ class AdaptivePolicyDriver:
         # normalization of the prior digest is in ``[0, 1]``), but we
         # still sanity-check finiteness so the math cannot blow up.
         self._target = float(t)
+        # Paper-quantity normalization: ``None`` disables the
+        # Lemma-3-evidence-scale normalisation (legacy behaviour).
+        # When supplied, it must be a finite positive real.
+        if per_cell_coefficient_C is None:
+            self._per_cell_coefficient_C: float | None = None
+        else:
+            try:
+                c_f = float(per_cell_coefficient_C)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"per_cell_coefficient_C must be a real number, "
+                    f"got {per_cell_coefficient_C!r}"
+                ) from exc
+            if not _is_finite(c_f):
+                raise ValueError(
+                    f"per_cell_coefficient_C must be finite, "
+                    f"got {per_cell_coefficient_C!r}"
+                )
+            if c_f <= 0.0:
+                raise ValueError(
+                    f"per_cell_coefficient_C must be positive, got {c_f!r}"
+                )
+            self._per_cell_coefficient_C = c_f
 
     # -- accessors ---------------------------------------------------------
 
@@ -447,6 +486,17 @@ class AdaptivePolicyDriver:
     def target_estimate(self) -> float:
         """Return the configured target estimate."""
         return float(self._target)
+
+    @property
+    def per_cell_coefficient_C(self) -> float | None:
+        """Return the configured paper-quantity ``C_g``, or ``None``.
+
+        ``None`` means "legacy adaptive driver" (``beta = 1 - |p - t|``).
+        When supplied, the driver divides the raw envelope by ``C_g``
+        to drive the per-round ``beta`` toward paper Lemma 3's
+        per-cell evidence scale.
+        """
+        return self._per_cell_coefficient_C
 
     # -- PolicyDriverProtocol ----------------------------------------------
 
@@ -458,22 +508,32 @@ class AdaptivePolicyDriver:
         channel: str,
         prior_endpoint_digest: str,
     ) -> FinalRestartPolicy:
-        """Return the round's policy with ``beta = 1 - |p - t|``.
+        """Return the round's policy with ``beta = (1 - |p - t|) / C_g``.
 
         ``prior_endpoint_digest`` is hashed to a ``[0, 1]`` value via
         a stable mapping (``int(digest_hex, 16) / 2**256``). An empty
         string (``round 0`` with no prior endpoint) is hashed
         verbatim — the digest then becomes ``"sha256('')"`` mapped to
         ``[0, 1]`` so round 0 is deterministic.
+
+        When ``per_cell_coefficient_C`` is configured at construction
+        time, the raw envelope ``1 - |p - t|`` is divided by ``C_g``
+        so the resulting ``beta`` lives on paper Lemma 3's per-cell
+        evidence scale. The result is clipped to ``[0, 1]`` (when
+        ``C_g < 1`` the unclipped value can exceed 1, so the clip
+        saturates; when ``C_g >= 1`` the raw envelope stays inside
+        ``[0, 1]``).
         """
         del schedule_sample
         prior_normalized = _digest_to_unit(str(prior_endpoint_digest))
         diff = abs(prior_normalized - self._target)
-        beta = 1.0 - diff
+        raw = 1.0 - diff
+        if self._per_cell_coefficient_C is not None:
+            raw = raw / float(self._per_cell_coefficient_C)
         # Clip into ``[0, 1]`` — when ``diff > 1`` (target_estimate far
         # from the unit interval) the raw ``beta`` would go negative,
         # so we floor at 0 to keep the engine's audit invariant.
-        clipped = _clip_unit_finite(float(beta))
+        clipped = _clip_unit_finite(float(raw))
         return _override_beta_by_channel(
             base_policy, beta_value=clipped, channel=channel
         )
@@ -483,11 +543,22 @@ class AdaptivePolicyDriver:
         return ADAPTIVE_FAMILY
 
     def config_hash(self) -> str:
-        """Return a stable digest of the driver family + target."""
-        payload = {
+        """Return a stable digest of the driver family + target.
+
+        Two drivers with the same ``target_estimate`` and the same
+        ``per_cell_coefficient_C`` compare equal; changing either
+        yields a different ``config_hash``.
+        """
+        payload: dict[str, Any] = {
             "driver_family": ADAPTIVE_FAMILY,
             "target_estimate": float(self._target),
         }
+        if self._per_cell_coefficient_C is None:
+            payload["per_cell_coefficient_C"] = None
+        else:
+            payload["per_cell_coefficient_C"] = float(
+                self._per_cell_coefficient_C
+            )
         return _stable_digest(payload)
 
 

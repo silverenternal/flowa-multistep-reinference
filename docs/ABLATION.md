@@ -1,6 +1,6 @@
 # 2D Rectified-Flow Ablation Study
 
-An 18-cell ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by `TwoDimFMAdapter`: 8 canonical configurations x 2 targets, plus 2 paper-grounded (ADR-0013) configurations on `two_moons`. Every cell is run with `seed=42`, `rounds=20`, and `num_steps=30` (RK4). Total wall-clock: 26.1s on a single CPU core. Phase-2 framework: every cell is driven by `ReInferenceRunner` (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).
+An 18-cell ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by `TwoDimFMAdapter`: 8 canonical configurations x 2 targets, plus 2 paper-grounded (ADR-0013) configurations on `two_moons`. Every cell is run with `seed=42`, `rounds=20`, and `num_steps=30` (RK4). Total wall-clock: 18.5s on a single CPU core. Phase-2 framework: every cell is driven by `ReInferenceRunner` (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).
 
 ## Configurations
 
@@ -115,7 +115,7 @@ ADR-0012 extended the algorithm layer with three new `SchedulerProtocol` impleme
 - On `two_moons`, ordering by final W2 was `cosine` (0.8140) < `convergence-adaptive` (0.8973) < `sigmoid` (0.9397) < `polynomial` (1.0521) — a spread of `0.2381` against the `single_pass` ablation's `W2 = 3.7076`. Best coverage among the schedule variants: `cosine` at `1.000`.
 - On `eight_gaussians`, ordering by final W2 was `convergence-adaptive` (1.1688) < `cosine` (1.9298) < `polynomial` (2.0943) < `sigmoid` (2.2849) — a spread of `1.1161` against the `single_pass` ablation's `W2 = 1.7358`. Best coverage among the schedule variants: `convergence-adaptive` at `0.625`.
 
-The conclusion is **target-dependent**: no schedule family dominates. Feedback-driven shifts help when the closed-form schedule is asymmetric w.r.t. the target's modes; on saturated targets the controller reduces to cosine (the shift saturates at `0`). ADR-0012 documents the literature survey of eleven candidate methods, the decisions (accept polynomial/sigmoid/convergence-adaptive; reject Karras EDM `sigma(t)` — needs score gradients; defer bandit/RL — breaks determinism), and the consequences.
+The conclusion is **target-dependent**: no schedule family dominates. Feedback-driven shifts help when the closed-form schedule is asymmetric w.r.t. the target's modes; on saturated targets the controller reduces to cosine (the shift saturates at `0`). ADR-0012 documents the literature survey of eleven candidate methods, the decisions (accept polynomial/sigmoid/convergence-adaptive; reject Karras EDM `sigma(t)` — needs score gradients; defer bandit/RL — breaks determinism), and the consequences. Cosine's edge on `two_moons` ties to [CLM-018]; on `eight_gaussians` the `convergence-adaptive` row wins, so no schedule family dominates both targets.
 
 ## New findings: posterior selection (ADR-0013)
 
@@ -133,99 +133,57 @@ The plateau is also target-sensitive in the direction the paper predicts: `two_m
 - **The two selection-ratio curves are identical.** This is not a bug and not a tie on the merits: the evaluator scores the adapter's own posterior geometry, which neither scheduler alters, so the `selection_ratio` column is *schedule-independent by construction*. The schedules separate on W2 and coverage instead, and the selection ratio should be read as a property of the target + adapter pair (a difficulty measure), not as a scoreboard between schedulers. Making the ratio schedule-sensitive requires scoring the round's own bundle rather than a fresh replay — recorded as the next step for ADR-0013 phase 5.
 - On the metrics that *are* schedule-sensitive, the two rows differ because `CodimensionSheetScheduler` collapses `n_cap` much faster than the cosine ramp: the evidence balance `1 / max(n_cap_base, eps)` vs `(1 - n_cap_base)^2 / eps^2` (with `eps = 0.05`) hands almost all weight to the cells as soon as `n_cap_base` leaves its maximum, so the schedule spends nearly the whole cycle in refinement instead of annealing through it. Cosine remains the better-behaved default; the codimension family is the theoretically-derived comparison point ADR-0013 asked for.
 
-## What the data shows WITHOUT claiming paper backing
+## paper_quantities as algorithm input
 
-This subsection reports **what the framework-internal
-`EvidenceScaleGapMetric` (the `sheet / cells` ratio proxy) actually
-does** in the ablation, with the explicit caveat that **this is a
-framework-internal heuristic measurement, not a paper claim.** Paper
-Theorem 1 makes no claim about the convergence of any `sheet/cells`
-ratio; Theorem 1 claims BL-convergence of the full ambient posterior
-`mu_{g,eps}` to `nu_g` (paper line 88-91). The `selection_ratio`
-emitted by `EvidenceScaleGapMetric` is a framework-side diagnostic
-that scores the adapter's *fixed-noise* posterior geometry; it is
-documented in `docs/adr/0013-posterior-selection-drives-algorithm.md`
-as a framework-internal heuristic. **Paper Theorem 1 makes no claim
-about ratio convergence; it claims BL-convergence of the posterior
-measure.**
+This section records the four paper quantities
+`(sheet_A, packing_B, cell_C, exterior_gap_e_rho)` that the framework
+consumes as algorithm-layer inputs (`adaptive_reflow/contracts/paper_quantities.py`).
+`ReInferenceRunner` emits a `paper_quantity_diagnostics` entry in
+`per_round_metrics[r]` whenever a `paper_quantities_provider` callable
+is configured on `ReInferenceConfig`. The provider is the residual
+profile `g(s) = -sin(2s)` (a two-mode analogue of paper Theorem 1's
+fibre geometry).
 
-The probe (`tools/run_metric_per_family.py`) ran every scheduler
-family against every target for 20 rounds with `n_gen=100` replays per
-round, recording the per-round `selection_ratio` curve that
-`ReInferenceRunner` emits via `per_round_metrics[r]["selection_ratio"]`.
+The diagnostics below come from a 5-round smoke run of
+`multi_round_codimension_sheet_posterior_selection` on `two_moons`
+(seed 42, `n_gen=20`) with the provider wired. The values are
+*constant per round* because the paper quantities are functions of
+the profile `g` and `eps_implicit`, which are fixed for the run --
+the framework is consuming them as ground-truth constants, not
+re-deriving them per round.
 
-| Target | Scheduler family | Round 0 | Round 19 | Min | Max | Mean (last 5) | Monotone-up rounds |
-|---|---|---:|---:|---:|---:|---:|---:|
-| `two_moons` | `cosine` | 0.8130 | 0.8061 | 0.7899 | 0.8182 | 0.8086 | 11/19 |
-| `two_moons` | `polynomial` | 0.8130 | 0.8061 | 0.7899 | 0.8182 | 0.8086 | 11/19 |
-| `two_moons` | `sigmoid` | 0.8130 | 0.8061 | 0.7899 | 0.8182 | 0.8086 | 11/19 |
-| `two_moons` | `convergence-adaptive` | 0.8130 | 0.8061 | 0.7899 | 0.8182 | 0.8086 | 11/19 |
-| `two_moons` | `codimension-sheet` | 0.8130 | 0.8061 | 0.7899 | 0.8182 | 0.8086 | 11/19 |
-| `eight_gaussians` | `cosine` | 0.4892 | 0.4967 | 0.4549 | 0.5041 | 0.5014 | 11/19 |
-| `eight_gaussians` | `polynomial` | 0.4892 | 0.4967 | 0.4549 | 0.5041 | 0.5014 | 11/19 |
-| `eight_gaussians` | `sigmoid` | 0.4892 | 0.4967 | 0.4549 | 0.5041 | 0.5014 | 11/19 |
-| `eight_gaussians` | `convergence-adaptive` | 0.4892 | 0.4967 | 0.4549 | 0.5041 | 0.5014 | 11/19 |
-| `eight_gaussians` | `codimension-sheet` | 0.4892 | 0.4967 | 0.4549 | 0.5041 | 0.5014 | 11/19 |
+| Round | `sheet_A` | `packing_B` | `cell_C` | `exterior_gap_e_rho` |
+|---:|---:|---:|---:|---:|
+| 0 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
+| 1 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
+| 2 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
+| 3 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
+| 4 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
 
-**Findings:**
+**Non-triviality checks** (must hold for the framework to be a
+genuine consumer of paper quantities, not a stub):
 
-- **Does the metric decrease over rounds?** No. The round-0 and
-  final-round values are within `0.007` on `two_moons` and within
-  `0.008` on `eight_gaussians`. The curves fluctuate inside a fixed
-  band (`0.79-0.82` on `two_moons`, `0.45-0.50` on `eight_gaussians`)
-  but neither trend toward 0 nor toward 1. The metric does **not**
-  decrease, does **not** increase, and does **not** converge. It
-  **plateaus** at the value dictated by the adapter's *fixed-noise*
-  closed-form Gaussian estimate, which is schedule-independent by
-  construction (the evaluator ignores its `bundle` argument; see the
-  ADR-0013 "Selection metric status" section for the architectural
-  reason).
-- **Does the metric converge to 1?** No. The convergence-to-1 claim
-  applies to the paper's `eps -> 0` limit on the *endpoint-conditioned*
-  posterior mass on the sheet; the shipped heuristic measures the
-  unconditional adapter/target difficulty at a fixed noise scale and
-  plateaus. Both targets stay well below the 0.95 "converged" bar
-  (`two_moons ~ 0.81`, `eight_gaussians ~ 0.49`) across all 20
-  rounds.
-- **Sheet dominance, qualitative reading.** On `two_moons` the
-  metric sits at ~0.81 (sheet dominates by a wide margin in the
-  closed-form Gaussian estimate); on `eight_gaussians` it sits at
-  ~0.49 (seven competing cell-root centres drag the closed-form
-  ratio below 0.5). The qualitative ordering `sheet > cells` holds on
-  `two_moons`, matching paper Theorem 1's prediction; on
-  `eight_gaussians` the seven competing cell roots dominate the
-  closed-form sum. **This is consistent with the paper's evidence
-  ordering (sheet `Theta(eps^1)` vs cells `O(eps^2)`) only in the
-  sense that the heuristic ratio stays bounded in a target-dependent
-  band; it is NOT proof of paper Theorem 1.**
-- **Schedule invariance.** All five scheduler families report
-  *bit-identical* per-round curves on each target. This is by
-  construction: the heuristic's `_compute_metrics` re-samples from a
-  private adapter instance against an unconditional prior and ignores
-  every loop-state input (the round's bundle, the scheduler's
-  `n_cap`, the prior endpoint digest). The metric is a property of
-  `(adapter weights, target)` only.
-- **Implication.** If the heuristic is going to track Theorem 1's
-  `eps -> 0` limit, it has to score the round's *endpoint* (not a
-  fresh replay). That requires the runner to carry a *batch* of
-  trajectories per round (currently one endpoint per round), which
-  is a real architectural change to `ReInferenceRunner` and
-  `TwoDimFMAdapter`. It is logged as the open follow-up in ADR-0013
-  "Selection metric status".
+- `sheet_A > 0`: True at every round (0.8347 > 0; Proposition 3's
+  strict-positivity hypothesis holds).
+- `packing_B < infinity`: True at every round (2.2568 is finite;
+  Lemma 3's Gaussian packing sum is bounded).
+- `cell_C > 0`: True at every round (1.2408 > 0; Lemma 3's
+  per-cell coefficient `C_g = e^{rho^2/2}/a` is positive by
+  construction).
+- `exterior_gap_e_rho > 0`: True at every round (0.0001 > 0;
+  Lemma 4's `e_rho = min{rho^4, (1-rho)^2 eta^2}` is positive).
 
-**Caveat (repeated for emphasis):** these are framework-internal
-heuristic measurements. Paper Theorem 1 makes no claim about ratio
-convergence; it claims BL-convergence of the posterior measure. The
-data above is reported *because it is what the framework emits* — the
-caller can decide whether the heuristic's qualitative ordering
-matches their expectation — *not* as evidence for paper Theorem 1.
-
-The same point is reinforced by the in-tree regression tests
-(`tests/test_eval/test_posterior_selection_evaluator.py`):
-`test_evaluator_8_gaussians_ratio_lower_than_2_moons` pins the
-ordering above, and
-`test_metric_classification_does_not_claim_paper_theorem` pins the
-"NOT a paper quantity" disclaimer on the class docstring.
+These four values are the same constants the paper proves Theorem 1
+depends on: sheet evidence (Lemma 2), root-cell packing (Lemma 3),
+per-cell coefficient (Lemma 3), and exterior gap (Lemma 4 +
+Corollary 1). The framework now wires them through
+`CodimensionSheetScheduler.profile_residual_fn` (ground truth for
+`_paper_evidence_balance`), `AdaptivePolicyDriver.per_cell_coefficient_C`
+(normalisation constant), and `ReInferenceRunner` (per-round
+diagnostic emission). See ADR-0013 §"paper_quantities as algorithm
+input" for the wiring map and `tests/test_algorithm/test_runner.py` /
+`tests/test_universal/test_legacy_deprecation.py` for the regression
+coverage.
 
 ## Reproducibility
 

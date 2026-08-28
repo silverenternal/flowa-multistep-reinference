@@ -11,6 +11,18 @@ version = "0.1.0"
 description = "Typed-contracts framework + Flow Matching ODE re-inference engine."
 requires-python = ">=3.12"
 
+# Project scripts. ``claims-consistency`` is the CLI entry point for
+# ``tools/check_claims_consistency.py``: it walks ``docs/CLAIMS.md``,
+# verifies every ``Asserted by`` reference resolves to a real
+# file:line, auto-promotes any ``Disputed by`` reference to
+# ``PROVISIONAL``, and cross-checks each ACTIVE claim against the
+# governance surfaces (INSIGHTS / ABLATION / ADR / README /
+# ARCHITECTURE) for ``[CLM-NNN]`` tags. Exits ``0`` on clean,
+# ``1`` on drift. Pair with ``check-docs-against-code`` as the two
+# docs-drift gates the pre-merge hook runs.
+[project.scripts]
+claims-consistency = "tools.check_claims_consistency:main"
+
 [project.optional-dependencies]
 # Doc-build dev toolchain. ``mkdocstrings[python]`` pulls in the Python
 # handler that auto-renders module-level docstrings + typed signatures

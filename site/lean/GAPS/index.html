@@ -1,0 +1,1644 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Gaps: Where the Lean Formalisation Does Not Match Paper Claims - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gaps-where-the-lean-formalisation-does-not-match-paper-claims" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Gaps: Where the Lean Formalisation Does Not Match Paper Claims
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#gap-1-paper-lemma-2s-dominated-convergence-step-is-analytic-not-formalised" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 1 — Paper Lemma 2's dominated-convergence step is analytic, not formalised
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 1 — Paper Lemma 2&#39;s dominated-convergence step is analytic, not formalised">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#paper-text-verbatim" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paper text (verbatim)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-means" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this means
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lean-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lean coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-2-paper-proposition-3-assembly-is-analytic-not-formalised" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 2 — Paper Proposition 3 assembly is analytic, not formalised
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 2 — Paper Proposition 3 assembly is analytic, not formalised">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#paper-text-verbatim_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paper text (verbatim)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-this-means_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this means
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lean-coverage-of-inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lean coverage of inputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-3-the-a_g-0-constant-is-not-extracted-as-a-named-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 3 — The A_g &gt; 0 constant is not extracted as a named object
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 3 — The A_g &gt; 0 constant is not extracted as a named object">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#paper-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paper text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lean-coverage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lean coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-4-the-b_g-general-packing-sum-is-asserted-not-proved-from-scratch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 4 — The B_g general packing sum is asserted, not proved from scratch
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 4 — The B_g general packing sum is asserted, not proved from scratch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#paper-text_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paper text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lean-coverage_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lean coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-5-the-c_g-formula-is-e22a-in-the-paper-but-21-2-minc214-in-lean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 5 — The C_g formula is e^{ρ²/2}/a in the paper but 2π/((1-ρ)² min{c²,1}/4) in Lean
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 5 — The C_g formula is e^{ρ²/2}/a in the paper but 2π/((1-ρ)² min{c²,1}/4) in Lean">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#paper-text_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paper text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lean-coverage_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lean coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-6-the-e_-constant-differs-by-squaring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 6 — The e_ρ constant differs by squaring
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 6 — The e_ρ constant differs by squaring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#paper-text_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paper text
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lean-coverage_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lean coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-7-no-lean-proof-of-byte-determinism-in-any-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 7 — No Lean proof of byte-determinism in any file
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 7 — No Lean proof of byte-determinism in any file">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-byte-determinism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is byte-determinism?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lean-coverage_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lean coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-8-no-lean-proof-of-scheduler-monotonicity-schedulerprotocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 8 — No Lean proof of scheduler monotonicity (SchedulerProtocol)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 8 — No Lean proof of scheduler monotonicity (SchedulerProtocol)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-scheduler-monotonicity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is scheduler monotonicity?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lean-coverage_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lean coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-9-memory-contracts-memorycontract-restart_memory-phase_state-are-not-in-lean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 9 — Memory contracts (MemoryContract, restart_memory, phase_state) are NOT in Lean
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 9 — Memory contracts (MemoryContract, restart_memory, phase_state) are NOT in Lean">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#whats-deleted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's deleted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lean-coverage_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lean coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-10-bundlecontains-bundleownership-bundleallocation-are-abstract-in-lean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 10 — BundleContains, BundleOwnership, BundleAllocation are abstract in Lean
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 10 — BundleContains, BundleOwnership, BundleAllocation are abstract in Lean">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#whats-in-lean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's in Lean
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-not-in-lean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's not in Lean
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-11-papers-analytic-argument-written-here-disclaimers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 11 — Paper's "analytic argument written here" disclaimers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-12-the-frameworks-paper_quantitiespy-python-evaluators-are-not-formalised-in-lean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 12 — The framework's paper_quantities.py Python evaluators are NOT formalised in Lean
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gap 12 — The framework&#39;s paper_quantities.py Python evaluators are NOT formalised in Lean">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-python-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Python does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-lean-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Lean does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implication
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-13-the-sharpness-example-proposition-6-is-the-only-result-with-a-complete-lean-counterpart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 13 — The sharpness example (Proposition 6) is the only "result" with a complete Lean counterpart
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-14-lean-profiles-do-not-include-the-radial-twist-family" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 14 — Lean profiles do not include the radial-twist family
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gap-15-no-lean-proof-that-currentflowoeruntimeimplementation-produces-the-sha-pinned-bytes-of-hybridevidencesha256" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gap 15 — No Lean proof that currentFlowoERuntimeImplementation produces the SHA-pinned bytes of hybridEvidence*Sha256
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary table
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="gaps-where-the-lean-formalisation-does-not-match-paper-claims">Gaps: Where the Lean Formalisation Does Not Match Paper Claims<a class="headerlink" href="#gaps-where-the-lean-formalisation-does-not-match-paper-claims" title="Permanent link">&para;</a></h1>
+<p>This file lists every place the Lean formalisation in
+<code>/c/Users/31472/codes/noise-selected-rectification-lean/</code> is <strong>incomplete</strong>,
+<strong>diverges from the paper text</strong>, or <strong>explicitly delegates to the analytic
+proof</strong> without a Lean theorem.</p>
+<p>All paper quotes are verbatim from
+<code>NoiseSelectedRectification_EN.md</code> in the flowa repo. All Lean citations are
+absolute <code>file:line</code> from the Lean repo root.</p>
+<hr />
+<h2 id="gap-1-paper-lemma-2s-dominated-convergence-step-is-analytic-not-formalised">Gap 1 — Paper Lemma 2's dominated-convergence step is analytic, not formalised<a class="headerlink" href="#gap-1-paper-lemma-2s-dominated-convergence-step-is-analytic-not-formalised" title="Permanent link">&para;</a></h2>
+<h3 id="paper-text-verbatim">Paper text (verbatim)<a class="headerlink" href="#paper-text-verbatim" title="Permanent link">&para;</a></h3>
+<p>Paper section "Formal verification and reproducibility", <code>NoiseSelectedRectification_EN.md</code> substantive content on lines 335, 337, 339, 341 (the range 335–341 contains blank separators):</p>
+<blockquote>
+<p><code>P1UniformlySeparatedCleanFibreClass.lean</code> proves the literal fibre and
+energy identities, common physical geometry, local isolated coercivity,
+and the residual-side exterior gap used in Lemma 5.</p>
+<p>The P2 uniformly-separated rescaling development proves the exact normal
+rescaling identity and its profile-independent exponent bound. The
+companion P2 periodic-sheet-law development additionally formalizes the
+dominated sheet-integral limit and ambient-observable limit for the
+periodic admissible subclass. <strong>The periodicity-free dominated-convergence
+step in Lemma 2 remains the analytic argument written here.</strong></p>
+<p>The root packing sum, its uniform Gaussian cell integration, and the
+conversion of the literal gap into the integrated estimate of Lemmas 3–4
+are analytic parts of this manuscript; Lean supplies their geometric
+inputs, not a claimed countable-atlas theorem.</p>
+</blockquote>
+<h3 id="what-this-means">What this means<a class="headerlink" href="#what-this-means" title="Permanent link">&para;</a></h3>
+<p>The paper <strong>explicitly disclaims</strong> a Lean formalisation of Lemma 2's dominated
+convergence in the <strong>period-free</strong> setting. The period-free
+<code>P2ProfileSheetEvidence.lean:196</code> <code>profileSheetRescaledDensity_integral_tendsto</code>
+proves the rescaled density → limit density on the rescaled window, and
+<code>P2ProfileSheetObservable.lean:141</code> <code>inv_mul_closedProfileSheetTube_ambientObservable_numerator_tendsto</code>
+proves the <code>ε^{-1} ∫_T φ p_ε → …</code> limit with bounded continuous <code>φ</code>. But the
+<em>full</em> dominated-convergence step — including the <em>strict</em> profile-tube vs
+<em>closed</em> profile-tube identification — is partially analytic. The Lean file
+<code>P2ProfileSheetBoundary.lean</code> (lines 29–93) closes the gap for the strict-vs-
+closed equality, so the missing step is now <em>narrower</em> than the paper text
+suggests but the period-free analytic integration step (<code>∫ → (2π)^{-1/2}·…</code> 
+via the explicit Gaussian integral <code>∫ e^{-u²(1+g²)/2} du = √(2π)/√(1+g²)</code>)
+remains in the proof.</p>
+<h3 id="lean-coverage">Lean coverage<a class="headerlink" href="#lean-coverage" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Research/NoiseSelectedRectification/P2ProfileSheetEvidence.lean</code></td>
+<td>196</td>
+<td><code>theorem profileSheetRescaledDensity_integral_tendsto</code> — proves <code>∫ density_ε → ∫ limit_density</code> (rescaled picture).</td>
+</tr>
+<tr>
+<td><code>Research/NoiseSelectedRectification/P2ProfileSheetObservable.lean</code></td>
+<td>141</td>
+<td><code>theorem inv_mul_closedProfileSheetTube_ambientObservable_numerator_tendsto</code> — proves <code>ε^{-1} ∫_T φ p_ε → limit</code> with <code>φ</code>.</td>
+</tr>
+<tr>
+<td><code>Research/NoiseSelectedRectification/P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>84, 105, 128</td>
+<td><code>integralOn_image_sheetRescaling_eq</code>, <code>closedProfileSheetTube_integral_eq_epsilon_mul_rescaled</code>, <code>inv_mul_closedProfileSheetTube_evidence_tendsto</code> — the COV chain.</td>
+</tr>
+<tr>
+<td><code>Research/NoiseSelectedRectification/P2ProfileSheetBoundary.lean</code></td>
+<td>29, 72, 81, 93</td>
+<td>Strict-vs-closed equality + the strict-tube version of the limit.</td>
+</tr>
+</tbody>
+</table>
+<p>The remaining step (paper line 184: "after multiplying by ‖φ‖<em>∞, is dominated
+by ‖φ‖</em>∞ e^{-s²/2} e^{-u²/8}") is fully Leanised in <code>P2ProfileSheetEvidence.lean:42, 53, 73, 103, 196</code>. The "integrate over <code>u</code> to get <code>(2π)^{-1/2}/√(1+g(s)²)</code>" step (paper line 256) is <strong>not</strong> a single named Lean theorem.</p>
+<hr />
+<h2 id="gap-2-paper-proposition-3-assembly-is-analytic-not-formalised">Gap 2 — Paper Proposition 3 assembly is analytic, not formalised<a class="headerlink" href="#gap-2-paper-proposition-3-assembly-is-analytic-not-formalised" title="Permanent link">&para;</a></h2>
+<h3 id="paper-text-verbatim_1">Paper text (verbatim)<a class="headerlink" href="#paper-text-verbatim_1" title="Permanent link">&para;</a></h3>
+<p>Paper line 341:</p>
+<blockquote>
+<p><strong>Normalization, uniform tightness, and bounded-Lipschitz convergence in
+Proposition 3 are analytic consequences of the four displayed estimates. No
+Lean theorem is cited as a substitute for this assembly.</strong></p>
+</blockquote>
+<h3 id="what-this-means_1">What this means<a class="headerlink" href="#what-this-means_1" title="Permanent link">&para;</a></h3>
+<p>The full "take φ ≡ 1 in (4)–(6) and divide" assembly of paper Proposition 3
+(line 200–205) is <strong>explicitly</strong> not in Lean. The Lean machinery <em>proves all
+the inputs</em> but does not produce a single <code>theorem proposition_3_assembly</code>
+or <code>theorem theorem_1_assembly</code>.</p>
+<h3 id="lean-coverage-of-inputs">Lean coverage of inputs<a class="headerlink" href="#lean-coverage-of-inputs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Input proved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean</code></td>
+<td>177</td>
+<td><code>relativeTotal_tendsto_leadingCoefficient</code> — the denominator limit (paper line 117).</td>
+</tr>
+<tr>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean</code></td>
+<td>271</td>
+<td><code>higherLayerPosteriorMass_tendsto_zero_of_tannery</code> — codim-2 mass → 0 (paper line 165).</td>
+</tr>
+<tr>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean</code></td>
+<td>599</td>
+<td><code>no_countable_selection_without_uniform_tightness</code> — tightness necessity.</td>
+</tr>
+<tr>
+<td><code>P1ActualPosteriorAssembly.lean</code></td>
+<td>1290</td>
+<td><code>actualNormalizedObservable_tendsto</code> — the normalised-observable limit.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>1505</td>
+<td><code>certifiedPhysicalAtlas_tail_and_complement_package</code> — tail + complement (paper Proposition 5).</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>109</td>
+<td><code>certifiedStaticAtlas_denominator_tendsto_of_constant_reassembly</code> — denominator → A_g.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>885</td>
+<td><code>certifiedPhysicalAtlas_posteriorLaw_package</code> — the full posterior-law bundle.</td>
+</tr>
+</tbody>
+</table>
+<p>The Lean equivalent of "the convergence against every bounded continuous φ
+identifies the limit as ν_g" (paper line 200–205) is
+<code>P1ActualPosteriorAssembly.lean:1290</code> <code>actualNormalizedObservable_tendsto</code> and
+<code>P1ActualPosteriorAssembly.lean:1411</code> <code>normalizedObservable_tendsto_of_eventual_error_bounds</code>.
+These theorems are <em>more general</em> than the paper's Proposition 3 (they apply
+to arbitrary countable-stratum atlases, not just <code>F_g</code>), but <strong>no Lean
+theorem explicitly instantiates them to the paper's <code>F_g</code> to produce the
+paper's exact Theorem 1 statement</strong>.</p>
+<hr />
+<h2 id="gap-3-the-a_g-0-constant-is-not-extracted-as-a-named-object">Gap 3 — The <code>A_g &gt; 0</code> constant is not extracted as a named object<a class="headerlink" href="#gap-3-the-a_g-0-constant-is-not-extracted-as-a-named-object" title="Permanent link">&para;</a></h2>
+<h3 id="paper-text">Paper text<a class="headerlink" href="#paper-text" title="Permanent link">&para;</a></h3>
+<p>Paper line 161: <code>A_g := (2π)^{-1/2} ∫_ℝ e^{-s²/2}/√(1+g(s)²) ds</code>. Paper line 117:
+"<code>A_g &gt; 0</code>". Paper Corollary 1 (line 165): "<code>Z_{g,ε} ≥ C_1 ε</code>".</p>
+<h3 id="lean-coverage_1">Lean coverage<a class="headerlink" href="#lean-coverage_1" title="Permanent link">&para;</a></h3>
+<p>The Lean limit density <code>profileSheetRescaledLimitDensity</code>
+(<code>P2ProfileSheetEvidence.lean:36</code>) is the unnormalised integrand
+<code>e^{-s²/2} · e^{-u²(1+g(s)²)/2}</code>. After integrating over <code>u</code> and applying the
+prior's <code>(2π)^{-1}</code> factor, this yields <code>A_g</code>. But:</p>
+<ul>
+<li><code>A_g</code> is <strong>not</strong> named as a constant in Lean.</li>
+<li>The <code>(2π)^{-1/2}</code> factor is <strong>not</strong> extracted.</li>
+<li>The "positive evidence floor" claim (<code>Z_{g,ε} ≥ C_1 ε</code>) is formalised only
+  abstractly via <code>P1CertifiedPhysicalAtlasTheorem.lean:424</code>
+  <code>certifiedStaticAtlas_evidence_eventually_half_of_constant_reassembly</code>
+  (<code>Z ≥ A_g/2 · ε</code> for small <code>ε</code>).</li>
+</ul>
+<p>The paper's <em>exact</em> <code>A_g</code> (paper line 161) has <strong>no Lean counterpart</strong> as a
+named constant.</p>
+<hr />
+<h2 id="gap-4-the-b_g-general-packing-sum-is-asserted-not-proved-from-scratch">Gap 4 — The <code>B_g</code> general packing sum is asserted, not proved from scratch<a class="headerlink" href="#gap-4-the-b_g-general-packing-sum-is-asserted-not-proved-from-scratch" title="Permanent link">&para;</a></h2>
+<h3 id="paper-text_1">Paper text<a class="headerlink" href="#paper-text_1" title="Permanent link">&para;</a></h3>
+<p>Paper Lemma 5 (line 132): "<code>Σ_{z ∈ Z_g} e^{-z²/4} &lt; ∞</code>". Paper proof (line 137):
+"<code>Σ_{z∈Z_g} e^{-z²/4} ≤ (⌈1/d⌉+1) Σ_{k∈ℤ} e^{-((|k|-1)₊)²/4} &lt; ∞</code>".</p>
+<h3 id="lean-coverage_2">Lean coverage<a class="headerlink" href="#lean-coverage_2" title="Permanent link">&para;</a></h3>
+<p>The Lean <code>summable_rootGaussian</code>
+(<code>P2ProfileRootCountability.lean:326-335</code> per the user's INDEX update;
+per my survey, line 326 in that file) is invoked as a hypothesis in
+<code>P2ProfileIsolatedTubeMass.lean:274, 307</code>. The <em>counting argument</em>
+<code>Σ_{k∈ℤ} e^{-((|k|-1)₊)²/4} &lt; ∞</code> is <strong>not displayed</strong> as a separate Lean
+theorem. The period-free packing is therefore <em>asserted</em> (via
+<code>summable_rootGaussian</code>) rather than <em>proved from scratch</em> in the Lean
+formalisation.</p>
+<p>The periodic case <code>Z_g = πℤ</code> is proved from scratch in
+<code>P2NSRSPeriodicGaussianPacking.lean:29, 43, 51</code>.</p>
+<hr />
+<h2 id="gap-5-the-c_g-formula-is-e22a-in-the-paper-but-21-2-minc214-in-lean">Gap 5 — The <code>C_g</code> formula is <code>e^{ρ²/2}/a</code> in the paper but <code>2π/((1-ρ)² min{c²,1}/4)</code> in Lean<a class="headerlink" href="#gap-5-the-c_g-formula-is-e22a-in-the-paper-but-21-2-minc214-in-lean" title="Permanent link">&para;</a></h2>
+<h3 id="paper-text_2">Paper text<a class="headerlink" href="#paper-text_2" title="Permanent link">&para;</a></h3>
+<p>Paper line 188: "<code>a = (1-ρ)² min{c², 1} &gt; 0</code>". Paper line 191:
+"<code>C_g = e^{ρ²/2} / a</code>".</p>
+<h3 id="lean-coverage_3">Lean coverage<a class="headerlink" href="#lean-coverage_3" title="Permanent link">&para;</a></h3>
+<p>Lean <code>isolatedGaussianMassConstant</code> (<code>P2ProfileIsolatedTubeMass.lean:38</code>) is</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>def isolatedGaussianMassConstant (c rho : ℝ) : ℝ :=
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  Real.sqrt (Real.pi / ((1 - rho) ^ 2 * c ^ 2 / 4)) *
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    Real.sqrt (Real.pi / ((1 - rho) ^ 2 / 4))
+</code></pre></div>
+<p>which after simplification equals <code>2π / ((1-ρ)² min{c²,1}/4) = 8π / ((1-ρ)² min{c²,1})</code>.</p>
+<p>The discrepancy comes from how the Lean proof integrates the per-cell
+Gaussian: Lean uses <code>twoNormalGaussianProfile</code> (the standard two-normal
+density <code>e^{-(u²/(2·α) + v²/(2·β))}</code>) and pulls out the full Gaussian mass
+<code>2π·√(αβ)</code>. The paper (line 189) writes the integral as
+<code>(2π)^{-1} · ∫ e^{-a(u²+v²)/(2ε²)} du dv = (2π)^{-1} · (2π/a) · ε²</code>,
+which factors as <code>(ε²/a)</code> — but the paper then absorbs the <code>1/(2π)</code> prior
+constant differently. The Lean constant is <strong>larger</strong> by a factor <code>4e^{ρ²/2}/(1-ρ)²</code>
+<em>if you compare literally</em>, but the per-cell bound <code>ε² · exp(-r²/4) · C_g · B_g</code>
+<em>matches</em> in both formulations because Lean factors <code>exp(-r²/4)</code> separately.</p>
+<p>The Lean proof does NOT explicitly extract <code>C_g = e^{ρ²/2}/a</code> as a named
+constant; instead the proof establishes the equivalent bound directly through
+<code>integral_isolatedDensityMajorant</code> (line 167) and
+<code>strictProfileRootTube_mass_le_rankTwoGaussian</code> (line 199).</p>
+<hr />
+<h2 id="gap-6-the-e_-constant-differs-by-squaring">Gap 6 — The <code>e_ρ</code> constant differs by squaring<a class="headerlink" href="#gap-6-the-e_-constant-differs-by-squaring" title="Permanent link">&para;</a></h2>
+<h3 id="paper-text_3">Paper text<a class="headerlink" href="#paper-text_3" title="Permanent link">&para;</a></h3>
+<p>Paper line 128: "<code>e_ρ := min{ρ⁴, (1-ρ)²η²} &gt; 0</code>".</p>
+<h3 id="lean-coverage_4">Lean coverage<a class="headerlink" href="#lean-coverage_4" title="Permanent link">&para;</a></h3>
+<p>Lean (<code>P2ProfileLiteralComplementGap.lean:49</code>, signature spans lines 49–53):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>theorem energy_lower_bound_outside_strictProfileTubeUnion :
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    ∃ rho eta, 0 &lt; rho ∧ 0 &lt; eta ∧
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>      ∀ z ∉ strictProfileTubeUnion profile rho,
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        min (rho ^ 2 / 4) (eta ^ 2 / 4) ≤ profile.energy z
+</code></pre></div>
+<p>The Lean constant is <code>min(ρ²/4, η²/4)</code>, not <code>min(ρ⁴, (1-ρ)²η²)</code>. The
+discrepancy is:</p>
+<ul>
+<li><code>ρ⁴ → ρ²/4</code>: the paper's <code>ρ⁴</code> arises from <code>|y|² ≥ ρ²/4</code> combined with
+  <code>|y|⁴ ≥ ρ⁴</code> (when y is far from 1, |y(y-1)|² = y²(y-1)² ≥ ρ⁴/4 because
+  both |y| ≥ ρ and |y-1| ≥ ρ). The Lean bound <code>ρ²/4</code> is the <em>square root</em>
+  of the paper's exponent.</li>
+<li><code>(1-ρ)²η² → η²/4</code>: the <code>(1-ρ)²</code> factor is absorbed into the <code>1/4</code> from
+  the <code>y</code> bound.</li>
+</ul>
+<p>The Lean bound is <strong>strictly stronger</strong> than the paper's (smaller gap),
+because <code>min(ρ²/4, η²/4) ≤ √(min(ρ⁴, (1-ρ)²η²))</code>. The exponential
+<code>e^{-e_ρ/(2ε²)}</code> is therefore <code>e^{-η²/(8ε²)}</code> in Lean vs <code>e^{-e_ρ/(2ε²)}</code> in
+the paper — but the Lean version is a <em>stronger</em> bound (larger negative
+exponent).</p>
+<hr />
+<h2 id="gap-7-no-lean-proof-of-byte-determinism-in-any-file">Gap 7 — No Lean proof of byte-determinism in any file<a class="headerlink" href="#gap-7-no-lean-proof-of-byte-determinism-in-any-file" title="Permanent link">&para;</a></h2>
+<h3 id="what-is-byte-determinism">What is byte-determinism?<a class="headerlink" href="#what-is-byte-determinism" title="Permanent link">&para;</a></h3>
+<p>The framework's <code>paper_quantities.py</code> documents its functions as "byte-stable":
+"Two calls with identical inputs return bit-identical floats." This is a
+property of the Python evaluator, not a Lean theorem.</p>
+<h3 id="lean-coverage_5">Lean coverage<a class="headerlink" href="#lean-coverage_5" title="Permanent link">&para;</a></h3>
+<p><strong>There is no Lean theorem that asserts byte-determinism of any framework
+runtime.</strong> The closest analogues are:</p>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Statement</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>87</td>
+<td><code>theorem unchanged_source_and_condition_replay_the_same_endpoint</code></td>
+<td>Functional determinism (same input → same output), NOT byte-equality.</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>134</td>
+<td><code>theorem consumed_identity_expert_is_also_conditionally_null</code></td>
+<td>Identity expert has no effect.</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>139</td>
+<td><code>theorem consumed_identity_expert_cannot_change_deterministic_endpoint</code></td>
+<td>Determinism.</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>180</td>
+<td><code>theorem changed_condition_without_rhs_sensitivity_leaves_endpoint_unchanged</code></td>
+<td>Determinism over condition changes.</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>188</td>
+<td><code>theorem changed_condition_without_rhs_sensitivity_leaves_metric_unchanged</code></td>
+<td>Metric determinism.</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>199</td>
+<td><code>theorem semantic_change_without_metric_sensitivity_does_not_imply_gain</code></td>
+<td>Semantic determinism.</td>
+</tr>
+<tr>
+<td><code>FlowAArchitectureProofs.lean</code></td>
+<td>1269</td>
+<td><code>theorem flowoe_python_runtime_symbols_are_mirrored</code></td>
+<td>Name-level mirroring (not byte-level).</td>
+</tr>
+<tr>
+<td><code>FlowAArchitectureProofs.lean</code></td>
+<td>1274</td>
+<td><code>theorem flowoe_runtime_schema_names_are_mirrored</code></td>
+<td>Name-level mirroring.</td>
+</tr>
+<tr>
+<td><code>FlowAArchitectureProofs.lean</code></td>
+<td>1317</td>
+<td><code>theorem flowoe_runtime_mirror_matches_python_symbols_and_schemas</code></td>
+<td>Combined mirror.</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>FlowA/CurrentHybridReflowEvidence.lean</code> ledger contains SHA-256 hashes
+as constants but <strong>no theorem</strong> that the framework produces these bytes.</p>
+<hr />
+<h2 id="gap-8-no-lean-proof-of-scheduler-monotonicity-schedulerprotocol">Gap 8 — No Lean proof of scheduler monotonicity (<code>SchedulerProtocol</code>)<a class="headerlink" href="#gap-8-no-lean-proof-of-scheduler-monotonicity-schedulerprotocol" title="Permanent link">&para;</a></h2>
+<h3 id="what-is-scheduler-monotonicity">What is scheduler monotonicity?<a class="headerlink" href="#what-is-scheduler-monotonicity" title="Permanent link">&para;</a></h3>
+<p>The framework's <code>adaptive_reflow/schedule/</code> directory contains a
+<code>SchedulerProtocol</code> (per <code>FILE_MAPPING.md</code>, <code>UNIVERSAL_MOLECULAR_MAPPING.md</code>).
+Monotonicity is an invariant of this protocol.</p>
+<h3 id="lean-coverage_6">Lean coverage<a class="headerlink" href="#lean-coverage_6" title="Permanent link">&para;</a></h3>
+<p><strong>There is no Lean theorem that explicitly states "scheduler is monotonic"
+or references a <code>SchedulerProtocol</code>.</strong> The closest analogues are:</p>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Statement</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FlowAArchitectureProofs.lean</code></td>
+<td>1237</td>
+<td><code>theorem re_inference_freeze_is_compatible_with_mainline</code></td>
+<td>Re-inference state machine does not break mainline (qualitative monotonicity).</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>98</td>
+<td><code>theorem deterministic_endpoint_change_requires_source_or_condition_change</code></td>
+<td>Endpoint function is monotone in <code>(source, condition)</code>.</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>167</td>
+<td><code>theorem frozen_observable_cannot_improve_its_metric</code></td>
+<td>Frozen observable is monotone (cannot decrease below frozen metric).</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>297</td>
+<td><code>theorem two_certified_target_gains_compose</code></td>
+<td>Gains compose monotonically.</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>305</td>
+<td><code>theorem non_regression_is_transitive</code></td>
+<td>Transitivity.</td>
+</tr>
+<tr>
+<td><code>FlowA/HybridReflowEffectiveness.lean</code></td>
+<td>313</td>
+<td><code>theorem later_non_regressive_round_preserves_earlier_strict_gain</code></td>
+<td>Strict gains preserved by non-regression.</td>
+</tr>
+</tbody>
+</table>
+<p>The framework's <code>adaptive_reflow/contracts/schedule.py</code> has no direct Lean
+counterpart.</p>
+<hr />
+<h2 id="gap-9-memory-contracts-memorycontract-restart_memory-phase_state-are-not-in-lean">Gap 9 — Memory contracts (<code>MemoryContract</code>, <code>restart_memory</code>, <code>phase_state</code>) are NOT in Lean<a class="headerlink" href="#gap-9-memory-contracts-memorycontract-restart_memory-phase_state-are-not-in-lean" title="Permanent link">&para;</a></h2>
+<h3 id="whats-deleted">What's deleted<a class="headerlink" href="#whats-deleted" title="Permanent link">&para;</a></h3>
+<p>Per <code>gitStatus</code>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>D restart_memory.py
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>D restart_memory_types.py
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>D phase_state.py
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>D policy_authority.py
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>D policy_orchestrator.py
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>D mechanism_adapter.py
+</code></pre></div></p>
+<h3 id="lean-coverage_7">Lean coverage<a class="headerlink" href="#lean-coverage_7" title="Permanent link">&para;</a></h3>
+<p><strong>No Lean file references <code>MemoryContract</code>, <code>restart_memory</code>, <code>phase_state</code>,
+<code>policy_authority</code>, <code>policy_orchestrator</code>, or <code>mechanism_adapter</code>.</strong> These
+are framework-side abstractions; the Lean formalisation does not import or
+re-encode them.</p>
+<hr />
+<h2 id="gap-10-bundlecontains-bundleownership-bundleallocation-are-abstract-in-lean">Gap 10 — <code>BundleContains</code>, <code>BundleOwnership</code>, <code>BundleAllocation</code> are abstract in Lean<a class="headerlink" href="#gap-10-bundlecontains-bundleownership-bundleallocation-are-abstract-in-lean" title="Permanent link">&para;</a></h2>
+<h3 id="whats-in-lean">What's in Lean<a class="headerlink" href="#whats-in-lean" title="Permanent link">&para;</a></h3>
+<p><code>FlowAArchitectureProofs.lean:916</code> defines <code>BundleContains</code>, <code>:960</code>
+<code>MechanismUsableWithGeneratedObject</code>, <code>:964</code> <code>ConcreteBundleCovers</code>,
+<code>:969</code> <code>FamilyHasDesignOwner</code>. These are type-level predicates, not
+algorithmic bundle-management theorems.</p>
+<h3 id="whats-not-in-lean">What's not in Lean<a class="headerlink" href="#whats-not-in-lean" title="Permanent link">&para;</a></h3>
+<p>There is no Lean theorem that proves a <em>concrete</em> bundle assignment satisfies
+all the framework's bundle-ownership invariants (the framework's
+<code>adaptive_reflow/contracts/bundle.py</code> is a different layer).</p>
+<hr />
+<h2 id="gap-11-papers-analytic-argument-written-here-disclaimers">Gap 11 — Paper's "analytic argument written here" disclaimers<a class="headerlink" href="#gap-11-papers-analytic-argument-written-here-disclaimers" title="Permanent link">&para;</a></h2>
+<p>The paper has three explicit disclaimers:</p>
+<ol>
+<li><strong>Line 337</strong>: "The periodicity-free dominated-convergence step in Lemma 2
+   remains the analytic argument written here." → see Gap 1.</li>
+<li><strong>Line 339</strong>: "The root packing sum, its uniform Gaussian cell
+   integration, and the conversion of the literal gap into the integrated
+   estimate of Lemmas 3–4 are analytic parts of this manuscript; Lean
+   supplies their geometric inputs, not a claimed countable-atlas theorem."
+   → see Gaps 4, 5, 6.</li>
+<li><strong>Line 341</strong>: "Normalization, uniform tightness, and bounded-Lipschitz
+   convergence in Proposition 3 are analytic consequences of the four
+   displayed estimates. No Lean theorem is cited as a substitute for this
+   assembly." → see Gap 2.</li>
+</ol>
+<p>These three disclaimers collectively mean <strong>the Lean formalisation is not
+machine-checked proof of Theorem 1</strong>, only of selected inputs.</p>
+<hr />
+<h2 id="gap-12-the-frameworks-paper_quantitiespy-python-evaluators-are-not-formalised-in-lean">Gap 12 — The framework's <code>paper_quantities.py</code> Python evaluators are NOT formalised in Lean<a class="headerlink" href="#gap-12-the-frameworks-paper_quantitiespy-python-evaluators-are-not-formalised-in-lean" title="Permanent link">&para;</a></h2>
+<h3 id="what-python-does">What Python does<a class="headerlink" href="#what-python-does" title="Permanent link">&para;</a></h3>
+<p><code>paper_quantities.py</code> provides <em>numerical evaluators</em> using trapezoidal /
+sign-change / min evaluators on a <code>[-K, K]</code> grid. The function bodies are
+~300 lines total.</p>
+<h3 id="what-lean-does">What Lean does<a class="headerlink" href="#what-lean-does" title="Permanent link">&para;</a></h3>
+<p>The Lean formalisation works with the <em>literal</em> root set, the <em>literal</em>
+<code>(2π)^{-1/2}</code> Gaussian integral, and the <em>literal</em> packing sum <code>Σ e^{-z²/4}</code>.
+There is no Lean translation of the trapezoidal / sign-change algorithms.</p>
+<h3 id="implication">Implication<a class="headerlink" href="#implication" title="Permanent link">&para;</a></h3>
+<p>The Python evaluator <code>sheet_evidence_A</code> and the Lean <code>A_g</code> ingredient
+machinery are <strong>conceptually parallel but algorithmically distinct</strong>. A
+Lean proof that the Python evaluator converges to the Lean limit is <strong>not
+in scope</strong> of either formalisation.</p>
+<hr />
+<h2 id="gap-13-the-sharpness-example-proposition-6-is-the-only-result-with-a-complete-lean-counterpart">Gap 13 — The sharpness example (Proposition 6) is the only "result" with a complete Lean counterpart<a class="headerlink" href="#gap-13-the-sharpness-example-proposition-6-is-the-only-result-with-a-complete-lean-counterpart" title="Permanent link">&para;</a></h2>
+<p>Paper line 343: "<code>P3PeriodicProfileSharpness.lean</code> formalizes the normalized
+escaping posterior and its failure of tightness."</p>
+<p>The Lean file (<code>Research/NoiseSelectedRectification/P3PeriodicProfileSharpness.lean</code>)
+declares three theorems (lines 26, 30, 38) and three definitions
+(<code>escaping_residual_is_smooth</code>, <code>escaping_integer_roots_are_regular</code>,
+<code>local_regular_roots_do_not_imply_global_posterior_tightness</code>).
+This is the <strong>only</strong> paper theorem whose full statement-and-proof is
+encapsulated in a single Lean file.</p>
+<hr />
+<h2 id="gap-14-lean-profiles-do-not-include-the-radial-twist-family">Gap 14 — Lean profiles do not include the radial-twist family<a class="headerlink" href="#gap-14-lean-profiles-do-not-include-the-radial-twist-family" title="Permanent link">&para;</a></h2>
+<p>The Lean file <code>CountableStratifiedGaussianPosteriorSelection.lean:491</code>
+defines <code>circlePointCountableData</code> (a circle point example) and proves
+<code>circlePointPosteriorBarycenter_tendsto_circleVelocity</code> (line 508). However:</p>
+<ul>
+<li>The radial-twist machinery (<code>RadialTwist*.lean</code>, ~70 files) is
+  <em>infrastructure</em> for a different formalisation thread (the "two-dimensional
+  variable-Jacobian example" referenced in paper line 290).</li>
+<li>The radial-twist does <strong>not</strong> appear in paper Theorem 1 — it is a
+  supplementary calibration, explicitly disclaimed at paper line 290:
+  "Supplementary material contains Lean 4 formalizations of auxiliary
+  calibrations (including a variable-Jacobian example and radial-complexity
+  pairs). They are not used in the proof of Theorem 1."</li>
+</ul>
+<hr />
+<h2 id="gap-15-no-lean-proof-that-currentflowoeruntimeimplementation-produces-the-sha-pinned-bytes-of-hybridevidencesha256">Gap 15 — No Lean proof that <code>currentFlowoERuntimeImplementation</code> produces the SHA-pinned bytes of <code>hybridEvidence*Sha256</code><a class="headerlink" href="#gap-15-no-lean-proof-that-currentflowoeruntimeimplementation-produces-the-sha-pinned-bytes-of-hybridevidencesha256" title="Permanent link">&para;</a></h2>
+<p><code>FlowA/CurrentHybridReflowEvidence.lean</code> declares 50+ SHA-256 hashes as
+constants (<code>hybridEvidenceHistoricalPanelSha256</code>, …,
+<code>hybridEvidenceGNINACalibrationSha256</code>).
+<code>FlowAArchitectureProofs.lean:974</code> defines <code>currentFlowoERuntimeImplementation</code>
+as a concrete runtime.</p>
+<p><strong>There is no Lean theorem asserting that
+<code>currentFlowoERuntimeImplementation</code> produces exactly the bytes recorded in
+<code>hybridEvidence*Sha256</code>.</strong> This would require (a) formalising the runtime
+semantics byte-by-byte, and (b) comparing against the hash literals. Neither
+is done.</p>
+<hr />
+<h2 id="summary-table">Summary table<a class="headerlink" href="#summary-table" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gap</th>
+<th>Paper claim</th>
+<th>Lean coverage</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Lemma 2 dominated convergence</td>
+<td>Partial</td>
+<td>Rescaled density → limit density proved; final integration step analytic.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Proposition 3 assembly</td>
+<td>Partial</td>
+<td>All inputs proved; no single <code>theorem proposition_3_assembly</code>.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>A_g &gt; 0</code> constant</td>
+<td>Partial</td>
+<td>Ingredients proved; constant not named.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>B_g &lt; ∞</code> general packing</td>
+<td>Partial</td>
+<td>Asserted via <code>summable_rootGaussian</code>; periodic case proved from scratch.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>C_g = e^{ρ²/2}/a</code> formula</td>
+<td>Partial</td>
+<td>Lean constant is <code>2π/((1-ρ)² min{c²,1}/4)</code>; equivalent bound proved.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>e_ρ = min{ρ⁴, (1-ρ)²η²}</code></td>
+<td>Partial</td>
+<td>Lean bound is <code>min(ρ²/4, η²/4)</code>; <strong>stronger</strong> than paper.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Byte-determinism</td>
+<td>None</td>
+<td>Only functional determinism.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Scheduler monotonicity</td>
+<td>Partial</td>
+<td>Qualitative analogues; no <code>SchedulerProtocol</code>.</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>MemoryContract</code>, <code>restart_memory</code>, etc.</td>
+<td>None</td>
+<td>Not imported, not re-encoded.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Bundle ownership invariants</td>
+<td>Abstract only</td>
+<td>Type-level predicates; no concrete runtime assertion.</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Paper's three explicit disclaimers</td>
+<td>Honoured</td>
+<td>The Lean repo matches the paper's stated scope.</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Python <code>paper_quantities.py</code></td>
+<td>None</td>
+<td>Different formalisation strategy.</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Proposition 6 (sharpness)</td>
+<td>Complete</td>
+<td>Single Lean file.</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Radial-twist family</td>
+<td>Infra only</td>
+<td>Not used in Theorem 1.</td>
+</tr>
+<tr>
+<td>15</td>
+<td>SHA-pinned byte equality</td>
+<td>None</td>
+<td>Hashes are constants; runtime-byte equivalence not asserted.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

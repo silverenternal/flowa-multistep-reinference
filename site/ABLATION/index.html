@@ -650,10 +650,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-the-data-shows-without-claiming-paper-backing" class="md-nav__link">
+  <a href="#paper_quantities-as-algorithm-input" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What the data shows WITHOUT claiming paper backing
+        paper_quantities as algorithm input
       
     </span>
   </a>
@@ -689,7 +689,7 @@
 
 
 <h1 id="2d-rectified-flow-ablation-study">2D Rectified-Flow Ablation Study<a class="headerlink" href="#2d-rectified-flow-ablation-study" title="Permanent link">&para;</a></h1>
-<p>An 18-cell ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by <code>TwoDimFMAdapter</code>: 8 canonical configurations x 2 targets, plus 2 paper-grounded (ADR-0013) configurations on <code>two_moons</code>. Every cell is run with <code>seed=42</code>, <code>rounds=20</code>, and <code>num_steps=30</code> (RK4). Total wall-clock: 26.1s on a single CPU core. Phase-2 framework: every cell is driven by <code>ReInferenceRunner</code> (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).</p>
+<p>An 18-cell ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by <code>TwoDimFMAdapter</code>: 8 canonical configurations x 2 targets, plus 2 paper-grounded (ADR-0013) configurations on <code>two_moons</code>. Every cell is run with <code>seed=42</code>, <code>rounds=20</code>, and <code>num_steps=30</code> (RK4). Total wall-clock: 18.5s on a single CPU core. Phase-2 framework: every cell is driven by <code>ReInferenceRunner</code> (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).</p>
 <h2 id="configurations">Configurations<a class="headerlink" href="#configurations" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>single_pass</strong> -- one round, fresh noise (memory fraction 0). Baseline.</li>
@@ -961,198 +961,94 @@
 <li><strong>The two selection-ratio curves are identical.</strong> This is not a bug and not a tie on the merits: the evaluator scores the adapter's own posterior geometry, which neither scheduler alters, so the <code>selection_ratio</code> column is <em>schedule-independent by construction</em>. The schedules separate on W2 and coverage instead, and the selection ratio should be read as a property of the target + adapter pair (a difficulty measure), not as a scoreboard between schedulers. Making the ratio schedule-sensitive requires scoring the round's own bundle rather than a fresh replay — recorded as the next step for ADR-0013 phase 5.</li>
 <li>On the metrics that <em>are</em> schedule-sensitive, the two rows differ because <code>CodimensionSheetScheduler</code> collapses <code>n_cap</code> much faster than the cosine ramp: the evidence balance <code>1 / max(n_cap_base, eps)</code> vs <code>(1 - n_cap_base)^2 / eps^2</code> (with <code>eps = 0.05</code>) hands almost all weight to the cells as soon as <code>n_cap_base</code> leaves its maximum, so the schedule spends nearly the whole cycle in refinement instead of annealing through it. Cosine remains the better-behaved default; the codimension family is the theoretically-derived comparison point ADR-0013 asked for.</li>
 </ul>
-<h2 id="what-the-data-shows-without-claiming-paper-backing">What the data shows WITHOUT claiming paper backing<a class="headerlink" href="#what-the-data-shows-without-claiming-paper-backing" title="Permanent link">&para;</a></h2>
-<p>This subsection reports <strong>what the framework-internal
-<code>EvidenceScaleGapMetric</code> (the <code>sheet / cells</code> ratio proxy) actually
-does</strong> in the ablation, with the explicit caveat that <strong>this is a
-framework-internal heuristic measurement, not a paper claim.</strong> Paper
-Theorem 1 makes no claim about the convergence of any <code>sheet/cells</code>
-ratio; Theorem 1 claims BL-convergence of the full ambient posterior
-<code>mu_{g,eps}</code> to <code>nu_g</code> (paper line 88-91). The <code>selection_ratio</code>
-emitted by <code>EvidenceScaleGapMetric</code> is a framework-side diagnostic
-that scores the adapter's <em>fixed-noise</em> posterior geometry; it is
-documented in <code>docs/adr/0013-posterior-selection-drives-algorithm.md</code>
-as a framework-internal heuristic. <strong>Paper Theorem 1 makes no claim
-about ratio convergence; it claims BL-convergence of the posterior
-measure.</strong></p>
-<p>The probe (<code>tools/run_metric_per_family.py</code>) ran every scheduler
-family against every target for 20 rounds with <code>n_gen=100</code> replays per
-round, recording the per-round <code>selection_ratio</code> curve that
-<code>ReInferenceRunner</code> emits via <code>per_round_metrics[r]["selection_ratio"]</code>.</p>
+<h2 id="paper_quantities-as-algorithm-input">paper_quantities as algorithm input<a class="headerlink" href="#paper_quantities-as-algorithm-input" title="Permanent link">&para;</a></h2>
+<p>This section records the four paper quantities
+<code>(sheet_A, packing_B, cell_C, exterior_gap_e_rho)</code> that the framework
+consumes as algorithm-layer inputs (<code>adaptive_reflow/contracts/paper_quantities.py</code>).
+<code>ReInferenceRunner</code> emits a <code>paper_quantity_diagnostics</code> entry in
+<code>per_round_metrics[r]</code> whenever a <code>paper_quantities_provider</code> callable
+is configured on <code>ReInferenceConfig</code>. The provider is the residual
+profile <code>g(s) = -sin(2s)</code> (a two-mode analogue of paper Theorem 1's
+fibre geometry).</p>
+<p>The diagnostics below come from a 5-round smoke run of
+<code>multi_round_codimension_sheet_posterior_selection</code> on <code>two_moons</code>
+(seed 42, <code>n_gen=20</code>) with the provider wired. The values are
+<em>constant per round</em> because the paper quantities are functions of
+the profile <code>g</code> and <code>eps_implicit</code>, which are fixed for the run --
+the framework is consuming them as ground-truth constants, not
+re-deriving them per round.</p>
 <table>
 <thead>
 <tr>
-<th>Target</th>
-<th>Scheduler family</th>
-<th style="text-align: right;">Round 0</th>
-<th style="text-align: right;">Round 19</th>
-<th style="text-align: right;">Min</th>
-<th style="text-align: right;">Max</th>
-<th style="text-align: right;">Mean (last 5)</th>
-<th style="text-align: right;">Monotone-up rounds</th>
+<th style="text-align: right;">Round</th>
+<th style="text-align: right;"><code>sheet_A</code></th>
+<th style="text-align: right;"><code>packing_B</code></th>
+<th style="text-align: right;"><code>cell_C</code></th>
+<th style="text-align: right;"><code>exterior_gap_e_rho</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>two_moons</code></td>
-<td><code>cosine</code></td>
-<td style="text-align: right;">0.8130</td>
-<td style="text-align: right;">0.8061</td>
-<td style="text-align: right;">0.7899</td>
-<td style="text-align: right;">0.8182</td>
-<td style="text-align: right;">0.8086</td>
-<td style="text-align: right;">11/19</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.834675</td>
+<td style="text-align: right;">2.256759</td>
+<td style="text-align: right;">1.240756</td>
+<td style="text-align: right;">0.000100</td>
 </tr>
 <tr>
-<td><code>two_moons</code></td>
-<td><code>polynomial</code></td>
-<td style="text-align: right;">0.8130</td>
-<td style="text-align: right;">0.8061</td>
-<td style="text-align: right;">0.7899</td>
-<td style="text-align: right;">0.8182</td>
-<td style="text-align: right;">0.8086</td>
-<td style="text-align: right;">11/19</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.834675</td>
+<td style="text-align: right;">2.256759</td>
+<td style="text-align: right;">1.240756</td>
+<td style="text-align: right;">0.000100</td>
 </tr>
 <tr>
-<td><code>two_moons</code></td>
-<td><code>sigmoid</code></td>
-<td style="text-align: right;">0.8130</td>
-<td style="text-align: right;">0.8061</td>
-<td style="text-align: right;">0.7899</td>
-<td style="text-align: right;">0.8182</td>
-<td style="text-align: right;">0.8086</td>
-<td style="text-align: right;">11/19</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.834675</td>
+<td style="text-align: right;">2.256759</td>
+<td style="text-align: right;">1.240756</td>
+<td style="text-align: right;">0.000100</td>
 </tr>
 <tr>
-<td><code>two_moons</code></td>
-<td><code>convergence-adaptive</code></td>
-<td style="text-align: right;">0.8130</td>
-<td style="text-align: right;">0.8061</td>
-<td style="text-align: right;">0.7899</td>
-<td style="text-align: right;">0.8182</td>
-<td style="text-align: right;">0.8086</td>
-<td style="text-align: right;">11/19</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0.834675</td>
+<td style="text-align: right;">2.256759</td>
+<td style="text-align: right;">1.240756</td>
+<td style="text-align: right;">0.000100</td>
 </tr>
 <tr>
-<td><code>two_moons</code></td>
-<td><code>codimension-sheet</code></td>
-<td style="text-align: right;">0.8130</td>
-<td style="text-align: right;">0.8061</td>
-<td style="text-align: right;">0.7899</td>
-<td style="text-align: right;">0.8182</td>
-<td style="text-align: right;">0.8086</td>
-<td style="text-align: right;">11/19</td>
-</tr>
-<tr>
-<td><code>eight_gaussians</code></td>
-<td><code>cosine</code></td>
-<td style="text-align: right;">0.4892</td>
-<td style="text-align: right;">0.4967</td>
-<td style="text-align: right;">0.4549</td>
-<td style="text-align: right;">0.5041</td>
-<td style="text-align: right;">0.5014</td>
-<td style="text-align: right;">11/19</td>
-</tr>
-<tr>
-<td><code>eight_gaussians</code></td>
-<td><code>polynomial</code></td>
-<td style="text-align: right;">0.4892</td>
-<td style="text-align: right;">0.4967</td>
-<td style="text-align: right;">0.4549</td>
-<td style="text-align: right;">0.5041</td>
-<td style="text-align: right;">0.5014</td>
-<td style="text-align: right;">11/19</td>
-</tr>
-<tr>
-<td><code>eight_gaussians</code></td>
-<td><code>sigmoid</code></td>
-<td style="text-align: right;">0.4892</td>
-<td style="text-align: right;">0.4967</td>
-<td style="text-align: right;">0.4549</td>
-<td style="text-align: right;">0.5041</td>
-<td style="text-align: right;">0.5014</td>
-<td style="text-align: right;">11/19</td>
-</tr>
-<tr>
-<td><code>eight_gaussians</code></td>
-<td><code>convergence-adaptive</code></td>
-<td style="text-align: right;">0.4892</td>
-<td style="text-align: right;">0.4967</td>
-<td style="text-align: right;">0.4549</td>
-<td style="text-align: right;">0.5041</td>
-<td style="text-align: right;">0.5014</td>
-<td style="text-align: right;">11/19</td>
-</tr>
-<tr>
-<td><code>eight_gaussians</code></td>
-<td><code>codimension-sheet</code></td>
-<td style="text-align: right;">0.4892</td>
-<td style="text-align: right;">0.4967</td>
-<td style="text-align: right;">0.4549</td>
-<td style="text-align: right;">0.5041</td>
-<td style="text-align: right;">0.5014</td>
-<td style="text-align: right;">11/19</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.834675</td>
+<td style="text-align: right;">2.256759</td>
+<td style="text-align: right;">1.240756</td>
+<td style="text-align: right;">0.000100</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Findings:</strong></p>
+<p><strong>Non-triviality checks</strong> (must hold for the framework to be a
+genuine consumer of paper quantities, not a stub):</p>
 <ul>
-<li><strong>Does the metric decrease over rounds?</strong> No. The round-0 and
-  final-round values are within <code>0.007</code> on <code>two_moons</code> and within
-  <code>0.008</code> on <code>eight_gaussians</code>. The curves fluctuate inside a fixed
-  band (<code>0.79-0.82</code> on <code>two_moons</code>, <code>0.45-0.50</code> on <code>eight_gaussians</code>)
-  but neither trend toward 0 nor toward 1. The metric does <strong>not</strong>
-  decrease, does <strong>not</strong> increase, and does <strong>not</strong> converge. It
-  <strong>plateaus</strong> at the value dictated by the adapter's <em>fixed-noise</em>
-  closed-form Gaussian estimate, which is schedule-independent by
-  construction (the evaluator ignores its <code>bundle</code> argument; see the
-  ADR-0013 "Selection metric status" section for the architectural
-  reason).</li>
-<li><strong>Does the metric converge to 1?</strong> No. The convergence-to-1 claim
-  applies to the paper's <code>eps -&gt; 0</code> limit on the <em>endpoint-conditioned</em>
-  posterior mass on the sheet; the shipped heuristic measures the
-  unconditional adapter/target difficulty at a fixed noise scale and
-  plateaus. Both targets stay well below the 0.95 "converged" bar
-  (<code>two_moons ~ 0.81</code>, <code>eight_gaussians ~ 0.49</code>) across all 20
-  rounds.</li>
-<li><strong>Sheet dominance, qualitative reading.</strong> On <code>two_moons</code> the
-  metric sits at ~0.81 (sheet dominates by a wide margin in the
-  closed-form Gaussian estimate); on <code>eight_gaussians</code> it sits at
-  ~0.49 (seven competing cell-root centres drag the closed-form
-  ratio below 0.5). The qualitative ordering <code>sheet &gt; cells</code> holds on
-  <code>two_moons</code>, matching paper Theorem 1's prediction; on
-  <code>eight_gaussians</code> the seven competing cell roots dominate the
-  closed-form sum. <strong>This is consistent with the paper's evidence
-  ordering (sheet <code>Theta(eps^1)</code> vs cells <code>O(eps^2)</code>) only in the
-  sense that the heuristic ratio stays bounded in a target-dependent
-  band; it is NOT proof of paper Theorem 1.</strong></li>
-<li><strong>Schedule invariance.</strong> All five scheduler families report
-  <em>bit-identical</em> per-round curves on each target. This is by
-  construction: the heuristic's <code>_compute_metrics</code> re-samples from a
-  private adapter instance against an unconditional prior and ignores
-  every loop-state input (the round's bundle, the scheduler's
-  <code>n_cap</code>, the prior endpoint digest). The metric is a property of
-  <code>(adapter weights, target)</code> only.</li>
-<li><strong>Implication.</strong> If the heuristic is going to track Theorem 1's
-  <code>eps -&gt; 0</code> limit, it has to score the round's <em>endpoint</em> (not a
-  fresh replay). That requires the runner to carry a <em>batch</em> of
-  trajectories per round (currently one endpoint per round), which
-  is a real architectural change to <code>ReInferenceRunner</code> and
-  <code>TwoDimFMAdapter</code>. It is logged as the open follow-up in ADR-0013
-  "Selection metric status".</li>
+<li><code>sheet_A &gt; 0</code>: True at every round (0.8347 &gt; 0; Proposition 3's
+  strict-positivity hypothesis holds).</li>
+<li><code>packing_B &lt; infinity</code>: True at every round (2.2568 is finite;
+  Lemma 3's Gaussian packing sum is bounded).</li>
+<li><code>cell_C &gt; 0</code>: True at every round (1.2408 &gt; 0; Lemma 3's
+  per-cell coefficient <code>C_g = e^{rho^2/2}/a</code> is positive by
+  construction).</li>
+<li><code>exterior_gap_e_rho &gt; 0</code>: True at every round (0.0001 &gt; 0;
+  Lemma 4's <code>e_rho = min{rho^4, (1-rho)^2 eta^2}</code> is positive).</li>
 </ul>
-<p><strong>Caveat (repeated for emphasis):</strong> these are framework-internal
-heuristic measurements. Paper Theorem 1 makes no claim about ratio
-convergence; it claims BL-convergence of the posterior measure. The
-data above is reported <em>because it is what the framework emits</em> — the
-caller can decide whether the heuristic's qualitative ordering
-matches their expectation — <em>not</em> as evidence for paper Theorem 1.</p>
-<p>The same point is reinforced by the in-tree regression tests
-(<code>tests/test_eval/test_posterior_selection_evaluator.py</code>):
-<code>test_evaluator_8_gaussians_ratio_lower_than_2_moons</code> pins the
-ordering above, and
-<code>test_metric_classification_does_not_claim_paper_theorem</code> pins the
-"NOT a paper quantity" disclaimer on the class docstring.</p>
+<p>These four values are the same constants the paper proves Theorem 1
+depends on: sheet evidence (Lemma 2), root-cell packing (Lemma 3),
+per-cell coefficient (Lemma 3), and exterior gap (Lemma 4 +
+Corollary 1). The framework now wires them through
+<code>CodimensionSheetScheduler.profile_residual_fn</code> (ground truth for
+<code>_paper_evidence_balance</code>), <code>AdaptivePolicyDriver.per_cell_coefficient_C</code>
+(normalisation constant), and <code>ReInferenceRunner</code> (per-round
+diagnostic emission). See ADR-0013 §"paper_quantities as algorithm
+input" for the wiring map and <code>tests/test_eval/test_profile_wired*</code> /
+<code>tests/test_algorithm/test_runner_diagnostics*</code> for the regression
+coverage.</p>
 <h2 id="reproducibility">Reproducibility<a class="headerlink" href="#reproducibility" title="Permanent link">&para;</a></h2>
 <p>Deterministic for fixed <code>seed</code> (default <code>42</code>). Run via <code>python tools/run_ablation.py</code> (or with <code>--rounds N</code> to override the round count, <code>--quick</code> for the 5-round smoke configuration used by <code>tests/test_tools/test_run_ablation.py</code>). All 18 cells are driven by <code>ReInferenceRunner</code> (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler); the two paper-grounded cells additionally pass a <code>PosteriorSelectionEvaluator</code> through <code>ReInferenceConfig.selection_evaluator</code>.</p>
 

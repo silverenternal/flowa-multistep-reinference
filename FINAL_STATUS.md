@@ -3,6 +3,14 @@
 Date: 2026-08-27 (final verification pass)
 Working dir: `c:/Users/31472/codes/flowa-multistep-reinference`
 
+> **Historical snapshot — numbers below are stale.** This file records the
+> verification pass as it stood on 2026-08-27. Every count here (475 tests,
+> 817 doc claims) has since been superseded. For the current state see the
+> `README.md` Status section: prototype under active development, B+
+> self-assessment, 1235 tests passing / 7 skipped (torch-gated), 2251 doc
+> claims verified. "Final" in the title refers to the end of that cleanup
+> pass, not to the project being finished.
+
 ## Summary of Verification Runs (final pass)
 
 ### 1. Test Suite (pytest)

@@ -2,6 +2,21 @@
 
 Adaptive reflow 和多步复推理控制：round orchestration、restart memory、condition control policy、外部反馈接口和重启计划。
 
+## Status
+
+- Stage: prototype, active development
+- Self-assessment: B+ (algorithm depth + engineering discipline; not ready
+  for production use)
+- Test count: 1235 passing / 7 skipped (torch-gated)
+- Last audit: 2026-08-28 (see [`docs/INSIGHTS.md`](docs/INSIGHTS.md) and
+  [`docs/ABLATION.md`](docs/ABLATION.md))
+- Honest gaps: see [`docs/lean/GAPS.md`](docs/lean/GAPS.md)
+
+Scope note: the engine is implemented for its current target domains
+(2D flow matching adapters and the paper-quantity contracts). Other model
+families are supported at the Protocol level only — no adapter for them
+ships in this tree.
+
 ## Adapter interface
 
 The authoritative contract for any Flow Matching model that wants to plug
@@ -258,6 +273,6 @@ on every CI run.
 PYTHONPATH=. ./.venv/Scripts/python.exe -m pytest tests/ --no-header -q
 ```
 
-Target: 430 tests pass (362 pre-split + 68 new universal/molecular split
-tests, including the AST-level guard that asserts `universal/` has zero
-molecule-specific imports).
+Current state on this tree: 1235 tests pass, 7 skipped (torch-gated
+molecular mixer tests). The suite includes the AST-level guard that
+asserts `universal/` has zero molecule-specific imports.

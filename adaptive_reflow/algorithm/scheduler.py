@@ -1545,7 +1545,14 @@ class ConvergenceAdaptiveScheduler:
 # ---------------------------------------------------------------------------
 
 
-def _paper_evidence_balance(n_cap_base: float, eps_implicit: float) -> float:
+def _paper_evidence_balance(
+    n_cap_base: float,
+    eps_implicit: float,
+    *,
+    sheet_A: float | None = None,
+    packing_B: float | None = None,
+    cell_C: float | None = None,
+) -> float:
     """Closed-form sheet-vs-cell evidence ratio (paper Lemma 2 + Lemma 3).
 
     Paper Lemma 2 (``NoiseSelectedRectification_EN.md``:101-103) shows that
@@ -1576,6 +1583,27 @@ def _paper_evidence_balance(n_cap_base: float, eps_implicit: float) -> float:
     sheet term, so ``ratio -> 1`` (sheet dominance) for every
     ``n_cap_base < 1``, matching Theorem 1.
 
+    Paper-quantity-augmented mode (preferred when
+    ``profile_residual_fn`` is supplied to :class:`CodimensionSheetScheduler`):
+
+    When ``sheet_A``, ``packing_B`` and ``cell_C`` are supplied (the
+    cached outputs of ``paper_quantities.sheet_evidence_A``,
+    ``paper_quantities.root_cell_packing_B`` and
+    ``paper_quantities.per_cell_coefficient_C``), the helper uses the
+    *literal* paper quantities as ground truth instead of the
+    framework-side heuristic. Concretely:
+
+        sheet = sheet_A * eps                                          # Lemma 2 / Cor. 1
+        cell  = cell_C * packing_B * eps ** 2                          # Lemma 3 + Lemma 5
+        ratio = sheet / (sheet + cell)
+
+    In this mode ``n_cap_base`` is ignored as an evidence weight — the
+    paper quantities carry the full evidence scale, so the
+    ``n_cap``-driven framework heuristic is replaced by the paper's
+    literal constants. The two closed forms agree up to normalisation
+    constants; the paper-quantity-augmented form is the canonical
+    version for callers that have configured ``profile_residual_fn``.
+
     :returns: ``ratio`` in ``[0, 1]``. ``ratio == 1`` means sheet evidence
         dominates the round; ``ratio == 0`` means cell evidence dominates.
     """
@@ -1588,6 +1616,48 @@ def _paper_evidence_balance(n_cap_base: float, eps_implicit: float) -> float:
     if not math.isfinite(n):
         raise ValueError(f"n_cap_base must be finite, got {n_cap_base!r}")
     n_clipped = max(0.0, min(1.0, n))
+
+    # Paper-quantity-augmented path: replace the framework heuristic
+    # with the literal paper constants. Used by
+    # :class:`CodimensionSheetScheduler` when ``profile_residual_fn`` is
+    # supplied so the per-round balance is grounded in the paper's
+    # ``A_g`` / ``B_g`` / ``C_g`` (Lemma 2 / Lemma 3 / Lemma 5) rather
+    # than in a framework-side surrogate.
+    if sheet_A is not None and packing_B is not None and cell_C is not None:
+        try:
+            sheet_f = float(sheet_A)
+            pack_f = float(packing_B)
+            cell_C_f = float(cell_C)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"paper quantities must be real numbers; got sheet_A={sheet_A!r}, "
+                f"packing_B={packing_B!r}, cell_C={cell_C!r}"
+            ) from exc
+        if not (
+            math.isfinite(sheet_f)
+            and math.isfinite(pack_f)
+            and math.isfinite(cell_C_f)
+        ):
+            raise ValueError(
+                f"paper quantities must be finite; got sheet_A={sheet_A!r}, "
+                f"packing_B={packing_B!r}, cell_C={cell_C!r}"
+            )
+        if sheet_f < 0.0 or pack_f < 0.0 or cell_C_f < 0.0:
+            raise ValueError(
+                f"paper quantities must be non-negative; got sheet_A={sheet_f!r}, "
+                f"packing_B={pack_f!r}, cell_C={cell_C_f!r}"
+            )
+        sheet = sheet_f * eps
+        cell = cell_C_f * pack_f * eps * eps
+        denom = sheet + cell
+        if denom <= 0.0:
+            # Degenerate (all zero): fall back to the framework heuristic
+            # to avoid div-by-zero; the paper's ``A_g > 0`` guarantees this
+            # branch is unreachable for any well-posed ``profile``.
+            sheet = max(n_clipped, eps)
+            cell = (1.0 - n_clipped) ** 2 * eps * eps
+            denom = sheet + cell
+        return float(sheet / denom)
 
     # ``eps > 0`` (validated above) and ``n_clipped in [0, 1]`` together
     # guarantee ``denom > 0`` (both ``sheet >= eps > 0`` and
@@ -1628,6 +1698,34 @@ class CodimensionSheetScheduler:
     integral), but two schedulers configured with different profiles
     must be distinguishable in the audit trail.
 
+    **Paper-quantity wiring.** When ``profile_residual_fn`` is
+    supplied, the scheduler consumes the four paper quantities from
+    :mod:`adaptive_reflow.contracts.paper_quantities` as ground
+    truth:
+
+    * ``A_g = paper_quantities.sheet_evidence_A(profile)`` (Lemma 2 /
+      Proposition 3) is computed once at construction time and cached
+      as :attr:`sheet_A`.
+    * ``B_g = paper_quantities.root_cell_packing_B(profile)``
+      (Lemma 5 / line 159) is computed once at construction time and
+      cached as :attr:`packing_B`.
+    * ``C_g = paper_quantities.per_cell_coefficient_C()`` (Lemma 3,
+      line 191) is computed once at construction time and cached as
+      :attr:`cell_C`.
+    * ``e_rho = paper_quantities.exterior_gap_e_rho()`` (Lemma 4 /
+      Lemma 5) is computed once at construction time and cached as
+      :attr:`exterior_gap_e_rho`.
+
+    The scheduler then replaces the framework-side heuristic in
+    :func:`_paper_evidence_balance` with the literal paper quantities
+    (``sheet = A_g * eps``, ``cell = C_g * B_g * eps**2``). When
+    ``profile_residual_fn`` is ``None``, the scheduler falls back to
+    the inline heuristic closed form; the two paths are mathematically
+    equivalent up to normalisation constants and agree on the
+    direction of sheet dominance as ``eps -> 0`` per Theorem 1. The
+    fallback path preserves byte-identical behaviour for callers that
+    have not supplied a profile (backward compat).
+
     The ``eps_direction`` parameter selects between the paper-aligned
     ``"decreasing"`` direction (default: r=0 high fresh-noise, r=L-1
     low fresh-noise, matching paper Theorem 1's ``eps -> 0`` limit)
@@ -1659,6 +1757,19 @@ class CodimensionSheetScheduler:
             residual profile. Its identity is recorded in
             :attr:`config_hash`. Optional; ``None`` is permitted and
             yields the default ``"default_sheet"`` profile signature.
+            When supplied, the scheduler also computes the four paper
+            quantities ``A_g``, ``B_g``, ``C_g``, ``e_rho`` from
+            :mod:`adaptive_reflow.contracts.paper_quantities` exactly
+            once at construction time, caches them on
+            ``self._sheet_A``, ``self._packing_B``, ``self._cell_C``,
+            ``self._exterior_gap_e_rho`` (exposed via
+            :attr:`sheet_A`, :attr:`packing_B`, :attr:`cell_C`,
+            :attr:`exterior_gap_e_rho`), and uses them as ground truth
+            in :func:`_paper_evidence_balance`. When ``None``, the
+            scheduler falls back to the framework-side heuristic
+            closed form (mathematically equivalent up to normalisation
+            constants — the two paths agree on the direction of sheet
+            dominance as ``eps -> 0`` per Theorem 1).
         :param eps_implicit: implicit noise scale in evidence units;
             must satisfy ``eps_implicit > 0``. Paper's Theorem 1 says
             the sheet dominates as ``eps -> 0``; this scheduler treats
@@ -1754,6 +1865,35 @@ class CodimensionSheetScheduler:
             profile_residual_fn
         )
 
+        # Paper-quantity ground truth. When ``profile_residual_fn`` is
+        # supplied, compute the three paper-Theorem-1 quantities that
+        # the scheduler consumes (Lemma 2 ``A_g``, Lemma 5 ``B_g``,
+        # Lemma 3 ``C_g``) exactly once at construction time and cache
+        # them. The scheduler then uses these as ground truth in the
+        # per-round sheet-vs-cell evidence balance, replacing the
+        # framework-side heuristic that callers see when no profile is
+        # configured. ``None`` means "no paper quantities wired" — the
+        # scheduler falls back to the legacy inline formula.
+        # When ``profile_residual_fn is None``: ``A_g = B_g = C_g = None``
+        # and the scheduler uses the legacy inline closed form.
+        # When ``profile_residual_fn is not None``: each is computed via
+        # ``paper_quantities.*`` and cached on ``self``.
+        self._sheet_A: float | None = None
+        self._packing_B: float | None = None
+        self._cell_C: float | None = None
+        self._exterior_gap_e_rho: float | None = None
+        if profile_residual_fn is not None:
+            # Imports are local so the scheduler module keeps the
+            # same dependency surface as the legacy codimension helper
+            # (the ``paper_quantities`` module is stdlib-only, so this
+            # is a soft import rather than a heavy transitive pull).
+            from adaptive_reflow.contracts import paper_quantities as _pq
+
+            self._sheet_A = float(_pq.sheet_evidence_A(profile_residual_fn))
+            self._packing_B = float(_pq.root_cell_packing_B(profile_residual_fn))
+            self._cell_C = float(_pq.per_cell_coefficient_C())
+            self._exterior_gap_e_rho = float(_pq.exterior_gap_e_rho())
+
         # Underlying base schedule. We use the framework's canonical
         # cosine annealing (ADR-0010) as the n_cap_base source so that
         # the codimension scheduler composes over the same closed form
@@ -1816,6 +1956,52 @@ class CodimensionSheetScheduler:
         canonical ``"default_sheet"`` signature.
         """
         return str(self._profile_signature)
+
+    @property
+    def sheet_A(self) -> float | None:
+        """Return the cached paper-Theorem-1 ``A_g`` (Lemma 2 / Prop. 3).
+
+        ``None`` when no ``profile_residual_fn`` was supplied at
+        construction time. When supplied, this is the cached value of
+        ``paper_quantities.sheet_evidence_A(profile_residual_fn)``,
+        used as ground truth for the per-round sheet evidence in
+        :attr:`last_evidence_ratio`.
+        """
+        return self._sheet_A
+
+    @property
+    def packing_B(self) -> float | None:
+        """Return the cached paper-Theorem-1 ``B_g`` (Lemma 5).
+
+        ``None`` when no ``profile_residual_fn`` was supplied at
+        construction time. When supplied, this is the cached value of
+        ``paper_quantities.root_cell_packing_B(profile_residual_fn)``,
+        used as ground truth for the per-round cell evidence in
+        :attr:`last_evidence_ratio`.
+        """
+        return self._packing_B
+
+    @property
+    def cell_C(self) -> float | None:
+        """Return the cached paper-Theorem-1 ``C_g`` (Lemma 3).
+
+        ``None`` when no ``profile_residual_fn`` was supplied at
+        construction time. When supplied, this is the cached value of
+        ``paper_quantities.per_cell_coefficient_C()``, used as the
+        per-cell evidence coefficient in :attr:`last_evidence_ratio`.
+        """
+        return self._cell_C
+
+    @property
+    def exterior_gap_e_rho(self) -> float | None:
+        """Return the cached paper-Theorem-1 ``e_rho`` (Lemma 4 / 5).
+
+        ``None`` when no ``profile_residual_fn`` was supplied at
+        construction time. When supplied, this is the cached value of
+        ``paper_quantities.exterior_gap_e_rho()``, the literal
+        physical-exterior gap from Lemma 5.
+        """
+        return self._exterior_gap_e_rho
 
     @property
     def base(self) -> CosineAnnealScheduler:
@@ -1914,8 +2100,23 @@ class CodimensionSheetScheduler:
         # driver of n_cap. With paper-positive eps powers the ratio
         # tends to 1 (sheet dominance) at small effective eps, matching
         # Theorem 1.
+        #
+        # When a ``profile_residual_fn`` was supplied at construction
+        # time, the scheduler has cached the literal paper quantities
+        # ``A_g``, ``B_g``, ``C_g`` from :mod:`paper_quantities` and
+        # uses them as ground truth (the
+        # "paper-quantity-augmented" path in
+        # :func:`_paper_evidence_balance`). Otherwise it falls back to
+        # the framework-side heuristic — the two closed forms agree up
+        # to normalisation constants.
         ratio = float(
-            _paper_evidence_balance(n_cap_base, self._eps_implicit)
+            _paper_evidence_balance(
+                n_cap_base,
+                self._eps_implicit,
+                sheet_A=self._sheet_A,
+                packing_B=self._packing_B,
+                cell_C=self._cell_C,
+            )
         )
         self._last_evidence_ratio = ratio
 

@@ -410,5 +410,115 @@ def test_drivers_are_swapable() -> None:
     )
 
 
+# ---------------------------------------------------------------------------
+# 6. AdaptivePolicyDriver — paper-quantity wiring (ADR-0013 follow-up)
+# ---------------------------------------------------------------------------
+
+
+def test_adaptive_policy_driver_with_paper_quantities_uses_C() -> None:
+    """``per_cell_coefficient_C`` normalises beta to paper Lemma 3 scale.
+
+    When the driver is constructed with ``per_cell_coefficient_C``, the
+    per-round ``beta`` is the legacy envelope divided by ``C_g``:
+
+        beta = clip((1 - |p - t|) / C_g, 0, 1)
+
+    The default ``C_g`` from ``paper_quantities.per_cell_coefficient_C``
+    is approximately 1.2408 (rho=0.1, c=1.0); the resulting beta is
+    therefore smaller than the legacy envelope but still in ``[0, 1]``.
+    """
+    from adaptive_reflow.contracts import paper_quantities as _pq
+
+    base_policy = _make_base_policy(beta=0.0)
+    cell_C = float(_pq.per_cell_coefficient_C())
+    driver = AdaptivePolicyDriver(per_cell_coefficient_C=cell_C)
+    assert driver.per_cell_coefficient_C == pytest.approx(cell_C, rel=1e-12)
+
+    # Sample a non-trivial prior digest; the legacy envelope gives
+    # ``1 - |p - t|``, which the driver divides by ``C_g``.
+    digest = "abcdef0123456789" * 4  # 64-hex; maps into [0, 1]
+    out_with_C = driver.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest=digest,
+    )
+    beta_with_C = _beta_value(out_with_C)
+    assert 0.0 <= beta_with_C <= 1.0
+
+    # The legacy driver produces a different beta (no division by C_g).
+    legacy_driver = AdaptivePolicyDriver()
+    out_legacy = legacy_driver.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest=digest,
+    )
+    beta_legacy = _beta_value(out_legacy)
+
+    # The relationship holds: beta_with_C = clip(beta_legacy / C_g, 0, 1).
+    expected = beta_legacy / cell_C
+    expected = max(0.0, min(1.0, expected))
+    assert beta_with_C == pytest.approx(expected, rel=1e-12)
+
+
+def test_adaptive_policy_driver_without_paper_quantities_legacy_behavior() -> None:
+    """Without ``per_cell_coefficient_C`` the legacy formula is used.
+
+    Backward compatibility: ``AdaptivePolicyDriver()`` (no
+    ``per_cell_coefficient_C``) preserves the legacy
+    ``beta = 1 - |p - t|`` formula byte-for-byte.
+    """
+    driver = AdaptivePolicyDriver()
+    assert driver.per_cell_coefficient_C is None
+
+    base_policy = _make_base_policy(beta=0.0)
+    for digest in ("", "0", "abc", "deadbeef" * 8, "feedface" * 8):
+        out = driver.compute_policy(
+            None,
+            base_policy=base_policy,
+            channel="xy",
+            prior_endpoint_digest=digest,
+        )
+        beta = _beta_value(out)
+        # Legacy invariant: ``beta`` equals the legacy envelope,
+        # clipped into ``[0, 1]`` (``driver.target_estimate = 0.5``
+        # by default). The exact value depends on the digest mapping
+        # but must lie in ``[0, 1]``.
+        assert 0.0 <= beta <= 1.0
+
+
+def test_adaptive_policy_driver_rejects_invalid_per_cell_coefficient_C() -> None:
+    """Invalid ``per_cell_coefficient_C`` values raise ``ValueError``."""
+    with pytest.raises(ValueError, match="real number"):
+        AdaptivePolicyDriver(per_cell_coefficient_C="not a number")  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="finite"):
+        AdaptivePolicyDriver(per_cell_coefficient_C=float("inf"))
+    with pytest.raises(ValueError, match="finite"):
+        AdaptivePolicyDriver(per_cell_coefficient_C=float("-inf"))
+    with pytest.raises(ValueError, match="positive"):
+        AdaptivePolicyDriver(per_cell_coefficient_C=0.0)
+    with pytest.raises(ValueError, match="positive"):
+        AdaptivePolicyDriver(per_cell_coefficient_C=-1.0)
+
+
+def test_adaptive_policy_driver_config_hash_varies_with_per_cell_coefficient_C() -> None:
+    """``config_hash`` captures the ``per_cell_coefficient_C`` choice.
+
+    Two drivers with the same ``target_estimate`` but different
+    ``per_cell_coefficient_C`` must produce different
+    ``config_hash`` values; two drivers with the same parameters
+    must produce the same ``config_hash``.
+    """
+    a = AdaptivePolicyDriver(per_cell_coefficient_C=1.0)
+    b = AdaptivePolicyDriver(per_cell_coefficient_C=2.0)
+    c = AdaptivePolicyDriver(per_cell_coefficient_C=None)
+    d = AdaptivePolicyDriver(per_cell_coefficient_C=1.0)
+    assert a.config_hash() != b.config_hash()
+    assert a.config_hash() != c.config_hash()
+    assert b.config_hash() != c.config_hash()
+    assert a.config_hash() == d.config_hash()
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-x", "--no-header", "-q"]))

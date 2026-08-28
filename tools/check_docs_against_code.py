@@ -144,6 +144,14 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         "EvaluatorNotCalibratedError", "MoleculeFrozenEnvelopeManifestBuilder",
         "TargetConditionHash", "Import", "ImportFrom", "Inf", "NaN",
         "Types",
+        # Field-name tokens used by ``docs/CLAIMS.md`` (the single-
+        # source-of-truth ledger built up by the forced-sync gate) as
+        # ``- Status:`` / ``- Date:`` / ``- Source:`` / ``- Asserted
+        # by:`` / ``- Disputed by:`` / ``- Statement:`` / ``- Evidence:``
+        # bullets. They look like CamelCase tokens to the inline
+        # extractor but are prose field labels, not project symbols.
+        "Status", "Date", "Source", "Evidence", "Statement",
+        "Asserted", "Disputed",
         # Prose sentence-starters / adverbs commonly backticked in ADRs.
         "Today", "Toward", "Hence", "Thereafter", "Otherwise",
         # Inlined per CONTRACTS.md (TypedDicts / Literal / Callable inlined

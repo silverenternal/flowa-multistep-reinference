@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 
 from adaptive_reflow.algorithm import (
+    AdaptivePolicyDriver,
     ConstantPolicyDriver,
     ConstantScheduler,
     ConvergenceAdaptiveScheduler,
@@ -668,6 +669,202 @@ def test_runner_endpoints_matrix_is_nan_initialised(_twodim_adapter) -> None:
         f"expected all endpoints finite for a normal run; "
         f"got NaN mask={np.isnan(result.endpoints)}"
     )
+
+
+# ---------------------------------------------------------------------------
+# 10. paper_quantities_provider wiring (ADR-0013 follow-up)
+# ---------------------------------------------------------------------------
+
+
+def test_runner_with_paper_quantities_emits_diagnostics(_twodim_adapter) -> None:
+    """``paper_quantities_provider`` produces per-round diagnostics.
+
+    Configuring ``ReInferenceConfig.paper_quantities_provider``
+    upgrades the scheduler / driver in place (when their concrete
+    types support the upgrade) and records the four paper quantities
+    ``(sheet_A, packing_B, cell_C, exterior_gap_e_rho)`` in each
+    ``per_round_metrics[r]`` under the
+    ``paper_quantity_diagnostics`` entry. The diagnostics match the
+    values computed directly by ``paper_quantities.*``.
+    """
+    import math
+
+    from adaptive_reflow.algorithm.scheduler import CodimensionSheetScheduler
+    from adaptive_reflow.contracts import paper_quantities as _pq
+
+    adapter = _twodim_adapter
+    n_rounds = 4
+    profile = lambda x: math.sin(x)  # noqa: E731
+
+    # Reference paper quantities for the diagnostics check below.
+    expected_sheet_A = float(_pq.sheet_evidence_A(profile))
+    expected_packing_B = float(_pq.root_cell_packing_B(profile))
+    expected_cell_C = float(_pq.per_cell_coefficient_C())
+    expected_e_rho = float(_pq.exterior_gap_e_rho())
+
+    # Build the runner with a CodimensionSheetScheduler + the legacy
+    # schedule-derived driver so we can confirm the diagnostics path
+    # is wired through the ``paper_quantities_provider`` argument.
+    scheduler = CodimensionSheetScheduler(
+        cycle_length=n_rounds, n_min=0.0, n_max=1.0, eps_implicit=0.05
+    )
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=scheduler,
+        policy_driver=ScheduleDerivedPolicyDriver(),
+        merge_operator=default_bounded_merge_operator(),
+    )
+    result = runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+            paper_quantities_provider=profile,
+        )
+    )
+    # Every round carries the diagnostics entry.
+    assert len(result.per_round_metrics) == n_rounds
+    for r in range(n_rounds):
+        metric = result.per_round_metrics[r]
+        assert "paper_quantity_diagnostics" in metric, (
+            f"round {r}: missing paper_quantity_diagnostics; "
+            f"keys={sorted(metric)!r}"
+        )
+        diag = metric["paper_quantity_diagnostics"]
+        assert diag["sheet_A"] == pytest.approx(expected_sheet_A, rel=1e-12)
+        assert diag["packing_B"] == pytest.approx(expected_packing_B, rel=1e-12)
+        assert diag["cell_C"] == pytest.approx(expected_cell_C, rel=1e-12)
+        assert diag["exterior_gap_e_rho"] == pytest.approx(
+            expected_e_rho, rel=1e-12
+        )
+
+    # The scheduler was upgraded in place to consume paper quantities.
+    assert isinstance(runner.scheduler, CodimensionSheetScheduler)
+    assert runner.scheduler.sheet_A == pytest.approx(expected_sheet_A, rel=1e-12)
+    assert runner.scheduler.packing_B == pytest.approx(
+        expected_packing_B, rel=1e-12
+    )
+    assert runner.scheduler.cell_C == pytest.approx(expected_cell_C, rel=1e-12)
+    assert runner.scheduler.exterior_gap_e_rho == pytest.approx(
+        expected_e_rho, rel=1e-12
+    )
+
+
+def test_runner_without_paper_quantities_legacy_behavior(_twodim_adapter) -> None:
+    """Without ``paper_quantities_provider`` no diagnostics are emitted.
+
+    Backward compatibility: when ``paper_quantities_provider`` is
+    ``None`` (the default), the runner does not emit
+    ``paper_quantity_diagnostics`` and does not upgrade the scheduler
+    / driver in place.
+    """
+    adapter = _twodim_adapter
+    n_rounds = 3
+    # Pin the scheduler/driver to known types so we can verify they
+    # are NOT upgraded.
+    from adaptive_reflow.algorithm.scheduler import CosineAnnealScheduler
+
+    scheduler = default_cosine_scheduler(cycle_length=n_rounds)
+    driver = ScheduleDerivedPolicyDriver()
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=scheduler,
+        policy_driver=driver,
+        merge_operator=default_bounded_merge_operator(),
+    )
+    result = runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    # Diagnostics are absent for every round.
+    for r in range(n_rounds):
+        metric = result.per_round_metrics[r]
+        assert "paper_quantity_diagnostics" not in metric, (
+            f"round {r}: paper_quantity_diagnostics should be absent "
+            f"when no provider is configured; keys={sorted(metric)!r}"
+        )
+    # Scheduler / driver unchanged.
+    assert isinstance(runner.scheduler, CosineAnnealScheduler)
+    assert isinstance(runner.policy_driver, ScheduleDerivedPolicyDriver)
+
+
+def test_runner_paper_quantities_upgrade_adaptive_driver(_twodim_adapter) -> None:
+    """``paper_quantities_provider`` upgrades ``AdaptivePolicyDriver``.
+
+    When the runner is built with an :class:`AdaptivePolicyDriver`
+    and a ``paper_quantities_provider`` is supplied, the runner
+    replaces the driver with one constructed with
+    ``per_cell_coefficient_C`` set so the per-round ``beta`` lives
+    on paper Lemma 3's per-cell evidence scale.
+    """
+    import math
+
+    from adaptive_reflow.contracts import paper_quantities as _pq
+
+    adapter = _twodim_adapter
+    n_rounds = 2
+    profile = lambda x: math.sin(x)  # noqa: E731
+    expected_C = float(_pq.per_cell_coefficient_C())
+
+    driver = AdaptivePolicyDriver(target_estimate=0.5)
+    assert driver.per_cell_coefficient_C is None
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=default_cosine_scheduler(cycle_length=n_rounds),
+        policy_driver=driver,
+        merge_operator=default_bounded_merge_operator(),
+    )
+    runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+            paper_quantities_provider=profile,
+        )
+    )
+    # The driver was upgraded in place.
+    assert isinstance(runner.policy_driver, AdaptivePolicyDriver)
+    assert runner.policy_driver.per_cell_coefficient_C == pytest.approx(
+        expected_C, rel=1e-12
+    )
+
+
+def test_runner_paper_quantities_rejects_non_callable_provider(
+    _twodim_adapter,
+) -> None:
+    """Non-callable ``paper_quantities_provider`` raises ``ValueError``."""
+    from adaptive_reflow.algorithm.scheduler import (
+        CodimensionSheetScheduler,
+    )
+
+    adapter = _twodim_adapter
+    n_rounds = 2
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=CodimensionSheetScheduler(cycle_length=n_rounds),
+        policy_driver=ScheduleDerivedPolicyDriver(),
+        merge_operator=default_bounded_merge_operator(),
+    )
+    with pytest.raises(ValueError, match="callable"):
+        runner.run(
+            ReInferenceConfig(
+                n_rounds=n_rounds,
+                outer_cycle_id=0,
+                target_round=0,
+                seed=42,
+                channels=TWODIM_FM_CHANNELS,
+                paper_quantities_provider=42,  # type: ignore[arg-type]
+            )
+        )
 
 
 if __name__ == "__main__":

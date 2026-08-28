@@ -38,6 +38,7 @@ Tasks satisfied:
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -53,10 +54,12 @@ from adaptive_reflow.algorithm.merge_operator import (
     default_bounded_merge_operator,
 )
 from adaptive_reflow.algorithm.policy_driver import (
+    AdaptivePolicyDriver,
     PolicyDriverProtocol,
     default_policy_driver,
 )
 from adaptive_reflow.algorithm.scheduler import (
+    CodimensionSheetScheduler,
     SchedulerProtocol,
     default_cosine_scheduler,
 )
@@ -145,6 +148,36 @@ class ReInferenceConfig:
         alongside the ``W2`` / ``coverage`` pair promoted from the
         main evaluator. ``None`` (the default) keeps the runner's
         behaviour byte-for-byte identical to ADR-0011 / ADR-0012.
+    paper_quantities_provider:
+        Optional callable mapping ``x -> g(x)``, the residual
+        profile the four paper quantities are computed from. When
+        supplied, the runner wires it into the algorithm layer as
+        ground truth:
+
+        * If the scheduler is a :class:`CodimensionSheetScheduler`,
+          it is replaced with one constructed with
+          ``profile_residual_fn=paper_quantities_provider`` so
+          ``sheet_A``, ``packing_B``, ``cell_C``, ``exterior_gap_e_rho``
+          are computed once at construction time and used as the
+          ground truth for the per-round sheet-vs-cell evidence
+          balance. If the scheduler is not a
+          :class:`CodimensionSheetScheduler`, the provider is ignored
+          for the scheduler (the runner cannot retrofit a non-
+          codimension scheduler with paper quantities without changing
+          the per-round ``n_cap`` formula).
+        * If the policy driver is an :class:`AdaptivePolicyDriver`,
+          it is replaced with one constructed with
+          ``per_cell_coefficient_C`` set to
+          ``paper_quantities.per_cell_coefficient_C()``, so the
+          per-round ``beta`` lives on paper Lemma 3's per-cell
+          evidence scale.
+        * The runner records a ``paper_quantity_diagnostics`` entry
+          in each ``per_round_metrics[r]`` containing the four paper
+          quantities ``(sheet_A, packing_B, cell_C,
+          exterior_gap_e_rho)`` for empirical verification.
+
+        ``None`` (the default) preserves the legacy behaviour
+        (no paper-quantity rewiring, no diagnostics entry).
     """
 
     n_rounds: int = 20
@@ -153,6 +186,7 @@ class ReInferenceConfig:
     seed: int = 42
     channels: tuple[str, ...] = ("xy",)
     selection_evaluator: PosteriorSelectionEvaluator | None = None
+    paper_quantities_provider: Callable[[float], float] | None = None
 
 
 @dataclass(frozen=True)
@@ -178,7 +212,12 @@ class ReInferenceResult:
         when an evaluator is configured, also contains the evaluator's
         oracle keys plus the promoted ``W2`` and ``coverage``; when
         ``ReInferenceConfig.selection_evaluator`` is configured, also
-        contains ``selection_ratio`` (ADR-0013).
+        contains ``selection_ratio`` (ADR-0013); when
+        ``ReInferenceConfig.paper_quantities_provider`` is configured,
+        also contains ``paper_quantity_diagnostics`` (a nested dict
+        with keys ``sheet_A``, ``packing_B``, ``cell_C``,
+        ``exterior_gap_e_rho``) for empirical verification of paper
+        Theorem 1's literal constants.
     algorithm_signatures:
         ``{component_name: config_hash}`` provenance mapping for the
         scheduler, policy driver, merge operator, and blender.
@@ -188,7 +227,7 @@ class ReInferenceResult:
     round_traces: tuple[RoundTrace, ...]
     final_endpoint_digest: str
     endpoints: NDArray[np.float64]
-    per_round_metrics: dict[int, dict[str, float]] = field(default_factory=dict)
+    per_round_metrics: dict[int, dict[str, Any]] = field(default_factory=dict)
     algorithm_signatures: dict[str, str] = field(default_factory=dict)
 
 
@@ -422,6 +461,14 @@ class ReInferenceRunner:
         5. When ``config.selection_evaluator`` is set, ask it for the
            paper-Theorem-1 ``selection_ratio`` and record it in the
            round's metric dict (ADR-0013).
+        6. When ``config.paper_quantities_provider`` is set, record the
+           four paper quantities ``(sheet_A, packing_B, cell_C,
+           exterior_gap_e_rho)`` in the round's metric dict under the
+           ``paper_quantity_diagnostics`` entry for empirical
+           verification of Theorem 1's literal constants. The
+           scheduler / driver are also upgraded in-place when their
+           concrete types support paper-quantity wiring (see
+           :meth:`_apply_paper_quantities_rewiring`).
         """
         n_rounds = int(config.n_rounds)
         if n_rounds < 1:
@@ -430,6 +477,15 @@ class ReInferenceRunner:
         if not channels:
             raise ValueError("channels must be non-empty")
         primary_channel = ChannelName(str(channels[0]))
+
+        # When a paper-quantities provider is configured, upgrade the
+        # scheduler / driver in-place if their concrete types support
+        # the upgrade. The four paper quantities are computed once up
+        # front and cached on the runner for the per-round diagnostic
+        # emission below. ``None`` preserves legacy behaviour.
+        paper_quantities_snapshot: tuple[float, float, float, float] | None = (
+            self._apply_paper_quantities_rewiring(config)
+        )
 
         round_traces: list[RoundTrace] = []
         per_round_metrics: dict[int, dict[str, float]] = {}
@@ -506,7 +562,7 @@ class ReInferenceRunner:
                         ).reshape(2)
 
             # Per-round metrics: evaluator oracle + algorithm scalars.
-            metric: dict[str, float] = {
+            metric: dict[str, Any] = {
                 "n_cap": float(sample.n_cap),
                 "memory_fraction": float(sample.memory_fraction()),
                 "beta": float(
@@ -536,6 +592,18 @@ class ReInferenceRunner:
                 metric["selection_ratio"] = float(
                     selection_metrics.get("selection_ratio", 0.0)
                 )
+            # Paper-quantity diagnostics (only when the runner was
+            # configured with ``paper_quantities_provider``).
+            if paper_quantities_snapshot is not None:
+                sheet_A, packing_B, cell_C, exterior_gap_e_rho = (
+                    paper_quantities_snapshot
+                )
+                metric["paper_quantity_diagnostics"] = {
+                    "sheet_A": float(sheet_A),
+                    "packing_B": float(packing_B),
+                    "cell_C": float(cell_C),
+                    "exterior_gap_e_rho": float(exterior_gap_e_rho),
+                }
             per_round_metrics[r] = metric
 
             # Feed the round's W2 / coverage back into adaptive schedulers
@@ -570,6 +638,67 @@ class ReInferenceRunner:
                 blender=self._blender,
             ),
         )
+
+    # -- paper-quantity wiring --------------------------------------------
+
+    def _apply_paper_quantities_rewiring(
+        self,
+        config: ReInferenceConfig,
+    ) -> tuple[float, float, float, float] | None:
+        """Apply paper-quantity rewiring for the duration of one ``run``.
+
+        When ``config.paper_quantities_provider`` is set, this method
+        upgrades ``self._scheduler`` / ``self._driver`` in-place if
+        their concrete types support the upgrade (see the
+        :class:`ReInferenceConfig` docstring for the exact upgrade
+        rules). The four paper quantities are computed once via the
+        ``paper_quantities`` module and returned for per-round
+        diagnostics.
+
+        Returns ``None`` when ``config.paper_quantities_provider`` is
+        ``None``, in which case the scheduler / driver are left
+        unchanged (legacy behaviour).
+        """
+        provider = config.paper_quantities_provider
+        if provider is None:
+            return None
+        if not callable(provider):
+            raise ValueError(
+                "paper_quantities_provider must be callable or None, "
+                f"got {provider!r}"
+            )
+
+        # Local import keeps the runner's import surface unchanged for
+        # callers that never set ``paper_quantities_provider``.
+        from adaptive_reflow.contracts import paper_quantities as _pq
+
+        sheet_A = float(_pq.sheet_evidence_A(provider))
+        packing_B = float(_pq.root_cell_packing_B(provider))
+        cell_C = float(_pq.per_cell_coefficient_C())
+        exterior_gap_e_rho = float(_pq.exterior_gap_e_rho())
+
+        # Upgrade the scheduler if it is a CodimensionSheetScheduler.
+        # Otherwise leave it alone (the codimension scheduler is the
+        # only concrete type that consumes paper quantities today).
+        if isinstance(self._scheduler, CodimensionSheetScheduler):
+            self._scheduler = CodimensionSheetScheduler(
+                cycle_length=int(self._scheduler.cycle_length()),
+                n_min=float(self._scheduler._n_min),  # noqa: SLF001
+                n_max=float(self._scheduler._n_max),  # noqa: SLF001
+                profile_residual_fn=provider,
+                eps_implicit=float(self._scheduler._eps_implicit),  # noqa: SLF001
+                eps_direction=str(self._scheduler._eps_direction),  # noqa: SLF001
+                seed=int(self._scheduler.seed),
+            )
+
+        # Upgrade the policy driver if it is an AdaptivePolicyDriver.
+        if isinstance(self._driver, AdaptivePolicyDriver):
+            self._driver = AdaptivePolicyDriver(
+                target_estimate=float(self._driver.target_estimate),
+                per_cell_coefficient_C=cell_C,
+            )
+
+        return (sheet_A, packing_B, cell_C, exterior_gap_e_rho)
 
     def run_with_default_engine(self, config: ReInferenceConfig) -> ReInferenceResult:
         """Convenience alias of :meth:`run` (always uses a fresh :class:`Engine`)."""

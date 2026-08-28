@@ -1,0 +1,1087 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Project Claims — single source of truth - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#project-claims-single-source-of-truth" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Project Claims — single source of truth
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-001" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-001: Sheet tube evidence scales as Theta(eps^{+1})
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-002" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-002: Root cell evidence scales as O(eps^{+2}) per cell
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-003" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-003: Framework selection_ratio metric is invariant to scheduler
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-004" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-004: Framework selection_ratio plateaus, does NOT converge to 1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-005" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-005: Cosine annealing is the canonical implementation of paper Lemma 2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-006" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-006: CodimensionSheetScheduler implements paper Lemma 2 + Lemma 3 as closed form
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-007" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-007: Physical complement is exponentially suppressed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-008" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-008: Framework's heuristic selection_ratio is NOT a paper quantity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-009" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-009: eight_gaussians plateau is lower than two_moons
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-010" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-010: Bounded noise floor prevents escape from the fibre
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-011" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-011: Four paper quantities are first-class algorithm inputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-012" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-012: Paper Theorem 1 proves bounded-Lipschitz convergence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-013" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-013: Paper Corollary 1 yields Z_{g,eps} &gt;= C_1 * eps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-014" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-014: Posterior mass on isolated cells is O(eps)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-015" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-015: Framework does NOT prove paper Theorem 1 magnitude-level competition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-016" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-016: (DEPRECATED) Original _paper_evidence_balance used inverted eps exponents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-017" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-017: (DEPRECATED) selection_ratio converges to 1 over rounds
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-018" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-018: Cosine wins on W2 vs polynomial, sigmoid, and convergence-adaptive
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="project-claims-single-source-of-truth">Project Claims — single source of truth<a class="headerlink" href="#project-claims-single-source-of-truth" title="Permanent link">&para;</a></h1>
+<p>Status: governance document. This file is the canonical ledger of every
+substantive claim the framework makes. All cross-references between
+<code>docs/INSIGHTS.md</code>, <code>docs/ABLATION.md</code>, <code>docs/adr/*.md</code>, and the source
+tree resolve through the CLM IDs defined here.</p>
+<p>How it works:</p>
+<ul>
+<li>Each claim gets a stable ID (<code>CLM-NNN</code>).</li>
+<li><code>Asserted by</code> records the file/line that grounds the claim in code.</li>
+<li><code>Disputed by</code> records any file/line that contradicts it; the verifier
+  in <code>tools/check_claims_consistency.py</code> automatically promotes a claim
+  to <code>PROVISIONAL</code> when a <code>Disputed by</code> reference is present.</li>
+<li><code>Status</code> is one of <code>ACTIVE</code>, <code>PROVISIONAL</code>, <code>DEPRECATED</code>:</li>
+<li><code>ACTIVE</code> — currently the canonical claim.</li>
+<li><code>PROVISIONAL</code> — has a <code>Disputed by</code> reference; needs human review.</li>
+<li><code>DEPRECATED</code> — superseded; cited only for historical context.</li>
+<li>The verifier (<code>tools/check_claims_consistency.py</code>) reads this file,
+  walks every <code>Asserted by</code> reference, and exits non-zero if drift is
+  detected.</li>
+</ul>
+<h2 id="CLM-001">CLM-001: Sheet tube evidence scales as <code>Theta(eps^{+1})</code><a class="headerlink" href="#CLM-001" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: paper Theorem 1 / Lemma 2 (Li 2024,
+  <code>NoiseSelectedRectification_EN.md</code> line 101-103)</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:115-117</li>
+<li>Disputed by: —</li>
+<li>Statement: Paper Lemma 2 proves the sheet tube's unnormalised
+  contribution to the small-noise posterior is <code>Theta(eps^{+1})</code>,
+  derived from the substitution <code>y = eps u</code> which contributes one
+  Jacobian factor <code>eps</code>.</li>
+<li>Evidence: paper Lemma 2 (line 101-103); framework contract
+  <code>adaptive_reflow/contracts/paper_quantities.py:64</code>
+  (<code>sheet_evidence_A</code> returns <code>A_g</code>, the positive limit derived from
+  Lemma 2's sheet tube).</li>
+</ul>
+<h2 id="CLM-002">CLM-002: Root cell evidence scales as <code>O(eps^{+2})</code> per cell<a class="headerlink" href="#CLM-002" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: paper Theorem 1 / Lemma 3 (Li 2024, line 107)</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:119-120</li>
+<li>Disputed by: —</li>
+<li>Statement: Paper Lemma 3 proves each isolated root cell contributes at
+  most <code>O(eps^{+2})</code> to the unnormalised posterior, because codimension-2
+  cells carry two Jacobian factors.</li>
+<li>Evidence: paper Lemma 3 (line 107); framework contract
+  <code>adaptive_reflow/contracts/paper_quantities.py:226</code>
+  (<code>per_cell_coefficient_C</code> returns <code>C_g = e^{rho^2/2} / a</code>,
+  the per-cell coefficient Lemma 3 proves is literal and explicit).</li>
+</ul>
+<h2 id="CLM-003">CLM-003: Framework <code>selection_ratio</code> metric is invariant to scheduler<a class="headerlink" href="#CLM-003" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ADR-0013 §"Selection metric status" / <code>docs/review/B5-VERIFICATION.md</code></li>
+<li>Asserted by: docs/INSIGHTS.md:60,
+  docs/ABLATION.md:130-133</li>
+<li>Disputed by: —</li>
+<li>Statement: The shipped <code>selection_ratio = sheet_evidence /
+  (sheet_evidence + cell_evidence)</code> metric emitted by
+  <code>EvidenceScaleGapMetric</code> is schedule-independent by construction; both
+  <code>CosineAnnealScheduler</code> and <code>CodimensionSheetScheduler</code> report
+  bit-identical per-round curves on each target because the evaluator
+  scores the adapter's own posterior geometry at a fixed noise scale.</li>
+<li>Evidence: <code>tools/run_metric_per_family.py</code> produces identical
+  per-round values across all five scheduler families on both targets
+  (<code>two_moons</code>, <code>eight_gaussians</code>); pinned by
+  <code>tests/test_eval/test_posterior_selection_evaluator.py</code>.</li>
+</ul>
+<h2 id="CLM-004">CLM-004: Framework <code>selection_ratio</code> plateaus, does NOT converge to 1<a class="headerlink" href="#CLM-004" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ADR-0013 §"Selection metric status" (post-review, 2026-08-28)</li>
+<li>Asserted by: docs/INSIGHTS.md:60-62,
+  docs/ABLATION.md:183-189,
+  docs/adr/0013-posterior-selection-drives-algorithm.md:651-706</li>
+<li>Disputed by: —</li>
+<li>Statement: The shipped <code>selection_ratio</code> is a fixed-noise replay
+  estimator; it plateaus at the value dictated by the adapter's
+  training noise rather than converging to 1 as rounds progress.
+  Convergence to 1 would require an endpoint-conditioned metric
+  operating in the <code>eps -&gt; 0</code> limit, which is the open follow-up.</li>
+<li>Evidence: <code>docs/ABLATION.md</code> §"What the data shows WITHOUT claiming
+  paper backing" reports <code>two_moons</code> plateau <code>~0.81</code>,
+  <code>eight_gaussians</code> plateau <code>~0.49</code> across 20 rounds.</li>
+</ul>
+<h2 id="CLM-005">CLM-005: Cosine annealing is the canonical implementation of paper Lemma 2<a class="headerlink" href="#CLM-005" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ADR-0013 §"Sheet tube scaling -&gt; CosineAnnealScheduler"</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:142-173</li>
+<li>Disputed by: —</li>
+<li>Statement: <code>CosineAnnealScheduler</code>'s monotonic decrease in fresh-noise
+  capacity is the direction-aligned surrogate of the paper's
+  <code>eps -&gt; 0</code> limit; it is the canonical implementation of paper
+  Lemma 2's sheet tube scaling <em>at the direction level</em>.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/scheduler.py:182</code>
+  (<code>CosineAnnealScheduler.sample(...)</code> produces
+  <code>n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))</code>).</li>
+</ul>
+<h2 id="CLM-006">CLM-006: CodimensionSheetScheduler implements paper Lemma 2 + Lemma 3 as closed form<a class="headerlink" href="#CLM-006" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ADR-0013 §"Framework mapping" / §"paper_quantities as algorithm input"</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:556-577,
+  docs/INSIGHTS.md:13-15</li>
+<li>Disputed by: —</li>
+<li>Statement: <code>CodimensionSheetScheduler</code> instantiates paper Lemma 2 +
+  Lemma 3 as a first-class <code>SchedulerProtocol</code> implementation,
+  emitting the sheet-vs-cell evidence balance via
+  <code>_paper_evidence_balance</code> (with positive <code>eps</code> powers, not the
+  historical inversion).</li>
+<li>Evidence: <code>adaptive_reflow/algorithm/scheduler.py:1671</code>
+  (<code>CodimensionSheetScheduler</code> class),
+  <code>adaptive_reflow/algorithm/scheduler.py:1548</code>
+  (<code>_paper_evidence_balance</code> helper).</li>
+</ul>
+<h2 id="CLM-007">CLM-007: Physical complement is exponentially suppressed<a class="headerlink" href="#CLM-007" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: paper Theorem 1 / Lemma 4 (Li 2024, line 111-112)</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:121-124,
+  docs/INSIGHTS.md:40</li>
+<li>Disputed by: —</li>
+<li>Statement: Paper Lemma 4 proves the "physical" complement
+  (<code>{ y != 0 }</code>) is exponentially suppressed at rate
+  <code>exp(-e_rho / (2 eps^2)) = o(eps)</code>, with
+  <code>e_rho = min{rho^4, (1 - rho)^2 eta^2}</code>.</li>
+<li>Evidence: <code>adaptive_reflow/contracts/paper_quantities.py:271</code>
+  (<code>exterior_gap_e_rho</code> returns <code>e_rho</code>, the literal Lemma 5 constant).</li>
+</ul>
+<h2 id="CLM-008">CLM-008: Framework's heuristic <code>selection_ratio</code> is NOT a paper quantity<a class="headerlink" href="#CLM-008" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ADR-0013 §"Framework-internal heuristic: the <code>selection_ratio</code> metric"</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:289-321,
+  docs/INSIGHTS.md:21-27</li>
+<li>Disputed by: —</li>
+<li>Statement: The <code>selection_ratio</code> emitted by <code>EvidenceScaleGapMetric</code>
+  (formerly <code>PosteriorSelectionEvaluator</code>) is a framework-internal
+  heuristic for monitoring the sheet-vs-cell evidence <em>scale gap</em>; it
+  is NOT a paper quantity, and convergence to 1 is NOT a paper claim.</li>
+<li>Evidence:
+  <code>adaptive_reflow/eval/posterior_selection_evaluator.py:396</code>
+  (<code>EvidenceScaleGapMetric</code> class); pinned by
+  <code>tests/test_eval/test_posterior_selection_evaluator.py::test_metric_classification_does_not_claim_paper_theorem</code>.</li>
+</ul>
+<h2 id="CLM-009">CLM-009: <code>eight_gaussians</code> plateau is lower than <code>two_moons</code><a class="headerlink" href="#CLM-009" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ablation data, <code>tools/run_metric_per_family.py</code></li>
+<li>Asserted by: docs/ABLATION.md:128, docs/INSIGHTS.md:58</li>
+<li>Disputed by: —</li>
+<li>Statement: The framework's heuristic <code>selection_ratio</code> is
+  target-sensitive in the direction paper Lemma 3 predicts: more
+  competing cell roots means a lower plateau value. Empirically
+  <code>eight_gaussians</code> (7 cells) plateaus materially below <code>two_moons</code>
+  (1 cell).</li>
+<li>Evidence: <code>tests/test_eval/test_posterior_selection_evaluator.py::test_evaluator_8_gaussians_ratio_lower_than_2_moons</code>
+  pins the ordering; <code>docs/ABLATION.md</code> §"What the data shows WITHOUT
+  claiming paper backing" reports the per-family mean values
+  (<code>~0.49</code> for <code>eight_gaussians</code>, <code>~0.81</code> for <code>two_moons</code>).</li>
+</ul>
+<h2 id="CLM-010">CLM-010: Bounded noise floor prevents escape from the fibre<a class="headerlink" href="#CLM-010" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ADR-0013 §"Physical complement suppression -&gt; bounded noise floor"</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:248-265</li>
+<li>Disputed by: —</li>
+<li>Statement: <code>SchedulerProtocol.config.n_min &gt; 0</code> and the
+  <code>BoundedMergeOperator</code> cap (<code>MERGE_FLOOR_FALLBACK</code>,
+  <code>MERGE_DEGENERATE_INTERVAL</code>) implement paper Lemma 4's bounded-noise
+  guarantee: a non-zero noise floor is the structural guarantee that
+  the posterior stays on the fibre.</li>
+<li>Evidence: <code>adaptive_reflow/algorithm/merge_operator.py</code> /
+  <code>adaptive_reflow/algorithm/scheduler.py:182</code>
+  (<code>CosineAnnealScheduler</code> carries the <code>n_min</code> field).</li>
+</ul>
+<h2 id="CLM-011">CLM-011: Four paper quantities are first-class algorithm inputs<a class="headerlink" href="#CLM-011" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ADR-0013 §"paper_quantities as algorithm input"</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:545-624,
+  docs/INSIGHTS.md:79</li>
+<li>Disputed by: —</li>
+<li>Statement: The four paper quantities <code>A_g</code>, <code>B_g</code>, <code>C_g</code>, <code>e_rho</code>
+  (exposed via <code>adaptive_reflow.contracts.paper_quantities</code>) are
+  consumed end-to-end as first-class algorithm-layer inputs by
+  <code>CodimensionSheetScheduler</code>, <code>AdaptivePolicyDriver</code>, and
+  <code>ReInferenceRunner</code> whenever the corresponding opt-in configuration
+  is supplied.</li>
+<li>Evidence: <code>adaptive_reflow/contracts/paper_quantities.py:39-44</code>
+  (<code>__all__</code>); <code>adaptive_reflow/algorithm/scheduler.py:1844-1854</code>
+  (<code>CodimensionSheetScheduler</code> constructs the four constants);
+  <code>adaptive_reflow/algorithm/policy_driver.py:485-490</code>
+  (<code>AdaptivePolicyDriver</code> accepts <code>per_cell_coefficient_C</code>);
+  <code>adaptive_reflow/algorithm/runner.py:155</code>
+  (<code>ReInferenceConfig.paper_quantities_provider</code>).</li>
+</ul>
+<h2 id="CLM-012">CLM-012: Paper Theorem 1 proves bounded-Lipschitz convergence<a class="headerlink" href="#CLM-012" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: paper Theorem 1 (Li 2024, line 88-91)</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:794-798,
+  docs/INSIGHTS.md:110</li>
+<li>Disputed by: —</li>
+<li>Statement: Paper Theorem 1 proves <code>mu_{g,eps} --BL--&gt; nu_g</code> as
+  <code>eps -&gt; 0</code>; the limiting measure is supported on the codimension-1
+  sheet with local density
+  <code>q_g(x) / Q_g = exp(-x^2 / 2) / (sqrt(1 + g(x)^2) * Q_g)</code>.</li>
+<li>Evidence: paper Theorem 1 (line 88-91);
+  <code>adaptive_reflow/contracts/paper_quantities.py:1-31</code>
+  (module docstring quotes the theorem statement).</li>
+</ul>
+<h2 id="CLM-013">CLM-013: Paper Corollary 1 yields <code>Z_{g,eps} &gt;= C_1 * eps</code><a class="headerlink" href="#CLM-013" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: paper Corollary 1 (Li 2024, line 165)</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:805-809,
+  docs/INSIGHTS.md:112</li>
+<li>Disputed by: —</li>
+<li>Statement: Paper Corollary 1 deduces the normalisation lower bound
+  <code>Z_{g,eps} &gt;= C_1 * eps</code> for sufficiently small <code>eps</code>, where the
+  constant <code>C_1</code> is derived from the positive limit
+  <code>A_g = (2*pi)^{-1/2} \int_R exp(-s^2/2) / sqrt(1 + g(s)^2) ds</code>
+  (Proposition 3 / line 161).</li>
+<li>Evidence: paper Corollary 1 (line 165);
+  <code>adaptive_reflow/contracts/paper_quantities.py:64</code>
+  (<code>sheet_evidence_A</code> returns <code>A_g</code>).</li>
+</ul>
+<h2 id="CLM-014">CLM-014: Posterior mass on isolated cells is <code>O(eps)</code><a class="headerlink" href="#CLM-014" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: paper Corollary 1 (Li 2024, line 165-168)</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:799-804,
+  docs/INSIGHTS.md:111</li>
+<li>Disputed by: —</li>
+<li>Statement: Paper Corollary 1 proves
+  <code>mu_{g,eps}(union_z I_z) &lt;= C_2 * eps</code> for sufficiently small <code>eps</code>,
+  the <em>normalised</em> mass statement derived from Lemma 3's
+  <code>int_{I_z} p_eps &lt;= C_g e^{-z^2/4} eps^2</code> unnormalised bound divided
+  by Corollary 1's <code>C_1 * eps</code> lower bound.</li>
+<li>Evidence: paper Corollary 1 (line 165-168).</li>
+</ul>
+<h2 id="CLM-015">CLM-015: Framework does NOT prove paper Theorem 1 magnitude-level competition<a class="headerlink" href="#CLM-015" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ADR-0013 §"What the paper does NOT claim"</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:782-790,
+  docs/INSIGHTS.md:103</li>
+<li>Disputed by: —</li>
+<li>Statement: The framework's <code>n_cap</code> ramp is a convex mixing weight on
+  a state vector; it is <em>directionally</em> aligned with the paper's
+  <code>eps -&gt; 0</code> limit but does not produce the
+  <code>Theta(eps^{+1}) / O(eps^{+2})</code> evidence competition the paper
+  proves at the magnitude level. The framework's <code>eps_implicit</code>
+  parameter is a tunable hyperparameter, not the paper's <code>eps</code>.</li>
+<li>Evidence: <code>docs/audit/EPSILON_DIRECTION.md</code> (canonical audit record
+  of the dimensional-orthogonality finding).</li>
+</ul>
+<h2 id="CLM-016">CLM-016: (DEPRECATED) Original <code>_paper_evidence_balance</code> used inverted <code>eps</code> exponents<a class="headerlink" href="#CLM-016" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: DEPRECATED</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ADR-0013 §"What the paper does NOT claim"</li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:771-781</li>
+<li>Disputed by: docs/adr/0013-posterior-selection-drives-algorithm.md:198-219
+  (the corrected closed form using <em>positive</em> powers)</li>
+<li>Statement: The prototype <code>_paper_evidence_balance</code> helper historically
+  claimed <code>sheet = eps^{-1}</code> and <code>cell = eps^{-2}</code>, <em>inverting</em> paper
+  Lemma 2 + Lemma 3's exponents. The corrected helper uses positive
+  powers (<code>sheet = Theta(eps^{+1})</code>, <code>cell = O(eps^{+2})</code>) per the
+  audit at <code>docs/audit/EPSILON_DIRECTION.md</code> §4.2.</li>
+<li>Evidence: <code>docs/audit/EPSILON_DIRECTION.md</code> §4.2; corrected code at
+  <code>adaptive_reflow/algorithm/scheduler.py:1548</code>
+  (<code>_paper_evidence_balance</code> closed form).</li>
+</ul>
+<h2 id="CLM-017">CLM-017: (DEPRECATED) <code>selection_ratio</code> converges to 1 over rounds<a class="headerlink" href="#CLM-017" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: DEPRECATED</li>
+<li>Date: 2026-08-28</li>
+<li>Source: prior versions of <code>docs/INSIGHTS.md</code> /
+  <code>docs/adr/0013-posterior-selection-drives-algorithm.md</code></li>
+<li>Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:680-688
+  (the prior prediction, now demoted)</li>
+<li>Disputed by: docs/adr/0013-posterior-selection-drives-algorithm.md:651-706
+  (the post-review clarification that demotes the prediction),
+  docs/ABLATION.md:183-189 (the empirical plateau finding)</li>
+<li>Statement: The shipped <code>selection_ratio</code> does NOT converge to 1 over
+  rounds; it plateaus at the value dictated by the adapter's
+  fixed-noise replay. The "converges to 1" prediction applies to a
+  future <em>endpoint-conditioned</em> metric that scores the round's own
+  bundle rather than a fresh replay — a real architectural change
+  deferred behind the runner-batch-trajectories open decision.</li>
+<li>Evidence: <code>docs/review/B5-VERIFICATION.md</code> (the canonical
+  investigation); <code>docs/ABLATION.md</code> §"What the data shows WITHOUT
+  claiming paper backing" (the empirical plateau).</li>
+</ul>
+<h2 id="CLM-018">CLM-018: Cosine wins on W2 vs polynomial, sigmoid, and convergence-adaptive<a class="headerlink" href="#CLM-018" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-28</li>
+<li>Source: ablation data, <code>tools/run_ablation.py</code></li>
+<li>Asserted by: docs/ABLATION.md:115-116</li>
+<li>Disputed by: —</li>
+<li>Statement: On <code>two_moons</code>, the ordering by final W2 is
+  <code>cosine (0.8140)</code> &lt; <code>convergence-adaptive (0.8973)</code> &lt;
+  <code>sigmoid (0.9397)</code> &lt; <code>polynomial (1.0521)</code>. On <code>eight_gaussians</code>,
+  <code>convergence-adaptive (1.1688)</code> &lt; <code>cosine (1.9298)</code> &lt;
+  <code>polynomial (2.0943)</code> &lt; <code>sigmoid (2.2849)</code>. No schedule family
+  dominates both targets.</li>
+<li>Evidence: <code>docs/ABLATION.md</code> §"New findings: schedule families
+  (ADR-0012)"; regression coverage in
+  <code>tests/test_tools/test_run_ablation.py</code>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

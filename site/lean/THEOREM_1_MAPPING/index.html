@@ -1,0 +1,1927 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Theorem 1 Mapping: Bounded-Lipschitz Convergence μ_{g,ε} → ν_g - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#theorem-1-mapping-bounded-lipschitz-convergence-_g-_g" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Theorem 1 Mapping: Bounded-Lipschitz Convergence μ_{g,ε} → ν_g
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-master-countable-stratum-selection-theorem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A. Master countable-stratum selection theorem
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="A. Master countable-stratum selection theorem">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#researchnoiseselectedrectificationcountablestratifiedgaussianposteriorselectionlean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Research/NoiseSelectedRectification/CountableStratifiedGaussianPosteriorSelection.lean
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#researchnoiseselectedrectificationfinitestratifiedgaussianposteriorselectionlean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Research/NoiseSelectedRectification/FiniteStratifiedGaussianPosteriorSelection.lean
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b-the-four-estimates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B. The four estimates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="B. The four estimates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#b1-sheet-tube-rescaling-coarea-weighted-line-integral-paper-lemma-2-line-101104" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.1 Sheet-tube rescaling → coarea-weighted line integral (paper Lemma 2, line 101–104)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b2-per-root-cell-oe-z24-2-mass-gaussian-packing-paper-lemma-3-line-106108" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.2 Per-root cell O(e^{-z²/4} ε²) mass + Gaussian packing (paper Lemma 3, line 106–108)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b3-exterior-exponential-bound-paper-lemma-4-line-110113" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.3 Exterior exponential bound (paper Lemma 4, line 110–113)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b4-positive-sheet-limit-tightness-bl-convergence-paper-proposition-3-line-115119" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B.4 Positive sheet limit + tightness + BL convergence (paper Proposition 3, line 115–119)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c-sharpness-proposition-6-paper-line-294306" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C. Sharpness (Proposition 6, paper line 294–306)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-compact-containment-proposition-5-paper-line-223233" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D. Compact-containment (Proposition 5, paper line 223–233)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#e-quantitative-allocation-corollary-1-paper-line-164173" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E. Quantitative allocation (Corollary 1, paper line 164–173)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#f-proof-assembly-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F. Proof-assembly summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="theorem-1-mapping-bounded-lipschitz-convergence-_g-_g">Theorem 1 Mapping: Bounded-Lipschitz Convergence μ_{g,ε} → ν_g<a class="headerlink" href="#theorem-1-mapping-bounded-lipschitz-convergence-_g-_g" title="Permanent link">&para;</a></h1>
+<p>Paper: Li 2024, "Gaussian Posterior Selection on Noncompact Fibres with
+Uniformly Separated Roots". <code>Theorem 1</code> is paper lines 87–92 (Theorem 1 box)
+and lines 87–205 (proof). The full statement:</p>
+<blockquote>
+<p><em>For every C³ profile <code>g</code> satisfying the F-side hypotheses (with no
+periodicity assumption), the associated cells can be chosen so that
+    μ_{g,ε} → ν_g  in BL-distance,  and
+    μ_{g,ε}(⋃_{z∈Z_g} I_z) = O(ε).</em>
+<em>Equivalently, for every bounded Lipschitz φ,</em>
+<em>∫φ dμ_{g,ε} → Q_g^{-1} ∫_ℝ φ(x, 0) e^{-x²/2}/√(1+g(x)²) dx.</em></p>
+</blockquote>
+<p>The proof separates into <strong>four estimates</strong> (paper line 96):</p>
+<ol>
+<li>Sheet-tube rescaling → coarea-weighted line integral (Lemma 2).</li>
+<li>Per-root cell <code>O(e^{-z²/4} ε²)</code> mass + Gaussian packing (Lemma 3).</li>
+<li>Exterior exponential bound <code>e^{-e_ρ/(2ε²)} = o(ε)</code> (Lemma 4).</li>
+<li>Positive sheet limit normalizes, yields tightness + BL convergence
+   (Proposition 3).</li>
+</ol>
+<p>This file maps each estimate and the assembly to the Lean files that
+contribute. All <code>file:line</code> citations are absolute paths from the Lean repo
+root <code>/c/Users/31472/codes/noise-selected-rectification-lean/</code>.</p>
+<hr />
+<h2 id="a-master-countable-stratum-selection-theorem">A. Master countable-stratum selection theorem<a class="headerlink" href="#a-master-countable-stratum-selection-theorem" title="Permanent link">&para;</a></h2>
+<h3 id="researchnoiseselectedrectificationcountablestratifiedgaussianposteriorselectionlean"><code>Research/NoiseSelectedRectification/CountableStratifiedGaussianPosteriorSelection.lean</code><a class="headerlink" href="#researchnoiseselectedrectificationcountablestratifiedgaussianposteriorselectionlean" title="Permanent link">&para;</a></h3>
+<p>This file is the <strong>top-level algebraic engine</strong> for paper Theorem 1. It encodes
+the countable-stratum setting (with <code>ι : Type*</code> <code>[Countable ι]</code>) and proves that
+a stratified posterior selects the leading stratum in the limit.</p>
+<table>
+<thead>
+<tr>
+<th>Lean declaration</th>
+<th>File:line</th>
+<th>Paper reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>structure CountableStratifiedData (ι : Type*) [Countable ι]</code></td>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean:39</code></td>
+<td>Generic countable-stratum framework (paper §3 setup)</td>
+</tr>
+<tr>
+<td><code>def leadingCoefficient</code></td>
+<td><code>:61</code></td>
+<td>Limit of relative total mass — corresponds to paper <code>A_g</code> after specialization (paper line 161).</td>
+</tr>
+<tr>
+<td><code>def selectedWeight</code></td>
+<td><code>:65</code></td>
+<td>Selected-stratum weight in the limit.</td>
+</tr>
+<tr>
+<td><code>def posteriorWeight</code></td>
+<td><code>:69</code></td>
+<td>Finite-noise posterior weight (Tannery target).</td>
+</tr>
+<tr>
+<td><code>theorem summable_leadingTerm</code></td>
+<td><code>:86</code></td>
+<td>Tannery sum finiteness.</td>
+</tr>
+<tr>
+<td><code>theorem leadingCoefficient_pos</code></td>
+<td><code>:91</code></td>
+<td>Positivity of the leading coefficient — corresponds to <strong>Proposition 3 <code>A_g &gt; 0</code></strong> (paper line 117).</td>
+</tr>
+<tr>
+<td><code>theorem summable_selectedWeight</code></td>
+<td><code>:101</code></td>
+<td>Σ of selected weights converges.</td>
+</tr>
+<tr>
+<td><code>theorem tsum_selectedWeight</code></td>
+<td><code>:113</code></td>
+<td>Closed form for the selected-weight sum.</td>
+</tr>
+<tr>
+<td><code>theorem relativeContribution_tendsto</code></td>
+<td><code>:124</code></td>
+<td>Relative mass per stratum → selected weight (Tannery).</td>
+</tr>
+<tr>
+<td><code>theorem relativeTotal_tendsto_leadingCoefficient</code></td>
+<td><code>:177</code></td>
+<td>Relative total → leading coefficient — <strong>paper line 117</strong> <code>ε^{-1} Z_{g,ε} → A_g</code>.</td>
+</tr>
+<tr>
+<td><code>theorem posteriorWeight_tendsto_selectedWeight_of_tannery</code></td>
+<td><code>:197</code></td>
+<td><strong>Core Tannery limit</strong>: posterior → selected weight.</td>
+</tr>
+<tr>
+<td><code>theorem minimumLayerPosteriorMass_tendsto_one_of_tannery</code></td>
+<td><code>:224</code></td>
+<td>Leading-stratum mass → 1.</td>
+</tr>
+<tr>
+<td><code>theorem higherLayerPosteriorMass_tendsto_zero_of_tannery</code></td>
+<td><code>:271</code></td>
+<td><strong>Countable codimension-two mass → 0</strong> — paper Corollary 1 / Theorem 1 second assertion (paper line 88, 165).</td>
+</tr>
+<tr>
+<td><code>theorem exactPosteriorWeight_tendsto_selectedWeight</code></td>
+<td><code>:315</code></td>
+<td>Variant using exact sums.</td>
+</tr>
+<tr>
+<td><code>theorem exactMinimumLayerPosteriorMass_tendsto_one</code></td>
+<td><code>:327</code></td>
+<td>Variant.</td>
+</tr>
+<tr>
+<td><code>theorem posteriorBarycenter_tendsto_selectedBarycenter_of_tannery</code></td>
+<td><code>:446</code></td>
+<td>Barycentre limit.</td>
+</tr>
+<tr>
+<td><code>def circlePointCountableData</code>, <code>circlePointObservable</code></td>
+<td><code>:491, 499</code></td>
+<td>The paper's <code>g(x) = sin x</code> example instance.</td>
+</tr>
+<tr>
+<td><code>theorem circlePointPosteriorBarycenter_tendsto_circleVelocity</code></td>
+<td><code>:508</code></td>
+<td>Concretized barycentre.</td>
+</tr>
+<tr>
+<td><code>def ofCountableRegularBranches</code></td>
+<td><code>:556</code></td>
+<td>Specialization to regular-branch case.</td>
+</tr>
+<tr>
+<td><code>theorem countableRegularBranchPosteriorWeight_tendsto</code></td>
+<td><code>:572</code></td>
+<td>Regular-branch limit.</td>
+</tr>
+<tr>
+<td><code>theorem no_countable_selection_without_uniform_tightness</code></td>
+<td><code>:599</code></td>
+<td><strong>Necessity</strong> of tightness for selection — links to Proposition 3 tightness step.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="researchnoiseselectedrectificationfinitestratifiedgaussianposteriorselectionlean"><code>Research/NoiseSelectedRectification/FiniteStratifiedGaussianPosteriorSelection.lean</code><a class="headerlink" href="#researchnoiseselectedrectificationfinitestratifiedgaussianposteriorselectionlean" title="Permanent link">&para;</a></h3>
+<p>Finite-index analogue (paper §3.2 special case).</p>
+<table>
+<thead>
+<tr>
+<th>Lean declaration</th>
+<th>File:line</th>
+<th>Paper reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>structure FiniteStratifiedData (ι : Type*) [Fintype ι]</code></td>
+<td><code>:32</code></td>
+<td>Finite analogue.</td>
+</tr>
+<tr>
+<td><code>def leadingCoefficient</code>, <code>selectedWeight</code></td>
+<td><code>:69, 74</code></td>
+<td>Same as countable.</td>
+</tr>
+<tr>
+<td><code>theorem leadingCoefficient_pos</code></td>
+<td><code>:78</code></td>
+<td>A_g &gt; 0.</td>
+</tr>
+<tr>
+<td><code>theorem rawTotal_eq_common_mul_relative</code>, <code>rawContribution_eq_common_mul_relative</code></td>
+<td><code>:91, 111</code></td>
+<td>Common factor decomposition used in Lemma 2 / Prop 3 numerator/denominator.</td>
+</tr>
+<tr>
+<td><code>theorem relativeTotal_tendsto_leadingCoefficient</code></td>
+<td><code>:180</code></td>
+<td><code>Z_{g,ε} / ε → A_g</code>.</td>
+</tr>
+<tr>
+<td><code>theorem posteriorWeight_tendsto_selectedWeight</code></td>
+<td><code>:191</code></td>
+<td>Posterior → selected weight.</td>
+</tr>
+<tr>
+<td><code>theorem sum_selectedWeight</code></td>
+<td><code>:211</code></td>
+<td>Σ selected weights = 1 (normalisation).</td>
+</tr>
+<tr>
+<td><code>def circlePointData</code>, <code>theorem circle_dominates_regular_point</code></td>
+<td><code>:234, 259</code></td>
+<td>The <code>g = sin x</code> example (paper Proposition 2 analogue).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="b-the-four-estimates">B. The four estimates<a class="headerlink" href="#b-the-four-estimates" title="Permanent link">&para;</a></h2>
+<h3 id="b1-sheet-tube-rescaling-coarea-weighted-line-integral-paper-lemma-2-line-101104">B.1 Sheet-tube rescaling → coarea-weighted line integral (paper Lemma 2, line 101–104)<a class="headerlink" href="#b1-sheet-tube-rescaling-coarea-weighted-line-integral-paper-lemma-2-line-101104" title="Permanent link">&para;</a></h3>
+<p>Paper text (line 102):</p>
+<blockquote>
+<p>ε^{-1} ∫_T φ p_ε → (2π)^{-1/2} ∫_ℝ φ(s, 0) e^{-s²/2}/√(1+g(s)²) ds</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Lean name</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>20</td>
+<td>(section)</td>
+<td>Section opener.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>24</td>
+<td><code>def closedProfileSheetTube</code></td>
+<td>Defines T = <code>{|y| ≤ 1/2}</code> (matches paper <code>T</code>).</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>28</td>
+<td><code>def sheetRescalingDerivative</code></td>
+<td>The map <code>(s, u) ↦ (s, εu)</code> — paper line 180 change of variables.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>31</td>
+<td><code>theorem hasFDerivAt_sheetRescaling</code></td>
+<td>Differentiability of the rescaling.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>45</td>
+<td><code>theorem sheetRescalingDerivative_det</code></td>
+<td>Det of the rescaling Jacobian (needed for COV).</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>51</td>
+<td><code>theorem sheetRescaling_bijective</code></td>
+<td>Bijectivity of the rescaling.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>66</td>
+<td><code>theorem sheetRescaling_image_rescaledWindow</code></td>
+<td>Image = rescaled window.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>84</td>
+<td><code>theorem integralOn_image_sheetRescaling_eq</code></td>
+<td>The COV identity <code>∫ image = ∫</code>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>105</td>
+<td><code>theorem closedProfileSheetTube_integral_eq_epsilon_mul_rescaled</code></td>
+<td><code>∫_T φ p_ε = ε · ∫_{rescaled} …</code> — <strong>paper equation (3)</strong> (line 181).</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>128</td>
+<td><code>theorem inv_mul_closedProfileSheetTube_evidence_tendsto</code></td>
+<td><code>ε^{-1} ∫_T 1·p_ε → limit</code> — φ ≡ 1 case of Lemma 2.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetChangeOfVariables.lean</code></td>
+<td>146</td>
+<td><code>theorem eventually_fullEvidence_ge_sheet_floor</code></td>
+<td>Positive sheet evidence floor.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>25</td>
+<td><code>def profileSheetRescaledWindow</code></td>
+<td><code>{|εp₂| ≤ 1/2}</code> window.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>29</td>
+<td><code>def profileSheetRescaledDensity</code></td>
+<td>Rescaled density for the actual <code>F_g</code>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>36</td>
+<td><code>def profileSheetRescaledLimitDensity</code></td>
+<td>The pointwise limit density = <code>e^{-s²/2} · e^{-u²(1+g(s)²)/2}</code>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>42</td>
+<td><code>def profileSheetRescaledMajorant</code></td>
+<td>Integrable majorant <code>e^{-s²/2} · e^{-u²/8}</code>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>46</td>
+<td><code>theorem measurableSet_profileSheetRescaledWindow</code></td>
+<td>Measurability of the rescaled window.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>53</td>
+<td><code>theorem integrable_profileSheetRescaledMajorant</code></td>
+<td>Integrable majorant — <strong>paper line 182 domination</strong>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>73</td>
+<td><code>theorem profileSheetRescaledDensity_le_majorant</code></td>
+<td>Dominated by the majorant.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>103</td>
+<td><code>theorem profileSheetRescaledDensity_tendsto</code></td>
+<td>Pointwise limit — <strong>paper line 182 pointwise convergence</strong>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>147</td>
+<td><code>theorem continuous_profileSheetRescaledLimitDensity</code></td>
+<td>Continuity of the limit.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>160</td>
+<td><code>theorem profileSheetRescaledLimitDensity_le_majorant</code></td>
+<td>Limit ≤ majorant.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>171</td>
+<td><code>theorem integrable_profileSheetRescaledLimitDensity</code></td>
+<td>Limit integrable.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>183</td>
+<td><code>theorem profileSheetRescaledLimitDensity_integral_pos</code></td>
+<td><strong>Strictly positive integral — paper <code>A_g &gt; 0</code> (line 117)</strong>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>196</td>
+<td><code>theorem profileSheetRescaledDensity_integral_tendsto</code></td>
+<td><strong>Dominated convergence on the rescaled sheet kernel — paper Lemma 2 φ≡1 (line 184 equation (4))</strong>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetObservable.lean</code></td>
+<td>24</td>
+<td><code>def profileAmbientObservableRescaledDensity</code></td>
+<td>With bounded continuous test φ.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetObservable.lean</code></td>
+<td>28</td>
+<td><code>def profileAmbientObservableLimitDensity</code></td>
+<td>The limit with φ.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetObservable.lean</code></td>
+<td>32</td>
+<td><code>theorem integrable_profileAmbientObservableRescaledDensity</code></td>
+<td>Integrability.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetObservable.lean</code></td>
+<td>58</td>
+<td><code>theorem integrable_profileAmbientObservableLimitDensity</code></td>
+<td>Limit integrable.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetObservable.lean</code></td>
+<td>79</td>
+<td><code>theorem profileAmbientObservableRescaledDensity_integral_tendsto</code></td>
+<td><strong>Dominated convergence with arbitrary bounded continuous φ — paper Lemma 2 general (line 184 equation (4))</strong>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetObservable.lean</code></td>
+<td>114</td>
+<td><code>theorem closedProfileSheetTube_ambientObservable_integral_eq_epsilon_mul_rescaled</code></td>
+<td>The <code>ε·rescaled</code> identity with φ.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetObservable.lean</code></td>
+<td>141</td>
+<td><code>theorem inv_mul_closedProfileSheetTube_ambientObservable_numerator_tendsto</code></td>
+<td><strong>paper Lemma 2 final statement with φ</strong> (line 102).</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetBoundary.lean</code></td>
+<td>29</td>
+<td><code>theorem closedProfileSheetTube_ae_eq_strictProfileSheetTube</code></td>
+<td>Strict vs closed T a.e. equality.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetBoundary.lean</code></td>
+<td>72</td>
+<td><code>theorem setIntegral_closedProfileSheetTube_eq_strictProfileSheetTube</code></td>
+<td>Integral identity (strict ↔ closed).</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetBoundary.lean</code></td>
+<td>81</td>
+<td><code>theorem inv_mul_strictProfileSheetTube_evidence_tendsto</code></td>
+<td>Same limit on strict T.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetBoundary.lean</code></td>
+<td>93</td>
+<td><code>theorem inv_mul_strictProfileSheetTube_ambientObservable_numerator_tendsto</code></td>
+<td>Same with φ on strict T.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>24</td>
+<td><code>def profileSheetDerivative</code></td>
+<td>Derivative of <code>F_g</code> at sheet point <code>(s, 0)</code> — paper line 147.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>32</td>
+<td><code>theorem hasFDerivAt_profile_forward_on_sheet</code></td>
+<td>fderiv exists on sheet.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>58</td>
+<td><code>theorem fderiv_profile_forward_on_sheet</code></td>
+<td>fderiv at sheet point.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>75</td>
+<td><code>theorem profileSheetNormalGramSquare</code></td>
+<td><code>‖det DF_g‖² = 1 + g(s)²</code> — paper line 149 <code>J_S(s)² = 1 + g(s)²</code>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>82</td>
+<td><code>def profileIsolatedDerivative</code></td>
+<td>Derivative at isolated root.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>89</td>
+<td><code>theorem hasFDerivAt_profile_forward_on_isolatedRoot</code></td>
+<td>fderiv exists at isolated root.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>117</td>
+<td><code>theorem fderiv_profile_forward_on_isolatedRoot</code></td>
+<td>fderiv formula.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>127</td>
+<td><code>theorem deriv_profile_ne_zero_of_uniform_coercivity</code></td>
+<td>g'(z) ≠ 0 (Lemma 5 coercivity).</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>182</td>
+<td><code>theorem profileIsolatedDerivative_surjective_of_regular</code></td>
+<td>Isolated point has rank-2 derivative.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>192</td>
+<td><code>theorem fderiv_profile_forward_on_isolatedRoot_surjective_of_regular</code></td>
+<td>Isolated rank-2.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetDerivative.lean</code></td>
+<td>201</td>
+<td><code>theorem fderiv_profile_forward_on_isolatedRoot_surjective</code></td>
+<td>Final isolated surjectivity.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetParametrization.lean</code> (periodic special case)</td>
+<td>24</td>
+<td><code>def periodicSheetParam</code></td>
+<td>Periodic sheet parametrization.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetParametrization.lean</code></td>
+<td>36</td>
+<td><code>theorem periodicSheetParam_isometry</code></td>
+<td>Periodic-sheet isometry.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetParametrization.lean</code></td>
+<td>47</td>
+<td><code>theorem range_periodicSheetParam_eq_sheetStratum</code></td>
+<td>Image = sheet stratum.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetParametrization.lean</code></td>
+<td>74</td>
+<td><code>theorem map_euclideanHausdorffMeasure_periodicSheetParam</code></td>
+<td>Pushforward of Hausdorff measure.</td>
+</tr>
+<tr>
+<td><code>P2PeriodicPosteriorNormalization.lean</code></td>
+<td>17</td>
+<td>(section)</td>
+<td>Periodic normalization helper.</td>
+</tr>
+<tr>
+<td><code>P2PeriodicPosteriorNormalization.lean</code></td>
+<td>22</td>
+<td><code>theorem normalized_ratio_eq_inv_scale_ratio</code></td>
+<td>Periodic linear-scale ratio identity.</td>
+</tr>
+<tr>
+<td><code>P2PeriodicPosteriorNormalization.lean</code></td>
+<td>31</td>
+<td><code>theorem normalized_quadratic_over_linear_le</code></td>
+<td>Periodic <code>ε²/ε</code> ratio bound.</td>
+</tr>
+<tr>
+<td><code>P2PeriodicPosteriorNormalization.lean</code></td>
+<td>53</td>
+<td><code>theorem tendsto_normalized_ratio_of_inv_scale</code></td>
+<td>Periodic ratio → ratio (Lemma 2 / Prop 3 normalization step).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="b2-per-root-cell-oe-z24-2-mass-gaussian-packing-paper-lemma-3-line-106108">B.2 Per-root cell <code>O(e^{-z²/4} ε²)</code> mass + Gaussian packing (paper Lemma 3, line 106–108)<a class="headerlink" href="#b2-per-root-cell-oe-z24-2-mass-gaussian-packing-paper-lemma-3-line-106108" title="Permanent link">&para;</a></h3>
+<p>Paper text (line 107):</p>
+<blockquote>
+<p>There is a constant <code>C_g &gt; 0</code> such that, for every <code>z ∈ Z_g</code> and every <code>ε &gt; 0</code>,
+    ∫<em I_z="I_z" __z="⋃_z">{I_z} p_ε ≤ C_g e^{-z²/4} ε².
+Consequently ∫</em> p_ε = O(ε²).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Lean name</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>P2ProfileRootCountability.lean</code></td>
+<td>(mid)</td>
+<td><code>theorem root_set_countable</code></td>
+<td><code>Z_g</code> is countable (Lemma 5 prerequisite).</td>
+</tr>
+<tr>
+<td><code>P2ProfileRootCountability.lean</code></td>
+<td>(mid)</td>
+<td><code>theorem summable_rootGaussian</code></td>
+<td>The <strong>Gaussian packing sum <code>Σ e^{-z²/4}</code></strong> (paper line 159).</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedChangeOfVariables.lean</code></td>
+<td>(mid)</td>
+<td><code>def isolatedRescaling</code></td>
+<td>Rescaling <code>(z+u, 1+v) ↦ (z+εu, 1+εv)</code>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedChangeOfVariables.lean</code></td>
+<td>(mid)</td>
+<td><code>theorem hasFDerivAt_isolatedRescaling</code></td>
+<td>fderiv.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedChangeOfVariables.lean</code></td>
+<td>(mid)</td>
+<td><code>theorem integralOn_image_isolatedRescaling_eq</code></td>
+<td>The <code>ε²·∫ …</code> COV identity — paper line 189.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedRescaling.lean</code></td>
+<td>(mid)</td>
+<td><code>def isolatedRescaling</code></td>
+<td>Rescaling definition.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedRescaling.lean</code></td>
+<td>(mid)</td>
+<td><code>theorem hasFDerivAt_isolatedRescaling</code></td>
+<td>Differentiability.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedRescaling.lean</code></td>
+<td>(mid)</td>
+<td><code>theorem continuous_isolatedRescaling</code></td>
+<td>Continuity.</td>
+</tr>
+<tr>
+<td><code>P2StrictProfileTubeGeometry.lean</code></td>
+<td>(mid)</td>
+<td><code>def strictProfileRootTube r rho</code></td>
+<td>The literal physical cell <code>I_z</code>.</td>
+</tr>
+<tr>
+<td><code>P2StrictProfileTubeGeometry.lean</code></td>
+<td>(mid)</td>
+<td><code>theorem measurableSet_strictProfileRootTube</code></td>
+<td>Measurability.</td>
+</tr>
+<tr>
+<td><code>P2StrictProfileTubeGeometry.lean</code></td>
+<td>(mid)</td>
+<td><code>theorem strictProfileRootTube_disjoint_of_center_separation</code></td>
+<td>Disjointness from F-side separation.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>29</td>
+<td><code>def isolatedCoordinateBox</code></td>
+<td>Closed normal envelope <code>[-ρ/ε, ρ/ε]²</code>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>33</td>
+<td><code>def isolatedCommonGaussian</code></td>
+<td>The common Gaussian factor.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>38</td>
+<td><code>def isolatedGaussianMassConstant</code></td>
+<td><strong>The Lean constant <code>2π / ((1-ρ)² min{c²,1}/4)</code> — paper <code>C_g</code></strong> (paper line 191).</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>42</td>
+<td><code>theorem isolatedDensityMajorant_eq_root_mul_common</code></td>
+<td>Factorisation.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>48</td>
+<td><code>theorem integrable_isolatedCommonGaussian</code></td>
+<td>Integrability of the common Gaussian.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>56</td>
+<td><code>theorem measurableSet_isolatedCoordinateBox</code></td>
+<td>Measurability.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>60</td>
+<td><code>theorem isCompact_isolatedCoordinateBox</code></td>
+<td>Compactness.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>67</td>
+<td><code>theorem continuous_isolatedRescaling</code></td>
+<td>Continuity of rescaling.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>75</td>
+<td><code>theorem isolatedCoordinateBox_mem_normalWindow</code></td>
+<td>Window membership.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>92</td>
+<td><code>theorem strictProfileRootTube_subset_image_isolatedCoordinateBox</code></td>
+<td>Tube ⊂ image of box.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>119</td>
+<td><code>theorem image_isolatedDensity_le_epsilon_sq_majorant</code></td>
+<td><code>∫ ≤ ε² · ∫ majorant</code> — <strong>paper line 189 inequality</strong>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>167</td>
+<td><code>theorem integral_isolatedDensityMajorant</code></td>
+<td>Closed form <code>= e^{-r²/4} · C_g</code>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>183</td>
+<td><code>theorem strictProfileRootTube_integral_le_image_integral</code></td>
+<td>Cell integral ≤ image integral.</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>199</td>
+<td><code>theorem strictProfileRootTube_mass_le_rankTwoGaussian</code></td>
+<td><strong>Paper Lemma 3: <code>∫_{I_z} p_ε ≤ C_g · e^{-z²/4} · ε²</code></strong> (paper line 107).</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>250</td>
+<td><code>theorem exists_summable_literal_isolatedTube_mass</code></td>
+<td>Full cell-sum estimate, Σ-over-roots ≤ <code>ε² · C_g · B_g</code> — <strong>paper line 154 (Lemma 5 packing + Lemma 3 sum)</strong>.</td>
+</tr>
+<tr>
+<td><code>P1TwoNormalGaussianMass.lean</code></td>
+<td>29</td>
+<td><code>def twoNormalGaussianProfile</code></td>
+<td>The two-normal Gaussian used for the cell integration.</td>
+</tr>
+<tr>
+<td><code>P1TwoNormalGaussianMass.lean</code></td>
+<td>32</td>
+<td><code>theorem integrable_twoNormalGaussianProfile</code></td>
+<td>Integrability.</td>
+</tr>
+<tr>
+<td><code>P1TwoNormalGaussianMass.lean</code></td>
+<td>40</td>
+<td><code>theorem integral_twoNormalGaussianProfile</code></td>
+<td>Closed-form integral.</td>
+</tr>
+<tr>
+<td><code>P2NSRSPeriodicGaussianPacking.lean</code></td>
+<td>29</td>
+<td><code>theorem summable_periodic_integerGaussian</code></td>
+<td><strong>Periodic <code>Σ_{n∈ℤ} e^{-n²/4}</code></strong> — paper line 159 specialised to <code>Z_g = πℤ</code>.</td>
+</tr>
+<tr>
+<td><code>P2NSRSPeriodicGaussianPacking.lean</code></td>
+<td>43</td>
+<td><code>theorem periodic_integerGaussian_tsum_ne_top</code></td>
+<td>The sum is finite.</td>
+</tr>
+<tr>
+<td><code>P2NSRSPeriodicGaussianPacking.lean</code></td>
+<td>51</td>
+<td><code>theorem periodic_liveRootSeries_ne_top_of_uniform_prefactor</code></td>
+<td>Live-root series summable.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="b3-exterior-exponential-bound-paper-lemma-4-line-110113">B.3 Exterior exponential bound (paper Lemma 4, line 110–113)<a class="headerlink" href="#b3-exterior-exponential-bound-paper-lemma-4-line-110113" title="Permanent link">&para;</a></h3>
+<p>Paper text (line 111):</p>
+<blockquote>
+<p>∫_{T^c \ ⋃_z I_z} p_ε ≤ e^{-e_ρ/(2ε²)} = o(ε).</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Lean name</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>P2ProfileLiteralComplementGap.lean</code></td>
+<td>24</td>
+<td><code>def strictProfileTubeUnion</code></td>
+<td>The literal physical allocation <code>S ∪ ⋃_z I_z</code>.</td>
+</tr>
+<tr>
+<td><code>P2ProfileLiteralComplementGap.lean</code></td>
+<td>31</td>
+<td><code>theorem measurableSet_strictProfileTubeUnion</code></td>
+<td>Measurability.</td>
+</tr>
+<tr>
+<td><code>P2ProfileLiteralComplementGap.lean</code></td>
+<td>49</td>
+<td><code>theorem energy_lower_bound_outside_strictProfileTubeUnion</code></td>
+<td><strong><code>min(ρ²/4, η²/4) ≤ \|F_g\|²</code> outside the union</strong> — paper <code>e_ρ</code> (line 128).</td>
+</tr>
+<tr>
+<td><code>P2ProfileLiteralComplementGap.lean</code></td>
+<td>113</td>
+<td><code>theorem exists_lowEnergy_covered_by_strictProfileTubeUnion</code></td>
+<td>Low-energy cover (<code>energy ≤ δ</code> ⇒ inside union).</td>
+</tr>
+<tr>
+<td><code>P2ProfileComplementRemainder.lean</code></td>
+<td>38</td>
+<td><code>let gap : ℝ := min (rho ^ 2 / 4) (eta ^ 2 / 4)</code></td>
+<td>The complement-gap helper.</td>
+</tr>
+<tr>
+<td><code>P2ProfileRootPosteriorRemainder.lean</code></td>
+<td>(mid)</td>
+<td>(root-tail integral bound)</td>
+<td>The mass estimate on the tail <code>B_g(N) · ε²</code> (paper line 220).</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>195</td>
+<td><code>theorem exists_literal_exterior_gap</code></td>
+<td><strong>Lemma 5 input</strong>: <code>\|g(x)\| ≥ η</code> outside root ρ-neighbourhoods.</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>79</td>
+<td><code>theorem sheet_energy_lower_bound</code></td>
+<td><code>\|F_g(s, h)\|² ≥ h²/4</code> on T (paper line 126).</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>112</td>
+<td><code>theorem isolated_energy_lower_of_local_coercivity</code></td>
+<td><code>\|F_g(z+u, 1+v)\|² ≥ a(u²+v²)</code> on isolated cell (paper line 188).</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>161</td>
+<td><code>theorem sheet_disjoint_isolatedFibre</code></td>
+<td>Sheet ∩ isolated fibre = ∅ (Lemma 5).</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>170</td>
+<td><code>theorem exists_root_separation</code></td>
+<td><code>\|r-s\| ≥ d</code> (F-side hypothesis).</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>182</td>
+<td><code>theorem exists_uniform_physical_geometry</code></td>
+<td>Common ρ exists.</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>138</td>
+<td><code>theorem forward_eq_zero_iff</code></td>
+<td><code>F_g(x,y) = 0 ⇔ (x,0)∈S ∨ (z,1), z∈Z_g</code> (paper line 29).</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>64</td>
+<td><code>theorem forward_sheet_normal_form</code></td>
+<td>Sheet normal form.</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>73</td>
+<td><code>theorem energy_on_sheet</code></td>
+<td><code>\|F_g(s,h)\|² = h²(g(s)² + (h-1)²)</code>.</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>90</td>
+<td><code>def isolatedTubeCoordinate</code></td>
+<td><code>(z+u, 1+v)</code>.</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>93</td>
+<td><code>theorem forward_isolated_normal_form</code></td>
+<td>Isolated normal form.</td>
+</tr>
+<tr>
+<td><code>P1UniformlySeparatedCleanFibreClass.lean</code></td>
+<td>103</td>
+<td><code>theorem energy_at_isolated</code></td>
+<td>Energy identity at isolated root.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="b4-positive-sheet-limit-tightness-bl-convergence-paper-proposition-3-line-115119">B.4 Positive sheet limit + tightness + BL convergence (paper Proposition 3, line 115–119)<a class="headerlink" href="#b4-positive-sheet-limit-tightness-bl-convergence-paper-proposition-3-line-115119" title="Permanent link">&para;</a></h3>
+<p>Paper text (line 116):</p>
+<blockquote>
+<p>The three preceding estimates imply <code>ε^{-1} Z_{g,ε} → A_g &gt; 0</code>, and
+<code>μ_{g,ε} → ν_g</code> weakly, hence in bounded-Lipschitz distance. Moreover
+<code>{μ_{g,ε} : 0 &lt; ε ≤ ε_0}</code> is uniformly tight, and
+<code>μ_{g,ε}(⋃_z I_z) = O(ε)</code>.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Lean name</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean</code></td>
+<td>197</td>
+<td><code>theorem posteriorWeight_tendsto_selectedWeight_of_tannery</code></td>
+<td>Posterior → selected weight (Tannery).</td>
+</tr>
+<tr>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean</code></td>
+<td>271</td>
+<td><code>theorem higherLayerPosteriorMass_tendsto_zero_of_tannery</code></td>
+<td>Codim-2 mass → 0 — <strong>paper Theorem 1's second assertion</strong> (paper line 88, 165).</td>
+</tr>
+<tr>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean</code></td>
+<td>91</td>
+<td><code>theorem leadingCoefficient_pos</code></td>
+<td><strong>A_g &gt; 0</strong> — paper line 117.</td>
+</tr>
+<tr>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean</code></td>
+<td>177</td>
+<td><code>theorem relativeTotal_tendsto_leadingCoefficient</code></td>
+<td><strong>ε^{-1} Z_{g,ε} → A_g</strong> — paper line 117.</td>
+</tr>
+<tr>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean</code></td>
+<td>599</td>
+<td><code>theorem no_countable_selection_without_uniform_tightness</code></td>
+<td><strong>Tightness is necessary for selection</strong> (paper Proposition 3's tightness claim, line 118).</td>
+</tr>
+<tr>
+<td><code>P1ActualPosteriorAssembly.lean</code></td>
+<td>770–1173</td>
+<td><code>theorem actualCountableNumerator_tendsto_of_head_tail_errors_majorant</code> … <code>setIntegral_smul_test_tendsto_zero_of_scalarComplement</code></td>
+<td><strong>The ambient assembly engine</strong>: head-tail decomposition with majorant, leading to <code>actualNormalizedObservable_tendsto</code> (line 1290).</td>
+</tr>
+<tr>
+<td><code>P1ActualPosteriorAssembly.lean</code></td>
+<td>1290</td>
+<td><code>theorem actualNormalizedObservable_tendsto</code></td>
+<td><strong>Normalised observable limit</strong> — paper Proposition 3 / Theorem 1.</td>
+</tr>
+<tr>
+<td><code>P1ActualPosteriorAssembly.lean</code></td>
+<td>1302</td>
+<td><code>theorem actualNormalizedBanachObservable_tendsto</code></td>
+<td>Banach-valued version.</td>
+</tr>
+<tr>
+<td><code>P1ActualPosteriorAssembly.lean</code></td>
+<td>1411</td>
+<td><code>theorem normalizedObservable_tendsto_of_eventual_error_bounds</code></td>
+<td>Error-bound-driven convergence.</td>
+</tr>
+<tr>
+<td><code>P1ActualPosteriorAssembly.lean</code></td>
+<td>1477</td>
+<td><code>theorem actualCountablePosteriorObservable_tendsto</code></td>
+<td>Countable case.</td>
+</tr>
+<tr>
+<td><code>P1ActualPosteriorAssembly.lean</code></td>
+<td>1507</td>
+<td><code>theorem actualCountableBanachPosteriorObservable_tendsto</code></td>
+<td>Banach version.</td>
+</tr>
+<tr>
+<td><code>P1ActualPosteriorAssembly.lean</code></td>
+<td>55</td>
+<td><code>theorem actualCountableNumerator_tendsto</code></td>
+<td>Numerator-only tendsto.</td>
+</tr>
+<tr>
+<td><code>P1ActualPosteriorAssembly.lean</code></td>
+<td>83</td>
+<td><code>theorem actualCountableBanachNumerator_tendsto</code></td>
+<td>Banach numerator tendsto.</td>
+</tr>
+<tr>
+<td><code>P1ActualEnergyAtlasReassembly.lean</code></td>
+<td>264</td>
+<td><code>theorem atlasOutside_posteriorWeight_tendsto_zero</code></td>
+<td><strong>Atlas-outside posterior weight → 0</strong> — paper tightness step (line 200–205).</td>
+</tr>
+<tr>
+<td><code>P1ActualEnergyAtlasReassembly.lean</code></td>
+<td>178</td>
+<td><code>theorem energyGapEvidence_eq_tsum_allocated_add_atlasOutside</code></td>
+<td>Energy-gap evidence decomposition.</td>
+</tr>
+<tr>
+<td><code>P1ActualEnergyAtlasReassembly.lean</code></td>
+<td>212</td>
+<td><code>theorem rescaledAtlasOutsideLikelihoodMass_tendsto_zero</code></td>
+<td>Outside likelihood → 0.</td>
+</tr>
+<tr>
+<td><code>P1ActualEnergyAtlasReassembly.lean</code></td>
+<td>246</td>
+<td><code>theorem rescaledAtlasOutsideLikelihoodMass_twoScale_uniform</code></td>
+<td>Two-scale uniform estimate.</td>
+</tr>
+<tr>
+<td><code>P1ActualEnergyAtlasReassembly.lean</code></td>
+<td>287</td>
+<td><code>theorem generalFiniteNormal_energyGapEvidence_eq_tsum_allocatedChartImage_add_outside</code></td>
+<td>General finite-normal decomposition.</td>
+</tr>
+<tr>
+<td><code>P1ActualEnergyAtlasReassembly.lean</code></td>
+<td>307</td>
+<td><code>theorem generalFiniteNormal_rescaledOutside_twoScale_uniform</code></td>
+<td>General two-scale.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>885</td>
+<td><code>theorem certifiedPhysicalAtlas_posteriorLaw_package</code></td>
+<td><strong>Complete posterior-law package</strong> for the physical atlas.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>947</td>
+<td><code>theorem certifiedStaticAtlas_posteriorLaw_package</code></td>
+<td>Static-atlas posterior-law package.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>1009</td>
+<td><code>theorem certifiedStaticAtlas_posteriorLaw_package_of_constant_reassembly</code></td>
+<td>Constant-reassembly variant.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>1079</td>
+<td><code>theorem certifiedStaticAtlas_posteriorLaw_package_of_constant_support</code></td>
+<td>Constant-support variant.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>1145</td>
+<td><code>theorem certifiedStaticAtlas_posteriorLaw_package_of_constant_live_set</code></td>
+<td>Constant-live-set variant.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>1505</td>
+<td><code>theorem certifiedPhysicalAtlas_tail_and_complement_package</code></td>
+<td><strong>Tail + complement package</strong> — paper Proposition 5 (line 224).</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>109</td>
+<td><code>theorem certifiedStaticAtlas_denominator_tendsto_of_constant_reassembly</code></td>
+<td>Denominator (Z_{g,ε}/ε) → positive limit.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>177</td>
+<td><code>theorem certifiedStaticAtlas_denominator_calibration_package</code></td>
+<td>Denominator calibration package.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>424</td>
+<td><code>theorem certifiedStaticAtlas_evidence_eventually_half_of_constant_reassembly</code></td>
+<td>Evidence ≥ <code>A_g/2 · ε</code> eventually.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>488</td>
+<td><code>theorem certifiedStaticAtlas_evidence_eventually_half_of_constant_support</code></td>
+<td>Evidence lower bound.</td>
+</tr>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>737</td>
+<td><code>theorem certifiedStaticAtlas_normalizedObservable_tendsto_of_constant_support_error_bounds</code></td>
+<td>Normalised limit.</td>
+</tr>
+<tr>
+<td><code>P1CountablePosteriorLaw.lean</code></td>
+<td>(mid)</td>
+<td>(countable posterior-law package)</td>
+<td>Countable analogue.</td>
+</tr>
+<tr>
+<td><code>P1StratifiedActualPosteriorLaw.lean</code></td>
+<td>(mid)</td>
+<td>(stratified actual posterior-law package)</td>
+<td>Stratified actual law.</td>
+</tr>
+<tr>
+<td><code>P1StratifiedTaggedPosteriorLaw.lean</code></td>
+<td>(mid)</td>
+<td>(stratified tagged posterior-law package)</td>
+<td>Tagged version.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="c-sharpness-proposition-6-paper-line-294306">C. Sharpness (Proposition 6, paper line 294–306)<a class="headerlink" href="#c-sharpness-proposition-6-paper-line-294306" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Lean name</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>P3PeriodicProfileSharpness.lean</code></td>
+<td>23</td>
+<td>(section)</td>
+<td>Section opener.</td>
+</tr>
+<tr>
+<td><code>P3PeriodicProfileSharpness.lean</code></td>
+<td>26</td>
+<td><code>theorem escaping_residual_is_smooth : ContDiff ℝ ⊤ escapingForward</code></td>
+<td><code>H(x) = e^{-x²/2} sin(π x)</code> is smooth.</td>
+</tr>
+<tr>
+<td><code>P3PeriodicProfileSharpness.lean</code></td>
+<td>30</td>
+<td><code>theorem escaping_integer_roots_are_regular (n : ℤ) : …</code></td>
+<td>Every integer root is regular.</td>
+</tr>
+<tr>
+<td><code>P3PeriodicProfileSharpness.lean</code></td>
+<td>38</td>
+<td><code>theorem local_regular_roots_do_not_imply_global_posterior_tightness</code></td>
+<td><strong>Local regularity does not imply tightness</strong> — paper Proposition 6 (line 294).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="d-compact-containment-proposition-5-paper-line-223233">D. Compact-containment (Proposition 5, paper line 223–233)<a class="headerlink" href="#d-compact-containment-proposition-5-paper-line-223233" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Lean name</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>P1CertifiedPhysicalAtlasTheorem.lean</code></td>
+<td>1505</td>
+<td><code>theorem certifiedPhysicalAtlas_tail_and_complement_package</code></td>
+<td>The compact-containment proposition.</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>196</td>
+<td><code>theorem profileSheetRescaledDensity_integral_tendsto</code></td>
+<td>Sheet-tube contribution to compact-containment.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="e-quantitative-allocation-corollary-1-paper-line-164173">E. Quantitative allocation (Corollary 1, paper line 164–173)<a class="headerlink" href="#e-quantitative-allocation-corollary-1-paper-line-164173" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Lean file</th>
+<th>File:line</th>
+<th>Lean name</th>
+<th>What it proves</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CountableStratifiedGaussianPosteriorSelection.lean</code></td>
+<td>271</td>
+<td><code>theorem higherLayerPosteriorMass_tendsto_zero_of_tannery</code></td>
+<td><strong>C_2 · ε</strong> codim-2 mass (paper line 166).</td>
+</tr>
+<tr>
+<td><code>P2ProfileIsolatedTubeMass.lean</code></td>
+<td>250</td>
+<td><code>theorem exists_summable_literal_isolatedTube_mass</code></td>
+<td><code>ε² · C_g · B_g</code> sum bound (paper line 220).</td>
+</tr>
+<tr>
+<td><code>P2ProfileLiteralComplementGap.lean</code></td>
+<td>113</td>
+<td><code>theorem exists_lowEnergy_covered_by_strictProfileTubeUnion</code></td>
+<td>Exterior exponential bound (paper line 167).</td>
+</tr>
+<tr>
+<td><code>P2ProfileSheetEvidence.lean</code></td>
+<td>183</td>
+<td><code>theorem profileSheetRescaledLimitDensity_integral_pos</code></td>
+<td>Positive evidence floor (paper line 165 <code>Z_{g,ε} ≥ C_1 ε</code>).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="f-proof-assembly-summary">F. Proof-assembly summary<a class="headerlink" href="#f-proof-assembly-summary" title="Permanent link">&para;</a></h2>
+<p><strong>Paper Theorem 1</strong> is assembled (paper line 200–205) by:
+1. Taking <code>φ ≡ 1</code> in Lemma 2 to get <code>ε^{-1} Z_{g,ε} → A_g</code> (positive).
+2. Dividing the numerator limit by (7) to get the posterior limit.
+3. Using Lemma 3 + Lemma 4 for tightness.
+4. Dividing the countably-many cell masses by the linear evidence lower bound.</p>
+<p>The Lean realisation maps this to:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Theorem 1 (paper)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  └─ Finite-stratum / countable-stratum selection (Tannery)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>       ├─ File: CountableStratifiedGaussianPosteriorSelection.lean
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>       │     └─ relativeTotal_tendsto_leadingCoefficient (line 177)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>       │            ⇒ ε⁻¹ Z_{g,ε} → A_g     [paper line 117]
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>       └─ File: P1ActualPosteriorAssembly.lean
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>             └─ actualNormalizedObservable_tendsto (line 1290)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                    ⇒ μ_{g,ε} → ν_g          [paper line 117]
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>       └─ File: CountableStratifiedGaussianPosteriorSelection.lean
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>             └─ higherLayerPosteriorMass_tendsto_zero_of_tannery (line 271)
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                    ⇒ μ_{g,ε}(⋃ I_z) = O(ε) [paper line 88]
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>       └─ File: CountableStratifiedGaussianPosteriorSelection.lean
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>             └─ no_countable_selection_without_uniform_tightness (line 599)
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                    ⇒ tightness is necessary    [paper line 118]
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>       └─ File: P1CertifiedPhysicalAtlasTheorem.lean
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>             └─ certifiedPhysicalAtlas_tail_and_complement_package (line 1505)
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                    ⇒ explicit compact-containment [paper Proposition 5, line 224]
+</code></pre></div>
+<p>See <code>GAPS.md</code> for the explicit list of paper claims NOT covered by Lean.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

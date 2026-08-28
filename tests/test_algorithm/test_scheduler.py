@@ -999,3 +999,183 @@ def test_codimension_sheet_scheduler_config_hash_includes_eps_direction() -> Non
             **{**base_kwargs, "eps_direction": "increasing"}
         ).config_hash()
     assert h_dec != h_inc
+
+
+# ---------------------------------------------------------------------------
+# CodimensionSheetScheduler — paper-quantity wiring (ADR-0013 follow-up)
+# ---------------------------------------------------------------------------
+
+
+def test_codimension_sheet_scheduler_with_profile_uses_paper_quantities() -> None:
+    """``profile_residual_fn`` is consumed: paper quantities cached once.
+
+    Building the scheduler with a ``profile_residual_fn`` must call
+    :func:`adaptive_reflow.contracts.paper_quantities.sheet_evidence_A`
+    and :func:`adaptive_reflow.contracts.paper_quantities.root_cell_packing_B`
+    exactly once at construction time and cache the results on
+    ``self._sheet_A`` / ``self._packing_B``. The cached values must
+    equal the result of calling those functions directly with the same
+    profile callable.
+    """
+    from adaptive_reflow.contracts import paper_quantities as _pq
+
+    profile = lambda x: math.sin(x)  # noqa: E731
+
+    # Reference values from the paper-quantity functions.
+    expected_sheet_A = _pq.sheet_evidence_A(profile)
+    expected_packing_B = _pq.root_cell_packing_B(profile)
+    expected_cell_C = _pq.per_cell_coefficient_C()
+    expected_e_rho = _pq.exterior_gap_e_rho()
+
+    scheduler = CodimensionSheetScheduler(
+        cycle_length=8,
+        n_min=0.0,
+        n_max=1.0,
+        profile_residual_fn=profile,
+    )
+
+    # Cached paper quantities on the scheduler.
+    assert scheduler._sheet_A == pytest.approx(expected_sheet_A, rel=1e-12)
+    assert scheduler._packing_B == pytest.approx(expected_packing_B, rel=1e-12)
+    assert scheduler._cell_C == pytest.approx(expected_cell_C, rel=1e-12)
+    assert scheduler._exterior_gap_e_rho == pytest.approx(expected_e_rho, rel=1e-12)
+    # Public accessors expose the cached values too.
+    assert scheduler.sheet_A == pytest.approx(expected_sheet_A, rel=1e-12)
+    assert scheduler.packing_B == pytest.approx(expected_packing_B, rel=1e-12)
+    assert scheduler.cell_C == pytest.approx(expected_cell_C, rel=1e-12)
+    assert scheduler.exterior_gap_e_rho == pytest.approx(expected_e_rho, rel=1e-12)
+
+    # The per-round evidence ratio uses the paper-quantity path. Verify
+    # by recomputing the ratio via the public helper signature and
+    # confirming the scheduler's last_evidence_ratio matches.
+    for r in range(8):
+        scheduler.sample(0, r, r)
+        # The cached quantities are the inputs the scheduler forwards
+        # into the paper-quantity-augmented path of the helper.
+        assert scheduler.sheet_A is not None
+        assert scheduler.packing_B is not None
+        assert scheduler.cell_C is not None
+        # Recompute via the helper signature (paper-quantity path).
+        # We avoid using ``n_cap`` directly because the scheduler
+        # applies its own envelope; instead we verify the cached
+        # values are forwarded correctly by checking ``sheet_A`` and
+        # ``packing_B`` survive a ``sample`` call unchanged.
+        assert scheduler.sheet_A == pytest.approx(expected_sheet_A, rel=1e-12)
+        assert scheduler.packing_B == pytest.approx(expected_packing_B, rel=1e-12)
+        assert scheduler.last_evidence_ratio is not None
+        assert 0.0 <= scheduler.last_evidence_ratio <= 1.0
+
+
+def test_codimension_sheet_scheduler_without_profile_uses_inline_formula() -> None:
+    """Without ``profile_residual_fn`` the legacy inline formula is used.
+
+    Backward compatibility: when ``profile_residual_fn`` is ``None``
+    the scheduler does NOT cache paper quantities (all four accessors
+    return ``None``) and the per-round sheet-vs-cell evidence ratio
+    uses the framework-side heuristic closed form — byte-identical
+    to the legacy inline formula.
+    """
+    scheduler = CodimensionSheetScheduler(
+        cycle_length=10,
+        n_min=0.0,
+        n_max=1.0,
+        eps_implicit=0.05,
+    )
+    # No profile => no paper-quantity caching.
+    assert scheduler._sheet_A is None
+    assert scheduler._packing_B is None
+    assert scheduler._cell_C is None
+    assert scheduler._exterior_gap_e_rho is None
+    assert scheduler.sheet_A is None
+    assert scheduler.packing_B is None
+    assert scheduler.cell_C is None
+    assert scheduler.exterior_gap_e_rho is None
+    # Legacy inline formula: ratio matches the framework heuristic.
+    eps = 0.05
+    for r in range(10):
+        scheduler.sample(0, r, r)
+        assert scheduler.last_evidence_ratio is not None
+        n_base = max(0.0, min(1.0, scheduler.last_sample.n_cap))
+        # The heuristic formula is ``sheet / (sheet + cell)`` with
+        # ``sheet = max(n_clipped, eps)`` and
+        # ``cell = (1 - n_clipped) ** 2 * eps ** 2``.
+        sheet = max(n_base, eps)
+        cell = (1.0 - n_base) ** 2 * eps * eps
+        expected = sheet / (sheet + cell)
+        assert scheduler.last_evidence_ratio == pytest.approx(expected, rel=1e-12)
+
+
+def test_codimension_sheet_scheduler_paper_quantity_diagnostics_emitted() -> None:
+    """Per-round diagnostics from the paper-quantity-augmented path.
+
+    When ``profile_residual_fn`` is configured, the per-round
+    ``last_evidence_ratio`` is computed via the
+    paper-quantity-augmented path. We verify the resulting ratio is
+    well-defined (in ``[0, 1]``) and that the cached ``sheet_A``,
+    ``packing_B``, ``cell_C`` are forwarded into the helper
+    unchanged across rounds.
+    """
+    profile = lambda x: math.sin(x)  # noqa: E731
+
+    scheduler = CodimensionSheetScheduler(
+        cycle_length=6,
+        n_min=0.0,
+        n_max=1.0,
+        profile_residual_fn=profile,
+    )
+    # Snapshot the cached quantities at construction time.
+    snapshot = (
+        scheduler.sheet_A,
+        scheduler.packing_B,
+        scheduler.cell_C,
+        scheduler.exterior_gap_e_rho,
+    )
+    for r in range(6):
+        scheduler.sample(0, r, r)
+        # Cached quantities are immutable across rounds (computed once).
+        assert scheduler.sheet_A == snapshot[0]
+        assert scheduler.packing_B == snapshot[1]
+        assert scheduler.cell_C == snapshot[2]
+        assert scheduler.exterior_gap_e_rho == snapshot[3]
+        # The ratio is well-defined.
+        assert scheduler.last_evidence_ratio is not None
+        assert 0.0 <= scheduler.last_evidence_ratio <= 1.0
+
+
+def test_codimension_sheet_scheduler_paper_quantity_path_matches_paper_quantities_module() -> None:
+    """End-to-end: paper-quantity-augmented ratio recomputed via the helper.
+
+    The paper-quantity-augmented path computes
+
+        sheet = sheet_A * eps
+        cell  = cell_C * packing_B * eps ** 2
+        ratio = sheet / (sheet + cell)
+
+    We verify the scheduler's per-round ``last_evidence_ratio``
+    matches this formula when ``profile_residual_fn`` is configured.
+    """
+    from adaptive_reflow.contracts import paper_quantities as _pq
+
+    profile = lambda x: math.sin(x)  # noqa: E731
+
+    sheet_A = _pq.sheet_evidence_A(profile)
+    packing_B = _pq.root_cell_packing_B(profile)
+    cell_C = _pq.per_cell_coefficient_C()
+
+    scheduler = CodimensionSheetScheduler(
+        cycle_length=4,
+        n_min=0.0,
+        n_max=1.0,
+        profile_residual_fn=profile,
+        eps_implicit=0.05,
+    )
+    eps = scheduler.eps_implicit
+    sheet = sheet_A * eps
+    cell = cell_C * packing_B * eps * eps
+    expected_ratio = sheet / (sheet + cell)
+    for r in range(4):
+        scheduler.sample(0, r, r)
+        assert scheduler.last_evidence_ratio == pytest.approx(
+            expected_ratio, rel=1e-12
+        )
+

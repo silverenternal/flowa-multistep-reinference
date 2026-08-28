@@ -58,6 +58,7 @@ nav:
   - Testing: TESTING_STRATEGY.md
 
 plugins:
+  - autorefs
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -123,10 +124,13 @@ not_in_nav: |
   ABLATION.md
   ABLATION_METRIC_PROBE.md
   ADAPTER_INTERFACE_SPEC.md
+  CLAIMS.md
   DEPRECATION.md
   PERFORMANCE_BUDGETS.md
   TUTORIAL.md
   candidate_registry_init.md
+  design/*.md
+  lean/*.md
   lean_issue_re_inference_provenance.md
   adr/*.md
   INSIGHTS.md
