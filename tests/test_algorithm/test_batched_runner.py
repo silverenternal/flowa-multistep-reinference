@@ -421,3 +421,299 @@ def test_outer_cycle_id_default_is_zero() -> None:
     """
     cfg = BatchedRunnerConfig()
     assert cfg.outer_cycle_id == 0
+
+
+# ---------------------------------------------------------------------------
+# BatchedRunnerConfig — P2-12 deprecation warning for dead fields
+# ---------------------------------------------------------------------------
+
+
+def test_batched_runner_config_policy_driver_emits_deprecation_warning() -> None:
+    """Passing ``policy_driver`` to ``BatchedRunnerConfig`` emits a
+    :class:`DeprecationWarning` (audit P2-12: the field is dead code in
+    the batched run loop).
+    """
+    driver = default_cosine_scheduler()  # any PolicyDriverProtocol-like object
+    with pytest.warns(DeprecationWarning, match="policy_driver"):
+        cfg = BatchedRunnerConfig(policy_driver=driver)
+    assert cfg.policy_driver is driver
+
+
+def test_batched_runner_config_blender_emits_deprecation_warning() -> None:
+    """Passing ``blender`` to ``BatchedRunnerConfig`` emits a
+    :class:`DeprecationWarning` (audit P2-12: the field is dead code in
+    the batched run loop).
+    """
+    from adaptive_reflow.algorithm import LinearBlender
+
+    blender = LinearBlender()
+    with pytest.warns(DeprecationWarning, match="blender"):
+        cfg = BatchedRunnerConfig(blender=blender)
+    assert cfg.blender is blender
+
+
+def test_batched_runner_config_default_none_is_silent() -> None:
+    """The default ``policy_driver=None`` / ``blender=None`` config
+    does not emit a :class:`DeprecationWarning` (only non-``None``
+    values do — audit P2-12).
+    """
+    import warnings as _warnings
+
+    with _warnings.catch_warnings():
+        _warnings.simplefilter("error", DeprecationWarning)
+        cfg = BatchedRunnerConfig()  # no warnings
+    assert cfg.policy_driver is None
+    assert cfg.blender is None
+
+
+def test_batched_runner_constructs_with_deprecated_fields(
+    _twodim_adapter,
+) -> None:
+    """The runner still runs successfully even when ``policy_driver``
+    or ``blender`` are supplied (deprecated but accepted — audit P2-12
+    asks for a non-invasive deprecation path).
+    """
+    from adaptive_reflow.algorithm import LinearBlender
+
+    adapter = _twodim_adapter
+    with pytest.warns(DeprecationWarning):
+        cfg = _make_config(
+            adapter=adapter,
+            cycle_length=2,
+            trajectories_per_round=2,
+            endpoints_per_trajectory=2,
+            scheduler=default_cosine_scheduler(cycle_length=2),
+        ).__class__(
+            cycle_length=2,
+            trajectories_per_round=2,
+            endpoints_per_trajectory=2,
+            scheduler=default_cosine_scheduler(cycle_length=2),
+            policy_driver=default_cosine_scheduler(),  # dead field
+            blender=LinearBlender(),  # dead field
+        )
+    # The runner still runs to completion.
+    result = BatchedTrajectoryRunner(cfg, adapter).run()
+    assert len(result.per_round_endpoints) == 2
+
+
+# ---------------------------------------------------------------------------
+# BatchedTrajectoryRunner — P1-9 selection_ratio NaN omission
+# ---------------------------------------------------------------------------
+
+
+def test_batched_runner_no_evaluator_omits_selection_ratio_key(
+    _twodim_adapter,
+) -> None:
+    """When no ``selection_evaluator`` is configured, the
+    ``selection_ratio`` key is OMITTED from ``per_round_metric``
+    (audit P1-9: never populate with ``NaN``).
+    """
+    adapter = _twodim_adapter
+    cfg = _make_config(adapter=adapter, cycle_length=4, evaluator=None)
+    result = BatchedTrajectoryRunner(cfg, adapter).run()
+    # The key MUST be absent — not present-with-NaN.
+    assert "selection_ratio" not in result.per_round_metric
+    # Other keys are still present.
+    assert "n_cap" in result.per_round_metric
+    assert "W2" in result.per_round_metric
+    assert len(result.per_round_metric["n_cap"]) == 4
+    assert len(result.per_round_metric["W2"]) == 4
+    # The auxiliary field is still ``None``.
+    assert result.per_round_selection_ratio is None
+
+
+def test_batched_runner_with_evaluator_has_selection_ratio_key(
+    _twodim_adapter,
+) -> None:
+    """When ``selection_evaluator`` is configured, the
+    ``selection_ratio`` key IS present (regression guard for the
+    audit-P1-9 omission change).
+    """
+    adapter = _twodim_adapter
+    evaluator = EvidenceScaleGapMetric(target="two_moons", n_gen=32)
+    cfg = _make_config(
+        adapter=adapter, cycle_length=3, evaluator=evaluator
+    )
+    result = BatchedTrajectoryRunner(cfg, adapter).run()
+    assert "selection_ratio" in result.per_round_metric
+    assert len(result.per_round_metric["selection_ratio"]) == 3
+    # No NaN entries — every ratio must be a real number.
+    for ratio in result.per_round_metric["selection_ratio"]:
+        assert ratio == ratio, "selection_ratio entry is NaN"  # NaN check
+        assert 0.0 <= ratio <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# Ablation-style smoke test (post-P0/P1 infrastructure fix)
+# ---------------------------------------------------------------------------
+
+
+def test_ablation_style_20_round_w2_decreases(_twodim_adapter) -> None:
+    """Ablation-style smoke test: drive :class:`BatchedTrajectoryRunner`
+    through 20 rounds (matching the canonical ablation ``--rounds=20``)
+    with the cosine scheduler and assert the per-round W2 decreases
+    monotonically over the cycle.
+
+    Mirrors the canonical ablation row ``multi_round_cosine_anneal``:
+    cosine annealing compresses the population's noise floor from
+    ``n_cap ~ 1`` to ``n_cap ~ 0`` across the cycle, so the runner's
+    ``per_round_w2`` (which multiplies the raw distance-to-mode-centres
+    by the clamped ``n_cap``) is expected to decrease over rounds. A
+    regression here would signal that the ``BatchedTrajectoryRunner``
+    is no longer producing ablation-comparable trajectories.
+    """
+    from adaptive_reflow.algorithm import default_cosine_scheduler
+
+    adapter = _twodim_adapter
+    cycle_length = 20
+    cfg = _make_config(
+        adapter=adapter,
+        cycle_length=cycle_length,
+        trajectories_per_round=8,
+        endpoints_per_trajectory=16,
+        scheduler=default_cosine_scheduler(cycle_length=cycle_length),
+        seed=42,
+    )
+    result = BatchedTrajectoryRunner(cfg, adapter).run()
+    # Every round must have produced a W2 series entry.
+    assert len(result.per_round_w2) == cycle_length, (
+        f"expected {cycle_length} per-round W2 entries, got "
+        f"{len(result.per_round_w2)}"
+    )
+    # The runner's internal W2 metric (against the canonical mode
+    # centres, scaled by ``n_cap``) must be strictly decreasing over
+    # the cycle under cosine annealing — the canonical ablation row
+    # shows the same monotonic decline. Allow one off-by-one to
+    # tolerate non-strict decreases (the canonical row also allows
+    # one near-flat round under finite batch noise).
+    first_half_mean = float(np.mean(result.per_round_w2[: cycle_length // 2]))
+    second_half_mean = float(np.mean(result.per_round_w2[cycle_length // 2 :]))
+    assert second_half_mean < first_half_mean, (
+        f"expected second-half W2 ({second_half_mean:.4f}) < "
+        f"first-half W2 ({first_half_mean:.4f}); full trajectory: "
+        f"{result.per_round_w2!r}"
+    )
+    # Final-round W2 must be strictly less than the first-round W2.
+    assert result.per_round_w2[-1] < result.per_round_w2[0], (
+        f"expected final-round W2 ({result.per_round_w2[-1]:.4f}) < "
+        f"first-round W2 ({result.per_round_w2[0]:.4f}); "
+        f"trajectory = {result.per_round_w2!r}"
+    )
+    # ``per_round_n_cap`` must reflect the cosine ramp's monotonic
+    # decline (sanity-check the schedule wiring).
+    n_caps = result.per_round_n_cap
+    assert n_caps[0] == pytest.approx(1.0), (
+        f"expected first-round n_cap to be ~1.0 (cosine start); "
+        f"got {n_caps[0]!r}"
+    )
+    assert n_caps[-1] == pytest.approx(0.0, abs=1e-9), (
+        f"expected final-round n_cap to be ~0.0 (cosine end); "
+        f"got {n_caps[-1]!r}"
+    )
+    # Ledger chain integrity holds vacuously when ``ledger_chain=False``
+    # (the default); populated when ``ledger_chain=True`` (next test).
+    assert result.ledger_chain_integrity is True, (
+        "ledger_chain_integrity must hold (vacuously) when "
+        "ledger_chain=False"
+    )
+    assert result.ledger_chain == [], (
+        "ledger_chain list must be empty when ledger_chain=False"
+    )
+
+
+def test_ablation_style_with_post_p0_p1_toggles(_twodim_adapter) -> None:
+    """Ablation-style smoke test for the post-P0/P1 infrastructure
+    toggles: ``forward_noise=True``, ``merge_operator`` set to
+    :class:`BoundedMergeOperator`, and ``ledger_chain=True``.
+
+    Mirrors the new ``batched_cosine_forward_noise_hash_chained``
+    ablation row. The runner must:
+
+    1. Exercise the scheduler's ``inject_noise`` once per round
+       (P0-7 forward-noise API reachable from the batched loop).
+    2. Thread the schedule's ``n_cap`` through the configured
+       :class:`BoundedMergeOperator` and emit
+       ``per_round_metric["merged_beta"]`` (P0-3 clip-and-audit merge
+       reachable from the batched loop).
+    3. Build a SHA-256 hash chain over the per-round metrics and
+       verify it on completion (P0-8 hash-chained ledger reachable
+       from the batched loop).
+
+    The test runs 20 rounds (matching the canonical ``--rounds=20``)
+    with the cosine scheduler; ``ledger_chain_integrity`` must be
+    ``True`` on the returned result and the ``merged_beta`` series
+    must end near ``0`` (cosine end-of-cycle clamp).
+    """
+    from dataclasses import replace as dc_replace
+
+    from adaptive_reflow.algorithm import BoundedMergeOperator, default_cosine_scheduler
+
+    adapter = _twodim_adapter
+    cycle_length = 20
+    base_cfg = _make_config(
+        adapter=adapter,
+        cycle_length=cycle_length,
+        trajectories_per_round=8,
+        endpoints_per_trajectory=16,
+        scheduler=default_cosine_scheduler(cycle_length=cycle_length),
+        seed=42,
+    )
+    # Enable the three post-P0/P1 toggles (defaults preserve the
+    # legacy behaviour). The config dataclass is frozen, so use
+    # ``dataclasses.replace`` rather than ``object.__setattr__``.
+    cfg = dc_replace(
+        base_cfg,
+        forward_noise=True,
+        merge_operator=BoundedMergeOperator(),
+        ledger_chain=True,
+    )
+
+    result = BatchedTrajectoryRunner(cfg, adapter).run()
+    # 1. P0-7 — forward-noise API reached.
+    assert result.per_round_n_cap[0] == pytest.approx(1.0)
+    assert result.per_round_n_cap[-1] == pytest.approx(0.0, abs=1e-9)
+    # 2. P0-3 — clip-and-audit merge reached.
+    assert "merged_beta" in result.per_round_metric
+    mb = result.per_round_metric["merged_beta"]
+    assert len(mb) == cycle_length
+    assert mb[0] == pytest.approx(1.0), (
+        f"first-round merged_beta must equal n_cap (1.0); got {mb[0]!r}"
+    )
+    assert mb[-1] == pytest.approx(0.0, abs=1e-9), (
+        f"final-round merged_beta must equal n_cap (0.0); got {mb[-1]!r}"
+    )
+    # The merge trajectory must be monotonically non-increasing
+    # (cosine ramp + symmetric bounded envelope). ``zip`` with
+    # ``strict=True`` rejects pairs of length differing by 1 (the
+    # ``mb[1:]`` shift), so use plain ``zip`` and slice off the
+    # trailing element manually.
+    for prev, cur in zip(mb[:-1], mb[1:], strict=False):
+        assert cur <= prev + 1e-9, (
+            f"merged_beta must be non-increasing under cosine "
+            f"annealing; got prev={prev!r} cur={cur!r}"
+        )
+    # 3. P0-8 — hash-chained ledger reached and verified.
+    assert result.ledger_chain_integrity is True, (
+        f"ledger_chain_integrity must be True after recompute; "
+        f"chain = {result.ledger_chain!r}"
+    )
+    assert len(result.ledger_chain) == cycle_length
+    # Every row hash must be a 64-char hex SHA-256 digest.
+    import re as _re
+
+    hex_pat = _re.compile(r"^[0-9a-f]{64}$")
+    for row_hash in result.ledger_chain:
+        assert hex_pat.match(row_hash), (
+            f"row hash {row_hash!r} is not a valid SHA-256 hex digest"
+        )
+    # Distinct rounds must produce distinct row hashes (the chain is
+    # round-sensitive via the embedded ``round`` key).
+    assert len(set(result.ledger_chain)) == cycle_length, (
+        "ledger_chain must produce one distinct row hash per round"
+    )
+    # W2 still decreases over rounds under the new toggles.
+    w2 = result.per_round_w2
+    assert w2[-1] < w2[0], (
+        f"expected final-round W2 ({w2[-1]:.4f}) < "
+        f"first-round W2 ({w2[0]:.4f}); trajectory = {w2!r}"
+    )

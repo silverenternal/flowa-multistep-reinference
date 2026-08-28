@@ -560,6 +560,67 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#8-closed-form-expressions-all-eight-schedulers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Closed-form expressions — all eight schedulers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-comparison-to-field-standards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Comparison to field standards
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-how-to-choose-a-schedule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. How to choose a schedule
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. How to choose a schedule">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-defaults-matrix-cross-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Defaults matrix cross-reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-references-extended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. References (extended)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -700,6 +761,296 @@ forward / reverse (denoising) steps under the cosine capacity profile.</p>
   — the framework's canonical schedule wiring.</li>
 <li><a href="../adaptive_reflow/algorithm/scheduler.py"><code>adaptive_reflow/algorithm/scheduler.py</code></a> —
   the <code>SchedulerProtocol</code> definition and all concrete schedulers.</li>
+<li><a href="../adaptive_reflow/schedule/cosine.py"><code>adaptive_reflow/schedule/cosine.py</code></a> —
+  the closed-form <code>n_cap_for_round</code> helper.</li>
+</ul>
+<h2 id="8-closed-form-expressions-all-eight-schedulers">8. Closed-form expressions — all eight schedulers<a class="headerlink" href="#8-closed-form-expressions-all-eight-schedulers" title="Permanent link">&para;</a></h2>
+<p>The framework ships nine registered <code>SchedulerProtocol</code> implementations
+(<code>SCHEDULER_REGISTRY</code> in
+<a href="../adaptive_reflow/algorithm/scheduler.py"><code>adaptive_reflow/algorithm/scheduler.py</code></a>
+plus <a href="../adaptive_reflow/algorithm/sequential.py"><code>adaptive_reflow/algorithm/sequential.py</code></a>);
+the table below lists the <strong>closed form for <code>n_cap(r)</code></strong> of every
+implementation that has one. <code>SequentialScheduler</code> is excluded
+because its <code>n_cap(r)</code> is the dispatch of its sub-scheduler's
+<code>n_cap(r - cumulative_offset)</code> (see
+<a href="../sequential-protocol/"><code>docs/sequential-protocol.md</code></a>).</p>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Class</th>
+<th>Closed form <code>n_cap(r)</code></th>
+<th style="text-align: center;">Monotone?</th>
+<th><code>n_min</code>/<code>n_max</code>?</th>
+<th>Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cosine</code></td>
+<td><code>CosineAnnealScheduler</code></td>
+<td><code>n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))</code></td>
+<td style="text-align: center;">yes</td>
+<td>yes</td>
+<td><a href="#1-the-closed-form">§1</a>, [CLM-005]</td>
+</tr>
+<tr>
+<td><code>constant</code></td>
+<td><code>ConstantScheduler</code></td>
+<td><code>n_cap</code> (constant across <code>r</code>)</td>
+<td style="text-align: center;">n/a</td>
+<td>n/a (config)</td>
+<td><a href="../adaptive_reflow/algorithm/scheduler.py"><code>scheduler.py:478</code></a></td>
+</tr>
+<tr>
+<td><code>linear</code></td>
+<td><code>LinearScheduler</code></td>
+<td><code>n_min + (n_max - n_min) * r / (L - 1)</code></td>
+<td style="text-align: center;">yes (slope ≥ 0)</td>
+<td>yes</td>
+<td><a href="../adaptive_reflow/algorithm/scheduler.py"><code>scheduler.py:672</code></a></td>
+</tr>
+<tr>
+<td><code>exponential</code></td>
+<td><code>ExponentialScheduler</code></td>
+<td><code>n_max * exp(-alpha * r)</code></td>
+<td style="text-align: center;">yes</td>
+<td><code>n_min = 0</code> implicit</td>
+<td><a href="../adaptive_reflow/algorithm/scheduler.py"><code>scheduler.py:882</code></a></td>
+</tr>
+<tr>
+<td><code>polynomial</code></td>
+<td><code>PolynomialScheduler</code></td>
+<td><code>n_min + (n_max - n_min) * (1 - u_r ** power)</code> where <code>u_r = r / max(L - 1, 1)</code></td>
+<td style="text-align: center;">yes if <code>n_max &gt; n_min</code></td>
+<td>yes</td>
+<td><a href="../adaptive_reflow/algorithm/scheduler.py"><code>scheduler.py:1103</code></a></td>
+</tr>
+<tr>
+<td><code>sigmoid</code></td>
+<td><code>SigmoidScheduler</code></td>
+<td><code>n_min + (n_max - n_min) * sigmoid(steepness * (u_r - midpoint))</code></td>
+<td style="text-align: center;">yes (when <code>steepness &gt; 0</code>)</td>
+<td>yes</td>
+<td><a href="../adaptive_reflow/algorithm/scheduler.py"><code>scheduler.py:1340</code></a></td>
+</tr>
+<tr>
+<td><code>convergence_adaptive</code></td>
+<td><code>ConvergenceAdaptiveScheduler</code></td>
+<td><code>base.sample(r) + shift(r)</code> where <code>shift(r)</code> is the PID-lite output</td>
+<td style="text-align: center;">inherited from <code>base</code></td>
+<td>inherited from <code>base</code></td>
+<td><a href="../adaptive_reflow/algorithm/scheduler.py"><code>scheduler.py:1593</code></a>, ADR-0012</td>
+</tr>
+<tr>
+<td><code>codimension_sheet</code></td>
+<td><code>CodimensionSheetScheduler</code></td>
+<td><code>n_min + (n_max - n_min) * ratio(r)</code> where <code>ratio(r) = sheet(r) / (sheet(r) + cell(r))</code> with <code>sheet = 1 / max(n_cap_base, eps_implicit)</code> and <code>cell = (1 - n_cap_base)^2 / eps_implicit^2</code> [CLM-006]</td>
+<td style="text-align: center;">inherited from base</td>
+<td>inherited</td>
+<td><a href="../adaptive_reflow/algorithm/scheduler.py"><code>scheduler.py:2053</code></a>, ADR-0013</td>
+</tr>
+</tbody>
+</table>
+<p>All eight closed forms are <strong>pure</strong> with respect to their arguments:
+two calls with identical inputs return equal <code>ScheduleSample</code> objects.
+The single-round degenerate edge case (<code>cycle_length == 1</code>) is
+handled deterministically by every implementation (returns
+<code>n_max</code> for the four envelope-anchor families; returns <code>n_max * exp(0)</code>
+for the exponential family; returns <code>0.5</code> for the constant family).</p>
+<h2 id="9-comparison-to-field-standards">9. Comparison to field standards<a class="headerlink" href="#9-comparison-to-field-standards" title="Permanent link">&para;</a></h2>
+<p>The schedule-theory literature offers three published closed forms
+that map onto the framework's <code>n_cap(r)</code> envelope. The table below
+aligns the framework's <code>cosine</code> (canonical) and <code>exponential</code>
+(implemented) families with each one; the framework does NOT ship a
+direct port of EDM's <code>sigma(t) = t</code> polynomial ramp — it ships the cosine
+because the cosine is <code>C^1</code> and monotone-decreasing on the whole
+cycle (no staircase artefacts at the endpoints), which EDM's
+geometric progression lacks on small cycles (see <a href="#4-why-cosine-and-not-edms-polynomial">§4</a>).</p>
+<table>
+<thead>
+<tr>
+<th>Field standard</th>
+<th>Closed form (their notation)</th>
+<th>Framework analog</th>
+<th style="text-align: center;">Identical?</th>
+<th>Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Nichol-Dhariwal cosine</strong> (arXiv:2102.09672, eq. 8)</td>
+<td><code>alpha_bar(t) = cos^2((t/T + s) / (1 + s) * pi/2)</code>; <code>beta_diff(t) = 1 - alpha_bar(t)/alpha_bar(t-1)</code></td>
+<td><code>n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))</code></td>
+<td style="text-align: center;"><strong>Yes</strong> (functional form: half-cosine scaled into <code>[0, 1]</code>; offset <code>s = 0</code>)</td>
+<td><a href="#2-analogy-to-nichol-dhariwal-arxiv210209672">§2</a></td>
+</tr>
+<tr>
+<td><strong>Karras EDM rho-spacing</strong> (arXiv:2206.00364, §5.2)</td>
+<td><code>sigma(t) = t</code> (polynomial); geometric progression <code>sigma_i = (sigma_max^(1/rho) + i/(N-1) * (sigma_min^(1/rho) - sigma_max^(1/rho)))^rho</code></td>
+<td><code>n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))</code></td>
+<td style="text-align: center;"><strong>No</strong> (different functional form); cosine is the framework's chosen replacement, not a port</td>
+<td><a href="#3-analogy-to-karras-edm-arxiv220600364">§3</a>, <a href="#4-why-cosine-and-not-edms-polynomial">§4</a></td>
+</tr>
+<tr>
+<td><strong>SD3 exponential shift</strong> (Esser et al. 2024, §"Shifted schedules")</td>
+<td><code>sigma(t) = sigma_max * t</code> shifted so <code>log(sigma(t)/sigma_max) = -gamma * log(t)</code> (rectified flow-style log-shift)</td>
+<td><code>n_cap(r) = n_max * exp(-alpha * r)</code></td>
+<td style="text-align: center;"><strong>No</strong> (different parameterisation); the exponential family is a framework analogue, not a port</td>
+<td><a href="../adaptive_reflow/algorithm/scheduler.py"><code>scheduler.py:882</code></a></td>
+</tr>
+</tbody>
+</table>
+<p>The "Identical?" column reflects whether the framework's closed form
+is <strong>byte-equivalent</strong> to the field standard. The cosine is identical
+to Nichol-Dhariwal at the functional level (same half-cosine, same
+scaling); the framework's exponential is <em>not</em> a port of SD3's
+log-shift (it is a raw <code>exp(-alpha * r)</code>) but is the closest
+single-parameter closed form that respects monotonicity.</p>
+<blockquote>
+<p><strong>What this section does NOT claim.</strong> The framework does NOT claim
+to reproduce any of the three field standards' empirical
+performance. The closed forms are aligned at the <em>direction</em> level
+(monotone-decreasing <code>n_cap</code> over rounds, mapping onto the paper's
+<code>eps -&gt; 0</code> direction) but not at the <em>magnitude</em> level
+([CLM-015]). The 18-row ablation in <code>tools/run_ablation.py</code> records
+the framework's own empirical behaviour; comparing those numbers to
+a Nichol-Dhariwal or EDM run on the same target is out of scope.</p>
+</blockquote>
+<h2 id="10-how-to-choose-a-schedule">10. How to choose a schedule<a class="headerlink" href="#10-how-to-choose-a-schedule" title="Permanent link">&para;</a></h2>
+<p>The decision tree below maps <code>cycle_length</code> (the round budget of one
+outer cycle) onto a recommended <code>SchedulerProtocol</code> family. The
+recommendations are derived from the ablation grid in
+<code>tools/run_ablation.py</code> (see <code>docs/ABLATION.md</code> §"New findings:
+schedule families (ADR-0012)") and the framework's paper-grounding
+ADR (ADR-0013).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>                       +---------------------------------+
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>                       |  What is your cycle_length?     |
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>                       +----------------+----------------+
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>                                        |
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>            +---------------------------+---------------------------+
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>            |                           |                           |
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>            v                           v                           v
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>       cycle_length              5 &lt;= cycle_length              cycle_length
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>       &lt; 5                       &lt;= 10                          &gt; 10
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>            |                           |                           |
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>            v                           v                           v
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>   PolynomialScheduler        CosineAnnealScheduler       +----------------+
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>   (power=1.0, linear)         (default, n_min=0.0,        | Is there an   |
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>                                n_max=1.0)                  | external       |
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>                                - ties or wins              | convergence    |
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>                                on the canonical            | signal?        |
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>                                2D-FM target                +----+-----------+
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>                                [CLM-018]                         |
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>                                                           +-----+------+
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>                                                           v            v
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>                                                       Yes (oracle)   No
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>                                                           |            |
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>                                                           v            v
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>                                                  ConvergenceAdaptive    +---------+
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>                                                  Scheduler              | L &gt; 20? |
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>                                                  (base=Cosine,          |         |
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>                                                   shift_max=0.2)        v         v
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>                                                  ADR-0012             Yes        No
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>                                                                       |          |
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a>                                                                       v          v
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>                                                            CodimensionSheet   CosineAnneal
+<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a>                                                            Scheduler          Scheduler
+<a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a>                                                            (eps_implicit=     (default)
+<a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a>                                                             0.05, paper-
+<a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a>                                                             aligned)
+<a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a>                                                            [CLM-006]
+</code></pre></div>
+<p>The decision rules:</p>
+<ul>
+<li><strong><code>cycle_length &lt; 5</code></strong> — use <code>PolynomialScheduler(power=1.0)</code>.
+  Cosine with fewer than 5 rounds has no time to anneal (the cosine
+  ramp's first quarter is the steepest descent, but on a 4-round
+  cycle there is no room for the smooth half-cosine profile to
+  distinguish itself from a linear ramp); the linear is the cheapest
+  closed form that respects monotonicity.</li>
+<li><strong><code>5 &lt;= cycle_length &lt;= 10</code></strong> — use <code>CosineAnnealScheduler</code> with
+  the default <code>n_min=0.0, n_max=1.0</code> envelope. Cosine wins or ties on
+  the canonical 2D-FM target in this range [CLM-018].</li>
+<li><strong><code>cycle_length &gt; 10</code> and convergence signal is available</strong> —
+  use <code>ConvergenceAdaptiveScheduler(base=CosineAnnealScheduler(...))</code>.
+  The convergence signal (a per-round oracle metric) lets the
+  scheduler shift away from the cosine ramp when the per-round
+  evidence is monotone-improving (shift negative, refine earlier) or
+  monotone-stalling (shift positive, re-explore). The shift is
+  bounded by <code>[-shift_max, +shift_max]</code> so the envelope invariant is
+  preserved.</li>
+<li><strong><code>cycle_length &gt; 20</code> and no convergence signal</strong> — use
+  <code>CodimensionSheetScheduler(eps_implicit=0.05)</code>. This is the
+  paper-grounded closed form for paper Theorem 1 magnitude level
+  [CLM-006]; the longer cycle gives the Lemma 2 + Lemma 3 closed form
+  room to settle.</li>
+<li><strong>All other cases</strong> — use <code>CosineAnnealScheduler</code> with the default
+  envelope. The cosine is the recommended default because (a) it is
+  the canonical implementation of paper Lemma 2's sheet-tube scaling
+  at the direction level [CLM-005]; (b) it ties or wins on the
+  canonical 2D-FM target [CLM-018]; (c) it has a single tunable knob
+  (the <code>n_min</code> / <code>n_max</code> envelope anchors).</li>
+</ul>
+<h3 id="101-defaults-matrix-cross-reference">10.1 Defaults matrix cross-reference<a class="headerlink" href="#101-defaults-matrix-cross-reference" title="Permanent link">&para;</a></h3>
+<p>The scenario column of <a href="../defaults-matrix/"><code>docs/defaults-matrix.md</code></a>
+mirrors this decision tree:</p>
+<table>
+<thead>
+<tr>
+<th>Decision-tree branch</th>
+<th>Defaults-matrix row</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cycle_length &lt; 5</code> (linear)</td>
+<td>"Short run" row uses <code>CosineAnnealScheduler(cycle_length=4)</code> (the <code>4</code>-round cosine is equivalent to a linear on a 4-round cycle because the half-cosine collapses to a line at <code>L=4</code>).</td>
+</tr>
+<tr>
+<td><code>cycle_length &gt; 20</code> paper-aligned</td>
+<td>"Long run" row uses <code>CodimensionSheetScheduler(eps_implicit=0.05)</code>.</td>
+</tr>
+<tr>
+<td>Convergence signal available</td>
+<td>"Adaptive" row uses <code>ConvergenceAdaptiveScheduler(base=CosineAnnealScheduler)</code>.</td>
+</tr>
+<tr>
+<td>Multi-phase piecewise</td>
+<td>"Sequential" row uses <code>SequentialScheduler([(Cosine, 8), (Expo, 4), (Const, 8)])</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The matrix and the decision tree are two views of the same
+recommendation set; the matrix is the reader-facing recipe, the
+decision tree is the algorithmically-derived branching.</p>
+<h2 id="11-references-extended">11. References (extended)<a class="headerlink" href="#11-references-extended" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Nichol, A., Dhariwal, P. (2021). <em>Improved Denoising Diffusion
+  Probabilistic Models.</em> arXiv:2102.09672. Section 3.2, eq. 8.</li>
+<li>Karras, T., Aittala, M., Aila, T., Laine, S. (2022). <em>Elucidating the
+  Design Space of Diffusion-Based Generative Models.</em> arXiv:2206.00364.
+  Section 5.2 (forward noise injection) and Section 5.3 (sampling).</li>
+<li>Esser, P., Kulal, S., Blattmann, A., et al. (2024). <em>Scaling Rectified
+  Flow Transformers for High-Resolution Image Synthesis (SD3).</em>
+  arXiv:2403.06306. Section on shifted schedules (the log-shift
+  parameterisation).</li>
+<li><a href="../adr/0010-cosine-driven-memory-fraction/"><code>docs/adr/0010-cosine-driven-memory-fraction.md</code></a>
+  — the framework's canonical schedule wiring.</li>
+<li><a href="../adr/0012-noise-schedule-survey/"><code>docs/adr/0012-noise-schedule-survey.md</code></a>
+  — the noise-schedule survey ADR (accepts
+  <code>ConvergenceAdaptiveScheduler</code>; rejects Karras EDM <code>sigma(t) = t</code>).</li>
+<li><a href="../adr/0013-posterior-selection-drives-algorithm/"><code>docs/adr/0013-posterior-selection-drives-algorithm.md</code></a>
+  — the paper-grounded algorithm-layer ADR (introduces
+  <code>CodimensionSheetScheduler</code>).</li>
+<li><a href="../defaults-matrix/"><code>docs/defaults-matrix.md</code></a> — the reader-facing
+  defaults matrix (heuristic guide, not a hard guarantee).</li>
+<li><a href="../sequential-protocol/"><code>docs/sequential-protocol.md</code></a> — the
+  <code>SequentialScheduler</code> reference.</li>
+<li><a href="../adaptive_reflow/algorithm/scheduler.py"><code>adaptive_reflow/algorithm/scheduler.py</code></a> —
+  the <code>SchedulerProtocol</code> definition and all concrete schedulers.</li>
+<li><a href="../adaptive_reflow/algorithm/sequential.py"><code>adaptive_reflow/algorithm/sequential.py</code></a> —
+  the <code>SequentialScheduler</code> implementation (P1-2).</li>
 <li><a href="../adaptive_reflow/schedule/cosine.py"><code>adaptive_reflow/schedule/cosine.py</code></a> —
   the closed-form <code>n_cap_for_round</code> helper.</li>
 </ul>

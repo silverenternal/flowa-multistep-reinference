@@ -78,6 +78,16 @@ DEFAULT_CONSTANT_BETA: float = 0.5
 #: target yields a symmetric envelope around ``beta = 0.5``.
 DEFAULT_ADAPTIVE_TARGET_ESTIMATE: float = 0.5
 
+#: Audit code emitted by :class:`AdaptivePolicyDriver` when the
+#: paper-quantity-normalised envelope ``(1 - |p - t|) / C_g``
+#: exceeds ``1.0`` and ``beta`` is therefore saturated at the
+#: unit-interval ceiling (P2-3 / 8.3 audit). The code carries the
+#: pre-clip raw value so a downstream audit reader can see how far
+#: past the ceiling the unclipped value would have gone (the gap is
+#: ``raw - 1.0``). When ``C_g >= 1`` the unclipped envelope is
+#: always ``<= 1.0`` and the code is never emitted.
+BETA_SATURATION_FROM_PAPER_QUANTITY: str = "beta_saturation_from_paper_quantity"
+
 
 # ---------------------------------------------------------------------------
 # Pure helper — channel vocabulary + policy_hash recompute
@@ -200,6 +210,7 @@ class PolicyDriverProtocol(Protocol):
         base_policy: FinalRestartPolicy,
         channel: str,
         prior_endpoint_digest: str,
+        audit_codes: list[str] | None = None,
     ) -> FinalRestartPolicy:
         """Return the round's :class:`FinalRestartPolicy`.
 
@@ -224,6 +235,16 @@ class PolicyDriverProtocol(Protocol):
             string when this is round 0). Drivers MAY use this to
             adapt ``beta``; drivers MUST NOT inspect the endpoint's
             contents.
+        audit_codes:
+            Optional mutable list that the driver appends diagnostic
+            codes to. Drivers MAY emit saturation / clipping codes
+            here without mutating the caller's list when ``None``
+            (mirrors the :class:`MergeOperatorProtocol` contract).
+            Adaptive drivers that fold a paper-quantity divisor
+            (``per_cell_coefficient_C < 1``) into the per-round
+            ``beta`` MAY emit
+            :data:`BETA_SATURATION_FROM_PAPER_QUANTITY` when the
+            unclipped envelope exceeds ``1.0``.
 
         Returns
         -------
@@ -291,6 +312,7 @@ class ScheduleDerivedPolicyDriver:
         base_policy: FinalRestartPolicy,
         channel: str,
         prior_endpoint_digest: str,
+        audit_codes: list[str] | None = None,
     ) -> FinalRestartPolicy:
         """Return the round's policy with ``beta = n_cap``.
 
@@ -304,10 +326,16 @@ class ScheduleDerivedPolicyDriver:
         ``prior_endpoint_digest`` is accepted for protocol signature
         parity and is otherwise ignored (the schedule is the only
         restart philosophy the driver encodes).
+
+        ``audit_codes`` is accepted for protocol signature parity and
+        is otherwise ignored (the schedule-derived driver has no
+        saturation / clipping surface; the schedule's ``n_cap`` is
+        already in ``[0, 1]`` post-clip).
         """
-        # ``prior_endpoint_digest`` is accepted for protocol signature
-        # parity; suppress the unused-argument lint explicitly.
-        del prior_endpoint_digest
+        # ``prior_endpoint_digest`` / ``audit_codes`` are accepted for
+        # protocol signature parity; suppress the unused-argument lint
+        # explicitly.
+        del prior_endpoint_digest, audit_codes
         if schedule_sample is None:
             return base_policy
         n_cap_raw = schedule_sample.n_cap
@@ -408,16 +436,19 @@ class ConstantPolicyDriver:
         base_policy: FinalRestartPolicy,
         channel: str,
         prior_endpoint_digest: str,
+        audit_codes: list[str] | None = None,
     ) -> FinalRestartPolicy:
         """Return the round's policy with ``beta = constant``.
 
-        ``schedule_sample`` and ``prior_endpoint_digest`` are accepted
-        for protocol signature parity and are otherwise ignored. The
-        override preserves the base policy's channel vocabulary and
-        recomputes ``policy_hash`` via :func:`hash_policy_hash`.
+        ``schedule_sample``, ``prior_endpoint_digest`` and
+        ``audit_codes`` are accepted for protocol signature parity and
+        are otherwise ignored. The override preserves the base
+        policy's channel vocabulary and recomputes ``policy_hash``
+        via :func:`hash_policy_hash`.
         """
         del schedule_sample
         del prior_endpoint_digest
+        del audit_codes
         return _override_beta_by_channel(
             base_policy, beta_value=self._beta, channel=channel
         )
@@ -564,6 +595,7 @@ class AdaptivePolicyDriver:
         base_policy: FinalRestartPolicy,
         channel: str,
         prior_endpoint_digest: str,
+        audit_codes: list[str] | None = None,
     ) -> FinalRestartPolicy:
         """Return the round's policy with ``beta = (1 - |p - t|) / C_g``.
 
@@ -580,17 +612,37 @@ class AdaptivePolicyDriver:
         ``C_g < 1`` the unclipped value can exceed 1, so the clip
         saturates; when ``C_g >= 1`` the raw envelope stays inside
         ``[0, 1]``).
+
+        ``audit_codes``: optional mutable list that the driver appends
+        diagnostic codes to. When the paper-quantity-normalised
+        envelope ``(1 - |p - t|) / C_g`` exceeds ``1.0`` (only
+        possible when ``C_g < 1``) the driver appends
+        :data:`BETA_SATURATION_FROM_PAPER_QUANTITY` with the raw
+        unclipped value embedded (P2-3 / 8.3 audit). The saturation
+        audit code is only emitted on the paper-quantity-augmented
+        path; the legacy path (``C_g = None``) cannot saturate.
         """
         del schedule_sample
         prior_normalized = _digest_to_unit(str(prior_endpoint_digest))
         diff = abs(prior_normalized - self._target)
         raw = 1.0 - diff
+        saturated_from_paper_quantity = False
         if self._per_cell_coefficient_C is not None:
             raw = raw / float(self._per_cell_coefficient_C)
+            # P2-3 / 8.3: when ``C_g < 1`` the paper-quantity-
+            # normalised envelope can exceed 1.0 and ``beta`` saturates
+            # at the ceiling. Emit an audit code so downstream readers
+            # can see the saturation.
+            if raw > 1.0:
+                saturated_from_paper_quantity = True
         # Clip into ``[0, 1]`` — when ``diff > 1`` (target_estimate far
         # from the unit interval) the raw ``beta`` would go negative,
         # so we floor at 0 to keep the engine's audit invariant.
         clipped = _clip_unit_finite(float(raw))
+        if saturated_from_paper_quantity and audit_codes is not None:
+            audit_codes.append(
+                f"{BETA_SATURATION_FROM_PAPER_QUANTITY}:raw={raw!r}"
+            )
         return _override_beta_by_channel(
             base_policy, beta_value=clipped, channel=channel
         )
@@ -672,10 +724,19 @@ def _stable_digest(payload: Mapping[str, Any]) -> str:
     keys, JSON-encodable values) so the digest is deterministic across
     runs and Python versions. The implementation is inlined so this
     module stays stdlib-only.
+
+    The fallback ``default`` is :func:`_canonical_json_default` (not
+    ``str``) so numerically-equal values from different dtypes (e.g.
+    ``numpy.float64(0.5)`` and ``float(0.5)``) produce the same digest
+    (P2-11 audit). The helper handles numpy scalars via
+    :meth:`numpy.ndarray.item` so the digest is mathematically stable
+    across dtype boundaries.
     """
     import json
 
-    text = json.dumps(_canonicalize(payload), sort_keys=True, default=str)
+    text = json.dumps(
+        _canonicalize(payload), sort_keys=True, default=_canonical_json_default
+    )
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
@@ -694,6 +755,43 @@ def _canonicalize(value: Any) -> Any:
         return float(value)
     except (TypeError, ValueError):
         return str(value)
+
+
+def _canonical_json_default(obj: Any) -> Any:
+    """Return a JSON-encodable fallback for ``obj``.
+
+    Used as the ``default`` argument to :func:`json.dumps` so the
+    canonical encoder can serialise objects outside the default JSON
+    type set without losing numerical precision. The helper handles:
+
+    * NumPy scalars (``numpy.float64`` / ``numpy.int64`` etc.) —
+      coerced via :meth:`numpy.ndarray.item` so a ``numpy.float64``
+      and a Python ``float`` with the same numerical value produce
+      the same digest (P2-11 audit).
+    * Objects exposing :meth:`__float__` — coerced via :func:`float`.
+    * Anything else — coerced via :func:`str` as the last-resort
+      deterministic fallback.
+
+    The helper never raises: a non-encodable object produces a string
+    digest of its repr so two digests remain byte-comparable across
+    Python versions and the encoder never silently drops content.
+    """
+    # NumPy scalars: ``.item()`` returns the Python builtin scalar.
+    item_fn = getattr(obj, "item", None)
+    if callable(item_fn):
+        try:
+            return item_fn()
+        except (ValueError, TypeError):
+            pass
+    # Numeric protocol fallback (decimal.Decimal, fractions.Fraction, etc.).
+    float_fn = getattr(obj, "__float__", None)
+    if callable(float_fn):
+        try:
+            return float_fn()
+        except (TypeError, ValueError):
+            pass
+    # Last-resort deterministic string fallback.
+    return str(obj)
 
 
 def _digest_to_unit(digest: str) -> float:
@@ -734,6 +832,7 @@ def _digest_to_unit(digest: str) -> float:
 __all__ = [
     # Constants
     "ADAPTIVE_FAMILY",
+    "BETA_SATURATION_FROM_PAPER_QUANTITY",
     "CONSTANT_FAMILY",
     "DEFAULT_ADAPTIVE_TARGET_ESTIMATE",
     "DEFAULT_CONSTANT_BETA",

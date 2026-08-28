@@ -39,16 +39,27 @@ EXPECTED_CONFIGS: tuple[str, ...] = (
     "multi_round_cosine_adaptive_driver",
 )
 #: The two ADR-0013 paper-grounded configurations. They only run
-#: against :data:`PAPER_GROUNDED_TARGET`, so the grid is
-#: ``8 * 2 + 2 = 18`` rows rather than ``10 * 2 = 20``.
+#: against :data:`PAPER_GROUNDED_TARGET`.
 EXPECTED_PAPER_CONFIGS: tuple[str, ...] = (
     "multi_round_codimension_sheet_posterior_selection",
     "multi_round_cosine_posterior_selection",
 )
+#: The two post-infrastructure-fix (commit ``e5e38fc``) configurations
+#: added in the post-P0/P1 ablation. Both run against both canonical
+#: targets (one batched-trajectory row + one identity-merge row).
+EXPECTED_INFRASTRUCTURE_FIX_CONFIGS: tuple[str, ...] = (
+    "batched_cosine_forward_noise_hash_chained",
+    "multi_round_cosine_anneal_identity_merge",
+)
 EXPECTED_TARGETS: tuple[str, ...] = ("two_moons", "eight_gaussians")
 PAPER_GROUNDED_TARGET: str = "two_moons"
+#: Total row count: ``8 * 2 + 2 + 2 * 2 = 22`` cells (8 canonical
+#: configs x 2 targets + 2 paper-grounded rows on ``two_moons`` + 2
+#: post-infrastructure-fix rows x 2 targets).
 EXPECTED_ROW_COUNT: int = (
-    len(EXPECTED_CONFIGS) * len(EXPECTED_TARGETS) + len(EXPECTED_PAPER_CONFIGS)
+    len(EXPECTED_CONFIGS) * len(EXPECTED_TARGETS)
+    + len(EXPECTED_PAPER_CONFIGS)
+    + len(EXPECTED_INFRASTRUCTURE_FIX_CONFIGS) * len(EXPECTED_TARGETS)
 )
 
 TABLE_HEADER: str = "| Config | Target | Final W2 | Mean W2 | Final coverage | Mean coverage |"
@@ -141,17 +152,23 @@ def test_run_ablation_quick_generates_table(
         (config, target) for config in EXPECTED_CONFIGS for target in EXPECTED_TARGETS
     } | {
         (config, PAPER_GROUNDED_TARGET) for config in EXPECTED_PAPER_CONFIGS
+    } | {
+        (config, target)
+        for config in EXPECTED_INFRASTRUCTURE_FIX_CONFIGS
+        for target in EXPECTED_TARGETS
     }
     seen = {(r["config"], r["target"]) for r in rows}
     assert seen == expected_rows, (
         f"missing rows: {expected_rows - seen}; extra rows: {seen - expected_rows}"
     )
 
-    # 2a. The 8 x 2 + 2 = 18 rows should all be present (the canonical
-    # smoke test count for the paper-grounded ablation).
+    # 2a. The 8 x 2 + 2 + 2 x 2 = 22 rows should all be present (the
+    # canonical smoke test count for the post-infrastructure-fix
+    # paper-grounded ablation).
     assert len(rows) == EXPECTED_ROW_COUNT, (
         f"expected {EXPECTED_ROW_COUNT} rows (8 configs x 2 targets + 2 "
-        f"paper-grounded rows), got {len(rows)}"
+        f"paper-grounded rows + 2 infrastructure-fix configs x 2 "
+        f"targets), got {len(rows)}"
     )
 
     # 2b. The ADR-0013 selection-ratio table is present and both
@@ -175,6 +192,39 @@ def test_run_ablation_quick_generates_table(
             assert 0.0 <= float(value) <= 1.0, (
                 f"{config}: selection_ratio {value} outside [0, 1]"
             )
+
+    # 2c. The post-infrastructure-fix ablation section is present
+    #     and reports ``ledger_chain_integrity = True`` for every
+    #     new row (commit ``e5e38fc`` verified the hash-chained
+    #     ledger on every emit).
+    assert "## Post-infrastructure-fix ablation (22 rows)" in text
+    assert "## Reproducibility" in text
+    for config in EXPECTED_INFRASTRUCTURE_FIX_CONFIGS:
+        for target in EXPECTED_TARGETS:
+            assert (config, target) in seen, (
+                f"post-infrastructure-fix row ({config}, {target}) "
+                f"missing from the canonical results table; seen: {seen}"
+            )
+    infra_section = text.split("## Post-infrastructure-fix ablation (22 rows)")[1]
+    # Every infrastructure-fix row in the new metrics table must
+    # have ``ledger_chain_integrity = True`` (the hash chain is
+    # verified on every run by ``verify_ledger_chain`` for the
+    # ``ReInferenceRunner`` and by the batched runner's own
+    # recompute).
+    for line in infra_section.splitlines():
+        if not line.startswith("|"):
+            continue
+        # Skip the header row.
+        if "ledger_chain_integrity" in line:
+            continue
+        for config in EXPECTED_INFRASTRUCTURE_FIX_CONFIGS:
+            if line.startswith(f"| {config} |"):
+                cells = [c.strip() for c in line.strip("|").split("|")]
+                # Last cell is the ledger_chain_integrity flag.
+                assert cells[-1] == "True", (
+                    f"{config}: ledger_chain_integrity must be True "
+                    f"after e5e38fc; got {cells[-1]!r} on row: {line}"
+                )
 
     # 3. Every numeric column parses to a finite real number; the
     #    ``Final Coverage`` and ``Mean Coverage`` columns must lie in

@@ -255,6 +255,31 @@ class MergeOperatorProtocol(Protocol):
     ``max(0.0, min(cap, floor))`` before computing the result; the
     audit trail records the degenerate configuration so downstream
     audit readers can replay it.
+
+    CONTRACT (closes P2-4) — ``audit_codes`` acceptance:
+    :class:`IdentityOperator` and :class:`EMAOperator` are
+    **non-clamping operators**. They MAY accept ``audit_codes`` but
+    are NOT obligated to populate it — the audit list is reserved for
+    operators that emit degeneracy / clipping diagnostics. In
+    particular:
+
+    * Non-clamping operators ignore the envelope arguments
+      (``cap`` / ``floor`` / ``delta_cap_up`` / ``delta_cap_down``).
+      The bounded-merge audit codes (e.g.
+      :data:`MERGE_DEGENERATE_INTERVAL`) MUST NOT be emitted by
+      non-clamping operators because the envelope semantics are not
+      in scope.
+    * Non-clamping operators MAY emit finiteness-clipping audit codes
+      (e.g. :data:`MERGE_NONFINITE_PREV_CLIPPED` /
+      :data:`MERGE_NONFINITE_DYNAMIC_CLIPPED`) when ``prev`` or
+      ``dynamic`` is non-finite / out-of-range. This matches the
+      P0-3 contract that ALL implementations MUST return a finite
+      ``float`` in ``[0, 1]`` and use the clip-and-audit surface to
+      do so.
+    * Operators that ignore ``audit_codes`` MUST NOT mutate the
+      caller's list (no appends, no removals); they MUST treat the
+      parameter as accepted-but-unused so the protocol signature
+      stays polymorphic across the bounded / non-clamping families.
     """
 
     def merge(

@@ -16,6 +16,7 @@ that produces the ``.npz`` weights files). It is the only module under
 from __future__ import annotations
 
 import hashlib
+from collections import OrderedDict, deque
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -74,6 +75,15 @@ TWODIM_FM_NUM_STEPS: int = 100
 # Coordinate clamp on the trajectory (the 2D target distributions all
 # fit comfortably inside ``[-5, 5]^2``).
 TWODIM_FM_CLAMP: float = 5.0
+
+#: Maximum size of the LRU-bounded ``_native_states`` cache. Long-
+#: lived engine runs accumulate one ``dict`` per ``build_initial_state``
+#: / ``solve_ode`` / ``observe_endpoint`` call; without a bound the
+#: cache grows unboundedly and the engine's memory footprint scales
+#: with the number of rounds (audit A-3). The bound is generous
+#: (``128``) so the engine's working set fits comfortably while
+#: preventing unbounded growth on long multi-cycle runs.
+TWODIM_FM_NATIVE_STATES_MAXSIZE: int = 128
 
 # Integrator method literals.
 IntegratorMethod = Literal["rk4", "dormand_prince"]
@@ -429,8 +439,15 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         self._weights = _load_weights(self._weights_path)
         # Native state keyed by sha256 digest. The engine never
         # inspects the values — it only propagates opaque
-        # ``native_state_digest`` strings.
-        self._native_states: dict[str, dict[str, Any]] = {}
+        # ``native_state_digest`` strings. Bounded by
+        # :data:`TWODIM_FM_NATIVE_STATES_MAXSIZE` (audit A-3): without
+        # an explicit bound the cache grows unboundedly across long
+        # multi-cycle engine runs and the adapter's memory footprint
+        # scales with the number of rounds. The OrderedDict is used
+        # in insertion-order LRU semantics so the *oldest* entries
+        # (the engine's consumed digests from prior rounds) are
+        # evicted first while fresh digests remain accessible.
+        self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._caps = TwoDimFMCapabilities()
 
     # ------------------------------------------------------------------
@@ -439,6 +456,48 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
 
     def capabilities(self) -> AdapterCapabilities:
         return self._caps
+
+    # ------------------------------------------------------------------
+    # 0. LRU-bounded native_states helper (audit A-3)
+    # ------------------------------------------------------------------
+
+    def _put_native_state(
+        self,
+        digest: str,
+        entry: dict[str, Any],
+    ) -> None:
+        """Insert ``entry`` under ``digest``; evict the oldest entry past maxsize.
+
+        The :attr:`_native_states` cache is bounded by
+        :data:`TWODIM_FM_NATIVE_STATES_MAXSIZE`. When the cache is at
+        the bound, the insertion-order oldest entry (the engine's
+        earliest round's consumed digest) is evicted to make room.
+        This closes audit A-3: previously the cache was an unbounded
+        ``dict`` so long-running multi-cycle engine runs accumulated
+        one entry per round and the adapter's memory footprint grew
+        without bound.
+        """
+        if digest in self._native_states:
+            # Update in place: re-insert to refresh insertion order.
+            self._native_states[digest] = entry
+            self._native_states.move_to_end(digest)
+            return
+        self._native_states[digest] = entry
+        while len(self._native_states) > TWODIM_FM_NATIVE_STATES_MAXSIZE:
+            # ``popitem(last=False)`` removes the oldest entry (FIFO
+            # eviction order).
+            self._native_states.popitem(last=False)
+
+    def _evict_native_state(self, digest: str) -> None:
+        """Remove ``digest`` from the cache if present (no-op when absent).
+
+        Called by ``observe_endpoint`` so the consumed trajectory
+        digest is removed as soon as the endpoint is recorded. The
+        endpoint entry itself stays in the cache so downstream
+        consumers (e.g. ``export_trajectory`` callers) can still
+        resolve it.
+        """
+        self._native_states.pop(digest, None)
 
     # ------------------------------------------------------------------
     # 2. build_initial_state (required by has_prior_export=True)
@@ -466,11 +525,14 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
                 "x0": [float(x0[0]), float(x0[1])],
             }
         )
-        self._native_states[digest] = {
-            "x0": np.asarray(x0, dtype=np.float64).reshape(2),
-            "target": self._target,
-            "source_round": 0,
-        }
+        self._put_native_state(
+            digest,
+            {
+                "x0": np.asarray(x0, dtype=np.float64).reshape(2),
+                "target": self._target,
+                "source_round": 0,
+            },
+        )
         bundle = StateBundle(
             channels={
                 ChannelName("xy"): _make_ref(
@@ -568,11 +630,14 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
                 "blended_x0": [float(blended_x0[0]), float(blended_x0[1])],
             }
         )
-        self._native_states[next_digest] = {
-            "x0": np.asarray(blended_x0, dtype=np.float64).reshape(2),
-            "target": self._target,
-            "source_round": next_round,
-        }
+        self._put_native_state(
+            next_digest,
+            {
+                "x0": np.asarray(blended_x0, dtype=np.float64).reshape(2),
+                "target": self._target,
+                "source_round": next_round,
+            },
+        )
         return StateBundle(
             channels=dict(state.channels),
             masks=dict(state.masks),
@@ -683,7 +748,7 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         }
         if overflowed:
             stored["_audit"] = ERR_INTEGRATOR_OVERFLOW
-        self._native_states[traj_digest] = stored
+        self._put_native_state(traj_digest, stored)
         # Integrator config hash: stable over (method, num_steps, seed).
         cfg_blob = repr(
             ("twodim_fm_config", self._integrator, int(num_steps), int(seed))
@@ -734,7 +799,12 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         # Propagate the integrator-overflow audit code, if any.
         if "_audit" in traj_entry:
             stored["_audit"] = traj_entry["_audit"]
-        self._native_states[endpoint_digest] = stored
+        self._put_native_state(endpoint_digest, stored)
+        # The trajectory digest itself is left in the cache so
+        # downstream consumers (``export_trajectory``,
+        # ``evaluate_trajectory`` callers) can still resolve it.
+        # The cache's LRU bound (audit A-3) ensures the trajectory
+        # is evicted eventually if the cache overflows.
         next_round = int(state.source_round) + 1
         provenance = tuple(state.provenance) + ("twodim_fm_observed",)
         if "_audit" in traj_entry:
@@ -923,6 +993,7 @@ __all__ = [
     "TWODIM_FM_CHANNEL_DOMAINS",
     "TWODIM_FM_CONFIG_HASH",
     "TWODIM_FM_CONFIG_VERSION",
+    "TWODIM_FM_NATIVE_STATES_MAXSIZE",
     "TWODIM_FM_NUM_STEPS",
     "TwoDimFMAdapter",
     "TwoDimFMCapabilities",

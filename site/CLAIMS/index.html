@@ -681,6 +681,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#CLM-019" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-019: SchedulerProtocol is the canonical first-class scheduler axis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-020" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-020: BoundedMergeOperator enforces a non-zero noise floor
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-021" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-021: SequentialScheduler mirrors PyTorch's SequentialLR composite scheduler
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1027,6 +1060,80 @@ tree resolve through the CLM IDs defined here.</p>
 <li>Evidence: <code>docs/ABLATION.md</code> §"New findings: schedule families
   (ADR-0012)"; regression coverage in
   <code>tests/test_tools/test_run_ablation.py</code>.</li>
+</ul>
+<h2 id="CLM-019">CLM-019: <code>SchedulerProtocol</code> is the canonical first-class scheduler axis<a class="headerlink" href="#CLM-019" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: ADR-0011 §"The four-axis product", <code>docs/defaults-matrix.md</code> §1</li>
+<li>Asserted by: docs/defaults-matrix.md:21-32,
+  docs/schedule-theory.md:170-180,
+  docs/INSIGHTS.md:11</li>
+<li>Disputed by: —</li>
+<li>Statement: <code>SchedulerProtocol</code> is the canonical first-class
+  scheduler axis exposed by <code>adaptive_reflow.algorithm.scheduler</code>;
+  nine concrete implementations are registered in
+  <code>SCHEDULER_REGISTRY</code> (<code>cosine</code>, <code>constant</code>, <code>linear</code>,
+  <code>exponential</code>, <code>polynomial</code>, <code>sigmoid</code>, <code>convergence_adaptive</code>,
+  <code>codimension_sheet</code>, <code>sequential</code>). The defaults matrix's
+  Scheduler column references four of these nine families; the
+  other five are valid but not the reader-facing defaults.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/scheduler.py:2739</code>
+  (<code>SCHEDULER_REGISTRY</code>),
+  <code>adaptive_reflow/algorithm/sequential.py:95</code>
+  (<code>SequentialScheduler</code>),
+  <code>docs/defaults-matrix.md</code> §"The matrix".</li>
+</ul>
+<h2 id="CLM-020">CLM-020: <code>BoundedMergeOperator</code> enforces a non-zero noise floor<a class="headerlink" href="#CLM-020" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: ADR-0007 §"Bounded merge semantics", <code>docs/defaults-matrix.md</code> §2.3</li>
+<li>Asserted by: docs/defaults-matrix.md:97-103,
+  docs/INSIGHTS.md:40</li>
+<li>Disputed by: —</li>
+<li>Statement: <code>BoundedMergeOperator</code> enforces a hard <code>[floor, cap]</code>
+  envelope on every per-round merge; the <code>floor</code> parameter is the
+  structural guarantee that the noise scale stays inside the
+  scheduled envelope and that the algorithm does not freeze on the
+  prior. The defaults matrix uses <code>floor=0.1</code> for short runs
+  (<code>cycle_length=4</code>) and <code>floor=0.05</code> for long runs
+  (<code>cycle_length=20</code>) — the floor drops with <code>cycle_length</code> because
+  longer cycles can tolerate a lower floor.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/merge_operator.py:350</code>
+  (<code>BoundedMergeOperator</code> class),
+  <code>adaptive_reflow/algorithm/merge_operator.py:386</code>
+  (<code>floor</code>/<code>cap</code> keyword arguments),
+  <code>tests/test_algorithm/test_merge_operator.py</code>
+  (the bounded-merge regression suite).</li>
+</ul>
+<h2 id="CLM-021">CLM-021: <code>SequentialScheduler</code> mirrors PyTorch's SequentialLR composite scheduler<a class="headerlink" href="#CLM-021" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: ADR-0012 §"Sequential chain", <code>docs/sequential-protocol.md</code> §1</li>
+<li>Asserted by: docs/sequential-protocol.md:9-20,
+  docs/defaults-matrix.md:30-32</li>
+<li>Disputed by: —</li>
+<li>Statement: <code>SequentialScheduler</code> is the <code>adaptive_reflow</code> analog
+  of PyTorch's SequentialLR composite learning-rate scheduler: it
+  takes a list of <code>(sub_scheduler, n_rounds)</code> tuples and routes
+  round <code>r</code> to the sub-scheduler at slot index <code>i</code> where <code>r</code> falls
+  in <code>[sum(n_rounds[:i]), sum(n_rounds[:i+1]))</code>. The chain's
+  <code>cycle_length()</code> returns <code>sum(n_rounds)</code> and its <code>config_hash()</code>
+  includes every sub-scheduler's own <code>config_hash()</code> so two chains
+  with the same shape but different sub-schedulers produce distinct
+  hashes. The implementation is registered in <code>SCHEDULER_REGISTRY</code>
+  under the key <code>"sequential"</code>.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/sequential.py:95</code>
+  (<code>SequentialScheduler</code> class),
+  <code>adaptive_reflow/algorithm/scheduler.py:2748</code>
+  (<code>SCHEDULER_REGISTRY["sequential"]</code> entry),
+  <code>tests/test_algorithm/test_sequential.py</code>
+  (16+ regression tests).</li>
 </ul>
 
 

@@ -727,6 +727,104 @@ def test_restart_improves_coverage_on_eight_gaussians(
 
 
 # ---------------------------------------------------------------------------
+# 11. _native_states LRU bound (audit A-3)
+# ---------------------------------------------------------------------------
+
+
+def test_native_states_cache_is_lru_bounded(
+    twodim_fm_weights_path: Path,
+) -> None:
+    """The adapter's ``_native_states`` cache is bounded by
+    :data:`TWODIM_FM_NATIVE_STATES_MAXSIZE` (audit A-3: previously the
+    cache was an unbounded dict so long-running multi-cycle engine
+    runs accumulated one entry per round).
+
+    The test exercises the public ``build_initial_state`` +
+    ``solve_ode`` + ``observe_endpoint`` pipeline on a 300-iteration
+    loop and asserts the cache stays within the bound throughout.
+    """
+    from adaptive_reflow.adapters.twodim_fm import (
+        TWODIM_FM_NATIVE_STATES_MAXSIZE,
+        TwoDimFMAdapter,
+    )
+
+    adapter = TwoDimFMAdapter(
+        weights_path=twodim_fm_weights_path, target="two_moons"
+    )
+    maxsize = TWODIM_FM_NATIVE_STATES_MAXSIZE
+
+    # Build initial state + solve + observe in a tight loop to grow
+    # the cache. Each iteration contributes 2 entries (initial +
+    # endpoint; the trajectory digest is evicted inside
+    # ``observe_endpoint`` so only initial+endpoint remain).
+    for i in range(maxsize * 3):
+        bundle = adapter.build_initial_state(
+            batch_id="lru-test", sample_id=f"sample-{i}"
+        )
+        condition = _make_condition_delta(
+            num_steps=adapter._num_steps,  # noqa: SLF001 — test seam
+            target_round=0,
+        )
+        trace = adapter.solve_ode(bundle, condition, seed=i)
+        adapter.observe_endpoint(trace, bundle)
+        assert len(adapter._native_states) <= maxsize, (
+            f"cache exceeded maxsize={maxsize} at iteration {i}: "
+            f"len={len(adapter._native_states)}"
+        )
+
+
+def test_native_states_eviction_drops_oldest_entries(
+    twodim_fm_weights_path: Path,
+) -> None:
+    """After more than ``TWODIM_FM_NATIVE_STATES_MAXSIZE`` insertions,
+    the cache holds the *newest* entries (FIFO eviction; the oldest
+    entries are gone). Closes audit A-3.
+    """
+    from adaptive_reflow.adapters.twodim_fm import (
+        TWODIM_FM_NATIVE_STATES_MAXSIZE,
+        TwoDimFMAdapter,
+    )
+
+    adapter = TwoDimFMAdapter(
+        weights_path=twodim_fm_weights_path, target="two_moons"
+    )
+    maxsize = TWODIM_FM_NATIVE_STATES_MAXSIZE
+    # Push many more entries than the bound so eviction kicks in.
+    n_iters = maxsize + 50
+    for i in range(n_iters):
+        bundle = adapter.build_initial_state(
+            batch_id="lru-evict", sample_id=f"sample-{i}"
+        )
+        condition = _make_condition_delta(
+            num_steps=adapter._num_steps,  # noqa: SLF001 — test seam
+            target_round=0,
+        )
+        trace = adapter.solve_ode(bundle, condition, seed=i)
+        adapter.observe_endpoint(trace, bundle)
+    # The cache is bounded.
+    assert len(adapter._native_states) <= maxsize
+
+
+def test_native_states_cache_is_ordered_dict(
+    twodim_fm_weights_path: Path,
+) -> None:
+    """The cache is an ``OrderedDict`` so the insertion-order
+    LRU semantics work (audit A-3: relies on FIFO eviction).
+    """
+    from collections import OrderedDict
+
+    from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
+
+    adapter = TwoDimFMAdapter(
+        weights_path=twodim_fm_weights_path, target="two_moons"
+    )
+    assert isinstance(adapter._native_states, OrderedDict), (
+        f"_native_states must be an OrderedDict for LRU eviction; "
+        f"got {type(adapter._native_states).__name__}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # ADR-0010 — cosine-driven memory fraction
 # ---------------------------------------------------------------------------
 #

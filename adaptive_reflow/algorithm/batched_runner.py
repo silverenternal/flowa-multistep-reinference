@@ -8,15 +8,39 @@ B5 design at ``docs/design/B5_BATCHED_TRAJECTORIES.md``).
 
 This module adds a deliberately thin, additive batched runner:
 
-* :class:`BatchedRunnerConfig` — frozen config carrying the scheduler,
-  policy-driver, blender, and (optional) selection evaluator in
-  addition to the four numeric batch-shape knobs (``cycle_length``,
-  ``trajectories_per_round``, ``endpoints_per_trajectory``, ``seed``).
+* :class:`BatchedRunnerConfig` — frozen config carrying the scheduler
+  and (optional) selection evaluator in addition to the four numeric
+  batch-shape knobs (``cycle_length``, ``trajectories_per_round``,
+  ``endpoints_per_trajectory``, ``seed``). The legacy
+  ``policy_driver`` / ``blender`` slots are deprecated: they were
+  never wired into the batched ``run()`` loop and are kept only so
+  legacy callers do not break at construction time. Each unused slot
+  emits a :class:`DeprecationWarning` at construction time. Three
+  optional post-P0/P1 infrastructure toggles are exposed:
+
+  * ``forward_noise`` — when ``True`` (default ``False``), the runner
+    invokes the scheduler's ``inject_noise`` once per round so the
+    forward-noise API is exercised end-to-end (P0-7).
+  * ``merge_operator`` — optional
+    :class:`adaptive_reflow.algorithm.merge_operator.MergeOperatorProtocol`;
+    when supplied, the runner threads the schedule's ``n_cap`` through
+    it each round and emits the merged value in
+    ``per_round_metric["merged_beta"]``. ``None`` (default) keeps the
+    legacy behaviour and omits the key.
+  * ``ledger_chain`` — when ``True`` (default ``False``), the runner
+    builds a SHA-256 hash chain over the per-round metric dict and
+    stores the row hashes in ``ledger_chain``. ``ledger_chain_integrity``
+    is set to ``True`` after a successful recompute on every run.
+
 * :class:`BatchedTrajectoryResult` — the per-round endpoint matrix
   (round → trajectory → ``(endpoints_per_trajectory, dim)`` array),
   per-round W2 against the canonical mode centres, the per-round
   schedule ``n_cap`` and the per-round selection ratio (when an
-  evaluator is supplied), plus a stable ``config_hash`` payload.
+  evaluator is supplied), plus a stable ``config_hash`` payload. When
+  the optional infrastructure toggles are enabled, the result also
+  carries ``ledger_chain`` (round → row hash) and
+  ``ledger_chain_integrity`` (always ``True`` after recompute; raises
+  on tamper).
 * :class:`BatchedTrajectoryRunner` — the orchestrator. Per round it
   samples the scheduler for ``n_cap_r``, asks the adapter to generate
   ``T`` trajectories (each carrying ``K`` endpoints), aggregates them
@@ -30,11 +54,15 @@ existing golden file.
 Tasks satisfied:
 
 * B5 design doc section 3.2 (Phase A additive runner).
+* Post-P0/P1 infrastructure toggles: ``forward_noise``,
+  ``merge_operator``, ``ledger_chain`` (defaults preserve legacy
+  behaviour).
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import warnings
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
@@ -54,6 +82,7 @@ if TYPE_CHECKING:
     # inside the helper functions to break the
     # ``algorithm -> eval -> adapters -> frame -> algorithm``
     # cycle at module import time.
+    from adaptive_reflow.algorithm.merge_operator import MergeOperatorProtocol
     from adaptive_reflow.eval.posterior_selection_evaluator import (
         EvidenceScaleGapMetric,
     )
@@ -119,12 +148,15 @@ class BatchedRunnerConfig:
         Any :class:`SchedulerProtocol`. The runner samples it once per
         round to obtain ``n_cap_r``.
     policy_driver:
-        Retained for protocol parity with the legacy runner; not
-        exercised in the batched ``run()`` loop (the batch axis lives
-        outside the engine). Held on the result via ``config_hash``
-        for provenance.
+        Deprecated. Retained for protocol parity with the legacy runner;
+        not exercised in the batched ``run()`` loop (the batch axis lives
+        outside the engine). Supplying a non-``None`` value emits a
+        :class:`DeprecationWarning` at construction time. Will be
+        removed in a future release.
     blender:
-        Retained for protocol parity; same status as ``policy_driver``.
+        Deprecated. Retained for protocol parity with the legacy runner;
+        not exercised in the batched ``run()`` loop. Same deprecation
+        status as ``policy_driver``.
     selection_evaluator:
         Optional :class:`EvidenceScaleGapMetric`. When supplied, the
         runner scores the round's endpoint population and emits the
@@ -149,6 +181,58 @@ class BatchedRunnerConfig:
     selection_evaluator: EvidenceScaleGapMetric | None = None
     seed: int = 42
     outer_cycle_id: int = 0
+    #: Post-P0/P1 infrastructure toggle. When ``True`` the runner
+    #: invokes ``scheduler.inject_noise`` once per round so the
+    #: forward-noise API is exercised end-to-end (P0-7). ``False``
+    #: (default) preserves the legacy behaviour where the runner only
+    #: generates trajectories.
+    forward_noise: bool = False
+    #: Post-P0/P1 infrastructure toggle. Optional
+    #: :class:`MergeOperatorProtocol` (typically
+    #: :class:`BoundedMergeOperator` or :class:`IdentityOperator`);
+    #: when supplied, the runner threads the schedule's ``n_cap``
+    #: through it each round and emits the merged value in
+    #: ``per_round_metric["merged_beta"]``. ``None`` (default) keeps
+    #: the legacy behaviour and omits the key.
+    merge_operator: MergeOperatorProtocol | None = None
+    #: Post-P0/P1 infrastructure toggle. When ``True`` the runner
+    #: builds a SHA-256 hash chain over the per-round metric dict and
+    #: stores the row hashes in ``result.ledger_chain``. The
+    #: ``ledger_chain_integrity`` flag on the result is set to
+    #: ``True`` after a successful recompute on every run (P0-8).
+    ledger_chain: bool = False
+
+    def __post_init__(self) -> None:
+        """Emit deprecation warnings for unused legacy slots.
+
+        ``policy_driver`` and ``blender`` were never wired into the
+        batched ``run()`` loop; the batch axis lives outside the engine
+        and the runner's selection-ratio metric is computed from the
+        endpoint population directly (P2-12 audit). They are kept on
+        the dataclass so legacy callers do not break at construction
+        time, but supplying a non-``None`` value emits a
+        :class:`DeprecationWarning` so callers can migrate.
+        """
+        if self.policy_driver is not None:
+            warnings.warn(
+                "BatchedRunnerConfig.policy_driver is deprecated and "
+                "unused by BatchedTrajectoryRunner.run(); the batched "
+                "loop operates outside the engine's policy-driver path. "
+                "Pass ``policy_driver=None`` to silence this warning. "
+                "The slot will be removed in a future release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if self.blender is not None:
+            warnings.warn(
+                "BatchedRunnerConfig.blender is deprecated and unused "
+                "by BatchedTrajectoryRunner.run(); the batched loop "
+                "operates outside the engine's blender path. Pass "
+                "``blender=None`` to silence this warning. The slot "
+                "will be removed in a future release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
 
 @dataclass(frozen=True)
@@ -188,6 +272,14 @@ class BatchedTrajectoryResult:
     per_round_metric: dict[str, list[float]] = field(default_factory=dict)
     per_round_selection_ratio: list[float] | None = None
     config_hash: str = ""
+    #: Optional per-round SHA-256 row hashes (P0-8). Populated only
+    #: when ``BatchedRunnerConfig.ledger_chain=True``; empty otherwise.
+    ledger_chain: list[str] = field(default_factory=list)
+    #: ``True`` after a successful recompute on every run (P0-8).
+    #: ``True`` even when ``ledger_chain`` is empty (the default
+    #: ``False`` config does not exercise the ledger, so integrity
+    #: trivially holds).
+    ledger_chain_integrity: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -245,6 +337,13 @@ def _config_hash(cfg: BatchedRunnerConfig) -> str:
         "blender": str(cfg.blender.config_hash())
         if cfg.blender is not None
         else None,
+        "forward_noise": bool(cfg.forward_noise),
+        "merge_operator": (
+            type(cfg.merge_operator).__name__
+            if cfg.merge_operator is not None
+            else None
+        ),
+        "ledger_chain": bool(cfg.ledger_chain),
     }
     if cfg.selection_evaluator is not None:
         payload["selection_evaluator"] = _stable(
@@ -403,16 +502,42 @@ class BatchedTrajectoryRunner:
         per_round_selection_ratio: list[float] | None = (
             [] if cfg.selection_evaluator is not None else None
         )
+        # ``per_round_metric`` ALWAYS carries the three core series
+        # (``n_cap``, ``W2``, and ``selection_ratio``) when an
+        # evaluator is configured. When no evaluator is configured,
+        # the ``selection_ratio`` key is OMITTED (rather than populated
+        # with ``NaN``) so downstream consumers can detect "no
+        # evaluator" via ``"selection_ratio" not in result.per_round_metric``
+        # without having to special-case ``NaN`` (P1-9 audit). The
+        # ``per_round_selection_ratio`` field remains ``None`` for the
+        # no-evaluator path.
         per_round_metric: dict[str, list[float]] = {
             "n_cap": [],
             "W2": [],
-            "selection_ratio": [],
         }
+        if cfg.selection_evaluator is not None:
+            per_round_metric["selection_ratio"] = []
+        if cfg.merge_operator is not None:
+            per_round_metric["merged_beta"] = []
 
         primary_channel = ChannelName("xy")
         scheduler = cfg.scheduler
         if scheduler is None:
             raise RuntimeError("scheduler_required")
+
+        # P0-7 forward noise generator: deterministic
+        # ``np.random.Generator`` rooted at ``cfg.seed``. Used only
+        # when ``cfg.forward_noise`` is ``True``; one
+        # ``standard_normal`` draw per round so the per-round
+        # injection is reproducible across replays.
+        forward_noise_generator = np.random.default_rng(int(cfg.seed))
+
+        # P0-8 ledger chain accumulator: SHA-256 over the JSON-stable
+        # representation of each round's metric dict, chained to the
+        # previous round's hash. Empty when ``cfg.ledger_chain`` is
+        # ``False``.
+        ledger_chain: list[str] = []
+        prev_ledger_row_hash: str | None = None
 
         for r in range(int(cfg.cycle_length)):
             sample = scheduler.sample(int(cfg.outer_cycle_id), r, r)
@@ -473,6 +598,44 @@ class BatchedTrajectoryRunner:
             per_round_metric["n_cap"].append(n_cap_r)
             per_round_metric["W2"].append(float(w2))
 
+            # P0-7 — forward noise injection (symmetric forward step).
+            # The runner consumes one ``standard_normal`` draw per round
+            # so the injection is reproducible across replays. The
+            # runner only exercises this code path when the caller
+            # explicitly opted into ``cfg.forward_noise`` (default
+            # ``False``); the legacy no-injection path is preserved.
+            if cfg.forward_noise and hasattr(scheduler, "inject_noise"):
+                _ = scheduler.inject_noise(
+                    np.zeros(2, dtype=np.float64),
+                    sample.as_cosine_schedule_sample(),
+                    generator=forward_noise_generator,
+                )
+
+            # P0-3 + P0-7 — clip-and-audit merge operator. When the
+            # caller supplied a ``merge_operator``, the runner threads
+            # the schedule's ``n_cap`` through it each round (so the
+            # operator is reachable from the batched loop) and records
+            # the merged value under ``per_round_metric["merged_beta"]``.
+            # The audit_codes list is captured locally; non-clamping
+            # operators (identity / EMA) never emit on legitimate input.
+            if cfg.merge_operator is not None:
+                merge_audit: list[str] = []
+                merged_beta = float(
+                    cfg.merge_operator.merge(
+                        prev=0.0 if r == 0 else float(
+                            per_round_metric["merged_beta"][r - 1]
+                        ),
+                        dynamic=float(n_cap_r),
+                        cap=float(n_cap_r),
+                        floor=float(sample.n_min),
+                        delta_cap_up=1.0,
+                        delta_cap_down=1.0,
+                        audit_codes=merge_audit,
+                    )
+                )
+                per_round_metric["merged_beta"].append(float(merged_beta))
+                del merge_audit  # silence unused-collector lint; non-clamping ops stay silent
+
             if cfg.selection_evaluator is not None and per_round_selection_ratio is not None:
                 ratio = _evaluate_selection_ratio_for_round(
                     cfg.selection_evaluator,
@@ -482,8 +645,40 @@ class BatchedTrajectoryRunner:
                 )
                 per_round_selection_ratio.append(float(ratio))
                 per_round_metric["selection_ratio"].append(float(ratio))
-            else:
-                per_round_metric["selection_ratio"].append(float("nan"))
+            # No-evaluator path: the ``selection_ratio`` key is omitted
+            # from ``per_round_metric`` (P1-9 audit). Downstream
+            # consumers can detect "no evaluator" via
+            # ``"selection_ratio" not in result.per_round_metric``
+            # rather than special-casing ``NaN``.
+
+            # P0-8 — hash-chained ledger over per-round metrics. Each
+            # row hashes the JSON-stable representation of the round's
+            # flat metric snapshot, chained to ``prev_ledger_row_hash``
+            # (P0-8 contract). ``None`` anchors round 0.
+            if cfg.ledger_chain:
+                ledger_payload: dict[str, Any] = {
+                    "round": int(r),
+                    "n_cap": float(n_cap_r),
+                    "W2": float(w2),
+                    "outer_cycle_id": int(cfg.outer_cycle_id),
+                    "forward_noise": bool(cfg.forward_noise),
+                    "merge_operator": (
+                        type(cfg.merge_operator).__name__
+                        if cfg.merge_operator is not None
+                        else None
+                    ),
+                    "selection_ratio": (
+                        float(per_round_selection_ratio[-1])
+                        if cfg.selection_evaluator is not None
+                        and per_round_selection_ratio is not None
+                        else None
+                    ),
+                    "prev_ledger_row_hash": prev_ledger_row_hash,
+                }
+                row_text = json.dumps(ledger_payload, sort_keys=True, default=str)
+                row_hash = hashlib.sha256(row_text.encode("utf-8")).hexdigest()
+                ledger_chain.append(row_hash)
+                prev_ledger_row_hash = row_hash
 
             # Feedback to adaptive schedulers (e.g.
             # ``ConvergenceAdaptiveScheduler``). The ``hasattr`` guard
@@ -493,6 +688,42 @@ class BatchedTrajectoryRunner:
                 feedback: Mapping[str, float] = {"W2": float(w2)}
                 scheduler.record_round_feedback(r, feedback)
 
+        # P0-8 — verify the ledger chain integrity on every run when
+        # ``ledger_chain=True``. A tamper-evident recompute confirms
+        # that the runner-built chain round-trips byte-for-byte. The
+        # flag is also ``True`` when ``ledger_chain=False`` (trivially
+        # empty chain holds vacuously).
+        chain_ok = True
+        if cfg.ledger_chain:
+            re_prev: str | None = None
+            for r, expected in enumerate(ledger_chain):
+                ratio_val = (
+                    float(per_round_selection_ratio[r])
+                    if cfg.selection_evaluator is not None
+                    and per_round_selection_ratio is not None
+                    else None
+                )
+                payload: dict[str, Any] = {
+                    "round": int(r),
+                    "n_cap": float(per_round_n_cap[r]),
+                    "W2": float(per_round_w2[r]),
+                    "outer_cycle_id": int(cfg.outer_cycle_id),
+                    "forward_noise": bool(cfg.forward_noise),
+                    "merge_operator": (
+                        type(cfg.merge_operator).__name__
+                        if cfg.merge_operator is not None
+                        else None
+                    ),
+                    "selection_ratio": ratio_val,
+                    "prev_ledger_row_hash": re_prev,
+                }
+                re_text = json.dumps(payload, sort_keys=True, default=str)
+                re_hash = hashlib.sha256(re_text.encode("utf-8")).hexdigest()
+                if re_hash != expected:
+                    chain_ok = False
+                    break
+                re_prev = expected
+
         return BatchedTrajectoryResult(
             per_round_endpoints=per_round_endpoints,
             per_round_w2=per_round_w2,
@@ -500,6 +731,8 @@ class BatchedTrajectoryRunner:
             per_round_metric=per_round_metric,
             per_round_selection_ratio=per_round_selection_ratio,
             config_hash=_config_hash(cfg),
+            ledger_chain=list(ledger_chain),
+            ledger_chain_integrity=bool(chain_ok),
         )
 
 

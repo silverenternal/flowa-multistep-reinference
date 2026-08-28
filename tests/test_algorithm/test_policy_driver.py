@@ -591,3 +591,170 @@ def test_driver_config_round_trip(driver) -> None:
     assert rebuilt.driver_family() == driver.driver_family()
     assert rebuilt.config_hash() == driver.config_hash()
     assert rebuilt.to_config() == config
+
+
+# ---------------------------------------------------------------------------
+# 7. Beta-saturation audit code (P2-3 / 8.3) — adaptive driver
+# ---------------------------------------------------------------------------
+
+
+def test_adaptive_driver_beta_saturation_with_C_below_one() -> None:
+    """When ``per_cell_coefficient_C < 1`` and the raw envelope
+    ``1 - |p - t|`` is close to 1, the unclipped
+    ``(1 - |p - t|) / C_g`` exceeds 1.0 and the driver emits
+    :data:`BETA_SATURATION_FROM_PAPER_QUANTITY` (audit P2-3 / 8.3).
+    """
+    from adaptive_reflow.algorithm.policy_driver import (
+        BETA_SATURATION_FROM_PAPER_QUANTITY,
+    )
+
+    base_policy = _make_base_policy(beta=0.0)
+    # C = 0.5 means the unclipped value can reach 2 * (1 - |p - t|),
+    # which exceeds 1.0 for any digest whose mapped |p - t| < 0.5.
+    # Use target_estimate = 0.0 and a digest that maps to ~0 so
+    # ``diff = 0`` and ``raw / C_g = 2.0`` (well above the ceiling).
+    driver = AdaptivePolicyDriver(
+        target_estimate=0.0, per_cell_coefficient_C=0.5
+    )
+    digest = "0" * 64  # maps to ~0
+    audit: list[str] = []
+    out = driver.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest=digest,
+        audit_codes=audit,
+    )
+    # The unclipped envelope exceeds 1.0 -> saturation audit code emitted.
+    saturation_codes = [
+        code for code in audit
+        if code.startswith(BETA_SATURATION_FROM_PAPER_QUANTITY)
+    ]
+    assert saturation_codes, (
+        f"expected a {BETA_SATURATION_FROM_PAPER_QUANTITY!r} audit "
+        f"line; got audit list {audit!r}"
+    )
+    # beta is still saturated at 1.0 (the engine invariant).
+    beta = _beta_value(out)
+    assert beta == pytest.approx(1.0)
+
+
+def test_adaptive_driver_no_saturation_when_C_above_one() -> None:
+    """When ``per_cell_coefficient_C >= 1`` the unclipped envelope is
+    always ``<= 1.0`` so no saturation audit code is emitted (audit
+    P2-3 / 8.3).
+    """
+    from adaptive_reflow.algorithm.policy_driver import (
+        BETA_SATURATION_FROM_PAPER_QUANTITY,
+    )
+
+    base_policy = _make_base_policy(beta=0.0)
+    # Use target_estimate = 0.0 so ``diff = 0`` and ``raw = 1.0``;
+    # divided by C = 1.0 the unclipped envelope is exactly 1.0 and
+    # therefore not strictly > 1.0.
+    driver = AdaptivePolicyDriver(
+        target_estimate=0.0, per_cell_coefficient_C=1.0
+    )
+    audit: list[str] = []
+    driver.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest="0" * 64,
+        audit_codes=audit,
+    )
+    saturation_codes = [
+        code for code in audit
+        if code.startswith(BETA_SATURATION_FROM_PAPER_QUANTITY)
+    ]
+    assert saturation_codes == []
+
+
+def test_adaptive_driver_legacy_path_does_not_saturate() -> None:
+    """When ``per_cell_coefficient_C=None`` (legacy path) the
+    unclipped envelope is already ``<= 1.0`` so no saturation audit
+    code is emitted (audit P2-3 / 8.3).
+    """
+    from adaptive_reflow.algorithm.policy_driver import (
+        BETA_SATURATION_FROM_PAPER_QUANTITY,
+    )
+
+    base_policy = _make_base_policy(beta=0.0)
+    driver = AdaptivePolicyDriver(target_estimate=0.0)
+    audit: list[str] = []
+    driver.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest="0" * 64,
+        audit_codes=audit,
+    )
+    saturation_codes = [
+        code for code in audit
+        if code.startswith(BETA_SATURATION_FROM_PAPER_QUANTITY)
+    ]
+    assert saturation_codes == []
+
+
+# ---------------------------------------------------------------------------
+# 8. _stable_digest canonical JSON encoder (P2-11)
+# ---------------------------------------------------------------------------
+
+
+def test_stable_digest_canonical_json_numpy_float64() -> None:
+    """``_stable_digest`` produces the same digest for
+    ``numpy.float64(0.5)`` and ``float(0.5)`` (audit P2-11:
+    numerically-equal values from different dtypes produce the same
+    digest).
+    """
+    import numpy as np
+
+    from adaptive_reflow.algorithm.policy_driver import (
+        _canonical_json_default,
+        _stable_digest,
+    )
+
+    digest_py = _stable_digest({"value": 0.5})
+    digest_np = _stable_digest({"value": np.float64(0.5)})
+    assert digest_py == digest_np, (
+        f"numpy.float64(0.5) and float(0.5) produced different "
+        f"digests: {digest_py!r} vs {digest_np!r}"
+    )
+
+
+def test_canonical_json_default_handles_numpy_scalar() -> None:
+    """``_canonical_json_default`` returns the Python builtin
+    equivalent of numpy scalars (audit P2-11 helper contract).
+    """
+    import numpy as np
+
+    from adaptive_reflow.algorithm.policy_driver import _canonical_json_default
+
+    assert _canonical_json_default(np.float64(0.5)) == 0.5
+    assert _canonical_json_default(np.int64(3)) == 3
+
+
+def test_canonical_json_default_handles_arbitrary_object() -> None:
+    """``_canonical_json_default`` falls back to ``str(obj)`` for
+    objects that don't expose ``.item()`` or ``__float__`` (last-resort
+    deterministic behaviour).
+    """
+    from adaptive_reflow.algorithm.policy_driver import _canonical_json_default
+
+    class _Custom:
+        def __str__(self) -> str:
+            return "custom_repr"
+
+    assert _canonical_json_default(_Custom()) == "custom_repr"
+
+
+def test_frame_engine_canonical_json_numpy_float64() -> None:
+    """The frame engine's ``_digest`` uses the same canonical JSON
+    helper so numpy.float64(0.5) and float(0.5) produce the same
+    digest (audit P2-15 cross-check).
+    """
+    import numpy as np
+
+    from adaptive_reflow.frame.engine import _digest
+
+    assert _digest({"value": 0.5}) == _digest({"value": np.float64(0.5)})

@@ -2224,17 +2224,14 @@ class CodimensionSheetScheduler:
                 f"'increasing', got {eps_direction!r}"
             )
         if normalised_direction == "increasing":
-            warnings.warn(
-                "CodimensionSheetScheduler(eps_direction='increasing') is "
-                "the legacy inverted convention (r=0 small noise, "
-                "r=L-1 large noise); it is the opposite of paper "
-                "Theorem 1's eps -> 0 limit. Migrate to "
-                "eps_direction='decreasing' (the paper-aligned default). "
-                "The 'increasing' option will be removed in a future "
-                "release.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            # The DeprecationWarning is intentionally deferred to the
+            # first :meth:`sample` call (rather than construction
+            # time) so legacy callers that build the scheduler
+            # eagerly but never exercise it do not flood logs
+            # (P2-18). The flag is set here and consulted below.
+            self._legacy_direction_pending_warning: bool = True
+        else:
+            self._legacy_direction_pending_warning = False
 
         self._cycle_length = int(cycle_length)
         self._n_min = float(n_min)
@@ -2442,6 +2439,26 @@ class CodimensionSheetScheduler:
         """
         outer_cycle_id = _coerce_int_nonneg(outer_cycle_id, "outer_cycle_id")
         target_round = _coerce_int_nonneg(target_round, "target_round")
+
+        # P2-18: emit the legacy-direction DeprecationWarning once,
+        # on the FIRST ``sample()`` call rather than at construction
+        # time. Legacy callers that build the scheduler eagerly but
+        # never exercise it (e.g. for ``config_hash`` introspection)
+        # do not flood logs.
+        if getattr(self, "_legacy_direction_pending_warning", False):
+            warnings.warn(
+                "CodimensionSheetScheduler(eps_direction='increasing') is "
+                "the legacy inverted convention (r=0 small noise, "
+                "r=L-1 large noise); it is the opposite of paper "
+                "Theorem 1's eps -> 0 limit. Migrate to "
+                "eps_direction='decreasing' (the paper-aligned default). "
+                "The 'increasing' option will be removed in a future "
+                "release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self._legacy_direction_pending_warning = False
+
         length = int(self._cycle_length)
         if length > 1 and not (
             0 <= int(round_in_cycle) <= length - 1

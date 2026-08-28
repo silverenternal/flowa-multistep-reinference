@@ -952,20 +952,30 @@ def test_codimension_sheet_scheduler_eps_direction_increasing_legacy_warns() -> 
     The legacy ``'increasing'`` mode is the opposite of paper Theorem
     1's ``eps -> 0`` limit (r=0 small noise, r=L-1 large noise). It is
     retained only for backward compatibility and emits a
-    :class:`DeprecationWarning` at construction time so callers can
-    migrate to the paper-aligned default.
+    :class:`DeprecationWarning` on the FIRST :meth:`sample` call
+    (not at construction time — P2-18 audit; legacy callers that
+    build the scheduler eagerly for ``config_hash`` introspection
+    do not flood logs).
     """
-    with pytest.warns(DeprecationWarning, match="legacy inverted convention"):
-        scheduler = CodimensionSheetScheduler(
-            cycle_length=8, n_min=0.0, n_max=1.0, eps_direction="increasing"
-        )
+    # P2-18: construction is silent; the warning fires on the first
+    # ``sample()`` call (once per instance).
+    scheduler = CodimensionSheetScheduler(
+        cycle_length=8, n_min=0.0, n_max=1.0, eps_direction="increasing"
+    )
     assert scheduler.eps_direction == "increasing"
-    caps = [scheduler.sample(0, r, r).n_cap for r in range(8)]
+    with pytest.warns(DeprecationWarning, match="legacy inverted convention"):
+        scheduler.sample(0, 0, 0)
+    caps = [scheduler.sample(0, r, r).n_cap for r in range(1, 8)]
     # Reversed: r=0 -> small n_cap (no fresh noise), r=L-1 -> large
     # n_cap (lots of fresh noise). This is the opposite of the
     # paper-aligned default.
     assert caps[0] < 0.05
     assert caps[-1] == pytest.approx(1.0, abs=1e-9)
+    # Subsequent sample() calls do not re-emit the warning.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        for r in range(8):
+            scheduler.sample(0, r, r)
 
 
 def test_codimension_sheet_scheduler_eps_direction_case_insensitive() -> None:

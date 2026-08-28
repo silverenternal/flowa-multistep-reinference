@@ -279,10 +279,52 @@ def _digest(payload: Any) -> str:
 
     Mirrors :func:`restart_memory_types.hash_artifact` but is inlined
     here so the engine module stays stdlib-only with no internal
-    dependency on the types module.
+    dependency on the types module. The fallback ``default`` is
+    :func:`_canonical_json_default` (not ``str``) so numerically-equal
+    values from different dtypes (e.g. ``numpy.float64(0.5)`` and
+    ``float(0.5)``) produce the same digest (P2-15 audit).
     """
-    text = json.dumps(payload, sort_keys=True, default=str)
+    text = json.dumps(payload, sort_keys=True, default=_canonical_json_default)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _canonical_json_default(obj: Any) -> Any:
+    """Return a JSON-encodable fallback for ``obj``.
+
+    Used as the ``default`` argument to :func:`json.dumps` so the
+    engine's inlined digest helper can serialise objects outside the
+    default JSON type set without losing numerical precision
+    (P2-15). Mirrors
+    :func:`adaptive_reflow.algorithm.policy_driver._canonical_json_default`
+    so the engine and the algorithm-layer drivers agree on the
+    canonical encoding.
+
+    The helper handles:
+
+    * NumPy scalars (``numpy.float64`` / ``numpy.int64`` etc.) —
+      coerced via :meth:`numpy.ndarray.item` so a ``numpy.float64``
+      and a Python ``float`` with the same numerical value produce
+      the same digest.
+    * Objects exposing :meth:`__float__` — coerced via :func:`float`.
+    * Anything else — coerced via :func:`str` as the last-resort
+      deterministic fallback.
+    """
+    # NumPy scalars: ``.item()`` returns the Python builtin scalar.
+    item_fn = getattr(obj, "item", None)
+    if callable(item_fn):
+        try:
+            return item_fn()
+        except (ValueError, TypeError):
+            pass
+    # Numeric protocol fallback.
+    float_fn = getattr(obj, "__float__", None)
+    if callable(float_fn):
+        try:
+            return float_fn()
+        except (TypeError, ValueError):
+            pass
+    # Last-resort deterministic string fallback.
+    return str(obj)
 
 
 def _digest_state(bundle: StateBundle | None) -> str:

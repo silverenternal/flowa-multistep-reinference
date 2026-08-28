@@ -742,3 +742,69 @@ def test_blender_config_round_trip(blender) -> None:
     assert rebuilt.config_hash() == blender.config_hash()
     assert rebuilt.to_config() == config
     assert rebuilt.blender_family() == blender.blender_family()
+
+
+# ---------------------------------------------------------------------------
+# 9. config_hash is a real digest (P2-3.3 / P3.3)
+# ---------------------------------------------------------------------------
+
+
+def test_linear_blender_config_hash_is_stable_across_instances() -> None:
+    """Two :class:`LinearBlender` instances produce the same
+    ``config_hash`` (the family has no constructor arguments; the
+    hash is a real digest of the family + qualname, audit P2-3.3).
+    """
+    h1 = LinearBlender().config_hash()
+    h2 = LinearBlender().config_hash()
+    assert h1 == h2
+    # The hash MUST be a real SHA-256 hex digest (64 chars), not the
+    # legacy constant string returned by the buggy implementation.
+    assert len(h1) == 64
+    int(h1, 16)  # parses as hex
+
+
+def test_linear_blender_config_hash_differs_from_distance_decay() -> None:
+    """``LinearBlender.config_hash()`` differs from
+    ``DistanceDecayBlender.config_hash()`` (different families).
+    """
+    assert LinearBlender().config_hash() != DistanceDecayBlender().config_hash()
+
+
+def test_distance_decay_blender_config_hash_differs_by_temperature() -> None:
+    """Two :class:`DistanceDecayBlender` instances with different
+    ``temperature`` values produce different ``config_hash`` values
+    (audit P2-3.3: the previous constant-returning implementation
+    could not distinguish them).
+    """
+    h_lo = DistanceDecayBlender(temperature=0.5).config_hash()
+    h_hi = DistanceDecayBlender(temperature=10.0).config_hash()
+    assert h_lo != h_hi
+    # Both must be real SHA-256 digests (not the legacy constant).
+    assert len(h_lo) == 64
+    assert len(h_hi) == 64
+
+
+def test_distance_decay_blender_config_hash_stable_for_same_temperature() -> None:
+    """Two :class:`DistanceDecayBlender` instances with the SAME
+    ``temperature`` produce the same ``config_hash`` (stability).
+    """
+    h1 = DistanceDecayBlender(temperature=2.5).config_hash()
+    h2 = DistanceDecayBlender(temperature=2.5).config_hash()
+    assert h1 == h2
+
+
+def test_blender_config_hash_handles_numpy_floats() -> None:
+    """``_canonical_json_default`` coerces numpy scalars so the
+    blender digest is stable across dtype boundaries (P2-3.3
+    cross-check; the same machinery backs the policy-driver
+    ``_stable_digest`` audit P2-11).
+    """
+    import numpy as np
+
+    from adaptive_reflow.algorithm.blender import _canonical_json_default
+
+    # numpy.float64 produces a Python float (via .item()).
+    np_val = np.float64(0.5)
+    assert _canonical_json_default(np_val) == 0.5
+    # numpy.int64 produces a Python int.
+    assert _canonical_json_default(np.int64(3)) == 3

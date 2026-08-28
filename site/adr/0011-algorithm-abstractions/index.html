@@ -724,13 +724,13 @@ framework.</strong></p>
 <tbody>
 <tr>
 <td>Per-round capacity</td>
-<td><code>SchedulerProtocol</code></td>
+<td><code>SchedulerProtocol</code> [CLM-019]</td>
 <td><code>CosineAnnealScheduler</code></td>
-<td><code>ConstantScheduler</code>, <code>LinearScheduler</code>, <code>ExponentialScheduler</code></td>
+<td><code>ConstantScheduler</code>, <code>LinearScheduler</code>, <code>ExponentialScheduler</code>, <code>PolynomialScheduler</code>, <code>SigmoidScheduler</code>, <code>ConvergenceAdaptiveScheduler</code>, <code>CodimensionSheetScheduler</code>, <code>SequentialScheduler</code></td>
 </tr>
 <tr>
 <td>Bounded update</td>
-<td><code>MergeOperatorProtocol</code></td>
+<td><code>MergeOperatorProtocol</code> [CLM-020]</td>
 <td><code>BoundedMergeOperator</code></td>
 <td><code>IdentityOperator</code>, <code>EMAOperator</code></td>
 </tr>
@@ -748,6 +748,16 @@ framework.</strong></p>
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><strong>Sequential chain</strong> [CLM-021]. <code>SequentialScheduler</code>
+(<code>adaptive_reflow/algorithm/sequential.py</code>) is the multi-phase
+composition primitive that chains multiple sub-schedulers by round
+range — the <code>adaptive_reflow</code> analog of PyTorch's SequentialLR
+composite scheduler. See
+<a href="../../sequential-protocol/"><code>docs/sequential-protocol.md</code></a> for the
+worked example and <a href="../../defaults-matrix/"><code>docs/defaults-matrix.md</code></a>
+for the reader-facing scenario-to-config mapping.</p>
+</blockquote>
 <ul>
 <li><strong><code>SchedulerProtocol</code></strong> (<code>adaptive_reflow/algorithm/scheduler.py</code>)
   answers "how much fresh-noise capacity does round <em>r</em> get?". Its

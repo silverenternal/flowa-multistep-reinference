@@ -329,3 +329,77 @@ How it works:
 - Evidence: `docs/ABLATION.md` §"New findings: schedule families
   (ADR-0012)"; regression coverage in
   `tests/test_tools/test_run_ablation.py`.
+
+## CLM-019: `SchedulerProtocol` is the canonical first-class scheduler axis {#CLM-019}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: ADR-0011 §"The four-axis product", `docs/defaults-matrix.md` §1
+- Asserted by: docs/defaults-matrix.md:21-32,
+  docs/schedule-theory.md:170-180,
+  docs/INSIGHTS.md:11
+- Disputed by: —
+- Statement: `SchedulerProtocol` is the canonical first-class
+  scheduler axis exposed by `adaptive_reflow.algorithm.scheduler`;
+  nine concrete implementations are registered in
+  `SCHEDULER_REGISTRY` (`cosine`, `constant`, `linear`,
+  `exponential`, `polynomial`, `sigmoid`, `convergence_adaptive`,
+  `codimension_sheet`, `sequential`). The defaults matrix's
+  Scheduler column references four of these nine families; the
+  other five are valid but not the reader-facing defaults.
+- Evidence:
+  `adaptive_reflow/algorithm/scheduler.py:2739`
+  (`SCHEDULER_REGISTRY`),
+  `adaptive_reflow/algorithm/sequential.py:95`
+  (`SequentialScheduler`),
+  `docs/defaults-matrix.md` §"The matrix".
+
+## CLM-020: `BoundedMergeOperator` enforces a non-zero noise floor {#CLM-020}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: ADR-0007 §"Bounded merge semantics", `docs/defaults-matrix.md` §2.3
+- Asserted by: docs/defaults-matrix.md:97-103,
+  docs/INSIGHTS.md:40
+- Disputed by: —
+- Statement: `BoundedMergeOperator` enforces a hard `[floor, cap]`
+  envelope on every per-round merge; the `floor` parameter is the
+  structural guarantee that the noise scale stays inside the
+  scheduled envelope and that the algorithm does not freeze on the
+  prior. The defaults matrix uses `floor=0.1` for short runs
+  (`cycle_length=4`) and `floor=0.05` for long runs
+  (`cycle_length=20`) — the floor drops with `cycle_length` because
+  longer cycles can tolerate a lower floor.
+- Evidence:
+  `adaptive_reflow/algorithm/merge_operator.py:350`
+  (`BoundedMergeOperator` class),
+  `adaptive_reflow/algorithm/merge_operator.py:386`
+  (`floor`/`cap` keyword arguments),
+  `tests/test_algorithm/test_merge_operator.py`
+  (the bounded-merge regression suite).
+
+## CLM-021: `SequentialScheduler` mirrors PyTorch's SequentialLR composite scheduler {#CLM-021}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: ADR-0012 §"Sequential chain", `docs/sequential-protocol.md` §1
+- Asserted by: docs/sequential-protocol.md:9-20,
+  docs/defaults-matrix.md:30-32
+- Disputed by: —
+- Statement: `SequentialScheduler` is the `adaptive_reflow` analog
+  of PyTorch's SequentialLR composite learning-rate scheduler: it
+  takes a list of `(sub_scheduler, n_rounds)` tuples and routes
+  round `r` to the sub-scheduler at slot index `i` where `r` falls
+  in `[sum(n_rounds[:i]), sum(n_rounds[:i+1]))`. The chain's
+  `cycle_length()` returns `sum(n_rounds)` and its `config_hash()`
+  includes every sub-scheduler's own `config_hash()` so two chains
+  with the same shape but different sub-schedulers produce distinct
+  hashes. The implementation is registered in `SCHEDULER_REGISTRY`
+  under the key `"sequential"`.
+- Evidence:
+  `adaptive_reflow/algorithm/sequential.py:95`
+  (`SequentialScheduler` class),
+  `adaptive_reflow/algorithm/scheduler.py:2748`
+  (`SCHEDULER_REGISTRY["sequential"]` entry),
+  `tests/test_algorithm/test_sequential.py`
+  (16+ regression tests).

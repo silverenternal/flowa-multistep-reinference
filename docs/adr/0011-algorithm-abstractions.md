@@ -111,10 +111,19 @@ framework.**
 
 | Role | Protocol | Default | Alternatives |
 | --- | --- | --- | --- |
-| Per-round capacity | `SchedulerProtocol` | `CosineAnnealScheduler` | `ConstantScheduler`, `LinearScheduler`, `ExponentialScheduler` |
-| Bounded update | `MergeOperatorProtocol` | `BoundedMergeOperator` | `IdentityOperator`, `EMAOperator` |
+| Per-round capacity | `SchedulerProtocol` [CLM-019] | `CosineAnnealScheduler` | `ConstantScheduler`, `LinearScheduler`, `ExponentialScheduler`, `PolynomialScheduler`, `SigmoidScheduler`, `ConvergenceAdaptiveScheduler`, `CodimensionSheetScheduler`, `SequentialScheduler` |
+| Bounded update | `MergeOperatorProtocol` [CLM-020] | `BoundedMergeOperator` | `IdentityOperator`, `EMAOperator` |
 | Per-round policy | `PolicyDriverProtocol` | `ScheduleDerivedPolicyDriver` | `ConstantPolicyDriver`, `AdaptivePolicyDriver` |
 | Prior/fresh blend | `RestartBlenderProtocol` | `LinearBlender` | `DistanceDecayBlender` |
+
+> **Sequential chain** [CLM-021]. `SequentialScheduler`
+> (`adaptive_reflow/algorithm/sequential.py`) is the multi-phase
+> composition primitive that chains multiple sub-schedulers by round
+> range — the `adaptive_reflow` analog of PyTorch's SequentialLR
+> composite scheduler. See
+> [`docs/sequential-protocol.md`](../sequential-protocol.md) for the
+> worked example and [`docs/defaults-matrix.md`](../defaults-matrix.md)
+> for the reader-facing scenario-to-config mapping.
 
 * **`SchedulerProtocol`** (`adaptive_reflow/algorithm/scheduler.py`)
   answers "how much fresh-noise capacity does round *r* get?". Its

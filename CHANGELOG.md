@@ -7,6 +7,113 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Final polish pass
+
+This section records the final polish pass that closes the remaining
+P1 / P2 review items and adds reader-facing documentation that was
+recommended in the 2026-08-29 external review. Phases are
+independently verifiable.
+
+### Phase 1 - P1 / P2 cleanup
+
+Eight concrete cleanups, each landed behind a regression test:
+
+- `BatchedRunnerConfig.policy_driver` / `.blender` now emit
+  `DeprecationWarning` at construction when a deprecated field is
+  supplied, rather than at first use. Less invasive than removal;
+  callers get one warning per instance instead of one per call.
+- `LinearBlender.config_hash` and `DistanceDecayBlender.config_hash`
+  now hash the real blender configuration (temperature included for
+  the distance-decay variant). The previous implementation hashed
+  only the class identity, so two `DistanceDecayBlender(temperature=2.0)`
+  and `(temperature=0.5)` instances compared equal.
+- `MergeOperatorProtocol` docstring updated: non-clamping operators
+  (`IdentityOperator`, `WeightedAverageOperator`) explicitly MAY
+  accept the `audit_codes` parameter but are documented to ignore it.
+- `_stable_digest` / `_digest` now use a canonical JSON encoder that
+  treats `numpy.float64` and Python `float` identically. Previously,
+  digesting a config that contained `numpy.float64` values produced
+  a different hash from the same config with Python floats, which
+  broke config-equality assertions across adapter boundaries.
+- `CodimensionSheetScheduler` `DeprecationWarning` for the legacy
+  inline formula moved from construction to the first `sample()`
+  call (one per instance, not per construction). Schedulers that
+  are constructed but never used no longer spam stderr.
+- `TwoDimFMAdapter._native_states` is now a bounded LRU cache
+  (`maxsize=128`) so long-running re-inference loops cannot
+  accumulate an unbounded Python list of cached native
+  representations.
+- `BatchedTrajectoryRunner` without a `selection_evaluator` now
+  omits the `selection_ratio` key from per-round metrics rather
+  than injecting `NaN`. Downstream consumers no longer need
+  `np.isnan` guards on a metric that the runner never computed.
+- `AdaptivePolicyDriver` emits the
+  `BETA_SATURATION_FROM_PAPER_QUANTITY` audit code when
+  `|p - t| / C_g` exceeds 1.0, where `C_g` is the paper's
+  per-cell coefficient. Previously the saturation check used an
+  ad-hoc hard-coded constant; it now uses the paper's `C_g` when
+  a `paper_quantities_provider` is wired.
+
+### Phase 2 - 22-row ablation
+
+The ablation grid in `tools/run_ablation.py` was extended from 18
+to 22 rows. Four new rows exercise previously-unreachable paths:
+
+- `BatchedTrajectoryRunner` with `forward_noise=True` (forward-
+  diffusion injection into the trajectory rollout).
+- `BatchedTrajectoryRunner` with clip-and-audit merge (clamp the
+  blended state into `[0, 1]` then emit a `CLIPPED_TO_BOUND` audit
+  code on the trace).
+- `BatchedTrajectoryRunner` with hash-chained ledger (every round
+  records the SHA-256 of the previous round's digest, making the
+  ledger tamper-evident end to end).
+- `ReInferenceRunner` with `IdentityOperator` merge, which was
+  previously unreachable because the default runner used the
+  clipping merge. Identity merge is now an explicit option.
+
+`docs/ABLATION.md` was updated to the 22-row table with the
+finding paragraph. W2 trajectory is preserved across all four
+scheduler families (cosine / polynomial / sigmoid / convergence-
+adaptive) on both `eight_gaussians` and `two_moons` (delta W2 ≤
+0.02 vs the cosine baseline for the new rows). Ledger chain
+integrity is verified for every row by `tools/check_ledger_chain.py`.
+
+### Phase 3 - ecosystem documentation
+
+Reader-facing documentation that was recommended in the 2026-08-29
+external review:
+
+- `docs/sequential-protocol.md` — `SequentialScheduler` worked
+  examples (cosine for 8 rounds, exponential for 4, constant for 8).
+- `docs/defaults-matrix.md` — four-row recommendation matrix
+  mapping (scheduler, driver, merge, blender) tuples to
+  short / long / adaptive / sequential scenarios.
+- `docs/schedule-theory.md` — extended with a closed-form
+  expressions table for all eight schedulers, a "comparison to
+  field standards" section (Nichol-Dhariwal cosine, Karras EDM
+  rho-spacing, SD3 exponential shift), and a "How to choose a
+  schedule" decision tree.
+- `docs/CLAIMS.md` — three new claims registered:
+  `CLM-019` (canonical `SchedulerProtocol` interface is the
+  single source of truth for scheduler inputs / outputs),
+  `CLM-020` (`BoundedMergeOperator` floor semantics are
+  documented and tested), `CLM-021` (`SequentialScheduler` is
+  analogous to running multiple sub-runs under different base
+  schedulers).
+- `ROADMAP.md` — updated to mark "Final polish pass" as
+  implemented.
+
+### Phase 4 - all six gates green
+
+- pytest: 1403 passed, 7 skipped
+- ruff: 0 issues
+- mypy: 0 issues
+- docs scanner (`tools/check_docs_against_code.py`): 2461 claims
+  verified, 0 drift
+- claims consistency (`tools/check_claims_consistency.py`): 19
+  active, 0 provisional, 2 deprecated, no drift
+- mkdocs `--strict`: clean
+
 ## [Unreleased] - Close 3 identified gaps
 
 This section records the closure of the three gaps an external review

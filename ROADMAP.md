@@ -132,6 +132,34 @@ wired into a default path are labelled inline.
       a stale snapshot, not a live status). All six gates green:
       pytest 1235 passed / 7 skipped, ruff 0, mypy 0, docs scanner
       2251, claims sync clean, mkdocs `--strict` clean.
+- [x] Ecosystem extensions — implemented 2026-08-29. Four
+      reader-facing additions that close the P1-2 / P1-4 external
+      recommendations: `SequentialScheduler` reference doc
+      ([`docs/sequential-protocol.md`](docs/sequential-protocol.md))
+      with a worked three-phase example (cosine for 8 rounds,
+      exponential for 4, constant for 8); the
+      [`docs/defaults-matrix.md`](docs/defaults-matrix.md) heuristic
+      guide with a `(scheduler, driver, merge, blender)` row for
+      each of the four common scenarios; extended
+      [`docs/schedule-theory.md`](docs/schedule-theory.md) with a
+      closed-form expressions table for all eight schedulers, a
+      "comparison to field standards" table (Nichol-Dhariwal cosine,
+      Karras EDM rho-spacing, SD3 exponential shift), and a "How to
+      choose a schedule" decision tree; and three new CLM IDs
+      ([CLM-019], [CLM-020], [CLM-021]) for the canonical
+      `SchedulerProtocol`, `BoundedMergeOperator` floor semantics,
+      and `SequentialScheduler` analogy respectively.
+- [x] Final polish pass — implemented 2026-08-29. P1 / P2 cleanup
+      (8 concrete items), ablation extended to 22 rows (4 new
+      rows exercise forward-noise, clip-and-audit, hash-chained
+      ledger, and identity merge paths), ecosystem documentation
+      extended with `SequentialScheduler` worked examples, a
+      defaults recommendation matrix, and an extended schedule
+      theory reference (closed-form table + field-standards
+      comparison + decision tree). All six gates green: pytest
+      1403 passed / 7 skipped, ruff 0, mypy 0, docs scanner 2461,
+      claims sync clean (19 active / 0 provisional / 2 deprecated,
+      no drift), mkdocs `--strict` clean.
 
 ## Next (2026-Q4 — October through December)
 

@@ -526,6 +526,74 @@ def test_p0_3_all_operators_return_finite_float_in_unit_interval() -> None:
 
 
 # ---------------------------------------------------------------------------
+# 8. Protocol docstring — non-clamping operators MAY accept audit_codes (P2-4)
+# ---------------------------------------------------------------------------
+
+
+def test_merge_operator_protocol_docstring_documents_non_clamping_audit_codes() -> None:
+    """The :class:`MergeOperatorProtocol` docstring explicitly states
+    that :class:`IdentityOperator` and :class:`EMAOperator` are
+    non-clamping operators that MAY accept ``audit_codes`` but ignore
+    it (audit P2-4: contract documentation).
+    """
+    docstring = MergeOperatorProtocol.__doc__ or ""
+    assert "audit_codes" in docstring
+    # The new P2-4 contract text must be present.
+    assert "non-clamping" in docstring
+
+
+def test_identity_operator_does_not_emit_envelope_audit_codes() -> None:
+    """:class:`IdentityOperator` does not emit
+    :data:`MERGE_DEGENERATE_INTERVAL` even on degenerate envelopes
+    (audit P2-4: non-clamping operators ignore the envelope
+    semantics, so the bounded-merge audit codes MUST NOT appear).
+    """
+    audit: list[str] = []
+    IdentityOperator().merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=0.0,  # degenerate: cap < floor
+        floor=1.0,
+        delta_cap_up=0.0,
+        delta_cap_down=0.0,
+        audit_codes=audit,
+    )
+    degenerate_lines = [
+        code for code in audit if "merge_degenerate_interval" in code
+    ]
+    assert degenerate_lines == [], (
+        f"IdentityOperator emitted MERGE_DEGENERATE_INTERVAL codes: "
+        f"{degenerate_lines!r}; non-clamping operators MUST NOT emit "
+        f"bounded-merge audit codes (P2-4)."
+    )
+
+
+def test_ema_operator_does_not_emit_envelope_audit_codes() -> None:
+    """:class:`EMAOperator` does not emit
+    :data:`MERGE_DEGENERATE_INTERVAL` even on degenerate envelopes
+    (audit P2-4).
+    """
+    audit: list[str] = []
+    EMAOperator().merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=0.0,
+        floor=1.0,
+        delta_cap_up=0.0,
+        delta_cap_down=0.0,
+        audit_codes=audit,
+    )
+    degenerate_lines = [
+        code for code in audit if "merge_degenerate_interval" in code
+    ]
+    assert degenerate_lines == [], (
+        f"EMAOperator emitted MERGE_DEGENERATE_INTERVAL codes: "
+        f"{degenerate_lines!r}; non-clamping operators MUST NOT emit "
+        f"bounded-merge audit codes (P2-4)."
+    )
+
+
+# ---------------------------------------------------------------------------
 # from_config / to_config round-trip (P1-1) — merge operators
 # ---------------------------------------------------------------------------
 

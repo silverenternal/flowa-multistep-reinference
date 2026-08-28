@@ -43,6 +43,7 @@ Public surface
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 from collections.abc import Mapping
 from typing import Any, Protocol, runtime_checkable
@@ -472,8 +473,20 @@ class LinearBlender:
         return self.FAMILY
 
     def config_hash(self) -> str:
-        """Return the canonical linear-blender config hash."""
-        return DEFAULT_LINEAR_CONFIG_HASH
+        """Return a stable digest of the linear-blender config.
+
+        Two :class:`LinearBlender` instances always compare equal
+        (the family has no constructor arguments; the class itself is
+        the canonical default). The digest is computed via
+        :func:`_blender_config_hash` so the hash incorporates the
+        family + ``__qualname__`` and matches the audit convention
+        used by every other blender / driver / scheduler (closes
+        P2-3.3).
+        """
+        return _blender_config_hash(
+            family=self.FAMILY,
+            qualname=type(self).__qualname__,
+        )
 
     def to_config(self) -> dict[str, Any]:
         """Return a JSON-serialisable config dict (P1-1 round-trip)."""
@@ -576,8 +589,21 @@ class DistanceDecayBlender:
         return self.FAMILY
 
     def config_hash(self) -> str:
-        """Return the canonical distance-decay-blender config hash."""
-        return DEFAULT_DISTANCE_DECAY_CONFIG_HASH
+        """Return a stable digest of the distance-decay-blender config.
+
+        Two :class:`DistanceDecayBlender` instances with the same
+        ``temperature`` compare equal; instances with different
+        ``temperature`` values produce different hashes (closes
+        P2-3.3 / P3.3 — the previous implementation returned the
+        constant :data:`DEFAULT_DISTANCE_DECAY_CONFIG_HASH` so two
+        operators with different temperatures were
+        indistinguishable in the audit trail).
+        """
+        return _blender_config_hash(
+            family=self.FAMILY,
+            qualname=type(self).__qualname__,
+            extra={"temperature": float(self._temperature)},
+        )
 
     def to_config(self) -> dict[str, Any]:
         """Return a JSON-serialisable config dict (P1-1 round-trip)."""
@@ -609,6 +635,59 @@ def default_blender() -> LinearBlender:
     canonical blender can never drift.
     """
     return LinearBlender()
+
+
+# ---------------------------------------------------------------------------
+# config_hash helpers
+# ---------------------------------------------------------------------------
+
+
+def _blender_config_hash(
+    *,
+    family: str,
+    qualname: str,
+    extra: Mapping[str, Any] | None = None,
+) -> str:
+    """Return the stable ``config_hash`` for a blender instance.
+
+    Two blenders of the same family + constructor arguments return
+    equal hashes; blenders that differ in any constructor argument
+    return different hashes. The hash captures the family, the class
+    ``__qualname__`` (so a future :class:`LinearBlender` subclass with
+    different default args does not collide), and any per-instance
+    constructor arguments (e.g. ``temperature`` on
+    :class:`DistanceDecayBlender`).
+
+    P2-3.3 / P3.3: previously the blender's ``config_hash`` returned a
+    constant family string, so two :class:`DistanceDecayBlender`
+    instances with different temperatures had identical hashes. The
+    audit trail therefore could not distinguish them. This helper
+    folds the constructor arguments into the digest so two instances
+    with different constructor arguments produce different hashes.
+    """
+    payload: dict[str, Any] = {"family": str(family), "qualname": str(qualname)}
+    if extra:
+        for k, v in sorted(extra.items()):
+            payload[str(k)] = v
+    text = json.dumps(payload, sort_keys=True, default=_canonical_json_default)
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _canonical_json_default(obj: Any) -> Any:
+    """Return a JSON-encodable fallback for ``obj``.
+
+    Mirrors :func:`adaptive_reflow.algorithm.policy_driver._canonicalize`
+    but is inlined here so this module stays stdlib-only. NumPy
+    scalars (``np.float64`` / ``np.int64``) are coerced via
+    :func:`float` / :func:`int` so two mathematically equal values
+    produce the same digest regardless of the originating dtype.
+    """
+    if hasattr(obj, "item"):
+        try:
+            return obj.item()
+        except (ValueError, TypeError):
+            return float(obj)
+    return str(obj)
 
 
 __all__ = [

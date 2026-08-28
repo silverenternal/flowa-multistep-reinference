@@ -138,6 +138,8 @@ not_in_nav: |
   review/*.md
   distinguishing-from-reflow.md
   schedule-theory.md
+  sequential-protocol.md
+  defaults-matrix.md
 
 validation:
   nav:

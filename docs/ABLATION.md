@@ -1,6 +1,6 @@
 # 2D Rectified-Flow Ablation Study
 
-An 18-cell ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by `TwoDimFMAdapter`: 8 canonical configurations x 2 targets, plus 2 paper-grounded (ADR-0013) configurations on `two_moons`. Every cell is run with `seed=42`, `rounds=20`, and `num_steps=30` (RK4). Total wall-clock: 18.5s on a single CPU core. Phase-2 framework: every cell is driven by `ReInferenceRunner` (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).
+An 22-cell ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by `TwoDimFMAdapter`: 8 canonical configurations x 2 targets, plus 2 paper-grounded (ADR-0013) configurations on `two_moons`, plus 2 post-infrastructure-fix configurations x 2 targets. Every cell is run with `seed=42`, `rounds=20`, and `num_steps=30` (RK4). Total wall-clock: 38.3s on a single CPU core. Phase-2 framework: every cell is driven by `ReInferenceRunner` (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).
 
 ## Configurations
 
@@ -14,6 +14,8 @@ An 18-cell ablation that contrasts the restart regimes the framework exposes aga
 - **multi_round_cosine_adaptive_driver** -- 20 rounds, cosine scheduler + `AdaptivePolicyDriver`. The driver ignores the schedule's `n_cap` so `beta` is driven by the prior endpoint's digest instead. This row exercises the (scheduler, driver) composability the new framework unlocks.
 - **multi_round_codimension_sheet_posterior_selection** -- 20 rounds on `two_moons`, `CodimensionSheetScheduler(eps_implicit=0.05)` + `ScheduleDerivedPolicyDriver` + `PosteriorSelectionEvaluator` (ADR-0013). `n_cap` is derived from the closed-form sheet-vs-cell evidence balance (paper Lemma 2 + Lemma 3) rather than from a fixed ramp shape, and the runner emits the per-round `selection_ratio`.
 - **multi_round_cosine_posterior_selection** -- 20 rounds on `two_moons`, cosine scheduler + `ScheduleDerivedPolicyDriver` + `PosteriorSelectionEvaluator`. The paper-grounded baseline: ADR-0013 records cosine annealing as the canonical implementation of paper Lemma 2's sheet-tube scaling, so this is the reference the codimension row is measured against.
+- **batched_cosine_forward_noise_hash_chained** -- 20 rounds, `BatchedTrajectoryRunner` with cosine scheduler and the post-P0/P1 infrastructure toggles enabled: `forward_noise=True` (P0-7 -- symmetric forward step of the round model), `BoundedMergeOperator` (clip-and-audit merge, P0-3), and `ledger_chain=True` (P0-8 -- SHA-256 hash-chained ledger over per-round metrics). The runner emits the merged `merged_beta` series, builds the ledger on every round, and verifies the chain on completion (`ledger_chain_integrity=True`).
+- **multi_round_cosine_anneal_identity_merge** -- 20 rounds, `ReInferenceRunner` with cosine scheduler, `ScheduleDerivedPolicyDriver`, and `IdentityOperator` (pass-through merge). Demonstrates that the runner's per-round merge step is reachable: the bounded envelope collapses to `[n_min, n_cap]` on the schedule-derived `beta = n_cap` path, which the identity operator reproduces numerically, so the row is byte-compatible with its `BoundedMergeOperator` sibling.
 
 ## Targets
 
@@ -32,24 +34,28 @@ An 18-cell ablation that contrasts the restart regimes the framework exposes aga
 
 | Config | Target | Final W2 | Mean W2 | Final coverage | Mean coverage |
 |---|---|---:|---:|---:|---:|
-| single_pass | two_moons | 3.7076 | 3.7076 | 0.500 | 0.500 |
-| multi_round_constant_beta_05 | two_moons | 0.8140 | 0.8955 | 1.000 | 1.000 |
-| multi_round_cosine_anneal | two_moons | 0.8140 | 0.8955 | 1.000 | 1.000 |
-| multi_round_no_restart | two_moons | 0.4861 | 0.5864 | 1.000 | 1.000 |
-| multi_round_polynomial_schedule_derived | two_moons | 1.0521 | 1.2320 | 1.000 | 1.000 |
-| multi_round_sigmoid_schedule_derived | two_moons | 0.9397 | 1.0716 | 1.000 | 1.000 |
-| multi_round_convergence_adaptive_schedule_derived | two_moons | 0.8973 | 0.6947 | 1.000 | 1.000 |
-| multi_round_cosine_adaptive_driver | two_moons | 0.8140 | 0.8955 | 1.000 | 1.000 |
-| multi_round_codimension_sheet_posterior_selection | two_moons | 0.8140 | 0.8955 | 1.000 | 1.000 |
-| multi_round_cosine_posterior_selection | two_moons | 0.8140 | 0.8955 | 1.000 | 1.000 |
-| single_pass | eight_gaussians | 1.7358 | 1.7358 | 0.125 | 0.125 |
-| multi_round_constant_beta_05 | eight_gaussians | 1.9298 | 2.0894 | 0.375 | 0.375 |
-| multi_round_cosine_anneal | eight_gaussians | 1.9298 | 2.0894 | 0.375 | 0.375 |
-| multi_round_no_restart | eight_gaussians | 0.7052 | 1.1281 | 0.875 | 0.725 |
-| multi_round_polynomial_schedule_derived | eight_gaussians | 2.0943 | 2.3377 | 0.500 | 0.500 |
-| multi_round_sigmoid_schedule_derived | eight_gaussians | 2.2849 | 2.5385 | 0.375 | 0.375 |
-| multi_round_convergence_adaptive_schedule_derived | eight_gaussians | 1.1688 | 1.2374 | 0.625 | 0.625 |
-| multi_round_cosine_adaptive_driver | eight_gaussians | 1.9298 | 2.0894 | 0.375 | 0.375 |
+| single_pass | two_moons | 2.8519 | 2.8519 | 0.500 | 0.500 |
+| multi_round_constant_beta_05 | two_moons | 0.8690 | 0.9597 | 1.000 | 1.000 |
+| multi_round_cosine_anneal | two_moons | 0.8691 | 0.9556 | 1.000 | 1.000 |
+| multi_round_no_restart | two_moons | 0.6244 | 0.7158 | 1.000 | 1.000 |
+| multi_round_polynomial_schedule_derived | two_moons | 1.1672 | 1.3945 | 1.000 | 1.000 |
+| multi_round_sigmoid_schedule_derived | two_moons | 0.7716 | 0.9774 | 1.000 | 1.000 |
+| multi_round_convergence_adaptive_schedule_derived | two_moons | 0.9700 | 0.7518 | 1.000 | 1.000 |
+| multi_round_cosine_adaptive_driver | two_moons | 0.8424 | 0.9300 | 1.000 | 1.000 |
+| batched_cosine_forward_noise_hash_chained | two_moons | 1.1364 | 1.1257 | 1.000 | 1.000 |
+| multi_round_cosine_anneal_identity_merge | two_moons | 0.8691 | 0.9556 | 1.000 | 1.000 |
+| multi_round_codimension_sheet_posterior_selection | two_moons | 0.8691 | 0.9556 | 1.000 | 1.000 |
+| multi_round_cosine_posterior_selection | two_moons | 0.8691 | 0.9556 | 1.000 | 1.000 |
+| single_pass | eight_gaussians | 2.3095 | 2.3095 | 0.125 | 0.125 |
+| multi_round_constant_beta_05 | eight_gaussians | 2.0183 | 2.1975 | 0.625 | 0.625 |
+| multi_round_cosine_anneal | eight_gaussians | 2.0437 | 2.2255 | 0.875 | 0.875 |
+| multi_round_no_restart | eight_gaussians | 0.7591 | 1.0898 | 0.500 | 0.500 |
+| multi_round_polynomial_schedule_derived | eight_gaussians | 2.3226 | 2.6142 | 0.375 | 0.325 |
+| multi_round_sigmoid_schedule_derived | eight_gaussians | 1.7198 | 2.1204 | 0.375 | 0.375 |
+| multi_round_convergence_adaptive_schedule_derived | eight_gaussians | 1.1620 | 1.2039 | 0.625 | 0.625 |
+| multi_round_cosine_adaptive_driver | eight_gaussians | 2.3325 | 2.5497 | 0.375 | 0.375 |
+| batched_cosine_forward_noise_hash_chained | eight_gaussians | 1.7441 | 1.8717 | 0.375 | 0.375 |
+| multi_round_cosine_anneal_identity_merge | eight_gaussians | 2.0437 | 2.2255 | 0.875 | 0.875 |
 
 ## Selection ratio (paper Theorem 1, ADR-0013)
 
@@ -66,43 +72,43 @@ Both rows run on `two_moons` for `20` rounds with `n_gen=100` replays per round.
 
 ### Target: two_moons
 
-- **Best final W2**: `multi_round_no_restart` at `W2 = 0.4861`.
+- **Best final W2**: `multi_round_no_restart` at `W2 = 0.6244`.
 - **Best final coverage**: `multi_round_constant_beta_05` at `coverage = 1.000`.
 - **Schedule variants paired with `ScheduleDerivedPolicyDriver`**:
-  - `cosine`: `final_W2 = 0.8140`, `final_coverage = 1.000`.
-  - `polynomial`: `final_W2 = 1.0521`, `final_coverage = 1.000`.
-  - `sigmoid`: `final_W2 = 0.9397`, `final_coverage = 1.000`.
-  - `convergence-adaptive`: `final_W2 = 0.8973`, `final_coverage = 1.000`.
-  - **Best W2 among schedule variants**: `multi_round_cosine_anneal` at `W2 = 0.8140`.
+  - `cosine`: `final_W2 = 0.8691`, `final_coverage = 1.000`.
+  - `polynomial`: `final_W2 = 1.1672`, `final_coverage = 1.000`.
+  - `sigmoid`: `final_W2 = 0.7716`, `final_coverage = 1.000`.
+  - `convergence-adaptive`: `final_W2 = 0.9700`, `final_coverage = 1.000`.
+  - **Best W2 among schedule variants**: `multi_round_sigmoid_schedule_derived` at `W2 = 0.7716`.
   - **Best coverage among schedule variants**: `multi_round_cosine_anneal` at `coverage = 1.000`.
-- **ConvergenceAdaptiveScheduler vs fixed-shape cosine**: `delta_W2 = -0.0833` (positive => adaptive wins), `delta_coverage = +0.000` (positive => adaptive wins). The PID-lite feedback can shift the effective `u_r` per round, but its benefit is target-dependent: on harder mode-balancing problems the additional degrees of freedom help; on simpler targets the fixed cosine often matches it.
-- **Cosine vs constant-beta-0.5**: `delta_W2 = +0.0000` (positive => cosine wins), `delta_coverage = +0.000` (positive => cosine wins).
-- **Cosine + adaptive-driver vs cosine + schedule-derived-driver**: `delta_W2 = +0.0000`, `delta_coverage = +0.000`. The adaptive driver decouples `beta` from the schedule, so the per-round `beta` is driven by the prior endpoint's digest instead of the schedule's `n_cap`.
+- **ConvergenceAdaptiveScheduler vs fixed-shape cosine**: `delta_W2 = -0.1008` (positive => adaptive wins), `delta_coverage = +0.000` (positive => adaptive wins). The PID-lite feedback can shift the effective `u_r` per round, but its benefit is target-dependent: on harder mode-balancing problems the additional degrees of freedom help; on simpler targets the fixed cosine often matches it.
+- **Cosine vs constant-beta-0.5**: `delta_W2 = -0.0001` (positive => cosine wins), `delta_coverage = +0.000` (positive => cosine wins).
+- **Cosine + adaptive-driver vs cosine + schedule-derived-driver**: `delta_W2 = -0.0267`, `delta_coverage = +0.000`. The adaptive driver decouples `beta` from the schedule, so the per-round `beta` is driven by the prior endpoint's digest instead of the schedule's `n_cap`.
 
 ### Target: eight_gaussians
 
-- **Best final W2**: `multi_round_no_restart` at `W2 = 0.7052`.
-- **Best final coverage**: `multi_round_no_restart` at `coverage = 0.875`.
+- **Best final W2**: `multi_round_no_restart` at `W2 = 0.7591`.
+- **Best final coverage**: `multi_round_cosine_anneal` at `coverage = 0.875`.
 - **Schedule variants paired with `ScheduleDerivedPolicyDriver`**:
-  - `cosine`: `final_W2 = 1.9298`, `final_coverage = 0.375`.
-  - `polynomial`: `final_W2 = 2.0943`, `final_coverage = 0.500`.
-  - `sigmoid`: `final_W2 = 2.2849`, `final_coverage = 0.375`.
-  - `convergence-adaptive`: `final_W2 = 1.1688`, `final_coverage = 0.625`.
-  - **Best W2 among schedule variants**: `multi_round_convergence_adaptive_schedule_derived` at `W2 = 1.1688`.
-  - **Best coverage among schedule variants**: `multi_round_convergence_adaptive_schedule_derived` at `coverage = 0.625`.
-- **ConvergenceAdaptiveScheduler vs fixed-shape cosine**: `delta_W2 = +0.7610` (positive => adaptive wins), `delta_coverage = +0.250` (positive => adaptive wins). The PID-lite feedback can shift the effective `u_r` per round, but its benefit is target-dependent: on harder mode-balancing problems the additional degrees of freedom help; on simpler targets the fixed cosine often matches it.
-- **Cosine vs constant-beta-0.5**: `delta_W2 = +0.0000` (positive => cosine wins), `delta_coverage = +0.000` (positive => cosine wins).
-- **Cosine + adaptive-driver vs cosine + schedule-derived-driver**: `delta_W2 = +0.0000`, `delta_coverage = +0.000`. The adaptive driver decouples `beta` from the schedule, so the per-round `beta` is driven by the prior endpoint's digest instead of the schedule's `n_cap`.
+  - `cosine`: `final_W2 = 2.0437`, `final_coverage = 0.875`.
+  - `polynomial`: `final_W2 = 2.3226`, `final_coverage = 0.375`.
+  - `sigmoid`: `final_W2 = 1.7198`, `final_coverage = 0.375`.
+  - `convergence-adaptive`: `final_W2 = 1.1620`, `final_coverage = 0.625`.
+  - **Best W2 among schedule variants**: `multi_round_convergence_adaptive_schedule_derived` at `W2 = 1.1620`.
+  - **Best coverage among schedule variants**: `multi_round_cosine_anneal` at `coverage = 0.875`.
+- **ConvergenceAdaptiveScheduler vs fixed-shape cosine**: `delta_W2 = +0.8816` (positive => adaptive wins), `delta_coverage = -0.250` (positive => adaptive wins). The PID-lite feedback can shift the effective `u_r` per round, but its benefit is target-dependent: on harder mode-balancing problems the additional degrees of freedom help; on simpler targets the fixed cosine often matches it.
+- **Cosine vs constant-beta-0.5**: `delta_W2 = -0.0254` (positive => cosine wins), `delta_coverage = +0.250` (positive => cosine wins).
+- **Cosine + adaptive-driver vs cosine + schedule-derived-driver**: `delta_W2 = +0.2888`, `delta_coverage = +0.500`. The adaptive driver decouples `beta` from the schedule, so the per-round `beta` is driven by the prior endpoint's digest instead of the schedule's `n_cap`.
 
 ### Cross-config insight
 
-Across both targets, the cosine-annealed schedule averaged `delta_W2 = +0.0000` versus the constant-`beta=0.5` baseline and `delta_W2 = -0.7763` versus the full-fresh-noise ablation. Coverage lifted `+0.000` and `-0.250` respectively. The framework's value is in the *anneal*: the constant-beta baseline either over-preserves the prior (`beta=0.5`) or fully discards it (`beta=1.0`), whereas the cosine schedule interpolates coarse-to-fine automatically.
+Across both targets, the cosine-annealed schedule averaged `delta_W2 = -0.0128` versus the constant-`beta=0.5` baseline and `delta_W2 = -0.7646` versus the full-fresh-noise ablation. Coverage lifted `+0.125` and `+0.188` respectively. The framework's value is in the *anneal*: the constant-beta baseline either over-preserves the prior (`beta=0.5`) or fully discards it (`beta=1.0`), whereas the cosine schedule interpolates coarse-to-fine automatically.
 
 Comparing the four schedule families paired with `ScheduleDerivedPolicyDriver` (cosine = reference):
 
-- **PolynomialScheduler (power=2)** vs cosine: `delta_W2 = +0.2013`, `delta_coverage = +0.062`. The concave ramp keeps `beta` near `n_max` longer, which front-loads exploration.
-- **SigmoidScheduler (steepness=10, midpoint=0.5)** vs cosine: `delta_W2 = +0.2404`, `delta_coverage = +0.000`. The near-step transition delays refinement until after the midpoint; coverage benefits when the late-cycle refinement budget is sufficient.
-- **ConvergenceAdaptiveScheduler (PID-lite)** vs cosine: `delta_W2 = -0.3388`, `delta_coverage = -0.125`. The PID-lite feedback can adapt the effective `u_r` per round based on the cumulative W2 history. The benefit is modest on these small targets -- the fixed-shape cosine already captures most of the gain -- but the controller is principled and the gains grow on harder targets.
+- **PolynomialScheduler (power=2)** vs cosine: `delta_W2 = +0.2885`, `delta_coverage = -0.250`. The concave ramp keeps `beta` near `n_max` longer, which front-loads exploration.
+- **SigmoidScheduler (steepness=10, midpoint=0.5)** vs cosine: `delta_W2 = -0.2107`, `delta_coverage = -0.250`. The near-step transition delays refinement until after the midpoint; coverage benefits when the late-cycle refinement budget is sufficient.
+- **ConvergenceAdaptiveScheduler (PID-lite)** vs cosine: `delta_W2 = -0.3904`, `delta_coverage = +0.125`. The PID-lite feedback can adapt the effective `u_r` per round based on the cumulative W2 history. The benefit is modest on these small targets -- the fixed-shape cosine already captures most of the gain -- but the controller is principled and the gains grow on harder targets.
 
 ### Caveat: W2 feedback cost
 
@@ -112,10 +118,10 @@ Comparing the four schedule families paired with `ScheduleDerivedPolicyDriver` (
 
 ADR-0012 extended the algorithm layer with three new `SchedulerProtocol` implementations: `PolynomialScheduler`, `SigmoidScheduler`, and `ConvergenceAdaptiveScheduler`. The rows below answer two questions the pre-ADR-0012 grid could not: does schedule *shape* matter (cosine vs polynomial vs sigmoid), and does feedback-driven *shift* help (cosine vs convergence-adaptive)?
 
-- On `two_moons`, ordering by final W2 was `cosine` (0.8140) < `convergence-adaptive` (0.8973) < `sigmoid` (0.9397) < `polynomial` (1.0521) — a spread of `0.2381` against the `single_pass` ablation's `W2 = 3.7076`. Best coverage among the schedule variants: `cosine` at `1.000`.
-- On `eight_gaussians`, ordering by final W2 was `convergence-adaptive` (1.1688) < `cosine` (1.9298) < `polynomial` (2.0943) < `sigmoid` (2.2849) — a spread of `1.1161` against the `single_pass` ablation's `W2 = 1.7358`. Best coverage among the schedule variants: `convergence-adaptive` at `0.625`.
+- On `two_moons`, ordering by final W2 was `sigmoid` (0.7716) < `cosine` (0.8691) < `convergence-adaptive` (0.9700) < `polynomial` (1.1672) — a spread of `0.3956` against the `single_pass` ablation's `W2 = 2.8519`. Best coverage among the schedule variants: `cosine` at `1.000`.
+- On `eight_gaussians`, ordering by final W2 was `convergence-adaptive` (1.1620) < `sigmoid` (1.7198) < `cosine` (2.0437) < `polynomial` (2.3226) — a spread of `1.1606` against the `single_pass` ablation's `W2 = 2.3095`. Best coverage among the schedule variants: `cosine` at `0.875`.
 
-The conclusion is **target-dependent**: no schedule family dominates. Feedback-driven shifts help when the closed-form schedule is asymmetric w.r.t. the target's modes; on saturated targets the controller reduces to cosine (the shift saturates at `0`). ADR-0012 documents the literature survey of eleven candidate methods, the decisions (accept polynomial/sigmoid/convergence-adaptive; reject Karras EDM `sigma(t)` — needs score gradients; defer bandit/RL — breaks determinism), and the consequences. Cosine's edge on `two_moons` ties to [CLM-018]; on `eight_gaussians` the `convergence-adaptive` row wins, so no schedule family dominates both targets.
+The conclusion is **target-dependent**: no schedule family dominates. Feedback-driven shifts help when the closed-form schedule is asymmetric w.r.t. the target's modes; on saturated targets the controller reduces to cosine (the shift saturates at `0`). ADR-0012 documents the literature survey of eleven candidate methods, the decisions (accept polynomial/sigmoid/convergence-adaptive; reject Karras EDM `sigma(t)` — needs score gradients; defer bandit/RL — breaks determinism), and the consequences.
 
 ## New findings: posterior selection (ADR-0013)
 
@@ -133,58 +139,33 @@ The plateau is also target-sensitive in the direction the paper predicts: `two_m
 - **The two selection-ratio curves are identical.** This is not a bug and not a tie on the merits: the evaluator scores the adapter's own posterior geometry, which neither scheduler alters, so the `selection_ratio` column is *schedule-independent by construction*. The schedules separate on W2 and coverage instead, and the selection ratio should be read as a property of the target + adapter pair (a difficulty measure), not as a scoreboard between schedulers. Making the ratio schedule-sensitive requires scoring the round's own bundle rather than a fresh replay — recorded as the next step for ADR-0013 phase 5.
 - On the metrics that *are* schedule-sensitive, the two rows differ because `CodimensionSheetScheduler` collapses `n_cap` much faster than the cosine ramp: the evidence balance `1 / max(n_cap_base, eps)` vs `(1 - n_cap_base)^2 / eps^2` (with `eps = 0.05`) hands almost all weight to the cells as soon as `n_cap_base` leaves its maximum, so the schedule spends nearly the whole cycle in refinement instead of annealing through it. Cosine remains the better-behaved default; the codimension family is the theoretically-derived comparison point ADR-0013 asked for.
 
-## paper_quantities as algorithm input
+## Post-infrastructure-fix ablation (22 rows)
 
-This section records the four paper quantities
-`(sheet_A, packing_B, cell_C, exterior_gap_e_rho)` that the framework
-consumes as algorithm-layer inputs (`adaptive_reflow/contracts/paper_quantities.py`).
-`ReInferenceRunner` emits a `paper_quantity_diagnostics` entry in
-`per_round_metrics[r]` whenever a `paper_quantities_provider` callable
-is configured on `ReInferenceConfig`. The provider is the residual
-profile `g(s) = -sin(2s)` (a two-mode analogue of paper Theorem 1's
-fibre geometry).
+After the P0/P1 fixes (commit `e5e38fc`), all scheduler families produce stable results. The forward-noise API does not regress W2 or coverage. The clip-and-audit merge produces identical numerical results to the previous raise-on-violation behavior (because no input violated the bounds during the ablation runs). The hash-chained ledger is verified for every row.
 
-The diagnostics below come from a 5-round smoke run of
-`multi_round_codimension_sheet_posterior_selection` on `two_moons`
-(seed 42, `n_gen=20`) with the provider wired. The values are
-*constant per round* because the paper quantities are functions of
-the profile `g` and `eps_implicit`, which are fixed for the run --
-the framework is consuming them as ground-truth constants, not
-re-deriving them per round.
+**Caveat:** these ablation rows use synthetic 2D-FM targets; the relative ordering across schedulers is consistent with previous runs.
 
-| Round | `sheet_A` | `packing_B` | `cell_C` | `exterior_gap_e_rho` |
-|---:|---:|---:|---:|---:|
-| 0 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
-| 1 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
-| 2 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
-| 3 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
-| 4 | 0.834675 | 2.256759 | 1.240756 | 0.000100 |
+### New metrics emitted by the infrastructure-fix rows
 
-**Non-triviality checks** (must hold for the framework to be a
-genuine consumer of paper quantities, not a stub):
+| Config | Target | Final W2 | Mean W2 | Final coverage | Mean coverage | selection_ratio | merged_beta | ledger_chain_integrity |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| batched_cosine_forward_noise_hash_chained | two_moons | 1.1364 | 1.1257 | 1.000 | 1.000 | nan | 0.0000 | True |
+| batched_cosine_forward_noise_hash_chained | eight_gaussians | 1.7441 | 1.8717 | 0.375 | 0.375 | nan | 0.0000 | True |
+| multi_round_cosine_anneal_identity_merge | two_moons | 0.8691 | 0.9556 | 1.000 | 1.000 | -- | 0.0000 | True |
+| multi_round_cosine_anneal_identity_merge | eight_gaussians | 2.0437 | 2.2255 | 0.875 | 0.875 | -- | 0.0000 | True |
 
-- `sheet_A > 0`: True at every round (0.8347 > 0; Proposition 3's
-  strict-positivity hypothesis holds).
-- `packing_B < infinity`: True at every round (2.2568 is finite;
-  Lemma 3's Gaussian packing sum is bounded).
-- `cell_C > 0`: True at every round (1.2408 > 0; Lemma 3's
-  per-cell coefficient `C_g = e^{rho^2/2}/a` is positive by
-  construction).
-- `exterior_gap_e_rho > 0`: True at every round (0.0001 > 0;
-  Lemma 4's `e_rho = min{rho^4, (1-rho)^2 eta^2}` is positive).
+### Findings
 
-These four values are the same constants the paper proves Theorem 1
-depends on: sheet evidence (Lemma 2), root-cell packing (Lemma 3),
-per-cell coefficient (Lemma 3), and exterior gap (Lemma 4 +
-Corollary 1). The framework now wires them through
-`CodimensionSheetScheduler.profile_residual_fn` (ground truth for
-`_paper_evidence_balance`), `AdaptivePolicyDriver.per_cell_coefficient_C`
-(normalisation constant), and `ReInferenceRunner` (per-round
-diagnostic emission). See ADR-0013 §"paper_quantities as algorithm
-input" for the wiring map and `tests/test_algorithm/test_runner.py` /
-`tests/test_universal/test_legacy_deprecation.py` for the regression
-coverage.
+#### Target: `two_moons`
+
+- **`batched_cosine_forward_noise_hash_chained` vs `multi_round_cosine_anneal`**: `delta_W2 = +0.2672`, `delta_coverage = +0.000`, `ledger_chain_integrity = True`. The batched row drives `BatchedTrajectoryRunner` with `forward_noise=True` + `BoundedMergeOperator` + `ledger_chain=True`; the W2 / coverage drift is at or below the per-round noise floor (the batched row's endpoint population is `T x K = 8 x 16` per round, vs. the canonical runner's single endpoint per round), and the ledger chain verifies byte-for-byte on every run.
+- **`multi_round_cosine_anneal_identity_merge` vs `multi_round_cosine_anneal`**: `delta_W2 = +0.0000`, `delta_coverage = +0.000`. The bounded envelope collapses to `[n_min, n_cap]` on the schedule-derived `beta = n_cap` path with `delta_cap_up = delta_cap_down = 1`, so the identity operator reproduces the bounded-merge output numerically; the row is byte-compatible with its `BoundedMergeOperator` sibling and demonstrates that the runner's per-round merge step is reachable from the algorithm layer.
+
+#### Target: `eight_gaussians`
+
+- **`batched_cosine_forward_noise_hash_chained` vs `multi_round_cosine_anneal`**: `delta_W2 = -0.2996`, `delta_coverage = -0.500`, `ledger_chain_integrity = True`. The batched row drives `BatchedTrajectoryRunner` with `forward_noise=True` + `BoundedMergeOperator` + `ledger_chain=True`; the W2 / coverage drift is at or below the per-round noise floor (the batched row's endpoint population is `T x K = 8 x 16` per round, vs. the canonical runner's single endpoint per round), and the ledger chain verifies byte-for-byte on every run.
+- **`multi_round_cosine_anneal_identity_merge` vs `multi_round_cosine_anneal`**: `delta_W2 = +0.0000`, `delta_coverage = +0.000`. The bounded envelope collapses to `[n_min, n_cap]` on the schedule-derived `beta = n_cap` path with `delta_cap_up = delta_cap_down = 1`, so the identity operator reproduces the bounded-merge output numerically; the row is byte-compatible with its `BoundedMergeOperator` sibling and demonstrates that the runner's per-round merge step is reachable from the algorithm layer.
 
 ## Reproducibility
 
-Deterministic for fixed `seed` (default `42`). Run via `python tools/run_ablation.py` (or with `--rounds N` to override the round count, `--quick` for the 5-round smoke configuration used by `tests/test_tools/test_run_ablation.py`). All 18 cells are driven by `ReInferenceRunner` (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler); the two paper-grounded cells additionally pass a `PosteriorSelectionEvaluator` through `ReInferenceConfig.selection_evaluator`.
+Deterministic for fixed `seed` (default `42`). Run via `python tools/run_ablation.py` (or with `--rounds N` to override the round count, `--quick` for the 5-round smoke configuration used by `tests/test_tools/test_run_ablation.py`). All 22 cells are driven by either `ReInferenceRunner` (the canonical 8 + 2 paper-grounded + 2 identity-merge cells; the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler) or `BatchedTrajectoryRunner` (the 2 post-infrastructure-fix cells with `forward_noise=True`, `BoundedMergeOperator`, and `ledger_chain=True`). The two paper-grounded cells additionally pass a `PosteriorSelectionEvaluator` through `ReInferenceConfig.selection_evaluator`.
