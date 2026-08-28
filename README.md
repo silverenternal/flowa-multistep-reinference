@@ -12,6 +12,98 @@ Adaptive reflow 和多步复推理控制：round orchestration、restart memory�
   [`docs/ABLATION.md`](docs/ABLATION.md))
 - Honest gaps: see [`docs/lean/GAPS.md`](docs/lean/GAPS.md)
 
+## Architecture at a glance
+
+The framework is **four pluggable layers wired by four feedback loops** —
+not a pile of independent algorithms. Every algorithm in the table is
+loaded by the loop it participates in.
+
+```mermaid
+flowchart TB
+    %% Layer 4: Adapters (framework drives these)
+    subgraph L4["Layer 4: Adapter Protocol (8 concrete adapters)"]
+        TW[TwoDimFMAdapter<br/>2-moons / 8-gaussians]
+        RF[ReferenceFlowAAdapter]
+        FM[FlowMol3Adapter]
+        SY[SyntheticAdapter]
+        TG[ToyGaussianAdapter]
+        TL[ToyLinearAdapter]
+        RDK[RDKitOracle]
+    end
+
+    %% Layer 3: 4-protocol composition (the framework-internal algorithm layer)
+    subgraph L3["Layer 3: 4-protocol composition (algorithm/)"]
+        SC[SchedulerProtocol<br/>8 + 1 = Cosine/Linear/Exp/Poly<br/>Sigmoid/Const/ConvAdapt<br/>CodimensionSheet/Sequential]
+        PD[PolicyDriverProtocol<br/>ScheduleDerived<br/>Constant<br/>Adaptive]
+        MO[MergeOperatorProtocol<br/>BoundedMerge<br/>Identity<br/>EMA]
+        RB[RestartBlenderProtocol<br/>Linear<br/>DistanceDecay]
+    end
+
+    %% Layer 2: Orchestration
+    subgraph L2["Layer 2: Engine + Runner (orchestration)"]
+        EN[Engine.run_round<br/>fail-closed, audit, capability check]
+        RI[ReInferenceRunner<br/>multi-round + per-round metric]
+        BT[BatchedTrajectoryRunner<br/>batched trajectories + endpoint metric]
+    end
+
+    %% Layer 1: Contracts + Metrics + Paper quantities
+    subgraph L1["Layer 1: Contracts + Metrics + Paper quantities"]
+        PQ[paper_quantities<br/>A_g / B_g / C_g / e_rho]
+        ESG[EvidenceScaleGapMetric<br/>paper Theorem 1 witness]
+        W2M[W2 / Coverage / Energy distance]
+        BLD[Bounded-Lipschitz metric<br/>μ → ν distance]
+    end
+
+    %% Forward edges (top-down data flow)
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
+
+    %% Composition edges within Layer 3
+    SC -->|n_cap| PD
+    PD -->|beta| MO
+    MO -->|merged_value| RB
+
+    %% Loop 1: scheduler self-feedback (PID-lite)
+    L2 -.->|W2 feedback| SC
+
+    %% Loop 2: paper_quantities drives scheduler (theory-grounded)
+    PQ -.->|A_g, B_g, C_g, e_rho| SC
+
+    %% Loop 3: metrics feed runner (selection_ratio → next round n_cap)
+    ESG -.->|selection_ratio| L2
+
+    %% Loop 4: ledger chain integrity
+    L2 -.->|hash chain| L1
+
+    %% Emergent behaviour (cannot be done by any single layer)
+    EB["Emergent:<br/>paper Theorem 1<br/>numerical witness<br/>(SNR 60.8:1)"]:::emergent
+    L1 & L2 & L3 & L4 -.-> EB
+
+    classDef emergent fill:#fff4e1,stroke:#cc6600,stroke-width:2px,color:#000
+```
+
+### The four feedback loops
+
+| Loop | Path | What it does |
+|---|---|---|
+| **1. Self-reflexive** | `scheduler → driver → engine → metric → scheduler.record_round_feedback` | The scheduler reads its own last-round output (W2) and updates the next round. This is what makes `ConvergenceAdaptiveScheduler` work — the framework is not executing a fixed schedule, the schedule is being *shaped* by the metric. |
+| **2. Theory-grounded** | `paper_quantities.{A_g,B_g,C_g,e_rho} → CodimensionSheetScheduler._paper_evidence_balance` | The four paper invariants are computed from the user-supplied profile and feed the scheduler directly. paper math → algorithm parameters, no intermediate. |
+| **3. Hash-chained integrity** | `engine.LedgerRow_r.prev_hash = LedgerRow_{r-1}.row_hash` | Round r's hash contains round r-1's hash. Tampering with any round breaks the chain. This is Temporal-style event sourcing applied to per-round inference. |
+| **4. Symmetric round** | `scheduler.inject_noise (forward) ↔ blender.merge (reverse)` | Each round has a symmetric noise model: forward noise injection and reverse bounded merge. This is what lets the round be replayed byte-for-byte. |
+
+### What this is not
+
+- **Not a pile of independent algorithms.** Removing any layer collapses an
+  emergent behaviour (see the dashed arrows). For example, deleting
+  `paper_quantities` reduces CodimensionSheetScheduler to a constant
+  function and loses the `selection_ratio → 1` Theorem-1 witness.
+- **Not a wrapper around an existing sampler.** The framework *is* the
+  algorithm layer. Plugging in a different sampler family (e.g. an
+  EDM-style sampler) requires implementing the four protocols and a
+  Protocol-conforming adapter — but the algorithm layer above it is
+  unchanged.
+
 Scope note: the engine is implemented for its current target domains
 (2D flow matching adapters and the paper-quantity contracts). Other model
 families are supported at the Protocol level only — no adapter for them
