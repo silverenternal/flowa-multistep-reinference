@@ -63,6 +63,8 @@ from __future__ import annotations
 import math
 from typing import Any, Protocol, runtime_checkable
 
+from adaptive_reflow.contracts import hash_artifact
+
 # ---------------------------------------------------------------------------
 # Module-level constants (canonical error codes; ASCII only)
 # ---------------------------------------------------------------------------
@@ -452,6 +454,27 @@ class BoundedMergeOperator:
             ),
         }
 
+    def config_hash(self) -> str:
+        """Return a stable digest of the operator config.
+
+        Captures every constructor argument (``tolerance`` and the
+        optional ``exterior_gap_e_rho``) so two operators with
+        different tolerances / paper-quantity floors hash differently.
+        """
+        return str(
+            hash_artifact(
+                {
+                    "family": "bounded",
+                    "tolerance": float(self._tolerance),
+                    "exterior_gap_e_rho": (
+                        None
+                        if self._exterior_gap_e_rho is None
+                        else float(self._exterior_gap_e_rho)
+                    ),
+                }
+            )
+        )
+
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> BoundedMergeOperator:
         """Build a :class:`BoundedMergeOperator` from ``config``."""
@@ -623,6 +646,10 @@ class IdentityOperator:
         """Return a JSON-serialisable config dict (P1-1 round-trip)."""
         return {"family": "identity"}
 
+    def config_hash(self) -> str:
+        """Return a stable digest of the operator config."""
+        return str(hash_artifact({"family": "identity"}))
+
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> IdentityOperator:
         """Build an :class:`IdentityOperator` from ``config``."""
@@ -701,6 +728,10 @@ class EMAOperator:
     def to_config(self) -> dict[str, Any]:
         """Return a JSON-serialisable config dict (P1-1 round-trip)."""
         return {"family": "ema", "alpha": float(self._alpha)}
+
+    def config_hash(self) -> str:
+        """Return a stable digest of the operator config (captures ``alpha``)."""
+        return str(hash_artifact({"family": "ema", "alpha": float(self._alpha)}))
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> EMAOperator:

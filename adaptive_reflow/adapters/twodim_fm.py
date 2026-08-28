@@ -26,6 +26,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.data.target_distributions import sampler_for
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -67,6 +68,10 @@ TWODIM_FM_CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = {
 _DEFAULT_WEIGHTS: Mapping[str, str] = {
     "two_moons": "data/twodim_fm_two_moons.npz",
     "eight_gaussians": "data/twodim_fm_eight_gaussians.npz",
+    "swiss_roll": "data/twodim_fm_swiss_roll.npz",
+    "pinwheel": "data/twodim_fm_pinwheel.npz",
+    "checkerboard": "data/twodim_fm_checkerboard.npz",
+    "gaussian_grid": "data/twodim_fm_gaussian_grid.npz",
 }
 
 # RK4 integration defaults.
@@ -75,6 +80,14 @@ TWODIM_FM_NUM_STEPS: int = 100
 # Coordinate clamp on the trajectory (the 2D target distributions all
 # fit comfortably inside ``[-5, 5]^2``).
 TWODIM_FM_CLAMP: float = 5.0
+
+# Default Dormand-Prince RK45 tolerances (P0-A19 — configurable
+# ``rtol`` / ``atol`` / ``max_steps`` per adapter). Mirrors the
+# canonical :class:`scipy.integrate.solve_ivp`` defaults scaled for
+# the 2D flow-matching scale.
+TWODIM_FM_DEFAULT_RTOL: float = 1e-3
+TWODIM_FM_DEFAULT_ATOL: float = 1e-4
+TWODIM_FM_DEFAULT_MAX_STEPS: int = 1000
 
 #: Maximum size of the LRU-bounded ``_native_states`` cache. Long-
 #: lived engine runs accumulate one ``dict`` per ``build_initial_state``
@@ -86,10 +99,25 @@ TWODIM_FM_CLAMP: float = 5.0
 TWODIM_FM_NATIVE_STATES_MAXSIZE: int = 128
 
 # Integrator method literals.
-IntegratorMethod = Literal["rk4", "dormand_prince"]
+IntegratorMethod = Literal["rk4", "dormand_prince", "heun", "dpm_solver", "unipc"]
 
 # Local type alias to keep numpy dependency off hot annotation paths.
 ArrayF64 = NDArray[np.float64]
+
+#: Default hidden width of the velocity MLP. Matches the canonical
+#: trainer's default; can be overridden per-instance via the
+#: ``hidden_width`` kwarg (or via the saved ``.npz`` weights, which
+#: always determine the actual width at load time).
+TWODIM_FM_DEFAULT_HIDDEN: int = 64
+
+#: Default rtol for adaptive Dormand-Prince integration.
+TWODIM_FM_DEFAULT_RTOL: float = 1e-3
+
+#: Default atol for adaptive Dormand-Prince integration.
+TWODIM_FM_DEFAULT_ATOL: float = 1e-4
+
+#: Default max-step budget for adaptive Dormand-Prince integration.
+TWODIM_FM_DEFAULT_MAX_STEPS: int = 1000
 
 
 # ---------------------------------------------------------------------------
@@ -370,6 +398,34 @@ def _load_weights(path: Path) -> dict[str, ArrayF64]:
         }
 
 
+def _random_init_weights(*, hidden: int, seed: int) -> dict[str, ArrayF64]:
+    """Kaiming-uniform init of the velocity MLP ``(3 -> H -> H -> 2)``.
+
+    Mirrors :func:`adaptive_reflow.adapters.twodim_fm_train.velocity_field_mlp_init`
+    so the wider-MLP runtime path is byte-comparable to the trainer's
+    random-init baseline. Used when ``init_random_weights=True`` on
+    :class:`TwoDimFMAdapter`'s constructor (no ``.npz`` file required).
+    """
+    if hidden <= 0:
+        raise ValueError("hidden_must_be_positive")
+    rng = np.random.default_rng(int(seed))
+
+    def kaiming(fan_in: int, fan_out: int) -> ArrayF64:
+        bound = np.sqrt(6.0 / float(fan_in))
+        return np.asarray(
+            rng.uniform(-bound, bound, size=(fan_in, fan_out)), dtype=np.float64
+        )
+
+    return {
+        "W1": kaiming(3, hidden),
+        "b1": np.zeros(hidden, dtype=np.float64),
+        "W2": kaiming(hidden, hidden),
+        "b2": np.zeros(hidden, dtype=np.float64),
+        "W3": kaiming(hidden, 2),
+        "b3": np.zeros(2, dtype=np.float64),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Adapter
 # ---------------------------------------------------------------------------
@@ -418,25 +474,74 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         self,
         *,
         weights_path: Path | None = None,
-        target: Literal["two_moons", "eight_gaussians"] = "two_moons",
+        target: Literal[
+            "two_moons",
+            "eight_gaussians",
+            "swiss_roll",
+            "pinwheel",
+            "checkerboard",
+            "gaussian_grid",
+        ] = "two_moons",
         integrator: IntegratorMethod = "rk4",
         num_steps: int = TWODIM_FM_NUM_STEPS,
         seed_offset: int = 0,
+        rtol: float = TWODIM_FM_DEFAULT_RTOL,
+        atol: float = TWODIM_FM_DEFAULT_ATOL,
+        max_steps: int = TWODIM_FM_DEFAULT_MAX_STEPS,
+        hidden_width: int = TWODIM_FM_DEFAULT_HIDDEN,
+        init_random_weights: bool = False,
+        init_seed: int = 12345,
     ) -> None:
-        if target not in ("two_moons", "eight_gaussians"):
+        if target not in (
+            "two_moons",
+            "eight_gaussians",
+            "swiss_roll",
+            "pinwheel",
+            "checkerboard",
+            "gaussian_grid",
+        ):
             raise ValueError(f"unknown_target:{target}")
-        if integrator not in ("rk4", "dormand_prince"):
+        if integrator not in (
+            "rk4",
+            "dormand_prince",
+            "heun",
+            "dpm_solver",
+            "unipc",
+        ):
             raise ValueError(f"unknown_integrator:{integrator}")
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
+        if rtol <= 0.0:
+            raise ValueError("rtol_must_be_positive")
+        if atol <= 0.0:
+            raise ValueError("atol_must_be_positive")
+        if max_steps <= 0:
+            raise ValueError("max_steps_must_be_positive")
+        if hidden_width <= 0:
+            raise ValueError("hidden_width_must_be_positive")
         self._target = target
         self._integrator: IntegratorMethod = integrator
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
+        self._rtol = float(rtol)
+        self._atol = float(atol)
+        self._max_steps = int(max_steps)
+        self._hidden_width = int(hidden_width)
         # Materialize weights from the supplied path or the default.
-        path = Path(weights_path) if weights_path is not None else _default_weights_path(target)
-        self._weights_path = Path(path)
-        self._weights = _load_weights(self._weights_path)
+        if init_random_weights:
+            self._weights_path = Path("random_init")
+            self._weights = _random_init_weights(
+                hidden=int(hidden_width),
+                seed=int(init_seed),
+            )
+        else:
+            path = (
+                Path(weights_path)
+                if weights_path is not None
+                else _default_weights_path(target)
+            )
+            self._weights_path = Path(path)
+            self._weights = _load_weights(self._weights_path)
         # Native state keyed by sha256 digest. The engine never
         # inspects the values — it only propagates opaque
         # ``native_state_digest`` strings. Bounded by
@@ -705,22 +810,46 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
             raise ValueError("num_steps_must_be_positive")
         # Build the t-grid on [0, 1] inclusive (num_steps + 1 points).
         t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
+        grid = t_grid  # alias for the new-integrator branch below.
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(2)
         if self._integrator == "rk4":
             traj = _integrate_rk4(self._weights, x0, t_grid)
             actual_steps = int(num_steps)
             accept_rate = 1.0
-        else:  # "dormand_prince"
+        elif self._integrator == "dormand_prince":
             traj = _integrate_dormand_prince(
                 self._weights,
                 x0,
                 0.0,
                 1.0,
-                max_steps=max(8, num_steps * 4),
-                rtol=1e-3,
-                atol=1e-4,
+                max_steps=max(int(self._max_steps), num_steps * 4),
+                rtol=float(self._rtol),
+                atol=float(self._atol),
             )
             actual_steps = max(1, traj.shape[0] - 1)
+            accept_rate = 1.0
+        else:
+            # ``heun`` / ``dpm_solver`` / ``unipc`` all share the
+            # pluggable :class:`IntegratorProtocol` step-based surface.
+            # We drive the integrator step-by-step over the t-grid so
+            # the per-step state is captured and the final trajectory
+            # matches the lineage shape ``(T, 2)``.
+            from .integrators import build_integrator
+            integrator = build_integrator(str(self._integrator))
+
+            def _vf(t: float, y: ArrayF64) -> ArrayF64:
+                return _velocity_field(self._weights, y, float(t))
+
+            traj = np.empty((grid.size, 2), dtype=np.float64)
+            y_cur = x0.copy()
+            traj[0, :] = y_cur
+            for i in range(1, grid.size):
+                t_cur = float(grid[i - 1])
+                t_next = float(grid[i])
+                dt = float(t_next - t_cur)
+                y_cur = integrator.step(_vf, t_cur, y_cur, dt)
+                traj[i, :] = y_cur
+            actual_steps = int(num_steps)
             accept_rate = 1.0
         # Overflow clamp + audit code emission.
         traj_clamped = np.clip(traj, -TWODIM_FM_CLAMP, TWODIM_FM_CLAMP)
@@ -980,10 +1109,24 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
 
 
 def default_twodim_fm_adapter(
-    target: Literal["two_moons", "eight_gaussians"] = "two_moons",
+    target: Literal[
+        "two_moons",
+        "eight_gaussians",
+        "swiss_roll",
+        "pinwheel",
+        "checkerboard",
+        "gaussian_grid",
+    ] = "two_moons",
+    *,
+    integrator: IntegratorMethod = "rk4",
 ) -> TwoDimFMAdapter:
-    """Return a fresh :class:`TwoDimFMAdapter` configured for ``target``."""
-    return TwoDimFMAdapter(target=target)
+    """Return a fresh :class:`TwoDimFMAdapter` configured for ``target``.
+
+    The optional ``integrator`` keyword lets the framework-EXTERNAL
+    P0/P1 integrator uplifts (``heun`` / ``dpm_solver`` / ``unipc``)
+    be exercised without touching the rest of the adapter's surface.
+    """
+    return TwoDimFMAdapter(target=target, integrator=integrator)
 
 
 __all__ = [
@@ -993,6 +1136,10 @@ __all__ = [
     "TWODIM_FM_CHANNEL_DOMAINS",
     "TWODIM_FM_CONFIG_HASH",
     "TWODIM_FM_CONFIG_VERSION",
+    "TWODIM_FM_DEFAULT_ATOL",
+    "TWODIM_FM_DEFAULT_HIDDEN",
+    "TWODIM_FM_DEFAULT_MAX_STEPS",
+    "TWODIM_FM_DEFAULT_RTOL",
     "TWODIM_FM_NATIVE_STATES_MAXSIZE",
     "TWODIM_FM_NUM_STEPS",
     "TwoDimFMAdapter",

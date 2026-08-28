@@ -423,7 +423,17 @@ def test_all_schedulers_conform_to_protocol() -> None:
         "sigmoid",
         "convergence_adaptive",
         "sequential",
+        # Phase-2 P0/P2 additions (see
+        # ``docs/algorithm-deep-uplift-plan.md``).
+        "edm",
+        "adaptive_pid",
+        "jittered_constant",
     }
+    from adaptive_reflow.algorithm import (
+        AdaptivePIDScheduler,
+        EDMScheduler,
+        JitteredConstantScheduler,
+    )
     instances: list[SchedulerProtocol] = [
         default_cosine_scheduler(cycle_length=5),
         ConstantScheduler(cycle_length=5),
@@ -433,6 +443,9 @@ def test_all_schedulers_conform_to_protocol() -> None:
         SigmoidScheduler(cycle_length=5),
         ConvergenceAdaptiveScheduler(),
         CodimensionSheetScheduler(cycle_length=5),
+        EDMScheduler(cycle_length=5),
+        AdaptivePIDScheduler(),
+        JitteredConstantScheduler(cycle_length=5, n_cap=0.5),
     ]
     for instance in instances:
         assert isinstance(instance, SchedulerProtocol)

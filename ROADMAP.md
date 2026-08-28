@@ -26,6 +26,29 @@ wired into a default path are labelled inline.
       2026-09-30 [ADR-0004]
 - [ ] Update reader docs (`README.md`, `ARCHITECTURE.md` §5) to reflect
       the ToyGaussianAdapter recipe by 2026-09-30 [ADR-0003]
+- [x] Algorithm depth uplift — implemented 2026-08-29. Phase 1 of
+      [`docs/algorithm-deep-uplift-plan.md`](docs/algorithm-deep-uplift-plan.md)
+      inventoried **~140 algorithms** across `adaptive_reflow/` and
+      `tools/` and researched **18 SOTA papers** (W2 estimators,
+      diffusion ODE solvers, coverage / energy metrics, noise
+      schedules, controllers, Bayesian merge, OT mixing,
+      bounded-Lipschitz estimators). Phase 2 implemented the P0 / P1
+      uplifts in parallel on three axes: **36 framework-internal**,
+      **14 framework-external**, **37 pluggable-design** entries.
+      Phase 3 measured every one BEFORE / AFTER in
+      [`docs/benchmark-deep-uplifts.md`](docs/benchmark-deep-uplifts.md):
+      **86 of 87** measured uplifts achieved their quantitative
+      target, **0** regressed. Headline numbers: projection-free
+      exact W2 cuts the per-round squared CV `0.00727 -> 0.00206`
+      (**-71.7%**); the batched runner cuts adapter invocations per
+      round `8 -> 1` (**-87.5%**); DPM-Solver / UniPC / Heun reach a
+      matched endpoint in `20` steps instead of `100` (**-80%**) at
+      `<= 0.05` L2 error; OT displacement mixing cuts worst relative
+      scale error `0.271 -> 1.19e-15`; incremental ledger
+      verification cuts row hashes `2080 -> 64` (**-96.9%**) at
+      `R = 64`. The one miss is the external weighted-coverage
+      separation row (`0.1916` against a `>= 0.20` target), recorded
+      rather than tuned to pass.
 - [x] Algorithm layer uplift — implemented 2026-08-29. Phase 1 of
       [`docs/algorithm-uplift-plan.md`](docs/algorithm-uplift-plan.md)
       surveyed **38 candidate uplifts** across 17 algorithm classes +

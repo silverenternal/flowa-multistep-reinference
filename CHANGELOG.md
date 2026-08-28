@@ -7,6 +7,116 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Algorithm depth uplift
+
+Second, deeper pass over the algorithm surface. Phase 1 inventoried
+**~140 algorithms** across `adaptive_reflow/` and `tools/` and
+researched **18 SOTA papers** (W2 estimators, diffusion ODE solvers,
+coverage / energy metrics, noise schedules, controllers, Bayesian
+merge, OT mixing, bounded-Lipschitz estimators); phase 2 implemented
+the P0 / P1 uplifts in parallel across framework-internal,
+framework-external and pluggable axes; phase 3 measured every one of
+them BEFORE / AFTER. The plan is
+[`docs/algorithm-deep-uplift-plan.md`](docs/algorithm-deep-uplift-plan.md)
+and the measurements are
+[`docs/benchmark-deep-uplifts.md`](docs/benchmark-deep-uplifts.md):
+**87 uplifts measured, 86 achieving target, 0 regressions**.
+
+### Framework-internal uplifts (36 measured)
+
+Uplifts to the framework's own abstractions — scheduler, driver,
+merge, blender, evaluators, ledger, paper quantities — measured in
+[`docs/benchmark-deep-uplifts.md`](docs/benchmark-deep-uplifts.md) §1.
+
+- Projection-free exact W2 estimator
+  (`adaptive_reflow/eval/w2.py`, `ProjectionFreeExactW2`): squared
+  coefficient of variation of the per-round W2 falls from `0.00727`
+  to `0.00206` at `n = 128` over 200 seeds — a **-71.7%** variance
+  reduction against a `>= 50%` target.
+- Vectorised batched round generation
+  (`adaptive_reflow/algorithm/batched_runner.py`): adapter
+  invocations per round drop from `8` to `1` — **-87.5%**, the
+  T-fold reduction the target asked for at `T = 8`.
+- Area-weighted Voronoi coverage
+  (`adaptive_reflow/eval/coverage.py`, `weighted_coverage_score`):
+  sparse-vs-dense separation rises from `0.0` (the binary score
+  saturates) to `0.2252`, clearing the `>= 0.20` target.
+- Percentile bootstrap CI for the energy distance
+  (`adaptive_reflow/eval/coverage.py`, `energy_distance_with_ci`):
+  the 95% CI relative width is `0.1526` at `n = 256` against a
+  `<= 0.20` target, where the point estimator had no interval at all.
+- Bounded-Lipschitz convergence diagnostic on the `selection_ratio`
+  trajectory: tail increment falls from `0.12` (oscillating) to
+  `0.00455` (converged) — **-96.2%**, under the `1/sqrt(N) ~ 0.0884`
+  bound.
+- OT displacement mixing
+  (`adaptive_reflow/universal/mixer_ot.py`): worst relative scale
+  error across the beta grid falls from `0.271` to `1.19e-15` —
+  **-100%**, far past the `>= 100x` reduction target.
+- Incremental ledger-chain verification
+  (`adaptive_reflow/frame/ledger_chain.py`,
+  `LedgerChain.verify_incremental` at `ledger_chain.py:225`): row hashes for verify-on-every-append fall
+  from `2080` to `64` at `R = 64` — **-96.9%**, past the `>= 32x`
+  target.
+- Sweep-based monotonicity certification: adjacent pairs certified
+  per factor rise from `1` to `32` (**+3100%**).
+- Evidence-driver mode on `CodimensionSheetScheduler`, `A1`/`A3`/`A7`
+  /`A9`/`A10`/`A11`/`A12`/`A13`/`A14`/`A15` audit-code and digest
+  uplifts, and the `A16`/`A17`/`B12`/`B13`/`B14` paper-quantity rows
+  are carried forward and re-measured in §1 of the benchmark.
+
+### Framework-external uplifts (14 measured)
+
+Uplifts that replace or augment framework-external numerics with
+published state-of-the-art methods, measured in
+[`docs/benchmark-deep-uplifts.md`](docs/benchmark-deep-uplifts.md) §2.
+
+- Diffusion ODE solver family
+  (`adaptive_reflow/adapters/integrators.py`): `DPMSolverIntegrator`
+  (`integrators.py:333`), `UniPCIntegrator` (`integrators.py:379`),
+  `HeunIntegrator` (`integrators.py:438`),
+  `AMEDSolverIntegrator` (`integrators.py:480`) join
+  `RK4Integrator` and `DormandPrinceRK45Integrator`. Step count for
+  a matched endpoint drops from `100` to `20` (**-80%**, target
+  `<= 25`) with endpoint L2 error against RK4@100 of `0.0230`
+  (DPM-Solver), `1.97e-4` (UniPC), `1.97e-4` (Heun) and `0.0164`
+  (DOPRI5) — all inside the `<= 0.05` accuracy budget.
+- Kernelized and Sinkhorn-approximated W2 estimators
+  (`adaptive_reflow/eval/w2.py:429`, `w2.py:534`) alongside the
+  projection-free exact estimator; the batched-runner squared CV
+  falls `0.00729 -> 0.00219` (**-69.9%**) on the 100-seed external
+  replication.
+- Wilson two-sided CI exposure: the two-sided lower bound agrees
+  with `wilson_lower_bound` to `0.0` (target `<= 1e-12`).
+- The weighted-coverage row is the one measurement that misses its
+  target on the external stress configuration (`0.1916` against
+  `>= 0.20`) and is recorded as such rather than tuned to pass.
+
+### Pluggable design hardening (37 entries)
+
+Every plug-in point must return a stable `config_hash` for the same
+configuration and round-trip `to_config` / `from_config`
+byte-for-byte;
+[`docs/benchmark-deep-uplifts.md`](docs/benchmark-deep-uplifts.md) §3
+records **37** such checks, all passing: 12 `SchedulerProtocol`
+entries (9 families + both factories + registry lookup), 4
+`PolicyDriverProtocol`, 4 `MergeOperatorProtocol`, 4
+`RestartBlenderProtocol` (including the
+`BLENDER_MEMORY_FRACTION_CLIPPED` emission contract), 6
+`IntegratorProtocol` entries plus `INTEGRATOR_REGISTRY` at
+`>= 5` families, 5 `W2EstimatorProtocol` entries plus a
+`W2_REGISTRY` of `4` families
+(`adaptive_reflow/eval/w2.py:649`), and 2 evidence-emission
+contracts on `CodimensionSheetScheduler`.
+
+### Benchmark
+
+`tools/benchmark_uplifts.py` was extended to emit all four sections;
+[`docs/benchmark-deep-uplifts.md`](docs/benchmark-deep-uplifts.md)
+carries the full BEFORE / AFTER table with delta and percentage
+change per uplift, plus the re-run 22-row ablation grid. Wall-clock
+`8.6s` for the uplift sections, `60.5s` for the ablation re-run.
+
 ## [Unreleased] - Algorithm layer uplift
 
 This section records the multi-phase algorithm layer uplift that

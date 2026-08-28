@@ -123,6 +123,16 @@ from .phase import (
     make_default_phase_state,
     validate_phase_state_transition,
 )
+from .stage import (
+    STAGE_REGISTRY,
+    CalibrationStage,
+    ClaimGateStage,
+    PromotionStage,
+    RunStage,
+    Stage,
+    StageProtocol,
+    build_stage,
+)
 from .trace import (
     ALLOWED_FINAL_POLICY_WRITERS,
     FINAL_POLICY_WRITER_ADAPTIVE_REFLOW,

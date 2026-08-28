@@ -112,6 +112,18 @@ from .twodim_fm_evaluator import (
     energy_distance,
     voronoi_grid,
 )
+from .w2 import (
+    DEFAULT_W2_FAMILY,
+    W2_REGISTRY,
+    KernelizedW2Estimator,
+    ModeCentreMSEEstimator,
+    ProjectionFreeW2Estimator,
+    SinkhornW2Estimator,
+    W2EstimatorProtocol,
+    W2Family,
+    build_w2_estimator,
+    compute_w2,
+)
 
 # Note: ``PosteriorSelectionEvaluator`` is the deprecated alias for
 # :class:`EvidenceScaleGapMetric`. Accessing it on

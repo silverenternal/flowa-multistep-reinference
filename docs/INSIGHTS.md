@@ -117,6 +117,44 @@ the benchmark folds into the per-uplift rows; see
 [`docs/benchmark-uplifts.md`](benchmark-uplifts.md) for the full
 table.
 
+## Algorithm depth uplift results
+
+The second, deeper uplift pass is planned in
+[`docs/algorithm-deep-uplift-plan.md`](algorithm-deep-uplift-plan.md)
+(inventory of **~140 algorithms**, **18 SOTA papers** surveyed) and
+measured in
+[`docs/benchmark-deep-uplifts.md`](benchmark-deep-uplifts.md):
+**87 uplifts measured, 86 achieving target, 0 regressions**, split
+**36 framework-internal** / **14 framework-external** / **37
+pluggable-design** entries. The interesting finding is not that the
+numbers moved but *which* ones moved and by how much. Replacing the
+toy `_w2_to_mode_centres` surrogate with a projection-free exact W2
+estimator cuts the per-round squared coefficient of variation
+`0.00727 -> 0.00206` (**-71.7%**), which means most of what the
+framework previously reported as round-to-round W2 movement was
+estimator noise rather than algorithm behaviour. Similarly, the
+binary coverage score *saturates* on the sparse-vs-dense contrast
+(separation `0.0`); only the area-weighted Voronoi variant separates
+them at all (`0.2252`) — a metric that cannot distinguish the two
+regimes is not a coverage metric, it is a constant. On the external
+axis the DPM-Solver / UniPC / Heun family reaches a matched endpoint
+in `20` steps instead of RK4's `100` (**-80%**) while staying inside
+a `<= 0.05` L2 budget, and OT displacement mixing removes the scale
+error of linear latent blending entirely (`0.271 -> 1.19e-15`).
+Incremental ledger verification turns an `O(R^2)` verify-on-append
+into `O(R)` (`2080 -> 64` row hashes at `R = 64`).
+
+One row deliberately does not pass: the external weighted-coverage
+separation measures `0.1916` against a `>= 0.20` target. It is
+recorded as a miss rather than re-tuned, because the honest reading
+is that the weighted coverage improvement is configuration-sensitive
+— it clears the bar on the internal configuration and misses it on
+the external stress configuration, and that gap is itself the
+finding. The pluggable-design section is the boundary counterpart:
+all **37** `config_hash` stability and `to_config` / `from_config`
+round-trip checks pass byte-for-byte, so every uplift above is
+swappable without the reproducibility surface changing shape.
+
 ## 6. Open questions
 
 The "next question" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped `selection_ratio` metric was claimed to converge toward 1 as rounds progress, but `docs/review/B5-VERIFICATION.md` shows that the metric is in fact invariant to loop state — it is an unconditional replay of the `(adapter, target)` pair, not an endpoint-conditioned posterior, and two unrelated schedulers report identical curves to four decimal places. The reviewer's symptom ("wrong bundle passed") was a wiring guess; the actual defect is that the evaluator's `bundle` parameter is inert, so no rewiring fix would change the output. Closing the gap requires an endpoint-conditioned variant (scoring the round's own endpoints rather than a fresh replay), which is blocked on the runner carrying a batch of trajectories per round — a real architectural change to `ReInferenceRunner` and `TwoDimFMAdapter`, both currently single-sample. ADR-0013 §"Selection metric status" demotes the convergence-to-1 prediction to apply only to that future variant. The shipped metric remains in place until a human design decision lands; the verification document is the canonical record of the investigation.

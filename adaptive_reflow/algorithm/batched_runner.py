@@ -86,6 +86,19 @@ if TYPE_CHECKING:
     from adaptive_reflow.eval.posterior_selection_evaluator import (
         EvidenceScaleGapMetric,
     )
+    from adaptive_reflow.eval.w2 import W2EstimatorProtocol
+
+
+DEFAULT_W2_FAMILY: str = "mode_centre_mse"
+"""Mirror of :data:`adaptive_reflow.eval.w2.DEFAULT_W2_FAMILY`.
+
+Duplicated as a bare string rather than imported because
+``adaptive_reflow.eval`` imports the adapters, which import the frame,
+which imports this package -- the same cycle the lazy imports elsewhere
+in this module break. :func:`_build_w2_estimator` asserts the two
+constants agree the first time a non-default estimator is built, so the
+duplication cannot silently drift.
+"""
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +133,42 @@ class _BatchedAdapterProtocol(Protocol):
         RK4-style deterministic integration. See
         :meth:`adaptive_reflow.adapters.twodim_fm.TwoDimFMAdapter.generate_trajectory`.
         """
+        ...
+
+
+@runtime_checkable
+class BatchedVectorisedAdapterProtocol(Protocol):
+    """OPTIONAL capability surface for the vectorised batched runner (P0 #8).
+
+    An adapter that can integrate every trajectory of a round in one
+    BLAS-vectorised call -- rather than ``T`` sequential
+    :meth:`_BatchedAdapterProtocol.generate_trajectory` calls -- declares
+    it by implementing :meth:`generate_trajectories_batched`.
+
+    The protocol is **purely additive**: adapters that do not implement
+    it keep working unchanged, and :class:`BatchedTrajectoryRunner` only
+    consults it when the caller sets
+    ``BatchedRunnerConfig.vectorised=True``. The runner falls back to the
+    sequential loop (and reports ``vectorised_rounds == 0`` on the
+    result) whenever the capability is absent, so opting in can never
+    break a run.
+
+    CONTRACT -- bit-equivalence: for the same ``seeds`` tuple the
+    returned stack MUST equal, within ``1e-9``, the stack the caller
+    would obtain by looping ``generate_trajectory(seed=s)`` over
+    ``seeds``. That equivalence is what lets the runner treat the
+    vectorised path as a pure *performance* switch rather than a
+    behavioural one, and it is asserted directly in the runner tests.
+    """
+
+    def generate_trajectories_batched(
+        self,
+        *,
+        seeds: tuple[int, ...],
+        endpoints_per_trajectory: int,
+        n_gen: int,
+    ) -> NDArray[np.float64]:
+        """Return ``(len(seeds), endpoints_per_trajectory, n_gen, dim)``."""
         ...
 
 
@@ -201,6 +250,23 @@ class BatchedRunnerConfig:
     #: ``ledger_chain_integrity`` flag on the result is set to
     #: ``True`` after a successful recompute on every run (P0-8).
     ledger_chain: bool = False
+    #: P0 #3 -- W2 estimator family key (see
+    #: :data:`adaptive_reflow.eval.w2.W2_REGISTRY`). Defaults to the
+    #: legacy ``"mode_centre_mse"`` surrogate so every existing run stays
+    #: byte-identical; set to ``"projection_free"`` / ``"kernelized"`` /
+    #: ``"sinkhorn"`` to opt into a genuine Wasserstein-2 estimate.
+    w2_family: str = DEFAULT_W2_FAMILY
+    #: P0 #3 -- constructor kwargs forwarded to the W2 estimator factory
+    #: (e.g. ``{"n_projections": 256}``). ``None`` uses the family's own
+    #: defaults.
+    w2_kwargs: Mapping[str, Any] | None = None
+    #: P0 #8 -- vectorised trajectory generation. When ``True`` and the
+    #: adapter implements :class:`BatchedVectorisedAdapterProtocol`, the
+    #: runner asks for all ``T`` trajectories of a round in a single
+    #: BLAS-vectorised call instead of ``T`` sequential ones. Falls back
+    #: to the sequential loop when the adapter does not declare the
+    #: capability, so opting in is always safe.
+    vectorised: bool = False
 
     def __post_init__(self) -> None:
         """Emit deprecation warnings for unused legacy slots.
@@ -280,6 +346,15 @@ class BatchedTrajectoryResult:
     #: ``False`` config does not exercise the ledger, so integrity
     #: trivially holds).
     ledger_chain_integrity: bool = True
+    #: P0 #3 -- the W2 estimator family actually used for
+    #: ``per_round_w2``. ``"mode_centre_mse"`` on the legacy path.
+    w2_family: str = DEFAULT_W2_FAMILY
+    #: P0 #8 -- number of rounds served by the adapter's vectorised
+    #: batch call. ``0`` means every round fell back to the sequential
+    #: per-trajectory loop (either because ``vectorised`` was ``False``
+    #: or because the adapter does not implement
+    #: :class:`BatchedVectorisedAdapterProtocol`).
+    vectorised_rounds: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -320,6 +395,62 @@ def _w2_to_mode_centres(
     return float(np.mean(nearest))
 
 
+def _reshape_round_endpoints(
+    traj_arr: NDArray[np.float64],
+    endpoints_per_trajectory: int,
+) -> NDArray[np.float64]:
+    """Normalise one adapter trajectory to a contiguous ``(K, 2)`` block.
+
+    Adapters may return the canonical ``(1, K, 1, 2)`` shape, the
+    ``n_gen``-squeezed ``(1, K, 2)``, the trajectory-axis-squeezed
+    ``(K, 1, 2)`` that falls out of slicing a batched
+    ``(T, K, 1, 2)`` stack, or an already-flat ``(K, 2)``. Anything
+    else is a contract violation and raises, so a silently-misshaped
+    population can never reach the W2 estimator.
+    """
+    arr = np.asarray(traj_arr, dtype=np.float64)
+    k = int(endpoints_per_trajectory)
+    if (arr.ndim == 4 and arr.shape == (1, k, 1, 2)) or (
+        arr.ndim == 3 and arr.shape in {(1, k, 2), (k, 1, 2)}
+    ):
+        arr = arr.reshape(k, 2)
+    elif arr.ndim != 2 or arr.shape != (k, 2):
+        raise ValueError(
+            f"unexpected generate_trajectory shape {arr.shape!r}; "
+            f"expected (1, {k}, 1, 2)"
+        )
+    return np.ascontiguousarray(arr, dtype=np.float64)
+
+
+def _build_w2_estimator(cfg: BatchedRunnerConfig) -> W2EstimatorProtocol | None:
+    """Return the configured W2 estimator, or ``None`` for the legacy path.
+
+    ``None`` means "keep calling :func:`_w2_to_mode_centres` directly",
+    which is what happens when ``cfg.w2_family`` is the legacy
+    ``"mode_centre_mse"`` family and no ``w2_kwargs`` were supplied. The
+    default run therefore stays byte-identical, pays no extra import
+    cost, and puts no new module in the hot loop for callers who did not
+    opt in.
+
+    The :mod:`adaptive_reflow.eval.w2` import is deferred to call time:
+    ``adaptive_reflow.eval`` pulls in the adapters, which pull in the
+    frame, which pulls in this package.
+    """
+    family = str(cfg.w2_family).strip().lower()
+    kwargs = dict(cfg.w2_kwargs or {})
+    if family == DEFAULT_W2_FAMILY and not kwargs:
+        return None
+    from adaptive_reflow.eval import w2 as _w2
+
+    if _w2.DEFAULT_W2_FAMILY != DEFAULT_W2_FAMILY:  # pragma: no cover - drift guard
+        raise RuntimeError(
+            "batched_runner.DEFAULT_W2_FAMILY drifted from "
+            f"eval.w2.DEFAULT_W2_FAMILY ({DEFAULT_W2_FAMILY!r} != "
+            f"{_w2.DEFAULT_W2_FAMILY!r})"
+        )
+    return _w2.build_w2_estimator(family, **kwargs)
+
+
 def _config_hash(cfg: BatchedRunnerConfig) -> str:
     """Compute the stable :class:`BatchedTrajectoryResult` ``config_hash``."""
     payload: dict[str, Any] = {
@@ -345,6 +476,14 @@ def _config_hash(cfg: BatchedRunnerConfig) -> str:
         ),
         "ledger_chain": bool(cfg.ledger_chain),
     }
+    # Additive keys are folded in ONLY when the caller opted out of the
+    # legacy defaults, so every pre-existing ``config_hash`` (and the
+    # golden fixtures pinned against it) stays byte-identical.
+    if str(cfg.w2_family).strip().lower() != DEFAULT_W2_FAMILY or cfg.w2_kwargs:
+        payload["w2_family"] = str(cfg.w2_family).strip().lower()
+        payload["w2_kwargs"] = _stable(dict(cfg.w2_kwargs or {}))
+    if cfg.vectorised:
+        payload["vectorised"] = True
     if cfg.selection_evaluator is not None:
         payload["selection_evaluator"] = _stable(
             {
@@ -479,6 +618,15 @@ class BatchedTrajectoryRunner:
         self._config = config
         self._adapter = adapter
         self._mode_centres = _canonical_mode_centres(adapter)
+        # P0 #3 -- resolved once per runner so the per-round loop pays
+        # no factory cost. ``None`` keeps the legacy inline surrogate.
+        self._w2_estimator = _build_w2_estimator(config)
+        # P0 #8 -- capability probe, also resolved once. An adapter that
+        # does not advertise the batched entry point silently keeps the
+        # sequential path.
+        self._vectorised = bool(config.vectorised) and callable(
+            getattr(adapter, "generate_trajectories_batched", None)
+        )
 
     @property
     def config(self) -> BatchedRunnerConfig:
@@ -489,6 +637,55 @@ class BatchedTrajectoryRunner:
     def adapter(self) -> _BatchedAdapterProtocol:
         """Return the adapter the runner wraps."""
         return self._adapter
+
+    def _estimate_w2(self, flat: NDArray[np.float64]) -> float:
+        """Return the round's raw W2 under the configured family (P0 #3).
+
+        Dispatches to the registered :class:`W2EstimatorProtocol` when
+        the caller opted into a non-legacy family, and otherwise calls
+        :func:`_w2_to_mode_centres` verbatim so the default run is
+        byte-identical to every historical result.
+        """
+        if self._w2_estimator is None:
+            return _w2_to_mode_centres(flat, self._mode_centres)
+        return float(self._w2_estimator.estimate(flat, self._mode_centres))
+
+    def _generate_round_vectorised(
+        self,
+        seeds: tuple[int, ...],
+        endpoints_per_trajectory: int,
+    ) -> list[NDArray[np.float64]]:
+        """Generate a whole round's trajectories in one adapter call (P0 #8).
+
+        Only reached when :attr:`_vectorised` is ``True``, i.e. the
+        caller opted in AND the adapter advertises
+        :class:`BatchedVectorisedAdapterProtocol`. The result is split
+        back into the same ``list[(K, 2)]`` shape the sequential path
+        produces, so everything downstream (W2, selection ratio, ledger)
+        is unaware of which path ran.
+        """
+        # The attribute is guaranteed present: ``self._vectorised`` is
+        # only ``True`` after the constructor's capability probe found a
+        # callable here. ``_BatchedAdapterProtocol`` does not declare it
+        # (it is the optional capability), hence the dynamic lookup.
+        batched = self._adapter.generate_trajectories_batched  # type: ignore[attr-defined]
+        stacked = np.asarray(
+            batched(
+                seeds=tuple(int(x) for x in seeds),
+                endpoints_per_trajectory=int(endpoints_per_trajectory),
+                n_gen=1,
+            ),
+            dtype=np.float64,
+        )
+        if stacked.shape[0] != len(seeds):
+            raise ValueError(
+                f"generate_trajectories_batched returned {stacked.shape[0]} "
+                f"trajectories for {len(seeds)} seeds"
+            )
+        return [
+            _reshape_round_endpoints(stacked[t], endpoints_per_trajectory)
+            for t in range(len(seeds))
+        ]
 
     def run(self) -> BatchedTrajectoryResult:
         """Drive the batched loop for ``config.cycle_length`` rounds."""
@@ -539,52 +736,52 @@ class BatchedTrajectoryRunner:
         ledger_chain: list[str] = []
         prev_ledger_row_hash: str | None = None
 
+        # P0 #8 -- how many rounds the adapter's vectorised batch call
+        # actually served. Reported on the result so a caller can verify
+        # the fast path engaged rather than silently falling back.
+        vectorised_rounds = 0
+
         for r in range(int(cfg.cycle_length)):
             sample = scheduler.sample(int(cfg.outer_cycle_id), r, r)
             n_cap_r = float(sample.n_cap)
             round_endpoints: list[NDArray[np.float64]] = []
-            for t in range(T):
-                # Bind the per-trajectory seed to ``n_cap_r`` AND
-                # ``outer_cycle_id`` so two schedulers that emit
-                # different ``n_cap`` trajectories, or two runners
-                # configured with different ``outer_cycle_id`` values,
-                # yield different endpoint populations (and hence
-                # different selection ratios). The ``1_000_000`` scale
-                # keeps ``n_cap`` within the low-integer range so the
-                # seed space remains disjoint across distinct
-                # capacities. The ``+ cfg.outer_cycle_id * 100_000_000``
-                # term carves out an entirely disjoint seed range per
-                # outer cycle so the populations do not collide.
-                seed_r = (
-                    int(cfg.seed)
-                    + r * T
-                    + t
-                    + int(round(n_cap_r * 1_000_000))
-                    + int(cfg.outer_cycle_id) * 100_000_000
-                )
-                traj_arr = self._adapter.generate_trajectory(
-                    n_trajectories=1,
-                    endpoints_per_trajectory=K,
-                    n_gen=1,
-                    seed=seed_r,
-                )
-                arr = np.asarray(traj_arr, dtype=np.float64)
-                # Adapter contract: (1, K, 1, 2) for n_gen=1. Reduce
-                # to (K, 2) for storage.
-                if (arr.ndim == 4 and arr.shape == (1, K, 1, 2)) or (
-                    arr.ndim == 3 and arr.shape == (1, K, 2)
-                ):
-                    arr = arr.reshape(K, 2)
-                elif arr.ndim != 2 or arr.shape != (K, 2):
-                    raise ValueError(
-                        f"unexpected generate_trajectory shape "
-                        f"{arr.shape!r}; expected (1, {K}, 1, 2)"
+            # Per-trajectory seeds. Bound to ``n_cap_r`` AND
+            # ``outer_cycle_id`` so two schedulers that emit different
+            # ``n_cap`` trajectories, or two runners configured with
+            # different ``outer_cycle_id`` values, yield different
+            # endpoint populations (and hence different selection
+            # ratios). The ``1_000_000`` scale keeps ``n_cap`` within the
+            # low-integer range so the seed space stays disjoint across
+            # distinct capacities; the ``* 100_000_000`` term carves out
+            # an entirely disjoint seed range per outer cycle.
+            seeds_r = tuple(
+                int(cfg.seed)
+                + r * T
+                + t
+                + int(round(n_cap_r * 1_000_000))
+                + int(cfg.outer_cycle_id) * 100_000_000
+                for t in range(T)
+            )
+            if self._vectorised:
+                # P0 #8 -- one BLAS-vectorised call for the whole round.
+                # The seeds are exactly the sequential path's, so the two
+                # paths are numerically equivalent (asserted in the
+                # runner tests): this is a pure performance switch.
+                round_endpoints = self._generate_round_vectorised(seeds_r, K)
+                vectorised_rounds += 1
+            else:
+                for t in range(T):
+                    traj_arr = self._adapter.generate_trajectory(
+                        n_trajectories=1,
+                        endpoints_per_trajectory=K,
+                        n_gen=1,
+                        seed=seeds_r[t],
                     )
-                round_endpoints.append(np.ascontiguousarray(arr, dtype=np.float64))
+                    round_endpoints.append(_reshape_round_endpoints(traj_arr, K))
 
             per_round_endpoints.append(round_endpoints)
             flat = np.concatenate(round_endpoints, axis=0)
-            raw_w2 = _w2_to_mode_centres(flat, self._mode_centres)
+            raw_w2 = self._estimate_w2(flat)
             # Cosine-annealing schedulers drive ``n_cap`` from ~1.0 to
             # ~0.0 across the cycle; a decreasing capacity read as a
             # decreasing noise floor compresses the population's
@@ -733,6 +930,8 @@ class BatchedTrajectoryRunner:
             config_hash=_config_hash(cfg),
             ledger_chain=list(ledger_chain),
             ledger_chain_integrity=bool(chain_ok),
+            w2_family=str(cfg.w2_family).strip().lower(),
+            vectorised_rounds=int(vectorised_rounds),
         )
 
 
@@ -745,4 +944,6 @@ __all__ = [
     "BatchedRunnerConfig",
     "BatchedTrajectoryResult",
     "BatchedTrajectoryRunner",
+    "BatchedVectorisedAdapterProtocol",
+    "DEFAULT_W2_FAMILY",
 ]

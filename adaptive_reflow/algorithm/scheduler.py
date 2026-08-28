@@ -2997,6 +2997,31 @@ contracts-layer taxonomy.
 """
 
 
+# Phase-2 protocol registry extension (P0/P2 — see
+# ``docs/algorithm-deep-uplift-plan.md``). Lazily imported so the
+# scheduler module's import surface stays minimal.
+def _register_extra_scheduler_families() -> None:
+    """Extend :data:`SCHEDULER_REGISTRY` with Phase-2 scheduler families.
+
+    Idempotent: re-invocations are no-ops. The new families are
+    registered so :func:`build_scheduler` /
+    :func:`build_scheduler_from_config` recognise them and
+    :data:`SCHEDULER_REGISTRY` reports them in its listing.
+    """
+    from .scheduler_extra import (
+        AdaptivePIDScheduler,
+        EDMScheduler,
+        JitteredConstantScheduler,
+    )
+
+    SCHEDULER_REGISTRY.setdefault("edm", EDMScheduler)
+    SCHEDULER_REGISTRY.setdefault("adaptive_pid", AdaptivePIDScheduler)
+    SCHEDULER_REGISTRY.setdefault("jittered_constant", JitteredConstantScheduler)
+
+
+_register_extra_scheduler_families()
+
+
 def build_scheduler(family: str, **kwargs: object) -> SchedulerProtocol:
     """Factory: build a :class:`SchedulerProtocol` from a family name.
 

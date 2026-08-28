@@ -13,6 +13,11 @@ suite guards against silent drift:
 * The summary block contains the four numeric counters the task brief
   requires (measured / achieving / regressions / neutral) plus the
   ablation row count.
+* The deep-uplift mode (``--deep``) emits a 5-section report at
+  ``docs/benchmark-deep-uplifts.md`` with section 1 (framework-
+  internal uplifts), section 2 (framework-external uplifts),
+  section 3 (pluggable design tests), section 4 (the 22-row
+  ablation), and section 5 (the totals + ablation row count).
 """
 from __future__ import annotations
 
@@ -32,6 +37,7 @@ import pytest
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent.parent
 SCRIPT_PATH: Path = REPO_ROOT / "tools" / "benchmark_uplifts.py"
 DEFAULT_OUT: Path = REPO_ROOT / "docs" / "benchmark-uplifts.md"
+DEEP_OUT: Path = REPO_ROOT / "docs" / "benchmark-deep-uplifts.md"
 ABLATION_OUTPUT: Path = REPO_ROOT / "docs" / "ABLATION.md"
 VENV_PYTHON: Path = REPO_ROOT / ".venv" / "Scripts" / "python.exe"
 
@@ -42,6 +48,16 @@ EXPECTED_SECTIONS: tuple[str, ...] = (
     "## Section 1: Per-uplift quantitative results",
     "## Section 2: Ablation comparison (22 rows)",
     "## Section 3: Summary",
+)
+
+#: Sections required for the deep-uplift (``--deep``) report. See
+#: ``docs/algorithm-deep-uplift-plan.md`` for the layout contract.
+EXPECTED_DEEP_SECTIONS: tuple[str, ...] = (
+    "## Section 1: Framework-internal uplifts",
+    "## Section 2: Framework-external uplifts",
+    "## Section 3: Pluggable design tests",
+    "## Section 4: Ablation (extended table)",
+    "## Section 5: Summary",
 )
 
 #: Numeric counters the summary block must carry. Each line follows
@@ -71,6 +87,13 @@ def benchmark_out(tmp_path: Path) -> Path:
     return tmp_path / "benchmark-uplifts.md"
 
 
+@pytest.fixture()
+def benchmark_deep_out(tmp_path: Path) -> Path:
+    """Return a fresh output path under ``tmp_path`` for the deep-uplift
+    report."""
+    return tmp_path / "benchmark-deep-uplifts.md"
+
+
 # ---------------------------------------------------------------------------
 # Import-time checks (no subprocess)
 # ---------------------------------------------------------------------------
@@ -90,7 +113,11 @@ def test_benchmark_module_imports_clean() -> None:
         "measure_metric_uplifts",
         "measure_paper_quantity_uplifts",
         "measure_sequential_uplifts",
+        "measure_internal_uplifts",
+        "measure_external_uplifts",
+        "measure_pluggable_design_tests",
         "format_markdown",
+        "format_deep_markdown",
         "_parse_ablation_rows",
     ):
         assert hasattr(module, name), f"missing public function {name!r}"
@@ -133,6 +160,76 @@ def test_measurement_functions_return_non_empty_rows() -> None:
     assert len(rows_seq) > 0
     for r in rows_seq:
         assert "algorithm" in r
+
+
+def test_external_uplifts_return_rows() -> None:
+    """``measure_external_uplifts`` returns the framework-external rows."""
+
+    import tools.benchmark_uplifts as benchmark
+
+    rows = benchmark.measure_external_uplifts()
+    assert len(rows) > 0, "measure_external_uplifts returned empty"
+    for r in rows:
+        assert "algorithm" in r, f"missing algorithm in row {r}"
+        assert "uplift" in r, f"missing uplift in row {r}"
+        assert "metric" in r, f"missing metric in row {r}"
+        assert "baseline" in r, f"missing baseline in row {r}"
+        assert "current" in r, f"missing current in row {r}"
+        assert "achieved" in r, f"missing achieved in row {r}"
+    # Should at minimum cover the integrator families (rk4 / dopri5 /
+    # dpm_solver / unipc / heun) + coverage + energy + lipschitz +
+    # wilson + OT + W2. Search both the metric and uplift fields so
+    # the test is robust to label renames.
+    metric_ids = {r["metric"] for r in rows}
+    uplift_ids = {r["uplift"] for r in rows}
+    all_texts = metric_ids | uplift_ids
+    assert any(
+        "step-count reduction" in t or "step-count used" in t
+        for t in all_texts
+    ), (
+        "measure_external_uplifts must include a step-count reduction row"
+    )
+    assert any("sampler accuracy" in t for t in all_texts), (
+        "measure_external_uplifts must include a sampler-accuracy row"
+    )
+    assert any(
+        "sparse-vs-dense separation" in t for t in all_texts
+    ), "measure_external_uplifts must include a Voronoi-coverage row"
+    assert any(
+        "95% CI relative width" in t for t in all_texts
+    ), (
+        "measure_external_uplifts must include an energy-distance CI row"
+    )
+    assert any(
+        "bounded-Lipschitz" in t or "Lipschitz" in t for t in all_texts
+    ), (
+        "measure_external_uplifts must include a Lipschitz row"
+    )
+
+
+def test_pluggable_design_tests_return_rows() -> None:
+    """``measure_pluggable_design_tests`` returns pluggable-invariant rows."""
+
+    import tools.benchmark_uplifts as benchmark
+
+    rows = benchmark.measure_pluggable_design_tests()
+    assert len(rows) > 0, "measure_pluggable_design_tests returned empty"
+    protocols = {r["algorithm"] for r in rows}
+    # Must cover all four plug-in protocol surfaces.
+    expected_protocols = {
+        "SchedulerProtocol",
+        "PolicyDriverProtocol",
+        "MergeOperatorProtocol",
+        "RestartBlenderProtocol",
+        "IntegratorProtocol",
+        "W2EstimatorProtocol",
+    }
+    missing = expected_protocols - protocols
+    assert not missing, f"missing plug-in rows for: {sorted(missing)}"
+    # All rows must carry a metric and a target.
+    for r in rows:
+        assert "metric" in r, f"missing metric in row {r}"
+        assert "target" in r, f"missing target in row {r}"
 
 
 def test_summary_counts_partitions_total() -> None:
@@ -263,6 +360,159 @@ def test_benchmark_uplifts_help_exits_zero(_venv_python: Path) -> None:
         f"--help failed: stderr={completed.stderr!r}"
     )
     assert "benchmark" in completed.stdout.lower()
+
+
+# ---------------------------------------------------------------------------
+# Deep-uplift (--deep) section
+# ---------------------------------------------------------------------------
+
+
+def test_benchmark_deep_uplifts_emits_five_sections(
+    _venv_python: Path,
+    benchmark_deep_out: Path,
+) -> None:
+    """Run ``--deep --skip-ablation`` and assert the 5-section structure.
+
+    The deep-uplift end-to-end test exercises the full CLI surface
+    (including the new ``measure_external_uplifts`` and
+    ``measure_pluggable_design_tests`` functions and the
+    ``format_deep_markdown`` emitter) and confirms the rendered report
+    carries all five sections + the ablation row count.
+    """
+
+    env = os.environ.copy()
+    env.setdefault("PYTHONIOENCODING", "utf-8")
+    completed = subprocess.run(
+        [
+            str(_venv_python),
+            str(SCRIPT_PATH),
+            "--deep",
+            "--skip-ablation",
+            "--out",
+            str(benchmark_deep_out),
+        ],
+        cwd=str(REPO_ROOT),
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert completed.returncode == 0, (
+        f"benchmark_uplifts --deep exited with code "
+        f"{completed.returncode}; stderr:\n{completed.stderr}\n"
+        f"stdout:\n{completed.stdout}"
+    )
+    assert benchmark_deep_out.exists(), (
+        f"expected markdown at {benchmark_deep_out} but it was not "
+        f"created; stdout:\n{completed.stdout}"
+    )
+    text = benchmark_deep_out.read_text(encoding="utf-8")
+
+    # 1. Top-level heading + the 5-section list.
+    assert "# Algorithm Deep Uplift Benchmark" in text
+    section_indices = [text.index(s) for s in EXPECTED_DEEP_SECTIONS]
+    assert section_indices == sorted(section_indices), (
+        f"deep-uplift sections out of order; got: {section_indices}"
+    )
+
+    # 2. The framework-internal section uses the canonical 9-column
+    #    header.
+    internal_header = (
+        "| Algorithm | Uplift | Metric | Baseline | Current | Delta | "
+        "% Change | Target | Achieved |"
+    )
+    assert internal_header in text, (
+        "framework-internal section missing canonical 9-column header"
+    )
+
+    # 3. The pluggable-design table uses the column the task brief
+    #    specifies (Protocol | Implementation | config_hash stability
+    #    | from_config round-trip | audit_codes emission).
+    plug_header = (
+        "| Protocol | Implementation | Metric | Before | After | "
+        "Delta | % Change | Target | Achieved |"
+    )
+    assert plug_header in text, (
+        "pluggable-design section missing canonical 9-column header"
+    )
+
+    # 4. The ablation section uses the canonical W2 / coverage /
+    #    selection_ratio / ledger_chain_integrity header.
+    ablation_header = (
+        "| Config | Target | Final W2 | Mean W2 | Final Coverage | "
+        "Mean Coverage | Selection Ratio | Ledger Chain Integrity |"
+    )
+    assert ablation_header in text, (
+        "deep-uplift ablation section missing canonical header"
+    )
+
+    # 5. The summary block carries the deep-uplift-specific line items
+    #    (Total uplifts measured, Framework-internal, Framework-
+    #    external, Pluggable design tests, Uplifts achieving target,
+    #    Regressions, Neutral, Ablation rows). Match both top-level
+    #    bullets and indented sub-bullets (the deep-uplift report
+    #    uses ``  - <label>: **<value>** (see Section N)`` for the
+    #    per-section counts).
+    counters: dict[str, int] = {}
+    for line in text.splitlines():
+        m = re.match(
+            r"^\s*-\s*(?P<label>[^*]+?)\s*:\s*\*\*\s*(?P<value>[0-9]+)"
+            r"\s*\*\*",
+            line,
+        )
+        if m is not None:
+            label = m.group("label").strip()
+            counters[label] = int(m.group("value"))
+    assert "Total uplifts measured" in counters, (
+        f"deep-uplift summary missing 'Total uplifts measured'; "
+        f"got counters={list(counters)!r}"
+    )
+    assert counters["Total uplifts measured"] > 0
+    # The task brief requires sections 1-3 to be present and
+    # populated; the deep-uplift report must therefore carry at least
+    # one measurement per section. The sub-items have a parenthesised
+    # suffix (e.g. ``Framework-internal: **36** (see Section 1)``);
+    # we use ``startswith`` so the suffix does not defeat the match.
+    found_internal = any(
+        k == "Framework-internal" or k.startswith("Framework-internal")
+        for k in counters
+    )
+    found_external = any(
+        k == "Framework-external" or k.startswith("Framework-external")
+        for k in counters
+    )
+    found_pluggable = any(
+        k == "Pluggable design tests"
+        or k.startswith("Pluggable design tests")
+        for k in counters
+    )
+    assert found_internal, (
+        "deep-uplift summary missing Framework-internal counter"
+    )
+    assert found_external, (
+        "deep-uplift summary missing Framework-external counter"
+    )
+    assert found_pluggable, (
+        "deep-uplift summary missing Pluggable design tests counter"
+    )
+    # Counter-partition invariant.
+    measured = counters["Total uplifts measured"]
+    achieving = counters["Uplifts achieving target"]
+    regressed = counters["Regressions"]
+    neutral = counters.get(
+        "Neutral / no-change / NaN comparisons", 0
+    )
+    assert achieving + regressed + neutral == measured, (
+        f"deep-uplift counters do not partition the measured total: "
+        f"measured={measured}, achieving={achieving}, "
+        f"regressed={regressed}, neutral={neutral}"
+    )
+    # Ablation row count from the cached docs/ABLATION.md.
+    assert counters["Ablation rows"] >= 22, (
+        f"expected at least 22 ablation rows in deep report; "
+        f"got {counters['Ablation rows']}"
+    )
 
 
 # ---------------------------------------------------------------------------

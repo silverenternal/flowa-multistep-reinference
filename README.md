@@ -89,7 +89,7 @@ flowchart TB
 |---|---|---|
 | **1. Self-reflexive** | `scheduler → driver → engine → metric → scheduler.record_round_feedback` | The scheduler reads its own last-round output (W2) and updates the next round. This is what makes `ConvergenceAdaptiveScheduler` work — the framework is not executing a fixed schedule, the schedule is being *shaped* by the metric. |
 | **2. Theory-grounded** | `paper_quantities.{A_g,B_g,C_g,e_rho} → CodimensionSheetScheduler._paper_evidence_balance` | The four paper invariants are computed from the user-supplied profile and feed the scheduler directly. paper math → algorithm parameters, no intermediate. |
-| **3. Hash-chained integrity** | `engine.LedgerRow_r.prev_hash = LedgerRow_{r-1}.row_hash` | Round r's hash contains round r-1's hash. Tampering with any round breaks the chain. This is Temporal-style event sourcing applied to per-round inference. |
+| **3. Hash-chained integrity** | `engine.build_ledger_row(prev_ledger_row_hash=...)` → `engine.verify_ledger_chain` | Round r's hash contains round r-1's hash. Tampering with any round breaks the chain. This is Temporal-style event sourcing applied to per-round inference. `frame.ledger_chain.LedgerChain` verifies the link incrementally as each row is appended, so a break is caught at emit time rather than at the end of the run. |
 | **4. Symmetric round** | `scheduler.inject_noise (forward) ↔ blender.merge (reverse)` | Each round has a symmetric noise model: forward noise injection and reverse bounded merge. This is what lets the round be replayed byte-for-byte. |
 
 ### What this is not

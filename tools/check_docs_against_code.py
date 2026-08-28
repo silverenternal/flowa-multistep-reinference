@@ -752,6 +752,10 @@ def _iter_markdown_files() -> Iterable[Path]:
     historical planning notes and are not in the "is my doc still
     accurate?" set -- they are excluded by default and can be re-enabled
     with ``--all-top-level-md``.
+
+    Files carrying the ``<!-- skip-doc-check -->`` marker in their
+    first 4 KiB are excluded entirely (forward-planning / research
+    notes whose as-yet-unbuilt references are not drift).
     """
     emitted: set[Path] = set()
     for name in ROOT_GOVERNANCE_DOCS:
@@ -764,12 +768,28 @@ def _iter_markdown_files() -> Iterable[Path]:
         for candidate in sorted(docs_root.glob("*.md")):
             if candidate in emitted:
                 continue
+            try:
+                head = candidate.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                emitted.add(candidate)
+                yield candidate
+                continue
+            if "skip-doc-check" in head[:4096]:
+                continue
             emitted.add(candidate)
             yield candidate
         adr_root = docs_root / "adr"
         if adr_root.is_dir():
             for candidate in sorted(adr_root.glob("*.md")):
                 if candidate in emitted:
+                    continue
+                try:
+                    head = candidate.read_text(encoding="utf-8")
+                except (OSError, UnicodeDecodeError):
+                    emitted.add(candidate)
+                    yield candidate
+                    continue
+                if "skip-doc-check" in head[:4096]:
                     continue
                 emitted.add(candidate)
                 yield candidate

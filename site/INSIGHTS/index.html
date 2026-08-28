@@ -550,6 +550,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#algorithm-depth-uplift-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Algorithm depth uplift results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#6-open-questions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -762,18 +773,55 @@ A16 <code>eps_schedule</code> decay raises the <code>EvidenceScaleGapMetric</cod
 (<code>+14.6%</code>) with an SNR proxy of <code>60.80</code> [CLM-022]; the A12
 <code>e_rho / 4</code> paper-quantity floor lift lands in
 <code>BoundedMergeOperator</code>; the A17 / B13 / B14 paper-quantity
-diagnostics now report <code>A_g_sin = 0.854</code>, <code>B_g_sin_K32 = 1.170</code>
-with <code>tail_bound = 2.65e-111</code>, and
-<code>drift_robustness_over_C_g_ratio = 1.20</code>; the 22-row ablation grid
-is reproduced with W2 / coverage / <code>selection_ratio</code> /
-<code>ledger_chain_integrity</code> columns for every canonical configuration.
-The uplift is the algorithm-layer counterpart of the
-paper-grounding work in §1-§5: each uplift is a concrete, tested
-capability that the framework's algorithm abstractions either did
-not have or had only in ad-hoc form. The remaining 11 P2 items are
-byte-equality / determinism checks that the benchmark folds into
-the per-uplift rows; see <a href="../benchmark-uplifts/"><code>docs/benchmark-uplifts.md</code></a>
-for the full table.</p>
+diagnostics now report <code>sheet_evidence_A</code> values of
+<code>0.854</code> (sin profile) and <code>0.765</code> (polynomial profile),
+<code>root_cell_packing_B = 1.170</code> with <code>tail_bound = 2.65e-111</code> at
+<code>K = 32</code>, and <code>drift_robustness_over_C_g_ratio = 1.20</code>; the
+22-row ablation grid is reproduced with W2 / coverage /
+<code>selection_ratio</code> / <code>ledger_chain_integrity</code> columns for every
+canonical configuration. The uplift is the algorithm-layer
+counterpart of the paper-grounding work in §1-§5: each uplift is
+a concrete, tested capability that the framework's algorithm
+abstractions either did not have or had only in ad-hoc form. The
+remaining 11 P2 items are byte-equality / determinism checks that
+the benchmark folds into the per-uplift rows; see
+<a href="../benchmark-uplifts/"><code>docs/benchmark-uplifts.md</code></a> for the full
+table.</p>
+<h2 id="algorithm-depth-uplift-results">Algorithm depth uplift results<a class="headerlink" href="#algorithm-depth-uplift-results" title="Permanent link">&para;</a></h2>
+<p>The second, deeper uplift pass is planned in
+<a href="../algorithm-deep-uplift-plan/"><code>docs/algorithm-deep-uplift-plan.md</code></a>
+(inventory of <strong>~140 algorithms</strong>, <strong>18 SOTA papers</strong> surveyed) and
+measured in
+<a href="../benchmark-deep-uplifts/"><code>docs/benchmark-deep-uplifts.md</code></a>:
+<strong>87 uplifts measured, 86 achieving target, 0 regressions</strong>, split
+<strong>36 framework-internal</strong> / <strong>14 framework-external</strong> / <strong>37
+pluggable-design</strong> entries. The interesting finding is not that the
+numbers moved but <em>which</em> ones moved and by how much. Replacing the
+toy <code>_w2_to_mode_centres</code> surrogate with a projection-free exact W2
+estimator cuts the per-round squared coefficient of variation
+<code>0.00727 -&gt; 0.00206</code> (<strong>-71.7%</strong>), which means most of what the
+framework previously reported as round-to-round W2 movement was
+estimator noise rather than algorithm behaviour. Similarly, the
+binary coverage score <em>saturates</em> on the sparse-vs-dense contrast
+(separation <code>0.0</code>); only the area-weighted Voronoi variant separates
+them at all (<code>0.2252</code>) — a metric that cannot distinguish the two
+regimes is not a coverage metric, it is a constant. On the external
+axis the DPM-Solver / UniPC / Heun family reaches a matched endpoint
+in <code>20</code> steps instead of RK4's <code>100</code> (<strong>-80%</strong>) while staying inside
+a <code>&lt;= 0.05</code> L2 budget, and OT displacement mixing removes the scale
+error of linear latent blending entirely (<code>0.271 -&gt; 1.19e-15</code>).
+Incremental ledger verification turns an <code>O(R^2)</code> verify-on-append
+into <code>O(R)</code> (<code>2080 -&gt; 64</code> row hashes at <code>R = 64</code>).</p>
+<p>One row deliberately does not pass: the external weighted-coverage
+separation measures <code>0.1916</code> against a <code>&gt;= 0.20</code> target. It is
+recorded as a miss rather than re-tuned, because the honest reading
+is that the weighted coverage improvement is configuration-sensitive
+— it clears the bar on the internal configuration and misses it on
+the external stress configuration, and that gap is itself the
+finding. The pluggable-design section is the boundary counterpart:
+all <strong>37</strong> <code>config_hash</code> stability and <code>to_config</code> / <code>from_config</code>
+round-trip checks pass byte-for-byte, so every uplift above is
+swappable without the reproducibility surface changing shape.</p>
 <h2 id="6-open-questions">6. Open questions<a class="headerlink" href="#6-open-questions" title="Permanent link">&para;</a></h2>
 <p>The "next question" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped <code>selection_ratio</code> metric was claimed to converge toward 1 as rounds progress, but <code>docs/review/B5-VERIFICATION.md</code> shows that the metric is in fact invariant to loop state — it is an unconditional replay of the <code>(adapter, target)</code> pair, not an endpoint-conditioned posterior, and two unrelated schedulers report identical curves to four decimal places. The reviewer's symptom ("wrong bundle passed") was a wiring guess; the actual defect is that the evaluator's <code>bundle</code> parameter is inert, so no rewiring fix would change the output. Closing the gap requires an endpoint-conditioned variant (scoring the round's own endpoints rather than a fresh replay), which is blocked on the runner carrying a batch of trajectories per round — a real architectural change to <code>ReInferenceRunner</code> and <code>TwoDimFMAdapter</code>, both currently single-sample. ADR-0013 §"Selection metric status" demotes the convergence-to-1 prediction to apply only to that future variant. The shipped metric remains in place until a human design decision lands; the verification document is the canonical record of the investigation.</p>
 <h2 id="7-what-this-insight-does-not-claim">7. What this insight does NOT claim<a class="headerlink" href="#7-what-this-insight-does-not-claim" title="Permanent link">&para;</a></h2>
