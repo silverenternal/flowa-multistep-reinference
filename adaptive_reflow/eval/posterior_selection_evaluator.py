@@ -111,6 +111,7 @@ Tasks satisfied:
 """
 from __future__ import annotations
 
+import hashlib
 import warnings
 from typing import Any, Literal
 
@@ -369,6 +370,24 @@ def _clip_unit(value: float) -> float:
     return float(value)
 
 
+def _flatten_endpoints(arr: NDArray[np.float64]) -> NDArray[np.float64]:
+    """Reduce an endpoint array to ``(N, 2)`` for the metric helpers.
+
+    Accepts ``(K, n_gen, 2)`` (``K`` trajectories, ``n_gen`` slot
+    samples) or a pre-flattened ``(N, 2)`` matrix. Raises on any
+    other shape — the helper is fail-closed on unexpected tensor ranks
+    so the ``evaluate_trajectory`` / ``oracle_batched`` pair keeps its
+    deterministic surface.
+    """
+    if arr.ndim == 2:
+        return arr.reshape(-1, 2)
+    if arr.ndim == 3 and arr.shape[2] == 2:
+        return arr.reshape(-1, 2)
+    raise ValueError(
+        f"endpoints_must_have_shape_K_n_gen_2 or N_2; got {arr.shape!r}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # EvidenceScaleGapMetric
 # ---------------------------------------------------------------------------
@@ -599,6 +618,157 @@ class EvidenceScaleGapMetric:
     def channel_supported(self, channel: ChannelName) -> bool:
         """Return ``True`` iff ``channel`` is in the evaluator's channel vocabulary."""
         return str(channel) in {str(c) for c in EVIDENCE_SCALE_GAP_CHANNELS}
+
+    def evaluate_trajectory(
+        self,
+        endpoints: NDArray[np.float64],
+        *,
+        channel: ChannelName,
+        seed: int,
+    ) -> ChannelTransferEvidence:
+        """Score a batched-trajectory endpoint population.
+
+        Endpoint input shape: ``(K, n_gen, 2)`` (``K`` trajectories,
+        ``n_gen`` slot samples each). The tensor is flattened into a
+        single ``(K * n_gen, 2)`` population before evaluating; the
+        ``K`` axis carries the trajectory-level aggregation per paper
+        Theorem 1 (the sheet-vs-cell evidence ratio is computed over
+        the union population, not per-trajectory).
+
+        ``evaluate_trajectory`` aggregates:
+
+        * ``sheet_evidence`` — mean of
+          ``exp(-x^2 / 2)`` over the population (paper Lemma 2
+          heuristic, unchanged);
+        * ``cell_evidence`` — sum of ``exp(-|z_j|^2/2) / (2 pi)`` over
+          the analytic mode-centre set for ``self._target`` (paper
+          Lemma 3 heuristic, unchanged);
+        * ``bounded_score`` — ``selection_ratio`` clipped to ``[0, 1]``.
+
+        B5 architectural fix: this entry point is endpoint-conditioned
+        end-to-end. The legacy :meth:`evaluate` /
+        :meth:`oracle` pair (replay through the metric's own private
+        adapter instance) remains unchanged for backward compatibility;
+        the byte-equality contract between ``evaluate`` and ``oracle``
+        is preserved on the legacy path.
+        """
+        if not self.channel_supported(channel):
+            raise NotImplementedError(
+                f"EvidenceScaleGapMetric does not support channel "
+                f"{str(channel)!r}; supported: "
+                f"{[str(c) for c in EVIDENCE_SCALE_GAP_CHANNELS]}"
+            )
+        arr = np.asarray(endpoints, dtype=np.float64)
+        flat: NDArray[np.float64]
+        if arr.size == 0:
+            flat = np.zeros((0, 2), dtype=np.float64)
+        elif arr.ndim == 4 and arr.shape[0] == 1:
+            # Caller passed (1, K, n_gen, 2); reduce to (K, n_gen, 2).
+            arr = arr[0]
+            flat = _flatten_endpoints(arr)
+        else:
+            flat = _flatten_endpoints(arr)
+        sheet_arr, cells_arr = sheet_cell_centers(self._target)
+        s_ev, c_ev, ratio = selection_ratio(flat, cells_arr)
+        bounded_score = _clip_unit(ratio)
+        bundle_id = self._derive_bundle_id_for_trajectory(flat, seed=int(seed))
+        provenance = ProvenanceChain(
+            (
+                MechanismId("evidence_scale_gap_metric"),
+                MechanismId(EVIDENCE_SCALE_GAP_AUDIT_REASON),
+                MechanismId("evidence_scale_gap_metric.trajectory"),
+            )
+        )
+        return ChannelTransferEvidence(
+            bundle_id=bundle_id,
+            channel=channel,
+            materialization_pass=True,
+            geometry_pass=True,
+            perturbation_stability_lower_bound=FactorValue(
+                float(POSTERIOR_SELECTION_PERTURBATION)
+            ),
+            condition_sensitivity_observable_pass=True,
+            external_metric_uncertainty=FactorValue(0.0),
+            proxy_only_evidence=False,
+            ambiguity=FactorValue(0.0),
+            degeneracy_penalty=FactorValue(0.0),
+            support_coverage=FactorValue(1.0),
+            recency_decay=FactorValue(1.0),
+            calibration_lower_bound=FactorValue(
+                float(POSTERIOR_SELECTION_CALIBRATION)
+            ),
+            raw_score=float(ratio),
+            bounded_score=float(bounded_score),
+            provenance=provenance,
+            validation_errors=(),
+        )
+
+    def oracle_batched(
+        self,
+        endpoints: NDArray[np.float64],
+        *,
+        channel: ChannelName,
+        seed: int,
+    ) -> dict[str, float]:
+        """Return the diagnostic dict for a batched-trajectory population.
+
+        Mirrors :meth:`oracle`'s key set, but reads the
+        :meth:`evaluate_trajectory` path instead of the legacy replay
+        path. ``evaluate_trajectory`` and ``oracle_batched`` agree
+        byte-for-byte for the same input (same underlying
+        :func:`selection_ratio` call).
+        """
+        if not self.channel_supported(channel):
+            raise NotImplementedError(
+                f"EvidenceScaleGapMetric does not support channel "
+                f"{str(channel)!r}; supported: "
+                f"{[str(c) for c in EVIDENCE_SCALE_GAP_CHANNELS]}"
+            )
+        arr = np.asarray(endpoints, dtype=np.float64)
+        if arr.ndim == 4 and arr.shape[0] == 1:
+            arr = arr[0]
+        flat = _flatten_endpoints(arr)
+        sheet_arr, cells_arr = sheet_cell_centers(self._target)
+        s_ev, c_ev, ratio = selection_ratio(flat, cells_arr)
+        bounded_score = _clip_unit(ratio)
+        return {
+            "raw_score": float(ratio),
+            "bounded_score": float(bounded_score),
+            "calibration_lower_bound": float(POSTERIOR_SELECTION_CALIBRATION),
+            "perturbation_stability_lower_bound": float(
+                POSTERIOR_SELECTION_PERTURBATION
+            ),
+            "sheet_evidence": float(s_ev),
+            "cell_evidence": float(c_ev),
+            "selection_ratio": float(ratio),
+            "n_gen": int(self._n_gen),
+            "n_ref": int(self._n_ref),
+            "eps_implicit": float(self._eps_implicit),
+            "trajectory_aggregated": True,
+        }
+
+    @staticmethod
+    def _derive_bundle_id_for_trajectory(
+        endpoints: NDArray[np.float64],
+        *,
+        seed: int,
+    ) -> BundleId:
+        """Derive a stable :class:`BundleId` for a trajectory population.
+
+        Hashes the flattened endpoint coordinates and ``seed`` so two
+        callers scoring the same population produce the same ``bundle_id``;
+        distinct populations or distinct seeds produce distinct ids.
+        """
+        flat = np.ascontiguousarray(endpoints, dtype=np.float64).reshape(-1)
+        blob = repr(
+            (
+                POSTERIOR_SELECTION_BUNDLE_ID_PREFIX,
+                "trajectory",
+                int(seed),
+                flat.tobytes(),
+            )
+        ).encode("utf-8")
+        return BundleId(hashlib.sha256(blob).hexdigest())
 
     # ---- private math (shared by evaluate + oracle) -----------------
 

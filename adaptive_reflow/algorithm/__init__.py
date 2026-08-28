@@ -10,6 +10,11 @@ constant schedules can be substituted by conforming to the same
 Protocol; constant-``beta`` and adaptive ``beta`` drivers can be
 substituted via :class:`PolicyDriverProtocol`.
 """
+from .batched_runner import (
+    BatchedRunnerConfig,
+    BatchedTrajectoryResult,
+    BatchedTrajectoryRunner,
+)
 from .blender import (
     DEFAULT_DISTANCE_DECAY_CONFIG_HASH,
     DEFAULT_DISTANCE_DECAY_TEMPERATURE,
@@ -70,6 +75,9 @@ from .scheduler import (
 __all__ = [
     "ADAPTIVE_FAMILY",
     "AdaptivePolicyDriver",
+    "BatchedRunnerConfig",
+    "BatchedTrajectoryResult",
+    "BatchedTrajectoryRunner",
     "BoundedMergeOperator",
     "CONSTANT_FAMILY",
     "CodimensionSheetScheduler",
