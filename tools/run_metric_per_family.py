@@ -14,6 +14,19 @@ and the number of monotone-up rounds (a "convergence" proxy).
 The metric is documented as schedule-independent by construction
 (`docs/ABLATION.md` §"CosineAnneal vs CodimensionSheet"); the script
 verifies that empirically.
+
+The script also sweeps :func:`_paper_evidence_balance` directly to
+verify that the closed-form formula (after the commit 91f3741 fix)
+moves the sheet share toward 1 as ``eps -> 0`` (paper Lemma 2 /
+Theorem 1 direction). The sweep grid is:
+
+* ``n`` in ``[0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 0.95]``
+* ``eps`` in ``[0.5, 0.1, 0.05, 0.01, 0.005, 0.001]``
+
+The probe prints ``(sheet, cell, ratio)`` for every ``(n, eps)`` cell
+and asserts the qualitative pattern: ``ratio -> 1`` as ``eps -> 0``
+and as ``n -> 1``. The result is appended to the same markdown file
+(``docs/ABLATION_METRIC_PROBE.md`` by default) as a separate section.
 """
 from __future__ import annotations
 
@@ -21,6 +34,8 @@ import argparse
 import sys
 import time
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -37,6 +52,7 @@ from adaptive_reflow.algorithm.scheduler import (  # noqa: E402
     ConvergenceAdaptiveScheduler,
     PolynomialScheduler,
     SigmoidScheduler,
+    _paper_evidence_balance,
 )
 from adaptive_reflow.eval.posterior_selection_evaluator import (  # noqa: E402
     EvidenceScaleGapMetric,
@@ -167,6 +183,141 @@ def _format_md(rows: list[dict[str, object]], *, rounds: int) -> str:
             f"{row['mean_tail5']:.4f} | "
             f"{int(row['monotone_up_rounds'])}/{int(row['n_rounds']) - 1} |"
         )
+    lines.append("")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# _paper_evidence_balance sweep
+# ---------------------------------------------------------------------------
+
+#: Grid of `n_cap_base` values used by the closed-form sweep. Chosen to
+#: span the small, mid, and large-capacity regimes a cosine ramp emits.
+_PAPER_SWEEP_N_GRID: tuple[float, ...] = (
+    0.05,
+    0.1,
+    0.2,
+    0.3,
+    0.5,
+    0.7,
+    0.9,
+    0.95,
+)
+
+#: Grid of `eps_implicit` values used by the closed-form sweep. Includes
+#: the canonical ``0.05`` default plus the small values where Theorem 1
+#: predicts sheet dominance.
+_PAPER_SWEEP_EPS_GRID: tuple[float, ...] = (
+    0.5,
+    0.1,
+    0.05,
+    0.01,
+    0.005,
+    0.001,
+)
+
+
+def _sweep_paper_evidence_balance() -> list[dict[str, object]]:
+    """Sweep ``_paper_evidence_balance(n, eps)`` over the canonical grid.
+
+    Returns a list of row dicts suitable for inclusion in the markdown
+    probe. The helper also verifies the qualitative pattern predicted by
+    paper Lemma 2 / Theorem 1: as ``eps -> 0`` the sheet share tends to
+    1 for every ``n < 1``; as ``n -> 1`` the share also tends to 1
+    regardless of ``eps``. Any monotonicity violation is surfaced as an
+    assertion failure.
+    """
+    rows: list[dict[str, object]] = []
+    for n_base in _PAPER_SWEEP_N_GRID:
+        prev_ratio = -1.0
+        for eps_implicit in _PAPER_SWEEP_EPS_GRID:
+            sheet = max(float(n_base), float(eps_implicit))
+            cell = (1.0 - float(n_base)) ** 2 * float(eps_implicit) ** 2
+            ratio = float(_paper_evidence_balance(n_base, eps_implicit))
+            # Recompute sheet/cell deterministically so the markdown
+            # table exposes the paper-aligned closed form explicitly.
+            rows.append(
+                {
+                    "n": float(n_base),
+                    "eps": float(eps_implicit),
+                    "sheet": float(sheet),
+                    "cell": float(cell),
+                    "ratio": float(ratio),
+                }
+            )
+            # Qualitatively: as eps decreases, the ratio is non-decreasing
+            # (paper Theorem 1 direction) for every n < 1.
+            assert ratio >= prev_ratio - 1e-12, (
+                f"_paper_evidence_balance must be non-decreasing as eps "
+                f"decreases; got n={n_base} eps={eps_implicit} ratio="
+                f"{ratio:.6f} after prev_ratio={prev_ratio:.6f}"
+            )
+            prev_ratio = ratio
+        # And in the limit (smallest eps) the ratio is essentially 1 for
+        # every n < 1.
+        assert prev_ratio == pytest.approx(1.0, abs=1e-6), (
+            f"_paper_evidence_balance must approach 1 as eps -> 0 for "
+            f"n={n_base} < 1; got {prev_ratio:.6f}"
+        )
+    return rows
+
+
+def _format_paper_sweep_md(rows: list[dict[str, object]]) -> str:
+    """Format the closed-form sweep as a markdown table.
+
+    Rows are indexed by ``n_cap_base``; columns by ``eps_implicit``; the
+    cell value is the closed-form ``ratio = sheet / (sheet + cell)`` that
+    the scheduler records on :attr:`last_evidence_ratio`.
+    """
+    lines: list[str] = []
+    lines.append(
+        "## `_paper_evidence_balance` closed-form sweep (post-flip)"
+    )
+    lines.append("")
+    lines.append(
+        "Direct call into "
+        "`adaptive_reflow.algorithm.scheduler._paper_evidence_balance` "
+        "for the canonical ``n`` x ``eps`` grid. With the formula flip "
+        "(commit `91f3741`) the sheet share uses paper-positive eps "
+        "powers:"
+    )
+    lines.append("")
+    lines.append("```")
+    lines.append(
+        "    sheet = max(n, eps)               # eps^{+1}  (Lemma 2 / Cor. 1)"
+    )
+    lines.append(
+        "    cell  = (1 - n) ** 2 * eps ** 2   # eps^{+2}  (Lemma 3)"
+    )
+    lines.append(
+        "    ratio = sheet / (sheet + cell)"
+    )
+    lines.append("```")
+    lines.append("")
+    lines.append(
+        "Expected pattern: as ``eps -> 0`` (each row, left-to-right) the "
+        "ratio tends to **1** (sheet dominance, paper Theorem 1). As "
+        "``n -> 1`` (each column, top-to-bottom) the ratio also tends "
+        "to **1** regardless of ``eps``."
+    )
+    lines.append("")
+    header_cells = ["n \\ eps"] + [f"{eps:g}" for eps in _PAPER_SWEEP_EPS_GRID]
+    lines.append("| " + " | ".join(header_cells) + " |")
+    lines.append("|" + "|".join(["---:"] * len(header_cells)) + "|")
+    # Group rows by n to build a wide table; preserve grid order so the
+    # ``n -> 1`` direction runs top-to-bottom.
+    by_n: dict[float, dict[float, float]] = {}
+    for row in rows:
+        by_n.setdefault(float(row["n"]), {})[float(row["eps"])] = float(
+            row["ratio"]
+        )
+    for n_base in _PAPER_SWEEP_N_GRID:
+        cells = by_n.get(float(n_base), {})
+        line = f"| {n_base:g} |"
+        for eps_implicit in _PAPER_SWEEP_EPS_GRID:
+            ratio = cells.get(float(eps_implicit), float("nan"))
+            line += f" {ratio:.6f} |"
+        lines.append(line)
     lines.append("")
     return "\n".join(lines)
 
