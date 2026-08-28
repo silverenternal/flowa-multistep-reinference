@@ -174,6 +174,11 @@ class SequentialScheduler:
             }
         )
         self._last_sample: ScheduleSample | None = None
+        # A9 uplift: per-call audit_codes accumulator for the
+        # seq_inject_noise_fallback code emitted by ``inject_noise``
+        # when the chain's total length is shorter than the caller's
+        # ``computed_at_round``. Cleared on ``reset()``.
+        self._audit_codes: list[str] = []
 
     # -- accessors ---------------------------------------------------------
 
@@ -191,6 +196,18 @@ class SequentialScheduler:
     def last_sample(self) -> ScheduleSample | None:
         """Return the most recent :class:`ScheduleSample` (or ``None``)."""
         return self._last_sample
+
+    @property
+    def audit_codes(self) -> tuple[str, ...]:
+        """Return the chain's audit_codes tuple (A9 uplift).
+
+        The list is populated by :meth:`inject_noise` whenever the
+        helper falls back to ``slot[0].inject_noise`` because the
+        chain's total length is shorter than the caller's
+        ``schedule_sample.computed_at_round``. Cleared on
+        :meth:`reset`.
+        """
+        return tuple(self._audit_codes)
 
     # -- helpers -----------------------------------------------------------
 
@@ -246,6 +263,13 @@ class SequentialScheduler:
         )
         # Rewrite the schedule_hash to the chain-level hash so downstream
         # consumers see one stable identifier for the entire chain.
+        # P0-A1 / P0-A7: the sub-scheduler's ``audit_codes`` and
+        # ``evidence_ratio`` are forwarded verbatim (prefixed with the
+        # chain slot marker) so the chain never hides which family
+        # actually produced the round.
+        sub_codes = tuple(
+            str(code) for code in getattr(sub_sample, "audit_codes", ()) or ()
+        )
         rewritten = ScheduleSample(
             outer_cycle_id=int(sub_sample.outer_cycle_id),
             round_in_cycle=int(round_in_cycle),
@@ -257,6 +281,8 @@ class SequentialScheduler:
             family=f"sequential[{slot_idx}]:{str(sub_sample.family)}",
             computed_at_round=int(sub_sample.computed_at_round),
             schedule_hash=str(self._config_hash_value),
+            audit_codes=(f"sequential_slot:{slot_idx}",) + sub_codes,
+            evidence_ratio=getattr(sub_sample, "evidence_ratio", None),
         )
         self._last_sample = rewritten
         return rewritten
@@ -283,26 +309,60 @@ class SequentialScheduler:
         for slot in self._slots:
             slot.scheduler.reset()
         self._last_sample = None
+        self._audit_codes = []
 
     def record_round_feedback(
         self,
         round_in_cycle: int,
         metrics: Mapping[str, float],
     ) -> None:
-        """Forward per-round feedback to the active sub-scheduler.
+        """Forward per-round feedback to *every* sub-scheduler (A8 uplift).
+
+        P0-A8: the chain forwards ``metrics`` to every slot (active
+        plus inactive) with a slot-relative round index clamped to
+        ``[0, n_rounds - 1]``. Chained adaptive schedulers can now
+        warm up before their slot starts instead of only ever seeing
+        a single feedback call when their slot activates. Slots whose
+        ``record_round_feedback`` is a no-op (e.g. cosine, constant)
+        ignore the call without side-effects; slots whose method
+        accepts arbitrary round indices (e.g.
+        :class:`ConvergenceAdaptiveScheduler`) can build history
+        across the entire chain length.
 
         Falls back to no-op when ``round_in_cycle`` is out of range
         (the chain was constructed with a shorter total length than
-        the caller expected).
+        the caller expected) — legacy behaviour preserved so callers
+        that explicitly signal out-of-range do not silently warm up
+        the chain's slots.
         """
         try:
-            _, slot, sub_round = self._resolve_slot(round_in_cycle)
-        except ValueError:
+            r = int(round_in_cycle)
+        except (TypeError, ValueError):
             return
-        slot.scheduler.record_round_feedback(
-            round_in_cycle=int(sub_round),
-            metrics=metrics,
-        )
+        if r < 0 or r >= int(self._total_rounds):
+            return  # Out-of-range: silent no-op (legacy behaviour).
+        # Resolve the cumulative offset to the *active* slot.
+        active_offset = 0
+        cumulative = 0
+        for slot in self._slots:
+            nxt = cumulative + int(slot.n_rounds)
+            if r < nxt:
+                active_offset = cumulative
+                break
+            cumulative = nxt
+        # Forward to *every* slot with its own slot-relative index,
+        # clamped to [0, slot.n_rounds - 1] so an out-of-cycle call
+        # still warms up the scheduler at the slot boundary.
+        for slot in self._slots:
+            sub_round = r - active_offset
+            if sub_round < 0:
+                sub_round = 0
+            elif sub_round >= int(slot.n_rounds):
+                sub_round = int(slot.n_rounds) - 1
+            slot.scheduler.record_round_feedback(
+                round_in_cycle=int(sub_round),
+                metrics=metrics,
+            )
 
     def inject_noise(
         self,
@@ -317,6 +377,14 @@ class SequentialScheduler:
         (the engine always passes the round's per-cycle index here);
         when no slot matches the helper falls back to the first slot's
         ``inject_noise``.
+
+        A9 uplift: when the fallback fires, the canonical audit code
+        ``seq_inject_noise_fallback:total_rounds=<N>:computed_at_round=<R>``
+        is appended to ``self._audit_codes`` so the runner / audit
+        ledger can record the mis-wiring instead of silently using
+        ``slot[0]``. The fallback itself is preserved for backward
+        compatibility (the chain still returns a fresh state); the
+        audit trail is the new signal.
         """
         if self._slots:
             try:
@@ -326,6 +394,17 @@ class SequentialScheduler:
                 )
             except (ValueError, IndexError):
                 pass
+            except TypeError:
+                # ``computed_at_round`` may be a non-int on legacy
+                # call paths; fall through to the audit-emitting
+                # fallback below.
+                pass
+        self._audit_codes.append(
+            "seq_inject_noise_fallback"
+            f":total_rounds={int(self._total_rounds)}"
+            f":computed_at_round="
+            f"{int(getattr(schedule_sample, 'computed_at_round', -1))}"
+        )
         return self._slots[0].scheduler.inject_noise(
             state, schedule_sample, generator=generator
         )

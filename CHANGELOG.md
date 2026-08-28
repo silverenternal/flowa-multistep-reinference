@@ -7,6 +7,173 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Algorithm layer uplift
+
+This section records the multi-phase algorithm layer uplift that
+extends the framework's algorithm abstractions (scheduler, policy
+driver, merge operator, restart blender) and the four paper-quantity
+contracts (`A_g`, `B_g`, `C_g`, `e_rho`) with concrete, measured
+improvements. Phases are independently verifiable: phase 1 is the
+survey + plan, phase 2 is the parallel implementation across the
+algorithm families, phase 3 is the quantitative benchmark. Every
+uplift is paired with a measurable target in
+[`docs/algorithm-uplift-plan.md`](docs/algorithm-uplift-plan.md) and
+the achieved target is recorded in
+[`docs/benchmark-uplifts.md`](docs/benchmark-uplifts.md).
+
+### Phase 1 — survey + plan
+
+- [`docs/algorithm-uplift-plan.md`](docs/algorithm-uplift-plan.md):
+  per-algorithm uplift plan with quantitative targets. P0 / P1 / P2
+  priorities identified across **5 P0 + 9 P1 + 24 P2 = 38 candidate
+  uplifts** spanning 17 algorithm classes + 1 runner integration.
+
+### Phase 2 — parallel implementation
+
+Every implemented uplift lands behind a regression test and emits an
+audit-code / digest change that the runner can observe. The
+file:line references below point to the implementation sites.
+
+**Schedulers (`adaptive_reflow/algorithm/scheduler.py`):**
+
+- `CosineAnnealScheduler`: `audit_codes` on `ScheduleSample` (**A1**)
+  at `scheduler.py:85`; `schedule_family` folded into `config_hash`
+  (**B1**) at `scheduler.py:398`.
+- `ConstantScheduler`: `schedule_constant_baseline` audit code
+  (**A3**) at `scheduler.py:666`; `memory_fraction_baseline` property
+  (**B2**).
+- `LinearScheduler`: `schedule_linear_baseline` audit code (**A5**)
+  at `scheduler.py:873`; `inject_noise` direction knob (**A4**).
+- `ExponentialScheduler`: `schedule_exponential_baseline` audit code
+  at `scheduler.py:1100`; `noise_floor` arg (**B3**);
+  `expected_n_cap` analytic mean (**B4**).
+- `PolynomialScheduler`: `schedule_polynomial_baseline` audit code
+  at `scheduler.py:1336`; `preset` literal (**C1**).
+- `SigmoidScheduler`: `schedule_sigmoid_baseline` audit code
+  at `scheduler.py:1588`; `tail_floor` knob (**B5**).
+- `ConvergenceAdaptiveScheduler`: multi-metric feedback
+  (`coverage`, `selection_ratio`) on `record_round_feedback` (**A6**)
+  at `scheduler.py:1937`; Kalman-like variance reduction (**B6**).
+- `CodimensionSheetScheduler`: `evidence_ratio` on `ScheduleSample`
+  (**A7**) at `scheduler.py:94`; `profile_residual_fn` made required
+  (**B7**); `e_rho` wired into `inject_noise` (**A18**).
+
+**Sequential (`adaptive_reflow/algorithm/sequential.py`):**
+
+- `SequentialScheduler`: `record_round_feedback` forwarded to all
+  slots (**A8**); `seq_inject_noise_fallback` audit code (**A9**) on
+  out-of-range calls.
+
+**Policy drivers (`adaptive_reflow/algorithm/policy_driver.py`):**
+
+- `ScheduleDerivedPolicyDriver`: `policy_schedule_derived` audit code
+  (**A10**) in the returned policy's `provenance`.
+- `ConstantPolicyDriver`: `min_floor` arg (**B8**) for paper-aligned
+  `e_rho` floor.
+- `AdaptivePolicyDriver`: `beta_saturation_count` per-round metric
+  (**A11**); `name` arg in `config_hash` (**C2**).
+
+**Merge operators (`adaptive_reflow/algorithm/merge_operator.py`):**
+
+- `BoundedMergeOperator`: `exterior_gap_e_rho` paper-quantity floor
+  (**A12**) at `merge_operator.py:386`; `tolerance` near-degenerate
+  handling (**B9**) at `merge_operator.py:387`.
+- `IdentityOperator`: `MERGE_NONFINITE_DYNAMIC_CLIPPED` audit code
+  (**A13**).
+- `EMAOperator`: `alpha_schedule` callable (**B10**).
+
+**Blenders (`adaptive_reflow/algorithm/blender.py`):**
+
+- `LinearBlender`: `BLENDER_MEMORY_FRACTION_CLIPPED` audit code
+  (**A14**); `per_cell_coefficient_C` paper-quantity scaling
+  (**B11**).
+- `DistanceDecayBlender`: `decay_factor` folded into
+  `native_state_digest` and surfaced via
+  `per_round_metrics["blender_decay_factor"]` (**A15**).
+
+**Metric (`adaptive_reflow/eval/posterior_selection_evaluator.py`):**
+
+- `EvidenceScaleGapMetric`: `eps_schedule` decay so
+  `selection_ratio` reaches `>=0.95` (**A16**)
+  at `posterior_selection_evaluator.py:473`; `evaluate_trajectory`
+  schedule-sensitive path (**B12**); `calibration_lower_bound`
+  derived from paper Corollary 1 (**C3**) at
+  `posterior_selection_evaluator.py:564`.
+
+**Paper quantities (`adaptive_reflow/contracts/paper_quantities.py`):**
+
+- `sheet_evidence_A(g)`: `SheetEvidenceResult` dataclass with
+  `discretization_error` field (**A17**); `lru_cache` on
+  identical `(g, K, h)` keys (**C4**).
+- `root_cell_packing_B(g)`: `K=32.0` default and `tail_bound` field
+  on `RootCellPackingResult` (**B13**).
+- `per_cell_coefficient_C`: `drift_robustness` field (**B14**).
+- `exterior_gap_e_rho`: default `1e-4`, Lemma 4 invariant
+  (`e_rho > 0`) emitted in the benchmark (**A18**).
+
+**Sequential protocol (`adaptive_reflow/algorithm/sequential.py`):**
+
+- `SequentialScheduler`: 3-slot chain trajectory matches
+  per-slot concatenation (`trajectory_matches_expected_curve = True`).
+
+### Phase 3 — quantitative benchmark
+
+[`docs/benchmark-uplifts.md`](docs/benchmark-uplifts.md) reports
+**27** quantitative measurements across the algorithm families
+(excluding the runner-side consumption items B12 / B15 / A19 / C5
+which the runner cannot yet exercise). Of the **27** measured
+uplifts, **27** achieved their target, **0** regressed, **0** were
+neutral. The 22-row ablation re-run (8 canonical configs x 2 targets
++ 2 paper-grounded rows on `two_moons` + 2 post-infrastructure-fix
+rows x 2 targets) is reproduced in full. Headline numbers:
+
+- `EvidenceScaleGapMetric` A16 — `eps_schedule` decay raises the
+  final `selection_ratio` from baseline `0.872` to `0.9996`
+  (`+0.127`, `+14.6%`) and the SNR proxy is `60.80` (target
+  `>=1.0`).
+- `BoundedMergeOperator` A12 — `e_rho / 4` paper-quantity floor
+  lift lands on `audit_codes_for_floor_lifted = 1`.
+- `LinearBlender` A14 — `BLENDER_MEMORY_FRACTION_CLIPPED` audit
+  emission on out-of-range `memory_fraction`.
+- `DistanceDecayBlender` A15 — `decay_factor` folded into digest
+  (`digests_differ_when_distance_differs = True`).
+- `paper_quantities.sheet_evidence_A` A17 — `A_g_sin = 0.854`,
+  `A_g_polynomial = 0.765` for the canonical `g_a(x) = (1 + 0.25 *
+  tanh x) * sin x` profile.
+- `paper_quantities.root_cell_packing_B` B13 — `B_g_sin_K32 =
+  1.170` with `tail_bound = 2.65e-111` (target `<= 1e-30`).
+- `paper_quantities.per_cell_coefficient_C` B14 —
+  `drift_robustness_over_C_g_ratio = 1.20` (target `<= 2.0`).
+- `paper_quantities.exterior_gap_e_rho` — `e_rho_default = 1e-4`
+  (target `in (0, 1)`); Lemma 4 invariant (`e_rho > 0`) holds.
+- `SequentialScheduler` A8 / A9 — `all_slots_warmed_after_single_call
+  = 1`; `audit_codes_for_oor_inject_noise = 1`.
+
+### Quantitative summary
+
+| Bucket | Count | Achieved target | Regressed | Neutral |
+|---|---:|---:|---:|---:|
+| P0 (must do) | 5 | 5 | 0 | 0 |
+| P1 (should do) | 9 | 9 | 0 | 0 |
+| P2 (nice to have) | 13 of 24 measured | 13 | 0 | 0 |
+| **Total** | **27** | **27** | **0** | **0** |
+
+The remaining 11 P2 uplifts (B1..B8 family; C1, C2, C4, C5) are
+implemented but their target thresholds are byte-equality or
+determinism checks that the benchmark fold into the per-uplift
+"baseline == current, target == byte_identical" rows. See
+`docs/benchmark-uplifts.md` for the full table.
+
+### Gate impact
+
+- Tests: 1461 passing, 7 skipped, 32 warnings (no new skips).
+- Ruff: 0 violations.
+- mypy `adaptive_reflow`: 0 errors across 92 source files.
+- Docs scanner: 2606 claims verified.
+- Claims consistency: 19 active, 0 deprecated, 0 provisional;
+  no drift.
+- mkdocs `--strict`: clean.
+
 ## [Unreleased] - Final polish pass
 
 This section records the final polish pass that closes the remaining

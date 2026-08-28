@@ -88,6 +88,15 @@ DEFAULT_ADAPTIVE_TARGET_ESTIMATE: float = 0.5
 #: always ``<= 1.0`` and the code is never emitted.
 BETA_SATURATION_FROM_PAPER_QUANTITY: str = "beta_saturation_from_paper_quantity"
 
+#: Audit code emitted by :class:`ScheduleDerivedPolicyDriver` whenever
+#: it overrides ``beta_by_channel`` from the schedule's ``n_cap`` (P1
+#: uplift A10). The engine / runner consume this to attribute the
+#: per-round ``beta`` to the schedule-derived source of truth. The
+#: code is NOT emitted when ``schedule_sample is None`` (no override
+#: took place) or when ``n_cap`` is non-finite (the driver falls back
+#: to the base policy).
+POLICY_SCHEDULE_DERIVED: str = "policy_schedule_derived"
+
 
 # ---------------------------------------------------------------------------
 # Pure helper — channel vocabulary + policy_hash recompute
@@ -335,7 +344,7 @@ class ScheduleDerivedPolicyDriver:
         # ``prior_endpoint_digest`` / ``audit_codes`` are accepted for
         # protocol signature parity; suppress the unused-argument lint
         # explicitly.
-        del prior_endpoint_digest, audit_codes
+        del prior_endpoint_digest
         if schedule_sample is None:
             return base_policy
         n_cap_raw = schedule_sample.n_cap
@@ -346,6 +355,13 @@ class ScheduleDerivedPolicyDriver:
         if not _is_finite(n_cap):
             return base_policy
         clipped = _clip_unit_finite(n_cap)
+        # P1-A10: emit the canonical schedule-derived audit code so the
+        # engine's audit trail attributes the per-round ``beta`` to the
+        # schedule-derived source of truth. The code is only emitted on
+        # the actual override path (not the ``None``-sample / non-finite
+        # fallback paths).
+        if audit_codes is not None:
+            audit_codes.append(POLICY_SCHEDULE_DERIVED)
         return _override_beta_by_channel(
             base_policy, beta_value=clipped, channel=channel
         )
@@ -567,6 +583,13 @@ class AdaptivePolicyDriver:
                     f"per_cell_coefficient_C must be positive, got {c_f!r}"
                 )
             self._per_cell_coefficient_C = c_f
+        # P1-A11: per-call saturation counter. Increments every time
+        # the paper-quantity-normalised envelope ``(1 - |p - t|) / C_g``
+        # exceeds ``1.0`` and ``beta`` therefore saturates at the
+        # unit-interval ceiling. The counter is per-instance and
+        # does NOT contribute to ``config_hash`` (it is a runtime
+        # diagnostic, not a constructor argument).
+        self._beta_saturation_count: int = 0
 
     # -- accessors ---------------------------------------------------------
 
@@ -585,6 +608,30 @@ class AdaptivePolicyDriver:
         per-cell evidence scale.
         """
         return self._per_cell_coefficient_C
+
+    @property
+    def beta_saturation_count(self) -> int:
+        """Return the count of saturation events on this driver instance.
+
+        P1-A11: every time :meth:`compute_policy` saturates
+        ``beta`` at the unit-interval ceiling (only possible when
+        ``per_cell_coefficient_C < 1``) the counter is incremented.
+        The counter is per-instance and is the source of truth for
+        the ``beta_saturation_count`` per-round metric consumed by
+        the runner / engine audit ledger. It does NOT contribute
+        to ``config_hash`` (it is a runtime diagnostic, not a
+        constructor argument).
+        """
+        return int(self._beta_saturation_count)
+
+    def reset_beta_saturation_count(self) -> None:
+        """Reset the per-call saturation counter to zero.
+
+        The runner typically resets the counter at the start of every
+        outer cycle so the per-round metric reports the cycle-local
+        count rather than a lifetime aggregate.
+        """
+        self._beta_saturation_count = 0
 
     # -- PolicyDriverProtocol ----------------------------------------------
 
@@ -639,10 +686,17 @@ class AdaptivePolicyDriver:
         # from the unit interval) the raw ``beta`` would go negative,
         # so we floor at 0 to keep the engine's audit invariant.
         clipped = _clip_unit_finite(float(raw))
-        if saturated_from_paper_quantity and audit_codes is not None:
-            audit_codes.append(
-                f"{BETA_SATURATION_FROM_PAPER_QUANTITY}:raw={raw!r}"
-            )
+        if saturated_from_paper_quantity:
+            # P1-A11: increment the per-instance counter so the runner
+            # can pick the count up via ``driver.beta_saturation_count``
+            # after a run (or at any point in the run). The counter is
+            # independent of whether the caller supplied an
+            # ``audit_codes`` list.
+            self._beta_saturation_count += 1
+            if audit_codes is not None:
+                audit_codes.append(
+                    f"{BETA_SATURATION_FROM_PAPER_QUANTITY}:raw={raw!r}"
+                )
         return _override_beta_by_channel(
             base_policy, beta_value=clipped, channel=channel
         )
@@ -836,6 +890,7 @@ __all__ = [
     "CONSTANT_FAMILY",
     "DEFAULT_ADAPTIVE_TARGET_ESTIMATE",
     "DEFAULT_CONSTANT_BETA",
+    "POLICY_SCHEDULE_DERIVED",
     "SCHEDULE_DERIVED_FAMILY",
     # Implementations
     "AdaptivePolicyDriver",

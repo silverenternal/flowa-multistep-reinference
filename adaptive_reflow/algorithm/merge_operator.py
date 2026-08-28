@@ -104,6 +104,13 @@ MERGE_CAP_OUT_OF_RANGE: str = "merge_cap_out_of_range"
 #: (P0-3 — the operator clips instead of raising).
 MERGE_FLOOR_OUT_OF_RANGE: str = "merge_floor_out_of_range"
 
+#: Audit code emitted when :class:`BoundedMergeOperator` lifts its
+#: ``floor`` to honour the paper-quantity ``e_rho / 4`` minimum
+#: (P0-A12 / paper Lemma 5). The code carries the lifted floor so
+#: a downstream audit reader can see how far the paper-driven
+#: envelope exceeded the schedule-supplied floor.
+MERGE_PAPER_QUANTITY_FLOOR_LIFTED: str = "merge_paper_quantity_floor_lifted"
+
 #: Error code raised when the orchestrator-driven merge path is
 #: asked to merge without supplying ``prev``. The schedule's
 #: ``n_cap`` is the cap; the prev must come from the previous
@@ -381,26 +388,82 @@ class BoundedMergeOperator:
         behaviour; it is accepted as a constructor argument so future
         near-degenerate handling can be added without changing the
         operator's protocol surface.
+    exterior_gap_e_rho:
+        Optional paper-quantity minimum-energy gap ``e_rho`` from
+        paper Lemma 5. When supplied, the operator lifts ``floor``
+        to ``max(floor, e_rho / 4)`` so the bounded-merge envelope
+        respects the paper's physical-complement floor. The
+        default ``None`` preserves the legacy behaviour (P0-A12).
     """
 
-    def __init__(self, *, tolerance: float = 1e-9) -> None:
+    def __init__(
+        self,
+        *,
+        tolerance: float = 1e-9,
+        exterior_gap_e_rho: float | None = None,
+    ) -> None:
         self._tolerance = float(tolerance)
+        if exterior_gap_e_rho is None:
+            self._exterior_gap_e_rho: float | None = None
+        else:
+            try:
+                e_f = float(exterior_gap_e_rho)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"exterior_gap_e_rho must be a real number, "
+                    f"got {exterior_gap_e_rho!r}"
+                ) from exc
+            if not math.isfinite(e_f):
+                raise ValueError(
+                    f"exterior_gap_e_rho must be finite, "
+                    f"got {exterior_gap_e_rho!r}"
+                )
+            if e_f < 0.0:
+                raise ValueError(
+                    f"exterior_gap_e_rho must be non-negative, "
+                    f"got {exterior_gap_e_rho!r}"
+                )
+            self._exterior_gap_e_rho = e_f
 
     @property
     def tolerance(self) -> float:
         """Return the configured degenerate-interval tolerance."""
         return float(self._tolerance)
 
+    @property
+    def exterior_gap_e_rho(self) -> float | None:
+        """Return the configured paper-quantity ``e_rho`` floor, or ``None``.
+
+        P0-A12: when configured, the operator lifts ``floor`` to
+        ``max(floor, e_rho / 4)`` so the bounded-merge envelope
+        respects paper Lemma 5's physical-complement floor.
+        """
+        return self._exterior_gap_e_rho
+
     def to_config(self) -> dict[str, Any]:
         """Return a JSON-serialisable config dict (P1-1 round-trip)."""
-        return {"family": "bounded", "tolerance": float(self._tolerance)}
+        return {
+            "family": "bounded",
+            "tolerance": float(self._tolerance),
+            "exterior_gap_e_rho": (
+                None
+                if self._exterior_gap_e_rho is None
+                else float(self._exterior_gap_e_rho)
+            ),
+        }
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> BoundedMergeOperator:
         """Build a :class:`BoundedMergeOperator` from ``config``."""
         if not isinstance(config, dict):
             raise TypeError(f"config must be a dict, got {type(config).__name__}")
-        return BoundedMergeOperator(tolerance=float(config.get("tolerance", 1e-9)))
+        e_rho = config.get("exterior_gap_e_rho")
+        if e_rho is not None:
+            e_rho = float(e_rho)
+        return BoundedMergeOperator(
+            tolerance=float(config.get("tolerance", 1e-9)),
+            exterior_gap_e_rho=e_rho,
+        )
 
     def merge(
         self,
@@ -453,6 +516,24 @@ class BoundedMergeOperator:
             floor, name="floor", audit_codes=audit_codes,
             code=MERGE_FLOOR_OUT_OF_RANGE,
         )
+
+        # P0-A12 — paper-quantity floor (Lemma 5). When the operator
+        # was constructed with ``exterior_gap_e_rho`` we lift the
+        # floor to ``max(floor, e_rho / 4)`` so the bounded-merge
+        # envelope respects the paper's physical-complement minimum.
+        # The lift is recorded in the audit trail so a downstream
+        # reader can see the paper-driven floor take precedence over
+        # the schedule-supplied floor.
+        if self._exterior_gap_e_rho is not None:
+            paper_floor = self._exterior_gap_e_rho / 4.0
+            if floor_f < paper_floor:
+                floor_f = float(paper_floor)
+                if audit_codes is not None:
+                    audit_codes.append(
+                        f"{MERGE_PAPER_QUANTITY_FLOOR_LIFTED}"
+                        f":floor={floor_f:.6f}"
+                        f":e_rho={self._exterior_gap_e_rho:.6f}"
+                    )
 
         # Delta caps are clipped into ``[0, 1]`` silently (no audit
         # emission — the legacy bounded-merge math stays
@@ -700,6 +781,7 @@ __all__ = [
     "MERGE_FLOOR_OUT_OF_RANGE",
     "MERGE_NONFINITE_DYNAMIC_CLIPPED",
     "MERGE_NONFINITE_PREV_CLIPPED",
+    "MERGE_PAPER_QUANTITY_FLOOR_LIFTED",
     "MERGE_PREV_ANCHORED_TO_LAST_EMITTED",
     "MergeAuthorityError",
     "MergeOperatorProtocol",

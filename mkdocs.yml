@@ -140,6 +140,9 @@ not_in_nav: |
   schedule-theory.md
   sequential-protocol.md
   defaults-matrix.md
+  _benchmark_ablation.md
+  algorithm-uplift-plan.md
+  benchmark-uplifts.md
 
 validation:
   nav:

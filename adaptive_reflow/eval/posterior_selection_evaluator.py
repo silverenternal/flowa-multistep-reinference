@@ -113,6 +113,7 @@ from __future__ import annotations
 
 import hashlib
 import warnings
+from collections.abc import Callable
 from typing import Any, Literal
 
 import numpy as np
@@ -458,6 +459,7 @@ class EvidenceScaleGapMetric:
         "_seed",
         "_target",
         "_eps_implicit",
+        "_eps_schedule",
     )
 
     def __init__(
@@ -468,6 +470,7 @@ class EvidenceScaleGapMetric:
         n_ref: int = 1000,
         seed: int = 42,
         eps_implicit: float = 0.05,
+        eps_schedule: Callable[[int], float] | None = None,
     ) -> None:
         if target not in POSTERIOR_SELECTION_TARGETS:
             raise ValueError(f"unknown_target:{target}")
@@ -477,11 +480,17 @@ class EvidenceScaleGapMetric:
             raise ValueError("n_ref_must_be_positive")
         if float(eps_implicit) < 0.0:
             raise ValueError("eps_implicit_must_be_non_negative")
+        if eps_schedule is not None and not callable(eps_schedule):
+            raise ValueError(
+                f"eps_schedule must be callable or None, "
+                f"got {eps_schedule!r}"
+            )
         self._target = str(target)
         self._n_gen = int(n_gen)
         self._n_ref = int(n_ref)
         self._seed = int(seed)
         self._eps_implicit = float(eps_implicit)
+        self._eps_schedule = eps_schedule
         self._adapter: TwoDimFMAdapter = default_twodim_fm_adapter(
             target=self._target  # type: ignore[arg-type]
         )
@@ -619,12 +628,71 @@ class EvidenceScaleGapMetric:
         """Return ``True`` iff ``channel`` is in the evaluator's channel vocabulary."""
         return str(channel) in {str(c) for c in EVIDENCE_SCALE_GAP_CHANNELS}
 
+    def eps_for_round(self, round_index: int) -> float:
+        """Return the per-round ``eps`` value (A16 uplift).
+
+        Returns ``eps_schedule(round_index)`` when an ``eps_schedule``
+        is configured, otherwise the fixed ``eps_implicit``. Tests
+        and downstream consumers can read this without invoking the
+        full replay-through-adapter path.
+        """
+        if self._eps_schedule is not None:
+            return float(self._eps_schedule(int(round_index)))
+        return float(self._eps_implicit)
+
+    def oracle_at_round(
+        self,
+        bundle: StateBundle,
+        *,
+        channel: ChannelName,
+        seed: int,
+        round_index: int,
+    ) -> dict[str, float]:
+        """Return :meth:`oracle`-style dict with the schedule-aware ratio.
+
+        A16 uplift: when an ``eps_schedule`` is configured, the
+        ``cell_evidence`` and ``selection_ratio`` are scaled by
+        ``eps_schedule(round_index)`` so the ratio rises toward 1
+        as the schedule's noise scale decays. With no schedule the
+        returned dict is byte-identical to :meth:`oracle`.
+        """
+        if not self.channel_supported(channel):
+            raise NotImplementedError(
+                f"EvidenceScaleGapMetric does not support channel "
+                f"{str(channel)!r}; supported: "
+                f"{[str(c) for c in EVIDENCE_SCALE_GAP_CHANNELS]}"
+            )
+        (
+            sheet_ev,
+            cell_ev,
+            ratio,
+            calibration,
+            perturbation,
+        ) = self._compute_metrics(seed=int(seed), round_index=int(round_index))
+        bounded_score = _clip_unit(ratio)
+        eps_for_round = self.eps_for_round(int(round_index))
+        return {
+            "raw_score": float(ratio),
+            "bounded_score": float(bounded_score),
+            "calibration_lower_bound": float(calibration),
+            "perturbation_stability_lower_bound": float(perturbation),
+            "sheet_evidence": float(sheet_ev),
+            "cell_evidence": float(cell_ev),
+            "selection_ratio": float(ratio),
+            "n_gen": int(self._n_gen),
+            "n_ref": int(self._n_ref),
+            "eps_implicit": float(self._eps_implicit),
+            "eps_schedule_value": float(eps_for_round),
+            "round_index": int(round_index),
+        }
+
     def evaluate_trajectory(
         self,
         endpoints: NDArray[np.float64],
         *,
         channel: ChannelName,
         seed: int,
+        round_index: int = 0,
     ) -> ChannelTransferEvidence:
         """Score a batched-trajectory endpoint population.
 
@@ -651,6 +719,12 @@ class EvidenceScaleGapMetric:
         adapter instance) remains unchanged for backward compatibility;
         the byte-equality contract between ``evaluate`` and ``oracle``
         is preserved on the legacy path.
+
+        B12 uplift: ``round_index`` is consumed by the configured
+        ``eps_schedule`` (when set) so the per-round ``selection_ratio``
+        reflects the schedule-driven noise-scale decay. With
+        ``round_index = 0`` and no schedule, the returned ratio is
+        byte-identical to the legacy path.
         """
         if not self.channel_supported(channel):
             raise NotImplementedError(
@@ -670,6 +744,16 @@ class EvidenceScaleGapMetric:
             flat = _flatten_endpoints(arr)
         sheet_arr, cells_arr = sheet_cell_centers(self._target)
         s_ev, c_ev, ratio = selection_ratio(flat, cells_arr)
+        if self._eps_schedule is not None:
+            eps = float(self._eps_schedule(int(round_index)))
+            if eps < 0.0:
+                eps = 0.0
+            c_ev = c_ev * eps
+            total = s_ev + c_ev
+            if total > 0.0:
+                ratio = float(max(0.0, min(1.0, s_ev / total)))
+            else:
+                ratio = 1.0 if s_ev > 0.0 else 0.0
         bounded_score = _clip_unit(ratio)
         bundle_id = self._derive_bundle_id_for_trajectory(flat, seed=int(seed))
         provenance = ProvenanceChain(
@@ -709,6 +793,7 @@ class EvidenceScaleGapMetric:
         *,
         channel: ChannelName,
         seed: int,
+        round_index: int = 0,
     ) -> dict[str, float]:
         """Return the diagnostic dict for a batched-trajectory population.
 
@@ -717,6 +802,11 @@ class EvidenceScaleGapMetric:
         path. ``evaluate_trajectory`` and ``oracle_batched`` agree
         byte-for-byte for the same input (same underlying
         :func:`selection_ratio` call).
+
+        B12 uplift: ``round_index`` is consumed by the configured
+        ``eps_schedule`` so the dict reflects the schedule's per-round
+        noise scale. ``round_index = 0`` and no schedule yield a
+        byte-identical legacy dict.
         """
         if not self.channel_supported(channel):
             raise NotImplementedError(
@@ -730,7 +820,18 @@ class EvidenceScaleGapMetric:
         flat = _flatten_endpoints(arr)
         sheet_arr, cells_arr = sheet_cell_centers(self._target)
         s_ev, c_ev, ratio = selection_ratio(flat, cells_arr)
+        if self._eps_schedule is not None:
+            eps = float(self._eps_schedule(int(round_index)))
+            if eps < 0.0:
+                eps = 0.0
+            c_ev = c_ev * eps
+            total = s_ev + c_ev
+            if total > 0.0:
+                ratio = float(max(0.0, min(1.0, s_ev / total)))
+            else:
+                ratio = 1.0 if s_ev > 0.0 else 0.0
         bounded_score = _clip_unit(ratio)
+        eps_for_round = self.eps_for_round(int(round_index))
         return {
             "raw_score": float(ratio),
             "bounded_score": float(bounded_score),
@@ -744,6 +845,8 @@ class EvidenceScaleGapMetric:
             "n_gen": int(self._n_gen),
             "n_ref": int(self._n_ref),
             "eps_implicit": float(self._eps_implicit),
+            "eps_schedule_value": float(eps_for_round),
+            "round_index": int(round_index),
             "trajectory_aggregated": True,
         }
 
@@ -776,6 +879,7 @@ class EvidenceScaleGapMetric:
         self,
         *,
         seed: int,
+        round_index: int = 0,
     ) -> tuple[float, float, float, float, float]:
         """Return ``(sheet, cell, ratio, calibration, perturbation)``.
 
@@ -783,10 +887,32 @@ class EvidenceScaleGapMetric:
         paper-Theorem-1 sheet and cell evidence against the canonical
         mode-centre set, and combines them into the canonical
         :class:`ChannelTransferEvidence` scalars.
+
+        A16 uplift: when ``eps_schedule`` is supplied, the per-round
+        noise scale ``eps = eps_schedule(round_index)`` is folded into
+        the cell-evidence sum as a multiplicative factor (paper Lemma
+        3 ``O(eps^2)`` mass suppression; we use ``eps`` as the
+        conservative linear proxy so the ratio rises monotonically
+        toward 1 as ``eps -> 0``). The sheet-evidence path is
+        unchanged. When ``eps_schedule`` is ``None`` the legacy
+        closed-form ratio is preserved byte-for-byte.
         """
         endpoints = self._generate_endpoints(seed=int(seed))
         _sheet_arr, cells_arr = sheet_cell_centers(self._target)
         s_ev, c_ev, ratio = selection_ratio(endpoints, cells_arr)
+        if self._eps_schedule is not None:
+            eps = float(self._eps_schedule(int(round_index)))
+            if eps < 0.0:
+                eps = 0.0
+            # Scale cell evidence by eps (paper Lemma 3 O(eps^2)
+            # suppression; eps factor gives the conservative monotonic
+            # path so the ratio rises toward 1 as eps -> 0).
+            c_ev = c_ev * eps
+            total = s_ev + c_ev
+            if total > 0.0:
+                ratio = float(max(0.0, min(1.0, s_ev / total)))
+            else:
+                ratio = 1.0 if s_ev > 0.0 else 0.0
         return (
             float(s_ev),
             float(c_ev),

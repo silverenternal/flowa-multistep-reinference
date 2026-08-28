@@ -403,3 +403,40 @@ How it works:
   (`SCHEDULER_REGISTRY["sequential"]` entry),
   `tests/test_algorithm/test_sequential.py`
   (16+ regression tests).
+
+## CLM-022: `EvidenceScaleGapMetric` `eps_schedule` uplift raises `selection_ratio` plateau with SNR proxy ≥ 1.0 {#CLM-022}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source:
+  [`docs/algorithm-uplift-plan.md`](algorithm-uplift-plan.md) §6
+  (uplift **A16**),
+  [`docs/benchmark-uplifts.md`](benchmark-uplifts.md) §1 (SNR row)
+- Asserted by: `docs/benchmark-uplifts.md:23`,
+  `tools/benchmark_uplifts.py:699-732` (`snr_proxy` measurement)
+- Disputed by: —
+- Statement: The `EvidenceScaleGapMetric` uplift **A16** exposes an
+  optional `eps_schedule: Callable[[int], float] | None` argument
+  on the metric constructor
+  (`adaptive_reflow/eval/posterior_selection_evaluator.py:473`).
+  When wired to a monotonically decaying schedule (e.g.
+  `lambda r: 0.05 * (1 - r / L)`), the per-round
+  `selection_ratio` rises from the documented baseline plateau of
+  `0.872` (two_moons, no schedule) to `0.9996` at the final round,
+  a `+0.127` absolute change / `+14.6%` relative change. The
+  benchmark measures an **SNR proxy** of
+  `(final_decay_ratio - baseline_ratio) / pstdev(per_round_ratio)`,
+  which quantifies the signal-to-noise of the schedule's
+  convergence: the SNR proxy measured for the A16 schedule is
+  `60.80` against a target of `>= 1.0`. The SNR proxy is a
+  framework-internal diagnostic (NOT a paper quantity) and is
+  emitted only when `eps_schedule` is supplied.
+- Evidence:
+  `adaptive_reflow/eval/posterior_selection_evaluator.py:473`
+  (`eps_schedule` constructor arg),
+  `adaptive_reflow/eval/posterior_selection_evaluator.py:564`
+  (`calibration` derivation using the per-round `eps`),
+  `tools/benchmark_uplifts.py:699-732`
+  (the SNR-proxy measurement),
+  `docs/benchmark-uplifts.md:23`
+  (the SNR row in the per-uplift table).

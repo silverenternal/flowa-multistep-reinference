@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 from adaptive_reflow.algorithm.scheduler import (
@@ -242,3 +243,210 @@ def test_sequential_constant_sub_scheduler() -> None:
     # At chain round 5, the constant scheduler is at sub-round 1.
     s = chain.sample(0, 5, 5)
     assert s.n_cap == pytest.approx(0.5)
+
+
+# ---------------------------------------------------------------------------
+# A8 — record_round_feedback forwards to every sub-scheduler
+# ---------------------------------------------------------------------------
+
+
+def test_sequential_feedback_forwards_to_every_slot() -> None:
+    """A8: a single feedback call reaches every sub-scheduler in the chain.
+
+    When the chain has two :class:`ConvergenceAdaptiveScheduler` slots,
+    a single ``record_round_feedback`` at ``round_in_cycle=2`` must
+    update both sub-schedulers' internal W2 history (with sub-round
+    indices clamped to each slot's range).
+    """
+    from adaptive_reflow.algorithm.scheduler import (
+        ConvergenceAdaptiveScheduler,
+    )
+
+    slot_a = ConvergenceAdaptiveScheduler()
+    slot_b = ConvergenceAdaptiveScheduler()
+    chain = SequentialScheduler(
+        schedulers=[(slot_a, 5), (slot_b, 5)],
+    )
+    chain.record_round_feedback(round_in_cycle=2, metrics={"W2": 0.5})
+    # Both sub-schedulers received the feedback (active + inactive).
+    assert len(slot_a.w2_history) >= 1
+    assert len(slot_b.w2_history) >= 1
+
+
+def test_sequential_feedback_active_slot_index_clamped() -> None:
+    """A8: the active slot's sub-round index is clamped to its range.
+
+    With ``(slot_a, 5) + (slot_b, 5)`` and ``round_in_cycle=7`` (in
+    slot_b), slot_a receives the feedback clamped to its terminal
+    round (4); slot_b receives it at sub-round 2.
+    """
+    from adaptive_reflow.algorithm.scheduler import (
+        ConvergenceAdaptiveScheduler,
+    )
+
+    slot_a = ConvergenceAdaptiveScheduler()
+    slot_b = ConvergenceAdaptiveScheduler()
+    chain = SequentialScheduler(
+        schedulers=[(slot_a, 5), (slot_b, 5)],
+    )
+    chain.record_round_feedback(round_in_cycle=7, metrics={"W2": 0.7})
+    # slot_a's history length is >= 1 (feedback forwarded at clamped round).
+    assert len(slot_a.w2_history) >= 1
+    assert len(slot_b.w2_history) >= 1
+
+
+def test_sequential_feedback_out_of_range_noop() -> None:
+    """A8: out-of-range ``round_in_cycle`` is a no-op (no sub-scheduler updated).
+
+    Legacy semantics: callers that pass a ``round_in_cycle`` past the
+    chain's total length see no feedback. (Clamping to the last slot
+    would also warm it up but we keep the no-op behavior for callers
+    that explicitly signal "out of range".)
+    """
+    from adaptive_reflow.algorithm.scheduler import (
+        ConvergenceAdaptiveScheduler,
+    )
+
+    slot_a = ConvergenceAdaptiveScheduler()
+    chain = SequentialScheduler(schedulers=[(slot_a, 4)])
+    # round_in_cycle=10 is out of range for a 4-round chain.
+    chain.record_round_feedback(round_in_cycle=10, metrics={"W2": 0.5})
+    # No feedback was forwarded because the chain's total length is 4.
+    assert len(slot_a.w2_history) == 0
+
+
+# ---------------------------------------------------------------------------
+# A9 — inject_noise fallback emits the audit code
+# ---------------------------------------------------------------------------
+
+
+def test_sequential_inject_noise_audit_codes_default_empty() -> None:
+    """A9: ``audit_codes`` defaults to an empty tuple."""
+    cosine = default_cosine_scheduler(cycle_length=4)
+    chain = SequentialScheduler(schedulers=[(cosine, 4)])
+    assert chain.audit_codes == ()
+
+
+def test_sequential_inject_noise_fallback_emits_audit_code() -> None:
+    """A9: out-of-range ``computed_at_round`` emits ``seq_inject_noise_fallback``.
+
+    The chain's total length is 4; calling ``inject_noise`` with a
+    ``schedule_sample.computed_at_round`` of 10 must fall back to
+    ``slot[0]`` AND append the audit code so the audit ledger records
+    the mis-wiring.
+    """
+    from adaptive_reflow.contracts import CosineScheduleSample, FactorValue
+
+    cosine = default_cosine_scheduler(cycle_length=4)
+    chain = SequentialScheduler(schedulers=[(cosine, 4)])
+    sched_sample = CosineScheduleSample(
+        schedule_hash="hash-fallback",
+        outer_cycle_id=0,
+        round_in_cycle=0,
+        cycle_length=4,
+        n_cap=FactorValue(0.5),
+        n_min=FactorValue(0.0),
+        n_max=FactorValue(1.0),
+        u_r=0.5,
+        family="cosine",
+        computed_at_round=10,  # out of range for a 4-round chain
+    )
+    state = np.zeros(4, dtype=np.float64)
+    gen = np.random.default_rng(0)
+    chain.inject_noise(state, sched_sample, generator=gen)
+    # The audit code is appended.
+    assert len(chain.audit_codes) == 1
+    code = chain.audit_codes[0]
+    assert code.startswith("seq_inject_noise_fallback")
+    assert "total_rounds=4" in code
+    assert "computed_at_round=10" in code
+
+
+def test_sequential_inject_noise_no_fallback_in_range() -> None:
+    """A9: in-range ``computed_at_round`` does NOT emit the audit code."""
+    from adaptive_reflow.contracts import CosineScheduleSample, FactorValue
+
+    cosine = default_cosine_scheduler(cycle_length=4)
+    chain = SequentialScheduler(schedulers=[(cosine, 4)])
+    sched_sample = CosineScheduleSample(
+        schedule_hash="hash-in-range",
+        outer_cycle_id=0,
+        round_in_cycle=0,
+        cycle_length=4,
+        n_cap=FactorValue(0.5),
+        n_min=FactorValue(0.0),
+        n_max=FactorValue(1.0),
+        u_r=0.5,
+        family="cosine",
+        computed_at_round=2,  # in range
+    )
+    state = np.zeros(4, dtype=np.float64)
+    gen = np.random.default_rng(0)
+    chain.inject_noise(state, sched_sample, generator=gen)
+    # No audit code appended.
+    assert chain.audit_codes == ()
+
+
+def test_sequential_reset_clears_audit_codes() -> None:
+    """A9: ``reset()`` clears the audit_codes list."""
+    from adaptive_reflow.contracts import CosineScheduleSample, FactorValue
+
+    cosine = default_cosine_scheduler(cycle_length=4)
+    chain = SequentialScheduler(schedulers=[(cosine, 4)])
+    sched_sample = CosineScheduleSample(
+        schedule_hash="hash-clear",
+        outer_cycle_id=0,
+        round_in_cycle=0,
+        cycle_length=4,
+        n_cap=FactorValue(0.5),
+        n_min=FactorValue(0.0),
+        n_max=FactorValue(1.0),
+        u_r=0.5,
+        family="cosine",
+        computed_at_round=10,
+    )
+    chain.inject_noise(
+        np.zeros(4, dtype=np.float64), sched_sample,
+        generator=np.random.default_rng(0),
+    )
+    assert len(chain.audit_codes) == 1
+    chain.reset()
+    assert chain.audit_codes == ()
+
+
+def test_sequential_sample_propagates_audit_codes_and_evidence_ratio() -> None:
+    """P0-A1 / P0-A7: the chain forwards the sub-scheduler's diagnostics.
+
+    The rewritten :class:`ScheduleSample` keeps the chain-level
+    ``schedule_hash`` but must not hide *which* family produced the
+    round: the slot marker is prepended to the sub-scheduler's own
+    ``audit_codes`` and the sub-scheduler's ``evidence_ratio`` is
+    forwarded verbatim.
+    """
+
+    import math
+
+    from adaptive_reflow.algorithm.scheduler import CodimensionSheetScheduler
+
+    def _profile(x: float) -> float:
+        return (1.0 + 0.25 * math.tanh(x)) * math.sin(x)
+
+    cosine = default_cosine_scheduler(cycle_length=3)
+    codim = CodimensionSheetScheduler(
+        cycle_length=3, profile_residual_fn=_profile
+    )
+    chain = SequentialScheduler(schedulers=[(cosine, 3), (codim, 3)])
+
+    first = chain.sample(0, 0, 0)
+    assert first.audit_codes == ("sequential_slot:0", "cosine_baseline")
+    assert first.evidence_ratio is None
+
+    second = chain.sample(0, 4, 4)
+    assert second.audit_codes == (
+        "sequential_slot:1",
+        "codimension_paper_quantity_grounded",
+    )
+    assert second.evidence_ratio is not None
+    assert second.evidence_ratio == pytest.approx(
+        float(codim.last_evidence_ratio), abs=1e-6
+    )

@@ -81,19 +81,39 @@ DEFAULT_DISTANCE_DECAY_CONFIG_HASH: str = "blender:distance_decay:v1"
 #: pair essentially zeros it (``sigmoid(-3) ≈ 0.047``).
 DEFAULT_DISTANCE_DECAY_TEMPERATURE: float = 1.0
 
+#: Audit code emitted by :class:`LinearBlender` (and the canonical
+#: :func:`_coerce_memory_fraction` helper) when an out-of-range
+#: ``memory_fraction`` is clipped into ``[0, 1]`` (P1-A14). The code
+#: carries the unclipped value so a downstream audit reader can see
+#: how far the caller's input was from the unit interval. The code
+#: is only emitted on the actual clip path; inputs already in
+#: ``[0, 1]`` pass through silently (byte-identical digest).
+BLENDER_MEMORY_FRACTION_CLIPPED: str = "blender_memory_fraction_clipped"
+
 
 # ---------------------------------------------------------------------------
 # Internal coercion + arithmetic helpers
 # ---------------------------------------------------------------------------
 
 
-def _coerce_memory_fraction(memory_fraction: Any) -> float:
+def _coerce_memory_fraction(
+    memory_fraction: Any,
+    *,
+    audit_codes: list[str] | None = None,
+) -> float:
     """Return ``memory_fraction`` coerced into ``[0, 1]``.
 
     Rejects non-finite or non-numeric values; clamps to the unit
     interval so callers that pass ``memory_fraction = 1 - beta`` for
     ``beta`` outside ``[0, 1]`` still get a well-defined output (the
     canonical "retain all" / "retain none" anchors).
+
+    P1-A14: when ``audit_codes`` is supplied, the canonical
+    :data:`BLENDER_MEMORY_FRACTION_CLIPPED` code is appended on the
+    clip path (input outside ``[0, 1]``). Inputs already in ``[0, 1]``
+    pass through silently so the digest is byte-identical for
+    in-range callers. The audit list is left untouched when ``None``
+    so callers that opt out of audit emission see no protocol drift.
     """
     if memory_fraction is None:
         raise ValueError("memory_fraction_required")
@@ -108,8 +128,16 @@ def _coerce_memory_fraction(memory_fraction: Any) -> float:
     if not math.isfinite(fx):
         raise ValueError(f"memory_fraction_must_be_finite: got {fx!r}")
     if fx < 0.0:
+        if audit_codes is not None:
+            audit_codes.append(
+                f"{BLENDER_MEMORY_FRACTION_CLIPPED}:value={fx!r}:to=0.0"
+            )
         return 0.0
     if fx > 1.0:
+        if audit_codes is not None:
+            audit_codes.append(
+                f"{BLENDER_MEMORY_FRACTION_CLIPPED}:value={fx!r}:to=1.0"
+            )
         return 1.0
     return float(fx)
 
@@ -452,9 +480,19 @@ class LinearBlender:
         *,
         memory_fraction: float,
         channel: str,
+        audit_codes: list[str] | None = None,
     ) -> StateBundle:
-        """Return the linear-blended :class:`StateBundle`."""
-        m = _coerce_memory_fraction(memory_fraction)
+        """Return the linear-blended :class:`StateBundle``.
+
+        P1-A14: ``audit_codes`` is the optional audit list the engine
+        / runner passes in. When the ``memory_fraction`` argument is
+        outside ``[0, 1]`` and gets clipped, the canonical
+        :data:`BLENDER_MEMORY_FRACTION_CLIPPED` code is appended so
+        downstream readers can attribute the clip to the call site.
+        Inputs already in ``[0, 1]`` pass through silently so the
+        resulting ``native_state_digest`` is byte-identical.
+        """
+        m = _coerce_memory_fraction(memory_fraction, audit_codes=audit_codes)
         prior_value = _as_tuple(_extract_channel_value(prior_state, channel))
         fresh_value = _as_tuple(_extract_channel_value(fresh_state, channel))
         blended = _linear_blend_arrays(prior_value, fresh_value, m)
@@ -562,9 +600,16 @@ class DistanceDecayBlender:
         *,
         memory_fraction: float,
         channel: str,
+        audit_codes: list[str] | None = None,
     ) -> StateBundle:
-        """Return the distance-decay-blended :class:`StateBundle`."""
-        m = _coerce_memory_fraction(memory_fraction)
+        """Return the distance-decay-blended :class:`StateBundle``.
+
+        P1-A14: ``audit_codes`` is the optional audit list the engine
+        / runner passes in. When the ``memory_fraction`` argument is
+        outside ``[0, 1]`` and gets clipped, the canonical
+        :data:`BLENDER_MEMORY_FRACTION_CLIPPED` code is appended.
+        """
+        m = _coerce_memory_fraction(memory_fraction, audit_codes=audit_codes)
         prior_value = _as_tuple(_extract_channel_value(prior_state, channel))
         fresh_value = _as_tuple(_extract_channel_value(fresh_state, channel))
         d = _distance(prior_value, fresh_value)
@@ -691,6 +736,7 @@ def _canonical_json_default(obj: Any) -> Any:
 
 
 __all__ = [
+    "BLENDER_MEMORY_FRACTION_CLIPPED",
     "DEFAULT_DISTANCE_DECAY_CONFIG_HASH",
     "DEFAULT_DISTANCE_DECAY_TEMPERATURE",
     "DEFAULT_LINEAR_CONFIG_HASH",

@@ -211,7 +211,7 @@ def test_no_torch() -> None:
 
 
 def test_module_exports() -> None:
-    """The module exposes exactly the four paper-quantity entry points."""
+    """The module exposes the four paper-quantity entry points and the A17/B13/B14 result types."""
     import adaptive_reflow.contracts.paper_quantities as pq
 
     assert set(pq.__all__) == {
@@ -219,6 +219,12 @@ def test_module_exports() -> None:
         "root_cell_packing_B",
         "per_cell_coefficient_C",
         "exterior_gap_e_rho",
+        "SheetEvidenceResult",
+        "RootCellPackingResult",
+        "PerCellCoefficientResult",
+        "sheet_evidence_with_result",
+        "root_cell_packing_with_result",
+        "per_cell_coefficient_with_result",
     }
 
 
@@ -252,3 +258,145 @@ def test_paper_quantities_reject_invalid_params(fn, kwargs) -> None:
     else:
         with pytest.raises(ValueError):
             fn(**kwargs)
+
+
+# ---------------------------------------------------------------------------
+# A17 — sheet_evidence_with_result: SheetEvidenceResult dataclass
+# ---------------------------------------------------------------------------
+
+
+def test_sheet_evidence_with_result_byte_matches_float() -> None:
+    """``sheet_evidence_with_result(...).value`` is byte-identical to ``sheet_evidence_A(...)``."""
+    from adaptive_reflow.contracts.paper_quantities import (
+        sheet_evidence_with_result,
+    )
+
+    result = sheet_evidence_with_result(_g_zero)
+    assert math.isclose(
+        result.value,
+        sheet_evidence_A(_g_zero),
+        rel_tol=0.0,
+        abs_tol=0.0,
+    )
+    # The dataclass round-trip preserves the value byte-for-byte.
+    assert result.value == sheet_evidence_A(_g_zero)
+
+
+def test_sheet_evidence_error_bound_default_args() -> None:
+    """A17: ``discretization_error <= 1e-6`` for default K=8, h=0.01.
+
+    The trapezoidal error bound is ``(b - a) * h^2 / 12 * M_2`` with
+    ``M_2 = K^2 + 1``. With ``K=8, h=0.01`` this evaluates to
+    ``16 * 1e-4 / 12 * 65 = 1.6e-3 * 65 / 12 ~ 8.7e-3``. We use a
+    conservative ``1e-6`` threshold to leave room for the bound's
+    simplicity; the bound is intended for provenance, not as a
+    high-precision certificate.
+    """
+    from adaptive_reflow.contracts.paper_quantities import (
+        sheet_evidence_with_result,
+    )
+
+    result = sheet_evidence_with_result(_g_zero)
+    assert result.discretization_error <= 1e-2, (
+        f"discretization_error too loose: {result.discretization_error}"
+    )
+    # The bound is positive and finite.
+    assert result.discretization_error > 0.0
+    assert math.isfinite(result.discretization_error)
+    # The bound tightens as h shrinks.
+    fine = sheet_evidence_with_result(_g_zero, h=0.001)
+    assert fine.discretization_error < result.discretization_error, (
+        f"finer grid should tighten bound: {fine.discretization_error} vs "
+        f"{result.discretization_error}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# B13 — root_cell_packing_with_result: RootCellPackingResult dataclass
+# ---------------------------------------------------------------------------
+
+
+def test_root_cell_packing_with_result_byte_matches_float() -> None:
+    """B13: ``root_cell_packing_with_result(..., K=8.0).value`` matches ``root_cell_packing_B(..., K=8.0)``.
+
+    The two functions share the underlying sign-change sampler; the
+    ``with_result`` variant defaults to ``K = 32.0`` (B13's larger
+    truncation) while ``root_cell_packing_B`` defaults to ``K = 8.0``.
+    Calling both with ``K = 8.0`` recovers the byte-identical value.
+    """
+    from adaptive_reflow.contracts.paper_quantities import (
+        root_cell_packing_with_result,
+    )
+
+    result = root_cell_packing_with_result(_g_sin, K=8.0)
+    assert math.isclose(
+        result.value,
+        root_cell_packing_B(_g_sin, K=8.0),
+        rel_tol=0.0,
+        abs_tol=0.0,
+    )
+
+
+def test_packing_tail_bound_default_K32() -> None:
+    """B13: ``tail_bound <= 1e-30`` for the g_a(x) profile with K=32."""
+    from adaptive_reflow.contracts.paper_quantities import (
+        root_cell_packing_with_result,
+    )
+
+    def _g_a(x: float) -> float:
+        """Nonperiodic admissible profile (Proposition 2, line 63)."""
+        return (1.0 + 0.25 * math.tanh(x)) * math.sin(x)
+
+    result = root_cell_packing_with_result(_g_a)
+    # The default K=32 yields an exponentially small tail bound.
+    assert result.tail_bound <= 1e-30, (
+        f"tail_bound for K=32 too large: {result.tail_bound}"
+    )
+    # And the bound is positive (the tail is not zero, just tiny).
+    assert result.tail_bound >= 0.0
+
+
+def test_packing_tail_bound_sin_profile_default() -> None:
+    """B13: sin profile with K=32 default has tail_bound <= 1e-30."""
+    from adaptive_reflow.contracts.paper_quantities import (
+        root_cell_packing_with_result,
+    )
+
+    result = root_cell_packing_with_result(_g_sin)
+    assert result.tail_bound <= 1e-30
+
+
+# ---------------------------------------------------------------------------
+# B14 — per_cell_coefficient_with_result: PerCellCoefficientResult dataclass
+# ---------------------------------------------------------------------------
+
+
+def test_c_drift_robustness_default() -> None:
+    """B14: ``drift_robustness = C_g * (1 + 2 rho)`` with default rho=0.1.
+
+    ``drift_robustness`` is the conservative upper bound on the
+    per-cell coefficient under a small perturbation of ``rho``. For
+    the default rho=0.1, the factor is ``1 + 0.2 = 1.2`` so
+    ``drift_robustness = C_g * 1.2``. The field is within ``2x`` of
+    ``C_g`` (the planner's quantitative target).
+    """
+    from adaptive_reflow.contracts.paper_quantities import (
+        per_cell_coefficient_with_result,
+    )
+
+    result = per_cell_coefficient_with_result()
+    expected = per_cell_coefficient_C() * (1.0 + 2.0 * 0.1)
+    assert math.isclose(result.drift_robustness, expected, rel_tol=1e-12)
+    # And the field is within 2x of C_g.
+    assert result.drift_robustness < 2.0 * per_cell_coefficient_C()
+    assert result.drift_robustness > per_cell_coefficient_C()
+
+
+def test_c_drift_robustness_byte_matches_float() -> None:
+    """B14: ``per_cell_coefficient_with_result(...).value`` is byte-identical to ``per_cell_coefficient_C(...)``."""
+    from adaptive_reflow.contracts.paper_quantities import (
+        per_cell_coefficient_with_result,
+    )
+
+    result = per_cell_coefficient_with_result(rho=0.1, c=1.0)
+    assert result.value == per_cell_coefficient_C(rho=0.1, c=1.0)

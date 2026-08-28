@@ -665,3 +665,183 @@ def test_legacy_alias_emits_deprecation_warning() -> None:
         "PosteriorSelectionEvaluator alias must resolve to "
         "EvidenceScaleGapMetric"
     )
+
+
+# ---------------------------------------------------------------------------
+# Tests — A16 uplift: ``eps_schedule`` decays noise toward selection-1
+# ---------------------------------------------------------------------------
+
+
+def test_eps_schedule_decay_raises_ratio_to_one() -> None:
+    """A16: ``eps_schedule`` decaying to 0 raises ratio to >= 0.95.
+
+    Per the algorithm-uplift-plan.md quantitative target: when the
+    schedule decays ``eps`` linearly from ``0.05`` to ``0`` over 20
+    rounds, the final round's ``selection_ratio >= 0.95``. The
+    selection_ratio rises monotonically toward 1 as ``eps -> 0``
+    (cell evidence is suppressed by ``eps``).
+    """
+
+    def _eps_schedule(r: int) -> float:
+        return 0.05 * (1.0 - r / 20.0)
+
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons",
+        n_gen=1000,
+        n_ref=1000,
+        seed=42,
+        eps_schedule=_eps_schedule,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-eps-schedule")
+    final = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=19,
+    )
+    assert final["selection_ratio"] >= 0.95, (
+        f"final round selection_ratio = {final['selection_ratio']:.4f} "
+        "below 0.95 (A16 target unmet)"
+    )
+    # And the eps value at the final round is small but non-negative.
+    assert final["eps_schedule_value"] < 0.01
+    assert final["eps_schedule_value"] >= 0.0
+
+
+def test_eps_schedule_monotonic_increase() -> None:
+    """A16: ``selection_ratio`` rises monotonically as ``eps`` decays.
+
+    With the schedule ``r -> 0.05 * (1 - r/20)``, the ratio at
+    ``r=0`` is strictly less than at ``r=19`` (cell mass shrinks
+    faster than sheet mass as ``eps -> 0``).
+    """
+
+    def _eps_schedule(r: int) -> float:
+        return 0.05 * (1.0 - r / 20.0)
+
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons",
+        n_gen=500,
+        n_ref=500,
+        seed=42,
+        eps_schedule=_eps_schedule,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-monotonic")
+    r0 = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0,
+    )
+    r10 = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=10,
+    )
+    r19 = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=19,
+    )
+    assert r0["selection_ratio"] < r19["selection_ratio"], (
+        f"selection_ratio should rise from r=0 ({r0['selection_ratio']:.4f}) "
+        f"to r=19 ({r19['selection_ratio']:.4f})"
+    )
+    assert r10["selection_ratio"] <= r19["selection_ratio"]
+
+
+def test_eps_schedule_eps_for_round_helper() -> None:
+    """A16: ``eps_for_round`` returns the schedule value (or fixed eps_implicit)."""
+
+    def _eps_schedule(r: int) -> float:
+        return 0.05 * (1.0 - r / 10.0)
+
+    evaluator_with = EvidenceScaleGapMetric(
+        target="two_moons", eps_schedule=_eps_schedule,
+    )
+    assert evaluator_with.eps_for_round(0) == pytest.approx(0.05)
+    assert evaluator_with.eps_for_round(5) == pytest.approx(0.025)
+    assert evaluator_with.eps_for_round(10) == pytest.approx(0.0)
+
+    evaluator_without = EvidenceScaleGapMetric(
+        target="two_moons", eps_implicit=0.07,
+    )
+    assert evaluator_without.eps_for_round(0) == pytest.approx(0.07)
+    assert evaluator_without.eps_for_round(99) == pytest.approx(0.07)
+
+
+def test_eps_schedule_rejects_non_callable() -> None:
+    """A16: ``eps_schedule`` must be callable or None."""
+    with pytest.raises(ValueError, match="eps_schedule"):
+        EvidenceScaleGapMetric(
+            target="two_moons",
+            eps_schedule="not-callable",  # type: ignore[arg-type]
+        )
+
+
+# ---------------------------------------------------------------------------
+# Tests — B12 uplift: ``evaluate_trajectory`` + ``oracle_batched`` schedule
+# ---------------------------------------------------------------------------
+
+
+def test_evaluate_trajectory_eps_schedule_consumes_round_index() -> None:
+    """B12: ``evaluate_trajectory(..., round_index=R)`` consumes the schedule."""
+
+    def _eps_schedule(r: int) -> float:
+        return 0.05 * (1.0 - r / 20.0)
+
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons",
+        eps_schedule=_eps_schedule,
+        n_gen=200,
+        n_ref=200,
+        seed=42,
+    )
+    endpoints = np.random.default_rng(0).standard_normal((2, 200, 2)).astype(np.float64)
+    # r=0 should produce a small baseline; r=19 should produce ~1.0.
+    ev_r0 = evaluator.evaluate_trajectory(
+        endpoints, channel=_XY_CHANNEL, seed=42, round_index=0,
+    )
+    ev_r19 = evaluator.evaluate_trajectory(
+        endpoints, channel=_XY_CHANNEL, seed=42, round_index=19,
+    )
+    assert ev_r19.raw_score > ev_r0.raw_score, (
+        f"r=19 ratio {ev_r19.raw_score:.4f} should exceed "
+        f"r=0 ratio {ev_r0.raw_score:.4f}"
+    )
+    assert ev_r19.raw_score >= 0.9, (
+        f"final round ratio {ev_r19.raw_score:.4f} below 0.9"
+    )
+
+
+def test_evaluate_trajectory_round_index_default_legacy_byte() -> None:
+    """B12: ``evaluate_trajectory`` with default round_index=0 is byte-identical to legacy."""
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons",
+        n_gen=200,
+        n_ref=200,
+        seed=42,
+    )
+    rng = np.random.default_rng(0)
+    endpoints = rng.standard_normal((2, 200, 2)).astype(np.float64)
+    ev = evaluator.evaluate_trajectory(
+        endpoints, channel=_XY_CHANNEL, seed=42,
+    )
+    # Compare against oracle_batched default (also uses round_index=0).
+    oracle = evaluator.oracle_batched(
+        endpoints, channel=_XY_CHANNEL, seed=42,
+    )
+    assert oracle["selection_ratio"] == pytest.approx(ev.raw_score, abs=1e-12)
+
+
+def test_oracle_batched_eps_schedule_consumes_round_index() -> None:
+    """B12: ``oracle_batched`` exposes ``eps_schedule_value`` and ``round_index``."""
+
+    def _eps_schedule(r: int) -> float:
+        return 0.02 * (1.0 - r / 10.0)
+
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons",
+        eps_schedule=_eps_schedule,
+        n_gen=200,
+        n_ref=200,
+        seed=42,
+    )
+    rng = np.random.default_rng(0)
+    endpoints = rng.standard_normal((2, 200, 2)).astype(np.float64)
+    out_r5 = evaluator.oracle_batched(
+        endpoints, channel=_XY_CHANNEL, seed=42, round_index=5,
+    )
+    assert out_r5["eps_schedule_value"] == pytest.approx(0.01)
+    assert out_r5["round_index"] == 5
+    assert "selection_ratio" in out_r5

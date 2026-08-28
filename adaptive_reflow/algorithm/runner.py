@@ -766,6 +766,16 @@ class ReInferenceRunner:
                 # symmetric forward side.
                 "forward_noise_injected": 1.0 if forward_noise_emitted else 0.0,
             }
+            # P0-A1 / P0-A7: fan the scheduler's per-round diagnostics into
+            # the metric dict so the audit ledger records which schedule
+            # family drove the round (and, for the codimension family, the
+            # sheet-vs-cell evidence balance) without re-deriving them.
+            schedule_codes = getattr(sample, "audit_codes", ()) or ()
+            if schedule_codes:
+                metric["schedule_audit_codes"] = [str(c) for c in schedule_codes]
+            schedule_evidence_ratio = getattr(sample, "evidence_ratio", None)
+            if schedule_evidence_ratio is not None:
+                metric["schedule_evidence_ratio"] = float(schedule_evidence_ratio)
             if self._evaluator is not None and bundle is not None:
                 oracle_metrics = self._evaluator.oracle(
                     bundle, channel=primary_channel, seed=int(config.seed) + r

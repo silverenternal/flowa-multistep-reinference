@@ -1193,6 +1193,43 @@ def test_codimension_sheet_scheduler_paper_quantity_path_matches_paper_quantitie
         )
 
 
+def test_codimension_sheet_scheduler_inject_noise_e_rho_floor() -> None:
+    """A18: ``inject_noise`` floors the noise mass at ``e_rho / 4``.
+
+    With ``profile_residual_fn`` supplied, the scheduler caches
+    ``e_rho`` (paper Lemma 5 exterior gap) and the ``inject_noise``
+    path lifts the noise mass to ``max(A_g, e_rho / 4)`` so the
+    forward noise respects paper Lemma 5's physical-complement gap.
+
+    The test constructs a scheduler with a profile whose ``A_g`` is
+    small (close to the ``e_rho / 4`` floor) and verifies the noise
+    mass is the floor.
+    """
+    # A near-zero profile: sheet evidence is tiny (close to e_rho/4).
+    profile = lambda x: 1e6 * math.sin(x)  # noqa: E731
+    scheduler = CodimensionSheetScheduler(
+        cycle_length=4,
+        n_min=0.0,
+        n_max=1.0,
+        profile_residual_fn=profile,
+    )
+    assert scheduler.sheet_A is not None
+    assert scheduler.exterior_gap_e_rho is not None
+    e_rho = float(scheduler.exterior_gap_e_rho)
+    expected_floor = e_rho / 4.0
+    sample = scheduler.sample(0, 0, 0).as_cosine_schedule_sample()
+    state = np.zeros(4, dtype=np.float64)
+    gen = np.random.default_rng(0)
+    out = scheduler.inject_noise(state, sample, generator=gen)
+    # The state was zero, so the output is exactly
+    # ``scale * standard_normal`` for the same generator stream.
+    expected_scale = math.sqrt(max(float(scheduler.sheet_A), expected_floor))
+    expected = expected_scale * np.random.default_rng(0).standard_normal(4)
+    assert np.allclose(out, expected, rtol=1e-12, atol=0.0), (
+        f"inject_noise output {out!r} does not match scale "
+        f"sqrt(max(A_g, e_rho/4))={expected_scale!r}"
+    )
+
 
 # ---------------------------------------------------------------------------
 # Forward noise injection (P0-7) — symmetric forward step
@@ -1369,3 +1406,295 @@ def test_codimension_scheduler_from_config_ignores_profile() -> None:
     rebuilt = CodimensionSheetScheduler.from_config(scheduler.to_config())
     assert rebuilt.profile_residual_fn is None
     assert rebuilt.profile_signature == "default_sheet"
+
+
+# ---------------------------------------------------------------------------
+# P0-A1 — ``audit_codes`` / ``evidence_ratio`` on ``ScheduleSample``
+# ---------------------------------------------------------------------------
+
+
+def test_cosine_sample_carries_audit_codes() -> None:
+    """P0-A1: cosine samples carry the family's baseline audit code."""
+    scheduler = default_cosine_scheduler(cycle_length=4)
+    sample = scheduler.sample(0, 0, 0)
+    assert sample.audit_codes == ("cosine_baseline",)
+    # The cosine family computes no sheet-vs-cell balance.
+    assert sample.evidence_ratio is None
+
+
+def test_schedule_sample_audit_codes_default_empty() -> None:
+    """A bare ``ScheduleSample`` keeps the legacy field set (defaults)."""
+    sample = ScheduleSample(
+        outer_cycle_id=0,
+        round_in_cycle=0,
+        cycle_length=4,
+        n_cap=0.5,
+        n_min=0.0,
+        n_max=1.0,
+        u_r=0.0,
+        family="custom",
+        computed_at_round=0,
+        schedule_hash="h",
+    )
+    assert sample.audit_codes == ()
+    assert sample.evidence_ratio is None
+
+
+def test_every_family_emits_audit_codes() -> None:
+    """P0-A1 target: 100% of samples carry a non-empty ``audit_codes``."""
+    schedulers = [
+        default_cosine_scheduler(cycle_length=4),
+        ConstantScheduler(cycle_length=4),
+        LinearScheduler(cycle_length=4),
+        ExponentialScheduler(cycle_length=4),
+        PolynomialScheduler(cycle_length=4),
+        SigmoidScheduler(cycle_length=4),
+        ConvergenceAdaptiveScheduler(
+            base=default_cosine_scheduler(cycle_length=4)
+        ),
+        CodimensionSheetScheduler(cycle_length=4),
+    ]
+    total = 0
+    tagged = 0
+    for scheduler in schedulers:
+        for r in range(4):
+            sample = scheduler.sample(0, r, r)
+            total += 1
+            if sample.audit_codes:
+                tagged += 1
+            assert all(isinstance(c, str) for c in sample.audit_codes)
+    assert total == 32
+    assert tagged == total
+
+
+def test_audit_codes_do_not_break_sample_equality() -> None:
+    """Two samples from the same scheduler + args still compare equal."""
+    scheduler = default_cosine_scheduler(cycle_length=4)
+    assert scheduler.sample(0, 2, 2) == scheduler.sample(0, 2, 2)
+
+
+# ---------------------------------------------------------------------------
+# P1-A2 — cosine paper-quantity (A_g) wiring
+# ---------------------------------------------------------------------------
+
+
+def _constant_profile_3(x: float) -> float:
+    """Residual profile ``g(x) = 3`` -> ``A_g = 1 / sqrt(10)``."""
+    del x
+    return 3.0
+
+
+def test_cosine_paper_quantity_wiring() -> None:
+    """P1-A2: ``A_g`` drives the forward-noise mass and raises SNR >= 5%."""
+    from adaptive_reflow.contracts import paper_quantities as pq
+
+    baseline = default_cosine_scheduler(cycle_length=4)
+    wired = default_cosine_scheduler(
+        cycle_length=4, profile_residual_fn=_constant_profile_3
+    )
+    assert baseline.sheet_A is None
+    a_g = float(pq.sheet_evidence_A(_constant_profile_3))
+    assert wired.sheet_A == pytest.approx(a_g, rel=1e-12)
+    assert a_g == pytest.approx(1.0 / math.sqrt(10.0), rel=1e-6)
+
+    sample = baseline.sample(0, 0, 0).as_cosine_schedule_sample()
+    state = np.zeros((256, 2), dtype=np.float64)
+    base_noise = baseline.inject_noise(
+        state, sample, generator=np.random.default_rng(7)
+    )
+    wired_noise = wired.inject_noise(
+        state, sample, generator=np.random.default_rng(7)
+    )
+    n_cap = float(sample.n_cap)
+    assert n_cap > 0.0
+    # Same generator stream -> the two outputs differ only by the scale.
+    assert wired_noise == pytest.approx(
+        base_noise * math.sqrt(a_g / n_cap), rel=1e-12
+    )
+    # SNR = signal / injected-noise magnitude, so the SNR gain is the
+    # inverse ratio of the noise scales.
+    snr_gain = math.sqrt(n_cap / a_g) - 1.0
+    assert snr_gain >= 0.05
+
+    # The audit trail records the wiring; the unwired path is unchanged.
+    wired_codes = wired.sample(0, 0, 0).audit_codes
+    assert wired_codes[0] == "cosine_baseline"
+    assert any(
+        c.startswith("cosine_paper_quantity_wired:") for c in wired_codes
+    )
+    assert baseline.sample(0, 0, 0).audit_codes == ("cosine_baseline",)
+
+
+def test_cosine_without_profile_is_byte_identical_legacy() -> None:
+    """P1-A2: unwired cosine ``inject_noise`` keeps ``sqrt(n_cap)``."""
+    scheduler = default_cosine_scheduler(cycle_length=4)
+    sample = scheduler.sample(0, 1, 1).as_cosine_schedule_sample()
+    state = np.zeros((64, 2), dtype=np.float64)
+    got = scheduler.inject_noise(
+        state, sample, generator=np.random.default_rng(3)
+    )
+    expected = math.sqrt(float(sample.n_cap)) * np.random.default_rng(
+        3
+    ).standard_normal(state.shape)
+    assert np.array_equal(got, expected)
+
+
+def test_cosine_rejects_non_callable_profile() -> None:
+    """A non-callable profile is rejected at construction time."""
+    with pytest.raises(ValueError, match="profile_residual_fn"):
+        default_cosine_scheduler(
+            cycle_length=4,
+            profile_residual_fn=1.0,  # type: ignore[arg-type]
+        )
+
+
+# ---------------------------------------------------------------------------
+# P0-A6 — ConvergenceAdaptiveScheduler multi-metric feedback
+# ---------------------------------------------------------------------------
+
+
+_W2_TRACE = (0.90, 0.82, 0.79, 0.77, 0.76)
+_COVERAGE_TRACE = (0.40, 0.55, 0.62, 0.68, 0.71)
+_SELECTION_TRACE = (0.50, 0.61, 0.70, 0.78, 0.83)
+
+
+def test_convergence_adaptive_multi_metric() -> None:
+    """P0-A6: coverage + selection_ratio move the shift vs. W2-only."""
+    w2_only = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=8),
+        metric_weights={"W2": 1.0},
+    )
+    multi = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=8)
+    )
+    for r, (w2, cov, sel) in enumerate(
+        zip(_W2_TRACE, _COVERAGE_TRACE, _SELECTION_TRACE, strict=True)
+    ):
+        w2_only.record_round_feedback(r, {"W2": w2})
+        multi.record_round_feedback(
+            r, {"W2": w2, "coverage": cov, "selection_ratio": sel}
+        )
+    assert multi.last_feedback_keys == ("W2", "coverage", "selection_ratio")
+    assert w2_only.last_feedback_keys == ("W2",)
+    # Quantitative target: the multi-metric controller lands at least
+    # 1e-3 (in u_r units) away from the W2-only controller.
+    assert abs(multi.shift - w2_only.shift) >= 1e-3
+    # All three metrics improve, so the aggregated loss keeps falling and
+    # the controller pushes toward refinement (positive shift).
+    assert multi.shift > 0.0
+
+
+def test_convergence_adaptive_w2_only_matches_legacy() -> None:
+    """P0-A6: a W2-only feedback dict reproduces the legacy signal."""
+    default_weights = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=8)
+    )
+    explicit_w2 = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=8),
+        metric_weights={"W2": 1.0},
+    )
+    for r, w2 in enumerate(_W2_TRACE):
+        default_weights.record_round_feedback(r, {"W2": w2})
+        explicit_w2.record_round_feedback(r, {"W2": w2})
+    assert default_weights.w2_history == _W2_TRACE
+    assert default_weights.shift == explicit_w2.shift
+    assert default_weights.smoothed_w2 == explicit_w2.smoothed_w2
+
+
+def test_convergence_adaptive_default_config_hash_unchanged() -> None:
+    """Default weights stay out of the digest (legacy hash preserved)."""
+    a = ConvergenceAdaptiveScheduler(base=default_cosine_scheduler())
+    b = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(), metric_weights={"W2": 1.0}
+    )
+    assert a.config_hash() != b.config_hash()
+    assert a.metric_weights == {
+        "W2": 1.0,
+        "coverage": 0.3,
+        "selection_ratio": 0.5,
+    }
+
+
+def test_convergence_adaptive_ignores_broken_metrics() -> None:
+    """Non-finite / non-numeric feedback never poisons the controller."""
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=4)
+    )
+    scheduler.record_round_feedback(
+        0, {"W2": float("nan"), "coverage": float("inf")}
+    )
+    assert scheduler.w2_history == ()
+    scheduler.record_round_feedback(
+        1, {"W2": 0.5, "coverage": "bad", "merge_audit_codes": []}
+    )
+    assert scheduler.w2_history == (0.5,)
+    assert scheduler.last_feedback_keys == ("W2",)
+
+
+def test_convergence_adaptive_metric_weights_round_trip() -> None:
+    """P0-A6 weights survive ``to_config`` / ``from_config``."""
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=4),
+        metric_weights={"W2": 1.0, "coverage": 0.25},
+    )
+    rebuilt = ConvergenceAdaptiveScheduler.from_config(scheduler.to_config())
+    assert rebuilt.metric_weights == {"W2": 1.0, "coverage": 0.25}
+    assert rebuilt.config_hash() == scheduler.config_hash()
+
+
+def test_convergence_adaptive_rejects_bad_metric_weights() -> None:
+    """Negative / empty weight maps are rejected."""
+    with pytest.raises(ValueError):
+        ConvergenceAdaptiveScheduler(metric_weights={"W2": -1.0})
+    with pytest.raises(ValueError):
+        ConvergenceAdaptiveScheduler(metric_weights={})
+
+
+def test_convergence_adaptive_sample_audit_codes() -> None:
+    """P0-A1: the adaptive family reports its shift in ``audit_codes``."""
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=4)
+    )
+    codes = scheduler.sample(0, 0, 0).audit_codes
+    assert codes[0] == "schedule_convergence_adaptive"
+    assert codes[1].startswith("schedule_shift_applied:")
+    for r, w2 in enumerate(_W2_TRACE[:3]):
+        scheduler.record_round_feedback(r, {"W2": w2, "coverage": 0.5})
+    codes = scheduler.sample(0, 1, 1).audit_codes
+    assert "schedule_feedback_multi_metric:W2,coverage" in codes
+
+
+# ---------------------------------------------------------------------------
+# P0-A7 — ``evidence_ratio`` on the codimension sample
+# ---------------------------------------------------------------------------
+
+
+def _g_a_profile(x: float) -> float:
+    """Canonical two_moons profile ``g_a(x) = (1 + 0.25 tanh x) sin x``."""
+    return (1.0 + 0.25 * math.tanh(x)) * math.sin(x)
+
+
+def test_codimension_sample_evidence_ratio() -> None:
+    """P0-A7: the sample carries the round's sheet-vs-cell balance."""
+    scheduler = CodimensionSheetScheduler(
+        cycle_length=8, profile_residual_fn=_g_a_profile
+    )
+    for r in range(8):
+        sample = scheduler.sample(0, r, r)
+        assert sample.evidence_ratio is not None
+        # Matches the reportable metric to within 1e-6 (target).
+        assert sample.evidence_ratio == pytest.approx(
+            float(scheduler.last_evidence_ratio), abs=1e-6
+        )
+        assert 0.0 <= sample.evidence_ratio <= 1.0
+        assert sample.audit_codes == ("codimension_paper_quantity_grounded",)
+
+
+def test_codimension_sample_evidence_ratio_heuristic_path() -> None:
+    """Without a profile the sample is tagged as the heuristic path."""
+    scheduler = CodimensionSheetScheduler(cycle_length=4)
+    sample = scheduler.sample(0, 0, 0)
+    assert sample.audit_codes == ("codimension_framework_heuristic",)
+    assert sample.evidence_ratio == pytest.approx(
+        float(scheduler.last_evidence_ratio), abs=1e-12
+    )

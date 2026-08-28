@@ -808,3 +808,121 @@ def test_blender_config_hash_handles_numpy_floats() -> None:
     assert _canonical_json_default(np_val) == 0.5
     # numpy.int64 produces a Python int.
     assert _canonical_json_default(np.int64(3)) == 3
+
+
+# ---------------------------------------------------------------------------
+# 10. P1-A14 — LinearBlender emits BLENDER_MEMORY_FRACTION_CLIPPED
+# ---------------------------------------------------------------------------
+
+
+def test_linear_audit_code_on_clip() -> None:
+    """P1-A14: when ``memory_fraction`` is out of ``[0, 1]`` the
+    blender appends
+    :data:`BLENDER_MEMORY_FRACTION_CLIPPED` to ``audit_codes`` and
+    clips the value to the nearest boundary. When the value is
+    already in ``[0, 1]`` the audit list is untouched and the
+    digest is byte-identical.
+    """
+    from adaptive_reflow.algorithm.blender import (
+        BLENDER_MEMORY_FRACTION_CLIPPED,
+    )
+
+    blender = LinearBlender()
+    prior = _ValueCarrier(channel_values={"x": (1.0, 1.0)})
+    fresh = _ValueCarrier(channel_values={"x": (0.0, 0.0)})
+
+    # m > 1 -> clipped to 1.0, audit code emitted.
+    audit: list[str] = []
+    bundle_high = blender.blend(
+        prior, fresh, memory_fraction=2.0, channel="x", audit_codes=audit
+    )
+    clip_codes = [c for c in audit if BLENDER_MEMORY_FRACTION_CLIPPED in c]
+    assert clip_codes, (
+        f"expected {BLENDER_MEMORY_FRACTION_CLIPPED!r} on m=2.0; "
+        f"got {audit!r}"
+    )
+    # Carry value + clip target in the audit line.
+    assert any("to=1.0" in c for c in clip_codes)
+    # Output is identical to the in-range m=1.0 path.
+    expected_digest = _encode_blend_digest(
+        family=LINEAR_FAMILY,
+        channel="x",
+        memory_fraction=1.0,
+        decay_factor=None,
+        value=(1.0, 1.0),
+    )
+    assert bundle_high.native_state_digest == expected_digest
+
+    # m < 0 -> clipped to 0.0, audit code emitted.
+    audit.clear()
+    bundle_low = blender.blend(
+        prior, fresh, memory_fraction=-0.5, channel="x", audit_codes=audit
+    )
+    clip_codes = [c for c in audit if BLENDER_MEMORY_FRACTION_CLIPPED in c]
+    assert clip_codes
+    assert any("to=0.0" in c for c in clip_codes)
+    expected_digest_low = _encode_blend_digest(
+        family=LINEAR_FAMILY,
+        channel="x",
+        memory_fraction=0.0,
+        decay_factor=None,
+        value=(0.0, 0.0),
+    )
+    assert bundle_low.native_state_digest == expected_digest_low
+
+    # In-range m -> audit list untouched, digest byte-identical to
+    # the no-audit path.
+    audit.clear()
+    bundle_in = blender.blend(
+        prior, fresh, memory_fraction=0.5, channel="x", audit_codes=audit
+    )
+    assert audit == []
+    bundle_no_audit = blender.blend(
+        prior, fresh, memory_fraction=0.5, channel="x"
+    )
+    assert bundle_in.native_state_digest == bundle_no_audit.native_state_digest
+
+
+def test_distance_decay_audit_code_on_clip() -> None:
+    """P1-A14: the distance-decay blender also emits
+    :data:`BLENDER_MEMORY_FRACTION_CLIPPED` on out-of-range
+    ``memory_fraction`` (the clip happens before the distance math,
+    so the audit code is shared with the linear path).
+    """
+    from adaptive_reflow.algorithm.blender import (
+        BLENDER_MEMORY_FRACTION_CLIPPED,
+    )
+
+    blender = DistanceDecayBlender()
+    prior = _ValueCarrier(channel_values={"x": (1.0, 1.0)})
+    fresh = _ValueCarrier(channel_values={"x": (0.0, 0.0)})
+
+    audit: list[str] = []
+    blender.blend(
+        prior,
+        fresh,
+        memory_fraction=1.5,
+        channel="x",
+        audit_codes=audit,
+    )
+    clip_codes = [c for c in audit if BLENDER_MEMORY_FRACTION_CLIPPED in c]
+    assert clip_codes, (
+        f"expected {BLENDER_MEMORY_FRACTION_CLIPPED!r} on m=1.5"
+    )
+
+
+def test_linear_blender_byte_identical_when_no_clip() -> None:
+    """P1-A14: in-range ``memory_fraction`` produces a digest that
+    is byte-for-byte identical whether or not ``audit_codes`` is
+    supplied (the audit emission is purely additive).
+    """
+    blender = LinearBlender()
+    prior = _ValueCarrier(channel_values={"x": (0.4, 0.6)})
+    fresh = _ValueCarrier(channel_values={"x": (0.7, 0.3)})
+    bundle_a = blender.blend(prior, fresh, memory_fraction=0.5, channel="x")
+    audit: list[str] = []
+    bundle_b = blender.blend(
+        prior, fresh, memory_fraction=0.5, channel="x", audit_codes=audit
+    )
+    assert bundle_a.native_state_digest == bundle_b.native_state_digest
+    assert audit == []

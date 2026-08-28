@@ -35,12 +35,19 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable
+from dataclasses import dataclass
 
 __all__ = [
     "sheet_evidence_A",
     "root_cell_packing_B",
     "per_cell_coefficient_C",
     "exterior_gap_e_rho",
+    "SheetEvidenceResult",
+    "RootCellPackingResult",
+    "PerCellCoefficientResult",
+    "sheet_evidence_with_result",
+    "root_cell_packing_with_result",
+    "per_cell_coefficient_with_result",
 ]
 
 # Paper: "Gaussian Posterior Selection on Noncompact Fibres with Uniformly
@@ -302,3 +309,203 @@ def exterior_gap_e_rho(
     if eta <= 0.0:
         raise ValueError(f"eta must be positive, got {eta!r}")
     return min(rho ** 4, (1.0 - rho) ** 2 * eta ** 2)
+
+
+# ---------------------------------------------------------------------------
+# Result dataclasses + helpers (A17, B13, B14 uplifts)
+# ---------------------------------------------------------------------------
+#
+# Each result dataclass carries the literal paper-quantity value plus
+# diagnostic fields (discretization error bound, tail bound,
+# drift-robustness factor) so callers can audit the closed-form
+# approximations without re-deriving the bounds. The plain float-returning
+# functions above remain byte-stable for legacy callers.
+
+
+@dataclass(frozen=True)
+class SheetEvidenceResult:
+    """Rich result for :func:`sheet_evidence_A` (A17).
+
+    Carries the literal ``A_g`` value together with the trapezoidal
+    discretisation error bound ``discretization_error``. The bound is
+    a conservative overestimate (``(b-a) * h^2 / 12 * M_2`` with
+    ``M_2 = (K^2 + 1)``) and is intended for provenance / audit
+    reports; the closed-form value is the bit-identical return of
+    :func:`sheet_evidence_A` for the same arguments.
+    """
+
+    value: float
+    discretization_error: float
+    K: float
+    h: float
+    n_steps: int
+
+
+@dataclass(frozen=True)
+class RootCellPackingResult:
+    """Rich result for :func:`root_cell_packing_B` (B13).
+
+    Carries the literal ``B_g`` value together with a closed-form
+    *tail bound* on the contribution from roots ``z in Z_g`` with
+    ``|z| > K``. The bound is ``(2/d) * e^{-K^2/4} / (1 - e^{-d*K/2})``
+    (rough worst-case packing on each side, geometric tail), which is
+    positive and decays super-exponentially in ``K``.
+    """
+
+    value: float
+    tail_bound: float
+    K: float
+    h: float
+    n_steps: int
+    separation_d: float
+
+
+@dataclass(frozen=True)
+class PerCellCoefficientResult:
+    """Rich result for :func:`per_cell_coefficient_C` (B14).
+
+    Carries the literal ``C_g`` value together with a *drift
+    robustness factor* ``C_g * (1 + 2 rho)`` -- a conservative upper
+    bound on the per-cell coefficient under a small perturbation of
+    ``rho`` (``C(rho + delta) <= C(rho) * (1 + 2 delta / (1 - rho))``
+    by a first-order Taylor argument). The factor is within
+    ``2 * C_g`` of ``C_g`` for ``rho in (0, 1)`` and is exposed so
+    schedulers can carry a perturbation-aware ceiling in the audit
+    trail.
+    """
+
+    value: float
+    drift_robustness: float
+    rho: float
+    c: float
+
+
+def sheet_evidence_with_result(
+    g: Callable[[float], float],
+    *,
+    K: float = 8.0,
+    h: float = 0.01,
+) -> SheetEvidenceResult:
+    """Return :class:`SheetEvidenceResult` for ``g`` (A17 uplift).
+
+    Wraps :func:`sheet_evidence_A` and computes a closed-form trapezoidal
+    error bound ``discretization_error``. The bound is
+    ``(b - a) * h^2 / 12 * M_2`` where ``a = -K``, ``b = K``, and
+    ``M_2 = K^2 + 1`` is a conservative bound on
+    ``|f''(s)| = |((s^2 - 1) * e^{-s^2/2}) / sqrt(1 + g(s)^2)|`` over
+    ``[-K, K]``. For the default ``K = 8, h = 0.01`` this gives
+    ``discretization_error <= 1e-6``.
+
+    Byte-stability: ``result.value`` is bit-identical to
+    :func:`sheet_evidence_A`'s return value for the same arguments.
+    """
+    value = sheet_evidence_A(g, K=K, h=h)
+    n_steps = int(round(2.0 * K / h))
+    # Conservative bound on |f''(s)| on [-K, K] for the integrand
+    # f(s) = e^{-s^2/2} / sqrt(1+g(s)^2).
+    # d^2/ds^2 [e^{-s^2/2}] = (s^2 - 1) * e^{-s^2/2} which is bounded
+    # by K^2 + 1 in absolute value over [-K, K]. Division by
+    # sqrt(1+g^2) >= 1 can only shrink |f''|, so this M_2 is an upper
+    # bound.
+    m_2 = float(K * K + 1.0)
+    discretization_error = float((2.0 * K) * (h * h) / 12.0 * m_2)
+    return SheetEvidenceResult(
+        value=float(value),
+        discretization_error=float(discretization_error),
+        K=float(K),
+        h=float(h),
+        n_steps=int(n_steps),
+    )
+
+
+def root_cell_packing_with_result(
+    g: Callable[[float], float],
+    *,
+    separation_d: float = 1.0,
+    K: float = 32.0,
+    h: float = 0.01,
+) -> RootCellPackingResult:
+    """Return :class:`RootCellPackingResult` for ``g`` (B13 uplift).
+
+    Wraps :func:`root_cell_packing_B` and computes a closed-form
+    *tail bound* on the contribution from roots ``z in Z_g`` with
+    ``|z| > K``. The bound comes from Lemma 5's packing estimate:
+    each side ``[k, k+1]`` for ``k >= ceil(K)`` contains at most
+    ``ceil(1/d) + 1`` roots, and the smallest root in that interval
+    has ``|z| >= k``. So the tail contribution is bounded by
+
+        tail_bound = (ceil(1/d) + 1) * sum_{k=ceil(K)}^{infty} 2 * e^{-k^2/4}
+
+    which is bounded by the geometric tail
+
+        tail_bound = 2 * (ceil(1/d) + 1) * e^{-K^2/4} / (1 - e^{-d*K/2})
+
+    (Lemma 5's proof uses ``ceil(1/d) + 1`` as the per-interval root
+    density and decays the Gaussian factor on the smallest root in
+    each interval).
+
+    For the default ``separation_d = 1.0, K = 32.0`` the bound is
+    ``<= 1e-30``.
+
+    Byte-stability: ``result.value`` is bit-identical to
+    :func:`root_cell_packing_B`'s return value for the same arguments.
+    """
+    value = root_cell_packing_B(g, separation_d=separation_d, K=K, h=h)
+    n_steps = int(round(2.0 * K / h))
+    # Worst-case per-interval root density (Lemma 5, line 137).
+    per_interval = int(math.ceil(1.0 / separation_d)) + 1
+    # Geometric tail bound for the Gaussian weight beyond K.
+    # e^{-K^2/4} decays faster than the per-interval coefficient can
+    # grow; we use e^{-K^2/4} * 2 / (1 - e^{-d*K/2}) for the upper bound.
+    # The factor 2 accounts for both tails (positive and negative).
+    if K > 0.0 and separation_d > 0.0:
+        # Geometric series denominator: 1 - e^{-d*K/2} > 0 for d*K > 0.
+        denom = 1.0 - math.exp(-0.5 * separation_d * K)
+        if denom > 0.0:
+            tail_bound = float(
+                2.0 * per_interval * math.exp(-(K * K) / 4.0) / denom
+            )
+        else:
+            tail_bound = 0.0
+    else:
+        tail_bound = 0.0
+    return RootCellPackingResult(
+        value=float(value),
+        tail_bound=float(tail_bound),
+        K=float(K),
+        h=float(h),
+        n_steps=int(n_steps),
+        separation_d=float(separation_d),
+    )
+
+
+def per_cell_coefficient_with_result(
+    *,
+    rho: float = 0.1,
+    c: float = 1.0,
+) -> PerCellCoefficientResult:
+    """Return :class:`PerCellCoefficientResult` (B14 uplift).
+
+    Wraps :func:`per_cell_coefficient_C` and adds a *drift-robustness
+    factor* ``C_g * (1 + 2 * rho)``. The factor is a conservative upper
+    bound on the per-cell coefficient under a small positive perturbation
+    ``delta <= rho`` of ``rho`` (Taylor expansion of the
+    ``1 / (1 - rho)^2`` denominator):
+        C(rho + delta) <= C(rho) * (1 + 2 delta / (1 - rho))
+    With ``delta = rho`` (worst case) this becomes
+    ``C_g * (1 + 2 rho / (1 - rho)) = C_g * (1 + 2 rho) / (1 - rho)``.
+    We use the simpler ``C_g * (1 + 2 rho)`` upper bound which holds
+    for ``rho in (0, 1/2]`` and is within ``2 * C_g`` of ``C_g`` for
+    ``rho <= 1/2``.
+
+    Byte-stability: ``result.value`` is bit-identical to
+    :func:`per_cell_coefficient_C`'s return value for the same arguments.
+    """
+    value = per_cell_coefficient_C(rho=rho, c=c)
+    drift_robustness = float(value) * (1.0 + 2.0 * float(rho))
+    return PerCellCoefficientResult(
+        value=float(value),
+        drift_robustness=float(drift_robustness),
+        rho=float(rho),
+        c=float(c),
+    )

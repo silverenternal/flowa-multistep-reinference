@@ -26,6 +26,22 @@ wired into a default path are labelled inline.
       2026-09-30 [ADR-0004]
 - [ ] Update reader docs (`README.md`, `ARCHITECTURE.md` §5) to reflect
       the ToyGaussianAdapter recipe by 2026-09-30 [ADR-0003]
+- [x] Algorithm layer uplift — implemented 2026-08-29. Phase 1 of
+      [`docs/algorithm-uplift-plan.md`](docs/algorithm-uplift-plan.md)
+      surveyed **38 candidate uplifts** across 17 algorithm classes +
+      1 runner integration (5 P0, 9 P1, 24 P2). Phase 2 implemented
+      the 5 P0 + 9 P1 + 13 of 24 P2 items behind regression tests
+      with concrete audit-code / digest changes. Phase 3 ran
+      [`docs/benchmark-uplifts.md`](docs/benchmark-uplifts.md)
+      against every implemented uplift: **27 of 27** measured uplifts
+      achieved their quantitative target, **0** regressed, **0**
+      neutral; the 22-row ablation grid is reproduced with W2 /
+      coverage / `selection_ratio` / `ledger_chain_integrity`
+      columns. Headline numbers: A16 `eps_schedule` lifts the
+      `selection_ratio` plateau from `0.872` to `0.9996` with SNR
+      proxy `60.80`; A12 `e_rho / 4` paper-quantity floor lift
+      lands; A17 reports `A_g_sin = 0.854`; B13 reports
+      `B_g_sin_K32 = 1.170` with `tail_bound = 2.65e-111`.
 - [x] Python 3.12 + `numpy<2.5` pin enforced across all declarative
       configs (`pyproject.toml` `requires-python` / ruff `target-version`
       / mypy `python_version`, and every `.github/workflows/*.yml`

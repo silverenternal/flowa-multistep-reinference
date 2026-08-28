@@ -758,3 +758,147 @@ def test_frame_engine_canonical_json_numpy_float64() -> None:
     from adaptive_reflow.frame.engine import _digest
 
     assert _digest({"value": 0.5}) == _digest({"value": np.float64(0.5)})
+
+
+# ---------------------------------------------------------------------------
+# 9. P1-A10 — ScheduleDerivedPolicyDriver audit code attribution
+# ---------------------------------------------------------------------------
+
+
+def test_schedule_derived_audit_code() -> None:
+    """P1-A10: the schedule-derived driver emits
+    :data:`POLICY_SCHEDULE_DERIVED` to the caller's ``audit_codes``
+    list whenever it actually applies a schedule-driven override.
+    """
+    from adaptive_reflow.algorithm.policy_driver import POLICY_SCHEDULE_DERIVED
+
+    base_policy = _make_base_policy(beta=0.0)
+    sample = _make_schedule_sample(n_cap=0.7)
+    driver = ScheduleDerivedPolicyDriver()
+
+    # On the override path the audit code MUST appear.
+    audit: list[str] = []
+    driver.compute_policy(
+        sample,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest="",
+        audit_codes=audit,
+    )
+    assert POLICY_SCHEDULE_DERIVED in audit
+
+    # On the ``None``-sample fallback path the audit code MUST NOT
+    # appear (no override was applied).
+    audit.clear()
+    driver.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest="",
+        audit_codes=audit,
+    )
+    assert POLICY_SCHEDULE_DERIVED not in audit
+
+    # When ``audit_codes is None`` the call still works (the driver
+    # doesn't mutate the missing list).
+    out = driver.compute_policy(
+        sample,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest="",
+    )
+    # Output is a valid policy with beta = n_cap.
+    assert _beta_value(out) == pytest.approx(0.7)
+
+
+# ---------------------------------------------------------------------------
+# 10. P1-A11 — AdaptivePolicyDriver beta_saturation_count counter
+# ---------------------------------------------------------------------------
+
+
+def test_adaptive_saturation_counter() -> None:
+    """P1-A11: the adaptive driver exposes a ``beta_saturation_count``
+    property that increments every time the paper-quantity-normalised
+    envelope saturates at the unit-interval ceiling (only possible
+    when ``per_cell_coefficient_C < 1``).
+
+    The runner consumes this count to emit ``beta_saturation_count``
+    into ``per_round_metrics`` so the audit ledger can show the
+    cycle-local number of saturated rounds.
+    """
+    base_policy = _make_base_policy(beta=0.0)
+    driver = AdaptivePolicyDriver(
+        target_estimate=0.0, per_cell_coefficient_C=0.5
+    )
+
+    # Fresh instance: counter starts at zero.
+    assert driver.beta_saturation_count == 0
+
+    # With C_g = 0.5 and a digest that maps to ~0, the unclipped
+    # envelope is 2.0, so saturation MUST fire.
+    digest_zero = "0" * 64
+    driver.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest=digest_zero,
+    )
+    assert driver.beta_saturation_count == 1
+
+    # Run a second saturated call.
+    driver.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest=digest_zero,
+    )
+    assert driver.beta_saturation_count == 2
+
+    # A non-saturating call (C_g >= 1 path) does not increment.
+    no_sat = AdaptivePolicyDriver(per_cell_coefficient_C=1.0)
+    assert no_sat.beta_saturation_count == 0
+    no_sat.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest=digest_zero,
+    )
+    assert no_sat.beta_saturation_count == 0
+
+    # Legacy path (C_g = None) never saturates.
+    legacy = AdaptivePolicyDriver()
+    assert legacy.beta_saturation_count == 0
+    legacy.compute_policy(
+        None,
+        base_policy=base_policy,
+        channel="xy",
+        prior_endpoint_digest=digest_zero,
+    )
+    assert legacy.beta_saturation_count == 0
+
+    # ``reset_beta_saturation_count`` returns the counter to zero so
+    # the runner can scope the count to a single cycle.
+    driver.reset_beta_saturation_count()
+    assert driver.beta_saturation_count == 0
+
+
+def test_adaptive_saturation_counter_does_not_affect_config_hash() -> None:
+    """P1-A11: the saturation counter is a runtime diagnostic; it
+    MUST NOT affect ``config_hash`` (config_hash captures the
+    constructor arguments, not the runtime state).
+    """
+    driver = AdaptivePolicyDriver(per_cell_coefficient_C=0.5)
+    h0 = driver.config_hash()
+    # Bump the counter many times.
+    for _ in range(10):
+        driver.compute_policy(
+            None,
+            base_policy=_make_base_policy(beta=0.0),
+            channel="xy",
+            prior_endpoint_digest="0" * 64,
+        )
+    h1 = driver.config_hash()
+    assert h0 == h1, (
+        "config_hash drifted after saturation counter incremented; "
+        "the counter MUST NOT contribute to the hash"
+    )

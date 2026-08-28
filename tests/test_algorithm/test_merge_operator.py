@@ -603,6 +603,7 @@ def test_ema_operator_does_not_emit_envelope_audit_codes() -> None:
     [
         BoundedMergeOperator(tolerance=1e-9),
         BoundedMergeOperator(tolerance=1e-6),
+        BoundedMergeOperator(tolerance=1e-9, exterior_gap_e_rho=0.05),
         IdentityOperator(),
         EMAOperator(alpha=0.2),
         EMAOperator(),  # default
@@ -639,3 +640,210 @@ def test_merge_operator_config_round_trip(operator) -> None:
         delta_cap_down=1.0,
     )
     assert result_orig == pytest.approx(result_rebuilt)
+
+
+# ---------------------------------------------------------------------------
+# 9. P0-A12 — BoundedMergeOperator folds ``exterior_gap_e_rho`` into floor
+# ---------------------------------------------------------------------------
+
+
+def test_bounded_paper_quantity_floor() -> None:
+    """P0-A12: when constructed with ``exterior_gap_e_rho``, the
+    operator lifts the envelope ``floor`` to ``max(floor, e_rho / 4)``
+    (paper Lemma 5 physical-complement floor) and emits
+    :data:`MERGE_PAPER_QUANTITY_FLOOR_LIFTED` on the lift path.
+
+    Quantitative target: with ``e_rho = 0.05`` the lifted floor is
+    ``>= 0.0125`` (``= 0.05 / 4``) and the merge result respects the
+    lifted envelope (the result is never below the lifted floor).
+    """
+    from adaptive_reflow.algorithm.merge_operator import (
+        MERGE_PAPER_QUANTITY_FLOOR_LIFTED,
+    )
+
+    op = BoundedMergeOperator(exterior_gap_e_rho=0.05)
+    assert op.exterior_gap_e_rho == pytest.approx(0.05)
+
+    # Schedule-supplied floor 0.0 < 0.0125 -> the operator lifts the
+    # floor to 0.0125 and emits the audit code. With prev=0.0 and
+    # dynamic=0.0, the merge result equals the lifted floor.
+    audit: list[str] = []
+    result = op.merge(
+        prev=0.0,
+        dynamic=0.0,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit,
+    )
+    assert result == pytest.approx(0.0125)
+    assert any(MERGE_PAPER_QUANTITY_FLOOR_LIFTED in code for code in audit)
+    # Audit line carries the lifted floor + e_rho.
+    lifted_lines = [
+        c for c in audit if MERGE_PAPER_QUANTITY_FLOOR_LIFTED in c
+    ]
+    assert any("floor=0.012500" in c for c in lifted_lines)
+
+    # Result respects the lifted envelope: even with a very small
+    # ``prev`` (below the lifted floor) the result is floored at
+    # ``e_rho / 4`` when ``dynamic`` and the delta caps are zero.
+    audit2: list[str] = []
+    result2 = op.merge(
+        prev=0.0,
+        dynamic=0.0,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=0.0,
+        delta_cap_down=0.0,
+        audit_codes=audit2,
+    )
+    assert result2 >= 0.0125, (
+        f"result {result2} fell below the lifted floor 0.0125"
+    )
+
+
+def test_bounded_paper_quantity_floor_no_lift_when_already_higher() -> None:
+    """P0-A12: when the schedule-supplied ``floor`` is already at or
+    above ``e_rho / 4`` the operator MUST NOT lift and MUST NOT emit
+    the audit code.
+    """
+    from adaptive_reflow.algorithm.merge_operator import (
+        MERGE_PAPER_QUANTITY_FLOOR_LIFTED,
+    )
+
+    op = BoundedMergeOperator(exterior_gap_e_rho=0.05)
+    audit: list[str] = []
+    result = op.merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=1.0,
+        floor=0.2,  # already above 0.05 / 4 = 0.0125
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit,
+    )
+    assert result == pytest.approx(0.5)
+    assert not any(MERGE_PAPER_QUANTITY_FLOOR_LIFTED in c for c in audit)
+
+
+def test_bounded_paper_quantity_floor_legacy_default_unchanged() -> None:
+    """P0-A12: when ``exterior_gap_e_rho`` is ``None`` (the default),
+    the operator preserves the legacy behaviour byte-for-byte — no
+    audit code is emitted, and the result is the same as the
+    no-paper-quantity path.
+    """
+    op = BoundedMergeOperator()  # exterior_gap_e_rho defaults to None
+    assert op.exterior_gap_e_rho is None
+    audit: list[str] = []
+    result = op.merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit,
+    )
+    assert result == pytest.approx(0.5)
+    # No paper-quantity audit code emitted.
+    assert not any(
+        "merge_paper_quantity_floor_lifted" in c for c in audit
+    )
+
+
+def test_bounded_merge_operator_rejects_invalid_e_rho() -> None:
+    """P0-A12: ``exterior_gap_e_rho`` must be finite and non-negative."""
+    with pytest.raises(ValueError, match="real number"):
+        BoundedMergeOperator(exterior_gap_e_rho="not a number")  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="finite"):
+        BoundedMergeOperator(exterior_gap_e_rho=float("inf"))
+    with pytest.raises(ValueError, match="non-negative"):
+        BoundedMergeOperator(exterior_gap_e_rho=-0.1)
+
+
+def test_bounded_paper_quantity_floor_result_respects_envelope() -> None:
+    """P0-A12: even with the paper-quantity floor lift, the result
+    MUST be a finite ``float`` in ``[0, 1]`` and the cap envelope
+    must be respected. The lift only changes the floor; cap and the
+    delta-cap-driven interval are still honored.
+    """
+    op = BoundedMergeOperator(exterior_gap_e_rho=0.05)
+    audit: list[str] = []
+    # cap = 0.5 so the result is bounded by the cap.
+    result = op.merge(
+        prev=0.4,
+        dynamic=0.4,
+        cap=0.5,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit,
+    )
+    # Floor lifts to 0.0125; cap=0.5 stays. The result sits inside
+    # the lifted envelope.
+    assert 0.0125 <= result <= 0.5
+
+
+# ---------------------------------------------------------------------------
+# 10. P1-A13 — IdentityOperator emits MERGE_NONFINITE_DYNAMIC_CLIPPED
+# (additional coverage for non-finite prev + audit_codes=None path).
+# ---------------------------------------------------------------------------
+
+
+def test_identity_emits_finiteness_code() -> None:
+    """P1-A13: ``IdentityOperator`` forwards
+    :data:`MERGE_NONFINITE_DYNAMIC_CLIPPED` to ``audit_codes`` on
+    every call where ``dynamic`` was clipped into ``[0, 1]``. The
+    operator is byte-identical when ``dynamic`` is already in
+    ``[0, 1]``.
+    """
+    from adaptive_reflow.algorithm.merge_operator import (
+        MERGE_NONFINITE_DYNAMIC_CLIPPED,
+    )
+
+    op = IdentityOperator()
+    # Out-of-range ``dynamic`` triggers the audit code.
+    audit: list[str] = []
+    out_clip = op.merge(
+        prev=0.5,
+        dynamic=1.7,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit,
+    )
+    assert out_clip == pytest.approx(1.0)
+    assert any(MERGE_NONFINITE_DYNAMIC_CLIPPED in c for c in audit)
+
+    # In-range ``dynamic`` -> no audit code, byte-identical output.
+    audit.clear()
+    out_in = op.merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit,
+    )
+    assert out_in == pytest.approx(0.5)
+    assert audit == []
+
+    # ``NaN`` -> ``0.0`` with the audit code emitted.
+    audit.clear()
+    import math
+
+    out_nan = op.merge(
+        prev=0.5,
+        dynamic=float("nan"),
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit,
+    )
+    assert math.isfinite(out_nan)
+    assert out_nan == pytest.approx(0.0)
+    assert any(MERGE_NONFINITE_DYNAMIC_CLIPPED in c for c in audit)

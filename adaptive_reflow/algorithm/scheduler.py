@@ -82,6 +82,23 @@ class ScheduleSample:
     family: str
     computed_at_round: int
     schedule_hash: str
+    audit_codes: tuple[str, ...] = ()
+    """Per-round diagnostic codes emitted by the scheduler (P0-A1).
+
+    Every scheduler tags each sample with at least its family's baseline
+    marker (e.g. ``"cosine_baseline"``) so the runner / engine can fan the
+    round's schedule provenance into the audit ledger without re-deriving
+    which family produced the sample. Defaults to ``()`` so callers that
+    construct a sample without codes keep working unchanged.
+    """
+    evidence_ratio: float | None = None
+    """Sheet-vs-cell evidence ratio for the round (P0-A7).
+
+    Set by :class:`CodimensionSheetScheduler` (paper Lemma 2 / Lemma 3);
+    ``None`` for every family that does not compute a paper-quantity
+    evidence balance, so consumers can branch on ``is None`` rather than
+    reading ``scheduler.last_evidence_ratio`` out of band.
+    """
 
     def memory_fraction(self) -> float:
         """Return the per-round memory fraction ``1 - n_cap`` (ADR-0010).
@@ -270,9 +287,38 @@ class CosineAnnealScheduler:
     objects.
     """
 
-    def __init__(self, config: CosineScheduleConfig) -> None:
+    def __init__(
+        self,
+        config: CosineScheduleConfig,
+        *,
+        profile_residual_fn: Callable[[float], float] | None = None,
+    ) -> None:
+        """Construct the cosine-annealing scheduler.
+
+        :param config: the frozen :class:`CosineScheduleConfig`.
+        :param profile_residual_fn: optional residual profile ``x -> g(x)``
+            (P1-A2). When supplied, the scheduler computes the paper's
+            sheet-evidence constant ``A_g``
+            (:func:`paper_quantities.sheet_evidence_A`, Lemma 2 /
+            Proposition 3) exactly once at construction time and uses it as
+            the per-round forward-noise mass in :meth:`inject_noise`,
+            matching :class:`CodimensionSheetScheduler`. When ``None``
+            (the default) the scheduler is byte-identical to the legacy
+            ``sqrt(n_cap)`` path.
+        """
         self._config = config
         self._last_sample: ScheduleSample | None = None
+        if profile_residual_fn is not None and not callable(profile_residual_fn):
+            raise ValueError(
+                "profile_residual_fn must be callable or None, "
+                f"got {profile_residual_fn!r}"
+            )
+        self._profile_residual_fn = profile_residual_fn
+        self._sheet_A: float | None = None
+        if profile_residual_fn is not None:
+            from adaptive_reflow.contracts import paper_quantities as _pq
+
+            self._sheet_A = float(_pq.sheet_evidence_A(profile_residual_fn))
 
     # -- accessors ---------------------------------------------------------
 
@@ -280,6 +326,16 @@ class CosineAnnealScheduler:
     def config(self) -> CosineScheduleConfig:
         """Return the frozen :class:`CosineScheduleConfig`."""
         return self._config
+
+    @property
+    def profile_residual_fn(self) -> Callable[[float], float] | None:
+        """Return the configured residual profile callable (or ``None``)."""
+        return self._profile_residual_fn
+
+    @property
+    def sheet_A(self) -> float | None:
+        """Return the cached paper-quantity ``A_g``, or ``None`` (P1-A2)."""
+        return self._sheet_A
 
     @property
     def last_sample(self) -> ScheduleSample | None:
@@ -302,6 +358,13 @@ class CosineAnnealScheduler:
         length = int(self._config.cycle_length)
         u_r = float(round_in_cycle) / max(length - 1, 1)
 
+        codes: tuple[str, ...] = ("cosine_baseline",)
+        if self._sheet_A is not None:
+            codes = (
+                "cosine_baseline",
+                f"cosine_paper_quantity_wired:A_g={self._sheet_A:.6f}",
+            )
+
         sample = ScheduleSample(
             outer_cycle_id=outer_cycle_id,
             round_in_cycle=int(round_in_cycle),
@@ -313,6 +376,7 @@ class CosineAnnealScheduler:
             family=str(self._config.schedule_family),
             computed_at_round=target_round,
             schedule_hash=str(self._config.config_hash),
+            audit_codes=codes,
         )
         self._last_sample = sample
         return sample
@@ -359,19 +423,28 @@ class CosineAnnealScheduler:
         *,
         generator: np.random.Generator,
     ) -> NDArray[np.float64]:
-        """Return ``state + sqrt(n_cap) * generator.standard_normal(state.shape)``.
+        """Return ``state + sqrt(noise_mass) * generator.standard_normal(...)``.
 
         The cosine family uses the round's ``n_cap`` as the per-round
         noise mass — at round 0 with ``n_cap = n_max`` the noise
         dominates; at round ``L-1`` with ``n_cap = n_min`` the prior
         dominates. Identical ``generator`` state always yields
         identical output (P0-7 forward-noise reproducibility).
+
+        P1-A2: when a ``profile_residual_fn`` was supplied at
+        construction time the noise mass is the cached paper quantity
+        ``A_g`` (Lemma 2 / Proposition 3) instead of the raw ``n_cap``,
+        matching :class:`CodimensionSheetScheduler`. Callers that did
+        not supply a profile get byte-identical legacy output.
         """
         state_arr = np.asarray(state, dtype=np.float64)
-        n_cap = float(schedule_sample.n_cap)
-        if n_cap < 0.0:
-            n_cap = 0.0
-        scale = math.sqrt(n_cap)
+        if self._sheet_A is not None:
+            noise_mass = float(self._sheet_A)
+        else:
+            noise_mass = float(schedule_sample.n_cap)
+        if noise_mass < 0.0:
+            noise_mass = 0.0
+        scale = math.sqrt(noise_mass)
         noise = generator.standard_normal(state_arr.shape).astype(np.float64)
         return state_arr + scale * noise
 
@@ -437,6 +510,7 @@ def default_cosine_scheduler(
     n_max: float = 1.0,
     schedule_family: str = "cosine_no_restart",
     seed: int = 0,
+    profile_residual_fn: Callable[[float], float] | None = None,
 ) -> CosineAnnealScheduler:
     """Build the default :class:`CosineAnnealScheduler`.
 
@@ -444,6 +518,10 @@ def default_cosine_scheduler(
     cosine family is deterministic, so it only participates in the frozen
     ``config_hash`` (so two schedulers with different seeds remain
     distinguishable in provenance).
+
+    ``profile_residual_fn`` (P1-A2) is forwarded to the scheduler so the
+    per-round forward-noise mass is the paper quantity ``A_g`` rather than
+    the raw ``n_cap``; ``None`` (default) keeps the legacy behaviour.
     """
     config_hash = hash_artifact(
         {
@@ -467,7 +545,7 @@ def default_cosine_scheduler(
         config_hash=config_hash,
         frozen_before_evaluation=True,
     )
-    return CosineAnnealScheduler(config)
+    return CosineAnnealScheduler(config, profile_residual_fn=profile_residual_fn)
 
 
 # ---------------------------------------------------------------------------
@@ -585,6 +663,7 @@ class ConstantScheduler:
             family="constant",
             computed_at_round=target_round,
             schedule_hash=str(self._config_hash_value),
+            audit_codes=("schedule_constant_baseline",),
         )
         self._last_sample = sample
         return sample
@@ -791,6 +870,7 @@ class LinearScheduler:
             family="linear",
             computed_at_round=target_round,
             schedule_hash=str(self._config_hash_value),
+            audit_codes=("schedule_linear_baseline",),
         )
         self._last_sample = sample
         return sample
@@ -1017,6 +1097,7 @@ class ExponentialScheduler:
             family="exponential",
             computed_at_round=target_round,
             schedule_hash=str(self._config_hash_value),
+            audit_codes=("schedule_exponential_baseline",),
         )
         self._last_sample = sample
         return sample
@@ -1252,6 +1333,7 @@ class PolynomialScheduler:
             family="polynomial",
             computed_at_round=target_round,
             schedule_hash=str(self._config_hash_value),
+            audit_codes=("schedule_polynomial_baseline",),
         )
         self._last_sample = sample
         return sample
@@ -1503,6 +1585,7 @@ class SigmoidScheduler:
             family="sigmoid",
             computed_at_round=target_round,
             schedule_hash=str(self._config_hash_value),
+            audit_codes=("schedule_sigmoid_baseline",),
         )
         self._last_sample = sample
         return sample
@@ -1590,6 +1673,27 @@ class SigmoidScheduler:
 # ---------------------------------------------------------------------------
 
 
+DEFAULT_FEEDBACK_METRIC_WEIGHTS: dict[str, float] = {
+    "W2": 1.0,
+    "coverage": 0.3,
+    "selection_ratio": 0.5,
+}
+"""Default multi-metric feedback weights for :class:`ConvergenceAdaptiveScheduler`.
+
+P0-A6: the controller aggregates the round's *loss-form* metrics with these
+weights. ``W2`` is already a loss (lower is better); ``coverage`` and
+``selection_ratio`` are higher-is-better, so the controller folds in
+``1 - value``. A feedback dict carrying only ``W2`` normalises back to the
+legacy single-metric signal exactly.
+"""
+
+#: Metrics whose *raw* value is higher-is-better and therefore enter the
+#: controller as ``1 - value`` (P0-A6).
+_HIGHER_IS_BETTER_METRICS: frozenset[str] = frozenset(
+    {"coverage", "selection_ratio"}
+)
+
+
 class ConvergenceAdaptiveScheduler:
     """PID-lite adaptive :class:`SchedulerProtocol` wrapper.
 
@@ -1625,6 +1729,7 @@ class ConvergenceAdaptiveScheduler:
         kd: float = 0.05,
         shift_max: float = 0.15,
         ema: float = 0.3,
+        metric_weights: Mapping[str, float] | None = None,
     ) -> None:
         """Construct the convergence-adaptive scheduler.
 
@@ -1635,6 +1740,17 @@ class ConvergenceAdaptiveScheduler:
         :param shift_max: maximum absolute shift in ``u_r`` units.
         :param ema: smoothing factor for the W2 EMA (0 = no smoothing,
             1 = ignore new samples).
+        :param metric_weights: P0-A6 multi-metric feedback weights. Maps
+            a metric name to the weight it carries in the controller's
+            aggregated loss signal. Defaults to
+            ``{"W2": 1.0, "coverage": 0.3, "selection_ratio": 0.5}``.
+            ``"coverage"`` and ``"selection_ratio"`` are *higher-is-better*
+            metrics, so the controller folds in their loss form
+            ``1 - value``; ``"W2"`` is already a loss. Metrics absent
+            from the round's feedback dict (or non-finite) are skipped and
+            their weight is dropped from the normaliser, so a W2-only
+            feedback dict reproduces the legacy single-metric controller
+            bit-for-bit.
         """
         self._base: CosineAnnealScheduler = (
             base if base is not None else default_cosine_scheduler()
@@ -1657,21 +1773,47 @@ class ConvergenceAdaptiveScheduler:
         self._kd = float(kd)
         self._shift_max = float(shift_max)
         self._ema = float(ema)
+        # P0-A6: multi-metric feedback weights.
+        weights: dict[str, float]
+        if metric_weights is None:
+            weights = dict(DEFAULT_FEEDBACK_METRIC_WEIGHTS)
+        else:
+            weights = {}
+            for key, val in dict(metric_weights).items():
+                if isinstance(val, bool) or not isinstance(val, (int, float)):
+                    raise ValueError(
+                        f"metric_weights[{key!r}] must be a real number, got {val!r}"
+                    )
+                fv = float(val)
+                if not math.isfinite(fv) or fv < 0.0:
+                    raise ValueError(
+                        f"metric_weights[{key!r}] must be finite and >= 0, got {fv!r}"
+                    )
+                weights[str(key)] = fv
+            if not weights:
+                raise ValueError("metric_weights must not be empty")
+        self._metric_weights: dict[str, float] = weights
         # Mutable state — cleared by reset().
         self._w2_history: list[float] = []
         self._smoothed_w2: float | None = None
         self._shift: float = 0.0
+        self._last_feedback_keys: tuple[str, ...] = ()
         self._last_sample: ScheduleSample | None = None
-        self._config_hash_value = hash_artifact(
-            {
-                "algorithm": "convergence_adaptive_cosine",
-                "base_config_hash": str(self._base.config_hash()),
-                "kp": float(self._kp),
-                "kd": float(self._kd),
-                "shift_max": float(self._shift_max),
-                "ema": float(self._ema),
+        hash_payload: dict[str, Any] = {
+            "algorithm": "convergence_adaptive_cosine",
+            "base_config_hash": str(self._base.config_hash()),
+            "kp": float(self._kp),
+            "kd": float(self._kd),
+            "shift_max": float(self._shift_max),
+            "ema": float(self._ema),
+        }
+        if self._metric_weights != dict(DEFAULT_FEEDBACK_METRIC_WEIGHTS):
+            # Only non-default weights enter the digest so schedulers built
+            # before P0-A6 keep their historical ``config_hash``.
+            hash_payload["metric_weights"] = {
+                str(k): float(v) for k, v in sorted(self._metric_weights.items())
             }
-        )
+        self._config_hash_value = hash_artifact(hash_payload)
 
     # -- accessors ---------------------------------------------------------
 
@@ -1712,8 +1854,23 @@ class ConvergenceAdaptiveScheduler:
 
     @property
     def w2_history(self) -> tuple[float, ...]:
-        """Return the recorded raw W2 history as a tuple."""
+        """Return the recorded aggregated feedback history as a tuple.
+
+        With a W2-only feedback dict these are the raw ``W2`` values
+        (legacy behaviour); with multi-metric feedback (P0-A6) they are
+        the weighted loss-form aggregates.
+        """
         return tuple(self._w2_history)
+
+    @property
+    def metric_weights(self) -> dict[str, float]:
+        """Return the multi-metric feedback weights (P0-A6)."""
+        return dict(self._metric_weights)
+
+    @property
+    def last_feedback_keys(self) -> tuple[str, ...]:
+        """Return the metric names used by the most recent feedback call."""
+        return tuple(self._last_feedback_keys)
 
     @property
     def last_sample(self) -> ScheduleSample | None:
@@ -1777,6 +1934,18 @@ class ConvergenceAdaptiveScheduler:
             family="convergence_adaptive_cosine",
             computed_at_round=int(target_round),
             schedule_hash=str(self._config_hash_value),
+            audit_codes=(
+                "schedule_convergence_adaptive",
+                f"schedule_shift_applied:{float(self._shift):+.6f}",
+            )
+            + (
+                (
+                    "schedule_feedback_multi_metric:"
+                    + ",".join(sorted(self._last_feedback_keys)),
+                )
+                if self._last_feedback_keys
+                else ()
+            ),
         )
         self._last_sample = sample
         return sample
@@ -1798,6 +1967,7 @@ class ConvergenceAdaptiveScheduler:
         self._w2_history = []
         self._smoothed_w2 = None
         self._shift = 0.0
+        self._last_feedback_keys = ()
         self._last_sample = None
         self._base.reset()
 
@@ -1827,6 +1997,9 @@ class ConvergenceAdaptiveScheduler:
             "kd": float(self._kd),
             "shift_max": float(self._shift_max),
             "ema": float(self._ema),
+            "metric_weights": {
+                str(k): float(v) for k, v in sorted(self._metric_weights.items())
+            },
         }
 
     @classmethod
@@ -1837,12 +2010,19 @@ class ConvergenceAdaptiveScheduler:
         base_cfg = dict(config["base_config"])
         # Recurse through CosineAnnealScheduler for the nested base.
         base = CosineAnnealScheduler.from_config(base_cfg)
+        raw_weights = config.get("metric_weights")
+        weights = (
+            {str(k): float(v) for k, v in dict(raw_weights).items()}
+            if isinstance(raw_weights, dict) and raw_weights
+            else None
+        )
         return ConvergenceAdaptiveScheduler(
             base=base,
             kp=float(config["kp"]),
             kd=float(config["kd"]),
             shift_max=float(config["shift_max"]),
             ema=float(config["ema"]),
+            metric_weights=weights,
         )
 
     def record_round_feedback(
@@ -1850,30 +2030,53 @@ class ConvergenceAdaptiveScheduler:
         round_in_cycle: int,
         metrics: Mapping[str, float],
     ) -> None:
-        """Consume one round's W2 metric and update the shift via PID-lite.
+        """Consume one round's metrics and update the shift via PID-lite.
 
-        Algorithm:
+        P0-A6 — multi-metric aggregation. The controller no longer reads
+        ``metrics["W2"]`` alone; it aggregates every metric named in
+        :attr:`metric_weights` into a single *loss-form* signal:
 
-        1. Pull ``w2 = metrics.get("W2", nan)``.
-        2. If ``w2`` is non-finite, ignore (no EMA, no shift).
-        3. Update EMA: ``smoothed = ema * w2 + (1 - ema) * prev_smoothed``
-           (or ``smoothed = w2`` if no prior smoothed value).
-        4. If only one sample, record and return.
-        5. Compute ``ratio = history[-1] / history[-2]`` and
-           ``delta = history[-1] - history[-2]``.
-        6. ``shift_update = kp * (1.0 - ratio) - kd * delta``.
-        7. ``self._shift = clip(self._shift + shift_update, -shift_max, +shift_max)``.
+        1. For each ``(key, weight)`` in :attr:`metric_weights`, read
+           ``metrics[key]``. Missing / non-numeric / non-finite values are
+           skipped (a broken oracle cannot poison the controller) and the
+           weight is dropped from the normaliser.
+        2. Higher-is-better metrics (``coverage``, ``selection_ratio``)
+           enter as their loss form ``1 - value``; ``W2`` enters as-is.
+        3. ``signal = sum(w * loss) / sum(w)``. With only ``W2`` present
+           this is exactly ``metrics["W2"]``, so the legacy behaviour is
+           reproduced bit-for-bit.
+        4. Update the EMA, append to the history, and (from the second
+           sample onwards) apply
+           ``shift += kp * (1 - ratio) - kd * delta`` clipped to
+           ``[-shift_max, +shift_max]``, where ``ratio`` and ``delta`` are
+           computed on consecutive aggregated signals.
         """
-        try:
-            w2_raw = metrics.get("W2", float("nan"))
-        except Exception:
-            w2_raw = float("nan")
-        try:
-            w2 = float(w2_raw)
-        except (TypeError, ValueError):
-            w2 = float("nan")
+        aggregate = 0.0
+        weight_sum = 0.0
+        used: list[str] = []
+        for key, weight in self._metric_weights.items():
+            try:
+                raw = metrics.get(key, float("nan"))
+            except Exception:
+                continue
+            try:
+                value = float(raw)
+            except (TypeError, ValueError):
+                continue
+            if not math.isfinite(value):
+                continue
+            loss = (
+                1.0 - value if key in _HIGHER_IS_BETTER_METRICS else value
+            )
+            aggregate += float(weight) * loss
+            weight_sum += float(weight)
+            used.append(str(key))
+        if weight_sum <= 0.0:
+            return
+        w2 = float(aggregate / weight_sum)
         if not math.isfinite(w2):
             return
+        self._last_feedback_keys = tuple(sorted(used))
 
         # Update EMA.
         if self._smoothed_w2 is None:
@@ -2519,6 +2722,15 @@ class CodimensionSheetScheduler:
         )
         self._last_evidence_ratio = ratio
 
+        # P0-A1 / P0-A7: surface the round's provenance and the
+        # sheet-vs-cell balance ON the sample so the runner / engine can
+        # branch on them without a second ``last_evidence_ratio`` read.
+        codes: tuple[str, ...] = (
+            ("codimension_paper_quantity_grounded",)
+            if self._sheet_A is not None
+            else ("codimension_framework_heuristic",)
+        )
+
         sample = ScheduleSample(
             outer_cycle_id=outer_cycle_id,
             round_in_cycle=int(round_in_cycle),
@@ -2530,6 +2742,8 @@ class CodimensionSheetScheduler:
             family="codimension_sheet",
             computed_at_round=target_round,
             schedule_hash=str(self._config_hash_value),
+            audit_codes=codes,
+            evidence_ratio=float(ratio),
         )
         self._last_sample = sample
         return sample
@@ -2581,12 +2795,27 @@ class CodimensionSheetScheduler:
         ``profile_residual_fn`` was supplied at construction time)
         it falls back to the schedule's ``n_cap``, matching the
         canonical cosine path.
+
+        A18 uplift: when the cached :attr:`exterior_gap_e_rho` is
+        available, the noise mass is *floored* at ``e_rho / 4`` so the
+        forward noise respects paper Lemma 5's physical-complement
+        gap (a noise mass below ``e_rho`` would put forward-noise
+        energy inside the complement region that the paper already
+        proves is exponentially suppressed). With a positive
+        ``e_rho`` the noise mass becomes ``max(A_g, e_rho / 4)``;
+        callers that wire both quantities get the audit-trail-safe
+        paper-aligned mass.
         """
         state_arr = np.asarray(state, dtype=np.float64)
         if self._sheet_A is not None:
             noise_mass = float(self._sheet_A)
         else:
             noise_mass = float(schedule_sample.n_cap)
+        # A18: fold the exterior gap into the noise mass floor.
+        if self._exterior_gap_e_rho is not None:
+            paper_floor = float(self._exterior_gap_e_rho) / 4.0
+            if noise_mass < paper_floor:
+                noise_mass = paper_floor
         if noise_mass < 0.0:
             noise_mass = 0.0
         scale = math.sqrt(noise_mass)

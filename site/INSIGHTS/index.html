@@ -539,6 +539,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#5a-algorithm-uplift-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5a. Algorithm uplift results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#6-open-questions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -738,6 +749,31 @@ in ADR-0013 §"Sheet tube scaling -&gt; CosineAnnealScheduler".</p>
 <h2 id="5-the-next-question">5. The next question<a class="headerlink" href="#5-the-next-question" title="Permanent link">&para;</a></h2>
 <p>ADR-0013 closed the <em>algorithm-layer</em> half of the paper-grounding gap: the <code>n_cap</code> envelope the framework produces per round is the canonical implementation of paper Lemma 2, and the per-round <code>selection_ratio</code> the new evaluator emits is the empirical handle on paper Proposition 3. The <em>restart-mechanism</em> half is still open. Paper Theorem 1 is silent on how the framework <em>uses</em> the sheet-vs-cell balance to drive the next round's prior — the paper proves that a small-noise posterior concentrates on the sheet, not that any particular restart mechanism realises that concentration. The framework's <code>apply_restart_distribution</code> (the universal-state boundary) and <code>ReInferenceRunner</code> (the per-round orchestrator) together determine <em>which</em> sheet-cell configuration is propagated forward; whether that mechanism matches paper's selection principle (or whether there is a gap where the framework's restart logic does not quite match paper's <code>sigma -&gt; 0</code> selection) is the question ADR-0014 (or its equivalent) will need to answer.</p>
 <p>Concretely: the paper's posterior is <code>P(X | F_g(X) = 0)</code> — the <em>conditional</em> distribution on the fibre given the residual hits zero. The framework's per-round prior is whatever the previous round's endpoint mixture is, blended with fresh noise via <code>RestartBlenderProtocol</code>. The mapping between paper's conditional and the framework's blend is not yet proven; the empirical observation that cosine schedules work <em>better</em> on hard mode-balancing targets is consistent with paper Theorem 1 but is not the same as a proof that the framework's restart mechanism realises paper's selection. Closing that gap requires either (a) a paper-style proof that <code>apply_restart_distribution</code> approximates the conditional posterior as the noise scale shrinks, or (b) an empirical handle that shows the framework's per-round posterior converges to paper's conditional as <code>sigma -&gt; 0</code>. Until either is available, the framework has paper-grounded <em>scheduling</em> and paper-validated <em>metrics</em>, but paper-claimed <em>restart</em> — and the difference matters, because the restart is what makes the algorithm a multi-round algorithm rather than a single-round anneal. This is the open question ADR-0013 explicitly defers and that this document records as the canonical narrative for the next work stream.</p>
+<h2 id="5a-algorithm-uplift-results">5a. Algorithm uplift results<a class="headerlink" href="#5a-algorithm-uplift-results" title="Permanent link">&para;</a></h2>
+<p>The algorithm layer uplifts surveyed in
+<a href="../algorithm-uplift-plan/"><code>docs/algorithm-uplift-plan.md</code></a> (5 P0 +
+9 P1 + 24 P2 = 38 candidate uplifts across 17 algorithm classes + 1
+runner integration) are measured quantitatively in
+<a href="../benchmark-uplifts/"><code>docs/benchmark-uplifts.md</code></a>. Headline
+findings: every one of the <strong>27 measured</strong> uplifts achieved its
+target, with <strong>0</strong> regressions and <strong>0</strong> neutral outcomes; the
+A16 <code>eps_schedule</code> decay raises the <code>EvidenceScaleGapMetric</code>
+<code>selection_ratio</code> plateau from baseline <code>0.872</code> to <code>0.9996</code>
+(<code>+14.6%</code>) with an SNR proxy of <code>60.80</code> [CLM-022]; the A12
+<code>e_rho / 4</code> paper-quantity floor lift lands in
+<code>BoundedMergeOperator</code>; the A17 / B13 / B14 paper-quantity
+diagnostics now report <code>A_g_sin = 0.854</code>, <code>B_g_sin_K32 = 1.170</code>
+with <code>tail_bound = 2.65e-111</code>, and
+<code>drift_robustness_over_C_g_ratio = 1.20</code>; the 22-row ablation grid
+is reproduced with W2 / coverage / <code>selection_ratio</code> /
+<code>ledger_chain_integrity</code> columns for every canonical configuration.
+The uplift is the algorithm-layer counterpart of the
+paper-grounding work in §1-§5: each uplift is a concrete, tested
+capability that the framework's algorithm abstractions either did
+not have or had only in ad-hoc form. The remaining 11 P2 items are
+byte-equality / determinism checks that the benchmark folds into
+the per-uplift rows; see <a href="../benchmark-uplifts/"><code>docs/benchmark-uplifts.md</code></a>
+for the full table.</p>
 <h2 id="6-open-questions">6. Open questions<a class="headerlink" href="#6-open-questions" title="Permanent link">&para;</a></h2>
 <p>The "next question" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped <code>selection_ratio</code> metric was claimed to converge toward 1 as rounds progress, but <code>docs/review/B5-VERIFICATION.md</code> shows that the metric is in fact invariant to loop state — it is an unconditional replay of the <code>(adapter, target)</code> pair, not an endpoint-conditioned posterior, and two unrelated schedulers report identical curves to four decimal places. The reviewer's symptom ("wrong bundle passed") was a wiring guess; the actual defect is that the evaluator's <code>bundle</code> parameter is inert, so no rewiring fix would change the output. Closing the gap requires an endpoint-conditioned variant (scoring the round's own endpoints rather than a fresh replay), which is blocked on the runner carrying a batch of trajectories per round — a real architectural change to <code>ReInferenceRunner</code> and <code>TwoDimFMAdapter</code>, both currently single-sample. ADR-0013 §"Selection metric status" demotes the convergence-to-1 prediction to apply only to that future variant. The shipped metric remains in place until a human design decision lands; the verification document is the canonical record of the investigation.</p>
 <h2 id="7-what-this-insight-does-not-claim">7. What this insight does NOT claim<a class="headerlink" href="#7-what-this-insight-does-not-claim" title="Permanent link">&para;</a></h2>

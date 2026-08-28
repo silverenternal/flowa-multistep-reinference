@@ -88,6 +88,35 @@ ADR-0013 closed the *algorithm-layer* half of the paper-grounding gap: the `n_ca
 
 Concretely: the paper's posterior is `P(X | F_g(X) = 0)` — the *conditional* distribution on the fibre given the residual hits zero. The framework's per-round prior is whatever the previous round's endpoint mixture is, blended with fresh noise via `RestartBlenderProtocol`. The mapping between paper's conditional and the framework's blend is not yet proven; the empirical observation that cosine schedules work *better* on hard mode-balancing targets is consistent with paper Theorem 1 but is not the same as a proof that the framework's restart mechanism realises paper's selection. Closing that gap requires either (a) a paper-style proof that `apply_restart_distribution` approximates the conditional posterior as the noise scale shrinks, or (b) an empirical handle that shows the framework's per-round posterior converges to paper's conditional as `sigma -> 0`. Until either is available, the framework has paper-grounded *scheduling* and paper-validated *metrics*, but paper-claimed *restart* — and the difference matters, because the restart is what makes the algorithm a multi-round algorithm rather than a single-round anneal. This is the open question ADR-0013 explicitly defers and that this document records as the canonical narrative for the next work stream.
 
+## 5a. Algorithm uplift results
+
+The algorithm layer uplifts surveyed in
+[`docs/algorithm-uplift-plan.md`](algorithm-uplift-plan.md) (5 P0 +
+9 P1 + 24 P2 = 38 candidate uplifts across 17 algorithm classes + 1
+runner integration) are measured quantitatively in
+[`docs/benchmark-uplifts.md`](benchmark-uplifts.md). Headline
+findings: every one of the **27 measured** uplifts achieved its
+target, with **0** regressions and **0** neutral outcomes; the
+A16 `eps_schedule` decay raises the `EvidenceScaleGapMetric`
+`selection_ratio` plateau from baseline `0.872` to `0.9996`
+(`+14.6%`) with an SNR proxy of `60.80` [CLM-022]; the A12
+`e_rho / 4` paper-quantity floor lift lands in
+`BoundedMergeOperator`; the A17 / B13 / B14 paper-quantity
+diagnostics now report `sheet_evidence_A` values of
+`0.854` (sin profile) and `0.765` (polynomial profile),
+`root_cell_packing_B = 1.170` with `tail_bound = 2.65e-111` at
+`K = 32`, and `drift_robustness_over_C_g_ratio = 1.20`; the
+22-row ablation grid is reproduced with W2 / coverage /
+`selection_ratio` / `ledger_chain_integrity` columns for every
+canonical configuration. The uplift is the algorithm-layer
+counterpart of the paper-grounding work in §1-§5: each uplift is
+a concrete, tested capability that the framework's algorithm
+abstractions either did not have or had only in ad-hoc form. The
+remaining 11 P2 items are byte-equality / determinism checks that
+the benchmark folds into the per-uplift rows; see
+[`docs/benchmark-uplifts.md`](benchmark-uplifts.md) for the full
+table.
+
 ## 6. Open questions
 
 The "next question" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped `selection_ratio` metric was claimed to converge toward 1 as rounds progress, but `docs/review/B5-VERIFICATION.md` shows that the metric is in fact invariant to loop state — it is an unconditional replay of the `(adapter, target)` pair, not an endpoint-conditioned posterior, and two unrelated schedulers report identical curves to four decimal places. The reviewer's symptom ("wrong bundle passed") was a wiring guess; the actual defect is that the evaluator's `bundle` parameter is inert, so no rewiring fix would change the output. Closing the gap requires an endpoint-conditioned variant (scoring the round's own endpoints rather than a fresh replay), which is blocked on the runner carrying a batch of trajectories per round — a real architectural change to `ReInferenceRunner` and `TwoDimFMAdapter`, both currently single-sample. ADR-0013 §"Selection metric status" demotes the convergence-to-1 prediction to apply only to that future variant. The shipped metric remains in place until a human design decision lands; the verification document is the canonical record of the investigation.
