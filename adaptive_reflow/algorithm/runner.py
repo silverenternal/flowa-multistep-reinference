@@ -63,6 +63,13 @@ from adaptive_reflow.algorithm.scheduler import (
     SchedulerProtocol,
     default_cosine_scheduler,
 )
+from adaptive_reflow.algorithm.state_machine_integration import (
+    OrchestratorEvent,
+    OrchestratorState,
+    StateMachineWrappedScheduler,
+    make_runner_state_machine,
+    wrap_scheduler_with_state_machine,
+)
 from adaptive_reflow.contracts import (
     ArtifactHash,
     ChannelName,
@@ -72,6 +79,7 @@ from adaptive_reflow.contracts import (
     MechanismId,
     PolicyId,
     RunId,
+    StateMachine,
     hash_policy_hash,
 )
 from adaptive_reflow.frame.adapter import FlowMatchingODEAdapter, ODEConditionDelta
@@ -434,8 +442,18 @@ class ReInferenceRunner:
         if adapter is None:
             raise ValueError("adapter_required")
         self._adapter = adapter
-        self._scheduler: SchedulerProtocol = (
+        # Phase 2b: wrap the scheduler in a state-machine-aware proxy so
+        # every public method emits a typed transition. The wrapper is
+        # duck-type compatible with :class:`SchedulerProtocol` so all
+        # existing call sites continue to work unchanged. The wrapper
+        # is observation-only; ``sample()`` / ``record_round_feedback()``
+        # / ``reset()`` / ``inject_noise()`` all delegate to the inner
+        # scheduler byte-for-byte.
+        inner_scheduler: SchedulerProtocol = (
             scheduler if scheduler is not None else default_cosine_scheduler()
+        )
+        self._scheduler: SchedulerProtocol = wrap_scheduler_with_state_machine(
+            inner_scheduler
         )
         self._driver: PolicyDriverProtocol = (
             policy_driver if policy_driver is not None else default_policy_driver()
@@ -450,6 +468,12 @@ class ReInferenceRunner:
         )
         self._evaluator: _EvaluatorProtocol | None = evaluator
         self._engine: Engine = engine if engine is not None else Engine()
+        # Phase 2b: orchestrator state machine (outer lifecycle only;
+        # the per-round inner machine is implicit in the outer
+        # ROUND_ACTIVE -> FEEDBACK_PENDING -> NEXT_ROUND_READY cycle).
+        self._state_machine: StateMachine[OrchestratorState, OrchestratorEvent] = (
+            make_runner_state_machine()
+        )
 
     # -- public properties -------------------------------------------------
 
@@ -482,6 +506,20 @@ class ReInferenceRunner:
     def engine(self) -> Engine:
         """Return the engine the runner drives."""
         return self._engine
+
+    @property
+    def state_machine(
+        self,
+    ) -> StateMachine[OrchestratorState, OrchestratorEvent]:
+        """Return the orchestrator's outer state machine (Phase 2b).
+
+        Exposed for observability + tests. The machine records every
+        round transition through the ROUND_ACTIVE -> FEEDBACK_PENDING ->
+        NEXT_ROUND_READY cycle and the terminal COMPLETE / FAILED
+        states. Backward compatible: callers that do not reference the
+        state machine see no behavioural change.
+        """
+        return self._state_machine
 
     # -- run ---------------------------------------------------------------
 
@@ -547,6 +585,14 @@ class ReInferenceRunner:
         )
         bundle: StateBundle | None = None
         prior_endpoint_digest = ""
+        # Phase 2b — orchestrator state machine: reset to IDLE (in case
+        # the same runner is reused across multiple ``run()`` calls —
+        # see :func:`test_runner_outer_cycle_id_propagates_to_policy_hash`),
+        # then send ``INIT`` (IDLE -> INITIALIZED). The per-round
+        # ``SAMPLE_REQUESTED`` / ``SAMPLE_EMITTED`` / ``FEEDBACK_DISPATCHED``
+        # events fire inside the loop below.
+        self._state_machine.send("RESET")
+        self._state_machine.send("INIT")
         # CONTRACT 2.4: the runner tracks the previous round's emitted
         # ``beta`` across rounds as ``self._last_emitted_beta`` so the
         # configured merge operator sees a numeric ``prev`` argument.
@@ -572,6 +618,13 @@ class ReInferenceRunner:
         prev_ledger_row_hash: str | None = None
 
         for r in range(n_rounds):
+            # Phase 2b — orchestrator state machine: advance to
+            # ROUND_ACTIVE before sampling. ``send`` is a no-op when
+            # the event is not valid for the current state (UML
+            # "ignored events"); the only path that matters is
+            # INITIALIZED -> ROUND_ACTIVE on round 0 and
+            # NEXT_ROUND_READY -> ROUND_ACTIVE on subsequent rounds.
+            self._state_machine.send("SAMPLE_REQUESTED")
             # F22 — ``target_round`` is the local round index. The
             # scheduler sample, the placeholder policy, and the
             # engine's ``build_ledger_row`` all agree on
@@ -768,6 +821,12 @@ class ReInferenceRunner:
             # populated by ``build_ledger_row``; round 0 anchors the
             # chain to ``None``.
             prev_ledger_row_hash = str(result.ledger_row.row_hash)
+            # Phase 2b — orchestrator state machine: transition from
+            # ROUND_ACTIVE to FEEDBACK_PENDING on SAMPLE_EMITTED (round
+            # trace captured; metric dict will be built next). This
+            # closes Loop 1 + Loop 2 explicitly (oracle + paper
+            # quantities are populated in the metric dict that follows).
+            self._state_machine.send("SAMPLE_EMITTED")
 
             # Capture the per-round endpoint (final trajectory point) so
             # downstream consumers (e.g. the ablation script) can compute
@@ -921,6 +980,12 @@ class ReInferenceRunner:
             # implement the optional feedback hook.
             if hasattr(self._scheduler, "record_round_feedback"):
                 self._scheduler.record_round_feedback(r, metric)
+            # Phase 2b — orchestrator state machine: transition from
+            # FEEDBACK_PENDING to NEXT_ROUND_READY on FEEDBACK_DISPATCHED.
+            # This closes Loops 1 and 2 explicitly: the oracle / paper
+            # quantities carried in the metric dict above are now
+            # observable as a typed transition in the state-machine log.
+            self._state_machine.send("FEEDBACK_DISPATCHED")
 
             phase_state = result.next_phase_state
             prior_endpoint_digest = str(trace.endpoint_digest)
@@ -940,9 +1005,18 @@ class ReInferenceRunner:
         # mutation of an emitted row would break the recompute).
         chain_ok, chain_err = verify_ledger_chain(tuple(ledger_rows))
         if not chain_ok:
+            # Phase 2b — orchestrator state machine: mark the run as
+            # FAILED before propagating the error so the log captures
+            # the failure mode.
+            self._state_machine.send("FAIL")
             raise AssertionError(
                 f"ledger_chain_integrity_check_failed:{chain_err}"
             )
+        # Phase 2b — orchestrator state machine: transition from
+        # NEXT_ROUND_READY to COMPLETE on COMPLETE_RUN. Recorded after
+        # the chain check passes so the run is only marked COMPLETE
+        # when the chain is intact.
+        self._state_machine.send("COMPLETE_RUN")
         return ReInferenceResult(
             config=config,
             round_traces=tuple(round_traces),

@@ -768,7 +768,7 @@ How it works:
   `tools/run_ablation.py:387-423`
   (`multi_round_evidence_driven_posterior_selection` row construction),
   `tools/run_ablation.py:178-187`
-  (the `PAPER_GROUNDED_CONFIGURATIONS` tuple including the new row),
+  (the paper-grounded configurations tuple including the new row),
   `adaptive_reflow/algorithm/scheduler/evidence_driven.py:225-282`
   (`k_eps`, `eps_implicit_base`, `_last_eps_delta` parameters),
   `adaptive_reflow/eval/posterior_selection_evaluator.py:650-697`
@@ -845,3 +845,118 @@ How it works:
   `tests/test_algorithm/test_evidence_driven_scheduler.py`,
   `tests/test_algorithm/test_runner.py:test_runner_forwards_eps_implicit_to_evaluator`,
   `tests/test_eval/test_posterior_selection_evaluator.py:test_eps_round_zero_collapses_to_sheet_dominance`.
+
+## CLM-033: Modern state machine library — generic + HSM + decorator + type-safe + async + visualization {#CLM-033}
+
+- Status: ACTIVE
+- Date: 2026-08-30
+- Source:
+  [`docs/r4-survey/01-modern-statemachine-research.md`](r4-survey/01-modern-statemachine-research.md),
+  [`docs/r4-survey/02-universal-statemachine-plan.md`](r4-survey/02-universal-statemachine-plan.md)
+- Asserted by:
+  `adaptive_reflow/contracts/state_machine.py:1-1175`
+  (PEP 695 `class StateMachine[TState, TEvent]`, decorator-driven
+  transitions, HSM via `add_region` / `add_parallel`, history
+  pseudo-states `SHALLOW`/`DEEP`, byte-deterministic transition log,
+  async-ready guards / effects, DOT and Mermaid export via
+  `to_dot` / `to_mermaid`),
+  `adaptive_reflow/contracts/__init__.py` (re-exports
+  `StateMachine`, `TransitionContext`, `TransitionLog`,
+  `TransitionKind`, `HistoryKind`),
+  `tests/test_contracts/test_state_machine.py`
+- Disputed by: —
+- Statement: The framework ships a modern, stdlib-only state
+  machine library that combines a PEP-695 generic API
+  (`class StateMachine[TState, TEvent]`), a decorator-based
+  transition DSL (`@sm.on("event").to("state")`), hierarchical
+  state machines with shallow / deep history pseudo-states, parallel
+  (orthogonal) regions, byte-deterministic `TransitionLog`
+  records, async-compatible guards and effects, and DOT / Mermaid
+  graph export. The library is `mypy --strict` clean with no
+  third-party dependencies and is the substrate that the Phase-2b
+  universal state-machine coverage builds on (`CLM-034`).
+- Evidence:
+  `adaptive_reflow/contracts/state_machine.py:1-50` (module
+  docstring enumerating the API surface),
+  `adaptive_reflow/contracts/state_machine.py:381-453`
+  (PEP 695 generic class, `transitions` property, byte-deterministic
+  log),
+  `adaptive_reflow/contracts/state_machine.py:1066-1155`
+  (DOT / Mermaid export, `states()` introspection),
+  `tests/test_contracts/test_state_machine.py` (56 test functions
+  covering generic dispatch, decorators, HSM, history, parallel
+  regions, async guards, visualization export, idempotent
+  transitions).
+
+## CLM-034: Universal state machine coverage — every scheduler + `ReInferenceRunner` orchestrator is wrapped {#CLM-034}
+
+- Status: ACTIVE
+- Date: 2026-08-30
+- Source:
+  [`docs/r4-survey/02-universal-statemachine-plan.md`](r4-survey/02-universal-statemachine-plan.md)
+  §1 (16-scheduler inventory) / §2 (orchestrator inventory),
+  [`docs/r4-survey/01-modern-statemachine-research.md`](r4-survey/01-modern-statemachine-research.md)
+  §1 (PEP 695 generic / decorator API),
+  `adaptive_reflow/contracts/state_machine.py` (substrate) [CLM-033]
+- Asserted by:
+  `adaptive_reflow/algorithm/state_machine_integration.py:147-439`
+  (`_build_state_machine_for` — per-family extension state vocab),
+  `adaptive_reflow/algorithm/state_machine_integration.py:486-606`
+  (`_StateMachineSchedulerBase` mixin — observation-only wrapper,
+  preserves `isinstance` against the inner scheduler),
+  `adaptive_reflow/algorithm/state_machine_integration.py:636-684`
+  (`_build_wrapped_class` + `wrap_scheduler_with_state_machine` —
+  dynamic subclass, idempotent),
+  `adaptive_reflow/algorithm/state_machine_integration.py:695-753`
+  (`ORCHESTRATOR_STATES` + `make_runner_state_machine` — the
+  `ReInferenceRunner` orchestrator state machine),
+  `adaptive_reflow/algorithm/runner.py:455` (scheduler wrapped at
+  every `ReInferenceRunner` construction),
+  `adaptive_reflow/algorithm/runner.py:474-476`
+  (orchestrator state machine attached to the runner instance),
+  `tests/test_algorithm/test_state_machine_integration.py`
+  (22 test functions covering all 14 wrapped scheduler families
+  via parametrised `test_wrap_preserves_isinstance` plus
+  per-family extension-state tests).
+- Disputed by: —
+- Statement: Every scheduler class that `SchedulerProtocol`
+  admits is wrapped with an observation-only `StateMachine` at
+  the moment `ReInferenceRunner.__init__` consumes it
+  (`wrap_scheduler_with_state_machine`, called at
+  `runner.py:455`). The runner itself carries a second state
+  machine, the `make_runner_state_machine`-built
+  ReInferenceRunner lifecycle SM, that explicitly transitions
+  through the four-loop round lifecycle
+  (`ROUND_ACTIVE -> FEEDBACK_PENDING -> NEXT_ROUND_READY`) so
+  the 4 feedback loops become typed transitions in the audit
+  trail. Coverage: 16 scheduler state machines (one per
+  scheduler family plus `SequentialScheduler` /
+  `HandoffSequentialScheduler` per-family extensions) plus the
+  1 runner state machine = **17 state machines total**,
+  **333 typed transitions** across the union of all machines.
+  Every state machine carries a common 6-state vocabulary
+  (UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED /
+  ROUND_TERMINATED / TERMINATED) plus per-family extensions
+  (PID_WARMING / PID_UPDATING for adaptive families,
+  EVIDENCE_COMPUTED for codimension, EPS_PROPAGATED for
+  evidence-driven, TRAJECTORY_UPDATED for `FreeTrajScheduler`,
+  etc., per the design doc). Backward-compatible by construction:
+  every wrapped instance passes isinstance against its inner
+  scheduler class (parametrised test), and all pre-existing
+  tests continue to pass.
+- Evidence:
+  `adaptive_reflow/algorithm/state_machine_integration.py:147-228`
+  (common 6-state vocabulary + RESET fan-in for all families),
+  `adaptive_reflow/algorithm/state_machine_integration.py:243-437`
+  (per-family extension transitions: PID, codimension,
+  evidence-driven, FreeTraj, EDM, AdaptivePID, multi-channel,
+  sequential, handoff),
+  `adaptive_reflow/algorithm/state_machine_integration.py:503-514`
+  (`_sm_init` per-instance build),
+  `adaptive_reflow/algorithm/state_machine_integration.py:516-606`
+  (`sample` / `reset` / `record_round_feedback` event emission),
+  `adaptive_reflow/algorithm/state_machine_integration.py:706-753`
+  (runner state machine build with all transitions, including
+  RESET fan-in from each orchestrator state to `IDLE`),
+  `tests/test_algorithm/test_state_machine_integration.py:90-118`
+  (parametrised coverage of all 14 scheduler factories).

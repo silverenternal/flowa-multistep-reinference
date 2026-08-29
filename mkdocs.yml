@@ -149,6 +149,7 @@ not_in_nav: |
   benchmark-round2-uplifts.md
   _test_ablation_quick.md
   r3-survey/*.md
+  r4-survey/*.md
 
 validation:
   nav:

@@ -213,6 +213,21 @@ from .operations import (
     OperationCompositionContract,
 )
 
+# ---- Generic state machine library (PEP 695, stdlib-only) ----
+from .state_machine import (
+    GuardRejected,
+    HistoryKind,
+    InvalidTransitionError,
+    StateMachine,
+    StateMachineError,
+    StateNotFoundError,
+    TransitionBuilder,
+    TransitionContext,
+    TransitionGuardedBuilder,
+    TransitionKind,
+    TransitionLog,
+)
+
 # ---------------------------------------------------------------------------
 # Lazy re-exports of the molecule-aware atomic source bundle.
 # ---------------------------------------------------------------------------
@@ -316,4 +331,16 @@ __all__ = [
     "validate_tail_budget_row",
     # Phase state validator
     "validate_phase_state",
+    # Generic state machine library
+    "GuardRejected",
+    "HistoryKind",
+    "InvalidTransitionError",
+    "StateMachine",
+    "StateMachineError",
+    "StateNotFoundError",
+    "TransitionBuilder",
+    "TransitionContext",
+    "TransitionGuardedBuilder",
+    "TransitionKind",
+    "TransitionLog",
 ]
