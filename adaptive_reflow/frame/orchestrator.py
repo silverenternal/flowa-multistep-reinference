@@ -66,6 +66,11 @@ from collections.abc import Mapping
 from contextlib import suppress
 from typing import Any, cast
 
+from adaptive_reflow.algorithm.merge_operator import (
+    BoundedMergeOperator,
+    MergeOperatorProtocol,
+    default_bounded_merge_operator,
+)
 from adaptive_reflow.contracts import (
     ArtifactHash,
     ChannelName,
@@ -94,7 +99,6 @@ from adaptive_reflow.envelope.manifest import classify_endpoint
 from adaptive_reflow.frame.channel_rule import (
     evaluate_channel_evidence_with_revocation,
 )
-from adaptive_reflow.frame.merge import bounded_merge
 from adaptive_reflow.frame.operation import build_default_composition_contract
 from adaptive_reflow.schedule.cosine import CosineScheduleSampler
 from adaptive_reflow.writer.authority import (
@@ -285,6 +289,7 @@ class AdaptiveReflowPolicyOrchestrator:
         "_evidence_rows",
         "_last_bounded_fraction",
         "_ledger_records",
+        "_merge_operator",
         "_operation_contract",
         "_phase",
         "_phases",
@@ -301,6 +306,7 @@ class AdaptiveReflowPolicyOrchestrator:
         operation_contract: OperationCompositionContract | None = None,
         arbitrator: WriterArbitrator | None = None,
         schedule_sampler: CosineScheduleSampler | None = None,
+        merge_operator: MergeOperatorProtocol | None = None,
     ) -> None:
         """Store all four contracts; create defaults when ``None``.
 
@@ -361,6 +367,15 @@ class AdaptiveReflowPolicyOrchestrator:
             schedule_sampler = CosineScheduleSampler(schedule_config)
         self._schedule_sampler: CosineScheduleSampler = schedule_sampler
 
+        # W2 fix (Hexagonal port set): the orchestrator now owns a
+        # :class:`MergeOperatorProtocol` instance and delegates the
+        # per-channel merge to it. Default is the canonical
+        # :class:`BoundedMergeOperator` (matches the legacy
+        # ``bounded_merge(...)`` wrapper math byte-for-byte).
+        if merge_operator is None:
+            merge_operator = default_bounded_merge_operator()
+        self._merge_operator: MergeOperatorProtocol = merge_operator
+
         # Mutable internal caches. None until first registration.
         self._phase: PhaseState | None = None
         self._ledger_records: list[_LedgerRecord] = []
@@ -407,6 +422,17 @@ class AdaptiveReflowPolicyOrchestrator:
     def schedule_sampler(self) -> CosineScheduleSampler:
         """Return the stored :class:`CosineScheduleSampler`."""
         return self._schedule_sampler
+
+    @property
+    def merge_operator(self) -> MergeOperatorProtocol:
+        """Return the stored :class:`MergeOperatorProtocol`.
+
+        W2 fix: the orchestrator now owns a merge operator directly so
+        :meth:`merge_fraction_authority` can delegate to
+        :meth:`MergeOperatorProtocol.merge` instead of the legacy
+        :func:`adaptive_reflow.frame.merge.bounded_merge` wrapper.
+        """
+        return self._merge_operator
 
     @property
     def current_phase(self) -> PhaseState | None:
@@ -1070,9 +1096,16 @@ class AdaptiveReflowPolicyOrchestrator:
             else:
                 prev_value = FactorValue(0.0)
 
-        merged = bounded_merge(
-            prev=prev_value,
-            dynamic=dynamic,
+        # W2 fix (Hexagonal port set): route the bounded merge through
+        # the orchestrator-owned :class:`MergeOperatorProtocol` rather
+        # than the legacy ``bounded_merge(...)`` wrapper. The default
+        # :class:`BoundedMergeOperator` is byte-equivalent to the
+        # legacy helper for any (prev, dynamic, cap, floor, delta_cap)
+        # tuple, so callers that do not supply a ``merge_operator`` see
+        # no behavioural change.
+        merged = self._merge_operator.merge(
+            prev=float(prev_value),
+            dynamic=float(dynamic),
             cap=cap,
             floor=float(configured_floor),
             delta_cap_up=delta_cap,

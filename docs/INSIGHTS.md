@@ -178,6 +178,37 @@ coverage metric (`0.1916 -> 0.7810` near-far separation)
 mypy **33 -> 0**, ruff **32 -> 0**, across 118 source files
 [CLM-024].
 
+## R3 adversarial fixes (Round-3 uplift)
+
+The R3 adversarial survey ([docs/r3-survey/05-verified-findings.md](r3-survey/05-verified-findings.md))
+read-only verified **17** findings against the shipped framework and
+refuted **5** [CLM-031]. The P0 paper-correctness fixes restore the
+documented fail-closed semantics: `BoundedMergeOperator.merge` now
+raises `MergeAuthorityError` on `cap < floor` after clipping instead
+of silently swapping the envelope [CLM-025], and
+`ConvergenceAdaptiveScheduler`'s PID consumes the EMA-smoothed W2
+(`self._smoothed_w2`) instead of the raw aggregated signal
+[CLM-026]. Loop 2 of the documented four-loop design is closed:
+`EvidenceDrivenScheduler` subscribes to the runner's per-round
+metric dict via `record_round_feedback` and updates `n_cap` via a
+PID-lite controller, so paper quantities now reach a scheduler and
+influence the per-round capacity [CLM-027]. The eight plug-in
+families (scheduler / policy driver / merge operator / blender /
+adapter / mixer / evaluator / envelope) are codified as named
+`Port[T]` instances with explicit `register(...)` / `resolve(...)`
+helpers, closing W1 (blender delegation) and W2 (orchestrator
+`bounded_merge` bypass) from `03-coupling.md` [CLM-028]. Two new
+algorithm additions land behind the canonical Protocol surfaces:
+`FreeTrajScheduler` ([arXiv:2507.10532](https://arxiv.org/abs/2507.10532))
+[CLM-029] and `MeanFlowMergeOperator`
+([arXiv:2505.13447](https://arxiv.org/abs/2505.13447)) [CLM-030].
+Fifteen P1 framework-driving fixes (F1, F2, F3, F6, F7, F10, F14,
+F18, F19, F22, F23, F25) close the rest of the verified leaks; 17
+new tests pin every fix and the six verification gates
+(``pytest tests/`` / ``ruff`` / ``mypy`` / ``check_docs_against_code.py``
+/ ``check_claims_consistency.py`` / ``mkdocs build --strict``) all
+remain green.
+
 ## 6. Open questions
 
 The "next question" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped `selection_ratio` metric was claimed to converge toward 1 as rounds progress, but `docs/review/B5-VERIFICATION.md` shows that the metric is in fact invariant to loop state — it is an unconditional replay of the `(adapter, target)` pair, not an endpoint-conditioned posterior, and two unrelated schedulers report identical curves to four decimal places. The reviewer's symptom ("wrong bundle passed") was a wiring guess; the actual defect is that the evaluator's `bundle` parameter is inert, so no rewiring fix would change the output. Closing the gap requires an endpoint-conditioned variant (scoring the round's own endpoints rather than a fresh replay), which is blocked on the runner carrying a batch of trajectories per round — a real architectural change to `ReInferenceRunner` and `TwoDimFMAdapter`, both currently single-sample. ADR-0013 §"Selection metric status" demotes the convergence-to-1 prediction to apply only to that future variant. The shipped metric remains in place until a human design decision lands; the verification document is the canonical record of the investigation.

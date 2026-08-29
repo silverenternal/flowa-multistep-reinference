@@ -154,6 +154,14 @@ class AdapterCapabilities:
     has_trajectory_digest: bool
     has_deterministic_seed: bool
     has_materialization_route: bool
+    # F14 — adapter's native state shape. The runner's forward-noise
+    # injection allocates a ``np.zeros(state_shape, dtype=np.float64)``
+    # prior array before calling ``scheduler.inject_noise``; without
+    # this declaration the runner hard-codes ``(2,)``, which is only
+    # correct for 2-D flow-matching adapters. Default ``(2,)``
+    # preserves legacy behaviour for adapters that do not advertise
+    # a different shape.
+    state_shape: tuple[int, ...] = (2,)
     supported_channels: tuple[str, ...] = ()
     channel_domains: Mapping[ChannelName, ChannelDomain] = field(default_factory=dict)
     # Pluggable-backend declarations (post-refactor addition).
@@ -304,6 +312,19 @@ class FlowMatchingODEAdapter(Protocol):
         valid "no trajectory available" signal.
         """
         ...
+
+    # NOTE — F3: ``inject_forward_noise`` is intentionally NOT declared
+    # on the :class:`FlowMatchingODEAdapter` :class:`Protocol` (it would
+    # break every concrete adapter via ``@runtime_checkable``).
+    # Adapters that wish to wire the symmetric FORWARD side of the
+    # round model into their bundle MAY implement the method with the
+    # signature
+    # ``inject_forward_noise(bundle: StateBundle, injected: Any) -> StateBundle``
+    # ; the runner detects the method via ``hasattr`` and routes the
+    # ``scheduler.inject_noise`` result through it. Adapters that do
+    # not implement it fall through to a no-op (the runner still emits
+    # the ``FORWARD_NOISE_INJECTED`` audit code so the trail is
+    # consistent across wired and unwired paths).
 
 
 # ---------------------------------------------------------------------------

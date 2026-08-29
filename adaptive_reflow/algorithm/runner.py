@@ -572,14 +572,24 @@ class ReInferenceRunner:
         prev_ledger_row_hash: str | None = None
 
         for r in range(n_rounds):
+            # F22 — ``target_round`` is the local round index. The
+            # scheduler sample, the placeholder policy, and the
+            # engine's ``build_ledger_row`` all agree on
+            # ``target_round=r`` (the engine never sees
+            # ``config.target_round``); using
+            # ``int(config.target_round) + r`` here produced
+            # ``sample.computed_at_round`` and ``policy.target_round``
+            # values that disagreed with the ledger row's
+            # ``target_round`` by ``config.target_round`` (see
+            # ``docs/r3-survey/05-verified-findings.md`` §22).
             sample = self._scheduler.sample(
-                int(config.outer_cycle_id), r, int(config.target_round) + r
+                int(config.outer_cycle_id), r, int(r)
             )
             base_policy = _build_base_policy(
                 schedule_sample=sample.as_cosine_schedule_sample(),
                 beta=0.0,
                 channel=primary_channel,
-                target_round=int(config.target_round) + r,
+                target_round=int(r),
                 outer_cycle_id=int(config.outer_cycle_id),
             )
             applied_policy = self._driver.compute_policy(
@@ -606,17 +616,52 @@ class ReInferenceRunner:
             # tighter per-round delta caps can wrap a custom
             # :class:`MergeOperatorProtocol`.
             merge_audit: list[str] = []
-            merged_beta = self._merge.merge(
-                prev=prev_beta,
-                dynamic=float(
+            # F25 — for the schedule-derived driver the
+            # ``applied_policy.beta_by_channel`` value is already
+            # ``n_cap`` (the driver computes ``beta`` directly from
+            # the schedule sample). With the runner's
+            # ``delta_cap_up = delta_cap_down = 1.0`` the bounded merge
+            # collapses to ``clamp(n_cap, n_min, n_cap) == n_cap`` —
+            # a double-wrapping identity. Skip the merge call so the
+            # runner no longer carries the redundant computation and
+            # the merge-operator family (EMAOperator,
+            # IdentityOperator, etc.) is reachable on the non-
+            # schedule-derived paths only.
+            if self._driver.driver_family() == "schedule_derived":
+                merged_beta = float(
                     applied_policy.beta_by_channel.get(primary_channel, 0.0)
-                ),
-                cap=float(sample.n_cap),
-                floor=float(sample.n_min),
-                delta_cap_up=1.0,
-                delta_cap_down=1.0,
-                audit_codes=merge_audit,
-            )
+                )
+            else:
+                # F7 — thread ``schedule_sample`` through the merge call
+                # so the schedule-aware modulation on
+                # :class:`EMAOperator` is reachable from the runner's
+                # data path. Only ``EMAOperator`` consumes the kwarg
+                # today; ``BoundedMergeOperator`` /
+                # :class:`IdentityOperator` ignore it. Use a
+                # signature check so the runner stays polymorphic over
+                # the merge-operator family without raising on
+                # legacy signatures.
+                import inspect as _inspect
+
+                _merge_params = _inspect.signature(
+                    self._merge.merge
+                ).parameters
+                _merge_kwargs: dict[str, Any] = {
+                    "prev": prev_beta,
+                    "dynamic": float(
+                        applied_policy.beta_by_channel.get(primary_channel, 0.0)
+                    ),
+                    "cap": float(sample.n_cap),
+                    "floor": float(sample.n_min),
+                    "delta_cap_up": 1.0,
+                    "delta_cap_down": 1.0,
+                    "audit_codes": merge_audit,
+                }
+                if "schedule_sample" in _merge_params:
+                    _merge_kwargs["schedule_sample"] = (
+                        sample.as_cosine_schedule_sample()
+                    )
+                merged_beta = self._merge.merge(**_merge_kwargs)
             # Replace the policy's ``beta_by_channel`` with the
             # merge-result so the engine / adapter see the bounded
             # value. ``driver_computed_beta=True`` still suppresses the
@@ -638,8 +683,12 @@ class ReInferenceRunner:
             # Carry the new emitted beta into the next round's merge.
             prev_beta = float(merged_beta)
 
+            # F22 — ``target_round`` is the local round index so the
+            # condition delta agrees with ``sample.computed_at_round``
+            # and ``ledger_row.target_round`` (the engine's
+            # ``build_ledger_row`` uses ``target_round=round_index``).
             condition_delta = _build_condition_delta(
-                target_round=int(config.target_round) + r,
+                target_round=int(r),
                 source="adaptive_reflow.algorithm.runner",
             )
 
@@ -662,15 +711,43 @@ class ReInferenceRunner:
                 hasattr(self._scheduler, "inject_noise")
                 and bundle is not None
             ):
+                # F14 — read the adapter's native state shape via the
+                # ``state_shape`` field on the adapter's advertised
+                # capabilities. Default ``(2,)`` preserves legacy
+                # behaviour for adapters that do not advertise a
+                # different shape. Without this, the runner would
+                # hard-code ``np.zeros(2, ...)`` and silently break
+                # adapters with non-2-D state spaces.
+                adapter_state_shape = tuple(
+                    getattr(self._adapter, "state_shape", (2,))
+                    if hasattr(self._adapter, "state_shape")
+                    else (2,)
+                )
+                if not adapter_state_shape:
+                    adapter_state_shape = (2,)
                 prior_array: NDArray[np.float64] = np.zeros(
-                    2, dtype=np.float64
+                    adapter_state_shape, dtype=np.float64
                 )
                 injected = self._scheduler.inject_noise(
                     prior_array,
                     sample.as_cosine_schedule_sample(),
                     generator=forward_noise_generator,
                 )
-                _ = injected  # symmetric pair — result feeds into the audit trail below
+                # F3 — route the injected perturbation through the
+                # adapter's ``inject_forward_noise`` hook so the
+                # symmetric FORWARD side of the round model actually
+                # perturbs the bundle's prior. The runner used to
+                # discard ``injected`` (``_ = injected``); the new
+                # path closes Loop 4 by delegating the perturbation
+                # to the adapter. Adapters that do not implement the
+                # hook are a no-op — the runner still emits the
+                # ``FORWARD_NOISE_INJECTED`` audit code so the audit
+                # trail stays consistent across wired / unwired
+                # paths.
+                if hasattr(self._adapter, "inject_forward_noise"):
+                    bundle = self._adapter.inject_forward_noise(
+                        bundle, injected
+                    )
                 forward_noise_emitted = True
 
             result = self._engine.run_round(
@@ -898,15 +975,26 @@ class ReInferenceRunner:
         # Otherwise leave it alone (the codimension scheduler is the
         # only concrete type that consumes paper quantities today).
         if isinstance(self._scheduler, CodimensionSheetScheduler):
-            self._scheduler = CodimensionSheetScheduler(
-                cycle_length=int(self._scheduler.cycle_length()),
-                n_min=float(self._scheduler._n_min),  # noqa: SLF001
-                n_max=float(self._scheduler._n_max),  # noqa: SLF001
-                profile_residual_fn=provider,
-                eps_implicit=float(self._scheduler._eps_implicit),  # noqa: SLF001
-                eps_direction=str(self._scheduler._eps_direction),  # noqa: SLF001
-                seed=int(self._scheduler.seed),
-            )
+            # F10 — prefer the public ``with_profile`` constructor when
+            # available (added by Agent 1a's P1 fix on the scheduler
+            # side). Fall back to a re-construction via private
+            # attributes when ``with_profile`` is not present (legacy
+            # schedulers). The reach-around signals that renaming the
+            # underlying attributes would break the legacy path; the
+            # ``with_profile`` public method (added by Agent 1a's P1
+            # fix) is the long-term replacement.
+            if hasattr(self._scheduler, "with_profile"):
+                self._scheduler = self._scheduler.with_profile(provider)
+            else:
+                self._scheduler = CodimensionSheetScheduler(
+                    cycle_length=int(self._scheduler.cycle_length()),
+                    n_min=float(self._scheduler._n_min),
+                    n_max=float(self._scheduler._n_max),
+                    profile_residual_fn=provider,
+                    eps_implicit=float(self._scheduler._eps_implicit),
+                    eps_direction=str(self._scheduler._eps_direction),
+                    seed=int(self._scheduler.seed),
+                )
 
         # Upgrade the policy driver if it is an AdaptivePolicyDriver.
         if isinstance(self._driver, AdaptivePolicyDriver):

@@ -644,7 +644,7 @@ class AdaptivePolicyDriver:
         prior_endpoint_digest: str,
         audit_codes: list[str] | None = None,
     ) -> FinalRestartPolicy:
-        """Return the round's policy with ``beta = (1 - |p - t|) / C_g``.
+        """Return the round's policy with ``beta = (1 - |p - t|) * C_g``.
 
         ``prior_endpoint_digest`` is hashed to a ``[0, 1]`` value via
         a stable mapping (``int(digest_hex, 16) / 2**256``). An empty
@@ -653,17 +653,17 @@ class AdaptivePolicyDriver:
         ``[0, 1]`` so round 0 is deterministic.
 
         When ``per_cell_coefficient_C`` is configured at construction
-        time, the raw envelope ``1 - |p - t|`` is divided by ``C_g``
+        time, the raw envelope ``1 - |p - t|`` is multiplied by ``C_g``
         so the resulting ``beta`` lives on paper Lemma 3's per-cell
         evidence scale. The result is clipped to ``[0, 1]`` (when
-        ``C_g < 1`` the unclipped value can exceed 1, so the clip
-        saturates; when ``C_g >= 1`` the raw envelope stays inside
+        ``C_g > 1`` the unclipped value can exceed 1, so the clip
+        saturates; when ``C_g <= 1`` the raw envelope stays inside
         ``[0, 1]``).
 
         ``audit_codes``: optional mutable list that the driver appends
         diagnostic codes to. When the paper-quantity-normalised
-        envelope ``(1 - |p - t|) / C_g`` exceeds ``1.0`` (only
-        possible when ``C_g < 1``) the driver appends
+        envelope ``(1 - |p - t|) * C_g`` exceeds ``1.0`` (possible
+        when ``C_g > 1``) the driver appends
         :data:`BETA_SATURATION_FROM_PAPER_QUANTITY` with the raw
         unclipped value embedded (P2-3 / 8.3 audit). The saturation
         audit code is only emitted on the paper-quantity-augmented
@@ -675,8 +675,13 @@ class AdaptivePolicyDriver:
         raw = 1.0 - diff
         saturated_from_paper_quantity = False
         if self._per_cell_coefficient_C is not None:
-            raw = raw / float(self._per_cell_coefficient_C)
-            # P2-3 / 8.3: when ``C_g < 1`` the paper-quantity-
+            # F6: invert the math — use multiplication by C_g instead of
+            # division. Default ``C_g ≈ 1.24 > 1`` now produces saturation
+            # when ``(1 - |p - t|)`` is large (i.e., ``p ≈ t``), matching
+            # paper Lemma 3's intent that the paper-quantity envelope
+            # scales *up* relative to the heuristic.
+            raw = raw * float(self._per_cell_coefficient_C)
+            # P2-3 / 8.3: when ``C_g > 1`` the paper-quantity-
             # normalised envelope can exceed 1.0 and ``beta`` saturates
             # at the ceiling. Emit an audit code so downstream readers
             # can see the saturation.

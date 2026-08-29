@@ -331,7 +331,8 @@ def test_production_clips_on_hostile(
     """Production clips on hostile input (P0-3) and emits a canonical
     audit code where the contract mandates one. The result is a
     finite ``float`` in ``[0, 1]`` rather than an exception
-    (closes P0-3).
+    (closes P0-3). For ``cap_below_floor`` the operator fails closed
+    (F5) — the audit code is appended before the raise.
 
     For ``cap > 1``, ``floor < 0``, ``floor > 1``, or
     ``cap < floor`` the operator MUST emit an audit code; for
@@ -341,6 +342,23 @@ def test_production_clips_on_hostile(
     envelope-mismatch cases and the result-finiteness for all.
     """
     audit: list[str] = []
+    if name == "cap_below_floor":
+        # F5: cap < floor fails closed — raises after emitting audit code.
+        with pytest.raises(MergeAuthorityError):
+            bounded_merge(
+                inputs["prev"],
+                inputs["dynamic"],
+                cap=inputs["cap"],
+                floor=inputs["floor"],
+                delta_cap_up=inputs["delta_cap_up"],
+                delta_cap_down=inputs["delta_cap_down"],
+                audit_codes=audit,
+            )
+        assert any(
+            code.startswith("merge_cap_below_floor")
+            for code in audit
+        ), f"no F5 audit code emitted for {name}: audit={audit!r}"
+        return
     result = bounded_merge(
         inputs["prev"],
         inputs["dynamic"],
@@ -359,14 +377,12 @@ def test_production_clips_on_hostile(
         "cap_above_one",
         "floor_negative",
         "floor_above_one",
-        "cap_below_floor",
     ):
         assert any(
             code.startswith(
                 (
                     "merge_cap_out_of_range",
                     "merge_floor_out_of_range",
-                    "merge_cap_below_floor",
                 )
             )
             for code in audit

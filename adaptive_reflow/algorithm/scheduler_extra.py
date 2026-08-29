@@ -40,7 +40,7 @@ from adaptive_reflow.contracts import (
     hash_artifact,
 )
 
-from .scheduler import (
+from .scheduler._core import (
     SchedulerProtocol,
     ScheduleSample,
     _coerce_int_nonneg,
@@ -420,7 +420,7 @@ class AdaptivePIDScheduler:
         seed: int = 0,
         metric_weights: Mapping[str, float] | None = None,
     ) -> None:
-        from .scheduler import ConvergenceAdaptiveScheduler
+        from .scheduler._core import ConvergenceAdaptiveScheduler
 
         if base is None:
             base = ConvergenceAdaptiveScheduler(
@@ -571,7 +571,7 @@ class AdaptivePIDScheduler:
         else:
             from adaptive_reflow.schedule.cosine import n_cap_for_round
 
-            from .scheduler import CosineAnnealScheduler
+            from .scheduler._core import CosineAnnealScheduler
 
             # The base may be a ConvergenceAdaptiveScheduler (which
             # wraps a CosineAnnealScheduler) or a CosineAnnealScheduler
@@ -785,7 +785,7 @@ class AdaptivePIDScheduler:
             raise TypeError(
                 f"config must be a dict, got {type(config).__name__}"
             )
-        from .scheduler import ConvergenceAdaptiveScheduler
+        from .scheduler._core import ConvergenceAdaptiveScheduler
 
         # Recurse through the nested base; the default
         # ConvergenceAdaptiveScheduler wraps a CosineAnnealScheduler
@@ -794,7 +794,7 @@ class AdaptivePIDScheduler:
         if base_cfg.get("family") == "convergence_adaptive":
             base: Any = ConvergenceAdaptiveScheduler.from_config(base_cfg)
         else:
-            from .scheduler import CosineAnnealScheduler
+            from .scheduler._core import CosineAnnealScheduler
 
             base = CosineAnnealScheduler.from_config(base_cfg)
         raw_weights = config.get("metric_weights")

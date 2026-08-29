@@ -148,6 +148,7 @@ not_in_nav: |
   algorithm-round2-uplift-plan.md
   benchmark-round2-uplifts.md
   _test_ablation_quick.md
+  r3-survey/*.md
 
 validation:
   nav:

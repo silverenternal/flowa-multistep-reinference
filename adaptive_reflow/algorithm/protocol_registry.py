@@ -115,7 +115,7 @@ BLENDER_FAMILIES: frozenset[str] = frozenset(
 
 def _build_scheduler_registry() -> dict[str, Any]:
     """Return the SchedulerProtocol family -> concrete-class registry."""
-    from .scheduler import (
+    from .scheduler._core import (
         CodimensionSheetScheduler,
         ConstantScheduler,
         ConvergenceAdaptiveScheduler,
@@ -126,6 +126,8 @@ def _build_scheduler_registry() -> dict[str, Any]:
         SigmoidScheduler,
         default_cosine_scheduler,
     )
+    from .scheduler.evidence_driven import EvidenceDrivenScheduler
+    from .scheduler.freetraj import FreeTrajScheduler
     from .scheduler_extra import (
         AdaptivePIDScheduler,
         EDMScheduler,
@@ -148,6 +150,8 @@ def _build_scheduler_registry() -> dict[str, Any]:
         "jittered_constant": JitteredConstantScheduler,
         "multi_channel_jittered": MultiChannelJitteredConstantScheduler,
         "handoff_sequential": HandoffSequentialScheduler,
+        "evidence_driven": EvidenceDrivenScheduler,
+        "freetraj": FreeTrajScheduler,
     }
     # Cosine factory defaults live behind a kwargs API rather than the
     # bare constructor; expose it under the same family key so callers
@@ -188,6 +192,7 @@ def _build_merge_operator_registry() -> dict[str, Any]:
         PIDIdentityOperator,
         ScheduleAwareEMAOperator,
     )
+    from .merge_operator_v3 import MeanFlowMergeOperator
 
     return {
         "bounded": BoundedMergeOperator,
@@ -198,6 +203,7 @@ def _build_merge_operator_registry() -> dict[str, Any]:
         "pid_identity": PIDIdentityOperator,
         "schedule_ema": ScheduleAwareEMAOperator,
         "multi_source_kalman": MultiSourceKalmanMergeOperator,
+        "meanflow": MeanFlowMergeOperator,
     }
 
 
@@ -276,13 +282,37 @@ def _ensure_protocol_registry() -> None:
     """Populate :data:`PROTOCOL_REGISTRY` from the per-protocol registries.
 
     Idempotent: re-invocations after the dict is populated are no-ops.
+
+    Dispatches through ``adaptive_reflow.manifest`` (D1 — Hexagonal port
+    set, ``docs/r3-survey/08-fix-plan.md`` §3): the legacy flat-name
+    dict is now a *view* over the manifest's registered families, so the
+    two surfaces can never drift. The manifest is populated lazily on
+    first call so this function remains safe to call from module import
+    time.
     """
     if PROTOCOL_REGISTRY:
         return
-    PROTOCOL_REGISTRY["SchedulerProtocol"] = dict(_scheduler_registry())
-    PROTOCOL_REGISTRY["PolicyDriverProtocol"] = dict(_policy_driver_registry())
-    PROTOCOL_REGISTRY["MergeOperatorProtocol"] = dict(_merge_operator_registry())
-    PROTOCOL_REGISTRY["RestartBlenderProtocol"] = dict(_blender_registry())
+    # Lazy import to avoid a circular dependency: ``manifest`` does not
+    # import this module, but the package import graph visits
+    # ``manifest`` -> ``protocol_registry`` -> ``scheduler`` etc.; a
+    # top-level import here would create the cycle.
+    try:
+        from ..manifest import register_all_default, rewire_protocol_registry_from_manifest
+
+        # Populate the default manifest singleton with the canonical
+        # stock implementations; ``register_all_default`` is idempotent
+        # so re-invocations are no-ops.
+        register_all_default(replace=False)
+        rewire_protocol_registry_from_manifest()
+    except (ImportError, AttributeError):
+        # Fallback: if the manifest module is unavailable (rare import
+        # edge case during package bootstrap), fall back to the legacy
+        # per-protocol builders so callers always see a populated
+        # ``PROTOCOL_REGISTRY``.
+        PROTOCOL_REGISTRY["SchedulerProtocol"] = dict(_scheduler_registry())
+        PROTOCOL_REGISTRY["PolicyDriverProtocol"] = dict(_policy_driver_registry())
+        PROTOCOL_REGISTRY["MergeOperatorProtocol"] = dict(_merge_operator_registry())
+        PROTOCOL_REGISTRY["RestartBlenderProtocol"] = dict(_blender_registry())
 
 
 # Auto-populate PROTOCOL_REGISTRY on import so callers see the full

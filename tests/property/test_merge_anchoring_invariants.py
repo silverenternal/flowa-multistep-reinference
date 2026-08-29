@@ -32,6 +32,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 # Make the repository importable when pytest is launched from the
 # project root without any package metadata.
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -168,20 +170,22 @@ def test_degenerate_interval_emits_audit(
     assume(0.0 <= cap <= 1.0)
 
     if floor > cap:
-        # Path 1 — the envelope is ill-formed: post-P0-3 the merge
-        # clips (swaps cap/floor) and emits the
-        # ``merge_cap_below_floor`` audit code WITHOUT raising.
+        # Path 1 — the envelope is ill-formed. F5: post-P0-3 + F5 the
+        # merge fails closed: the ``merge_cap_below_floor`` audit code
+        # is appended BEFORE the raise, and ``MergeAuthorityError`` is
+        # raised. The audit code is still emitted so a downstream
+        # reader can observe the broken configuration.
         audit_codes: list[str] = []
-        result = bounded_merge(
-            prev=prev,
-            dynamic=prev,
-            cap=cap,
-            floor=floor,
-            delta_cap_up=0.0,
-            delta_cap_down=0.0,
-            audit_codes=audit_codes,
-        )
-        assert 0.0 <= result <= 1.0
+        with pytest.raises(MergeAuthorityError):
+            bounded_merge(
+                prev=prev,
+                dynamic=prev,
+                cap=cap,
+                floor=floor,
+                delta_cap_up=0.0,
+                delta_cap_down=0.0,
+                audit_codes=audit_codes,
+            )
         joined = "|".join(audit_codes)
         assert "merge_cap_below_floor" in joined, (
             f"merge_cap_below_floor must appear in audit_codes; "

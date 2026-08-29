@@ -533,6 +533,14 @@ def _scan_path_claims(
                     continue
             target = repo_root / raw
             ok = target.exists()
+            # If a ``.py`` path was split into a package directory
+            # (e.g. ``scheduler.py`` -> ``scheduler/``) accept the
+            # sibling directory as a valid resolution so docs that
+            # pre-date the split do not falsely flag the path.
+            if not ok and raw.endswith(".py"):
+                sibling = target.with_suffix("")
+                if sibling.is_dir():
+                    ok = True
             claims.append(
                 Claim(
                     file=md_path,

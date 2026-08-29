@@ -616,23 +616,23 @@ class TestEdgeCases:
     # -----------------------------------------------------------------------
 
     def test_bounded_merge_cap_below_floor_clips_with_audit(self) -> None:
-        """Post-P0-3: when ``cap < floor``, the bounded_merge primitive
-        clips (swapping the envelope into a valid range) and emits
-        the canonical ``merge_cap_below_floor`` audit code WITHOUT
-        raising :exc:`MergeAuthorityError`. The result is a finite
-        ``float`` in ``[0, 1]``.
+        """F5: when ``cap < floor``, the bounded_merge primitive fails
+        closed: emits the canonical ``merge_cap_below_floor`` audit
+        code AND raises :exc:`MergeAuthorityError`. The legacy silent
+        swap semantics were removed so a downstream audit reader
+        can replay the broken configuration.
         """
         audit: list[str] = []
-        result = bounded_merge(
-            prev=0.5,
-            dynamic=0.5,
-            cap=0.2,
-            floor=0.7,
-            delta_cap_up=0.5,
-            delta_cap_down=0.5,
-            audit_codes=audit,
-        )
-        assert 0.0 <= result <= 1.0
+        with pytest.raises(MergeAuthorityError):
+            bounded_merge(
+                prev=0.5,
+                dynamic=0.5,
+                cap=0.2,
+                floor=0.7,
+                delta_cap_up=0.5,
+                delta_cap_down=0.5,
+                audit_codes=audit,
+            )
         joined = "|".join(audit)
         assert "merge_cap_below_floor" in joined, (
             f"merge_cap_below_floor must appear in audit_codes for "

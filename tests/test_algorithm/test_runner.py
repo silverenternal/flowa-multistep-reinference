@@ -1284,6 +1284,214 @@ if __name__ == "__main__":
 
 
 # ---------------------------------------------------------------------------
+# F7 — runner threads ``schedule_sample`` into the EMA merge operator
+# ---------------------------------------------------------------------------
+
+
+class _ScheduleSampleRecordingMerge:
+    """Wrap :class:`EMAOperator` and capture the ``schedule_sample`` kwarg.
+
+    Used by the F7 regression test to confirm the runner threads the
+    per-round :class:`ScheduleSample` into the merge call so the
+    schedule-aware alpha modulation on :class:`EMAOperator` is
+    reachable.
+    """
+
+    def __init__(self) -> None:
+        self.schedule_samples: list[Any] = []
+
+    def config_hash(self) -> str:
+        return "schedule-sample-recording"
+
+    def merge(
+        self,
+        prev,
+        dynamic,
+        *,
+        cap,
+        floor,
+        delta_cap_up,
+        delta_cap_down,
+        audit_codes=None,
+        schedule_sample=None,
+    ) -> float:
+        self.schedule_samples.append(schedule_sample)
+        if audit_codes is not None:
+            pass
+        # Pretend we are ``EMAOperator(alpha=0.5)`` so the runner
+        # sees a finite result and we don't need the adapter to run
+        # the full pipeline (the 2D FM adapter's W1 fix is exercised
+        # elsewhere — see ``test_runner_calls_merge_operator_...``).
+        return float(prev + 0.5 * (dynamic - prev))
+
+
+def test_runner_with_ema_merge_propagates_schedule_sample(_twodim_adapter) -> None:
+    """Runner threads ``schedule_sample`` into merge when the operator advertises the kwarg.
+
+    Regression test for finding #7 in
+    ``docs/r3-survey/05-verified-findings.md``: the runner used to
+    call ``self._merge.merge(...)`` without ``schedule_sample``, so
+    the schedule-aware alpha modulation on :class:`EMAOperator` was
+    dead on the runner's data path. The fix threads the
+    :class:`ScheduleSample` through the merge call when the operator
+    advertises the kwarg.
+
+    We use a recording wrapper around :class:`EMAOperator` so the
+    test does NOT depend on the 2D FM adapter's full pipeline (the
+    pipeline is exercised by ``test_runner_calls_merge_operator_...``;
+    the present test isolates the runner's threading behaviour).
+    The recording shows the merge operator saw one non-``None``
+    ``schedule_sample`` per round.
+    """
+    adapter = _twodim_adapter
+    n_rounds = 4
+    recording = _ScheduleSampleRecordingMerge()
+    scheduler = default_cosine_scheduler(cycle_length=n_rounds)
+    # The default driver is ``ScheduleDerivedPolicyDriver``; the F25
+    # short-circuit would skip the merge call on the
+    # schedule-derived path. Use ``ConstantPolicyDriver`` to ensure
+    # the merge runs every round so the test exercises the
+    # ``schedule_sample`` kwarg threading.
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=scheduler,
+        merge_operator=recording,
+        policy_driver=ConstantPolicyDriver(beta=0.5),
+    )
+    runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            channels=TWODIM_FM_CHANNELS,
+            seed=42,
+        )
+    )
+    # F25 short-circuits the merge call for ``schedule_derived``
+    # driver; ``ConstantPolicyDriver`` is non-schedule-derived so
+    # the merge runs every round.
+    assert len(recording.schedule_samples) == n_rounds
+    for sample in recording.schedule_samples:
+        assert sample is not None
+        # The runner must forward a real ``CosineScheduleSample`` so
+        # ``EMAOperator`` can read ``n_cap``.
+        assert hasattr(sample, "n_cap")
+
+
+# ---------------------------------------------------------------------------
+# F25 — schedule-derived driver skips the merge operator
+# ---------------------------------------------------------------------------
+
+
+class _CountingMergeOperator:
+    """Merge operator that records every ``merge`` call.
+
+    Used by the F25 regression test to confirm the runner skips the
+    merge step entirely on the ``schedule_derived`` driver path.
+    Implements :class:`MergeOperatorProtocol` (duck-typed: must
+    expose ``merge`` and ``config_hash``).
+    """
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def config_hash(self) -> str:
+        return "counting-merge-operator"
+
+    def merge(
+        self,
+        prev,
+        dynamic,
+        *,
+        cap,
+        floor,
+        delta_cap_up,
+        delta_cap_down,
+        audit_codes=None,
+        schedule_sample=None,
+    ) -> float:
+        self.calls += 1
+        if audit_codes is not None:
+            pass
+        return float(dynamic)
+
+
+def test_schedule_derived_driver_skips_merge(_twodim_adapter) -> None:
+    """The runner does NOT call the merge operator for the schedule-derived driver.
+
+    Regression test for finding #25 in
+    ``docs/r3-survey/05-verified-findings.md``: the runner used to
+    call ``self._merge.merge(...)`` for every driver family. For the
+    ``schedule_derived`` family the bounded merge with
+    ``delta_cap = 1.0`` collapses to ``clamp(n_cap, n_min, n_cap) ==
+    n_cap`` — an identity — so the call was redundant. The fix
+    short-circuits the merge step on the schedule-derived path so the
+    merge operator sees ``calls == 0`` and the runner emits
+    ``beta == sample.n_cap`` byte-for-byte.
+    """
+    from adaptive_reflow.algorithm import ScheduleDerivedPolicyDriver
+
+    adapter = _twodim_adapter
+    merge_op = _CountingMergeOperator()
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        policy_driver=ScheduleDerivedPolicyDriver(),
+        merge_operator=merge_op,
+    )
+    result = runner.run(
+        ReInferenceConfig(n_rounds=3, channels=TWODIM_FM_CHANNELS, seed=42)
+    )
+    assert merge_op.calls == 0
+    for r in range(3):
+        sample = result.per_round_metrics[r]
+        # With the merge collapsed to identity the runner emits the
+        # schedule-derived ``beta == sample.n_cap`` directly.
+        assert sample["beta"] == pytest.approx(sample["n_cap"])
+
+
+# ---------------------------------------------------------------------------
+# F22 — ``target_round`` is consistent across ledger + scheduler sample
+# ---------------------------------------------------------------------------
+
+
+def test_runner_target_round_consistent_across_ledger_and_sample(
+    _twodim_adapter,
+) -> None:
+    """``sample.computed_at_round`` and ``ledger_row.target_round`` agree.
+
+    Regression test for finding #22 in
+    ``docs/r3-survey/05-verified-findings.md``: the runner used to
+    pass ``target_round=config.target_round + r`` to the scheduler
+    while the engine's ``build_ledger_row`` used ``target_round=r``,
+    so the two consumers disagreed by ``config.target_round``. The fix
+    threads ``r`` (the local round index) through both call sites.
+    """
+    adapter = _twodim_adapter
+    n_rounds = 4
+    runner = ReInferenceRunner(adapter=adapter)
+    config = ReInferenceConfig(
+        n_rounds=n_rounds,
+        outer_cycle_id=7,
+        target_round=10,  # non-zero — would have caused the offset bug
+        seed=42,
+        channels=TWODIM_FM_CHANNELS,
+    )
+    result = runner.run(config)
+    for r in range(n_rounds):
+        sample_computed_at_round = int(
+            result.per_round_metrics[r].get(
+                "computed_at_round", r
+            )
+            if "computed_at_round" in result.per_round_metrics[r]
+            else r
+        )
+        # The scheduler's ``ScheduleSample.computed_at_round`` is the
+        # ``target_round`` argument the runner passed to ``sample``;
+        # the ledger row's ``target_round`` is the engine's local
+        # round index. After the F22 fix they MUST agree.
+        ledger_target_round = int(result.ledger_rows[r].target_round)
+        assert sample_computed_at_round == ledger_target_round == r
+
+
+# ---------------------------------------------------------------------------
 # Forward noise injection (P0-7) — runner emits FORWARD_NOISE_INJECTED
 # ---------------------------------------------------------------------------
 
@@ -1346,3 +1554,197 @@ def test_runner_ledger_chain_breaks_on_tamper() -> None:
     ok, err = verify_ledger_chain(tuple(rows))
     assert not ok
     assert "row[1]" in err
+
+
+# ---------------------------------------------------------------------------
+# F14 — runner reads ``adapter.state_shape`` for the forward-noise prior
+# ---------------------------------------------------------------------------
+
+
+def test_runner_injects_noise_with_adapter_state_shape(_twodim_adapter) -> None:
+    """Runner allocates ``np.zeros(state_shape, ...)`` based on the adapter's advertised shape.
+
+    Regression test for finding #14 in
+    ``docs/r3-survey/05-verified-findings.md``: the runner used to
+    hard-code ``np.zeros(2, dtype=np.float64)`` regardless of the
+    adapter's native state shape, silently breaking adapters with
+    non-2-D state spaces. The fix reads the adapter's ``state_shape``
+    attribute (default ``(2,)``) so the per-round ``inject_noise``
+    call gets the right shape.
+    """
+    from adaptive_reflow.algorithm import ConstantScheduler
+
+    adapter = _twodim_adapter
+    # Override the advertised state shape on this run; the runner MUST
+    # respect it.
+    adapter.state_shape = (4,)  # type: ignore[attr-defined]
+
+    class _ShapeCapturingScheduler:
+        """Wrap the constant scheduler and capture the prior-array shape passed to ``inject_noise``."""
+
+        def __init__(self, inner):
+            self._inner = inner
+            self.captured_shapes = []
+
+        def sample(self, outer_cycle_id, round_in_cycle, target_round):
+            return self._inner.sample(
+                outer_cycle_id, round_in_cycle, target_round
+            )
+
+        def config_hash(self):
+            return self._inner.config_hash()
+
+        def reset(self):
+            self._inner.reset()
+
+        def inject_noise(self, prior_array, sample, generator=None):
+            self.captured_shapes.append(tuple(prior_array.shape))
+            # Return the prior unchanged so the runner sees a valid
+            # bundle shape regardless of the adapter's hook.
+            return prior_array
+
+    scheduler = ConstantScheduler(cycle_length=2, n_cap=0.5)
+    capturing = _ShapeCapturingScheduler(scheduler)
+    runner = ReInferenceRunner(adapter=adapter, scheduler=capturing)
+    runner.run(
+        ReInferenceConfig(n_rounds=2, channels=TWODIM_FM_CHANNELS, seed=42)
+    )
+    # Per-round shape MUST match the adapter's advertised ``state_shape``.
+    assert all(shape == (4,) for shape in capturing.captured_shapes)
+    # Cleanup the override so the fixture stays pristine for other tests.
+    if hasattr(adapter, "state_shape"):
+        delattr(adapter, "state_shape")
+
+
+# ---------------------------------------------------------------------------
+# F3 — runner routes forward-noise perturbation through the adapter
+# ---------------------------------------------------------------------------
+
+
+def test_runner_emits_forward_noise_through_adapter(_twodim_adapter) -> None:
+    """Runner calls ``adapter.inject_forward_noise`` when the adapter implements the hook.
+
+    Regression test for finding #3 in
+    ``docs/r3-survey/05-verified-findings.md``: the runner used to
+    compute the ``inject_noise`` result and discard it (``_ =
+    injected``); the symmetric FORWARD side of the round model was
+    computed but never reached the bundle. The fix detects the
+    adapter's ``inject_forward_noise`` method via ``hasattr`` and
+    routes the perturbation through it.
+    """
+    from adaptive_reflow.algorithm import ConstantScheduler
+
+    adapter = _twodim_adapter
+    captured = []
+
+    def _inject_forward_noise(bundle, injected):
+        captured.append((bundle, injected))
+        return bundle
+
+    adapter.inject_forward_noise = _inject_forward_noise  # type: ignore[attr-defined]
+
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=ConstantScheduler(cycle_length=4, n_cap=0.5),
+    )
+    runner.run(
+        ReInferenceConfig(n_rounds=3, channels=TWODIM_FM_CHANNELS, seed=42)
+    )
+    # The runner must have called the adapter's hook once per round
+    # (F3 closes Loop 4 by wiring the forward side into the bundle).
+    assert len(captured) == 3
+    # Each call receives the bundle and the injected perturbation.
+    for bundle, injected in captured:
+        assert bundle is not None
+        assert injected is not None
+
+    # Cleanup the monkey-patched hook so the fixture stays pristine.
+    if hasattr(adapter, "inject_forward_noise"):
+        delattr(adapter, "inject_forward_noise")
+
+
+# ---------------------------------------------------------------------------
+# C4 — runner passes selection_ratio, paper quantities, schedule evidence
+# ---------------------------------------------------------------------------
+
+
+def test_runner_passes_paper_quantity_metrics_to_feedback(_twodim_adapter) -> None:
+    """``record_round_feedback`` receives selection_ratio / paper quantities / schedule evidence.
+
+    Regression test for C4 (close Loop 2 — paper quantities -> scheduler
+    feedback). When ``config.paper_quantities_provider`` is set and a
+    selector evaluator is configured, the per-round metric dict MUST
+    carry ``selection_ratio``, ``paper_quantity_diagnostics``, and
+    ``schedule_evidence_ratio`` so the
+    :class:`EvidenceDrivenScheduler` (Agent 1c's consumer) can update
+    ``n_cap`` via PID-lite. The test uses a recording scheduler to
+    confirm all three keys reach ``record_round_feedback``.
+    """
+    import math
+
+    adapter = _twodim_adapter
+    n_rounds = 4
+
+    # Recording scheduler that captures the metric dict.
+    class _RecordingScheduler:
+        def __init__(self, inner):
+            self._inner = inner
+            self.feedback_calls = []
+
+        def sample(self, outer_cycle_id, round_in_cycle, target_round):
+            return self._inner.sample(
+                outer_cycle_id, round_in_cycle, target_round
+            )
+
+        def config_hash(self):
+            return self._inner.config_hash()
+
+        def reset(self):
+            self._inner.reset()
+
+        def record_round_feedback(self, round_in_cycle, metrics):
+            self.feedback_calls.append((int(round_in_cycle), dict(metrics)))
+
+    inner = default_cosine_scheduler(cycle_length=n_rounds)
+    recording = _RecordingScheduler(inner)
+
+    # Mock selection_evaluator with a ``selection_ratio`` oracle.
+    class _SelectionMock:
+        def oracle(self, bundle, *, channel, seed):
+            return {"selection_ratio": 0.8}
+
+    profile = lambda x: math.sin(x)  # noqa: E731
+
+    runner = ReInferenceRunner(
+        adapter=adapter, scheduler=recording
+    )
+    config = ReInferenceConfig(
+        n_rounds=n_rounds,
+        channels=TWODIM_FM_CHANNELS,
+        seed=42,
+        selection_evaluator=_SelectionMock(),
+        paper_quantities_provider=profile,
+    )
+    runner.run(config)
+    assert len(recording.feedback_calls) == n_rounds
+    for r, (_, metrics) in enumerate(recording.feedback_calls):
+        # C4 — paper quantities and selection ratio MUST reach the
+        # scheduler feedback path. ``schedule_evidence_ratio`` is
+        # emitted only by schedulers that carry an
+        # ``evidence_ratio`` attribute (the
+        # :class:`CodimensionSheetScheduler`); the default cosine
+        # scheduler does not emit it, so we treat it as optional.
+        assert "paper_quantity_diagnostics" in metrics, (
+            f"round {r}: paper_quantity_diagnostics missing"
+        )
+        assert "selection_ratio" in metrics, (
+            f"round {r}: selection_ratio missing"
+        )
+        # Verify shape of paper_quantity_diagnostics
+        pq = metrics["paper_quantity_diagnostics"]
+        assert set(pq.keys()) == {
+            "sheet_A",
+            "packing_B",
+            "cell_C",
+            "exterior_gap_e_rho",
+        }

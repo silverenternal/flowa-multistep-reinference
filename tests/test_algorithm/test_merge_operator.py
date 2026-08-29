@@ -286,37 +286,39 @@ def test_p0_3_bounded_merge_operator_clips_cap_above_one() -> None:
 
 
 def test_p0_3_bounded_merge_operator_clips_cap_below_floor() -> None:
-    """P0-3: ``cap < floor`` swaps the envelope and emits the
-    canonical ``merge_cap_below_floor`` audit code rather than
-    raising."""
+    """P0-3 + F5: ``cap < floor`` post-clip fails closed
+    (:exc:`MergeAuthorityError`) and emits the canonical
+    ``merge_cap_below_floor`` audit code BEFORE the raise so a
+    downstream audit reader still observes the broken configuration.
+    """
     op = BoundedMergeOperator()
     audit: list[str] = []
-    result = op.merge(
-        prev=0.3,
-        dynamic=0.5,
-        cap=0.2,
-        floor=0.7,
-        delta_cap_up=0.5,
-        delta_cap_down=0.5,
-        audit_codes=audit,
-    )
-    assert 0.0 <= result <= 1.0
-    # ``cap < floor`` is the configuration error path; after clipping
-    # the swap the merge is total and the audit line is recorded.
+    with pytest.raises(MergeAuthorityError):
+        op.merge(
+            prev=0.3,
+            dynamic=0.5,
+            cap=0.2,
+            floor=0.7,
+            delta_cap_up=0.5,
+            delta_cap_down=0.5,
+            audit_codes=audit,
+        )
+    # Audit code emitted BEFORE raise so downstream audit readers see it.
     assert any("merge_cap_below_floor" in code for code in audit)
 
 
 def test_p0_3_bounded_merge_operator_never_raises_on_finite_inputs() -> None:
     """P0-3: no legitimate (numeric, finite) input raises; the
     operator only raises on ``None`` / non-numeric types at the
-    coercion boundary.
+    coercion boundary OR on a post-clip ``cap < floor`` (F5).
+
+    The cap < floor case is excluded here — it now raises by design
+    (fail-closed). See ``test_bounded_merge_rejects_cap_below_floor_post_clip``.
     """
     op = BoundedMergeOperator()
     for prev, dynamic, cap, floor, up, down in [
-        # envelope edge cases
+        # envelope edge cases — all cap >= floor post-clip
         (0.5, 0.5, 1.5, 0.0, 1.0, 1.0),
-        (0.5, 0.5, 0.5, 1.5, 1.0, 1.0),
-        (0.5, 0.5, 0.2, 0.7, 1.0, 1.0),
         (0.5, 0.5, 1.0, -0.1, 1.0, 1.0),
         (0.5, 0.5, 1.0, 0.0, 1.5, 1.0),
         (0.5, 0.5, 1.0, 0.0, 1.0, -0.1),
@@ -847,3 +849,116 @@ def test_identity_emits_finiteness_code() -> None:
     assert math.isfinite(out_nan)
     assert out_nan == pytest.approx(0.0)
     assert any(MERGE_NONFINITE_DYNAMIC_CLIPPED in c for c in audit)
+
+
+# ---------------------------------------------------------------------------
+# 6. F5 — cap/floor fail-closed (P0)
+# ---------------------------------------------------------------------------
+
+
+def test_bounded_merge_rejects_cap_below_floor_post_clip() -> None:
+    """F5: BoundedMergeOperator raises ``MergeAuthorityError`` when
+    ``cap < floor`` after clipping, instead of silently swapping.
+
+    The audit code ``merge_cap_below_floor`` is appended BEFORE the raise
+    so downstream audit readers still observe the broken configuration.
+    """
+    op = BoundedMergeOperator()
+    audit: list[str] = []
+    with pytest.raises(MergeAuthorityError) as exc_info:
+        op.merge(
+            prev=0.5,
+            dynamic=0.3,
+            cap=0.2,
+            floor=0.8,
+            delta_cap_up=1.0,
+            delta_cap_down=1.0,
+            audit_codes=audit,
+        )
+    # Audit code emitted BEFORE raise.
+    assert any("merge_cap_below_floor" in c for c in audit)
+    # Error message carries the cap/floor values.
+    assert "cap=" in str(exc_info.value) and "floor=" in str(exc_info.value)
+    # Sanity: the swap-semantics removal is the explicit contract.
+    assert "swap" in str(exc_info.value).lower()
+
+
+# ---------------------------------------------------------------------------
+# 7. F1 — MERGE_PREV_ANCHORED_TO_LAST_EMITTED emission (P1)
+# ---------------------------------------------------------------------------
+
+
+def test_bounded_merge_emits_prev_anchored() -> None:
+    """F1: BoundedMergeOperator emits
+    ``MERGE_PREV_ANCHORED_TO_LAST_EMITTED`` when ``prev_source ==
+    "last_emitted"`` and does NOT emit it under the default
+    ``prev_source="default"``.
+    """
+    from adaptive_reflow.algorithm.merge_operator import (
+        MERGE_PREV_ANCHORED_TO_LAST_EMITTED,
+    )
+
+    op = BoundedMergeOperator()
+
+    # Default ``prev_source`` -> no anchored-to-last-emitted audit code.
+    audit_default: list[str] = []
+    op.merge(
+        prev=0.5,
+        dynamic=0.4,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit_default,
+    )
+    assert not any(MERGE_PREV_ANCHORED_TO_LAST_EMITTED in c for c in audit_default)
+
+    # ``prev_source="last_emitted"`` -> emits the anchored code.
+    audit_anchored: list[str] = []
+    op.merge(
+        prev=0.5,
+        dynamic=0.4,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit_anchored,
+        prev_source="last_emitted",
+    )
+    assert any(MERGE_PREV_ANCHORED_TO_LAST_EMITTED in c for c in audit_anchored)
+
+
+# ---------------------------------------------------------------------------
+# 8. F7 — BoundedMergeOperator.merge accepts schedule_sample kwarg (P1)
+# ---------------------------------------------------------------------------
+
+
+def test_bounded_merge_accepts_schedule_sample() -> None:
+    """F7: BoundedMergeOperator.merge accepts ``schedule_sample`` as a
+    kwarg (no-op; the bounded merge does not modulate its envelope by
+    ``n_cap``). The kwarg is part of the protocol surface so callers
+    can forward a single call shape to any ``MergeOperatorProtocol``
+    implementation.
+    """
+    op = BoundedMergeOperator()
+    sample = type("S", (), {"n_cap": 0.7})()
+    # Without schedule_sample:
+    out_no_sample = op.merge(
+        prev=0.5,
+        dynamic=0.4,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+    )
+    # With schedule_sample — must produce the same result (no-op).
+    out_with_sample = op.merge(
+        prev=0.5,
+        dynamic=0.4,
+        cap=1.0,
+        floor=0.0,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        schedule_sample=sample,
+    )
+    assert out_with_sample == pytest.approx(out_no_sample)

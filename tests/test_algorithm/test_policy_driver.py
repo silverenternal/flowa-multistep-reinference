@@ -454,14 +454,15 @@ def test_drivers_are_swapable() -> None:
 def test_adaptive_policy_driver_with_paper_quantities_uses_C() -> None:
     """``per_cell_coefficient_C`` normalises beta to paper Lemma 3 scale.
 
-    When the driver is constructed with ``per_cell_coefficient_C``, the
-    per-round ``beta`` is the legacy envelope divided by ``C_g``:
+    F6: When the driver is constructed with ``per_cell_coefficient_C``,
+    the per-round ``beta`` is the legacy envelope multiplied by ``C_g``:
 
-        beta = clip((1 - |p - t|) / C_g, 0, 1)
+        beta = clip((1 - |p - t|) * C_g, 0, 1)
 
     The default ``C_g`` from ``paper_quantities.per_cell_coefficient_C``
     is approximately 1.2408 (rho=0.1, c=1.0); the resulting beta is
-    therefore smaller than the legacy envelope but still in ``[0, 1]``.
+    therefore larger than the legacy envelope (and saturates at 1.0
+    when the legacy envelope exceeds ``1 / C_g``).
     """
     from adaptive_reflow.contracts import paper_quantities as _pq
 
@@ -471,7 +472,7 @@ def test_adaptive_policy_driver_with_paper_quantities_uses_C() -> None:
     assert driver.per_cell_coefficient_C == pytest.approx(cell_C, rel=1e-12)
 
     # Sample a non-trivial prior digest; the legacy envelope gives
-    # ``1 - |p - t|``, which the driver divides by ``C_g``.
+    # ``1 - |p - t|``, which the driver multiplies by ``C_g``.
     digest = "abcdef0123456789" * 4  # 64-hex; maps into [0, 1]
     out_with_C = driver.compute_policy(
         None,
@@ -482,7 +483,7 @@ def test_adaptive_policy_driver_with_paper_quantities_uses_C() -> None:
     beta_with_C = _beta_value(out_with_C)
     assert 0.0 <= beta_with_C <= 1.0
 
-    # The legacy driver produces a different beta (no division by C_g).
+    # The legacy driver produces a different beta (no multiplication by C_g).
     legacy_driver = AdaptivePolicyDriver()
     out_legacy = legacy_driver.compute_policy(
         None,
@@ -492,8 +493,8 @@ def test_adaptive_policy_driver_with_paper_quantities_uses_C() -> None:
     )
     beta_legacy = _beta_value(out_legacy)
 
-    # The relationship holds: beta_with_C = clip(beta_legacy / C_g, 0, 1).
-    expected = beta_legacy / cell_C
+    # F6: the relationship holds: beta_with_C = clip(beta_legacy * C_g, 0, 1).
+    expected = beta_legacy * cell_C
     expected = max(0.0, min(1.0, expected))
     assert beta_with_C == pytest.approx(expected, rel=1e-12)
 
@@ -599,9 +600,9 @@ def test_driver_config_round_trip(driver) -> None:
 
 
 def test_adaptive_driver_beta_saturation_with_C_below_one() -> None:
-    """When ``per_cell_coefficient_C < 1`` and the raw envelope
-    ``1 - |p - t|`` is close to 1, the unclipped
-    ``(1 - |p - t|) / C_g`` exceeds 1.0 and the driver emits
+    """When ``per_cell_coefficient_C > 1`` (F6 inversion) and the raw
+    envelope ``1 - |p - t|`` is close to 1, the unclipped
+    ``(1 - |p - t|) * C_g`` exceeds 1.0 and the driver emits
     :data:`BETA_SATURATION_FROM_PAPER_QUANTITY` (audit P2-3 / 8.3).
     """
     from adaptive_reflow.algorithm.policy_driver import (
@@ -609,12 +610,12 @@ def test_adaptive_driver_beta_saturation_with_C_below_one() -> None:
     )
 
     base_policy = _make_base_policy(beta=0.0)
-    # C = 0.5 means the unclipped value can reach 2 * (1 - |p - t|),
-    # which exceeds 1.0 for any digest whose mapped |p - t| < 0.5.
-    # Use target_estimate = 0.0 and a digest that maps to ~0 so
-    # ``diff = 0`` and ``raw / C_g = 2.0`` (well above the ceiling).
+    # F6: math inverted — C = 2.0 means the unclipped value is
+    # 2 * (1 - |p - t|), which exceeds 1.0 for any digest whose
+    # mapped |p - t| < 0.5. Use target_estimate = 0.0 and a digest
+    # that maps to ~0 so ``diff = 0`` and ``raw * C_g = 2.0``.
     driver = AdaptivePolicyDriver(
-        target_estimate=0.0, per_cell_coefficient_C=0.5
+        target_estimate=0.0, per_cell_coefficient_C=2.0
     )
     digest = "0" * 64  # maps to ~0
     audit: list[str] = []
@@ -640,9 +641,9 @@ def test_adaptive_driver_beta_saturation_with_C_below_one() -> None:
 
 
 def test_adaptive_driver_no_saturation_when_C_above_one() -> None:
-    """When ``per_cell_coefficient_C >= 1`` the unclipped envelope is
-    always ``<= 1.0`` so no saturation audit code is emitted (audit
-    P2-3 / 8.3).
+    """When ``per_cell_coefficient_C <= 1`` (F6 inversion) the
+    unclipped envelope is always ``<= 1.0`` so no saturation audit
+    code is emitted (audit P2-3 / 8.3).
     """
     from adaptive_reflow.algorithm.policy_driver import (
         BETA_SATURATION_FROM_PAPER_QUANTITY,
@@ -650,7 +651,7 @@ def test_adaptive_driver_no_saturation_when_C_above_one() -> None:
 
     base_policy = _make_base_policy(beta=0.0)
     # Use target_estimate = 0.0 so ``diff = 0`` and ``raw = 1.0``;
-    # divided by C = 1.0 the unclipped envelope is exactly 1.0 and
+    # multiplied by C = 1.0 the unclipped envelope is exactly 1.0 and
     # therefore not strictly > 1.0.
     driver = AdaptivePolicyDriver(
         target_estimate=0.0, per_cell_coefficient_C=1.0
@@ -694,6 +695,39 @@ def test_adaptive_driver_legacy_path_does_not_saturate() -> None:
         if code.startswith(BETA_SATURATION_FROM_PAPER_QUANTITY)
     ]
     assert saturation_codes == []
+
+
+# ---------------------------------------------------------------------------
+# F6: beta_saturation_count is reachable at default C_g
+# ---------------------------------------------------------------------------
+
+
+def test_adaptive_driver_saturation_unreachable_at_default_C() -> None:
+    """F6 (after math inversion): the default paper-quantity
+    ``per_cell_coefficient_C ≈ 1.24 > 1`` makes saturation reachable
+    when ``(1 - |p - t|)`` is large. The new assertion is that
+    ``beta_saturation_count > 0`` after a 100-round drive with the
+    default paper-quantity coefficient and ``target_estimate=0.0``
+    (driving ``|p - t| ≈ 0`` for the chosen digest).
+    """
+    from adaptive_reflow.contracts import paper_quantities as _pq
+
+    base_policy = _make_base_policy(beta=0.0)
+    cell_C = float(_pq.per_cell_coefficient_C())
+    # Sanity: default C_g > 1 (precondition for the saturation path).
+    assert cell_C > 1.0
+    driver = AdaptivePolicyDriver(
+        target_estimate=0.0, per_cell_coefficient_C=cell_C
+    )
+    # Drive with a digest that maps to ~0 so diff=0 and (1 - diff)*C > 1.
+    for _ in range(100):
+        driver.compute_policy(
+            None,
+            base_policy=base_policy,
+            channel="xy",
+            prior_endpoint_digest="0" * 64,
+        )
+    assert driver.beta_saturation_count > 0
 
 
 # ---------------------------------------------------------------------------
@@ -819,22 +853,24 @@ def test_schedule_derived_audit_code() -> None:
 def test_adaptive_saturation_counter() -> None:
     """P1-A11: the adaptive driver exposes a ``beta_saturation_count``
     property that increments every time the paper-quantity-normalised
-    envelope saturates at the unit-interval ceiling (only possible
-    when ``per_cell_coefficient_C < 1``).
+    envelope saturates at the unit-interval ceiling (possible when
+    ``per_cell_coefficient_C > 1`` after the F6 math inversion).
 
     The runner consumes this count to emit ``beta_saturation_count``
     into ``per_round_metrics`` so the audit ledger can show the
     cycle-local number of saturated rounds.
     """
     base_policy = _make_base_policy(beta=0.0)
+    # F6: C_g = 2.0 means the unclipped envelope is 2 * (1 - |p - t|),
+    # which exceeds 1.0 for any digest whose mapped |p - t| < 0.5.
     driver = AdaptivePolicyDriver(
-        target_estimate=0.0, per_cell_coefficient_C=0.5
+        target_estimate=0.0, per_cell_coefficient_C=2.0
     )
 
     # Fresh instance: counter starts at zero.
     assert driver.beta_saturation_count == 0
 
-    # With C_g = 0.5 and a digest that maps to ~0, the unclipped
+    # With C_g = 2.0 and a digest that maps to ~0, the unclipped
     # envelope is 2.0, so saturation MUST fire.
     digest_zero = "0" * 64
     driver.compute_policy(
@@ -854,7 +890,7 @@ def test_adaptive_saturation_counter() -> None:
     )
     assert driver.beta_saturation_count == 2
 
-    # A non-saturating call (C_g >= 1 path) does not increment.
+    # A non-saturating call (C_g <= 1 path) does not increment.
     no_sat = AdaptivePolicyDriver(per_cell_coefficient_C=1.0)
     assert no_sat.beta_saturation_count == 0
     no_sat.compute_policy(

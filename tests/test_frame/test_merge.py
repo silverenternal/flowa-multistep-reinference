@@ -349,25 +349,24 @@ def test_cap_clamping_prevents_overflow():
 
 
 def test_floor_above_cap_clips_with_audit():
-    """Inverted envelope is clipped and a canonical audit code is appended (P0-3).
+    """Inverted envelope is fail-closed; audit code is appended before raise (F5).
 
-    Previously raised :exc:`MergeAuthorityError`. After the P0-3
-    contract fix, :class:`BoundedMergeOperator` clips into
-    ``(cap=floor, floor=cap)`` and appends the ``_ERR_CAP_BELOW_FLOOR``
-    audit code so a downstream audit reader can replay the
-    configuration. The result is a finite ``float`` in ``[0, 1]``.
+    After the F5 fix, :class:`BoundedMergeOperator` no longer silently
+    swaps the envelope. It appends the ``_ERR_CAP_BELOW_FLOOR`` audit
+    code and raises :exc:`MergeAuthorityError`. The audit trail is
+    preserved so a downstream reader can replay the broken configuration.
     """
     audit: list[str] = []
-    result = bounded_merge(
-        prev=0.5,
-        dynamic=0.5,
-        cap=0.3,
-        floor=0.7,
-        delta_cap_up=0.5,
-        delta_cap_down=0.5,
-        audit_codes=audit,
-    )
-    assert 0.0 <= result <= 1.0
+    with pytest.raises(MergeAuthorityError):
+        bounded_merge(
+            prev=0.5,
+            dynamic=0.5,
+            cap=0.3,
+            floor=0.7,
+            delta_cap_up=0.5,
+            delta_cap_down=0.5,
+            audit_codes=audit,
+        )
     assert any("merge_cap_below_floor" in code for code in audit)
 
 

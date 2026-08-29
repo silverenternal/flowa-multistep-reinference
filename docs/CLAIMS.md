@@ -101,7 +101,7 @@ How it works:
   `eps -> 0` limit; it is the canonical implementation of paper
   Lemma 2's sheet tube scaling *at the direction level*.
 - Evidence:
-  `adaptive_reflow/algorithm/scheduler.py:182`
+  `adaptive_reflow/algorithm/scheduler/_core.py:347`
   (`CosineAnnealScheduler.sample(...)` produces
   `n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))`).
 
@@ -118,9 +118,9 @@ How it works:
   emitting the sheet-vs-cell evidence balance via
   `_paper_evidence_balance` (with positive `eps` powers, not the
   historical inversion).
-- Evidence: `adaptive_reflow/algorithm/scheduler.py:1671`
+- Evidence: `adaptive_reflow/algorithm/scheduler/_core.py:2259`
   (`CodimensionSheetScheduler` class),
-  `adaptive_reflow/algorithm/scheduler.py:1548`
+  `adaptive_reflow/algorithm/scheduler/_core.py:2136`
   (`_paper_evidence_balance` helper).
 
 ## CLM-007: Physical complement is exponentially suppressed {#CLM-007}
@@ -185,7 +185,7 @@ How it works:
   guarantee: a non-zero noise floor is the structural guarantee that
   the posterior stays on the fibre.
 - Evidence: `adaptive_reflow/algorithm/merge_operator.py` /
-  `adaptive_reflow/algorithm/scheduler.py:182`
+  `adaptive_reflow/algorithm/scheduler/_core.py:347`
   (`CosineAnnealScheduler` carries the `n_min` field).
 
 ## CLM-011: Four paper quantities are first-class algorithm inputs {#CLM-011}
@@ -203,7 +203,7 @@ How it works:
   `ReInferenceRunner` whenever the corresponding opt-in configuration
   is supplied.
 - Evidence: `adaptive_reflow/contracts/paper_quantities.py:39-44`
-  (`__all__`); `adaptive_reflow/algorithm/scheduler.py:1844-1854`
+  (`__all__`); `adaptive_reflow/algorithm/scheduler/_core.py:2432-2442`
   (`CodimensionSheetScheduler` constructs the four constants);
   `adaptive_reflow/algorithm/policy_driver.py:485-490`
   (`AdaptivePolicyDriver` accepts `per_cell_coefficient_C`);
@@ -289,7 +289,7 @@ How it works:
   powers (`sheet = Theta(eps^{+1})`, `cell = O(eps^{+2})`) per the
   audit at `docs/audit/EPSILON_DIRECTION.md` §4.2.
 - Evidence: `docs/audit/EPSILON_DIRECTION.md` §4.2; corrected code at
-  `adaptive_reflow/algorithm/scheduler.py:1548`
+  `adaptive_reflow/algorithm/scheduler/_core.py:2136`
   (`_paper_evidence_balance` closed form).
 
 ## CLM-017: (DEPRECATED) `selection_ratio` converges to 1 over rounds {#CLM-017}
@@ -348,9 +348,9 @@ How it works:
   Scheduler column references four of these nine families; the
   other five are valid but not the reader-facing defaults.
 - Evidence:
-  `adaptive_reflow/algorithm/scheduler.py:2739`
+  `adaptive_reflow/algorithm/scheduler/_core.py:2992`
   (`SCHEDULER_REGISTRY`),
-  `adaptive_reflow/algorithm/sequential.py:95`
+  `adaptive_reflow/algorithm/sequential_handoff.py`
   (`SequentialScheduler`),
   `docs/defaults-matrix.md` §"The matrix".
 
@@ -397,9 +397,9 @@ How it works:
   hashes. The implementation is registered in `SCHEDULER_REGISTRY`
   under the key `"sequential"`.
 - Evidence:
-  `adaptive_reflow/algorithm/sequential.py:95`
+  `adaptive_reflow/algorithm/sequential_handoff.py`
   (`SequentialScheduler` class),
-  `adaptive_reflow/algorithm/scheduler.py:2748`
+  `adaptive_reflow/algorithm/scheduler/_core.py:2992`
   (`SCHEDULER_REGISTRY["sequential"]` entry),
   `tests/test_algorithm/test_sequential.py`
   (16+ regression tests).
@@ -504,3 +504,254 @@ How it works:
   run: `Success: no issues found in 118 source files`),
   `python -m ruff check .` (current run:
   `All checks passed!`).
+
+## CLM-025: `BoundedMergeOperator` fails closed on `cap < floor` (post-clip) {#CLM-025}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: [`docs/r3-survey/08-fix-plan.md`](r3-survey/08-fix-plan.md)
+  §2 (F5 — P0 paper-correctness)
+- Asserted by:
+  `adaptive_reflow/algorithm/merge_operator.py:591-599`
+  (the explicit `raise MergeAuthorityError`),
+  `tests/test_algorithm/test_merge_operator.py`
+  (`test_bounded_merge_rejects_cap_below_floor_post_clip`),
+  `docs/r3-survey/05-verified-findings.md` §F5
+- Disputed by: —
+- Statement: `BoundedMergeOperator.merge` raises
+  `MergeAuthorityError` (after appending the `_ERR_CAP_BELOW_FLOOR`
+  audit code) when the post-clip envelope satisfies
+  `cap_f < floor_f`. The legacy silent-swap semantics that inverted
+  the user's clearly-wrong envelope to a wider range were removed;
+  the operator now honours the documented fail-closed contract: a
+  configuration error produces a typed exception, not a wider
+  envelope. The audit code is emitted **before** the raise so the
+  invariant "audit code preserved across raise" holds.
+- Evidence:
+  `adaptive_reflow/algorithm/merge_operator.py:591-599`
+  (the explicit fail-closed raise),
+  `tests/test_algorithm/test_merge_operator.py`
+  (`test_bounded_merge_rejects_cap_below_floor_post_clip`),
+  `docs/r3-survey/05-verified-findings.md` §F5.
+
+## CLM-026: `ConvergenceAdaptiveScheduler` PID consumes `_smoothed_w2` (not raw `w2_history[-2]`) {#CLM-026}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: [`docs/r3-survey/08-fix-plan.md`](r3-survey/08-fix-plan.md)
+  §2 (F16 — P0 paper-correctness)
+- Asserted by:
+  `adaptive_reflow/algorithm/scheduler/_core.py:2093`
+  (`self._w2_history.append(float(self._smoothed_w2))`),
+  `tests/test_algorithm/test_scheduler.py`
+  (`test_pid_uses_smoothed_w2_as_prev`),
+  `docs/r3-survey/05-verified-findings.md` §F16
+- Disputed by: —
+- Statement: `ConvergenceAdaptiveScheduler.record_round_feedback`
+  appends the **EMA-smoothed** W2 (`self._smoothed_w2`) to
+  `_w2_history` (instead of the raw aggregated `w2` value) so the
+  PID's `prev = self._w2_history[-2]` reference reads the same
+  signal the EMA was supposed to expose. Previously the EMA was
+  computed and exposed via the `smoothed_w2` property but never
+  consumed by the controller — the PID used the raw value, making
+  the documented EMA behaviour decorative. The fix restores the
+  documented contract end-to-end.
+- Evidence:
+  `adaptive_reflow/algorithm/scheduler/_core.py:2093`
+  (the EMA-smoothed append),
+  `tests/test_algorithm/test_scheduler.py`
+  (`test_pid_uses_smoothed_w2_as_prev`),
+  `docs/r3-survey/05-verified-findings.md` §F16.
+
+## CLM-027: `EvidenceDrivenScheduler` closes Loop 2 (paper quantities → scheduler feedback) {#CLM-027}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: [`docs/r3-survey/08-fix-plan.md`](r3-survey/08-fix-plan.md)
+  §4 (C4 — P0 collaboration)
+- Asserted by:
+  `adaptive_reflow/algorithm/scheduler/evidence_driven.py:179`
+  (`EvidenceDrivenScheduler` class),
+  `adaptive_reflow/algorithm/scheduler/_core.py:201,411,687,894,1121,1357,1609`
+  (`record_round_feedback` hooks across all built-in families),
+  `tests/test_algorithm/test_evidence_driven_scheduler.py`
+- Disputed by: —
+- Statement: `EvidenceDrivenScheduler` (registered under the family
+  key `"evidence_driven"`) subscribes to the runner's per-round
+  metric dict via `record_round_feedback` and updates `n_cap` via a
+  PID-lite controller, closing Loop 2 of the documented four-loop
+  design (paper quantities now reach a scheduler and influence the
+  per-round capacity). Every built-in scheduler family
+  (`CosineAnnealScheduler`, `ConstantScheduler`, `LinearScheduler`,
+  `ExponentialScheduler`, `PolynomialScheduler`, `SigmoidScheduler`,
+  `ConvergenceAdaptiveScheduler`) exposes a `record_round_feedback`
+  hook so the runner fans `metric["selection_ratio"]`,
+  `metric["paper_quantity_diagnostics"]`, and
+  `metric["schedule_evidence_ratio"]` into the scheduler without
+  breaking the plug-in surface.
+- Evidence:
+  `adaptive_reflow/algorithm/scheduler/evidence_driven.py:179`
+  (the scheduler),
+  `adaptive_reflow/algorithm/scheduler/_core.py:201,411,687,894,1121,1357,1609`
+  (the per-family feedback hooks),
+  `tests/test_algorithm/test_evidence_driven_scheduler.py`
+  (regression coverage).
+
+## CLM-028: Hexagonal port set codifies eight plug-in families as named ports {#CLM-028}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: [`docs/r3-survey/08-fix-plan.md`](r3-survey/08-fix-plan.md)
+  §3 (D1 — P0 decoupling)
+- Asserted by:
+  `adaptive_reflow/manifest.py:247-318`
+  (the eight port classes),
+  `adaptive_reflow/manifest.py:326-484`
+  (`PortManifest` carrier + register / resolve),
+  `tests/test_manifest/`
+- Disputed by: —
+- Statement: The eight plug-in families (scheduler, policy driver,
+  merge operator, blender, adapter, mixer, evaluator, envelope)
+  that today live as scattered `@runtime_checkable` Protocols are
+  codified as named `Port[T]` instances with explicit
+  `register(...)` / `resolve(...)` helpers, single `PortManifest`
+  carrier, and `enumerate_ports` introspection. The legacy
+  `PROTOCOL_REGISTRY` is now a *view* over the manifest's
+  registered families, so the two surfaces cannot drift. The
+  `BlenderPort` closes W1 from `03-coupling.md` (every adapter that
+  today inlines `m * prior + (1 - m) * fresh` in its
+  `apply_restart_distribution` can delegate to a registered
+  blender via `BlenderPort.resolve`); the orchestrator's
+  `bounded_merge(...)` call is replaced with
+  `self._merge_operator.merge(...)` (closes W2).
+- Evidence:
+  `adaptive_reflow/manifest.py:247-318`
+  (port classes),
+  `adaptive_reflow/manifest.py:326-484`
+  (`PortManifest`),
+  `adaptive_reflow/algorithm/protocol_registry.py:281-323`
+  (the manifest → `PROTOCOL_REGISTRY` rewire),
+  `tests/test_manifest/`.
+
+## CLM-029: `FreeTrajScheduler` (arXiv:2507.10532) registered as a plug-in scheduler family {#CLM-029}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: [`docs/r3-survey/08-fix-plan.md`](r3-survey/08-fix-plan.md)
+  §5 (A1 — P1 algorithm addition)
+- Asserted by:
+  `adaptive_reflow/algorithm/scheduler/freetraj.py:63`
+  (`FreeTrajScheduler` class),
+  `adaptive_reflow/algorithm/protocol_registry.py:130,154`
+  (registration),
+  `tests/test_algorithm/test_freetraj.py`
+- Disputed by: —
+- Statement: `FreeTrajScheduler` (arXiv:2507.10532, training-free
+  trajectory control for rectified flow models) is registered as a
+  plug-in scheduler family under the key `"freetraj"` and composes
+  with the existing `LinearBlender` for trajectory control. The
+  implementation lives in
+  `adaptive_reflow/algorithm/scheduler/freetraj.py` and integrates
+  with the canonical `SchedulerProtocol` surface (sample /
+  cycle_length / schedule_family / config_hash / reset /
+  to_config / from_config). The framework can now drive FreeTraj
+  trajectories without retraining the underlying flow model.
+- Evidence:
+  `adaptive_reflow/algorithm/scheduler/freetraj.py:63`
+  (the class),
+  `adaptive_reflow/algorithm/protocol_registry.py:130,154`
+  (registration),
+  `tests/test_algorithm/test_freetraj.py`
+  (regression coverage).
+
+## CLM-030: `MeanFlowMergeOperator` (arXiv:2505.13447) registered as a plug-in merge operator {#CLM-030}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: [`docs/r3-survey/08-fix-plan.md`](r3-survey/08-fix-plan.md)
+  §5 (A2 — P1 algorithm addition)
+- Asserted by:
+  `adaptive_reflow/algorithm/merge_operator_v3.py`
+  (`MeanFlowMergeOperator`),
+  `adaptive_reflow/algorithm/protocol_registry.py:195,206`
+  (registration),
+  `tests/test_algorithm/test_meanflow_merge.py`
+- Disputed by: —
+- Statement: `MeanFlowMergeOperator` (arXiv:2505.13447, MeanFlow
+  meanflow identity `u = v − ∂v/∂t · (t − s)` as a merge-operator
+  envelope) is registered as a plug-in merge-operator family
+  under the key `"meanflow"`. The implementation lives in
+  `adaptive_reflow/algorithm/merge_operator_v3.py` and integrates
+  with the canonical `MergeOperatorProtocol` surface (merge /
+  config_hash / to_config / from_config). MeanFlow's multiplicative
+  composition maps directly onto the bounded-merge envelope so the
+  framework can swap in the MeanFlow correction without touching
+  the runner.
+- Evidence:
+  `adaptive_reflow/algorithm/merge_operator_v3.py`
+  (the operator),
+  `adaptive_reflow/algorithm/protocol_registry.py:195,206`
+  (registration),
+  `tests/test_algorithm/test_meanflow_merge.py`
+  (regression coverage).
+
+## CLM-031: R3 adversarial survey confirms 17 findings and refutes 5 {#CLM-031}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source: [`docs/r3-survey/05-verified-findings.md`](r3-survey/05-verified-findings.md)
+- Asserted by:
+  `docs/r3-survey/05-verified-findings.md:1133-1177`
+  (the 7-line summary table),
+  `tests/test_algorithm/test_round2_uplifts.py`
+  (`test_ema_schedule_weight_zero_recovers_constant_alpha`),
+  `tests/test_algorithm/test_runner.py`
+  (`test_runner_with_ema_merge_propagates_schedule_sample`,
+  `test_schedule_derived_driver_skips_merge`,
+  `test_runner_injects_noise_with_adapter_state_shape`,
+  `test_runner_emits_forward_noise_through_adapter`,
+  `test_runner_target_round_consistent_across_ledger_and_sample`),
+  `tests/test_algorithm/test_scheduler.py`
+  (`test_pid_uses_smoothed_w2_as_prev`,
+  `test_codimension_with_profile_preserves_eps_implicit`,
+  `test_build_scheduler_from_config_respects_kwargs_for_edm`,
+  `test_codimension_inject_noise_bounded_to_unit_interval`,
+  `test_paper_evidence_balance_monotone_in_n_cap`),
+  `tests/test_algorithm/test_merge_operator.py`
+  (`test_bounded_merge_rejects_cap_below_floor_post_clip`,
+  `test_bounded_merge_emits_prev_anchored`),
+  `tests/test_algorithm/test_policy_driver.py`
+  (`test_adaptive_driver_saturation_unreachable_at_default_C`),
+  `tests/test_frame/test_engine.py`
+  (`test_engine_runner_path_suppresses_schedule_beta_override`)
+- Disputed by: —
+- Statement: The R3 adversarial survey
+  ([`docs/r3-survey/05-verified-findings.md`](r3-survey/05-verified-findings.md))
+  read-only verified **17** findings (severity ≥ 2) and refuted
+  **5**. Confirmed: F1 (MERGE_PREV_ANCHORED emission),
+  F2 (EMAOperator schedule_weight kwarg), F3 (forward-noise
+  routing through adapter), F5 (BoundedMergeOperator cap/floor
+  fail-closed), F6 (beta_saturation_count math), F7 (runner
+  propagates schedule_sample), F10 (CodimensionSheetScheduler.
+  with_profile), F14 (adapter state shape lookup),
+  F16 (EMA-PID uses smoothed_w2), F18 (A_g unit-interval),
+  F19 (engine runner path precondition), F22 (target_round
+  consistency), F23 (build_scheduler_from_config kwargs for
+  edm/adaptive_pid/jittered), F25 (runner skips merge for
+  schedule-derived driver), C4 (Loop 2 closure), D1 (Hexagonal
+  ports), A1 (FreeTraj scheduler), A2 (MeanFlow merge operator).
+  Refuted: F4 (the registry drift concept, but not the
+  "`validate_config_schema` accepts phantom keys" claim),
+  F8 (selection_ratio IS read by the controller via default
+  metric weights), F11 (config-level merge_operator exposure),
+  F12 (EvidenceScaleGapMetric does NOT read sample.evidence_ratio),
+  F15 (paper evidence_ratio monotonicity check refuted at the
+  specific math claim, but conceptual claim about wrong-direction
+  ratio at default confirmed — fixed via F15 inversion),
+  F17 (default horizon_remaining claim refuted; conceptual
+  silent-decrement confirmed), F20 (default family name refuted;
+  vocabulary mismatch confirmed).
+- Evidence:
+  `docs/r3-survey/05-verified-findings.md:1133-1177`
+  (the 7-line summary table),
+  the regression tests listed in `Asserted by` above.

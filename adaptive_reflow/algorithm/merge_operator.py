@@ -498,6 +498,8 @@ class BoundedMergeOperator:
         delta_cap_up: float,
         delta_cap_down: float,
         audit_codes: list[str] | None = None,
+        prev_source: str = "default",
+        schedule_sample: Any | None = None,
     ) -> float:
         """Return the bounded merge of ``prev`` and ``dynamic`` (P0-3).
 
@@ -522,6 +524,19 @@ class BoundedMergeOperator:
             prev, name="prev", audit_codes=audit_codes,
             code=MERGE_NONFINITE_PREV_CLIPPED,
         )
+        # F1: emit ``MERGE_PREV_ANCHORED_TO_LAST_EMITTED`` when ``prev``
+        # was sourced from the previous round's emitted
+        # ``bounded_target_fraction`` (i.e. ``prev_source="last_emitted"``).
+        # The audit code is the canonical signal for downstream readers
+        # that ``prev`` did NOT come from the schedule's ``n_cap``.
+        if prev_source == "last_emitted" and audit_codes is not None:
+            audit_codes.append(MERGE_PREV_ANCHORED_TO_LAST_EMITTED)
+        # F7: ``schedule_sample`` is accepted for protocol parity with
+        # ``EMAOperator`` (the bounded merge does not modulate its
+        # envelope by ``n_cap``, but the kwarg must be a no-op rather
+        # than a TypeError so callers can forward a single call shape
+        # to any ``MergeOperatorProtocol`` implementation).
+        del schedule_sample
         dynamic_f, _dynamic_audit = _coerce_unit_real_clip(
             dynamic, name="dynamic", audit_codes=audit_codes,
             code=MERGE_NONFINITE_DYNAMIC_CLIPPED,
@@ -568,19 +583,20 @@ class BoundedMergeOperator:
 
         # If ``cap < floor`` after clipping (the only path that can
         # still reach this state, since both are in ``[0, 1]`` post-clip),
-        # collapse the envelope to ``(cap=floor_cap, floor=cap)`` so the
-        # bounded merge below stays total. The audit code
-        # ``MERGE_DEGENERATE_INTERVAL`` is appended so a downstream
-        # audit reader can see the clip.
+        # fail-closed: append the canonical audit code and raise so a
+        # downstream audit reader can see the broken configuration.
+        # The legacy silent-swap semantics were removed (F5): the
+        # caller's clearly-wrong envelope should not be silently
+        # inverted to a wider range.
         if cap_f < floor_f:
-            new_cap = floor_f
-            new_floor = cap_f
             if audit_codes is not None:
                 audit_codes.append(
                     f"{_ERR_CAP_BELOW_FLOOR}:cap={cap_f:.6f}:floor={floor_f:.6f}"
                 )
-            cap_f = new_cap
-            floor_f = new_floor
+            raise MergeAuthorityError(
+                f"cap={cap_f} < floor={floor_f} post-clip; "
+                f"swap semantics removed (audit code already appended)."
+            )
 
         # Step 1 — clamp the dynamic value to the envelope.
         target = max(floor_f, min(cap_f, dynamic_f))
@@ -751,6 +767,7 @@ class EMAOperator:
         delta_cap_down: float,
         audit_codes: list[str] | None = None,
         schedule_sample: Any | None = None,
+        schedule_weight: float = 1.0,
     ) -> float:
         """Return the EMA-smoothed update, clipped into ``[0, 1]``.
 
@@ -770,6 +787,11 @@ class EMAOperator:
             ``[alpha/2, 3 alpha/2]`` for ``n_cap in [0, 1]``; pass
             ``schedule_weight=0`` to recover the legacy
             constant-``alpha`` behaviour bit-for-bit.
+        :param schedule_weight: configurable knob for the
+            schedule-modulation strength. When ``schedule_weight=0``,
+            ``alpha`` is the legacy constant (``self._alpha``) regardless
+            of ``schedule_sample.n_cap``. The default ``1.0`` matches
+            the documented formula.
         """
         del cap, floor, delta_cap_up, delta_cap_down
         prev_f, _prev_audit = _coerce_unit_real_clip(
@@ -790,9 +812,13 @@ class EMAOperator:
                 n_cap = float("nan")
             if math.isfinite(n_cap):
                 # Clamp n_cap into [0, 1] so out-of-range samples still
-                # produce a finite alpha modulation.
+                # produce a finite alpha modulation. F2: schedule_weight
+                # is now a real kwarg threaded into the modulation
+                # formula; ``schedule_weight=0`` recovers the legacy
+                # constant-alpha behaviour bit-for-bit.
                 n_cap_c = max(0.0, min(1.0, n_cap))
-                alpha = float(alpha * (1.0 + (n_cap_c - 0.5)))
+                sw = float(schedule_weight)
+                alpha = float(alpha * (1.0 + sw * (n_cap_c - 0.5)))
         raw = prev_f + alpha * (dynamic_f - prev_f)
         # Final clip into ``[0, 1]`` — defensive against alpha outside
         # ``[0, 1]``. Operators usually configure ``alpha`` in
@@ -824,6 +850,16 @@ def default_bounded_merge_operator() -> BoundedMergeOperator:
     return BoundedMergeOperator()
 
 
+# Re-export the MeanFlow implementation so callers can
+# ``from adaptive_reflow.algorithm.merge_operator import
+# MeanFlowMergeOperator`` without importing the dedicated
+# ``merge_operator_v3`` module. The implementation lives in
+# :mod:`adaptive_reflow.algorithm.merge_operator_v3`; we import it here
+# so the legacy surface (this module's ``__all__``) carries the
+# canonical name. Importing the module is deferred so this file does
+# not introduce an import-time dependency on the ``_v3`` extension.
+from adaptive_reflow.algorithm.merge_operator_v3 import MeanFlowMergeOperator  # noqa: E402
+
 __all__ = [
     "EMAOperator",
     "ERR_PREV_REQUIRED",
@@ -836,6 +872,7 @@ __all__ = [
     "MERGE_NONFINITE_PREV_CLIPPED",
     "MERGE_PAPER_QUANTITY_FLOOR_LIFTED",
     "MERGE_PREV_ANCHORED_TO_LAST_EMITTED",
+    "MeanFlowMergeOperator",
     "MergeAuthorityError",
     "MergeOperatorProtocol",
     "BoundedMergeOperator",

@@ -338,6 +338,11 @@ def test_bounded_merge_clips_non_finite(
     # the rejection surface is exhaustive but each call has exactly
     # one bad input. The non-finite numeric values are clipped,
     # not raised (P0-3).
+    #
+    # F5: when ``bad=nan`` is passed as ``cap`` it clips to ``0.0``,
+    # which can produce ``cap < floor`` post-clip — that path now
+    # fail-closes with ``MergeAuthorityError`` (the audit code is
+    # still appended before the raise).
     for name in ("prev", "dynamic", "cap", "floor"):
         kwargs = dict(
             prev=prev,
@@ -349,7 +354,25 @@ def test_bounded_merge_clips_non_finite(
         )
         kwargs[name] = bad
         audit: list[str] = []
-        result = bounded_merge(audit_codes=audit, **kwargs)
+        try:
+            result = bounded_merge(audit_codes=audit, **kwargs)
+        except MergeAuthorityError:
+            # F5: cap=NaN clipped to 0.0 can produce cap<floor post-clip.
+            # The audit trail MUST still surface a clip / finite clip
+            # line for the bad argument.
+            assert any(
+                code.startswith(
+                    (
+                        "merge_cap_out_of_range",
+                        "merge_floor_out_of_range",
+                        "merge_nonfinite_prev_clipped",
+                        "merge_nonfinite_dynamic_clipped",
+                        "merge_cap_below_floor",
+                    )
+                )
+                for code in audit
+            ), f"no P0-3 audit code for bad {name!r}; audit={audit!r}"
+            continue
         # Result is finite and in ``[0, 1]`` (P0-3 contract).
         assert math.isfinite(result)
         assert 0.0 <= result <= 1.0

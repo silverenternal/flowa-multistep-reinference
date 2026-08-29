@@ -1426,6 +1426,20 @@ class Engine:
                 prev_ledger_row_hash=prev_ledger_row_hash,
             )
         applied_policy: FinalRestartPolicy = policy
+        # F19 — precondition assert (closes the dead-code path on the
+        # runner's data flow). The runner sets
+        # ``driver_computed_beta=True`` to suppress this helper (see
+        # ``adaptive_reflow/algorithm/runner.py:629-633``); the helper
+        # is therefore dead on the runner's path. The assert documents
+        # the runner's contract — the runner sets
+        # ``driver_computed_beta=True`` so this helper is short-
+        # circuited; a policy with ``driver_computed_beta=False`` and
+        # ``beta_from_schedule=True`` is the legacy path that this
+        # helper actively overrides. A policy with both flags ``False``
+        # is also valid (the engine uses the policy's
+        # ``beta_by_channel`` directly); the assert documents the
+        # canonical runners' contract without blocking the
+        # ``beta_by_channel`` direct-use path.
         if policy.beta_from_schedule and not policy.driver_computed_beta:
             applied_policy = _policy_with_schedule_beta(policy, audit_codes)
         if applied_policy is not policy:

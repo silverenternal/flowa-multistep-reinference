@@ -479,7 +479,13 @@ def test_convergence_adaptive_scheduler_initial_shift_zero() -> None:
 
 
 def test_convergence_adaptive_scheduler_shift_increases_when_w2_improves() -> None:
-    """When W2 improves (delta<0, ratio<1), the shift trends positive."""
+    """When W2 improves (delta<0, ratio<1), the shift trends positive.
+
+    F16: ``w2_history`` contains the EMA-smoothed values.
+    With ema=0.3:
+        round 0: smoothed = 1.0, history = (1.0,)
+        round 1: smoothed = 0.3*0.5 + 0.7*1.0 = 0.85, history = (1.0, 0.85)
+    """
     scheduler = ConvergenceAdaptiveScheduler(
         base=default_cosine_scheduler(cycle_length=10),
         kp=0.20,
@@ -493,7 +499,7 @@ def test_convergence_adaptive_scheduler_shift_increases_when_w2_improves() -> No
     assert scheduler.shift == 0.0  # no shift after first round
     # Round 1: W2 = 0.5 (improvement; should push shift positive).
     scheduler.record_round_feedback(1, {"W2": 0.5})
-    assert scheduler.w2_history == (1.0, 0.5)
+    assert scheduler.w2_history == pytest.approx((1.0, 0.85))
     assert scheduler.shift > 0.0
     shift_after_first = scheduler.shift
     # Round 2: W2 = 0.25 (further improvement; shift must trend up).
@@ -518,6 +524,38 @@ def test_convergence_adaptive_scheduler_shift_decreases_when_w2_worsens() -> Non
     # Round 2: W2 = 2.0 (further worsening; shift must trend down).
     scheduler.record_round_feedback(2, {"W2": 2.0})
     assert scheduler.shift < shift_after_first
+
+
+# ---------------------------------------------------------------------------
+# F16 — PID uses smoothed_w2 as the prev reference (P0)
+# ---------------------------------------------------------------------------
+
+
+def test_pid_uses_smoothed_w2_as_prev() -> None:
+    """F16: ``ConvergenceAdaptiveScheduler``'s PID reads its ``prev``
+    reference from the EMA-smoothed series (``_smoothed_w2``), not the
+    raw aggregated W2 signal.
+
+    With ema=0.3, after rounds ``W2 = [1.0, 0.5, 0.25]`` the
+    ``smoothed_w2`` is the EMA at each step. The PID ``prev`` on round 2
+    is the smoothed value at round 1 (``0.85``), not the raw ``0.5``.
+    """
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=10),
+        kp=0.0,  # disable proportional term; isolate delta/prev
+        kd=0.0,
+        shift_max=0.5,
+        ema=0.3,
+    )
+    # Round 0.
+    scheduler.record_round_feedback(0, {"W2": 1.0})
+    assert scheduler.smoothed_w2 == pytest.approx(1.0)
+    # Round 1 — smoothed = 0.3 * 0.5 + 0.7 * 1.0 = 0.85.
+    scheduler.record_round_feedback(1, {"W2": 0.5})
+    assert scheduler.smoothed_w2 == pytest.approx(0.85)
+    # F16: w2_history contains the smoothed value, NOT the raw 0.5.
+    assert scheduler.w2_history[-1] == pytest.approx(0.85)
+    assert scheduler.w2_history[-1] != pytest.approx(0.5)
 
 
 def test_convergence_adaptive_scheduler_shift_bounded() -> None:
@@ -1598,7 +1636,13 @@ def test_convergence_adaptive_multi_metric() -> None:
 
 
 def test_convergence_adaptive_w2_only_matches_legacy() -> None:
-    """P0-A6: a W2-only feedback dict reproduces the legacy signal."""
+    """P0-A6 + F16: a W2-only feedback dict reproduces the legacy signal.
+
+    F16: ``w2_history`` now contains the EMA-smoothed values (the PID
+    ``prev`` reference), NOT the raw aggregated signal. The
+    ``smoothed_w2`` property still tracks the EMA identically to the
+    legacy path.
+    """
     default_weights = ConvergenceAdaptiveScheduler(
         base=default_cosine_scheduler(cycle_length=8)
     )
@@ -1609,9 +1653,86 @@ def test_convergence_adaptive_w2_only_matches_legacy() -> None:
     for r, w2 in enumerate(_W2_TRACE):
         default_weights.record_round_feedback(r, {"W2": w2})
         explicit_w2.record_round_feedback(r, {"W2": w2})
-    assert default_weights.w2_history == _W2_TRACE
+    # F16: history contains the EMA-smoothed series.
+    assert default_weights.w2_history == explicit_w2.w2_history
     assert default_weights.shift == explicit_w2.shift
     assert default_weights.smoothed_w2 == explicit_w2.smoothed_w2
+    # Sanity: with the default EMA coefficient, the smoothed series
+    # starts equal to the first raw sample.
+    assert default_weights.w2_history[0] == pytest.approx(_W2_TRACE[0])
+
+
+# ---------------------------------------------------------------------------
+# F10 — CodimensionSheetScheduler.with_profile() method (P1)
+# ---------------------------------------------------------------------------
+
+
+def test_codimension_with_profile_preserves_eps_implicit() -> None:
+    """F10: ``CodimensionSheetScheduler.with_profile(provider)`` returns
+    a new scheduler with the supplied profile and ALL other config
+    preserved (cycle_length, n_min, n_max, eps_implicit, eps_direction,
+    seed).
+    """
+    from adaptive_reflow.algorithm.scheduler import (
+        CodimensionSheetScheduler,
+    )
+
+    original = CodimensionSheetScheduler(
+        cycle_length=20,
+        n_min=0.0,
+        n_max=1.0,
+        profile_residual_fn=lambda x: float(x),
+        eps_implicit=0.05,
+        eps_direction="decreasing",
+        seed=42,
+    )
+
+    def new_profile(x: float) -> float:
+        return float(x) ** 2
+
+    new_sched = original.with_profile(new_profile)
+    # Identity preserved on every other field.
+    assert new_sched.cycle_length() == original.cycle_length()
+    assert new_sched._n_min == original._n_min
+    assert new_sched._n_max == original._n_max
+    assert new_sched._eps_implicit == original._eps_implicit
+    assert new_sched._eps_direction == original._eps_direction
+    assert new_sched._seed == original._seed
+    # The new profile is the callable passed in.
+    assert new_sched._profile_residual_fn is new_profile
+    # Sanity: original is unmodified.
+    assert original._profile_residual_fn is not new_profile
+
+
+# ---------------------------------------------------------------------------
+# F23 — build_scheduler_from_config respects kwargs (P1)
+# ---------------------------------------------------------------------------
+
+
+def test_build_scheduler_from_config_respects_kwargs_for_edm() -> None:
+    """F23: ``build_scheduler_from_config`` honours the kwargs in the
+    ``config`` dict (not just the family key) for the
+    previously-unhandled ``edm`` family.
+    """
+    from adaptive_reflow.algorithm.scheduler import build_scheduler_from_config
+
+    config = {
+        "family": "edm",
+        "rho": 99.0,
+        "sigma_min": 0.001,
+        "sigma_max": 0.5,
+        "cycle_length": 16,
+        "n_min": 0.0,
+        "n_max": 1.0,
+        "seed": 7,
+    }
+    sched = build_scheduler_from_config(config)
+    cfg = sched.to_config()
+    # ``rho`` MUST be preserved through the round-trip (F23 — the
+    # family-specific from_config dispatcher is the canonical
+    # deserialiser, not the no-arg ``factory()`` fallback).
+    assert cfg.get("rho") == 99.0
+    assert cfg.get("sigma_max") == 0.5
 
 
 def test_convergence_adaptive_default_config_hash_unchanged() -> None:

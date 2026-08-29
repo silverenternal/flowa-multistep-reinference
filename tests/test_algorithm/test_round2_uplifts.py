@@ -425,6 +425,28 @@ def test_ema_schedule_sample_kwarg_modulates_alpha() -> None:
     assert val_high > val_default > val_low
 
 
+def test_ema_schedule_weight_zero_recovers_constant_alpha() -> None:
+    """F2: ``schedule_weight=0`` makes EMAOperator match the legacy
+    constant-alpha behaviour bit-for-bit, regardless of ``schedule_sample``.
+
+    Calling ``merge`` with ``schedule_weight=0`` and a non-trivial
+    ``schedule_sample.n_cap`` must equal calling ``merge`` with no
+    ``schedule_sample`` at all.
+    """
+    op = EMAOperator(alpha=0.3)
+    sample = type("S", (), {"n_cap": 1.0})()
+    base_kwargs = dict(
+        prev=0.5, dynamic=0.8, cap=1.0, floor=0.0,
+        delta_cap_up=1.0, delta_cap_down=1.0,
+    )
+    val_no_sample = op.merge(**base_kwargs)
+    val_with_sample_weight_zero = op.merge(
+        **base_kwargs, schedule_sample=sample, schedule_weight=0.0,
+    )
+    # Bit-for-bit equality (no schedule modulation when schedule_weight=0).
+    assert val_no_sample == pytest.approx(val_with_sample_weight_zero)
+
+
 # ---------------------------------------------------------------------------
 # P1 #24/25: Joint OT + barycentric blender
 # ---------------------------------------------------------------------------

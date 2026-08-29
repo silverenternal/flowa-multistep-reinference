@@ -2086,8 +2086,11 @@ class ConvergenceAdaptiveScheduler:
                 self._ema * w2 + (1.0 - self._ema) * float(self._smoothed_w2)
             )
 
-        # Record history.
-        self._w2_history.append(float(w2))
+        # Record history. F16: append the EMA-smoothed value so the
+        # PID ``prev`` reference below reads ``_smoothed_w2`` (the EMA),
+        # NOT the raw aggregated signal. Without this fix the EMA is
+        # computed and stored but never consumed by the controller.
+        self._w2_history.append(float(self._smoothed_w2))
 
         # Need at least two samples to compute ratio / delta.
         if len(self._w2_history) < 2:
@@ -2752,6 +2755,27 @@ class CodimensionSheetScheduler:
         """Return the configured cycle length."""
         return int(self._cycle_length)
 
+    def with_profile(
+        self, profile_residual_fn: Callable[[float], float] | None
+    ) -> CodimensionSheetScheduler:
+        """Return a new scheduler with ``profile_residual_fn`` swapped in.
+
+        F10: avoids the runner reaching into the private
+        ``_eps_implicit`` / ``_n_min`` / ``_n_max`` /
+        ``_eps_direction`` / ``_seed`` attributes. All other
+        configuration is preserved (cycle_length, n_min, n_max,
+        eps_implicit, eps_direction, seed).
+        """
+        return CodimensionSheetScheduler(
+            cycle_length=int(self._cycle_length),
+            n_min=float(self._n_min),
+            n_max=float(self._n_max),
+            profile_residual_fn=profile_residual_fn,
+            eps_implicit=float(self._eps_implicit),
+            eps_direction=str(self._eps_direction),
+            seed=int(self._seed),
+        )
+
     def schedule_family(self) -> str:
         """Return ``"codimension_sheet"``."""
         return "codimension_sheet"
@@ -3008,7 +3032,7 @@ def _register_extra_scheduler_families() -> None:
     :func:`build_scheduler_from_config` recognise them and
     :data:`SCHEDULER_REGISTRY` reports them in its listing.
     """
-    from .scheduler_extra import (
+    from ..scheduler_extra import (
         AdaptivePIDScheduler,
         EDMScheduler,
         JitteredConstantScheduler,
@@ -3095,8 +3119,40 @@ def build_scheduler_from_config(config: dict[str, Any]) -> SchedulerProtocol:
             SequentialScheduler as _SequentialScheduler,
         )
         return _SequentialScheduler.from_config(config)
-    # Fallback (unreachable): factory returns a fresh instance from kwargs.
+    # F23: explicit dispatch for the extra-scheduler families that
+    # previously fell through to the no-arg ``factory()`` fallback.
+    # Without these cases, kwargs from ``to_config`` are silently
+    # dropped on the rebuild (round-trip drift).
+    if key == "edm":
+        from adaptive_reflow.algorithm.scheduler_extra import (
+            EDMScheduler as _EDMScheduler,
+        )
+        return _EDMScheduler.from_config(config)
+    if key == "adaptive_pid":
+        from adaptive_reflow.algorithm.scheduler_extra import (
+            AdaptivePIDScheduler as _AdaptivePIDScheduler,
+        )
+        return _AdaptivePIDScheduler.from_config(config)
+    if key == "jittered_constant":
+        from adaptive_reflow.algorithm.scheduler_extra import (
+            JitteredConstantScheduler as _JitteredConstantScheduler,
+        )
+        return _JitteredConstantScheduler.from_config(config)
+    if key == "multi_channel_jittered":
+        from adaptive_reflow.algorithm.scheduler_r2 import (
+            MultiChannelJitteredConstantScheduler as _MCJCS,
+        )
+        return _MCJCS.from_config(config)
+    # Fallback (unreachable in the registered set; kept as a safety
+    # net for any third-party family registered via
+    # :func:`_register_extra_scheduler_families`).
     return factory()
+
+
+# Re-export ``CosineScheduleConfig`` from :mod:`adaptive_reflow.contracts`
+# (already imported at module top). Listed in ``__all__`` below so
+# downstream modules can ``from adaptive_reflow.algorithm.scheduler
+# import CosineScheduleConfig`` via this module's surface.
 
 
 __all__ = [
@@ -3104,6 +3160,7 @@ __all__ = [
     "ConstantScheduler",
     "ConvergenceAdaptiveScheduler",
     "CosineAnnealScheduler",
+    "CosineScheduleConfig",
     "ExponentialScheduler",
     "LinearScheduler",
     "PolynomialScheduler",

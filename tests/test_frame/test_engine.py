@@ -1948,3 +1948,60 @@ def test_engine_run_round_accepts_prev_ledger_row_hash() -> None:
         prev_ledger_row_hash=str(anchor.row_hash),
     )
     assert result.ledger_row.prev_ledger_row_hash == str(anchor.row_hash)
+
+
+# ---------------------------------------------------------------------------
+# F19 — engine precondition assert suppresses ``_policy_with_schedule_beta``
+# ---------------------------------------------------------------------------
+
+
+def test_engine_runner_path_suppresses_schedule_beta_override() -> None:
+    """``driver_computed_beta=True`` keeps ``applied_policy.beta_by_channel`` intact.
+
+    Regression test for finding #19 in
+    ``docs/r3-survey/05-verified-findings.md``: the engine used to
+    always call ``_policy_with_schedule_beta`` when
+    ``beta_from_schedule=True``, which would have overridden
+    ``beta_by_channel`` to ``n_cap``. On the runner's data path
+    (``driver_computed_beta=True``) the runner has already set
+    ``beta_by_channel`` to the merge result, so the engine MUST NOT
+    override it. The fix documents the runner's contract — the
+    runner sets ``driver_computed_beta=True`` so this helper is
+    short-circuited.
+
+    Test scenario: ``driver_computed_beta=True``,
+    ``beta_from_schedule=True``, ``beta_by_channel={"xy": 0.7}`` — the
+    engine's ``applied_policy_hash`` MUST reflect ``{"xy": 0.7}`` (no
+    override to ``n_cap``).
+    """
+    from dataclasses import replace as _dc_replace
+
+    from adaptive_reflow.frame.engine import EngineRoundResult
+
+    adapter = ReferenceFlowAAdapter()
+    caps = adapter.capabilities()
+    bundle = _make_state_bundle(adapter_caps=caps)
+    # ``beta_from_schedule=True`` + ``driver_computed_beta=True``
+    # is the runner's data path (the runner sets
+    # ``driver_computed_beta=True`` to suppress the engine's inline
+    # override). The engine MUST NOT re-override ``beta_by_channel``.
+    policy = _dc_replace(
+        _make_final_policy(
+            beta_by_channel={"xy": 0.7},
+            beta_from_schedule=True,
+        ),
+        driver_computed_beta=True,
+    )
+    engine = Engine()
+    result = engine.run_round(
+        round_index=0,
+        phase_state=_make_phase_state(),
+        bundle=bundle,
+        adapter=adapter,
+        policy=policy,
+        condition_delta=_make_condition_delta(),
+    )
+    assert isinstance(result, EngineRoundResult)
+    # The applied policy hash MUST match the original (no override to
+    # ``n_cap``).
+    assert result.applied_policy_hash == hash_policy_hash(policy)
