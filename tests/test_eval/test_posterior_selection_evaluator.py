@@ -770,6 +770,109 @@ def test_eps_schedule_rejects_non_callable() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Tests — C4 uplift: ``eps_round`` threaded from runner -> oracle_at_round
+# ---------------------------------------------------------------------------
+
+
+def test_eps_round_zero_collapses_to_sheet_dominance() -> None:
+    """C4: ``eps_round=0`` drives the ratio to 1 (paper Lemma 2 limit).
+
+    With ``eps_round=0`` the cell-evidence term ``c_ev * eps`` collapses
+    to zero, so the ratio ``s_ev / (s_ev + c_ev * eps)`` reduces to
+    ``s_ev / s_ev = 1.0`` whenever ``s_ev > 0`` — paper Theorem 1's
+    "sheet dominance as ``eps -> 0``" limit. The metric responds to
+    scheduler state by construction.
+    """
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-eps-round-zero")
+    out = evaluator.oracle_at_round(
+        bundle,
+        channel=_XY_CHANNEL,
+        seed=42,
+        round_index=0,
+        eps_round=0.0,
+    )
+    assert out["selection_ratio"] == pytest.approx(1.0, abs=1e-9), (
+        f"eps_round=0 must collapse to sheet dominance (ratio=1.0); "
+        f"got {out['selection_ratio']:.4f}"
+    )
+
+
+def test_eps_round_none_falls_back_to_legacy_path() -> None:
+    """C4: ``eps_round=None`` preserves the legacy fixed-eps path byte-for-byte.
+
+    No ``eps_schedule`` and no ``eps_round`` must produce the
+    ``oracle()``-identical value (regression guard for the legacy
+    ablation row behaviour).
+    """
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-eps-round-none")
+    legacy = evaluator.oracle(bundle, channel=_XY_CHANNEL, seed=42)
+    schedule_aware = evaluator.oracle_at_round(
+        bundle,
+        channel=_XY_CHANNEL,
+        seed=42,
+        round_index=0,
+        eps_round=None,
+    )
+    assert schedule_aware["selection_ratio"] == pytest.approx(
+        legacy["selection_ratio"], abs=1e-12
+    )
+
+
+def test_eps_round_scales_cell_evidence() -> None:
+    """C4: ``eps_round`` scales the cell-evidence term (paper Lemma 3).
+
+    A positive ``eps_round`` multiplies ``c_ev`` by ``eps_round``,
+    raising the ratio relative to ``eps_round=0``. A larger
+    ``eps_round`` strictly lowers the ratio (cell mass grows with
+    ``eps``).
+    """
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-eps-round-scale")
+    r0 = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0, eps_round=0.0,
+    )
+    r1 = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0, eps_round=0.5,
+    )
+    r2 = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0, eps_round=1.0,
+    )
+    assert r0["selection_ratio"] == pytest.approx(1.0, abs=1e-9)
+    assert r1["selection_ratio"] > 0.0
+    assert r1["selection_ratio"] < 1.0
+    assert r2["selection_ratio"] < r1["selection_ratio"], (
+        f"larger eps_round should lower the ratio "
+        f"(eps=0.5 -> {r1['selection_ratio']:.4f}; "
+        f"eps=1.0 -> {r2['selection_ratio']:.4f})"
+    )
+
+
+def test_eps_round_clamped_at_zero() -> None:
+    """C4: negative ``eps_round`` is clamped to 0 (paper constraint)."""
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-eps-round-neg")
+    out_neg = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0, eps_round=-1.0,
+    )
+    out_zero = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0, eps_round=0.0,
+    )
+    assert out_neg["selection_ratio"] == pytest.approx(
+        out_zero["selection_ratio"], abs=1e-12
+    )
+
+
+# ---------------------------------------------------------------------------
 # Tests — B12 uplift: ``evaluate_trajectory`` + ``oracle_batched`` schedule
 # ---------------------------------------------------------------------------
 

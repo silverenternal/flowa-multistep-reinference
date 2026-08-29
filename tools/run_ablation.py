@@ -47,6 +47,15 @@ per-round merge step is reachable).
   ADR-0013 records cosine annealing as the canonical implementation of
   paper Lemma 2's sheet-tube scaling, so this row is the reference the
   codimension row is measured against.
+* ``multi_round_evidence_driven_posterior_selection``   -- 20 rounds;
+  C4 fix (``docs/r3-survey/09-c4-investigation.md``):
+  :class:`EvidenceDrivenScheduler` (PID-lite feedback on
+  ``selection_ratio``) wired through the runner's
+  ``ScheduleSample.eps_implicit`` thread into the selection
+  evaluator's ``oracle_at_round(eps_round=...)``. The only paper-
+  grounded ablation cell with a *schedule-sensitive* ``selection_ratio``
+  curve (the cosine/codimension rows plateau because their
+  ``eps_implicit`` is fixed at construction time).
 * ``batched_cosine_forward_noise_hash_chained``         -- 20 rounds;
   :class:`BatchedTrajectoryRunner` with cosine scheduler and the
   post-P0/P1 infrastructure toggles enabled: ``forward_noise=True``
@@ -123,6 +132,18 @@ from adaptive_reflow.algorithm.scheduler import (  # noqa: E402
     PolynomialScheduler,
     SigmoidScheduler,
 )
+
+# C4 fix (``docs/r3-survey/09-c4-investigation.md``): the new
+# paper-grounded evidence-driven row needs the
+# :class:`CosineScheduleConfig` / :class:`FactorValue` /
+# :class:`ArtifactHash` to construct the
+# :class:`EvidenceDrivenScheduler`. Imported at module scope so the
+# ``_build_components`` branch stays free of late-bound imports.
+from adaptive_reflow.contracts import (  # noqa: E402
+    ArtifactHash,
+    CosineScheduleConfig,
+    FactorValue,
+)
 from adaptive_reflow.data.target_distributions import (  # noqa: E402
     mode_centers_for_target,
 )
@@ -157,6 +178,12 @@ CANONICAL_CONFIGURATIONS: tuple[str, ...] = (
 PAPER_GROUNDED_CONFIGURATIONS: tuple[str, ...] = (
     "multi_round_codimension_sheet_posterior_selection",
     "multi_round_cosine_posterior_selection",
+    # C4 fix (``docs/r3-survey/09-c4-investigation.md``): the new
+    # evidence-driven row exercises the PID-lite scheduler, threads
+    # its ``ScheduleSample.eps_implicit`` through the runner into the
+    # selection evaluator, and is the only ablation cell with a
+    # *schedule-sensitive* ``selection_ratio`` curve.
+    "multi_round_evidence_driven_posterior_selection",
 )
 #: Post-infrastructure-fix configurations. Both run against both
 #: canonical targets (2 rows each = 4 cells). ``batched_*`` exercises
@@ -353,6 +380,43 @@ def _build_components(
         return (
             default_cosine_scheduler(
                 cycle_length=rounds, n_min=COSINE_N_MIN, n_max=COSINE_N_MAX
+            ),
+            "default",
+            int(rounds),
+        )
+    if config == "multi_round_evidence_driven_posterior_selection":
+        # C4 fix (``docs/r3-survey/09-c4-investigation.md``): the
+        # paper-grounded row that exercises the PID-lite
+        # :class:`EvidenceDrivenScheduler` so the runner threads the
+        # per-round ``selection_ratio`` into ``record_round_feedback``
+        # AND threads ``ScheduleSample.eps_implicit`` into the
+        # selection evaluator's ``oracle_at_round(eps_round=...)``.
+        # The ``eps_implicit_base`` here matches the canonical
+        # codimension baseline (paper Theorem 1 limit value).
+        from adaptive_reflow.algorithm.scheduler.evidence_driven import (
+            EvidenceDrivenScheduler as _EDS,
+        )
+        cfg = CosineScheduleConfig(
+            cycle_length=rounds,
+            n_min=FactorValue(COSINE_N_MIN),
+            n_max=FactorValue(COSINE_N_MAX),
+            schedule_family="cosine_no_restart",
+            per_channel_caps={},
+            fresh_noise_floor_by_channel={},
+            symmetric_delta_caps_by_channel={},
+            restart_triggers_allowed=(),
+            config_hash=ArtifactHash("evidence_driven_ablation"),
+            frozen_before_evaluation=True,
+        )
+        return (
+            _EDS(
+                config=cfg,
+                kp=0.2,
+                ki=0.05,
+                max_step=0.05,
+                target_ratio=1.0,
+                k_eps=0.5,
+                eps_implicit_base=CODIMENSION_EPS_IMPLICIT,
             ),
             "default",
             int(rounds),

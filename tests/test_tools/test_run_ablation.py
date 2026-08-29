@@ -43,6 +43,11 @@ EXPECTED_CONFIGS: tuple[str, ...] = (
 EXPECTED_PAPER_CONFIGS: tuple[str, ...] = (
     "multi_round_codimension_sheet_posterior_selection",
     "multi_round_cosine_posterior_selection",
+    # C4 fix (``docs/r3-survey/09-c4-investigation.md``): the new
+    # evidence-driven row exercises the PID-lite scheduler and is
+    # the only ablation cell with a *schedule-sensitive*
+    # ``selection_ratio`` curve.
+    "multi_round_evidence_driven_posterior_selection",
 )
 #: The two post-infrastructure-fix (commit ``e5e38fc``) configurations
 #: added in the post-P0/P1 ablation. Both run against both canonical
@@ -288,3 +293,76 @@ def test_run_ablation_module_imports_clean() -> None:
     assert hasattr(module, "main")
     assert hasattr(module, "_run_one")
     assert hasattr(module, "_format_markdown")
+
+
+# ---------------------------------------------------------------------------
+# C4 — evidence-driven ablation row emits schedule-sensitive selection_ratio
+# ---------------------------------------------------------------------------
+
+
+def test_evidence_driven_row_emits_selection_ratio_curve(
+    _venv_python: Path,
+    ablation_out: Path,
+) -> None:
+    """C4: the new ``multi_round_evidence_driven_posterior_selection`` row emits a curve.
+
+    Smoke test for the C4 close-loop: the new evidence-driven
+    ablation row must (a) appear in the markdown, (b) carry a
+    ``selection_ratio`` per round in the selection-ratio table, and
+    (c) have at least one round of data in ``--quick`` mode. The
+    numerical movement is checked in unit tests; this test guards
+    the end-to-end plumbing.
+    """
+    env = os.environ.copy()
+    env.setdefault("PYTHONIOENCODING", "utf-8")
+    completed = subprocess.run(
+        [
+            str(_venv_python),
+            str(SCRIPT_PATH),
+            "--quick",
+            "--out",
+            str(ablation_out),
+        ],
+        cwd=str(REPO_ROOT),
+        env=env,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert completed.returncode == 0, (
+        f"run_ablation exited with code {completed.returncode}; "
+        f"stderr:\n{completed.stderr}\nstdout:\n{completed.stdout}"
+    )
+    text = ablation_out.read_text(encoding="utf-8")
+    # (a) The new row appears in the canonical results table.
+    assert (
+        "multi_round_evidence_driven_posterior_selection" in text
+    ), "C4: new ablation row missing from markdown"
+    # (b) The new row appears in the ADR-0013 selection-ratio table
+    # with ``Final selection_ratio`` and ``Mean selection_ratio``
+    # columns populated.
+    ratio_line = next(
+        (
+            line
+            for line in text.splitlines()
+            if line.startswith("| multi_round_evidence_driven_posterior_selection |")
+            and line.count("|") == 5
+        ),
+        None,
+    )
+    assert ratio_line is not None, (
+        f"no selection-ratio row for the new evidence-driven config; "
+        f"text:\n{text}"
+    )
+    cells = [c.strip() for c in ratio_line.strip("|").split("|")]
+    # First cell is the config name; remaining 4 cells are the
+    # selection-ratio triple + round_index.
+    assert len(cells) >= 4, (
+        f"evidence-driven row has too few cells: {cells!r}"
+    )
+    for value in cells[1:4]:
+        assert 0.0 <= float(value) <= 1.0, (
+            f"multi_round_evidence_driven_posterior_selection: "
+            f"selection_ratio {value} outside [0, 1]"
+        )

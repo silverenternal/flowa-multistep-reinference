@@ -869,10 +869,35 @@ class ReInferenceRunner:
             # ``PosteriorSelectionEvaluator`` measures the round's
             # sheet-vs-cell evidence ratio; paper Proposition 3 predicts
             # it rises toward 1 as the fresh-noise scale shrinks.
+            #
+            # C4 (close Loop 2): when the active scheduler emits a
+            # per-round ``eps_implicit`` on its sample (currently
+            # :class:`CodimensionSheetScheduler` and the
+            # ``profile_residual_fn``-aware path of
+            # :class:`EvidenceDrivenScheduler`), forward it to the
+            # evaluator as ``eps_round`` so the metric responds to
+            # scheduler state. Schedulers that do not carry a per-round
+            # ``eps_implicit`` leave the field ``None`` and the
+            # evaluator falls back to its fixed ``eps_implicit`` —
+            # preserving byte-for-byte backward compatibility.
             if config.selection_evaluator is not None and bundle is not None:
-                selection_metrics = config.selection_evaluator.oracle(
-                    bundle, channel=primary_channel, seed=int(config.seed) + r
-                )
+                eps_round: float | None = getattr(sample, "eps_implicit", None)
+                if hasattr(config.selection_evaluator, "oracle_at_round"):
+                    selection_metrics = (
+                        config.selection_evaluator.oracle_at_round(
+                            bundle,
+                            channel=primary_channel,
+                            seed=int(config.seed) + r,
+                            round_index=int(r),
+                            eps_round=eps_round,
+                        )
+                    )
+                else:
+                    selection_metrics = config.selection_evaluator.oracle(
+                        bundle,
+                        channel=primary_channel,
+                        seed=int(config.seed) + r,
+                    )
                 metric["selection_ratio"] = float(
                     selection_metrics.get("selection_ratio", 0.0)
                 )
@@ -975,26 +1000,18 @@ class ReInferenceRunner:
         # Otherwise leave it alone (the codimension scheduler is the
         # only concrete type that consumes paper quantities today).
         if isinstance(self._scheduler, CodimensionSheetScheduler):
-            # F10 — prefer the public ``with_profile`` constructor when
-            # available (added by Agent 1a's P1 fix on the scheduler
-            # side). Fall back to a re-construction via private
-            # attributes when ``with_profile`` is not present (legacy
-            # schedulers). The reach-around signals that renaming the
-            # underlying attributes would break the legacy path; the
-            # ``with_profile`` public method (added by Agent 1a's P1
-            # fix) is the long-term replacement.
-            if hasattr(self._scheduler, "with_profile"):
-                self._scheduler = self._scheduler.with_profile(provider)
-            else:
-                self._scheduler = CodimensionSheetScheduler(
-                    cycle_length=int(self._scheduler.cycle_length()),
-                    n_min=float(self._scheduler._n_min),
-                    n_max=float(self._scheduler._n_max),
-                    profile_residual_fn=provider,
-                    eps_implicit=float(self._scheduler._eps_implicit),
-                    eps_direction=str(self._scheduler._eps_direction),
-                    seed=int(self._scheduler.seed),
-                )
+            # F10 — ``CodimensionSheetScheduler`` exposes
+            # ``with_profile(profile_residual_fn)`` as the public
+            # swap-constructor. The runner calls it directly instead
+            # of reaching into the scheduler's private attributes
+            # (``_n_min`` / ``_n_max`` / ``_eps_implicit`` /
+            # ``_eps_direction`` / ``_seed``). Renaming any of those
+            # internals is now a local concern of
+            # ``CodimensionSheetScheduler`` and the runner stays
+            # decoupled. The ``isinstance`` guard above guarantees
+            # ``with_profile`` exists; no silent fallback path is
+            # supported.
+            self._scheduler = self._scheduler.with_profile(provider)
 
         # Upgrade the policy driver if it is an AdaptivePolicyDriver.
         if isinstance(self._driver, AdaptivePolicyDriver):

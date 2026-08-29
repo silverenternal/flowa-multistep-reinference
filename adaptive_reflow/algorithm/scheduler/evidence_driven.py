@@ -24,6 +24,19 @@ Paper context (MeanFlow / FreeTraj / Black-box-VI surveys in
   isolation this is parameterised as a per-call ``evidence_ratio`` in
   the ``metric`` dict rather than a hard blackboard reference.
 
+C4 uplift (``docs/r3-survey/09-c4-investigation.md``): in addition to
+the ``n_cap`` offset, the scheduler now propagates a per-round
+``eps_implicit`` adjustment onto the emitted ``ScheduleSample`` so
+the runner can thread it into the
+:class:`PosteriorSelectionEvaluator` (``oracle_at_round(eps_round=...)``).
+The PID controller is unchanged — only the destination of its delta
+is split between ``n_cap`` (legacy ``_last_pid_delta``) and
+``eps_implicit`` (new ``_last_eps_delta``). A small ``k_eps`` gain
+(default ``0.5``) maps the PID's raw adjustment onto the epsilon
+scale; paper Theorem 1 predicts the ratio rises toward 1 as
+``eps -> 0``, so the epsilon delta is the *negation* of the n_cap
+delta (positive ``error`` => lower ``eps`` to drive ratio toward 1).
+
 Module boundary
 ---------------
 
@@ -210,6 +223,8 @@ class EvidenceDrivenScheduler:
         ki: float = 0.05,
         max_step: float = 0.05,
         target_ratio: float = 1.0,
+        k_eps: float = 0.5,
+        eps_implicit_base: float | None = None,
     ) -> None:
         """Construct the scheduler.
 
@@ -221,6 +236,19 @@ class EvidenceDrivenScheduler:
         :param ki: integral gain (PID-lite).
         :param max_step: per-round step cap on ``|delta_n_cap|``.
         :param target_ratio: PID-lite set-point for ``evidence_ratio``.
+        :param k_eps: C4 uplift — gain mapping the PID's raw delta onto
+            the per-round ``eps_implicit`` adjustment. Default ``0.5``.
+            The ``eps`` delta is ``-delta * k_eps`` (paper Theorem 1
+            predicts ratio rises as ``eps -> 0``, so positive
+            ``error`` => lower ``eps``).
+        :param eps_implicit_base: C4 uplift — the baseline ``eps`` value
+            the PID modulates around. ``None`` (default) means "no
+            ``eps_implicit`` carried"; the runner will see
+            ``sample.eps_implicit is None`` and the evaluator will fall
+            back to its fixed ``eps_implicit``. When supplied, the
+            scheduler emits
+            ``ScheduleSample.eps_implicit = max(1e-6, eps_implicit_base + accumulated_delta)``
+            and the runner threads it into the selection evaluator.
         """
         self._config = config
         self._sheet_A: float | None = None
@@ -237,6 +265,22 @@ class EvidenceDrivenScheduler:
         self._last_sample: ScheduleSample | None = None
         self._last_audit_codes: tuple[str, ...] = ()
         self._last_pid_delta: float = 0.0
+        # C4 uplift: parallel ``_last_eps_delta`` that the runner
+        # propagates to the selection evaluator via
+        # ``ScheduleSample.eps_implicit``. ``_k_eps`` is the gain
+        # mapping the PID's raw delta onto the epsilon scale; the
+        # epsilon delta is the *negation* of the n_cap delta (paper
+        # Theorem 1 says the ratio rises as ``eps -> 0``). When
+        # ``_eps_implicit_base`` is ``None`` the field stays ``None``
+        # and the runner falls back to the evaluator's fixed
+        # ``eps_implicit`` — preserving byte-for-byte backward
+        # compatibility for callers that don't construct with
+        # ``eps_implicit_base``.
+        self._last_eps_delta: float = 0.0
+        self._k_eps: float = float(k_eps)
+        self._eps_implicit_base: float | None = (
+            float(eps_implicit_base) if eps_implicit_base is not None else None
+        )
         # Forward the profile so paper-quantity augmentation works.
         if profile_residual_fn is not None:
             from adaptive_reflow.algorithm.scheduler._core import CosineAnnealScheduler
@@ -280,6 +324,16 @@ class EvidenceDrivenScheduler:
         :meth:`sample` with the most recent ``evidence_ratio`` observed
         via :meth:`record_round_feedback`. The PID's ``delta_n_cap`` is
         added to the cosine baseline (and clipped into ``[0, 1]``).
+
+        C4 uplift: when the scheduler was constructed with
+        ``eps_implicit_base`` set, the parallel ``_last_eps_delta``
+        (computed in :meth:`record_round_feedback`) is applied to
+        produce ``ScheduleSample.eps_implicit``. The runner reads this
+        field and threads it into the selection evaluator as
+        ``eps_round``. When ``eps_implicit_base`` was ``None`` (the
+        default), ``ScheduleSample.eps_implicit`` stays ``None`` and
+        the runner falls back to the evaluator's fixed ``eps_implicit``
+        — preserving byte-for-byte backward compatibility.
         """
         baseline = self._wrapped.sample(
             outer_cycle_id=outer_cycle_id,
@@ -290,6 +344,20 @@ class EvidenceDrivenScheduler:
         # evidence; carry it into this round's sample.
         delta = self._last_pid_delta
         adjusted = max(0.0, min(1.0, float(baseline.n_cap) + delta))
+        # C4 uplift: compute the per-round ``eps_implicit`` if the
+        # scheduler was constructed with a baseline. The PID's
+        # ``_last_eps_delta`` is the negation of the n_cap delta
+        # scaled by ``k_eps`` (paper Theorem 1 says ratio rises as
+        # ``eps -> 0``, so a positive ``error`` lowers ``eps``).
+        # Floor at ``1e-6`` so the downstream metric never receives
+        # a non-positive eps.
+        eps_implicit_for_sample: float | None = None
+        eps_implicit_base_local: float | None = self._eps_implicit_base
+        if eps_implicit_base_local is not None:
+            eps_implicit_for_sample = max(
+                1e-6,
+                float(eps_implicit_base_local) + float(self._last_eps_delta),
+            )
         # Re-derive u_r from the *adjusted* n_cap so the schedule_hash
         # captures the evidence-driven offset (callers that want to
         # replay a round can recover the offset from the audit codes).
@@ -299,6 +367,12 @@ class EvidenceDrivenScheduler:
             f"evidence_driven_n_cap:baseline={float(baseline.n_cap):.6f}"
             f":delta={delta:.6f}:adjusted={adjusted:.6f}",
         )
+        if eps_implicit_for_sample is not None and eps_implicit_base_local is not None:
+            codes = codes + (
+                f"evidence_driven_eps:base={float(eps_implicit_base_local):.6f}"
+                f":delta={float(self._last_eps_delta):.6f}"
+                f":adjusted={float(eps_implicit_for_sample):.6f}",
+            )
         sample = ScheduleSample(
             outer_cycle_id=int(outer_cycle_id),
             round_in_cycle=int(round_in_cycle),
@@ -311,6 +385,7 @@ class EvidenceDrivenScheduler:
             computed_at_round=int(target_round),
             schedule_hash=str(self.config_hash()),
             audit_codes=codes,
+            eps_implicit=eps_implicit_for_sample,
         )
         self._last_sample = sample
         self._last_audit_codes = codes
@@ -346,6 +421,8 @@ class EvidenceDrivenScheduler:
         self._last_sample = None
         self._last_audit_codes = ()
         self._last_pid_delta = 0.0
+        # C4 uplift: reset the parallel ``_last_eps_delta`` accumulator.
+        self._last_eps_delta = 0.0
         self._controller.reset()
         self._wrapped.reset()
 
@@ -360,6 +437,14 @@ class EvidenceDrivenScheduler:
         ``evidence_ratio`` is absent; emits
         :data:`EVIDENCE_RATIO_MISSING` so the audit trail can
         distinguish the no-signal case from the explicit-signal case.
+
+        C4 uplift: when the scheduler was constructed with
+        ``eps_implicit_base``, the same PID controller output is
+        mapped onto the ``_last_eps_delta`` accumulator via the
+        ``_k_eps`` gain (negated — paper Theorem 1 says ratio rises
+        as ``eps -> 0``). The next :meth:`sample` adds the delta to
+        ``_eps_implicit_base`` and emits
+        ``ScheduleSample.eps_implicit``.
         """
         if "evidence_ratio" in metrics:
             ratio = float(metrics["evidence_ratio"])
@@ -377,6 +462,13 @@ class EvidenceDrivenScheduler:
         codes: list[str] = []
         delta, _saturated = self._controller.step(ratio, audit_codes=codes)
         self._last_pid_delta = delta
+        # C4 uplift: split the PID's delta between ``n_cap`` (the
+        # legacy destination) and ``eps_implicit`` (the C4 path).
+        # Paper Theorem 1: ratio rises as ``eps -> 0`` => positive
+        # ``error`` => lower ``eps``. The integral term is included
+        # implicitly via the controller (it sums into ``delta``).
+        if self._eps_implicit_base is not None:
+            self._last_eps_delta = -float(delta) * float(self._k_eps)
         self._last_audit_codes = self._last_audit_codes + tuple(codes)
 
     def inject_noise(
@@ -393,7 +485,7 @@ class EvidenceDrivenScheduler:
 
     def to_config(self) -> dict[str, Any]:
         """Return a JSON-serialisable config dict (P1-1 round-trip)."""
-        return {
+        out: dict[str, Any] = {
             "family": self.FAMILY,
             "cycle_length": int(self._config.cycle_length),
             "n_min": float(self._config.n_min),
@@ -404,7 +496,13 @@ class EvidenceDrivenScheduler:
             "ki": float(self._controller.ki),
             "max_step": float(self._controller.max_step),
             "target_ratio": float(self._controller.target_ratio),
+            # C4 uplift: round-trip the ``k_eps`` gain and the
+            # ``eps_implicit_base`` so the C4 fix is reproducible.
+            "k_eps": float(self._k_eps),
         }
+        if self._eps_implicit_base is not None:
+            out["eps_implicit_base"] = float(self._eps_implicit_base)
+        return out
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> EvidenceDrivenScheduler:
@@ -423,12 +521,18 @@ class EvidenceDrivenScheduler:
             config_hash=ArtifactHash(str(config.get("config_hash", "evid_cfg"))),
             frozen_before_evaluation=True,
         )
+        eps_base_raw = config.get("eps_implicit_base")
+        eps_base: float | None = (
+            None if eps_base_raw is None else float(eps_base_raw)
+        )
         return cls(
             config=sched_config,
             kp=float(config.get("kp", 0.2)),
             ki=float(config.get("ki", 0.05)),
             max_step=float(config.get("max_step", 0.05)),
             target_ratio=float(config.get("target_ratio", 1.0)),
+            k_eps=float(config.get("k_eps", 0.5)),
+            eps_implicit_base=eps_base,
         )
 
 

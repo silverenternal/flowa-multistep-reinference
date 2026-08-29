@@ -99,6 +99,22 @@ class ScheduleSample:
     evidence balance, so consumers can branch on ``is None`` rather than
     reading ``scheduler.last_evidence_ratio`` out of band.
     """
+    eps_implicit: float | None = None
+    """Per-round implicit noise scale in evidence units (paper Theorem 1 / epsilon).
+
+    Populated by schedulers that carry a construction-time
+    ``eps_implicit`` (currently :class:`CodimensionSheetScheduler` and
+    :class:`EvidenceDrivenScheduler` when wrapping a
+    ``profile_residual_fn``-aware base). ``None`` for schedulers
+    that have no concept of a paper-quantity epsilon (canonical
+    cosine, constant, polynomial, sigmoid). The runner reads this
+    field and threads it to the
+    :class:`PosteriorSelectionEvaluator` so the per-round
+    ``selection_ratio`` responds to scheduler state (per the C4
+    investigation, ``docs/r3-survey/09-c4-investigation.md``).
+    Defaults to ``None`` so legacy callers that build
+    :class:`ScheduleSample` directly keep working unchanged.
+    """
 
     def memory_fraction(self) -> float:
         """Return the per-round memory fraction ``1 - n_cap`` (ADR-0010).
@@ -2747,6 +2763,7 @@ class CodimensionSheetScheduler:
             schedule_hash=str(self._config_hash_value),
             audit_codes=codes,
             evidence_ratio=float(ratio),
+            eps_implicit=float(self._eps_implicit),
         )
         self._last_sample = sample
         return sample
@@ -3022,15 +3039,44 @@ contracts-layer taxonomy.
 
 
 # Phase-2 protocol registry extension (P0/P2 — see
-# ``docs/algorithm-deep-uplift-plan.md``). Lazily imported so the
-# scheduler module's import surface stays minimal.
+# ``docs/algorithm-deep-uplift-plan.md``).
+#
+# The extra families (``edm``, ``adaptive_pid``, ``jittered_constant``)
+# live in :mod:`adaptive_reflow.algorithm.scheduler_extra`, which has a
+# TOP-LEVEL ``from .scheduler._core import`` of its own. If we called
+# :func:`_register_extra_scheduler_families` at module load time it
+# would close a cycle:
+#
+#     scheduler/__init__.py -> scheduler/_core.py
+#                              -> scheduler_extra.py
+#                              -> scheduler/__init__.py (partial)
+#
+# The cycle currently happens to work because Python's
+# partially-initialised modules still expose the symbols defined
+# *before* line 3046 of ``_core.py``, but the design is fragile: any
+# future move of a symbol reference earlier in ``_core.py`` (or a
+# change in ``scheduler_extra.py``'s import order) silently turns the
+# "works by accident" cycle into an ``ImportError``.
+#
+# We therefore defer the registration to the first call of
+# :func:`build_scheduler`. The registration is idempotent so
+# re-invocations are no-ops; ``build_scheduler_from_config`` uses
+# explicit per-family dispatch with its own lazy imports and does NOT
+# depend on the registry being pre-populated.
+#
+# Net effect: the cycle disappears at module load time. The two
+# consumers that need the registry populated see the same final state
+# (the extra families registered) without any
+# ``try/except ImportError`` or ``sys.modules`` patching.
 def _register_extra_scheduler_families() -> None:
     """Extend :data:`SCHEDULER_REGISTRY` with Phase-2 scheduler families.
 
     Idempotent: re-invocations are no-ops. The new families are
-    registered so :func:`build_scheduler` /
-    :func:`build_scheduler_from_config` recognise them and
+    registered so :func:`build_scheduler` recognises them and
     :data:`SCHEDULER_REGISTRY` reports them in its listing.
+
+    Must be called at *function call time* rather than module load
+    time to avoid the cycle described in this function's docstring.
     """
     from ..scheduler_extra import (
         AdaptivePIDScheduler,
@@ -3043,7 +3089,25 @@ def _register_extra_scheduler_families() -> None:
     SCHEDULER_REGISTRY.setdefault("jittered_constant", JitteredConstantScheduler)
 
 
-_register_extra_scheduler_families()
+# Tracks whether :func:`_register_extra_scheduler_families` has run.
+# Module-level so the state survives across multiple
+# :func:`build_scheduler` invocations within the same process.
+_EXTRA_FAMILIES_REGISTERED: bool = False
+
+
+def _ensure_extra_families_registered() -> None:
+    """Register Phase-2 scheduler families on first :func:`build_scheduler` call.
+
+    Idempotent wrapper around :func:`_register_extra_scheduler_families`
+    that gates the registration on a module-level flag so the cycle
+    described in :func:`_register_extra_scheduler_families`'s
+    docstring cannot recur on repeated calls.
+    """
+    global _EXTRA_FAMILIES_REGISTERED
+    if _EXTRA_FAMILIES_REGISTERED:
+        return
+    _register_extra_scheduler_families()
+    _EXTRA_FAMILIES_REGISTERED = True
 
 
 def build_scheduler(family: str, **kwargs: object) -> SchedulerProtocol:
@@ -3056,7 +3120,14 @@ def build_scheduler(family: str, **kwargs: object) -> SchedulerProtocol:
         for ``"constant"`` they must match :class:`ConstantScheduler`; etc.
     :returns: a fresh :class:`SchedulerProtocol` instance for that family.
     :raises KeyError: ``family`` is not a registered schedule family.
+
+    The Phase-2 scheduler families (``edm``, ``adaptive_pid``,
+    ``jittered_constant``) are registered on first invocation of this
+    function via :func:`_ensure_extra_families_registered`. Deferring
+    the registration to here is what keeps the module-load-time cycle
+    closed (see :func:`_register_extra_scheduler_families`).
     """
+    _ensure_extra_families_registered()
     if not isinstance(family, str):
         raise ValueError(f"family must be str, got {family!r}")
     key = family.strip().lower()

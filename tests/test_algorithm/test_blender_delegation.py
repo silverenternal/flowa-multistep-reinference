@@ -24,8 +24,11 @@ now delegates to ``self._merge_operator.merge`` rather than the legacy
 
 from __future__ import annotations
 
+import hashlib
 import math
+from dataclasses import replace as _replace
 
+import numpy as np
 import pytest
 
 from adaptive_reflow.algorithm.blender import (
@@ -45,8 +48,13 @@ from adaptive_reflow.contracts import (
     CosineScheduleConfig,
     EnvelopeLayer,
     FactorValue,
+    FinalRestartPolicy,
     FrozenEnvelopeManifest,
+    LedgerRowId,
+    PolicyId,
     RestartTriggerCode,
+    RunId,
+    hash_policy_hash,
 )
 from adaptive_reflow.frame.merge import bounded_merge as legacy_bounded_merge
 from adaptive_reflow.frame.orchestrator import AdaptiveReflowPolicyOrchestrator
@@ -201,6 +209,233 @@ def test_twodim_blender_blend_call_does_not_raise() -> None:
     )
     assert bundle is not None
     assert any("blender:linear" in str(p) for p in bundle.provenance)
+
+
+# ---------------------------------------------------------------------------
+# W1 cleanup — no duck-typed wrappers; adapter constructs real StateBundles
+# ---------------------------------------------------------------------------
+#
+# The W1 fix (R3 cleanup) removed the previous ``_ArrayCarrier`` hack that
+# wrapped raw numpy arrays in a duck-typed object exposing ``native_value``
+# so the blender's ``_extract_channel_value`` could read it. The fix
+# replaces the carrier dance with a clean adapter-owned pattern: the
+# adapter computes the blend math directly in numpy (byte-identical to
+# the legacy ``_blend_endpoint_with_prior`` for the LinearBlender default)
+# and constructs the output ``StateBundle`` natively — the blender is
+# consulted only for its stable structural metadata (``blender_family``
+# + ``config_hash``), which tag the output bundle's provenance.
+#
+# These tests verify the new design WITHOUT relying on duck typing: the
+# adapter does not call ``self._blender.blend(...)``, does not instantiate
+# any carrier-like wrapper, and produces real ``StateBundle`` instances
+# with byte-stable math.
+
+
+def test_adapter_module_has_no_array_carrier_hack() -> None:
+    """The ``_ArrayCarrier`` duck-typed wrapper class has been removed.
+
+    The previous W1 implementation introduced a class named ``_ArrayCarrier``
+    that wrapped raw numpy arrays in a duck-typed object exposing
+    ``native_value`` so the blender's ``_extract_channel_value`` could
+    read it. That class is the hack this test asserts no longer exists.
+    """
+    import adaptive_reflow.adapters.twodim_fm as twodim_fm_module
+
+    assert not hasattr(twodim_fm_module, "_ArrayCarrier"), (
+        "_ArrayCarrier duck-typed wrapper must be removed from twodim_fm.py "
+        "(W1 cleanup: the 4-loop framework must not depend on "
+        "duck-typed wrappers)"
+    )
+    assert not hasattr(twodim_fm_module, "_blender_arrays_via_blender"), (
+        "_blender_arrays_via_blender inline-math helper must be removed "
+        "(W1 cleanup: it pretended to delegate to the blender but "
+        "computed the math inline)"
+    )
+
+
+def test_adapter_restart_does_not_invoke_blender_blend_method() -> None:
+    """``apply_restart_distribution`` must NOT call ``self._blender.blend``.
+
+    The new W1 design delegates only the blender's structural metadata
+    (``blender_family`` + ``config_hash``) — it does NOT route the
+    prior + fresh blend through the blender's ``blend()`` method, which
+    would require a duck-typed carrier to bridge the adapter's numpy
+    arrays to the blender's channel-value protocol. This test verifies
+    the contract by recording ``blend`` calls on a wrapped blender.
+    """
+    from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
+
+    class _BlendCountingBlender(LinearBlender):
+        def __init__(self) -> None:
+            super().__init__()
+            self.blend_calls: list[tuple[object, object, dict[str, object]]] = []
+
+        def blend(  # type: ignore[override]
+            self,
+            prior_state: object,
+            fresh_state: object,
+            *,
+            memory_fraction: float,
+            channel: str,
+            audit_codes: list[str] | None = None,
+        ) -> object:
+            self.blend_calls.append(
+                (prior_state, fresh_state, {"memory_fraction": memory_fraction, "channel": channel})
+            )
+            return super().blend(
+                prior_state,
+                fresh_state,
+                memory_fraction=memory_fraction,
+                channel=channel,
+                audit_codes=audit_codes,
+            )
+
+    counting = _BlendCountingBlender()
+    adapter = TwoDimFMAdapter(blender=counting)
+    bundle = adapter.build_initial_state(
+        batch_id="batch-no-blend-call", sample_id="sample-no-blend-call"
+    )
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId("policy-no-blend-call"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("run-no-blend-call"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={ChannelName("xy"): FactorValue(0.5)},
+        alpha_by_channel={ChannelName("xy"): FactorValue(1.0)},
+        fresh_noise_floor_by_channel={ChannelName("xy"): FactorValue(0.0)},
+        schedule_sample=None,
+        freeze_admission_by_channel={ChannelName("xy"): True},
+        ledger_row_id=LedgerRowId("ledger-no-blend-call"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    policy = _replace(policy, policy_hash=hash_policy_hash(policy))
+    adapter.apply_restart_distribution(bundle, policy)
+    # The adapter must NOT have called blender.blend(...) — that would
+    # require a duck-typed carrier, which the W1 fix removes.
+    assert len(counting.blend_calls) == 0, (
+        f"apply_restart_distribution must not call self._blender.blend(...); "
+        f"saw {len(counting.blend_calls)} call(s) — the adapter should "
+        f"compute the math directly in numpy and consult the blender only "
+        f"for its blender_family() / config_hash() metadata."
+    )
+
+
+def test_adapter_restart_returns_real_state_bundle() -> None:
+    """``apply_restart_distribution`` returns a real ``StateBundle``.
+
+    The previous W1 implementation returned a ``StateBundle`` but
+    accessed ``blended_bundle.channel_values.get(...)`` on what was NOT
+    a real ``StateBundle`` — the W1 fix removes that path entirely. This
+    test verifies the new design: the adapter constructs the output
+    bundle natively with a proper ``StateBundle`` that validates.
+    """
+    from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
+    from adaptive_reflow.universal.state import (
+        StateBundle,
+        validate_state_bundle,
+    )
+
+    adapter = TwoDimFMAdapter()
+    bundle = adapter.build_initial_state(
+        batch_id="batch-real-sb", sample_id="sample-real-sb"
+    )
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId("policy-real-sb"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("run-real-sb"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={ChannelName("xy"): FactorValue(0.5)},
+        alpha_by_channel={ChannelName("xy"): FactorValue(1.0)},
+        fresh_noise_floor_by_channel={ChannelName("xy"): FactorValue(0.0)},
+        schedule_sample=None,
+        freeze_admission_by_channel={ChannelName("xy"): True},
+        ledger_row_id=LedgerRowId("ledger-real-sb"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    policy = _replace(policy, policy_hash=hash_policy_hash(policy))
+    post = adapter.apply_restart_distribution(bundle, policy)
+    # Must be a real StateBundle instance — not a duck-typed wrapper.
+    assert isinstance(post, StateBundle), (
+        f"apply_restart_distribution must return a real StateBundle; "
+        f"got {type(post).__name__}"
+    )
+    ok, errs = validate_state_bundle(post)
+    assert ok, f"output bundle failed validation: {errs!r}"
+    # The blender's family + config hash must tag the provenance so the
+    # round is attributable to the configured blender.
+    provenance_strs = [str(p) for p in post.provenance]
+    assert any("blender:linear" in p for p in provenance_strs), (
+        f"output bundle provenance must carry blender:linear tag; "
+        f"got {provenance_strs!r}"
+    )
+    assert any("blender_hash:" in p for p in provenance_strs), (
+        f"output bundle provenance must carry blender_hash: tag; "
+        f"got {provenance_strs!r}"
+    )
+
+
+def test_adapter_restart_math_is_byte_identical_to_legacy() -> None:
+    """The adapter's restart blend is byte-identical to the legacy
+    ``_blend_endpoint_with_prior`` for any (prior_x0, fresh_x0, m) triple.
+
+    Verifies the load-bearing paper-correctness invariant: the new W1
+    design must preserve the math exactly so downstream tests (e.g.
+    ``test_restart_blend_respects_memory_fraction`` in
+    ``tests/test_adapters/test_twodim_fm.py``) keep passing byte-exactly.
+    """
+    from adaptive_reflow.adapters.twodim_fm import (
+        TwoDimFMAdapter,
+        _blend_endpoint_with_prior,
+    )
+
+    adapter = TwoDimFMAdapter()
+    # Drive a real restart to populate the native state cache.
+    bundle = adapter.build_initial_state(
+        batch_id="batch-byte-exact", sample_id="sample-byte-exact"
+    )
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId("policy-byte-exact"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("run-byte-exact"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={ChannelName("xy"): FactorValue(0.5)},
+        alpha_by_channel={ChannelName("xy"): FactorValue(1.0)},
+        fresh_noise_floor_by_channel={ChannelName("xy"): FactorValue(0.0)},
+        schedule_sample=None,
+        freeze_admission_by_channel={ChannelName("xy"): True},
+        ledger_row_id=LedgerRowId("ledger-byte-exact"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    policy = _replace(policy, policy_hash=hash_policy_hash(policy))
+    post = adapter.apply_restart_distribution(bundle, policy)
+    # Pull the stored x0 out of the adapter's native state cache and
+    # compare against the legacy math for the same (prior_x0, fresh_x0, m).
+    prior_entry = adapter._native_states[bundle.native_state_digest]
+    prior_x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(2)
+    # Reconstruct the fresh x0 the adapter drew (seeded deterministically).
+    next_round = int(bundle.source_round) + 1
+    seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
+    seed = int(hashlib.sha256(seed_blob).hexdigest()[:8], 16)
+    fresh_x0 = np.random.default_rng(seed).standard_normal(2).astype(np.float64)
+    m = 1.0 - float(policy.beta_by_channel[ChannelName("xy")])
+    expected_legacy = _blend_endpoint_with_prior(fresh_x0, prior_x0, m)
+    actual = adapter._native_states[post.native_state_digest]["x0"]
+    actual = np.asarray(actual, dtype=np.float64).reshape(2)
+    # Byte-exact: every element matches exactly (no tolerance needed).
+    assert np.array_equal(actual, expected_legacy), (
+        f"adapter restart math is NOT byte-identical to the legacy "
+        f"_blend_endpoint_with_prior for m={m}; "
+        f"actual={actual!r}, expected={expected_legacy!r}"
+    )
 
 
 # ---------------------------------------------------------------------------

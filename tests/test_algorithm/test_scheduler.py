@@ -951,6 +951,49 @@ def test_codimension_sheet_scheduler_clip_in_unit_interval() -> None:
         assert 0.0 <= s_hi.n_cap <= 1.0
 
 
+def test_codimension_sample_carries_eps_implicit() -> None:
+    """C4: ``CodimensionSheetScheduler.sample`` populates ``ScheduleSample.eps_implicit``.
+
+    The runner reads ``ScheduleSample.eps_implicit`` and forwards it
+    to the selection evaluator's ``oracle_at_round(eps_round=...)``.
+    A ``None`` field would silently fall back to the evaluator's
+    fixed ``eps_implicit`` and the metric would remain
+    schedule-independent — the precise failure the C4 investigation
+    diagnosed.
+    """
+    codim = CodimensionSheetScheduler(
+        cycle_length=8, n_min=0.0, n_max=1.0, eps_implicit=0.07,
+    )
+    for r in range(8):
+        sample = codim.sample(0, r, r)
+        assert sample.eps_implicit is not None, (
+            f"C4 regression: round {r} sample.eps_implicit is None"
+        )
+        assert sample.eps_implicit == pytest.approx(0.07, abs=1e-12)
+    # And a different eps_implicit propagates too.
+    codim_hi = CodimensionSheetScheduler(
+        cycle_length=4, n_min=0.0, n_max=1.0, eps_implicit=0.5,
+    )
+    for r in range(4):
+        sample_hi = codim_hi.sample(0, r, r)
+        assert sample_hi.eps_implicit == pytest.approx(0.5, abs=1e-12)
+
+
+def test_cosine_sample_eps_implicit_is_none() -> None:
+    """C4 regression guard: cosine baseline leaves ``eps_implicit`` as ``None``.
+
+    Cosine has no concept of a paper-quantity epsilon; the runner
+    must therefore fall back to the evaluator's fixed ``eps_implicit``
+    for cosine rows — preserving the legacy byte-for-byte behaviour
+    that the C4 investigation flagged as the source of the
+    "schedule-independent by construction" plateau.
+    """
+    cosine = default_cosine_scheduler(cycle_length=6)
+    for r in range(6):
+        sample = cosine.sample(0, r, r)
+        assert sample.eps_implicit is None
+
+
 def test_codimension_sheet_scheduler_build_scheduler_factory() -> None:
     """build_scheduler('codimension_sheet') returns the codim class."""
     scheduler = build_scheduler(

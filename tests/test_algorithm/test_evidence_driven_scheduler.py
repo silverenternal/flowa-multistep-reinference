@@ -227,3 +227,119 @@ def test_inject_noise_forwards_to_wrapped_cosine() -> None:
     gen2 = np.random.default_rng(42)
     out2 = sched.inject_noise(state, sample.as_cosine_schedule_sample(), generator=gen2)
     assert np.array_equal(out, out2)
+
+
+# ---------------------------------------------------------------------------
+# C4 — selection_ratio feedback drives PID; eps_implicit path
+# ---------------------------------------------------------------------------
+
+
+def test_selection_ratio_drives_pid_delta_positive() -> None:
+    """C4: ``record_round_feedback({"selection_ratio": 0.1})`` produces a positive delta.
+
+    Regression test for the C4 close-loop. With ``target_ratio=1.0``
+    and a low ``selection_ratio``, the PID error is positive
+    (``error = 1.0 - 0.1 = 0.9``), so the delta applied on the *next*
+    sample's ``n_cap`` is positive (the controller wants to *raise*
+    ``n_cap`` toward the target). The plan specifies that the new
+    evidence-driven ablation row must surface this delta end-to-end.
+    """
+    sched = EvidenceDrivenScheduler(
+        _make_config(), kp=0.5, ki=0.0, max_step=0.5, target_ratio=1.0,
+    )
+    assert sched._last_pid_delta == 0.0
+    sched.record_round_feedback(0, {"selection_ratio": 0.1})
+    # After the feedback, the next sample's ``_last_pid_delta`` is
+    # positive (target - observed = 0.9, kp=0.5 -> delta = +0.45).
+    assert sched._last_pid_delta > 0.0, (
+        f"selection_ratio=0.1 should produce a positive PID delta; "
+        f"got {sched._last_pid_delta}"
+    )
+
+
+def test_eps_implicit_default_is_none() -> None:
+    """C4 regression: without ``eps_implicit_base``, samples carry ``eps_implicit=None``.
+
+    Byte-for-byte backward compatibility — the runner falls back to
+    the evaluator's fixed ``eps_implicit`` and the metric stays
+    schedule-independent (the legacy ablation behaviour).
+    """
+    sched = EvidenceDrivenScheduler(_make_config())
+    sample = sched.sample(0, 0, 0)
+    assert sample.eps_implicit is None
+
+
+def test_pid_writes_eps_delta_lowers_eps() -> None:
+    """C4: a low ``selection_ratio`` lowers the next sample's ``eps_implicit``.
+
+    Paper Theorem 1: ratio rises as ``eps -> 0``. So when the
+    observed ``selection_ratio`` is below the target (positive error),
+    the PID's ``_last_eps_delta`` must be negative, and the next
+    sample's ``eps_implicit`` is reduced by ``delta * k_eps``. The
+    legacy ``_last_pid_delta`` (which adjusts ``n_cap``) is
+    unchanged in direction — both deltas come from the same PID
+    controller step.
+    """
+    sched = EvidenceDrivenScheduler(
+        _make_config(),
+        kp=0.5,
+        ki=0.0,
+        max_step=0.5,
+        target_ratio=1.0,
+        k_eps=0.5,
+        eps_implicit_base=0.1,
+    )
+    # Initial sample carries the baseline eps.
+    initial = sched.sample(0, 0, 0)
+    assert initial.eps_implicit == pytest.approx(0.1, abs=1e-9)
+    # Drive a large positive error.
+    sched.record_round_feedback(0, {"selection_ratio": 0.0})
+    # The PID produced a positive n_cap delta and (by Theorem 1)
+    # a negative eps delta.
+    assert sched._last_pid_delta > 0.0
+    assert sched._last_eps_delta < 0.0, (
+        f"C4: low selection_ratio must lower eps (Theorem 1 says "
+        f"ratio -> 1 as eps -> 0); got _last_eps_delta="
+        f"{sched._last_eps_delta}"
+    )
+    next_sample = sched.sample(0, 1, 1)
+    assert next_sample.eps_implicit is not None
+    assert next_sample.eps_implicit < 0.1, (
+        f"next sample's eps_implicit should be reduced below the "
+        f"baseline 0.1; got {next_sample.eps_implicit}"
+    )
+
+
+def test_eps_implicit_floor_at_eps_min() -> None:
+    """C4: ``eps_implicit`` is floored at ``1e-6`` so the metric never collapses.
+
+    A negative ``_last_eps_delta`` large enough to push
+    ``eps_implicit`` below zero would invert the paper's Theorem 1
+    monotonicity (``ratio -> 1`` requires ``eps >= 0``). The floor
+    guards against pathological PID saturation.
+    """
+    sched = EvidenceDrivenScheduler(
+        _make_config(),
+        kp=10.0,  # large gain -> large delta
+        ki=0.0,
+        max_step=1.0,  # big step cap -> big delta
+        target_ratio=1.0,
+        k_eps=10.0,  # amplify eps delta further
+        eps_implicit_base=0.001,  # tiny baseline
+    )
+    sched.record_round_feedback(0, {"selection_ratio": 0.0})
+    sample = sched.sample(0, 1, 1)
+    assert sample.eps_implicit is not None
+    assert sample.eps_implicit >= 1e-6, (
+        f"eps_implicit floor violated: {sample.eps_implicit}"
+    )
+
+
+def test_eps_implicit_to_config_round_trip() -> None:
+    """C4: ``to_config`` / ``from_config`` preserves the C4 fields."""
+    original = EvidenceDrivenScheduler(
+        _make_config(), kp=0.2, ki=0.05, k_eps=0.7, eps_implicit_base=0.123,
+    )
+    rebuilt = EvidenceDrivenScheduler.from_config(original.to_config())
+    assert rebuilt._k_eps == pytest.approx(0.7)
+    assert rebuilt._eps_implicit_base == pytest.approx(0.123)

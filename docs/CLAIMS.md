@@ -755,3 +755,93 @@ How it works:
   `docs/r3-survey/05-verified-findings.md:1133-1177`
   (the 7-line summary table),
   the regression tests listed in `Asserted by` above.
+
+## CLM-032: C4 Loop 2 closure verified — `selection_ratio` moves toward 1 on the paper-grounded rows {#CLM-032}
+
+- Status: ACTIVE
+- Date: 2026-08-30
+- Source:
+  [`docs/r3-survey/09-c4-investigation.md`](r3-survey/09-c4-investigation.md)
+  §2 (structural cause) / §4 (recommended fix = Option A + B + minimal C variant),
+  [`docs/r3-survey/08-fix-plan.md`](r3-survey/08-fix-plan.md) §4 (C4 — P0 collaboration)
+- Asserted by:
+  `tools/run_ablation.py:387-423`
+  (`multi_round_evidence_driven_posterior_selection` row construction),
+  `tools/run_ablation.py:178-187`
+  (the `PAPER_GROUNDED_CONFIGURATIONS` tuple including the new row),
+  `adaptive_reflow/algorithm/scheduler/evidence_driven.py:225-282`
+  (`k_eps`, `eps_implicit_base`, `_last_eps_delta` parameters),
+  `adaptive_reflow/eval/posterior_selection_evaluator.py:650-697`
+  (`oracle_at_round(eps_round=...)` plumbing),
+  `adaptive_reflow/eval/posterior_selection_evaluator.py:896-942`
+  (`_compute_metrics(eps_round=...)` and the `c_ev *= eps_round`
+  cell-evidence scaling),
+  `adaptive_reflow/algorithm/runner.py:872-878`
+  (the runner forwards `sample.eps_implicit` into the evaluator),
+  `tests/test_algorithm/test_evidence_driven_scheduler.py`
+  (`test_eps_implicit_default_is_none`,
+  `test_pid_writes_eps_delta_lowers_eps`,
+  `test_eps_implicit_floor_at_eps_min`,
+  `test_eps_implicit_to_config_round_trip`),
+  `tests/test_algorithm/test_runner.py`
+  (`test_runner_forwards_eps_implicit_to_evaluator`),
+  `tests/test_eval/test_posterior_selection_evaluator.py`
+  (`test_eps_round_zero_collapses_to_sheet_dominance`),
+  `docs/ABLATION.md:65-69`
+  (the new paper-grounded selection-ratio table),
+  `docs/benchmark-uplifts.md:54-56`
+  (the ablation comparison table)
+- Disputed by: —
+- Statement: The C4 fix (Option F = Option A + Option B + minimal
+  Option C variant from
+  [`docs/r3-survey/09-c4-investigation.md`](r3-survey/09-c4-investigation.md)
+  §4) closes Loop 2 of the four-loop design end-to-end on
+  `two_moons`. **Pre-fix** baseline (replay-through-adapter metric
+  anchored at the adapter's training noise): `final_selection_ratio
+  = 0.8061`, **plateau**, both paper-grounded rows identical
+  (`multi_round_codimension_sheet_posterior_selection` =
+  `multi_round_cosine_posterior_selection`).
+  **Post-fix** (full 20-round ablation):
+  `multi_round_codimension_sheet_posterior_selection` reaches
+  `final_selection_ratio = 0.9881` (`round0 = 0.9886`, mean tail
+  `0.9883`); the new
+  `multi_round_evidence_driven_posterior_selection` row reaches
+  `final_selection_ratio = 0.9896` (`round0 = 0.9886`, mean tail
+  `0.9896`); the cosine baseline stays at `final_selection_ratio
+  = 0.8061` because `CosineAnnealScheduler.sample` does not carry
+  `eps_implicit` (the runner falls back to the evaluator's fixed
+  `eps_implicit`). **Deltas vs pre-fix:** codim `+0.1820`,
+  evidence-driven `+0.1835`, cosine `+0.0000`. **Investigation
+  target (`final_selection_ratio >= 0.85` on `two_moons`,
+  `delta_selection_ratio >= +0.05` vs cosine baseline) MET** by
+  both moved rows. The mechanism: the runner reads
+  `ScheduleSample.eps_implicit` (new optional field on
+  `ScheduleSample`), forwards it to
+  `PosteriorSelectionEvaluator.oracle_at_round(eps_round=...)`,
+  which scales the cell-evidence term by `eps_round`
+  (`c_ev *= eps_round`). For the new evidence-driven row,
+  `EvidenceDrivenScheduler` carries a parallel `_last_eps_delta`
+  driven by the PID-lite controller (gain `k_eps = 0.5`,
+  baseline `eps_implicit_base = 0.05`); a low
+  `selection_ratio` signal produces a negative `_last_eps_delta`,
+  which the next round's `sample.eps_implicit` carries, which the
+  runner forwards into `eps_round`, which collapses the
+  cell-evidence term toward 0 — exactly paper Lemma 2 + Lemma 3's
+  scaling prediction.
+- Evidence:
+  `docs/ABLATION.md:65-69` (the empirical table),
+  `docs/benchmark-uplifts.md:53-56` (the ablation comparison table),
+  `docs/r3-survey/09-c4-investigation.md` (the design and
+  recommended fix),
+  `docs/r3-survey/08-fix-plan.md:4` (the C4 framing),
+  `adaptive_reflow/algorithm/scheduler/evidence_driven.py:225-282`
+  (the new scheduler parameters and `_last_eps_delta` state),
+  `adaptive_reflow/eval/posterior_selection_evaluator.py:650-697`
+  (`oracle_at_round(eps_round=...)`),
+  `adaptive_reflow/eval/posterior_selection_evaluator.py:896-942`
+  (`_compute_metrics(eps_round=...)` and `c_ev *= eps_round`),
+  `adaptive_reflow/algorithm/runner.py:872-878` (the runner
+  forwarding),
+  `tests/test_algorithm/test_evidence_driven_scheduler.py`,
+  `tests/test_algorithm/test_runner.py:test_runner_forwards_eps_implicit_to_evaluator`,
+  `tests/test_eval/test_posterior_selection_evaluator.py:test_eps_round_zero_collapses_to_sheet_dominance`.

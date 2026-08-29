@@ -35,9 +35,9 @@ Quantitative benchmark of every Phase-2 algorithm uplift listed in `docs/algorit
 | SequentialScheduler | A8 (feedback forwarded to all slots) | all_slots_warmed_after_single_call | 0 | 1 | 1 | +inf | True | yes |
 | SequentialScheduler | A9 (seq_inject_noise_fallback audit on OOR) | audit_codes_for_oor_inject_noise | 0 | 1 | 1 | +inf | >=1 with seq_inject_noise_fallback | yes |
 
-## Section 2: Ablation comparison (22 rows)
+## Section 2: Ablation comparison (23 rows)
 
-Re-run of `tools/run_ablation.py` (full 20-round configuration). The canonical 22-row grid (8 canonical configs x 2 targets + 2 paper-grounded rows on `two_moons` + 2 post-infrastructure-fix rows x 2 targets) is reproduced below with the W2 / coverage / selection_ratio / ledger_chain_integrity columns the task specifies. The paper-grounded rows report a final selection ratio of `0.8061` (the documented plateau of the legacy replay-through-adapter metric on `two_moons`; the A16 uplift is what raises the ratio toward 1 -- see the SNR row in Section 1).
+Re-run of `tools/run_ablation.py` (full 20-round configuration). The canonical 23-row grid (8 canonical configs x 2 targets + 3 paper-grounded rows on `two_moons` + 2 post-infrastructure-fix rows x 2 targets) is reproduced below with the W2 / coverage / selection_ratio / ledger_chain_integrity columns the task specifies. The codimension and evidence-driven paper-grounded rows now report final selection ratios of `0.9881` / `0.9896` after the C4 fix landed (`ScheduleSample.eps_implicit` threaded from the runner into `PosteriorSelectionEvaluator.oracle_at_round(eps_round=...)`); the cosine baseline row remains at the pre-fix plateau `0.8061` because `CosineAnnealScheduler` does not carry `eps_implicit` (the runner falls back to the evaluator's fixed `eps_implicit`). The pre-fix baseline was `0.8061` for all three paper-grounded rows; delta vs pre-fix is `+0.1820` (codim) / `+0.0000` (cosine) / `+0.1835` (evidence-driven).
 
 | Config | Target | Final W2 | Mean W2 | Final Coverage | Mean Coverage | Selection Ratio | Ledger Chain Integrity |
 |---|---|---:|---:|---:|---:|---:|:---:|
@@ -51,8 +51,9 @@ Re-run of `tools/run_ablation.py` (full 20-round configuration). The canonical 2
 | multi_round_cosine_adaptive_driver | two_moons | 0.8424 | 0.9300 | 1.000 | 1.000 | -- | -- |
 | batched_cosine_forward_noise_hash_chained | two_moons | 1.1364 | 1.1257 | 1.000 | 1.000 | -- | True |
 | multi_round_cosine_anneal_identity_merge | two_moons | 0.8691 | 0.9556 | 1.000 | 1.000 | -- | True |
-| multi_round_codimension_sheet_posterior_selection | two_moons | 0.8691 | 0.9556 | 1.000 | 1.000 | 0.8061 | -- |
+| multi_round_codimension_sheet_posterior_selection | two_moons | 0.8691 | 0.9556 | 1.000 | 1.000 | 0.9881 | -- |
 | multi_round_cosine_posterior_selection | two_moons | 0.8691 | 0.9556 | 1.000 | 1.000 | 0.8061 | -- |
+| multi_round_evidence_driven_posterior_selection | two_moons | 0.8868 | 0.9664 | 1.000 | 1.000 | 0.9896 | -- |
 | single_pass | eight_gaussians | 2.3095 | 2.3095 | 0.125 | 0.125 | -- | -- |
 | multi_round_constant_beta_05 | eight_gaussians | 2.0183 | 2.1975 | 0.625 | 0.625 | -- | -- |
 | multi_round_cosine_anneal | eight_gaussians | 2.0437 | 2.2255 | 0.875 | 0.875 | -- | -- |
@@ -71,5 +72,6 @@ Re-run of `tools/run_ablation.py` (full 20-round configuration). The canonical 2
 - Uplifts achieving target: **27**
 - Regressions: **0**
 - Neutral (no change / NaN): **0**
-- Ablation rows: **22**
+- Ablation rows: **23**
+- C4 verified: `selection_ratio` on codimension row moved `0.8061 -> 0.9881` (delta=+18.2%); evidence-driven row moved `0.8061 -> 0.9896` (delta=+18.4%); investigation target (`>= 0.85` on `two_moons`, `>= +0.05` vs cosine baseline) MET. See `docs/CLAIMS.md` CLM-032.
 

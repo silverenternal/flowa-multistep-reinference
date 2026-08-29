@@ -944,6 +944,268 @@ def test_runner_paper_quantities_rejects_non_callable_provider(
 
 
 # ---------------------------------------------------------------------------
+# F10 — runner wires paper quantities via ``CodimensionSheetScheduler.with_profile``
+# ---------------------------------------------------------------------------
+
+
+def test_runner_f10_wires_paper_quantities_via_with_profile(
+    _twodim_adapter,
+) -> None:
+    """F10: the runner wires ``paper_quantities_provider`` through the
+    public :meth:`CodimensionSheetScheduler.with_profile` swap-constructor,
+    not by reaching into private attributes.
+
+    The test wraps a recording subclass of
+    :class:`CodimensionSheetScheduler` that flags every direct
+    constructor call (``__init__``) and every :meth:`with_profile`
+    call. After the run:
+
+    * ``with_profile`` MUST have been called exactly once (with the
+      supplied provider), and
+    * the resulting ``runner.scheduler`` MUST be the object returned
+      by ``with_profile`` (identity check, so the runner cannot
+      reconstruct via private-attr ``CodimensionSheetScheduler(...)``
+      behind the subclass's back).
+
+    Re-introducing the ``hasattr(self._scheduler, "with_profile")``
+    fallback would route the upgrade through the direct
+    ``CodimensionSheetScheduler(...)`` constructor — which would
+    fail the identity assertion below because the constructor's
+    return value is discarded by the runner.
+    """
+    from adaptive_reflow.algorithm.scheduler import (
+        CodimensionSheetScheduler,
+    )
+
+    init_calls: list[dict[str, object]] = []
+    with_profile_calls: list[object] = []
+
+    class _RecordingCodimensionScheduler(CodimensionSheetScheduler):
+        """Subclass that records ``__init__`` and ``with_profile`` calls.
+
+        On ``with_profile`` the recording is appended BEFORE delegating
+        to the base class so the test sees the call regardless of what
+        the base returns. We return the base-class object (not ``self``)
+        so the identity assertion below has a chance to fire if the
+        runner reconstructs via the constructor instead of taking the
+        return value.
+        """
+
+        def __init__(self, **kwargs: object) -> None:
+            init_calls.append(dict(kwargs))
+            super().__init__(**kwargs)
+
+        def with_profile(self, profile_residual_fn):  # type: ignore[override]
+            with_profile_calls.append(profile_residual_fn)
+            return super().with_profile(profile_residual_fn)
+
+    adapter = _twodim_adapter
+    n_rounds = 3
+    profile = lambda x: float(x)  # noqa: E731
+    scheduler = _RecordingCodimensionScheduler(
+        cycle_length=n_rounds,
+        n_min=0.0,
+        n_max=1.0,
+        eps_implicit=0.05,
+        eps_direction="decreasing",
+        seed=42,
+    )
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=scheduler,
+        policy_driver=ScheduleDerivedPolicyDriver(),
+        merge_operator=default_bounded_merge_operator(),
+    )
+    runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+            paper_quantities_provider=profile,
+        )
+    )
+
+    # F10 wiring: the public ``with_profile`` swap-constructor was
+    # called exactly once with the supplied provider.
+    assert len(with_profile_calls) == 1, (
+        f"expected exactly one with_profile() call; got {len(with_profile_calls)} "
+        f"(hasattr fallback likely re-introduced)"
+    )
+    assert with_profile_calls[0] is profile, (
+        "with_profile() must be invoked with the configured "
+        "paper_quantities_provider"
+    )
+
+    # The runner MUST take the return value of ``with_profile`` (no
+    # private-attr reconstruction path that ignores the public
+    # swap-constructor). Identity check — the post-run scheduler is
+    # a different object from the one originally passed in, AND is
+    # the one returned by ``with_profile``.
+    assert runner.scheduler is not scheduler, (
+        "runner must swap to the scheduler returned by with_profile(); "
+        "post-run scheduler is identical to the original"
+    )
+
+    # And the swapped scheduler carries the supplied provider as its
+    # residual profile (round-trip through the public API).
+    assert getattr(runner.scheduler, "_profile_residual_fn", None) is profile, (
+        "swapped scheduler must carry the supplied profile_residual_fn"
+    )
+
+
+def test_runner_f10_does_not_read_scheduler_private_attributes(
+    _twodim_adapter,
+) -> None:
+    """F10 hardening: the runner MUST NOT reach into the scheduler's
+    private attributes (``_n_min`` / ``_n_max`` / ``_eps_implicit`` /
+    ``_eps_direction`` / ``_seed``) when wiring the paper-quantities
+    upgrade.
+
+    The test wraps a :class:`CodimensionSheetScheduler` subclass that
+    blocks every read of those five private attributes via
+    :py:meth:`__getattribute__`. The only allowed escape hatch is the
+    public :meth:`with_profile` swap-constructor (which the subclass
+    permits by name). If the runner reads any of the forbidden private
+    attributes — e.g. by re-introducing the ``hasattr`` fallback that
+    reconstructs via ``CodimensionSheetScheduler(...)`` and reads
+    ``self._scheduler._n_min`` — the read raises ``AttributeError``
+    and this test fails.
+    """
+    from adaptive_reflow.algorithm.scheduler import (
+        CodimensionSheetScheduler,
+    )
+
+    class _PrivateAttrGuardedScheduler(CodimensionSheetScheduler):
+        """Codimension scheduler that forbids external reads of internals.
+
+        Reading any of ``_n_min`` / ``_n_max`` / ``_eps_implicit`` /
+        ``_eps_direction`` / ``_seed`` raises :class:`AttributeError`.
+        The :meth:`with_profile` method is allow-listed (it is the
+        canonical swap-constructor introduced by F10).
+        """
+
+        _FORBIDDEN_PRIVATE_ATTRS = frozenset(
+            {
+                "_n_min",
+                "_n_max",
+                "_eps_implicit",
+                "_eps_direction",
+                "_seed",
+            }
+        )
+
+        def __getattribute__(self, name: str) -> object:
+            # Bypass our override for the meta-attribute that lists
+            # what to forbid (avoid recursive __getattribute__ calls).
+            if name == "_FORBIDDEN_PRIVATE_ATTRS":
+                return object.__getattribute__(self, name)
+            forbidden = type(self).__dict__.get(
+                "_FORBIDDEN_PRIVATE_ATTRS", frozenset()
+            )
+            if name in forbidden:
+                # Inspect the call stack. Reads are allowed ONLY when
+                # the caller is inside the ``CodimensionSheetScheduler``
+                # implementation (filename ends with ``_core.py`` —
+                # ``__init__`` and ``with_profile`` are defined there).
+                # Reads originating from the runner (``runner.py``)
+                # or anywhere else are blocked.
+                import sys
+
+                frame = sys._getframe(1)
+                allowed = False
+                while frame is not None:
+                    fname = frame.f_code.co_filename or ""
+                    if fname.endswith("_core.py"):
+                        allowed = True
+                        break
+                    frame = frame.f_back
+                if not allowed:
+                    raise AttributeError(
+                        f"F10 guard: private attribute {name!r} is not "
+                        "exposed to the runner; use "
+                        "CodimensionSheetScheduler.with_profile()"
+                    )
+            return object.__getattribute__(self, name)
+
+    adapter = _twodim_adapter
+    n_rounds = 2
+    profile = lambda x: float(x)  # noqa: E731
+    scheduler = _PrivateAttrGuardedScheduler(
+        cycle_length=n_rounds,
+        n_min=0.0,
+        n_max=1.0,
+        eps_implicit=0.05,
+        eps_direction="decreasing",
+        seed=42,
+    )
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=scheduler,
+        policy_driver=ScheduleDerivedPolicyDriver(),
+        merge_operator=default_bounded_merge_operator(),
+    )
+    # If the runner reaches into any forbidden private attribute the
+    # guard raises ``AttributeError`` and the run fails — the test
+    # catches it and reports a clear message. A clean run (no error)
+    # proves the runner took the public ``with_profile`` path.
+    runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+            paper_quantities_provider=profile,
+        )
+    )
+    assert isinstance(runner.scheduler, CodimensionSheetScheduler)
+
+
+def test_runner_f10_no_private_attr_reach_arounds_in_source() -> None:
+    """F10 source-level guard: the runner MUST NOT reach into the
+    scheduler's private attributes anywhere in its body.
+
+    This is the strongest F10 invariant: even if a runtime ``hasattr``
+    branch were re-introduced as a fallback for a hypothetical
+    scheduler without ``with_profile``, the constructor call that
+    copies private attributes (e.g. ``self._scheduler._n_min``) would
+    re-appear here and fail this assertion. The runner's contract is
+    to call :meth:`CodimensionSheetScheduler.with_profile` and nothing
+    else when wiring paper quantities.
+    """
+    import inspect
+
+    from adaptive_reflow.algorithm.runner import ReInferenceRunner
+
+    src = inspect.getsource(ReInferenceRunner)
+    forbidden_tokens = (
+        "self._scheduler._n_min",
+        "self._scheduler._n_max",
+        "self._scheduler._eps_implicit",
+        "self._scheduler._eps_direction",
+        "self._scheduler._seed",
+        "self._scheduler._profile_residual_fn",
+        # The runner had a `hasattr(self._scheduler, "with_profile")`
+        # fallback that called ``CodimensionSheetScheduler(...)`` via
+        # private attrs; that path is forbidden post-F10.
+        'hasattr(self._scheduler, "with_profile")',
+    )
+    for token in forbidden_tokens:
+        assert token not in src, (
+            f"F10 violation: runner contains forbidden reach-around "
+            f"{token!r}; use CodimensionSheetScheduler.with_profile() "
+            "instead"
+        )
+    # And the public path IS present — sanity guard so a future
+    # refactor that deletes the call also fails the test.
+    assert "self._scheduler.with_profile(provider)" in src, (
+        "F10 expectation: runner must call self._scheduler.with_profile(provider)"
+    )
+
+
+# ---------------------------------------------------------------------------
 # 11. CONTRACT 2.4 — runner calls the merge operator between policy
 # emission and engine.apply_restart_distribution.
 # ---------------------------------------------------------------------------
@@ -1748,3 +2010,145 @@ def test_runner_passes_paper_quantity_metrics_to_feedback(_twodim_adapter) -> No
             "cell_C",
             "exterior_gap_e_rho",
         }
+
+
+def test_runner_forwards_eps_implicit_to_evaluator(_twodim_adapter) -> None:
+    """C4: runner forwards ``sample.eps_implicit`` to ``oracle_at_round(eps_round=...)``.
+
+    When the active scheduler emits a per-round ``eps_implicit`` on
+    its ``ScheduleSample`` (e.g.
+    :class:`CodimensionSheetScheduler`), the runner must thread it
+    into the selection evaluator as ``eps_round``. Without this
+    thread, the metric's ``selection_ratio`` is structurally
+    independent of the scheduler (the C4 investigation's
+    "Failure 3").
+    """
+    from collections.abc import Mapping
+
+    import numpy as np
+
+    from adaptive_reflow.algorithm.scheduler._core import (
+        CosineScheduleConfig,
+        ScheduleSample,
+    )
+    from adaptive_reflow.contracts import (
+        ArtifactHash,
+        CosineScheduleSample,
+        FactorValue,
+    )
+
+    adapter = _twodim_adapter
+    n_rounds = 4
+
+    # Recording scheduler that returns ``ScheduleSample`` instances
+    # with a fixed ``eps_implicit`` so we can assert the runner
+    # forwards that exact value to the evaluator.
+    cfg = CosineScheduleConfig(
+        cycle_length=n_rounds,
+        n_min=FactorValue(0.0),
+        n_max=FactorValue(1.0),
+        schedule_family="cosine_no_restart",
+        per_channel_caps={},
+        fresh_noise_floor_by_channel={},
+        symmetric_delta_caps_by_channel={},
+        restart_triggers_allowed=(),
+        config_hash=ArtifactHash("test_eps_implicit_forward"),
+        frozen_before_evaluation=True,
+    )
+
+    fixed_eps = 0.123
+
+    class _EpsScheduler:
+        def __init__(self) -> None:
+            self._n = 0
+            self.config = cfg
+
+        def sample(
+            self, outer_cycle_id: int, round_in_cycle: int, target_round: int,
+        ) -> ScheduleSample:
+            self._n += 1
+            length = int(cfg.cycle_length)
+            n_cap = max(0.0, min(1.0, 1.0 - self._n / length))
+            return ScheduleSample(
+                outer_cycle_id=int(outer_cycle_id),
+                round_in_cycle=int(round_in_cycle),
+                cycle_length=length,
+                n_cap=n_cap,
+                n_min=float(cfg.n_min),
+                n_max=float(cfg.n_max),
+                u_r=float(round_in_cycle) / max(length - 1, 1),
+                family="test_eps_implicit",
+                computed_at_round=int(target_round),
+                schedule_hash="test_eps_implicit_hash",
+                audit_codes=(),
+                eps_implicit=float(fixed_eps),
+            )
+
+        def cycle_length(self) -> int:
+            return int(cfg.cycle_length)
+
+        def schedule_family(self) -> str:
+            return "test_eps_implicit"
+
+        def config_hash(self) -> str:
+            return "test_eps_implicit_hash"
+
+        def reset(self) -> None:
+            self._n = 0
+
+        def record_round_feedback(
+            self, round_in_cycle: int, metrics: Mapping[str, float],
+        ) -> None:
+            return None
+
+        def to_config(self) -> dict[str, object]:
+            return {"family": "test_eps_implicit"}
+
+        @classmethod
+        def from_config(
+            cls, config: dict[str, object],
+        ) -> _EpsScheduler:
+            return cls()
+
+        def inject_noise(self, state, schedule_sample, *, generator):
+            arr = np.asarray(state, dtype=np.float64)
+            return arr.copy()
+
+    # Selection evaluator that records every ``eps_round`` argument.
+    eps_seen: list[float | None] = []
+
+    class _SelectionRecorder:
+        def oracle(
+            self, bundle: object, *, channel: object, seed: int,
+        ) -> dict[str, float]:
+            return {"selection_ratio": 0.5}
+
+        def oracle_at_round(
+            self,
+            bundle: object,
+            *,
+            channel: object,
+            seed: int,
+            round_index: int,
+            eps_round: float | None = None,
+        ) -> dict[str, float]:
+            eps_seen.append(eps_round)
+            # Mirror the legacy ``oracle`` payload.
+            return {"selection_ratio": 0.5}
+
+    runner = ReInferenceRunner(
+        adapter=adapter, scheduler=_EpsScheduler(),
+    )
+    config = ReInferenceConfig(
+        n_rounds=n_rounds,
+        channels=TWODIM_FM_CHANNELS,
+        seed=42,
+        selection_evaluator=_SelectionRecorder(),
+    )
+    runner.run(config)
+    assert len(eps_seen) == n_rounds
+    for r, eps in enumerate(eps_seen):
+        assert eps == pytest.approx(fixed_eps, abs=1e-12), (
+            f"round {r}: runner forwarded eps_round={eps!r} "
+            f"instead of {fixed_eps!r}"
+        )

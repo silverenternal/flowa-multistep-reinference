@@ -647,6 +647,7 @@ class EvidenceScaleGapMetric:
         channel: ChannelName,
         seed: int,
         round_index: int,
+        eps_round: float | None = None,
     ) -> dict[str, float]:
         """Return :meth:`oracle`-style dict with the schedule-aware ratio.
 
@@ -655,6 +656,14 @@ class EvidenceScaleGapMetric:
         ``eps_schedule(round_index)`` so the ratio rises toward 1
         as the schedule's noise scale decays. With no schedule the
         returned dict is byte-identical to :meth:`oracle`.
+
+        C4 uplift (``docs/r3-survey/09-c4-investigation.md``): when
+        ``eps_round`` is supplied (the runner forwards
+        ``ScheduleSample.eps_implicit`` here), the cell-evidence
+        term is multiplied by ``eps_round`` so the metric responds
+        to scheduler state. ``eps_round`` is ignored when
+        ``eps_schedule`` is configured (the schedule wins by
+        construction).
         """
         if not self.channel_supported(channel):
             raise NotImplementedError(
@@ -668,7 +677,11 @@ class EvidenceScaleGapMetric:
             ratio,
             calibration,
             perturbation,
-        ) = self._compute_metrics(seed=int(seed), round_index=int(round_index))
+        ) = self._compute_metrics(
+            seed=int(seed),
+            round_index=int(round_index),
+            eps_round=eps_round,
+        )
         bounded_score = _clip_unit(ratio)
         eps_for_round = self.eps_for_round(int(round_index))
         return {
@@ -880,6 +893,7 @@ class EvidenceScaleGapMetric:
         *,
         seed: int,
         round_index: int = 0,
+        eps_round: float | None = None,
     ) -> tuple[float, float, float, float, float]:
         """Return ``(sheet, cell, ratio, calibration, perturbation)``.
 
@@ -896,6 +910,16 @@ class EvidenceScaleGapMetric:
         toward 1 as ``eps -> 0``). The sheet-evidence path is
         unchanged. When ``eps_schedule`` is ``None`` the legacy
         closed-form ratio is preserved byte-for-byte.
+
+        C4 uplift (``docs/r3-survey/09-c4-investigation.md``): when
+        ``eps_round`` is supplied (e.g. by the runner threading
+        ``ScheduleSample.eps_implicit`` into the evaluator), the
+        cell-evidence term is multiplied by ``eps_round`` even with
+        no ``eps_schedule`` configured, so the metric becomes a
+        function of the scheduler's per-round ``epsilon`` and the
+        PID's adjustment can move it. When ``eps_round`` is ``None``
+        the legacy path (fixed ``eps_implicit``, no scaling) is
+        preserved byte-for-byte.
         """
         endpoints = self._generate_endpoints(seed=int(seed))
         _sheet_arr, cells_arr = sheet_cell_centers(self._target)
@@ -907,6 +931,22 @@ class EvidenceScaleGapMetric:
             # Scale cell evidence by eps (paper Lemma 3 O(eps^2)
             # suppression; eps factor gives the conservative monotonic
             # path so the ratio rises toward 1 as eps -> 0).
+            c_ev = c_ev * eps
+            total = s_ev + c_ev
+            if total > 0.0:
+                ratio = float(max(0.0, min(1.0, s_ev / total)))
+            else:
+                ratio = 1.0 if s_ev > 0.0 else 0.0
+        elif eps_round is not None:
+            # C4: scheduler-supplied ``eps_round`` (typically the
+            # ``ScheduleSample.eps_implicit`` value the runner
+            # threads through). Clamp to ``[0, inf)`` and reuse the
+            # same conservative scaling path as the ``eps_schedule``
+            # branch so the ratio rises monotonically toward 1 as
+            # ``eps_round -> 0``.
+            eps = float(eps_round)
+            if eps < 0.0:
+                eps = 0.0
             c_ev = c_ev * eps
             total = s_ev + c_ev
             if total > 0.0:

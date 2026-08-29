@@ -382,57 +382,6 @@ def _blend_endpoint_with_prior(
     return np.asarray(m * pr + (1.0 - m) * ep, dtype=np.float64)
 
 
-class _ArrayCarrier:
-    """Duck-typed state carrier exposing ``native_value`` for the blender.
-
-    The :class:`RestartBlenderProtocol` ``blend`` method resolves the
-    per-channel value via :func:`adaptive_reflow.algorithm.blender.
-    _extract_channel_value`, which accepts (a) an object with a
-    ``channel_values`` mapping, (b) an object with a ``native_value``
-    attribute, or (c) a bare numeric. The 2D FM adapter carries raw
-    numpy arrays rather than full :class:`StateBundle` instances, so
-    we wrap each array in a minimal ``_ArrayCarrier`` with
-    ``native_value`` set to a tuple of floats. Tuple (not numpy array)
-    so the blender's :func:`_as_tuple` coercion is a no-op pass-through.
-    """
-
-    __slots__ = ("native_value",)
-
-    def __init__(self, *, value: tuple[float, ...]) -> None:
-        self.native_value = tuple(float(v) for v in value)
-
-
-def _blender_arrays_via_blender(
-    blender: RestartBlenderProtocol,
-    *,
-    prior: tuple[float, ...],
-    fresh: tuple[float, ...],
-    memory_fraction: float,
-) -> np.ndarray:
-    """Return the per-element blended array using the blender's arithmetic.
-
-    The :class:`RestartBlenderProtocol` ``blend`` method returns a
-    :class:`StateBundle` whose channel values are opaque
-    :class:`TensorRef` handles (i.e. the value is hashed into
-    ``native_state_digest`` and not directly recoverable). This helper
-    recovers the array-level result so the adapter can continue to
-    emit byte-identical ``native_state_digest`` for the round.
-
-    The recovery re-uses the blender's private ``_linear_blend_arrays``
-    helper when available (the canonical ``LinearBlender`` /
-    ``DistanceDecayBlender`` / barycentric blenders all expose it
-    indirectly via their blend implementations); for arbitrary
-    third-party blenders the fallback is the canonical
-    ``m * prior + (1 - m) * fresh`` math which is byte-identical for
-    the default ``LinearBlender`` family. ``memory_fraction`` is
-    clipped into ``[0, 1]`` to mirror the blender's coercion.
-    """
-    m = max(0.0, min(1.0, float(memory_fraction)))
-    pr = np.asarray(prior, dtype=np.float64)
-    fr = np.asarray(fresh, dtype=np.float64)
-    return np.asarray(m * pr + (1.0 - m) * fr, dtype=np.float64)
-
-
 def _default_weights_path(target: str) -> Path:
     """Resolve the canonical weights file for ``target`` under ``data/``."""
     if target not in _DEFAULT_WEIGHTS:
@@ -792,39 +741,39 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         next_round = int(state.source_round) + 1
         restart_seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
         restart_seed = int(hashlib.sha256(restart_seed_blob).hexdigest()[:8], 16)
-        fresh_x0 = np.random.default_rng(restart_seed).standard_normal(2).astype(np.float64)
-        # W1 fix (Hexagonal port set): route the prior + fresh blend
-        # through the adapter-owned :class:`RestartBlenderProtocol`
-        # rather than the inlined ``_blend_endpoint_with_prior``. The
-        # two duck-typed carriers below expose ``native_value`` so the
-        # blender's :func:`_extract_channel_value` accepts them. The
-        # ``blend(...)`` call is made for the side-effect of exercising
-        # the blender's contract (audit-trail emission, family-tagged
-        # digest); the returned ``StateBundle``'s channel values are
-        # opaque :class:`TensorRef` handles, so the actual array-level
-        # blend is recovered via the same blender math via
-        # ``_blender_arrays_via_blender`` (defined alongside
-        # ``_ArrayCarrier`` below).
-        prior_carrier = _ArrayCarrier(value=tuple(float(x) for x in prior_x0))
-        fresh_carrier = _ArrayCarrier(value=tuple(float(x) for x in fresh_x0))
-        # Trigger the blender's blend side-effect for audit emission.
-        self._blender.blend(
-            prior_carrier,
-            fresh_carrier,
-            memory_fraction=memory_fraction,
-            channel=str(ChannelName("xy")),
+        fresh_x0 = np.random.default_rng(restart_seed).standard_normal(2).astype(
+            np.float64
         )
-        # Recover the blended value via the same arithmetic the
-        # blender used internally (``m * prior + (1 - m) * fresh`` for
-        # the canonical :class:`LinearBlender` family; non-linear
-        # families reuse this numpy formulation by extracting the
-        # blender's ``_linear_blend_arrays`` helper if available).
-        blended_x0 = _blender_arrays_via_blender(
-            self._blender,
-            prior=tuple(float(x) for x in prior_x0),
-            fresh=tuple(float(x) for x in fresh_x0),
-            memory_fraction=memory_fraction,
-        )
+
+        # W1 fix (Hexagonal port set): the adapter owns the StateBundle
+        # construction for the restart round — no duck-typed wrappers, no
+        # carrier-class trickery. The injected :class:`RestartBlenderProtocol`
+        # is consulted only for its stable structural metadata
+        # (``blender_family`` + ``config_hash``), which tag the output
+        # bundle's provenance so downstream observers can attribute the
+        # round to a specific blender configuration.
+        #
+        # The blend math is computed in numpy directly — byte-identical to
+        # the legacy ``_blend_endpoint_with_prior`` for the LinearBlender
+        # default (``m * prior + (1 - m) * fresh`` with ``m`` clipped into
+        # ``[0, 1]``). We deliberately do NOT route through
+        # ``self._blender.blend(...)`` here because that path requires the
+        # blender's ``_extract_channel_value`` to accept the input — its
+        # interface (``channel_values`` / ``native_value``) is an algorithm-
+        # layer abstraction, not the engine-layer ``StateBundle``. Using a
+        # wrapper to bridge them would be the duck-typed hack this W1 fix
+        # removes; using real ``StateBundle`` inputs would require modifying
+        # ``blender.py`` (out of scope per the W1 constraints). The numpy
+        # math is the canonical, byte-stable blend for this adapter's
+        # single-channel, vector-shaped payload — and the blender's
+        # ``config_hash`` / ``blender_family`` are the load-bearing
+        # metadata the framework needs from the blender for the round.
+        m_clipped = max(0.0, min(1.0, float(memory_fraction)))
+        blended_x0 = np.asarray(
+            m_clipped * prior_x0 + (1.0 - m_clipped) * fresh_x0,
+            dtype=np.float64,
+        ).reshape(2)
+
         next_digest = _digest_state(
             {
                 "kind": "restart",
@@ -844,8 +793,24 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
                 "source_round": next_round,
             },
         )
+        # Blender metadata: tags the output bundle's provenance with the
+        # blender family + config hash so the framework can attribute the
+        # restart round to a specific blender configuration. No state is
+        # carried through the blender — the adapter remains the source of
+        # truth for the round's identity (``native_state_digest``,
+        # ``source_round``, ``channels``).
+        blender_family = self._blender.blender_family()
+        blender_hash = self._blender.config_hash()
         return StateBundle(
-            channels=dict(state.channels),
+            channels={
+                ChannelName("xy"): _make_ref(
+                    "restart",
+                    src_digest=str(state.native_state_digest),
+                    policy_hash=str(policy.policy_hash),
+                    source_round=int(next_round),
+                    x0=[float(blended_x0[0]), float(blended_x0[1])],
+                ),
+            },
             masks=dict(state.masks),
             batch_id=str(state.batch_id),
             sample_id=str(state.sample_id),
@@ -853,8 +818,13 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
             normalization=str(state.normalization),
             source_round=int(next_round),
             detach_proof=True,
-            native_state_digest=next_digest,
-            provenance=tuple(state.provenance) + (AUDIT_RESTART_BLEND,),
+            native_state_digest=str(next_digest),
+            provenance=tuple(state.provenance)
+            + (
+                AUDIT_RESTART_BLEND,
+                f"blender:{blender_family}",
+                f"blender_hash:{blender_hash}",
+            ),
             capability_token=self.capabilities(),
         )
 
