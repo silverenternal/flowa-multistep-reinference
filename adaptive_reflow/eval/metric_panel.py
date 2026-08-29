@@ -11,6 +11,8 @@ reporting contract. It exposes:
   per-tier metric mappings and the ``separation_enforced`` flag
   (which always defaults to ``True``; the constructor rejects any
   value other than ``True``).
+* :class:`SoftLayeredMetricPanel` — soft variant (P1 #27 round-2)
+  that records overlapping keys instead of raising.
 * :func:`enforce_separation` — pure validator that returns a
   ``(ok, overlapping_keys)`` tuple. When the three tiers share any
   key the function returns ``(False, sorted_overlapping_keys)``;
@@ -58,7 +60,9 @@ __all__ = [
     "LayeredEvidenceTiers",
     "LayeredMetricPanel",
     "LayeredMetricPanelArgumentError",
+    "SoftLayeredMetricPanel",
     "build_default_layered_metric_panel",
+    "build_soft_layered_metric_panel",
     "enforce_separation",
 ]
 
@@ -119,7 +123,7 @@ class LayeredMetricPanelArgumentError(ValueError):
 
 
 # ---------------------------------------------------------------------------
-# Dataclass
+# Dataclass — LayeredMetricPanel (canonical hard layer)
 # ---------------------------------------------------------------------------
 
 
@@ -147,6 +151,42 @@ class LayeredMetricPanel:
     adaptive_reflow_metrics: Mapping[str, Any]
     postprocess_assisted_metrics: Mapping[str, Any]
     separation_enforced: bool = True
+
+
+# ---------------------------------------------------------------------------
+# Dataclass — SoftLayeredMetricPanel (P1 #27 round-2)
+# ---------------------------------------------------------------------------
+
+
+@dataclasses.dataclass(frozen=True)
+class SoftLayeredMetricPanel(LayeredMetricPanel):
+    """Soft variant of :class:`LayeredMetricPanel` (P1 #27).
+
+    Same per-tier metric mappings as :class:`LayeredMetricPanel` but
+    the ``separation_enforced`` flag may be set to ``False`` (the
+    canonical layer requires ``True``). The constructor accepts a
+    ``strict`` constructor flag (``True`` by default) — when ``True``
+    the panel is a hard layer (no overlapping keys allowed); when
+    ``False`` the panel is a soft layer that *records* overlapping
+    keys but does not raise on them. ``overlapping_keys`` reports
+    the offenders so callers can branch on them.
+    """
+
+    overlapping_keys: tuple[str, ...] = ()
+    strict: bool = True
+
+    def __post_init__(self) -> None:
+        if not bool(self.separation_enforced):
+            # Soft mode keeps the bit but flags it as soft.
+            return
+        if bool(self.strict):
+            # Strict mode (default): no overlapping keys allowed.
+            ok, overlap = enforce_separation(self)
+            if not ok:
+                raise LayeredMetricPanelArgumentError(
+                    f"{ERR_TIER_KEY_OVERLAP}: keys {list(overlap)} appear in "
+                    "more than one tier; tier separation is required"
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -276,6 +316,64 @@ def build_default_layered_metric_panel(
     if not ok:
         raise LayeredMetricPanelArgumentError(
             f"{ERR_TIER_KEY_OVERLAP}: keys {list(overlapping)} appear in "
-            f"more than one tier; tier separation is required"
+            "more than one tier; tier separation is required"
         )
     return panel
+
+
+def build_soft_layered_metric_panel(
+    *,
+    raw_generation_metrics: Mapping[str, Any],
+    adaptive_reflow_metrics: Mapping[str, Any],
+    postprocess_assisted_metrics: Mapping[str, Any],
+    strict: bool = False,
+) -> SoftLayeredMetricPanel:
+    """Build a soft :class:`SoftLayeredMetricPanel` (P1 #27).
+
+    When ``strict=False`` the panel is constructed with the
+    overlapping-keys tuple populated instead of raising. Use this in
+    tooling that needs to *report* tier overlaps (audit dashboards,
+    regression tests) rather than hard-fail on them.
+
+    When ``strict=True`` the function delegates to
+    :func:`build_default_layered_metric_panel` and the standard hard
+    separation rules apply.
+    """
+    if (
+        raw_generation_metrics is None
+        or adaptive_reflow_metrics is None
+        or postprocess_assisted_metrics is None
+    ):
+        raise LayeredMetricPanelArgumentError(ERR_TIER_MAPPING_NONE)
+    if not bool(strict):
+        # Build a plain panel and inspect overlaps.
+        panel = LayeredMetricPanel(
+            raw_generation_metrics=raw_generation_metrics,
+            adaptive_reflow_metrics=adaptive_reflow_metrics,
+            postprocess_assisted_metrics=postprocess_assisted_metrics,
+            separation_enforced=True,
+        )
+        _ok, overlap = enforce_separation(panel)
+        return SoftLayeredMetricPanel(
+            raw_generation_metrics=raw_generation_metrics,
+            adaptive_reflow_metrics=adaptive_reflow_metrics,
+            postprocess_assisted_metrics=postprocess_assisted_metrics,
+            separation_enforced=True,
+            overlapping_keys=tuple(overlap),
+            strict=False,
+        )
+    # Strict path: build the canonical hard panel and wrap it.
+    panel = build_default_layered_metric_panel(
+        raw_generation_metrics=raw_generation_metrics,
+        adaptive_reflow_metrics=adaptive_reflow_metrics,
+        postprocess_assisted_metrics=postprocess_assisted_metrics,
+        separation_enforced=True,
+    )
+    return SoftLayeredMetricPanel(
+        raw_generation_metrics=panel.raw_generation_metrics,
+        adaptive_reflow_metrics=panel.adaptive_reflow_metrics,
+        postprocess_assisted_metrics=panel.postprocess_assisted_metrics,
+        separation_enforced=True,
+        overlapping_keys=(),
+        strict=True,
+    )

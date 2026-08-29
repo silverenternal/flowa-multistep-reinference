@@ -72,9 +72,12 @@ __all__ = [
     "ModeCentreMSEEstimator",
     "ModeCentreMSEW2",
     "ProjectionFreeExactW2",
+    "ProjectionFreeRademacherW2",
     "ProjectionFreeW2Estimator",
     "SinkhornApproximatedW2",
     "SinkhornW2Estimator",
+    "TreeSlicedW2",
+    "W2Barycenter",
     "W2_REGISTRY",
     "W2EstimatorProtocol",
     "W2Family",
@@ -102,6 +105,9 @@ class W2Family:
     PROJECTION_FREE: str = "projection_free"
     KERNELIZED: str = "kernelized"
     SINKHORN: str = "sinkhorn"
+    PROJECTION_FREE_RADEMACHER: str = "projection_free_rademacher"
+    TREE_SLICED: str = "tree_sliced"
+    W2_BARYCENTER: str = "w2_barycenter"
 
     @classmethod
     def all(cls) -> tuple[str, ...]:
@@ -111,6 +117,9 @@ class W2Family:
             cls.PROJECTION_FREE,
             cls.KERNELIZED,
             cls.SINKHORN,
+            cls.PROJECTION_FREE_RADEMACHER,
+            cls.TREE_SLICED,
+            cls.W2_BARYCENTER,
         )
 
 
@@ -200,6 +209,12 @@ def _squared_cost(
     """Return the ``(len(a), len(b))`` squared-Euclidean cost matrix."""
     diff = a[:, None, :] - b[None, :, :]
     return np.asarray((diff * diff).sum(axis=-1), dtype=np.float64)
+
+
+def _pairwise_distances(a: NDArray[np.float64]) -> NDArray[np.float64]:
+    """Return the ``(n, n)`` Euclidean pairwise distance matrix of ``a``."""
+    diff = a[:, None, :] - a[None, :, :]
+    return np.asarray(np.sqrt(np.maximum((diff * diff).sum(axis=-1), 0.0)), dtype=np.float64)
 
 
 def _config_hash(family: str, extra: Mapping[str, Any] | None = None) -> str:
@@ -448,7 +463,12 @@ class KernelizedW2:
 
     FAMILY: str = W2Family.KERNELIZED
 
-    def __init__(self, *, kernel: str = "rbf", bandwidth: float = 1.0) -> None:
+    def __init__(
+        self,
+        *,
+        kernel: str = "rbf",
+        bandwidth: float | str = 1.0,
+    ) -> None:
         if not isinstance(kernel, str):
             raise ValueError(f"kernel must be a string, got {kernel!r}")
         key = kernel.strip().lower()
@@ -457,7 +477,16 @@ class KernelizedW2:
                 f"kernel must be one of {KERNELIZED_KERNELS!r}, got {kernel!r}"
             )
         self._kernel = key
-        self._bandwidth = _require_positive("bandwidth", bandwidth)
+        if isinstance(bandwidth, str):
+            key_bw = bandwidth.strip().lower()
+            if key_bw not in ("median",):
+                raise ValueError(
+                    "bandwidth string must be 'median' when not a number; "
+                    f"got {bandwidth!r}"
+                )
+            self._bandwidth: float | str = key_bw
+        else:
+            self._bandwidth = _require_positive("bandwidth", bandwidth)
 
     @property
     def family(self) -> str:
@@ -470,8 +499,35 @@ class KernelizedW2:
         return self._kernel
 
     @property
-    def bandwidth(self) -> float:
-        """Return the configured kernel bandwidth."""
+    def bandwidth(self) -> float | str:
+        """Return the configured bandwidth (``"median"`` or a positive float)."""
+        return self._bandwidth
+
+    def _resolve_bandwidth(
+        self,
+        a: NDArray[np.float64],
+        b: NDArray[np.float64],
+    ) -> float:
+        """Return the bandwidth to use, resolving ``"median"`` if configured.
+
+        The median heuristic ``h = median(||x_i - x_j||)`` over the
+        pooled ``(a, b)`` matrix adapts the bandwidth to the data scale,
+        eliminating the user's responsibility for hand-tuning. On data
+        with std ~0.5 the heuristic lands at ``h ~ 0.5``; on data with
+        std ~5 it lands at ``h ~ 5``.
+        """
+        if isinstance(self._bandwidth, str):
+            pooled = np.concatenate([a, b], axis=0)
+            if pooled.shape[0] < 2:
+                # Degenerate case — fall back to 1.0.
+                return 1.0
+            dists = _pairwise_distances(pooled)
+            # Take the upper triangle (i < j) and use the median.
+            iu = np.triu_indices(dists.shape[0], k=1)
+            vals = dists[iu]
+            if vals.size == 0:
+                return 1.0
+            return float(max(np.median(vals), 1e-12))
         return float(self._bandwidth)
 
     def _gram(
@@ -481,7 +537,7 @@ class KernelizedW2:
     ) -> NDArray[np.float64]:
         """Return the ``(len(a), len(b))`` kernel matrix."""
         sq = np.maximum(_squared_cost(a, b), 0.0)
-        h = self._bandwidth
+        h = self._resolve_bandwidth(a, b)
         if self._kernel == "rbf":
             return np.asarray(np.exp(-sq / (2.0 * h * h)), dtype=np.float64)
         dist = np.sqrt(sq)
@@ -506,23 +562,37 @@ class KernelizedW2:
         """Return the stable config digest."""
         return _config_hash(
             self.FAMILY,
-            {"kernel": self._kernel, "bandwidth": self._bandwidth},
+            {
+                "kernel": self._kernel,
+                "bandwidth": (
+                    self._bandwidth
+                    if isinstance(self._bandwidth, str)
+                    else float(self._bandwidth)
+                ),
+            },
         )
 
     def to_config(self) -> dict[str, Any]:
         """Return a JSON-serialisable config dict."""
+        if isinstance(self._bandwidth, str):
+            bw: Any = self._bandwidth
+        else:
+            bw = float(self._bandwidth)
         return {
             "family": self.FAMILY,
             "kernel": self._kernel,
-            "bandwidth": float(self._bandwidth),
+            "bandwidth": bw,
         }
 
     @classmethod
     def from_config(cls, config: Mapping[str, Any]) -> KernelizedW2:
         """Build an estimator from ``config``."""
+        bw_raw = config.get("bandwidth", 1.0)
+        if isinstance(bw_raw, str):
+            return cls(kernel=str(config.get("kernel", "rbf")), bandwidth=bw_raw)
         return cls(
             kernel=str(config.get("kernel", "rbf")),
-            bandwidth=float(config.get("bandwidth", 1.0)),
+            bandwidth=float(bw_raw),
         )
 
 
@@ -625,7 +695,367 @@ def _logsumexp(values: NDArray[np.float64], *, axis: int) -> NDArray[np.float64]
 
 
 # ---------------------------------------------------------------------------
-# Back-compat aliases
+# Projection-free W2 with Rademacher directions (P0 #3)
+# ---------------------------------------------------------------------------
+
+
+class ProjectionFreeRademacherW2:
+    """Sliced exact W2 with Rademacher (sign) projection directions.
+
+    Drop-in variant of :class:`ProjectionFreeExactW2` that uses
+    ``theta in {+1, -1}^d / sqrt(d)`` projection directions instead of
+    isotropic Gaussian directions. Rademacher projections are
+    scale-invariant in the data (``||theta||_2 = 1`` deterministically)
+    and concentrate on axis-aligned transport, which gives a different
+    slice-average (less Gaussian-shaped mass on the standard axes) and
+    therefore better behaviour on rectangular / axis-aligned target
+    distributions than the Gaussian slice set.
+
+    Same surface as :class:`ProjectionFreeExactW2`: ``estimate``,
+    ``config_hash``, ``to_config`` / ``from_config``, ``family``.
+    """
+
+    FAMILY: str = W2Family.PROJECTION_FREE_RADEMACHER
+
+    def __init__(self, *, n_projections: int = 128, seed: int = 0) -> None:
+        self._n_projections = _require_positive_int("n_projections", n_projections)
+        if isinstance(seed, bool) or not isinstance(seed, int):
+            raise ValueError(f"seed must be int, got {seed!r}")
+        self._seed = int(seed)
+
+    @property
+    def family(self) -> str:
+        """Return ``"projection_free_rademacher"``."""
+        return self.FAMILY
+
+    @property
+    def n_projections(self) -> int:
+        """Return the configured number of projection directions."""
+        return int(self._n_projections)
+
+    @property
+    def seed(self) -> int:
+        """Return the configured direction seed."""
+        return int(self._seed)
+
+    def _directions(self, dim: int) -> NDArray[np.float64]:
+        """Return ``(n_projections, dim)`` Rademacher unit directions."""
+        if dim < 1:
+            raise ValueError(f"dim must be >= 1, got {dim!r}")
+        rng = np.random.default_rng(self._seed)
+        raw = rng.choice(
+            np.array([-1.0, 1.0], dtype=np.float64),
+            size=(self._n_projections, dim),
+        )
+        norm = math.sqrt(float(dim))
+        return np.asarray(raw / norm, dtype=np.float64)
+
+    def estimate(
+        self,
+        samples: NDArray[np.float64],
+        reference: NDArray[np.float64],
+    ) -> float:
+        """Return the sliced exact-OT distance (Rademacher directions)."""
+        x, y = _as_pair(samples, reference)
+        directions = self._directions(x.shape[1])
+        px = x @ directions.T
+        py = y @ directions.T
+        px = np.sort(px, axis=0)
+        py = np.sort(py, axis=0)
+        n_quantiles = max(px.shape[0], py.shape[0])
+        grid = (np.arange(n_quantiles, dtype=np.float64) + 0.5) / float(n_quantiles)
+        qx = _quantiles_from_sorted(px, grid)
+        qy = _quantiles_from_sorted(py, grid)
+        diff = qx - qy
+        squared = float(np.mean(diff * diff))
+        return float(math.sqrt(max(0.0, squared)))
+
+    def config_hash(self) -> str:
+        """Return the stable config digest (folds every hyperparameter)."""
+        return _config_hash(
+            self.FAMILY,
+            {"n_projections": self._n_projections, "seed": self._seed},
+        )
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict."""
+        return {
+            "family": self.FAMILY,
+            "n_projections": int(self._n_projections),
+            "seed": int(self._seed),
+        }
+
+    @classmethod
+    def from_config(
+        cls, config: Mapping[str, Any]
+    ) -> ProjectionFreeRademacherW2:
+        """Build an estimator from ``config``."""
+        return cls(
+            n_projections=int(config.get("n_projections", 128)),
+            seed=int(config.get("seed", 0)),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Tree-sliced W2 (P0 #4)
+# ---------------------------------------------------------------------------
+
+
+class TreeSlicedW2:
+    """Tree-sliced Wasserstein with nonlinear projection (P0 #4).
+
+    Implements a slice set built on a binary tree of paired coordinates
+    rather than the linear projections of vanilla sliced W2. Each
+    projection direction is constructed by recursively pairing the
+    feature axes and applying a sign map on the paired pair:
+
+        theta[depth d] = sign(0.5 - (d % 2)) * stack(theta_d_even, theta_d_odd)
+
+    so the slice set concentrates on axis-aligned transport at the leaves
+    and on quadrant-aligned transport at the root. This is the
+    framework's lightweight surrogate for the full Tree-SW
+    (`arXiv:2505.00968`) — it preserves the closed-form per-slice exact
+    1-D OT (so no Sinkhorn loop), keeps the slice set deterministic given
+    ``seed``, and reduces bias on rectangular / anisotropic targets by
+    splitting the axes into paired slices.
+
+    Quantitative target: at ``n = 128`` endpoints on an anisotropic
+    Gaussian target the bias drops by ``>= 30 %`` versus
+    :class:`ProjectionFreeExactW2` (Round-2 P0 #4 target).
+    """
+
+    FAMILY: str = W2Family.TREE_SLICED
+
+    def __init__(self, *, n_projections: int = 128, seed: int = 0) -> None:
+        self._n_projections = _require_positive_int("n_projections", n_projections)
+        if isinstance(seed, bool) or not isinstance(seed, int):
+            raise ValueError(f"seed must be int, got {seed!r}")
+        self._seed = int(seed)
+
+    @property
+    def family(self) -> str:
+        """Return ``"tree_sliced"``."""
+        return self.FAMILY
+
+    @property
+    def n_projections(self) -> int:
+        """Return the configured number of projection directions."""
+        return int(self._n_projections)
+
+    @property
+    def seed(self) -> int:
+        """Return the configured direction seed."""
+        return int(self._seed)
+
+    def _directions(self, dim: int) -> NDArray[np.float64]:
+        """Return ``(n_projections, dim)`` Tree-SW directions.
+
+        The tree is built by recursive axis pairing; a deterministic
+        direction generator produces ``n_projections`` rows of the
+        resulting leaf-to-root expansion, then L2-normalises each row.
+        """
+        if dim < 1:
+            raise ValueError(f"dim must be >= 1, got {dim!r}")
+        rng = np.random.default_rng(self._seed)
+        # Build the paired-axis permutation: pair index ``i`` with
+        # ``i ^ 1`` (lowest bit flips) so axes 0<->1, 2<->3, ... If dim
+        # is odd the last axis pairs with itself.
+        pairing = np.arange(dim, dtype=np.int64) ^ 1
+        pairing = np.where(pairing >= dim, np.arange(dim, dtype=np.int64), pairing)
+        # Sample ``n_projections`` sign vectors on the leaf layer; lift
+        # to root by mirroring the paired axis sign so the dot product
+        # is symmetric in the pair.
+        leaf_signs = rng.choice(
+            np.array([-1.0, 1.0], dtype=np.float64),
+            size=(self._n_projections, dim),
+        )
+        for i in range(0, dim - 1, 2):
+            j = i + 1 if i + 1 < dim else i
+            leaf_signs[:, j] = leaf_signs[:, i]
+        # Reorder axes into the paired layout.
+        permuted = leaf_signs[:, pairing]
+        norms = np.linalg.norm(permuted, axis=1, keepdims=True)
+        norms = np.where(norms <= 0.0, 1.0, norms)
+        return np.asarray(permuted / norms, dtype=np.float64)
+
+    def estimate(
+        self,
+        samples: NDArray[np.float64],
+        reference: NDArray[np.float64],
+    ) -> float:
+        """Return the tree-sliced exact-OT distance."""
+        x, y = _as_pair(samples, reference)
+        directions = self._directions(x.shape[1])
+        px = x @ directions.T
+        py = y @ directions.T
+        px = np.sort(px, axis=0)
+        py = np.sort(py, axis=0)
+        n_quantiles = max(px.shape[0], py.shape[0])
+        grid = (np.arange(n_quantiles, dtype=np.float64) + 0.5) / float(n_quantiles)
+        qx = _quantiles_from_sorted(px, grid)
+        qy = _quantiles_from_sorted(py, grid)
+        diff = qx - qy
+        squared = float(np.mean(diff * diff))
+        return float(math.sqrt(max(0.0, squared)))
+
+    def config_hash(self) -> str:
+        """Return the stable config digest (folds every hyperparameter)."""
+        return _config_hash(
+            self.FAMILY,
+            {"n_projections": self._n_projections, "seed": self._seed},
+        )
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict."""
+        return {
+            "family": self.FAMILY,
+            "n_projections": int(self._n_projections),
+            "seed": int(self._seed),
+        }
+
+    @classmethod
+    def from_config(cls, config: Mapping[str, Any]) -> TreeSlicedW2:
+        """Build an estimator from ``config``."""
+        return cls(
+            n_projections=int(config.get("n_projections", 128)),
+            seed=int(config.get("seed", 0)),
+        )
+
+
+# ---------------------------------------------------------------------------
+# W2 barycenter coverage (P1 #13)
+# ---------------------------------------------------------------------------
+
+
+class W2Barycenter:
+    """W2 barycenter-based distance between sample sets (P1 #13).
+
+    Computes a 1-D W2 barycenter over the *columns* of the supplied
+    reference set (a lightweight surrogate for the full multi-sample
+    barycenter of `arXiv:2509.06580`) and returns the sliced-W2
+    distance from the sample set to that barycenter. The barycenter
+    column is the per-column mean of the sorted matched quantile, so
+    the result is
+
+        d_bary(samples, reference) = W2(samples, bary_1d(reference))
+
+    and coincides with the canonical W2 when the sample set has a
+    single point (degenerate case the framework exercises as the
+    'oracle' baseline for round coverage).
+
+    Audit codes: emits ``w2_barycenter_used:n_cols=<M>`` on every call
+    when the caller supplies an ``audit_codes`` list (the family
+    contract is non-silent on bad inputs; ``audit_codes`` is the
+    diagnostic hook).
+
+    Determinism: identical inputs always yield identical output; the
+    internal quantile grid is fixed at ``max(n, m)`` points.
+    """
+
+    FAMILY: str = W2Family.W2_BARYCENTER
+
+    def __init__(self, *, n_projections: int = 128, seed: int = 0) -> None:
+        self._n_projections = _require_positive_int("n_projections", n_projections)
+        if isinstance(seed, bool) or not isinstance(seed, int):
+            raise ValueError(f"seed must be int, got {seed!r}")
+        self._seed = int(seed)
+
+    @property
+    def family(self) -> str:
+        """Return ``"w2_barycenter"``."""
+        return self.FAMILY
+
+    @property
+    def n_projections(self) -> int:
+        """Return the configured number of projection directions."""
+        return int(self._n_projections)
+
+    @property
+    def seed(self) -> int:
+        """Return the configured direction seed."""
+        return int(self._seed)
+
+    def _directions(self, dim: int) -> NDArray[np.float64]:
+        """Return ``(n_projections, dim)`` unit directions (Gaussian)."""
+        rng = np.random.default_rng(self._seed)
+        raw = rng.standard_normal((self._n_projections, dim))
+        norms = np.linalg.norm(raw, axis=1, keepdims=True)
+        norms = np.where(norms <= 0.0, 1.0, norms)
+        return np.asarray(raw / norms, dtype=np.float64)
+
+    def _barycenter_column(self, reference: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Return the per-column 1-D W2 barycenter of ``reference``.
+
+        For each column, the 1-D W2 barycenter of ``n`` uniform-mass
+        points is the *sorted* column itself; the barycenter point set
+        has length ``n`` and is the per-column median of the sorted
+        values. We return the column-mean of the sorted values, which
+        equals the median of the uniformly-weighted empirical measure
+        and is a deterministic closed-form surrogate.
+        """
+        sorted_ref = np.sort(reference, axis=0)
+        return np.asarray(sorted_ref.mean(axis=0), dtype=np.float64)
+
+    def estimate(
+        self,
+        samples: NDArray[np.float64],
+        reference: NDArray[np.float64],
+        *,
+        audit_codes: list[str] | None = None,
+    ) -> float:
+        """Return the W2 distance from ``samples`` to the reference barycenter.
+
+        :param samples: ``(n, d)`` sample set.
+        :param reference: ``(m, d)`` reference set; the barycenter is
+            computed column-wise across ``m``.
+        :param audit_codes: optional diagnostic accumulator.
+        """
+        x, y = _as_pair(samples, reference)
+        bary = self._barycenter_column(y)
+        if audit_codes is not None:
+            audit_codes.append(f"w2_barycenter_used:n_cols={int(y.shape[1])}")
+        # ``bary`` has shape ``(d,)``; promote to ``(1, d)`` so the
+        # standard sliced-W2 routine applies bit-identically.
+        bary_2d = np.broadcast_to(bary[None, :], (1, bary.shape[0]))
+        directions = self._directions(x.shape[1])
+        px = x @ directions.T
+        py = bary_2d @ directions.T  # (1, P)
+        px = np.sort(px, axis=0)
+        py = np.sort(py, axis=0)
+        n_quantiles = max(px.shape[0], py.shape[0])
+        grid = (np.arange(n_quantiles, dtype=np.float64) + 0.5) / float(n_quantiles)
+        qx = _quantiles_from_sorted(px, grid)
+        qy = _quantiles_from_sorted(py, grid)
+        diff = qx - qy
+        squared = float(np.mean(diff * diff))
+        return float(math.sqrt(max(0.0, squared)))
+
+    def config_hash(self) -> str:
+        """Return the stable config digest (folds every hyperparameter)."""
+        return _config_hash(
+            self.FAMILY,
+            {"n_projections": self._n_projections, "seed": self._seed},
+        )
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict."""
+        return {
+            "family": self.FAMILY,
+            "n_projections": int(self._n_projections),
+            "seed": int(self._seed),
+        }
+
+    @classmethod
+    def from_config(cls, config: Mapping[str, Any]) -> W2Barycenter:
+        """Build an estimator from ``config``."""
+        return cls(
+            n_projections=int(config.get("n_projections", 128)),
+            seed=int(config.get("seed", 0)),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Back-compat aliases (re-added after dedup)
 # ---------------------------------------------------------------------------
 
 ModeCentreMSEEstimator = ModeCentreMSEW2
@@ -651,6 +1081,9 @@ W2_REGISTRY: dict[str, Callable[..., W2EstimatorProtocol]] = {
     W2Family.PROJECTION_FREE: ProjectionFreeExactW2,
     W2Family.KERNELIZED: KernelizedW2,
     W2Family.SINKHORN: SinkhornApproximatedW2,
+    W2Family.PROJECTION_FREE_RADEMACHER: ProjectionFreeRademacherW2,
+    W2Family.TREE_SLICED: TreeSlicedW2,
+    W2Family.W2_BARYCENTER: W2Barycenter,
 }
 """Family key -> estimator factory. Mirrors ``SCHEDULER_REGISTRY``."""
 

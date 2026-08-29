@@ -578,6 +578,203 @@ class ScheduleAwareEMAOperator:
         return float(max(0.0, min(1.0, raw)))
 
 
+class MultiSourceKalmanMergeOperator:
+    """Multi-source Kalman merge with one Kalman gain per source (P1 #15).
+
+    Fuses ``k`` dynamic signals into the prior ``prev`` by computing
+    one Kalman gain per signal and combining the corrections as a
+    variance-weighted average. Concretely, for ``k`` measurements
+    ``d_i`` with variances ``v_i``:
+
+        K_i    = sigma2_p / (sigma2_p + v_i + eps)
+        delta  = sum_i K_i * (d_i - prev) / sum_i K_i
+        merged = clip(prev + delta, envelope)
+
+    The combined update is bounded into the same ``[floor, cap]``
+    envelope as the canonical merge operators and the delta caps
+    ``[prev - delta_cap_down, prev + delta_cap_up]`` are honoured.
+    ``audit_codes`` receives ``merge_multi_source_kalman:k=<k>`` on
+    every successful call so callers can attribute the merge to this
+    family without inspecting the runtime class.
+    """
+
+    FAMILY: ClassVar[str] = "multi_source_kalman"
+
+    def __init__(
+        self,
+        *,
+        prior_variance: float = 0.01,
+        dynamic_variances: tuple[float, ...] | list[float] = (0.04, 0.04),
+        eps: float = 1e-12,
+    ) -> None:
+        for nm, val in (
+            ("prior_variance", prior_variance),
+            ("eps", eps),
+        ):
+            if isinstance(val, bool) or not isinstance(val, (int, float)):
+                raise ValueError(f"{nm} must be a real number, got {val!r}")
+            fv = float(val)
+            if not math.isfinite(fv):
+                raise ValueError(f"{nm} must be finite, got {val!r}")
+            if fv < 0.0:
+                raise ValueError(f"{nm} must be >= 0, got {val!r}")
+        if float(eps) <= 0.0:
+            raise ValueError(f"eps must be > 0, got {float(eps)!r}")
+        if not isinstance(dynamic_variances, (list, tuple)):
+            raise ValueError(
+                "dynamic_variances must be a list/tuple, got "
+                f"{type(dynamic_variances).__name__}"
+            )
+        cleaned: list[float] = []
+        for i, v in enumerate(dynamic_variances):
+            if isinstance(v, bool) or not isinstance(v, (int, float)):
+                raise ValueError(
+                    f"dynamic_variances[{i}] must be a real number, got {v!r}"
+                )
+            fv = float(v)
+            if not math.isfinite(fv) or fv < 0.0:
+                raise ValueError(
+                    f"dynamic_variances[{i}] must be finite and >= 0, "
+                    f"got {fv!r}"
+                )
+            cleaned.append(fv)
+        if len(cleaned) < 1:
+            raise ValueError("dynamic_variances must contain at least one entry")
+        self._prior_variance = float(prior_variance)
+        self._dynamic_variances: tuple[float, ...] = tuple(cleaned)
+        self._eps = float(eps)
+
+    @property
+    def prior_variance(self) -> float:
+        """Return the prior variance ``sigma2_p``."""
+        return float(self._prior_variance)
+
+    @property
+    def dynamic_variances(self) -> tuple[float, ...]:
+        """Return the tuple of per-source variances."""
+        return tuple(self._dynamic_variances)
+
+    def config_hash(self) -> str:
+        """Stable digest capturing every constructor argument."""
+        return str(
+            hash_artifact(
+                {
+                    "family": self.FAMILY,
+                    "prior_variance": float(self._prior_variance),
+                    "dynamic_variances": [
+                        float(v) for v in self._dynamic_variances
+                    ],
+                    "eps": float(self._eps),
+                }
+            )
+        )
+
+    def to_config(self) -> dict[str, Any]:
+        return {
+            "family": self.FAMILY,
+            "prior_variance": float(self._prior_variance),
+            "dynamic_variances": [float(v) for v in self._dynamic_variances],
+            "eps": float(self._eps),
+        }
+
+    @classmethod
+    def from_config(
+        cls, config: dict[str, Any]
+    ) -> MultiSourceKalmanMergeOperator:
+        if not isinstance(config, dict):
+            raise TypeError(
+                f"config must be a dict, got {type(config).__name__}"
+            )
+        raw = config.get("dynamic_variances", [0.04, 0.04])
+        return cls(
+            prior_variance=float(config.get("prior_variance", 0.01)),
+            dynamic_variances=tuple(float(v) for v in raw),
+            eps=float(config.get("eps", 1e-12)),
+        )
+
+    def merge(
+        self,
+        prev: float,
+        dynamic: float,
+        *,
+        cap: float,
+        floor: float,
+        delta_cap_up: float,
+        delta_cap_down: float,
+        audit_codes: list[str] | None = None,
+        dynamics: tuple[float, ...] | list[float] | None = None,
+    ) -> float:
+        """Fuse ``dynamics`` sources into ``prev`` via multi-source Kalman.
+
+        ``dynamic`` is the first measurement source for backward
+        compatibility; ``dynamics`` (optional) lets callers supply the
+        full list. If ``dynamics`` is provided the operator uses it and
+        ignores ``dynamic``. ``audit_codes`` receives
+        ``merge_multi_source_kalman:k=<k>`` on success and the canonical
+        degeneracy code on a degenerate envelope.
+        """
+        if dynamics is None:
+            dynamics_list: list[float] = [float(dynamic)]
+        else:
+            if not isinstance(dynamics, (list, tuple)):
+                raise ValueError(
+                    "dynamics must be a list/tuple, got "
+                    f"{type(dynamics).__name__}"
+                )
+            dynamics_list = [float(d) for d in dynamics]
+        if len(dynamics_list) != len(self._dynamic_variances):
+            raise ValueError(
+                f"len(dynamics)={len(dynamics_list)} does not match the "
+                f"configured number of sources {len(self._dynamic_variances)}"
+            )
+        prev_f, _ = _coerce_unit_real_clip(
+            prev, name="prev", audit_codes=audit_codes,
+            code=MERGE_NONFINITE_PREV_CLIPPED,
+        )
+        cap_f, _ = _coerce_unit_real_clip(
+            cap, name="cap", audit_codes=audit_codes,
+            code="merge_cap_out_of_range",
+        )
+        floor_f, _ = _coerce_unit_real_clip(
+            floor, name="floor", audit_codes=audit_codes,
+            code="merge_floor_out_of_range",
+        )
+        up_f = max(0.0, min(1.0, float(delta_cap_up)))
+        down_f = max(0.0, min(1.0, float(delta_cap_down)))
+        if cap_f < floor_f:
+            cap_f, floor_f = floor_f, cap_f
+        s2_prior = max(self._prior_variance, 0.0)
+        gains: list[float] = []
+        corrected: list[float] = []
+        for d, v in zip(dynamics_list, self._dynamic_variances, strict=True):
+            d_f, _ = _coerce_unit_real_clip(
+                d, name="dynamic", audit_codes=audit_codes,
+                code=MERGE_NONFINITE_DYNAMIC_CLIPPED,
+            )
+            denom = s2_prior + max(v, 0.0) + self._eps
+            K = s2_prior / denom if denom > 0.0 else 0.0
+            gains.append(K)
+            corrected.append(K * (d_f - prev_f))
+        gain_sum = sum(gains)
+        target = prev_f if gain_sum <= 0.0 else prev_f + sum(corrected) / gain_sum
+        target = max(0.0, min(1.0, float(target)))
+        lo = max(floor_f, prev_f - down_f)
+        hi = min(cap_f, prev_f + up_f)
+        if audit_codes is not None:
+            audit_codes.append(
+                f"{self.FAMILY}:k={len(dynamics_list)}:gain_sum={gain_sum:.6f}"
+            )
+        if hi < lo:
+            if audit_codes is not None:
+                audit_codes.append(
+                    f"{MERGE_DEGENERATE_INTERVAL}:floor={floor_f:.6f}"
+                    f":cap={cap_f:.6f}:prev={prev_f:.6f}"
+                    f":up={up_f:.6f}:down={down_f:.6f}"
+                )
+            return float(floor_f)
+        return float(max(lo, min(hi, target)))
+
+
 # Register Protocol conformance via structural typing — these classes
 # are not decorated with ``@runtime_checkable`` Protocol but each
 # implements the canonical :meth:`merge` / :meth:`to_config` /
@@ -588,6 +785,7 @@ for _cls in (
     BayesianMergeOperator,
     PIDIdentityOperator,
     ScheduleAwareEMAOperator,
+    MultiSourceKalmanMergeOperator,
 ):
     assert hasattr(_cls, "merge") and hasattr(_cls, "to_config") and hasattr(
         _cls, "from_config"
@@ -597,6 +795,7 @@ for _cls in (
 __all__ = [
     "BayesianMergeOperator",
     "KalmanBoundedMergeOperator",
+    "MultiSourceKalmanMergeOperator",
     "PIDIdentityOperator",
     "ScheduleAwareEMAOperator",
 ]

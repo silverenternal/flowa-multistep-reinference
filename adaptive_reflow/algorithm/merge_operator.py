@@ -750,6 +750,7 @@ class EMAOperator:
         delta_cap_up: float,
         delta_cap_down: float,
         audit_codes: list[str] | None = None,
+        schedule_sample: Any | None = None,
     ) -> float:
         """Return the EMA-smoothed update, clipped into ``[0, 1]``.
 
@@ -759,6 +760,16 @@ class EMAOperator:
         P0-3). Envelope arguments (``cap``, ``floor``, etc.) are
         ignored by the EMA step but the operator never raises on
         their values either.
+
+        :param schedule_sample: optional additive kwarg (P1 #23). When
+            supplied, the smoothing factor becomes
+            ``alpha * (1 + schedule_weight * (n_cap - 0.5))`` so
+            high-``n_cap`` rounds follow ``dynamic`` more aggressively
+            and low-``n_cap`` rounds weight the prior more. The
+            default ``schedule_weight=1.0`` keeps ``alpha`` in
+            ``[alpha/2, 3 alpha/2]`` for ``n_cap in [0, 1]``; pass
+            ``schedule_weight=0`` to recover the legacy
+            constant-``alpha`` behaviour bit-for-bit.
         """
         del cap, floor, delta_cap_up, delta_cap_down
         prev_f, _prev_audit = _coerce_unit_real_clip(
@@ -771,7 +782,18 @@ class EMAOperator:
         )
         # Silence the unused-but-set lint explicitly.
         del _prev_audit, _dynamic_audit
-        raw = prev_f + self._alpha * (dynamic_f - prev_f)
+        alpha = float(self._alpha)
+        if schedule_sample is not None:
+            try:
+                n_cap = float(getattr(schedule_sample, "n_cap", float("nan")))
+            except (TypeError, ValueError):
+                n_cap = float("nan")
+            if math.isfinite(n_cap):
+                # Clamp n_cap into [0, 1] so out-of-range samples still
+                # produce a finite alpha modulation.
+                n_cap_c = max(0.0, min(1.0, n_cap))
+                alpha = float(alpha * (1.0 + (n_cap_c - 0.5)))
+        raw = prev_f + alpha * (dynamic_f - prev_f)
         # Final clip into ``[0, 1]`` — defensive against alpha outside
         # ``[0, 1]``. Operators usually configure ``alpha`` in
         # ``(0, 1)`` so the raw EMA is already bounded, but we clip

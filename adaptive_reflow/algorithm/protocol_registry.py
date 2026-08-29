@@ -68,6 +68,8 @@ SCHEDULER_FAMILIES: frozenset[str] = frozenset(
         "geometric",
         "piecewise_sigmoid",
         "handoff",
+        "handoff_sequential",
+        "multi_channel_jittered",
     }
 )
 
@@ -76,6 +78,8 @@ POLICY_DRIVER_FAMILIES: frozenset[str] = frozenset(
         "schedule_derived",
         "constant",
         "adaptive",
+        "multi_channel_constant",
+        "dual_target_adaptive",
     }
 )
 
@@ -88,6 +92,7 @@ MERGE_OPERATOR_FAMILIES: frozenset[str] = frozenset(
         "bayesian",
         "pid_identity",
         "schedule_ema",
+        "multi_source_kalman",
     }
 )
 
@@ -97,6 +102,8 @@ BLENDER_FAMILIES: frozenset[str] = frozenset(
         "distance_decay",
         "ot_linear",
         "multi_temperature_distance_decay",
+        "joint_ot_linear",
+        "barycentric",
     }
 )
 
@@ -123,7 +130,9 @@ def _build_scheduler_registry() -> dict[str, Any]:
         AdaptivePIDScheduler,
         EDMScheduler,
         JitteredConstantScheduler,
+        MultiChannelJitteredConstantScheduler,
     )
+    from .sequential_handoff import HandoffSequentialScheduler
 
     reg: dict[str, Any] = {
         "cosine": CosineAnnealScheduler,
@@ -137,6 +146,8 @@ def _build_scheduler_registry() -> dict[str, Any]:
         "edm": EDMScheduler,
         "adaptive_pid": AdaptivePIDScheduler,
         "jittered_constant": JitteredConstantScheduler,
+        "multi_channel_jittered": MultiChannelJitteredConstantScheduler,
+        "handoff_sequential": HandoffSequentialScheduler,
     }
     # Cosine factory defaults live behind a kwargs API rather than the
     # bare constructor; expose it under the same family key so callers
@@ -150,6 +161,8 @@ def _build_policy_driver_registry() -> dict[str, Any]:
     from .policy_driver import (
         AdaptivePolicyDriver,
         ConstantPolicyDriver,
+        DualTargetAdaptivePolicyDriver,
+        MultiChannelConstantPolicyDriver,
         ScheduleDerivedPolicyDriver,
     )
 
@@ -157,6 +170,8 @@ def _build_policy_driver_registry() -> dict[str, Any]:
         "schedule_derived": ScheduleDerivedPolicyDriver,
         "constant": ConstantPolicyDriver,
         "adaptive": AdaptivePolicyDriver,
+        "multi_channel_constant": MultiChannelConstantPolicyDriver,
+        "dual_target_adaptive": DualTargetAdaptivePolicyDriver,
     }
 
 
@@ -169,6 +184,7 @@ def _build_merge_operator_registry() -> dict[str, Any]:
     from .merge_operator_extra import (
         BayesianMergeOperator,
         KalmanBoundedMergeOperator,
+        MultiSourceKalmanMergeOperator,
         PIDIdentityOperator,
         ScheduleAwareEMAOperator,
     )
@@ -181,12 +197,15 @@ def _build_merge_operator_registry() -> dict[str, Any]:
         "bayesian": BayesianMergeOperator,
         "pid_identity": PIDIdentityOperator,
         "schedule_ema": ScheduleAwareEMAOperator,
+        "multi_source_kalman": MultiSourceKalmanMergeOperator,
     }
 
 
 def _build_blender_registry() -> dict[str, Any]:
     from .blender import DistanceDecayBlender, LinearBlender
     from .blender_extra import (
+        BarycentricBlender,
+        JointOTLinearBlender,
         MultiTemperatureDistanceDecayBlender,
         OTLinearBlender,
     )
@@ -198,6 +217,8 @@ def _build_blender_registry() -> dict[str, Any]:
         "multi_temperature_distance_decay": (
             MultiTemperatureDistanceDecayBlender
         ),
+        "joint_ot_linear": JointOTLinearBlender,
+        "barycentric": BarycentricBlender,
     }
 
 

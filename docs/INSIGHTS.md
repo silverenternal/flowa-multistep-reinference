@@ -155,6 +155,29 @@ all **37** `config_hash` stability and `to_config` / `from_config`
 round-trip checks pass byte-for-byte, so every uplift above is
 swappable without the reproducibility surface changing shape.
 
+## Algorithm depth uplift Round 2 results
+
+The third, deepest pass is planned in
+[`docs/algorithm-round2-uplift-plan.md`](algorithm-round2-uplift-plan.md)
+(inventory of **~165 algorithms** after Round-1, **17 fresh SOTA
+papers** surveyed on top of Round-1's 30, ~47 unique external
+SOTA works cited) and measured in
+[`docs/benchmark-round2-uplifts.md`](benchmark-round2-uplifts.md):
+**83 uplifts measured, 80 achieving target, 0 regressions, 3 neutral
+/ NaN-baseline comparisons**, split **48 framework-internal** /
+**8 framework-external** / **27 pluggable-design** entries. The
+Round-2 numbers sharpen the Round-1 story rather than retell it.
+Rademacher projections cut the W2 CV another **-42.8%** past the
+Round-1 projection-free estimator, tree-sliced W2 beats projection-
+free on anisotropic Gaussians, multi-metric PID oscillation is
+bounded under oscillating input, adaptive `sigma_max` makes the
+EDM scheduler actually adapt (variance `0 -> 593.158`), and the
+Round-1 weighted-coverage miss is closed by the KDE-support-
+coverage metric (`0.1916 -> 0.7810` near-far separation)
+[CLM-023]. The type / lint cleanup lands both counters at zero:
+mypy **33 -> 0**, ruff **32 -> 0**, across 118 source files
+[CLM-024].
+
 ## 6. Open questions
 
 The "next question" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped `selection_ratio` metric was claimed to converge toward 1 as rounds progress, but `docs/review/B5-VERIFICATION.md` shows that the metric is in fact invariant to loop state — it is an unconditional replay of the `(adapter, target)` pair, not an endpoint-conditioned posterior, and two unrelated schedulers report identical curves to four decimal places. The reviewer's symptom ("wrong bundle passed") was a wiring guess; the actual defect is that the evaluator's `bundle` parameter is inert, so no rewiring fix would change the output. Closing the gap requires an endpoint-conditioned variant (scoring the round's own endpoints rather than a fresh replay), which is blocked on the runner carrying a batch of trajectories per round — a real architectural change to `ReInferenceRunner` and `TwoDimFMAdapter`, both currently single-sample. ADR-0013 §"Selection metric status" demotes the convergence-to-1 prediction to apply only to that future variant. The shipped metric remains in place until a human design decision lands; the verification document is the canonical record of the investigation.

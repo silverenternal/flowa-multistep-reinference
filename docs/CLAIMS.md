@@ -440,3 +440,67 @@ How it works:
   (the SNR-proxy measurement),
   `docs/benchmark-uplifts.md:23`
   (the SNR row in the per-uplift table).
+
+## CLM-023: `KDE-support-coverage` near-far separation closes the Round-1 weighted-coverage miss {#CLM-023}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source:
+  [`docs/algorithm-round2-uplift-plan.md`](algorithm-round2-uplift-plan.md)
+  §3 (uplift **P1 #11**),
+  [`docs/benchmark-round2-uplifts.md`](benchmark-round2-uplifts.md)
+  §1 (KDE-support-coverage row)
+- Asserted by:
+  `docs/benchmark-round2-uplifts.md:55`
+  (the `KDE-support-coverage` row),
+  `CHANGELOG.md` "Phase 2 - parallel implementation" section,
+  P1 #11 KDE-support-coverage bullet
+- Disputed by: —
+- Statement: The `KDE-support-coverage` uplift
+  ([arXiv:2412.00849](https://arxiv.org/abs/2412.00849)) implemented
+  in `adaptive_reflow/eval/coverage.py` closes the Round-1 weighted-
+  coverage miss: the near-far score separation
+  (`score_near - score_far`) rises from the Round-1 weighted-
+  coverage baseline of `0.1916` (which missed the `>= 0.20` target)
+  to `0.780954` (**+307.6%**) at the Round-2 measurement. The
+  metric is registered in the new `COVERAGE_REGISTRY` under the key
+  `"kde_support"` and is factory-callable; the measurement is
+  reproducible across runs (regression coverage in
+  `tests/test_eval/test_coverage_metrics.py` and
+  `tests/test_eval/test_round2_coverage.py`).
+- Evidence:
+  `adaptive_reflow/eval/coverage.py` (`support_coverage_score`),
+  `tools/benchmark_uplifts.py` (the KDE-support-coverage row in
+  §1 of `benchmark-round2-uplifts.md`),
+  `docs/benchmark-round2-uplifts.md:55`
+  (the near - far score separation row).
+
+## CLM-024: Round-2 type/lint cleanup brings mypy 33→0 and ruff 32→0 across 118 source files {#CLM-024}
+
+- Status: ACTIVE
+- Date: 2026-08-29
+- Source:
+  [`docs/benchmark-round2-uplifts.md`](benchmark-round2-uplifts.md)
+  §4 (Type-checker and lint-cleanup delta table)
+- Asserted by: `docs/benchmark-round2-uplifts.md:115-118`
+  (the mypy / ruff delta table),
+  `CHANGELOG.md` "Phase 2 - parallel implementation" section,
+  type-checker and lint-cleanup bullet
+- Disputed by: —
+- Statement: The Round-2 type-checker and lint-cleanup reduced the
+  mypy error count from the documented Round-1 baseline of **33**
+  to **0** (**-33**) and the ruff error count from the Round-1
+  baseline of **32** to **0** (**-32**), checked across **118**
+  source files in `adaptive_reflow/`. The Round-1 baseline was the
+  "honest audit" count captured at the start of Round-1
+  (`docs/benchmark-round2-uplifts.md` §4 explicitly records both
+  numbers); the Round-2 cleanup landed every reported error in
+  this single commit and verified the zero-error state on every
+  subsequent gate run.
+- Evidence:
+  `docs/benchmark-round2-uplifts.md:115-118`
+  (the mypy / ruff baseline-vs-current table),
+  `python -m mypy adaptive_reflow` (current
+  run: `Success: no issues found in 118 source files`),
+  `python -m ruff check .` (current run:
+  `All checks passed!`).

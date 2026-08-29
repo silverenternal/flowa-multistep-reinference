@@ -49,6 +49,42 @@ wired into a default path are labelled inline.
       `R = 64`. The one miss is the external weighted-coverage
       separation row (`0.1916` against a `>= 0.20` target), recorded
       rather than tuned to pass.
+- [x] Algorithm depth uplift Round 2 — implemented 2026-08-29.
+      Phase 1 of
+      [`docs/algorithm-round2-uplift-plan.md`](docs/algorithm-round2-uplift-plan.md)
+      re-inventoried **~165 algorithms** after Round-1 and surveyed
+      **17 fresh SOTA papers** ([M]-tagged) covering SDE / stochastic
+      solvers, OT / W2 estimators, EDM preconditioners, KDE-density
+      coverage, Bayesian change-point detection, and differentiable
+      sliced Wasserstein plans (combined ~47 unique external SOTA
+      works). Phase 2 implemented the P0 / P1 uplifts in parallel on
+      three axes: **48 framework-internal**, **8 framework-external**,
+      **27 pluggable-design** entries. Phase 3 measured every uplift
+      BEFORE / AFTER in
+      [`docs/benchmark-round2-uplifts.md`](docs/benchmark-round2-uplifts.md):
+      **80 of 83** measured uplifts achieved their quantitative
+      target, **0** regressed, **3 neutral / NaN-baseline**
+      comparisons recorded. Headline numbers: adaptive `sigma_max`
+      on `EDMScheduler` lifts per-round variance `0 -> 593.158`
+      (`sigma_max` now adapts); `ProjectionFreeRademacherW2` cuts CV
+      `0.000104 -> 5.95e-5` (**-42.8%**); `TreeSlicedW2` beats
+      projection-free on anisotropic Gaussian (**-1.20%** W2);
+      `UniPCIntegrator2` / `UniPCIntegrator3` reach endpoint L2
+      `<= 0.001` at NFE=10; `DormandPrinceRK45Integrator` adaptive
+      step loop reaches L2 `<= 0.05` at NFE=20; `KDE-support-coverage`
+      closes the Round-1 weighted-coverage miss (`0.1916 -> 0.7810`,
+      **+307.6%** near-far separation); `MultiChannelJitteredConstantScheduler`
+      cuts per-channel noise variance `0.0025 -> 0.000646`
+      (**-74.2%**); the type / lint cleanup brings mypy from
+      **33 → 0** and ruff from **32 → 0**. The one external miss is
+      `DPMSolverPPIntegrator` endpoint L2 `0.716` against a
+      `<= 0.05` target (the x0-prediction step is implemented but the
+      integrator does not yet call into the score function the way
+      RK4@100 does), recorded as a future-work item rather than
+      re-tuned. All six gates green: pytest **1906** passed / 7
+      skipped (+503 vs Round-1 1403), ruff 0, mypy 0, docs scanner
+      **2663**, claims sync clean (20 active / 0 provisional /
+      2 deprecated, no drift), mkdocs `--strict` clean.
 - [x] Algorithm layer uplift — implemented 2026-08-29. Phase 1 of
       [`docs/algorithm-uplift-plan.md`](docs/algorithm-uplift-plan.md)
       surveyed **38 candidate uplifts** across 17 algorithm classes +

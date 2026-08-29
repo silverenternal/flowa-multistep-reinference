@@ -49,6 +49,7 @@ __all__ = [
     "ChainVerification",
     "LedgerChain",
     "LedgerChainError",
+    "ParallelLedgerChain",
     "verify_ledger_chain_incremental",
 ]
 
@@ -287,3 +288,49 @@ def verify_ledger_chain_incremental(
         head_hash=chain.head_hash,
         hash_computations=chain.hash_computations,
     )
+
+
+class ParallelLedgerChain:
+    """Concurrent / out-of-order ledger chain (P1 #26).
+
+    Accepts round rows out of round order (e.g. from a thread pool
+    executing rounds concurrently) and defers linking until
+    :meth:`finalize` is called. On finalize the chain is sorted by
+    ``round_index``, validated, and produces the same head hash as the
+    sequential :class:`LedgerChain` (deterministic).
+
+    The class is fail-closed: a row that breaks any invariant raises
+    :class:`LedgerChainError` and is not appended.
+    """
+
+    def __init__(self) -> None:
+        self._rows: dict[int, LedgerRow] = {}
+
+    @property
+    def pending(self) -> int:
+        """Return the number of buffered rows awaiting finalize."""
+        return len(self._rows)
+
+    def append(self, row: LedgerRow) -> None:
+        """Buffer ``row`` for the upcoming :meth:`finalize` call."""
+        if not isinstance(row, LedgerRow):
+            raise LedgerChainError(
+                f"row is not a LedgerRow, got {type(row).__name__}",
+                index=int(row.round_index) if hasattr(row, "round_index") else -1,
+            )
+        rid = int(row.round_index)
+        if rid in self._rows:
+            raise LedgerChainError(
+                f"duplicate round_index={rid} in ParallelLedgerChain",
+                index=rid,
+            )
+        self._rows[rid] = row
+
+    def finalize(self) -> LedgerChain:
+        """Sort by ``round_index`` and validate via :class:`LedgerChain`."""
+        if not self._rows:
+            return LedgerChain()
+        chain = LedgerChain()
+        for rid in sorted(self._rows):
+            chain.append(self._rows[rid])
+        return chain

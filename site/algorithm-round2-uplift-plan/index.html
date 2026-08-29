@@ -1,0 +1,2952 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Algorithm round2 uplift plan - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#algorithm-round-2-uplift-plan-flowa-framework" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Algorithm round2 uplift plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-re-inventory-of-all-algorithms-in-the-codebase-round-2-lens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STEP 1 — Re-inventory of all algorithms in the codebase (Round-2 lens)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="STEP 1 — Re-inventory of all algorithms in the codebase (Round-2 lens)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-schedulers-adaptive_reflowalgorithmschedulerpy-scheduler_extrapy-sequentialpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Schedulers (adaptive_reflow/algorithm/scheduler.py, scheduler_extra.py, sequential.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-policy-drivers-adaptive_reflowalgorithmpolicy_driverpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Policy drivers (adaptive_reflow/algorithm/policy_driver.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-merge-operators-adaptive_reflowalgorithmmerge_operatorpy-merge_operator_extrapy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Merge operators (adaptive_reflow/algorithm/merge_operator.py, merge_operator_extra.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-blenders-adaptive_reflowalgorithmblenderpy-blender_extrapy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 Blenders (adaptive_reflow/algorithm/blender.py, blender_extra.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-runners-registry-adaptive_reflowalgorithmrunnerpy-batched_runnerpy-runner_registrypy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Runners + registry (adaptive_reflow/algorithm/runner.py, batched_runner.py, runner_registry.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#16-ode-integrators-adaptive_reflowadaptersintegratorspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.6 ODE integrators (adaptive_reflow/adapters/integrators.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#17-w2-estimators-adaptive_reflowevalw2py" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.7 W2 estimators (adaptive_reflow/eval/w2.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#18-coverage-energy-lipschitz-metrics-adaptive_reflowevalcoveragepy-lipschitz_diagnosticpy-coverage_score-in-twodim_fm_evaluatorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.8 Coverage / energy / Lipschitz metrics (adaptive_reflow/eval/coverage.py, lipschitz_diagnostic.py, coverage_score in twodim_fm_evaluator.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#19-mixers-adaptive_reflowuniversalmixerpy-mixer_otpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.9 Mixers (adaptive_reflow/universal/mixer.py, mixer_ot.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#110-frame-orchestration-adaptive_reflowframe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.10 Frame / orchestration (adaptive_reflow/frame/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#111-tools-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.11 Tools (tools/)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-external-research-on-sota-2024-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STEP 2 — External research on SOTA 2024-2026
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="STEP 2 — External research on SOTA 2024-2026">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-sde-stochastic-flow-matching-solvers-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 SDE / stochastic flow-matching solvers (NEW)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-wasserstein-ot-estimators-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Wasserstein / OT estimators (NEW)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-edm-karras-step-count-reduction-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 EDM / Karras step-count reduction (NEW)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-summary-external-papers-cited-round-2-additions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Summary — external papers cited (Round-2 additions)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-per-algorithm-uplift-plan-round-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STEP 3 — Per-algorithm uplift plan (Round 2)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-prioritised-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STEP 4 — Prioritised list
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="STEP 4 — Prioritised list">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p0-must-do-qualitative-framework-uplift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P0 — Must do (qualitative framework uplift)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p1-should-do-clear-measurable-improvement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1 — Should do (clear measurable improvement)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-nice-to-have" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2 — Nice to have
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-pluggability-design-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STEP 5 — Pluggability design checklist
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="STEP 5 — Pluggability design checklist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-adaptive-_max-on-edmscheduler-p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Adaptive σ_max on EDMScheduler (P0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-multi-metric-adaptivepidscheduler-p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Multi-metric AdaptivePIDScheduler (P0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-rademacher-projections-on-projectionfreeexactw2-p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Rademacher projections on ProjectionFreeExactW2 (P0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-tree-sliced-w2-p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Tree-Sliced W2 (P0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-dpm-solver-unipc-order-23-p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 DPM-Solver++ / UniPC order-2/3 (P0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-sde-integrators-p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 SDE integrators (P0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-real-parallelrunner-earlystoprunner-onlinerunner-p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 Real ParallelRunner / EarlyStopRunner / OnlineRunner (P0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#58-stochastic-fm-adapter-p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.8 Stochastic FM adapter (P0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#59-stage-protocol-stage_registry-p0" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.9 Stage Protocol + STAGE_REGISTRY (P0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#510-kde-support-coverage-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.10 KDE-support-coverage (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#511-differential-entropy-estimator-on-top-k-coverage-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.11 Differential-entropy estimator on top-k coverage (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#512-w2-barycenter-coverage-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.12 W2 barycenter coverage (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#513-dopri5-adaptive-step-loop-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.13 DOPRI5 adaptive step loop (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#514-multi-source-kalman-merge-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.14 Multi-source Kalman merge (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#515-handoff-sequential-scheduler-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.15 Handoff sequential scheduler (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#516-anisotropic-gaussian-heavy-tailed-targets-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.16 Anisotropic Gaussian + heavy-tailed targets (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#517-multi-channel-jitteredconstantscheduler-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.17 Multi-channel JitteredConstantScheduler (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#518-per-channel-constantpolicydriver-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.18 Per-channel ConstantPolicyDriver (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#519-dual-target-adaptivepolicydriver-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.19 Dual-target AdaptivePolicyDriver (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#520-time-varying-effective_count-on-bayesianmergeoperator-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.20 Time-varying effective_count on BayesianMergeOperator (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#521-schedule-aware-emaoperator-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.21 Schedule-aware EMAOperator (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#522-joint-ot-blender-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.22 Joint OT blender (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#523-barycentric-blender-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.23 Barycentric blender (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#524-parallel-ledgerchain-append-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.24 Parallel LedgerChain append (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#525-soft-mode-on-layeredmetricpanel-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.25 Soft mode on LayeredMetricPanel (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#526-cusum-bayesian-change-point-detector-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.26 CUSUM / Bayesian change-point detector (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#527-cross-channel-interaction-p1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.27 Cross-channel interaction (P1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-quantitative-benchmark-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STEP 6 — Quantitative benchmark plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sources-round-2-external-papers-cited" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sources — Round-2 external papers cited
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-line-summary-round-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6-line summary (Round-2)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<!-- skip-doc-check -->
+
+<h1 id="algorithm-round-2-uplift-plan-flowa-framework">Algorithm Round-2 Uplift Plan — FlowA Framework<a class="headerlink" href="#algorithm-round-2-uplift-plan-flowa-framework" title="Permanent link">&para;</a></h1>
+<p>Second, deeper-pass inventory + SOTA research + per-algorithm uplift
+plan (P0/P1/P2) for everything that the Round-1
+<a href="../algorithm-deep-uplift-plan/"><code>docs/algorithm-deep-uplift-plan.md</code></a>
+plan (already executed at commit 719af32) did <em>not</em> yet reach. Builds on
+the Round-1 deliverables — 87 uplifts measured, 86 reaching target — and
+asks "what is STILL weak?".</p>
+<p>Scope: <code>adaptive_reflow/</code> (all packages) + <code>tools/</code> (benchmarks +
+ablation). Working directory:
+<code>C:/Users/31472/codes/flowa-multistep-reinference</code>. Author date:
+2026-08-29.</p>
+<hr />
+<h2 id="step-1-re-inventory-of-all-algorithms-in-the-codebase-round-2-lens">STEP 1 — Re-inventory of all algorithms in the codebase (Round-2 lens)<a class="headerlink" href="#step-1-re-inventory-of-all-algorithms-in-the-codebase-round-2-lens" title="Permanent link">&para;</a></h2>
+<p>Round-1 delivered 11 framework-internal algorithm uplifts and 5
+framework-external uplifts (<code>docs/algorithm-deep-uplift-plan.md</code> §4):
+EDM scheduler, AdaptivePID scheduler, Projection-Free Exact W2,
+Kernelized/Sinkhorn W2, 5 ODE integrators (DPM/UniPC/Heun/AMED/DP-RK45),
+OT-Linear blender, Multi-Temp blender, Bayesian/Kalman/PID-Identity
+merges, and 5 runner-registry families (Parallel/EarlyStop/Online).
+86/87 achieved target, 0 regressions; the only miss was the weighted
+coverage score on the external stress config (0.1916 vs target 0.20),
+which is now Round-2 P1 work.</p>
+<p>The Round-2 inventory below inventories every algorithm in the
+codebase with the new <strong>Round-2 status</strong> column. Counts are tight
+pluggable classes/protocols that have non-trivial numeric semantics.</p>
+<h3 id="11-schedulers-adaptive_reflowalgorithmschedulerpy-scheduler_extrapy-sequentialpy">1.1 Schedulers (<code>adaptive_reflow/algorithm/scheduler.py</code>, <code>scheduler_extra.py</code>, <code>sequential.py</code>)<a class="headerlink" href="#11-schedulers-adaptive_reflowalgorithmschedulerpy-scheduler_extrapy-sequentialpy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status (current capability + numbers)</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CosineAnnealScheduler</code></td>
+<td><code>scheduler.py:275</code></td>
+<td>INTERNAL</td>
+<td>Default cosine annealing</td>
+<td><code>n_cap(r) = n_min + (n_max - n_min) * (1 - cos(pi r/(L-1)))/2</code>; selection_ratio ≈ 0.85 plateau</td>
+<td>Not driven by paper-quantity A_g unless profile supplied; not adaptive in noise scale</td>
+</tr>
+<tr>
+<td><code>EDMScheduler</code></td>
+<td><code>scheduler_extra.py:58</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Karras EDM σ(t) ramp</td>
+<td><code>n_cap = σ(t)/σ_max</code> with σ_min=0.002, σ_max=80, ρ=7; SNR-dB audit code emitted</td>
+<td>Limited to fixed-shape σ(t); no adaptive σ_max per round</td>
+</tr>
+<tr>
+<td><code>AdaptivePIDScheduler</code></td>
+<td><code>scheduler_extra.py:289</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Full PID on convergence signal</td>
+<td><code>shift += kp·(1-ratio) + ki·integral - kd·delta</code>; 5-round integral window; ki=0.05</td>
+<td>PID only on W2; no multi-metric blending</td>
+</tr>
+<tr>
+<td><code>JitteredConstantScheduler</code></td>
+<td><code>scheduler_extra.py:613</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Constant + Gaussian jitter</td>
+<td><code>n_cap = 0.5 + jitter_std·N(0,1)</code>, default jitter_std=0.05</td>
+<td>Single jitter scale; no per-channel jitter</td>
+</tr>
+<tr>
+<td><code>ConvergenceAdaptiveScheduler</code></td>
+<td><code>scheduler.py:1697</code></td>
+<td>INTERNAL</td>
+<td>PID-lite on W2+coverage+sel-ratio</td>
+<td>multi-metric EMA aggregator</td>
+<td>Oscillation residual; legacy PID-lite (no integral)</td>
+</tr>
+<tr>
+<td><code>CodimensionSheetScheduler</code></td>
+<td><code>scheduler.py:2256</code></td>
+<td>INTERNAL</td>
+<td>Theorem-1 driven</td>
+<td>caches <code>A_g, B_g, C_g, e_rho</code>; emits <code>evidence_ratio</code></td>
+<td>Ratio is reportable but not driver (now wrapped by <code>EvidenceDrivenScheduler</code>)</td>
+</tr>
+<tr>
+<td><code>EvidenceDrivenScheduler</code></td>
+<td><code>evidence_driver.py:93</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Wrapper modulating <code>n_cap</code> by evidence ratio</td>
+<td><code>n_cap' = n_cap · factor(evidence_ratio, strength)</code>; default strength=1.0</td>
+<td>strength dial; <code>evidence_ratio is None</code> families pass through unchanged</td>
+</tr>
+<tr>
+<td><code>SequentialScheduler</code></td>
+<td><code>sequential.py:95</code></td>
+<td>INTERNAL</td>
+<td>Chain N schedulers by round range</td>
+<td>3-slot chain trajectory matches per-slot; A8+A9 audit codes</td>
+<td>No handoff blending between slots</td>
+</tr>
+<tr>
+<td><code>SCHEDULER_REGISTRY</code></td>
+<td><code>protocol_registry.py:128</code></td>
+<td>INTERNAL</td>
+<td>dict[str, cls]; 11 entries</td>
+<td>keys: cosine, constant, linear, exponential, polynomial, sigmoid, convergence_adaptive, codimension_sheet, edm, adaptive_pid, jittered_constant</td>
+<td>WarmupLinear / Geometric / Handoff / PiecewiseSigmoid / Handoff registered in PROTOCOL_REGISTRY but no implementations</td>
+</tr>
+<tr>
+<td><code>build_scheduler</code> / <code>build_scheduler_from_config</code></td>
+<td><code>scheduler.py:3000</code></td>
+<td>INTERNAL</td>
+<td>Polymorphic factory</td>
+<td>registry lookup over 11 entries</td>
+<td>Cache invalidation on hot-reload</td>
+</tr>
+<tr>
+<td><code>_paper_evidence_balance</code></td>
+<td><code>scheduler.py:2133</code></td>
+<td>INTERNAL</td>
+<td>Helper</td>
+<td>Heuristic or paper-quantity mode; asymptotic diagnostic via <code>check_evidence_mode</code></td>
+<td>Asymptotic gap not surfaced as audit code</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12-policy-drivers-adaptive_reflowalgorithmpolicy_driverpy">1.2 Policy drivers (<code>adaptive_reflow/algorithm/policy_driver.py</code>)<a class="headerlink" href="#12-policy-drivers-adaptive_reflowalgorithmpolicy_driverpy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PolicyDriverProtocol</code></td>
+<td><code>policy_driver.py:181</code></td>
+<td>contract</td>
+<td>per-round <code>beta</code> generator</td>
+<td>3 impls in registry</td>
+<td>Per-channel <code>β</code> override via mapping not yet supported</td>
+</tr>
+<tr>
+<td><code>ScheduleDerivedPolicyDriver</code></td>
+<td><code>policy_driver.py:292</code></td>
+<td>INTERNAL</td>
+<td><code>β = n_cap</code> (default)</td>
+<td>emits <code>POLICY_SCHEDULE_DERIVED</code> audit code</td>
+<td>Single channel-vocabulary; ignores <code>prior_endpoint_digest</code></td>
+</tr>
+<tr>
+<td><code>ConstantPolicyDriver</code></td>
+<td><code>policy_driver.py:409</code></td>
+<td>INTERNAL</td>
+<td><code>β = const</code></td>
+<td>0.5 default</td>
+<td>No per-channel constants</td>
+</tr>
+<tr>
+<td><code>AdaptivePolicyDriver</code></td>
+<td><code>policy_driver.py:505</code></td>
+<td>INTERNAL</td>
+<td><code>β = (1 - |p - t|)/C_g</code></td>
+<td>emits <code>BETA_SATURATION_FROM_PAPER_QUANTITY</code>; counter <code>beta_saturation_count</code></td>
+<td>Single target_estimate; no dual-target</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-merge-operators-adaptive_reflowalgorithmmerge_operatorpy-merge_operator_extrapy">1.3 Merge operators (<code>adaptive_reflow/algorithm/merge_operator.py</code>, <code>merge_operator_extra.py</code>)<a class="headerlink" href="#13-merge-operators-adaptive_reflowalgorithmmerge_operatorpy-merge_operator_extrapy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MergeOperatorProtocol</code></td>
+<td><code>merge_operator.py:238</code></td>
+<td>contract</td>
+<td>bounded update</td>
+<td>7 impls in registry</td>
+<td><code>audit_codes</code> non-mutation contract not enforced at runtime</td>
+</tr>
+<tr>
+<td><code>BoundedMergeOperator</code></td>
+<td><code>merge_operator.py:357</code></td>
+<td>INTERNAL</td>
+<td>Symmetric bounded merge</td>
+<td><code>e_rho/4</code> paper-quantity floor lift; degenerate-interval → floor</td>
+<td>Static envelope; no variance tracking</td>
+</tr>
+<tr>
+<td><code>IdentityOperator</code></td>
+<td><code>merge_operator.py:599</code></td>
+<td>INTERNAL</td>
+<td>Pass-through</td>
+<td>A13 audit code on non-finite</td>
+<td>No audit beyond clip</td>
+</tr>
+<tr>
+<td><code>EMAOperator</code></td>
+<td><code>merge_operator.py:668</code></td>
+<td>INTERNAL</td>
+<td><code>α·prev + (1-α)·dyn</code></td>
+<td><code>alpha_schedule</code> callable</td>
+<td>α constant; schedule-aware EMA is in extras</td>
+</tr>
+<tr>
+<td><code>KalmanBoundedMergeOperator</code></td>
+<td><code>merge_operator_extra.py:45</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Variance-tracking Kalman merge</td>
+<td><code>K = σ²_p / (σ²_p + σ²_d)</code>; envelope honoured</td>
+<td>Single-σ² state; no multi-source fusion</td>
+</tr>
+<tr>
+<td><code>BayesianMergeOperator</code></td>
+<td><code>merge_operator_extra.py:233</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Beta-Bernoulli posterior</td>
+<td><code>alpha_post = alpha_p + dyn·e_c</code>; mean returned</td>
+<td>Single effective_count</td>
+</tr>
+<tr>
+<td><code>PIDIdentityOperator</code></td>
+<td><code>merge_operator_extra.py:376</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Pass-through + PID residual</td>
+<td><code>damped = (1-kd)·residual + kp·residual</code></td>
+<td>No full integral term</td>
+</tr>
+<tr>
+<td><code>ScheduleAwareEMAOperator</code></td>
+<td><code>merge_operator_extra.py:466</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>α(r) tracks n_cap</td>
+<td><code>α(r) = α_min + (α_max - α_min)·n_cap</code></td>
+<td>n_cap_hint is constant kwarg; ignores schedule_sample</td>
+</tr>
+</tbody>
+</table>
+<h3 id="14-blenders-adaptive_reflowalgorithmblenderpy-blender_extrapy">1.4 Blenders (<code>adaptive_reflow/algorithm/blender.py</code>, <code>blender_extra.py</code>)<a class="headerlink" href="#14-blenders-adaptive_reflowalgorithmblenderpy-blender_extrapy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LinearBlender</code></td>
+<td><code>blender.py:449</code></td>
+<td>INTERNAL</td>
+<td><code>new = m·p + (1-m)·f</code></td>
+<td><code>BLENDER_MEMORY_FRACTION_CLIPPED</code> audit code</td>
+<td>Convex only; cannot extrapolate</td>
+</tr>
+<tr>
+<td><code>DistanceDecayBlender</code></td>
+<td><code>blender.py:546</code></td>
+<td>INTERNAL</td>
+<td>Distance-gated linear</td>
+<td><code>decay_factor</code> folded into digest; <code>per_round_metrics["blender_decay_factor"]</code></td>
+<td>Single global T</td>
+</tr>
+<tr>
+<td><code>OTLinearBlender</code></td>
+<td><code>blender_extra.py:48</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Closed-form 1-D OT-path blend</td>
+<td><code>ot_path[k] = m·p_(k) + (1-m)·f_(k)</code></td>
+<td>1-D per-coordinate; no joint OT</td>
+</tr>
+<tr>
+<td><code>MultiTemperatureDistanceDecayBlender</code></td>
+<td><code>blender_extra.py:151</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Per-channel temperature</td>
+<td><code>T_c</code> per channel</td>
+<td>Wraps DD; no closed-form OT integration</td>
+</tr>
+<tr>
+<td><code>RestartBlenderProtocol</code></td>
+<td><code>blender.py:404</code></td>
+<td>contract</td>
+<td>per-channel blender</td>
+<td>4 impls in registry</td>
+<td><code>to_config/from_config</code> heterogeneous across impls</td>
+</tr>
+<tr>
+<td><code>BLENDER_REGISTRY</code> (effective)</td>
+<td><code>protocol_registry.py:194</code></td>
+<td>INTERNAL</td>
+<td>4 families</td>
+<td>linear / distance_decay / ot_linear / multi_temperature_distance_decay</td>
+<td>Cannot register 5th family via config — needs new kwarg propagation</td>
+</tr>
+<tr>
+<td><code>_blender_config_hash</code></td>
+<td><code>blender.py:690</code></td>
+<td>helper</td>
+<td>SHA-256 family + qualname digest</td>
+<td>Stable; folds <code>extra</code></td>
+<td>No canonical serializer for numpy scalars in <code>per_channel_temperatures</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="15-runners-registry-adaptive_reflowalgorithmrunnerpy-batched_runnerpy-runner_registrypy">1.5 Runners + registry (<code>adaptive_reflow/algorithm/runner.py</code>, <code>batched_runner.py</code>, <code>runner_registry.py</code>)<a class="headerlink" href="#15-runners-registry-adaptive_reflowalgorithmrunnerpy-batched_runnerpy-runner_registrypy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ReInferenceRunner</code></td>
+<td><code>runner.py:383</code></td>
+<td>INTERNAL</td>
+<td>Round-by-round engine loop</td>
+<td>per-round <code>scheduler → driver → merge → engine → blender → evaluator</code></td>
+<td>Sequential only; no early-stop</td>
+</tr>
+<tr>
+<td><code>BatchedTrajectoryRunner</code></td>
+<td><code>batched_runner.py:429</code></td>
+<td>INTERNAL</td>
+<td>T*K endpoints per round</td>
+<td>T=8, K=16, cycle_length=20 default; vectorised inner loop (8→1 invocations)</td>
+<td><code>_w2_to_mode_centres</code> still default W2 (surrogate)</td>
+</tr>
+<tr>
+<td><code>RUNNER_REGISTRY</code></td>
+<td><code>runner_registry.py:192</code></td>
+<td>INTERNAL</td>
+<td>dict[str, cls]; 5 entries</td>
+<td>reinference / batched / parallel / early_stop / online</td>
+<td>Each stub returns dict, not full <code>run()</code> delegation</td>
+</tr>
+<tr>
+<td><code>ParallelRunner</code> (stub)</td>
+<td><code>runner_registry.py:38</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Thread-pool stub</td>
+<td>n_workers=4 default</td>
+<td>No real parallel inner loop wired</td>
+</tr>
+<tr>
+<td><code>EarlyStopRunner</code> (stub)</td>
+<td><code>runner_registry.py:78</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Early-stop stub</td>
+<td>w2_tolerance=1e-3, min_rounds=5</td>
+<td>Returns dict only</td>
+</tr>
+<tr>
+<td><code>OnlineRunner</code> (stub)</td>
+<td><code>runner_registry.py:131</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>Streaming stub</td>
+<td>seed=0</td>
+<td>Returns dict only</td>
+</tr>
+</tbody>
+</table>
+<h3 id="16-ode-integrators-adaptive_reflowadaptersintegratorspy">1.6 ODE integrators (<code>adaptive_reflow/adapters/integrators.py</code>)<a class="headerlink" href="#16-ode-integrators-adaptive_reflowadaptersintegratorspy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IntegratorProtocol</code></td>
+<td><code>integrators.py:42</code></td>
+<td>contract</td>
+<td>ODE step surface</td>
+<td>6 impls in <code>INTEGRATOR_REGISTRY</code></td>
+<td>Only single-step signature; no adaptive-step reporting</td>
+</tr>
+<tr>
+<td><code>RK4Integrator</code></td>
+<td><code>integrators.py:64</code></td>
+<td>EXTERNAL</td>
+<td>Classical RK4</td>
+<td>fixed-step</td>
+<td>O(n_steps) per call</td>
+</tr>
+<tr>
+<td><code>DormandPrinceRK45Integrator</code></td>
+<td><code>integrators.py:113</code></td>
+<td>EXTERNAL</td>
+<td>Adaptive DOPRI5</td>
+<td>rtol=1e-3, atol=1e-4, max_steps=1000; rtol/atol configurable</td>
+<td>Adaptive loop not wired; single-step returns y5 only</td>
+</tr>
+<tr>
+<td><code>DPMSolverIntegrator</code></td>
+<td><code>integrators.py:333</code></td>
+<td>EXTERNAL</td>
+<td>DPM-Solver order-1</td>
+<td><code>y + dt·v</code>; gives 5× step reduction (RK4@100 → DPM@20)</td>
+<td>First-order only; no DPM-Solver++ (x0-pred) variant</td>
+</tr>
+<tr>
+<td><code>UniPCIntegrator</code></td>
+<td><code>integrators.py:379</code></td>
+<td>EXTERNAL</td>
+<td>UniPC predictor-corrector</td>
+<td>order ∈ {1,2,3}; default order=1</td>
+<td>Order-2/3 unimplemented (only order-1 path)</td>
+</tr>
+<tr>
+<td><code>HeunIntegrator</code></td>
+<td><code>integrators.py:438</code></td>
+<td>EXTERNAL</td>
+<td>Improved Euler</td>
+<td><code>y + 0.5·dt·(v_t + v_next)</code></td>
+<td>Same as DPM order-1 in practice</td>
+</tr>
+<tr>
+<td><code>AMEDSolverIntegrator</code></td>
+<td><code>integrators.py:480</code></td>
+<td>EXTERNAL</td>
+<td>AMED-Solver placeholder</td>
+<td>order-1 forward Euler step</td>
+<td>Placeholder; full AMED not implemented</td>
+</tr>
+<tr>
+<td><code>INTEGRATOR_REGISTRY</code></td>
+<td><code>integrators.py:527</code></td>
+<td>EXTERNAL</td>
+<td>6 entries</td>
+<td>rk4 / dopri5 / dpm_solver / unipc / heun / am_ed</td>
+<td>No stochastic SDE integrators (Euler-Maruyama, leapfrog, SDE-Heun)</td>
+</tr>
+<tr>
+<td><code>build_integrator</code></td>
+<td><code>integrators.py:543</code></td>
+<td>EXTERNAL</td>
+<td>factory</td>
+<td>registry lookup</td>
+<td>Caches no instances</td>
+</tr>
+</tbody>
+</table>
+<h3 id="17-w2-estimators-adaptive_reflowevalw2py">1.7 W2 estimators (<code>adaptive_reflow/eval/w2.py</code>)<a class="headerlink" href="#17-w2-estimators-adaptive_reflowevalw2py" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>W2EstimatorProtocol</code></td>
+<td><code>w2.py:127</code></td>
+<td>contract</td>
+<td>per-call estimator</td>
+<td>4 impls</td>
+<td>no multi-sample bagging / bootstrap</td>
+</tr>
+<tr>
+<td><code>ModeCentreMSEW2</code></td>
+<td><code>w2.py:238</code></td>
+<td>INTERNAL/EXTERNAL</td>
+<td>legacy MSE-to-mode</td>
+<td>squared units; high CV (~0.0073)</td>
+<td>biased surrogate</td>
+</tr>
+<tr>
+<td><code>ProjectionFreeExactW2</code></td>
+<td><code>w2.py:287</code></td>
+<td>EXTERNAL (NEW R1)</td>
+<td>Sliced exact 1-D OT</td>
+<td>CV reduced -71.7% (0.00727 → 0.00206) at n=128</td>
+<td>Gaussian projections only — no Rademacher, no Tree-SW</td>
+</tr>
+<tr>
+<td><code>KernelizedW2</code></td>
+<td><code>w2.py:429</code></td>
+<td>EXTERNAL (NEW R1)</td>
+<td>MMD-based</td>
+<td>3 kernels (rbf / laplacian / matern)</td>
+<td>bandwidth not adapted to data scale</td>
+</tr>
+<tr>
+<td><code>SinkhornApproximatedW2</code></td>
+<td><code>w2.py:534</code></td>
+<td>EXTERNAL (NEW R1)</td>
+<td>Entropic OT</td>
+<td>reg=0.1, n_iter=100; biased upward</td>
+<td>no automatic reg selection</td>
+</tr>
+<tr>
+<td><code>W2_REGISTRY</code></td>
+<td><code>w2.py:649</code></td>
+<td>EXTERNAL</td>
+<td>4 families</td>
+<td>mode_centre_mse / projection_free / kernelized / sinkhorn</td>
+<td>default = legacy (no behavioural change unless opted in)</td>
+</tr>
+<tr>
+<td><code>compute_w2</code></td>
+<td><code>w2.py:676</code></td>
+<td>EXTERNAL</td>
+<td>convenience</td>
+<td>family dispatch</td>
+<td>No batched mode (per-call)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="18-coverage-energy-lipschitz-metrics-adaptive_reflowevalcoveragepy-lipschitz_diagnosticpy-coverage_score-in-twodim_fm_evaluatorpy">1.8 Coverage / energy / Lipschitz metrics (<code>adaptive_reflow/eval/coverage.py</code>, <code>lipschitz_diagnostic.py</code>, <code>coverage_score</code> in <code>twodim_fm_evaluator.py</code>)<a class="headerlink" href="#18-coverage-energy-lipschitz-metrics-adaptive_reflowevalcoveragepy-lipschitz_diagnosticpy-coverage_score-in-twodim_fm_evaluatorpy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>weighted_coverage_score</code></td>
+<td><code>coverage.py:95</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>area-weighted Voronoi</td>
+<td>separation 0.2252 (PASS); 0.1916 on stress config (FAIL)</td>
+<td>One miss in stress config → R2 target</td>
+</tr>
+<tr>
+<td><code>energy_distance_with_ci</code></td>
+<td><code>coverage.py:286</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>bootstrap CI</td>
+<td>relative width 0.1526 (PASS at n=256)</td>
+<td>1000 resamples — slower at high n</td>
+</tr>
+<tr>
+<td><code>coverage_score</code> (binary)</td>
+<td><code>twodim_fm_evaluator.py:269</code></td>
+<td>INTERNAL</td>
+<td>fraction of cells hit</td>
+<td>saturates at 1.0 (R1 documented)</td>
+<td>still saturated in low-res cases</td>
+</tr>
+<tr>
+<td><code>lipschitz_modulus</code></td>
+<td><code>lipschitz_diagnostic.py:96</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>discrete Lipschitz on selection_ratio series</td>
+<td>tail increment -96.2% (oscillating → converged)</td>
+<td>Single-series; no kernel Lipschitz</td>
+</tr>
+<tr>
+<td><code>evaluate_lipschitz_convergence</code></td>
+<td><code>lipschitz_diagnostic.py:186</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>tail MC-rate check</td>
+<td><code>within_rate</code> verdict</td>
+<td>Single-kernel</td>
+</tr>
+<tr>
+<td><code>bounded_lipschitz_distance</code></td>
+<td><code>lipschitz_diagnostic.py:246</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>truncated W1 in 1-D</td>
+<td><code>mean_i min(\|x_(i)-y_(i)\|, B)</code></td>
+<td>1-D only; no multi-dim support</td>
+</tr>
+</tbody>
+</table>
+<h3 id="19-mixers-adaptive_reflowuniversalmixerpy-mixer_otpy">1.9 Mixers (<code>adaptive_reflow/universal/mixer.py</code>, <code>mixer_ot.py</code>)<a class="headerlink" href="#19-mixers-adaptive_reflowuniversalmixerpy-mixer_otpy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NoOpMixer</code></td>
+<td><code>mixer.py:142</code></td>
+<td>INTERNAL</td>
+<td>returns <code>prior</code></td>
+<td>n/a</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><code>LatentConvexMixer</code></td>
+<td><code>mixer.py:167</code></td>
+<td>INTERNAL</td>
+<td>convex combination</td>
+<td>relative scale error -100%</td>
+<td>Convex only</td>
+</tr>
+<tr>
+<td><code>DiscreteIdentityMixer</code></td>
+<td><code>mixer.py:207</code></td>
+<td>INTERNAL</td>
+<td>discrete tokens</td>
+<td>n/a</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><code>LatentConvexMixer</code> (OT variant)</td>
+<td><code>mixer_ot.py</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>OT displacement mixing</td>
+<td>worst relative scale error 1.19e-15 (PASS)</td>
+<td>1-D per-coordinate OT only</td>
+</tr>
+<tr>
+<td><code>EqualRmsCoordinateMixer</code></td>
+<td><code>molecular/mixer.py:307</code></td>
+<td>INTERNAL</td>
+<td>RMS-preserving</td>
+<td>n/a</td>
+<td>global RMS only — no per-channel</td>
+</tr>
+</tbody>
+</table>
+<h3 id="110-frame-orchestration-adaptive_reflowframe">1.10 Frame / orchestration (<code>adaptive_reflow/frame/</code>)<a class="headerlink" href="#110-frame-orchestration-adaptive_reflowframe" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Engine</code></td>
+<td><code>engine.py:860</code></td>
+<td>INTERNAL</td>
+<td>inner re-inference engine</td>
+<td>per-round <code>run_round(bundle, policy, delta, phase)</code></td>
+<td>Single-engine; no multi-stage warmup</td>
+</tr>
+<tr>
+<td><code>AdaptiveReflowPolicyOrchestrator</code></td>
+<td><code>orchestrator.py:251</code></td>
+<td>INTERNAL</td>
+<td>top-level pipeline</td>
+<td>monolithic</td>
+<td>Stage registry not yet exposed</td>
+</tr>
+<tr>
+<td><code>LedgerChain</code></td>
+<td><code>ledger_chain.py:110</code></td>
+<td>INTERNAL (NEW R1)</td>
+<td>incremental chain verification</td>
+<td><code>verify_incremental</code> reduces 2080→64 hash computations (PASS)</td>
+<td>No parallel-round chain support</td>
+</tr>
+<tr>
+<td><code>LedgerRow</code></td>
+<td><code>engine.py:188</code></td>
+<td>contract</td>
+<td>hash-chained ledger row</td>
+<td>SHA-256 hash chain</td>
+<td>Single-thread append; no concurrent rows</td>
+</tr>
+<tr>
+<td><code>PhaseState</code></td>
+<td><code>engine.py:218</code>, <code>phase.py</code></td>
+<td>contract</td>
+<td>per-round phase state</td>
+<td><code>round_in_cycle, schedule_phase_index, horizon_remaining</code></td>
+<td>hard-coded schedule_phase values</td>
+</tr>
+<tr>
+<td><code>compute_channel_decision</code>, <code>check_monotonicity_property</code></td>
+<td><code>channel_rule.py:461,632</code></td>
+<td>INTERNAL</td>
+<td>per-channel rule</td>
+<td>sweep-based 1→32 adjacent pairs (PASS)</td>
+<td>only single-factor monotonicity</td>
+</tr>
+<tr>
+<td><code>Stage Protocol</code></td>
+<td><code>stage.py</code> (NEW R1)</td>
+<td>INTERNAL</td>
+<td>pipeline stage surface</td>
+<td>not yet implemented — STAGE_REGISTRY is empty</td>
+<td>stage pipeline reorder not exposed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="111-tools-tools">1.11 Tools (<code>tools/</code>)<a class="headerlink" href="#111-tools-tools" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>What it does</th>
+<th>Round-2 status</th>
+<th>Round-2 limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tools/run_ablation.py</code></td>
+<td>full file</td>
+<td>benchmark</td>
+<td>22-row ablation grid</td>
+<td>reproduces all configs</td>
+<td>22 rows only</td>
+</tr>
+<tr>
+<td><code>tools/benchmark_uplifts.py</code></td>
+<td>full file</td>
+<td>benchmark</td>
+<td>4-section uplift benchmark</td>
+<td>87 measurements</td>
+<td>Section 5 (Round-2) not present</td>
+</tr>
+<tr>
+<td><code>tools/run_metric_per_family.py</code></td>
+<td>full file</td>
+<td>benchmark</td>
+<td>per-family metric comparison</td>
+<td>yes</td>
+<td>No SOTA round-2 entries</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total algorithms inventoried (Round 2 lens): ~165</strong> — framework now exposes:</p>
+<ul>
+<li>12 scheduler families (<code>SCHEDULER_FAMILIES</code>).</li>
+<li>3 policy drivers.</li>
+<li>7 merge operators (<code>MERGE_OPERATOR_FAMILIES</code>).</li>
+<li>4 blenders (<code>BLENDER_FAMILIES</code>).</li>
+<li>5 runner-registry families (<code>RUNNER_REGISTRY</code>).</li>
+<li>6 ODE integrators (<code>INTEGRATOR_REGISTRY</code>).</li>
+<li>4 W2 estimators (<code>W2_REGISTRY</code>).</li>
+<li>2 rotation policies (<code>ROTATION_POLICY_REGISTRY</code>).</li>
+<li>2 protocol-registry generic builders.</li>
+<li>1 ledger-chain (<code>LedgerChain</code>), 1 bounded-Lipschitz helper.</li>
+<li>3 mixer families (<code>LatentConvex</code> / <code>LatentConvexOT</code> / <code>NoOp</code>).</li>
+<li>~22 supporting dataclasses + helpers + evaluators.</li>
+</ul>
+<hr />
+<h2 id="step-2-external-research-on-sota-2024-2026">STEP 2 — External research on SOTA 2024-2026<a class="headerlink" href="#step-2-external-research-on-sota-2024-2026" title="Permanent link">&para;</a></h2>
+<p>(Research conducted via WebSearch in 2026-08-29. Round-1 cited ~30
+arXiv / NeurIPS / CVPR / ICLR entries; Round-2 adds the entries below.
+All listed arXiv IDs are referenced under "Sources" at the end of this
+file.)</p>
+<h3 id="21-sde-stochastic-flow-matching-solvers-new">2.1 SDE / stochastic flow-matching solvers (NEW)<a class="headerlink" href="#21-sde-stochastic-flow-matching-solvers-new" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>arXiv</th>
+<th>Key idea</th>
+<th>Replaces</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Stochastic Flow Matching (SFM)</strong> for resolving small-scale physics</td>
+<td><a href="https://arxiv.org/abs/2410.19814">arXiv:2410.19814</a> (NVIDIA, Oct 2024)</td>
+<td>Encoder for deterministic component + flow matching for stochastic small-scale details with adaptive noise scaling; outperforms conditional diffusion on weather super-resolution</td>
+<td>RK4 fixed-step ODE / order-1 DPM</td>
+</tr>
+<tr>
+<td><strong>Neural Stochastic Flows (NSFs)</strong></td>
+<td>NeurIPS 2025 poster, <a href="https://arxivlens.com/PaperView/Details/neural-stochastic-flows-solver-free-modelling-and-inference-for-sde-solutions-7738-55dafcef">arXiv:2510.25769</a></td>
+<td>Direct learning of (latent) SDE transition laws via conditional normalizing flows; up to <strong>2 OOM speed-up</strong> vs numerical SDE solvers at equal distributional accuracy</td>
+<td>Numerical SDE / Euler-Maruyama</td>
+</tr>
+<tr>
+<td><strong>Bayesian Flow Networks unified with diffusion SDEs</strong></td>
+<td>ICML 2024, <a href="https://ui.adsabs.harvard.edu/abs/2024arXiv240415766X/abstract">arXiv:2404.15766</a></td>
+<td>Specialized BFN solvers for SDEs achieving <strong>5-20× faster sampling</strong></td>
+<td>Plain diffusion solvers</td>
+</tr>
+<tr>
+<td><strong>Flow Matching: Markov Kernels, Stochastic Processes and Transport Plans</strong></td>
+<td><a href="https://arxiv.org/abs/2501.16839">arXiv:2501.16839</a> (Wald &amp; Steidl, Jan 2025; rev Aug 2025)</td>
+<td>Mathematical unification of FM via transport plans / Markov kernels / stochastic processes; bridges to Bayesian inverse problems</td>
+<td>Theory-level reference for the framework</td>
+</tr>
+<tr>
+<td><strong>Generalized Flow Matching for Transition Dynamics</strong></td>
+<td><a href="https://scirate.com/arxiv/2410.15128">arXiv:2410.15128</a> (Oct 2024)</td>
+<td>Learns vector fields for probable transition paths (metastable states); iterative importance-weight refinement</td>
+<td>Vanilla FM</td>
+</tr>
+<tr>
+<td><strong>CFO: Continuous-time PDE dynamics via flow-matched neural operators</strong></td>
+<td><a href="https://doi.org/10.48550/ARXIV.2512.05297">arXiv:2512.05297</a> (Dec 2025)</td>
+<td>FM for PDE right-hand sides without backprop-through-ODE; <strong>87 % relative error reduction</strong> on Lorenz / Burgers</td>
+<td>Black-box ODE solvers for PDE systems</td>
+</tr>
+<tr>
+<td><strong>Flow Matching Neural Processes</strong></td>
+<td>NeurIPS 2025, <a href="https://ui.adsabs.harvard.edu/abs/2025arXiv251223853/abstract">arXiv:2512.23853</a></td>
+<td>New NP model based on FM; controllable accuracy/runtime via ODE solver steps</td>
+<td>Vanilla NPs</td>
+</tr>
+<tr>
+<td><strong>Stochastic EDM preconditioner</strong></td>
+<td><a href="https://arxiv.org/abs/2409.06984">arXiv:2409.06984</a> (Sep 2024)</td>
+<td>Diffusion models as stochastic preconditioners; Karras-style noise conditioning; EDM2-style step counts</td>
+<td>Plain EDM</td>
+</tr>
+<tr>
+<td><strong>EDM2 sampling-step analysis</strong></td>
+<td><a href="https://arxiv.org/abs/2410.17090">arXiv:2410.17090</a> (Oct 2024)</td>
+<td>Karras method as preconditioner at high noise levels on ImageNet-64</td>
+<td>EDM original</td>
+</tr>
+</tbody>
+</table>
+<h3 id="22-wasserstein-ot-estimators-new">2.2 Wasserstein / OT estimators (NEW)<a class="headerlink" href="#22-wasserstein-ot-estimators-new" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>arXiv</th>
+<th>Key idea</th>
+<th>Replaces</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Support Coverage via KDE</strong></td>
+<td>NeurIPS 2024 GenBench, <a href="https://arxiv.org/abs/2412.00849">arXiv:2412.00849</a> (Dec 2024, rev Jul 2025)</td>
+<td>New KDE-based evaluation metric: expected value of real-data KDE density under generator-induced distribution</td>
+<td>Voronoi binary coverage</td>
+</tr>
+<tr>
+<td><strong>Wasserstein-2 Barycenters: Foundations, Methods, Applications</strong></td>
+<td><a href="https://arxiv.org/abs/2509.06580">arXiv:2509.06580</a> (Sep 2025)</td>
+<td>Comprehensive survey on W2 barycenters; distributional summary / coverage metric</td>
+<td>Single-point W2 statistic</td>
+</tr>
+<tr>
+<td><strong>Tree-Sliced Wasserstein with Nonlinear Projection</strong></td>
+<td>ICML 2025, <a href="https://arxiv.org/pdf/2505.00968v1">arXiv:2505.00968</a></td>
+<td>Replaces linear projections with Circular / Spatial Radon transforms; tree framework</td>
+<td>Linear-projection sliced W2</td>
+</tr>
+<tr>
+<td><strong>Efficient Sliced Wasserstein via Adaptive Bayesian Optimization</strong></td>
+<td><a href="https://adsabs.harvard.edu/abs/2025arXiv250917405A/abstract">arXiv:2509.17405</a> (Sep 2025)</td>
+<td>BOSW / RBOSW / ABOSW / ARBOSW projection-direction selectors</td>
+<td>Fixed-direction sliced W2</td>
+</tr>
+<tr>
+<td><strong>Differentiable Generalized Sliced Wasserstein Plans</strong></td>
+<td>NeurIPS 2025, <a href="https://mlanthology.org/neurips/2025/chapel2025neurips-differentiable">mlanthology/neurips/2025/chapel2025neurips</a></td>
+<td>Reformulates min-SWGG as bilevel optimization; high-dim + manifold support; sliced OT for conditional FM</td>
+<td>Standard sliced W2</td>
+</tr>
+<tr>
+<td><strong>Slicing Wasserstein Over Wasserstein via Functional OT</strong></td>
+<td><a href="http://arxiv-export-lb.library.cornell.edu/abs/2509.22138">arXiv:2509.22138</a> (Sep 2025)</td>
+<td>Double-sliced Wasserstein (DSW) metric for meta-measures; L2 projections via GPs</td>
+<td>Single-sliced W2</td>
+</tr>
+<tr>
+<td><strong>Differential Entropy Survey</strong></td>
+<td><a href="https://arxiv.org/html/2406.19432v1">arXiv:2406.19432</a> (Jun 2024)</td>
+<td>Comprehensive empirical comparison of kNN / Kozachenko–Leonenko / kernel / spacing entropy estimators</td>
+<td>ad-hoc entropy</td>
+</tr>
+<tr>
+<td><strong>Unifying Information-theoretic Perspective on Evaluating Generative Models</strong></td>
+<td><a href="https://adsabs.harvard.edu/abs/2024arXiv241214340F">arXiv:2412.14340</a> (Dec 2024)</td>
+<td>PCE / RCE / RE tri-dimensional metric based on KL divergence and entropy via kNN density estimators; RE detects mode shrinkage in CFG diffusion</td>
+<td>Density &amp; Coverage (Naeem 2020)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="23-edm-karras-step-count-reduction-new">2.3 EDM / Karras step-count reduction (NEW)<a class="headerlink" href="#23-edm-karras-step-count-reduction-new" title="Permanent link">&para;</a></h3>
+<ul>
+<li>EDM2 with preconditioner: <a href="https://arxiv.org/abs/2410.17090">arXiv:2410.17090</a> — uses Karras method as preconditioner at high noise; reports step-count reduction on ImageNet-64 (Oct 2024).</li>
+<li>EDM stochastic preconditioner: <a href="https://arxiv.org/abs/2409.06984">arXiv:2409.06984</a> (Sep 2024).</li>
+<li>EDM-as-sampler: <code>n_cap = σ(t)/σ_max</code> mapping (already shipped as <code>EDMScheduler</code>); Round-2 next step: adaptive <code>σ_max</code> per round + EDM2-style preconditioner wiring.</li>
+</ul>
+<h3 id="24-summary-external-papers-cited-round-2-additions">2.4 Summary — external papers cited (Round-2 additions)<a class="headerlink" href="#24-summary-external-papers-cited-round-2-additions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>SDE / stochastic solvers (9):</strong> <a href="https://arxiv.org/abs/2410.19814">2410.19814</a>, <a href="https://arxivlens.com/PaperView/Details/neural-stochastic-flows-solver-free-modelling-and-inference-for-sde-solutions-7738-55dafcef">2510.25769</a>, <a href="https://ui.adsabs.harvard.edu/abs/2024arXiv240415766X/abstract">2404.15766</a>, <a href="https://arxiv.org/abs/2501.16839">2501.16839</a>, <a href="https://scirate.com/arxiv/2410.15128">2410.15128</a>, <a href="https://doi.org/10.48550/ARXIV.2512.05297">2512.05297</a>, <a href="https://ui.adsabs.harvard.edu/abs/2025arXiv251223853/abstract">2512.23853</a>, <a href="https://arxiv.org/abs/2409.06984">2409.06984</a>, <a href="https://arxiv.org/abs/2410.17090">2410.17090</a>.</li>
+<li><strong>OT / W2 estimators (6):</strong> <a href="https://arxiv.org/abs/2412.00849">2412.00849</a>, <a href="https://arxiv.org/abs/2509.06580">2509.06580</a>, <a href="https://arxiv.org/pdf/2505.00968v1">2505.00968</a>, <a href="https://adsabs.harvard.edu/abs/2025arXiv250917405A/abstract">2509.17405</a>, <a href="http://arxiv-export-lb.library.cornell.edu/abs/2509.22138">2509.22138</a>, <a href="https://adsabs.harvard.edu/abs/2024arXiv241214340F">2412.14340</a>.</li>
+<li><strong>Differential entropy (1):</strong> <a href="https://arxiv.org/html/2406.19432v1">2406.19432</a>.</li>
+<li><strong>Differentiable SW plans (1):</strong> <a href="https://mlanthology.org/neurips/2025/chapel2025neurips-differentiable">mlanthology/neurips/2025/chapel2025neurips</a>.</li>
+</ul>
+<p><strong>Round-2 new papers cited: 17 distinct arXiv / NeurIPS / NeurIPS-W entries.</strong> Combined with the Round-1 30, total ~47 unique entries.</p>
+<hr />
+<h2 id="step-3-per-algorithm-uplift-plan-round-2">STEP 3 — Per-algorithm uplift plan (Round 2)<a class="headerlink" href="#step-3-per-algorithm-uplift-plan-round-2" title="Permanent link">&para;</a></h2>
+<p>For every algorithm still considered weak, the table below records the
+<strong>Round-2 limitation</strong> and the concrete uplift.</p>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>File:line</th>
+<th>Category</th>
+<th>Round-2 limitation</th>
+<th>Uplift (concrete)</th>
+<th>Quantitative target</th>
+<th>Plug-in design</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>weighted_coverage_score</code></td>
+<td><code>eval/coverage.py:95</code></td>
+<td>INTERNAL</td>
+<td><strong>Fails</strong> stress config (0.1916 vs 0.20)</td>
+<td>Add <strong><code>KDE-support-coverage</code></strong> estimator (<a href="https://arxiv.org/abs/2412.00849">arXiv:2412.00849</a>) — expected KDE-density on generator-induced measure; complement Voronoi with support coverage</td>
+<td>stress-config score ≥ 0.22 (close the 0.2 miss)</td>
+<td>new <code>support_coverage_score(samples, ref, bandwidth=...)</code> in <code>eval/coverage.py</code>; registered in new <code>COVERAGE_REGISTRY</code></td>
+</tr>
+<tr>
+<td><code>ProjectionFreeExactW2</code></td>
+<td><code>eval/w2.py:287</code></td>
+<td>EXTERNAL</td>
+<td>Gaussian projections only</td>
+<td>Add <strong>Rademacher projections</strong> (<code>θ ∈ {±1}^d / √d</code>) for higher-dim slicing</td>
+<td>W2 CV at n=128 drops another 10 % (target 0.0018)</td>
+<td>new <code>ProjectionFreeRademacherW2</code> in <code>w2.py</code>; <code>W2_REGISTRY["projection_free_rademacher"]</code></td>
+</tr>
+<tr>
+<td><code>ProjectionFreeExactW2</code></td>
+<td><code>eval/w2.py:287</code></td>
+<td>EXTERNAL</td>
+<td>Linear projections only</td>
+<td>Add <strong>Tree-Sliced W2</strong> (<a href="https://arxiv.org/pdf/2505.00968v1">arXiv:2505.00968</a>) — nonlinear Radon transforms</td>
+<td>Bias ↓ 30% on anisotropic Gaussians</td>
+<td>new <code>TreeSlicedW2</code> in <code>w2.py</code>; <code>W2_REGISTRY["tree_sliced"]</code></td>
+</tr>
+<tr>
+<td><code>W2_REGISTRY</code></td>
+<td><code>eval/w2.py:649</code></td>
+<td>EXTERNAL</td>
+<td>4 entries</td>
+<td>Add 3 entries: <code>projection_free_rademacher</code>, <code>tree_sliced</code>, <code>w2_barycenter</code></td>
+<td>registry size 4 → 7</td>
+<td>extend <code>W2_REGISTRY</code></td>
+</tr>
+<tr>
+<td><code>W2 barycenter coverage</code> (NEW)</td>
+<td><code>eval/w2.py</code> (NEW)</td>
+<td>INTERNAL</td>
+<td>single-point W2</td>
+<td>Compute <strong>W2 barycenter</strong> (<a href="https://arxiv.org/abs/2509.06580">arXiv:2509.06580</a>) over per-round endpoints; coverage = distance of round distribution to barycenter</td>
+<td>barycenter distance ≤ W2 distance (oracle-style)</td>
+<td>new <code>W2BarycenterCoverage</code> in <code>eval/coverage.py</code></td>
+</tr>
+<tr>
+<td><code>KernelizedW2</code></td>
+<td><code>eval/w2.py:429</code></td>
+<td>EXTERNAL</td>
+<td>bandwidth fixed</td>
+<td>Add <strong>median-heuristic bandwidth selection</strong> (<code>h = median(\|\|x_i - x_j\|\|)</code>)</td>
+<td>kernel-W2 CV at n=128 drops 20 %</td>
+<td>new constructor kwarg <code>bandwidth="median"</code></td>
+</tr>
+<tr>
+<td><code>coverage_score</code> (binary)</td>
+<td><code>eval/twodim_fm_evaluator.py:269</code></td>
+<td>INTERNAL</td>
+<td>saturates at 1.0</td>
+<td>Add <strong>partial coverage</strong>: per-cell fractional coverage 0.0-1.0 in place of binary</td>
+<td>resolves saturation in 2D</td>
+<td>new helper <code>partial_coverage_score</code></td>
+</tr>
+<tr>
+<td><code>lipschitz_modulus</code></td>
+<td><code>eval/lipschitz_diagnostic.py:96</code></td>
+<td>INTERNAL</td>
+<td>1-D series only</td>
+<td>Add <strong>kernel Lipschitz</strong> (<a href="https://adsabs.harvard.edu/abs/2024arXiv241214340F">arXiv:2412.14340</a> PCE/RCE/RE) — Lipschitz constant on the <em>density</em> rather than the trajectory</td>
+<td>kernel-Lipschitz ratio ≤ 1/sqrt(N)</td>
+<td>new <code>kernel_lipschitz_constant(samples)</code> in <code>eval/lipschitz_diagnostic.py</code></td>
+</tr>
+<tr>
+<td><code>selection_ratio</code> (Theorem 1)</td>
+<td><code>eval/posterior_selection_evaluator.py:397</code></td>
+<td>INTERNAL</td>
+<td>single terminal value</td>
+<td>Add <strong>differential-entropy estimator</strong> (<a href="https://arxiv.org/html/2406.19432v1">arXiv:2406.19432</a> KL estimator) for top-k coverage threshold</td>
+<td>entropy estimate CV ≤ 0.1 at N=256</td>
+<td>new <code>top_k_coverage_with_entropy</code> in <code>eval/coverage.py</code>; uses kNN KL estimator</td>
+</tr>
+<tr>
+<td><code>EDMScheduler</code></td>
+<td><code>algorithm/scheduler_extra.py:58</code></td>
+<td>INTERNAL</td>
+<td>fixed σ_max per cycle</td>
+<td>Add <strong>adaptive σ_max per round</strong> driven by per-round W2 derivative (PID-style on σ_max)</td>
+<td>SNR-dB monotonicity preserved; σ_max variance ↓ 30 %</td>
+<td>new constructor kwarg <code>adaptive_sigma_max=True</code></td>
+</tr>
+<tr>
+<td><code>AdaptivePIDScheduler</code></td>
+<td><code>scheduler_extra.py:289</code></td>
+<td>INTERNAL</td>
+<td>only W2 metric</td>
+<td>Add <strong>multi-metric PID</strong> with separate PID loops for W2 + coverage + selection_ratio</td>
+<td>oscillation amplitude ↓ 50 %</td>
+<td>extend constructor with <code>metric_weights: dict[str, float]</code></td>
+</tr>
+<tr>
+<td><code>JitteredConstantScheduler</code></td>
+<td><code>scheduler_extra.py:613</code></td>
+<td>INTERNAL</td>
+<td>single jitter scale</td>
+<td>Add <strong>per-channel jitter</strong> via <code>per_channel_jitter_std</code> mapping</td>
+<td>per-channel β variance ↓ 40 %</td>
+<td>new constructor kwarg</td>
+</tr>
+<tr>
+<td><code>SequentialScheduler</code></td>
+<td><code>algorithm/sequential.py:95</code></td>
+<td>INTERNAL</td>
+<td>no slot handoff blending</td>
+<td>Add <strong>HandoffSequentialScheduler</strong> — blend <code>slot[i]</code> into <code>slot[i+1]</code> over a configurable handoff window <code>k</code></td>
+<td>smooth transition; no abrupt <code>n_cap</code> step</td>
+<td>new class in <code>algorithm/sequential.py</code>; new SCHEDULER_REGISTRY key <code>handoff_sequential</code></td>
+</tr>
+<tr>
+<td><code>SCHEDULER_FAMILIES</code></td>
+<td><code>protocol_registry.py:53</code></td>
+<td>INTERNAL</td>
+<td>16 declared, only 11 implemented</td>
+<td>Implement <strong>WarmupLinearScheduler</strong>, <strong>GeometricDecayScheduler</strong>, <strong>PiecewiseSigmoidScheduler</strong>, <strong>HandoffSequentialScheduler</strong>, <strong>MultiChannelJitteredConstantScheduler</strong></td>
+<td>registry_size 11 → 16</td>
+<td>extend <code>protocol_registry._build_scheduler_registry</code></td>
+</tr>
+<tr>
+<td><code>AdaptivePolicyDriver</code></td>
+<td><code>policy_driver.py:505</code></td>
+<td>INTERNAL</td>
+<td>single target_estimate</td>
+<td>Add <strong>dual-target driver</strong>: <code>β = (1 - |p - t1|)(1 - |p - t2|) / C_g</code></td>
+<td>per-round β variance ↓ 30 %</td>
+<td>subclass <code>AdaptivePolicyDriver</code></td>
+</tr>
+<tr>
+<td><code>ConstantPolicyDriver</code></td>
+<td><code>policy_driver.py:409</code></td>
+<td>INTERNAL</td>
+<td>single β</td>
+<td>Add <strong>per-channel constant</strong> mode</td>
+<td>≥ 2 channels independently</td>
+<td>subclass</td>
+</tr>
+<tr>
+<td><code>KalmanBoundedMergeOperator</code></td>
+<td><code>merge_operator_extra.py:45</code></td>
+<td>INTERNAL</td>
+<td>single σ²</td>
+<td>Add <strong>multi-source Kalman</strong> — fuse two <code>dynamic</code> signals with separate variances</td>
+<td>posterior W2 reduction ↑ to 30 %</td>
+<td>new class <code>MultiSourceKalmanMergeOperator</code></td>
+</tr>
+<tr>
+<td><code>BayesianMergeOperator</code></td>
+<td><code>merge_operator_extra.py:233</code></td>
+<td>INTERNAL</td>
+<td>single effective_count</td>
+<td>Add <strong>time-varying effective_count</strong> tied to schedule <code>n_cap(r)</code></td>
+<td>selection_ratio convergence ↑</td>
+<td>new class</td>
+</tr>
+<tr>
+<td><code>EMAOperator</code></td>
+<td><code>merge_operator.py:668</code></td>
+<td>INTERNAL</td>
+<td>α constant</td>
+<td>Wire schedule sample directly into <code>merge</code> via new kwarg <code>schedule_sample</code></td>
+<td>schedule-aware blending without separate class</td>
+<td>constructor signature change (additive)</td>
+</tr>
+<tr>
+<td><code>LinearBlender</code></td>
+<td><code>blender.py:449</code></td>
+<td>INTERNAL</td>
+<td>convex only</td>
+<td>Add <strong>OT-barycentric blender</strong> (<a href="https://arxiv.org/abs/2509.06580">arXiv:2509.06580</a> barycentric coords in target cell)</td>
+<td>OT-path distance observable</td>
+<td>new class <code>BarycentricBlender</code></td>
+</tr>
+<tr>
+<td><code>OTLinearBlender</code></td>
+<td><code>blender_extra.py:48</code></td>
+<td>INTERNAL</td>
+<td>per-coordinate 1-D OT</td>
+<td>Add <strong>multi-D OT joint map</strong> via Tree-Sliced W2 routing</td>
+<td>joint-OT distance ↓ on correlated channels</td>
+<td>new class <code>JointOTLinearBlender</code></td>
+</tr>
+<tr>
+<td><code>RUNNER_REGISTRY</code> stubs</td>
+<td><code>runner_registry.py:38</code></td>
+<td>INTERNAL</td>
+<td>return dict only</td>
+<td>Wire <strong>real</strong> <code>run()</code> on <code>ParallelRunner</code> (thread pool), <code>EarlyStopRunner</code> (W2 tolerance), <code>OnlineRunner</code> (streaming)</td>
+<td>wall-clock ↓ ≥ 2×, early-stop within 30 % oracle</td>
+<td>extend stubs to delegate to <code>ReInferenceRunner</code> / <code>BatchedTrajectoryRunner</code></td>
+</tr>
+<tr>
+<td><code>BatchedTrajectoryRunner</code></td>
+<td><code>batched_runner.py:429</code></td>
+<td>INTERNAL</td>
+<td>sequential round loop</td>
+<td>Add <strong>parallel-round</strong> runner using threads; preserves batched semantics</td>
+<td>wall-clock ↓ ≥ 1.5× on 4-core</td>
+<td>new class <code>ParallelBatchedRunner</code></td>
+</tr>
+<tr>
+<td><code>DormandPrinceRK45Integrator</code></td>
+<td><code>integrators.py:113</code></td>
+<td>EXTERNAL</td>
+<td>adaptive loop not wired</td>
+<td>Wire <strong>adaptive step loop</strong> with rejection + max_steps</td>
+<td>endpoint L2 error ↓ 50 % at fixed budget</td>
+<td>new method <code>integrate(t_grid, v, y0)</code></td>
+</tr>
+<tr>
+<td><code>DPMSolverIntegrator</code></td>
+<td><code>integrators.py:333</code></td>
+<td>EXTERNAL</td>
+<td>first-order only</td>
+<td>Add <strong>DPM-Solver++</strong> (x0-prediction) variant</td>
+<td>endpoint L2 at NFE=10 ≤ 0.05 (DPM++) vs 0.05 at NFE=20 (DPM order-1)</td>
+<td>new class <code>DPMSolverPPIntegrator</code></td>
+</tr>
+<tr>
+<td><code>UniPCIntegrator</code></td>
+<td><code>integrators.py:379</code></td>
+<td>EXTERNAL</td>
+<td>order-1 only</td>
+<td>Implement <strong>order-2 and order-3</strong> UniPC steps</td>
+<td>endpoint L2 at NFE=10 ≤ 0.02 (UniPC-3)</td>
+<td>new class or constructor switch</td>
+</tr>
+<tr>
+<td><code>AMEDSolverIntegrator</code></td>
+<td><code>integrators.py:480</code></td>
+<td>EXTERNAL</td>
+<td>placeholder</td>
+<td>Replace with <strong>real AMED-Solver</strong> order-1 (<a href="https://github.com/zju-pi/diff-sampler">CVPR 2024 diff-sampler</a>)</td>
+<td>endpoint L2 ↓ 30 %</td>
+<td>new class <code>AMEDSolverReal</code></td>
+</tr>
+<tr>
+<td><code>INTEGRATOR_REGISTRY</code></td>
+<td><code>integrators.py:527</code></td>
+<td>EXTERNAL</td>
+<td>no SDE integrators</td>
+<td>Add <strong>EulerMaruyamaIntegrator</strong>, <strong>SDEHeunIntegrator</strong>, <strong>SymplecticLeapfrogIntegrator</strong></td>
+<td>SDE-aware sampling; symplectic preserves Hamiltonian structure</td>
+<td>new classes; <code>INTEGRATOR_REGISTRY["euler_maruyama", "sde_heun", "leapfrog"]</code></td>
+</tr>
+<tr>
+<td><code>SyntheticAdapter</code> (target distributions)</td>
+<td><code>adapters/synthetic.py</code></td>
+<td>EXTERNAL</td>
+<td>single target</td>
+<td>Add <strong>anisotropic Gaussian target</strong> (covariance λI with λ varying across modes) + <strong>heavy-tailed target</strong> (Cauchy mixture)</td>
+<td>coverage separation ↑ 30 % on these targets</td>
+<td>new target classes in <code>synthetic.py</code></td>
+</tr>
+<tr>
+<td><code>ToyGaussianAdapter</code></td>
+<td><code>adapters/toy_gaussian.py</code></td>
+<td>EXTERNAL</td>
+<td>1-D Gaussian only</td>
+<td>Add <strong>multi-modal 2-D Gaussian</strong> target (<code>eval/</code>)</td>
+<td>coverage separation visible in 2-D</td>
+<td>new class <code>MultiModal2DAdapter</code></td>
+</tr>
+<tr>
+<td><code>TwodimFMAdapter</code></td>
+<td><code>adapters/twodim_fm.py:404</code></td>
+<td>EXTERNAL</td>
+<td>fixed velocity MLP</td>
+<td>Add <strong>adaptive-capacity velocity MLP</strong> (per-round width driven by scheduler)</td>
+<td>selection_ratio convergence ↑</td>
+<td>new adapter <code>AdaptiveMLPAdapter</code></td>
+</tr>
+<tr>
+<td><code>Stochastic FM adapter</code> (NEW)</td>
+<td><code>adapters/</code> (NEW)</td>
+<td>EXTERNAL</td>
+<td>no stochastic sampling</td>
+<td>Add <strong>StochasticFMAdapter</strong> (<a href="https://arxiv.org/abs/2410.19814">arXiv:2410.19814</a>) — encoder + stochastic FM with adaptive noise scaling</td>
+<td>W2 ↓ 25 % on stochastic targets</td>
+<td>new adapter; registry extension</td>
+</tr>
+<tr>
+<td><code>LedgerChain</code></td>
+<td><code>frame/ledger_chain.py:110</code></td>
+<td>INTERNAL</td>
+<td>single-thread append</td>
+<td>Add <strong>parallel-round append</strong> — accept out-of-order rounds, sort by <code>round_index</code>, then re-verify</td>
+<td>supports ParallelRunner without breaking tamper-evidence</td>
+<td>extend <code>LedgerChain.append</code> with optional async queue</td>
+</tr>
+<tr>
+<td><code>check_monotonicity_property</code></td>
+<td><code>frame/channel_rule.py:632</code></td>
+<td>INTERNAL</td>
+<td>single-factor</td>
+<td>Add <strong>3-way interaction monotonicity</strong> (factor_a, factor_b, factor_c → outcome)</td>
+<td>2-way → 3-way coverage</td>
+<td>extend helper</td>
+</tr>
+<tr>
+<td><code>ConvergenceAdaptiveScheduler</code></td>
+<td><code>algorithm/scheduler.py:1697</code></td>
+<td>INTERNAL</td>
+<td>PID-lite</td>
+<td>Wire <strong>multi-metric</strong> feedback (W2 + coverage + selection_ratio) as separate loops</td>
+<td>reduce over-fit to single metric</td>
+<td>constructor kwarg <code>metric_weights</code></td>
+</tr>
+<tr>
+<td><code>_paper_evidence_balance</code></td>
+<td><code>scheduler.py:2133</code></td>
+<td>INTERNAL</td>
+<td>asymptotic gap not surfaced</td>
+<td>Emit <strong>gap code</strong> (<code>evidence_asymptotic_gap=...</code>) on every sample at eps &lt; 1e-3 when heuristic</td>
+<td>diagnostic coverage 100 % at eps &lt; 1e-3</td>
+<td>extend helper</td>
+</tr>
+<tr>
+<td><code>STAGE_REGISTRY</code></td>
+<td><code>frame/stage.py</code> (NEW R1)</td>
+<td>INTERNAL</td>
+<td>empty</td>
+<td>Implement <strong>Stage</strong> Protocol + 4 stage implementations (<code>RunStage</code>, <code>CalibrationStage</code>, <code>ClaimGateStage</code>, <code>PromotionStage</code>)</td>
+<td>pipeline reorder via config</td>
+<td>new file <code>frame/stage.py</code>; <code>STAGE_REGISTRY</code> with 4 keys</td>
+</tr>
+<tr>
+<td><code>LayeredMetricPanel</code></td>
+<td><code>eval/metric_panel.py:127</code></td>
+<td>INTERNAL</td>
+<td>hard-fail</td>
+<td>Add <strong>soft mode</strong> (<code>strict=False</code>) — warn instead of raise on tier violation</td>
+<td>zero false-positive failures</td>
+<td>constructor kwarg</td>
+</tr>
+<tr>
+<td><code>RoundToRoundOscillationDetector</code></td>
+<td><code>eval/protocol.py:280</code></td>
+<td>INTERNAL</td>
+<td>threshold-based</td>
+<td>Add <strong>CUSUM detector</strong> + <strong>Bayesian online change-point detection</strong> (<a href="https://arxiv.org/abs/0710.3742">arXiv:0710.3742</a>)</td>
+<td>detection latency ↓ 50 %</td>
+<td>new detector class</td>
+</tr>
+<tr>
+<td><code>PairedComparisonRegistry</code></td>
+<td><code>eval/protocol.py:110</code></td>
+<td>INTERNAL</td>
+<td>static</td>
+<td>Add <strong>online arm addition</strong> during run</td>
+<td>enables bandit arm selection</td>
+<td>extend registry</td>
+</tr>
+<tr>
+<td><code>Channel rule</code></td>
+<td><code>frame/channel_rule.py:461</code></td>
+<td>INTERNAL</td>
+<td>single-factor</td>
+<td>Add <strong>cross-channel interaction</strong> — <code>evidence_cross_channel(factor_a, factor_b) -&gt; evidence_score</code></td>
+<td>audit_codes for cross-channel interactions</td>
+<td>new helper</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="step-4-prioritised-list">STEP 4 — Prioritised list<a class="headerlink" href="#step-4-prioritised-list" title="Permanent link">&para;</a></h2>
+<h3 id="p0-must-do-qualitative-framework-uplift">P0 — Must do (qualitative framework uplift)<a class="headerlink" href="#p0-must-do-qualitative-framework-uplift" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Adaptive σ_max on <code>EDMScheduler</code></strong> — adaptive per-round σ_max driven by W2 derivative; Round-2 framework-level scheduler SNR uplift.</li>
+<li><strong>Multi-metric <code>AdaptivePIDScheduler</code></strong> — separate PID loops for W2 + coverage + selection_ratio; Round-2 oscillation damping uplift.</li>
+<li><strong>Rademacher projections on <code>ProjectionFreeExactW2</code></strong> — high-dim slicing variant; Round-2 metric-quality uplift.</li>
+<li><strong>Tree-Sliced W2</strong> (<a href="https://arxiv.org/pdf/2505.00968v1">arXiv:2505.00968</a>) — nonlinear Radon transform; bias ↓ on anisotropic Gaussians.</li>
+<li><strong>DPM-Solver++ (x0-pred) integrator</strong> — <code>INTEGRATOR_REGISTRY["dpm_solver_pp"]</code>; 2× step count reduction vs DPM order-1.</li>
+<li><strong>UniPC order-2 and order-3</strong> — <code>INTEGRATOR_REGISTRY["unipc_2", "unipc_3"]</code>; endpoint L2 ↓ 5× at NFE=10.</li>
+<li><strong>SDE integrators (Euler-Maruyama, SDE-Heun, Leapfrog)</strong> — <code>INTEGRATOR_REGISTRY</code> extensions; stochastic-aware sampling.</li>
+<li><strong>Real <code>ParallelRunner</code> / <code>EarlyStopRunner</code> / <code>OnlineRunner</code> wiring</strong> — replace dict-stub with delegation; wall-clock ↓ ≥ 2× on multi-core.</li>
+<li><strong>Stochastic FM adapter</strong> (<a href="https://arxiv.org/abs/2410.19814">arXiv:2410.19814</a>) — new <code>adapters/stochastic_fm.py</code>; W2 ↓ 25 % on stochastic targets.</li>
+<li><strong>Stage Protocol + <code>STAGE_REGISTRY</code></strong> with 4 stages — pluggable pipeline composition.</li>
+</ol>
+<h3 id="p1-should-do-clear-measurable-improvement">P1 — Should do (clear measurable improvement)<a class="headerlink" href="#p1-should-do-clear-measurable-improvement" title="Permanent link">&para;</a></h3>
+<ol>
+<li>KDE-support-coverage metric (<a href="https://arxiv.org/abs/2412.00849">arXiv:2412.00849</a>) — fix the 0.1916 stress-config miss.</li>
+<li>Differential-entropy estimator on top-k coverage (<a href="https://arxiv.org/html/2406.19432v1">arXiv:2406.19432</a>).</li>
+<li>W2 barycenter coverage (<a href="https://arxiv.org/abs/2509.06580">arXiv:2509.06580</a>).</li>
+<li>Adaptive step loop on DOPRI5 (<code>integrate(t_grid, v, y0)</code> method).</li>
+<li>Multi-source Kalman merge operator.</li>
+<li>Handoff sequential scheduler.</li>
+<li>Adaptive σ_max wired into EDM2-style preconditioner (<a href="https://arxiv.org/abs/2410.17090">arXiv:2410.17090</a>).</li>
+<li>Anisotropic Gaussian + heavy-tailed targets.</li>
+<li>Multi-channel <code>JitteredConstantScheduler</code>.</li>
+<li>Per-channel <code>ConstantPolicyDriver</code>.</li>
+<li>Dual-target <code>AdaptivePolicyDriver</code>.</li>
+<li>Time-varying effective_count on <code>BayesianMergeOperator</code>.</li>
+<li>Schedule-aware <code>EMAOperator</code> (constructor kwarg).</li>
+<li>Joint OT <code>OTLinearBlender</code> via Tree-Sliced W2 routing.</li>
+<li>Barycentric blender (<a href="https://arxiv.org/abs/2509.06580">arXiv:2509.06580</a>).</li>
+<li>Parallel <code>LedgerChain</code> append.</li>
+<li>Soft mode on <code>LayeredMetricPanel</code>.</li>
+<li>CUSUM / Bayesian change-point detector.</li>
+<li>Cross-channel interaction in channel rule.</li>
+</ol>
+<h3 id="p2-nice-to-have">P2 — Nice to have<a class="headerlink" href="#p2-nice-to-have" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Kernel Lipschitz constant on density (PCE/RCE/RE-style from <a href="https://adsabs.harvard.edu/abs/2024arXiv241214340F">arXiv:2412.14340</a>).</li>
+<li>Differentiable sliced-Wasserstein plans (<a href="https://mlanthology.org/neurips/2025/chapel2025neurips-differentiable">mlanthology/neurips/2025/chapel2025neurips</a>).</li>
+<li>Median-heuristic bandwidth selection on <code>KernelizedW2</code>.</li>
+<li>Slicing Wasserstein over Wasserstein (<a href="http://arxiv-export-lb.library.cornell.edu/abs/2509.22138">arXiv:2509.22138</a>).</li>
+<li>Adaptive Bayesian optimization for SW directions (<a href="https://adsabs.harvard.edu/abs/2025arXiv250917405A/abstract">arXiv:2509.17405</a>).</li>
+<li>Per-channel <code>AdaptivePolicyDriver</code> (3-way interaction).</li>
+<li><code>MultiModal2DAdapter</code> for 2D target distributions.</li>
+<li>Online arm addition to <code>PairedComparisonRegistry</code>.</li>
+<li>3-way interaction monotonicity check.</li>
+<li>Real <code>AMEDSolverReal</code> (CVPR 2024 diff-sampler replacement).</li>
+<li>Streamed <code>online_runner</code> event hooks.</li>
+<li>Multi-channel <code>AdaptivePIDScheduler</code> rate constants.</li>
+</ol>
+<hr />
+<h2 id="step-5-pluggability-design-checklist">STEP 5 — Pluggability design checklist<a class="headerlink" href="#step-5-pluggability-design-checklist" title="Permanent link">&para;</a></h2>
+<p>For each P0/P1 uplift, the plug-in design is sketched below so the
+existing Protocol surface stays canonical.</p>
+<h3 id="51-adaptive-_max-on-edmscheduler-p0">5.1 Adaptive σ_max on <code>EDMScheduler</code> (P0)<a class="headerlink" href="#51-adaptive-_max-on-edmscheduler-p0" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none (existing <code>SchedulerProtocol</code>).</li>
+<li><strong>Existing implementations to keep:</strong> all 12 scheduler families.</li>
+<li><strong>New implementation:</strong> constructor kwarg <code>adaptive_sigma_max=True</code> on <code>EDMScheduler</code>; per-round σ_max driven by W2 derivative.</li>
+<li><strong>Registration point:</strong> <code>SCHEDULER_REGISTRY["edm"]</code> (in-place upgrade).</li>
+<li><strong>Test strategy:</strong> σ_max variance across rounds ↓ 30 %; SNR-dB monotonicity preserved.</li>
+</ul>
+<h3 id="52-multi-metric-adaptivepidscheduler-p0">5.2 Multi-metric <code>AdaptivePIDScheduler</code> (P0)<a class="headerlink" href="#52-multi-metric-adaptivepidscheduler-p0" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> <code>metric_weights: dict[str, float]</code> constructor kwarg on <code>AdaptivePIDScheduler</code>.</li>
+<li><strong>Existing implementations to keep:</strong> all 11 other scheduler families (default <code>metric_weights={"W2": 1.0}</code> reproduces R1 behaviour).</li>
+<li><strong>Registration point:</strong> <code>SCHEDULER_REGISTRY["adaptive_pid"]</code>.</li>
+<li><strong>Test strategy:</strong> oscillation amplitude on multi-metric on two_moons ↓ ≥ 50 % vs single-metric.</li>
+</ul>
+<h3 id="53-rademacher-projections-on-projectionfreeexactw2-p0">5.3 Rademacher projections on <code>ProjectionFreeExactW2</code> (P0)<a class="headerlink" href="#53-rademacher-projections-on-projectionfreeexactw2-p0" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> new <code>projection_kind: str</code> kwarg (<code>"gaussian"</code> default; <code>"rademacher"</code> new) on <code>ProjectionFreeExactW2</code>.</li>
+<li><strong>Existing implementations to keep:</strong> legacy <code>ProjectionFreeExactW2</code> (default projection_kind="gaussian").</li>
+<li><strong>New implementation:</strong> <code>ProjectionFreeRademacherW2</code> in <code>w2.py</code>; <code>W2_REGISTRY["projection_free_rademacher"]</code>.</li>
+<li><strong>Test strategy:</strong> W2 CV at n=128 ≤ 0.0018 (10 % improvement).</li>
+</ul>
+<h3 id="54-tree-sliced-w2-p0">5.4 Tree-Sliced W2 (P0)<a class="headerlink" href="#54-tree-sliced-w2-p0" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none (conforms to existing <code>W2EstimatorProtocol</code>).</li>
+<li><strong>New implementation:</strong> <code>TreeSlicedW2</code> in <code>eval/w2.py</code>; <code>W2_REGISTRY["tree_sliced"]</code>.</li>
+<li><strong>Test strategy:</strong> bias ↓ 30 % on anisotropic Gaussians.</li>
+</ul>
+<h3 id="55-dpm-solver-unipc-order-23-p0">5.5 DPM-Solver++ / UniPC order-2/3 (P0)<a class="headerlink" href="#55-dpm-solver-unipc-order-23-p0" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none (<code>IntegratorProtocol</code>).</li>
+<li><strong>New implementations:</strong> <code>DPMSolverPPIntegrator</code>, <code>UniPCIntegrator2</code>, <code>UniPCIntegrator3</code> in <code>integrators.py</code>.</li>
+<li><strong>Registration point:</strong> <code>INTEGRATOR_REGISTRY["dpm_solver_pp", "unipc_2", "unipc_3"]</code>.</li>
+<li><strong>Test strategy:</strong> endpoint L2 at NFE=10 ≤ 0.02 (UniPC-3) / ≤ 0.05 (DPM++).</li>
+</ul>
+<h3 id="56-sde-integrators-p0">5.6 SDE integrators (P0)<a class="headerlink" href="#56-sde-integrators-p0" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> new <code>SDEIntegratorProtocol</code> (extends <code>IntegratorProtocol</code> with <code>sigma: Callable[[float], float]</code> drift-diffusion input).</li>
+<li><strong>New implementations:</strong> <code>EulerMaruyamaIntegrator</code>, <code>SDEHeunIntegrator</code>, <code>SymplecticLeapfrogIntegrator</code>.</li>
+<li><strong>Registration point:</strong> <code>INTEGRATOR_REGISTRY["euler_maruyama", "sde_heun", "leapfrog"]</code>.</li>
+<li><strong>Test strategy:</strong> symplectic preserves Hamiltonian energy (drift-diffusion pair tested on <code>dx = x dt + σ dW</code>).</li>
+</ul>
+<h3 id="57-real-parallelrunner-earlystoprunner-onlinerunner-p0">5.7 Real <code>ParallelRunner</code> / <code>EarlyStopRunner</code> / <code>OnlineRunner</code> (P0)<a class="headerlink" href="#57-real-parallelrunner-earlystoprunner-onlinerunner-p0" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none (<code>RunnerProtocol</code> already in <code>runner_registry.py</code>).</li>
+<li><strong>New implementations:</strong> replace dict-stub <code>run()</code> methods with delegation to <code>ReInferenceRunner</code> / <code>BatchedTrajectoryRunner</code>.</li>
+<li><strong>Registration point:</strong> <code>RUNNER_REGISTRY</code> keys unchanged.</li>
+<li><strong>Test strategy:</strong> wall-clock ↓ ≥ 2× on 4-core for <code>ParallelRunner</code>; early-stop within 30 % of oracle round count.</li>
+</ul>
+<h3 id="58-stochastic-fm-adapter-p0">5.8 Stochastic FM adapter (P0)<a class="headerlink" href="#58-stochastic-fm-adapter-p0" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none (<code>FlowMatchingODEAdapter</code>).</li>
+<li><strong>New implementation:</strong> <code>StochasticFMAdapter</code> in <code>adapters/stochastic_fm.py</code>.</li>
+<li><strong>Registration point:</strong> <code>ADAPTER_REGISTRY</code> (new) with key <code>"stochastic_fm"</code>.</li>
+<li><strong>Test strategy:</strong> W2 ↓ 25 % on stochastic targets (Cauchy mixture).</li>
+</ul>
+<h3 id="59-stage-protocol-stage_registry-p0">5.9 Stage Protocol + <code>STAGE_REGISTRY</code> (P0)<a class="headerlink" href="#59-stage-protocol-stage_registry-p0" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> new <code>Stage</code> Protocol in <code>frame/stage.py</code>.</li>
+<li><strong>New implementations:</strong> <code>RunStage</code>, <code>CalibrationStage</code>, <code>ClaimGateStage</code>, <code>PromotionStage</code>.</li>
+<li><strong>Registration point:</strong> <code>STAGE_REGISTRY</code> with 4 keys.</li>
+<li><strong>Test strategy:</strong> each stage independently unit-testable; pipeline reorder via config (no engine coupling).</li>
+</ul>
+<h3 id="510-kde-support-coverage-p1">5.10 KDE-support-coverage (P1)<a class="headerlink" href="#510-kde-support-coverage-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none.</li>
+<li><strong>New implementation:</strong> <code>support_coverage_score(samples, ref, bandwidth)</code> in <code>eval/coverage.py</code>.</li>
+<li><strong>Registration point:</strong> new <code>COVERAGE_REGISTRY</code> with key <code>"kde_support"</code>.</li>
+<li><strong>Test strategy:</strong> stress-config score ≥ 0.22.</li>
+</ul>
+<h3 id="511-differential-entropy-estimator-on-top-k-coverage-p1">5.11 Differential-entropy estimator on top-k coverage (P1)<a class="headerlink" href="#511-differential-entropy-estimator-on-top-k-coverage-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none.</li>
+<li><strong>New implementation:</strong> <code>top_k_coverage_with_entropy(samples, ref, k)</code> in <code>eval/coverage.py</code> using kNN KL estimator.</li>
+<li><strong>Registration point:</strong> <code>COVERAGE_REGISTRY["top_k_entropy"]</code>.</li>
+</ul>
+<h3 id="512-w2-barycenter-coverage-p1">5.12 W2 barycenter coverage (P1)<a class="headerlink" href="#512-w2-barycenter-coverage-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none.</li>
+<li><strong>New implementation:</strong> <code>W2BarycenterCoverage</code> in <code>eval/coverage.py</code>.</li>
+<li><strong>Registration point:</strong> <code>COVERAGE_REGISTRY["w2_barycenter"]</code>.</li>
+</ul>
+<h3 id="513-dopri5-adaptive-step-loop-p1">5.13 DOPRI5 adaptive step loop (P1)<a class="headerlink" href="#513-dopri5-adaptive-step-loop-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> new method <code>integrate(t_grid, v, y0)</code> on <code>IntegratorProtocol</code>.</li>
+<li><strong>New implementation:</strong> <code>DormandPrinceRK45Integrator.integrate</code> runs the adaptive loop and returns <code>(t_values, y_values)</code>.</li>
+<li><strong>Test strategy:</strong> endpoint L2 error ↓ 50 % at fixed budget; reported <code>n_steps</code> matches oracle.</li>
+</ul>
+<h3 id="514-multi-source-kalman-merge-p1">5.14 Multi-source Kalman merge (P1)<a class="headerlink" href="#514-multi-source-kalman-merge-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> new optional <code>merge_multi(prev, dynamics, variances, ...)</code> method.</li>
+<li><strong>New implementation:</strong> <code>MultiSourceKalmanMergeOperator</code> in <code>merge_operator_extra.py</code>.</li>
+<li><strong>Registration point:</strong> <code>MERGE_OPERATOR_REGISTRY["multi_source_kalman"]</code>.</li>
+</ul>
+<h3 id="515-handoff-sequential-scheduler-p1">5.15 Handoff sequential scheduler (P1)<a class="headerlink" href="#515-handoff-sequential-scheduler-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none (<code>SchedulerProtocol</code>).</li>
+<li><strong>New implementation:</strong> <code>HandoffSequentialScheduler</code> in <code>algorithm/sequential.py</code>.</li>
+<li><strong>Registration point:</strong> <code>SCHEDULER_REGISTRY["handoff_sequential"]</code>.</li>
+</ul>
+<h3 id="516-anisotropic-gaussian-heavy-tailed-targets-p1">5.16 Anisotropic Gaussian + heavy-tailed targets (P1)<a class="headerlink" href="#516-anisotropic-gaussian-heavy-tailed-targets-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none (existing <code>TargetDistribution</code>).</li>
+<li><strong>New implementations:</strong> <code>AnisotropicGaussianTarget</code>, <code>HeavyTailedTarget</code> in <code>eval/synthetic_oracle.py</code> or <code>adapters/synthetic.py</code>.</li>
+<li><strong>Test strategy:</strong> coverage separation ↑ 30 % on these targets.</li>
+</ul>
+<h3 id="517-multi-channel-jitteredconstantscheduler-p1">5.17 Multi-channel <code>JitteredConstantScheduler</code> (P1)<a class="headerlink" href="#517-multi-channel-jitteredconstantscheduler-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none (<code>SchedulerProtocol</code>).</li>
+<li><strong>New implementation:</strong> <code>MultiChannelJitteredConstantScheduler</code> in <code>algorithm/scheduler_extra.py</code>.</li>
+<li><strong>Registration point:</strong> <code>SCHEDULER_REGISTRY["multi_channel_jittered"]</code>.</li>
+</ul>
+<h3 id="518-per-channel-constantpolicydriver-p1">5.18 Per-channel <code>ConstantPolicyDriver</code> (P1)<a class="headerlink" href="#518-per-channel-constantpolicydriver-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none.</li>
+<li><strong>New implementation:</strong> <code>MultiChannelConstantPolicyDriver</code> in <code>policy_driver.py</code>.</li>
+<li><strong>Registration point:</strong> <code>POLICY_DRIVER_REGISTRY["multi_channel_constant"]</code>.</li>
+</ul>
+<h3 id="519-dual-target-adaptivepolicydriver-p1">5.19 Dual-target <code>AdaptivePolicyDriver</code> (P1)<a class="headerlink" href="#519-dual-target-adaptivepolicydriver-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> constructor kwarg <code>target_estimates: tuple[float, ...]</code>.</li>
+<li><strong>New implementation:</strong> <code>DualTargetAdaptivePolicyDriver</code>.</li>
+<li><strong>Registration point:</strong> <code>POLICY_DRIVER_REGISTRY["dual_target_adaptive"]</code>.</li>
+</ul>
+<h3 id="520-time-varying-effective_count-on-bayesianmergeoperator-p1">5.20 Time-varying effective_count on <code>BayesianMergeOperator</code> (P1)<a class="headerlink" href="#520-time-varying-effective_count-on-bayesianmergeoperator-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> constructor kwarg <code>effective_count_schedule: Callable[[int], float]</code>.</li>
+<li><strong>New implementation:</strong> same <code>BayesianMergeOperator</code> extended.</li>
+<li><strong>Registration point:</strong> <code>MERGE_OPERATOR_REGISTRY["bayesian"]</code> (in-place).</li>
+</ul>
+<h3 id="521-schedule-aware-emaoperator-p1">5.21 Schedule-aware <code>EMAOperator</code> (P1)<a class="headerlink" href="#521-schedule-aware-emaoperator-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> new <code>merge(... schedule_sample=...)</code> kwarg on <code>MergeOperatorProtocol</code> (additive).</li>
+<li><strong>New implementation:</strong> <code>EMAOperator</code> extended to consume <code>schedule_sample</code>.</li>
+<li><strong>Registration point:</strong> <code>MERGE_OPERATOR_REGISTRY["ema"]</code> (in-place upgrade).</li>
+</ul>
+<h3 id="522-joint-ot-blender-p1">5.22 Joint OT blender (P1)<a class="headerlink" href="#522-joint-ot-blender-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none.</li>
+<li><strong>New implementation:</strong> <code>JointOTLinearBlender</code> in <code>blender_extra.py</code>.</li>
+<li><strong>Registration point:</strong> <code>BLENDER_REGISTRY["joint_ot_linear"]</code>.</li>
+</ul>
+<h3 id="523-barycentric-blender-p1">5.23 Barycentric blender (P1)<a class="headerlink" href="#523-barycentric-blender-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none.</li>
+<li><strong>New implementation:</strong> <code>BarycentricBlender</code> in <code>blender_extra.py</code>.</li>
+<li><strong>Registration point:</strong> <code>BLENDER_REGISTRY["barycentric"]</code>.</li>
+</ul>
+<h3 id="524-parallel-ledgerchain-append-p1">5.24 Parallel <code>LedgerChain</code> append (P1)<a class="headerlink" href="#524-parallel-ledgerchain-append-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> <code>LedgerChain.append_async(row)</code> returns a <code>Future</code> or generator.</li>
+<li><strong>New implementation:</strong> <code>ParallelLedgerChain</code> in <code>frame/ledger_chain.py</code>.</li>
+<li><strong>Test strategy:</strong> concurrent appends validate to same head hash as sequential.</li>
+</ul>
+<h3 id="525-soft-mode-on-layeredmetricpanel-p1">5.25 Soft mode on <code>LayeredMetricPanel</code> (P1)<a class="headerlink" href="#525-soft-mode-on-layeredmetricpanel-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> constructor kwarg <code>strict: bool = True</code>.</li>
+<li><strong>New implementation:</strong> in-place upgrade.</li>
+<li><strong>Test strategy:</strong> zero false-positive failures on tier-violation path.</li>
+</ul>
+<h3 id="526-cusum-bayesian-change-point-detector-p1">5.26 CUSUM / Bayesian change-point detector (P1)<a class="headerlink" href="#526-cusum-bayesian-change-point-detector-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> none.</li>
+<li><strong>New implementation:</strong> <code>CUSUMOscillationDetector</code>, <code>BayesianChangePointDetector</code> in <code>eval/protocol.py</code>.</li>
+<li><strong>Test strategy:</strong> detection latency ↓ 50 % on synthetic oscillating trajectory.</li>
+</ul>
+<h3 id="527-cross-channel-interaction-p1">5.27 Cross-channel interaction (P1)<a class="headerlink" href="#527-cross-channel-interaction-p1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Protocol surface extended:</strong> new helper <code>evidence_cross_channel(factor_a, factor_b, ...) -&gt; evidence_score</code>.</li>
+<li><strong>New implementation:</strong> in <code>frame/channel_rule.py</code>.</li>
+<li><strong>Test strategy:</strong> audit_codes emitted for cross-channel interactions on multi-channel inputs.</li>
+</ul>
+<hr />
+<h2 id="step-6-quantitative-benchmark-plan">STEP 6 — Quantitative benchmark plan<a class="headerlink" href="#step-6-quantitative-benchmark-plan" title="Permanent link">&para;</a></h2>
+<p>For each P0/P1, the BEFORE / AFTER metric, baseline, target, and
+benchmark script.</p>
+<table>
+<thead>
+<tr>
+<th>Uplift</th>
+<th>Baseline (BEFORE / Round-1)</th>
+<th>Target (After Round-2)</th>
+<th>Benchmark script</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Adaptive σ_max on EDM</td>
+<td>σ_max constant (R1 EDM)</td>
+<td>σ_max variance per round ↓ 30 %</td>
+<td><code>tools/bench/scheduler_edm_adaptive_sigma.py</code></td>
+</tr>
+<tr>
+<td>Multi-metric PID</td>
+<td>R1 AdaptivePID</td>
+<td>oscillation amplitude ↓ 50 %</td>
+<td><code>tools/bench/scheduler_pid_multimetric.py</code></td>
+</tr>
+<tr>
+<td>Rademacher W2</td>
+<td>R1 projection_free CV 0.00206</td>
+<td>CV ≤ 0.0018 at n=128</td>
+<td><code>tools/bench/w2_rademacher_cv.py</code></td>
+</tr>
+<tr>
+<td>Tree-Sliced W2</td>
+<td>R1 linear-sliced</td>
+<td>bias ↓ 30 % on anisotropic Gaussians</td>
+<td><code>tools/bench/w2_tree_sliced_bias.py</code></td>
+</tr>
+<tr>
+<td>DPM-Solver++</td>
+<td>R1 DPM order-1 (L2=0.023 at NFE=20)</td>
+<td>L2 ≤ 0.05 at NFE=10</td>
+<td><code>tools/bench/dpm_pp_endpoint_distance.py</code></td>
+</tr>
+<tr>
+<td>UniPC order-3</td>
+<td>R1 UniPC order-1 (L2=1.97e-4 at NFE=20)</td>
+<td>L2 ≤ 0.02 at NFE=10</td>
+<td><code>tools/bench/unipc_order3_endpoint_distance.py</code></td>
+</tr>
+<tr>
+<td>SDE integrators</td>
+<td>R1 deterministic only</td>
+<td>symplectic preserves Hamiltonian energy within 1e-6</td>
+<td><code>tools/bench/sde_integrator_symplectic.py</code></td>
+</tr>
+<tr>
+<td>Real Parallel/Early/Online runners</td>
+<td>R1 dict-stub</td>
+<td>wall-clock ↓ ≥ 2× on 4-core</td>
+<td><code>tools/bench/runner_real_wallclock.py</code></td>
+</tr>
+<tr>
+<td>Stochastic FM adapter</td>
+<td>R1 deterministic adapter only</td>
+<td>W2 ↓ 25 % on stochastic targets</td>
+<td><code>tools/bench/stochastic_fm_w2.py</code></td>
+</tr>
+<tr>
+<td>Stage Protocol</td>
+<td>R1 monolithic orchestrator</td>
+<td>4 stages unit-testable independently</td>
+<td><code>tools/bench/stage_pipeline_reorder.py</code></td>
+</tr>
+<tr>
+<td>KDE-support-coverage</td>
+<td>R1 weighted 0.1916 (FAIL)</td>
+<td>stress-config ≥ 0.22</td>
+<td><code>tools/bench/coverage_kde_support.py</code></td>
+</tr>
+<tr>
+<td>Differential-entropy top-k coverage</td>
+<td>R1 binary top-k</td>
+<td>entropy estimate CV ≤ 0.1 at n=256</td>
+<td><code>tools/bench/coverage_entropy_topk.py</code></td>
+</tr>
+<tr>
+<td>W2 barycenter coverage</td>
+<td>R1 single-point W2</td>
+<td>barycenter distance ≤ oracle W2</td>
+<td><code>tools/bench/coverage_w2_barycenter.py</code></td>
+</tr>
+<tr>
+<td>DOPRI5 adaptive step loop</td>
+<td>R1 single-step only</td>
+<td>endpoint L2 ↓ 50 % at fixed budget</td>
+<td><code>tools/bench/dopri5_endpoint_distance.py</code></td>
+</tr>
+<tr>
+<td>Multi-source Kalman merge</td>
+<td>R1 single-source Kalman</td>
+<td>posterior W2 reduction ↑ to 30 %</td>
+<td><code>tools/bench/merge_multi_source_kalman.py</code></td>
+</tr>
+<tr>
+<td>Handoff sequential scheduler</td>
+<td>R1 SequentialScheduler (no handoff)</td>
+<td>n_cap transition smoothness ↑</td>
+<td><code>tools/bench/scheduler_handoff_smoothness.py</code></td>
+</tr>
+<tr>
+<td>Adaptive σ_max + EDM2 preconditioner</td>
+<td>R1 EDM only</td>
+<td>step-count ↓ further 30 %</td>
+<td><code>tools/bench/edm2_preconditioner.py</code></td>
+</tr>
+<tr>
+<td>Anisotropic Gaussian target</td>
+<td>R1 isotropic only</td>
+<td>coverage separation ↑ 30 %</td>
+<td><code>tools/bench/target_anisotropic_coverage.py</code></td>
+</tr>
+<tr>
+<td>Multi-channel jittered scheduler</td>
+<td>R1 single-channel</td>
+<td>per-channel β variance ↓ 40 %</td>
+<td><code>tools/bench/scheduler_multichannel_jitter.py</code></td>
+</tr>
+<tr>
+<td>Per-channel constant policy</td>
+<td>R1 single-channel</td>
+<td>≥ 2 channels independently</td>
+<td><code>tools/bench/policy_multichannel.py</code></td>
+</tr>
+<tr>
+<td>Dual-target adaptive policy</td>
+<td>R1 single-target</td>
+<td>per-round β variance ↓ 30 %</td>
+<td><code>tools/bench/policy_dual_target.py</code></td>
+</tr>
+<tr>
+<td>Time-varying Bayesian effective_count</td>
+<td>R1 constant effective_count</td>
+<td>selection_ratio convergence ↑</td>
+<td><code>tools/bench/merge_bayesian_time_varying.py</code></td>
+</tr>
+<tr>
+<td>Schedule-aware EMA merge</td>
+<td>R1 constant α</td>
+<td>schedule-aware blending</td>
+<td><code>tools/bench/merge_ema_schedule.py</code></td>
+</tr>
+<tr>
+<td>Joint OT blender</td>
+<td>R1 per-coordinate 1-D OT</td>
+<td>joint-OT distance ↓ on correlated channels</td>
+<td><code>tools/bench/blender_joint_ot.py</code></td>
+</tr>
+<tr>
+<td>Barycentric blender</td>
+<td>R1 OT path</td>
+<td>OT-path distance observable</td>
+<td><code>tools/bench/blender_barycentric.py</code></td>
+</tr>
+<tr>
+<td>Parallel LedgerChain</td>
+<td>R1 sequential chain</td>
+<td>concurrent appends validate to same head hash</td>
+<td><code>tools/bench/ledger_chain_parallel.py</code></td>
+</tr>
+<tr>
+<td>Soft mode LayeredMetricPanel</td>
+<td>R1 hard-fail</td>
+<td>zero false-positive failures</td>
+<td><code>tools/bench/metric_panel_soft.py</code></td>
+</tr>
+<tr>
+<td>CUSUM change-point detector</td>
+<td>R1 threshold-based</td>
+<td>detection latency ↓ 50 %</td>
+<td><code>tools/bench/cusum_detection_latency.py</code></td>
+</tr>
+<tr>
+<td>Cross-channel interaction</td>
+<td>R1 single-channel</td>
+<td>audit_codes for cross-channel interactions</td>
+<td><code>tools/bench/channel_cross_interaction.py</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Quantitative targets summary:</strong></p>
+<ul>
+<li><strong>Framework-internal:</strong> adaptive σ_max ↓ 30 % variance; multi-metric PID ↓ 50 % oscillation; KDE-support-coverage stress ≥ 0.22 (fixes R1 miss); barycenter coverage on par with W2.</li>
+<li><strong>Framework-external:</strong> DPM-Solver++ at NFE=10 ≤ 0.05 L2; UniPC-3 at NFE=10 ≤ 0.02 L2; stochastic FM W2 ↓ 25 %; symplectic SDE preserves Hamiltonian within 1e-6.</li>
+<li><strong>Wall-clock:</strong> ParallelRunner / EarlyStopRunner / OnlineRunner wall-clock ↓ ≥ 2× on multi-core.</li>
+<li><strong>Pluggability:</strong> new registries <code>W2_REGISTRY</code> 4 → 7; <code>INTEGRATOR_REGISTRY</code> 6 → 12; <code>SCHEDULER_REGISTRY</code> 11 → 16; <code>MERGE_OPERATOR_REGISTRY</code> 7 → 8; <code>POLICY_DRIVER_REGISTRY</code> 3 → 5; <code>BLENDER_REGISTRY</code> 4 → 6; <code>RUNNER_REGISTRY</code> 5 (wired); <code>STAGE_REGISTRY</code> 0 → 4; <code>COVERAGE_REGISTRY</code> (new) 0 → 3; <code>ADAPTER_REGISTRY</code> (new) → +1 stochastic FM.</li>
+</ul>
+<hr />
+<h2 id="sources-round-2-external-papers-cited">Sources — Round-2 external papers cited<a class="headerlink" href="#sources-round-2-external-papers-cited" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://arxiv.org/abs/2410.19814">Stochastic Flow Matching — arXiv:2410.19814</a></li>
+<li><a href="https://arxivlens.com/PaperView/Details/neural-stochastic-flows-solver-free-modelling-and-inference-for-sde-solutions-7738-55dafcef">Neural Stochastic Flows — arXiv:2510.25769</a> (NeurIPS 2025 poster)</li>
+<li><a href="https://ui.adsabs.harvard.edu/abs/2024arXiv240415766X/abstract">Bayesian Flow Networks unified with diffusion SDEs — arXiv:2404.15766</a> (ICML 2024)</li>
+<li><a href="https://arxiv.org/abs/2501.16839">Flow Matching: Markov Kernels, Stochastic Processes and Transport Plans — arXiv:2501.16839</a></li>
+<li><a href="https://scirate.com/arxiv/2410.15128">Generalized Flow Matching for Transition Dynamics — arXiv:2410.15128</a></li>
+<li><a href="https://doi.org/10.48550/ARXIV.2512.05297">CFO: Continuous-time PDE via flow-matched neural operators — arXiv:2512.05297</a></li>
+<li><a href="https://ui.adsabs.harvard.edu/abs/2025arXiv251223853/abstract">Flow Matching Neural Processes — arXiv:2512.23853</a> (NeurIPS 2025)</li>
+<li><a href="https://arxiv.org/abs/2409.06984">Stochastic EDM preconditioner — arXiv:2409.06984</a></li>
+<li><a href="https://arxiv.org/abs/2410.17090">EDM2 with preconditioner — arXiv:2410.17090</a></li>
+<li><a href="https://arxiv.org/abs/2412.00849">Support Coverage via KDE — arXiv:2412.00849</a> (NeurIPS 2024 GenBench)</li>
+<li><a href="https://arxiv.org/abs/2509.06580">Wasserstein-2 Barycenters survey — arXiv:2509.06580</a></li>
+<li><a href="https://arxiv.org/pdf/2505.00968v1">Tree-Sliced Wasserstein with Nonlinear Projection — arXiv:2505.00968</a> (ICML 2025)</li>
+<li><a href="https://adsabs.harvard.edu/abs/2025arXiv250917405A/abstract">Efficient Sliced W2 via Adaptive Bayesian Optimization — arXiv:2509.17405</a></li>
+<li><a href="https://mlanthology.org/neurips/2025/chapel2025neurips-differentiable">Differentiable Generalized Sliced Wasserstein Plans — NeurIPS 2025 (Chapel et al.)</a></li>
+<li><a href="http://arxiv-export-lb.library.cornell.edu/abs/2509.22138">Slicing Wasserstein Over Wasserstein via Functional OT — arXiv:2509.22138</a></li>
+<li><a href="https://arxiv.org/html/2406.19432v1">Differential Entropy Survey — arXiv:2406.19432</a></li>
+<li><a href="https://adsabs.harvard.edu/abs/2024arXiv241214340F">Unifying Information-theoretic Perspective on Evaluating Generative Models — arXiv:2412.14340</a></li>
+</ul>
+<p><strong>Round-2 distinct external paper IDs cited: 17.</strong> Combined with the
+Round-1 30 entries, the framework references <strong>~47 unique external
+SOTA works</strong>.</p>
+<hr />
+<h2 id="6-line-summary-round-2">6-line summary (Round-2)<a class="headerlink" href="#6-line-summary-round-2" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Total algorithms inventoried (Round-2 lens): <strong>~165</strong> classes / protocols / helpers across <code>algorithm/</code>, <code>eval/</code>, <code>frame/</code>, <code>contracts/</code>, <code>universal/</code>, <code>molecular/</code>, <code>policy/</code>, <code>adapters/</code>, <code>tools/</code> (12 scheduler families, 3 policy drivers, 7 merge operators, 4 blenders, 5 runner-registry families, 6 ODE integrators, 4 W2 estimators, 2 rotation policies, 3 mixers, ledger chain, bounded-Lipschitz, plus supporting dataclasses).</li>
+<li>Round-2 priority counts: <strong>P0 = 10</strong> (qualitative framework uplift), <strong>P1 = 19</strong> (clear measurable improvement), <strong>P2 = 11</strong> (nice to have).</li>
+<li>Biggest expected framework-INTERNAL effect: <strong>adaptive σ_max on EDM + multi-metric PID + KDE-support-coverage + barycenter coverage</strong> together deliver σ_max variance ↓ 30 %, PID oscillation ↓ 50 %, weighted coverage stress-config ≥ 0.22 (fixes the R1 0.1916 miss), and barycenter distance oracle-parity — qualitatively stronger scheduling, more discriminating coverage.</li>
+<li>Biggest expected framework-EXTERNAL effect: <strong>DPM-Solver++ / UniPC-3 / SDE integrators</strong> (≥ 2× step-count reduction vs R1 DPM order-1; L2 ≤ 0.02 at NFE=10 with UniPC-3) driving the FM adapter, plus <strong>Rademacher + Tree-Sliced W2</strong> estimators (<a href="https://arxiv.org/pdf/2505.00968v1">arXiv:2505.00968</a>) cutting estimator CV by another 10-30 %, and <strong>stochastic FM adapter</strong> (<a href="https://arxiv.org/abs/2410.19814">arXiv:2410.19814</a>) giving W2 ↓ 25 % on stochastic targets.</li>
+<li>Plug-in design extensions: <strong>~15</strong> Protocol-extension points (10 P0 + 5 P1 inline) across 6 new + 6 extended registries (<code>W2_REGISTRY</code> 4→7, <code>INTEGRATOR_REGISTRY</code> 6→12, <code>SCHEDULER_REGISTRY</code> 11→16, <code>MERGE_OPERATOR_REGISTRY</code> 7→8, <code>POLICY_DRIVER_REGISTRY</code> 3→5, <code>BLENDER_REGISTRY</code> 4→6, plus new <code>STAGE_REGISTRY</code> 0→4, <code>COVERAGE_REGISTRY</code> 0→3, <code>ADAPTER_REGISTRY</code> +1).</li>
+<li>External papers cited (Round-2): <strong>17 distinct arXiv / NeurIPS / NeurIPS-W entries</strong> (SDE solvers ×9, OT/W2 estimators ×6, differential entropy ×1, differentiable SW ×1); combined with Round-1's 30, <strong>~47 unique SOTA works</strong> underpin the framework.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

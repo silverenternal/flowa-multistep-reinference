@@ -561,6 +561,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#algorithm-depth-uplift-round-2-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Algorithm depth uplift Round 2 results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#6-open-questions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -822,6 +833,27 @@ finding. The pluggable-design section is the boundary counterpart:
 all <strong>37</strong> <code>config_hash</code> stability and <code>to_config</code> / <code>from_config</code>
 round-trip checks pass byte-for-byte, so every uplift above is
 swappable without the reproducibility surface changing shape.</p>
+<h2 id="algorithm-depth-uplift-round-2-results">Algorithm depth uplift Round 2 results<a class="headerlink" href="#algorithm-depth-uplift-round-2-results" title="Permanent link">&para;</a></h2>
+<p>The third, deepest pass is planned in
+<a href="../algorithm-round2-uplift-plan/"><code>docs/algorithm-round2-uplift-plan.md</code></a>
+(inventory of <strong>~165 algorithms</strong> after Round-1, <strong>17 fresh SOTA
+papers</strong> surveyed on top of Round-1's 30, ~47 unique external
+SOTA works cited) and measured in
+<a href="../benchmark-round2-uplifts/"><code>docs/benchmark-round2-uplifts.md</code></a>:
+<strong>83 uplifts measured, 80 achieving target, 0 regressions, 3 neutral
+/ NaN-baseline comparisons</strong>, split <strong>48 framework-internal</strong> /
+<strong>8 framework-external</strong> / <strong>27 pluggable-design</strong> entries. The
+Round-2 numbers sharpen the Round-1 story rather than retell it.
+Rademacher projections cut the W2 CV another <strong>-42.8%</strong> past the
+Round-1 projection-free estimator, tree-sliced W2 beats projection-
+free on anisotropic Gaussians, multi-metric PID oscillation is
+bounded under oscillating input, adaptive <code>sigma_max</code> makes the
+EDM scheduler actually adapt (variance <code>0 -&gt; 593.158</code>), and the
+Round-1 weighted-coverage miss is closed by the KDE-support-
+coverage metric (<code>0.1916 -&gt; 0.7810</code> near-far separation)
+[CLM-023]. The type / lint cleanup lands both counters at zero:
+mypy <strong>33 -&gt; 0</strong>, ruff <strong>32 -&gt; 0</strong>, across 118 source files
+[CLM-024].</p>
 <h2 id="6-open-questions">6. Open questions<a class="headerlink" href="#6-open-questions" title="Permanent link">&para;</a></h2>
 <p>The "next question" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped <code>selection_ratio</code> metric was claimed to converge toward 1 as rounds progress, but <code>docs/review/B5-VERIFICATION.md</code> shows that the metric is in fact invariant to loop state — it is an unconditional replay of the <code>(adapter, target)</code> pair, not an endpoint-conditioned posterior, and two unrelated schedulers report identical curves to four decimal places. The reviewer's symptom ("wrong bundle passed") was a wiring guess; the actual defect is that the evaluator's <code>bundle</code> parameter is inert, so no rewiring fix would change the output. Closing the gap requires an endpoint-conditioned variant (scoring the round's own endpoints rather than a fresh replay), which is blocked on the runner carrying a batch of trajectories per round — a real architectural change to <code>ReInferenceRunner</code> and <code>TwoDimFMAdapter</code>, both currently single-sample. ADR-0013 §"Selection metric status" demotes the convergence-to-1 prediction to apply only to that future variant. The shipped metric remains in place until a human design decision lands; the verification document is the canonical record of the investigation.</p>
 <h2 id="7-what-this-insight-does-not-claim">7. What this insight does NOT claim<a class="headerlink" href="#7-what-this-insight-does-not-claim" title="Permanent link">&para;</a></h2>

@@ -745,7 +745,7 @@
 
 
 <h1 id="2d-rectified-flow-ablation-study">2D Rectified-Flow Ablation Study<a class="headerlink" href="#2d-rectified-flow-ablation-study" title="Permanent link">&para;</a></h1>
-<p>An 22-cell ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by <code>TwoDimFMAdapter</code>: 8 canonical configurations x 2 targets, plus 2 paper-grounded (ADR-0013) configurations on <code>two_moons</code>, plus 2 post-infrastructure-fix configurations x 2 targets. Every cell is run with <code>seed=42</code>, <code>rounds=20</code>, and <code>num_steps=30</code> (RK4). Total wall-clock: 59.7s on a single CPU core. Phase-2 framework: every cell is driven by <code>ReInferenceRunner</code> (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).</p>
+<p>An 22-cell ablation that contrasts the restart regimes the framework exposes against the two analytic target distributions supported by <code>TwoDimFMAdapter</code>: 8 canonical configurations x 2 targets, plus 2 paper-grounded (ADR-0013) configurations on <code>two_moons</code>, plus 2 post-infrastructure-fix configurations x 2 targets. Every cell is run with <code>seed=42</code>, <code>rounds=20</code>, and <code>num_steps=30</code> (RK4). Total wall-clock: 39.4s on a single CPU core. Phase-2 framework: every cell is driven by <code>ReInferenceRunner</code> (the convergence-adaptive cell mirrors the runner's loop so it can feed per-round W2 back to the scheduler).</p>
 <h2 id="configurations">Configurations<a class="headerlink" href="#configurations" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>single_pass</strong> -- one round, fresh noise (memory fraction 0). Baseline.</li>

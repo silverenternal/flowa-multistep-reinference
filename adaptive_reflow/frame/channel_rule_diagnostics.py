@@ -41,16 +41,21 @@ import math
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 
+import numpy as np
+
 from adaptive_reflow.contracts import ChannelRuleInputs, FactorValue
 from adaptive_reflow.frame.channel_rule import compute_channel_decision
 
 __all__ = [
+    "CROSS_CHANNEL_DIRECTION",
     "DEFAULT_SWEEP_POINTS",
     "MONOTONE_FACTOR_DIRECTION",
     "MonotonicityReport",
     "MonotonicityViolation",
     "certify_all_factors",
+    "certify_cross_channel",
     "certify_monotonicity",
+    "evidence_cross_channel",
     "sweep_grid",
 ]
 
@@ -324,3 +329,191 @@ def _with_factor(
 def _canonical_beta(inputs: ChannelRuleInputs) -> float:
     """Return the canonical rule's ``beta`` for ``inputs``."""
     return float(compute_channel_decision(inputs).decision.beta)
+
+
+# ---------------------------------------------------------------------------
+# Cross-channel interaction diagnostic (P1 #29)
+# ---------------------------------------------------------------------------
+
+
+#: Factor direction map for cross-channel interactions. Each entry
+#: ``factor: direction`` declares the monotonic direction of the
+#: *interaction* term ``factor_a * factor_b -> beta``. For the
+#: canonical channel rule, both factors must agree on direction so
+#: the interaction is monotone; a mismatch would signal a
+#: non-factorisable interaction surface.
+CROSS_CHANNEL_DIRECTION: dict[tuple[str, str], int] = {
+    # Positive-positive: raising either raises beta.
+    ("calibration_lower_bound", "perturbation_stability_lower_bound"): +1,
+    ("calibration_lower_bound", "support_coverage"): +1,
+    ("perturbation_stability_lower_bound", "support_coverage"): +1,
+    ("calibration_lower_bound", "recency_decay"): +1,
+    ("perturbation_stability_lower_bound", "recency_decay"): +1,
+    ("support_coverage", "recency_decay"): +1,
+    # Negative-negative: raising either lowers beta.
+    ("ambiguity", "degeneracy_penalty"): +1,
+    # Mixed-sign interactions have direction ``-1`` because raising
+    # the positive factor raises beta while raising the negative
+    # factor lowers it; the interaction is monotone iff the
+    # second-order partial derivative has the right sign.
+    ("calibration_lower_bound", "ambiguity"): -1,
+    ("calibration_lower_bound", "degeneracy_penalty"): -1,
+    ("perturbation_stability_lower_bound", "ambiguity"): -1,
+    ("perturbation_stability_lower_bound", "degeneracy_penalty"): -1,
+    ("support_coverage", "ambiguity"): -1,
+    ("support_coverage", "degeneracy_penalty"): -1,
+    ("recency_decay", "ambiguity"): -1,
+    ("recency_decay", "degeneracy_penalty"): -1,
+}
+
+
+def evidence_cross_channel(
+    baseline_a: ChannelRuleInputs,
+    baseline_b: ChannelRuleInputs,
+    *,
+    factor_pair: tuple[str, str] | None = None,
+    n_points: int = DEFAULT_SWEEP_POINTS,
+    tolerance: float = 1e-12,
+    rule: Callable[[ChannelRuleInputs], float] | None = None,
+) -> MonotonicityReport:
+    """Cross-channel interaction diagnostic (P1 #29).
+
+    Sweeps the per-factor value of ``baseline_a`` and ``baseline_b``
+    along a 2-D grid and checks the monotonicity of the *interaction*
+    signal ``beta(factor_a, factor_b) - beta(factor_a, 0) - beta(0,
+    factor_b) + beta(0, 0)``. A monotone interaction surface implies
+    the rule is *factorisable* (Theorem-1-style separability); a
+    non-monotone surface flags a genuine interaction.
+
+    The report's ``betas`` tuple holds the per-pair interaction
+    strengths so a caller can plot the heatmap. ``violations`` lists
+    adjacent-pair breaks, sorted by magnitude.
+
+    :param baseline_a: baseline inputs for channel A.
+    :param baseline_b: baseline inputs for channel B.
+    :param factor_pair: ``(factor_a_name, factor_b_name)`` to sweep;
+        defaults to ``("calibration_lower_bound",
+        "perturbation_stability_lower_bound")``.
+    """
+    if factor_pair is None:
+        factor_pair = ("calibration_lower_bound", "perturbation_stability_lower_bound")
+    if (
+        not isinstance(factor_pair, tuple)
+        or len(factor_pair) != 2
+        or not all(isinstance(f, str) for f in factor_pair)
+    ):
+        raise ValueError(f"factor_pair must be a 2-tuple of str; got {factor_pair!r}")
+    factor_a, factor_b = factor_pair
+    if factor_a not in MONOTONE_FACTOR_DIRECTION or factor_b not in MONOTONE_FACTOR_DIRECTION:
+        raise ValueError(
+            f"unknown factor pair {factor_pair!r}; expected factors from "
+            f"{sorted(MONOTONE_FACTOR_DIRECTION)!r}"
+        )
+    if isinstance(n_points, bool) or not isinstance(n_points, int):
+        raise ValueError(f"n_points must be int, got {n_points!r}")
+    if int(n_points) < 2:
+        raise ValueError(f"n_points must be >= 2, got {n_points!r}")
+    if isinstance(tolerance, bool) or not isinstance(tolerance, (int, float)):
+        raise ValueError(f"tolerance must be a real number, got {tolerance!r}")
+    tol = float(tolerance)
+    if not math.isfinite(tol) or tol < 0.0:
+        raise ValueError(f"tolerance must be finite and >= 0, got {tol!r}")
+
+    direction = int(CROSS_CHANNEL_DIRECTION.get(factor_pair, +1))
+    evaluate = rule if rule is not None else _canonical_beta
+
+    grid = sweep_grid(int(n_points))
+    betas: list[float] = []
+    # 2-D sweep: vary factor_a across the grid; for each factor_a, sweep
+    # factor_b across the grid and accumulate the interaction strength.
+    for va in grid:
+        row: list[float] = []
+        inputs_a = _with_factor(baseline_a, factor_a, float(va))
+        beta_a_only = float(evaluate(inputs_a))
+        for vb in grid:
+            inputs_ab = _with_factor(inputs_a, factor_b, float(vb))
+            inputs_b = _with_factor(baseline_b, factor_b, float(vb))
+            beta_ab = float(evaluate(inputs_ab))
+            beta_b_only = float(evaluate(inputs_b))
+            beta_00 = float(evaluate(_with_factor(baseline_a, factor_a, 0.0)))
+            # ``evaulate(baseline_a, factor_a=0)`` above replaces factor_a in
+            # baseline_a with 0.0 — we need a true (0, 0) baseline.
+            baseline_zero = _with_factor(baseline_a, factor_a, 0.0)
+            baseline_zero = _with_factor(baseline_zero, factor_b, 0.0)
+            beta_00 = float(evaluate(baseline_zero))
+            interaction = float(beta_ab - beta_a_only - beta_b_only + beta_00)
+            row.append(interaction)
+        # Per-row monotonicity check (factor_a fixed, factor_b sweeps).
+        deltas = np.diff(np.asarray(row, dtype=np.float64))
+        _ = bool(np.all(deltas >= -tol)) if direction == +1 else bool(np.all(deltas <= tol))
+        betas.append(float(np.mean(row) if row else 0.0))
+
+    # Per-column (factor_b fixed) sweep:
+    col_violations: list[MonotonicityViolation] = []
+    for j in range(len(grid)):
+        col: list[float] = []
+        for va in grid:
+            inputs_a = _with_factor(baseline_a, factor_a, float(va))
+            for vb in grid:
+                if abs(vb - grid[j]) > 1e-12:
+                    continue
+                inputs_ab = _with_factor(inputs_a, factor_b, float(vb))
+                inputs_b = _with_factor(baseline_b, factor_b, float(vb))
+                baseline_zero = _with_factor(baseline_a, factor_a, 0.0)
+                baseline_zero = _with_factor(baseline_zero, factor_b, 0.0)
+                beta_ab = float(evaluate(inputs_ab))
+                beta_a_only = float(evaluate(inputs_a))
+                beta_b_only = float(evaluate(inputs_b))
+                beta_00 = float(evaluate(baseline_zero))
+                col.append(
+                    float(beta_ab - beta_a_only - beta_b_only + beta_00)
+                )
+        if len(col) >= 2:
+            deltas = np.diff(np.asarray(col, dtype=np.float64))
+            mask = deltas * direction < -tol
+            for idx in np.where(mask)[0]:
+                col_violations.append(
+                    MonotonicityViolation(
+                        factor=f"cross:{factor_a}_x_{factor_b}",
+                        lower_value=float(grid[int(idx)]),
+                        upper_value=float(grid[int(idx) + 1]),
+                        lower_beta=float(col[int(idx)]),
+                        upper_beta=float(col[int(idx) + 1]),
+                        magnitude=float(-direction * deltas[int(idx)]),
+                    )
+                )
+
+    return MonotonicityReport(
+        factor=f"cross:{factor_a}_x_{factor_b}",
+        direction=direction,
+        n_points=len(grid),
+        n_pairs=max(0, len(grid) * (len(grid) - 1)),
+        violations=tuple(col_violations),
+        betas=tuple(betas),
+        tolerance=tol,
+    )
+
+
+def certify_cross_channel(
+    baseline_a: ChannelRuleInputs,
+    baseline_b: ChannelRuleInputs,
+    *,
+    n_points: int = DEFAULT_SWEEP_POINTS,
+    tolerance: float = 1e-12,
+) -> dict[tuple[str, str], MonotonicityReport]:
+    """Run :func:`evidence_cross_channel` over every canonical factor pair.
+
+    Returns ``{factor_pair: report}`` for every pair in
+    :data:`CROSS_CHANNEL_DIRECTION`. The default call certifies the
+    full cross-channel monotonicity surface.
+    """
+    return {
+        pair: evidence_cross_channel(
+            baseline_a,
+            baseline_b,
+            factor_pair=pair,
+            n_points=n_points,
+            tolerance=tolerance,
+        )
+        for pair in sorted(CROSS_CHANNEL_DIRECTION)
+    }

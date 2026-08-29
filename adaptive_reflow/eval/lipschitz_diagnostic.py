@@ -69,9 +69,11 @@ from numpy.typing import NDArray
 __all__ = [
     "DEFAULT_RATE_CONSTANT",
     "DEFAULT_TAIL_FRACTION",
+    "KernelLipschitzReport",
     "LipschitzConvergenceReport",
     "bounded_lipschitz_distance",
     "evaluate_lipschitz_convergence",
+    "kernel_lipschitz_constant",
     "lipschitz_modulus",
 ]
 
@@ -289,3 +291,114 @@ def bounded_lipschitz_distance(
     qx = x[np.clip((grid * float(x.size)).astype(np.int64), 0, x.size - 1)]
     qy = y[np.clip((grid * float(y.size)).astype(np.int64), 0, y.size - 1)]
     return float(np.minimum(np.abs(qx - qy), b).mean())
+
+
+# ---------------------------------------------------------------------------
+# Kernel Lipschitz constant on the density (P2 #30)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class KernelLipschitzReport:
+    """Result of :func:`kernel_lipschitz_constant`.
+
+    Attributes
+    ----------
+    constant:
+        The empirical kernel Lipschitz constant on the density.
+        Defined as ``max_{i, j} |k(x_i, x_j)| / ||x_i - x_j||`` over
+        the supplied sample, capturing the maximum local sensitivity
+        of the (Gaussian) kernel matrix to a unit-norm perturbation.
+    bandwidth:
+        The bandwidth ``h`` actually used (median-heuristic when
+        ``bandwidth=None`` was passed).
+    n_samples:
+        Number of points used in the empirical estimate.
+    ratio_to_sqrt_n:
+        ``constant * sqrt(n_samples)``. The natural convergence rate
+        for kernel density estimators is ``O(1 / sqrt(n))``; a
+        ratio ``<= 1`` is the bounded-Lipschitz analogue of the
+        trajectory-level modulus being below the MC rate.
+    """
+
+    constant: float
+    bandwidth: float
+    n_samples: int
+    ratio_to_sqrt_n: float
+
+
+def kernel_lipschitz_constant(
+    samples: Sequence[float] | Sequence[Sequence[float]] | NDArray[np.float64],
+    *,
+    bandwidth: float | None = None,
+) -> KernelLipschitzReport:
+    """Return the empirical kernel Lipschitz constant of a sample set.
+
+    The PCE / RCE / RE tri-dimensional metric from the SOTA evaluation
+    paper `arXiv:2412.14340 <https://adsabs.harvard.edu/abs/2024arXiv241214340F>`_
+    defines the *precision, recall, and realism* of a generator via the
+    Lipschitz behaviour of the *density* rather than the trajectory. A
+    generator whose density has bounded Lipschitz constant is one that
+    cannot concentrate arbitrarily sharply, which is a necessary
+    condition for tight kernel density estimation.
+
+    We compute the empirical kernel Lipschitz constant on the supplied
+    sample set with a Gaussian kernel:
+
+        L_k = max_{i, j} |k(x_i, x_j) - k(x_j, x_j)| / ||x_i - x_j||
+            = max_{i != j} (1 - exp(-||x_i - x_j||^2 / (2 h^2)))
+              / ||x_i - x_j||
+
+    which is the maximum slope of the radial kernel function over the
+    realised pairwise distances. The bandwidth defaults to the median
+    pairwise distance (Silverman-style heuristic).
+
+    Quantitative target: ``L_k * sqrt(N) <= 1`` on a converged run,
+    mirroring the trajectory-level ``tail_modulus * du <= 1/sqrt(N)``
+    target of :func:`evaluate_lipschitz_convergence`.
+    """
+    arr_in = samples
+    if hasattr(arr_in, "ndim"):
+        arr = np.asarray(arr_in, dtype=np.float64)
+    else:
+        first = next(iter(arr_in), None) if hasattr(arr_in, "__iter__") else None
+        if first is None:
+            return KernelLipschitzReport(0.0, 0.0, 0, 0.0)
+        if np.isscalar(first):
+            arr = np.asarray(list(arr_in), dtype=np.float64).reshape(-1, 1)
+        else:
+            arr = np.asarray(arr_in, dtype=np.float64)
+    if arr.ndim == 1:
+        arr = arr.reshape(-1, 1)
+    if arr.ndim != 2 or arr.shape[0] < 2 or arr.shape[1] < 1:
+        return KernelLipschitzReport(0.0, 0.0, int(arr.shape[0]) if arr.ndim >= 1 else 0, 0.0)
+    if not bool(np.all(np.isfinite(arr))):
+        raise ValueError("kernel_lipschitz_constant: samples must be finite")
+    n = int(arr.shape[0])
+    diff = arr[:, None, :] - arr[None, :, :]
+    sq = (diff * diff).sum(axis=-1)
+    dist = np.sqrt(np.maximum(sq, 0.0))
+    if bandwidth is None:
+        iu = np.triu_indices(n, k=1)
+        vals = dist[iu]
+        h = 1.0 if vals.size == 0 else float(max(np.median(vals), 1e-12))
+    else:
+        if isinstance(bandwidth, bool) or not isinstance(bandwidth, (int, float)):
+            raise ValueError(f"bandwidth must be a real number or None; got {bandwidth!r}")
+        h = float(bandwidth)
+        if not math.isfinite(h) or h <= 0.0:
+            raise ValueError(f"bandwidth must be finite and > 0; got {bandwidth!r}")
+    # Compute the slope at each pair.
+    np.fill_diagonal(dist, 1.0)  # avoid /0; the slope at distance 0 is 0.
+    val = 1.0 - np.exp(-(dist * dist) / (2.0 * h * h))
+    # Mask self-pairs (we filled them with 1.0).
+    mask: NDArray[np.bool_] = ~np.eye(n, dtype=bool)
+    slopes = val[mask] / np.maximum(dist[mask], 1e-12)
+    L = float(np.max(slopes)) if slopes.size > 0 else 0.0
+    ratio = float(L * math.sqrt(float(n))) if n > 0 else 0.0
+    return KernelLipschitzReport(
+        constant=float(L),
+        bandwidth=float(h),
+        n_samples=int(n),
+        ratio_to_sqrt_n=float(ratio),
+    )

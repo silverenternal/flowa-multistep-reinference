@@ -145,6 +145,9 @@ not_in_nav: |
   benchmark-uplifts.md
   benchmark-deep-uplifts.md
   algorithm-deep-uplift-plan.md
+  algorithm-round2-uplift-plan.md
+  benchmark-round2-uplifts.md
+  _test_ablation_quick.md
 
 validation:
   nav:
