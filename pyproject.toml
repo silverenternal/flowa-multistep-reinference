@@ -76,6 +76,7 @@ markers = [
     "property: property-based tests",
     "adversarial: adversarial-case tests",
     "stress: long-horizon tests that run on stress-nightly CI only",
+    "experiments: experimental claim reproduction tests (see docs/r5-survey/)",
 ]
 addopts = [
     "-ra",
@@ -247,6 +248,11 @@ exclude = [
     "(^|/)adaptive_reflow/adapters/twodim_fm.*",
     "(^|/)adaptive_reflow/adapters/twodim_fm_train\\.py",
     "(^|/)adaptive_reflow/eval/twodim_fm_evaluator\\.py",
+    # R5 scaffolded CIFAR adapter — torch-required UNet constructor and
+    # torch.no_grad() inference path. Production analogue is twodim_fm.py
+    # (also excluded). Both files are intentionally not mypy-strict-clean
+    # until the [rf-cifar] extra is wired into the type-checking CI matrix.
+    "(^|/)adaptive_reflow/adapters/rectified_flow_cifar\\.py",
 ]
 
 [[tool.mypy.overrides]]
@@ -313,6 +319,7 @@ ignore_errors = true
 module = [
     "adaptive_reflow.adapters.twodim_fm",
     "adaptive_reflow.adapters.twodim_fm_train",
+    "adaptive_reflow.adapters.rectified_flow_cifar",
     "adaptive_reflow.eval.twodim_fm_evaluator",
 ]
 ignore_errors = true

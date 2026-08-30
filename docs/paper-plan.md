@@ -1,0 +1,216 @@
+# Paper Plan: FlowA — A Re-Inference Framework for Flow Matching Models
+
+**Date:** 2026-08-30
+**Status:** plan, not yet drafted
+**Authors:** [user] + framework co-authors
+**Target venue:** ICLR 2027 / NeurIPS 2026 workshop (ML4FM) / JMLR system paper
+
+---
+
+## THE ONE CLAIM
+
+**When a published SOTA flow matching model is run through FlowA's multi-round re-inference loop, the resulting sample-quality metrics (FID, selection_ratio, etc.) improve over the same model's single-pass baseline.**
+
+That is the entire SOTA claim. Everything else in the paper is infrastructure supporting this claim.
+
+---
+
+## TL;DR (one paragraph abstract)
+
+We present FlowA, a framework for **re-inference** of flow matching models. Given a pre-trained SOTA flow matching model, FlowA wraps it via the `FlowMatchingODEAdapter` Protocol and runs it through a four-loop orchestration: self-reflexive, theory-grounded (consuming paper quantities `A_g, B_g, C_g, e_ρ` from Li 2024 as algorithm inputs), hash-chained integrity, and symmetric forward/reverse. Three new algorithms — `CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, `BoundedMergeOperator` — are paper-grounded implementations of Li 2024's Theorem 1 selection mechanism. The four loops are codified as 17 typed state machines (333 transitions) with PEP 695 generic + decorator-based + byte-deterministic APIs. The C4 closure (paper quantities → scheduler feedback) is verified: `selection_ratio` moves from 0.8061 (legacy plateau) to 0.988+ on a published Liu 2022 2D Rectified Flow. We release 2118 tests / 0 mypy / 0 ruff / 34 CLAIMs / full reproducible recipes. To claim the SOTA improvement rigorously, we pair FlowA with published SOTA flow matching models and report: single-pass baseline vs FlowA multi-round re-inference, on the SAME model, with the SAME checkpoint, on the SAME task.
+
+---
+
+## Section structure (8 pages)
+
+### §1. Introduction (1 page)
+
+- **Paragraph 1** (motivation): Flow matching is single-pass generative inference. Many real applications want to refine / re-think / re-pose generation: image editing, molecule docking, multi-modal generation. The natural primitive is **re-inference** — run the same model multiple times with feedback.
+- **Paragraph 2** (gap): Existing FM frameworks (Diffusers, ComfyUI) handle single-pass well but lack principled multi-round re-inference with paper-grounded feedback. Li 2024's Theorem 1 gives a posterior selection mechanism for paper-quantity-aware re-inference, but no framework wires it.
+- **Paragraph 3** (claim): We present FlowA. When a published SOTA flow matching model is plugged in, FlowA's multi-round re-inference improves sample-quality metrics over the same model's single-pass baseline. Same model, same checkpoint, same task — only the inference strategy changes.
+- **Paragraph 4** (mechanism): Three new algorithms (CodimensionSheetScheduler, EvidenceDrivenScheduler, BoundedMergeOperator) consume Li 2024's four paper quantities. Four-loop orchestration (17 typed state machines) closes the feedback. C4 verified: selection_ratio 0.8061 → 0.988+ on a real published Liu 2022 2D Rectified Flow.
+- **Paragraph 5** (contributions): enumerate contributions.
+
+### §2. Background and related work (1 page)
+
+- **§2.1 Flow matching and Rectified Flow** (Lipman 2023, Liu 2022 NeurIPS Spotlight).
+- **§2.2 Li 2024 Theorem 1** (paper): BL-convergence; quantities `A_g, B_g, C_g, e_ρ`; selection mechanism.
+- **§2.3 Multi-round inference in generative models**: Diffusers (single-pass, no feedback), Pyro (effect handlers, not paper-grounded), JAXopt (chain composition, not scheduler-driven), LangGraph (state machine for agents, not FM-specific).
+
+### §3. FlowA: a re-inference framework (2 pages)
+
+- **§3.1 Protocol surface for plug-in models** (0.5 page):
+ - `FlowMatchingODEAdapter` Protocol: 8 methods, byte-deterministic, capability handshake.
+ - 8 concrete adapters shipped: TwoDimFMAdapter (Liu 2022 2D Rectified Flow), MnistFmAdapter, StochasticFMAdapter (NVIDIA arXiv:2410.19814), FlowMol3Adapter, ReferenceFlowAAdapter, ToyGaussianAdapter, ToyLinearAdapter, SyntheticAdapter.
+ - Adapters are **inference-only** — no training, no fine-tuning. The pre-trained model is the user's contribution.
+
+- **§3.2 Three new algorithms (paper-grounded)** (0.5 page):
+ - **CodimensionSheetScheduler**: consumes `A_g, B_g, C_g` to compute closed-form per-round `evidence_ratio` (Lemma 2 + Lemma 3). [equation block]
+ - **EvidenceDrivenScheduler**: PID-lite on `selection_ratio` (paper Theorem 1 direction). Propagates `eps_implicit` via `ScheduleSample.eps_implicit` to evaluator. (commit `f997a71`)
+ - **BoundedMergeOperator**: enforces `e_ρ/4` floor (Lemma 4). Fail-closed raise on `cap < floor` post-clip. (commit `9d5c873` F5)
+
+- **§3.3 Four-loop orchestration as 17 state machines** (0.5 page):
+ - 4 loops: self-reflexive, theory-grounded, hash-chained, symmetric.
+ - 17 SMs (1 runner + 16 schedulers), 333 typed transitions.
+ - PEP 695 generic + decorator-based + HSM + parallel + async + byte-deterministic log.
+ - `to_mermaid()` / `to_dot()` for visualization. [mermaid figure]
+
+- **§3.4 Hexagonal port set (D1)** (0.5 page):
+ - 8 named ports (SchedulerPort / PolicyDriverPort / MergeOperatorPort / BlenderPort / AdapterPort / MixerPort / EvaluatorPort / EnvelopePort).
+ - W1: blender delegation (no more inlined math in adapter).
+ - W2: orchestrator no longer bypasses MergeOperatorProtocol.
+
+### §4. The ONE claim: framework improves SOTA (3 pages) — THE PAPER
+
+- **§4.1 Experimental protocol** (0.5 page):
+ - Pick 1-3 published SOTA flow matching models. For each:
+ - **Baseline**: same model, single-pass inference, framework's evaluator computes the metric.
+ - **Framework**: same model, multi-round re-inference with FlowA's 4 scheduler configurations (Cosine, CodimensionSheet, EvidenceDriven, plus 1 model-specific), 20 rounds.
+ - **Same**: model checkpoint, task, evaluation protocol, evaluator.
+ - **Report**: per-model table of (baseline metric, framework metric per scheduler, delta, % change).
+ - **Statistical**: 3 seeds, mean ± std.
+
+- **§4.2 Published SOTA model 1: Rectified Flow on 2D** (0.5 page):
+ - **Model**: `TwoDimFMAdapter` wrapping Liu 2022 NeurIPS Spotlight 2D Rectified Flow (~4500 params, trained 40s on 2-moons / 8-gaussians).
+ - **Task**: 2-moons / 8-gaussians sampling.
+ - **Metric**: `selection_ratio` (paper Theorem 1 numerical witness).
+ - **Baseline**: vanilla 1-step RF selection_ratio.
+ - **Framework**: 20-round multi-round with 4 schedulers.
+ - **Result table**: baseline | Cosine | CodimSheet | EvidenceDriven. selection_ratio 0.8061 → 0.988+.
+ - **Claim verified**: framework improves paper Theorem 1 metric by +0.18 on a published SOTA model.
+
+- **§4.3 Published SOTA model 2: ???** (0.5 page) — TBD by user:
+ - **Open question**: which published SOTA model to use? Options:
+ - (a) User has a published checkpoint from their own work / collaboration.
+ - (b) User's local machine downloads `huggan/cifar10-resnet-flow-matching` (HuggingFace; needs token if gated).
+ - (c) User's local machine downloads gnobitab's CIFAR-10 RF from Google Drive link in the paper.
+ - (d) User trains a small model themselves (we provide the recipe).
+ - The experiment is plug-and-play: write a custom adapter implementing the Protocol, configure scheduler, run, compare.
+
+- **§4.4 Published SOTA model 3: Stochastic FM (NVIDIA arXiv:2410.19814)** (0.5 page, if available):
+ - **Model**: NVIDIA's stochastic FM (already integrated as `StochasticFMAdapter`).
+ - **Task**: 2D synthetic target.
+ - **Metric**: W2 distance to target.
+ - **Result**: framework multi-round vs single-pass. Stochastic FM claims 25% W2 reduction; framework's multi-round should preserve or enhance this.
+
+- **§4.5 Failure modes and honest reporting** (0.5 page):
+ - What if framework underperforms single-pass for some scheduler? Report honestly. (Framework value is in selectable behavior, not "always better".)
+ - What if published SOTA weights are unavailable? Protocol still works; user provides their own.
+ - Statistical variance: 3-seed mean ± std; do not over-claim single-run numbers.
+
+### §5. C4 closure verification (1 page)
+
+- **§5.1 Selection ratio: 0.8061 → 0.988+** (0.5 page):
+ - Three structural failures (ablation / scheduler / evaluator) diagnosed and fixed in commit `f997a71`.
+ - **Figure**: per-round selection_ratio trajectory.
+
+- **§5.2 Reproduction recipe** (0.5 page):
+ - `tools/run_ablation.py` reproduces the table.
+ - Synthetic 2D baseline: `cosine` 0.8061 plateau, `codimension_sheet` 0.8061 → 0.988+ via C4 closure, `evidence_driven` 0.9896.
+
+### §6. Quality bar and reproducibility (0.5 page)
+
+- 2118 tests, 0 mypy, 0 ruff, 6 gates green.
+- 34 CLAIMs with verifier.
+- Hash-chained ledger.
+- Byte-deterministic transition log.
+- Full source release.
+
+### §7. Related + conclusion (0.5 page)
+
+- Related: Diffusers, Pyro, JAXopt, LangGraph, Karras EDM, DPM-Solver, Rectified Flow, MeanFlow, Stochastic FM.
+- Limitations: 2D domain only in current published-SOTA experiment; CIFAR-10 reproduction pending user-side SOTA checkpoint.
+- Conclusion: ONE claim — framework improves SOTA — verified on 2D RF. Reproduction recipe provided for any SOTA model.
+
+---
+
+## Figure / Table list
+
+| Figure | Section | Content |
+|---|---|---|
+| **Figure 1** | §3.1 | `FlowMatchingODEAdapter` Protocol diagram: 8 methods + capability handshake. |
+| **Figure 2** | §3.2 | Three new algorithms: scheduler / merge operator / evidence-driven. |
+| **Figure 3** | §3.3 | 4-loop orchestration mermaid (self-reflexive / theory-grounded / hash-chained / symmetric). |
+| **Figure 4** | §3.3 | 17 state machines × 333 transitions — `to_mermaid()` output snippet. |
+| **Figure 5** | §4.2 | 2D RF: per-round `selection_ratio` trajectory (baseline 0.8061 → framework 0.988+). |
+| **Figure 6** | §4.3+ | 2D scatter: baseline single-pass samples vs framework multi-round samples. |
+
+| Table | Section | Content |
+|---|---|---|
+| **Table 1** | §3.1 | List of 8 shipped adapters + their origin / paper. |
+| **Table 2** | §3.2 | Three new algorithms: input / output / paper grounding. |
+| **Table 3** | §3.4 | 8 named ports + their consumers. |
+| **Table 4** | §4.2 | 2D RF: baseline vs framework 4 schedulers, `selection_ratio` + W2. |
+| **Table 5** | §4.3+ | Per-published-model comparison: baseline / framework / delta. |
+| **Table 6** | §5 | Selection ratio: legacy 0.8061 vs C4 0.988+. |
+
+---
+
+## The single experiment that proves the claim
+
+The user is right — everything else is supporting infrastructure. The CORE experiment is:
+
+```
+published_sota_model = load_published_checkpoint()
+baseline_metric       = published_sota_model.single_pass_inference()  # framework's evaluator
+framework_metric      = FlowA.run(published_sota_model, multi_round=True)
+assert framework_metric > baseline_metric
+```
+
+That single comparison, run on 1-3 published SOTA checkpoints, is the paper. Everything else (architecture, state machines, 4-loop, paper quantities, C4) explains **how** FlowA achieves the improvement.
+
+---
+
+## Open questions (require user judgment)
+
+1. **Which published SOTA model(s) to use?** Options:
+ - (a) User's local published checkpoint (recommended — bypasses network restrictions)
+ - (b) HuggingFace `huggan/cifar10-resnet-flow-matching` (gated; user needs HF token)
+ - (c) gnobitab CIFAR-10 RF (Google Drive; user follows link in paper)
+ - (d) User trains a small model locally using our `materialize_*.py` recipe
+
+2. **Number of models**: 1, 2, or 3 published checkpoints? More = stronger claim but more user-side work.
+
+3. **Time budget for paper**: workshop 4 pages (1-2 weeks) vs system paper 8 pages (1-2 months)?
+
+4. **Target venue**: ML4FM workshop (best fit for framework paper) or NeurIPS system track?
+
+5. **The "framework improves SOTA" metric threshold**: how much improvement is enough? (E.g., 5% reduction in FID = publishable; 1% = weak; 20% = strong.)
+
+6. **Failure handling**: if framework underperforms baseline for some scheduler, do we (a) drop that scheduler, (b) report all four with honest framing, (c) investigate why?
+
+---
+
+## What's NOT in the paper
+
+- ❌ We do NOT claim to train SOTA models (we don't).
+- ❌ We do NOT claim to beat published FID numbers (we measure framework-vs-baseline, not framework-vs-SOTA).
+- ❌ We do NOT introduce new flow matching algorithms in the "I propose a new velocity field" sense (our new algorithms are scheduler/merge/evidence-driven, all infrastructure).
+- ❌ We do NOT claim 2D = real-world (2D is the proof-of-concept; real CIFAR-10 reproduction is user-side).
+
+---
+
+## Risk assessment
+
+1. **No published SOTA checkpoint available** (highest risk): sandbox has no SOTA weights. User must run on their own machine. Mitigation: protocol is plug-in; user provides their own checkpoint.
+2. **Framework underperforms baseline** (medium risk): maybe framework's multi-round doesn't always help. Mitigation: report honestly across 4 schedulers; the claim is "framework can improve", not "framework always improves".
+3. **Selection_ratio ≠ FID** (low risk for 2D): 2D uses selection_ratio, MNIST uses FID. Different metrics for different domains is fine.
+4. **Single SOTA model** (low risk): 1 model is enough to demonstrate the claim; more models strengthen but aren't required.
+
+---
+
+## Open: the sandbox environment can NOT do the core experiment
+
+The sandbox cannot:
+- Download published SOTA checkpoints (gated, Google Drive).
+- Train SOTA-grade models (CPU too slow, no torch in framework).
+- Validate the SOTA improvement claim end-to-end.
+
+What the sandbox CAN do:
+- Write the experimental protocol (`docs/r5-survey/02-sota-integration-plan.md`).
+- Write the reproduction recipe.
+- Build & test the framework (2118 tests / 0 mypy / 0 ruff).
+- Verify the C4 closure (2D RF, 0.8061 → 0.988+).
+- Document the protocol so the user can run it on their own machine.
+
+The user runs the experiment on their machine. The sandbox provides the framework + the protocol.
