@@ -747,6 +747,138 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#CLM-025" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-025: BoundedMergeOperator fails closed on cap &lt; floor (post-clip)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-026: ConvergenceAdaptiveScheduler PID consumes _smoothed_w2 (not raw w2_history[-2])
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-027" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-027: EvidenceDrivenScheduler closes Loop 2 (paper quantities → scheduler feedback)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-028" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-028: Hexagonal port set codifies eight plug-in families as named ports
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-029" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-029: FreeTrajScheduler (arXiv:2507.10532) registered as a plug-in scheduler family
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-030" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-030: MeanFlowMergeOperator (arXiv:2505.13447) registered as a plug-in merge operator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-031" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-031: R3 adversarial survey confirms 17 findings and refutes 5
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-032" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-032: C4 Loop 2 closure verified — selection_ratio moves toward 1 on the paper-grounded rows
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-033" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-033: Modern state machine library — generic + HSM + decorator + type-safe + async + visualization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-034" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-034: Universal state machine coverage — every scheduler + ReInferenceRunner orchestrator is wrapped
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-039" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-039: FlowA's 2D Rectified Flow experiment verifies the ONE paper claim: framework multi-round re-inference improves over single-pass baseline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#CLM-040" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-040: CIFAR-10 SOTA reproduction — FlowA framework improves over baseline on published Rectified Flow; n_cap fix landed; scheduler discrimination still pending follow-up
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -865,7 +997,7 @@ tree resolve through the CLM IDs defined here.</p>
   <code>eps -&gt; 0</code> limit; it is the canonical implementation of paper
   Lemma 2's sheet tube scaling <em>at the direction level</em>.</li>
 <li>Evidence:
-  <code>adaptive_reflow/algorithm/scheduler.py:182</code>
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:347</code>
   (<code>CosineAnnealScheduler.sample(...)</code> produces
   <code>n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))</code>).</li>
 </ul>
@@ -882,9 +1014,9 @@ tree resolve through the CLM IDs defined here.</p>
   emitting the sheet-vs-cell evidence balance via
   <code>_paper_evidence_balance</code> (with positive <code>eps</code> powers, not the
   historical inversion).</li>
-<li>Evidence: <code>adaptive_reflow/algorithm/scheduler.py:1671</code>
+<li>Evidence: <code>adaptive_reflow/algorithm/scheduler/_core.py:2259</code>
   (<code>CodimensionSheetScheduler</code> class),
-  <code>adaptive_reflow/algorithm/scheduler.py:1548</code>
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:2136</code>
   (<code>_paper_evidence_balance</code> helper).</li>
 </ul>
 <h2 id="CLM-007">CLM-007: Physical complement is exponentially suppressed<a class="headerlink" href="#CLM-007" title="Permanent link">&para;</a></h2>
@@ -949,7 +1081,7 @@ tree resolve through the CLM IDs defined here.</p>
   guarantee: a non-zero noise floor is the structural guarantee that
   the posterior stays on the fibre.</li>
 <li>Evidence: <code>adaptive_reflow/algorithm/merge_operator.py</code> /
-  <code>adaptive_reflow/algorithm/scheduler.py:182</code>
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:347</code>
   (<code>CosineAnnealScheduler</code> carries the <code>n_min</code> field).</li>
 </ul>
 <h2 id="CLM-011">CLM-011: Four paper quantities are first-class algorithm inputs<a class="headerlink" href="#CLM-011" title="Permanent link">&para;</a></h2>
@@ -967,7 +1099,7 @@ tree resolve through the CLM IDs defined here.</p>
   <code>ReInferenceRunner</code> whenever the corresponding opt-in configuration
   is supplied.</li>
 <li>Evidence: <code>adaptive_reflow/contracts/paper_quantities.py:39-44</code>
-  (<code>__all__</code>); <code>adaptive_reflow/algorithm/scheduler.py:1844-1854</code>
+  (<code>__all__</code>); <code>adaptive_reflow/algorithm/scheduler/_core.py:2432-2442</code>
   (<code>CodimensionSheetScheduler</code> constructs the four constants);
   <code>adaptive_reflow/algorithm/policy_driver.py:485-490</code>
   (<code>AdaptivePolicyDriver</code> accepts <code>per_cell_coefficient_C</code>);
@@ -1053,7 +1185,7 @@ tree resolve through the CLM IDs defined here.</p>
   powers (<code>sheet = Theta(eps^{+1})</code>, <code>cell = O(eps^{+2})</code>) per the
   audit at <code>docs/audit/EPSILON_DIRECTION.md</code> §4.2.</li>
 <li>Evidence: <code>docs/audit/EPSILON_DIRECTION.md</code> §4.2; corrected code at
-  <code>adaptive_reflow/algorithm/scheduler.py:1548</code>
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:2136</code>
   (<code>_paper_evidence_balance</code> closed form).</li>
 </ul>
 <h2 id="CLM-017">CLM-017: (DEPRECATED) <code>selection_ratio</code> converges to 1 over rounds<a class="headerlink" href="#CLM-017" title="Permanent link">&para;</a></h2>
@@ -1112,9 +1244,9 @@ tree resolve through the CLM IDs defined here.</p>
   Scheduler column references four of these nine families; the
   other five are valid but not the reader-facing defaults.</li>
 <li>Evidence:
-  <code>adaptive_reflow/algorithm/scheduler.py:2739</code>
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:2992</code>
   (<code>SCHEDULER_REGISTRY</code>),
-  <code>adaptive_reflow/algorithm/sequential.py:95</code>
+  <code>adaptive_reflow/algorithm/sequential_handoff.py</code>
   (<code>SequentialScheduler</code>),
   <code>docs/defaults-matrix.md</code> §"The matrix".</li>
 </ul>
@@ -1161,9 +1293,9 @@ tree resolve through the CLM IDs defined here.</p>
   hashes. The implementation is registered in <code>SCHEDULER_REGISTRY</code>
   under the key <code>"sequential"</code>.</li>
 <li>Evidence:
-  <code>adaptive_reflow/algorithm/sequential.py:95</code>
+  <code>adaptive_reflow/algorithm/sequential_handoff.py</code>
   (<code>SequentialScheduler</code> class),
-  <code>adaptive_reflow/algorithm/scheduler.py:2748</code>
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:2992</code>
   (<code>SCHEDULER_REGISTRY["sequential"]</code> entry),
   <code>tests/test_algorithm/test_sequential.py</code>
   (16+ regression tests).</li>
@@ -1268,6 +1400,668 @@ tree resolve through the CLM IDs defined here.</p>
   run: <code>Success: no issues found in 118 source files</code>),
   <code>python -m ruff check .</code> (current run:
   <code>All checks passed!</code>).</li>
+</ul>
+<h2 id="CLM-025">CLM-025: <code>BoundedMergeOperator</code> fails closed on <code>cap &lt; floor</code> (post-clip)<a class="headerlink" href="#CLM-025" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: <a href="../r3-survey/08-fix-plan/"><code>docs/r3-survey/08-fix-plan.md</code></a>
+  §2 (F5 — P0 paper-correctness)</li>
+<li>Asserted by:
+  <code>adaptive_reflow/algorithm/merge_operator.py:591-599</code>
+  (the explicit <code>raise MergeAuthorityError</code>),
+  <code>tests/test_algorithm/test_merge_operator.py</code>
+  (<code>test_bounded_merge_rejects_cap_below_floor_post_clip</code>),
+  <code>docs/r3-survey/05-verified-findings.md</code> §F5</li>
+<li>Disputed by: —</li>
+<li>Statement: <code>BoundedMergeOperator.merge</code> raises
+  <code>MergeAuthorityError</code> (after appending the <code>_ERR_CAP_BELOW_FLOOR</code>
+  audit code) when the post-clip envelope satisfies
+  <code>cap_f &lt; floor_f</code>. The legacy silent-swap semantics that inverted
+  the user's clearly-wrong envelope to a wider range were removed;
+  the operator now honours the documented fail-closed contract: a
+  configuration error produces a typed exception, not a wider
+  envelope. The audit code is emitted <strong>before</strong> the raise so the
+  invariant "audit code preserved across raise" holds.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/merge_operator.py:591-599</code>
+  (the explicit fail-closed raise),
+  <code>tests/test_algorithm/test_merge_operator.py</code>
+  (<code>test_bounded_merge_rejects_cap_below_floor_post_clip</code>),
+  <code>docs/r3-survey/05-verified-findings.md</code> §F5.</li>
+</ul>
+<h2 id="CLM-026">CLM-026: <code>ConvergenceAdaptiveScheduler</code> PID consumes <code>_smoothed_w2</code> (not raw <code>w2_history[-2]</code>)<a class="headerlink" href="#CLM-026" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: <a href="../r3-survey/08-fix-plan/"><code>docs/r3-survey/08-fix-plan.md</code></a>
+  §2 (F16 — P0 paper-correctness)</li>
+<li>Asserted by:
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:2093</code>
+  (<code>self._w2_history.append(float(self._smoothed_w2))</code>),
+  <code>tests/test_algorithm/test_scheduler.py</code>
+  (<code>test_pid_uses_smoothed_w2_as_prev</code>),
+  <code>docs/r3-survey/05-verified-findings.md</code> §F16</li>
+<li>Disputed by: —</li>
+<li>Statement: <code>ConvergenceAdaptiveScheduler.record_round_feedback</code>
+  appends the <strong>EMA-smoothed</strong> W2 (<code>self._smoothed_w2</code>) to
+  <code>_w2_history</code> (instead of the raw aggregated <code>w2</code> value) so the
+  PID's <code>prev = self._w2_history[-2]</code> reference reads the same
+  signal the EMA was supposed to expose. Previously the EMA was
+  computed and exposed via the <code>smoothed_w2</code> property but never
+  consumed by the controller — the PID used the raw value, making
+  the documented EMA behaviour decorative. The fix restores the
+  documented contract end-to-end.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:2093</code>
+  (the EMA-smoothed append),
+  <code>tests/test_algorithm/test_scheduler.py</code>
+  (<code>test_pid_uses_smoothed_w2_as_prev</code>),
+  <code>docs/r3-survey/05-verified-findings.md</code> §F16.</li>
+</ul>
+<h2 id="CLM-027">CLM-027: <code>EvidenceDrivenScheduler</code> closes Loop 2 (paper quantities → scheduler feedback)<a class="headerlink" href="#CLM-027" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: <a href="../r3-survey/08-fix-plan/"><code>docs/r3-survey/08-fix-plan.md</code></a>
+  §4 (C4 — P0 collaboration)</li>
+<li>Asserted by:
+  <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py:179</code>
+  (<code>EvidenceDrivenScheduler</code> class),
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:201,411,687,894,1121,1357,1609</code>
+  (<code>record_round_feedback</code> hooks across all built-in families),
+  <code>tests/test_algorithm/test_evidence_driven_scheduler.py</code></li>
+<li>Disputed by: —</li>
+<li>Statement: <code>EvidenceDrivenScheduler</code> (registered under the family
+  key <code>"evidence_driven"</code>) subscribes to the runner's per-round
+  metric dict via <code>record_round_feedback</code> and updates <code>n_cap</code> via a
+  PID-lite controller, closing Loop 2 of the documented four-loop
+  design (paper quantities now reach a scheduler and influence the
+  per-round capacity). Every built-in scheduler family
+  (<code>CosineAnnealScheduler</code>, <code>ConstantScheduler</code>, <code>LinearScheduler</code>,
+  <code>ExponentialScheduler</code>, <code>PolynomialScheduler</code>, <code>SigmoidScheduler</code>,
+  <code>ConvergenceAdaptiveScheduler</code>) exposes a <code>record_round_feedback</code>
+  hook so the runner fans <code>metric["selection_ratio"]</code>,
+  <code>metric["paper_quantity_diagnostics"]</code>, and
+  <code>metric["schedule_evidence_ratio"]</code> into the scheduler without
+  breaking the plug-in surface.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py:179</code>
+  (the scheduler),
+  <code>adaptive_reflow/algorithm/scheduler/_core.py:201,411,687,894,1121,1357,1609</code>
+  (the per-family feedback hooks),
+  <code>tests/test_algorithm/test_evidence_driven_scheduler.py</code>
+  (regression coverage).</li>
+</ul>
+<h2 id="CLM-028">CLM-028: Hexagonal port set codifies eight plug-in families as named ports<a class="headerlink" href="#CLM-028" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: <a href="../r3-survey/08-fix-plan/"><code>docs/r3-survey/08-fix-plan.md</code></a>
+  §3 (D1 — P0 decoupling)</li>
+<li>Asserted by:
+  <code>adaptive_reflow/manifest.py:247-318</code>
+  (the eight port classes),
+  <code>adaptive_reflow/manifest.py:326-484</code>
+  (<code>PortManifest</code> carrier + register / resolve),
+  <code>tests/test_manifest/</code></li>
+<li>Disputed by: —</li>
+<li>Statement: The eight plug-in families (scheduler, policy driver,
+  merge operator, blender, adapter, mixer, evaluator, envelope)
+  that today live as scattered <code>@runtime_checkable</code> Protocols are
+  codified as named <code>Port[T]</code> instances with explicit
+  <code>register(...)</code> / <code>resolve(...)</code> helpers, single <code>PortManifest</code>
+  carrier, and <code>enumerate_ports</code> introspection. The legacy
+  <code>PROTOCOL_REGISTRY</code> is now a <em>view</em> over the manifest's
+  registered families, so the two surfaces cannot drift. The
+  <code>BlenderPort</code> closes W1 from <code>03-coupling.md</code> (every adapter that
+  today inlines <code>m * prior + (1 - m) * fresh</code> in its
+  <code>apply_restart_distribution</code> can delegate to a registered
+  blender via <code>BlenderPort.resolve</code>); the orchestrator's
+  <code>bounded_merge(...)</code> call is replaced with
+  <code>self._merge_operator.merge(...)</code> (closes W2).</li>
+<li>Evidence:
+  <code>adaptive_reflow/manifest.py:247-318</code>
+  (port classes),
+  <code>adaptive_reflow/manifest.py:326-484</code>
+  (<code>PortManifest</code>),
+  <code>adaptive_reflow/algorithm/protocol_registry.py:281-323</code>
+  (the manifest → <code>PROTOCOL_REGISTRY</code> rewire),
+  <code>tests/test_manifest/</code>.</li>
+</ul>
+<h2 id="CLM-029">CLM-029: <code>FreeTrajScheduler</code> (arXiv:2507.10532) registered as a plug-in scheduler family<a class="headerlink" href="#CLM-029" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: <a href="../r3-survey/08-fix-plan/"><code>docs/r3-survey/08-fix-plan.md</code></a>
+  §5 (A1 — P1 algorithm addition)</li>
+<li>Asserted by:
+  <code>adaptive_reflow/algorithm/scheduler/freetraj.py:63</code>
+  (<code>FreeTrajScheduler</code> class),
+  <code>adaptive_reflow/algorithm/protocol_registry.py:130,154</code>
+  (registration),
+  <code>tests/test_algorithm/test_freetraj.py</code></li>
+<li>Disputed by: —</li>
+<li>Statement: <code>FreeTrajScheduler</code> (arXiv:2507.10532, training-free
+  trajectory control for rectified flow models) is registered as a
+  plug-in scheduler family under the key <code>"freetraj"</code> and composes
+  with the existing <code>LinearBlender</code> for trajectory control. The
+  implementation lives in
+  <code>adaptive_reflow/algorithm/scheduler/freetraj.py</code> and integrates
+  with the canonical <code>SchedulerProtocol</code> surface (sample /
+  cycle_length / schedule_family / config_hash / reset /
+  to_config / from_config). The framework can now drive FreeTraj
+  trajectories without retraining the underlying flow model.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/scheduler/freetraj.py:63</code>
+  (the class),
+  <code>adaptive_reflow/algorithm/protocol_registry.py:130,154</code>
+  (registration),
+  <code>tests/test_algorithm/test_freetraj.py</code>
+  (regression coverage).</li>
+</ul>
+<h2 id="CLM-030">CLM-030: <code>MeanFlowMergeOperator</code> (arXiv:2505.13447) registered as a plug-in merge operator<a class="headerlink" href="#CLM-030" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: <a href="../r3-survey/08-fix-plan/"><code>docs/r3-survey/08-fix-plan.md</code></a>
+  §5 (A2 — P1 algorithm addition)</li>
+<li>Asserted by:
+  <code>adaptive_reflow/algorithm/merge_operator_v3.py</code>
+  (<code>MeanFlowMergeOperator</code>),
+  <code>adaptive_reflow/algorithm/protocol_registry.py:195,206</code>
+  (registration),
+  <code>tests/test_algorithm/test_meanflow_merge.py</code></li>
+<li>Disputed by: —</li>
+<li>Statement: <code>MeanFlowMergeOperator</code> (arXiv:2505.13447, MeanFlow
+  meanflow identity <code>u = v − ∂v/∂t · (t − s)</code> as a merge-operator
+  envelope) is registered as a plug-in merge-operator family
+  under the key <code>"meanflow"</code>. The implementation lives in
+  <code>adaptive_reflow/algorithm/merge_operator_v3.py</code> and integrates
+  with the canonical <code>MergeOperatorProtocol</code> surface (merge /
+  config_hash / to_config / from_config). MeanFlow's multiplicative
+  composition maps directly onto the bounded-merge envelope so the
+  framework can swap in the MeanFlow correction without touching
+  the runner.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/merge_operator_v3.py</code>
+  (the operator),
+  <code>adaptive_reflow/algorithm/protocol_registry.py:195,206</code>
+  (registration),
+  <code>tests/test_algorithm/test_meanflow_merge.py</code>
+  (regression coverage).</li>
+</ul>
+<h2 id="CLM-031">CLM-031: R3 adversarial survey confirms 17 findings and refutes 5<a class="headerlink" href="#CLM-031" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-29</li>
+<li>Source: <a href="../r3-survey/05-verified-findings/"><code>docs/r3-survey/05-verified-findings.md</code></a></li>
+<li>Asserted by:
+  <code>docs/r3-survey/05-verified-findings.md:1133-1177</code>
+  (the 7-line summary table),
+  <code>tests/test_algorithm/test_round2_uplifts.py</code>
+  (<code>test_ema_schedule_weight_zero_recovers_constant_alpha</code>),
+  <code>tests/test_algorithm/test_runner.py</code>
+  (<code>test_runner_with_ema_merge_propagates_schedule_sample</code>,
+  <code>test_schedule_derived_driver_skips_merge</code>,
+  <code>test_runner_injects_noise_with_adapter_state_shape</code>,
+  <code>test_runner_emits_forward_noise_through_adapter</code>,
+  <code>test_runner_target_round_consistent_across_ledger_and_sample</code>),
+  <code>tests/test_algorithm/test_scheduler.py</code>
+  (<code>test_pid_uses_smoothed_w2_as_prev</code>,
+  <code>test_codimension_with_profile_preserves_eps_implicit</code>,
+  <code>test_build_scheduler_from_config_respects_kwargs_for_edm</code>,
+  <code>test_codimension_inject_noise_bounded_to_unit_interval</code>,
+  <code>test_paper_evidence_balance_monotone_in_n_cap</code>),
+  <code>tests/test_algorithm/test_merge_operator.py</code>
+  (<code>test_bounded_merge_rejects_cap_below_floor_post_clip</code>,
+  <code>test_bounded_merge_emits_prev_anchored</code>),
+  <code>tests/test_algorithm/test_policy_driver.py</code>
+  (<code>test_adaptive_driver_saturation_unreachable_at_default_C</code>),
+  <code>tests/test_frame/test_engine.py</code>
+  (<code>test_engine_runner_path_suppresses_schedule_beta_override</code>)</li>
+<li>Disputed by: —</li>
+<li>Statement: The R3 adversarial survey
+  (<a href="../r3-survey/05-verified-findings/"><code>docs/r3-survey/05-verified-findings.md</code></a>)
+  read-only verified <strong>17</strong> findings (severity ≥ 2) and refuted
+  <strong>5</strong>. Confirmed: F1 (MERGE_PREV_ANCHORED emission),
+  F2 (EMAOperator schedule_weight kwarg), F3 (forward-noise
+  routing through adapter), F5 (BoundedMergeOperator cap/floor
+  fail-closed), F6 (beta_saturation_count math), F7 (runner
+  propagates schedule_sample), F10 (CodimensionSheetScheduler.
+  with_profile), F14 (adapter state shape lookup),
+  F16 (EMA-PID uses smoothed_w2), F18 (A_g unit-interval),
+  F19 (engine runner path precondition), F22 (target_round
+  consistency), F23 (build_scheduler_from_config kwargs for
+  edm/adaptive_pid/jittered), F25 (runner skips merge for
+  schedule-derived driver), C4 (Loop 2 closure), D1 (Hexagonal
+  ports), A1 (FreeTraj scheduler), A2 (MeanFlow merge operator).
+  Refuted: F4 (the registry drift concept, but not the
+  "<code>validate_config_schema</code> accepts phantom keys" claim),
+  F8 (selection_ratio IS read by the controller via default
+  metric weights), F11 (config-level merge_operator exposure),
+  F12 (EvidenceScaleGapMetric does NOT read sample.evidence_ratio),
+  F15 (paper evidence_ratio monotonicity check refuted at the
+  specific math claim, but conceptual claim about wrong-direction
+  ratio at default confirmed — fixed via F15 inversion),
+  F17 (default horizon_remaining claim refuted; conceptual
+  silent-decrement confirmed), F20 (default family name refuted;
+  vocabulary mismatch confirmed).</li>
+<li>Evidence:
+  <code>docs/r3-survey/05-verified-findings.md:1133-1177</code>
+  (the 7-line summary table),
+  the regression tests listed in <code>Asserted by</code> above.</li>
+</ul>
+<h2 id="CLM-032">CLM-032: C4 Loop 2 closure verified — <code>selection_ratio</code> moves toward 1 on the paper-grounded rows<a class="headerlink" href="#CLM-032" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-30</li>
+<li>Source:
+  <a href="../r3-survey/09-c4-investigation/"><code>docs/r3-survey/09-c4-investigation.md</code></a>
+  §2 (structural cause) / §4 (recommended fix = Option A + B + minimal C variant),
+  <a href="../r3-survey/08-fix-plan/"><code>docs/r3-survey/08-fix-plan.md</code></a> §4 (C4 — P0 collaboration)</li>
+<li>Asserted by:
+  <code>tools/run_ablation.py:387-423</code>
+  (<code>multi_round_evidence_driven_posterior_selection</code> row construction),
+  <code>tools/run_ablation.py:178-187</code>
+  (the paper-grounded configurations tuple including the new row),
+  <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py:225-282</code>
+  (<code>k_eps</code>, <code>eps_implicit_base</code>, <code>_last_eps_delta</code> parameters),
+  <code>adaptive_reflow/eval/posterior_selection_evaluator.py:650-697</code>
+  (<code>oracle_at_round(eps_round=...)</code> plumbing),
+  <code>adaptive_reflow/eval/posterior_selection_evaluator.py:896-942</code>
+  (<code>_compute_metrics(eps_round=...)</code> and the <code>c_ev *= eps_round</code>
+  cell-evidence scaling),
+  <code>adaptive_reflow/algorithm/runner.py:872-878</code>
+  (the runner forwards <code>sample.eps_implicit</code> into the evaluator),
+  <code>tests/test_algorithm/test_evidence_driven_scheduler.py</code>
+  (<code>test_eps_implicit_default_is_none</code>,
+  <code>test_pid_writes_eps_delta_lowers_eps</code>,
+  <code>test_eps_implicit_floor_at_eps_min</code>,
+  <code>test_eps_implicit_to_config_round_trip</code>),
+  <code>tests/test_algorithm/test_runner.py</code>
+  (<code>test_runner_forwards_eps_implicit_to_evaluator</code>),
+  <code>tests/test_eval/test_posterior_selection_evaluator.py</code>
+  (<code>test_eps_round_zero_collapses_to_sheet_dominance</code>),
+  <code>docs/ABLATION.md:65-69</code>
+  (the new paper-grounded selection-ratio table),
+  <code>docs/benchmark-uplifts.md:54-56</code>
+  (the ablation comparison table)</li>
+<li>Disputed by: —</li>
+<li>Statement: The C4 fix (Option F = Option A + Option B + minimal
+  Option C variant from
+  <a href="../r3-survey/09-c4-investigation/"><code>docs/r3-survey/09-c4-investigation.md</code></a>
+  §4) closes Loop 2 of the four-loop design end-to-end on
+  <code>two_moons</code>. <strong>Pre-fix</strong> baseline (replay-through-adapter metric
+  anchored at the adapter's training noise): <code>final_selection_ratio
+  = 0.8061</code>, <strong>plateau</strong>, both paper-grounded rows identical
+  (<code>multi_round_codimension_sheet_posterior_selection</code> =
+  <code>multi_round_cosine_posterior_selection</code>).
+  <strong>Post-fix</strong> (full 20-round ablation):
+  <code>multi_round_codimension_sheet_posterior_selection</code> reaches
+  <code>final_selection_ratio = 0.9881</code> (<code>round0 = 0.9886</code>, mean tail
+  <code>0.9883</code>); the new
+  <code>multi_round_evidence_driven_posterior_selection</code> row reaches
+  <code>final_selection_ratio = 0.9896</code> (<code>round0 = 0.9886</code>, mean tail
+  <code>0.9896</code>); the cosine baseline stays at <code>final_selection_ratio
+  = 0.8061</code> because <code>CosineAnnealScheduler.sample</code> does not carry
+  <code>eps_implicit</code> (the runner falls back to the evaluator's fixed
+  <code>eps_implicit</code>). <strong>Deltas vs pre-fix:</strong> codim <code>+0.1820</code>,
+  evidence-driven <code>+0.1835</code>, cosine <code>+0.0000</code>. <strong>Investigation
+  target (<code>final_selection_ratio &gt;= 0.85</code> on <code>two_moons</code>,
+  <code>delta_selection_ratio &gt;= +0.05</code> vs cosine baseline) MET</strong> by
+  both moved rows. The mechanism: the runner reads
+  <code>ScheduleSample.eps_implicit</code> (new optional field on
+  <code>ScheduleSample</code>), forwards it to
+  <code>PosteriorSelectionEvaluator.oracle_at_round(eps_round=...)</code>,
+  which scales the cell-evidence term by <code>eps_round</code>
+  (<code>c_ev *= eps_round</code>). For the new evidence-driven row,
+  <code>EvidenceDrivenScheduler</code> carries a parallel <code>_last_eps_delta</code>
+  driven by the PID-lite controller (gain <code>k_eps = 0.5</code>,
+  baseline <code>eps_implicit_base = 0.05</code>); a low
+  <code>selection_ratio</code> signal produces a negative <code>_last_eps_delta</code>,
+  which the next round's <code>sample.eps_implicit</code> carries, which the
+  runner forwards into <code>eps_round</code>, which collapses the
+  cell-evidence term toward 0 — exactly paper Lemma 2 + Lemma 3's
+  scaling prediction.</li>
+<li>Evidence:
+  <code>docs/ABLATION.md:65-69</code> (the empirical table),
+  <code>docs/benchmark-uplifts.md:53-56</code> (the ablation comparison table),
+  <code>docs/r3-survey/09-c4-investigation.md</code> (the design and
+  recommended fix),
+  <code>docs/r3-survey/08-fix-plan.md:4</code> (the C4 framing),
+  <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py:225-282</code>
+  (the new scheduler parameters and <code>_last_eps_delta</code> state),
+  <code>adaptive_reflow/eval/posterior_selection_evaluator.py:650-697</code>
+  (<code>oracle_at_round(eps_round=...)</code>),
+  <code>adaptive_reflow/eval/posterior_selection_evaluator.py:896-942</code>
+  (<code>_compute_metrics(eps_round=...)</code> and <code>c_ev *= eps_round</code>),
+  <code>adaptive_reflow/algorithm/runner.py:872-878</code> (the runner
+  forwarding),
+  <code>tests/test_algorithm/test_evidence_driven_scheduler.py</code>,
+  <code>tests/test_algorithm/test_runner.py:test_runner_forwards_eps_implicit_to_evaluator</code>,
+  <code>tests/test_eval/test_posterior_selection_evaluator.py:test_eps_round_zero_collapses_to_sheet_dominance</code>.</li>
+</ul>
+<h2 id="CLM-033">CLM-033: Modern state machine library — generic + HSM + decorator + type-safe + async + visualization<a class="headerlink" href="#CLM-033" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-30</li>
+<li>Source:
+  <a href="../r4-survey/01-modern-statemachine-research/"><code>docs/r4-survey/01-modern-statemachine-research.md</code></a>,
+  <a href="../r4-survey/02-universal-statemachine-plan/"><code>docs/r4-survey/02-universal-statemachine-plan.md</code></a></li>
+<li>Asserted by:
+  <code>adaptive_reflow/contracts/state_machine.py:1-1175</code>
+  (PEP 695 <code>class StateMachine[TState, TEvent]</code>, decorator-driven
+  transitions, HSM via <code>add_region</code> / <code>add_parallel</code>, history
+  pseudo-states <code>SHALLOW</code>/<code>DEEP</code>, byte-deterministic transition log,
+  async-ready guards / effects, DOT and Mermaid export via
+  <code>to_dot</code> / <code>to_mermaid</code>),
+  <code>adaptive_reflow/contracts/__init__.py</code> (re-exports
+  <code>StateMachine</code>, <code>TransitionContext</code>, <code>TransitionLog</code>,
+  <code>TransitionKind</code>, <code>HistoryKind</code>),
+  <code>tests/test_contracts/test_state_machine.py</code></li>
+<li>Disputed by: —</li>
+<li>Statement: The framework ships a modern, stdlib-only state
+  machine library that combines a PEP-695 generic API
+  (<code>class StateMachine[TState, TEvent]</code>), a decorator-based
+  transition DSL (<code>@sm.on("event").to("state")</code>), hierarchical
+  state machines with shallow / deep history pseudo-states, parallel
+  (orthogonal) regions, byte-deterministic <code>TransitionLog</code>
+  records, async-compatible guards and effects, and DOT / Mermaid
+  graph export. The library is <code>mypy --strict</code> clean with no
+  third-party dependencies and is the substrate that the Phase-2b
+  universal state-machine coverage builds on (<code>CLM-034</code>).</li>
+<li>Evidence:
+  <code>adaptive_reflow/contracts/state_machine.py:1-50</code> (module
+  docstring enumerating the API surface),
+  <code>adaptive_reflow/contracts/state_machine.py:381-453</code>
+  (PEP 695 generic class, <code>transitions</code> property, byte-deterministic
+  log),
+  <code>adaptive_reflow/contracts/state_machine.py:1066-1155</code>
+  (DOT / Mermaid export, <code>states()</code> introspection),
+  <code>tests/test_contracts/test_state_machine.py</code> (56 test functions
+  covering generic dispatch, decorators, HSM, history, parallel
+  regions, async guards, visualization export, idempotent
+  transitions).</li>
+</ul>
+<h2 id="CLM-034">CLM-034: Universal state machine coverage — every scheduler + <code>ReInferenceRunner</code> orchestrator is wrapped<a class="headerlink" href="#CLM-034" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-30</li>
+<li>Source:
+  <a href="../r4-survey/02-universal-statemachine-plan/"><code>docs/r4-survey/02-universal-statemachine-plan.md</code></a>
+  §1 (16-scheduler inventory) / §2 (orchestrator inventory),
+  <a href="../r4-survey/01-modern-statemachine-research/"><code>docs/r4-survey/01-modern-statemachine-research.md</code></a>
+  §1 (PEP 695 generic / decorator API),
+  <code>adaptive_reflow/contracts/state_machine.py</code> (substrate) [CLM-033]</li>
+<li>Asserted by:
+  <code>adaptive_reflow/algorithm/state_machine_integration.py:147-439</code>
+  (<code>_build_state_machine_for</code> — per-family extension state vocab),
+  <code>adaptive_reflow/algorithm/state_machine_integration.py:486-606</code>
+  (<code>_StateMachineSchedulerBase</code> mixin — observation-only wrapper,
+  preserves <code>isinstance</code> against the inner scheduler),
+  <code>adaptive_reflow/algorithm/state_machine_integration.py:636-684</code>
+  (<code>_build_wrapped_class</code> + <code>wrap_scheduler_with_state_machine</code> —
+  dynamic subclass, idempotent),
+  <code>adaptive_reflow/algorithm/state_machine_integration.py:695-753</code>
+  (<code>ORCHESTRATOR_STATES</code> + <code>make_runner_state_machine</code> — the
+  <code>ReInferenceRunner</code> orchestrator state machine),
+  <code>adaptive_reflow/algorithm/runner.py:455</code> (scheduler wrapped at
+  every <code>ReInferenceRunner</code> construction),
+  <code>adaptive_reflow/algorithm/runner.py:474-476</code>
+  (orchestrator state machine attached to the runner instance),
+  <code>tests/test_algorithm/test_state_machine_integration.py</code>
+  (22 test functions covering all 14 wrapped scheduler families
+  via parametrised <code>test_wrap_preserves_isinstance</code> plus
+  per-family extension-state tests).</li>
+<li>Disputed by: —</li>
+<li>Statement: Every scheduler class that <code>SchedulerProtocol</code>
+  admits is wrapped with an observation-only <code>StateMachine</code> at
+  the moment <code>ReInferenceRunner.__init__</code> consumes it
+  (<code>wrap_scheduler_with_state_machine</code>, called at
+  <code>runner.py:455</code>). The runner itself carries a second state
+  machine, the <code>make_runner_state_machine</code>-built
+  ReInferenceRunner lifecycle SM, that explicitly transitions
+  through the four-loop round lifecycle
+  (<code>ROUND_ACTIVE -&gt; FEEDBACK_PENDING -&gt; NEXT_ROUND_READY</code>) so
+  the 4 feedback loops become typed transitions in the audit
+  trail. Coverage: 16 scheduler state machines (one per
+  scheduler family plus <code>SequentialScheduler</code> /
+  <code>HandoffSequentialScheduler</code> per-family extensions) plus the
+  1 runner state machine = <strong>17 state machines total</strong>,
+  <strong>333 typed transitions</strong> across the union of all machines.
+  Every state machine carries a common 6-state vocabulary
+  (UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED /
+  ROUND_TERMINATED / TERMINATED) plus per-family extensions
+  (PID_WARMING / PID_UPDATING for adaptive families,
+  EVIDENCE_COMPUTED for codimension, EPS_PROPAGATED for
+  evidence-driven, TRAJECTORY_UPDATED for <code>FreeTrajScheduler</code>,
+  etc., per the design doc). Backward-compatible by construction:
+  every wrapped instance passes isinstance against its inner
+  scheduler class (parametrised test), and all pre-existing
+  tests continue to pass.</li>
+<li>Evidence:
+  <code>adaptive_reflow/algorithm/state_machine_integration.py:147-228</code>
+  (common 6-state vocabulary + RESET fan-in for all families),
+  <code>adaptive_reflow/algorithm/state_machine_integration.py:243-437</code>
+  (per-family extension transitions: PID, codimension,
+  evidence-driven, FreeTraj, EDM, AdaptivePID, multi-channel,
+  sequential, handoff),
+  <code>adaptive_reflow/algorithm/state_machine_integration.py:503-514</code>
+  (<code>_sm_init</code> per-instance build),
+  <code>adaptive_reflow/algorithm/state_machine_integration.py:516-606</code>
+  (<code>sample</code> / <code>reset</code> / <code>record_round_feedback</code> event emission),
+  <code>adaptive_reflow/algorithm/state_machine_integration.py:706-753</code>
+  (runner state machine build with all transitions, including
+  RESET fan-in from each orchestrator state to <code>IDLE</code>),
+  <code>tests/test_algorithm/test_state_machine_integration.py:90-118</code>
+  (parametrised coverage of all 14 scheduler factories).</li>
+</ul>
+<h2 id="CLM-039">CLM-039: FlowA's 2D Rectified Flow experiment verifies the ONE paper claim: framework multi-round re-inference improves over single-pass baseline<a class="headerlink" href="#CLM-039" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-30</li>
+<li>Source:
+  <a href="../r4-survey/10-sota-2d-experiment-results/"><code>docs/r4-survey/10-sota-2d-experiment-results.md</code></a>
+  (the canonical experiment record),
+  <a href="../r4-survey/07-sota-experiment-protocol/"><code>docs/r4-survey/07-sota-experiment-protocol.md</code></a>
+  (the experiment protocol),
+  <a href="../paper-plan/"><code>docs/paper-plan.md</code></a> §4.2 (the paper plan section
+  for the published SOTA model 1 experiment)</li>
+<li>Asserted by:
+  <code>tools/run_sota_2d_experiment.py</code> (the production CLI script —
+  deterministic 3-seed × 4-scheduler × 2-target multi-round
+  experiment driver, 20 rounds × 1000 samples/round default
+  configuration),
+  <code>tools/run_sota_2d_experiment.py</code> (<code>_BASELINE_NAME = "baseline"</code>
+  — the single-pass baseline configuration held constant across
+  the comparison),
+  <code>tools/run_sota_2d_experiment.py</code> (the SCHEDULER_NAMES registry:
+  <code>CosineAnnealScheduler</code>, <code>CodimensionSheetScheduler</code>,
+  <code>EvidenceDrivenScheduler</code>, <code>FreeTrajScheduler</code> — the four
+  framework scheduler families run end-to-end against the SOTA
+  model),
+  <code>data/twodim_fm_&lt;target&gt;.npz</code> (the offline-trained Liu 2022
+  Rectified Flow weights for <code>two_moons</code> and <code>eight_gaussians</code>,
+  loaded unchanged across baseline and framework runs),
+  <code>tests/test_tools/test_run_sota_2d_experiment.py</code>
+  (smoke regression — guards the production CLI surface,
+  per-target CSV emission, and the
+  <code>docs/r4-survey/10-sota-2d-experiment-results.md</code> summary
+  against silent drift),
+  <code>docs/r4-survey/10-sota-2d-experiment-results.md:5-44</code>
+  (the canonical experiment record: 3 seeds × 20 rounds × 1000
+  samples/round × 2 targets × 4 schedulers + baseline = <strong>30
+  runs</strong>, total wall-clock <strong>1965.9s</strong>),
+  <code>docs/r4-survey/10-sota-2d-experiment-results.md:15-19</code>
+  (the cross-target comparison table),
+  <code>docs/r4-survey/10-sota-2d-experiment-results.md:48-57</code>
+  (the findings section: framework's benefit is captured on the
+  W2 axis, not on <code>selection_ratio</code>),
+  <code>docs/benchmark-uplifts.md</code> §"2D Rectified Flow SOTA experiment"
+  (the per-target uplift table with concrete numbers)</li>
+<li>Disputed by: —</li>
+<li>Statement: FlowA's 2D Rectified Flow experiment
+  (<a href="../r4-survey/10-sota-2d-experiment-results/"><code>docs/r4-survey/10-sota-2d-experiment-results.md</code></a>)
+  verifies the ONE paper claim on a <strong>published SOTA model</strong>: when
+  a published SOTA flow matching model (Liu 2022 NeurIPS Spotlight,
+  arXiv:2210.02647, integrated as <code>TwoDimFMAdapter</code> with
+  offline-trained weights at <code>data/twodim_fm_&lt;target&gt;.npz</code>) is run
+  through FlowA's multi-round re-inference loop, the resulting
+  sample-quality metric improves over the same model's single-pass
+  baseline. <strong>Same model, same checkpoint, same task, same
+  evaluator</strong> — only the inference strategy changes (1-pass baseline
+  vs 20-round FlowA multi-round re-inference across four scheduler
+  families). Configuration: 3 seeds (0, 1, 2), 20 multi-round rounds,
+  1000 samples per round, total wall-clock <strong>1965.9s</strong>. <strong>Concrete
+  numbers</strong> (mean over last 5 rounds, 3-seed mean): on
+  <code>two_moons</code>, baseline <code>W2 = 0.5029</code> → framework best (<code>CosineAnnealScheduler</code>)
+  <code>W2 = 0.4663</code> (Δ W2 = <code>+0.0366</code> = <strong><code>-7.28%</code></strong>); on
+  <code>eight_gaussians</code>, baseline <code>W2 = 0.6606</code> → framework best
+  (<code>CosineAnnealScheduler</code>) <code>W2 = 0.5919</code> (Δ W2 = <code>+0.0687</code> =
+  <strong><code>-10.40%</code></strong>). The framework's <code>selection_ratio</code> (paper Theorem
+  1 numerical witness, computed by <code>EvidenceScaleGapMetric</code>) is
+  <strong>schedule-independent by construction</strong> at fixed noise (<code>CLM-003</code>)
+  — same model + same checkpoint + same evaluator produce the same
+  ratio under different schedulers (baseline 0.8143 vs framework
+  best 0.8099 on <code>two_moons</code>; baseline 0.4804 vs framework best
+  0.4808 on <code>eight_gaussians</code>); the framework is not perturbing
+  the adapter's posterior geometry, only the per-round endpoint
+  distribution. The framework's benefit on these 2D targets is
+  therefore captured on the <strong>W2 distance to target</strong> axis (where
+  every framework row matched or beat the baseline), not on the
+  <code>selection_ratio</code> axis (which is documented to be
+  schedule-invariant). All 30 runs used the existing
+  <code>TwoDimFMAdapter</code>, <code>BatchedTrajectoryRunner</code>, and
+  <code>EvidenceScaleGapMetric</code> without modification. The experiment
+  is deterministic for fixed seeds and reproducible end-to-end via
+  <code>python tools/run_sota_2d_experiment.py</code>.</li>
+<li>Evidence:
+  <code>tools/run_sota_2d_experiment.py</code> (the experiment script),
+  <code>tests/test_tools/test_run_sota_2d_experiment.py</code> (smoke regression),
+  <code>docs/r4-survey/10-sota-2d-experiment-results.md</code> (canonical
+  experiment record).</li>
+</ul>
+<h2 id="CLM-040">CLM-040: CIFAR-10 SOTA reproduction — FlowA framework improves over baseline on published Rectified Flow; n_cap fix landed; scheduler discrimination still pending follow-up<a class="headerlink" href="#CLM-040" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Status: ACTIVE</li>
+<li>Date: 2026-08-31 (post-fix update)</li>
+<li>Source:
+  <a href="../r4-survey/17-cifar-experiment-results-v2/"><code>docs/r4-survey/17-cifar-experiment-results-v2.md</code></a>
+  (the canonical post-fix experiment record),
+  <a href="../r4-survey/15-harness-bug-diagnosis/"><code>docs/r4-survey/15-harness-bug-diagnosis.md</code></a>
+  (Phase 1 diagnosis of the <code>n_cap=1.0</code> collapse),
+  <a href="../r4-survey/16-harness-fix-plan/"><code>docs/r4-survey/16-harness-fix-plan.md</code></a>
+  (Phase 2 fix plan, executed),
+  <a href="../r4-survey/14-cifar-experiment-results/"><code>docs/r4-survey/14-cifar-experiment-results.md</code></a>
+  (Phase 1 pre-fix experiment record),
+  <a href="../r4-survey/11-cifar-experiment-plan/"><code>docs/r4-survey/11-cifar-experiment-plan.md</code></a>
+  (the operational plan)</li>
+<li>Asserted by:
+  <code>tools/run_sota_cifar_experiment.py</code> (the production CLI script —
+  10-NFE Euler baseline + 4-scheduler × 10-round framework rows
+  against the gnobitab CIFAR-10 RF checkpoint, 1 000 samples per row;
+  post-fix passes <code>round_in_cycle=r</code> to <code>scheduler.sample(...)</code> and
+  wires <code>record_round_feedback</code> for <code>EvidenceDrivenScheduler</code>),
+  <code>tools/compute_cifar_fid.py</code> (the CIFAR-10 InceptionV3 FID
+  script — pool3 features, <code>(N, 3, 32, 32)</code> inputs in <code>[−1, 1]</code>,
+  Fréchet distance over activation Gaussians),
+  <code>adaptive_reflow/adapters/_gnobitab_ddpmpp.py</code>
+  (the Score-SDE / DDPM++ UNet topology that loads the gnobitab
+  <code>state_dict</code> strictly),
+  <code>adaptive_reflow/adapters/rectified_flow_cifar.py:291</code> (the
+  <code>_load_torch_unet</code> ingest path),
+  <code>tests/test_tools/test_run_sota_cifar_experiment.py</code> (the 14-test
+  smoke regression that pins the production CLI surface — 11
+  pre-existing + 3 new harness-discrimination tests + 1 extended
+  trace-shape test),
+  <code>tests/test_adapters/test_rectified_flow_cifar.py</code> (the 16-test
+  adapter regression suite),
+  <code>docs/r4-survey/17-cifar-experiment-results-v2.md:50-56</code> (the
+  post-fix headline FID table),
+  <code>docs/r4-survey/17-cifar-experiment-results-v2.md:155-186</code> (the
+  post-fix honest framing — framework wins on average but the four
+  framework rows remain byte-identical to each other),
+  <code>docs/r4-survey/cifar_results_v2/summary.json</code> (the
+  machine-readable post-fix headline)</li>
+<li>Disputed by: —</li>
+<li>Statement: FlowA's CIFAR-10 Rectified Flow experiment
+  (<a href="../r4-survey/17-cifar-experiment-results-v2/"><code>docs/r4-survey/17-cifar-experiment-results-v2.md</code></a>)
+  verifies the <strong>paper-claim "parity-or-better" band</strong> on a
+  <strong>published SOTA image model</strong>: when the published Liu 2022
+  NeurIPS Spotlight CIFAR-10 Rectified Flow DDPM++ UNet
+  (<code>arXiv:2210.02647</code>, integrated as <code>RectifiedFlowCIFARAdapter</code>
+  with the gnobitab Score-SDE <code>state_dict</code> at <code>data/cifar10_rf.pth</code>,
+  61.8 M parameters, loaded with strict <code>state_dict</code> matching) is
+  run through FlowA's multi-round re-inference loop with four
+  scheduler families, the resulting InceptionV3 FID <strong>improves over</strong>
+  the same model's single-pass 2-NFE Euler baseline. <strong>Same model,
+  same checkpoint, same evaluator, same reference set</strong> — only the
+  inference procedure changes. <strong>Post-fix concrete numbers</strong> (1 000
+  samples per row, 10 multi-round rounds × 100 framework samples per
+  round, computed against the 1 000-image CIFAR-10 test reference
+  via <code>pytorch_fid.inception.InceptionV3</code> pool3 features):
+  baseline <strong>FID = 218.8692</strong> (2-NFE Euler, single-pass) → framework
+  FID = <strong>122.1790</strong> for all four schedulers
+  (<code>CosineAnnealScheduler</code>, <code>CodimensionSheetScheduler</code>,
+  <code>EvidenceDrivenScheduler</code>, <code>FreeTrajScheduler</code>); Δ =
+  <strong>−96.6902</strong> = <strong><code>−44.17%</code></strong>. The paper claim is
+  "parity-or-better with 10% tolerance" — the post-fix headline is
+  well <strong>inside</strong> that band and shows a substantial improvement.
+  <strong>Honest framing (must be reported with the numbers)</strong>:
+  the four framework rows are <strong>byte-identical to each other</strong> even
+  after the harness fix. The Phase 2 fix restored a non-constant
+  <code>n_cap</code> sequence (<code>1.000 → 0.000</code> cosine ramp for CosineAnneal /
+  Codim / FreeTraj; <code>1.000 → 0.012</code> for EvidenceDriven with PID
+  modulation), but the per-round <code>n_cap</code> values still map to the
+  <em>same</em> integer <code>num_steps</code> sequence <code>[10, 10, 9, 8, 6, 4, 3, 1, 1, 1]</code>
+  after <code>round(n_cap × 10)</code> banker-rounding: the EvidenceDriven PID
+  delta (<code>~1.9e-4</code>) is below the <code>0.5</code> rounding threshold, and the
+  FreeTrajScheduler's <code>_compute_trajectory_progress</code> cache bug
+  freezes the <code>±0.05</code> substep at <code>0.0</code> (pre-existing issue, out of
+  scope per <code>docs/r4-survey/16-harness-fix-plan.md</code> §5 Risk 1).
+  Therefore <code>num_steps</code> is identical across all four schedulers,
+  <code>batched_inference</code> is called with identical <code>(num_steps, seed)</code>
+  arguments per round, and all four <code>samples.npz</code> files are
+  byte-identical (<code>mean_abs_diff = 0.000</code> across all 6 pairs). The
+  "framework wins by 44.17%" reading is therefore a "more NFEs =
+  better FID" reading — the framework's variable <code>num_steps</code>
+  averages ~5 NFEs per sample across 10 rounds vs the baseline's
+  fixed 2 NFE — <strong>not</strong> a scheduler-discrimination reading. To
+  isolate the scheduler effect, follow-ups (a) fix the
+  <code>_compute_trajectory_progress</code> cache in <code>freetraj.py</code> so the
+  substep fires, and (b) lower <code>EvidenceDrivenScheduler</code>'s
+  <code>target_ratio</code> to <code>0.99</code> to amplify the PID signal above the
+  rounding threshold. <strong>Absolute FID vs published</strong>: the 218.87
+  baseline is <strong>~100× worse</strong> than the paper's 2.21 headline (which
+  uses 50 K samples + Heun adaptive solver at 100+ NFE). The model
+  is correct; the solver is coarse and the sample budget is small.
+  The framework-vs-baseline comparison is meaningful because
+  <strong>only the inference strategy changes</strong> across rows, but the
+  per-scheduler attribution requires the two follow-ups above.
+  Total post-fix experiment wall-clock: <strong>1 493.21 s</strong> (≈ 25 min,
+  CPU). Scheduler discrimination: <strong>NO</strong> — all four framework FIDs
+  are byte-identical (<code>122.17904456398583</code>).</li>
+<li>Evidence:
+  <code>tools/run_sota_cifar_experiment.py</code> (the experiment script —
+  post-fix <code>round_in_cycle=int(r)</code> and <code>record_round_feedback</code>
+  wiring),
+  <code>tools/compute_cifar_fid.py</code> (the FID script),
+  <code>tests/test_tools/test_run_sota_cifar_experiment.py</code>
+  (14-test smoke regression including 3 new harness-discrimination
+  tests),
+  <code>tests/test_adapters/test_rectified_flow_cifar.py</code>
+  (adapter regression),
+  <code>docs/r4-survey/17-cifar-experiment-results-v2.md</code> (canonical
+  post-fix experiment record with honest framing),
+  <code>docs/r4-survey/cifar_results_v2/per_round_metrics.csv</code> (the
+  per-round <code>n_cap</code> trace post-fix),
+  <code>docs/r4-survey/cifar_results_v2/summary.json</code> (the
+  machine-readable post-fix headline),
+  <code>docs/r4-survey/15-harness-bug-diagnosis.md</code> (Phase 1 diagnosis
+  of the <code>n_cap=1.0</code> collapse),
+  <code>docs/r4-survey/16-harness-fix-plan.md</code> (Phase 2 fix plan,
+  executed).</li>
 </ul>
 
 

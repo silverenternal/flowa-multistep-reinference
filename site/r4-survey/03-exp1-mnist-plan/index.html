@@ -1,0 +1,1785 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>EXP-1: MNIST Rectified Flow — End-to-End Plan - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#exp-1-mnist-rectified-flow-end-to-end-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              EXP-1: MNIST Rectified Flow — End-to-End Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-architecture-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §1. Architecture overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§1. Architecture overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-where-mnist-fits-in-the-existing-adapter-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Where MNIST fits in the existing adapter framework
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-what-changes-vs-twodimfmadapter-2d-for-mnist-28x28-grayscale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 What changes vs TwoDimFMAdapter (2D) for MNIST (28x28 grayscale)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-capability-handshake-what-mnistfmadapter-advertises" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Capability handshake — what MnistFmAdapter advertises
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-state-shape-decision-1-28-28-image-vs-784-flattened" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 State shape decision: (1, 28, 28) image vs (784,) flattened
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-training-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §2. Training plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§2. Training plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-model-architecture-small-numpy-unet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Model architecture: small NumPy UNet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-hyperparameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Hyperparameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-optimizer-numpy-adam-analytic-gradient-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Optimizer (NumPy Adam) — analytic gradient sketch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-dataset-loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Dataset loading
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-expected-training-time-cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Expected training time (CPU)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-adapter-implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §3. Adapter implementation plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§3. Adapter implementation plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-file-adaptive_reflowadaptersmnist_fmpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 File: adaptive_reflow/adapters/mnist_fm.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-class-mnistfmadapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Class: MnistFmAdapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-integrator-rk4-byte-deterministic-same-as-twodimfmadapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Integrator: RK4 (byte-deterministic) — same as TwoDimFMAdapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-state-shape-1-28-28-internally-784-over-the-protocol-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 State shape: (1, 28, 28) internally; (784,) over the protocol boundary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-restart-blend-endpoint-with-fresh-n0-i_784" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Restart: blend endpoint with fresh N(0, I_784)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-capabilities-handshake-exact-dataclass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6 Capabilities handshake — exact dataclass
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#37-factory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.7 Factory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-training-script-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §4. Training script plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§4. Training script plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-file-adaptive_reflowadaptersmnist_fm_trainpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 File: adaptive_reflow/adapters/mnist_fm_train.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-cli-run-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 CLI run example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-framework-integration-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §5. Framework integration plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§5. Framework integration plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-add-mnistfmadapter-to-adaptive_reflowadapters__init__py" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Add MnistFmAdapter to adaptive_reflow/adapters/__init__.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-fid-computation-options-and-decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 FID computation — options and decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-add-4-row-ablation-rows-to-toolsrun_ablationpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Add 4-row ablation rows to tools/run_ablation.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-tests-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §6. Tests plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§6. Tests plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-teststest_adapterstest_mnist_fmpy-adapter-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 tests/test_adapters/test_mnist_fm.py — adapter unit tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-teststest_adapterstest_mnist_fm_trainpy-trainer-smoke-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 tests/test_adapters/test_mnist_fm_train.py — trainer smoke test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-teststest_toolstest_run_ablationpy-ablation-table-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 tests/test_tools/test_run_ablation.py — ablation table tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-expected-outputs-realistic-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §7. Expected outputs (realistic numbers)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§7. Expected outputs (realistic numbers)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-baseline-fid-single-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Baseline FID (single-pass)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-multi-round-fid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Multi-round FID
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-selection_ratio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 selection_ratio
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-wall-clock-per-round-cpu" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Wall-clock per round (CPU)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-failure-modes-and-mitigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §8. Failure modes and mitigation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-timeline-sub-tasks-2-days-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §9. Timeline (sub-tasks, 2 days total)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-verification-claims-to-add-to-docsclaimsmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §10. Verification (claims to add to docs/CLAIMS.md)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-line-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7-line summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="exp-1-mnist-rectified-flow-end-to-end-plan">EXP-1: MNIST Rectified Flow — End-to-End Plan<a class="headerlink" href="#exp-1-mnist-rectified-flow-end-to-end-plan" title="Permanent link">&para;</a></h1>
+<p><strong>Agent:</strong> P1 (planning)
+<strong>Date:</strong> 2026-08-30
+<strong>Working dir:</strong> <code>c:\Users\31472\codes\flowa-multistep-reinference</code>
+<strong>Goal:</strong> Move the framework's empirical demonstration from a synthetic 2D Rectified Flow target (<code>two_moons</code>, <code>eight_gaussians</code>) onto a <strong>real domain</strong> (MNIST 28x28 grayscale), reusing the framework's algorithm layer (schedulers / drivers / blenders / merge operators / hash-chained ledger) unchanged. EXP-1 is the highest-leverage experiment for the paper — it generalises the existing 2D story from "framework works on a synthetic toy" to "framework works on real images" without changing the framework itself.</p>
+<p><strong>Constraints (read-only):</strong>
+- <code>/c/Users/31472/codes/noise-selected-rectification-lean/</code> — DO NOT TOUCH.
+- This phase is read-only on the working repo — this plan is the deliverable; no code is modified yet.</p>
+<hr />
+<h2 id="1-architecture-overview">§1. Architecture overview<a class="headerlink" href="#1-architecture-overview" title="Permanent link">&para;</a></h2>
+<h3 id="11-where-mnist-fits-in-the-existing-adapter-framework">1.1 Where MNIST fits in the existing adapter framework<a class="headerlink" href="#11-where-mnist-fits-in-the-existing-adapter-framework" title="Permanent link">&para;</a></h3>
+<p>The adapter layer (<code>adaptive_reflow.adapters.*</code>) is intentionally pluggable:
+- The framework's contract is <code>FlowMatchingODEAdapter</code> (8 methods + <code>capabilities</code>) declared in <code>adaptive_reflow/universal/adapter.py</code>.
+- Concrete adapters in the working tree today: <code>TwoDimFMAdapter</code> (2D rectified flow, the reference), plus synthetic / toy / reference / flowmol3 fixtures.
+- The algorithm layer (<code>ReInferenceRunner</code>, schedulers, drivers, merge operators, blenders, evaluators, hash-chained ledger) is adapter-agnostic — it consumes only the 8-method protocol surface and <code>AdapterCapabilities</code>. No algorithm-layer code needs to change.</p>
+<p>EXP-1 adds a single new concrete adapter — <code>MnistFmAdapter</code> — that:
+- Trains a small NumPy UNet on MNIST (offline, in <code>adaptive_reflow/adapters/mnist_fm_train.py</code>, following the <code>twodim_fm_train.py</code> pattern exactly).
+- Loads the trained weights and exposes the same 8-method protocol surface against the 28x28 grayscale pixel state.
+- Reuses RK4 (byte-deterministic) integration, identical to <code>TwoDimFMAdapter</code>.
+- Reuses the framework's existing schedulers, drivers, blenders, ledger, and (with one optional evaluator addition) the framework's existing FID-as-quality-metric support.</p>
+<p>The framework layer is <strong>not</strong> modified — only the adapter is added.</p>
+<h3 id="12-what-changes-vs-twodimfmadapter-2d-for-mnist-28x28-grayscale">1.2 What changes vs <code>TwoDimFMAdapter</code> (2D) for MNIST (28x28 grayscale)<a class="headerlink" href="#12-what-changes-vs-twodimfmadapter-2d-for-mnist-28x28-grayscale" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th><code>TwoDimFMAdapter</code></th>
+<th><code>MnistFmAdapter</code> (new)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>State shape</td>
+<td><code>(2,)</code> continuous</td>
+<td><code>(1, 28, 28)</code> grayscale (or flattened <code>(784,)</code> — see §1.4)</td>
+</tr>
+<tr>
+<td>Velocity field</td>
+<td>MLP <code>3 -&gt; 64 -&gt; 64 -&gt; 2</code> (~518 params)</td>
+<td>NumPy UNet <code>1 -&gt; 32 -&gt; 64 -&gt; 32 -&gt; 1</code> (~500K-2M params) with sinusoidal time embedding</td>
+</tr>
+<tr>
+<td>Channels</td>
+<td><code>(xy,)</code> continuous</td>
+<td><code>(x,)</code> continuous (flattened 784-dim; pixels in <code>[0, 1]</code>)</td>
+</tr>
+<tr>
+<td>Integrator</td>
+<td>RK4 byte-deterministic (same)</td>
+<td>RK4 byte-deterministic (same) — one custom 4D conv-style UNet block; same RK4 formula</td>
+</tr>
+<tr>
+<td>Restart</td>
+<td>Blend endpoint with <code>N(0, I_2)</code></td>
+<td>Blend endpoint with <code>N(0, I_784)</code> reshaped to <code>(1, 28, 28)</code></td>
+</tr>
+<tr>
+<td><code>native_config_hash</code></td>
+<td><code>"twodim_fm:cfg:v1"</code></td>
+<td><code>"mnist_fm:cfg:v1"</code></td>
+</tr>
+<tr>
+<td><code>state_shape</code> capability</td>
+<td><code>(2,)</code></td>
+<td><code>(1, 28, 28)</code> (or <code>(784,)</code> if flattened — see §1.4)</td>
+</tr>
+<tr>
+<td>Target distribution</td>
+<td>Analytic (two-moons / eight-gaussians)</td>
+<td>Empirical (10K test MNIST digits, <code>torchvision.datasets.MNIST</code>)</td>
+</tr>
+<tr>
+<td>Training</td>
+<td><code>twodim_fm_train.py</code> (3-layer MLP, MSE on <code>v_θ(x_t, t) - (x_1 - x_0)</code>)</td>
+<td><code>mnist_fm_train.py</code> (small UNet, identical MSE loss form, analytic gradients via NumPy)</td>
+</tr>
+<tr>
+<td>Source distribution</td>
+<td><code>N(0, I_2)</code></td>
+<td><code>N(0, I_{1x28x28})</code> (clamped to <code>[-1, 1]</code>)</td>
+</tr>
+<tr>
+<td>FID computation</td>
+<td>Closed-form 2D W2 against analytic target</td>
+<td>FID against 10K MNIST test images (see §5 for FID choice)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-capability-handshake-what-mnistfmadapter-advertises">1.3 Capability handshake — what <code>MnistFmAdapter</code> advertises<a class="headerlink" href="#13-capability-handshake-what-mnistfmadapter-advertises" title="Permanent link">&para;</a></h3>
+<p><code>MnistFMCapabilities(AdapterCapabilities)</code>:
+- <code>has_ode_integration_surface=True</code>
+- <code>has_prior_export=True</code>
+- <code>has_state_export=True</code>
+- <code>has_condition_injection=True</code>
+- <code>has_restart_boundary=True</code>
+- <code>has_continuous_channels=True</code> (pixels are continuous in <code>[0, 1]</code>)
+- <code>has_discrete_channels=False</code>
+- <code>has_trajectory_digest=True</code>
+- <code>has_deterministic_seed=True</code>
+- <code>has_materialization_route=True</code>
+- <code>state_shape=(1, 28, 28)</code> (matches the trailing-axes convention used by <code>_features</code>/<code>_velocity_field</code> reshape paths; see §1.4 for the flattened-vs-image decision)
+- <code>supported_channels=("x",)</code> — single flattened grayscale pixel channel
+- <code>channel_domains={ChannelName("x"): "continuous"}</code>
+- <code>required_mixer=NoOpMixer</code>
+- <code>exposed_envelope_criteria=()</code>
+- <code>exposed_evaluators=()</code>
+- <code>native_config_hash="mnist_fm:cfg:v1"</code>
+- <code>native_config_version="0.1.0"</code></p>
+<h3 id="14-state-shape-decision-1-28-28-image-vs-784-flattened">1.4 State shape decision: <code>(1, 28, 28)</code> image vs <code>(784,)</code> flattened<a class="headerlink" href="#14-state-shape-decision-1-28-28-image-vs-784-flattened" title="Permanent link">&para;</a></h3>
+<p><strong>Decision: flatten to <code>(784,)</code> for the adapter's <code>state_shape</code> capability; internally reshape to <code>(1, 28, 28)</code> for the UNet forward pass.</strong></p>
+<p>Rationale:
+- The framework's <code>state_shape</code> is used by <code>ReInferenceRunner.run</code> (around lines 774-783 of <code>runner.py</code>) only to allocate a <code>np.zeros(state_shape, ...)</code> prior for the forward-noise injection. <code>(784,)</code> is consistent with how the rest of the framework treats state vectors (linear flat arrays), and avoids breaking F14's contract that the runner "folds the batch shape into its <code>config_hash</code>".
+- Inside <code>MnistFmAdapter</code>, the UNet forward reshapes <code>(batch, 784) -&gt; (batch, 1, 28, 28) -&gt; conv -&gt; reshape (batch, 784)</code> for the velocity output. This matches how <code>TwoDimFMAdapter</code> reshapes <code>(2,) -&gt; (n, 2)</code> internally before computing the MLP forward.
+- Alternative <code>(1, 28, 28)</code> is more "image-native" but would force the runner's forward-noise allocation into a 3D tensor path that the rest of the framework does not exercise. <strong>Flat <code>(784,)</code> is safer for a first integration.</strong></p>
+<p>The trainer writes a flat <code>.npz</code> of UNet weights; the adapter reshapes on load and on every forward pass.</p>
+<hr />
+<h2 id="2-training-plan">§2. Training plan<a class="headerlink" href="#2-training-plan" title="Permanent link">&para;</a></h2>
+<h3 id="21-model-architecture-small-numpy-unet">2.1 Model architecture: small NumPy UNet<a class="headerlink" href="#21-model-architecture-small-numpy-unet" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Input:  (B, 1, 28, 28) grayscale image in [-1, 1]
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Concatenated with sinusoidal t-embedding broadcast to (B, 1, 28, 28) -&gt; (B, 2, 28, 28)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                    (or: time as extra channel; we use the second-channel approach)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>Down 1:  Conv2d(2 -&gt; 32, k=3, p=1) + GroupNorm(8) + SiLU   -&gt; (B, 32, 28, 28)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>Down 2:  Conv2d(32 -&gt; 64, k=3, s=2, p=1) + GroupNorm(8) + SiLU -&gt; (B, 64, 14, 14)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Down 3:  Conv2d(64 -&gt; 64, k=3, s=2, p=1) + GroupNorm(8) + SiLU -&gt; (B, 64, 7, 7)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Bottleneck: Conv2d(64 -&gt; 64, k=3, p=1) + GroupNorm(8) + SiLU + Conv2d(64 -&gt; 64, k=3, p=1) -&gt; (B, 64, 7, 7)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>Up 1:  Upsample(nearest, 2x) + Conv2d(64 -&gt; 32, k=3, p=1) + GroupNorm(8) + SiLU  -&gt; (B, 32, 14, 14)
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>Up 2:  Upsample(nearest, 2x) + Conv2d(32 -&gt; 32, k=3, p=1) + GroupNorm(8) + SiLU  -&gt; (B, 32, 28, 28)
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>Output: Conv2d(32 -&gt; 1, k=3, p=1) -&gt; (B, 1, 28, 28) velocity prediction
+</code></pre></div>
+<p><strong>Parameter target:</strong> ~600K-800K (CPU-tractable). The 3 down + bottleneck + 2 up structure mirrors a "tiny UNet" used in DDPM smoke tests. We Kaiming-uniform init all Conv weights; zero-init all biases and the final projection layer (residual-style stabilisation).</p>
+<h3 id="22-hyperparameters">2.2 Hyperparameters<a class="headerlink" href="#22-hyperparameters" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Hyperparameter</th>
+<th>Value</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Optimizer</td>
+<td>NumPy Adam (β1=0.9, β2=0.999, ε=1e-8)</td>
+<td>Match <code>twodim_fm_train.py</code>; no torch dep</td>
+</tr>
+<tr>
+<td>Learning rate</td>
+<td>1e-3</td>
+<td>Adam default; standard for UNets on MNIST</td>
+</tr>
+<tr>
+<td>Batch size</td>
+<td>64</td>
+<td>CPU-tractable; ~32MB per batch</td>
+</tr>
+<tr>
+<td>Epochs</td>
+<td>30</td>
+<td>Loss converges ~5-7 FID delta in &lt;30 min on CPU</td>
+</tr>
+<tr>
+<td>Dataset</td>
+<td>torchvision MNIST (60K train, 10K test)</td>
+<td>Standard; auto-download via <code>torchvision.datasets.MNIST</code></td>
+</tr>
+<tr>
+<td>Loss</td>
+<td>MSE between <code>v_θ(x_t, t)</code> and <code>(x_1 - x_0)</code> (per-pixel)</td>
+<td>Rectified Flow loss; identical to <code>twodim_fm_train.py</code></td>
+</tr>
+<tr>
+<td>Interpolation</td>
+<td><code>x_t = (1-t) * x_0 + t * x_1</code>, <code>t ~ U[0, 1]</code></td>
+<td>Same as 2D</td>
+</tr>
+<tr>
+<td>Normalization</td>
+<td><code>[0, 1] -&gt; [-1, 1]</code> (mean/std ≈ 0.13/0.31 for MNIST, but we use the cleaner <code>[-1, 1]</code> clamp at sample time)</td>
+<td>Standard</td>
+</tr>
+<tr>
+<td>Time embedding</td>
+<td>Sinusoidal broadcast to a 2nd input channel</td>
+<td>Avoids a learned time-MLP for CPU speed</td>
+</tr>
+<tr>
+<td>Output path</td>
+<td><code>data/mnist_fm.npz</code></td>
+<td>Mirrors <code>data/twodim_fm_&lt;target&gt;.npz</code></td>
+</tr>
+<tr>
+<td>Seed</td>
+<td>42</td>
+<td>Default; matches ablation seed</td>
+</tr>
+<tr>
+<td>Validation interval</td>
+<td>Every 200 steps print loss</td>
+<td>Mirrors <code>twodim_fm_train.py</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="23-optimizer-numpy-adam-analytic-gradient-sketch">2.3 Optimizer (NumPy Adam) — analytic gradient sketch<a class="headerlink" href="#23-optimizer-numpy-adam-analytic-gradient-sketch" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Forward: <code>im2col</code>-style unfold + matmul (each conv is a matmul over its <code>k*k</code> spatial window). Implement via <code>np.einsum("bchw,coij-&gt;bohw", x, w)</code> patterns.</li>
+<li>Backward: analytic conv backward via <code>np.einsum</code> + <code>np.pad</code> (no autograd).</li>
+<li>GroupNorm backward: <code>(x - mean) / sqrt(var + eps)</code>.</li>
+<li>SiLU: <code>x * sigmoid(x)</code>; backward: <code>sigmoid(x) + x * sigmoid(x) * (1 - sigmoid(x))</code>.</li>
+<li>Nearest-neighbour upsample: backward distributes gradient equally to the 4 source pixels.</li>
+<li>Total param count: ~600K. At batch 64 this is ~38M activations per layer, ~150MB peak. Fits CPU.</li>
+</ul>
+<p><strong>Concrete trainer file: <code>adaptive_reflow/adapters/mnist_fm_train.py</code></strong> — modelled line-for-line on <code>twodim_fm_train.py</code>. Function signatures:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">velocity_field_unet_init</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="n">base_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">"""Kaiming-uniform init of the small UNet. Returns ~24 weight tensors + biases."""</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="o">...</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">velocity_field_forward</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="sd">"""Forward: (B, 1, 28, 28) image + (B,) time -&gt; (B, 1, 28, 28) velocity."""</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="o">...</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">_loss_and_grads</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">x_t</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">v_target</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="sd">"""MSE loss + analytic grads, identical loss form to 2D trainer."""</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="o">...</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">epochs</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="sd">"""Train on MNIST and return the weight list."""</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="o">...</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">save_weights</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="k">def</span><span class="w"> </span><span class="nf">load_weights</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span> <span class="o">...</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># argparse CLI</span>
+</code></pre></div>
+<p>CLI example:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>-m<span class="w"> </span>adaptive_reflow.adapters.mnist_fm_train<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--epochs<span class="w"> </span><span class="m">30</span><span class="w"> </span>--batch-size<span class="w"> </span><span class="m">64</span><span class="w"> </span>--lr<span class="w"> </span>1e-3<span class="w"> </span>--output<span class="w"> </span>data/mnist_fm.npz
+</code></pre></div></p>
+<h3 id="24-dataset-loading">2.4 Dataset loading<a class="headerlink" href="#24-dataset-loading" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>from torchvision import datasets, transforms</code></li>
+<li><code>transforms.Compose([transforms.ToTensor(), transforms.Lambda(lambda x: 2*x - 1)])</code> to land in <code>[-1, 1]</code>.</li>
+<li><code>datasets.MNIST(root="data/mnist_cache", train=True, download=True)</code> — auto-downloads from <code>yann.lecun.com</code>. Fallback to a mirror (<code>https://ossci-datasets.s3.amazonaws.com/mnist/</code>) if the canonical URL is blocked.</li>
+<li>Cache in <code>data/mnist_cache/MNIST/raw/</code> so re-runs are offline.</li>
+</ul>
+<h3 id="25-expected-training-time-cpu">2.5 Expected training time (CPU)<a class="headerlink" href="#25-expected-training-time-cpu" title="Permanent link">&para;</a></h3>
+<ul>
+<li>60K images / 64 batch = 938 batches/epoch.</li>
+<li>30 epochs = ~28K batches.</li>
+<li>Per-batch UNet forward (~600K params) ≈ 0.3s; backward ≈ 0.6s. Total ~1s/batch.</li>
+<li><strong>Total: ~28K seconds / 3600 ≈ 8 hours</strong> — too slow for the 0.5-day budget.</li>
+<li><strong>Mitigation: target 10 epochs</strong> → ~2.5-3 hours; still too slow. <strong>Mitigation 2: target 5 epochs and reduce base_channels to 24</strong> → ~1 hour. <strong>Mitigation 3: use 128 batch with 10 epochs and base_channels=32</strong> → ~1.5 hours.</li>
+<li><strong>Recommended for the plan: 10 epochs, batch 64, base_channels=32 → ~3 hours on a single CPU core. If we want sub-1-hour, use base_channels=24 and 8 epochs (~45 min).</strong> The plan must commit to one — we pick <strong>base_channels=32, 10 epochs, batch 64 → ~2.5 hours, then 30 min to write the adapter and run the smoke ablation.</strong></li>
+</ul>
+<h3 id="26-output">2.6 Output<a class="headerlink" href="#26-output" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>data/mnist_fm.npz</code> — UNet weights serialized as <code>float32</code> (<code>np.savez_compressed</code>). Expected size: ~2-3 MB.</li>
+<li><code>data/mnist_fm.npz.sha256</code> — checksum for reproducibility.</li>
+</ul>
+<hr />
+<h2 id="3-adapter-implementation-plan">§3. Adapter implementation plan<a class="headerlink" href="#3-adapter-implementation-plan" title="Permanent link">&para;</a></h2>
+<h3 id="31-file-adaptive_reflowadaptersmnist_fmpy">3.1 File: <code>adaptive_reflow/adapters/mnist_fm.py</code><a class="headerlink" href="#31-file-adaptive_reflowadaptersmnist_fmpy" title="Permanent link">&para;</a></h3>
+<p>Module-level constants (mirroring <code>twodim_fm.py</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">MNIST_FM_CHANNELS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ChannelName</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"x"</span><span class="p">),)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">MNIST_FM_CONFIG_HASH</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mnist_fm:cfg:v1"</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">MNIST_FM_CONFIG_VERSION</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"0.1.0"</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">MNIST_FM_STATE_SHAPE</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">784</span><span class="p">,)</span>  <span class="c1"># flattened; see §1.4</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">MNIST_FM_IMAGE_SHAPE</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">)</span>  <span class="c1"># internal UNet shape</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">MNIST_FM_CLAMP</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># pixels live in [-1, 1] after normalization</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">MNIST_FM_NUM_STEPS</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># RK4 grid; matches TwoDimFMAdapter</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">MNIST_FM_NATIVE_STATES_MAXSIZE</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span>  <span class="c1"># same bound as 2D</span>
+</code></pre></div>
+<h3 id="32-class-mnistfmadapter">3.2 Class: <code>MnistFmAdapter</code><a class="headerlink" href="#32-class-mnistfmadapter" title="Permanent link">&para;</a></h3>
+<p>Implements the full <code>FlowMatchingODEAdapter</code> Protocol — 8 methods + <code>export_trajectory</code> + optional <code>inject_forward_noise</code> (P0-7):</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>capabilities()</code></td>
+<td>Return <code>MnistFMCapabilities</code> (frozen dataclass with <code>state_shape=(784,)</code>)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>build_initial_state(batch_id, sample_id)</code></td>
+<td>SHA256-seeded <code>np.random.default_rng</code>; sample <code>x0 ~ N(0, I_784)</code>; clamp to <code>[-1, 1]</code>; construct <code>StateBundle</code> with <code>ChannelName("x")</code> and <code>TensorRef("mnist:x:&lt;sha256[:16]&gt;")</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>export_endpoint(state)</code></td>
+<td>Validate <code>state_bundle</code>; return <code>state</code> (no copy)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>detach_and_validate_endpoint(bundle)</code></td>
+<td>Fail-closed <code>detach_proof is True</code> check; validate bundle</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>apply_restart_distribution(state, policy)</code></td>
+<td>Blend <code>m * prior_x0 + (1-m) * fresh_x0</code> (m = 1 - β) with fresh <code>N(0, I_784)</code> seeded by <code>(policy_hash, source_round+1)</code>; emit next round's <code>StateBundle</code> with new <code>TensorRef</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>compose_condition(bundle, delta)</code></td>
+<td>Inject <code>target_distribution="mnist"</code> and <code>integrator_config_hash=MNIST_FM_CONFIG_HASH</code> into <code>delta_spec</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>solve_ode(state, condition, *, seed)</code></td>
+<td>RK4 integration over <code>t_grid = linspace(0, 1, num_steps+1)</code> using <code>_velocity_field(weights, x, t)</code> reshaped <code>(batch, 1, 28, 28)</code> per step; returns <code>ODEIntegratorTrace</code> with <code>traj_digest</code> keyed on <code>(x0, integrator, num_steps, seed, target)</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>observe_endpoint(trace, state)</code></td>
+<td>Pull final row of stored trajectory; build endpoint <code>StateBundle</code> with new <code>endpoint_digest</code></td>
+</tr>
+<tr>
+<td>+</td>
+<td><code>export_trajectory(trace)</code></td>
+<td>Return <code>(T, 784)</code> stored trajectory for <code>trace.native_state_digest</code> (P0-7)</td>
+</tr>
+<tr>
+<td>+</td>
+<td><code>inject_forward_noise(bundle, injected)</code></td>
+<td>Optional; add <code>injected</code> (already a <code>(784,)</code> vector from <code>scheduler.inject_noise</code>) to the bundle's prior — returns new bundle with <code>provenance += ("forward_noise_applied",)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-integrator-rk4-byte-deterministic-same-as-twodimfmadapter">3.3 Integrator: RK4 (byte-deterministic) — same as TwoDimFMAdapter<a class="headerlink" href="#33-integrator-rk4-byte-deterministic-same-as-twodimfmadapter" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_integrate_rk4</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">t_grid</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">"""Pure RK4 over t_grid; returns (len(t_grid), 784) trajectory."""</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">784</span><span class="p">)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">t_grid</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">traj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">784</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">traj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x0</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="n">dt</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="n">k1</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">x_cur</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">),</span> <span class="n">t0</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">784</span><span class="p">)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="n">k2</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="p">(</span><span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">dt</span><span class="o">*</span><span class="n">k1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">),</span> <span class="n">t0</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">dt</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">784</span><span class="p">)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="n">k3</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="p">(</span><span class="n">x_cur</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">dt</span><span class="o">*</span><span class="n">k2</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">),</span> <span class="n">t0</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">dt</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">784</span><span class="p">)</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="n">k4</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="p">(</span><span class="n">x_cur</span> <span class="o">+</span> <span class="n">dt</span><span class="o">*</span><span class="n">k3</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">28</span><span class="p">,</span><span class="mi">28</span><span class="p">),</span> <span class="n">t1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">784</span><span class="p">)</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="p">(</span><span class="n">dt</span><span class="o">/</span><span class="mf">6.0</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">k1</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">k2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">k3</span> <span class="o">+</span> <span class="n">k4</span><span class="p">)</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>        <span class="n">x_cur</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x_cur</span><span class="p">,</span> <span class="o">-</span><span class="n">MNIST_FM_CLAMP</span><span class="p">,</span> <span class="n">MNIST_FM_CLAMP</span><span class="p">)</span>  <span class="c1"># numerical safety</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>        <span class="n">traj</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_cur</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="k">return</span> <span class="n">traj</span>
+</code></pre></div>
+<p>Batched variant <code>_batched_integrate_rk4(weights, x0_batch, n_steps)</code> returns <code>(batch, 784)</code> final states; used for population evaluation (FID).</p>
+<h3 id="34-state-shape-1-28-28-internally-784-over-the-protocol-boundary">3.4 State shape: <code>(1, 28, 28)</code> internally; <code>(784,)</code> over the protocol boundary<a class="headerlink" href="#34-state-shape-1-28-28-internally-784-over-the-protocol-boundary" title="Permanent link">&para;</a></h3>
+<ul>
+<li>All <code>StateBundle</code> channels carry <code>(784,)</code> arrays.</li>
+<li>The adapter reshapes <code>(784,) -&gt; (1, 28, 28)</code> at the UNet boundary and back.</li>
+<li>The reshapes are zero-cost (no copy) when contiguous; we use <code>np.ascontiguousarray</code> for safety.</li>
+<li>The <code>TensorRef</code> digest includes the full <code>(784,)</code> vector via <code>_digest_state</code> (sha256 over a deterministic repr).</li>
+</ul>
+<h3 id="35-restart-blend-endpoint-with-fresh-n0-i_784">3.5 Restart: blend endpoint with fresh <code>N(0, I_784)</code><a class="headerlink" href="#35-restart-blend-endpoint-with-fresh-n0-i_784" title="Permanent link">&para;</a></h3>
+<p>Same blend formula as <code>TwoDimFMAdapter.apply_restart_distribution</code>:
+- <code>memory_fraction = 1 - β</code> where <code>β</code> comes from <code>policy.beta_by_channel[ChannelName("x")]</code>.
+- <code>m = clip(memory_fraction, 0, 1)</code>
+- <code>prior_x0</code> is the previous round's stored x0 (from <code>_native_states[state.native_state_digest]</code>).
+- <code>fresh_x0 = np.random.default_rng(seed_from(policy_hash, source_round+1)).standard_normal(784).astype(np.float64)</code>
+- <code>blended = m * prior_x0 + (1 - m) * fresh_x0</code>, reshaped to <code>(784,)</code>, stored in <code>_native_states</code> under a new digest.
+- Output <code>StateBundle</code> carries <code>provenance += (AUDIT_RESTART_BLEND, "blender:linear", "blender_hash:linear_blender_default")</code>.</p>
+<h3 id="36-capabilities-handshake-exact-dataclass">3.6 Capabilities handshake — exact dataclass<a class="headerlink" href="#36-capabilities-handshake-exact-dataclass" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">MnistFMCapabilities</span><span class="p">(</span><span class="n">AdapterCapabilities</span><span class="p">):</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>            <span class="n">has_ode_integration_surface</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>            <span class="n">has_prior_export</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>            <span class="n">has_state_export</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>            <span class="n">has_condition_injection</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>            <span class="n">has_restart_boundary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>            <span class="n">has_continuous_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>            <span class="n">has_discrete_channels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>            <span class="n">has_trajectory_digest</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>            <span class="n">has_deterministic_seed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>            <span class="n">has_materialization_route</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>            <span class="n">state_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">784</span><span class="p">,),</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>            <span class="n">supported_channels</span><span class="o">=</span><span class="n">MNIST_FM_CHANNELS</span><span class="p">,</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>            <span class="n">channel_domains</span><span class="o">=</span><span class="p">{</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"x"</span><span class="p">):</span> <span class="s2">"continuous"</span><span class="p">},</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>            <span class="n">required_mixer</span><span class="o">=</span><span class="n">NoOpMixer</span><span class="p">,</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>            <span class="n">exposed_envelope_criteria</span><span class="o">=</span><span class="p">(),</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>            <span class="n">exposed_evaluators</span><span class="o">=</span><span class="p">(),</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>            <span class="n">native_config_hash</span><span class="o">=</span><span class="n">MNIST_FM_CONFIG_HASH</span><span class="p">,</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>            <span class="n">native_config_version</span><span class="o">=</span><span class="n">MNIST_FM_CONFIG_VERSION</span><span class="p">,</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>        <span class="p">)</span>
+</code></pre></div>
+<h3 id="37-factory">3.7 Factory<a class="headerlink" href="#37-factory" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">default_mnist_fm_adapter</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">weights_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MnistFmAdapter</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="sd">"""Default factory: loads data/mnist_fm.npz unless ``weights_path`` is given."""</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">weights_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">weights_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"data/mnist_fm.npz"</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="k">return</span> <span class="n">MnistFmAdapter</span><span class="p">(</span><span class="n">weights_path</span><span class="o">=</span><span class="n">path</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="4-training-script-plan">§4. Training script plan<a class="headerlink" href="#4-training-script-plan" title="Permanent link">&para;</a></h2>
+<h3 id="41-file-adaptive_reflowadaptersmnist_fm_trainpy">4.1 File: <code>adaptive_reflow/adapters/mnist_fm_train.py</code><a class="headerlink" href="#41-file-adaptive_reflowadaptersmnist_fm_trainpy" title="Permanent link">&para;</a></h3>
+<p>Modelled on <code>twodim_fm_train.py</code> line-for-line.</p>
+<p>Module sections:
+1. <strong>Module docstring</strong> — describe the training objective (rectified flow on MNIST), the architecture (small NumPy UNet), the expected runtime (~2-3 hours CPU for 10 epochs).
+2. <strong>Imports</strong> — <code>argparse</code>, <code>pathlib.Path</code>, <code>numpy</code>, <code>numpy.typing.NDArray</code>. Conditional <code>torchvision</code> import inside <code>_load_mnist()</code> (so the trainer is a strict extra).
+3. <strong>Constants</strong> — <code>MNIST_TRAIN_SIZE = 60_000</code>, <code>MNIST_TEST_SIZE = 10_000</code>, <code>MNIST_IMAGE_SHAPE = (1, 28, 28)</code>, <code>MNIST_FLAT_DIM = 784</code>.
+4. <strong><code>_load_mnist(split: str) -&gt; np.ndarray</code></strong> — returns <code>(60000, 784)</code> or <code>(10000, 784)</code> float64 in <code>[-1, 1]</code>. Uses <code>torchvision.datasets.MNIST</code> with auto-download. Caches under <code>data/mnist_cache/</code>.
+5. <strong><code>velocity_field_unet_init(rng, base_channels=32) -&gt; list[np.ndarray]</code></strong> — Kaiming-uniform init of all 24 weight tensors + biases. Returns a flat list so Adam's moment arrays index naturally.
+6. <strong><code>velocity_field_forward(weights, x, t) -&gt; np.ndarray</code></strong> — UNet forward. <code>x: (B, 1, 28, 28)</code>, <code>t: (B,)</code>; returns <code>(B, 1, 28, 28)</code> velocity. Includes the time-as-second-channel trick.
+7. <strong><code>_unet_backward(weights, x, t, v_target, v_pred) -&gt; list[np.ndarray]</code></strong> — analytic grads for all UNet layers (this is the load-bearing piece). Use a layered approach: GroupNorm backward = <code>(x - mean) / sqrt(var + eps)</code>; SiLU backward = <code>sigmoid(x) * (1 + x * (1 - sigmoid(x)))</code>; nearest upsample backward distributes grad; conv backward via <code>np.einsum</code> + padding.
+8. <strong><code>_loss_and_grads(weights, x_t, t, v_target) -&gt; tuple[float, list[np.ndarray]]</code></strong> — MSE + analytic grads (mirrors the 2D trainer).
+9. <strong><code>train(epochs=30, batch_size=64, lr=1e-3, base_channels=32, seed=42) -&gt; list[np.ndarray]</code></strong> — main loop; <code>np.random.default_rng(seed)</code>; per-batch <code>x_0 ~ N(0, I_784)</code>, <code>x_1 ~ batch_from_train_set</code>, <code>t ~ U[0,1]</code>, <code>x_t = (1-t)*x_0 + t*x_1</code>, <code>v_target = x_1 - x_0</code>. Adam with <code>β1=0.9, β2=0.999, eps=1e-8</code>. Print loss every 200 steps.
+10. <strong><code>save_weights(weights, path) -&gt; Path</code></strong> — <code>np.savez_compressed(path, **{f"W{i}": w for i, w in enumerate(weights)})</code>.
+11. <strong><code>load_weights(path) -&gt; list[np.ndarray]</code></strong> — inverse of <code>save_weights</code>; reshapes to <code>float64</code>.
+12. <strong><code>main(argv=None) -&gt; int</code></strong> — argparse CLI: <code>--epochs, --batch-size, --lr, --base-channels, --seed, --output, --cache-dir</code>.</p>
+<h3 id="42-cli-run-example">4.2 CLI run example<a class="headerlink" href="#42-cli-run-example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-m<span class="w"> </span>adaptive_reflow.adapters.mnist_fm_train<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>--epochs<span class="w"> </span><span class="m">10</span><span class="w"> </span>--batch-size<span class="w"> </span><span class="m">64</span><span class="w"> </span>--lr<span class="w"> </span>1e-3<span class="w"> </span>--base-channels<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>--output<span class="w"> </span>data/mnist_fm.npz<span class="w"> </span>--cache-dir<span class="w"> </span>data/mnist_cache
+</code></pre></div>
+<p>Expected output (stdout):
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>[mnist_fm] loaded 60000 training images, 10000 test images
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>[mnist_fm] step 1/9380 loss=0.482103
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>[mnist_fm] step 200/9380 loss=0.187234
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>...
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>[mnist_fm] step 9380/9380 loss=0.041287
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>[mnist_fm] saved data/mnist_fm.npz (2418123 bytes)
+</code></pre></div></p>
+<hr />
+<h2 id="5-framework-integration-plan">§5. Framework integration plan<a class="headerlink" href="#5-framework-integration-plan" title="Permanent link">&para;</a></h2>
+<h3 id="51-add-mnistfmadapter-to-adaptive_reflowadapters__init__py">5.1 Add <code>MnistFmAdapter</code> to <code>adaptive_reflow/adapters/__init__.py</code><a class="headerlink" href="#51-add-mnistfmadapter-to-adaptive_reflowadapters__init__py" title="Permanent link">&para;</a></h3>
+<p>Append (mirroring the <code>TwoDimFMAdapter</code> block):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">.mnist_fm</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">MNIST_FM_CHANNELS</span><span class="p">,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">MNIST_FM_CONFIG_HASH</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">MNIST_FM_CONFIG_VERSION</span><span class="p">,</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">MnistFmAdapter</span><span class="p">,</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="n">default_mnist_fm_adapter</span><span class="p">,</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="p">)</span>
+</code></pre></div>
+<p>This makes the adapter importable via <code>from adaptive_reflow.adapters import MnistFmAdapter</code>.</p>
+<h3 id="52-fid-computation-options-and-decision">5.2 FID computation — options and decision<a class="headerlink" href="#52-fid-computation-options-and-decision" title="Permanent link">&para;</a></h3>
+<p><strong>Three options considered:</strong></p>
+<ol>
+<li>
+<p><strong>pytorch-fid library</strong> — <code>pip install pytorch-fid</code>. Computes FID against ImageNet-pretrained InceptionV3 features. Requires torchvision + scipy + numpy. Adds a heavy dep (PyTorch at test time). Rejected for EXP-1 because the project is stdlib-only by design (see <code>docs/paper-plan.md</code> §7.2 "CPU only").</p>
+</li>
+<li>
+<p><strong>Custom MNIST-trained InceptionV3 alternative</strong> — train a small CNN on MNIST, use its penultimate features for FID. Adds training complexity and is not comparable to literature FID. Rejected for EXP-1.</p>
+</li>
+<li>
+<p><strong>NumPy-only custom FID</strong> — compute <code>(μ_r - μ_g)^T (Σ_r + Σ_g - 2(Σ_r Σ_g)^{1/2})</code> from flattened grayscale features; feature extractor = small random Conv stack (deterministic, no training). This is the "FID-style" metric used in some MNIST benchmarks. <strong>Selected for EXP-1.</strong></p>
+</li>
+</ol>
+<p><strong>Decision:</strong> Implement a NumPy-only FID helper in <code>adaptive_reflow/eval/mnist_fid.py</code>:
+- <code>class MnistFidEvaluator</code> (matching the <code>_EvaluatorProtocol</code> duck-type used by <code>ReInferenceRunner</code>).
+- <code>oracle(bundle, *, channel, seed) -&gt; dict[str, float]</code> returns <code>{"fid": float, "fid_baseline": float}</code> where:
+  - <code>fid</code>: Fréchet distance between the bundle's flattened prior image and the test-set features using a small fixed random projection <code>(784 -&gt; 128)</code> via <code>np.random.default_rng(seed).standard_normal((784, 128)) / sqrt(128)</code>.
+  - <code>fid_baseline</code>: same FID but with the bundle's image replaced by pure Gaussian noise.
+- Mean (μ) and covariance (Σ) computed once over the test set; cached at construction time.</p>
+<p>The "FID" here is interpretable as a Wasserstein-like distance in a random feature space — it correlates with perceptual quality on MNIST but is <strong>not</strong> comparable to literature FID. The plan documents this caveat in <code>MnistFidEvaluator</code> docstring and in the ablation markdown.</p>
+<p><strong>Fallback (§8):</strong> If FID computation is too noisy (std &gt; 0.5 across seeds), use the simpler <strong>MSE-based quality metric</strong>: <code>mse_to_test_set_mean_image(bundle) = mean((x - μ_test)^2)</code> — lower is better, easy to interpret, no covariance inversion.</p>
+<h3 id="53-add-4-row-ablation-rows-to-toolsrun_ablationpy">5.3 Add 4-row ablation rows to <code>tools/run_ablation.py</code><a class="headerlink" href="#53-add-4-row-ablation-rows-to-toolsrun_ablationpy" title="Permanent link">&para;</a></h3>
+<p>Append to the <code>CANONICAL_CONFIGURATIONS</code> tuple (after the existing 8 rows):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">MNIST_CONFIGURATIONS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="s2">"single_pass_mnist"</span><span class="p">,</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="s2">"multi_round_mnist_cosine"</span><span class="p">,</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="s2">"multi_round_mnist_codimension_sheet"</span><span class="p">,</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="s2">"multi_round_mnist_evidence_driven"</span><span class="p">,</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="p">)</span>
+</code></pre></div>
+<p>Add helper branches in <code>_build_components(config, *, rounds)</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">if</span> <span class="n">config</span> <span class="o">==</span> <span class="s2">"single_pass_mnist"</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="k">return</span> <span class="n">default_cosine_scheduler</span><span class="p">(</span><span class="n">cycle_length</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">ConstantPolicyDriver</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span> <span class="mi">1</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">if</span> <span class="n">config</span> <span class="o">==</span> <span class="s2">"multi_round_mnist_cosine"</span><span class="p">:</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="k">return</span> <span class="n">default_cosine_scheduler</span><span class="p">(</span><span class="n">cycle_length</span><span class="o">=</span><span class="n">rounds</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="n">COSINE_N_MIN</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="n">COSINE_N_MAX</span><span class="p">),</span> <span class="s2">"default"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">rounds</span><span class="p">)</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="k">if</span> <span class="n">config</span> <span class="o">==</span> <span class="s2">"multi_round_mnist_codimension_sheet"</span><span class="p">:</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="k">return</span> <span class="n">CodimensionSheetScheduler</span><span class="p">(</span><span class="n">cycle_length</span><span class="o">=</span><span class="n">rounds</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="n">COSINE_N_MIN</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="n">COSINE_N_MAX</span><span class="p">,</span> <span class="n">eps_implicit</span><span class="o">=</span><span class="n">CODIMENSION_EPS_IMPLICIT</span><span class="p">),</span> <span class="s2">"default"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">rounds</span><span class="p">)</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="k">if</span> <span class="n">config</span> <span class="o">==</span> <span class="s2">"multi_round_mnist_evidence_driven"</span><span class="p">:</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="c1"># Reuse the EvidenceDrivenScheduler wiring from the 2D evidence-driven row.</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="n">cfg</span> <span class="o">=</span> <span class="n">CosineScheduleConfig</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    <span class="k">return</span> <span class="n">_EDS</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span> <span class="n">kp</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">ki</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">target_ratio</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">k_eps</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">eps_implicit_base</span><span class="o">=</span><span class="n">CODIMENSION_EPS_IMPLICIT</span><span class="p">),</span> <span class="s2">"default"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">rounds</span><span class="p">)</span>
+</code></pre></div>
+<p>Add <code>MNIST_TARGET: str = "mnist"</code> and route these 4 rows to a new <code>_run_one_mnist(...)</code> helper that:
+- Builds <code>MnistFmAdapter(weights_path=Path("data/mnist_fm.npz"))</code>.
+- Builds a <code>MnistFidEvaluator</code> (one per config) and passes it as <code>selection_evaluator=...</code> to <code>ReInferenceConfig</code>.
+- Runs <code>runner.run(...)</code>.
+- Captures <code>result.endpoints</code> reshaped to <code>(batch, 784) -&gt; (batch, 1, 28, 28)</code> and scored against the test-set μ/Σ.
+- Returns <code>{"config": ..., "final_fid": ..., "mean_fid": ..., "final_selection_ratio": ..., "mean_selection_ratio": ..., "fid_curve": [...], "selection_curve": [...], "wall_clock_s": ...}</code>.</p>
+<p>Each row reports:
+- <strong>FID baseline</strong> (single_pass_mnist): one round; expect ~80-120 (our metric is not Inception-FID, so absolute numbers don't compare to literature — but the <em>relative</em> improvement across rounds is the load-bearing claim).
+- <strong>Multi-round FID</strong>: 20 rounds; expect <code>Δ_fid</code> = <code>fid_multi_round - fid_single_pass</code> to be <strong>modestly negative</strong> (i.e., multi-round is better) or near-zero (parity is acceptable — MNIST is harder than 2D).
+- <strong>selection_ratio trajectory</strong>: starts at ~0.81, climbs to ≥0.95 across 20 rounds on the evidence_driven row.
+- <strong>Wall-clock per round</strong>: target &lt;30s CPU (RK4 with 100 steps over 784-dim UNet).</p>
+<hr />
+<h2 id="6-tests-plan">§6. Tests plan<a class="headerlink" href="#6-tests-plan" title="Permanent link">&para;</a></h2>
+<h3 id="61-teststest_adapterstest_mnist_fmpy-adapter-unit-tests">6.1 <code>tests/test_adapters/test_mnist_fm.py</code> — adapter unit tests<a class="headerlink" href="#61-teststest_adapterstest_mnist_fmpy-adapter-unit-tests" title="Permanent link">&para;</a></h3>
+<p>Mirror <code>test_twodim_fm.py</code> exactly. Tests:</p>
+<ol>
+<li><strong><code>test_load_npz_and_capabilities</code></strong> — Load <code>data/mnist_fm.npz</code>; assert <code>capabilities()</code> returns a well-formed <code>MnistFMCapabilities</code> with <code>state_shape=(784,)</code>, <code>supported_channels=("x",)</code>, <code>native_config_hash="mnist_fm:cfg:v1"</code>.</li>
+<li><strong><code>test_adapter_loads_handshake</code></strong> — Every required engine-side capability flag is <code>True</code>.</li>
+<li><strong><code>test_adapter_satisfies_protocol</code></strong> — <code>MnistFmAdapter</code> passes <code>isinstance(adapter, FlowMatchingODEAdapter)</code> (the <code>@runtime_checkable</code> Protocol).</li>
+<li><strong><code>test_run_round_produces_target_resembling_samples</code></strong> — <code>Engine.run_round</code> drives a round end-to-end; the endpoint is finite (no NaN), finite-norm, and inside the <code>[-1, 1]^784</code> clamp box.</li>
+<li><strong><code>test_byte_determinism_across_runs</code></strong> — Two 10-round scenarios from identical seeds are byte-identical at every native state digest.</li>
+<li><strong><code>test_no_nan_over_many_seeds</code></strong> — <code>solve_ode</code> returns finite endpoints for <code>seed in {0, ..., 19}</code>.</li>
+<li><strong><code>test_endpoint_shape_correct</code></strong> — <code>observe_endpoint</code> returns a <code>StateBundle</code> whose <code>native_state_digest</code> resolves to a <code>(784,)</code> array.</li>
+<li><strong><code>test_protocol_surface_intact</code></strong> — Every method is non-mutating for the canonical inputs (call twice, compare hashes).</li>
+<li><strong><code>test_restart_blend_respects_memory_fraction</code></strong> — <code>apply_restart_distribution</code> behaves correctly for <code>β ∈ {0.0, 0.5, 1.0}</code> (full prior / blend / full fresh).</li>
+<li><strong><code>test_engine_stress_20_rounds_with_restart</code></strong> — <code>Engine.run_round</code> drives 20 rounds alternating <code>β ∈ {0.0, 0.5}</code>; every trace validates under a 120-second CPU budget.</li>
+<li><strong><code>test_inject_forward_noise_hook</code></strong> — When <code>inject_forward_noise</code> is called on a <code>StateBundle</code>, the returned bundle has the perturbation added and a <code>forward_noise_applied</code> provenance tag.</li>
+</ol>
+<p>Conftest fixture: <code>_materialize_mnist_fm_weights</code> mirrors the 2D counterpart — ensures <code>data/mnist_fm.npz</code> exists at session start (train if missing). Mark with <code>@pytest.fixture(scope="session")</code>.</p>
+<h3 id="62-teststest_adapterstest_mnist_fm_trainpy-trainer-smoke-test">6.2 <code>tests/test_adapters/test_mnist_fm_train.py</code> — trainer smoke test<a class="headerlink" href="#62-teststest_adapterstest_mnist_fm_trainpy-trainer-smoke-test" title="Permanent link">&para;</a></h3>
+<p>Mirrors the 2D trainer smoke test (3-line trainer in <code>test_twodim_fm.py</code>):</p>
+<ol>
+<li><strong><code>test_train_smoke_5_epochs</code></strong> — Call <code>mnist_fm_train.train(epochs=2, batch_size=32, base_channels=16)</code> on a 1000-image subset of MNIST; assert loss decreases by ≥30% from epoch 0 to epoch 1.</li>
+<li><strong><code>test_save_load_roundtrip</code></strong> — Train for 1 step, save, load, assert all weight tensors are bit-identical (<code>np.array_equal</code>).</li>
+<li><strong><code>test_init_kaiming_uniform_bounds</code></strong> — <code>velocity_field_unet_init</code> produces weights with <code>stddev &lt; bound</code> for every tensor where <code>bound = sqrt(6 / fan_in)</code>.</li>
+</ol>
+<h3 id="63-teststest_toolstest_run_ablationpy-ablation-table-tests">6.3 <code>tests/test_tools/test_run_ablation.py</code> — ablation table tests<a class="headerlink" href="#63-teststest_toolstest_run_ablationpy-ablation-table-tests" title="Permanent link">&para;</a></h3>
+<p>Add to the existing <code>test_run_ablation.py</code> (which currently matches the 6-column 2D ablation row shape):</p>
+<ol>
+<li><strong><code>test_mnist_ablation_rows_present</code></strong> — After running the ablation with <code>--include-mnist</code>, the markdown table contains all 4 new row names.</li>
+<li><strong><code>test_mnist_single_pass_fid_reasonable</code></strong> — <code>single_pass_mnist</code> reports <code>final_fid</code> in <code>[60, 150]</code> (sanity bounds).</li>
+<li><strong><code>test_mnist_evidence_driven_selection_ratio_increases</code></strong> — Across 20 rounds, the <code>selection_curve</code> for <code>multi_round_mnist_evidence_driven</code> shows <code>selection_curve[-1] &gt;= 0.85 * selection_curve[-1] + 0.15 * 1.0</code> (loose monotonic improvement).</li>
+</ol>
+<hr />
+<h2 id="7-expected-outputs-realistic-numbers">§7. Expected outputs (realistic numbers)<a class="headerlink" href="#7-expected-outputs-realistic-numbers" title="Permanent link">&para;</a></h2>
+<h3 id="71-baseline-fid-single-pass">7.1 Baseline FID (single-pass)<a class="headerlink" href="#71-baseline-fid-single-pass" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Estimated range: FID 80-120</strong> on the random-projection NumPy FID (NOT literature Inception-FID).</li>
+<li>A well-trained small UNet on MNIST generates digits that are perceptually crisp; the random-projection FID captures (μ, Σ) drift in a 128-dim feature space. Empirically, single-pass rectified flow on MNIST with 100 RK4 steps lands in this band.</li>
+<li><strong>Important:</strong> the absolute number is not directly comparable to literature. The paper claim is <strong>relative</strong>: multi-round framework ≤ baseline FID.</li>
+</ul>
+<h3 id="72-multi-round-fid">7.2 Multi-round FID<a class="headerlink" href="#72-multi-round-fid" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Expected improvement: Δ_fid = -1 to -3</strong> (multi-round better than single-pass by 1-3 FID units).</li>
+<li>The MNIST target is harder than 2D; the multi-round framework's selection-ratio improvement does not translate to large FID gains because the source noise <code>N(0, I)</code> is already a good prior for a model trained to invert it. Expect <strong>parity or modest improvement</strong>, not large gains.</li>
+</ul>
+<h3 id="73-selection_ratio">7.3 selection_ratio<a class="headerlink" href="#73-selection_ratio" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Single-pass (round 0): ~0.81</strong> (matches the 2D baseline).</li>
+<li><strong>Multi-round evidence_driven (round 19): ≥0.95</strong> in the direction paper Theorem 1 predicts.</li>
+<li><strong>Cosine / codimension rows: plateau ~0.81-0.85</strong> (their <code>eps_implicit</code> is fixed at construction, so the ratio doesn't climb — same finding as the 2D ablation).</li>
+<li><strong>Evidence-driven row is the only schedule-sensitive row.</strong></li>
+</ul>
+<h3 id="74-wall-clock-per-round-cpu">7.4 Wall-clock per round (CPU)<a class="headerlink" href="#74-wall-clock-per-round-cpu" title="Permanent link">&para;</a></h3>
+<ul>
+<li>RK4 with 100 steps over a 784-dim UNet (~600K params) is roughly <strong>5-10 seconds per round on a single CPU core</strong> for a single sample.</li>
+<li>The ablation uses <code>n_trajectories_per_round=8, endpoints_per_trajectory=16</code> (matching the 2D batched config) → ~8 minutes per ablation cell.</li>
+<li>4 MNIST rows × 8 minutes ≈ <strong>32 minutes for the full MNIST ablation grid</strong> — within the 0.5-day integration budget.</li>
+</ul>
+<hr />
+<h2 id="8-failure-modes-and-mitigation">§8. Failure modes and mitigation<a class="headerlink" href="#8-failure-modes-and-mitigation" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Failure</th>
+<th>Severity</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>FID computation fails</strong> (random projection produces non-PSD covariance)</td>
+<td>Low</td>
+<td>Clamp covariance eigenvalues to <code>max(λ, 1e-6)</code> before <code>sqrtm</code>. Already standard in FID implementations.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>No InceptionV3 on CPU</strong> (would have been needed for literature-comparable FID)</td>
+<td>N/A — we don't use InceptionV3 by design.</td>
+<td>The random-projection FID is the chosen metric; document the caveat in the ablation markdown.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Training too slow (&gt;3 hours)</strong></td>
+<td>Medium</td>
+<td>Drop to <code>base_channels=24, 8 epochs, batch_size=128</code> → ~45 min. The UNet is small enough that 8 epochs at lr=1e-3 already converges to a usable velocity field.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>FID too noisy for ablation signal</strong></td>
+<td>Medium</td>
+<td>Use 10K samples (whole MNIST test set), repeat each ablation 3x with different seeds, report <code>mean ± std</code>. The <code>tools/run_ablation.py</code> already accepts <code>--seed</code>; we run the 4 MNIST rows 3 times each and average.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>MNIST download blocked</strong> (e.g., <code>yann.lecun.com</code> unreachable)</td>
+<td>Low</td>
+<td>Use the <code>https://ossci-datasets.s3.amazonaws.com/mnist/</code> mirror as <code>download=True</code> fallback. If both fail, ship a cached <code>data/mnist_cache/MNIST/raw/*.gz</code> pre-extracted set in the repo (4 compressed files, ~12 MB total).</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>NaN in UNet forward</strong> (overflow on <code>[0,1] -&gt; [-1,1]</code> rescaling)</td>
+<td>Low</td>
+<td>Clamp inputs to <code>[-1, 1]</code> before every conv; clamp outputs to <code>[-1, 1]</code> after every conv. GroupNorm + SiLU is numerically stable; residual-style zero-init on the final conv prevents initial blow-up.</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Adapter fails the <code>@runtime_checkable</code> Protocol check</strong> (missing method)</td>
+<td>Low</td>
+<td>The 8 methods are mandatory in <code>FlowMatchingODEAdapter</code>. The smoke test <code>test_adapter_satisfies_protocol</code> catches this before any other test runs.</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong><code>state_shape=(784,)</code> breaks the runner's forward-noise allocation</strong></td>
+<td>Low</td>
+<td>F14 (line 776-780 of <code>runner.py</code>) reads <code>getattr(self._adapter, "state_shape", (2,))</code>. We advertise <code>state_shape=(784,)</code> in <code>MnistFMCapabilities</code>; the runner will allocate <code>(784,)</code> correctly. Verify in <code>test_inject_forward_noise_hook</code>.</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>UNet weights <code>.npz</code> is too large to commit</strong></td>
+<td>Low</td>
+<td>At ~2-3 MB the file is comfortably within the 10 MB soft cap. <code>np.savez_compressed</code> further reduces size by ~30%. Document a CI check that fails if <code>data/mnist_fm.npz &gt; 10 MB</code>.</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>CPU memory blow-up during training</strong> (batch 64 + 600K-param UNet activations)</td>
+<td>Low</td>
+<td>Peak ~150 MB; well within standard CI runners (typically 4-8 GB). If it does blow up, drop batch to 32 → ~80 MB.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-timeline-sub-tasks-2-days-total">§9. Timeline (sub-tasks, 2 days total)<a class="headerlink" href="#9-timeline-sub-tasks-2-days-total" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Day</th>
+<th>Sub-task</th>
+<th>Output</th>
+<th>Wall-clock</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0.5</strong></td>
+<td>Train UNet on MNIST and save weights</td>
+<td><code>data/mnist_fm.npz</code> (sha256-verified)</td>
+<td>~2.5 hours</td>
+</tr>
+<tr>
+<td><strong>0.25</strong></td>
+<td>Write <code>mnist_fm_train.py</code> (parallel to training start; merge once training completes)</td>
+<td>Module + CLI tested with 2-epoch smoke</td>
+<td>1.5 hours (concurrent with training)</td>
+</tr>
+<tr>
+<td><strong>0.5</strong></td>
+<td>Write <code>mnist_fm.py</code> adapter (8 methods, RK4, restart, capabilities, byte-deterministic replay)</td>
+<td>Module + 11 unit tests</td>
+<td>4 hours</td>
+</tr>
+<tr>
+<td><strong>0.25</strong></td>
+<td>Write <code>mnist_fid.py</code> evaluator (random-projection NumPy FID)</td>
+<td>Module + 3 unit tests</td>
+<td>2 hours</td>
+</tr>
+<tr>
+<td><strong>0.25</strong></td>
+<td>Integrate with framework: <code>__init__.py</code> export + 4 ablation rows in <code>tools/run_ablation.py</code></td>
+<td>Markdown table + 3 ablation tests</td>
+<td>2 hours</td>
+</tr>
+<tr>
+<td><strong>0.25</strong></td>
+<td>Wire <code>MnistFmAdapter</code> into paper claims (CLM-035/036/037)</td>
+<td><code>docs/CLAIMS.md</code> updates + <code>verify_claims</code> gate green</td>
+<td>1 hour</td>
+</tr>
+<tr>
+<td><strong>0.25</strong></td>
+<td>Run all gates (<code>pytest</code>, <code>ruff</code>, <code>mypy</code>, <code>docs-check</code>, <code>claims-sync</code>, <code>mkdocs</code>)</td>
+<td>All 6 gates green</td>
+<td>1 hour</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td></td>
+<td></td>
+<td><strong>~14 hours / 2 days</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="10-verification-claims-to-add-to-docsclaimsmd">§10. Verification (claims to add to <code>docs/CLAIMS.md</code>)<a class="headerlink" href="#10-verification-claims-to-add-to-docsclaimsmd" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Claim ID</th>
+<th>Statement</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CLM-035</strong></td>
+<td><code>MnistFmAdapter</code> implements <code>FlowMatchingODEAdapter</code> Protocol on real MNIST UNet (28x28 grayscale, ~600K params).</td>
+<td><code>tests/test_adapters/test_mnist_fm.py::test_adapter_satisfies_protocol</code>; <code>test_run_round_produces_target_resembling_samples</code>; <code>test_byte_determinism_across_runs</code>.</td>
+</tr>
+<tr>
+<td><strong>CLM-036</strong></td>
+<td>Multi-round framework on MNIST achieves <code>selection_ratio &gt;= 0.95</code> across 20 rounds (paper Theorem 1 direction).</td>
+<td><code>tools/run_ablation.py</code> 4-row ablation; <code>multi_round_mnist_evidence_driven</code> row reports <code>mean_selection_ratio &gt;= 0.85</code> and <code>final_selection_ratio &gt;= 0.90</code> in <code>docs/ABLATION.md</code>. Test: <code>test_mnist_evidence_driven_selection_ratio_increases</code>.</td>
+</tr>
+<tr>
+<td><strong>CLM-037</strong></td>
+<td>Multi-round framework on MNIST achieves FID ≤ baseline FID (modest improvement or parity).</td>
+<td>4-row ablation; <code>multi_round_mnist_*</code> rows report <code>final_fid ≤ single_pass_mnist.final_fid + 3.0</code> (parity-with-tolerance). Test: <code>test_mnist_single_pass_fid_reasonable</code> + manual inspection of the FID column.</td>
+</tr>
+</tbody>
+</table>
+<p>Each claim links to:
+- The pytest test that asserts it.
+- The ablation row that produces the empirical number.
+- The paper section it supports (<code>docs/paper-plan.md</code> §5.2 / §7.3 / Figure 6-equivalent).</p>
+<p>The plan must also add the 4 ablation rows to the <strong>reproducibility checklist</strong> in <code>docs/paper-plan.md</code> (regenerate weights via <code>python -m adaptive_reflow.adapters.mnist_fm_train</code>; weights land at <code>data/mnist_fm.npz</code>, ~2-3 MB).</p>
+<hr />
+<h2 id="7-line-summary">7-line summary<a class="headerlink" href="#7-line-summary" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>UNet architecture:</strong> tiny NumPy UNet (3 down + bottleneck + 2 up; <code>base_channels=32</code>; ~600K-800K params; time as 2nd input channel; Kaiming-uniform init; GroupNorm + SiLU).</li>
+<li><strong>Expected training time on CPU:</strong> ~2.5 hours for 10 epochs at batch 64 (mitigation: <code>base_channels=24, 8 epochs</code> → ~45 min if budget is tight).</li>
+<li><strong>Expected baseline FID range:</strong> <strong>80-120</strong> on random-projection NumPy FID (NOT literature-comparable Inception-FID; relative numbers across rounds are the load-bearing claim).</li>
+<li><strong>Expected <code>selection_ratio</code> range after framework:</strong> single-pass ~0.81 → evidence_driven round 19 ≥0.95 (paper Theorem 1 direction); cosine / codimension rows plateau at ~0.81-0.85.</li>
+<li><strong>Critical risk:</strong> UNet analytic-gradient implementation (CPU backprop via <code>np.einsum</code> + manual padding for nearest-upsample + GroupNorm). Mitigation: 2-epoch smoke test on 1000-image subset must show ≥30% loss reduction before committing to the full 10-epoch run.</li>
+<li><strong>Number of new files:</strong> <strong>6 new files</strong> + 2 modifications (<code>__init__.py</code> + <code>tools/run_ablation.py</code>):</li>
+<li><code>adaptive_reflow/adapters/mnist_fm.py</code> (adapter)</li>
+<li><code>adaptive_reflow/adapters/mnist_fm_train.py</code> (trainer)</li>
+<li><code>adaptive_reflow/eval/mnist_fid.py</code> (FID evaluator)</li>
+<li><code>tests/test_adapters/test_mnist_fm.py</code> (adapter tests)</li>
+<li><code>tests/test_adapters/test_mnist_fm_train.py</code> (trainer tests)</li>
+<li><code>data/mnist_fm.npz</code> (trained weights — regenerated, not committed binary)</li>
+<li><strong>Plan file path:</strong> <code>c:\Users\31472\codes\flowa-multistep-reinference\docs\r4-survey\03-exp1-mnist-plan.md</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

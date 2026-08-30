@@ -1,0 +1,1846 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>03 — Coupling / Collaboration Inventory - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#03-coupling-collaboration-inventory" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              03 — Coupling / Collaboration Inventory
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-decoupling-mechanisms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Decoupling Mechanisms
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Decoupling Mechanisms">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-protocols-structural-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Protocols (structural types)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-registries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Registries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-type-contracts-frozen-dataclasses-newtypes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Type Contracts (frozen dataclasses + NewTypes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-capability-handshake-engine-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 Capability Handshake (engine ↔ adapter)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-are-these-sufficient" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Are these sufficient?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-coupling-mechanisms-where-algorithms-do-touch-framework-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Coupling Mechanisms (where algorithms do touch framework state)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Coupling Mechanisms (where algorithms do touch framework state)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-data-flow-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Data flow paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-audit-code-emission-sites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Audit-code emission sites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-ledger-integration-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Ledger integration points
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-metric-consumption-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Metric consumption points
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-schedulerrecord_round_feedback-callers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 scheduler.record_round_feedback callers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-paper_quantities-consumers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 paper_quantities consumers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-feedback-loop-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Feedback Loop Implementations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Feedback Loop Implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loop-1-self-reflexive-scheduler-reads-its-own-last-round-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loop 1 — Self-reflexive (scheduler reads its own last-round output)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loop-2-theory-grounded-paper_quantities-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loop 2 — Theory-grounded (paper_quantities → algorithm)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loop-3-hash-chained-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loop 3 — Hash-chained integrity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loop-4-symmetric-round-forward-inject_noise-reverse-blend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loop 4 — Symmetric round (forward inject_noise ↔ reverse blend)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-cross-algorithm-interactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Cross-Algorithm Interactions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Cross-Algorithm Interactions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#asymmetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asymmetry
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-emergent-behaviour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Emergent Behaviour
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-collaboration-weaknesses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Collaboration Weaknesses
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Collaboration Weaknesses">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-blender-is-declared-but-never-executed-through-its-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Blender is declared but never executed through its Protocol
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-orchestrator-bypasses-mergeoperatorprotocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Orchestrator bypasses MergeOperatorProtocol
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-runner-reaches-into-scheduler-private-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Runner reaches into scheduler private attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-two-parallel-sources-of-truth-for-the-per-round-sample" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Two parallel sources of truth for the per-round sample
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#65-driver-merge-audit-codes-do-not-reach-the-runners-metric-dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.5 Driver / merge audit codes do not reach the runner's metric dict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#66-orchestrator-is-entirely-isolated-from-the-algorithm-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.6 Orchestrator is entirely isolated from the algorithm layer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#67-feedback-loop-is-single-family" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.7 Feedback loop is single-family
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#68-evidence_ratio-and-paper_quantity_diagnostics-are-observation-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.8 evidence_ratio and paper_quantity_diagnostics are observation-only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#69-select_evaluatororacle-and-the-primary-evaluator-are-asymmetric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.9 select_evaluator.oracle and the primary evaluator are asymmetric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#610-emaoperators-optional-schedule_sample-kwarg-is-dead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.10 EMAOperator's optional schedule_sample kwarg is dead
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#611-evidence_driverpy-and-sequentialpy-are-wrappers-not-protocol-participants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.11 evidence_driver.py and sequential.py are wrappers, not protocol participants
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#612-diagnostics-are-write-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.12 Diagnostics are write-only
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-weaknesses-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Weaknesses (summary)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="03-coupling-collaboration-inventory">03 — Coupling / Collaboration Inventory<a class="headerlink" href="#03-coupling-collaboration-inventory" title="Permanent link">&para;</a></h1>
+<p>Survey of how the algorithm layer (<code>adaptive_reflow/algorithm/</code>) is decoupled
+from the framework layer (<code>adaptive_reflow/frame/</code>, <code>adaptive_reflow/eval/</code>,
+<code>adaptive_reflow/contracts/</code>, <code>adaptive_reflow/universal/</code>, adapters), where
+that boundary leaks, and which emergent behaviours only exist when the pieces
+work together.</p>
+<p>Files audited:</p>
+<ul>
+<li><code>adaptive_reflow/algorithm/__init__.py</code></li>
+<li><code>adaptive_reflow/algorithm/{scheduler,blender,merge_operator,policy_driver,runner,scheduler_extra,scheduler_r2,round2_extra,batched_runner,evidence_driver,sequential}.py</code></li>
+<li><code>adaptive_reflow/frame/{engine,orchestrator,ledger_chain}.py</code></li>
+<li><code>adaptive_reflow/contracts/paper_quantities.py</code></li>
+<li><code>adaptive_reflow/diagnostics/ledger.py</code></li>
+<li><code>adaptive_reflow/adapters/twodim_fm.py</code></li>
+<li><code>README.md</code> (§ "The four feedback loops")</li>
+<li><code>docs/r3-survey/01-architecture.md</code>, <code>02-algorithms.md</code> (referenced)</li>
+</ul>
+<hr />
+<h2 id="1-decoupling-mechanisms">1. Decoupling Mechanisms<a class="headerlink" href="#1-decoupling-mechanisms" title="Permanent link">&para;</a></h2>
+<h3 id="11-protocols-structural-types">1.1 Protocols (structural types)<a class="headerlink" href="#11-protocols-structural-types" title="Permanent link">&para;</a></h3>
+<p>All four algorithm roles are governed by <code>runtime_checkable</code> Protocols; the
+framework depends only on the Protocol, never on the concrete class.</p>
+<table>
+<thead>
+<tr>
+<th>Protocol</th>
+<th>Where declared</th>
+<th>Method surface the framework depends on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SchedulerProtocol</code></td>
+<td><code>algorithm/scheduler.py:154-259</code></td>
+<td><code>sample</code>, <code>cycle_length</code>, <code>schedule_family</code>, <code>config_hash</code>, <code>reset</code>, optional <code>record_round_feedback</code>, <code>inject_noise</code>, <code>to_config</code>/<code>from_config</code></td>
+</tr>
+<tr>
+<td><code>ScheduleSampleProtocol</code></td>
+<td><code>algorithm/scheduler.py:136-151</code></td>
+<td>structural type for <code>ScheduleSample</code> (no behaviour)</td>
+</tr>
+<tr>
+<td><code>PolicyDriverProtocol</code></td>
+<td><code>algorithm/policy_driver.py:180-284</code></td>
+<td><code>compute_policy</code>, <code>driver_family</code>, <code>config_hash</code>, <code>to_config</code>/<code>from_config</code></td>
+</tr>
+<tr>
+<td><code>MergeOperatorProtocol</code></td>
+<td><code>algorithm/merge_operator.py:239-351</code></td>
+<td>single <code>merge(prev, dynamic, *, cap, floor, delta_cap_up, delta_cap_down, audit_codes)</code></td>
+</tr>
+<tr>
+<td><code>RestartBlenderProtocol</code></td>
+<td><code>algorithm/blender.py:403-441</code></td>
+<td><code>blender_family</code>, <code>config_hash</code> (the framework never calls <code>blend()</code> through this Protocol)</td>
+</tr>
+</tbody>
+</table>
+<p>The engine never imports any concrete scheduler / driver / merge operator
+class; it only knows about the dataclasses (<code>FinalRestartPolicy</code>,
+<code>ScheduleSample</code>, <code>StateBundle</code>) and the per-round helper
+<code>_policy_with_schedule_beta</code> (<code>frame/engine.py:770-843</code>) which itself only
+reads <code>policy.schedule_sample</code> and <code>policy.beta_from_schedule</code>.</p>
+<h3 id="12-registries">1.2 Registries<a class="headerlink" href="#12-registries" title="Permanent link">&para;</a></h3>
+<p>Family-keyed registries enable polymorphic construction by <code>family</code> string
+without coupling to concrete implementations.</p>
+<table>
+<thead>
+<tr>
+<th>Registry</th>
+<th>Location</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SCHEDULER_REGISTRY</code></td>
+<td><code>algorithm/scheduler.py:106</code> + <code>scheduler_r2.py</code> + <code>scheduler_extra.py</code></td>
+<td><code>build_scheduler_from_config</code> (<code>algorithm/protocol_registry.py</code>)</td>
+</tr>
+<tr>
+<td><code>BLENDER_FAMILIES</code></td>
+<td><code>algorithm/protocol_registry.py:68-71</code></td>
+<td><code>build_blender_from_config</code></td>
+</tr>
+<tr>
+<td><code>MERGE_OPERATOR_FAMILIES</code></td>
+<td><code>algorithm/protocol_registry.py:72-76</code></td>
+<td><code>build_merge_operator_from_config</code></td>
+</tr>
+<tr>
+<td><code>POLICY_DRIVER_FAMILIES</code></td>
+<td><code>algorithm/protocol_registry.py:77-80</code></td>
+<td><code>build_policy_driver_from_config</code></td>
+</tr>
+<tr>
+<td><code>ROTATION_POLICY_REGISTRY</code></td>
+<td><code>algorithm/rotation_policy.py:83</code></td>
+<td><code>build_rotation_policy</code></td>
+</tr>
+<tr>
+<td><code>RUNNER_REGISTRY</code></td>
+<td><code>algorithm/runner_registry.py:96</code></td>
+<td><code>build_runner</code> for runner families (batched/parallel/early-stop/online)</td>
+</tr>
+<tr>
+<td><code>PROTOCOL_REGISTRY</code></td>
+<td><code>algorithm/protocol_registry.py:74</code></td>
+<td>aggregate dispatch with <code>validate_config_schema</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code>to_config()</code> / <code>from_config()</code> round-trip is enforced on every
+implementation (<code>scheduler.py:451-486</code>, <code>merge_operator.py:445-489</code>,
+<code>policy_driver.py:386-401</code> / <code>488-497</code> / <code>727-750</code>, <code>blender.py:529-538</code> /
+<code>653-666</code>) so a schedule / driver / operator can be serialised byte-for-byte
+and rebuilt without coupling the wire format to the class identity
+(closes P1-1).</p>
+<h3 id="13-type-contracts-frozen-dataclasses-newtypes">1.3 Type Contracts (frozen dataclasses + NewTypes)<a class="headerlink" href="#13-type-contracts-frozen-dataclasses-newtypes" title="Permanent link">&para;</a></h3>
+<p><code>adaptive_reflow/contracts/</code> carries the <em>vocabulary</em> the framework and
+algorithm layer must share, never the behaviour:</p>
+<ul>
+<li><code>ScheduleSample</code> (algorithm) → <code>CosineScheduleSample</code> (contracts) via
+  <code>ScheduleSample.as_cosine_schedule_sample</code> (<code>scheduler.py:115-128</code>)</li>
+<li><code>FactorValue</code>, <code>ArtifactHash</code>, <code>ChannelName</code>, <code>LedgerRowId</code>, <code>MechanismId</code>,
+  <code>PolicyId</code>, <code>RunId</code>, <code>RestartTriggerCode</code></li>
+<li><code>FinalRestartPolicy</code> (frozen, has <code>policy_hash = hash_policy_hash(policy)</code>)
+  invariant; recomputed by <code>_override_beta_by_channel</code> and the engine.</li>
+</ul>
+<h3 id="14-capability-handshake-engine-adapter">1.4 Capability Handshake (engine ↔ adapter)<a class="headerlink" href="#14-capability-handshake-engine-adapter" title="Permanent link">&para;</a></h3>
+<p><code>Engine.handshake</code> (<code>frame/engine.py:896-936</code>) calls
+<code>adapter.capabilities()</code> and rejects adapters that lack any of the 8
+required capability flags (<code>has_ode_integration_surface</code>, etc). This is the
+<strong>engine ↔ adapter</strong> boundary; the engine never introspects adapter state
+beyond the declared surface. ONNX-Runtime-style per-op capability dispatch
+re-check happens at <code>frame/engine.py:1283-1295</code> and
+<code>_check_capabilities_advertise_dispatch</code> (<code>engine.py:660-?</code>).</p>
+<h3 id="15-are-these-sufficient">1.5 Are these sufficient?<a class="headerlink" href="#15-are-these-sufficient" title="Permanent link">&para;</a></h3>
+<p>The Protocols + registries + type contracts cleanly separate:</p>
+<ul>
+<li><strong>Scheduler</strong> ↔ driver (driver receives <code>schedule_sample</code>, ignores it for
+  constant/adaptive families — <code>policy_driver.py:347</code>, <code>466</code>, <code>672</code>).</li>
+<li><strong>Driver</strong> ↔ merge operator (driver returns <code>FinalRestartPolicy</code>; merge
+  operator accepts numeric <code>dynamic</code> via <code>applied_policy.beta_by_channel</code>,
+  runner.py:609-619).</li>
+<li><strong>Merge</strong> ↔ blender (kept formally decoupled; merge operates on numerics,
+  blender operates on <code>prior_state</code>/<code>fresh_state</code> carrying arbitrary
+  carriers).</li>
+</ul>
+<p>However the <strong>sufficiency test fails</strong> in two places (see §2 and §6):</p>
+<ul>
+<li>The <code>RestartBlenderProtocol</code> is declared but <strong>not wired into the data
+  path</strong> — adapters inline <code>_blend_endpoint_with_prior</code>
+  (<code>adapters/twodim_fm.py:364-373</code>) instead of delegating to <code>self._blender</code>.</li>
+<li><code>AdaptiveReflowPolicyOrchestrator.merge_fraction_authority</code>
+  (<code>frame/orchestrator.py:966-1081</code>) calls the legacy free function
+  <code>bounded_merge</code> (re-export of <code>frame/merge.py</code>) rather than the canonical
+  <code>MergeOperatorProtocol.merge</code> — so the orchestrator bypasses the Protocol.</li>
+</ul>
+<hr />
+<h2 id="2-coupling-mechanisms-where-algorithms-do-touch-framework-state">2. Coupling Mechanisms (where algorithms do touch framework state)<a class="headerlink" href="#2-coupling-mechanisms-where-algorithms-do-touch-framework-state" title="Permanent link">&para;</a></h2>
+<h3 id="21-data-flow-paths">2.1 Data flow paths<a class="headerlink" href="#21-data-flow-paths" title="Permanent link">&para;</a></h3>
+<p>Per round (runner.py:574-832), the canonical pipeline is:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>[outer] scheduler.sample                (runner.py:575-577)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>       └→ ScheduleSample .as_cosine_schedule_sample()  (runner.py:579)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>[outer] driver.compute_policy(schedule_sample, base_policy,
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                               channel, prior_endpoint_digest)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>       └→ FinalRestartPolicy w/ driver_computed_beta=True
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>[outer] _merge.merge(prev=prev_beta, dynamic=beta,
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                     cap=sample.n_cap, floor=sample.n_min,
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                     delta_cap_up/down=1.0, audit_codes)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>       └→ merged_beta    (runner.py:609-619)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>[outer] applied_policy.beta_by_channel = {ch: merged_beta}    (runner.py:625-637)
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>[outer] scheduler.inject_noise(prior_array, schedule_sample,
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                               generator=forward_noise_generator)
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>       └→ "FORWARD_NOISE_INJECTED" audit code   (runner.py:668-674)
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>[outer] engine.run_round(round_index=r, phase_state, bundle, adapter,
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                          policy=applied_policy, condition_delta,
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                          seed, prev_ledger_row_hash)
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>       └→ EngineRoundResult(round_trace, ledger_row, next_phase_state)
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>[outer] adapter.export_trajectory(trace.integrator_trace)
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>       └→ endpoints[r]   (runner.py:710-720)
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>[outer] evaluator.oracle(bundle, channel, seed)     (runner.py:780-790)
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>[outer] selection_evaluator.oracle(bundle, ...)    (runner.py:796-801)
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>[outer] scheduler.record_round_feedback(r, metric) (runner.py:820-821)
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>[outer] adapter.observe_endpoint(trace.integrator_trace, bundle)
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>       └→ next bundle    (runner.py:828-830)
+</code></pre></div>
+<p>Then <code>verify_ledger_chain(tuple(ledger_rows))</code> runs once at the end
+(runner.py:839-843); failure raises <code>AssertionError</code>.</p>
+<p>The engine itself (<code>frame/engine.py:1016-1659</code>) is the inner protocol
+surface driver: <code>build_initial_state</code> → <code>apply_restart_distribution</code> →
+<code>compose_condition</code> → <code>solve_ode</code> → <code>observe_endpoint</code> → <code>export_endpoint</code> →
+<code>detach_and_validate_endpoint</code>. Each step is wrapped in
+<code>_safe_adapter_call</code> (<code>engine.py:730-?</code>) that fail-closes to a
+non-raising <code>_emit_fail_closed</code> round.</p>
+<h3 id="22-audit-code-emission-sites">2.2 Audit-code emission sites<a class="headerlink" href="#22-audit-code-emission-sites" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Site</th>
+<th>Emitter</th>
+<th>Codes</th>
+<th>Read by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runner.py:729</code></td>
+<td>runner</td>
+<td><code>FORWARD_NOISE_INJECTED</code></td>
+<td>per-round <code>metric["merge_audit_codes"]</code></td>
+</tr>
+<tr>
+<td><code>runner.py:755</code></td>
+<td>runner</td>
+<td>(relays <code>merge.merge</code> audit list)</td>
+<td>per-round <code>metric["merge_audit_codes"]</code></td>
+</tr>
+<tr>
+<td><code>engine.py:1142/1146</code></td>
+<td>engine</td>
+<td><code>ERR_FEATURE_DISABLED</code></td>
+<td><code>RoundTrace.audit_codes</code> + <code>LedgerRow.audit_codes</code></td>
+</tr>
+<tr>
+<td><code>engine.py:1217-1224</code></td>
+<td>engine</td>
+<td><code>ERR_CAPABILITIES_INVALID</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>engine.py:1228-1232</code></td>
+<td>engine</td>
+<td><code>ERR_BUNDLE_INVALID</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>engine.py:1238-1247</code></td>
+<td>engine</td>
+<td><code>ERR_CHANNEL_UNSUPPORTED</code>, <code>ERR_CAPABILITY_UNSUPPORTED</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>engine.py:812-813</code></td>
+<td>engine (<code>_policy_with_schedule_beta</code>)</td>
+<td><code>ERR_SCHEDULE_SAMPLE_MISSING</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>engine.py:830-835</code></td>
+<td>engine</td>
+<td><code>ERR_ADAPTER_CONFIGURATION_ERROR</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>merge_operator.py:521-541</code></td>
+<td>merge</td>
+<td><code>MERGE_NONFINITE_PREV_CLIPPED</code>, <code>MERGE_NONFINITE_DYNAMIC_CLIPPED</code>, <code>MERGE_CAP_OUT_OF_RANGE</code>, <code>MERGE_FLOOR_OUT_OF_RANGE</code></td>
+<td>runner passes list into <code>metric["merge_audit_codes"]</code></td>
+</tr>
+<tr>
+<td><code>merge_operator.py:550-559</code></td>
+<td>merge</td>
+<td><code>MERGE_PAPER_QUANTITY_FLOOR_LIFTED</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>merge_operator.py:599-604</code></td>
+<td>merge</td>
+<td><code>MERGE_DEGENERATE_INTERVAL</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>blender.py:131-141</code></td>
+<td>blender</td>
+<td><code>BLENDER_MEMORY_FRACTION_CLIPPED</code></td>
+<td>(currently never reaches the runner — see §6.1)</td>
+</tr>
+<tr>
+<td><code>policy_driver.py:364</code></td>
+<td>driver</td>
+<td><code>POLICY_SCHEDULE_DERIVED</code></td>
+<td>driver <code>audit_codes</code> argument (runner doesn't forward)</td>
+</tr>
+<tr>
+<td><code>policy_driver.py:697-699</code></td>
+<td>driver</td>
+<td><code>BETA_SATURATION_FROM_PAPER_QUANTITY</code></td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>scheduler.py:362-366</code></td>
+<td>scheduler</td>
+<td><code>cosine_paper_quantity_wired:A_g=…</code></td>
+<td>runner fans into <code>metric["schedule_audit_codes"]</code> (runner.py:773-775)</td>
+</tr>
+<tr>
+<td><code>scheduler.py:1941-1948</code></td>
+<td>scheduler (adaptive)</td>
+<td><code>schedule_feedback_multi_metric:…</code></td>
+<td>same</td>
+</tr>
+</tbody>
+</table>
+<p>The fan-out is asymmetric: scheduler codes reach the runner audit trail
+(<code>runner.py:773-778</code>), but driver codes do <strong>not</strong> (the runner never passes
+its <code>merge_audit</code> list into <code>driver.compute_policy</code> — see <code>runner.py:585-590</code>).</p>
+<h3 id="23-ledger-integration-points">2.3 Ledger integration points<a class="headerlink" href="#23-ledger-integration-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>File:line</th>
+<th>What</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>frame/engine.py:404-438</code></td>
+<td><code>compute_ledger_row_hash(...)</code> — single hashing rule</td>
+</tr>
+<tr>
+<td><code>frame/engine.py:441-488</code></td>
+<td><code>build_ledger_row(...)</code> — round-level row, includes <code>prev_ledger_row_hash</code></td>
+</tr>
+<tr>
+<td><code>frame/engine.py:491-?</code></td>
+<td><code>verify_ledger_chain(...)</code> — full-chain re-walk</td>
+</tr>
+<tr>
+<td><code>frame/ledger_chain.py:96-?</code></td>
+<td><code>LedgerChain.append</code> — incremental <code>O(1)</code> per-row check (delegates to engine's <code>compute_ledger_row_hash</code>)</td>
+</tr>
+<tr>
+<td><code>algorithm/runner.py:572, 685, 693</code></td>
+<td>runner carries <code>prev_ledger_row_hash</code> across rounds</td>
+</tr>
+<tr>
+<td><code>algorithm/runner.py:839-843</code></td>
+<td>runner calls <code>verify_ledger_chain</code> on the final tuple; raises <code>AssertionError</code> on tamper</td>
+</tr>
+<tr>
+<td><code>algorithm/runner.py:857</code></td>
+<td><code>ReInferenceResult.ledger_rows</code> exposes the chain as an immutable tuple</td>
+</tr>
+</tbody>
+</table>
+<h3 id="24-metric-consumption-points">2.4 Metric consumption points<a class="headerlink" href="#24-metric-consumption-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Consumed at</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>W2</code> (from <code>oracle["raw_score"]</code>)</td>
+<td><code>runner.py:785-787</code> (promotion) → <code>metric["W2"]</code> → <code>scheduler.record_round_feedback(r, metric)</code> (runner.py:820-821)</td>
+<td><code>ConvergenceAdaptiveScheduler.record_round_feedback</code> aggregates via <code>metric_weights</code>, updates EMA, PID-lite shift (scheduler.py:2028-2113)</td>
+</tr>
+<tr>
+<td><code>coverage</code> (from <code>oracle["bounded_score"]</code>)</td>
+<td><code>runner.py:788-790</code> → <code>metric["coverage"]</code> → feedback</td>
+<td>folded in via <code>1 - value</code> in PID (scheduler.py:2069)</td>
+</tr>
+<tr>
+<td><code>selection_ratio</code></td>
+<td><code>runner.py:795-801</code> → <code>metric["selection_ratio"]</code></td>
+<td><strong>NOT</strong> fed to any algorithm; observation only</td>
+</tr>
+<tr>
+<td><code>schedule_evidence_ratio</code> (from <code>sample.evidence_ratio</code>)</td>
+<td><code>runner.py:776-778</code> → <code>metric["schedule_evidence_ratio"]</code></td>
+<td><strong>NOT</strong> fed to any algorithm; observation only</td>
+</tr>
+<tr>
+<td><code>paper_quantity_diagnostics</code></td>
+<td><code>runner.py:808-813</code> → <code>metric["paper_quantity_diagnostics"]</code></td>
+<td><strong>NOT</strong> fed to any algorithm; observation only</td>
+</tr>
+<tr>
+<td><code>driver.beta_saturation_count</code></td>
+<td>(<code>policy_driver.py:613-625</code>)</td>
+<td>per-instance counter; runner never resets it (so it grows across cycles)</td>
+</tr>
+</tbody>
+</table>
+<p>The metrics actually closing a feedback loop are <em>only</em> <code>W2</code> and
+<code>coverage</code> (and only <code>W2</code> in legacy single-metric mode). The other three are
+observation-only diagnostic emissions — see §6.5.</p>
+<h3 id="25-schedulerrecord_round_feedback-callers">2.5 <code>scheduler.record_round_feedback</code> callers<a class="headerlink" href="#25-schedulerrecord_round_feedback-callers" title="Permanent link">&para;</a></h3>
+<p>The runner is the <strong>single</strong> caller in production code, via <code>hasattr</code> to
+preserve compatibility with non-adaptive schedulers:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>runner.py:820-821        ReInferenceRunner.run loop        (runner-driven loop)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>batched_runner.py:884-886 BatchedTrajectoryRunner.run        (batched runner)
+</code></pre></div>
+<p>The remaining references are definition sites
+(<code>scheduler.py:201</code>, <code>scheduler.py:411</code>, <code>687</code>, <code>894</code>, <code>1121</code>, <code>1357</code>,
+<code>1609</code>, <code>2028</code>, <code>2775</code>; <code>scheduler_extra.py:280</code>, <code>624</code>, <code>954</code>, <code>1196</code>;
+<code>scheduler_r2.py:220</code>; <code>round2_extra.py:189</code>; <code>evidence_driver.py:209-215</code>
+[proxy wrapper]; <code>sequential.py:314</code>, <code>326</code>, <code>362</code>
+[slot-aware wrapper]) — every default implementation is a no-op
+(<code>scheduler.py:411-417</code> for cosine), so the hook is effectively only
+honoured by <code>ConvergenceAdaptiveScheduler</code> and <code>AdaptivePIDScheduler</code>.</p>
+<h3 id="26-paper_quantities-consumers">2.6 <code>paper_quantities</code> consumers<a class="headerlink" href="#26-paper_quantities-consumers" title="Permanent link">&para;</a></h3>
+<p>The four paper quantities (<code>contracts/paper_quantities.py:71, 142, 233,
+278</code>) are consumed by:</p>
+<ul>
+<li><code>CosineAnnealScheduler.__init__</code> → caches <code>sheet_A</code> when a
+  <code>profile_residual_fn</code> is supplied (<code>scheduler.py:317-321</code>).</li>
+<li><code>CodimensionSheetScheduler.__init__</code> → caches all four (<code>scheduler.py:2472-2477</code>).</li>
+<li><code>_paper_evidence_balance</code> helper (<code>scheduler.py:2133-2253</code>) — closed-form
+  sheet-vs-cell ratio using literal <code>A_g</code>, <code>B_g</code>, <code>C_g</code>.</li>
+<li><code>BoundedMergeOperator.__init__</code> (via <code>exterior_gap_e_rho</code> kwarg,
+  <code>merge_operator.py:394-428</code>) and <code>merge_operator_extra.py:96-112</code> — lifts
+  <code>floor</code> to <code>max(floor, e_rho/4)</code>.</li>
+<li><code>AdaptivePolicyDriver.__init__</code> (via <code>per_cell_coefficient_C</code>,
+  <code>policy_driver.py:566-585</code>) — divides envelope by <code>C_g</code>.</li>
+<li><code>ReInferenceRunner._apply_paper_quantities_rewiring</code>
+  (<code>runner.py:861-918</code>) — computes all four once and rewires the scheduler
+  / driver in place.</li>
+</ul>
+<p>Consumers that <strong>do not</strong> read <code>paper_quantities</code> (despite being downstream
+of the same data):</p>
+<ul>
+<li><code>frame/engine.py</code> — engine never imports the module.</li>
+<li><code>frame/orchestrator.py</code> — orchestrator never imports the module (verified
+  by grep; zero matches).</li>
+<li><code>frame/ledger_chain.py</code> — no consumption.</li>
+<li><code>diagnostics/ledger.py</code> — no consumption.</li>
+</ul>
+<hr />
+<h2 id="3-feedback-loop-implementations">3. Feedback Loop Implementations<a class="headerlink" href="#3-feedback-loop-implementations" title="Permanent link">&para;</a></h2>
+<p>The README (<code>README.md:86-93</code>) declares four loops. Each is traced here
+with exact <code>file:line</code> end-points and a verdict on whether data flows back
+to the source.</p>
+<h3 id="loop-1-self-reflexive-scheduler-reads-its-own-last-round-output">Loop 1 — Self-reflexive (scheduler reads its own last-round output)<a class="headerlink" href="#loop-1-self-reflexive-scheduler-reads-its-own-last-round-output" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Forward: scheduler.sample
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>         → runner captures W2/coverage in metric (runner.py:785-790)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>         → ConvergenceAdaptiveScheduler.record_round_feedback
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>           aggregates via metric_weights, updates EMA, PID-lite shift
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>           (scheduler.py:2054-2113)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>         → next round scheduler.sample reads self._shift (scheduler.py:1905-1919)
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>Backward: ✅ closed (data flows back to u_r via the shift)
+</code></pre></div>
+<p><strong>End-points:</strong>
+- Producer: <code>runner.py:780-790</code> (oracle → metric)
+- Consumer: <code>scheduler.py:2028-2113</code> (<code>record_round_feedback</code>)
+- Re-entry: <code>scheduler.py:1895-1919</code> (<code>sample</code> reads <code>_shift</code>)
+- Audit code: <code>schedule_shift_applied:{shift:+.6f}</code> (scheduler.py:1939),
+  <code>schedule_feedback_multi_metric:…</code> (scheduler.py:1943)</p>
+<p><strong>Verdict:</strong> ✅ Closed — but the <strong>driver and merge operator do not see
+this signal</strong>. <code>AdaptivePolicyDriver</code> reads <code>prior_endpoint_digest</code> only
+(runner.py:589; policy_driver.py:673) — never the feedback metric. The
+merge operator sees <code>prev_beta</code> only (runner.py:610). So the loop is
+<strong>single-ended</strong>: only the scheduler is reflexive; the driver / merge are
+not.</p>
+<h3 id="loop-2-theory-grounded-paper_quantities-algorithm">Loop 2 — Theory-grounded (paper_quantities → algorithm)<a class="headerlink" href="#loop-2-theory-grounded-paper_quantities-algorithm" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Forward: paper_quantities.{A_g, B_g, C_g, e_rho}
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>         → CodimensionSheetScheduler caches at __init__ (scheduler.py:2472-2477)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>         → _paper_evidence_balance per round (scheduler.py:2133-2253)
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>         → sample.evidence_ratio exposed via audit_codes (scheduler.py:1948? — via audit_codes tuple)
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>         → runner records metric["schedule_evidence_ratio"] (runner.py:776-778)
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>Backward: ❌ not closed — selection_ratio / evidence_ratio never feeds
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>          back into scheduler, driver, or merge at runtime.
+</code></pre></div>
+<p><strong>End-points:</strong>
+- Producer: <code>contracts/paper_quantities.py:71, 142, 233, 278</code>
+- Consumer: <code>scheduler.py:2472-2477</code>, <code>policy_driver.py:566-585</code>,
+  <code>merge_operator.py:401-428</code>
+- Auditor: <code>runner.py:808-813</code>
+- Re-entry: <strong>none</strong> — <code>selection_ratio</code> is observation-only;
+  <code>evidence_ratio</code> is observation-only</p>
+<p><strong>Verdict:</strong> ❌ Half-closed — paper quantities <em>configure</em> the algorithms
+once at construction time, but no per-round paper quantity flows back
+into the algorithm; the value sits in the metric dict and is never
+consumed.</p>
+<h3 id="loop-3-hash-chained-integrity">Loop 3 — Hash-chained integrity<a class="headerlink" href="#loop-3-hash-chained-integrity" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Forward: build_ledger_row(prev_ledger_row_hash) (engine.py:441-488)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>         → runner carries prev_ledger_row_hash across rounds (runner.py:572, 685, 693)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>         → verify_ledger_chain at run end (runner.py:839-843)
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>Backward: ✅ closed — each round's row_hash contains prev's row_hash;
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>          tamper anywhere breaks recompute at verify time.
+</code></pre></div>
+<p><strong>End-points:</strong>
+- Producer: <code>frame/engine.py:441-488</code> (<code>build_ledger_row</code>)
+- Chainer: <code>frame/engine.py:404-438</code> (<code>compute_ledger_row_hash</code>)
+- Carriers: <code>algorithm/runner.py:572, 685, 693</code>
+- Verifier: <code>frame/engine.py:491-?</code> (<code>verify_ledger_chain</code>); incremental
+  alternative <code>frame/ledger_chain.py:111-216</code> (<code>LedgerChain.append</code>)</p>
+<p><strong>Verdict:</strong> ✅ Closed — this is the load-bearing invariant; P0-8.</p>
+<h3 id="loop-4-symmetric-round-forward-inject_noise-reverse-blend">Loop 4 — Symmetric round (forward inject_noise ↔ reverse blend)<a class="headerlink" href="#loop-4-symmetric-round-forward-inject_noise-reverse-blend" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Forward: scheduler.inject_noise(state, schedule_sample, generator)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>         (runner.py:668-674)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>         → forward_noise_emitted=True → FORWARD_NOISE_INJECTED in
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>           merge_audit (runner.py:729)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>         → metric["forward_noise_injected"] = 1.0 (runner.py:767)
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>Backward (reverse side): adapter.apply_restart_distribution inlines
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>         _blend_endpoint_with_prior (adapters/twodim_fm.py:364-373, 696-758);
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>         this is the *reverse* of inject_noise, but the math is duplicated
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>         rather than delegated to RestartBlenderProtocol.
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>         → engine.run_round calls apply_restart_distribution (engine.py:1438-1444)
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>Backward (closed form): ❌ NOT closed via the Protocol; blender is
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>         bypassed at the adapter boundary; the forward noise is discarded
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>         after the audit-code emission (runner.py:673: `_ = injected`).
+</code></pre></div>
+<p><strong>End-points:</strong>
+- Producer: <code>algorithm/scheduler.py:217-238</code> (Protocol); per-implementation
+  at <code>scheduler.py:419-449</code>, <code>695-712</code>, <code>902-921</code>, <code>1129-1143</code>,
+  <code>1365-1379</code>, <code>1617-1631</code>, <code>1974-1989</code>
+- Caller: <code>algorithm/runner.py:668-674</code>
+- Reverse side caller: <code>frame/engine.py:1438-1444</code> →
+  <code>adapter.apply_restart_distribution</code> (inlined math, not Protocol call)</p>
+<p><strong>Verdict:</strong> ❌ <strong>Asymmetric / half-closed.</strong> The forward side reaches the
+Protocol; the reverse side is inlined inside each adapter. The runner
+<em>receives</em> the injected noise as <code>_ = injected</code> and immediately drops it
+(runner.py:673). There is no <code>self._blender</code> reach-around; the
+<code>RestartBlenderProtocol</code> is consulted only for its <code>config_hash()</code>
+(runner.py:374 / <code>_algorithm_signatures</code>).</p>
+<hr />
+<h2 id="4-cross-algorithm-interactions">4. Cross-Algorithm Interactions<a class="headerlink" href="#4-cross-algorithm-interactions" title="Permanent link">&para;</a></h2>
+<p>The runner composes four protocols; the joints between them are:</p>
+<table>
+<thead>
+<tr>
+<th>Joint</th>
+<th>Producer</th>
+<th>Consumer</th>
+<th>Joint file:line</th>
+<th>Direction</th>
+<th>Symmetric?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>schedule → driver</td>
+<td><code>SchedulerProtocol.sample</code></td>
+<td><code>PolicyDriverProtocol.compute_policy(schedule_sample, ...)</code></td>
+<td><code>algorithm/runner.py:575-585</code></td>
+<td>→</td>
+<td>No (driver ignores schedule for constant / adaptive)</td>
+</tr>
+<tr>
+<td>driver → merge</td>
+<td><code>PolicyDriverProtocol.compute_policy</code> → <code>FinalRestartPolicy.beta_by_channel[ch]</code></td>
+<td><code>MergeOperatorProtocol.merge(prev, dynamic=beta, ...)</code></td>
+<td><code>algorithm/runner.py:585-619</code></td>
+<td>→</td>
+<td>No (merge ignores schedule_sample unless EMAOperator)</td>
+</tr>
+<tr>
+<td>merge → engine</td>
+<td>merged <code>beta</code> is patched back into <code>FinalRestartPolicy.beta_by_channel</code></td>
+<td><code>Engine.run_round(policy=applied_policy, ...)</code></td>
+<td><code>algorithm/runner.py:625-685</code></td>
+<td>→</td>
+<td>No (driver <code>compute_policy</code> is not re-invoked)</td>
+</tr>
+<tr>
+<td>engine → adapter</td>
+<td>engine forwards <code>FinalRestartPolicy</code> to <code>adapter.apply_restart_distribution(state, policy)</code></td>
+<td>adapter returns <code>StateBundle</code></td>
+<td><code>frame/engine.py:1428-1444</code></td>
+<td>→</td>
+<td>No (engine never reads adapter state)</td>
+</tr>
+<tr>
+<td>adapter → evaluator</td>
+<td><code>adapter.observe_endpoint</code> → <code>evaluator.oracle(bundle, ...)</code></td>
+<td><code>metric</code> dict</td>
+<td><code>algorithm/runner.py:779-790</code></td>
+<td>→</td>
+<td>No (evaluator never inspects adapter state)</td>
+</tr>
+<tr>
+<td>evaluator → scheduler</td>
+<td><code>metric["W2"]</code>/<code>coverage</code> → <code>scheduler.record_round_feedback(r, metric)</code></td>
+<td><code>ConvergenceAdaptiveScheduler._shift</code></td>
+<td><code>algorithm/runner.py:820-821</code>; <code>algorithm/scheduler.py:2028-2113</code></td>
+<td>← (closes loop 1)</td>
+<td>Yes for that one family</td>
+</tr>
+<tr>
+<td>scheduler → runner</td>
+<td><code>scheduler.inject_noise(...)</code></td>
+<td>runner audit / metric</td>
+<td><code>algorithm/runner.py:668-674</code></td>
+<td>→</td>
+<td>No (result is discarded: <code>_ = injected</code>)</td>
+</tr>
+<tr>
+<td>runner → orchestrator</td>
+<td><code>AdaptiveReflowPolicyOrchestrator</code> lives in <code>frame/</code>; the runner does <strong>not</strong> call it (verified: zero matches in runner.py)</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>❌ <strong>no joint</strong></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>runner → paper_quantities</td>
+<td><code>_apply_paper_quantities_rewiring</code> re-routes scheduler / driver in place</td>
+<td>re-entry</td>
+<td><code>algorithm/runner.py:861-918</code></td>
+<td>→ (one-shot, pre-loop)</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h3 id="asymmetry">Asymmetry<a class="headerlink" href="#asymmetry" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The <strong>only closed loop is Loop 1 (scheduler ↔ metric)</strong> and that closure
+  only exists when the user opts into <code>ConvergenceAdaptiveScheduler</code>. All
+  other joints are one-way.</li>
+<li>The <strong>merge operator → driver</strong> path is one-way. The merge operator
+  never informs the driver that its <code>dynamic</code> was clipped (only the audit
+  codes propagate via <code>merge_audit_codes</code>).</li>
+<li>The <strong>scheduler → engine</strong> path: the engine's inline override
+  <code>_policy_with_schedule_beta</code> (<code>frame/engine.py:770-843</code>) duplicates the
+  schedule-derived driver's logic. Contract 1.2 dedups via the
+  <code>driver_computed_beta</code> flag (<code>policy_driver.py:209-212</code>, <code>engine.py:1429</code>),
+  but the engine still owns a second source of truth for the
+  <code>n_cap → beta</code> mapping.</li>
+</ul>
+<hr />
+<h2 id="5-emergent-behaviour">5. Emergent Behaviour<a class="headerlink" href="#5-emergent-behaviour" title="Permanent link">&para;</a></h2>
+<p>Behaviours that only exist when two-or-more algorithms collaborate:</p>
+<ol>
+<li><strong>Hash-chained integrity</strong> — single scheduler + single engine + single
+   runner, no merge, would not produce a tamper-evident chain. The
+   <em>combination</em> of <code>build_ledger_row(prev_hash) → row_hash → recompute</code> is
+   an emergent invariant.</li>
+<li><strong>Paper Theorem 1 numerical witness (<code>selection_ratio → 1</code>)</strong> — only
+   emerges from <code>paper_quantities.sheet_evidence_A</code> + <code>CodimensionSheetScheduler</code></li>
+<li><code>PosteriorSelectionEvaluator</code> + the runner wiring them
+   (<code>runner.py:891-918</code>, <code>runner.py:795-801</code>). Removing any one collapses
+   the witness.</li>
+<li><strong>Symmetric round model (DRM-3)</strong> — the <code>inject_noise(state)</code> forward +
+   <code>apply_restart_distribution(state, policy)</code> reverse pair
+   (<code>scheduler.py:217-238</code>, <code>engine.py:1438-1444</code>) is byte-replayable only
+   because the same <code>np.random.Generator</code> state is threaded through both
+   sides.</li>
+<li><strong>Coarea ratio reporting</strong> — <code>CodimensionSheetScheduler._paper_evidence_balance</code></li>
+<li><code>runner.py:776-778</code> produces the <code>evidence_ratio</code> audit emission that
+   no single scheduler alone emits.</li>
+<li><strong><code>beta_saturation_count</code> provenance</strong> — only <code>AdaptivePolicyDriver</code>
+   tracks this counter (<code>policy_driver.py:613-625</code>); the runner never
+   resets it (<code>runner.py:585-590</code> ignores it), so the counter accumulates
+   across <code>n_rounds</code> but only <code>AdaptivePolicyDriver</code> + the runner
+   <em>together</em> can attribute saturation to a specific per-round metric.</li>
+<li><strong><code>policy_hash</code> integrity</strong> — emerges from
+   <code>FinalRestartPolicy</code> dataclass + <code>hash_policy_hash</code> +
+   <code>_override_beta_by_channel</code> + <code>_policy_with_schedule_beta</code> recomputing
+   on every mutation. No single piece preserves the invariant.</li>
+<li><strong><code>schedule_evidence_ratio</code> in <code>metric[]</code></strong> — only emitted because the
+   runner fans <code>sample.audit_codes</code> and <code>sample.evidence_ratio</code> into the
+   per-round metric (runner.py:773-778); without the runner scheduler
+   audits never reach the audit ledger.</li>
+</ol>
+<hr />
+<h2 id="6-collaboration-weaknesses">6. Collaboration Weaknesses<a class="headerlink" href="#6-collaboration-weaknesses" title="Permanent link">&para;</a></h2>
+<h3 id="61-blender-is-declared-but-never-executed-through-its-protocol">6.1 Blender is declared but never executed through its Protocol<a class="headerlink" href="#61-blender-is-declared-but-never-executed-through-its-protocol" title="Permanent link">&para;</a></h3>
+<p><code>RestartBlenderProtocol</code> (<code>algorithm/blender.py:403-441</code>) exists, has two
+implementations (<code>LinearBlender</code>, <code>DistanceDecayBlender</code>), and is stored
+on <code>ReInferenceRunner._blender</code> (runner.py:448-450). The runner uses
+it only for <code>config_hash()</code> (<code>runner.py:374</code>, via <code>_algorithm_signatures</code>).</p>
+<p><strong>Adapters' <code>apply_restart_distribution</code> inline the same math</strong> rather
+than calling the blender:</p>
+<ul>
+<li><code>adapters/twodim_fm.py:364-373</code> — <code>_blend_endpoint_with_prior</code> is a
+  byte-identical copy of <code>_linear_blend_arrays</code> in <code>algorithm/blender.py:220-238</code>.</li>
+<li><code>adapters/twodim_fm.py:696-758</code> — <code>apply_restart_distribution</code> does
+  <code>memory_fraction = 1 - beta</code>, calls the inlined helper, never
+  <code>self._blender.blend(...)</code>.</li>
+<li><code>adapters/stochastic_fm.py:256</code> and <code>adapters/toy_gaussian.py:308</code> — same
+  inlined pattern (verified via grep).</li>
+</ul>
+<p>The blender's <code>BLENDER_MEMORY_FRACTION_CLIPPED</code> audit code
+(<code>algorithm/blender.py:131-141</code>) is therefore <strong>never emitted on the
+production data path</strong> — it is observable only through direct blender
+tests. The protocol guarantees nothing about runtime behaviour because the
+contract's only consumer is a config-hash print.</p>
+<h3 id="62-orchestrator-bypasses-mergeoperatorprotocol">6.2 Orchestrator bypasses <code>MergeOperatorProtocol</code><a class="headerlink" href="#62-orchestrator-bypasses-mergeoperatorprotocol" title="Permanent link">&para;</a></h3>
+<p><code>frame/orchestrator.py:1073-1080</code> calls <code>bounded_merge(...)</code> — the legacy
+free function re-exported from <code>frame/merge.py</code> — instead of dispatching
+through <code>MergeOperatorProtocol</code>. The protocol is therefore only enforced
+on the runner-driven path; the orchestrator-driven path (used by
+<code>AdaptiveReflowMechanism</code>) is decoupled from <code>MergeOperatorProtocol</code>
+entirely and silently uses the legacy <code>max(prev, dynamic)</code>-derived
+operator with delta caps pinned at <code>delta_cap</code>.</p>
+<h3 id="63-runner-reaches-into-scheduler-private-attributes">6.3 Runner reaches into scheduler private attributes<a class="headerlink" href="#63-runner-reaches-into-scheduler-private-attributes" title="Permanent link">&para;</a></h3>
+<p><code>algorithm/runner.py:903-907</code> re-constructs a <code>CodimensionSheetScheduler</code>
+using private slots:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span> <span class="o">=</span> <span class="n">CodimensionSheetScheduler</span><span class="p">(</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">cycle_length</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">cycle_length</span><span class="p">()),</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">n_min</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">_n_min</span><span class="p">),</span>    <span class="c1"># noqa: SLF001</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">n_max</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">_n_max</span><span class="p">),</span>    <span class="c1"># noqa: SLF001</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">profile_residual_fn</span><span class="o">=</span><span class="n">provider</span><span class="p">,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">eps_implicit</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">_eps_implicit</span><span class="p">),</span>  <span class="c1"># noqa: SLF001</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">eps_direction</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">_eps_direction</span><span class="p">),</span>  <span class="c1"># noqa: SLF001</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">seed</span><span class="p">),</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="p">)</span>
+</code></pre></div>
+<p>This is a <strong>leak</strong>: a future change to <code>CodimensionSheetScheduler</code>'s
+constructor that drops <code>eps_implicit</code>/<code>eps_direction</code> would silently break
+paper-quantity rewiring. The <code># noqa: SLF001</code> is an explicit confession.</p>
+<h3 id="64-two-parallel-sources-of-truth-for-the-per-round-sample">6.4 Two parallel sources of truth for the per-round sample<a class="headerlink" href="#64-two-parallel-sources-of-truth-for-the-per-round-sample" title="Permanent link">&para;</a></h3>
+<p><code>ScheduleSample</code> (algorithm layer, frozen dataclass) carries <code>n_cap</code>,
+<code>n_min</code>, <code>n_max</code>, <code>u_r</code>, <code>schedule_hash</code>, <code>audit_codes</code>, <code>evidence_ratio</code>.
+<code>CosineScheduleSample</code> (contracts layer, frozen dataclass) carries
+<code>schedule_hash</code>, <code>n_cap</code>, <code>n_min</code>, <code>n_max</code>, <code>u_r</code>, <code>family</code>. The
+algorithm sample converts via <code>.as_cosine_schedule_sample()</code>
+(<code>scheduler.py:115-128</code>); every place that consumes a sample in the
+runner converts immediately (<code>runner.py:579</code>, <code>586</code>, <code>670</code>).</p>
+<p>Two parallel types for the same content increases the surface that has to
+stay in sync. Any new field on <code>ScheduleSample</code> (e.g.
+<code>schedule_evidence_ratio</code>) needs to be added to <code>CosineScheduleSample</code> and
+the converter before the engine can see it.</p>
+<h3 id="65-driver-merge-audit-codes-do-not-reach-the-runners-metric-dict">6.5 Driver / merge audit codes do not reach the runner's metric dict<a class="headerlink" href="#65-driver-merge-audit-codes-do-not-reach-the-runners-metric-dict" title="Permanent link">&para;</a></h3>
+<p><code>runner.py:585-590</code> calls <code>driver.compute_policy(...)</code> without passing
+an <code>audit_codes</code> list, and the driver's <code>policy_schedule_derived</code> /
+<code>BETA_SATURATION_FROM_PAPER_QUANTITY</code> codes are never propagated. Same
+for the merge operator — <code>runner.py:608-619</code> does collect <code>merge_audit</code>
+into the metric dict, but the <em>driver's</em> codes are dropped. Audit replay
+is therefore <strong>incomplete</strong>.</p>
+<h3 id="66-orchestrator-is-entirely-isolated-from-the-algorithm-layer">6.6 Orchestrator is entirely isolated from the algorithm layer<a class="headerlink" href="#66-orchestrator-is-entirely-isolated-from-the-algorithm-layer" title="Permanent link">&para;</a></h3>
+<p><code>frame/orchestrator.py</code> is the policy orchestrator for
+<code>AdaptiveReflowMechanism</code>, but it:</p>
+<ul>
+<li>does not import <code>algorithm/</code>.</li>
+<li>does not call <code>paper_quantities.*</code> (zero matches in grep).</li>
+<li>does not honour <code>SchedulerProtocol.sample</code>; it instantiates its own
+  <code>CosineScheduleSampler</code> (<code>frame/orchestrator.py:328</code>).</li>
+<li>does not honour <code>PolicyDriverProtocol</code>; <code>merge_fraction_authority</code>
+  bypasses the merge protocol (§6.2).</li>
+</ul>
+<p>The orchestrator is effectively a <strong>parallel framework</strong> inside the
+framework. The runner and the orchestrator cannot drive the same round.</p>
+<h3 id="67-feedback-loop-is-single-family">6.7 Feedback loop is single-family<a class="headerlink" href="#67-feedback-loop-is-single-family" title="Permanent link">&para;</a></h3>
+<p><code>record_round_feedback</code> is honoured only by <code>ConvergenceAdaptiveScheduler</code>
+(<code>scheduler.py:2028-2113</code>) and <code>AdaptivePIDScheduler</code>
+(<code>scheduler_extra.py:280, 624, 954, 1196</code>); the default
+<code>CosineAnnealScheduler.record_round_feedback</code> is a no-op (<code>scheduler.py:411-417</code>).
+For any non-adaptive scheduler, the metric dict is built and discarded:
+<code>metric["W2"]</code> and <code>metric["coverage"]</code> go into the per-round dict and
+into <code>ReInferenceResult.per_round_metrics</code>, but no algorithm consumes
+them. Loop 1 therefore exists <em>only when explicitly opted into</em>.</p>
+<h3 id="68-evidence_ratio-and-paper_quantity_diagnostics-are-observation-only">6.8 <code>evidence_ratio</code> and <code>paper_quantity_diagnostics</code> are observation-only<a class="headerlink" href="#68-evidence_ratio-and-paper_quantity_diagnostics-are-observation-only" title="Permanent link">&para;</a></h3>
+<p><code>runner.py:776-778</code> and <code>runner.py:808-813</code> record these in the metric
+dict but no algorithm reads them. They cannot close Loop 2 — paper
+quantities configure once, then become invisible at runtime. To close
+Loop 2 the runner would need to dispatch the per-round <code>evidence_ratio</code> /
+<code>selection_ratio</code> into <code>scheduler.record_round_feedback</code> (currently only
+W2/coverage are forwarded via the runner.py:820-821 call).</p>
+<h3 id="69-select_evaluatororacle-and-the-primary-evaluator-are-asymmetric">6.9 <code>select_evaluator.oracle</code> and the primary evaluator are asymmetric<a class="headerlink" href="#69-select_evaluatororacle-and-the-primary-evaluator-are-asymmetric" title="Permanent link">&para;</a></h3>
+<p><code>runner.py:779-790</code> calls <code>self._evaluator.oracle(...)</code>; <code>runner.py:795-801</code>
+calls <code>config.selection_evaluator.oracle(...)</code>. They are both fan-out
+callers but <code>selection_evaluator</code> is a constructor argument while the
+primary evaluator is a constructor argument on <code>ReInferenceRunner.__init__</code>.
+A caller that configures only the primary evaluator gets zero
+<code>selection_ratio</code> emission; a caller that configures only the secondary
+gets no W2/coverage. There is <strong>no aggregation</strong> that ties the two
+oracles together.</p>
+<h3 id="610-emaoperators-optional-schedule_sample-kwarg-is-dead">6.10 EMAOperator's optional <code>schedule_sample</code> kwarg is dead<a class="headerlink" href="#610-emaoperators-optional-schedule_sample-kwarg-is-dead" title="Permanent link">&para;</a></h3>
+<p><code>merge_operator.py:786-795</code> accepts <code>schedule_sample=None</code> and modulates
+the alpha by <code>n_cap</code>. The runner never passes <code>schedule_sample</code> into
+<code>merge.merge</code> (<code>runner.py:609-619</code>) — so the schedule-aware modulation
+is unreachable from the runner path. The path is reachable only by
+direct callers of the merge operator.</p>
+<h3 id="611-evidence_driverpy-and-sequentialpy-are-wrappers-not-protocol-participants">6.11 <code>evidence_driver.py</code> and <code>sequential.py</code> are wrappers, not protocol participants<a class="headerlink" href="#611-evidence_driverpy-and-sequentialpy-are-wrappers-not-protocol-participants" title="Permanent link">&para;</a></h3>
+<p><code>algorithm/evidence_driver.py:209-217</code> and
+<code>algorithm/sequential.py:314-392</code> wrap an inner scheduler; they implement
+the <code>SchedulerProtocol</code> surface (and <code>inject_noise</code> delegates to the
+inner scheduler, <code>sequential.py:392-408</code>). They are not in the runner's
+hot path (verified — runner.py imports none of them), so the wrapper
+hierarchy is <strong>unused</strong> by the runner pipeline.</p>
+<h3 id="612-diagnostics-are-write-only">6.12 Diagnostics are write-only<a class="headerlink" href="#612-diagnostics-are-write-only" title="Permanent link">&para;</a></h3>
+<p><code>diagnostics/ledger.py</code> defines <code>ledger_only=True</code> dataclasses marked as
+"observation only, never influence the beta/alpha write path". Nothing in
+the engine, runner, orchestrator, or drivers reads them. They are
+dead-letter carriers in the current pipeline (the diagnostics module is
+its own sub-package; engine imports <code>frame/diagnostics/</code> only via type
+names).</p>
+<hr />
+<h2 id="7-weaknesses-summary">7. Weaknesses (summary)<a class="headerlink" href="#7-weaknesses-summary" title="Permanent link">&para;</a></h2>
+<p>The collaboration works end-to-end only on the path:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>paper_quantities → scheduler.sample → driver.compute_policy → merge.merge
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>                   → engine.run_round → adapter.apply_restart_distribution
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>                   → adapter.observe_endpoint → evaluator.oracle
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>                   → scheduler.record_round_feedback  (closes loop 1)
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>                   → build_ledger_row(prev_hash) → verify_ledger_chain
+</code></pre></div>
+<p>Everything else is broken or asymmetric:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Weakness</th>
+<th>Severity</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W1</td>
+<td>Blender is declared but never called from the data path</td>
+<td>High</td>
+<td><code>adapters/twodim_fm.py:364-373</code>, <code>blender.py:403-441</code></td>
+</tr>
+<tr>
+<td>W2</td>
+<td>Orchestrator bypasses <code>MergeOperatorProtocol</code></td>
+<td>High</td>
+<td><code>frame/orchestrator.py:1073-1080</code></td>
+</tr>
+<tr>
+<td>W3</td>
+<td>Runner reaches into private scheduler attributes for paper-quantity rewiring</td>
+<td>High</td>
+<td><code>algorithm/runner.py:903-907</code></td>
+</tr>
+<tr>
+<td>W4</td>
+<td>Two parallel sample types (<code>ScheduleSample</code> vs <code>CosineScheduleSample</code>)</td>
+<td>Medium</td>
+<td><code>algorithm/scheduler.py:115-128</code></td>
+</tr>
+<tr>
+<td>W5</td>
+<td>Driver audit codes never reach runner metric dict</td>
+<td>Medium</td>
+<td><code>algorithm/runner.py:585-590</code></td>
+</tr>
+<tr>
+<td>W6</td>
+<td>Orchestrator entirely isolated from algorithm layer</td>
+<td>High</td>
+<td><code>frame/orchestrator.py</code> (zero imports of <code>algorithm/</code>)</td>
+</tr>
+<tr>
+<td>W7</td>
+<td>Feedback loop only closes for adaptive schedulers</td>
+<td>Medium</td>
+<td><code>algorithm/scheduler.py:411-417</code> (no-op default)</td>
+</tr>
+<tr>
+<td>W8</td>
+<td>Loop 2 half-closed: paper quantities never re-enter runtime</td>
+<td>High</td>
+<td><code>algorithm/runner.py:808-813</code></td>
+</tr>
+<tr>
+<td>W9</td>
+<td>EMAOperator's schedule-aware modulation is unreachable</td>
+<td>Low</td>
+<td><code>merge_operator.py:786-795</code></td>
+</tr>
+<tr>
+<td>W10</td>
+<td>Diagnostic ledger is write-only</td>
+<td>Low</td>
+<td><code>diagnostics/ledger.py:1-22</code></td>
+</tr>
+</tbody>
+</table>
+<p>The biggest weakness is <strong>W1 (the Blender Protocol leaks but is not
+honored at execution time)</strong> — the protocol is declared with a real
+implementation family (<code>DistanceDecayBlender</code>), with audit codes, with
+config-hash provenance, but the data path bypasses it via inlined adapter
+math. Until the adapter boundary delegates to <code>self._blender.blend(...)</code>,
+the algorithm layer's "four pluggable layers" claim is reduced to three.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

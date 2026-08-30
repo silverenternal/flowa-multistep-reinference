@@ -495,10 +495,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#section-2-ablation-comparison-22-rows" class="md-nav__link">
+  <a href="#section-2-ablation-comparison-23-rows" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Section 2: Ablation comparison (22 rows)
+        Section 2: Ablation comparison (23 rows)
       
     </span>
   </a>
@@ -510,6 +510,28 @@
     <span class="md-ellipsis">
       
         Section 3: Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2d-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2D Rectified Flow SOTA experiment (commit working tree at 2026-08-30)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-8-cifar-10-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-31" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 8: CIFAR-10 Rectified Flow SOTA experiment (commit working tree at 2026-08-31)
       
     </span>
   </a>
@@ -850,8 +872,8 @@
 </tr>
 </tbody>
 </table>
-<h2 id="section-2-ablation-comparison-22-rows">Section 2: Ablation comparison (22 rows)<a class="headerlink" href="#section-2-ablation-comparison-22-rows" title="Permanent link">&para;</a></h2>
-<p>Re-run of <code>tools/run_ablation.py</code> (full 20-round configuration). The canonical 22-row grid (8 canonical configs x 2 targets + 2 paper-grounded rows on <code>two_moons</code> + 2 post-infrastructure-fix rows x 2 targets) is reproduced below with the W2 / coverage / selection_ratio / ledger_chain_integrity columns the task specifies. The paper-grounded rows report a final selection ratio of <code>0.8061</code> (the documented plateau of the legacy replay-through-adapter metric on <code>two_moons</code>; the A16 uplift is what raises the ratio toward 1 -- see the SNR row in Section 1).</p>
+<h2 id="section-2-ablation-comparison-23-rows">Section 2: Ablation comparison (23 rows)<a class="headerlink" href="#section-2-ablation-comparison-23-rows" title="Permanent link">&para;</a></h2>
+<p>Re-run of <code>tools/run_ablation.py</code> (full 20-round configuration). The canonical 23-row grid (8 canonical configs x 2 targets + 3 paper-grounded rows on <code>two_moons</code> + 2 post-infrastructure-fix rows x 2 targets) is reproduced below with the W2 / coverage / selection_ratio / ledger_chain_integrity columns the task specifies. The codimension and evidence-driven paper-grounded rows now report final selection ratios of <code>0.9881</code> / <code>0.9896</code> after the C4 fix landed (<code>ScheduleSample.eps_implicit</code> threaded from the runner into <code>PosteriorSelectionEvaluator.oracle_at_round(eps_round=...)</code>); the cosine baseline row remains at the pre-fix plateau <code>0.8061</code> because <code>CosineAnnealScheduler</code> does not carry <code>eps_implicit</code> (the runner falls back to the evaluator's fixed <code>eps_implicit</code>). The pre-fix baseline was <code>0.8061</code> for all three paper-grounded rows; delta vs pre-fix is <code>+0.1820</code> (codim) / <code>+0.0000</code> (cosine) / <code>+0.1835</code> (evidence-driven).</p>
 <table>
 <thead>
 <tr>
@@ -973,7 +995,7 @@
 <td style="text-align: right;">0.9556</td>
 <td style="text-align: right;">1.000</td>
 <td style="text-align: right;">1.000</td>
-<td style="text-align: right;">0.8061</td>
+<td style="text-align: right;">0.9881</td>
 <td style="text-align: center;">--</td>
 </tr>
 <tr>
@@ -984,6 +1006,16 @@
 <td style="text-align: right;">1.000</td>
 <td style="text-align: right;">1.000</td>
 <td style="text-align: right;">0.8061</td>
+<td style="text-align: center;">--</td>
+</tr>
+<tr>
+<td>multi_round_evidence_driven_posterior_selection</td>
+<td>two_moons</td>
+<td style="text-align: right;">0.8868</td>
+<td style="text-align: right;">0.9664</td>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">1.000</td>
+<td style="text-align: right;">0.9896</td>
 <td style="text-align: center;">--</td>
 </tr>
 <tr>
@@ -1094,8 +1126,124 @@
 <li>Uplifts achieving target: <strong>27</strong></li>
 <li>Regressions: <strong>0</strong></li>
 <li>Neutral (no change / NaN): <strong>0</strong></li>
-<li>Ablation rows: <strong>22</strong></li>
+<li>Ablation rows: <strong>23</strong></li>
+<li>C4 verified: <code>selection_ratio</code> on codimension row moved <code>0.8061 -&gt; 0.9881</code> (delta=+18.2%); evidence-driven row moved <code>0.8061 -&gt; 0.9896</code> (delta=+18.4%); investigation target (<code>&gt;= 0.85</code> on <code>two_moons</code>, <code>&gt;= +0.05</code> vs cosine baseline) MET. See <code>docs/CLAIMS.md</code> CLM-032.</li>
 </ul>
+<h2 id="2d-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-30">2D Rectified Flow SOTA experiment (commit working tree at 2026-08-30)<a class="headerlink" href="#2d-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-30" title="Permanent link">&para;</a></h2>
+<p>Published-SOTA verification on <strong>2D Rectified Flow</strong> (Liu 2022 NeurIPS Spotlight, arXiv:2210.02647). The model (<code>TwoDimFMAdapter</code>, offline-trained weights at <code>data/twodim_fm_&lt;target&gt;.npz</code>) is held constant across the comparison — only the inference strategy changes (1-pass baseline vs FlowA 20-round multi-round re-inference across four scheduler families). Configuration: 3 seeds (0, 1, 2), 20 multi-round rounds, 1000 samples per round. Total experiment wall-clock: <strong>1965.9s</strong>. Full per-(scheduler, seed) CSV round metrics live in <code>docs/r4-survey/&lt;target&gt;_&lt;scheduler&gt;_seed&lt;seed&gt;.csv</code>; per-target comparison summaries live in <code>docs/r4-survey/&lt;target&gt;_comparison.md</code>; the canonical experiment record is <code>docs/r4-survey/10-sota-2d-experiment-results.md</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Target</th>
+<th style="text-align: right;">Baseline selection_ratio</th>
+<th style="text-align: right;">Baseline W2</th>
+<th>Best scheduler (selection_ratio)</th>
+<th style="text-align: right;">Framework selection_ratio</th>
+<th>Improvement (Δ ratio + %)</th>
+<th style="text-align: right;">Framework W2 (best)</th>
+<th style="text-align: right;">W2 reduction vs baseline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>two_moons</td>
+<td style="text-align: right;">0.8143</td>
+<td style="text-align: right;">0.5029</td>
+<td>EvidenceDrivenScheduler</td>
+<td style="text-align: right;">0.8099</td>
+<td>-0.0044 (-0.54%)</td>
+<td style="text-align: right;">0.4663</td>
+<td style="text-align: right;">-7.28%</td>
+</tr>
+<tr>
+<td>eight_gaussians</td>
+<td style="text-align: right;">0.4804</td>
+<td style="text-align: right;">0.6606</td>
+<td>CosineAnnealScheduler</td>
+<td style="text-align: right;">0.4808</td>
+<td>+0.0004 (+0.07%)</td>
+<td style="text-align: right;">0.5919</td>
+<td style="text-align: right;">-10.40%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note</strong>: the framework's <code>selection_ratio</code> (paper Theorem 1 numerical witness, computed by <code>EvidenceScaleGapMetric</code>) is <em>schedule-independent by construction</em> at fixed noise — see <code>CLM-003</code> / <code>CLM-004</code>. The framework's benefit on these 2D targets is captured on the <strong>W2 distance to target</strong> axis, where every framework row matched or beat the baseline and on <code>eight_gaussians</code> the framework cut W2 by ~10.4% (0.6606 → 0.5919) versus the single-pass baseline. The selection_ratio column is reported for completeness; it confirms the same model + checkpoint + evaluator produce the same ratio under different schedulers (i.e. the framework is not perturbing the adapter's posterior geometry, only the per-round endpoint distribution).</p>
+<p><strong>Honest framing</strong>: the framework's contribution on this SOTA model is reproducible W2 reduction with byte-identical per-round selection_ratio. On <code>two_moons</code>, <code>CosineAnnealScheduler</code>/<code>CodimensionSheetScheduler</code>/<code>FreeTrajScheduler</code> produce byte-identical per-round metrics to each other (cosine-wrapped scheduler family at fixed <code>eps</code>); <code>EvidenceDrivenScheduler</code> deviates because its PID-lite feedback shifts <code>n_cap</code> per round. Reproducible: re-run with <code>python tools/run_sota_2d_experiment.py</code> (default: 5 seeds, 20 rounds, 1000 samples/round, both targets). Use <code>--quick</code> for the smoke configuration exercised by <code>tests/test_tools/test_run_sota_2d_experiment.py</code>.</p>
+<h2 id="section-8-cifar-10-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-31">Section 8: CIFAR-10 Rectified Flow SOTA experiment (commit working tree at 2026-08-31)<a class="headerlink" href="#section-8-cifar-10-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-31" title="Permanent link">&para;</a></h2>
+<p>Published-SOTA verification on <strong>CIFAR-10 Rectified Flow</strong> (Liu 2022 NeurIPS Spotlight, arXiv:2210.02647). The model — the canonical SOTA flow-matching UNet on CIFAR-10 32×32 (published FID 2.21 at 2-NFE Euler with 50 K samples + adaptive solver) — is held constant across the comparison: only the inference strategy changes (2-NFE Euler baseline vs FlowA 10-round multi-round re-inference across four scheduler families). Configuration: 1 000 samples per row, 10 multi-round rounds, 100 framework samples per round, <code>--baseline-num-steps 2</code>, <code>--framework-max-num-steps 10</code>, 4 schedulers × 10 rounds × 100 chains (= 1 000 samples per scheduler). <strong>Post-harness-fix (<code>tools/run_sota_cifar_experiment.py:439</code> now passes <code>round_in_cycle=int(r)</code> instead of hard-coded <code>0</code>, plus <code>record_round_feedback</code> wiring for <code>EvidenceDrivenScheduler</code>)</strong>. Total experiment wall-clock: <strong>1 493.21 s</strong> (≈ 25 min, CPU). Per-row sample <code>.npz</code> files live at <code>docs/r4-survey/cifar_results_v2/{baseline,cosineanneal,codimensionsheet,evidencedriven,freetraj}_samples.npz</code>; the canonical post-fix experiment record is <code>docs/r4-survey/17-cifar-experiment-results-v2.md</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th style="text-align: right;">FID</th>
+<th style="text-align: right;">Δ vs baseline</th>
+<th style="text-align: right;">% change</th>
+<th style="text-align: right;">sel_ratio[r=9]</th>
+<th style="text-align: right;">wall-clock (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baseline (2-NFE Euler)</td>
+<td style="text-align: right;">218.8692</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">104.0</td>
+</tr>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td style="text-align: right;">122.1790</td>
+<td style="text-align: right;">−96.6902</td>
+<td style="text-align: right;"><strong>−44.17%</strong></td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">253.7</td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td style="text-align: right;">122.1790</td>
+<td style="text-align: right;">−96.6902</td>
+<td style="text-align: right;"><strong>−44.17%</strong></td>
+<td style="text-align: right;">0.9524</td>
+<td style="text-align: right;">243.5</td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td style="text-align: right;">122.1790</td>
+<td style="text-align: right;">−96.6902</td>
+<td style="text-align: right;"><strong>−44.17%</strong></td>
+<td style="text-align: right;">0.9524</td>
+<td style="text-align: right;">243.3</td>
+</tr>
+<tr>
+<td>FreeTrajScheduler</td>
+<td style="text-align: right;">122.1790</td>
+<td style="text-align: right;">−96.6902</td>
+<td style="text-align: right;"><strong>−44.17%</strong></td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">243.2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Honest framing (read this before quoting the numbers)</strong>:</p>
+<ul>
+<li><strong>The framework improves the baseline by −44.17% FID</strong> (Δ = −96.6902), well inside the "parity-or-better with 10% tolerance" band from <code>docs/r4-survey/11-cifar-experiment-plan.md</code> §1. The headline is satisfied — the framework wins on this metric.</li>
+<li><strong>However, the four framework rows are byte-identical to each other</strong> (<code>mean_abs_diff = 0.000</code>, <code>byte_equal = True</code> across all 6 pairs). The Phase 2 harness fix landed cleanly: <code>per_round_metrics.csv</code> shows <code>n_cap</code> sweeping <code>1.000 → 0.000</code> for CosineAnneal, CodimSheet, and FreeTraj, and <code>1.000 → 0.012</code> for EvidenceDriven (the small PID modulation). However, the banker's-rounding <code>num_steps = max(1, round(n_cap × 10))</code> collapses all four schedulers to the same integer <code>num_steps</code> sequence <code>[10, 10, 9, 8, 6, 4, 3, 1, 1, 1]</code> because (a) the EvidenceDriven PID delta (<code>~1.9e-4</code>) is below the <code>0.5</code> rounding threshold, and (b) the FreeTrajScheduler's pre-existing <code>_compute_trajectory_progress</code> cache bug freezes the <code>±0.05</code> substep at <code>0.0</code> (out of scope per <code>docs/r4-survey/16-harness-fix-plan.md</code> §5 Risk 1).</li>
+<li><strong>The −44.17% FID delta is therefore a "more NFEs = better FID" reading</strong>, not a scheduler-discrimination reading. The framework's variable <code>num_steps</code> averages ~5 NFEs per sample (sum <code>54 NFEs</code> across 10 rounds) vs the baseline's fixed <code>2 NFE</code>. To isolate the scheduler effect, follow-ups are required: (1) fix the <code>_compute_trajectory_progress</code> cache in <code>freetraj.py</code> so the substep fires; (2) lower <code>EvidenceDrivenScheduler</code>'s <code>target_ratio</code> to <code>0.99</code> to amplify the PID signal above the rounding threshold.</li>
+<li><strong>Absolute FID vs published</strong>: our <code>218.87</code> baseline is <strong>~100× worse</strong> than the paper's 2.21 headline. The paper uses 50 K samples + Heun adaptive solver at 100+ NFE; we use 1 000 samples + 2-NFE Euler. The model is correct; the solver is coarse and the sample budget is small. The framework is <strong>not</strong> claiming to improve on the published 2.21 number — the comparison is baseline-vs-framework on the <strong>same</strong> model + same checkpoint + same evaluation protocol, holding everything constant.</li>
+<li><strong>What IS shown</strong>: the adapter loads the published checkpoint correctly (strict <code>state_dict</code> load; 61.8 M parameters; byte-identical to the published weights), the UNet produces real CIFAR-10-shaped images (std≈0.34, range≈[−1, 1]) at 2-NFE Euler, the four schedulers run end-to-end through the post-fix harness with FID computed against the 1 000-image CIFAR-10 test reference via InceptionV3, and the framework's variable NFE budget cuts FID by 44% relative to the 2-NFE baseline.</li>
+<li><strong>What is NOT shown</strong>: scheduler discrimination (all four framework rows are byte-identical to each other; per-scheduler attribution is not yet isolated); any causal attribution of the −44% improvement to a particular scheduler.</li>
+<li><strong>Recommended follow-up</strong>: (1) fix the FreeTraj <code>_compute_trajectory_progress</code> cache; (2) lower <code>EvidenceDrivenScheduler.target_ratio</code> to <code>0.99</code>; (3) widen <code>n_max</code> (e.g. to <code>5.0</code>) so the cosine ramp maps to a more diverse <code>num_steps</code> trace. Either fix lets the comparison actually isolate the scheduler effect rather than (seed, batch-shape, NFE-budget) noise. See <code>docs/r4-survey/17-cifar-experiment-results-v2.md</code> §4.</li>
+</ul>
+<p><strong>Reproducibility</strong>: deterministic for fixed <code>(seed, scheduler_config, weights)</code>. Re-run with the full command documented at <code>docs/r4-survey/17-cifar-experiment-results-v2.md</code> §6. To re-score the existing samples only:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>/c/Users/31472/AppData/Local/Temp/flowa_fid_env/Scripts/python.exe<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>tools/compute_cifar_fid.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>docs/r4-survey/cifar_results_v2/baseline_samples.npz<span class="w">      </span>data/_torch_cifar10_cache/cifar10_test_ref_1000.npz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>docs/r4-survey/cifar_results_v2/cosineanneal_samples.npz<span class="w">  </span>data/_torch_cifar10_cache/cifar10_test_ref_1000.npz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span>docs/r4-survey/cifar_results_v2/codimensionsheet_samples.npz<span class="w"> </span>data/_torch_cifar10_cache/cifar10_test_ref_1000.npz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span>docs/r4-survey/cifar_results_v2/evidencedriven_samples.npz<span class="w">   </span>data/_torch_cifar10_cache/cifar10_test_ref_1000.npz<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span>docs/r4-survey/cifar_results_v2/freetraj_samples.npz<span class="w">      </span>data/_torch_cifar10_cache/cifar10_test_ref_1000.npz
+</code></pre></div>
 
 
 

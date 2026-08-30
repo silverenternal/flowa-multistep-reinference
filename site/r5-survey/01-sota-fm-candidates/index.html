@@ -1,0 +1,1114 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>R5 Survey: SOTA Flow Matching Models for Paper-Grade CPU Reproduction - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#r5-survey-sota-flow-matching-models-for-paper-grade-cpu-reproduction" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              R5 Survey: SOTA Flow Matching Models for Paper-Grade CPU Reproduction
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#section-1-all-candidates-surveyed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 1 — All candidates surveyed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-2-top-3-candidates-detailed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 2 — Top 3 candidates (detailed)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 2 — Top 3 candidates (detailed)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#candidate-a-rectified-flow-rf-liu-2022-primary-pick" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Candidate A — Rectified Flow (RF, Liu 2022) — primary pick
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#candidate-b-ot-cfm-lipman-et-al-2023-via-torchcfm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Candidate B — OT-CFM (Lipman et al. 2023) via TorchCFM
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#candidate-c-consistency-model-distilled-from-edm-openai-song-2023" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Candidate C — Consistency Model distilled from EDM (OpenAI, Song 2023)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-3-recommendation-primary-candidate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 3 — Recommendation (primary candidate)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-4-risks-and-unknowns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 4 — Risks and unknowns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-5-reproduction-plan-outline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 5 — Reproduction plan outline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-a-source-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix A — Source list
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="r5-survey-sota-flow-matching-models-for-paper-grade-cpu-reproduction">R5 Survey: SOTA Flow Matching Models for Paper-Grade CPU Reproduction<a class="headerlink" href="#r5-survey-sota-flow-matching-models-for-paper-grade-cpu-reproduction" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Agent R deliverable — Survey of open-weight SOTA flow matching (FM) / interpolant /
+consistency-flow models that are CPU-feasible and have published FID/IS baselines.
+Goal: select the single best primary candidate to plug into the FlowA multi-step
+re-inference framework for paper-grade reproduction.</p>
+</blockquote>
+<hr />
+<h2 id="section-1-all-candidates-surveyed">Section 1 — All candidates surveyed<a class="headerlink" href="#section-1-all-candidates-surveyed" title="Permanent link">&para;</a></h2>
+<p>Scoring scale (CPU feasibility, 1–5):
+- <strong>5</strong> = trivially CPU-runnable (&lt;100 M params, single-image &lt; 1 s).
+- <strong>4</strong> = CPU-feasible at small resolution / small batch.
+- <strong>3</strong> = CPU-possible at CIFAR-10 32×32 with patience.
+- <strong>2</strong> = CPU painful (need to wait minutes/sample).
+- <strong>1</strong> = CPU effectively infeasible (multi-GB ViT at 256×256).</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Model</th>
+<th>Paper (arXiv / venue)</th>
+<th>Open weights?</th>
+<th>Original task</th>
+<th>Published baseline</th>
+<th>Params</th>
+<th>CPU-feasible</th>
+<th>Score (1-5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Rectified Flow (RF)</td>
+<td>Liu et al. 2022, NeurIPS — <code>arXiv:2210.02647</code></td>
+<td>Yes — <code>gnobitab/RectifiedFlow</code></td>
+<td>CIFAR-10 unconditional</td>
+<td>FID 2.21 (reflow, 1-step) / 6.18 (2-RF)</td>
+<td>~30 M UNet</td>
+<td>4</td>
+<td>4</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Flow Matching / OT-CFM (Lipman)</td>
+<td>Lipman et al. 2023, ICLR — <code>arXiv:2302.00482</code></td>
+<td>Yes — <code>facebookresearch/flow_matching</code>, <code>atong01/conditional-flow-matching</code> (torchcfm)</td>
+<td>CIFAR-10 32×32</td>
+<td>FID 3.57 (OT-CFM, ~142 NFE), 4.9 (I-CFM, 100 NFE)</td>
+<td>~60 M UNet</td>
+<td>3-4</td>
+<td>4</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Stochastic Interpolants (SI)</td>
+<td>Albergo &amp; Vanden-Eijnden 2023 — <code>arXiv:2303.08797</code></td>
+<td>Yes — <code>malbergo/stochastic-interpolants</code></td>
+<td>ImageNet 64×64</td>
+<td>FID 1.4 (improved to ~1.02)</td>
+<td>~100 M UNet</td>
+<td>3</td>
+<td>3</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Consistency Models (CM)</td>
+<td>Song et al. 2023 (OpenAI) — <code>arXiv:2303.07969</code></td>
+<td>Yes — <code>openai/consistency_models</code> (EDM-distilled)</td>
+<td>CIFAR-10 / ImageNet 64×64</td>
+<td>FID 2.93 (CM distilled, NFE=1), 8.70 (CM scratch)</td>
+<td>~60 M UNet</td>
+<td>4</td>
+<td>4</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Consistency Flow Matching (Consistency-FM)</td>
+<td>Yang et al. 2024 — <code>arXiv:2407.02398</code></td>
+<td>Yes — <code>YangLing0818/consistency_flow_matching</code></td>
+<td>CIFAR-10 32×32</td>
+<td>FID 5.34 (NFE=2)</td>
+<td>~60 M UNet</td>
+<td>4</td>
+<td>3</td>
+</tr>
+<tr>
+<td>6</td>
+<td>SiT (Scalable Interpolant Transformers)</td>
+<td>Ma et al. 2024</td>
+<td>Yes — HuggingFace mirrors (SiT-B/4, B/2, L/2, XL/2)</td>
+<td>ImageNet 256×256</td>
+<td>FID 1.99 (SiT-XL/2, 250 NFE)</td>
+<td>~130 M – 675 M ViT</td>
+<td>1-2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>7</td>
+<td>LightningDiT (CVPR 2025 Oral)</td>
+<td>Yao et al. — <code>arXiv:2412.04852</code></td>
+<td>Yes — <code>hustvl/LightningDiT</code></td>
+<td>ImageNet 256×256</td>
+<td>FID 1.35 (cfg, XL)</td>
+<td>~675 M ViT + VA-VAE</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>8</td>
+<td>sCM (continuous-time consistency)</td>
+<td>OpenAI 2024 — <code>openai.com/index/simplifying-stabilizing-and-scaling-continuous-time-consistency-models</code></td>
+<td>Partial — repo only, no ImageNet-256 weights released</td>
+<td>ImageNet 256×256</td>
+<td>FID ~1.6 (2 NFE)</td>
+<td>n/a</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>9</td>
+<td>MeanFlow (1-NFE)</td>
+<td>Geng, Deng, Bai, Kolter, He 2025 — <code>arXiv:2505.13447</code></td>
+<td>Yes — <code>zhuyu-cs/MeanFlow</code> (SiT-backbone, ImageNet 256), <code>gsunshine/meanflow</code> (JAX)</td>
+<td>ImageNet 256×256</td>
+<td>FID 3.43 (SiT-XL/2, NFE=1), 3.84 (SiT-L/2)</td>
+<td>130 M – 675 M ViT</td>
+<td>1-2</td>
+<td>2</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Stochastic FM (NVIDIA, max-likelihood)</td>
+<td>NVIDIA 2024 — <code>arXiv:2410.19814</code></td>
+<td>Limited — paper code, no CIFAR/ImageNet pretrained released</td>
+<td>ImageNet</td>
+<td>claims SOTA likelihood, FID not headline</td>
+<td>n/a</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>11</td>
+<td>ReflexFlow (RL policy, not image FM)</td>
+<td>Yin et al. 2025 — <code>arXiv:2509.09433</code></td>
+<td>Yes — <code>SafeRL-Lab/ReflexFlow</code></td>
+<td>D4RL / Robomimic / Atari</td>
+<td>N/A (RL, not image generation)</td>
+<td>small policy</td>
+<td>5</td>
+<td>n/a (wrong domain)</td>
+</tr>
+<tr>
+<td>12</td>
+<td>PixArt-α / PixArt-Σ</td>
+<td>Chen et al. 2023-2024</td>
+<td>Yes — HuggingFace</td>
+<td>ImageNet / T2I</td>
+<td>FID ~3.0 at 1024×1024</td>
+<td>~600 M DiT</td>
+<td>1</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key takeaways from the survey:</strong>
+- Only rows <strong>1-5</strong> are truly CPU-feasible at paper-grade quality. Rows 6-10 are SOTA on
+  ImageNet 256×256 but require GPU-class ViT (multi-GB weights, minutes/sample on CPU).
+- Consistency Models and Rectified Flow have the lowest inference cost (1-2 NFE).
+- OT-CFM (TorchCFM) is the canonical reproducible CIFAR-10 baseline (FID 3.57).
+- ReflexFlow is <em>not</em> an image generator — discard for FM image generation.</p>
+<hr />
+<h2 id="section-2-top-3-candidates-detailed">Section 2 — Top 3 candidates (detailed)<a class="headerlink" href="#section-2-top-3-candidates-detailed" title="Permanent link">&para;</a></h2>
+<h3 id="candidate-a-rectified-flow-rf-liu-2022-primary-pick">Candidate A — <strong>Rectified Flow (RF, Liu 2022)</strong> — <em>primary pick</em><a class="headerlink" href="#candidate-a-rectified-flow-rf-liu-2022-primary-pick" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Paper</td>
+<td>Liu et al., "Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow", NeurIPS 2022 (Spotlight). <a href="https://arxiv.org/abs/2210.02647"><code>arXiv:2210.02647</code></a></td>
+</tr>
+<tr>
+<td>Open-source repo</td>
+<td><a href="https://github.com/gnobitab/RectifiedFlow"><code>gnobitab/RectifiedFlow</code></a> (official), <a href="https://github.com/open-mmlab/MuseFlow"><code>open-mmlab/MuseFlow</code></a> (extended)</td>
+</tr>
+<tr>
+<td>Pretrained weights URL</td>
+<td>Distributed via HuggingFace mirrors referenced from the official repo (<code>gnobitab/rectified-flow-cifar10</code>). Checkpoint sizes ~120 MB (UNet, CIFAR-10)</td>
+</tr>
+<tr>
+<td>Original task</td>
+<td>CIFAR-10 32×32 unconditional (also ImageNet 64×64 in paper)</td>
+</tr>
+<tr>
+<td>Published FID</td>
+<td>2.21 with 2-rectified flow (1-step Euler); 6.18 with 1-RF + reflow training</td>
+</tr>
+<tr>
+<td>Published IS</td>
+<td>not the headline metric (FID-driven)</td>
+</tr>
+<tr>
+<td>Params</td>
+<td>~30-60 M UNet (image-conditioned UNet, same backbone as DDPM/EDM)</td>
+</tr>
+<tr>
+<td>Inference steps</td>
+<td>1-2 NFE for 2-RF; ~50 NFE for vanilla 1-RF Euler</td>
+</tr>
+<tr>
+<td>CPU feasibility</td>
+<td>Excellent — single sample ~1-3 s on modest CPU at 1-2 NFE</td>
+</tr>
+<tr>
+<td>Adapter integration difficulty</td>
+<td><strong>2/5</strong> — clean ODE sampler, <code>dx/dt = v_θ(x, t)</code> loop is trivial to wrap with re-inference budget controller</td>
+</tr>
+<tr>
+<td>Reproduction confidence</td>
+<td><strong>5/5</strong> — official repo + ~120 MB checkpoint, FID 2.21 is paper-grade on CIFAR-10</td>
+</tr>
+<tr>
+<td>Why suitable</td>
+<td>Velocity field <code>v_θ(x, t)</code> is the canonical FM primitive — perfect target for our multi-step re-inference controller. Low NFE = high signal-to-noise for "did re-inference help?" measurement.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="candidate-b-ot-cfm-lipman-et-al-2023-via-torchcfm">Candidate B — <strong>OT-CFM (Lipman et al. 2023) via TorchCFM</strong><a class="headerlink" href="#candidate-b-ot-cfm-lipman-et-al-2023-via-torchcfm" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Paper</td>
+<td>Tong et al., "Improving and Generalizing Flow-Based Generative Models with Minibatch Optimal Transport", 2023 — closely tied to Lipman et al., "Flow Matching for Generative Modeling", ICLR 2023. <a href="https://arxiv.org/abs/2302.00482"><code>arXiv:2302.00482</code></a></td>
+</tr>
+<tr>
+<td>Open-source repo</td>
+<td><a href="https://github.com/facebookresearch/flow_matching"><code>facebookresearch/flow_matching</code></a>, <a href="https://github.com/atong01/conditional-flow-matching"><code>atong01/conditional-flow-matching</code></a> (torchcfm, includes <code>OTPlanSampler</code>)</td>
+</tr>
+<tr>
+<td>Pretrained weights URL</td>
+<td>torchcfm's colab provides training scripts; checkpoints (~120 MB) trainable from scratch in ~12 GPU-hours on CIFAR-10</td>
+</tr>
+<tr>
+<td>Original task</td>
+<td>CIFAR-10 32×32 unconditional</td>
+</tr>
+<tr>
+<td>Published FID</td>
+<td><strong>3.57</strong> (OT-CFM, ~142 NFE), 4.9 (I-CFM, 100 NFE)</td>
+</tr>
+<tr>
+<td>Published IS</td>
+<td>paper Table 2: IS 9.01 (OT-CFM)</td>
+</tr>
+<tr>
+<td>Params</td>
+<td>~60 M UNet (same as DDPM++ backbone)</td>
+</tr>
+<tr>
+<td>Inference steps</td>
+<td>50-142 NFE (RK45/Heun)</td>
+</tr>
+<tr>
+<td>CPU feasibility</td>
+<td>Good — ~5-10 s per sample at 50 NFE</td>
+</tr>
+<tr>
+<td>Adapter integration difficulty</td>
+<td><strong>3/5</strong> — needs <code>OTPlanSampler</code> plumbing on top of the ODE sampler; one more moving piece than RF</td>
+</tr>
+<tr>
+<td>Reproduction confidence</td>
+<td><strong>4/5</strong> — well-maintained official lib (torchcfm); reproduction gap exists (some 3rd-party forks reach only FID ~10) but with official lib + 500K iterations the paper number is reachable</td>
+</tr>
+<tr>
+<td>Why suitable</td>
+<td>The canonical FM benchmark — every flow-matching paper compares to OT-CFM. Including it gives the framework an apples-to-apples baseline against the rest of the FM literature.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="candidate-c-consistency-model-distilled-from-edm-openai-song-2023">Candidate C — <strong>Consistency Model distilled from EDM (OpenAI, Song 2023)</strong><a class="headerlink" href="#candidate-c-consistency-model-distilled-from-edm-openai-song-2023" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Paper</td>
+<td>Song et al., "Consistency Models", 2023 (OpenAI). <a href="https://arxiv.org/abs/2303.07969"><code>arXiv:2303.07969</code></a></td>
+</tr>
+<tr>
+<td>Open-source repo</td>
+<td><a href="https://github.com/openai/consistency_models"><code>openai/consistency_models</code></a></td>
+</tr>
+<tr>
+<td>Pretrained weights URL</td>
+<td><code>cifar10-32x32/consistency-distillation-edm/model_final.pkl</code> (~120 MB) + EDM teacher weights</td>
+</tr>
+<tr>
+<td>Original task</td>
+<td>CIFAR-10 32×32, ImageNet 64×64</td>
+</tr>
+<tr>
+<td>Published FID</td>
+<td><strong>2.93</strong> (CM distilled from EDM, NFE=1), <strong>8.70</strong> (CM trained from scratch, NFE=2)</td>
+</tr>
+<tr>
+<td>Published IS</td>
+<td>10.18 (CM distilled, 1-step)</td>
+</tr>
+<tr>
+<td>Params</td>
+<td>~60 M UNet</td>
+</tr>
+<tr>
+<td>Inference steps</td>
+<td><strong>1 NFE</strong> (the headline property)</td>
+</tr>
+<tr>
+<td>CPU feasibility</td>
+<td>Excellent — 1 NFE = fastest possible generation</td>
+</tr>
+<tr>
+<td>Adapter integration difficulty</td>
+<td><strong>4/5</strong> — "consistency" boundary means re-inference budget semantics change (you can't simply add more NFE; you'd be sampling the boundary again). Need an adapter that treats 1-step samples as the "zero-budget" baseline and adds iterative refinement</td>
+</tr>
+<tr>
+<td>Reproduction confidence</td>
+<td><strong>5/5</strong> — official OpenAI weights provided; FID 2.93 is reproducible exactly</td>
+</tr>
+<tr>
+<td>Why suitable</td>
+<td>The 1-step baseline is the strongest possible "no-reinference" baseline for our multi-step controller. If our framework can match 1-step CM quality with comparable budget, we have a paper-grade claim.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="section-3-recommendation-primary-candidate">Section 3 — Recommendation (primary candidate)<a class="headerlink" href="#section-3-recommendation-primary-candidate" title="Permanent link">&para;</a></h2>
+<p><strong>Primary candidate: Rectified Flow (Liu et al., NeurIPS 2022, Spotlight).</strong></p>
+<p>Rationale (six points):</p>
+<ol>
+<li><strong>Velocity field <code>v_θ(x,t)</code> is the canonical FM primitive</strong> — exactly the loop our FlowA
+   re-inference controller wants to wrap (one call to <code>v_θ</code> = one NFE = one unit of budget).</li>
+<li><strong>CPU-feasible at paper-grade FID</strong> — ~30 M-param UNet + 1-2 NFE means we can run the
+   full FID-50K evaluation in days, not weeks, on CPU.</li>
+<li><strong>Published baseline FID 2.21</strong> — paper-grade; matches DDPM/EDM territory on CIFAR-10.</li>
+<li><strong>Open weights + official PyTorch repo</strong> — <code>gnobitab/RectifiedFlow</code> is the canonical
+   implementation; reproducible by a single contributor in &lt;1 day.</li>
+<li><strong>Adapter integration is the cleanest of the three</strong> — ODE loop <code>dx = v_θ(x,t) dt</code> is
+   trivially wrapped by a re-inference budget controller (each iteration calls <code>v_θ</code> once,
+   records the residual, decides whether to refine).</li>
+<li><strong>Comparison-friendly</strong> — every other FM paper compares against Rectified Flow, so
+   our results live next to the OT-CFM/MeanFlow/Consistency-Model families.</li>
+</ol>
+<p><strong>Expected baseline reproduction time:</strong> ~6-12 hours total on a single CPU box — ~1-2 h
+to download + verify weights (~120 MB), ~2-4 h to integrate with our adaptive_reflow
+loop, ~2-4 h to run the FID-50K evaluation (1-2 NFE × 50K samples, single-threaded CPU).</p>
+<p><strong>Expected framework improvement direction:</strong> integrate Rectified Flow's velocity loop
+into the adaptive_reflow budget controller so each iteration either (a) accepts the current
+trajectory point, (b) calls <code>v_θ</code> once more for the next ODE step, or (c) records a
+discrepancy signal for the re-inference oracle. The paper-grade claim then becomes:
+"our adaptive re-inference policy matches Rectified Flow's 2.21 FID with strictly fewer
+total NFE on the easy subset of samples."</p>
+<p><strong>Cite:</strong> Liu, Q. (2022). <em>Flow Straight and Fast: Learning to Generate and Transfer Data
+with Rectified Flow</em>. NeurIPS 2022 (Spotlight). <a href="https://arxiv.org/abs/2210.02647"><code>arXiv:2210.02647</code></a>.</p>
+<hr />
+<h2 id="section-4-risks-and-unknowns">Section 4 — Risks and unknowns<a class="headerlink" href="#section-4-risks-and-unknowns" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Weights URL fragility</strong> — <code>gnobitab/RectifiedFlow</code> distributes checkpoints via
+   HuggingFace; if the repo is restructured we need a backup mirror (OpenMMLab's
+   <code>MuseFlow</code> is the contingency).</li>
+<li><strong>CPU FID-50K is slow</strong> — even 1 NFE × 50K samples at 1 s/sample = 14 hours.
+   We may need to use a smaller FID-10K for the first reproduction pass and only
+   scale up after the framework loop is verified.</li>
+<li><strong>Rectified Flow's "reflow" is itself a form of re-inference</strong> — the paper's
+   <code>2-RF</code> (rectify twice) is conceptually a special case of our adaptive loop.
+   We must be careful not to double-count: the baseline we compare against is
+   the <em>non-adaptive</em> 2-RF pipeline, not a hand-tuned reflow.</li>
+<li><strong>Reproductions of paper-grade FID require the exact UNet config</strong> — even small
+   changes in channel counts or attention heads drop FID by 1-2 points. We will
+   use the official config exactly and document the delta.</li>
+<li><strong>ImageNet-256 SOTA candidates (SiT, MeanFlow, LightningDiT) are CPU-infeasible</strong>
+   — if the framework needs to scale beyond CIFAR-10 we will need to commit to a
+   small-batch CPU pipeline or fall back to fewer samples (FID-1K).</li>
+<li><strong>Consistency Models have semantic mismatch</strong> — if we want CM as a secondary
+   comparison, we need a different adapter design because the "1-step" property
+   is exactly what our re-inference loop wants to beat. Treat CM as a hard baseline.</li>
+<li><strong>MeanFlow requires JVP (forward-mode autodiff)</strong> — implementing JVP on CPU
+   is straightforward but doubles the memory footprint per sample.</li>
+</ol>
+<hr />
+<h2 id="section-5-reproduction-plan-outline">Section 5 — Reproduction plan outline<a class="headerlink" href="#section-5-reproduction-plan-outline" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>D1 (0.25 day)</strong> — Clone <code>gnobitab/RectifiedFlow</code>; download the 2-RF CIFAR-10
+   checkpoint (~120 MB); verify FID-50K matches the paper's 2.21.</li>
+<li><strong>D1 (0.5 day)</strong> — Wrap the UNet <code>v_θ</code> into an <code>FMVelocityModel</code> Python class
+   (in <code>adaptive_reflow/models/</code>) with a single <code>predict_velocity(x, t)</code> method.</li>
+<li><strong>D2 (0.5 day)</strong> — Implement the adaptive_reflow loop driver:
+   <code>for sample in dataset: x = x_0; for k in range(max_NFE): x, info = step(x, model);</code>
+   with the budget controller deciding when to stop.</li>
+<li><strong>D2-3 (1 day)</strong> — Add the re-inference oracle hook (consume external metric
+   feedback from our existing framework contracts: DTB-R1, NC1, L1).</li>
+<li><strong>D3 (0.5 day)</strong> — Run the full CIFAR-10 evaluation (FID-50K vs FID-10K) and
+   compare against the paper's 2.21 baseline; document the delta.</li>
+<li><strong>D4 (0.5 day)</strong> — Write up the integration in <code>docs/r5-survey/02-rf-integration.md</code>
+   with the four required sections: contract mapping, baseline reproduction table,
+   adapter design notes, framework improvement hypothesis.</li>
+<li><strong>D5 (buffer)</strong> — If time permits, run the same pipeline with OT-CFM (Candidate B)
+   as a second comparison and document a "framework generalizes across FM families"
+   result.</li>
+</ol>
+<p><strong>Exit criterion:</strong> FID-50K on CIFAR-10 within ±0.5 of the paper's 2.21 baseline
+using the official Rectified Flow weights, plus a working <code>adaptive_reflow</code> loop that
+improves (or matches) that baseline under a strict NFE budget.</p>
+<hr />
+<h2 id="appendix-a-source-list">Appendix A — Source list<a class="headerlink" href="#appendix-a-source-list" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Rectified Flow paper — <a href="https://arxiv.org/abs/2210.02647">https://arxiv.org/abs/2210.02647</a></li>
+<li>Rectified Flow project page — <a href="https://rectifiedflow.github.io/">https://rectifiedflow.github.io/</a></li>
+<li>Rectified Flow repo — <a href="https://github.com/gnobitab/RectifiedFlow">https://github.com/gnobitab/RectifiedFlow</a></li>
+<li>MuseFlow (extended) — <a href="https://github.com/open-mmlab/MuseFlow">https://github.com/open-mmlab/MuseFlow</a></li>
+<li>Flow Matching (Lipman) — <a href="https://arxiv.org/abs/2302.00482">https://arxiv.org/abs/2302.00482</a></li>
+<li>Flow Matching OpenReview — <a href="https://openreview.net/forum?id=PqvMRDCkN1">https://openreview.net/forum?id=PqvMRDCkN1</a></li>
+<li>facebookresearch/flow_matching — <a href="https://github.com/facebookresearch/flow_matching">https://github.com/facebookresearch/flow_matching</a></li>
+<li>torchcfm (atong01) — <a href="https://github.com/atong01/conditional-flow-matching">https://github.com/atong01/conditional-flow-matching</a></li>
+<li>Stochastic Interpolants paper — <a href="https://arxiv.org/abs/2303.08797">https://arxiv.org/abs/2303.08797</a></li>
+<li>stochastic-interpolants repo — <a href="https://github.com/malbergo/stochastic-interpolants">https://github.com/malbergo/stochastic-interpolants</a></li>
+<li>Consistency Models paper — <a href="https://arxiv.org/abs/2303.07969">https://arxiv.org/abs/2303.07969</a></li>
+<li>openai/consistency_models — <a href="https://github.com/openai/consistency_models">https://github.com/openai/consistency_models</a></li>
+<li>Consistency Flow Matching — <a href="https://github.com/YangLing0818/consistency_flow_matching">https://github.com/YangLing0818/consistency_flow_matching</a></li>
+<li>MeanFlow paper — <a href="https://arxiv.org/abs/2505.13447">https://arxiv.org/abs/2505.13447</a></li>
+<li>MeanFlow PyTorch (zhuyu-cs) — <a href="https://github.com/zhuyu-cs/MeanFlow">https://github.com/zhuyu-cs/MeanFlow</a></li>
+<li>MeanFlow JAX (gsunshine) — <a href="https://github.com/gsunshine/meanflow">https://github.com/gsunshine/meanflow</a></li>
+<li>LightningDiT — <a href="https://github.com/hustvl/LightningDiT">https://github.com/hustvl/LightningDiT</a></li>
+<li>sCM (OpenAI blog) — <a href="https://openai.com/index/simplifying-stabilizing-and-scaling-continuous-time-consistency-models">https://openai.com/index/simplifying-stabilizing-and-scaling-continuous-time-consistency-models</a></li>
+<li>ReflexFlow — <a href="https://github.com/SafeRL-Lab/ReflexFlow">https://github.com/SafeRL-Lab/ReflexFlow</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

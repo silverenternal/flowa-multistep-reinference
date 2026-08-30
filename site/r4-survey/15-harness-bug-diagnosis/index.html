@@ -1,0 +1,1164 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>CIFAR harness — n_cap=1.0 root-cause diagnosis - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cifar-harness-n_cap10-root-cause-diagnosis" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CIFAR harness — n_cap=1.0 root-cause diagnosis
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-per-scheduler-n_cap-values-from-per_round_metricscsv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §1. Per-scheduler n_cap values (from per_round_metrics.csv)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-construction-parameters-from-the-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §2. Construction parameters (from the script)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-root-cause-analysis-what-is-wrong-and-why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §3. Root cause analysis (what is wrong and why)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§3. Root cause analysis (what is wrong and why)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-bug" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The bug
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-the-symptom-is-so-uniform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the symptom is so uniform
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-it-is-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it is not
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-expected-n_cap-behavior-per-scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §4. Expected n_cap behavior (per scheduler)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§4. Expected n_cap behavior (per scheduler)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cosineannealscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CosineAnnealScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codimensionsheetscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CodimensionSheetScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evidencedrivenscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EvidenceDrivenScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#freetrajscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FreeTrajScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-differences-from-the-2d-experiment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §5. Differences from the 2D experiment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-recommended-fix-direction-no-code-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §6. Recommended fix direction (no code yet)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§6. Recommended fix direction (no code yet)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fix-a-single-line-pass-the-loop-index-as-round_in_cycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fix A (single-line): pass the loop index as round_in_cycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fix-b-small-wrapper-call-record_round_feedback-per-round" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fix B (small wrapper): call record_round_feedback per round
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fix-c-config-tuning-optional-widen-n_max-so-num_steps-saturates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fix C (config tuning, optional): widen n_max so num_steps saturates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#direction-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direction summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="cifar-harness-n_cap10-root-cause-diagnosis">CIFAR harness — n_cap=1.0 root-cause diagnosis<a class="headerlink" href="#cifar-harness-n_cap10-root-cause-diagnosis" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Author:</strong> Agent D (harness-bug-diagnosis subagent)
+<strong>Date:</strong> 2026-08-31
+<strong>Working dir:</strong> <code>c:\Users\31472\codes\flowa-multistep-reinference</code>
+<strong>Status:</strong> read-only diagnosis; no code changes in this phase.</p>
+</blockquote>
+<h2 id="1-per-scheduler-n_cap-values-from-per_round_metricscsv">§1. Per-scheduler <code>n_cap</code> values (from <code>per_round_metrics.csv</code>)<a class="headerlink" href="#1-per-scheduler-n_cap-values-from-per_round_metricscsv" title="Permanent link">&para;</a></h2>
+<p><code>docs/r4-survey/cifar_results/per_round_metrics.csv</code> (verbatim summary):</p>
+<table>
+<thead>
+<tr>
+<th>scheduler</th>
+<th style="text-align: right;">r=0</th>
+<th style="text-align: right;">r=1</th>
+<th style="text-align: right;">r=2</th>
+<th style="text-align: right;">r=3</th>
+<th style="text-align: right;">r=4</th>
+<th style="text-align: right;">r=5</th>
+<th style="text-align: right;">r=6</th>
+<th style="text-align: right;">r=7</th>
+<th style="text-align: right;">r=8</th>
+<th style="text-align: right;">r=9</th>
+<th style="text-align: right;">num_steps</th>
+<th style="text-align: right;">evidence_ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">(empty)</td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">1.0</td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">(empty)</td>
+</tr>
+<tr>
+<td>FreeTrajScheduler</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">(empty)</td>
+</tr>
+</tbody>
+</table>
+<p><code>num_steps</code> is <code>max(1, round(n_cap * framework_max_num_steps))</code> per
+<code>tools/run_sota_cifar_experiment.py:441</code>. With <code>framework_max_num_steps=10</code>
+and <code>n_cap=1.0</code> for every row, the harness collapses to a single
+10-step Euler trajectory every round (and every scheduler).</p>
+<p>For reference, the 2D experiment's
+<code>docs/r4-survey/two_moons_CosineAnnealScheduler_seed0.csv</code> shows the
+expected cosine ramp across 20 rounds: <code>1.0, 0.99, 0.94, 0.89, ...,
+0.06, 0.05</code> — i.e. <code>n_cap</code> is clearly <em>not</em> stuck at 1.0 in the 2D
+harness. The CIFAR-side value is therefore a harness-level defect, not
+a scheduler defect.</p>
+<h2 id="2-construction-parameters-from-the-script">§2. Construction parameters (from the script)<a class="headerlink" href="#2-construction-parameters-from-the-script" title="Permanent link">&para;</a></h2>
+<p><code>tools/run_sota_cifar_experiment.py:169-200</code> (<code>build_scheduler</code>):</p>
+<table>
+<thead>
+<tr>
+<th>scheduler</th>
+<th>constructor call</th>
+<th style="text-align: right;">rounds</th>
+<th style="text-align: right;">n_min</th>
+<th style="text-align: right;">n_max</th>
+<th>other knobs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td><code>default_cosine_scheduler(cycle_length=10)</code></td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.0 (default)</td>
+<td style="text-align: right;">1.0 (default)</td>
+<td>schedule_family default <code>"cosine_no_restart"</code></td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td><code>CodimensionSheetScheduler(cycle_length=10, n_min=0.0, n_max=1.0, eps_implicit=0.05)</code></td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.0</td>
+<td style="text-align: right;">1.0</td>
+<td><code>eps_implicit=0.05</code></td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td><code>EvidenceDrivenScheduler(config=_build_cosine_schedule_config(10), kp=0.2, ki=0.05, max_step=0.05, target_ratio=1.0, k_eps=0.5, eps_implicit_base=0.05)</code></td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.0</td>
+<td style="text-align: right;">1.0</td>
+<td>PID-lite (<code>kp=0.2, ki=0.05, max_step=0.05, target_ratio=1.0</code>), <code>k_eps=0.5</code>, <code>eps_implicit_base=0.05</code></td>
+</tr>
+<tr>
+<td>FreeTrajScheduler</td>
+<td><code>FreeTrajScheduler(config=_build_cosine_schedule_config(10), trajectory_amplitude=0.05, trajectory_period=4)</code></td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.0</td>
+<td style="text-align: right;">1.0</td>
+<td><code>trajectory_amplitude=0.05</code>, <code>trajectory_period=4</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code>_build_cosine_schedule_config</code> helper (lines 141-166) builds a
+frozen <code>CosineScheduleConfig(schedule_family="cosine_no_restart",
+cycle_length=10, n_min=0.0, n_max=1.0)</code>.</p>
+<p>Note: <code>n_min=0.0</code>, <code>n_max=1.0</code> is the <em>correct</em> envelope for a cosine
+ramp that should produce <code>n_cap ∈ [0, 1]</code>. The PID's <code>max_step=0.05</code> is
+the <em>correct</em> cap on a per-round shift. Nothing in the <em>construction</em>
+parameters forces <code>n_cap=1.0</code> for every round; the construction
+parameters are sane.</p>
+<p>The mapping from <code>n_cap</code> to <code>num_steps</code>
+(<code>tools/run_sota_cifar_experiment.py:441</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>num_steps = max(1, int(round(n_cap * float(max_num_steps))))
+</code></pre></div>
+<p>is also sane in isolation: it takes <code>n_cap ∈ [0, 1]</code> and maps it to
+<code>num_steps ∈ [1, max_num_steps]</code>. The defect is that <em>the input to
+this mapping is always 1.0</em>, not the mapping itself.</p>
+<h2 id="3-root-cause-analysis-what-is-wrong-and-why">§3. Root cause analysis (what is wrong and why)<a class="headerlink" href="#3-root-cause-analysis-what-is-wrong-and-why" title="Permanent link">&para;</a></h2>
+<h3 id="the-bug">The bug<a class="headerlink" href="#the-bug" title="Permanent link">&para;</a></h3>
+<p><code>tools/run_sota_cifar_experiment.py:439</code> (inside <code>_run_framework</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_rounds</span><span class="p">)):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">sample</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>   <span class="c1"># &lt;-- BUG: 2nd arg is 0, not r</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">n_cap</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">n_cap</span><span class="p">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">num_steps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">n_cap</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">max_num_steps</span><span class="p">))))</span>
+</code></pre></div>
+<p>The second positional argument to <code>SchedulerProtocol.sample</code> is
+<code>round_in_cycle</code> — the index that drives the cosine ramp and the
+PID/substep accumulators. The script passes the literal <code>0</code> for every
+iteration and forwards the loop variable <code>r</code> as the third argument
+(<code>target_round</code>, a <em>provenance</em> field, not the schedule driver).</p>
+<p>Every implementation keys its <code>n_cap</code> computation on <code>round_in_cycle</code>:</p>
+<ul>
+<li>
+<p><code>CosineAnnealScheduler.sample</code>
+  (<code>adaptive_reflow/algorithm/scheduler/_core.py:363-398</code>) calls
+  <code>n_cap_for_round(self._config, round_in_cycle)</code> which evaluates
+  <code>u_r = r / (L - 1)</code> and the closed form
+  <code>n_min + (n_max - n_min) * (1 + cos(pi * u_r)) / 2</code>.
+  With <code>round_in_cycle=0</code>, <code>u_r=0</code>, so
+  <code>n_cap = n_min + (n_max - n_min) * 1.0 = n_max = 1.0</code> regardless of
+  <code>cycle_length</code>.</p>
+</li>
+<li>
+<p><code>CodimensionSheetScheduler.sample</code>
+  (<code>adaptive_reflow/algorithm/scheduler/_core.py:2636-2769</code>) builds
+  <code>n_cap_base</code> from its underlying cosine base (<code>u_r</code> derived from
+  <code>round_in_cycle</code>), then maps to <code>[n_min, n_max]</code>. With
+  <code>round_in_cycle=0</code> it returns <code>n_min + (n_max - n_min) * n_cap_base = 1.0</code>.
+  <code>evidence_ratio</code> is computed inside <code>sample()</code> from
+  <code>_paper_evidence_balance(n_cap_base=1.0, eps_implicit=0.05, ...)</code>
+  which yields <code>ratio=1.0</code> for <code>n_cap_base=1.0</code> (sheet dominates).</p>
+</li>
+<li>
+<p><code>EvidenceDrivenScheduler.sample</code>
+  (<code>adaptive_reflow/algorithm/scheduler/evidence_driven.py:315-392</code>)
+  delegates to the wrapped cosine (<code>n_cap_for_round(config,
+  round_in_cycle)</code>), then adds <code>_last_pid_delta</code> (clipped to
+  <code>[0, 1]</code>). With <code>round_in_cycle=0</code> the wrapped cosine returns
+  <code>1.0</code>; <code>_last_pid_delta=0.0</code> (no feedback has been recorded — the
+  harness never calls <code>record_round_feedback</code>), so <code>adjusted=1.0</code>.</p>
+</li>
+<li>
+<p><code>FreeTrajScheduler.sample</code>
+  (<code>adaptive_reflow/algorithm/scheduler/freetraj.py:160-208</code>) delegates
+  to the wrapped cosine, then adds
+  <code>amplitude * sin(2*pi*progress)</code>. With <code>round_in_cycle=0</code>,
+  <code>progress = 0 % 4 / 4 = 0.0</code>, <code>substep = 0.05 * sin(0) = 0.0</code>,
+  <code>adjusted = 1.0 + 0.0 = 1.0</code>.</p>
+</li>
+</ul>
+<p>So <em>every</em> scheduler is forced to round <code>0</code> of its cycle on every
+call, and the only thing that varies is the (cosmetic) <code>audit_codes</code>
+and <code>evidence_ratio</code> field on the <code>ScheduleSample</code>. The PID and
+substep controllers are never advanced because (a) their inputs
+(<code>round_in_cycle</code>) don't change, and (b) the harness never calls
+<code>record_round_feedback</code> to feed the per-round metrics back.</p>
+<p>The downstream mapping
+<code>num_steps = max(1, round(n_cap * max_num_steps))</code> then collapses to
+<code>num_steps = max_num_steps = 10</code> for every scheduler and every round,
+so each scheduler's <code>{name}_samples.npz</code> is byte-identical to the
+baseline row (and to each other).</p>
+<h3 id="why-the-symptom-is-so-uniform">Why the symptom is so uniform<a class="headerlink" href="#why-the-symptom-is-so-uniform" title="Permanent link">&para;</a></h3>
+<p>All four schedulers are <em>wrappers</em> around a cosine-derived baseline.
+The wrapper offsets (PID delta, FreeTraj substep) are deliberately
+<em>small</em> (<code>|delta| &lt;= max_step=0.05</code>, <code>|substep| &lt;= 0.05</code>). If the
+bug had only affected one scheduler, the symptom would still be
+<code>n_cap≈1.0</code> everywhere because (a) <code>round_in_cycle=0</code> makes the
+baseline <code>1.0</code>, and (b) the wrapper offsets are at most ±0.05 and
+zero in the no-feedback / default-progress case. The defect is
+single-point but its footprint is wide because every scheduler
+shares the same cosine core.</p>
+<h3 id="what-it-is-not">What it is <em>not</em><a class="headerlink" href="#what-it-is-not" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Not</strong> a scheduler construction bug. Construction params
+  (<code>n_min=0.0, n_max=1.0, cycle_length=10</code>, etc.) are the canonical
+  ones — they would produce a <code>1.0 → 0.0</code> cosine ramp if
+  <code>round_in_cycle</code> were wired correctly.</li>
+<li><strong>Not</strong> a <code>n_cap_for_round</code> math bug. The closed form is correct;
+  it just always receives <code>round_in_cycle=0</code>.</li>
+<li><strong>Not</strong> a framework-adapter wrapping bug. The
+  <code>_gnobitab_ddpmpp.py</code> adapter is the UNet forward path; it doesn't
+  see <code>n_cap</code> at all in this harness. The harness consumes <code>n_cap</code>
+  via <code>batched_inference(num_steps=int(num_steps), ...)</code> — a
+  <code>num_steps</code>-keyed contract, not an <code>n_cap</code>-keyed contract.</li>
+<li><strong>Not</strong> a <code>num_steps = n_cap * max_num_steps</code> mapping bug. The
+  mapping is correct; it is fed a constant <code>1.0</code> because of the
+  <code>round_in_cycle</code> wiring bug.</li>
+</ul>
+<h2 id="4-expected-n_cap-behavior-per-scheduler">§4. Expected <code>n_cap</code> behavior (per scheduler)<a class="headerlink" href="#4-expected-n_cap-behavior-per-scheduler" title="Permanent link">&para;</a></h2>
+<p>If <code>round_in_cycle</code> were wired correctly (<code>scheduler.sample(0, r, r)</code>),
+the per-scheduler traces would be:</p>
+<h3 id="cosineannealscheduler">CosineAnnealScheduler<a class="headerlink" href="#cosineannealscheduler" title="Permanent link">&para;</a></h3>
+<p>Pure cosine ramp from <code>n_max=1.0</code> (round 0) to <code>n_min=0.0</code> (round 9).
+Closed form
+(<code>adaptive_reflow/schedule/cosine.py:144-233</code>,
+<code>_core.py:363-398</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>n_cap(r) = 0.0 + (1.0 - 0.0) * (1 + cos(pi * r/9)) / 2
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>        = 0.5 * (1 + cos(pi * r/9))
+</code></pre></div>
+<p>Expected per-round values (<code>cosine_no_restart</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>r=0 → 1.000
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>r=1 → 0.9698
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>r=2 → 0.8830
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>r=3 → 0.7500
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>r=4 → 0.5868
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>r=5 → 0.4132
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>r=6 → 0.2500
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>r=7 → 0.1170
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>r=8 → 0.0302
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>r=9 → 0.000
+</code></pre></div>
+<p>(Matches the 2D experiment's <code>1.0, 0.99, 0.94, 0.89, ...</code> trace at
+<code>cycle_length=20</code>.)</p>
+<h3 id="codimensionsheetscheduler">CodimensionSheetScheduler<a class="headerlink" href="#codimensionsheetscheduler" title="Permanent link">&para;</a></h3>
+<p><code>n_cap = n_min + (n_max - n_min) * n_cap_base(r)</code>
+(<code>_core.py:2713-2718</code>) where <code>n_cap_base(r)</code> is the cosine ramp above
+scaled into <code>[0, 1]</code>. So the <em>same</em> cosine curve, but the
+<code>evidence_ratio</code> reported on the sample <em>does</em> depend on the
+paper-quantity closed form
+(<code>_core.py:2733-2741</code> calling <code>_paper_evidence_balance</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sheet = max(n_cap_base, eps_implicit)              # eps^{+1} (Lemma 2)
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>cell  = (1 - n_cap_base)**2 * eps_implicit**2      # eps^{+2} (Lemma 3)
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>ratio = sheet / (sheet + cell)
+</code></pre></div>
+<p>With <code>eps_implicit=0.05</code>, the ratio sweeps from
+<code>1.0</code> at <code>r=0</code> (sheet dominates, <code>n_cap_base=1.0</code>) down to
+<code>0.05/(0.05 + 0.95**2 * 0.05**2) ≈ 0.99997</code> at <code>r=9</code> and <em>rises
+again toward 1</em> as <code>n_cap_base → 0</code> (sheet still dominates because
+<code>eps_implicit=0.05</code> floors the sheet term). The current CSV shows
+<code>evidence_ratio=1.0</code> for every round — the helper is being driven at
+<code>n_cap_base=1.0</code> every time because <code>round_in_cycle=0</code>.</p>
+<h3 id="evidencedrivenscheduler">EvidenceDrivenScheduler<a class="headerlink" href="#evidencedrivenscheduler" title="Permanent link">&para;</a></h3>
+<p><code>n_cap = cosine_base(r) + delta</code>
+(<code>evidence_driven.py:338-346</code>), where
+<code>delta ∈ [-max_step, +max_step] = [-0.05, +0.05]</code>. PID-lite
+(<code>evidence_driven.py:103-184</code>) is updated by
+<code>record_round_feedback(round_in_cycle, metrics)</code>, which the harness
+<em>never calls</em>. So <code>_last_pid_delta=0.0</code> and
+<code>n_cap == cosine_base(r)</code> clamped to <code>[0, 1]</code>. Expected trace: cosine
+curve with a constant <code>±0.05</code> slack — the <em>direction</em> of the slack
+is what would distinguish this row from the pure cosine row once
+feedback is wired. As observed, the row tracks cosine exactly.</p>
+<h3 id="freetrajscheduler">FreeTrajScheduler<a class="headerlink" href="#freetrajscheduler" title="Permanent link">&para;</a></h3>
+<p><code>n_cap = cosine_base(r) + amplitude * sin(2*pi*progress)</code>
+(<code>freetraj.py:185</code>), where <code>progress = (r % period) / period =
+(r % 4) / 4</code>. So at <code>period=4</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>progress sequence: 0/4, 1/4, 2/4, 3/4, 0/4, 1/4, ...
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>sin(2*pi*progress): 0, +1, 0, -1, 0, +1, 0, -1, 0, ...
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>substep (±0.05):   0, +0.05, 0, -0.05, 0, +0.05, 0, -0.05, 0, ...
+</code></pre></div>
+<p>Expected <code>n_cap</code> trace: cosine curve with a small ±0.05 sinusoidal
+"wobble" indexed by <code>r % 4</code>. Currently the script reports <code>1.0</code>
+because <code>r=0</code> always evaluates <code>progress=0</code> and <code>substep=0</code>.</p>
+<h2 id="5-differences-from-the-2d-experiment">§5. Differences from the 2D experiment<a class="headerlink" href="#5-differences-from-the-2d-experiment" title="Permanent link">&para;</a></h2>
+<p>The 2D harness (<code>tools/run_sota_2d_experiment.py:390-434</code>,
+<code>_drive_batched</code> → <code>BatchedTrajectoryRunner.run</code>) does <em>not</em> expose
+the same bug for two structural reasons:</p>
+<ol>
+<li>
+<p><strong>The 2D harness drives <code>n_cap</code> as a fraction, not as a step-count
+   multiplier.</strong> <code>n_cap</code> enters the 2D adapter via
+   <code>inject_noise(state, schedule_sample, ...)</code> and via
+   <code>memory_fraction = 1 - n_cap</code> (the canonical
+   <code>apply_restart_distribution</code> boundary). It does <em>not</em> feed
+   <code>n_cap</code> into the ODE step count. So even if <code>n_cap</code> were stuck at
+   <code>1.0</code>, the 2D experiment would still produce per-round variation
+   because each round draws a fresh batch of endpoints and re-runs
+   <code>solve_ode</code> against the <em>previous round's endpoint distribution</em>.
+   The 2D CSVs confirm this: <code>w2</code> and <code>selection_ratio</code> move round by
+   round even when <code>n_cap</code> is constant.</p>
+</li>
+<li>
+<p><strong>The 2D runner passes <code>round_in_cycle=r</code> correctly.</strong>
+   <code>BatchedTrajectoryRunner.run</code> (see the <code>round_in_cycle=r</code> call
+   inside the runner) advances <code>round_in_cycle</code> per iteration, so
+   the cosine ramp and the wrapper offsets move normally across
+   rounds. The 2D CSVs show <code>n_cap</code> sweeping from <code>1.0</code> at <code>r=0</code> to
+   <code>0.05</code> at <code>r=19</code> (cosine) / <code>0.0</code> at <code>r=19</code> (PID-modulated) /
+   <code>0.0</code> at <code>r=19</code> with periodic wobble (FreeTraj).</p>
+</li>
+</ol>
+<p>The CIFAR harness inlines its own per-round loop (it does not call
+<code>BatchedTrajectoryRunner</code>), and the inline loop is the place where
+<code>round_in_cycle</code> is hard-coded to <code>0</code>. So the bug is <em>CIFAR-only</em> in
+the sense that it lives in <code>tools/run_sota_cifar_experiment.py</code> and
+not in any shared runner; the 2D harness is unaffected.</p>
+<p>A subtle secondary difference: the 2D harness <em>does</em> call
+<code>record_round_feedback</code> on its <code>EvidenceDrivenScheduler</code> (via the
+batched runner + selection evaluator), so the PID-lite controller
+actually accumulates error across rounds. The CIFAR harness skips
+this hook entirely, so even with the <code>round_in_cycle</code> fix
+<code>EvidenceDrivenScheduler</code> would only differentiate from cosine if
+the harness also wires <code>record_round_feedback</code>.</p>
+<h2 id="6-recommended-fix-direction-no-code-yet">§6. Recommended fix direction (no code yet)<a class="headerlink" href="#6-recommended-fix-direction-no-code-yet" title="Permanent link">&para;</a></h2>
+<p>Two issues are stacked in <code>_run_framework</code>; both should be fixed
+together to make the framework-vs-baseline comparison carry
+information.</p>
+<h3 id="fix-a-single-line-pass-the-loop-index-as-round_in_cycle">Fix A (single-line): pass the loop index as <code>round_in_cycle</code><a class="headerlink" href="#fix-a-single-line-pass-the-loop-index-as-round_in_cycle" title="Permanent link">&para;</a></h3>
+<p>In <code>tools/run_sota_cifar_experiment.py:439</code>, replace</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">sample</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+</code></pre></div>
+<p>with</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">sample</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+</code></pre></div>
+<p>This single change restores the cosine ramp and the FreeTraj
+substep wobble for <code>CosineAnnealScheduler</code>, <code>CodimensionSheetScheduler</code>,
+and <code>FreeTrajScheduler</code>. <code>EvidenceDrivenScheduler</code> would also track
+the cosine ramp (its PID delta stays zero until Fix B is applied).</p>
+<h3 id="fix-b-small-wrapper-call-record_round_feedback-per-round">Fix B (small wrapper): call <code>record_round_feedback</code> per round<a class="headerlink" href="#fix-b-small-wrapper-call-record_round_feedback-per-round" title="Permanent link">&para;</a></h3>
+<p>To make <code>EvidenceDrivenScheduler</code> actually carry information,
+compute the round's <code>selection_ratio</code> (or the codimension sheet's
+<code>evidence_ratio</code>) and pass it via
+<code>scheduler.record_round_feedback(int(r), {"evidence_ratio": ratio})</code>
+between the <code>sample()</code> call and the <code>batched_inference()</code> call. This
+is the analogue of the 2D harness's per-round feedback path.</p>
+<h3 id="fix-c-config-tuning-optional-widen-n_max-so-num_steps-saturates">Fix C (config tuning, optional): widen <code>n_max</code> so <code>num_steps</code> saturates<a class="headerlink" href="#fix-c-config-tuning-optional-widen-n_max-so-num_steps-saturates" title="Permanent link">&para;</a></h3>
+<p>If Fix A alone is too timid to differentiate the framework rows
+(the framework rows would still integrate on the same step grid as
+the baseline for early rounds where <code>n_cap≈1</code>), the harness can
+widen <code>n_max</code> past <code>1.0</code> (e.g. <code>n_max=2.0</code>) so that
+<code>round(n_cap * max_num_steps)</code> overshoots <code>max_num_steps</code> early and
+narrows later. This produces a distinguishing fingerprint even
+without chained state. The cosine family clips <code>n_cap</code> to <code>[0, 1]</code>
+defensively, so this requires either widening the script's
+<code>max_num_steps</code> mapping or relaxing the cosine clip. Lower priority
+than Fix A / Fix B.</p>
+<h3 id="direction-summary">Direction summary<a class="headerlink" href="#direction-summary" title="Permanent link">&para;</a></h3>
+<p>The fix direction is <em>change the call site in
+<code>tools/run_sota_cifar_experiment.py:439</code></em> (pass the loop index as
+<code>round_in_cycle</code>). The scheduler implementation is correct; the
+construction parameters are correct; the <code>n_cap → num_steps</code> mapping
+is correct; the new <code>_gnobitab_ddpmpp.py</code> adapter is correct. The
+defect is a single hard-coded <code>0</code> where the loop variable <code>r</code> was
+intended.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

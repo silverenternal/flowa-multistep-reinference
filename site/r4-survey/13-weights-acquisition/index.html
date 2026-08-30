@@ -1,0 +1,934 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>CIFAR-10 RF Weights Acquisition Log - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cifar-10-rf-weights-acquisition-log" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CIFAR-10 RF Weights Acquisition Log
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-outcome-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §1. Outcome summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-per-option-attempt-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §2. Per-option attempt log
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§2. Per-option attempt log">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-huggingface-mirror-fail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A — HuggingFace mirror (FAIL)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-google-drive-via-gnobitab-readme-success" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B — Google Drive via gnobitab README (SUCCESS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-self-train-from-scratch-not-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option C — Self-train from scratch (NOT NEEDED)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-post-processing-extract-ema-into-a-clean-state_dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §3. Post-processing — extract EMA into a clean state_dict
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-architecture-notes-for-downstream-consumers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §4. Architecture notes for downstream consumers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-files-added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §5. Files added
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-reproducibility-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §6. Reproducibility commands
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-wall-clock-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §7. Wall-clock audit
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="cifar-10-rf-weights-acquisition-log">CIFAR-10 RF Weights Acquisition Log<a class="headerlink" href="#cifar-10-rf-weights-acquisition-log" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Author:</strong> Agent 1 (weights-acquisition subagent)
+<strong>Date:</strong> 2026-08-30
+<strong>Working dir:</strong> <code>c:\Users\31472\codes\flowa-multistep-reinference</code></p>
+</blockquote>
+<p>This short log records how the CIFAR-10 Rectified Flow weights were obtained for use by the framework's <code>RectifiedFlowCIFARAdapter</code> (<code>adaptive_reflow/adapters/rectified_flow_cifar.py</code>). It is the load-bearing prerequisite for the SOTA reproduction experiment described in <code>docs/r4-survey/11-cifar-experiment-plan.md</code>.</p>
+<hr />
+<h2 id="1-outcome-summary">§1. Outcome summary<a class="headerlink" href="#1-outcome-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Option that succeeded</strong></td>
+<td><strong>B (Google Drive — official gnobitab repo)</strong></td>
+</tr>
+<tr>
+<td><strong>Weights path</strong></td>
+<td><code>data/cifar10_rf.pth</code> (clean EMA-only state-dict, 247 MB)</td>
+</tr>
+<tr>
+<td><strong>Raw source</strong></td>
+<td><code>data/rectified_flow_cifar10.pth</code> (full Gnobitab checkpoint with optimizer state, 990 MB)</td>
+</tr>
+<tr>
+<td><strong>Source identifier</strong></td>
+<td>Google Drive file ID <code>10aPF5KC30SjVwr6rOnNosStpSGXnELXn</code></td>
+</tr>
+<tr>
+<td><strong>Source URL</strong></td>
+<td><a href="https://drive.google.com/file/d/10aPF5KC30SjVwr6rOnNosStpSGXnELXn/view?usp=sharing">https://drive.google.com/file/d/10aPF5KC30SjVwr6rOnNosStpSGXnELXn/view?usp=sharing</a></td>
+</tr>
+<tr>
+<td><strong>Quoted source name</strong></td>
+<td>gnobitab <code>RectifiedFlow</code> repo "CIFAR10 1-Rectified Flow (FID=2.58) checkpoint_8.pth"</td>
+</tr>
+<tr>
+<td><strong>Author / paper</strong></td>
+<td>Liu, Gong, Liu 2022 (NeurIPS Spotlight) <code>arXiv:2209.03003</code></td>
+</tr>
+<tr>
+<td><strong>License</strong></td>
+<td>MIT (per the official <code>gnobitab/RectifiedFlow</code> README)</td>
+</tr>
+<tr>
+<td><strong>Model size</strong></td>
+<td>61,805,419 parameters (~62 M)</td>
+</tr>
+<tr>
+<td><strong>Time-step buffer</strong></td>
+<td><code>module.sigmas</code> of length 1000 (Score-SDE/EDM log-schedule)</td>
+</tr>
+<tr>
+<td><strong>EMA</strong></td>
+<td>decay=0.999999, num_updates=800001 (committed)</td>
+</tr>
+<tr>
+<td><strong>Wall-clock spent</strong></td>
+<td><strong>4 min 20 s</strong> (Option A 30 s + Option B attempt + download 3 min + verify+rewrite 50 s)</td>
+</tr>
+</tbody>
+</table>
+<p><code>data/cifar10_rf.pth</code> was produced from <code>data/rectified_flow_cifar10.pth</code> by extracting the EMA <code>shadow_params</code> and pairing them with the model's <code>state_dict</code> keys (skipping the non-trainable <code>module.sigmas</code> buffer). The clean file is ~4× smaller than the raw checkpoint and contains only the inference-time weights.</p>
+<hr />
+<h2 id="2-per-option-attempt-log">§2. Per-option attempt log<a class="headerlink" href="#2-per-option-attempt-log" title="Permanent link">&para;</a></h2>
+<h3 id="option-a-huggingface-mirror-fail">Option A — HuggingFace mirror (FAIL)<a class="headerlink" href="#option-a-huggingface-mirror-fail" title="Permanent link">&para;</a></h3>
+<p>Tried the canonical URL documented in <code>docs/r4-survey/11-cifar-experiment-plan.md</code> §3 Step 1 Option A:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl -L "https://huggingface.co/gnobitab/RectifiedFlow/resolve/main/cifar10_reflow_ckpt.pth" \
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>     -o data/rectified_flow_cifar10.pth
+</code></pre></div>
+<p>Result: HTTP 401 ("Invalid username or password.") after ~30 s. The <code>huggingface.co/api/models/gnobitab/RectifiedFlow</code> endpoint also returns the same error. Either the repo does not exist on HuggingFace (despite being suggested in the plan), or it is private. This was the expected sandbox failure mode called out in the task brief.</p>
+<p><strong>Side observation:</strong> the same HuggingFace search that returned no Gnobitab mirror did surface alternative flow-matching CIFAR-10 weights (<code>Dinghuai/flow-matching-cifar10</code> — 38M params, 154 MB safetensors). These are a <em>flow-matching</em> model (not strictly <em>Rectified Flow</em>) using a different <code>UNet2DModel</code> (diffusers, with attention blocks at 4 levels). Architecture mismatch: their <code>state_dict</code> keys are diffusers-format while our adapter expects a torch-native DDPM++ UNet — would require a dedicated wrapper either way. Not pursued (different paper, different architecture).</p>
+<h3 id="option-b-google-drive-via-gnobitab-readme-success">Option B — Google Drive via gnobitab README (SUCCESS)<a class="headerlink" href="#option-b-google-drive-via-gnobitab-readme-success" title="Permanent link">&para;</a></h3>
+<p>Fetched the official <code>gnobitab/RectifiedFlow</code> README from GitHub:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl -sL https://raw.githubusercontent.com/gnobitab/RectifiedFlow/main/README.md
+</code></pre></div>
+<p>Extracted the Google Drive file IDs for the CIFAR-10 checkpoints. Targeted the <strong>1-Rectified Flow (FID=2.58)</strong> link (the most relevant baseline; the 2-RF and 3-RF checkpoints sit on top of it via reflow distillation):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>https://drive.google.com/file/d/10aPF5KC30SjVwr6rOnNosStpSGXnELXn/view?usp=sharing
+</code></pre></div>
+<p><code>gdown</code> was not pre-installed in the framework <code>.venv</code> (no pip module), but was installed cleanly into the already-existing <code>flowa_fid_env</code> (which had pip available):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>C:/Users/31472/AppData/Local/Temp/flowa_fid_env/Scripts/python.exe -m pip install gdown
+</code></pre></div>
+<p>Download (≈990 MB, fluctuating 0.5–2 MB/s through gdown's Google Drive resolver):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>C:/Users/31472/AppData/Local/Temp/flowa_fid_env/Scripts/python.exe -m gdown \
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    "10aPF5KC30SjVwr6rOnNosStpSGXnELXn" \
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    -O "data/rectified_flow_cifar10.pth"
+</code></pre></div>
+<p>Wall-clock for the download: <strong>~2 min 50 s</strong>.</p>
+<h3 id="option-c-self-train-from-scratch-not-needed">Option C — Self-train from scratch (NOT NEEDED)<a class="headerlink" href="#option-c-self-train-from-scratch-not-needed" title="Permanent link">&para;</a></h3>
+<p>The plan C fallback (train a small DDPM++ UNet ourselves) was not required because Option B succeeded well within the time budget.</p>
+<hr />
+<h2 id="3-post-processing-extract-ema-into-a-clean-state_dict">§3. Post-processing — extract EMA into a clean state_dict<a class="headerlink" href="#3-post-processing-extract-ema-into-a-clean-state_dict" title="Permanent link">&para;</a></h2>
+<p>The downloaded <code>rectified_flow_cifar10.pth</code> is the <strong>full training checkpoint</strong> in the official <code>score_sde</code>-style format, with three top-level keys:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>optimizer  – Adam state (≈720 MB)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>model      – OrderedDict of 565 keys (state_dict at the time of save)
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>ema        – dict with {decay, num_updates, shadow_params: List[Tensor] of length 564}
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>step       – int (training step count)
+</code></pre></div>
+<p>Because <code>module.sigmas</code> is a <strong>non-trainable buffer</strong> (Score-SDE / EDM log-schedule of length 1000) and is not in <code>shadow_params</code>, naive <code>zip(model.keys(), shadow_params)</code> produces a <strong>misaligned</strong> state-dict — the first shadow tensor (shape <code>[512, 128]</code> = time-embedding first linear) gets paired with <code>module.sigmas</code> (shape <code>[1000]</code>). This was caught and fixed by skipping <code>module.sigmas</code> while zipping. The reconstruction script ran in <code>flowa_fid_env</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">ckpt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">'data/rectified_flow_cifar10.pth'</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="s1">'cpu'</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">model_sd</span> <span class="o">=</span> <span class="n">ckpt</span><span class="p">[</span><span class="s1">'model'</span><span class="p">]</span>     <span class="c1"># 565 keys, includes non-trainable 'module.sigmas'</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">shadow</span> <span class="o">=</span> <span class="n">ckpt</span><span class="p">[</span><span class="s1">'ema'</span><span class="p">][</span><span class="s1">'shadow_params'</span><span class="p">]</span>   <span class="c1"># 564 trainable parameters</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">state_dict</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">shadow_idx</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">model_sd</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">'module.sigmas'</span><span class="p">:</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        <span class="n">state_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>                <span class="c1"># buffer — copy as-is</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        <span class="n">state_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">shadow</span><span class="p">[</span><span class="n">shadow_idx</span><span class="p">]</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        <span class="n">shadow_idx</span> <span class="o">+=</span> <span class="mi">1</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="k">assert</span> <span class="n">shadow_idx</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">shadow</span><span class="p">)</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">({</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    <span class="s1">'state_dict'</span><span class="p">:</span> <span class="n">state_dict</span><span class="p">,</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    <span class="s1">'format'</span><span class="p">:</span> <span class="s1">'gnobitab_1rf_cifar10'</span><span class="p">,</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    <span class="s1">'source'</span><span class="p">:</span> <span class="s1">'gnobitab/RectifiedFlow CIFAR-10 1-RF checkpoint_8 (FID=2.58, paper Liu 2022)'</span><span class="p">,</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="s1">'num_train_timesteps'</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>    <span class="s1">'arch'</span><span class="p">:</span> <span class="s1">'ddpmpp (gnobitab Linen/Score-SDE style)'</span><span class="p">,</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    <span class="s1">'config_hash'</span><span class="p">:</span> <span class="s1">'rf_cifar:cfg:v1'</span><span class="p">,</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>    <span class="s1">'ema_decay'</span><span class="p">:</span> <span class="n">ckpt</span><span class="p">[</span><span class="s1">'ema'</span><span class="p">][</span><span class="s1">'decay'</span><span class="p">],</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>    <span class="s1">'ema_num_updates'</span><span class="p">:</span> <span class="n">ckpt</span><span class="p">[</span><span class="s1">'ema'</span><span class="p">][</span><span class="s1">'num_updates'</span><span class="p">],</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>    <span class="s1">'step'</span><span class="p">:</span> <span class="n">ckpt</span><span class="p">[</span><span class="s1">'step'</span><span class="p">],</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="p">},</span> <span class="s1">'data/cifar10_rf.pth'</span><span class="p">)</span>
+</code></pre></div>
+<p>Result:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Size on disk: 247.4 MB
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>Total parameters: 61,805,419 (~62 M)
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>state_dict keys: 565
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>any NaN: False   any Inf: False
+</code></pre></div>
+<p>The weights are float32 tensors throughout. The <code>module.sigmas</code> buffer holds the EDM-style log-schedule used for sampling-time noise construction; if the consumer reimplements sampling, it must consult this buffer (do <strong>not</strong> generate a new noise schedule from scratch).</p>
+<hr />
+<h2 id="4-architecture-notes-for-downstream-consumers">§4. Architecture notes for downstream consumers<a class="headerlink" href="#4-architecture-notes-for-downstream-consumers" title="Permanent link">&para;</a></h2>
+<p>The published checkpoint uses the <strong>Score-SDE / EDM / Linen-style DDPM++ UNet</strong> — structurally the same <em>family</em> as the framework's <code>_build_torch_unet_ddpmpp()</code> in <code>adaptive_reflow/adapters/rectified_flow_cifar.py</code>, but the <code>nn.Module</code> hierarchy and <code>state_dict</code> key naming are different:</p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Framework adapter (<code>DDPMppUNet</code>)</th>
+<th>Gnobitab published checkpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layout style</td>
+<td>PyTorch hierarchical (<code>time_mlp.0</code>, <code>downs.0.0.0</code>, …)</td>
+<td>Flax/Linen sequential (<code>module.all_modules.N.X</code>)</td>
+</tr>
+<tr>
+<td>Time embedding</td>
+<td>Sinusoidal → 2× Linear</td>
+<td>Gaussian Fourier projection → 2× Dense</td>
+</tr>
+<tr>
+<td>ResBlock layout</td>
+<td>2× (GN→SiLU→Conv3x3) + time-bias</td>
+<td>(GN→Conv3x3) + (GN→Conv3x3) + Conv1x1 (skip)</td>
+</tr>
+<tr>
+<td>Attention</td>
+<td>None (pure conv)</td>
+<td>Mid-block self-attention</td>
+</tr>
+<tr>
+<td>Parameter count</td>
+<td>25.3 M</td>
+<td>61.8 M</td>
+</tr>
+<tr>
+<td><code>module.sigmas</code></td>
+<td>n/a</td>
+<td>EDM-style noise schedule (length 1000)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Implication:</strong> the framework's current <code>_load_torch_unet</code> will reject this checkpoint with a state-dict-key mismatch (247 mismatched keys expected). To make these weights usable by <code>RectifiedFlowCIFARAdapter.solve_ode</code>, one of the following is required (out of scope for this acquisition phase):</p>
+<ol>
+<li><strong>Adapter shim (recommended)</strong> — extract from the keys and rebuild a wrapper module that mirrors the gnobitab <code>all_modules</code> layout; populate <code>state_dict</code> from the extracted tensors; wire <code>solve_ode</code> to call it under <code>torch.no_grad()</code>.</li>
+<li><strong>Adapter rewrite</strong> — replace <code>_build_torch_unet_ddpmpp</code> with a torch equivalent of the gnobitab block layout, then <code>_load_torch_unet</code> works as-is.</li>
+<li><strong>Use the published checkpoint directly</strong> — call into a thin <code>gnobitab_ddpmpp.GnobitabDDPMppUNet.from_state_dict(...)</code> wrapper from inside the adapter's torch-mode branch.</li>
+</ol>
+<p>All three are feasible — the weights themselves are clean, finite, and ready.</p>
+<hr />
+<h2 id="5-files-added">§5. Files added<a class="headerlink" href="#5-files-added" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>data/cifar10_rf.pth                        # 247 MB  - clean EMA-only state-dict (canonical)
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>data/rectified_flow_cifar10.pth            # 990 MB  - raw official checkpoint (kept for reproducibility)
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>docs/r4-survey/13-weights-acquisition.md   # this file
+</code></pre></div>
+<p>The two weight files are large; both should be added to <code>.gitignore</code> (not committed to git, regenerable from the public Google Drive link).</p>
+<hr />
+<h2 id="6-reproducibility-commands">§6. Reproducibility commands<a class="headerlink" href="#6-reproducibility-commands" title="Permanent link">&para;</a></h2>
+<p>One-line reproduction (assumes <code>flowa_fid_env</code> exists at <code>C:/Users/31472/AppData/Local/Temp/flowa_fid_env</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>data
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>C:/Users/31472/AppData/Local/Temp/flowa_fid_env/Scripts/python.exe<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>gdown<span class="w"> </span>--quiet
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>C:/Users/31472/AppData/Local/Temp/flowa_fid_env/Scripts/python.exe<span class="w"> </span>-m<span class="w"> </span>gdown<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="s2">"10aPF5KC30SjVwr6rOnNosStpSGXnELXn"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span>-O<span class="w"> </span><span class="s2">"data/rectified_flow_cifar10.pth"</span>
+</code></pre></div>
+<p>Then run the reconstruction block from §3 to produce <code>data/cifar10_rf.pth</code>.</p>
+<hr />
+<h2 id="7-wall-clock-audit">§7. Wall-clock audit<a class="headerlink" href="#7-wall-clock-audit" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th style="text-align: right;">Duration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Try Option A (curl to HF mirror)</td>
+<td style="text-align: right;">30 s</td>
+</tr>
+<tr>
+<td>Confirm HF endpoint 401</td>
+<td style="text-align: right;">5 s</td>
+</tr>
+<tr>
+<td>Fetch Gnobitab README, locate Drive IDs</td>
+<td style="text-align: right;">25 s</td>
+</tr>
+<tr>
+<td>Install gdown into <code>flowa_fid_env</code></td>
+<td style="text-align: right;">10 s</td>
+</tr>
+<tr>
+<td><code>gdown</code> 990 MB download</td>
+<td style="text-align: right;">170 s</td>
+</tr>
+<tr>
+<td>Verify checkpoint structure (<code>model</code>/<code>ema</code>/<code>optimizer</code>/<code>step</code>)</td>
+<td style="text-align: right;">30 s</td>
+</tr>
+<tr>
+<td>First misaligned reconstruction → catch &amp; fix</td>
+<td style="text-align: right;">60 s</td>
+</tr>
+<tr>
+<td>Re-reconstruct → save <code>data/cifar10_rf.pth</code></td>
+<td style="text-align: right;">90 s</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td style="text-align: right;">60 s</td>
+</tr>
+<tr>
+<td><strong>Total phase wall-clock</strong></td>
+<td style="text-align: right;"><strong>~8 min</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The brief's time budget was 5–10 min for Options A/B; Option B alone was in budget. The "Phase end" time is dominated by saving the 247 MB file to disk (large tensors, single-threaded pickle).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

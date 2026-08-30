@@ -1,0 +1,1870 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>SOTA Experiment Protocol + Runbook - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#sota-experiment-protocol-runbook" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              SOTA Experiment Protocol + Runbook
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §1. Goal
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§1. Goal">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-single-claim-under-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The single claim under test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-this-protocol-exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this protocol exists
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-improvement-means-here" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What "improvement" means here
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §2. Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-step-by-step-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §3. Step-by-step protocol
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§3. Step-by-step protocol">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-inspect-the-checkpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 — Inspect the checkpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-implement-a-thin-adapter-inheriting-flowmatchingodeadapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 — Implement a thin adapter inheriting FlowMatchingODEAdapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-validate-the-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — Validate the adapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-compute-the-baseline-single-pass-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4 — Compute the baseline single-pass metric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-run-flowa-multi-round-with-the-four-schedulers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5 — Run FlowA multi-round with the four schedulers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-compute-per-scheduler-metric-fid-or-w2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6 — Compute per-scheduler metric (FID or W2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-fill-the-comparison-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7 — Fill the comparison table
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-adapter-template-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §4. Adapter template (code)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-common-pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §5. Common pitfalls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-expected-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §6. Expected output
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§6. Expected output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#artifact-1-the-5-row-comparison-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Artifact 1 — The 5-row comparison table
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifact-2-per-round-trajectory-plot-per-scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Artifact 2 — Per-round trajectory plot (per scheduler)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifact-3-per-sample-visualisation-88-grid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Artifact 3 — Per-sample visualisation (8×8 grid)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifact-4-selection-ratio-trajectory-theorem-1-witness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Artifact 4 — Selection-ratio trajectory (Theorem 1 witness)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-success-looks-like" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What success looks like
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-sandbox-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §7. Sandbox limitations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §8. Versioning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§8. Versioning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changelog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changelog
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="sota-experiment-protocol-runbook">SOTA Experiment Protocol + Runbook<a class="headerlink" href="#sota-experiment-protocol-runbook" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-08-30
+<strong>Protocol version:</strong> v1
+<strong>Framework version required:</strong> post-<code>3a30801</code> (commit hash <code>3a30801</code> introduces the state-machine infrastructure that <code>EvidenceDrivenScheduler</code> consumes; the protocol's "Loop 2" wiring relies on it)
+<strong>Author:</strong> Agent B (runbook); paper-claim owner is the framework author
+<strong>Audience:</strong> a fresh user (you) with one pre-trained flow-matching checkpoint, a CPU or GPU machine, and one afternoon to spare</p>
+<hr />
+<h2 id="1-goal">§1. Goal<a class="headerlink" href="#1-goal" title="Permanent link">&para;</a></h2>
+<h3 id="the-single-claim-under-test">The single claim under test<a class="headerlink" href="#the-single-claim-under-test" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>When a published SOTA flow-matching model is run through FlowA's multi-round re-inference loop, the resulting sample-quality metric (FID for images, W2 for synthetic 2D, selection ratio for paper-Theorem-1 witnesses, etc.) improves over the same model's single-pass baseline on the same checkpoint, same task, same evaluator.</strong></p>
+</blockquote>
+<p>That is the entire SOTA claim from <code>docs/paper-plan.md</code> §4. This protocol is the <strong>runbook</strong> that lets you verify it on a checkpoint of your choice.</p>
+<h3 id="why-this-protocol-exists">Why this protocol exists<a class="headerlink" href="#why-this-protocol-exists" title="Permanent link">&para;</a></h3>
+<p>The sandbox where FlowA was developed cannot download gated HuggingFace weights, cannot access Google Drive, has no GPU, and has no torch in its framework venv. The sandbox <em>can</em> ship: (a) the framework, (b) the protocol, (c) the adapter template, and (d) the FID harness (<code>flowa_fid_env</code>). The <em>experiment</em> must run on a machine that has your checkpoint and a torch-capable environment. This document is the bridge — it tells you, step by step, how to wire the framework to your checkpoint and produce a single comparison table that, if the claim is true, will show a framework-side metric strictly better than the baseline.</p>
+<h3 id="what-improvement-means-here">What "improvement" means here<a class="headerlink" href="#what-improvement-means-here" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>FID:</strong> strictly lower (<code>framework_FID &lt; baseline_FID</code>); publishable threshold is roughly ≥ 5 % relative reduction.</li>
+<li><strong>W2:</strong> strictly lower; for 2D synthetic targets the Li-2024 selection mechanism (paper Theorem 1) predicts W2 should fall as <code>eps_implicit</code> shrinks.</li>
+<li><strong>selection_ratio:</strong> should rise toward 1.0 (paper Theorem 1 direction); the published 2D RF baseline is 0.8061, framework result is 0.988+.</li>
+<li><strong>honesty clause:</strong> the framework is allowed to underperform for some schedulers. Report all four honestly; the paper claim is "framework <em>can</em> improve", not "framework <em>always</em> improves".</li>
+</ul>
+<hr />
+<h2 id="2-prerequisites">§2. Prerequisites<a class="headerlink" href="#2-prerequisites" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Python 3.12</strong> + the framework venv at <code>./.venv</code> (created by <code>uv sync</code> or <code>python -m venv .venv &amp;&amp; pip install -e .</code>)</td>
+<td>The framework is stdlib + numpy at runtime. PyTorch is <strong>not</strong> required for the framework itself.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>One pre-trained flow-matching checkpoint</strong> that <strong>you</strong> provide</td>
+<td>The framework is inference-only. Your model is the contribution. Options: (a) your own published checkpoint, (b) <code>huggan/cifar10-resnet-flow-matching</code> if you have an HF token, (c) gnobitab CIFAR-10 RF from Google Drive. Anything that maps <code>noise → data</code> deterministically works.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Standard test set</strong> for the checkpoint's original task</td>
+<td>e.g. CIFAR-10 test set (10K images), MNIST test set (10K), or a 2D synthetic ground-truth sampler (<code>two_moons</code>, <code>eight_gaussians</code>, …).</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>An InceptionV3 FID computation environment</strong></td>
+<td>We use the isolated venv at <code>C:/Users/31472/AppData/Local/Temp/flowa_fid_env</code> (<code>torch==2.4.1+cpu</code> + <code>pytorch-fid</code>). The InceptionV3 weights download once on first run (~95 MB) from <code>github.com/mseitzer/pytorch-fid/releases/download/...</code>. If torch is unavailable on your machine, the framework ships a NumPy random-projection FID that is less accurate but works on any machine — see §5.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Disk space</strong> ~ 2 GB for InceptionV3 cache + your generated sample <code>.npz</code> files</td>
+<td>Generated samples are stored under <code>/tmp/{model_name}_*.npz</code> by convention.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Time budget</strong> ~ 1–4 hours per checkpoint (CPU) or 10–30 min (GPU)</td>
+<td>1000 samples × 20 rounds × 4 schedulers = 80 K forward passes. On CPU at ~4 samples/s that's ~5.5 hours; bump <code>n_samples</code> down to 250 for a faster smoke pass.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-step-by-step-protocol">§3. Step-by-step protocol<a class="headerlink" href="#3-step-by-step-protocol" title="Permanent link">&para;</a></h2>
+<p>The protocol is <strong>seven steps</strong>. Steps 1–3 are one-time per checkpoint; steps 4–7 produce the comparison table.</p>
+<h3 id="step-1-inspect-the-checkpoint">Step 1 — Inspect the checkpoint<a class="headerlink" href="#step-1-inspect-the-checkpoint" title="Permanent link">&para;</a></h3>
+<p>Open a Python REPL and answer five questions about your checkpoint. Record the answers; you'll need them in Step 2.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"/path/to/your_checkpoint.npz"</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="o">&gt;&gt;&gt;</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>          <span class="c1"># what weight tensors does it have?</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="o">&gt;&gt;&gt;</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">files</span><span class="p">}</span>  <span class="c1"># what is each tensor's shape?</span>
+</code></pre></div>
+<p>Record:</p>
+<table>
+<thead>
+<tr>
+<th>Question</th>
+<th>Your answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Model class</strong> (UNet / MLP / DiT / …)</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Input shape</strong> (the noise tensor shape fed to the model)</td>
+<td>e.g. <code>(1, 3, 32, 32)</code> for CIFAR-10 UNet</td>
+</tr>
+<tr>
+<td><strong>Output shape</strong> (the model's <code>v(x, t)</code> shape)</td>
+<td>usually matches input</td>
+</tr>
+<tr>
+<td><strong>Sampling steps</strong> (how many <code>solve_ode</code> calls the original codebase uses)</td>
+<td>e.g. 50 / 100 / 250</td>
+</tr>
+<tr>
+<td><strong>Original task</strong> + <strong>original metric</strong></td>
+<td>e.g. CIFAR-10 image generation, FID</td>
+</tr>
+</tbody>
+</table>
+<p>If your checkpoint has no NumPy <code>.npz</code> (e.g. a <code>safetensors</code> / PyTorch <code>state_dict</code> / Equinox <code>.eqx</code>), translate the weights to a NumPy <code>.npz</code> once with <code>torch.load(...).state_dict()</code> → <code>tensor.cpu().numpy()</code> per key. Save the resulting file under <code>data/your_model.npz</code>; the adapter template assumes NumPy access.</p>
+<h3 id="step-2-implement-a-thin-adapter-inheriting-flowmatchingodeadapter">Step 2 — Implement a thin adapter inheriting <code>FlowMatchingODEAdapter</code><a class="headerlink" href="#step-2-implement-a-thin-adapter-inheriting-flowmatchingodeadapter" title="Permanent link">&para;</a></h3>
+<p>Copy the template from §4 into <code>adaptive_reflow/adapters/your_model.py</code>, then fill in 4–5 methods (marked <strong>TODO</strong>). The other 3–4 methods have sensible defaults and usually need no edits. Reference: <code>adaptive_reflow/adapters/twodim_fm.py</code> is the canonical pattern — the <code>TwoDimFMAdapter</code> (line 469) implements all 8 methods end-to-end against a tiny velocity-field MLP; your adapter is the same shape, sized up to your model's input/output dimensions.</p>
+<p>Minimal working adapter for a CIFAR-10 UNet checkpoint:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># adaptive_reflow/adapters/your_model.py — see §4 for the full template</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.universal</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">FlowMatchingODEAdapter</span><span class="p">,</span> <span class="n">AdapterCapabilities</span><span class="p">,</span> <span class="n">NoOpMixer</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">YourModelAdapter</span><span class="p">(</span><span class="n">FlowMatchingODEAdapter</span><span class="p">):</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weights_path</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span> <span class="o">=</span> <span class="n">load_your_weights</span><span class="p">(</span><span class="n">weights_path</span><span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_num_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_caps</span> <span class="o">=</span> <span class="n">AdapterCapabilities</span><span class="p">(</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>            <span class="n">has_ode_integration_surface</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>            <span class="n">has_prior_export</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_state_export</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>            <span class="n">has_condition_injection</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_restart_boundary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>            <span class="n">has_continuous_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_discrete_channels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>            <span class="n">has_trajectory_digest</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_deterministic_seed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>            <span class="n">has_materialization_route</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>            <span class="n">supported_channels</span><span class="o">=</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">,),</span>  <span class="c1"># or whatever your model emits</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>            <span class="n">channel_domains</span><span class="o">=</span><span class="p">{</span><span class="s2">"rgb"</span><span class="p">:</span> <span class="s2">"continuous"</span><span class="p">},</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>            <span class="n">required_mixer</span><span class="o">=</span><span class="n">NoOpMixer</span><span class="p">,</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>            <span class="n">native_config_hash</span><span class="o">=</span><span class="s2">"your_model:cfg:v1"</span><span class="p">,</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>            <span class="n">native_config_version</span><span class="o">=</span><span class="s2">"0.1.0"</span><span class="p">,</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>        <span class="p">)</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caps</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build_initial_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">,</span> <span class="n">sample_id</span><span class="p">):</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>        <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="nb">hash</span><span class="p">((</span><span class="n">batch_id</span><span class="p">,</span> <span class="n">sample_id</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mh">0xffffffff</span><span class="p">)</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">))</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>        <span class="c1"># ... build StateBundle (see §4)</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">solve_ode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">condition</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>        <span class="c1"># integrate your model forward for self._num_steps</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>        <span class="o">...</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">observe_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trace</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a>        <span class="c1"># read final state, build a new StateBundle (see §4)</span>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>        <span class="o">...</span>
+<a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a>
+<a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">export_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+<a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a>        <span class="k">return</span> <span class="n">state</span>
+<a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a>
+<a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">detach_and_validate_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bundle</span><span class="p">):</span>
+<a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a>        <span class="c1"># default implementation: assert detach_proof and re-validate</span>
+<a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>        <span class="o">...</span>
+</code></pre></div>
+<p>Three methods that need filling (per the §4 template):</p>
+<ol>
+<li><code>build_initial_state(batch_id, sample_id)</code> → sample <code>x0</code> from the prior your checkpoint expects (usually <code>N(0, I)</code>) and return a <code>StateBundle</code>.</li>
+<li><code>solve_ode(state, condition, *, seed)</code> → integrate the velocity field using your checkpoint's native solver (Euler / Heun / RK4 / whatever the original codebase used). Return an <code>ODEIntegratorTrace</code> with a stable <code>native_state_digest</code> and <code>integrator_config_hash</code>.</li>
+<li><code>observe_endpoint(trace, state)</code> → read the final trajectory point, build a fresh <code>StateBundle</code> with <code>detach_proof=True</code> and a fresh <code>native_state_digest</code>.</li>
+<li><code>export_endpoint(state)</code> → typically a no-op identity, but if you want to project the native tensor into a canonical form do it here.</li>
+<li>(optional) <code>inject_forward_noise(bundle, delta)</code> → only needed if you want the runner's Loop-4 forward-noise step to actually perturb the bundle. The 2D adapter does not implement this; it is a no-op.</li>
+</ol>
+<p>Three methods that already have sensible defaults (copy from §4 verbatim):</p>
+<ul>
+<li><code>apply_restart_distribution(state, policy)</code> — blend the prior endpoint with fresh <code>x0 ~ N(0, I)</code> using <code>memory_fraction = 1 - beta</code>. The 2D adapter's implementation is a copy-paste template.</li>
+<li><code>compose_condition(bundle, delta)</code> — typically passes through <code>delta</code> with <code>target_distribution</code> and <code>integrator_config_hash</code> set as <code>delta_spec</code> defaults.</li>
+<li><code>capabilities()</code> — return your constructed <code>AdapterCapabilities</code>.</li>
+</ul>
+<h3 id="step-3-validate-the-adapter">Step 3 — Validate the adapter<a class="headerlink" href="#step-3-validate-the-adapter" title="Permanent link">&para;</a></h3>
+<p>Two checks before you trust the adapter on a long run:</p>
+<p><strong>(3a) Capability handshake.</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.frame.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">Engine</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.adapters.your_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">YourModelAdapter</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">adapter</span> <span class="o">=</span> <span class="n">YourModelAdapter</span><span class="p">(</span><span class="n">weights_path</span><span class="o">=</span><span class="s2">"data/your_model.npz"</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">()</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">caps</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">handshake</span><span class="p">(</span><span class="n">adapter</span><span class="p">)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"OK"</span><span class="p">,</span> <span class="n">caps</span><span class="o">.</span><span class="n">supported_channels</span><span class="p">,</span> <span class="n">caps</span><span class="o">.</span><span class="n">has_ode_integration_surface</span><span class="p">)</span>
+</code></pre></div>
+<p>If this raises <code>CapabilityMissingError</code> or <code>CapabilityMismatchError</code>, fix the capability declaration in <code>__init__</code> before proceeding — the engine will fail closed otherwise.</p>
+<p><strong>(3b) 10-round smoke test.</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.algorithm.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReInferenceRunner</span><span class="p">,</span> <span class="n">ReInferenceConfig</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">ReInferenceRunner</span><span class="p">(</span><span class="n">adapter</span><span class="o">=</span><span class="n">adapter</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ReInferenceConfig</span><span class="p">(</span><span class="n">n_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">,)))</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">endpoints</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="s2">"NaN/Inf in endpoints!"</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="k">assert</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">ledger_rows</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">row_hash</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">"ledger chain broken!"</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nb">print</span><span class="p">(</span><span class="s2">"smoke OK; endpoint shape:"</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">endpoints</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</code></pre></div>
+<p>Three checks the smoke test must pass:
+- <code>np.isfinite(result.endpoints).all()</code> — no NaN / Inf in any of the 10 endpoints.
+- <code>verify_ledger_chain(result.ledger_rows)</code> returns <code>(True, "")</code> — ledger integrity holds (the runner calls this automatically; an <code>AssertionError</code> aborts).
+- <code>result.endpoints.shape == (10, …)</code> — one row per round, shape matches your model's output.</p>
+<p>If the smoke test fails on any of these, jump to §5 "Common pitfalls" before continuing.</p>
+<h3 id="step-4-compute-the-baseline-single-pass-metric">Step 4 — Compute the baseline single-pass metric<a class="headerlink" href="#step-4-compute-the-baseline-single-pass-metric" title="Permanent link">&para;</a></h3>
+<p>This is the <strong>same model, same checkpoint, same task, single-pass inference</strong> (no FlowA re-inference). The framework's evaluator computes the metric so the comparison is apples-to-apples.</p>
+<p>For an image generation model:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">your_model_code</span><span class="w"> </span><span class="kn">import</span> <span class="n">your_sampling_function</span>   <span class="c1"># your model's native sample loop</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># 1. Sample N=1000 images with the original codebase (single pass)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">images</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">x</span> <span class="o">=</span> <span class="n">your_sampling_function</span><span class="p">(</span><span class="n">checkpoint</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>                           <span class="c1"># (1000, 3, 32, 32)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="s2">"/tmp/your_model_baseline.npz"</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">images</span><span class="p">)</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1"># 2. Compute FID against the test set reference</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1">#    (or W2 if the task is 2D synthetic)</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">"C:/Users/31472/AppData/Local/Temp/flowa_fid_env/compute_mnist_fid.py"</span><span class="p">,</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>                <span class="s2">"--gen"</span><span class="p">,</span> <span class="s2">"/tmp/your_model_baseline.npz"</span><span class="p">,</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>                <span class="s2">"--ref"</span><span class="p">,</span> <span class="s2">"data/your_test_set.npz"</span><span class="p">,</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>                <span class="s2">"--out"</span><span class="p">,</span> <span class="s2">"/tmp/your_model_baseline_fid.txt"</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="n">BASELINE_FID</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">"/tmp/your_model_baseline_fid.txt"</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"BASELINE FID: </span><span class="si">{</span><span class="n">BASELINE_FID</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+<p>Record <code>BASELINE_FID</code> (or <code>BASELINE_W2</code>, <code>BASELINE_selection_ratio</code>, etc.). This is the row "baseline (single-pass)" in the §3 Step 7 table.</p>
+<p><strong>Important:</strong> keep the <code>num_steps</code> and seed schedule identical to what your model's original sampling code uses — the baseline is <em>that</em> sampling loop, not something FlowA invented. FlowA's job is to improve on it via multi-round re-inference.</p>
+<p>If <code>num_steps</code> is small (≤ 10) the framework can match the original in one round. If <code>num_steps</code> is large (≥ 100) the framework may need to chunk the integration or run a smaller per-round <code>num_steps</code> — this is an open tuning parameter; record the value you actually used.</p>
+<h3 id="step-5-run-flowa-multi-round-with-the-four-schedulers">Step 5 — Run FlowA multi-round with the four schedulers<a class="headerlink" href="#step-5-run-flowa-multi-round-with-the-four-schedulers" title="Permanent link">&para;</a></h3>
+<p>The framework ships four schedulers, each wired to a different re-inference strategy:</p>
+<table>
+<thead>
+<tr>
+<th>Scheduler</th>
+<th>What it does</th>
+<th>Where to import from</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default_cosine_scheduler</code></td>
+<td>CosineAnneal: <code>n_cap</code> decays from <code>n_max</code> to <code>n_min</code> over <code>n_rounds</code>. ADR-0010.</td>
+<td><code>adaptive_reflow.algorithm.scheduler</code></td>
+</tr>
+<tr>
+<td><code>CodimensionSheetScheduler</code></td>
+<td>Paper-grounded: per-round <code>evidence_ratio</code> derived from sheet-A / packing-B / cell-C quantities (Lemma 2 + Lemma 3).</td>
+<td><code>adaptive_reflow.algorithm.scheduler</code></td>
+</tr>
+<tr>
+<td><code>EvidenceDrivenScheduler</code></td>
+<td>PID-lite on <code>selection_ratio</code> (paper Theorem 1 direction). Requires <code>selection_evaluator</code>.</td>
+<td><code>adaptive_reflow.algorithm.scheduler</code></td>
+</tr>
+<tr>
+<td>Model-specific (you choose)</td>
+<td>For CIFAR-10: <code>FreeTrajScheduler</code> (per-round free-trajectory budget). For molecules: bond-length cap scheduler. For 2D: <code>default_cosine_scheduler</code> (already covered).</td>
+<td><code>adaptive_reflow.algorithm.scheduler</code></td>
+</tr>
+</tbody>
+</table>
+<p>Driver loop (run for each scheduler):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.algorithm.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReInferenceRunner</span><span class="p">,</span> <span class="n">ReInferenceConfig</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.algorithm.scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">default_cosine_scheduler</span><span class="p">,</span> <span class="n">CodimensionSheetScheduler</span><span class="p">,</span> <span class="n">EvidenceDrivenScheduler</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.eval.posterior_selection_evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorSelectionEvaluator</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># (a) CosineAnnealScheduler — the canonical baseline</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">cosine</span> <span class="o">=</span> <span class="n">ReInferenceRunner</span><span class="p">(</span><span class="n">adapter</span><span class="o">=</span><span class="n">adapter</span><span class="p">,</span> <span class="n">scheduler</span><span class="o">=</span><span class="n">default_cosine_scheduler</span><span class="p">())</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">result_cos</span> <span class="o">=</span> <span class="n">cosine</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ReInferenceConfig</span><span class="p">(</span><span class="n">n_rounds</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">,)))</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="s2">"/tmp/your_model_framework_cosine.npz"</span><span class="p">,</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>         <span class="n">samples</span><span class="o">=</span><span class="n">result_cos</span><span class="o">.</span><span class="n">endpoints</span><span class="p">,</span>        <span class="c1"># (20, 3, 32, 32) — per-round endpoints</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>         <span class="n">metrics</span><span class="o">=</span><span class="n">result_cos</span><span class="o">.</span><span class="n">per_round_metrics</span><span class="p">)</span>  <span class="c1"># dict[r] -&gt; {W2, n_cap, beta, ...}</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="c1"># (b) CodimensionSheetScheduler — paper-grounded</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="n">codim</span> <span class="o">=</span> <span class="n">ReInferenceRunner</span><span class="p">(</span><span class="n">adapter</span><span class="o">=</span><span class="n">adapter</span><span class="p">,</span> <span class="n">scheduler</span><span class="o">=</span><span class="n">CodimensionSheetScheduler</span><span class="p">(</span><span class="o">...</span><span class="p">))</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="n">result_codim</span> <span class="o">=</span> <span class="n">codim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ReInferenceConfig</span><span class="p">(</span><span class="n">n_rounds</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">,)))</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="s2">"/tmp/your_model_framework_codim.npz"</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">result_codim</span><span class="o">.</span><span class="n">endpoints</span><span class="p">)</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="c1"># (c) EvidenceDrivenScheduler — paper-Theorem-1 feedback</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="n">sel_eval</span> <span class="o">=</span> <span class="n">PosteriorSelectionEvaluator</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="n">evid</span> <span class="o">=</span> <span class="n">ReInferenceRunner</span><span class="p">(</span><span class="n">adapter</span><span class="o">=</span><span class="n">adapter</span><span class="p">,</span> <span class="n">scheduler</span><span class="o">=</span><span class="n">EvidenceDrivenScheduler</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>                         <span class="n">evaluator</span><span class="o">=</span><span class="n">sel_eval</span><span class="p">)</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="n">result_evid</span> <span class="o">=</span> <span class="n">evid</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ReInferenceConfig</span><span class="p">(</span><span class="n">n_rounds</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">,),</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>                                         <span class="n">selection_evaluator</span><span class="o">=</span><span class="n">sel_eval</span><span class="p">))</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="s2">"/tmp/your_model_framework_evid.npz"</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">result_evid</span><span class="o">.</span><span class="n">endpoints</span><span class="p">)</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="c1"># (d) Model-specific — for CIFAR-10: FreeTrajScheduler</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="n">freetraj</span> <span class="o">=</span> <span class="n">ReInferenceRunner</span><span class="p">(</span><span class="n">adapter</span><span class="o">=</span><span class="n">adapter</span><span class="p">,</span> <span class="n">scheduler</span><span class="o">=</span><span class="n">FreeTrajScheduler</span><span class="p">(</span><span class="o">...</span><span class="p">))</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="n">result_free</span> <span class="o">=</span> <span class="n">freetraj</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ReInferenceConfig</span><span class="p">(</span><span class="n">n_rounds</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">,)))</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="s2">"/tmp/your_model_framework_freetraj.npz"</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">result_free</span><span class="o">.</span><span class="n">endpoints</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Per-round metric recording:</strong> every <code>result.per_round_metrics[r]</code> dict already carries <code>W2</code>, <code>n_cap</code>, <code>beta</code>, <code>memory_fraction</code>, <code>selection_ratio</code> (when <code>selection_evaluator</code> is configured), and the per-round <code>paper_quantity_diagnostics</code> (when <code>paper_quantities_provider</code> is configured). For plotting trajectories you don't need to recompute anything — the runner emits the time series.</p>
+<p><strong>Per-scheduler file naming convention:</strong> <code>/tmp/{model_name}_framework_{scheduler}.npz</code> where <code>{scheduler}</code> is one of <code>cosine</code> / <code>codim</code> / <code>evid</code> / <code>freetraj</code>. Use the convention verbatim; §6 expects these filenames.</p>
+<h3 id="step-6-compute-per-scheduler-metric-fid-or-w2">Step 6 — Compute per-scheduler metric (FID or W2)<a class="headerlink" href="#step-6-compute-per-scheduler-metric-fid-or-w2" title="Permanent link">&para;</a></h3>
+<p>The runner emits per-round <em>endpoints</em> (final trajectory points), but for image models we need <em>samples</em> — the per-round endpoint is the final generated image, one per round. To compare fairly against the baseline, we use <strong>round 19 (the last round) endpoints</strong> as the "framework multi-round sample set" — they represent the result of 20 rounds of re-inference on a single trajectory.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span><span class="o">,</span><span class="w"> </span><span class="nn">subprocess</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">FID_SCRIPT</span> <span class="o">=</span> <span class="s2">"C:/Users/31472/AppData/Local/Temp/flowa_fid_env/compute_mnist_fid.py"</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">TEST_REF</span>   <span class="o">=</span> <span class="s2">"data/your_test_set.npz"</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">fid</span><span class="p">(</span><span class="n">framework_npz</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">framework_npz</span><span class="p">)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="c1"># Use the LAST round's endpoints as the multi-round sample set.</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="c1"># If n_rounds &lt; sample count, repeat the last endpoint (or upsample).</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">samples</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"samples"</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s2">"samples"</span><span class="p">]</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">4</span> <span class="k">else</span> <span class="n">data</span><span class="p">[</span><span class="s2">"samples"</span><span class="p">]</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="k">if</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1000</span><span class="p">:</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        <span class="c1"># Pad by repeating; alternative: run multiple seeds and concatenate.</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        <span class="n">samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="p">(</span><span class="mi">1000</span> <span class="o">//</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))[:</span><span class="mi">1000</span><span class="p">]</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="n">out</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"/tmp/</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_fid.txt"</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="s2">"/tmp/_tmp.npz"</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="n">samples</span><span class="p">)</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="n">FID_SCRIPT</span><span class="p">,</span> <span class="s2">"--gen"</span><span class="p">,</span> <span class="s2">"/tmp/_tmp.npz"</span><span class="p">,</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>                    <span class="s2">"--ref"</span><span class="p">,</span> <span class="n">TEST_REF</span><span class="p">,</span> <span class="s2">"--out"</span><span class="p">,</span> <span class="n">out</span><span class="p">],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="n">baseline_fid</span> <span class="o">=</span> <span class="n">fid</span><span class="p">(</span><span class="s2">"/tmp/your_model_baseline.npz"</span><span class="p">,</span> <span class="s2">"baseline"</span><span class="p">)</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="n">cosine_fid</span>   <span class="o">=</span> <span class="n">fid</span><span class="p">(</span><span class="s2">"/tmp/your_model_framework_cosine.npz"</span><span class="p">,</span>   <span class="s2">"cosine"</span><span class="p">)</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="n">codim_fid</span>    <span class="o">=</span> <span class="n">fid</span><span class="p">(</span><span class="s2">"/tmp/your_model_framework_codim.npz"</span><span class="p">,</span>    <span class="s2">"codim"</span><span class="p">)</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="n">evid_fid</span>     <span class="o">=</span> <span class="n">fid</span><span class="p">(</span><span class="s2">"/tmp/your_model_framework_evid.npz"</span><span class="p">,</span>     <span class="s2">"evid"</span><span class="p">)</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="n">freetraj_fid</span> <span class="o">=</span> <span class="n">fid</span><span class="p">(</span><span class="s2">"/tmp/your_model_framework_freetraj.npz"</span><span class="p">,</span> <span class="s2">"freetraj"</span><span class="p">)</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"baseline   FID = </span><span class="si">{</span><span class="n">baseline_fid</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"cosine     FID = </span><span class="si">{</span><span class="n">cosine_fid</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">   Δ = </span><span class="si">{</span><span class="n">cosine_fid</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">baseline_fid</span><span class="si">:</span><span class="s2">+.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"codim      FID = </span><span class="si">{</span><span class="n">codim_fid</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">   Δ = </span><span class="si">{</span><span class="n">codim_fid</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">baseline_fid</span><span class="si">:</span><span class="s2">+.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"evidence   FID = </span><span class="si">{</span><span class="n">evid_fid</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">   Δ = </span><span class="si">{</span><span class="n">evid_fid</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">baseline_fid</span><span class="si">:</span><span class="s2">+.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"freetraj   FID = </span><span class="si">{</span><span class="n">freetraj_fid</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">   Δ = </span><span class="si">{</span><span class="n">freetraj_fid</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">baseline_fid</span><span class="si">:</span><span class="s2">+.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+<p>Three honest notes:</p>
+<ol>
+<li>The "last-round endpoint" is one trajectory's worth of refinement, not a population. For a publishable table, run <strong>N ≥ 1000 parallel trajectories</strong> (each with the same scheduler / seed pattern) and pool the last-round endpoints; this averages out per-trajectory stochasticity.</li>
+<li>The framework's FID uses the same InceptionV3 weights as the baseline's FID — never mix FID implementations between baseline and framework rows.</li>
+<li>If a scheduler crashes or fails closed, the row stays as <code>NaN</code> in <code>result.endpoints</code>; the runner emits <code>endpoint_export_failed=1.0</code> in the per-round metric dict. Report this honestly; do not drop the row.</li>
+</ol>
+<h3 id="step-7-fill-the-comparison-table">Step 7 — Fill the comparison table<a class="headerlink" href="#step-7-fill-the-comparison-table" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Scheduler</th>
+<th>Mean FID</th>
+<th>Std FID</th>
+<th>Delta vs Baseline</th>
+<th>% Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baseline (single-pass)</td>
+<td><strong>X</strong></td>
+<td>std</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>FreeTrajScheduler (or model-specific)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Mean / Std</strong> are over 3 seeds (the paper-plan §4.1 statistical recipe). For each scheduler, re-run Steps 5–6 with <code>seed ∈ {42, 43, 44}</code> and pool the FID numbers. The "Δ vs Baseline" is <code>framework_FID - baseline_FID</code> (negative = improvement); "% Change" is <code>100 * Δ / baseline_FID</code>.</p>
+<p><strong>Honest framing:</strong> if only 1–2 schedulers beat the baseline, report it that way. The paper claim is "framework <em>can</em> improve"; the table is the evidence, not a claim that all four schedulers always win. The Li 2024 paper-quantity-driven schedulers (Codim / Evidence) have a theoretical reason to improve on Theorem-1-style metrics; the heuristic ones (Cosine / FreeTraj) are ablation rows.</p>
+<hr />
+<h2 id="4-adapter-template-code">§4. Adapter template (code)<a class="headerlink" href="#4-adapter-template-code" title="Permanent link">&para;</a></h2>
+<p>This is the <strong>complete</strong> adapter template. Copy it verbatim, fill in the <strong>TODO</strong> blocks, and you have a working <code>FlowMatchingODEAdapter</code>. Reference implementation: <code>adaptive_reflow/adapters/twodim_fm.py:469</code> (the <code>TwoDimFMAdapter</code> class).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="sd">"""YourModelAdapter — thin wrapper around a pre-trained flow-matching checkpoint.</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="sd">Implements the eight methods of :class:`FlowMatchingODEAdapter` against a</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="sd">user-supplied checkpoint (NumPy .npz). The adapter is inference-only;</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="sd">training is the user's contribution.</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="sd">This template is byte-stable: the ``TwoDimFMAdapter`` (see</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="sd">:mod:`adaptive_reflow.adapters.twodim_fm`) is the canonical reference</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="sd">implementation. Read it before filling in the TODOs.</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="sd">"""</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.contracts.authority</span><span class="w"> </span><span class="kn">import</span> <span class="n">FinalRestartPolicy</span> <span class="k">as</span> <span class="n">RestartPolicy</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.universal</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a>    <span class="n">AdapterCapabilities</span><span class="p">,</span> <span class="n">CapabilityMissingError</span><span class="p">,</span>
+<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a>    <span class="n">ChannelDomain</span><span class="p">,</span> <span class="n">FlowMatchingODEAdapter</span><span class="p">,</span> <span class="n">NoOpMixer</span><span class="p">,</span>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="p">)</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.universal.state</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a>    <span class="n">ChannelName</span><span class="p">,</span> <span class="n">ODEConditionDelta</span><span class="p">,</span> <span class="n">ODEIntegratorTrace</span><span class="p">,</span>
+<a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a>    <span class="n">StateBundle</span><span class="p">,</span> <span class="n">TensorRef</span><span class="p">,</span> <span class="n">validate_state_bundle</span><span class="p">,</span>
+<a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="p">)</span>
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>
+<a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="c1"># --- Module-level constants (your model) ---------------------------</span>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a>
+<a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a><span class="n">YOUR_MODEL_CHANNELS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ChannelName</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">),)</span>  <span class="c1"># TODO</span>
+<a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a><span class="n">YOUR_MODEL_CONFIG_HASH</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"your_model:cfg:v1"</span>                     <span class="c1"># TODO</span>
+<a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a><span class="n">YOUR_MODEL_CONFIG_VERSION</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"0.1.0"</span>                              <span class="c1"># TODO</span>
+<a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="n">YOUR_MODEL_CHANNEL_DOMAINS</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">ChannelName</span><span class="p">,</span> <span class="n">ChannelDomain</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a>    <span class="n">ChannelName</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">):</span> <span class="s2">"continuous"</span><span class="p">,</span>                                  <span class="c1"># TODO</span>
+<a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a><span class="p">}</span>
+<a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a><span class="n">YOUR_MODEL_NUM_STEPS</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>                                        <span class="c1"># TODO</span>
+<a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a><span class="n">YOUR_MODEL_STATE_SHAPE</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>                 <span class="c1"># TODO</span>
+<a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a><span class="n">YOUR_MODEL_CLAMP</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>                                         <span class="c1"># TODO (or omit)</span>
+<a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a>
+<a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a><span class="c1">#: LRU bound on native state cache (audit A-3 — see TwoDimFMAdapter).</span>
+<a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a><span class="n">_NATIVE_STATES_MAXSIZE</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span>
+<a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a>
+<a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a>
+<a id="__codelineno-7-49" name="__codelineno-7-49" href="#__codelineno-7-49"></a><span class="c1"># --- Helpers --------------------------------------------------------</span>
+<a id="__codelineno-7-50" name="__codelineno-7-50" href="#__codelineno-7-50"></a>
+<a id="__codelineno-7-51" name="__codelineno-7-51" href="#__codelineno-7-51"></a><span class="k">def</span><span class="w"> </span><span class="nf">_seed_from_ids</span><span class="p">(</span><span class="n">batch_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sample_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source_round</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-7-52" name="__codelineno-7-52" href="#__codelineno-7-52"></a>    <span class="n">blob</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">batch_id</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">sample_id</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">source_round</span><span class="p">)))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+<a id="__codelineno-7-53" name="__codelineno-7-53" href="#__codelineno-7-53"></a>    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+<a id="__codelineno-7-54" name="__codelineno-7-54" href="#__codelineno-7-54"></a>
+<a id="__codelineno-7-55" name="__codelineno-7-55" href="#__codelineno-7-55"></a><span class="k">def</span><span class="w"> </span><span class="nf">_digest_state</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-7-56" name="__codelineno-7-56" href="#__codelineno-7-56"></a>    <span class="n">blob</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">((</span><span class="nb">sorted</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="mi">0</span><span class="p">])),))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+<a id="__codelineno-7-57" name="__codelineno-7-57" href="#__codelineno-7-57"></a>    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<a id="__codelineno-7-58" name="__codelineno-7-58" href="#__codelineno-7-58"></a>
+<a id="__codelineno-7-59" name="__codelineno-7-59" href="#__codelineno-7-59"></a><span class="k">def</span><span class="w"> </span><span class="nf">_make_ref</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">parts</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TensorRef</span><span class="p">:</span>
+<a id="__codelineno-7-60" name="__codelineno-7-60" href="#__codelineno-7-60"></a>    <span class="n">blob</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">((</span><span class="n">label</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">parts</span><span class="o">.</span><span class="n">items</span><span class="p">())))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+<a id="__codelineno-7-61" name="__codelineno-7-61" href="#__codelineno-7-61"></a>    <span class="k">return</span> <span class="n">TensorRef</span><span class="p">(</span><span class="sa">f</span><span class="s2">"your_model:state:</span><span class="si">{</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">blob</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">16</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-7-62" name="__codelineno-7-62" href="#__codelineno-7-62"></a>
+<a id="__codelineno-7-63" name="__codelineno-7-63" href="#__codelineno-7-63"></a><span class="k">def</span><span class="w"> </span><span class="nf">_load_weights</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+<a id="__codelineno-7-64" name="__codelineno-7-64" href="#__codelineno-7-64"></a><span class="w">    </span><span class="sd">"""TODO: load your model's weights into a flat dict[str, np.ndarray]."""</span>
+<a id="__codelineno-7-65" name="__codelineno-7-65" href="#__codelineno-7-65"></a>    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">as</span> <span class="n">data</span><span class="p">:</span>
+<a id="__codelineno-7-66" name="__codelineno-7-66" href="#__codelineno-7-66"></a>        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">files</span><span class="p">}</span>
+<a id="__codelineno-7-67" name="__codelineno-7-67" href="#__codelineno-7-67"></a>
+<a id="__codelineno-7-68" name="__codelineno-7-68" href="#__codelineno-7-68"></a><span class="k">def</span><span class="w"> </span><span class="nf">_velocity_field</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+<a id="__codelineno-7-69" name="__codelineno-7-69" href="#__codelineno-7-69"></a><span class="w">    </span><span class="sd">"""TODO: evaluate your model's v(x, t). Mirror the original code's step."""</span>
+<a id="__codelineno-7-70" name="__codelineno-7-70" href="#__codelineno-7-70"></a>    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"TODO: port your model's forward step"</span><span class="p">)</span>
+<a id="__codelineno-7-71" name="__codelineno-7-71" href="#__codelineno-7-71"></a>
+<a id="__codelineno-7-72" name="__codelineno-7-72" href="#__codelineno-7-72"></a>
+<a id="__codelineno-7-73" name="__codelineno-7-73" href="#__codelineno-7-73"></a><span class="c1"># --- Capabilities dataclass -----------------------------------------</span>
+<a id="__codelineno-7-74" name="__codelineno-7-74" href="#__codelineno-7-74"></a>
+<a id="__codelineno-7-75" name="__codelineno-7-75" href="#__codelineno-7-75"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-7-76" name="__codelineno-7-76" href="#__codelineno-7-76"></a><span class="k">class</span><span class="w"> </span><span class="nc">YourModelCapabilities</span><span class="p">(</span><span class="n">AdapterCapabilities</span><span class="p">):</span>
+<a id="__codelineno-7-77" name="__codelineno-7-77" href="#__codelineno-7-77"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-7-78" name="__codelineno-7-78" href="#__codelineno-7-78"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-7-79" name="__codelineno-7-79" href="#__codelineno-7-79"></a>            <span class="n">has_ode_integration_surface</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-7-80" name="__codelineno-7-80" href="#__codelineno-7-80"></a>            <span class="n">has_prior_export</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_state_export</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-7-81" name="__codelineno-7-81" href="#__codelineno-7-81"></a>            <span class="n">has_condition_injection</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_restart_boundary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-7-82" name="__codelineno-7-82" href="#__codelineno-7-82"></a>            <span class="n">has_continuous_channels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_discrete_channels</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-7-83" name="__codelineno-7-83" href="#__codelineno-7-83"></a>            <span class="n">has_trajectory_digest</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">has_deterministic_seed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-7-84" name="__codelineno-7-84" href="#__codelineno-7-84"></a>            <span class="n">has_materialization_route</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-7-85" name="__codelineno-7-85" href="#__codelineno-7-85"></a>            <span class="n">supported_channels</span><span class="o">=</span><span class="n">YOUR_MODEL_CHANNELS</span><span class="p">,</span>
+<a id="__codelineno-7-86" name="__codelineno-7-86" href="#__codelineno-7-86"></a>            <span class="n">channel_domains</span><span class="o">=</span><span class="n">YOUR_MODEL_CHANNEL_DOMAINS</span><span class="p">,</span>
+<a id="__codelineno-7-87" name="__codelineno-7-87" href="#__codelineno-7-87"></a>            <span class="n">required_mixer</span><span class="o">=</span><span class="n">NoOpMixer</span><span class="p">,</span>
+<a id="__codelineno-7-88" name="__codelineno-7-88" href="#__codelineno-7-88"></a>            <span class="n">exposed_envelope_criteria</span><span class="o">=</span><span class="p">(),</span>
+<a id="__codelineno-7-89" name="__codelineno-7-89" href="#__codelineno-7-89"></a>            <span class="n">exposed_evaluators</span><span class="o">=</span><span class="p">(),</span>
+<a id="__codelineno-7-90" name="__codelineno-7-90" href="#__codelineno-7-90"></a>            <span class="n">native_config_hash</span><span class="o">=</span><span class="n">YOUR_MODEL_CONFIG_HASH</span><span class="p">,</span>
+<a id="__codelineno-7-91" name="__codelineno-7-91" href="#__codelineno-7-91"></a>            <span class="n">native_config_version</span><span class="o">=</span><span class="n">YOUR_MODEL_CONFIG_VERSION</span><span class="p">,</span>
+<a id="__codelineno-7-92" name="__codelineno-7-92" href="#__codelineno-7-92"></a>        <span class="p">)</span>
+<a id="__codelineno-7-93" name="__codelineno-7-93" href="#__codelineno-7-93"></a>
+<a id="__codelineno-7-94" name="__codelineno-7-94" href="#__codelineno-7-94"></a>
+<a id="__codelineno-7-95" name="__codelineno-7-95" href="#__codelineno-7-95"></a><span class="c1"># --- Adapter --------------------------------------------------------</span>
+<a id="__codelineno-7-96" name="__codelineno-7-96" href="#__codelineno-7-96"></a>
+<a id="__codelineno-7-97" name="__codelineno-7-97" href="#__codelineno-7-97"></a><span class="k">class</span><span class="w"> </span><span class="nc">YourModelAdapter</span><span class="p">(</span><span class="n">FlowMatchingODEAdapter</span><span class="p">):</span>
+<a id="__codelineno-7-98" name="__codelineno-7-98" href="#__codelineno-7-98"></a><span class="w">    </span><span class="sd">"""Your flow-matching model adapter.</span>
+<a id="__codelineno-7-99" name="__codelineno-7-99" href="#__codelineno-7-99"></a>
+<a id="__codelineno-7-100" name="__codelineno-7-100" href="#__codelineno-7-100"></a><span class="sd">    Implements all eight methods of :class:`FlowMatchingODEAdapter`.</span>
+<a id="__codelineno-7-101" name="__codelineno-7-101" href="#__codelineno-7-101"></a><span class="sd">    Reference: :class:`adaptive_reflow.adapters.twodim_fm.TwoDimFMAdapter`.</span>
+<a id="__codelineno-7-102" name="__codelineno-7-102" href="#__codelineno-7-102"></a><span class="sd">    """</span>
+<a id="__codelineno-7-103" name="__codelineno-7-103" href="#__codelineno-7-103"></a>
+<a id="__codelineno-7-104" name="__codelineno-7-104" href="#__codelineno-7-104"></a>    <span class="n">pinned_num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">YOUR_MODEL_NUM_STEPS</span>
+<a id="__codelineno-7-105" name="__codelineno-7-105" href="#__codelineno-7-105"></a>
+<a id="__codelineno-7-106" name="__codelineno-7-106" href="#__codelineno-7-106"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<a id="__codelineno-7-107" name="__codelineno-7-107" href="#__codelineno-7-107"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-7-108" name="__codelineno-7-108" href="#__codelineno-7-108"></a>        <span class="o">*</span><span class="p">,</span>
+<a id="__codelineno-7-109" name="__codelineno-7-109" href="#__codelineno-7-109"></a>        <span class="n">weights_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<a id="__codelineno-7-110" name="__codelineno-7-110" href="#__codelineno-7-110"></a>        <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">YOUR_MODEL_NUM_STEPS</span><span class="p">,</span>
+<a id="__codelineno-7-111" name="__codelineno-7-111" href="#__codelineno-7-111"></a>        <span class="n">seed_offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-7-112" name="__codelineno-7-112" href="#__codelineno-7-112"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-7-113" name="__codelineno-7-113" href="#__codelineno-7-113"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_weights_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">weights_path</span><span class="p">)</span>
+<a id="__codelineno-7-114" name="__codelineno-7-114" href="#__codelineno-7-114"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_weights</span> <span class="o">=</span> <span class="n">_load_weights</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights_path</span><span class="p">)</span>
+<a id="__codelineno-7-115" name="__codelineno-7-115" href="#__codelineno-7-115"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_num_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+<a id="__codelineno-7-116" name="__codelineno-7-116" href="#__codelineno-7-116"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_seed_offset</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seed_offset</span><span class="p">)</span>
+<a id="__codelineno-7-117" name="__codelineno-7-117" href="#__codelineno-7-117"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+<a id="__codelineno-7-118" name="__codelineno-7-118" href="#__codelineno-7-118"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_caps</span> <span class="o">=</span> <span class="n">YourModelCapabilities</span><span class="p">()</span>
+<a id="__codelineno-7-119" name="__codelineno-7-119" href="#__codelineno-7-119"></a>
+<a id="__codelineno-7-120" name="__codelineno-7-120" href="#__codelineno-7-120"></a>    <span class="c1"># --- 1. capabilities (always required) ---</span>
+<a id="__codelineno-7-121" name="__codelineno-7-121" href="#__codelineno-7-121"></a>
+<a id="__codelineno-7-122" name="__codelineno-7-122" href="#__codelineno-7-122"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdapterCapabilities</span><span class="p">:</span>
+<a id="__codelineno-7-123" name="__codelineno-7-123" href="#__codelineno-7-123"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caps</span>
+<a id="__codelineno-7-124" name="__codelineno-7-124" href="#__codelineno-7-124"></a>
+<a id="__codelineno-7-125" name="__codelineno-7-125" href="#__codelineno-7-125"></a>    <span class="c1"># --- 2. build_initial_state (TODO; required by has_prior_export=True) ---</span>
+<a id="__codelineno-7-126" name="__codelineno-7-126" href="#__codelineno-7-126"></a>
+<a id="__codelineno-7-127" name="__codelineno-7-127" href="#__codelineno-7-127"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build_initial_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sample_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateBundle</span><span class="p">:</span>
+<a id="__codelineno-7-128" name="__codelineno-7-128" href="#__codelineno-7-128"></a>        <span class="c1"># TODO: sample x0 ~ N(0, I) in YOUR_MODEL_STATE_SHAPE and build a StateBundle.</span>
+<a id="__codelineno-7-129" name="__codelineno-7-129" href="#__codelineno-7-129"></a>        <span class="c1"># Reference: TwoDimFMAdapter.build_initial_state (twodim_fm.py:630).</span>
+<a id="__codelineno-7-130" name="__codelineno-7-130" href="#__codelineno-7-130"></a>        <span class="n">seed</span> <span class="o">=</span> <span class="n">_seed_from_ids</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">batch_id</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">sample_id</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_seed_offset</span><span class="p">)</span> <span class="o">+</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-7-131" name="__codelineno-7-131" href="#__codelineno-7-131"></a>        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+<a id="__codelineno-7-132" name="__codelineno-7-132" href="#__codelineno-7-132"></a>        <span class="n">x0</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">YOUR_MODEL_STATE_SHAPE</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-7-133" name="__codelineno-7-133" href="#__codelineno-7-133"></a>        <span class="n">digest</span> <span class="o">=</span> <span class="n">_digest_state</span><span class="p">({</span>
+<a id="__codelineno-7-134" name="__codelineno-7-134" href="#__codelineno-7-134"></a>            <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"initial"</span><span class="p">,</span> <span class="s2">"batch_id"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">batch_id</span><span class="p">),</span> <span class="s2">"sample_id"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">sample_id</span><span class="p">),</span>
+<a id="__codelineno-7-135" name="__codelineno-7-135" href="#__codelineno-7-135"></a>            <span class="s2">"x0"</span><span class="p">:</span> <span class="n">x0</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+<a id="__codelineno-7-136" name="__codelineno-7-136" href="#__codelineno-7-136"></a>        <span class="p">})</span>
+<a id="__codelineno-7-137" name="__codelineno-7-137" href="#__codelineno-7-137"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="p">[</span><span class="n">digest</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"x0"</span><span class="p">:</span> <span class="n">x0</span><span class="p">,</span> <span class="s2">"source_round"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<a id="__codelineno-7-138" name="__codelineno-7-138" href="#__codelineno-7-138"></a>        <span class="n">bundle</span> <span class="o">=</span> <span class="n">StateBundle</span><span class="p">(</span>
+<a id="__codelineno-7-139" name="__codelineno-7-139" href="#__codelineno-7-139"></a>            <span class="n">channels</span><span class="o">=</span><span class="p">{</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">):</span> <span class="n">_make_ref</span><span class="p">(</span><span class="s2">"initial"</span><span class="p">,</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch_id</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample_id</span><span class="p">)},</span>
+<a id="__codelineno-7-140" name="__codelineno-7-140" href="#__codelineno-7-140"></a>            <span class="n">masks</span><span class="o">=</span><span class="p">{},</span> <span class="n">batch_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">batch_id</span><span class="p">),</span> <span class="n">sample_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">sample_id</span><span class="p">),</span>
+<a id="__codelineno-7-141" name="__codelineno-7-141" href="#__codelineno-7-141"></a>            <span class="n">reference_frame</span><span class="o">=</span><span class="s2">"world"</span><span class="p">,</span> <span class="n">normalization</span><span class="o">=</span><span class="s2">"none"</span><span class="p">,</span> <span class="n">source_round</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-7-142" name="__codelineno-7-142" href="#__codelineno-7-142"></a>            <span class="n">detach_proof</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">native_state_digest</span><span class="o">=</span><span class="n">digest</span><span class="p">,</span>
+<a id="__codelineno-7-143" name="__codelineno-7-143" href="#__codelineno-7-143"></a>            <span class="n">provenance</span><span class="o">=</span><span class="p">(</span><span class="s2">"your_model@v1"</span><span class="p">,),</span> <span class="n">capability_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">capabilities</span><span class="p">(),</span>
+<a id="__codelineno-7-144" name="__codelineno-7-144" href="#__codelineno-7-144"></a>        <span class="p">)</span>
+<a id="__codelineno-7-145" name="__codelineno-7-145" href="#__codelineno-7-145"></a>        <span class="n">ok</span><span class="p">,</span> <span class="n">errs</span> <span class="o">=</span> <span class="n">validate_state_bundle</span><span class="p">(</span><span class="n">bundle</span><span class="p">)</span>
+<a id="__codelineno-7-146" name="__codelineno-7-146" href="#__codelineno-7-146"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+<a id="__codelineno-7-147" name="__codelineno-7-147" href="#__codelineno-7-147"></a>            <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"placeholder_state_invalid:</span><span class="si">{</span><span class="n">errs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<a id="__codelineno-7-148" name="__codelineno-7-148" href="#__codelineno-7-148"></a>        <span class="k">return</span> <span class="n">bundle</span>
+<a id="__codelineno-7-149" name="__codelineno-7-149" href="#__codelineno-7-149"></a>
+<a id="__codelineno-7-150" name="__codelineno-7-150" href="#__codelineno-7-150"></a>    <span class="c1"># --- 3. export_endpoint (default; pass-through) ---</span>
+<a id="__codelineno-7-151" name="__codelineno-7-151" href="#__codelineno-7-151"></a>
+<a id="__codelineno-7-152" name="__codelineno-7-152" href="#__codelineno-7-152"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">export_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">StateBundle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateBundle</span><span class="p">:</span>
+<a id="__codelineno-7-153" name="__codelineno-7-153" href="#__codelineno-7-153"></a>        <span class="n">ok</span><span class="p">,</span> <span class="n">errs</span> <span class="o">=</span> <span class="n">validate_state_bundle</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+<a id="__codelineno-7-154" name="__codelineno-7-154" href="#__codelineno-7-154"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+<a id="__codelineno-7-155" name="__codelineno-7-155" href="#__codelineno-7-155"></a>            <span class="k">raise</span> <span class="n">CapabilityMissingError</span><span class="p">(</span><span class="s2">"validate_state_bundle"</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">errs</span><span class="p">))</span>
+<a id="__codelineno-7-156" name="__codelineno-7-156" href="#__codelineno-7-156"></a>        <span class="k">return</span> <span class="n">state</span>
+<a id="__codelineno-7-157" name="__codelineno-7-157" href="#__codelineno-7-157"></a>
+<a id="__codelineno-7-158" name="__codelineno-7-158" href="#__codelineno-7-158"></a>    <span class="c1"># --- 4. detach_and_validate_endpoint (default) ---</span>
+<a id="__codelineno-7-159" name="__codelineno-7-159" href="#__codelineno-7-159"></a>
+<a id="__codelineno-7-160" name="__codelineno-7-160" href="#__codelineno-7-160"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">detach_and_validate_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bundle</span><span class="p">:</span> <span class="n">StateBundle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateBundle</span><span class="p">:</span>
+<a id="__codelineno-7-161" name="__codelineno-7-161" href="#__codelineno-7-161"></a>        <span class="k">if</span> <span class="n">bundle</span><span class="o">.</span><span class="n">detach_proof</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+<a id="__codelineno-7-162" name="__codelineno-7-162" href="#__codelineno-7-162"></a>            <span class="k">raise</span> <span class="n">CapabilityMissingError</span><span class="p">(</span><span class="s2">"detach_proof_must_be_true"</span><span class="p">)</span>
+<a id="__codelineno-7-163" name="__codelineno-7-163" href="#__codelineno-7-163"></a>        <span class="n">ok</span><span class="p">,</span> <span class="n">errs</span> <span class="o">=</span> <span class="n">validate_state_bundle</span><span class="p">(</span><span class="n">bundle</span><span class="p">)</span>
+<a id="__codelineno-7-164" name="__codelineno-7-164" href="#__codelineno-7-164"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+<a id="__codelineno-7-165" name="__codelineno-7-165" href="#__codelineno-7-165"></a>            <span class="k">raise</span> <span class="n">CapabilityMissingError</span><span class="p">(</span><span class="s2">"detach_proof_must_be_true"</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">errs</span><span class="p">))</span>
+<a id="__codelineno-7-166" name="__codelineno-7-166" href="#__codelineno-7-166"></a>        <span class="k">return</span> <span class="n">bundle</span>
+<a id="__codelineno-7-167" name="__codelineno-7-167" href="#__codelineno-7-167"></a>
+<a id="__codelineno-7-168" name="__codelineno-7-168" href="#__codelineno-7-168"></a>    <span class="c1"># --- 5. apply_restart_distribution (default; blend prior with fresh noise) ---</span>
+<a id="__codelineno-7-169" name="__codelineno-7-169" href="#__codelineno-7-169"></a>
+<a id="__codelineno-7-170" name="__codelineno-7-170" href="#__codelineno-7-170"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">apply_restart_distribution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">StateBundle</span><span class="p">,</span> <span class="n">policy</span><span class="p">:</span> <span class="n">RestartPolicy</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateBundle</span><span class="p">:</span>
+<a id="__codelineno-7-171" name="__codelineno-7-171" href="#__codelineno-7-171"></a>        <span class="n">ok</span><span class="p">,</span> <span class="n">errs</span> <span class="o">=</span> <span class="n">validate_state_bundle</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+<a id="__codelineno-7-172" name="__codelineno-7-172" href="#__codelineno-7-172"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+<a id="__codelineno-7-173" name="__codelineno-7-173" href="#__codelineno-7-173"></a>            <span class="k">raise</span> <span class="n">CapabilityMissingError</span><span class="p">(</span><span class="s2">"validate_state_bundle"</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">errs</span><span class="p">))</span>
+<a id="__codelineno-7-174" name="__codelineno-7-174" href="#__codelineno-7-174"></a>        <span class="n">prior_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">)</span>
+<a id="__codelineno-7-175" name="__codelineno-7-175" href="#__codelineno-7-175"></a>        <span class="k">if</span> <span class="n">prior_entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-7-176" name="__codelineno-7-176" href="#__codelineno-7-176"></a>            <span class="k">raise</span> <span class="n">CapabilityMissingError</span><span class="p">(</span><span class="s2">"missing_native_state"</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">)</span>
+<a id="__codelineno-7-177" name="__codelineno-7-177" href="#__codelineno-7-177"></a>        <span class="n">beta_raw</span> <span class="o">=</span> <span class="n">policy</span><span class="o">.</span><span class="n">beta_by_channel</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">))</span>
+<a id="__codelineno-7-178" name="__codelineno-7-178" href="#__codelineno-7-178"></a>        <span class="k">if</span> <span class="n">beta_raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-7-179" name="__codelineno-7-179" href="#__codelineno-7-179"></a>            <span class="n">beta</span><span class="p">,</span> <span class="n">memory_fraction</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span>
+<a id="__codelineno-7-180" name="__codelineno-7-180" href="#__codelineno-7-180"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-7-181" name="__codelineno-7-181" href="#__codelineno-7-181"></a>            <span class="n">beta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">beta_raw</span><span class="p">)</span>
+<a id="__codelineno-7-182" name="__codelineno-7-182" href="#__codelineno-7-182"></a>            <span class="n">memory_fraction</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">beta</span>
+<a id="__codelineno-7-183" name="__codelineno-7-183" href="#__codelineno-7-183"></a>        <span class="n">prior_x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">prior_entry</span><span class="p">[</span><span class="s2">"x0"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-7-184" name="__codelineno-7-184" href="#__codelineno-7-184"></a>        <span class="n">next_round</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">source_round</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+<a id="__codelineno-7-185" name="__codelineno-7-185" href="#__codelineno-7-185"></a>        <span class="n">restart_seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+<a id="__codelineno-7-186" name="__codelineno-7-186" href="#__codelineno-7-186"></a>            <span class="nb">repr</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">policy</span><span class="o">.</span><span class="n">policy_hash</span><span class="p">),</span> <span class="n">next_round</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+<a id="__codelineno-7-187" name="__codelineno-7-187" href="#__codelineno-7-187"></a>        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">8</span><span class="p">],</span> <span class="mi">16</span><span class="p">)</span>
+<a id="__codelineno-7-188" name="__codelineno-7-188" href="#__codelineno-7-188"></a>        <span class="n">fresh_x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">restart_seed</span><span class="p">)</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span>
+<a id="__codelineno-7-189" name="__codelineno-7-189" href="#__codelineno-7-189"></a>            <span class="n">YOUR_MODEL_STATE_SHAPE</span>
+<a id="__codelineno-7-190" name="__codelineno-7-190" href="#__codelineno-7-190"></a>        <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-7-191" name="__codelineno-7-191" href="#__codelineno-7-191"></a>        <span class="n">m_clipped</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">memory_fraction</span><span class="p">)))</span>
+<a id="__codelineno-7-192" name="__codelineno-7-192" href="#__codelineno-7-192"></a>        <span class="n">blended_x0</span> <span class="o">=</span> <span class="p">(</span><span class="n">m_clipped</span> <span class="o">*</span> <span class="n">prior_x0</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">m_clipped</span><span class="p">)</span> <span class="o">*</span> <span class="n">fresh_x0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-7-193" name="__codelineno-7-193" href="#__codelineno-7-193"></a>        <span class="n">next_digest</span> <span class="o">=</span> <span class="n">_digest_state</span><span class="p">({</span>
+<a id="__codelineno-7-194" name="__codelineno-7-194" href="#__codelineno-7-194"></a>            <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"restart"</span><span class="p">,</span> <span class="s2">"src_digest"</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">,</span>
+<a id="__codelineno-7-195" name="__codelineno-7-195" href="#__codelineno-7-195"></a>            <span class="s2">"policy_hash"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">policy</span><span class="o">.</span><span class="n">policy_hash</span><span class="p">),</span> <span class="s2">"source_round"</span><span class="p">:</span> <span class="n">next_round</span><span class="p">,</span>
+<a id="__codelineno-7-196" name="__codelineno-7-196" href="#__codelineno-7-196"></a>            <span class="s2">"memory_fraction"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">memory_fraction</span><span class="p">),</span>
+<a id="__codelineno-7-197" name="__codelineno-7-197" href="#__codelineno-7-197"></a>            <span class="s2">"blended_x0"</span><span class="p">:</span> <span class="n">blended_x0</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+<a id="__codelineno-7-198" name="__codelineno-7-198" href="#__codelineno-7-198"></a>        <span class="p">})</span>
+<a id="__codelineno-7-199" name="__codelineno-7-199" href="#__codelineno-7-199"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="p">[</span><span class="n">next_digest</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-7-200" name="__codelineno-7-200" href="#__codelineno-7-200"></a>            <span class="s2">"x0"</span><span class="p">:</span> <span class="n">blended_x0</span><span class="p">,</span> <span class="s2">"source_round"</span><span class="p">:</span> <span class="n">next_round</span><span class="p">,</span>
+<a id="__codelineno-7-201" name="__codelineno-7-201" href="#__codelineno-7-201"></a>        <span class="p">}</span>
+<a id="__codelineno-7-202" name="__codelineno-7-202" href="#__codelineno-7-202"></a>        <span class="k">return</span> <span class="n">StateBundle</span><span class="p">(</span>
+<a id="__codelineno-7-203" name="__codelineno-7-203" href="#__codelineno-7-203"></a>            <span class="n">channels</span><span class="o">=</span><span class="p">{</span><span class="n">ChannelName</span><span class="p">(</span><span class="s2">"rgb"</span><span class="p">):</span> <span class="n">_make_ref</span><span class="p">(</span>
+<a id="__codelineno-7-204" name="__codelineno-7-204" href="#__codelineno-7-204"></a>                <span class="s2">"restart"</span><span class="p">,</span> <span class="n">src_digest</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">,</span>
+<a id="__codelineno-7-205" name="__codelineno-7-205" href="#__codelineno-7-205"></a>                <span class="n">source_round</span><span class="o">=</span><span class="n">next_round</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="n">blended_x0</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+<a id="__codelineno-7-206" name="__codelineno-7-206" href="#__codelineno-7-206"></a>            <span class="p">)},</span>
+<a id="__codelineno-7-207" name="__codelineno-7-207" href="#__codelineno-7-207"></a>            <span class="n">masks</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">masks</span><span class="p">),</span> <span class="n">batch_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">batch_id</span><span class="p">),</span>
+<a id="__codelineno-7-208" name="__codelineno-7-208" href="#__codelineno-7-208"></a>            <span class="n">sample_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">sample_id</span><span class="p">),</span> <span class="n">reference_frame</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">reference_frame</span><span class="p">),</span>
+<a id="__codelineno-7-209" name="__codelineno-7-209" href="#__codelineno-7-209"></a>            <span class="n">normalization</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">normalization</span><span class="p">),</span> <span class="n">source_round</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">next_round</span><span class="p">),</span>
+<a id="__codelineno-7-210" name="__codelineno-7-210" href="#__codelineno-7-210"></a>            <span class="n">detach_proof</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">native_state_digest</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">next_digest</span><span class="p">),</span>
+<a id="__codelineno-7-211" name="__codelineno-7-211" href="#__codelineno-7-211"></a>            <span class="n">provenance</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">provenance</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s2">"your_model_restart_blend"</span><span class="p">,),</span>
+<a id="__codelineno-7-212" name="__codelineno-7-212" href="#__codelineno-7-212"></a>            <span class="n">capability_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">capabilities</span><span class="p">(),</span>
+<a id="__codelineno-7-213" name="__codelineno-7-213" href="#__codelineno-7-213"></a>        <span class="p">)</span>
+<a id="__codelineno-7-214" name="__codelineno-7-214" href="#__codelineno-7-214"></a>
+<a id="__codelineno-7-215" name="__codelineno-7-215" href="#__codelineno-7-215"></a>    <span class="c1"># --- 6. compose_condition (default; pass-through with metadata) ---</span>
+<a id="__codelineno-7-216" name="__codelineno-7-216" href="#__codelineno-7-216"></a>
+<a id="__codelineno-7-217" name="__codelineno-7-217" href="#__codelineno-7-217"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">compose_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bundle</span><span class="p">:</span> <span class="n">StateBundle</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="n">ODEConditionDelta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ODEConditionDelta</span><span class="p">:</span>
+<a id="__codelineno-7-218" name="__codelineno-7-218" href="#__codelineno-7-218"></a>        <span class="k">del</span> <span class="n">bundle</span>
+<a id="__codelineno-7-219" name="__codelineno-7-219" href="#__codelineno-7-219"></a>        <span class="n">new_spec</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">delta</span><span class="o">.</span><span class="n">delta_spec</span><span class="p">)</span>
+<a id="__codelineno-7-220" name="__codelineno-7-220" href="#__codelineno-7-220"></a>        <span class="n">new_spec</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"integrator_config_hash"</span><span class="p">,</span> <span class="n">YOUR_MODEL_CONFIG_HASH</span><span class="p">)</span>
+<a id="__codelineno-7-221" name="__codelineno-7-221" href="#__codelineno-7-221"></a>        <span class="k">return</span> <span class="n">ODEConditionDelta</span><span class="p">(</span>
+<a id="__codelineno-7-222" name="__codelineno-7-222" href="#__codelineno-7-222"></a>            <span class="n">delta_spec</span><span class="o">=</span><span class="n">new_spec</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">delta</span><span class="o">.</span><span class="n">source</span><span class="p">),</span>
+<a id="__codelineno-7-223" name="__codelineno-7-223" href="#__codelineno-7-223"></a>            <span class="n">target_round</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">delta</span><span class="o">.</span><span class="n">target_round</span><span class="p">),</span>
+<a id="__codelineno-7-224" name="__codelineno-7-224" href="#__codelineno-7-224"></a>            <span class="n">calibration_artifact_hash</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">delta</span><span class="o">.</span><span class="n">calibration_artifact_hash</span><span class="p">),</span>
+<a id="__codelineno-7-225" name="__codelineno-7-225" href="#__codelineno-7-225"></a>        <span class="p">)</span>
+<a id="__codelineno-7-226" name="__codelineno-7-226" href="#__codelineno-7-226"></a>
+<a id="__codelineno-7-227" name="__codelineno-7-227" href="#__codelineno-7-227"></a>    <span class="c1"># --- 7. solve_ode (TODO; required by has_ode_integration_surface=True) ---</span>
+<a id="__codelineno-7-228" name="__codelineno-7-228" href="#__codelineno-7-228"></a>
+<a id="__codelineno-7-229" name="__codelineno-7-229" href="#__codelineno-7-229"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">solve_ode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">StateBundle</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">ODEConditionDelta</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ODEIntegratorTrace</span><span class="p">:</span>
+<a id="__codelineno-7-230" name="__codelineno-7-230" href="#__codelineno-7-230"></a>        <span class="c1"># TODO: integrate v(x, t) over YOUR_MODEL_NUM_STEPS using YOUR_MODEL's</span>
+<a id="__codelineno-7-231" name="__codelineno-7-231" href="#__codelineno-7-231"></a>        <span class="c1"># native solver. Return an ODEIntegratorTrace with a stable</span>
+<a id="__codelineno-7-232" name="__codelineno-7-232" href="#__codelineno-7-232"></a>        <span class="c1"># native_state_digest and integrator_config_hash.</span>
+<a id="__codelineno-7-233" name="__codelineno-7-233" href="#__codelineno-7-233"></a>        <span class="c1"># Reference: TwoDimFMAdapter.solve_ode (twodim_fm.py:857).</span>
+<a id="__codelineno-7-234" name="__codelineno-7-234" href="#__codelineno-7-234"></a>        <span class="n">ok</span><span class="p">,</span> <span class="n">errs</span> <span class="o">=</span> <span class="n">validate_state_bundle</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+<a id="__codelineno-7-235" name="__codelineno-7-235" href="#__codelineno-7-235"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+<a id="__codelineno-7-236" name="__codelineno-7-236" href="#__codelineno-7-236"></a>            <span class="k">raise</span> <span class="n">CapabilityMissingError</span><span class="p">(</span><span class="s2">"validate_state_bundle"</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">errs</span><span class="p">))</span>
+<a id="__codelineno-7-237" name="__codelineno-7-237" href="#__codelineno-7-237"></a>        <span class="n">prior_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">)</span>
+<a id="__codelineno-7-238" name="__codelineno-7-238" href="#__codelineno-7-238"></a>        <span class="k">if</span> <span class="n">prior_entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-7-239" name="__codelineno-7-239" href="#__codelineno-7-239"></a>            <span class="k">raise</span> <span class="n">CapabilityMissingError</span><span class="p">(</span><span class="s2">"missing_native_state"</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">)</span>
+<a id="__codelineno-7-240" name="__codelineno-7-240" href="#__codelineno-7-240"></a>        <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">prior_entry</span><span class="p">[</span><span class="s2">"x0"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-7-241" name="__codelineno-7-241" href="#__codelineno-7-241"></a>        <span class="n">num_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">condition</span><span class="o">.</span><span class="n">delta_spec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_steps"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_steps</span><span class="p">))</span>
+<a id="__codelineno-7-242" name="__codelineno-7-242" href="#__codelineno-7-242"></a>        <span class="n">t_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">num_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-7-243" name="__codelineno-7-243" href="#__codelineno-7-243"></a>        <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x0</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<a id="__codelineno-7-244" name="__codelineno-7-244" href="#__codelineno-7-244"></a>        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">t_grid</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+<a id="__codelineno-7-245" name="__codelineno-7-245" href="#__codelineno-7-245"></a>            <span class="n">t_cur</span><span class="p">,</span> <span class="n">t_next</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t_grid</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">t_grid</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<a id="__codelineno-7-246" name="__codelineno-7-246" href="#__codelineno-7-246"></a>            <span class="n">h</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">t_next</span> <span class="o">-</span> <span class="n">t_cur</span><span class="p">)</span>
+<a id="__codelineno-7-247" name="__codelineno-7-247" href="#__codelineno-7-247"></a>            <span class="c1"># TODO: replace the placeholder Euler step with YOUR model's step.</span>
+<a id="__codelineno-7-248" name="__codelineno-7-248" href="#__codelineno-7-248"></a>            <span class="n">v</span> <span class="o">=</span> <span class="n">_velocity_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_weights</span><span class="p">,</span> <span class="n">x_cur</span><span class="p">,</span> <span class="n">t_cur</span><span class="p">)</span>
+<a id="__codelineno-7-249" name="__codelineno-7-249" href="#__codelineno-7-249"></a>            <span class="n">x_cur</span> <span class="o">=</span> <span class="n">x_cur</span> <span class="o">+</span> <span class="n">h</span> <span class="o">*</span> <span class="n">v</span>
+<a id="__codelineno-7-250" name="__codelineno-7-250" href="#__codelineno-7-250"></a>        <span class="n">traj</span> <span class="o">=</span> <span class="n">x_cur</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">YOUR_MODEL_STATE_SHAPE</span><span class="p">)</span>
+<a id="__codelineno-7-251" name="__codelineno-7-251" href="#__codelineno-7-251"></a>        <span class="k">if</span> <span class="n">YOUR_MODEL_CLAMP</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-7-252" name="__codelineno-7-252" href="#__codelineno-7-252"></a>            <span class="n">traj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">traj</span><span class="p">,</span> <span class="o">-</span><span class="n">YOUR_MODEL_CLAMP</span><span class="p">,</span> <span class="n">YOUR_MODEL_CLAMP</span><span class="p">)</span>
+<a id="__codelineno-7-253" name="__codelineno-7-253" href="#__codelineno-7-253"></a>        <span class="n">traj_digest</span> <span class="o">=</span> <span class="n">_digest_state</span><span class="p">({</span>
+<a id="__codelineno-7-254" name="__codelineno-7-254" href="#__codelineno-7-254"></a>            <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"trajectory"</span><span class="p">,</span> <span class="s2">"src_digest"</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">,</span>
+<a id="__codelineno-7-255" name="__codelineno-7-255" href="#__codelineno-7-255"></a>            <span class="s2">"num_steps"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="s2">"shape"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">traj</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
+<a id="__codelineno-7-256" name="__codelineno-7-256" href="#__codelineno-7-256"></a>            <span class="s2">"x0"</span><span class="p">:</span> <span class="n">x0</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+<a id="__codelineno-7-257" name="__codelineno-7-257" href="#__codelineno-7-257"></a>        <span class="p">})</span>
+<a id="__codelineno-7-258" name="__codelineno-7-258" href="#__codelineno-7-258"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="p">[</span><span class="n">traj_digest</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"x_final"</span><span class="p">:</span> <span class="n">traj</span><span class="p">,</span> <span class="s2">"t_final"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
+<a id="__codelineno-7-259" name="__codelineno-7-259" href="#__codelineno-7-259"></a>        <span class="n">cfg_blob</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">((</span><span class="s2">"your_model_config"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">)))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+<a id="__codelineno-7-260" name="__codelineno-7-260" href="#__codelineno-7-260"></a>        <span class="k">return</span> <span class="n">ODEIntegratorTrace</span><span class="p">(</span>
+<a id="__codelineno-7-261" name="__codelineno-7-261" href="#__codelineno-7-261"></a>            <span class="n">steps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">accept_rate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<a id="__codelineno-7-262" name="__codelineno-7-262" href="#__codelineno-7-262"></a>            <span class="n">native_state_digest</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">traj_digest</span><span class="p">),</span>
+<a id="__codelineno-7-263" name="__codelineno-7-263" href="#__codelineno-7-263"></a>            <span class="n">integrator_config_hash</span><span class="o">=</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">cfg_blob</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(),</span>
+<a id="__codelineno-7-264" name="__codelineno-7-264" href="#__codelineno-7-264"></a>        <span class="p">)</span>
+<a id="__codelineno-7-265" name="__codelineno-7-265" href="#__codelineno-7-265"></a>
+<a id="__codelineno-7-266" name="__codelineno-7-266" href="#__codelineno-7-266"></a>    <span class="c1"># --- 8. observe_endpoint (TODO; always required) ---</span>
+<a id="__codelineno-7-267" name="__codelineno-7-267" href="#__codelineno-7-267"></a>
+<a id="__codelineno-7-268" name="__codelineno-7-268" href="#__codelineno-7-268"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">observe_endpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trace</span><span class="p">:</span> <span class="n">ODEIntegratorTrace</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">StateBundle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StateBundle</span><span class="p">:</span>
+<a id="__codelineno-7-269" name="__codelineno-7-269" href="#__codelineno-7-269"></a>        <span class="c1"># TODO: read the final trajectory point, build a fresh StateBundle with</span>
+<a id="__codelineno-7-270" name="__codelineno-7-270" href="#__codelineno-7-270"></a>        <span class="c1"># detach_proof=True. Reference: TwoDimFMAdapter.observe_endpoint (twodim_fm.py:968).</span>
+<a id="__codelineno-7-271" name="__codelineno-7-271" href="#__codelineno-7-271"></a>        <span class="n">ok</span><span class="p">,</span> <span class="n">errs</span> <span class="o">=</span> <span class="n">validate_state_bundle</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+<a id="__codelineno-7-272" name="__codelineno-7-272" href="#__codelineno-7-272"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+<a id="__codelineno-7-273" name="__codelineno-7-273" href="#__codelineno-7-273"></a>            <span class="k">raise</span> <span class="n">CapabilityMissingError</span><span class="p">(</span><span class="s2">"validate_state_bundle"</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">errs</span><span class="p">))</span>
+<a id="__codelineno-7-274" name="__codelineno-7-274" href="#__codelineno-7-274"></a>        <span class="n">traj_entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">trace</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">)</span>
+<a id="__codelineno-7-275" name="__codelineno-7-275" href="#__codelineno-7-275"></a>        <span class="k">if</span> <span class="n">traj_entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-7-276" name="__codelineno-7-276" href="#__codelineno-7-276"></a>            <span class="k">raise</span> <span class="n">CapabilityMissingError</span><span class="p">(</span><span class="s2">"missing_native_state"</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">trace</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">)</span>
+<a id="__codelineno-7-277" name="__codelineno-7-277" href="#__codelineno-7-277"></a>        <span class="n">x_final</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">traj_entry</span><span class="p">[</span><span class="s2">"x_final"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+<a id="__codelineno-7-278" name="__codelineno-7-278" href="#__codelineno-7-278"></a>        <span class="n">endpoint_digest</span> <span class="o">=</span> <span class="n">_digest_state</span><span class="p">({</span>
+<a id="__codelineno-7-279" name="__codelineno-7-279" href="#__codelineno-7-279"></a>            <span class="s2">"kind"</span><span class="p">:</span> <span class="s2">"endpoint"</span><span class="p">,</span> <span class="s2">"traj_digest"</span><span class="p">:</span> <span class="n">trace</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">,</span>
+<a id="__codelineno-7-280" name="__codelineno-7-280" href="#__codelineno-7-280"></a>            <span class="s2">"src_digest"</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">native_state_digest</span><span class="p">,</span> <span class="s2">"x_final"</span><span class="p">:</span> <span class="n">x_final</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+<a id="__codelineno-7-281" name="__codelineno-7-281" href="#__codelineno-7-281"></a>            <span class="s2">"t_final"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+<a id="__codelineno-7-282" name="__codelineno-7-282" href="#__codelineno-7-282"></a>        <span class="p">})</span>
+<a id="__codelineno-7-283" name="__codelineno-7-283" href="#__codelineno-7-283"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_native_states</span><span class="p">[</span><span class="n">endpoint_digest</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"x"</span><span class="p">:</span> <span class="n">x_final</span><span class="p">,</span> <span class="s2">"t"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
+<a id="__codelineno-7-284" name="__codelineno-7-284" href="#__codelineno-7-284"></a>        <span class="n">next_round</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">source_round</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+<a id="__codelineno-7-285" name="__codelineno-7-285" href="#__codelineno-7-285"></a>        <span class="k">return</span> <span class="n">StateBundle</span><span class="p">(</span>
+<a id="__codelineno-7-286" name="__codelineno-7-286" href="#__codelineno-7-286"></a>            <span class="n">channels</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">channels</span><span class="p">),</span> <span class="n">masks</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">masks</span><span class="p">),</span>
+<a id="__codelineno-7-287" name="__codelineno-7-287" href="#__codelineno-7-287"></a>            <span class="n">batch_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">batch_id</span><span class="p">),</span> <span class="n">sample_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">sample_id</span><span class="p">),</span>
+<a id="__codelineno-7-288" name="__codelineno-7-288" href="#__codelineno-7-288"></a>            <span class="n">reference_frame</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">reference_frame</span><span class="p">),</span> <span class="n">normalization</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">normalization</span><span class="p">),</span>
+<a id="__codelineno-7-289" name="__codelineno-7-289" href="#__codelineno-7-289"></a>            <span class="n">source_round</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">next_round</span><span class="p">),</span> <span class="n">detach_proof</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-7-290" name="__codelineno-7-290" href="#__codelineno-7-290"></a>            <span class="n">native_state_digest</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">endpoint_digest</span><span class="p">),</span>
+<a id="__codelineno-7-291" name="__codelineno-7-291" href="#__codelineno-7-291"></a>            <span class="n">provenance</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">provenance</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s2">"your_model_observed"</span><span class="p">,),</span>
+<a id="__codelineno-7-292" name="__codelineno-7-292" href="#__codelineno-7-292"></a>            <span class="n">capability_token</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">capabilities</span><span class="p">(),</span>
+<a id="__codelineno-7-293" name="__codelineno-7-293" href="#__codelineno-7-293"></a>        <span class="p">)</span>
+</code></pre></div>
+<p><strong>Which methods you actually fill in:</strong></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Need to fill?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>capabilities</code></td>
+<td>No — return <code>self._caps</code>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>build_initial_state</code></td>
+<td><strong>YES</strong> — sample x0, build the StateBundle (digest, channels, etc.).</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>export_endpoint</code></td>
+<td>No — pass-through identity.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>detach_and_validate_endpoint</code></td>
+<td>No — assert + re-validate.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>apply_restart_distribution</code></td>
+<td>No — blend prior + fresh (template above is canonical).</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>compose_condition</code></td>
+<td>No — pass-through with metadata.</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>solve_ode</code></td>
+<td><strong>YES</strong> — port your model's forward step.</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>observe_endpoint</code></td>
+<td><strong>YES</strong> — read the final point, build the StateBundle.</td>
+</tr>
+</tbody>
+</table>
+<p>Three methods <strong>must</strong> be filled (<code>build_initial_state</code>, <code>solve_ode</code>, <code>observe_endpoint</code>); one method (<code>export_endpoint</code>) is a no-op identity; one optional (<code>inject_forward_noise</code>) only if you want Loop-4 forward-noise to actually perturb the bundle. The other three have sensible defaults from the template above and can be copied verbatim.</p>
+<hr />
+<h2 id="5-common-pitfalls">§5. Common pitfalls<a class="headerlink" href="#5-common-pitfalls" title="Permanent link">&para;</a></h2>
+<p>Six categories of failure that bite a fresh adapter. Diagnose with the symptom in the table; fix per the remedy.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Pitfall</th>
+<th>Symptom</th>
+<th>Remedy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Capability mismatch</strong> — adapter claims <code>has_ode_integration_surface=True</code> but uses a different solver family the engine doesn't recognise</td>
+<td><code>CapabilityMissingError: has_ode_integration_surface</code> raised by <code>engine.handshake()</code> in Step 3a</td>
+<td>Set the corresponding <code>has_*</code> flag in your <code>AdapterCapabilities</code> ctor to match what your adapter <em>actually</em> implements. False advertising fails closed; missing capability is the most common cause.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>State shape mismatch</strong> — adapter reports <code>(3, 32, 32)</code> but model expects <code>(1, 3, 32, 32)</code> batched</td>
+<td><code>result.endpoints.shape</code> is <code>(20,)</code> instead of <code>(20, 3, 32, 32)</code>, or <code>np.broadcast</code> warnings</td>
+<td>Always return the <em>batched</em> shape from <code>build_initial_state</code> / <code>solve_ode</code>; the engine flattens for you. Match <code>YOUR_MODEL_STATE_SHAPE</code> to your model's output, not its input.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Non-determinism in <code>solve_ode</code></strong> — <code>solve_ode</code> reseeds RNG per call, so round r and round r+1 with the same <code>seed</code> produce different trajectories</td>
+<td><code>result.endpoints.std(axis=0)</code> is nonzero across rounds for the same input</td>
+<td>The <code>seed</code> kwarg is consumed <em>once</em> per round; pass it through to your solver's <code>torch.manual_seed</code> / <code>numpy.random.default_rng</code> exactly once. Do not reseed inside the integrator loop.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>NaN / Inf in long round chains</strong></td>
+<td><code>np.isnan(result.endpoints).any()</code> returns True after round 10+</td>
+<td>(a) Check <code>YOUR_MODEL_CLAMP</code> is set; (b) ensure your model outputs finite values for the input range; (c) the runner emits <code>endpoint_export_failed=1.0</code> in <code>per_round_metrics[r]</code> — look at the round index where NaN first appears and inspect that round's input.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>FID computation fails on a torch-less machine</strong></td>
+<td><code>ModuleNotFoundError: No module named 'torch'</code> when running the FID script</td>
+<td>Use the framework's <code>flowa_fid_env</code> (the isolated venv) — it has <code>torch==2.4.1+cpu</code> already installed. Alternatively, the framework ships a NumPy random-projection FID (<code>mnist_fid.py</code>) that works on any machine but is less accurate (lower precision, biased toward large features).</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>InceptionV3 weights won't download</strong> (corporate firewall blocks github.com)</td>
+<td>First FID run times out fetching <code>pt_inception-2015-12-05-6726825d.pth</code> (95 MB)</td>
+<td>Pre-download the file with <code>curl -L https://github.com/mseitzer/pytorch-fid/releases/download/fid_weights/pt_inception-2015-12-05-6726825d.pth -o ~/.cache/torch/hub/checkpoints/pt_inception-2015-12-05-6726825d.pth</code> once, then re-run.</td>
+</tr>
+</tbody>
+</table>
+<p>Two more that bite less often:</p>
+<ul>
+<li><strong>Per-round metric dict missing keys</strong> — if <code>selection_ratio</code> doesn't appear in <code>per_round_metrics[r]</code>, you forgot to pass <code>selection_evaluator=...</code> to <code>ReInferenceConfig</code>. Add it back; <code>EvidenceDrivenScheduler</code> needs it.</li>
+<li><strong>Ledger chain breaks after round 5</strong> — usually a non-deterministic source_round or a mutated <code>policy_hash</code>. The runner emits <code>AssertionError: ledger_chain_integrity_check_failed:...</code> with the exact round index. Re-run that round's adapter inputs in isolation; the issue is almost always a non-pure <code>apply_restart_distribution</code>.</li>
+</ul>
+<hr />
+<h2 id="6-expected-output">§6. Expected output<a class="headerlink" href="#6-expected-output" title="Permanent link">&para;</a></h2>
+<p>The protocol produces <strong>four artifacts per published SOTA model</strong>:</p>
+<h3 id="artifact-1-the-5-row-comparison-table">Artifact 1 — The 5-row comparison table<a class="headerlink" href="#artifact-1-the-5-row-comparison-table" title="Permanent link">&para;</a></h3>
+<p>For each model you evaluate, fill this table (one row per scheduler + one baseline row). Compute mean / std over 3 seeds.</p>
+<table>
+<thead>
+<tr>
+<th>Scheduler</th>
+<th>Mean FID</th>
+<th>Std FID</th>
+<th>Δ vs Baseline</th>
+<th>% Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baseline (single-pass)</td>
+<td>X</td>
+<td>std</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>FreeTrajScheduler (or model-specific)</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>For 2D synthetic targets, replace "FID" with "W2" (2-Wasserstein distance) or "selection_ratio" depending on the published metric.</p>
+<h3 id="artifact-2-per-round-trajectory-plot-per-scheduler">Artifact 2 — Per-round trajectory plot (per scheduler)<a class="headerlink" href="#artifact-2-per-round-trajectory-plot-per-scheduler" title="Permanent link">&para;</a></h3>
+<p>One figure per scheduler, x-axis = round index (0–19), y-axis = metric. Use the per-round numbers from <code>result.per_round_metrics[r]['W2']</code> (or <code>selection_ratio</code>). Plotting recipe:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">plot_trajectory</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">rounds</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">per_round_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">per_round_metrics</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="s2">"W2"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rounds</span><span class="p">]</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">rounds</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"round"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"W2"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">plot_trajectory</span><span class="p">(</span><span class="n">result_cos</span><span class="p">,</span>   <span class="s2">"CosineAnnealScheduler"</span><span class="p">)</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">plot_trajectory</span><span class="p">(</span><span class="n">result_codim</span><span class="p">,</span> <span class="s2">"CodimensionSheetScheduler"</span><span class="p">)</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="n">plot_trajectory</span><span class="p">(</span><span class="n">result_evid</span><span class="p">,</span>  <span class="s2">"EvidenceDrivenScheduler"</span><span class="p">)</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="n">plot_trajectory</span><span class="p">(</span><span class="n">result_free</span><span class="p">,</span>  <span class="s2">"FreeTrajScheduler"</span><span class="p">)</span>
+</code></pre></div>
+<p>The paper-plan §4.1 Figure 5 is the canonical version of this plot on the 2D RF baseline.</p>
+<h3 id="artifact-3-per-sample-visualisation-88-grid">Artifact 3 — Per-sample visualisation (8×8 grid)<a class="headerlink" href="#artifact-3-per-sample-visualisation-88-grid" title="Permanent link">&para;</a></h3>
+<p>For image models, save an 8×8 PNG of generated vs reference images side by side.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span><span class="o">,</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">gen</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"/tmp/your_model_framework_cosine.npz"</span><span class="p">)[</span><span class="s2">"samples"</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">8</span><span class="p">]</span>   <span class="c1"># last round, 8 samples</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">ref</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">"data/your_test_set.npz"</span><span class="p">)[</span><span class="s2">"samples"</span><span class="p">][:</span><span class="mi">8</span><span class="p">]</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">gen</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># de-normalize [-1, 1] -&gt; [0, 1]</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">ref</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">"off"</span><span class="p">);</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">"off"</span><span class="p">)</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">"Generated (top) vs Reference (bottom)"</span><span class="p">);</span> <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">"/tmp/your_model_grid.png"</span><span class="p">)</span>
+</code></pre></div>
+<p>For 2D synthetic, replace with a 2D scatter plot (paper-plan Figure 6).</p>
+<h3 id="artifact-4-selection-ratio-trajectory-theorem-1-witness">Artifact 4 — Selection-ratio trajectory (Theorem 1 witness)<a class="headerlink" href="#artifact-4-selection-ratio-trajectory-theorem-1-witness" title="Permanent link">&para;</a></h3>
+<p>If you configured <code>selection_evaluator=PosteriorSelectionEvaluator(...)</code> in Step 5, <code>result.per_round_metrics[r]["selection_ratio"]</code> carries the per-round evidence ratio. Plot it on a 0-to-1 scale; the paper Theorem 1 direction is monotone non-decreasing toward 1.0. The published baseline is 0.8061; framework target is 0.988+.</p>
+<h3 id="what-success-looks-like">What success looks like<a class="headerlink" href="#what-success-looks-like" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>At least 1–2 of the 4 schedulers</strong> show strictly better metric than the baseline. Reporting 0/4 is a publishable negative result (the paper claim is "can improve", not "always improves").</li>
+<li><strong>Selection ratio</strong> (where applicable) trends monotonically toward 1 as rounds progress.</li>
+<li><strong>No NaN / Inf</strong> in any per-round endpoint.</li>
+<li><strong>Ledger chain</strong> verifies intact (<code>verify_ledger_chain(result.ledger_rows) == (True, "")</code>).</li>
+<li><strong>Adapter validates</strong> the capability handshake on the first try.</li>
+</ul>
+<hr />
+<h2 id="7-sandbox-limitations">§7. Sandbox limitations<a class="headerlink" href="#7-sandbox-limitations" title="Permanent link">&para;</a></h2>
+<p>The sandbox where FlowA was developed <strong>cannot run this experiment end-to-end</strong>. Read this carefully before you wonder why the sandbox isn't producing FID numbers.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Limitation</th>
+<th>Consequence</th>
+<th>Workaround</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Gated HuggingFace models blocked</strong> — <code>huggan/cifar10-resnet-flow-matching</code> requires an HF token the sandbox does not have</td>
+<td>Cannot download the most common CIFAR-10 RF checkpoint</td>
+<td>User downloads on their own machine with their token, then drops the <code>.npz</code> weights into <code>data/</code>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>No Google Drive access</strong> — gnobitab's CIFAR-10 RF is hosted there</td>
+<td>Cannot fetch the published Rectified Flow MNIST/CIFAR weights either</td>
+<td>User downloads via their browser, exports to <code>.npz</code>.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>No GPU</strong> — only CPU cores available</td>
+<td>3.8 samples/s for the framework's existing MNIST UNet (FID 173.48 record); SOTA models run slower still</td>
+<td>User runs on GPU; protocol is identical.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Framework venv has no torch</strong> — by design (stdlib + numpy only)</td>
+<td>Cannot run InceptionV3 FID in the framework's own venv</td>
+<td>Use the isolated <code>flowa_fid_env</code> venv (already pre-built in <code>C:/Users/31472/AppData/Local/Temp/flowa_fid_env</code>) for FID.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>No published SOTA weights</strong></td>
+<td>The sandbox cannot produce the §6 comparison table by itself</td>
+<td>Sandbox ships the protocol + adapter template + reproduction recipe; user runs the experiment on their machine.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Slower per-round wall-clock</strong> on CPU (~10 s/round for the 2D adapter at 100-step RK4)</td>
+<td>A full 4-scheduler × 20-round × 1000-sample run takes ~5 hours</td>
+<td>User can parallelise across seeds; framework's <code>run</code> is single-process per call.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What the sandbox <em>does</em> ship:</strong></p>
+<ol>
+<li>The framework (<code>adaptive_reflow/</code>) at commit post-<code>3a30801</code>, with the four-loop orchestration, the 17 state machines, the paper-quantity-driven schedulers (CodimensionSheet, EvidenceDriven), and the BoundedMergeOperator.</li>
+<li>The 8 concrete adapters — <code>TwoDimFMAdapter</code>, <code>MnistFmAdapter</code>, <code>StochasticFMAdapter</code>, <code>FlowMol3Adapter</code>, <code>ReferenceFlowAAdapter</code>, <code>ToyGaussianAdapter</code>, <code>ToyLinearAdapter</code>, <code>SyntheticAdapter</code> — to verify the protocol against (Steps 1–3) before plugging in a SOTA checkpoint.</li>
+<li>This protocol (§1–§8 of this document).</li>
+<li>The adapter template (§4).</li>
+<li>The FID harness (<code>flowa_fid_env</code> venv + <code>tools/generate_mnist_samples.py</code> + <code>tools/extract_mnist_test.py</code>).</li>
+</ol>
+<p><strong>What the user provides:</strong></p>
+<ol>
+<li>The checkpoint (in <code>.npz</code> form).</li>
+<li>A machine (CPU or GPU; CPU is fine but slow).</li>
+<li>Run time (~1–4 hours per checkpoint on CPU).</li>
+<li>Patience for honest reporting when some schedulers underperform.</li>
+</ol>
+<p>The sandbox cannot answer the question "does FlowA improve SOTA FID?" — it can only ship the framework and protocol that lets you answer it on your machine.</p>
+<hr />
+<h2 id="8-versioning">§8. Versioning<a class="headerlink" href="#8-versioning" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Protocol version</strong></td>
+<td>v1 (2026-08-30)</td>
+</tr>
+<tr>
+<td><strong>Framework version at time of writing</strong></td>
+<td>post-<code>3a30801</code> (commit hash <code>3a30801</code>)</td>
+</tr>
+<tr>
+<td><strong>State-machine infrastructure</strong></td>
+<td>17 state machines, 333 transitions (commit <code>456a406</code> parent)</td>
+</tr>
+<tr>
+<td><strong>EvidenceDrivenScheduler requirement</strong></td>
+<td>requires state-machine infrastructure (post-<code>3a30801</code>) for the per-round <code>eps_implicit</code> propagation; the older pre-<code>3a30801</code> framework cannot run this scheduler</td>
+</tr>
+<tr>
+<td><strong>Forward compatibility</strong></td>
+<td>the protocol's interface (<code>AdapterCapabilities</code>, <code>FlowMatchingODEAdapter</code>, <code>ReInferenceRunner</code>) is stable across <code>3a30801</code> and later; pre-<code>3a30801</code> framework versions require a backport of the state-machine wrappers</td>
+</tr>
+<tr>
+<td><strong>InceptionV3 FID weights</strong></td>
+<td><code>pt_inception-2015-12-05-6726825d.pth</code> (95 MB); cache at <code>~/.cache/torch/hub/checkpoints/</code>; first-run download only</td>
+</tr>
+</tbody>
+</table>
+<h3 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v1</td>
+<td>2026-08-30</td>
+<td>Initial protocol; references post-<code>3a30801</code> framework; covers four schedulers (CosineAnneal, CodimensionSheet, EvidenceDriven, FreeTraj-or-model-specific); 8-method adapter template; 7-step runbook.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>docs/paper-plan.md</code> — paper structure and the ONE claim (§4.1–§4.5).</li>
+<li><code>docs/r4-survey/01-modern-statemachine-research.md</code> — state-machine context for EvidenceDrivenScheduler.</li>
+<li><code>docs/r4-survey/06-mnist-inceptionv3-fid.md</code> — the FID harness (FID 173.48 vs noise 370.55, 2.14× better) this protocol extends.</li>
+<li><code>adaptive_reflow/adapters/twodim_fm.py</code> — canonical adapter (<code>TwoDimFMAdapter</code>, line 469); pattern reference for all 8 methods.</li>
+<li><code>adaptive_reflow/algorithm/runner.py</code> — <code>ReInferenceRunner</code> (line 391), <code>ReInferenceConfig</code> (line 137), <code>ReInferenceResult</code> (line 215).</li>
+<li><code>adaptive_reflow/frame/engine.py</code> — <code>Engine.run_round</code> (line 1016), capability handshake (line 896), ledger chain verification (line 491).</li>
+<li><code>flowa_fid_env</code> — isolated InceptionV3 venv at <code>C:/Users/31472/AppData/Local/Temp/flowa_fid_env</code>.</li>
+<li>Li 2024 — paper Theorem 1 (BL-convergence; quantities <code>A_g, B_g, C_g, e_ρ</code>); selection mechanism.</li>
+<li>Liu 2022 NeurIPS Spotlight — 2D Rectified Flow.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

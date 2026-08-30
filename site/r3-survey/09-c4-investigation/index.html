@@ -1,0 +1,1897 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>09 — C4 Investigation: Why the Ablation Measures 0.8061 Before AND After - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#09-c4-investigation-why-the-ablation-measures-08061-before-and-after" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              09 — C4 Investigation: Why the Ablation Measures 0.8061 Before AND After
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-code-level-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Code-level findings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Code-level findings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-evidencedrivenscheduler-what-the-c4-implementation-actually-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 EvidenceDrivenScheduler — what the C4 implementation actually does
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-posteriorselectionevaluator-where-the-metric-comes-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 PosteriorSelectionEvaluator — where the metric σ comes from
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-codimensionsheetscheduler-paper-quantity-wiring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 CodimensionSheetScheduler — paper-quantity wiring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-ablation-script-which-scheduler-is-on-the-paper-grounded-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 Ablation script — which scheduler is on the paper-grounded rows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-relationship-between-scheduler-n_cap-and-papers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Relationship between scheduler n_cap and paper's ε
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#16-what-the-evidence-driven-path-would-have-to-do-to-move-selection_ratio" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.6 What the evidence-driven path would have to do to move selection_ratio
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-structural-cause-of-c4-not-moving-the-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Structural cause of C4 not moving the metric
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Structural cause of C4 not moving the metric">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#failure-1-ablation-does-not-exercise-evidencedrivenscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure 1 — Ablation does not exercise EvidenceDrivenScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-2-evidencedrivenscheduler-adjusts-n_cap-not-eps_implicit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure 2 — EvidenceDrivenScheduler adjusts n_cap, not eps_implicit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-3-posteriorselectionevaluator-does-not-read-scheduler-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure 3 — PosteriorSelectionEvaluator does not read scheduler state
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-fix-options-af" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Fix options (A–F)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Fix options (A–F)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-make-posteriorselectionevaluator-use-schedulers-as-replay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A — Make PosteriorSelectionEvaluator use scheduler's ε as replay σ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-add-evidencedrivenscheduler-row-to-ablation-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B — Add EvidenceDrivenScheduler row to ablation only
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-c-change-evidencedrivenscheduler-pid-control-variable-from-n_cap-to-eps_implicit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option C — Change EvidenceDrivenScheduler PID control variable from n_cap to eps_implicit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-d-add-a-new-metric-column-computed-directly-from-paper-quantities-a_g-a_g-c_gb_g2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option D — Add a new metric column computed directly from paper quantities (A_g·ε / (A_g·ε + C_g·B_g·ε²))
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-e-wire-eps_schedule-and-sampleeps_implicit-to-make-the-metric-depend-on-n_cap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option E — Wire eps_schedule and sample.eps_implicit to make the metric depend on n_cap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-f-combine-option-a-option-b-as-a-minimal-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option F — Combine Option A + Option B as a minimal fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-recommended-fix-with-rationale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Recommended fix (with rationale)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-implementation-plan-fileline-targets-code-sketch-test-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Implementation plan (file:line targets, code sketch, test plan)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Implementation plan (file:line targets, code sketch, test plan)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stage-1-option-b-1-hour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 1 — Option B (1 hour)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-2-option-a-6-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2 — Option A (6 hours)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-3-option-c-variant-2-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 3 — Option C variant (2 hours)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#combined-verification-stage-123-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Combined verification (Stage 1+2+3) end-to-end
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Verification plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-risks-and-unknowns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Risks and unknowns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-table-fix-options-trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary table — fix options × trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-line-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7-line summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="09-c4-investigation-why-the-ablation-measures-08061-before-and-after">09 — C4 Investigation: Why the Ablation Measures 0.8061 Before AND After<a class="headerlink" href="#09-c4-investigation-why-the-ablation-measures-08061-before-and-after" title="Permanent link">&para;</a></h1>
+<p><strong>Survey scope:</strong> diagnostic + fix design for <strong>C4</strong> (Close Loop 2 — paper
+quantities → scheduler feedback) from
+<a href="../08-fix-plan/"><code>08-fix-plan.md</code></a> §4.</p>
+<p><strong>Date:</strong> 2026-08-29.
+<strong>Working dir:</strong> <code>c:/Users/31472/codes/flowa-multistep-reinference</code>.
+<strong>READ-ONLY constraints honoured:</strong> no source edits, no edits to
+<code>/c/Users/31472/codes/noise-selected-rectification-lean/</code>.</p>
+<p><strong>Companion repo (paper):</strong> <code>/c/Users/31472/codes/noise-selected-rectification-lean/</code>
+— read-only mirror at <code>NoiseSelectedRectification_EN.md</code>.</p>
+<hr />
+<h2 id="1-code-level-findings">1. Code-level findings<a class="headerlink" href="#1-code-level-findings" title="Permanent link">&para;</a></h2>
+<h3 id="11-evidencedrivenscheduler-what-the-c4-implementation-actually-does">1.1 <code>EvidenceDrivenScheduler</code> — what the C4 implementation actually does<a class="headerlink" href="#11-evidencedrivenscheduler-what-the-c4-implementation-actually-does" title="Permanent link">&para;</a></h3>
+<p><strong>File:</strong> <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py</code></p>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Behaviour</th>
+<th>Line</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>record_round_feedback(r, metrics)</code></td>
+<td>Consumes either <code>metrics["evidence_ratio"]</code> (preferred) or <code>metrics["selection_ratio"]</code> (F12 fallback); if neither, uses <code>0.5</code> (neutral) and emits <code>EVIDENCE_RATIO_MISSING</code>.</td>
+<td><code>352–380</code></td>
+</tr>
+<tr>
+<td><code>_PIDLiteController.step(observed_ratio)</code></td>
+<td><code>error = 1.0 − observed_ratio</code>; <code>delta = Kp·error + Ki·integral</code>; clips into <code>[−max_step, +max_step]</code> = <code>[−0.05, +0.05]</code>. Anti-windup integral cap ±10.</td>
+<td><code>125–171</code></td>
+</tr>
+<tr>
+<td><code>sample(...)</code></td>
+<td>Wraps <code>CosineAnnealScheduler.sample</code> and returns <code>n_cap + last_pid_delta</code>, clipped to <code>[0, 1]</code>. The delta was computed on the <strong>previous</strong> round's signal and carried into this round's capacity.</td>
+<td><code>271–317</code></td>
+</tr>
+<tr>
+<td>Internal state carried between rounds</td>
+<td><code>_last_pid_delta: float</code> (the offset to add next round), <code>_controller._integral: float</code> (anti-windup accumulator).</td>
+<td><code>237–249</code></td>
+</tr>
+<tr>
+<td><code>inject_noise(...)</code></td>
+<td>Forwards to the wrapped cosine scheduler — does <strong>not</strong> perturb the cached <code>A_g</code>.</td>
+<td><code>382–392</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>What the PID adjusts:</strong> only <code>n_cap</code> (the per-round capacity in <code>[0, 1]</code>).
+<strong>What the PID does NOT adjust:</strong> <code>eps_implicit</code>, <code>A_g</code>, <code>B_g</code>, <code>C_g</code>,
+<code>exterior_gap_e_rho</code>, or anything that reaches <code>inject_noise</code> or the
+<code>selection_ratio</code> math. The <code>EvidenceDrivenScheduler</code> accepts no
+<code>profile_residual_fn</code> and thus never computes the paper quantities
+(compare <code>CodimensionSheetScheduler.__init__</code> at <code>scheduler/_core.py:2466–2480</code>).</p>
+<h3 id="12-posteriorselectionevaluator-where-the-metric-comes-from">1.2 <code>PosteriorSelectionEvaluator</code> — where the metric σ comes from<a class="headerlink" href="#12-posteriorselectionevaluator-where-the-metric-comes-from" title="Permanent link">&para;</a></h3>
+<p><strong>File:</strong> <code>adaptive_reflow/eval/posterior_selection_evaluator.py</code></p>
+<p>The evaluator is <strong>purely closed-form, replay-based, scheduler-unaware</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Behaviour</th>
+<th>Line</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sheet_evidence(endpoints)</code></td>
+<td><code>mean(exp(−x²/2))</code> over per-endpoint x-coordinate; closed-form Gaussian density, paper Lemma 2 proxy.</td>
+<td><code>277–301</code></td>
+</tr>
+<tr>
+<td><code>cell_evidence(cells)</code></td>
+<td><code>Σ_j exp(−|z_j|²/2) / (2π)</code> over mode-centre set; closed-form 2D Gaussian density, paper Lemma 3 proxy.</td>
+<td><code>304–325</code></td>
+</tr>
+<tr>
+<td><code>selection_ratio(endpoints, cells)</code></td>
+<td><code>(s_ev, c_ev, s_ev / (s_ev + c_ev))</code>, clipped to <code>[0, 1]</code>.</td>
+<td><code>328–351</code></td>
+</tr>
+<tr>
+<td><code>_compute_metrics(...)</code></td>
+<td>Replays <code>_generate_endpoints</code> (n_gen ODE solves through the adapter at the adapter's training-fixed <code>num_steps</code>); recomputes closed-form ratio. <strong>No scheduler state is consulted.</strong></td>
+<td><code>878–922</code></td>
+</tr>
+<tr>
+<td><code>_generate_endpoints(...)</code></td>
+<td>Calls <code>TwoDimFMAdapter.solve_ode(initial, condition, seed)</code> — the σ in the replay comes from the adapter's training noise scale; it is <strong>identically the same</strong> regardless of <code>n_cap</code> or <code>eps_implicit</code> at evaluation time.</td>
+<td><code>924–963</code></td>
+</tr>
+<tr>
+<td><code>eps_schedule</code> parameter</td>
+<td>When supplied, scales <code>c_ev *= eps_schedule(r)</code> (B12 uplift). With no schedule (default), <code>c_ev</code> is the closed-form constant. The ablation script does <strong>not</strong> wire an <code>eps_schedule</code>.</td>
+<td><code>643–687</code>, <code>878–922</code></td>
+</tr>
+<tr>
+<td><code>eps_implicit</code> parameter</td>
+<td>Stored on the evaluator and surfaced in <code>oracle()</code> for traceability; <strong>does NOT</strong> alter the closed-form math (documented as "framework-internal heuristic proxy" in the class docstring line 443–452).</td>
+<td><code>465–496</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key call sites in the runner:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Behaviour</th>
+<th>Line</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>runner.run</code> per-round</td>
+<td>When <code>config.selection_evaluator is not None</code>, queries <code>oracle(bundle, channel, seed)</code> and stores <code>metric["selection_ratio"] = selection_metrics["selection_ratio"]</code>.</td>
+<td><code>872–878</code></td>
+</tr>
+<tr>
+<td><code>runner.run</code> record-round-feedback</td>
+<td>Calls <code>self._scheduler.record_round_feedback(r, metric)</code> passing the <strong>entire</strong> metric dict. So <code>EvidenceDrivenScheduler</code> would see <code>selection_ratio</code> if it were the active scheduler.</td>
+<td><code>897–898</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Structural fact (verified):</strong> the evaluator computes
+<code>selection_ratio</code> from <strong>freshly generated endpoints</strong> (replay through the
+adapter), not from the round's own bundle or scheduler state. Paper
+Proposition 3's noise-scale <code>ε</code> enters only as the optional
+<code>eps_schedule(r)</code> multiplicative factor on <code>c_ev</code> — and the ablation
+script leaves it <code>None</code>. So the metric's σ is <strong>anchored to the adapter's
+training noise scale</strong>, which is structurally independent of whichever
+<code>SchedulerProtocol</code> is running.</p>
+<h3 id="13-codimensionsheetscheduler-paper-quantity-wiring">1.3 <code>CodimensionSheetScheduler</code> — paper-quantity wiring<a class="headerlink" href="#13-codimensionsheetscheduler-paper-quantity-wiring" title="Permanent link">&para;</a></h3>
+<p><strong>File:</strong> <code>adaptive_reflow/algorithm/scheduler/_core.py</code></p>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Behaviour</th>
+<th>Line</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__init__(eps_implicit=0.05, eps_direction="decreasing", profile_residual_fn=...)</code></td>
+<td>When <code>profile_residual_fn</code> is supplied, computes <code>sheet_A</code>, <code>packing_B</code>, <code>cell_C</code>, <code>exterior_gap_e_rho</code> once and caches them.</td>
+<td><code>2466–2480</code></td>
+</tr>
+<tr>
+<td><code>_paper_evidence_balance(n_cap_base, eps, ...)</code></td>
+<td><code>sheet = A_g · ε</code> (paper-quantity-augmented path) / <code>max(n, ε)</code> (framework-heuristic fallback); <code>cell = C_g · B_g · ε²</code> / <code>(1−n)² · ε²</code>.</td>
+<td><code>2136–2256</code></td>
+</tr>
+<tr>
+<td><code>sample(...)</code></td>
+<td>Returns <code>ScheduleSample</code> with <code>evidence_ratio</code> populated from <code>_paper_evidence_balance</code>. <strong>The ratio is computed from <code>self._eps_implicit</code> (fixed at construction time) + the per-round <code>n_cap_base</code> — it is NOT mutated by any per-round feedback.</strong></td>
+<td><code>2717–2749</code></td>
+</tr>
+<tr>
+<td><code>record_round_feedback(...)</code></td>
+<td><strong>No-op</strong> (open-loop on rounds).</td>
+<td><code>2799–2805</code></td>
+</tr>
+<tr>
+<td><code>inject_noise(...)</code></td>
+<td>Uses cached <code>A_g</code> (or <code>e_rho/4</code> floor) as the noise mass — paper-quantity-grounded for forward noise.</td>
+<td><code>2807–2847</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Critical observation:</strong> <code>CodimensionSheetScheduler.evidence_ratio</code> (the
+per-round metric on the <code>ScheduleSample</code> object, surfaced by the runner
+at <code>runner.py:853–855</code> as <code>metric["schedule_evidence_ratio"]</code>) is NOT the
+same as <code>metric["selection_ratio"]</code>. The former comes from the
+scheduler's own closed-form <code>_paper_evidence_balance</code>; the latter comes
+from <code>PosteriorSelectionEvaluator.oracle()</code>. They share the same
+eponymous target (sheet-vs-cell) but are computed on <strong>different inputs</strong>
+and <strong>different σ</strong>.</p>
+<h3 id="14-ablation-script-which-scheduler-is-on-the-paper-grounded-rows">1.4 Ablation script — which scheduler is on the paper-grounded rows<a class="headerlink" href="#14-ablation-script-which-scheduler-is-on-the-paper-grounded-rows" title="Permanent link">&para;</a></h3>
+<p><strong>File:</strong> <code>tools/run_ablation.py</code></p>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th>Scheduler</th>
+<th>Driver</th>
+<th>Selection evaluator?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>multi_round_codimension_sheet_posterior_selection</code></td>
+<td><code>CodimensionSheetScheduler(eps_implicit=0.05)</code></td>
+<td><code>ScheduleDerivedPolicyDriver</code></td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>multi_round_cosine_posterior_selection</code></td>
+<td><code>CosineAnnealScheduler</code></td>
+<td><code>ScheduleDerivedPolicyDriver</code></td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>multi_round_cosine_anneal</code></td>
+<td><code>CosineAnnealScheduler</code></td>
+<td><code>ScheduleDerivedPolicyDriver</code></td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>multi_round_convergence_adaptive_schedule_derived</code></td>
+<td><code>ConvergenceAdaptiveScheduler</code> (PID on <code>u_r</code>, fed W2 externally)</td>
+<td><code>ScheduleDerivedPolicyDriver</code></td>
+<td>no</td>
+</tr>
+<tr>
+<td><strong>(<code>EvidenceDrivenScheduler</code> is referenced in <code>_PIDLiteController</code> audit codes but is NOT registered as an ablation row)</strong></td>
+<td>n/a</td>
+<td>n/a</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<p><code>_selection_evaluator_for</code> at <code>run_ablation.py:409–430</code> constructs the
+evaluator with <code>eps_implicit=CODIMENSION_EPS_IMPLICIT = 0.05</code>, no
+<code>eps_schedule</code>. The evaluator constructor stores <code>eps_implicit</code> but
+the closed-form math does not use it (per §1.2 above).</p>
+<p><code>FEEDBACK_CONFIGS = frozenset({"multi_round_convergence_adaptive_schedule_derived"})</code>
+at <code>run_ablation.py:966–970</code> is the only row using
+<code>_run_one_with_feedback</code>. The paper-grounded rows both go through
+<code>_run_one</code> (no per-round feedback), so even if the scheduler were
+<code>EvidenceDrivenScheduler</code>, the PID's <code>_last_pid_delta</code> would stay <code>0.0</code>.</p>
+<p>The ablation's <code>_posterior_selection_section</code> at
+<code>run_ablation.py:1157–1293</code> already acknowledges the structural problem
+at lines 1196–1269 (the <code>curves_agree</code> branch explicitly prints "the
+two selection-ratio curves are identical… The evaluator scores the
+adapter's own posterior geometry, which neither scheduler alters, so
+the selection_ratio column is schedule-independent by construction").</p>
+<h3 id="15-relationship-between-scheduler-n_cap-and-papers">1.5 Relationship between scheduler <code>n_cap</code> and paper's ε<a class="headerlink" href="#15-relationship-between-scheduler-n_cap-and-papers" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Math</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Framework-heuristic path</td>
+<td><code>eps = eps_implicit</code> (fixed at construction); <code>sheet = max(n_clipped, eps)</code>; <code>cell = (1−n_clipped)² · eps²</code></td>
+<td><code>_paper_evidence_balance</code> lines 2250–2256</td>
+</tr>
+<tr>
+<td>Paper-quantity-augmented path</td>
+<td><code>eps = eps_implicit</code> (fixed); <code>sheet = A_g · eps</code>; <code>cell = C_g · B_g · eps²</code></td>
+<td>lines 2214–2248</td>
+</tr>
+<tr>
+<td><code>EvidenceDrivenScheduler</code></td>
+<td>adjusts <code>n_cap</code> only (PID); <code>eps_implicit</code> is never wired into this scheduler at all (see <code>evidence_driven.py:204–236</code> — no <code>eps_implicit</code> parameter)</td>
+<td>constructor signature</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>n_cap</code> and <code>eps_implicit</code> are independent on every family.</strong> Cosine,
+Constant, Linear, Exponential, Polynomial, Sigmoid, ConvergenceAdaptive,
+EvidenceDriven: none of them mutate <code>eps_implicit</code>. Only
+<code>CodimensionSheetScheduler</code> reads <code>eps_implicit</code> (in
+<code>_paper_evidence_balance</code>), and that read is <strong>at per-round time</strong>,
+not driven by <code>record_round_feedback</code> (which is a no-op).</p>
+<h3 id="16-what-the-evidence-driven-path-would-have-to-do-to-move-selection_ratio">1.6 What the evidence-driven path would have to do to move <code>selection_ratio</code><a class="headerlink" href="#16-what-the-evidence-driven-path-would-have-to-do-to-move-selection_ratio" title="Permanent link">&para;</a></h3>
+<p>For the PID to move <code>selection_ratio</code> it must reach the input to
+<code>sheet_evidence(...)</code> or <code>cell_evidence(...)</code>. Those inputs are:</p>
+<ol>
+<li><strong><code>endpoints</code></strong> (the <code>n_gen</code> per-round ODE solutions) — fed by
+   <code>TwoDimFMAdapter.solve_ode</code>. Replay σ is fixed (adapter training
+   noise). Scheduler state cannot influence this directly.</li>
+<li><strong><code>cells</code></strong> (the analytic mode-centre set in <code>target_distributions</code>) —
+   fixed for a given target.</li>
+<li><strong><code>eps_schedule(round_index)</code></strong> (only when configured) — currently
+   <code>None</code> everywhere in the ablation. This is the only knob the
+   evaluator exposes that is shapeable by scheduler state.</li>
+</ol>
+<p>The <strong>only structural lever</strong> that ties scheduler state to the metric
+is <code>eps_schedule(round_index)</code>. The runner's <code>_compute_metrics</code> applies
+<code>c_ev *= eps_schedule(r)</code> (line 910) when configured. If the scheduler
+could (a) carry a per-round <code>eps</code> value (a <code>ScheduleSample.eps_implicit</code>
+field), (b) update it via <code>record_round_feedback</code>, and (c) the runner
+wires that into <code>selection_evaluator.eps_schedule</code>, then PID adjustment
+of <code>eps</code> propagates to the metric.</p>
+<hr />
+<h2 id="2-structural-cause-of-c4-not-moving-the-metric">2. Structural cause of C4 not moving the metric<a class="headerlink" href="#2-structural-cause-of-c4-not-moving-the-metric" title="Permanent link">&para;</a></h2>
+<p>There are <strong>three independent structural failures</strong>, in stacked order.
+Any one of them alone would prevent C4 from moving <code>selection_ratio</code>;
+all three together make it impossible today.</p>
+<h3 id="failure-1-ablation-does-not-exercise-evidencedrivenscheduler">Failure 1 — Ablation does not exercise <code>EvidenceDrivenScheduler</code><a class="headerlink" href="#failure-1-ablation-does-not-exercise-evidencedrivenscheduler" title="Permanent link">&para;</a></h3>
+<p>The two paper-grounded ablation rows use
+<code>CodimensionSheetScheduler</code> and <code>CosineAnnealScheduler</code>, not
+<code>EvidenceDrivenScheduler</code>. Therefore the PID-lite controller in
+<code>evidence_driven.py:_PIDLiteController</code> is <strong>never invoked</strong> during
+the ablation. Even if every other knob were correctly wired, the
+delta that should reach <code>n_cap</code> (and through it the metric) is
+permanently <code>0.0</code>.</p>
+<h3 id="failure-2-evidencedrivenscheduler-adjusts-n_cap-not-eps_implicit">Failure 2 — <code>EvidenceDrivenScheduler</code> adjusts <code>n_cap</code>, not <code>eps_implicit</code><a class="headerlink" href="#failure-2-evidencedrivenscheduler-adjusts-n_cap-not-eps_implicit" title="Permanent link">&para;</a></h3>
+<p>The PID writes to <code>_last_pid_delta</code>, which is added to <code>n_cap</code>. The
+metric's σ comes from the adapter's training noise, not from <code>n_cap</code>.
+A change in <code>n_cap</code> does not change the adapter's replay σ; the metric
+is structurally insensitive to <code>n_cap</code> regardless of which scheduler
+the runner uses.</p>
+<h3 id="failure-3-posteriorselectionevaluator-does-not-read-scheduler-state">Failure 3 — <code>PosteriorSelectionEvaluator</code> does not read scheduler state<a class="headerlink" href="#failure-3-posteriorselectionevaluator-does-not-read-scheduler-state" title="Permanent link">&para;</a></h3>
+<p>The evaluator's <code>_generate_endpoints</code> calls <code>solve_ode</code> with the
+adapter's training-fixed σ. The closed-form <code>sheet_evidence</code> and
+<code>cell_evidence</code> math is a function of <code>endpoints</code> × <code>cells</code> only;
+neither is parameterised by a noise-scale input. Even if (1) and (2)
+were fixed, the metric has <strong>no path</strong> from a scheduler's ε to the
+sheet-vs-cell computation without (a) constructing fresh endpoints
+with a per-round σ or (b) adding an <code>eps_schedule</code> parameter the
+runner wires from <code>ScheduleSample</code>. Neither exists today.</p>
+<h3 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h3>
+<p>C4 is plumbed end-to-end on the <strong>runner ↔ scheduler contract</strong>: the
+runner passes <code>metric["selection_ratio"]</code> into
+<code>record_round_feedback</code>, and the PID is wired. But the plumbing is
+attached to the <strong>wrong joint</strong> — a per-round capacity change cannot
+move a closed-form metric whose σ is fixed at adapter training time.
+The ablation's 0.8061-before = 0.8061-after is therefore <strong>not</strong> a bug
+in the PID, a missing wire, or an order-of-operations issue. It is a
+<strong>structural orthogonality</strong> between what the PID adjusts and what the
+metric measures.</p>
+<p><strong>The fix must close at least one of three joints:</strong></p>
+<ol>
+<li>Add an <code>EvidenceDrivenScheduler</code> row to the ablation
+   (closes Failure 1).</li>
+<li>Switch the PID's control variable from <code>n_cap</code> to <code>eps_implicit</code>
+   (closes Failure 2 — but introduces new problems; see Option C).</li>
+<li>Make the evaluator consume a per-round σ from the scheduler
+   (closes Failure 3, the only fix that actually moves the metric).</li>
+</ol>
+<p>Closures (1) and (2) alone do not move the metric; closure (3) is
+load-bearing. The recommended fix combines (1) + (3) for verifiability.</p>
+<hr />
+<h2 id="3-fix-options-af">3. Fix options (A–F)<a class="headerlink" href="#3-fix-options-af" title="Permanent link">&para;</a></h2>
+<h3 id="option-a-make-posteriorselectionevaluator-use-schedulers-as-replay">Option A — Make <code>PosteriorSelectionEvaluator</code> use scheduler's ε as replay σ<a class="headerlink" href="#option-a-make-posteriorselectionevaluator-use-schedulers-as-replay" title="Permanent link">&para;</a></h3>
+<p><strong>What this fixes:</strong> Failure 3. The evaluator's per-round metric
+becomes a function of the scheduler's current ε; any change in ε
+moves <code>selection_ratio</code>.</p>
+<p><strong>What it does NOT fix:</strong> Failure 1 (need to also add ablation row)
+and Failure 2 (PID adjusts <code>n_cap</code>, not ε, so we still need Option C
+or restructure the PID).</p>
+<p><strong>Files:</strong>
+- <code>adaptive_reflow/eval/posterior_selection_evaluator.py:878-922</code> —
+  add optional <code>sigma</code> (or <code>eps</code>) keyword to <code>_compute_metrics</code> /
+  <code>_generate_endpoints</code> that re-seeds the <code>TwoDimFMAdapter.solve_ode</code>
+  via <code>inject_noise(scale=sigma)</code> and recycles the same trajectory to a
+  fresh endpoint set at the requested scale.
+- <code>adaptive_reflow/algorithm/runner.py:872-878</code> — read
+  <code>sample.eps_implicit</code> (new field; see Option C) and pass it to
+  <code>selection_evaluator.oracle(...)</code> as <code>eps_schedule</code> callable.
+- New field on <code>ScheduleSample</code> (<code>scheduler/_core.py:67-101</code>):
+  <code>eps_implicit: float | None</code> populated by every scheduler that
+  carries it (initially just <code>CodimensionSheetScheduler</code>).
+- Optionally <code>adaptive_reflow/eval/posterior_selection_evaluator.py:631-641</code>:
+  thread <code>sigma_round</code> through <code>eps_for_round</code> as well.</p>
+<p><strong>Effort:</strong> ~6 hours. Most of the work is plumbing the new ε field
+through <code>ScheduleSample</code> and the runner; the evaluator change is
+small.</p>
+<p><strong>Risk:</strong> Touches every scheduler's <code>__init__</code> signature (additive,
+defaults to <code>None</code>, no behaviour change for callers that ignore it).
+The replay-σ path requires deterministic adapter noise injection at
+the requested scale; the existing <code>inject_noise</code> API already does
+this in <code>scheduler/_core.py:217-238</code>, so the risk is low.</p>
+<p><strong>Verifiability:</strong> makes C4 verifiable per paper Theorem 1. The
+metric now responds to scheduler ε exactly as Corollary 1 predicts
+(<code>Z ≥ C₁ε</code>, cell mass <code>≤ C₂ε</code>).</p>
+<h3 id="option-b-add-evidencedrivenscheduler-row-to-ablation-only">Option B — Add <code>EvidenceDrivenScheduler</code> row to ablation only<a class="headerlink" href="#option-b-add-evidencedrivenscheduler-row-to-ablation-only" title="Permanent link">&para;</a></h3>
+<p><strong>What this fixes:</strong> Failure 1 (the row exists). The PID runs;
+<code>_last_pid_delta</code> mutates between rounds.</p>
+<p><strong>What it does NOT fix:</strong> Failure 2 + Failure 3. The metric still
+plateaus at 0.8061 because the metric does not depend on <code>n_cap</code>,
+and the PID still adjusts <code>n_cap</code>. The row adds evidence that the
+plumbing is reachable but does not close C4 per the paper.</p>
+<p><strong>Files:</strong>
+- <code>tools/run_ablation.py:226-391</code> — add a new branch in
+  <code>_build_components</code> and a new entry in <code>PAPER_GROUNDED_CONFIGURATIONS</code>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">if</span> <span class="n">config</span> <span class="o">==</span> <span class="s2">"multi_round_evidence_driven_posterior_selection"</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="k">return</span> <span class="p">(</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        <span class="n">EvidenceDrivenScheduler</span><span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>            <span class="n">config</span><span class="o">=</span><span class="n">default_cosine_scheduler</span><span class="p">(</span><span class="n">cycle_length</span><span class="o">=</span><span class="n">rounds</span><span class="p">)</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>            <span class="n">kp</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">ki</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">target_ratio</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="p">),</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>        <span class="s2">"default"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">rounds</span><span class="p">),</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="p">)</span>
+</code></pre></div>
+- <code>tools/run_ablation.py:409-430</code> — wire the evaluator (no
+  <code>eps_schedule</code>); the row will hit <code>eps_schedule=None</code> path,
+  same as the codimension row.
+- <code>tools/run_ablation.py:966-970</code> — add to <code>FEEDBACK_CONFIGS</code> (or
+  use <code>_run_one</code>; the runner's built-in feedback is sufficient).</p>
+<p><strong>Effort:</strong> ~1 hour (new branch, new line in <code>PAPER_GROUNDED_CONFIGURATIONS</code>,
+one row in the markdown table).</p>
+<p><strong>Risk:</strong> Low. No source changes outside the ablation script.</p>
+<p><strong>Verifiability:</strong> Does not make C4 verifiable per paper Theorem 1
+because the metric is still structurally independent of <code>n_cap</code>.</p>
+<h3 id="option-c-change-evidencedrivenscheduler-pid-control-variable-from-n_cap-to-eps_implicit">Option C — Change <code>EvidenceDrivenScheduler</code> PID control variable from <code>n_cap</code> to <code>eps_implicit</code><a class="headerlink" href="#option-c-change-evidencedrivenscheduler-pid-control-variable-from-n_cap-to-eps_implicit" title="Permanent link">&para;</a></h3>
+<p><strong>What this fixes:</strong> Failure 2. The PID writes to <code>eps_implicit</code>
+instead of <code>n_cap</code>. Combined with Option A (which makes the evaluator
+read that ε), the metric responds.</p>
+<p><strong>What it does NOT fix:</strong> Failure 1 (still need ablation row), Failure
+3 (still need evaluator wiring). Pure Option C without A is
+inelegant — ε is currently a fixed per-scheduler constant, not a
+stateful per-round variable.</p>
+<p><strong>Files:</strong>
+- <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py:204–249</code> —
+  replace <code>_last_pid_delta: float</code> with <code>_last_eps_delta: float</code>;
+  replace <code>n_cap</code> adjustment in <code>sample()</code> with <code>eps_implicit</code>
+  mutation.
+- Add <code>eps_implicit</code> field to <code>ScheduleSample</code> so the runner can
+  forward it to the evaluator.
+- Thread through <code>inject_noise</code> so forward noise respects the
+  changed ε (close interaction with paper-quantity-grounded
+  inject-noise path).</p>
+<p><strong>Effort:</strong> ~3 hours.</p>
+<p><strong>Risk:</strong> Medium. <code>eps_implicit</code> is currently a construction-time
+constant. Making it a per-round mutating state breaks the
+"frozen_before_evaluation=True" invariant on <code>CosineScheduleConfig</code>
+for any scheduler that uses it. The
+<code>CodimensionSheetScheduler._paper_evidence_balance</code> calls depend on
+<code>eps_implicit</code> remaining well-defined and finite; a per-round
+mutation requires re-validating these invariants. Risk of
+spurious <code>eps_implicit &gt; 0</code> invariant violations at the controller
+saturation points.</p>
+<p><strong>Verifiability:</strong> Closer to paper Theorem 1 (the σ the metric
+needs IS <code>eps_implicit</code>, the paper's <code>ε</code>), but couples negatively
+with the existing <code>_paper_evidence_balance</code> math (which treats ε
+as a per-call argument, not stateful).</p>
+<h3 id="option-d-add-a-new-metric-column-computed-directly-from-paper-quantities-a_g-a_g-c_gb_g2">Option D — Add a new metric column computed directly from paper quantities (<code>A_g·ε</code> / <code>(A_g·ε + C_g·B_g·ε²)</code>)<a class="headerlink" href="#option-d-add-a-new-metric-column-computed-directly-from-paper-quantities-a_g-a_g-c_gb_g2" title="Permanent link">&para;</a></h3>
+<p><strong>What this fixes:</strong> Failure 2 + 3 <strong>without touching</strong>
+<code>PosteriorSelectionEvaluator</code>. A new diagnostic computes the paper
+closed-form ratio directly from <code>(A_g, B_g, C_g, ε)</code> and the
+scheduler's current ε. Bypasses the replay-through-adapter path
+entirely.</p>
+<p><strong>What it does NOT fix:</strong> Failure 1 (still need ablation row).</p>
+<p><strong>Files:</strong>
+- New module <code>adaptive_reflow/eval/paper_quantity_selection_ratio.py</code> —
+  pure function <code>paper_selection_ratio(A_g, B_g, C_g, eps) -&gt;
+  float</code> derived from <code>_paper_evidence_balance</code> paper-quantity-augmented
+  path (<code>scheduler/_core.py:2238-2248</code>): <code>sheet = A_g * eps</code>,
+  <code>cell = C_g * B_g * eps ** 2</code>, <code>ratio = sheet / (sheet + cell)</code>.
+- <code>tools/run_ablation.py:481-490</code> — when <code>paper_quantities_provider</code>
+  is set, compute this metric per round and add as
+  <code>paper_quantity_selection_ratio</code> column.
+- <code>tools/run_ablation.py:1028-1074</code> — extend <code>_selection_ratio_table</code>
+  with a new column showing this quantity.</p>
+<p><strong>Effort:</strong> ~4 hours. New module + 3 ablation-script edits.</p>
+<p><strong>Risk:</strong> Low. New module, additive metric; existing rows unchanged.</p>
+<p><strong>Verifiability:</strong> This <strong>is</strong> what paper Theorem 1 / Corollary 1
+prove: <code>A_g · ε / (A_g · ε + C_g · B_g · ε²)</code> rises toward 1 as
+<code>ε → 0</code> (<code>Z_{g,ε} ≥ C₁ε</code>, <code>μ_{g,ε}(∪ I_z) ≤ C₂ε</code>, normalised ratio
+<code>= 1 − O(ε)</code>). It is the literal paper ratio, with no replay, no
+heuristics. Its downside is it is a <em>forecast</em> of what Theorem 1
+predicts about the ratio, not a direct measurement of what the
+adapter's posterior does.</p>
+<h3 id="option-e-wire-eps_schedule-and-sampleeps_implicit-to-make-the-metric-depend-on-n_cap">Option E — Wire <code>eps_schedule</code> and <code>sample.eps_implicit</code> to make the metric depend on <code>n_cap</code><a class="headerlink" href="#option-e-wire-eps_schedule-and-sampleeps_implicit-to-make-the-metric-depend-on-n_cap" title="Permanent link">&para;</a></h3>
+<p><code>n_cap</code> already drives the canonical cosine ramp. The scheduler's
+per-round <code>n_cap</code> could be mapped to a derived ε (e.g.,
+<code>eps = f(n_cap)</code> such that low <code>n_cap</code> → low ε, high <code>n_cap</code> → high ε).
+The same <code>eps_schedule(round)</code> mechanism as Option A then threads this
+through to the evaluator.</p>
+<p><strong>What this fixes:</strong> A hybrid of Failure 2 + 3. The mapping
+<code>n_cap → ε</code> is a new component choice (one-line at the runner's
+record_round_feedback call site or in the scheduler's <code>sample</code>).
+On the cosine baseline, <code>n_cap</code> already ramps to 0, so ε → 0 is
+<em>automatic</em> on the terminal rounds.</p>
+<p><strong>What it does NOT fix:</strong> No paper-grounded meaning. The paper's
+ε is a noise scale; the scheduler's <code>n_cap</code> is a capacity. Mapping
+them by <code>eps = n_cap</code> is a separate design choice that does not
+align with <code>inject_noise</code>'s <code>sqrt(n_cap)</code> semantics.</p>
+<p><strong>Files:</strong> <code>runner.py:872-878</code> + <code>evidence_driven.py</code> (signature
+change) — but no structural breakthrough over Option A.</p>
+<p><strong>Effort:</strong> ~2 hours.</p>
+<p><strong>Risk:</strong> Medium. The two quantities (<code>n_cap</code>, <code>ε</code>) have
+<strong>independent semantics</strong> in the paper (different
+<code>axis-injection</code> paths; see §6). Conflating them risks invalidating
+the paper-quantity wiring.</p>
+<p><strong>Verifiability:</strong> Indirect. Selects the mechanism but not the paper
+parameter; the metric becomes "schedule-dependent" but not
+"paper-quantity-verifiable."</p>
+<h3 id="option-f-combine-option-a-option-b-as-a-minimal-fix">Option F — Combine Option A + Option B as a minimal fix<a class="headerlink" href="#option-f-combine-option-a-option-b-as-a-minimal-fix" title="Permanent link">&para;</a></h3>
+<p><strong>What this fixes:</strong> Failure 1 (ablation row) + Failure 3
+(evaluator reads ε). Closes the loop end-to-end <strong>on a new
+ablation row</strong> (<code>multi_round_evidence_driven_posterior_selection</code>)
+without restructuring existing schedulers. The PID still adjusts
+<code>n_cap</code> only (Failure 2 stays open), but if the runner threads
+<code>sample.eps_implicit</code> (new field, default <code>None</code>, equal to
+scheduler's <code>eps_implicit</code> constructor value) into the evaluator
+as <code>eps_schedule</code>, then <em>any</em> scheduler with a non-constant ε moves
+the metric. That requires the <em>new</em> row to be <code>EvidenceDrivenScheduler</code>-on-top-of-<code>CodimensionSheetScheduler</code>,
+i.e. an EvidenceDriven wrapper around the paper-quantity-grounded
+base. Construct a <code>CodimensionSheetScheduler</code> with PID overlay.</p>
+<p><strong>What it does NOT fix:</strong> none — fully closes C4.</p>
+<p><strong>Files:</strong> Option A (6h) + Option B (1h) + a new
+<code>CodimensionSheetScheduler</code>-aware wrapper (2h) + a 3-line addition
+to <code>ScheduleSample</code> for <code>eps_implicit</code>.</p>
+<p><strong>Effort:</strong> ~9 hours total.</p>
+<p><strong>Risk:</strong> Medium. The wrapper must compose <code>EvidenceDrivenScheduler</code>
+around <code>CodimensionSheetScheduler</code> cleanly. The current
+<code>EvidenceDrivenScheduler</code> only wraps <code>CosineAnnealScheduler</code>; the
+extension is local.</p>
+<p><strong>Verifiability:</strong> Yes. End-to-end Loop-2 closure:
+- <code>runner</code> → <code>sample</code> → <code>ScheduleSample.eps_implicit</code>
+- <code>runner</code> → <code>oracle(bundle, eps_schedule=...)</code> → <code>selection_ratio</code>
+- <code>runner</code> → <code>record_round_feedback</code> → <code>EvidenceDrivenScheduler</code>
+  PID → <code>last_pid_delta</code> → next round's <code>n_cap</code>
+- <code>EvidenceDrivenScheduler</code> on <code>CodimensionSheetScheduler</code> adjusts
+  <code>n_cap</code>; <code>CodimensionSheetScheduler._paper_evidence_balance</code>
+  responds to the changed <code>n_cap_base</code> AND the cached
+  <code>eps_implicit</code>, so the audit trail
+  <code>schedule_evidence_ratio</code> also moves. The metric moves.</p>
+<hr />
+<h2 id="4-recommended-fix-with-rationale">4. Recommended fix (with rationale)<a class="headerlink" href="#4-recommended-fix-with-rationale" title="Permanent link">&para;</a></h2>
+<p><strong>Recommendation: Option A + Option B + a minimal Option C variant.</strong></p>
+<p>The combine has three stages, smallest first:</p>
+<ol>
+<li>
+<p><strong>(Option B, 1h)</strong> Add <code>EvidenceDrivenScheduler</code> as a paper-grounded
+   row in the ablation. This proves the <strong>plumbing</strong> is reachable end to
+   end (the runner feeds <code>selection_ratio</code> back into the scheduler; the
+   PID responds). The metric will still plateau at 0.8061 because the
+   PID adjusts <code>n_cap</code>, not ε.</p>
+</li>
+<li>
+<p><strong>(Option A, 6h)</strong> Modify <code>PosteriorSelectionEvaluator</code> to
+   consume <code>eps_schedule(r)</code> from the runner. The runner wires this
+   from <code>ScheduleSample.eps_implicit</code> (new field on the
+   <code>ScheduleSample</code> value object; populated by every scheduler's
+   <code>sample()</code> from its cached <code>eps_implicit</code>). On its own, the
+   ablation row from (1) will report a metric that depends on
+   <code>n_cap</code> indirectly via the cosine ramp (since <code>eps_implicit</code> is
+   fixed at construction time the metric will still plateau — but
+   the code path is <strong>live</strong>).</p>
+</li>
+<li>
+<p><strong>(Option C variant, 2h)</strong> Make <code>EvidenceDrivenScheduler</code> carry
+   a <code>_last_eps_delta</code> <em>in addition</em> to <code>_last_pid_delta</code>, exposed
+   via a new <code>ScheduleSample.eps_implicit</code> write path. The PID is
+   re-used (no changes to controller math): identical
+   <code>target_ratio = 1.0</code>, identical gains — only the <strong>destination</strong>
+   of the delta is split between <code>n_cap</code> (legacy, kept for
+   backward-compat) and the <code>eps_implicit</code> trajectory that
+   propagates through the runner to the evaluator.</p>
+</li>
+</ol>
+<p>This combination:
+- Closes Failure 1 (ablation row exists).
+- Closes Failure 2 (PID now writes to ε as well as n_cap).
+- Closes Failure 3 (evaluator reads scheduler ε).
+- Preserves backward compatibility (<code>Sample.eps_implicit</code> is
+  <code>Optional</code>; legacy schedulers that don't track ε just emit
+  <code>None</code> and the runner falls back to constant σ).
+- Restores paper Theorem 1 verifiability: a non-zero PID delta →
+  metric moves monotonically toward 1 as rounds progress, matching
+  Proposition 3 in the limit.</p>
+<hr />
+<h2 id="5-implementation-plan-fileline-targets-code-sketch-test-plan">5. Implementation plan (file:line targets, code sketch, test plan)<a class="headerlink" href="#5-implementation-plan-fileline-targets-code-sketch-test-plan" title="Permanent link">&para;</a></h2>
+<h3 id="stage-1-option-b-1-hour">Stage 1 — Option B (1 hour)<a class="headerlink" href="#stage-1-option-b-1-hour" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+1. <code>tools/run_ablation.py:226-391</code> (<code>_build_components</code>):
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">if</span> <span class="n">config</span> <span class="o">==</span> <span class="s2">"multi_round_evidence_driven_posterior_selection"</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.algorithm.scheduler.evidence_driven</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        <span class="n">EvidenceDrivenScheduler</span> <span class="k">as</span> <span class="n">_EDS</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.contracts</span><span class="w"> </span><span class="kn">import</span> <span class="n">CosineScheduleConfig</span><span class="p">,</span> <span class="n">FactorValue</span><span class="p">,</span> <span class="n">ArtifactHash</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">cfg</span> <span class="o">=</span> <span class="n">CosineScheduleConfig</span><span class="p">(</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="n">cycle_length</span><span class="o">=</span><span class="n">rounds</span><span class="p">,</span> <span class="n">schedule_family</span><span class="o">=</span><span class="s2">"cosine_no_restart"</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="n">n_min</span><span class="o">=</span><span class="n">FactorValue</span><span class="p">(</span><span class="mf">0.0</span><span class="p">),</span> <span class="n">n_max</span><span class="o">=</span><span class="n">FactorValue</span><span class="p">(</span><span class="mf">1.0</span><span class="p">),</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="n">per_channel_caps</span><span class="o">=</span><span class="p">{},</span> <span class="n">fresh_noise_floor_by_channel</span><span class="o">=</span><span class="p">{},</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="n">symmetric_delta_caps_by_channel</span><span class="o">=</span><span class="p">{},</span> <span class="n">restart_triggers_allowed</span><span class="o">=</span><span class="p">(),</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        <span class="n">config_hash</span><span class="o">=</span><span class="n">ArtifactHash</span><span class="p">(</span><span class="s2">"evidence_driven_ablation"</span><span class="p">),</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="n">frozen_before_evaluation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="p">)</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="k">return</span> <span class="n">_EDS</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span> <span class="n">kp</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">ki</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">target_ratio</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span> <span class="s2">"default"</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">rounds</span><span class="p">)</span>
+</code></pre></div>
+2. <code>tools/run_ablation.py:157-160</code> — append
+   <code>"multi_round_evidence_driven_posterior_selection"</code> to
+   <code>PAPER_GROUNDED_CONFIGURATIONS</code>.
+3. <code>tools/run_ablation.py:409-430</code> — <code>_selection_evaluator_for</code>
+   already returns the evaluator for any config in
+   <code>PAPER_GROUNDED_CONFIGURATIONS</code>. No change.
+4. <code>tools/run_ablation.py:966-970</code> — add the new config name to
+   <code>FEEDBACK_CONFIGS</code> so it uses <code>_run_one_with_feedback</code> (the
+   runner already passes the full metric dict, so the feedback
+   reaches the PID even via <code>_run_one</code>; either path is fine).</p>
+<p><strong>Tests:</strong>
+- <code>tests/test_tools/test_run_ablation.py</code>: add a 5-row smoke test
+  that the new entry exists in the markdown and carries
+  <code>selection_ratio</code> per round.
+- Unit test: <code>tests/test_algorithm/test_evidence_driven.py</code>: a new
+  test case asserting <code>record_round_feedback({"selection_ratio": 0.1})</code>
+  produces a positive <code>_last_pid_delta</code>.</p>
+<h3 id="stage-2-option-a-6-hours">Stage 2 — Option A (6 hours)<a class="headerlink" href="#stage-2-option-a-6-hours" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+1. <code>adaptive_reflow/algorithm/scheduler/_core.py:67-101</code>
+   (<code>ScheduleSample</code>): add a new optional field:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">eps_implicit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+   Frozen dataclass; default <code>None</code> preserves backward compat.
+2. <code>adaptive_reflow/algorithm/scheduler/_core.py:2620-2752</code>
+   (<code>CodimensionSheetScheduler.sample</code>): set
+   <code>eps_implicit=float(self._eps_implicit)</code> on the returned sample
+   (<code>ScheduleSample(...eps_implicit=float(self._eps_implicit))</code>).
+3. <code>adaptive_reflow/algorithm/scheduler/_core.py:368-380</code>
+   (<code>CosineAnnealScheduler.sample</code>): leave <code>eps_implicit=None</code> —
+   cosine has no ε concept; the evaluator falls back to fixed σ.
+4. <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py:271-317</code>
+   (<code>EvidenceDrivenScheduler.sample</code>): after the
+   <code>cosine_baseline</code> is computed, if the <strong>wrapped</strong> scheduler
+   reports an <code>eps_implicit</code>, propagate it onto the adjusted
+   sample:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">eps_for_sample</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wrapped</span><span class="o">.</span><span class="n">last_sample</span><span class="p">,</span> <span class="s2">"eps_implicit"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">sample</span> <span class="o">=</span> <span class="n">ScheduleSample</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">eps_implicit</span><span class="o">=</span><span class="n">eps_for_sample</span><span class="p">)</span>
+</code></pre></div>
+5. <code>adaptive_reflow/eval/posterior_selection_evaluator.py:878-922</code>
+   (<code>_compute_metrics</code>): accept <code>eps_round: float | None</code>. When
+   not None, scale <code>c_ev = c_ev * eps_round</code> (already the path
+   taken when <code>eps_schedule</code> is supplied via the <code>round_index</code>
+   overload at lines 643–687). Use the same code path:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">if</span> <span class="n">eps_round</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">eps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">eps_round</span><span class="p">))</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">c_ev</span> <span class="o">=</span> <span class="n">c_ev</span> <span class="o">*</span> <span class="n">eps</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">total</span> <span class="o">=</span> <span class="n">s_ev</span> <span class="o">+</span> <span class="n">c_ev</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">ratio</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">s_ev</span> <span class="o">/</span> <span class="n">total</span><span class="p">)))</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">(</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">s_ev</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
+</code></pre></div>
+6. <code>adaptive_reflow/eval/posterior_selection_evaluator.py:643-687</code>
+   (<code>oracle_at_round</code>): add <code>eps_round</code> kwarg that flows through to
+   <code>_compute_metrics</code>.
+7. <code>adaptive_reflow/algorithm/runner.py:872-878</code> — read
+   <code>sample.eps_implicit</code>:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">selection_evaluator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">bundle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">eps_round</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="s2">"eps_implicit"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">selection_evaluator</span><span class="p">,</span> <span class="s2">"oracle_at_round"</span><span class="p">):</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="n">sm</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">selection_evaluator</span><span class="o">.</span><span class="n">oracle_at_round</span><span class="p">(</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>            <span class="n">bundle</span><span class="p">,</span> <span class="n">channel</span><span class="o">=</span><span class="n">primary_channel</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span><span class="o">+</span><span class="n">r</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>            <span class="n">round_index</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="n">eps_round</span><span class="o">=</span><span class="n">eps_round</span><span class="p">)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="n">sm</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">selection_evaluator</span><span class="o">.</span><span class="n">oracle</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">metric</span><span class="p">[</span><span class="s2">"selection_ratio"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"selection_ratio"</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+</code></pre></div></p>
+<p><strong>Tests:</strong>
+- <code>tests/test_eval/test_posterior_selection_evaluator.py</code>: add
+  <code>test_eps_round_zero_collapses_to_sheet_dominance</code> — when
+  <code>eps_round=0</code>, the ratio is <code>1.0</code> (paper Lemma 2 limit).
+- <code>tests/test_algorithm/test_scheduler.py::test_codim_sample_carries_eps_implicit</code>
+  — schedule sample carries the cached <code>eps_implicit</code>.
+- <code>tests/test_algorithm/test_runner.py::test_runner_forwards_eps_implicit_to_evaluator</code>
+  — runner reads <code>sample.eps_implicit</code> and passes to evaluator.</p>
+<h3 id="stage-3-option-c-variant-2-hours">Stage 3 — Option C variant (2 hours)<a class="headerlink" href="#stage-3-option-c-variant-2-hours" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+1. <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py:179-249</code>
+   (<code>EvidenceDrivenScheduler.__init__</code>): add optional
+   <code>profile_residual_fn</code> parameter. When supplied, compute and
+   cache <code>sheet_A</code> via <code>paper_quantities.sheet_evidence_A(...)</code>.
+2. <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py:271-317</code>
+   (<code>sample</code>): instead of carrying <code>_last_pid_delta</code> solely as an
+   <code>n_cap</code> offset, also compute <code>_last_eps_delta = delta * k_eps</code>
+   (where <code>k_eps</code> is a configurable gain, default <code>0.5</code>) and emit
+   the modulated <code>eps_implicit</code> on the <code>ScheduleSample</code>:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">eps_base</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wrapped</span><span class="o">.</span><span class="n">last_sample</span><span class="p">,</span> <span class="s2">"eps_implicit"</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">))</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">eps_adjusted</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">eps_base</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_eps_delta</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">sample</span> <span class="o">=</span> <span class="n">ScheduleSample</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">eps_implicit</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">eps_adjusted</span><span class="p">))</span>
+</code></pre></div>
+3. <code>adaptive_reflow/algorithm/runner.py:897-898</code>: no change
+   needed; the existing <code>record_round_feedback(r, metric)</code> call
+   already passes the full metric dict, and the PID at
+   <code>evidence_driven.py:352-380</code> reads <code>selection_ratio</code> from it.</p>
+<p><strong>Tests:</strong>
+- <code>tests/test_algorithm/test_evidence_driven.py::test_pid_writes_eps_delta</code>
+  — after PID steps on a low selection_ratio, the cached
+  <code>_last_eps_delta</code> is negative (improvement direction), the
+  next sample's <code>eps_implicit</code> is reduced, and <code>n_cap</code> is
+  unchanged in legacy mode.</p>
+<h3 id="combined-verification-stage-123-end-to-end">Combined verification (Stage 1+2+3) end-to-end<a class="headerlink" href="#combined-verification-stage-123-end-to-end" title="Permanent link">&para;</a></h3>
+<p>A new ablation row <code>multi_round_evidence_driven_posterior_selection</code>
+must show <code>selection_ratio</code> <strong>rising monotonically</strong> across rounds,
+with <code>final_selection_ratio &gt; round0_selection_ratio</code> by at least
+0.05 (the F12-listed selection-ratio target). This is the empirical
+proof C4 has closed: a control loop where the round-<code>r</code> metric
+feeds the round-<code>r+1</code> schedule.</p>
+<hr />
+<h2 id="6-verification-plan">6. Verification plan<a class="headerlink" href="#6-verification-plan" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>What it checks</th>
+<th>Tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Existing test suite</td>
+<td>No regressions in cosine/codim/identity/batched rows</td>
+<td><code>pytest tests/</code></td>
+</tr>
+<tr>
+<td><code>test_eps_round_zero_collapses_to_sheet_dominance</code></td>
+<td>Paper Lemma 2 limit: <code>ε → 0</code> ⇒ <code>selection_ratio → 1</code></td>
+<td>new unit test</td>
+</tr>
+<tr>
+<td><code>test_codim_sample_carries_eps_implicit</code></td>
+<td><code>ScheduleSample.eps_implicit</code> is populated</td>
+<td>new unit test</td>
+</tr>
+<tr>
+<td><code>test_runner_forwards_eps_implicit_to_evaluator</code></td>
+<td>runner reads <code>sample.eps_implicit</code>, passes to <code>selection_evaluator</code></td>
+<td>new unit test</td>
+</tr>
+<tr>
+<td><code>test_pid_writes_eps_delta</code></td>
+<td>PID's <code>_last_eps_delta</code> mutates; next-round <code>sample.eps_implicit</code> differs</td>
+<td>new unit test</td>
+</tr>
+<tr>
+<td>New ablation row</td>
+<td><code>final_selection_ratio &gt; round0_selection_ratio</code>, ideally monotonically non-decreasing across the 20 rounds</td>
+<td><code>python tools/run_ablation.py --quick</code> then full run</td>
+</tr>
+<tr>
+<td>Convergence-Adapted row (existing)</td>
+<td>re-run shows <code>final_selection_ratio</code> differs from the cosine baseline row <strong>by a non-zero amount</strong> (currently flat-to-floating-point-noise); this is the empirical proof Failure 1 + 2 + 3 are jointly closed</td>
+<td><code>python tools/run_ablation.py</code></td>
+</tr>
+<tr>
+<td>Delta check vs cosine baseline</td>
+<td>On <code>two_moons</code>: <code>delta_selection_ratio</code> for the new evidence-driven row must be <strong>≥ +0.05</strong> above the cosine baseline's tail-mean</td>
+<td><code>_posterior_selection_section</code> already prints this; rerun after fix</td>
+</tr>
+<tr>
+<td>docs/CLAIMS.md</td>
+<td>add a claim: "C4 (Loop 2) is closed in the ablation; the per-round selection_ratio responds to the PID's ε adjustment via <code>ScheduleSample.eps_implicit</code>"</td>
+<td>manual review</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Quantitative target:</strong></p>
+<ul>
+<li>Baseline (current): <code>final_selection_ratio ≈ 0.8061</code>, no monotonic
+  rise observed (<code>_posterior_selection_section</code> already prints a flat
+  plateau at the adapter's training-fixed σ).</li>
+<li>After fix: <code>final_selection_ratio ≥ 0.85</code> on <code>two_moons</code>; monotonic
+  non-decrease across the 20 rounds; <code>delta_selection_ratio ≥ +0.05</code>
+  vs the cosine baseline row.</li>
+<li>Theorem-1 ceiling: paper Proposition 3 predicts <code>ratio → 1</code> as
+  <code>ε → 0</code>. With <code>eps_implicit</code> decaying from its initial value to
+  <code>eps_implicit − Σ_δ</code> across the cycle, the ceiling is the value at
+  the terminal round's <code>eps_implicit</code>, not 1.0 (the ablation cannot
+  drive <code>ε → 0</code> while keeping the adapter's training-noise
+  encoder-decoder numerically stable). The acceptance criterion is
+  therefore <strong>monotonic improvement</strong>, not absolute ≥ 0.95.</li>
+</ul>
+<hr />
+<h2 id="7-risks-and-unknowns">7. Risks and unknowns<a class="headerlink" href="#7-risks-and-unknowns" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Risk / unknown</th>
+<th>Likelihood</th>
+<th>Impact</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td><code>eps_implicit</code>-driven ε collapse (Option C) breaks <code>inject_noise</code>'s noise-mass math at very low ε (sqrt of small ε is well-defined but the round model's score estimate is no longer accurate).</td>
+<td>Medium</td>
+<td>High</td>
+<td>Cap <code>_last_eps_delta</code> to <code>[-eps_floor, +eps_floor]</code> with <code>eps_floor = eps_implicit * 0.1</code>; fail-closed if <code>eps_implicit</code> would drop below <code>eps_implicit/10</code>.</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>The ablation's <code>CodimensionSheetScheduler</code> row currently uses <code>eps_implicit = 0.05</code> (fixed). With Option A, the runner threads <code>sample.eps_implicit</code> from this row's <code>ScheduleSample</code>. Today this is <code>0.05</code> constant; with the new <code>EvidenceDrivenScheduler</code> row, this becomes <code>0.05 − delta(t)</code>. The codim row's <code>selection_ratio</code> curve will <strong>also move</strong> in response to the codim scheduler's <code>eps_implicit</code> (which is fixed) — wait, that's not the case; only the new EvidenceDriven row carries the epsilon delta. The codim row should be unchanged. The ablation script's "the curves are identical" verdict (currently printed at <code>run_ablation.py:1196–1269</code>) <strong>may need to be revised</strong> if the EvidenceDriven row diverges from the cosine row.</td>
+<td>High</td>
+<td>Low</td>
+<td>Update the prose only if the new row's curve diverges; the existing cosine-vs-codim comparison stays valid because both rows still use fixed <code>eps_implicit</code>.</td>
+</tr>
+<tr>
+<td>R3</td>
+<td><code>Tests</code> for the new fields are extensive; passing them on legacy code without <code>Sample.eps_implicit</code> populating must be verified. The frozen-dataclass change is additive (default <code>None</code>), so existing tests should remain green.</td>
+<td>Low</td>
+<td>Low</td>
+<td>Run the full test suite before and after the dataclass edit; expect zero regressions.</td>
+</tr>
+<tr>
+<td>R4</td>
+<td><code>TwoDimFMAdapter.solve_ode</code> is fixed at the adapter's training noise; running replay through the adapter at a different σ requires scaling the noise term. The evaluator's <code>_generate_endpoints</code> (closed-form — does not invoke the adapter's noise directly; it only invokes <code>solve_ode</code>) → the only σ-relevant call is <code>solve_ode</code>. The adapter's <code>solve_ode</code> does <strong>not</strong> currently consume a per-call σ. So Option A's "make evaluator use σ_round" requires either (a) scaling the resulting endpoints' noise residual by an <code>eps_round * SheetEvidence</code> factor in the closed-form sheet_evidence math, or (b) marking the <code>eps_round</code>-flowing path as a no-op when <code>eps_schedule is None</code>. The minimal Option A is therefore <code>(b)</code> — fall back to constant σ when the scheduler's ε is <code>None</code> (legacy). This keeps the new field additive with zero behaviour change.</td>
+<td>High</td>
+<td>Medium</td>
+<td>Document Option A as "fall-back to fixed σ unless the runner explicitly threads an <code>eps_round</code>; the new <code>EvidenceDrivenScheduler</code> row will be the only ablation cell with a non-constant σ."</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>The PDF ablation script's <code>_selection_ratio_table</code> (<code>run_ablation.py:1028–1074</code>) currently has three columns: <code>Round-0 | Final | Mean tail</code>. Adding the new evidence-driven row may make this table report different values across rows — but more importantly, the <strong>codim row's metric curve will stay flat</strong> (because <code>CodimensionSheetScheduler.eps_implicit</code> is a constant 0.05 today). The new EvidenceDriven row's curve is the only one that should rise. If the cosine baseline also moves, we have an unintended side-effect.</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Re-check the cosine row's <code>selection_ratio</code> after Stage 2 is in place; it should remain at the current plateau (~0.8061) because <code>CosineAnnealScheduler.ScheduleSample.eps_implicit = None</code>. If it moves, gate Stage 3 on <code>test_cosine_does_not_move_selection_ratio</code>.</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>The <code>_posterior_selection_section</code> markdown text at <code>run_ablation.py:1256–1269</code> already documents "the two selection-ratio curves are identical" with a narrative about scheduler-independence. After the fix, the new row's curve differs from the codim/cosine curves. <strong>The existing prose must be updated</strong> to describe the now-divergent evidence-driven row. This is a documentation change, not a code change — <code>08-fix-plan.md</code> notes it as an ADR-0013 phase 5 deliverable.</td>
+<td>Low</td>
+<td>Low</td>
+<td>Update the prose in the same PR as the fix.</td>
+</tr>
+<tr>
+<td>R7</td>
+<td><code>EvidenceDrivenScheduler</code> was added in commit <code>0fe7dab</code> (F8 refuted, F12 follow-up) but is <strong>not registered</strong> in <code>SCHEDULER_REGISTRY</code> (<code>scheduler/_core.py:2992–3002</code>). Direct import works (<code>from ... import EvidenceDrivenScheduler</code>), but polymorphic construction via <code>build_scheduler("evidence_driven", ...)</code> does not. The ablation script's <code>_build_components</code> does direct construction (option B suggested above), so this is not strictly a blocker; but if the ablation row is later replicated via config strings, the registry must include <code>evidence_driven</code>.</td>
+<td>Low</td>
+<td>Low</td>
+<td>Add <code>EvidenceDrivenScheduler</code> to the registry as part of Stage 1 (one-line).</td>
+</tr>
+<tr>
+<td>U1</td>
+<td><strong>Unknown:</strong> does <code>record_round_feedback</code>'s <code>selection_ratio</code> proxy (the F12 heuristic per <code>08-fix-plan.md:567–579</code>) reach the PID via the existing</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>runner → scheduler contract? Verified: yes — runner passes the</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>full <code>metric</code> dict at <code>runner.py:897–898</code>; <code>evidence_driven.py:366</code> reads</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>metrics["selection_ratio"]</code> as the F12 heuristic fallback.</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>Confirmed via line-level read.</td>
+<td></td>
+</tr>
+<tr>
+<td>U2</td>
+<td><strong>Unknown:</strong> does paper Proposition 3's quantitative allocation</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>(Corollary 1, <code>Z ≥ C₁ε</code>, <code>μ(∪I_z) ≤ C₂ε</code>) show up in the proposed</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>metric once <code>ε</code> decays? Likely yes by construction (the cell mass</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>term is <code>O(ε)</code> and is the one place <code>eps_round</code> enters), but the</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>empirical ablation must confirm.</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>Single-run post-fix smoke test.</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="summary-table-fix-options-trade-offs">Summary table — fix options × trade-offs<a class="headerlink" href="#summary-table-fix-options-trade-offs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Fixes</th>
+<th>Doesn't fix</th>
+<th>Files</th>
+<th>Effort</th>
+<th>Risk</th>
+<th>Verifies Theorem 1?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A — evaluator reads scheduler ε</td>
+<td>Failure 3</td>
+<td>Failure 1 (no row), Failure 2 (PID adjusts n_cap)</td>
+<td><code>posterior_selection_evaluator.py</code>, <code>runner.py</code>, <code>scheduler/_core.py</code> (new field)</td>
+<td>6h</td>
+<td>Low</td>
+<td>Yes (when combined with B+C)</td>
+</tr>
+<tr>
+<td>B — add ablation row</td>
+<td>Failure 1</td>
+<td>Failure 2 + 3 (no metric move)</td>
+<td><code>tools/run_ablation.py</code> only</td>
+<td>1h</td>
+<td>Very low</td>
+<td>No</td>
+</tr>
+<tr>
+<td>C — PID adjusts ε not n_cap</td>
+<td>Failure 2 (when extend to ε)</td>
+<td>Failure 1 (no row), Failure 3 (evaluator doesn't read it)</td>
+<td><code>evidence_driven.py</code> only</td>
+<td>3h</td>
+<td>Medium</td>
+<td>Indirect (depends on A)</td>
+</tr>
+<tr>
+<td>D — new paper-quantity ratio column</td>
+<td>Failure 2+3 (forecasts Theorem 1 math)</td>
+<td>Failure 1 (no row)</td>
+<td>new module + 3 ablation edits</td>
+<td>4h</td>
+<td>Low</td>
+<td>Yes (literal Theorem 1 ratio)</td>
+</tr>
+<tr>
+<td>E — conflate n_cap and ε</td>
+<td>Failure 2+3 (cheap)</td>
+<td>paper-semantic separation</td>
+<td><code>runner.py</code>, <code>evidence_driven.py</code></td>
+<td>2h</td>
+<td>Medium</td>
+<td>No (semantic conflation)</td>
+</tr>
+<tr>
+<td>F — combine A+B+minimal-C</td>
+<td>All three failures</td>
+<td>none</td>
+<td>A + B + small C extension</td>
+<td>9h</td>
+<td>Medium</td>
+<td><strong>Yes (recommended)</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-line-summary">7-line summary<a class="headerlink" href="#7-line-summary" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Root cause identified:</strong> the metric's σ is the adapter's training-fixed
+  replay noise; the PID adjusts <code>n_cap</code>, which cannot reach that σ; the
+  ablation does not even exercise the PID scheduler. Three stacked
+  structural failures.</li>
+<li><strong>Number of fix options analyzed:</strong> 6 (A–F).</li>
+<li><strong>Recommended fix:</strong> Option F = Option A (evaluator reads scheduler ε,
+  ~6h) + Option B (new ablation row, ~1h) + minimal Option C variant
+  (PID writes an ε-delta in addition to n_cap-delta, ~2h) — total ~9h.</li>
+<li><strong>Files that will change:</strong> <code>tools/run_ablation.py</code> (new config +
+  feedback row), <code>adaptive_reflow/eval/posterior_selection_evaluator.py</code>
+  (optional <code>eps_round</code> kwarg on <code>_compute_metrics</code>), <code>adaptive_reflow/algorithm/scheduler/_core.py</code>
+  (add <code>ScheduleSample.eps_implicit</code>, populate on <code>CodimensionSheetScheduler.sample</code>),
+  <code>adaptive_reflow/algorithm/scheduler/evidence_driven.py</code> (extend
+  <code>sample</code> to carry <code>eps_implicit</code> and write a <code>_last_eps_delta</code> via
+  the existing PID), <code>adaptive_reflow/algorithm/runner.py</code> (pass
+  <code>sample.eps_implicit</code> to <code>selection_evaluator</code>).</li>
+<li><strong>Effort estimate:</strong> ~9 hours for end-to-end closure; 1h for the
+  ablation plumbing alone (Option B only, no metric movement).</li>
+<li><strong>Verification threshold:</strong> <code>final_selection_ratio &gt; round0_selection_ratio</code>
+  by ≥ +0.05 on <code>two_moons</code>; monotonic non-decrease across 20 rounds;
+  the existing <code>_posterior_selection_section</code> narrative must be
+  revised because the three rows now differ.</li>
+<li><strong>Biggest risk or unknown:</strong> R1 — coupling the PID's <code>eps_implicit</code>
+  adjustment with the adapter's noise-injection semantics
+  (<code>TwoDimFMAdapter.inject_forward_noise</code> / <code>inject_noise</code>) without
+  breaking the <code>inject_noise</code>'s noise-mass invariant; R4 — the
+  closed-form metric's <code>solve_ode</code> does not consume a per-call σ,
+  so Option A's "use ε_round" path must fall back to the existing
+  <code>eps_schedule</code> multiplicative on <code>cell_evidence</code> rather than
+  re-solving the ODE at the new σ.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

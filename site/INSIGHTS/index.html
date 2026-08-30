@@ -572,6 +572,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#r3-adversarial-fixes-round-3-uplift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R3 adversarial fixes (Round-3 uplift)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#6-open-questions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -651,6 +662,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-state-machine-infrastructure-phase-2a-2b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. State machine infrastructure (Phase 2a + 2b)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -854,6 +876,35 @@ coverage metric (<code>0.1916 -&gt; 0.7810</code> near-far separation)
 [CLM-023]. The type / lint cleanup lands both counters at zero:
 mypy <strong>33 -&gt; 0</strong>, ruff <strong>32 -&gt; 0</strong>, across 118 source files
 [CLM-024].</p>
+<h2 id="r3-adversarial-fixes-round-3-uplift">R3 adversarial fixes (Round-3 uplift)<a class="headerlink" href="#r3-adversarial-fixes-round-3-uplift" title="Permanent link">&para;</a></h2>
+<p>The R3 adversarial survey (<a href="../r3-survey/05-verified-findings/">docs/r3-survey/05-verified-findings.md</a>)
+read-only verified <strong>17</strong> findings against the shipped framework and
+refuted <strong>5</strong> [CLM-031]. The P0 paper-correctness fixes restore the
+documented fail-closed semantics: <code>BoundedMergeOperator.merge</code> now
+raises <code>MergeAuthorityError</code> on <code>cap &lt; floor</code> after clipping instead
+of silently swapping the envelope [CLM-025], and
+<code>ConvergenceAdaptiveScheduler</code>'s PID consumes the EMA-smoothed W2
+(<code>self._smoothed_w2</code>) instead of the raw aggregated signal
+[CLM-026]. Loop 2 of the documented four-loop design is closed:
+<code>EvidenceDrivenScheduler</code> subscribes to the runner's per-round
+metric dict via <code>record_round_feedback</code> and updates <code>n_cap</code> via a
+PID-lite controller, so paper quantities now reach a scheduler and
+influence the per-round capacity [CLM-027]. The eight plug-in
+families (scheduler / policy driver / merge operator / blender /
+adapter / mixer / evaluator / envelope) are codified as named
+<code>Port[T]</code> instances with explicit <code>register(...)</code> / <code>resolve(...)</code>
+helpers, closing W1 (blender delegation) and W2 (orchestrator
+<code>bounded_merge</code> bypass) from <code>03-coupling.md</code> [CLM-028]. Two new
+algorithm additions land behind the canonical Protocol surfaces:
+<code>FreeTrajScheduler</code> (<a href="https://arxiv.org/abs/2507.10532">arXiv:2507.10532</a>)
+[CLM-029] and <code>MeanFlowMergeOperator</code>
+(<a href="https://arxiv.org/abs/2505.13447">arXiv:2505.13447</a>) [CLM-030].
+Fifteen P1 framework-driving fixes (F1, F2, F3, F6, F7, F10, F14,
+F18, F19, F22, F23, F25) close the rest of the verified leaks; 17
+new tests pin every fix and the six verification gates
+(<code>pytest tests/</code> / <code>ruff</code> / <code>mypy</code> / <code>check_docs_against_code.py</code>
+/ <code>check_claims_consistency.py</code> / <code>mkdocs build --strict</code>) all
+remain green.</p>
 <h2 id="6-open-questions">6. Open questions<a class="headerlink" href="#6-open-questions" title="Permanent link">&para;</a></h2>
 <p>The "next question" above is the algorithm-level gap. A separate, narrower gap surfaced in the post-ADR-0013 code-review pass (B5): the shipped <code>selection_ratio</code> metric was claimed to converge toward 1 as rounds progress, but <code>docs/review/B5-VERIFICATION.md</code> shows that the metric is in fact invariant to loop state — it is an unconditional replay of the <code>(adapter, target)</code> pair, not an endpoint-conditioned posterior, and two unrelated schedulers report identical curves to four decimal places. The reviewer's symptom ("wrong bundle passed") was a wiring guess; the actual defect is that the evaluator's <code>bundle</code> parameter is inert, so no rewiring fix would change the output. Closing the gap requires an endpoint-conditioned variant (scoring the round's own endpoints rather than a fresh replay), which is blocked on the runner carrying a batch of trajectories per round — a real architectural change to <code>ReInferenceRunner</code> and <code>TwoDimFMAdapter</code>, both currently single-sample. ADR-0013 §"Selection metric status" demotes the convergence-to-1 prediction to apply only to that future variant. The shipped metric remains in place until a human design decision lands; the verification document is the canonical record of the investigation.</p>
 <h2 id="7-what-this-insight-does-not-claim">7. What this insight does NOT claim<a class="headerlink" href="#7-what-this-insight-does-not-claim" title="Permanent link">&para;</a></h2>
@@ -907,6 +958,12 @@ paper's claim of optimality.</p>
 <li><strong>Plateau-valued, not convergence-valued</strong> [CLM-004]. It measures a property of the <code>(adapter weights, target)</code> pair, not a per-round convergence trajectory. The empirical plateau values are pinned by regression tests in <code>tests/test_eval/test_posterior_selection_evaluator.py</code>.</li>
 </ul>
 <p>Any audit that wants to check the <em>literal</em> paper invariants should use the four paper-quantity contracts in <code>adaptive_reflow/contracts/paper_quantities.py</code> (<code>sheet_evidence_A</code>, <code>root_cell_packing_B</code>, <code>per_cell_coefficient_C</code>, <code>exterior_gap_e_rho</code>) rather than the framework's heuristic <code>selection_ratio</code>. The two surfaces are complementary: the heuristic monitors the qualitative scale gap, the paper-quantity contracts compute the literal constants the paper proves. <code>ReInferenceRunner</code> emits the four paper quantities in <code>per_round_metrics[r]["paper_quantity_diagnostics"]</code> whenever the config carries a <code>paper_quantities_provider</code>, so a reviewer can pull the literal <code>A_g</code>, <code>B_g</code>, <code>C_g</code>, <code>e_rho</code> from the audit trail without recomputing them.</p>
+<h2 id="8-state-machine-infrastructure-phase-2a-2b">8. State machine infrastructure (Phase 2a + 2b)<a class="headerlink" href="#8-state-machine-infrastructure-phase-2a-2b" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Substrate is generic + HSM + decorator + type-safe</strong> [CLM-033]. <code>adaptive_reflow/contracts/state_machine.py</code> ships a PEP 695 <code>class StateMachine[TState, TEvent]</code> with decorator-driven transitions, hierarchical regions, history pseudo-states, parallel regions, byte-deterministic <code>TransitionLog</code>, async guards, and DOT / Mermaid export — stdlib-only, <code>mypy --strict</code> clean, no third-party dependency.</li>
+<li><strong>Coverage is universal</strong> [CLM-034]. Every scheduler class plus the <code>ReInferenceRunner</code> orchestrator carries an observation-only <code>StateMachine</code> (17 machines, 333 typed transitions). The runner's lifecycle machine traverses ROUND_ACTIVE -&gt; FEEDBACK_PENDING -&gt; NEXT_ROUND_READY per round, making the 4 feedback loops typed transitions in the audit trail.</li>
+<li><strong>Backward-compatible by construction</strong> [CLM-034]. <code>wrap_scheduler_with_state_machine</code> returns a dynamic subclass of the inner scheduler, so isinstance checks against the inner scheduler class stay true (parametrised test at <code>tests/test_algorithm/test_state_machine_integration.py:90-118</code>); existing 2027+ tests pass unchanged. Paper-grounded <code>selection_ratio</code> regressions from earlier R3 closure [CLM-032] are not touched by this layering (the SM only observes; the scheduler behaviour is bit-for-bit preserved).</li>
+</ul>
 
 
 

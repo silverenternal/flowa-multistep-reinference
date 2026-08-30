@@ -1,0 +1,918 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>2D Rectified-Flow SOTA Experiment — target: two_moons - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#2d-rectified-flow-sota-experiment-target-two_moons" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2D Rectified-Flow SOTA Experiment — target: two_moons
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scheduler-comparison-paper-theorem-1-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduler comparison (paper Theorem 1 metric)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-per-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best per metric
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-round-tail-averages-mean-over-last-5-rounds-all-seeds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-round tail averages (mean over last 5 rounds, all seeds)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-seed-raw-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-seed raw values
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-seed raw values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#baseline-1-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        baseline (1-pass)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cosineannealscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CosineAnnealScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codimensionsheetscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CodimensionSheetScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evidencedrivenscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EvidenceDrivenScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#freetrajscheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FreeTrajScheduler
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="2d-rectified-flow-sota-experiment-target-two_moons">2D Rectified-Flow SOTA Experiment — target: <code>two_moons</code><a class="headerlink" href="#2d-rectified-flow-sota-experiment-target-two_moons" title="Permanent link">&para;</a></h1>
+<p>Configuration: 1000 samples/round × 20 rounds × 3 seeds. Same adapter, same weights, same evaluator; only the inference strategy differs between baseline (1-pass, cycle_length=1) and framework (multi-round, cycle_length=20). Total wall-clock: 990.2s.</p>
+<h2 id="scheduler-comparison-paper-theorem-1-metric">Scheduler comparison (paper Theorem 1 metric)<a class="headerlink" href="#scheduler-comparison-paper-theorem-1-metric" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th style="text-align: right;">Mean selection_ratio (last 5 rounds, across seeds)</th>
+<th style="text-align: right;">std</th>
+<th style="text-align: right;">Mean W2 (last 5 rounds, across seeds)</th>
+<th style="text-align: right;">std</th>
+<th style="text-align: right;">Delta selection vs baseline</th>
+<th style="text-align: right;">Delta selection (% of baseline)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baseline (1-pass)</td>
+<td style="text-align: right;">0.8143</td>
+<td style="text-align: right;">0.0003</td>
+<td style="text-align: right;">0.5029</td>
+<td style="text-align: right;">0.0098</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td style="text-align: right;">0.8091</td>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">0.4663</td>
+<td style="text-align: right;">0.0078</td>
+<td style="text-align: right;">-0.0052</td>
+<td style="text-align: right;">-0.64%</td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td style="text-align: right;">0.8091</td>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">0.4663</td>
+<td style="text-align: right;">0.0078</td>
+<td style="text-align: right;">-0.0052</td>
+<td style="text-align: right;">-0.64%</td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td style="text-align: right;">0.8099</td>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">0.5031</td>
+<td style="text-align: right;">0.0049</td>
+<td style="text-align: right;">-0.0044</td>
+<td style="text-align: right;">-0.54%</td>
+</tr>
+<tr>
+<td>FreeTrajScheduler</td>
+<td style="text-align: right;">0.8091</td>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">0.4663</td>
+<td style="text-align: right;">0.0078</td>
+<td style="text-align: right;">-0.0052</td>
+<td style="text-align: right;">-0.64%</td>
+</tr>
+</tbody>
+</table>
+<h2 id="best-per-metric">Best per metric<a class="headerlink" href="#best-per-metric" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Best W2 (lowest)</strong>: <code>CosineAnnealScheduler</code> at <code>W2 = 0.4663</code>.</li>
+<li><strong>Best selection_ratio (highest)</strong>: <code>EvidenceDrivenScheduler</code> at <code>selection_ratio = 0.8099</code>.</li>
+<li><strong>Delta vs baseline</strong>: <code>delta_W2 = +0.0366</code> (positive =&gt; framework wins), <code>delta_selection_ratio = -0.0044</code> (<code>-0.54%</code> of baseline).</li>
+</ul>
+<h2 id="per-round-tail-averages-mean-over-last-5-rounds-all-seeds">Per-round tail averages (mean over last 5 rounds, all seeds)<a class="headerlink" href="#per-round-tail-averages-mean-over-last-5-rounds-all-seeds" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th style="text-align: right;">Per-seed mean selection_ratio (last 5 rounds)</th>
+<th style="text-align: right;">Per-seed mean W2 (last 5 rounds)</th>
+<th style="text-align: right;">Δ W2 vs baseline</th>
+<th style="text-align: right;">% W2 reduction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baseline (1-pass)</td>
+<td style="text-align: right;">0.8143</td>
+<td style="text-align: right;">0.5029</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td style="text-align: right;">0.8091</td>
+<td style="text-align: right;">0.4663</td>
+<td style="text-align: right;">+0.0366</td>
+<td style="text-align: right;">+7.28%</td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td style="text-align: right;">0.8091</td>
+<td style="text-align: right;">0.4663</td>
+<td style="text-align: right;">+0.0366</td>
+<td style="text-align: right;">+7.28%</td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td style="text-align: right;">0.8099</td>
+<td style="text-align: right;">0.5031</td>
+<td style="text-align: right;">-0.0001</td>
+<td style="text-align: right;">-0.03%</td>
+</tr>
+<tr>
+<td>FreeTrajScheduler</td>
+<td style="text-align: right;">0.8091</td>
+<td style="text-align: right;">0.4663</td>
+<td style="text-align: right;">+0.0366</td>
+<td style="text-align: right;">+7.28%</td>
+</tr>
+</tbody>
+</table>
+<h2 id="per-seed-raw-values">Per-seed raw values<a class="headerlink" href="#per-seed-raw-values" title="Permanent link">&para;</a></h2>
+<h3 id="baseline-1-pass">baseline (1-pass)<a class="headerlink" href="#baseline-1-pass" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Seed</th>
+<th style="text-align: right;">Mean W2 (last 5)</th>
+<th style="text-align: right;">Mean selection_ratio (last 5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.5133</td>
+<td style="text-align: right;">0.8141</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.5018</td>
+<td style="text-align: right;">0.8142</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.4938</td>
+<td style="text-align: right;">0.8146</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cosineannealscheduler">CosineAnnealScheduler<a class="headerlink" href="#cosineannealscheduler" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Seed</th>
+<th style="text-align: right;">Mean W2 (last 5)</th>
+<th style="text-align: right;">Mean selection_ratio (last 5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.4753</td>
+<td style="text-align: right;">0.8091</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.4631</td>
+<td style="text-align: right;">0.8089</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.4606</td>
+<td style="text-align: right;">0.8092</td>
+</tr>
+</tbody>
+</table>
+<h3 id="codimensionsheetscheduler">CodimensionSheetScheduler<a class="headerlink" href="#codimensionsheetscheduler" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Seed</th>
+<th style="text-align: right;">Mean W2 (last 5)</th>
+<th style="text-align: right;">Mean selection_ratio (last 5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.4753</td>
+<td style="text-align: right;">0.8091</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.4631</td>
+<td style="text-align: right;">0.8089</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.4606</td>
+<td style="text-align: right;">0.8092</td>
+</tr>
+</tbody>
+</table>
+<h3 id="evidencedrivenscheduler">EvidenceDrivenScheduler<a class="headerlink" href="#evidencedrivenscheduler" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Seed</th>
+<th style="text-align: right;">Mean W2 (last 5)</th>
+<th style="text-align: right;">Mean selection_ratio (last 5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.5085</td>
+<td style="text-align: right;">0.8098</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.5018</td>
+<td style="text-align: right;">0.8099</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.4989</td>
+<td style="text-align: right;">0.8100</td>
+</tr>
+</tbody>
+</table>
+<h3 id="freetrajscheduler">FreeTrajScheduler<a class="headerlink" href="#freetrajscheduler" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Seed</th>
+<th style="text-align: right;">Mean W2 (last 5)</th>
+<th style="text-align: right;">Mean selection_ratio (last 5)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.4753</td>
+<td style="text-align: right;">0.8091</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.4631</td>
+<td style="text-align: right;">0.8089</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.4606</td>
+<td style="text-align: right;">0.8092</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

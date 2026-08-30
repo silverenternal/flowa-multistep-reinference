@@ -1,0 +1,2334 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>R2: Universal State Machine Plan — All Schedulers + ReInferenceRunner - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#r2-universal-state-machine-plan-all-schedulers-reinferencerunner" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              R2: Universal State Machine Plan — All Schedulers + ReInferenceRunner
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#section-1-all-scheduler-classes-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 1: All scheduler classes inventory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-2-orchestrator-inventory-reinferencerunner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 2: Orchestrator inventory (ReInferenceRunner)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 2: Orchestrator inventory (ReInferenceRunner)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#public-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#internal-state-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal state fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-run-local-state-stack-allocated-but-conceptually-persistent-across-rounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-run local state (stack-allocated but conceptually persistent across rounds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-step-orchestration-lifecycle-from-docsadapter_interface_specmd-7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11-step orchestration lifecycle (from docs/ADAPTER_INTERFACE_SPEC.md §7)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#where-each-of-the-4-feedback-loops-currently-triggers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where each of the 4 feedback loops currently triggers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-3-universal-state-vocabulary-common-across-schedulers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 3: Universal state vocabulary (common across schedulers)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 3: Universal state vocabulary (common across schedulers)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common states
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#universal-guards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Universal guards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#universal-common-transition-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Universal common transition table
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-4-per-scheduler-state-machines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 4: Per-scheduler state machines
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 4: Per-scheduler state machines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-cosineannealscheduler-1-trivial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 CosineAnnealScheduler (#1) — TRIVIAL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-constantscheduler-2-trivial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 ConstantScheduler (#2) — TRIVIAL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-linearscheduler-3-trivial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 LinearScheduler (#3) — TRIVIAL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-exponentialscheduler-4-trivial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 ExponentialScheduler (#4) — TRIVIAL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-polynomialscheduler-5-trivial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 PolynomialScheduler (#5) — TRIVIAL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-sigmoidscheduler-6-trivial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 SigmoidScheduler (#6) — TRIVIAL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#47-convergenceadaptivescheduler-7-complex-pid-lite-multi-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.7 ConvergenceAdaptiveScheduler (#7) — COMPLEX (PID-lite, multi-metric)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#48-codimensionsheetscheduler-8-complex-paper-grounded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.8 CodimensionSheetScheduler (#8) — COMPLEX (paper-grounded)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#49-evidencedrivenscheduler-9-complex-paper-grounded-pid-lite-loop-2-closer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.9 EvidenceDrivenScheduler (#9) — COMPLEX (paper-grounded, PID-lite, Loop 2 closer)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#410-freetrajscheduler-10-moderate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.10 FreeTrajScheduler (#10) — MODERATE
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#411-edmscheduler-11-complex-optional-adaptive-sigma_max" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.11 EDMScheduler (#11) — COMPLEX (optional adaptive sigma_max)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#412-adaptivepidscheduler-12-complex-full-pid-multi-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.12 AdaptivePIDScheduler (#12) — COMPLEX (full PID, multi-metric)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#413-jitteredconstantscheduler-13-trivial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.13 JitteredConstantScheduler (#13) — TRIVIAL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#414-multichanneljitteredconstantscheduler-14-moderate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.14 MultiChannelJitteredConstantScheduler (#14) — MODERATE
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#415-sequentialscheduler-15-moderate-composite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.15 SequentialScheduler (#15) — MODERATE (composite)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#416-handoffsequentialscheduler-16-moderate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.16 HandoffSequentialScheduler (#16) — MODERATE
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-scheduler-state-extension-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-scheduler state-extension summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-5-orchestrator-state-machine-design-reinferencerunnerrun" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 5: Orchestrator state machine design (ReInferenceRunner.run)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 5: Orchestrator state machine design (ReInferenceRunner.run)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#outer-state-machine-per-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outer state machine (per-run)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inner-state-machine-per-round-the-11-step-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inner state machine (per-round, the 11-step lifecycle)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#where-each-loop-explicitly-transitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where each loop explicitly transitions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-6-state-machine-library-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 6: State machine library design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 6: State machine library design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-constraints-carried-from-01-modern-statemachine-researchmd-7" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design constraints (carried from 01-modern-statemachine-research.md §7)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concrete-api-sketch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concrete API sketch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#library-loc-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Library LOC budget
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-7-integration-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 7: Integration plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 7: Integration plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strategy-wrap-do-not-replace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy: WRAP, do not replace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-scheduler-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-scheduler integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backward-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backward compatibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-8-test-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 8: Test plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 8: Test plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#per-scheduler-tests-one-per-state-transition-16-schedulers-1-per-guard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-scheduler tests (one per state transition × 16 schedulers + 1 per guard)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-scheduler tests (one per state transition × 16 schedulers + 1 per guard)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-state-tests-run-for-every-scheduler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common-state tests (run for every scheduler)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-scheduler-extension-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-scheduler extension tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#per-guard-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-guard tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visualization-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualization tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#byte-determinism-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Byte-determinism tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-9-verification-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 9: Verification plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Section 9: Verification plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#selection-ratio-preservation-paper-theorem-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selection-ratio preservation (paper Theorem 1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gate-preservation-all-6-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gate preservation (all 6 gates)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state-machine-log-byte-determinism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State-machine log byte-determinism
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-regression" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-regression
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#section-10-risks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Section 10: Risks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-line-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11-line summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="r2-universal-state-machine-plan-all-schedulers-reinferencerunner">R2: Universal State Machine Plan — All Schedulers + ReInferenceRunner<a class="headerlink" href="#r2-universal-state-machine-plan-all-schedulers-reinferencerunner" title="Permanent link">&para;</a></h1>
+<p><strong>Agent:</strong> R2 (state machine inventory + design)
+<strong>Survey date:</strong> 2026-08-30
+<strong>Scope:</strong> Inventory EVERY scheduler class in the framework, design a state machine for each, and design the orchestrator state machine for <code>ReInferenceRunner</code> — universal coverage, not just 4 schedulers.
+<strong>Reading order followed:</strong> <code>_core.py</code>, <code>evidence_driven.py</code>, <code>freetraj.py</code>, <code>__init__.py</code>, <code>scheduler_extra.py</code>, <code>scheduler_r2.py</code>, <code>round2_extra.py</code>, <code>handoff.py</code>, <code>sequential_handoff.py</code>, <code>runner.py</code>, <code>frame/orchestrator.py</code>, <code>01-modern-statemachine-research.md</code>.</p>
+<hr />
+<h2 id="section-1-all-scheduler-classes-inventory">Section 1: All scheduler classes inventory<a class="headerlink" href="#section-1-all-scheduler-classes-inventory" title="Permanent link">&para;</a></h2>
+<p>Universal inventory of every class implementing (or wrapping) <code>SchedulerProtocol</code> in the working tree. Each row covers one concrete implementation.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Name</th>
+<th>Module:line</th>
+<th>Public methods</th>
+<th>Internal state fields</th>
+<th>Paper-grounded (A_g / B_g / C_g / e_ρ)?</th>
+<th>4-loop participant?</th>
+<th>Trivial / Complex</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>CosineAnnealScheduler</code></td>
+<td><code>scheduler/_core.py:291</code></td>
+<td><code>sample, cycle_length, schedule_family, config_hash, reset, record_round_feedback, inject_noise, to_config, from_config, memory_fraction_for</code></td>
+<td><code>_config, _last_sample, _profile_residual_fn, _sheet_A</code></td>
+<td>Partial (optional <code>_sheet_A</code> only when <code>profile_residual_fn</code> supplied)</td>
+<td>No (no-op <code>record_round_feedback</code> on canonical path)</td>
+<td>Trivial (1 cache field)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>ConstantScheduler</code></td>
+<td><code>scheduler/_core.py:572</code></td>
+<td>same protocol surface</td>
+<td><code>_cycle_length, _n_cap, _seed, _last_sample, _config_hash_value</code></td>
+<td>No</td>
+<td>No</td>
+<td>Trivial (1 cap field)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>LinearScheduler</code></td>
+<td><code>scheduler/_core.py:767</code></td>
+<td>same protocol surface</td>
+<td><code>_cycle_length, _n_min, _n_max, _seed, _last_sample, _config_hash_value</code></td>
+<td>No</td>
+<td>No</td>
+<td>Trivial (2 fields)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>ExponentialScheduler</code></td>
+<td><code>scheduler/_core.py:978</code></td>
+<td>same protocol surface</td>
+<td><code>_cycle_length, _n_max, _alpha, _seed, _last_sample, _config_hash_value</code></td>
+<td>No</td>
+<td>No</td>
+<td>Trivial (2 fields)</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>PolynomialScheduler</code></td>
+<td><code>scheduler/_core.py:1200</code></td>
+<td>same protocol surface</td>
+<td><code>_cycle_length, _n_min, _n_max, _power, _seed, _last_sample, _config_hash_value</code></td>
+<td>No</td>
+<td>No</td>
+<td>Trivial (3 fields)</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>SigmoidScheduler</code></td>
+<td><code>scheduler/_core.py:1438</code></td>
+<td>same protocol surface</td>
+<td><code>_cycle_length, _n_min, _n_max, _steepness, _midpoint, _seed, _last_sample, _config_hash_value</code></td>
+<td>No</td>
+<td>No</td>
+<td>Trivial (4 fields)</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>ConvergenceAdaptiveScheduler</code></td>
+<td><code>scheduler/_core.py:1713</code></td>
+<td>same + <code>controller_props (kp, kd, shift_max, ema, shift, smoothed_w2, w2_history, metric_weights, last_feedback_keys)</code></td>
+<td><code>_base, _kp, _kd, _shift_max, _ema, _metric_weights, _w2_history, _smoothed_w2, _shift, _last_feedback_keys, _last_sample, _config_hash_value</code></td>
+<td>No (consumes W2 / coverage / selection_ratio)</td>
+<td><strong>YES — Loop 1</strong> (W2 / coverage → shift adjustment)</td>
+<td>Complex (10+ state fields)</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>CodimensionSheetScheduler</code></td>
+<td><code>scheduler/_core.py:2275</code></td>
+<td>same + <code>with_profile, eps_implicit, eps_direction, profile_signature, sheet_A, packing_B, cell_C, exterior_gap_e_rho, base, last_evidence_ratio</code></td>
+<td><code>_cycle_length, _n_min, _n_max, _eps_implicit, _eps_direction, _seed, _profile_residual_fn, _profile_signature, _sheet_A, _packing_B, _cell_C, _exterior_gap_e_rho, _base, _last_sample, _last_evidence_ratio, _config_hash_value, _legacy_direction_pending_warning</code></td>
+<td><strong>YES — full paper grounding</strong> (A_g, B_g, C_g, e_ρ all cached)</td>
+<td>No (closed-form cosine + reportable evidence ratio)</td>
+<td>Complex (15 fields)</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>EvidenceDrivenScheduler</code></td>
+<td><code>scheduler/evidence_driven.py:192</code></td>
+<td>same + <code>controller, last_sample</code></td>
+<td><code>_config, _sheet_A, _wrapped, _controller, _last_sample, _last_audit_codes, _last_pid_delta, _last_eps_delta, _k_eps, _eps_implicit_base</code></td>
+<td><strong>YES</strong> (closes Loop 2 via evidence_ratio → PID)</td>
+<td><strong>YES — Loop 2</strong> (paper-quantities → scheduler feedback)</td>
+<td>Complex (10 fields + inner <code>_PIDLiteController</code>)</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>FreeTrajScheduler</code></td>
+<td><code>scheduler/freetraj.py:63</code></td>
+<td>same + <code>trajectory_amplitude, trajectory_period</code></td>
+<td><code>_config, _trajectory_amplitude, _trajectory_period, _wrapped, _last_sample, _last_trajectory_progress, _last_audit_codes</code></td>
+<td>No (trajectory-aware substep sizing; not paper-quantity grounded)</td>
+<td>Optional feedback on <code>trajectory_progress</code> metric</td>
+<td>Moderate (5 fields)</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>EDMScheduler</code></td>
+<td><code>scheduler_extra.py:58</code></td>
+<td>same + <code>sigma_min, sigma_max, sigma_max_effective, sigma_max_history, rho, adaptive_sigma_max</code></td>
+<td><code>_cycle_length, _n_min, _n_max, _sigma_min, _sigma_max, _rho, _seed, _adaptive_sigma_max, _adaptive_pid_kp, _adaptive_pid_kd, _sigma_max_eff, _w2_history, _sigma_max_history, _last_sample, _config_hash_value</code></td>
+<td>No (Karras EDM closed-form, optional <code>adaptive_sigma_max</code> feedback path)</td>
+<td><strong>YES — Loop 1 derivative</strong> (when <code>adaptive_sigma_max=True</code>, drives <code>sigma_max_eff</code>)</td>
+<td>Complex (14 fields)</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>AdaptivePIDScheduler</code></td>
+<td><code>scheduler_extra.py:381</code></td>
+<td>same + <code>base, kp, kd, ki, integral_window, shift_max, shift</code></td>
+<td><code>_base, _kp, _kd, _ki, _integral_window, _shift_max, _ema, _seed, _metric_weights, _metric_histories, _loss_history, _shift, _last_sample, _config_hash_value</code></td>
+<td>No (full multi-metric PID; wraps <code>ConvergenceAdaptiveScheduler</code>)</td>
+<td><strong>YES — Loop 1</strong> (multi-metric PID: W2 + coverage + selection_ratio)</td>
+<td>Complex (13 fields)</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>JitteredConstantScheduler</code></td>
+<td><code>scheduler_extra.py:825</code></td>
+<td>same + <code>n_cap, jitter_std</code></td>
+<td><code>_cycle_length, _n_cap, _jitter_std, _seed, _last_sample, _config_hash_value</code></td>
+<td>No</td>
+<td>No</td>
+<td>Trivial (2 fields)</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>MultiChannelJitteredConstantScheduler</code></td>
+<td><code>scheduler_extra.py:999</code> AND <code>scheduler_r2.py:30</code> (two implementations: r2 ships via <code>scheduler_extra.py:999</code> + re-export in <code>round2_extra.py:46</code>)</td>
+<td>same + <code>channel_keys, default_jitter_std, per_channel_jitter_std</code></td>
+<td><code>_cycle_length, _n_cap, _default_jitter_std, _per_channel_jitter_std, _channel_keys, _seed, _last_sample, _config_hash_value</code></td>
+<td>No</td>
+<td>No</td>
+<td>Moderate (5 fields)</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>SequentialScheduler</code></td>
+<td><code>sequential.py:95</code></td>
+<td>same + <code>slots, total_rounds, audit_codes</code></td>
+<td><code>_slots, _total_rounds, _config_hash_value, _last_sample, _audit_codes</code></td>
+<td>No (chain of sub-schedulers)</td>
+<td>Indirectly (forwards to every sub-scheduler)</td>
+<td>Moderate (5 fields + composite slots)</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>HandoffSequentialScheduler</code> (round-2 variant)</td>
+<td><code>handoff.py:56</code> (dataclass) AND <code>sequential_handoff.py:50</code> (alternative — both exist; r2-handoff variant uses cosine blend)</td>
+<td>inherits <code>SequentialScheduler</code>; overrides <code>sample</code></td>
+<td><code>_handoff_window, _config_hash_value</code></td>
+<td>No (P1 #16 handoff smoothing)</td>
+<td>Indirectly</td>
+<td>Moderate (1 extra field)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total scheduler classes: 16 (some via duplicate definitions; canonical set is 14 distinct).</strong></p>
+<p>Paper-quantity grounding (uses <code>A_g</code> / <code>B_g</code> / <code>C_g</code> / <code>e_ρ</code> from <code>paper_quantities</code>): <code>CodimensionSheetScheduler</code> (#8), <code>EvidenceDrivenScheduler</code> (#9).</p>
+<p>4-loop participants:
+- Loop 1 (oracle W2 / coverage → scheduler): <code>ConvergenceAdaptiveScheduler</code> (#7), <code>EDMScheduler</code> (#11, when <code>adaptive_sigma_max</code>), <code>AdaptivePIDScheduler</code> (#12).
+- Loop 2 (paper-quantities → scheduler): <code>EvidenceDrivenScheduler</code> (#9).
+- Loop 3 (oracle → driver): out of scope (driver is <code>PolicyDriverProtocol</code>, not a scheduler).
+- Loop 4 (forward noise → adapter): scheduler-side via <code>inject_noise</code>; all 16 participate on the FORWARD side.</p>
+<hr />
+<h2 id="section-2-orchestrator-inventory-reinferencerunner">Section 2: Orchestrator inventory (<code>ReInferenceRunner</code>)<a class="headerlink" href="#section-2-orchestrator-inventory-reinferencerunner" title="Permanent link">&para;</a></h2>
+<p>File: <code>adaptive_reflow/algorithm/runner.py</code></p>
+<h3 id="public-methods">Public methods<a class="headerlink" href="#public-methods" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>line</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ReInferenceRunner.__init__(adapter, scheduler, policy_driver, merge_operator, blender, evaluator, *, engine)</code></td>
+<td>runner.py:423</td>
+<td>wires scheduler + driver + merge + blender + evaluator + engine</td>
+</tr>
+<tr>
+<td><code>run(config)</code></td>
+<td>runner.py:488</td>
+<td>main 11-step orchestration loop</td>
+</tr>
+<tr>
+<td><code>run_with_default_engine(config)</code></td>
+<td>runner.py:1025</td>
+<td>convenience (drops in fresh <code>Engine()</code>)</td>
+</tr>
+<tr>
+<td><code>_apply_paper_quantities_rewiring(config)</code></td>
+<td>runner.py:963</td>
+<td>upgrades scheduler/driver in-place when <code>paper_quantities_provider</code> set</td>
+</tr>
+<tr>
+<td>Properties</td>
+<td>runner.py:456-484</td>
+<td><code>adapter, scheduler, policy_driver, merge_operator, blender, engine</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="internal-state-fields">Internal state fields<a class="headerlink" href="#internal-state-fields" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_adapter</code></td>
+<td><code>FlowMatchingODEAdapter</code></td>
+<td>universal adapter</td>
+</tr>
+<tr>
+<td><code>_scheduler</code></td>
+<td><code>SchedulerProtocol</code></td>
+<td>wrapped scheduler</td>
+</tr>
+<tr>
+<td><code>_driver</code></td>
+<td><code>PolicyDriverProtocol</code></td>
+<td>policy driver</td>
+</tr>
+<tr>
+<td><code>_merge</code></td>
+<td><code>MergeOperatorProtocol</code></td>
+<td>envelope merge</td>
+</tr>
+<tr>
+<td><code>_blender</code></td>
+<td><code>RestartBlenderProtocol</code></td>
+<td>restart blender</td>
+</tr>
+<tr>
+<td><code>_evaluator</code></td>
+<td><code>_EvaluatorProtocol \| None</code></td>
+<td>oracle caller</td>
+</tr>
+<tr>
+<td><code>_engine</code></td>
+<td><code>Engine</code></td>
+<td>round runner</td>
+</tr>
+</tbody>
+</table>
+<h3 id="per-run-local-state-stack-allocated-but-conceptually-persistent-across-rounds">Per-<code>run</code> local state (stack-allocated but conceptually persistent across rounds)<a class="headerlink" href="#per-run-local-state-stack-allocated-but-conceptually-persistent-across-rounds" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>line</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>n_rounds, channels, primary_channel</code></td>
+<td>runner.py:515</td>
+<td>config-derived</td>
+</tr>
+<tr>
+<td><code>paper_quantities_snapshot</code></td>
+<td>runner.py:528</td>
+<td>4 paper quantities</td>
+</tr>
+<tr>
+<td><code>round_traces, ledger_rows, per_round_metrics, endpoints</code></td>
+<td>runner.py:532</td>
+<td>accumulators</td>
+</tr>
+<tr>
+<td><code>phase_state</code></td>
+<td>runner.py:544</td>
+<td><code>PhaseState</code> (chain across rounds)</td>
+</tr>
+<tr>
+<td><code>bundle</code></td>
+<td>runner.py:548</td>
+<td><code>StateBundle \| None</code> (initialised round 0)</td>
+</tr>
+<tr>
+<td><code>prior_endpoint_digest</code></td>
+<td>runner.py:549</td>
+<td>round-boundary hash carrier</td>
+</tr>
+<tr>
+<td><code>prev_beta</code></td>
+<td>runner.py:557</td>
+<td>merge-operator's <code>prev</code> argument</td>
+</tr>
+<tr>
+<td><code>forward_noise_generator</code></td>
+<td>runner.py:566</td>
+<td>deterministic per-round RNG</td>
+</tr>
+<tr>
+<td><code>prev_ledger_row_hash</code></td>
+<td>runner.py:572</td>
+<td>hash-chain anchor</td>
+</tr>
+</tbody>
+</table>
+<h3 id="11-step-orchestration-lifecycle-from-docsadapter_interface_specmd-7">11-step orchestration lifecycle (from <code>docs/ADAPTER_INTERFACE_SPEC.md</code> §7)<a class="headerlink" href="#11-step-orchestration-lifecycle-from-docsadapter_interface_specmd-7" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>capabilities()</code> — adapter capability probe (cached at registration)</li>
+<li><code>validate_phase(PhaseState)</code> — round-boundary PhaseState check</li>
+<li><code>build_initial_state</code> — round 0 only</li>
+<li><code>detach_and_validate_endpoint</code> — every round</li>
+<li><code>observe_endpoint</code> — post-observation</li>
+<li><code>apply_restart_distribution</code> — β blend (merge step)</li>
+<li><code>compose_condition</code> — only if condition_delta != ∅</li>
+<li><code>solve_ode</code> — only if steps &gt; 0</li>
+<li><code>emit_round_trace</code></li>
+<li>(optional) evaluators</li>
+</ol>
+<p>Within the runner, the loop body is:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>A. sample = scheduler.sample
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>B. applied_policy = driver.compute_policy (prior_endpoint_digest carried)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>C. merged_beta = merge.merge(prev_beta, dynamic, cap, floor, ...)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>D. condition_delta = build_condition_delta(target_round=r)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>E. bundle = adapter.build_initial_state  (r==0 only)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>F. injected = scheduler.inject_noise
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>G. result = engine.run_round(...)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>H. trace = result.round_trace; ledger_rows.append(...)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>I. endpoints[r] = adapter.export_trajectory(trace.integrator_trace)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>J. metric = {...n_cap, memory_fraction, beta, driver_beta, merge_audit_codes, ...}
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>   + oracle_metrics (if evaluator)
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>   + selection_ratio (if selection_evaluator)
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>   + paper_quantity_diagnostics (if provider)
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>K. scheduler.record_round_feedback(r, metric)        # LOOP 1/2 trigger
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>L. phase_state = result.next_phase_state
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>   prior_endpoint_digest = trace.endpoint_digest
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>   bundle = adapter.observe_endpoint(trace.integrator_trace, bundle)
+</code></pre></div></p>
+<h3 id="where-each-of-the-4-feedback-loops-currently-triggers">Where each of the 4 feedback loops currently triggers<a class="headerlink" href="#where-each-of-the-4-feedback-loops-currently-triggers" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Loop</th>
+<th>Trigger site</th>
+<th>Triggered event</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Loop 1</strong> (oracle W2/coverage → scheduler)</td>
+<td>runner.py:922-923 (<code>scheduler.record_round_feedback(r, metric)</code>)</td>
+<td>end-of-round metric carry-over</td>
+</tr>
+<tr>
+<td><strong>Loop 2</strong> (paper-quantities → scheduler)</td>
+<td>runner.py:855-915 (selection_ratio + paper_quantity_diagnostics emitted in metric, then forwarded to <code>scheduler.record_round_feedback</code> at 922-923)</td>
+<td>same single dispatch</td>
+</tr>
+<tr>
+<td><strong>Loop 3</strong> (oracle → driver)</td>
+<td>driver-side (<code>PolicyDriverProtocol.compute_policy</code> reads <code>prior_endpoint_digest</code> at runner.py:599)</td>
+<td>per-round start</td>
+</tr>
+<tr>
+<td><strong>Loop 4</strong> (forward noise → adapter)</td>
+<td>runner.py:710-751 (<code>scheduler.inject_noise</code> + <code>adapter.inject_forward_noise</code>)</td>
+<td>per-round pre-merge</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="section-3-universal-state-vocabulary-common-across-schedulers">Section 3: Universal state vocabulary (common across schedulers)<a class="headerlink" href="#section-3-universal-state-vocabulary-common-across-schedulers" title="Permanent link">&para;</a></h2>
+<p>All scheduler state machines share a baseline vocabulary. Extensions are per-family (Section 4).</p>
+<h3 id="common-states">Common states<a class="headerlink" href="#common-states" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UNINITIALIZED</code></td>
+<td>freshly constructed; never sampled</td>
+</tr>
+<tr>
+<td><code>INITIALIZED</code></td>
+<td>construction complete; pre-first-sample</td>
+</tr>
+<tr>
+<td><code>SAMPLING</code></td>
+<td>a <code>sample()</code> call is in flight (single-round critical section)</td>
+</tr>
+<tr>
+<td><code>SAMPLE_EMITTED</code></td>
+<td>sample produced; awaiting feedback / next round</td>
+</tr>
+<tr>
+<td><code>FEEDBACK_RECEIVED</code></td>
+<td><code>record_round_feedback</code> has been consumed since last <code>sample</code></td>
+</tr>
+<tr>
+<td><code>ADJUSTED</code></td>
+<td>an internal adjustment (PID step / EMA update / shift) has been applied post-feedback</td>
+</tr>
+<tr>
+<td><code>ROUND_TERMINATED</code></td>
+<td>chain / cycle reached <code>cycle_length</code>; sample() raises out-of-range</td>
+</tr>
+<tr>
+<td><code>TERMINATED</code></td>
+<td>terminal lifecycle end (e.g. single-shot scheduler with no reset hook)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="common-events">Common events<a class="headerlink" href="#common-events" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Payload</th>
+<th>Triggered by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>INIT</code></td>
+<td><code>()</code></td>
+<td>construction</td>
+</tr>
+<tr>
+<td><code>SAMPLE_REQUESTED</code></td>
+<td><code>(outer_cycle_id, round_in_cycle, target_round)</code></td>
+<td>runner</td>
+</tr>
+<tr>
+<td><code>SAMPLE_EMIT</code></td>
+<td><code>(ScheduleSample)</code></td>
+<td>scheduler impl</td>
+</tr>
+<tr>
+<td><code>FEEDBACK_RECEIVED</code></td>
+<td><code>(round_in_cycle, metrics: Mapping)</code></td>
+<td>runner</td>
+</tr>
+<tr>
+<td><code>ADJUST</code></td>
+<td>internal (per-family)</td>
+<td>scheduler impl after FEEDBACK</td>
+</tr>
+<tr>
+<td><code>RESET</code></td>
+<td><code>()</code></td>
+<td>test harness / runner reset</td>
+</tr>
+<tr>
+<td><code>TERMINATE</code></td>
+<td><code>()</code></td>
+<td>cycle end / explicit close</td>
+</tr>
+</tbody>
+</table>
+<h3 id="universal-guards">Universal guards<a class="headerlink" href="#universal-guards" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Guard</th>
+<th>Predicate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cycle_length_valid</code></td>
+<td><code>0 &lt;= round_in_cycle &lt; cycle_length()</code></td>
+</tr>
+<tr>
+<td><code>metrics_finite</code></td>
+<td>every value in <code>metrics</code> is <code>math.isfinite</code></td>
+</tr>
+<tr>
+<td><code>target_round_in_range</code></td>
+<td><code>target_round &gt;= 0</code></td>
+</tr>
+<tr>
+<td><code>cooldown_complete</code></td>
+<td>per-family (e.g. <code>_w2_history</code> has &gt;= 2 entries for <code>ConvergenceAdaptiveScheduler</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="universal-common-transition-table">Universal common transition table<a class="headerlink" href="#universal-common-transition-table" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>INIT                   -&gt; INITIALIZED            (on construction)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>INITIALIZED            -&gt; SAMPLING               (on SAMPLE_REQUESTED)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>SAMPLING               -&gt; SAMPLE_EMITTED         (on SAMPLE_EMIT)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>SAMPLE_EMITTED         -&gt; FEEDBACK_RECEIVED      (on FEEDBACK_RECEIVED)
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>SAMPLE_EMITTED         -&gt; SAMPLING               (on SAMPLE_REQUESTED, next round)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>FEEDBACK_RECEIVED      -&gt; ADJUSTED               (on ADJUST)
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>ADJUSTED               -&gt; SAMPLING               (on SAMPLE_REQUESTED)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>ANY                    -&gt; INITIALIZED            (on RESET)
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>ROUND_TERMINATED       -&gt; TERMINATED             (on TERMINATE)
+</code></pre></div>
+<hr />
+<h2 id="section-4-per-scheduler-state-machines">Section 4: Per-scheduler state machines<a class="headerlink" href="#section-4-per-scheduler-state-machines" title="Permanent link">&para;</a></h2>
+<p>Each scheduler adds per-family state extensions. The total transition count across all 16 state machines is enumerated at the end.</p>
+<h3 id="41-cosineannealscheduler-1-trivial">4.1 <code>CosineAnnealScheduler</code> (#1) — TRIVIAL<a class="headerlink" href="#41-cosineannealscheduler-1-trivial" title="Permanent link">&para;</a></h3>
+<p>States: UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED / ROUND_TERMINATED / TERMINATED. No feedback state (no-op <code>record_round_feedback</code>). Transitions: 5. Extension states: none.</p>
+<h3 id="42-constantscheduler-2-trivial">4.2 <code>ConstantScheduler</code> (#2) — TRIVIAL<a class="headerlink" href="#42-constantscheduler-2-trivial" title="Permanent link">&para;</a></h3>
+<p>Same as 4.1. <code>record_round_feedback</code> is a no-op. Transitions: 5. Extension states: none.</p>
+<h3 id="43-linearscheduler-3-trivial">4.3 <code>LinearScheduler</code> (#3) — TRIVIAL<a class="headerlink" href="#43-linearscheduler-3-trivial" title="Permanent link">&para;</a></h3>
+<p>Same as 4.1. Transitions: 5. Extension states: none.</p>
+<h3 id="44-exponentialscheduler-4-trivial">4.4 <code>ExponentialScheduler</code> (#4) — TRIVIAL<a class="headerlink" href="#44-exponentialscheduler-4-trivial" title="Permanent link">&para;</a></h3>
+<p>Same as 4.1. Transitions: 5. Extension states: none.</p>
+<h3 id="45-polynomialscheduler-5-trivial">4.5 <code>PolynomialScheduler</code> (#5) — TRIVIAL<a class="headerlink" href="#45-polynomialscheduler-5-trivial" title="Permanent link">&para;</a></h3>
+<p>Same as 4.1. Transitions: 5. Extension states: none.</p>
+<h3 id="46-sigmoidscheduler-6-trivial">4.6 <code>SigmoidScheduler</code> (#6) — TRIVIAL<a class="headerlink" href="#46-sigmoidscheduler-6-trivial" title="Permanent link">&para;</a></h3>
+<p>Same as 4.1. Transitions: 5. Extension states: none.</p>
+<h3 id="47-convergenceadaptivescheduler-7-complex-pid-lite-multi-metric">4.7 <code>ConvergenceAdaptiveScheduler</code> (#7) — COMPLEX (PID-lite, multi-metric)<a class="headerlink" href="#47-convergenceadaptivescheduler-7-complex-pid-lite-multi-metric" title="Permanent link">&para;</a></h3>
+<p>States: UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED / FEEDBACK_RECEIVED / <strong>PID_WARMING</strong> (first round; _w2_history has &lt; 2 entries) / <strong>PID_UPDATING</strong> (post-warmup EMA + shift update) / ROUND_TERMINATED / TERMINATED. Extension states: <code>PID_WARMING, PID_UPDATING</code> (+2). Transitions: 9.
+- Guard: <code>cooldown_complete = len(_w2_history) &gt;= 2</code>
+- FEEDBACK_RECEIVED → PID_WARMING (when guard false) or PID_UPDATING (when guard true)
+- PID_UPDATING → SAMPLE_EMITTED on next SAMPLE_REQUESTED (carries the new <code>_shift</code>)</p>
+<h3 id="48-codimensionsheetscheduler-8-complex-paper-grounded">4.8 <code>CodimensionSheetScheduler</code> (#8) — COMPLEX (paper-grounded)<a class="headerlink" href="#48-codimensionsheetscheduler-8-complex-paper-grounded" title="Permanent link">&para;</a></h3>
+<p>States: UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED / FEEDBACK_RECEIVED / <strong>EVIDENCE_COMPUTED</strong> (per-round <code>_paper_evidence_balance</code> consumed; ratio cached) / <strong>PROFILE_BOUND</strong> (when <code>profile_residual_fn</code> is not None; A_g/B_g/C_g/e_ρ cached at construction) / ROUND_TERMINATED / TERMINATED. Extension states: <code>EVIDENCE_COMPUTED, PROFILE_BOUND</code> (+2). Transitions: 10.
+- SAMPLING → SAMPLE_EMITTED always passes through EVIDENCE_COMPUTED (the <code>last_evidence_ratio</code> is a reportable diagnostic).</p>
+<h3 id="49-evidencedrivenscheduler-9-complex-paper-grounded-pid-lite-loop-2-closer">4.9 <code>EvidenceDrivenScheduler</code> (#9) — COMPLEX (paper-grounded, PID-lite, Loop 2 closer)<a class="headerlink" href="#49-evidencedrivenscheduler-9-complex-paper-grounded-pid-lite-loop-2-closer" title="Permanent link">&para;</a></h3>
+<p>States: UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED / FEEDBACK_RECEIVED / <strong>PID_UPDATING</strong> (PID-lite step in <code>_PIDLiteController.step</code>) / <strong>EPS_PROPAGATED</strong> (parallel <code>_last_eps_delta</code> accumulator updated) / <strong>EPS_FLOORED</strong> (<code>max(1e-6, eps_implicit_base + _last_eps_delta)</code> applied in <code>sample()</code>) / ROUND_TERMINATED / TERMINATED. Extension states: <code>PID_UPDATING, EPS_PROPAGATED, EPS_FLOORED</code> (+3). Transitions: 12.
+- FEEDBACK_RECEIVED → PID_UPDATING → EPS_PROPAGATED (when <code>eps_implicit_base is not None</code>) or directly to ADJUSTED.
+- SAMPLING → EPS_FLOORED (when <code>eps_implicit_base is not None</code>).</p>
+<h3 id="410-freetrajscheduler-10-moderate">4.10 <code>FreeTrajScheduler</code> (#10) — MODERATE<a class="headerlink" href="#410-freetrajscheduler-10-moderate" title="Permanent link">&para;</a></h3>
+<p>States: UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED / FEEDBACK_RECEIVED / <strong>TRAJECTORY_UPDATED</strong> (<code>_last_trajectory_progress</code> updated from <code>metrics["trajectory_progress"]</code>) / <strong>SUBSTEP_COMPUTED</strong> (sin/cos substep added to baseline) / ROUND_TERMINATED / TERMINATED. Extension states: <code>TRAJECTORY_UPDATED, SUBSTEP_COMPUTED</code> (+2). Transitions: 10.</p>
+<h3 id="411-edmscheduler-11-complex-optional-adaptive-sigma_max">4.11 <code>EDMScheduler</code> (#11) — COMPLEX (optional adaptive sigma_max)<a class="headerlink" href="#411-edmscheduler-11-complex-optional-adaptive-sigma_max" title="Permanent link">&para;</a></h3>
+<p>States: UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED / FEEDBACK_RECEIVED / <strong>ADAPTIVE_WARMING</strong> (<code>_w2_history</code> &lt; 2) / <strong>SIGMA_ADAPTING</strong> (PD controller on <code>sigma_max_eff</code>) / ROUND_TERMINATED / TERMINATED. Extension states: <code>ADAPTIVE_WARMING, SIGMA_ADAPTING</code> (+2). Transitions: 10.
+- <code>adaptive_sigma_max=False</code> ⇒ identical to 4.1 (5 transitions).</p>
+<h3 id="412-adaptivepidscheduler-12-complex-full-pid-multi-metric">4.12 <code>AdaptivePIDScheduler</code> (#12) — COMPLEX (full PID, multi-metric)<a class="headerlink" href="#412-adaptivepidscheduler-12-complex-full-pid-multi-metric" title="Permanent link">&para;</a></h3>
+<p>States: UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED / FEEDBACK_RECEIVED / <strong>PID_WARMING</strong> / <strong>PID_UPDATING</strong> (KP / KI / KD blend across <code>metric_histories</code>) / <strong>INTEGRAL_ACCUMULATING</strong> (rolling window mean of <code>(1 - ratio)</code>) / ROUND_TERMINATED / TERMINATED. Extension states: <code>PID_WARMING, PID_UPDATING, INTEGRAL_ACCUMULATING</code> (+3). Transitions: 13.</p>
+<h3 id="413-jitteredconstantscheduler-13-trivial">4.13 <code>JitteredConstantScheduler</code> (#13) — TRIVIAL<a class="headerlink" href="#413-jitteredconstantscheduler-13-trivial" title="Permanent link">&para;</a></h3>
+<p>Same as 4.1. Transitions: 5.</p>
+<h3 id="414-multichanneljitteredconstantscheduler-14-moderate">4.14 <code>MultiChannelJitteredConstantScheduler</code> (#14) — MODERATE<a class="headerlink" href="#414-multichanneljitteredconstantscheduler-14-moderate" title="Permanent link">&para;</a></h3>
+<p>States: 4.1 + <strong>CHANNEL_RESOLVED</strong> (per-channel jitter scale looked up; falls back to <code>_default_jitter_std</code>). Extension states: <code>CHANNEL_RESOLVED</code> (+1). Transitions: 7.</p>
+<h3 id="415-sequentialscheduler-15-moderate-composite">4.15 <code>SequentialScheduler</code> (#15) — MODERATE (composite)<a class="headerlink" href="#415-sequentialscheduler-15-moderate-composite" title="Permanent link">&para;</a></h3>
+<p>States: UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED / FEEDBACK_RECEIVED / <strong>SLOT_ACTIVE</strong> (sub-scheduler <code>i</code> selected for round <code>r</code>) / <strong>FALLBACK_EMITTED</strong> (<code>seq_inject_noise_fallback</code> audit code emitted when <code>computed_at_round</code> out of range) / ROUND_TERMINATED / TERMINATED. Extension states: <code>SLOT_ACTIVE, FALLBACK_EMITTED</code> (+2). Transitions: 12.</p>
+<h3 id="416-handoffsequentialscheduler-16-moderate">4.16 <code>HandoffSequentialScheduler</code> (#16) — MODERATE<a class="headerlink" href="#416-handoffsequentialscheduler-16-moderate" title="Permanent link">&para;</a></h3>
+<p>Inherits 4.15 + <strong>HANDOFF_BLENDING</strong> (rounds where <code>0 &lt; alpha &lt; 1</code>, the cosine blend of two slots' <code>n_cap</code>). Extension states: <code>HANDOFF_BLENDING</code> (+1). Transitions: 14.</p>
+<h3 id="per-scheduler-state-extension-summary">Per-scheduler state-extension summary<a class="headerlink" href="#per-scheduler-state-extension-summary" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Scheduler</th>
+<th>Extension states</th>
+<th>Transitions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4.1-4.6, 4.13</td>
+<td>0</td>
+<td>5</td>
+</tr>
+<tr>
+<td>4.7 ConvergenceAdaptive</td>
+<td>2</td>
+<td>9</td>
+</tr>
+<tr>
+<td>4.8 CodimensionSheet</td>
+<td>2</td>
+<td>10</td>
+</tr>
+<tr>
+<td>4.9 EvidenceDriven</td>
+<td>3</td>
+<td>12</td>
+</tr>
+<tr>
+<td>4.10 FreeTraj</td>
+<td>2</td>
+<td>10</td>
+</tr>
+<tr>
+<td>4.11 EDM</td>
+<td>2</td>
+<td>10</td>
+</tr>
+<tr>
+<td>4.12 AdaptivePID</td>
+<td>3</td>
+<td>13</td>
+</tr>
+<tr>
+<td>4.14 MultiChannelJittered</td>
+<td>1</td>
+<td>7</td>
+</tr>
+<tr>
+<td>4.15 Sequential</td>
+<td>2</td>
+<td>12</td>
+</tr>
+<tr>
+<td>4.16 HandoffSequential</td>
+<td>1 (added on top of 4.15)</td>
+<td>14</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>18</strong></td>
+<td><strong>127</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="section-5-orchestrator-state-machine-design-reinferencerunnerrun">Section 5: Orchestrator state machine design (<code>ReInferenceRunner.run</code>)<a class="headerlink" href="#section-5-orchestrator-state-machine-design-reinferencerunnerrun" title="Permanent link">&para;</a></h2>
+<p>The orchestrator has one <em>outer</em> machine for <code>run()</code> lifecycle and <em>one per-round</em> inner machine for the 11-step lifecycle.</p>
+<h3 id="outer-state-machine-per-run">Outer state machine (per-<code>run</code>)<a class="headerlink" href="#outer-state-machine-per-run" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>IDLE                (no run in progress)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  -&gt; PAPER_QUANTITIES_APPLIED    on INIT (when paper_quantities_provider is set; else INITIALIZED)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>INITIALIZED         (config validated; accumulators built; prev_beta=0.0; prev_ledger_row_hash=None)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  -&gt; ROUND_ACTIVE                 on SAMPLE_REQUESTED (round 0)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>ROUND_ACTIVE        (current round r in [0, n_rounds))
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  -&gt; FEEDBACK_PENDING             on SAMPLE_EMITTED (round trace captured; metric dict built)
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>FEEDBACK_PENDING    (oracle called; paper diagnostics populated; scheduler.record_round_feedback about to fire)
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  -&gt; NEXT_ROUND_READY             on FEEDBACK_DISPATCHED (feedback emitted; phase_state / bundle / prev_ledger_row_hash updated)
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>NEXT_ROUND_READY    (loop body complete; r += 1)
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  -&gt; ROUND_ACTIVE                 on SAMPLE_REQUESTED (next round)
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>  -&gt; COMPLETE                     on GUARD: round_index &gt;= n_rounds
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>COMPLETE            (final_endpoint_digest set; verify_ledger_chain passed)
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>  -&gt; IDLE                         on RESET
+</code></pre></div>
+<p>Guard on <code>NEXT_ROUND_READY → COMPLETE</code>: <code>verify_ledger_chain(tuple(ledger_rows)) == (True, "")</code> (otherwise raise <code>AssertionError("ledger_chain_integrity_check_failed:...")</code>).</p>
+<h3 id="inner-state-machine-per-round-the-11-step-lifecycle">Inner state machine (per-round, the 11-step lifecycle)<a class="headerlink" href="#inner-state-machine-per-round-the-11-step-lifecycle" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ROUND_ACTIVE        -&gt; ENGINE_DISPATCHED            on BUILD_PHASE_STATE
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ENGINE_DISPATCHED   -&gt; NOISE_INJECTED               on INJECT_FORWARD_NOISE (when hasattr scheduler.inject_noise)
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>NOISE_INJECTED      -&gt; POLICY_MERGED                on MERGE_BETA (BoundedMergeOperator / IdentityOperator / EMAOperator)
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>POLICY_MERGED       -&gt; ODE_SOLVED                   on SOLVE_ODE (engine.run_round -&gt; trace)
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>ODE_SOLVED          -&gt; TRACE_EMITTED                on EMIT_ROUND_TRACE (ledger_rows.append)
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>TRACE_EMITTED       -&gt; METRICS_PROMOTED             on COLLECT_METRICS (evaluator + selection_evaluator + diagnostics)
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>METRICS_PROMOTED    -&gt; FEEDBACK_DISPATCHED          on RECORD_FEEDBACK (scheduler.record_round_feedback)
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>FEEDBACK_DISPATCHED -&gt; NEXT_ROUND_READY             on ADVANCE (phase_state = result.next_phase_state; bundle = observe_endpoint; prior_endpoint_digest = trace.endpoint_digest)
+</code></pre></div>
+<h3 id="where-each-loop-explicitly-transitions">Where each loop explicitly transitions<a class="headerlink" href="#where-each-loop-explicitly-transitions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Loop</th>
+<th>Outer transition</th>
+<th>Inner transition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Loop 1 (oracle → scheduler)</td>
+<td><code>ROUND_ACTIVE → FEEDBACK_PENDING</code> via SAMPLE_EMITTED → <code>METRICS_PROMOTED → FEEDBACK_DISPATCHED</code> via RECORD_FEEDBACK</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Loop 2 (paper quantities → scheduler)</td>
+<td>Same path; <code>paper_quantity_diagnostics</code> is appended in <code>METRICS_PROMOTED</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Loop 3 (oracle → driver)</td>
+<td>(driver is part of <code>POLICY_MERGED</code> inner state; <code>prior_endpoint_digest</code> flows in via <code>SAMPLE_REQUESTED</code>)</td>
+<td><code>ROUND_ACTIVE → POLICY_MERGED</code> via <code>DRIVER_COMPUTE_POLICY</code></td>
+</tr>
+<tr>
+<td>Loop 4 (forward noise → adapter)</td>
+<td>—</td>
+<td><code>ENGINE_DISPATCHED → NOISE_INJECTED</code> via <code>INJECT_FORWARD_NOISE</code></td>
+</tr>
+</tbody>
+</table>
+<p>States × transitions:
+- Outer: 6 states × 9 transitions (4 outgoing from ROUND_ACTIVE family).
+- Inner: 8 states × 8 transitions.
+- Combined: 14 states × 17 transitions.</p>
+<hr />
+<h2 id="section-6-state-machine-library-design">Section 6: State machine library design<a class="headerlink" href="#section-6-state-machine-library-design" title="Permanent link">&para;</a></h2>
+<p>Location: <code>adaptive_reflow/contracts/state_machine.py</code> (aligned with Phase 1a contracts surface).</p>
+<h3 id="design-constraints-carried-from-01-modern-statemachine-researchmd-7">Design constraints (carried from <code>01-modern-statemachine-research.md</code> §7)<a class="headerlink" href="#design-constraints-carried-from-01-modern-statemachine-researchmd-7" title="Permanent link">&para;</a></h3>
+<ul>
+<li>stdlib-only (no PyPI dep)</li>
+<li>PEP 695 generic + <code>Self</code>-returning + <code>Literal</code> state/event vocab + <code>assert_never</code> exhaustiveness</li>
+<li>HSM support via <code>Sub(parent, child)</code> + LCA transition resolution + <code>History(parent)</code> + <code>Parallel(region_a, region_b)</code></li>
+<li>Visualization: <code>to_mermaid()</code> returns <code>stateDiagram-v2</code> text</li>
+<li>Async support: <code>async def on_enter / guard / effect</code></li>
+<li>mypy --strict clean</li>
+<li>100-200 LOC core</li>
+</ul>
+<h3 id="concrete-api-sketch">Concrete API sketch<a class="headerlink" href="#concrete-api-sketch" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># adaptive_reflow/contracts/state_machine.py</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Self</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">override</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">assert_never</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">S_contra</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"S_contra"</span><span class="p">,</span> <span class="n">contravariant</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">E_contra</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"E_contra"</span><span class="p">,</span> <span class="n">contravariant</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">S_co</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"S_co"</span><span class="p">,</span> <span class="n">covariant</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1"># ---- Core transition record ----</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="k">class</span><span class="w"> </span><span class="nc">Transition</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">S_contra</span><span class="p">,</span> <span class="n">E_contra</span><span class="p">]):</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">source</span><span class="p">:</span> <span class="n">S_contra</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="n">event</span><span class="p">:</span>  <span class="n">E_contra</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="n">target</span><span class="p">:</span> <span class="n">S_contra</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="n">guard</span><span class="p">:</span>  <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="n">effect</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="c1"># ---- State machine base class (PEP 695 generic) ----</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="k">class</span><span class="w"> </span><span class="nc">StateMachine</span><span class="p">:</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">    </span><span class="sd">"""Universal state machine. Hand-rolled, stdlib-only."""</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>    <span class="n">_state</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>    <span class="n">_history</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">initial</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">transitions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Transition</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">asend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">can</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>    <span class="c1"># HSM support</span>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">enter_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parallel_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span> <span class="o">...</span>
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>    <span class="c1"># Visualization</span>
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_mermaid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a><span class="w">        </span><span class="sd">"""Emit ``stateDiagram-v2`` text for the configured transitions."""</span>
+<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_dot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a><span class="w">        </span><span class="sd">"""Emit Graphviz DOT text (parallel alternative)."""</span>
+<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>
+<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>    <span class="c1"># Hooks (override with @override for type-check enforcement)</span>
+<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>    <span class="nd">@override</span>
+<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">on_enter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a>    <span class="nd">@override</span>
+<a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">on_exit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a>
+<a id="__codelineno-4-49" name="__codelineno-4-49" href="#__codelineno-4-49"></a><span class="c1"># ---- Generic variant (PEP 695) ----</span>
+<a id="__codelineno-4-50" name="__codelineno-4-50" href="#__codelineno-4-50"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
+<a id="__codelineno-4-51" name="__codelineno-4-51" href="#__codelineno-4-51"></a><span class="nb">type</span> <span class="n">SchedulerState</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
+<a id="__codelineno-4-52" name="__codelineno-4-52" href="#__codelineno-4-52"></a>    <span class="s2">"UNINITIALIZED"</span><span class="p">,</span> <span class="s2">"INITIALIZED"</span><span class="p">,</span> <span class="s2">"SAMPLING"</span><span class="p">,</span> <span class="s2">"SAMPLE_EMITTED"</span><span class="p">,</span>
+<a id="__codelineno-4-53" name="__codelineno-4-53" href="#__codelineno-4-53"></a>    <span class="s2">"FEEDBACK_RECEIVED"</span><span class="p">,</span> <span class="s2">"ADJUSTED"</span><span class="p">,</span> <span class="s2">"ROUND_TERMINATED"</span><span class="p">,</span> <span class="s2">"TERMINATED"</span><span class="p">,</span>
+<a id="__codelineno-4-54" name="__codelineno-4-54" href="#__codelineno-4-54"></a><span class="p">]</span>
+<a id="__codelineno-4-55" name="__codelineno-4-55" href="#__codelineno-4-55"></a><span class="nb">type</span> <span class="n">SchedulerEvent</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
+<a id="__codelineno-4-56" name="__codelineno-4-56" href="#__codelineno-4-56"></a>    <span class="s2">"INIT"</span><span class="p">,</span> <span class="s2">"SAMPLE_REQUESTED"</span><span class="p">,</span> <span class="s2">"SAMPLE_EMIT"</span><span class="p">,</span> <span class="s2">"FEEDBACK_RECEIVED"</span><span class="p">,</span>
+<a id="__codelineno-4-57" name="__codelineno-4-57" href="#__codelineno-4-57"></a>    <span class="s2">"ADJUST"</span><span class="p">,</span> <span class="s2">"RESET"</span><span class="p">,</span> <span class="s2">"TERMINATE"</span><span class="p">,</span>
+<a id="__codelineno-4-58" name="__codelineno-4-58" href="#__codelineno-4-58"></a><span class="p">]</span>
+<a id="__codelineno-4-59" name="__codelineno-4-59" href="#__codelineno-4-59"></a>
+<a id="__codelineno-4-60" name="__codelineno-4-60" href="#__codelineno-4-60"></a><span class="k">class</span><span class="w"> </span><span class="nc">SchedulerStateMachine</span><span class="p">[</span><span class="n">S</span><span class="p">:</span> <span class="n">SchedulerState</span><span class="p">,</span> <span class="n">E</span><span class="p">:</span> <span class="n">SchedulerEvent</span><span class="p">](</span><span class="n">StateMachine</span><span class="p">):</span>
+<a id="__codelineno-4-61" name="__codelineno-4-61" href="#__codelineno-4-61"></a><span class="w">    </span><span class="sd">"""Scheduler-specific typed state machine."""</span>
+<a id="__codelineno-4-62" name="__codelineno-4-62" href="#__codelineno-4-62"></a>    <span class="nd">@override</span>
+<a id="__codelineno-4-63" name="__codelineno-4-63" href="#__codelineno-4-63"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">E</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span> <span class="o">...</span>
+<a id="__codelineno-4-64" name="__codelineno-4-64" href="#__codelineno-4-64"></a>
+<a id="__codelineno-4-65" name="__codelineno-4-65" href="#__codelineno-4-65"></a><span class="c1"># ---- Per-family extension mixin (concrete) ----</span>
+<a id="__codelineno-4-66" name="__codelineno-4-66" href="#__codelineno-4-66"></a><span class="k">class</span><span class="w"> </span><span class="nc">EvidenceDrivenStateMachine</span><span class="p">(</span><span class="n">SchedulerStateMachine</span><span class="p">):</span>
+<a id="__codelineno-4-67" name="__codelineno-4-67" href="#__codelineno-4-67"></a><span class="w">    </span><span class="sd">"""Adds PID_UPDATING + EPS_PROPAGATED + EPS_FLOORED sub-states."""</span>
+<a id="__codelineno-4-68" name="__codelineno-4-68" href="#__codelineno-4-68"></a>    <span class="o">...</span>
+<a id="__codelineno-4-69" name="__codelineno-4-69" href="#__codelineno-4-69"></a>
+<a id="__codelineno-4-70" name="__codelineno-4-70" href="#__codelineno-4-70"></a><span class="c1"># ---- Orchestrator state machine ----</span>
+<a id="__codelineno-4-71" name="__codelineno-4-71" href="#__codelineno-4-71"></a><span class="k">class</span><span class="w"> </span><span class="nc">RunnerStateMachine</span><span class="p">:</span>
+<a id="__codelineno-4-72" name="__codelineno-4-72" href="#__codelineno-4-72"></a><span class="w">    </span><span class="sd">"""ReInferenceRunner orchestrator machine (14 states; outer + inner)."""</span>
+<a id="__codelineno-4-73" name="__codelineno-4-73" href="#__codelineno-4-73"></a>    <span class="o">...</span>
+</code></pre></div>
+<h3 id="key-properties">Key properties<a class="headerlink" href="#key-properties" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Generic typing:</strong> <code>SchedulerStateMachine[S, E]</code> enforces literal state/event vocab.</li>
+<li><strong>HSM support:</strong> <code>Sub("FEEDBACK_RECEIVED", "PID_UPDATING")</code> + LCA resolution in <code>send()</code>.</li>
+<li><strong>History states:</strong> <code>enter_history("FEEDBACK_RECEIVED")</code> restores last sub-state.</li>
+<li><strong>Visualization:</strong> <code>to_mermaid()</code> walks <code>transitions</code> table and emits <code>stateDiagram-v2</code>.</li>
+<li><strong>Async support:</strong> <code>asend()</code> for <code>async on_enter</code> / guards; uses <code>asyncio.iscoroutine</code> detection.</li>
+<li><strong>Backward compat:</strong> zero-impact on existing <code>SchedulerProtocol</code> — <code>StateMachine</code> is a <em>wrapper</em>, not a replacement.</li>
+</ul>
+<h3 id="library-loc-budget">Library LOC budget<a class="headerlink" href="#library-loc-budget" title="Permanent link">&para;</a></h3>
+<ul>
+<li>core (<code>StateMachine</code> + <code>Transition</code>): ~150 LOC</li>
+<li>generic + visualization: ~50 LOC</li>
+<li>per-family mixins: ~30 LOC each (lazy-registered on first import)</li>
+<li>total target: ~300 LOC (slightly above the 100-200 LOC survey estimate because of per-family mixins)</li>
+</ul>
+<hr />
+<h2 id="section-7-integration-plan">Section 7: Integration plan<a class="headerlink" href="#section-7-integration-plan" title="Permanent link">&para;</a></h2>
+<h3 id="strategy-wrap-do-not-replace">Strategy: WRAP, do not replace<a class="headerlink" href="#strategy-wrap-do-not-replace" title="Permanent link">&para;</a></h3>
+<p>The library is a thin wrapper around the existing <code>SchedulerProtocol</code> methods. It observes — it does not mutate — the scheduler's <code>sample()</code> / <code>record_round_feedback()</code> / <code>reset()</code> calls. This keeps backward compatibility by construction.</p>
+<h3 id="per-scheduler-integration">Per-scheduler integration<a class="headerlink" href="#per-scheduler-integration" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Scheduler</th>
+<th>Wrap mode</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CosineAnneal, Constant, Linear, Exponential, Polynomial, Sigmoid, JitteredConstant</td>
+<td>mixin (5 LOC; zero behavioural impact)</td>
+<td>no-op <code>record_round_feedback</code> ⇒ ADJUSTED is unreachable</td>
+</tr>
+<tr>
+<td>ConvergenceAdaptive</td>
+<td>mixin (10 LOC; PID_WARMING / PID_UPDATING)</td>
+<td>transitions become typed via <code>Transition("FEEDBACK_RECEIVED", "ADJUSTED", guard=_w2_history_ready)</code></td>
+</tr>
+<tr>
+<td>CodimensionSheet</td>
+<td>mixin (12 LOC; EVIDENCE_COMPUTED)</td>
+<td>transitions: <code>SAMPLING -&gt; EVIDENCE_COMPUTED -&gt; SAMPLE_EMITTED</code></td>
+</tr>
+<tr>
+<td>EvidenceDriven</td>
+<td>mixin (15 LOC; PID_UPDATING / EPS_PROPAGATED / EPS_FLOORED)</td>
+<td>full Loop 2 closure path</td>
+</tr>
+<tr>
+<td>FreeTraj</td>
+<td>mixin (10 LOC; TRAJECTORY_UPDATED / SUBSTEP_COMPUTED)</td>
+<td></td>
+</tr>
+<tr>
+<td>EDM</td>
+<td>mixin (10 LOC; ADAPTIVE_WARMING / SIGMA_ADAPTING)</td>
+<td>only when <code>adaptive_sigma_max=True</code>; else 4.1</td>
+</tr>
+<tr>
+<td>AdaptivePID</td>
+<td>mixin (15 LOC; PID_WARMING / PID_UPDATING / INTEGRAL_ACCUMULATING)</td>
+<td>multi-metric PID path</td>
+</tr>
+<tr>
+<td>MultiChannelJittered</td>
+<td>mixin (8 LOC; CHANNEL_RESOLVED)</td>
+<td></td>
+</tr>
+<tr>
+<td>Sequential</td>
+<td>mixin (15 LOC; SLOT_ACTIVE / FALLBACK_EMITTED)</td>
+<td>sub-scheduler forwarding</td>
+</tr>
+<tr>
+<td>HandoffSequential</td>
+<td>mixin (5 LOC; HANDOFF_BLENDING)</td>
+<td>inherits Sequential's mixin</td>
+</tr>
+<tr>
+<td><code>ReInferenceRunner</code></td>
+<td>full replace of <code>run()</code> body with <code>RunnerStateMachine</code> (30 LOC)</td>
+<td>adds per-round inner machine; keeps public API byte-identical</td>
+</tr>
+</tbody>
+</table>
+<h3 id="backward-compatibility">Backward compatibility<a class="headerlink" href="#backward-compatibility" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Existing tests: 100% preserved. The state machine is a <em>wrapper</em>; <code>sample()</code>, <code>record_round_feedback()</code>, <code>reset()</code>, etc. continue to behave byte-for-byte identically.</li>
+<li>The 4 feedback loops become <strong>explicit typed transitions</strong> (no behavioural change; just visibility):</li>
+<li>Loop 1: <code>Transition("METRICS_PROMOTED", "FEEDBACK_DISPATCHED", effect=scheduler.record_round_feedback)</code></li>
+<li>Loop 2: same path, with the metric dict carrying <code>paper_quantity_diagnostics</code></li>
+<li>Loop 3: driver-side; the orchestrator's <code>POLICY_MERGED</code> inner state consumes <code>prior_endpoint_digest</code></li>
+<li>Loop 4: <code>Transition("ENGINE_DISPATCHED", "NOISE_INJECTED", effect=scheduler.inject_noise)</code></li>
+<li><code>config_hash()</code> byte-identical for every scheduler (state machine is out-of-band).</li>
+<li><code>to_config()</code> / <code>from_config()</code> round-trip is untouched.</li>
+</ul>
+<hr />
+<h2 id="section-8-test-plan">Section 8: Test plan<a class="headerlink" href="#section-8-test-plan" title="Permanent link">&para;</a></h2>
+<h3 id="per-scheduler-tests-one-per-state-transition-16-schedulers-1-per-guard">Per-scheduler tests (one per state transition × 16 schedulers + 1 per guard)<a class="headerlink" href="#per-scheduler-tests-one-per-state-transition-16-schedulers-1-per-guard" title="Permanent link">&para;</a></h3>
+<h4 id="common-state-tests-run-for-every-scheduler">Common-state tests (run for every scheduler)<a class="headerlink" href="#common-state-tests-run-for-every-scheduler" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>test_&lt;name&gt;_state_init</code>: <code>INIT -&gt; INITIALIZED</code> on construction.</li>
+<li><code>test_&lt;name&gt;_state_sample_requested</code>: <code>INITIALIZED -&gt; SAMPLING</code> on <code>sample()</code>.</li>
+<li><code>test_&lt;name&gt;_state_sample_emit</code>: <code>SAMPLING -&gt; SAMPLE_EMITTED</code> post-sample.</li>
+<li><code>test_&lt;name&gt;_state_reset</code>: <code>ANY -&gt; INITIALIZED</code> on <code>reset()</code>.</li>
+<li><code>test_&lt;name&gt;_state_terminate</code>: <code>ROUND_TERMINATED -&gt; TERMINATED</code> on out-of-range <code>sample()</code>.</li>
+<li><code>test_&lt;name&gt;_invalid_transition</code>: e.g. <code>INITIALIZED -&gt; ADJUSTED</code> raises <code>InvalidTransitionError</code>.</li>
+</ul>
+<h4 id="per-scheduler-extension-tests">Per-scheduler extension tests<a class="headerlink" href="#per-scheduler-extension-tests" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>test_convergence_adaptive_pid_warming_to_updating</code>: first feedback → <code>PID_WARMING</code>; second feedback → <code>PID_UPDATING</code>.</li>
+<li><code>test_codimension_sheet_evidence_computed</code>: after <code>sample()</code> → <code>EVIDENCE_COMPUTED</code> with <code>last_evidence_ratio</code> non-None.</li>
+<li><code>test_evidence_driven_eps_propagated</code>: when <code>eps_implicit_base</code> set, after <code>record_round_feedback()</code> → <code>EPS_PROPAGATED</code>.</li>
+<li><code>test_evidence_driven_eps_floored</code>: in <code>sample()</code> → <code>EPS_FLOORED</code> with <code>eps_implicit &gt;= 1e-6</code>.</li>
+<li><code>test_freetraj_substep_computed</code>: per-round <code>audit_codes</code> carries <code>freetraj_substep_audit</code>.</li>
+<li><code>test_edm_sigma_adapting</code>: when <code>adaptive_sigma_max=True</code>, after 2+ feedbacks → <code>SIGMA_ADAPTING</code>.</li>
+<li><code>test_adaptive_pid_integral_accumulating</code>: after <code>&gt;=integral_window</code> rounds → <code>INTEGRAL_ACCUMULATING</code>.</li>
+<li><code>test_multi_channel_jittered_channel_resolved</code>: per-channel <code>audit_codes</code> carries <code>per_channel_n_cap:</code>.</li>
+<li><code>test_sequential_slot_active</code>: round <code>r</code> resolves to slot <code>i</code> where <code>sum(n_rounds[:i+1]) &gt; r</code>.</li>
+<li><code>test_sequential_fallback_emitted</code>: when <code>computed_at_round &gt;= total_rounds</code>, <code>_audit_codes</code> carries <code>seq_inject_noise_fallback</code>.</li>
+<li><code>test_handoff_sequential_blending</code>: round in handoff window → <code>HANDOFF_BLENDING</code> with <code>alpha in (0, 1)</code>.</li>
+</ul>
+<h4 id="per-guard-tests">Per-guard tests<a class="headerlink" href="#per-guard-tests" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>test_cycle_length_valid_guard</code>: round_in_cycle out of range → <code>InvalidTransitionError</code>.</li>
+<li><code>test_metrics_finite_guard</code>: NaN W2 in feedback → no transition (no-op; matches existing behaviour).</li>
+<li><code>test_target_round_in_range_guard</code>: negative target_round → <code>ValueError</code>.</li>
+<li><code>test_cooldown_complete_guard</code>: ConvergenceAdaptive after 1 feedback stays in <code>PID_WARMING</code>; after 2 → <code>PID_UPDATING</code>.</li>
+</ul>
+<h4 id="integration-tests">Integration tests<a class="headerlink" href="#integration-tests" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>test_reinference_runner_full_run</code>: full 11-step loop, 5 rounds; final state = <code>COMPLETE</code>; ledger chain verified.</li>
+<li><code>test_reinference_runner_ledger_integrity_guard</code>: tampering with a row → <code>AssertionError("ledger_chain_integrity_check_failed:...")</code>.</li>
+<li><code>test_reinference_runner_invalid_transition</code>: calling <code>run()</code> twice without reset → <code>InvalidTransitionError</code>.</li>
+</ul>
+<h4 id="visualization-tests">Visualization tests<a class="headerlink" href="#visualization-tests" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>test_state_machine_to_mermaid</code>: <code>to_mermaid()</code> returns non-empty <code>stateDiagram-v2</code> text containing every transition.</li>
+<li><code>test_state_machine_to_dot</code>: <code>to_dot()</code> returns valid Graphviz DOT.</li>
+</ul>
+<h4 id="byte-determinism-tests">Byte-determinism tests<a class="headerlink" href="#byte-determinism-tests" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>test_scheduler_byte_determinism</code>: two <code>CosineAnnealScheduler</code> instances with the same config produce identical samples and <code>config_hash()</code> (already tested; state-machine layer must not perturb).</li>
+<li><code>test_reinference_runner_byte_determinism</code>: same seed + same config → same <code>per_round_metrics</code>.</li>
+</ul>
+<p><strong>Total test count estimate:</strong> ~150 tests (16 schedulers × ~6 common tests + ~10 per-scheduler extension tests + ~4 guard tests + ~3 integration tests + ~2 viz tests).</p>
+<hr />
+<h2 id="section-9-verification-plan">Section 9: Verification plan<a class="headerlink" href="#section-9-verification-plan" title="Permanent link">&para;</a></h2>
+<h3 id="selection-ratio-preservation-paper-theorem-1">Selection-ratio preservation (paper Theorem 1)<a class="headerlink" href="#selection-ratio-preservation-paper-theorem-1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Run canonical ablation: <code>CosineAnnealScheduler</code> with <code>profile_residual_fn=...</code>, <code>n_rounds=20</code>, evaluator = <code>PosteriorSelectionEvaluator</code>. Capture <code>selection_ratio</code> trajectory.</li>
+<li>Confirm: <code>selection_ratio[-1] &gt; selection_ratio[0]</code> and trend toward 1.</li>
+<li>Confirm: byte-identical to pre-state-machine run (the wrapper is observation-only).</li>
+<li>Test: <code>test_evidence_driven_selection_ratio_trend</code> + <code>test_codimension_sheet_selection_ratio_trend</code>.</li>
+</ul>
+<h3 id="gate-preservation-all-6-gates">Gate preservation (all 6 gates)<a class="headerlink" href="#gate-preservation-all-6-gates" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Verification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gate 1 — byte-deterministic</td>
+<td>compare <code>selection_ratio</code> trajectory + <code>config_hash()</code> + <code>per_round_metrics</code> byte-by-byte against pre-state-machine baseline</td>
+</tr>
+<tr>
+<td>Gate 2 — paper Theorem 1 (ratio → 1)</td>
+<td><code>selection_ratio[-1] - selection_ratio[0] &gt; 0</code></td>
+</tr>
+<tr>
+<td>Gate 3 — 4 feedback loops wired</td>
+<td>unit tests for each loop (Section 8)</td>
+</tr>
+<tr>
+<td>Gate 4 — fail-closed</td>
+<td><code>test_reinference_runner_ledger_integrity_guard</code> + <code>test_invalid_transition</code></td>
+</tr>
+<tr>
+<td>Gate 5 — provenance</td>
+<td><code>algorithm_signatures</code> unchanged byte-for-byte</td>
+</tr>
+<tr>
+<td>Gate 6 — audit trail byte-exact</td>
+<td><code>merge_audit_codes</code> and <code>schedule_audit_codes</code> byte-identical</td>
+</tr>
+</tbody>
+</table>
+<h3 id="state-machine-log-byte-determinism">State-machine log byte-determinism<a class="headerlink" href="#state-machine-log-byte-determinism" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Every <code>send()</code> / <code>asend()</code> emits a <code>(timestamp, event, source_state, target_state, guard_result)</code> line via the <code>state_machine.log</code> channel.</li>
+<li>Two <code>RunnerStateMachine</code> instances driven by the same sequence of events (same payload) produce byte-identical logs (timestamps in monotonic counter form, not wall-clock).</li>
+<li>Test: <code>test_state_machine_log_byte_determinism</code>.</li>
+</ul>
+<h3 id="non-regression">Non-regression<a class="headerlink" href="#non-regression" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Existing test suite (<code>tests/</code>) must pass without modification.</li>
+<li>Coverage: state-machine code paths exercised by <code>test_state_machine_*</code> set; existing tests stay green via the wrap-only integration.</li>
+</ul>
+<hr />
+<h2 id="section-10-risks">Section 10: Risks<a class="headerlink" href="#section-10-risks" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Risk</th>
+<th>Severity</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Module cycle when registering per-family mixins</strong> — already a documented risk for the scheduler registry (see <code>_register_extra_scheduler_families</code> docstring, <code>_core.py:3071</code>). State-machine mixins would deepen the cycle.</td>
+<td>High</td>
+<td>Lazy registration on first <code>StateMachine.for_scheduler(scheduler_instance)</code> call (mirrors the existing <code>_ensure_extra_families_registered()</code> pattern).</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>PID controller integral accumulator drift</strong> — wrapping <code>_PIDLiteController.step</code> in a state-machine transition could perturb float ordering if not careful.</td>
+<td>High</td>
+<td>Wrap-only; do not reorder operations. Add byte-equity test against pre-state-machine baseline.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>HSM LCA resolution overhead</strong> — <code>ConvergenceAdaptiveScheduler</code> chains base + adaptive; if the state machine treats them as nested HSM, LCA resolution could perturb ordering.</td>
+<td>Medium</td>
+<td>Document that scheduler mixins are <em>flat</em> (not nested); HSM is available for future use only.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong><code>to_mermaid()</code> Mermaid syntax drift</strong> — Mermaid <code>stateDiagram-v2</code> is stable but sub-state syntax differs across renderers.</td>
+<td>Low</td>
+<td>Pin to v2.5.1 syntax; emit a smoke-test Mermaid in CI.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>14 schedulers + 1 orchestrator ≈ 14+1 mixins</strong> — 30 LOC × 15 = 450 LOC of mixin code, plus 150 tests ≈ 600 LOC new code.</td>
+<td>Medium</td>
+<td>Per-family mixins are short and templated; consider a <code>@register_state_machine("family_name")</code> decorator that auto-generates from the scheduler's introspection.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong><code>async def on_enter</code> introduces event-loop coupling</strong> — the runner is currently sync.</td>
+<td>Medium</td>
+<td>Phase 1 ships sync-only; async variants land in a follow-up. State machine supports both via <code>send()</code> / <code>asend()</code> so the framework is forward-compatible.</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong><code>Literal</code> state vocab gets wide</strong> — SchedulerState + 18 extension states = ~26 literal strings. mypy --strict may slow down.</td>
+<td>Low</td>
+<td>Group per-family via <code>type ConvergenceAdaptiveState = Literal[...]</code> aliases; PEP 695 <code>type</code> statement makes this ergonomic.</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong><code>runner.py</code> is 1043 LOC</strong> — the orchestrator state machine targets the <code>run()</code> method (lines 488-959 ≈ 471 LOC). Adding 30 LOC for the state machine is fine; rewriting the method is dangerous.</td>
+<td>Medium</td>
+<td><strong>Replace</strong> the per-round body with <code>RunnerStateMachine.send()</code> calls but keep the <em>outer</em> loop in <code>run()</code>. This is "wrap the per-round body, not the loop" — same wrap-only philosophy.</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong><code>assert_never</code> exhaustiveness on per-family state extensions</strong> — adding a new state to one scheduler may not raise mypy errors on others.</td>
+<td>Low</td>
+<td>Each scheduler gets its own <code>type &lt;Name&gt;State = Literal[...]</code> alias; <code>assert_never(state)</code> is local to each scheduler.</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Visualization graph size</strong> — CodimensionSheet at 10 transitions × AdaptivePID at 13 transitions = 41-node Mermaid graph; harder to read.</td>
+<td>Low</td>
+<td>Per-scheduler <code>to_mermaid()</code>; orchestrator's <code>to_mermaid()</code> is separate. Aggregate <code>to_mermaid(per_family=True)</code> for documentation.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="11-line-summary">11-line summary<a class="headerlink" href="#11-line-summary" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Total scheduler classes found:                         16 (14 distinct; ConvergenceAdaptive/EDM/JitteredConstant/AdaptivePID + paper-grounded CodimensionSheet + EvidenceDriven + FreeTraj + 6 trivial baselines + Sequential + HandoffSequential)
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Common state vocabulary:                               UNINITIALIZED / INITIALIZED / SAMPLING / SAMPLE_EMITTED / FEEDBACK_RECEIVED / ADJUSTED / ROUND_TERMINATED / TERMINATED
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Common event vocabulary:                               INIT / SAMPLE_REQUESTED / SAMPLE_EMIT / FEEDBACK_RECEIVED / ADJUST / RESET / TERMINATE
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>Per-scheduler state extensions:                        18 across 16 schedulers (PID_WARMING, PID_UPDATING, EVIDENCE_COMPUTED, PROFILE_BOUND, EPS_PROPAGATED, EPS_FLOORED, TRAJECTORY_UPDATED, SUBSTEP_COMPUTED, ADAPTIVE_WARMING, SIGMA_ADAPTING, INTEGRAL_ACCUMULATING, CHANNEL_RESOLVED, SLOT_ACTIVE, FALLBACK_EMITTED, HANDOFF_BLENDING, ...)
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Orchestrator states × transitions:                     outer 6 states × 9 transitions; inner 8 states × 8 transitions; combined 14 states × 17 transitions
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>Recommended library API shape:                         PEP 695 generic StateMachine[S, E] + Transition dataclass + Self-returning send() + to_mermaid() + assert_never exhaustiveness; ~150 LOC core + 30 LOC per-family mixin
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>Backward-compat approach:                              WRAP (never replace); state machine is observation-only; existing SchedulerProtocol surface unchanged; to_config/from_config byte-identical
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>Total transitions across all state machines:           127 scheduler transitions + 17 orchestrator transitions = 144 transitions total
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>Estimated implementation effort:                       ~32-40 hours (15 mixins × 1.5h + 300 LOC core × 4h + 150 tests × 0.15h + integration 4h + verification 4h)
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>Biggest design risk:                                   Module-load cycle when registering per-family mixins (mirrors existing scheduler-registry cycle); mitigation = lazy registration on first for_scheduler() call
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>Plan file path:                                        c:\Users\31472\codes\flowa-multistep-reinference\docs\r4-survey\02-universal-statemachine-plan.md
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

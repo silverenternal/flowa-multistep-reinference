@@ -1,0 +1,252 @@
+...  N=  100  total_bytes=     62200  bytes/N=  622.00
+.  N= 1000  total_bytes=    624232  bytes/N=  624.23
+.  N=10000  total_bytes=   6249232  bytes/N=  624.92
+................................................................... [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+...F.................................................................... [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 23%]
+........................................................................ [ 26%]
+........................................................................ [ 29%]
+........................................................................ [ 33%]
+........................................................................ [ 36%]
+........................................................................ [ 39%]
+........................................................................ [ 42%]
+........................................................................ [ 46%]
+........................................................................ [ 49%]
+........................................................................ [ 52%]
+........................................................................ [ 56%]
+........................................................................ [ 59%]
+........................................................................ [ 62%]
+........................................................................ [ 66%]
+........................................................................ [ 69%]
+........................................................................ [ 72%]
+........................................................................ [ 76%]
+........................................................................ [ 79%]
+..................................sssssss............................... [ 82%]
+........................................................................ [ 85%]
+........................................................................ [ 89%]
+............................................FF..........ss.............. [ 92%]
+........................................................................ [ 95%]
+........................................................................ [ 99%]
+.................                                                        [100%]
+================================== FAILURES ===================================
+_________ test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction _________
+
+    def test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction() -> None:
+        """Reproduce the EXP-2 25% W2-reduction claim.
+    
+        For 3 outer seeds, compute the W2 of the deterministic baseline
+        (``noise_scale = 0``) and the stochastic treatment
+        (``noise_scale = DEFAULT_NOISE_SCALE``) to a fresh two-moons
+        target, then take the ratio. The mean ratio must be <= 0.75
+        across the outer seeds.
+        """
+        det_ratios: list[float] = []
+        det_w2_list: list[float] = []
+        sto_w2_list: list[float] = []
+        for outer in OUTER_SEEDS:
+            # Fresh target draw per outer seed (stable inside the seed).
+            target_rng = np.random.default_rng(10_000 + outer)
+            target = sample_two_moons(N_TARGET, target_rng)
+    
+            det_rng = np.random.default_rng(100 + outer)
+            sto_rng = np.random.default_rng(100 + outer)  # same y0 sequence
+            det_eps = _sample_endpoints(
+                noise_scale=0.0,
+                n_endpoints=N_ENDPOINTS,
+                seed_base=outer * 1000,
+                target=TARGET_SCALAR,
+                n_steps=N_STEPS_INTEGRATION,
+                rng=det_rng,
+            )
+            sto_eps = _sample_endpoints(
+                noise_scale=DEFAULT_NOISE_SCALE,
+                n_endpoints=N_ENDPOINTS,
+                seed_base=outer * 1000,
+                target=TARGET_SCALAR,
+                n_steps=N_STEPS_INTEGRATION,
+                rng=sto_rng,
+            )
+            det_w2 = _w2_to_two_moons(det_eps, target, seed=outer)
+            sto_w2 = _w2_to_two_moons(sto_eps, target, seed=outer)
+            det_w2_list.append(det_w2)
+            sto_w2_list.append(sto_w2)
+            ratio = sto_w2 / det_w2 if det_w2 > 0.0 else float("nan")
+            det_ratios.append(ratio)
+        det_mean = float(np.mean(det_w2_list))
+        det_std = float(np.std(det_w2_list))
+        sto_mean = float(np.mean(sto_w2_list))
+        sto_std = float(np.std(sto_w2_list))
+        # Filter NaNs and infs for the ratio mean.
+        finite_ratios = [r for r in det_ratios if math.isfinite(r)]
+        ratio_mean = float(np.mean(finite_ratios)) if finite_ratios else float("nan")
+        summary = (
+            f"W2_det={det_mean:.4f}+/-{det_std:.4f}, "
+            f"W2_sto={sto_mean:.4f}+/-{sto_std:.4f}, "
+            f"ratio={ratio_mean:.3f} (outer_seeds={OUTER_SEEDS})"
+        )
+        # Diagnostics: always print. The claim is ratio <= 0.75.
+        print(f"\n[exp2] {summary}")
+        assert math.isfinite(ratio_mean), (
+            f"ratio is not finite; det_ratios={det_ratios}"
+        )
+>       assert ratio_mean <= RATIO_GATE + 1e-9, (
+            f"EXP-2 25% reduction NOT reproduced. {summary}"
+        )
+E       AssertionError: EXP-2 25% reduction NOT reproduced. W2_det=0.5508+/-0.0325, W2_sto=0.5509+/-0.0326, ratio=1.000 (outer_seeds=(0, 1, 2))
+E       assert 1.0001014502036298 <= (0.75 + 1e-09)
+
+tests\test_adapters\test_exp2_stochastic_fm_repro.py:213: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+[materialize_mnist_fm] C:\Users\31472\codes\flowa-multistep-reinference\data\mnist_fm_smoke.npz already exists; skipping training
+---------------------------- Captured stdout call -----------------------------
+
+[exp2] W2_det=0.5508+/-0.0325, W2_sto=0.5509+/-0.0326, ratio=1.000 (outer_seeds=(0, 1, 2))
+___________________ test_no_false_positives_on_current_repo ___________________
+
+    def test_no_false_positives_on_current_repo() -> None:
+        """Sanity check: every claim in the project's governance docs +
+        ``docs/*.md`` must verify against the actual codebase. This is the
+        "the tool itself stays honest" guard: a future PR that introduces
+        doc drift without fixing the corresponding code (or vice versa)
+        will fail this test.
+        """
+        claims = checker.collect_claims()
+        missing = [c for c in claims if c.status == "missing"]
+        if missing:
+            formatted = "\n".join(
+                f"  - {c.file.name}:{c.line} ({c.kind}) `{c.symbol}`"
+                for c in missing
+            )
+>           pytest.fail(
+                "Expected every claim in the current governance docs / "
+                "docs/*.md to verify against the codebase, but found "
+                f"{len(missing)} missing:\n{formatted}"
+            )
+E           Failed: Expected every claim in the current governance docs / docs/*.md to verify against the codebase, but found 5 missing:
+E             - ABLATION.md:177 (inline-symbol) `Each`
+E             - CLAIMS.md:1258 (inline-symbol) `W2_det`
+E             - CLAIMS.md:1259 (inline-symbol) `W2_sto`
+E             - paper-plan.md:183 (inline-symbol) `W2_det`
+E             - paper-plan.md:184 (inline-symbol) `W2_sto`
+
+tests\test_tools\test_check_docs_against_code.py:264: Failed
+_________________ test_self_test_quiet_mode_returns_zero_exit _________________
+
+    def test_self_test_quiet_mode_returns_zero_exit() -> None:
+        """``collect_claims()`` with no arguments and a quiet run should
+        produce zero missing on the current repo -- the same contract as
+        ``test_no_false_positives_on_current_repo`` but invoked via the
+        end-to-end orchestrator (which exercises the same code path the
+        CLI uses).
+        """
+        claims = checker.collect_claims()
+        missing_count = sum(1 for c in claims if c.status == "missing")
+>       assert missing_count == 0, (
+            "The CLI reported unverifiable claims on the current repo; "
+            "either fix the docs (run the tool to see what is missing) or "
+            "tighten the PROSE_SYMBOL_DENYLIST."
+        )
+E       AssertionError: The CLI reported unverifiable claims on the current repo; either fix the docs (run the tool to see what is missing) or tighten the PROSE_SYMBOL_DENYLIST.
+E       assert 5 == 0
+
+tests\test_tools\test_check_docs_against_code.py:280: AssertionError
+============================== warnings summary ===============================
+adaptive_reflow\molecular\__init__.py:140
+  C:\Users\31472\codes\flowa-multistep-reinference\adaptive_reflow\molecular\__init__.py:140: DeprecationWarning: RMSPreservingCoordinateMixer is deprecated; use EqualRmsCoordinateMixer
+    from .mixer import (
+
+tests\test_frame\test_trace.py:62
+  C:\Users\31472\codes\flowa-multistep-reinference\tests\test_frame\test_trace.py:62: DeprecationWarning: adaptive_reflow.legacy is quarantined (torch + pocket_modules bound). Nothing under adaptive_reflow/ imports from it and it exports no public symbols. Do not import from it in new code; migrate to the typed replacement subpackage listed in ARCHITECTURE.md.
+    from adaptive_reflow.legacy import plan as _rp_module
+
+tests/test_adversarial/test_hostile_cases.py: 11 warnings
+  C:\Users\31472\codes\flowa-multistep-reinference\tests\test_adversarial\test_hostile_cases.py:321: DeprecationWarning: CosineScheduleSampler is deprecated; use adaptive_reflow.algorithm.CosineAnnealScheduler (or default_cosine_scheduler()) behind SchedulerProtocol instead.
+    schedule_sampler=CosineScheduleSampler(schedule),
+
+tests/test_algorithm/test_blender_delegation.py::test_orchestrator_has_default_bounded_merge_operator
+tests/test_algorithm/test_blender_delegation.py::test_orchestrator_honours_injected_merge_operator
+tests/test_algorithm/test_blender_delegation.py::test_orchestrator_merge_fraction_authority_default_matches_legacy
+tests/test_algorithm/test_blender_delegation.py::test_orchestrator_merge_fraction_authority_uses_injected_operator
+tests/test_algorithm/test_blender_delegation.py::test_orchestrator_merge_fraction_authority_with_schedule_cap
+tests/test_algorithm/test_blender_delegation.py::test_orchestrator_property_merge_operator_returns_operator
+tests/test_algorithm/test_blender_delegation.py::test_orchestrator_merge_returns_factor_value
+  C:\Users\31472\codes\flowa-multistep-reinference\adaptive_reflow\frame\orchestrator.py:367: DeprecationWarning: CosineScheduleSampler is deprecated; use adaptive_reflow.algorithm.CosineAnnealScheduler (or default_cosine_scheduler()) behind SchedulerProtocol instead.
+    schedule_sampler = CosineScheduleSampler(schedule_config)
+
+tests/test_eval/test_rdkit_oracle.py::test_dtb_r7_orchestrator_with_real_evaluator
+  C:\Users\31472\codes\flowa-multistep-reinference\tests\test_eval\test_rdkit_oracle.py:289: DeprecationWarning: CosineScheduleSampler is deprecated; use adaptive_reflow.algorithm.CosineAnnealScheduler (or default_cosine_scheduler()) behind SchedulerProtocol instead.
+    schedule_sampler=CosineScheduleSampler(schedule),
+
+tests/test_eval/test_rdkit_vs_synthetic.py::test_orchestrator_treats_both_evaluators_consistently
+  C:\Users\31472\codes\flowa-multistep-reinference\tests\test_eval\test_rdkit_vs_synthetic.py:270: DeprecationWarning: CosineScheduleSampler is deprecated; use adaptive_reflow.algorithm.CosineAnnealScheduler (or default_cosine_scheduler()) behind SchedulerProtocol instead.
+    schedule_sampler=CosineScheduleSampler(_make_schedule_config()),
+
+tests/test_eval/test_synthetic_oracle.py::test_dtb_r7_orchestrator_round_trip
+  C:\Users\31472\codes\flowa-multistep-reinference\tests\test_eval\test_synthetic_oracle.py:268: DeprecationWarning: CosineScheduleSampler is deprecated; use adaptive_reflow.algorithm.CosineAnnealScheduler (or default_cosine_scheduler()) behind SchedulerProtocol instead.
+    schedule_sampler=CosineScheduleSampler(schedule),
+
+tests/test_eval/test_target_distributions.py::test_run_ablation_mode_centers_canonical
+  C:\Users\31472\codes\flowa-multistep-reinference\tools\run_ablation.py:160: DeprecationWarning: PosteriorSelectionEvaluator has been renamed to EvidenceScaleGapMetric; the old name is a deprecated alias and will be removed in a future release. Update imports to use EvidenceScaleGapMetric directly.
+    from adaptive_reflow.eval.posterior_selection_evaluator import (  # noqa: E402
+
+tests/test_frame/test_merge.py::test_orchestrator_auto_registers_diagnostic_writer
+tests/test_frame/test_merge.py::test_with_orchestrator_uses_bounded_merge_authority
+tests/test_frame/test_merge.py::test_orchestrator_emits_strictly_decreasing_fraction_on_worse_evidence
+  C:\Users\31472\codes\flowa-multistep-reinference\tests\test_frame\test_merge.py:261: DeprecationWarning: CosineScheduleSampler is deprecated; use adaptive_reflow.algorithm.CosineAnnealScheduler (or default_cosine_scheduler()) behind SchedulerProtocol instead.
+    schedule_sampler=CosineScheduleSampler(schedule),
+
+tests/test_frame/test_merge.py::test_diagnostic_writer_does_not_change_policy_hash
+  C:\Users\31472\codes\flowa-multistep-reinference\tests\test_frame\test_merge.py:565: DeprecationWarning: CosineScheduleSampler is deprecated; use adaptive_reflow.algorithm.CosineAnnealScheduler (or default_cosine_scheduler()) behind SchedulerProtocol instead.
+    sampler = CosineScheduleSampler(schedule)
+
+tests/test_schedule/test_cosine_purity.py::test_compute_restart_event_does_not_mutate
+tests/test_schedule/test_cosine_purity.py::test_compute_restart_event_embeds_after_sample_on_event
+tests/test_schedule/test_cosine_purity.py::test_compute_restart_event_rejects_unknown_trigger_code
+tests/test_schedule/test_cosine_purity.py::test_compute_restart_event_rejects_non_int_cycle_ids
+tests/test_schedule/test_cosine_purity.py::test_record_restart_event_writes_last_sample
+tests/test_schedule/test_cosine_purity.py::test_record_restart_event_is_idempotent
+tests/test_schedule/test_cosine_purity.py::test_record_restart_event_rejects_untrusted_event
+tests/test_schedule/test_cosine_purity.py::test_legacy_restart_trigger_event_still_mutates
+  C:\Users\31472\codes\flowa-multistep-reinference\tests\test_schedule\test_cosine_purity.py:91: DeprecationWarning: CosineScheduleSampler is deprecated; use adaptive_reflow.algorithm.CosineAnnealScheduler (or default_cosine_scheduler()) behind SchedulerProtocol instead.
+    sampler = CosineScheduleSampler(_make_config(cycle_length=cycle_length))
+
+tests/test_schedule/test_cosine_purity.py::test_compute_restart_event_with_no_prior_sample_does_not_mutate
+  C:\Users\31472\codes\flowa-multistep-reinference\tests\test_schedule\test_cosine_purity.py:156: DeprecationWarning: CosineScheduleSampler is deprecated; use adaptive_reflow.algorithm.CosineAnnealScheduler (or default_cosine_scheduler()) behind SchedulerProtocol instead.
+    sampler = CosineScheduleSampler(_make_config())
+
+tests/test_universal/test_legacy_deprecation.py::TestLegacyDeprecation::test_marker_attributes_survive_reimport[__deprecation_marker__]
+tests/test_universal/test_legacy_deprecation.py::TestLegacyDeprecation::test_marker_attributes_survive_reimport[__deprecation_notice__]
+  C:\Users\31472\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\importlib\__init__.py:90: DeprecationWarning: adaptive_reflow.legacy is quarantined (torch + pocket_modules bound). Nothing under adaptive_reflow/ imports from it and it exports no public symbols. Do not import from it in new code; migrate to the typed replacement subpackage listed in ARCHITECTURE.md.
+    return _bootstrap._gcd_import(name[level:], package, level)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+--------------------------------------------------------------------------------------------- benchmark: 3 tests --------------------------------------------------------------------------------------------
+Name (time in us)                           Min                   Max              Mean            StdDev            Median               IQR            Outliers  OPS (Kops/s)            Rounds  Iterations
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test_bounded_merge_kernel                1.5000 (1.0)         19.4000 (2.13)     1.6695 (1.0)      0.1481 (1.01)     1.7000 (1.0)      0.1000 (1.0)       339;338      598.9778 (1.0)       68966           1
+test_evaluate_claim_gate_kernel          2.5000 (1.67)         9.1000 (1.0)      2.6460 (1.58)     0.1462 (1.0)      2.6000 (1.53)     0.1000 (1.0)       866;231      377.9318 (0.63)      48077           1
+test_compute_channel_decision_kernel     5.8000 (3.87)     1,041.1000 (114.41)   6.1311 (3.67)     6.8046 (46.54)    6.0000 (3.53)     0.1000 (1.0)         5;534      163.1040 (0.27)      27101           1
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Legend:
+  Outliers: 1 Standard Deviation from Mean; 1.5 IQR (InterQuartile Range) from 1st Quartile and 3rd Quartile.
+  OPS: Operations Per Second, computed as 1 / Mean
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_molecular\test_mixer.py:62: torch is required for the molecule coordinate mixer
+SKIPPED [1] tests\test_molecular\test_mixer.py:75: torch is required for the molecule coordinate mixer
+SKIPPED [1] tests\test_molecular\test_mixer.py:81: torch is required for the molecule coordinate mixer
+SKIPPED [1] tests\test_molecular\test_mixer.py:123: torch is required for the molecule coordinate mixer
+SKIPPED [1] tests\test_molecular\test_mixer.py:153: torch is required for the molecule coordinate mixer
+SKIPPED [1] tests\test_molecular\test_mixer.py:175: torch is required for the molecule coordinate mixer
+SKIPPED [1] tests\test_molecular\test_mixer.py:194: torch is required for the molecule coordinate mixer
+SKIPPED [1] tests\test_tools\test_run_rf_cifar_ablation.py:189: torch is required for the full RF CIFAR ablation smoke test
+SKIPPED [1] tests\test_tools\test_run_rf_cifar_ablation.py:208: torch is required for the full RF CIFAR ablation smoke test
+FAILED tests/test_adapters/test_exp2_stochastic_fm_repro.py::test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction
+FAILED tests/test_tools/test_check_docs_against_code.py::test_no_false_positives_on_current_repo
+FAILED tests/test_tools/test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit
+3 failed, 2165 passed, 9 skipped, 39 warnings in 484.58s (0:08:04)

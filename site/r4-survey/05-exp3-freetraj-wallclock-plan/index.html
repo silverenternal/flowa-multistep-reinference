@@ -1,0 +1,1547 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>EXP-3 — FreeTrajScheduler 15-25% Wall-Clock Reduction - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#exp-3-freetrajscheduler-15-25-wall-clock-reduction" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              EXP-3 — FreeTrajScheduler 15-25% Wall-Clock Reduction
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-experimental-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §1. Experimental setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-implementation-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §2. Implementation plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§2. Implementation plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-existing-freetrajscheduler-review-evidence-base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1. Existing FreeTrajScheduler review (evidence base)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-new-test-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2. New test file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-imports-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3. Imports + discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-optional-micro-benchmark-variant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4. Optional — micro-benchmark variant
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-test-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §3. Test design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§3. Test design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-per-trial-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1. Per-trial procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-identical-conditions-between-arms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2. Identical conditions between arms
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-reduction-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3. Reduction metric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-why-per-round-not-total" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4. Why per-round, not total?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-why-10-trials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5. Why 10 trials?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-pre-registration-of-the-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6. Pre-registration of the analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-expected-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §4. Expected results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-failure-modes-and-mitigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §5. Failure modes and mitigation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§5. Failure modes and mitigation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-freetrajscheduler-overhead-from-trajectory-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1. FreeTrajScheduler overhead from trajectory control
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-variance-too-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2. Variance too high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-adapter-too-fast-to-measure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3. Adapter too fast to measure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-cosine-freetraj-produce-different-n_cap-trajectories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4. Cosine / FreeTraj produce different n_cap trajectories
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-sidecar-json-fails-to-write-ci-sandbox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5. Sidecar JSON fails to write (CI / sandbox)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-timeline-sub-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §6. Timeline (sub-tasks)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-verification-claims-to-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §7. Verification (claims to add)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§7. Verification (claims to add)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clm-039-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLM-039 (NEW)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supporting-audit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supporting audit codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-paper-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §8. Paper integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§8. Paper integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-new-section-in-the-paper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1. New section in the paper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-table-wall-clock-cosine-vs-freetraj" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2. Table — wall-clock cosine vs freetraj
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-figure-wall-clock-per-round-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3. Figure — wall-clock per round (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-cross-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.4. Cross-reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-a-why-wall-clock-instead-of-nfe-or-step-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix A — Why "wall-clock" instead of "NFE" or "step count"
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-b-companion-repo-pointer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix B — Companion repo pointer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-c-reproducibility-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix C — Reproducibility checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="exp-3-freetrajscheduler-15-25-wall-clock-reduction">EXP-3 — FreeTrajScheduler 15-25% Wall-Clock Reduction<a class="headerlink" href="#exp-3-freetrajscheduler-15-25-wall-clock-reduction" title="Permanent link">&para;</a></h1>
+<p><strong>Paper claim under verification:</strong> arXiv:2507.10532 (FreeTraj) reports
+"training-free trajectory control with parity quality at parity NFE versus
+retrained controllers". A second-order claim (surfaced in <code>docs/r4-survey</code>
+companion survey) states that FreeTraj delivers <strong>15-25% wall-clock reduction</strong>
+against a fixed-cost baseline (cosine-anneal scheduler + Flow Matching ODE
+adapter + fixed-<code>n_steps</code> inner loop).</p>
+<p><strong>Goal:</strong> confirm or refute that the framework's
+<code>adaptive_reflow.algorithm.scheduler.freetraj.FreeTrajScheduler</code>
+(wired at commit <code>9d5c873</code>) reproduces that 15-25% wall-clock reduction on a
+fast 2-moons test bench.</p>
+<hr />
+<h2 id="1-experimental-setup">§1. Experimental setup<a class="headerlink" href="#1-experimental-setup" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Choice</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Target distribution</td>
+<td><code>TwoMoonsTarget</code> (2-D, batch-shaped)</td>
+<td>Fastest existing target; no GPU required; reproducible via seeded <code>np.random.default_rng</code>.</td>
+</tr>
+<tr>
+<td>Source</td>
+<td><code>np.random.default_rng(seed).standard_normal((N, 2))</code> (≈ N(0, I_2))</td>
+<td>Matches the default initial-state path used by <code>TwoDimFMAdapter.build_initial_state</code>.</td>
+</tr>
+<tr>
+<td>Adapter</td>
+<td><code>TwoDimFMAdapter</code> (byte-deterministic, <code>num_steps=100</code>)</td>
+<td>Already in <code>adaptive_reflow.frame.adapter</code>. Same adapter across baseline / treatment.</td>
+</tr>
+<tr>
+<td>Evaluator</td>
+<td><code>SyntheticTwoMoonsEvaluator</code> (built-in)</td>
+<td>Oracle W2 / coverage metrics; deterministic given seed.</td>
+</tr>
+<tr>
+<td>Baseline scheduler</td>
+<td><code>CosineAnnealScheduler(cycle_length=20, n_min=0.0, n_max=1.0)</code></td>
+<td>Constructed via <code>default_cosine_scheduler(...)</code> from <code>adaptive_reflow.algorithm.scheduler</code>.</td>
+</tr>
+<tr>
+<td>Treatment scheduler</td>
+<td><code>FreeTrajScheduler(cycle_length=20, n_min=0.0, n_max=1.0, trajectory_amplitude=0.05, trajectory_period=4)</code></td>
+<td>Defaults from <code>freetraj.py</code> <code>__init__</code>; matches the paper's "period 3-6 rounds" sweet spot.</td>
+</tr>
+<tr>
+<td>Round count per trial</td>
+<td><strong>20</strong> (one full ablation row)</td>
+<td>Mirrors <code>ReInferenceConfig(n_rounds=20)</code> and the cosine cycle length; matches the ablation table row.</td>
+</tr>
+<tr>
+<td>Trial count</td>
+<td><strong>10</strong> (mean ± std)</td>
+<td>Statistically meaningful; each trial is independent; 10× the variance of a single measurement.</td>
+</tr>
+<tr>
+<td>Metric</td>
+<td>wall-clock per round, seconds (sum over 20 rounds)</td>
+<td><code>time.perf_counter()</code> wall-clock; symmetric FORWARD + REVERSE steps.</td>
+</tr>
+<tr>
+<td>Seeds</td>
+<td><code>range(10)</code> (trials 0-9), with <code>n_rounds=20</code> rounds each</td>
+<td>Identical seed-pair (cosine, freetraj) per trial, so any difference is scheduler-only.</td>
+</tr>
+<tr>
+<td>Engine</td>
+<td>Default <code>Engine()</code></td>
+<td>Engine is scheduler-agnostic; identical across both arms.</td>
+</tr>
+<tr>
+<td>Runner</td>
+<td><code>ReInferenceRunner(adapter, scheduler, ..., engine=Engine())</code></td>
+<td>Identical runner; only <code>scheduler</code> differs.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sample budget:</strong> 10 trials × 20 rounds × 2 schedulers = 400 rounds total per
+experiment invocation. At ≈1 ms / round on 2-moons (sanity: existing
+<code>tests/perf/test_stress_1000_rounds.py</code> hits 1000 rounds in &lt;30 s on a
+single CPU), each arm is ≈0.4 s of measured work — well above the timer
+resolution. We pre-warm by running <strong>one full trial before the timed loop</strong>,
+discarded, to eliminate JIT / cache-warmup overhead.</p>
+<hr />
+<h2 id="2-implementation-plan">§2. Implementation plan<a class="headerlink" href="#2-implementation-plan" title="Permanent link">&para;</a></h2>
+<h3 id="21-existing-freetrajscheduler-review-evidence-base">2.1. Existing FreeTrajScheduler review (evidence base)<a class="headerlink" href="#21-existing-freetrajscheduler-review-evidence-base" title="Permanent link">&para;</a></h3>
+<p><strong>File:</strong> <code>adaptive_reflow/algorithm/scheduler/freetraj.py</code>
+(<code>FreeTrajScheduler</code>, lines 63-321).</p>
+<p>The existing implementation already has the trajectory-control logic
+required by the paper claim:</p>
+<ol>
+<li><strong>Cosine baseline wrapper</strong> (line 125-131): wraps
+   <code>default_cosine_scheduler</code> with the same <code>(cycle_length, n_min, n_max)</code>
+   tuple used by the baseline arm.</li>
+<li><strong>Trajectory substep</strong> (line 182-185): adds
+   <code>trajectory_amplitude * sin(2π · progress)</code> to the cosine <code>n_cap</code>,
+   clipped into <code>[0, 1]</code>.</li>
+<li><strong>Trajectory progress</strong> (line 308-321): deterministic
+   <code>(round_in_cycle % period) / period</code> when no oracle feedback is
+   supplied (so the scheduler is reproducible without external state).</li>
+<li><strong><code>record_round_feedback</code> hook</strong> (line 240-256): optional override that
+   consumes <code>metrics["trajectory_progress"]</code> so the orchestrator can
+   drive trajectory progress from oracle feedback.</li>
+</ol>
+<p><strong>Conclusion:</strong> the framework's <code>FreeTrajScheduler</code> is <em>not</em> a stub — it
+already implements the trajectory-control knob. The 15-25% claim is testable
+<em>as-is</em>; we do not need to extend <code>FreeTrajScheduler</code> for this experiment.</p>
+<h3 id="22-new-test-file">2.2. New test file<a class="headerlink" href="#22-new-test-file" title="Permanent link">&para;</a></h3>
+<p><strong>Path:</strong> <code>tests/test_experiments/test_freetraj_wallclock.py</code> (NEW).</p>
+<p>The directory <code>tests/test_experiments/</code> does not exist yet; this experiment
+is the first entry. We create the directory + an empty <code>__init__.py</code> and
+the test file.</p>
+<p><strong>Skeleton (≈80 LOC):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="sd">"""EXP-3 — FreeTrajScheduler wall-clock reproduction (arXiv:2507.10532)."""</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">statistics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean</span><span class="p">,</span> <span class="n">stdev</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.algorithm.runner</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">ReInferenceConfig</span><span class="p">,</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">ReInferenceRunner</span><span class="p">,</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.algorithm.scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">CosineAnnealScheduler</span><span class="p">,</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">FreeTrajScheduler</span><span class="p">,</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="n">default_cosine_scheduler</span><span class="p">,</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="p">)</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="kn">from</span><span class="w"> </span><span class="nn">adaptive_reflow.frame.adapter</span><span class="w"> </span><span class="kn">import</span> <span class="n">TwoDimFMAdapter</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">N_TRIALS</span> <span class="o">=</span> <span class="mi">10</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="n">N_ROUNDS</span> <span class="o">=</span> <span class="mi">20</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="n">WARMUP_TRIALS</span> <span class="o">=</span> <span class="mi">1</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="k">def</span><span class="w"> </span><span class="nf">_build_runner</span><span class="p">(</span><span class="n">scheduler_factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ReInferenceRunner</span><span class="p">:</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="n">adapter</span> <span class="o">=</span> <span class="n">TwoDimFMAdapter</span><span class="p">(</span><span class="n">num_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    <span class="k">return</span> <span class="n">ReInferenceRunner</span><span class="p">(</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>        <span class="n">adapter</span><span class="o">=</span><span class="n">adapter</span><span class="p">,</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>        <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler_factory</span><span class="p">(),</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>        <span class="n">engine</span><span class="o">=</span><span class="nb">__import__</span><span class="p">(</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>            <span class="s2">"adaptive_reflow.frame.engine"</span><span class="p">,</span> <span class="n">fromlist</span><span class="o">=</span><span class="p">[</span><span class="s2">"Engine"</span><span class="p">]</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>        <span class="p">)</span><span class="o">.</span><span class="n">Engine</span><span class="p">(),</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>    <span class="p">)</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="k">def</span><span class="w"> </span><span class="nf">_make_cosine</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">CosineAnnealScheduler</span><span class="p">:</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>    <span class="k">return</span> <span class="n">default_cosine_scheduler</span><span class="p">(</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>        <span class="n">cycle_length</span><span class="o">=</span><span class="n">N_ROUNDS</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>    <span class="p">)</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="k">def</span><span class="w"> </span><span class="nf">_make_freetraj</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">FreeTrajScheduler</span><span class="p">:</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>    <span class="n">cfg</span> <span class="o">=</span> <span class="n">default_cosine_scheduler</span><span class="p">(</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>        <span class="n">cycle_length</span><span class="o">=</span><span class="n">N_ROUNDS</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">0</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>    <span class="p">)</span><span class="o">.</span><span class="n">config</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>    <span class="k">return</span> <span class="n">FreeTrajScheduler</span><span class="p">(</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>        <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span> <span class="n">trajectory_amplitude</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">trajectory_period</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>    <span class="p">)</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a><span class="k">def</span><span class="w"> </span><span class="nf">_time_runner</span><span class="p">(</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a>    <span class="n">runner</span><span class="p">:</span> <span class="n">ReInferenceRunner</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a>    <span class="n">cfg</span> <span class="o">=</span> <span class="n">ReInferenceConfig</span><span class="p">(</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a>        <span class="n">n_rounds</span><span class="o">=</span><span class="n">N_ROUNDS</span><span class="p">,</span> <span class="n">outer_cycle_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">target_round</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a>        <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="p">(</span><span class="s2">"xy"</span><span class="p">,),</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a>    <span class="p">)</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60" href="#__codelineno-0-60"></a>    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61" href="#__codelineno-0-61"></a>    <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62" href="#__codelineno-0-62"></a>    <span class="k">return</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63" href="#__codelineno-0-63"></a>
+<a id="__codelineno-0-64" name="__codelineno-0-64" href="#__codelineno-0-64"></a>
+<a id="__codelineno-0-65" name="__codelineno-0-65" href="#__codelineno-0-65"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">experiments</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66" href="#__codelineno-0-66"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_freetraj_wallclock_reduction</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67" href="#__codelineno-0-67"></a><span class="w">    </span><span class="sd">"""EXP-3 — Cosine vs FreeTraj, 10 trials × 20 rounds."""</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68" href="#__codelineno-0-68"></a>    <span class="n">cosine_runner</span> <span class="o">=</span> <span class="n">_build_runner</span><span class="p">(</span><span class="n">_make_cosine</span><span class="p">)</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69" href="#__codelineno-0-69"></a>    <span class="n">freetraj_runner</span> <span class="o">=</span> <span class="n">_build_runner</span><span class="p">(</span><span class="n">_make_freetraj</span><span class="p">)</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70" href="#__codelineno-0-70"></a>
+<a id="__codelineno-0-71" name="__codelineno-0-71" href="#__codelineno-0-71"></a>    <span class="c1"># Pre-warm: 1 discarded trial to load caches, JIT paths, imports.</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72" href="#__codelineno-0-72"></a>    <span class="n">_time_runner</span><span class="p">(</span><span class="n">cosine_runner</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">999</span><span class="p">)</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73" href="#__codelineno-0-73"></a>    <span class="n">_time_runner</span><span class="p">(</span><span class="n">freetraj_runner</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">999</span><span class="p">)</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74" href="#__codelineno-0-74"></a>
+<a id="__codelineno-0-75" name="__codelineno-0-75" href="#__codelineno-0-75"></a>    <span class="n">cosine_times</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76" href="#__codelineno-0-76"></a>    <span class="n">freetraj_times</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77" href="#__codelineno-0-77"></a>    <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_TRIALS</span><span class="p">):</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78" href="#__codelineno-0-78"></a>        <span class="n">cosine_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_time_runner</span><span class="p">(</span><span class="n">cosine_runner</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">trial</span><span class="p">))</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79" href="#__codelineno-0-79"></a>        <span class="n">freetraj_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_time_runner</span><span class="p">(</span><span class="n">freetraj_runner</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">trial</span><span class="p">))</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80" href="#__codelineno-0-80"></a>
+<a id="__codelineno-0-81" name="__codelineno-0-81" href="#__codelineno-0-81"></a>    <span class="n">cosine_mean</span> <span class="o">=</span> <span class="n">mean</span><span class="p">(</span><span class="n">cosine_times</span><span class="p">)</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82" href="#__codelineno-0-82"></a>    <span class="n">freetraj_mean</span> <span class="o">=</span> <span class="n">mean</span><span class="p">(</span><span class="n">freetraj_times</span><span class="p">)</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83" href="#__codelineno-0-83"></a>    <span class="n">reduction</span> <span class="o">=</span> <span class="p">(</span><span class="n">cosine_mean</span> <span class="o">-</span> <span class="n">freetraj_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">cosine_mean</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84" href="#__codelineno-0-84"></a>    <span class="c1"># Diagnostic logging only (not assertions; see §4 for thresholds).</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85" href="#__codelineno-0-85"></a>    <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86" href="#__codelineno-0-86"></a>        <span class="sa">f</span><span class="s2">"EXP-3 cosine=</span><span class="si">{</span><span class="n">cosine_mean</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s ± </span><span class="si">{</span><span class="n">stdev</span><span class="p">(</span><span class="n">cosine_times</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">; "</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87" href="#__codelineno-0-87"></a>        <span class="sa">f</span><span class="s2">"freetraj=</span><span class="si">{</span><span class="n">freetraj_mean</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">s ± </span><span class="si">{</span><span class="n">stdev</span><span class="p">(</span><span class="n">freetraj_times</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">; "</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88" href="#__codelineno-0-88"></a>        <span class="sa">f</span><span class="s2">"reduction=</span><span class="si">{</span><span class="n">reduction</span><span class="si">:</span><span class="s2">.3%</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89" href="#__codelineno-0-89"></a>    <span class="p">)</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90" href="#__codelineno-0-90"></a>    <span class="c1"># Soft assertion: store the result in a sidecar JSON for the paper.</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91" href="#__codelineno-0-91"></a>    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="o">,</span><span class="w"> </span><span class="nn">pathlib</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92" href="#__codelineno-0-92"></a>    <span class="n">out</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">"docs/r4-survey/exp3-results.json"</span><span class="p">)</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93" href="#__codelineno-0-93"></a>    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94" href="#__codelineno-0-94"></a>    <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95" href="#__codelineno-0-95"></a>        <span class="s2">"n_trials"</span><span class="p">:</span> <span class="n">N_TRIALS</span><span class="p">,</span> <span class="s2">"n_rounds"</span><span class="p">:</span> <span class="n">N_ROUNDS</span><span class="p">,</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96" href="#__codelineno-0-96"></a>        <span class="s2">"cosine_mean_s"</span><span class="p">:</span> <span class="n">cosine_mean</span><span class="p">,</span> <span class="s2">"cosine_std_s"</span><span class="p">:</span> <span class="n">stdev</span><span class="p">(</span><span class="n">cosine_times</span><span class="p">),</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97" href="#__codelineno-0-97"></a>        <span class="s2">"freetraj_mean_s"</span><span class="p">:</span> <span class="n">freetraj_mean</span><span class="p">,</span> <span class="s2">"freetraj_std_s"</span><span class="p">:</span> <span class="n">stdev</span><span class="p">(</span><span class="n">freetraj_times</span><span class="p">),</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98" href="#__codelineno-0-98"></a>        <span class="s2">"reduction"</span><span class="p">:</span> <span class="n">reduction</span><span class="p">,</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99" href="#__codelineno-0-99"></a>    <span class="p">},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</code></pre></div>
+<p><strong>Key design choices:</strong>
+- <code>time.perf_counter()</code> (monotonic, high-resolution) for wall-clock.
+- <code>WARMUP_TRIALS = 1</code> (full runner.run() call, results discarded) so any
+  one-shot module imports / hash-table warmup / numpy caching don't poison
+  the first trial.
+- Per-round wall-clock is computed as <code>total_wallclock / n_rounds</code> (we time
+  the whole <code>runner.run()</code> call, then divide — equivalent to per-round mean
+  and statistically more stable than 20 independent timer reads).
+- Identical seed between cosine / freetraj so the only thing varying is
+  the scheduler's <code>n_cap</code> trajectory.</p>
+<h3 id="23-imports-discovery">2.3. Imports + discovery<a class="headerlink" href="#23-imports-discovery" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The new file lives at <code>tests/test_experiments/test_freetraj_wallclock.py</code>.</li>
+<li>Decorated <code>@pytest.mark.experiments</code> so it can be selected by
+  <code>pytest -m experiments</code> (add <code>markers = ["experiments: arXiv reproduction
+  experiments"]</code> to <code>pyproject.toml</code>'s <code>[tool.pytest.ini_options]</code> if not
+  already present; we check during execution).</li>
+<li>No production code changes — the runner, adapter, and schedulers all
+  exist. The test is <strong>pure observation</strong>.</li>
+</ul>
+<h3 id="24-optional-micro-benchmark-variant">2.4. Optional — micro-benchmark variant<a class="headerlink" href="#24-optional-micro-benchmark-variant" title="Permanent link">&para;</a></h3>
+<p>If wall-clock per-trial is too small (sub-millisecond), we add a
+<code>pytest.mark.benchmark</code> variant that runs <strong>100 rounds × 10 trials</strong> and
+emits a separate <code>exp3-results-100rounds.json</code> for the paper. The same
+file format; same metric. Threshold is the same 15-25% range.</p>
+<hr />
+<h2 id="3-test-design">§3. Test design<a class="headerlink" href="#3-test-design" title="Permanent link">&para;</a></h2>
+<h3 id="31-per-trial-procedure">3.1. Per-trial procedure<a class="headerlink" href="#31-per-trial-procedure" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Pre-warm</strong> (1 trial, discarded): invoke <code>runner.run(ReInferenceConfig(...))</code>
+   with both arms to load any caches (numpy <code>standard_normal</code> warmup, ledger
+   hash chain warmup, scheduler config_hash memoization).</li>
+<li><strong>Timed loop</strong> (10 trials): for <code>seed in range(10)</code>:</li>
+<li>Time <code>runner.run(ReInferenceConfig(n_rounds=20, seed=seed, channels=("xy",)))</code>
+     on the cosine arm.</li>
+<li>Time the same on the freetraj arm.</li>
+<li>Store both wall-clock measurements.</li>
+<li><strong>Aggregate</strong>: compute per-arm <code>mean</code> and <code>stdev</code> across the 10 trials;
+   compute <code>reduction = (T_cosine - T_freetraj) / T_cosine</code>.</li>
+</ol>
+<h3 id="32-identical-conditions-between-arms">3.2. Identical conditions between arms<a class="headerlink" href="#32-identical-conditions-between-arms" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Same <code>TwoDimFMAdapter</code> instance kind (both arms build their own with
+  identical <code>num_steps=100</code>, but both adapters are byte-deterministic so
+  this is moot).</li>
+<li>Same <code>Engine()</code> instance kind (default <code>Engine()</code> per arm — pure
+  orchestrator with no scheduler state).</li>
+<li>Same <code>seed</code> value.</li>
+<li>Same <code>channels=("xy",)</code>, same <code>n_rounds=20</code>, same <code>outer_cycle_id=0</code>,
+  same <code>target_round=0</code>.</li>
+<li><strong>No oracle differences:</strong> both arms use the default
+  <code>SyntheticTwoMoonsEvaluator</code> (the runner's <code>_evaluator</code> is <code>None</code> by
+  default, which means oracle keys are not added to the per-round
+  metrics — but the scheduler's <code>record_round_feedback</code> is never invoked
+  when the evaluator is <code>None</code>, so the cosine arm and freetraj arm
+  follow identical code paths through the runner).</li>
+<li>Identical imports, identical module load order.</li>
+</ul>
+<h3 id="33-reduction-metric">3.3. Reduction metric<a class="headerlink" href="#33-reduction-metric" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>reduction_trial  = (T_cosine_t - T_freetraj_t) / T_cosine_t
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>reduction_mean   = mean(reduction_trial)
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>reduction_std    = stdev(reduction_trial)
+</code></pre></div>
+<p>Target: <code>reduction_mean ≥ 0.15</code> (15% reduction, the lower bound of the
+claim). Acceptable: <code>reduction_mean ∈ [0.15, 0.25]</code>. Stretch goal:
+<code>reduction_mean ∈ [0.20, 0.30]</code> (the upper bound).</p>
+<h3 id="34-why-per-round-not-total">3.4. Why per-round, not total?<a class="headerlink" href="#34-why-per-round-not-total" title="Permanent link">&para;</a></h3>
+<p>The paper claim is "wall-clock reduction". On 2-moons the total
+20-round run completes in well under a second, but <code>time.perf_counter</code>
+has nanosecond resolution and the variance from <code>np.random.standard_normal</code>
++ numpy dispatch dominates. We therefore report <strong>wall-clock per round</strong>
+(<code>total / 20</code>) as the headline metric; the table also lists the <strong>total
+wall-clock</strong> for reproducibility.</p>
+<h3 id="35-why-10-trials">3.5. Why 10 trials?<a class="headerlink" href="#35-why-10-trials" title="Permanent link">&para;</a></h3>
+<p>With 20 rounds at ≈1 ms / round the per-trial total is ≈20 ms. Wall-clock
+variance from OS scheduling / Python GC on a single CPU is typically
+±5% relative stddev. With n=10 the standard error of the mean is
+±1.6% (≈0.3 ms), comfortably below the 15% signal we want to detect
+(paired t-test power ≈0.95 against <code>d=0.15/0.05=3.0</code> effect size with
+n=10). 10 trials is the minimum statistically meaningful sample.</p>
+<h3 id="36-pre-registration-of-the-analysis">3.6. Pre-registration of the analysis<a class="headerlink" href="#36-pre-registration-of-the-analysis" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>H₁:</strong> FreeTrajScheduler reduces wall-clock by 15-25% versus
+  CosineAnnealScheduler on 2-moons.</li>
+<li><strong>H₀:</strong> wall-clock difference is within ±2% of zero.</li>
+<li><strong>Test:</strong> paired reduction mean vs zero (one-sided). Report mean ± std,
+  paired t-statistic, p-value.</li>
+<li><strong>Effect-size threshold:</strong> Cohen's <code>d ≥ 0.5</code> (medium) on the reduction
+  distribution.</li>
+</ul>
+<hr />
+<h2 id="4-expected-results">§4. Expected results<a class="headerlink" href="#4-expected-results" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Outcome</th>
+<th>Wall-clock reduction</th>
+<th>Interpretation</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Reproduce</strong></td>
+<td><code>0.15 ≤ reduction_mean ≤ 0.25</code></td>
+<td>FreeTrajScheduler delivers the paper's claim on the framework's bench</td>
+<td>CLM-039 marked CONFIRMED; add §5.4 to paper</td>
+</tr>
+<tr>
+<td><strong>Underclaim</strong></td>
+<td><code>0.05 ≤ reduction_mean &lt; 0.15</code></td>
+<td>Paper claim is qualitatively correct but the framework's overhead shrinks the gap</td>
+<td>Document deviation; tighten methodology; consider bigger adapter</td>
+</tr>
+<tr>
+<td><strong>Flat</strong></td>
+<td><code>|reduction_mean| &lt; 0.05</code></td>
+<td>Framework's hooks cancel out the trajectory-control effect on this bench</td>
+<td>Mark CLM-039 as INCONCLUSIVE; check trajectory substep wiring (§5.1)</td>
+</tr>
+<tr>
+<td><strong>Reverse</strong></td>
+<td><code>reduction_mean &lt; 0</code> (FreeTraj SLOWER)</td>
+<td>Trajectory substep adds overhead without benefit; possible bug</td>
+<td>Mark CLM-039 as REFUTED; investigate; file an issue</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Edge case — high variance:</strong> <code>stdev(reduction) &gt; 0.10</code> even when
+<code>reduction_mean ≈ 0.15</code> is acceptable as long as the paired t-test is
+significant (p &lt; 0.05). High variance alone is not a failure mode.</p>
+<p><strong>Edge case — FreeTraj SLOWER:</strong> a negative reduction would indicate
+that the trajectory substep costs more wall-clock than it saves (e.g.
+because the scheduler wraps a cosine scheduler and adds an extra
+<code>math.sin</code> call per round — that overhead is real but on the order
+of nanoseconds per round, so it should not dominate). If observed,
+investigate the wrapped scheduler's <code>inject_noise</code> path.</p>
+<hr />
+<h2 id="5-failure-modes-and-mitigation">§5. Failure modes and mitigation<a class="headerlink" href="#5-failure-modes-and-mitigation" title="Permanent link">&para;</a></h2>
+<h3 id="51-freetrajscheduler-overhead-from-trajectory-control">5.1. FreeTrajScheduler overhead from trajectory control<a class="headerlink" href="#51-freetrajscheduler-overhead-from-trajectory-control" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> FreeTrajScheduler is <em>slower</em> than CosineAnnealScheduler,
+or the reduction is &lt; 5%.</p>
+<p><strong>Root cause hypothesis:</strong> the framework's <code>FreeTrajScheduler</code> wraps a
+<code>CosineAnnealScheduler</code> (line 125 of <code>freetraj.py</code>) and adds a
+<code>math.sin(2π · progress)</code> call + a <code>max/min</code> clip per round. On a
+fast 2-moons adapter the scheduler cost is non-trivial relative to
+the adapter cost, so the wrapper's overhead may eat the wall-clock
+savings.</p>
+<p><strong>Mitigation:</strong> subtract scheduler-only overhead in the analysis.
+Time <code>scheduler.sample(...)</code> and <code>scheduler.inject_noise(...)</code> in a
+micro-benchmark (no adapter, no engine) for both arms. If the
+savings are concentrated in the <em>adapter / engine</em> path (i.e.
+<code>cosine_scheduler.sample</code> and <code>freetraj_scheduler.sample</code> take the
+same time, but <code>runner.run()</code> is faster for freetraj), the claim
+is reproduced at the right layer. If <code>freetraj_scheduler.sample</code>
+takes more time than <code>cosine_scheduler.sample</code>, document the
+overhead in §5.4 and report net savings.</p>
+<h3 id="52-variance-too-high">5.2. Variance too high<a class="headerlink" href="#52-variance-too-high" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> <code>stdev(reduction) &gt; 0.10</code> (one-trial swings of 10% or
+more).</p>
+<p><strong>Mitigation:</strong>
+1. Verify pre-warm: re-read the test file, confirm <code>_time_runner(...,
+   seed=999)</code> is invoked before the timed loop. Without pre-warm the
+   first trial includes import overhead and dominates the variance.
+2. Pin CPU affinity / disable turbo boost on the host (out of scope
+   for the test, but document in §5.4 if needed).
+3. Increase trials to 20 (still well under the per-experiment budget;
+   ≈80 ms × 20 trials × 2 arms = 3.2 s total).
+4. Run <code>time.perf_counter()</code> <em>around</em> the timed section only — strip
+   out the result-packaging overhead.</p>
+<h3 id="53-adapter-too-fast-to-measure">5.3. Adapter too fast to measure<a class="headerlink" href="#53-adapter-too-fast-to-measure" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> total wall-clock per trial is sub-millisecond (e.g. when
+<code>TwoDimFMAdapter.num_steps</code> is lowered or when an even-faster mock
+adapter is in play). Timer resolution dominates.</p>
+<p><strong>Mitigation:</strong>
+1. Increase <code>num_steps</code> (e.g. 100 → 500) so the inner ODE solve
+   dominates.
+2. Increase <code>n_rounds</code> to 50 or 100 (the cycle length scales
+   linearly, and the cosine cycle_length is decoupled from <code>n_rounds</code>
+   — set <code>cycle_length=n_rounds</code> so the trajectory stays in [0, 1]).
+3. Repeat the experiment with <code>N=1000</code> samples per round (the
+   adapter operates on <code>(N, 2)</code> arrays; bigger <code>N</code> = bigger
+   ODE solve).</p>
+<h3 id="54-cosine-freetraj-produce-different-n_cap-trajectories">5.4. Cosine / FreeTraj produce different <code>n_cap</code> trajectories<a class="headerlink" href="#54-cosine-freetraj-produce-different-n_cap-trajectories" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> the two schedulers' <code>n_cap</code> values are almost identical
+in magnitude (e.g. because <code>trajectory_amplitude=0.05</code> is too small
+to affect the bounded envelope's downstream path).</p>
+<p><strong>Mitigation:</strong>
+1. Verify trajectory substep is wired:
+   <code>FreeTrajScheduler().sample(0, 0, 0).n_cap</code> should differ from
+   <code>CosineAnnealScheduler().sample(0, 0, 0).n_cap</code> by at most
+   <code>trajectory_amplitude</code>. Assert <code>abs(cosine.n_cap - freetraj.n_cap)
+   &lt;= 0.06</code> in the test setup.
+2. If the deviation is too small, raise <code>trajectory_amplitude</code> to
+   <code>0.20</code> (still in the [0, 1] bound) and re-run.
+3. Note that the paper's claim is about <em>trajectory coverage</em>, not
+   necessarily per-round wall-clock; a smaller trajectory substep may
+   be the paper's intended regime. Document in §5.4.</p>
+<h3 id="55-sidecar-json-fails-to-write-ci-sandbox">5.5. Sidecar JSON fails to write (CI / sandbox)<a class="headerlink" href="#55-sidecar-json-fails-to-write-ci-sandbox" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> <code>pathlib.Path("docs/r4-survey/exp3-results.json").write_text(...)</code>
+raises <code>OSError</code> because the test runner has no write access.</p>
+<p><strong>Mitigation:</strong> catch <code>OSError</code>, fall back to <code>tmp_path / "exp3-results.json"</code>
+(pytest's standard temp fixture), and emit a log line pointing the user
+at the temp location. The paper's §5.4 cites the path either way.</p>
+<hr />
+<h2 id="6-timeline-sub-tasks">§6. Timeline (sub-tasks)<a class="headerlink" href="#6-timeline-sub-tasks" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Sub-task</th>
+<th>Owner</th>
+<th>Wall-clock</th>
+<th>Cumulative</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>T1.</strong> Read <code>freetraj.py</code> and confirm trajectory-control logic exists</td>
+<td>P3 (this plan)</td>
+<td>0.25 d</td>
+<td>0.25 d</td>
+</tr>
+<tr>
+<td><strong>T2.</strong> Author <code>tests/test_experiments/test_freetraj_wallclock.py</code></td>
+<td>P3</td>
+<td>0.25 d</td>
+<td>0.50 d</td>
+</tr>
+<tr>
+<td><strong>T3.</strong> Run the experiment on <code>TwoDimFMAdapter</code> × 10 trials</td>
+<td>P3</td>
+<td>0.10 d</td>
+<td>0.60 d</td>
+</tr>
+<tr>
+<td><strong>T4.</strong> Capture <code>exp3-results.json</code> sidecar, validate reduction metric</td>
+<td>P3</td>
+<td>0.05 d</td>
+<td>0.65 d</td>
+</tr>
+<tr>
+<td><strong>T5.</strong> Write paper §5.4 stub (sentence + table + figure)</td>
+<td>P3</td>
+<td>0.10 d</td>
+<td>0.75 d</td>
+</tr>
+<tr>
+<td><strong>T6.</strong> Update <code>docs/CLAIMS.md</code> to mark CLM-039 CONFIRMED / REFUTED</td>
+<td>P3</td>
+<td>0.05 d</td>
+<td>0.80 d</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total:</strong> ≈0.80 day (≈6.5 hours) end-to-end. The first 0.25 d (T1) is
+already done by this plan. T2-T6 are pure execution.</p>
+<hr />
+<h2 id="7-verification-claims-to-add">§7. Verification (claims to add)<a class="headerlink" href="#7-verification-claims-to-add" title="Permanent link">&para;</a></h2>
+<h3 id="clm-039-new">CLM-039 (NEW)<a class="headerlink" href="#clm-039-new" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>CLM-039:</strong> The framework's <code>FreeTrajScheduler</code>
+(<code>adaptive_reflow.algorithm.scheduler.freetraj.FreeTrajScheduler</code>,
+commit <code>9d5c873</code>) reproduces arXiv:2507.10532's 15-25% wall-clock
+reduction claim against the cosine-anneal baseline on the 2-moons
+bench. Verification harness: <code>tests/test_experiments/test_freetraj_wallclock.py</code>.
+Result sidecar: <code>docs/r4-survey/exp3-results.json</code>.</p>
+</blockquote>
+<p><strong>Verdict rubric</strong> (set after T4):</p>
+<ul>
+<li><strong>CONFIRMED:</strong> <code>reduction_mean ∈ [0.15, 0.25]</code>, paired t-test p &lt; 0.05.</li>
+<li><strong>PARTIAL:</strong> <code>reduction_mean ∈ [0.05, 0.15)</code> or paired t-test
+  <code>0.05 ≤ p &lt; 0.10</code>. Document the gap.</li>
+<li><strong>INCONCLUSIVE:</strong> <code>|reduction_mean| &lt; 0.05</code> and paired t-test p &gt; 0.10.</li>
+<li><strong>REFUTED:</strong> <code>reduction_mean &lt; -0.05</code>. Investigate and file an issue.</li>
+</ul>
+<h3 id="supporting-audit-codes">Supporting audit codes<a class="headerlink" href="#supporting-audit-codes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>FREETRAJ_SUBSTEP_AUDIT</code> (already emitted per round by the existing
+  <code>FreeTrajScheduler</code> — line 55, 186-189 of <code>freetraj.py</code>).</li>
+<li><code>cosine_baseline</code> (already emitted per round by <code>CosineAnnealScheduler</code>
+  — line 377 of <code>_core.py</code>).</li>
+</ul>
+<p>Both audit codes already appear in the round's <code>schedule_audit_codes</code>
+metric (P0-A1), so the paper's §5.4 can cite them as evidence the right
+scheduler was active in each arm.</p>
+<hr />
+<h2 id="8-paper-integration">§8. Paper integration<a class="headerlink" href="#8-paper-integration" title="Permanent link">&para;</a></h2>
+<h3 id="81-new-section-in-the-paper">8.1. New section in the paper<a class="headerlink" href="#81-new-section-in-the-paper" title="Permanent link">&para;</a></h3>
+<p><strong>§5.4 FreeTrajScheduler wall-clock reproduction.</strong> Add a new subsection
+to the paper's "Empirical verification" chapter.</p>
+<h3 id="82-table-wall-clock-cosine-vs-freetraj">8.2. Table — wall-clock cosine vs freetraj<a class="headerlink" href="#82-table-wall-clock-cosine-vs-freetraj" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Arm</th>
+<th>n_trials</th>
+<th>n_rounds</th>
+<th>mean wall-clock (s)</th>
+<th>std wall-clock (s)</th>
+<th>reduction vs cosine</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CosineAnnealScheduler (baseline)</td>
+<td>10</td>
+<td>20</td>
+<td>T_cos</td>
+<td>σ_cos</td>
+<td>—</td>
+</tr>
+<tr>
+<td>FreeTrajScheduler (treatment)</td>
+<td>10</td>
+<td>20</td>
+<td>T_free</td>
+<td>σ_free</td>
+<td>(T_cos − T_free) / T_cos</td>
+</tr>
+<tr>
+<td><strong>Pass threshold</strong></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td><strong>≥ 0.15</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Two-row table; values are populated from <code>exp3-results.json</code>. Add a
+footnote citing arXiv:2507.10532 and noting that the framework's
+<code>FreeTrajScheduler</code> already implements the trajectory-control knob
+(T2 wrap + sin substep + per-round audit code).</p>
+<h3 id="83-figure-wall-clock-per-round-optional">8.3. Figure — wall-clock per round (optional)<a class="headerlink" href="#83-figure-wall-clock-per-round-optional" title="Permanent link">&para;</a></h3>
+<p>If the per-round breakdown is informative (it usually isn't on a
+20-round experiment with constant per-round cost), plot a bar chart of
+<code>cosine_mean_per_round</code> vs <code>freetraj_mean_per_round</code> with error bars
+(±1 std). Use the existing
+<code>docs/_benchmark_ablation.md</code> matplotlib palette to stay consistent
+with the paper's other figures. Skip if the bars are visually
+indistinguishable.</p>
+<h3 id="84-cross-reference">8.4. Cross-reference<a class="headerlink" href="#84-cross-reference" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>docs/CLAIMS.md</code> — add CLM-039 entry with verdict + sidecar path.</li>
+<li><code>docs/ABLATION.md</code> — add EXP-3 row to the ablation table.</li>
+<li><code>docs/TESTING_STRATEGY.md</code> — note <code>tests/test_experiments/</code> as the
+  home for arXiv reproduction experiments.</li>
+</ul>
+<hr />
+<h2 id="appendix-a-why-wall-clock-instead-of-nfe-or-step-count">Appendix A — Why "wall-clock" instead of "NFE" or "step count"<a class="headerlink" href="#appendix-a-why-wall-clock-instead-of-nfe-or-step-count" title="Permanent link">&para;</a></h2>
+<p>The paper claim is wall-clock. FreeTraj's headline is "training-free
+trajectory control with parity quality at parity NFE" — meaning the
+method does <strong>not</strong> claim to reduce NFE. It claims to reduce wall-clock
+at parity NFE (because the trajectory oscillation reduces wasted ODE
+steps on rounds where the cosine schedule over-shoots). The
+framework's <code>FreeTrajScheduler</code> does not change <code>num_steps</code> (that's
+the adapter's knob), so the reduction must come from the scheduler's
+trajectory-aware <code>n_cap</code> modulating the inner bounded update — which
+in turn affects <code>merged_beta</code>, which drives the per-round ODE
+termination criterion.</p>
+<p>In short: at parity NFE (= 100 ODE steps per round), the
+trajectory-aware <code>n_cap</code> should reduce wasted accept / reject work
+inside the runner. The 15-25% wall-clock claim maps to this layer.</p>
+<h2 id="appendix-b-companion-repo-pointer">Appendix B — Companion repo pointer<a class="headerlink" href="#appendix-b-companion-repo-pointer" title="Permanent link">&para;</a></h2>
+<p><code>/c/Users/31472/codes/noise-selected-rectification-lean/</code> is the
+companion Lean repo (read-only for this plan). The companion repo
+formalises the paper's Lemma 2 / Lemma 3 / Theorem 1 / Proposition 3;
+the framework's <code>CosineScheduleConfig</code> and <code>CodimensionSheetScheduler</code>
+already consume those lemmas (P1-A2). FreeTraj's contribution is
+<em>orthogonal</em> — it modifies the per-round capacity trajectory, not
+the paper's evidence balance. So the companion repo does not gate
+this experiment; CLM-039 is verified at the algorithm layer only.</p>
+<h2 id="appendix-c-reproducibility-checklist">Appendix C — Reproducibility checklist<a class="headerlink" href="#appendix-c-reproducibility-checklist" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>TwoDimFMAdapter(num_steps=100)</code> — byte-deterministic, seed-driven.</li>
+<li>[ ] <code>default_cosine_scheduler(cycle_length=20, n_min=0.0, n_max=1.0, seed=0)</code>.</li>
+<li>[ ] <code>FreeTrajScheduler(config=cosine.config, trajectory_amplitude=0.05, trajectory_period=4)</code>.</li>
+<li>[ ] <code>ReInferenceConfig(n_rounds=20, seed=trial, channels=("xy",))</code>.</li>
+<li>[ ] <code>time.perf_counter()</code> brackets the <code>runner.run(cfg)</code> call only.</li>
+<li>[ ] Pre-warm: 1 trial × 2 arms, discarded.</li>
+<li>[ ] Timed loop: 10 trials × 2 arms, recorded.</li>
+<li>[ ] Sidecar: <code>docs/r4-survey/exp3-results.json</code> (or <code>tmp_path</code> fallback).</li>
+</ul>
+<hr />
+<p><strong>Plan file path (absolute):</strong>
+<code>c:/Users/31472/codes/flowa-multistep-reinference/docs/r4-survey/05-exp3-freetraj-wallclock-plan.md</code></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
