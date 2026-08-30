@@ -119,6 +119,16 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         "PreTrainedModel", "Trainer", "IExecutionProvider",
         "PTransform", "StatLoggerFactory", "make_model_info",
         "op_type_proto",
+        # Third-party ML model class names referenced inline in the
+        # CIFAR-10 / InceptionV3 FID governance text
+        # (docs/r4-survey/14-cifar-experiment-results.md,
+        # docs/CLAIMS.md CLM-040, docs/paper-plan.md §4.3,
+        # docs/benchmark-uplifts.md §8). The framework's FID script
+        # imports InceptionV3 from ``pytorch_fid.inception``; the
+        # docs treat the class name as prose. Denylisting keeps the
+        # inline-symbol extractor from demanding a project-internal
+        # symbol match.
+        "InceptionV3",
         # Doc / section anchors referenced as CamelCase caps headings.
         "ADAPTER_INTERFACE_SPEC", "ARCHITECTURE_PLAN", "FILE_MAPPING",
         "DESIGN_BOUNDARY", "SPLIT_NOTES", "REFACTOR_PLAN_V2",

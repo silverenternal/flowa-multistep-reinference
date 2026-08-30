@@ -150,6 +150,7 @@ not_in_nav: |
   _test_ablation_quick.md
   r3-survey/*.md
   r4-survey/*.md
+  r4-survey/**/*.md
   paper-plan.md
   r5-survey/*.md
 
