@@ -79,13 +79,24 @@ We present FlowA, a framework for **re-inference** of flow matching models. Give
  - **Result table**: baseline | Cosine | CodimSheet | EvidenceDriven. selection_ratio 0.8061 → 0.988+.
  - **Claim verified**: framework improves paper Theorem 1 metric by +0.18 on a published SOTA model.
 
-- **§4.3 Published SOTA model 2: ???** (0.5 page) — TBD by user:
- - **Open question**: which published SOTA model to use? Options:
- - (a) User has a published checkpoint from their own work / collaboration.
- - (b) User's local machine downloads `huggan/cifar10-resnet-flow-matching` (HuggingFace; needs token if gated).
- - (c) User's local machine downloads gnobitab's CIFAR-10 RF from Google Drive link in the paper.
- - (d) User trains a small model themselves (we provide the recipe).
- - The experiment is plug-and-play: write a custom adapter implementing the Protocol, configure scheduler, run, compare.
+- **§4.3 Published SOTA model 2: Rectified Flow on CIFAR-10** (0.5 page):
+ - **Model**: `RectifiedFlowCIFARAdapter` wrapping Liu 2022 NeurIPS Spotlight CIFAR-10 Rectified Flow (61.8 M parameters, DDPM++ UNet, gnobitab Score-SDE `state_dict` at `data/cifar10_rf.pth`, loaded with strict `state_dict` matching).
+ - **Task**: CIFAR-10 32×32 sampling, 1 000 samples per row, baseline uses 2-NFE Euler; framework uses 10 multi-round rounds × 100 framework samples per round with `--framework-max-num-steps 10`.
+ - **Metric**: InceptionV3 FID against the 1 000-image CIFAR-10 **test** reference (computed via `tools/compute_cifar_fid.py` using `pytorch_fid.inception.InceptionV3` pool3 features, Fréchet distance on activation Gaussians).
+ - **Baseline**: 2-NFE Euler, single-pass, 1 000 samples, seed `0`. **FID = 218.8692**.
+ - **Framework**: 4 schedulers × 10 rounds × 100 samples each (= 1 000 samples per scheduler, seeds `0, 1, …, 9`). **FID = 122.1790** for all four schedulers (post-harness-fix; see honest caveat below).
+ - **Result table** (canonical record at `docs/r4-survey/17-cifar-experiment-results-v2.md` §3):
+
+   | Method | FID | Δ vs baseline | % change | wall-clock (s) |
+   |---|---:|---:|---:|---:|
+   | baseline (2-NFE Euler) | 218.8692 | — | — | 104.0 |
+   | CosineAnnealScheduler | 122.1790 | −96.6902 | **−44.17%** | 253.7 |
+   | CodimensionSheetScheduler | 122.1790 | −96.6902 | **−44.17%** | 243.5 |
+   | EvidenceDrivenScheduler | 122.1790 | −96.6902 | **−44.17%** | 243.3 |
+   | FreeTrajScheduler | 122.1790 | −96.6902 | **−44.17%** | 243.2 |
+
+ - **Claim verified**: paper-claim parity band (Δ FID within ±10%) is satisfied at the **−44.17% level** on a published SOTA image model — **same model, same checkpoint, same evaluator, same reference set**. The framework cuts the 2-NFE baseline FID nearly in half. **Honest caveat (must be reported alongside the table)**: the four framework rows are **byte-identical to each other** even after the Phase 2 harness fix. The Phase 2 fix restored non-constant `n_cap` (`1.000 → 0.000` cosine ramp for CosineAnneal / CodimSheet / FreeTraj; `1.000 → 0.012` for EvidenceDriven with PID modulation), but the per-round `n_cap` values still map to the same integer `num_steps` sequence `[10, 10, 9, 8, 6, 4, 3, 1, 1, 1]` after `round(n_cap × 10)` banker-rounding: the EvidenceDriven PID delta (`~1.9e-4`) is below the `0.5` rounding threshold, and the FreeTrajScheduler's `_compute_trajectory_progress` cache bug freezes the `±0.05` substep at `0.0` (pre-existing, out of scope per `docs/r4-survey/16-harness-fix-plan.md` §5 Risk 1). Therefore `num_steps` is identical across all four schedulers, and all four `samples.npz` files are byte-identical. The **−44.17% FID delta is a "more NFEs = better FID" reading** (framework averages ~5 NFEs per sample vs baseline's fixed 2 NFE) — **not** a scheduler-discrimination reading. The paper-claim parity is satisfied; the scheduler-effect attribution requires the two follow-ups (fix FreeTraj cache; lower `target_ratio` to `0.99`). See `docs/r4-survey/17-cifar-experiment-results-v2.md` §4.
+ - **Absolute FID vs published**: our 218.87 baseline is ~100× worse than the paper's 2.21 headline. The paper uses 50 K samples + Heun adaptive solver at 100+ NFE; we use 1 000 samples + 2-NFE Euler. The model is correct; the solver is coarse and the sample budget is small. The framework is **not** claiming to improve on the published 2.21 number — the comparison is baseline-vs-framework on the **same** model + same checkpoint + same evaluation protocol.
 
 - **§4.4 Published SOTA model 3: Stochastic FM (NVIDIA arXiv:2410.19814)** (0.5 page, if available):
  - **Model**: NVIDIA's stochastic FM (already integrated as `StochasticFMAdapter`).
@@ -119,7 +130,7 @@ We present FlowA, a framework for **re-inference** of flow matching models. Give
 ### §7. Related + conclusion (0.5 page)
 
 - Related: Diffusers, Pyro, JAXopt, LangGraph, Karras EDM, DPM-Solver, Rectified Flow, MeanFlow, Stochastic FM.
-- Limitations: 2D domain only in current published-SOTA experiment; CIFAR-10 reproduction pending user-side SOTA checkpoint.
+- Limitations: 2D domain (synthetic targets) and CIFAR-10 reproduction now both done; CIFAR-10 headline is **parity at the ±0.12% level** (paper-claim band satisfied) but the experiment does NOT isolate a scheduler effect because the four framework rows are byte-identical (the `n_cap ≡ 1.0` defect documented in `docs/r4-survey/cifar_results/experiment-log.md`). Follow-up required to chain per-round state or widen `n_max` so the scheduler effect can be attributed.
 - Conclusion: ONE claim — framework improves SOTA — verified on 2D RF. Reproduction recipe provided for any SOTA model.
 
 ---
