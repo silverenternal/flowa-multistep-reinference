@@ -487,6 +487,33 @@ def test_run_framework_n_cap_varies_per_round(tmp_path: Path) -> None:
     assert loaded.shape == (40, 3, 32, 32)
 
 
+def test_run_framework_real_adapter_emits_final_chain_endpoints(tmp_path: Path) -> None:
+    """Production adapters use Engine chains and save one final endpoint per sample."""
+    import numpy as np
+
+    from adaptive_reflow.adapters.rectified_flow_cifar import RectifiedFlowCIFARAdapter
+
+    module = _load_cifar_script_module()
+    adapter = RectifiedFlowCIFARAdapter(
+        force_mode="synthetic", num_steps=1, synthetic_hidden=4, synthetic_seed=7
+    )
+    samples_path, per_round, _wall, total_nfe = module._run_framework(
+        adapter=adapter,
+        scheduler_name="CosineAnnealScheduler",
+        n_rounds=3,
+        framework_samples=2,
+        seed_base=0,
+        output_dir=tmp_path,
+        max_num_steps=2,
+        exact_total_steps=5,
+    )
+    samples = np.load(samples_path)["samples"]
+    assert samples.shape == (2, 3, 32, 32)
+    assert total_nfe == 5
+    assert total_nfe == sum(int(row["num_steps"]) for row in per_round)
+    assert all(int(row["num_steps"]) >= 1 for row in per_round)
+
+
 def test_run_framework_four_schedulers_produce_different_traces(
     tmp_path: Path,
 ) -> None:

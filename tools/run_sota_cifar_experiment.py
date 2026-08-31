@@ -66,6 +66,7 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -87,6 +88,20 @@ from adaptive_reflow.algorithm.scheduler._core import (  # noqa: E402
     CosineScheduleConfig,
     default_cosine_scheduler,
 )
+from adaptive_reflow.contracts import (  # noqa: E402
+    ArtifactHash,
+    ChannelName,
+    FactorValue,
+    FinalRestartPolicy,
+    LedgerRowId,
+    MechanismId,
+    PolicyId,
+    RunId,
+    hash_policy_hash,
+)
+from adaptive_reflow.frame.engine import Engine  # noqa: E402
+from adaptive_reflow.frame.phase import build_phase_state  # noqa: E402
+from adaptive_reflow.universal.state import ODEConditionDelta  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -236,6 +251,7 @@ def _make_adapter(
     *,
     num_steps: int,
     solver: str = "euler",
+    device: str = "cpu",
 ) -> Any:
     """Return a fresh :class:`RectifiedFlowCIFARAdapter`.
 
@@ -254,12 +270,13 @@ def _make_adapter(
 
     if checkpoint is None:
         return default_rectified_flow_cifar_adapter(
-            num_steps=num_steps, solver=solver,
+            num_steps=num_steps, solver=solver, device=device,
         )
     return default_rectified_flow_cifar_adapter(
         weights_path=checkpoint,
         num_steps=num_steps,
         solver=solver,
+        device=device,
     )
 
 
@@ -444,6 +461,7 @@ def _run_framework(
     output_dir: Path,
     max_num_steps: int,
     target_ratio: float = 0.95,
+    exact_total_steps: int | None = None,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive the framework multi-round run for one scheduler.
 
@@ -477,6 +495,19 @@ def _run_framework(
     loop, so per-round ``n_cap`` values reflect the scheduler's
     feedback mechanism where applicable.
     """
+    if hasattr(adapter, "build_initial_state"):
+        return _run_framework_state_chains(
+            adapter=adapter,
+            scheduler_name=scheduler_name,
+            n_rounds=n_rounds,
+            framework_samples=framework_samples,
+            seed_base=seed_base,
+            output_dir=output_dir,
+            max_num_steps=max_num_steps,
+            target_ratio=target_ratio,
+            exact_total_steps=exact_total_steps,
+        )
+
     output_dir.mkdir(parents=True, exist_ok=True)
     scheduler = build_scheduler(
         scheduler_name, rounds=int(n_rounds), target_ratio=float(target_ratio),
@@ -529,7 +560,7 @@ def _run_framework(
             proxy_sample = evidence_proxy_scheduler.sample(0, int(r), int(r))
             scheduler.record_round_feedback(
                 int(r),
-                {"evidence_ratio": float(proxy_sample.evidence_ratio)},
+                {"evidence_ratio": float(proxy_sample.evidence_ratio or 0.0)},
             )
 
         row: dict[str, float] = {
@@ -559,6 +590,144 @@ def _run_framework(
     total_nfe_per_sample = int(
         sum(int(row.get("num_steps", 0)) for row in per_round_metrics)
     )
+    return out_path, per_round_metrics, wall, total_nfe_per_sample
+
+
+def _run_framework_state_chains(
+    *,
+    adapter: Any,
+    scheduler_name: str,
+    n_rounds: int,
+    framework_samples: int,
+    seed_base: int,
+    output_dir: Path,
+    max_num_steps: int,
+    target_ratio: float,
+    exact_total_steps: int | None,
+) -> tuple[Path, list[dict[str, float]], float, int]:
+    """Drive final CIFAR samples through Engine-managed endpoint chains."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    scheduler = build_scheduler(
+        scheduler_name, rounds=int(n_rounds), target_ratio=float(target_ratio)
+    )
+    evidence_proxy_scheduler = (
+        CodimensionSheetScheduler(
+            cycle_length=int(n_rounds), n_min=0.0, n_max=1.0, eps_implicit=0.05
+        )
+        if scheduler_name == "EvidenceDrivenScheduler"
+        else None
+    )
+    schedule_samples: list[Any] = []
+    per_round_metrics: list[dict[str, float]] = []
+    for r in range(int(n_rounds)):
+        sample = scheduler.sample(0, int(r), int(r))
+        schedule_samples.append(sample)
+        if evidence_proxy_scheduler is not None:
+            proxy_sample = evidence_proxy_scheduler.sample(0, int(r), int(r))
+            scheduler.record_round_feedback(
+                int(r), {"evidence_ratio": float(proxy_sample.evidence_ratio or 0.0)}
+            )
+        row: dict[str, float] = {"round_index": int(r), "n_cap": float(sample.n_cap)}
+        evidence = getattr(sample, "evidence_ratio", None)
+        if evidence is not None:
+            row["evidence_ratio"] = float(evidence)
+        per_round_metrics.append(row)
+
+    if exact_total_steps is None:
+        steps_by_round = [
+            max(1, int(round(float(sample.n_cap) * float(max_num_steps))))
+            for sample in schedule_samples
+        ]
+    else:
+        if int(exact_total_steps) < int(n_rounds):
+            raise ValueError("match_nfe_sample_requires_baseline_nfe_at_least_n_rounds")
+        steps_by_round = [1] * int(n_rounds)
+        for _ in range(int(exact_total_steps) - int(n_rounds)):
+            target = max(
+                range(int(n_rounds)),
+                key=lambda index: (float(schedule_samples[index].n_cap), -index),
+            )
+            steps_by_round[target] += 1
+    for row, steps in zip(per_round_metrics, steps_by_round, strict=True):
+        row["num_steps"] = int(steps)
+
+    started = time.perf_counter()
+    engine = Engine()
+    samples: NDArray[np.float64] = np.empty(
+        (int(framework_samples), 3, 32, 32), dtype=np.float64
+    )
+    seed_offset = SCHEDULER_SEED_OFFSETS.get(str(scheduler_name), 0)
+    channel = ChannelName("image")
+    for sample_index in range(int(framework_samples)):
+        bundle = adapter.build_initial_state(
+            batch_id=f"sota-cifar-{scheduler_name}",
+            sample_id=f"sample-{sample_index}",
+        )
+        for r, (schedule_sample, row) in enumerate(
+            zip(schedule_samples, per_round_metrics, strict=True)
+        ):
+            policy = FinalRestartPolicy(
+                policy_id=PolicyId(f"sota-cifar-{scheduler_name}-{sample_index}-{r}"),
+                writer_id=MechanismId("inference.adaptive_reflow"),
+                run_id=RunId("sota-cifar"),
+                target_round=int(r),
+                outer_cycle_id=0,
+                beta_by_channel={
+                    channel: FactorValue(1.0 - float(schedule_sample.memory_fraction()))
+                },
+                alpha_by_channel={channel: FactorValue(1.0)},
+                fresh_noise_floor_by_channel={channel: FactorValue(0.0)},
+                schedule_sample=schedule_sample.as_cosine_schedule_sample(),
+                freeze_admission_by_channel={channel: True},
+                ledger_row_id=LedgerRowId(f"sota-cifar-{sample_index}-{r}"),
+                policy_hash=ArtifactHash(""),
+                created_at_round=int(r),
+                beta_from_schedule=False,
+            )
+            policy = replace(policy, policy_hash=hash_policy_hash(policy))
+            condition = ODEConditionDelta(
+                delta_spec={"num_steps": int(row["num_steps"])},
+                source="tools.run_sota_cifar_experiment",
+                target_round=int(r),
+                calibration_artifact_hash="sota-cifar",
+            )
+            phase = build_phase_state(
+                outer_cycle_id=0,
+                round_in_cycle=int(r),
+                schedule_phase_index=int(r),
+                operation_order_version="sota_cifar_v1",
+                source_selector_procedure="sota_cifar_framework",
+                seed_lineage_digest=ArtifactHash(f"sota-cifar-{sample_index}"),
+                horizon_remaining=int(n_rounds - r),
+                recorded_at_round=int(r),
+            )
+            result = engine.run_round(
+                round_index=int(r),
+                phase_state=phase,  # type: ignore[arg-type]
+                bundle=bundle,
+                adapter=adapter,
+                policy=policy,
+                condition_delta=condition,
+                seed=int(seed_base) + int(seed_offset) + sample_index * 1000 + r,
+            )
+            trace = result.round_trace.integrator_trace
+            if result.round_trace.audit_codes or trace is None:
+                raise RuntimeError(
+                    f"framework_round_failed:{r}:{result.round_trace.audit_codes}"
+                )
+            trajectory = adapter.export_trajectory(trace)
+            if trajectory is None:
+                raise RuntimeError(f"framework_endpoint_missing:{r}")
+            samples[sample_index] = np.asarray(trajectory[-1], dtype=np.float64)
+            # The returned endpoint, rather than a fresh initial state, is
+            # explicitly carried into the following Engine round.
+            bundle = adapter.observe_endpoint(trace, bundle)
+
+    safe_name = scheduler_name.lower().replace("scheduler", "")
+    out_path = output_dir / f"{safe_name}_samples.npz"
+    np.savez(out_path, samples=samples)
+    wall = float(time.perf_counter() - started)
+    total_nfe_per_sample = int(sum(steps_by_round))
     return out_path, per_round_metrics, wall, total_nfe_per_sample
 
 
@@ -948,27 +1117,21 @@ def main(argv: list[str] | None = None) -> int:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # --match-nfe sample: per-sample NFE matched. The framework's
-    # ``framework_max_num_steps`` is set to ``baseline_num_steps // n_rounds``
-    # so the framework's per-round average NFE equals the baseline's
-    # per-sample NFE. The cosine ramp's per-round ``n_cap`` averages to
-    # ``n_rounds / (pi)`` across the cycle, so the framework's
-    # per-sample NFE (sum of ``round(n_cap * framework_max_num_steps)``
-    # across rounds) lands close to ``baseline_num_steps``. See
-    # ``docs/r4-survey/21-fix-v2-plan.md`` §2.3 / §3.3 for the
-    # apples-to-apples protocol. Default ``--match-nfe budget`` keeps
-    # the v4 protocol (total framework budget equals baseline budget,
-    # per-sample NFE differs by ~2x).
+    # A re-inference chain requires at least one ODE evaluation per round.
+    # Therefore an exact per-sample NFE match exists only when the baseline
+    # budget is at least the number of rounds. Do not silently inflate the
+    # framework budget and label the result as matched.
+    exact_total_steps: int | None = None
     if str(args.match_nfe) == "sample":
-        per_round_target = max(
-            1, int(args.baseline_num_steps) // int(n_rounds)
-        )
-        args.framework_max_num_steps = per_round_target
+        if str(args.integrator) != "euler":
+            raise ValueError("match_nfe_sample_requires_euler")
+        if int(args.baseline_num_steps) < int(n_rounds):
+            raise ValueError("match_nfe_sample_requires_baseline_nfe_at_least_n_rounds")
+        exact_total_steps = int(args.baseline_num_steps)
         print(
             f"[run_sota_cifar_experiment] --match-nfe sample: "
-            f"framework_max_num_steps={per_round_target} "
-            f"(= baseline_num_steps {int(args.baseline_num_steps)} "
-            f"// n_rounds {n_rounds})",
+            f"framework_total_nfe={exact_total_steps} "
+            f"(exactly matches baseline_num_steps)",
             flush=True,
         )
 
@@ -986,7 +1149,10 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.checkpoint) if args.checkpoint else None,
         num_steps=int(args.baseline_num_steps),
         solver=str(args.integrator),
+        device=str(args.device),
     )
+    if str(args.device) == "cuda" and str(adapter._mode) != "torch":  # noqa: SLF001
+        raise RuntimeError("cuda experiment requires torch and a valid checkpoint")
     caps = adapter.capabilities()
     print(
         f"[run_sota_cifar_experiment] adapter: state_shape={caps.state_shape} "
@@ -1026,6 +1192,7 @@ def main(argv: list[str] | None = None) -> int:
             output_dir=output_dir,
             max_num_steps=int(args.framework_max_num_steps),
             target_ratio=float(args.target_ratio),
+            exact_total_steps=exact_total_steps,
         )
         sel_last = float(per_round[-1].get("evidence_ratio", float("nan")))
         rows.append(
