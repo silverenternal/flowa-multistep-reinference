@@ -936,6 +936,35 @@ class Engine:
         return caps
 
     @staticmethod
+    def _apply_schedule_beta_override(
+        *,
+        policy: FinalRestartPolicy,
+        applied_policy_hash: str,
+        audit_codes: list[str],
+    ) -> tuple[FinalRestartPolicy, str]:
+        """Apply the ``_policy_with_schedule_beta`` override if warranted.
+
+        P1-11 (F-36) — extracted from the inline call site in
+        :meth:`run_round`. The runner's canonical data flow sets
+        ``driver_computed_beta=True`` so the override is
+        short-circuited; legacy callers that set
+        ``beta_from_schedule=True`` with ``driver_computed_beta=False``
+        trigger the override. The ``applied_policy_hash`` is
+        recomputed from the post-override policy so the audit
+        invariant ``hash == recompute`` is preserved.
+
+        Returns the (possibly new) ``applied_policy`` plus the
+        (possibly recomputed) ``applied_policy_hash`` so callers can
+        unpack both in a single assignment.
+        """
+        if not (policy.beta_from_schedule and not policy.driver_computed_beta):
+            return policy, applied_policy_hash
+        overridden = _policy_with_schedule_beta(policy, audit_codes)
+        if overridden is policy:
+            return policy, applied_policy_hash
+        return overridden, str(hash_policy_hash(overridden))
+
+    @staticmethod
     def _emit_fail_closed(
         *,
         round_index: int,
@@ -1440,14 +1469,19 @@ class Engine:
         # ``beta_by_channel`` directly); the assert documents the
         # canonical runners' contract without blocking the
         # ``beta_by_channel`` direct-use path.
-        if policy.beta_from_schedule and not policy.driver_computed_beta:
-            applied_policy = _policy_with_schedule_beta(policy, audit_codes)
-        if applied_policy is not policy:
-            # Recompute the applied hash so the round trace's
-            # ``applied_policy_hash`` reflects the post-override
-            # policy. The original ``policy`` is left untouched so
-            # the caller can still introspect the unoverridden surface.
-            applied_policy_hash = str(hash_policy_hash(applied_policy))
+        #
+        # P1-11 (F-36) — the inline override was extracted to
+        # :meth:`Engine._apply_schedule_beta_override` so the W3-leak
+        # (an inline ``_policy_with_schedule_beta`` call buried in the
+        # middle of ``run_round``) is now a single dispatchable
+        # surface that downstream callers / tests can subclass,
+        # monkey-patch, or swap without re-implementing the override
+        # logic.
+        applied_policy, applied_policy_hash = self._apply_schedule_beta_override(
+            policy=policy,
+            applied_policy_hash=applied_policy_hash,
+            audit_codes=audit_codes,
+        )
 
         post_state = _safe_adapter_call(
             "apply_restart_distribution",

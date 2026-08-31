@@ -649,3 +649,359 @@ def test_license_check_accepted_license() -> None:
         assert lic in accepted
     for lic in rejected:
         assert lic not in accepted
+
+
+# ---------------------------------------------------------------------------
+# 17. Heun 2nd-order solver — adapter constructor accepts solver argument
+# ---------------------------------------------------------------------------
+
+
+def test_heun_solver_constructor_accepts_euler_default() -> None:
+    """Default solver is ``euler`` for backward compatibility."""
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        RF_CIFAR_INTEGRATOR_EULER,
+        RF_CIFAR_INTEGRATORS,
+        RectifiedFlowCIFARAdapter,
+    )
+
+    adapter = RectifiedFlowCIFARAdapter(
+        weights_path=None, force_mode="synthetic", num_steps=2, synthetic_seed=42
+    )
+    assert adapter._solver == RF_CIFAR_INTEGRATOR_EULER  # noqa: SLF001 — test seam
+    assert RF_CIFAR_INTEGRATOR_EULER in RF_CIFAR_INTEGRATORS
+    assert "heun" in RF_CIFAR_INTEGRATORS
+
+
+def test_heun_solver_constructor_rejects_unknown_solver() -> None:
+    """Unknown solver names raise ``ValueError`` with a deterministic code."""
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        ERR_RF_CIFAR_INTEGRATOR_UNKNOWN,
+        RectifiedFlowCIFARAdapter,
+    )
+
+    with pytest.raises(ValueError, match=ERR_RF_CIFAR_INTEGRATOR_UNKNOWN):
+        RectifiedFlowCIFARAdapter(
+            weights_path=None,
+            force_mode="synthetic",
+            num_steps=2,
+            synthetic_seed=42,
+            solver="rk4",
+        )
+
+
+# ---------------------------------------------------------------------------
+# 18. Heun vs Euler — single-step integration matches manual computation
+# ---------------------------------------------------------------------------
+
+
+def _expected_heun_step(
+    x_cur: np.ndarray, t0: float, t1: float, *, velocity_fn: object
+) -> np.ndarray:
+    """Manually compute one Heun predictor-corrector step.
+
+    Replicates the algorithm in ``solve_ode`` so the test can compare the
+    adapter's output to an independent reference implementation. The
+    per-step update is::
+
+        v1   = velocity_fn(x_cur, t0)
+        x_p  = clip(x_cur + dt * v1, ±CLAMP)
+        v2   = velocity_fn(x_p, t1)
+        x'   = clip(x_cur + 0.5 * dt * (v1 + v2), ±CLAMP)
+
+    No closed-form solution exists for the synthetic ``tanh`` field,
+    so we re-implement the algorithm as the analytical reference.
+    """
+    from adaptive_reflow.adapters.rectified_flow_cifar import RF_CIFAR_CLAMP
+
+    dt = float(t1) - float(t0)
+    v1 = velocity_fn(x_cur, t0)  # type: ignore[operator]
+    x_pred = np.clip(x_cur + dt * v1, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP)
+    v2 = velocity_fn(x_pred, t1)  # type: ignore[operator]
+    return np.clip(x_cur + 0.5 * dt * (v1 + v2), -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP)
+
+
+def _expected_heun_multi_step(
+    x0: np.ndarray, t_grid: np.ndarray, *, velocity_fn: object
+) -> np.ndarray:
+    """Replicate the full multi-step Heun integration in ``solve_ode``."""
+    x_cur = np.asarray(x0, dtype=np.float64).copy()
+    for i in range(1, t_grid.size):
+        t0 = float(t_grid[i - 1])
+        t1 = float(t_grid[i])
+        if i < t_grid.size - 1:
+            x_cur = _expected_heun_step(
+                x_cur, t0, t1, velocity_fn=velocity_fn
+            )
+        else:
+            # Final step: corrector is skipped — Euler-only update.
+            from adaptive_reflow.adapters.rectified_flow_cifar import RF_CIFAR_CLAMP
+
+            dt = float(t1) - float(t0)
+            v1 = velocity_fn(x_cur, t0)  # type: ignore[operator]
+            x_cur = np.clip(
+                x_cur + dt * v1, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP
+            )
+    return x_cur
+
+
+def test_heun_single_step_matches_manual_reference() -> None:
+    """Two-step Heun endpoint matches an independent reference computation.
+
+    With ``num_steps=1`` the corrector is always skipped (the loop has
+    a single iteration and the corrector condition is ``i < t_grid.size
+    - 1``). We therefore test ``num_steps=2`` so the corrector runs in
+    the first iteration; the second iteration uses the predictor only,
+    matching the k-diffusion ``sample_heun`` behaviour.
+    """
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        RF_CIFAR_INTEGRATOR_EULER,
+        RF_CIFAR_INTEGRATOR_HEUN,
+        RectifiedFlowCIFARAdapter,
+    )
+
+    adapter = RectifiedFlowCIFARAdapter(
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=2,
+        synthetic_seed=42,
+        solver=RF_CIFAR_INTEGRATOR_HEUN,
+    )
+    bundle = adapter.build_initial_state(
+        batch_id="batch-rf-cifar-heun-1", sample_id="sample-rf-cifar-heun-1"
+    )
+    delta = _make_condition_delta(target_round=0, num_steps=2)
+    trace = adapter.solve_ode(bundle, delta, seed=0)
+    endpoint = _endpoint_from_trace(adapter, trace)
+
+    # Manually replicate the Heun integration from the same x0 over the
+    # same t_grid.
+    x0 = _native_x0(adapter, bundle.native_state_digest)
+    t_grid = np.linspace(0.0, 1.0, 3, dtype=np.float64)
+    expected = _expected_heun_multi_step(
+        x0,
+        t_grid,
+        velocity_fn=lambda x, t: adapter._velocity_field(x, t),  # noqa: SLF001
+    )
+    np.testing.assert_allclose(endpoint, expected, atol=1e-12)
+    # Endpoint is finite and inside the clamp bound.
+    assert np.all(np.isfinite(endpoint))
+    assert np.max(np.abs(endpoint)) <= 3.0 + 1e-9
+    # Sanity: solver string is set on the adapter.
+    assert adapter._solver == RF_CIFAR_INTEGRATOR_HEUN  # noqa: SLF001
+    # Euler adapter must still default to Euler; confirm by constructing
+    # one and re-running the same single step.
+    euler_adapter = RectifiedFlowCIFARAdapter(
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=2,
+        synthetic_seed=42,
+        solver=RF_CIFAR_INTEGRATOR_EULER,
+    )
+    assert euler_adapter._solver == RF_CIFAR_INTEGRATOR_EULER  # noqa: SLF001
+
+
+# ---------------------------------------------------------------------------
+# 19. Heun vs Euler — produce different results for the same seed
+# ---------------------------------------------------------------------------
+
+
+def test_heun_and_euler_produce_different_results() -> None:
+    """Heun and Euler integrations over the same field diverge (Heun uses
+    two velocity evaluations per step; Euler uses one).
+    """
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        RF_CIFAR_INTEGRATOR_EULER,
+        RF_CIFAR_INTEGRATOR_HEUN,
+        RectifiedFlowCIFARAdapter,
+    )
+
+    euler = RectifiedFlowCIFARAdapter(
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=10,
+        synthetic_seed=42,
+        solver=RF_CIFAR_INTEGRATOR_EULER,
+    )
+    heun = RectifiedFlowCIFARAdapter(
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=10,
+        synthetic_seed=42,
+        solver=RF_CIFAR_INTEGRATOR_HEUN,
+    )
+    e_samples = euler.batched_inference(n_samples=4, num_steps=10, seed=0)
+    h_samples = heun.batched_inference(n_samples=4, num_steps=10, seed=0)
+    assert e_samples.shape == h_samples.shape == (4, 3, 32, 32)
+    # The two integrators must NOT produce byte-identical samples —
+    # that would mean the Heun path is a silent no-op.
+    assert not np.array_equal(e_samples, h_samples)
+    # The Heun output must still be finite and inside the clamp bound.
+    assert np.all(np.isfinite(h_samples))
+    assert np.max(np.abs(h_samples)) <= 3.0 + 1e-9
+
+
+# ---------------------------------------------------------------------------
+# 20. Heun is byte-deterministic — same seed → same output
+# ---------------------------------------------------------------------------
+
+
+def test_heun_batched_inference_is_byte_deterministic() -> None:
+    """Two Heun integrations from the same seed are byte-identical."""
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        RF_CIFAR_INTEGRATOR_HEUN,
+        RectifiedFlowCIFARAdapter,
+    )
+
+    def _run() -> np.ndarray:
+        a = RectifiedFlowCIFARAdapter(
+            weights_path=None,
+            force_mode="synthetic",
+            num_steps=10,
+            synthetic_seed=42,
+            solver=RF_CIFAR_INTEGRATOR_HEUN,
+        )
+        return a.batched_inference(n_samples=4, num_steps=10, seed=0)
+
+    np.testing.assert_array_equal(_run(), _run())
+
+
+# ---------------------------------------------------------------------------
+# 21. Heun per-step predictor-corrector — corrector skipped on the last step
+# ---------------------------------------------------------------------------
+
+
+def test_heun_corrector_skipped_on_last_step() -> None:
+    """The corrector (second velocity eval) is skipped on the final step.
+
+    For ``num_steps=1`` the loop has exactly one iteration ``i=1`` and
+    ``t_grid.size - 1 == 1`` so the corrector branch is never entered;
+    the result must equal the predictor-only (Euler) result. For
+    ``num_steps=2`` the first iteration runs the corrector; the second
+    does not — so the result is *not* identical to Euler.
+    """
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        RF_CIFAR_INTEGRATOR_EULER,
+        RF_CIFAR_INTEGRATOR_HEUN,
+        RectifiedFlowCIFARAdapter,
+    )
+
+    # num_steps == 1 → Heun's only step has no corrector; result equals Euler.
+    euler_single = RectifiedFlowCIFARAdapter(
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=1,
+        synthetic_seed=42,
+        solver=RF_CIFAR_INTEGRATOR_EULER,
+    ).batched_inference(n_samples=2, num_steps=1, seed=0)
+    heun_single = RectifiedFlowCIFARAdapter(
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=1,
+        synthetic_seed=42,
+        solver=RF_CIFAR_INTEGRATOR_HEUN,
+    ).batched_inference(n_samples=2, num_steps=1, seed=0)
+    np.testing.assert_array_equal(heun_single, euler_single)
+
+    # num_steps == 2 → Heun's first iteration runs the corrector; results diverge.
+    euler_two = RectifiedFlowCIFARAdapter(
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=2,
+        synthetic_seed=42,
+        solver=RF_CIFAR_INTEGRATOR_EULER,
+    ).batched_inference(n_samples=2, num_steps=2, seed=0)
+    heun_two = RectifiedFlowCIFARAdapter(
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=2,
+        synthetic_seed=42,
+        solver=RF_CIFAR_INTEGRATOR_HEUN,
+    ).batched_inference(n_samples=2, num_steps=2, seed=0)
+    assert not np.array_equal(heun_two, euler_two)
+
+
+# ---------------------------------------------------------------------------
+# 22. Heun wall-clock ~ 2x Euler (literature expectation)
+# ---------------------------------------------------------------------------
+
+
+def test_heun_wallclock_within_factor_of_euler() -> None:
+    """Heun's wall-clock is within [1.4x, 3.0x] of Euler's for the same NFE.
+
+    Heun evaluates the velocity field twice per step (vs Euler once),
+    so the expected ratio is ~2.0. The lower bound is relaxed to 1.4x
+    to absorb CI noise; the upper bound at 3.0x guards against a
+    regression that doubles the work again (e.g. accidental third eval).
+    """
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        RF_CIFAR_INTEGRATOR_EULER,
+        RF_CIFAR_INTEGRATOR_HEUN,
+        RectifiedFlowCIFARAdapter,
+    )
+
+    n_samples = 4
+    n_steps = 20
+
+    def _time(solver_kind: str) -> float:
+        a = RectifiedFlowCIFARAdapter(
+            weights_path=None,
+            force_mode="synthetic",
+            num_steps=n_steps,
+            synthetic_seed=42,
+            solver=solver_kind,
+        )
+        # Warmup: discard the first call (numpy / cache warmup).
+        _ = a.batched_inference(n_samples=2, num_steps=n_steps, seed=0)
+        start = time.perf_counter()
+        for _ in range(3):
+            _ = a.batched_inference(n_samples=n_samples, num_steps=n_steps, seed=0)
+        return time.perf_counter() - start
+
+    t_euler = _time(RF_CIFAR_INTEGRATOR_EULER)
+    t_heun = _time(RF_CIFAR_INTEGRATOR_HEUN)
+    ratio = float(t_heun) / float(t_euler) if t_euler > 0 else float("inf")
+    # The synthetic field is a small NumPy MLP; Heun's overhead should
+    # be clearly above 1x but bounded well below 3x.
+    assert 1.4 <= ratio <= 3.0, (
+        f"Heun/Euler wall-clock ratio out of expected band: "
+        f"{ratio:.2f}x (euler={t_euler:.3f}s, heun={t_heun:.3f}s)"
+    )
+
+
+# ---------------------------------------------------------------------------
+# 23. Heun per-step velocity evaluations — counted via probe
+# ---------------------------------------------------------------------------
+
+
+def test_heun_makes_two_velocity_evaluations_per_step() -> None:
+    """Heun's ``_velocity_field`` is called 2× per integration step (except
+    the last, which has only the predictor). For ``num_steps = N`` the
+    total call count is ``2 * (N - 1) + 1 = 2N - 1``.
+    """
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        RF_CIFAR_INTEGRATOR_HEUN,
+        RectifiedFlowCIFARAdapter,
+    )
+
+    adapter = RectifiedFlowCIFARAdapter(
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=5,
+        synthetic_seed=42,
+        solver=RF_CIFAR_INTEGRATOR_HEUN,
+    )
+    call_count = {"n": 0}
+    original = adapter._velocity_field  # noqa: SLF001
+
+    def _spy(x: np.ndarray, t: float) -> np.ndarray:
+        call_count["n"] += 1
+        return original(x, t)
+
+    adapter._velocity_field = _spy  # type: ignore[method-assign]  # noqa: SLF001
+    bundle = adapter.build_initial_state(
+        batch_id="batch-rf-cifar-heun-calls", sample_id="sample-rf-cifar-heun-calls"
+    )
+    delta = _make_condition_delta(target_round=0, num_steps=5)
+    adapter.solve_ode(bundle, delta, seed=0)
+    # ``num_steps=5`` → 5 predictor calls + 4 corrector calls = 9 total.
+    assert call_count["n"] == 9, f"expected 9 velocity evals, got {call_count['n']}"

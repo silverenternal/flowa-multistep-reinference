@@ -2005,3 +2005,62 @@ def test_engine_runner_path_suppresses_schedule_beta_override() -> None:
     # The applied policy hash MUST match the original (no override to
     # ``n_cap``).
     assert result.applied_policy_hash == hash_policy_hash(policy)
+
+
+# ---------------------------------------------------------------------------
+# P1-11 (F-36) — Engine._apply_schedule_beta_override extracted from inline
+# ---------------------------------------------------------------------------
+
+
+def test_engine_apply_schedule_beta_override_method_exists() -> None:
+    """P1-11 (F-36): the override must be a dispatchable method, not an inline leak."""
+    assert hasattr(Engine, "_apply_schedule_beta_override"), (
+        "F-36 fix: Engine._apply_schedule_beta_override must exist as a "
+        "method so the inline override in run_round is replaceable."
+    )
+    assert callable(Engine._apply_schedule_beta_override)
+
+
+def test_engine_apply_schedule_beta_override_passthrough_for_runner_path() -> None:
+    """F-36: ``driver_computed_beta=True`` short-circuits the override.
+
+    The runner's canonical data flow sets ``driver_computed_beta=True``
+    so the override MUST NOT mutate the policy when the runner is in
+    control. The method must return the original ``(policy, hash)``
+    pair unchanged.
+    """
+    # The _make_final_policy helper doesn't expose driver_computed_beta;
+    # patch the flag in via dataclasses.replace.
+    from dataclasses import replace as _replace
+
+    original = _replace(_make_final_policy(), driver_computed_beta=True)
+    applied, hash_after = Engine._apply_schedule_beta_override(
+        policy=original,
+        applied_policy_hash=str(original.policy_hash),
+        audit_codes=[],
+    )
+    assert applied is original, (
+        "F-36: driver_computed_beta=True must short-circuit the override"
+    )
+    assert hash_after == str(original.policy_hash)
+
+
+def test_engine_apply_schedule_beta_override_disabled_when_both_flags_false() -> None:
+    """F-36: ``beta_from_schedule=False`` AND ``driver_computed_beta=False`` is a no-op.
+
+    The engine uses the policy's ``beta_by_channel`` directly in this
+    mode (legacy path). The override MUST NOT mutate the policy.
+    """
+    from dataclasses import replace as _replace
+
+    original = _replace(
+        _make_final_policy(),
+        driver_computed_beta=False,
+        beta_from_schedule=False,
+    )
+    applied, hash_after = Engine._apply_schedule_beta_override(
+        policy=original,
+        applied_policy_hash=str(original.policy_hash),
+        audit_codes=[],
+    )
+    assert applied is original

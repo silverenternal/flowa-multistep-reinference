@@ -369,6 +369,11 @@ class CosineAnnealScheduler:
         """Return the cosine-annealed capacity sample for one round."""
         outer_cycle_id = _coerce_int_nonneg(outer_cycle_id, "outer_cycle_id")
         target_round = _coerce_int_nonneg(target_round, "target_round")
+        # P2-1 (F-6 / audit) — reject negative ``round_in_cycle``.
+        # Previously the helper accepted any int, including ``-1``, and
+        # produced a nonsense ``n_cap`` (clamped via ``max(length - 1, 1)``
+        # but still a contract wart). Validate up-front.
+        round_in_cycle = _coerce_int_nonneg(round_in_cycle, "round_in_cycle")
 
         n_cap = n_cap_for_round(self._config, round_in_cycle)
         length = int(self._config.cycle_length)
@@ -659,6 +664,10 @@ class ConstantScheduler:
         """Return the constant-capacity sample for one round."""
         outer_cycle_id = _coerce_int_nonneg(outer_cycle_id, "outer_cycle_id")
         target_round = _coerce_int_nonneg(target_round, "target_round")
+        # P2-3 (F-8 / audit) — reject negative ``round_in_cycle`` even when
+        # ``length == 1`` (the original ``length > 1`` short-circuit skipped
+        # validation for the cycle_length=1 edge case). Validate up-front.
+        round_in_cycle = _coerce_int_nonneg(round_in_cycle, "round_in_cycle")
         length = int(self._cycle_length)
         if length > 1 and not (
             0 <= int(round_in_cycle) <= length - 1

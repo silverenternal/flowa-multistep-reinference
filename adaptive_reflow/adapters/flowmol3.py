@@ -371,6 +371,53 @@ class FlowMol3Adapter:
             "FlowMol3Adapter does not preserve a native trajectory"
         )
 
+    # ------------------------------------------------------------------
+    # 10. inject_forward_noise (P1-8 / F-25 close)
+    # ------------------------------------------------------------------
+
+    def inject_forward_noise(
+        self,
+        bundle: StateBundle,
+        injected: Any,
+    ) -> StateBundle:
+        """P1-8 (F-25): FlowMol3 carries no native state — pass through."""
+        import hashlib as _hl
+        import json as _json
+
+        ok, errs = validate_state_bundle(bundle)
+        if not ok:
+            raise CapabilityMissingError(
+                "inject_forward_noise_invalid_bundle", context=",".join(errs),
+            )
+        try:
+            flat = list(getattr(injected, "flat", injected))
+        except TypeError:
+            flat = [injected]
+        flat = flat[:32]
+        new_digest = _hl.sha256(
+            _json.dumps(
+                {
+                    "kind": "forward_noise",
+                    "src_digest": str(bundle.native_state_digest),
+                    "injected_head": [repr(float(x)) for x in flat],
+                },
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()
+        return StateBundle(
+            channels=dict(bundle.channels),
+            masks=dict(bundle.masks),
+            batch_id=str(bundle.batch_id),
+            sample_id=str(bundle.sample_id),
+            reference_frame=str(bundle.reference_frame),
+            normalization=str(bundle.normalization),
+            source_round=int(bundle.source_round) + 1,
+            detach_proof=True,
+            native_state_digest=new_digest,
+            provenance=tuple(bundle.provenance) + ("inject_forward_noise_applied",),
+            capability_token=self.capabilities(),
+        )
+
 
 # ---------------------------------------------------------------------------
 # Convenience

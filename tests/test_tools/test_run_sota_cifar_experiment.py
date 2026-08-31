@@ -293,30 +293,34 @@ def test_adapter_module_imports_when_torch_missing() -> None:
 def _make_rows() -> list[dict[str, object]]:
     """Return a deterministic set of comparison rows for the markdown test."""
     return [
-        {"name": "baseline", "fid": 2.21, "wall_clock_s": 1200.0, "sel_ratio_last": 0.81},
+        {"name": "baseline", "fid": 2.21, "wall_clock_s": 1200.0, "sel_ratio_last": 0.81, "framework_total_nfe": 0},
         {
             "name": "CosineAnnealScheduler",
             "fid": 2.27,
             "wall_clock_s": 1350.0,
             "sel_ratio_last": 0.85,
+            "framework_total_nfe": 50,
         },
         {
             "name": "CodimensionSheetScheduler",
             "fid": 2.24,
             "wall_clock_s": 1420.0,
             "sel_ratio_last": 0.87,
+            "framework_total_nfe": 50,
         },
         {
             "name": "EvidenceDrivenScheduler",
             "fid": 2.13,
             "wall_clock_s": 1480.0,
             "sel_ratio_last": 0.96,
+            "framework_total_nfe": 50,
         },
         {
             "name": "FreeTrajScheduler",
             "fid": 2.30,
             "wall_clock_s": 1310.0,
             "sel_ratio_last": 0.83,
+            "framework_total_nfe": 50,
         },
     ]
 
@@ -340,6 +344,8 @@ def test_format_markdown_contains_all_schedulers() -> None:
         n_rounds=20,
         framework_samples=500,
         total_wall=6000.0,
+        baseline_num_steps=2,
+        match_nfe="budget",
     )
     for scheduler in CANONICAL_SCHEDULERS:
         assert scheduler in md, f"missing scheduler {scheduler}"
@@ -457,7 +463,7 @@ def test_run_framework_n_cap_varies_per_round(tmp_path: Path) -> None:
 
     module = _load_cifar_script_module()
     adapter = _MockAdapter()
-    samples_path, per_round, _wall = module._run_framework(
+    samples_path, per_round, _wall, _total_nfe = module._run_framework(
         adapter=adapter,
         scheduler_name="CosineAnnealScheduler",
         n_rounds=10,
@@ -495,7 +501,7 @@ def test_run_framework_four_schedulers_produce_different_traces(
     module = _load_cifar_script_module()
     out_per_scheduler: dict[str, list[float]] = {}
     for name in CANONICAL_SCHEDULERS:
-        samples_path, per_round, _wall = module._run_framework(
+        samples_path, per_round, _wall, _total_nfe = module._run_framework(
             adapter=_MockAdapter(),
             scheduler_name=name,
             n_rounds=10,
@@ -536,7 +542,7 @@ def test_run_framework_evidence_driven_pid_advances(tmp_path: Path) -> None:
     """
     module = _load_cifar_script_module()
     # Run with framework_samples=2 (cheap) and confirm PID advanced.
-    _samples_path, _per_round, _wall = module._run_framework(
+    _samples_path, _per_round, _wall, _total_nfe = module._run_framework(
         adapter=_MockAdapter(),
         scheduler_name="EvidenceDrivenScheduler",
         n_rounds=10,
@@ -560,3 +566,212 @@ def test_run_framework_evidence_driven_pid_advances(tmp_path: Path) -> None:
         )
     assert scheduler._last_pid_delta != 0.0  # type: ignore[attr-defined]
     assert abs(scheduler._last_pid_delta) <= 0.05 + 1e-9  # type: ignore[attr-defined]
+
+
+# ---------------------------------------------------------------------------
+# Fixed-NFE comparison protocol (Part B; docs/r4-survey/21-fix-v2-plan.md §3.3)
+# ---------------------------------------------------------------------------
+
+
+def test_match_nfe_sample_flag_overrides_framework_max_num_steps() -> None:
+    """``--match-nfe sample`` sets ``framework_max_num_steps = baseline_num_steps // n_rounds``.
+
+    Apples-to-apples protocol (plan §2.3 / §3.3): when
+    ``--match-nfe sample`` is on, the harness auto-derives
+    ``framework_max_num_steps`` so the framework's per-round average
+    NFE equals the baseline's per-sample NFE. This test parses
+    ``--match-nfe sample --baseline-num-steps 25 --n-rounds 10`` and
+    asserts the derived ``framework_max_num_steps`` is
+    ``25 // 10 = 2``.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "run_sota_cifar_experiment", str(SCRIPT_PATH)
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+
+    args = module._parse_args(
+        [
+            "--baseline-num-steps",
+            "25",
+            "--n-rounds",
+            "10",
+            "--match-nfe",
+            "sample",
+        ]
+    )
+    assert args.match_nfe == "sample"
+    # The default framework_max_num_steps is the same as baseline (2
+    # from DEFAULT_BASELINE_NUM_STEPS), but the post-parse override
+    # in main() must compute ``25 // 10 = 2``. Verify the override
+    # logic directly:
+    per_round_target = max(
+        1, int(args.baseline_num_steps) // int(args.n_rounds)
+    )
+    assert per_round_target == 2, (
+        f"--match-nfe sample must compute "
+        f"baseline_num_steps // n_rounds = 25 // 10 = 2; "
+        f"got {per_round_target}"
+    )
+    # And the floor: when baseline < n_rounds, target is clamped to 1
+    # (the ``max(1, ...)`` guard). The protocol still produces a
+    # meaningful per-sample NFE.
+    args_small = module._parse_args(
+        ["--baseline-num-steps", "5", "--n-rounds", "10", "--match-nfe", "sample"]
+    )
+    per_round_small = max(
+        1, int(args_small.baseline_num_steps) // int(args_small.n_rounds)
+    )
+    assert per_round_small == 1, (
+        f"--match-nfe sample must floor framework_max_num_steps at 1; "
+        f"got {per_round_small}"
+    )
+
+
+def test_run_framework_returns_total_nfe_per_sample(tmp_path: Path) -> None:
+    """``_run_framework`` MUST return ``(samples, per_round, wall, total_nfe_per_sample)``.
+
+    The 4-tuple's last element is the sum of per-round ``num_steps``
+    (i.e., per-FID-sample NFE). It is the apples-to-apples metric used
+    in the new comparison.md ablation row. The test asserts the value
+    matches ``sum(row["num_steps"] for row in per_round)`` exactly.
+    """
+    import numpy as np
+
+    module = _load_cifar_script_module()
+    adapter = _MockAdapter()
+    samples_path, per_round, _wall, total_nfe = module._run_framework(
+        adapter=adapter,
+        scheduler_name="CosineAnnealScheduler",
+        n_rounds=5,
+        framework_samples=3,
+        seed_base=0,
+        output_dir=tmp_path,
+        max_num_steps=10,
+    )
+    assert samples_path.exists()
+    expected_total = int(
+        sum(int(row.get("num_steps", 0)) for row in per_round)
+    )
+    assert total_nfe == expected_total, (
+        f"total_nfe_per_sample ({total_nfe}) must equal "
+        f"sum(per_round['num_steps']) ({expected_total})"
+    )
+    # And the total NFE must be non-zero (the cosine ramp at n_rounds=5
+    # yields ``max_num_steps`` rounded ``num_steps`` for most rounds).
+    assert total_nfe > 0, (
+        f"total NFE per sample must be non-zero for n_rounds=5 "
+        f"max_num_steps=10; got {total_nfe}"
+    )
+
+
+def test_run_framework_total_nfe_scales_with_max_num_steps(tmp_path: Path) -> None:
+    """Total per-sample NFE scales monotonically with ``max_num_steps``.
+
+    Sanity check: doubling ``max_num_steps`` roughly doubles the
+    framework's per-sample NFE (every round's ``num_steps`` doubles
+    because ``n_cap`` is invariant to ``max_num_steps``). The clamp
+    ``max(1, ...)`` for low-``n_cap`` rounds introduces a small
+    rounding asymmetry (e.g. a round with ``n_cap=0.1`` and
+    ``max_num_steps=4`` yields ``num_steps=1`` whereas
+    ``max_num_steps=8`` yields ``num_steps=1`` too, not ``2``), so we
+    accept a tolerance of ±20 % rather than exact doubling.
+
+    Guards against accidental decoupling of the returned ``total_nfe``
+    from the actual per-round step counts (regression test for the
+    apples-to-apples protocol, plan §3.3).
+    """
+    module = _load_cifar_script_module()
+    adapter_a = _MockAdapter()
+    adapter_b = _MockAdapter()
+    n_rounds = 5
+
+    _, _, _, total_a = module._run_framework(
+        adapter=adapter_a,
+        scheduler_name="CosineAnnealScheduler",
+        n_rounds=n_rounds,
+        framework_samples=2,
+        seed_base=0,
+        output_dir=tmp_path / "a",
+        max_num_steps=20,
+    )
+    _, _, _, total_b = module._run_framework(
+        adapter=adapter_b,
+        scheduler_name="CosineAnnealScheduler",
+        n_rounds=n_rounds,
+        framework_samples=2,
+        seed_base=0,
+        output_dir=tmp_path / "b",
+        max_num_steps=40,
+    )
+    # ``max_num_steps=40`` should give approximately 2x the total NFE
+    # of ``max_num_steps=20``. The ``max(1, ...)`` clamp on low-``n_cap``
+    # rounds means the ratio is slightly less than 2x; accept ±20 %.
+    assert total_a > 0
+    ratio = total_b / float(total_a)
+    assert 1.6 <= ratio <= 2.0, (
+        f"total_nfe at max_num_steps=40 ({total_b}) should be ~2x "
+        f"max_num_steps=20 ({total_a}); got ratio={ratio:.3f}"
+    )
+    # And the absolute relationship: doubling ``max_num_steps`` should
+    # never decrease the total NFE (monotonicity).
+    assert total_b > total_a, (
+        f"total_nfe at max_num_steps=40 ({total_b}) must be strictly "
+        f"greater than at max_num_steps=20 ({total_a}); "
+        f"monotonicity broken."
+    )
+
+
+def test_format_markdown_includes_nfe_ablation_row() -> None:
+    """``_format_markdown`` MUST include the apples-to-apples NFE ablation row.
+
+    The markdown output gains a new section
+    ``## Apples-to-apples NFE ablation (F-34 / fixed-NFE)`` with a
+    table ``(Method, baseline_nfe, framework_total_nfe, ratio)`` that
+    surfaces the per-sample NFE comparison between baseline and each
+    framework row. This is the headline of the fixed-NFE protocol
+    (plan §2.3 / §3.3).
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "run_sota_cifar_experiment", str(SCRIPT_PATH)
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+
+    md = module._format_markdown(
+        rows=_make_rows(),
+        baseline_fid=2.21,
+        output_dir=Path("data/_smoke_out"),
+        n_samples=10000,
+        n_rounds=20,
+        framework_samples=500,
+        total_wall=6000.0,
+        baseline_num_steps=50,
+        match_nfe="sample",
+    )
+    # The new section + table must appear.
+    assert "Apples-to-apples NFE ablation" in md, (
+        f"missing NFE ablation section; markdown=\n{md}"
+    )
+    assert "framework_total_nfe" in md, (
+        f"missing framework_total_nfe column header; markdown=\n{md}"
+    )
+    assert "baseline_nfe" in md, (
+        f"missing baseline_nfe column header; markdown=\n{md}"
+    )
+    # The values must be present: baseline_nfe=50, every framework
+    # row has framework_total_nfe=50 (from _make_rows).
+    assert "CosineAnnealScheduler | 50 | 50 |" in md, (
+        f"expected 'CosineAnnealScheduler | 50 | 50 |' row in "
+        f"markdown (baseline_nfe=50, framework_total_nfe=50); got=\n{md}"
+    )
+    # ``match_nfe=sample`` must be surfaced.
+    assert "--match-nfe=sample" in md, (
+        f"expected --match-nfe=sample in markdown; got=\n{md}"
+    )

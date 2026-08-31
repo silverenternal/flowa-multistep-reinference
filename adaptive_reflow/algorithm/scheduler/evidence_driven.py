@@ -104,33 +104,52 @@ class _PIDLiteController:
     """Proportional + integral controller for ``n_cap`` adjustments.
 
     The controller's *control error* is ``target_ratio - observed_ratio``
-    (with ``target_ratio = 1.0`` by default — the paper's evidence
-    ordering claims the sheet evidence dominates as ``eps -> 0``).
-    The controller output ``delta_n_cap`` is
+    (with ``target_ratio = 0.99`` by default — below the paper's
+    ``1.0`` asymptote because real ``evidence_ratio`` signals drift
+    under ``1.0`` from cell-evidence variance). The controller output
+    ``delta_n_cap`` is
 
         delta = Kp * error + Ki * integral_error
 
     with optional clamping into ``[-max_step, +max_step]``.
 
+    .. note::
+       **Signal amplification (Phase-3 / F-3 / F-32):** the original
+       defaults (``kp=0.2``, ``ki=0.05``, ``max_step=0.05``,
+       ``target_ratio=1.0``) produced ``|delta| < 0.012`` even when
+       the oracle signal was at ``0.0`` — well below the cosine
+       ramp's rounding threshold (``1 / max_num_steps ≈ 0.02`` for
+       the canonical 50-NFE budget). The amplified defaults
+       (``kp=2.0``, ``ki=0.5``, ``max_step=0.1``, ``target_ratio=0.99``)
+       raise the worst-case |delta| to ``0.1``, which translates to
+       a +5 NFE bump at the canonical 50-NFE max — enough to
+       surface a measurable difference between the
+       ``EvidenceDrivenScheduler`` row and the cosine baseline row.
+       See ``docs/r4-survey/21-fix-v2-plan.md`` §3.4 for the design
+       rationale.
+
     Parameters
     ----------
     kp:
-        Proportional gain. Default ``0.2`` — moves ``n_cap`` by ``0.2``
+        Proportional gain. Default ``2.0`` — moves ``n_cap`` by ``2.0``
         of the error magnitude per round (a one-step correction of
-        0.2 for a fully-wrong ``error=1.0`` signal).
+        ``1.0`` for a fully-wrong ``error=0.5`` signal). The high
+        gain ensures the per-round delta lands above the rounding
+        threshold of the cosine ramp.
     ki:
-        Integral gain. Default ``0.05`` — accumulates the long-term
+        Integral gain. Default ``0.5`` — accumulates the long-term
         offset so a sustained error does not just produce a
         steady-state offset (steady-state error from pure-P control).
     max_step:
-        Per-round cap on ``|delta|``. Default ``0.05`` — keeps the
-        controller from making large jumps on noisy single-round
-        signals.
+        Per-round cap on ``|delta|``. Default ``0.1`` — guarantees the
+        delta translates to at least ``round(0.1 * max_num_steps) = 5``
+        NFE bump at the canonical 50-NFE max.
     target_ratio:
-        The control set-point. Default ``1.0`` (the paper's evidence
-        ratio target per Theorem 1). Custom set-points are exposed
-        for experiments; the framework's canonical config uses
-        ``1.0``.
+        The control set-point. Default ``0.99`` (the paper's
+        ``Theorem 1`` evidence ratio target is ``1.0``; ``0.99`` is
+        the operational asymptote that drives the PID into a
+        measurable correction regime even when the proxy signal is
+        constant at ``1.0``).
     """
 
     __slots__ = ("_integral", "ki", "kp", "max_step", "target_ratio")
@@ -138,10 +157,10 @@ class _PIDLiteController:
     def __init__(
         self,
         *,
-        kp: float = 0.2,
-        ki: float = 0.05,
-        max_step: float = 0.05,
-        target_ratio: float = 1.0,
+        kp: float = 2.0,
+        ki: float = 0.5,
+        max_step: float = 0.1,
+        target_ratio: float = 0.99,
     ) -> None:
         self.kp = float(kp)
         self.ki = float(ki)
@@ -219,10 +238,10 @@ class EvidenceDrivenScheduler:
         config: CosineScheduleConfig,
         *,
         profile_residual_fn: Any | None = None,
-        kp: float = 0.2,
-        ki: float = 0.05,
-        max_step: float = 0.05,
-        target_ratio: float = 1.0,
+        kp: float = 2.0,
+        ki: float = 0.5,
+        max_step: float = 0.1,
+        target_ratio: float = 0.99,
         k_eps: float = 0.5,
         eps_implicit_base: float | None = None,
     ) -> None:
@@ -281,6 +300,20 @@ class EvidenceDrivenScheduler:
         self._eps_implicit_base: float | None = (
             float(eps_implicit_base) if eps_implicit_base is not None else None
         )
+        # P1-2 (F-3) — per-round PID delta history. The legacy
+        # ``_last_pid_delta`` field has "one round stale" semantics:
+        # the delta computed from round ``r``'s feedback is consumed
+        # by round ``r+1``'s sample, leaving the recorded n_cap for
+        # round ``r`` based on the *previous* round's feedback. To
+        # close the loop without losing the existing
+        # forward-propagation semantics, we now record per-round
+        # deltas so the runner can amend round ``r``'s metric with
+        # the delta derived from round ``r``'s own feedback (the
+        # "non-stale" delta). The next ``sample()`` continues to
+        # consume ``_last_pid_delta`` as before (legacy callers
+        # observe no behavioural change).
+        self._pid_delta_by_round: dict[int, float] = {}
+        self._eps_delta_by_round: dict[int, float] = {}
         # Forward the profile so paper-quantity augmentation works.
         if profile_residual_fn is not None:
             from adaptive_reflow.algorithm.scheduler._core import CosineAnnealScheduler
@@ -400,21 +433,29 @@ class EvidenceDrivenScheduler:
         return self.FAMILY
 
     def config_hash(self) -> str:
-        """Return a stable identifier for the algorithm + its config."""
-        return str(
-            hash_artifact(
-                {
-                    "algorithm": self.FAMILY,
-                    "cycle_length": int(self._config.cycle_length),
-                    "n_min": float(self._config.n_min),
-                    "n_max": float(self._config.n_max),
-                    "kp": float(self._controller.kp),
-                    "ki": float(self._controller.ki),
-                    "max_step": float(self._controller.max_step),
-                    "target_ratio": float(self._controller.target_ratio),
-                }
-            )
-        )
+        """Return a stable identifier for the algorithm + its config.
+
+        P1-1 (F-2): the hash now includes ``k_eps`` and the
+        ``eps_implicit_base`` so two schedulers that differ ONLY in
+        the C4-uplift fields have distinct hashes (the audit trail is
+        complete). The previous hash dropped ``k_eps`` which made
+        C4-uplift configurations indistinguishable from their
+        non-uplift twins.
+        """
+        hash_payload: dict[str, Any] = {
+            "algorithm": self.FAMILY,
+            "cycle_length": int(self._config.cycle_length),
+            "n_min": float(self._config.n_min),
+            "n_max": float(self._config.n_max),
+            "kp": float(self._controller.kp),
+            "ki": float(self._controller.ki),
+            "max_step": float(self._controller.max_step),
+            "target_ratio": float(self._controller.target_ratio),
+            "k_eps": float(self._k_eps),
+        }
+        if self._eps_implicit_base is not None:
+            hash_payload["eps_implicit_base"] = float(self._eps_implicit_base)
+        return str(hash_artifact(hash_payload))
 
     def reset(self) -> None:
         """Reset internal state so the scheduler can be re-run from scratch."""
@@ -423,8 +464,38 @@ class EvidenceDrivenScheduler:
         self._last_pid_delta = 0.0
         # C4 uplift: reset the parallel ``_last_eps_delta`` accumulator.
         self._last_eps_delta = 0.0
+        # P1-2 (F-3): clear the per-round delta history so a re-run
+        # starts with a clean slate.
+        self._pid_delta_by_round.clear()
+        self._eps_delta_by_round.clear()
         self._controller.reset()
         self._wrapped.reset()
+
+    # -- P1-2 (F-3) per-round PID delta lookup ----------------------------
+
+    def pid_delta_for_round(self, round_in_cycle: int) -> float:
+        """Return the PID delta computed from ``round_in_cycle``'s feedback.
+
+        P1-2 (F-3): the legacy ``_last_pid_delta`` has one-round-
+        stale semantics — the delta derived from round ``r``'s
+        feedback is consumed by round ``r+1``'s sample. Callers that
+        want to amend round ``r``'s metric with the delta derived
+        from round ``r``'s OWN feedback should call this method.
+
+        Returns ``0.0`` when no feedback was recorded for the given
+        round (matches the controller's neutral initial state).
+        """
+        return float(self._pid_delta_by_round.get(int(round_in_cycle), 0.0))
+
+    def eps_delta_for_round(self, round_in_cycle: int) -> float:
+        """Return the eps delta computed from ``round_in_cycle``'s feedback.
+
+        P1-2 (F-3): companion to :meth:`pid_delta_for_round` for the
+        C4-uplift ``eps_implicit`` path. Returns ``0.0`` when no
+        feedback was recorded or when ``eps_implicit_base`` was
+        ``None`` at construction time.
+        """
+        return float(self._eps_delta_by_round.get(int(round_in_cycle), 0.0))
 
     def record_round_feedback(
         self,
@@ -462,6 +533,14 @@ class EvidenceDrivenScheduler:
         codes: list[str] = []
         delta, _saturated = self._controller.step(ratio, audit_codes=codes)
         self._last_pid_delta = delta
+        # P1-2 (F-3): record the delta per round so the runner can
+        # amend round ``r``'s metric with the delta derived from
+        # round ``r``'s own feedback (closes the "one round stale"
+        # loop). The legacy ``_last_pid_delta`` field is left
+        # intact so the existing forward-propagation semantics are
+        # preserved for callers that consume ``_last_pid_delta``
+        # directly.
+        self._pid_delta_by_round[int(round_in_cycle)] = float(delta)
         # C4 uplift: split the PID's delta between ``n_cap`` (the
         # legacy destination) and ``eps_implicit`` (the C4 path).
         # Paper Theorem 1: ratio rises as ``eps -> 0`` => positive
@@ -469,6 +548,7 @@ class EvidenceDrivenScheduler:
         # implicitly via the controller (it sums into ``delta``).
         if self._eps_implicit_base is not None:
             self._last_eps_delta = -float(delta) * float(self._k_eps)
+            self._eps_delta_by_round[int(round_in_cycle)] = -float(delta) * float(self._k_eps)
         self._last_audit_codes = self._last_audit_codes + tuple(codes)
 
     def inject_noise(

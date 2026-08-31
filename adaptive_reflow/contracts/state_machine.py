@@ -169,6 +169,21 @@ class TransitionLog:
     internal_subpath: str
     """``"parent/region/sub_sm"`` path for nested dispatch, or ``""`` if root."""
 
+    def __hash__(self) -> int:
+        """Explicit hash over the canonical 4-tuple (audit F-52 / P2-29).
+
+        ``frozen=True`` dataclasses already get a default ``__hash__`` over
+        *every* field, but the audit asked for an explicit hash that
+        pins only the 4-tuple ``(event, source, target, kind)`` so two
+        ``TransitionLog`` records that differ only in ``counter`` /
+        ``guard_name`` / ``effect_name`` / ``history_restored`` /
+        ``internal_subpath`` / ``guard_result`` still hash the same.
+        This makes the dedup-set semantic (the 4-tuple uniquely names
+        the transition; the other fields are diagnostic metadata) the
+        hash's contract.
+        """
+        return hash((self.event, self.source, self.target, self.kind))
+
 
 # ---------------------------------------------------------------------------
 # Context passed to hooks/guards/effects

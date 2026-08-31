@@ -107,6 +107,34 @@ def validate_final_restart_policy(p: FinalRestartPolicy) -> ValidationResult:
         errors.append(
             f"writer_id must be 'inference.adaptive_reflow'; got {p.writer_id!r}"
         )
+    # P2-32 (F-56 / audit) — the four channel-keyed mappings must carry
+    # the same :data:`ChannelName` set; otherwise the policy can silently
+    # disagree with itself (e.g. ``beta_by_channel`` defines ``"image"``
+    # but ``alpha_by_channel`` defines ``"label"``). Reject when the
+    # channel-name key sets disagree. ``freeze_admission_by_channel`` is
+    # allowed to be a strict subset of the other three (some callers
+    # only freeze a subset of channels), but it must not introduce
+    # *new* channel names that aren't already in ``beta_by_channel``.
+    beta_keys = set(p.beta_by_channel)
+    alpha_keys = set(p.alpha_by_channel)
+    floor_keys = set(p.fresh_noise_floor_by_channel)
+    freeze_keys = set(p.freeze_admission_by_channel)
+    if alpha_keys != beta_keys:
+        errors.append(
+            "alpha_by_channel key set must equal beta_by_channel key set; "
+            f"got alpha_keys={sorted(alpha_keys)!r} vs beta_keys={sorted(beta_keys)!r}"
+        )
+    if floor_keys != beta_keys:
+        errors.append(
+            "fresh_noise_floor_by_channel key set must equal beta_by_channel key set; "
+            f"got floor_keys={sorted(floor_keys)!r} vs beta_keys={sorted(beta_keys)!r}"
+        )
+    if not freeze_keys.issubset(beta_keys):
+        errors.append(
+            "freeze_admission_by_channel key set must be a subset of "
+            f"beta_by_channel; got freeze_keys={sorted(freeze_keys)!r} "
+            f"vs beta_keys={sorted(beta_keys)!r}"
+        )
     expected_hash = hash_policy_hash(p)
     if p.policy_hash != expected_hash:
         errors.append(

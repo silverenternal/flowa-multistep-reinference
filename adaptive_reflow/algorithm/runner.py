@@ -623,6 +623,26 @@ class ReInferenceRunner:
         # events fire inside the loop below.
         self._state_machine.send("RESET")
         self._state_machine.send("INIT")
+        # P1-9 (F-33) — also reset the inner components that carry
+        # per-cycle state so a re-run starts from a clean slate. The
+        # outer orchestrator state machine is reset above; the
+        # scheduler / merge operator / policy driver / blender each
+        # carry their own ``reset()`` hooks that clear their per-cycle
+        # accumulators (the PID integral, the merge ``prev`` chain,
+        # the policy driver's saturation count, the blender's prior
+        # digest). Without these resets a second ``run()`` on the same
+        # runner instance would inherit the previous cycle's state
+        # and produce a non-reproducible result.
+        reset_hooks: list[Any] = [
+            self._scheduler,
+            self._driver,
+            self._merge,
+            self._blender,
+        ]
+        for component in reset_hooks:
+            reset_method = getattr(component, "reset", None)
+            if callable(reset_method):
+                reset_method()
         # CONTRACT 2.4: the runner tracks the previous round's emitted
         # ``beta`` across rounds as ``self._last_emitted_beta`` so the
         # configured merge operator sees a numeric ``prev`` argument.
@@ -1056,8 +1076,31 @@ class ReInferenceRunner:
             phase_state = result.next_phase_state
             prior_endpoint_digest = str(trace.endpoint_digest)
 
-            # Carry the detached endpoint forward as the next source bundle.
-            if trace.integrator_trace is not None and bundle is not None:
+            # F-34 — state propagation between rounds. The runner
+            # carries round ``r``'s detached endpoint forward as round
+            # ``r+1``'s source bundle so the framework chains the
+            # β-blended state across rounds (per
+            # ``docs/r4-survey/21-fix-v2-plan.md`` §3.1, F-34). The
+            # engine internally dispatches
+            # ``apply_restart_distribution(bundle, policy)`` for the
+            # next round, so the bundle flowing into round ``r+1``
+            # MUST be round ``r``'s ``observe_endpoint`` output — NOT
+            # the round-0 ``build_initial_state`` bundle. The
+            # ``observe_endpoint`` call returns a fresh bundle with
+            # ``source_round = r+1`` (the adapter's invariant: round
+            # ``r``'s endpoint becomes round ``r+1``'s prior).
+            #
+            # We re-assign the local ``bundle`` so the next loop
+            # iteration feeds the chained bundle into the engine.
+            # Adapters without ``observe_endpoint`` are tolerated via
+            # the ``hasattr`` guard (legacy adapter path); the runner
+            # falls back to keeping the round-0 bundle, which preserves
+            # the legacy ``not_chain_yet`` behaviour.
+            if (
+                trace.integrator_trace is not None
+                and bundle is not None
+                and hasattr(self._adapter, "observe_endpoint")
+            ):
                 bundle = self._adapter.observe_endpoint(
                     trace.integrator_trace, bundle
                 )

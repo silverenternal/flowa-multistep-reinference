@@ -89,6 +89,17 @@ RF_CIFAR_NUM_STEPS_DEFAULT: int = 2
 RF_CIFAR_T_END: float = 1.0
 RF_CIFAR_NATIVE_STATES_MAXSIZE: int = 8
 
+#: Available ODE integrators. ``"euler"`` is the 1st-order baseline
+#: (single velocity evaluation per step). ``"heun"`` is the 2nd-order
+#: predictor-corrector (two evaluations per step: Euler trial + trapezoidal
+#: corrector). Heun at half the steps matches Euler at full steps
+#: (trapezoidal rule halves the truncation error) but costs the same
+#: wall-clock; at matched steps Heun is ~30-40% better FID.
+#: See ``docs/r4-survey/21-fix-v2-plan.md`` §1.2 / §3.2.
+RF_CIFAR_INTEGRATORS: tuple[str, ...] = ("euler", "heun")
+RF_CIFAR_INTEGRATOR_EULER: str = "euler"
+RF_CIFAR_INTEGRATOR_HEUN: str = "heun"
+
 #: Max sub-batch fed to the torch UNet in one forward pass. The published
 #: DDPM++ attention block materialises a ``(B, 16, 16, 16, 16)`` tensor,
 #: so unbounded batches exhaust CPU memory.
@@ -100,6 +111,7 @@ AUDIT_RF_CIFAR_OBSERVED: str = "rf_cifar_observed"
 AUDIT_FORWARD_NOISE_APPLIED: str = "forward_noise_applied"
 ERR_RF_CIFAR_NUM_STEPS: str = "rf_cifar_num_steps_must_be_positive"
 ERR_RF_CIFAR_WEIGHTS_MISSING: str = "rf_cifar_weights_missing"
+ERR_RF_CIFAR_INTEGRATOR_UNKNOWN: str = "rf_cifar_integrator_unknown"
 
 # Default weights filenames in priority order (the plan §1.2 fallbacks).
 # ``cifar10_rf.pth`` is the clean EMA-only state-dict produced by the
@@ -537,6 +549,13 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
     * ``num_steps`` — default number of Euler integration steps per
       round (paper uses 2-NFE Euler; the framework can override via
       ``condition.delta_spec["num_steps"]``).
+    * ``solver`` — ``"euler"`` (default) or ``"heun"``. ``"euler"`` is
+      the 1st-order baseline (1 NFE per step). ``"heun"`` is the 2nd-
+      order predictor-corrector (2 NFE per step): Euler trial step at
+      ``t+dt`` + trapezoidal corrector. Cost is ~2x wall-clock per step;
+      quality improvement at matched NFE is ~30-40% per the EDM /
+      Rectified-Flow literature. See
+      ``docs/r4-survey/21-fix-v2-plan.md`` §1.2 / §3.2.
     """
 
     pinned_num_steps: int = RF_CIFAR_NUM_STEPS_DEFAULT
@@ -556,15 +575,22 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         seed_offset: int = 0,
         synthetic_hidden: int = RF_CIFAR_SYNTHETIC_HIDDEN,
         synthetic_seed: int = RF_CIFAR_SYNTHETIC_SEED_DEFAULT,
+        solver: str = RF_CIFAR_INTEGRATOR_EULER,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_RF_CIFAR_NUM_STEPS)
         if int(synthetic_hidden) <= 0:
             raise ValueError("synthetic_hidden_must_be_positive")
+        if str(solver) not in RF_CIFAR_INTEGRATORS:
+            raise ValueError(
+                f"{ERR_RF_CIFAR_INTEGRATOR_UNKNOWN}:{solver!r}"
+                f"; expected one of {RF_CIFAR_INTEGRATORS!r}"
+            )
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
         self._synthetic_hidden = int(synthetic_hidden)
         self._synthetic_seed = int(synthetic_seed)
+        self._solver: str = str(solver)
 
         # Resolve weights path.
         explicit = Path(weights_path) if weights_path is not None else None
@@ -836,6 +862,21 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
     # 7. solve_ode
     # ------------------------------------------------------------------
 
+    def _velocity_field(self, x: ArrayF64, t: float) -> ArrayF64:
+        """Evaluate the velocity field at ``(x, t)`` for the active backend.
+
+        Internal dispatch helper used by :meth:`solve_ode` and
+        :meth:`batched_inference`. ``torch`` mode delegates to the
+        PyTorch UNet (see :func:`_torch_velocity_field`); ``synthetic``
+        mode uses the deterministic NumPy field. Returns a NumPy
+        ``(3, 32, 32)`` float64 array (copy-safe to mutate).
+        """
+        if self._mode == "torch":
+            assert self._unet is not None
+            return _torch_velocity_field(self._unet, x, t, dtype=self._torch_dtype)
+        assert self._synthetic_weights is not None
+        return _synthetic_velocity_field(x, t, weights=self._synthetic_weights)
+
     def solve_ode(
         self,
         state: StateBundle,
@@ -860,6 +901,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
             RF_CIFAR_STATE_SHAPE
         )
 
+        solver_kind = str(self._solver)
         t_grid = np.linspace(0.0, float(RF_CIFAR_T_END), num_steps + 1, dtype=np.float64)
         traj = np.empty((t_grid.size, *RF_CIFAR_STATE_SHAPE), dtype=np.float64)
         traj[0] = x0.copy()
@@ -868,26 +910,33 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
             t0 = float(t_grid[i - 1])
             t1 = float(t_grid[i])
             dt = float(t1 - t0)
-            if self._mode == "torch":
-                v = _torch_velocity_field(
-                    self._unet, x_cur, t0, dtype=self._torch_dtype
+            v1 = self._velocity_field(x_cur, t0)
+            if solver_kind == RF_CIFAR_INTEGRATOR_HEUN and i < t_grid.size - 1:
+                # Predictor: Euler trial step at t+dt.
+                x_pred = np.clip(
+                    x_cur + dt * v1, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP
+                )
+                # Corrector: trapezoidal average using v(x_pred, t+dt).
+                # The final step has no ``t+dt`` within the integration
+                # range so the corrector is skipped (matches k-diffusion
+                # ``sample_heun`` at ``sigma_next == 0``).
+                v2 = self._velocity_field(x_pred, t1)
+                x_cur = np.clip(
+                    x_cur + 0.5 * dt * (v1 + v2),
+                    -RF_CIFAR_CLAMP,
+                    RF_CIFAR_CLAMP,
                 )
             else:
-                assert self._synthetic_weights is not None
-                v = _synthetic_velocity_field(
-                    x_cur,
-                    t0,
-                    weights=self._synthetic_weights,
+                x_cur = np.clip(
+                    x_cur + dt * v1, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP
                 )
-            x_cur = x_cur + dt * v
-            x_cur = np.clip(x_cur, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP)
             traj[i] = x_cur
 
         traj_digest = _digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
-                "integrator": "euler",
+                "integrator": str(solver_kind),
                 "num_steps": int(num_steps),
                 "shape": [int(traj.shape[0]), int(traj.shape[1]), int(traj.shape[2])],
                 "x0_first": [
@@ -907,7 +956,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
             },
         )
         cfg_blob = repr(
-            ("rf_cifar_config", "euler", int(num_steps), int(seed))
+            ("rf_cifar_config", str(solver_kind), int(num_steps), int(seed))
         ).encode("utf-8")
         integrator_config_hash = hashlib.sha256(cfg_blob).hexdigest()
         return ODEIntegratorTrace(
@@ -1060,6 +1109,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         *,
         num_steps: int | None = None,
         seed: int = 0,
+        solver: str | None = None,
     ) -> ArrayF64:
         """Return ``(n_samples, 3, 32, 32)`` samples from the velocity field.
 
@@ -1067,15 +1117,26 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         reproduction (§4 of the plan) and the framework FID
         computation (§5.4). Each sample is drawn from
         ``N(0, I_{3×32×32})`` and integrated forward over the
-        ``t_grid`` with ``num_steps`` Euler steps.
+        ``t_grid`` with ``num_steps`` Euler steps (or Heun 2nd-order
+        steps when ``solver='heun'``).
 
-        Byte-deterministic for fixed ``(seed, num_steps, weights)``.
+        The ``solver`` argument overrides the adapter's default
+        ``solver`` constructor argument for this call only. When
+        ``None``, the constructor setting is used.
+
+        Byte-deterministic for fixed ``(seed, num_steps, weights, solver)``.
         """
         if int(n_samples) <= 0:
             raise ValueError("n_samples_must_be_positive")
         steps = int(num_steps) if num_steps is not None else self._num_steps
         if steps <= 0:
             raise ValueError(ERR_RF_CIFAR_NUM_STEPS)
+        solver_kind = str(self._solver if solver is None else solver)
+        if solver_kind not in RF_CIFAR_INTEGRATORS:
+            raise ValueError(
+                f"{ERR_RF_CIFAR_INTEGRATOR_UNKNOWN}:{solver_kind!r}"
+                f"; expected one of {RF_CIFAR_INTEGRATORS!r}"
+            )
         rng = np.random.default_rng(int(seed))
         x0_batch = rng.standard_normal((int(n_samples), *RF_CIFAR_STATE_SHAPE)).astype(
             np.float64
@@ -1088,16 +1149,35 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
             dt = float(t1 - t0)
             if self._mode == "torch":
                 assert self._unet is not None
-                v = _batched_torch_velocity_field(
+                v1 = _batched_torch_velocity_field(
                     self._unet, x_cur, t0, dtype=self._torch_dtype
                 )
             else:
                 assert self._synthetic_weights is not None
-                v = _batched_synthetic_velocity_field(
+                v1 = _batched_synthetic_velocity_field(
                     x_cur, t0, weights=self._synthetic_weights
                 )
-            x_cur = x_cur + dt * v
-            x_cur = np.clip(x_cur, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP)
+            if solver_kind == RF_CIFAR_INTEGRATOR_HEUN and i < t_grid.size - 1:
+                # Predictor: Euler trial step at t+dt.
+                x_pred = np.clip(x_cur + dt * v1, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP)
+                if self._mode == "torch":
+                    assert self._unet is not None
+                    v2 = _batched_torch_velocity_field(
+                        self._unet, x_pred, t1, dtype=self._torch_dtype
+                    )
+                else:
+                    assert self._synthetic_weights is not None
+                    v2 = _batched_synthetic_velocity_field(
+                        x_pred, t1, weights=self._synthetic_weights
+                    )
+                # Corrector: trapezoidal average.
+                x_cur = np.clip(
+                    x_cur + 0.5 * dt * (v1 + v2),
+                    -RF_CIFAR_CLAMP,
+                    RF_CIFAR_CLAMP,
+                )
+            else:
+                x_cur = np.clip(x_cur + dt * v1, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP)
         return np.asarray(x_cur, dtype=np.float64).reshape(
             (int(n_samples), *RF_CIFAR_STATE_SHAPE)
         )
@@ -1160,6 +1240,7 @@ def default_rectified_flow_cifar_adapter(
     weights_path: Path | None = None,
     force_mode: Mode | Literal["auto"] = "auto",
     num_steps: int = RF_CIFAR_NUM_STEPS_DEFAULT,
+    solver: str = RF_CIFAR_INTEGRATOR_EULER,
 ) -> RectifiedFlowCIFARAdapter:
     """Default factory for :class:`RectifiedFlowCIFARAdapter`.
 
@@ -1169,11 +1250,15 @@ def default_rectified_flow_cifar_adapter(
     ``data/rectified_flow_cifar10.pt`` in priority order; when none of
     those exist and ``force_mode`` is ``"auto"``, the adapter falls
     back to ``synthetic`` mode (testing-only).
+
+    The ``solver`` parameter selects the integrator: ``"euler"`` (1st-
+    order, default) or ``"heun"`` (2nd-order predictor-corrector).
     """
     return RectifiedFlowCIFARAdapter(
         weights_path=weights_path,
         force_mode=force_mode,
         num_steps=num_steps,
+        solver=solver,
     )
 
 
@@ -1181,6 +1266,7 @@ __all__ = [
     "AUDIT_FORWARD_NOISE_APPLIED",
     "AUDIT_RF_CIFAR_OBSERVED",
     "AUDIT_RF_CIFAR_RESTART_BLEND",
+    "ERR_RF_CIFAR_INTEGRATOR_UNKNOWN",
     "ERR_RF_CIFAR_NUM_STEPS",
     "ERR_RF_CIFAR_WEIGHTS_MISSING",
     "RF_CIFAR_CHANNELS",
@@ -1190,6 +1276,9 @@ __all__ = [
     "RF_CIFAR_CONFIG_VERSION",
     "RF_CIFAR_FORMAT_GNOBITAB",
     "RF_CIFAR_HEIGHT",
+    "RF_CIFAR_INTEGRATOR_EULER",
+    "RF_CIFAR_INTEGRATOR_HEUN",
+    "RF_CIFAR_INTEGRATORS",
     "RF_CIFAR_NATIVE_STATES_MAXSIZE",
     "RF_CIFAR_NUM_STEPS_DEFAULT",
     "RF_CIFAR_STATE_SHAPE",

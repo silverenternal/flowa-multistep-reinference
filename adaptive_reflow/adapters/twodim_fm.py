@@ -1049,6 +1049,36 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         return np.asarray(traj, dtype=np.float64)
 
     # ------------------------------------------------------------------
+    # 11. inject_forward_noise (P1-8 / F-25 close)
+    # ------------------------------------------------------------------
+
+    def inject_forward_noise(
+        self,
+        bundle: StateBundle,
+        injected: Any,
+    ) -> StateBundle:
+        """P1-8 (F-25): perturb the prior's state vector by ``injected``.
+
+        Delegates to the generic helper
+        :func:`adaptive_reflow.adapters._inject_forward_noise.inject_forward_noise_into_state`.
+        The state key is ``("x", "x0")`` because
+        :meth:`build_initial_state` (round 0) stores under
+        ``{"x0", ...}`` while :meth:`observe_endpoint` (post-round
+        0) stores under ``{"x", "t", "target"}``. The helper tries
+        both keys so the same call works across both entry shapes.
+        """
+        from adaptive_reflow.adapters._inject_forward_noise import (
+            inject_forward_noise_into_state,
+        )
+
+        return inject_forward_noise_into_state(
+            adapter=self,
+            bundle=bundle,
+            injected=injected,
+            state_key=("x", "x0"),
+        )
+
+    # ------------------------------------------------------------------
     # 10. batched_integrate (B5 metric population; RK4-only)
     # ------------------------------------------------------------------
 
