@@ -399,15 +399,15 @@ def compute_sa(mols: Sequence[Any | None]) -> float:
 def compute_logp(mols: Sequence[Any | None]) -> float:
     """Mean Wildman-Crippen logP across non-``None`` molecules.
 
-    Imports :func:`MolLogP` directly (rather than via the
-    :mod:`Descriptors` module attribute) so mypy under strict mode
-    can resolve the symbol without reaching for the upstream rdkit
-    stub, which is excluded from the project's type-checking matrix
-    per ``pyproject.toml``.
+    The :func:`MolLogP` accessor is reached via :mod:`Descriptors`
+    rather than a direct ``from rdkit.Chem import MolLogP`` because
+    rdkit's stub layout exposes ``MolLogP`` only as a submodule
+    attribute (per the upstream ``rdMolDescriptors.pyi`` shape, which
+    is excluded from this project's mypy matrix).
     """
-    from rdkit.Chem.Descriptors import MolLogP
+    from rdkit.Chem import Descriptors
 
-    return _mean_over_valid(mols, MolLogP)
+    return _mean_over_valid(mols, Descriptors.MolLogP)  # type: ignore[attr-defined]
 
 
 def _load_smiles_file(path: Path) -> list[str]:
