@@ -526,3 +526,24 @@ available on the user's machine.
   — the canonical real-model reference implementation.
 - [`adaptive_reflow/adapters/toy_linear.py`](../adaptive_reflow/adapters/toy_linear.py)
   — the smallest possible adapter (≤ 60 LOC).
+
+## Plug-in candidates — video modality
+
+The Wan2.2 family is also wired as a plug-in candidate adapter
+(stub harness only; the dependency blockers listed in the design
+spec remain open):
+
+| Adapter | Module | State shape | Solver | Notes |
+|---|---|---|---|---|
+| Wan2.2 T2V-A14B | `adaptive_reflow/adapters/wan2_2_video_flowmatchingodeadapter.py` | `(16, 30, 45, 80)` | Heun (compliance path) / DPM++ (published) | MoE routing per-step; `t_moe=0.875` default. Blocked on Wan2.2 paper PDF, DiT weights, umT5-XXL, flash-attn, I3D, GPU VRAM. |
+| Wan2.2 TI2V-5B | same module | `(48, 30, 45, 80)` | Heun / DPM++ | Dense DiT forward (no MoE). Blocked on the same dependency list as A14B. |
+
+The Protocol surface is fully implemented and the test suite
+(`tests/test_adapters/test_wan2_2_video_flowmatchingodeadapter.py`)
+covers all 18 contract points in `synthetic` mode today (no GPU or
+torch required). Once the dependency blockers are resolved, the
+executable harness at
+`tools/run_sota_wan2_2_video_flowmatchingodeadapter_experiment.py`
+should be authored per
+[`r4-survey/07-sota-experiment-protocol.md`](./r4-survey/07-sota-experiment-protocol.md)
+§8 (video extension).
