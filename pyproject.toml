@@ -139,7 +139,7 @@ chemistry = [
 # parse; NumPy 2.0.x through 2.4.x are syntactically
 # compatible with mypy 1.x.
 flow_matching = [
-    "numpy>=2.0,<2.5",
+    "numpy>=2.0,<2.6",
     "scipy>=1.10",
 ]
 # Test-only extra: closes T-04.4 — the workflows (``cpu-tests.yml``,
