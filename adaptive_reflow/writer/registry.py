@@ -611,7 +611,6 @@ def make_default_graphbfn_entry() -> CandidateEntry:
         ),
         registered_at="2026-08-31",
         registered_by="DTB-M7 GraphBFN adapter scaffold",
->>>>>>> worktree-wf_155a6098-91b-23
     )
 
 
