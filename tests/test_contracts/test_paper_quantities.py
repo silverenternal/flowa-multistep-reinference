@@ -14,6 +14,9 @@ from __future__ import annotations
 
 import math
 import sys
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
@@ -234,11 +237,33 @@ def test_no_torch() -> None:
     """Importing :mod:`adaptive_reflow.contracts.paper_quantities` must not pull in torch.
 
     Stdlib-only contract: this module has no optional heavy dependencies.
+
+    Runs the import inside a fresh subprocess so the check is not polluted
+    by torch-using tests that may have been collected earlier in the same
+    pytest session (test_rectified_flow_cifar, test_hidream_i1, the FID
+    regression suite, ...). Without the subprocess wrapper, a sibling test
+    that legitimately imports torch for its own work would leave
+    ``torch`` in ``sys.modules`` for every subsequent test and break this
+    assertion even when the contracts chain is genuinely torch-free.
     """
-    assert "torch" not in sys.modules, (
-        "torch was imported as a side-effect of importing "
-        "adaptive_reflow.contracts.paper_quantities; the module must be "
-        "stdlib-only"
+    import subprocess  # local import; stdlib-only assertion needs no torch.
+
+    script = (
+        "import sys; "
+        "import adaptive_reflow.contracts.paper_quantities; "
+        "assert 'torch' not in sys.modules, sys.modules.get('torch'); "
+        "print('OK')"
+    )
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        cwd=str(Path(__file__).resolve().parents[2]),
+        check=False,
+    )
+    assert completed.returncode == 0, (
+        "subprocess import of adaptive_reflow.contracts.paper_quantities "
+        f"pulled in torch: stdout={completed.stdout!r} stderr={completed.stderr!r}"
     )
 
 
