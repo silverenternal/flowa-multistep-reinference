@@ -25,7 +25,7 @@ The suite is **CPU-only by design**: the package is stdlib-only
 Python 3.12 -- no `torch`, no `numpy`, no I/O -- so every test runs
 in plain Python and CI does not need GPU runners. The full suite
 runs locally in well under a second (475 tests in ~0.65 s), which
-keeps mutation testing (`mutmut`) and property-based testing
+keeps mutation testing (`tools/mutate/ast_mutator.py`) and property-based testing
 (`hypothesis`) practical as part of the normal suite, not a
 nightly-only concern. The kernels (`bounded_merge`,
 `compute_channel_decision`, `evaluate_claim_gate`, `engine_round_loop`)
@@ -121,12 +121,20 @@ Current budgets (microseconds, p95):
 
 Regression threshold: **+20% vs the recorded baseline**.
 
-### 2.6 Mutation tests (`mutmut`, nightly)
+### 2.6 Mutation tests (`ast_mutator`, nightly)
 
-`mutmut` runs across the contracts + universal core in
-`.github/workflows/mutation-nightly.yml`. Surviving mutants are
-triaged the next morning; surviving mutants in `contracts/` or
-`universal/` are bugs by definition. Mutation score targets are in §7.
+`tools/mutate/ast_mutator.py` runs across the contracts + universal
+core in `.github/workflows/mutation-nightly.yml`. T-04.7 closes the
+historical `mutmut` -> `ast_mutator` doc drift; the upstream `mutmut`
+package cannot run on Windows (boxed/mutmut#397) which made the
+mutation gate unreproducible for contributors on that platform, so the
+project ships its own stdlib-only AST point mutator that behaves
+identically on Linux and Windows. It is not a full `mutmut` replacement
+(coverage is partial; seven operator families) but it reports the same
+`killed / total` score, so the S-tier thresholds in §7 gate exactly as
+before. Surviving mutants are triaged the next morning; surviving
+mutants in `contracts/` or `universal/` are bugs by definition.
+Mutation score targets are in §7.
 
 ### 2.7 Doc-drift scanner (`tools/check_docs_against_code.py`)
 
@@ -147,7 +155,7 @@ tools/check_docs_against_code.py`.
 | `pytest`          | Test runner, strict markers, `--strict-markers`   | every CI workflow         |
 | `hypothesis`      | Property-based test generation                    | `tests/property/`         |
 | `pytest-benchmark`| Microsecond kernel benchmarking                   | `tests/perf/`             |
-| `mutmut`          | Mutation testing, nightly only                    | `mutation-nightly.yml`    |
+| `ast_mutator`     | Mutation testing, nightly only (T-04.7: replaces `mutmut`) | `mutation-nightly.yml`    |
 | `ruff`            | Lint (E/W/F/I/B/UP/SIM)                           | `cpu-tests.yml`, `docs-validate.yml` |
 | `mypy --strict`   | Type check on `contracts/` and `universal/`       | manual gate (see FINAL_STATUS §4) |
 | `tools/check_docs_against_code.py` | Doc-drift scanner              | `docs-validate.yml`       |
@@ -191,7 +199,9 @@ All workflows live under `.github/workflows/`.
 | `cpu-tests.yml`       | push to main, every PR           | ruff + pytest (not slow/benchmark) + doc scanner   |
 | `docs-validate.yml`   | push to main, every PR           | ruff + doc scanner + full pytest                    |
 | `bench-regression.yml`| weekly Mon 04:00 UTC + manual    | `pytest --benchmark-only` + `tools/bench/check_budgets.py` |
-| `mutation-nightly.yml`| nightly 03:00 UTC + manual       | `bash tools/mutate/run_mutmut.sh`; report uploaded |
+| `mutation-nightly.yml`| nightly 03:00 UTC + manual       | `python tools/mutate/ast_mutator.py run`; report uploaded (T-04.7: `mutmut` -> `ast_mutator`) |
+| `experiments-nightly.yml` | Wed 02:00 UTC + manual       | `-m "experiments"` marker survey-reproduction gate (T-04.6) |
+| `stress-nightly.yml`  | Mon 03:00 UTC + manual           | `-m "stress"` marker long-horizon gate (T-04.3: was Windows-path'd) |
 
 The nightly / weekly jobs do not block PRs, but their artifacts are
 expected to be triaged -- a failing mutation report is a follow-up
@@ -231,7 +241,9 @@ ticket; a failing bench-regression is a same-day fix.
 
 ## 7. Mutation score targets
 
-`mutmut` runs across the typed-contracts core. Targets:
+`ast_mutator` runs across the typed-contracts core (T-04.7: was
+historically `mutmut`, now the in-tree stdlib-only mutator that runs
+identically on Linux and Windows). Targets:
 
 | Scope                                | Target mutation score |
 |--------------------------------------|----------------------:|
@@ -244,7 +256,7 @@ A surviving mutant in `contracts/` or `universal/` is, by definition,
 either (a) an equivalent mutant (no behaviour change possible) or
 (b) a missing test. (a) is annotated in `tools/mutate/`; (b) is filed
 as a follow-up and blocks the PR that introduced it. Nightly score
-trend is captured in the `mutmut-report` artifact from
+trend is captured in the `mutation-report` artifact from
 `.github/workflows/mutation-nightly.yml`; the current snapshot is in
 [FINAL_STATUS.md](../FINAL_STATUS.md), and a sustained drop below
 the targets above is a release blocker.

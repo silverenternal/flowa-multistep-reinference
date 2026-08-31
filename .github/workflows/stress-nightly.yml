@@ -25,4 +25,7 @@ jobs:
         run: |
           pip install -e .[test] || pip install pytest hypothesis pytest-benchmark
       - name: Run stress tests
-        run: .venv/Scripts/python.exe -m pytest -m stress --no-header -q
+        # T-04.3: ``.venv/Scripts/python.exe`` is a Windows path; the
+        # stress runner is Linux-only (``ubuntu-latest``). Use ``python``
+        # so the gate does not silently fail when scheduled.
+        run: python -m pytest -m stress --no-header -q

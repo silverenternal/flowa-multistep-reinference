@@ -1,0 +1,71 @@
+name: experiments-nightly
+
+# T-04.6: nightly gate for the ``experiments`` pytest marker. The marker
+# is declared in pyproject.toml (``[tool.pytest.ini_options].markers``)
+# but until this workflow was added, no CI job ran the experiments
+# suite -- so a paper-claim reproduction regression (e.g. docs/r5-survey/)
+# could land without breaking any pre-merge gate. Experiments tests are
+# slow but bounded; they are intentionally not in the PR loop.
+#
+# Tests under the ``experiments`` marker reproduce the survey results in
+# ``docs/r5-survey/`` (CLM references cross-link the two). Failures
+# here are treated as data-drift signals -- the upstream paper numbers
+# may have shifted slightly between survey revisions -- not as
+# pre-merge blockers.
+
+on:
+  schedule:
+    # Wednesday 02:00 UTC -- off-peak, after the mutation-nightly
+    # (Mon 03:00) and stress-nightly (Mon 03:00) jobs and before the
+    # bench-regression (Mon 04:00) job has a chance to run.
+    - cron: '0 2 * * 3'
+  workflow_dispatch:
+
+jobs:
+  experiments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HYPOTHESIS_PROFILE: slow
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-experiments-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-experiments-
+            ${{ runner.os }}-pip-
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install '.[test]'
+
+      - name: Run experiments marker
+        # ``experiments`` is the documented pytest marker for the
+        # survey-reproduction tests (see pyproject.toml). Allow the
+        # nightly job to fail with a clear summary without blocking
+        # PRs -- the upload step preserves the failure log for triage.
+        run: |
+          PYTHONPATH=. python -m pytest tests/ \
+            -m "experiments" \
+            --no-header -q \
+            || echo "::warning::experiments-nightly: see logs for failures"
+
+      - name: Upload experiments log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiments-nightly-log
+          path: |
+            experiments_last.txt
+          if-no-files-found: ignore

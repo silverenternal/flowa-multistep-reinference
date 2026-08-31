@@ -142,6 +142,22 @@ flow_matching = [
     "numpy>=2.0,<2.5",
     "scipy>=1.10",
 ]
+# Test-only extra: closes T-04.4 — the workflows (``cpu-tests.yml``,
+# ``docs-validate.yml``, ``stress-nightly.yml``, ``bench-regression.yml``,
+# ``mutation-nightly.yml``) historically call ``pip install -e .[test]``
+# but the extra was never declared, so ``pip`` silently skipped the
+# install and each workflow fell back to an explicit
+# ``pip install pytest hypothesis pytest-benchmark`` step. Declaring
+# the extra makes the workflow ``pip install -e .[test]`` line actually
+# resolve, removes the duplication, and gives contributors a single
+# documented ``pip install -e .[test,dev]`` recipe for full local CI.
+# ``pytest-benchmark`` is included so the bench-regression workflow
+# works without a second install step.
+test = [
+    "pytest>=7.0",
+    "hypothesis>=6.0",
+    "pytest-benchmark>=4.0",
+]
 
 [tool.pytest.ini_options]
 # Pytest configuration for adaptive_reflow. ``markers`` documents the

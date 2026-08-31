@@ -1,5 +1,13 @@
 name: cpu-tests
 
+# T-04.2: This workflow predates the canonical ``ci.yml`` (which runs all
+# six pre-merge gates) and is kept as a lightweight watchdog so external
+# contributors with branch-protection rules pinned to this exact filename
+# do not lose coverage. The single ``test_universal/test_universal_imports_no_molecular.py``
+# reference on the previous line was a stale filename (the file is
+# actually ``test_no_molecular_import.py``) — fixed below. New work
+# should target ``ci.yml``; this file is intentionally minimal.
+
 on:
   push:
     branches: [main]
@@ -24,6 +32,9 @@ jobs:
       - name: Run pytest (non-slow, non-benchmark)
         run: PYTHONPATH=. python -m pytest tests/ -m "not slow and not benchmark" --no-header -q
       - name: Run universal-import guard
-        run: PYTHONPATH=. python -m pytest tests/test_universal/test_universal_imports_no_molecular.py --no-header -q
+        # T-04.2: file was previously referenced as
+        # ``test_universal_imports_no_molecular.py`` — that file does not
+        # exist; the canonical guard lives at ``test_no_molecular_import.py``.
+        run: PYTHONPATH=. python -m pytest tests/test_universal/test_no_molecular_import.py --no-header -q
       - name: Check docs against code
         run: PYTHONPATH=. python tools/check_docs_against_code.py

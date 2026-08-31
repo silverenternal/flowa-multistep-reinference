@@ -1,5 +1,12 @@
 name: docs-validate
 
+# T-04.2: This workflow predates the canonical ``ci.yml`` (which already
+# runs ruff + docs scanner + pytest as Gates 2 / 4 / 1) and is kept as a
+# minimal watchdog so external contributors with branch-protection rules
+# pinned to this exact filename do not lose coverage. ``ci.yml`` is the
+# single source of truth for the six pre-merge gates; new work should
+# target it directly.
+
 # Pre-merge gate for the three invariants that keep the docs and the
 # code from drifting apart:
 #
@@ -11,9 +18,8 @@ name: docs-validate
 #      docs still resolves against the codebase.
 #   3. the full pytest suite must pass.
 #
-# The project has no [project] table in pyproject.toml and is imported
-# via PYTHONPATH=. rather than installed, so the install step only
-# needs the two tools themselves.
+# The project is imported via PYTHONPATH=. rather than installed, so the
+# install step only needs the two tools themselves.
 
 on:
   push:

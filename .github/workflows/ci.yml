@@ -57,13 +57,25 @@ jobs:
     name: Lint + types + docs-drift scanners
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # T-04.5: Python version matrix. The project declares
+    # ``requires-python = ">=3.12"`` (see pyproject.toml) so we run the
+    # gates on the current minimum (3.12) plus the latest stable
+    # release available on Actions. ``fail-fast: false`` keeps the rest
+    # of the matrix green when one version fails so a regression on one
+    # interpreter does not mask the others. Static checks are
+    # interpreter-agnostic in practice; the matrix is here to detect
+    # stdlib-typing / dataclass / typing-extension regressions early.
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python 3.12
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
 
       - name: Cache pip dependencies
         uses: actions/cache@v4
@@ -72,8 +84,9 @@ jobs:
           # Key on the lockfile so any change to uv.lock invalidates the
           # cache; the fallback key covers the first-ever run before
           # uv.lock is populated.
-          key: ${{ runner.os }}-pip-${{ hashFiles('uv.lock') }}
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
             ${{ runner.os }}-pip-
 
       - name: Install static-check toolchain
@@ -118,30 +131,38 @@ jobs:
     name: Test + mkdocs build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # T-04.5: matches the lint-types matrix above so the same Python
+    # versions gate both jobs.
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python 3.12
+      - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
 
       - name: Cache pip dependencies
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('uv.lock') }}
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
             ${{ runner.os }}-pip-
 
       - name: Install test + docs toolchain
-        # ``.[dev]`` brings mkdocs + mkdocstrings[python] + griffe. The
-        # rest of the suite is stdlib-only; pytest, hypothesis, and
-        # pytest-benchmark are pinned in requirements-style via the
-        # package metadata (see pyproject.toml [project]).
+        # ``.[test,dev]`` brings mkdocs + mkdocstrings[python] + griffe
+        # plus pytest + hypothesis + pytest-benchmark. The rest of the
+        # suite is stdlib-only. Closes T-04.4: the workflows historically
+        # called ``pip install -e .[test]`` but the extra was never
+        # declared; ``[test]`` is now an explicit optional-dependency.
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest hypothesis pytest-benchmark '.[dev]'
+          python -m pip install '.[test,dev]'
 
       - name: Gate 1 -- pytest
         # ``-m "not slow and not benchmark"`` matches the cpu-tests.yml
