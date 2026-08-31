@@ -219,13 +219,15 @@ def test_unknown_channel_raises() -> None:
 
 
 def test_no_torch_imported() -> None:
-    """The 2D FM evaluator must not depend on ``torch`` at import time."""
-    # Sanity: the module itself does not import torch.
-    import adaptive_reflow.eval.twodim_fm_evaluator as mod  # noqa: F401
+    """The 2D FM evaluator must not depend on ``torch`` at import time.
 
-    assert "torch" not in sys.modules, (
-        "twodim_fm_evaluator must be torch-free; torch is in sys.modules"
-    )
+    Runs the import in a fresh subprocess so this assertion is
+    decoupled from pytest collection order. See
+    :func:`tests._utils.import_isolation.assert_import_is_torch_free`.
+    """
+    from tests._utils.import_isolation import assert_import_is_torch_free
+
+    assert_import_is_torch_free("adaptive_reflow.eval.twodim_fm_evaluator")
 
 
 def test_coverage_metric_in_unit_interval() -> None:

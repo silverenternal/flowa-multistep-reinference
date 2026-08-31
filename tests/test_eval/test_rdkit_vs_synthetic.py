@@ -435,9 +435,17 @@ def test_both_evaluators_are_deterministic() -> None:
 
 
 def test_cross_evaluator_no_torch() -> None:
-    """Neither oracle may pull ``torch`` into ``sys.modules``."""
-    assert "torch" not in sys.modules, (
-        "Both evaluators must be torch-free; torch is in sys.modules"
+    """Neither oracle may pull ``torch`` into ``sys.modules``.
+
+    Runs both imports in a fresh subprocess so this assertion is
+    decoupled from pytest collection order. See
+    :func:`tests._utils.import_isolation.assert_import_is_torch_free`.
+    """
+    from tests._utils.import_isolation import assert_import_is_torch_free
+
+    assert_import_is_torch_free(
+        "adaptive_reflow.eval.rdkit_oracle",
+        "adaptive_reflow.eval.synthetic_oracle",
     )
 
 

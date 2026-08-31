@@ -423,13 +423,15 @@ def test_is_deterministic_returns_true() -> None:
 
 
 def test_no_torch_imported() -> None:
-    """The RDKit oracle must not depend on ``torch`` at import time."""
-    # Sanity: the module itself does not import torch.
-    import adaptive_reflow.eval.rdkit_oracle as mod  # noqa: F401
+    """The RDKit oracle must not depend on ``torch`` at import time.
 
-    assert "torch" not in sys.modules, (
-        "rdkit_oracle must be torch-free; torch is in sys.modules"
-    )
+    Runs the import in a fresh subprocess so this assertion is
+    decoupled from pytest collection order. See
+    :func:`tests._utils.import_isolation.assert_import_is_torch_free`.
+    """
+    from tests._utils.import_isolation import assert_import_is_torch_free
+
+    assert_import_is_torch_free("adaptive_reflow.eval.rdkit_oracle")
 
 
 def test_dtb_r7_orchestrator_with_real_evaluator() -> None:
