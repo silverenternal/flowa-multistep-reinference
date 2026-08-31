@@ -1527,3 +1527,191 @@ How it works:
   (the canonical 37-row audit + vocabulary cross-reference +
   action items).
 
+## CLM-044: Algorithm/ package enumeration — outer framework + abstract algorithm layer is the largest subpackage (25 modules, 4 Protocols) {#CLM-044}
+
+- Status: ACTIVE
+- Date: 2026-08-31
+- Source:
+  [`docs/governance/01-code-org-audit.md`](governance/01-code-org-audit.md)
+  §5 / §7.1 (D-01.A1-01 MEDIUM doc-drift),
+  [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) §1 / §4 / §7.1
+  (the package row, the "Why each subpackage exists" paragraph, and
+  the `algorithm/` directory tree).
+- Asserted by:
+  [`ARCHITECTURE.md:141`](../../ARCHITECTURE.md) (the new
+  `algorithm/` row in the package table, with the
+  four-Protocol composition layer summary + ADR-0011 +
+  ADR-0013 cross-references),
+  [`ARCHITECTURE.md:188-197`](../../ARCHITECTURE.md) (the
+  `algorithm/` paragraph in the "Why each subpackage exists"
+  section),
+  [`ARCHITECTURE.md:260-302`](../../ARCHITECTURE.md) (the
+  `algorithm/` directory tree with the four substitution-point
+  Protocols + 2-4 implementations per role + scheduler submodule
+  breakdown).
+- Disputed by: —
+- Statement: [`ARCHITECTURE.md`](../ARCHITECTURE.md) §1 / §4 / §7.1
+  enumerate the [`adaptive_reflow/algorithm/`](../adaptive_reflow/algorithm/)
+  package — the largest by file count (25 modules) — owning the
+  abstract algorithm layer with the four substitution-point
+  Protocols (`SchedulerProtocol`, `MergeOperatorProtocol`,
+  `PolicyDriverProtocol`, `RestartBlenderProtocol`) plus
+  `RotationPolicy` and `RunnerProtocol` (each with 2-4
+  implementations), the canonical multi-round orchestrator
+  (`ReInferenceRunner` + `BatchedTrajectoryRunner`), and the
+  scheduler implementations
+  (`CosineAnnealScheduler` default + `ConvergenceAdaptiveScheduler`
+  + `CodimensionSheetScheduler` + `EDMScheduler` + `AdaptivePIDScheduler`
+  + `JitteredConstantScheduler` + `FreeTrajScheduler` + eight
+  fixed-form schedulers). The first named implementation in each
+  group is the default; cosine annealing is one option here, not
+  a framework requirement (ADR-0011); posterior-selection drives
+  the algorithm choice (ADR-0013). Closes the MEDIUM doc-drift
+  risk D-01.A1-01 (the `algorithm/` package was previously absent
+  from `ARCHITECTURE.md` §1 / §4 even though it is the largest
+  subpackage).
+- Evidence:
+  [`ARCHITECTURE.md:141,188-197,260-302`](../../ARCHITECTURE.md),
+  [`docs/governance/01-code-org-audit.md`](governance/01-code-org-audit.md)
+  §5 + §7.1.
+
+## CLM-045: `e_rho / 4` factor carries an inline CLM-042 derivation note in `BoundedMergeOperator` and `CodimensionSheetScheduler` (A-02.M1 paper-math fidelity) {#CLM-045}
+
+- Status: ACTIVE
+- Date: 2026-08-31
+- Source:
+  [`docs/governance/02-algorithm-audit.md`](governance/02-algorithm-audit.md)
+  §2.3 / §6 (A-02.M1 Sev 3),
+  [`docs/governance/05-fix-plan.md`](governance/05-fix-plan.md) §4.3.
+- Asserted by:
+  [`adaptive_reflow/algorithm/merge_operator.py:558-572`](../adaptive_reflow/algorithm/merge_operator.py)
+  (the new CLM-042 derivation comment block on the merge-floor
+  computation),
+  [`adaptive_reflow/algorithm/scheduler/_core.py:2858-2867`](../adaptive_reflow/algorithm/scheduler/_core.py)
+  (the corresponding CLM-042 derivation comment block on
+  `CodimensionSheetScheduler.inject_noise`),
+  [`tests/test_eval/test_posterior_selection_evaluator.py:1204-1235`](../tests/test_eval/test_posterior_selection_evaluator.py)
+  (`test_e_rho_over_4_factor_documented_in_merge_operator` +
+  `test_e_rho_over_4_factor_documented_in_scheduler_core`).
+- Disputed by: —
+- Statement: The framework's `e_rho / 4` paper-quantity floor used
+  in [`BoundedMergeOperator.merge`](../adaptive_reflow/algorithm/merge_operator.py)
+  (Lemma 4 / `MERGE_PAPER_QUANTITY_FLOOR_LIFTED` audit code) and in
+  [`CodimensionSheetScheduler.inject_noise`](../adaptive_reflow/algorithm/scheduler/_core.py)
+  (`_paper_evidence_balance`) carries an inline CLM-042 derivation
+  note explaining the rationale: the paper proves
+  `|F_g|^2 >= e_rho` (Lemma 4, Li 2026
+  `NoiseSelectedRectification_EN.md` lines 111-114), and the `/4`
+  factor is a conservative tightening (smaller floor = tighter
+  envelope) so the algorithm cannot drive the merge or the noise
+  mass below a quarter of the paper's proven exterior gap. The
+  derivation is referenced from both surfaces and the new
+  `tests/test_eval/test_posterior_selection_evaluator.py`
+  regression tests pin both comment blocks in CI so a future
+  refactor cannot silently drop the audit trail. Empirically
+  verified against the 16-row ablation grid in
+  [`docs/ABLATION.md`](../docs/ABLATION.md).
+- Evidence:
+  [`adaptive_reflow/algorithm/merge_operator.py:558-572`](../adaptive_reflow/algorithm/merge_operator.py),
+  [`adaptive_reflow/algorithm/scheduler/_core.py:2858-2867`](../adaptive_reflow/algorithm/scheduler/_core.py),
+  [`tests/test_eval/test_posterior_selection_evaluator.py:1204-1235`](../tests/test_eval/test_posterior_selection_evaluator.py).
+
+## CLM-046: `EvidenceScaleGapMetric` honours paper-math `eps` scaling flags (quadratic Lemma 3 + Lemma 4 exponential suppression); NaN/inf `eps_round` rejected (A-02.M2 + A-02.G1 + A-02.M3) {#CLM-046}
+
+- Status: ACTIVE
+- Date: 2026-08-31
+- Source:
+  [`docs/governance/02-algorithm-audit.md`](governance/02-algorithm-audit.md)
+  §2.4 + §4 + §3 (A-02.M2 / A-02.G1 / A-02.M3),
+  [`docs/governance/05-fix-plan.md`](governance/05-fix-plan.md) §4.4 + §4.5 + §4.6.
+- Asserted by:
+  [`adaptive_reflow/eval/posterior_selection_evaluator.py:474-514`](../adaptive_reflow/eval/posterior_selection_evaluator.py)
+  (the two new constructor flags
+  `use_quadratic_eps_scaling` + `apply_lemma4_exponential_suppression`),
+  [`adaptive_reflow/eval/posterior_selection_evaluator.py:779-797,856-873,948-977`](../adaptive_reflow/eval/posterior_selection_evaluator.py)
+  (the `math.isfinite` guard + `_scale_cell_evidence` +
+  `_ratio_after_eps` refactor across the three call sites),
+  [`adaptive_reflow/eval/posterior_selection_evaluator.py:989-1049`](../adaptive_reflow/eval/posterior_selection_evaluator.py)
+  (the new `_scale_cell_evidence` private helper),
+  [`tests/test_eval/test_posterior_selection_evaluator.py:958-1199`](../tests/test_eval/test_posterior_selection_evaluator.py)
+  (nine new regression tests covering NaN/inf rejection +
+  quadratic scaling default-off + Lemma 3 match + Lemma 4
+  exponential default-off + zero-cell-evidence edge case +
+  e_rho > 0 precondition + ratio-toward-one drive).
+- Disputed by: —
+- Statement: [`EvidenceScaleGapMetric`](../adaptive_reflow/eval/posterior_selection_evaluator.py)
+  exposes two opt-in flags that bring the cell-evidence scaling
+  into closer alignment with the paper while preserving backward
+  compatibility: `use_quadratic_eps_scaling=True` (A-02.M2) scales
+  cell-evidence by `eps ** 2` instead of the legacy `eps`,
+  matching Lemma 3's `O(eps^{+2})` per-cell suppression; and
+  `apply_lemma4_exponential_suppression=True` (A-02.G1) further
+  multiplies the cell-evidence term by
+  `exp(-e_rho / (2 * eps ** 2))` (paper Lemma 4 exponential
+  suppression of the exterior posterior mass), which tends to
+  `0` as `eps -> 0` for `e_rho > 0` and therefore drives the
+  selection ratio toward `1`. Both default **off** to preserve the
+  A16 plateau + CLM-022 SNR 60.80 reference. Independently, the
+  safety boundary (A-02.M3) rejects `NaN` and `inf` `eps_round` /
+  `eps_schedule(...)` upstream of the `total > 0` guard with an
+  explicit `ValueError`, closing the silent-bypass path that
+  previously slipped `nan` through the metric. The legacy
+  in-place `c_ev = c_ev * eps; if total > 0: ratio = ...` pattern
+  is replaced by the named `_scale_cell_evidence` +
+  `_ratio_after_eps` helpers at all three call sites so the
+  scaling policy lives in one place.
+- Evidence:
+  [`adaptive_reflow/eval/posterior_selection_evaluator.py:474-514,779-797,856-873,948-977,989-1049`](../adaptive_reflow/eval/posterior_selection_evaluator.py),
+  [`tests/test_eval/test_posterior_selection_evaluator.py:958-1199`](../tests/test_eval/test_posterior_selection_evaluator.py).
+
+## CLM-047: Stress-nightly Windows path bug closed + `cpu-tests.yml` / `docs-validate.yml` deduplicated + Python version matrix landed (T-04.3 + T-04.2 + T-04.4 + T-04.5) {#CLM-047}
+
+- Status: ACTIVE
+- Date: 2026-08-31
+- Source:
+  [`docs/governance/04-test-ci-audit.md`](governance/04-test-ci-audit.md)
+  §7.2 / §7.3 / §7.4 / §7.5,
+  [`docs/governance/05-fix-plan.md`](governance/05-fix-plan.md) §4.1 + §4.2.
+- Asserted by:
+  [`.github/workflows/stress-nightly.yml:28-31`](../.github/workflows/stress-nightly.yml)
+  (T-04.3 one-line fix replacing
+  `.venv/Scripts/python.exe` with `python`),
+  [`.github/workflows/cpu-tests.yml:3-9,35-39`](../.github/workflows/cpu-tests.yml)
+  (T-04.2 stale filename fix
+  `test_universal_imports_no_molecular.py` →
+  `test_no_molecular_import.py` + module-level comment
+  documenting the watchdog role),
+  [`.github/workflows/ci.yml:60-66,128-135,141-150`](../.github/workflows/ci.yml)
+  (T-04.5 Python version matrix `[3.12, 3.13]` on both
+  `lint-types` and `test-docs` jobs + T-04.4 `[test]` extra now
+  installed via `pip install '.[test,dev]'`),
+  [`pyproject.toml:60-67`](../pyproject.toml) (the new
+  `[project.optional-dependencies.test]` block declaring
+  `pytest`, `hypothesis`, `pytest-benchmark`).
+- Disputed by: —
+- Statement: The four CI-gate issues closed by the test/CI agent
+  are now structurally impossible to regress: the stress-nightly
+  workflow invokes `python` instead of the Windows-path
+  `.venv/Scripts/python.exe` (T-04.3, so the weekly gate no
+  longer silently fails on the Linux-only `ubuntu-latest`
+  runner); `cpu-tests.yml` references the canonical
+  `test_no_molecular_import.py` filename with a module-level
+  comment documenting its watchdog role (T-04.2); the canonical
+  `[project.optional-dependencies.test]` extra in `pyproject.toml`
+  is wired through `pip install '.[test,dev]'` (T-04.4, so the
+  previously-fallback `pip install pytest hypothesis pytest-benchmark`
+  is no longer needed); and the Python version matrix is
+  `[3.12, 3.13]` with `fail-fast: false` on both `lint-types` and
+  `test-docs` jobs (T-04.5, so a regression on one interpreter
+  does not mask the others). The pre-existing Gate-4 self-test
+  failures (`test_no_false_positives_on_current_repo` +
+  `test_self_test_quiet_mode_returns_zero_exit`) are caused by
+  three PLUG_IN_YOUR_MODEL inline-symbol false positives in
+  `README.md:352` and `TUTORIAL.md:14,269` and remain out-of-scope
+  for this fix train (tracked under the T-04.7 follow-up).
+- Evidence:
+  [`.github/workflows/stress-nightly.yml:28-31`](../.github/workflows/stress-nightly.yml),
+  [`.github/workflows/cpu-tests.yml:3-9,35-39`](../.github/workflows/cpu-tests.yml),
+  [`.github/workflows/ci.yml:60-66,128-135,141-150`](../.github/workflows/ci.yml),
+  [`pyproject.toml:60-67`](../pyproject.toml).
+
