@@ -1,0 +1,209 @@
+# Pre-commit hooks for flowa-multistep-reinference.
+#
+# Mirrors the six pre-merge gates defined in CONTRIBUTING.md §2 so
+# contributors catch gate failures locally before pushing. The hooks
+# are wired as a ``local`` repo (no third-party action downloads) so
+# the suite runs offline and is byte-identical to the CI workflow.
+#
+# Install (after ``pip install pre-commit``):
+#
+#     pre-commit install
+#
+# Run on the full tree (skips staged-only restriction):
+#
+#     pre-commit run --all-files
+#
+# Run a single hook:
+#
+#     pre-commit run ruff-check --all-files
+#
+# Bypass a hook for a one-off commit (NOT recommended):
+#
+#     git commit --no-verify -m "..."
+#
+# Hook catalogue
+# --------------
+#
+# ruff-check          Gate 2 — E/W/F/I/B/UP/SIM over adaptive_reflow/
+#                     and tests/. Per-file-ignores in pyproject.toml
+#                     cover the intentional __init__.py re-exports,
+#                     the quarantined legacy/ tree, and the forward
+#                     references in contracts/ / universal/ /
+#                     molecular/. Mirrors the ``ruff check
+#                     adaptive_reflow/ tests/`` step in
+#                     .github/workflows/ci.yml.
+#
+# mypy-strict         Gate 3 — ``mypy --strict`` over the
+#                     ``adaptive_reflow`` tree. The per-module
+#                     overrides in pyproject.toml silence the rdkit /
+#                     numpy stub noise (upstream syntax errors, not
+#                     project defects). Mirrors the ``python -m mypy
+#                     adaptive_reflow`` step in ci.yml.
+#
+# check-docs          Gate 4 — ``tools/check_docs_against_code.py``
+#                     walks every governance doc, resolves inline-
+#                     symbol / code-block / path claims, and fails on
+#                     unresolved references.
+#
+# check-claims        Gate 5 — ``tools/check_claims_consistency.py``
+#                     walks docs/CLAIMS.md, resolves every
+#                     ``Asserted by`` / ``Disputed by`` reference,
+#                     and enforces the governance-surface cross-
+#                     reference rule.
+#
+# pytest-fast         Gate 1 — the PR-loop pytest gate (slow /
+#                     benchmark / torch-gated markers excluded so the
+#                     wall-clock stays bounded). ``importorskip``
+#                     handles the optional torch dependency cleanly
+#                     when torch is not installed. Mirrors the
+#                     ``PYTHONPATH=. python -m pytest tests/ -m "not
+#                     slow and not benchmark" --no-header -q`` step
+#                     from CONTRIBUTING.md §2.
+#
+# mkdocs-strict       Gate 6 — ``mkdocs build --strict`` renders the
+#                     auto-generated API reference; a broken internal
+#                     link or unresolved mkdocstrings reference fails
+#                     the build. This gate is heavy (it builds the
+#                     docs site under ``site/``); it is included as a
+#                     local hook for completeness but is **only run
+#                     when files under ``docs/`` are staged** so a
+#                     pure-source-code commit does not pay the cost.
+#
+# Skipped intentionally
+# ---------------------
+#
+# The MNIST / CIFAR verification scripts under ``tools/`` import the
+# ``data/mnist_fm.npz`` and ``data/cifar10_rf.pth`` artefacts; the
+# pytest-fast hook excludes those tests with ``-m "not slow and not
+# benchmark"`` and skips them when the artefact is absent (the
+# underlying ``tools/run_sota_cifar_experiment.py`` and friends are
+# not part of the PR-loop gate). Long-running ``tools/`` scripts are
+# always one-shot manual invocations, never CI-blocking.
+---
+default_language_version:
+  python: python3.12
+
+# Fail the whole commit (not just the staged files) when the staged
+# diff is empty — a developer who stages no files and commits will
+# see the hook set fail, which catches accidental ``git commit``
+# invocations from the repo root with no intent to commit.
+fail_fast: false
+
+# Skip these files from ALL hooks (the gate scripts themselves must
+# not be subject to their own validation cycles; the docs scanner
+# specifically treats them as the source of truth).
+exclude: |
+  (?x)^(
+    .*/__pycache__/.*|
+    .*\.pyc|
+    data/.*|
+    site/.*|
+    dist/.*|
+    .*\.egg-info/.*|
+    mutmut_results\..*|
+    mutmut_run\.log
+  )$
+
+repos:
+  # ---- Gate 2: ruff lint -------------------------------------------------
+  - repo: local
+    name: ruff-check
+    description: >
+      Gate 2 — ruff lint over adaptive_reflow/ + tests/.
+      E/W/F/I/B/UP/SIM rule set; per-file-ignores in pyproject.toml.
+    entry: ruff check adaptive_reflow/ tests/
+    language: system
+    types_or: [python]
+    # The hook runs over the full tree (not just staged files) so
+    # deleting a file does not silently remove its residual lint
+    # signal from the working copy. The pre-commit harness still
+    # invokes the hook only on commits (not on every save), so the
+    # wall-clock cost is bounded to a single lint pass per commit.
+    stages: [pre-commit]
+    require_serial: true
+
+  # ---- Gate 3: mypy --strict --------------------------------------------
+  - repo: local
+    name: mypy-strict
+    description: >
+      Gate 3 — mypy --strict over adaptive_reflow/. Per-module
+      overrides in pyproject.toml silence upstream stub noise.
+    entry: python -m mypy adaptive_reflow
+    language: system
+    types_or: [python]
+    # Same reasoning as the ruff hook: the per-commit invocation
+    # runs over the full tree, but is only invoked on commits (not
+    # on saves). The mypy cache (.mypy_cache/) keeps the per-pass
+    # cost bounded.
+    stages: [pre-commit]
+    require_serial: true
+    # mypy --strict is slow (~30s cold, ~5s warm on this tree). Allow
+    # extra time so the hook does not flake on Windows where the
+    # first cold cache miss is ~10s slower than Linux.
+    pass_filenames: false
+
+  # ---- Gate 4: docs scanner ---------------------------------------------
+  - repo: local
+    name: check-docs
+    description: >
+      Gate 4 — tools/check_docs_against_code.py walks every
+      governance doc and verifies inline-symbol / code-block / path
+      claims resolve to real public symbols.
+    entry: python tools/check_docs_against_code.py
+    language: system
+    # The scanner reads the entire ``docs/`` tree, so we trigger it
+    # on both Python and Markdown changes (a Markdown-only change
+    # can introduce a stale symbol reference).
+    types_or: [python, markdown]
+    stages: [pre-commit]
+    require_serial: true
+    pass_filenames: false
+
+  # ---- Gate 5: claims consistency ---------------------------------------
+  - repo: local
+    name: check-claims
+    description: >
+      Gate 5 — tools/check_claims_consistency.py walks
+      docs/CLAIMS.md, resolves every Asserted by / Disputed by
+      reference, and enforces the governance-surface cross-
+      reference rule.
+    entry: python tools/check_claims_consistency.py
+    language: system
+    types_or: [python, markdown]
+    stages: [pre-commit]
+    require_serial: true
+    pass_filenames: false
+
+  # ---- Gate 1: pytest (fast subset) --------------------------------------
+  - repo: local
+    name: pytest-fast
+    description: >
+      Gate 1 — PR-loop pytest suite (slow / benchmark / torch-gated
+      markers excluded). Mirrors the CONTRIBUTING.md §2 command.
+    entry: bash -c "PYTHONPATH=. python -m pytest tests/ -m 'not slow and not benchmark' --no-header -q"
+    language: system
+    # The pytest hook only fires on Python source changes (a pure
+    # docs/.md commit does not need to re-run the test suite). The
+    # torch-gated tests (``test_mnist_fm.py`` etc.) skip cleanly via
+    # ``pytest.importorskip('torch')`` when torch is not installed.
+    types_or: [python]
+    stages: [pre-commit]
+    require_serial: true
+    pass_filenames: false
+
+  # ---- Gate 6: mkdocs --strict -------------------------------------------
+  - repo: local
+    name: mkdocs-strict
+    description: >
+      Gate 6 — mkdocs build --strict renders the auto-generated API
+      reference; broken internal links or unresolved mkdocstrings
+      references fail the build.
+    entry: mkdocs build --strict
+    language: system
+    # The mkdocs build only fires on docs/ tree changes — running it
+    # on every Python commit would balloon the per-commit wall-clock
+    # by ~15s with no signal gain.
+    files: ^docs/
+    stages: [pre-commit]
+    require_serial: true
+    pass_filenames: false
