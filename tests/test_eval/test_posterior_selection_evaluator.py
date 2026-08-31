@@ -476,17 +476,13 @@ def test_unknown_channel_raises() -> None:
 def test_no_torch() -> None:
     """The evidence-scale-gap evaluator must not depend on ``torch``.
 
-    The test runs early in the file so a torch import triggered by a
-    sibling test file does not poison this assertion; if a previous
-    test pulls torch into ``sys.modules`` (none of the existing
-    ``tests/test_eval/`` files do, but defence-in-depth) this
-    assertion will fail and surface the regression.
+    Runs the import in a fresh subprocess so this assertion is
+    decoupled from pytest collection order. See
+    :func:`tests._utils.import_isolation.assert_import_is_torch_free`.
     """
-    # Sanity: the module itself does not import torch.
-    assert "torch" not in sys.modules, (
-        "evidence_scale_gap_metric must be torch-free; "
-        "torch is in sys.modules"
-    )
+    from tests._utils.import_isolation import assert_import_is_torch_free
+
+    assert_import_is_torch_free("adaptive_reflow.eval.posterior_selection_evaluator")
 
 
 # ---------------------------------------------------------------------------
