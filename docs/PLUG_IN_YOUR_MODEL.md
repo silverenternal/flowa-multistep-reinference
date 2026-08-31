@@ -477,3 +477,47 @@ see
   — the canonical real-model reference implementation.
 - [`adaptive_reflow/adapters/toy_linear.py`](../adaptive_reflow/adapters/toy_linear.py)
   — the smallest possible adapter (≤ 60 LOC).
+
+---
+
+## Plug-in catalogue
+
+The framework's adapter registry currently ships the following
+production adapters (see
+[`adaptive_reflow/adapters/__init__.py`](../adaptive_reflow/adapters/__init__.py)
+for the canonical re-exports):
+
+| Adapter | Channels | `state_shape` | Mode | License |
+|---|---|---|---|---|
+| `TwoDimFMAdapter` | `xy` | `(2,)` | NumPy | n/a (synthetic trainer) |
+| `RectifiedFlowCIFARAdapter` | `image` | `(3, 32, 32)` | torch / synthetic | depends on checkpoint |
+| `LuminaImage20Adapter` | `latent`, `text_condition` | `(16, 128, 128)` | torch (diffusers) / synthetic | Apache-2.0 |
+| `ReferenceFlowAAdapter` | `(model-specific)` | model-specific | torch | Apache-2.0 |
+| `FlowMol3Adapter` | molecule channels | model-specific | torch | MIT |
+| `ToyLinearAdapter`, `ToyGaussianAdapter` | various | various | NumPy | n/a |
+
+### Lumina-Image 2.0
+
+```python
+from adaptive_reflow.adapters.lumina_image_2_0_adapter_lumina_image_2_0 import (
+    LuminaImage20Adapter,
+    default_lumina_image_2_0_adapter,
+)
+
+# Synthetic mode (no checkpoint, no torch) -- protocol conformance.
+adapter = LuminaImage20Adapter(
+    weights_path=None, force_mode="synthetic", num_steps=2
+)
+
+# Torch mode (requires diffusers + transformers + the published
+# Alpha-VLLM/Lumina-Image-2.0 checkpoint).
+adapter = default_lumina_image_2_0_adapter(
+    weights_path=Path("data/Lumina-Image-2.0"),
+    force_mode="torch",
+    num_steps=50,
+)
+```
+
+Per-model `mechanism_id`: `lumina_image_2_0_flow_matching` (stamped
+on every round trace alongside the canonical writer authority
+`inference.adaptive_reflow`).

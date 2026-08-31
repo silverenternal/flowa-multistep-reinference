@@ -4,13 +4,24 @@ Concrete :class:`FlowMatchingODEAdapter` implementations. The synthetic
 fixtures live here (not in ``tests/``) so external parity harnesses can
 import them too.
 """
-from .flowmol3 import (
+from .flowmol3 import (  # noqa: I001 -- alphabetical re-export ordering
     FLOWMOL3_CHANNEL_DOMAINS,
     FLOWMOL3_CHANNELS,
     FlowMol3Adapter,
     FlowMol3Capabilities,
     default_flowmol3_adapter,
     flowmol3_registry_entry,
+)
+from .lumina_image_2_0_adapter_lumina_image_2_0 import (  # noqa: I001
+    LUMINA_IMAGE_2_0_CHANNEL_DOMAINS,
+    LUMINA_IMAGE_2_0_CHANNELS,
+    LUMINA_IMAGE_2_0_CONFIG_HASH,
+    LUMINA_IMAGE_2_0_CONFIG_VERSION,
+    LUMINA_IMAGE_2_0_MECHANISM_ID,
+    LUMINA_IMAGE_2_0_STATE_SHAPE,
+    LuminaImage20Adapter,
+    LuminaImage20Capabilities,
+    default_lumina_image_2_0_adapter,
 )
 from .integrators import (
     INTEGRATOR_REGISTRY,
