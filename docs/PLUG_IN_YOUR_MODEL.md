@@ -477,3 +477,16 @@ see
   — the canonical real-model reference implementation.
 - [`adaptive_reflow/adapters/toy_linear.py`](../adaptive_reflow/adapters/toy_linear.py)
   — the smallest possible adapter (≤ 60 LOC).
+- [`adaptive_reflow/adapters/flowmol3adapter.py`](../adaptive_reflow/adapters/flowmol3adapter.py)
+  — FlowMol3 unconditional 3-D molecule generator adapter. Wraps the
+  zavalab FlowMol3 model at commit
+  ``77cae22174b7792b0e25e9e0414038420736d841``. Implements all eight
+  Protocol methods against the heterogeneous ``(x, a, c, e)`` native
+  state; the engine-domain triple ``(coordinate, charge, raw_pair)`` is
+  exposed on the protocol surface; the model-local atom-type label
+  ``a`` stays inside the adapter. Pocket conditioning is a non-claim
+  boundary (``has_condition_injection=False``). The companion harness
+  stub lives at
+  [`tools/run_sota_flowmol3adapter_experiment.py`](../tools/run_sota_flowmol3adapter_experiment.py)
+  and awaits the FlowMol3 paper PDF + published checkpoint before
+  authoring the full baseline-vs-FlowA pipeline.
