@@ -138,6 +138,17 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         # research notes. These are prose pointers to companion files,
         # not project-internal symbols.
         "EPSILON_DIRECTION", "NoiseSelectedRectification_EN",
+        # Audit / governance document filenames referenced inline in
+        # CLAM ledger entries (CLM-042 / CLM-043) and INSIGHTS §7.1.5
+        # as companion-doc pointers, not project-internal symbols.
+        "PHASE4_DOCSTRING_AUDIT", "AUDIT_CODE_REGISTRY",
+        # ``CoverageEvaluator`` referenced inline in CLM-043 / INSIGHTS
+        # §7.1.5 as a planned docstring surface item (Phase-4 audit
+        # P2-22 / F-43) — the class does NOT exist yet in the source
+        # tree (the Phase-4 audit recommends adding it); the denylist
+        # entry keeps the audit text from triggering a false-positive
+        # missing claim.
+        "CoverageEvaluator",
         # Deprecated back-compat alias for ``EvidenceScaleGapMetric``
         # (renamed 2026-08-28). The alias is still importable from
         # ``adaptive_reflow.eval.posterior_selection_evaluator`` (with

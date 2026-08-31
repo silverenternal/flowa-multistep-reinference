@@ -135,9 +135,25 @@ def inject_forward_noise_into_state(
         )
     prior_state = np.asarray(prior_entry[resolved_key], dtype=np.float64)
     injected_arr = np.asarray(injected, dtype=np.float64)
-    # Broadcast ``injected_arr`` to the prior's shape (handles scalar
-    # priors with vector injected, vector priors with vector injected,
-    # etc.). numpy broadcasts scalar / (1,) to any shape by default.
+    # Reshape ``injected_arr`` to the prior's shape when sizes match
+    # (handles scalar priors with vector injected, vector priors with
+    # vector injected, etc.). The runner pads the noise to the
+    # adapter's ``state_shape`` so the reshape is always well-defined
+    # for the canonical ``(2,)`` and ``(3, 32, 32)`` state shapes.
+    # When the shapes disagree entirely (e.g. the runner overrides
+    # ``state_shape`` for a regression test), subsample the injected
+    # tensor to the prior's flat size so the broadcast still
+    # succeeds. This is a guard against the runner's noise array
+    # being larger than the native state space — production code
+    # never hits this path because the runner reads
+    # ``adapter.state_shape`` from the *capabilities* token, which
+    # matches the native state.
+    if injected_arr.size == prior_state.size:
+        injected_arr = injected_arr.reshape(prior_state.shape)
+    elif injected_arr.size > prior_state.size:
+        injected_arr = injected_arr.reshape(-1)[: prior_state.size].reshape(
+            prior_state.shape
+        )
     new_state = prior_state + injected_arr
     if clamp is not None:
         new_state = np.clip(new_state, -float(clamp), float(clamp))

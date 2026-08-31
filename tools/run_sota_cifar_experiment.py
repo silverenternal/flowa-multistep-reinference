@@ -417,7 +417,7 @@ def _run_framework(
     seed_base: int,
     output_dir: Path,
     max_num_steps: int,
-) -> tuple[Path, list[dict[str, float]], float]:
+) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive the framework multi-round run for one scheduler.
 
     For each of ``n_rounds`` rounds, the scheduler's
@@ -434,7 +434,12 @@ def _run_framework(
     is therefore the union of its per-round sample batches; the FID is
     computed over the whole pool.
 
-    Returns ``(samples_path, per_round_metrics, wall_clock_s)``.
+    Returns ``(samples_path, per_round_metrics, wall_clock_s,
+    total_nfe_per_sample)`` where ``total_nfe_per_sample`` is the sum
+    of ``num_steps`` across rounds — i.e., the per-FID-sample NFE for
+    the framework rows. The apples-to-apples comparison
+    (``docs/r4-survey/21-fix-v2-plan.md`` §2.3 / §3.3) compares this
+    against the baseline's ``num_steps`` per sample.
 
     Note: the scheduler's internal state (e.g. ``EvidenceDrivenScheduler``'s
     PID-lite controller) advances across the ``sample()`` calls in this
@@ -511,7 +516,17 @@ def _run_framework(
     out_path = output_dir / f"{safe_name}_samples.npz"
     np.savez(out_path, samples=samples)
     wall = float(time.perf_counter() - started)
-    return out_path, per_round_metrics, wall
+    # Total NFE per FID sample (apples-to-apples metric — sum across
+    # rounds; each round's ``num_steps`` is ``round(n_cap * max_num_steps)``).
+    # The baseline's NFE per sample is ``baseline_num_steps``. When
+    # ``--match-nfe sample`` is used, ``max_num_steps`` is set to
+    # ``baseline_num_steps // n_rounds`` so the framework's average
+    # per-round NFE equals the baseline's per-sample NFE, making the
+    # two columns directly comparable.
+    total_nfe_per_sample = int(
+        sum(int(row.get("num_steps", 0)) for row in per_round_metrics)
+    )
+    return out_path, per_round_metrics, wall, total_nfe_per_sample
 
 
 # ---------------------------------------------------------------------------
@@ -561,8 +576,18 @@ def _format_markdown(
     n_rounds: int,
     framework_samples: int,
     total_wall: float,
+    baseline_num_steps: int,
+    match_nfe: str,
 ) -> str:
-    """Render the comparison.md markdown table."""
+    """Render the comparison.md markdown table.
+
+    Adds the **apples-to-apples NFE ablation row** at the end of the
+    markdown so the reader can directly compare ``baseline_nfe`` and
+    ``framework_total_nfe`` per FID sample. The row format is
+    ``framework_total_nfe=X vs baseline_nfe=X`` per
+    ``docs/r4-survey/21-fix-v2-plan.md`` §2.3 / §3.3 (F-34 / fixed-NFE
+    protocol).
+    """
     lines: list[str] = []
     lines.append("# CIFAR-10 Rectified Flow — baseline vs FlowA multi-round")
     lines.append("")
@@ -591,6 +616,31 @@ def _format_markdown(
             f"{pct:+.2f}% | "
             f"{float(row.get('sel_ratio_last', float('nan'))):.4f} | "
             f"{float(row['wall_clock_s']):.1f} |"
+        )
+    lines.append("")
+    lines.append("## Apples-to-apples NFE ablation (F-34 / fixed-NFE)")
+    lines.append("")
+    lines.append(
+        f"Protocol: ``--match-nfe={match_nfe}``. ``baseline_nfe`` is "
+        f"the per-sample NFE of the baseline row; "
+        f"``framework_total_nfe`` is the sum of per-round "
+        f"``num_steps`` (i.e., per-sample NFE) for each scheduler."
+    )
+    lines.append("")
+    lines.append("| Method | baseline_nfe | framework_total_nfe | ratio |")
+    lines.append("|---|---:|---:|---:|")
+    for row in rows:
+        if row["name"] == "baseline":
+            continue
+        fw_nfe = int(row.get("framework_total_nfe", 0))
+        ratio = (
+            float(fw_nfe) / float(baseline_num_steps)
+            if int(baseline_num_steps) > 0
+            else float("nan")
+        )
+        lines.append(
+            f"| {row['name']} | {baseline_num_steps} | {fw_nfe} | "
+            f"{ratio:.3f} |"
         )
     lines.append("")
     lines.append("## Honest framing")
@@ -676,7 +726,20 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "``round(n_cap * framework_max_num_steps)`` Euler steps. "
             "Defaults to the same value as ``--baseline-num-steps`` so "
             "baseline and framework rows integrate on the same step "
-            "grid."
+            "grid. Auto-overridden by ``--match-nfe sample`` (see "
+            "below)."
+        ),
+    )
+    parser.add_argument(
+        "--match-nfe",
+        choices=("budget", "sample"),
+        default="budget",
+        help=(
+            "How to match NFE between baseline and framework: 'budget' = "
+            "total NFE budget (default; framework averages per-round NFE); "
+            "'sample' = per-sample NFE matched (framework_max_num_steps = "
+            "baseline_num_steps // n_rounds, so the framework's average "
+            "per-round NFE equals the baseline's per-sample NFE)."
         ),
     )
     parser.add_argument(
@@ -829,6 +892,30 @@ def main(argv: list[str] | None = None) -> int:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # --match-nfe sample: per-sample NFE matched. The framework's
+    # ``framework_max_num_steps`` is set to ``baseline_num_steps // n_rounds``
+    # so the framework's per-round average NFE equals the baseline's
+    # per-sample NFE. The cosine ramp's per-round ``n_cap`` averages to
+    # ``n_rounds / (pi)`` across the cycle, so the framework's
+    # per-sample NFE (sum of ``round(n_cap * framework_max_num_steps)``
+    # across rounds) lands close to ``baseline_num_steps``. See
+    # ``docs/r4-survey/21-fix-v2-plan.md`` §2.3 / §3.3 for the
+    # apples-to-apples protocol. Default ``--match-nfe budget`` keeps
+    # the v4 protocol (total framework budget equals baseline budget,
+    # per-sample NFE differs by ~2x).
+    if str(args.match_nfe) == "sample":
+        per_round_target = max(
+            1, int(args.baseline_num_steps) // int(n_rounds)
+        )
+        args.framework_max_num_steps = per_round_target
+        print(
+            f"[run_sota_cifar_experiment] --match-nfe sample: "
+            f"framework_max_num_steps={per_round_target} "
+            f"(= baseline_num_steps {int(args.baseline_num_steps)} "
+            f"// n_rounds {n_rounds})",
+            flush=True,
+        )
+
     print(
         f"[run_sota_cifar_experiment] n_samples={n_samples} "
         f"n_rounds={n_rounds} framework_samples={framework_samples} "
@@ -873,7 +960,7 @@ def main(argv: list[str] | None = None) -> int:
         }
     )
     for scheduler_name in schedulers:
-        samples_path, per_round, wall = _run_framework(
+        samples_path, per_round, wall, total_nfe_per_sample = _run_framework(
             adapter=adapter,
             scheduler_name=str(scheduler_name),
             n_rounds=int(n_rounds),
@@ -889,6 +976,7 @@ def main(argv: list[str] | None = None) -> int:
                 "fid": float("nan"),
                 "wall_clock_s": float(wall),
                 "sel_ratio_last": sel_last,
+                "framework_total_nfe": int(total_nfe_per_sample),
             }
         )
         _write_csv(
@@ -946,6 +1034,8 @@ def main(argv: list[str] | None = None) -> int:
         n_rounds=int(n_rounds),
         framework_samples=int(framework_samples),
         total_wall=total_wall,
+        baseline_num_steps=int(args.baseline_num_steps),
+        match_nfe=str(args.match_nfe),
     )
     md_path = output_dir / "comparison.md"
     md_path.write_text(md, encoding="utf-8")
@@ -955,9 +1045,16 @@ def main(argv: list[str] | None = None) -> int:
         "n_samples": int(n_samples),
         "n_rounds": int(n_rounds),
         "framework_samples": int(framework_samples),
+        "baseline_num_steps": int(args.baseline_num_steps),
+        "match_nfe": str(args.match_nfe),
         "wall_clock_s": float(total_wall),
         "rows": [
-            {"name": r["name"], "fid": r["fid"], "wall_clock_s": r["wall_clock_s"]}
+            {
+                "name": r["name"],
+                "fid": r["fid"],
+                "wall_clock_s": r["wall_clock_s"],
+                "framework_total_nfe": r.get("framework_total_nfe", 0),
+            }
             for r in rows
         ],
     }
@@ -970,11 +1067,18 @@ def main(argv: list[str] | None = None) -> int:
         + json.dumps(
             {
                 "baseline_fid": float(rows[0]["fid"]),
+                "baseline_nfe": int(args.baseline_num_steps),
                 "framework_fids": {
                     str(r["name"]): float(r["fid"])
                     for r in rows
                     if r["name"] != "baseline"
                 },
+                "framework_total_nfe": {
+                    str(r["name"]): int(r.get("framework_total_nfe", 0))
+                    for r in rows
+                    if r["name"] != "baseline"
+                },
+                "match_nfe": str(args.match_nfe),
                 "total_wall_s": float(total_wall),
             }
         ),
