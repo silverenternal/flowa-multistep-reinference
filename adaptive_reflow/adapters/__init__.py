@@ -70,3 +70,21 @@ from .twodim_fm import (
     TwoDimFMAdapter,
     default_twodim_fm_adapter,
 )
+from .wan2_2_video_flowmatchingodeadapter import (
+    AUDIT_WAN22_FORWARD_NOISE_APPLIED,
+    AUDIT_WAN22_OBSERVED,
+    AUDIT_WAN22_RESTART_BLEND,
+    WAN22_A14B_STATE_SHAPE,
+    WAN22_CHANNELS,
+    WAN22_CHANNEL_DOMAINS,
+    WAN22_CONFIG_HASH,
+    WAN22_CONFIG_VERSION,
+    WAN22_MECHANISM_ID,
+    WAN22_NUM_STEPS_DEFAULT,
+    WAN22_SOLVER_HEUN,
+    WAN22_TI2V5B_STATE_SHAPE,
+    Wan22VideoFlowMatchingODEAdapter,
+    Wan22VideoFlowMatchingODEAdapterCapabilities,
+    default_wan22_video_flowmatchingodeadapter,
+    wan22_resolve_weights_path,
+)
