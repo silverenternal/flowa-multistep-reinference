@@ -127,7 +127,7 @@ family to take on molecule-shaped dependencies.
 
 ## 1. Layered structure overview
 
-`adaptive_reflow/` is a single importable Python package with twelve peer
+`adaptive_reflow/` is a single importable Python package with fourteen peer
 subpackages. Each subpackage owns **one concern**, and the concern is named
 in the docstring of the subpackage's `__init__.py`. The subpackages are
 listed in dependency order (leaf first):
@@ -146,6 +146,7 @@ listed in dependency order (leaf first):
 | `adapters/`            | Concrete `FlowMatchingODEAdapter` implementations (synthetic + reference + flowmol3).     | DTB-G1 + DTB-G2                    |
 | `eval/`                | CPU-only DTB-R7 + DTB-R8 evaluation / reporting.                                           | DTB-R7, DTB-R8                     |
 | `legacy/`              | Existing torch-bound / `pocket_modules`-coupled modules. Quarantined.                      | (none — kept only for migration)   |
+| `data/`                | Canonical analytic target fixtures (`TARGET_REGISTRY`, `AnisotropicGaussianMixtureTarget`, `HeavyTailedTarget`, `EIGHT_GAUSSIANS_*`, `TWO_MOONS_*`, `sampler_for`, `supported_targets`) used by the 2D Flow Matching adapters and experiments. NumPy-only. | (none — experiment fixtures)       |
 | `algorithm/`           | Outer framework + abstract algorithm layer — `ReInferenceRunner` (canonical multi-round orchestrator) plus `SchedulerProtocol` / `MergeOperatorProtocol` / `PolicyDriverProtocol` / `RestartBlenderProtocol` / `RotationPolicy` / `RunnerProtocol` + 2-4 implementations per role (D-01.A1-01). The largest by file count (25 modules); depends on `frame/`, `eval/`, `schedule/`, `policy/`. Cross-references: ADR-0011 (cosine-as-option), ADR-0013 (posterior-selection drives algorithm). | DTB-NA1 + DTB-R7 + DTB-R8 outer loop |
 
 ### Why each subpackage exists (one paragraph each)
@@ -1415,7 +1416,7 @@ These are the rules that the tests enforce; if you break one, the suite fails.
    `blocker_codes` on the failing path; both constants are re-exported
    from `adaptive_reflow.contracts`, `adaptive_reflow.frame`, and
    `adaptive_reflow.policy` so the doc scanner indexes them.
-9. **Full test suite (475+ tests)** — round-trip + capability handshake +
+9. **Full test suite (2,113 tests)** — round-trip + capability handshake +
    bounded-merge + channel-rule + phase-transition + registry-admit + claim-gate
    + rollback + promotion + calibration + trace-v3 round-trip + diagnostic
    ledger + universal-Protocol universality + property-based invariants
