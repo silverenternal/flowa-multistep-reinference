@@ -61,10 +61,37 @@ import warnings
 from dataclasses import asdict, dataclass
 from typing import Any
 
-try:
-    import torch
-except Exception:  # pragma: no cover - optional dependency
-    torch = None  # type: ignore[assignment]
+# ``torch`` is an optional heavy dependency. The mixer is torch-bound at
+# call time (the coordinate blender operates on ``(N, 3)`` torch tensors)
+# but the module itself is importable without torch so that modules which
+# only reach into :mod:`adaptive_reflow.molecular.mixer` for its public
+# surface (audit codes, dataclasses, Protocol wrappers) do not pull torch
+# in transitively. See :func:`_import_torch` for the lazy loader used by
+# the blender functions below.
+_torch: Any = None
+_torch_import_attempted: bool = False
+
+
+def _import_torch() -> Any:
+    """Return the ``torch`` module, importing it lazily on first use.
+
+    Returning ``None`` signals the optional dependency is unavailable;
+    callers (e.g. :func:`require_torch`, :func:`_compute_rms`,
+    :func:`adaptive_reflow_memory_restart_coords`) translate that into
+    :class:`RuntimeError`. The import is attempted at most once per
+    process; subsequent calls reuse the cached result.
+    """
+    global _torch, _torch_import_attempted
+    if _torch_import_attempted:
+        return _torch
+    _torch_import_attempted = True
+    try:
+        import torch as _t  # noqa: PLC0415 - intentional lazy import
+    except Exception:  # pragma: no cover - optional dependency
+        _torch = None
+    else:
+        _torch = _t
+    return _torch
 
 
 # ---------------------------------------------------------------------------
@@ -81,7 +108,7 @@ result or surface the failure."""
 
 
 def require_torch() -> None:
-    if torch is None:
+    if _import_torch() is None:
         raise RuntimeError("torch is required for adaptive reflow restart memory")
 
 
@@ -117,6 +144,7 @@ def _compute_rms(tensor: Any) -> float:
     Treats an empty tensor as RMS 0.0. Returns a float (CPU side).
     """
     require_torch()
+    torch = _import_torch()
     t = torch.as_tensor(tensor)
     if t.numel() == 0:
         return 0.0
@@ -196,6 +224,7 @@ def adaptive_reflow_memory_restart_coords(
     """
 
     require_torch()
+    torch = _import_torch()
     fraction = float(memory_fraction)
     if not math.isfinite(fraction) or not 0.0 <= fraction <= 1.0:
         raise ValueError("adaptive reflow memory_fraction must be finite and in [0, 1]")

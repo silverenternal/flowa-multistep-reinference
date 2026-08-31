@@ -39,7 +39,7 @@ implementation* that consumes it.
   *concrete* implementation of those universal abstractions. Every
   molecule-specific dataclass, channel vocabulary entry, and protocol
   impl lives here. **`molecular/` implements the universal abstractions**:
-  `molecular/mixer.py` provides a concrete `RMSPreservingCoordinateMixer`
+  `molecular/mixer.py` provides a concrete `EqualRmsCoordinateMixer`
   that implements the universal `RestartMixer` Protocol; `molecular/envelope.py`
   provides `MoleculeEnvelopeLayer` / `MoleculeEnvelopeManifest` that
   implement the universal `EnvelopeCriterion` Protocol; and so on.
@@ -111,8 +111,8 @@ listed in dependency order (leaf first):
   vocabulary (`MOLECULE_CHANNELS`, `MoleculeChannel` enum), molecule bundle
   (`MoleculeRoundResultBundle`), molecule envelope manifest
   (`MoleculeEnvelopeLayer` / `MoleculeEnvelopeManifest` /
-  `MoleculeTailBudgetRow`), RMS-preserving restart mixer
-  (`RMSPreservingCoordinateMixer` implementing the universal `RestartMixer`
+  `MoleculeTailBudgetRow`), equal-RMS coordinate mixer
+  (`EqualRmsCoordinateMixer` implementing the universal `RestartMixer`
   Protocol), and the four molecule evaluator arms (GNINA, PoseBusters, QED,
   ADMET) implementing the universal `Evaluator` Protocol.
 * **`frame/`** — everything that drives *one round* end-to-end. Engine,
@@ -211,7 +211,7 @@ flowa-multistep-reinference/
 │   │   ├── domain.py                    <- MOLECULE_DOMAIN_BY_CHANNEL fallback table
 │   │   ├── stratification.py             <- MoleculeStratum / MoleculeStratumAssignment /
 │   │   │                                  dominance_ratio / cross_stratum_mix_rejected
-│   │   ├── mixer.py                     <- RMSPreservingCoordinateMixer
+│   │   ├── mixer.py                     <- EqualRmsCoordinateMixer
 │   │   │                                  (concrete RestartMixer Protocol impl) +
 │   │   │                                  adaptive_reflow_memory_restart_coords back-compat
 │   │   └── calibration_protocols.py     <- GNINAEvaluator / PoseBustersEvaluator /
@@ -802,7 +802,7 @@ from adaptive_reflow.molecular import (
     # --- Pure-data carriers (molecule stratification) ---
     MoleculeStratum, MoleculeStratumAssignment,
     # --- Concrete RestartMixer Protocol impl ---
-    RMSPreservingCoordinateMixer,
+    EqualRmsCoordinateMixer,
     adaptive_reflow_memory_restart_coords,
     # --- Concrete Evaluator Protocol impls (four arms) ---
     GNINAEvaluator, PoseBustersEvaluator,
@@ -1142,7 +1142,7 @@ possible (`isinstance(adapter, FlowMatchingODEAdapter)`).
 | `adaptive_reflow/molecular/channels.py`                       | `MOLECULE_CHANNELS`, `MoleculeChannel` enum, four `*ChannelRef` NewType aliases.                    |
 | `adaptive_reflow/molecular/domain.py`                         | `MOLECULE_DOMAIN_BY_CHANNEL` fallback domain table.                                                 |
 | `adaptive_reflow/molecular/stratification.py`                  | `MoleculeStratum` / `MoleculeStratumAssignment` / `dominance_ratio` / `cross_stratum_mix_rejected`. |
-| `adaptive_reflow/molecular/mixer.py`                          | `RMSPreservingCoordinateMixer` (concrete universal `RestartMixer` Protocol impl) + back-compat free function. |
+| `adaptive_reflow/molecular/mixer.py`                          | `EqualRmsCoordinateMixer` (concrete universal `RestartMixer` Protocol impl) + back-compat free function. |
 | `adaptive_reflow/molecular/calibration_protocols.py`          | `GNINAEvaluator` / `PoseBustersEvaluator` / `QEDEvaluator` / `ADMETEvaluator` (concrete universal `Evaluator` Protocol impls). |
 | `adaptive_reflow/policy/__init__.py`                          | Re-export all pure decision-logic types + functions.                                               |
 | `adaptive_reflow/policy/archive.py`                           | DTB-R4: `SameSampleArchive`, `ArchiveEntry`, `CandidateArchiveError` family.                        |

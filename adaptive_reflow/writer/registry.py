@@ -436,7 +436,7 @@ def default_registry() -> CandidateRegistry:
 
 def make_default_flowmol3adapter_entry() -> CandidateEntry:
     """Build the canonical registry row that pairs with
-    :class:`adaptive_reflow.adapters.flowmol3adapter.FlowMol3AdapterImpl`.
+    :class:`adaptive_reflow.adapters.flowmol3_v2_adapter.FlowMol3V2Adapter`.
 
     Same pinned commit, license, paper, and audit notes as
     :func:`make_default_flowmol3_entry`; the
@@ -464,8 +464,8 @@ def make_default_flowmol3adapter_entry() -> CandidateEntry:
         ),
         ode_call_site=(
             "model.integrate / model.step over (x, a, c, e) — wired "
-            "through adaptive_reflow.adapters.flowmol3adapter."
-            "FlowMol3AdapterImpl (backend='torch' lazy-imports the "
+            "through adaptive_reflow.adapters.flowmol3_v2_adapter."
+            "FlowMol3V2Adapter (backend='torch' lazy-imports the "
             "zavalab FlowMol3 module at the pinned commit; "
             "backend='numpy' is the deterministic Protocol conformance "
             "fallback)"
@@ -489,7 +489,7 @@ def make_default_flowmol3adapter_entry() -> CandidateEntry:
             "is a model-local label and is NOT carried as an "
             "adaptive-reflow evidence surface. "
             "The real mechanics adapter "
-            "(adaptive_reflow.adapters.flowmol3adapter.FlowMol3AdapterImpl) "
+            "(adaptive_reflow.adapters.flowmol3_v2_adapter.FlowMol3V2Adapter) "
             "implements all eight FlowMatchingODEAdapter methods "
             "(capabilities / build_initial_state / export_endpoint / "
             "detach_and_validate_endpoint / apply_restart_distribution / "

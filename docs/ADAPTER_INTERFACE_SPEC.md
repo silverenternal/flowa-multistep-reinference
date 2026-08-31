@@ -213,7 +213,7 @@ All three live in `adaptive_reflow/universal/mixer.py`:
 | `NoOpMixer` | **Implemented** | Adapters that do not need a restart distribution; `blend` returns `prior` unchanged | `universal/mixer.py` |
 | `LatentConvexMixer` | **Skeleton** | Latent-space flow matching (e.g. Stable Diffusion 3); blend formula `result = (1-β)·prior + β·endpoint`. Adapter authors pass a `native_blend_fn` to invoke their native convex-combination code; default falls back to `NoOpMixer` semantics | `universal/mixer.py` |
 | `DiscreteIdentityMixer` | **Skeleton** | CTMC-style discrete flow matching; returns `prior` for `β < 1.0` and `endpoint` for `β ≥ 1.0`. Continuous interpolation between discrete states is undefined | `universal/mixer.py` |
-| `RMSPreservingCoordinateMixer` | **Implemented** (concrete impl for molecules) | Molecular coordinate channels | `molecular/mixer.py` |
+| `EqualRmsCoordinateMixer` | **Implemented** (concrete impl for molecules) | Molecular coordinate channels | `molecular/mixer.py` |
 
 Adapter authors MAY write their own `RestartMixer` subclass for any
 space the three skeletons do not cover.

@@ -534,14 +534,14 @@ available on the user's machine.
   on the published GraphBFN weights landing in ``data/graphbfn/``.
 - [`adaptive_reflow/adapters/toy_linear.py`](../adaptive_reflow/adapters/toy_linear.py)
   — the smallest possible adapter (≤ 60 LOC).
-- [`adaptive_reflow/adapters/protbfnabbfnadapter.py`](../adaptive_reflow/adapters/protbfnabbfnadapter.py)
+- [`adaptive_reflow/adapters/protbfn_abbfn_adapter.py`](../adaptive_reflow/adapters/protbfn_abbfn_adapter.py)
   — adapter wrapping the published InstaDeep BFN protein models
   (ProtBFN, AbBFN, AbBFN2). Discrete-channel adapter; the
   `solve_ode` method re-interprets the framework's continuous-time
   ODE call as `num_steps` discrete Bayesian-update refinement
   steps over a per-position categorical over the 22-entry
   amino-acid vocabulary.
-- [`adaptive_reflow/adapters/flowmol3adapter.py`](../adaptive_reflow/adapters/flowmol3adapter.py)
+- [`adaptive_reflow/adapters/flowmol3_v2_adapter.py`](../adaptive_reflow/adapters/flowmol3_v2_adapter.py)
   — FlowMol3 unconditional 3-D molecule generator adapter. Wraps the
   zavalab FlowMol3 model at commit
   ``77cae22174b7792b0e25e9e0414038420736d841``. Implements all eight
@@ -551,6 +551,6 @@ available on the user's machine.
   ``a`` stays inside the adapter. Pocket conditioning is a non-claim
   boundary (``has_condition_injection=False``). The companion harness
   stub lives at
-  [`tools/run_sota_flowmol3adapter_experiment.py`](../tools/run_sota_flowmol3adapter_experiment.py)
+  [`tools/run_sota_flowmol3_v2_adapter_experiment.py`](../tools/run_sota_flowmol3_v2_adapter_experiment.py)
   and awaits the FlowMol3 paper PDF + published checkpoint before
   authoring the full baseline-vs-FlowA pipeline.
