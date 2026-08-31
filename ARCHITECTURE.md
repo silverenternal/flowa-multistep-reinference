@@ -872,6 +872,10 @@ from adaptive_reflow.universal import (
     FlowMatchingODEAdapter,    # Protocol: engine + adapter handshake
     RestartMixer,              # Protocol: per-round coordinate blender
     Evaluator,                 # Protocol: per-channel scorer (R7)
+    # --- Concrete mixer / evaluator implementations ---
+    DiscreteIdentityMixer,      # canonical baseline mixer for discrete channels
+    LatentConvexMixer,          # convex blend with latent-space projection
+    NoOpMixer,                  # pass-through mixer (smoke-test fixture)
     # --- Exceptions ---
     CapabilityMismatchError, CapabilityMissingError,
     # --- Validators (state / adapter / envelope / mixer / numeric) ---
@@ -908,7 +912,8 @@ from adaptive_reflow.molecular import (
     # --- Pure-data carriers (molecule stratification) ---
     MoleculeStratum, MoleculeStratumAssignment,
     # --- Concrete RestartMixer Protocol impl ---
-    RMSPreservingCoordinateMixer,
+    EqualRmsCoordinateMixer,    # canonical mixer (RMS-preserving RMS blend)
+    RMSPreservingCoordinateMixer,  # deprecated alias for EqualRmsCoordinateMixer
     adaptive_reflow_memory_restart_coords,
     # --- Concrete Evaluator Protocol impls (four arms) ---
     GNINAEvaluator, PoseBustersEvaluator,
