@@ -25,6 +25,9 @@ Module boundary
 * :mod:`adaptive_reflow.molecular.mixer` —
   :class:`EqualRmsCoordinateMixer` (concrete ``RestartMixer``)
   + back-compat :func:`adaptive_reflow_memory_restart_coords`.
+* :mod:`adaptive_reflow.molecular.rdkit_export` — Phase-A
+  in-process glue that converts a FlowMol3 endpoint
+  ``(x, a, c, e)`` to an RDKit ``Chem.Mol``. Pure RDKit; no torch.
 * :mod:`adaptive_reflow.molecular.calibration_protocols` — concrete
   :class:`Evaluator` implementations for the four molecule evaluator
   arms (GNINA, PoseBusters, QED, ADMET) plus their factory helpers.
@@ -144,6 +147,12 @@ from .mixer import (
     RMSPreservingCoordinateMixer,
     adaptive_reflow_memory_restart_coords,
     require_torch,
+)
+from .rdkit_export import (
+    FLOWMOL3_ATOM_SYMBOLS,
+    adapter_endpoint_to_rdkit_mol,
+    endpoint_to_rdkit_mol,
+    trajectory_endpoint_to_rdkit_mol,
 )
 from .stratification import (
     MoleculeStratum,
@@ -339,6 +348,11 @@ __all__ = [
     "MIXER_RMS_PRECEDENCE_FAIL",
     "adaptive_reflow_memory_restart_coords",
     "require_torch",
+    # RDKit glue (Phase-A FlowMol3 endpoint -> Chem.Mol writer)
+    "FLOWMOL3_ATOM_SYMBOLS",
+    "endpoint_to_rdkit_mol",
+    "trajectory_endpoint_to_rdkit_mol",
+    "adapter_endpoint_to_rdkit_mol",
     # Concrete Evaluator classes
     "GNINAEvaluator",
     "PoseBustersEvaluator",
