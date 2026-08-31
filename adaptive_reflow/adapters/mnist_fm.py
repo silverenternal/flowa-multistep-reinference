@@ -409,7 +409,12 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         else:
             beta = float(beta_raw)
             memory_fraction = 1.0 - beta
-        prior_x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(MNIST_FLAT_DIM)
+        prior_value = prior_entry.get("x0", prior_entry.get("x"))
+        if prior_value is None:
+            raise CapabilityMissingError(
+                "missing_endpoint_value", context=state.native_state_digest
+            )
+        prior_x0 = np.asarray(prior_value, dtype=np.float64).reshape(MNIST_FLAT_DIM)
         next_round = int(state.source_round) + 1
         restart_seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
         restart_seed = int(hashlib.sha256(restart_seed_blob).hexdigest()[:8], 16)
@@ -584,6 +589,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         )
         stored = {
             "x": np.asarray(x_final, dtype=np.float64).reshape(MNIST_FLAT_DIM),
+            "x0": np.asarray(x_final, dtype=np.float64).reshape(MNIST_FLAT_DIM),
             "t": 1.0,
         }
         if "_audit" in traj_entry:
