@@ -171,7 +171,7 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         # by:`` / ``- Disputed by:`` / ``- Statement:`` / ``- Evidence:``
         # bullets. They look like CamelCase tokens to the inline
         # extractor but are prose field labels, not project symbols.
-        "Status", "Date", "Source", "Evidence", "Statement",
+        "Status", "Date", "Source", "Evidence", "Statement", "Scripts",
         "Asserted", "Disputed",
         # Prose sentence-starters / adverbs commonly backticked in ADRs.
         "Today", "Toward", "Hence", "Thereafter", "Otherwise",
@@ -182,7 +182,7 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         # uses inside "Section X.Y example / pseudocode / Step N"
         # blocks. Adding the canonical real names here would be wrong;
         # these are precisely the *example* names we want to skip.
-        "MyAdapter",
+        "MyAdapter", "PLUG_IN_YOUR_MODEL",
         "CLIPScoreEvaluator",
     }
 )
@@ -357,7 +357,7 @@ def _is_placeholder_path(raw: str) -> bool:
     missing-on-disk for those -- only paths made of concrete characters
     are real claims.
     """
-    return "<" in raw or ">" in raw
+    return "<" in raw or ">" in raw or "..." in raw
 
 
 def _iter_python_block_symbols(source: str) -> list[tuple[int, str]]:
