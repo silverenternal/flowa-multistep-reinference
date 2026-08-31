@@ -112,6 +112,7 @@ Tasks satisfied:
 from __future__ import annotations
 
 import hashlib
+import math
 import warnings
 from collections.abc import Callable
 from typing import Any, Literal
@@ -460,6 +461,8 @@ class EvidenceScaleGapMetric:
         "_target",
         "_eps_implicit",
         "_eps_schedule",
+        "_use_quadratic_eps_scaling",
+        "_apply_lemma4_exponential_suppression",
     )
 
     def __init__(
@@ -471,6 +474,8 @@ class EvidenceScaleGapMetric:
         seed: int = 42,
         eps_implicit: float = 0.05,
         eps_schedule: Callable[[int], float] | None = None,
+        use_quadratic_eps_scaling: bool = False,
+        apply_lemma4_exponential_suppression: bool = False,
     ) -> None:
         if target not in POSTERIOR_SELECTION_TARGETS:
             raise ValueError(f"unknown_target:{target}")
@@ -491,6 +496,21 @@ class EvidenceScaleGapMetric:
         self._seed = int(seed)
         self._eps_implicit = float(eps_implicit)
         self._eps_schedule = eps_schedule
+        # A-02.M2: quadratic ``eps`` scaling flag (paper Lemma 3).
+        # Defaults to ``False`` to preserve the A16 plateau + CLM-022
+        # SNR 60.80 reference. When ``True``, the cell-evidence term
+        # is multiplied by ``eps**2`` instead of ``eps``, matching
+        # Lemma 3's ``O(eps^{+2})`` suppression verbatim.
+        self._use_quadratic_eps_scaling = bool(use_quadratic_eps_scaling)
+        # A-02.G1: Lemma 4 exponential suppression flag. Defaults to
+        # ``False`` to preserve backward compatibility. When ``True``
+        # and a positive exterior gap ``e_rho`` is in effect, the
+        # cell-evidence term is additionally multiplied by
+        # ``exp(-e_rho / (2 eps^2))`` which tends to ``0`` as
+        # ``eps -> 0`` (paper Lemma 4).
+        self._apply_lemma4_exponential_suppression = bool(
+            apply_lemma4_exponential_suppression
+        )
         self._adapter: TwoDimFMAdapter = default_twodim_fm_adapter(
             target=self._target  # type: ignore[arg-type]
         )
@@ -759,14 +779,15 @@ class EvidenceScaleGapMetric:
         s_ev, c_ev, ratio = selection_ratio(flat, cells_arr)
         if self._eps_schedule is not None:
             eps = float(self._eps_schedule(int(round_index)))
+            if not math.isfinite(eps):
+                raise ValueError(
+                    f"eps_schedule({int(round_index)}) must be finite "
+                    f"(no NaN/inf), got {eps!r}"
+                )
             if eps < 0.0:
                 eps = 0.0
-            c_ev = c_ev * eps
-            total = s_ev + c_ev
-            if total > 0.0:
-                ratio = float(max(0.0, min(1.0, s_ev / total)))
-            else:
-                ratio = 1.0 if s_ev > 0.0 else 0.0
+            c_ev = self._scale_cell_evidence(c_ev, eps)
+            ratio = self._ratio_after_eps(s_ev, c_ev)
         bounded_score = _clip_unit(ratio)
         bundle_id = self._derive_bundle_id_for_trajectory(flat, seed=int(seed))
         provenance = ProvenanceChain(
@@ -835,14 +856,15 @@ class EvidenceScaleGapMetric:
         s_ev, c_ev, ratio = selection_ratio(flat, cells_arr)
         if self._eps_schedule is not None:
             eps = float(self._eps_schedule(int(round_index)))
+            if not math.isfinite(eps):
+                raise ValueError(
+                    f"eps_schedule({int(round_index)}) must be finite "
+                    f"(no NaN/inf), got {eps!r}"
+                )
             if eps < 0.0:
                 eps = 0.0
-            c_ev = c_ev * eps
-            total = s_ev + c_ev
-            if total > 0.0:
-                ratio = float(max(0.0, min(1.0, s_ev / total)))
-            else:
-                ratio = 1.0 if s_ev > 0.0 else 0.0
+            c_ev = self._scale_cell_evidence(c_ev, eps)
+            ratio = self._ratio_after_eps(s_ev, c_ev)
         bounded_score = _clip_unit(ratio)
         eps_for_round = self.eps_for_round(int(round_index))
         return {
@@ -926,33 +948,36 @@ class EvidenceScaleGapMetric:
         s_ev, c_ev, ratio = selection_ratio(endpoints, cells_arr)
         if self._eps_schedule is not None:
             eps = float(self._eps_schedule(int(round_index)))
+            if not math.isfinite(eps):
+                raise ValueError(
+                    f"eps_schedule({int(round_index)}) must be finite "
+                    f"(no NaN/inf), got {eps!r}"
+                )
             if eps < 0.0:
                 eps = 0.0
-            # Scale cell evidence by eps (paper Lemma 3 O(eps^2)
-            # suppression; eps factor gives the conservative monotonic
-            # path so the ratio rises toward 1 as eps -> 0).
-            c_ev = c_ev * eps
-            total = s_ev + c_ev
-            if total > 0.0:
-                ratio = float(max(0.0, min(1.0, s_ev / total)))
-            else:
-                ratio = 1.0 if s_ev > 0.0 else 0.0
+            # A-02.M2 / A-02.G1: cell-evidence scaling honours the
+            # configured flags (linear default, optional quadratic
+            # Lemma 3 and optional Lemma 4 exponential suppression).
+            c_ev = self._scale_cell_evidence(c_ev, eps)
+            ratio = self._ratio_after_eps(s_ev, c_ev)
         elif eps_round is not None:
             # C4: scheduler-supplied ``eps_round`` (typically the
             # ``ScheduleSample.eps_implicit`` value the runner
-            # threads through). Clamp to ``[0, inf)`` and reuse the
-            # same conservative scaling path as the ``eps_schedule``
-            # branch so the ratio rises monotonically toward 1 as
-            # ``eps_round -> 0``.
+            # threads through). Reject NaN/inf upstream of the
+            # ``total > 0`` guard (A-02.M3 safety boundary), clamp to
+            # ``[0, inf)``, and reuse the same conservative scaling
+            # path as the ``eps_schedule`` branch so the ratio rises
+            # monotonically toward 1 as ``eps_round -> 0``.
+            if not math.isfinite(float(eps_round)):
+                raise ValueError(
+                    f"eps_round must be finite (no NaN/inf), got "
+                    f"{eps_round!r}"
+                )
             eps = float(eps_round)
             if eps < 0.0:
                 eps = 0.0
-            c_ev = c_ev * eps
-            total = s_ev + c_ev
-            if total > 0.0:
-                ratio = float(max(0.0, min(1.0, s_ev / total)))
-            else:
-                ratio = 1.0 if s_ev > 0.0 else 0.0
+            c_ev = self._scale_cell_evidence(c_ev, eps)
+            ratio = self._ratio_after_eps(s_ev, c_ev)
         return (
             float(s_ev),
             float(c_ev),
@@ -960,6 +985,66 @@ class EvidenceScaleGapMetric:
             float(POSTERIOR_SELECTION_CALIBRATION),
             float(POSTERIOR_SELECTION_PERTURBATION),
         )
+
+    def _scale_cell_evidence(
+        self,
+        c_ev: float,
+        eps: float,
+        *,
+        e_rho: float = 0.0,
+    ) -> float:
+        """Apply the configured cell-evidence ``eps`` scaling.
+
+        A-02.M2 (``use_quadratic_eps_scaling=True``): multiplies
+        ``c_ev`` by ``eps ** 2`` instead of the legacy ``eps`` (paper
+        Lemma 3 ``O(eps^{+2})`` cell suppression). Default off to
+        preserve the A16 plateau and CLM-022 SNR 60.80 reference.
+
+        A-02.G1 (``apply_lemma4_exponential_suppression=True`` AND
+        ``e_rho > 0``): additionally multiplies by
+        ``exp(-e_rho / (2 * eps ** 2))`` (paper Lemma 4 exponential
+        suppression of the exterior posterior mass). The factor tends
+        to ``0`` as ``eps -> 0`` for ``e_rho > 0``, driving the
+        selection ratio toward ``1``. Default off.
+
+        ``eps`` must be ``>= 0`` and finite (callers reject NaN/inf
+        upstream so the math is airtight). When ``eps == 0`` the cell
+        evidence is ``0`` regardless of flags; the ratio then equals
+        ``1`` when ``s_ev > 0`` and ``0`` otherwise.
+        """
+        if eps <= 0.0:
+            return 0.0
+        scaled = c_ev * eps
+        if self._use_quadratic_eps_scaling:
+            scaled = scaled * eps  # total: c_ev * eps ** 2
+        if (
+            self._apply_lemma4_exponential_suppression
+            and float(e_rho) > 0.0
+            and eps > 0.0
+        ):
+            # Paper Lemma 4: ``exp(-e_rho / (2 eps^2))`` decays to 0 as
+            # ``eps -> 0`` when ``e_rho > 0``. For ``eps == 0`` the
+            # exponential is ``0`` (matches the early return).
+            suppression = math.exp(-float(e_rho) / (2.0 * eps * eps))
+            scaled = scaled * suppression
+        return float(scaled)
+
+    @staticmethod
+    def _ratio_after_eps(s_ev: float, c_ev: float) -> float:
+        """Combine ``s_ev`` and ``c_ev`` into the selection ratio.
+
+        Mirrors the legacy inline computation byte-for-byte when
+        ``c_ev == s_ev * eps`` (the default A16 path):
+        ``ratio = clip(s_ev / (s_ev + c_ev), 0, 1)`` with the
+        ``total == 0`` fallback to ``1.0`` when ``s_ev > 0`` else
+        ``0.0``. Extracted so the three call sites
+        (:meth:`evaluate_trajectory`, :meth:`oracle_batched`,
+        :meth:`_compute_metrics`) share one canonical path.
+        """
+        total = s_ev + c_ev
+        if total > 0.0:
+            return float(max(0.0, min(1.0, s_ev / total)))
+        return 1.0 if s_ev > 0.0 else 0.0
 
     def _generate_endpoints(
         self,

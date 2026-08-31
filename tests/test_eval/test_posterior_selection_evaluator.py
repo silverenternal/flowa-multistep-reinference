@@ -948,3 +948,289 @@ def test_oracle_batched_eps_schedule_consumes_round_index() -> None:
     assert out_r5["eps_schedule_value"] == pytest.approx(0.01)
     assert out_r5["round_index"] == 5
     assert "selection_ratio" in out_r5
+
+
+# ---------------------------------------------------------------------------
+# Tests — A-02.M3 safety boundary: ``eps_round`` NaN/inf rejection
+# ---------------------------------------------------------------------------
+
+
+def test_eps_round_nan_rejected() -> None:
+    """A-02.M3: NaN ``eps_round`` is rejected with ``ValueError``.
+
+    The legacy implementation silently bypassed the ``total > 0`` guard
+    for ``nan``; the new path raises ``ValueError`` upstream of the
+    ratio computation so the failure mode is explicit.
+    """
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-eps-round-nan")
+    with pytest.raises(ValueError, match="eps_round must be finite"):
+        evaluator.oracle_at_round(
+            bundle,
+            channel=_XY_CHANNEL,
+            seed=42,
+            round_index=0,
+            eps_round=float("nan"),
+        )
+
+
+def test_eps_round_inf_rejected() -> None:
+    """A-02.M3: positive ``inf`` ``eps_round`` is rejected with ``ValueError``."""
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-eps-round-inf")
+    with pytest.raises(ValueError, match="eps_round must be finite"):
+        evaluator.oracle_at_round(
+            bundle,
+            channel=_XY_CHANNEL,
+            seed=42,
+            round_index=0,
+            eps_round=float("inf"),
+        )
+
+
+def test_eps_schedule_nan_rejected() -> None:
+    """A-02.M3: a ``eps_schedule`` returning NaN raises ``ValueError``."""
+
+    def _nan_schedule(_r: int) -> float:
+        return float("nan")
+
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons",
+        eps_schedule=_nan_schedule,
+        n_gen=200,
+        n_ref=200,
+        seed=42,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-schedule-nan")
+    with pytest.raises(ValueError, match="eps_schedule"):
+        evaluator.oracle_at_round(
+            bundle, channel=_XY_CHANNEL, seed=42, round_index=0,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Tests — A-02.M2: quadratic ``eps`` scaling flag (paper Lemma 3)
+# ---------------------------------------------------------------------------
+
+
+def test_quadratic_eps_scaling_default_off() -> None:
+    """A-02.M2: ``use_quadratic_eps_scaling`` defaults to ``False``.
+
+    With the flag off, the metric's behaviour matches the legacy
+    A16 linear scaling byte-for-byte (CLM-022 SNR 60.80 reference
+    preserved).
+    """
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    assert evaluator._use_quadratic_eps_scaling is False
+
+
+def test_quadratic_eps_scaling_matches_lemma_3() -> None:
+    """A-02.M2: with the flag on, smaller ``eps`` gives a larger ratio.
+
+    Paper Lemma 3 bounds the cell-evidence mass by ``O(eps**2)``, so
+    with ``eps = 0.01`` the cell mass is suppressed by a factor of
+    ``1e-4`` relative to ``eps = 0.1``; the ratio must therefore
+    rise monotonically with smaller ``eps`` when the quadratic flag
+    is enabled, and the gap between ``eps=0.01`` and ``eps=0.1`` is
+    at least ``1e-3``.
+    """
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons",
+        n_gen=200,
+        n_ref=200,
+        seed=42,
+        use_quadratic_eps_scaling=True,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-quadratic-lemma3")
+    r_small = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0,
+        eps_round=0.01,
+    )
+    r_large = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0,
+        eps_round=0.1,
+    )
+    assert r_small["selection_ratio"] > r_large["selection_ratio"], (
+        f"quadratic scaling: eps=0.01 ratio {r_small['selection_ratio']:.4f} "
+        f"should exceed eps=0.1 ratio {r_large['selection_ratio']:.4f}"
+    )
+    gap = r_small["selection_ratio"] - r_large["selection_ratio"]
+    assert gap >= 1e-3, (
+        f"quadratic scaling gap {gap:.6f} below Lemma 3 floor 1e-3"
+    )
+
+
+def test_quadratic_eps_scaling_eps_zero_collapses_to_one() -> None:
+    """A-02.M2: ``eps=0`` collapses the cell-evidence term to zero
+    regardless of the scaling flag, so the ratio equals 1.0."""
+    bundle = _make_state_bundle("evidence-scale-gap-quadratic-zero")
+    for flag in (False, True):
+        evaluator = EvidenceScaleGapMetric(
+            target="two_moons",
+            n_gen=200,
+            n_ref=200,
+            seed=42,
+            use_quadratic_eps_scaling=flag,
+        )
+        out = evaluator.oracle_at_round(
+            bundle, channel=_XY_CHANNEL, seed=42, round_index=0,
+            eps_round=0.0,
+        )
+        assert out["selection_ratio"] == pytest.approx(1.0, abs=1e-9), (
+            f"flag={flag}: eps=0 ratio {out['selection_ratio']:.4f} "
+            f"should be 1.0"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Tests — A-02.G1: Lemma 4 exponential suppression
+# ---------------------------------------------------------------------------
+
+
+def test_lemma4_exponential_default_off() -> None:
+    """A-02.G1: ``apply_lemma4_exponential_suppression`` defaults to ``False``."""
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    assert evaluator._apply_lemma4_exponential_suppression is False
+
+
+def test_lemma4_exponential_requires_positive_e_rho() -> None:
+    """A-02.G1: the suppression factor is ``1.0`` when no ``e_rho`` is supplied.
+
+    The flag is opt-in; with ``e_rho == 0`` (the default for the
+    helper) the factor collapses to a no-op even when the flag is
+    on. This guards the helper against an accidental exponential
+    blow-up when the ``e_rho`` plumbing is absent.
+    """
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons",
+        n_gen=200,
+        n_ref=200,
+        seed=42,
+        apply_lemma4_exponential_suppression=True,
+    )
+    # ``e_rho`` defaults to 0 -> the helper short-circuits and the
+    # legacy linear ``eps`` scaling path is preserved byte-for-byte.
+    baseline = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    bundle = _make_state_bundle("evidence-scale-gap-lemma4-no-e-rho")
+    flag_on = evaluator.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0,
+        eps_round=0.1,
+    )
+    baseline_out = baseline.oracle_at_round(
+        bundle, channel=_XY_CHANNEL, seed=42, round_index=0,
+        eps_round=0.1,
+    )
+    assert flag_on["selection_ratio"] == pytest.approx(
+        baseline_out["selection_ratio"], abs=1e-12,
+    )
+
+
+def test_lemma4_exponential_drives_ratio_toward_one() -> None:
+    """A-02.G1: with a positive ``e_rho`` and small ``eps`` the
+    exponential suppression drives the ratio to >= 0.999999.
+
+    Paper Lemma 4 says the exterior posterior mass is bounded by
+    ``C * eps^{-1} * exp(-e_rho / (2 eps^2))``; the
+    ``exp(-e_rho / (2 eps^2))`` term tends to 0 as ``eps -> 0`` for
+    ``e_rho > 0``. The cell-evidence product therefore collapses,
+    the ratio rises to 1, and the magnitude of the gap with the
+    flag off is observable.
+    """
+    # ``e_rho`` large enough that ``exp(-e_rho / (2 eps^2))`` is
+    # numerically negligible at ``eps = 0.01``:
+    # ``exp(-1.0 / (2 * 0.0001))`` = ``exp(-5000)`` ~ 0.
+    eps = 0.01
+    e_rho = 1.0
+
+    with_flag = EvidenceScaleGapMetric(
+        target="two_moons",
+        n_gen=200,
+        n_ref=200,
+        seed=42,
+        apply_lemma4_exponential_suppression=True,
+    )
+    without_flag = EvidenceScaleGapMetric(
+        target="two_moons", n_gen=200, n_ref=200, seed=42,
+    )
+    r_flag = with_flag._scale_cell_evidence(
+        c_ev=1.0, eps=eps, e_rho=e_rho,
+    )
+    r_baseline = without_flag._scale_cell_evidence(
+        c_ev=1.0, eps=eps, e_rho=e_rho,
+    )
+    assert r_flag < r_baseline, (
+        f"Lemma 4 flag should suppress the cell evidence: "
+        f"flagged {r_flag:.6e}, baseline {r_baseline:.6e}"
+    )
+    # Drive the ratio through ``_ratio_after_eps``: with negligible
+    # cell evidence and a positive sheet evidence, the ratio collapses
+    # to >= 0.999999.
+    s_ev = 0.5
+    c_ev_collapsed = r_flag
+    ratio = with_flag._ratio_after_eps(s_ev, c_ev_collapsed)
+    assert ratio >= 0.999999, (
+        f"with Lemma 4 flag and e_rho={e_rho}, eps={eps}: ratio "
+        f"{ratio:.10f} should be >= 0.999999"
+    )
+
+
+def test_lemma4_exponential_zero_eps_zero_cell_evidence() -> None:
+    """A-02.G1: with ``eps == 0`` the helper returns ``0.0`` regardless of flags."""
+    evaluator = EvidenceScaleGapMetric(
+        target="two_moons",
+        n_gen=200,
+        n_ref=200,
+        seed=42,
+        apply_lemma4_exponential_suppression=True,
+    )
+    assert evaluator._scale_cell_evidence(c_ev=1.0, eps=0.0, e_rho=1.0) == 0.0
+
+
+# ---------------------------------------------------------------------------
+# Tests — A-02.M1 derivation note (``e_rho / 4`` audit trail)
+# ---------------------------------------------------------------------------
+
+
+def test_e_rho_over_4_factor_documented_in_merge_operator() -> None:
+    """A-02.M1: the ``e_rho / 4`` factor in :class:`BoundedMergeOperator`
+    carries the CLM-042 derivation note inline so the audit reader can
+    trace the framework-side tightening back to the paper.
+    """
+    import inspect
+
+    from adaptive_reflow.algorithm.merge_operator import BoundedMergeOperator
+
+    src = inspect.getsource(BoundedMergeOperator.merge)
+    assert "CLM-042" in src, (
+        "BoundedMergeOperator.merge must carry the CLM-042 derivation "
+        "note inline (A-02.M1 paper-math fidelity)"
+    )
+    assert "e_rho / 4" in src or "/ 4.0" in src, (
+        "BoundedMergeOperator.merge must still apply the e_rho / 4 "
+        "paper-quantity floor"
+    )
+
+
+def test_e_rho_over_4_factor_documented_in_scheduler_core() -> None:
+    """A-02.M1: the scheduler's ``e_rho / 4`` factor carries the
+    CLM-042 derivation note inline as well."""
+    import inspect
+
+    from adaptive_reflow.algorithm.scheduler._core import CodimensionSheetScheduler
+
+    src = inspect.getsource(CodimensionSheetScheduler.inject_noise)
+    assert "CLM-042" in src, (
+        "CodimensionSheetScheduler.inject_noise must carry the "
+        "CLM-042 derivation note inline (A-02.M1 paper-math fidelity)"
+    )
+

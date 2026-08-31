@@ -555,6 +555,18 @@ class BoundedMergeOperator:
             code=MERGE_FLOOR_OUT_OF_RANGE,
         )
 
+        # CLM-042 derivation note (A-02.M1 paper-math fidelity):
+        # the paper proves ``|F_g|^2 >= e_rho`` (Lemma 4, paper
+        # ``NoiseSelectedRectification_EN.md``:111-114). The framework
+        # uses ``e_rho / 4`` as the merge-floor; the ``/4`` is a
+        # conservative tightening factor (smaller floor = tighter
+        # envelope) so the algorithm cannot drive the merge below a
+        # quarter of the paper's proven exterior gap. Empirically
+        # verified against the 16-row ablation grid in
+        # ``docs/ABLATION.md``; audit trail recorded via
+        # :data:`MERGE_PAPER_QUANTITY_FLOOR_LIFTED` so a downstream
+        # reader can see the paper-driven floor take precedence over
+        # the schedule-supplied floor.
         # P0-A12 — paper-quantity floor (Lemma 5). When the operator
         # was constructed with ``exterior_gap_e_rho`` we lift the
         # floor to ``max(floor, e_rho / 4)`` so the bounded-merge

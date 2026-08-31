@@ -2855,6 +2855,15 @@ class CodimensionSheetScheduler:
         ``e_rho`` the noise mass becomes ``max(A_g, e_rho / 4)``;
         callers that wire both quantities get the audit-trail-safe
         paper-aligned mass.
+
+        CLM-042 derivation note (A-02.M1 paper-math fidelity): the
+        ``/4`` factor mirrors the
+        :class:`~adaptive_reflow.algorithm.merge_operator.BoundedMergeOperator`
+        paper-quantity-floor convention; the paper proves
+        ``|F_g|^2 >= e_rho`` (Lemma 4) and ``/4`` is a conservative
+        tightening so the noise mass cannot drop below a quarter of
+        the proven exterior gap. See CLM-042 in ``docs/CLAIMS.md``
+        for the audit trail.
         """
         state_arr = np.asarray(state, dtype=np.float64)
         if self._sheet_A is not None:
