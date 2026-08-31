@@ -33,6 +33,16 @@ from .lumina_image_2_0_adapter_lumina_image_2_0 import (  # noqa: I001
     LuminaImage20Capabilities,
     default_lumina_image_2_0_adapter,
 )
+from .protbfnabbfnadapter import (
+    AMINO_ACID_CATEGORICAL,
+    PROTBFN_ABBFN_CHANNELS,
+    PROTBFN_ABBFN_CHANNEL_DOMAINS,
+    PROTBFN_ABBFN_CONFIG_HASH,
+    PROTBFN_ABBFN_STATE_SHAPE,
+    ProtBFNAbBFNAdapter,
+    ProtBFNAbBFNCapabilities,
+    default_protbfnabbfn_adapter,
+)
 from .integrators import (
     INTEGRATOR_REGISTRY,
     AMEDSolverIntegrator,
