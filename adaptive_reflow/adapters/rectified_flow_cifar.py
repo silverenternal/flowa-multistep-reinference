@@ -291,6 +291,7 @@ def _torch_velocity_field(
     t: float,
     *,
     dtype: Any,
+    device: Any,
 ) -> ArrayF64:
     """Call the PyTorch UNet velocity field ``v_theta(x, t)``.
 
@@ -306,14 +307,14 @@ def _torch_velocity_field(
     import torch  # local import — torch is optional at the framework level.
 
     with torch.no_grad():
-        x_t = torch.as_tensor(x, dtype=dtype).unsqueeze(0)
-        t_t = torch.tensor([float(t)], dtype=dtype)
+        x_t = torch.as_tensor(x, dtype=dtype, device=device).unsqueeze(0)
+        t_t = torch.tensor([float(t)], dtype=dtype, device=device)
         v = unet(x_t, t_t)
         out = np.asarray(v.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
     return out.reshape(RF_CIFAR_STATE_SHAPE)
 
 
-def _load_torch_unet(weights_path: Path) -> Any:
+def _load_torch_unet(weights_path: Path, *, device: Any) -> Any:
     """Load the published UNet ``state_dict`` and return the unet module.
 
     Two checkpoint layouts are recognised:
@@ -330,7 +331,18 @@ def _load_torch_unet(weights_path: Path) -> Any:
     """
     import torch  # local import.
 
-    raw = torch.load(str(weights_path), map_location="cpu", weights_only=False)
+    if weights_path.suffix == ".safetensors":
+        try:
+            from safetensors.torch import load_file
+        except ImportError as exc:
+            raise RuntimeError(
+                "safetensors checkpoint requires the safetensors package"
+            ) from exc
+        raw: Any = load_file(str(weights_path), device=str(device))
+    else:
+        # Model checkpoints are data, not executable Python.  Refuse legacy
+        # pickle objects so an untrusted checkpoint cannot execute on load.
+        raw = torch.load(str(weights_path), map_location=device, weights_only=True)
     state_dict = raw.get("state_dict", raw) if isinstance(raw, dict) else raw
     fmt = raw.get("format") if isinstance(raw, dict) else None
     is_gnobitab = fmt == RF_CIFAR_FORMAT_GNOBITAB or any(
@@ -342,10 +354,11 @@ def _load_torch_unet(weights_path: Path) -> Any:
             load_gnobitab_rf_cifar_unet,
         )
 
-        return load_gnobitab_rf_cifar_unet(state_dict, dtype=torch.float32)
-
-    unet = _build_torch_unet_ddpmpp()
-    unet.load_state_dict(state_dict)
+        unet = load_gnobitab_rf_cifar_unet(state_dict, dtype=torch.float32)
+    else:
+        unet = _build_torch_unet_ddpmpp()
+        unet.load_state_dict(state_dict)
+    unet.to(device)
     unet.eval()
     for p in unet.parameters():
         p.requires_grad_(False)
@@ -576,6 +589,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         synthetic_hidden: int = RF_CIFAR_SYNTHETIC_HIDDEN,
         synthetic_seed: int = RF_CIFAR_SYNTHETIC_SEED_DEFAULT,
         solver: str = RF_CIFAR_INTEGRATOR_EULER,
+        device: str = "cpu",
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_RF_CIFAR_NUM_STEPS)
@@ -591,6 +605,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         self._synthetic_hidden = int(synthetic_hidden)
         self._synthetic_seed = int(synthetic_seed)
         self._solver: str = str(solver)
+        self._device_name = str(device)
 
         # Resolve weights path.
         explicit = Path(weights_path) if weights_path is not None else None
@@ -617,12 +632,18 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         # Backend handles.
         self._unet: Any = None
         self._torch_dtype: Any = None
+        self._torch_device: Any = None
         self._synthetic_weights: dict[str, ArrayF64] | None = None
         if self._mode == "torch":
-            self._unet = _load_torch_unet(self._weights_path)
             try:
                 import torch as _torch  # local
 
+                self._torch_device = _torch.device(self._device_name)
+                if self._torch_device.type == "cuda" and not _torch.cuda.is_available():
+                    raise RuntimeError("cuda requested but not available")
+                self._unet = _load_torch_unet(
+                    self._weights_path, device=self._torch_device
+                )
                 # The published weights are float32; running the UNet in
                 # float64 on CPU roughly doubles the wall-clock for no
                 # accuracy gain (the integrator state stays float64).
@@ -779,7 +800,12 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
             beta = float(beta_raw)
             memory_fraction = 1.0 - beta
 
-        prior_x = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
+        prior_value = prior_entry.get("x0", prior_entry.get("x"))
+        if prior_value is None:
+            raise CapabilityMissingError(
+                "missing_endpoint_value", context=state.native_state_digest
+            )
+        prior_x = np.asarray(prior_value, dtype=np.float64).reshape(
             RF_CIFAR_STATE_SHAPE
         )
         next_round = int(state.source_round) + 1
@@ -873,7 +899,13 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         """
         if self._mode == "torch":
             assert self._unet is not None
-            return _torch_velocity_field(self._unet, x, t, dtype=self._torch_dtype)
+            return _torch_velocity_field(
+                self._unet,
+                x,
+                t,
+                dtype=self._torch_dtype,
+                device=self._torch_device,
+            )
         assert self._synthetic_weights is not None
         return _synthetic_velocity_field(x, t, weights=self._synthetic_weights)
 
@@ -1006,6 +1038,9 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
             endpoint_digest,
             {
                 "x": np.asarray(x_final, dtype=np.float64).reshape(RF_CIFAR_STATE_SHAPE),
+                # ``apply_restart_distribution`` accepts either key so
+                # endpoint bundles can be fed directly into the next round.
+                "x0": np.asarray(x_final, dtype=np.float64).reshape(RF_CIFAR_STATE_SHAPE),
                 "t": float(RF_CIFAR_T_END),
                 "mode": self._mode,
             },
@@ -1150,7 +1185,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
             if self._mode == "torch":
                 assert self._unet is not None
                 v1 = _batched_torch_velocity_field(
-                    self._unet, x_cur, t0, dtype=self._torch_dtype
+                    self._unet, x_cur, t0, dtype=self._torch_dtype, device=self._torch_device
                 )
             else:
                 assert self._synthetic_weights is not None
@@ -1163,7 +1198,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 if self._mode == "torch":
                     assert self._unet is not None
                     v2 = _batched_torch_velocity_field(
-                        self._unet, x_pred, t1, dtype=self._torch_dtype
+                        self._unet, x_pred, t1, dtype=self._torch_dtype, device=self._torch_device
                     )
                 else:
                     assert self._synthetic_weights is not None
@@ -1207,6 +1242,7 @@ def _batched_torch_velocity_field(
     t: float,
     *,
     dtype: Any,
+    device: Any,
     chunk_size: int = RF_CIFAR_TORCH_CHUNK,
 ) -> ArrayF64:
     """Batched torch velocity field for shape ``(B, 3, 32, 32)``.
@@ -1224,8 +1260,10 @@ def _batched_torch_velocity_field(
     with torch.no_grad():
         for start in range(0, n, step):
             stop = min(start + step, n)
-            x_t = torch.as_tensor(np.ascontiguousarray(x_batch[start:stop]), dtype=dtype)
-            t_t = torch.full((stop - start,), float(t), dtype=dtype)
+            x_t = torch.as_tensor(
+                np.ascontiguousarray(x_batch[start:stop]), dtype=dtype, device=device
+            )
+            t_t = torch.full((stop - start,), float(t), dtype=dtype, device=device)
             out[start:stop] = unet(x_t, t_t).detach().cpu().numpy().astype(np.float64)
     return out.reshape(x_batch.shape)
 
@@ -1241,6 +1279,7 @@ def default_rectified_flow_cifar_adapter(
     force_mode: Mode | Literal["auto"] = "auto",
     num_steps: int = RF_CIFAR_NUM_STEPS_DEFAULT,
     solver: str = RF_CIFAR_INTEGRATOR_EULER,
+    device: str = "cpu",
 ) -> RectifiedFlowCIFARAdapter:
     """Default factory for :class:`RectifiedFlowCIFARAdapter`.
 
@@ -1259,6 +1298,7 @@ def default_rectified_flow_cifar_adapter(
         force_mode=force_mode,
         num_steps=num_steps,
         solver=solver,
+        device=device,
     )
 
 
