@@ -437,6 +437,28 @@ def test_endpoint_shape_correct(rf_cifar_adapter: object) -> None:
     assert np.asarray(stored["x"], dtype=np.float64).shape == (3, 32, 32)
 
 
+def test_observed_endpoint_can_restart_next_round(rf_cifar_adapter: object) -> None:
+    """An observed endpoint is a valid prior for the next restart boundary."""
+    bundle = rf_cifar_adapter.build_initial_state(
+        batch_id="batch-rf-cifar-endpoint-restart",
+        sample_id="sample-rf-cifar-endpoint-restart",
+    )
+    trace = rf_cifar_adapter.solve_ode(
+        bundle, _make_condition_delta(target_round=0, num_steps=2), seed=17
+    )
+    endpoint = rf_cifar_adapter.observe_endpoint(trace, bundle)
+    endpoint_x = rf_cifar_adapter._native_states[endpoint.native_state_digest]["x"]  # noqa: SLF001
+    policy = _make_final_policy(
+        policy_id="policy-rf-cifar-endpoint-restart",
+        run_id="run-rf-cifar-endpoint-restart",
+        beta=0.0,
+        target_round=1,
+    )
+    restarted = rf_cifar_adapter.apply_restart_distribution(endpoint, policy)
+    restarted_x0 = _native_x0(rf_cifar_adapter, restarted.native_state_digest)
+    np.testing.assert_allclose(restarted_x0, np.clip(endpoint_x, -3.0, 3.0))
+
+
 # ---------------------------------------------------------------------------
 # 10. Protocol surface is non-mutating
 # ---------------------------------------------------------------------------
@@ -602,6 +624,33 @@ def test_batched_inference_shape_and_determinism(rf_cifar_adapter: object) -> No
     np.testing.assert_array_equal(a1, a2)
     assert np.all(np.isfinite(a1))
     assert np.max(np.abs(a1)) <= 3.0 + 1e-9
+
+
+def test_batched_torch_velocity_uses_requested_cuda_device() -> None:
+    """The production tensor bridge places both UNet inputs on CUDA."""
+    torch = pytest.importorskip("torch")
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA unavailable")
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        _batched_torch_velocity_field,
+    )
+
+    class DeviceAssertingUNet(torch.nn.Module):
+        def forward(self, x, t):
+            assert x.is_cuda
+            assert t.is_cuda
+            assert x.device == t.device
+            return torch.zeros_like(x)
+
+    result = _batched_torch_velocity_field(
+        DeviceAssertingUNet().to("cuda"),
+        np.zeros((2, 3, 32, 32), dtype=np.float64),
+        0.5,
+        dtype=torch.float32,
+        device=torch.device("cuda"),
+    )
+    assert result.shape == (2, 3, 32, 32)
+    assert np.all(result == 0.0)
 
 
 # ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -43,6 +44,21 @@ def twodim_fm_weights_path() -> Path:
 def twodim_fm_eight_gaussians_weights_path() -> Path:
     """Return the canonical ``data/twodim_fm_eight_gaussians.npz`` path."""
     return _REPO_ROOT / "data" / "twodim_fm_eight_gaussians.npz"
+
+
+@pytest.fixture(scope="session")
+def mnist_fm_weights_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Create deterministic MNIST adapter weights without training a model."""
+    from adaptive_reflow.adapters.mnist_fm_train import (
+        save_weights,
+        velocity_field_unet_init,
+    )
+
+    path = tmp_path_factory.mktemp("mnist_fm") / "mnist_fm_test.npz"
+    weights = velocity_field_unet_init(
+        np.random.default_rng(0), base_channels=8
+    )
+    return save_weights(list(weights), path)
 
 
 __all__ = ()
