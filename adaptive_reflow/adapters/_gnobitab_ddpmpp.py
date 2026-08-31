@@ -39,7 +39,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn.functional as F  # noqa: N812
@@ -166,7 +166,7 @@ class AttnBlockpp(nn.Module):
         w = torch.reshape(w, (b, h_dim, w_dim, h_dim, w_dim))
         h = torch.einsum("bhwij,bcij->bchw", w, v)
         h = self.NIN_3(h)
-        return (x + h) / _SQRT2
+        return cast(Tensor, (x + h) / _SQRT2)
 
 
 class ResnetBlockBigGANpp(nn.Module):
@@ -219,7 +219,7 @@ class ResnetBlockBigGANpp(nn.Module):
         h = self.Conv_1(h)
         if self.has_skip_conv:
             x = self.Conv_2(x)
-        return (x + h) / _SQRT2
+        return cast(Tensor, (x + h) / _SQRT2)
 
 
 class NCSNppDDPMpp(nn.Module):
@@ -351,7 +351,7 @@ class NCSNppDDPMpp(nn.Module):
         m_idx += 1
         if m_idx != len(modules):  # pragma: no cover — topology invariant
             raise AssertionError(f"gnobitab_ddpmpp_module_index:{m_idx}!={len(modules)}")
-        return h
+        return cast(Tensor, h)
 
 
 class RFVelocityUNet(nn.Module):
@@ -369,7 +369,7 @@ class RFVelocityUNet(nn.Module):
 
     def forward(self, x: Tensor, t: Tensor) -> Tensor:
         """Return the velocity field at ``(x, t)`` for ``t`` in ``[0, 1]``."""
-        return self.net(x, t * self.t_scale)
+        return cast(Tensor, self.net(x, t * self.t_scale))
 
 
 def strip_module_prefix(state_dict: Mapping[str, Any]) -> dict[str, Any]:

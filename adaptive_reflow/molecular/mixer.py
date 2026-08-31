@@ -64,7 +64,7 @@ from typing import Any
 try:
     import torch
 except Exception:  # pragma: no cover - optional dependency
-    torch = None
+    torch = None  # type: ignore[assignment]
 
 
 # ---------------------------------------------------------------------------
