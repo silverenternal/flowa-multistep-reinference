@@ -2,7 +2,7 @@
   "schema_version": "flowa_adaptive_reflow_dynamic_transfer_bias_todo_v2",
   "component": "inference.adaptive_reflow",
   "component_repository": "silverenternal/flowa-multistep-reinference",
-  "status": "partial_implementation_phase1",
+  "status": "phase_a_in_progress_image_molecule_protein_experiment",
   "purpose": "把非紧候选空间中的噪声选择问题显式引入多轮 Flow Matching re-inference：上一轮结果只有在局部证据、全局尾部控制和补集排除共同成立时，才以可校准、通道一致、全局有界且可撤销的动态权重进入下一轮 restart distribution。该机制只改变 inference-external ODE condition 和 restart distribution，绝不替代 FlowA ODE 主线、模型权重、checkpoint 或终端评估。",
   "research_input": {
     "lean_project": "docs/formal_architecture_lean4/Research/NoiseSelectedRectification/",
@@ -1064,6 +1064,104 @@
         "pyproject.toml"
       ],
       "completed_at": "2026-08-27T01:00:00+08:00"
+    },
+    {
+      "id": "EXP-MOL",
+      "title": "Phase A — 分子生成 (FlowMol3 / GraphBFN) 同任务 baseline vs framework 对比",
+      "priority": "P0",
+      "status": "in_progress",
+      "owner": "flowa-multistep-reinference",
+      "implementation": [
+        "使用已下载的 FlowMol3 (bits.csb.pitt.edu proxy) + GraphBFN 论文 metadata 作为论文任务锚点",
+        "接入 FlowMol3Adapter (adaptive_reflow/adapters/flowmol3_v2_adapter.py) 与 GraphBFNAdapter 到 Engine.run_round 链",
+        "写 tools/run_sota_flowmol3_v2_adapter_experiment.py 与 tools/run_sota_graphbfn_experiment.py 主体（目前是 stub）",
+        "baseline = 单 pass paper-reported NFE + paper sampler；framework = 同 checkpoint + 多轮 re-inference",
+        "接 eval scripts：Vina docking + validity + FCD/QED (FlowMol3)，FCD + NSPDK + validity + uniqueness (GraphBFN)",
+        "输出 apples-to-apples 对比表（baseline_FCD vs framework_FCD 等），5 seeds paired t-test",
+        "运行在 GPU0 (RTX PRO 6000, 98GB)，FlowMol3/GraphBFN VRAM 需求 <4GB，剩余空间富裕"
+      ],
+      "acceptance": [
+        "两个 adapter 都能 end-to-end 跑通（baseline + framework）",
+        "eval 脚本接入不报错，输出可解析的 metric JSON",
+        "对比表展示在 docs/r17-survey/ 下，含 paired t-test p-value 和 effect size"
+      ],
+      "completion_evidence": [
+        "tools/run_sota_flowmol3_v2_adapter_experiment.py --mode both 跑通",
+        "tools/run_sota_graphbfn_experiment.py --mode both 跑通",
+        "docs/r17-survey/mol-comparison.md 生成"
+      ],
+      "completed_at": null
+    },
+    {
+      "id": "EXP-IMG",
+      "title": "Phase B — 图像生成 (HiDream-I1-Dev / Lumina-Image 2.0) baseline vs framework 对比",
+      "priority": "P0",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference",
+      "implementation": [
+        "Phase A 完成后再启动，避免同时占两套资源",
+        "模型权重: HiDream-ai/HiDream-I1-Dev (24GB), Alpha-VLLM/Lumina-Image-2.0 (8GB) - 已下载 metadata",
+        "接入 HiDreamI1Adapter 与 LuminaImage20Adapter 到 Engine.run_round (text conditioning 走 compose_condition)",
+        "写 tools/run_sota_hidream_i1_experiment.py 与 tools/run_sota_lumina_image_2_0_experiment.py 主体",
+        "eval scripts: GenEval + FID + CLIP score（已写 InceptionV3 提取器）",
+        "运行在 GPU1 (RTX 5090, 32GB) - HiDream-I1-Dev 24GB 正好",
+        "Lumina-Image 2.0 可在 CPU/GPU 都跑（轻量）"
+      ],
+      "acceptance": [
+        "两个 image adapter 都能跑 baseline + framework",
+        "GenEval / FID 数字有可比性 (paper-reported 在 ±5% 范围内)",
+        "对比表输出 markdown + csv"
+      ],
+      "completion_evidence": [
+        "tools/run_sota_hidream_i1_experiment.py --mode both 跑通",
+        "tools/run_sota_lumina_image_2_0_experiment.py --mode both 跑通",
+        "docs/r17-survey/img-comparison.md 生成"
+      ],
+      "completed_at": null
+    },
+    {
+      "id": "EXP-PROT",
+      "title": "Phase C — 蛋白质 (ProtBFN / AbBFN) baseline vs framework 对比",
+      "priority": "P1",
+      "status": "pending",
+      "owner": "flowa-multistep-reinference",
+      "implementation": [
+        "Phase A/B 完成后启动",
+        "ProtBFN (650M params) 与 AbBFN 都是 Bayesian Flow Networks = 离散 flow matching",
+        "接入 ProtBFNAbBFNAdapter (adaptive_reflow/adapters/protbfn_abbfn_adapter.py)",
+        "eval: TM-score + perplexity + designability (scTM / pLDDT)",
+        "生物学层 (adaptive_reflow/molecular) 已有 categorical flow 的 mixer 基础设施，可直接复用",
+        "可在 CPU 或 GPU 跑（650M 很小）"
+      ],
+      "acceptance": [
+        "ProtBFN/AbBFNAdapter end-to-end 跑通",
+        "TM-score 报告在 paper 公布的 baseline ±5% 内",
+        "framework 是否提升 designability 的对比表输出"
+      ],
+      "completion_evidence": [
+        "tools/run_sota_protbfn_abbfn_adapter_experiment.py --mode both 跑通",
+        "docs/r17-survey/prot-comparison.md 生成"
+      ],
+      "completed_at": null
+    },
+    {
+      "id": "EXP-DROP-VIDEO",
+      "title": "Phase D — 视频 (Wan2.2) 跳过",
+      "priority": "P3",
+      "status": "completed",
+      "owner": "flowa-multistep-reinference",
+      "implementation": [
+        "Wan2.2 视频评估复杂度高 + 时间成本不划算",
+        "Wan2.2VideoAdapter (adaptive_reflow/adapters/wan2_2_video.py) 与 tools/run_sota_wan2_2_video_experiment.py 保留 stub，但不在 paper 实验范围内",
+        "data/wan2_2/ 保留 paper.pdf + 权重 metadata 作为后续参考"
+      ],
+      "acceptance": [
+        "明确文档记录 Wan2.2 为 deferred scope"
+      ],
+      "completion_evidence": [
+        "docs/r17-survey/scope.md 注明 video out-of-scope"
+      ],
+      "completed_at": "2026-09-01T00:05:00+08:00"
     }
   ],
   "open_decisions_for_review": [
@@ -1135,7 +1233,7 @@
     "target-disjoint paired round-to-round evaluation per admitted model",
     "claim gate promotion or disabled rollback"
   ],
-  "updated_at": "2026-08-27T01:00:00+08:00",
+  "updated_at": "2026-09-01T00:05:00+08:00",
   "implementation_progress": {
     "phase": "phase_1_immediate_previous_only",
     "completed_tasks": [
