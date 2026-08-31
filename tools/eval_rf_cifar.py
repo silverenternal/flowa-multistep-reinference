@@ -185,7 +185,18 @@ def extract_inception_features(
     import torchvision.models as tvm
 
     weights_obj = tvm.Inception_V3_Weights.IMAGENET1K_V1 if hasattr(tvm, "Inception_V3_Weights") else None
-    model = tvm.inception_v3(weights=weights_obj, aux_logits=False, transform_input=False)
+    # pytorch-fid convention: load InceptionV3 with no torchvision pretrained
+    # weights, drop the aux head, replace the final fc with Identity so the
+    # forward returns the 2048-dim pool3 features directly. Loading the
+    # IMAGENET1K_V1 weights requires aux_logits=True (the aux head is part
+    # of the pretrained checkpoint), which then makes the forward return a
+    # 1000-dim classifier-logits tensor — not the 2048-dim pool3 features
+    # FID is defined against. The converted TF-pretrained Inception weights
+    # are loaded separately when needed (see docs/r4-survey/06-mnist-
+    # inceptionv3-fid.md); this function is the canonical feature-extraction
+    # shape, not the canonical weight-loading shape.
+    _ = weights_obj
+    model = tvm.inception_v3(weights=None, aux_logits=False, transform_input=False)
     model.fc = torch.nn.Identity()
     model.eval()
     out_feats: list[np.ndarray] = []
