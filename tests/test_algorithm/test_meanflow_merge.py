@@ -136,23 +136,26 @@ def test_meanflow_merge_honours_envelope() -> None:
 def test_meanflow_emits_degenerate_interval_audit_code() -> None:
     """A degenerate envelope (``cap < floor``) emits the canonical code.
 
-    The :class:`BoundedMergeOperator` now raises
-    :class:`MergeAuthorityError` (F5 fix — fail-closed instead of
-    silently swapping the envelope) on ``cap < floor``. The audit code
-    is appended *before* the raise so a downstream reader can still
-    attribute the rejection to the broken envelope configuration.
+    P0-3 (F-18): the :class:`BoundedMergeOperator` no longer raises on
+    ``cap < floor`` — it returns the ``floor`` value and emits the
+    canonical ``merge_cap_below_floor`` audit code. The earlier
+    F5-fix ``MergeAuthorityError`` raise contradicted the
+    :data:`MergeOperatorProtocol` docstring ("implementations MUST NOT
+    raise on legitimate caller input such as ``cap < floor``") and
+    crashed the runner on legitimate envelopes; the fail-closed
+    path now returns ``floor`` and the audit code captures the
+    degenerate envelope.
     """
-    from adaptive_reflow.algorithm.merge_operator import MergeAuthorityError
-
     op = MeanFlowMergeOperator()
     codes: list[str] = []
-    with pytest.raises(MergeAuthorityError):
-        op.merge(
-            prev=0.5, dynamic=0.5,
-            cap=0.1, floor=0.9,  # cap < floor
-            delta_cap_up=1.0, delta_cap_down=1.0,
-            audit_codes=codes,
-        )
+    result = op.merge(
+        prev=0.5, dynamic=0.5,
+        cap=0.1, floor=0.9,  # cap < floor
+        delta_cap_up=1.0, delta_cap_down=1.0,
+        audit_codes=codes,
+    )
+    # Fail-closed: returns the floor value.
+    assert result == pytest.approx(0.9, abs=1e-12)
     assert any("merge_cap_below_floor" in c for c in codes)
 
 

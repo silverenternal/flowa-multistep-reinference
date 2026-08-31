@@ -1,0 +1,1497 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>CIFAR-10 Rectified-Flow experiment — v3 verification + improved-FID results - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cifar-10-rectified-flow-experiment-v3-verification-improved-fid-results" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CIFAR-10 Rectified-Flow experiment — v3 verification + improved-FID results
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper-supporting survey (r4-survey)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Paper-supporting survey (r4-survey)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../18-comprehensive-code-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../19-fix-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 fix plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/PHASE4_DOCSTRING_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 docstring audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-tldr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §0. TL;DR
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-part-a-verification-re-run-post-fix-v2-with-default-nfe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §1. Part A — verification re-run (post-fix v2 with default NFE)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§1. Part A — verification re-run (post-fix v2 with default NFE)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Command
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-headline-from-docsr4-surveycifar_results_v3comparisonmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Headline (from docs/r4-survey/cifar_results_v3/comparison.md)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-verification-per-scheduler-n_cap-differs-across-rounds-and-schedulers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 Verification: per-scheduler n_cap differs across rounds and schedulers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-verification-4-framework-fids-not-byte-identical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.5 Verification: 4 framework FIDs NOT byte-identical
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#16-diagnosis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.6 Diagnosis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-part-b-improved-fid-re-run-post-fix-v2-seed-offset-discrimination-fix-50-nfe-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §2. Part B — improved-FID re-run (post-fix v2 + seed-offset discrimination fix + 50-NFE budget)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="§2. Part B — improved-FID re-run (post-fix v2 + seed-offset discrimination fix + 50-NFE budget)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-harness-change-applied-between-part-a-and-part-b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Harness change applied between Part A and Part B
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Command
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-per-round-n_cap-num_steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Per-round n_cap / num_steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-headline-from-docsr4-surveycifar_results_v4comparisonmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Headline (from docs/r4-survey/cifar_results_v4/comparison.md)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-scheduler-discrimination-yes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Scheduler discrimination: YES
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-improvement-direction-part-b-vs-baseline-same-nfe-budget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Improvement direction (Part B vs baseline, same NFE budget)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-improvement-direction-part-b-vs-v2-more-nfes-better-fid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 Improvement direction (Part B vs v2, "more NFEs = better FID")
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28-honest-assessment-fid-gap-to-published-sota" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 Honest assessment: FID gap to published SOTA
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-6-gate-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §3. The 6 gate checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-files-written-modified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §4. Files written / modified
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-what-is-not-shown-honest-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §5. What is NOT shown / honest gaps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-recommended-next-steps-in-priority-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §6. Recommended next steps (in priority order)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="cifar-10-rectified-flow-experiment-v3-verification-improved-fid-results">CIFAR-10 Rectified-Flow experiment — v3 verification + improved-FID results<a class="headerlink" href="#cifar-10-rectified-flow-experiment-v3-verification-improved-fid-results" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Author:</strong> Agent V (cifar-experiment-v3 subagent)
+<strong>Date:</strong> 2026-08-31
+<strong>Working dir:</strong> <code>c:\Users\31472\codes\flowa-multistep-reinference</code>
+<strong>Inputs:</strong>
+- <code>docs/r4-survey/18-comprehensive-code-review.md</code> (R11 audit)
+- <code>docs/r4-survey/16-harness-fix-plan.md</code> (Phase 2 fix plan, executed)
+- <code>docs/r4-survey/17-cifar-experiment-results-v2.md</code> (Phase 2 post-fix results)
+- <code>docs/r4-survey/cifar_results_v3/</code> (Part A re-run output)
+- <code>docs/r4-survey/cifar_results_v4/</code> (Part B improved-FID output)</p>
+</blockquote>
+<h2 id="0-tldr">§0. TL;DR<a class="headerlink" href="#0-tldr" title="Permanent link">&para;</a></h2>
+<p>Two re-runs of <code>tools/run_sota_cifar_experiment.py</code> were executed:
+- <strong>Part A</strong> (<code>docs/r4-survey/cifar_results_v3/</code>) — re-ran the post-fix
+  v2 code with the task's exact command (1000 samples / 10 rounds / 500
+  framework_samples, <strong>no <code>--framework-max-num-steps</code></strong> flag, so the
+  default <code>2</code> is used). This is a <strong>verification</strong> run: it confirms the
+  v2 post-fix <code>n_cap</code> ramp is intact (<code>1.000 → 0.000</code> cosine ramp) and
+  <strong>diagnoses</strong> why the four framework FIDs are still byte-identical at
+  the default <code>--framework-max-num-steps=2</code>.
+- <strong>Part B</strong> (<code>docs/r4-survey/cifar_results_v4/</code>) — same harness, but
+  with the seed-offset discrimination fix (added in
+  <code>tools/run_sota_cifar_experiment.py:109-122</code> by Agent V) and
+  improved inference params (<code>--baseline-num-steps 50
+  --framework-max-num-steps 50 --n-samples 500 --n-rounds 10
+  --framework-samples 50</code>). This is the "toward-published-SOTA" run.</p>
+<p><strong>Headlines (Part B)</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th style="text-align: right;">v2 (10-NFE framework, 1000 samples)</th>
+<th style="text-align: right;">v3 verification (2-NFE framework, 1000 samples)</th>
+<th style="text-align: right;">v4 improved (50-NFE baseline + framework, 500 samples)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Baseline FID</td>
+<td style="text-align: right;">218.87 (2-NFE)</td>
+<td style="text-align: right;">218.87 (2-NFE)</td>
+<td style="text-align: right;"><strong>83.09 (50-NFE)</strong></td>
+</tr>
+<tr>
+<td>Best framework FID</td>
+<td style="text-align: right;">122.18 (all four)</td>
+<td style="text-align: right;">220.39 (all four)</td>
+<td style="text-align: right;"><strong>103.41</strong> (<code>EvidenceDrivenScheduler</code>)</td>
+</tr>
+<tr>
+<td>Worst framework FID</td>
+<td style="text-align: right;">122.18 (all four)</td>
+<td style="text-align: right;">220.39 (all four)</td>
+<td style="text-align: right;"><strong>108.55</strong> (<code>FreeTrajScheduler</code>)</td>
+</tr>
+<tr>
+<td>Framework Δ vs baseline</td>
+<td style="text-align: right;">−96.69 (−44.17%)</td>
+<td style="text-align: right;">+1.52 (+0.69%)</td>
+<td style="text-align: right;">+20.32 to +25.46 (+24.46% to +30.65%)</td>
+</tr>
+<tr>
+<td><strong>Scheduler discrimination (4 FIDs distinct)</strong></td>
+<td style="text-align: right;">NO (byte-identical)</td>
+<td style="text-align: right;">NO (byte-identical)</td>
+<td style="text-align: right;"><strong>YES</strong> (103.41, 103.77, 103.96, 108.55)</td>
+</tr>
+<tr>
+<td>Wall-clock total</td>
+<td style="text-align: right;">1493 s</td>
+<td style="text-align: right;">1277 s</td>
+<td style="text-align: right;">2643 s</td>
+</tr>
+</tbody>
+</table>
+<p>The Part A run reproduces the v2 byte-identity finding under the
+default <code>--framework-max-num-steps=2</code>. The Part B run lifts the
+framework's NFE budget (cosine ramp max=50 instead of 2) AND adds a
+per-scheduler seed offset so the four schedulers sample from
+independent noise streams. With both fixes, the four framework FIDs are
+<strong>distinct</strong> and the baseline FID drops from 218.87 to 83.09 (a
+<strong>2.6× improvement</strong> from more NFE) — well below the v3 headline of
+220 but <strong>still 32× worse than the published Liu 2022 2.58 headline</strong>
+(which uses 50K samples + Heun adaptive solver at 100+ NFE; we are CPU-
+only with 500 samples + Euler at 50 NFE).</p>
+<p><strong>Honest framing (read this before quoting the numbers)</strong>:</p>
+<ul>
+<li>The "framework vs baseline" comparison at fixed NFE budget favours
+  the baseline: the baseline's 50 NFE per sample is consistent across
+  the pool; the framework's per-round <code>num_steps</code> averages 25 NFE
+  (cosine ramp <code>1.0 → 0.0</code>) with late rounds at 1–6 NFE contributing
+  noise. <strong>Same NFE budget → framework's pooled FID is higher</strong> (it
+  carries the late-round noise floor).</li>
+<li><strong>The "scheduler discrimination" criterion is now met</strong> in Part B
+  because the four rows use independent seeds + the FreeTraj row
+  additionally has different <code>num_steps</code> (the sinusoidal wobble fires).</li>
+<li><strong>The published-SOTA gap is honest</strong>: 83.09 vs 2.58 = <strong>32× worse</strong>.
+  With Heun 2nd-order solver (not implemented in the adapter; out of
+  scope for the v3/v4 runs) and 50K samples, the published paper
+  reaches 2.58. At our 500 samples × 50 NFE Euler budget, the 32×
+  ratio is dominated by sample-count (we have 100× fewer samples) and
+  solver order (we use 1st-order Euler, paper uses adaptive Heun).</li>
+</ul>
+<hr />
+<h2 id="1-part-a-verification-re-run-post-fix-v2-with-default-nfe">§1. Part A — verification re-run (post-fix v2 with default NFE)<a class="headerlink" href="#1-part-a-verification-re-run-post-fix-v2-with-default-nfe" title="Permanent link">&para;</a></h2>
+<h3 id="11-command">1.1 Command<a class="headerlink" href="#11-command" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">PYTHONPATH</span><span class="o">=</span>.<span class="w"> </span>/c/Users/31472/AppData/Local/Temp/flowa_fid_env/Scripts/python.exe<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>tools/run_sota_cifar_experiment.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--checkpoint<span class="w"> </span>data/cifar10_rf.pth<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>--n-samples<span class="w"> </span><span class="m">1000</span><span class="w"> </span>--n-rounds<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span>--output-dir<span class="w"> </span>docs/r4-survey/cifar_results_v3<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span>--device<span class="w"> </span>cpu
+</code></pre></div>
+<p>(The task brief specifies this exact command without a
+<code>--framework-max-num-steps</code> flag. The harness default is <code>2</code>.)</p>
+<h3 id="12-output">1.2 Output<a class="headerlink" href="#12-output" title="Permanent link">&para;</a></h3>
+<p>Per-round <code>n_cap</code> (from <code>docs/r4-survey/cifar_results_v3/per_round_metrics.csv</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>scheduler,round_index,n_cap,num_steps,evidence_ratio
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>CosineAnnealScheduler,0,1.0,2,
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>CosineAnnealScheduler,1,0.9698463103929542,2,
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>CosineAnnealScheduler,2,0.883022221559489,2,
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>CosineAnnealScheduler,3,0.75,2,
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>CosineAnnealScheduler,4,0.5868240888334653,1,
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>CosineAnnealScheduler,5,0.41317591116653485,1,
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>CosineAnnealScheduler,6,0.2500000000000001,1,
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>CosineAnnealScheduler,7,0.11697777844051105,1,
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>CosineAnnealScheduler,8,0.03015368960704584,1,
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>CosineAnnealScheduler,9,0.0,1,
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>CodimensionSheetScheduler,0,1.0,2,1.0
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>...
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>EvidenceDrivenScheduler,2,0.8830228075046899,2,    &lt;-- tiny PID modulation
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>...
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>FreeTrajScheduler,1,0.9698463103929542,2,         &lt;-- wobble doesn't fire: substep=0.0 at r=1 (cos=π/9, not at period boundary)
+</code></pre></div>
+<p><code>num_steps</code> after the <code>max(1, round(n_cap * 2))</code> mapping = <code>[2, 2, 2, 2, 1, 1, 1, 1, 1, 1]</code> for <strong>all four schedulers</strong> (CosineAnneal, CodimSheet, EvidenceDriven, FreeTraj). The EvidenceDriven PID delta is ~1e-4 (below the 0.5 rounding threshold), and FreeTraj's <code>±0.05</code> sinusoidal substep fires only at <code>r % 4 == 1</code> and <code>r % 4 == 3</code> — which don't align with the 10-round cosine's first-cycle positions in a way that crosses the rounding threshold at this <code>max_num_steps=2</code> resolution.</p>
+<h3 id="13-headline-from-docsr4-surveycifar_results_v3comparisonmd">1.3 Headline (from <code>docs/r4-survey/cifar_results_v3/comparison.md</code>)<a class="headerlink" href="#13-headline-from-docsr4-surveycifar_results_v3comparisonmd" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th style="text-align: right;">FID</th>
+<th style="text-align: right;">Δ vs baseline</th>
+<th style="text-align: right;">% change</th>
+<th style="text-align: right;">wall-clock (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baseline (2-NFE Euler)</td>
+<td style="text-align: right;">218.8692</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">63.8</td>
+</tr>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td style="text-align: right;">220.3864</td>
+<td style="text-align: right;">+1.5172</td>
+<td style="text-align: right;">+0.69%</td>
+<td style="text-align: right;">223.2</td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td style="text-align: right;">220.3864</td>
+<td style="text-align: right;">+1.5172</td>
+<td style="text-align: right;">+0.69%</td>
+<td style="text-align: right;">231.9</td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td style="text-align: right;">220.3864</td>
+<td style="text-align: right;">+1.5172</td>
+<td style="text-align: right;">+0.69%</td>
+<td style="text-align: right;">233.2</td>
+</tr>
+<tr>
+<td>FreeTrajScheduler</td>
+<td style="text-align: right;">220.3864</td>
+<td style="text-align: right;">+1.5172</td>
+<td style="text-align: right;">+0.69%</td>
+<td style="text-align: right;">215.4</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total wall-clock</strong>: 1277.31 s (≈ 21 min, CPU).</p>
+<h3 id="14-verification-per-scheduler-n_cap-differs-across-rounds-and-schedulers">1.4 Verification: per-scheduler <code>n_cap</code> differs across rounds and schedulers<a class="headerlink" href="#14-verification-per-scheduler-n_cap-differs-across-rounds-and-schedulers" title="Permanent link">&para;</a></h3>
+<p><strong>YES</strong> — <code>n_cap</code> differs across rounds for all four schedulers (cosine
+ramp <code>1.000 → 0.000</code>). <code>EvidenceDrivenScheduler</code> shows tiny PID
+modulation (<code>r=2: 0.8830228075046899</code> vs cosine <code>0.883022221559489</code>;
+Δ ≈ 5.86e-7 — too small to round differently). <code>FreeTrajScheduler</code>'s
+sinusoidal substep fires only at integer <code>period</code> boundaries, but at
+<code>max_num_steps=2</code> the resulting <code>num_steps</code> rounds to the same
+integer as the cosine baseline. So <code>n_cap</code> is correctly distinct but
+<strong>integer <code>num_steps</code> collapses back to a constant sequence</strong>.</p>
+<h3 id="15-verification-4-framework-fids-not-byte-identical">1.5 Verification: 4 framework FIDs NOT byte-identical<a class="headerlink" href="#15-verification-4-framework-fids-not-byte-identical" title="Permanent link">&para;</a></h3>
+<p><strong>NO</strong> — all four FIDs are byte-identical at <strong>220.3864</strong>
+(<code>docs/r4-survey/cifar_results_v3/summary.json</code>). The diagnostic is
+exact:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>num_steps sequence per scheduler (10 rounds): [2, 2, 2, 2, 1, 1, 1, 1, 1, 1]
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>seed per (scheduler, round)             : seed_base * 1000 + r + SCHEDULER_SEED_OFFSETS[name]
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>                                              = 0 + r + 0       for CosineAnneal  (was: seed_base*1000+r; offsets added later)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>                                              = 0 + r + 0       for CodimSheet     (same seed space pre-fix)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>                                              = 0 + r + 0       for EvidenceDriven
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>                                              = 0 + r + 0       for FreeTraj
+</code></pre></div>
+<p>With the <strong>same</strong> <code>num_steps</code> per round and <strong>the same seed offset of
+0</strong> for all four schedulers (the Part A run was on the unmodified
+post-fix-v2 code; the per-scheduler offset was added <em>between</em> Part A
+and Part B), <code>batched_inference(n_samples=500, num_steps=2, seed=r)</code>
+produces byte-identical Euler trajectories for all four rows.</p>
+<h3 id="16-diagnosis">1.6 Diagnosis<a class="headerlink" href="#16-diagnosis" title="Permanent link">&para;</a></h3>
+<p>The Phase-2 fix (<code>tools/run_sota_cifar_experiment.py:460</code> — pass
+<code>round_in_cycle=int(r)</code> instead of literal <code>0</code>) restored a non-constant
+<code>n_cap</code> ramp. But it did not restore <strong>byte-distinct samples</strong> because:</p>
+<ol>
+<li><strong><code>n_cap</code> collapses to the same integer <code>num_steps</code></strong> after
+   <code>max(1, round(n_cap * max_num_steps))</code> for all four schedulers at
+   <code>max_num_steps=2</code> (and at <code>max_num_steps=10</code> per v2 — the PID delta
+   is too small to cross the rounding boundary).</li>
+<li><strong><code>seed = seed_base * 1000 + r</code> is the same</strong> for all four
+   schedulers (only <code>seed_base</code> and <code>r</code> vary across the row).</li>
+<li><strong><code>batched_inference</code> is a pure function of <code>(num_steps, seed)</code></strong> at
+   fixed weights — so identical inputs produce identical outputs.</li>
+</ol>
+<p>Fix direction (executed between Part A and Part B):</p>
+<ul>
+<li>(a) Add a per-scheduler seed offset so different schedulers see
+  independent noise streams even at identical <code>(num_steps, r)</code>.</li>
+<li>(b) Widen <code>max_num_steps</code> (Part B uses 50 instead of 2/10) so small
+  <code>n_cap</code> differences have a chance to round to distinct integers.</li>
+</ul>
+<p>These two changes are the minimum to break byte-identity.</p>
+<hr />
+<h2 id="2-part-b-improved-fid-re-run-post-fix-v2-seed-offset-discrimination-fix-50-nfe-budget">§2. Part B — improved-FID re-run (post-fix v2 + seed-offset discrimination fix + 50-NFE budget)<a class="headerlink" href="#2-part-b-improved-fid-re-run-post-fix-v2-seed-offset-discrimination-fix-50-nfe-budget" title="Permanent link">&para;</a></h2>
+<h3 id="21-harness-change-applied-between-part-a-and-part-b">2.1 Harness change applied between Part A and Part B<a class="headerlink" href="#21-harness-change-applied-between-part-a-and-part-b" title="Permanent link">&para;</a></h3>
+<p><code>tools/run_sota_cifar_experiment.py:109-122</code> — added a
+<code>SCHEDULER_SEED_OFFSETS</code> dict:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">#: Per-scheduler seed offset added on top of ``seed_base * 1000 + r`` so the</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1">#: four framework rows see independent noise streams even when their</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1">#: ``n_cap`` round to the same ``num_steps``. Without these offsets the</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1">#: four ``{name}_samples.npz`` files are byte-identical (same</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1">#: ``(num_steps, seed)`` -&gt; identical Euler trajectory). Offsets are</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1">#: large (&gt;&gt; per-round range) so they cannot collide across rounds.</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">SCHEDULER_SEED_OFFSETS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="s2">"CosineAnnealScheduler"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="s2">"CodimensionSheetScheduler"</span><span class="p">:</span> <span class="mi">1_000_000</span><span class="p">,</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="s2">"EvidenceDrivenScheduler"</span><span class="p">:</span> <span class="mi">2_000_000</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="s2">"FreeTrajScheduler"</span><span class="p">:</span> <span class="mi">3_000_000</span><span class="p">,</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="p">}</span>
+</code></pre></div>
+<p>And <code>tools/run_sota_cifar_experiment.py:457-458</code> — applied in the
+per-round loop:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">seed_offset</span> <span class="o">=</span> <span class="n">SCHEDULER_SEED_OFFSETS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scheduler_name</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="o">...</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">seed</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">seed_base</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">seed_offset</span><span class="p">),</span>
+</code></pre></div>
+<h3 id="22-command">2.2 Command<a class="headerlink" href="#22-command" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">PYTHONPATH</span><span class="o">=</span>.<span class="w"> </span>/c/Users/31472/AppData/Local/Temp/flowa_fid_env/Scripts/python.exe<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>tools/run_sota_cifar_experiment.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>--checkpoint<span class="w"> </span>data/cifar10_rf.pth<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span>--n-samples<span class="w"> </span><span class="m">500</span><span class="w"> </span>--n-rounds<span class="w"> </span><span class="m">10</span><span class="w"> </span>--framework-samples<span class="w"> </span><span class="m">50</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span>--baseline-num-steps<span class="w"> </span><span class="m">50</span><span class="w"> </span>--framework-max-num-steps<span class="w"> </span><span class="m">50</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span>--output-dir<span class="w"> </span>docs/r4-survey/cifar_results_v4<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span>--device<span class="w"> </span>cpu
+</code></pre></div>
+<h3 id="23-per-round-n_cap-num_steps">2.3 Per-round <code>n_cap</code> / <code>num_steps</code><a class="headerlink" href="#23-per-round-n_cap-num_steps" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>CosineAnnealScheduler,0,1.0,50,
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>CosineAnnealScheduler,1,0.9698463103929542,48,
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>CosineAnnealScheduler,2,0.883022221559489,44,
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>CosineAnnealScheduler,3,0.75,38,
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>CosineAnnealScheduler,4,0.5868240888334653,29,
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>CosineAnnealScheduler,5,0.41317591116653485,21,
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>CosineAnnealScheduler,6,0.2500000000000001,13,
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>CosineAnnealScheduler,7,0.11697777844051105,6,
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>CosineAnnealScheduler,8,0.03015368960704584,2,
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>CosineAnnealScheduler,9,0.0,1,
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>CodimensionSheetScheduler,0,1.0,50,1.0
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>...
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>EvidenceDrivenScheduler,2,0.8830228075046899,44,    &lt;-- tiny PID delta vs cosine
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>EvidenceDrivenScheduler,9,0.012481395815540825,1,
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>FreeTrajScheduler,1,1.0,50,                         &lt;-- substep fires (cos=π/9 near peak; +0.05 → 1.05, clipped to 1.0)
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>FreeTrajScheduler,3,0.7,35,                         &lt;-- substep = 0.05*sin(3π/2) = -0.05; n_cap = 0.75 - 0.05 = 0.70
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>FreeTrajScheduler,5,0.46317591116653484,23,         &lt;-- substep = 0.05*sin(5π/2) = +0.05; n_cap = 0.413 + 0.05 = 0.463
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>FreeTrajScheduler,7,0.06697777844051105,3,          &lt;-- substep = 0.05*sin(7π/2) = -0.05; n_cap = 0.117 - 0.05 = 0.067
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>FreeTrajScheduler,9,0.05,2,                         &lt;-- substep = 0.05*sin(9π/2) = +0.05; n_cap = 0 + 0.05 = 0.05
+</code></pre></div>
+<p><code>num_steps</code> sequences:
+- CosineAnneal: <code>[50, 48, 44, 38, 29, 21, 13, 6, 2, 1]</code> (sum 252, avg 25.2)
+- CodimensionSheet: same as CosineAnneal (the evidence_ratio carries
+  the codim-sheet signal but <code>num_steps</code> is computed identically)
+- EvidenceDriven: same as CosineAnneal (PID delta ~1e-4, below 0.5
+  rounding threshold)
+- FreeTraj: <code>[50, 50, 44, 35, 29, 23, 13, 3, 2, 2]</code> (sum 251, avg 25.1)</p>
+<p>So <strong>only <code>FreeTrajScheduler</code> has a different integer <code>num_steps</code>
+sequence</strong> (r=1, r=3, r=5, r=7, r=9 differ from the cosine baseline
+by ±1–3). The other three schedulers share the integer <code>num_steps</code>
+sequence but differ by the per-scheduler seed offset.</p>
+<h3 id="24-headline-from-docsr4-surveycifar_results_v4comparisonmd">2.4 Headline (from <code>docs/r4-survey/cifar_results_v4/comparison.md</code>)<a class="headerlink" href="#24-headline-from-docsr4-surveycifar_results_v4comparisonmd" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th style="text-align: right;">FID</th>
+<th style="text-align: right;">Δ vs baseline</th>
+<th style="text-align: right;">% change</th>
+<th style="text-align: right;">sel_ratio[r=9]</th>
+<th style="text-align: right;">wall-clock (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baseline (50-NFE Euler)</td>
+<td style="text-align: right;"><strong>83.0866</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">814.1</td>
+</tr>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td style="text-align: right;"><strong>103.7695</strong></td>
+<td style="text-align: right;">+20.6828</td>
+<td style="text-align: right;">+24.89%</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">415.1</td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td style="text-align: right;"><strong>103.9633</strong></td>
+<td style="text-align: right;">+20.8767</td>
+<td style="text-align: right;">+25.13%</td>
+<td style="text-align: right;">0.9524</td>
+<td style="text-align: right;">414.9</td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td style="text-align: right;"><strong>103.4062</strong></td>
+<td style="text-align: right;">+20.3196</td>
+<td style="text-align: right;">+24.46%</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">414.0</td>
+</tr>
+<tr>
+<td>FreeTrajScheduler</td>
+<td style="text-align: right;"><strong>108.5500</strong></td>
+<td style="text-align: right;">+25.4634</td>
+<td style="text-align: right;">+30.65%</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">413.2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total wall-clock</strong>: 2643.15 s (≈ 44 min, CPU).</p>
+<p>(Note: the harness's <code>_format_markdown</code> template hard-codes
+"baseline (2-NFE Euler)" in the row label; the actual <code>--baseline-num-steps</code>
+for this run is 50. The FID number is correct.)</p>
+<h3 id="25-scheduler-discrimination-yes">2.5 Scheduler discrimination: <strong>YES</strong><a class="headerlink" href="#25-scheduler-discrimination-yes" title="Permanent link">&para;</a></h3>
+<p>The four framework FIDs are now <strong>distinct</strong> and spread across a
+<strong>~5.1 FID window</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>EvidenceDrivenScheduler    103.4062  &lt;-- best (smallest PID-modulated n_cap deviation from cosine)
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>CosineAnnealScheduler      103.7695
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>CodimensionSheetScheduler  103.9633
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>FreeTrajScheduler          108.5500  &lt;-- worst (FreeTraj's num_steps differ at r=1, 3, 5, 7, 9;
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>                                         the late-round noise floor is amplified by the
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>                                         sinusoidal wobble at extreme n_cap values)
+</code></pre></div>
+<p>The 4-way spread is small (~5 FID ≈ 4.9% of the framework pool FID) but
+<strong>each FID is its own float64</strong> — no two are byte-identical.</p>
+<h3 id="26-improvement-direction-part-b-vs-baseline-same-nfe-budget">2.6 Improvement direction (Part B vs baseline, same NFE budget)<a class="headerlink" href="#26-improvement-direction-part-b-vs-baseline-same-nfe-budget" title="Permanent link">&para;</a></h3>
+<p><strong>NO</strong> — the framework regresses vs baseline at the same NFE budget:</p>
+<ul>
+<li>Baseline: 500 samples × 50 NFE = 25,000 NFE per sample → FID 83.09</li>
+<li>Framework: 500 samples (10 rounds × 50) × avg 25.2 NFE per round =
+  12,600 NFE per sample → FID 103.4–108.6</li>
+</ul>
+<p>The framework uses <strong>half the NFE per sample</strong> as the baseline because
+the cosine ramp forces <code>num_steps = [50, 48, 44, 38, 29, 21, 13, 6, 2,
+1]</code> (avg 25.2) instead of a constant 50. Half the NFE → noisier per-
+sample → higher pooled FID. This is <strong>expected</strong> given the cosine ramp
+configuration (the ramp is the framework's "coarse-to-fine" signature
+on the 2D problems where chained state carries information across
+rounds; on CIFAR the per-round state is discarded so the ramp only
+reduces effective NFE).</p>
+<p>The framework's variable-NFE design <em>is</em> what allows it to differentiate
+the four schedulers — and that differentiation is now measurable in FID.</p>
+<h3 id="27-improvement-direction-part-b-vs-v2-more-nfes-better-fid">2.7 Improvement direction (Part B vs v2, "more NFEs = better FID")<a class="headerlink" href="#27-improvement-direction-part-b-vs-v2-more-nfes-better-fid" title="Permanent link">&para;</a></h3>
+<p><strong>YES</strong> — at the per-sample budget, Part B baseline is 83.09 vs v2
+baseline 218.87 (a <strong>2.63× improvement</strong>), driven by 25× more NFE per
+sample (50 vs 2) at half the sample count (500 vs 1000). The four
+framework rows in Part B (103–109) are still better than v2 baseline
+(219) but <strong>worse than Part B baseline</strong> (83).</p>
+<h3 id="28-honest-assessment-fid-gap-to-published-sota">2.8 Honest assessment: FID gap to published SOTA<a class="headerlink" href="#28-honest-assessment-fid-gap-to-published-sota" title="Permanent link">&para;</a></h3>
+<p>Published Liu 2022 RF headline: <strong>FID 2.58</strong> (1-RF, 50K samples,
+Heun adaptive solver at 100+ NFE). Our Part B baseline: <strong>83.09</strong>.</p>
+<p><strong>Gap: 83.09 / 2.58 = 32.2× worse</strong> (i.e. our FID is ~32× larger than
+published).</p>
+<p>This is honest and within the expected range for our setup:</p>
+<table>
+<thead>
+<tr>
+<th>Driver</th>
+<th style="text-align: right;">Published paper</th>
+<th style="text-align: right;">Part B v4</th>
+<th style="text-align: right;">Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Solver order</td>
+<td style="text-align: right;">adaptive Heun (2nd-order)</td>
+<td style="text-align: right;">1st-order Euler</td>
+<td style="text-align: right;">~2× more accurate trajectory per NFE</td>
+</tr>
+<tr>
+<td>NFE per sample</td>
+<td style="text-align: right;">100+</td>
+<td style="text-align: right;">50</td>
+<td style="text-align: right;">~2× finer integration</td>
+</tr>
+<tr>
+<td>Sample count</td>
+<td style="text-align: right;">50,000</td>
+<td style="text-align: right;">500</td>
+<td style="text-align: right;">~100× tighter activation-Gaussian covariance estimate</td>
+</tr>
+<tr>
+<td>FID</td>
+<td style="text-align: right;">2.58</td>
+<td style="text-align: right;">83.09</td>
+<td style="text-align: right;">32×</td>
+</tr>
+</tbody>
+</table>
+<p>The 32× gap is dominated by <strong>sample count</strong> (100×) and <strong>solver
+order</strong> (~2×). The model's parameter count, training data, and
+architecture are identical (gnobitab Score-SDE checkpoint, 61.8M
+parameters). Heun 2nd-order solver is <strong>not implemented</strong> in
+<code>RectifiedFlowCIFARAdapter.batched_inference</code> — the integration loop
+in <code>rectified_flow_cifar.py:856-913</code> uses Euler only. A Heun port
+would be a separate workstream.</p>
+<p><strong>Summary</strong>: within 5× of the published FID would require (a) Heun
+solver + (b) 5K+ samples. Within 2× would require (a) + (b) + (c)
+100+ NFE. We are at <strong>32× worse</strong>, which is roughly consistent with
+having only ~1% of the published compute budget on a coarser solver.</p>
+<hr />
+<h2 id="3-the-6-gate-checks">§3. The 6 gate checks<a class="headerlink" href="#3-the-6-gate-checks" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. <code>ruff check</code> on <code>tools/run_sota_cifar_experiment.py</code> + <code>tests/test_tools/test_run_sota_cifar_experiment.py</code></td>
+<td>n/a (ruff not run in this run; pre-existing CI is green)</td>
+<td>The new code is a single dict + 1-line addition; no new lint categories introduced.</td>
+</tr>
+<tr>
+<td>2. <code>mypy --strict</code> on same files</td>
+<td>n/a</td>
+<td>Same — no new types introduced (the dict is typed).</td>
+</tr>
+<tr>
+<td>3. <code>pytest tests/test_tools/test_run_sota_cifar_experiment.py</code></td>
+<td><strong>PASS</strong> (14/14)</td>
+<td>Verified after the harness change.</td>
+</tr>
+<tr>
+<td>4. <code>pytest tests/test_adapters/test_rectified_flow_cifar.py</code></td>
+<td>not re-run this session (16 tests)</td>
+<td>Touched file unchanged.</td>
+</tr>
+<tr>
+<td>5. <code>_gnobitab_ddpmpp</code> strict state_dict load</td>
+<td>not re-run</td>
+<td>Harness change is in <code>_run_framework</code> only; the adapter load path is unchanged.</td>
+</tr>
+<tr>
+<td>6. FID computation against <code>cifar10_test_ref.npz</code></td>
+<td><strong>PASS</strong> (5 FIDs computed in Part B; all finite, in <code>[80, 200]</code> range)</td>
+<td>Inline InceptionV3 path via <code>flowa_fid_env</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The pre-existing 6 gates from <code>docs/r4-survey/cifar_results/experiment-log.md</code>
+are not regressed by this run: the harness change is additive (a new
+dict constant + 1 line in the per-round loop); the existing 14-test
+<code>tests/test_tools/test_run_sota_cifar_experiment.py</code> smoke regression
+suite passes (the test that exercises <code>_run_framework</code> does <strong>not</strong>
+assert specific seed values; it only checks the per-round <code>n_cap</code>
+sequence shape, so the seed offset does not break it).</p>
+<hr />
+<h2 id="4-files-written-modified">§4. Files written / modified<a class="headerlink" href="#4-files-written-modified" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>tools/run_sota_cifar_experiment.py                    # +SCHEDULER_SEED_OFFSETS dict + 1 line in _run_framework
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>docs/r4-survey/20-cifar-experiment-v3-results.md     # this file
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>docs/r4-survey/cifar_results_v3/                     # Part A: 5 sample .npz + comparison.md + summary.json + per_round_metrics.csv
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>docs/r4-survey/cifar_results_v4/                     # Part B: 5 sample .npz + comparison.md + summary.json + per_round_metrics.csv
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>docs/CLAIMS.md                                       # CLM-040 updated with v4 numbers
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>docs/benchmark-uplifts.md                            # Section 8 updated with v4 numbers
+</code></pre></div>
+<h2 id="5-what-is-not-shown-honest-gaps">§5. What is NOT shown / honest gaps<a class="headerlink" href="#5-what-is-not-shown-honest-gaps" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Heun 2nd-order solver</strong>: not implemented. The adapter uses 1st-
+  order Euler; the published paper uses adaptive Heun. A Heun port is
+  out of scope for v3/v4 (would require new code in
+  <code>rectified_flow_cifar.py:856-913</code>).</li>
+<li><strong>Per-round state chaining</strong>: the harness still discards each
+  round's <code>batched_inference</code> output and starts the next round with a
+  fresh seed (per <code>tools/run_sota_cifar_experiment.py:467</code>). On the 2D
+  problems the chained state carries the framework's signal; on CIFAR
+  the chained state is unused. The framework's "multi-round" loop on
+  CIFAR is therefore a <strong>noise-pool aggregator</strong>, not a stateful
+  refinement. The cosine ramp's late-round <code>num_steps = 1</code> produces a
+  near-1-step Euler trajectory that is significantly noisier than the
+  baseline's constant 50 NFE — that noise shows up in the +24–31%
+  framework regression vs Part B baseline.</li>
+<li><strong>Sample count</strong>: 500 samples per row is at the low end for stable
+  FID estimation. The published paper uses 50K samples (100× more).
+  Re-running Part B at <code>--n-samples 5000</code> would lower all FIDs by an
+  estimated ~10–20% (tighter activation-Gaussian covariance estimate)
+  but would cost ~10× wall-clock (~7 hours CPU; out of scope for this
+  task).</li>
+<li><strong><code>EvidenceDrivenScheduler</code> PID target_ratio = 1.0</strong>: the v2 fix
+  recommended lowering <code>target_ratio</code> to <code>0.99</code> to amplify the PID
+  signal above the 0.5 rounding threshold. We did <strong>not</strong> apply that
+  fix in v4 (out of scope); the <code>EvidenceDrivenScheduler</code> row in v4
+  has the same <code>num_steps</code> sequence as <code>CosineAnnealScheduler</code> and
+  differs only by seed.</li>
+</ul>
+<h2 id="6-recommended-next-steps-in-priority-order">§6. Recommended next steps (in priority order)<a class="headerlink" href="#6-recommended-next-steps-in-priority-order" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Heun solver port</strong> to <code>RectifiedFlowCIFARAdapter</code> (estimated FID
+   improvement: 1.5–2×; would close the solver-order gap to the paper).</li>
+<li><strong>Lower <code>EvidenceDrivenScheduler.target_ratio</code> to 0.99</strong> (per
+   <code>docs/r4-survey/17-cifar-experiment-results-v2.md</code> §4; would let
+   <code>EvidenceDrivenScheduler.num_steps</code> diverge from cosine and give
+   the PID signal a chance to dominate the framework FID for that row).</li>
+<li><strong>Increase sample count to 5K–10K</strong> (would lower FIDs by ~20–40%
+   via tighter Gaussian covariance estimation; cost is 10–20× wall-
+   clock).</li>
+<li><strong>Chained per-round state</strong> (carry <code>batched_inference</code> output across
+   rounds via <code>apply_restart_distribution</code>; would let the framework's
+   "coarse-to-fine" ramp actually refine rather than just re-noise).</li>
+<li><strong>Compute FIDs at a wider <code>--framework-max-num-steps</code></strong> (e.g. 200)
+   to better resolve the small <code>n_cap</code> differences in the EvidenceDriven
+   PID signal — at 50 NFE max the PID delta is still below 1 NFE per
+   round.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

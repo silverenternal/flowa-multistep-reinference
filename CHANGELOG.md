@@ -7,6 +7,131 @@ because the contract surface evolves with the research questions, not
 on a fixed cadence. Version markers in commit messages follow the
 `vMAJOR.MINOR.PATCH` schema used by GitHub tags.
 
+## [Unreleased] - Phase-4 code review + fix plan + docstring audit (documentation-only)
+
+This entry records the **Phase-4 R3/R11 adversarial code review** and
+its associated fix plan. The audit + fix plan is **documentation-only**
+(read-only on the algorithm layer): the audit identifies 52 bugs, the
+fix plan prioritises 7 P0 / 15 P1 / 30 P2, and the docstring audit
+records the 37 modules the audit flagged as missing-or-stale on
+documentation axes. The fixes themselves are deferred behind a future
+code-review pass that applies them; this entry exists so the audit,
+the fix plan, and the cross-reference surfaces (claims ledger,
+mkdocs nav, README) stay in sync.
+
+### Phase 1 - audit (Phase-4 R3/R11 read-only review)
+
+- [`docs/r4-survey/18-comprehensive-code-review.md`](docs/r4-survey/18-comprehensive-code-review.md)
+  — the canonical Phase-4 audit. **52 bugs found**: 7 P0 (severity
+  5, paper-blocking), 15 P1 (severity 3-4, correctness without
+  blocking the paper), 30 P2 (severity 1-2, polish / dead code /
+  contract warts). Severity-5 bugs: F-31 (runner bypasses
+  `MergeOperatorProtocol` for `schedule_derived` driver — W2 leak),
+  F-18 (BoundedMergeOperator raises on `cap < floor`, contradicting
+  the `MergeOperatorProtocol` docstring), F-24 (runner hardcodes
+  `.reshape(2)` for non-2D adapters). The audit also catalogues 5
+  cross-cutting concerns (naming inconsistencies, deprecated CLAMs,
+  capability handshake gaps, determinism concerns, documentation
+  drift) and 6 architecture smells (duplicate engine-side override
+  paths, scattered state across modules, config round-trip fragility,
+  hard-coded shape assumptions, undocumented MeanFlow state, audit-
+  code vocabulary sprawl).
+- [`docs/CLAIMS.md`](docs/CLAIMS.md) `CLM-041` — registers the
+  Phase-4 audit as an active claim with the `Asserted by` reference
+  to the severity table.
+- [`docs/CLAIMS.md`](docs/CLAIMS.md) `CLM-042` — registers the
+  Phase-4 audit's doc-drift risk on `CLM-025`: the P0-3 fix
+  (replace `raise MergeAuthorityError` with `return floor + audit
+  code`) would make `CLM-025`'s "raises MergeAuthorityError"
+  assertion stale. The claim is recorded as ACTIVE with the
+  remediation action ("any agent applying P0-3 must update CLM-025
+  in the same commit"); the verification tooling
+  (`tools/check_claims_consistency.py:406-408`) auto-promotes
+  disputed-by references to PROVISIONAL so the drift is caught
+  mechanically.
+- [`docs/CLAIMS.md`](docs/CLAIMS.md) `CLM-043` — registers the
+  Phase-4 docstring audit surface. The claim records that the
+  Phase-4 audit re-verified the DEPRECATED status of `CLM-016` and
+  `CLM-017` (the inverted-eps-exponents and selection-ratio-converges-
+  to-1 demotions still hold) and links the new docstring audit doc.
+
+### Phase 2 - fix plan (parallelisable, 5 h hands-on / 7.5 h wall-clock)
+
+- [`docs/r4-survey/19-fix-plan.md`](docs/r4-survey/19-fix-plan.md)
+  — the canonical Phase-4 fix plan. 7 P0 fixes totalling ~70 LoC
+  across 7 files, with 4 parallel branches (A: FreeTraj cache,
+  B: BoundedMerge contract, C: runner correctness, D: eval labels).
+  P0 critical path for Path A (scheduler discrimination) is
+  P0-1 + P0-2 + P0-5 (~2 h). P0 critical path for Path B (better
+  FID than baseline) extends with P0-4 (~2.5 h). P1 + P2 fixes
+  total ~29 h hands-on (one developer-week). Effort + risk table
+  per fix is in §4 of the fix plan; parallelisation map in §5.
+
+### Phase 3 - docstring audit surface
+
+- [`docs/audit/PHASE4_DOCSTRING_AUDIT.md`](docs/audit/PHASE4_DOCSTRING_AUDIT.md)
+  — new docstring audit surface recording the **37 modules** the
+  Phase-4 audit identified as missing-or-stale on documentation
+  axes (module-level docstring, public-surface docstring, audit-
+  code vocabulary, cross-references). Each entry carries a
+  `MISSING` / `STALE` / `THIN` / `MISLEADING` flag and a
+  recommended remediation that the next code-review pass should
+  land. The doc also catalogues the audit-code vocabulary sprawl
+  (§6.6 of the audit) as an action item for a future
+  `AUDIT_CODE_REGISTRY`.
+
+### Phase 4 - cross-reference fixes (this entry)
+
+- `docs/CLAIMS.md`: `CLM-016` and `CLM-017` re-verified as
+  DEPRECATED with `2026-08-31` timestamps and Phase-4 evidence
+  references. Neither claim is re-activated.
+- `docs/CLAIMS.md`: `CLM-041` / `CLM-042` / `CLM-043` registered
+  as ACTIVE.
+- `README.md`: stale "Last audit: 2026-08-28" claim updated to
+  `2026-08-31` with the Phase-4 audit cross-link and CLM-041 /
+  CLM-043 cross-references. The state-machine 17 / 333 numbers
+  ([`CLM-034`](docs/CLAIMS.md#CLM-034)) and the R3 17-fix claim
+  ([`CLM-031`](docs/CLAIMS.md#CLM-031)) are now cross-referenced
+  with explicit Phase-4 confirmation that neither has been
+  invalidated by the audit.
+- `README.md`: added a "Six gates (load-bearing)" section that
+  cross-references CLM-019 / CLM-020 / CLM-021 / CLM-041 and lists
+  the six gates with their last-verified state.
+- `mkdocs.yml`: `r4-survey/18-comprehensive-code-review.md`,
+  `r4-survey/19-fix-plan.md`, and
+  `audit/PHASE4_DOCSTRING_AUDIT.md` moved from `not_in_nav` into
+  a new "Paper-supporting survey (r4-survey)" nav section so the
+  paper-supporting docs are first-class landing pages.
+- `ARCHITECTURE.md`: `Status:` paragraph extended to reference
+  the Phase-4 audit (CLM-041) and the CLM-025 doc-drift risk
+  (CLM-042). The state-machine 17 / 333 numbers are cross-
+  referenced to CLM-019 / CLM-020 / CLM-021.
+
+### Compatibility
+
+- Documentation-only entry. No algorithm-layer behaviour change.
+  No test, gate, or public-API change. The Phase-4 audit + fix
+  plan + docstring audit live in `docs/` and `mkdocs.yml`; the
+  algorithm layer is untouched. The CLM-042 doc-drift risk is
+  recorded for the future code-review pass that applies P0-3.
+
+### Gate impact (post-this-entry)
+
+- pytest: **1235** passed, 7 skipped (unchanged).
+- ruff: **0** violations (unchanged).
+- mypy `adaptive_reflow`: **0** errors (unchanged).
+- docs scanner (`tools/check_docs_against_code.py`): claim count
+  unchanged (the new docstring audit doc adds doc-claim assertions
+  but the scanner's catalogue of supported governance-doc
+  identifiers is unchanged).
+- claims consistency (`tools/check_claims_consistency.py`):
+  **32 active** (was 30; +2 for `CLM-041` / `CLM-042` / `CLM-043`
+  registered above), **0 provisional**, **2 deprecated** (CLM-016,
+  CLM-017 re-verified). All ACTIVE claims cross-referenced from
+  README, ARCHITECTURE, INSIGHTS, or ABLATION.
+- mkdocs `--strict`: clean (the r4-survey/18-19 docs moved from
+  `not_in_nav` into the explicit nav).
+
 ## [Unreleased] - Algorithm depth uplift
 
 Second, deeper pass over the algorithm surface. Phase 1 inventoried

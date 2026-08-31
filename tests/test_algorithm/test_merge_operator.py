@@ -286,34 +286,43 @@ def test_p0_3_bounded_merge_operator_clips_cap_above_one() -> None:
 
 
 def test_p0_3_bounded_merge_operator_clips_cap_below_floor() -> None:
-    """P0-3 + F5: ``cap < floor`` post-clip fails closed
-    (:exc:`MergeAuthorityError`) and emits the canonical
-    ``merge_cap_below_floor`` audit code BEFORE the raise so a
-    downstream audit reader still observes the broken configuration.
+    """P0-3 (F-18) + F5: ``cap < floor`` post-clip returns the
+    ``floor`` value and emits the canonical ``merge_cap_below_floor``
+    audit code so the runner's loop survives a degenerate envelope.
+
+    Earlier (post-F5) the operator raised
+    :exc:`MergeAuthorityError` on ``cap < floor``, which contradicted
+    the :data:`MergeOperatorProtocol` docstring ("implementations
+    MUST NOT raise on legitimate caller input such as ``cap <
+    floor``"). The runner crashed on legitimate envelopes where a
+    misconfigured codim scheduler supplied ``n_max < n_min``; the
+    fail-closed path now returns the ``floor`` and the audit code
+    captures the degenerate envelope so the loop survives.
     """
     op = BoundedMergeOperator()
     audit: list[str] = []
-    with pytest.raises(MergeAuthorityError):
-        op.merge(
-            prev=0.3,
-            dynamic=0.5,
-            cap=0.2,
-            floor=0.7,
-            delta_cap_up=0.5,
-            delta_cap_down=0.5,
-            audit_codes=audit,
-        )
-    # Audit code emitted BEFORE raise so downstream audit readers see it.
+    result = op.merge(
+        prev=0.3,
+        dynamic=0.5,
+        cap=0.2,
+        floor=0.7,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    # Fail-closed: return the floor value rather than raising.
+    assert result == pytest.approx(0.7, abs=1e-12)
+    # Audit code emitted so downstream audit readers see the
+    # degenerate envelope.
     assert any("merge_cap_below_floor" in code for code in audit)
 
 
 def test_p0_3_bounded_merge_operator_never_raises_on_finite_inputs() -> None:
     """P0-3: no legitimate (numeric, finite) input raises; the
     operator only raises on ``None`` / non-numeric types at the
-    coercion boundary OR on a post-clip ``cap < floor`` (F5).
-
-    The cap < floor case is excluded here — it now raises by design
-    (fail-closed). See ``test_bounded_merge_rejects_cap_below_floor_post_clip``.
+    coercion boundary. The cap < floor case no longer raises — the
+    operator returns ``floor`` and emits the canonical audit code
+    (P0-3 fix). See ``test_p0_3_bounded_merge_operator_clips_cap_below_floor``.
     """
     op = BoundedMergeOperator()
     for prev, dynamic, cap, floor, up, down in [
@@ -857,30 +866,33 @@ def test_identity_emits_finiteness_code() -> None:
 
 
 def test_bounded_merge_rejects_cap_below_floor_post_clip() -> None:
-    """F5: BoundedMergeOperator raises ``MergeAuthorityError`` when
-    ``cap < floor`` after clipping, instead of silently swapping.
+    """P0-3 (F-18): BoundedMergeOperator returns the ``floor`` value
+    when ``cap < floor`` after clipping (fail-closed), and emits the
+    canonical ``merge_cap_below_floor`` audit code.
 
-    The audit code ``merge_cap_below_floor`` is appended BEFORE the raise
-    so downstream audit readers still observe the broken configuration.
+    Earlier the operator raised ``MergeAuthorityError`` (F5 fix),
+    which contradicted the :data:`MergeOperatorProtocol` docstring
+    ("implementations MUST NOT raise on legitimate caller input
+    such as ``cap < floor``") and crashed the runner on legitimate
+    envelopes. The fail-closed path now returns ``floor`` and the
+    audit code captures the degenerate envelope so the runner's
+    loop survives.
     """
     op = BoundedMergeOperator()
     audit: list[str] = []
-    with pytest.raises(MergeAuthorityError) as exc_info:
-        op.merge(
-            prev=0.5,
-            dynamic=0.3,
-            cap=0.2,
-            floor=0.8,
-            delta_cap_up=1.0,
-            delta_cap_down=1.0,
-            audit_codes=audit,
-        )
-    # Audit code emitted BEFORE raise.
+    result = op.merge(
+        prev=0.5,
+        dynamic=0.3,
+        cap=0.2,
+        floor=0.8,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit,
+    )
+    # Fail-closed: returns the floor value.
+    assert result == pytest.approx(0.8, abs=1e-12)
+    # Audit code captures the degenerate envelope.
     assert any("merge_cap_below_floor" in c for c in audit)
-    # Error message carries the cap/floor values.
-    assert "cap=" in str(exc_info.value) and "floor=" in str(exc_info.value)
-    # Sanity: the swap-semantics removal is the explicit contract.
-    assert "swap" in str(exc_info.value).lower()
 
 
 # ---------------------------------------------------------------------------

@@ -158,21 +158,25 @@ def test_freetraj_trajectory_substep_is_live_on_a_fresh_instance() -> None:
 
 
 @pytest.mark.experiments
-def test_freetraj_trajectory_progress_freezes_when_driven_statefully() -> None:
-    """DEFECT — the substep is inert on the path the runner actually uses.
+def test_freetraj_trajectory_progress_varies_when_driven_statefully() -> None:
+    """Post-P0-2 regression — the substep *now* fires on the runner's path.
 
-    ``FreeTrajScheduler.sample`` writes ``self._last_trajectory_progress
-    = progress`` on every call, and
-    ``_compute_trajectory_progress`` short-circuits and returns that
-    cached value whenever it is not ``None``. Consequently, from round 1
-    onwards the scheduler reuses *round 0's* progress
-    (``(0 % period) / period == 0.0``) forever, so
-    ``substep = amplitude * sin(0) == 0.0`` for every round and the
-    trajectory control never fires.
+    Pre-fix (F-1): ``FreeTrajScheduler.sample`` wrote
+    ``self._last_trajectory_progress = progress`` on every call, and
+    ``_compute_trajectory_progress`` short-circuited and returned that
+    cached value whenever it was non-``None``. From round 1 onwards
+    the trajectory substep was frozen at round 0's progress forever.
 
-    The runner drives one scheduler instance across all rounds, so this
-    is the production path — see
-    :func:`test_freetraj_runner_result_is_identical_to_cosine`.
+    Post-fix (P0-2): the cache is *only* consulted when an external
+    ``trajectory_progress`` signal has been received via
+    ``record_round_feedback``; otherwise the deterministic baseline is
+    re-computed every round, so the substep actually oscillates.
+
+    The runner drives one scheduler instance across all rounds
+    (production path), so this test exercises the runner's path. It
+    now asserts that the substep is *live*: the odd-round ``n_cap``
+    values deviate from the cosine baseline by > 0.01 (the plan's
+    audit threshold).
     """
     cosine = _make_cosine()
     freetraj = _make_freetraj()
@@ -188,34 +192,54 @@ def test_freetraj_trajectory_progress_freezes_when_driven_statefully() -> None:
         for r in range(N_ROUNDS)
     ]
 
-    # Every round is byte-identical to the cosine baseline: the
-    # trajectory knob contributed exactly nothing.
-    assert caps_freetraj == caps_cosine
-    # The cached progress is pinned at round 0's value.
-    assert freetraj._last_trajectory_progress == pytest.approx(0.0, abs=1e-12)
+    # The substep is *live*: the trajectory control fires on the
+    # runner's path. With trajectory_period=4, round 3 sits at
+    # progress 0.75 -> sin = -1 -> full -amplitude; round 5 at 0.25
+    # -> sin = +1 -> full +amplitude. Both must deviate from the
+    # cosine baseline by more than 0.01.
+    assert abs(caps_freetraj[3] - caps_cosine[3]) > 0.01
+    assert abs(caps_freetraj[5] - caps_cosine[5]) > 0.01
+    # Some round must differ from the cosine baseline; otherwise the
+    # knob is still dead.
+    assert any(
+        abs(f - c) > 0.01 for f, c in zip(caps_freetraj, caps_cosine, strict=True)
+    )
+    # The cache flag stays False because no feedback was recorded.
+    assert freetraj._external_signal_received is False
+    # The cached progress is NOT pinned at round 0 anymore; it is
+    # only set when ``record_round_feedback`` supplies a value.
+    assert freetraj._last_trajectory_progress is None
 
 
 @pytest.mark.experiments
-def test_freetraj_runner_result_is_identical_to_cosine() -> None:
-    """The two arms produce byte-identical runner output.
+def test_freetraj_runner_result_differs_from_cosine_post_fix() -> None:
+    """Post-P0-2 — the two arms now diverge; substep is live in the runner.
 
-    Direct consequence of the freeze above: with identical seeds the
-    endpoint digest, the per-round ``n_cap`` series, and the merged
-    ``beta`` series all match exactly. Any wall-clock difference is
-    therefore pure measurement noise plus the treatment arm's
-    per-round audit-string formatting overhead.
+    Pre-fix this test asserted byte-identity of the runner outputs.
+    Post-fix the trajectory substep fires on the runner's path (P0-2
+    inverted the cache freeze), so the per-round ``n_cap`` and the
+    downstream ``beta`` series now differ from the cosine baseline.
+
+    The endpoint digest may or may not match exactly depending on the
+    seed (the substep amplitude is small, ``0.05``, so the cosine
+    baseline dominates), but the ``n_cap`` series must differ.
     """
     cosine_result = _build_runner(_make_cosine()).run(_runner_config(seed=0))
     freetraj_result = _build_runner(_make_freetraj()).run(_runner_config(seed=0))
 
-    assert (
-        freetraj_result.final_endpoint_digest == cosine_result.final_endpoint_digest
-    )
+    # The substep is now live; per-round ``n_cap`` diverges from
+    # cosine at odd rounds where sin(2 pi * (r % 4) / 4) is non-zero.
+    ncap_diverges = False
     for r in range(N_ROUNDS):
         cos_metrics = cosine_result.per_round_metrics[r]
         free_metrics = freetraj_result.per_round_metrics[r]
-        assert float(free_metrics["n_cap"]) == float(cos_metrics["n_cap"])
-        assert float(free_metrics["beta"]) == float(cos_metrics["beta"])
+        if float(free_metrics["n_cap"]) != float(cos_metrics["n_cap"]):
+            ncap_diverges = True
+            break
+    assert ncap_diverges, (
+        "Post-P0-2 the FreeTraj scheduler's n_cap series must diverge "
+        "from the cosine baseline at the trajectory-substep rounds."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -324,13 +348,16 @@ def test_freetraj_wallclock_reduction(tmp_path: pathlib.Path) -> None:
         "cosine_times_s": cosine_times,
         "freetraj_times_s": freetraj_times,
         "note": (
-            "FreeTrajScheduler.sample caches trajectory_progress on every "
-            "call and _compute_trajectory_progress short-circuits on the "
-            "cached value, so from round 1 onwards the substep is frozen "
-            "at sin(round-0 progress) = 0. Driven statefully (the runner's "
-            "path) the treatment arm is numerically identical to the "
-            "cosine baseline; see "
-            "test_freetraj_trajectory_progress_freezes_when_driven_statefully."
+            "P0-2 fix applied (F-1, docs/r4-survey/19-fix-plan.md): "
+            "FreeTrajScheduler.sample no longer caches "
+            "trajectory_progress on every call. The cache is only "
+            "consulted when record_round_feedback supplied an external "
+            "trajectory_progress signal. Driven statefully (the "
+            "runner path), the trajectory substep is now live; the "
+            "treatment arm diverges from the cosine baseline by "
+            "amplitude * sin(2 pi * (r % period) / period) at every "
+            "round. See "
+            "test_freetraj_trajectory_progress_varies_when_driven_statefully."
         ),
     }
 

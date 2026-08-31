@@ -581,22 +581,23 @@ class BoundedMergeOperator:
             0.0, min(1.0, _coerce_unit_real(delta_cap_down, name="delta_cap_down"))
         )
 
-        # If ``cap < floor`` after clipping (the only path that can
+        # P0-3 (F-18) — if ``cap < floor`` after clipping (the only path that can
         # still reach this state, since both are in ``[0, 1]`` post-clip),
-        # fail-closed: append the canonical audit code and raise so a
-        # downstream audit reader can see the broken configuration.
-        # The legacy silent-swap semantics were removed (F5): the
-        # caller's clearly-wrong envelope should not be silently
-        # inverted to a wider range.
+        # fail-closed: append the canonical audit code and return the
+        # ``floor`` value so the runner's loop survives a degenerate
+        # envelope. Earlier this raised :class:`MergeAuthorityError`,
+        # which crashed the runner on legitimate caller envelopes
+        # (per the :data:`MergeOperatorProtocol` docstring: callers
+        # MUST NOT raise on legitimate envelopes such as ``cap <
+        # floor``). The audit code is the canonical signal — the
+        # caller can detect "degenerate envelope" via
+        # ``_ERR_CAP_BELOW_FLOOR`` without crashing the loop.
         if cap_f < floor_f:
             if audit_codes is not None:
                 audit_codes.append(
                     f"{_ERR_CAP_BELOW_FLOOR}:cap={cap_f:.6f}:floor={floor_f:.6f}"
                 )
-            raise MergeAuthorityError(
-                f"cap={cap_f} < floor={floor_f} post-clip; "
-                f"swap semantics removed (audit code already appended)."
-            )
+            return float(floor_f)
 
         # Step 1 — clamp the dynamic value to the envelope.
         target = max(floor_f, min(cap_f, dynamic_f))

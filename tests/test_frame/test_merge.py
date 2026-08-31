@@ -349,24 +349,30 @@ def test_cap_clamping_prevents_overflow():
 
 
 def test_floor_above_cap_clips_with_audit():
-    """Inverted envelope is fail-closed; audit code is appended before raise (F5).
+    """Inverted envelope is fail-closed (P0-3 / F-18).
 
-    After the F5 fix, :class:`BoundedMergeOperator` no longer silently
-    swaps the envelope. It appends the ``_ERR_CAP_BELOW_FLOOR`` audit
-    code and raises :exc:`MergeAuthorityError`. The audit trail is
-    preserved so a downstream reader can replay the broken configuration.
+    Earlier (post-F5) :class:`BoundedMergeOperator` raised
+    :exc:`MergeAuthorityError` on ``cap < floor``. That contradicts
+    the :data:`MergeOperatorProtocol` docstring ("implementations
+    MUST NOT raise on legitimate caller input such as ``cap <
+    floor``") and crashed the runner on legitimate envelopes. P0-3
+    inverts this: the merge now returns the ``floor`` value (no
+    raise) and emits the ``merge_cap_below_floor`` audit code.
     """
     audit: list[str] = []
-    with pytest.raises(MergeAuthorityError):
-        bounded_merge(
-            prev=0.5,
-            dynamic=0.5,
-            cap=0.3,
-            floor=0.7,
-            delta_cap_up=0.5,
-            delta_cap_down=0.5,
-            audit_codes=audit,
-        )
+    result = bounded_merge(
+        prev=0.5,
+        dynamic=0.5,
+        cap=0.3,
+        floor=0.7,
+        delta_cap_up=0.5,
+        delta_cap_down=0.5,
+        audit_codes=audit,
+    )
+    # Fail-closed: returns the floor value rather than raising.
+    assert result == pytest.approx(0.7, abs=1e-12)
+    # Audit trail is preserved so a downstream reader can replay
+    # the broken configuration.
     assert any("merge_cap_below_floor" in code for code in audit)
 
 

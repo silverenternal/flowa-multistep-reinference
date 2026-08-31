@@ -6,19 +6,25 @@ It supersedes the planning notes (`ARCHITECTURE_PLAN.md`, `FILE_MAPPING.md`,
 historical artefacts explaining *why* the move happened; this file describes
 *what is now true*.
 
-**Status:** refactor + universal split complete. The package ships
-two domain adapters (`molecular/` as the concrete pocket-3D flow
-matching impl, `adapters/toy_gaussian.py` as the second, non-molecular
-domain) plus the legacy `adapters/toy_linear.py` worked example. DTB-R0
-§3 hostile-case 2 (monotonic uncertainty / stability collapse) and
-case 5 (source revocation) are now **hard gates** — the audit codes
+**Status:** refactor + universal split complete; Phase-4 R3/R11 code
+review (52 findings) identified and triaged, P0/P1 fix plan published
+([CLM-041](#CLM-041), [CLM-042](#CLM-042)). The package ships two
+domain adapters (`molecular/` as the concrete pocket-3D flow matching
+impl, `adapters/toy_gaussian.py` as the second, non-molecular domain)
+plus the legacy `adapters/toy_linear.py` worked example. DTB-R0 §3
+hostile-case 2 (monotonic uncertainty / stability collapse) and case 5
+(source revocation) are now **hard gates** — the audit codes
 [`AUDIT_STABILITY_COLLAPSE`](adaptive_reflow/frame/channel_rule.py)
 and
 [`AUDIT_SOURCE_REVOKED`](adaptive_reflow/contracts/validators.py)
 are re-exported from the public `__init__.py` and indexed by the
 doc-drift scanner. Top-level flat modules and the in-tree `.py` files
 in the repo root are **stale re-export shims** that will be removed in
-a follow-up pass.
+a follow-up pass. The package's six gates ([CLM-019](#CLM-019) [CLM-020](#CLM-020)
+[CLM-021](#CLM-021)) remain load-bearing; the Phase-4 audit introduced
+no gate regression but catalogued one P0 doc-drift risk
+([CLM-042](#CLM-042) `CLM-025` raise-vs-return compatibility under the
+proposed P0-3 fix).
 
 ---
 

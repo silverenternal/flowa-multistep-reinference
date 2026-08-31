@@ -154,6 +154,9 @@ def test_freetraj_feedback_overrides_trajectory_progress() -> None:
     )
     sched.record_round_feedback(0, {"trajectory_progress": 0.25})
     assert sched._last_trajectory_progress == pytest.approx(0.25)
+    # P0-2: the feedback path also sets the external-signal flag so
+    # the next ``_compute_trajectory_progress`` call consults the cache.
+    assert sched._external_signal_received is True
 
 
 def test_freetraj_invalid_trajectory_progress_ignored() -> None:
@@ -161,8 +164,11 @@ def test_freetraj_invalid_trajectory_progress_ignored() -> None:
     sched = FreeTrajScheduler(_make_config())
     sched.record_round_feedback(0, {"trajectory_progress": float("nan")})
     # The last trajectory progress stays ``None`` so the deterministic
-    # baseline is used.
+    # baseline is used. The external-signal flag is NOT set when the
+    # value is rejected (P0-2: ``record_round_feedback`` must not turn
+    # on the cache gate for invalid input).
     assert sched._last_trajectory_progress is None
+    assert sched._external_signal_received is False
 
 
 def test_freetraj_trajectory_progress_clipped_into_unit_interval() -> None:
@@ -170,6 +176,127 @@ def test_freetraj_trajectory_progress_clipped_into_unit_interval() -> None:
     sched = FreeTrajScheduler(_make_config())
     sched.record_round_feedback(0, {"trajectory_progress": 1.5})
     assert sched._last_trajectory_progress == pytest.approx(1.0)
+    # Out-of-range but finite inputs DO set the external-signal flag
+    # (the cache value is the clipped one).
+    assert sched._external_signal_received is True
+
+
+# ---------------------------------------------------------------------------
+# P0-2 regression: trajectory substep is live across rounds when no
+# external signal is provided. Pre-fix the cache froze at round 0;
+# post-fix the deterministic baseline is re-computed every round.
+# ---------------------------------------------------------------------------
+
+
+def test_freetraj_substep_varies_across_rounds_no_feedback() -> None:
+    """P0-2 — the substep fires on odd rounds without an external signal.
+
+    Pre-fix (F-1): the cache was written on every ``sample()`` call
+    and short-circuited the deterministic fallback, so the substep
+    was frozen at ``sin(2 pi * 0) = 0`` from round 1 onwards.
+
+    Post-fix (P0-2): the cache is only consulted when an external
+    ``trajectory_progress`` signal has been recorded. Without that
+    signal, ``_compute_trajectory_progress`` recomputes
+    ``(round_in_cycle % period) / period`` every round, and the
+    substep oscillates with ``sin(2 pi * progress)``.
+
+    With ``trajectory_period=4`` and ``trajectory_amplitude=0.05``,
+    rounds 1, 3, 5, 7 sit at progress ``0.25, 0.75, 0.25, 0.75``
+    and the *raw* substep values are ``+0.05, -0.05, +0.05, -0.05``.
+    The test reads the raw substep from the audit code
+    (``freetraj_substep_audit:substep=...``) so the assertion is
+    unaffected by the ``[0, 1]`` clip that masks the deviation in
+    ``n_cap`` near the cosine peak.
+    """
+    sched = FreeTrajScheduler(
+        _make_config(cycle_length=20), trajectory_amplitude=0.05,
+        trajectory_period=4,
+    )
+    # The raw substep for rounds 1, 3, 5, 7 must be ±amplitude.
+    # Round 1 -> progress 0.25 -> sin(+pi/2) = +1 -> +amplitude.
+    # Round 3 -> progress 0.75 -> sin(+3pi/2) = -1 -> -amplitude.
+    expected = {1: 0.05, 3: -0.05, 5: 0.05, 7: -0.05}
+    for r, want in expected.items():
+        sample = sched.sample(0, r, r)
+        # Locate the FREETRAJ_SUBSTEP_AUDIT code in the audit list
+        # and parse out the substep value.
+        substep_val: float | None = None
+        for code in sample.audit_codes:
+            if FREETRAJ_SUBSTEP_AUDIT not in code:
+                continue
+            for token in code.split(":"):
+                if token.startswith("substep="):
+                    substep_val = float(token.split("=", 1)[1])
+        assert substep_val is not None, (
+            f"round {r}: no substep in audit codes"
+        )
+        assert substep_val == pytest.approx(want, abs=1e-12), (
+            f"round {r}: substep {substep_val:+.6f} != expected {want:+.6f}; "
+            "the cache bug appears to still be present"
+        )
+    # Round 0 sits at progress 0 -> sin = 0 -> substep = 0.
+    s0 = sched.sample(0, 0, 0)
+    for code in s0.audit_codes:
+        if FREETRAJ_SUBSTEP_AUDIT not in code:
+            continue
+        for token in code.split(":"):
+            if token.startswith("substep="):
+                assert float(token.split("=", 1)[1]) == pytest.approx(0.0, abs=1e-12)
+
+
+def test_freetraj_external_signal_overrides_recomputed_baseline() -> None:
+    """P0-2 — once ``record_round_feedback`` fires, the cache wins.
+
+    Post-fix the cache flag is set by ``record_round_feedback`` so
+    the cached value (not the deterministic fallback) drives the
+    substep for the next ``sample()`` call. This is the only path
+    that consults the cache; the ``sample()`` path no longer writes
+    to it.
+    """
+    sched = FreeTrajScheduler(
+        _make_config(cycle_length=20), trajectory_amplitude=0.1,
+        trajectory_period=4,
+    )
+
+    def _substep_of(sample) -> float:
+        for code in sample.audit_codes:
+            if FREETRAJ_SUBSTEP_AUDIT not in code:
+                continue
+            for token in code.split(":"):
+                if token.startswith("substep="):
+                    return float(token.split("=", 1)[1])
+        raise AssertionError("no substep in audit codes")
+
+    # First sample at round 1: no feedback yet, deterministic baseline
+    # applies -> progress = 0.25 -> substep = +0.1 * sin(pi/2) = +0.1.
+    s_no_fb = sched.sample(0, 1, 1)
+    assert _substep_of(s_no_fb) == pytest.approx(0.1, abs=1e-12)
+
+    # Now feed a trajectory_progress of 0.75; substep should be
+    # 0.1 * sin(2 pi * 0.75) = 0.1 * sin(3 pi / 2) = -0.1.
+    sched.record_round_feedback(1, {"trajectory_progress": 0.75})
+    s_with_fb = sched.sample(0, 2, 1)
+    assert _substep_of(s_with_fb) == pytest.approx(-0.1, abs=1e-12)
+    # And the cache flag is on.
+    assert sched._external_signal_received is True
+    # The deviation in ``n_cap`` is bounded by the [0, 1] clip; what
+    # matters is that the raw substep value (from the audit code) is
+    # what the feedback dictated, *not* what the deterministic
+    # baseline would give for round_in_cycle=2.
+    expected_at_2 = 0.1 * math.sin(2 * math.pi * (2 % 4) / 4)
+    assert _substep_of(s_with_fb) != pytest.approx(expected_at_2, abs=1e-6)
+
+
+def test_freetraj_reset_clears_external_signal_flag() -> None:
+    """P0-2 — ``reset()`` clears the external-signal flag and the cache."""
+    sched = FreeTrajScheduler(_make_config())
+    sched.record_round_feedback(0, {"trajectory_progress": 0.5})
+    assert sched._external_signal_received is True
+    assert sched._last_trajectory_progress == pytest.approx(0.5)
+    sched.reset()
+    assert sched._external_signal_received is False
+    assert sched._last_trajectory_progress is None
 
 
 # ---------------------------------------------------------------------------

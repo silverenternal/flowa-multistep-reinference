@@ -56,6 +56,10 @@ nav:
       - Adapters: api/adaptive_reflow.adapters.md
   - Architecture: ARCHITECTURE.md
   - Testing: TESTING_STRATEGY.md
+  - Paper-supporting survey (r4-survey):
+      - Phase-4 code review: r4-survey/18-comprehensive-code-review.md
+      - Phase-4 fix plan: r4-survey/19-fix-plan.md
+      - Phase-4 docstring audit: audit/PHASE4_DOCSTRING_AUDIT.md
 
 plugins:
   - autorefs

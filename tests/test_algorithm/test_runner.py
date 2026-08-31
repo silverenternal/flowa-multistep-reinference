@@ -747,6 +747,55 @@ def test_runner_endpoints_matrix_is_nan_initialised(_twodim_adapter) -> None:
     )
 
 
+def test_runner_endpoints_matrix_respects_adapter_state_shape(
+    _twodim_adapter,
+) -> None:
+    """P0-4 (F-24): the endpoint matrix honours the adapter's ``state_shape``.
+
+    Earlier the runner hard-coded ``arr[-1].reshape(2)`` regardless of
+    the adapter's native state vector, so 8 of 10 adapters (CIFAR's
+    ``(3, 32, 32)``, video adapters' ``(T, C, H, W)``, …) had their
+    endpoint row collapse to a NaN. The fix reads the adapter's
+    ``state_shape`` attribute and reshapes the per-round endpoint
+    vector into it; size mismatches leave the row as ``NaN`` so
+    callers can detect "endpoint not captured" via ``np.isnan``.
+    """
+    adapter = _twodim_adapter
+    n_rounds = 3
+    # ``_twodim_adapter`` exposes a 2-D state; override ``state_shape``
+    # on the adapter instance so the runner reshapes into a 3-vector.
+    adapter.state_shape = (3,)  # type: ignore[attr-defined]
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=default_cosine_scheduler(cycle_length=n_rounds),
+    )
+    result = runner.run(
+        ReInferenceConfig(
+            n_rounds=n_rounds,
+            outer_cycle_id=0,
+            target_round=0,
+            seed=42,
+            channels=TWODIM_FM_CHANNELS,
+        )
+    )
+    # The endpoint matrix now follows ``state_shape == (3,)``.
+    assert result.endpoints.shape == (n_rounds, 3)
+    # The 2-D trajectory has 2 elements but the advertised state
+    # shape wants 3 — so the per-round reshape is a size mismatch
+    # and the runner must leave the row as NaN. With the P0-4 fix
+    # ``endpoint_export_failed == 1.0`` and the row is NaN.
+    for r in range(n_rounds):
+        sample = result.per_round_metrics[r]
+        assert sample["endpoint_export_failed"] == pytest.approx(1.0)
+        assert np.isnan(result.endpoints[r]).all(), (
+            f"row {r}: size mismatch must leave the endpoint row as "
+            f"NaN; got {result.endpoints[r]!r}"
+        )
+    # Cleanup the override so the fixture stays pristine for other tests.
+    if hasattr(adapter, "state_shape"):
+        delattr(adapter, "state_shape")
+
+
 # ---------------------------------------------------------------------------
 # 10. paper_quantities_provider wiring (ADR-0013 follow-up)
 # ---------------------------------------------------------------------------
@@ -1639,17 +1688,19 @@ def test_runner_with_ema_merge_propagates_schedule_sample(_twodim_adapter) -> No
 
 
 # ---------------------------------------------------------------------------
-# F25 — schedule-derived driver skips the merge operator
+# P0-1 (F-31) — runner must call the merge operator on the
+# schedule-derived driver path too (F25 W2 leak fix).
 # ---------------------------------------------------------------------------
 
 
 class _CountingMergeOperator:
     """Merge operator that records every ``merge`` call.
 
-    Used by the F25 regression test to confirm the runner skips the
-    merge step entirely on the ``schedule_derived`` driver path.
     Implements :class:`MergeOperatorProtocol` (duck-typed: must
-    expose ``merge`` and ``config_hash``).
+    expose ``merge`` and ``config_hash``). Used by the
+    ``test_runner_calls_merge_operator_on_schedule_derived`` and the
+    ``test_runner_calls_merge_operator_between_policy_and_engine``
+    tests to count merge invocations across rounds.
     """
 
     def __init__(self) -> None:
@@ -1676,33 +1727,44 @@ class _CountingMergeOperator:
         return float(dynamic)
 
 
-def test_schedule_derived_driver_skips_merge(_twodim_adapter) -> None:
-    """The runner does NOT call the merge operator for the schedule-derived driver.
+def test_runner_calls_merge_operator_on_schedule_derived(
+    _twodim_adapter,
+) -> None:
+    """P0-1 (F-31): the runner must invoke the merge operator on the
+    ``schedule_derived`` driver path.
 
-    Regression test for finding #25 in
-    ``docs/r3-survey/05-verified-findings.md``: the runner used to
-    call ``self._merge.merge(...)`` for every driver family. For the
-    ``schedule_derived`` family the bounded merge with
+    Earlier the runner short-circuited the merge step for
+    ``schedule_derived`` drivers (the bounded merge with
     ``delta_cap = 1.0`` collapses to ``clamp(n_cap, n_min, n_cap) ==
-    n_cap`` — an identity — so the call was redundant. The fix
-    short-circuits the merge step on the schedule-derived path so the
-    merge operator sees ``calls == 0`` and the runner emits
-    ``beta == sample.n_cap`` byte-for-byte.
+    n_cap`` — an identity), which leaked W2: the bounded envelope's
+    ``floor`` / clipping / audit codes never fired on the
+    schedule-derived path so the four framework rows collapsed to the
+    same trajectory. The fix always calls ``merge`` regardless of
+    driver family. With the bounded merge collapsed to an identity
+    on the schedule-derived path, ``beta == n_cap`` byte-for-byte
+    is preserved for legacy callers.
     """
     from adaptive_reflow.algorithm import ScheduleDerivedPolicyDriver
 
     adapter = _twodim_adapter
     merge_op = _CountingMergeOperator()
+    n_rounds = 3
     runner = ReInferenceRunner(
         adapter=adapter,
         policy_driver=ScheduleDerivedPolicyDriver(),
         merge_operator=merge_op,
     )
     result = runner.run(
-        ReInferenceConfig(n_rounds=3, channels=TWODIM_FM_CHANNELS, seed=42)
+        ReInferenceConfig(
+            n_rounds=n_rounds, channels=TWODIM_FM_CHANNELS, seed=42,
+        )
     )
-    assert merge_op.calls == 0
-    for r in range(3):
+    # One merge call per round — even on the schedule-derived path.
+    assert merge_op.calls == n_rounds, (
+        f"runner must call merge once per round on the "
+        f"schedule_derived path; got {merge_op.calls}"
+    )
+    for r in range(n_rounds):
         sample = result.per_round_metrics[r]
         # With the merge collapsed to identity the runner emits the
         # schedule-derived ``beta == sample.n_cap`` directly.

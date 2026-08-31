@@ -343,21 +343,28 @@ def test_production_clips_on_hostile(
     """
     audit: list[str] = []
     if name == "cap_below_floor":
-        # F5: cap < floor fails closed — raises after emitting audit code.
-        with pytest.raises(MergeAuthorityError):
-            bounded_merge(
-                inputs["prev"],
-                inputs["dynamic"],
-                cap=inputs["cap"],
-                floor=inputs["floor"],
-                delta_cap_up=inputs["delta_cap_up"],
-                delta_cap_down=inputs["delta_cap_down"],
-                audit_codes=audit,
-            )
+        # P0-3 (F-18): cap < floor fails closed — returns the floor
+        # value (no raise) and emits the canonical audit code. The
+        # earlier F5 ``MergeAuthorityError`` raise contradicted the
+        # :data:`MergeOperatorProtocol` docstring ("implementations
+        # MUST NOT raise on legitimate caller input such as ``cap <
+        # floor``") and crashed the runner on legitimate envelopes.
+        result = bounded_merge(
+            inputs["prev"],
+            inputs["dynamic"],
+            cap=inputs["cap"],
+            floor=inputs["floor"],
+            delta_cap_up=inputs["delta_cap_up"],
+            delta_cap_down=inputs["delta_cap_down"],
+            audit_codes=audit,
+        )
+        # Fail-closed: result equals the floor.
+        assert 0.0 <= result <= 1.0
+        assert result == pytest.approx(float(inputs["floor"]), abs=1e-12)
         assert any(
             code.startswith("merge_cap_below_floor")
             for code in audit
-        ), f"no F5 audit code emitted for {name}: audit={audit!r}"
+        ), f"no P0-3 audit code emitted for {name}: audit={audit!r}"
         return
     result = bounded_merge(
         inputs["prev"],

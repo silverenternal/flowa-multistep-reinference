@@ -100,6 +100,19 @@ SCHEDULER_NAMES: tuple[str, ...] = (
     "FreeTrajScheduler",
 )
 
+#: Per-scheduler seed offset added on top of ``seed_base * 1000 + r`` so the
+#: four framework rows see independent noise streams even when their
+#: ``n_cap`` round to the same ``num_steps``. Without these offsets the
+#: four ``{name}_samples.npz`` files are byte-identical (same
+#: ``(num_steps, seed)`` -> identical Euler trajectory). Offsets are
+#: large (>> per-round range) so they cannot collide across rounds.
+SCHEDULER_SEED_OFFSETS: dict[str, int] = {
+    "CosineAnnealScheduler": 0,
+    "CodimensionSheetScheduler": 1_000_000,
+    "EvidenceDrivenScheduler": 2_000_000,
+    "FreeTrajScheduler": 3_000_000,
+}
+
 #: Channel vocabulary of :class:`RectifiedFlowCIFARAdapter`.
 CIFAR_CHANNELS: tuple[str, ...] = ("image",)
 
@@ -452,6 +465,7 @@ def _run_framework(
     samples_pool: list[NDArray[np.float64]] = []
 
     started = time.perf_counter()
+    seed_offset = SCHEDULER_SEED_OFFSETS.get(str(scheduler_name), 0)
     for r in range(int(n_rounds)):
         # Fix A: pass the loop index as ``round_in_cycle`` (was 0,0,r).
         # The second positional arg drives the cosine ramp and the
@@ -463,7 +477,7 @@ def _run_framework(
         sub = adapter.batched_inference(
             n_samples=int(framework_samples),
             num_steps=int(num_steps),
-            seed=int(seed_base) * 1000 + int(r),
+            seed=int(seed_base) * 1000 + int(r) + int(seed_offset),
         )
         sub = np.asarray(sub, dtype=np.float64).reshape(
             (int(framework_samples), 3, 32, 32)

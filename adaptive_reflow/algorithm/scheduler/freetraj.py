@@ -131,6 +131,14 @@ class FreeTrajScheduler:
         )
         self._last_sample: ScheduleSample | None = None
         self._last_trajectory_progress: float | None = None
+        # Flag set by ``record_round_feedback`` when an external
+        # ``trajectory_progress`` signal has been observed for the
+        # current round. The cache value is only consulted while this
+        # flag is ``True``; the deterministic baseline is always
+        # re-computed when the flag is ``False``. Without this guard,
+        # caching the progress on every ``sample()`` call (the v2
+        # bug) would freeze the substep at round 0 forever.
+        self._external_signal_received: bool = False
         self._last_audit_codes: tuple[str, ...] = ()
 
     # -- accessors ---------------------------------------------------------
@@ -177,8 +185,14 @@ class FreeTrajScheduler:
         )
         # Trajectory progress is computed from ``round_in_cycle`` and
         # ``trajectory_period`` so the schedule is deterministic
-        # without an external signal.
-        progress = self._compute_trajectory_progress(round_in_cycle)
+        # without an external signal. The cache is only consulted when
+        # ``record_round_feedback`` set the external-signal flag for
+        # this round; otherwise the deterministic baseline is
+        # re-computed every call so the substep actually oscillates.
+        progress = self._compute_trajectory_progress(
+            round_in_cycle,
+            external_override_active=bool(self._external_signal_received),
+        )
         substep = self._trajectory_amplitude * math.sin(
             2.0 * math.pi * progress
         )
@@ -204,7 +218,11 @@ class FreeTrajScheduler:
         )
         self._last_sample = sample
         self._last_audit_codes = codes
-        self._last_trajectory_progress = progress
+        # Do NOT cache ``progress`` here. The cache is reserved for
+        # ``record_round_feedback`` to communicate the external signal;
+        # the deterministic fallback must always be re-computed.
+        # (F-1 / P0-2: caching on every ``sample()`` call was freezing
+        # the substep at round-0's value forever.)
         return sample
 
     def cycle_length(self) -> int:
@@ -234,6 +252,7 @@ class FreeTrajScheduler:
         """Reset internal state so the scheduler can be re-run from scratch."""
         self._last_sample = None
         self._last_trajectory_progress = None
+        self._external_signal_received = False
         self._last_audit_codes = ()
         self._wrapped.reset()
 
@@ -254,6 +273,13 @@ class FreeTrajScheduler:
             tp = float(metrics["trajectory_progress"])
             if math.isfinite(tp):
                 self._last_trajectory_progress = max(0.0, min(1.0, tp))
+                # Mark the cache as "externally driven" so the next
+                # ``_compute_trajectory_progress`` call returns this
+                # value instead of recomputing the deterministic
+                # baseline. The flag is one-shot per feedback call;
+                # it must be cleared by ``reset()`` and is never set
+                # from the ``sample()`` path itself.
+                self._external_signal_received = True
 
     def inject_noise(
         self,
@@ -305,15 +331,30 @@ class FreeTrajScheduler:
 
     # -- helpers ------------------------------------------------------------
 
-    def _compute_trajectory_progress(self, round_in_cycle: int) -> float:
+    def _compute_trajectory_progress(
+        self,
+        round_in_cycle: int,
+        *,
+        external_override_active: bool,
+    ) -> float:
         """Compute the trajectory progress for ``round_in_cycle``.
 
         When :meth:`record_round_feedback` has supplied a
-        ``trajectory_progress`` metric, that value is used directly.
-        Otherwise the deterministic baseline ``round_in_cycle / period``
-        modulo 1.0 is used so the schedule is reproducible.
+        ``trajectory_progress`` metric *and* the
+        ``external_override_active`` flag is ``True``, the cached
+        value is used directly. Otherwise the deterministic baseline
+        ``round_in_cycle / period`` modulo 1.0 is used so the schedule
+        is reproducible and the trajectory substep actually oscillates
+        across rounds.
+
+        The flag (rather than the cache's ``None`` check) is the gate
+        so that the deterministic baseline is always re-computed when
+        no external signal has been received this round — see P0-2.
         """
-        if self._last_trajectory_progress is not None:
+        if (
+            external_override_active
+            and self._last_trajectory_progress is not None
+        ):
             return float(self._last_trajectory_progress)
         return float(
             (int(round_in_cycle) % self._trajectory_period)

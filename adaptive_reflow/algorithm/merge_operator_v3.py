@@ -43,6 +43,7 @@ import math
 from typing import Any
 
 from adaptive_reflow.algorithm.merge_operator import (
+    _ERR_CAP_BELOW_FLOOR,
     MERGE_DEGENERATE_INTERVAL,
     BoundedMergeOperator,
     MergeOperatorProtocol,
@@ -268,6 +269,22 @@ class MeanFlowMergeOperator:
             )
         # Re-clip into ``[floor, cap]`` so the bounded-merge contract
         # is honoured even after the correction.
+        #
+        # P0-3 (F-18) — when ``cap < floor`` the envelope is
+        # degenerate. The parent :meth:`BoundedMergeOperator.merge`
+        # already returned the ``floor`` value via fail-closed
+        # semantics; we must not silently invert the result by
+        # clipping into ``[floor, cap]`` again (which would otherwise
+        # snap the floor back down to the cap). Match the parent's
+        # fail-closed path: emit the canonical audit code and return
+        # the ``floor`` value.
+        if floor > cap:
+            if audit_codes is not None:
+                audit_codes.append(
+                    f"{_ERR_CAP_BELOW_FLOOR}:cap={float(cap):.6f}"
+                    f":floor={float(floor):.6f}"
+                )
+            return float(floor)
         if result < floor:
             result = float(floor)
         elif result > cap:

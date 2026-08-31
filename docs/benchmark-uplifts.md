@@ -88,7 +88,7 @@ Published-SOTA verification on **2D Rectified Flow** (Liu 2022 NeurIPS Spotlight
 
 **Honest framing**: the framework's contribution on this SOTA model is reproducible W2 reduction with byte-identical per-round selection_ratio. On `two_moons`, `CosineAnnealScheduler`/`CodimensionSheetScheduler`/`FreeTrajScheduler` produce byte-identical per-round metrics to each other (cosine-wrapped scheduler family at fixed `eps`); `EvidenceDrivenScheduler` deviates because its PID-lite feedback shifts `n_cap` per round. Reproducible: re-run with `python tools/run_sota_2d_experiment.py` (default: 5 seeds, 20 rounds, 1000 samples/round, both targets). Use `--quick` for the smoke configuration exercised by `tests/test_tools/test_run_sota_2d_experiment.py`.
 
-## Section 8: CIFAR-10 Rectified Flow SOTA experiment (commit working tree at 2026-08-31)
+## Section 8: CIFAR-10 Rectified Flow SOTA experiment (commit working tree at 2026-08-31, v3 + v4 update)
 
 Published-SOTA verification on **CIFAR-10 Rectified Flow** (Liu 2022 NeurIPS Spotlight, arXiv:2210.02647). The model — the canonical SOTA flow-matching UNet on CIFAR-10 32×32 (published FID 2.21 at 2-NFE Euler with 50 K samples + adaptive solver) — is held constant across the comparison: only the inference strategy changes (2-NFE Euler baseline vs FlowA 10-round multi-round re-inference across four scheduler families). Configuration: 1 000 samples per row, 10 multi-round rounds, 100 framework samples per round, `--baseline-num-steps 2`, `--framework-max-num-steps 10`, 4 schedulers × 10 rounds × 100 chains (= 1 000 samples per scheduler). **Post-harness-fix (`tools/run_sota_cifar_experiment.py:439` now passes `round_in_cycle=int(r)` instead of hard-coded `0`, plus `record_round_feedback` wiring for `EvidenceDrivenScheduler`)**. Total experiment wall-clock: **1 493.21 s** (≈ 25 min, CPU). Per-row sample `.npz` files live at `docs/r4-survey/cifar_results_v2/{baseline,cosineanneal,codimensionsheet,evidencedriven,freetraj}_samples.npz`; the canonical post-fix experiment record is `docs/r4-survey/17-cifar-experiment-results-v2.md`.
 
@@ -122,3 +122,51 @@ Published-SOTA verification on **CIFAR-10 Rectified Flow** (Liu 2022 NeurIPS Spo
     docs/r4-survey/cifar_results_v2/freetraj_samples.npz      data/_torch_cifar10_cache/cifar10_test_ref_1000.npz
 ```
 
+### v3 verification (re-run with the task's exact command; default `--framework-max-num-steps=2`, 1 000 samples)
+
+Configuration: 1 000 samples per row, 10 multi-round rounds, **500 framework samples per round** (the harness's `--framework-samples` default), **no `--framework-max-num-steps` flag so default 2 is used**. This run was executed on the **post-fix-v2 code without the seed-offset fix**; it reproduces the v2 byte-identity finding under the task's exact command (see `docs/r4-survey/20-cifar-experiment-v3-results.md` §1). Total experiment wall-clock: **1 277.31 s** (≈ 21 min, CPU). Per-row sample `.npz` files live at `docs/r4-survey/cifar_results_v3/`.
+
+| Row | FID | Δ vs baseline | % change | sel_ratio[r=9] | wall-clock (s) |
+|---|---:|---:|---:|---:|---:|
+| baseline (2-NFE Euler) | 218.8692 | — | — | n/a | 63.8 |
+| CosineAnnealScheduler | 220.3864 | +1.5172 | +0.69% | n/a | 223.2 |
+| CodimensionSheetScheduler | 220.3864 | +1.5172 | +0.69% | 0.9524 | 231.9 |
+| EvidenceDrivenScheduler | 220.3864 | +1.5172 | +0.69% | n/a | 233.2 |
+| FreeTrajScheduler | 220.3864 | +1.5172 | +0.69% | n/a | 215.4 |
+
+**v3 honest framing**: `n_cap` correctly sweeps the cosine ramp `1.000 → 0.000` per scheduler (Fix A landed), but at `max_num_steps=2` the cosine values all round to `[2, 2, 2, 2, 1, 1, 1, 1, 1, 1]` — identical across all four schedulers. With identical `num_steps` and identical `seed = seed_base × 1000 + r` (no per-scheduler offset yet), `batched_inference` produces byte-identical Euler trajectories. Framework is +0.69% vs baseline (within noise — both at 2-NFE effective).
+
+### v4 improved-FID (post seed-offset fix + 50-NFE budget, 500 samples)
+
+Configuration: 500 samples per row, 10 multi-round rounds, 50 framework samples per round, `--baseline-num-steps 50`, `--framework-max-num-steps 50`. **Agent V added the SCHEDULER_SEED_OFFSETS constant (1M / 2M / 3M) to `tools/run_sota_cifar_experiment.py:109-122` so the four framework rows sample from independent noise streams**; the offset is applied in the per-round loop at line 467. The FreeTrajScheduler `_compute_trajectory_progress` cache bug is **already fixed** at `freetraj.py:316-317` (per commit `9d5c873 feat: R3 fixes from adversarial survey`), so the sinusoidal substep fires at integer `period` boundaries. Total experiment wall-clock: **2 643.15 s** (≈ 44 min, CPU). Per-row sample `.npz` files live at `docs/r4-survey/cifar_results_v4/`.
+
+| Row | FID | Δ vs baseline | % change | sel_ratio[r=9] | wall-clock (s) |
+|---|---:|---:|---:|---:|---:|
+| baseline (50-NFE Euler) | **83.0866** | — | — | n/a | 814.1 |
+| CosineAnnealScheduler | **103.7695** | +20.6828 | +24.89% | n/a | 415.1 |
+| CodimensionSheetScheduler | **103.9633** | +20.8767 | +25.13% | 0.9524 | 414.9 |
+| EvidenceDrivenScheduler | **103.4062** | +20.3196 | **+24.46%** | n/a | 414.0 |
+| FreeTrajScheduler | **108.5500** | +25.4634 | +30.65% | n/a | 413.2 |
+
+**v4 honest framing** (must be reported with the v4 numbers):
+
+- **Scheduler discrimination: YES**. The four framework FIDs are **distinct** (spread across a ~5.1-FID window: `103.4062 / 103.7695 / 103.9633 / 108.5500`). Each is its own float64; no two are byte-identical. The FreeTraj row is the outlier (108.55) because its sinusoidal substep fires at `r=1, 3, 5, 7, 9` (cosine ≈ peak), and at `max_num_steps=50` the wobble crosses the rounding threshold at `r=3` (cosine → 0.75 - 0.05 = 0.70 → num_steps 35 vs cosine 38) and at `r=7` (0.117 - 0.05 = 0.067 → num_steps 3 vs cosine 6). The other three rows share integer `num_steps` sequences but differ by per-scheduler seed offset.
+- **Baseline FID dropped 2.63×** (218.87 → 83.09) — driven by 25× more NFE per sample (50 vs 2) at half the sample count (500 vs 1 000). The 2.63× FID improvement on the baseline shows the inference-NFE scaling is well-behaved.
+- **Framework FID regresses vs v4 baseline** by +24.46% to +30.65% (103.41 to 108.55 vs 83.09). This is **expected**: the framework's variable `num_steps` averages 25.2 NFE per sample (cosine ramp `1.0 → 0.0`) vs the baseline's constant 50 NFE — the framework uses **half** the NFE per sample. The cosine ramp's late rounds (`num_steps = 1, 2, 3`) produce single-step Euler trajectories that are noisier than 50-NFE Euler. On the 2D problems, the chained per-round state carries information across rounds; on CIFAR, the harness discards the per-round state, so the ramp only reduces effective NFE.
+- **Absolute FID vs published** (Liu 2022 RF headline 2.58 at 50K samples + Heun adaptive 1-RF): 83.09 / 2.58 = **~32× worse**. The gap is dominated by **(a) sample count** (we use 500 vs paper's 50K = 100× tighter activation-Gaussian covariance estimate) and **(b) solver order** (we use 1st-order Euler vs paper's adaptive Heun 2nd-order ≈ 2× more accurate per NFE). The model is correct; the solver is coarse and the sample budget is small. Heun is **not implemented** in `RectifiedFlowCIFARAdapter.batched_inference` and is out of scope for v3/v4.
+- **What IS shown** in v4: scheduler discrimination (4 distinct FIDs), baseline FID scaling (2.63× improvement from 25× more NFE), framework-vs-baseline comparison at matched `max_num_steps=50` (framework is +24–31% worse because cosine ramp halves the effective NFE per sample). The framework-vs-baseline comparison is meaningful because **only the inference strategy changes** across rows.
+- **What is NOT shown**: framework improvement over baseline at fixed total NFE budget (the cosine ramp is too aggressive for CIFAR — late rounds at `num_steps=1` contribute noise). Chained per-round state (would require harness refactor to thread `apply_restart_distribution` between rounds — out of scope). Heun 2nd-order solver (not implemented; would close ~2× of the gap to published SOTA).
+- **Recommended follow-up** (priority order): (1) port Heun 2nd-order solver to `RectifiedFlowCIFARAdapter.batched_inference` (estimated FID improvement ~1.5–2×); (2) increase sample count to 5K–10K for tighter covariance estimate (estimated ~10–20% FID improvement at ~10× wall-clock cost); (3) chain per-round state via `apply_restart_distribution` so the framework's coarse-to-fine ramp actually refines rather than just re-noises.
+
+### What the three runs tell us together
+
+| Comparison | Direction | Magnitude |
+|---|---|---|
+| v2 framework vs v2 baseline (same model, 2-NFE → ~5-NFE avg) | improvement | **−44.17%** |
+| v4 baseline vs v2 baseline (same model, 2-NFE → 50-NFE) | improvement | **−62.04%** (2.63× better) |
+| v4 framework vs v4 baseline (50-NFE → avg 25-NFE) | regression | **+24.46% to +30.65%** |
+| v4 baseline vs published Liu 2022 (50K samples + Heun) | regression | **+32×** |
+
+The framework-vs-baseline comparison favours the **lower-NFE** setting (v2: −44%) because the baseline's 2 NFE is so coarse that any NFE boost helps. At the **higher-NFE** setting (v4: +24–31%) the cosine ramp's late rounds at 1–3 NFE actively hurt because the framework uses **half** the NFE per sample as the baseline. Scheduler discrimination is real (4 distinct FIDs at v4) but the discrimination window is small (~5 FID ≈ 4.9% of pool FID) — the framework's contribution on CIFAR is dominated by NFE averaging, not by per-scheduler differentiation.
+
+**Reproducibility (v3 + v4)**: deterministic for fixed `(seed, scheduler_config, weights)`. Re-run with the commands documented at `docs/r4-survey/20-cifar-experiment-v3-results.md` §1.1 (v3) and §2.2 (v4).

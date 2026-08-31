@@ -170,26 +170,32 @@ def test_degenerate_interval_emits_audit(
     assume(0.0 <= cap <= 1.0)
 
     if floor > cap:
-        # Path 1 — the envelope is ill-formed. F5: post-P0-3 + F5 the
-        # merge fails closed: the ``merge_cap_below_floor`` audit code
-        # is appended BEFORE the raise, and ``MergeAuthorityError`` is
-        # raised. The audit code is still emitted so a downstream
-        # reader can observe the broken configuration.
+        # Path 1 — the envelope is ill-formed. P0-3 (F-18): the merge
+        # now fails closed by returning the ``floor`` value (no
+        # raise) and emitting the ``merge_cap_below_floor`` audit
+        # code. The earlier F5 raise contradicted the
+        # :data:`MergeOperatorProtocol` docstring ("implementations
+        # MUST NOT raise on legitimate caller input such as ``cap <
+        # floor``") and crashed the runner on legitimate envelopes.
         audit_codes: list[str] = []
-        with pytest.raises(MergeAuthorityError):
-            bounded_merge(
-                prev=prev,
-                dynamic=prev,
-                cap=cap,
-                floor=floor,
-                delta_cap_up=0.0,
-                delta_cap_down=0.0,
-                audit_codes=audit_codes,
-            )
+        result = bounded_merge(
+            prev=prev,
+            dynamic=prev,
+            cap=cap,
+            floor=floor,
+            delta_cap_up=0.0,
+            delta_cap_down=0.0,
+            audit_codes=audit_codes,
+        )
         joined = "|".join(audit_codes)
         assert "merge_cap_below_floor" in joined, (
             f"merge_cap_below_floor must appear in audit_codes; "
             f"got {audit_codes!r} for prev={prev}, floor={floor}, cap={cap}"
+        )
+        # Fail-closed: returns the floor value rather than raising.
+        assert abs(float(result) - float(floor)) <= 1e-9, (
+            f"degenerate-envelope merge must return the floor "
+            f"({floor}); got {result!r}"
         )
         return
 

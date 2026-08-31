@@ -432,3 +432,58 @@ def test_bounded_merge_coerces_bools(
     assert result_bool == pytest.approx(result_numeric, abs=1e-12)
     assert expected_prev in (0.0, 1.0)
     assert expected_dynamic in (0.0, 1.0)
+
+
+# ---------------------------------------------------------------------------
+# P0-3 (F-18) — ``cap < floor`` post-clip returns ``floor`` and emits the
+# canonical audit code; it MUST NOT raise. The runner used to crash on
+# legitimate envelopes where a misconfigured codim scheduler supplied
+# ``n_max < n_min``; the fail-closed path now returns the floor and the
+# audit code captures the degenerate envelope.
+# ---------------------------------------------------------------------------
+
+
+def test_bounded_merge_returns_floor_on_cap_below_floor() -> None:
+    """``cap < floor`` post-clip returns the ``floor`` and emits the audit code.
+
+    Regression test for F-18 / P0-3: the bounded merge used to raise
+    :class:`MergeAuthorityError` on ``cap < floor`` (the
+    documentation explicitly said "implementations MUST NOT raise on
+    legitimate caller input such as ``cap < floor``"). The runner
+    crashed on legitimate envelopes; the fix returns ``floor`` and
+    the canonical ``merge_cap_below_floor`` audit code is appended.
+    """
+    audit: list[str] = []
+    # ``floor > cap`` post-clip → the fail-closed path runs.
+    result = bounded_merge(
+        prev=0.5,
+        dynamic=0.7,
+        cap=0.3,
+        floor=0.4,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+        audit_codes=audit,
+    )
+    assert result == pytest.approx(0.4, abs=1e-12)
+    # The canonical audit code captures the degenerate envelope.
+    assert any(
+        code.startswith("merge_cap_below_floor") for code in audit
+    ), f"expected merge_cap_below_floor in audit; got {audit!r}"
+
+
+def test_bounded_merge_survives_cap_below_floor_no_raise() -> None:
+    """The runner's loop MUST NOT raise on ``cap < floor``; the audit
+    code is the canonical signal (P0-3)."""
+    # No ``audit_codes`` argument → the operator MUST still return a
+    # finite value (no raise). The degenerate-envelope signal is
+    # silently dropped but the runner survives.
+    result = bounded_merge(
+        prev=0.5,
+        dynamic=0.7,
+        cap=0.2,
+        floor=0.8,
+        delta_cap_up=1.0,
+        delta_cap_down=1.0,
+    )
+    assert result == pytest.approx(0.8, abs=1e-12)
+    assert 0.0 <= result <= 1.0

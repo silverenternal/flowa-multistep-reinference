@@ -521,6 +521,149 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper-supporting survey (r4-survey)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Paper-supporting survey (r4-survey)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../r4-survey/18-comprehensive-code-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../r4-survey/19-fix-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 fix plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/PHASE4_DOCSTRING_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 docstring audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1370,7 +1513,8 @@ exterior_gap_e_rho:
 <span class="normal"><a href="#__codelineno-0-627">627</a></span>
 <span class="normal"><a href="#__codelineno-0-628">628</a></span>
 <span class="normal"><a href="#__codelineno-0-629">629</a></span>
-<span class="normal"><a href="#__codelineno-0-630">630</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-359" name="__codelineno-0-359"></a><span class="k">class</span><span class="w"> </span><span class="nc">BoundedMergeOperator</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-630">630</a></span>
+<span class="normal"><a href="#__codelineno-0-631">631</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-359" name="__codelineno-0-359"></a><span class="k">class</span><span class="w"> </span><span class="nc">BoundedMergeOperator</span><span class="p">:</span>
 <a id="__codelineno-0-360" name="__codelineno-0-360"></a><span class="w">    </span><span class="sd">"""Canonical symmetric, capped, floor-aware merge (DTB-R3).</span>
 <a id="__codelineno-0-361" name="__codelineno-0-361"></a>
 <a id="__codelineno-0-362" name="__codelineno-0-362"></a><span class="sd">    The merge replaces the legacy ``max(prev, dynamic)`` operator with</span>
@@ -1595,53 +1739,54 @@ exterior_gap_e_rho:
 <a id="__codelineno-0-581" name="__codelineno-0-581"></a>            <span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">_coerce_unit_real</span><span class="p">(</span><span class="n">delta_cap_down</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"delta_cap_down"</span><span class="p">))</span>
 <a id="__codelineno-0-582" name="__codelineno-0-582"></a>        <span class="p">)</span>
 <a id="__codelineno-0-583" name="__codelineno-0-583"></a>
-<a id="__codelineno-0-584" name="__codelineno-0-584"></a>        <span class="c1"># If ``cap &lt; floor`` after clipping (the only path that can</span>
+<a id="__codelineno-0-584" name="__codelineno-0-584"></a>        <span class="c1"># P0-3 (F-18) — if ``cap &lt; floor`` after clipping (the only path that can</span>
 <a id="__codelineno-0-585" name="__codelineno-0-585"></a>        <span class="c1"># still reach this state, since both are in ``[0, 1]`` post-clip),</span>
-<a id="__codelineno-0-586" name="__codelineno-0-586"></a>        <span class="c1"># fail-closed: append the canonical audit code and raise so a</span>
-<a id="__codelineno-0-587" name="__codelineno-0-587"></a>        <span class="c1"># downstream audit reader can see the broken configuration.</span>
-<a id="__codelineno-0-588" name="__codelineno-0-588"></a>        <span class="c1"># The legacy silent-swap semantics were removed (F5): the</span>
-<a id="__codelineno-0-589" name="__codelineno-0-589"></a>        <span class="c1"># caller's clearly-wrong envelope should not be silently</span>
-<a id="__codelineno-0-590" name="__codelineno-0-590"></a>        <span class="c1"># inverted to a wider range.</span>
-<a id="__codelineno-0-591" name="__codelineno-0-591"></a>        <span class="k">if</span> <span class="n">cap_f</span> <span class="o">&lt;</span> <span class="n">floor_f</span><span class="p">:</span>
-<a id="__codelineno-0-592" name="__codelineno-0-592"></a>            <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-593" name="__codelineno-0-593"></a>                <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-<a id="__codelineno-0-594" name="__codelineno-0-594"></a>                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ERR_CAP_BELOW_FLOOR</span><span class="si">}</span><span class="s2">:cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-595" name="__codelineno-0-595"></a>                <span class="p">)</span>
-<a id="__codelineno-0-596" name="__codelineno-0-596"></a>            <span class="k">raise</span> <span class="n">MergeAuthorityError</span><span class="p">(</span>
-<a id="__codelineno-0-597" name="__codelineno-0-597"></a>                <span class="sa">f</span><span class="s2">"cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">}</span><span class="s2"> &lt; floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">}</span><span class="s2"> post-clip; "</span>
-<a id="__codelineno-0-598" name="__codelineno-0-598"></a>                <span class="sa">f</span><span class="s2">"swap semantics removed (audit code already appended)."</span>
-<a id="__codelineno-0-599" name="__codelineno-0-599"></a>            <span class="p">)</span>
-<a id="__codelineno-0-600" name="__codelineno-0-600"></a>
-<a id="__codelineno-0-601" name="__codelineno-0-601"></a>        <span class="c1"># Step 1 — clamp the dynamic value to the envelope.</span>
-<a id="__codelineno-0-602" name="__codelineno-0-602"></a>        <span class="n">target</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">dynamic_f</span><span class="p">))</span>
-<a id="__codelineno-0-603" name="__codelineno-0-603"></a>
-<a id="__codelineno-0-604" name="__codelineno-0-604"></a>        <span class="c1"># Step 2 — bound the per-round delta. The interval is</span>
-<a id="__codelineno-0-605" name="__codelineno-0-605"></a>        <span class="c1"># [max(floor, prev - delta_cap_down), min(cap, prev + delta_cap_up)].</span>
-<a id="__codelineno-0-606" name="__codelineno-0-606"></a>        <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">-</span> <span class="n">down_f</span><span class="p">)</span>
-<a id="__codelineno-0-607" name="__codelineno-0-607"></a>        <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">+</span> <span class="n">up_f</span><span class="p">)</span>
-<a id="__codelineno-0-608" name="__codelineno-0-608"></a>
-<a id="__codelineno-0-609" name="__codelineno-0-609"></a>        <span class="c1"># Defensive: collapse an empty interval to the floor. This is the</span>
-<a id="__codelineno-0-610" name="__codelineno-0-610"></a>        <span class="c1"># documented fail-closed path; the merge never raises on legitimate</span>
-<a id="__codelineno-0-611" name="__codelineno-0-611"></a>        <span class="c1"># call patterns and never returns a value below the floor. When</span>
-<a id="__codelineno-0-612" name="__codelineno-0-612"></a>        <span class="c1"># the caller opted into audit emission, we surface the collapse so</span>
-<a id="__codelineno-0-613" name="__codelineno-0-613"></a>        <span class="c1"># downstream consumers can audit-replay it.</span>
-<a id="__codelineno-0-614" name="__codelineno-0-614"></a>        <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">:</span>
-<a id="__codelineno-0-615" name="__codelineno-0-615"></a>            <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-616" name="__codelineno-0-616"></a>                <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-<a id="__codelineno-0-617" name="__codelineno-0-617"></a>                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MERGE_DEGENERATE_INTERVAL</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-618" name="__codelineno-0-618"></a>                    <span class="sa">f</span><span class="s2">":cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:prev=</span><span class="si">{</span><span class="n">prev_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-619" name="__codelineno-0-619"></a>                    <span class="sa">f</span><span class="s2">":up=</span><span class="si">{</span><span class="n">up_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:down=</span><span class="si">{</span><span class="n">down_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-620" name="__codelineno-0-620"></a>                <span class="p">)</span>
-<a id="__codelineno-0-621" name="__codelineno-0-621"></a>            <span class="c1"># ``_prev_audit`` / ``_dynamic_audit`` are the audit</span>
-<a id="__codelineno-0-622" name="__codelineno-0-622"></a>            <span class="c1"># side-effects from the clip step above; the operator</span>
-<a id="__codelineno-0-623" name="__codelineno-0-623"></a>            <span class="c1"># returns the (clipped) floor. Silence the unused-but-set</span>
-<a id="__codelineno-0-624" name="__codelineno-0-624"></a>            <span class="c1"># lint explicitly.</span>
-<a id="__codelineno-0-625" name="__codelineno-0-625"></a>            <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
-<a id="__codelineno-0-626" name="__codelineno-0-626"></a>            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
-<a id="__codelineno-0-627" name="__codelineno-0-627"></a>
-<a id="__codelineno-0-628" name="__codelineno-0-628"></a>        <span class="c1"># Silence the unused-but-set lint explicitly.</span>
-<a id="__codelineno-0-629" name="__codelineno-0-629"></a>        <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
-<a id="__codelineno-0-630" name="__codelineno-0-630"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span>
+<a id="__codelineno-0-586" name="__codelineno-0-586"></a>        <span class="c1"># fail-closed: append the canonical audit code and return the</span>
+<a id="__codelineno-0-587" name="__codelineno-0-587"></a>        <span class="c1"># ``floor`` value so the runner's loop survives a degenerate</span>
+<a id="__codelineno-0-588" name="__codelineno-0-588"></a>        <span class="c1"># envelope. Earlier this raised :class:`MergeAuthorityError`,</span>
+<a id="__codelineno-0-589" name="__codelineno-0-589"></a>        <span class="c1"># which crashed the runner on legitimate caller envelopes</span>
+<a id="__codelineno-0-590" name="__codelineno-0-590"></a>        <span class="c1"># (per the :data:`MergeOperatorProtocol` docstring: callers</span>
+<a id="__codelineno-0-591" name="__codelineno-0-591"></a>        <span class="c1"># MUST NOT raise on legitimate envelopes such as ``cap &lt;</span>
+<a id="__codelineno-0-592" name="__codelineno-0-592"></a>        <span class="c1"># floor``). The audit code is the canonical signal — the</span>
+<a id="__codelineno-0-593" name="__codelineno-0-593"></a>        <span class="c1"># caller can detect "degenerate envelope" via</span>
+<a id="__codelineno-0-594" name="__codelineno-0-594"></a>        <span class="c1"># ``_ERR_CAP_BELOW_FLOOR`` without crashing the loop.</span>
+<a id="__codelineno-0-595" name="__codelineno-0-595"></a>        <span class="k">if</span> <span class="n">cap_f</span> <span class="o">&lt;</span> <span class="n">floor_f</span><span class="p">:</span>
+<a id="__codelineno-0-596" name="__codelineno-0-596"></a>            <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-597" name="__codelineno-0-597"></a>                <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-0-598" name="__codelineno-0-598"></a>                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ERR_CAP_BELOW_FLOOR</span><span class="si">}</span><span class="s2">:cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-599" name="__codelineno-0-599"></a>                <span class="p">)</span>
+<a id="__codelineno-0-600" name="__codelineno-0-600"></a>            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
+<a id="__codelineno-0-601" name="__codelineno-0-601"></a>
+<a id="__codelineno-0-602" name="__codelineno-0-602"></a>        <span class="c1"># Step 1 — clamp the dynamic value to the envelope.</span>
+<a id="__codelineno-0-603" name="__codelineno-0-603"></a>        <span class="n">target</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">dynamic_f</span><span class="p">))</span>
+<a id="__codelineno-0-604" name="__codelineno-0-604"></a>
+<a id="__codelineno-0-605" name="__codelineno-0-605"></a>        <span class="c1"># Step 2 — bound the per-round delta. The interval is</span>
+<a id="__codelineno-0-606" name="__codelineno-0-606"></a>        <span class="c1"># [max(floor, prev - delta_cap_down), min(cap, prev + delta_cap_up)].</span>
+<a id="__codelineno-0-607" name="__codelineno-0-607"></a>        <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">-</span> <span class="n">down_f</span><span class="p">)</span>
+<a id="__codelineno-0-608" name="__codelineno-0-608"></a>        <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">+</span> <span class="n">up_f</span><span class="p">)</span>
+<a id="__codelineno-0-609" name="__codelineno-0-609"></a>
+<a id="__codelineno-0-610" name="__codelineno-0-610"></a>        <span class="c1"># Defensive: collapse an empty interval to the floor. This is the</span>
+<a id="__codelineno-0-611" name="__codelineno-0-611"></a>        <span class="c1"># documented fail-closed path; the merge never raises on legitimate</span>
+<a id="__codelineno-0-612" name="__codelineno-0-612"></a>        <span class="c1"># call patterns and never returns a value below the floor. When</span>
+<a id="__codelineno-0-613" name="__codelineno-0-613"></a>        <span class="c1"># the caller opted into audit emission, we surface the collapse so</span>
+<a id="__codelineno-0-614" name="__codelineno-0-614"></a>        <span class="c1"># downstream consumers can audit-replay it.</span>
+<a id="__codelineno-0-615" name="__codelineno-0-615"></a>        <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">:</span>
+<a id="__codelineno-0-616" name="__codelineno-0-616"></a>            <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-617" name="__codelineno-0-617"></a>                <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-0-618" name="__codelineno-0-618"></a>                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MERGE_DEGENERATE_INTERVAL</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-619" name="__codelineno-0-619"></a>                    <span class="sa">f</span><span class="s2">":cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:prev=</span><span class="si">{</span><span class="n">prev_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-620" name="__codelineno-0-620"></a>                    <span class="sa">f</span><span class="s2">":up=</span><span class="si">{</span><span class="n">up_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:down=</span><span class="si">{</span><span class="n">down_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-621" name="__codelineno-0-621"></a>                <span class="p">)</span>
+<a id="__codelineno-0-622" name="__codelineno-0-622"></a>            <span class="c1"># ``_prev_audit`` / ``_dynamic_audit`` are the audit</span>
+<a id="__codelineno-0-623" name="__codelineno-0-623"></a>            <span class="c1"># side-effects from the clip step above; the operator</span>
+<a id="__codelineno-0-624" name="__codelineno-0-624"></a>            <span class="c1"># returns the (clipped) floor. Silence the unused-but-set</span>
+<a id="__codelineno-0-625" name="__codelineno-0-625"></a>            <span class="c1"># lint explicitly.</span>
+<a id="__codelineno-0-626" name="__codelineno-0-626"></a>            <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
+<a id="__codelineno-0-627" name="__codelineno-0-627"></a>            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
+<a id="__codelineno-0-628" name="__codelineno-0-628"></a>
+<a id="__codelineno-0-629" name="__codelineno-0-629"></a>        <span class="c1"># Silence the unused-but-set lint explicitly.</span>
+<a id="__codelineno-0-630" name="__codelineno-0-630"></a>        <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
+<a id="__codelineno-0-631" name="__codelineno-0-631"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2050,7 +2195,8 @@ regardless of caller input.</p>
 <span class="normal"><a href="#__codelineno-0-627">627</a></span>
 <span class="normal"><a href="#__codelineno-0-628">628</a></span>
 <span class="normal"><a href="#__codelineno-0-629">629</a></span>
-<span class="normal"><a href="#__codelineno-0-630">630</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-630">630</a></span>
+<span class="normal"><a href="#__codelineno-0-631">631</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span>
 <a id="__codelineno-0-492" name="__codelineno-0-492"></a>    <span class="bp">self</span><span class="p">,</span>
 <a id="__codelineno-0-493" name="__codelineno-0-493"></a>    <span class="n">prev</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <a id="__codelineno-0-494" name="__codelineno-0-494"></a>    <span class="n">dynamic</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -2143,53 +2289,54 @@ regardless of caller input.</p>
 <a id="__codelineno-0-581" name="__codelineno-0-581"></a>        <span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">_coerce_unit_real</span><span class="p">(</span><span class="n">delta_cap_down</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"delta_cap_down"</span><span class="p">))</span>
 <a id="__codelineno-0-582" name="__codelineno-0-582"></a>    <span class="p">)</span>
 <a id="__codelineno-0-583" name="__codelineno-0-583"></a>
-<a id="__codelineno-0-584" name="__codelineno-0-584"></a>    <span class="c1"># If ``cap &lt; floor`` after clipping (the only path that can</span>
+<a id="__codelineno-0-584" name="__codelineno-0-584"></a>    <span class="c1"># P0-3 (F-18) — if ``cap &lt; floor`` after clipping (the only path that can</span>
 <a id="__codelineno-0-585" name="__codelineno-0-585"></a>    <span class="c1"># still reach this state, since both are in ``[0, 1]`` post-clip),</span>
-<a id="__codelineno-0-586" name="__codelineno-0-586"></a>    <span class="c1"># fail-closed: append the canonical audit code and raise so a</span>
-<a id="__codelineno-0-587" name="__codelineno-0-587"></a>    <span class="c1"># downstream audit reader can see the broken configuration.</span>
-<a id="__codelineno-0-588" name="__codelineno-0-588"></a>    <span class="c1"># The legacy silent-swap semantics were removed (F5): the</span>
-<a id="__codelineno-0-589" name="__codelineno-0-589"></a>    <span class="c1"># caller's clearly-wrong envelope should not be silently</span>
-<a id="__codelineno-0-590" name="__codelineno-0-590"></a>    <span class="c1"># inverted to a wider range.</span>
-<a id="__codelineno-0-591" name="__codelineno-0-591"></a>    <span class="k">if</span> <span class="n">cap_f</span> <span class="o">&lt;</span> <span class="n">floor_f</span><span class="p">:</span>
-<a id="__codelineno-0-592" name="__codelineno-0-592"></a>        <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-593" name="__codelineno-0-593"></a>            <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-<a id="__codelineno-0-594" name="__codelineno-0-594"></a>                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ERR_CAP_BELOW_FLOOR</span><span class="si">}</span><span class="s2">:cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-595" name="__codelineno-0-595"></a>            <span class="p">)</span>
-<a id="__codelineno-0-596" name="__codelineno-0-596"></a>        <span class="k">raise</span> <span class="n">MergeAuthorityError</span><span class="p">(</span>
-<a id="__codelineno-0-597" name="__codelineno-0-597"></a>            <span class="sa">f</span><span class="s2">"cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">}</span><span class="s2"> &lt; floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">}</span><span class="s2"> post-clip; "</span>
-<a id="__codelineno-0-598" name="__codelineno-0-598"></a>            <span class="sa">f</span><span class="s2">"swap semantics removed (audit code already appended)."</span>
-<a id="__codelineno-0-599" name="__codelineno-0-599"></a>        <span class="p">)</span>
-<a id="__codelineno-0-600" name="__codelineno-0-600"></a>
-<a id="__codelineno-0-601" name="__codelineno-0-601"></a>    <span class="c1"># Step 1 — clamp the dynamic value to the envelope.</span>
-<a id="__codelineno-0-602" name="__codelineno-0-602"></a>    <span class="n">target</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">dynamic_f</span><span class="p">))</span>
-<a id="__codelineno-0-603" name="__codelineno-0-603"></a>
-<a id="__codelineno-0-604" name="__codelineno-0-604"></a>    <span class="c1"># Step 2 — bound the per-round delta. The interval is</span>
-<a id="__codelineno-0-605" name="__codelineno-0-605"></a>    <span class="c1"># [max(floor, prev - delta_cap_down), min(cap, prev + delta_cap_up)].</span>
-<a id="__codelineno-0-606" name="__codelineno-0-606"></a>    <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">-</span> <span class="n">down_f</span><span class="p">)</span>
-<a id="__codelineno-0-607" name="__codelineno-0-607"></a>    <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">+</span> <span class="n">up_f</span><span class="p">)</span>
-<a id="__codelineno-0-608" name="__codelineno-0-608"></a>
-<a id="__codelineno-0-609" name="__codelineno-0-609"></a>    <span class="c1"># Defensive: collapse an empty interval to the floor. This is the</span>
-<a id="__codelineno-0-610" name="__codelineno-0-610"></a>    <span class="c1"># documented fail-closed path; the merge never raises on legitimate</span>
-<a id="__codelineno-0-611" name="__codelineno-0-611"></a>    <span class="c1"># call patterns and never returns a value below the floor. When</span>
-<a id="__codelineno-0-612" name="__codelineno-0-612"></a>    <span class="c1"># the caller opted into audit emission, we surface the collapse so</span>
-<a id="__codelineno-0-613" name="__codelineno-0-613"></a>    <span class="c1"># downstream consumers can audit-replay it.</span>
-<a id="__codelineno-0-614" name="__codelineno-0-614"></a>    <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">:</span>
-<a id="__codelineno-0-615" name="__codelineno-0-615"></a>        <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-616" name="__codelineno-0-616"></a>            <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-<a id="__codelineno-0-617" name="__codelineno-0-617"></a>                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MERGE_DEGENERATE_INTERVAL</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-618" name="__codelineno-0-618"></a>                <span class="sa">f</span><span class="s2">":cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:prev=</span><span class="si">{</span><span class="n">prev_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-619" name="__codelineno-0-619"></a>                <span class="sa">f</span><span class="s2">":up=</span><span class="si">{</span><span class="n">up_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:down=</span><span class="si">{</span><span class="n">down_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-620" name="__codelineno-0-620"></a>            <span class="p">)</span>
-<a id="__codelineno-0-621" name="__codelineno-0-621"></a>        <span class="c1"># ``_prev_audit`` / ``_dynamic_audit`` are the audit</span>
-<a id="__codelineno-0-622" name="__codelineno-0-622"></a>        <span class="c1"># side-effects from the clip step above; the operator</span>
-<a id="__codelineno-0-623" name="__codelineno-0-623"></a>        <span class="c1"># returns the (clipped) floor. Silence the unused-but-set</span>
-<a id="__codelineno-0-624" name="__codelineno-0-624"></a>        <span class="c1"># lint explicitly.</span>
-<a id="__codelineno-0-625" name="__codelineno-0-625"></a>        <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
-<a id="__codelineno-0-626" name="__codelineno-0-626"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
-<a id="__codelineno-0-627" name="__codelineno-0-627"></a>
-<a id="__codelineno-0-628" name="__codelineno-0-628"></a>    <span class="c1"># Silence the unused-but-set lint explicitly.</span>
-<a id="__codelineno-0-629" name="__codelineno-0-629"></a>    <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
-<a id="__codelineno-0-630" name="__codelineno-0-630"></a>    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span>
+<a id="__codelineno-0-586" name="__codelineno-0-586"></a>    <span class="c1"># fail-closed: append the canonical audit code and return the</span>
+<a id="__codelineno-0-587" name="__codelineno-0-587"></a>    <span class="c1"># ``floor`` value so the runner's loop survives a degenerate</span>
+<a id="__codelineno-0-588" name="__codelineno-0-588"></a>    <span class="c1"># envelope. Earlier this raised :class:`MergeAuthorityError`,</span>
+<a id="__codelineno-0-589" name="__codelineno-0-589"></a>    <span class="c1"># which crashed the runner on legitimate caller envelopes</span>
+<a id="__codelineno-0-590" name="__codelineno-0-590"></a>    <span class="c1"># (per the :data:`MergeOperatorProtocol` docstring: callers</span>
+<a id="__codelineno-0-591" name="__codelineno-0-591"></a>    <span class="c1"># MUST NOT raise on legitimate envelopes such as ``cap &lt;</span>
+<a id="__codelineno-0-592" name="__codelineno-0-592"></a>    <span class="c1"># floor``). The audit code is the canonical signal — the</span>
+<a id="__codelineno-0-593" name="__codelineno-0-593"></a>    <span class="c1"># caller can detect "degenerate envelope" via</span>
+<a id="__codelineno-0-594" name="__codelineno-0-594"></a>    <span class="c1"># ``_ERR_CAP_BELOW_FLOOR`` without crashing the loop.</span>
+<a id="__codelineno-0-595" name="__codelineno-0-595"></a>    <span class="k">if</span> <span class="n">cap_f</span> <span class="o">&lt;</span> <span class="n">floor_f</span><span class="p">:</span>
+<a id="__codelineno-0-596" name="__codelineno-0-596"></a>        <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-597" name="__codelineno-0-597"></a>            <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-0-598" name="__codelineno-0-598"></a>                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ERR_CAP_BELOW_FLOOR</span><span class="si">}</span><span class="s2">:cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-599" name="__codelineno-0-599"></a>            <span class="p">)</span>
+<a id="__codelineno-0-600" name="__codelineno-0-600"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
+<a id="__codelineno-0-601" name="__codelineno-0-601"></a>
+<a id="__codelineno-0-602" name="__codelineno-0-602"></a>    <span class="c1"># Step 1 — clamp the dynamic value to the envelope.</span>
+<a id="__codelineno-0-603" name="__codelineno-0-603"></a>    <span class="n">target</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">dynamic_f</span><span class="p">))</span>
+<a id="__codelineno-0-604" name="__codelineno-0-604"></a>
+<a id="__codelineno-0-605" name="__codelineno-0-605"></a>    <span class="c1"># Step 2 — bound the per-round delta. The interval is</span>
+<a id="__codelineno-0-606" name="__codelineno-0-606"></a>    <span class="c1"># [max(floor, prev - delta_cap_down), min(cap, prev + delta_cap_up)].</span>
+<a id="__codelineno-0-607" name="__codelineno-0-607"></a>    <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">-</span> <span class="n">down_f</span><span class="p">)</span>
+<a id="__codelineno-0-608" name="__codelineno-0-608"></a>    <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">+</span> <span class="n">up_f</span><span class="p">)</span>
+<a id="__codelineno-0-609" name="__codelineno-0-609"></a>
+<a id="__codelineno-0-610" name="__codelineno-0-610"></a>    <span class="c1"># Defensive: collapse an empty interval to the floor. This is the</span>
+<a id="__codelineno-0-611" name="__codelineno-0-611"></a>    <span class="c1"># documented fail-closed path; the merge never raises on legitimate</span>
+<a id="__codelineno-0-612" name="__codelineno-0-612"></a>    <span class="c1"># call patterns and never returns a value below the floor. When</span>
+<a id="__codelineno-0-613" name="__codelineno-0-613"></a>    <span class="c1"># the caller opted into audit emission, we surface the collapse so</span>
+<a id="__codelineno-0-614" name="__codelineno-0-614"></a>    <span class="c1"># downstream consumers can audit-replay it.</span>
+<a id="__codelineno-0-615" name="__codelineno-0-615"></a>    <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">:</span>
+<a id="__codelineno-0-616" name="__codelineno-0-616"></a>        <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-617" name="__codelineno-0-617"></a>            <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-0-618" name="__codelineno-0-618"></a>                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MERGE_DEGENERATE_INTERVAL</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-619" name="__codelineno-0-619"></a>                <span class="sa">f</span><span class="s2">":cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:prev=</span><span class="si">{</span><span class="n">prev_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-620" name="__codelineno-0-620"></a>                <span class="sa">f</span><span class="s2">":up=</span><span class="si">{</span><span class="n">up_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:down=</span><span class="si">{</span><span class="n">down_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-621" name="__codelineno-0-621"></a>            <span class="p">)</span>
+<a id="__codelineno-0-622" name="__codelineno-0-622"></a>        <span class="c1"># ``_prev_audit`` / ``_dynamic_audit`` are the audit</span>
+<a id="__codelineno-0-623" name="__codelineno-0-623"></a>        <span class="c1"># side-effects from the clip step above; the operator</span>
+<a id="__codelineno-0-624" name="__codelineno-0-624"></a>        <span class="c1"># returns the (clipped) floor. Silence the unused-but-set</span>
+<a id="__codelineno-0-625" name="__codelineno-0-625"></a>        <span class="c1"># lint explicitly.</span>
+<a id="__codelineno-0-626" name="__codelineno-0-626"></a>        <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
+<a id="__codelineno-0-627" name="__codelineno-0-627"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
+<a id="__codelineno-0-628" name="__codelineno-0-628"></a>
+<a id="__codelineno-0-629" name="__codelineno-0-629"></a>    <span class="c1"># Silence the unused-but-set lint explicitly.</span>
+<a id="__codelineno-0-630" name="__codelineno-0-630"></a>    <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
+<a id="__codelineno-0-631" name="__codelineno-0-631"></a>    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2875,8 +3022,7 @@ and the canonical operator can never drift.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>adaptive_reflow\algorithm\merge_operator.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-841">841</a></span>
-<span class="normal"><a href="#__codelineno-0-842">842</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-842">842</a></span>
 <span class="normal"><a href="#__codelineno-0-843">843</a></span>
 <span class="normal"><a href="#__codelineno-0-844">844</a></span>
 <span class="normal"><a href="#__codelineno-0-845">845</a></span>
@@ -2884,16 +3030,17 @@ and the canonical operator can never drift.</p>
 <span class="normal"><a href="#__codelineno-0-847">847</a></span>
 <span class="normal"><a href="#__codelineno-0-848">848</a></span>
 <span class="normal"><a href="#__codelineno-0-849">849</a></span>
-<span class="normal"><a href="#__codelineno-0-850">850</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-841" name="__codelineno-0-841"></a><span class="k">def</span><span class="w"> </span><span class="nf">default_bounded_merge_operator</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BoundedMergeOperator</span><span class="p">:</span>
-<a id="__codelineno-0-842" name="__codelineno-0-842"></a><span class="w">    </span><span class="sd">"""Return the canonical :class:`BoundedMergeOperator` singleton-factory.</span>
-<a id="__codelineno-0-843" name="__codelineno-0-843"></a>
-<a id="__codelineno-0-844" name="__codelineno-0-844"></a><span class="sd">    The operator is cheap to construct (no state beyond its tolerance),</span>
-<a id="__codelineno-0-845" name="__codelineno-0-845"></a><span class="sd">    so callers may also instantiate :class:`BoundedMergeOperator`</span>
-<a id="__codelineno-0-846" name="__codelineno-0-846"></a><span class="sd">    directly. This factory is the single entry point used by</span>
-<a id="__codelineno-0-847" name="__codelineno-0-847"></a><span class="sd">    :func:`adaptive_reflow.frame.merge.bounded_merge` so the wrapper</span>
-<a id="__codelineno-0-848" name="__codelineno-0-848"></a><span class="sd">    and the canonical operator can never drift.</span>
-<a id="__codelineno-0-849" name="__codelineno-0-849"></a><span class="sd">    """</span>
-<a id="__codelineno-0-850" name="__codelineno-0-850"></a>    <span class="k">return</span> <span class="n">BoundedMergeOperator</span><span class="p">()</span>
+<span class="normal"><a href="#__codelineno-0-850">850</a></span>
+<span class="normal"><a href="#__codelineno-0-851">851</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-842" name="__codelineno-0-842"></a><span class="k">def</span><span class="w"> </span><span class="nf">default_bounded_merge_operator</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BoundedMergeOperator</span><span class="p">:</span>
+<a id="__codelineno-0-843" name="__codelineno-0-843"></a><span class="w">    </span><span class="sd">"""Return the canonical :class:`BoundedMergeOperator` singleton-factory.</span>
+<a id="__codelineno-0-844" name="__codelineno-0-844"></a>
+<a id="__codelineno-0-845" name="__codelineno-0-845"></a><span class="sd">    The operator is cheap to construct (no state beyond its tolerance),</span>
+<a id="__codelineno-0-846" name="__codelineno-0-846"></a><span class="sd">    so callers may also instantiate :class:`BoundedMergeOperator`</span>
+<a id="__codelineno-0-847" name="__codelineno-0-847"></a><span class="sd">    directly. This factory is the single entry point used by</span>
+<a id="__codelineno-0-848" name="__codelineno-0-848"></a><span class="sd">    :func:`adaptive_reflow.frame.merge.bounded_merge` so the wrapper</span>
+<a id="__codelineno-0-849" name="__codelineno-0-849"></a><span class="sd">    and the canonical operator can never drift.</span>
+<a id="__codelineno-0-850" name="__codelineno-0-850"></a><span class="sd">    """</span>
+<a id="__codelineno-0-851" name="__codelineno-0-851"></a>    <span class="k">return</span> <span class="n">BoundedMergeOperator</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -16141,7 +16288,8 @@ exterior_gap_e_rho:
 <span class="normal"><a href="#__codelineno-0-627">627</a></span>
 <span class="normal"><a href="#__codelineno-0-628">628</a></span>
 <span class="normal"><a href="#__codelineno-0-629">629</a></span>
-<span class="normal"><a href="#__codelineno-0-630">630</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-359" name="__codelineno-0-359"></a><span class="k">class</span><span class="w"> </span><span class="nc">BoundedMergeOperator</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-630">630</a></span>
+<span class="normal"><a href="#__codelineno-0-631">631</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-359" name="__codelineno-0-359"></a><span class="k">class</span><span class="w"> </span><span class="nc">BoundedMergeOperator</span><span class="p">:</span>
 <a id="__codelineno-0-360" name="__codelineno-0-360"></a><span class="w">    </span><span class="sd">"""Canonical symmetric, capped, floor-aware merge (DTB-R3).</span>
 <a id="__codelineno-0-361" name="__codelineno-0-361"></a>
 <a id="__codelineno-0-362" name="__codelineno-0-362"></a><span class="sd">    The merge replaces the legacy ``max(prev, dynamic)`` operator with</span>
@@ -16366,53 +16514,54 @@ exterior_gap_e_rho:
 <a id="__codelineno-0-581" name="__codelineno-0-581"></a>            <span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">_coerce_unit_real</span><span class="p">(</span><span class="n">delta_cap_down</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"delta_cap_down"</span><span class="p">))</span>
 <a id="__codelineno-0-582" name="__codelineno-0-582"></a>        <span class="p">)</span>
 <a id="__codelineno-0-583" name="__codelineno-0-583"></a>
-<a id="__codelineno-0-584" name="__codelineno-0-584"></a>        <span class="c1"># If ``cap &lt; floor`` after clipping (the only path that can</span>
+<a id="__codelineno-0-584" name="__codelineno-0-584"></a>        <span class="c1"># P0-3 (F-18) — if ``cap &lt; floor`` after clipping (the only path that can</span>
 <a id="__codelineno-0-585" name="__codelineno-0-585"></a>        <span class="c1"># still reach this state, since both are in ``[0, 1]`` post-clip),</span>
-<a id="__codelineno-0-586" name="__codelineno-0-586"></a>        <span class="c1"># fail-closed: append the canonical audit code and raise so a</span>
-<a id="__codelineno-0-587" name="__codelineno-0-587"></a>        <span class="c1"># downstream audit reader can see the broken configuration.</span>
-<a id="__codelineno-0-588" name="__codelineno-0-588"></a>        <span class="c1"># The legacy silent-swap semantics were removed (F5): the</span>
-<a id="__codelineno-0-589" name="__codelineno-0-589"></a>        <span class="c1"># caller's clearly-wrong envelope should not be silently</span>
-<a id="__codelineno-0-590" name="__codelineno-0-590"></a>        <span class="c1"># inverted to a wider range.</span>
-<a id="__codelineno-0-591" name="__codelineno-0-591"></a>        <span class="k">if</span> <span class="n">cap_f</span> <span class="o">&lt;</span> <span class="n">floor_f</span><span class="p">:</span>
-<a id="__codelineno-0-592" name="__codelineno-0-592"></a>            <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-593" name="__codelineno-0-593"></a>                <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-<a id="__codelineno-0-594" name="__codelineno-0-594"></a>                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ERR_CAP_BELOW_FLOOR</span><span class="si">}</span><span class="s2">:cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-595" name="__codelineno-0-595"></a>                <span class="p">)</span>
-<a id="__codelineno-0-596" name="__codelineno-0-596"></a>            <span class="k">raise</span> <span class="n">MergeAuthorityError</span><span class="p">(</span>
-<a id="__codelineno-0-597" name="__codelineno-0-597"></a>                <span class="sa">f</span><span class="s2">"cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">}</span><span class="s2"> &lt; floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">}</span><span class="s2"> post-clip; "</span>
-<a id="__codelineno-0-598" name="__codelineno-0-598"></a>                <span class="sa">f</span><span class="s2">"swap semantics removed (audit code already appended)."</span>
-<a id="__codelineno-0-599" name="__codelineno-0-599"></a>            <span class="p">)</span>
-<a id="__codelineno-0-600" name="__codelineno-0-600"></a>
-<a id="__codelineno-0-601" name="__codelineno-0-601"></a>        <span class="c1"># Step 1 — clamp the dynamic value to the envelope.</span>
-<a id="__codelineno-0-602" name="__codelineno-0-602"></a>        <span class="n">target</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">dynamic_f</span><span class="p">))</span>
-<a id="__codelineno-0-603" name="__codelineno-0-603"></a>
-<a id="__codelineno-0-604" name="__codelineno-0-604"></a>        <span class="c1"># Step 2 — bound the per-round delta. The interval is</span>
-<a id="__codelineno-0-605" name="__codelineno-0-605"></a>        <span class="c1"># [max(floor, prev - delta_cap_down), min(cap, prev + delta_cap_up)].</span>
-<a id="__codelineno-0-606" name="__codelineno-0-606"></a>        <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">-</span> <span class="n">down_f</span><span class="p">)</span>
-<a id="__codelineno-0-607" name="__codelineno-0-607"></a>        <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">+</span> <span class="n">up_f</span><span class="p">)</span>
-<a id="__codelineno-0-608" name="__codelineno-0-608"></a>
-<a id="__codelineno-0-609" name="__codelineno-0-609"></a>        <span class="c1"># Defensive: collapse an empty interval to the floor. This is the</span>
-<a id="__codelineno-0-610" name="__codelineno-0-610"></a>        <span class="c1"># documented fail-closed path; the merge never raises on legitimate</span>
-<a id="__codelineno-0-611" name="__codelineno-0-611"></a>        <span class="c1"># call patterns and never returns a value below the floor. When</span>
-<a id="__codelineno-0-612" name="__codelineno-0-612"></a>        <span class="c1"># the caller opted into audit emission, we surface the collapse so</span>
-<a id="__codelineno-0-613" name="__codelineno-0-613"></a>        <span class="c1"># downstream consumers can audit-replay it.</span>
-<a id="__codelineno-0-614" name="__codelineno-0-614"></a>        <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">:</span>
-<a id="__codelineno-0-615" name="__codelineno-0-615"></a>            <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-616" name="__codelineno-0-616"></a>                <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-<a id="__codelineno-0-617" name="__codelineno-0-617"></a>                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MERGE_DEGENERATE_INTERVAL</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-618" name="__codelineno-0-618"></a>                    <span class="sa">f</span><span class="s2">":cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:prev=</span><span class="si">{</span><span class="n">prev_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-619" name="__codelineno-0-619"></a>                    <span class="sa">f</span><span class="s2">":up=</span><span class="si">{</span><span class="n">up_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:down=</span><span class="si">{</span><span class="n">down_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-620" name="__codelineno-0-620"></a>                <span class="p">)</span>
-<a id="__codelineno-0-621" name="__codelineno-0-621"></a>            <span class="c1"># ``_prev_audit`` / ``_dynamic_audit`` are the audit</span>
-<a id="__codelineno-0-622" name="__codelineno-0-622"></a>            <span class="c1"># side-effects from the clip step above; the operator</span>
-<a id="__codelineno-0-623" name="__codelineno-0-623"></a>            <span class="c1"># returns the (clipped) floor. Silence the unused-but-set</span>
-<a id="__codelineno-0-624" name="__codelineno-0-624"></a>            <span class="c1"># lint explicitly.</span>
-<a id="__codelineno-0-625" name="__codelineno-0-625"></a>            <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
-<a id="__codelineno-0-626" name="__codelineno-0-626"></a>            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
-<a id="__codelineno-0-627" name="__codelineno-0-627"></a>
-<a id="__codelineno-0-628" name="__codelineno-0-628"></a>        <span class="c1"># Silence the unused-but-set lint explicitly.</span>
-<a id="__codelineno-0-629" name="__codelineno-0-629"></a>        <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
-<a id="__codelineno-0-630" name="__codelineno-0-630"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span>
+<a id="__codelineno-0-586" name="__codelineno-0-586"></a>        <span class="c1"># fail-closed: append the canonical audit code and return the</span>
+<a id="__codelineno-0-587" name="__codelineno-0-587"></a>        <span class="c1"># ``floor`` value so the runner's loop survives a degenerate</span>
+<a id="__codelineno-0-588" name="__codelineno-0-588"></a>        <span class="c1"># envelope. Earlier this raised :class:`MergeAuthorityError`,</span>
+<a id="__codelineno-0-589" name="__codelineno-0-589"></a>        <span class="c1"># which crashed the runner on legitimate caller envelopes</span>
+<a id="__codelineno-0-590" name="__codelineno-0-590"></a>        <span class="c1"># (per the :data:`MergeOperatorProtocol` docstring: callers</span>
+<a id="__codelineno-0-591" name="__codelineno-0-591"></a>        <span class="c1"># MUST NOT raise on legitimate envelopes such as ``cap &lt;</span>
+<a id="__codelineno-0-592" name="__codelineno-0-592"></a>        <span class="c1"># floor``). The audit code is the canonical signal — the</span>
+<a id="__codelineno-0-593" name="__codelineno-0-593"></a>        <span class="c1"># caller can detect "degenerate envelope" via</span>
+<a id="__codelineno-0-594" name="__codelineno-0-594"></a>        <span class="c1"># ``_ERR_CAP_BELOW_FLOOR`` without crashing the loop.</span>
+<a id="__codelineno-0-595" name="__codelineno-0-595"></a>        <span class="k">if</span> <span class="n">cap_f</span> <span class="o">&lt;</span> <span class="n">floor_f</span><span class="p">:</span>
+<a id="__codelineno-0-596" name="__codelineno-0-596"></a>            <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-597" name="__codelineno-0-597"></a>                <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-0-598" name="__codelineno-0-598"></a>                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ERR_CAP_BELOW_FLOOR</span><span class="si">}</span><span class="s2">:cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-599" name="__codelineno-0-599"></a>                <span class="p">)</span>
+<a id="__codelineno-0-600" name="__codelineno-0-600"></a>            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
+<a id="__codelineno-0-601" name="__codelineno-0-601"></a>
+<a id="__codelineno-0-602" name="__codelineno-0-602"></a>        <span class="c1"># Step 1 — clamp the dynamic value to the envelope.</span>
+<a id="__codelineno-0-603" name="__codelineno-0-603"></a>        <span class="n">target</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">dynamic_f</span><span class="p">))</span>
+<a id="__codelineno-0-604" name="__codelineno-0-604"></a>
+<a id="__codelineno-0-605" name="__codelineno-0-605"></a>        <span class="c1"># Step 2 — bound the per-round delta. The interval is</span>
+<a id="__codelineno-0-606" name="__codelineno-0-606"></a>        <span class="c1"># [max(floor, prev - delta_cap_down), min(cap, prev + delta_cap_up)].</span>
+<a id="__codelineno-0-607" name="__codelineno-0-607"></a>        <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">-</span> <span class="n">down_f</span><span class="p">)</span>
+<a id="__codelineno-0-608" name="__codelineno-0-608"></a>        <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">+</span> <span class="n">up_f</span><span class="p">)</span>
+<a id="__codelineno-0-609" name="__codelineno-0-609"></a>
+<a id="__codelineno-0-610" name="__codelineno-0-610"></a>        <span class="c1"># Defensive: collapse an empty interval to the floor. This is the</span>
+<a id="__codelineno-0-611" name="__codelineno-0-611"></a>        <span class="c1"># documented fail-closed path; the merge never raises on legitimate</span>
+<a id="__codelineno-0-612" name="__codelineno-0-612"></a>        <span class="c1"># call patterns and never returns a value below the floor. When</span>
+<a id="__codelineno-0-613" name="__codelineno-0-613"></a>        <span class="c1"># the caller opted into audit emission, we surface the collapse so</span>
+<a id="__codelineno-0-614" name="__codelineno-0-614"></a>        <span class="c1"># downstream consumers can audit-replay it.</span>
+<a id="__codelineno-0-615" name="__codelineno-0-615"></a>        <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">:</span>
+<a id="__codelineno-0-616" name="__codelineno-0-616"></a>            <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-617" name="__codelineno-0-617"></a>                <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-0-618" name="__codelineno-0-618"></a>                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MERGE_DEGENERATE_INTERVAL</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-619" name="__codelineno-0-619"></a>                    <span class="sa">f</span><span class="s2">":cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:prev=</span><span class="si">{</span><span class="n">prev_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-620" name="__codelineno-0-620"></a>                    <span class="sa">f</span><span class="s2">":up=</span><span class="si">{</span><span class="n">up_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:down=</span><span class="si">{</span><span class="n">down_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-621" name="__codelineno-0-621"></a>                <span class="p">)</span>
+<a id="__codelineno-0-622" name="__codelineno-0-622"></a>            <span class="c1"># ``_prev_audit`` / ``_dynamic_audit`` are the audit</span>
+<a id="__codelineno-0-623" name="__codelineno-0-623"></a>            <span class="c1"># side-effects from the clip step above; the operator</span>
+<a id="__codelineno-0-624" name="__codelineno-0-624"></a>            <span class="c1"># returns the (clipped) floor. Silence the unused-but-set</span>
+<a id="__codelineno-0-625" name="__codelineno-0-625"></a>            <span class="c1"># lint explicitly.</span>
+<a id="__codelineno-0-626" name="__codelineno-0-626"></a>            <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
+<a id="__codelineno-0-627" name="__codelineno-0-627"></a>            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
+<a id="__codelineno-0-628" name="__codelineno-0-628"></a>
+<a id="__codelineno-0-629" name="__codelineno-0-629"></a>        <span class="c1"># Silence the unused-but-set lint explicitly.</span>
+<a id="__codelineno-0-630" name="__codelineno-0-630"></a>        <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
+<a id="__codelineno-0-631" name="__codelineno-0-631"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -16821,7 +16970,8 @@ regardless of caller input.</p>
 <span class="normal"><a href="#__codelineno-0-627">627</a></span>
 <span class="normal"><a href="#__codelineno-0-628">628</a></span>
 <span class="normal"><a href="#__codelineno-0-629">629</a></span>
-<span class="normal"><a href="#__codelineno-0-630">630</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span>
+<span class="normal"><a href="#__codelineno-0-630">630</a></span>
+<span class="normal"><a href="#__codelineno-0-631">631</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="k">def</span><span class="w"> </span><span class="nf">merge</span><span class="p">(</span>
 <a id="__codelineno-0-492" name="__codelineno-0-492"></a>    <span class="bp">self</span><span class="p">,</span>
 <a id="__codelineno-0-493" name="__codelineno-0-493"></a>    <span class="n">prev</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <a id="__codelineno-0-494" name="__codelineno-0-494"></a>    <span class="n">dynamic</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -16914,53 +17064,54 @@ regardless of caller input.</p>
 <a id="__codelineno-0-581" name="__codelineno-0-581"></a>        <span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">_coerce_unit_real</span><span class="p">(</span><span class="n">delta_cap_down</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"delta_cap_down"</span><span class="p">))</span>
 <a id="__codelineno-0-582" name="__codelineno-0-582"></a>    <span class="p">)</span>
 <a id="__codelineno-0-583" name="__codelineno-0-583"></a>
-<a id="__codelineno-0-584" name="__codelineno-0-584"></a>    <span class="c1"># If ``cap &lt; floor`` after clipping (the only path that can</span>
+<a id="__codelineno-0-584" name="__codelineno-0-584"></a>    <span class="c1"># P0-3 (F-18) — if ``cap &lt; floor`` after clipping (the only path that can</span>
 <a id="__codelineno-0-585" name="__codelineno-0-585"></a>    <span class="c1"># still reach this state, since both are in ``[0, 1]`` post-clip),</span>
-<a id="__codelineno-0-586" name="__codelineno-0-586"></a>    <span class="c1"># fail-closed: append the canonical audit code and raise so a</span>
-<a id="__codelineno-0-587" name="__codelineno-0-587"></a>    <span class="c1"># downstream audit reader can see the broken configuration.</span>
-<a id="__codelineno-0-588" name="__codelineno-0-588"></a>    <span class="c1"># The legacy silent-swap semantics were removed (F5): the</span>
-<a id="__codelineno-0-589" name="__codelineno-0-589"></a>    <span class="c1"># caller's clearly-wrong envelope should not be silently</span>
-<a id="__codelineno-0-590" name="__codelineno-0-590"></a>    <span class="c1"># inverted to a wider range.</span>
-<a id="__codelineno-0-591" name="__codelineno-0-591"></a>    <span class="k">if</span> <span class="n">cap_f</span> <span class="o">&lt;</span> <span class="n">floor_f</span><span class="p">:</span>
-<a id="__codelineno-0-592" name="__codelineno-0-592"></a>        <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-593" name="__codelineno-0-593"></a>            <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-<a id="__codelineno-0-594" name="__codelineno-0-594"></a>                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ERR_CAP_BELOW_FLOOR</span><span class="si">}</span><span class="s2">:cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-595" name="__codelineno-0-595"></a>            <span class="p">)</span>
-<a id="__codelineno-0-596" name="__codelineno-0-596"></a>        <span class="k">raise</span> <span class="n">MergeAuthorityError</span><span class="p">(</span>
-<a id="__codelineno-0-597" name="__codelineno-0-597"></a>            <span class="sa">f</span><span class="s2">"cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">}</span><span class="s2"> &lt; floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">}</span><span class="s2"> post-clip; "</span>
-<a id="__codelineno-0-598" name="__codelineno-0-598"></a>            <span class="sa">f</span><span class="s2">"swap semantics removed (audit code already appended)."</span>
-<a id="__codelineno-0-599" name="__codelineno-0-599"></a>        <span class="p">)</span>
-<a id="__codelineno-0-600" name="__codelineno-0-600"></a>
-<a id="__codelineno-0-601" name="__codelineno-0-601"></a>    <span class="c1"># Step 1 — clamp the dynamic value to the envelope.</span>
-<a id="__codelineno-0-602" name="__codelineno-0-602"></a>    <span class="n">target</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">dynamic_f</span><span class="p">))</span>
-<a id="__codelineno-0-603" name="__codelineno-0-603"></a>
-<a id="__codelineno-0-604" name="__codelineno-0-604"></a>    <span class="c1"># Step 2 — bound the per-round delta. The interval is</span>
-<a id="__codelineno-0-605" name="__codelineno-0-605"></a>    <span class="c1"># [max(floor, prev - delta_cap_down), min(cap, prev + delta_cap_up)].</span>
-<a id="__codelineno-0-606" name="__codelineno-0-606"></a>    <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">-</span> <span class="n">down_f</span><span class="p">)</span>
-<a id="__codelineno-0-607" name="__codelineno-0-607"></a>    <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">+</span> <span class="n">up_f</span><span class="p">)</span>
-<a id="__codelineno-0-608" name="__codelineno-0-608"></a>
-<a id="__codelineno-0-609" name="__codelineno-0-609"></a>    <span class="c1"># Defensive: collapse an empty interval to the floor. This is the</span>
-<a id="__codelineno-0-610" name="__codelineno-0-610"></a>    <span class="c1"># documented fail-closed path; the merge never raises on legitimate</span>
-<a id="__codelineno-0-611" name="__codelineno-0-611"></a>    <span class="c1"># call patterns and never returns a value below the floor. When</span>
-<a id="__codelineno-0-612" name="__codelineno-0-612"></a>    <span class="c1"># the caller opted into audit emission, we surface the collapse so</span>
-<a id="__codelineno-0-613" name="__codelineno-0-613"></a>    <span class="c1"># downstream consumers can audit-replay it.</span>
-<a id="__codelineno-0-614" name="__codelineno-0-614"></a>    <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">:</span>
-<a id="__codelineno-0-615" name="__codelineno-0-615"></a>        <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-616" name="__codelineno-0-616"></a>            <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-<a id="__codelineno-0-617" name="__codelineno-0-617"></a>                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MERGE_DEGENERATE_INTERVAL</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-618" name="__codelineno-0-618"></a>                <span class="sa">f</span><span class="s2">":cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:prev=</span><span class="si">{</span><span class="n">prev_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-619" name="__codelineno-0-619"></a>                <span class="sa">f</span><span class="s2">":up=</span><span class="si">{</span><span class="n">up_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:down=</span><span class="si">{</span><span class="n">down_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
-<a id="__codelineno-0-620" name="__codelineno-0-620"></a>            <span class="p">)</span>
-<a id="__codelineno-0-621" name="__codelineno-0-621"></a>        <span class="c1"># ``_prev_audit`` / ``_dynamic_audit`` are the audit</span>
-<a id="__codelineno-0-622" name="__codelineno-0-622"></a>        <span class="c1"># side-effects from the clip step above; the operator</span>
-<a id="__codelineno-0-623" name="__codelineno-0-623"></a>        <span class="c1"># returns the (clipped) floor. Silence the unused-but-set</span>
-<a id="__codelineno-0-624" name="__codelineno-0-624"></a>        <span class="c1"># lint explicitly.</span>
-<a id="__codelineno-0-625" name="__codelineno-0-625"></a>        <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
-<a id="__codelineno-0-626" name="__codelineno-0-626"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
-<a id="__codelineno-0-627" name="__codelineno-0-627"></a>
-<a id="__codelineno-0-628" name="__codelineno-0-628"></a>    <span class="c1"># Silence the unused-but-set lint explicitly.</span>
-<a id="__codelineno-0-629" name="__codelineno-0-629"></a>    <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
-<a id="__codelineno-0-630" name="__codelineno-0-630"></a>    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span>
+<a id="__codelineno-0-586" name="__codelineno-0-586"></a>    <span class="c1"># fail-closed: append the canonical audit code and return the</span>
+<a id="__codelineno-0-587" name="__codelineno-0-587"></a>    <span class="c1"># ``floor`` value so the runner's loop survives a degenerate</span>
+<a id="__codelineno-0-588" name="__codelineno-0-588"></a>    <span class="c1"># envelope. Earlier this raised :class:`MergeAuthorityError`,</span>
+<a id="__codelineno-0-589" name="__codelineno-0-589"></a>    <span class="c1"># which crashed the runner on legitimate caller envelopes</span>
+<a id="__codelineno-0-590" name="__codelineno-0-590"></a>    <span class="c1"># (per the :data:`MergeOperatorProtocol` docstring: callers</span>
+<a id="__codelineno-0-591" name="__codelineno-0-591"></a>    <span class="c1"># MUST NOT raise on legitimate envelopes such as ``cap &lt;</span>
+<a id="__codelineno-0-592" name="__codelineno-0-592"></a>    <span class="c1"># floor``). The audit code is the canonical signal — the</span>
+<a id="__codelineno-0-593" name="__codelineno-0-593"></a>    <span class="c1"># caller can detect "degenerate envelope" via</span>
+<a id="__codelineno-0-594" name="__codelineno-0-594"></a>    <span class="c1"># ``_ERR_CAP_BELOW_FLOOR`` without crashing the loop.</span>
+<a id="__codelineno-0-595" name="__codelineno-0-595"></a>    <span class="k">if</span> <span class="n">cap_f</span> <span class="o">&lt;</span> <span class="n">floor_f</span><span class="p">:</span>
+<a id="__codelineno-0-596" name="__codelineno-0-596"></a>        <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-597" name="__codelineno-0-597"></a>            <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-0-598" name="__codelineno-0-598"></a>                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ERR_CAP_BELOW_FLOOR</span><span class="si">}</span><span class="s2">:cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-599" name="__codelineno-0-599"></a>            <span class="p">)</span>
+<a id="__codelineno-0-600" name="__codelineno-0-600"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
+<a id="__codelineno-0-601" name="__codelineno-0-601"></a>
+<a id="__codelineno-0-602" name="__codelineno-0-602"></a>    <span class="c1"># Step 1 — clamp the dynamic value to the envelope.</span>
+<a id="__codelineno-0-603" name="__codelineno-0-603"></a>    <span class="n">target</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">dynamic_f</span><span class="p">))</span>
+<a id="__codelineno-0-604" name="__codelineno-0-604"></a>
+<a id="__codelineno-0-605" name="__codelineno-0-605"></a>    <span class="c1"># Step 2 — bound the per-round delta. The interval is</span>
+<a id="__codelineno-0-606" name="__codelineno-0-606"></a>    <span class="c1"># [max(floor, prev - delta_cap_down), min(cap, prev + delta_cap_up)].</span>
+<a id="__codelineno-0-607" name="__codelineno-0-607"></a>    <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">-</span> <span class="n">down_f</span><span class="p">)</span>
+<a id="__codelineno-0-608" name="__codelineno-0-608"></a>    <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cap_f</span><span class="p">,</span> <span class="n">prev_f</span> <span class="o">+</span> <span class="n">up_f</span><span class="p">)</span>
+<a id="__codelineno-0-609" name="__codelineno-0-609"></a>
+<a id="__codelineno-0-610" name="__codelineno-0-610"></a>    <span class="c1"># Defensive: collapse an empty interval to the floor. This is the</span>
+<a id="__codelineno-0-611" name="__codelineno-0-611"></a>    <span class="c1"># documented fail-closed path; the merge never raises on legitimate</span>
+<a id="__codelineno-0-612" name="__codelineno-0-612"></a>    <span class="c1"># call patterns and never returns a value below the floor. When</span>
+<a id="__codelineno-0-613" name="__codelineno-0-613"></a>    <span class="c1"># the caller opted into audit emission, we surface the collapse so</span>
+<a id="__codelineno-0-614" name="__codelineno-0-614"></a>    <span class="c1"># downstream consumers can audit-replay it.</span>
+<a id="__codelineno-0-615" name="__codelineno-0-615"></a>    <span class="k">if</span> <span class="n">hi</span> <span class="o">&lt;</span> <span class="n">lo</span><span class="p">:</span>
+<a id="__codelineno-0-616" name="__codelineno-0-616"></a>        <span class="k">if</span> <span class="n">audit_codes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-617" name="__codelineno-0-617"></a>            <span class="n">audit_codes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+<a id="__codelineno-0-618" name="__codelineno-0-618"></a>                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MERGE_DEGENERATE_INTERVAL</span><span class="si">}</span><span class="s2">:floor=</span><span class="si">{</span><span class="n">floor_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-619" name="__codelineno-0-619"></a>                <span class="sa">f</span><span class="s2">":cap=</span><span class="si">{</span><span class="n">cap_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:prev=</span><span class="si">{</span><span class="n">prev_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-620" name="__codelineno-0-620"></a>                <span class="sa">f</span><span class="s2">":up=</span><span class="si">{</span><span class="n">up_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">:down=</span><span class="si">{</span><span class="n">down_f</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+<a id="__codelineno-0-621" name="__codelineno-0-621"></a>            <span class="p">)</span>
+<a id="__codelineno-0-622" name="__codelineno-0-622"></a>        <span class="c1"># ``_prev_audit`` / ``_dynamic_audit`` are the audit</span>
+<a id="__codelineno-0-623" name="__codelineno-0-623"></a>        <span class="c1"># side-effects from the clip step above; the operator</span>
+<a id="__codelineno-0-624" name="__codelineno-0-624"></a>        <span class="c1"># returns the (clipped) floor. Silence the unused-but-set</span>
+<a id="__codelineno-0-625" name="__codelineno-0-625"></a>        <span class="c1"># lint explicitly.</span>
+<a id="__codelineno-0-626" name="__codelineno-0-626"></a>        <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
+<a id="__codelineno-0-627" name="__codelineno-0-627"></a>        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">floor_f</span><span class="p">)</span>
+<a id="__codelineno-0-628" name="__codelineno-0-628"></a>
+<a id="__codelineno-0-629" name="__codelineno-0-629"></a>    <span class="c1"># Silence the unused-but-set lint explicitly.</span>
+<a id="__codelineno-0-630" name="__codelineno-0-630"></a>    <span class="k">del</span> <span class="n">_prev_audit</span><span class="p">,</span> <span class="n">_dynamic_audit</span>
+<a id="__codelineno-0-631" name="__codelineno-0-631"></a>    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -25039,8 +25190,7 @@ and the canonical operator can never drift.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>adaptive_reflow\algorithm\merge_operator.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-841">841</a></span>
-<span class="normal"><a href="#__codelineno-0-842">842</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-842">842</a></span>
 <span class="normal"><a href="#__codelineno-0-843">843</a></span>
 <span class="normal"><a href="#__codelineno-0-844">844</a></span>
 <span class="normal"><a href="#__codelineno-0-845">845</a></span>
@@ -25048,16 +25198,17 @@ and the canonical operator can never drift.</p>
 <span class="normal"><a href="#__codelineno-0-847">847</a></span>
 <span class="normal"><a href="#__codelineno-0-848">848</a></span>
 <span class="normal"><a href="#__codelineno-0-849">849</a></span>
-<span class="normal"><a href="#__codelineno-0-850">850</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-841" name="__codelineno-0-841"></a><span class="k">def</span><span class="w"> </span><span class="nf">default_bounded_merge_operator</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BoundedMergeOperator</span><span class="p">:</span>
-<a id="__codelineno-0-842" name="__codelineno-0-842"></a><span class="w">    </span><span class="sd">"""Return the canonical :class:`BoundedMergeOperator` singleton-factory.</span>
-<a id="__codelineno-0-843" name="__codelineno-0-843"></a>
-<a id="__codelineno-0-844" name="__codelineno-0-844"></a><span class="sd">    The operator is cheap to construct (no state beyond its tolerance),</span>
-<a id="__codelineno-0-845" name="__codelineno-0-845"></a><span class="sd">    so callers may also instantiate :class:`BoundedMergeOperator`</span>
-<a id="__codelineno-0-846" name="__codelineno-0-846"></a><span class="sd">    directly. This factory is the single entry point used by</span>
-<a id="__codelineno-0-847" name="__codelineno-0-847"></a><span class="sd">    :func:`adaptive_reflow.frame.merge.bounded_merge` so the wrapper</span>
-<a id="__codelineno-0-848" name="__codelineno-0-848"></a><span class="sd">    and the canonical operator can never drift.</span>
-<a id="__codelineno-0-849" name="__codelineno-0-849"></a><span class="sd">    """</span>
-<a id="__codelineno-0-850" name="__codelineno-0-850"></a>    <span class="k">return</span> <span class="n">BoundedMergeOperator</span><span class="p">()</span>
+<span class="normal"><a href="#__codelineno-0-850">850</a></span>
+<span class="normal"><a href="#__codelineno-0-851">851</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-842" name="__codelineno-0-842"></a><span class="k">def</span><span class="w"> </span><span class="nf">default_bounded_merge_operator</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">BoundedMergeOperator</span><span class="p">:</span>
+<a id="__codelineno-0-843" name="__codelineno-0-843"></a><span class="w">    </span><span class="sd">"""Return the canonical :class:`BoundedMergeOperator` singleton-factory.</span>
+<a id="__codelineno-0-844" name="__codelineno-0-844"></a>
+<a id="__codelineno-0-845" name="__codelineno-0-845"></a><span class="sd">    The operator is cheap to construct (no state beyond its tolerance),</span>
+<a id="__codelineno-0-846" name="__codelineno-0-846"></a><span class="sd">    so callers may also instantiate :class:`BoundedMergeOperator`</span>
+<a id="__codelineno-0-847" name="__codelineno-0-847"></a><span class="sd">    directly. This factory is the single entry point used by</span>
+<a id="__codelineno-0-848" name="__codelineno-0-848"></a><span class="sd">    :func:`adaptive_reflow.frame.merge.bounded_merge` so the wrapper</span>
+<a id="__codelineno-0-849" name="__codelineno-0-849"></a><span class="sd">    and the canonical operator can never drift.</span>
+<a id="__codelineno-0-850" name="__codelineno-0-850"></a><span class="sd">    """</span>
+<a id="__codelineno-0-851" name="__codelineno-0-851"></a>    <span class="k">return</span> <span class="n">BoundedMergeOperator</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

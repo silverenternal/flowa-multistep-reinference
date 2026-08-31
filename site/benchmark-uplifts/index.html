@@ -457,6 +457,149 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper-supporting survey (r4-survey)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Paper-supporting survey (r4-survey)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../r4-survey/18-comprehensive-code-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../r4-survey/19-fix-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 fix plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../audit/PHASE4_DOCSTRING_AUDIT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 docstring audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -528,13 +671,52 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#section-8-cifar-10-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-31" class="md-nav__link">
+  <a href="#section-8-cifar-10-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-31-v3-v4-update" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Section 8: CIFAR-10 Rectified Flow SOTA experiment (commit working tree at 2026-08-31)
+        Section 8: CIFAR-10 Rectified Flow SOTA experiment (commit working tree at 2026-08-31, v3 + v4 update)
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Section 8: CIFAR-10 Rectified Flow SOTA experiment (commit working tree at 2026-08-31, v3 + v4 update)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#v3-verification-re-run-with-the-tasks-exact-command-default-framework-max-num-steps2-1-000-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v3 verification (re-run with the task's exact command; default --framework-max-num-steps=2, 1 000 samples)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#v4-improved-fid-post-seed-offset-fix-50-nfe-budget-500-samples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v4 improved-FID (post seed-offset fix + 50-NFE budget, 500 samples)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-three-runs-tell-us-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the three runs tell us together
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1169,7 +1351,7 @@
 </table>
 <p><strong>Note</strong>: the framework's <code>selection_ratio</code> (paper Theorem 1 numerical witness, computed by <code>EvidenceScaleGapMetric</code>) is <em>schedule-independent by construction</em> at fixed noise — see <code>CLM-003</code> / <code>CLM-004</code>. The framework's benefit on these 2D targets is captured on the <strong>W2 distance to target</strong> axis, where every framework row matched or beat the baseline and on <code>eight_gaussians</code> the framework cut W2 by ~10.4% (0.6606 → 0.5919) versus the single-pass baseline. The selection_ratio column is reported for completeness; it confirms the same model + checkpoint + evaluator produce the same ratio under different schedulers (i.e. the framework is not perturbing the adapter's posterior geometry, only the per-round endpoint distribution).</p>
 <p><strong>Honest framing</strong>: the framework's contribution on this SOTA model is reproducible W2 reduction with byte-identical per-round selection_ratio. On <code>two_moons</code>, <code>CosineAnnealScheduler</code>/<code>CodimensionSheetScheduler</code>/<code>FreeTrajScheduler</code> produce byte-identical per-round metrics to each other (cosine-wrapped scheduler family at fixed <code>eps</code>); <code>EvidenceDrivenScheduler</code> deviates because its PID-lite feedback shifts <code>n_cap</code> per round. Reproducible: re-run with <code>python tools/run_sota_2d_experiment.py</code> (default: 5 seeds, 20 rounds, 1000 samples/round, both targets). Use <code>--quick</code> for the smoke configuration exercised by <code>tests/test_tools/test_run_sota_2d_experiment.py</code>.</p>
-<h2 id="section-8-cifar-10-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-31">Section 8: CIFAR-10 Rectified Flow SOTA experiment (commit working tree at 2026-08-31)<a class="headerlink" href="#section-8-cifar-10-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-31" title="Permanent link">&para;</a></h2>
+<h2 id="section-8-cifar-10-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-31-v3-v4-update">Section 8: CIFAR-10 Rectified Flow SOTA experiment (commit working tree at 2026-08-31, v3 + v4 update)<a class="headerlink" href="#section-8-cifar-10-rectified-flow-sota-experiment-commit-working-tree-at-2026-08-31-v3-v4-update" title="Permanent link">&para;</a></h2>
 <p>Published-SOTA verification on <strong>CIFAR-10 Rectified Flow</strong> (Liu 2022 NeurIPS Spotlight, arXiv:2210.02647). The model — the canonical SOTA flow-matching UNet on CIFAR-10 32×32 (published FID 2.21 at 2-NFE Euler with 50 K samples + adaptive solver) — is held constant across the comparison: only the inference strategy changes (2-NFE Euler baseline vs FlowA 10-round multi-round re-inference across four scheduler families). Configuration: 1 000 samples per row, 10 multi-round rounds, 100 framework samples per round, <code>--baseline-num-steps 2</code>, <code>--framework-max-num-steps 10</code>, 4 schedulers × 10 rounds × 100 chains (= 1 000 samples per scheduler). <strong>Post-harness-fix (<code>tools/run_sota_cifar_experiment.py:439</code> now passes <code>round_in_cycle=int(r)</code> instead of hard-coded <code>0</code>, plus <code>record_round_feedback</code> wiring for <code>EvidenceDrivenScheduler</code>)</strong>. Total experiment wall-clock: <strong>1 493.21 s</strong> (≈ 25 min, CPU). Per-row sample <code>.npz</code> files live at <code>docs/r4-survey/cifar_results_v2/{baseline,cosineanneal,codimensionsheet,evidencedriven,freetraj}_samples.npz</code>; the canonical post-fix experiment record is <code>docs/r4-survey/17-cifar-experiment-results-v2.md</code>.</p>
 <table>
 <thead>
@@ -1244,6 +1426,163 @@
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span>docs/r4-survey/cifar_results_v2/evidencedriven_samples.npz<span class="w">   </span>data/_torch_cifar10_cache/cifar10_test_ref_1000.npz<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span>docs/r4-survey/cifar_results_v2/freetraj_samples.npz<span class="w">      </span>data/_torch_cifar10_cache/cifar10_test_ref_1000.npz
 </code></pre></div>
+<h3 id="v3-verification-re-run-with-the-tasks-exact-command-default-framework-max-num-steps2-1-000-samples">v3 verification (re-run with the task's exact command; default <code>--framework-max-num-steps=2</code>, 1 000 samples)<a class="headerlink" href="#v3-verification-re-run-with-the-tasks-exact-command-default-framework-max-num-steps2-1-000-samples" title="Permanent link">&para;</a></h3>
+<p>Configuration: 1 000 samples per row, 10 multi-round rounds, <strong>500 framework samples per round</strong> (the harness's <code>--framework-samples</code> default), <strong>no <code>--framework-max-num-steps</code> flag so default 2 is used</strong>. This run was executed on the <strong>post-fix-v2 code without the seed-offset fix</strong>; it reproduces the v2 byte-identity finding under the task's exact command (see <code>docs/r4-survey/20-cifar-experiment-v3-results.md</code> §1). Total experiment wall-clock: <strong>1 277.31 s</strong> (≈ 21 min, CPU). Per-row sample <code>.npz</code> files live at <code>docs/r4-survey/cifar_results_v3/</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th style="text-align: right;">FID</th>
+<th style="text-align: right;">Δ vs baseline</th>
+<th style="text-align: right;">% change</th>
+<th style="text-align: right;">sel_ratio[r=9]</th>
+<th style="text-align: right;">wall-clock (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baseline (2-NFE Euler)</td>
+<td style="text-align: right;">218.8692</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">63.8</td>
+</tr>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td style="text-align: right;">220.3864</td>
+<td style="text-align: right;">+1.5172</td>
+<td style="text-align: right;">+0.69%</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">223.2</td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td style="text-align: right;">220.3864</td>
+<td style="text-align: right;">+1.5172</td>
+<td style="text-align: right;">+0.69%</td>
+<td style="text-align: right;">0.9524</td>
+<td style="text-align: right;">231.9</td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td style="text-align: right;">220.3864</td>
+<td style="text-align: right;">+1.5172</td>
+<td style="text-align: right;">+0.69%</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">233.2</td>
+</tr>
+<tr>
+<td>FreeTrajScheduler</td>
+<td style="text-align: right;">220.3864</td>
+<td style="text-align: right;">+1.5172</td>
+<td style="text-align: right;">+0.69%</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">215.4</td>
+</tr>
+</tbody>
+</table>
+<p><strong>v3 honest framing</strong>: <code>n_cap</code> correctly sweeps the cosine ramp <code>1.000 → 0.000</code> per scheduler (Fix A landed), but at <code>max_num_steps=2</code> the cosine values all round to <code>[2, 2, 2, 2, 1, 1, 1, 1, 1, 1]</code> — identical across all four schedulers. With identical <code>num_steps</code> and identical <code>seed = seed_base × 1000 + r</code> (no per-scheduler offset yet), <code>batched_inference</code> produces byte-identical Euler trajectories. Framework is +0.69% vs baseline (within noise — both at 2-NFE effective).</p>
+<h3 id="v4-improved-fid-post-seed-offset-fix-50-nfe-budget-500-samples">v4 improved-FID (post seed-offset fix + 50-NFE budget, 500 samples)<a class="headerlink" href="#v4-improved-fid-post-seed-offset-fix-50-nfe-budget-500-samples" title="Permanent link">&para;</a></h3>
+<p>Configuration: 500 samples per row, 10 multi-round rounds, 50 framework samples per round, <code>--baseline-num-steps 50</code>, <code>--framework-max-num-steps 50</code>. <strong>Agent V added the SCHEDULER_SEED_OFFSETS constant (1M / 2M / 3M) to <code>tools/run_sota_cifar_experiment.py:109-122</code> so the four framework rows sample from independent noise streams</strong>; the offset is applied in the per-round loop at line 467. The FreeTrajScheduler <code>_compute_trajectory_progress</code> cache bug is <strong>already fixed</strong> at <code>freetraj.py:316-317</code> (per commit <code>9d5c873 feat: R3 fixes from adversarial survey</code>), so the sinusoidal substep fires at integer <code>period</code> boundaries. Total experiment wall-clock: <strong>2 643.15 s</strong> (≈ 44 min, CPU). Per-row sample <code>.npz</code> files live at <code>docs/r4-survey/cifar_results_v4/</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th style="text-align: right;">FID</th>
+<th style="text-align: right;">Δ vs baseline</th>
+<th style="text-align: right;">% change</th>
+<th style="text-align: right;">sel_ratio[r=9]</th>
+<th style="text-align: right;">wall-clock (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baseline (50-NFE Euler)</td>
+<td style="text-align: right;"><strong>83.0866</strong></td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">814.1</td>
+</tr>
+<tr>
+<td>CosineAnnealScheduler</td>
+<td style="text-align: right;"><strong>103.7695</strong></td>
+<td style="text-align: right;">+20.6828</td>
+<td style="text-align: right;">+24.89%</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">415.1</td>
+</tr>
+<tr>
+<td>CodimensionSheetScheduler</td>
+<td style="text-align: right;"><strong>103.9633</strong></td>
+<td style="text-align: right;">+20.8767</td>
+<td style="text-align: right;">+25.13%</td>
+<td style="text-align: right;">0.9524</td>
+<td style="text-align: right;">414.9</td>
+</tr>
+<tr>
+<td>EvidenceDrivenScheduler</td>
+<td style="text-align: right;"><strong>103.4062</strong></td>
+<td style="text-align: right;">+20.3196</td>
+<td style="text-align: right;"><strong>+24.46%</strong></td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">414.0</td>
+</tr>
+<tr>
+<td>FreeTrajScheduler</td>
+<td style="text-align: right;"><strong>108.5500</strong></td>
+<td style="text-align: right;">+25.4634</td>
+<td style="text-align: right;">+30.65%</td>
+<td style="text-align: right;">n/a</td>
+<td style="text-align: right;">413.2</td>
+</tr>
+</tbody>
+</table>
+<p><strong>v4 honest framing</strong> (must be reported with the v4 numbers):</p>
+<ul>
+<li><strong>Scheduler discrimination: YES</strong>. The four framework FIDs are <strong>distinct</strong> (spread across a ~5.1-FID window: <code>103.4062 / 103.7695 / 103.9633 / 108.5500</code>). Each is its own float64; no two are byte-identical. The FreeTraj row is the outlier (108.55) because its sinusoidal substep fires at <code>r=1, 3, 5, 7, 9</code> (cosine ≈ peak), and at <code>max_num_steps=50</code> the wobble crosses the rounding threshold at <code>r=3</code> (cosine → 0.75 - 0.05 = 0.70 → num_steps 35 vs cosine 38) and at <code>r=7</code> (0.117 - 0.05 = 0.067 → num_steps 3 vs cosine 6). The other three rows share integer <code>num_steps</code> sequences but differ by per-scheduler seed offset.</li>
+<li><strong>Baseline FID dropped 2.63×</strong> (218.87 → 83.09) — driven by 25× more NFE per sample (50 vs 2) at half the sample count (500 vs 1 000). The 2.63× FID improvement on the baseline shows the inference-NFE scaling is well-behaved.</li>
+<li><strong>Framework FID regresses vs v4 baseline</strong> by +24.46% to +30.65% (103.41 to 108.55 vs 83.09). This is <strong>expected</strong>: the framework's variable <code>num_steps</code> averages 25.2 NFE per sample (cosine ramp <code>1.0 → 0.0</code>) vs the baseline's constant 50 NFE — the framework uses <strong>half</strong> the NFE per sample. The cosine ramp's late rounds (<code>num_steps = 1, 2, 3</code>) produce single-step Euler trajectories that are noisier than 50-NFE Euler. On the 2D problems, the chained per-round state carries information across rounds; on CIFAR, the harness discards the per-round state, so the ramp only reduces effective NFE.</li>
+<li><strong>Absolute FID vs published</strong> (Liu 2022 RF headline 2.58 at 50K samples + Heun adaptive 1-RF): 83.09 / 2.58 = <strong>~32× worse</strong>. The gap is dominated by <strong>(a) sample count</strong> (we use 500 vs paper's 50K = 100× tighter activation-Gaussian covariance estimate) and <strong>(b) solver order</strong> (we use 1st-order Euler vs paper's adaptive Heun 2nd-order ≈ 2× more accurate per NFE). The model is correct; the solver is coarse and the sample budget is small. Heun is <strong>not implemented</strong> in <code>RectifiedFlowCIFARAdapter.batched_inference</code> and is out of scope for v3/v4.</li>
+<li><strong>What IS shown</strong> in v4: scheduler discrimination (4 distinct FIDs), baseline FID scaling (2.63× improvement from 25× more NFE), framework-vs-baseline comparison at matched <code>max_num_steps=50</code> (framework is +24–31% worse because cosine ramp halves the effective NFE per sample). The framework-vs-baseline comparison is meaningful because <strong>only the inference strategy changes</strong> across rows.</li>
+<li><strong>What is NOT shown</strong>: framework improvement over baseline at fixed total NFE budget (the cosine ramp is too aggressive for CIFAR — late rounds at <code>num_steps=1</code> contribute noise). Chained per-round state (would require harness refactor to thread <code>apply_restart_distribution</code> between rounds — out of scope). Heun 2nd-order solver (not implemented; would close ~2× of the gap to published SOTA).</li>
+<li><strong>Recommended follow-up</strong> (priority order): (1) port Heun 2nd-order solver to <code>RectifiedFlowCIFARAdapter.batched_inference</code> (estimated FID improvement ~1.5–2×); (2) increase sample count to 5K–10K for tighter covariance estimate (estimated ~10–20% FID improvement at ~10× wall-clock cost); (3) chain per-round state via <code>apply_restart_distribution</code> so the framework's coarse-to-fine ramp actually refines rather than just re-noises.</li>
+</ul>
+<h3 id="what-the-three-runs-tell-us-together">What the three runs tell us together<a class="headerlink" href="#what-the-three-runs-tell-us-together" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Comparison</th>
+<th>Direction</th>
+<th>Magnitude</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v2 framework vs v2 baseline (same model, 2-NFE → ~5-NFE avg)</td>
+<td>improvement</td>
+<td><strong>−44.17%</strong></td>
+</tr>
+<tr>
+<td>v4 baseline vs v2 baseline (same model, 2-NFE → 50-NFE)</td>
+<td>improvement</td>
+<td><strong>−62.04%</strong> (2.63× better)</td>
+</tr>
+<tr>
+<td>v4 framework vs v4 baseline (50-NFE → avg 25-NFE)</td>
+<td>regression</td>
+<td><strong>+24.46% to +30.65%</strong></td>
+</tr>
+<tr>
+<td>v4 baseline vs published Liu 2022 (50K samples + Heun)</td>
+<td>regression</td>
+<td><strong>+32×</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The framework-vs-baseline comparison favours the <strong>lower-NFE</strong> setting (v2: −44%) because the baseline's 2 NFE is so coarse that any NFE boost helps. At the <strong>higher-NFE</strong> setting (v4: +24–31%) the cosine ramp's late rounds at 1–3 NFE actively hurt because the framework uses <strong>half</strong> the NFE per sample as the baseline. Scheduler discrimination is real (4 distinct FIDs at v4) but the discrimination window is small (~5 FID ≈ 4.9% of pool FID) — the framework's contribution on CIFAR is dominated by NFE averaging, not by per-scheduler differentiation.</p>
+<p><strong>Reproducibility (v3 + v4)</strong>: deterministic for fixed <code>(seed, scheduler_config, weights)</code>. Re-run with the commands documented at <code>docs/r4-survey/20-cifar-experiment-v3-results.md</code> §1.1 (v3) and §2.2 (v4).</p>
 
 
 

@@ -510,7 +510,10 @@ def test_run_framework_four_schedulers_produce_different_traces(
     for name in CANONICAL_SCHEDULERS:
         vals = out_per_scheduler[name]
         assert vals[0] == pytest.approx(1.0, abs=1e-6), (name, vals)
-        assert vals[-1] < 0.05, (name, vals)
+        # Cosine ramp terminates at n_cap=0.0 at r=L-1; FreeTraj's
+        # trajectory substep (trajectory_amplitude=0.05) can lift the
+        # last value to exactly 0.05. Use <= to accept the substep.
+        assert vals[-1] <= 0.05, (name, vals)
         assert len(set(round(v, 4) for v in vals)) >= 5, (name, vals)
     # EvidenceDriven differs from CosineAnneal at mid-cycle (PID offset).
     # Plan §5 Risk 5: the proxy ratio is ~1.0, so the PID delta is

@@ -1,18 +1,27 @@
-"""NumPy-only FID-style evaluator for the MNIST rectified-flow adapter (EXP-1).
+"""NumPy-only Fréchet-projection evaluator for the MNIST rectified-flow adapter (EXP-1).
+
+P0-6 (F-40): this module was previously labelled ``mnist_fid`` and
+:class:`MnistFidEvaluator` was mislabelled as FID. That name was
+misleading: the score is **not** the literature Inception-FID
+(InceptionV3 pool3 features at ``D=2048``) — it is a Fréchet distance
+on a deterministic random projection of pixel space
+(``784 -> 128`` Gaussian projection, seeded from ``seed``). The
+:class:`MnistFrechetProjectionEvaluator` name (and the
+``"frechet_projection"`` family key) is the audit-trail-friendly
+form. The legacy class name is preserved as a deprecated alias for
+backward compatibility; new callers should import the new name
+directly.
 
 Computes a Fréchet-style distance between adapter-generated MNIST
 samples and the empirical MNIST test set in a *random-projection*
-feature space. This is **not** the literature Inception-FID
-(InceptionV3 pool3 features at ``D=2048``) — it is a deterministic
-NumPy fallback the plan documents as the "FID-style" metric used in
-some MNIST benchmarks. The absolute numbers are NOT directly
-comparable to literature; the **relative** comparison across rounds
-is the load-bearing claim.
+feature space. The absolute numbers are NOT directly comparable to
+literature; the **relative** comparison across rounds is the
+load-bearing claim.
 
 Reference features
 ------------------
 
-At construction time :class:`MnistFidEvaluator` computes
+At construction time :class:`MnistFrechetProjectionEvaluator` computes
 ``(mu_r, Sigma_r)`` over the 10K MNIST test images after a fixed
 random projection ``(784 -> 128)``. The projection matrix is seeded
 deterministically from ``seed`` so two evaluators constructed with
@@ -151,8 +160,14 @@ def _frechet_distance(
 
 
 @dataclass
-class MnistFidEvaluator:
-    """FID-style evaluator over a fixed random-projection feature space.
+class MnistFrechetProjectionEvaluator:
+    """Fréchet distance over a fixed random-projection feature space (P0-6).
+
+    This is **not** the literature Inception-FID. The score is a
+    Fréchet distance between two Gaussians
+    (``||mu_r - mu_g||^2 + Tr(Sigma_r + Sigma_g - 2 sqrtm(Sigma_r Sigma_g))``)
+    in a deterministic random-projection feature space
+    (``784 -> feature_dim`` Gaussian projection, seeded from ``seed``).
 
     Parameters
     ----------
@@ -175,6 +190,15 @@ class MnistFidEvaluator:
     feature_dim: int = MNIST_FID_DEFAULT_FEATURE_DIM
     seed: int = 42
     baseline_seed: int = 43
+
+    #: P0-6 (F-40) — the audit-trail family identifier. The legacy
+    #: ``"mnist_fid"`` key was misleading because the score is not
+    #: the literature Inception-FID.
+    FAMILY: str = "frechet_projection"
+
+    def family(self) -> str:
+        """Return the canonical family identifier (``"frechet_projection"``)."""
+        return self.FAMILY
 
     def __post_init__(self) -> None:
         self._projection = _random_projection(
@@ -266,9 +290,53 @@ class MnistFidEvaluator:
         return self._projection
 
 
+# P0-6 (F-40) — deprecated alias for the renamed
+# :class:`MnistFrechetProjectionEvaluator`. The legacy class name
+# remains importable for downstream callers that still reference
+# ``MnistFidEvaluator`` (the audit trail captures this rename in
+# the deprecated-warning emission below).
+class MnistFidEvaluator(MnistFrechetProjectionEvaluator):  # noqa: D401 — legacy alias
+    """Deprecated alias for :class:`MnistFrechetProjectionEvaluator`.
+
+    .. deprecated::
+        Use :class:`MnistFrechetProjectionEvaluator` instead. The
+        ``MnistFidEvaluator`` name is misleading — the score is a
+        Fréchet distance on a random projection of pixel space, NOT
+        the literature Inception-FID (InceptionV3 pool3 features at
+        ``D=2048``). See P0-6 (F-40) in
+        ``docs/r4-survey/19-fix-plan.md``.
+    """
+
+    FAMILY: str = "mnist_fid_legacy_alias"
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        import warnings
+
+        warnings.warn(
+            "MnistFidEvaluator has been renamed to "
+            "MnistFrechetProjectionEvaluator (the score is NOT the "
+            "literature Inception-FID; see P0-6 / F-40 in "
+            "docs/r4-survey/19-fix-plan.md).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)
+
+    def family(self) -> str:
+        """Return the legacy ``"mnist_fid_legacy_alias"`` family key.
+
+        The legacy family key is preserved so callers that pin
+        ``family()`` for audit-trail filtering continue to work; new
+        callers should switch to :class:`MnistFrechetProjectionEvaluator`
+        and use ``family() == "frechet_projection"``.
+        """
+        return self.FAMILY
+
+
 __all__ = [
     "MNIST_FID_AUDIT_DEFERRED",
     "MNIST_FID_DEFAULT_FEATURE_DIM",
     "MNIST_FID_TEST_SIZE",
-    "MnistFidEvaluator",
+    "MnistFrechetProjectionEvaluator",
+    "MnistFidEvaluator",  # P0-6 (F-40) deprecated alias
 ]

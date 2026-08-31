@@ -225,8 +225,14 @@ def root_cell_packing_B(
             t = -y0 / (y1 - y0)
             z = x0 + t * (x1 - x0)
             total += math.exp(-(z * z) / 4.0)
-    # Final endpoint: an exact zero at x = K would have been counted as a
-    # sign change between ys[-2] and ys[-1] -- no separate check needed.
+    # F-46 (P1-14) — final endpoint: an exact zero at x = K would NOT
+    # have been counted above. The sign-change branch requires
+    # ``y0 * y1 < 0.0`` (strict), so ``ys[-2] * 0.0 == 0.0`` is missed,
+    # and the ``y0 == 0.0`` branch inspects only ``ys[i]`` for
+    # ``i < len(xs) - 1`` so it never sees ``ys[-1]``. Without this
+    # guard, a root sitting exactly at ``x = K`` is silently dropped.
+    if ys[-1] == 0.0:
+        total += math.exp(-(xs[-1] * xs[-1]) / 4.0)
     return total
 
 

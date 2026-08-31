@@ -121,6 +121,38 @@ def test_root_cell_packing_B_sin_profile() -> None:
     assert sampled > 0.0
 
 
+def test_root_cell_packing_B_counts_exact_zero_at_K() -> None:
+    """F-46 (P1-14) — a root exactly at x = K must be counted.
+
+    Paper line 159: ``B_g := sum_{z in Z_g} e^{-z^2/4} < infinity`` is
+    over the *literal* zero set ``Z_g``, including any root at the
+    half-width endpoint. The original sampler used ``range(len(xs) -
+    1)`` for the sign-change loop and skipped the final endpoint;
+    ``ys[-2] * 0.0 == 0.0`` (not ``< 0.0``) so the sign-change branch
+    did not fire, and ``y0 == 0.0`` only inspected ``ys[i]`` for
+    ``i < len(xs) - 1``. The fix adds an explicit ``ys[-1] == 0.0``
+    guard after the loop.
+
+    This test uses ``K = 4.0, h = 1.0`` so the grid points land on
+    integer-aligned x-values (``-4, -3, ..., 3, 4``); with
+    ``g(4.0) = 0.0`` exactly, the sampler must now count the root at
+    ``x = K`` and the result must equal ``exp(-K^2/4)``.
+    """
+    # Define g(4.0) = 0.0 exactly and g(x) = x - 4 elsewhere so the
+    # only zero on the [-K, K] grid is at x = K.
+    def g_zero_at_K(x: float) -> float:
+        if x == 4.0:
+            return 0.0
+        return x - 4.0
+
+    result = root_cell_packing_B(g_zero_at_K, K=4.0, h=1.0)
+    expected = math.exp(-(4.0 * 4.0) / 4.0)  # exp(-K^2/4) = exp(-4)
+    assert math.isclose(result, expected, abs_tol=1e-12, rel_tol=1e-12), (
+        f"B_g must count exact zero at x=K; expected {expected!r}, "
+        f"got {result!r}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # per_cell_coefficient_C(rho, c)
 # ---------------------------------------------------------------------------

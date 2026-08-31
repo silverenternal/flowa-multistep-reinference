@@ -1,0 +1,1255 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated API reference + governance docs for the flowa-multistep-reinference typed-contracts framework and Flow Matching ODE re-inference engine.">
+      
+      
+      
+      
+        <link rel="prev" href="../../r4-survey/19-fix-plan/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Phase-4 docstring audit - flowa-multistep-reinference API</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-4-docstring-audit-surface" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-header__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flowa-multistep-reinference API
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase-4 docstring audit
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flowa-multistep-reinference API" class="md-nav__button md-logo" aria-label="flowa-multistep-reinference API" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flowa-multistep-reinference API
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contracts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.universal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Universal
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.frame/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frame
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.molecular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Molecular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/adaptive_reflow.adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TESTING_STRATEGY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper-supporting survey (r4-survey)
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Paper-supporting survey (r4-survey)
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../r4-survey/18-comprehensive-code-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 code review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../r4-survey/19-fix-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 fix plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 docstring audit
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Phase-4 docstring audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §1. Method
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-module-by-module-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §2. Module-by-module table
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-audit-code-vocabulary-cross-reference-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §3. Audit-code vocabulary (cross-reference surface)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-action-items-no-code-changes-read-only-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §4. Action items (no code changes — READ-ONLY audit)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §5. References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §1. Method
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-module-by-module-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §2. Module-by-module table
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-audit-code-vocabulary-cross-reference-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §3. Audit-code vocabulary (cross-reference surface)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-action-items-no-code-changes-read-only-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §4. Action items (no code changes — READ-ONLY audit)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        §5. References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="phase-4-docstring-audit-surface">Phase-4 docstring audit surface<a class="headerlink" href="#phase-4-docstring-audit-surface" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Author:</strong> Agent F4 (Phase-4 follow-up; documentation only)
+<strong>Date:</strong> 2026-08-31
+<strong>Source audit:</strong>
+<a href="../../r4-survey/18-comprehensive-code-review/"><code>../r4-survey/18-comprehensive-code-review.md</code></a>
+§5.5 (documentation drift), §6.6 (audit-code vocabulary sprawl),
+F-11, F-12, F-23, F-40, F-41.
+<strong>Status:</strong> READ-ONLY audit of docstring coverage. No code changes.
+Each entry records a module + the missing-or-stale docstring surface
+the Phase-4 audit identified, plus the recommended remediation that a
+future code-review pass should land.</p>
+</blockquote>
+<hr />
+<h2 id="1-method">§1. Method<a class="headerlink" href="#1-method" title="Permanent link">&para;</a></h2>
+<p>The Phase-4 audit walked the algorithm layer, adapters, runner,
+engine, evaluators, paper quantities, state machines, and contracts
+surface. For each module the audit checked:</p>
+<ol>
+<li><strong>Module-level docstring</strong> — does the file open with a numpydoc /
+   google-style summary that names the module's role in the
+   framework?</li>
+<li><strong>Public surface docstrings</strong> — does every Protocol method or
+   <code>__init__</code> on a public class carry a docstring that names
+   parameters, return type, and the audit invariants the method
+   upholds?</li>
+<li><strong>Audit-code vocabulary</strong> — does the docstring enumerate the
+   audit codes the module can emit? (Audit-code vocabulary sprawl is
+   a §6.6 finding.)</li>
+<li><strong>Cross-references</strong> — does the docstring point at the relevant
+   CLM-NNN claim, ADR, and regression test?</li>
+</ol>
+<p>The Phase-4 audit flagged the modules below as missing-or-stale on
+one or more of those axes. The flag column reads <code>MISSING</code> (no
+docstring at all), <code>STALE</code> (docstring present but contradicts the
+current code), <code>THIN</code> (docstring present but lacks parameters /
+audit codes / cross-references), or <code>MISLEADING</code> (docstring makes a
+claim the audit refuted).</p>
+<hr />
+<h2 id="2-module-by-module-table">§2. Module-by-module table<a class="headerlink" href="#2-module-by-module-table" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Module</th>
+<th style="text-align: right;">Line</th>
+<th>Flag</th>
+<th>Docstring axis</th>
+<th>Recommended remediation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>adaptive_reflow/algorithm/merge_operator_v3.py</code></td>
+<td style="text-align: right;">1-50</td>
+<td>THIN</td>
+<td>module-level</td>
+<td>Add numpydoc module docstring naming <code>MeanFlowMergeOperator</code>'s role as a plug-in <code>MergeOperatorProtocol</code> (arXiv:2505.13447) and the per-method audit-code vocabulary.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>adaptive_reflow/algorithm/merge_operator_v3.py</code> (<code>MeanFlowMergeOperator.merge</code>)</td>
+<td style="text-align: right;">240-300</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the <code>_prev_dynamic</code> update ordering (F-19), the <code>[0,1]</code>-then-<code>[floor,cap]</code> re-clip behaviour (F-21), and the missing <code>reset()</code> method (F-20).</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>adaptive_reflow/algorithm/merge_operator.py</code> (<code>BoundedMergeOperator</code>)</td>
+<td style="text-align: right;">254-260</td>
+<td>STALE</td>
+<td>public surface</td>
+<td>The <code>MergeOperatorProtocol</code> docstring still claims "MUST return a finite <code>float</code> ... MUST NOT raise on ... <code>cap &lt; floor</code>" — refuted by F-18. Update once the P0-3 fix lands (and per <code>CLM-042</code> the same commit must update <code>CLM-025</code>).</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>adaptive_reflow/algorithm/merge_operator.py</code> (<code>BoundedMergeOperator.tolerance</code>)</td>
+<td style="text-align: right;">386-392</td>
+<td>STALE</td>
+<td>public surface</td>
+<td>Document that <code>tolerance</code> is accepted but has no observable effect (F-23). Either remove the field or implement the near-degenerate warning.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>adaptive_reflow/algorithm/merge_operator.py</code> (<code>EMAOperator.schedule_weight</code>)</td>
+<td style="text-align: right;">807-821</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the <code>alpha</code> over-range modulation behaviour (F-22) and the defensive <code>[0,1]</code> clip that hides the bug.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>adaptive_reflow/algorithm/scheduler/freetraj.py</code> (<code>FreeTrajScheduler._compute_trajectory_progress</code>)</td>
+<td style="text-align: right;">308-321</td>
+<td>STALE</td>
+<td>public surface</td>
+<td>Docstring claims the cache advances with <code>record_round_feedback</code>; the implementation caches unconditionally (F-1). Update once P0-2 lands.</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>adaptive_reflow/algorithm/scheduler/_core.py</code> (<code>CodimensionSheetScheduler.record_round_feedback</code>)</td>
+<td style="text-align: right;">2816-2822</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the no-op semantics (F-5) and the planned C4-style uplift.</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>adaptive_reflow/algorithm/scheduler/_core.py</code> (<code>ConvergenceAdaptiveScheduler.sample</code>)</td>
+<td style="text-align: right;">1927-1935</td>
+<td>STALE</td>
+<td>public surface</td>
+<td>Document the <code>schedule_family</code> precondition for the cosine re-derivation (F-4) — raise <code>NotImplementedError</code> for non-cosine base.</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>adaptive_reflow/algorithm/scheduler/_core.py</code> (<code>_paper_evidence_balance</code>)</td>
+<td style="text-align: right;">2257-2264</td>
+<td>STALE</td>
+<td>internal helper</td>
+<td>Document the unreachable <code>denom &lt;= 0.0</code> fallback (F-11) or remove it (the closed form's input validation rules it out).</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>adaptive_reflow/algorithm/scheduler/_core.py</code> (<code>CosineScheduleConfig.frozen_before_evaluation</code>)</td>
+<td style="text-align: right;">562</td>
+<td>STALE</td>
+<td>dead config</td>
+<td>The field is set in every factory but never read (F-12). Remove or wire to the engine's pre-round evaluation freeze check.</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>adaptive_reflow/algorithm/scheduler/evidence_driven.py</code> (<code>EvidenceDrivenScheduler.config_hash</code>)</td>
+<td style="text-align: right;">402-417</td>
+<td>STALE</td>
+<td>public surface</td>
+<td>Document the missing <code>k_eps</code> and <code>eps_implicit_base</code> digest inputs (F-2); add a <code>test_evidence_driven_config_hash_varies_with_k_eps</code> regression.</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>adaptive_reflow/algorithm/scheduler/evidence_driven.py</code> (<code>EvidenceDrivenScheduler.sample</code>)</td>
+<td style="text-align: right;">338-346</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the round-lag semantics of <code>_last_pid_delta</code> (F-3) — round <code>r</code> uses round <code>r-1</code>'s evidence ratio by construction; the audit code should carry the annotation.</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>adaptive_reflow/algorithm/runner.py</code> (<code>ReInferenceRunner.run</code> merge bypass)</td>
+<td style="text-align: right;">672-686</td>
+<td>STALE</td>
+<td>public surface</td>
+<td>Document the <code>schedule_derived</code> merge bypass (F-31); remove the bypass once P0-1 lands (the bounded merge collapses to the same value for <code>delta_cap=1.0</code>, so the call is free).</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>adaptive_reflow/algorithm/runner.py</code> (<code>ReInferenceRunner.run</code> endpoint reshape)</td>
+<td style="text-align: right;">832-858</td>
+<td>STALE</td>
+<td>public surface</td>
+<td>Document the <code>.reshape(2)</code> hard-code (F-24) and the <code>adapter.state_shape</code> lookup; replace with <code>arr[-1].reshape(adapter.state_shape)</code>.</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>adaptive_reflow/algorithm/runner.py</code> (<code>ReInferenceRunner.run</code> record_round_feedback)</td>
+<td style="text-align: right;">620-1000</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the missing <code>record_round_feedback</code> call (F-32) — the runner never feeds <code>metric</code> back into the scheduler, breaking Loop 2 outside the harness.</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>adaptive_reflow/algorithm/runner.py</code> (<code>ReInferenceRunner.run</code> state-machine reset)</td>
+<td style="text-align: right;">600-1000</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the missing <code>_state_machine.reset()</code> call between runs (F-33).</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>adaptive_reflow/eval/mnist_fid.py</code> (<code>MnistFidEvaluator</code>)</td>
+<td style="text-align: right;">154-264</td>
+<td>MISLEADING</td>
+<td>public surface</td>
+<td>Rename to <code>MnistFrechetProjectionEvaluator</code> (F-40); document that the evaluator computes Fréchet distance on a random linear projection of pixel space, NOT canonical FID.</td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>adaptive_reflow/eval/w2.py</code> (<code>ModeCentreMSEW2</code>)</td>
+<td style="text-align: right;">253-295</td>
+<td>MISLEADING</td>
+<td>public surface</td>
+<td>Document that this is NOT a Wasserstein distance (F-41); the runner's metric key should carry the estimator family.</td>
+</tr>
+<tr>
+<td>19</td>
+<td><code>adaptive_reflow/eval/w2.py</code> (<code>ProjectionFreeExactW2</code>)</td>
+<td style="text-align: right;">302-440</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the quantile interpolator (F-42) — pin to <code>np.quantile(..., method='linear')</code> for byte-determinism across numpy versions.</td>
+</tr>
+<tr>
+<td>20</td>
+<td><code>adaptive_reflow/eval/coverage.py</code> (<code>CoverageEvaluator</code>)</td>
+<td style="text-align: right;">(file)</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Add <code>config_hash()</code> and <code>to_config()</code> methods (F-43) following the W2-estimator pattern.</td>
+</tr>
+<tr>
+<td>21</td>
+<td><code>adaptive_reflow/contracts/paper_quantities.py</code> (<code>sheet_evidence_A.discretization_error</code>)</td>
+<td style="text-align: right;">338</td>
+<td>STALE</td>
+<td>result dataclass</td>
+<td>Document the rough trapezoidal error bound (F-45) — replace with the exact second-derivative bound.</td>
+</tr>
+<tr>
+<td>22</td>
+<td><code>adaptive_reflow/contracts/paper_quantities.py</code> (<code>root_cell_packing_B</code>)</td>
+<td style="text-align: right;">212-229</td>
+<td>STALE</td>
+<td>public surface</td>
+<td>Document the missed zero at <code>x=K</code> (F-46) — add an explicit post-loop <code>if ys[-1] == 0.0</code> guard.</td>
+</tr>
+<tr>
+<td>23</td>
+<td><code>adaptive_reflow/contracts/paper_quantities.py</code> (<code>per_cell_coefficient_C</code>)</td>
+<td style="text-align: right;">265-275</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the silent <code>c</code>-clip (F-47) — <code>min(c*c, 1.0)</code> caps <code>c</code> at 1 without a warning.</td>
+</tr>
+<tr>
+<td>24</td>
+<td><code>adaptive_reflow/contracts/paper_quantities.py</code> (<code>exterior_gap_e_rho</code>)</td>
+<td style="text-align: right;">307-311</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the near-zero-floor risk (F-48) — when <code>e_rho &lt; 1e-4</code> the codim scheduler's <code>noise_mass</code> floor is effectively zero.</td>
+</tr>
+<tr>
+<td>25</td>
+<td><code>adaptive_reflow/contracts/state_machine.py</code> (parallel fallback)</td>
+<td style="text-align: right;">752-773</td>
+<td>THIN</td>
+<td>internal helper</td>
+<td>Document the no-region-handled parallel fallback (F-49) — emit a <code>parallel_no_region_handled</code> log entry.</td>
+</tr>
+<tr>
+<td>26</td>
+<td><code>adaptive_reflow/contracts/state_machine.py</code> (priority tie-break)</td>
+<td style="text-align: right;">813-820</td>
+<td>THIN</td>
+<td>internal helper</td>
+<td>Document the registration-order tie-break (F-50) — switch to a stable secondary key (transition's target state).</td>
+</tr>
+<tr>
+<td>27</td>
+<td><code>adaptive_reflow/contracts/state_machine.py</code> (<code>with_strict_guards</code>)</td>
+<td style="text-align: right;">425-426</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the silent-disable behaviour (F-51) — emit an audit log entry when a guard rejects even in non-strict mode.</td>
+</tr>
+<tr>
+<td>28</td>
+<td><code>adaptive_reflow/contracts/state_machine.py</code> (<code>TransitionLog</code>)</td>
+<td style="text-align: right;">134-178</td>
+<td>THIN</td>
+<td>result dataclass</td>
+<td>Add an explicit <code>__hash__</code> method (F-52) that hashes only the <code>(state, event, source, target)</code> tuple.</td>
+</tr>
+<tr>
+<td>29</td>
+<td><code>adaptive_reflow/contracts/authority.py</code> (<code>hash_policy_hash</code>)</td>
+<td style="text-align: right;">(file)</td>
+<td>THIN</td>
+<td>helper</td>
+<td>Document the missing <code>driver_computed_beta</code> digest input (F-53).</td>
+</tr>
+<tr>
+<td>30</td>
+<td><code>adaptive_reflow/contracts/authority.py</code> (<code>validate_final_restart_policy</code>)</td>
+<td style="text-align: right;">(file)</td>
+<td>THIN</td>
+<td>validator</td>
+<td>Document the missing <code>ChannelName</code> key check (F-56).</td>
+</tr>
+<tr>
+<td>31</td>
+<td><code>adaptive_reflow/frame/engine.py</code> (<code>run_round</code> <code>_policy_with_schedule_beta</code>)</td>
+<td style="text-align: right;">770-814</td>
+<td>STALE</td>
+<td>internal helper</td>
+<td>Document the inline override path (F-36) and the runner's <code>driver_computed_beta=True</code> flag that suppresses it; consolidate to one source of truth.</td>
+</tr>
+<tr>
+<td>32</td>
+<td><code>adaptive_reflow/frame/engine.py</code> (<code>run_round</code> audit order)</td>
+<td style="text-align: right;">939-1014</td>
+<td>THIN</td>
+<td>internal helper</td>
+<td>Document the canonical audit-code ordering (F-38) — capability → bundle → policy → integrator → endpoint.</td>
+</tr>
+<tr>
+<td>33</td>
+<td><code>adaptive_reflow/frame/orchestrator.py</code> (<code>AdaptiveReflowPolicyOrchestrator.merge_operator</code>)</td>
+<td style="text-align: right;">300-432</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the missing <code>MergeOperatorProtocol</code> validation (F-35).</td>
+</tr>
+<tr>
+<td>34</td>
+<td><code>adaptive_reflow/frame/orchestrator.py</code> (<code>reset_cycle</code>)</td>
+<td style="text-align: right;">1139</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the missing <code>_last_bounded_fraction</code> reset between cycles (F-39).</td>
+</tr>
+<tr>
+<td>35</td>
+<td><code>adaptive_reflow/adapters/twodim_fm.py</code> (<code>TwoDimFMAdapter.inject_forward_noise</code>)</td>
+<td style="text-align: right;">469-1182</td>
+<td>MISSING</td>
+<td>public surface</td>
+<td>Implement the missing <code>inject_forward_noise</code> hook (F-25); the runner sets <code>forward_noise_emitted=True</code> for all adapters but only CIFAR and MNIST implement the hook.</td>
+</tr>
+<tr>
+<td>36</td>
+<td><code>adaptive_reflow/adapters/rectified_flow_cifar.py</code> (<code>inject_forward_noise</code>)</td>
+<td style="text-align: right;">997-1051</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the shape precondition (F-27) — <code>if np.asarray(injected).shape != RF_CIFAR_STATE_SHAPE: raise ValueError(...)</code>.</td>
+</tr>
+<tr>
+<td>37</td>
+<td><code>adaptive_reflow/adapters/reference_flowa.py</code> (<code>export_trajectory</code>)</td>
+<td style="text-align: right;">303-318</td>
+<td>THIN</td>
+<td>public surface</td>
+<td>Document the <code>NotImplementedError</code> (F-26) — the engine should emit a separate <code>ENDPOINT_EXPORT_NOT_IMPLEMENTED</code> audit code for this case.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-audit-code-vocabulary-cross-reference-surface">§3. Audit-code vocabulary (cross-reference surface)<a class="headerlink" href="#3-audit-code-vocabulary-cross-reference-surface" title="Permanent link">&para;</a></h2>
+<p>The Phase-4 audit (§6.6) flagged the audit-code vocabulary as a sprawl
+without a central registry. The 37 modules above emit ~30 distinct
+audit codes (<code>BETA_SATURATION_FROM_PAPER_QUANTITY</code>,
+<code>FORWARD_NOISE_INJECTED</code>, <code>MERGE_DEGENERATE_INTERVAL</code>,
+<code>MERGE_PAPER_QUANTITY_FLOOR_LIFTED</code>, <code>MERGE_NONFINITE_PREV_CLIPPED</code>,
+<code>MERGE_NONFINITE_DYNAMIC_CLIPPED</code>, <code>MERGE_CAP_OUT_OF_RANGE</code>,
+<code>MERGE_FLOOR_OUT_OF_RANGE</code>, <code>MEANFLOW_DECOMPOSITION_AUDIT</code>,
+<code>MEANFLOW_PAIR_INVALID</code>, <code>ERR_CAPABILITY_UNSUPPORTED</code>,
+<code>ERR_SCHEDULE_SAMPLE_MISSING</code>, ...). A future code-review pass should
+publish an <code>AUDIT_CODE_REGISTRY</code> in <code>adaptive_reflow.contracts.audit</code>
+so the audit trail is enumerable; until then this table is the
+canonical cross-reference surface for a reader trying to enumerate the
+vocabulary from the source.</p>
+<hr />
+<h2 id="4-action-items-no-code-changes-read-only-audit">§4. Action items (no code changes — READ-ONLY audit)<a class="headerlink" href="#4-action-items-no-code-changes-read-only-audit" title="Permanent link">&para;</a></h2>
+<p>The Phase-4 audit + fix plan is documentation only. The 37 entries in
+§2 each carry a "Recommended remediation" column that the next
+code-review pass should land. Until then:</p>
+<ul>
+<li><code>tools/check_claims_consistency.py</code> exits clean (no drift).</li>
+<li><code>tools/check_docs_against_code.py</code> exits clean (no doc-claim drift).</li>
+<li>The audit + fix plan live in <code>docs/r4-survey/18-*.md</code> and
+  <code>docs/r4-survey/19-*.md</code>.</li>
+<li><code>CLM-041</code> records the bug count, <code>CLM-042</code> records the
+  <code>CLM-025</code> doc-drift risk, <code>CLM-043</code> records the docstring audit
+  surface (this file).</li>
+</ul>
+<hr />
+<h2 id="5-references">§5. References<a class="headerlink" href="#5-references" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>docs/r4-survey/18-comprehensive-code-review.md</code> — the canonical
+  audit (52 bugs, severity 1-5).</li>
+<li><code>docs/r4-survey/19-fix-plan.md</code> — the canonical fix plan (7 P0,
+  15 P1, 30 P2).</li>
+<li><code>docs/CLAIMS.md</code> — <code>CLM-041</code> (Phase-4 audit), <code>CLM-042</code> (CLM-025
+  doc-drift risk), <code>CLM-043</code> (this audit surface).</li>
+<li><code>tools/check_claims_consistency.py</code> — the verifier that auto-
+  promotes a claim to <code>PROVISIONAL</code> when its <code>Disputed by</code> reference
+  is present (relevant for <code>CLM-025</code> after P0-3 lands).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

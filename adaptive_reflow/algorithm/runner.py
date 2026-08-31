@@ -127,6 +127,17 @@ class _EvaluatorProtocol(Protocol):
         """Return a deterministic metric dict for ``bundle``."""
         ...
 
+    def family(self) -> str:
+        """Return the audit-trail family identifier (P0-7, F-41).
+
+        The runner prefixes the ``W2`` metric key with this value
+        (``metric[f"W2:{family}"]``) so downstream consumers can
+        attribute the score to the right estimator (the canonical
+        runner default is :class:`ModeCentreMSEW2`, which is **not**
+        a Wasserstein distance — see P0-7 / F-41).
+        """
+        ...
+
 
 # ---------------------------------------------------------------------------
 # Config + result
@@ -579,6 +590,25 @@ class ReInferenceRunner:
         endpoints: NDArray[np.float64] = np.full(
             (n_rounds, 2), np.nan, dtype=np.float64
         )
+        # P0-4 (F-24) — ``endpoints`` is allocated to the adapter's
+        # advertised ``state_shape`` so non-2-D adapters (e.g. CIFAR's
+        # ``(3, 32, 32)``, video adapters' ``(T, C, H, W)``) carry a
+        # ``(n_rounds, *state_shape)`` array instead of a 2-vector.
+        # Adapters that do not advertise a state shape fall back to
+        # the legacy ``(n_rounds, 2)`` allocation. The reshape step
+        # below honors the same fallback so the 2-D adapters stay
+        # byte-identical for legacy callers.
+        _adapter_state_shape_init: tuple[int, ...] = (
+            tuple(getattr(self._adapter, "state_shape", ()))
+            if hasattr(self._adapter, "state_shape")
+            else ()
+        )
+        if _adapter_state_shape_init:
+            endpoints = np.full(
+                (n_rounds, *_adapter_state_shape_init),
+                np.nan,
+                dtype=np.float64,
+            )
         phase_state = _build_initial_phase_state(
             horizon_remaining=n_rounds,
             outer_cycle_id=int(config.outer_cycle_id),
@@ -669,52 +699,48 @@ class ReInferenceRunner:
             # tighter per-round delta caps can wrap a custom
             # :class:`MergeOperatorProtocol`.
             merge_audit: list[str] = []
-            # F25 — for the schedule-derived driver the
-            # ``applied_policy.beta_by_channel`` value is already
-            # ``n_cap`` (the driver computes ``beta`` directly from
-            # the schedule sample). With the runner's
-            # ``delta_cap_up = delta_cap_down = 1.0`` the bounded merge
-            # collapses to ``clamp(n_cap, n_min, n_cap) == n_cap`` —
-            # a double-wrapping identity. Skip the merge call so the
-            # runner no longer carries the redundant computation and
-            # the merge-operator family (EMAOperator,
-            # IdentityOperator, etc.) is reachable on the non-
-            # schedule-derived paths only.
-            if self._driver.driver_family() == "schedule_derived":
-                merged_beta = float(
-                    applied_policy.beta_by_channel.get(primary_channel, 0.0)
-                )
-            else:
-                # F7 — thread ``schedule_sample`` through the merge call
-                # so the schedule-aware modulation on
-                # :class:`EMAOperator` is reachable from the runner's
-                # data path. Only ``EMAOperator`` consumes the kwarg
-                # today; ``BoundedMergeOperator`` /
-                # :class:`IdentityOperator` ignore it. Use a
-                # signature check so the runner stays polymorphic over
-                # the merge-operator family without raising on
-                # legacy signatures.
-                import inspect as _inspect
+            # F7 — thread ``schedule_sample`` through the merge call
+            # so the schedule-aware modulation on
+            # :class:`EMAOperator` is reachable from the runner's
+            # data path. Only ``EMAOperator`` consumes the kwarg
+            # today; ``BoundedMergeOperator`` /
+            # :class:`IdentityOperator` ignore it. Use a
+            # signature check so the runner stays polymorphic over
+            # the merge-operator family without raising on
+            # legacy signatures.
+            #
+            # P0-1 (F-31) — the runner must always invoke the merge
+            # operator, including on the ``schedule_derived`` driver
+            # path. The earlier bypass was a W2 leak: the bounded
+            # envelope's ``floor`` / clipping / audit-codes never
+            # fired when the driver computed ``beta`` directly from
+            # the schedule, so the four framework rows collapsed to
+            # the same trajectory. With ``delta_cap_up =
+            # delta_cap_down = 1.0`` the bounded merge is a no-op
+            # for the canonical path (``clamp(dynamic, floor, cap)
+            # == dynamic`` when ``floor <= dynamic <= cap``), so
+            # the byte trajectory is preserved for legacy callers
+            # while the audit trail now records merge-operator
+            # activity on every round.
+            import inspect as _inspect
 
-                _merge_params = _inspect.signature(
-                    self._merge.merge
-                ).parameters
-                _merge_kwargs: dict[str, Any] = {
-                    "prev": prev_beta,
-                    "dynamic": float(
-                        applied_policy.beta_by_channel.get(primary_channel, 0.0)
-                    ),
-                    "cap": float(sample.n_cap),
-                    "floor": float(sample.n_min),
-                    "delta_cap_up": 1.0,
-                    "delta_cap_down": 1.0,
-                    "audit_codes": merge_audit,
-                }
-                if "schedule_sample" in _merge_params:
-                    _merge_kwargs["schedule_sample"] = (
-                        sample.as_cosine_schedule_sample()
-                    )
-                merged_beta = self._merge.merge(**_merge_kwargs)
+            _merge_params = _inspect.signature(self._merge.merge).parameters
+            _merge_kwargs: dict[str, Any] = {
+                "prev": prev_beta,
+                "dynamic": float(
+                    applied_policy.beta_by_channel.get(primary_channel, 0.0)
+                ),
+                "cap": float(sample.n_cap),
+                "floor": float(sample.n_min),
+                "delta_cap_up": 1.0,
+                "delta_cap_down": 1.0,
+                "audit_codes": merge_audit,
+            }
+            if "schedule_sample" in _merge_params:
+                _merge_kwargs["schedule_sample"] = (
+                    sample.as_cosine_schedule_sample()
+                )
+            merged_beta = self._merge.merge(**_merge_kwargs)
             # Replace the policy's ``beta_by_channel`` with the
             # merge-result so the engine / adapter see the bounded
             # value. ``driver_computed_beta=True`` still suppresses the
@@ -853,7 +879,29 @@ class ReInferenceRunner:
                 if traj is not None:
                     arr = np.asarray(traj, dtype=np.float64)
                     if arr.ndim >= 2 and arr.shape[0] >= 1:
-                        endpoints[r] = arr[-1].reshape(2)
+                        # P0-4 (F-24) — respect the adapter's advertised
+                        # ``state_shape`` so non-2D adapters (e.g. CIFAR's
+                        # ``(3, 32, 32)``, video adapters' ``(T, C, H, W)``)
+                        # do not collapse to a single 2-vector. The 2-D
+                        # path (``state_shape`` missing or ``()``) keeps
+                        # its previous flatten-to-2-vector behaviour.
+                        # Size mismatches (e.g. trajectory shorter than
+                        # the adapter's native state vector) leave the
+                        # endpoint row as ``NaN`` so callers can detect
+                        # "endpoint not captured" via ``np.isnan``.
+                        _adapter_state_shape: tuple[int, ...] = (
+                            tuple(getattr(self._adapter, "state_shape", ()))
+                            if hasattr(self._adapter, "state_shape")
+                            else ()
+                        )
+                        last = np.asarray(arr[-1], dtype=np.float64).reshape(-1)
+                        if _adapter_state_shape:
+                            if int(np.prod(_adapter_state_shape)) == int(last.size):
+                                endpoints[r] = last.reshape(_adapter_state_shape)
+                            else:
+                                endpoint_export_failed = True
+                        else:
+                            endpoints[r] = last
                     else:
                         endpoint_export_failed = True
 
@@ -918,7 +966,25 @@ class ReInferenceRunner:
                 )
                 metric.update({str(k): float(v) for k, v in oracle_metrics.items()})
                 # Promote the canonical W2 / coverage keys when present.
-                metric["W2"] = float(
+                #
+                # P0-7 (F-41) — the bare ``"W2"`` key was misleading:
+                # the runner's default estimator is
+                # :class:`ModeCentreMSEW2`, which is **not** a Wasserstein
+                # distance (it ignores the reference measure's masses and
+                # reports squared units). Prefix the key with the
+                # estimator's family so downstream consumers can
+                # attribute the score to the right estimator. The
+                # ``_EvaluatorProtocol`` now requires ``family()``
+                # directly so the key is unambiguous; the ``getattr``
+                # fallback covers legacy evaluators that pre-date the
+                # P0-7 protocol extension.
+                _w2_family: str = (
+                    str(self._evaluator.family())
+                    if hasattr(self._evaluator, "family")
+                    and callable(getattr(self._evaluator, "family", None))
+                    else "default"
+                )
+                metric[f"W2:{_w2_family}"] = float(
                     oracle_metrics.get("raw_score", 0.0)
                 )
                 metric["coverage"] = float(
