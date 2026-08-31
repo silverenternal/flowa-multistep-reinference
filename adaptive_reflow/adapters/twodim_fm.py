@@ -159,7 +159,7 @@ def _features(x: ArrayF64, t: ArrayF64 | float) -> ArrayF64:
 
 
 def _velocity_field(weights: Mapping[str, ArrayF64], x: ArrayF64, t: float) -> ArrayF64:
-    """Evaluate the velocity MLP ``v_theta(x, t)`` (Tanh activations, 3->64->64->2)."""
+    """Evaluate the trained ReLU velocity MLP ``v_theta(x, t)``."""
     x_arr = np.asarray(x, dtype=np.float64)
     if x_arr.ndim == 1:
         if x_arr.shape[0] != 2:
@@ -171,8 +171,10 @@ def _velocity_field(weights: Mapping[str, ArrayF64], x: ArrayF64, t: float) -> A
     else:
         raise ValueError("x_must_have_shape_2_or_n_2")
     h0 = _features(x_arr, float(t))
-    h1 = np.tanh(h0 @ weights["W1"] + weights["b1"])
-    h2 = np.tanh(h1 @ weights["W2"] + weights["b2"])
+    # The offline trainer uses ReLU for both hidden layers. The runtime
+    # must apply the same architecture when loading its checkpoints.
+    h1 = np.maximum(h0 @ weights["W1"] + weights["b1"], 0.0)
+    h2 = np.maximum(h1 @ weights["W2"] + weights["b2"], 0.0)
     out = h2 @ weights["W3"] + weights["b3"]
     if np.asarray(x, dtype=np.float64).ndim == 1:
         return np.asarray(out[0], dtype=np.float64)
@@ -736,7 +738,12 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
             beta = float(beta_raw)
             memory_fraction = 1.0 - beta
         # Look up the prior x0 (the prior endpoint that will be blended).
-        prior_x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(2)
+        prior_value = prior_entry.get("x0", prior_entry.get("x"))
+        if prior_value is None:
+            raise CapabilityMissingError(
+                "missing_endpoint_value", context=state.native_state_digest
+            )
+        prior_x0 = np.asarray(prior_value, dtype=np.float64).reshape(2)
         # Fresh noise N(0, I_2) seeded by (policy_hash, source_round+1).
         next_round = int(state.source_round) + 1
         restart_seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
@@ -993,6 +1000,7 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         )
         stored: dict[str, Any] = {
             "x": np.asarray(x_final, dtype=np.float64).reshape(2),
+            "x0": np.asarray(x_final, dtype=np.float64).reshape(2),
             "t": 1.0,
             "target": self._target,
         }
