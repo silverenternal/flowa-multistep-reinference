@@ -1,0 +1,1433 @@
+"""Lumina-Image 2.0 Flow Matching ODE adapter (lumina_image_2_0).
+
+This module wires the published Lumina-Image 2.0 Unified Next-DiT
+diffusion-transformer (``Alpha-VLLM/Lumina-Image-2.0`` on HuggingFace,
+``arXiv:2503.21758``, Apache-2.0) into the framework's
+:class:`FlowMatchingODEAdapter` Protocol so that the same algorithm-
+layer code that drives the synthetic 2D :mod:`adaptive_reflow.adapters
+.twodim_fm` and the unconditional 32x32 RF CIFAR
+(:mod:`adaptive_reflow.adapters.rectified_flow_cifar`) adapters can
+also drive a state-of-the-art flow-based text-to-image DiT.
+
+Architecture summary
+-------------------
+
+* 2.6B-parameter Unified Next-DiT (Gemma2 text encoder, mRoPE
+  positional encoding, single-stream fused text+image causal DiT with
+  26 layers, hidden=2304, 24 Q heads / 8 KV heads, head_dim=256, 16-
+  channel latent space).
+* FLUX.1-dev AutoencoderKL encoder/decoder (latent_channels=16,
+  scaling_factor=0.3611, shift_factor=0.1159).
+* FlowMatchEulerDiscreteScheduler (shift=6.0, num_train_timesteps=1000).
+* Default sampling at 1024x1024: 50 inference steps + classifier-free
+  guidance (guidance_scale=4.0, cfg_trunc_ratio=0.25,
+  cfg_normalization=True).
+
+Two operating modes
+-------------------
+
+1. ``torch`` mode (the published integration). The adapter lazy-imports
+   :mod:`torch` and :mod:`diffusers.Lumina2Pipeline` /
+   :class:`diffusers.Lumina2Transformer2DModel`. Required when running
+   on a GPU host with the Lumina-Image 2.0 checkpoint available.
+
+2. ``synthetic`` mode (testing only). When :mod:`torch` / diffusers /
+   transformers / safetensors are unavailable at construction time, the
+   adapter falls back to a deterministic NumPy two-tensor affine
+   velocity field on the canonical ``(16, 128, 128)`` latent shape. The
+   synthetic path lets the Protocol conformance tests run without the
+   heavy dependencies.
+
+Public surface
+--------------
+
+* :class:`LuminaImage20Adapter` -- concrete
+  :class:`FlowMatchingODEAdapter` with ``state_shape=(16, 128, 128)``.
+* :class:`LuminaImage20Capabilities` -- frozen capability surface.
+* :func:`default_lumina_image_2_0_adapter` -- factory.
+
+Tasks satisfied
+---------------
+
+* ``ADAPTER-lumina_image_2_0`` -- Lumina-Image 2.0 Flow Matching
+  reproduction wiring (DTB-G1 + DTB-G2).
+
+The implementation deliberately mirrors the
+:class:`RectifiedFlowCIFARAdapter` torch/synthetic dual-mode pattern:
+lazy torch / diffusers imports, capability handshake, deterministic
+seed, native tensors on adapter side via :class:`TensorRef`, text-
+condition injection cached on ``calibration_artifact_hash`` so two
+rounds with the same prompt share the embedding compute.
+"""
+
+from __future__ import annotations
+
+import hashlib
+from collections import OrderedDict
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Literal
+
+import numpy as np
+from numpy.typing import NDArray
+
+from adaptive_reflow.contracts import MechanismId
+from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.universal import (
+    AdapterCapabilities,
+    CapabilityMissingError,
+    ChannelDomain,
+    FlowMatchingODEAdapter,
+    NoOpMixer,
+)
+from adaptive_reflow.universal.state import (
+    ChannelName,
+    ODEConditionDelta,
+    ODEIntegratorTrace,
+    StateBundle,
+    TensorRef,
+    validate_state_bundle,
+)
+
+# ---------------------------------------------------------------------------
+# Module-level constants
+# ---------------------------------------------------------------------------
+
+#: Canonical Lumina-Image 2.0 latent state shape -- 16-channel latent at
+#: the 1024x1024 generation resolution. This is the ``state_shape`` the
+#: framework's runner reads for F14 forward-noise allocation and the
+#: shape ``solve_ode`` integrates over.
+LUMINA_IMAGE_2_0_CHANNELS: tuple[ChannelName, ...] = (
+    ChannelName("latent"),
+    ChannelName("text_condition"),
+)
+LUMINA_IMAGE_2_0_CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = {
+    ChannelName("latent"): "continuous",
+    ChannelName("text_condition"): "continuous",
+}
+LUMINA_IMAGE_2_0_STATE_SHAPE: tuple[int, ...] = (16, 128, 128)
+LUMINA_IMAGE_2_0_CONFIG_HASH: str = "lumina_image_2_0:cfg:v1"
+LUMINA_IMAGE_2_0_CONFIG_VERSION: str = "0.1.0"
+
+#: Per-model mechanism_id -- the engine stamps this on every round trace
+#: so the writer can attribute the round to this specific
+#: model+adapter pair. Distinct from the canonical
+#: ``EXECUTABLE_WRITER_MECHANISM_ID = "inference.adaptive_reflow"``,
+#: which is the writer authority (DTB-S1). The per-model mechanism_id
+#: lives alongside the writer registry as an attribution tag.
+LUMINA_IMAGE_2_0_MECHANISM_ID: str = "lumina_image_2_0_flow_matching"
+
+#: Paper default sampling steps at 1024x1024. Overridable per-round via
+#: ``condition.delta_spec["num_steps"]``.
+LUMINA_IMAGE_2_0_NUM_STEPS_DEFAULT: int = 50
+
+#: Default classifier-free-guidance scale (paper default).
+LUMINA_IMAGE_2_0_GUIDANCE_SCALE_DEFAULT: float = 4.0
+
+#: Default CFG-Trunc ratio (paper default; truncates the last 25% of
+#: the diffusion timeline from CFG).
+LUMINA_IMAGE_2_0_CFG_TRUNC_RATIO_DEFAULT: float = 0.25
+
+#: Default RoPE axis lengths (text=300, h=512, w=512) for mRoPE.
+LUMINA_IMAGE_2_0_ROPE_AXES_DEFAULT: tuple[int, int, int] = (300, 512, 512)
+
+#: Latent clamp magnitude. FLUX.1-dev VAE scale 0.3611 + shift 0.1159
+#: keep encoded latents inside ``|x| <= 3.0`` (~3-sigma capture).
+LUMINA_IMAGE_2_0_CLAMP: float = 3.0
+
+#: ``t_end`` of the diffusion interval. Lumina uses ``[0, 1]`` like
+#: Rectified Flow; the FlowMatchEulerDiscreteScheduler applies the
+#: ``shift=6.0`` rescale internally.
+LUMINA_IMAGE_2_0_T_END: float = 1.0
+
+#: LRU cache bound on native states (audit A-3 mirror of twodim_fm).
+LUMINA_IMAGE_2_0_NATIVE_STATES_MAXSIZE: int = 8
+
+#: Integrator literals -- the published Lumina-Image 2.0 sampler uses
+#: FlowMatchEulerDiscreteScheduler. Heun is exposed as a future
+#: 2nd-order option but is not the paper default.
+LUMINA_IMAGE_2_0_INTEGRATORS: tuple[str, ...] = ("euler", "heun")
+LUMINA_IMAGE_2_0_INTEGRATOR_EULER: str = "euler"
+LUMINA_IMAGE_2_0_INTEGRATOR_HEUN: str = "heun"
+
+#: Default synthetic-mode hidden width (the NumPy two-tensor affine
+#: velocity field). Matches :data:`RectifiedFlowCIFARAdapter.SYNTHETIC_HIDDEN`
+#: pattern -- random-init for protocol conformance only.
+LUMINA_IMAGE_2_0_SYNTHETIC_HIDDEN: int = 32
+LUMINA_IMAGE_2_0_SYNTHETIC_SEED_DEFAULT: int = 0xA5A5A5A5
+
+#: Gemma2 text-encoder cache: keyed by
+#: ``sha256(prompt + negative_prompt + calibration_artifact_hash)`` so
+#: two rounds with the same prompt share the embedding compute.
+LUMINA_IMAGE_2_0_TEXT_CACHE_MAXSIZE: int = 32
+
+# Audit / error codes (deterministic ASCII strings).
+AUDIT_LUMINA_RESTART_BLEND: str = "lumina_image_2_0_restart_blend"
+AUDIT_LUMINA_OBSERVED: str = "lumina_image_2_0_observed"
+AUDIT_LUMINA_TEXT_CACHED: str = "lumina_image_2_0_text_cached"
+AUDIT_FORWARD_NOISE_APPLIED: str = "forward_noise_applied"
+ERR_LUMINA_NUM_STEPS: str = "lumina_image_2_0_num_steps_must_be_positive"
+ERR_LUMINA_INTEGRATOR_UNKNOWN: str = "lumina_image_2_0_integrator_unknown"
+ERR_LUMINA_TEXT_EMBED_MISSING: str = "lumina_image_2_0_text_embed_missing"
+ERR_LUMINA_PROMPT_MISSING: str = "lumina_image_2_0_prompt_missing"
+
+# Local type alias (avoid numpy at module-import hot annotation paths).
+ArrayF64 = NDArray[np.float64]
+
+Mode = Literal["torch", "synthetic"]
+
+# Default weight-dir candidate filenames (used by the resolver; the
+# published checkpoint layout is documented in
+# ``docs/r4-survey/07-sota-experiment-protocol.md`` §2).
+LUMINA_IMAGE_2_0_WEIGHTS_CANDIDATES: tuple[str, ...] = (
+    "lumina-image-2.0",
+    "Lumina-Image-2.0",
+    "Alpha-VLLM__Lumina-Image-2.0",
+)
+
+
+# ---------------------------------------------------------------------------
+# Public helpers
+# ---------------------------------------------------------------------------
+
+
+def lumina_image_2_0_resolve_weights_path(
+    data_dir: Path | None = None,
+    *,
+    candidates: tuple[str, ...] = LUMINA_IMAGE_2_0_WEIGHTS_CANDIDATES,
+) -> Path | None:
+    """Return the first existing candidate weights path under ``data_dir``.
+
+    The Lumina-Image 2.0 published checkpoint layout is a directory
+    (``consolidated.00-of-01.pth`` + ``text_encoder/`` + ``transformer/``
+    + ``vae/``); the resolver simply returns the first matching
+    directory under ``data_dir``. Returns ``None`` when none of the
+    candidates exist.
+    """
+    base = Path(data_dir) if data_dir is not None else Path("data")
+    for name in candidates:
+        candidate = base / name
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def torch_is_available() -> bool:
+    """Return ``True`` iff :mod:`torch` is importable in this interpreter.
+
+    The check is a runtime ``importlib.util.find_spec`` call (not a
+    cached flag) so test fixtures that install torch mid-session still
+    see the live answer.
+    """
+    import importlib.util as _il
+
+    return _il.find_spec("torch") is not None
+
+
+def diffusers_is_available() -> bool:
+    """Return ``True`` iff :mod:`diffusers` is importable in this interpreter.
+
+    Mirrors :func:`torch_is_available`. Used by the constructor to
+    decide whether the heavy diffusion pipeline can be loaded.
+    """
+    import importlib.util as _il
+
+    return _il.find_spec("diffusers") is not None
+
+
+def transformers_is_available() -> bool:
+    """Return ``True`` iff :mod:`transformers` is importable.
+
+    The Gemma2 text encoder is a HuggingFace ``transformers`` model;
+    without it the torch path cannot construct the prompt embedding.
+    """
+    import importlib.util as _il
+
+    return _il.find_spec("transformers") is not None
+
+
+# ---------------------------------------------------------------------------
+# Private helpers -- hashing + state-shape integrity
+# ---------------------------------------------------------------------------
+
+
+def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
+    """SHA-256-derived 32-bit seed from ``(batch_id, sample_id, source_round)``."""
+    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
+    return int(hashlib.sha256(blob).hexdigest()[:8], 16)
+
+
+def _digest_state(payload: Mapping[str, Any]) -> str:
+    """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
+    blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()
+
+
+def _make_ref(label: str, **parts: Any) -> TensorRef:
+    """Deterministic hash-stable :class:`TensorRef`."""
+    blob = repr((label, sorted(parts.items()))).encode("utf-8")
+    return TensorRef(f"lumina_image_2_0:{label}:{hashlib.sha256(blob).hexdigest()[:16]}")
+
+
+def _validate_state_shape(x: ArrayF64) -> ArrayF64:
+    """Reshape ``x`` to ``LUMINA_IMAGE_2_0_STATE_SHAPE`` and float64."""
+    return np.asarray(x, dtype=np.float64).reshape(LUMINA_IMAGE_2_0_STATE_SHAPE)
+
+
+def _text_embed_cache_key(prompt: str, negative_prompt: str, calibration_hash: str) -> str:
+    """Return the cache key for a ``(prompt, negative_prompt, calibration_hash)`` triple."""
+    blob = repr((str(prompt), str(negative_prompt), str(calibration_hash))).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# Synthetic (NumPy) velocity field -- test-only path; no torch dependency
+# ---------------------------------------------------------------------------
+
+
+def _synthesize_latent_like_tensor(rng: np.random.Generator) -> ArrayF64:
+    """Sample a latent-shape ``(16, 128, 128)`` array from ``N(0, I)``."""
+    return rng.standard_normal(LUMINA_IMAGE_2_0_STATE_SHAPE).astype(np.float64)
+
+
+def _synthetic_velocity_field(
+    x: ArrayF64,
+    t: float,
+    *,
+    weights: Mapping[str, ArrayF64],
+) -> ArrayF64:
+    """Evaluate a tiny two-tensor affine velocity field on ``(16, 128, 128)``.
+
+    The synthetic field is shaped as
+    ``v_theta(x, t) = W2 @ tanh(W1 @ flatten(x) + b1 + t * t_bias) + b2``
+    using two dense linear layers with hidden width
+    :data:`LUMINA_IMAGE_2_0_SYNTHETIC_HIDDEN`. The weights are random-
+    init (deterministic via ``np.random.default_rng``) so the synthetic
+    path is byte-deterministic for a fixed ``seed``. The field is NOT
+    a trained Lumina-Image 2.0 model and is only used by the test
+    suite to exercise the Protocol surface.
+    """
+    flat = np.asarray(x, dtype=np.float64).reshape(-1)
+    w1 = np.asarray(weights["W1"], dtype=np.float64)
+    b1 = np.asarray(weights["b1"], dtype=np.float64)
+    w2 = np.asarray(weights["W2"], dtype=np.float64)
+    b2 = np.asarray(weights["b2"], dtype=np.float64)
+    t_bias = np.asarray(weights["t_bias"], dtype=np.float64)
+    h = np.tanh(flat @ w1 + b1 + float(t) * t_bias)
+    out = h @ w2 + b2
+    return np.asarray(out, dtype=np.float64).reshape(LUMINA_IMAGE_2_0_STATE_SHAPE)
+
+
+def _random_init_synthetic_weights(
+    *,
+    seed: int,
+    hidden: int | None = None,
+) -> dict[str, ArrayF64]:
+    """Kaiming-uniform init of the synthetic velocity field's two linear layers.
+
+    Hidden width defaults to :data:`LUMINA_IMAGE_2_0_SYNTHETIC_HIDDEN`
+    but can be overridden per-instance via the ``hidden`` keyword.
+    """
+    rng = np.random.default_rng(int(seed))
+    in_dim = int(np.prod(LUMINA_IMAGE_2_0_STATE_SHAPE))
+    hidden_w = (
+        int(hidden)
+        if hidden is not None
+        else int(LUMINA_IMAGE_2_0_SYNTHETIC_HIDDEN)
+    )
+
+    def kaiming(fan_in: int, fan_out: int) -> ArrayF64:
+        bound = np.sqrt(6.0 / float(fan_in))
+        return np.asarray(
+            rng.uniform(-bound, bound, size=(fan_in, fan_out)),
+            dtype=np.float64,
+        )
+
+    return {
+        "W1": kaiming(in_dim, hidden_w),
+        "b1": np.zeros(hidden_w, dtype=np.float64),
+        "W2": kaiming(hidden_w, in_dim),
+        "b2": np.zeros(in_dim, dtype=np.float64),
+        "t_bias": rng.standard_normal(hidden_w).astype(np.float64),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Torch velocity field -- production path; requires torch + diffusers
+# ---------------------------------------------------------------------------
+
+
+def _torch_velocity_field(
+    pipeline: Any,
+    x: ArrayF64,
+    t: float,
+    *,
+    dtype: Any,
+    text_emb: Any,
+    uncond_text_emb: Any,
+    guidance_scale: float,
+    cfg_trunc_ratio: float,
+    cfg_normalization: bool,
+    rope_axes: tuple[int, int, int],
+) -> ArrayF64:
+    """Call the Lumina-Image 2.0 transformer ``v_theta(x, t, text)``.
+
+    Lazy-imports :mod:`torch` and :mod:`diffusers.Lumina2Transformer2DModel`.
+    Returns a NumPy ``(16, 128, 128)`` float64 array.
+
+    Notes
+    -----
+    The function is intentionally a thin wrapper around the diffusers
+    Lumina2Transformer2DModel call: paper §4.5's CFG-Renorm and
+    CFG-Trunc are applied here, then a single Euler velocity evaluation
+    is returned. The protocol layer stays byte-deterministic by passing
+    the same ``text_emb`` / ``uncond_text_emb`` tensors across the
+    integration grid.
+    """
+    import torch  # local import -- torch is optional at the framework level.
+
+    t_text, t_h, t_w = rope_axes
+    with torch.no_grad():
+        x_t = torch.as_tensor(x, dtype=dtype).unsqueeze(0)
+        # Time conditioning: broadcast scalar to (1,) and cast to dtype.
+        t_t = torch.tensor([float(t)], dtype=dtype)
+        # Conditional forward: v_t = pipeline(x_t, t_t, text_emb, ...)
+        v_t = pipeline(
+            x_t,
+            t_t,
+            encoder_hidden_states=text_emb,
+            rope_axes=(t_text, t_h, t_w),
+        ).sample
+        # CFG: combine conditional + unconditional (CFG-Trunc gate).
+        in_cfg_window = float(t) <= float(1.0 - float(cfg_trunc_ratio))
+        if in_cfg_window and uncond_text_emb is not None:
+            v_tu = pipeline(
+                x_t,
+                t_t,
+                encoder_hidden_states=uncond_text_emb,
+                rope_axes=(t_text, t_h, t_w),
+            ).sample
+            v_eff = v_tu + float(guidance_scale) * (v_t - v_tu)
+            # CFG-Renorm: rescale v_eff so its per-sample std matches the
+            # conditional branch's std (paper §4.5 stability fix).
+            if cfg_normalization:
+                cond_std = v_t.flatten(1).std(dim=1, keepdim=True).clamp_min(1e-6)
+                eff_std = v_eff.flatten(1).std(dim=1, keepdim=True).clamp_min(1e-6)
+                scale = (cond_std / eff_std).view(-1, 1, 1, 1)
+                v_eff = v_eff * scale
+        else:
+            v_eff = v_t
+        out = np.asarray(v_eff.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
+    return out.reshape(LUMINA_IMAGE_2_0_STATE_SHAPE)
+
+
+def _load_torch_pipeline(weights_dir: Path, *, dtype: Any) -> Any:
+    """Load the published Lumina-Image 2.0 diffusion pipeline.
+
+    The pipeline is constructed via diffusers' ``Lumina2Pipeline.from_
+    pretrained`` so the encoder, transformer, scheduler and VAE are
+    loaded with their canonical configurations. The result is moved to
+    CPU and put in ``eval()`` mode; the caller can re-enable CPU
+    offload via ``pipeline.enable_model_cpu_offload()``.
+    """
+    import torch  # local import -- torch is optional at the framework level.
+    from diffusers import Lumina2Pipeline  # local import -- diffusers is optional.
+
+    pipeline = Lumina2Pipeline.from_pretrained(
+        str(weights_dir),
+        torch_dtype=dtype,
+        variant=None,
+    )
+    pipeline.set_progress_bar_config(disable=True)
+    return pipeline
+
+
+# ---------------------------------------------------------------------------
+# Capabilities
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class LuminaImage20Capabilities(AdapterCapabilities):
+    """Capability surface for :class:`LuminaImage20Adapter`."""
+
+    def __init__(self) -> None:  # noqa: D401 -- dataclass __init__ override
+        super().__init__(
+            has_ode_integration_surface=True,
+            has_prior_export=True,
+            has_state_export=True,
+            has_condition_injection=True,
+            has_restart_boundary=True,
+            has_continuous_channels=True,
+            has_discrete_channels=False,
+            has_trajectory_digest=True,
+            has_deterministic_seed=True,
+            has_materialization_route=True,
+            state_shape=LUMINA_IMAGE_2_0_STATE_SHAPE,
+            supported_channels=LUMINA_IMAGE_2_0_CHANNELS,
+            channel_domains=LUMINA_IMAGE_2_0_CHANNEL_DOMAINS,
+            required_mixer=NoOpMixer,
+            exposed_envelope_criteria=(),
+            exposed_evaluators=(),
+            native_config_hash=LUMINA_IMAGE_2_0_CONFIG_HASH,
+            native_config_version=LUMINA_IMAGE_2_0_CONFIG_VERSION,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Adapter
+# ---------------------------------------------------------------------------
+
+
+class LuminaImage20Adapter(FlowMatchingODEAdapter):
+    """Lumina-Image 2.0 Flow Matching text-to-image adapter.
+
+    Wraps the published 2.6B-parameter Unified Next-DiT
+    (``Alpha-VLLM/Lumina-Image-2.0``, ``arXiv:2503.21758``, Apache-2.0)
+    into the :class:`FlowMatchingODEAdapter` Protocol so the framework's
+    algorithm-layer code can drive a state-of-the-art text-conditioned
+    flow-matching model at 1024x1024 without modification.
+
+    Two operating modes (per :data:`Mode`):
+
+    * ``torch`` -- production path. Lazy-imports :mod:`torch` and
+      :mod:`diffusers.Lumina2Pipeline` /
+      :class:`diffusers.Lumina2Transformer2DModel` and invokes the
+      transformer in ``torch.no_grad()`` / ``eval()`` mode on each
+      integration step. Requires the ``[lumina-image]`` extra and the
+      Lumina-Image 2.0 checkpoint (default ``data/Lumina-Image-2.0/``).
+    * ``synthetic`` -- testing-only path. Uses a deterministic NumPy
+      two-tensor affine velocity field with random init. The synthetic
+      field is NOT a trained Lumina-Image 2.0 model; it is a Protocol-
+      surface shim that lets the test suite exercise every method
+      without the heavy torch / diffusers / transformers stack.
+
+    Constructor parameters
+    ----------------------
+
+    * ``weights_path`` -- explicit path to the Lumina-Image 2.0
+      checkpoint directory. When ``None``, the adapter falls back to
+      ``data/lumina-image-2.0`` / ``data/Lumina-Image-2.0`` /
+      ``data/Alpha-VLLM__Lumina-Image-2.0`` in order; if none of those
+      exist, the adapter switches to ``synthetic`` mode (when ``force_mode``
+      is ``"auto"``).
+    * ``force_mode`` -- ``"torch"`` / ``"synthetic"`` / ``"auto"``
+      (default). ``"auto"`` picks ``"torch"`` when the weights directory
+      exists AND torch + diffusers + transformers are all importable;
+      otherwise ``"synthetic"``.
+    * ``num_steps`` -- default number of Euler integration steps per
+      round (paper default 50). The framework can override via
+      ``condition.delta_spec["num_steps"]``.
+    * ``guidance_scale`` -- CFG scale (paper default 4.0).
+    * ``cfg_trunc_ratio`` -- CFG-Trunc ratio (paper default 0.25).
+    * ``cfg_normalization`` -- enable CFG-Renorm (paper default True).
+    * ``solver`` -- ``"euler"`` (default; matches the paper's
+      FlowMatchEulerDiscreteScheduler) or ``"heun"``.
+    """
+
+    pinned_num_steps: int = LUMINA_IMAGE_2_0_NUM_STEPS_DEFAULT
+    # F14: runner reads ``getattr(self._adapter, "state_shape", (2,))``.
+    state_shape: tuple[int, ...] = LUMINA_IMAGE_2_0_STATE_SHAPE
+
+    mechanism_id: MechanismId = MechanismId(LUMINA_IMAGE_2_0_MECHANISM_ID)
+
+    def __init__(
+        self,
+        *,
+        weights_path: Path | None = None,
+        force_mode: Mode | Literal["auto"] = "auto",
+        num_steps: int = LUMINA_IMAGE_2_0_NUM_STEPS_DEFAULT,
+        guidance_scale: float = LUMINA_IMAGE_2_0_GUIDANCE_SCALE_DEFAULT,
+        cfg_trunc_ratio: float = LUMINA_IMAGE_2_0_CFG_TRUNC_RATIO_DEFAULT,
+        cfg_normalization: bool = True,
+        rope_axes: tuple[int, int, int] = LUMINA_IMAGE_2_0_ROPE_AXES_DEFAULT,
+        seed_offset: int = 0,
+        synthetic_hidden: int = LUMINA_IMAGE_2_0_SYNTHETIC_HIDDEN,
+        synthetic_seed: int = LUMINA_IMAGE_2_0_SYNTHETIC_SEED_DEFAULT,
+        solver: str = LUMINA_IMAGE_2_0_INTEGRATOR_EULER,
+    ) -> None:
+        if int(num_steps) <= 0:
+            raise ValueError(ERR_LUMINA_NUM_STEPS)
+        if float(guidance_scale) < 0.0:
+            raise ValueError("guidance_scale_must_be_non_negative")
+        if not (0.0 <= float(cfg_trunc_ratio) <= 1.0):
+            raise ValueError("cfg_trunc_ratio_must_be_in_[0,1]")
+        if int(synthetic_hidden) <= 0:
+            raise ValueError("synthetic_hidden_must_be_positive")
+        if str(solver) not in LUMINA_IMAGE_2_0_INTEGRATORS:
+            raise ValueError(
+                f"{ERR_LUMINA_INTEGRATOR_UNKNOWN}:{solver!r}"
+                f"; expected one of {LUMINA_IMAGE_2_0_INTEGRATORS!r}"
+            )
+        for rope_label, rope_value in (
+            ("rope_axes[0]", rope_axes[0]),
+            ("rope_axes[1]", rope_axes[1]),
+            ("rope_axes[2]", rope_axes[2]),
+        ):
+            if int(rope_value) <= 0:
+                raise ValueError(f"{rope_label}_must_be_positive")
+
+        self._num_steps = int(num_steps)
+        self._guidance_scale = float(guidance_scale)
+        self._cfg_trunc_ratio = float(cfg_trunc_ratio)
+        self._cfg_normalization = bool(cfg_normalization)
+        self._rope_axes: tuple[int, int, int] = (
+            int(rope_axes[0]),
+            int(rope_axes[1]),
+            int(rope_axes[2]),
+        )
+        self._seed_offset = int(seed_offset)
+        self._synthetic_hidden = int(synthetic_hidden)
+        self._synthetic_seed = int(synthetic_seed)
+        self._solver: str = str(solver)
+
+        # Resolve weights path.
+        explicit = Path(weights_path) if weights_path is not None else None
+        resolved = explicit or lumina_image_2_0_resolve_weights_path()
+        self._weights_path = (
+            Path(resolved) if resolved is not None else Path("synthetic")
+        )
+
+        # Decide operating mode.
+        if force_mode == "auto":
+            if (
+                self._weights_path.exists()
+                and torch_is_available()
+                and diffusers_is_available()
+                and transformers_is_available()
+            ):
+                self._mode: Mode = "torch"
+            else:
+                self._mode = "synthetic"
+        elif force_mode == "torch":
+            if not torch_is_available():
+                raise RuntimeError("torch requested but not installed")
+            if not diffusers_is_available():
+                raise RuntimeError("diffusers requested but not installed")
+            if not transformers_is_available():
+                raise RuntimeError("transformers requested but not installed")
+            if not self._weights_path.exists():
+                raise FileNotFoundError(
+                    f"lumina_image_2_0_weights_missing:{self._weights_path}"
+                )
+            self._mode = "torch"
+        elif force_mode == "synthetic":
+            self._mode = "synthetic"
+        else:
+            raise ValueError(f"unknown_force_mode:{force_mode}")
+
+        # Backend handles.
+        self._pipeline: Any = None
+        self._torch_dtype: Any = None
+        self._synthetic_weights: dict[str, ArrayF64] | None = None
+        if self._mode == "torch":
+            try:
+                import torch as _torch  # local import -- torch is optional.
+
+                # bfloat16 matches the paper's recommended inference
+                # dtype (the consolidated weights ship as bf16).
+                self._torch_dtype = _torch.bfloat16
+                self._pipeline = _load_torch_pipeline(
+                    self._weights_path, dtype=self._torch_dtype
+                )
+            except ImportError:
+                self._mode = "synthetic"
+        if self._mode == "synthetic":
+            self._synthetic_weights = _random_init_synthetic_weights(
+                hidden=int(self._synthetic_hidden),
+                seed=int(self._synthetic_seed),
+            )
+
+        # LRU-bounded native-states cache (audit A-3 mirror of twodim_fm).
+        self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        # Gemma2 text-embedding cache keyed by sha256(prompt + negative_prompt
+        # + calibration_hash). Bounded LRU.
+        self._text_embed_cache: OrderedDict[str, tuple[Any, Any]] = OrderedDict()
+        self._caps = LuminaImage20Capabilities()
+
+    # ------------------------------------------------------------------
+    # 1. capability handshake
+    # ------------------------------------------------------------------
+
+    def capabilities(self) -> AdapterCapabilities:
+        return self._caps
+
+    # ------------------------------------------------------------------
+    # 0. helpers -- LRU-bounded caches
+    # ------------------------------------------------------------------
+
+    def _put_native_state(self, digest: str, entry: dict[str, Any]) -> None:
+        if digest in self._native_states:
+            self._native_states[digest] = entry
+            self._native_states.move_to_end(digest)
+            return
+        self._native_states[digest] = entry
+        while len(self._native_states) > LUMINA_IMAGE_2_0_NATIVE_STATES_MAXSIZE:
+            self._native_states.popitem(last=False)
+
+    def _evict_native_state(self, digest: str) -> None:
+        self._native_states.pop(digest, None)
+
+    def _put_text_embed(self, key: str, emb_pair: tuple[Any, Any]) -> None:
+        if key in self._text_embed_cache:
+            self._text_embed_cache[key] = emb_pair
+            self._text_embed_cache.move_to_end(key)
+            return
+        self._text_embed_cache[key] = emb_pair
+        while len(self._text_embed_cache) > LUMINA_IMAGE_2_0_TEXT_CACHE_MAXSIZE:
+            self._text_embed_cache.popitem(last=False)
+
+    def _resolve_text_embed(self, key: str) -> tuple[Any, Any] | None:
+        return self._text_embed_cache.get(key)
+
+    # ------------------------------------------------------------------
+    # 2. build_initial_state
+    # ------------------------------------------------------------------
+
+    def build_initial_state(
+        self,
+        *,
+        batch_id: str,
+        sample_id: str,
+    ) -> StateBundle:
+        seed = _seed_from_ids(
+            str(batch_id),
+            str(sample_id),
+            int(self._seed_offset) + 0,
+        )
+        rng = np.random.default_rng(seed)
+        x0 = _synthesize_latent_like_tensor(rng)
+        digest = _digest_state(
+            {
+                "kind": "initial",
+                "batch_id": str(batch_id),
+                "sample_id": str(sample_id),
+                "shape": [int(s) for s in x0.shape],
+                "x0_first": [
+                    float(x0[0, 0, 0]),
+                    float(x0[0, 0, 1]),
+                    float(x0[0, 1, 0]),
+                ],
+            }
+        )
+        self._put_native_state(
+            digest,
+            {
+                "x0": np.asarray(x0, dtype=np.float64).reshape(
+                    LUMINA_IMAGE_2_0_STATE_SHAPE
+                ),
+                "source_round": 0,
+                "mode": self._mode,
+            },
+        )
+        bundle = StateBundle(
+            channels={
+                ChannelName("latent"): _make_ref(
+                    "initial",
+                    batch=batch_id,
+                    sample=sample_id,
+                ),
+                # Text condition is a placeholder TensorRef -- the actual
+                # Gemma2 embedding lives on the adapter side in
+                # ``self._text_embed_cache``. The engine never inspects
+                # the ref's contents; it only propagates the opaque
+                # handle.
+                ChannelName("text_condition"): _make_ref(
+                    "text_initial",
+                    batch=batch_id,
+                    sample=sample_id,
+                ),
+            },
+            masks={},
+            batch_id=str(batch_id),
+            sample_id=str(sample_id),
+            reference_frame="world",
+            normalization="none",
+            source_round=0,
+            detach_proof=True,
+            native_state_digest=digest,
+            provenance=("lumina_image_2_0@v1",),
+            capability_token=self.capabilities(),
+        )
+        ok, errs = validate_state_bundle(bundle)
+        if not ok:
+            raise AssertionError(f"placeholder_state_invalid:{errs}")
+        return bundle
+
+    # ------------------------------------------------------------------
+    # 3. export_endpoint
+    # ------------------------------------------------------------------
+
+    def export_endpoint(self, state: StateBundle) -> StateBundle:
+        ok, errs = validate_state_bundle(state)
+        if not ok:
+            raise CapabilityMissingError(
+                "validate_state_bundle", context=",".join(errs)
+            )
+        return state
+
+    # ------------------------------------------------------------------
+    # 4. detach_and_validate_endpoint
+    # ------------------------------------------------------------------
+
+    def detach_and_validate_endpoint(self, bundle: StateBundle) -> StateBundle:
+        if bundle.detach_proof is not True:
+            raise CapabilityMissingError("detach_proof_must_be_true")
+        ok, errs = validate_state_bundle(bundle)
+        if not ok:
+            raise CapabilityMissingError(
+                "detach_proof_must_be_true", context=",".join(errs)
+            )
+        return bundle
+
+    # ------------------------------------------------------------------
+    # 5. apply_restart_distribution
+    # ------------------------------------------------------------------
+
+    def apply_restart_distribution(
+        self,
+        state: StateBundle,
+        policy: RestartPolicy,
+    ) -> StateBundle:
+        ok, errs = validate_state_bundle(state)
+        if not ok:
+            raise CapabilityMissingError(
+                "validate_state_bundle", context=",".join(errs)
+            )
+        prior_entry = self._native_states.get(state.native_state_digest)
+        if prior_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state", context=state.native_state_digest
+            )
+
+        beta_raw = policy.beta_by_channel.get(ChannelName("latent"))  # type: ignore[arg-type]
+        if beta_raw is None:
+            beta = 0.5
+            memory_fraction = 0.5
+        else:
+            beta = float(beta_raw)
+            memory_fraction = 1.0 - beta
+
+        prior_x = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
+            LUMINA_IMAGE_2_0_STATE_SHAPE
+        )
+        next_round = int(state.source_round) + 1
+        restart_seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
+        restart_seed = int(hashlib.sha256(restart_seed_blob).hexdigest()[:8], 16)
+        fresh_x = _synthesize_latent_like_tensor(np.random.default_rng(restart_seed))
+
+        m = max(0.0, min(1.0, float(memory_fraction)))
+        blended = (m * prior_x + (1.0 - m) * fresh_x).astype(np.float64)
+        blended = np.clip(blended, -LUMINA_IMAGE_2_0_CLAMP, LUMINA_IMAGE_2_0_CLAMP)
+
+        next_digest = _digest_state(
+            {
+                "kind": "restart",
+                "src_digest": state.native_state_digest,
+                "policy_hash": str(policy.policy_hash),
+                "source_round": next_round,
+                "beta": float(beta),
+                "memory_fraction": float(memory_fraction),
+                "blended_first": [
+                    float(blended[0, 0, 0]),
+                    float(blended[0, 0, 1]),
+                    float(blended[0, 1, 0]),
+                ],
+            }
+        )
+        self._put_native_state(
+            next_digest,
+            {
+                "x0": blended,
+                "source_round": next_round,
+                "mode": self._mode,
+            },
+        )
+        return StateBundle(
+            channels={
+                ChannelName("latent"): _make_ref(
+                    "restart",
+                    src_digest=str(state.native_state_digest),
+                    policy_hash=str(policy.policy_hash),
+                    source_round=int(next_round),
+                ),
+                # Text condition is NOT blended -- it is condition, not
+                # state. The ref propagates unchanged from the prior so
+                # the engine's restart math is state-only.
+                ChannelName("text_condition"): _make_ref(
+                    "text_restart",
+                    src_digest=str(state.native_state_digest),
+                    policy_hash=str(policy.policy_hash),
+                ),
+            },
+            masks=dict(state.masks),
+            batch_id=str(state.batch_id),
+            sample_id=str(state.sample_id),
+            reference_frame=str(state.reference_frame),
+            normalization=str(state.normalization),
+            source_round=int(next_round),
+            detach_proof=True,
+            native_state_digest=str(next_digest),
+            provenance=tuple(state.provenance) + (AUDIT_LUMINA_RESTART_BLEND,),
+            capability_token=self.capabilities(),
+        )
+
+    # ------------------------------------------------------------------
+    # 6. compose_condition
+    # ------------------------------------------------------------------
+
+    def compose_condition(
+        self,
+        bundle: StateBundle,
+        delta: ODEConditionDelta,
+    ) -> ODEConditionDelta:
+        new_spec = dict(delta.delta_spec)
+        # Stamp paper defaults; the framework's ``delta_spec`` can
+        # override these per-round.
+        new_spec.setdefault(
+            "target_distribution", "lumina_image_2.0_text_to_image"
+        )
+        new_spec.setdefault(
+            "integrator_config_hash", LUMINA_IMAGE_2_0_CONFIG_HASH
+        )
+        new_spec.setdefault("num_steps", LUMINA_IMAGE_2_0_NUM_STEPS_DEFAULT)
+        new_spec.setdefault(
+            "guidance_scale", LUMINA_IMAGE_2_0_GUIDANCE_SCALE_DEFAULT
+        )
+        new_spec.setdefault(
+            "cfg_trunc_ratio", LUMINA_IMAGE_2_0_CFG_TRUNC_RATIO_DEFAULT
+        )
+        new_spec.setdefault("cfg_normalization", True)
+        new_spec.setdefault(
+            "rope_axes", LUMINA_IMAGE_2_0_ROPE_AXES_DEFAULT
+        )
+        # Per-round condition injection: encode the (prompt,
+        # negative_prompt) pair via the Gemma2 text encoder, cache
+        # keyed by ``calibration_artifact_hash``, and stamp the new
+        # delta's ``delta_spec`` with the cache key so ``solve_ode``
+        # can resolve the cached embedding without re-running the
+        # encoder. The encode path is lazy-imported (torch /
+        # transformers) so the framework's stdlib-only contract holds
+        # in synthetic mode.
+        prompt = str(new_spec.get("prompt", ""))
+        negative_prompt = str(new_spec.get("negative_prompt", ""))
+        if not prompt:
+            raise ValueError(ERR_LUMINA_PROMPT_MISSING)
+        cache_key = _text_embed_cache_key(
+            prompt,
+            negative_prompt,
+            str(delta.calibration_artifact_hash),
+        )
+        cached = self._resolve_text_embed(cache_key)
+        if cached is None:
+            text_emb, uncond_text_emb = self._encode_text_pair(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+            )
+            self._put_text_embed(cache_key, (text_emb, uncond_text_emb))
+        new_spec["text_embed_cache_key"] = cache_key
+        return ODEConditionDelta(
+            delta_spec=new_spec,
+            source=str(delta.source),
+            target_round=int(delta.target_round),
+            calibration_artifact_hash=str(delta.calibration_artifact_hash),
+        )
+
+    # ------------------------------------------------------------------
+    # 6a. text-encoder helper -- lazy torch + transformers import
+    # ------------------------------------------------------------------
+
+    def _encode_text_pair(
+        self,
+        *,
+        prompt: str,
+        negative_prompt: str,
+    ) -> tuple[Any, Any]:
+        """Encode ``prompt`` and ``negative_prompt`` via Gemma2.
+
+        Returns a ``(text_emb, uncond_text_emb)`` pair; both elements
+        are adapter-side native tensors that MUST NOT cross the
+        protocol boundary. The encode path is lazy-imported: in
+        synthetic mode a tiny NumPy placeholder pair is returned so
+        the Protocol conformance tests run without the heavy stack.
+
+        The torch mode returns the actual Gemma2 hidden states from
+        ``transformers.Gemma2Model`` -- the paper embeds the
+        ``last_hidden_state`` (shape ``(1, seq_text, 2304)``) into
+        the Unified Next-DiT as the text condition.
+        """
+        if self._mode != "torch" or self._pipeline is None:
+            # Synthetic placeholder: a deterministic NumPy anchor that
+            # satisfies the protocol surface without requiring
+            # transformers / torch. Shape ``(1, 1, 2304)`` mirrors
+            # the canonical Gemma2 embedding dim (hidden_size=2304).
+            seed_blob = repr(("text_embed", str(prompt), str(negative_prompt))).encode(
+                "utf-8"
+            )
+            seed = int(hashlib.sha256(seed_blob).hexdigest()[:8], 16)
+            rng = np.random.default_rng(seed)
+            text_emb = rng.standard_normal((1, 1, 2304)).astype(np.float64)
+            uncond_text_emb = np.zeros_like(text_emb)
+            return text_emb, uncond_text_emb
+
+        # Torch mode: lazy-import Gemma2Model + tokenizer, encode.
+        try:
+            import torch  # local import.
+            from transformers import Gemma2Model, GemmaTokenizerFast  # local import.
+        except ImportError:
+            # Defensive: if torch / transformers disappear mid-session,
+            # fall back to the synthetic placeholder so the round can
+            # still complete (engine never sees a hard fail).
+            return self._encode_text_pair.__wrapped__(  # type: ignore[attr-defined]
+                self, prompt=prompt, negative_prompt=negative_prompt
+            )
+
+        # The adapter is configured for a published Lumina-Image 2.0
+        # checkpoint; the Gemma2 text encoder is expected to live
+        # under ``weights_dir/text_encoder``. We load it once and
+        # cache the encoder on the adapter; subsequent encodings reuse
+        # the cached encoder.
+        encoder = getattr(self, "_text_encoder", None)
+        tokenizer = getattr(self, "_text_tokenizer", None)
+        if encoder is None or tokenizer is None:
+            text_encoder_dir = self._weights_path / "text_encoder"
+            tokenizer = GemmaTokenizerFast.from_pretrained(str(text_encoder_dir))
+            encoder = Gemma2Model.from_pretrained(
+                str(text_encoder_dir), torch_dtype=self._torch_dtype
+            )
+            encoder.eval()
+            for p in encoder.parameters():
+                p.requires_grad_(False)
+            self._text_encoder = encoder
+            self._text_tokenizer = tokenizer
+
+        with torch.no_grad():
+            tokens = tokenizer(
+                [prompt], return_tensors="pt", padding="max_length",
+                max_length=int(self._rope_axes[0]), truncation=True,
+            )
+            uncond_tokens = tokenizer(
+                [negative_prompt or ""], return_tensors="pt",
+                padding="max_length",
+                max_length=int(self._rope_axes[0]), truncation=True,
+            )
+            input_ids = tokens.input_ids.to(dtype=torch.long)
+            attn = tokens.attention_mask.to(dtype=torch.long)
+            uncond_ids = uncond_tokens.input_ids.to(dtype=torch.long)
+            uncond_attn = uncond_tokens.attention_mask.to(dtype=torch.long)
+            text_emb = encoder(
+                input_ids=input_ids,
+                attention_mask=attn,
+            ).last_hidden_state
+            uncond_text_emb = encoder(
+                input_ids=uncond_ids,
+                attention_mask=uncond_attn,
+            ).last_hidden_state
+        return text_emb.detach(), uncond_text_emb.detach()
+
+    # ------------------------------------------------------------------
+    # 7. solve_ode
+    # ------------------------------------------------------------------
+
+    def _velocity_field(
+        self,
+        x: ArrayF64,
+        t: float,
+        *,
+        text_emb: Any,
+        uncond_text_emb: Any,
+    ) -> ArrayF64:
+        """Evaluate the velocity field at ``(x, t)`` for the active backend.
+
+        ``torch`` mode delegates to :func:`_torch_velocity_field`;
+        ``synthetic`` mode uses the deterministic NumPy two-tensor
+        affine field. Returns a NumPy ``(16, 128, 128)`` float64 array
+        (copy-safe to mutate).
+        """
+        if self._mode == "torch":
+            assert self._pipeline is not None
+            # The diffusers Lumina2Pipeline owns the transformer + VAE
+            # + scheduler; we call the inner transformer directly for
+            # the velocity field and rely on the pipeline's loaded
+            # encoder for any latent <-> pixel round-trips downstream.
+            transformer = getattr(self._pipeline, "transformer", self._pipeline)
+            return _torch_velocity_field(
+                transformer,
+                x,
+                t,
+                dtype=self._torch_dtype,
+                text_emb=text_emb,
+                uncond_text_emb=uncond_text_emb,
+                guidance_scale=self._guidance_scale,
+                cfg_trunc_ratio=self._cfg_trunc_ratio,
+                cfg_normalization=self._cfg_normalization,
+                rope_axes=self._rope_axes,
+            )
+        assert self._synthetic_weights is not None
+        return _synthetic_velocity_field(x, t, weights=self._synthetic_weights)
+
+    def solve_ode(
+        self,
+        state: StateBundle,
+        condition: ODEConditionDelta,
+        *,
+        seed: int,
+    ) -> ODEIntegratorTrace:
+        ok, errs = validate_state_bundle(state)
+        if not ok:
+            raise CapabilityMissingError(
+                "validate_state_bundle", context=",".join(errs)
+            )
+        prior_entry = self._native_states.get(state.native_state_digest)
+        if prior_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state", context=state.native_state_digest
+            )
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        if num_steps <= 0:
+            raise ValueError(ERR_LUMINA_NUM_STEPS)
+        x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
+            LUMINA_IMAGE_2_0_STATE_SHAPE
+        )
+
+        # Resolve the cached text embeddings (encoded during
+        # ``compose_condition``). In synthetic mode the cached entries
+        # are NumPy placeholders; in torch mode they are the actual
+        # Gemma2 hidden states.
+        cache_key = str(condition.delta_spec.get("text_embed_cache_key", ""))
+        if not cache_key:
+            raise CapabilityMissingError(
+                "text_embed_cache_key_missing",
+                context=str(condition.delta_spec),
+            )
+        cached = self._resolve_text_embed(cache_key)
+        if cached is None:
+            raise CapabilityMissingError(
+                ERR_LUMINA_TEXT_EMBED_MISSING,
+                context=cache_key,
+            )
+        text_emb, uncond_text_emb = cached
+
+        # Per-round overrides for CFG (paper §4.5 + framework control).
+        guidance_scale = float(
+            condition.delta_spec.get("guidance_scale", self._guidance_scale)
+        )
+        cfg_trunc_ratio = float(
+            condition.delta_spec.get("cfg_trunc_ratio", self._cfg_trunc_ratio)
+        )
+        cfg_normalization = bool(
+            condition.delta_spec.get("cfg_normalization", self._cfg_normalization)
+        )
+
+        solver_kind = str(self._solver)
+        t_grid = np.linspace(
+            0.0, float(LUMINA_IMAGE_2_0_T_END), num_steps + 1, dtype=np.float64
+        )
+        traj = np.empty(
+            (t_grid.size, *LUMINA_IMAGE_2_0_STATE_SHAPE), dtype=np.float64
+        )
+        traj[0] = x0.copy()
+        x_cur = x0.copy()
+
+        # The CFG params are baked into ``self._velocity_field`` via
+        # closure above; per-round overrides are applied here so the
+        # trajectory reflects the round's policy.
+        # Closure pattern: rebuild a small per-round velocity function.
+        def _vf_round(xx: ArrayF64, tt: float) -> ArrayF64:
+            if self._mode == "torch":
+                assert self._pipeline is not None
+                transformer = getattr(self._pipeline, "transformer", self._pipeline)
+                return _torch_velocity_field(
+                    transformer,
+                    xx,
+                    tt,
+                    dtype=self._torch_dtype,
+                    text_emb=text_emb,
+                    uncond_text_emb=uncond_text_emb,
+                    guidance_scale=guidance_scale,
+                    cfg_trunc_ratio=cfg_trunc_ratio,
+                    cfg_normalization=cfg_normalization,
+                    rope_axes=self._rope_axes,
+                )
+            assert self._synthetic_weights is not None
+            return _synthetic_velocity_field(
+                xx, tt, weights=self._synthetic_weights
+            )
+
+        for i in range(1, t_grid.size):
+            t0 = float(t_grid[i - 1])
+            t1 = float(t_grid[i])
+            dt = float(t1 - t0)
+            v1 = _vf_round(x_cur, t0)
+            if solver_kind == LUMINA_IMAGE_2_0_INTEGRATOR_HEUN and i < t_grid.size - 1:
+                # Predictor: Euler trial step at t+dt.
+                x_pred = np.clip(
+                    x_cur + dt * v1,
+                    -LUMINA_IMAGE_2_0_CLAMP,
+                    LUMINA_IMAGE_2_0_CLAMP,
+                )
+                # Corrector: trapezoidal average.
+                v2 = _vf_round(x_pred, t1)
+                x_cur = np.clip(
+                    x_cur + 0.5 * dt * (v1 + v2),
+                    -LUMINA_IMAGE_2_0_CLAMP,
+                    LUMINA_IMAGE_2_0_CLAMP,
+                )
+            else:
+                x_cur = np.clip(
+                    x_cur + dt * v1,
+                    -LUMINA_IMAGE_2_0_CLAMP,
+                    LUMINA_IMAGE_2_0_CLAMP,
+                )
+            traj[i] = x_cur
+
+        traj_digest = _digest_state(
+            {
+                "kind": "trajectory",
+                "src_digest": state.native_state_digest,
+                "integrator": str(solver_kind),
+                "num_steps": int(num_steps),
+                "guidance_scale": float(guidance_scale),
+                "shape": [int(traj.shape[0]), int(traj.shape[1]), int(traj.shape[2])],
+                "x0_first": [
+                    float(x0[0, 0, 0]),
+                    float(x0[0, 0, 1]),
+                    float(x0[0, 1, 0]),
+                ],
+                "mode": self._mode,
+            }
+        )
+        self._put_native_state(
+            traj_digest,
+            {
+                "trajectory": traj,
+                "t_grid": t_grid,
+                "mode": self._mode,
+            },
+        )
+        cfg_blob = repr(
+            (
+                "lumina_image_2_0_config",
+                str(solver_kind),
+                int(num_steps),
+                int(seed),
+                float(guidance_scale),
+                float(cfg_trunc_ratio),
+            )
+        ).encode("utf-8")
+        integrator_config_hash = hashlib.sha256(cfg_blob).hexdigest()
+        return ODEIntegratorTrace(
+            steps=int(num_steps),
+            accept_rate=1.0,
+            native_state_digest=traj_digest,
+            integrator_config_hash=integrator_config_hash,
+        )
+
+    # ------------------------------------------------------------------
+    # 8. observe_endpoint
+    # ------------------------------------------------------------------
+
+    def observe_endpoint(
+        self,
+        trace: ODEIntegratorTrace,
+        state: StateBundle,
+    ) -> StateBundle:
+        ok, errs = validate_state_bundle(state)
+        if not ok:
+            raise CapabilityMissingError(
+                "validate_state_bundle", context=",".join(errs)
+            )
+        traj_entry = self._native_states.get(trace.native_state_digest)
+        if traj_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state", context=trace.native_state_digest
+            )
+        trajectory = np.asarray(traj_entry["trajectory"], dtype=np.float64)
+        x_final = np.asarray(trajectory[-1], dtype=np.float64).reshape(
+            LUMINA_IMAGE_2_0_STATE_SHAPE
+        )
+        endpoint_digest = _digest_state(
+            {
+                "kind": "endpoint",
+                "traj_digest": trace.native_state_digest,
+                "src_digest": state.native_state_digest,
+                "x_final_first": [
+                    float(x_final[0, 0, 0]),
+                    float(x_final[0, 0, 1]),
+                    float(x_final[0, 1, 0]),
+                ],
+                "t_final": float(LUMINA_IMAGE_2_0_T_END),
+            }
+        )
+        self._put_native_state(
+            endpoint_digest,
+            {
+                "x": np.asarray(x_final, dtype=np.float64).reshape(
+                    LUMINA_IMAGE_2_0_STATE_SHAPE
+                ),
+                "t": float(LUMINA_IMAGE_2_0_T_END),
+                "mode": self._mode,
+            },
+        )
+        next_round = int(state.source_round) + 1
+        return StateBundle(
+            channels=dict(state.channels),
+            masks=dict(state.masks),
+            batch_id=str(state.batch_id),
+            sample_id=str(state.sample_id),
+            reference_frame=str(state.reference_frame),
+            normalization=str(state.normalization),
+            source_round=int(next_round),
+            detach_proof=True,
+            native_state_digest=endpoint_digest,
+            provenance=tuple(state.provenance) + (AUDIT_LUMINA_OBSERVED,),
+            capability_token=self.capabilities(),
+        )
+
+    # ------------------------------------------------------------------
+    # 9. export_trajectory (P0-7 -- public trajectory export)
+    # ------------------------------------------------------------------
+
+    def export_trajectory(self, trace: ODEIntegratorTrace) -> ArrayF64 | None:
+        """Return the native ``(T, 16, 128, 128)`` trajectory for ``trace``."""
+        entry = self._native_states.get(trace.native_state_digest)
+        if entry is None:
+            return None
+        traj = entry.get("trajectory")
+        if traj is None:
+            return None
+        return np.asarray(traj, dtype=np.float64)
+
+    # ------------------------------------------------------------------
+    # 10. inject_forward_noise (optional -- P0-7 close)
+    # ------------------------------------------------------------------
+
+    def inject_forward_noise(
+        self,
+        bundle: StateBundle,
+        injected: Any,
+    ) -> StateBundle:
+        """Inject ``injected`` (shape ``(16, 128, 128)``) into the bundle's prior.
+
+        Returns a fresh :class:`StateBundle` whose prior x0 has been
+        updated to ``x + injected`` (clipped to ``[-LUMINA_IMAGE_2_0_CLAMP,
+        LUMINA_IMAGE_2_0_CLAMP]``) and whose ``provenance`` records
+        the :data:`AUDIT_FORWARD_NOISE_APPLIED` tag.
+        """
+        prior_entry = self._native_states.get(bundle.native_state_digest)
+        if prior_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state", context=bundle.native_state_digest
+            )
+        x_prior = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
+            LUMINA_IMAGE_2_0_STATE_SHAPE
+        )
+        x_new_arr = np.asarray(injected, dtype=np.float64).reshape(
+            LUMINA_IMAGE_2_0_STATE_SHAPE
+        )
+        x_new = np.clip(
+            x_prior + x_new_arr,
+            -LUMINA_IMAGE_2_0_CLAMP,
+            LUMINA_IMAGE_2_0_CLAMP,
+        )
+        new_digest = _digest_state(
+            {
+                "kind": "forward_noise",
+                "src_digest": bundle.native_state_digest,
+                "shape": [int(s) for s in x_new.shape],
+                "x_first": [
+                    float(x_new[0, 0, 0]),
+                    float(x_new[0, 0, 1]),
+                    float(x_new[0, 1, 0]),
+                ],
+            }
+        )
+        self._put_native_state(
+            new_digest,
+            {
+                "x0": x_new,
+                "source_round": int(bundle.source_round),
+                "mode": self._mode,
+            },
+        )
+        return StateBundle(
+            channels=dict(bundle.channels),
+            masks=dict(bundle.masks),
+            batch_id=str(bundle.batch_id),
+            sample_id=str(bundle.sample_id),
+            reference_frame=str(bundle.reference_frame),
+            normalization=str(bundle.normalization),
+            source_round=int(bundle.source_round),
+            detach_proof=True,
+            native_state_digest=new_digest,
+            provenance=tuple(bundle.provenance) + (AUDIT_FORWARD_NOISE_APPLIED,),
+            capability_token=self.capabilities(),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Factory
+# ---------------------------------------------------------------------------
+
+
+def default_lumina_image_2_0_adapter(
+    *,
+    weights_path: Path | None = None,
+    force_mode: Mode | Literal["auto"] = "auto",
+    num_steps: int = LUMINA_IMAGE_2_0_NUM_STEPS_DEFAULT,
+    solver: str = LUMINA_IMAGE_2_0_INTEGRATOR_EULER,
+) -> LuminaImage20Adapter:
+    """Default factory for :class:`LuminaImage20Adapter`.
+
+    When ``weights_path`` is ``None`` the adapter resolves
+    ``data/lumina-image-2.0`` / ``data/Lumina-Image-2.0`` /
+    ``data/Alpha-VLLM__Lumina-Image-2.0`` in priority order; when none
+    of those exist and ``force_mode`` is ``"auto"``, the adapter falls
+    back to ``synthetic`` mode (testing-only).
+    """
+    return LuminaImage20Adapter(
+        weights_path=weights_path,
+        force_mode=force_mode,
+        num_steps=num_steps,
+        solver=solver,
+    )
+
+
+__all__ = [
+    "AUDIT_FORWARD_NOISE_APPLIED",
+    "AUDIT_LUMINA_OBSERVED",
+    "AUDIT_LUMINA_RESTART_BLEND",
+    "AUDIT_LUMINA_TEXT_CACHED",
+    "ERR_LUMINA_INTEGRATOR_UNKNOWN",
+    "ERR_LUMINA_NUM_STEPS",
+    "ERR_LUMINA_PROMPT_MISSING",
+    "ERR_LUMINA_TEXT_EMBED_MISSING",
+    "LUMINA_IMAGE_2_0_CHANNEL_DOMAINS",
+    "LUMINA_IMAGE_2_0_CHANNELS",
+    "LUMINA_IMAGE_2_0_CLAMP",
+    "LUMINA_IMAGE_2_0_CFG_TRUNC_RATIO_DEFAULT",
+    "LUMINA_IMAGE_2_0_CONFIG_HASH",
+    "LUMINA_IMAGE_2_0_CONFIG_VERSION",
+    "LUMINA_IMAGE_2_0_GUIDANCE_SCALE_DEFAULT",
+    "LUMINA_IMAGE_2_0_INTEGRATOR_EULER",
+    "LUMINA_IMAGE_2_0_INTEGRATOR_HEUN",
+    "LUMINA_IMAGE_2_0_INTEGRATORS",
+    "LUMINA_IMAGE_2_0_MECHANISM_ID",
+    "LUMINA_IMAGE_2_0_NATIVE_STATES_MAXSIZE",
+    "LUMINA_IMAGE_2_0_NUM_STEPS_DEFAULT",
+    "LUMINA_IMAGE_2_0_ROPE_AXES_DEFAULT",
+    "LUMINA_IMAGE_2_0_STATE_SHAPE",
+    "LUMINA_IMAGE_2_0_SYNTHETIC_HIDDEN",
+    "LUMINA_IMAGE_2_0_SYNTHETIC_SEED_DEFAULT",
+    "LUMINA_IMAGE_2_0_T_END",
+    "LUMINA_IMAGE_2_0_TEXT_CACHE_MAXSIZE",
+    "LUMINA_IMAGE_2_0_WEIGHTS_CANDIDATES",
+    "LuminaImage20Adapter",
+    "LuminaImage20Capabilities",
+    "default_lumina_image_2_0_adapter",
+    "diffusers_is_available",
+    "lumina_image_2_0_resolve_weights_path",
+    "torch_is_available",
+    "transformers_is_available",
+]

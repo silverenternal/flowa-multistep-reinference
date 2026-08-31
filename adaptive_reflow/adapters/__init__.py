@@ -22,7 +22,7 @@ from .hidream_i1 import (
     default_hidream_i1_adapter,
     hidream_i1_resolve_weights_path,
 )
-from .lumina_image_2_0_adapter_lumina_image_2_0 import (  # noqa: I001
+from .lumina_image_2_0 import (  # noqa: I001
     LUMINA_IMAGE_2_0_CHANNEL_DOMAINS,
     LUMINA_IMAGE_2_0_CHANNELS,
     LUMINA_IMAGE_2_0_CONFIG_HASH,
@@ -33,7 +33,7 @@ from .lumina_image_2_0_adapter_lumina_image_2_0 import (  # noqa: I001
     LuminaImage20Capabilities,
     default_lumina_image_2_0_adapter,
 )
-from .protbfnabbfnadapter import (
+from .protbfn_abbfn_adapter import (
     AMINO_ACID_CATEGORICAL,
     PROTBFN_ABBFN_CHANNELS,
     PROTBFN_ABBFN_CHANNEL_DOMAINS,
@@ -43,7 +43,7 @@ from .protbfnabbfnadapter import (
     ProtBFNAbBFNCapabilities,
     default_protbfnabbfn_adapter,
 )
-from .flowmol3adapter import (
+from .flowmol3_v2_adapter import (
     AUDIT_FLOWMOL3_NUMPY_BACKEND,
     AUDIT_FLOWMOL3_RESTART_BLEND,
     AUDIT_FLOWMOL3_TORCH_BACKEND,
@@ -60,8 +60,8 @@ from .flowmol3adapter import (
     FLOWMOL3ADAPTER_NUM_STEPS_DEFAULT,
     FLOWMOL3ADAPTER_PINNED_COMMIT,
     FLOWMOL3ADAPTER_STATE_SHAPE,
-    FlowMol3AdapterCapabilities,
-    FlowMol3AdapterImpl,
+    FlowMol3V2AdapterCapabilities,
+    FlowMol3V2Adapter,
     default_flowmol3adapter,
 )
 from .graphbfn import (
@@ -137,7 +137,7 @@ from .twodim_fm import (
     TwoDimFMAdapter,
     default_twodim_fm_adapter,
 )
-from .wan2_2_video_flowmatchingodeadapter import (
+from .wan2_2_video import (
     AUDIT_WAN22_FORWARD_NOISE_APPLIED,
     AUDIT_WAN22_OBSERVED,
     AUDIT_WAN22_RESTART_BLEND,
@@ -150,8 +150,8 @@ from .wan2_2_video_flowmatchingodeadapter import (
     WAN22_NUM_STEPS_DEFAULT,
     WAN22_SOLVER_HEUN,
     WAN22_TI2V5B_STATE_SHAPE,
-    Wan22VideoFlowMatchingODEAdapter,
-    Wan22VideoFlowMatchingODEAdapterCapabilities,
+    Wan22VideoAdapter,
+    Wan22VideoAdapterCapabilities,
     default_wan22_video_flowmatchingodeadapter,
     wan22_resolve_weights_path,
 )
