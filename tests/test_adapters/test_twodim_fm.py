@@ -414,29 +414,29 @@ def test_no_nan_over_many_seeds(twodim_fm_weights_path: Path) -> None:
 
 
 def test_endpoint_near_target_centroid(twodim_fm_weights_path: Path) -> None:
-    """Generate 100 endpoints; centroid must be within ``0.3`` of ``(0.5, 0.25)``.
+    """Generate 100 endpoints; centroid must be within ``0.3`` of ``(0.5, -0.25)``.
 
     The analytic two_moons centroid is approximately the average of the
     two half-discs: ``((0.0, 1.0) + (1.0, -0.5)) / 2 = (0.5, 0.25)``
     (the integrals of ``cos(theta)`` over ``[0, pi]`` and the shifted
     second moon are both zero in expectation; the means of the two
     discs are ``(0, 2/pi)`` and ``(1, -0.5 - 2/pi)`` respectively so the
-    exact centroid is ``(0.5, -0.25)``. We use ``(0.5, 0.25)`` as the
-    generous bound — both the ``x``-component (``0.5``) and a rough
-    ``y``-centroid).
+    exact centroid is ``(0.5, -0.25)``.
     """
     from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
 
     adapter = TwoDimFMAdapter(
         weights_path=twodim_fm_weights_path, integrator="rk4"
     )
-    bundle = adapter.build_initial_state(
-        batch_id="batch-cent-twodim", sample_id="sample-cent-twodim"
-    )
     condition = _make_condition_delta(target_round=0, num_steps=100)
 
     endpoints = np.empty((100, 2), dtype=np.float64)
     for i in range(100):
+        # ``solve_ode`` is deterministic for an existing bundle, so each
+        # distribution sample needs its own initial state.
+        bundle = adapter.build_initial_state(
+            batch_id="batch-cent-twodim", sample_id=f"sample-cent-twodim-{i}"
+        )
         trace = adapter.solve_ode(bundle, condition, seed=i + 1)
         endpoints[i] = _endpoint_from_trace(adapter, trace)
 
@@ -446,8 +446,8 @@ def test_endpoint_near_target_centroid(twodim_fm_weights_path: Path) -> None:
     assert abs(float(centroid[0]) - 0.5) < 0.3, (
         f"centroid x = {float(centroid[0]):.3f} escapes (0.5 ± 0.3)"
     )
-    assert abs(float(centroid[1]) - 0.25) < 0.3, (
-        f"centroid y = {float(centroid[1]):.3f} escapes (0.25 ± 0.3)"
+    assert abs(float(centroid[1]) + 0.25) < 0.3, (
+        f"centroid y = {float(centroid[1]):.3f} escapes (-0.25 ± 0.3)"
     )
 
 
