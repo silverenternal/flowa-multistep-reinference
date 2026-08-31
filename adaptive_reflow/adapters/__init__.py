@@ -12,6 +12,21 @@ from .flowmol3 import (
     default_flowmol3_adapter,
     flowmol3_registry_entry,
 )
+from .graphbfn import (
+    GRAPHBFN_CHANNELS,
+    GRAPHBFN_CHANNEL_DOMAINS,
+    GRAPHBFN_CONFIG_HASH_HIER,
+    GRAPHBFN_CONFIG_HASH_ICLR,
+    GRAPHBFN_CONFIG_VERSION,
+    GRAPHBFN_CONDITION_KINDS,
+    GRAPHBFN_NATIVE_STATES_MAXSIZE,
+    GRAPHBFN_NUM_STEPS_DEFAULT,
+    GraphBFNAdapter,
+    GraphBFNCapabilities,
+    default_graphbfn_adapter,
+    graphbfn_resolve_weights_path,
+    torch_is_available as graphbfn_torch_is_available,
+)
 from .integrators import (
     INTEGRATOR_REGISTRY,
     AMEDSolverIntegrator,
