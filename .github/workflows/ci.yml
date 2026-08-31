@@ -1,0 +1,166 @@
+# GitHub Actions CI for flowa-multistep-reinference.
+#
+# Runs the project's six pre-merge gates on every push to ``main`` and on
+# every pull request targeting ``main``. ``workflow_dispatch`` is wired so a
+# maintainer can re-run the gate suite without a push.
+#
+# Gates (one step each; see CONTRIBUTING.md for the local equivalents):
+#
+#   1. pytest       -- the full test suite, slow / benchmark markers excluded
+#                     so PR-loop wall-clock stays bounded. ``importorskip``
+#                     handles torch-gated files (test_mnist_fm.py) cleanly
+#                     when torch is not installed.
+#   2. ruff         -- E/W/F/I/B/UP/SIM rule set over adaptive_reflow/ and
+#                     tests/ (per pyproject.toml [tool.ruff]).
+#   3. mypy         -- ``--strict`` over the full ``adaptive_reflow`` tree;
+#                     the per-module overrides in pyproject.toml silence
+#                     the upstream numpy / rdkit stub noise.
+#   4. check_docs   -- ``tools/check_docs_against_code.py`` walks every
+#                     governance doc, resolves inline-symbol and code-block
+#                     claims against the AST-built symbol index.
+#   5. check_claims -- ``tools/check_claims_consistency.py`` walks
+#                     ``docs/CLAIMS.md``, resolves every ``Asserted by`` /
+#                     ``Disputed by`` reference, and enforces the
+#                     governance-surface cross-reference rule.
+#   6. mkdocs       -- ``mkdocs build --strict`` renders the auto-generated
+#                     API reference; a broken internal link or unresolved
+#                     mkdocstrings reference fails the build.
+#
+# The six gates are split across two jobs (``lint-types`` for the static
+# checks that don't need the test runner, and ``test-docs`` for pytest +
+# mkdocs). Both jobs run in parallel and must be green before a PR merges.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel in-progress CI on the same ref when a new commit lands. The
+# ``cancel-in-progress: true`` keeps the Actions quota free for fast-iterate
+# PRs (a fresh push supersedes the previous run within ~30 s).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Static checks: ruff + mypy + the two docs-drift scanners. None of
+  # these need the test runner or the mkdocs site renderer, so they
+  # live in their own job and run in parallel with ``test-docs``.
+  lint-types:
+    name: Lint + types + docs-drift scanners
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          # Key on the lockfile so any change to uv.lock invalidates the
+          # cache; the fallback key covers the first-ever run before
+          # uv.lock is populated.
+          key: ${{ runner.os }}-pip-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install static-check toolchain
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff mypy
+
+      - name: Gate 2 -- ruff check
+        # E/W/F/I/B/UP/SIM over adaptive_reflow/ + tests/. Per-file-ignores
+        # in pyproject.toml handle the __init__.py re-exports, the
+        # quarantined legacy/ tree, and the forward references inside
+        # contracts/ / universal/ / molecular/.
+        run: ruff check adaptive_reflow/ tests/
+
+      - name: Gate 3 -- mypy --strict
+        # Strict mode over the full adaptive_reflow tree. Per-module
+        # overrides in pyproject.toml silence the rdkit / numpy stub
+        # noise (upstream syntax errors, not project defects) and the
+        # torch-conditional rf-cifar adapter.
+        run: python -m mypy adaptive_reflow
+
+      - name: Gate 4 -- check_docs_against_code
+        # Walks every governance doc, extracts inline-symbol /
+        # code-block / path claims, and verifies each against an
+        # AST-built symbol index. PYTHONPATH=. because the project is
+        # imported by path rather than installed.
+        run: PYTHONPATH=. python tools/check_docs_against_code.py
+
+      - name: Gate 5 -- check_claims_consistency
+        # Walks docs/CLAIMS.md, verifies every ``Asserted by`` /
+        # ``Disputed by`` reference resolves to a real file:line, and
+        # enforces that every ACTIVE claim is cross-referenced from at
+        # least one governance surface (INSIGHTS / ABLATION / ADR /
+        # README / ARCHITECTURE).
+        run: python tools/check_claims_consistency.py
+
+  # Test + docs build. Runs the pytest suite (slow / benchmark excluded)
+  # and the mkdocs --strict build. Same runner pool as ``lint-types``
+  # but a separate job so a mypy regression cannot mask a pytest
+  # regression in the same Actions run.
+  test-docs:
+    name: Test + mkdocs build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install test + docs toolchain
+        # ``.[dev]`` brings mkdocs + mkdocstrings[python] + griffe. The
+        # rest of the suite is stdlib-only; pytest, hypothesis, and
+        # pytest-benchmark are pinned in requirements-style via the
+        # package metadata (see pyproject.toml [project]).
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest hypothesis pytest-benchmark '.[dev]'
+
+      - name: Gate 1 -- pytest
+        # ``-m "not slow and not benchmark"`` matches the cpu-tests.yml
+        # convention: keep the PR loop under 60 s; slow / benchmark /
+        # stress markers are covered by the dedicated nightly jobs.
+        # ``--strict-markers`` is in addopts (pyproject.toml) so a typo
+        # in a marker name fails at collection, not silently.
+        # ``--import-mode=importlib`` matches the local convention; the
+        # repo is imported by path via PYTHONPATH so this is a no-op
+        # but keeps behaviour identical to the docs-validate workflow.
+        run: |
+          PYTHONPATH=. python -m pytest tests/ \
+            -m "not slow and not benchmark" \
+            --no-header -q
+
+      - name: Gate 6 -- mkdocs build --strict
+        # Strict mode rejects broken internal links, unresolved
+        # mkdocstrings directives, and any docs/ markdown file that
+        # is not listed in mkdocs.yml ``nav``. The site is built into
+        # ``./site`` and discarded -- the docs-deploy workflow handles
+        # the actual GitHub Pages publish.
+        run: mkdocs build --strict

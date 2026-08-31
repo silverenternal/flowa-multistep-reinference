@@ -1,6 +1,21 @@
+# PEP 621 build-system declaration. ``hatchling`` is the build backend
+# because (1) it ships a permissive ``only-include`` filter that lets us
+# ship the runtime package + the ``tools/`` entry points without dragging
+# the 1300+-line ``adaptive_reflow/legacy/`` quarantine into the wheel,
+# (2) it is the default backend for projects that opt into hatch-style
+# PEP 621 metadata, and (3) ``pip`` resolves the build-system entry from
+# ``requires`` alone -- a PEP 517 install via ``pip install .`` does not
+# require hatch to be pre-installed locally for ``build`` to pick it up.
+# ``build-system.requires`` is the exact list of frontend/back-end plugins
+# ``build`` must provision before invoking the backend; ``build-system.backend``
+# is the dotted path to the build entry point hatchling exposes
+# (``hatchling.build``).
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
 [project]
-# Minimal project metadata so PEP-621 tools (pip, hatch, etc.) can
-# resolve optional-dependency groups. The package itself is intentionally
+# PEP 621 project metadata. The package itself is intentionally
 # metadata-light: ``name`` is required for ``pip install -e .`` to work;
 # ``version`` is bumped by hand; ``optional-dependencies.dev`` carries
 # the doc-build toolchain (mkdocs + mkdocstrings) that the CI / pre-merge
@@ -10,6 +25,69 @@ name = "flowa-multistep-reinference"
 version = "0.1.0"
 description = "Typed-contracts framework + Flow Matching ODE re-inference engine."
 requires-python = ">=3.12"
+# SPDX expression is the PEP 639 canonical form. ``MIT`` matches the
+# ``LICENSE`` file shipped at the repo root; ``license-files`` globs
+# both the canonical ``LICENSE`` and the ``LICENSE-*`` variant pattern
+# so a future re-licensing swap (e.g. MIT -> Apache-2.0) only requires
+# adding the new file under a matching glob, not editing ``pyproject.toml``.
+license = "MIT"
+license-files = ["LICENSE", "LICENSE-*"]
+# ``readme`` is what PyPI renders on the project landing page. The README
+# is the only long-form document we expose -- the rest of the project
+# documentation lives under ``docs/`` and is published via mkdocs + GitHub
+# Pages (see [project.urls].Documentation below).
+readme = "README.md"
+# Authors follow PEP 621 name+email table syntax. ``name`` is optional but
+# ``email`` must be a valid RFC-822 address (PyPI rejects anything else).
+# Copyright holder for LICENSE is the same individual.
+authors = [
+    {name = "silverenternal", email = "silverenternal@users.noreply.github.com"},
+]
+# Keywords surface in the PyPI sidebar search. Plurals chosen to match
+# the canonical PyPI taxonomy (``flow-matching`` and ``reinference`` are
+# one canonical form each; ``machine-learning`` is the long-form variant
+# of the shorter ``ml``).
+keywords = [
+    "flow-matching",
+    "reinference",
+    "machine-learning",
+    "contracts",
+    "typed",
+    "research",
+]
+# Classifiers follow PyPI's controlled vocabulary
+# (https://pypi.org/classifiers/). We pick the closest match for a
+# research-stage prototype that runs on Python 3.12 only: ``Development
+# Status :: 3 - Alpha`` is honest about the B+ self-assessment in
+# README.md; the three ``Intended Audience`` lines cover the three
+# audiences the README explicitly names (research, science, education);
+# the two ``Topic`` lines cover the algorithm-flavour and ML-flavour
+# readers; ``Typing :: Typed`` advertises the typed-contracts core.
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+
+# Project URLs surface in the PyPI sidebar. ``Homepage`` is the GitHub
+# landing page (canonical source); ``Repository`` is the git clone URL
+# (also used by ``pip`` for editable installs); ``Documentation`` is the
+# rendered mkdocs site (the long-form docs do not live in README.md);
+# ``Issues`` is the GitHub issue tracker.
+[project.urls]
+Homepage = "https://github.com/silverenternal/flowa-multistep-reinference"
+Repository = "https://github.com/silverenternal/flowa-multistep-reinference.git"
+Documentation = "https://silverenternal.github.io/flowa-multistep-reinference/"
+Issues = "https://github.com/silverenternal/flowa-multistep-reinference/issues"
+Changelog = "https://github.com/silverenternal/flowa-multistep-reinference/blob/main/CHANGELOG.md"
 
 # Project scripts. ``claims-consistency`` is the CLI entry point for
 # ``tools/check_claims_consistency.py``: it walks ``docs/CLAIMS.md``,
@@ -332,4 +410,44 @@ module = [
     "adaptive_reflow.eval.twodim_fm_evaluator",
 ]
 ignore_errors = true
+
+# --- hatchling wheel / sdist configuration ---------------------------------
+# Hatchling auto-discovers Python packages from the project root, but the
+# ``tools/`` directory is a *flat* layout (no nested package) that hatchling
+# would otherwise exclude. ``only-include`` below forces the wheel to ship
+# exactly three roots: the runtime ``adaptive_reflow/`` package, the
+# ``tools/`` entry-point module (``tools.check_claims_consistency``), and
+# the ``tests/`` tree. ``tests/`` is shipped for downstream consumers who
+# want to re-run the suite without checking out the source tree; the
+# runtime import graph never touches it.
+#
+# We deliberately do NOT include the ``site/`` (mkdocs rendered HTML),
+# ``docs/_benchmark_ablation.md``, ``docs/_test_ablation_quick.md``, or
+# any other ``docs/_*`` underscore-prefixed files. The mkdocs ``--strict``
+# build never reads from the wheel, and shipping the rendered site would
+# bloat the wheel by ~1 MB.
+[tool.hatch.build.targets.wheel]
+only-include = [
+    "adaptive_reflow",
+    "tools",
+    "tests",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+]
+
+# sdist must mirror the wheel include set so ``pip install -e .`` (which
+# goes through sdist -> wheel) sees the same files. The same
+# ``README.md`` / ``CHANGELOG.md`` / ``LICENSE`` triad is included so the
+# rendered PyPI landing page has its sources.
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "adaptive_reflow",
+    "tools",
+    "tests",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "pyproject.toml",
+]
 

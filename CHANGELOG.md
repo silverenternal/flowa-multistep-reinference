@@ -9,8 +9,9 @@ on a fixed cadence. Version markers in commit messages follow the
 
 ## [Unreleased] - Phase-4 code review + fix plan + docstring audit (documentation-only)
 
-This entry records the **Phase-4 R3/R11 adversarial code review** and
-its associated fix plan. The audit + fix plan is **documentation-only**
+This entry records the **Phase-4 R3/R11 adversarial code review**
+(round 12 / round 13 of the review series, hence "r12 / r13 fixes")
+and its associated fix plan. The audit + fix plan is **documentation-only**
 (read-only on the algorithm layer): the audit identifies 52 bugs, the
 fix plan prioritises 7 P0 / 15 P1 / 30 P2, and the docstring audit
 records the 37 modules the audit flagged as missing-or-stale on
@@ -18,6 +19,30 @@ documentation axes. The fixes themselves are deferred behind a future
 code-review pass that applies them; this entry exists so the audit,
 the fix plan, and the cross-reference surfaces (claims ledger,
 mkdocs nav, README) stay in sync.
+
+**r12 / r13 fixes summarised below:**
+
+- **r12 (Phase-4 audit, [`docs/r4-survey/18-comprehensive-code-review.md`](docs/r4-survey/18-comprehensive-code-review.md))**
+  — 52 bugs: 7 P0 (severity 5, paper-blocking), 15 P1 (severity 3-4),
+  30 P2 (severity 1-2). Severity-5 bugs: F-31, F-18, F-24
+  (see Phase 1 below). The audit also catalogues 5 cross-cutting
+  concerns and 6 architecture smells. See Phase 1 below for the
+  full severity table.
+- **r13 (Phase-4 fix plan, [`docs/r4-survey/19-fix-plan.md`](docs/r4-survey/19-fix-plan.md))**
+  — 7 P0 fixes totalling ~70 LoC across 7 files, with 4 parallel
+  branches (A: FreeTraj cache, B: BoundedMerge contract, C: runner
+  correctness, D: eval labels). P0 critical path for Path A
+  (scheduler discrimination) is P0-1 + P0-2 + P0-5 (~2 h). P0
+  critical path for Path B (better FID than baseline) extends with
+  P0-4 (~2.5 h). P1 + P2 fixes total ~29 h hands-on (one
+  developer-week). See Phase 2 below for the full parallelisation
+  map.
+- **r13 follow-up (docstring audit, [`docs/audit/PHASE4_DOCSTRING_AUDIT.md`](docs/audit/PHASE4_DOCSTRING_AUDIT.md))**
+  — 37 modules flagged as missing-or-stale on documentation axes
+  (module-level docstring, public-surface docstring, audit-code
+  vocabulary, cross-references). Each entry carries a `MISSING` /
+  `STALE` / `THIN` / `MISLEADING` flag and a recommended remediation.
+  See Phase 3 below for the full list.
 
 ### Phase 1 - audit (Phase-4 R3/R11 read-only review)
 
@@ -1328,6 +1353,97 @@ layer as ground-truth constants, not just as opt-in runner diagnostics.
 - ADR-0007: prev-anchored bounded-merge
 - ADR-0008: claim-gate deferral placeholder
 - ADR-0009: mixer RMS-preservation precondition
+
+---
+
+## [0.1.0] - 2026-08-31 - Initial PyPI release
+
+First published version of `flowa-multistep-reinference`. This entry
+serves as the manifest of every user-visible surface that ships in
+the 0.1.0 wheel; it is intentionally non-exhaustive (the per-round
+audit + fix history lives in the entries above) but lists every
+adapter, protocol, evaluator, claim, and ADR that a downstream
+consumer can rely on.
+
+### Added (this release manifest)
+
+- **Runtime package** — `adaptive_reflow/` with the twelve peer
+  subpackages: `adapters/`, `algorithm/`, `contracts/`, `data/`,
+  `diagnostics/`, `envelope/`, `eval/`, `frame/`, `legacy/`
+  (quarantined), `molecular/`, `policy/`, `schedule/`, `universal/`,
+  `writer/`.
+- **Two-layer universal / molecular split** — `universal/` is
+  stdlib-only and free of molecule-specific imports (enforced by
+  `tests/test_universal/test_no_molecular_import.py`); `molecular/`
+  is the concrete pocket-conditioned 3D flow matching implementation
+  of the universal Protocols.
+- **Typed-contracts core** — `contracts/` ships the frozen dataclasses
+  + `NewType`s that constitute the contract surface: DTB-R0/R1/R2/R4/
+  R5/NC1/NA1/L1/L2/S1 (see `docs/CONTRACTS.md` for the contract
+  ledger).
+- **Algorithm layer** — `algorithm/` ships the four protocols
+  (`SchedulerProtocol`, `PolicyDriverProtocol`, `MergeOperatorProtocol`,
+  `RestartBlenderProtocol`) and the algorithm-layer surfaces wired by
+  the 4-protocol composition (Cosine / Linear / Exp / Poly / Sigmoid /
+  Const / ConvAdapt / CodimensionSheet / Sequential schedulers;
+  ScheduleDerived / Constant / Adaptive drivers; BoundedMerge /
+  Identity / EMA operators; Linear / DistanceDecay blenders).
+- **Concrete adapters** — `TwoDimFMAdapter` (CPU-runnable 2D rectified
+  flow, 2-moons + 8-gaussians), `ReferenceFlowAAdapter`,
+  `FlowMol3Adapter`, `SyntheticAdapter`, `ToyGaussianAdapter`,
+  `ToyLinearAdapter`, `RDKitOracle` (chemistry-gated).
+- **Engine + runner** — `frame/engine.py` (`Engine.run_round`,
+  fail-closed, audit, capability check), `algorithm/batched_runner.py`
+  (`BatchedTrajectoryRunner`, batched trajectories + endpoint metric),
+  `frame/runner.py` (`ReInferenceRunner`, multi-round + per-round
+  metric).
+- **Evaluators** — `eval/` ships the W2 / Coverage / Energy distance
+  evaluators, `paper_quantities` (A_g / B_g / C_g / e_rho),
+  `EvidenceScaleGapMetric` (paper Theorem 1 witness), and the
+  bounded-Lipschitz metric.
+- **CLI entry point** — `claims-consistency` (from
+  `tools.check_claims_consistency:main`) walks `docs/CLAIMS.md`,
+  verifies every `Asserted by` reference, and auto-promotes
+  `Disputed by` to `PROVISIONAL`.
+- **Documentation** — long-form docs published via mkdocs + GitHub
+  Pages at
+  <https://silverenternal.github.io/flowa-multistep-reinference/>.
+
+### Optional dependency extras
+
+- `[dev]` — `mkdocs`, `mkdocstrings[python]`, `griffe`. Doc-build
+  toolchain for the auto-rendered API reference under `docs/api/`.
+- `[chemistry]` — `rdkit>=2024.3.1`. RDKit oracle
+  (`adaptive_reflow.eval.rdkit_oracle`).
+- `[flow_matching]` — `numpy>=2.0,<2.5`, `scipy>=1.10`. 2D rectified
+  flow adapter + offline trainer.
+
+### Compatibility
+
+- Python **3.12** only. ``requires-python = ">=3.12"`` in `pyproject.toml`.
+- Standard library only at install time; runtime is opt-in per extra.
+- No algorithm-layer behaviour change vs. the immediately-preceding
+  commits; 0.1.0 is the first public release and the first published
+  wheel.
+
+### Gate impact (at this release)
+
+- pytest: **1235** passed, 7 skipped (torch-gated).
+- ruff: **0** violations.
+- mypy `adaptive_reflow`: **0** errors.
+- claims consistency: **32 active** / **0 provisional** / **2 deprecated**
+  (`CLM-016`, `CLM-017`).
+- docs scanner (`tools/check_docs_against_code.py`): clean.
+- mkdocs `--strict`: clean.
+
+### Detailed change log
+
+This entry is a release manifest. The full per-round audit + fix
+history (the R3 / R11 review, the algorithm-deep uplifts, the
+algorithmic gap closure, the governance scaffolding, and every
+intermediate round) lives in the `[Unreleased]` sections above.
+For the full git history see
+<https://github.com/silverenternal/flowa-multistep-reinference/commits/main>.
 
 ---
 

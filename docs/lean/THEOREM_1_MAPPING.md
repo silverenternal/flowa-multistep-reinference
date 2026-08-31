@@ -1,6 +1,6 @@
 # Theorem 1 Mapping: Bounded-Lipschitz Convergence μ_{g,ε} → ν_g
 
-Paper: Li 2024, "Gaussian Posterior Selection on Noncompact Fibres with
+Paper: Li 2026, "Gaussian Posterior Selection on Noncompact Fibres with
 Uniformly Separated Roots". `Theorem 1` is paper lines 87–92 (Theorem 1 box)
 and lines 87–205 (proof). The full statement:
 

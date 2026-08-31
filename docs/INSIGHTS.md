@@ -1,4 +1,4 @@
-# Paper-grounded algorithm layer: how Li 2024 Theorem 1 maps to flowa's algorithm abstractions
+# Paper-grounded algorithm layer: how Li 2026 Theorem 1 maps to flowa's algorithm abstractions
 
 Status: insight document (narrative, not a load-bearing governance record).
 Audience: maintainers, reviewers, and newcomers asking "why does the algorithm layer look like it does?"
@@ -32,7 +32,7 @@ The empirical validation lives in `EvidenceScaleGapMetric` (formerly `PosteriorS
 
 The mapping below mirrors ADR-0013's framework-mapping table; the right-hand column adds the empirical handle (which test, which metric, which ablation row) that lets a reviewer verify each paper claim from a run's audit trail.
 
-| Paper Theorem 1 (Li 2024) | Paper symbol | Framework implementation | Empirical handle |
+| Paper Theorem 1 (Li 2026) | Paper symbol | Framework implementation | Empirical handle |
 | --- | --- | --- | --- |
 | Codimension-driven selection (Theorem 1) | `mu_{g,eps} --BL--> nu_g` as `eps -> 0` [CLM-012]; `mu_{g,eps}(union_z I_z) = O(eps)` [CLM-014] | The four `Protocol`s composed by `ReInferenceRunner`; the sheet is the primary mode, cells are the secondary modes | `EvidenceScaleGapMetric` (formerly `PosteriorSelectionEvaluator`) + `multi_round_codimension_sheet_posterior_selection` / `multi_round_cosine_posterior_selection` rows |
 | Lemma 2 — sheet tube scaling | `Theta(eps^{+1})` per normal direction (one normal direction, codimension 1) [CLM-001] | `CosineAnnealScheduler` (ADR-0010's `n_cap` ramp) [CLM-005] — closed-form `n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))`; direction-aligned with `eps -> 0` per `docs/audit/EPSILON_DIRECTION.md` | `CosineAnnealScheduler.sample(...)` produces `n_cap`; the per-round sheet-vs-cell evidence *scale gap* is monitored by the framework heuristic `selection_ratio` (NOT a paper quantity) [CLM-008] |
@@ -248,6 +248,10 @@ The paper does NOT claim:
 * **The paper does NOT claim that the framework's `EvidenceScaleGapMetric` (formerly `PosteriorSelectionEvaluator`) is a paper quantity** [CLM-008]. The metric emits a heuristic `selection_ratio` based on closed-form Gaussian densities; the paper proves no such ratio. The metric is a framework-internal diagnostic for monitoring whether the framework's behaviour is consistent with the paper's evidence ordering (sheet `Theta(eps^{+1})` [CLM-001] vs cells `O(eps^{+2})` [CLM-002]). It is NOT claimed to converge to 1; it plateaus at a fixed-noise replay [CLM-004].
 * **The paper does NOT claim that any framework-specific schedule implements Theorem 1's evidence competition at the magnitude level** [CLM-015]. The framework's `n_cap` ramp is a convex mixing weight on a state vector; it is *directionally* aligned with the paper's `eps -> 0` limit (round progression mirrors the noise-shrink direction) but it does not produce the `Theta(eps^{+1})` / `O(eps^{+2})` evidence competition the paper proves.
 * **The paper does NOT claim that the framework's heuristic `selection_ratio` will ever reach 1 in finite rounds** [CLM-017]. The shipped metric is a fixed-noise replay estimator; it plateaus at the value implied by the adapter's training noise. Convergence to 1 would require an endpoint-conditioned variant (scoring the round's own bundle) operating in the `eps -> 0` limit, which is the open follow-up recorded in §6.
+
+### 7.1.5 Cross-reference surface (Phase-4 docstring audit)
+
+* **Cross-reference surface (Phase-4 docstring audit)** [CLM-043]. The Phase-4 docstring audit (docs/audit/PHASE4_DOCSTRING_AUDIT.md) read-only surveyed the algorithm layer, adapters, runner, engine, evaluators, paper quantities, state machines, and contracts surface and flagged 37 modules as missing-or-stale on one or more of four docstring axes (`MISSING` / `STALE` / `THIN` / `MISLEADING`). Each entry carries a one-line "recommended remediation" that a future code-review pass should land; the audit-code vocabulary cross-reference surface (audit §3) is the canonical reader-side entry point until a future audit-code-registry module lands in `adaptive_reflow.contracts.audit`. The 2 deprecated CLAMs (CLM-016 inverted-`eps` exponents, CLM-017 selection-ratio-converges-to-1) are kept DEPRECATED with explicit resolution rationale (re-activation would contradict CLM-004/CLM-006/CLM-008/CLM-015). The fix-v2 capability set ([CLM-042], docs/r4-survey/21-fix-v2-plan.md) lands Heun 2nd-order + stateful β-blend chain + fixed-NFE comparison + PID amplification on the CIFAR-10 image domain; the verification record lives at docs/r4-survey/22-fix-v2-results.md. The 2D Rectified Flow SOTA experiment ([CLM-039], docs/r4-survey/10-sota-2d-experiment-results.md) verifies the framework's W2 reduction on a published Liu 2022 2D flow-matching model.
 
 ### 7.2 What the paper DOES claim
 

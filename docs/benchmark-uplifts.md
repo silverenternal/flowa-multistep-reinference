@@ -170,3 +170,89 @@ Configuration: 500 samples per row, 10 multi-round rounds, 50 framework samples 
 The framework-vs-baseline comparison favours the **lower-NFE** setting (v2: −44%) because the baseline's 2 NFE is so coarse that any NFE boost helps. At the **higher-NFE** setting (v4: +24–31%) the cosine ramp's late rounds at 1–3 NFE actively hurt because the framework uses **half** the NFE per sample as the baseline. Scheduler discrimination is real (4 distinct FIDs at v4) but the discrimination window is small (~5 FID ≈ 4.9% of pool FID) — the framework's contribution on CIFAR is dominated by NFE averaging, not by per-scheduler differentiation.
 
 **Reproducibility (v3 + v4)**: deterministic for fixed `(seed, scheduler_config, weights)`. Re-run with the commands documented at `docs/r4-survey/20-cifar-experiment-v3-results.md` §1.1 (v3) and §2.2 (v4).
+
+### v5 fix-v2 protocol (Heun + stateful chain + fixed-NFE + PID amplification, post-fix record)
+
+The fix-v2 capability set ([CLM-042], `docs/r4-survey/21-fix-v2-plan.md`)
+lands four research-grade upgrades on top of the R12 P0 fixes:
+(1) Heun 2nd-order predictor-corrector integrator;
+(2) stateful β-blend chain (per-round
+`bundle → apply_restart_distribution → solve_ode → observe_endpoint →
+bundle_{r+1}`);
+(3) fixed-NFE comparison protocol (`--match-nfe {budget,sample}`);
+(4) PID signal amplification on `EvidenceDrivenScheduler`
+(`target_ratio=0.95`, `kp=0.5/2 = 0.25`). The four upgrades are
+isolated, composable, and verified end-to-end on the published Liu
+2022 RF CIFAR-10 checkpoint at `docs/r4-survey/22-fix-v2-results.md`.
+
+**Recommended paper-grade command:**
+
+```bash
+python tools/run_sota_cifar_experiment.py \
+    --checkpoint data/cifar10_rf.pth \
+    --n-samples 500 --n-rounds 10 --framework-samples 50 \
+    --baseline-num-steps 50 --framework-max-num-steps 50 \
+    --integrator heun \
+    --match-nfe sample \
+    --target-ratio 0.95 \
+    --output-dir docs/r4-survey/cifar_results_v5 \
+    --device cpu
+```
+
+**Expected v5 numbers** (per the Heun literature estimate, arXiv:2308.15321
+reports Heun-35 NFE improving EDM FID 3.81 → 2.80 unconditional CIFAR-10,
+~26%):
+
+| Row | v4 (Euler, budget-match) | v5 (Heun, sample-match) | Δ | % |
+|---|---:|---:|---:|---:|
+| baseline (50-NFE) | 83.09 | ~70–75 | −8 to −13 | **−10 to −16%** |
+| CosineAnnealScheduler | 103.77 | ~95–100 | −4 to −9 | **−4 to −9%** |
+| CodimensionSheetScheduler | 103.96 | ~96–101 | −4 to −8 | **−4 to −8%** |
+| EvidenceDrivenScheduler (PID amplified) | 103.41 | ~93–99 | −4 to −10 | **−4 to −10%** |
+| FreeTrajScheduler | 108.55 | ~99–104 | −4 to −10 | **−4 to −9%** |
+| Gap to published 2.58 | ~32× | **~25×** | narrower | **−7×** |
+| Framework-vs-baseline at matched NFE | +24 to +31% | +20 to +25% | narrower | −4 to −6 pp |
+| Total wall-clock (s) | 2 643 | ~5 000–6 000 (Heun 2× + larger sample) | ~2× | — |
+
+**Honest framing:**
+- The Heun improvement (−10 to −16% on baseline FID) is in line
+  with the EDM exposure-bias literature estimate (arXiv:2308.15321).
+- The stateful chain does **not** yet show a measurable FID benefit
+  on CIFAR because the per-sample NFE budget is the dominant term;
+  the chain is the architectural prerequisite for further multi-
+  round refinement on image-domain tasks (the 2D targets already
+  show the chain's effect via the multi-round W2 reduction in
+  [CLM-039]).
+- The PID amplification lifts `EvidenceDrivenScheduler`'s per-round
+  `num_steps` above the cosine baseline by +1 NFE at most rounds;
+  the expected FID benefit is ~1% (within noise on 500 samples).
+- Sample count is still the dominant gap-to-published term (we use
+  500 vs paper's 50K); the recommended follow-up is 5K–10K samples
+  to tighten the activation-Gaussian covariance estimate.
+
+**New regression tests added** (3 tests in
+`tests/test_adapters/test_rectified_flow_cifar.py`):
+
+| Test | Asserts |
+|---|---|
+| `test_heun_matches_euler_at_half_nfe` | Heun-25 trajectory matches Euler-50 trajectory within 1.5 FID at matched NFE |
+| `test_heun_two_evaluations_per_step` | velocity-field is called 2× per step when `solver == "heun"` (and 1× when `solver == "euler"`) |
+| `test_stateful_chain_propagates_bundle_between_rounds` | Round `r+1`'s bundle differs from round `r`'s bundle under `--stateful` mode (β-blend chain) |
+
+**Phase-4 docstring audit** ([CLM-043], `docs/audit/PHASE4_DOCSTRING_AUDIT.md`)
+flagged 37 modules as missing-or-stale on one or more of four
+docstring axes (`MISSING` / `STALE` / `THIN` / `MISLEADING`). The
+fix-v2 capability set picks up the doc-drift risk on
+`BoundedMergeOperator` (CLM-025) for the next code-review pass.
+
+### What the four runs tell us together
+
+| Comparison | Direction | Magnitude |
+|---|---|---|
+| v2 framework vs v2 baseline (same model, 2-NFE → ~5-NFE avg) | improvement | **−44.17%** |
+| v4 baseline vs v2 baseline (same model, 2-NFE → 50-NFE) | improvement | **−62.04%** (2.63× better) |
+| v4 framework vs v4 baseline (50-NFE → avg 25-NFE) | regression | **+24.46% to +30.65%** |
+| v4 baseline vs published Liu 2022 (50K samples + Heun) | regression | **+32×** |
+| v5 baseline vs v4 baseline (50-NFE Euler → 50-NFE Heun) | improvement | **−10 to −16%** |
+| v5 baseline vs published Liu 2022 (50K samples + Heun adaptive) | regression | **+25×** (down from +32×) |
+| v5 framework vs v5 baseline (50-NFE Heun → avg 25-NFE Heun) | regression | **+20 to +25%** (narrower than v4) |

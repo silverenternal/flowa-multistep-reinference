@@ -431,7 +431,7 @@ Plus **the framework's anchor paper** itself:
 |---|-------|-----------------------------|
 | 48 | Li, "Gaussian Posterior Selection on Noncompact Fibres with Uniformly Separated Roots" (the project's anchor paper; `NoiseSelectedRectification_EN.md`) | `sheet_evidence_A`, `root_cell_packing_B`, `per_cell_coefficient_C`, `exterior_gap_e_rho`, `CodimensionSheetScheduler`, `AdaptivePolicyDriver`, `BoundedMergeOperator` (paper-quantity floor lift), `EDMScheduler.inject_noise` (paper-quantity floor), `_paper_evidence_balance`, `EvidenceScaleGapMetric` (`sheet_evidence` / `cell_evidence` / `selection_ratio`), `mode_centers_for`, `sheet_cell_centers` |
 
-**Verification of "47 SOTA papers cited":** VERIFIED — 47 unique SOTA papers are cited across source, docs, and tools. Plus 1 framework-internal paper (Li 2024).
+**Verification of "47 SOTA papers cited":** VERIFIED — 47 unique SOTA papers are cited across source, docs, and tools. Plus 1 framework-internal paper (Li 2026).
 
 ---
 

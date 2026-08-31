@@ -316,7 +316,7 @@ Three honest notes:
 
 **Mean / Std** are over 3 seeds (the paper-plan §4.1 statistical recipe). For each scheduler, re-run Steps 5–6 with `seed ∈ {42, 43, 44}` and pool the FID numbers. The "Δ vs Baseline" is `framework_FID - baseline_FID` (negative = improvement); "% Change" is `100 * Δ / baseline_FID`.
 
-**Honest framing:** if only 1–2 schedulers beat the baseline, report it that way. The paper claim is "framework *can* improve"; the table is the evidence, not a claim that all four schedulers always win. The Li 2024 paper-quantity-driven schedulers (Codim / Evidence) have a theoretical reason to improve on Theorem-1-style metrics; the heuristic ones (Cosine / FreeTraj) are ablation rows.
+**Honest framing:** if only 1–2 schedulers beat the baseline, report it that way. The paper claim is "framework *can* improve"; the table is the evidence, not a claim that all four schedulers always win. The Li 2026 paper-quantity-driven schedulers (Codim / Evidence) have a theoretical reason to improve on Theorem-1-style metrics; the heuristic ones (Cosine / FreeTraj) are ablation rows.
 
 ---
 
@@ -786,5 +786,5 @@ The sandbox cannot answer the question "does FlowA improve SOTA FID?" — it can
 - `adaptive_reflow/algorithm/runner.py` — `ReInferenceRunner` (line 391), `ReInferenceConfig` (line 137), `ReInferenceResult` (line 215).
 - `adaptive_reflow/frame/engine.py` — `Engine.run_round` (line 1016), capability handshake (line 896), ledger chain verification (line 491).
 - `flowa_fid_env` — isolated InceptionV3 venv at `C:/Users/31472/AppData/Local/Temp/flowa_fid_env`.
-- Li 2024 — paper Theorem 1 (BL-convergence; quantities `A_g, B_g, C_g, e_ρ`); selection mechanism.
+- Li 2026 — paper Theorem 1 (BL-convergence; quantities `A_g, B_g, C_g, e_ρ`); selection mechanism.
 - Liu 2022 NeurIPS Spotlight — 2D Rectified Flow.

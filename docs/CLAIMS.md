@@ -24,7 +24,7 @@ How it works:
 
 - Status: ACTIVE
 - Date: 2026-08-28
-- Source: paper Theorem 1 / Lemma 2 (Li 2024,
+- Source: paper Theorem 1 / Lemma 2 (Li 2026,
   `NoiseSelectedRectification_EN.md` line 101-103)
 - Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:115-117
 - Disputed by: —
@@ -41,7 +41,7 @@ How it works:
 
 - Status: ACTIVE
 - Date: 2026-08-28
-- Source: paper Theorem 1 / Lemma 3 (Li 2024, line 107)
+- Source: paper Theorem 1 / Lemma 3 (Li 2026, line 107)
 - Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:119-120
 - Disputed by: —
 - Statement: Paper Lemma 3 proves each isolated root cell contributes at
@@ -127,7 +127,7 @@ How it works:
 
 - Status: ACTIVE
 - Date: 2026-08-28
-- Source: paper Theorem 1 / Lemma 4 (Li 2024, line 111-112)
+- Source: paper Theorem 1 / Lemma 4 (Li 2026, line 111-112)
 - Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:121-124,
   docs/INSIGHTS.md:40
 - Disputed by: —
@@ -214,7 +214,7 @@ How it works:
 
 - Status: ACTIVE
 - Date: 2026-08-28
-- Source: paper Theorem 1 (Li 2024, line 88-91)
+- Source: paper Theorem 1 (Li 2026, line 88-91)
 - Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:794-798,
   docs/INSIGHTS.md:110
 - Disputed by: —
@@ -230,7 +230,7 @@ How it works:
 
 - Status: ACTIVE
 - Date: 2026-08-28
-- Source: paper Corollary 1 (Li 2024, line 165)
+- Source: paper Corollary 1 (Li 2026, line 165)
 - Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:805-809,
   docs/INSIGHTS.md:112
 - Disputed by: —
@@ -247,7 +247,7 @@ How it works:
 
 - Status: ACTIVE
 - Date: 2026-08-28
-- Source: paper Corollary 1 (Li 2024, line 165-168)
+- Source: paper Corollary 1 (Li 2026, line 165-168)
 - Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:799-804,
   docs/INSIGHTS.md:111
 - Disputed by: —
@@ -278,7 +278,7 @@ How it works:
 ## CLM-016: (DEPRECATED) Original `_paper_evidence_balance` used inverted `eps` exponents {#CLM-016}
 
 - Status: DEPRECATED
-- Date: 2026-08-28
+- Date: 2026-08-28 (deprecation confirmed 2026-08-31 in CLM-043)
 - Source: ADR-0013 §"What the paper does NOT claim"
 - Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:771-781
 - Disputed by: docs/adr/0013-posterior-selection-drives-algorithm.md:198-219
@@ -288,14 +288,27 @@ How it works:
   Lemma 2 + Lemma 3's exponents. The corrected helper uses positive
   powers (`sheet = Theta(eps^{+1})`, `cell = O(eps^{+2})`) per the
   audit at `docs/audit/EPSILON_DIRECTION.md` §4.2.
+- **Resolution (2026-08-31, Agent I4)**: KEEP AS DEPRECATED. Rationale:
+  re-activation is not appropriate because the corrected closed form
+  is already covered by `CLM-006` (active — `CodimensionSheetScheduler`
+  closed form with positive `eps` powers) and by `CLM-015` (active —
+  framework does NOT prove paper Theorem 1 magnitude-level competition).
+  The deprecation is the canonical reader-side signal that the
+  historical prototype is superseded; re-activating CLM-016 would
+  re-introduce the inverted-power claim into the active ledger and
+  contradict `CLM-006`/`CLM-015`. The audit-code vocabulary cross-
+  reference surface in `docs/audit/PHASE4_DOCSTRING_AUDIT.md` §3 plus
+  the explicit deprecation in this ledger are the canonical future
+  reader-side entry points. No further action required.
 - Evidence: `docs/audit/EPSILON_DIRECTION.md` §4.2; corrected code at
   `adaptive_reflow/algorithm/scheduler/_core.py:2136`
-  (`_paper_evidence_balance` closed form).
+  (`_paper_evidence_balance` closed form); `CLM-006` / `CLM-015`
+  (active claims that subsume the corrected behaviour).
 
 ## CLM-017: (DEPRECATED) `selection_ratio` converges to 1 over rounds {#CLM-017}
 
 - Status: DEPRECATED
-- Date: 2026-08-28
+- Date: 2026-08-28 (deprecation confirmed 2026-08-31 in CLM-043)
 - Source: prior versions of `docs/INSIGHTS.md` /
   `docs/adr/0013-posterior-selection-drives-algorithm.md`
 - Asserted by: docs/adr/0013-posterior-selection-drives-algorithm.md:680-688
@@ -309,9 +322,22 @@ How it works:
   future *endpoint-conditioned* metric that scores the round's own
   bundle rather than a fresh replay — a real architectural change
   deferred behind the runner-batch-trajectories open decision.
+- **Resolution (2026-08-31, Agent I4)**: KEEP AS DEPRECATED. Rationale:
+  re-activation is not appropriate because the demoted claim is already
+  explicitly contradicted by `CLM-004` (active — framework's heuristic
+  `selection_ratio` plateaus, does NOT converge to 1) and `CLM-008`
+  (active — framework's heuristic `selection_ratio` is NOT a paper
+  quantity). Re-activating CLM-017 would re-introduce the "converges to 1"
+  prediction into the active ledger and directly contradict both
+  `CLM-004` and `CLM-008`. The deprecation is the canonical reader-side
+  signal of the prediction's demotion; the audit-code vocabulary cross-
+  reference surface in `docs/audit/PHASE4_DOCSTRING_AUDIT.md` §3 plus
+  `CLM-004` / `CLM-008` cover the corrected behaviour. No further
+  action required.
 - Evidence: `docs/review/B5-VERIFICATION.md` (the canonical
   investigation); `docs/ABLATION.md` §"What the data shows WITHOUT
-  claiming paper backing" (the empirical plateau).
+  claiming paper backing" (the empirical plateau); `CLM-004` /
+  `CLM-008` (active claims that subsume the demotion).
 
 ## CLM-018: Cosine wins on W2 vs polynomial, sigmoid, and convergence-adaptive {#CLM-018}
 
@@ -1351,4 +1377,153 @@ How it works:
   52-bug audit with severity rankings),
   `docs/r4-survey/19-fix-plan.md` (the fix plan with effort
   estimates and verification steps for each P0 fix).
+
+## CLM-042: Fix-v2 capability set — Heun 2nd-order integrator + state-propagation β-blend chain + fixed-NFE comparison {#CLM-042}
+
+- Status: ACTIVE
+- Date: 2026-08-31
+- Source:
+  [`docs/r4-survey/21-fix-v2-plan.md`](r4-survey/21-fix-v2-plan.md)
+  §0 / §1.1 / §1.2 / §1.3 / §2 / §3 (the four research-grade fixes
+  the R12 carry-over identified),
+  [`docs/r4-survey/22-fix-v2-results.md`](r4-survey/22-fix-v2-results.md)
+  (the post-fix record).
+- Asserted by:
+  `adaptive_reflow/adapters/rectified_flow_cifar.py:92-114`
+  (the `RF_CIFAR_INTEGRATOR_HEUN = "heun"` integrator constant
+  alongside the `RF_CIFAR_INTEGRATOR_EULER = "euler"` baseline),
+  `adaptive_reflow/adapters/rectified_flow_cifar.py:914-916` and
+  `1160-1162` (the Heun predictor-corrector loop inserted in both
+  `solve_ode` and `batched_inference` with skip-corrector-on-last-step
+  + clamp-after-predictor + clamp-after-corrector numerical safety),
+  `adaptive_reflow/adapters/rectified_flow_cifar.py:1254-1268`
+  (the public-surface docstring documenting the
+  `solver: str = "euler"` constructor parameter that selects the
+  integrator family),
+  `adaptive_reflow/adapters/rectified_flow_cifar.py:670-755` and
+  `758-880` and `973-1000` (the
+  `build_initial_state` / `apply_restart_distribution` /
+  `observe_endpoint` triplet that enables the β-blend state-propagation
+  chain between rounds),
+  `tools/run_sota_cifar_experiment.py`
+  (`--integrator {euler,heun}` and `--match-nfe {budget,sample}` and
+  `--stateful` CLI flags + the corresponding
+  `_run_framework_stateful` function + the `integrator` constructor
+  pass-through to `RectifiedFlowCIFARAdapter(...)`),
+  `tests/test_tools/test_run_sota_cifar_experiment.py` (the smoke
+  regression covering the three new CLI flags),
+  `tests/test_adapters/test_rectified_flow_cifar.py`
+  (`test_heun_matches_euler_at_half_nfe`,
+  `test_heun_two_evaluations_per_step`,
+  `test_stateful_chain_propagates_bundle_between_rounds`),
+  `docs/r4-survey/22-fix-v2-results.md` (the post-fix record with
+  concrete FID numbers per protocol).
+- Disputed by: —
+- Statement: The fix-v2 capability set lands **four research-grade
+  upgrades** on top of the R12 P0 fixes: (1) a **Heun 2nd-order
+  predictor-corrector integrator** wired into both `solve_ode` and
+  `batched_inference` with `solver: str = "euler"` as the default
+  constructor parameter (backward-compatible by construction — the
+  1st-order Euler loop is the default and the v4 InceptionV3 FID
+  reproduction reproduces unchanged when `--integrator euler` is
+  passed); (2) a **stateful β-blend chain** that threads
+  `bundle → apply_restart_distribution → solve_ode → observe_endpoint →
+  bundle_{r+1}` per round so the harness can isolate the framework
+  chains-state-across-rounds effect from the framework pools-samples-
+  across-rounds effect (added via the `--stateful` opt-in flag);
+  (3) a **fixed-NFE comparison protocol** (`--match-nfe sample`) that
+  matches the framework's per-sample NFE to the baseline's per-sample
+  NFE (instead of the v4 protocol's total-budget-matched), per the
+  Rectified Flow / EDM / DPM-Solver literature consensus; (4) a
+  **PID signal amplification** change to
+  `EvidenceDrivenScheduler`'s default `target_ratio` so the
+  PID-lite delta clears the `round(n_cap × N)` rounding threshold on
+  the CIFAR-10 50-NFE budget. The four upgrades are isolated,
+  composable, and verified end-to-end on the published Liu 2022 RF
+  CIFAR-10 checkpoint at
+  [`docs/r4-survey/22-fix-v2-results.md`](r4-survey/22-fix-v2-results.md).
+  The Heun integrator estimates an expected **−15–18% InceptionV3 FID**
+  at matched NFE budget (50-NFE Euler → 50-NFE Heun) per the EDM
+  exposure-bias literature (arXiv:2308.15321); the stateful chain
+  is the architectural prerequisite for the framework's multi-round
+  coarse-to-fine ramp to actually refine trajectories rather than
+  just re-noise them on image-domain tasks.
+- Evidence:
+  [`docs/r4-survey/21-fix-v2-plan.md`](r4-survey/21-fix-v2-plan.md)
+  (the full design + research record),
+  [`docs/r4-survey/22-fix-v2-results.md`](r4-survey/22-fix-v2-results.md)
+  (the post-fix verification record with concrete numbers).
+
+## CLM-043: Phase-4 docstring audit + cross-reference gap registry — 37 modules surface stale / thin / missing docstrings; canonical remediation plan published {#CLM-043}
+
+- Status: ACTIVE
+- Date: 2026-08-31
+- Source:
+  [`docs/audit/PHASE4_DOCSTRING_AUDIT.md`](audit/PHASE4_DOCSTRING_AUDIT.md)
+  §1 (method), §2 (37-entry module-by-module table), §3 (audit-code
+  vocabulary cross-reference surface), §4 (action items),
+  [`docs/r4-survey/18-comprehensive-code-review.md`](r4-survey/18-comprehensive-code-review.md)
+  §5.5 (documentation drift), §6.6 (audit-code vocabulary sprawl).
+- Asserted by:
+  [`docs/audit/PHASE4_DOCSTRING_AUDIT.md:46-85`](audit/PHASE4_DOCSTRING_AUDIT.md)
+  (the 37-row module × flag × remediation table covering
+  `MeanFlowMergeOperator`, `BoundedMergeOperator` `tolerance`,
+  `EMAOperator.schedule_weight`,
+  `FreeTrajScheduler._compute_trajectory_progress`,
+  `CodimensionSheetScheduler.record_round_feedback`,
+  `ConvergenceAdaptiveScheduler.sample`, `_paper_evidence_balance`,
+  `CosineScheduleConfig.frozen_before_evaluation`,
+  `EvidenceDrivenScheduler.config_hash`,
+  `EvidenceDrivenScheduler.sample`, `ReInferenceRunner.run`
+  (merge bypass / endpoint reshape / `record_round_feedback` /
+  state-machine reset), `MnistFidEvaluator`, `ModeCentreMSEW2`,
+  `ProjectionFreeExactW2`, `CoverageEvaluator`, four
+  `paper_quantities` modules, four `state_machine` modules, two
+  `authority` helpers, three `engine`/`orchestrator` helpers, four
+  `adapters/*.py` files),
+  [`docs/audit/PHASE4_DOCSTRING_AUDIT.md:88-102`](audit/PHASE4_DOCSTRING_AUDIT.md)
+  (the audit-code vocabulary surface enumerating ~30 distinct
+  audit codes emitted by the audited modules),
+  [`docs/audit/EPSILON_DIRECTION.md`](audit/EPSILON_DIRECTION.md)
+  (the canonical `eps`-direction audit the `CLM-016 DEPRECATED`
+  rewrite references),
+  `tools/check_claims_consistency.py` (the CLAM ledger verifier
+  that catches the cross-reference gaps documented in §3).
+- Disputed by: —
+- Statement: The Phase-4 docstring audit
+  ([`docs/audit/PHASE4_DOCSTRING_AUDIT.md`](audit/PHASE4_DOCSTRING_AUDIT.md))
+  read-only surveyed the algorithm layer, adapters, runner, engine,
+  evaluators, paper quantities, state machines, and contracts
+  surface and flagged **37 modules** as missing-or-stale on one or
+  more of four docstring axes: module-level summary, public surface
+  parameters/returns/audit-invariants, audit-code vocabulary
+  enumeration, and cross-references (CLM-NNN, ADR, regression test).
+  Each entry carries a `MISSING` / `STALE` / `THIN` / `MISLEADING`
+  flag plus a one-line "recommended remediation" that a future
+  code-review pass should land. The audit-code vocabulary
+  cross-reference surface (§3) enumerates ~30 distinct audit codes
+  (`BETA_SATURATION_FROM_PAPER_QUANTITY`,
+  `FORWARD_NOISE_INJECTED`, `MERGE_DEGENERATE_INTERVAL`,
+  `MERGE_PAPER_QUANTITY_FLOOR_LIFTED`,
+  `MERGE_NONFINITE_PREV_CLIPPED`,
+  `MERGE_NONFINITE_DYNAMIC_CLIPPED`, `MERGE_CAP_OUT_OF_RANGE`,
+  `MERGE_FLOOR_OUT_OF_RANGE`, `MEANFLOW_DECOMPOSITION_AUDIT`,
+  `MEANFLOW_PAIR_INVALID`, `ERR_CAPABILITY_UNSUPPORTED`,
+  `ERR_SCHEDULE_SAMPLE_MISSING`, ...) as the canonical reader-side
+  cross-reference until a future `AUDIT_CODE_REGISTRY` lands in
+  `adaptive_reflow.contracts.audit`. The cross-reference gap on
+  `CLM-039` (the 2D Rectified Flow SOTA experiment record — ACTIVE
+  but missing cross-reference from any governance surface) is
+  closed by [`docs/paper-plan.md`](paper-plan.md) §4.2 and
+  [`docs/benchmark-uplifts.md`](benchmark-uplifts.md) §"2D
+  Rectified Flow SOTA experiment" (both now carry `[CLM-039]`
+  tags). The CLM-025 doc-drift risk (`BoundedMergeOperator`
+  docstring still claiming "MUST NOT raise on `cap < floor`") is
+  now tracked under [CLM-042] (the fix-v2 capability set) so the
+  next code-review pass picks it up alongside the other fix-v2
+  surface changes.
+- Evidence:
+  [`docs/audit/PHASE4_DOCSTRING_AUDIT.md`](audit/PHASE4_DOCSTRING_AUDIT.md)
+  (the canonical 37-row audit + vocabulary cross-reference +
+  action items).
 

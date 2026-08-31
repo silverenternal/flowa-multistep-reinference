@@ -11,7 +11,7 @@ mandatory.
 
 References:
 
-- Paper: `NoiseSelectedRectification_EN.md` (Li 2024) — Theorem 1
+- Paper: `NoiseSelectedRectification_EN.md` (Li 2026) — Theorem 1
   (`mu_{g,eps} --BL--> nu_g`), Lemma 2 (`eps^{-1} int_T phi p_eps
   -> A_g`), Lemma 3 (`int_{I_z} p_eps <= C_g e^{-z^2/4} eps^2`),
   Lemma 4 (`int_{T^c \setminus cells} p_eps <= e^{-e_rho/(2 eps^2)}`),

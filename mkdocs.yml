@@ -47,6 +47,10 @@ nav:
   # junction created at setup time so a single source of truth lives
   # at the repo root.
   - Home: api/index.md
+  - User guide:
+      - Tutorial: TUTORIAL.md
+      - Plug in your model: PLUG_IN_YOUR_MODEL.md
+      - Algorithms catalog: ALGORITHMS.md
   - API reference:
       - Contracts: api/adaptive_reflow.contracts.md
       - Universal: api/adaptive_reflow.universal.md
@@ -60,6 +64,8 @@ nav:
       - Phase-4 code review: r4-survey/18-comprehensive-code-review.md
       - Phase-4 fix plan: r4-survey/19-fix-plan.md
       - Phase-4 docstring audit: audit/PHASE4_DOCSTRING_AUDIT.md
+      - Phase-4 fix-v2 plan: r4-survey/21-fix-v2-plan.md
+      - Phase-4 fix-v2 results: r4-survey/22-fix-v2-results.md
 
 plugins:
   - autorefs
@@ -131,11 +137,14 @@ not_in_nav: |
   CLAIMS.md
   DEPRECATION.md
   PERFORMANCE_BUDGETS.md
-  TUTORIAL.md
+  RELEASING.md
   candidate_registry_init.md
   design/*.md
   lean/*.md
   lean_issue_re_inference_provenance.md
+  paper-draft.md
+  tables/*.md
+  figures/*.md
   adr/*.md
   INSIGHTS.md
   audit/*.md

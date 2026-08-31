@@ -1,0 +1,48 @@
+# Dependabot configuration for flowa-multistep-reinference.
+#
+# Two ecosystems are tracked:
+#
+#   * ``pip`` -- pulls updates for the runtime + dev dependencies pinned
+#     in pyproject.toml. Weekly cadence so the PR queue does not flood
+#     during an active development sprint.
+#   * ``github-actions`` -- bumps ``actions/checkout``, ``setup-python``,
+#     ``cache``, and the rest of the workflow action pins. Monthly
+#     cadence; a Dependabot bump that lands a broken action can be
+#     reverted in-tree without a code release.
+#
+# Both ecosystems target the ``/`` (root) directory. ``open-pull-requests-limit: 5``
+# caps the number of concurrent Dependabot PRs; older ones auto-close
+# when the cap is hit, mirroring the GitHub default.
+
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      # Monday 06:00 UTC. Lands after the nightly mutation + stress
+      # jobs have run (Mon 03:00 UTC) so a Dependabot bump that breaks
+      # the suite is caught before the weekly bench job.
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    # Group patch + minor bumps so they land as a single squash-merge
+    # PR. Major bumps are kept separate because they can break the
+    # mypy / mkdocs strict build and warrant their own review.
+    groups:
+      patch-and-minor:
+        update-types: ["minor", "patch"]
+      major:
+        update-types: ["major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 3
+    groups:
+      actions-patch:
+        update-types: ["minor", "patch"]

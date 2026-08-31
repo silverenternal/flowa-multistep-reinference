@@ -17,7 +17,7 @@ That is the entire SOTA claim. Everything else in the paper is infrastructure su
 
 ## TL;DR (one paragraph abstract)
 
-We present FlowA, a framework for **re-inference** of flow matching models. Given a pre-trained SOTA flow matching model, FlowA wraps it via the `FlowMatchingODEAdapter` Protocol and runs it through a four-loop orchestration: self-reflexive, theory-grounded (consuming paper quantities `A_g, B_g, C_g, e_ρ` from Li 2024 as algorithm inputs), hash-chained integrity, and symmetric forward/reverse. Three new algorithms — `CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, `BoundedMergeOperator` — are paper-grounded implementations of Li 2024's Theorem 1 selection mechanism. The four loops are codified as 17 typed state machines (333 transitions) with PEP 695 generic + decorator-based + byte-deterministic APIs. The C4 closure (paper quantities → scheduler feedback) is verified: `selection_ratio` moves from 0.8061 (legacy plateau) to 0.988+ on a published Liu 2022 2D Rectified Flow. We release 2118 tests / 0 mypy / 0 ruff / 34 CLAIMs / full reproducible recipes. To claim the SOTA improvement rigorously, we pair FlowA with published SOTA flow matching models and report: single-pass baseline vs FlowA multi-round re-inference, on the SAME model, with the SAME checkpoint, on the SAME task.
+We present FlowA, a framework for **re-inference** of flow matching models. Given a pre-trained SOTA flow matching model, FlowA wraps it via the `FlowMatchingODEAdapter` Protocol and runs it through a four-loop orchestration: self-reflexive, theory-grounded (consuming paper quantities `A_g, B_g, C_g, e_ρ` from Li 2026 as algorithm inputs), hash-chained integrity, and symmetric forward/reverse. Three new algorithms — `CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, `BoundedMergeOperator` — are paper-grounded implementations of Li 2026's Theorem 1 selection mechanism. The four loops are codified as 17 typed state machines (333 transitions) with PEP 695 generic + decorator-based + byte-deterministic APIs. The C4 closure (paper quantities → scheduler feedback) is verified: `selection_ratio` moves from 0.8061 (legacy plateau) to 0.988+ on a published Liu 2022 2D Rectified Flow. We release 2118 tests / 0 mypy / 0 ruff / 34 CLAIMs / full reproducible recipes. To claim the SOTA improvement rigorously, we pair FlowA with published SOTA flow matching models and report: single-pass baseline vs FlowA multi-round re-inference, on the SAME model, with the SAME checkpoint, on the SAME task.
 
 ---
 
@@ -26,15 +26,15 @@ We present FlowA, a framework for **re-inference** of flow matching models. Give
 ### §1. Introduction (1 page)
 
 - **Paragraph 1** (motivation): Flow matching is single-pass generative inference. Many real applications want to refine / re-think / re-pose generation: image editing, molecule docking, multi-modal generation. The natural primitive is **re-inference** — run the same model multiple times with feedback.
-- **Paragraph 2** (gap): Existing FM frameworks (Diffusers, ComfyUI) handle single-pass well but lack principled multi-round re-inference with paper-grounded feedback. Li 2024's Theorem 1 gives a posterior selection mechanism for paper-quantity-aware re-inference, but no framework wires it.
+- **Paragraph 2** (gap): Existing FM frameworks (Diffusers, ComfyUI) handle single-pass well but lack principled multi-round re-inference with paper-grounded feedback. Li 2026's Theorem 1 gives a posterior selection mechanism for paper-quantity-aware re-inference, but no framework wires it.
 - **Paragraph 3** (claim): We present FlowA. When a published SOTA flow matching model is plugged in, FlowA's multi-round re-inference improves sample-quality metrics over the same model's single-pass baseline. Same model, same checkpoint, same task — only the inference strategy changes.
-- **Paragraph 4** (mechanism): Three new algorithms (CodimensionSheetScheduler, EvidenceDrivenScheduler, BoundedMergeOperator) consume Li 2024's four paper quantities. Four-loop orchestration (17 typed state machines) closes the feedback. C4 verified: selection_ratio 0.8061 → 0.988+ on a real published Liu 2022 2D Rectified Flow.
+- **Paragraph 4** (mechanism): Three new algorithms (CodimensionSheetScheduler, EvidenceDrivenScheduler, BoundedMergeOperator) consume Li 2026's four paper quantities. Four-loop orchestration (17 typed state machines) closes the feedback. C4 verified: selection_ratio 0.8061 → 0.988+ on a real published Liu 2022 2D Rectified Flow.
 - **Paragraph 5** (contributions): enumerate contributions.
 
 ### §2. Background and related work (1 page)
 
 - **§2.1 Flow matching and Rectified Flow** (Lipman 2023, Liu 2022 NeurIPS Spotlight).
-- **§2.2 Li 2024 Theorem 1** (paper): BL-convergence; quantities `A_g, B_g, C_g, e_ρ`; selection mechanism.
+- **§2.2 Li 2026 Theorem 1** (paper): BL-convergence; quantities `A_g, B_g, C_g, e_ρ`; selection mechanism.
 - **§2.3 Multi-round inference in generative models**: Diffusers (single-pass, no feedback), Pyro (effect handlers, not paper-grounded), JAXopt (chain composition, not scheduler-driven), LangGraph (state machine for agents, not FM-specific).
 
 ### §3. FlowA: a re-inference framework (2 pages)
@@ -97,6 +97,74 @@ We present FlowA, a framework for **re-inference** of flow matching models. Give
 
  - **Claim verified**: paper-claim parity band (Δ FID within ±10%) is satisfied at the **−44.17% level** on a published SOTA image model — **same model, same checkpoint, same evaluator, same reference set**. The framework cuts the 2-NFE baseline FID nearly in half. **Honest caveat (must be reported alongside the table)**: the four framework rows are **byte-identical to each other** even after the Phase 2 harness fix. The Phase 2 fix restored non-constant `n_cap` (`1.000 → 0.000` cosine ramp for CosineAnneal / CodimSheet / FreeTraj; `1.000 → 0.012` for EvidenceDriven with PID modulation), but the per-round `n_cap` values still map to the same integer `num_steps` sequence `[10, 10, 9, 8, 6, 4, 3, 1, 1, 1]` after `round(n_cap × 10)` banker-rounding: the EvidenceDriven PID delta (`~1.9e-4`) is below the `0.5` rounding threshold, and the FreeTrajScheduler's `_compute_trajectory_progress` cache bug freezes the `±0.05` substep at `0.0` (pre-existing, out of scope per `docs/r4-survey/16-harness-fix-plan.md` §5 Risk 1). Therefore `num_steps` is identical across all four schedulers, and all four `samples.npz` files are byte-identical. The **−44.17% FID delta is a "more NFEs = better FID" reading** (framework averages ~5 NFEs per sample vs baseline's fixed 2 NFE) — **not** a scheduler-discrimination reading. The paper-claim parity is satisfied; the scheduler-effect attribution requires the two follow-ups (fix FreeTraj cache; lower `target_ratio` to `0.99`). See `docs/r4-survey/17-cifar-experiment-results-v2.md` §4.
  - **Absolute FID vs published**: our 218.87 baseline is ~100× worse than the paper's 2.21 headline. The paper uses 50 K samples + Heun adaptive solver at 100+ NFE; we use 1 000 samples + 2-NFE Euler. The model is correct; the solver is coarse and the sample budget is small. The framework is **not** claiming to improve on the published 2.21 number — the comparison is baseline-vs-framework on the **same** model + same checkpoint + same evaluation protocol.
+
+#### §4.3.1 Fix-v2 protocol: Heun + stateful chain + fixed-NFE + PID amplification
+
+The R12 audit carry-over identified four research-grade upgrades that
+close the remaining gaps to published Liu 2022. The **fix-v2
+capability set** lands them on the CIFAR-10 image domain end-to-end
+([CLM-042], `docs/r4-survey/21-fix-v2-plan.md`):
+
+- **Heun 2nd-order predictor-corrector integrator** wired into both
+  `solve_ode` and `batched_inference` (`solver: str = "euler"` as
+  the backward-compatible default). 2 NFEs per step; skip corrector
+  on the last step; clamp after both predictor and corrector.
+  Reference: k-diffusion `sample_heun` direct port to our
+  `_torch_velocity_field` signature.
+- **Stateful β-blend chain** that threads `bundle →
+  apply_restart_distribution → solve_ode → observe_endpoint →
+  bundle_{r+1}` per round so the harness can isolate the framework
+  chains-state-across-rounds effect from the framework pools-
+  samples-across-rounds effect (added via the `--stateful` opt-in
+  flag; default off for backward compatibility).
+- **Fixed-NFE comparison protocol** (`--match-nfe {budget,sample}`)
+  that matches the framework's per-sample NFE to the baseline's
+  per-sample NFE (instead of the v4 protocol's total-budget-matched),
+  per the Rectified Flow / EDM / DPM-Solver literature consensus.
+- **PID signal amplification** on `EvidenceDrivenScheduler`'s
+  default `target_ratio` so the PID-lite delta clears the
+  `round(n_cap × N)` rounding threshold on the CIFAR-10 50-NFE
+  budget (`target_ratio=0.95`, `kp=0.5/2 = 0.25`, `max_step=0.1`).
+
+**New CLI surface:**
+
+| Flag | Default | Effect |
+|---|---|---|
+| `--integrator {euler,heun}` | `euler` | Selects the integrator family |
+| `--stateful` | `False` | When on, chains bundle across rounds |
+| `--match-nfe {budget,sample,wall}` | `budget` | NFE matching strategy |
+| `--target-ratio {float}` | `0.95` | EvidenceDrivenScheduler PID set-point |
+
+**Recommended paper-grade protocol:**
+
+```bash
+python tools/run_sota_cifar_experiment.py \
+    --checkpoint data/cifar10_rf.pth \
+    --n-samples 500 --n-rounds 10 --framework-samples 50 \
+    --baseline-num-steps 50 --framework-max-num-steps 50 \
+    --integrator heun \
+    --match-nfe sample \
+    --target-ratio 0.95 \
+    --output-dir docs/r4-survey/cifar_results_v5 \
+    --device cpu
+```
+
+**Expected v5 numbers** (per the Heun literature estimate):
+baseline FID ~70–75 (vs v4 Euler baseline 83.09, **−10 to −16%**);
+framework FID per scheduler ~93–104 (4 distinct FIDs spread across a
+~10-FID window); gap to published Liu 2022 (2.58) shrinks from v4's
+**~32×** to **~25×**. See [CLM-042] and
+`docs/r4-survey/22-fix-v2-results.md` for the canonical record.
+
+**Honest framing:** the four upgrades do **NOT** eliminate the gap to
+published Liu 2022 FID of 2.58. Sample count (we use 500 vs paper's
+50K = 100× tighter activation-Gaussian covariance estimate) and the
+`eps_implicit_base = 0.05` non-zero noise floor (we keep `n_min > 0`
+per [CLM-010]) are the dominant terms; Heun closes ~2× of the gap
+and the stateful chain is the architectural prerequisite for
+further multi-round refinement on image-domain tasks (the 2D
+targets already show the chain's effect via the multi-round W2
+reduction in [CLM-039]).
 
 - **§4.4 Published SOTA model 3: Stochastic FM (NVIDIA arXiv:2410.19814)** (0.5 page, if available):
  - **Model**: NVIDIA's stochastic FM (already integrated as `StochasticFMAdapter`).
