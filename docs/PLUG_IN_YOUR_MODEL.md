@@ -524,6 +524,14 @@ available on the user's machine.
   your task.
 - [`adaptive_reflow/adapters/twodim_fm.py`](../adaptive_reflow/adapters/twodim_fm.py)
   — the canonical real-model reference implementation.
+- [`adaptive_reflow/adapters/graphbfn.py`](../adaptive_reflow/adapters/graphbfn.py)
+  — graph-shaped BFN adapter for molecular-graph generation (QM9 /
+  ZINC250k); the native payload lives behind ``TensorRef`` keys
+  (``state_shape=()`` surrogate), and the molecule-equivalent of the
+  image FID is FCD via RDKit + ChemNet. The adapter ships with a
+  ``synthetic`` mode so the Protocol surface can be exercised on
+  CPU-only environments; the production torch-mode loader is gated
+  on the published GraphBFN weights landing in ``data/graphbfn/``.
 - [`adaptive_reflow/adapters/toy_linear.py`](../adaptive_reflow/adapters/toy_linear.py)
   — the smallest possible adapter (≤ 60 LOC).
 - [`adaptive_reflow/adapters/protbfnabbfnadapter.py`](../adaptive_reflow/adapters/protbfnabbfnadapter.py)

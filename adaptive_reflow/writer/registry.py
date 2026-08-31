@@ -511,8 +511,113 @@ def make_default_flowmol3adapter_entry() -> CandidateEntry:
     )
 
 
+# ---------------------------------------------------------------------------
+# Default GraphBFN row (read-only; adapter_status="unsupported" until the
+# paper PDF + weights land in data/graphbfn/).
+# ---------------------------------------------------------------------------
+
+
+GRAPHBFN_PINNED_COMMIT: str = "TODO:graphbfn-pin-on-weights-landing"
+"""Pinned GraphBFN commit. ``TODO`` placeholder until the weights-
+acquisition phase succeeds (see ``data/graphbfn/weights_metadata.json``)
+and a concrete commit SHA is recorded."""
+
+
+def make_default_graphbfn_entry() -> CandidateEntry:
+    """Build the canonical GraphBFN row for the registry.
+
+    ``adapter_status="unsupported"`` is the honest default until the
+    published GraphBFN paper PDF + state_dict land in
+    ``data/graphbfn/``. The synthetic-mode adapter skeleton lives in
+    :mod:`adaptive_reflow.adapters.graphbfn` so the public engine +
+    Protocol surface can be exercised on CPU-only environments, but
+    no production checkpoint is admitted for evaluation until the
+    dependency blockers clear (per the design spec).
+
+    Re-admit with ``adapter_status="admitted_unconditional_only"``
+    once the QM9 / ZINC250k weights land (the GraphBFN baseline is
+    unconditional 2D molecular graph generation — there is no
+    pocket-conditioned efficacy claim to validate).
+    """
+    return CandidateEntry(
+        repo_url="https://arxiv.org/abs/2412.08559 (ICLR 2025 GraphBFN) "
+        "/ arXiv:2510.10211 (Hierarchical BFN)",
+        commit=GRAPHBFN_PINNED_COMMIT,
+        license="TODO:license (TBD pending weights acquisition)",
+        paper_id="arXiv:2412.08559 (ICLR 2025) / arXiv:2510.10211 (Hierarchical)",
+        paper_date="2024-12 / 2025-10",
+        task_conditions=("other",),  # 2D molecular-graph generation (not 3D).
+        dataset_split="canonical QM9 100k/10k/24k OR ZINC250k 220k/15k/15k",
+        native_metric_protocol=(
+            "RDKit-based validity / FCD (Frechet ChemNet Distance) / "
+            "NSPDK (Neighborhood Subgraph Pairwise Distance Kernel); "
+            "also per-property KL / Wasserstein on logP / QED / SA. "
+            "Eval gated on data/graphbfn/weights landing + RDKit + ChemNet "
+            "env at /tmp/flowa_rdkit_env."
+        ),
+        ode_call_site=(
+            "BFN Bayesian-update loop wrapped as NFE-step calls: per-step "
+            "(1) sample y_t per node / edge from current Categorical, "
+            "(2) call the GNN / Graph Transformer forward, "
+            "(3) update per-node + per-edge Categorical parameters."
+        ),
+        state_boundary=(
+            "graph-shaped native state: per-node (N, K_atom) Categorical "
+            "params, per-edge (E, K_bond) Categorical params, (N, N) "
+            "adjacency logits. Carried behind TensorRef keys in the "
+            "adapter's private _native_states cache; engine never "
+            "inspects the payload."
+        ),
+        condition_boundary=(
+            "unconditional baseline + property-conditioned (logP / QED / "
+            "SA) via Hierarchical CDF-rounding; ``condition_kind`` is "
+            "one of {unconditional, property_logp, property_qed, "
+            "property_sa} with optional ``property_value`` scalar."
+        ),
+        restart_boundary=(
+            "graph BFN restart blend on per-channel Categorical "
+            "parameters: ``m * prior + (1 - m) * fresh`` elementwise "
+            "with ``m = 1 - beta`` per channel. Mirrors "
+            "TwoDimFMAdapter blend math lifted to graph-shaped tensors."
+        ),
+        compatible_channels=(
+            "atoms",
+            "bonds",
+            "adjacency",
+            "valence",
+            "charge",
+        ),
+        available_checkpoint=None,
+        adapter_status="unsupported",
+        audit_notes=(
+            "GraphBFN native state is graph-shaped (variable N, E, "
+            "adjacency), not a fixed tensor. The engine's StateBundle "
+            "treats state_shape as a fixed tuple; the adapter publishes "
+            "state_shape=() (zero-length surrogate) and routes the "
+            "graph payload through private native-state dict keyed by "
+            "native_state_digest, matching the FlowMol3 / ReferenceFlowA "
+            "placeholder pattern. Per-channel domain is "
+            "atoms/bonds/adjacency=discrete + valence/charge=continuous. "
+            "DEP-BLOCKER: published GNN/Graph-Transformer weights have "
+            "NOT landed in data/graphbfn/ (status='failed' in "
+            "weights_metadata.json per the design spec). Adapter ships "
+            "with synthetic-mode (deterministic NumPy BFN update loop) "
+            "so the Protocol surface can be exercised on CPU-only "
+            "environments until production weights land. EVAL-BLOCKER: "
+            "RDKit-based validity / FCD / NSPDK evaluators require "
+            "rdkit>=2024.3.3 + chemnet-pretrained-weights; the harness "
+            "stub at tools/run_sota_graphbfn_experiment.py documents "
+            "the planned CLI surface but does not execute."
+        ),
+        registered_at="2026-08-31",
+        registered_by="DTB-M7 GraphBFN adapter scaffold",
+>>>>>>> worktree-wf_155a6098-91b-23
+    )
+
+
 __all__ = [
     "FLOWMOL3_PINNED_COMMIT",
+    "GRAPHBFN_PINNED_COMMIT",
     "AdapterStatus",
     "CandidateEntry",
     "CandidateRegistry",
@@ -521,5 +626,6 @@ __all__ = [
     "default_registry",
     "make_default_flowmol3_entry",
     "make_default_flowmol3adapter_entry",
+    "make_default_graphbfn_entry",
     "make_initial_registry",
 ]
