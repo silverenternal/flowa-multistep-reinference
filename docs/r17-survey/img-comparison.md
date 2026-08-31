@@ -9,75 +9,84 @@ scheduler harness (`tools/run_sota_hidream_i1_experiment.py` and
 Both adapters are designed end-to-end (see `adaptive_reflow/adapters/hidream_i1.py`
 and the Lumina adapter spec) and the underlying T2I eval layer (FID +
 CLIPScore in-process, GenEval + DPG-Bench as external stubs) is fully
-documented in `docs/r17-survey/image-eval-plan.md`. **Neither harness
-executed real inference in Phase B because both weight checkpoints are
-absent from disk**: the on-disk trees at `data/hidream_i1/weights/` and
-`data/lumina_image_2_0/weights/` are metadata + LFS pointers only. The
-harness stubs both detected this and reported the gap; the JSON output
-files do not exist.
+documented in `docs/r17-survey/image-eval-plan.md`. The weight
+checkpoints are now on disk (HiDream-I1-Dev 44 GB at
+`data/hidream_i1/weights_dev/`, Lumina-Image 2.0 20 GB at
+`data/lumina_image_2_0/weights_real/`), but **both experiment harnesses
+remain TODO stubs** — neither executed real inference this iteration.
+HiDream-I1's harness prints the seven-step runbook stub and exits 75;
+Lumina's harness prints a four-bullet dependency-blocker stub and exits
+0. JSON output files (`summary.json`, `comparison.md`) were not written
+to either `--output-dir`.
 
-> **Status: awaiting weights.** The two image-model harnesses are
-> wiring-complete and pipeline-validated (adapter -> protocol -> harness
-> -> stub exit). They will run end-to-end the moment real `.safetensors`
-> / `.pth` payloads land on disk and a CUDA host is available.
+> **Status: weights landed; harness implementation still TODO.** The
+> adapter layers are wired end-to-end and validated by unit tests; the
+> experiment harnesses themselves are design-only stubs. Finishing each
+> is a discrete SOTA runbook item — see §2 for the captured exit codes
+> and §3.3 for what is left to implement.
 
-## 1. Weights-presence audit (the blocker)
+## 1. Weights-presence audit (this iteration)
 
-| Adapter | Path | Expected files | On-disk reality |
+| Adapter | Path | On-disk reality (this iteration) | Loadable? |
 |---|---|---|---|
-| **HiDream-I1** | `data/hidream_i1/weights/` | 7 x `transformer/diffusion_pytorch_model-{00001..00007}-of-00007.safetensors` (~5 GB each), text encoders (CLIP-L/14, CLIP-G/14, T5-XXL, Llama-3.1-8B), FLUX.1 VAE | **LFS pointers only.** Each transformer shard is a 135-byte `version https://git-lfs.github.com/spec/v1` pointer file. Metadata (config.json, model_index.json, scheduler/, vae/) is present but no payload. `weights_metadata.json` records `status=fetched_metadata_only`, `total_clone_size=7.0M`. |
-| **Lumina-Image 2.0** | `data/lumina_image_2_0/weights/` | `Lumina-Image-2.0` consolidated checkpoint (~52.65 GB), Gemma2 text encoder (gated, license-gated) | **Metadata only.** `model_index.json` (411 B), `model_args.pth` (129 B), `README.md` (2.4 KB). No `diffusion_pytorch_model*.safetensors` or consolidated `.pth` payload. The repository is gated, and the size is above the auto-download budget. |
+| **HiDream-I1** | `data/hidream_i1/weights_dev/` | Real weights: transformer (7 shards ~33.7 GB), text_encoder (495 MB), text_encoder_2 (2.78 GB), text_encoder_3 (9.5 GB), VAE (168 MB), tokenizers, scheduler. `model_index.json` present. `weights_dev/` ~44 GB total. | Yes — `safe_open(..., framework="pt")` would succeed against the transformer shards, but **the harness stub never invokes it** (see §2). |
+| **Lumina-Image 2.0** | `data/lumina_image_2_0/weights_real/` | Real weights: transformer (9.96 + 0.48 GB shards), text_encoder (3 shards ~10.5 GB), VAE. `model_index.json`, `README.md` present. `weights_real/` ~20 GB total. | Yes — payload files present, but the **harness stub never invokes them** (see §2). |
 
-Both trees pass the smoke-`ls` check but fail the actual-load check: any
-`safe_open(..., framework="pt")` call against the HiDream transformer
-shards would error with *"InvalidFileException: does not contain a
-header identifying it as a safetensors file"*; any `torch.load(...)`
-against the Lumina checkpoint directory would error with
-*"No such file or directory"*. We deliberately did not exercise the load
-path against pointers because that would raise a misleading exception
-in the harness rather than cleanly surfacing the metadata-only gap.
+Both weight trees are now populated with real payloads (verified by file
+size + `ls` enumeration; no SHA-256 cross-check against upstream
+manifests). The on-disk LFS-pointer gap documented in the previous
+revision is closed. The remaining gap is the experiment-harness
+implementation: neither `tools/run_sota_hidream_i1_experiment.py` nor
+`tools/run_sota_lumina_image_2_0_experiment.py` has a real-implementation
+code path; both are stub `print` + `sys.exit(...)` shells.
 
 ## 2. Harness invocation (ran, captured exit codes)
 
 The harnesses were invoked with the operator-supplied args; both exited
 without writing JSON to the requested `--output-dir`. Outputs captured
-to `/tmp/{hidream,lumina}.out`.
+to `/tmp/exp_b_{hidream,lumina}/run.log`.
 
 ### 2.1 HiDream-I1-Dev (cuda:1, RTX 5090 32 GB)
 
 ```bash
 python tools/run_sota_hidream_i1_experiment.py \
-    --weights-path data/hidream_i1/weights/transformer \
+    --weights-path data/hidream_i1/weights_dev/ \
     --device cuda:1 \
-    --variant dev \
     --n-samples 8 \
     --n-rounds 2 \
-    --output-dir /tmp/phase_b_smoke/hidream
+    --output-dir /tmp/exp_b_hidream
 ```
 
 - **Exit code: 75** (`sysexits.h EX_TEMPFAIL` — temporary failure
   the user can resolve by supplying weights + GPU + eval stack).
 - Behaviour: stub printed full rationale and the parsed-args block,
   no `summary.json`, no `baseline_samples/`, no `framework_samples/`.
-- Rationale text (excerpt): *"The HiDream-I1 harness is not implemented
-  in this skeleton release. HiDream-I1 is a 17B-parameter sparse-DiT
-  model that requires ~64 GB HBM at fp16 inference. The published
-  HiDream-ai/HiDream-I1-{Full,Dev,Fast} HF repos are unreachable from
-  the sandbox (no HF token)."*
-- `/tmp/phase_b_smoke/hidream/` was not created.
+- Rationale text (excerpt): *"The HiDream-I1 harness is **not implemented**
+  in this skeleton release. ... HiDream-I1 is a 17B-parameter sparse-DiT
+  model that requires ~64GB HBM at fp16 inference."*
+- Note: the stub's CLI parser rejects `--seed` ("unrecognized arguments:
+  --seed 0"); the operator command in the task prompt was therefore
+  trimmed. The harness stub does not even consume the parsed args.
+- `/tmp/exp_b_hidream/` was not created (no JSON / no sample images).
 
 ### 2.2 Lumina-Image 2.0 (cuda:0, RTX PRO 6000 98 GB)
 
 ```bash
 python tools/run_sota_lumina_image_2_0_experiment.py \
-    --checkpoint data/lumina_image_2_0/weights \
+    --checkpoint data/lumina_image_2_0/weights_real/ \
     --n-prompts 8 \
     --n-rounds 2 \
     --seed 0 \
-    --output-dir /tmp/phase_b_smoke/lumina
+    --output-dir /tmp/exp_b_lumina
 ```
 
 - **Exit code: 0** (clean stub message; the Lumina stub does not
+  intentionally signal failure because the harness is a TODO pending
+  the seven-step SOTA runbook).
+- Behaviour: stub printed dependency blockers (Lumina checkpoint,
+  GPU host, Gemma2 license, GenEval/DPG/T2I-CompBench evaluator venv)
+  and parsed args; no `summary.json`, no `samples/`.
+- `/tmp/exp_b_lumina/` was not created.
   intentionally signal failure because the harness is a TODO pending
   the seven-step SOTA runbook).
 - Behaviour: stub printed dependency blockers (Lumina checkpoint,
@@ -110,6 +119,16 @@ When the weights land, the populated rows will look like:
 | DPG-Bench | -- | -- | -- | higher is better | Table 1 |
 
 Until the weights land, **all cells remain `--`**.
+
+### 3.3 What is left to implement (per harness stub)
+
+| Harness | What's stubbed | What's needed to light it up |
+|---|---|---|
+| `tools/run_sota_hidream_i1_experiment.py` | `print(stub_rationale); sys.exit(75)`. Adapter `_load_torch_pipeline` returns a `torch` namespace placeholder, not a real `HiDreamI1Pipeline`. | Replace stub with: `transformers.AutoModel.from_pretrained(weights_path, variant=...)`, FLUX.1 VAE init, four text-encoder init, per-eval-set dispatch (DPG-Bench MiniCPM-V 2.6 / GenEval detection+text-match / HPSv2 CLIP-H / FID InceptionV3 vs MS-COCO-30K). Wire `HiDreamI1Adapter._load_torch_pipeline` to a real pipeline call. |
+| `tools/run_sota_lumina_image_2_0_experiment.py` | `print(stub_rationale); sys.exit(0)`. Adapter side wired per design spec but no harness call path. | Replace stub with: `LuminaPipeline.from_pretrained(checkpoint, text_encoder=...)`, FlowA re-inference scheduler wiring (`CosineAnnealScheduler`), per-eval-set dispatch (FID + CLIPScore in-process; GenEval / DPG-Bench / T2I-CompBench as external stubs). |
+
+Both stubs are intentional in the r17 skeleton release; this iteration's
+contribution is documenting the post-weights-blocker gap.
 
 ## 4. Eval-layer refactor (design-only, not in Phase-B runbook)
 
