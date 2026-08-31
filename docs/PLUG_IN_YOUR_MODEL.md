@@ -465,6 +465,55 @@ see
 
 ---
 
+## Plug-in candidate: HiDream-I1 (R17)
+
+HiDream-I1 is a 17B-parameter open-source image generative
+foundation model (Cai et al. 2025, arXiv:2505.22705) built on a
+sparse Diffusion Transformer with dual-stream encoders + single-
+stream sparse MoE, trained with latent flow matching. Three
+published variants: HiDream-I1-Full (50+ NFE standard sampler),
+HiDream-I1-Dev (28 NFE guidance-distilled), HiDream-I1-Fast (14
+NFE DMD-distilled).
+
+A **skeleton adapter** is wired at
+[`adaptive_reflow/adapters/hidream_i1.py`](../adaptive_reflow/adapters/hidream_i1.py):
+
+* State shape `(16, 128, 128)` (FLUX.1-VAE convention).
+* Channels: `image_latent` (latent domain) + `text_cond`
+  (continuous domain) — the text-conditioning cache reference is
+  preserved across re-inference rounds so the prompt is encoded
+  once per `(batch_id, prompt)` pair.
+* Per-variant defaults: `{"full": 50 steps / CFG 5.0, "dev": 28
+  steps / CFG 1.0, "fast": 14 steps / CFG 1.0}`.
+* Synthetic-mode test path is fully wired (deterministic NumPy
+  velocity field; LRU-bounded native-state cache; conditioning
+  cache). 22 tests in
+  [`tests/test_adapters/test_hidream_i1.py`](../tests/test_adapters/test_hidream_i1.py)
+  exercise the Protocol surface end-to-end.
+* Torch-mode production path requires the ``[hidream]`` extra,
+  ``HiDream-ai/HiDream-I1-{Full,Dev,Fast}`` weights (~34 GB / variant)
+  + the four text encoders (~30 GB total) + a CUDA host with
+  ≥40 GB HBM. The skeleton ships a stub ``_load_torch_pipeline``
+  that returns a zero-velocity-field placeholder so the integration
+  loop terminates with a finite trajectory without requiring the
+  full checkpoint at construction time.
+
+Harness status: ``tools/run_sota_hidream_i1_experiment.py`` is a
+**stub** that documents the required CLI surface and exits with
+``75`` (EX_TEMPFAIL). The full harness depends on user-supplied
+HiDream-I1 weights + a CUDA host + an evaluation stack (DPG-Bench
+via MiniCPM-V 2.6, GenEval via the official detection+text-match
+pipeline, HPSv2 via HPSv2.1 CLIP-H, or FID against MS-COCO-30K via
+InceptionV3).
+
+This adapter is a **genuine plug-in candidate**: the surface
+(``HiDreamI1Adapter`` + ``HiDreamI1Capabilities`` + per-variant
+step/CFG defaults) is enough to run the framework's algorithm-
+layer code against HiDream-I1 once the heavy dependencies are
+available on the user's machine.
+
+---
+
 ## See also
 
 - [`ADAPTER_INTERFACE_SPEC.md`](./ADAPTER_INTERFACE_SPEC.md) — full

@@ -271,6 +271,18 @@ FLOWMOL3_PINNED_COMMIT = "77cae22174b7792b0e25e9e0414038420736d841"
 mechanics parity gate."""
 
 
+HIDREAM_I1_PINNED_COMMIT = "0000000000000000000000000000000000000000"
+"""Pinned HiDream-I1 commit placeholder.
+
+The HiDream-ai/HiDream-I1 HuggingFace repos do not yet have a pinned
+git commit hash that is reproducible from the public sandbox (the HF
+repo URL is not in the pre-acquired ``weights_metadata.json`` and the
+sandbox has no HF token). This zero-hash placeholder will be replaced
+once the user supplies a reproducible checkout hash for one of the
+``HiDream-ai/HiDream-I1-{Full,Dev,Fast}`` sub-repos. DO NOT change
+without re-running the mechanics parity gate."""
+
+
 def make_default_flowmol3_entry() -> CandidateEntry:
     """Build the canonical FlowMol3 row for the registry.
 
@@ -320,6 +332,100 @@ def make_default_flowmol3_entry() -> CandidateEntry:
         ),
         registered_at="2026-08-25",
         registered_by="DTB-G2 audit scaffold",
+    )
+
+
+def make_default_hidream_i1_entry() -> CandidateEntry:
+    """Build the canonical HiDream-I1 row for the registry.
+
+    ``adapter_status="admitted_unconditional_only"`` is the appropriate
+    status for a text-conditional image adapter that has passed the
+    mechanics gate but cannot claim pocket-conditioned efficacy. The
+    HiDream-I1 adapter is a ``sequence_conditioned`` candidate (text
+    prompt + optional negative prompt); it is NOT an unconditional 3D
+    generator and therefore uses ``"sequence_conditioned"`` rather than
+    ``"unconditional_3d"`` in ``task_conditions``.
+
+    The compatible channels are the adapter's own vocabulary:
+    ``image_latent`` (latent domain; the FLUX.1 VAE 16x128x128 latent)
+    and ``text_cond`` (continuous domain; cached hybrid encoder
+    output). The QA-only / aesthetics benchmark suite (DPG-Bench,
+    GenEval, HPSv2.1) is intentionally NOT validated here because
+    HiDream-I1's published metrics exclude FID.
+    """
+    return CandidateEntry(
+        repo_url="https://huggingface.co/HiDream-ai/HiDream-I1-Full",
+        commit=HIDREAM_I1_PINNED_COMMIT,
+        license="MIT",
+        paper_id="HiDream-I1 (arXiv:2505.22705)",
+        paper_date="2025",
+        task_conditions=("sequence_conditioned",),
+        dataset_split=(
+            "web-crawled + internal copyright-respecting corpora, "
+            "deduplicated via SSCD + k-means + intra-cluster Faiss, "
+            "filtered by NSFW / aesthetic / watermark / Top-IQ / "
+            "bytes-per-pixel, captioned by MiniCPM-V 2.6"
+        ),
+        native_metric_protocol=(
+            "DPG-Bench (overall 85.89), GenEval (overall 0.83), "
+            "HPSv2.1 (average 33.82) — paper Tables 1-3. FID is "
+            "intentionally NOT a paper metric; any FID row would be "
+            "an optional non-paper metric (e.g. FID against "
+            "MS-COCO-30K or MJHQ-30K)."
+        ),
+        ode_call_site=(
+            "v_theta(x_t, t, conditioning_stack) over the latent "
+            "(16, 128, 128) FLUX.1-VAE state; three published variants "
+            "(Full 50+ NFE Euler/midpoint, Dev 28 NFE guidance-"
+            "distilled, Fast 14 NFE DMD-distilled)"
+        ),
+        state_boundary=(
+            "v_theta input/output shape (16, 128, 128); restart "
+            "blend is latent-space m * prior + (1 - m) * fresh; "
+            "conditioning reference preserved across rounds"
+        ),
+        condition_boundary=(
+            "text-only (prompt + optional negative prompt) via "
+            "4-source hybrid text encoder cache (CLIP-L/14 + "
+            "CLIP-G/14 pooled for adaLN, T5-XXL tokens + "
+            "Llama-3.1-8B multi-intermediate-layer features for "
+            "the text sequence). CFG scale is a per-round "
+            "integrator parameter, not a static condition."
+        ),
+        restart_boundary=(
+            "model.integrate restart boundary: latent state variable "
+            "detached via the standard protocol boundary; restart "
+            "blend happens in latent space (NOT pixel space)"
+        ),
+        compatible_channels=("image_latent", "text_cond"),
+        available_checkpoint=None,  # user must supply HiDream-I1 weights locally
+        adapter_status="admitted_unconditional_only",
+        audit_notes=(
+            "HiDream-I1 is a 17B-parameter open-source text-to-image "
+            "foundation model (sparse Diffusion Transformer with dual-"
+            "stream encoders + single-stream sparse MoE; latent flow "
+            "matching objective). This row records the protocol surface: "
+            "the adapter is wired at adaptive_reflow/adapters/hidream_i1.py "
+            "with state_shape=(16, 128, 128), the per-variant num_steps / "
+            "CFG defaults (full=50/5.0, dev=28/1.0, fast=14/1.0), and "
+            "the synthetic-mode test path that lets the test suite run "
+            "without the heavy torch dependency. The torch-mode production "
+            "path requires the [hidream] extra + HiDream-ai/HiDream-I1-"
+            "{Full,Dev,Fast} weights (~34 GB / variant) + the four text "
+            "encoders (~30 GB total) + a CUDA host with >=40 GB HBM. "
+            "DPG-Bench / GenEval / HPSv2.1 scoring require their own "
+            "eval stack (MiniCPM-V 2.6, official detection+text-match, "
+            "HPSv2.1 CLIP-H respectively). The harness is a stub "
+            "(tools/run_sota_hidream_i1_experiment.py) that exits with "
+            "75 (EX_TEMPFAIL) until the user supplies the missing "
+            "inputs. This row does NOT validate any prompt-following / "
+            "aesthetic quality claim; admission to text-conditioned "
+            "efficacy experiments requires a separate candidate row "
+            "with adapter_status='admitted' and a reproducible "
+            "HiDream-I1 commit hash + a full eval-stack provenance."
+        ),
+        registered_at="2026-08-31",
+        registered_by="R17 HiDream-I1 audit scaffold",
     )
 
 

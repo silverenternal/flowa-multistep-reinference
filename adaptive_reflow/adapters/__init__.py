@@ -12,6 +12,16 @@ from .flowmol3 import (
     default_flowmol3_adapter,
     flowmol3_registry_entry,
 )
+from .hidream_i1 import (
+    HIDREAM_I1_CHANNEL_DOMAINS,
+    HIDREAM_I1_CHANNELS,
+    HIDREAM_I1_MECHANISM_ID,
+    HIDREAM_I1_STATE_SHAPE,
+    HiDreamI1Adapter,
+    HiDreamI1Capabilities,
+    default_hidream_i1_adapter,
+    hidream_i1_resolve_weights_path,
+)
 from .integrators import (
     INTEGRATOR_REGISTRY,
     AMEDSolverIntegrator,
