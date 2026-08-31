@@ -155,6 +155,13 @@ def inject_forward_noise_into_state(
             prior_state.shape
         )
     new_state = prior_state + injected_arr
+    # Promote scalars to 1-D for the digest so the JSON-serialisable
+    # ``shape`` field always carries a list. This is a guard against
+    # adapters (e.g. ``ToyGaussianAdapter``) whose native state is a
+    # scalar ``x: float`` rather than an ``(n,)`` vector.
+    new_state_for_digest = (
+        new_state.reshape(1) if new_state.ndim == 0 else new_state
+    )
     if clamp is not None:
         new_state = np.clip(new_state, -float(clamp), float(clamp))
     next_round = int(bundle.source_round) + 1
@@ -166,14 +173,14 @@ def inject_forward_noise_into_state(
     # two perturbations with different injected tensors land on
     # distinct digests). The shape is recorded so a future
     # capability check can reject shape mismatches.
-    head_idx = tuple(range(min(8, new_state.size)))
+    head_idx = tuple(range(min(8, new_state_for_digest.size)))
     new_digest = _digest_state_payload(
         {
             "kind": "forward_noise",
             "src_digest": str(bundle.native_state_digest),
             "state_key": str(resolved_key),
-            "shape": [int(s) for s in new_state.shape],
-            "head": [float(new_state[i]) for i in head_idx],
+            "shape": [int(s) for s in new_state_for_digest.shape],
+            "head": [float(new_state_for_digest[i]) for i in head_idx],
         }
     )
     adapter._native_states[new_digest] = new_entry  # noqa: SLF001

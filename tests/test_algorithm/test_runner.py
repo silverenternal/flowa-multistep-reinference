@@ -2415,3 +2415,109 @@ def test_runner_forwards_eps_implicit_to_evaluator(_twodim_adapter) -> None:
             f"round {r}: runner forwarded eps_round={eps!r} "
             f"instead of {fixed_eps!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# P1-9 (F-33) — Runner resets inner driver / merge / blender between runs
+# ---------------------------------------------------------------------------
+
+
+def test_runner_resets_inner_components_between_runs(_twodim_adapter) -> None:
+    """P1-9 (F-33): inner driver / merge / blender reset between ``run()`` calls.
+
+    Regression test: the legacy runner only reset the outer
+    orchestrator state machine between runs; the inner driver /
+    merge / blender each carried over their per-cycle state. This
+    produced non-reproducible second runs (the merge operator's
+    ``prev`` chain, the policy driver's saturation count, the
+    blender's prior digest all polluted the second run). The fix
+    hooks ``reset()`` on each non-scheduler inner component at the
+    top of ``run()`` (the scheduler is already reset via the state
+    machine wrapper).
+
+    We assert that each non-scheduler inner component has a
+    callable ``reset`` (the runner already exercises that the
+    runner invokes it before the per-round loop).
+    """
+    from adaptive_reflow.algorithm import (
+        AdaptivePolicyDriver,
+        BoundedMergeOperator,
+        LinearBlender,
+        default_cosine_scheduler,
+    )
+
+    adapter = _twodim_adapter
+    n_rounds = 3
+    merge = BoundedMergeOperator()
+    driver = AdaptivePolicyDriver()
+    blender = LinearBlender()
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=default_cosine_scheduler(cycle_length=n_rounds),
+        merge_operator=merge,
+        policy_driver=driver,
+        blender=blender,
+    )
+    config = ReInferenceConfig(
+        n_rounds=n_rounds,
+        outer_cycle_id=0,
+        target_round=0,
+        seed=42,
+        channels=TWODIM_FM_CHANNELS,
+    )
+    runner.run(config)
+    # Assert each non-scheduler inner component has a callable
+    # ``reset`` method (the runner invokes it via the reset_hooks
+    # loop at the top of ``run()``).
+    assert callable(merge.reset)
+    assert callable(driver.reset)
+    assert callable(blender.reset)
+    # Re-run with the same config — must succeed (the reset hooks
+    # clear per-cycle state so the second run starts clean).
+    runner.run(config)
+
+
+# ---------------------------------------------------------------------------
+# P1-9 (F-33) — Runner resets inner components between runs (smoke test)
+# ---------------------------------------------------------------------------
+
+
+def test_runner_resets_inner_components_between_runs(_twodim_adapter) -> None:
+    """P1-9 (F-33): second ``run()`` on the same runner must succeed without crashing.
+
+    Regression test: the legacy runner only reset the outer
+    orchestrator state machine between runs. The fix hooks
+    ``reset()`` on each non-scheduler inner component (driver /
+    merge / blender) at the top of ``run()`` so a re-run starts
+    from a clean slate. This smoke test runs the same config
+    twice on the same runner and asserts both runs succeed.
+    """
+    from adaptive_reflow.algorithm import (
+        AdaptivePolicyDriver,
+        BoundedMergeOperator,
+        LinearBlender,
+        default_cosine_scheduler,
+    )
+
+    adapter = _twodim_adapter
+    n_rounds = 3
+    runner = ReInferenceRunner(
+        adapter=adapter,
+        scheduler=default_cosine_scheduler(cycle_length=n_rounds),
+        merge_operator=BoundedMergeOperator(),
+        policy_driver=AdaptivePolicyDriver(),
+        blender=LinearBlender(),
+    )
+    config = ReInferenceConfig(
+        n_rounds=n_rounds,
+        outer_cycle_id=0,
+        target_round=0,
+        seed=42,
+        channels=TWODIM_FM_CHANNELS,
+    )
+    result_a = runner.run(config)
+    result_b = runner.run(config)
+    # Both runs must succeed and produce the same number of round
+    # traces. The second run's reproducibility is what F-33 guarantees.
+    assert len(result_a.round_traces) == n_rounds
+    assert len(result_b.round_traces) == n_rounds

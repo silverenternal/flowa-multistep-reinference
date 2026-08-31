@@ -343,3 +343,137 @@ def test_eps_implicit_to_config_round_trip() -> None:
     rebuilt = EvidenceDrivenScheduler.from_config(original.to_config())
     assert rebuilt._k_eps == pytest.approx(0.7)
     assert rebuilt._eps_implicit_base == pytest.approx(0.123)
+
+
+# ---------------------------------------------------------------------------
+# Phase-3 PID signal amplification (Part A — F-3 / F-32)
+# ---------------------------------------------------------------------------
+
+
+def test_pid_amplified_defaults_exceed_rounding_threshold() -> None:
+    """Phase-3 amplification: defaults must produce |delta| above the rounding threshold.
+
+    The legacy defaults (``kp=0.2``, ``ki=0.05``, ``max_step=0.05``,
+    ``target_ratio=1.0``) produced ``|delta| < 0.012`` even at the
+    worst-case oracle signal — well below the cosine ramp's
+    rounding threshold of ``1 / max_num_steps = 0.02`` for the
+    canonical 50-NFE budget. The Phase-3 amplified defaults
+    (``kp=2.0``, ``ki=0.5``, ``max_step=0.1``, ``target_ratio=0.99``)
+    must produce ``|delta| >= 0.1`` at the worst-case signal so the
+    delta translates to a +5 NFE bump at the canonical 50-NFE max.
+    """
+    sched = EvidenceDrivenScheduler(_make_config())
+    for _ in range(20):
+        sched.record_round_feedback(0, {"evidence_ratio": 0.0})
+    assert abs(sched._last_pid_delta) >= 0.1, (
+        f"Phase-3 amplified PID delta must be >= 0.1 (worst-case); "
+        f"got {sched._last_pid_delta}"
+    )
+
+
+def test_pid_signal_magnitude_measurable_difference_in_n_cap() -> None:
+    """Phase-3 amplification: n_cap adjustment must exceed the rounding threshold."""
+    sched = EvidenceDrivenScheduler(_make_config())
+    for _ in range(15):
+        sched.record_round_feedback(0, {"evidence_ratio": 0.0})
+    assert abs(sched._last_pid_delta) >= 0.02, (
+        f"Phase-3 PID signal magnitude must be >= 0.02 to survive "
+        f"rounding at 50-NFE budget; got {abs(sched._last_pid_delta)}"
+    )
+
+
+def test_pid_evidence_driven_n_cap_differs_from_cosine_baseline() -> None:
+    """Phase-3: EvidenceDriven n_cap must measurably differ from CosineAnneal."""
+    from adaptive_reflow.algorithm.scheduler import (
+        default_cosine_scheduler,
+    )
+
+    config = _make_config(cycle_length=10)
+    cosine = default_cosine_scheduler(
+        cycle_length=10, n_min=0.0, n_max=1.0,
+        schedule_family="cosine_no_restart", seed=0,
+    )
+    evidence = EvidenceDrivenScheduler(config)
+    for r in range(5):
+        evidence.record_round_feedback(r, {"evidence_ratio": 0.3})
+    cosine_sample = cosine.sample(0, 5, 5)
+    evidence_sample = evidence.sample(0, 5, 5)
+    diff = abs(float(evidence_sample.n_cap) - float(cosine_sample.n_cap))
+    assert diff >= 0.02, (
+        f"EvidenceDriven vs CosineAnneal n_cap must differ by >= 0.02 "
+        f"at r=5 to be measurable; got cosine={cosine_sample.n_cap:.4f}, "
+        f"evidence={evidence_sample.n_cap:.4f}, diff={diff:.4f}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# P1-1 (F-2) config_hash includes k_eps
+# ---------------------------------------------------------------------------
+
+
+def test_config_hash_distinguishes_k_eps_values() -> None:
+    """P1-1 (F-2): two schedulers differing ONLY in k_eps must have distinct hashes."""
+    base = EvidenceDrivenScheduler(
+        _make_config(),
+        kp=2.0, ki=0.5, max_step=0.1, target_ratio=0.99,
+        k_eps=0.5, eps_implicit_base=0.1,
+    )
+    twin = EvidenceDrivenScheduler(
+        _make_config(),
+        kp=2.0, ki=0.5, max_step=0.1, target_ratio=0.99,
+        k_eps=0.9, eps_implicit_base=0.1,
+    )
+    assert base.config_hash() != twin.config_hash(), (
+        f"Schedulers differing only in k_eps must have distinct hashes; "
+        f"both produced {base.config_hash()}"
+    )
+
+
+def test_config_hash_distinguishes_eps_implicit_base() -> None:
+    """P1-1 (F-2): two schedulers differing ONLY in eps_implicit_base must have distinct hashes."""
+    base = EvidenceDrivenScheduler(
+        _make_config(),
+        kp=2.0, ki=0.5, max_step=0.1, target_ratio=0.99,
+        k_eps=0.5, eps_implicit_base=0.1,
+    )
+    twin = EvidenceDrivenScheduler(
+        _make_config(),
+        kp=2.0, ki=0.5, max_step=0.1, target_ratio=0.99,
+        k_eps=0.5, eps_implicit_base=0.5,
+    )
+    assert base.config_hash() != twin.config_hash(), (
+        f"Schedulers differing only in eps_implicit_base must have "
+        f"distinct hashes; both produced {base.config_hash()}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# P1-2 (F-3) per-round PID delta lookup
+# ---------------------------------------------------------------------------
+
+
+def test_pid_delta_for_round_closes_stale_loop() -> None:
+    """P1-2 (F-3): round ``r``'s feedback must expose its own delta via pid_delta_for_round."""
+    sched = EvidenceDrivenScheduler(
+        _make_config(), kp=2.0, ki=0.0, max_step=0.1, target_ratio=0.99,
+    )
+    sched.record_round_feedback(0, {"evidence_ratio": 0.5})
+    delta_round_0 = sched.pid_delta_for_round(0)
+    assert delta_round_0 > 0.0, (
+        f"Round 0's feedback (ratio=0.5, target=0.99) must produce a "
+        f"positive delta; got {delta_round_0}"
+    )
+    assert sched.pid_delta_for_round(1) == 0.0
+    sched.record_round_feedback(1, {"evidence_ratio": 0.0})
+    delta_round_1 = sched.pid_delta_for_round(1)
+    assert delta_round_1 > 0.0
+
+
+def test_pid_delta_for_round_resets_on_scheduler_reset() -> None:
+    """P1-2 (F-3): ``reset()`` clears the per-round delta history."""
+    sched = EvidenceDrivenScheduler(_make_config())
+    sched.record_round_feedback(0, {"evidence_ratio": 0.5})
+    assert sched.pid_delta_for_round(0) != 0.0
+    sched.reset()
+    assert sched.pid_delta_for_round(0) == 0.0
+    assert sched.controller._integral == 0.0

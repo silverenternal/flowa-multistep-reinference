@@ -179,11 +179,18 @@ def _build_cosine_schedule_config(rounds: int) -> CosineScheduleConfig:
     )
 
 
-def build_scheduler(name: str, *, rounds: int) -> Any:
+def build_scheduler(name: str, *, rounds: int, target_ratio: float = 0.95) -> Any:
     """Return the named scheduler configured for ``rounds`` rounds.
 
     Mirrors the 2D experiment's ``_build_scheduler`` exactly so the CIFAR
     ablation rows are directly comparable.
+
+    The ``target_ratio`` argument drives the EvidenceDrivenScheduler
+    PID-lite set-point (default 0.95 per the v2 plan's PID amplification
+    recommendation; paper's evidence ordering Theorem 1 says "ratio rises
+    toward 1" with the natural asymptote below 1.0 because of the
+    cell-evidence contribution). Per
+    ``docs/r4-survey/21-fix-v2-plan.md`` §2.4 / §3.4.
     """
     if name == "CosineAnnealScheduler":
         return default_cosine_scheduler(cycle_length=int(rounds))
@@ -195,12 +202,18 @@ def build_scheduler(name: str, *, rounds: int) -> Any:
             eps_implicit=0.05,
         )
     if name == "EvidenceDrivenScheduler":
+        # PID amplification (Part A — cheap, paper-neutral): gain
+        # scheduling with adaptive kp + lowered target_ratio so the
+        # PID delta clears the round(n_cap * N) rounding threshold on
+        # the CIFAR-10 50-NFE budget. Per
+        # docs/r4-survey/21-fix-v2-plan.md §3.4.
+        adaptive_kp = 0.5 / max(1, int(rounds) / 5)
         return EvidenceDrivenScheduler(
             config=_build_cosine_schedule_config(int(rounds)),
-            kp=0.2,
-            ki=0.05,
-            max_step=0.05,
-            target_ratio=1.0,
+            kp=adaptive_kp,
+            ki=0.1,
+            max_step=0.1,
+            target_ratio=float(target_ratio),
             k_eps=0.5,
             eps_implicit_base=0.05,
         )
@@ -218,22 +231,35 @@ def build_scheduler(name: str, *, rounds: int) -> Any:
 # ---------------------------------------------------------------------------
 
 
-def _make_adapter(checkpoint: Path | None, *, num_steps: int) -> Any:
+def _make_adapter(
+    checkpoint: Path | None,
+    *,
+    num_steps: int,
+    solver: str = "euler",
+) -> Any:
     """Return a fresh :class:`RectifiedFlowCIFARAdapter`.
 
     Local import keeps this script import-clean when torch is unavailable
     (the adapter module requires torch for the production path; synthetic
     mode works without).
+
+    The ``solver`` argument selects the ODE integrator: ``"euler"`` (1st-
+    order, default; 1 NFE per step) or ``"heun"`` (2nd-order predictor-
+    corrector; 2 NFE per step). Per
+    ``docs/r4-survey/21-fix-v2-plan.md`` §2.2 / §3.2.
     """
     from adaptive_reflow.adapters.rectified_flow_cifar import (
         default_rectified_flow_cifar_adapter,
     )
 
     if checkpoint is None:
-        return default_rectified_flow_cifar_adapter(num_steps=num_steps)
+        return default_rectified_flow_cifar_adapter(
+            num_steps=num_steps, solver=solver,
+        )
     return default_rectified_flow_cifar_adapter(
         weights_path=checkpoint,
         num_steps=num_steps,
+        solver=solver,
     )
 
 
@@ -417,6 +443,7 @@ def _run_framework(
     seed_base: int,
     output_dir: Path,
     max_num_steps: int,
+    target_ratio: float = 0.95,
 ) -> tuple[Path, list[dict[str, float]], float, int]:
     """Drive the framework multi-round run for one scheduler.
 
@@ -434,6 +461,10 @@ def _run_framework(
     is therefore the union of its per-round sample batches; the FID is
     computed over the whole pool.
 
+    The ``target_ratio`` argument controls the EvidenceDrivenScheduler
+    PID-lite set-point (PID amplification per
+    ``docs/r4-survey/21-fix-v2-plan.md`` §3.4).
+
     Returns ``(samples_path, per_round_metrics, wall_clock_s,
     total_nfe_per_sample)`` where ``total_nfe_per_sample`` is the sum
     of ``num_steps`` across rounds — i.e., the per-FID-sample NFE for
@@ -447,7 +478,9 @@ def _run_framework(
     feedback mechanism where applicable.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    scheduler = build_scheduler(scheduler_name, rounds=int(n_rounds))
+    scheduler = build_scheduler(
+        scheduler_name, rounds=int(n_rounds), target_ratio=float(target_ratio),
+    )
 
     # For the EvidenceDrivenScheduler row we proxy the per-round
     # ``evidence_ratio`` from a *shared* CodimensionSheetScheduler (cheap;
@@ -743,6 +776,29 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--solver",
+        "--integrator",
+        choices=("euler", "heun"),
+        default="euler",
+        dest="integrator",
+        help=(
+            "ODE integrator: 'euler' (1st-order, default, 1 NFE per step) "
+            "or 'heun' (2nd-order predictor-corrector, 2 NFE per step). "
+            "Per docs/r4-survey/21-fix-v2-plan.md §2.2 / §3.2."
+        ),
+    )
+    parser.add_argument(
+        "--target-ratio",
+        type=float,
+        default=0.95,
+        help=(
+            "EvidenceDrivenScheduler PID-lite set-point. Default 0.95 "
+            "amplifies the PID signal above the round(n_cap * N) "
+            "rounding threshold. Per docs/r4-survey/21-fix-v2-plan.md "
+            "§2.4 / §3.4."
+        ),
+    )
+    parser.add_argument(
         "--device",
         choices=("cpu", "cuda"),
         default="cpu",
@@ -929,6 +985,7 @@ def main(argv: list[str] | None = None) -> int:
     adapter = _make_adapter(
         Path(args.checkpoint) if args.checkpoint else None,
         num_steps=int(args.baseline_num_steps),
+        solver=str(args.integrator),
     )
     caps = adapter.capabilities()
     print(
@@ -968,6 +1025,7 @@ def main(argv: list[str] | None = None) -> int:
             seed_base=0,
             output_dir=output_dir,
             max_num_steps=int(args.framework_max_num_steps),
+            target_ratio=float(args.target_ratio),
         )
         sel_last = float(per_round[-1].get("evidence_ratio", float("nan")))
         rows.append(
