@@ -477,3 +477,10 @@ see
   — the canonical real-model reference implementation.
 - [`adaptive_reflow/adapters/toy_linear.py`](../adaptive_reflow/adapters/toy_linear.py)
   — the smallest possible adapter (≤ 60 LOC).
+- [`adaptive_reflow/adapters/protbfnabbfnadapter.py`](../adaptive_reflow/adapters/protbfnabbfnadapter.py)
+  — adapter wrapping the published InstaDeep BFN protein models
+  (ProtBFN, AbBFN, AbBFN2). Discrete-channel adapter; the
+  `solve_ode` method re-interprets the framework's continuous-time
+  ODE call as `num_steps` discrete Bayesian-update refinement
+  steps over a per-position categorical over the 22-entry
+  amino-acid vocabulary.

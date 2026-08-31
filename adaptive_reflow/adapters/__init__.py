@@ -12,6 +12,16 @@ from .flowmol3 import (
     default_flowmol3_adapter,
     flowmol3_registry_entry,
 )
+from .protbfnabbfnadapter import (
+    AMINO_ACID_CATEGORICAL,
+    PROTBFN_ABBFN_CHANNELS,
+    PROTBFN_ABBFN_CHANNEL_DOMAINS,
+    PROTBFN_ABBFN_CONFIG_HASH,
+    PROTBFN_ABBFN_STATE_SHAPE,
+    ProtBFNAbBFNAdapter,
+    ProtBFNAbBFNCapabilities,
+    default_protbfnabbfn_adapter,
+)
 from .integrators import (
     INTEGRATOR_REGISTRY,
     AMEDSolverIntegrator,
