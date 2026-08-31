@@ -185,7 +185,8 @@ def extract_inception_features(
     import torchvision.models as tvm
 
     weights_obj = tvm.Inception_V3_Weights.IMAGENET1K_V1 if hasattr(tvm, "Inception_V3_Weights") else None
-    model = tvm.inception_v3(weights=weights_obj, aux_logits=True, transform_input=False)
+    model = tvm.inception_v3(weights=weights_obj, aux_logits=False, transform_input=False)
+    model.fc = torch.nn.Identity()
     model.eval()
     out_feats: list[np.ndarray] = []
     with torch.no_grad():
@@ -193,17 +194,13 @@ def extract_inception_features(
             batch: np.ndarray = images[i : i + int(batch_size)].astype(np.float32)
             x = torch.from_numpy(batch)
             x = F.interpolate(x, size=(299, 299), mode="bilinear", align_corners=False)
-            # InceptionV3 expects inputs normalized to [0, 1]; the
-            # paper-standard preprocessing rescales to roughly [-1, 1]
-            # using ``(x - 0.5) / 0.5`` but ``transform_input=False``
-            # bypasses that default; we apply it explicitly.
-            x = (x - 0.5) / 0.5
-            # We need the pool3 features (2048-dim) — the model's
-            # classifier head is replaced with an Identity so the
-            # forward returns the feature vector directly.
+            # Adapter samples use [-1, 1]. Convert to ImageNet's [0, 1]
+            # domain, then apply the published ImageNet normalization.
+            x = (x + 1.0) / 2.0
+            mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+            std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+            x = (x - mean) / std
             feats_t = model(x)
-            if hasattr(feats_t, "logits"):
-                feats_t = feats_t.logits
             out_feats.append(np.asarray(feats_t.detach().cpu().numpy(), dtype=np.float32))
     return np.concatenate(out_feats, axis=0)  # type: ignore[no-any-return]
 
