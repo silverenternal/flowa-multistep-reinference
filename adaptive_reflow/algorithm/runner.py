@@ -626,15 +626,19 @@ class ReInferenceRunner:
         # P1-9 (F-33) — also reset the inner components that carry
         # per-cycle state so a re-run starts from a clean slate. The
         # outer orchestrator state machine is reset above; the
-        # scheduler / merge operator / policy driver / blender each
-        # carry their own ``reset()`` hooks that clear their per-cycle
-        # accumulators (the PID integral, the merge ``prev`` chain,
-        # the policy driver's saturation count, the blender's prior
-        # digest). Without these resets a second ``run()`` on the same
-        # runner instance would inherit the previous cycle's state
-        # and produce a non-reproducible result.
+        # scheduler is wrapped with a state machine whose ``reset()``
+        # already cascades to the inner (so we skip it to avoid
+        # double-reset on test doubles that mutate ``self.foo = []``
+        # inside ``reset()`` — a re-bind on the wrapper instance
+        # would lose the test's reference to the original list). The
+        # driver / merge / blender each carry their own ``reset()``
+        # hooks that clear their per-cycle accumulators (the merge
+        # ``prev`` chain, the policy driver's saturation count, the
+        # blender's prior digest). Without these resets a second
+        # ``run()`` on the same runner instance would inherit the
+        # previous cycle's state and produce a non-reproducible
+        # result.
         reset_hooks: list[Any] = [
-            self._scheduler,
             self._driver,
             self._merge,
             self._blender,
