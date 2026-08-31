@@ -2,16 +2,25 @@
 
 Both .npz files are expected to contain key 'samples' with shape
 (N, 3, 32, 32) float32/float64 arrays in [-1, 1]. The script:
-  1. Loads InceptionV3 (2048-d pool3 features) once.
+  1. Loads InceptionV3 (2048-d pool3 features) via torchvision.
   2. Maps [-1, 1] -> [0, 1] and ImageNet-normalises.
   3. Bilinearly resizes to 299x299.
-  4. Returns Fréchet distance on activation Gaussians.
+  4. Returns Fréchet distance on activation Gaussians via the
+     canonical :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator`.
 
 Usage:
     python compute_cifar_fid.py <gen.npz> <ref.npz> [<gen.npz> <ref.npz> ...]
 
 Each pair prints "=== FID: <value> ===" on its own line; the orchestrator
 in tools/run_sota_cifar_experiment.py greps that line.
+
+The Fréchet arithmetic (covariance square root + numerical guards) was
+previously a near-duplicate of :func:`tools.eval_rf_cifar.compute_fid`
+and :func:`tools.run_image_eval.compute_fid_from_features`. Both
+copies have now been folded into
+:class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator
+._compute_frechet_distance_inner`; this script is a thin CLI wrapper
+around the shared abstraction.
 """
 from __future__ import annotations
 
@@ -20,12 +29,24 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from pytorch_fid.inception import InceptionV3
-from scipy import linalg
+
+# Make the project importable when running as ``python
+# tools/compute_cifar_fid.py``.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from adaptive_reflow.eval.fid import InceptionV3FIDEvaluator  # noqa: E402
 
 
-def get_activations(samples: np.ndarray, model: InceptionV3, batch_size: int = 32) -> np.ndarray:
-    """Run InceptionV3 on a batch of (N, 3, 32, 32) float arrays in [-1, 1]."""
+def get_activations(samples: np.ndarray, model: torch.nn.Module, batch_size: int = 32) -> np.ndarray:
+    """Run InceptionV3 on a batch of (N, 3, 32, 32) float arrays in [-1, 1].
+
+    The model is a torchvision ``inception_v3`` with ``weights=None``,
+    ``aux_logits=False`` and ``fc = Identity`` (the canonical FID
+    shape — see :func:`tools.eval_rf_cifar.extract_inception_features`
+    and commit ``2fb3dc0`` for the regression rationale).
+    """
     model.eval()
     n = samples.shape[0]
     activations = np.empty((n, 2048), dtype=np.float32)
@@ -41,24 +62,44 @@ def get_activations(samples: np.ndarray, model: InceptionV3, batch_size: int = 3
             mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
             std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
             x = (x - mean) / std
-            pred = model(x)[0]  # (B, 2048, 1, 1)
-            pred = pred.squeeze(3).squeeze(2)  # (B, 2048)
-            activations[i : i + batch_size] = pred.cpu().numpy()
+            feats = model(x)
+            activations[i : i + batch_size] = feats.cpu().numpy()
     return activations
 
 
 def calculate_frechet_distance(act1: np.ndarray, act2: np.ndarray) -> float:
-    """Standard Fréchet distance between two Gaussian fits."""
-    mu1, sigma1 = act1.mean(axis=0), np.cov(act1, rowvar=False)
-    mu2, sigma2 = act2.mean(axis=0), np.cov(act2, rowvar=False)
-    diff = mu1 - mu2
-    covmean = linalg.sqrtm(sigma1.dot(sigma2))
-    if not np.isfinite(covmean).all():
-        offset = np.eye(sigma1.shape[0]) * 1e-6
-        covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
-    if np.iscomplexobj(covmean):
-        covmean = covmean.real
-    return float(diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * np.trace(covmean))
+    """Standard Fréchet distance between two Gaussian fits.
+
+    Thin back-compat wrapper around
+    :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator
+    .compute_from_features`. Returns ``float('nan')`` when either
+    operand has fewer than 2 rows (FID is undefined there).
+    """
+    evaluator = InceptionV3FIDEvaluator(feature_dim=int(act1.shape[1]))
+    return float(
+        evaluator.compute_from_features(
+            act2.astype(np.float64, copy=False),
+            act1.astype(np.float64, copy=False),
+        ).value
+    )
+
+
+def _load_inception_v3_for_fid() -> torch.nn.Module:
+    """Build the canonical ``torchvision`` InceptionV3 for FID.
+
+    Mirrors the construction in
+    :func:`tools.eval_rf_cifar.extract_inception_features` and
+    :func:`tools.run_image_eval.load_inception_for_fid`: ``weights=None``,
+    ``aux_logits=False``, ``fc = Identity`` so the forward returns the
+    2048-dim pool3 features directly.
+    """
+    import torch.nn as nn
+    import torchvision.models as tvm
+
+    model = tvm.inception_v3(weights=None, aux_logits=False, transform_input=False)
+    model.fc = nn.Identity()
+    model.eval()
+    return model
 
 
 def compute_fid_for_pair(gen_path: Path, ref_path: Path) -> float:
@@ -67,9 +108,7 @@ def compute_fid_for_pair(gen_path: Path, ref_path: Path) -> float:
     n = min(int(gen.shape[0]), int(ref.shape[0]))
     gen = np.asarray(gen[:n], dtype=np.float32)
     ref = np.asarray(ref[:n], dtype=np.float32)
-    block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[2048]
-    model = InceptionV3([block_idx])
-    model.eval()
+    model = _load_inception_v3_for_fid()
     a_gen = get_activations(gen, model)
     a_ref = get_activations(ref, model)
     return calculate_frechet_distance(a_gen, a_ref)
@@ -82,9 +121,7 @@ def main() -> None:
     args = sys.argv[1:]
     pairs = list(zip(args[0::2], args[1::2], strict=False))
     # Cache the model load across pairs to avoid 95MB download × N
-    block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[2048]
-    model = InceptionV3([block_idx])
-    model.eval()
+    model = _load_inception_v3_for_fid()
     results: list[tuple[Path, Path, float]] = []
     for gen_str, ref_str in pairs:
         gen_path, ref_path = Path(gen_str), Path(ref_str)

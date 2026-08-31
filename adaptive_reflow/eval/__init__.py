@@ -30,6 +30,21 @@ from .claim_gate import (
     build_default_claim_gate_config,
     evaluate_claim_gate,
 )
+from .clip_score import (
+    CLIPSCORE_PAPER_SCALE,
+    CLIPScoreProtocol,
+    CLIPScoreResult,
+    DEFAULT_CLIP_MODEL_NAME,
+    HFCosineClipScoreEvaluator,
+)
+from .fid import (
+    FID_AUDIT_INSUFFICIENT_STATS,
+    FID_EIGENCLIP_EPS_DEFAULT,
+    FIDProtocol,
+    FIDResult,
+    InceptionV3FIDEvaluator,
+    compute_frechet_distance,
+)
 from .manifests import (
     DEFERRED_GPU_SENTINEL,
     JsonString,

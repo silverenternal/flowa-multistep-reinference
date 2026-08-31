@@ -58,6 +58,9 @@ from adaptive_reflow.adapters.rectified_flow_cifar import (  # noqa: E402
     rectified_flow_cifar_resolve_weights_path,
     torch_is_available,
 )
+from adaptive_reflow.eval.fid import (  # noqa: E402
+    InceptionV3FIDEvaluator,
+)
 
 # Published baseline from Liu 2022 (Table 2 — 2-rectified flow, 1-NFE
 # Euler on CIFAR-10 32×32).
@@ -69,8 +72,17 @@ DEFAULT_REFERENCE_FEATURES: str = "data/cifar10_inception_features.npz"
 
 
 # ---------------------------------------------------------------------------
-# FID computation (NumPy — no pytorch-fid dependency)
+# FID computation — thin back-compat wrapper around the canonical
+# :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator`.
 # ---------------------------------------------------------------------------
+#
+# Behaviour change: the legacy :func:`compute_fid` returned
+# ``float('inf')`` on insufficient statistics (``<2`` rows in either
+# operand). The new abstraction follows the scientific convention and
+# returns ``float('nan')`` in that case (the FID is genuinely undefined
+# when the sample covariance is degenerate). Callers that need to
+# distinguish "undefined" from a finite-but-large FID should branch on
+# ``math.isnan(...)`` / ``math.isfinite(...)``.
 
 
 def compute_fid(
@@ -81,7 +93,9 @@ def compute_fid(
 ) -> float:
     """Compute the Fréchet Inception Distance (FID) between two feature sets.
 
-    The standard FID formula is::
+    Thin back-compat wrapper around
+    :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator
+    .compute_from_features`. The standard FID formula is::
 
         FID = ||μ_r - μ_g||^2 + Tr(Σ_r + Σ_g - 2 (Σ_r Σ_g)^{1/2})
 
@@ -92,50 +106,26 @@ def compute_fid(
     callers that need bit-determinism across machines should seed
     numpy's PRNG via ``np.random.default_rng``.
 
-    Falls back to a pure-NumPy eigenvalue decomposition when
-    :mod:`scipy` is unavailable (it is in the project's
-    ``[flow_matching]`` extra but we guard anyway).
-
-    Returns ``float('inf')`` when either input has fewer than 2 rows
-    (insufficient statistics for FID).
+    Returns ``float('nan')`` when either input has fewer than 2 rows
+    (insufficient statistics for FID). **Behaviour change**: this
+    sentinel used to be ``float('inf')`` — the legacy call sites in
+    :mod:`tools.run_sota_cifar_experiment` already branch on
+    ``math.isfinite`` so they keep working.
     """
     if generated_feats.ndim != 2 or reference_feats.ndim != 2:
         raise ValueError("features_must_be_2d")
     if generated_feats.shape[1] != reference_feats.shape[1]:
         raise ValueError("feature_dims_must_match")
-    if generated_feats.shape[0] < 2 or reference_feats.shape[0] < 2:
-        return float("inf")
-
-    mu_r = np.mean(reference_feats, axis=0)
-    mu_g = np.mean(generated_feats, axis=0)
-    sigma_r = np.cov(reference_feats, rowvar=False)
-    sigma_g = np.cov(generated_feats, rowvar=False)
-    diff = mu_r - mu_g
-
-    try:
-        from scipy.linalg import sqrtm as _sqrtm  # local import
-    except ImportError:
-        _sqrtm = None
-    if _sqrtm is not None:
-        covmean = _sqrtm(sigma_r @ sigma_g)
-        if np.iscomplexobj(covmean):
-            covmean = np.real(covmean)
-    else:
-        # Pure-numpy fallback: eigvalsh of Σ_r Σ_g + eps·I, take sqrt.
-        prod = sigma_r @ sigma_g
-        eigvals = np.linalg.eigvalsh(prod)
-        eigvals_clipped = np.clip(eigvals, eps, None)
-        sqrt_eigvals = np.sqrt(eigvals_clipped)
-        # Reconstruct a PSD approximation; this is not the exact
-        # matrix square root but matches the canonical fallback used
-        # in the PyTorch FID implementation when ``sqrtm`` is unstable.
-        eigvecs = np.linalg.eigh(prod)[1]
-        covmean = eigvecs @ np.diag(sqrt_eigvals) @ eigvecs.T
-    tr_covmean = float(np.trace(covmean))
-    fid = float(diff @ diff + np.trace(sigma_r) + np.trace(sigma_g) - 2.0 * tr_covmean)
-    if not np.isfinite(fid):
-        return float("inf")
-    return fid
+    evaluator = InceptionV3FIDEvaluator(
+        feature_dim=int(generated_feats.shape[1]),
+        eigenclip_eps=float(eps),
+    )
+    return float(
+        evaluator.compute_from_features(
+            reference_feats.astype(np.float64, copy=False),
+            generated_feats.astype(np.float64, copy=False),
+        ).value
+    )
 
 
 def random_inception_features(

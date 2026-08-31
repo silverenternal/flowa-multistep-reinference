@@ -145,12 +145,20 @@ def tiny_inception_v3(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.fixture()
 def fake_clip(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Patch ``transformers.CLIPModel`` / ``CLIPProcessor`` with deterministic stubs.
+    """Patch ``transformers.AutoModel`` / ``AutoProcessor`` with deterministic stubs.
 
     The stub returns a constant per-pair cosine similarity of 0.25
     (so ``100 * max(0, 0.25) = 25.0`` under the paper's 100× scaling)
-    and a tiny variability term keyed off the row-sum so different
+    and a tiny variability term keyed off the row index so different
     images get different scores (mean + std are both well-defined).
+
+    The canonical :class:`adaptive_reflow.eval.clip_score
+    .HFCosineClipScoreEvaluator` (the abstraction the runner now
+    delegates to) loads via :class:`transformers.AutoModel` /
+    :class:`transformers.AutoProcessor` rather than the explicit
+    ``CLIPModel`` / ``CLIPProcessor`` pair. We expose ``AutoModel`` /
+    ``AutoProcessor`` here so the new code path resolves without
+    needing a real ``~600 MB`` model download.
     """
     import torch
     import torch.nn as nn
@@ -221,6 +229,11 @@ def fake_clip(monkeypatch: pytest.MonkeyPatch) -> None:
     import types
 
     fake_module = types.ModuleType("transformers")
+    fake_module.AutoModel = _FakeCLIPModel  # type: ignore[attr-defined]
+    fake_module.AutoProcessor = _FakeProcessor  # type: ignore[attr-defined]
+    # Preserve the legacy ``CLIPModel`` / ``CLIPProcessor`` symbols too
+    # so any remaining direct references (older code paths / tests)
+    # keep resolving.
     fake_module.CLIPModel = _FakeCLIPModel  # type: ignore[attr-defined]
     fake_module.CLIPProcessor = _FakeProcessor  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "transformers", fake_module)

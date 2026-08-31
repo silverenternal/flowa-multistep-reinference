@@ -71,6 +71,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from adaptive_reflow.eval.clip_score import (  # noqa: E402
+    CLIPSCORE_PAPER_SCALE,
+    HFCosineClipScoreEvaluator,
+)
+from adaptive_reflow.eval.fid import (  # noqa: E402
+    InceptionV3FIDEvaluator,
+)
+
 
 # ---------------------------------------------------------------------------
 # Image loading
@@ -168,7 +176,8 @@ def load_images_as_tensor(
 
 
 # ---------------------------------------------------------------------------
-# FID
+# FID — thin back-compat wrapper around the canonical
+# :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator`.
 # ---------------------------------------------------------------------------
 
 
@@ -184,72 +193,33 @@ def compute_fid_from_features(
     Reference statistics come from a precomputed ``.npz`` containing
     ``mu`` and ``sigma`` arrays (the format emitted by
     :func:`compute_reference_stats` and by ``clean-fid``'s
-    ``make_custom_stats`` helper). The FID formula is::
+    ``make_custom_stats`` helper). The Fréchet arithmetic is delegated
+    to :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator
+    .compute_from_precomputed`; this function is preserved as the
+    legacy entry point for any caller (and tests) that imports it
+    directly.
 
-        FID = ||μ_s - μ_r||^2 + Tr(Σ_s + Σ_r - 2 (Σ_s Σ_r)^{1/2})
-
-    Computed via :func:`scipy.linalg.sqrtm` with eigen-clipping for
-    numerical safety. Returns ``float('nan')`` if the input contains
-    fewer than 2 rows (insufficient statistics) — the FID is
-    undefined there.
-
-    The matrix square root uses an eigen-clipping fallback identical
-    to the one in :mod:`tools.eval_rf_cifar.compute_fid`: when
-    ``scipy`` is unavailable, a pure-NumPy eigenvalue decomposition
-    with a PSD-reconstructed approximation is used. This is the
-    "clipped FID" pattern used in pytorch-fid when the matrix
-    product is numerically singular.
+    Returns ``float('nan')`` if the input contains fewer than 2 rows
+    (FID is undefined there).
     """
     if sample_feats.ndim != 2:
         raise ValueError("sample_features_must_be_2d")
-    if sample_feats.shape[0] < 2:
-        return float("nan")
     if reference_mu.ndim != 1 or reference_sigma.ndim != 2:
         raise ValueError("reference_mu_must_be_1d_sigma_2d")
-    if sample_feats.shape[1] != reference_mu.shape[0]:
-        raise ValueError("feature_dims_must_match_reference_mu")
     if reference_sigma.shape[0] != reference_sigma.shape[1]:
         raise ValueError("reference_sigma_must_be_square")
-    if sample_feats.shape[1] != reference_sigma.shape[0]:
-        raise ValueError("feature_dims_must_match_reference_sigma")
-
-    feats = np.asarray(sample_feats, dtype=np.float64)
-    mu_r = np.asarray(reference_mu, dtype=np.float64)
-    sigma_r = np.asarray(reference_sigma, dtype=np.float64)
-
-    mu_s = np.mean(feats, axis=0)
-    sigma_s = np.cov(feats, rowvar=False)
-    diff = mu_s - mu_r
-
-    try:
-        from scipy.linalg import sqrtm as _sqrtm
-    except ImportError:
-        _sqrtm = None
-    if _sqrtm is not None:
-        prod = sigma_s @ sigma_r
-        covmean = _sqrtm(prod)
-        if np.iscomplexobj(covmean):
-            covmean = np.real(covmean)
-        # Eigen-clipping guard for numerically singular matrices.
-        if not np.all(np.isfinite(covmean)):
-            offset = np.eye(sigma_s.shape[0]) * eps
-            covmean = _sqrtm((sigma_s + offset) @ (sigma_r + offset))
-            if np.iscomplexobj(covmean):
-                covmean = np.real(covmean)
-    else:
-        prod = sigma_s @ sigma_r
-        eigvals = np.linalg.eigvalsh(prod)
-        eigvals_clipped = np.clip(eigvals, eps, None)
-        sqrt_eigvals = np.sqrt(eigvals_clipped)
-        eigvecs = np.linalg.eigh(prod)[1]
-        covmean = eigvecs @ np.diag(sqrt_eigvals) @ eigvecs.T
-
-    tr_covmean = float(np.trace(covmean))
-    fid = float(diff @ diff + np.trace(sigma_s) + np.trace(sigma_r) - 2.0 * tr_covmean)
-    if not math.isfinite(fid):
-        return float("nan")
-    # FID is non-negative; negative values from numerical noise clip to 0.
-    return float(max(fid, 0.0))
+    feature_dim = int(sample_feats.shape[1])
+    evaluator = InceptionV3FIDEvaluator(
+        feature_dim=feature_dim,
+        eigenclip_eps=float(eps),
+    )
+    return float(
+        evaluator.compute_from_precomputed(
+            sample_feats.astype(np.float64, copy=False),
+            reference_mu.astype(np.float64, copy=False),
+            reference_sigma.astype(np.float64, copy=False),
+        ).value
+    )
 
 
 def load_inception_for_fid(device: Any) -> Any:
@@ -315,11 +285,9 @@ def extract_inception_features_for_image_eval(
 
 
 # ---------------------------------------------------------------------------
-# CLIPScore
+# CLIPScore — thin back-compat wrapper around the canonical
+# :class:`adaptive_reflow.eval.clip_score.HFCosineClipScoreEvaluator`.
 # ---------------------------------------------------------------------------
-
-
-_CLIPSCORE_PAPER_SCALE: float = 100.0  # Hessel et al. 2021 — 100×max(0, cos).
 
 
 def compute_clipscore(
@@ -330,60 +298,46 @@ def compute_clipscore(
     model_id: str = "openai/clip-vit-base-patch32",
     batch_size: int = 16,
 ) -> dict[str, float]:
-    """Compute CLIPScore (mean ± std) using ``transformers`` CLIPModel.
+    """Compute CLIPScore (mean ± std) using the canonical HF cosine evaluator.
 
-    Returns a dict with ``mean`` and ``std`` keys. Applies the
-    100× scaling from Hessel et al. 2021 (CLIPScore paper) so the
-    numbers are paper-comparable. Raises ``ImportError`` when
-    :mod:`transformers` is not installed — callers (see
-    :func:`run_image_eval`) translate that to a NaN-with-stderr
-    fallback rather than a hard failure.
+    The L2-normalised + paper-scale ``100 × max(0, cos)`` math is
+    delegated to :class:`adaptive_reflow.eval.clip_score
+    .HFCosineClipScoreEvaluator`. Returns a dict with ``mean`` and
+    ``std`` keys. When :mod:`transformers` is missing or the model
+    fails to load the underlying evaluator returns a graceful-NaN
+    :class:`CLIPScoreResult` — the legacy contract was to raise
+    :class:`ImportError`, so callers (see :func:`run_image_eval`)
+    translate a graceful-NaN mean to ``None`` in the JSON output
+    rather than a hard failure.
     """
-    import torch
-    from transformers import CLIPModel, CLIPProcessor
+    del batch_size  # The canonical evaluator handles batching internally.
 
     if images.shape[0] != len(prompts):
         raise ValueError(
             f"image_prompt_count_mismatch: {images.shape[0]} images vs {len(prompts)} prompts"
         )
 
-    model = CLIPModel.from_pretrained(model_id).to(device)
-    processor = CLIPProcessor.from_pretrained(model_id)
-    model.eval()
+    # The canonical evaluator expects ``list[Image]``-or-array input.
+    # ``images`` arrives as an ``(N, 3, H, W)`` float32 tensor in
+    # ``[-1, 1]``. Convert each row to a ``uint8`` ``(H, W, 3)`` numpy
+    # array — the AutoProcessor accepts that format directly.
+    pil_batch: list[np.ndarray] = []
+    for arr in images:
+        hwc = ((arr.transpose(1, 2, 0) + 1.0) / 2.0 * 255.0)
+        hwc = np.clip(hwc, 0.0, 255.0).astype(np.uint8)
+        pil_batch.append(hwc)
 
-    scores: list[float] = []
-    with torch.no_grad():
-        for i in range(0, images.shape[0], int(batch_size)):
-            batch_imgs = images[i : i + int(batch_size)]
-            batch_prompts = prompts[i : i + int(batch_size)]
-            # Convert [-1, 1] back to PIL-friendly [0, 1] then to a list
-            # of numpy uint8 HWC arrays for the processor.
-            pil_batch: list[Any] = []
-            for arr in batch_imgs:
-                hwc = ((arr.transpose(1, 2, 0) + 1.0) / 2.0 * 255.0)
-                hwc = np.clip(hwc, 0.0, 255.0).astype(np.uint8)
-                pil_batch.append(hwc)
-            inputs = processor(
-                text=batch_prompts,
-                images=pil_batch,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-            )
-            inputs = {k: v.to(device) for k, v in inputs.items()}
-            outputs = model(**inputs)
-            # L2-normalised embeddings → cosine similarity (== dot product on unit vectors).
-            img_emb = outputs.image_embeds  # (B, D)
-            txt_emb = outputs.text_embeds  # (B, D)
-            img_emb = img_emb / img_emb.norm(dim=-1, keepdim=True)
-            txt_emb = txt_emb / txt_emb.norm(dim=-1, keepdim=True)
-            # Pairwise dot product (diagonal of the Gram matrix).
-            per_pair = (img_emb * txt_emb).sum(dim=-1)
-            scaled = torch.clamp(per_pair, min=0.0) * _CLIPSCORE_PAPER_SCALE
-            scores.extend(float(x) for x in scaled.detach().cpu().tolist())
-
-    arr = np.asarray(scores, dtype=np.float64)
-    return {"mean": float(arr.mean()), "std": float(arr.std())}
+    evaluator = HFCosineClipScoreEvaluator(
+        model_name=str(model_id),
+        paper_scale=float(CLIPSCORE_PAPER_SCALE),
+        device=device,
+    )
+    result = evaluator.score(pil_batch, list(prompts))
+    # Preserve the legacy return shape (``{"mean": float, "std": float}``).
+    # When the evaluator returns graceful NaN we surface that directly so
+    # callers (which key off ``ImportError``) get a clear signal — the
+    # numeric mean will be NaN in that case.
+    return {"mean": float(result.mean), "std": float(result.std)}
 
 
 # ---------------------------------------------------------------------------
@@ -447,11 +401,27 @@ def run_clipscore_metric(
         "std": None,
         "n_pairs": None,
         "model_id": str(model_id),
-        "paper_scale": _CLIPSCORE_PAPER_SCALE,
+        "paper_scale": CLIPSCORE_PAPER_SCALE,
     }
     if not prompts:
         out["error"] = "no_prompts_provided"
         print("[CLIPScore] skipped: no prompts provided (--prompts-jsonl missing or empty).", file=sys.stderr)
+        return out
+    # Probe the dependency up-front so we can preserve the legacy
+    # ``ImportError`` marker on the JSON output (downstream consumers
+    # key off the literal substring ``"ImportError"`` to distinguish
+    # the missing-dep fallback from a generic failure). Note: a bare
+    # ``import transformers`` is NOT sufficient because some test
+    # fixtures monkeypatch ``sys.modules["transformers"]`` with a
+    # stub that raises on attribute access — so we explicitly probe
+    # the symbols the canonical evaluator uses
+    # (:class:`transformers.AutoModel` / :class:`AutoProcessor`).
+    try:
+        import transformers  # noqa: F401  — presence check
+        from transformers import AutoModel, AutoProcessor  # noqa: F401
+    except ImportError as exc:
+        out["error"] = f"ImportError: {exc}"
+        print(f"[CLIPScore] skipped: dependency missing ({exc!r}).", file=sys.stderr)
         return out
     try:
         scores = compute_clipscore(
