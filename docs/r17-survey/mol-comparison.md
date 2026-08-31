@@ -8,11 +8,9 @@ Phase-A end-to-end smoke comparison between the FlowMol3 (3D flow-matching) and 
 Two runs are recorded in this document:
 
 - **synthetic (smoke):** `--weights synthetic` adapter backend, `--n-mols 8 --n-rounds 2 --seed 0`. Outputs under `/tmp/phase_a_smoke/{flowmol3,graphbfn}/`.
-- **real-weights (this iteration):** `--weights data/flowmol3/weights_real/checkpoints/last.ckpt`, `--n-mols 16 --n-rounds 3 --seed 0`, `--output-dir /tmp/exp_a_real`. Output files: `comparison.md`, `summary.json`, `baseline_metrics.json`, `framework_metrics.json`, `baseline_molecules.pkl`, `framework_molecules.pkl`. **Honest caveat below.**
+- **real-weights (this iteration):** `--weights data/flowmol3/weights_real/checkpoints/last.ckpt`, `--n-mols 16 --n-rounds 3 --seed 0`, `--output-dir /tmp/exp_a_real`. Output files: `comparison.md`, `summary.json`, `baseline_metrics.json`, `framework_metrics.json`, `baseline_molecules.pkl`, `framework_molecules.pkl`.
 
 ## 1. Metrics table (paired baseline vs framework, per model)
-
-All numbers are produced by the Phase-A smoke harness with **synthetic weights**; see §3 for why the chemistry-side metrics are not yet paper-comparable.
 
 ### 1.1 FlowMol3 (3D small-molecule flow matching, GEOM-DRUGS)
 
@@ -30,20 +28,21 @@ All numbers are produced by the Phase-A smoke harness with **synthetic weights**
 
 #### 1.1.b Real-weights run (n=16, n_rounds=3, weights=data/flowmol3/weights_real/checkpoints/last.ckpt)
 
+Configuration: baseline = 16 mols x 250-NFE Euler single-pass; framework = 16 chains x 3 rounds (CosineAnnealScheduler). Wall-clock baseline=4.6 s, framework=2.3 s.
+
 | Metric | Baseline (250 NFE) | Framework (3 x 83 NFE) | Paired delta | Direction |
 |---|---:|---:|---:|:---:|
-| validity | 0.0000 | 0.0625 | +0.0625 | higher is better |
-| qed | nan | 0.2583 | +nan | higher is better |
-| sa | nan | 8.4474 | +nan | lower is better |
-| logp | nan | -3.7985 | +nan | neutral (raw) |
+| validity | 0.1250 | 0.0625 | -0.0625 | higher is better |
+| qed | 0.2676 | 0.5843 | +0.3167 | higher is better |
+| sa | 7.2418 | 8.4207 | +1.1788 | lower is better |
+| logp | -3.9604 | 3.9652 | +7.9257 | neutral (raw) |
 | fcd | nan | nan | +nan | lower is better |
 
-- Wall clock: baseline 1.2 s, framework 0.2 s (CPU; total run 1.98 s).
-- Adapter signature: `state_shape=(3,)`, channels=`('coordinate', 'charge', 'raw_pair')`.
+- Adapter metadata: `state_shape=(3,)`, channels=`('coordinate', 'charge', 'raw_pair')`, `atom_map=('C','H','N','O','F','P','S','Cl','Br','I')`, `dataset_name=geom`, `parameterization=ctmc`, `epoch=17`, `global_step=1547236`, `distort_p=0.7`, `distort_t=0.25`. `n_checkpoint_tensors=475`. Total wall clock 8.6 s for the whole run (CPU).
 - `fcd` is `NaN` because the `fcd` Python package is not installed; the JSON records `missing_dependencies=["fcd"]` and `fcd_unavailable` stderr notes. Install with `uv pip install fcd` to populate.
 - RDKit emitted numerous "Explicit valence ... greater than permitted" warnings during baseline, indicating the baseline run produced no RDKit-valid molecules (validity=0). The framework arm produced 1 valid out of 16 (validity=0.0625); qed/sa/logp are populated only for that one valid molecule.
 
-**Honest caveat on the "real weights" run.** The Phase-A harness CLI does forward `--weights data/flowmol3/weights_real/checkpoints/last.ckpt` and selects `backend="torch"` when the path is non-`synthetic`, but the adapter's `_load_model` stub (`adaptive_reflow/adapters/flowmol3_v2_adapter.py:699-723`) only imports `torch` and sets `self._model = torch`; the velocity-field call (`_velocity_field`, lines 725-768) routes back to `_numpy_velocity_field(...)` with `_get_synthetic_weights(...)` regardless of `backend="torch"`. The `last.ckpt` payload (65 MB) is not loaded into the model. The 1.98 s total wall-clock also strongly suggests no real forward pass is happening (a 16x250 Euler step through a 17-layer DiT on CPU would take minutes). The 0.0625 validity on the framework arm is scheduler noise on synthetic output, not a paper-comparable FlowMol3 number. To populate this row with real FlowMol3 numbers, finish the `_load_model` body (`FlowMol3.from_pretrained(weights_path).eval()`) and forward `weights_path` from `default_flowmol3adapter(backend=..., weights_path=...)` to the constructor.
+**Honest caveat on the "real weights" run.** The Phase-A harness CLI does forward `--weights data/flowmol3/weights_real/checkpoints/last.ckpt` and selects `backend="torch"` when the path is non-`synthetic`. The adapter's `_load_model` (in `adaptive_reflow/adapters/flowmol3_v2_adapter.py`) loads the Lightning `state_dict` (475 tensors) into the partial-fidelity `_FlowMol3ReadoutHead` (token embeddings + scalar_embedding + edge_embedding + node_output_head + to_edge_logits). The 444 GVP graph-convolution tensors in the published FlowMol3 checkpoint are NOT applied (they require `flowmol` and `dgl`, neither of which has a Python 3.12 wheel). The 0.0625 framework validity and the non-zero qed/sa/logp numbers are from trained embedding/readout tensors, not the published FlowMol3 sampler -- the chemistry is partial-fidelity. A 17-layer DiT forward through the GVP stack would take minutes per sample on CPU; the partial-fidelity run completes in 8.6 s.
 
 ### 1.2 GraphBFN (hierarchical Bayesian Flow Network, QM9)
 
@@ -64,35 +63,33 @@ All numbers are produced by the Phase-A smoke harness with **synthetic weights**
 
 ## 2. Paired-delta interpretation
 
-Paired delta = `framework - baseline` on the same `(seed, weight-backend, n_mols)` draw. Signs follow the `Direction` column (higher-is-better vs lower-is-better). The Phase-A smoke deltas are NOT informative about real chemistry: both arms run the synthetic backend, so any divergence between baseline and framework reflects scheduler-side noise on synthetic output, not paper-claimed gains.
+Paired delta = `framework - baseline` on the same `(seed, weight-backend, n_mols)` draw. Signs follow the `Direction` column (higher-is-better vs lower-is-better). The Phase-A real-weights row is partial-fidelity -- the embedding + readout path runs on real trained tensors, but the GVP graph-convolution stack is not applied. Treat these numbers as plumbing validation on real-weights input, NOT paper-claimed chemistry.
 
-The harness is correct; the inputs are not yet the real weights. Re-run with `--weights <real-checkpoint>` (once those land; see §3) to populate this table with paper-comparable numbers.
+## 3. Real-weights artifact
 
-## 3. Synthetic-smoke honest framing
-
-> **Note -- synthetic weights.** Both `data/flowmol3/weights/` and `data/graphbfn/weights/` are empty of real checkpoints. FlowMol3 has only README/HTML scrape artifacts in `data/flowmol3/weights/` (no `.pt`/`.pth`/`ckpt` payload); GraphBFN has no published checkpoint available to us at all (the adapter's torch loader raises `NotImplementedError`). Both Phase-A runs therefore used the deterministic NumPy backends inside each adapter. The harness paths are validated end-to-end (adapter -> endpoint -> RDKit glue -> metrics JSON); the chemistry is not. This smoke run is a plumbing check, not a chemistry comparison.
-
-### 3.1 Real-weights attempt (this iteration)
-
-The real-weights checkpoint at `data/flowmol3/weights_real/checkpoints/last.ckpt` (65 MB, single .ckpt file with a sibling `config.yaml` declaring `dataset_name=geom`, `parameterization=ctmc`, `mol_fm.distort_p=0.7`) was downloaded into place, but the adapter torch-load path is not finished (see §1.1.b honest caveat). The Phase-A harness ran end-to-end with this path (no ImportError, real `torch.nn` module imported, exit 0, summary.json + comparison.md emitted) but the velocity field still routes through `_numpy_velocity_field` with cached random-init weights. Therefore §1.1.b is **not paper-comparable**; it documents the harness state at the moment real weights landed.
-
-Real-weight placeholder:
-
-- FlowMol3: drop the Pitt/Koes checkpoint into `data/flowmol3/weights/`, then `python tools/run_sota_flowmol3_v2_adapter_experiment.py --weights <ckpt> --n-mols 1000 --n-rounds 4 --output-dir data/flowmol3/runs/real/ --seed 0`. Until the adapter torch-load path is wired, the chemistry-side cells (qed/sa/logp/fcd/validity) in §1.1.b stay zero/NaN/synthetic.
-- GraphBFN: no checkpoint URL confirmed at Phase-A time. The synthetic row in §1.2 will remain the only populated row until either (a) a checkpoint is obtained or (b) the torch loader is finished and a public checkpoint is located.
+- Weights path: `data/flowmol3/weights_real/checkpoints/last.ckpt` (65 MB PyTorch Lightning checkpoint + sibling `config.yaml`). Sibling `config.yaml` declares `dataset_name=geom`, `parameterization=ctmc`, `mol_fm.distort_p=0.7`, `mol_fm.distort_t=0.25`, `mol_fm.explicit_aromaticity=false`, and the `atom_map = [C, H, N, O, F, P, S, Cl, Br, I]`. The adapter loader confirms `epoch=17, global_step=1547236, n_checkpoint_tensors=475`.
+- Adapter surfaces 31 trained tensors into the partial-fidelity `_FlowMol3ReadoutHead`: 3 token embeddings (`token_embeddings.{a,c,e}`), 2 scalar MLPs (`scalar_embedding`), 2 edge MLPs (`edge_embedding`), 4 node readout MLPs (`node_output_head`), 4 edge readout MLPs (`to_edge_logits`). The remaining 444 GVP / DGL-bound tensors are skipped.
+- The harness ran end-to-end with no ImportError; exit code 0; `summary.json` + `comparison.md` emitted.
+- Future work -- bring up `flowmol` + `dgl` in a Python 3.11 sidecar venv to apply the full GVP stack and reproduce the paper's FlowMol3 sampler.
 
 ## 4. Pointer to paper-claimed numbers
 
-Paper PDFs are downloaded locally (Phase A prerequisite complete):
+Paper PDFs are downloaded locally:
 
 - **FlowMol3**: `data/flowmol3/paper.pdf` (arXiv:2508.12629, Dunn & Koes, U. Pittsburgh, 26 pages). Table for paper-claimed validity / QED / SA / logP / FCD lives in the main text; pull values from §5 / Tables there when cross-referencing the §1.1 placeholder row.
 - **GraphBFN**: `data/graphbfn/paper.pdf` (arXiv:2510.10211v1, Xiong et al.). Paper Table 1 reports validity / uniqueness / FCD / NSPDK MMD on QM9; only the first three are reachable in Phase A (NSPDK is Phase B).
 
-When the real-weight runs land, populate a "paper-claimed vs framework-reproduced" column here using `data/<model>/paper.pdf` Table values as the reference. Until then, treat §1 as "pipeline works, chemistry pending".
+When the full-fidelity FlowMol3 run lands, populate a "paper-claimed vs framework-reproduced" column here using `data/flowmol3/paper.pdf` Table values as the reference. Until then, treat §1 as "real-weights loader works, partial-fidelity chemistry".
 
 ## 5. Repro commands
 
 ```bash
+# Phase-A real weights (this iteration; partial-fidelity chemistry)
+python tools/run_sota_flowmol3_v2_adapter_experiment.py \
+    --weights data/flowmol3/weights_real/checkpoints/last.ckpt \
+    --n-mols 16 --n-rounds 3 \
+    --output-dir /tmp/exp_a_real --seed 0
+
 # Phase-A smoke (synthetic weights)
 python tools/run_sota_flowmol3_v2_adapter_experiment.py \
     --weights synthetic --n-mols 8 --n-rounds 2 \
@@ -101,14 +98,6 @@ python tools/run_sota_flowmol3_v2_adapter_experiment.py \
 python tools/run_sota_graphbfn_experiment.py \
     --weights synthetic --n-mols 8 --n-rounds 2 \
     --output-dir /tmp/phase_a_smoke/graphbfn --seed 0
-
-# Phase-A real weights (this iteration; harness path is wired but the
-# adapter torch loader is not finished -- numbers in §1.1.b are still
-# from the synthetic NumPy field; see the §1.1.b honest caveat).
-python tools/run_sota_flowmol3_v2_adapter_experiment.py \
-    --weights data/flowmol3/weights_real/checkpoints/last.ckpt \
-    --n-mols 16 --n-rounds 3 \
-    --output-dir /tmp/exp_a_real --seed 0
 ```
 
 Each harness writes its own `comparison.md` (single-model table with honest-framing notes) plus `summary.json`; this document consolidates both.

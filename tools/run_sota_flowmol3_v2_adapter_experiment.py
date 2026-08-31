@@ -118,14 +118,17 @@ def _make_adapter(
     *,
     baseline_nfe: int,
     n_rounds: int,
+    device: str = "cpu",
 ) -> Any:
     """Return a :class:`FlowMol3V2Adapter` for the experiment.
 
     ``weights=None`` (or the literal sentinel ``"synthetic"``) selects
     the deterministic NumPy backend; any other path selects the
-    ``torch`` backend with the supplied checkpoint forwarded to the
-    adapter's ``weights_path``. ``backend='torch'`` raises if torch
-    isn't importable.
+    ``torch`` backend and forwards the checkpoint to the adapter's
+    ``weights_path`` so :meth:`FlowMol3V2Adapter._load_model` loads the
+    real PyTorch Lightning ``state_dict``. ``backend='torch'`` raises
+    if torch isn't importable; we fall back to synthetic with a loud
+    stderr note in that case.
     """
     from adaptive_reflow.adapters.flowmol3_v2_adapter import (
         default_flowmol3adapter,
@@ -139,9 +142,11 @@ def _make_adapter(
                 f"flowmol3_weights_not_found:{weights_path}"
             )
         try:
-            return default_flowmol3adapter(
+            adapter = default_flowmol3adapter(
                 backend="torch",
                 num_steps=int(baseline_nfe),
+                weights_path=weights_path,
+                device=str(device),
             )
         except ImportError:
             # Torch not installed: fall back to synthetic with a clear
@@ -158,6 +163,20 @@ def _make_adapter(
                 backend="numpy",
                 num_steps=int(baseline_nfe),
             )
+        # Eagerly materialize the checkpoint so a bad path / shape
+        # mismatch fails now rather than mid-experiment.
+        adapter._load_model()  # noqa: SLF001 — deliberate eager load.
+        meta = dict(adapter.model_metadata)
+        print(
+            "[run_sota_flowmol3] loaded real weights: "
+            f"kind={meta.get('kind')} tensors={meta.get('n_checkpoint_tensors')} "
+            f"epoch={meta.get('epoch')} step={meta.get('global_step')} "
+            f"dataset={meta.get('dataset_name')} "
+            f"parameterization={meta.get('parameterization')} "
+            f"atom_map={meta.get('atom_map')} device={meta.get('device')}",
+            flush=True,
+        )
+        return adapter
     return default_flowmol3adapter(
         backend="numpy",
         num_steps=int(baseline_nfe),
@@ -650,6 +669,16 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         help="Base seed for both arms (default: 0).",
     )
     parser.add_argument(
+        "--device",
+        type=str,
+        default="cpu",
+        help=(
+            "Torch device for the real-weights backend (default: cpu). "
+            "FlowMol3 is 5.85M params so CPU is the VRAM-safe choice; "
+            "pass e.g. cuda:0 to co-locate with GPU 0."
+        ),
+    )
+    parser.add_argument(
         "--smoke",
         action="store_true",
         help=(
@@ -708,6 +737,7 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.weights) if args.weights else None,
         baseline_nfe=baseline_nfe,
         n_rounds=n_rounds,
+        device=str(args.device),
     )
     caps = adapter.capabilities()
     print(
@@ -793,6 +823,11 @@ def main(argv: list[str] | None = None) -> int:
         "baseline_nfe": int(baseline_nfe),
         "per_round_nfe": int(per_round_nfe),
         "weights": str(args.weights) if args.weights else "synthetic",
+        "device": str(args.device),
+        "model_metadata": {
+            str(k): (list(v) if isinstance(v, tuple) else v)
+            for k, v in dict(getattr(adapter, "model_metadata", {}) or {}).items()
+        },
         "dataset": str(args.dataset),
         "wall_clock_s": float(total_wall),
         "baseline": baseline_metrics,

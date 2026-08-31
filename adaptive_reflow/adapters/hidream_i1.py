@@ -459,36 +459,249 @@ def _torch_velocity_field(
 def _load_torch_pipeline(variant: str, weights_path: Path) -> Any:
     """Load the published HiDream-I1 ``{variant}`` pipeline.
 
-    Returns a callable ``pipeline(x, t, conditioning, cfg_scale)`` that
-    evaluates the DiT velocity field. The real implementation would
-    load the 17B checkpoint via ``HiDream-ai/HiDream-I1-{variant}``
-    and wire the four text encoders; this skeleton release returns a
-    small module so the torch path is reachable in tests.
+    Returns a :class:`diffusers.HiDreamImagePipeline` constructed from
+    the local weights directory. The Dev / Fast variants on disk have
+    three text encoders (CLIP-L + CLIP-G + T5-XXL); the Full variant's
+    ``text_encoder_4`` (Llama-3.1-8B) is missing from the local
+    snapshot, so :func:`_load_diffusion_pipeline` substitutes a
+    zero-output ``LlamaForCausalLM`` stub and a passthrough tokenizer.
+    The DiT still runs (caption_projection projects zeros through its
+    own weights) but the residual contribution from the Llama branch is
+    degenerate. The Dev variant uses 28 NFE + ``guidance_scale=1.0`` so
+    no classifier-free-guidance concatenation is needed.
 
     The function is gated on ``torch`` being importable and
     ``weights_path`` existing; both gates are enforced by the adapter
     constructor before this function is called.
     """
-    import torch  # local import.
+    return _load_diffusion_pipeline(str(variant), Path(weights_path))
+
+
+def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
+    """Construct :class:`diffusers.HiDreamImagePipeline` from local weights.
+
+    Loads scheduler, three text encoders, three tokenizers, the
+    transformer (DiT) and the VAE directly from ``weights_path``. The
+    fourth text encoder (Llama-3.1-8B) is supplied as a deterministic
+    stub: a tiny :class:`torch.nn.Module` that returns a stack of
+    ``num_hidden_layers`` zero hidden states, plus a passthrough
+    tokenizer that emits zeros. This lets ``HiDreamImagePipeline`` build
+    end-to-end without the missing 8 B-parameter Llama checkpoint.
+
+    Args:
+        variant: ``"full"``, ``"dev"``, or ``"fast"``. Used only for
+            logging — the component construction is variant-agnostic.
+        weights_path: directory containing ``model_index.json`` and the
+            per-component subdirectories.
+
+    Returns:
+        A :class:`diffusers.HiDreamImagePipeline` ready for inference,
+        placed on CPU with ``dtype=torch.bfloat16``.
+    """
+    import torch
     import torch.nn as nn
+    from diffusers import (
+        AutoencoderKL,
+        FlowMatchEulerDiscreteScheduler,
+        HiDreamImagePipeline,
+        HiDreamImageTransformer2DModel,
+    )
+    from transformers import (
+        CLIPTextModelWithProjection,
+        CLIPTokenizer,
+        T5EncoderModel,
+        T5Tokenizer,
+    )
 
-    class _HiDreamI1StubPipeline(nn.Module):
-        """A *stub* HiDream-I1 DiT pipeline.
+    weights_path = Path(weights_path)
+    if not weights_path.exists():
+        raise FileNotFoundError(
+            f"{ERR_HIDREAM_I1_WEIGHTS_MISSING}:{weights_path}"
+        )
 
-        Returns the zero velocity field on every call so the
-        integration loop terminates with a finite trajectory. NOT a
-        trained FM model — see the module docstring for the
-        production-path requirements (HiDream-ai/HiDream-I1
-        checkpoints, FSDP / CP sharding, CUDA >=40GB HBM).
+    # 1. Scheduler — the local checkpoint ships FlowMatchLCMScheduler;
+    #    keep it as-is so the published shift + sigma schedule is used.
+    scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(
+        str(weights_path / "scheduler"),
+    )
+
+    # 2. The three real text encoders.
+    text_encoder = CLIPTextModelWithProjection.from_pretrained(
+        str(weights_path / "text_encoder"),
+        dtype=torch.bfloat16,
+    )
+    text_encoder_2 = CLIPTextModelWithProjection.from_pretrained(
+        str(weights_path / "text_encoder_2"),
+        dtype=torch.bfloat16,
+    )
+    text_encoder_3 = T5EncoderModel.from_pretrained(
+        str(weights_path / "text_encoder_3"),
+        dtype=torch.bfloat16,
+    )
+
+    # 3. Their tokenizers.
+    tokenizer = CLIPTokenizer.from_pretrained(
+        str(weights_path / "tokenizer"),
+    )
+    tokenizer_2 = CLIPTokenizer.from_pretrained(
+        str(weights_path / "tokenizer_2"),
+    )
+    tokenizer_3 = T5Tokenizer.from_pretrained(
+        str(weights_path / "tokenizer_3"),
+    )
+
+    # 4. Transformer (DiT) — 16 shard safetensors.
+    transformer = HiDreamImageTransformer2DModel.from_pretrained(
+        str(weights_path / "transformer"),
+        dtype=torch.bfloat16,
+    )
+
+    # 5. VAE (FLUX.1-AutoencoderKL).
+    vae = AutoencoderKL.from_pretrained(
+        str(weights_path / "vae"),
+        dtype=torch.bfloat16,
+    )
+
+    # 6. Stub text_encoder_4 (Llama-3.1-8B) + tokenizer_4. The local
+    #    snapshot does not include them; we provide a deterministic
+    #    zero-output substitute so the pipeline's encode_prompt can be
+    #    satisfied without the 8 B-parameter Llama checkpoint.
+    class _StubLlama(nn.Module):
+        """Zero-output LlamaForCausalLM substitute.
+
+        Returns a stack of ``num_hidden_layers + 1`` zero hidden
+        states (shape ``(num_layers+1, batch, seq_len, 4096)``) so the
+        DiT's ``caption_projection`` layers see a real input and the
+        encode_prompt signature is satisfied. The contribution to the
+        DiT residual is zero by construction — the residual still
+        flows through the T5 branch.
         """
 
-        def forward(
-            self, x: "torch.Tensor", t: "torch.Tensor", *, conditioning: Any,
-            cfg_scale: float,
-        ) -> "torch.Tensor":
-            return torch.zeros_like(x)
+        NUM_LAYERS = 32
+        HIDDEN_DIM = 4096
 
-    return _HiDreamI1StubPipeline().eval()
+        def __init__(self) -> None:
+            super().__init__()
+            # Register a dummy parameter so the diffusers pipeline's
+            # ``device`` / ``_execution_device`` properties work
+            # (those iterate over the nn.Module components and call
+            # ``module.device``; ``nn.Module`` itself does NOT define a
+            # ``device`` property — real transformers models mix in
+            # ``ModuleUtilsMixin`` which does. We mirror that contract
+            # via ``@property``). The dummy parameter is also what
+            # ``.to(cuda)`` actually moves, so the stub follows the
+            # pipeline's device placement like a real component.
+            self.register_parameter(
+                "_dummy",
+                nn.Parameter(torch.zeros(1, dtype=torch.bfloat16), requires_grad=False),
+            )
+
+        @property
+        def device(self) -> "torch.device":
+            """Return the dummy parameter's device (mirrors ModuleUtilsMixin)."""
+            return self._dummy.device
+
+        @property
+        def dtype(self) -> "torch.dtype":
+            """Return the dummy parameter's dtype (mirrors ModuleUtilsMixin)."""
+            return self._dummy.dtype
+
+        def forward(  # noqa: D401 — nn.Module forward signature
+            self,
+            input_ids: "torch.Tensor",
+            attention_mask: "torch.Tensor | None" = None,
+            output_hidden_states: bool = True,
+            output_attentions: bool = False,
+            **_: Any,
+        ) -> Any:
+            batch = int(input_ids.shape[0])
+            seq = int(input_ids.shape[1])
+            device = input_ids.device
+            dtype = self._dummy.dtype
+            all_hidden = tuple(
+                torch.zeros(
+                    batch, seq, self.HIDDEN_DIM, dtype=dtype, device=device,
+                )
+                for _ in range(self.NUM_LAYERS + 1)
+            )
+
+            class _StubOutput:
+                def __init__(self, hs: tuple) -> None:
+                    self.hidden_states = hs
+
+            return _StubOutput(all_hidden)
+
+    class _StubTokenizer:
+        """Passthrough LlamaTokenizer substitute.
+
+        Returns ``input_ids`` and ``attention_mask`` tensors of the
+        shape HiDreamImagePipeline's ``_get_llama3_prompt_embeds``
+        expects. Values are zero — the stub model turns them into zero
+        embeddings regardless of the input.
+        """
+
+        model_max_length = 128
+        pad_token_id = 0
+        bos_token_id = 1
+        eos_token_id = 2
+        pad_token = "</s>"
+        bos_token = "<s>"
+        eos_token = "</s>"
+
+        def __call__(
+            self,
+            prompt: list[str],
+            *,
+            padding: str = "max_length",
+            max_length: int = 128,
+            truncation: bool = True,
+            add_special_tokens: bool = True,
+            return_tensors: str = "pt",
+            **_: Any,
+        ) -> Any:
+            max_length = min(int(max_length), int(self.model_max_length))
+            input_ids = torch.zeros(
+                (len(prompt), max_length), dtype=torch.long,
+            )
+            attention_mask = torch.ones(
+                (len(prompt), max_length), dtype=torch.long,
+            )
+
+            class _BatchEncoding:
+                """Minimal BatchEncoding stand-in (attribute access)."""
+
+                def __init__(self, ids: "torch.Tensor", mask: "torch.Tensor") -> None:
+                    self.input_ids = ids
+                    self.attention_mask = mask
+
+            return _BatchEncoding(input_ids, attention_mask)
+
+        def batch_decode(self, ids: "torch.Tensor", **_: Any) -> list[str]:
+            return ["" for _ in range(int(ids.shape[0]))]
+
+    text_encoder_4 = _StubLlama()
+    tokenizer_4 = _StubTokenizer()
+
+    pipeline = HiDreamImagePipeline(
+        scheduler=scheduler,
+        text_encoder=text_encoder,
+        tokenizer=tokenizer,
+        text_encoder_2=text_encoder_2,
+        tokenizer_2=tokenizer_2,
+        text_encoder_3=text_encoder_3,
+        tokenizer_3=tokenizer_3,
+        text_encoder_4=text_encoder_4,
+        tokenizer_4=tokenizer_4,
+        transformer=transformer,
+        vae=vae,
+    )
+    pipeline.set_progress_bar_config(disable=True)
+    print(
+        f"[hidream_i1._load_diffusion_pipeline] variant={variant} "
+        f"weights={weights_path} components={list(pipeline.components.keys())}",
+        flush=True,
+    )
+    return pipeline
 
 
 # ---------------------------------------------------------------------------
@@ -712,6 +925,81 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
     # ------------------------------------------------------------------
     # 0. helpers — LRU-bounded native_states + conditioning cache
     # ------------------------------------------------------------------
+
+    def _sample(
+        self,
+        *,
+        prompt: str,
+        negative_prompt: str = "",
+        height: int = 1024,
+        width: int = 1024,
+        num_inference_steps: int | None = None,
+        guidance_scale: float | None = None,
+        generator: Any = None,
+        device: Any = None,
+        dtype: Any = None,
+    ) -> Any:
+        """Run the real HiDream-I1 diffusers pipeline and return images.
+
+        Thin wrapper over :class:`diffusers.HiDreamImagePipeline` that
+        fills in the per-variant defaults (``num_inference_steps``,
+        ``guidance_scale``) when the caller does not override them. The
+        ``generator`` argument controls the noise stream so successive
+        calls are reproducible. The returned object mirrors the
+        diffusers convention — ``result.images`` is a list of PIL
+        images when ``output_type='pil'`` (the pipeline default).
+
+        Args:
+            prompt: positive text prompt.
+            negative_prompt: negative text prompt (empty for Dev / Fast
+                variants where ``guidance_scale=1.0``).
+            height: pixel height (must be divisible by 16; default 1024).
+            width: pixel width (default 1024).
+            num_inference_steps: Euler step count. Defaults to the
+                per-variant NFE (``{"full": 50, "dev": 28, "fast": 14}``).
+            guidance_scale: CFG scale. Defaults to per-variant
+                ``{"full": 5.0, "dev": 1.0, "fast": 1.0}``.
+            generator: torch.Generator for the noise stream.
+            device: torch.device for the pipeline (overrides the
+                adapter's default device placement).
+            dtype: torch.dtype for the inference pass.
+        """
+        import torch
+
+        if self._pipeline is None:
+            raise RuntimeError("pipeline_not_loaded:cannot_sample")
+
+        steps = int(
+            num_inference_steps
+            if num_inference_steps is not None
+            else HIDREAM_VARIANT_NUM_STEPS.get(self._variant, self._num_steps)
+        )
+        cfg = float(
+            guidance_scale
+            if guidance_scale is not None
+            else HIDREAM_VARIANT_CFG_SCALE.get(self._variant, self._cfg_scale)
+        )
+        # Move pipeline components to the requested device (idempotent).
+        if device is not None:
+            target = torch.device(device)
+            try:
+                self._pipeline.to(target)
+            except Exception:  # noqa: BLE001 — best-effort device placement
+                pass
+        # ``self._pipeline(...)`` accepts both pre-tokenised strings and
+        # lists of strings; the diffusers default returns PIL images.
+        result = self._pipeline(
+            prompt=prompt,
+            negative_prompt=negative_prompt if cfg > 1.0 else None,
+            height=int(height),
+            width=int(width),
+            num_inference_steps=int(steps),
+            guidance_scale=float(cfg),
+            generator=generator,
+            output_type="pil",
+            return_dict=True,
+        )
+        return result
 
     def _put_native_state(self, digest: str, entry: dict[str, Any]) -> None:
         if digest in self._native_states:

@@ -359,17 +359,18 @@ def _random_init_synthetic_weights(
 
 
 def _torch_velocity_field(
-    pipeline: Any,
+    transformer: Any,
     x: ArrayF64,
     t: float,
     *,
     dtype: Any,
     text_emb: Any,
     uncond_text_emb: Any,
+    encoder_attention_mask: Any | None,
+    uncond_attention_mask: Any | None,
     guidance_scale: float,
     cfg_trunc_ratio: float,
     cfg_normalization: bool,
-    rope_axes: tuple[int, int, int],
 ) -> ArrayF64:
     """Call the Lumina-Image 2.0 transformer ``v_theta(x, t, text)``.
 
@@ -384,29 +385,35 @@ def _torch_velocity_field(
     is returned. The protocol layer stays byte-deterministic by passing
     the same ``text_emb`` / ``uncond_text_emb`` tensors across the
     integration grid.
+
+    The diffusers 0.40+ Lumina2Transformer2DModel.forward signature
+    drops the legacy ``rope_axes`` kwarg (RoPE is computed internally
+    from ``axes_lens`` in the config), so this wrapper passes
+    ``encoder_hidden_states`` + ``encoder_attention_mask`` only.
     """
     import torch  # local import -- torch is optional at the framework level.
 
-    t_text, t_h, t_w = rope_axes
     with torch.no_grad():
         x_t = torch.as_tensor(x, dtype=dtype).unsqueeze(0)
         # Time conditioning: broadcast scalar to (1,) and cast to dtype.
+        # The Lumina2 transformer expects a (B,) tensor of normalized
+        # timesteps in [0, 1] (FlowMatchEuler scheduler convention).
         t_t = torch.tensor([float(t)], dtype=dtype)
-        # Conditional forward: v_t = pipeline(x_t, t_t, text_emb, ...)
-        v_t = pipeline(
-            x_t,
-            t_t,
+        # Conditional forward: v_t = transformer(x_t, t_t, text_emb, ...).
+        v_t = transformer(
+            hidden_states=x_t,
+            timestep=t_t,
             encoder_hidden_states=text_emb,
-            rope_axes=(t_text, t_h, t_w),
+            encoder_attention_mask=encoder_attention_mask,
         ).sample
         # CFG: combine conditional + unconditional (CFG-Trunc gate).
         in_cfg_window = float(t) <= float(1.0 - float(cfg_trunc_ratio))
         if in_cfg_window and uncond_text_emb is not None:
-            v_tu = pipeline(
-                x_t,
-                t_t,
+            v_tu = transformer(
+                hidden_states=x_t,
+                timestep=t_t,
                 encoder_hidden_states=uncond_text_emb,
-                rope_axes=(t_text, t_h, t_w),
+                encoder_attention_mask=uncond_attention_mask,
             ).sample
             v_eff = v_tu + float(guidance_scale) * (v_t - v_tu)
             # CFG-Renorm: rescale v_eff so its per-sample std matches the
@@ -921,11 +928,16 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         )
         cached = self._resolve_text_embed(cache_key)
         if cached is None:
-            text_emb, uncond_text_emb = self._encode_text_pair(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
+            text_emb, uncond_text_emb, attn_mask, uncond_attn_mask = (
+                self._encode_text_pair(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                )
             )
-            self._put_text_embed(cache_key, (text_emb, uncond_text_emb))
+            self._put_text_embed(
+                cache_key,
+                (text_emb, uncond_text_emb, attn_mask, uncond_attn_mask),
+            )
         new_spec["text_embed_cache_key"] = cache_key
         return ODEConditionDelta(
             delta_spec=new_spec,
@@ -943,14 +955,15 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         *,
         prompt: str,
         negative_prompt: str,
-    ) -> tuple[Any, Any]:
+    ) -> tuple[Any, Any, Any | None, Any | None]:
         """Encode ``prompt`` and ``negative_prompt`` via Gemma2.
 
-        Returns a ``(text_emb, uncond_text_emb)`` pair; both elements
-        are adapter-side native tensors that MUST NOT cross the
-        protocol boundary. The encode path is lazy-imported: in
-        synthetic mode a tiny NumPy placeholder pair is returned so
-        the Protocol conformance tests run without the heavy stack.
+        Returns a 4-tuple ``(text_emb, uncond_text_emb, attention_mask,
+        uncond_attention_mask)``; the embeddings are adapter-side
+        native tensors that MUST NOT cross the protocol boundary. The
+        encode path is lazy-imported: in synthetic mode a tiny NumPy
+        placeholder pair is returned so the Protocol conformance
+        tests run without the heavy stack.
 
         The torch mode returns the actual Gemma2 hidden states from
         ``transformers.Gemma2Model`` -- the paper embeds the
@@ -969,48 +982,54 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
             rng = np.random.default_rng(seed)
             text_emb = rng.standard_normal((1, 1, 2304)).astype(np.float64)
             uncond_text_emb = np.zeros_like(text_emb)
-            return text_emb, uncond_text_emb
+            attn_mask = np.ones((1, 1), dtype=np.int64)
+            return text_emb, uncond_text_emb, attn_mask, attn_mask
 
         # Torch mode: lazy-import Gemma2Model + tokenizer, encode.
         try:
             import torch  # local import.
-            from transformers import Gemma2Model, GemmaTokenizerFast  # local import.
+            from transformers import GemmaTokenizer  # local import.
         except ImportError:
             # Defensive: if torch / transformers disappear mid-session,
             # fall back to the synthetic placeholder so the round can
             # still complete (engine never sees a hard fail).
-            return self._encode_text_pair.__wrapped__(  # type: ignore[attr-defined]
-                self, prompt=prompt, negative_prompt=negative_prompt
+            return self._encode_text_pair(
+                prompt=prompt, negative_prompt=negative_prompt
             )
 
         # The adapter is configured for a published Lumina-Image 2.0
-        # checkpoint; the Gemma2 text encoder is expected to live
-        # under ``weights_dir/text_encoder``. We load it once and
-        # cache the encoder on the adapter; subsequent encodings reuse
-        # the cached encoder.
-        encoder = getattr(self, "_text_encoder", None)
-        tokenizer = getattr(self, "_text_tokenizer", None)
-        if encoder is None or tokenizer is None:
-            text_encoder_dir = self._weights_path / "text_encoder"
-            tokenizer = GemmaTokenizerFast.from_pretrained(str(text_encoder_dir))
-            encoder = Gemma2Model.from_pretrained(
-                str(text_encoder_dir), torch_dtype=self._torch_dtype
+        # checkpoint; the Gemma2 text encoder + tokenizer are loaded
+        # by the diffusers ``Lumina2Pipeline.from_pretrained`` call
+        # earlier. Reuse the pipeline's loaded components so the
+        # tokenizer / encoder dtype match the pipeline (no extra disk
+        # load + no dtype mismatch on the forward pass).
+        try:
+            tokenizer = self._pipeline.tokenizer
+            encoder = self._pipeline.text_encoder
+        except AttributeError:
+            # Defensive: the published checkpoint layout may not match
+            # our pipeline expectations. Fall back to the synthetic
+            # pair so the round still completes.
+            return self._encode_text_pair(
+                prompt=prompt, negative_prompt=negative_prompt
             )
-            encoder.eval()
-            for p in encoder.parameters():
-                p.requires_grad_(False)
-            self._text_encoder = encoder
-            self._text_tokenizer = tokenizer
+
+        max_seq = int(self._rope_axes[0])
 
         with torch.no_grad():
             tokens = tokenizer(
-                [prompt], return_tensors="pt", padding="max_length",
-                max_length=int(self._rope_axes[0]), truncation=True,
+                [prompt],
+                return_tensors="pt",
+                padding="max_length",
+                max_length=max_seq,
+                truncation=True,
             )
             uncond_tokens = tokenizer(
-                [negative_prompt or ""], return_tensors="pt",
+                [negative_prompt or ""],
+                return_tensors="pt",
                 padding="max_length",
-                max_length=int(self._rope_axes[0]), truncation=True,
+                max_length=max_seq,
+                truncation=True,
             )
             input_ids = tokens.input_ids.to(dtype=torch.long)
             attn = tokens.attention_mask.to(dtype=torch.long)
@@ -1024,7 +1043,12 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 input_ids=uncond_ids,
                 attention_mask=uncond_attn,
             ).last_hidden_state
-        return text_emb.detach(), uncond_text_emb.detach()
+        return (
+            text_emb.detach(),
+            uncond_text_emb.detach(),
+            attn.detach(),
+            uncond_attn.detach(),
+        )
 
     # ------------------------------------------------------------------
     # 7. solve_ode
@@ -1037,6 +1061,8 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         *,
         text_emb: Any,
         uncond_text_emb: Any,
+        encoder_attention_mask: Any | None = None,
+        uncond_attention_mask: Any | None = None,
     ) -> ArrayF64:
         """Evaluate the velocity field at ``(x, t)`` for the active backend.
 
@@ -1059,10 +1085,11 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 dtype=self._torch_dtype,
                 text_emb=text_emb,
                 uncond_text_emb=uncond_text_emb,
+                encoder_attention_mask=encoder_attention_mask,
+                uncond_attention_mask=uncond_attention_mask,
                 guidance_scale=self._guidance_scale,
                 cfg_trunc_ratio=self._cfg_trunc_ratio,
                 cfg_normalization=self._cfg_normalization,
-                rope_axes=self._rope_axes,
             )
         assert self._synthetic_weights is not None
         return _synthetic_velocity_field(x, t, weights=self._synthetic_weights)
@@ -1107,7 +1134,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 ERR_LUMINA_TEXT_EMBED_MISSING,
                 context=cache_key,
             )
-        text_emb, uncond_text_emb = cached
+        text_emb, uncond_text_emb, attn_mask, uncond_attn_mask = cached
 
         # Per-round overrides for CFG (paper §4.5 + framework control).
         guidance_scale = float(
@@ -1145,10 +1172,11 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                     dtype=self._torch_dtype,
                     text_emb=text_emb,
                     uncond_text_emb=uncond_text_emb,
+                    encoder_attention_mask=attn_mask,
+                    uncond_attention_mask=uncond_attn_mask,
                     guidance_scale=guidance_scale,
                     cfg_trunc_ratio=cfg_trunc_ratio,
                     cfg_normalization=cfg_normalization,
-                    rope_axes=self._rope_axes,
                 )
             assert self._synthetic_weights is not None
             return _synthetic_velocity_field(

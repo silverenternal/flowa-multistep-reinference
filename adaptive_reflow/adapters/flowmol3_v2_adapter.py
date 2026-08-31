@@ -128,6 +128,61 @@ FLOWMOL3ADAPTER_N_BOND_TYPES: int = 5
 #: GEOM-DRUGS-filtered; pad to 10 for the categorical relaxation).
 FLOWMOL3ADAPTER_N_ATOM_TYPES: int = 10
 
+# ---------------------------------------------------------------------------
+# Real-checkpoint (GEOM-Drugs CTMC) vocabulary constants.
+#
+# Derived from the published ``last.ckpt`` tensor shapes:
+#
+# * ``vector_field.token_embeddings.a.weight`` -> ``(12, 64)``
+#   = 10 elements + 1 fake-atom token + 1 CTMC mask token.
+# * ``vector_field.token_embeddings.c.weight`` -> ``(7, 64)``
+#   = 6 formal-charge values (-2..+3) + 1 CTMC mask token.
+# * ``vector_field.token_embeddings.e.weight`` -> ``(5, 64)``
+#   = 4 kekulized bond orders (none/single/double/triple, because
+#   ``mol_fm.explicit_aromaticity=false``) + 1 CTMC mask token.
+# * ``vector_field.node_output_head.2.weight`` -> ``(17, 256)``
+#   = 11 atom-type logits (10 elements + fake) ++ 6 charge logits.
+# * ``vector_field.to_edge_logits.2.weight`` -> ``(4, 128)``
+#   = the 4 kekulized bond orders.
+# ---------------------------------------------------------------------------
+
+#: Number of atom-type tokens on the checkpoint's ``a`` embedding table.
+FLOWMOL3_MODEL_ATOM_TOKENS: int = 12
+#: Number of charge tokens on the checkpoint's ``c`` embedding table.
+FLOWMOL3_MODEL_CHARGE_TOKENS: int = 7
+#: Number of bond tokens on the checkpoint's ``e`` embedding table.
+FLOWMOL3_MODEL_BOND_TOKENS: int = 5
+#: Atom-type logit width of ``node_output_head`` (10 elements + fake).
+FLOWMOL3_MODEL_ATOM_LOGITS: int = 11
+#: Charge logit width of ``node_output_head``.
+FLOWMOL3_MODEL_CHARGE_LOGITS: int = 6
+#: Bond logit width of ``to_edge_logits`` (kekulized: none/1/2/3).
+FLOWMOL3_MODEL_BOND_LOGITS: int = 4
+#: Scalar / edge / token hidden widths (``config.yaml:vector_field``).
+FLOWMOL3_MODEL_TOKEN_DIM: int = 64
+FLOWMOL3_MODEL_HIDDEN_SCALARS: int = 256
+FLOWMOL3_MODEL_HIDDEN_EDGE: int = 128
+FLOWMOL3_MODEL_TIME_DIM: int = 64
+
+#: Formal-charge values behind the checkpoint's 6 charge classes.
+FLOWMOL3_MODEL_CHARGE_VALUES: tuple[int, ...] = (-2, -1, 0, 1, 2, 3)
+
+#: Adapter bond label -> checkpoint bond token. The adapter's vocabulary
+#: is ``(single, double, triple, aromatic, no-bond)``; the checkpoint's
+#: is ``(none, single, double, triple)`` + mask. GEOM-Drugs is trained
+#: kekulized so the adapter's ``aromatic`` label folds onto ``single``.
+FLOWMOL3_ADAPTER_TO_MODEL_BOND: tuple[int, ...] = (1, 2, 3, 1, 0)
+
+#: Checkpoint bond class -> adapter bond label (inverse of the above for
+#: the 4 emitted logits). ``none`` becomes the adapter's no-bond
+#: sentinel ``FLOWMOL3ADAPTER_N_BOND_TYPES - 1``.
+FLOWMOL3_MODEL_TO_ADAPTER_BOND: tuple[int, ...] = (4, 0, 1, 2)
+
+#: Target bonded / non-bonded interatomic separations (Angstrom) used by
+#: the equivariant coordinate head.
+FLOWMOL3_BONDED_SEPARATION_A: float = 1.45
+FLOWMOL3_NONBONDED_SEPARATION_A: float = 3.2
+
 #: Default number of integration steps on ``[0, 1]`` for ``solve_ode``.
 FLOWMOL3ADAPTER_NUM_STEPS_DEFAULT: int = 100
 
@@ -139,6 +194,7 @@ AUDIT_FLOWMOL3_RESTART_BLEND: str = "flowmol3adapter_restart_blend"
 AUDIT_FLOWMOL3_TRAJECTORY_BUILT: str = "flowmol3adapter_trajectory_built"
 AUDIT_FLOWMOL3_TORCH_BACKEND: str = "flowmol3adapter_torch_backend"
 AUDIT_FLOWMOL3_NUMPY_BACKEND: str = "flowmol3adapter_numpy_backend"
+AUDIT_FLOWMOL3_REAL_WEIGHTS: str = "flowmol3adapter_real_weights"
 
 # Mechanism ID for the writer-authority registry. Matches the
 # `diagnostic_writer_id` naming scheme used by the rest of the
@@ -396,6 +452,385 @@ def _numpy_random_init_weights(*, seed: int, n_atoms: int) -> dict[str, ArrayF64
 
 
 # ---------------------------------------------------------------------------
+# Real-checkpoint loading (PyTorch Lightning ``last.ckpt``)
+# ---------------------------------------------------------------------------
+
+
+def _resolve_flowmol3_config_path(weights_path: Any) -> Any:
+    """Return the ``config.yaml`` that ships beside a FlowMol3 checkpoint.
+
+    The published layout is ``<run>/config.yaml`` +
+    ``<run>/checkpoints/last.ckpt``; we also accept a ``config.yaml``
+    sitting directly next to the checkpoint. Returns ``None`` when
+    neither exists (the loader then falls back to the pinned vocabulary
+    constants in this module).
+    """
+    from pathlib import Path
+
+    ckpt = Path(str(weights_path))
+    for candidate in (
+        ckpt.parent / "config.yaml",
+        ckpt.parent.parent / "config.yaml",
+    ):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _load_flowmol3_config(weights_path: Any) -> dict[str, Any]:
+    """Parse the FlowMol3 ``config.yaml`` next to ``weights_path``.
+
+    Returns a normalized dict with the keys the adapter actually
+    consumes: ``atom_map`` (the element vocabulary), ``dataset_name``,
+    ``parameterization`` (``ctmc`` for the published GEOM-Drugs run),
+    ``distort_p`` / ``distort_t``, and the raw ``vector_field`` block.
+    Falls back to the module's pinned constants when the YAML is
+    missing or unreadable.
+    """
+    default: dict[str, Any] = {
+        "atom_map": ("C", "H", "N", "O", "F", "P", "S", "Cl", "Br", "I"),
+        "dataset_name": "geom",
+        "parameterization": "ctmc",
+        "distort_p": 0.7,
+        "distort_t": 0.25,
+        "explicit_aromaticity": False,
+        "vector_field": {},
+        "config_path": None,
+    }
+    cfg_path = _resolve_flowmol3_config_path(weights_path)
+    if cfg_path is None:
+        return default
+    try:
+        import yaml  # noqa: PLC0415 — optional, only on the torch path.
+
+        raw = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    except Exception:  # noqa: BLE001 — config is advisory, never fatal.
+        return default
+    dataset = raw.get("dataset", {}) or {}
+    mol_fm = raw.get("mol_fm", {}) or {}
+    atom_map = dataset.get("atom_map") or default["atom_map"]
+    return {
+        "atom_map": tuple(str(sym) for sym in atom_map),
+        "dataset_name": str(dataset.get("dataset_name", default["dataset_name"])),
+        "parameterization": str(
+            mol_fm.get("parameterization", default["parameterization"])
+        ),
+        "distort_p": float(mol_fm.get("distort_p", default["distort_p"])),
+        "distort_t": float(mol_fm.get("distort_t", default["distort_t"])),
+        "explicit_aromaticity": bool(
+            mol_fm.get("explicit_aromaticity", default["explicit_aromaticity"])
+        ),
+        "vector_field": dict(raw.get("vector_field", {}) or {}),
+        "config_path": str(cfg_path),
+    }
+
+
+def _load_flowmol3_state_dict(weights_path: Any) -> dict[str, Any]:
+    """Load the Lightning checkpoint and return its ``state_dict``.
+
+    The published FlowMol3 artifact is a PyTorch Lightning checkpoint
+    (``epoch`` / ``global_step`` / ``state_dict`` / ``hyper_parameters``
+    / optimizer state). We take ``state_dict`` only — the optimizer and
+    loop state are irrelevant to inference — and strip the
+    ``vector_field.`` prefix that Lightning's ``LightningModule``
+    attribute path adds.
+    """
+    import torch  # noqa: PLC0415 — torch backend only.
+
+    blob = torch.load(str(weights_path), map_location="cpu", weights_only=False)
+    if isinstance(blob, dict) and "state_dict" in blob:
+        raw_sd = blob["state_dict"]
+        meta = {
+            "epoch": int(blob.get("epoch", -1)),
+            "global_step": int(blob.get("global_step", -1)),
+            "lightning_version": str(blob.get("pytorch-lightning_version", "")),
+        }
+    else:
+        raw_sd = blob
+        meta = {"epoch": -1, "global_step": -1, "lightning_version": ""}
+    stripped: dict[str, Any] = {}
+    for key, value in raw_sd.items():
+        name = str(key)
+        if name.startswith("vector_field."):
+            name = name[len("vector_field.") :]
+        stripped[name] = value
+    return {"state_dict": stripped, "meta": meta, "n_tensors": len(raw_sd)}
+
+
+def _build_flowmol3_velocity_module(
+    state_dict: Mapping[str, Any],
+    *,
+    device: str,
+) -> Any:
+    """Build the real-weight FlowMol3 velocity head from ``state_dict``.
+
+    Scope / fidelity boundary (READ THIS BEFORE QUOTING NUMBERS)
+    -----------------------------------------------------------
+
+    The published checkpoint's vector field is a GVP-based **SE(3)
+    equivariant message-passing network over DGL heterographs**
+    (``conv_layers`` / ``node_position_updaters`` / ``edge_updaters`` —
+    444 of the 475 checkpoint tensors). Reconstructing that stack
+    requires both the ``flowmol`` package and ``dgl``; neither has a
+    Python 3.12 wheel and neither is installed in this framework's
+    venv (see the module docstring in
+    :mod:`adaptive_reflow.molecular.rdkit_export` for the same dgl
+    boundary).
+
+    What this module therefore instantiates is the checkpoint's
+    **embedding + readout path**, with the *real pretrained tensors*:
+
+    * ``token_embeddings.{a,c,e}`` — the trained atom / charge / bond
+      token tables,
+    * ``scalar_embedding`` — the trained node-scalar MLP
+      (``Linear(192,256) -> act -> Linear(256,256) -> act -> LayerNorm``),
+    * ``edge_embedding`` — the trained edge MLP,
+    * ``node_output_head`` — the trained ``(11 atom ++ 6 charge)``
+      readout,
+    * ``to_edge_logits`` — the trained 4-way bond readout.
+
+    The 444 GVP graph-convolution tensors are **not** applied. This is a
+    real-weights partial-fidelity head, NOT the published FlowMol3
+    sampler: the atom / charge / bond marginals come from trained
+    parameters, but they are not conditioned on 3D graph context. Any
+    chemistry number produced through it measures the re-inference
+    plumbing on real weights, not FlowMol3's reported sample quality.
+    """
+    import torch  # noqa: PLC0415 — torch backend only.
+    from torch import nn  # noqa: PLC0415
+
+    class _FlowMol3ReadoutHead(nn.Module):
+        """Embedding + readout subgraph of the FlowMol3 vector field."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.emb_a = nn.Embedding(
+                FLOWMOL3_MODEL_ATOM_TOKENS, FLOWMOL3_MODEL_TOKEN_DIM
+            )
+            self.emb_c = nn.Embedding(
+                FLOWMOL3_MODEL_CHARGE_TOKENS, FLOWMOL3_MODEL_TOKEN_DIM
+            )
+            self.emb_e = nn.Embedding(
+                FLOWMOL3_MODEL_BOND_TOKENS, FLOWMOL3_MODEL_TOKEN_DIM
+            )
+            self.scalar_embedding = nn.Sequential(
+                nn.Linear(3 * FLOWMOL3_MODEL_TOKEN_DIM, FLOWMOL3_MODEL_HIDDEN_SCALARS),
+                nn.SiLU(),
+                nn.Linear(
+                    FLOWMOL3_MODEL_HIDDEN_SCALARS, FLOWMOL3_MODEL_HIDDEN_SCALARS
+                ),
+                nn.SiLU(),
+                nn.LayerNorm(FLOWMOL3_MODEL_HIDDEN_SCALARS),
+            )
+            self.edge_embedding = nn.Sequential(
+                nn.Linear(FLOWMOL3_MODEL_TOKEN_DIM, FLOWMOL3_MODEL_HIDDEN_EDGE),
+                nn.SiLU(),
+                nn.Linear(FLOWMOL3_MODEL_HIDDEN_EDGE, FLOWMOL3_MODEL_HIDDEN_EDGE),
+                nn.SiLU(),
+                nn.LayerNorm(FLOWMOL3_MODEL_HIDDEN_EDGE),
+            )
+            self.node_output_head = nn.Sequential(
+                nn.Linear(
+                    FLOWMOL3_MODEL_HIDDEN_SCALARS, FLOWMOL3_MODEL_HIDDEN_SCALARS
+                ),
+                nn.SiLU(),
+                nn.Linear(
+                    FLOWMOL3_MODEL_HIDDEN_SCALARS,
+                    FLOWMOL3_MODEL_ATOM_LOGITS + FLOWMOL3_MODEL_CHARGE_LOGITS,
+                ),
+            )
+            self.to_edge_logits = nn.Sequential(
+                nn.Linear(FLOWMOL3_MODEL_HIDDEN_EDGE, FLOWMOL3_MODEL_HIDDEN_EDGE),
+                nn.SiLU(),
+                nn.Linear(FLOWMOL3_MODEL_HIDDEN_EDGE, FLOWMOL3_MODEL_BOND_LOGITS),
+            )
+
+        def forward(  # noqa: D102 — see module docstring above.
+            self,
+            a_tok: Any,
+            c_tok: Any,
+            e_tok: Any,
+            t_emb: Any,
+        ) -> tuple[Any, Any, Any]:
+            h = self.scalar_embedding(
+                torch.cat([self.emb_a(a_tok), self.emb_c(c_tok), t_emb], dim=-1)
+            )
+            node_out = self.node_output_head(h)
+            atom_logits = node_out[..., :FLOWMOL3_MODEL_ATOM_LOGITS]
+            charge_logits = node_out[..., FLOWMOL3_MODEL_ATOM_LOGITS :]
+            edge_h = self.edge_embedding(self.emb_e(e_tok))
+            edge_logits = self.to_edge_logits(edge_h)
+            return atom_logits, charge_logits, edge_logits
+
+    module = _FlowMol3ReadoutHead()
+    remap = {
+        "emb_a.weight": "token_embeddings.a.weight",
+        "emb_c.weight": "token_embeddings.c.weight",
+        "emb_e.weight": "token_embeddings.e.weight",
+    }
+    target: dict[str, Any] = {}
+    missing: list[str] = []
+    for name in module.state_dict():
+        source = remap.get(name, name)
+        if source not in state_dict:
+            missing.append(source)
+            continue
+        target[name] = state_dict[source]
+    if missing:
+        raise KeyError(
+            "flowmol3_checkpoint_missing_tensors:" + ",".join(sorted(missing))
+        )
+    module.load_state_dict(target, strict=True)
+    module.eval()
+    for param in module.parameters():
+        param.requires_grad_(False)
+    module.to(torch.device(str(device)))
+    return module
+
+
+def _flowmol3_time_embedding(t: float, dim: int, *, device: Any, torch_mod: Any) -> Any:
+    """Sinusoidal ``dim``-wide time features for a scalar ``t`` in ``[0, 1]``.
+
+    The checkpoint carries no learned time-embedding tensor (the
+    ``scalar_embedding`` input width of 192 = ``a`` token (64) ++ ``c``
+    token (64) ++ time (64)), so the time features are the standard
+    fixed sinusoidal basis.
+    """
+    half = int(dim) // 2
+    freqs = torch_mod.exp(
+        -np.log(10000.0)
+        * torch_mod.arange(half, dtype=torch_mod.float32, device=device)
+        / float(half)
+    )
+    ang = float(t) * freqs
+    return torch_mod.cat([torch_mod.sin(ang), torch_mod.cos(ang)], dim=-1)
+
+
+def _real_velocity_field(
+    module: Any,
+    x: ArrayF64,
+    a: ArrayF64,
+    c: ArrayF64,
+    e: ArrayF64,
+    t: float,
+    *,
+    device: str,
+) -> tuple[ArrayF64, ArrayF64, ArrayF64, ArrayF64]:
+    """Evaluate the real-weight velocity field; return ``(v_x, v_c, v_e, v_a)``.
+
+    All four channels use the flow-matching linear-interpolant form
+    ``v = (endpoint_prediction - current_state) / max(1 - t, eps)``, so
+    an Euler sweep over ``t in [0, 1]`` lands exactly on the model's
+    endpoint prediction at ``t = 1``.
+
+    * ``v_a`` — ``(n, 10)`` atom-type logit velocity toward the
+      checkpoint's ``node_output_head`` atom marginal (the ``fake``
+      class is dropped; the adapter has no fake-atom concept).
+    * ``v_c`` — ``(n,)`` charge velocity toward the expected formal
+      charge under the checkpoint's 6-way charge marginal.
+    * ``v_e`` — ``(n, n, 5)`` bond-logit velocity toward the
+      checkpoint's symmetrized 4-way bond marginal, re-indexed into the
+      adapter's ``(single, double, triple, aromatic, no-bond)``
+      vocabulary. ``aromatic`` is held at zero probability because the
+      published run is ``explicit_aromaticity: false`` (kekulized).
+    * ``v_x`` — SE(3)-equivariant coordinate velocity: each atom is
+      pulled along the real interatomic difference vectors toward a
+      bonded / non-bonded target separation, weighted by the
+      checkpoint's predicted bond probability. Translation- and
+      rotation-equivariant by construction (it is a bond-probability
+      weighted combination of ``x_j - x_i``).
+    """
+    import torch  # noqa: PLC0415
+
+    dev = torch.device(str(device))
+    x_t = torch.as_tensor(np.asarray(x, dtype=np.float32)).to(dev).detach()
+    n_atoms = int(x_t.shape[0])
+    a_np = np.clip(
+        np.asarray(a, dtype=np.int64), 0, FLOWMOL3ADAPTER_N_ATOM_TYPES - 1
+    )
+    a_tok = torch.as_tensor(a_np).to(dev).detach()
+    c_np = np.asarray(c, dtype=np.float64).reshape(n_atoms)
+    c_idx = np.clip(
+        np.rint(c_np).astype(np.int64) - int(FLOWMOL3_MODEL_CHARGE_VALUES[0]),
+        0,
+        FLOWMOL3_MODEL_CHARGE_LOGITS - 1,
+    )
+    c_tok = torch.as_tensor(c_idx).to(dev).detach()
+    e_np = np.asarray(e, dtype=np.int64).reshape(n_atoms, n_atoms)
+    e_np = np.clip(e_np, 0, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
+    e_model = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND, dtype=np.int64)[e_np]
+    e_tok = torch.as_tensor(e_model).to(dev).detach()
+
+    with torch.no_grad():
+        t_emb = _flowmol3_time_embedding(
+            float(t), FLOWMOL3_MODEL_TIME_DIM, device=dev, torch_mod=torch
+        ).expand(n_atoms, FLOWMOL3_MODEL_TIME_DIM)
+        atom_logits, charge_logits, edge_logits = module(a_tok, c_tok, e_tok, t_emb)
+        atom_logits = atom_logits.detach()
+        charge_logits = charge_logits.detach()
+        edge_logits = edge_logits.detach()
+
+        # --- atom-type marginal (drop the fake-atom class) -------------
+        p_a = torch.softmax(
+            atom_logits[:, :FLOWMOL3ADAPTER_N_ATOM_TYPES].float(), dim=-1
+        )
+        # --- charge marginal -> expected formal charge -----------------
+        p_c = torch.softmax(charge_logits.float(), dim=-1)
+        charge_values = torch.as_tensor(
+            np.asarray(FLOWMOL3_MODEL_CHARGE_VALUES, dtype=np.float32)
+        ).to(dev)
+        c_pred = (p_c * charge_values).sum(dim=-1)
+        # --- bond marginal, symmetrized, re-indexed --------------------
+        p_e_model = torch.softmax(edge_logits.float(), dim=-1)
+        p_e_model = 0.5 * (p_e_model + p_e_model.transpose(0, 1))
+        p_e = torch.zeros(
+            (n_atoms, n_atoms, FLOWMOL3ADAPTER_N_BOND_TYPES),
+            dtype=torch.float32,
+            device=dev,
+        )
+        for model_cls, adapter_lbl in enumerate(FLOWMOL3_MODEL_TO_ADAPTER_BOND):
+            p_e[:, :, int(adapter_lbl)] = p_e_model[:, :, int(model_cls)]
+        # No self-bonds.
+        eye = torch.eye(n_atoms, dtype=torch.bool, device=dev)
+        p_e[eye] = 0.0
+        p_e[eye, FLOWMOL3ADAPTER_N_BOND_TYPES - 1] = 1.0
+
+        # --- equivariant coordinate endpoint ---------------------------
+        diff = x_t.unsqueeze(0) - x_t.unsqueeze(1)  # diff[i, j] = x_j - x_i
+        dist = diff.norm(dim=-1)
+        safe_dist = dist.clamp_min(1e-3)
+        p_bond = 1.0 - p_e[:, :, FLOWMOL3ADAPTER_N_BOND_TYPES - 1]
+        target_sep = (
+            FLOWMOL3_BONDED_SEPARATION_A * p_bond
+            + FLOWMOL3_NONBONDED_SEPARATION_A * (1.0 - p_bond)
+        )
+        # Unit step toward the target separation along the real
+        # difference vector (equivariant: rotates with the molecule).
+        step = ((safe_dist - target_sep) / safe_dist).unsqueeze(-1) * diff
+        weight = p_bond + 0.05
+        weight = weight.masked_fill(eye, 0.0)
+        weight = weight / weight.sum(dim=1, keepdim=True).clamp_min(1e-6)
+        x_pred = x_t + (weight.unsqueeze(-1) * step).sum(dim=1)
+
+    inv_dt = 1.0 / max(1.0 - float(t), 1e-3)
+    onehot_a = np.eye(FLOWMOL3ADAPTER_N_ATOM_TYPES, dtype=np.float64)[a_np]
+    onehot_e = np.eye(FLOWMOL3ADAPTER_N_BOND_TYPES, dtype=np.float64)[e_np]
+    v_a = (p_a.cpu().numpy().astype(np.float64) - onehot_a) * inv_dt
+    v_e = (p_e.cpu().numpy().astype(np.float64) - onehot_e) * inv_dt
+    v_c = (c_pred.cpu().numpy().astype(np.float64) - c_np) * inv_dt
+    v_x = (
+        x_pred.cpu().numpy().astype(np.float64)
+        - np.asarray(x, dtype=np.float64).reshape(n_atoms, 3)
+    ) * inv_dt
+    return (
+        np.nan_to_num(v_x, nan=0.0, posinf=0.0, neginf=0.0),
+        np.nan_to_num(v_c, nan=0.0, posinf=0.0, neginf=0.0),
+        np.nan_to_num(v_e, nan=0.0, posinf=0.0, neginf=0.0),
+        np.nan_to_num(v_a, nan=0.0, posinf=0.0, neginf=0.0),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Private helper — channel-aware restart blender
 # ---------------------------------------------------------------------------
 
@@ -640,6 +1075,8 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         num_steps: int = FLOWMOL3ADAPTER_NUM_STEPS_DEFAULT,
         seed_offset: int = 0,
         blender: RestartBlenderProtocol | None = None,
+        weights_path: Any = None,
+        device: str = "cpu",
     ) -> None:
         if backend not in ("numpy", "torch"):
             raise ValueError(
@@ -655,6 +1092,8 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         self._backend = backend
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
+        self._weights_path = str(weights_path) if weights_path is not None else None
+        self._device = str(device)
         self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._caps = FlowMol3V2AdapterCapabilities()
         self._blender: RestartBlenderProtocol = (
@@ -664,6 +1103,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # matrices for the synthetic velocity field. Both are populated
         # on first use.
         self._model: Any = None
+        self._model_meta: dict[str, Any] = {}
         self._synthetic_weights: dict[int, dict[str, ArrayF64]] = {}
 
     # ------------------------------------------------------------------
@@ -697,12 +1137,27 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
     # ------------------------------------------------------------------
 
     def _load_model(self) -> Any:
-        """Lazy-load the zavalab FlowMol3 model at commit ``77cae22174...``.
+        """Lazy-load the real FlowMol3 checkpoint (``backend='torch'``).
 
-        Imports :mod:`torch` only when ``backend="torch"``. Caches the
-        handle on ``self._model``. When torch is unavailable this method
-        is never called (the constructor rejects ``backend="torch"``
-        up-front).
+        Imports :mod:`torch` only when ``backend="torch"``, parses the
+        ``config.yaml`` shipped next to the checkpoint for the element
+        vocabulary + CTMC settings, loads the PyTorch Lightning
+        ``last.ckpt`` ``state_dict``, and instantiates the real-weight
+        velocity head via :func:`_build_flowmol3_velocity_module`.
+        Caches the module on ``self._model`` and the parsed metadata on
+        ``self._model_meta``.
+
+        When no ``weights_path`` was supplied the model handle is the
+        sentinel string ``"synthetic"`` and
+        :meth:`_velocity_field_ex` keeps using the deterministic NumPy
+        field (so ``backend='torch'`` without weights stays a valid,
+        reproducible configuration).
+
+        See :func:`_build_flowmol3_velocity_module` for the fidelity
+        boundary: the 444 GVP graph-convolution tensors in the
+        checkpoint are NOT applied (``dgl`` / ``flowmol`` are not
+        importable on py3.12), so this is a real-weights readout head,
+        not the published FlowMol3 sampler.
         """
         if self._model is not None:
             return self._model
@@ -710,17 +1165,78 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             raise RuntimeError(
                 "model_load_called_with_numpy_backend; this is a logic bug"
             )
-        import torch  # lazy import — gated by ``backend='torch'``.
-
-        # Real wiring would be:
-        #   from flowmol3 import FlowMol3
-        #   self._model = FlowMol3.from_pretrained(...).eval()
-        # The synthetic ``_numpy_velocity_field`` is used everywhere
-        # in the Protocol conformance tests; the torch backend is
-        # reserved for the production SOTA harness (see
-        # ``tools/run_sota_flowmol3_v2_adapter_experiment.py``).
-        self._model = torch
+        if self._weights_path is None:
+            self._model = "synthetic"
+            self._model_meta = {"kind": "synthetic", "weights_path": None}
+            return self._model
+        config = _load_flowmol3_config(self._weights_path)
+        loaded = _load_flowmol3_state_dict(self._weights_path)
+        module = _build_flowmol3_velocity_module(
+            loaded["state_dict"], device=self._device
+        )
+        self._model = module
+        self._model_meta = {
+            "kind": "real",
+            "weights_path": str(self._weights_path),
+            "device": str(self._device),
+            "n_checkpoint_tensors": int(loaded["n_tensors"]),
+            "epoch": loaded["meta"]["epoch"],
+            "global_step": loaded["meta"]["global_step"],
+            "atom_map": tuple(config["atom_map"]),
+            "dataset_name": str(config["dataset_name"]),
+            "parameterization": str(config["parameterization"]),
+            "distort_p": float(config["distort_p"]),
+            "distort_t": float(config["distort_t"]),
+            "explicit_aromaticity": bool(config["explicit_aromaticity"]),
+            "config_path": config["config_path"],
+        }
         return self._model
+
+    @property
+    def model_metadata(self) -> Mapping[str, Any]:
+        """Parsed checkpoint metadata (empty until :meth:`_load_model` runs)."""
+        return dict(self._model_meta)
+
+    def _velocity_field_ex(
+        self,
+        x: ArrayF64,
+        c: ArrayF64,
+        e: ArrayF64,
+        t: float,
+        *,
+        n_atoms: int,
+        seed: int,
+        a: ArrayF64 | None = None,
+    ) -> tuple[ArrayF64, ArrayF64, ArrayF64, ArrayF64 | None]:
+        """Evaluate ``v_theta`` returning ``(v_x, v_c, v_e, v_a)``.
+
+        ``v_a`` is ``None`` on the synthetic NumPy field (the atom-type
+        channel is not evolved there, matching the pre-real-weights
+        behaviour); it is an ``(n_atoms, 10)`` logit velocity on the
+        real-weights torch path.
+        """
+        if (
+            self._backend == "torch"
+            and self._load_model() != "synthetic"
+            and a is not None
+        ):
+            return _real_velocity_field(
+                self._model,
+                np.asarray(x, dtype=np.float64),
+                np.asarray(a, dtype=np.int64),
+                np.asarray(c, dtype=np.float64),
+                np.asarray(e, dtype=np.int64),
+                float(t),
+                device=self._device,
+            )
+        v_x, v_c, v_e = _numpy_velocity_field(
+            x,
+            c,
+            e,
+            float(t),
+            weights=self._get_synthetic_weights(int(n_atoms), int(seed)),
+        )
+        return v_x, v_c, v_e, None
 
     def _velocity_field(
         self,
@@ -731,41 +1247,19 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         *,
         n_atoms: int,
         seed: int,
+        a: ArrayF64 | None = None,
     ) -> tuple[ArrayF64, ArrayF64, ArrayF64]:
-        """Evaluate ``v_theta(x, c, e, t)``.
+        """Evaluate ``v_theta(x, c, e, t)`` -> ``(v_x, v_c, v_e)``.
 
-        Routes to the synthetic NumPy field for ``backend="numpy"`` and
-        to the lazy-loaded torch model for ``backend="torch"``. The
-        output tuple is ``(v_x, v_c, v_e)`` matching the FlowMol3
-        restart / detach contract.
+        Backwards-compatible three-tuple view of
+        :meth:`_velocity_field_ex`. Routes to the synthetic NumPy field
+        for ``backend="numpy"`` (and for ``backend="torch"`` without a
+        checkpoint) and to the real-weights head otherwise.
         """
-        if self._backend == "torch":
-            _ = self._load_model()
-            # Real FlowMol3 invocation would be:
-            #   with torch.no_grad():
-            #       x_t = torch.as_tensor(x).detach()
-            #       c_t = torch.as_tensor(c).detach()
-            #       e_t = torch.as_tensor(e, dtype=torch.long).detach()
-            #       v_x, v_c, v_e = self._model.integrate(
-            #           x=x_t, c_t=c_t, e_t=e_t, t=t,
-            #       )
-            #       v_x = v_x.detach(); v_c = v_c.detach(); v_e = v_e.detach()
-            # The torch backend is wired through this code path; the
-            # synthetic NumPy fallback runs the conformance tests.
-            return _numpy_velocity_field(
-                x,
-                c,
-                e,
-                float(t),
-                weights=self._get_synthetic_weights(int(n_atoms), int(seed)),
-            )
-        return _numpy_velocity_field(
-            x,
-            c,
-            e,
-            float(t),
-            weights=self._get_synthetic_weights(int(n_atoms), int(seed)),
+        v_x, v_c, v_e, _ = self._velocity_field_ex(
+            x, c, e, float(t), n_atoms=int(n_atoms), seed=int(seed), a=a
         )
+        return v_x, v_c, v_e
 
     def _get_synthetic_weights(
         self, n_atoms: int, seed: int
@@ -1131,13 +1625,14 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             x_eval = np.asarray(x_cur, dtype=np.float64)
             c_eval = np.asarray(c_cur, dtype=np.float64)
             e_eval = np.asarray(e_cur, dtype=np.int64)
-            v_x, v_c, v_e = self._velocity_field(
+            v_x, v_c, v_e, v_a = self._velocity_field_ex(
                 x=x_eval,
                 c=c_eval,
                 e=e_eval,
                 t=float(t_cur),
                 n_atoms=n_atoms,
                 seed=int(seed),
+                a=np.asarray(a_cur, dtype=np.int64),
             )
             x_cur = x_cur + dt * np.asarray(v_x, dtype=np.float64)
             c_cur = c_cur + dt * np.asarray(v_c, dtype=np.float64)
@@ -1148,10 +1643,34 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 + dt * np.asarray(v_e, dtype=np.float64)
             )
             e_cur = np.argmax(e_logits, axis=-1).astype(np.int64)
+            if v_a is not None:
+                # Real-weights path: enforce the symmetric-dense bond
+                # contract (the RDKit writer reads the upper triangle,
+                # but symmetry keeps the next model call consistent),
+                # and evolve the atom-type channel too (the synthetic
+                # field leaves ``a`` frozen, so its lineage — and every
+                # golden digest built on it — is unchanged).
+                upper = np.triu(e_cur, k=1)
+                e_cur = (
+                    upper
+                    + upper.T
+                    + np.diag(
+                        np.full(
+                            n_atoms,
+                            int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
+                            dtype=np.int64,
+                        )
+                    )
+                )
+                a_logits = (
+                    np.eye(int(FLOWMOL3ADAPTER_N_ATOM_TYPES), dtype=np.float64)[a_cur]
+                    + dt * np.asarray(v_a, dtype=np.float64)
+                )
+                a_cur = np.argmax(a_logits, axis=-1).astype(np.int64)
             traj_x[i] = x_cur
             traj_c[i] = c_cur
             traj_e[i] = e_cur
-            traj_a[i] = a_cur  # atom-type label is model-local; not evolved here.
+            traj_a[i] = a_cur
         # Trajectory digest binds the per-step lineage.
         traj_digest = _digest_state(
             {
@@ -1193,6 +1712,13 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 int(num_steps),
                 int(seed),
                 FLOWMOL3ADAPTER_PINNED_COMMIT,
+            )
+            + (
+                # Real weights participate in the integrator identity so
+                # a checkpoint swap can never alias onto a synthetic run.
+                (str(self._weights_path), str(self._device))
+                if self._weights_path is not None
+                else ()
             )
         ).encode("utf-8")
         integrator_config_hash = hashlib.sha256(cfg_blob).hexdigest()
@@ -1321,13 +1847,27 @@ def default_flowmol3adapter(
     backend: str = "numpy",
     *,
     num_steps: int = FLOWMOL3ADAPTER_NUM_STEPS_DEFAULT,
+    weights_path: Any = None,
+    device: str = "cpu",
 ) -> FlowMol3V2Adapter:
-    """Return a fresh :class:`FlowMol3V2Adapter` for tests + registry wiring."""
-    return FlowMol3V2Adapter(backend=str(backend), num_steps=int(num_steps))
+    """Return a fresh :class:`FlowMol3V2Adapter` for tests + registry wiring.
+
+    ``weights_path`` (with ``backend='torch'``) points at a published
+    FlowMol3 PyTorch Lightning checkpoint — e.g.
+    ``data/flowmol3/weights_real/checkpoints/last.ckpt``. Leave it
+    ``None`` for the deterministic synthetic field.
+    """
+    return FlowMol3V2Adapter(
+        backend=str(backend),
+        num_steps=int(num_steps),
+        weights_path=weights_path,
+        device=str(device),
+    )
 
 
 __all__ = [
     "AUDIT_FLOWMOL3_NUMPY_BACKEND",
+    "AUDIT_FLOWMOL3_REAL_WEIGHTS",
     "AUDIT_FLOWMOL3_RESTART_BLEND",
     "AUDIT_FLOWMOL3_TORCH_BACKEND",
     "AUDIT_FLOWMOL3_TRAJECTORY_BUILT",
