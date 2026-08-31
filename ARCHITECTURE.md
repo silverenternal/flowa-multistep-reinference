@@ -8,7 +8,15 @@ historical artefacts explaining *why* the move happened; this file describes
 
 **Status:** refactor + universal split complete; Phase-4 R3/R11 code
 review (52 findings) identified and triaged, P0/P1 fix plan published
-([CLM-041](#CLM-041), [CLM-042](#CLM-042)). The package ships two
+([CLM-041](#CLM-041), [CLM-042](#CLM-042)); the r16 governance audit
+fix train closed six P0 paper-math + CI-gate items and landed the
+`algorithm/` package enumeration in this doc
+([CLM-044](#CLM-044)), the `e_rho / 4` derivation notes
+([CLM-045](#CLM-045)), the paper-math `eps` scaling flags +
+NaN/inf safety boundary on `EvidenceScaleGapMetric`
+([CLM-046](#CLM-046)), and the stress-nightly / cpu-tests /
+[test]-extra / Python-matrix CI hygiene fixes ([CLM-047](#CLM-047)).
+The package ships two
 domain adapters (`molecular/` as the concrete pocket-3D flow matching
 impl, `adapters/toy_gaussian.py` as the second, non-molecular domain)
 plus the legacy `adapters/toy_linear.py` worked example. DTB-R0 §3
@@ -138,6 +146,7 @@ listed in dependency order (leaf first):
 | `adapters/`            | Concrete `FlowMatchingODEAdapter` implementations (synthetic + reference + flowmol3).     | DTB-G1 + DTB-G2                    |
 | `eval/`                | CPU-only DTB-R7 + DTB-R8 evaluation / reporting.                                           | DTB-R7, DTB-R8                     |
 | `legacy/`              | Existing torch-bound / `pocket_modules`-coupled modules. Quarantined.                      | (none — kept only for migration)   |
+| `algorithm/`           | Outer framework + abstract algorithm layer — `ReInferenceRunner` (canonical multi-round orchestrator) plus `SchedulerProtocol` / `MergeOperatorProtocol` / `PolicyDriverProtocol` / `RestartBlenderProtocol` / `RotationPolicy` / `RunnerProtocol` + 2-4 implementations per role (D-01.A1-01). The largest by file count (25 modules); depends on `frame/`, `eval/`, `schedule/`, `policy/`. Cross-references: ADR-0011 (cosine-as-option), ADR-0013 (posterior-selection drives algorithm). | DTB-NA1 + DTB-R7 + DTB-R8 outer loop |
 
 ### Why each subpackage exists (one paragraph each)
 
@@ -184,6 +193,16 @@ listed in dependency order (leaf first):
 * **`legacy/`** — the eight pre-refactor torch-bound modules. Quarantined;
   emits a `DeprecationWarning` at import time so any new code that
   accidentally reaches in is warned.
+* **`algorithm/`** — the abstract algorithm layer (D-01.A1-01). Owns
+  the four substitution-point Protocols (`SchedulerProtocol`,
+  `MergeOperatorProtocol`, `PolicyDriverProtocol`,
+  `RestartBlenderProtocol`) plus `RotationPolicy` and `RunnerProtocol`,
+  with 2-4 implementations per role. Also owns the multi-round
+  orchestration surface (`ReInferenceRunner` + `BatchedTrajectoryRunner`),
+  which is the canonical outer-loop orchestrator. The first named
+  implementation in each group is the default; cosine annealing is
+  one option here, not a framework requirement (ADR-0011);
+  posterior-selection drives the algorithm choice (ADR-0013).
 
 ---
 
@@ -246,6 +265,52 @@ flowa-multistep-reinference/
 │   │   ├── evaluator.py                 <- Evaluator Protocol + ArtifactHash + validate_evaluator_artifact_hash
 │   │   ├── mixer.py                     <- RestartMixer Protocol + validate_blend_inputs
 │   │   └── validators.py                <- numeric validators (validate_unit_factor, …)
+│   ├── algorithm/                       <- abstract algorithm layer (D-01.A1-01):
+│   │   │                                    SchedulerProtocol / MergeOperatorProtocol /
+│   │   │                                    PolicyDriverProtocol / RestartBlenderProtocol /
+│   │   │                                    RotationPolicy / RunnerProtocol + 2-4 impls each.
+│   │   ├── __init__.py                  <- curated public surface (re-exports below)
+│   │   ├── runner.py                    <- ReInferenceRunner (canonical outer-loop orchestrator)
+│   │   ├── batched_runner.py            <- BatchedTrajectoryRunner (parallel multi-trajectory)
+│   │   ├── runner_registry.py           <- RUNNER_REGISTRY + OnlineRunner / ParallelRunner /
+│   │   │                                  EarlyStopRunner (RunnerProtocol impls)
+│   │   ├── protocol_registry.py         <- PROTOCOL_REGISTRY + build_*_from_config +
+│   │   │                                  enumerate_implementations + registered_families +
+│   │   │                                  validate_config_schema + ProtocolRegistryError
+│   │   ├── merge_operator.py            <- BoundedMergeOperator (default merge) + IdentityOperator /
+│   │   │                                  EMAOperator + MergeOperatorProtocol +
+│   │   │                                  MERGE_* / ERR_* constants + MergeAuthorityError
+│   │   ├── merge_operator_extra.py      <- BayesianMergeOperator, KalmanBoundedMergeOperator,
+│   │   │                                  PIDIdentityOperator, ScheduleAwareEMAOperator
+│   │   ├── merge_operator_v3.py         <- experimental v3 bounded-merge refactor (WIP)
+│   │   ├── merge_r2.py                  <- round-2 merge experimental surface (WIP)
+│   │   ├── blender.py                   <- LinearBlender (default blender) + DistanceDecayBlender +
+│   │   │                                  RestartBlenderProtocol + family constants
+│   │   ├── blender_extra.py             <- MultiTemperatureDistanceDecayBlender, OTLinearBlender
+│   │   ├── policy_driver.py             <- ScheduleDerivedPolicyDriver (default) +
+│   │   │                                  ConstantPolicyDriver, AdaptivePolicyDriver,
+│   │   │                                  PolicyDriverProtocol + ADAPTIVE_FAMILY / CONSTANT_FAMILY
+│   │   ├── rotation_policy.py           <- BanditUCBRotationPolicy, RoundRobinRotationPolicy,
+│   │   │                                  RotationPolicy, ROTATION_POLICY_REGISTRY
+│   │   ├── evidence_driver.py           <- evidence-driven merge delta driver (R7/R8 leg)
+│   │   ├── sequential.py                <- SEQUENTIAL_FAMILY, SequentialScheduler, SequentialSlot
+│   │   ├── sequential_handoff.py        <- sequential <-> batched handoff glue
+│   │   ├── handoff.py                   <- cross-runner handoff helpers
+│   │   ├── state_machine_integration.py <- state-machine bridge for RunnerProtocol contracts
+│   │   ├── round2_extra.py              <- round-2 experimental surface (WIP)
+│   │   ├── scheduler/                   <- scheduler implementations (3 submodules + __init__)
+│   │   │   ├── __init__.py              <- SCHEDULER_REGISTRY + ScheduleSample + build_scheduler
+│   │   │   ├── _core.py                 <- SchedulerProtocol + ScheduleSampleProtocol +
+│   │   │   │                              CosineAnnealScheduler (default) + ConstantScheduler +
+│   │   │   │                              LinearScheduler + ExponentialScheduler +
+│   │   │   │                              PolynomialScheduler + SigmoidScheduler +
+│   │   │   │                              ConvergenceAdaptiveScheduler +
+│   │   │   │                              CodimensionSheetScheduler
+│   │   │   ├── evidence_driven.py       <- evidence-driven scheduler (R7/R8 leg)
+│   │   │   └── freetraj.py              <- free-trajectory scheduler (WIP)
+│   │   ├── scheduler_extra.py           <- EDMScheduler, AdaptivePIDScheduler,
+│   │   │                                  JitteredConstantScheduler + EDM_* constants
+│   │   └── scheduler_r2.py              <- round-2 scheduler experimental surface (WIP)
 │   ├── molecular/                       <- concrete pocket-3D flow matching impl of universal Protocols
 │   │   ├── __init__.py                  <- re-export molecule channel vocabulary + concrete Protocol impls
 │   │   ├── bundle.py                    <- MoleculeRoundResultBundle + validate_molecule_round_result_bundle
@@ -858,6 +923,85 @@ from adaptive_reflow.molecular import (
 )
 ```
 
+### 4.13 `adaptive_reflow.algorithm`
+
+The abstract algorithm layer (D-01.A1-01). The framework depends on
+the four Protocols defined here, not on any single schedule family,
+merge authority, blend temperature, or per-round restart philosophy.
+Each Protocol has 2-4 implementations; the first named below is the
+default. Cosine annealing is one option here, not a framework
+requirement (ADR-0011); posterior-selection drives the algorithm
+choice (ADR-0013). The package also owns the multi-round
+orchestration surface (`ReInferenceRunner` + `BatchedTrajectoryRunner`).
+
+```python
+from adaptive_reflow.algorithm import (
+    # --- Protocols (the four substitution points) ---
+    SchedulerProtocol,              # per-round sigma / weight sampler
+    MergeOperatorProtocol,          # bounded merge over prev/dynamic
+    PolicyDriverProtocol,           # round -> applied policy beta
+    RestartBlenderProtocol,         # per-coordinate blend weights
+    RotationPolicy,             # cross-round algorithm rotator
+    RunnerProtocol,                 # multi-round runner abstraction
+    # --- Default scheduler implementations ---
+    CosineAnnealScheduler,          # default scheduler (ADR-0011)
+    ConstantScheduler, LinearScheduler,
+    ExponentialScheduler, PolynomialScheduler,
+    ConvergenceAdaptiveScheduler, CodimensionSheetScheduler,
+    SigmoidScheduler, AdaptivePIDScheduler,
+    EDMScheduler, JitteredConstantScheduler,
+    # --- Default merge-operator implementations ---
+    BoundedMergeOperator,           # default merge (DTB-R3)
+    IdentityOperator, EMAOperator,
+    BayesianMergeOperator, KalmanBoundedMergeOperator,
+    PIDIdentityOperator, ScheduleAwareEMAOperator,
+    # --- Default policy-driver implementations ---
+    ScheduleDerivedPolicyDriver,    # default policy driver
+    ConstantPolicyDriver, AdaptivePolicyDriver,
+    # --- Default restart-blender implementations ---
+    LinearBlender,                  # default blender
+    DistanceDecayBlender,
+    MultiTemperatureDistanceDecayBlender, OTLinearBlender,
+    # --- Default rotation-policy implementations ---
+    BanditUCBRotationPolicy, RoundRobinRotationPolicy,
+    # --- Multi-round runners ---
+    ReInferenceRunner,              # canonical outer-loop runner
+    ReInferenceConfig, ReInferenceResult,
+    BatchedTrajectoryRunner, BatchedRunnerConfig, BatchedTrajectoryResult,
+    OnlineRunner, ParallelRunner, EarlyStopRunner,
+    # --- Registries (build-by-config) ---
+    PROTOCOL_REGISTRY, SCHEDULER_REGISTRY, RUNNER_REGISTRY,
+    ROTATION_POLICY_REGISTRY,
+    SCHEDULER_FAMILIES, MERGE_OPERATOR_FAMILIES,
+    POLICY_DRIVER_FAMILIES, BLENDER_FAMILIES,
+    build_scheduler, build_scheduler_from_config,
+    build_blender_from_config, build_merge_operator_from_config,
+    build_policy_driver_from_config, build_rotation_policy,
+    build_runner, registered_families, enumerate_implementations,
+    validate_config_schema,
+    # --- Family / default-config constants ---
+    ADAPTIVE_FAMILY, CONSTANT_FAMILY, SCHEDULE_DERIVED_FAMILY,
+    LINEAR_FAMILY, DISTANCE_DECAY_FAMILY,
+    DEFAULT_ADAPTIVE_TARGET_ESTIMATE, DEFAULT_CONSTANT_BETA,
+    DEFAULT_DISTANCE_DECAY_TEMPERATURE,
+    DEFAULT_DISTANCE_DECAY_CONFIG_HASH, DEFAULT_LINEAR_CONFIG_HASH,
+    EDM_RHO_DEFAULT, EDM_SIGMA_MIN_DEFAULT, EDM_SIGMA_MAX_DEFAULT,
+    # --- Schedule carriers / sample protocol ---
+    ScheduleSample, ScheduleSampleProtocol, SEQUENTIAL_FAMILY,
+    SequentialScheduler, SequentialSlot,
+    # --- Diagnostics / event flags ---
+    FORWARD_NOISE_INJECTED,
+    # --- Merge-operator error / audit codes ---
+    ERR_PREV_REQUIRED,
+    MERGE_CAP_OUT_OF_RANGE, MERGE_DEGENERATE_INTERVAL,
+    MERGE_FLOOR_OUT_OF_RANGE, MERGE_FLOOR_FALLBACK,
+    MERGE_NONFINITE_DYNAMIC_CLIPPED, MERGE_NONFINITE_PREV_CLIPPED,
+    MERGE_PREV_ANCHORED_TO_LAST_EMITTED,
+    # --- Exceptions ---
+    MergeAuthorityError, ProtocolRegistryError,
+)
+```
+
 ---
 
 ## 5. Adapter Protocol — how to add a new model
@@ -1351,14 +1495,16 @@ re-export step.
 * **`pytest-benchmark`** — microsecond kernel benchmarking. Pinned
   profile in `pyproject.toml [tool.pytest-benchmark]` (`min_rounds=5`,
   `warmup_iterations=10`, `sort=mean`).
-* **`mutmut`** — mutation testing, nightly only. Scoped to
-  `contracts / universal / molecular / frame` in
-  `tools/mutate/mutmut.toml`; runner in
-  `tools/mutate/run_mutmut.sh`. Native Windows run is deferred to
-  upstream mutmut issue 397; the Linux nightly job captures the
-  canonical score and uploads the report as the `mutmut-report`
-  artifact. The mutation score is itself a release gate (see
-  "Mutation score targets" below).
+* **`ast_mutator`** — mutation testing, nightly only (T-04.7: was
+  historically `mutmut`, now the in-tree stdlib-only AST point
+  mutator). Scoped to `contracts / universal / molecular / frame` via
+  the `--target` args in `.github/workflows/mutation-nightly.yml`; the
+  Linux nightly job captures the canonical score and uploads the
+  report as the `mutation-report` artifact. Native Windows run is
+  supported (unlike upstream `mutmut`, blocked by boxed/mutmut#397);
+  the in-tree mutator behaves identically on Linux and Windows. The
+  mutation score is itself a release gate (see "Mutation score
+  targets" below).
 * **`tools/bench/check_budgets.py`** vs `tools/bench/budgets.json` —
   the 20% regression threshold gate.
 * **`tests/perf/test_stress_1000_rounds.py`** — 1,000-round stress
@@ -1373,8 +1519,9 @@ re-export step.
 | `cpu-tests.yml` | push to main + every PR | ruff + pytest (non-slow, non-benchmark) + doc scanner |
 | `docs-validate.yml` | push to main + every PR | ruff + doc scanner + full pytest |
 | `bench-regression.yml` | weekly Mon 04:00 UTC + manual | `pytest --benchmark-only` + `tools/bench/check_budgets.py` |
-| `mutation-nightly.yml` | nightly 03:00 UTC + manual | `bash tools/mutate/run_mutmut.sh`; mutation-score release gate enforced; `mutmut-report` artifact uploaded |
-| `stress-nightly.yml` | nightly 03:30 UTC + manual | `pytest tests/perf/test_stress_1000_rounds.py` against the `SyntheticEvaluator` oracle; rejects leaks > 5 MB / 1000 rounds |
+| `mutation-nightly.yml` | nightly 03:00 UTC + manual | `python tools/mutate/ast_mutator.py run`; mutation-score release gate enforced (T-04.7); `mutation-report` artifact uploaded |
+| `stress-nightly.yml` | nightly 03:30 UTC + manual | `pytest -m "stress"` (T-04.3: was a Windows-only venv path; now uses bare `python`); rejects leaks > 5 MB / 1000 rounds |
+| `experiments-nightly.yml` | weekly Wed 02:00 UTC + manual | `-m "experiments"` survey-reproduction gate (T-04.6) |
 
 ### Mutation score targets (release gate)
 
@@ -1471,3 +1618,58 @@ recorded here first.
 | "When is the next feature landing?" | `ROADMAP.md` |
 | "Is there a security boundary I need to respect?" | `SECURITY.md` |
 | "Who reviews PRs against the contracts layer?" | `CODEOWNERS` |
+
+### 10.2 Audit-code registry (D-01.A1-09)
+
+The `AUDIT_*` constants live alongside the modules that *raise* them
+(`adaptive_reflow.frame.orchestrator`, `adaptive_reflow.frame.channel_rule`,
+`adaptive_reflow.contracts.validators`, …) and are re-exported from
+the public surface of the package that owns the relevant governance
+domain. ADR-0005 pins the fail-closed policy; the table below is the
+single source of truth for *where* each audit code lives and *which*
+governance domain it belongs to. **Adding a new audit code without
+re-exporting it surfaces as a doc-scanner drift failure** -- the
+canonical list is enforced by `tools/check_docs_against_code.py` and
+the per-file-ignores in `pyproject.toml` whitelist the intentional
+`__init__.py` re-export shims.
+
+| Audit code constant | Defining module | Domain |
+|---|---|---|
+| `AUDIT_STABILITY_COLLAPSE` | `adaptive_reflow.frame.channel_rule` | DTB-R0 §3 case 2 (monotonic uncertainty) |
+| `AUDIT_SOURCE_REVOKED` | `adaptive_reflow.contracts.validators` | DTB-R0 §3 case 5 (source revocation) |
+| `BLOCKER_PROXY_ONLY` | `adaptive_reflow.frame.channel_rule` | DTB-R0 §3 case 6 (proxy-only evidence) |
+| `COMPLEMENT_BLOCKER_CODES`, `RESTART_TRIGGER_CODES`, `FEEDBACK_MODES` | `adaptive_reflow.contracts.types` | literal-set tuples |
+
+To add a new audit code: define the constant in the module that
+raises it, add it to the relevant subpackage's `__init__.py`
+re-export list, and reference it from the table above. The doc
+scanner will refuse the PR otherwise.
+
+### 10.3 Documentation conventions (D-01.A1-04, D-01.A1-05)
+
+* **Junction mechanic (`docs/` -> `site/`)** -- The `site/` directory is
+  the mkdocs-rendered output of `docs/` + the inline auto-generated API
+  reference under `docs/api/`. It is regenerated on every
+  `mkdocs build --strict` run (CI Gate 6) and is **never hand-edited**.
+  The site/ tree in the working copy is committed for two reasons:
+  (1) so the static-HTML fallback works on branches where the
+  docs-deploy job has not yet run, and (2) so the local
+  `python -m http.server -d site` smoke test does not require an
+  mkdocs install. Do not edit files under `site/` -- edit `docs/`
+  and re-run `mkdocs build`.
+* **`docs/_*.md` leading-underscore convention** -- Files prefixed with
+  a single underscore under `docs/` (e.g. `docs/_benchmark_ablation.md`,
+  `docs/_test_ablation_quick.md`) are **internal scratch / working
+  notes** that ship alongside the rendered docs but are intentionally
+  excluded from the mkdocs `nav:` (see `mkdocs.yml`). They are kept in
+  the repository so contributors can see the long-form methodology
+  behind the published numbers without those notes cluttering the
+  landing page. The hatchling wheel `[tool.hatch.build.targets.wheel]`
+  configuration explicitly excludes the `docs/_*.md` files from the
+  wheel -- see `pyproject.toml` for the rationale.
+* **Public API convention** -- Any name that is documented in this
+  file (§4), in `CONTRACTS.md` §1-§8, or in the mkdocs API reference
+  under `docs/api/` must be re-exported from its subpackage's
+  `__init__.py`. The doc scanner (`tools/check_docs_against_code.py`)
+  enforces this: a documented public symbol without an `__init__.py`
+  re-export surfaces as Gate 4 drift.
