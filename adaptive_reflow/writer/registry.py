@@ -434,6 +434,83 @@ def default_registry() -> CandidateRegistry:
     return make_initial_registry(flowmol3_entry=make_default_flowmol3_entry())
 
 
+def make_default_flowmol3adapter_entry() -> CandidateEntry:
+    """Build the canonical registry row that pairs with
+    :class:`adaptive_reflow.adapters.flowmol3adapter.FlowMol3AdapterImpl`.
+
+    Same pinned commit, license, paper, and audit notes as
+    :func:`make_default_flowmol3_entry`; the
+    ``audit_notes`` field is extended to record that the real
+    mechanics adapter is wired (cf. the read-only placeholder
+    ``adaptive_reflow.adapters.flowmol3.FlowMol3Adapter``). The row is
+    the load-bearing registry entry the production SOTA harness will
+    look up.
+
+    Note: this row carries the same ``admitted_unconditional_only``
+    status — FlowMol3's pocket-conditioned efficacy remains a
+    non-claim boundary at this admission.
+    """
+    return CandidateEntry(
+        repo_url="https://github.com/zavalab/ML/tree/FlowMol3",
+        commit=FLOWMOL3_PINNED_COMMIT,
+        license="MIT",
+        paper_id="FlowMol3",
+        paper_date="2025",
+        task_conditions=("unconditional_3d",),
+        dataset_split="n/a (unconditional 3D generator)",
+        native_metric_protocol=(
+            "model-internal sampling diagnostics only; no pocket-conditioned "
+            "evaluator provenance available"
+        ),
+        ode_call_site=(
+            "model.integrate / model.step over (x, a, c, e) — wired "
+            "through adaptive_reflow.adapters.flowmol3adapter."
+            "FlowMol3AdapterImpl (backend='torch' lazy-imports the "
+            "zavalab FlowMol3 module at the pinned commit; "
+            "backend='numpy' is the deterministic Protocol conformance "
+            "fallback)"
+        ),
+        state_boundary=(
+            "model.integrate output: state variable returned with "
+            "stop_gradient=True at the (x, a, c, e) boundary"
+        ),
+        condition_boundary="no pocket conditioning exposed",
+        restart_boundary=(
+            "model.integrate restart boundary: state variable "
+            "detached via .detach() at every restart"
+        ),
+        compatible_channels=("coordinate", "charge", "raw_pair"),
+        available_checkpoint=None,
+        adapter_status="admitted_unconditional_only",
+        audit_notes=(
+            "FlowMol3 native state is (x, a, c, e). It is exposed via "
+            "the engine-domain channel vocabulary: x->coordinate, "
+            "c->charge, e->raw_pair. The native atom-type channel (a) "
+            "is a model-local label and is NOT carried as an "
+            "adaptive-reflow evidence surface. "
+            "The real mechanics adapter "
+            "(adaptive_reflow.adapters.flowmol3adapter.FlowMol3AdapterImpl) "
+            "implements all eight FlowMatchingODEAdapter methods "
+            "(capabilities / build_initial_state / export_endpoint / "
+            "detach_and_validate_endpoint / apply_restart_distribution / "
+            "compose_condition / solve_ode / observe_endpoint) plus the "
+            "public export_trajectory (P0-7) surface. Restart "
+            "boundary applies .detach() at every model.integrate / "
+            "model.step entry; the channel-aware blender uses "
+            "LinearBlender for the continuous (coordinate, charge) "
+            "channels and categorical resampling for the discrete "
+            "(raw_pair) channel. FlowMol3 is an unconditional 3D "
+            "generator; this row does NOT validate any "
+            "pocket-conditioned efficacy claim; admission to "
+            "pocket-conditioned experiments requires a separate "
+            "candidate row with adapter_status='admitted' and a "
+            "pocket-conditioned paper/eval reference."
+        ),
+        registered_at="2026-08-31",
+        registered_by="DTB-G2 mechanics-adapter scaffold",
+    )
+
+
 __all__ = [
     "FLOWMOL3_PINNED_COMMIT",
     "AdapterStatus",
@@ -443,5 +520,6 @@ __all__ = [
     "admit_entry",
     "default_registry",
     "make_default_flowmol3_entry",
+    "make_default_flowmol3adapter_entry",
     "make_initial_registry",
 ]

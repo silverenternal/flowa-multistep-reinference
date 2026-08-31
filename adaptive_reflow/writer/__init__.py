@@ -45,6 +45,7 @@ from .registry import (
     admit_entry,
     default_registry,
     make_default_flowmol3_entry,
-    make_default_hidream_i1_entry,
+make_default_hidream_i1_entry,
+    make_default_flowmol3adapter_entry,
     make_initial_registry,
 )
