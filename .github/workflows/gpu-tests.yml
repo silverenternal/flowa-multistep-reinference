@@ -1,0 +1,182 @@
+name: gpu-tests
+
+# P-12 / r17-survey: SOTA-harness CI gate that runs on the project's
+# self-hosted CUDA runners. This workflow is intentionally separate
+# from ``ci.yml`` and ``cpu-tests.yml`` so the GPU runtime budget is
+# isolated from the pre-merge gates.
+#
+# Unlike ``gpu-experiment.yml`` (which runs the heavy paper-parity
+# HiDream + Lumina experiments), ``gpu-tests.yml`` is a *smoke*
+# watchdog: every entry point is invoked in ``--smoke`` mode on small
+# sample counts (4 mols / 2 rounds / ~30 NFE) so the harness wiring
+# for *all four* SOTA adapters (mol / img / prot / 2D) is exercised
+# on every label event without the wall-clock cost of a full run.
+#
+# Triggers:
+#   * PR labelled with ``gpu-experiment`` -- the r17-survey paper-
+#     parity gate. Same label as ``gpu-experiment.yml``; the two are
+#     complementary (one smoke, one full).
+#   * PR labelled with ``sota-rerun`` -- a manual rerun request from
+#     a maintainer after a SOTA baseline / framework delta changes.
+#   * push to any ``tools/run_sota_*_experiment.py`` (catch harness
+#     regressions without waiting for a labelled PR).
+#
+# Runners:
+#   * ``runs-on: [self-hosted, gpu, cuda-1]`` -- the faster CUDA:1
+#     device, used for the heavy image harnesses (HiDream + Lumina).
+#   * ``runs-on: [self-hosted, gpu, cuda-0]`` -- the CUDA:0 device,
+#     used for the molecular + categorical harnesses (FlowMol3 + 2D).
+#     Splitting across two runners halves the wall-clock cost of a
+#     manual rerun and means a single hung harness does not block
+#     the others.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/run_sota_*_experiment.py'
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gpu-tests-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---- CUDA:1: image harnesses (heavy image-side FID + CLIPScore) ----
+  image-smoke:
+    # Fires on push to a SOTA entry-point, OR on a PR label event whose
+    # labels include ``gpu-experiment`` or ``sota-rerun``. Label events
+    # without one of those labels are skipped silently so unrelated PR
+    # label churn does not consume GPU minutes.
+    if: |
+      github.event_name == 'push' ||
+      contains(github.event.pull_request.labels.*.name, 'gpu-experiment') ||
+      contains(github.event.pull_request.labels.*.name, 'sota-rerun')
+    runs-on: [self-hosted, gpu, cuda-1]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: pip install -e '.[dev]' || pip install pytest hypothesis pytest-benchmark ruff mypy mutmut
+
+      - name: Lint SOTA entry points
+        run: ruff check tools/
+
+      - name: Detect CUDA availability
+        id: cuda
+        run: |
+          python - <<'PY'
+          import os, sys
+          has_cuda = "false"
+          try:
+              import torch  # noqa: F401
+              has_cuda = "true" if torch.cuda.is_available() else "false"
+          except Exception as exc:  # pragma: no cover - runner-side guard
+              print(f"torch import failed: {exc}", file=sys.stderr)
+          with open(os.environ["GITHUB_OUTPUT"], "w", encoding="utf-8") as fh:
+              fh.write(f"has_cuda={has_cuda}\n")
+          if has_cuda == "false":
+              print(
+                  "::warning::No CUDA device reported on this runner -- "
+                  "skipping HiDream + Lumina image-harness smoke.",
+              )
+          PY
+
+      - name: HiDream-I1 image harness --smoke on CUDA:1
+        if: steps.cuda.outputs.has_cuda == 'true'
+        run: |
+          PYTHONPATH=. CUDA_VISIBLE_DEVICES=1 python tools/run_sota_hidream_i1_experiment.py --smoke
+
+      - name: Lumina-Image 2.0 image harness --smoke on CUDA:1
+        if: steps.cuda.outputs.has_cuda == 'true'
+        run: |
+          PYTHONPATH=. CUDA_VISIBLE_DEVICES=1 python tools/run_sota_lumina_image_2_0_experiment.py --smoke
+
+      - name: Upload image-harness artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpu-tests-image-${{ github.run_id }}
+          path: |
+            docs/r17-survey/
+            /tmp/hidream_smoke/
+            /tmp/lumina_smoke/
+          if-no-files-found: ignore
+
+  # ---- CUDA:0: molecular + categorical harnesses ----
+  mol-smoke:
+    # Same gate as image-smoke; the two jobs run in parallel.
+    if: |
+      github.event_name == 'push' ||
+      contains(github.event.pull_request.labels.*.name, 'gpu-experiment') ||
+      contains(github.event.pull_request.labels.*.name, 'sota-rerun')
+    runs-on: [self-hosted, gpu, cuda-0]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: pip install -e '.[dev]' || pip install pytest hypothesis pytest-benchmark ruff mypy mutmut
+
+      - name: Lint SOTA entry points
+        run: ruff check tools/
+
+      - name: Detect CUDA availability
+        id: cuda
+        run: |
+          python - <<'PY'
+          import os, sys
+          has_cuda = "false"
+          try:
+              import torch  # noqa: F401
+              has_cuda = "true" if torch.cuda.is_available() else "false"
+          except Exception as exc:  # pragma: no cover - runner-side guard
+              print(f"torch import failed: {exc}", file=sys.stderr)
+          with open(os.environ["GITHUB_OUTPUT"], "w", encoding="utf-8") as fh:
+              fh.write(f"has_cuda={has_cuda}\n")
+          if has_cuda == "false":
+              print(
+                  "::warning::No CUDA device reported on this runner -- "
+                  "skipping FlowMol3 + 2D harness smoke.",
+              )
+          PY
+
+      - name: FlowMol3-v2 molecular harness --smoke on CUDA:0
+        if: steps.cuda.outputs.has_cuda == 'true'
+        run: |
+          PYTHONPATH=. CUDA_VISIBLE_DEVICES=0 python tools/run_sota_flowmol3_v2_adapter_experiment.py --smoke
+
+      - name: 2D Gaussian-mix oracle harness --smoke on CUDA:0
+        if: steps.cuda.outputs.has_cuda == 'true'
+        run: |
+          PYTHONPATH=. CUDA_VISIBLE_DEVICES=0 python tools/run_sota_2d_experiment.py --smoke
+
+      - name: Upload molecular-harness artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpu-tests-mol-${{ github.run_id }}
+          path: |
+            docs/r17-survey/
+            /tmp/flowmol3_smoke/
+            /tmp/sota_2d_smoke/
+          if-no-files-found: ignore

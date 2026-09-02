@@ -303,8 +303,15 @@ class HFCosineClipScoreEvaluator(CLIPScoreProtocol):
             self._load_attempted = True
             self._load_error = exc
             raise
-        model = AutoModel.from_pretrained(self._model_name)
-        processor = AutoProcessor.from_pretrained(self._model_name)
+        model = AutoModel.from_pretrained(
+            self._model_name,
+            local_files_only=True,
+            use_safetensors=False,
+        )
+        processor = AutoProcessor.from_pretrained(  # type: ignore[no-untyped-call]
+            self._model_name,
+            local_files_only=True,
+        )
         model.eval()
         # Resolve device: honour explicit override, else CUDA → CPU.
         resolved_device = self._device

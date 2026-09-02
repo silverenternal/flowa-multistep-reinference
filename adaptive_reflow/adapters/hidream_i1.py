@@ -90,6 +90,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.contracts import MechanismId
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -815,8 +816,12 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
     state_shape: tuple[int, ...] = HIDREAM_I1_STATE_SHAPE
     # Mechanism ID — used as the leading entry of every bundle's
     # ``provenance`` tuple so the audit trail can trace a round back
-    # to this adapter implementation.
-    mechanism_id: str = HIDREAM_I1_MECHANISM_ID
+    # to this adapter implementation. Standardised on the typed
+    # :class:`contracts.MechanismId` alias (matches
+    # :class:`LuminaImage20Adapter.mechanism_id`); ``MechanismId`` is
+    # a ``NewType("MechanismId", str)`` so this remains
+    # ``str``-compatible at runtime (r17-audit P-03).
+    mechanism_id: MechanismId = MechanismId(HIDREAM_I1_MECHANISM_ID)
 
     def __init__(
         self,

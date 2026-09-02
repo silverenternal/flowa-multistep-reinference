@@ -53,7 +53,11 @@ def test_register_all_default_populates_eight_ports() -> None:
     assert isinstance(manifest, PortManifest)
     assert manifest.total_registered() >= 16  # 14 sched + 8 merge + ...
     families = manifest.families()
-    assert set(families.keys()) == {
+    # The LCM extension (D1-D4) adds two new ports — DynamicsProtocol and
+    # IntegratorProtocol — that split the legacy ``solve_ode`` seam. The
+    # canonical eight remain; the LCM seam is opt-in via ``DynamicsPort``
+    # / ``SolverPort`` registration.
+    canonical_eight = {
         "SchedulerProtocol",
         "PolicyDriverProtocol",
         "MergeOperatorProtocol",
@@ -63,6 +67,8 @@ def test_register_all_default_populates_eight_ports() -> None:
         "EvaluatorProtocol",
         "EnvelopeCriterionProtocol",
     }
+    lcm_extension = {"DynamicsProtocol", "IntegratorProtocol"}
+    assert set(families.keys()) == canonical_eight | lcm_extension
 
 
 def test_register_all_default_is_idempotent() -> None:
@@ -203,6 +209,8 @@ def test_enumerate_ports_yields_eight_pairs() -> None:
     """``enumerate_ports`` yields the eight canonical port names."""
     ports = list(enumerate_ports())
     names = [name for name, _ in ports]
+    # LCM extension (D1-D4): DynamicsProtocol + IntegratorProtocol added
+    # after the eight canonical ports.
     assert names == [
         "SchedulerProtocol",
         "PolicyDriverProtocol",
@@ -212,6 +220,8 @@ def test_enumerate_ports_yields_eight_pairs() -> None:
         "RestartMixerProtocol",
         "EvaluatorProtocol",
         "EnvelopeCriterionProtocol",
+        "DynamicsProtocol",
+        "IntegratorProtocol",
     ]
 
 

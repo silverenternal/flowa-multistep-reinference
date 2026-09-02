@@ -77,6 +77,8 @@ Tasks satisfied:
 """
 from __future__ import annotations
 
+from typing import Any
+
 from .adapter import (
     AdapterCapabilities,
     CapabilityMismatchError,
@@ -85,6 +87,26 @@ from .adapter import (
     FlowMatchingODEAdapter,
     RestartPolicy,
     validate_capabilities,
+)
+# D8: typed Condition discriminated union.
+#
+# Import the submodule lazily via ``__getattr__`` to break the
+# ``universal`` → ``contracts.__init__`` → ``envelope`` →
+# ``molecular.envelope`` → ``molecular.__init__`` →
+# ``molecular.calibration_protocols`` → ``universal`` re-entry cycle.
+# The ``__getattr__`` resolver below (registered as the LAST block of
+# this module) evaluates ``adaptive_reflow.contracts.condition`` on
+# first lookup, AFTER ``adaptive_reflow.universal`` has finished its
+# own init. ``state.py`` already uses this lazy-import pattern for
+# the same reason.
+from .condition_injection import (
+    AugmentingConditionInjector,
+    ConditionInjectionProtocol,
+    ConditionInjectorKind,
+    NullConditionInjector,
+    PassthroughConditionInjector,
+    default_null_injector,
+    validate_condition_injector,
 )
 from .envelope import (
     ArtifactHash,
@@ -102,6 +124,17 @@ from .evaluator import (
 from .evaluator import (
     Evaluator,
     validate_evaluator_artifact_hash,
+)
+from .materialization import (
+    EnvelopeState,
+    HeterogeneousCategoricalMaterializer,
+    LossTolerance,
+    MATERIALIZER_NOOP_DIGEST,
+    MaterializationRouteProtocol,
+    MaterializerHandle,
+    NativeStateBundle,
+    NoOpMaterializer,
+    default_materializer,
 )
 from .mixer import (
     DiscreteIdentityMixer,
@@ -140,6 +173,9 @@ __all__ = [
     # Pure-data carriers — envelope
     "EnvelopeClassification",
     "EnvelopeCriterion",
+    # Pure-data carriers — materialization (D2)
+    "EnvelopeState",
+    "NativeStateBundle",
     # String enums
     "NORMALIZATION_KINDS",
     "REFERENCE_FRAMES",
@@ -156,10 +192,39 @@ __all__ = [
     "Predicate",
     # NewType aliases — evaluator (alias)
     "EvaluatorArtifactHash",
+    # NewType aliases — materialization (D2)
+    "LossTolerance",
+    "MATERIALIZER_NOOP_DIGEST",
+    "MaterializerHandle",
     # Protocols
+    "Condition",
+    "ConditionInjectionProtocol",
+    "ConditionInjectorKind",
+    "ConditionKind",
     "Evaluator",
     "FlowMatchingODEAdapter",
+    "MaterializationRouteProtocol",
     "RestartMixer",
+    # Concrete condition kinds (D8)
+    "BFNInpaintCondition",
+    "CFGCondition",
+    "CONDITION_KINDS",
+    "InpaintingCondition",
+    "MappingConditionAdapter",
+    "NullCondition",
+    "PropertyCondition",
+    "condition_kind_of",
+    "condition_to_mapping",
+    "wrap_condition",
+    # Concrete condition injectors (D3)
+    "AugmentingConditionInjector",
+    "NullConditionInjector",
+    "PassthroughConditionInjector",
+    "default_null_injector",
+    # Concrete materializers (D2)
+    "HeterogeneousCategoricalMaterializer",
+    "NoOpMaterializer",
+    "default_materializer",
     # Standard concrete mixers
     "DiscreteIdentityMixer",
     "LatentConvexMixer",
@@ -169,7 +234,9 @@ __all__ = [
     "CapabilityMissingError",
     # Validators — state / adapter
     "validate_capabilities",
+    "validate_condition",
     "validate_condition_delta",
+    "validate_condition_injector",
     "validate_integrator_trace",
     "validate_state_bundle",
     # Validators — envelope
@@ -185,3 +252,75 @@ __all__ = [
     "validate_unit_factor",
     "validate_unit_float",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Lazy re-exports for the typed Condition discriminated union (D8).
+#
+# ``adaptive_reflow.contracts.condition`` is stdlib-only and depends on no
+# other ``adaptive_reflow`` module, so a direct eager import is fine for
+# NORMAL call sites. But importing the ``contracts`` package would
+# trigger its eager ``__init__`` chain
+# (``envelope`` → ``molecular.envelope`` → ``molecular.__init__`` →
+# ``molecular.calibration_protocols`` → ``universal`` re-entry), which
+# creates a circular import when ``molecular`` is mid-init. We resolve
+# the cycle by importing the ``condition`` submodule DIRECTLY here
+# AFTER all the other eager imports are settled — at this point the
+# ``contracts`` package's __init__ may not have run yet, but importing
+# ``adaptive_reflow.contracts.condition`` evaluates only that module
+# (since Python resolves submodules lazily), bypassing the contracts
+# package init chain entirely.
+# ---------------------------------------------------------------------------
+
+try:
+    from adaptive_reflow.contracts import condition as _condition_module  # noqa: E402
+
+    # Re-bind names into the universal namespace.
+    BFNInpaintCondition = _condition_module.BFNInpaintCondition  # noqa: F811
+    CFGCondition = _condition_module.CFGCondition  # noqa: F811
+    CONDITION_KINDS = _condition_module.CONDITION_KINDS  # noqa: F811
+    Condition = _condition_module.Condition  # noqa: F811
+    ConditionKind = _condition_module.ConditionKind  # noqa: F811
+    InpaintingCondition = _condition_module.InpaintingCondition  # noqa: F811
+    MappingConditionAdapter = _condition_module.MappingConditionAdapter  # noqa: F811
+    NullCondition = _condition_module.NullCondition  # noqa: F811
+    PropertyCondition = _condition_module.PropertyCondition  # noqa: F811
+    condition_kind_of = _condition_module.condition_kind_of  # noqa: F811
+    condition_to_mapping = _condition_module.condition_to_mapping  # noqa: F811
+    validate_condition = _condition_module.validate_condition  # noqa: F811
+    wrap_condition = _condition_module.wrap_condition  # noqa: F811
+    del _condition_module
+except ImportError:
+    # The contracts module may not be importable when ``adaptive_reflow`` is
+    # partially initialized (e.g., mid-circular-import from ``molecular``).
+    # In that case we provide a ``__getattr__`` shim that re-attempts the
+    # import on first attribute access — this matches the
+    # ``state.py``/``adapter.py`` lazy-import pattern already used elsewhere.
+    _LAZY_CONDITION_NAMES = frozenset(
+        {
+            "BFNInpaintCondition",
+            "CFGCondition",
+            "CONDITION_KINDS",
+            "Condition",
+            "ConditionKind",
+            "InpaintingCondition",
+            "MappingConditionAdapter",
+            "NullCondition",
+            "PropertyCondition",
+            "condition_kind_of",
+            "condition_to_mapping",
+            "validate_condition",
+            "wrap_condition",
+        }
+    )
+
+    def __getattr__(name: str) -> Any:
+        if name in _LAZY_CONDITION_NAMES:
+            from adaptive_reflow.contracts import condition as _cond_mod
+
+            value = getattr(_cond_mod, name)
+            globals()[name] = value
+            return value
+        raise AttributeError(
+            f"module {__name__!r} has no attribute {name!r}"
+        )

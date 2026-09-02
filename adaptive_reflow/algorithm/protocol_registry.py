@@ -107,6 +107,27 @@ BLENDER_FAMILIES: frozenset[str] = frozenset(
     }
 )
 
+DYNAMICS_FAMILIES: frozenset[str] = frozenset(
+    {
+        "continuous_fm",
+        "ctmc",
+        "bfn",
+        "flowmol3_composite",
+        "protbfn_bfn",
+    }
+)
+
+SOLVER_FAMILIES: frozenset[str] = frozenset(
+    {
+        "euler",
+        "rk4",
+        "heun",
+        "adaptive_rk4",
+        "ctmc_euler_heun",
+        "bfn",
+    }
+)
+
 
 # ---------------------------------------------------------------------------
 # Lazy-import registry (avoids circular imports with the concrete modules)
@@ -228,12 +249,52 @@ def _build_blender_registry() -> dict[str, Any]:
     }
 
 
+def _build_dynamics_registry() -> dict[str, Any]:
+    from .dynamics import (
+        BFNDynamics,
+        ContinuousFMDynamics,
+        CTMCDynamics,
+        FlowMol3Dynamics,
+        ProtBFNDynamics,
+    )
+
+    return {
+        "continuous_fm": ContinuousFMDynamics,
+        "ctmc": CTMCDynamics,
+        "bfn": BFNDynamics,
+        "flowmol3_composite": FlowMol3Dynamics,
+        "protbfn_bfn": ProtBFNDynamics,
+    }
+
+
+def _build_solver_registry() -> dict[str, Any]:
+    from .solver import (
+        AdaptiveRK4Solver,
+        BFNSolver,
+        CTMCEulerHeunSolver,
+        EulerSolver,
+        HeunSolver,
+        RK4Solver,
+    )
+
+    return {
+        "euler": EulerSolver,
+        "rk4": RK4Solver,
+        "heun": HeunSolver,
+        "adaptive_rk4": AdaptiveRK4Solver,
+        "ctmc_euler_heun": CTMCEulerHeunSolver,
+        "bfn": BFNSolver,
+    }
+
+
 # Module-level lazy accessor. Built lazily so concrete modules can be
 # imported without triggering a circular import at package load time.
 _SCHEDULER_REG_CACHE: dict[str, Any] | None = None
 _POLICY_DRIVER_REG_CACHE: dict[str, Any] | None = None
 _MERGE_OPERATOR_REG_CACHE: dict[str, Any] | None = None
 _BLENDER_REG_CACHE: dict[str, Any] | None = None
+_DYNAMICS_REG_CACHE: dict[str, Any] | None = None
+_SOLVER_REG_CACHE: dict[str, Any] | None = None
 
 
 def _scheduler_registry() -> dict[str, Any]:
@@ -262,6 +323,20 @@ def _blender_registry() -> dict[str, Any]:
     if _BLENDER_REG_CACHE is None:
         _BLENDER_REG_CACHE = _build_blender_registry()
     return _BLENDER_REG_CACHE
+
+
+def _dynamics_registry() -> dict[str, Any]:
+    global _DYNAMICS_REG_CACHE
+    if _DYNAMICS_REG_CACHE is None:
+        _DYNAMICS_REG_CACHE = _build_dynamics_registry()
+    return _DYNAMICS_REG_CACHE
+
+
+def _solver_registry() -> dict[str, Any]:
+    global _SOLVER_REG_CACHE
+    if _SOLVER_REG_CACHE is None:
+        _SOLVER_REG_CACHE = _build_solver_registry()
+    return _SOLVER_REG_CACHE
 
 
 # ---------------------------------------------------------------------------
@@ -313,6 +388,8 @@ def _ensure_protocol_registry() -> None:
         PROTOCOL_REGISTRY["PolicyDriverProtocol"] = dict(_policy_driver_registry())
         PROTOCOL_REGISTRY["MergeOperatorProtocol"] = dict(_merge_operator_registry())
         PROTOCOL_REGISTRY["RestartBlenderProtocol"] = dict(_blender_registry())
+        PROTOCOL_REGISTRY["DynamicsProtocol"] = dict(_dynamics_registry())
+        PROTOCOL_REGISTRY["IntegratorProtocol"] = dict(_solver_registry())
 
 
 # Auto-populate PROTOCOL_REGISTRY on import so callers see the full
@@ -437,6 +514,20 @@ def build_blender_from_config(config: Mapping[str, Any]) -> Any:
     return cls.from_config(dict(config))
 
 
+def build_dynamics_from_config(config: Mapping[str, Any]) -> Any:
+    """Polymorphic :class:`DynamicsProtocol` factory."""
+    family = validate_config_schema(config, protocol_name="DynamicsProtocol")
+    cls = PROTOCOL_REGISTRY["DynamicsProtocol"][family]
+    return cls.from_config(dict(config))
+
+
+def build_solver_from_config(config: Mapping[str, Any]) -> Any:
+    """Polymorphic :class:`IntegratorProtocol` factory."""
+    family = validate_config_schema(config, protocol_name="IntegratorProtocol")
+    cls = PROTOCOL_REGISTRY["IntegratorProtocol"][family]
+    return cls.from_config(dict(config))
+
+
 def enumerate_implementations(
     protocol_name: str,
 ) -> Iterable[tuple[str, Any]]:
@@ -452,15 +543,19 @@ def enumerate_implementations(
 
 __all__ = [
     "BLENDER_FAMILIES",
+    "DYNAMICS_FAMILIES",
     "MERGE_OPERATOR_FAMILIES",
     "POLICY_DRIVER_FAMILIES",
     "PROTOCOL_REGISTRY",
     "ProtocolRegistryError",
     "SCHEDULER_FAMILIES",
+    "SOLVER_FAMILIES",
     "build_blender_from_config",
+    "build_dynamics_from_config",
     "build_merge_operator_from_config",
     "build_policy_driver_from_config",
     "build_scheduler_from_config",
+    "build_solver_from_config",
     "enumerate_implementations",
     "registered_families",
     "validate_config_schema",

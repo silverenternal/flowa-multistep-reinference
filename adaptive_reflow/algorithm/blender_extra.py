@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Optional
 
 from adaptive_reflow.universal.state import StateBundle
 
@@ -43,6 +43,94 @@ from .blender import (
     _make_blend_bundle,
     _sigmoid,
 )
+from ._derivation import (
+    DEFAULT_MEMORY_FRACTION_FALLBACK,
+    DerivationContext,
+    DerivationRule,
+    PolyakMemoryFraction,
+    default_memory_fraction,
+    make_derivation_context,
+)
+
+
+# ---------------------------------------------------------------------------
+# Parameter-free default-memory-fraction entry point (DERIV-001 proof)
+# ---------------------------------------------------------------------------
+#
+# The canonical ``memory_fraction`` consumed by every blender in
+# this module is the ADR-0010 cosine-driven ``1 - n_cap``. DERIV-001
+# establishes the principle that every framework hyperparameter
+# SHOULD trace to a paper quantity (A_g / B_g / C_g / e_rho) or a
+# mathematical theory (Lipschitz, variance-preserving, OT, BL
+# convergence, Fisher / Polyak / information geometry); hand-set
+# constants stay as named provenance.
+#
+# :func:`derive_default_memory_fraction` is the minimal proof:
+# when the caller supplies a :class:`DerivationContext` carrying
+# the per-round W2 residuals, the function returns the
+# :class:`PolyakMemoryFraction` closed-form value
+# ``W2_round_t / (W2_round_0 + W2_round_t)`` (Polyak 1969 step
+# applied to the Wasserstein-gap ratio). When the context is
+# missing the W2 inputs, the function falls back to ``1 - n_cap``
+# verbatim so existing callers keep working unchanged.
+#
+# The engine / runner is the canonical caller: it constructs the
+# context from the per-round OT metric ledger and the per-round
+# schedule sample, then passes the returned value as the
+# ``memory_fraction`` kwarg to ``RestartBlenderProtocol.blend``.
+# When the engine does NOT supply a context (legacy callers, or
+# callers without a W2 estimator), the existing ``1 - n_cap``
+# path is preserved.
+#
+# This is additive: no public blender signature changes; the
+# helper is a new entry point that engine code can opt-into
+# without breaking the 2356+15 existing tests.
+
+
+def derive_default_memory_fraction(
+    *,
+    n_cap: Optional[float] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return the per-round ``memory_fraction`` from a derivation rule.
+
+    Parameters
+    ----------
+    n_cap:
+        The current round's ``n_cap``. Used by the ADR-0010
+        cosine-driven fallback when ``context`` is missing or
+        incomplete.
+    context:
+        The :class:`DerivationContext` carrying per-round W2
+        residuals (and other paper / scheduler inputs). When
+        supplied with non-``None`` ``W2_round_t`` and
+        ``W2_round_0``, the :class:`PolyakMemoryFraction` rule
+        derives the memory fraction from the closed-form ratio
+        (s1 Principle 3, s3 refinement).
+    rule:
+        The :class:`DerivationRule` to apply. Defaults to
+        :class:`PolyakMemoryFraction` (the DERIV-001 proof).
+
+    Returns
+    -------
+    float
+        A value in ``[0, 1]``. Falls back to ``1 - n_cap``
+        (ADR-0010) when the chosen rule cannot derive from the
+        supplied context, preserving the existing wiring.
+
+    Notes
+    -----
+    This function is the **minimal application** of the
+    Hyperparameter-Freeness Principle (DERIV-001) — a single
+    component proof. Future work may wire the same pattern into
+    the other 22 framework hyperparameters cataloged in
+    ``docs/algorithm-deep-uplift-plan.md`` (meanflow ``alpha_grad``,
+    evidence-driver ``eps_threshold``, handoff ``window``,
+    etc.), each following the abstract :class:`DerivationRule`
+    protocol with its own concrete subclass.
+    """
+    return default_memory_fraction(context, n_cap=n_cap, rule=rule)
 
 
 class OTLinearBlender:
@@ -293,9 +381,15 @@ class MultiTemperatureDistanceDecayBlender:
 
 __all__ = [
     "BarycentricBlender",
+    "DEFAULT_MEMORY_FRACTION_FALLBACK",
+    "DerivationContext",
+    "DerivationRule",
     "JointOTLinearBlender",
     "MultiTemperatureDistanceDecayBlender",
     "OTLinearBlender",
+    "PolyakMemoryFraction",
+    "derive_default_memory_fraction",
+    "make_derivation_context",
 ]
 
 

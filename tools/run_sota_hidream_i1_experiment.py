@@ -401,6 +401,100 @@ def _generate_pngs_baseline(
     return wall, paths
 
 
+def _make_per_round_callback(
+    *,
+    sample_index: int,
+    n_rounds: int,
+    per_round_nfe: int,
+    framework_dir: Path,
+) -> Any:
+    """Return a diffusers ``callback_on_step_end`` closure that decodes latents and writes per-round PNGs.
+
+    The closure fires on every denoising step; it captures a PNG at the
+    boundary of each framework round (i.e. after step index
+    ``(r + 1) * per_round_nfe - 1`` for round ``r``) into
+    ``framework_round{r}/sample_{sample_index:04d}.png``. The closure
+    also writes the FINAL round to the legacy single-shot path
+    ``framework/sample_{sample_index:04d}.png`` so the existing
+    :func:`_run_image_eval` subprocess (which consumes
+    ``samples_dir/output_dir/framework`` byte-stable) keeps working.
+
+    The total NFE budget for the parent ``pipeline(...)`` call is
+    ``n_rounds * per_round_nfe`` (the closure only fires at the round
+    boundaries, not at every step, so per-round decode overhead is
+    bounded by ``n_rounds``).
+
+    Phase 4 contract
+    ----------------
+
+    * Returns ``callback_kwargs`` unchanged so the pipeline continues.
+    * Runs under ``torch.no_grad`` to avoid building an autograd graph.
+    * Decodes through the pipeline's VAE in its native dtype (bf16 by
+      default). The decoded tensor is moved to CPU before ``numpy()``
+      so the GPU workspace is released immediately.
+    * On :class:`torch.cuda.OutOfMemoryError` (rare; only possible on
+      24 GB rigs where the per-round VAE decode overlaps with the
+      transformer weights), writes a ``.skipped`` sentinel next to the
+      expected PNG and continues without aborting the chain.
+
+    NOTE — diffusers HiDreamImagePipeline's ``callback_on_step_end``
+    signature (verified in installed diffusers 0.30+) is
+    ``callback(self, step_index, timestep, callback_kwargs)`` and the
+    closure must return ``callback_kwargs`` so the pipeline state
+    flows forward. The closure is intentionally a no-op for steps
+    that are not at a round boundary.
+    """
+    import torch
+
+    def _cb(pipe: Any, step_index: int, timestep: Any, callback_kwargs: dict[str, Any]) -> dict[str, Any]:
+        completed_steps = int(step_index) + 1
+        if completed_steps % int(per_round_nfe) != 0:
+            return callback_kwargs
+        round_idx = (completed_steps // int(per_round_nfe)) - 1
+        if round_idx < 0 or round_idx >= int(n_rounds):
+            return callback_kwargs
+        try:
+            with torch.no_grad():
+                latents = callback_kwargs.get("latents")
+                if latents is None:
+                    return callback_kwargs
+                # FLUX.1 VAE convention: latent scaling factor before decode.
+                scaling_factor = float(getattr(pipe.vae.config, "scaling_factor", 1.0))
+                latents_scaled = (latents / scaling_factor).to(pipe.vae.dtype)
+                # ``pipe.vae.decode`` returns a DecoderOutput; take .sample.
+                decoded = pipe.vae.decode(latents_scaled, return_dict=False)[0]
+                image = (decoded / 2 + 0.5).clamp(0, 1)
+                image = image[0].cpu().permute(1, 2, 0).float().numpy()
+            arr = (image * 255.0).round().astype(np.uint8)
+            pil = _to_pil(arr)
+            round_dir = framework_dir / f"framework_round{round_idx}"
+            round_dir.mkdir(parents=True, exist_ok=True)
+            round_path = round_dir / f"sample_{int(sample_index):04d}.png"
+            pil.save(round_path)
+            # Final round also writes the legacy single-shot endpoint
+            # so the existing ``_run_image_eval(samples_dir=framework)``
+            # subprocess keeps scoring the endpoint byte-stable.
+            if round_idx == int(n_rounds) - 1:
+                legacy_path = framework_dir / f"sample_{int(sample_index):04d}.png"
+                pil.save(legacy_path)
+        except Exception as exc:  # noqa: BLE001
+            # OOM or decode failure: emit a sentinel + log; do not abort.
+            sentinel_dir = framework_dir / f"framework_round{round_idx}"
+            sentinel_dir.mkdir(parents=True, exist_ok=True)
+            (sentinel_dir / f"sample_{int(sample_index):04d}.png.skipped").write_text(
+                repr(exc), encoding="utf-8",
+            )
+            print(
+                f"[run_sota_hidream_i1_experiment] per_round_decode_skipped "
+                f"round={round_idx} sample={int(sample_index)}: {exc!r}",
+                file=sys.stderr,
+                flush=True,
+            )
+        return callback_kwargs
+
+    return _cb
+
+
 def _generate_pngs_framework(
     *,
     pipeline: Any,
@@ -414,53 +508,91 @@ def _generate_pngs_framework(
     seed: int,
     output_dir: Path,
     device: str,
-) -> tuple[float, list[Path]]:
-    """Run the multi-round framework; write PNGs.
+) -> tuple[float, list[Path], list[Path]]:
+    """Run the multi-round framework; write per-round PNGs + endpoint PNG.
 
-    The framework arm runs the pipeline once per chain with a fixed
-    ``per_round_nfe`` step budget (the sum across rounds matches the
-    baseline's ``--baseline-nfe`` when ``per_round_nfe ==
-    baseline_nfe // n_rounds``). Each chain writes its single endpoint
-    PNG. Returns ``(wall_clock_s, png_paths)``.
+    Phase 4 contract: the framework arm invokes the pipeline ONCE per
+    chain with ``num_inference_steps = n_rounds * per_round_nfe`` and
+    installs a :func:`_make_per_round_callback` hook that decodes
+    latents + saves a PNG at every round boundary into
+    ``framework_round{r}/sample_{i:04d}.png``. The final round also
+    writes the legacy single-shot endpoint
+    ``framework/sample_{i:04d}.png`` so
+    :func:`_run_image_eval` (the subprocess bridge over
+    ``tools/run_image_eval.py``) keeps scoring the endpoint byte-stable.
+
+    The total NFE budget equals ``n_rounds * per_round_nfe``, which
+    matches the baseline's ``--baseline-nfe`` when ``per_round_nfe ==
+    baseline_nfe // n_rounds`` (the harness's default).
+
+    Returns ``(wall_clock_s, endpoint_png_paths, per_round_png_paths)``
+    where ``per_round_png_paths`` is the flat list of PNGs across all
+    rounds and all chains (one entry per ``(chain, round)`` pair).
     """
     import torch
 
     out_dir = output_dir / "framework"
     out_dir.mkdir(parents=True, exist_ok=True)
-    paths: list[Path] = []
+    endpoint_paths: list[Path] = []
+    per_round_paths: list[Path] = []
     started = time.perf_counter()
     target_device = torch.device(device) if device else (
         torch.device("cuda" if torch.cuda.is_available() else "cpu")
     )
+    total_nfe = int(n_rounds) * int(per_round_nfe)
     for i in range(int(n_mols)):
         prompt = prompts[i % len(prompts)]
         chain_seed = int(seed) + i * 1009
         generator = torch.Generator().manual_seed(int(chain_seed))
+        # Build the callback BEFORE the call so the closure captures
+        # the correct sample_index / n_rounds / per_round_nfe.
+        callback = _make_per_round_callback(
+            sample_index=int(i),
+            n_rounds=int(n_rounds),
+            per_round_nfe=int(per_round_nfe),
+            framework_dir=out_dir,
+        )
         result = pipeline(
             prompt=prompt,
-            num_inference_steps=int(per_round_nfe),
+            num_inference_steps=int(total_nfe),
             guidance_scale=float(guidance_scale),
             height=int(resolution),
             width=int(resolution),
             generator=generator,
+            callback_on_step_end=callback,
+            callback_on_step_end_tensor_inputs=["latents"],
         )
-        images = getattr(result, "images", None) or result
-        if isinstance(images, list) and images:
-            arr = np.asarray(images[0])
-        else:
-            arr = np.asarray(images)
-        img = _to_pil(arr)
-        path = out_dir / f"sample_{i:04d}.png"
-        img.save(path)
-        paths.append(path)
+        # The callback writes the endpoint PNG on the final round; the
+        # pipeline's own return value is also a valid endpoint image
+        # (identical pixels) — we only write it if the callback did
+        # NOT (e.g. diffusers skipped the final round boundary).
+        endpoint_path = out_dir / f"sample_{i:04d}.png"
+        if not endpoint_path.exists():
+            images = getattr(result, "images", None) or result
+            if isinstance(images, list) and images:
+                arr = np.asarray(images[0])
+            else:
+                arr = np.asarray(images)
+            _to_pil(arr).save(endpoint_path)
+        endpoint_paths.append(endpoint_path)
+        # Collect per-round paths written by the callback for the summary.
+        for r in range(int(n_rounds)):
+            rdir = out_dir / f"framework_round{r}"
+            rp = rdir / f"sample_{i:04d}.png"
+            if rp.exists():
+                per_round_paths.append(rp)
+            else:
+                # Fall back to legacy endpoint if per-round decode was skipped.
+                per_round_paths.append(endpoint_path)
         print(
             f"[run_sota_hidream_i1_experiment] framework chain "
             f"{i + 1}/{int(n_mols)} ({int(n_rounds)} rounds x "
-            f"{int(per_round_nfe)} NFE) -> {path.name}",
+            f"{int(per_round_nfe)} NFE) -> {endpoint_path.name} "
+            f"+ {len(per_round_paths)} per-round PNGs",
             flush=True,
         )
     wall = float(time.perf_counter() - started)
-    return wall, paths
+    return wall, endpoint_paths, per_round_paths
 
 
 # ---------------------------------------------------------------------------
@@ -558,8 +690,26 @@ def _run_image_eval(
     ]
     if reference_stats is not None:
         cmd.extend(["--reference-stats", str(reference_stats)])
+    # Audit #2 (2026-09): ``run_image_eval.py`` setdefaults
+    # ``CUDA_VISIBLE_DEVICES=0`` at import time so the bare
+    # subprocess invocation previously saw only physical GPU 0 and
+    # --device cuda:1 (HiDream's default) became invalid. Pin the
+    # eval subprocess to BOTH GPUs so ``cuda:1`` resolves correctly.
+    # We pass an explicit ``env`` mapping so the parent harness's
+    # env doesn't leak (HF cache, JAX_PLATFORMS, etc.) — the audit
+    # contract is that ``HF_HUB_OFFLINE`` propagates; we keep it
+    # when the parent had it.
+    spawn_env = dict(os.environ)
+    if "CUDA_VISIBLE_DEVICES" not in spawn_env:
+        spawn_env["CUDA_VISIBLE_DEVICES"] = "0,1"
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+            env=spawn_env,
+        )
     except (OSError, subprocess.SubprocessError) as exc:  # pragma: no cover
         print(
             f"[run_sota_hidream_i1_experiment] image_eval_spawn_failed:"
@@ -686,26 +836,52 @@ def _emit_synthetic_pngs(
     *,
     output_dir: Path,
     n_mols: int,
+    n_rounds: int = 1,
     resolution: int,
     seed: int,
     tag: str,
-) -> tuple[float, list[Path]]:
-    """Fallback PIL-noise PNG emission when no pipeline is available."""
+) -> tuple[float, list[Path], list[Path]]:
+    """Fallback PIL-noise PNG emission when no pipeline is available.
+
+    Phase 4 contract: when ``n_rounds > 1``, this helper ALSO emits
+    ``n_rounds`` per-round synthetic PNGs under
+    ``output_dir/framework_round{r}/sample_{i:04d}.png`` so the
+    no-weights smoke path remains consistent with the per-round
+    framework contract. The legacy single-shot endpoint
+    ``output_dir/sample_{i:04d}.png`` is preserved for back-compat with
+    :func:`_run_image_eval`.
+
+    Returns ``(wall_clock_s, endpoint_png_paths, per_round_png_paths)``.
+    """
     from PIL import Image
 
     output_dir.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(int(seed))
     started = time.perf_counter()
-    paths: list[Path] = []
+    endpoint_paths: list[Path] = []
+    per_round_paths: list[Path] = []
     for i in range(int(n_mols)):
         arr = rng.integers(
             0, 256, size=(int(resolution), int(resolution), 3), dtype=np.uint8,
         )
-        path = output_dir / f"sample_{i:04d}.png"
-        Image.fromarray(arr, mode="RGB").save(path)
-        paths.append(path)
+        endpoint_path = output_dir / f"sample_{i:04d}.png"
+        Image.fromarray(arr, mode="RGB").save(endpoint_path)
+        endpoint_paths.append(endpoint_path)
+        # Phase 4 contract: per-round dirs ONLY exist for the framework
+        # arm with ``n_rounds > 1``. Baseline (or framework with
+        # ``n_rounds == 1``) emits no per-round dirs; ``per_round_paths``
+        # is left empty so ``summary.framework.per_round_png_count == 0``.
+        if str(tag) == "framework" and int(n_rounds) > 1:
+            # Per-round dirs: ``framework_round{r}/sample_{i:04d}.png``.
+            for r in range(int(n_rounds)):
+                rdir = output_dir / f"framework_round{r}"
+                rdir.mkdir(parents=True, exist_ok=True)
+                rp = rdir / f"sample_{i:04d}.png"
+                if not rp.exists():
+                    Image.fromarray(arr, mode="RGB").save(rp)
+                per_round_paths.append(rp)
     wall = float(time.perf_counter() - started)
-    return wall, paths
+    return wall, endpoint_paths, per_round_paths
 
 
 # ---------------------------------------------------------------------------
@@ -850,6 +1026,20 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     args = parser.parse_args(argv)
     if int(args.n_mols) <= 0:
         raise ValueError("n_mols must be >= 1")
+    # Audit #2 (2026-09): soft warning for n_mols < 2048. The FID math
+    # requires np.cov on 2048-d features; with n_mols << d the
+    # covariance is rank-deficient and the Fréchet distance becomes
+    # numerically unstable. We do not hard-fail because paper-comparable
+    # MJHQ-30K is the canonical 30K but in-house deltas may use smaller n.
+    if int(args.n_mols) < 2048:
+        warnings.warn(
+            f"n_mols={int(args.n_mols)} < 2048: FID covariance will be "
+            "rank-deficient (d > n); reported FID is numerically "
+            "unstable. Use n_mols >= 2048 for a stable relative "
+            "comparison and ~30000 for paper-comparable magnitudes.",
+            UserWarning,
+            stacklevel=2,
+        )
     if int(args.n_rounds) <= 0:
         raise ValueError("n_rounds must be >= 1")
     if int(args.baseline_nfe) <= 0:
@@ -919,16 +1109,18 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
             flush=True,
         )
-        baseline_wall, baseline_paths = _emit_synthetic_pngs(
+        baseline_wall, baseline_paths, _baseline_per_round = _emit_synthetic_pngs(
             output_dir=output_dir / "baseline",
             n_mols=n_mols,
+            n_rounds=1,
             resolution=resolution,
             seed=int(args.seed),
             tag="baseline",
         )
-        framework_wall, framework_paths = _emit_synthetic_pngs(
+        framework_wall, framework_paths, framework_per_round_paths = _emit_synthetic_pngs(
             output_dir=output_dir / "framework",
             n_mols=n_mols,
+            n_rounds=int(n_rounds),
             resolution=resolution,
             seed=int(args.seed) + 1,
             tag="framework",
@@ -950,7 +1142,7 @@ def main(argv: list[str] | None = None) -> int:
             f"{len(baseline_paths)} PNGs wall={baseline_wall:.1f}s",
             flush=True,
         )
-        framework_wall, framework_paths = _generate_pngs_framework(
+        framework_wall, framework_paths, framework_per_round_paths = _generate_pngs_framework(
             pipeline=pipeline,
             prompts=prompts,
             n_mols=int(n_mols),
@@ -965,7 +1157,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(
             f"[run_sota_hidream_i1_experiment] framework: "
-            f"{len(framework_paths)} PNGs wall={framework_wall:.1f}s",
+            f"{len(framework_paths)} endpoint PNGs + "
+            f"{len(framework_per_round_paths)} per-round PNGs "
+            f"wall={framework_wall:.1f}s",
             flush=True,
         )
 
@@ -1056,6 +1250,17 @@ def main(argv: list[str] | None = None) -> int:
     md_path.write_text(md, encoding="utf-8")
     print(f"[run_sota_hidream_i1_experiment] wrote {md_path}", flush=True)
 
+    # Phase 4: surface the per-round PNG directories in summary.json so
+    # downstream TheoremAlignedFID.compute_per_round consumers can locate
+    # the per-round samples without re-globbing the output tree. The
+    # contract is additive: existing consumers that only read
+    # summary["framework"]["fid"] keep working byte-stable.
+    per_round_png_dirs: list[str] = []
+    if int(n_rounds) > 1:
+        for r in range(int(n_rounds)):
+            rdir_rel = f"framework/framework_round{r}"
+            per_round_png_dirs.append(rdir_rel)
+
     summary: dict[str, Any] = {
         "schema_version": OUTPUT_SCHEMA_VERSION,
         "n_mols": int(n_mols),
@@ -1086,6 +1291,8 @@ def main(argv: list[str] | None = None) -> int:
             "clip_score_mean": framework_clip,
             "clip_score_error": framework_clip_err,
             "report": framework_report,
+            "per_round_png_dirs": per_round_png_dirs,
+            "per_round_png_count": int(len(framework_per_round_paths)),
         },
     }
     json_path = output_dir / "summary.json"

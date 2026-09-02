@@ -26,7 +26,20 @@ import string
 from collections.abc import Mapping
 from typing import Any
 
-from hypothesis import strategies as st
+import pytest
+
+# Preflight: the property-based strategies below require ``hypothesis``.
+# On sandboxes where ``hypothesis`` is not vendored (the default CPU-only
+# rig), pytest collection aborts the entire ``tests/property/`` subtree
+# with ``ModuleNotFoundError: No module named 'hypothesis'``. The
+# import below is gated on the package being importable so collection
+# succeeds and the subtree reports a single clean SKIP rather than a
+# collection error.
+hypothesis_spec = pytest.importorskip(
+    "hypothesis",
+    reason="hypothesis not in venv (install via `uv pip install hypothesis`)",
+)
+from hypothesis import strategies as st  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Floats in the canonical envelopes

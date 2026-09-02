@@ -52,8 +52,9 @@ Module boundary
 
 from __future__ import annotations
 
+import logging
 import math
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import numpy as np
@@ -65,12 +66,34 @@ from adaptive_reflow.algorithm.scheduler._core import (
     ScheduleSample,
     default_cosine_scheduler,
 )
+from adaptive_reflow.algorithm.scheduler.regime_selector import (
+    DEFAULT_REGIME_SLACK,
+    RegimeAwareEpsSelector,
+    RegimeSelection,
+    build_regime_selector,
+    default_e_rho_provider,
+)
 from adaptive_reflow.contracts import (
     ArtifactHash,
     CosineScheduleSample,
     FactorValue,
+    RegimeGate,
     hash_artifact,
 )
+
+#: Module logger — the "scheduler log" the Lemma 4 regime warnings are
+#: emitted to (in addition to the in-memory
+#: :meth:`EvidenceDrivenScheduler.regime_violation_warnings` log, which
+#: is what tests and audit readers consume).
+_LOGGER = logging.getLogger(__name__)
+
+
+#: Sentinel used by :class:`EvidenceDrivenScheduler.__init__` to detect
+#: "the caller did not supply this argument" versus "the caller passed
+#: the default value". Required because Python's keyword-argument
+#: semantics cannot otherwise distinguish ``regime_aware=False`` (an
+#: explicit choice) from the inert default.
+_UNSET: Any = object()
 
 # ---------------------------------------------------------------------------
 # Module-level constants (canonical audit codes)
@@ -93,6 +116,20 @@ EVIDENCE_PID_SATURATED: str = "evidence_pid_saturated"
 #: (neutral) and emits this code so a reader can distinguish the
 #: "no signal" case from the "ratio present" case.
 EVIDENCE_RATIO_MISSING: str = "evidence_ratio_missing"
+
+#: Audit code prefix emitted on every regime-aware round, carrying the
+#: pre-clamp ``eps`` request, the Lemma 4 ceiling and the applied
+#: value. The per-outcome codes (``eps_regime_ok`` /
+#: ``eps_regime_clamped`` / ``eps_regime_infeasible``) come from
+#: :mod:`adaptive_reflow.algorithm.scheduler.regime_selector` and are
+#: appended verbatim, so an audit reader sees both the scheduler's view
+#: and the selector's.
+EVIDENCE_REGIME_GATED: str = "evidence_driven_eps_regime"
+
+#: Warning tag pushed onto
+#: :meth:`EvidenceDrivenScheduler.regime_violation_warnings` (and the
+#: module logger) whenever the Lemma 4 regime would have been violated.
+REGIME_VIOLATION_WARNING: str = "regime_violation_warning"
 
 
 # ---------------------------------------------------------------------------
@@ -244,6 +281,12 @@ class EvidenceDrivenScheduler:
         target_ratio: float = 0.99,
         k_eps: float = 0.5,
         eps_implicit_base: float | None = None,
+        regime_aware: bool | Any = _UNSET,
+        regime_selector: RegimeAwareEpsSelector | None = None,
+        e_rho_provider: Callable[[float], float] | None = None,
+        regime_slack: float | Any = _UNSET,
+        regime_selector_family: str | Any = _UNSET,
+        regime_gate: RegimeGate | None = None,
     ) -> None:
         """Construct the scheduler.
 
@@ -268,6 +311,38 @@ class EvidenceDrivenScheduler:
             scheduler emits
             ``ScheduleSample.eps_implicit = max(1e-6, eps_implicit_base + accumulated_delta)``
             and the runner threads it into the selection evaluator.
+        :param regime_aware: Phase-4 / Design #3 — opt-in Lemma 4 regime
+            enforcement. ``False`` (default) keeps the ``eps_implicit``
+            path byte-identical to Phase 3: no selector is consulted,
+            no extra audit codes are emitted, and ``config_hash`` /
+            ``to_config`` are unchanged. ``True`` routes every round's
+            PID-proposed ``eps`` through a
+            :class:`~adaptive_reflow.algorithm.scheduler.regime_selector.RegimeAwareEpsSelector`
+            so the emitted ``eps`` always satisfies
+            ``eps^2 < e_rho / log 2`` (paper Lemma 4, line 110-113);
+            a would-be violation is clamped to the ceiling and logged
+            as a regime-violation warning. Has no effect when
+            ``eps_implicit_base`` is ``None`` (there is no ``eps`` to
+            gate).
+        :param regime_selector: the concrete selector to consult when
+            ``regime_aware`` is ``True``. ``None`` builds one from
+            ``regime_selector_family``.
+        :param e_rho_provider: maps a round index (as a float) to the
+            exterior gap ``e_rho`` for that round. ``None`` with
+            ``regime_aware=True`` falls back to
+            :func:`~adaptive_reflow.contracts.paper_quantities.exterior_gap_e_rho`
+            at its documented ``rho`` / ``eta`` defaults.
+        :param regime_slack: strict-inequality slack subtracted from
+            ``sqrt(e_rho / log 2)`` so the emitted ``eps`` satisfies
+            Lemma 4's *strict* inequality in floating point.
+        :param regime_selector_family: selector family to build when
+            ``regime_selector`` is ``None`` (``"cosine_anneal"`` or
+            ``"convergence_adaptive"``).
+        :param regime_gate: optional :class:`RegimeGate` bundling
+            ``regime_aware`` / ``e_rho_provider`` / ``slack`` /
+            ``selector_family``. Explicitly-passed *non-default*
+            keyword arguments win over the gate's fields, so the gate
+            acts as a default carrier for config-driven construction.
         """
         self._config = config
         self._sheet_A: float | None = None
@@ -314,6 +389,63 @@ class EvidenceDrivenScheduler:
         # observe no behavioural change).
         self._pid_delta_by_round: dict[int, float] = {}
         self._eps_delta_by_round: dict[int, float] = {}
+        # ------------------------------------------------------------------
+        # Phase-4 / Design #3 — Lemma 4 regime gate (opt-in).
+        # ------------------------------------------------------------------
+        # ``regime_aware=False`` (the default) leaves every field inert:
+        # ``sample()`` skips the selector entirely, no audit code is
+        # appended, and ``config_hash`` / ``to_config`` omit the regime
+        # keys — so a Phase-3 caller gets byte-identical behaviour.
+        # Explicit kwargs always win over the gate (the explicit-flag
+        # sentinels distinguish "passed by the caller" from "still at
+        # its Python default").
+        if regime_gate is not None:
+            # Sentinels let us detect "caller passed the literal default"
+            # (e.g. ``regime_aware=False``) — explicit kwargs always win.
+            if regime_aware is _UNSET:
+                regime_aware = bool(regime_gate.regime_aware)
+            if regime_slack is _UNSET:
+                regime_slack = float(regime_gate.slack)
+            if regime_selector_family is _UNSET:
+                regime_selector_family = str(regime_gate.selector_family)
+            if e_rho_provider is None:
+                e_rho_provider = regime_gate.e_rho_provider
+        if regime_aware is _UNSET:
+            regime_aware = False
+        if regime_slack is _UNSET:
+            regime_slack = DEFAULT_REGIME_SLACK
+        if regime_selector_family is _UNSET:
+            regime_selector_family = "cosine_anneal"
+        slack_f = float(regime_slack)
+        if not math.isfinite(slack_f) or slack_f < 0.0:
+            raise ValueError(
+                f"regime_slack must be finite and >= 0, got {regime_slack!r}"
+            )
+        #: Public per :class:`RegimeAwareSchedulerProtocol` so a consumer
+        #: can detect the gate structurally instead of by concrete type.
+        self.regime_aware: bool = bool(regime_aware)
+        self.e_rho_provider: Callable[[float], float] | None = e_rho_provider
+        self._regime_slack: float = slack_f
+        self._regime_selector_family: str = str(regime_selector_family)
+        self._regime_selector: RegimeAwareEpsSelector | None = None
+        if self.regime_aware:
+            self._regime_selector = (
+                regime_selector
+                if regime_selector is not None
+                else build_regime_selector(self._regime_selector_family)
+            )
+            if self.e_rho_provider is None:
+                # Paper default: e_rho = min{rho^4, (1-rho)^2 eta^2} at
+                # the documented rho / eta defaults (line 128).
+                self.e_rho_provider = default_e_rho_provider()
+        elif regime_selector is not None:
+            raise ValueError(
+                "regime_selector was supplied but regime_aware is False; "
+                "pass regime_aware=True to enable the Lemma 4 clamp"
+            )
+        self._regime_warnings: list[str] = []
+        self._last_regime_selection: RegimeSelection | None = None
+        self._regime_selection_by_round: dict[int, RegimeSelection] = {}
         # Forward the profile so paper-quantity augmentation works.
         if profile_residual_fn is not None:
             from adaptive_reflow.algorithm.scheduler._core import CosineAnnealScheduler
@@ -391,6 +523,23 @@ class EvidenceDrivenScheduler:
                 1e-6,
                 float(eps_implicit_base_local) + float(self._last_eps_delta),
             )
+        # Phase-4 / Design #3: consult the regime selector BEFORE the
+        # eps is committed to the sample. The PID's proposal is the
+        # *request*; the selector returns an ``eps`` guaranteed to sit
+        # inside the Lemma 4 regime ``eps^2 < e_rho / log 2``. Inert
+        # unless ``regime_aware=True`` AND an eps is actually carried.
+        regime_selection: RegimeSelection | None = None
+        if (
+            self.regime_aware
+            and self._regime_selector is not None
+            and eps_implicit_for_sample is not None
+        ):
+            regime_selection = self._select_regime_eps(
+                eps_implicit_for_sample,
+                round_in_cycle=int(round_in_cycle),
+                target_round=int(target_round),
+            )
+            eps_implicit_for_sample = float(regime_selection.eps_next)
         # Re-derive u_r from the *adjusted* n_cap so the schedule_hash
         # captures the evidence-driven offset (callers that want to
         # replay a round can recover the offset from the audit codes).
@@ -406,6 +555,16 @@ class EvidenceDrivenScheduler:
                 f":delta={float(self._last_eps_delta):.6f}"
                 f":adjusted={float(eps_implicit_for_sample):.6f}",
             )
+        if regime_selection is not None:
+            # Scheduler-side view first, then the selector's own codes.
+            codes = codes + (
+                f"{EVIDENCE_REGIME_GATED}"
+                f":selector={self._regime_selector_family}"
+                f":requested={float(regime_selection.eps_requested):.9g}"
+                f":ceiling={float(regime_selection.ceiling):.9g}"
+                f":applied={float(regime_selection.eps_next):.9g}"
+                f":e_rho={float(regime_selection.e_rho):.9g}",
+            ) + tuple(regime_selection.audit_codes)
         sample = ScheduleSample(
             outer_cycle_id=int(outer_cycle_id),
             round_in_cycle=int(round_in_cycle),
@@ -424,10 +583,90 @@ class EvidenceDrivenScheduler:
         self._last_audit_codes = codes
         return sample
 
+    # -- Phase-4 / Design #3: Lemma 4 regime gate -------------------------
+
+    def _select_regime_eps(
+        self,
+        eps_requested: float,
+        *,
+        round_in_cycle: int,
+        target_round: int,
+    ) -> RegimeSelection:
+        """Clamp ``eps_requested`` into the Lemma 4 regime.
+
+        Resolves ``e_rho`` for the round through
+        :attr:`e_rho_provider`, hands the PID's proposal to the
+        configured
+        :class:`~adaptive_reflow.algorithm.scheduler.regime_selector.RegimeAwareEpsSelector`,
+        records the resulting :class:`RegimeSelection` per round, and
+        pushes any warning onto the scheduler's regime log (and the
+        module logger). Never raises for an out-of-regime request —
+        clamping *is* the fix — but does raise when the caller's
+        ``e_rho_provider`` itself returns a non-finite value, because
+        that indicates a broken paper-quantity wiring rather than a
+        schedule that stepped too far.
+        """
+        selector = self._regime_selector
+        provider = self.e_rho_provider
+        if selector is None or provider is None:  # pragma: no cover - guarded
+            raise RuntimeError(
+                "regime gate is active but the selector / e_rho provider is "
+                "unset; this indicates the scheduler was mutated after "
+                "construction"
+            )
+        e_rho = float(provider(float(target_round)))
+        if not math.isfinite(e_rho):
+            raise ValueError(
+                f"e_rho_provider returned non-finite {e_rho!r} for round "
+                f"{target_round}"
+            )
+        selection = selector.select_detailed(
+            float(eps_requested),
+            e_rho,
+            slack=float(self._regime_slack),
+            round_index=int(round_in_cycle),
+        )
+        self._last_regime_selection = selection
+        self._regime_selection_by_round[int(round_in_cycle)] = selection
+        if selection.warning is not None:
+            warning = (
+                f"{selection.warning} "
+                f"(round_in_cycle={int(round_in_cycle)}, "
+                f"target_round={int(target_round)})"
+            )
+            self._regime_warnings.append(warning)
+            _LOGGER.warning("%s", warning)
+        return selection
+
+    def regime_violation_warnings(self) -> tuple[str, ...]:
+        """Return the per-run log of Lemma 4 regime warnings.
+
+        One entry per round where the PID's ``eps`` proposal violated
+        ``eps^2 < e_rho / log 2`` (clamped) or where the ceiling itself
+        was infeasible. Empty when the gate is inert or every round
+        stayed inside the regime. Cleared by :meth:`reset`.
+        """
+        return tuple(self._regime_warnings)
+
+    @property
+    def regime_selector(self) -> RegimeAwareEpsSelector | None:
+        """Return the configured selector (``None`` when the gate is off)."""
+        return self._regime_selector
+
+    @property
+    def last_regime_selection(self) -> RegimeSelection | None:
+        """Return the most recent :class:`RegimeSelection`, if any."""
+        return self._last_regime_selection
+
+    def regime_selection_for_round(
+        self, round_in_cycle: int,
+    ) -> RegimeSelection | None:
+        """Return the :class:`RegimeSelection` recorded for a round."""
+        return self._regime_selection_by_round.get(int(round_in_cycle))
+
     def cycle_length(self) -> int:
         """Return the configured cycle length."""
         return int(self._config.cycle_length)
-
     def schedule_family(self) -> str:
         """Return the algorithm family identifier ``"evidence_driven"``."""
         return self.FAMILY
@@ -455,6 +694,22 @@ class EvidenceDrivenScheduler:
         }
         if self._eps_implicit_base is not None:
             hash_payload["eps_implicit_base"] = float(self._eps_implicit_base)
+        # Phase-4 / Design #3: the regime keys enter the hash ONLY when
+        # the gate is active, so a Phase-3 config keeps its existing
+        # hash byte-for-byte while two regime-aware schedulers that
+        # differ only in their selector / slack stay distinguishable in
+        # the audit trail.
+        if self.regime_aware:
+            hash_payload["regime_aware"] = True
+            hash_payload["regime_selector_family"] = str(
+                self._regime_selector_family
+            )
+            hash_payload["regime_slack"] = float(self._regime_slack)
+            selector = self._regime_selector
+            if selector is not None:
+                hash_payload["regime_selector_config"] = dict(
+                    selector.to_config()
+                )
         return str(hash_artifact(hash_payload))
 
     def reset(self) -> None:
@@ -468,6 +723,14 @@ class EvidenceDrivenScheduler:
         # starts with a clean slate.
         self._pid_delta_by_round.clear()
         self._eps_delta_by_round.clear()
+        # Phase-4 / Design #3: clear the regime log + selector memory so
+        # a re-run starts inside the same regime it started with.
+        self._regime_warnings.clear()
+        self._last_regime_selection = None
+        self._regime_selection_by_round.clear()
+        selector = self._regime_selector
+        if selector is not None:
+            selector.reset()
         self._controller.reset()
         self._wrapped.reset()
 
@@ -549,6 +812,13 @@ class EvidenceDrivenScheduler:
         if self._eps_implicit_base is not None:
             self._last_eps_delta = -float(delta) * float(self._k_eps)
             self._eps_delta_by_round[int(round_in_cycle)] = -float(delta) * float(self._k_eps)
+        # Phase-4 / Design #3: forward the round's metrics to the regime
+        # selector (e.g. ``ConvergenceAdaptiveRegimeSelector`` consumes
+        # ``W2`` / ``evidence_ratio``). The cosine variant ignores the
+        # feedback; the convergence variant folds it into its history.
+        selector = self._regime_selector
+        if selector is not None:
+            selector.observe_round_feedback(int(round_in_cycle), metrics)
         self._last_audit_codes = self._last_audit_codes + tuple(codes)
 
     def inject_noise(
@@ -582,6 +852,15 @@ class EvidenceDrivenScheduler:
         }
         if self._eps_implicit_base is not None:
             out["eps_implicit_base"] = float(self._eps_implicit_base)
+        # Phase-4 / Design #3: regime keys enter the config ONLY when
+        # the gate is active so Phase-3 round-trips stay byte-identical.
+        if self.regime_aware:
+            out["regime_aware"] = True
+            out["regime_slack"] = float(self._regime_slack)
+            out["regime_selector_family"] = str(self._regime_selector_family)
+            selector = self._regime_selector
+            if selector is not None:
+                out["regime_selector_config"] = dict(selector.to_config())
         return out
 
     @classmethod
@@ -605,6 +884,32 @@ class EvidenceDrivenScheduler:
         eps_base: float | None = (
             None if eps_base_raw is None else float(eps_base_raw)
         )
+        # Phase-4 / Design #3: rebuild the selector from its config
+        # dict so the regime gate survives a round-trip. ``None`` when
+        # the gate is off — ``build_regime_selector`` is never called
+        # for Phase-3 callers.
+        regime_aware = bool(config.get("regime_aware", False))
+        regime_selector: RegimeAwareEpsSelector | None = None
+        if regime_aware:
+            family = str(config.get("regime_selector_family", "cosine_anneal"))
+            selector_config = dict(config.get("regime_selector_config") or {})
+            # ``selector_config["family"]`` is informational; passing
+            # it as a kwarg duplicates the explicit ``family=`` arg, so
+            # we pop it and re-route through the concrete's
+            # ``from_config`` (which is the canonical round-trip path
+            # for the regime selector).
+            selector_config.pop("family", None)
+            from adaptive_reflow.algorithm.scheduler.regime_selector import (
+                REGIME_SELECTOR_REGISTRY,
+            )
+            selector_cls = REGIME_SELECTOR_REGISTRY.get(family)
+            if selector_cls is None:
+                known = ", ".join(sorted(REGIME_SELECTOR_REGISTRY))
+                raise ValueError(
+                    f"unknown regime selector family {family!r} in "
+                    f"from_config; known families: {known}"
+                )
+            regime_selector = selector_cls.from_config(selector_config)  # type: ignore[attr-defined]
         return cls(
             config=sched_config,
             kp=float(config.get("kp", 0.2)),
@@ -613,6 +918,17 @@ class EvidenceDrivenScheduler:
             target_ratio=float(config.get("target_ratio", 1.0)),
             k_eps=float(config.get("k_eps", 0.5)),
             eps_implicit_base=eps_base,
+            regime_aware=regime_aware,
+            regime_selector=regime_selector,
+            regime_slack=float(config.get("regime_slack", DEFAULT_REGIME_SLACK)),
+            regime_selector_family=str(
+                config.get("regime_selector_family", "cosine_anneal"),
+            ),
+            # Round-trip leaves ``e_rho_provider`` to the constructor's
+            # paper-default fallback (``default_e_rho_provider()``); a
+            # custom provider is not JSON-serialisable and so cannot
+            # survive a snapshot replay — callers needing one must
+            # supply it after rebuild.
         )
 
 
@@ -620,7 +936,9 @@ __all__ = [
     "EVIDENCE_PID_ADJUSTED",
     "EVIDENCE_PID_SATURATED",
     "EVIDENCE_RATIO_MISSING",
+    "EVIDENCE_REGIME_GATED",
     "EvidenceDrivenScheduler",
+    "REGIME_VIOLATION_WARNING",
 ]
 
 

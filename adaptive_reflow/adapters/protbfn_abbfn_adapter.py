@@ -33,6 +33,7 @@ Tasks satisfied
 from __future__ import annotations
 
 import hashlib
+import os
 from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -42,6 +43,7 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.contracts import MechanismId
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
 from adaptive_reflow.universal import (
     AdapterCapabilities,
@@ -504,7 +506,14 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             import torch as _torch  # local
 
             self._torch_dtype = _torch.float32
-            self._torch_device = _torch.device("cpu")
+            # GPU support is opt-in via env var to keep CPU as the default
+            # deterministic baseline (matches pre-existing test fixtures).
+            # The glue-audit workflow may recommend auto-detect or a CLI
+            # flag; this minimal hook unblocks paper-parity reruns without
+            # altering default behaviour.
+            self._torch_device = _torch.device(
+                os.environ.get("PROTBFN_TORCH_DEVICE", "cpu")
+            )
         if self._mode == "synthetic":
             self._synthetic_weights = _random_init_synthetic_bfn_weights(
                 seed=int(self._synthetic_seed),
@@ -520,13 +529,18 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
     # ------------------------------------------------------------------
 
     @property
-    def mechanism_id(self) -> Mechanism:
-        """Return ``"ProtBFN"`` / ``"AbBFN"`` / ``"AbBFN2"``.
+    def mechanism_id(self) -> MechanismId:
+        """Return ``"ProtBFN"`` / ``"AbBFN"`` / ``"AbBFN2"`` as a :class:`MechanismId`.
 
         The framework reads this via ``getattr(adapter, "mechanism_id",
         type(adapter).__name__)`` and stamps it into the ledger row.
+        The return type is the typed :class:`contracts.MechanismId`
+        alias (``NewType("MechanismId", str)``) so cross-module type
+        checkers (mypy) see the writer-authority register accepting the
+        value directly. Runtime stays ``str``-compatible (r17-audit
+        P-04 -- was ``Literal["ProtBFN", "AbBFN", "AbBFN2"]``).
         """
-        return self._mechanism
+        return MechanismId(self._mechanism)
 
     # ------------------------------------------------------------------
     # 1. Capability handshake
@@ -1053,6 +1067,11 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                         theta_t = torch.as_tensor(
                             theta_pad, dtype=self._torch_dtype
                         )
+                        # Move input onto the same device as the loaded
+                        # torch model weights. Without this, GPU mode
+                        # (`PROTBFN_TORCH_DEVICE=cuda`) raises
+                        # `RuntimeError: mat1 on cpu, weights on cuda:0`.
+                        theta_t = theta_t.to(self._torch_device)
                         logits = self._torch_model(theta_t)
                         if hasattr(logits, "logits"):
                             logits = logits.logits

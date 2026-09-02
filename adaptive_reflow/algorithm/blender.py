@@ -38,6 +38,17 @@ Public surface
 * :data:`LINEAR_FAMILY`, :data:`DISTANCE_DECAY_FAMILY`,
   :data:`DEFAULT_LINEAR_CONFIG_HASH`,
   :data:`DEFAULT_DISTANCE_DECAY_TEMPERATURE`
+
+Categorical-aware sibling
+-------------------------
+
+The :class:`CategoricalAwareBlender` (in ``adaptive_reflow.algorithm.categorical_blender``)
+implements the same :class:`RestartBlenderProtocol` and adds a
+per-channel-domain dispatch (``continuous`` / ``discrete`` / ``graph`` /
+``latent``) with logit-space blending, Gumbel-anneal sampling, and
+audit-codes for the GraphBFN ``-inf`` diagonal + FlowMol3 padded
+positions. It is the paper-grounded (Theorem 1 iterative application)
+sibling of the linear / distance-decay blenders here.
 """
 
 from __future__ import annotations
@@ -46,13 +57,19 @@ import hashlib
 import json
 import math
 from collections.abc import Mapping
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Optional, Protocol, runtime_checkable
 
 from adaptive_reflow.universal.state import (
     ChannelName,
     StateBundle,
     TensorRef,
     validate_state_bundle,
+)
+from adaptive_reflow.algorithm._derivation import (
+    DerivationContext,
+    DerivationRule,
+    LipschitzTemperatureRule,
+    default_distance_decay_temperature,
 )
 
 # ---------------------------------------------------------------------------
@@ -680,6 +697,29 @@ def default_blender() -> LinearBlender:
     canonical blender can never drift.
     """
     return LinearBlender()
+
+
+# ---------------------------------------------------------------------------
+# Parameter-free default-distance-decay-temperature (DERIV-001 P-19 #10)
+# ---------------------------------------------------------------------------
+
+
+def derive_default_distance_decay_temperature(
+    *,
+    l_e: Optional[float] = None,
+    n_rounds: Optional[int] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``DEFAULT_DISTANCE_DECAY_TEMPERATURE`` from a derivation rule.
+
+    Falls back to :data:`DEFAULT_DISTANCE_DECAY_TEMPERATURE` (``1.0``)
+    on missing context. The closed form is
+    ``tau := 1 / sqrt(L_local * n_rounds)`` (Lipschitz-derived).
+    """
+    return default_distance_decay_temperature(
+        context, l_e=l_e, n_rounds=n_rounds, rule=rule
+    )
 
 
 # ---------------------------------------------------------------------------

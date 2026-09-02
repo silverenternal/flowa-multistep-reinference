@@ -37,6 +37,20 @@ import numpy as np
 import pytest
 
 # ---------------------------------------------------------------------------
+# Preflight: this module exercises :mod:`tools.run_image_eval`, which
+# requires ``torch`` (InceptionV3 forward via torchvision). The
+# :func:`requires_torch` session fixture in ``tests/conftest.py``
+# short-circuits the suite on sandboxes where torch is not vendored
+# (CPU-only rigs, fresh clones).
+#
+# Note: the ``test_graceful_fallback`` case verifies the *transformers*
+# fallback path, not the torch fallback path; it still requires torch
+# for the InceptionV3 stub that runs the FID math. The torch skip is
+# therefore correct for the whole module.
+# ---------------------------------------------------------------------------
+pytestmark = pytest.mark.usefixtures("requires_torch")
+
+# ---------------------------------------------------------------------------
 # Path setup
 # ---------------------------------------------------------------------------
 
@@ -498,3 +512,122 @@ def test_compute_fid_returns_non_negative(
     # Too-few-rows guard: returns NaN rather than raising.
     fid_tiny = runner.compute_fid_from_features(feats[:1], mu, sigma)
     assert math.isnan(fid_tiny), f"single-row FID must be NaN; got {fid_tiny}"
+
+
+# ---------------------------------------------------------------------------
+# Phase 4 / Design #1 — per-round surface
+# ---------------------------------------------------------------------------
+
+
+def _seed_round_dir(parent: Path, round_idx: int, n_samples: int = 2) -> Path:
+    """Write ``n_samples`` solid-color RGB PNGs into ``parent/framework_round{XX}``."""
+    from PIL import Image
+
+    rd = parent / f"framework_round{round_idx:02d}"
+    rd.mkdir(parents=True, exist_ok=True)
+    for i in range(n_samples):
+        color = ((round_idx * 64 + i * 16) % 256, (round_idx * 32) % 256, 96)
+        Image.new("RGB", (8, 8), color).save(rd / f"sample_{i:04d}.png")
+    return rd
+
+
+def test_per_round_emits_per_round_metrics(
+    runner: Any,
+    tmp_path: Path,
+) -> None:
+    """``--per-round`` must emit per-round FID + CLIPScore lists.
+
+    Phase 4 / Design #1 contract:
+
+    * ``metrics.per_round_fid`` has length ``n_rounds``.
+    * ``metrics.per_round_clip_score`` has length ``n_rounds``.
+    * Each per-round entry carries ``round_index`` + ``round_dir``.
+    * The legacy top-level ``metrics.fid`` / ``metrics.clip_score``
+      stay byte-stable (computed over the FINAL round).
+    """
+    samples_dir = tmp_path / "samples"
+    samples_dir.mkdir()
+    rounds = [_seed_round_dir(samples_dir, r, n_samples=2) for r in range(3)]
+    out_path = tmp_path / "report.json"
+
+    # Reference stats: shape doesn't matter here — the FID may be NaN
+    # due to feature-dim mismatch with the InceptionV3 2048-d pool, but
+    # we only assert the structural shape of the report.
+    import numpy as np
+    ref_npz = tmp_path / "ref.npz"
+    np.savez(
+        ref_npz,
+        mu=np.zeros(2048, dtype=np.float64),
+        sigma=np.eye(2048, dtype=np.float64),
+    )
+
+    prompts = tmp_path / "prompts.jsonl"
+    prompts.write_text("\n".join(["a"] * 6) + "\n")
+
+    report = runner.run_image_eval(
+        samples_dir=samples_dir,
+        reference_stats=ref_npz,
+        prompts_jsonl=prompts,
+        output=out_path,
+        device_arg="cpu",
+        fid_batch_size=4,
+        clip_batch_size=4,
+        image_target_size=8,
+        per_round=True,
+        per_round_glob="{arm}_round{r:02d}",
+        arm="framework",
+    )
+
+    metrics = report["metrics"]
+    assert "per_round_fid" in metrics, "per_round_fid missing"
+    assert "per_round_clip_score" in metrics, "per_round_clip_score missing"
+    assert len(metrics["per_round_fid"]) == 3, (
+        f"per_round_fid must have length 3; got {len(metrics['per_round_fid'])}"
+    )
+    assert len(metrics["per_round_clip_score"]) == 3, (
+        f"per_round_clip_score must have length 3; got {len(metrics['per_round_clip_score'])}"
+    )
+    for entry in metrics["per_round_fid"]:
+        assert "round_index" in entry
+        assert "round_dir" in entry
+    for entry in metrics["per_round_clip_score"]:
+        assert "round_index" in entry
+        assert "round_dir" in entry
+    # Legacy top-level fields stay byte-stable.
+    assert "fid" in metrics
+    assert "clip_score" in metrics
+
+    # Same JSON shape on disk.
+    on_disk = json.loads(out_path.read_text(encoding="utf-8"))
+    assert on_disk["schema"] == "img_eval_report.v1"
+    assert len(on_disk["metrics"]["per_round_fid"]) == 3
+
+
+def test_per_round_falls_back_when_no_round_dirs(
+    runner: Any,
+    tmp_path: Path,
+) -> None:
+    """``--per-round`` with no per-round dirs falls back to single-shot semantics."""
+    samples_dir = tmp_path / "samples"
+    samples_dir.mkdir()
+    from PIL import Image
+    for i in range(2):
+        Image.new("RGB", (8, 8), (i * 32, i * 16, 64)).save(
+            samples_dir / f"sample_{i:04d}.png"
+        )
+    out_path = tmp_path / "report.json"
+    report = runner.run_image_eval(
+        samples_dir=samples_dir,
+        reference_stats=None,
+        prompts_jsonl=None,
+        output=out_path,
+        device_arg="cpu",
+        fid_batch_size=4,
+        clip_batch_size=4,
+        image_target_size=8,
+        per_round=True,
+    )
+    # No per_round_fid sub-tree when no round dirs were found (the
+    # fallback path runs the legacy single-shot semantics instead).
+    metrics = report["metrics"]
+    assert "per_round_fid" not in metrics or metrics.get("per_round_fid") == []

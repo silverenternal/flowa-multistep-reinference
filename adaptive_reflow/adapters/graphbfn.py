@@ -273,6 +273,15 @@ def _blend_graph_param(
     target_shape = np.broadcast_shapes(prior.shape, fresh.shape)
     prior_b = np.broadcast_to(prior, target_shape)
     fresh_b = np.broadcast_to(fresh, target_shape)
+    # Degenerate weights must pass the surviving side through untouched.
+    # The adjacency channel carries ``-inf`` diagonal sentinels (the
+    # self-loop mask from ``_uniform_edge_existence_logits``), and
+    # ``0.0 * -inf`` is NaN — so the general formula would silently
+    # convert a masked self-loop into a NaN logit at m == 0 or m == 1.
+    if m == 0.0:
+        return np.array(fresh_b, dtype=np.float64).reshape(target_shape)
+    if m == 1.0:
+        return np.array(prior_b, dtype=np.float64).reshape(target_shape)
     return np.asarray(m * prior_b + (1.0 - m) * fresh_b, dtype=np.float64).reshape(
         target_shape
     )
@@ -479,6 +488,18 @@ class GraphBFNCapabilities(AdapterCapabilities):
     right domain kind. ``state_shape=()`` is the design-spec
     zero-length surrogate; the graph payload lives behind
     ``TensorRef`` keys in the adapter's private native-state cache.
+
+    DESIGN NOTE (r17-audit P-05): ``state_shape=()`` is intentional
+    and is NOT a defect. The GraphBFN native state is a heterogeneous
+    graph ``(atoms, bonds, adjacency, valence, charge)`` whose
+    shapes are dynamic (``n_atoms``, ``n_edges`` vary per sample) so
+    no fixed-shape float64 placeholder is meaningful. The F14 runner's
+    ``np.zeros(state_shape, dtype=np.float64)`` is a no-op on the
+    zero-length tuple; the runner bypasses the allocation entirely
+    and threads graph payloads via :class:`TensorRef` keys. Do NOT
+    "fix" this to ``(n_atoms, 3)`` or any other concrete shape --
+    it would break the dynamic-shape contract that lets GraphBFN
+    handle variable molecular graphs.
     """
 
     def __init__(self, *, variant: GraphBFNVariant = "iclr2025") -> None:  # noqa: D401
@@ -567,10 +588,26 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
     #: :class:`TwoDimFMAdapter`).
     pinned_num_steps: int = GRAPHBFN_NUM_STEPS_DEFAULT
 
-    # F14 (runner forward-noise allocation): the runner reads
-    # ``getattr(self._adapter, "state_shape", (2,))``; the graph adapter
-    # exposes ``()`` so the runner's hard-coded ``(2,)`` fallback is
-    # never exercised.
+    # --- Inline design intent: ``state_shape=()`` zero-length surrogate ---
+    # The GraphBFN native payload is a *graph* (variable node count ``N``,
+    # variable edge count ``E``, ``(N, N)`` adjacency logits) — it does
+    # not fit a fixed-shape tensor. The engine's ``StateBundle`` treats
+    # ``state_shape`` as a fixed tuple and ``TensorRef`` as an opaque
+    # string handle, so the graph payload is routed behind ``TensorRef``
+    # keys in the adapter's private ``_native_states`` cache, indexed by
+    # ``native_state_digest``. The graph itself therefore behaves like a
+    # flat observation from the engine's perspective: the engine never
+    # inspects it, only propagates the opaque handle. Concretely:
+    #
+    # * ``state_shape=()`` is the design-spec zero-length surrogate that
+    #   tells the runner (F14) not to allocate a hard-coded ``(2,)``
+    #   forward-noise prior — the runner reads
+    #   ``getattr(self._adapter, "state_shape", (2,))`` and falls back to
+    #   the 2-D shape only when the attribute is absent.
+    # * ``has_materialization_route=False`` (declared in
+    #   :class:`GraphBFNCapabilities`) keeps the engine from attempting
+    #   to materialize the graph via the engine's envelope plumbing;
+    #   the adapter handles the LRU-bounded cache itself.
     state_shape: tuple[int, ...] = ()
 
     def __init__(

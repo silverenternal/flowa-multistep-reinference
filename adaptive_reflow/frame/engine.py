@@ -727,6 +727,79 @@ def _check_capabilities_advertise_dispatch(
     return True
 
 
+def _state_bundle_to_native(
+    bundle: StateBundle,
+    caps: AdapterCapabilities,
+) -> "NativeStateBundle":
+    """Project a detached :class:`StateBundle` to a typed
+    :class:`adaptive_reflow.contracts.materialization.NativeStateBundle`
+    for materializer invocation (D10 typed surface).
+
+    The conversion is total and deterministic; channels whose opaque
+    ``TensorRef`` cannot be inspected are passed through as opaque
+    string handles. The bundle's ``channel_domains`` is sourced from
+    ``caps.channel_domains`` when the per-channel declaration is present;
+    otherwise the per-channel domain is inferred from the
+    ``caps.has_continuous_channels`` / ``caps.has_discrete_channels``
+    capability booleans (single-domain adapter).
+
+    Backed by an adapter-private ``atom_count`` derivation: when the
+    adapter's first channel is a graph-shaped or molecule-shaped
+    channel, ``atom_count`` is read from the bundle's source round
+    (Round 0 = first round; ``atom_count`` is otherwise carried in the
+    bundle's ``native_state_digest`` as a parseable integer). The
+    helper is best-effort: callers that require a strict atom_count
+    must supply their own projection.
+
+    The helper imports :mod:`adaptive_reflow.contracts.materialization`
+    lazily to avoid the module-init cycle
+    (``frame.engine`` ↔ ``contracts.__init__``).
+    """
+    # Local import — breaks the ``frame.engine`` ↔
+    # ``contracts.__init__`` module-init cycle.
+    from adaptive_reflow.contracts.materialization import (
+        NativeStateBundle as _NativeStateBundle,
+    )
+
+    # Build the channels mapping (opaque string handles pass through).
+    channels: dict[str, str] = {str(k): str(v) for k, v in bundle.channels.items()}
+    # Build the channel_domains mapping from caps.channel_domains.
+    channel_domains: dict[str, str] = {}
+    if isinstance(caps.channel_domains, Mapping):
+        for ch_name, dom in caps.channel_domains.items():
+            channel_domains[str(ch_name)] = str(dom)
+    # Channel shapes — read from caps.channel_shapes if present.
+    channel_shapes: dict[str, tuple[tuple[int, ...], tuple[int, ...]]] = {}
+    if isinstance(getattr(caps, "channel_shapes", None), Mapping):
+        for ch_name, shapes in caps.channel_shapes.items():
+            if isinstance(shapes, tuple) and len(shapes) == 2:
+                channel_shapes[str(ch_name)] = (
+                    tuple(shapes[0]),
+                    tuple(shapes[1]),
+                )
+    # Channel masks — bundle.masks passes through.
+    channel_masks: dict[str, str] = {str(k): str(v) for k, v in bundle.masks.items()}
+    # Atom count: best-effort. Try the bundle's source_round as a proxy
+    # for graph / molecule shape; fall back to 0 when no canonical
+    # declaration exists. Adapters that need strict atom_count must
+    # provide it via the ``materializer_instance`` handle itself (the
+    # materializer can read its private cache).
+    atom_count = int(bundle.source_round) if int(bundle.source_round) > 0 else 0
+    return _NativeStateBundle(
+        channels=channels,
+        atom_count=atom_count,
+        backend_kind=str(bundle.backend_kind)
+        if hasattr(bundle, "backend_kind")
+        else "",
+        source_round=int(bundle.source_round),
+        source_digest=str(bundle.native_state_digest),
+        provenance=tuple(bundle.provenance),
+        channel_domains=channel_domains,
+        channel_shapes=channel_shapes,
+        channel_masks=channel_masks,
+    )
+
+
 def _safe_adapter_call(
     step_name: str,
     audit_codes: list[str],
@@ -1673,6 +1746,42 @@ class Engine:
         if not detached.detach_proof:
             audit_codes.append(ERR_DETACH_PROOF_FAILED)
 
+        # D10 (Design #4) — typed materialization invocation. After
+        # the endpoint is detached the engine optionally projects the
+        # native state to the envelope via the adapter-declared
+        # ``materializer_instance`` (the prior ``materializer: type | None``
+        # class reference is preserved for back-compat; the typed
+        # instance handle is the new canonical path). The result is
+        # stored in ``RoundTrace.extras["materializer_handle"]`` and
+        # ``RoundTrace.extras["envelope_state_keys"]`` so downstream
+        # consumers (BoundedMergeOperator, paper-quantity audits) can
+        # consume the projection. The call is opt-in: when the
+        # adapter does not declare a typed materializer, the engine
+        # emits no audit code and the extras map stays empty.
+        extras: dict[str, Any] = {
+            "feature_flag": True,
+            "engine_version": ENGINE_VERSION,
+        }
+        materializer_instance = getattr(caps, "materializer_instance", None)
+        if materializer_instance is not None and caps is not None:
+            try:
+                # Build a typed NativeStateBundle from the detached
+                # bundle's channels so the materializer can be invoked
+                # through the typed D10 surface.
+                native_bundle = _state_bundle_to_native(detached, caps)
+                envelope_state = materializer_instance.dematerialize(native_bundle)
+                extras["materializer_handle"] = str(
+                    getattr(materializer_instance, "handle", "")
+                )
+                extras["envelope_state_keys"] = sorted(
+                    str(k) for k in envelope_state.observables
+                )
+                extras["materialization_pass"] = True
+            except Exception as exc:  # pragma: no cover - defensive
+                audit_codes.append(
+                    f"materialization_failed:{type(exc).__name__}"
+                )
+
         trace = RoundTrace(
             round_index=int(round_index),
             operation_steps=self._operation_steps,
@@ -1684,7 +1793,7 @@ class Engine:
             endpoint_digest=_digest_state(detached),
             detached=bool(detached.detach_proof),
             audit_codes=tuple(audit_codes),
-            extras={"feature_flag": True, "engine_version": ENGINE_VERSION},
+            extras=extras,
         )
         ledger = build_ledger_row(
             round_index=int(round_index),

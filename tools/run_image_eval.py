@@ -64,12 +64,23 @@ import warnings
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 # Make the project importable when running as ``python tools/run_image_eval.py``.
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+# Defense in depth (Audit #3, 2026-09). Pin the HF / transformers
+# stack to its local cache before any ``transformers`` import so the
+# safetensors auto-conversion daemon thread (``transformers`` 5.7.0)
+# cannot issue HEAD requests to ``huggingface.co`` on every
+# ``AutoModel.from_pretrained(...)`` call. Without this we observed
+# a 5x-retry loop with ``1+2+4+8`` seconds of exponential backoff per
+# load — graceful NaN under tight subprocess timeouts. Operators can
+# still force network via ``HF_HUB_OFFLINE=0 python ...``.
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+
+import numpy as np
 
 from adaptive_reflow.eval.clip_score import (  # noqa: E402
     CLIPSCORE_PAPER_SCALE,
@@ -223,22 +234,52 @@ def compute_fid_from_features(
 
 
 def load_inception_for_fid(device: Any) -> Any:
-    """Construct the canonical-pytorch-fid InceptionV3 and move it to ``device``.
+    """Construct the IMAGENET1K_V1-pretrained InceptionV3 and move it to ``device``.
 
-    The model uses ``weights=None`` + ``aux_logits=False`` so the
-    forward returns ``(N, 2048)`` pool3 features directly (regression
-    guard from commit ``2fb3dc0``). The published IMAGENET1K_V1
-    weights force ``aux_logits=True`` (the aux head is part of the
-    checkpoint), so loading them would silently route the forward
-    through the 1000-dim classifier head. This is the shape
-    pytorch-fid defines FID against.
+    The pretrained IMAGENET1K_V1 checkpoint forces ``aux_logits=True``
+    (the aux head is baked into the state_dict); we keep that flag on
+    during construction, replace ``model.fc`` with ``Identity`` so the
+    forward returns the ``(N, 2048)`` pool3 vector (the aux logits
+    branch is not consumed by the FID math), and the network is run
+    in ``eval()`` / ``no_grad()`` mode by
+    :func:`extract_inception_features_for_image_eval`.
+
+    Historical note (commit ``2fb3dc0`` regression guard). The
+    earlier construct used ``weights=None`` + ``aux_logits=False``
+    which produces a *randomly-initialized* network; pool3 features
+    from random conv activations have magnitudes ~1e10-1e12 and a
+    FID computed against a pretrained-feature reference statistics
+    collapses to ~1e25 (still mathematically valid Fréchet arithmetic
+    on a noise feature space, but useless as a paper-comparable
+    metric). Audits P-03 (Lumina) and P-04 (HiDream) confirmed this
+    was the root cause of the ~3e25 FID regression; the fix is to
+    load the IMAGENET1K_V1 weights (~108.9 MB) cached under
+    ``~/.cache/torch/hub/checkpoints/inception_v3_google-0cc3c7bd.pth``.
+
+    The pytorch-fid canonical Inception (TF port, num_classes=1008,
+    slightly different ``Mixed_5b``/``Mixed_5c``/``Mixed_5d``/...
+    blocks) is *not* used here because the Lumina/HiDream reference
+    statistics were both downloaded as published paper-comparable
+    MJHQ-30K stats with torchvision's pretrained Inception; mixing
+    the two would produce a feature-space mismatch. Operators who
+    want pytorch-fid's canonical Inception can override by passing
+    their own callable into
+    :func:`extract_inception_features_for_image_eval` via the test
+    harness.
     """
     import torch
     import torch.nn as nn
     import torchvision.models as tvm
 
-    model = tvm.inception_v3(weights=None, aux_logits=False, transform_input=False)
+    weights = tvm.Inception_V3_Weights.IMAGENET1K_V1
+    model = tvm.inception_v3(weights=weights, aux_logits=True, transform_input=False)
     model.fc = nn.Identity()
+    # Strip the auxiliary classifier head — we don't consume its
+    # output, but leaving it in keeps an unused submodule on the
+    # device. The forward still returns the 2048-d pool3 vector via
+    # the Identity-replaced ``model.fc``.
+    if hasattr(model, "AuxLogits") and model.AuxLogits is not None:
+        model.AuxLogits = None  # type: ignore[assignment]
     model.eval()
     return model.to(device)
 
@@ -343,6 +384,283 @@ def compute_clipscore(
 # ---------------------------------------------------------------------------
 # Metric orchestration (with graceful NaN fallback)
 # ---------------------------------------------------------------------------
+
+
+def discover_per_round_samples(
+    samples_dir: Path,
+    *,
+    per_round_glob: str = "{arm}_round{r:02d}",
+    arm: str = "framework",
+) -> list[Path]:
+    """Return a sorted list of per-round directories under ``samples_dir``.
+
+    Phase 4 / Design #1 — globs ``{arm}_round00``, ``{arm}_round01``,
+    ... under ``samples_dir``. Each discovered directory is one round;
+    the list is sorted by the integer index encoded in the directory
+    name (so ``round00`` precedes ``round01`` etc.) for stable
+    ordering in the per-round metrics output.
+
+    Returns an empty list when no per-round directories are present so
+    the caller can fall back to legacy single-shot semantics.
+    """
+    if not samples_dir.is_dir():
+        return []
+    # Compute the literal prefix and trailing integer of the glob
+    # (e.g. ``{arm}_round{r:02d}`` -> prefix="framework_round", suffix="").
+    rendered = str(per_round_glob).format(arm=arm, r=0)
+    # Split rendered at the trailing integer; everything before the
+    # integer is the prefix and everything after (typically nothing)
+    # is the suffix. This is more robust than splitting on "round"
+    # because arm names may themselves contain underscores.
+    prefix_end = len(rendered)
+    while prefix_end > 0 and rendered[prefix_end - 1].isdigit():
+        prefix_end -= 1
+    prefix = rendered[:prefix_end]
+    if not prefix:
+        return []
+    out: list[tuple[int, Path]] = []
+    for child in samples_dir.iterdir():
+        if not child.is_dir():
+            continue
+        if not child.name.startswith(prefix):
+            continue
+        try:
+            idx = int(child.name[len(prefix):])
+        except ValueError:
+            continue
+        out.append((idx, child))
+    out.sort(key=lambda kv: kv[0])
+    return [p for _, p in out]
+
+
+def run_image_eval_per_round(
+    *,
+    samples_dir: Path,
+    reference_stats: Path | None,
+    prompts_jsonl: Path | None,
+    output: Path,
+    device_arg: str = "auto",
+    fid_batch_size: int = 16,
+    clip_batch_size: int = 16,
+    clip_model_id: str = "openai/clip-vit-base-patch32",
+    image_target_size: int = 299,
+    per_round_glob: str = "{arm}_round{r:02d}",
+    arm: str = "framework",
+) -> dict[str, Any]:
+    """Top-level per-round orchestrator: load per-round images, run metrics.
+
+    Returns ``img_eval_report.v1`` with an ADDITIVE
+    ``metrics.per_round_fid`` and ``metrics.per_round_clip_score`` list
+    keyed by ``round_index``. The legacy top-level ``metrics.fid`` and
+    ``metrics.clip_score`` stay byte-stable — they are computed over
+    the LAST round's images so downstream consumers that ignore the
+    per-round surface keep working.
+
+    Phase 4 / Design #1.
+    """
+    import torch as _torch  # local import keeps top-level lazy
+
+    device = select_device(device_arg)
+    per_round_dirs = discover_per_round_samples(
+        samples_dir, per_round_glob=per_round_glob, arm=arm
+    )
+    if not per_round_dirs:
+        # No per-round dirs found: fall back to legacy single-shot
+        # behaviour (do not raise — Phase 3 byte-stability contract).
+        print(
+            f"[run_image_eval] no per-round dirs found under {samples_dir} "
+            f"(glob={per_round_glob!r}, arm={arm!r}); falling back to "
+            f"single-shot semantics.",
+            file=sys.stderr,
+        )
+        return run_image_eval(
+            samples_dir=samples_dir,
+            reference_stats=reference_stats,
+            prompts_jsonl=prompts_jsonl,
+            output=output,
+            device_arg=device_arg,
+            fid_batch_size=fid_batch_size,
+            clip_batch_size=clip_batch_size,
+            clip_model_id=clip_model_id,
+            image_target_size=image_target_size,
+        )
+
+    prompts = load_prompts(prompts_jsonl) if prompts_jsonl is not None else None
+
+    per_round_fid: list[dict[str, Any]] = []
+    per_round_clip: list[dict[str, Any]] = []
+    final_images: np.ndarray | None = None
+    t0 = time.perf_counter()
+    for round_idx, round_dir in enumerate(per_round_dirs):
+        try:
+            round_samples = discover_samples(round_dir)
+            round_images = load_images_as_tensor(
+                round_samples, target_size=int(image_target_size)
+            )
+        except FileNotFoundError as exc:
+            per_round_fid.append(
+                {
+                    "round_index": int(round_idx),
+                    "round_dir": str(round_dir),
+                    "metric": "fid",
+                    "value": None,
+                    "n_samples": 0,
+                    "error": str(exc),
+                }
+            )
+            per_round_clip.append(
+                {
+                    "round_index": int(round_idx),
+                    "round_dir": str(round_dir),
+                    "metric": "clip_score",
+                    "mean": None,
+                    "std": None,
+                    "n_pairs": 0,
+                    "error": str(exc),
+                }
+            )
+            continue
+        if reference_stats is not None:
+            per_round_fid.append(
+                {
+                    "round_index": int(round_idx),
+                    "round_dir": str(round_dir),
+                    **run_fid_metric(
+                        round_images,
+                        reference_stats,
+                        device=device,
+                        batch_size=int(fid_batch_size),
+                    ),
+                }
+            )
+        else:
+            per_round_fid.append(
+                {
+                    "round_index": int(round_idx),
+                    "round_dir": str(round_dir),
+                    "metric": "fid",
+                    "value": None,
+                    "n_samples": int(round_images.shape[0]),
+                    "error": "reference_stats_not_provided",
+                }
+            )
+        if prompts is not None:
+            aligned: list[str] = list(prompts[: round_images.shape[0]])
+            while len(aligned) < round_images.shape[0]:
+                aligned.append("")
+            clip_block = run_clipscore_metric(
+                round_images,
+                aligned,
+                device=device,
+                batch_size=int(clip_batch_size),
+                model_id=str(clip_model_id),
+            )
+            clip_block.setdefault("round_index", int(round_idx))
+            clip_block.setdefault("round_dir", str(round_dir))
+            per_round_clip.append(clip_block)
+        else:
+            per_round_clip.append(
+                {
+                    "round_index": int(round_idx),
+                    "round_dir": str(round_dir),
+                    "metric": "clip_score",
+                    "mean": None,
+                    "std": None,
+                    "n_pairs": int(round_images.shape[0]),
+                    "error": "prompts_jsonl_not_provided",
+                }
+            )
+        final_images = round_images
+
+    # Legacy single-shot fields re-emitted over the FINAL round so
+    # Phase 3 byte-stability holds for any downstream consumer that
+    # ignores the per-round surface.
+    if final_images is not None:
+        if reference_stats is not None:
+            legacy_fid = run_fid_metric(
+                final_images,
+                reference_stats,
+                device=device,
+                batch_size=int(fid_batch_size),
+            )
+        else:
+            legacy_fid = {
+                "metric": "fid",
+                "value": None,
+                "error": "reference_stats_not_provided",
+            }
+        if prompts is not None:
+            aligned = list(prompts[: final_images.shape[0]])
+            while len(aligned) < final_images.shape[0]:
+                aligned.append("")
+            legacy_clip = run_clipscore_metric(
+                final_images,
+                aligned,
+                device=device,
+                batch_size=int(clip_batch_size),
+                model_id=str(clip_model_id),
+            )
+        else:
+            legacy_clip = {
+                "metric": "clip_score",
+                "mean": None,
+                "std": None,
+                "error": "prompts_jsonl_not_provided",
+            }
+    else:
+        legacy_fid = {
+            "metric": "fid",
+            "value": None,
+            "error": "no_per_round_samples_loaded",
+        }
+        legacy_clip = {
+            "metric": "clip_score",
+            "mean": None,
+            "std": None,
+            "error": "no_per_round_samples_loaded",
+        }
+
+    report: dict[str, Any] = {
+        "schema": "img_eval_report.v1",
+        "samples_dir": str(samples_dir),
+        "reference_stats": str(reference_stats) if reference_stats else None,
+        "prompts_jsonl": str(prompts_jsonl) if prompts_jsonl else None,
+        "n_samples": int(final_images.shape[0]) if final_images is not None else 0,
+        "image_shape_hw": (
+            [int(final_images.shape[2]), int(final_images.shape[3])]
+            if final_images is not None and final_images.size
+            else [0, 0]
+        ),
+        "device": str(device),
+        "metrics": {
+            "fid": legacy_fid,
+            "clip_score": legacy_clip,
+            "per_round_fid": per_round_fid,
+            "per_round_clip_score": per_round_clip,
+            "geneval": {
+                "value": None,
+                "marker": "external",
+                "note": "GenEval object-composition evaluation requires an mmdet/Mask2Former harness; see docs/r17-survey/image-eval-plan.md",
+            },
+            "dpg_bench": {
+                "value": None,
+                "marker": "external",
+                "note": "DPG-Bench dense-prompt evaluation requires mPLUG-owl (Tier 2 self-host) or GPT-4V (paper); see docs/r17-survey/image-eval-plan.md",
+            },
+        },
+        "wall_clock_seconds": float(time.perf_counter() - t0),
+        "status": "ok",
+    }
+    if all(
+        report["metrics"][k].get("value", report["metrics"][k].get("mean")) is None
+        and report["metrics"][k].get("error")
+        for k in ("fid", "clip_score")
+    ):
+        report["status"] = "all_metrics_failed"
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2, sort_keys=True))
+    return report
 
 
 def run_fid_metric(
@@ -475,13 +793,39 @@ def run_image_eval(
     clip_batch_size: int = 16,
     clip_model_id: str = "openai/clip-vit-base-patch32",
     image_target_size: int = 299,
+    per_round: bool = False,
+    per_round_glob: str = "{arm}_round{r:02d}",
+    arm: str = "framework",
 ) -> dict[str, Any]:
     """Top-level orchestrator: load images, run metrics, write JSON.
 
     ``image_target_size`` controls the bilinear resize applied at
     image-load time. Production runs use the canonical FID value
     (299); tests pass smaller values (e.g. 32) for speed.
+
+    When ``per_round`` is ``True`` the runner delegates to
+    :func:`run_image_eval_per_round` which globs ``{arm}_round{r:02d}``
+    directories under ``samples_dir`` and emits per-round metrics
+    under the additive ``metrics.per_round_fid`` /
+    ``metrics.per_round_clip_score`` sub-trees. The legacy top-level
+    ``metrics.fid`` / ``metrics.clip_score`` are re-emitted over the
+    FINAL round so existing Phase 3 byte-stable consumers keep working
+    when ``--per-round`` is omitted.
     """
+    if per_round:
+        return run_image_eval_per_round(
+            samples_dir=samples_dir,
+            reference_stats=reference_stats,
+            prompts_jsonl=prompts_jsonl,
+            output=output,
+            device_arg=device_arg,
+            fid_batch_size=fid_batch_size,
+            clip_batch_size=clip_batch_size,
+            clip_model_id=clip_model_id,
+            image_target_size=image_target_size,
+            per_round_glob=per_round_glob,
+            arm=arm,
+        )
     t0 = time.perf_counter()
     samples = discover_samples(samples_dir)
     prompts = load_prompts(prompts_jsonl) if prompts_jsonl is not None else None
@@ -600,15 +944,108 @@ def _build_argparser() -> argparse.ArgumentParser:
                    help="HF model id for CLIPScore (default: openai/clip-vit-base-patch32).")
     p.add_argument("--image-target-size", type=int, default=299,
                    help="Bilinear resize applied to every image at load time (default: 299).")
+    p.add_argument("--per-round", action="store_true",
+                   help=(
+                       "Phase 4 / Design #1: glob ``{arm}_round{r:02d}/`` "
+                       "sub-directories under ``--samples-dir`` and emit "
+                       "per-round FID + CLIPScore under "
+                       "``metrics.per_round_fid`` / ``metrics.per_round_clip_score``. "
+                       "Legacy top-level ``metrics.fid`` / ``metrics.clip_score`` "
+                       "are re-emitted over the FINAL round (Phase 3 "
+                       "byte-stability preserved when --per-round is omitted)."
+                   ))
+    p.add_argument("--per-round-glob", type=str, default="{arm}_round{r:02d}",
+                   help="Format string for per-round directory naming (default: ``{arm}_round{r:02d}``).")
+    p.add_argument("--arm", type=str, default="framework",
+                   help="Arm prefix consumed by the per-round glob (default: ``framework``).")
+    p.add_argument("--synthetic-image", action="store_true",
+                   help=(
+                       "P-15 phase 3 ADDITIVE: when set, automatically load the "
+                       "canonical synthetic-image InceptionV3 reference statistics "
+                       "from ``data/synthetic_image_v1/inception_reference_stats.npz`` "
+                       "(relative to the repo root), falling back to the documented "
+                       "external canonical path ``/home/hugo/data/synthetic_image_v1/"
+                       "inception_reference_stats.npz`` when the in-repo file is "
+                       "absent (the repo ``.gitignore`` excludes ``data/``). "
+                       "When set, --reference-stats is overridden (a stderr note is "
+                       "emitted). When --synthetic-image is NOT set, behaviour is "
+                       "byte-stable vs the pre-existing --reference-stats path."
+                   ))
     return p
+
+
+# ---------------------------------------------------------------------------
+# Canonical synthetic-image reference stats path resolution (P-15 phase 3)
+# ---------------------------------------------------------------------------
+
+
+#: Canonical in-repo path (relative to REPO_ROOT). The repo ``.gitignore``
+#: excludes ``data/`` so the in-repo path may be absent on a fresh clone.
+SYNTHETIC_IMAGE_REF_STATS_INREPO: str = "data/synthetic_image_v1/inception_reference_stats.npz"
+#: Documented external canonical path produced by
+#: :mod:`tools.build_synthetic_image_dataset` on the agent's host.
+SYNTHETIC_IMAGE_REF_STATS_EXTERNAL: str = "/home/hugo/data/synthetic_image_v1/inception_reference_stats.npz"
+
+
+def resolve_synthetic_image_reference_stats() -> Path:
+    """Return the canonical synthetic-image reference stats path.
+
+    Search order (first match wins):
+
+    1. ``<REPO_ROOT>/data/synthetic_image_v1/inception_reference_stats.npz``
+       (in-repo path; documented contract from P-15).
+    2. ``/home/hugo/data/synthetic_image_v1/inception_reference_stats.npz``
+       (the documented external canonical path produced by
+       :mod:`tools.build_synthetic_image_dataset` on the agent's host —
+       used when the repo ``.gitignore`` excludes ``data/``).
+
+    Raises
+    ------
+    FileNotFoundError
+        When neither path is present. The CLI then propagates the error
+        so the operator sees a clear actionable message rather than
+        silently using a missing reference.
+    """
+    in_repo = REPO_ROOT / SYNTHETIC_IMAGE_REF_STATS_INREPO
+    if in_repo.is_file():
+        return in_repo
+    external = Path(SYNTHETIC_IMAGE_REF_STATS_EXTERNAL)
+    if external.is_file():
+        return external
+    raise FileNotFoundError(
+        "synthetic_image_reference_stats_not_found: tried "
+        f"{in_repo} (in-repo) and {external} (external canonical); "
+        "run tools/build_synthetic_image_dataset.py --n-samples 5000 "
+        "to materialise the canonical 5K reference."
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_argparser().parse_args(argv)
+    # P-15 phase 3 ADDITIVE: when --synthetic-image is set, override
+    # --reference-stats with the canonical synthetic-image reference
+    # statistics. The legacy --reference-stats path is byte-stable when
+    # --synthetic-image is omitted. We log the resolved path to stderr so
+    # operators can audit which reference was used.
+    resolved_ref_stats: Path | None = None
+    if args.synthetic_image:
+        try:
+            resolved_ref_stats = resolve_synthetic_image_reference_stats()
+        except FileNotFoundError as exc:
+            print(f"[ERROR] --synthetic-image requested but no canonical "
+                  f"reference stats found: {exc}", file=sys.stderr)
+            return 1
+        print(
+            f"[run_image_eval] --synthetic-image: using canonical reference "
+            f"stats at {resolved_ref_stats}",
+            file=sys.stderr,
+        )
+    elif args.reference_stats:
+        resolved_ref_stats = Path(args.reference_stats)
     try:
         report = run_image_eval(
             samples_dir=Path(args.samples_dir),
-            reference_stats=Path(args.reference_stats) if args.reference_stats else None,
+            reference_stats=resolved_ref_stats,
             prompts_jsonl=Path(args.prompts_jsonl) if args.prompts_jsonl else None,
             output=Path(args.output),
             device_arg=str(args.device),
@@ -616,6 +1053,9 @@ def main(argv: list[str] | None = None) -> int:
             clip_batch_size=int(args.clip_batch_size),
             clip_model_id=str(args.clip_model_id),
             image_target_size=int(args.image_target_size),
+            per_round=bool(args.per_round),
+            per_round_glob=str(args.per_round_glob),
+            arm=str(args.arm),
         )
     except Exception as exc:  # noqa: BLE001 — final guard, report & exit 1
         print(f"[ERROR] image-eval run failed: {exc!r}", file=sys.stderr)

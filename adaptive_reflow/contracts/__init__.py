@@ -131,9 +131,12 @@ from .phase import (
 
 # ---- DTB-NA1 contract ----
 from .schedule import (
+    LEMMA4_REGIME_SLACK,
     CosineScheduleConfig,
     CosineScheduleSample,
     FreshNoiseFloor,
+    RegimeAwareSchedulerProtocol,
+    RegimeGate,
     RestartTriggerEvent,
 )
 
@@ -201,6 +204,12 @@ from .archive import (
     validate_archive_quota,
 )
 
+# ---- D4: Dynamic noise bias typed contracts ----
+from .dynamic_noise_bias import (
+    DynamicNoiseBiasResult,
+    PaperQuantitiesSnapshot,
+)
+
 # ---- DTB-S1 contract ----
 from .authority import (
     FinalRestartPolicy,
@@ -228,6 +237,48 @@ from .state_machine import (
     TransitionLog,
 )
 
+# ---- D8: Typed Condition discriminated union ----
+from .condition import (
+    BFNInpaintCondition,
+    CFGCondition,
+    CONDITION_KINDS,
+    Condition,
+    ConditionKind,
+    InpaintingCondition,
+    MappingConditionAdapter,
+    NullCondition,
+    PropertyCondition,
+    condition_kind_of,
+    condition_to_mapping,
+    validate_condition,
+    wrap_condition,
+)
+
+# ---- D5: Per-channel state-type + shape contracts (Design #3) ----
+from .state_channel import (
+    STATE_CHANNELS,
+    StateChannel,
+    StateChannelKind,
+    StateShape,
+    validate_channel_types,
+    validate_state_channel,
+    validate_state_shape,
+)
+
+# ---- D10: Typed materialization route (Design #4) ----
+from .materialization import (
+    EnvelopeStateBundle,
+    LegacyProtocolAdapter,
+    LossTolerance,
+    MATERIALIZER_NOOP_DIGEST,
+    MaterializationRoute,
+    MaterializerHandle,
+    NativeChannelAccessor,
+    NativeStateBundle,
+    NoOpMaterializer,
+    default_materializer_route,
+)
+
 # ---------------------------------------------------------------------------
 # Lazy re-exports of the molecule-aware atomic source bundle.
 # ---------------------------------------------------------------------------
@@ -246,22 +297,24 @@ __all__ = [
     "AuditCode",
     "ArchiveQuota",
     "ArtifactHash",
+    "BFNInpaintCondition",
     "BundleId",
+    "CFGCondition",
     "CHANNEL_NAMES",
+    "CONDITION_KINDS",
     "COMPLEMENT_BLOCKER_CODES",
     "ChannelName",
-    "ChannelRuleInputs",
-    "ChannelRuleOutputs",
-    "ChannelTransferDecision",
-    "ChannelTransferEvidence",
     "ChargeChannelRef",
     "ComplementBlockerCode",
     "CommutatorResidualDiagnostic",
+    "Condition",
     "ConditionDigest",
+    "ConditionKind",
     "CoordinateChannelRef",
     "CosineScheduleConfig",
     "CosineScheduleSample",
     "DEFAULT_OPERATION_ORDER",
+    "DynamicNoiseBiasResult",
     "DynamicRestartTransferLedger",
     "EvaluatorProvenanceRef",
     "FEEDBACK_MODES",
@@ -273,21 +326,29 @@ __all__ = [
     "FrameSpec",
     "FreshNoiseFloor",
     "FrozenEnvelopeManifest",
+    "InpaintingCondition",
+    "LEMMA4_REGIME_SLACK",
     "LedgerRowId",
     "LegacyCompatibilityWindow",
     "ManifestId",
+    "MappingConditionAdapter",
     "MaterializationEvidenceRef",
     "MechanismId",
     "NoiseBiasInputRow",
+    "NullCondition",
     "OPERATION_STEPS",
     "OperationCompositionContract",
+    "PaperQuantitiesSnapshot",
     "PhaseState",
     "PolicyId",
     "ProjectedPairChannelRef",
+    "PropertyCondition",
     "ProvenanceChain",
     "RESTART_TRIGGER_CODES",
     "RawPairChannelRef",
     "RestartPolicyAuthorityContract",
+    "RegimeAwareSchedulerProtocol",
+    "RegimeGate",
     "RestartTriggerCode",
     "RestartTriggerEvent",
     "RoundResultBundle",
@@ -296,11 +357,17 @@ __all__ = [
     "SCHEDULE_PHASES",
     "SampleId",
     "ShapeSpec",
+    "STATE_CHANNELS",
+    "StateChannel",
+    "StateChannelKind",
+    "StateShape",
     "TailBudgetRow",
     "TailBudgetRowId",
     "TraceDigest",
     "TriggerId",
     "ValidationResult",
+    "condition_kind_of",
+    "condition_to_mapping",
     "empty_provenance",
     "hash_artifact",
     "hash_bundle_id",
@@ -313,12 +380,17 @@ __all__ = [
     "validate_audit_chain",
     "validate_audit_code",
     "validate_channel_evidence",
+    "validate_channel_types",
+    "validate_condition",
     "validate_final_restart_policy",
     "validate_nonneg_int",
     "validate_positive_int",
     "validate_round_result_bundle",
+    "validate_state_channel",
+    "validate_state_shape",
     "validate_unit_factor",
     "validate_unit_float",
+    "wrap_condition",
     # Audit-code typed structure (CONTRACTS.md §9.1-§9.2)
     "coerce_audit_code",
     "coerce_audit_codes",
@@ -343,4 +415,15 @@ __all__ = [
     "TransitionGuardedBuilder",
     "TransitionKind",
     "TransitionLog",
+    # D10 typed materialization route (Design #4)
+    "EnvelopeStateBundle",
+    "LegacyProtocolAdapter",
+    "LossTolerance",
+    "MATERIALIZER_NOOP_DIGEST",
+    "MaterializationRoute",
+    "MaterializerHandle",
+    "NativeChannelAccessor",
+    "NativeStateBundle",
+    "NoOpMaterializer",
+    "default_materializer_route",
 ]

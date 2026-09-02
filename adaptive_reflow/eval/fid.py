@@ -66,6 +66,44 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
+# Theorem-aligned FID re-exports (Phase 3 / r17 audit fix)
+# ---------------------------------------------------------------------------
+#
+# The :mod:`adaptive_reflow.eval.fid_theorem_aligned` module is the
+# theorem-aligned sibling: it binds the four paper quantities
+# ``(A_g, B_g, C_g, e_rho)`` from :mod:`adaptive_reflow.contracts
+# .paper_quantities` to the standard Gaussian-Frechet arithmetic and
+# adds three obligations (per-round FID tracking, ``O(eps)``
+# convergence assertion, regime check). The legacy :class:`FIDProtocol` /
+# :class:`InceptionV3FIDEvaluator` surface above is byte-stable; the
+# re-exports below give legacy callers a single import point if they
+# want both the single-shot FID and the per-round theorem-aligned
+# surface from the same module.
+
+# Lazy re-export so importing :mod:`adaptive_reflow.eval.fid` does NOT
+# import :mod:`adaptive_reflow.eval.fid_theorem_aligned` (the latter
+# pulls in :mod:`adaptive_reflow.contracts.paper_quantities`). The
+# ``__getattr__`` hook is the canonical Python 3.7+ way to expose
+# optional module-level symbols lazily.
+def __getattr__(name: str) -> object:
+    if name in {
+        "TheoremAlignedFIDResult",
+        "FIDPerRoundResult",
+        "ConvergenceDiagnostic",
+        "TheoremAlignedFIDReport",
+        "PaperQuantitiesSnapshot",
+        "NuGReferenceRegistry",
+        "InceptionV3TheoremAlignedFIDEvaluator",
+        "PerRoundFIDTracker",
+        "REGIME_VIOLATION_AUDIT_CODE",
+    }:
+        from adaptive_reflow.eval import fid_theorem_aligned as _ft
+
+        return getattr(_ft, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+# ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
 

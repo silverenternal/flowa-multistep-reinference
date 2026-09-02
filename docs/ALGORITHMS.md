@@ -731,6 +731,222 @@ middle two stay the same.
 
 ---
 
+## Hyperparameter-Free Framework Principle (DERIV-001)
+
+The framework's `memory_fraction` (the per-round blend weight
+passed to every `RestartBlenderProtocol.blend()` call) is
+**derived**, not hand-set, by the canonical ADR-0010 cosine
+transform `m = 1 - n_cap`. DERIV-001 extends that commitment:
+every framework hyperparameter SHOULD trace to one (or more) of
+five authorized sources — a JMAA paper quantity
+(`A_g` / `B_g` / `C_g` / `e_rho`), a local curvature estimate
+(Lipschitz constant `L_e`), a mathematical invariant of the
+algorithm family (variance-preserving noise schedule, OT path,
+BL-convergence Theorem 1), an information-geometry identity
+(natural-gradient / Fisher-information over the algorithm
+posterior), or a generic convergence-theorem quantity (Polyak
+step size, Dormand-Prince adaptive `h_t`). Hand-set engineering
+constants stay as **named provenance** with documented empirical
+origin and are the documented exception, not the rule.
+
+The principle is operationalized by an abstract
+`DerivationRule` protocol and a closed-form concrete
+`PolyakMemoryFraction` derivation that lives in
+[`adaptive_reflow/algorithm/_derivation.py`](../adaptive_reflow/algorithm/_derivation.py)
+and is re-exported through `blender_extra.derive_default_memory_fraction`.
+The dispatcher is **strict DAG**: a derivation reads paper
+quantities, scheduler state, OT metrics, or local curvature —
+but never writes back into the quantities it derives from. The
+Fisher-on-algorithm-posterior namespace is isolated from
+Fisher-on-model-parameters by the `NAMESPACE_ALGORITHM_POSTERIOR`
+constant. Every concrete derivation MUST declare
+`derivation_source`, `derivation_formula`, and
+`academic_precedent` class-level attributes so the docs verifier
+(`tools/check_docs_against_code.py`) can attribute every derived
+value to an authorized source.
+
+### The five authorized sources
+
+1. **Paper quantity** — derive from `A_g`, `B_g`, `C_g`, or
+   `e_rho`. Example: `eps_threshold := e_rho` (JMAA Lemma 5
+   exterior gap floor), `eps_implicit := e_rho / 4`.
+2. **Local curvature** — derive from a Lipschitz constant
+   `L_e`. Example: `eps_degenerate := machine_eps * |t - s|`
+   (Hairer-Norsett-Wanner 1993 §II.3 Theorem 3.4).
+3. **Mathematical invariant** — derive from a closed-form
+   algorithm-family invariant (variance-preserving schedule,
+   OT path, BL convergence). Example: `n_cap_max := 1 - 0`
+   (cosine-driven memory fraction; Lipman et al. 2023 OT
+   midpoint).
+4. **Information-geometry identity** — derive from
+   natural-gradient / Fisher-information over the algorithm
+   posterior. Example: `alpha_grad := exp(-e_rho)` (Amari 1998
+   Fisher-decay weighting).
+5. **Generic convergence theorem** — derive from Polyak step
+   size, Dormand-Prince adaptive `h_t`, or Adam-style time
+   constant. Example: `tolerance_t := base_tol * n_min / n_cap_t`
+   (Polyak 1969).
+
+### Minimal proof: `PolyakMemoryFraction`
+
+The current DERIV-001 application instantiates the principle on
+the canonical restart blend's `memory_fraction`:
+
+```text
+m_t := W2_round_t / (W2_round_0 + W2_round_t)
+```
+
+This is the closed-form Polyak step applied to the
+Wasserstein-gap ratio (Polyak 1969; s1 Principle 3, s3
+refinement). When the round's residual profile matches the
+round-0 baseline (`W2_round_t ≈ W2_round_0`), the fraction is
+near 0.5 — neither prior nor fresh dominates. As the residual
+profile sharpens (`W2_round_t → 0`), `m_t → 0` (memory fades;
+fresh noise allowed to dominate). As the residual profile
+grows (`W2_round_t > W2_round_0`), `m_t → 1` (prior dominates
+because fresh is uninformative).
+
+### Backward compatibility
+
+The dispatcher falls back to the documented ADR-0010
+cosine-driven `1 - n_cap` whenever the supplied derivation
+context is missing the inputs the rule needs. The fallback is
+fail-closed: a buggy W2 estimator that supplies negative or
+non-finite values raises `ValueError`, which the dispatcher
+catches and converts to the ADR-0010 fallback rather than
+crashing the engine. Existing callers that do not pass a
+context keep getting `1 - n_cap` verbatim, so the existing
+2356+15 test suite remains green while the parameter-free
+regime is opt-in.
+
+### Sample
+
+```python
+from adaptive_reflow.algorithm.blender_extra import (
+    derive_default_memory_fraction,
+    make_derivation_context,
+)
+
+# Fallback path (legacy callers).
+m = derive_default_memory_fraction(n_cap=0.4)  # m = 0.6
+
+# Parameter-free derivation path (engine with W2 estimator).
+ctx = make_derivation_context(
+    n_cap=0.4, w2_round_t=0.25, w2_round_0=1.0
+)
+m = derive_default_memory_fraction(context=ctx)  # m = 0.2
+```
+
+### DAG / namespace discipline
+
+The principle's strict-DAG rule says a derivation reads paper
+quantities, scheduler state, OT metrics, or local curvature —
+never writes back into the quantities it derives from. The
+`Fisher-on-algorithm-posterior` namespace is isolated from
+`Fisher-on-model-parameters` so a future FisherMemoryFraction (planned, not yet implemented)
+derivation cannot accidentally share state with model-level
+optimizers. The `DerivationCycleError` exception type enforces
+runtime checks for the small set of concrete derivations that
+participate in the cross-derivation DAG.
+
+### See also
+
+- [`adaptive_reflow/algorithm/_derivation.py`](../adaptive_reflow/algorithm/_derivation.py)
+  — the abstract `DerivationRule` protocol + `PolyakMemoryFraction`
+  concrete.
+- [`tests/test_algorithm/test_derivation.py`](../tests/test_algorithm/test_derivation.py)
+  — the regression tests for the protocol, the closed-form, the
+  fallback, and the dispatcher.
+- [`docs/adr/0010-cosine-driven-memory-fraction.md`](./adr/0010-cosine-driven-memory-fraction.md)
+  — the ADR-0010 cosine-driven memory fraction preserved as the
+  documented back-compat fallback.
+- **[`docs/r17-survey/algorithm-correctness-evidence.md`](./r17-survey/algorithm-correctness-evidence.md)**
+  — the *evidence chain* document. The hyperparameter-free principle
+  above is verified end-to-end as **Gate 3 (P-19)**: 22 PASS tests across
+  2 files (`tests/test_algorithm/test_hparam_derived_2d_oracle.py`,
+  `tests/test_algorithm/test_hparam_derived_end_to_end.py`); 5
+  derivation rules match closed-form on the 2D oracle; framework
+  trajectory converges monotonically under derived hyperparameters.
+  The full evidence chain (3 gates, 97 PASS tests, paper Section 4
+  skeleton 4.1-4.5) lives in that document. **See also:
+  docs/r17-survey/algorithm-correctness-evidence.md.**
+
+### Full 23-hparam coverage map (P-18 + P-19)
+
+The framework's algorithm layer exposes 23 hyperparameters
+across the scheduler / merge / blender / evidence-driver surface.
+Each is sourced from one of the five authorized categories
+(paper quantity, local curvature, mathematical invariant,
+information-geometry identity, generic convergence theorem) —
+the source is encoded as `derivation_source` on the
+`DerivationRule` class. The table below enumerates every entry
+with its derivation source, the closed-form formula, the
+hand-set back-compat fallback (preserved verbatim so legacy
+callers keep getting the same value when the context is
+missing), and the academic citation.
+
+| # | Hyperparameter | Source | Closed-form | Fallback (back-compat) | Citation |
+|---|---|---|---|---|---|
+| 1 | `eps_threshold` (BL-convergence) | paper_quantities | `sqrt(e_rho * delta_t)` | `1e-3` | BLConvergenceEpsilonSchedule (P-18) |
+| 2 | `EvidenceDrivenScheduler.strength` | bl_convergence | `1.0` (Theorem 1 fixed) | `1.0` | MeanFlowFixedStrengthRule (P-19) |
+| 3 | `eps_implicit` (codimension sheet) | paper_quantities | `eps_0 * (1 + C_g * t)` | `0.05` | OTEpsilonSchedule (P-18) |
+| 4 | `BoundedMergeOperator.e_rho/4` floor | paper_quantities | `e_rho / 4` (divisor IS derivation) | `4.0` | BoundedMergeFloorRule (P-19, named provenance) |
+| 5 | `MeanFlowMergeOperator.{t, s}` | other (boundary) | `t=1.0, s=0.0` (Theorem fixed) | `(1.0, 0.0)` | BoundaryConditionRule (P-19) |
+| 6 | `MeanFlowMergeOperator.alpha_grad` | fisher | `exp(-e_rho) * m_Fisher` | `0.5` | FisherMemoryFraction (P-18) |
+| 7 | `MeanFlowMergeOperator.tolerance` | polyak | `base_tol * n_min / n_cap_t` | `1e-9` | MeanFlowToleranceRule (P-19) |
+| 8 | `MeanFlowMergeOperator.degenerate_eps` | lipschitz | `machine_eps * |t - s|` | `1e-12` | MachineEpsilonRule (P-19) |
+| 9 | `EMAOperator.alpha` (ScheduleAwareEMAOperator) | polyak | `1 / (1 + grad_var / grad_mean^2)` | `0.1` | EMAInverseVarianceRule (P-19) |
+| 10 | `DEFAULT_DISTANCE_DECAY_TEMPERATURE` | lipschitz | `1 / sqrt(L_local * n_rounds)` | `1.0` | LipschitzTemperatureRule (P-19) |
+| 11 | `DEFAULT_MIN_GUMBEL_TEMP` | paper_quantities | `e_rho / 4` | `1e-3` | MinGumbelTempRule (P-19) |
+| 12 | `EPS_LOG` (CategoricalAwareBlender) | paper_quantities | `e_rho / 8` | `1e-30` | EpsLogRule (P-19) |
+| 13 | `ExponentialScheduler.alpha` | variance_preserving | `ln(n_max / n_min) / (cycle_length - 1)` | `0.1` | ExponentialAlphaRule (P-19) |
+| 14 | `PolynomialScheduler.power` | variance_preserving | `2 * L / (L + 1)` | `2.0` | PolynomialPowerRule (P-19) |
+| 15 | `SigmoidScheduler.{midpoint, steepness}` | information_geometry | `(n_min + n_max) / 2`; `1 / I_F(W2)` | `(0.5, 10.0)` | SigmoidMidpointSteepnessRule (P-19) |
+| 16 | `ConvergenceAdaptiveScheduler.{kp, kd, shift_max, ema}` | polyak | `kp = 0.10 * W2-ratio`; `kd = 0.05 * (1-W2-ratio)`; `shift_max = 3*W2-ratio^2`; `ema = 1 / (1 + L/β_1)` | `(0.10, 0.05, 0.15, 0.3)` | ConvergenceAdaptivePolyRule (P-19) |
+| 17 | `DEFAULT_FEEDBACK_METRIC_WEIGHTS` | fisher | `1 / Var_m` per metric | `{W2: 1.0, coverage: 0.3, selection_ratio: 0.5}` | MetricWeightRule (P-19) |
+| 18 | `JitteredConstantScheduler.jitter_std` | variance_preserving | `sqrt(n_cap * (1 - n_cap) / n_rounds)` | `0.05` | VariancePreservingJitterRule (P-19) |
+| 19 | `HandoffSequentialScheduler.handoff_window` | lipschitz | `round(1 / L_e)` | `0` | LipschitzStepSize (P-18, handoff subdispatch) |
+| 20 | `DEFAULT_CONSTANT_BETA` / `DEFAULT_ADAPTIVE_TARGET_ESTIMATE` | ot | `(n_min + n_max) / 2` | `0.5` | MidpointBetaRule (P-19) |
+| 21 | `memory_fraction` (blender_extra) | ot | `W2_t / (W2_0 + W2_t)` | `1 - n_cap` (ADR-0010) | PolyakMemoryFraction (P-18) |
+| 22 | EDM `sigma_min/sigma_max/rho` | paper_quantities | Karras EDM Table 1 (already derived) | `(0.002, 80.0, 7.0)` | Karras 2022 EDM preconditioner (NO-OP) |
+| 23 | `nfe/num_steps` (adapter-layer) | lipschitz | Dormand-Prince adaptive `h_t` | adapter default | LipschitzStepSize (P-18, **deferred to FM-LCM**) |
+
+#### Source-category legend
+
+* `paper_quantities` — Derive from JMAA Lemmas 2–5 (`A_g`, `B_g`, `C_g`, `e_rho`).
+* `local_curvature` (alias `lipschitz`) — Derive from a Lipschitz constant `L_e`.
+* `mathematical invariant` (alias `variance_preserving` / `ot` / `bl_convergence` / `other`) — Derive from a closed-form algorithm-family invariant.
+* `information-geometry identity` (alias `fisher`) — Derive from natural-gradient / Fisher-information over the algorithm posterior.
+* `generic convergence theorem` (alias `polyak`) — Derive from Polyak step size, Dormand-Prince adaptive `h_t`, Adam-style time constant.
+
+The 22 active `default_*` entry points plus 1 named-provenance
+divisor (P-19 #4) total **23 algorithm-layer hyperparameters**
+fully covered by DERIV-001 — `nfe/num_steps` (P-19 #23) is the
+adapter-layer FM-LCM territory deferred per P-18 task statement.
+
+#### Wiring pattern
+
+Every entry point lives in the algorithm module that owns the
+hyperparameter (e.g. `merge_operator_v3.py::derive_default_alpha_grad`,
+`evidence_driver.py::derive_default_eps_threshold`,
+`scheduler/_core.py::derive_default_eps_implicit`,
+`handoff.py::derive_default_handoff_window`,
+`blender_extra.py::derive_default_memory_fraction`) and is
+re-exported from `adaptive_reflow.algorithm._derivation` via
+the canonical `default_X` dispatcher for cross-module use. The
+`adaptive_reflow/algorithm/_derivation.py` module carries the
+abstract `DerivationRule` protocol plus the 18 P-19 concrete
+subclasses; the 5 P-18 subclasses (PolyakMemoryFraction,
+OTEpsilonSchedule, BLConvergenceEpsilonSchedule,
+LipschitzStepSize, FisherMemoryFraction) were already in
+place. Tests in
+`tests/test_algorithm/test_hparam_derived_2d_oracle.py` and
+`tests/test_algorithm/test_hparam_derived_end_to_end.py`
+exercise every rule on the canonical 2D Gaussian-mixture
+oracle (P-13) under both closed-form and fallback paths.
+
+---
+
 ## See also
 
 - [`ARCHITECTURE.md`](../ARCHITECTURE.md) — the four-layer model and

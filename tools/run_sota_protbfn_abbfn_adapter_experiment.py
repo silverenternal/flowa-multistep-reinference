@@ -32,6 +32,13 @@ CLI
 The default ``--baseline-nfe 250`` matches the paper-reported
 unconditional BFN NFE budget. Smaller ``--num-steps`` values speed
 up smoke tests at the cost of fidelity.
+
+P-05 (paper-parity FlowA NFE): ``--bfn-steps-per-round`` (default 125)
+controls the per-round BFN refinement steps. The default keeps the
+total FlowA NFE budget at ``2 rounds * 125 = 250`` (paper parity with
+``--baseline-nfe``), preventing the legacy behaviour of dividing the
+total budget across rounds (which produced too few steps per round for
+the FlowA refiner to converge).
 """
 from __future__ import annotations
 
@@ -223,7 +230,18 @@ def _build_adapter(args: argparse.Namespace) -> Any:
         raise FileNotFoundError(f"weights_dir_not_found:{weights_path}")
     mechanism = "ProtBFN" if args.model.lower() == "protbfn" else "AbBFN"
     max_seq_length = 512 if mechanism == "ProtBFN" else 256
-    num_steps = int(args.num_steps) if args.num_steps > 0 else int(args.baseline_nfe)
+    # P-05: per-round BFN steps default to ``--bfn-steps-per-round`` (default
+    # 125), which keeps the *total* FlowA NFE at paper-parity
+    # (``2 rounds * 125 = 250 = --baseline-nfe``). The legacy
+    # ``--num-steps`` flag is retained as a fallback for backward
+    # compatibility (kept ``<=0`` semantics for the
+    # ``--baseline-nfe`` fall-through path).
+    if int(args.bfn_steps_per_round) > 0:
+        num_steps = int(args.bfn_steps_per_round)
+    elif int(args.num_steps) > 0:
+        num_steps = int(args.num_steps)
+    else:
+        num_steps = int(args.baseline_nfe)
 
     adapter = ProtBFNAbBFNAdapter(
         checkpoint_path=weights_path,
@@ -295,6 +313,10 @@ def _sample_one_sequence(
     # Run one more forward pass to get the actual phi logits for the
     # final theta — used to compute perplexity.
     theta_t = torch.as_tensor(final_theta_full, dtype=torch.float32)
+    # Mirror the device-move done inside `solve_ode` so the harness's
+    # own perplexity forward pass works in GPU mode
+    # (`PROTBFN_TORCH_DEVICE=cuda`).
+    theta_t = theta_t.to(adapter._torch_device)
     with torch.no_grad():
         logits = adapter._torch_model(theta_t)
     log_probs = torch.log_softmax(logits, dim=-1)
@@ -312,36 +334,108 @@ def _sample_one_sequence(
 
 def _run_baseline(
     *,
+    adapter: Any,
     n_samples: int,
     num_steps: int,
     seed: int,
     rng: np.random.Generator,
-) -> tuple[float, float, float, list[str]]:
-    """Baseline perplexity: uniform-categorical reference.
+    output_dir: Path,
+) -> tuple[float, float, float, list[str], Path]:
+    """Trained-model single-pass baseline.
+
+    Runs ``num_steps`` BFN refinement steps (``--baseline-nfe``) using
+    the *trained* ProtBFN / AbBFN model already loaded by
+    ``adapter`` (not a uniform-categorical reference), and reports the
+    mean per-sequence perplexity over ``n_samples`` freshly-sampled
+    sequences. Also writes a ``baseline.fasta`` containing the produced
+    sequences so the baseline is reproducible from disk.
 
     Returns ``(baseline_perplexity, baseline_std, baseline_max,
-    baseline_sequences)``. Sequences are uniformly random AA strings
-    drawn from the engine vocabulary (the model has zero information
-    about them) and their perplexity is computed under a uniform
-    ``1/K`` distribution.
+    baseline_sequences, baseline_fasta_path)``.
+
+    The actual sampling loop mirrors :func:`_sample_one_sequence` so
+    the trained-model baseline and the multi-round framework run use
+    the same per-step encode / Bayesian-update / decode logic.
     """
-    K = 22
-    L = 128  # canonical midpoint between 256 (AbBFN) and 512 (ProtBFN)
+    import torch
+
+    fasta_path = output_dir / "baseline.fasta"
     seqs: list[str] = []
-    neg_log_probs: list[float] = []
-    for _ in range(int(n_samples)):
-        ids = rng.integers(0, K, size=L).astype(np.int64)
-        # Each position contributes +log(K) to NLL under uniform 1/K.
-        neg_log_probs.append(float(L) * float(np.log(K)))
-        # Map engine-side ids 0..21 onto the AA tokens (id - 0 in
-        # surface space; we use the AA_TOKEN_IDS suffix 0..21 for
-        # readability).
-        seqs.append("".join(PROTBFN_ID_TO_TOKEN[6 + int(t)] for t in ids))
-    perps = [
-        per_sequence_perplexity(np.array([0]), nlp, L) for nlp in neg_log_probs
-    ]
+    perps: list[float] = []
+    fasta_lines: list[str] = []
+    for sample_idx in range(int(n_samples)):
+        sample_id = f"baseline-s{sample_idx}"
+        sub_seed = int(seed) * 10_000 + 9000 + int(sample_idx)
+        t0 = time.perf_counter()
+        state = adapter.build_initial_state(
+            batch_id="baseline", sample_id=sample_id
+        )
+        from adaptive_reflow.universal.state import ODEConditionDelta
+
+        delta = ODEConditionDelta(
+            delta_spec={"num_steps": int(num_steps)},
+            source="run_sota_protbfn_abbfn_baseline",
+            target_round=0,
+            calibration_artifact_hash="cal-protbfn-abbfn-baseline-v1",
+        )
+        trace = adapter.solve_ode(state, delta, seed=int(sub_seed))
+        endpoint = adapter.observe_endpoint(trace, state)
+        # Decode the final categorical to token ids via argmax over the
+        # engine's 22-entry surface vocabulary, padding to the model's
+        # 32-token vocabulary before running the encoder for logits.
+        final_theta = np.asarray(
+            adapter._native_states[endpoint.native_state_digest]["theta"],
+            dtype=np.float64,
+        )  # (L, 22)
+        L_eff, K_surface = final_theta.shape
+        model_K = 32
+        if K_surface < model_K:
+            pad = np.zeros((L_eff, model_K - K_surface), dtype=np.float64)
+            final_theta_full = np.concatenate([final_theta, pad], axis=1)
+        else:
+            final_theta_full = final_theta[:, :model_K]
+        theta_t = torch.as_tensor(final_theta_full, dtype=torch.float32)
+        # Mirror the device-move done inside `solve_ode` so this baseline
+        # forward pass works in GPU mode (`PROTBFN_TORCH_DEVICE=cuda`).
+        theta_t = theta_t.to(adapter._torch_device)
+        with torch.no_grad():
+            logits = adapter._torch_model(theta_t)
+        log_probs = torch.log_softmax(logits, dim=-1)
+        token_ids = log_probs.argmax(dim=-1).cpu().numpy().astype(np.int64)
+        neg_log_prob = float(
+            -log_probs[
+                torch.arange(L_eff),
+                torch.as_tensor(token_ids, dtype=torch.long),
+            ]
+            .sum()
+            .item()
+        )
+        sequence = sample_to_string(token_ids)
+        length = max(1, len(sequence))
+        perp = per_sequence_perplexity(token_ids, neg_log_prob, length)
+        perps.append(perp)
+        seqs.append(sequence)
+        fasta_lines.append(
+            f">protbfn-abbfn-baseline|sample={sample_id}|seed={sub_seed} "
+            f"|perplexity={perp:.3f}|nfe={num_steps}"
+        )
+        fasta_lines.append(sequence)
+        wall = time.perf_counter() - t0
+        print(
+            f"[protbfn-abbfn] baseline sample {sample_idx + 1}/{n_samples}: "
+            f"perp={perp:.3f} len={length} wall={wall:.1f}s",
+            file=sys.stderr,
+        )
+    with fasta_path.open("w") as f:
+        f.write("\n".join(fasta_lines) + "\n")
     arr = np.asarray(perps, dtype=np.float64)
-    return float(arr.mean()), float(arr.std()), float(arr.max()), seqs
+    return (
+        float(arr.mean()),
+        float(arr.std()),
+        float(arr.max()),
+        seqs,
+        fasta_path,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -385,7 +479,20 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         default=0,
         help="Discrete-BFN refinement steps per round. If <=0, "
-        "falls back to --baseline-nfe.",
+        "falls back to --baseline-nfe. Deprecated: prefer "
+        "--bfn-steps-per-round (P-05) for paper-parity NFE "
+        "budgeting.",
+    )
+    parser.add_argument(
+        "--bfn-steps-per-round",
+        type=int,
+        default=125,
+        help="P-05: per-round BFN refinement steps (default 125). "
+        "Defaults so that ``2 rounds * 125 = 250`` total NFE "
+        "matches the paper's single-pass --baseline-nfe budget. "
+        "Overrides --num-steps when > 0; set to 0 to disable "
+        "the override and fall back to --num-steps / "
+        "--baseline-nfe.",
     )
     parser.add_argument(
         "--baseline-nfe",
@@ -555,17 +662,22 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
 
-    # Baseline (uniform-categorical reference) perplexity.
+    # Baseline = trained-model single pass with `--baseline-nfe` steps
+    # (no framework multi-round refiner). This is the proper paper-
+    # comparable reference number, not a uniform-categorical surrogate.
     (
         baseline_perp,
         baseline_std,
         baseline_max,
         _baseline_seqs,
+        baseline_fasta_path,
     ) = _run_baseline(
+        adapter=adapter,
         n_samples=int(args.n_samples),
         num_steps=int(args.baseline_nfe),
         seed=int(args.seed),
         rng=rng,
+        output_dir=output_dir,
     )
     # Framework perplexity = mean of all per-sequence perplexities.
     all_perps = np.asarray(

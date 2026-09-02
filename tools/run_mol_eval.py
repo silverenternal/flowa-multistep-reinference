@@ -364,6 +364,167 @@ def compute_qed(mols: Sequence[Any | None]) -> float:
     return _mean_over_valid(mols, QED.qed)
 
 
+# ---------------------------------------------------------------------------
+# FlowMol3 paper-aligned metrics
+# ---------------------------------------------------------------------------
+#
+# FlowMol3 (Dunn & Koes, arXiv:2508.12629) reports atom-level valence
+# stability and connectivity as PRIMARY metrics (see
+# data/FlowMol3/repo/flowmol/analysis/metrics.py:91-167). QED/SA/logP
+# are NOT in the FlowMol3 paper - they are JT-VAE/GraphAF-era metrics
+# we carried over for back-compat. The four metrics below match the
+# flowmol.SampleAnalyzer.analyze() output schema so the framework's
+# FlowMol3 numbers can be compared against the paper directly.
+#
+# Reference: data/FlowMol3/repo/flowmol/analysis/metrics.py:27-36
+# (midi_valence_table) and :333-362 (check_stability).
+
+#: Atom-type → formal-charge → valid-valency list. Verbatim from
+#: MiDi's molecular metrics code, as used by FlowMol3's stability check.
+MIDI_VALENCE_TABLE: dict[str, Any] = {
+    "H": {0: [1], 1: [0], -1: [0]},
+    "C": {0: [3, 4], 1: [3], -1: [3]},
+    "N": {0: [2, 3], 1: [2, 3, 4], -1: [2]},
+    "O": {0: [2], 1: [3], -1: [1]},
+    "F": {0: [1], -1: [0]},
+    "B": {0: [3]},
+    "Al": {0: [3]},
+    "Si": {0: [4]},
+    "P": {0: [3, 5], 1: [4]},
+    "S": {0: [2, 6], 1: [2, 3], 2: [4], 3: [5], -1: [3]},
+    "Cl": {0: [1]},
+    "As": {0: [3]},
+    "Br": {0: [1], 1: [2]},
+    "I": {0: [1]},
+    "Hg": {0: [1, 2]},
+    "Bi": {0: [3, 5]},
+    "Se": {0: [2, 4, 6]},
+}
+
+
+def _normalise_valencies(table_value: Any, charge: int) -> list[int] | None:
+    """Flatten MiDi's mixed-shape valency table into ``list[int]``.
+
+    MiDi packs each ``table[atom_type][charge]`` entry as either a single
+    ``int`` (e.g. ``"F": {0: 1}``) or a list of allowed valencies
+    (e.g. ``"C": {0: [3, 4]}``). This helper unifies the two shapes.
+    """
+    if charge not in table_value:
+        return None
+    raw = table_value[charge]
+    if isinstance(raw, (list, tuple)):
+        return [int(v) for v in raw]
+    return [int(raw)]
+
+
+def _atom_stable(atom: Any) -> tuple[bool, bool]:
+    """Check whether ``atom`` has a valid valence under MiDi's table.
+
+    Returns ``(atom_is_stable, atom_is_real)`` where ``atom_is_real`` is
+    ``False`` for fake atoms (placeholder ``Sn`` tokens that FlowMol3
+    uses for size-varied sampling). Real atoms with no matching entry
+    in the valency table contribute ``False`` to the numerator AND
+    denominator so unknown atom types neither help nor hurt.
+    """
+    if atom is None:
+        return False, False
+    symbol = atom.GetSymbol()
+    if symbol == "Sn":
+        # Fake atom used by FlowMol3 for size variation.
+        return False, False
+    if symbol not in MIDI_VALENCE_TABLE:
+        return False, True
+    formal_charge = atom.GetFormalCharge()
+    valid = _normalise_valencies(MIDI_VALENCE_TABLE[symbol], formal_charge)
+    if valid is None:
+        return False, True
+    valence = atom.GetTotalValence()
+    return (valence in valid), True
+
+
+def compute_atom_stability(
+    mols: Sequence[Any | None],
+) -> tuple[float, float]:
+    """Return ``(frac_atoms_stable, frac_mols_stable_valence)``.
+
+    Mirrors FlowMol3's ``SampleAnalyzer.analyze`` primary metric:
+    fraction of generated atoms with valid valencies (excluding fake
+    atoms), and fraction of molecules whose atoms ALL have valid
+    valencies. NaN when input list is empty.
+    """
+    if not mols:
+        return NAN, NAN
+    n_total_atoms = 0
+    n_stable_atoms = 0
+    n_real_mols = 0
+    n_stable_mols = 0
+    for mol in mols:
+        if mol is None:
+            continue
+        try:
+            atoms = mol.GetAtoms()
+        except AttributeError:
+            continue
+        mol_stable = True
+        mol_has_real_atoms = False
+        for atom in atoms:
+            is_stable, is_real = _atom_stable(atom)
+            if not is_real:
+                continue
+            mol_has_real_atoms = True
+            n_total_atoms += 1
+            if is_stable:
+                n_stable_atoms += 1
+            else:
+                mol_stable = False
+        if mol_has_real_atoms:
+            n_real_mols += 1
+            if mol_stable:
+                n_stable_mols += 1
+    if n_total_atoms == 0:
+        return NAN, NAN
+    frac_atoms_stable = float(n_stable_atoms) / float(n_total_atoms)
+    frac_mols_stable = (
+        float(n_stable_mols) / float(n_real_mols) if n_real_mols else NAN
+    )
+    return frac_atoms_stable, frac_mols_stable
+
+
+def compute_connectivity(
+    mols: Sequence[Any | None],
+) -> tuple[float, float]:
+    """Return ``(frac_connected, avg_num_components)``.
+
+    A molecule counts as connected when RDKit's
+    :func:`GetMolFrags` returns exactly one fragment. ``avg_num_components``
+    is the mean number of fragments per non-None molecule. NaN when no
+    molecules available. Mirrors FlowMol3's ``frac_connected`` and
+    ``avg_num_components`` in :mod:`flowmol.analysis.metrics`.
+    """
+    from rdkit import Chem
+    from rdkit.Chem import rdmolops
+
+    real_mols = [m for m in mols if m is not None]
+    if not real_mols:
+        return NAN, NAN
+    n_connected = 0
+    component_counts: list[int] = []
+    for mol in real_mols:
+        try:
+            frags = rdmolops.GetMolFrags(mol, asMols=False, sanitizeFrags=False)
+        except Exception:  # noqa: BLE001 - permissive
+            component_counts.append(0)
+            continue
+        n_frags = len(frags)
+        component_counts.append(n_frags)
+        if n_frags == 1:
+            n_connected += 1
+    frac_connected = float(n_connected) / float(len(real_mols))
+    avg_components = float(sum(component_counts)) / float(len(component_counts))
+    _ = Chem  # noqa: F841 - rdkit import probed for availability
+    return frac_connected, avg_components
+
+
 def compute_sa(mols: Sequence[Any | None]) -> float:
     """Mean SA (Synthetic Accessibility) across non-``None`` molecules.
 
@@ -522,6 +683,10 @@ def evaluate(
             "sa": NAN,
             "logp": NAN,
             "fcd": NAN,
+            "frac_atoms_stable": NAN,
+            "frac_mols_stable_valence": NAN,
+            "frac_connected": NAN,
+            "avg_num_components": NAN,
             "missing_dependencies": missing,
             "stderr_notes": notes,
         }
@@ -534,6 +699,8 @@ def evaluate(
     fcd_value, fcd_note = compute_fcd(smiles, reference_path=reference_path)
     if fcd_note is not None:
         notes.append(fcd_note)
+    frac_atoms_stable, frac_mols_stable_valence = compute_atom_stability(mols)
+    frac_connected, avg_num_components = compute_connectivity(mols)
 
     return {
         "schema_version": OUTPUT_SCHEMA_VERSION,
@@ -547,6 +714,10 @@ def evaluate(
         "sa": float(sa),
         "logp": float(logp),
         "fcd": float(fcd_value),
+        "frac_atoms_stable": float(frac_atoms_stable),
+        "frac_mols_stable_valence": float(frac_mols_stable_valence),
+        "frac_connected": float(frac_connected),
+        "avg_num_components": float(avg_num_components),
         "missing_dependencies": missing,
         "stderr_notes": notes,
     }

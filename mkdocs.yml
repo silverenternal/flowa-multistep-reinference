@@ -66,6 +66,14 @@ nav:
       - Phase-4 docstring audit: audit/PHASE4_DOCSTRING_AUDIT.md
       - Phase-4 fix-v2 plan: r4-survey/21-fix-v2-plan.md
       - Phase-4 fix-v2 results: r4-survey/22-fix-v2-results.md
+  - Paper-supporting survey (r17-survey):
+      - Image-eval plan: r17-survey/image-eval-plan.md
+      - Image comparison: r17-survey/img-comparison.md
+      - Mol comparison: r17-survey/mol-comparison.md
+      - Prot comparison: r17-survey/prot-comparison.md
+      - Paper table template: r17-survey/paper-table-template.md
+      - SOTA adapter audit: r17-survey/sota-adapter-audit.md
+      - Data/weights inventory: r17-survey/data-weights-inventory.md
 
 plugins:
   - autorefs
@@ -166,6 +174,7 @@ not_in_nav: |
   r4-survey/**/*.md
   paper-plan.md
   r5-survey/*.md
+  r17-survey/*.md
 
 validation:
   nav:

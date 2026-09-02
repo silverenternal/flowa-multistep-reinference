@@ -1248,3 +1248,28 @@ class MultiChannelJitteredConstantScheduler:
             channel_keys=tuple(str(k) for k in raw_keys),
             seed=int(config.get("seed", 0)),
         )
+
+
+# ---------------------------------------------------------------------------
+# Parameter-free default-jitter-std entry point (DERIV-001 P-19 #18)
+# ---------------------------------------------------------------------------
+
+
+def derive_default_jitter_std(
+    *,
+    n_cap: float | None = None,
+    n_rounds: int | None = None,
+    context: Any | None = None,
+    rule: Any | None = None,
+) -> float:
+    """Return ``JitteredConstantScheduler.jitter_std`` from a derivation rule.
+
+    Falls back to ``0.05`` on missing context. The closed form is
+    ``jitter_std := sqrt(n_cap * (1 - n_cap) / n_rounds)``
+    (Bernoulli-variance preserving).
+    """
+    from adaptive_reflow.algorithm._derivation import (
+        default_jitter_std as _d,
+    )
+    ctx = context if context is not None else None
+    return _d(ctx, n_cap=n_cap, n_rounds=n_rounds, rule=rule)

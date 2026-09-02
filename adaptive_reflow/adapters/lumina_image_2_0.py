@@ -103,7 +103,7 @@ LUMINA_IMAGE_2_0_CHANNELS: tuple[ChannelName, ...] = (
     ChannelName("text_condition"),
 )
 LUMINA_IMAGE_2_0_CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = {
-    ChannelName("latent"): "continuous",
+    ChannelName("latent"): "latent",
     ChannelName("text_condition"): "continuous",
 }
 LUMINA_IMAGE_2_0_STATE_SHAPE: tuple[int, ...] = (16, 128, 128)
@@ -535,6 +535,10 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
 
     pinned_num_steps: int = LUMINA_IMAGE_2_0_NUM_STEPS_DEFAULT
     # F14: runner reads ``getattr(self._adapter, "state_shape", (2,))``.
+    # Standardised on the HiDream dual-level pattern (class-level
+    # default, instance-level override) so subclasses / fixtures can
+    # tweak the state shape without redefining the class attribute
+    # (r17-audit P-07).
     state_shape: tuple[int, ...] = LUMINA_IMAGE_2_0_STATE_SHAPE
 
     mechanism_id: MechanismId = MechanismId(LUMINA_IMAGE_2_0_MECHANISM_ID)
@@ -652,6 +656,14 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         # + calibration_hash). Bounded LRU.
         self._text_embed_cache: OrderedDict[str, tuple[Any, Any]] = OrderedDict()
         self._caps = LuminaImage20Capabilities()
+        # Instance-level override for F14 state-shape resolution
+        # (r17-audit P-07 -- mirrors HiDreamI1Adapter's dual-level
+        # pattern so the runner's ``getattr(self._adapter, "state_shape",
+        # (2,))`` always sees the instance value). Defaults to the
+        # canonical ``LUMINA_IMAGE_2_0_STATE_SHAPE``; subclasses /
+        # fixtures may override via ``self.state_shape = ...`` before
+        # the runner inspects the adapter.
+        self.state_shape: tuple[int, ...] = LUMINA_IMAGE_2_0_STATE_SHAPE
 
     # ------------------------------------------------------------------
     # 1. capability handshake

@@ -16,7 +16,12 @@ name: docs-validate
 #   2. tools/check_docs_against_code.py must exit 0 -- every concrete
 #      class / function / path / inline-symbol claim in the governance
 #      docs still resolves against the codebase.
-#   3. the full pytest suite must pass.
+#   3. every P-NN ("known problem") id declared in todo.json must be
+#      referenced from ARCHITECTURE.md OR docs/r17-survey/*.md. A
+#      missing reference means a documented gap has no owner in the
+#      survey docs -- a drift hazard for the r17-survey paper-grade
+#      evidence chain (P-12 quick-win).
+#   4. the full pytest suite must pass.
 #
 # The project is imported via PYTHONPATH=. rather than installed, so the
 # install step only needs the two tools themselves.
@@ -56,6 +61,62 @@ jobs:
       - name: Run docs scanner
         run: |
           PYTHONPATH=. python tools/check_docs_against_code.py
+
+      - name: Verify every P-NN in todo.json is referenced
+        # P-12 quick-win: every "known problem" id (P-01, P-02, ...,
+        # P-19) declared in todo.json must show up at least once in
+        # either ARCHITECTURE.md or docs/r17-survey/. A drift here
+        # would mean an open known-problem has no owner in the
+        # survey docs, which silently breaks the paper-grade evidence
+        # chain. Set --strict-fail to make this gate required.
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          """grep-verify every P-NN in todo.json is referenced from
+          ARCHITECTURE.md or docs/r17-survey/. Exits non-zero (and
+          lists the missing ids) if any known-problem id is missing.
+          """
+          from __future__ import annotations
+
+          import json
+          import re
+          import sys
+          from pathlib import Path
+
+          root = Path(".").resolve()
+          todo = json.loads((root / "todo.json").read_text(encoding="utf-8"))
+          ids = sorted({entry["id"] for entry in todo["problems"]})
+
+          # Look for P-NN references in ARCHITECTURE.md plus every
+          # docs/r17-survey/*.md file. We match both the bare "P-01"
+          # form and the quoted "\"P-01\"" form so that ids buried in
+          # table cells / inline-code spans still count.
+          search_roots = [root / "ARCHITECTURE.md"] + sorted(
+              (root / "docs" / "r17-survey").glob("*.md")
+          )
+          pat = re.compile(r"\bP-[0-9]+\b")
+
+          referenced: set[str] = set()
+          for path in search_roots:
+              if not path.exists():
+                  continue
+              for line in path.read_text(encoding="utf-8").splitlines():
+                  referenced.update(pat.findall(line))
+
+          missing = [i for i in ids if i not in referenced]
+          if missing:
+              print(
+                  "::error::P-NN ids declared in todo.json but missing "
+                  "from ARCHITECTURE.md / docs/r17-survey/: "
+                  + ", ".join(missing),
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+          print(
+              f"P-NN coverage OK: {len(ids)} ids, all referenced from "
+              f"{sum(1 for p in search_roots if p.exists())} doc files."
+          )
+          PY
 
       - name: Run tests
         run: |

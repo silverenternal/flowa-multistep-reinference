@@ -772,6 +772,47 @@ def default_policy_driver() -> ScheduleDerivedPolicyDriver:
 
 
 # ---------------------------------------------------------------------------
+# Parameter-free default-beta entry points (DERIV-001 P-19 #20)
+# ---------------------------------------------------------------------------
+
+
+def derive_default_constant_beta(
+    *,
+    n_min: float | None = None,
+    n_max: float | None = None,
+    context: Any | None = None,
+    rule: Any | None = None,
+) -> float:
+    """Return ``DEFAULT_CONSTANT_BETA`` from a derivation rule.
+
+    Falls back to ``0.5`` on missing context. The closed form is
+    ``beta := (n_min + n_max) / 2`` (cycle midpoint; OT path).
+    """
+    from adaptive_reflow.algorithm._derivation import (
+        default_constant_beta as _d,
+    )
+    return _d(context, n_min=n_min, n_max=n_max, rule=rule)
+
+
+def derive_default_adaptive_target_estimate(
+    *,
+    n_min: float | None = None,
+    n_max: float | None = None,
+    context: Any | None = None,
+    rule: Any | None = None,
+) -> float:
+    """Return ``DEFAULT_ADAPTIVE_TARGET_ESTIMATE`` from a derivation rule.
+
+    Falls back to ``0.5`` on missing context. The closed form is
+    ``target_estimate := (n_min + n_max) / 2``.
+    """
+    from adaptive_reflow.algorithm._derivation import (
+        default_adaptive_target_estimate as _d,
+    )
+    return _d(context, n_min=n_min, n_max=n_max, rule=rule)
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 

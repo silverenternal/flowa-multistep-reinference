@@ -105,18 +105,27 @@ class FlowMol3Capabilities:
     trajectory digest in the placeholder. The fields below mirror
     :class:`flow_matching_adapter.AdapterCapabilities` exactly; the
     engine reads them via duck-typing.
+
+    D3 — :attr:`has_condition_injection` now defaults to ``True`` so
+    FlowMol3 can participate in :class:`Engine.run_round`. The model
+    itself is unconditional; the engine delegates to
+    :class:`NullConditionInjector` which annotates the audit trail
+    with the null-condition provenance. D2 — :attr:`has_materialization_route`
+    defaults to ``True`` and the FlowMol3-specific materializer is
+    wired via the framework's :class:`AdapterCapabilities.materializer`
+    field (adapters can override).
     """
 
     has_ode_integration_surface: bool = True
     has_prior_export: bool = True
     has_state_export: bool = True
-    has_condition_injection: bool = False  # FlowMol3 is unconditional.
+    has_condition_injection: bool = True  # D3 — null-condition injector.
     has_restart_boundary: bool = True
     has_continuous_channels: bool = True
     has_discrete_channels: bool = True
     has_trajectory_digest: bool = False
     has_deterministic_seed: bool = True
-    has_materialization_route: bool = False  # No pocket materialization.
+    has_materialization_route: bool = True  # D2 — wired via materializer field.
     supported_channels: tuple[str, ...] = FLOWMOL3_CHANNELS
     channel_domains: Mapping[str, str] = field(
         default_factory=lambda: cast(
@@ -126,7 +135,27 @@ class FlowMol3Capabilities:
     )
 
     def to_engine_caps(self) -> AdapterCapabilities:
-        """Project this token into the engine's ``AdapterCapabilities``."""
+        """Project this token into the engine's ``AdapterCapabilities``.
+
+        D2 — wires the FlowMol3-specific materializer via the
+        ``AdapterCapabilities.materializer`` field. The default
+        constructor for the placeholder adapter uses
+        :class:`NoOpMaterializer` (no real (x, a, c, e) tensor to
+        project); the real FlowMol3 v2 adapter wires the
+        :class:`ConcreteFlowMol3Materializer`.
+        """
+        # Lazy import — materializer is a new addition; we keep the
+        # adapter importable for callers that haven't installed
+        # numpy for the molecular layer yet.
+        try:
+            from adaptive_reflow.molecular.materializer import (
+                ConcreteFlowMol3Materializer,
+            )
+
+            materializer_cls = ConcreteFlowMol3Materializer
+        except ImportError:
+            materializer_cls = None
+
         return AdapterCapabilities(
             has_ode_integration_surface=self.has_ode_integration_surface,
             has_prior_export=self.has_prior_export,
@@ -143,6 +172,7 @@ class FlowMol3Capabilities:
                 "Mapping[ChannelName, ChannelDomain]",
                 dict(self.channel_domains),
             ),
+            materializer=materializer_cls,
         )
 
 
@@ -292,23 +322,58 @@ class FlowMol3Adapter:
         state: StateBundle,
         delta: Mapping[str, Any],
     ) -> StateBundle:
-        """Condition injection.
+        """Condition injection (D3 — null-condition injector).
 
-        FlowMol3 is unconditional (``has_condition_injection=False``);
-        any non-empty delta is rejected. The placeholder returns the
-        state with the condition attached as provenance so the trace
-        round-trip remains deterministic.
+        FlowMol3 is an unconditional model; the engine-side handshake
+        requires ``has_condition_injection=True`` so we delegate to
+        :class:`NullConditionInjector` which annotates the audit
+        trail with the null-condition provenance
+        (``condition_kind='null', dataset='flowmol3_smiles_pl',
+        variant='v1', round_trace_only=True``). The model itself does
+        not consume the delta — the injector is the canonical seam
+        between the engine's fail-closed audit policy and FlowMol3's
+        unconditional ODE.
         """
         ok, errs = validate_state_bundle(state)
         if not ok:
             raise CapabilityMissingError(
                 "validate_state_bundle", context=",".join(errs)
             )
-        if delta:
-            raise CapabilityMissingError(
-                "has_condition_injection", context="flowmol3_is_unconditional"
-            )
-        return state
+        # D3 — delegate to NullConditionInjector for audit provenance.
+        from adaptive_reflow.universal.condition_injection import (
+            NullConditionInjector,
+        )
+        from adaptive_reflow.universal.state import ODEConditionDelta
+
+        injector = NullConditionInjector(
+            dataset="flowmol3_smiles_pl", variant="v1"
+        )
+        od_delta = ODEConditionDelta(
+            delta_spec=dict(delta),
+            source="flowmol3_adapter",
+            target_round=int(state.source_round) + 1,
+            calibration_artifact_hash="flowmol3_null_calibration",
+        )
+        composed = injector.compose_delta(state, od_delta)
+        # The composed delta's spec is recorded as provenance on the
+        # returned bundle so the per-round ledger row captures the
+        # null-condition provenance. (Production wiring uses the
+        # round-trace ledger row directly.)
+        return StateBundle(
+            channels=dict(state.channels),
+            masks=dict(state.masks),
+            batch_id=state.batch_id,
+            sample_id=state.sample_id,
+            reference_frame=state.reference_frame,
+            normalization=state.normalization,
+            source_round=state.source_round,
+            detach_proof=True,
+            native_state_digest=state.native_state_digest,
+            provenance=state.provenance
+            + ("flowmol3_null_condition",)
+            + tuple(f"null_spec:{k}" for k in sorted(composed.delta_spec)),
+            capability_token=state.capability_token,
+        )
 
     def solve_ode(
         self,

@@ -49,6 +49,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, NewType
 
 if TYPE_CHECKING:
+    from adaptive_reflow.contracts.condition import Condition
+
     from .adapter import AdapterCapabilities
 
 # ---------------------------------------------------------------------------
@@ -156,18 +158,54 @@ class ODEConditionDelta:
     passes the ``delta_spec`` through to the adapter via
     :meth:`FlowMatchingODEAdapter.compose_condition`.
 
+    The ``delta_spec`` is typed as :class:`~adaptive_reflow.contracts.condition.Condition`
+    (D8) — a discriminated union over ``null``, ``cfg``, ``inpainting``,
+    ``bfn_inpaint``, ``property``, and ``mapping`` (back-compat). Adapters
+    that pass a raw ``Mapping[str, Any]`` to the constructor are
+    auto-wrapped into a :class:`~adaptive_reflow.contracts.condition.MappingConditionAdapter`
+    by :meth:`__post_init__`, so the type change is non-breaking for
+    existing adapter code that still emits dicts.
+
     Required invariants (validated by :func:`validate_condition_delta`):
 
-    * ``delta_spec`` is a non-empty mapping.
+    * ``delta_spec`` is a non-empty :class:`~adaptive_reflow.contracts.condition.Condition`.
     * ``source`` is a non-empty string identifying the producer.
     * ``target_round`` is a non-negative integer.
     * ``calibration_artifact_hash`` is a non-empty string.
     """
 
-    delta_spec: Mapping[str, Any]
+    delta_spec: Condition
     source: str
     target_round: int
     calibration_artifact_hash: str
+
+    def __post_init__(self) -> None:
+        """Auto-wrap ``Mapping`` arguments as :class:`MappingConditionAdapter`.
+
+        Preserves the 2356-test back-compat invariant: adapters that
+        still emit raw ``dict``-style delta_spec continue to work; the
+        constructor coerces the dict into a typed :class:`Condition`
+        (with ``condition_kind == "mapping"`` by default) so all
+        downstream consumers see a uniform :class:`Condition` view.
+
+        Import is local to avoid the
+        ``state.py`` ↔ ``contracts/condition.py`` module-init cycle.
+        """
+        # Local import to break the module-init cycle:
+        # ``state.py`` ↔ ``contracts/condition.py`` ↔ ``contracts/__init__.py``.
+        from adaptive_reflow.contracts.condition import (
+            Condition as _Condition,
+            MappingConditionAdapter as _MappingConditionAdapter,
+        )
+
+        if isinstance(self.delta_spec, Mapping) and not isinstance(
+            self.delta_spec, _Condition
+        ):
+            object.__setattr__(
+                self,
+                "delta_spec",
+                _MappingConditionAdapter.from_mapping(dict(self.delta_spec)),
+            )
 
 
 @dataclass(frozen=True)
@@ -254,12 +292,50 @@ def validate_state_bundle(bundle: StateBundle) -> tuple[bool, tuple[str, ...]]:
 
 
 def validate_condition_delta(delta: ODEConditionDelta) -> tuple[bool, tuple[str, ...]]:
-    """Return ``(True, ())`` iff ``delta`` is well-formed."""
+    """Return ``(True, ())`` iff ``delta`` is well-formed.
+
+    The ``delta_spec`` is now typed as :class:`Condition` (D8). The
+    validator accepts either a typed :class:`Condition` (the canonical
+    post-D8 form) or, for back-compat, a raw ``Mapping[str, Any]`` —
+    but the :class:`ODEConditionDelta` constructor already auto-wraps
+    any mapping argument into :class:`MappingConditionAdapter`, so the
+    back-compat branch is rarely exercised in practice.
+    """
     errors: list[str] = []
     if delta is None:
         return (False, ("condition_delta_must_not_be_none",))
-    if not isinstance(delta.delta_spec, Mapping) or not delta.delta_spec:
-        errors.append("delta_spec_must_be_non_empty_mapping")
+    # Local import to break the module-init cycle.
+    from adaptive_reflow.contracts.condition import Condition as _Condition
+
+    spec = delta.delta_spec
+    if isinstance(spec, _Condition):
+        # Typed path (D8). Validate via the condition validator.
+        from adaptive_reflow.contracts.condition import (
+            MappingConditionAdapter as _MappingConditionAdapter,
+        )
+        from adaptive_reflow.contracts.condition import (
+            validate_condition as _validate_condition,
+        )
+
+        # For :class:`MappingConditionAdapter` (the back-compat
+        # wrapper for raw dicts), also reject empty underlying
+        # mappings — ``to_mapping()`` injects a ``condition_kind``
+        # key by default, but the wire form is empty.
+        if isinstance(spec, _MappingConditionAdapter) and not spec._data:
+            errors.append("delta_spec_must_be_non_empty_mapping")
+        else:
+            ok, sub_errors = _validate_condition(spec)
+            if not ok:
+                errors.extend(sub_errors)
+    elif isinstance(spec, Mapping):
+        # Back-compat path: raw mapping (should be auto-wrapped by
+        # ``ODEConditionDelta.__post_init__``; this branch exists so
+        # pre-D8 caller code keeps working even before the
+        # auto-wrap runs).
+        if not spec:
+            errors.append("delta_spec_must_be_non_empty_mapping")
+    else:
+        errors.append("delta_spec_must_be_Condition_or_Mapping")
     if not delta.source:
         errors.append("source_must_be_non_empty")
     if not isinstance(delta.target_round, int) or isinstance(delta.target_round, bool):

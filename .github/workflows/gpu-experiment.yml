@@ -1,0 +1,116 @@
+name: gpu-experiment
+
+# Manual / path-triggered experiment runner for SOTA-model adapters that
+# need an actual CUDA device (HiDream-I1, Lumina-Image 2.0, GraphBFN, ...).
+#
+# The repo has no hosted GPU runner configured, so this workflow is
+# designed to land on a self-hosted runner carrying the ``gpu`` label
+# (typically registered as ``runs-on: [self-hosted, gpu]``). When the
+# runner reports no CUDA device -- which happens for any push to
+# ``tools/run_sota_*_experiment.py`` on a non-GPU node -- the SOTA
+# experiment step is skipped with a warning but the new abstraction
+# tests still execute, so a label-only or path-only trigger always
+# yields useful signal.
+#
+# Triggers:
+#   * push to any ``tools/run_sota_*_experiment.py`` (catch regressions
+#     in the heavy SOTA entry points without waiting for a labelled PR).
+#   * PR labelled with ``gpu-experiment`` -- the gate that gates the
+#     r17-survey image/molecule/protocol SOTA runs.
+#
+# This workflow is intentionally separate from ``ci.yml`` and
+# ``cpu-tests.yml`` so the GPU runtime budget is isolated from the
+# pre-merge gates. A failed GPU run does NOT block merge by itself;
+# the new abstraction tests that *do* run on every push to this file
+# live in ``cpu-tests.yml``.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/run_sota_*_experiment.py'
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gpu-experiment-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  experiment:
+    # Gate: fires on a direct push to a SOTA entry-point, OR on any PR
+    # label event whose labels include ``gpu-experiment``. Label
+    # events that arrive without that label are skipped silently so
+    # unrelated PR label churn does not consume GPU minutes.
+    if: |
+      github.event_name == 'push' ||
+      contains(github.event.pull_request.labels.*.name, 'gpu-experiment')
+    runs-on: [self-hosted, gpu]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: pip install -e '.[dev]' || pip install pytest hypothesis pytest-benchmark ruff mypy mutmut
+
+      - name: Lint SOTA entry points
+        run: ruff check tools/ adaptive_reflow/adapters/
+
+      - name: Run new abstraction tests on the GPU runner
+        # r17-survey: the canonical FID + CLIP-score abstractions and the
+        # mol-eval / image-eval driver tests must pass even when no GPU
+        # is available; if the abstraction tests fail, the SOTA
+        # experiments that build on them cannot be trusted.
+        run: |
+          PYTHONPATH=. python -m pytest \
+            tests/test_eval/test_fid_abstraction.py \
+            tests/test_eval/test_clip_score_abstraction.py \
+            tests/test_tools/test_run_mol_eval.py \
+            tests/test_tools/test_run_image_eval.py \
+            --no-header -q
+
+      - name: Detect CUDA availability
+        id: cuda
+        run: |
+          python - <<'PY'
+          import os, sys
+          has_cuda = "false"
+          try:
+              import torch  # noqa: F401
+              has_cuda = "true" if torch.cuda.is_available() else "false"
+          except Exception as exc:  # pragma: no cover - runner-side guard
+              print(f"torch import failed: {exc}", file=sys.stderr)
+          with open(os.environ["GITHUB_OUTPUT"], "w", encoding="utf-8") as fh:
+              fh.write(f"has_cuda={has_cuda}\n")
+          if has_cuda == "false":
+              print(
+                  "::warning::No CUDA device reported on this runner -- "
+                  "skipping HiDream-I1 + Lumina-Image 2.0 SOTA experiments.",
+              )
+          PY
+
+      - name: Run HiDream + Lumina SOTA experiments (skipped when no GPU)
+        if: steps.cuda.outputs.has_cuda == 'true'
+        run: |
+          PYTHONPATH=. python tools/run_sota_hidream_image_1_experiment.py
+          PYTHONPATH=. python tools/run_sota_lumina_image_2_0_experiment.py
+
+      - name: Upload experiment artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpu-experiment-${{ github.run_id }}
+          path: |
+            docs/r17-survey/
+            docs/benchmarks.json
+          if-no-files-found: ignore

@@ -36,5 +36,21 @@ jobs:
         # ``test_universal_imports_no_molecular.py`` — that file does not
         # exist; the canonical guard lives at ``test_no_molecular_import.py``.
         run: PYTHONPATH=. python -m pytest tests/test_universal/test_no_molecular_import.py --no-header -q
+      - name: Run eval-abstraction tests (FID + CLIP)
+        # r17-survey: explicit wire-in of the canonical abstraction tests so
+        # branch-protection rules pinned to this exact filename do not lose
+        # coverage when the broad ``tests/`` discovery is filtered out.
+        # test_fid_theorem_aligned.py pins the JMAA-Theorem-1 obligations
+        # (PaperQuantitiesSnapshot byte-stability, per-round FID envelope,
+        # convergence-rate bound, reference-registry cache hit, legacy
+        # back-compat) that the phase-3 redesign (P-04) added on top of the
+        # legacy single-shot FID abstraction regression-tested by
+        # test_fid_abstraction.py.
+        run: PYTHONPATH=. python -m pytest tests/test_eval/test_fid_abstraction.py tests/test_eval/test_fid_theorem_aligned.py tests/test_eval/test_clip_score_abstraction.py --no-header -q
+      - name: Run tool entry-point tests (mol-eval + image-eval)
+        # r17-survey: explicit wire-in of the new ``run_*_eval.py`` driver
+        # tests so a regression in either entry point fails the watchdog
+        # even if the broader discovery sweep is masked by markers.
+        run: PYTHONPATH=. python -m pytest tests/test_tools/test_run_mol_eval.py tests/test_tools/test_run_image_eval.py --no-header -q
       - name: Check docs against code
         run: PYTHONPATH=. python tools/check_docs_against_code.py

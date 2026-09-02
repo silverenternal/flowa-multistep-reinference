@@ -195,6 +195,7 @@ AUDIT_FLOWMOL3_TRAJECTORY_BUILT: str = "flowmol3adapter_trajectory_built"
 AUDIT_FLOWMOL3_TORCH_BACKEND: str = "flowmol3adapter_torch_backend"
 AUDIT_FLOWMOL3_NUMPY_BACKEND: str = "flowmol3adapter_numpy_backend"
 AUDIT_FLOWMOL3_REAL_WEIGHTS: str = "flowmol3adapter_real_weights"
+AUDIT_FLOWMOL3_INJECT_FORWARD_NOISE: str = "flowmol3adapter_inject_forward_noise"
 
 # Mechanism ID for the writer-authority registry. Matches the
 # `diagnostic_writer_id` naming scheme used by the rest of the
@@ -793,7 +794,8 @@ def _real_velocity_field(
         # No self-bonds.
         eye = torch.eye(n_atoms, dtype=torch.bool, device=dev)
         p_e[eye] = 0.0
-        p_e[eye, FLOWMOL3ADAPTER_N_BOND_TYPES - 1] = 1.0
+        diag_idx = torch.arange(n_atoms, device=dev)
+        p_e[diag_idx, diag_idx, FLOWMOL3ADAPTER_N_BOND_TYPES - 1] = 1.0
 
         # --- equivariant coordinate endpoint ---------------------------
         diff = x_t.unsqueeze(0) - x_t.unsqueeze(1)  # diff[i, j] = x_j - x_i
@@ -1809,7 +1811,116 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         )
 
     # ------------------------------------------------------------------
-    # 9. export_trajectory (P0-7 — public trajectory export)
+    # 9. inject_forward_noise (optional — P0-7 close, r17-audit P-01)
+    # ------------------------------------------------------------------
+
+    def inject_forward_noise(
+        self,
+        bundle: StateBundle,
+        injected: Any,
+    ) -> StateBundle:
+        """Inject ``injected`` (shape ``(3,)`` = ``FLOWMOL3ADAPTER_STATE_SHAPE``)
+        into the bundle's prior ``x`` channel.
+
+        Mirror of the F-25 close-out pattern in
+        :class:`RectifiedFlowCIFARAdapter.inject_forward_noise` and
+        :class:`HiDreamI1Adapter.inject_forward_noise`. The injected
+        array is treated as additive noise on the *coordinate* (``x``)
+        slice of the heterogeneous ``(x, a, c, e)`` native state --
+        ``a`` / ``c`` / ``e`` are categorical and pass through
+        untouched. Returns a fresh :class:`StateBundle` whose
+        :attr:`native_state_digest` is a SHA-256 over the new noise
+        provenance and whose ``provenance`` records the
+        :data:`AUDIT_FLOWMOL3_INJECT_FORWARD_NOISE` tag.
+
+        Notes
+        -----
+        * This is a *byte-deterministic* state replay: the new prior
+          is keyed under a digest that the engine's F-25
+          forward-noise-injection path can look up via
+          ``_native_states`` rather than carrying the noise as
+          private adapter state.
+        * The ``x`` channel update uses the one-atom degenerate prior
+          (``FLOWMOL3ADAPTER_STATE_SHAPE = (3,)``), so the
+          ``injected`` array is reshaped to ``(3,)`` when shorter or
+          truncated when longer. This matches the design spec
+          (r17-audit P-02).
+        """
+        prior_entry = self._native_states.get(bundle.native_state_digest)
+        if prior_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state", context=str(bundle.native_state_digest)
+            )
+        # Heterogeneous native state: only ``x`` is continuous; ``a`` /
+        # ``c`` / ``e`` pass through (categorical channels).
+        flat = np.asarray(
+            getattr(injected, "flat", injected), dtype=np.float64
+        )
+        flat = flat[: FLOWMOL3ADAPTER_STATE_SHAPE[0]] if flat.ndim == 1 else flat
+        if flat.size < FLOWMOL3ADAPTER_STATE_SHAPE[0]:
+            # Pad with zeros so the digest is well-defined.
+            flat = np.concatenate(
+                [
+                    flat,
+                    np.zeros(
+                        FLOWMOL3ADAPTER_STATE_SHAPE[0] - flat.size,
+                        dtype=np.float64,
+                    ),
+                ]
+            )
+        noise_x = flat[: FLOWMOL3ADAPTER_STATE_SHAPE[0]].reshape(
+            FLOWMOL3ADAPTER_STATE_SHAPE
+        )
+        x_prior = np.asarray(prior_entry.get("x", np.zeros(0)), dtype=np.float64)
+        if x_prior.size == 0:
+            # No prior x (e.g. trajectory-only entry) — seed from noise.
+            x_new = noise_x
+        elif x_prior.shape == FLOWMOL3ADAPTER_STATE_SHAPE:
+            # Degenerate one-atom prior shape (3,) — add in-place.
+            x_new = x_prior + noise_x
+        else:
+            # Multi-atom prior shape (n_atoms, 3) — propagate the
+            # one-atom noise to the centroid (audit-replayability).
+            x_new = x_prior + noise_x.reshape(1, 3)
+
+        new_digest = _digest_state(
+            {
+                "kind": "forward_noise",
+                "src_digest": str(bundle.native_state_digest),
+                "noise_head": [float(v) for v in flat[: min(flat.size, 8)]],
+                "noise_x_first": float(noise_x[0]) if noise_x.size > 0 else 0.0,
+            }
+        )
+        self._put_native_state(
+            new_digest,
+            {
+                "x": x_new,
+                "a": prior_entry.get("a", np.zeros(0, dtype=np.int64)),
+                "c": prior_entry.get("c", np.zeros(0)),
+                "e": prior_entry.get("e", np.zeros(0, dtype=np.int64)),
+                "n_atoms": int(prior_entry.get("n_atoms", 0)),
+                "source_round": int(bundle.source_round),
+                "audit": tuple(prior_entry.get("audit", ()))
+                + (AUDIT_FLOWMOL3_INJECT_FORWARD_NOISE,),
+            },
+        )
+        return StateBundle(
+            channels=dict(bundle.channels),
+            masks=dict(bundle.masks),
+            batch_id=str(bundle.batch_id),
+            sample_id=str(bundle.sample_id),
+            reference_frame=str(bundle.reference_frame),
+            normalization=str(bundle.normalization),
+            source_round=int(bundle.source_round),
+            detach_proof=True,
+            native_state_digest=new_digest,
+            provenance=tuple(bundle.provenance)
+            + (AUDIT_FLOWMOL3_INJECT_FORWARD_NOISE,),
+            capability_token=self.capabilities(),
+        )
+
+    # ------------------------------------------------------------------
+    # 10. export_trajectory (P0-7 — public trajectory export)
     # ------------------------------------------------------------------
 
     def export_trajectory(
@@ -1866,6 +1977,7 @@ def default_flowmol3adapter(
 
 
 __all__ = [
+    "AUDIT_FLOWMOL3_INJECT_FORWARD_NOISE",
     "AUDIT_FLOWMOL3_NUMPY_BACKEND",
     "AUDIT_FLOWMOL3_REAL_WEIGHTS",
     "AUDIT_FLOWMOL3_RESTART_BLEND",

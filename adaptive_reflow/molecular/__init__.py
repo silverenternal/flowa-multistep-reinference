@@ -132,6 +132,14 @@ from .channels import (
     RawPairChannelRef,
 )
 from .domain import MOLECULE_DOMAIN_BY_CHANNEL
+from .materializer import (
+    FLOWMOL3_ENVELOPE_KEYS,
+    GRAPHBFN_ENVELOPE_KEYS,
+    ConcreteFlowMol3Materializer,
+    ConcreteGraphBFNMaterializer,
+    default_flowmol3_materializer,
+    default_graphbfn_materializer,
+)
 from .envelope import (
     MoleculeEnvelopeClassification,
     MoleculeEnvelopeLayer,
@@ -329,6 +337,13 @@ __all__ = [
     "MoleculeRoundResultBundle",
     "validate_molecule_round_result_bundle",
     "attach_molecule_channels",
+    # D2 materializers
+    "FLOWMOL3_ENVELOPE_KEYS",
+    "GRAPHBFN_ENVELOPE_KEYS",
+    "ConcreteFlowMol3Materializer",
+    "ConcreteGraphBFNMaterializer",
+    "default_flowmol3_materializer",
+    "default_graphbfn_materializer",
     # Envelope dataclasses
     "MoleculeEnvelopeLayer",
     "MoleculeEnvelopeManifest",

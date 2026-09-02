@@ -34,6 +34,17 @@ from pathlib import Path
 
 import pytest
 
+# Preflight: this module uses the ``benchmark`` fixture provided by
+# ``pytest-benchmark``. On sandboxes where the plugin is not
+# installed, the test functions below raise ``fixture 'benchmark'
+# not found`` at setup time, polluting the suite with hard errors.
+# The importorskip below short-circuits collection cleanly.
+pytest.importorskip(
+    "pytest_benchmark",
+    reason="pytest-benchmark plugin not in venv "
+    "(install via `uv pip install pytest-benchmark`)",
+)
+
 # Make sure the repo root is importable when pytest is invoked from any
 # directory.
 _REPO_ROOT = Path(__file__).resolve().parent.parent

@@ -146,6 +146,16 @@ class AdapterCapabilities:
         "continuous", "discrete", "latent", "graph",
     ]] = field(default_factory=dict)
 
+    # Per-channel state-type + shape (D5 — Design #3 OPT-IN).
+    # When non-empty, the engine routes each channel to the
+    # correct BlendStrategy via the PerChannelBlender dispatcher
+    # (D9 — see §3.3). Adapters that leave the mapping empty
+    # continue to use the legacy ``state_shape`` carrier for
+    # forward-noise allocation; the 2356-test back-compat
+    # invariant holds.
+    channel_types: Mapping[ChannelName, str] = field(default_factory=dict)
+    channel_shapes: Mapping[ChannelName, tuple[tuple[int, ...], tuple[int, ...]]] = field(default_factory=dict)
+
     # Pluggable-backend declarations (engine uses these at registration).
     required_mixer: type = field(default=None)         # type[RestartMixer]; None ⇒ NoOpMixer
     exposed_envelope_criteria: tuple[type, ...] = ()
@@ -155,6 +165,104 @@ class AdapterCapabilities:
     native_config_hash: str = ""
     native_config_version: str = "0.0.0"
 ```
+
+### 3.2 Condition types (D8 — typed `delta_spec`)
+
+> **Status**: governance document. Locked at D8-v1. Changes require a paired acceptance test and a `DTB-Q` decision in `todo.json`.
+
+The `ODEConditionDelta.delta_spec` field is typed as a
+`Condition` discriminated union (D8). The discriminator field is
+`condition_kind ∈ {"null", "cfg", "inpainting", "bfn_inpaint", "property", "mapping"}`.
+
+```python
+from adaptive_reflow.contracts.condition import (
+    Condition,                      # Protocol (runtime_checkable)
+    NullCondition,                  # unconditional / round trace-only
+    CFGCondition,                   # text-prompt CFG (Lumina / HiDream)
+    InpaintingCondition,            # multi-slot inpaint (ProtBFN)
+    BFNInpaintCondition,            # single-slot BFN inpaint
+    PropertyCondition,              # property-targeted scalar (GraphBFN)
+    MappingConditionAdapter,        # back-compat wrapper for raw dicts
+    CONDITION_KINDS,                # closed set of discriminator values
+    validate_condition,             # canonical validator
+    wrap_condition,                 # auto-wrap helper
+    condition_kind_of,              # discriminator helper
+)
+```
+
+The five typed concrete kinds are:
+
+| Kind | Frozen dataclass | Use case |
+|---|---|---|
+| `"null"` | `NullCondition(dataset, variant, round_trace_only, source)` | Unconditional models (FlowMol3 / GraphBFN-v1); round trace-only |
+| `"cfg"` | `CFGCondition(text_prompt, negative_prompt, guidance_scale, cfg_trunc_ratio, cfg_normalization, rope_axes)` | Text-prompt CFG image models (Lumina / HiDream) |
+| `"inpainting"` | `InpaintingCondition(positions, strength, n_particles, num_steps, model_family)` | Multi-slot inpainting (ProtBFN / AbBFN / AbBFN2) |
+| `"bfn_inpaint"` | `BFNInpaintCondition(slot_index, strength, n_particles, t_grid_len)` | Single-slot Bayesian-flow inpaint |
+| `"property"` | `PropertyCondition(property_kind, property_value)` | Property-targeted scalar (`logp` / `qed` / `sa`); GraphBFN style |
+| `"mapping"` | `MappingConditionAdapter(_data)` | Back-compat wrapper for adapters that still emit raw dicts |
+
+### 3.2.1 Backward compatibility
+
+Adapters that still pass a raw `Mapping[str, Any]` to the
+`ODEConditionDelta` constructor are auto-wrapped into a
+`MappingConditionAdapter` via `ODEConditionDelta.__post_init__`. The
+legacy `delta.delta_spec["key"]`, `delta.delta_spec.get("key")`, and
+`delta.delta_spec.items()` idioms continue to work because
+`MappingConditionAdapter` duck-types the mapping protocol via
+`__getitem__`, `get`, `__contains__`, `__iter__`, `__len__`, `keys`,
+`values`, and `items`. The 2356-test back-compat invariant holds.
+
+### 3.2.2 Constructing a typed `Condition`
+
+```python
+# Option A: typed Condition subclass (preferred)
+cond = CFGCondition(
+    text_prompt="a serene mountain landscape",
+    negative_prompt="blurry, distorted",
+    guidance_scale=7.5,
+    cfg_trunc_ratio=0.92,
+    cfg_normalization="lumina",
+    rope_axes=(16, 16),
+)
+delta = ODEConditionDelta(
+    delta_spec=cond,
+    source="engine",
+    target_round=3,
+    calibration_artifact_hash="cal-v1",
+)
+
+# Option B: legacy raw dict (auto-wrapped)
+delta = ODEConditionDelta(
+    delta_spec={"num_steps": 100, "target_mean": 0.0},
+    source="engine",
+    target_round=3,
+    calibration_artifact_hash="cal-v1",
+)
+assert isinstance(delta.delta_spec, MappingConditionAdapter)
+assert delta.delta_spec.condition_kind == "mapping"
+assert delta.delta_spec.get("num_steps") == 100
+```
+
+### 3.2.3 Validation contract
+
+`validate_condition_delta(delta)` enforces:
+
+* `delta_spec` is a non-empty `Condition` (or, for back-compat, a
+  non-empty `Mapping[str, Any]`).
+* `delta_spec.condition_kind` is one of `CONDITION_KINDS`.
+* `delta_spec.to_mapping()` returns a non-empty `Mapping` containing a
+  `condition_kind` key matching the discriminator.
+* `source`, `target_round`, and `calibration_artifact_hash` satisfy the
+  existing structural invariants.
+
+### 3.2.4 Helper helpers
+
+* `wrap_condition(value)` — coerce a raw mapping into a typed
+  `Condition` (idempotent on already-typed values).
+* `condition_to_mapping(condition)` — return the JSON-serializable
+  mapping form.
+* `condition_kind_of(value)` — return the discriminator literal for
+  either a typed `Condition` or a raw mapping.
 
 ### 3.2 Failure modes
 
@@ -167,6 +275,127 @@ class AdapterCapabilities:
 
 The fail-closed contract means **no partial-write**: the engine never
 applies a beta for a channel whose gate the adapter cannot satisfy.
+
+### 3.3 State Channels (D5 — per-channel state-type declaration)
+
+> **Status**: governance document. Design #3 of the FM-LCM
+> interface redesign. Adding a new `StateChannel` discriminator
+> value requires a paired acceptance test and a `DTB-Q` decision
+> in `todo.json`.
+
+The legacy `AdapterCapabilities.state_shape: tuple[int, ...]`
+field is a single per-instance tuple — it can describe the shape
+of a 2-D flow-matching channel `(2,)` or a CIFAR image channel
+`(3, 32, 32)`, but **cannot** express the heterogeneous per-channel
+shapes carried by FlowMol3 (`(n, 3)` coordinate + `(n,)`
+atom type + `(n, n)` bond), GraphBFN (`(N, E, K)` theta node/edge
++ `(N, N)` adjacency logits + `(N,)` charge), or any future model
+family whose native state decomposes into typed per-channel
+sub-tensors.
+
+The per-channel typed surface replaces the single tuple with two
+OPT-IN fields:
+
+```python
+from adaptive_reflow.universal.adapter import AdapterCapabilities
+from adaptive_reflow.contracts.state_channel import (
+    StateShape,
+    validate_channel_types,
+)
+
+# Per-channel typed declaration (OPT-IN; defaults preserve legacy
+# back-compat).
+caps = AdapterCapabilities(
+    # ... existing fields ...
+    channel_types={
+        ChannelName("coordinate"): "continuous",
+        ChannelName("atom_type"): "categorical_mask",
+        ChannelName("amino_acid"): "categorical_argmax",
+        ChannelName("bond_type"): "categorical_sample",
+        ChannelName("graph"): "graph",
+    },
+    channel_shapes={
+        ChannelName("coordinate"): StateShape(dims=(10, 3), variable_axes=(0,)).dims,
+        ChannelName("atom_type"): (10,),
+        ChannelName("graph"): (8, 8),
+    },
+)
+```
+
+#### 3.3.1 `StateChannel` closed set
+
+The discriminator is `StateChannel ∈ {"continuous", "categorical_mask", "categorical_argmax", "categorical_sample", "mixed", "graph"}` — the six kinds cover the union of LCM concerns identified in the FM-LCM interface gap audit:
+
+| Kind | Adapter use case | Blend strategy (D9) |
+|---|---|---|
+| `"continuous"` | FlowMol3 `coordinate`, GraphBFN `charge`, Lumina/HiDream `latent` | `LinearBlend` (convex combination) |
+| `"categorical_mask"` | FlowMol3 padded positions, GraphBFN diagonal `-inf` sentinel | `MaskedBlend` (m=0/1 short-circuit + sentinel passthrough) |
+| `"categorical_argmax"` | ProtBFN amino-acid `argmax`, GraphBFN adjacency `argmax` | `LogitBlend` (logit lift + softmax + argmax) |
+| `"categorical_sample"` | ProtBFN `sample`, FlowMol3 `bond_type` sample | `GumbelBlend` (Gumbel-max with τ anneal) |
+| `"mixed"` | FlowMol3 four-tuple `(x, a, c, e)` | Dispatcher recurses into per-sub-channel table |
+| `"graph"` | GraphBFN `(theta_node, theta_edge, adj_logits)` triple | `GraphBlend` (per-sub-tensor dispatch) |
+
+The closed set is enforced by `validate_state_channel`; the per-adapter table is validated by `validate_channel_types`.
+
+#### 3.3.2 `StateShape` dataclass
+
+The optional `StateShape` carrier declares per-channel dimensions:
+
+```python
+@dataclass(frozen=True)
+class StateShape:
+    dims: tuple[int, ...] = ()               # static dimensions
+    variable_axes: tuple[int, ...] = ()      # sample-varying axis indices
+```
+
+* `dims` is the static shape; `() ` is the degenerate scalar channel; `(2,)` is the canonical 2-D flow-matching channel; `(10, 3)` is the FlowMol3 coordinate channel.
+* `variable_axes` declares which axes vary sample-by-sample (FlowMol3 `n_atoms`, GraphBFN `n_nodes`). Non-empty values trigger the dynamic-shape resampling helper (D18).
+* `validate_state_shape` rejects negative dims, out-of-range axis indices, and duplicate axis entries.
+
+#### 3.3.3 Backward compatibility
+
+Adapters that do not declare a `channel_types` table continue to use the legacy `AdapterCapabilities.state_shape: tuple[int, ...] = (2,)` carrier; the engine falls back to it whenever a channel carries no typed `channel_types` entry. The 2356-test back-compat invariant holds.
+
+#### 3.3.4 Per-channel blend dispatch (D9)
+
+The `PerChannelBlender` dispatcher (in
+`adaptive_reflow.algorithm.per_channel_blender`) routes each
+channel to the correct `BlendStrategy` based on the
+`channel_types` table. Five concrete strategies + one graph
+delegate cover the six kinds:
+
+```python
+from adaptive_reflow.algorithm.per_channel_blender import PerChannelBlender
+
+blender = PerChannelBlender(
+    channel_types={
+        ChannelName("coordinate"): "continuous",
+        ChannelName("amino_acid"): "categorical_argmax",
+        ChannelName("atom_type"): "categorical_mask",
+        ChannelName("graph"): "graph",
+    },
+)
+
+# Dispatcher picks the correct strategy per channel.
+out = blender.blend_all_channels(
+    prior_values={...},
+    fresh_values={...},
+    memory_fraction_by_channel={
+        ChannelName("coordinate"): 0.5,
+        ChannelName("amino_acid"): 0.0,
+        ChannelName("atom_type"): 1.0,
+        ChannelName("graph"): 0.5,
+    },
+)
+```
+
+Audit codes emitted by the dispatcher include:
+
+* `per_channel_blend_m_zero_short_circuit` / `per_channel_blend_m_one_short_circuit` — `m=0` / `m=1` short-circuits dodge `0 * -inf = NaN` on the GraphBFN adjacency diagonal.
+* `per_channel_blend_mask_fresh_fallback` — FlowMol3 padded positions (`mask == 0`).
+* `per_channel_blend_sentinel_passthrough` — GraphBFN `-inf` diagonal sentinels.
+* `per_channel_blend_tau_floor_hit` — Gumbel τ ≤ τ_floor → argmax degeneration.
+* `per_channel_blend_fallthrough` — channel not in `channel_types` table; falls through to `LinearBlend` (back-compat).
 
 ---
 
@@ -644,6 +873,17 @@ Three classes of validation are bundled with the engine:
 
 Every adapter MUST be green on all validation classes.
 
+**See also: docs/r17-survey/algorithm-correctness-evidence.md.** The
+static + capability + standard-mixer validation tooling above enforces
+*Protocol conformance* — every adapter advertises the right surface and
+behaves deterministically. It does **not** by itself prove the
+*algorithm layer* is correct against a known ground truth. For that,
+the framework maintains three independent oracle gates
+(2D Gaussian-mix / synthetic-image / hyperparameter-free) — see the
+evidence chain document for the per-gate PASS verdicts, the 97-test
+test count, and the paper Section 4 skeleton. **See also:
+docs/r17-survey/algorithm-correctness-evidence.md.**
+
 ---
 
 ## 13. Worked example — full minimal adapter
@@ -1005,3 +1245,260 @@ override.
 - Evaluator tests: `tests/test_eval/test_twodim_fm_evaluator.py`.
 - Materialize script: `tools/materialize_twodim_fm.py`.
 - Worked end-to-end example: [TUTORIAL.md](../TUTORIAL.md).
+
+---
+
+## 17. Typed materialization route (Design #4 — D10)
+
+> **Status**: governance document. Locked at D10-v1. Changes require a paired acceptance test and a `DTB-Q` decision in `todo.json`.
+
+The materialization route is the **fibre-to-ambient map** that
+Theorem 1 (Li 2026, lines 87-92) implicitly references when it treats
+the BL distance on the ambient law. Heterogeneous native state spaces
+(FlowMol3 `(x, a, c, e)`; GraphBFN graph payload; ProtBFN amino-acid
+logits; CTMC+BFN categorical simplex) must be projected to the
+ambient state X_envelope so the BL metric, the four paper
+quantities (`A_g`, `B_g`, `C_g`, `e_rho`), and the
+:class:`BoundedMergeOperator`'s residual `g` are well-defined.
+
+### 17.1 Surface — two parallel Protocols
+
+The typed materialization route is exposed at TWO layers, both
+preserved by the 2356-test back-compat invariant:
+
+| Layer | Module | Surface |
+|---|---|---|
+| **Universal / universal.materialization** | `adaptive_reflow.universal.materialization` | `MaterializationRouteProtocol` (legacy `native_to_envelope` / `envelope_to_native` API) |
+| **Contracts / contracts.materialization** (D10 typed) | `adaptive_reflow.contracts.materialization` | `MaterializationRoute` (`materialize` / `dematerialize` typed API) |
+
+The D10 typed surface replaces the prior `materializer: type | None`
+class reference on :class:`AdapterCapabilities` with an
+`Optional[MaterializationRoute]` INSTANCE handle
+(``materializer_instance``). The legacy class-reference field is
+preserved as ``materializer: type | None`` for back-compat; new
+adapters should declare the typed instance via
+``materializer_instance=default_flowmol3_materializer()`` (or the
+appropriate factory).
+
+### 17.2 `MaterializationRoute` (D10 abstract)
+
+```python
+class MaterializationRoute(Protocol):
+    @property
+    def handle(self) -> MaterializerHandle: ...
+    @property
+    def loss_tolerance_by_channel(self) -> Mapping[str, LossTolerance]: ...
+    def materialize(
+        self,
+        envelope_state: EnvelopeStateBundle,
+        *,
+        atom_count: int | None = None,
+    ) -> NativeStateBundle: ...
+    def dematerialize(
+        self,
+        native_state_bundle: NativeStateBundle,
+    ) -> EnvelopeStateBundle: ...
+    def validate_roundtrip(
+        self,
+        native_state_bundle: NativeStateBundle,
+    ) -> tuple[bool, tuple[str, ...]]: ...
+```
+
+The abstract is `runtime_checkable` so adapters can be duck-type-checked
+against it.
+
+### 17.3 `NativeStateBundle` per-channel accessors (D20 wiring)
+
+The :class:`NativeStateBundle` now exposes typed per-channel accessors
+so the dispatch is total (no raises on missing channels):
+
+| Accessor | Domain filter | Returns |
+|---|---|---|
+| `get_continuous(name)` | `channel_domains[name] == "continuous"` | opaque `TensorRef` handle, or `None` |
+| `get_categorical(name, *, mode="argmax")` | `discrete / categorical_mask / categorical_argmax / categorical_sample` | opaque `TensorRef` handle, or `None` |
+| `get_masked(name)` | any | `(channel_handle, mask_handle)` tuple, or `None` |
+| `get_graph(name)` | `channel_domains[name] == "graph"` | sub-mapping of prefixed sub-channel handles, or `None` |
+
+### 17.4 Three concrete molecular materializers
+
+| Materializer | Backend | Per-channel domain | Handles |
+|---|---|---|---|
+| `ConcreteFlowMol3Materializer` | FlowMol3 | `coordinate`, `charge` (continuous); `raw_pair`, `atom_type` (categorical) | `(x, a, c, e)` four-tuple projection |
+| `ConcreteProtBFNMaterializer` | ProtBFN / AbBFN / AbBFN2 | `amino_acid_categorical` (categorical_argmax); 4 auxiliary categoricals; `tap_continuous` (continuous) | K=32 model → K=22 surface vocabulary alignment + residue mass aggregation |
+| `ConcreteGraphBFNMaterializer` | GraphBFN | `nodes` (continuous); `edges`, `adjacency` (discrete) | Graph-shaped `(N, E, (N, N))` payload; preserves `-inf` diagonal sentinel through roundtrip |
+
+All three concrete materializers implement BOTH the legacy
+`MaterializationRouteProtocol` API (for back-compat with the existing
+adapters) AND the new typed `MaterializationRoute` surface (for the
+D10 wire-up). The `LegacyProtocolAdapter` shim bridges legacy
+materializers onto the typed surface transparently.
+
+### 17.5 Engine integration
+
+`Engine.run_round` invokes the adapter-declared materializer after the
+endpoint is detached:
+
+```python
+materializer_instance = getattr(caps, "materializer_instance", None)
+if materializer_instance is not None:
+    native_bundle = _state_bundle_to_native(detached, caps)
+    envelope_state = materializer_instance.dematerialize(native_bundle)
+    extras["materializer_handle"] = str(materializer_instance.handle)
+    extras["envelope_state_keys"] = sorted(envelope_state.observables)
+```
+
+The projection is stored in `RoundTrace.extras` so downstream consumers
+(`BoundedMergeOperator`, paper-quantity audits) can consume it. The
+invocation is opt-in: adapters that don't declare a typed
+materializer continue to work unchanged.
+
+### 17.6 Back-compat
+
+The `MaterializationRouteProtocol` legacy surface at
+`adaptive_reflow.universal.materialization` is preserved byte-for-byte:
+the `MaterializationRouteProtocol` Protocol class, the `NoOpMaterializer`
+class, the `MaterializationRouteProtocol`-conforming
+`native_to_envelope` / `envelope_to_native` methods on
+`ConcreteFlowMol3Materializer` / `ConcreteGraphBFNMaterializer` are
+all unchanged. The new surface is **additive** at the protocol layer
+and **orthogonal** at the capability layer
+(`materializer_instance: Optional[MaterializationRoute]` defaults to
+`None`, preserving the 2356-test back-compat invariant).
+
+### 17.7 Tests
+
+`tests/test_contracts/test_materialization_typed.py` covers:
+
+* (1) Abstract + carrier invariants (12 tests).
+* (2) NativeStateBundle per-channel accessors (7 tests).
+* (3) FlowMol3 materializer roundtrip (5 tests).
+* (4) ProtBFN K=32 vs K=22 vocabulary alignment (8 tests).
+* (5) GraphBFN `-inf` sentinel roundtrip (4 tests).
+* (6) LegacyProtocolAdapter shim (2 tests).
+* (7) `AdapterCapabilities.materializer_instance` field (2 tests).
+* (8) Handle digest byte-stability (2 tests).
+* (9) Cross-adapter parametrized conformance (6 tests).
+* (10) Determinism for fixed inputs (2 tests).
+* (11) Engine integration helper (1 test).
+
+Total: 48 tests, all passing.
+
+### 18. Dynamics + Solver split (D6 + D7 — LCM Tier-1 design)
+
+> **Status**: governance document. LCM Tier-1 design D6 (DynamicsProtocol
+> — split `solve_ode` into ``dynamics.step`` + ``solver.integrate``)
+> and D7 (IntegratorProtocol — pluggable solver euler/heun/rk4/
+> dormand_prince/bfn_step/ctmc_euler_heun). The split is the canonical
+> seam that the prior FM-LCM gap audit identified as Tier-1 gaps.
+
+The legacy `FlowMatchingODEAdapter.solve_ode` method is monolithic —
+it bundles two concerns into one method body:
+
+* **(C) DYNAMICS** — how state evolves per ``dt`` (velocity field,
+  CTMC transition kernel, Bayesian update)
+* **(D) SOLVER** — how the dynamics are integrated (Euler / RK4 /
+  Heun / adaptive Dormand-Prince / CTMC-EulerHeun / BFN-step)
+
+The split exposes these as independent `Protocol` surfaces:
+
+```python
+from adaptive_reflow.algorithm.dynamics import (
+    DynamicsProtocol,
+    ContinuousFMDynamics,
+    CTMCDynamics,
+    BFNDynamics,
+    FlowMol3Dynamics,    # 4-channel (x, a, c, e) composite
+    ProtBFNDynamics,     # 3-channel (theta, y, alpha) composite
+)
+from adaptive_reflow.algorithm.solver import (
+    IntegratorProtocol,
+    EulerSolver,
+    RK4Solver,
+    HeunSolver,
+    AdaptiveRK4Solver,
+    CTMCEulerHeunSolver, # canonical CTMC solver
+    BFNSolver,           # fixed-NFE BFN step counter
+)
+```
+
+#### 18.1 DynamicsProtocol — split surface (D6)
+
+`DynamicsProtocol.step(s, t, dt, c, *, seed, paper_quantities, audit_codes) -> slope`
+returns the SLOPE (velocity / rate / Bayesian delta) at the given
+state; the solver applies `dt * slope` weighting. Concrete families:
+
+| Family | SLOPE formula | Used by |
+| --- | --- | --- |
+| `continuous_fm` | `velocity(s, t, c)` | Lumina, HiDream, two-dim FM, TwoDimFMAdapter |
+| `ctmc` | `Q @ s` | FlowMol3 (currently; task #324 swap to `ctmc_euler_heun`) |
+| `bfn` | `pred_logits - s` | ProtBFN/AbBFN/AbBFN2, GraphBFN |
+| `flowmol3_composite` | per-channel dispatch | FlowMol3 (4-channel composite) |
+| `protbfn_bfn` | BFN with alpha schedule | ProtBFN/AbBFN/AbBFN2 (3-channel) |
+
+#### 18.2 IntegratorProtocol — pluggable solver (D7)
+
+`IntegratorProtocol.integrate(dynamics, state_0, t_grid, c, *, seed, paper_quantities) -> DynamicsTrajectory`
+applies the dynamics at multiple points. Concrete families:
+
+| Family | Update rule | Use case |
+| --- | --- | --- |
+| `euler` | `s + h * k1` | Default for Lumina/HiDream/two-dim FM |
+| `rk4` | classical 4th-order Runge-Kutta | Higher-order accuracy |
+| `heun` | predictor-corrector 2nd-order | Lumina solver_kind="heun" path |
+| `adaptive_rk4` | Dormand-Prince with adaptive dt | Variable stiffness |
+| `ctmc_euler_heun` | Euler + Heun correction | Canonical CTMC solver; task #324 |
+| `bfn` | fixed-NFE BFN step counter | BFN refinement loops |
+
+#### 18.3 Paper-quantity grounding
+
+* `e_rho / 4` (paper Lemma 5) is consumed as the minimum step-size
+  floor so the solver cannot underflow below the paper exterior-gap
+  envelope. Both `DynamicsProtocol.step` and `IntegratorProtocol.integrate`
+  take an optional `paper_quantities` argument that emits the
+  `dynamics_dt_floored_by_paper_exterior_gap` audit code when the
+  floor engages.
+
+#### 18.4 Backward compatibility
+
+* The 8-method `FlowMatchingODEAdapter` Protocol surface is
+  byte-identical (no new methods added). The split is **opt-in** via
+  `AdapterCapabilities.has_dynamics_seam` and
+  `AdapterCapabilities.has_solver_seam` boolean flags (both default
+  `False`).
+* Adapters that do NOT advertise the seam continue to route through
+  their existing monolithic `solve_ode` body via a private
+  `_default_solve_ode()` shim. The 2356-test back-compat invariant is
+  preserved.
+
+#### 18.5 Registry integration
+
+`adaptive_reflow.algorithm.protocol_registry` exposes two new family
+sets:
+
+* `DYNAMICS_FAMILIES = {"continuous_fm", "ctmc", "bfn", "flowmol3_composite", "protbfn_bfn"}`
+* `SOLVER_FAMILIES = {"euler", "rk4", "heun", "adaptive_rk4", "ctmc_euler_heun", "bfn"}`
+
+with corresponding `build_dynamics_from_config()` and
+`build_solver_from_config()` polymorphic factories. The
+`adaptive_reflow.manifest.PortManifest` exposes the corresponding
+`DynamicsPort` / `SolverPort` accessors so callers can dispatch by
+name through the hexagonal port set.
+
+### 18.6 Tests
+
+`tests/test_algorithm/test_dynamics_solver.py` covers:
+
+* (1) Euler + ContinuousFMDynamics reproduces closed-form sine wave ODE (1 test).
+* (2) BFN + BFNSolver reproduces ProtBFN Bayesian update (1 test).
+* (3) CTMC + CTMCEulerHeunSolver wraps rate matrix Q correctly (1 test).
+* (4) RK4 / Heun / AdaptiveRK4 compose with ContinuousFMDynamics (3 tests).
+* (5) Native-state digest byte-stability for fixed inputs (2 tests).
+* (6) Polymorphic builders + family registry dispatch (3 tests).
+* (7) Default factories return canonical instances (1 test).
+* (8) Adapter-specific bindings via composition — FlowMol3Dynamics 4-tuple, ProtBFNDynamics 3-tuple (4 tests).
+* (9) Protocol conformance (runtime_checkable) for DynamicsProtocol + IntegratorProtocol (2 tests).
+* (10) Config hash stability + to_config round-trip (2 tests).
+* (11) Failure modes (fail-closed): bad CTMC rate matrix, None state, non-positive dt, short t_grid, negative seed (6 tests).
+* (12) Paper exterior-gap floor (e_rho / 4) emits audit code (1 test).
+
+Total: 27 tests, all passing.

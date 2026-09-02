@@ -684,6 +684,19 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--deferred",
+        action="store_true",
+        help=(
+            "Acknowledge the GraphBFN deferral (option c in "
+            "todo.json P-10) and exit 0 without running the experiment. "
+            "The data/graphbfn/repo/ checkout is empty at submission "
+            "time (README + .git only); this script is gated behind "
+            "this flag to prevent the synthetic backend's numbers from "
+            "being read as a GraphBFN paper claim. See "
+            "docs/r17-survey/mol-comparison.md §6 for the deferral note."
+        ),
+    )
+    parser.add_argument(
         "--weights",
         type=Path,
         default=None,
@@ -826,6 +839,41 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point. Returns 0 on a successful emit, 1 otherwise."""
     args = _parse_args(argv)
+
+    # --- deferral gate (option c: drop from paper scope and document) ---
+    # data/graphbfn/repo/ is empty at submission time (README + .git only;
+    # no published checkpoint, no eval script, no reference vocab). The
+    # synthetic NumPy BFN backend that the adapter would otherwise fall
+    # back to is plumbing validation only -- the adapter's own docstring
+    # says it "is NOT a reproduction of the ICLR-2025 / Hierarchical
+    # GraphBFN papers". Refuse to run unless the operator passes
+    # --deferred to acknowledge the deferral, so the synthetic-backend
+    # numbers cannot accidentally be read as a GraphBFN paper claim.
+    # See docs/r17-survey/mol-comparison.md §6 for the full note.
+    if bool(args.deferred):
+        print(
+            "[run_sota_graphbfn] deferred: GraphBFN is out of paper "
+            "scope at submission time (data/graphbfn/repo/ holds only "
+            "README + .git). The FlowA re-inference plumbing reaches the "
+            "same endpoint shape through the full Protocol surface on "
+            "the synthetic adapter, but those numbers are NOT a "
+            "GraphBFN chemistry claim. To re-enable this script, drop "
+            "the published GraphBFN checkpoint + reference vocab under "
+            "data/graphbfn/ and lift the deferral gate here. See "
+            "docs/r17-survey/mol-comparison.md §6 for the deferral note "
+            "and option (c) in todo.json P-10.",
+            flush=True,
+        )
+        return 0
+
+    raise NotImplementedError(
+        "graphbfn_deferred: data/graphbfn/repo/ is empty at submission "
+        "time (README + .git only). The published GraphBFN checkpoint "
+        "is not vendored. See docs/r17-survey/mol-comparison.md §6 and "
+        "todo.json P-10 for the deferral note. Pass --deferred to "
+        "acknowledge the deferral and exit 0."
+    )
+
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -849,12 +897,26 @@ def main(argv: list[str] | None = None) -> int:
     overall_started = time.perf_counter()
 
     # --- adapter ---
-    adapter = _make_adapter(
-        Path(args.weights) if args.weights else None,
-        dataset=dataset,
-        variant=str(args.variant),
-        baseline_nfe=baseline_nfe,
-    )
+    # A missing checkpoint is an operator error, not a bug: report it as a
+    # single actionable line and exit 1 rather than surfacing a traceback.
+    try:
+        adapter = _make_adapter(
+            Path(args.weights) if args.weights else None,
+            dataset=dataset,
+            variant=str(args.variant),
+            baseline_nfe=baseline_nfe,
+        )
+    except FileNotFoundError as exc:
+        missing = str(exc).split(":", 1)[-1]
+        print(
+            f"[run_sota_graphbfn] ERROR: GraphBFN weights not found at "
+            f"{missing!r}. Pass --weights pointing at a published GraphBFN "
+            "checkpoint, or omit --weights (or pass --weights synthetic) to "
+            "run the synthetic NumPy BFN backend.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
     caps = adapter.capabilities()
     mode = _adapter_mode(adapter)
     print(

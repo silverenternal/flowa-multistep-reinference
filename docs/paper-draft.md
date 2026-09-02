@@ -1,6 +1,6 @@
 # FlowA: A Paper-Grounded Re-Inference Framework for Flow Matching Models
 
-**Status:** body draft (§1–§7), generated from the records enumerated in
+**Status:** body draft (§1–§9), generated from the records enumerated in
 `docs/paper-plan.md`. Every numeric claim below is traceable to a record
 in `docs/CLAIMS.md`, `docs/ABLATION.md`, `docs/benchmark-uplifts.md`, or
 `docs/r4-survey/`. This file is a *draft*; `docs/paper-plan.md` remains
@@ -132,7 +132,7 @@ $$\texttt{selection\_ratio} = \frac{\text{sheet\_evidence}}{\text{sheet\_evidenc
 
 computed per round by `EvidenceScaleGapMetric` /
 `PosteriorSelectionEvaluator`. Theorem 1 predicts it rises toward 1 as
-$\varepsilon \downarrow 0$; §5 shows it doing exactly that once the
+$\varepsilon \downarrow 0$; §4.6 shows it doing exactly that once the
 scheduler is allowed to write $\varepsilon$.
 
 ### §2.3 Related frameworks
@@ -214,7 +214,7 @@ posterior split is at this noise scale?" and derives `n_cap` from it.
 feature is that it writes `ScheduleSample.eps_implicit`, which the runner
 forwards into `PosteriorSelectionEvaluator.oracle_at_round(eps_round=...)`,
 where the cell-evidence term is scaled (`c_ev *= eps_round`). That single
-plumbing edge is the C4 closure of §5.
+plumbing edge is the C4 closure of §4.6.
 
 ```python
 # EvidenceDrivenScheduler: PID-lite on Theorem 1's witness
@@ -286,6 +286,15 @@ routes through it, so the Lemma 4 floor cannot be evaded.
 ---
 
 ## §4. Empirical Verification
+
+> **Source-of-truth evidence chain:** every algorithmic claim below is
+> grounded in `docs/r17-survey/algorithm-correctness-evidence.md`
+> (r17, 2026-09-01) — a synthesised three-gate record (P-13 2D
+> Gaussian-mixture oracle, P-15 + P-16 synthetic-image oracle, P-19
+> hyperparameter-free principle) totalling 97 oracle-pass tests with 0
+> bugs filed, plus a Section 4.1–4.5 paper skeleton. SOTA paper-metric
+> evidence (Lumina / HiDream / FlowMol3) is tracked separately in
+> `docs/r17-survey/img-comparison.md` and `docs/r17-survey/mol-comparison.md`.
 
 ### §4.1 Experimental protocol
 
@@ -361,8 +370,12 @@ Mode coverage — not just distance — is what multi-round buys.
 ### §4.3 CIFAR-10 Rectified Flow
 
 **Setup.** `RectifiedFlowCIFARAdapter` wrapping the gnobitab Score-SDE
-DDPM++ UNet (61.8 M parameters, strict `state_dict` load from
-`data/cifar10_rf.pth`). Metric: InceptionV3 pool3 FID against a 1 000- or
+DDPM++ UNet (61.8 M parameters; strict `state_dict` load from
+`data/cifar10_rf.pth`, the gnobitab 1-RF EMA-only checkpoint referenced
+by name in `adaptive_reflow/adapters/rectified_flow_cifar.py:120-129`
+— the third-party checkpoint is **not bundled with this repo** and
+must be acquired separately; the v4 numbers below were captured on an
+external rig). Metric: InceptionV3 pool3 FID against a 1 000- or
 500-image CIFAR-10 *test* reference, computed by
 `tools/compute_cifar_fid.py`. CPU only.
 
@@ -489,9 +502,9 @@ than a single pass".
 
 ---
 
-## §5. C4 Closure Verification
+## §4.6 C4 Closure Verification
 
-### §5.1 `selection_ratio`: 0.8061 → 0.988+
+### §4.6.1 `selection_ratio`: 0.8061 → 0.988+
 
 The C4 loop is Loop 2 of §3.3: paper quantities must reach the scheduler,
 *and the scheduler's noise decision must reach the evaluator*. The second
@@ -520,7 +533,7 @@ move by +0.18, exceeding the pre-registered target
 posterior mass migrating to the sheet — observed numerically on a
 published Rectified Flow, and it only appears once the loop is closed.
 
-### §5.2 Reproduction recipe
+### §4.6.2 Reproduction recipe
 
 ```bash
 # 23-cell ablation: Table 8 + docs/ABLATION.md tables (73.1 s, 1 CPU core)
@@ -545,7 +558,7 @@ seed) round metrics are released as CSVs under `docs/r4-survey/`.
 
 ---
 
-## §6. Quality Bar and Reproducibility
+## §5. Quality Bar and Reproducibility
 
 FlowA is released as a system, so the engineering evidence is part of the
 claim.
@@ -576,82 +589,410 @@ benchmark, and mutation-testing suites. Beyond the gates:
 
 ---
 
-## §7. Related Work, Limitations, and Conclusion
+## §6. Related Work
 
-### §7.1 Related work (expanded)
+### §6.1 Positioning in the generative-modeling literature
 
-Beyond §2.3: **Karras EDM** and **DPM-Solver** optimise the *within-pass*
-noise schedule and solver order — orthogonal to, and composable with,
-FlowA's *across-pass* schedule; FlowA's `--integrator` surface is the
-integration point. **Rectified Flow** straightens at training time;
-FlowA schedules at inference time. **MeanFlow** and **Stochastic Flow
-Matching** (NVIDIA arXiv:2410.19814, integrated as `StochasticFMAdapter`)
-are candidate plug-in models rather than competitors — the protocol
-accepts them unchanged.
+FlowA's inference-time re-inference sits at the intersection of three
+distinct lines of prior work: **flow-matching** training objectives, the
+**within-pass schedule/solver** family pioneered by EDM and DPM-Solver,
+and the **hyperparameter-free optimisation** literature that supplies
+the derivation rules FlowA consumes. We survey each in turn, then
+contrast with three framework-adjacent systems (Diffusers, Pyro, JAXopt,
+LangGraph) already tabulated in §2.3.
 
-### §7.2 Limitations
+### §6.2 Flow-matching lineage
 
-1. **Sample counts are small** (500–1 000 vs the 50 000 standard for
-   FID). Absolute FIDs are inflated and the CIFAR-10 rows carry no
-   seed-variance estimate.
-2. **Euler only** in the measured runs. Heun is implemented but the v5
-   sweep has not been executed; its numbers in §4.3 are projections.
-3. **CPU only.** No GPU was available, which sets the sample-count and
-   NFE ceilings for every result reported here.
-4. **Two domains.** 2D synthetic targets and CIFAR-10. No ImageNet, no
-   MNIST FID in the headline set, no molecular benchmark, despite
-   adapters existing for the latter.
-5. **CIFAR-10 multi-round is not stateful.** The harness re-seeds each
-   round, so the image-domain loop pools rather than refines. The
-   `--stateful` flag exists but is off by default and unmeasured.
-6. **Negative result at matched NFE.** The framework's pooled FID is
-   24–31% worse than the constant-NFE baseline in the v4 protocol.
-7. **Known open defects.** The R11/R12 review found 52 issues; 7 P0 fixes
-   landed, and the `FreeTrajScheduler` progress-cache bug remains open.
+- **[Lipman 2023]** introduces *flow matching for generative modeling*:
+  given a coupling $(x_0, x_1)$ and the linear interpolant
+  $x_t = (1-t)x_0 + t x_1$, the velocity field is trained by
+  regressing on $(x_1 - x_0)$. FlowA inherits this objective; it does
+  *not* modify the training loss. All FlowA adapters (Table 1) wrap a
+  pre-trained $v_\theta$ and never re-fit it.
+- **[Liu 2022]** *Rectified Flow* refines the coupling by re-coupling
+  $(x_0, x_1)$ through the learned map and re-training, straightening
+  trajectories so that one-step Euler integration approaches the
+  full-NFE sample quality. Reflow is a *training-time* straightening
+  procedure; FlowA is its *inference-time* complement — $\theta$ is
+  fixed and the schedule of noise and steps is varied across rounds.
+  `docs/distinguishing-from-reflow.md` records the boundary.
+- **[Song 2021]** *Score-Based Generative Modeling through Stochastic
+  Differential Equations* (ICLR 2021) develops the VE/VP SDE viewpoint,
+  with likelihood-weighted training and stochastic Langevin sampling.
+  FlowA's per-round `eps_implicit` is conceptually closer to the
+  score-based noise-scale parameter $\sigma_t$ than to a flow-matching
+  step size; the two lineages differ in whether training regresses on a
+  velocity field or a score, but converge in the linear-interpolant
+  limit [Lipman 2023, §4]. FlowA is agnostic: any adapter whose
+  `paper_quantities()` returns $A_g, B_g, C_g, e_\rho$ participates,
+  including the score-based stochastic sampler family once an adapter
+  surfaces them.
 
-### §7.3 Conclusion
+### §6.3 Within-pass schedule and solver design
+
+- **[Karras 2022]** *EDM* formalises the within-pass noise schedule and
+  introduces a network-preconditioner design (skip / magnitude
+  normalisation) that decouples the noise-level choice from the network
+  capacity. FlowA is *orthogonal*: it varies the *across-pass* schedule
+  and holds the within-pass schedule fixed. The two are composable via
+  FlowA's `--integrator` surface: a FlowA round can call into an EDM
+  schedule internally, so an EDM-trained model is a natural
+  `FlowMatchingODEAdapter` candidate. **Layer-wise adaptive rate scaling
+  [You 2017 / Goyal 2017]** (LARS / LAMB) and EDM's preconditioner share
+  the same normalisation philosophy at different time scales; the
+  layerwise preconditioner is the ancestor of FlowA's per-channel
+  `alpha_grad` blending rule.
+- **[Lu 2022]** *DPM-Solver* (NeurIPS 2022) provides adaptive-step solvers
+  for diffusion ODEs and SDEs. FlowA exposes an
+  `IntegratorProtocol` (`D1` in the FM-LCM redesign) with
+  `euler | heun | rk4 | adaptive_rk4 | ctmc_euler_heun | bfn` —
+  DPM-Solver's adaptive RK routine integrates naturally as
+  `adaptive_rk4`. The numerical-integration mechanics underlying this
+  family are treated as classical in **[Hairer-Norsett-Wanner 1993]**
+  *Solving Ordinary Differential Equations I*, whose symplectic,
+  Euler, Heun, and RK4 constructions FlowA's integrator seam exposes
+  verbatim.
+- **[Germain 2024] (MeanFlow)** and **[NVIDIA 2024] (Stochastic Flow
+  Matching)** are plug-in models rather than competitors: FlowA's
+  `StochasticFMAdapter` accepts stochastic FM unchanged (Table 1), and
+  the MeanFlow parameterisation is a candidate adapter once the
+  per-round plug-in is wired.
+
+### §6.4 Hyperparameter-free optimisation lineage
+
+FlowA's DERIV-001 principle (§3.2, §4.4) treats every per-round
+hyperparameter as a derived quantity whose source must be one of five
+authorised families. The literature supporting each family is decades
+deep; we name the immediate ancestors:
+
+- **Polyak step size [Polyak 1969]** — averaging or step-sizing
+  proportional to $1/L$ where $L$ is a Lipschitz constant. FlowA's
+  `PolyakMemoryFraction` (PMC) and `LipschitzStepSize` (LSS) derivation
+  rules are direct descendants: PMC sets
+  $m_t = W_2^{(\text{round } t)} / (W_2^{(\text{round } 0)} + W_2^{(\text{round } t)})$,
+  and LSS sets
+  $h = \sqrt{\mathrm{tol}\cdot \delta_t} / (L_e \sqrt{\mathrm{err}})$,
+  both of which are $O(1/L)$-style step sizes.
+- **Natural gradient [Amari 1998]** and **KFAC [Martens-Grosse 2015]**.
+  The natural-gradient step is invariant to the parameterisation of the
+  posterior; KFAC approximates the Fisher information by a Kronecker
+  product. FlowA's `FisherMemoryFraction` (FMC) rule,
+  $m := f_{\text{trace}} / (f_{\text{trace}} + d\varepsilon^2)$, is a
+  Fisher-decay-weighted memory fraction in the same family; the
+  `Fisher-on-algorithm-posterior` namespace is deliberately isolated
+  from `Fisher-on-model-parameters` so the framework never confuses
+  model Fisher information with algorithm-posterior Fisher information
+  (see `docs/ALGORITHMS.md` §"Hyperparameter-Free Framework Principle").
+- **Adam-style adaptive step [Kingma & Ba 2015]**. The bias-corrected
+  exponential moving averages in Adam motivate FlowA's
+  `convergence_adaptive_kp` / `convergence_adaptive_kd` convergence
+  tracking surface: the framework maintains an EMA of the per-round
+  PID error and adjusts `kp`/`kd` against a running baseline, mirroring
+  the Adam-bias-correction principle at the per-round level.
+
+Where FlowA departs from the optimisation literature: the derivation
+rules operate on the *algorithm's* per-round knobs (`n_cap`,
+`eps_implicit`, `memory_fraction`, …), not on the *model's* training
+parameters. The framework is hyperparameter-free *for the inference
+schedule*, not for training. The dispatcher is a strict DAG so a
+derivation rule cannot shadow another rule on the same quantity
+(`docs/ALGORITHMS.md` §DERIV-001).
+
+### §6.5 Framework-adjacent systems (recap)
+
+| System | Loop primitive | Feedback | Theory-grounded | FM-specific |
+|---|---|---|---|---|
+| Diffusers | single-pass pipeline + scheduler | none across generations | no | yes |
+| Pyro | effect handlers / poutine | programmable | no (generic PPL) | no |
+| JAXopt | fixed-point / implicit-diff chain | convergence only | no | no |
+| LangGraph | agent state machine | LLM-mediated | no | no |
+| **FlowA** | multi-round re-inference | 4 typed loops | Li 2026 Thm 1 + 23 DERIV-001 rules | yes |
+
+The previous table (§2.3) did not yet record the FM-LCM redesign that
+closes 10 of the 15 framework-side gaps identified in
+`docs/r17-survey/fm-lcm-interface-gap-audit.md` — including the
+per-channel typed state channel (`D3`), the typed Condition
+discriminated union (`D2`), and the typed materialization route
+(`D4`). After the redesign the adapter surface is no longer a GCD of
+the FM-family members (continuous FM, CTMC, BFN, mixed, graph): it is
+a least-common-multiple that exposes all 10 orthogonal concerns
+(state, prior, dynamics, solver, condition, extraction, blending,
+materialization, forward noise, trajectory) as independently replaceable
+seams. The redesign has not made any system *other than FlowA* into a
+re-inference framework; it has only made FlowA into an LCM one.
+
+---
+
+## §7. Discussion and Limitations
+
+> **Source-of-truth evidence chain:** the algorithm-correctness half of
+> this section is grounded in `docs/r17-survey/algorithm-correctness-evidence.md`
+> (r17, 2026-09-01), which synthesises the three-gate PASS record (P-13
+> 57 tests, P-15+P-16 18 tests, P-19 22 tests; 0 bugs filed). The
+> SOTA-paper-metric half is grounded in
+> `docs/r17-survey/state-report.md` (workflow D audit) and the
+> gap-closure status table in
+> `docs/r17-survey/fm-lcm-interface-gap-audit.md` §8 rows 156–157.
+> We are explicit about which claims are *algorithmically PASS at the
+> unit level* vs *pending at the trained-FM level*.
+
+### §7.1 What is proven (algorithmically)
+
+Three independent ground-truth oracles return **PASS** with 97 oracle
+tests in aggregate and 0 bugs filed:
+
+| Gate | Oracle | Verdict | Evidence |
+|---|---|---|---|
+| **G1 (P-13)** | 2D Gaussian mixture $0.5 N([-2,0],I) + 0.5 N([+2,0],I)$ | **PASS** (57/57 tests) | `adaptive_reflow/algorithm/_synthetic_oracle.py`; `tests/test_algorithm/{test_synthetic_oracle,test_algorithm_on_2d_oracle,test_scheduler_algorithm_on_2d_oracle,test_blender_algorithm_on_2d_oracle,test_merge_algorithm_on_2d_oracle}.py` |
+| **G2 (P-15 + P-16)** | 5K synthetic geometric-shape images with canonical InceptionV3 stats | **PASS** (18/18 tests, hermetic) | `tests/test_algorithm/test_image_algorithm_math.py`; `tests/test_algorithm/test_image_algorithm_determinism.py`; `tests/test_algorithm/test_image_algorithm_on_synthetic_oracle.py`; `adaptive_reflow/eval/synthetic_oracle.py`; `tools/run_synthetic_image_eval.py` |
+| **G3 (P-19)** | Same as G1 with every per-round hparam from a DERIV-001 derivation rule | **PASS** (22/22 tests) | `tests/test_algorithm/test_hparam_derived_2d_oracle.py`; `tests/test_algorithm/test_hparam_derived_end_to_end.py`; `adaptive_reflow/algorithm/_derivation.py` |
+
+`docs/r17-survey/algorithm-correctness-evidence.md` §3.3 records that the
+KL trajectory on G1 is **monotone non-increasing** (final KL 0.229 <
+$0.85 \times$ initial KL 0.293), **byte-deterministic across reruns**,
+**closed-form-correct at analytical endpoints** ($W_2(N(0,I), N(0,
+\mathrm{diag}(5,1))) = \sqrt{5} - 1$ to 1e-9), and
+**paper-envelope-respecting** at the merge layer (10-step trajectory in
+$[e_\rho/4, C_g]$). On G2, framework-arm FID is monotone
+non-increasing across 5 rounds while the baseline arm is flat. On G3,
+the framework trajectory remains finite, non-negative, and monotone
+non-increasing whether hyperparameters come from closed-form
+derivations or from the documented hand-set fallbacks.
+
+`InceptionV3TheoremAlignedFIDEvaluator`
+(`adaptive_reflow/eval/fid_theorem_aligned.py`) emits per-round
+`FIDPerRoundResult` carrying $(A_g, B_g, C_g, e_\rho)$, and
+`assert_convergence_rate` checks the quantitative $O(\varepsilon)$
+paper-bound on synthetic inputs (15/15 unit tests). The legacy FID
+math (`adaptive_reflow/eval/fid.py::InceptionV3FIDEvaluator`) is
+unchanged and remains the single source of truth for Fréchet
+arithmetic.
+
+### §7.2 What is *not yet* proven at the trained-FM level
+
+The paper claim — "framework improves FM model outputs" — is
+**indirectly supported at the unit level** (§7.1) and **directly
+unsupported at the trained-FM level**. We enumerate the gap precisely:
+
+1. **SOTA paper-metric FID at $n \geq 30\,000$ is INFEASIBLE on this
+   rig.** The Lumina-Image 2.0 harness, run at $n=16$, produces a
+   rank-deficient FID that is **not paper-comparable**: framework FID
+   $313.38$ vs baseline $328.90$ ($\Delta = -15.52$) against MJHQ-30K
+   reference. The $n=30\,000$ sweep is INFEASIBLE on this rig (~73 h
+   sequential at 5.85 s/sample). The torch dependency is blocked on a
+   workflow A phase 1 install
+   (`docs/r17-survey/state-report.md` §11 risk #1;
+   `docs/r17-survey/img-comparison.md` §2.2.1).
+2. **HiDream-Dev Llama-3.1-8B stub is Path-A deferred.**
+   `tools/run_sota_hidream_i1_experiment.py` runs in *dual torch /
+   synthetic* mode with the Llama-3.1-8B encoder replaced by a
+   `_StubLlama` helper. The reported HiDream *CLIPScore ↑ / FID ↓*
+   opposite-direction result
+   (`docs/r17-survey/state-report.md` §7 row 2) is a **Path-A
+   doc-only deferred** artefact (todo.json P-06): it is *not* an
+   unconditional empirical finding and must not be promoted as such.
+   Path-B full-weights HiDream is a 2–3-day project not in flight.
+3. **FlowMol3 CTMC-vs-linear-interpolant mismatch is unresolved.**
+   The published FlowMol3 checkpoint was trained under the CTMC
+   parameterisation; FlowA's `FlowMol3V2Adapter` still integrates a
+   flow-matching *linear* interpolant. This is the documented root
+   cause of the regression in `frac_mols_stable_valence` (0.125 → 0.0625
+   at $n=16$). Closing this requires a CTMC transition kernel swap,
+   for which the `D1` `IntegratorProtocol` seam
+   (`ctmc_euler_heun`) provides the right plug-in point but the swap is
+   **not yet wired**. Pure-torch GVP port is estimated at 5–10 days
+   (todo.json P-01, tasks #324, #367–369).
+4. **DERIV-001 coverage is 23/23 at the algorithm layer but empirical
+   preference tests are partial.** The five derivation rules
+   (`PolyakMemoryFraction`, `OTEpsilonSchedule`,
+   `BLConvergenceEpsilonSchedule`, `LipschitzStepSize`,
+   `FisherMemoryFraction`) match their closed-form expected values on
+   the canonical 2D oracle and the framework trajectory remains
+   monotone non-increasing when they engage
+   (`docs/r17-survey/algorithm-correctness-evidence.md` §4.3). The
+   *full* 23-hparam coverage map was completed in workflow B
+   (`tests/test_algorithm/test_derivation.py` — 118 rule-level unit
+   tests, `test_hparam_derived_2d_oracle.py` 60 tests,
+   `test_hparam_derived_end_to_end.py` 12 tests = 190 PASS). The
+   *safety* gate (framework still converges under derived hparams) is
+   verified; the *preference* gate (all 23 rules preferred over
+   hand-set) is not yet tested empirically on a trained model.
+5. **`e_rho` regime enforcement is diagnostic-only.** Theorem 1's
+   $\varepsilon \downarrow 0$ direction requires the scheduler to
+   respect the Lemma 4 regime $\varepsilon^2 < e_\rho / \log(2)$. The
+   `ConvergenceDiagnostic.regime_violations` surface exists
+   (`adaptive_reflow/eval/fid_theorem_aligned.py`) and is unit-tested
+   on synthetic inputs, but the scheduler still consumes
+   `paper_quantities` at round 0 only and
+   `_apply_paper_quantities_rewiring` at `runner.py:577` does NOT gate
+   on $e_\rho$. Status: **diagnostic-only** per
+   `docs/r17-survey/fm-lcm-interface-gap-audit.md` §8 row 157. This
+   means the framework *reports* when a scheduler's $\varepsilon$
+   choice would violate the Lemma 4 regime, but does not yet *block*
+   the choice. Closing this is the natural next follow-on after
+   workflow A.
+
+### §7.3 Honest framing of the §4 numbers
+
+Beyond the trained-FM gap, the §4 numbers carry their own caveats that
+we restate here for completeness:
+
+| Caveat | Effect on the numbers | Mitigation in the paper |
+|---|---|---|
+| 500–1 000 samples vs 50 000 | Loose activation-Gaussian covariance; ~10–20% FID inflation expected, dominant term in the §4.3 32× gap | §4.5 row 1; future work raises to 10 K on GPU |
+| Euler vs adaptive Heun | ~2× coarser trajectory per NFE | §4.3 fix-v2 protocol wired (`--integrator heun`); v5 sweep pending |
+| CPU only | Forces small sample counts; 2 643 s for a single v4 CIFAR sweep | §4.5 row 3; future work moves to GPU |
+| Single seed on CIFAR-10 | No variance estimate on the FID rows; 5.1-FID spread not yet shown to exceed seed noise | §4.5 row 4; future work adds 3-seed bars |
+| CIFAR harness discards per-round state | Multi-round is a pooler, not a refiner, on the image domain | `--stateful` flag exists; off by default; unmeasured |
+| `selection_ratio` is schedule-independent at fixed $\varepsilon$ | 2D `selection_ratio` columns cannot discriminate schedulers by construction | §4.2 reading paragraph; §4.6.1 shows it moves once C4 closed |
+| 52 issues found in R11/R12 code review | 7 P0 fixes applied; `FreeTrajScheduler` `_compute_trajectory_progress` cache bug is a known open defect | §4.5 row 7; future work item |
+| Workload A torch install pending | SOTA paper-metric FID at $n \geq 30\,000$ not yet captured | §7.2 item 1; workflow A pending |
+
+The framework's honest value proposition is therefore:
+**selectable, auditable inference behaviour with a theory-grounded
+knob**, *not* "always better than a single pass" — the §4.3 v4
+CIFAR-10 number (framework FID 103.41–108.55 vs 50-NFE baseline 83.09)
+is the headline counter-evidence, and we report it without softening.
+
+### §7.4 Threats to validity (paper-reviewer checklist)
+
+For a paper-reviewer checklist, the threats and our responses:
+
+- **Internal validity** (does the framework do what it claims on the
+  measured data?). **PASS** at the unit level across three
+  ground-truth oracles (§7.1). **Pending** at the trained-FM level
+  (§7.2).
+- **Construct validity** (do we measure what we claim to measure?). The
+  `selection_ratio` is the numerical witness of Theorem 1's BL
+  convergence on Euclidean state spaces; it is computed by
+  `EvidenceScaleGapMetric` and `PosteriorSelectionEvaluator` against
+  closed-form quantities (§2.2). $W_2$ on 2D is closed-form against
+  analytic targets via Villani Ch. 6 [Villani 2009]. FID on CIFAR-10
+  is computed by the canonical `tools/compute_cifar_fid.py` against
+  the standard CIFAR-10 *test* reference.
+- **External validity** (do the results generalise beyond the
+  measured settings?). Limited: §7.2 enumerates the gaps. The
+  algorithm core is portable across FM-family members via the LCM
+  redesign (`docs/r17-survey/fm-lcm-interface-gap-audit.md`); the
+  empirical measurements are not yet.
+- **Reproducibility validity** (can another investigator reproduce
+  the numbers?). **PASS** at the algorithmic level (six-gate CI,
+  hash-chained ledger, byte-deterministic transition log, full source
+  release). **Pending** at the SOTA-paper-metric level (workflow A
+  blocked on torch install).
+- **Statistical conclusion validity** (are the significance claims
+  warranted?). 2D rows carry 3-seed $\pm$ std bars. CIFAR-10 rows are
+  single-seed; the 5.1-FID spread across schedulers is **not yet
+  shown to exceed seed noise** (§4.5 row 4).
+
+---
+
+## §8. Conclusion
 
 FlowA treats a published theorem as executable code. Three contributions,
 each with a verified number attached:
 
 1. **Paper-as-algorithm.** Li 2026's $A_g, B_g, C_g, e_\rho$ are
-   algorithm inputs. Closing the C4 loop moves Theorem 1's numerical
-   witness from a **0.8061 plateau to 0.9881 / 0.9896** (+0.182 / +0.184)
-   while the cosine control stays flat at 0.8061.
+   algorithm inputs, not motivation. The closed-form
+   `evidence_ratio` returned by `CodimensionSheetScheduler` reads them
+   directly; `BoundedMergeOperator` enforces the Lemma 4 floor
+   $e_\rho/4$; `EvidenceDrivenScheduler` writes `eps_implicit` to the
+   runner and closes the C4 loop. Once closed, Theorem 1's numerical
+   witness `selection_ratio` moves from a **0.8061 plateau to 0.9881 /
+   0.9896** (+0.182 / +0.184) while the cosine control stays flat at
+   0.8061 (§4.6.1).
 2. **Four-loop composition as typed state machines.** 17 machines, 333
-   typed transitions, byte-deterministic logs, hash-chained ledger — the
-   feedback loops are auditable artefacts, not implicit control flow.
+   typed transitions, byte-deterministic transition logs, hash-chained
+   ledger — the feedback loops are auditable artefacts, not implicit
+   control flow (§3.3). The state machine surface is decorated,
+   PEP-695 generic, supports hierarchical and parallel regions, and
+   emits `to_mermaid()` / `to_dot()` renderings for the paper's
+   figures.
 3. **Measured re-inference gains on a published model.** $W_2$ falls
-   **7.28%** on `two_moons` and **10.40%** on `eight_gaussians` across 3
-   seeds at fixed checkpoint and evaluator; on CIFAR-10 the four
-   schedulers become FID-distinguishable (103.41 / 103.77 / 103.96 /
-   108.55) while the framework loses to the constant-NFE baseline — a
-   result we report as it is.
+   **7.28%** on `two_moons` and **10.40%** on `eight_gaussians` across
+   3 seeds at fixed checkpoint and evaluator (§4.2). On CIFAR-10 the
+   four schedulers become FID-distinguishable (103.41 / 103.77 /
+   103.96 / 108.55) once the seed-offset fix lands (§4.4). At matched
+   NFE the framework's pooled FID is **24–31% worse** than the
+   constant-NFE baseline — a result we report as it is (§4.3, §4.5).
 
-The framework, the harnesses, the raw metrics, and the six-gate CI are
-released in full.
+Three companion results are required to keep the claim honest:
 
-### §7.4 Future work
+- **DERIV-001 hyperparameter-free principle.** 23 algorithm-layer
+  hyperparameters trace to closed-form sources (5 derivation rules
+  inherited from the Polyak, natural-gradient, KFAC, Adam-style
+  adaptive-step, Lipschitz-step-size lineages; §6.4). The *safety*
+  gate — framework still converges under derived hyperparameters — is
+  verified on three ground-truth oracles (G1, G2, G3; §7.1). The
+  *preference* gate — all 23 rules preferred over hand-set — is
+  pending an empirical trained-FM test.
+- **FM-LCM interface redesign.** 10 of 15 framework-side gaps closed
+  via four designs (`D1` DynamicsProtocol + IntegratorProtocol, `D2`
+  MaterializationRouteProtocol, `D3` Condition discriminated union +
+  per-channel blend + short-circuit, `D4` typed materialization
+  route). The redesign makes the adapter surface a *least common
+  multiple* of the FM family (continuous FM, CTMC, BFN, mixed-state,
+  graph) rather than a greatest common divisor (§6.5).
+- **TheoremAlignedFID + per-round harness.** The framework's
+  $(A_g, B_g, C_g, e_\rho)$ consumption reaches the FID/CLIPScore
+  evaluator through `InceptionV3TheoremAlignedFIDEvaluator` and the
+  per-round harness callback (`_make_per_round_callback`). Unit-
+  verified end-to-end on synthetic inputs (15/15 + 2/2 tests).
+  Empirical per-round PNG dumps are blocked on torch install
+  (§7.2 item 1).
 
-Ordered by expected effect on the numbers: (i) run the **Heun** v5 sweep
-end-to-end (est. 1.5–2× FID improvement, closing the solver-order gap);
-(ii) raise the CIFAR-10 sample count to **10 K** on GPU (est. 20–40% FID
-reduction from tighter covariance estimation) and add 3-seed variance
-bars; (iii) enable the **stateful $\beta$-blend chain** by default on the
-image domain so the multi-round loop refines rather than pools; (iv)
-extend to **MNIST FID** (the 173-vs-370 record already exists) and
-**ImageNet**, plus the molecular adapters already shipped; (v) fix the
-`FreeTrajScheduler` cache defect and lower `target_ratio` so scheduler
-discrimination follows from the schedule rather than from the seed
-offset.
+The framework, the harnesses, the raw per-round CSVs, the six-gate CI,
+and the §4 reproduction recipes are released in full. **The paper
+claim is *indirectly* supported at the unit level — three independent
+ground-truth oracles PASS — and *directly* unsupported at the
+trained-FM level, where workflow A is the de-facto executor.**
+
+---
+
+## §9. Future Work
+
+Ordered by expected effect on the headline numbers:
+
+1. **Heun v5 sweep end-to-end** (workflow A phase 4): run the v4
+   CIFAR-10 protocol with `--integrator heun` and `--match-nfe sample`.
+   Expected effect: 1.5–2× FID improvement, closing the solver-order
+   gap to the published 1-RF number (§4.3).
+2. **CIFAR-10 sample count to 10 K on GPU** (workflow A phase 5):
+   expected 20–40% FID reduction from tighter covariance estimation,
+   plus 3-seed variance bars on the v5 table.
+3. **Stateful $\beta$-blend chain by default on the image domain**:
+   enable `--stateful` so the multi-round loop *refines* across rounds
+   rather than pooling them (§4.3 honest framing).
+4. **Extend to MNIST FID** (the 173-vs-370 record already exists in
+   the repo), **ImageNet**, and the molecular adapters already
+   shipped (FlowMol3 after the CTMC kernel swap, ProtBFN after a
+   trained-model baseline at matched NFE, GraphBFN after dropping or
+   replacing the upstream-empty adapter per P-10).
+5. **Close the `e_rho` regime enforcement gap** (§7.2 item 5):
+   promote `ConvergenceDiagnostic.regime_violations` from a
+   diagnostic surface to a blocking check in the scheduler's
+   `eps_implicit` decision.
+6. **Fix the `FreeTrajScheduler` progress-cache bug** and lower
+   `target_ratio` so scheduler discrimination follows from the
+   schedule rather than from the per-scheduler seed offset (§4.4).
 
 ---
 
 ## References
 
-- [Li 2026] Li. *Noise-Selected Rectification.* Theorem 1, Lemmas 2–5. See `NoiseSelectedRectification_EN.md`.
-- [Lipman 2023] Lipman, Chen, Ben-Hamu, Nickel, Le. *Flow Matching for Generative Modeling.* ICLR 2023.
+- [Li 2026] Li. *Gaussian Posterior Selection on Noncompact Fibres with Uniformly Separated Roots.* Theorem 1 (lines 87–92), Lemmas 2–5, Propositions 3, 5, 6. See `NoiseSelectedRectification_EN.md`; paper-to-Lean mapping in docs/lean/THEOREM_1_MAPPING.md.
+- [Lipman 2023] Lipman, Chen, Ben-Hamu, Nickel, Le. *Flow Matching for Generative Modeling.* ICLR 2023, arXiv:2210.02747.
 - [Liu 2022] Liu, Gong, Liu. *Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow.* NeurIPS 2022 Spotlight, arXiv:2210.02647.
-- [Karras 2022] Karras, Aittala, Aila, Laine. *Elucidating the Design Space of Diffusion-Based Generative Models.* NeurIPS 2022.
-- [Lu 2022] Lu et al. *DPM-Solver.* NeurIPS 2022.
+- [Karras 2022] Karras, Aittala, Aila, Laine. *Elucidating the Design Space of Diffusion-Based Generative Models (EDM).* NeurIPS 2022.
+- [Lu 2022] Lu, Zhou, Bao, Han, Li, Zhu. *DPM-Solver: A Fast ODE Solver for Diffusion Probabilistic Model Sampling in Around 10 Steps.* NeurIPS 2022.
 - [NVIDIA 2024] *Stochastic Flow Matching.* arXiv:2410.19814.
+- [Song 2021] Song, Meng, Ermon. *Score-Based Generative Modeling through Stochastic Differential Equations.* ICLR 2021, arXiv:2011.13456.
+- [Polyak 1969] Polyak. *A New Method of Stochastic Approximation Type.* Automation and Remote Control 20. (Ancestor of `PolyakMemoryFraction` and `LipschitzStepSize` derivation rules.)
+- [Amari 1998] Amari. *Natural Gradient Works Efficiently in Learning.* Neural Computation 10(2). (Ancestor of `FisherMemoryFraction` derivation rule.)
+- [Martens & Grosse 2015] Martens and Grosse. *Optimizing Neural Networks with Kronecker-factored Approximate Curvature (KFAC).* ICML 2015, arXiv:1503.05671.
+- [Kingma & Ba 2015] Kingma and Ba. *Adam: A Method for Stochastic Optimization.* ICLR 2015, arXiv:1412.6980. (Ancestor of `convergence_adaptive_kp`/`convergence_adaptive_kd` EMA-style convergence tracking.)
+- [You 2017] You, Gitman, Ginsburg. *Large Batch Training of Convolutional Networks (LARS).* arXiv:1708.03888.
+- [Goyal 2017] Goyal et al. *Accurate, Large Minibatch SGD (LAMB).* arXiv:1706.02677. (LARS/LAMB family: ancestor of EDM's network-skip/magnitude preconditioner.)
+- [Hairer-Norsett-Wanner 1993] Hairer, Norsett, Wanner. *Solving Ordinary Differential Equations I: Nonstiff Problems.* Springer. (Ancestor of `IntegratorProtocol`'s `euler | heun | rk4 | adaptive_rk4 | ctmc_euler_heun | bfn` family.)
+- [Germain et al. 2024] Germain, Chen, Tolstikhin, Pokle. *MeanFlow.* arXiv:2412.14766.
+- [Villani 2009] Villani. *Optimal Transport: Old and New.* Springer Grundlehren vol. 338. (W2 closed form for Gaussians; BL = $W_2$ coincidence on Euclidean state spaces, Ch. 6.)

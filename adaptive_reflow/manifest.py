@@ -318,6 +318,24 @@ class EnvelopePort(Port[Any]):
     """
 
 
+class DynamicsPort(Port[Any]):
+    """Port for :class:`adaptive_reflow.algorithm.dynamics.DynamicsProtocol`.
+
+    Holds the canonical dynamics families (``continuous_fm``, ``ctmc``,
+    ``bfn``, ``flowmol3_composite``, ``protbfn_bfn``) behind a single
+    ``register`` / ``resolve`` seam. LCM Tier-1 design D6.
+    """
+
+
+class SolverPort(Port[Any]):
+    """Port for :class:`adaptive_reflow.algorithm.solver.IntegratorProtocol`.
+
+    Holds the canonical solver families (``euler``, ``rk4``, ``heun``,
+    ``adaptive_rk4``, ``ctmc_euler_heun``, ``bfn``) behind a single
+    ``register`` / ``resolve`` seam. LCM Tier-1 design D7.
+    """
+
+
 # ---------------------------------------------------------------------------
 # The PortManifest (carrier for every port)
 # ---------------------------------------------------------------------------
@@ -350,6 +368,8 @@ class PortManifest:
         "_mixer",
         "_evaluator",
         "_envelope",
+        "_dynamics",
+        "_solver",
     )
 
     def __init__(self) -> None:
@@ -365,6 +385,8 @@ class PortManifest:
         self._mixer: MixerPort = MixerPort(name="RestartMixerProtocol")
         self._evaluator: EvaluatorPort = EvaluatorPort(name="EvaluatorProtocol")
         self._envelope: EnvelopePort = EnvelopePort(name="EnvelopeCriterionProtocol")
+        self._dynamics: DynamicsPort = DynamicsPort(name="DynamicsProtocol")
+        self._solver: SolverPort = SolverPort(name="IntegratorProtocol")
 
     # -- per-port accessors ----------------------------------------------
 
@@ -400,6 +422,14 @@ class PortManifest:
     def envelope(self) -> EnvelopePort:
         return self._envelope
 
+    @property
+    def dynamics(self) -> DynamicsPort:
+        return self._dynamics
+
+    @property
+    def solver(self) -> SolverPort:
+        return self._solver
+
     # -- bulk introspection ---------------------------------------------
 
     def families(self) -> Mapping[str, tuple[str, ...]]:
@@ -417,6 +447,8 @@ class PortManifest:
             "RestartMixerProtocol": self._mixer.families(),
             "EvaluatorProtocol": self._evaluator.families(),
             "EnvelopeCriterionProtocol": self._envelope.families(),
+            "DynamicsProtocol": self._dynamics.families(),
+            "IntegratorProtocol": self._solver.families(),
         }
 
     def total_registered(self) -> int:
@@ -473,6 +505,8 @@ class PortManifest:
             "restartmixerprotocol": "_mixer",
             "evaluatorprotocol": "_evaluator",
             "envelopecriterionprotocol": "_envelope",
+            "dynamicsprotocol": "_dynamics",
+            "integratorprotocol": "_solver",
         }
         normalized = port_name.lower()
         slot = slot_map.get(normalized)
@@ -540,9 +574,11 @@ def register_all_default(
     # back through ``protocol_registry._ensure_protocol_registry``.
     from .algorithm.protocol_registry import (
         _build_blender_registry,
+        _build_dynamics_registry,
         _build_merge_operator_registry,
         _build_policy_driver_registry,
         _build_scheduler_registry,
+        _build_solver_registry,
     )
 
     families_to_register: dict[str, dict[str, Any]] = {
@@ -550,6 +586,8 @@ def register_all_default(
         "PolicyDriverProtocol": _build_policy_driver_registry(),
         "MergeOperatorProtocol": _build_merge_operator_registry(),
         "RestartBlenderProtocol": _build_blender_registry(),
+        "DynamicsProtocol": _build_dynamics_registry(),
+        "IntegratorProtocol": _build_solver_registry(),
     }
     for port_name, families in families_to_register.items():
         for family, impl in families.items():
@@ -677,6 +715,8 @@ def enumerate_ports(
     yield ("RestartMixerProtocol", manifest.mixer)
     yield ("EvaluatorProtocol", manifest.evaluator)
     yield ("EnvelopeCriterionProtocol", manifest.envelope)
+    yield ("DynamicsProtocol", manifest.dynamics)
+    yield ("IntegratorProtocol", manifest.solver)
 
 
 __all__ = [

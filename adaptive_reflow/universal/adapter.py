@@ -60,6 +60,7 @@ from .state import (
 
 if TYPE_CHECKING:
     from adaptive_reflow.contracts.authority import FinalRestartPolicy as FinalRestartPolicy
+    from adaptive_reflow.contracts.materialization import MaterializationRoute as MaterializationRoute
     RestartPolicy: TypeAlias = FinalRestartPolicy
 
 # Runtime placeholder so ``universal/__init__.py`` can re-export the name
@@ -142,6 +143,15 @@ class AdapterCapabilities:
     in ``supported_channels``. This replaces the molecule-specific
     ``DOMAIN_BY_CHANNEL`` table that used to live at the universal
     layer — domain resolution is now the adapter's own responsibility.
+
+    ``materializer`` is an optional class reference to a
+    :class:`MaterializationRouteProtocol` concrete implementation
+    (defaults to ``None``). When supplied, ``has_materialization_route``
+    is treated as ``True`` for the engine handshake so adapters can
+    participate in :class:`Engine.run_round` without changing the
+    legacy bool semantics (D2). Back-compat: adapters that declare
+    ``has_materialization_route=True`` but do not supply a materializer
+    keep their original behaviour with a deprecation warning.
     """
 
     has_ode_integration_surface: bool
@@ -171,6 +181,25 @@ class AdapterCapabilities:
     # Native integration config (informational; engine does not parse).
     native_config_hash: str = ""
     native_config_version: str = "0.0.0"
+    # D2 — materializer class reference (None = no projection route).
+    materializer: type | None = field(default=None)  # type[type]
+    # D10 (Design #4) — invoked typed materializer instance handle
+    # (Optional[MaterializationRoute]). When present, the engine calls
+    # ``materializer.dematerialize(native_state_bundle)`` /
+    # ``materializer.materialize(envelope_state_bundle)`` instead of
+    # relying on the prior ``native_to_envelope`` / ``envelope_to_native``
+    # carrier convention. Default ``None`` preserves the 2356-test
+    # back-compat invariant; adapters that opt in via this field keep
+    # the same ``has_materialization_route`` boolean flag set.
+    materializer_instance: "MaterializationRoute | None" = field(default=None)
+    # D5 — per-channel state-type table (Design #3 — LMAA LCM coverage).
+    # Replaces the single ``state_shape`` carrier with a typed per-channel
+    # declaration so the engine can route each channel to the correct
+    # :class:`BlendStrategy`. Default empty mapping preserves the 2356-test
+    # back-compat invariant: adapters that don't declare per-channel types
+    # fall back to the single-tuple ``state_shape`` carrier.
+    channel_types: "Mapping[ChannelName, str]" = field(default_factory=dict)
+    channel_shapes: "Mapping[ChannelName, tuple[tuple[int, ...], tuple[int, ...]]]" = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -325,6 +354,29 @@ class FlowMatchingODEAdapter(Protocol):
     # not implement it fall through to a no-op (the runner still emits
     # the ``FORWARD_NOISE_INJECTED`` audit code so the trail is
     # consistent across wired and unwired paths).
+
+    # D10 (Design #4) — OPT-IN typed materialization surface. Adapters
+    # that opt in implement these methods to expose the new
+    # envelope ↔ native projection directly on the Protocol. Adapters
+    # that don't implement them continue to work via
+    # ``AdapterCapabilities.materializer_instance`` (the engine reads
+    # the materializer handle from the capability surface). Both paths
+    # are 100% equivalent; the new methods are additive so the
+    # ``@runtime_checkable`` Protocol conformance test is preserved.
+    #
+    # ``materialize(envelope_state)`` — inverse projection: envelope →
+    # native. Reduces an envelope-state carrier (e.g.
+    # :class:`adaptive_reflow.contracts.materialization.EnvelopeStateBundle`)
+    # to a :class:`NativeStateBundle`. Default implementation
+    # delegates to ``self.capabilities().materializer_instance`` when
+    # present, otherwise returns the input unchanged (no-op).
+    #
+    # ``dematerialize(native_state)`` — forward projection: native →
+    # envelope. Reduces a :class:`NativeStateBundle` to an
+    # :class:`EnvelopeStateBundle`. Default implementation delegates
+    # to ``self.capabilities().materializer_instance`` when present,
+    # otherwise returns a no-op envelope (observables derived from
+    # the bundle's channels).
 
 
 # ---------------------------------------------------------------------------

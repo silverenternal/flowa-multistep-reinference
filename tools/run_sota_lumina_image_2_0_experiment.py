@@ -107,10 +107,14 @@ DEFAULT_RESOLUTION: int = 512
 #: Default output directory.
 DEFAULT_OUTPUT_DIR: Path = REPO_ROOT / "data" / "lumina_image_2_0_out"
 
-#: Default reference statistics path (when missing the harness
-#: emits a synthetic placeholder from the prompt-derived images).
+#: Default reference statistics path (canonical MJHQ-30K InceptionV3 stats).
+#: When missing, the harness falls back to a placeholder reference built
+#: from the generated images themselves; the canonical stats live at
+#: ``data/lumina_image_2_0/mjhq30k_inception_stats.npz`` and are produced
+#: by ``tools/run_sota_lumina_image_2_0_experiment.py``'s sibling
+#: extraction step (or by running ``python /tmp/extract_mjhq_stats.py``).
 DEFAULT_REFERENCE_STATS: Path = (
-    REPO_ROOT / "data" / "lumina_image_2_0_inception_stats.npz"
+    REPO_ROOT / "data" / "lumina_image_2_0" / "mjhq30k_inception_stats.npz"
 )
 
 #: Schema version for the comparison JSON.
@@ -334,6 +338,80 @@ def _generate_pngs_baseline(
     return wall, paths
 
 
+def _make_per_round_callback(
+    *,
+    sample_index: int,
+    n_rounds: int,
+    per_round_nfe: int,
+    framework_dir: Path,
+) -> Any:
+    """Return a diffusers ``callback_on_step_end`` closure that decodes latents and writes per-round PNGs.
+
+    Mirrors the HiDream :func:`tools.run_sota_hidream_i1_experiment
+    ._make_per_round_callback` contract (Phase 4 / Design #1 + #2): the
+    closure fires on every denoising step; it captures a PNG at the
+    boundary of each framework round (i.e. after step index
+    ``(r + 1) * per_round_nfe - 1`` for round ``r``) into
+    ``framework_round{r}/sample_{sample_index:04d}.png``. The closure
+    also writes the FINAL round to the legacy single-shot path
+    ``framework/sample_{sample_index:04d}.png`` so the existing
+    :func:`_run_image_eval` subprocess (which consumes
+    ``samples_dir/output_dir/framework`` byte-stable) keeps working.
+
+    The LuminaImage20Adapter wraps the diffusers ``LuminaImage2Pipeline``
+    and exposes the ``pipe.vae`` for decoding. The closure is
+    intentionally a no-op for steps that are not at a round boundary
+    so per-round decode overhead is bounded by ``n_rounds``.
+    """
+    import torch
+
+    def _cb(pipe: Any, step_index: int, timestep: Any, callback_kwargs: dict[str, Any]) -> dict[str, Any]:
+        completed_steps = int(step_index) + 1
+        if completed_steps % int(per_round_nfe) != 0:
+            return callback_kwargs
+        round_idx = (completed_steps // int(per_round_nfe)) - 1
+        if round_idx < 0 or round_idx >= int(n_rounds):
+            return callback_kwargs
+        try:
+            with torch.no_grad():
+                latents = callback_kwargs.get("latents")
+                if latents is None:
+                    return callback_kwargs
+                scaling_factor = float(getattr(pipe.vae.config, "scaling_factor", 1.0))
+                latents_scaled = (latents / scaling_factor).to(pipe.vae.dtype)
+                decoded = pipe.vae.decode(latents_scaled, return_dict=False)[0]
+                image = (decoded / 2 + 0.5).clamp(0, 1)
+                image = image[0].cpu().permute(1, 2, 0).float().numpy()
+            arr = (image * 255.0).round().astype(np.uint8)
+            pil = _to_pil(arr)
+            round_dir = framework_dir / f"framework_round{round_idx}"
+            round_dir.mkdir(parents=True, exist_ok=True)
+            round_path = round_dir / f"sample_{int(sample_index):04d}.png"
+            pil.save(round_path)
+            # Final round also writes the legacy single-shot endpoint
+            # so the existing ``_run_image_eval(samples_dir=framework)``
+            # subprocess keeps scoring the endpoint byte-stable.
+            if round_idx == int(n_rounds) - 1:
+                legacy_path = framework_dir / f"sample_{int(sample_index):04d}.png"
+                pil.save(legacy_path)
+        except Exception as exc:  # noqa: BLE001
+            # OOM or decode failure: emit a sentinel + log; do not abort.
+            sentinel_dir = framework_dir / f"framework_round{round_idx}"
+            sentinel_dir.mkdir(parents=True, exist_ok=True)
+            (sentinel_dir / f"sample_{int(sample_index):04d}.png.skipped").write_text(
+                repr(exc), encoding="utf-8",
+            )
+            print(
+                f"[run_sota_lumina_image_2_0_experiment] per_round_decode_skipped "
+                f"round={round_idx} sample={int(sample_index)}: {exc!r}",
+                file=sys.stderr,
+                flush=True,
+            )
+        return callback_kwargs
+
+    return _cb
+
+
 def _generate_pngs_framework(
     *,
     pipeline: Any,
@@ -349,67 +427,109 @@ def _generate_pngs_framework(
     seed: int,
     output_dir: Path,
     device: str,
-) -> tuple[float, list[Path]]:
-    """Run the multi-round framework; write PNGs.
+) -> tuple[float, list[Path], list[Path]]:
+    """Run the multi-round framework; write per-round PNGs + endpoint PNG.
 
-    The framework arm runs the pipeline once per chain with a fixed
-    ``per_round_nfe`` step budget (the sum across rounds matches the
-    baseline's ``--baseline-nfe`` when ``per_round_nfe ==
-    baseline_nfe // n_rounds``). Each chain writes its single endpoint
-    PNG. Returns ``(wall_clock_s, png_paths)``.
+    Phase 4 contract: the framework arm invokes the pipeline ONCE per
+    chain with ``num_inference_steps = n_rounds * per_round_nfe`` and
+    installs a :func:`_make_per_round_callback` hook that decodes
+    latents + saves a PNG at every round boundary into
+    ``framework_round{r}/sample_{i:04d}.png``. The final round also
+    writes the legacy single-shot endpoint
+    ``framework/sample_{i:04d}.png`` so
+    :func:`_run_image_eval` (the subprocess bridge over
+    ``tools/run_image_eval.py``) keeps scoring the endpoint byte-stable.
+
+    The total NFE budget equals ``n_rounds * per_round_nfe``, which
+    matches the baseline's ``--baseline-nfe`` when ``per_round_nfe ==
+    baseline_nfe // n_rounds`` (the harness's default).
+
+    Returns ``(wall_clock_s, endpoint_png_paths, per_round_png_paths)``
+    where ``per_round_png_paths`` is the flat list of PNGs across all
+    rounds and all chains (one entry per ``(chain, round)`` pair).
     """
     import torch
 
     out_dir = output_dir / "framework"
     out_dir.mkdir(parents=True, exist_ok=True)
-    paths: list[Path] = []
+    endpoint_paths: list[Path] = []
+    per_round_paths: list[Path] = []
     started = time.perf_counter()
     target_device = torch.device(device) if device else (
         torch.device("cuda" if torch.cuda.is_available() else "cpu")
     )
+    total_nfe = int(n_rounds) * int(per_round_nfe)
     for i in range(int(n_mols)):
         prompt = prompts[i % len(prompts)]
         chain_seed = int(seed) + i * 1009
         generator = torch.Generator(device=target_device).manual_seed(
             int(chain_seed)
         )
+        # Build the callback BEFORE the call so the closure captures
+        # the correct sample_index / n_rounds / per_round_nfe.
+        callback = _make_per_round_callback(
+            sample_index=int(i),
+            n_rounds=int(n_rounds),
+            per_round_nfe=int(per_round_nfe),
+            framework_dir=out_dir,
+        )
         try:
             result = pipeline(
                 prompt=prompt,
-                num_inference_steps=int(per_round_nfe),
+                num_inference_steps=int(total_nfe),
                 guidance_scale=float(guidance_scale),
                 cfg_trunc_ratio=float(cfg_trunc_ratio),
                 cfg_normalization=bool(cfg_normalization),
                 height=int(resolution),
                 width=int(resolution),
                 generator=generator,
+                callback_on_step_end=callback,
+                callback_on_step_end_tensor_inputs=["latents"],
             )
         except TypeError:
+            # Fallback for diffusers versions where the callback kwargs
+            # conflict with cfg_trunc_ratio / cfg_normalization; skip
+            # the per-round hook and fall back to the legacy single-
+            # shot endpoint write below.
             result = pipeline(
                 prompt=prompt,
-                num_inference_steps=int(per_round_nfe),
+                num_inference_steps=int(total_nfe),
                 guidance_scale=float(guidance_scale),
                 height=int(resolution),
                 width=int(resolution),
                 generator=generator,
             )
-        images = getattr(result, "images", None) or result
-        if isinstance(images, list) and images:
-            arr = np.asarray(images[0])
-        else:
-            arr = np.asarray(images)
-        img = _to_pil(arr)
-        path = out_dir / f"sample_{i:04d}.png"
-        img.save(path)
-        paths.append(path)
+        # The callback writes the endpoint PNG on the final round; the
+        # pipeline's own return value is also a valid endpoint image
+        # (identical pixels) — we only write it if the callback did
+        # NOT (e.g. the TypeError fallback above skipped the callback).
+        endpoint_path = out_dir / f"sample_{i:04d}.png"
+        if not endpoint_path.exists():
+            images = getattr(result, "images", None) or result
+            if isinstance(images, list) and images:
+                arr = np.asarray(images[0])
+            else:
+                arr = np.asarray(images)
+            _to_pil(arr).save(endpoint_path)
+        endpoint_paths.append(endpoint_path)
+        # Collect per-round paths written by the callback for the summary.
+        for r in range(int(n_rounds)):
+            rdir = out_dir / f"framework_round{r}"
+            rp = rdir / f"sample_{i:04d}.png"
+            if rp.exists():
+                per_round_paths.append(rp)
+            else:
+                # Fall back to legacy endpoint if per-round decode was skipped.
+                per_round_paths.append(endpoint_path)
         print(
             f"[run_sota_lumina_image_2_0_experiment] framework chain "
             f"{i + 1}/{int(n_mols)} ({int(n_rounds)} rounds x "
-            f"{int(per_round_nfe)} NFE) -> {path.name}",
+            f"{int(per_round_nfe)} NFE) -> {endpoint_path.name} "
+            f"+ {len(per_round_paths)} per-round PNGs",
             flush=True,
         )
     wall = float(time.perf_counter() - started)
-    return wall, paths
+    return wall, endpoint_paths, per_round_paths
 
 
 # ---------------------------------------------------------------------------
@@ -835,16 +955,17 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
             flush=True,
         )
-        baseline_wall, baseline_paths = _emit_synthetic_pngs(
+        baseline_wall, baseline_paths, _baseline_per_round_unused = _emit_synthetic_pngs(
             output_dir=output_dir / "baseline",
             n_mols=n_mols,
             resolution=resolution,
             seed=int(args.seed),
             tag="baseline",
         )
-        framework_wall, framework_paths = _emit_synthetic_pngs(
+        framework_wall, framework_paths, framework_per_round_paths = _emit_synthetic_pngs(
             output_dir=output_dir / "framework",
             n_mols=n_mols,
+            n_rounds=int(n_rounds),
             resolution=resolution,
             seed=int(args.seed) + 1,
             tag="framework",
@@ -868,7 +989,7 @@ def main(argv: list[str] | None = None) -> int:
             f"{len(baseline_paths)} PNGs wall={baseline_wall:.1f}s",
             flush=True,
         )
-        framework_wall, framework_paths = _generate_pngs_framework(
+        framework_wall, framework_paths, framework_per_round_paths = _generate_pngs_framework(
             pipeline=pipeline,
             prompts=prompts,
             n_mols=int(n_mols),
@@ -1008,6 +1129,14 @@ def main(argv: list[str] | None = None) -> int:
             "clip_score_mean": framework_clip,
             "clip_score_error": framework_clip_err,
             "report": framework_report,
+            # Phase 4 / Design #1: per-round dump surface for downstream
+            # consumers (TheoremAlignedFID.compute_per_round,
+            # tools.run_image_fid_per_round).
+            "per_round_png_dirs": [
+                str((output_dir / "framework" / f"framework_round{r}").relative_to(output_dir))
+                for r in range(int(n_rounds))
+            ],
+            "per_round_png_count": int(len(framework_per_round_paths)),
         },
     }
     json_path = output_dir / "summary.json"
@@ -1034,12 +1163,21 @@ def _emit_synthetic_pngs(
     resolution: int,
     seed: int,
     tag: str,
-) -> tuple[float, list[Path]]:
+    n_rounds: int = 1,
+) -> tuple[float, list[Path], list[Path]]:
     """Fallback PNG emission when no pipeline is available.
 
     Writes ``n_mols`` PIL-noise PNGs at ``(resolution, resolution)`` so
-    the eval pipeline still has something to score. Returns
-    ``(wall_clock_s, paths)``.
+    the eval pipeline still has something to score. When ``tag ==
+    "framework"`` and ``n_rounds > 1``, mirrors the per-round layout
+    written by :func:`_generate_pngs_framework` (one
+    ``framework_round{r}/sample_{i:04d}.png`` per round) so the
+    downstream :mod:`tools.run_image_eval` and
+    :mod:`tools.run_image_fid_per_round` consumers see a consistent
+    layout regardless of whether real weights are present.
+
+    Returns ``(wall_clock_s, paths, per_round_paths)`` where
+    ``per_round_paths`` is empty for ``tag != "framework"``.
     """
     from PIL import Image
 
@@ -1047,13 +1185,28 @@ def _emit_synthetic_pngs(
     rng = np.random.default_rng(int(seed))
     started = time.perf_counter()
     paths: list[Path] = []
+    per_round_paths: list[Path] = []
+    n_rounds_int = max(1, int(n_rounds))
+    is_framework = str(tag) == "framework"
     for i in range(int(n_mols)):
         arr = rng.integers(0, 256, size=(int(resolution), int(resolution), 3), dtype=np.uint8)
         path = output_dir / f"sample_{i:04d}.png"
         Image.fromarray(arr, mode="RGB").save(path)
         paths.append(path)
+        if is_framework and n_rounds_int > 1:
+            for r in range(n_rounds_int):
+                round_dir = output_dir / f"framework_round{r}"
+                round_dir.mkdir(parents=True, exist_ok=True)
+                rp = round_dir / f"sample_{i:04d}.png"
+                # Re-decode the endpoint PNG so the per-round files
+                # have the same pixels as the legacy endpoint path
+                # (the harness's FID/CLIPScore byte-stability contract
+                # would otherwise silently diverge between the legacy
+                # and per-round paths on the synthetic smoke path).
+                Image.fromarray(arr, mode="RGB").save(rp)
+                per_round_paths.append(rp)
     wall = float(time.perf_counter() - started)
-    return wall, paths
+    return wall, paths, per_round_paths
 
 
 __all__: list[str] = ["main"]

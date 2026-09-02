@@ -650,5 +650,39 @@ def test_hierarchical_variant_config_hash() -> None:
     assert caps.native_config_hash == GRAPHBFN_CONFIG_HASH_HIER
 
 
+# ---------------------------------------------------------------------------
+# 13. Degenerate blend weights preserve the -inf self-loop sentinel.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("memory_fraction", [0.0, 1.0, 0.5])
+def test_blend_preserves_neg_inf_self_loop_mask(memory_fraction: float) -> None:
+    """``_blend_graph_param`` must never turn a ``-inf`` mask into NaN.
+
+    The adjacency channel marks forbidden self-loops with ``-inf`` on the
+    diagonal. The plain ``m * prior + (1 - m) * fresh`` form evaluates
+    ``0.0 * -inf`` -> NaN whenever ``m`` is exactly 0 or 1, silently
+    replacing a masked self-loop with a NaN logit that then propagates
+    into the decoded graph. Regression guard for that.
+    """
+    from adaptive_reflow.adapters.graphbfn import _blend_graph_param
+
+    n = 4
+    prior = np.zeros((n, n), dtype=np.float64)
+    np.fill_diagonal(prior, -np.inf)
+    fresh = np.zeros((n, n), dtype=np.float64)
+    np.fill_diagonal(fresh, -np.inf)
+
+    blended = _blend_graph_param(prior, fresh, memory_fraction)
+
+    assert blended.shape == (n, n)
+    # No NaN anywhere.
+    assert not np.any(np.isnan(blended))
+    # The diagonal stays a -inf mask; off-diagonal stays finite.
+    assert np.all(np.isneginf(np.diag(blended)))
+    off_diag = blended[~np.eye(n, dtype=bool)]
+    assert np.all(np.isfinite(off_diag))
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-x", "--no-header", "-q"]))

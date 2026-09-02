@@ -45,6 +45,17 @@ from collections.abc import Mapping
 
 import pytest
 
+# Preflight: this cross-evaluator benchmark imports the RDKit-backed
+# oracle (:mod:`adaptive_reflow.eval.rdkit_oracle`) which
+# unconditionally imports ``rdkit`` at module load. On sandboxes
+# where rdkit is not vendored (the default CPU-only rig), pytest
+# collection aborts. The importorskip below short-circuits
+# collection cleanly.
+pytest.importorskip(
+    "rdkit",
+    reason="rdkit not in venv (install via `uv pip install rdkit`)",
+)
+
 from adaptive_reflow.contracts import (
     ArtifactHash,
     BundleId,

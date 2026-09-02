@@ -21,6 +21,7 @@ on:
     paths:
       - mkdocs.yml
       - docs/**
+      - docs/r17-survey/**
       - README.md
       - QUICKSTART.md
       - TUTORIAL.md

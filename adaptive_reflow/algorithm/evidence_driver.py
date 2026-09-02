@@ -53,7 +53,7 @@ import math
 import warnings
 from collections.abc import Mapping
 from dataclasses import replace
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -61,6 +61,15 @@ from numpy.typing import NDArray
 from adaptive_reflow.algorithm.scheduler import (
     SchedulerProtocol,
     ScheduleSample,
+)
+from adaptive_reflow.algorithm._derivation import (
+    BLConvergenceEpsilonSchedule,
+    DerivationContext,
+    DerivationRule,
+    MeanFlowFixedStrengthRule,
+    MinGumbelTempRule,
+    default_eps_implicit,
+    default_min_gumbel_temp,
 )
 from adaptive_reflow.contracts import CosineScheduleSample
 
@@ -71,6 +80,7 @@ __all__ = [
     "EvidenceDrivenScheduler",
     "EvidenceModeReport",
     "check_evidence_mode",
+    "derive_default_eps_threshold",
     "warn_if_heuristic_evidence_mode",
 ]
 
@@ -405,3 +415,160 @@ def warn_if_heuristic_evidence_mode(
     if report.asymptotic_risk:
         warnings.warn(report.message, UserWarning, stacklevel=int(stacklevel))
     return report
+
+
+# ---------------------------------------------------------------------------
+# Parameter-free default-eps-threshold entry point (DERIV-001 proof #3)
+# ---------------------------------------------------------------------------
+#
+# :data:`EVIDENCE_HEURISTIC_EPS_THRESHOLD` (default ``1e-3``) is the
+# framework's documented asymptotic threshold below which the
+# heuristic evidence balance is unsound. DERIV-001 establishes the
+# principle that every framework hyperparameter SHOULD trace to a
+# paper quantity (A_g / B_g / C_g / e_rho) or a mathematical theory
+# (Lipschitz, variance-preserving, OT, BL convergence, Fisher / Polyak
+# / information geometry); hand-set engineering constants stay as
+# named provenance.
+#
+# :func:`derive_default_eps_threshold` is the minimal wiring for
+# that threshold: when the caller supplies a
+# :class:`DerivationContext` carrying ``e_rho`` (paper-quantity
+# exterior gap from Lemma 5) and ``delta_t`` (per-round step), the
+# function returns the :class:`BLConvergenceEpsilonSchedule`
+# closed-form value ``eps_t = sqrt(e_rho * delta_t)`` (Li 2024
+# Theorem 1 / Lemma 5). When the context is missing ``e_rho``, the
+# function falls back to ``1e-3`` verbatim so existing callers
+# keep working unchanged.
+#
+# The function is additive: no ``check_evidence_mode`` /
+# :data:`EVIDENCE_HEURISTIC_EPS_THRESHOLD` API changes; the helper
+# is a new entry point that engine / runner code can opt-into
+# without breaking the existing 2356+15 test suite.
+
+
+def derive_default_eps_threshold(
+    *,
+    e_rho: Optional[float] = None,
+    delta_t: Optional[float] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return the BL-convergence-derived ``eps_threshold``.
+
+    Parameters
+    ----------
+    e_rho:
+        The paper-quantity exterior gap (Lemma 5 / Lemma 4). Forwarded
+        into ``paper_quantities['e_rho']`` if the context does not
+        already carry it.
+    delta_t:
+        The per-round step size. Forwarded into
+        ``scheduler_state['delta_t']`` if the context does not already
+        carry it. Used by the BL-convergence closed form
+        ``eps_t = sqrt(e_rho * delta_t)``.
+    context:
+        The :class:`DerivationContext` carrying ``e_rho`` / ``delta_t``
+        (and other paper / scheduler inputs). When supplied with
+        non-``None`` ``e_rho``, the
+        :class:`BLConvergenceEpsilonSchedule` rule derives the
+        threshold from the closed-form ``sqrt(e_rho * delta_t)``
+        (Li 2024 Theorem 1 / Lemma 5).
+    rule:
+        The :class:`DerivationRule` to apply. Defaults to
+        :class:`BLConvergenceEpsilonSchedule` (the DERIV-001 proof
+        for the eps_threshold parameter).
+
+    Returns
+    -------
+    float
+        A positive ``float``. Falls back to
+        :data:`EVIDENCE_HEURISTIC_EPS_THRESHOLD` (``1e-3``, the
+        documented asymptotic threshold below which the heuristic
+        evidence balance is unsound) when the chosen rule cannot
+        derive from the supplied context, preserving the existing
+        wiring.
+    """
+    chosen: DerivationRule = (
+        rule if rule is not None else BLConvergenceEpsilonSchedule()
+    )
+    # When the caller did not pass a context, build one from the
+    # scalar kwargs so the dispatcher can apply the rule uniformly.
+    # This mirrors the ``derive_default_memory_fraction`` pattern in
+    # ``blender_extra.py``: the entry point is a thin wrapper that
+    # promotes caller-side scalars into a DerivationContext when one
+    # is missing.
+    if context is None:
+        from adaptive_reflow.algorithm._derivation import (
+            make_derivation_context,
+        )
+
+        context = make_derivation_context(
+            e_rho=e_rho,
+            delta_t=delta_t,
+        )
+    return float(
+        default_eps_implicit(
+            context, eps_implicit=None, rule=chosen
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
+# Parameter-free default-min-gumbel-temp entry point (DERIV-001 P-19 #11)
+# ---------------------------------------------------------------------------
+
+
+def derive_default_min_gumbel_temp(
+    *,
+    e_rho: Optional[float] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``DEFAULT_MIN_GUMBEL_TEMP`` from a derivation rule.
+
+    The closed form is ``tau_floor := e_rho / 4`` (paper-quantity
+    exterior gap, Lemma 5). Falls back to ``1e-3`` when the
+    context is missing ``e_rho``, preserving the existing wiring.
+
+    Parameters
+    ----------
+    e_rho:
+        The paper-quantity exterior gap. Forwarded into
+        ``paper_quantities['e_rho']`` if the context does not
+        already carry it.
+    context:
+        The :class:`DerivationContext`.
+    rule:
+        The :class:`DerivationRule` to apply. Defaults to
+        :class:`MinGumbelTempRule`.
+    """
+    return default_min_gumbel_temp(context, e_rho=e_rho, rule=rule)
+
+
+# ---------------------------------------------------------------------------
+# Parameter-free default-strength entry point (DERIV-001 P-19 #2)
+# ---------------------------------------------------------------------------
+
+
+def derive_default_strength(
+    *,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``EvidenceDrivenScheduler.strength`` (theorem-fixed at 1.0).
+
+    Per Theorem 1 (Li 2024), the canonical evidence-driven
+    strength is fixed at ``1.0`` — the full multiplicative drive
+    ``n_cap * evidence_ratio``. Returns ``1.0`` regardless of
+    context.
+    """
+    chosen: DerivationRule = (
+        rule if rule is not None else MeanFlowFixedStrengthRule()
+    )
+    return float(chosen.derive(context if context is not None else _empty_ctx()))
+
+
+def _empty_ctx() -> DerivationContext:
+    """Return an empty DerivationContext for the strength fallback path."""
+    from adaptive_reflow.algorithm._derivation import _empty_context as _ec
+    return _ec()

@@ -28,12 +28,16 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 from numpy.typing import NDArray
 
 from adaptive_reflow.algorithm.scheduler import ScheduleSample
+from adaptive_reflow.algorithm._derivation import (
+    DerivationContext,
+    default_handoff_window,
+)
 from adaptive_reflow.contracts import CosineScheduleSample
 from adaptive_reflow.contracts.hashes import hash_artifact as _hash_artifact_global
 
@@ -255,7 +259,81 @@ def _dispatch_to_sub(config: Any) -> Any:
     return _dispatch_scheduler_config(config)
 
 
+# ---------------------------------------------------------------------------
+# Parameter-free default-handoff-window entry point (DERIV-001 proof #4)
+# ---------------------------------------------------------------------------
+#
+# The :class:`HandoffSequentialScheduler`'s ``handoff_window`` (the
+# number of rounds over which a slot boundary is linearly blended)
+# is currently hand-set to ``0`` (the canonical sharp-boundary
+# default). DERIV-001 establishes the principle that every framework
+# hyperparameter SHOULD trace to a paper quantity (A_g / B_g / C_g /
+# e_rho) or a mathematical theory (Lipschitz, variance-preserving,
+# OT, BL convergence, Fisher / Polyak / information geometry); hand-
+# set engineering constants stay as named provenance.
+#
+# :func:`derive_default_handoff_window` is the minimal wiring for
+# that window: when the caller supplies a
+# :class:`DerivationContext` carrying the local Lipschitz estimate
+# ``L_e``, the function returns
+# ``int(round(1.0 / max(L_e, 1e-9)))`` so a stiff region (large
+# ``L_e``) shrinks the window (sharp boundary) and a smooth region
+# (small ``L_e``) widens it (more blending rounds). When the
+# context is missing ``L_e``, the function falls back to the
+# caller-supplied ``handoff_window`` (or ``0`` when both are
+# missing) verbatim so existing callers keep working unchanged.
+#
+# The function is additive: no :class:`HandoffSequentialScheduler`
+# API changes; the helper is a new entry point that engine / runner
+# code can opt-into without breaking the existing 2356+15 test
+# suite.
+
+
+def derive_default_handoff_window(
+    *,
+    handoff_window: Optional[int] = None,
+    context: Optional[DerivationContext] = None,
+) -> int:
+    """Return the per-round handoff window from a derivation rule.
+
+    Parameters
+    ----------
+    handoff_window:
+        The caller-supplied handoff window. Used by the dispatcher
+        when ``context`` is missing or does not carry ``L_e``.
+    context:
+        The :class:`DerivationContext` carrying the local Lipschitz
+        estimate ``L_e`` (and other curvature inputs). When supplied
+        with non-``None`` ``L_e``, the dispatcher derives the window
+        from ``round(1.0 / max(L_e, 1e-9))`` so a stiff region shrinks
+        the window and a smooth region widens it.
+
+    Returns
+    -------
+    int
+        A non-negative integer. Falls back to the caller-supplied
+        ``handoff_window`` (or ``0`` when both ``L_e`` and the
+        supplied value are missing — the canonical
+        :class:`HandoffSequentialScheduler` default) when the
+        derivation cannot fire, preserving the existing wiring.
+
+    Notes
+    -----
+    This function is the **DERIV-001 wiring** for the
+    ``handoff_window`` parameter — the linear blend width across a
+    sequential-scheduler slot boundary. Future work may wire the
+    same pattern into the other framework hyperparameters cataloged
+    in ``docs/algorithm-deep-uplift-plan.md``, each following the
+    abstract :class:`DerivationRule` protocol with its own concrete
+    subclass.
+    """
+    return default_handoff_window(
+        context, handoff_window=handoff_window
+    )
+
+
 __all__ = [
     "HANDOFF_FAMILY",
     "HandoffSequentialScheduler",
+    "derive_default_handoff_window",
 ]

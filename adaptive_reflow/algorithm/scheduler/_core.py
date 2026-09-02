@@ -40,7 +40,7 @@ import math
 import warnings
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Optional, Protocol, runtime_checkable
 
 import numpy as np
 from numpy.typing import NDArray
@@ -52,6 +52,12 @@ from adaptive_reflow.contracts import (
     FactorValue,
     RestartTriggerCode,
     hash_artifact,
+)
+from adaptive_reflow.algorithm._derivation import (
+    DerivationContext,
+    DerivationRule,
+    OTEpsilonSchedule,
+    default_eps_implicit,
 )
 from adaptive_reflow.schedule.cosine import (
     memory_fraction_from_schedule,
@@ -3244,12 +3250,283 @@ def build_scheduler_from_config(config: dict[str, Any]) -> SchedulerProtocol:
 # import CosineScheduleConfig`` via this module's surface.
 
 
+# ---------------------------------------------------------------------------
+# Parameter-free default-eps-implicit entry point (DERIV-001 proof #2)
+# ---------------------------------------------------------------------------
+#
+# The :class:`CodimensionSheetScheduler`'s ``eps_implicit`` (the
+# implicit noise scale in evidence units, paper's epsilon in Theorem
+# 1's ``eps -> 0`` limit) is currently hand-set to ``0.05`` (the
+# canonical ``CodimensionSheetScheduler`` default). DERIV-001
+# establishes the principle that every framework hyperparameter
+# SHOULD trace to a paper quantity (A_g / B_g / C_g / e_rho) or a
+# mathematical theory (Lipschitz, variance-preserving, OT, BL
+# convergence, Fisher / Polyak / information geometry); hand-set
+# engineering constants stay as named provenance.
+#
+# :func:`derive_default_eps_implicit` is the minimal wiring for
+# that epsilon: when the caller supplies a
+# :class:`DerivationContext` carrying ``C_g`` (paper-quantity
+# codimension coefficient from Lemma 3) and ``eps_implicit`` (the
+# round-0 baseline), the function returns the
+# :class:`OTEpsilonSchedule` closed-form value
+# ``eps_t = eps_implicit * (1 + C_g * t)`` (Lipman et al. 2023,
+# arXiv:2210.02747). When the context is missing the inputs, the
+# function falls back to
+# :data:`adaptive_reflow.algorithm._derivation.DEFAULT_EPSILON_SCHEDULE_FALLBACK`
+# (``0.05``) verbatim so existing callers keep working unchanged.
+#
+# The function is additive: no :class:`CodimensionSheetScheduler` API
+# changes; the helper is a new entry point that engine / runner code
+# can opt-into without breaking the existing 2356+15 test suite.
+
+
+def derive_default_eps_implicit(
+    *,
+    eps_implicit: Optional[float] = None,
+    t: Optional[float] = None,
+    c_g: Optional[float] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return the per-round ``eps_implicit`` from a derivation rule.
+
+    Parameters
+    ----------
+    eps_implicit:
+        The round-0 baseline ``eps_implicit``. Forwarded into
+        ``scheduler_state['eps_implicit']`` if the context does not
+        already carry it.
+    t:
+        The round index in ``[0, cycle_length - 1]``. Forwarded into
+        ``scheduler_state['t']`` if the context does not already
+        carry it. Used by the closed form ``eps_t = eps_0 * (1 + C_g * t)``.
+    c_g:
+        The paper-quantity codimension coefficient (Lemma 3).
+        Forwarded into ``paper_quantities['C_g']`` if the context
+        does not already carry it.
+    context:
+        The :class:`DerivationContext` carrying ``C_g`` /
+        ``eps_implicit`` (and other paper / scheduler inputs). When
+        supplied with non-``None`` ``C_g`` AND ``eps_implicit``, the
+        :class:`OTEpsilonSchedule` rule derives the epsilon from the
+        closed-form ``eps_implicit * (1 + C_g * t)`` (Lipman et al.
+        2023, arXiv:2210.02747).
+    rule:
+        The :class:`DerivationRule` to apply. Defaults to
+        :class:`OTEpsilonSchedule` (the DERIV-001 proof for the
+        ``eps_implicit`` parameter); pass
+        :class:`BLConvergenceEpsilonSchedule` for the BL-convergence
+        form ``sqrt(e_rho * delta_t)``.
+
+    Returns
+    -------
+    float
+        A non-negative ``float``. Falls back to
+        :data:`adaptive_reflow.algorithm._derivation.DEFAULT_EPSILON_SCHEDULE_FALLBACK`
+        (``0.05``, matching the
+        :class:`CodimensionSheetScheduler` default) when the chosen
+        rule cannot derive from the supplied context, preserving
+        the existing wiring.
+
+    Notes
+    -----
+    This function is the **DERIV-001 wiring** for the
+    ``eps_implicit`` parameter — the codimension-driven scheduler's
+    implicit noise scale. Future work may wire the same pattern into
+    the other framework hyperparameters cataloged in
+    ``docs/algorithm-deep-uplift-plan.md``, each following the
+    abstract :class:`DerivationRule` protocol with its own concrete
+    subclass.
+    """
+    chosen: DerivationRule = (
+        rule if rule is not None else OTEpsilonSchedule()
+    )
+    # Build a context from the scalar kwargs when the caller did not
+    # supply one. This mirrors the ``derive_default_memory_fraction``
+    # pattern in ``blender_extra.py``: the entry point is a thin
+    # wrapper that promotes caller-side scalars into a
+    # DerivationContext when one is missing.
+    if context is None:
+        from adaptive_reflow.algorithm._derivation import (
+            make_derivation_context,
+        )
+
+        context = make_derivation_context(
+            eps_implicit=eps_implicit,
+            t=t,
+            c_g=c_g,
+        )
+    return float(
+        default_eps_implicit(
+            context, eps_implicit=eps_implicit, rule=chosen
+        )
+    )
+
+
+# ---------------------------------------------------------------------------
+# Parameter-free scheduler hyperparameter entry points (DERIV-001 P-19)
+# ---------------------------------------------------------------------------
+
+
+def derive_default_exponential_alpha(
+    *,
+    n_min: Optional[float] = None,
+    n_max: Optional[float] = None,
+    cycle_length: Optional[int] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``ExponentialScheduler.alpha`` from a derivation rule.
+
+    Falls back to ``0.1`` on missing context. The closed form is
+    ``alpha := ln(n_min / n_max) / (cycle_length - 1)``
+    (variance-preserving exponential decay).
+    """
+    from adaptive_reflow.algorithm._derivation import (
+        default_exponential_alpha as _d,
+    )
+    return _d(
+        context,
+        n_min=n_min,
+        n_max=n_max,
+        cycle_length=cycle_length,
+        rule=rule,
+    )
+
+
+def derive_default_polynomial_power(
+    *,
+    cycle_length: Optional[int] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``PolynomialScheduler.power`` from a derivation rule.
+
+    Falls back to ``2.0`` on missing context. The closed form is
+    the analytic variance-preserving backstop ``2 * L / (L + 1)``.
+    """
+    from adaptive_reflow.algorithm._derivation import (
+        default_polynomial_power as _d,
+    )
+    return _d(context, cycle_length=cycle_length, rule=rule)
+
+
+def derive_default_sigmoid_midpoint(
+    *,
+    n_min: Optional[float] = None,
+    n_max: Optional[float] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``SigmoidScheduler.midpoint`` from a derivation rule.
+
+    Falls back to ``0.5`` on missing context. The closed form is
+    ``(n_min + n_max) / 2`` (cycle midpoint).
+    """
+    from adaptive_reflow.algorithm._derivation import (
+        default_sigmoid_midpoint as _d,
+    )
+    return _d(context, n_min=n_min, n_max=n_max, rule=rule)
+
+
+def derive_default_sigmoid_steepness(
+    *,
+    fisher_information: Optional[float] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``SigmoidScheduler.steepness`` from a derivation rule.
+
+    Falls back to ``10.0`` on missing context. The closed form is
+    ``1 / I_F(W2)`` (information-geometry / Fisher trace).
+    """
+    from adaptive_reflow.algorithm._derivation import (
+        default_sigmoid_steepness as _d,
+    )
+    return _d(
+        context,
+        fisher_information=fisher_information,
+        rule=rule,
+    )
+
+
+def derive_default_convergence_adaptive_kp(
+    *,
+    w2_history: Optional[tuple[float, ...]] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``ConvergenceAdaptiveScheduler.kp`` from a derivation rule."""
+    from adaptive_reflow.algorithm._derivation import (
+        default_convergence_adaptive_kp as _d,
+    )
+    return _d(context, w2_history=w2_history, rule=rule)
+
+
+def derive_default_convergence_adaptive_kd(
+    *,
+    w2_history: Optional[tuple[float, ...]] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``ConvergenceAdaptiveScheduler.kd`` from a derivation rule."""
+    from adaptive_reflow.algorithm._derivation import (
+        default_convergence_adaptive_kd as _d,
+    )
+    return _d(context, w2_history=w2_history, rule=rule)
+
+
+def derive_default_convergence_adaptive_shift_max(
+    *,
+    w2_history: Optional[tuple[float, ...]] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``ConvergenceAdaptiveScheduler.shift_max`` from a derivation rule."""
+    from adaptive_reflow.algorithm._derivation import (
+        default_convergence_adaptive_shift_max as _d,
+    )
+    return _d(context, w2_history=w2_history, rule=rule)
+
+
+def derive_default_convergence_adaptive_ema(
+    *,
+    cycle_length: Optional[int] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> float:
+    """Return ``ConvergenceAdaptiveScheduler.ema`` from a derivation rule."""
+    from adaptive_reflow.algorithm._derivation import (
+        default_convergence_adaptive_ema as _d,
+    )
+    return _d(context, cycle_length=cycle_length, rule=rule)
+
+
+def derive_default_metric_weights(
+    *,
+    metric_variances: Optional[Mapping[str, tuple[float, ...]]] = None,
+    context: Optional[DerivationContext] = None,
+    rule: Optional[DerivationRule] = None,
+) -> dict[str, float]:
+    """Return the multi-metric feedback weights from a derivation rule.
+
+    Falls back to ``DEFAULT_FEEDBACK_METRIC_WEIGHTS`` on missing
+    context. The closed form is ``weight_m := 1 / Var_m``.
+    """
+    from adaptive_reflow.algorithm._derivation import (
+        default_metric_weights as _d,
+    )
+    return _d(context, metric_variances=metric_variances, rule=rule)
+
+
 __all__ = [
     "CodimensionSheetScheduler",
     "ConstantScheduler",
     "ConvergenceAdaptiveScheduler",
     "CosineAnnealScheduler",
     "CosineScheduleConfig",
+    "DEFAULT_FEEDBACK_METRIC_WEIGHTS",
     "ExponentialScheduler",
     "LinearScheduler",
     "PolynomialScheduler",
@@ -3262,4 +3539,14 @@ __all__ = [
     "build_scheduler",
     "build_scheduler_from_config",
     "default_cosine_scheduler",
+    "derive_default_convergence_adaptive_ema",
+    "derive_default_convergence_adaptive_kd",
+    "derive_default_convergence_adaptive_kp",
+    "derive_default_convergence_adaptive_shift_max",
+    "derive_default_eps_implicit",
+    "derive_default_exponential_alpha",
+    "derive_default_metric_weights",
+    "derive_default_polynomial_power",
+    "derive_default_sigmoid_midpoint",
+    "derive_default_sigmoid_steepness",
 ]

@@ -79,10 +79,10 @@ listed in dependency order (leaf first):
 
 | Subpackage             | Concern                                                                                    | Dep tasks satisfied                |
 | ---------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------- |
-| `contracts/`           | Frozen typed dataclasses, `NewType` aliases, hash helpers, validators. Leaf.               | DTB-R0/R1/R2/R4/R5/NC1/NC2/NA1/L1/L2/S1 |
-| `universal/`           | Model-family-agnostic kernel: `FlowMatchingODEAdapter`, `RestartMixer`, `EnvelopeCriterion`, `Evaluator` Protocols + stdlib-only carriers + validators. No molecule-specific imports. | DTB-G1, DTB-NC1, DTB-NC2, DTB-L3, DTB-L4, DTB-R7 |
+| `contracts/`           | Frozen typed dataclasses, `NewType` aliases, hash helpers, validators. Leaf. Now also houses D4 paper-quantity contracts (`PaperQuantitiesSnapshot`, `DynamicNoiseBiasResult`). | DTB-R0/R1/R2/R4/R5/NC1/NC2/NA1/L1/L2/S1 + D4 |
+| `universal/`           | Model-family-agnostic kernel: `FlowMatchingODEAdapter`, `RestartMixer`, `EnvelopeCriterion`, `Evaluator` Protocols + stdlib-only carriers + validators. Now also houses D2 materialization route (`MaterializationRouteProtocol`, `NoOpMaterializer`), D3 condition injection (`ConditionInjectionProtocol`, `NullConditionInjector`), and D5 typed per-channel state declaration (`StateChannel`, `StateShape`). No molecule-specific imports. | DTB-G1, DTB-NC1, DTB-NC2, DTB-L3, DTB-L4, DTB-R7 + D2 + D3 + D5 |
 | `envelope/`            | Runtime envelope builder + tail-budget accumulator.                                         | DTB-NC1 + DTB-L3 partial           |
-| `molecular/`           | Concrete pocket-conditioned 3D flow matching implementation of the universal Protocols: molecule channel vocabulary, molecule bundle, molecule envelope manifest, RMS-preserving restart mixer, GNINA/PoseBusters/QED/ADMET evaluators. | DTB-G1, DTB-NC1, DTB-NC2, DTB-L3, DTB-L4, DTB-R7 |
+| `molecular/`           | Concrete pocket-conditioned 3D flow matching implementation of the universal Protocols: molecule channel vocabulary, molecule bundle, molecule envelope manifest, RMS-preserving restart mixer, GNINA/PoseBusters/QED/ADMET evaluators. Now also houses D2 concrete materializers (`ConcreteFlowMol3Materializer`, `ConcreteGraphBFNMaterializer`). | DTB-G1, DTB-NC1, DTB-NC2, DTB-L3, DTB-L4, DTB-R7 + D2 |
 | `frame/`               | The universal round frame (engine, adapter protocol, bounded merge, channel rule, trace).  | DTB-G1, DTB-R3, DTB-R5, DTB-S1, DTB-L1, DTB-L2, DTB-R2 |
 | `policy/`              | Pure decision logic (archive, stratification, pruning, noise accounting).                  | DTB-R4, DTB-L3, DTB-L4 calc        |
 | `schedule/`            | Outer restart-noise schedule (cosine / linear / constant).                                 | DTB-NA1                            |
@@ -166,6 +166,7 @@ flowa-multistep-reinference/
 │   │   │                                  NoiseBiasInputRow, ChannelRuleInputs, ChannelRuleOutputs,
 │   │   │                                  validate_round_result_bundle, validate_channel_evidence
 │   │   ├── decision.py                  <- reserved for future DTB-R2/R8 additions
+│   │   ├── dynamic_noise_bias.py        <- D4: PaperQuantitiesSnapshot + DynamicNoiseBiasResult
 │   │   ├── envelope.py                  <- DTB-NC1/NC2: EnvelopeLayer, FrozenEnvelopeManifest,
 │   │   │                                  EnvelopeClassification, TailBudgetRow,
 │   │   │                                  validate_envelope_manifest, validate_tail_budget_row
@@ -194,9 +195,14 @@ flowa-multistep-reinference/
 │   │   │                                  NORMALIZATION_KINDS, REFERENCE_FRAMES, ChannelName, TensorRef
 │   │   ├── adapter.py                   <- FlowMatchingODEAdapter Protocol + AdapterCapabilities +
 │   │   │                                  RestartPolicy + ChannelDomain + validate_capabilities
+│   │   │                                  (D2: +materializer class field)
+│   │   ├── condition_injection.py       <- D3: ConditionInjectionProtocol + NullConditionInjector
+│   │   │                                  + PassthroughConditionInjector + AugmentingConditionInjector
 │   │   ├── envelope.py                  <- EnvelopeCriterion Protocol + EnvelopeClassification +
 │   │   │                                  Predicate + validate_envelope_*
 │   │   ├── evaluator.py                 <- Evaluator Protocol + ArtifactHash + validate_evaluator_artifact_hash
+│   │   ├── materialization.py           <- D2: MaterializationRouteProtocol + NoOpMaterializer +
+│   │   │                                  HeterogeneousCategoricalMaterializer + EnvelopeState + NativeStateBundle
 │   │   ├── mixer.py                     <- RestartMixer Protocol + validate_blend_inputs
 │   │   └── validators.py                <- numeric validators (validate_unit_factor, …)
 │   ├── molecular/                       <- concrete pocket-3D flow matching impl of universal Protocols
@@ -209,6 +215,10 @@ flowa-multistep-reinference/
 │   │   │                                  CoordinateChannelRef / ChargeChannelRef /
 │   │   │                                  RawPairChannelRef / ProjectedPairChannelRef
 │   │   ├── domain.py                    <- MOLECULE_DOMAIN_BY_CHANNEL fallback table
+│   │   ├── materializer.py              <- D2: ConcreteFlowMol3Materializer +
+│   │   │                                  ConcreteGraphBFNMaterializer +
+│   │   │                                  default_flowmol3_materializer +
+│   │   │                                  default_graphbfn_materializer
 │   │   ├── stratification.py             <- MoleculeStratum / MoleculeStratumAssignment /
 │   │   │                                  dominance_ratio / cross_stratum_mix_rejected
 │   │   ├── mixer.py                     <- EqualRmsCoordinateMixer
@@ -1198,6 +1208,83 @@ possible (`isinstance(adapter, FlowMatchingODEAdapter)`).
 
 These are the rules that the tests enforce; if you break one, the suite fails.
 
+### 8.0 Design principles (load-bearing, ADR-anchored)
+
+The framework's load-bearing design principles are pinned to
+named ADRs so a reviewer can recover the reasoning behind each
+constraint rather than re-deriving it from the code:
+
+* **Hyperparameter-Free Framework Principle** ([ADR-0014](adr/0014-hyperparameter-free-framework-principle.md),
+  DERIV-001; Workflow K brief referenced this decision as
+  "ADR-0006" — see
+  [ADR-0006 pointer](adr/0006-hyperparameter-free-framework-principle.md)
+  for the slug-collision note) — every framework
+  hyperparameter in `adaptive_reflow/algorithm/` MUST trace
+  to one (or more) of five authorized sources (paper
+  quantity, local curvature, mathematical invariant,
+  information-geometry identity, generic convergence
+  theorem). Hand-set engineering constants are admitted
+  only as named provenance. The principle is operationalized
+  by the abstract `DerivationRule` protocol in
+  `adaptive_reflow/algorithm/_derivation.py` and verified
+  end-to-end as Gate 3 (P-19) of the algorithm-correctness
+  evidence chain in
+  [`docs/r17-survey/algorithm-correctness-evidence.md`](r17-survey/algorithm-correctness-evidence.md)
+  §4. The full 23-hparam coverage map (P-18 + P-19) is the
+  single greppable source of truth and lives in
+  [`docs/ALGORITHMS.md`](ALGORITHMS.md) §"Hyperparameter-Free
+  Framework Principle (DERIV-001)" §"Full 23-hparam coverage
+  map".
+
+* **Theorem-aligned FID + per-round harness pattern**
+  ([ADR-0015](adr/0015-theorem-aligned-fid-per-round-pattern.md);
+  Workflow K brief referenced this decision as "ADR-0007" — see
+  [ADR-0007 pointer](adr/0007-theorem-aligned-fid-per-round-pattern.md)
+  for the slug-collision note) — the canonical image-side FID
+  surface consumes the four paper quantities `(A_g, B_g, C_g,
+  e_rho)` per round and emits one `FIDPerRoundResult` per round
+  plus a `ConvergenceDiagnostic` that asserts monotonicity and
+  the quantitative `O(eps)` paper-bound (`fid(r) <= C_paper *
+  eps_r` with `C_paper = (C_g * B_g + 1 / e_rho) / A_g`).
+  Operationalized by the `TheoremAlignedFID` module in
+  `adaptive_reflow/eval/fid_theorem_aligned.py` (sibling of
+  the legacy `InceptionV3FIDEvaluator`, byte-stable back-compat
+  via `as_fid_result`). The per-round harness wiring is on
+  disk (`tools/run_image_eval.py --per-round`,
+  `_make_per_round_callback` on Lumina / HiDream harnesses) and
+  unit-verified; the empirical per-round PNG dump is blocked on
+  torch install (`per-round-wired-partial`). The Lemma 4 regime
+  check surfaces as
+  `TheoremAlignedFIDResult.regime_check_ok` (per-round) and
+  `ConvergenceDiagnostic.regime_violations` (trajectory-wide)
+  — diagnosis only; enforcement lives in ADR-0016.
+
+* **Regime-aware eps selector (opt-in Lemma 4 enforcement)**
+  ([ADR-0016](adr/0016-regime-aware-eps-selector.md); Workflow K
+  brief referenced this decision as "ADR-0008" — see
+  [ADR-0008 pointer](adr/0008-regime-aware-eps-selector.md)
+  for the slug-collision note) — the scheduler-side
+  enforcement for the Lemma 4 regime
+  `eps^2 < e_rho / log(2)` that ADR-0015 *diagnoses*. The
+  abstract `RegimeAwareEpsSelector` Protocol wraps an existing
+  trajectory (cosine anneal, convergence-adaptive PID) and
+  applies the regime ceiling on top, so the bound is
+  orthogonal to the schedule family. Opt-in via
+  `EvidenceDrivenScheduler(..., regime_aware=False)`; default
+  `False` keeps the `eps_implicit` path byte-identical to
+  Phase 3. Fail-closed semantics: a violation clamps to the
+  ceiling (`EPS_REGIME_CLAMPED`); an infeasible ceiling
+  emits the `EPS_FLOOR` with
+  `EPS_REGIME_INFEASIBLE`. The selector wraps
+  `_apply_paper_quantities_rewiring` so a caller who wants
+  fail-closed Theorem-1 reconciliation opts into both
+  `regime_aware=True` (scheduler) and
+  `TheoremAlignedFIDReport` (FID side, ADR-0015). The
+  Lemma 4 regime predicate is re-derived from `math`
+  primitives and pinned bit-for-bit equal to the eval-layer
+  version by
+  `test_regime_predicate_matches_fid_module`.
+
 1. **`tests/test_frame/test_engine.py::test_no_torch_in_any_new_file`** —
    no engine / adapter module imports `torch`.
 2. **`tests/test_policy/test_stratification_and_pruning.py::TestNoTorchDependency::test_no_torch_in_new_modules`** —
@@ -1279,6 +1366,18 @@ without depending on GNINA / QED / ADMET / PoseBusters. This is what
 makes the universal layer exercisable end-to-end without a model in
 the loop. The corresponding golden set lives at
 `tests/golden/synthetic_evaluator/`.
+
+**Algorithm-correctness evidence chain.** The synthetic-evaluator oracle
+above is the per-round scoreboard, not the algorithm-correctness oracle.
+For the *algorithm* layer's correctness — i.e. does the framework's
+per-round Scheduler → Blender → BoundedMerge → Materializer pipeline
+produce trajectories that match the paper Theorem 1 prediction? — see
+**[docs/r17-survey/algorithm-correctness-evidence.md](r17-survey/algorithm-correctness-evidence.md)**.
+That document synthesises the three named gates (P-13 2D Gaussian-mix
+oracle / P-15+P-16 synthetic-image oracle / P-19 hyperparameter-free
+under derived hyperparameters), records the 97 PASS tests / 0 bugs
+filed, and provides the paper Section 4 skeleton (4.1-4.5).
+**See also: docs/r17-survey/algorithm-correctness-evidence.md.**
 
 ### Audit-code catalogue (ADR-0005)
 
@@ -1417,7 +1516,7 @@ recorded here first.
 | Security | [`SECURITY.md`](SECURITY.md) | Single-maintainer scope; explicit "no security-sensitive surface" claim; reporting channel for build / supply-chain defects. |
 | Code ownership | [`CODEOWNERS`](CODEOWNERS) | GitHub code-owner routing. Load-bearing boundaries (`contracts/`, `universal/`, `frame/engine.py`, public `__init__.py` files, the doc scanner, the docs governance tree) are pinned explicitly. |
 | Deprecation policy | [`docs/DEPRECATION.md`](docs/DEPRECATION.md) | Versioned deprecation table for every `adaptive_reflow.legacy/*` module; quarantine mechanics; sunset / removal convention. |
-| ADRs | [`docs/adr/`](docs/adr/) | Architectural decisions (MADR 4.0). The five shipped today cover (1) the meta-format, (2) the typed-contracts core boundary, (3) the universal / molecular split, (4) the seven-step engine order, and (5) the fail-closed audit-code policy. New load-bearing decisions follow the same template. |
+| ADRs | [`docs/adr/`](docs/adr/) | Architectural decisions (MADR 4.0). The fourteen shipped today cover (1) the meta-format, (2) the typed-contracts core boundary, (3) the universal / molecular split, (4) the seven-step engine order, (5) the fail-closed audit-code policy, (6) the engine-wraps-adapter pattern, (7) the prev-anchored bounded merge, (8) the claim-gate deferral placeholder, (9) the mixer RMS-precondition, (10) the cosine-driven memory fraction, (11) the four-axis algorithm abstractions, (12) the noise-schedule survey, (13) the posterior-selection-driven algorithm layer, and (14) the Hyperparameter-Free Framework Principle (DERIV-001 — every framework hyperparameter traces to a paper quantity, local curvature, mathematical invariant, information-geometry identity, or generic convergence theorem). Workflow K also shipped three brief-slot pointer stubs at the `0006`/`0007`/`0008` slug slots ([ADR-0006](adr/0006-hyperparameter-free-framework-principle.md), [ADR-0007](adr/0007-theorem-aligned-fid-per-round-pattern.md), [ADR-0008](adr/0008-regime-aware-eps-selector.md)) that forward to the canonical allocations `0014`/`0015`/`0016` to avoid slug collisions with the pre-existing ADRs that own those slots. New load-bearing decisions follow the same template. |
 | Hands-on walk-through | [`TUTORIAL.md`](TUTORIAL.md) | Step-by-step tutorial: mental model, the seven-step engine round, writing an adapter, hostile-case tests, golden snapshots, property-based tests, mutation testing, performance budgets, contributing. |
 
 ### 10.1 Where to look first
@@ -1431,6 +1530,9 @@ recorded here first.
 | "How do I add a hostile-case test?" | `TUTORIAL.md` §4, then `CONTRIBUTING.md` §1 |
 | "Why did we choose seven steps, not six or eight?" | ADR-0004 |
 | "Why is this `AUDIT_*` constant where it is?" | ADR-0005, then `tools/check_docs_against_code.py` |
+| "Why does the framework not have hand-set magic numbers?" | ADR-0014 (DERIV-001 Hyperparameter-Free Framework Principle; brief-slot pointer at [ADR-0006](adr/0006-hyperparameter-free-framework-principle.md)), then `docs/ALGORITHMS.md` §"Hyperparameter-Free Framework Principle (DERIV-001)" |
+| "Why does FID consume `(A_g, B_g, C_g, e_rho)` per round, not just `value`?" | ADR-0015 (Theorem-aligned FID + per-round harness pattern; brief-slot pointer at [ADR-0007](adr/0007-theorem-aligned-fid-per-round-pattern.md)), then [`docs/r17-survey/algorithm-correctness-evidence.md`](r17-survey/algorithm-correctness-evidence.md) §5 |
+| "How does the framework prevent the scheduler's `eps` from leaving the Lemma 4 regime?" | ADR-0016 (Regime-aware eps selector; brief-slot pointer at [ADR-0008](adr/0008-regime-aware-eps-selector.md)), then `adaptive_reflow/algorithm/scheduler/regime_selector.py` and `tests/test_algorithm/test_regime_selector.py` |
 | "When is the next feature landing?" | `ROADMAP.md` |
 | "Is there a security boundary I need to respect?" | `SECURITY.md` |
 | "Who reviews PRs against the contracts layer?" | `CODEOWNERS` |

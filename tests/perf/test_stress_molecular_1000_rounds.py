@@ -47,8 +47,19 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
+
+# Preflight: this molecular-path stress test is decorated with
+# ``@given`` / ``@settings`` so it requires the ``hypothesis``
+# package. On sandboxes where hypothesis is not vendored, pytest
+# collection aborts with ``ModuleNotFoundError``. The importorskip
+# below short-circuits collection cleanly: every test in this
+# module reports SKIP rather than failing or aborting the suite.
+pytest.importorskip(
+    "hypothesis",
+    reason="hypothesis not in venv (install via `uv pip install hypothesis`)",
+)
+from hypothesis import given, settings  # noqa: E402
+from hypothesis import strategies as st  # noqa: E402
 
 # Make sure the repo root is importable when pytest is invoked from any
 # directory.

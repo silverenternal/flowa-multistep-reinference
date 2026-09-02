@@ -3,6 +3,20 @@
 This audit is a **read-only** survey of the 6 SOTA Flow-Matching-ODE
 adapters in `adaptive_reflow/adapters/`. It does not edit any source file.
 
+> **See also: docs/r17-survey/algorithm-correctness-evidence.md.** This
+> audit answers **"does each SOTA adapter conform to the
+> FlowMatchingODEAdapter Protocol?"** — a static *interface* question. The
+> companion **algorithm-correctness evidence chain** answers the
+> behavioural question: **"does the framework algorithm layer (Scheduler
+> → CategoricalAwareBlender → BoundedMergeOperator → Materializer)
+> produce trajectories that match the paper Theorem 1 prediction?"** —
+> verified via three named gates (P-13 2D Gaussian-mix oracle / P-15+P-16
+> synthetic-image oracle / P-19 hyperparameter-free under DERIV-001).
+> Together they bound the question: each adapter is *Protocol-conformant*
+> AND the *algorithm layer* produces monotone non-increasing KL/FID on
+> known ground-truth oracles. **See also:
+> docs/r17-survey/algorithm-correctness-evidence.md.**
+
 The canonical Flow-Matching-ODE adapter contract is defined in
 `adaptive_reflow/universal/adapter.py` (re-exported via
 `adaptive_reflow/frame/adapter.py`) and comprises:
@@ -412,19 +426,35 @@ plus adapter-specific surface tests (e.g.
 
 ## 5. Severity triage
 
-| Severity | Count | Items |
-|:--------:|:-----:|:------|
-| High     |   0   | --    |
-| Medium   |   1   | P-04  |
-| Low      |   6   | P-01, P-02, P-03, P-05, P-06, P-07 |
+**Initial audit (pre-fix):** `{high: 0, medium: 1, low: 6}` (7 items
+total: P-01, P-02, P-03, P-04 [M], P-05, P-06, P-07).
+
+**Post-fix (workflow G, 2026-09-02):** all 7 audit items applied
+to the working tree and staged in the git index. Post-fix
+severity_breakdown = `{high: 0, medium: 0, low: 0}` (all 7 items
+resolved — typing/style only, no behaviour change). See `todo.json`
+P-07 status `completed-with-fixes-applied-2026-09-02` and the fix
+log in `docs/r17-survey/fm-lcm-interface-gap-audit.md` row P-07.
+
+| Severity | Pre-fix Count | Post-fix Count | Items (pre-fix → status) |
+|:--------:|:-------------:|:--------------:|:-------------------------|
+| High     |       0       |       0        | --                       |
+| Medium   |       1       |       0        | P-04 [M] → applied       |
+| Low      |       6       |       0        | P-01, P-02, P-03, P-05, P-06, P-07 [L] → all applied |
 
 Zero high-severity protocol-conformance defects across the 6 SOTA
-adapters. All five "in-scope" adapters (FlowMol3V2, Lumina, HiDream,
-ProtBFN, GraphBFN) advertise the full `AdapterCapabilities` surface,
-implement all 8 Protocol methods, expose `export_trajectory`, and
-publish a sensible `mechanism_id`. The single medium item (P-04) is
-a typing-only inconsistency on ProtBFNAbBFN's `mechanism_id` return
-type; the runner reads via `getattr` and runtime is unaffected.
+adapters (pre- and post-fix). All five "in-scope" adapters (FlowMol3V2,
+Lumina, HiDream, ProtBFN, GraphBFN) advertise the full
+`AdapterCapabilities` surface, implement all 8 Protocol methods, expose
+`export_trajectory`, and publish a sensible `mechanism_id` (typed as
+`MechanismId` post-fix). All seven audit nits (1 medium + 6 low) are
+applied: P-04 [M] (ProtBFN `mechanism_id` returns `MechanismId`),
+P-03 [L] (HiDream `mechanism_id: MechanismId`), P-01 [L] (FlowMol3V2
+`inject_forward_noise` hook), P-06 [L] (Lumina `channel_domains` uses
+`"latent"` for the latent channel), and P-02/P-05/P-07 [L] doc
+comments documenting the deliberate `state_shape` choices (and P-07
+also adds instance-level `state_shape` override in `__init__`,
+matching the HiDream dual-level pattern).
 
 ---
 

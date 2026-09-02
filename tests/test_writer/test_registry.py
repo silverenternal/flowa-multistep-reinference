@@ -22,7 +22,7 @@ from adaptive_reflow.adapters import (
     default_flowmol3_adapter,
 )
 from adaptive_reflow.frame import (
-    CapabilityMissingError,
+    StateBundle,
     validate_state_bundle,
 )
 from adaptive_reflow.molecular.domain import MOLECULE_DOMAIN_BY_CHANNEL
@@ -362,7 +362,11 @@ def test_flowmol3_adapter_capabilities_match_engine_protocol():
     assert caps.has_ode_integration_surface is True
     assert caps.has_continuous_channels is True
     assert caps.has_discrete_channels is True
-    assert caps.has_condition_injection is False  # unconditional
+    # D3 — FlowMol3 now declares has_condition_injection=True so the
+    # engine handshake accepts it; the model itself is unconditional
+    # and delegates to NullConditionInjector for audit provenance.
+    assert caps.has_condition_injection is True  # D3 — null-condition injector
+    assert caps.has_materialization_route is True  # D2 — materializer field wired
     assert caps.has_trajectory_digest is False  # placeholder
     assert caps.supported_channels == FLOWMOL3_CHANNELS
     # All channels must be declared in the adapter's own channel_domains
@@ -401,14 +405,24 @@ def test_flowmol3_solve_ode_produces_trace():
     assert trace.native_state_digest == next_state.native_state_digest
 
 
-def test_flowmol3_compose_condition_rejects_non_empty_delta():
+def test_flowmol3_compose_condition_accepts_delta_via_null_injector():
+    """D3 — FlowMol3's ``compose_condition`` delegates to
+    :class:`NullConditionInjector` for non-empty deltas so the engine
+    handshake's ``has_condition_injection=True`` gate is satisfied.
+    The model itself is unconditional; the injector annotates the
+    audit trail with null-condition provenance (``condition_kind='null',
+    dataset='flowmol3_smiles_pl', variant='v1', round_trace_only=True``).
+    """
     adapter = default_flowmol3_adapter()
     state = adapter.build_initial_state("b", "s", source_round=0)
-    with pytest.raises(CapabilityMissingError):
-        adapter.compose_condition(state, {"pocket": "ligand"})
-    # Empty delta is allowed.
+    # Non-empty delta is now accepted via NullConditionInjector (D3).
+    out = adapter.compose_condition(state, {"pocket": "ligand"})
+    assert isinstance(out, StateBundle)
+    assert "flowmol3_null_condition" in out.provenance
+    # Empty delta is still allowed (back-compat).
     same = adapter.compose_condition(state, {})
-    assert same is state
+    assert isinstance(same, StateBundle)
+    assert "flowmol3_null_condition" in same.provenance
 
 
 def test_flowmol3_apply_restart_distribution_revalidates():
