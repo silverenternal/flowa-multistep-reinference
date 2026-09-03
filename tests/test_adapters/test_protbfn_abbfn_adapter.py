@@ -674,3 +674,69 @@ def test_default_factory_per_mechanism() -> None:
     assert a_protbfn.mechanism_id == "ProtBFN"
     assert a_abbfn.mechanism_id == "AbBFN"
     assert a_abbfn2.mechanism_id == "AbBFN2"
+
+
+# ---------------------------------------------------------------------------
+# 15. force_mode allowlist accepts "upstream_jax"
+# ---------------------------------------------------------------------------
+
+
+def test_force_mode_upstream_jax_in_allowlist() -> None:
+    """``force_mode='upstream_jax'`` is a valid value in the Mode Literal.
+
+    Verifies the type system accepted the new member and that a fresh
+    adapter constructed in synthetic mode reports its mode verbatim.
+    The full upstream-jax materialization path requires the JAX stack
+    + a real checkpoint directory; we do NOT exercise that here (the
+    harness-level smoke covers it under ``--use-jax-loader``).
+    """
+    from adaptive_reflow.adapters.protbfn_abbfn_adapter import (
+        Mode,
+        ProtBFNAbBFNAdapter,
+    )
+
+    # 1. ``Mode`` literal exposes the new value (static type-level check).
+    assert "upstream_jax" in Mode.__args__
+
+    # 2. ``force_mode='upstream_jax'`` constructs an adapter without
+    #    raising under ``is_upstream_available() == True`` (which is the
+    #    case in the protbfn_venv where jax + dm-haiku + flax are
+    #    installed). We only verify the allowlist accepts the value;
+    #    we do NOT exercise ``solve_ode`` here (would require GPU and
+    #    the upstream pytree -> JAX pytree binding, which is a separate
+    #    workflow).
+    from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+        is_upstream_available,
+    )
+
+    if is_upstream_available():
+        ckpt = Path(
+            "/home/hugo/codes/flowa-multistep-reinference/data/protbfn_abbfn/weights_real/ProtBFN"
+        )
+        if ckpt.is_dir() and (ckpt / "tree_def.npy").is_file():
+            a = ProtBFNAbBFNAdapter(
+                checkpoint_path=ckpt,
+                mechanism="ProtBFN",
+                force_mode="upstream_jax",
+                num_steps=2,
+                max_seq_length=4,
+                vocab_size=22,
+            )
+            assert a._mode == "upstream_jax"  # noqa: SLF001
+            assert a._mechanism == "ProtBFN"  # noqa: SLF001
+
+    # 3. ``force_mode='upstream_jax'`` raises RuntimeError when the
+    #    JAX stack is unavailable. We simulate this by stubbing the
+    #    upstream availability check.
+    from unittest.mock import patch
+
+    from adaptive_reflow.adapters import protbfn_abbfn_upstream_shim as shim
+
+    with patch.object(shim, "is_upstream_available", return_value=False):
+        with pytest.raises(RuntimeError, match="upstream_jax_requested"):
+            ProtBFNAbBFNAdapter(
+                mechanism="ProtBFN",
+                force_mode="upstream_jax",
+                num_steps=2,
+                max_seq_length=4,
+            )

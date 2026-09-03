@@ -436,6 +436,60 @@ def test_probe_fcd_returns_bool(module: Any) -> None:
     assert err is None or isinstance(err, str)
 
 
+def test_probe_posebusters_returns_bool(module: Any) -> None:
+    """The PoseBusters probe must always return ``(bool, str | None)``."""
+    ok, err = module._probe_posebusters()
+    assert isinstance(ok, bool)
+    assert err is None or isinstance(err, str)
+
+
+def test_compute_pb_validity_json_shape(module: Any) -> None:
+    """``compute_pb_validity`` must always return the documented JSON shape.
+
+    Tests the contract independent of whether PoseBusters is
+    installed: every documented key is present in every return.
+    The ``marker`` value is one of the four documented sentinels
+    (``"not_installed"``, ``"stub_unavailable"``, ``"computed"``,
+    ``"computed_etkdg_v3_only"``) and ``value`` is a float in
+    ``[0, 1]`` or ``None`` or ``NaN``.
+    """
+    if not _rdkit_available():
+        pytest.skip("rdkit_unavailable")
+    from rdkit import Chem
+
+    mol = Chem.MolFromSmiles(ASPIRIN_SMILES)
+    assert mol is not None
+    result = module.compute_pb_validity([mol])
+    # Core keys always present.
+    for key in (
+        "value",
+        "marker",
+        "install_hint",
+        "note",
+        "conformer_protocol",
+        "n_total",
+        "n_pb_valid",
+        "n_conformer_failures",
+        "pass_per_check",
+    ):
+        assert key in result, key
+    assert result["marker"] in {
+        module.PB_VALIDITY_MARKER_NOT_INSTALLED,
+        module.PB_VALIDITY_MARKER_STUB_UNAVAILABLE,
+        module.PB_VALIDITY_MARKER_COMPUTED,
+        module.PB_VALIDITY_MARKER_COMPUTED_ETKDG_V3_ONLY,
+    }
+    if result["marker"] == module.PB_VALIDITY_MARKER_NOT_INSTALLED:
+        # Stable stub: value=None, install_hint non-null.
+        assert result["value"] is None
+        assert result["install_hint"] is not None
+    else:
+        # Real call path: value is a finite float in [0, 1].
+        assert isinstance(result["value"], float)
+        assert 0.0 <= result["value"] <= 1.0
+        assert result["install_hint"] is None
+
+
 def test_unsupported_extension_raises(module: Any, tmp_path: Path) -> None:
     """An unsupported ``--input`` extension must raise ``ValueError``."""
     bad = tmp_path / "foo.txt"
