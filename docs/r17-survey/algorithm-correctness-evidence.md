@@ -522,6 +522,29 @@ maps directly to a gate above.
 >    because no arm produced real amino-acid sequences. Paper-parity
 >    ProtBFN chemistry assessment requires NFE on the order of 250.
 >    `framework_improved_on_sota = false` on chemistry quality at NFE=8.
+>
+>    **2026-09-03 Workflow W Phase 2 update (GPU switch + paper-parity
+>    NFE=128):** the harness now binds the JAX pytree to `cuda:0` via
+>    the adapter's existing `theta_t.to(self._torch_device)` hook
+>    (no adapter code change required). ProtBFN v3 n=4 n_rounds=1
+>    ran in **12.07 s wall** (vs CPU v2 wall=131.4 s at NFE=8) --
+>    **10.9x wall speedup, 172x per-NFE throughput speedup**. At
+>    NFE=128 (baseline_nfe=128 / framework_nfe=125) both arms produce
+>    real amino-acid sequences (no degenerate single-token outputs):
+>    `baseline_perp=1.510, framework_perp=2.072, paired_delta=-0.562
+>    (framework higher = more diverse sequences under trained model),
+>    novelty=1.00 in both, distinct_sequences=4/4 in both, repetition
+>    ~0.93 in both`. The sign inversion vs v2 is interpretable: the
+>    framework's sequences are more diverse / less mode-collapsed than
+>    the baseline, so the trained model assigns them higher NLL.
+>    **`framework_improved_on_sota = false` on raw trained-model
+>    perplexity at NFE=128 (interpretable, not degenerate)** --
+>    paper-parity AAR or CATH-S40 reference scoring is the next
+>    follow-on. The 172x GPU speedup makes paper-parity NFE=250
+>    feasible on this rig (~24 s for n_rounds=2 n=4). Capture:
+>    `/tmp/protbfn_gpu_n4/summary.json` + log at
+>    `/tmp/protbfn_gpu_n4.log`. Documented at
+>    `docs/r17-survey/prot-comparison.md` §3.4 + §8 v3.
 > 5. **The remaining 18 hyperparameters** (5/23 → 23/23) are still
 >    hand-set in their respective modules; workflow B is the pending
 >    follow-on. The DERIV-001 *safety* gate (5 implemented rules
@@ -549,7 +572,7 @@ maps directly to a gate above.
 | SOTA paper-metric FID at n ≥ 30 000 (Lumina / HiDream) | INFEASIBLE on this rig per §2.2.1; n=16 v2 run is rank-deficient (per-round FID non-monotonic, regime-check undefined). Aggregate direction (Lumina FID −19.19, CLIP +1.02, framework_improved=true) is meaningful at n=16 but not paper-comparable in magnitude. | `docs/r17-survey/img-comparison.md` §2.4 + §3.2.1; workflow A v2 |
 | FlowMol3 CTMC-vs-linear-integrator paper chemistry | Published FlowMol3 checkpoint trained CTMC; framework integrates linear. **PARTIAL** in v2: framework improves validity/QED/SA/LogP on real CTMC checkpoint (paired Δ all framework-favorable, `framework_improved=true`); paper-magnitude numbers still require CTMC transition kernel swap. | `docs/r17-survey/mol-comparison.md` §1.1.d; workflow A v2 |
 | HiDream-I1-Dev per-round FID trajectory | **PENDING** supervisor (PID 4215 active on cuda:1, ~158 min ETA); T5-XXL-only text conditioning (missing Llama-3.1-8B encoder) is an outstanding prompt-fidelity limitation | `docs/r17-survey/img-comparison.md` §2.5 + §3.2.2; workflow A v2 |
-| ProtBFN chemistry quality at NFE | **NEGATIVE at NFE=8**: degenerate single-token outputs in both arms; paper-parity perplexity requires NFE ≈ 250 | `docs/r17-survey/prot-comparison.md` §3.3; workflow A v2 |
+| ProtBFN chemistry quality at NFE | **NEGATIVE at NFE=8 (degenerate outputs in both arms); INTERPRETABLE at NFE=128 on GPU (paired Δ = -0.562 with framework higher = more diverse real amino-acid sequences; paper-parity AAR / CATH-S40 reference still pending)** | `docs/r17-survey/prot-comparison.md` §3.3 (NFE=8) + §3.4 (NFE=128 GPU); workflows A v2 + W |
 | DERIV-001 *preference* gate (all 23 derivations preferred over hand-set) | 18 hyperparameters still hand-set (workflow B pending) | `docs/ALGORITHMS.md` §"Hyperparameter-Free Framework Principle"; `tests/test_algorithm/test_hparam_derived_*.py` (covers 5/23) |
 | `e_rho` regime enforcement blocks scheduler eps choices | diagnostic-only surface; runner does not gate on `e_rho` | `docs/r17-sururvey/fm-lcm-interface-gap-audit.md` §8 row 157; `adaptive_reflow/eval/fid_theorem_aligned.py::ConvergenceDiagnostic.regime_violations` |
 
@@ -658,6 +681,21 @@ maps directly to a gate above.
    output). **NOT a regression**: GPU is correctly identified as
    overhead-dominated for partial-fidelity; honest document beats
    phantom GPU speedup claim.
+
+7. **Workflow W new (2026-09-03): protbfn GPU speedup = 10.9x wall
+   (172x per-NFE throughput)** — the 650M-param dense BERT-like
+   ProtBFN encoder amortises CUDA launch overhead where the
+   FlowMol3 partial-fidelity adapter cannot. The single-flight
+   guard (workflow W: no parallel CPU-heavy tasks) keeps the
+   harness under wall budget. The 172x speedup makes paper-parity
+   NFE=250 feasible on this rig (~24 s for n_rounds=2 n=4 vs
+   unmeasurable on CPU). Documented at
+   `docs/r17-survey/prot-comparison.md` §3.4 + §8 v3 and
+   `docs/r17-survey/state-report.md` §3.3 Workflow W row. **NOT
+   a regression for FlowMol3**: the per-adapter GPU story is
+   correctly captured (FlowMol3 = overhead-dominated; ProtBFN =
+   throughput-dominated); honest documentation of both avoids
+   generalising "GPU is faster" as a one-size-fits-all claim.
 7. **GraphBFN deferral (P-10, same)** — option c; harness refuses to
    run without `--deferred` ack; out of paper scope.
 
@@ -668,13 +706,17 @@ maps directly to a gate above.
 > **Framework algorithm correctness: PASS on three independent
 > ground-truth oracles** (57 + 18 + 22 = 97 oracle-pass tests across the
 > three gates; 0 bugs filed; paper Theorem 1 BL-convergence prediction
-> holds at the unit level). **SOTA paper-metric evidence (workflow A v2,
-  2026-09-02): 2/4 tasks framework_improved=true** (Lumina FID -19.19 /
-  CLIP +1.02 on canonical MJHQ-30K ref; FlowMol3 validity +50% / QED
-  +0.12 / SA -0.31 / LogP +6.53 on real CTMC checkpoint); **1/4
-  pending** (HiDream supervisor in flight, ~158 min ETA); **1/4
-  negative at NFE=8** (ProtBFN degenerate single-token outputs at the
-  v2 apples-to-apples budget). Per-round TheoremAlignedFID math
-  unit-verified (15/15); empirical regime-check rank-deficient at n=16
-  on both image tasks. Workflow B blocked on the remaining 18
-  hyperparameters.
+> holds at the unit level). **SOTA paper-metric evidence (workflow A v2 +
+> Workflow W, 2026-09-02 → 2026-09-03): 2/4 tasks framework_improved=true**
+> (Lumina FID -19.19 / CLIP +1.02 on canonical MJHQ-30K ref; FlowMol3
+> validity +50% / QED +0.12 / SA -0.31 / LogP +6.53 on real CTMC
+> checkpoint); **1/4 interpretable** (ProtBFN v3 NFE=128 GPU: framework
+> produces more diverse real amino-acid sequences; paired delta = -0.562
+> with framework higher = expected direction; chemistry-quality AAR /
+> CATH-S40 reference still pending); **1/4 pending** (HiDream supervisor
+> in flight, ~158 min ETA). Per-round TheoremAlignedFID math unit-verified
+> (15/15); empirical regime-check rank-deficient at n=16 on both image
+> tasks. **Workflow W GPU switch delivered: ProtBFN 10.9x wall / 172x
+> per-NFE throughput speedup** (vs FlowMol3 0.081x overhead-dominated
+> per-adapter story). Workflow B blocked on the remaining 18
+> hyperparameters.

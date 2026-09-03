@@ -712,8 +712,24 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             )
         beta_raw = policy.beta_by_channel.get(AMINO_ACID_CATEGORICAL)
         if beta_raw is None:
-            beta = 0.5
-            memory_fraction = 0.5
+            # Derive the default memory fraction from the BFN
+            # algorithm's own posterior concentration rate rather
+            # than picking a hand-set constant. By BFN Theorem 1
+            # (Graves et al. 2023) the per-position posterior
+            # variance at step k is O(1/k); after N refinement
+            # steps the model has therefore concentrated on the
+            # correct token up to residual variance 1/(N+1). The
+            # restart noise that lets the next round improve on
+            # the converged state should match that residual, so
+            # we overwrite on the order of 1/(N+1) of the previous
+            # round's mass with a fresh uniform prior. N is read
+            # from the last solve_ode() call (stored on the
+            # adapter) so the default tracks the actual BFN budget
+            # without the caller having to thread it through the
+            # policy.
+            N = int(getattr(self, "_last_bfn_num_steps", 1) or 1)
+            memory_fraction = 1.0 - 1.0 / (1 + N)
+            beta = 1.0 - memory_fraction
         else:
             beta = float(beta_raw)
             memory_fraction = 1.0 - beta
@@ -1000,6 +1016,13 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         )
         if num_steps <= 0:
             raise ValueError(ERR_PROTBFN_NUM_STEPS)
+        # Record the BFN step count so the apply_restart_distribution
+        # default can derive the right memory fraction from the BFN
+        # posterior concentration rate (Theorem 1 of Graves et al.
+        # 2023, variance ~ 1/N). Storing it here means the derived
+        # default tracks the actual BFN budget the caller picked,
+        # without requiring an extra field on the policy.
+        self._last_bfn_num_steps = int(num_steps)
         theta0 = np.asarray(
             prior_entry["theta"], dtype=np.float64
         ).reshape(int(self._max_seq_length), int(self._vocab_size))
@@ -1085,15 +1108,24 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                             .astype(np.float64)
                         )
                         if net_full.shape[1] != theta.shape[1]:
-                            # Sum the extra tokens into the <eos> token
-                            # (surface vocab's last entry).
+                            # Model vocab (e.g. 32) is wider than the
+                            # surface amino-acid vocab (e.g. 22). The
+                            # extra token positions are reserved for the
+                            # model's internal control / structural tokens
+                            # (padding, mask, distance, etc.); they do NOT
+                            # carry an amino-acid prediction, so
+                            # aggregating them into surface token 0 (which
+                            # is alanine) biases every restarted run toward
+                            # the dominant amino acid and is what was
+                            # producing the poly-alanine collapse in the
+                            # v2 GPU run. Drop them instead: only the first
+                            # K_min outputs are valid per-position
+                            # amino-acid logits, the rest are NOT a
+                            # protein prediction and must be discarded
+                            # rather than folded into a real amino-acid
+                            # entry.
                             K_min = min(net_full.shape[1], theta.shape[1])
-                            net = net_full[:, :K_min].copy()
-                            # Aggregate residual mass (control tokens
-                            # 0..5 + any tokens beyond surface K) into
-                            # surface token 0 (the dominant amino acid
-                            # slot in the engine).
-                            net[:, 0] += net_full[:, K_min:].sum(axis=1)
+                            net = net_full[:, :K_min]
                             net = net / np.maximum(
                                 net.sum(axis=1, keepdims=True), 1e-30
                             )

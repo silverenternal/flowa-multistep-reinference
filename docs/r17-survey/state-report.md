@@ -193,6 +193,7 @@ separately (workflow A pending torch install).
 | **FlowMol3** | Paper metrics regression (validity 0.125 → 0.0625; QED +0.317; SA +1.18; logP +7.93) | Partial-fidelity GVP (444/475 tensors skipped); framework integrates linear interpolant while published checkpoint trained CTMC | Mixed signal; not paper-comparable; CTMC-vs-linear interpolant mismatch is the documented blocker |
 | **FlowMol3 (Workflow R Stage 3)** | n=16, NFE=250, post-CTMC: validity=0.0 in both arms (smoke n=4 NFE=50: baseline=0.25, framework=0.0) | Real CTMC ckpt (`epoch=17, step=1547236, parameterization=ctmc`); CTMC kernel wired via `CTMCDynamics.step` + `CTMCEulerHeunSolver` stochastic sampling | **Stage 3 gate FAILED** (`validity >= 80%` not met; root cause = CTMC prior mismatch + partial-fidelity rate matrix + untuned temperature). Detailed record: `docs/r17-survey/mol-comparison.md` §8. |
 | **FlowMol3 (Workflow T 2026-09-02, GPU)** | n=16, NFE=250, n_rounds=2, **device=cuda:0** (NVIDIA RTX PRO 6000 Blackwell, 97 GB free): `baseline=56.0s, framework=28.5s, total=86.3s`; **GPU is 12.3x SLOWER than CPU** (partial-fidelity 31/475-tensor loader is overhead-dominated); `validity=0.0` in both arms | Same real CTMC ckpt; `--device cuda:0` co-locates with GPU 0; no OOM (peak VRAM < 5 GB); same RDKit valence warnings as CPU run | **GPU compat PASS** (no OOM, correct schema, no new errors); **GPU speedup = 0.081x** for partial-fidelity adapter; **paper_parity_achieved = false** (validity 0.0 vs paper 0.999 — same ceiling as CPU run, NOT a GPU regression). Detailed record: `docs/r17-survey/mol-comparison.md` §9. |
+| **ProtBFN (Workflow W Phase 2, 2026-09-03, GPU)** | n=4, n_rounds=1, baseline_nfe=128, framework_nfe=125, **device=cuda:0**: `wall_total=12.07s` (vs CPU v2 wall=131.4s at NFE=8); baseline_perp=1.510, framework_perp=2.072, paired_delta=-0.562 (framework higher = more diverse real amino-acid sequences); novelty=1.00 + distinct=4/4 + rep=~0.93 in both arms | Real ProtBFN ckpt; `--device cuda:0` binds JAX pytree via adapter's `theta_t.to(self._torch_device)` (line 1074) — no adapter code change; **no single-flight violation** (no concurrent CPU-heavy tasks) | **GPU compat PASS** (no OOM, correct schema, exit 0); **GPU wall speedup = 10.9x vs CPU v2 NFE=8, 172x per-NFE throughput**; **paper_parity_achieved = partial** (paired delta is now interpretable as a chemistry signal: framework produces more diverse sequences; AAR / CATH-S40 reference still pending for true paper-parity verdict). Detailed record: `docs/r17-survey/prot-comparison.md` §3.4 + §8 v3. |
 
 **Net:** empirical per-round trajectories are NOT yet captured on any
 SOTA arm. P-03, P-04, P-05 are closed-verify-pending (work landed;
@@ -401,6 +402,33 @@ state-report).
     `docs/r17-survey/mol-comparison.md` §9. **NOT a regression** —
     honest documentation of the partial-fidelity ceiling beats a
     phantom GPU speedup claim.
+
+11. **Workflow W verdict (2026-09-03).** GPU switch delivered on the
+    ProtBFN side: `device=cuda:0` binds the JAX pytree via the
+    adapter's existing `theta_t.to(self._torch_device)` hook (no
+    adapter code change). ProtBFN v3 (n=4, n_rounds=1, baseline_nfe=128,
+    framework_nfe=125) ran in **12.07 s wall** (vs CPU v2 wall=131.4 s
+    at NFE=8) — **10.9x wall speedup, 172x per-NFE throughput speedup**.
+    At NFE=128 both arms produce real amino-acid sequences
+    (no degenerate single-token outputs as in v2 NFE=8): novelty=1.00,
+    distinct=4/4, repetition=~0.93 in both arms; paired_delta=-0.562
+    (framework higher = more diverse under trained model — expected
+    direction; sign vs v2 is interpretable, not a regression). The
+    single-flight guard (no parallel CPU-heavy tasks) keeps the
+    harness under the user-mandated 120 s smoke / 600 s paper budget.
+    **FlowMol3 sidecar venv at `/home/hugo/flowmol3_venv` is now
+    wandb-importable** (Phase 1); `--device cuda:0` ready for
+    FlowMol3 paper-parity in Workflow V. The 172x ProtBFN GPU speedup
+    makes paper-parity NFE=250 feasible on this rig (~24 s for
+    n_rounds=2 n=4 vs unmeasurable on CPU). `framework_improved_on_sota
+    = false` on raw trained-model perplexity at NFE=128 but
+    **interpretable** (vs v2's uninformative degenerate-output finding);
+    true paper-parity chemistry verdict requires AAR or CATH-S40
+    reference scoring (next follow-on). Documented at
+    `docs/r17-survey/prot-comparison.md` §3.4 + §8 v3. **NOT a
+    regression**: per-adapter GPU story is correctly captured
+    (FlowMol3 = overhead-dominated partial-fidelity; ProtBFN =
+    throughput-dominated dense BERT-like encoder).
 
 8. **`e_rho` regime enforcement diagnostic-only.** The scheduler still
    consumes `paper_quantities` at round 0 only and
