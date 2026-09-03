@@ -520,6 +520,12 @@ def _probe_reference_path(path: str | os.PathLike[str] | None) -> list[str]:
     The reference file format is one SMILES per line, optionally
     followed by a tab + identifier (RDKit convention; mirrors
     :func:`tools.run_mol_eval._load_smiles_file`).
+
+    The GEOM-DRUGS reference has ~1M+ SMILES — stream the file
+    line-by-line instead of materializing the whole text via
+    ``Path.read_text()`` and then a full list[str] via
+    ``.splitlines()``. Only one line sits in memory at a time
+    plus the growing output list.
     """
     if path is None:
         return []
@@ -527,11 +533,12 @@ def _probe_reference_path(path: str | os.PathLike[str] | None) -> list[str]:
     if not p.exists():
         return []
     out: list[str] = []
-    for ln in p.read_text(encoding="utf-8").splitlines():
-        ln = ln.strip()
-        if not ln:
-            continue
-        out.append(ln.split("\t", 1)[0])
+    with p.open("r", encoding="utf-8") as f:
+        for ln in f:
+            ln = ln.strip()
+            if not ln:
+                continue
+            out.append(ln.split("\t", 1)[0])
     return out
 
 

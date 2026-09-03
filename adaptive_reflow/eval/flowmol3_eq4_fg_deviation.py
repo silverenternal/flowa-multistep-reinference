@@ -277,11 +277,17 @@ def compute_fg_deviation_eq4(
         if reference_smiles_path is not None:
             ref_path = Path(reference_smiles_path)
             if ref_path.exists():
-                for ln in ref_path.read_text(encoding="utf-8").splitlines():
-                    ln = ln.strip()
-                    if not ln:
-                        continue
-                    ref_raw.append(ln.split("\t", 1)[0])
+                # Stream line-by-line: the GEOM-DRUGS reference has
+                # ~1M+ SMILES — Path.read_text().splitlines() would
+                # double-materialize the file (full string + full
+                # line list). Only one line sits in memory at a
+                # time plus the growing output list.
+                with ref_path.open("r", encoding="utf-8") as f:
+                    for ln in f:
+                        ln = ln.strip()
+                        if not ln:
+                            continue
+                        ref_raw.append(ln.split("\t", 1)[0])
         if not ref_raw:
             base["note"] = "fg_dev_eq4_reference_unavailable"
             base["n_gen"] = int(len(gen_mols))

@@ -759,10 +759,23 @@ def _load_smiles_file(path: Path) -> list[str]:
     newlines / blank-separator conventions do not poison the FCD
     reference set. Returns ``[]`` when the file is missing so the
     caller can decide whether to raise or skip.
+
+    The GEOM-DRUGS reference has ~1M+ SMILES — reading the entire
+    file via ``Path.read_text()`` materializes the whole file as a
+    single Python string AND ``.splitlines()`` materializes a full
+    list[str]. To avoid that double materialization we stream the
+    file line-by-line and accumulate the result one line at a time
+    so only a single line plus the growing output list sit in RAM.
     """
     if not path.exists():
         return []
-    return [ln.strip() for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+    out: list[str] = []
+    with path.open("r", encoding="utf-8") as f:
+        for ln in f:
+            stripped = ln.strip()
+            if stripped:
+                out.append(stripped)
+    return out
 
 
 def compute_fcd(

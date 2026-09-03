@@ -7,75 +7,14 @@ No I/O, no torch, no other adaptive_reflow imports.
    ``RoundResultBundle`` and ``validate_round_result_bundle`` are
    molecule-aware. They are re-exported from
    :mod:`adaptive_reflow.molecular.bundle` (canonical home) under the
-   historical names for back-compat. The re-export is **lazy** via
-   ``__getattr__`` to break the import cycle between
-   :mod:`contracts.bundle` and :mod:`molecular.bundle`.
+   historical names for back-compat. The re-export goes through
+   :mod:`contracts.bundle`'s lazy ``__getattr__``; an eager
+   ``from .bundle import RoundResultBundle, ...`` here triggers the
+   lazy resolution but does not introduce a circular import because
+   the ``contracts`` ↔ ``molecular`` cycle is broken at the root
+   (see :mod:`contracts.types` for the stdlib-only contract surface).
 """
 from __future__ import annotations
-
-from typing import Any
-
-# ---------------------------------------------------------------------------
-# Lazy re-exports of the molecule-aware atomic source bundle.
-# ---------------------------------------------------------------------------
-# ``RoundResultBundle`` and ``validate_round_result_bundle`` are
-# molecule-aware; they live in :mod:`adaptive_reflow.molecular.bundle`
-# (canonical home) and are re-exported under the historical names via
-# :mod:`contracts.bundle`. We declare the lazy ``__getattr__`` resolver
-# AND pre-populate the module namespace BEFORE the eager
-# ``from .bundle import ...`` block below because the eager chain
-# (``contracts.bundle`` -> ``contracts.types`` ->
-# ``molecular.channels`` -> ``molecular.__init__``) triggers a
-# ``from adaptive_reflow.contracts import RoundResultBundle`` while
-# ``adaptive_reflow.contracts`` is mid-init. Without the early
-# registration the eager import fails with a circular-import error
-# (Python's ``from X import Y`` consults ``X.__dict__`` directly during
-# a partial init and does NOT always fall through to module-level
-# ``__getattr__``).
-#
-# We register a ``__getattr__`` resolver AND pre-populate
-# ``globals()["RoundResultBundle"]`` / ``["validate_round_result_bundle"]``
-# so both lookup paths succeed.
-_LAZY_BUNDLE_NAMES = frozenset({"RoundResultBundle", "validate_round_result_bundle"})
-
-
-def __getattr__(name: str) -> Any:  # pragma: no cover - exercised via re-export
-    """Lazy-load the molecule-aware bundle re-exports to break the cycle."""
-    if name in _LAZY_BUNDLE_NAMES:
-        from . import bundle as _bundle_module
-
-        value = getattr(_bundle_module, name)
-        globals()[name] = value
-        return value
-    raise AttributeError(
-        f"module {__name__!r} has no attribute {name!r}"
-    )
-
-
-def _prepopulate_molecule_bundle_names() -> None:
-    """Pre-populate ``RoundResultBundle`` / ``validate_round_result_bundle``
-    in this module's namespace so the eager chain in
-    :mod:`adaptive_reflow.molecular.__init__` finds them via direct
-    namespace lookup. Safe to call at top-of-file: ``molecular.bundle``
-    does not import :mod:`adaptive_reflow.contracts.__init__` directly
-    (it imports only ``contracts.types`` / ``contracts.validators``),
-    so no cycle is triggered here.
-    """
-    try:
-        from adaptive_reflow.molecular.bundle import (
-            MoleculeRoundResultBundle as _RRB,
-        )
-        from adaptive_reflow.molecular.bundle import (
-            validate_molecule_round_result_bundle as _VRRB,
-        )
-    except ImportError:
-        return
-    globals()["RoundResultBundle"] = _RRB
-    globals()["validate_round_result_bundle"] = _VRRB
-
-
-_prepopulate_molecule_bundle_names()
-
 
 # ---- NewType aliases ----
 # ---- DTB-R1 + DTB-R2 contract (universal carriers) ----
@@ -96,10 +35,17 @@ from .bundle import (
     ChannelTransferEvidence,
     DynamicRestartTransferLedger,
     NoiseBiasInputRow,
+    RoundResultBundle,
     validate_channel_evidence,
+    validate_round_result_bundle,
 )
 
 # ---- DTB-NC1 / NC2 contract (re-exported molecule envelope) ----
+# ``contracts.envelope`` is lazy (its module-level ``__getattr__`` defers
+# the ``adaptive_reflow.molecular.envelope`` import until first access),
+# so this ``from .envelope import ...`` resolves the four dataclasses
+# and two validators through that lazy mechanism without triggering the
+# historical ``contracts`` ↔ ``molecular`` cycle.
 from .envelope import (
     EnvelopeClassification,
     EnvelopeLayer,
@@ -280,16 +226,8 @@ from .materialization import (
 )
 
 # ---------------------------------------------------------------------------
-# Lazy re-exports of the molecule-aware atomic source bundle.
+# Public surface
 # ---------------------------------------------------------------------------
-# NOTE: The ``__getattr__`` resolver and ``_LAZY_BUNDLE_NAMES`` set are
-# declared at the TOP of this module (before the eager ``from .bundle
-# import ...`` block) so the lazy resolver is in place when the eager
-# chain triggers ``from adaptive_reflow.contracts import
-# RoundResultBundle`` mid-init. See the comment near the top of the
-# file for the full rationale.
-
-
 __all__ = [
     "AUTHORITY_MODES",
     "AUDIT_SOURCE_REVOKED",

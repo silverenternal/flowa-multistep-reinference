@@ -55,3 +55,7 @@ dist/
 .cache/
 .verify_outputs/
 verification_outputs/
+
+# Claude Code workspace (workflow scripts, journals, scratch).
+# Regenerated on every workflow run; not part of the framework source.
+.claude/

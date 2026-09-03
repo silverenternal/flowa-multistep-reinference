@@ -52,6 +52,7 @@ import sys
 from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, cast
 
@@ -190,6 +191,13 @@ FLOWMOL3ADAPTER_NUM_STEPS_DEFAULT: int = 100
 
 #: Maximum size of the LRU-bounded ``_native_states`` cache.
 FLOWMOL3ADAPTER_NATIVE_STATES_MAXSIZE: int = 64
+
+#: Maximum size of the LRU-bounded synthetic-velocity-field weights cache.
+#: Bounds :func:`_cached_synthetic_weights` (and therefore the adapter's
+#: ``_synthetic_weights`` data path) so a long-running adapter cannot
+#: accumulate an unbounded number of weight arrays when called with many
+#: distinct ``n_atoms`` values.
+FLOWMOL3ADAPTER_SYNTHETIC_WEIGHTS_MAXSIZE: int = 8
 
 #: Audit / error codes (deterministic ASCII strings).
 AUDIT_FLOWMOL3_RESTART_BLEND: str = "flowmol3adapter_restart_blend"
@@ -634,6 +642,25 @@ def _numpy_random_init_weights(*, seed: int, n_atoms: int) -> dict[str, ArrayF64
         "W_e": kaiming(int(FLOWMOL3ADAPTER_N_BOND_TYPES), int(FLOWMOL3ADAPTER_N_BOND_TYPES)),
         "b_e": np.zeros(int(FLOWMOL3ADAPTER_N_BOND_TYPES), dtype=np.float64),
     }
+
+
+@lru_cache(maxsize=FLOWMOL3ADAPTER_SYNTHETIC_WEIGHTS_MAXSIZE)
+def _cached_synthetic_weights(
+    n_atoms: int, seed: int
+) -> dict[str, ArrayF64]:
+    """Module-level LRU-bounded cache for synthetic-velocity-field weights.
+
+    Bounded to :data:`FLOWMOL3ADAPTER_SYNTHETIC_WEIGHTS_MAXSIZE = 8`
+    entries so a long-running adapter cannot accumulate an unbounded
+    number of weight arrays when called with many distinct ``n_atoms``
+    values. Replaces the prior per-instance unbounded
+    ``self._synthetic_weights`` dict on
+    :class:`FlowMol3V2Adapter`; the cache key is ``(n_atoms, seed)`` so
+    the result is deterministic for fixed inputs. Shared across all
+    :class:`FlowMol3V2Adapter` instances (the weights are pure
+    functions of the inputs).
+    """
+    return _numpy_random_init_weights(seed=int(seed), n_atoms=int(n_atoms))
 
 
 # ---------------------------------------------------------------------------
@@ -1564,7 +1591,6 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # on first use.
         self._model: Any = None
         self._model_meta: dict[str, Any] = {}
-        self._synthetic_weights: dict[int, dict[str, ArrayF64]] = {}
 
     @property
     def use_upstream(self) -> bool:
@@ -1818,14 +1844,18 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
     def _get_synthetic_weights(
         self, n_atoms: int, seed: int
     ) -> dict[str, ArrayF64]:
-        """Cache-by-n_atoms random-init weights for the synthetic field."""
+        """Cache-by-(n_atoms, seed) random-init weights for the synthetic field.
+
+        Delegates to the module-level LRU-bounded
+        :func:`_cached_synthetic_weights` (maxsize =
+        :data:`FLOWMOL3ADAPTER_SYNTHETIC_WEIGHTS_MAXSIZE` = 8) so a
+        long-running adapter cannot accumulate an unbounded number of
+        weight arrays. The bound replaces the prior per-instance
+        unbounded ``self._synthetic_weights`` dict.
+        """
         cache_key = int(n_atoms)
-        if cache_key not in self._synthetic_weights:
-            self._synthetic_weights[cache_key] = _numpy_random_init_weights(
-                seed=int(seed) + cache_key * 31,
-                n_atoms=int(n_atoms),
-            )
-        return self._synthetic_weights[cache_key]
+        effective_seed = int(seed) + cache_key * 31
+        return _cached_synthetic_weights(cache_key, effective_seed)
 
     # ------------------------------------------------------------------
     # 2. build_initial_state

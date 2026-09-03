@@ -10,8 +10,11 @@
    ``from adaptive_reflow.contracts import CoordinateChannelRef``
    imports keep working.
 
-   New code should import the molecule channel vocabulary from
-   :mod:`adaptive_reflow.molecular`:
+   The aliases exported here are *placeholder* ``NewType('X', str)``
+   declarations; the canonical ones (with ``Mapping[str, Any]`` as the
+   underlying type) live in
+   :mod:`adaptive_reflow.molecular.channels`. New code should import
+   the molecule channel vocabulary from :mod:`adaptive_reflow.molecular`:
 
        from adaptive_reflow.molecular import (
            MOLECULE_CHANNELS,
@@ -60,55 +63,35 @@ FeedbackEvidenceRef = NewType("FeedbackEvidenceRef", Mapping[str, Any])
 TailBudgetRowId = NewType("TailBudgetRowId", str)
 
 # ---------------------------------------------------------------------------
-# Molecule channel aliases (lazy re-exported from adaptive_reflow.molecular)
+# Molecule channel aliases (placeholder NewTypes, stdlib-only)
 # ---------------------------------------------------------------------------
 # The four molecule channel aliases are canonical in
-# ``adaptive_reflow.molecular.channels``. They are re-exported here via
-# a lazy ``__getattr__`` (defined below) to break the import cycle:
+# ``adaptive_reflow.molecular.channels`` (with ``Mapping[str, Any]`` as
+# the underlying type). The aliases exported here are *placeholder*
+# ``NewType('X', str)`` declarations kept for back-compat so existing
+# ``from adaptive_reflow.contracts import CoordinateChannelRef``
+# imports keep working. They are intentionally distinct NewTypes from
+# the canonical molecule ones: at runtime both are erased, so callers
+# that pass the placeholder where the canonical is expected behave
+# correctly; at the static-typing layer the two are incompatible, which
+# is the desired nudge toward importing from ``adaptive_reflow.molecular``
+# for new code.
 #
-#   ``contracts.types`` -> ``molecular.channels`` -> ``molecular.__init__``
-#     -> ``molecular.bundle`` -> ``contracts.hashes`` -> ``contracts.types``
-#     (in-flight, no name yet)
-#
-# ``MOLECULE_CHANNELS`` is the literal tuple of channel names; it is
-# eagerly resolved (it's just a tuple of strings, not a NewType).
-from adaptive_reflow.molecular.channels import (  # noqa: E402
-    MOLECULE_CHANNELS as _MOLECULE_CHANNELS,
+# ``_MOLECULE_CHANNELS`` is the literal tuple of channel names; it is
+# hard-coded here as a stdlib-only constant (no eager import of
+# ``adaptive_reflow.molecular``) so the ``contracts`` ↔ ``molecular``
+# import cycle is broken at the root.
+CoordinateChannelRef = NewType("CoordinateChannelRef", str)
+ChargeChannelRef = NewType("ChargeChannelRef", str)
+RawPairChannelRef = NewType("RawPairChannelRef", str)
+ProjectedPairChannelRef = NewType("ProjectedPairChannelRef", str)
+
+_MOLECULE_CHANNELS: tuple[str, ...] = (
+    "coordinate",
+    "charge",
+    "raw_pair",
+    "projected_pair",
 )
-
-_MOLECULE_CHANNEL_ALIASES = frozenset(
-    {
-        "CoordinateChannelRef",
-        "ChargeChannelRef",
-        "RawPairChannelRef",
-        "ProjectedPairChannelRef",
-    }
-)
-
-
-def __getattr__(name: str) -> Any:  # pragma: no cover - exercised via re-export
-    """Lazy-load the molecule channel aliases to break the import cycle."""
-    if name in _MOLECULE_CHANNEL_ALIASES:
-        from adaptive_reflow.molecular.channels import (
-            ChargeChannelRef,
-            CoordinateChannelRef,
-            ProjectedPairChannelRef,
-            RawPairChannelRef,
-        )
-
-        # Map the requested name to the molecule alias.
-        mapping = {
-            "CoordinateChannelRef": CoordinateChannelRef,
-            "ChargeChannelRef": ChargeChannelRef,
-            "RawPairChannelRef": RawPairChannelRef,
-            "ProjectedPairChannelRef": ProjectedPairChannelRef,
-        }
-        value = mapping[name]
-        globals()[name] = value
-        return value
-    raise AttributeError(
-        f"module {__name__!r} has no attribute {name!r}"
-    )
 
 
 # ---------------------------------------------------------------------------
