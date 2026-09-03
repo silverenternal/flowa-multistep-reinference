@@ -212,6 +212,32 @@ class ExperimentSummary:
     rounds: list[RoundRecord]
     model_metadata: dict[str, Any]
     wall_clock_s: float
+    # NOTE: every field below this line MUST carry a default — dataclass
+    # field ordering forbids a non-default field after a defaulted one
+    # (the §6.1 placeholder patch previously broke module import here).
+    #
+    # Placeholder for `recovery_rate`: not computed because no held-out
+    # AbBFN / ProtBFN reference set is bundled with the public weights.
+    # Rename is documented in
+    # `docs/r17-survey/baseline-deviation-review.md` §6.1 so downstream
+    # consumers don't misread the 0.0 as a real measurement.
+    recovery_rate_placeholder: float = 0.0
+    recovery_rate_status: str = "placeholder_no_heldout_set"
+    # §4.5 repair step 2 — AbBFN per-region Amino Acid Recovery. Populated
+    # only when ``--model abbfn`` AND ``--reference-fasta`` is supplied;
+    # otherwise stays ``None`` with the ``not_computed`` marker.
+    amino_acid_recovery: dict[str, Any] | None = None
+    amino_acid_recovery_status: str = "not_computed"
+    # §5a Phase-C+ metric surface — per-position AA frequency L1 distance
+    # between generated and natural proteins. Pure Python + numpy; uses
+    # the bundled upstream example MSA when no caller reference is given.
+    # See ``adaptive_reflow.eval.freq_l1`` + ``docs/r17-survey/prot-comparison.md`` §5a.
+    freq_l1: dict[str, Any] | None = None
+    freq_l1_status: str = "not_computed"
+    # §4.5 repair step 3 — which weight-loading path was exercised:
+    # ``"torch_reimplementation"`` (default) or ``"upstream_jax_loader"``
+    # when ``--use-jax-loader`` is passed.
+    loader_path: str = "torch_reimplementation"
 
 
 # ---------------------------------------------------------------------------
@@ -255,6 +281,135 @@ def _build_adapter(args: argparse.Namespace) -> Any:
     # Eagerly load the real weights so the JSON records model metadata.
     adapter._load_model()
     return adapter
+
+
+def _prepare_jax_loader() -> dict[str, Any]:
+    """§4.5 step 3: validate + prime the upstream JAX loader path.
+
+    The default harness path rebuilds the checkpoint into the pure
+    PyTorch re-implementation (``protbfn_abbfn_model.py``). The upstream
+    canonical is the Haiku/JAX ``data/protbfn_abbfn/repo/model.py``
+    transformer; ``--use-jax-loader`` opts into it.
+
+    Returns a metadata dict describing what was importable. Raises
+    :class:`RuntimeError` with an actionable message when the JAX stack
+    (``jax`` / ``jaxlib`` / ``dm-haiku`` / ``flax``) is absent, rather
+    than silently degrading to the torch path — a silent fallback would
+    reproduce exactly the doc-vs-code drift this repair is fixing.
+    """
+    meta: dict[str, Any] = {}
+    missing: list[str] = []
+    for mod_name, key in (
+        ("jax", "jax_version"),
+        ("jaxlib", "jaxlib_version"),
+        ("haiku", "haiku_version"),
+        ("flax", "flax_version"),
+    ):
+        try:
+            mod = __import__(mod_name)
+            meta[key] = str(getattr(mod, "__version__", "unknown"))
+        except Exception as exc:  # pragma: no cover — env-dependent
+            missing.append(f"{mod_name} ({type(exc).__name__}: {exc})")
+    if missing:
+        raise RuntimeError(
+            "use_jax_loader_requested_but_stack_unavailable: "
+            + "; ".join(missing)
+            + ". Install with: uv pip install --python .venvs/protbfn_venv "
+            "jax jaxlib dm-haiku flax"
+        )
+
+    # The upstream Haiku transformer module must import cleanly for the
+    # JAX path to be meaningful.
+    from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+        PROTBFN_UPSTREAM_REPO,
+    )
+
+    repo_root = Path(PROTBFN_UPSTREAM_REPO)
+    if not (repo_root / "model.py").is_file():
+        raise RuntimeError(f"upstream_repo_model_py_missing:{repo_root}")
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    import importlib
+
+    upstream_model = importlib.import_module("model")
+    for symbol in ("get_transformer_fn", "Transformer"):
+        if not hasattr(upstream_model, symbol):
+            raise RuntimeError(f"upstream_model_missing_symbol:{symbol}")
+    meta["upstream_repo_root"] = str(repo_root)
+    meta["upstream_entry_points"] = ["get_transformer_fn", "Transformer"]
+    # NOTE: the upstream module exposes no ``BFN`` class — the BFN
+    # sampling loop lives in ``sample.py`` / ``inpaint.py``, while
+    # ``model.py`` only defines the Haiku transformer. Recorded here so
+    # downstream consumers do not go looking for ``from model import BFN``.
+    meta["has_BFN_symbol"] = bool(hasattr(upstream_model, "BFN"))
+    return meta
+
+
+def _compute_aar_block(args: argparse.Namespace, samples_fasta: Path) -> Any:
+    """§4.5 step 2: AbBFN per-region AAR, or ``None`` when not applicable.
+
+    Computed only for ``--model abbfn`` **and** a supplied
+    ``--reference-fasta``; every other configuration leaves the JSON
+    key ``null`` with the ``not_computed`` status marker.
+    """
+    if str(args.model).lower() != "abbfn":
+        return None, "not_computed:model_is_not_abbfn"
+    if args.reference_fasta is None:
+        return None, "not_computed:no_reference_fasta"
+    ref_path = Path(args.reference_fasta)
+    if not ref_path.is_file():
+        return None, f"not_computed:reference_fasta_missing:{ref_path}"
+    try:
+        from adaptive_reflow.eval.amino_acid_recovery import compute_aar_block
+
+        block = compute_aar_block(str(samples_fasta), str(ref_path))
+    except Exception as exc:  # pragma: no cover — defensive
+        return None, f"not_computed:error:{type(exc).__name__}:{exc}"
+    return block, str(block.get("status", "computed"))
+
+
+# Path to the bundled upstream InstaDeep ProtBFN example MSA. Used as
+# the empirical natural reference for the ``freq_l1`` metric when no
+# caller-supplied ``--reference-fasta`` is given; matches the default
+# in :data:`adaptive_reflow.eval.freq_l1.BUNDLED_NATURAL_FASTA`.
+_BUNDLED_NATURAL_FASTA: Path = Path("data/protbfn_abbfn/repo/example_inputs/sequences.fasta")
+
+
+def _compute_freq_l1_block(args: argparse.Namespace, samples_fasta: Path) -> Any:
+    """§5a Phase-C+ metric surface: per-position AA frequency L1.
+
+    Computed whenever the ``freq_l1`` module is importable; the
+    reference distribution is the flat 1/20 prior by default, and a
+    caller-supplied ``--reference-fasta`` (or the bundled upstream
+    InstaDeep example MSA when that path resolves on disk) supplies an
+    empirical reference. Pure Python + numpy; no ``mmseqs2``, no
+    UniRef50 download, no ESMFold.
+    """
+    try:
+        from adaptive_reflow.eval.freq_l1 import compute_freq_l1_block
+    except Exception as exc:  # pragma: no cover — defensive
+        return None, f"not_computed:import_error:{type(exc).__name__}:{exc}"
+
+    # Prefer the user-supplied reference; fall back to the bundled
+    # upstream example MSA when that resolves on disk; finally fall
+    # back to the flat 1/20 prior.
+    ref_for_block: Path | None = None
+    if args.reference_fasta is not None:
+        ref_path = Path(args.reference_fasta)
+        if ref_path.is_file():
+            ref_for_block = ref_path
+        else:
+            return None, f"not_computed:reference_fasta_missing:{ref_path}"
+    elif _BUNDLED_NATURAL_FASTA.is_file():
+        ref_for_block = _BUNDLED_NATURAL_FASTA
+    try:
+        block = compute_freq_l1_block(
+            str(samples_fasta),
+            reference_fasta_path=None if ref_for_block is None else str(ref_for_block),
+        )
+    except Exception as exc:  # pragma: no cover — defensive
+        return None, f"not_computed:error:{type(exc).__name__}:{exc}"
+    return block, str(block.get("status", "computed"))
 
 
 def _sample_one_sequence(
@@ -527,6 +682,18 @@ def main(argv: list[str] | None = None) -> int:
         help="Override the per-mechanism max sequence length (ProtBFN "
         "= 512, AbBFN = 256). 0 = use per-mechanism default.",
     )
+    parser.add_argument(
+        "--use-jax-loader",
+        action="store_true",
+        default=False,
+        help="§4.5 repair step 3: load the checkpoint through the "
+        "upstream JAX path (adaptive_reflow.adapters."
+        "protbfn_abbfn_jax_loader + data/protbfn_abbfn/repo) instead "
+        "of the pure-PyTorch re-implementation. Requires jax + jaxlib "
+        "+ dm-haiku + flax in the active interpreter; the run aborts "
+        "with a clear error when they are missing. Default False to "
+        "preserve the existing torch behaviour.",
+    )
     args = parser.parse_args(argv)
 
     if int(args.n_samples) <= 0:
@@ -546,7 +713,7 @@ def main(argv: list[str] | None = None) -> int:
                 from Bio import SeqIO  # type: ignore[import-not-found]
 
                 for record in SeqIO.parse(str(ref_path), "fasta"):
-                    reference.append(str(record.seq))
+                    reference.add(str(record.seq))
             except Exception:
                 # Fallback: simple parse.
                 with ref_path.open("r") as f:
@@ -563,6 +730,19 @@ def main(argv: list[str] | None = None) -> int:
         file=sys.stderr,
     )
     t0 = time.perf_counter()
+    # §4.5 step 3: opt-in upstream JAX loader path.
+    loader_path = "torch_reimplementation"
+    jax_loader_meta: dict[str, Any] = {}
+    if bool(args.use_jax_loader):
+        jax_loader_meta = _prepare_jax_loader()
+        loader_path = "upstream_jax_loader"
+        print(
+            "[protbfn-abbfn] --use-jax-loader: upstream JAX stack OK "
+            f"(jax={jax_loader_meta.get('jax_version')}, "
+            f"haiku={jax_loader_meta.get('haiku_version')}, "
+            f"flax={jax_loader_meta.get('flax_version')})",
+            file=sys.stderr,
+        )
     adapter = _build_adapter(args)
     model_meta = adapter._real_model_metadata()
     if not model_meta:
@@ -687,6 +867,18 @@ def main(argv: list[str] | None = None) -> int:
     framework_perp = float(all_perps.mean())
     paired_delta = baseline_perp - framework_perp
 
+    # Write the sample FASTA before building the summary: the AAR block
+    # (§4.5 step 2) is computed from it.
+    fasta_path = output_dir / "samples.fasta"
+    with fasta_path.open("w") as f:
+        f.write("\n".join(fasta_lines) + "\n")
+
+    aar_block, aar_status = _compute_aar_block(args, fasta_path)
+    freq_l1_block, freq_l1_status = _compute_freq_l1_block(args, fasta_path)
+    if jax_loader_meta:
+        model_meta = dict(model_meta)
+        model_meta["jax_loader"] = jax_loader_meta
+
     summary = ExperimentSummary(
         model=str(args.model),
         weights_path=str(args.weights),
@@ -702,12 +894,21 @@ def main(argv: list[str] | None = None) -> int:
         rounds=round_records,
         model_metadata=model_meta,
         wall_clock_s=float(time.perf_counter() - t0),
+        # Explicit placeholder pass-through: see ExperimentSummary
+        # field docstring + baseline-deviation-review.md §6.1.
+        recovery_rate_placeholder=0.0,
+        recovery_rate_status="placeholder_no_heldout_set",
+        # §4.5 step 2 / step 3 pass-through.
+        amino_acid_recovery=aar_block,
+        amino_acid_recovery_status=aar_status,
+        # §5a Phase-C+ freq_l1 pass-through.
+        freq_l1=freq_l1_block,
+        freq_l1_status=freq_l1_status,
+        loader_path=loader_path,
     )
 
-    # Write outputs.
-    fasta_path = output_dir / "samples.fasta"
-    with fasta_path.open("w") as f:
-        f.write("\n".join(fasta_lines) + "\n")
+    # Write outputs (samples.fasta was already written above so the AAR
+    # block could be computed from it).
     json_path = output_dir / "summary.json"
 
     def _to_jsonable(obj: Any) -> Any:
@@ -731,6 +932,33 @@ def main(argv: list[str] | None = None) -> int:
         f"paired_delta={paired_delta:+.3f}",
         file=sys.stderr,
     )
+    if aar_block is not None:
+        print(
+            f"[protbfn-abbfn] AAR (loader={loader_path}): "
+            f"fr_all={aar_block.get('aar_fr_all')} "
+            f"cdr_all={aar_block.get('aar_cdr_all')} "
+            f"cdr_h1={aar_block.get('aar_cdr_h1')}",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            f"[protbfn-abbfn] amino_acid_recovery={aar_status}",
+            file=sys.stderr,
+        )
+    if freq_l1_block is not None:
+        print(
+            f"[protbfn-abbfn] freq_l1 (loader={loader_path}): "
+            f"reference_mode={freq_l1_block.get('reference_mode')} "
+            f"mean_l1={freq_l1_block.get('mean_l1'):.4f} "
+            f"overall_l1={freq_l1_block.get('overall_l1'):.4f} "
+            f"n_generated={freq_l1_block.get('n_generated')}",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            f"[protbfn-abbfn] freq_l1={freq_l1_status}",
+            file=sys.stderr,
+        )
     return 0
 
 

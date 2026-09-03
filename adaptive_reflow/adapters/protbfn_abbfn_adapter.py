@@ -169,7 +169,23 @@ PROTBFN_NATIVE_STATES_MAXSIZE: int = 32
 
 #: Mode literal.
 Mechanism = Literal["ProtBFN", "AbBFN", "AbBFN2"]
-Mode = Literal["torch", "synthetic"]
+Mode = Literal["torch", "synthetic", "upstream_jax"]
+
+#: Default upstream-jax weights directory (real ProtBFN / AbBFN
+#: checkpoint trees). The ``upstream_jax`` mode resolves this when the
+#: caller did not pass an explicit ``checkpoint_path``.
+PROTBFN_UPSTREAM_DEFAULT_WEIGHTS_ROOT: str = (
+    "/home/hugo/codes/flowa-multistep-reinference/data/protbfn_abbfn/weights_real"
+)
+
+#: Audit tag emitted when the trajectory was produced via the
+#: upstream InstaDeep Haiku/JAX sampler rather than the framework's
+#: pure-PyTorch port.
+AUDIT_PROTBFN_UPSTREAM_JAX: str = "protbfn_upstream_jax"
+
+#: K-dim of the upstream sampler's full tokenizer (vs. the adapter
+#: surface vocab of 22 amino acids).
+PROTBFN_UPSTREAM_VOCAB_SIZE: int = 32
 
 # Local type alias.
 ArrayF64 = NDArray[np.float64]
@@ -310,6 +326,14 @@ def _sample_uniform_categorical(
     theta = theta + jitter
     theta = theta / theta.sum(axis=1, keepdims=True)
     return np.asarray(theta, dtype=np.float64).reshape(int(length), int(vocab_size))
+
+
+def _softmax(z: np.ndarray, axis: int = -1) -> np.ndarray:
+    """Numerically stable softmax along ``axis``."""
+    z = np.asarray(z, dtype=np.float64)
+    z = z - np.max(z, axis=axis, keepdims=True)
+    exp_z = np.exp(z)
+    return exp_z / np.sum(exp_z, axis=axis, keepdims=True)
 
 
 # ---------------------------------------------------------------------------
@@ -488,6 +512,53 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             self._mode = "torch"
         elif force_mode == "synthetic":
             self._mode = "synthetic"
+        elif force_mode == "upstream_jax":
+            # Upstream InstaDeep Haiku/JAX sampler path. Routes through
+            # ``data/protbfn_abbfn/repo/sample.py:make_sample_fn`` so the
+            # BFN refinement loop matches the paper Algorithm 2 exactly.
+            # The framework's torch port stays the default; ``auto``
+            # never selects ``upstream_jax`` — the caller must opt in
+            # explicitly because the JAX stack adds a non-trivial import
+            # cost and the upstream API is functional, not class-based.
+            try:
+                from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+                    is_upstream_available,
+                )
+            except Exception as _exc:  # pragma: no cover — defensive
+                raise RuntimeError(
+                    f"upstream_jax_shim_import_failed:{type(_exc).__name__}:{_exc}"
+                )
+            if not is_upstream_available():
+                raise RuntimeError(
+                    "upstream_jax_requested_but_jax_stack_unavailable: "
+                    "install jax + jaxlib + dm-haiku + flax in the "
+                    "active interpreter (see protbfn_venv in "
+                    "docs/environments.md)"
+                )
+            # Resolve to a default checkpoint dir when the caller did
+            # not supply one. Upstream make_sample_fn reads
+            # ``tree_def.npy`` + ``array_<i>.npy`` files via
+            # ``utils.load_pytree_from_dir``.
+            if (
+                self._checkpoint_path == Path("synthetic")
+                or not self._checkpoint_path.exists()
+            ):
+                default_dir = (
+                    Path(PROTBFN_UPSTREAM_DEFAULT_WEIGHTS_ROOT)
+                    / str(self._mechanism)
+                )
+                if default_dir.is_dir():
+                    self._checkpoint_path = default_dir
+            if not self._checkpoint_path.is_dir():
+                raise FileNotFoundError(
+                    f"upstream_jax_checkpoint_dir_missing:{self._checkpoint_path}"
+                )
+            if not (self._checkpoint_path / "tree_def.npy").is_file():
+                raise FileNotFoundError(
+                    f"upstream_jax_tree_def_missing:"
+                    f"{self._checkpoint_path / 'tree_def.npy'}"
+                )
+            self._mode = "upstream_jax"
         else:
             raise ValueError(f"unknown_force_mode:{force_mode}")
 
@@ -519,6 +590,8 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 seed=int(self._synthetic_seed),
                 vocab_size=int(self._vocab_size),
             )
+        # Upstream-jax handles keep ``self._synthetic_weights=None``;
+        # solve_ode() routes through ``make_sample_fn`` instead.
 
         # LRU-bounded native-states cache (audit A-3 mirror).
         self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
@@ -894,6 +967,149 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             traj[step + 1] = theta
         return traj
 
+    def _upstream_jax_refine(
+        self,
+        theta0: ArrayF64,
+        *,
+        num_steps: int,
+        sample_length: int,
+        seed: int,
+    ) -> ArrayF64:
+        """Run the upstream ``sample.make_sample_fn`` sampler.
+
+        Routes through the canonical InstaDeep Haiku/JAX sampler at
+        ``data/protbfn_abbfn/repo/sample.py:33``. The upstream sampler
+        runs paper Algorithm 2 inside a single ``jax.lax.scan`` and
+        returns argmax tokens of shape ``(sample_length,)``. We
+        project those tokens back to a ``(num_steps + 1, L, K_surface)``
+        trajectory so the rest of the framework sees a well-shaped
+        per-position categorical::
+
+            traj[0] = theta0                                # uniform prior
+            traj[k+1] = theta0   for k in [0, num_steps-1)   # carry-forward
+            traj[num_steps] = one_hot(argmax_tokens, K)     # upstream decode
+
+        The carry-forward is the documented semantic for
+        ``mode == "upstream_jax"``: the upstream sampler does NOT
+        expose intermediate states, so the framework's per-step
+        digest logic sees the prior on every intermediate row and
+        the upstream argmax decode on the final row. Any
+        downstream audit that requires per-step state should use
+        ``mode == "torch"`` or ``mode == "synthetic"``.
+
+        The function converts the JAX/NumPy outputs back to
+        ``float64`` ndarrays in the adapter's surface vocab so the
+        ``trajectory`` shape matches the protocol's expectation.
+        """
+        # Lazy-import the upstream shim + JAX stack.
+        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+            ProtBFNUpstreamLoadResult,
+        )
+        import jax  # local — only when ``upstream_jax`` mode is active
+        import jax.numpy as jnp  # local
+
+        # 1. Build the upstream sampler.
+        loader = ProtBFNUpstreamLoadResult()
+        if not loader.materialize(model_kind=str(self._mechanism)):
+            raise RuntimeError(
+                f"upstream_jax_materialize_failed:{loader.last_error}"
+            )
+        sample_fn = loader.build_sample_fn(
+            params=self._load_upstream_params(),
+            num_steps=int(num_steps),
+            sample_length=int(sample_length),
+        )
+
+        # 2. Draw one sample under a deterministic PRNGKey derived from
+        # ``seed``. The upstream sampler is functional and reads a fresh
+        # ``PRNGKey`` per call; this matches the framework's
+        # byte-determinism contract for fixed (theta0, num_steps, seed).
+        key = jax.random.PRNGKey(int(seed))
+        # ``make_sample_fn`` returns ``argmax(phi)`` of shape
+        # ``(sample_length,)``. Convert to numpy int64.
+        argmax_jax = sample_fn(key=key)
+        argmax_np = np.asarray(
+            jax.device_get(argmax_jax), dtype=np.int64
+        ).reshape(int(sample_length))
+
+        # 3. Project upstream (L, K_upstream=32) tokens to the adapter's
+        # surface (L, K_surface) per-position categorical via a one-hot
+        # in K_upstream space then a left-truncate to K_surface (the
+        # first K_surface tokens of the upstream tokenizer correspond
+        # to the canonical amino-acid channel; the trailing K are the
+        # control / structural tokens that the framework's surface
+        # channel omits).
+        K_surface = int(self._vocab_size)
+        K_upstream = int(PROTBFN_UPSTREAM_VOCAB_SIZE)
+        K_eff = min(K_surface, K_upstream)
+        # Build a (L, K_surface) one-hot. Any upstream token index >=
+        # K_surface is folded into surface token 0 (the reserved pad /
+        # unknown slot) — this matches the framework's existing torch
+        # path, which also projects wider-vocab logits back into the
+        # surface by left-truncation.
+        clipped = np.where(
+            argmax_np >= K_eff, np.zeros_like(argmax_np), argmax_np
+        ).reshape(int(sample_length))
+        one_hot_upstream = np.eye(K_upstream, dtype=np.float64)[clipped]
+        if K_upstream > K_surface:
+            one_hot_surface = one_hot_upstream[:, :K_surface]
+        else:
+            pad = np.zeros(
+                (int(sample_length), K_surface - K_upstream), dtype=np.float64
+            )
+            one_hot_surface = np.concatenate(
+                [one_hot_upstream, pad], axis=-1
+            )
+        # Row-renormalize (defensive — the one-hot rows already sum to
+        # 1, but the row-normalization keeps the trajectory consistent
+        # with the framework's protocol that ``traj[i].sum(axis=-1) ==
+        # 1`` for every ``i``).
+        one_hot_surface = one_hot_surface / np.maximum(
+            one_hot_surface.sum(axis=-1, keepdims=True), 1e-30
+        )
+
+        # 4. Build the trajectory.
+        L = int(sample_length)
+        traj = np.empty((int(num_steps) + 1, L, K_surface), dtype=np.float64)
+        traj[0] = np.asarray(theta0, dtype=np.float64).reshape(L, K_surface)
+        # Carry-forward intermediate rows from theta0 — the upstream
+        # sampler does not expose intermediate states.
+        for k in range(1, int(num_steps)):
+            traj[k] = traj[0]
+        traj[int(num_steps)] = one_hot_surface
+
+        # Defensive: clear the JAX-traced tensors so the cached
+        # upstream sampler does not leak JAX tracers into subsequent
+        # solve_ode calls.
+        del argmax_jax, key, sample_fn, loader
+
+        return traj
+
+    def _load_upstream_params(self) -> Any:
+        """Load the upstream Haiku pytree from ``self._checkpoint_path``.
+
+        Thin wrapper around
+        :func:`adaptive_reflow.adapters.protbfn_abbfn_jax_loader
+        .load_protbfn_pytree`. Returns an ``OrderedDict[str,
+        np.ndarray]`` whose keys are the canonical Haiku module
+        parameter names and whose values are float32 arrays in the
+        canonical (out, in) Linear orientation. The upstream
+        ``model.get_transformer_fn`` then binds these by name.
+
+        Note: the JAX-free loader returns numpy arrays; the upstream
+        Haiku transformer expects its parameters as a JAX pytree. The
+        ``make_sample_fn`` call below relies on the fact that the
+        upstream ``hk.transform`` ``init`` function is only used for
+        ``params`` shape introspection in this adapter's path; the
+        ``load_from_pytree`` step inside the shim already produced a
+        JAX-compatible pytree via the same loader.
+        """
+        from adaptive_reflow.adapters.protbfn_abbfn_jax_loader import (
+            load_protbfn_pytree,
+        )
+
+        return load_protbfn_pytree(self._checkpoint_path)
+
     # ------------------------------------------------------------------
     # 6.5. _load_model — lazy real-weights loader
     # ------------------------------------------------------------------
@@ -972,6 +1188,497 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 out["weights_path"] = str(self._checkpoint_path)
         return out
 
+    # ------------------------------------------------------------------
+    # 6.6. Upstream-compat shim
+    # ------------------------------------------------------------------
+
+    def upstream_jax_path_available(self) -> bool:
+        """``True`` iff ``jax`` + ``haiku`` + ``flax`` are importable.
+
+        Convenience shim around
+        :func:`adaptive_reflow.adapters.protbfn_abbfn_upstream_shim
+        .upstream_jax_available`. Exposed on the adapter so callers can
+        decide whether to opt into ``force_mode="upstream_jax"``.
+
+        Implementation note: the framework's ``protbfn_venv`` is
+        Python 3.12 and the upstream InstaDeep environment.yaml pins
+        ``jax==0.4.13`` / ``jaxlib==0.4.13``, which only ship wheels
+        for Python <= 3.11. The framework therefore defaults to the
+        pure-PyTorch path even when the upstream JAX stack is later
+        installed side-by-side; users opt in by setting
+        ``PROTBFN_USE_UPSTREAM_JAX=1`` and ensuring their JAX install
+        is compatible with their Python.
+        """
+        try:
+            from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+                upstream_jax_available,
+            )
+
+            return bool(upstream_jax_available())
+        except Exception:
+            return False
+
+    def upstream_repo_path(self) -> Any:
+        """Return the absolute path to the upstream InstaDeep repo."""
+        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+            UPSTREAM_REPO_ROOT,
+        )
+
+        return UPSTREAM_REPO_ROOT
+
+    def upstream_weights_path(self) -> Any:
+        """Return the default real-weights checkpoint directory.
+
+        Resolution order:
+
+        1. The constructor's ``checkpoint_path`` when it points at an
+           existing directory (covers explicit overrides).
+        2. :func:`adaptive_reflow.adapters.protbfn_abbfn_upstream_shim
+           .default_upstream_weights_path` for ``self._mechanism``.
+        """
+        if self._checkpoint_path is not None and self._checkpoint_path.is_dir():
+            return self._checkpoint_path
+        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+            default_upstream_weights_path,
+        )
+
+        return default_upstream_weights_path(str(self._mechanism))
+
+    def try_import_upstream(self) -> dict[str, Any]:
+        """Lazy importer for the upstream ``protbfn_jax`` modules.
+
+        Thin pass-through to
+        :func:`adaptive_reflow.adapters.protbfn_abbfn_upstream_shim
+        .try_import_upstream`. Returns a dict whose keys are the
+        canonical names (``get_transformer_fn``, ``make_sample_fn``,
+        ``make_inpaint_fn``, ``approximate_loss``,
+        ``load_pytree_from_dir``, ``sample_to_string``,
+        ``string_to_sample``, ``repetition_score``, ``id_to_token``).
+        Raises :class:`UpstreamJAXNotAvailableError` if JAX is not
+        installed; raises :class:`FileNotFoundError` if the upstream
+        repo is missing on disk.
+        """
+        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+            try_import_upstream as _try_import,
+        )
+
+        return _try_import()
+
+    # ------------------------------------------------------------------
+    # 6.7. Algorithm-2 / Algorithm-3 plumbing (paper-faithful samplers)
+    # ------------------------------------------------------------------
+
+    def _make_sample_fn(
+        self,
+        num_steps: int,
+        sample_length: int,
+        seed: int,
+    ) -> dict[str, Any]:
+        """Build a paper-faithful Algorithm 2 sample function.
+
+        Returns a dict with keys::
+
+            {
+                "theta_traj": np.ndarray of shape (num_steps + 1, L, K),
+                "argmax_tokens": np.ndarray of shape (L,),
+                "sample_fn": callable(seed_key) -> {"tokens", "phi_logits"},
+            }
+
+        The inner ``sample_fn`` consumes a NumPy ``Generator``-style
+        ``seed_key`` (int) and re-runs Algorithm 2 from the same prior.
+        It uses the loaded real-weights encoder when available and the
+        synthetic refiner otherwise - same fall-through as
+        :meth:`solve_ode`.
+
+        Mirrors ``data/protbfn_abbfn/repo/sample.py:33-105``: fixed
+        isotropic noise ``z ~ N(0, I)`` in logit space, uniform prior
+        ``y_0 = 0``, recurrence ``y_{k+1} = beta_s * (K * phi - 1) +
+        sqrt(beta_s * K) * z`` with ``beta_s = beta_1 * s**2`` and
+        ``s = (k+1)/num_steps``.
+        """
+        n = int(num_steps)
+        L = int(sample_length)
+        rng = np.random.default_rng(int(seed))
+        # Fixed isotropic noise z of shape (L, K=32).
+        K_MODEL = 32
+        z = rng.standard_normal(size=(L, K_MODEL)).astype(np.float64)
+        # Uniform prior in logit space y_0 = 0.
+        y = np.zeros((L, K_MODEL), dtype=np.float64)
+        traj = np.empty((n + 1, L, K_MODEL), dtype=np.float64)
+        traj[0] = _softmax(y, axis=-1)
+
+        encoder = self._torch_model  # may be None
+        if encoder is None:
+            self._load_model()
+            encoder = self._torch_model
+
+        for step in range(n):
+            s = (step + 1) / n
+            beta_s = 2.0 * (s ** 2.0)
+            # theta = softmax(y), phi = softmax(encoder(theta))
+            theta = _softmax(y, axis=-1)
+            phi = self._forward_encoder(encoder, theta)
+            y = beta_s * (float(K_MODEL) * phi - 1.0) + np.sqrt(
+                beta_s * float(K_MODEL)
+            ) * z
+            traj[step + 1] = _softmax(y, axis=-1)
+
+        # Final inference step + argmax decode.
+        theta_final = _softmax(y, axis=-1)
+        phi_final = self._forward_encoder(encoder, theta_final)
+        argmax_tokens = np.argmax(phi_final, axis=-1).astype(np.int64)
+
+        def sample_fn(seed_key: int) -> dict[str, Any]:
+            inner_rng = np.random.default_rng(int(seed_key))
+            inner_z = inner_rng.standard_normal(size=(L, K_MODEL)).astype(
+                np.float64
+            )
+            inner_y = np.zeros((L, K_MODEL), dtype=np.float64)
+            for inner_step in range(n):
+                s = (inner_step + 1) / n
+                beta_s = 2.0 * (s ** 2.0)
+                theta = _softmax(inner_y, axis=-1)
+                phi = self._forward_encoder(encoder, theta)
+                inner_y = beta_s * (
+                    float(K_MODEL) * phi - 1.0
+                ) + np.sqrt(beta_s * float(K_MODEL)) * inner_z
+            final_theta = _softmax(inner_y, axis=-1)
+            final_phi = self._forward_encoder(encoder, final_theta)
+            return {
+                "tokens": np.argmax(final_phi, axis=-1).astype(np.int64),
+                "phi_logits": final_phi,
+            }
+
+        return {
+            "theta_traj": traj,
+            "argmax_tokens": argmax_tokens,
+            "sample_fn": sample_fn,
+        }
+
+    def _make_inpaint_fn(
+        self,
+        num_steps: int,
+        num_particles: int,
+        sample_length: int,
+        seed: int,
+    ) -> Callable[[int, np.ndarray, np.ndarray], np.ndarray]:
+        """Build a paper-faithful Algorithm 3 inpaint function.
+
+        Mirrors ``data/protbfn_abbfn/repo/inpaint.py:32-144``: particle
+        filter in logit space with importance resampling on the
+        squared-error logit and the "force phi to x where mask==1"
+        rule.
+
+        Returns a callable ``inpaint_fn(seed_key, x, mask) ->
+        argmax_tokens`` of shape ``(L,)`` where ``mask==1`` means
+        "preserve x at this position" (matches upstream
+        ``mask = 1 - jnp.clip(...)``).
+        """
+        n = int(num_steps)
+        p = int(num_particles)
+        L = int(sample_length)
+        K_MODEL = 32
+
+        encoder = self._torch_model
+        if encoder is None:
+            self._load_model()
+            encoder = self._torch_model
+
+        def inpaint_fn(
+            seed_key: int,
+            x: np.ndarray,
+            mask: np.ndarray,
+        ) -> np.ndarray:
+            rng = np.random.default_rng(int(seed_key))
+            x_int = np.asarray(x, dtype=np.int64).reshape(L)
+            mask_int = np.asarray(mask, dtype=np.int64).reshape(L)
+            # Fixed per-particle noise z of shape (P, L, K).
+            zs = rng.standard_normal(size=(p, L, K_MODEL)).astype(np.float64)
+            # Particle priors y_0 = 0 of shape (P, L, K).
+            ys = np.zeros((p, L, K_MODEL), dtype=np.float64)
+
+            for step_index in range(n):
+                t = step_index / n
+                s = (step_index + 1) / n
+                beta_t = 2.0 * (t ** 2.0)
+                beta_s = 2.0 * (s ** 2.0)
+                alpha = beta_s - beta_t
+
+                # Step every particle.
+                new_ys = np.empty_like(ys)
+                log_probs = np.zeros((p,), dtype=np.float64)
+                x_one_hot = np.eye(K_MODEL, dtype=np.float64)[x_int]
+                for particle_idx in range(p):
+                    theta = _softmax(ys[particle_idx], axis=-1)
+                    phi = self._forward_encoder(encoder, theta)
+                    # Squared-error logit for the SMC weight.
+                    sq_err = np.sum((x_one_hot - phi) ** 2, axis=-1)
+                    # Mirror upstream: ``where=mask`` means we sum
+                    # over the masked (preserved) positions only.
+                    masked_sq_err = np.where(
+                        mask_int == 1, sq_err, np.zeros_like(sq_err)
+                    )
+                    log_probs[particle_idx] = -0.5 * (
+                        alpha * K_MODEL
+                    ) * float(np.sum(masked_sq_err))
+                    # Force phi to x where mask==1.
+                    phi_forced = np.where(
+                        mask_int[:, None] == 1, x_one_hot, phi
+                    )
+                    ys_step = (
+                        beta_s * (float(K_MODEL) * phi_forced - 1.0)
+                        + np.sqrt(beta_s * float(K_MODEL)) * zs[particle_idx]
+                    )
+                    new_ys[particle_idx] = ys_step
+                ys = new_ys
+
+                # Importance resample by softmax(log_probs).
+                weights = _softmax(log_probs, axis=-1)
+                indices = rng.choice(
+                    p, size=p, replace=True, p=weights
+                )
+                ys = ys[indices]
+
+            # Take the first particle + final inference + argmax.
+            y_1 = ys[0]
+            theta = _softmax(y_1, axis=-1)
+            phi = self._forward_encoder(encoder, theta)
+            return np.argmax(phi, axis=-1).astype(np.int64)
+
+        return inpaint_fn
+
+    def _forward_encoder(
+        self,
+        encoder: Any,
+        theta: np.ndarray,
+    ) -> np.ndarray:
+        """Encoder forward + softmax; torch-aware.
+
+        Returns ``np.ndarray`` of shape ``theta.shape``. When
+        ``encoder is None`` (synthetic refiner mode), falls back to a
+        NumPy-only affine blend.
+        """
+        if encoder is not None:
+            import torch as _torch
+
+            theta_t = _torch.as_tensor(
+                np.asarray(theta, dtype=np.float32),
+                dtype=self._torch_dtype,
+                device=self._torch_device,
+            )
+            with _torch.no_grad():
+                logits = encoder(theta_t)
+                if hasattr(logits, "logits"):
+                    logits = logits.logits
+                return (
+                    _torch.softmax(logits, dim=-1)
+                    .detach()
+                    .cpu()
+                    .numpy()
+                    .astype(np.float64)
+                )
+        # Synthetic fallback: feed-forward ``phi = softmax(W theta + b)``
+        # so the Algorithm 2 / Algorithm 3 plumbing still runs without
+        # torch weights (test fixtures).
+        assert self._synthetic_weights is not None
+        W = self._synthetic_weights["W"]
+        b = self._synthetic_weights["b"]
+        L, K_theta = theta.shape
+        K_synth = int(W.shape[0])
+        # The synthetic weights are sized for the adapter's surface
+        # amino-acid vocab (22). The Algorithm 2 / Algorithm 3 plumbing
+        # uses the model's full 32-token tokenizer; pad / slice to the
+        # synthetic width so the affine forward stays well-defined.
+        if K_theta == K_synth:
+            theta_w = theta
+        elif K_theta > K_synth:
+            theta_w = theta[:, :K_synth]
+        else:
+            pad = np.zeros((L, K_synth - K_theta), dtype=np.float64)
+            theta_w = np.concatenate([theta, pad], axis=-1)
+            theta_w = theta_w / np.maximum(
+                theta_w.sum(axis=-1, keepdims=True), 1e-30
+            )
+        proj = theta_w @ W + b
+        proj = proj - proj.max(axis=-1, keepdims=True)
+        exp_proj = np.exp(proj)
+        net = exp_proj / exp_proj.sum(axis=-1, keepdims=True)
+        # Pad net back up to the model's K if needed (control-token
+        # columns carry zero mass).
+        if net.shape[-1] < K_theta:
+            pad = np.zeros((L, K_theta - net.shape[-1]), dtype=np.float64)
+            net = np.concatenate([net, pad], axis=-1)
+            net = net / np.maximum(net.sum(axis=-1, keepdims=True), 1e-30)
+        return net
+
+    # ------------------------------------------------------------------
+    # 6.8. Paper-metric orchestrator
+    # ------------------------------------------------------------------
+
+    def run_paper_eval(
+        self,
+        *,
+        num_samples: int = 1,
+        num_particles: int = 128,
+        region: str = "CDR3",
+        filter_samples: bool = True,
+        perplexity_threshold: float = 7.786,
+        repetition_threshold: float = 0.0207,
+        inpaint_x: np.ndarray | None = None,
+        inpaint_mask: np.ndarray | None = None,
+        out_dir: str | None = None,
+        seed: int = 0xBF00A047,
+    ) -> dict[str, Any]:
+        """Run the upstream paper-metric harness on the loaded model.
+
+        Wraps :meth:`_make_sample_fn` and :meth:`_make_inpaint_fn` to
+        emit the same metrics the upstream ``sample.py`` /
+        ``inpaint.py`` produce::
+
+            {
+                "samples": list[str],          # argmax-decoded FASTA
+                "losses": list[float],
+                "perplexities": list[float],
+                "rep_scores": list[float],
+                "filtered_count": int,
+                "inpaint_argmax": np.ndarray,  # if inpaint_x/mask given
+                "aar": float,                  # if inpaint_x/mask given
+                "samples_fasta_path": str,
+            }
+
+        Per-sample perplexity is ``exp(loss / L)``; repetition score
+        is computed by :func:`mirror_repetition_score`. Filtering
+        drops samples whose perplexity >= ``perplexity_threshold`` OR
+        whose repetition score >= ``repetition_threshold``.
+        """
+        from adaptive_reflow.adapters.protbfn_abbfn_loss import (
+            approximate_loss,
+            transformer_to_numpy_fn,
+        )
+        from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
+            mirror_repetition_score,
+            mirror_sample_to_string,
+        )
+
+        # 1. Build the sample function and produce `num_samples` samples.
+        L = int(self._max_seq_length)
+        sample_kwargs = self._make_sample_fn(
+            num_steps=int(self._num_steps),
+            sample_length=L,
+            seed=int(seed),
+        )
+        sample_fn = sample_kwargs["sample_fn"]
+        encoder = self._torch_model
+        if encoder is not None:
+            fwd = transformer_to_numpy_fn(encoder)
+        else:
+            fwd = lambda _t: sample_kwargs["theta_traj"][
+                -1
+            ]  # synthetic placeholder
+
+        samples: list[np.ndarray] = []
+        losses: list[float] = []
+        for i in range(int(num_samples)):
+            out = sample_fn(int(seed) + i + 1)
+            tokens = out["tokens"]
+            samples.append(tokens)
+            losses.append(
+                float(
+                    approximate_loss(
+                        tokens,
+                        fwd,
+                        beta_1=2.0,
+                        num_approximations=16,  # small for smoke runs
+                        seed=int(seed) + 31 + i,
+                    )
+                )
+            )
+
+        # 2. Convert + compute perplexity + repetition score.
+        seqs: list[str] = [mirror_sample_to_string(s) for s in samples]
+        perps: list[float] = [
+            float(np.exp(loss / max(len(s), 1))) for loss, s in zip(losses, seqs)
+        ]
+        rep_scores: list[float] = [mirror_repetition_score(s) for s in seqs]
+
+        # 3. Filter.
+        if filter_samples:
+            kept = [
+                (s, p, r)
+                for s, p, r in zip(seqs, perps, rep_scores)
+                if p < perplexity_threshold and r < repetition_threshold
+            ]
+            filtered_count = len(seqs) - len(kept)
+            seqs = [k[0] for k in kept]
+            perps = [k[1] for k in kept]
+            rep_scores = [k[2] for k in kept]
+        else:
+            filtered_count = 0
+
+        # 4. Optional inpainting path.
+        inpaint_argmax: np.ndarray | None = None
+        aar: float | None = None
+        if inpaint_x is not None and inpaint_mask is not None:
+            inpaint_fn = self._make_inpaint_fn(
+                num_steps=int(self._num_steps),
+                num_particles=int(num_particles),
+                sample_length=L,
+                seed=int(seed) + 17,
+            )
+            inpaint_argmax = inpaint_fn(int(seed), inpaint_x, inpaint_mask)
+            original_str = mirror_sample_to_string(np.asarray(inpaint_x))
+            inpainted_str = mirror_sample_to_string(inpaint_argmax)
+            mask_arr = np.asarray(inpaint_mask, dtype=np.int64).reshape(-1)
+            errors = sum(
+                int(a != b)
+                for a, b in zip(original_str, inpainted_str)
+            )
+            denom = max(int(np.sum(1 - mask_arr)), 1)
+            aar = 1.0 - float(errors) / float(denom)
+
+        # 5. FASTA I/O via Bio.SeqIO.
+        out_path: str | None = None
+        try:
+            from Bio import SeqIO, Seq  # local import — biopython is in venv
+        except Exception:
+            SeqIO = None
+            Seq = None
+        if SeqIO is not None and out_dir is not None:
+            out_root = Path(str(out_dir))
+            out_root.mkdir(parents=True, exist_ok=True)
+            fasta_records = []
+            for i, (s, p, r) in enumerate(zip(seqs, perps, rep_scores)):
+                rec = SeqIO.SeqRecord(
+                    Seq.Seq(s),
+                    id=f"sample_{i}",
+                    description=f"loss: {losses[i]:.2f}, perplexity: {p:.2f}, "
+                    f"rep_score: {r:.4f}, mechanism: {self._mechanism}, "
+                    f"region: {region}",
+                )
+                fasta_records.append(rec)
+            if inpaint_argmax is not None:
+                rec_inpaint = SeqIO.SeqRecord(
+                    Seq.Seq(mirror_sample_to_string(inpaint_argmax)),
+                    id=f"{self._mechanism}-inpainted",
+                    description=f"inpainted with AAR {aar}",
+                )
+                fasta_records.append(rec_inpaint)
+            out_path = str(out_root / "samples.fasta")
+            SeqIO.write(fasta_records, out_path, "fasta")
+
+        return {
+            "samples": seqs,
+            "losses": losses,
+            "perplexities": perps,
+            "rep_scores": rep_scores,
+            "filtered_count": int(filtered_count),
+            "inpaint_argmax": inpaint_argmax,
+            "aar": aar,
+            "samples_fasta_path": out_path,
+            "region": region,
+            "mechanism": str(self._mechanism),
+        }
+
     def solve_ode(
         self,
         state: StateBundle,
@@ -1029,6 +1736,21 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         if self._mode == "synthetic":
             traj = self._synthetic_refine(
                 theta0, num_steps=int(num_steps), seed=int(seed)
+            )
+        elif self._mode == "upstream_jax":
+            # Upstream InstaDeep Haiku/JAX sampler path. The upstream
+            # ``make_sample_fn`` runs paper Algorithm 2 inside a single
+            # ``jax.lax.scan`` and returns argmax tokens of shape
+            # ``(sample_length,)``; we project those tokens to the
+            # adapter's surface (L, K_surface) per-position one-hot
+            # trajectory so the rest of the framework sees a well-
+            # shaped ``(N+1, L, K)`` trajectory whose last row is the
+            # upstream-decoded distribution.
+            traj = self._upstream_jax_refine(
+                theta0,
+                num_steps=int(num_steps),
+                sample_length=int(self._max_seq_length),
+                seed=int(seed),
             )
         else:
             # Production torch path. The 650M-param BERT-style encoder
@@ -1412,6 +2134,7 @@ __all__ = [
     "AUDIT_FORWARD_NOISE_APPLIED",
     "AUDIT_PROTBFN_OBSERVED",
     "AUDIT_PROTBFN_RESTART_BLEND",
+    "AUDIT_PROTBFN_UPSTREAM_JAX",
     "CDR_LENGTH_CATEGORICAL",
     "ERR_PROTBFN_INPAINT_POSITIONS",
     "ERR_PROTBFN_INPAINT_STRENGTH",
@@ -1431,6 +2154,8 @@ __all__ = [
     "PROTBFN_SYNTHETIC_MAX_LENGTH",
     "PROTBFN_SYNTHETIC_NUM_STEPS",
     "PROTBFN_SYNTHETIC_SEED_DEFAULT",
+    "PROTBFN_UPSTREAM_DEFAULT_WEIGHTS_ROOT",
+    "PROTBFN_UPSTREAM_VOCAB_SIZE",
     "PROTBFN_VOCAB_SIZE",
     "ProtBFNAbBFNAdapter",
     "ProtBFNAbBFNCapabilities",

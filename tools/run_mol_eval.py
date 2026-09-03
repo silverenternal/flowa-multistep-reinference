@@ -20,6 +20,43 @@ single JSON report containing:
   one SMILES per line). Computed via the ``fcd`` PyPI package when
   available; NaN with a stderr note when ``fcd`` is not importable
   (the operator can install with ``uv pip install fcd``).
+* ``pb_validity`` — PoseBusters-validity (Buttenschoen et al. 2024),
+  the Tier-2 paper metric for FlowMol3 / GraphBFN. When
+  ``posebusters`` is importable in the running venv, a real call is
+  made (``PoseBusters(config="mol").bust(mols)``) on 3D conformers
+  generated with RDKit ``ETKDGv3`` (built-in distance-geometry
+  embedder, no MMFF, no ``xtb``). The marker distinguishes:
+
+  - ``"computed_etkdg_v3_only"`` — a real PB-validity number was
+    measured with ETKDGv3-only conformers (no MMFF refinement,
+    no GFN2-xTB). This is the first-cut implementation; not
+    bit-equivalent to the FlowMol3 / GraphBFN paper pipeline
+    (which uses MMFF or GFN2-xTB) but is a usable signal of
+    geometric plausibility and chemical sanity for the
+    de-novo-generated set.
+  - ``"computed"`` — placeholder reserved for the future
+    full-fidelity (MMFF or GFN2-xTB) pipeline.
+  - ``"stub_unavailable"`` — ``posebusters`` is importable but
+    the call raised (caller sees ``value=None``).
+  - ``"not_installed"`` — ``posebusters`` is not importable in
+    the running venv; ``install_hint`` is non-null.
+
+  The stub branch still exists so the JSON shape is stable; the
+  real call replaces the stub per §3.4 / §6.2 of
+  ``docs/r17-survey/baseline-deviation-review.md``.
+* ``fg_deviation`` — FlowMol3 paper-aligned L1 distance between the
+  generated functional-group occurrence distribution and a reference
+  distribution (typically the GEOM-DRUGS training set). Computed
+  from RDKit's bundled Dundee + Glaxo Wellcome FG SMARTS lists via
+  :mod:`rdkit.Chem.Fragments` (no external SMARTS download). The
+  reference set is taken from the same ``--reference-smiles`` file
+  used for FCD when supplied; the per-FG presence vector is the
+  L1 distance between the per-FG occurrence-rate vectors. NaN
+  with a stderr note when RDKit is missing or the reference set
+  is empty. Reference paper: arXiv:2508.12629 (FlowMol3), paper
+  reports ``FG Deviation = 0.37 ± 0.01`` (generated) and
+  ``FG Deviation = 0.28`` (training-data reference) on
+  GEOM-DRUGS.
 
 Each metric returns ``NaN`` with a deterministic stderr note when its
 dependency is missing so a partial run still produces a parseable
@@ -40,10 +77,13 @@ Input formats
 * ``--input <path>.sdf`` — RDKit SDF; one molecule per record. Parsed
   via :class:`Chem.SDMolSupplier`.
 
-The runner never imports the FlowMol3 evaluation library (``posebusters``,
-``useful_rdkit_utils``, ``dgl``, ``xtb``) — those live behind a
-subprocess boundary per Phase-1 risk register. This script is the
-in-process arm: same-task baseline vs framework comparison.
+The runner imports the PoseBusters library directly when it is
+available in the running venv (``posebusters >= 0.6.5``; verified
+importable in ``flowmol3_venv``). Other FlowMol3 evaluation
+dependencies (``useful_rdkit_utils``, ``dgl``, ``xtb``) remain
+behind a subprocess boundary per the Phase-1 risk register; this
+script is the in-process arm: same-task baseline vs framework
+comparison.
 
 Output schema
 -------------
@@ -60,6 +100,32 @@ Output schema
       "sa":  float in [1, 10] (NaN if RDKit missing),
       "logp": float (NaN if RDKit missing),
       "fcd": float (NaN if ``fcd`` not importable),
+      "pb_validity": {
+        "value": null | float in [0, 1] (NaN when not computed),
+        "marker": "not_installed" | "stub_unavailable"
+                | "computed" | "computed_etkdg_v3_only",
+        "install_hint": "pip install posebusters" | null,
+        "note": "<stderr-equivalent string>",
+        "conformer_protocol": "ETKDGv3" | null,
+        "n_total": int,            # denominator
+        "n_pb_valid": int,         # numerator
+        "n_conformer_failures": int,
+        "pass_per_check": dict[str, float] | None
+      },
+      "fg_deviation": float (NaN if RDKit missing or no reference set),
+      "flowmol3_paper_metrics": {
+        "metrics": null | dict[str, float],  # upstream dict, verbatim
+        "marker": "not_requested" | "not_available"
+                | "computed_upstream" | "upstream_error",
+        "install_hint": str | null,
+        "note": str | null,
+        "n_total": int,
+        "run_posebusters": bool
+      },
+      "frac_atoms_stable": float (NaN if RDKit missing),
+      "frac_mols_stable_valence": float (NaN if RDKit missing),
+      "frac_connected": float (NaN if RDKit missing),
+      "avg_num_components": float (NaN if RDKit missing),
       "missing_dependencies": list[str],
       "stderr_notes": list[str]
     }
@@ -115,7 +181,35 @@ SUPPORTED_DATASETS: tuple[str, ...] = (
 
 #: Output schema version. Bump when the JSON shape changes; downstream
 #: consumers can branch on this to keep parsing the old shape.
-OUTPUT_SCHEMA_VERSION: str = "1.0.0"
+#: 1.1.0 — added ``fg_deviation`` field (FlowMol3 paper-aligned L1
+#: distance between generated and reference functional-group
+#: occurrence distributions; uses RDKit's bundled Dundee + Glaxo
+#: Wellcome SMARTS via ``rdkit.Chem.Fragments``).
+#: 1.2.0 — added the additive ``flowmol3_paper_metrics`` block
+#: (upstream FlowMol3 ``SampleAnalyzer.analyze`` output, via
+#: ``adaptive_reflow.adapters.flowmol3_metrics_upstream``). Every
+#: pre-existing key keeps its meaning; the block is a pure addition.
+OUTPUT_SCHEMA_VERSION: str = "1.2.0"
+
+#: ``flowmol3_paper_metrics.marker`` vocabulary (closed set).
+#: ``not_requested`` — the caller did not ask for the block (or the
+#: auto-gate decided the input does not look like a FlowMol3 sample
+#: list), so no upstream call was attempted.
+FLOWMOL3_MARKER_NOT_REQUESTED: str = "not_requested"
+#: ``not_available`` — the upstream wrapper (or its ``flowmol`` /
+#: ``torch_scatter`` dependency chain) is not importable in this venv.
+FLOWMOL3_MARKER_NOT_AVAILABLE: str = "not_available"
+#: ``computed_upstream`` — a real upstream ``SampleAnalyzer.analyze``
+#: dict was produced and is carried verbatim under ``metrics``.
+FLOWMOL3_MARKER_COMPUTED_UPSTREAM: str = "computed_upstream"
+#: ``upstream_error`` — the wrapper imported but the analyze call raised.
+FLOWMOL3_MARKER_UPSTREAM_ERROR: str = "upstream_error"
+
+#: Install hint surfaced when the upstream wrapper cannot be imported.
+FLOWMOL3_INSTALL_HINT: str = (
+    "run inside .venvs/flowmol3_venv (upstream FlowMol3 + posebusters + "
+    "useful_rdkit_utils required)"
+)
 
 #: Sentinel returned by every "missing dependency" branch. Keeps the
 #: JSON shape stable so a downstream consumer never sees a missing key.
@@ -154,6 +248,27 @@ def _probe_fcd() -> tuple[bool, str | None]:
         import fcd  # noqa: F401
     except ImportError as exc:
         return False, f"fcd_unavailable:{exc}"
+    return True, None
+
+
+def _probe_posebusters() -> tuple[bool, str | None]:
+    """Return ``(importable, error_message_or_None)`` for :mod:`posebusters`.
+
+    ``posebusters`` (Buttenschoen et al. 2024) is the published
+    PoseBusters validity-check package used as the Tier-2 paper
+    metric by FlowMol3 / GraphBFN / JT-VAE-era successors. A missing
+    dependency here is non-fatal: ``pb_validity`` returns the
+    ``"not_installed"`` sentinel (per §3.4 of
+    ``docs/r17-survey/baseline-deviation-review.md``) and every
+    other metric still computes. The actual PoseBusters call requires
+    a 3D conformer-generation stage (RDKit ``ETKDGv3`` + ``MMFF``
+    minimisation) that is multi-hour and lives in a separate
+    ``posebusters_venv`` — that work is NOT performed here.
+    """
+    try:
+        import posebusters  # noqa: F401
+    except ImportError as exc:
+        return False, f"posebusters_unavailable:{exc}"
     return True, None
 
 
@@ -622,6 +737,675 @@ def compute_fcd(
     return score, None
 
 
+#: Marker for ``pb_validity`` when the underlying ``posebusters``
+#: package is not importable in the running venv. The JSON shape is
+#: stable (``{"value": null, "marker": <marker>, "install_hint": <hint>}``)
+#: so downstream consumers can rely on the keys being present even
+#: when the metric was not actually computed. Mirrors the
+#: ``"external"`` sentinel used by :mod:`tools.run_image_eval` for
+#: Tier-2 image-gen paper metrics that the framework deliberately
+#: defers to a separate venv.
+PB_VALIDITY_MARKER_NOT_INSTALLED: str = "not_installed"
+PB_VALIDITY_MARKER_COMPUTED: str = "computed"
+PB_VALIDITY_MARKER_COMPUTED_ETKDG_V3_ONLY: str = "computed_etkdg_v3_only"
+PB_VALIDITY_MARKER_STUB_UNAVAILABLE: str = "stub_unavailable"
+PB_VALIDITY_INSTALL_HINT: str = "pip install posebusters"
+#: PoseBusters config name to use. ``"mol"`` is the de-novo
+#: generation config: 12 intrinsic checks (sanitization, InChI
+#: convertibility, atom connectivity, no radicals, bond lengths,
+#: bond angles, internal steric clash, aromatic ring flatness,
+#: non-aromatic ring non-flatness, double-bond flatness, internal
+#: energy) with no protein / conditioning-molecule requirement.
+#: The ``"dock"`` and ``"gen"`` configs both invoke
+#: ``intermolecular_distance`` and ``volume_overlap`` modules that
+#: need a ``mol_cond`` (the docking pocket protein) which is not
+#: available for unconditional de-novo generation and which causes
+#: posebusters 0.6.5 to raise ``TypeError: check_intermolecular_
+#: distance() missing 1 required positional argument: 'mol_cond'``.
+PB_VALIDITY_CONFIG: str = "mol"
+
+
+def _embed_3d_etkdg_v3(mol: Any, *, random_seed: int = 42) -> bool:
+    """Add a 3D conformer to ``mol`` in-place using RDKit's ``ETKDGv3``.
+
+    Pure distance-geometry embed (no MMFF refinement, no GFN2-xTB).
+    Returns ``True`` if a conformer was successfully added, ``False``
+    if embedding failed (large / macrocyclic / pathological
+    topology). The seed is fixed so the embedding is deterministic
+    — the PoseBusters checks themselves are a function of the
+    conformer, so a stable seed makes the metric reproducible.
+
+    No sanitization is run here: PoseBusters applies its own
+    ``sanitize=True`` to each mol via the ``distance_geometry``
+    module and re-parses through InChI, which is a stricter round
+    trip than the RDKit ``MolFromSmiles`` sanitize.
+    """
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+
+    try:
+        mol_h = Chem.AddHs(mol)
+    except Exception:  # noqa: BLE001 - permissive on purpose
+        return False
+    params = AllChem.ETKDGv3()
+    params.randomSeed = int(random_seed)
+    try:
+        status = AllChem.EmbedMolecule(mol_h, params)
+    except Exception:  # noqa: BLE001 - permissive on purpose
+        return False
+    if status != 0:
+        return False
+    try:
+        # Copy the conformer onto the heavy-atom mol so downstream
+        # PoseBusters sees a single conformer on the H-stripped
+        # graph. ``Chem.RemoveHs`` drops the explicit Hs; the
+        # conformer is preserved.
+        new_mol = Chem.RemoveHs(mol_h)
+    except Exception:  # noqa: BLE001 - permissive on purpose
+        return False
+    if new_mol.GetNumConformers() == 0:
+        return False
+    # Replace the input mol's conformer slot with the embedded one.
+    # The conformer has the same heavy-atom indexing as the
+    # original (AddHs appends Hs at the end), so atom positions
+    # align with the input bond graph.
+    conf = new_mol.GetConformer()
+    # Clear any prior conformers on ``mol`` then add the new one.
+    for i in range(mol.GetNumConformers() - 1, -1, -1):
+        mol.RemoveConformer(i)
+    mol.AddConformer(conf, assignId=True)
+    return True
+
+
+def compute_pb_validity(
+    mols: Sequence[Any | None],
+    *,
+    random_seed: int = 42,
+) -> dict[str, Any]:
+    """Tier-2 paper metric: PoseBusters validity (``pb_validity``).
+
+    PoseBusters (Buttenschoen et al. 2024) is the published chemical-
+    validity oracle used by FlowMol3, GraphBFN, and JT-VAE-era
+    successors. The metric is a fraction in ``[0, 1]`` — the
+    proportion of generated molecules that pass PoseBusters'
+    geometry-and-bond-order checks.
+
+    This implementation is the **first-cut ETKDGv3-only** path
+    (no MMFF minimisation, no GFN2-xTB). It is sufficient to
+    emit a real ``pb_validity`` number on the de-novo set; it is
+    NOT bit-equivalent to the FlowMol3 / GraphBFN paper pipeline,
+    which uses MMFF or GFN2-xTB to refine the conformer before
+    PoseBusters runs. The marker ``"computed_etkdg_v3_only"``
+    makes the fidelity tier explicit so a downstream consumer
+    can choose to ignore the number until the MMFF / xTB path
+    is wired in (per §3.4 / §6.2 of
+    ``docs/r17-survey/baseline-deviation-review.md``).
+
+    A molecule is counted as PoseBusters-valid iff:
+
+    1. It is not ``None`` AND ``Chem.MolFromSmiles`` round-tripped
+       (already enforced by the upstream ``compute_validity`` —
+       we re-derive here so this function is independently
+       callable);
+    2. ``AllChem.EmbedMolecule(ETKDGv3)`` succeeds on it
+       (a non-trivial filter for macrocyclic / over-large graphs);
+    3. Every PoseBusters check in the ``"mol"`` config returns
+       ``True`` for it.
+
+    A molecule that fails any of (1) / (2) / (3) counts as
+    NOT PoseBusters-valid and stays in the denominator. Empty
+    input returns ``value=NaN``.
+
+    Returns
+    -------
+    dict with shape::
+
+        {
+          "value": None | float in [0, 1],
+          "marker": "not_installed"
+                 | "stub_unavailable"
+                 | "computed"
+                 | "computed_etkdg_v3_only",
+          "install_hint": "pip install posebusters" | None,
+          "note": "..."  # optional stderr-equivalent string
+          "conformer_protocol": "ETKDGv3" | None,
+          "n_total": int,            # denominator
+          "n_pb_valid": int,         # numerator
+          "n_conformer_failures": int,
+          "pass_per_check": dict[str, float] | None  # per-check pass rate
+        }
+
+    The ``marker`` field is the canonical sentinel; consumers
+    that only need the value should treat ``value == None`` as
+    "not computed". The ``install_hint`` field names the
+    missing package (when ``marker == "not_installed"``); for
+    other markers it is ``None``.
+
+    Stability contract
+    -------------------
+
+    The JSON shape is stable regardless of which branch fires —
+    every documented key is present in every return. New keys
+    are additive (downstream code that reads only the four
+    core keys continues to work). The ``marker`` vocabulary is
+    closed: future fidelity tiers should be added by appending
+    a new marker, never by repurposing an existing one.
+    """
+    pb_ok, pb_err = _probe_posebusters()
+    if not pb_ok:
+        # Stable stub shape — the consumer can rely on every key
+        # being present regardless of which branch fires.
+        return {
+            "value": None,
+            "marker": PB_VALIDITY_MARKER_NOT_INSTALLED,
+            "install_hint": PB_VALIDITY_INSTALL_HINT,
+            "note": (
+                f"{pb_err}:posebusters_unavailable:"
+                "install_with_uv_pip_install_posebusters_in_flowmol3_venv"
+            ),
+            "conformer_protocol": None,
+            "n_total": int(len(mols)),
+            "n_pb_valid": 0,
+            "n_conformer_failures": 0,
+            "pass_per_check": None,
+        }
+
+    real_mols: list[Any] = [m for m in mols if m is not None]
+    if not real_mols:
+        return {
+            "value": NAN,
+            "marker": PB_VALIDITY_MARKER_COMPUTED_ETKDG_V3_ONLY,
+            "install_hint": None,
+            "note": "no_valid_input_molecules:pb_validity_is_NaN",
+            "conformer_protocol": "ETKDGv3",
+            "n_total": 0,
+            "n_pb_valid": 0,
+            "n_conformer_failures": 0,
+            "pass_per_check": None,
+        }
+
+    # 3D conformer stage — first-cut ETKDGv3 only (no MMFF, no
+    # GFN2-xTB). Molecules that fail embedding are recorded as
+    # ``conformer_failures`` and counted in the denominator as
+    # "not PoseBusters-valid".
+    conformered_mols: list[Any] = []
+    n_conformer_failures = 0
+    for mol in real_mols:
+        # Build a fresh copy so we don't mutate the caller's
+        # molecule list (the input ``mols`` is the in-process
+        # RDKit mol list, owned by the caller). ``Chem.Mol(mol)``
+        # is the canonical deep-copy idiom in RDKit.
+        from rdkit import Chem
+
+        try:
+            m_copy = Chem.Mol(mol)
+        except Exception:  # noqa: BLE001 - permissive on purpose
+            n_conformer_failures += 1
+            continue
+        if _embed_3d_etkdg_v3(m_copy, random_seed=random_seed):
+            conformered_mols.append(m_copy)
+        else:
+            n_conformer_failures += 1
+
+    if not conformered_mols:
+        return {
+            "value": 0.0,
+            "marker": PB_VALIDITY_MARKER_COMPUTED_ETKDG_V3_ONLY,
+            "install_hint": None,
+            "note": (
+                f"all_{n_conformer_failures}_conformer_embeds_failed_"
+                "etkdg_v3_no_pb_checks_run:pb_validity_is_0"
+            ),
+            "conformer_protocol": "ETKDGv3",
+            "n_total": int(len(real_mols)),
+            "n_pb_valid": 0,
+            "n_conformer_failures": int(n_conformer_failures),
+            "pass_per_check": None,
+        }
+
+    # Real PoseBusters call. ``config="mol"`` is the de-novo
+    # generation config (12 intrinsic checks, no protein). See
+    # ``PB_VALIDITY_CONFIG`` for why "dock" / "gen" are not used
+    # here.
+    try:
+        from posebusters import PoseBusters  # type: ignore[import-not-found]
+
+        pb = PoseBusters(config=PB_VALIDITY_CONFIG)
+        df = pb.bust(conformered_mols)
+    except Exception as exc:  # noqa: BLE001 - permissive on purpose
+        return {
+            "value": None,
+            "marker": PB_VALIDITY_MARKER_STUB_UNAVAILABLE,
+            "install_hint": None,
+            "note": (
+                f"posebusters_call_failed:{type(exc).__name__}:{exc}:"
+                "see_pb_validity_block_for_failure"
+            ),
+            "conformer_protocol": "ETKDGv3",
+            "n_total": int(len(real_mols)),
+            "n_pb_valid": 0,
+            "n_conformer_failures": int(n_conformer_failures),
+            "pass_per_check": None,
+        }
+
+    # ``df`` is a multi-index DataFrame (file, molecule, position)
+    # with one row per conformer and one column per PoseBusters
+    # check. ``mol_pred_loaded`` is a tautology (always True since
+    # we passed live RDKit mols) so we drop it from the per-check
+    # pass-rate dictionary; the strict PB-validity definition
+    # uses ALL checks.
+    n_total = int(len(real_mols))
+    n_pass_all = 0
+    pass_per_check: dict[str, int] = {}
+    check_total: dict[str, int] = {}
+    for _, row in df.iterrows():
+        row_dict = row.to_dict()
+        all_ok = all(bool(v) for v in row_dict.values())
+        if all_ok:
+            n_pass_all += 1
+        for k, v in row_dict.items():
+            check_total[k] = check_total.get(k, 0) + 1
+            if bool(v):
+                pass_per_check[k] = pass_per_check.get(k, 0) + 1
+
+    pass_rates: dict[str, float] = {
+        k: float(pass_per_check.get(k, 0)) / float(check_total[k])
+        for k in check_total
+    }
+    # Drop the tautological "loaded" check from the public dict so
+    # consumers see the substantive checks only.
+    pass_rates_public = {k: v for k, v in pass_rates.items() if k != "mol_pred_loaded"}
+
+    pb_validity = float(n_pass_all) / float(n_total)
+    return {
+        "value": pb_validity,
+        "marker": PB_VALIDITY_MARKER_COMPUTED_ETKDG_V3_ONLY,
+        "install_hint": None,
+        "note": (
+            f"posebusters_computed_with_etkdg_v3_only_no_mmff_no_xtb:"
+            f"{n_pass_all}_of_{n_total}_passed_all_checks:"
+            f"{n_conformer_failures}_conformer_failures"
+        ),
+        "conformer_protocol": "ETKDGv3",
+        "n_total": n_total,
+        "n_pb_valid": int(n_pass_all),
+        "n_conformer_failures": int(n_conformer_failures),
+        "pass_per_check": pass_rates_public,
+    }
+
+
+# ---------------------------------------------------------------------------
+# FlowMol3 FG-deviation (Dundee + Glaxo Wellcome SMARTS, L1 distance)
+# ---------------------------------------------------------------------------
+#
+# The FlowMol3 paper (Dunn & Koes, arXiv:2508.12629) reports a
+# "Functional-Group Deviation" (FG-deviation) metric which is the L1
+# distance between the generated molecules' functional-group
+# occurrence distribution and a reference distribution (typically the
+# training data — GEOM-DRUGS). The functional-group vocabulary is
+# the published SMARTS lists from Bickerton et al. (Dundee QED
+# fragments) and the Glaxo Wellcome Kinase inhibitor filter, both
+# of which RDKit ships verbatim in :mod:`rdkit.Chem.Fragments` as the
+# ``fr_*`` descriptors. Using RDKit's built-in list avoids any
+# external SMARTS download (the lists are non-gated academic data
+# baked into the RDKit distribution per the
+# ``rdkit/Chem/FragCatalog`` source tree).
+#
+# Definition (per molecule, per FG):
+#
+#   v_i(mol) = 1 if FG_i SMARTS matches anywhere in ``mol`` else 0
+#
+# Aggregate to a per-set occurrence rate (the fraction of the set
+# that contains the group at least once):
+#
+#   p_i^gen  = mean(v_i(mol) over generated mols)
+#   p_i^ref  = mean(v_i(mol) over reference mols)
+#
+# FG-deviation = sum over i of |p_i^gen - p_i^ref|
+#
+# This is the metric definition used by the FlowMol3 paper for the
+# 0.37 / 0.28 numbers reported in §5 of arXiv:2508.12629.
+
+#: SMARTS-backed fragment descriptors we use for FG-deviation.
+#: RDKit's :mod:`rdkit.Chem.Fragments` ships 85 ``fr_*`` symbols
+#: covering the Dundee QED-style fragments and the Glaxo Wellcome
+#: kinase-inhibitor fragments. We hard-code the list here (rather
+#: than ``dir(Fragments)`` at runtime) so the FG vocabulary is
+#: pinned — adding a new RDKit ``fr_*`` should be a deliberate
+#: choice reviewed against the paper, not a side effect of an
+#: RDKit upgrade. Mirrors the published lists (Bickerton et al.
+#: 2012 QED §SMARTS; Hann et al. Glaxo Wellcome kinase SMARTS).
+FG_SMARTS_NAMES: tuple[str, ...] = (
+    "fr_Al_COO",
+    "fr_Al_OH",
+    "fr_Al_OH_noTert",
+    "fr_ArN",
+    "fr_Ar_COO",
+    "fr_Ar_N",
+    "fr_Ar_NH",
+    "fr_Ar_OH",
+    "fr_COO",
+    "fr_COO2",
+    "fr_C_O",
+    "fr_C_O_noCOO",
+    "fr_C_S",
+    "fr_HOCCN",
+    "fr_Imine",
+    "fr_NH0",
+    "fr_NH1",
+    "fr_NH2",
+    "fr_N_O",
+    "fr_Ndealkylation1",
+    "fr_Ndealkylation2",
+    "fr_Nhpyrrole",
+    "fr_SH",
+    "fr_aldehyde",
+    "fr_alkyl_carbamate",
+    "fr_alkyl_halide",
+    "fr_allylic_oxid",
+    "fr_amide",
+    "fr_amidine",
+    "fr_aniline",
+    "fr_aryl_methyl",
+    "fr_azide",
+    "fr_azo",
+    "fr_barbitur",
+    "fr_benzene",
+    "fr_benzodiazepine",
+    "fr_bicyclic",
+    "fr_diazo",
+    "fr_dihydropyridine",
+    "fr_epoxide",
+    "fr_ester",
+    "fr_ether",
+    "fr_furan",
+    "fr_guanido",
+    "fr_halogen",
+    "fr_hdrzine",
+    "fr_hdrzone",
+    "fr_imidazole",
+    "fr_imide",
+    "fr_isocyan",
+    "fr_isothiocyan",
+    "fr_ketone",
+    "fr_ketone_Topliss",
+    "fr_lactam",
+    "fr_lactone",
+    "fr_methoxy",
+    "fr_morpholine",
+    "fr_nitrile",
+    "fr_nitro",
+    "fr_nitro_arom",
+    "fr_nitro_arom_nonortho",
+    "fr_nitroso",
+    "fr_oxazole",
+    "fr_oxime",
+    "fr_para_hydroxylation",
+    "fr_phenol",
+    "fr_phenol_noOrthoHbond",
+    "fr_phos_acid",
+    "fr_phos_ester",
+    "fr_piperdine",
+    "fr_piperzine",
+    "fr_priamide",
+    "fr_prisulfonamd",
+    "fr_pyridine",
+    "fr_quatN",
+    "fr_sulfide",
+    "fr_sulfonamd",
+    "fr_sulfone",
+    "fr_term_acetylene",
+    "fr_tetrazole",
+    "fr_thiazole",
+    "fr_thiocyan",
+    "fr_thiophene",
+    "fr_unbrch_alkane",
+    "fr_urea",
+)
+
+
+def _fg_presence_vector(mol: Any) -> list[int]:
+    """Return ``[v_0, v_1, ..., v_K]`` where ``v_i = 1`` if ``FG_i`` matches.
+
+    Each ``fr_*`` is a 1-arg callable taking an RDKit ``Chem.Mol`` and
+    returning an ``int`` count. We coerce to ``{0, 1}`` (binary
+    occurrence) per the FlowMol3 paper definition. Returns
+    ``[]`` for ``None`` mols (the caller filters these out before
+    averaging). Failures on a single ``fr_*`` are treated as
+    "absent" (``0``) so a malformed SMARTS cannot poison the whole
+    vector.
+    """
+    from rdkit.Chem import Fragments
+
+    vec: list[int] = []
+    for name in FG_SMARTS_NAMES:
+        counter = getattr(Fragments, name, None)
+        if counter is None:
+            vec.append(0)
+            continue
+        try:
+            n_hits = int(counter(mol))
+        except Exception:  # noqa: BLE001 - permissive on purpose
+            n_hits = 0
+        vec.append(1 if n_hits > 0 else 0)
+    return vec
+
+
+def _fg_occurrence_rates(mols: Sequence[Any | None]) -> tuple[list[float], int]:
+    """Mean occurrence rate per FG across ``mols``; ``(rates, n_used)``.
+
+    Skips ``None`` and SMILES-parse-failure entries (which surface
+    here as ``None`` from the loader). Returns ``([0.0]*K, 0)`` when
+    no usable mols are present so the caller can branch on
+    ``n_used == 0`` for the NaN sentinel.
+    """
+    n_used = 0
+    K = len(FG_SMARTS_NAMES)
+    sums = [0] * K
+    for mol in mols:
+        if mol is None:
+            continue
+        vec = _fg_presence_vector(mol)
+        if not vec:
+            continue
+        n_used += 1
+        for i, v in enumerate(vec):
+            sums[i] += v
+    if n_used == 0:
+        return [0.0] * K, 0
+    return [s / n_used for s in sums], n_used
+
+
+def compute_fg_deviation(
+    gen_mols: Sequence[Any | None],
+    ref_smiles: Sequence[str],
+) -> tuple[float, str | None]:
+    """L1 FG-deviation between ``gen_mols`` and ``ref_smiles``.
+
+    Returns ``(value, stderr_note_or_None)``. The reference set is
+    parsed on-the-fly via :func:`rdkit.Chem.MolFromSmiles`; the
+    same RDKit parse failure tolerance as the validity path
+    applies (an unparseable reference SMILES is silently dropped
+    from the reference occurrence-rate computation). Returns
+    ``NaN`` with a stderr note when RDKit is missing, the
+    reference list is empty, or the generated list is empty.
+
+    The metric is the sum of per-FG absolute differences of the
+    occurrence rates, which equals the L1 distance between the two
+    per-set binary FG vectors (under uniform weight on the
+    generators and references). The value is in ``[0, 2*K]``
+    where ``K = len(FG_SMARTS_NAMES) = 85``; in practice on
+    drug-like sets the value is small (paper: 0.27-0.37 on
+    GEOM-DRUGS) because most groups are either consistently
+    present or consistently absent.
+    """
+    rdkit_ok, rdkit_err = _probe_rdkit()
+    if not rdkit_ok:
+        return NAN, f"rdkit_unavailable:{rdkit_err}"
+    from rdkit import Chem  # noqa: F401 - sentinel for availability
+
+    if not ref_smiles:
+        return NAN, "fg_deviation_reference_smiles_empty"
+    if not gen_mols or all(m is None for m in gen_mols):
+        return NAN, "fg_deviation_generated_mols_empty"
+
+    # Parse reference SMILES into RDKit mols. Reuse the same
+    # permissive parse + sanitise tolerance as ``_normalize_items``
+    # so a single malformed reference does not abort the metric.
+    ref_mols: list[Any] = []
+    for smi in ref_smiles:
+        if not smi:
+            continue
+        try:
+            mol = Chem.MolFromSmiles(smi)
+        except Exception:  # noqa: BLE001
+            mol = None
+        if mol is None:
+            continue
+        ref_mols.append(mol)
+
+    if not ref_mols:
+        return NAN, "fg_deviation_reference_all_unparseable"
+
+    gen_rates, n_gen = _fg_occurrence_rates(gen_mols)
+    ref_rates, n_ref = _fg_occurrence_rates(ref_mols)
+    if n_gen == 0 or n_ref == 0:
+        return NAN, (
+            f"fg_deviation_no_usable_mols:gen={n_gen}:ref={n_ref}"
+        )
+
+    # L1 distance between the two occurrence-rate vectors.
+    deviation = 0.0
+    for p_g, p_r in zip(gen_rates, ref_rates):
+        deviation += abs(p_g - p_r)
+    return float(deviation), None
+
+
+# ---------------------------------------------------------------------------
+# FlowMol3 upstream paper metrics (additive, Tier-1 fidelity)
+# ---------------------------------------------------------------------------
+
+
+def _looks_like_flowmol3_samples(items: Sequence[Any], fmt: str) -> bool:
+    """Heuristic auto-gate: does this input look like a FlowMol3 sample list?
+
+    A FlowMol3 sample list arrives as RDKit ``Mol`` objects (from a
+    ``.pkl`` written by ``adaptive_reflow.molecular.rdkit_export`` /
+    upstream ``test.py``, or from an ``.sdf``), typically carrying a 3D
+    conformer. A bare SMILES ``.npz`` is *not* treated as a FlowMol3
+    sample list: the upstream analyzer would then be scoring
+    re-embedded geometry rather than generated geometry.
+
+    The check is deliberately structural (format + object type) and
+    never imports the upstream wrapper.
+    """
+    if fmt not in ("pkl", "sdf"):
+        return False
+    for item in items:
+        if item is None or isinstance(item, str):
+            continue
+        if hasattr(item, "GetNumAtoms"):
+            return True
+    return False
+
+
+def compute_flowmol3_paper_metrics(
+    smiles: Sequence[str],
+    *,
+    processed_data_dir: Path | str | None = None,
+    run_posebusters: bool = True,
+    run_functional_validity: bool = True,
+    run_energy_div: bool = False,
+    pb_workers: int = 2,
+    device: str = "cuda:0",
+) -> dict[str, Any]:
+    """Tier-1 paper metrics: upstream FlowMol3 ``SampleAnalyzer.analyze``.
+
+    This delegates **all** computation to
+    :func:`adaptive_reflow.adapters.flowmol3_metrics_upstream.compute_paper_metrics_from_smiles`,
+    which runs the pinned upstream FlowMol3 analyzer verbatim. Nothing
+    is reimplemented here: this function only handles gating, import
+    failure, and JSON-shape stability.
+
+    The wrapper import is a **lazy local import** on purpose. Callers
+    that evaluate non-FlowMol3 samples in a venv without
+    ``torch_scatter`` / upstream ``flowmol`` must not pay an
+    ImportError at module import time.
+
+    Returns
+    -------
+    dict with a stable shape::
+
+        {
+          "metrics": dict[str, float] | None,  # upstream dict, verbatim
+          "marker": "not_requested" | "not_available"
+                  | "computed_upstream" | "upstream_error",
+          "install_hint": str | None,
+          "note": str | None,
+          "n_total": int,
+          "run_posebusters": bool,
+        }
+
+    ``metrics`` is the upstream dict unmodified (keys such as
+    ``frac_valid_mols``, ``frac_connected``, ``reos_cum_dev``,
+    ``pb_valid``, ...). Consumers that only need one number should read
+    ``metrics[<key>]`` and treat ``metrics is None`` as "not computed".
+    """
+    smiles_list = [s for s in smiles if s]
+    base: dict[str, Any] = {
+        "metrics": None,
+        "marker": FLOWMOL3_MARKER_NOT_AVAILABLE,
+        "install_hint": None,
+        "note": None,
+        "n_total": int(len(smiles_list)),
+        "run_posebusters": bool(run_posebusters),
+    }
+
+    if not smiles_list:
+        base["marker"] = FLOWMOL3_MARKER_NOT_REQUESTED
+        base["note"] = "no_valid_input_smiles:flowmol3_paper_metrics_skipped"
+        return base
+
+    # LAZY import — see docstring. Never hoist to module scope.
+    try:
+        from adaptive_reflow.adapters import (  # noqa: PLC0415
+            flowmol3_metrics_upstream as _upstream,
+        )
+    except BaseException as exc:  # noqa: BLE001 - upstream may raise anything
+        base["marker"] = FLOWMOL3_MARKER_NOT_AVAILABLE
+        base["install_hint"] = FLOWMOL3_INSTALL_HINT
+        base["note"] = f"wrapper_import_failed:{type(exc).__name__}:{exc}"
+        return base
+
+    if not _upstream.is_upstream_available():
+        base["marker"] = FLOWMOL3_MARKER_NOT_AVAILABLE
+        base["install_hint"] = FLOWMOL3_INSTALL_HINT
+        base["note"] = (
+            "upstream_flowmol_unavailable:"
+            f"{_upstream.get_upstream_import_error()!r}"
+        )
+        return base
+
+    try:
+        metrics = _upstream.compute_paper_metrics_from_smiles(
+            smiles_list,
+            processed_data_dir=processed_data_dir,
+            run_posebusters=bool(run_posebusters),
+            run_functional_validity=bool(run_functional_validity),
+            run_energy_div=bool(run_energy_div),
+            pb_workers=int(pb_workers),
+            device=str(device),
+        )
+    except BaseException as exc:  # noqa: BLE001 - keep the JSON parseable
+        base["marker"] = FLOWMOL3_MARKER_UPSTREAM_ERROR
+        base["note"] = f"upstream_analyze_failed:{type(exc).__name__}:{exc}"
+        return base
+
+    base["metrics"] = {str(k): v for k, v in dict(metrics).items()}
+    base["marker"] = FLOWMOL3_MARKER_COMPUTED_UPSTREAM
+    return base
+
+
 # ---------------------------------------------------------------------------
 # Pipeline
 # ---------------------------------------------------------------------------
@@ -644,12 +1428,25 @@ def evaluate(
     input_path: Path,
     reference_path: Path | None,
     dataset: str | None,
+    flowmol3_paper_metrics: bool | None = None,
+    flowmol3_processed_data_dir: Path | str | None = None,
+    flowmol3_run_posebusters: bool = True,
+    flowmol3_pb_workers: int = 2,
+    flowmol3_device: str = "cuda:0",
 ) -> dict[str, Any]:
     """Run the full evaluation pipeline and return the JSON-ready dict.
 
     The dict shape is fixed: every metric key is always present.
     Missing dependencies downgrade individual metrics to ``NaN``;
     the rest of the row still computes.
+
+    ``flowmol3_paper_metrics`` controls the additive
+    ``flowmol3_paper_metrics`` block: ``True`` forces the upstream
+    FlowMol3 analyzer to run, ``False`` skips it (marker
+    ``not_requested``), and ``None`` (default) auto-gates on
+    :func:`_looks_like_flowmol3_samples`. The pre-existing per-metric
+    outputs (``validity``, ``qed``, ``fcd``, ``logp``, ``sa``,
+    ``pb_validity``, ...) are unaffected in every case.
     """
     notes: list[str] = []
     missing: list[str] = []
@@ -665,6 +1462,20 @@ def evaluate(
     if not fcd_ok:
         missing.append("fcd")
         notes.append(f"{fcd_err}:install_with_uv_pip_install_fcd")
+
+    pb_ok, pb_err = _probe_posebusters()
+    if not pb_ok:
+        missing.append("posebusters")
+        # PoseBusters is a Tier-2 paper metric; we record the missing
+        # dep in the missing_dependencies list but do NOT also append
+        # to stderr_notes — ``pb_validity`` carries the install hint
+        # in its own ``install_hint`` field. Adding it here would
+        # duplicate the message.
+        notes.append(
+            f"{pb_err}:posebusters_unavailable:"
+            "real_paper_metric_requires_3d_conformer_stage:"
+            "see_pb_validity_block_in_json"
+        )
 
     items, fmt = load_inputs(input_path)
     if not rdkit_ok:
@@ -683,6 +1494,9 @@ def evaluate(
             "sa": NAN,
             "logp": NAN,
             "fcd": NAN,
+            "pb_validity": compute_pb_validity([]),
+            "flowmol3_paper_metrics": compute_flowmol3_paper_metrics([]),
+            "fg_deviation": NAN,
             "frac_atoms_stable": NAN,
             "frac_mols_stable_valence": NAN,
             "frac_connected": NAN,
@@ -699,8 +1513,49 @@ def evaluate(
     fcd_value, fcd_note = compute_fcd(smiles, reference_path=reference_path)
     if fcd_note is not None:
         notes.append(fcd_note)
+    pb_validity = compute_pb_validity(mols)
     frac_atoms_stable, frac_mols_stable_valence = compute_atom_stability(mols)
     frac_connected, avg_num_components = compute_connectivity(mols)
+
+    # FG-deviation: load the reference SMILES (if any) and compute
+    # the L1 distance. The same --reference-smiles file is shared
+    # with FCD (GEOM-DRUGS-style training-data reference).
+    fg_ref_smiles: list[str] = []
+    if reference_path is not None:
+        fg_ref_smiles = _load_smiles_file(reference_path)
+    fg_dev_value, fg_dev_note = compute_fg_deviation(mols, fg_ref_smiles)
+    if fg_dev_note is not None:
+        notes.append(fg_dev_note)
+
+    # Additive Tier-1 block: upstream FlowMol3 SampleAnalyzer. Auto-gated
+    # on the input looking like a FlowMol3 sample list unless the caller
+    # forced the flag. Never affects the metrics computed above.
+    if flowmol3_paper_metrics is None:
+        want_flowmol3 = _looks_like_flowmol3_samples(items, fmt)
+    else:
+        want_flowmol3 = bool(flowmol3_paper_metrics)
+    if want_flowmol3:
+        flowmol3_block = compute_flowmol3_paper_metrics(
+            smiles,
+            processed_data_dir=flowmol3_processed_data_dir,
+            run_posebusters=bool(flowmol3_run_posebusters),
+            pb_workers=int(flowmol3_pb_workers),
+            device=str(flowmol3_device),
+        )
+    else:
+        flowmol3_block = {
+            "metrics": None,
+            "marker": FLOWMOL3_MARKER_NOT_REQUESTED,
+            "install_hint": None,
+            "note": (
+                "flowmol3_paper_metrics_not_requested:"
+                f"input_format={fmt}:auto_gate={flowmol3_paper_metrics is None}"
+            ),
+            "n_total": int(len(smiles)),
+            "run_posebusters": bool(flowmol3_run_posebusters),
+        }
+    if flowmol3_block.get("note"):
+        notes.append(f"flowmol3_paper_metrics:{flowmol3_block['note']}")
 
     return {
         "schema_version": OUTPUT_SCHEMA_VERSION,
@@ -714,6 +1569,9 @@ def evaluate(
         "sa": float(sa),
         "logp": float(logp),
         "fcd": float(fcd_value),
+        "pb_validity": pb_validity,
+        "flowmol3_paper_metrics": flowmol3_block,
+        "fg_deviation": float(fg_dev_value),
         "frac_atoms_stable": float(frac_atoms_stable),
         "frac_mols_stable_valence": float(frac_mols_stable_valence),
         "frac_connected": float(frac_connected),
@@ -772,6 +1630,55 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "Default: 'unknown'."
         ),
     )
+    parser.add_argument(
+        "--flowmol3-paper-metrics",
+        dest="flowmol3_paper_metrics",
+        action="store_true",
+        default=None,
+        help=(
+            "Force the additive flowmol3_paper_metrics block (upstream "
+            "FlowMol3 SampleAnalyzer) to run. Default: auto — it runs "
+            "when the input looks like a FlowMol3 sample list (.pkl / "
+            ".sdf of RDKit Mols) and the upstream wrapper imports."
+        ),
+    )
+    parser.add_argument(
+        "--no-flowmol3-paper-metrics",
+        dest="flowmol3_paper_metrics",
+        action="store_false",
+        help="Skip the flowmol3_paper_metrics block entirely.",
+    )
+    parser.add_argument(
+        "--flowmol3-processed-data-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Upstream processed dataset dir handed to the FlowMol3 "
+            "SampleAnalyzer. Default: upstream's own fallback."
+        ),
+    )
+    parser.add_argument(
+        "--flowmol3-no-posebusters",
+        dest="flowmol3_run_posebusters",
+        action="store_false",
+        default=True,
+        help=(
+            "Disable the PoseBusters stage inside the upstream FlowMol3 "
+            "analyzer (memory-hungry on tight GPUs)."
+        ),
+    )
+    parser.add_argument(
+        "--flowmol3-pb-workers",
+        type=int,
+        default=2,
+        help="PoseBusters worker processes for the upstream analyzer (0 = serial).",
+    )
+    parser.add_argument(
+        "--flowmol3-device",
+        type=str,
+        default="cuda:0",
+        help="Device tag forwarded to the upstream FlowMol3 analyzer.",
+    )
     return parser.parse_args(argv)
 
 
@@ -788,6 +1695,15 @@ def main(argv: list[str] | None = None) -> int:
         input_path=Path(args.input),
         reference_path=Path(args.reference_smiles) if args.reference_smiles else None,
         dataset=str(args.dataset) if args.dataset else None,
+        flowmol3_paper_metrics=args.flowmol3_paper_metrics,
+        flowmol3_processed_data_dir=(
+            Path(args.flowmol3_processed_data_dir)
+            if args.flowmol3_processed_data_dir
+            else None
+        ),
+        flowmol3_run_posebusters=bool(args.flowmol3_run_posebusters),
+        flowmol3_pb_workers=int(args.flowmol3_pb_workers),
+        flowmol3_device=str(args.flowmol3_device),
     )
     # Surface dependency-missing notes on stderr so an operator can
     # see them without opening the JSON.
@@ -812,8 +1728,24 @@ if __name__ == "__main__":
 __all__ = [
     "OUTPUT_SCHEMA_VERSION",
     "SUPPORTED_DATASETS",
+    "FG_SMARTS_NAMES",
+    "PB_VALIDITY_MARKER_NOT_INSTALLED",
+    "PB_VALIDITY_MARKER_COMPUTED",
+    "PB_VALIDITY_MARKER_COMPUTED_ETKDG_V3_ONLY",
+    "PB_VALIDITY_MARKER_STUB_UNAVAILABLE",
+    "PB_VALIDITY_INSTALL_HINT",
+    "PB_VALIDITY_CONFIG",
+    "FLOWMOL3_MARKER_NOT_REQUESTED",
+    "FLOWMOL3_MARKER_NOT_AVAILABLE",
+    "FLOWMOL3_MARKER_COMPUTED_UPSTREAM",
+    "FLOWMOL3_MARKER_UPSTREAM_ERROR",
+    "FLOWMOL3_INSTALL_HINT",
+    "_embed_3d_etkdg_v3",
     "compute_fcd",
+    "compute_fg_deviation",
+    "compute_flowmol3_paper_metrics",
     "compute_logp",
+    "compute_pb_validity",
     "compute_qed",
     "compute_sa",
     "compute_validity",

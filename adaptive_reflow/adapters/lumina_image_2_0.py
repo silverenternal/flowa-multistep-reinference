@@ -175,7 +175,7 @@ ERR_LUMINA_PROMPT_MISSING: str = "lumina_image_2_0_prompt_missing"
 # Local type alias (avoid numpy at module-import hot annotation paths).
 ArrayF64 = NDArray[np.float64]
 
-Mode = Literal["torch", "synthetic"]
+Mode = Literal["torch", "synthetic", "upstream"]
 
 # Default weight-dir candidate filenames (used by the resolver; the
 # published checkpoint layout is documented in
@@ -398,7 +398,11 @@ def _torch_velocity_field(
         # Time conditioning: broadcast scalar to (1,) and cast to dtype.
         # The Lumina2 transformer expects a (B,) tensor of normalized
         # timesteps in [0, 1] (FlowMatchEuler scheduler convention).
-        t_t = torch.tensor([float(t)], dtype=dtype)
+        # Match the transformer's device (transformer may have been
+        # moved to GPU by the caller via ``pipeline.to("cuda")``).
+        tf_device = next(transformer.parameters()).device
+        x_t = x_t.to(device=tf_device)
+        t_t = torch.tensor([float(t)], dtype=dtype, device=tf_device)
         # Conditional forward: v_t = transformer(x_t, t_t, text_emb, ...).
         v_t = transformer(
             hidden_states=x_t,
@@ -425,7 +429,7 @@ def _torch_velocity_field(
                 v_eff = v_eff * scale
         else:
             v_eff = v_t
-        out = np.asarray(v_eff.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
+        out = np.asarray(v_eff.squeeze(0).detach().to(torch.float32).cpu().numpy(), dtype=np.float64)
     return out.reshape(LUMINA_IMAGE_2_0_STATE_SHAPE)
 
 
@@ -448,6 +452,240 @@ def _load_torch_pipeline(weights_dir: Path, *, dtype: Any) -> Any:
     )
     pipeline.set_progress_bar_config(disable=True)
     return pipeline
+
+
+def _load_upstream_pipeline(
+    weights_dir: Path, *, dtype: Any
+) -> dict[str, Any]:
+    """Load the Lumina-Image 2.0 *upstream* harness.
+
+    Wires the framework adapter to the upstream
+    ``Alpha-VLLM/Lumina-Image-2.0`` repo (arXiv:2503.21758):
+
+    * ``models.NextDiT_2B_GQA_patch2_Adaln_Refiner`` -- the 2.6B-param
+      Unified Next-DiT backbone with the canonical architecture.
+    * ``transport.create_transport`` / ``Sampler`` -- the Rectified-Flow
+      path / drift / ``sample_ode`` machinery.
+
+    The function returns a dict with the loaded handles the framework
+    needs to drive ``model.forward_with_cfg`` from the ODE loop:
+
+    ==================  ===============================================
+    Key                 Description
+    ==================  ===============================================
+    ``model``           ``NextDiT_2B_GQA_patch2_Adaln_Refiner``
+                        instance in ``eval()`` mode on CUDA in
+                        ``dtype`` (paper default: bf16).
+    ``sampler``         ``transport.Sampler`` from
+                        ``create_transport('Linear', 'velocity')``.
+    ``train_args``      Loaded ``model_args.pth`` (the upstream uses
+                        ``train_args.model`` and ``train_args.qk_norm``
+                        to look up the right constructor).
+    ``weights_dir``         Mirror of the input arg for downstream logging.
+    ``stubbed_flash_attn``  True iff ``flash_attn`` was stubbed by the
+                        shim (real wheel missing on sm_120). When True,
+                        ``model.forward`` will raise at the first
+                        attention call -- the caller must surface this
+                        as a clean blocker.
+    ==================  ===============================================
+
+    Notes
+    -----
+    The upstream harness needs:
+
+    * ``consolidated.00-of-01.safetensors`` (or ``.pth``) -- the actual
+      checkpoint file. The published layout is documented in
+      ``data/lumina_image_2_0/weights_real/`` (diffusers format) vs
+      ``data/lumina_image_2_0/weights/`` (upstream format placeholder).
+    * ``model_args.pth`` -- a small ``argparse.Namespace`` persisted by
+      upstream's training entrypoint. Used to look up the constructor.
+    * ``flash_attn`` -- the upstream uses ``flash_attn_varlen_func`` at
+      every attention call. On sm_120 (Blackwell) the wheel is not on
+      PyPI as of 2026-09; the shim installs a stub so this function
+      can return successfully even when the real wheel is missing.
+
+    If ``model_args.pth`` or ``consolidated.00-of-01.safetensors`` /
+    ``consolidated.00-of-01.pth`` is missing, the function raises
+    ``FileNotFoundError`` so the caller can fall back to
+    ``synthetic`` mode.
+    """
+    import torch  # local import -- torch is optional at the framework level.
+    from safetensors.torch import load_file  # local import.
+
+    # Late-bound shim import -- keeps the module importable on
+    # stdlib-only test runners.
+    from adaptive_reflow.adapters.lumina_image_2_0_upstream_shim import (
+        import_upstream_harness,
+    )
+
+    harness = import_upstream_harness()
+    models_module = harness["models_module"]
+    create_transport = harness["create_transport"]
+
+    model_args_path = weights_dir / "model_args.pth"
+    if not model_args_path.exists():
+        raise FileNotFoundError(
+            f"lumina_upstream_model_args_missing:{model_args_path}"
+        )
+
+    # Detect an LFS pointer stub (the published repo's
+    # ``weights/model_args.pth`` is a 129-byte ASCII pointer line,
+    # not a real pickle). The LFS stub starts with
+    # ``version https://git-lfs.github.com/spec/v1`` -- if we see
+    # that, raise ``FileNotFoundError`` so the caller falls back
+    # cleanly to synthetic mode rather than choking on a
+    # ``pickle.UnpicklingError`` deep inside ``torch.load``.
+    try:
+        with open(model_args_path, "rb") as _f:
+            _head = _f.read(48)
+        if b"git-lfs" in _head or b"version https" in _head:
+            raise FileNotFoundError(
+                f"lumina_upstream_model_args_lfs_stub:{model_args_path}"
+            )
+    except OSError:
+        # File vanished between the ``exists()`` check and our open --
+        # treat as missing.
+        raise FileNotFoundError(
+            f"lumina_upstream_model_args_missing:{model_args_path}"
+        ) from None
+
+    # ``model_args.pth`` is a pickled argparse.Namespace persisted by
+    # upstream's training entrypoint.
+    train_args = torch.load(model_args_path, weights_only=False)
+
+    # Look up the constructor by name (the upstream uses the same name
+    # across checkpoints: ``NextDiT_2B_GQA_patch2_Adaln_Refiner`` for
+    # the published 2B Lumina-Image 2.0 config). If a future variant
+    # lands (3B/4B/7B), the lookup falls back to the same model.
+    model_cls_name = getattr(train_args, "model", "NextDiT_2B_GQA_patch2_Adaln_Refiner")
+    try:
+        model_cls = models_module.__dict__[model_cls_name]
+    except KeyError as exc:
+        raise RuntimeError(
+            f"lumina_upstream_model_class_unknown:{model_cls_name}"
+        ) from exc
+
+    model = model_cls(
+        in_channels=16,
+        qk_norm=getattr(train_args, "qk_norm", True),
+        cap_feat_dim=2304,  # Gemma2-2B hidden_size
+    )
+
+    # Locate the upstream-format checkpoint. The published layout uses
+    # ``consolidated.00-of-01.safetensors`` (or ``.pth`` as a fallback).
+    consolidated_st = weights_dir / "consolidated.00-of-01.safetensors"
+    consolidated_pt = weights_dir / "consolidated.00-of-01.pth"
+    if consolidated_st.exists():
+        ckpt = load_file(str(consolidated_st))
+        model.load_state_dict(ckpt, strict=True)
+    elif consolidated_pt.exists():
+        ckpt = torch.load(consolidated_pt, weights_only=False)
+        # The ``.pth`` variant wraps a list of state-dicts (one per
+        # shard); with single-GPU ``num_gpus=1`` there is exactly one.
+        if isinstance(ckpt, list):
+            ckpt = ckpt[0]
+        model.load_state_dict(ckpt, strict=True)
+    else:
+        raise FileNotFoundError(
+            f"lumina_upstream_consolidated_missing:{weights_dir} "
+            "(expected consolidated.00-of-01.safetensors or "
+            "consolidated.00-of-01.pth)"
+        )
+
+    model = model.to(dtype=dtype)
+    if torch.cuda.is_available():
+        model = model.cuda()
+    model.eval()
+
+    sampler_obj = create_transport(
+        path_type="Linear",
+        prediction="velocity",
+    )
+
+    return {
+        "model": model,
+        "sampler": sampler_obj,
+        "train_args": train_args,
+        "weights_dir": weights_dir,
+        "stubbed_flash_attn": bool(harness.get("stubbed_flash_attn", False)),
+    }
+
+
+def _upstream_velocity_field(
+    pipeline: dict[str, Any],
+    x: ArrayF64,
+    t: float,
+    *,
+    dtype: Any,
+    text_emb: Any,
+    uncond_text_emb: Any,
+    encoder_attention_mask: Any | None,
+    uncond_attention_mask: Any | None,
+    guidance_scale: float,
+    cfg_trunc_ratio: float,
+    cfg_normalization: bool,
+) -> ArrayF64:
+    """Call the upstream ``model.forward_with_cfg(x, t, cap_feats, cap_mask)``.
+
+    The upstream Lumina-Image 2.0 ``forward_with_cfg`` (in
+    ``data/lumina_image_2_0/repo/models/model.py`` line 781) handles
+    CFG-Trunc + CFG-Renorm internally and expects:
+
+    * ``x`` -- shape ``(2*B, 16, h, w)`` with the conditional x
+      duplicated across the batch dim (``forward_with_cfg`` takes
+      ``half = x[:B]`` then re-stacks ``[half, half]`` before the
+      inner ``self.forward``).
+    * ``cap_feats`` -- shape ``(2*B, L, 2304)`` with the conditional
+      features in the first half and the unconditional features in the
+      second half.
+    * ``cap_mask`` -- same layout as ``cap_feats`` along the batch dim.
+    * ``t`` -- shape ``(B,)`` (or ``(2*B,)`` -- only ``t[0]`` is checked
+      against ``cfg_trunc``).
+
+    The CFG-Trunc semantics are: if ``t[0] < cfg_trunc`` apply CFG,
+    else return the conditional branch untouched. The paper's
+    ``CFG-Trunc=0.25`` means "skip CFG for the LAST 25% of the
+    timeline", i.e. CFG applies for ``t < 0.75``. The adapter sets
+    ``cfg_trunc=1.0 - cfg_trunc_ratio`` to match that convention.
+
+    The CFG-Renorm semantics are: ``renorm_cfg > 0`` rescales the
+    CFG-combined eps so its vector norm does not exceed
+    ``renorm_cfg * ||cond_eps||``. The paper sets ``renorm_cfg=1.0``
+    (matches ``cfg_normalization=True``).
+
+    Returns a NumPy ``(16, 128, 128)`` float64 array.
+    """
+    import torch  # local import -- torch is optional at the framework level.
+
+    model = pipeline["model"]
+
+    with torch.no_grad():
+        x_t = torch.as_tensor(x, dtype=dtype).unsqueeze(0)  # (1, 16, h, w)
+        x_batched = torch.cat([x_t, x_t], dim=0)  # (2, 16, h, w)
+        t_t = torch.tensor([float(t)], dtype=dtype)
+        # ``cap_feats`` and ``cap_mask`` are already pre-stacked by
+        # ``_encode_text_pair`` in the upstream mode (see that method
+        # below). The shape is ``(2, L, 2304)`` and ``(2, L)``.
+        cap_feats = text_emb
+        cap_mask = encoder_attention_mask
+        # CFG-Trunc: in upstream's convention CFG applies when
+        # ``t[0] < cfg_trunc``. The framework stores the "truncate the
+        # LAST fraction of the timeline" ratio; invert it.
+        cfg_trunc = float(1.0 - float(cfg_trunc_ratio))
+        # CFG-Renorm: upstream takes a numeric threshold; the framework
+        # stores a bool. Map True -> 1.0, False -> 0.0.
+        renorm_cfg = 1.0 if bool(cfg_normalization) else 0.0
+        v_t = model.forward_with_cfg(
+            x_batched,
+            t_t,
+            cap_feats,
+            cap_mask,
+            float(guidance_scale),
+            cfg_trunc=cfg_trunc,
+            renorm_cfg=renorm_cfg,
+        )  # (1, 16, h, w) -- forward_with_cfg returns the half-output
+    out = np.asarray(v_t.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
+    return out.reshape(LUMINA_IMAGE_2_0_STATE_SHAPE)
 
 
 # ---------------------------------------------------------------------------
@@ -504,6 +742,16 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
       transformer in ``torch.no_grad()`` / ``eval()`` mode on each
       integration step. Requires the ``[lumina-image]`` extra and the
       Lumina-Image 2.0 checkpoint (default ``data/Lumina-Image-2.0/``).
+    * ``upstream`` -- the upstream-repo harness. Lazy-imports the
+      ``models`` and ``transport`` modules from the cloned
+      ``Alpha-VLLM/Lumina-Image-2.0`` repository (see
+      :mod:`adaptive_reflow.adapters.lumina_image_2_0_upstream_shim`)
+      and constructs ``NextDiT_2B_GQA_patch2_Adaln_Refiner`` plus
+      ``transport.create_transport`` directly. Requires the upstream
+      ``consolidated.00-of-01.safetensors`` + ``model_args.pth`` +
+      ``flash_attn`` wheel. Falls back to ``synthetic`` on any of
+      those being unavailable; the failure is captured on
+      ``self._upstream_init_error``.
     * ``synthetic`` -- testing-only path. Uses a deterministic NumPy
       two-tensor affine velocity field with random init. The synthetic
       field is NOT a trained Lumina-Image 2.0 model; it is a Protocol-
@@ -519,10 +767,10 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
       ``data/Alpha-VLLM__Lumina-Image-2.0`` in order; if none of those
       exist, the adapter switches to ``synthetic`` mode (when ``force_mode``
       is ``"auto"``).
-    * ``force_mode`` -- ``"torch"`` / ``"synthetic"`` / ``"auto"``
-      (default). ``"auto"`` picks ``"torch"`` when the weights directory
-      exists AND torch + diffusers + transformers are all importable;
-      otherwise ``"synthetic"``.
+    * ``force_mode`` -- ``"torch"`` / ``"upstream"`` / ``"synthetic"`` /
+      ``"auto"`` (default). ``"auto"`` picks ``"torch"`` when the
+      weights directory exists AND torch + diffusers + transformers
+      are all importable; otherwise ``"synthetic"``.
     * ``num_steps`` -- default number of Euler integration steps per
       round (paper default 50). The framework can override via
       ``condition.delta_spec["num_steps"]``.
@@ -623,6 +871,14 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                     f"lumina_image_2_0_weights_missing:{self._weights_path}"
                 )
             self._mode = "torch"
+        elif force_mode == "upstream":
+            if not torch_is_available():
+                raise RuntimeError("upstream requested but torch not installed")
+            if not self._weights_path.exists():
+                raise FileNotFoundError(
+                    f"lumina_image_2_0_weights_missing:{self._weights_path}"
+                )
+            self._mode = "upstream"
         elif force_mode == "synthetic":
             self._mode = "synthetic"
         else:
@@ -632,6 +888,13 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         self._pipeline: Any = None
         self._torch_dtype: Any = None
         self._synthetic_weights: dict[str, ArrayF64] | None = None
+        # When ``force_mode == 'upstream'`` we keep a repr of any
+        # import / weight-loading failure here so the engine log can
+        # surface why the upstream path is unavailable without
+        # crashing the framework. ``None`` when the upstream load
+        # succeeded, or when the adapter never attempted the upstream
+        # path.
+        self._upstream_init_error: str | None = None
         if self._mode == "torch":
             try:
                 import torch as _torch  # local import -- torch is optional.
@@ -644,6 +907,31 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 )
             except ImportError:
                 self._mode = "synthetic"
+        elif self._mode == "upstream":
+            try:
+                import torch as _torch  # local import -- torch is optional.
+
+                self._torch_dtype = _torch.bfloat16
+                self._pipeline = _load_upstream_pipeline(
+                    self._weights_path, dtype=self._torch_dtype
+                )
+            except (ImportError, FileNotFoundError, RuntimeError, EOFError, ValueError) as exc:
+                # Upstream path requires the published
+                # ``consolidated.00-of-01.safetensors`` /
+                # ``model_args.pth`` + a working ``flash_attn`` wheel.
+                # None of those is a guaranteed runtime guarantee, so
+                # we fall back to ``synthetic`` rather than crashing
+                # the framework; the failure is surfaced via the
+                # exception's repr in the engine log.
+                # ``UnpicklingError`` and friends are surfaced as
+                # ``EOFError`` / ``ValueError`` here because
+                # ``weights/model_args.pth`` is currently an LFS
+                # pointer stub (ASCII text starting with the LFS
+                # version line, not a real pickle).
+                self._mode = "synthetic"
+                self._upstream_init_error = repr(exc)
+            else:
+                self._upstream_init_error = None
         if self._mode == "synthetic":
             self._synthetic_weights = _random_init_synthetic_weights(
                 hidden=int(self._synthetic_hidden),
@@ -1047,17 +1335,70 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
             attn = tokens.attention_mask.to(dtype=torch.long)
             uncond_ids = uncond_tokens.input_ids.to(dtype=torch.long)
             uncond_attn = uncond_tokens.attention_mask.to(dtype=torch.long)
-            text_emb = encoder(
-                input_ids=input_ids,
-                attention_mask=attn,
-            ).last_hidden_state
-            uncond_text_emb = encoder(
-                input_ids=uncond_ids,
-                attention_mask=uncond_attn,
-            ).last_hidden_state
+            # Tokenizer output lives on CPU; the loaded text_encoder may
+            # have been moved to GPU via ``pipeline.to("cuda")``. Move
+            # inputs to the encoder's device so the forward pass doesn't
+            # crash on a mixed-device ``F.embedding`` call.
+            enc_device = next(encoder.parameters()).device
+            input_ids = input_ids.to(device=enc_device)
+            attn = attn.to(device=enc_device)
+            uncond_ids = uncond_ids.to(device=enc_device)
+            uncond_attn = uncond_attn.to(device=enc_device)
+            # SEMANTIC DIFFERENCE vs upstream:
+            # the framework's torch path uses ``last_hidden_state``
+            # (the diffusers Lumina2Pipeline convention); the upstream
+            # ``sample.py`` uses ``hidden_states[-2]`` (the 2nd-to-last
+            # Gemma2 layer). Both are valid choices in the paper's
+            # framework -- mixing-and-matching is a documented
+            # foot-gun, so the upstream mode uses ``hidden_states[-2]``
+            # below.
+            if self._mode == "upstream":
+                # Upstream's ``encode_prompt`` returns the second-to-
+                # last Gemma2 hidden layer (``hidden_states[-2]``)
+                # rather than ``last_hidden_state``. The diffusers
+                # pipeline exposes ``output_hidden_states=True`` via
+                # the underlying ``Gemma2Model``; we re-encode here
+                # so the layer index matches upstream.
+                cond_out = encoder(
+                    input_ids=input_ids,
+                    attention_mask=attn,
+                    output_hidden_states=True,
+                )
+                uncond_out = encoder(
+                    input_ids=uncond_ids,
+                    attention_mask=uncond_attn,
+                    output_hidden_states=True,
+                )
+                cond_h = cond_out.hidden_states[-2]
+                uncond_h = uncond_out.hidden_states[-2]
+            else:
+                cond_h = encoder(
+                    input_ids=input_ids,
+                    attention_mask=attn,
+                ).last_hidden_state
+                uncond_h = encoder(
+                    input_ids=uncond_ids,
+                    attention_mask=uncond_attn,
+                ).last_hidden_state
+
+        # Upstream mode: pre-stack the (cond, uncond) embeddings so
+        # ``model.forward_with_cfg`` can use the (2, L, 2304)-shaped
+        # ``cap_feats`` and (2, L)-shaped ``cap_mask`` directly. The
+        # upstream's ``forward_with_cfg`` does the conditional /
+        # unconditional split internally via
+        # ``cond_eps, uncond_eps = torch.split(eps, len(eps)//2)``.
+        if self._mode == "upstream":
+            text_emb = torch.cat([cond_h, uncond_h], dim=0)
+            encoder_attention_mask = torch.cat([attn, uncond_attn], dim=0)
+            return (
+                text_emb.detach(),
+                None,
+                encoder_attention_mask.detach(),
+                None,
+            )
         return (
-            text_emb.detach(),
-            uncond_text_emb.detach(),
+            cond_h.detach(),
+            uncond_h.detach(),
             attn.detach(),
             uncond_attn.detach(),
         )
@@ -1092,6 +1433,27 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
             transformer = getattr(self._pipeline, "transformer", self._pipeline)
             return _torch_velocity_field(
                 transformer,
+                x,
+                t,
+                dtype=self._torch_dtype,
+                text_emb=text_emb,
+                uncond_text_emb=uncond_text_emb,
+                encoder_attention_mask=encoder_attention_mask,
+                uncond_attention_mask=uncond_attention_mask,
+                guidance_scale=self._guidance_scale,
+                cfg_trunc_ratio=self._cfg_trunc_ratio,
+                cfg_normalization=self._cfg_normalization,
+            )
+        if self._mode == "upstream":
+            assert self._pipeline is not None
+            # The upstream harness owns the bare ``NextDiT`` model +
+            # a ``transport.Sampler``. ``_upstream_velocity_field``
+            # batches the (cond, uncond) pair inside the call -- the
+            # upstream ``forward_with_cfg`` expects ``cap_feats`` /
+            # ``cap_mask`` to be pre-stacked along the batch dim (see
+            # ``_encode_text_pair`` for the pre-stacking path).
+            return _upstream_velocity_field(
+                self._pipeline,
                 x,
                 t,
                 dtype=self._torch_dtype,
@@ -1179,6 +1541,21 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 transformer = getattr(self._pipeline, "transformer", self._pipeline)
                 return _torch_velocity_field(
                     transformer,
+                    xx,
+                    tt,
+                    dtype=self._torch_dtype,
+                    text_emb=text_emb,
+                    uncond_text_emb=uncond_text_emb,
+                    encoder_attention_mask=attn_mask,
+                    uncond_attention_mask=uncond_attn_mask,
+                    guidance_scale=guidance_scale,
+                    cfg_trunc_ratio=cfg_trunc_ratio,
+                    cfg_normalization=cfg_normalization,
+                )
+            if self._mode == "upstream":
+                assert self._pipeline is not None
+                return _upstream_velocity_field(
+                    self._pipeline,
                     xx,
                     tt,
                     dtype=self._torch_dtype,

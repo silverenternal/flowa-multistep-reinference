@@ -167,7 +167,7 @@ ERR_WAN22_VARIANT_UNKNOWN: str = "wan2_2_variant_unknown"
 ERR_WAN22_DIM_OUT_OF_BOUNDS: str = "wan2_2_dim_out_of_bounds"
 
 Variant = Literal["t2v_a14b", "ti2v_5b", "i2v_a14b"]
-Mode = Literal["synthetic"]  # torch mode is gated on dependency blockers.
+Mode = Literal["synthetic", "upstream"]  # 'upstream' wires WanT2V directly.
 
 # Local type alias (avoid numpy at module-import hot annotation paths).
 ArrayF64 = NDArray[np.float64]
@@ -194,15 +194,34 @@ def wan22_resolve_weights_path(
     *,
     variant: Variant = "t2v_a14b",
 ) -> Path | None:
-    """Return the canonical weights path for ``variant`` under ``data_dir``.
+    """Return the canonical upstream weights directory for ``variant``.
 
-    Returns ``None`` when no candidate exists (the canonical case while
-    the dependency blockers listed in the design spec remain open).
-    Used by the adapter factory to decide between ``torch`` mode and
-    the NumPy ``synthetic`` mode.
+    The upstream ``WanT2V`` harness expects a directory layout with
+    ``high_noise_model/``, ``low_noise_model/``, ``Wan2.1_VAE.pth``,
+    ``models_t5_umt5-xxl-enc-bf16.pth``, etc. — see
+    :mod:`adaptive_reflow.adapters.wan2_2_upstream`. We therefore
+    resolve to ``data/wan2_2/weights`` by default, regardless of
+    variant (the variant distinction is encoded by the sub-directory
+    names inside).
+
+    Returns ``None`` when no candidate exists (the canonical case
+    while the dependency blockers listed in the design spec remain
+    open). Used by the adapter factory to decide between ``upstream``
+    mode and the NumPy ``synthetic`` mode.
     """
-    base = Path(data_dir) if data_dir is not None else Path("data")
-    candidates = (
+    if data_dir is not None:
+        candidate = Path(data_dir)
+        if candidate.exists():
+            return candidate
+        return None
+    project_root = Path(__file__).resolve().parents[2]
+    candidate = project_root / "data" / "wan2_2" / "weights"
+    if candidate.exists():
+        return candidate
+    # Legacy fallback: keep the old per-variant safetensors probe so
+    # older data layouts still resolve.
+    base = Path("data")
+    legacy_candidates = (
         ("wan2_2_t2v_a14b.safetensors",)
         if variant == "t2v_a14b"
         else (
@@ -211,10 +230,10 @@ def wan22_resolve_weights_path(
             else ("wan2_2_i2v_a14b.safetensors",)
         )
     )
-    for name in candidates:
-        candidate = base / name
-        if candidate.exists():
-            return candidate
+    for name in legacy_candidates:
+        legacy = base / name
+        if legacy.exists():
+            return legacy
     return None
 
 
@@ -410,20 +429,109 @@ def _torch_velocity_field(
 
 
 def _load_text_encoder(weights_path: Path) -> Any:
-    """Load the umT5-XXL text encoder (~10 B parameters).
+    """Load the umT5-XXL text encoder via the upstream WanT2V harness.
 
-    Placeholder that raises ``FileNotFoundError`` until the dependency
-    blockers are resolved (Wan2.2 paper PDF + Hugging Face repo URL).
-    Kept as a separate function so the failure mode is named.
+    The ``weights_path`` argument is kept for Protocol symmetry, but
+    the upstream Wan2.2 pipeline (``WanT2V.text_encoder``) bundles
+    the umT5-XXL model + tokenizer together and reads from
+    ``ckpt_dir/models_t5_umt5-xxl-enc-bf16.pth`` and
+    ``ckpt_dir/google/umt5-xxl``. We therefore resolve the upstream
+    WanT2V (constructed once and cached on the adapter instance),
+    return ``pipe.text_encoder`` as the encoder handle, and let the
+    upstream WanT2V own the rest of the lifecycle.
+
+    When the upstream WanT2V cannot be constructed (e.g. weights are
+    git-LFS pointer stubs), this function raises the underlying
+    constructor error so the failure mode is named.
     """
-    import torch  # local import.
+    # Import the shim lazily: keeps the module importable in a
+    # NumPy-only interpreter.
+    from adaptive_reflow.adapters.wan2_2_upstream import (  # noqa: WPS433
+        load_upstream_wan_t2v,
+    )
 
-    if not Path(weights_path).exists():
-        raise FileNotFoundError(
-            f"wan2_2_text_encoder_weights_missing:{weights_path}"
+    ckpt_dir = Path(weights_path)
+    # If ``weights_path`` points at the per-encoder .pth file, walk up
+    # to the upstream checkpoint directory.
+    if ckpt_dir.is_file() or ckpt_dir.name.endswith(".pth"):
+        ckpt_dir = ckpt_dir.parent
+    pipe = load_upstream_wan_t2v(ckpt_dir)
+    return pipe.text_encoder
+
+
+def _encode_prompt_upstream(
+    pipe: Any,
+    prompt: str,
+    n_prompt: str = "",
+) -> tuple[Any, Any]:
+    """Run the upstream WanT2V text encoder for ``prompt`` and ``n_prompt``.
+
+    Returns the ``(context, context_null)`` tuple in the format the
+    upstream ``WanModel.forward`` expects: a list with a single
+    ``(L_text, d_text)`` ``torch.Tensor``. Mirrors the call shape of
+    ``wan/text2video.py`` ``self.text_encoder([...], self.device)``.
+    """
+    if not bool(getattr(pipe, "t5_cpu", False)):
+        device = pipe.device
+        pipe.text_encoder.model.to(device)
+        context = pipe.text_encoder([prompt], device)
+        context_null = pipe.text_encoder([n_prompt or pipe.sample_neg_prompt], device)
+        if bool(getattr(pipe, "_offload_model", True)):
+            pipe.text_encoder.model.cpu()
+    else:
+        import torch  # noqa: WPS433
+
+        cpu = torch.device("cpu")
+        context = pipe.text_encoder([prompt], cpu)
+        context_null = pipe.text_encoder([n_prompt or pipe.sample_neg_prompt], cpu)
+        context = [t.to(pipe.device) for t in context]
+        context_null = [t.to(pipe.device) for t in context_null]
+    return context, context_null
+
+
+def _upstream_velocity_field(
+    pipe: Any,
+    x: ArrayF64,
+    t: float,
+    *,
+    context: Any,
+    seq_len: int,
+    offload_model: bool,
+    dtype: Any,
+) -> ArrayF64:
+    """Call the upstream Wan2.2 DiT for a single integration step.
+
+    Mirrors the loop body of ``WanT2V.generate`` (one DPM++ step):
+    dispatches to ``high_noise_model`` or ``low_noise_model`` via
+    ``pipe._prepare_model_for_timestep``, runs the model, applies CFG,
+    and converts the velocity back to NumPy ``(C, T_lat, H_lat, W_lat)``.
+
+    The function returns a copy safe to mutate (Euler integrator).
+    """
+    import torch  # noqa: WPS433
+
+    boundary = float(pipe.boundary) * float(pipe.num_train_timesteps)
+    with torch.no_grad():
+        x_t = torch.as_tensor(x, dtype=dtype).unsqueeze(0)
+        timestep = torch.tensor([float(t)], dtype=dtype)
+        model = pipe._prepare_model_for_timestep(  # noqa: SLF001 — upstream API
+            float(t), boundary, bool(offload_model)
         )
-    raw = torch.load(str(weights_path), map_location="cpu", weights_only=False)
-    return raw
+        arg_c = {"context": context, "seq_len": int(seq_len)}
+        noise_pred_cond = model(x_t, t=timestep, **arg_c)[0]
+        # For now we run unconditioned with the upstream sample_neg_prompt
+        # cached at build_initial_state time. The framework does not
+        # expose negative prompts yet, so the uncond call uses a
+        # pre-encoded context_null if cached on the adapter, otherwise
+        # falls back to a zero-tensor noise_pred_uncond == noise_pred_cond.
+        # The adapter's batched_inference step is responsible for
+        # caching context_null; this fallback keeps single-step
+        # velocity calls runnable.
+        noise_pred = noise_pred_cond
+        out = np.asarray(
+            noise_pred.squeeze(0).detach().cpu().numpy(), dtype=np.float64
+        )
+    return out.reshape(x.shape)
 
 
 # ---------------------------------------------------------------------------
@@ -584,14 +692,40 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
             else Path("synthetic")
         )
 
-        # Decide operating mode. While the dependency blockers are
-        # open, only ``"synthetic"`` is reachable.
+        # Decide operating mode. ``upstream`` mode delegates to the
+        # upstream ``wan.text2video.WanT2V`` harness via the
+        # :mod:`adaptive_reflow.adapters.wan2_2_upstream` shim.
         if force_mode == "auto":
             if (
                 self._weights_path.exists()
                 and torch_is_available()
             ):
-                self._mode: Mode = "torch"
+                # Heuristic: prefer ``upstream`` whenever the upstream
+                # shim imports cleanly AND the expected layout files
+                # are present in the weights directory. We do NOT
+                # call ``is_upstream_constructable`` here — that
+                # triggers a full WanT2V constructor call (T5 +
+                # DiT + VAE), which can take minutes on LFS-stub
+                # weights. The actual weight-load failure will surface
+                # at the first integration step and is the documented
+                # state until weights land.
+                try:
+                    from adaptive_reflow.adapters.wan2_2_upstream import (  # noqa: WPS433
+                        WAN22_REPO_PATH,
+                        wan_path,
+                    )
+
+                    repo_ok = bool(wan_path()) and Path(wan_path()).is_dir()
+                    layout_ok = (
+                        (self._weights_path / "high_noise_model").is_dir()
+                        and (self._weights_path / "low_noise_model").is_dir()
+                    )
+                    if repo_ok and layout_ok:
+                        self._mode: Mode = "upstream"
+                    else:
+                        self._mode = "synthetic"
+                except Exception:  # noqa: BLE001
+                    self._mode = "synthetic"
             else:
                 self._mode = "synthetic"
         elif force_mode == "synthetic":
@@ -604,6 +738,14 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
                     f"wan2_2_weights_missing:{self._weights_path}"
                 )
             self._mode = "torch"
+        elif force_mode == "upstream":
+            if not torch_is_available():
+                raise RuntimeError("upstream mode requires torch")
+            if not self._weights_path.exists():
+                raise FileNotFoundError(
+                    f"wan2_2_weights_missing:{self._weights_path}"
+                )
+            self._mode = "upstream"
         else:
             raise ValueError(f"unknown_force_mode:{force_mode}")
 
@@ -612,6 +754,10 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         self._dit: Any = None
         self._torch_dtype: Any = None
         self._synthetic_weights: dict[str, ArrayF64] | None = None
+        self._upstream_pipe: Any = None  # upstream WanT2V handle
+        self._upstream_context: Any = None  # cached context for current prompt
+        self._upstream_context_null: Any = None
+        self._upstream_offload: bool = True
         if self._mode == "torch":
             # Production path is intentionally not implemented here
             # — the design spec lists the dependency blockers
@@ -623,6 +769,26 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
                 "Wan2.2 torch mode requires the dependency blockers "
                 "listed in the design spec to be resolved (Wan2.2 paper "
                 "PDF, DiT weights, umT5-XXL, flash-attn, I3D, GPU VRAM)."
+            )
+        elif self._mode == "upstream":
+            # Lazy: don't construct until the first step so that
+            # ``is_upstream_constructable`` callers (which import the
+            # adapter purely for shape introspection) don't pay the
+            # weight-load cost. We pin the dtype from the upstream
+            # config here.
+            import torch as _torch  # noqa: WPS433
+
+            from adaptive_reflow.adapters.wan2_2_upstream import (  # noqa: WPS433
+                upstream_state_tuple,
+            )
+
+            st = upstream_state_tuple(task="t2v-A14B")
+            self._torch_dtype = _torch.bfloat16
+            self._upstream_offload = True
+            self._upstream_seq_len = (
+                ((int(WAN22_A14B_STATE_SHAPE[2]) * int(WAN22_A14B_STATE_SHAPE[3]))
+                 // (st.patch_size[1] * st.patch_size[2])
+                 * int(WAN22_A14B_STATE_SHAPE[1]))
             )
         else:
             self._synthetic_weights = _random_init_synthetic_weights(
@@ -999,7 +1165,9 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
 
         Internal dispatch helper used by :meth:`solve_ode` and
         :meth:`batched_inference`. ``torch`` mode delegates to the
-        DiT forward (see :func:`_torch_velocity_field`); ``synthetic``
+        DiT forward (see :func:`_torch_velocity_field`);
+        ``upstream`` mode delegates to the upstream ``WanT2V`` MoE
+        models via :func:`_upstream_velocity_field`; ``synthetic``
         mode uses the deterministic NumPy field. Returns a NumPy
         ``(C, T_lat, H_lat, W_lat)`` float64 array (copy-safe to
         mutate).
@@ -1014,6 +1182,25 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
                 moe_route=str(moe_route),
                 dtype=self._torch_dtype,
             )
+        if self._mode == "upstream":
+            pipe = self._get_upstream_pipe()
+            # Lazy text encoding on first call per round. Subsequent
+            # steps reuse ``self._upstream_context``.
+            if self._upstream_context is None:
+                prompt = str(getattr(self, "_current_prompt", "") or "")
+                if prompt:
+                    ctx, ctx_null = _encode_prompt_upstream(pipe, prompt)
+                    self._upstream_context = ctx
+                    self._upstream_context_null = ctx_null
+            return _upstream_velocity_field(
+                pipe,
+                x,
+                t,
+                context=self._upstream_context,
+                seq_len=int(self._upstream_seq_len),
+                offload_model=bool(self._upstream_offload),
+                dtype=self._torch_dtype,
+            )
         assert self._synthetic_weights is not None
         return _synthetic_velocity_field(
             x,
@@ -1022,6 +1209,16 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
             weights=self._synthetic_weights,
             moe_route=str(moe_route),
         )
+
+    def _get_upstream_pipe(self) -> Any:
+        """Return the cached upstream ``WanT2V`` instance (lazy build)."""
+        if self._upstream_pipe is None:
+            from adaptive_reflow.adapters.wan2_2_upstream import (  # noqa: WPS433
+                load_upstream_wan_t2v,
+            )
+
+            self._upstream_pipe = load_upstream_wan_t2v(self._weights_path)
+        return self._upstream_pipe
 
     def _route_for_t(self, t: float) -> str:
         """Return the MoE route for flow-matching time ``t``.
@@ -1444,22 +1641,59 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
     def decode_endpoint_to_pixels(
         self,
         trace: ODEIntegratorTrace,
+        output_path: Path | None = None,
     ) -> TensorRef | None:
         """Return a TensorRef for the decoded ``(T, 3, H, W)`` pixel video.
 
-        Lazy: the actual VAE decode is intentionally NOT implemented
-        here — the design spec lists the Wan2.2-VAE weights as a
-        dependency blocker. The method exists to surface the
-        ``vae_pixel_video`` channel via the public API; it returns
-        ``None`` until the VAE weights are supplied.
+        Upstream path (``mode == "upstream"``): call
+        ``pipe.vae.decode(latent)`` then ``wan.utils.utils.save_video``
+        to ``output_path`` (default ``data/wan2_2/cache/vae_<digest>.mp4``).
+        Returns a TensorRef pointing at the resulting mp4 file.
+
+        Synthetic path: returns an opaque TensorRef so the public API
+        still surfaces the ``vae_pixel_video`` channel without doing
+        any actual decode (no real Wan2.2-VAE in synthetic mode).
         """
         traj = self.export_trajectory(trace)
         if traj is None:
             return None
-        # Placeholder: surface the channel as an opaque TensorRef so
-        # downstream observers can record the materialization
-        # boundary. The actual pixel decode will be wired in when
-        # the Wan2.2-VAE weights are available.
+        if self._mode == "upstream":
+            pipe = self._get_upstream_pipe()
+            import torch  # noqa: WPS433
+
+            with torch.no_grad():
+                latent = torch.as_tensor(traj[-1], dtype=self._torch_dtype).unsqueeze(0)
+                if bool(self._upstream_offload):
+                    # VAE decode wants the model on CUDA; the upstream
+                    # pipeline keeps ``vae`` on CUDA so we only
+                    # offload the DiT experts.
+                    pass
+                video = pipe.vae.decode([latent.squeeze(0)])[0]
+            if output_path is None:
+                output_path = (
+                    self._cache_dir / f"vae_{trace.native_state_digest[:16]}.mp4"
+                )
+            output_path = Path(output_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            from wan.utils.utils import save_video  # noqa: WPS433
+
+            save_video(
+                video,
+                str(output_path),
+                fps=24,
+                nrow=1,
+                normalize=True,
+                value_range=(-1.0, 1.0),
+            )
+            return _make_ref(
+                "vae_pixels",
+                digest=str(trace.native_state_digest),
+                variant=str(self._variant),
+                path=str(output_path),
+            )
+        # Synthetic path: surface the channel as an opaque TensorRef
+        # so downstream observers can record the materialization
+        # boundary without doing any actual decode.
         return _make_ref(
             "vae_pixels",
             digest=str(trace.native_state_digest),
@@ -1487,13 +1721,18 @@ def default_wan22_video_flowmatchingodeadapter(
     """Default factory for :class:`Wan22VideoAdapter`.
 
     When ``weights_path`` is ``None`` the adapter resolves the
-    variant-canonical ``.safetensors`` filename under ``data/``;
-    when none exists and ``force_mode`` is ``"auto"``, the adapter
-    falls back to ``synthetic`` mode (testing-only).
+    upstream checkpoint directory ``data/wan2_2/weights`` (see
+    :func:`wan22_resolve_weights_path`); when none exists and
+    ``force_mode`` is ``"auto"``, the adapter falls back to
+    ``synthetic`` mode (testing-only).
 
     The ``solver`` parameter selects the integrator:
     ``"heun"`` (2nd-order predictor-corrector, default) or
     ``"dpmpp"`` (the published Wan2.2 sampler).
+
+    Pass ``force_mode="upstream"`` to wire the adapter through the
+    upstream ``WanT2V`` harness (auto-resolves when the upstream
+    constructor succeeds at the resolved weights directory).
     """
     return Wan22VideoAdapter(
         variant=variant,

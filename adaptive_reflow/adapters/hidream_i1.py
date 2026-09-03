@@ -479,15 +479,24 @@ def _load_torch_pipeline(variant: str, weights_path: Path) -> Any:
 
 
 def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
-    """Construct :class:`diffusers.HiDreamImagePipeline` from local weights.
+    """Construct the canonical HiDreamImagePipeline from local weights.
 
-    Loads scheduler, three text encoders, three tokenizers, the
-    transformer (DiT) and the VAE directly from ``weights_path``. The
-    fourth text encoder (Llama-3.1-8B) is supplied as a deterministic
+    The canonical pipeline class is resolved by the upstream shim
+    :mod:`adaptive_reflow.adapters._hidream_i1_upstream_shim`:
+
+    1. Try ``hi_diffusers.pipelines.hidream_image.pipeline_hidream_image.HiDreamImagePipeline``
+       (the upstream harness — MoE kernel layout, 4-source
+       ``encode_prompt`` (CLIP-L pool + CLIP-G pool + T5-XXL tokens +
+       Llama-3.1-8B multi-layer hidden states), and upstream
+       ``FlashFlowMatchEulerDiscreteScheduler`` / ``FlowUniPCMultistepScheduler``
+       schedulers).
+    2. Fall back to ``diffusers.HiDreamImagePipeline`` (diffusers >=0.32).
+
+    The fourth text encoder (Llama-3.1-8B) is supplied as a deterministic
     stub: a tiny :class:`torch.nn.Module` that returns a stack of
     ``num_hidden_layers`` zero hidden states, plus a passthrough
-    tokenizer that emits zeros. This lets ``HiDreamImagePipeline`` build
-    end-to-end without the missing 8 B-parameter Llama checkpoint.
+    tokenizer that emits zeros. This lets the pipeline build end-to-end
+    without the missing 8 B-parameter Llama checkpoint.
 
     Args:
         variant: ``"full"``, ``"dev"``, or ``"fast"``. Used only for
@@ -496,15 +505,14 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
             per-component subdirectories.
 
     Returns:
-        A :class:`diffusers.HiDreamImagePipeline` ready for inference,
-        placed on CPU with ``dtype=torch.bfloat16``.
+        A canonical HiDreamImagePipeline ready for inference, placed
+        on CPU with ``dtype=torch.bfloat16``.
     """
     import torch
     import torch.nn as nn
     from diffusers import (
         AutoencoderKL,
         FlowMatchEulerDiscreteScheduler,
-        HiDreamImagePipeline,
         HiDreamImageTransformer2DModel,
     )
     from transformers import (
@@ -514,11 +522,23 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
         T5Tokenizer,
     )
 
+    # Late import to avoid hard dependency on the upstream package at
+    # module-import time. The shim handles the upstream-vs-diffusers
+    # fallback transparently.
+    from adaptive_reflow.adapters._hidream_i1_upstream_shim import (
+        _make_hidream_pipeline,
+        _resolve_pipeline_class,
+        upstream_is_available,
+    )
+
     weights_path = Path(weights_path)
     if not weights_path.exists():
         raise FileNotFoundError(
             f"{ERR_HIDREAM_I1_WEIGHTS_MISSING}:{weights_path}"
         )
+
+    pipeline_cls = _resolve_pipeline_class()
+    upstream_pkg = "hi_diffusers" if upstream_is_available() else "diffusers"
 
     # 1. Scheduler — the local checkpoint ships FlowMatchLCMScheduler;
     #    keep it as-is so the published shift + sigma schedule is used.
@@ -683,7 +703,7 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
     text_encoder_4 = _StubLlama()
     tokenizer_4 = _StubTokenizer()
 
-    pipeline = HiDreamImagePipeline(
+    pipeline = _make_hidream_pipeline(
         scheduler=scheduler,
         text_encoder=text_encoder,
         tokenizer=tokenizer,
@@ -696,10 +716,11 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
         transformer=transformer,
         vae=vae,
     )
-    pipeline.set_progress_bar_config(disable=True)
     print(
         f"[hidream_i1._load_diffusion_pipeline] variant={variant} "
-        f"weights={weights_path} components={list(pipeline.components.keys())}",
+        f"weights={weights_path} upstream_pkg={upstream_pkg} "
+        f"pipeline_cls={pipeline_cls.__module__}.{pipeline_cls.__name__} "
+        f"components={list(pipeline.components.keys())}",
         flush=True,
     )
     return pipeline
@@ -1005,6 +1026,65 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             return_dict=True,
         )
         return result
+
+    def sample_pil(
+        self,
+        prompts: list[str],
+        *,
+        num_inference_steps: int | None = None,
+        guidance_scale: float | None = None,
+        height: int = 1024,
+        width: int = 1024,
+        seed: int = 0,
+    ) -> list[Any]:
+        """Run the loaded HiDreamImagePipeline and return PIL images.
+
+        Thin wrapper over :meth:`_sample` that handles a list of
+        prompts with per-prompt deterministic ``torch.Generator``s
+        (seed-derived). The function is the canonical public entry
+        point that the framework's image-quality harnesses call when
+        they want to compare the real HiDream-I1 model against a
+        torch / synthetic baseline.
+
+        Args:
+            prompts: list of positive text prompts.
+            num_inference_steps: per-prompt step count (defaults to
+                per-variant NFE: ``full=50``, ``dev=28``, ``fast=14``).
+            guidance_scale: per-prompt CFG scale (defaults to per-variant
+                ``full=5.0``, ``dev/fast=1.0``).
+            height: pixel height (must be divisible by 16).
+            width: pixel width (must be divisible by 16).
+            seed: torch seed; successive prompts in the same call get
+                ``seed + i`` so the noise stream is reproducible
+                across calls.
+
+        Returns:
+            A list of ``PIL.Image.Image`` objects, one per prompt.
+            The list is empty when ``self._pipeline`` is not loaded
+            (synthetic mode raises — callers are expected to gate on
+            :attr:`mode` or :attr:`capabilities`).
+        """
+        if self._pipeline is None:
+            raise RuntimeError("pipeline_not_loaded:cannot_sample_pil")
+
+        try:
+            import torch  # local — torch is an opt extra
+        except ImportError as exc:  # pragma: no cover — torch gated
+            raise RuntimeError("sample_pil requires torch") from exc
+
+        images: list[Any] = []
+        for i, prompt in enumerate(prompts):
+            generator = torch.Generator(device="cpu").manual_seed(int(seed) + i)
+            result = self._sample(
+                prompt=prompt,
+                height=int(height),
+                width=int(width),
+                num_inference_steps=num_inference_steps,
+                guidance_scale=guidance_scale,
+                generator=generator,
+            )
+            images.extend(getattr(result, "images", []) or [])
+        return images
 
     def _put_native_state(self, digest: str, entry: dict[str, Any]) -> None:
         if digest in self._native_states:
@@ -1757,6 +1837,31 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             0.0, float(HIDREAM_I1_T_END), steps + 1, dtype=np.float64
         )
         x_cur = x0_batch.copy()
+        # Dispatch: torch mode -> call the loaded pipeline per-step on
+        # the latent grid; synthetic mode -> fall back to the
+        # deterministic NumPy field. The previous version
+        # unconditionally referenced ``self._synthetic_weights``, which
+        # is ``None`` in torch mode -> ``AttributeError``.
+        if self._mode == "torch" and self._pipeline is not None:
+            # In torch mode, the latent space is owned by the
+            # upstream/diffusers pipeline's denoising loop. We surface
+            # this with a clear error — callers that want real
+            # 1024x1024 outputs should use :meth:`sample_pil`, which
+            # drives the pipeline directly. :meth:`batched_inference`
+            # remains a NumPy latent-grid integrator for the
+            # framework's synthetic-vs-torch comparison tests.
+            raise RuntimeError(
+                "batched_inference: torch mode requires sample_pil() "
+                "(the loaded HiDreamImagePipeline owns its own "
+                "denoising loop); call HiDreamI1Adapter.sample_pil(...) "
+                "for real-image inference, or use "
+                "force_mode='synthetic' for the NumPy latent grid."
+            )
+        if self._synthetic_weights is None:
+            raise RuntimeError(
+                "batched_inference: synthetic_weights not initialised "
+                "(internal invariant violated)"
+            )
         for i in range(1, t_grid.size):
             t0 = float(t_grid[i - 1])
             t1 = float(t_grid[i])

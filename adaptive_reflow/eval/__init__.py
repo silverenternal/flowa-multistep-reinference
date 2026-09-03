@@ -45,6 +45,13 @@ from .fid import (
     InceptionV3FIDEvaluator,
     compute_frechet_distance,
 )
+from .freq_l1 import (
+    BUNDLED_NATURAL_FASTA,
+    DEFAULT_MAX_LENGTH,
+    STANDARD_AA_ALPHABET,
+    compute_freq_l1_block,
+    per_position_freq_l1,
+)
 from .manifests import (
     DEFERRED_GPU_SENTINEL,
     JsonString,

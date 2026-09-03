@@ -22,10 +22,58 @@ a JSON report with the following metrics:
   separate mmdet/Mask2Former harness; this runner emits ``null`` with
   a ``"external"`` marker pointing the operator at
   ``docs/r17-survey/image-eval-plan.md``.
+* **HPSv2.1** — *stub by default, subprocess-wrapped when
+  ``--hpsv2-binary`` is set*. HiDream-I1 paper Table 4 human-preference
+  score (32.8 on Style + Anime). The wrapper invokes the upstream
+  ``hpsv2==1.2.0`` PyPI package (``pip install hpsv2``) in a separate
+  ``.venvs/hpsv2_venv`` and scores each ``(image, prompt)`` pair via
+  ``hpsv2.score(...)``. The v2.1 checkpoint downloads on first run
+  from the ``xswu/HPSv2`` HF repo (~3.3 GB).
 * **DPG-Bench** — *stub*. Densely-typed prompts evaluation requires
   either mPLUG-owl (Tier 2 self-host) or a paid GPT-4V judge (Lumina-
   Image 2.0 paper); this runner emits ``null`` with a ``"external"``
   marker.
+* **ImageReward** — *stub by default, subprocess-wrapped when
+  ``--image-reward-binary`` is set*. Lumina-Image 2.0 paper Table 3
+  preference-reward metric. The wrapper invokes the upstream
+  ``image-reward==1.5`` PyPI package (``pip install image-reward``)
+  in a separate ``.venvs/image_reward_venv`` so the heavy BLIP +
+  AestheticScore + OpenAI-CLIP dep chain cannot contaminate the
+  framework's ``.venv``. The wrapper downloads
+  ``THUDM/ImageReward`` (~3.6 GB checkpoint) via ``RM.load(...)`` on
+  first call, then ``model.score(prompt, img_list)`` over the staged
+  samples. Returns ``{"value": <float>, "n_pairs": <int>, "mean":
+  <float>, "std": <float>, "min": <float>, "max": <float>,
+  "command": <cmdline>, ...}`` on success; ``{"value": null,
+  "marker": "not_installed", ...}`` when the binary path is missing;
+  ``{"value": null, "marker": "external"}`` (byte-stable legacy stub)
+  when ``--image-reward-binary`` is not passed at all. See
+  :func:`run_image_reward_metric` and
+  ``docs/r17-survey/image-eval-tier2-progress.md`` §2.5.
+* **T2I-CompBench** — *stub* (Lumina-Image 2.0 paper). Compositional
+  text-to-image benchmark with three sub-scores (``color`` /
+  ``shape`` / ``texture``) and a BLIP-VQA judge; the canonical
+  harness is the upstream ``microsoft/T2I-CompBench`` repo (now
+  mirrored at ``github.com/Karine-Huang/T2I-CompBench`` — the
+  ``microsoft/`` org URL currently returns HTTP 404, see
+  ``docs/r17-survey/image-eval-tier2-progress.md`` for the audit
+  trail). It is **not** a PyPI package: there is no
+  ``t2i-compbench-tool`` distribution on PyPI, so the operator must
+  ``git clone`` the repo and run ``pip install -r requirements.txt``
+  (which pulls ``openai/CLIP`` from git, ``detectron2`` pinned to a
+  2022 commit, ``diffusers==0.15.0.dev0``, and a ``spaCy`` model
+  wheel). The ``clip-benchmark`` PyPI package is from LAION-AI and
+  is **not** what T2I-CompBench uses — the BLIP-VQA judge lives in
+  the repo's ``BLIPvqa_eval/`` subdir and loads via the bundled
+  requirements (transformers + openai-CLIP). The runner emits
+  ``null`` with a ``"external"`` marker and a ``sub_scores`` block
+  so downstream consumers can key off the three sub-metric fields
+  independently. The corresponding install command is documented in
+  the ``install_command`` field of the stub dict (a ``git clone`` +
+  ``pip install -r requirements.txt`` sequence in a dedicated
+  ``t2icompbench_venv``; separate venv because the upstream pins
+  ``torch==2.0.1`` + ``detectron2`` which conflict with the
+  framework's torch 2.7.0+cu128 build).
 
 Each metric returns NaN with a clear stderr message when its
 dependency is missing (e.g. ``transformers`` not installed), so a
@@ -51,6 +99,65 @@ Usage::
         --reference-stats data/lumina_mjhq30k_inception_stats.npz \\
         --prompts-jsonl data/lumina_prompts.jsonl \\
         --output data/lumina_image_2_0/eval_report.json
+
+Tier-2 GenEval subprocess (HiDream / Lumina §6.2 build-out)::
+
+    python tools/run_image_eval.py \\
+        --samples-dir data/lumina_image_2_0/samples/ \\
+        --reference-stats data/lumina_mjhq30k_inception_stats.npz \\
+        --prompts-jsonl data/lumina_prompts.jsonl \\
+        --output data/lumina_image_2_0/eval_report.json \\
+        --geneval-binary .venvs/geva_venv/bin/python \\
+        --geneval-prompts  data/geneval_evaluation_metadata.jsonl \\
+        --geneval-detector-path data/geva_models/mask2former_swin-s-p4-w7-224_lsj_8x2_50e_coco.pth \\
+        --geneval-gpu-id 0
+
+When ``--geneval-binary`` is omitted the runner emits the
+byte-stable ``{"value": null, "marker": "external"}`` stub so existing
+downstream consumers keep working. When it is set but the geva_venv
+is not provisioned, the runner emits ``marker: "not_installed"``
+with an explicit ``install_hint`` + a list of which paths are missing.
+
+Tier-2 ImageReward subprocess (Lumina-Image 2.0 paper Table 3, HiDream
+optional §6.2)::
+
+    python tools/run_image_eval.py \\
+        --samples-dir data/lumina_image_2_0/samples/ \\
+        --prompts-jsonl data/lumina_prompts.jsonl \\
+        --output data/lumina_image_2_0/eval_report.json \\
+        --image-reward-binary .venvs/image_reward_venv/bin/python \\
+        --image-reward-model   ImageReward-v1.0 \\
+        --image-reward-gpu-id  0 \\
+        --image-reward-timeout 600
+
+When ``--image-reward-binary`` is omitted the runner emits the
+byte-stable ``{"value": null, "marker": "external"}`` stub. When it
+is set but ``image_reward_venv`` is not provisioned, the runner
+emits ``marker: "not_installed"`` with an explicit ``install_hint``.
+The wrapper scores ``prompt[i]`` vs ``image[i]`` for each
+``(prompt, image)`` pair and reports ``mean ± std`` over the batch.
+
+Tier-2 HPSv2.1 subprocess (HiDream-I1 paper Table 4)::
+
+    python tools/run_image_eval.py \\
+        --samples-dir data/hidream_i1/samples/ \\
+        --prompts-jsonl data/hidream_i1/prompts.jsonl \\
+        --output data/hidream_i1/eval_report.json \\
+        --hpsv2-binary .venvs/hpsv2_venv/bin/python \\
+        --hpsv2-prompts data/hidream_i1/prompts.jsonl \\
+        --hpsv2-version v2.1 \\
+        --hpsv2-gpu-id  0 \\
+        --hpsv2-timeout 1800
+
+When ``--hpsv2-binary`` is omitted the runner emits the byte-stable
+``{"metric": "hpsv2", "value": null, "std": null, "n_pairs": 0,
+"marker": "external"}`` stub. When it is set but ``hpsv2_venv`` is
+not provisioned (or the upstream ``hpsv2`` package is not installed),
+the runner emits ``marker: "not_installed"`` with an explicit
+``install_hint``. The wrapper scores ``prompt[i]`` vs ``image[i]``
+for each ``(prompt, image)`` pair and reports ``value`` (mean) and
+``std`` (sample stddev) over the batch, with the v2.1 checkpoint
+auto-downloaded from the ``xswu/HPSv2`` HF repo on first run.
 """
 from __future__ import annotations
 
@@ -58,7 +165,10 @@ import argparse
 import json
 import math
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
 import time
 import warnings
 from pathlib import Path
@@ -446,6 +556,16 @@ def run_image_eval_per_round(
     image_target_size: int = 299,
     per_round_glob: str = "{arm}_round{r:02d}",
     arm: str = "framework",
+    geneval_binary: Path | None = None,
+    geneval_repo: Path | None = None,
+    geneval_detector_path: Path | None = None,
+    geneval_timeout_seconds: int = 600,
+    geneval_gpu_id: int | None = None,
+    hpsv2_binary: Path | None = None,
+    hpsv2_driver: Path | None = None,
+    hpsv2_version: str = "v2.1",
+    hpsv2_timeout_seconds: int = 1800,
+    hpsv2_gpu_id: int | None = None,
 ) -> dict[str, Any]:
     """Top-level per-round orchestrator: load per-round images, run metrics.
 
@@ -483,6 +603,21 @@ def run_image_eval_per_round(
             clip_batch_size=clip_batch_size,
             clip_model_id=clip_model_id,
             image_target_size=image_target_size,
+            geneval_binary=geneval_binary,
+            geneval_repo=geneval_repo,
+            geneval_detector_path=geneval_detector_path,
+            geneval_timeout_seconds=geneval_timeout_seconds,
+            geneval_gpu_id=geneval_gpu_id,
+            hpsv2_binary=hpsv2_binary,
+            hpsv2_driver=hpsv2_driver,
+            hpsv2_version=hpsv2_version,
+            hpsv2_timeout_seconds=hpsv2_timeout_seconds,
+            hpsv2_gpu_id=hpsv2_gpu_id,
+            image_reward_binary=image_reward_binary,
+            image_reward_driver=image_reward_driver,
+            image_reward_model=image_reward_model,
+            image_reward_timeout_seconds=image_reward_timeout_seconds,
+            image_reward_gpu_id=image_reward_gpu_id,
         )
 
     prompts = load_prompts(prompts_jsonl) if prompts_jsonl is not None else None
@@ -637,16 +772,39 @@ def run_image_eval_per_round(
             "clip_score": legacy_clip,
             "per_round_fid": per_round_fid,
             "per_round_clip_score": per_round_clip,
-            "geneval": {
-                "value": None,
-                "marker": "external",
-                "note": "GenEval object-composition evaluation requires an mmdet/Mask2Former harness; see docs/r17-survey/image-eval-plan.md",
-            },
+            "geneval": _resolve_geneval_metric(
+                samples_dir=samples_dir,
+                prompts_jsonl=prompts_jsonl,
+                geneval_binary=geneval_binary,
+                geneval_repo=geneval_repo,
+                geneval_detector_path=geneval_detector_path,
+                geneval_timeout_seconds=geneval_timeout_seconds,
+                geneval_gpu_id=geneval_gpu_id,
+            ),
+            "hpsv2": _resolve_hpsv2_metric(
+                samples_dir=samples_dir,
+                prompts_jsonl=prompts_jsonl,
+                hpsv2_binary=hpsv2_binary,
+                hpsv2_driver=hpsv2_driver,
+                hpsv2_version=hpsv2_version,
+                hpsv2_timeout_seconds=hpsv2_timeout_seconds,
+                hpsv2_gpu_id=hpsv2_gpu_id,
+            ),
+            "image_reward": _resolve_image_reward_metric(
+                samples_dir=samples_dir,
+                prompts_jsonl=prompts_jsonl,
+                image_reward_binary=image_reward_binary,
+                image_reward_driver=image_reward_driver,
+                image_reward_model=image_reward_model,
+                image_reward_timeout_seconds=image_reward_timeout_seconds,
+                image_reward_gpu_id=image_reward_gpu_id,
+            ),
             "dpg_bench": {
                 "value": None,
                 "marker": "external",
                 "note": "DPG-Bench dense-prompt evaluation requires mPLUG-owl (Tier 2 self-host) or GPT-4V (paper); see docs/r17-survey/image-eval-plan.md",
             },
+            "t2i_compbench": _t2i_compbench_external_stub(),
         },
         "wall_clock_seconds": float(time.perf_counter() - t0),
         "status": "ok",
@@ -661,6 +819,1182 @@ def run_image_eval_per_round(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True))
     return report
+
+
+def _t2i_compbench_external_stub() -> dict[str, Any]:
+    """Return the ``metrics.t2i_compbench`` external stub.
+
+    Mirrors the shape of the ``geneval`` / ``dpg_bench`` stubs but
+    adds a ``sub_scores`` block carrying ``color``, ``shape``,
+    ``texture`` keys (the three sub-metrics the Lumina-Image 2.0
+    paper Table 1 reports) so downstream consumers can key off the
+    sub-metric fields independently even before the Tier-2 harness is
+    installed.
+
+    Install path (Tier-2 build-out, see
+    ``docs/r17-survey/image-eval-tier2-progress.md``):
+
+    The canonical upstream is the ``Karine-Huang/T2I-CompBench``
+    repo (the ``microsoft/`` org URL returns HTTP 404 as of
+    2026-09; the audit trail is in
+    ``docs/r17-survey/image-eval-tier2-progress.md``). It is NOT a
+    PyPI package — there is no ``t2i-compbench-tool`` distribution,
+    so a ``git clone`` + ``pip install -r requirements.txt`` is the
+    only viable install. The upstream ``requirements.txt`` pins
+    ``torch==2.0.1`` + ``detectron2@5aeb252`` + ``diffusers==0.15.0
+    .dev0`` + a ``spaCy`` model wheel, so a dedicated venv is
+    mandatory (it MUST NOT be the framework's ``.venv``).
+
+    .. code-block:: bash
+
+        python -m venv .venvs/t2icompbench_venv
+        source .venvs/t2icompbench_venv/bin/activate
+        git clone https://github.com/Karine-Huang/T2I-CompBench.git \\
+            .venvs/t2icompbench_venv/repo
+        cd .venvs/t2icompbench_venv/repo
+        pip install -r requirements.txt
+        pip install diffusers==0.15.0.dev0
+        # Optional: `accelerate config` then run
+        # `BLIPvqa_eval/blip_vqa.py` against the generated samples.
+
+    Once installed, the runner should add a ``run_t2i_compbench_metric``
+    function and replace this stub with a subprocess call into the
+    upstream ``BLIPvqa_eval/blip_vqa.py`` (for the BLIP-VQA judge
+    step) and ``UniDet_eval/eval.py`` (for the UniDet expert scores);
+    the sub-score JSON keys (``color`` / ``shape`` / ``texture``)
+    are already reserved here so the contract is byte-stable across
+    the stub → real transition.
+
+    Returns the stub block as a ``dict`` so callers can drop it
+    directly under ``metrics.t2i_compbench`` without further shape
+    processing. The block is intentionally additive (does not alter
+    any existing key) so Phase 3 byte-stability holds.
+
+    Audit trail (P-22, 2026-09-03)
+    ------------------------------
+    The previous stub referenced ``pip install t2i-compbench-tool
+    clip-benchmark``. PyPI returns 404 for both names:
+
+      * ``t2i-compbench-tool`` — does not exist; the upstream is a
+        script-only repo with no ``setup.py`` / ``pyproject.toml``.
+      * ``clip-benchmark`` — IS a real PyPI package, but it is the
+        LAION-AI CLIP-retrieval benchmark, not what T2I-CompBench
+        uses for the BLIP-VQA judge (T2I-CompBench loads BLIP via
+        the bundled ``BLIPvqa_eval/`` module + transformers + the
+        openai/CLIP git dependency).
+
+    The corrected install command is the ``git clone`` +
+    ``pip install -r requirements.txt`` sequence above. The JSON
+    contract (keys, value types, ``sub_scores`` shape) is unchanged
+    so downstream consumers keep working.
+    """
+    return {
+        "metric": "t2i_compbench",
+        "value": None,
+        "marker": "external",
+        "note": (
+            "T2I-CompBench compositional evaluation (Lumina-Image 2.0 "
+            "paper). NOT a PyPI package — clone the upstream "
+            "Karine-Huang/T2I-CompBench repo (microsoft/ org URL "
+            "returns 404) and `pip install -r requirements.txt` in a "
+            "dedicated venv. See "
+            "docs/r17-survey/image-eval-tier2-progress.md for the "
+            "subprocess contract and BLIP-VQA judge setup."
+        ),
+        "sub_scores": {
+            "color": None,
+            "shape": None,
+            "texture": None,
+        },
+        "install_command": (
+            "python -m venv .venvs/t2icompbench_venv && "
+            "source .venvs/t2icompbench_venv/bin/activate && "
+            "git clone https://github.com/Karine-Huang/T2I-CompBench.git "
+            ".venvs/t2icompbench_venv/repo && "
+            "cd .venvs/t2icompbench_venv/repo && "
+            "pip install -r requirements.txt && "
+            "pip install diffusers==0.15.0.dev0"
+        ),
+        "package": "T2I-CompBench (git clone of github.com/Karine-Huang/T2I-CompBench)",
+        "upstream_repo": "https://github.com/Karine-Huang/T2I-CompBench",
+        "microsoft_org_url_status": "404 (use Karine-Huang mirror)",
+        "judge_model": "BLIPvqa_eval (openai/CLIP + transformers BLIP, not the LAION clip-benchmark PyPI pkg)",
+        "subprocess_contract_version": 1,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Tier-2: GenEval subprocess wrapper (HiDream / Lumina paper §6.2 build-out)
+# ---------------------------------------------------------------------------
+
+
+#: Default path to the ``geva_venv`` Python interpreter used to drive the
+#: GenEval detector. The runner resolves this via :func:`resolve_geva_binary`
+#: so the operator can override with ``--geneval-binary``.
+DEFAULT_GEVA_VENV_PYTHON: str = ".venvs/geva_venv/bin/python"
+
+#: Default location of the cloned upstream GenEval repo (djghosh13/geneval).
+#: The wrapper invokes ``evaluation/evaluate_images.py`` and
+#: ``evaluation/summary_scores.py`` from this checkout.
+DEFAULT_GEVA_REPO_DIR: str = ".venvs/geva_venv/repo"
+
+#: Default location of the Mask2Former detector weights. Upstream
+#: GenEval defaults to ``mask2former_swin-s-p4-w7-224_lsj_8x2_50e_coco``
+#: and expects ``<detector_path>/<model>.pth`` next to the
+#: ``mmdet`` config. The wrapper reads from the same layout.
+DEFAULT_GEVA_DETECTOR_DIR: str = "data/geva_models"
+
+#: Sub-scores the wrapper looks for in the ``summary_scores.py`` stdout.
+#: Order matches the official GenEval paper Table 1 (single_obj, two_obj,
+#: counting, colors, position, color_attr).
+GENEVAL_SUB_SCORES: tuple[str, ...] = (
+    "single_object",
+    "two_object",
+    "counting",
+    "colors",
+    "position",
+    "color_attr",
+)
+
+
+def _geneval_not_installed_marker(
+    *,
+    python_bin: Path,
+    geneval_repo: Path,
+    detector_path: Path,
+) -> dict[str, Any]:
+    """Return the ``metrics.geneval`` ``not_installed`` fallback block.
+
+    Emitted by :func:`run_geneval_metric` when one of the three required
+    external artefacts is absent so the operator can distinguish
+    "the Tier-2 harness is wired but not provisioned" from a generic
+    failure. The marker carries the explicit install hint consumed by
+    the operator checklist (``docs/r17-survey/image-eval-tier2-progress.md``).
+    """
+    missing: list[str] = []
+    if not python_bin.exists():
+        missing.append(f"--geneval-binary={python_bin}")
+    if not geneval_repo.exists():
+        missing.append(f"--geneval-repo={geneval_repo}")
+    if not detector_path.exists():
+        missing.append(f"--geneval-detector-path={detector_path}")
+    return {
+        "metric": "geneval",
+        "value": None,
+        "marker": "not_installed",
+        "note": (
+            "GenEval Tier-2 harness is wired (subprocess contract below) "
+            "but one or more external artefacts are missing. See the "
+            "checklist in docs/r17-survey/image-eval-tier2-progress.md."
+        ),
+        "missing": missing,
+        "install_hint": (
+            "Provision a separate geva_venv (it must NOT be the project's "
+            ".venv because mmcv-full pins its own torch build). Run the "
+            "operator checklist in docs/r17-survey/image-eval-tier2-progress.md "
+            "§B to install mmcv-full 1.7.2 + mmdet 2.28.2 + clone "
+            "github.com/djghosh13/geneval + download the Mask2Former "
+            "Swin-S weights (~1 GB)."
+        ),
+        "sub_scores": {tag: None for tag in GENEVAL_SUB_SCORES},
+    }
+
+
+def _stage_geneval_inputs(
+    *,
+    samples_dir: Path,
+    prompts_jsonl: Path | None,
+    stage_dir: Path,
+) -> int:
+    """Materialize GenEval's numbered-subfolder layout from a flat samples dir.
+
+    Upstream ``djghosh13/geneval`` ``evaluation/evaluate_images.py`` expects::
+
+        <root>/<idx>/samples/<idx>.png
+        <root>/<idx>/metadata.jsonl    (single JSON object, NOT line-delimited)
+
+    where ``<idx>`` is the integer index of the prompt. The SOTA
+    harness emits a flat samples dir + flat ``prompts.jsonl`` (one
+    prompt per line, order-aligned with sorted filenames). This helper
+    bridges the two: it walks ``samples_dir`` sorted, symlinks (or
+    copies on failure) each PNG into ``stage_dir/<idx>/samples/<idx>.png``
+    and writes a per-folder ``metadata.jsonl`` carrying the prompt
+    string + a heuristically-inferred ``tag`` (one of the six
+    GenEval sub-score buckets) so the upstream evaluator can group
+    images by task.
+
+    Returns the number of staged folders. Raises on missing inputs.
+    """
+    import re
+
+    image_paths = discover_samples(samples_dir)
+    prompts: list[str] | None = load_prompts(prompts_jsonl) if prompts_jsonl else None
+    if prompts is not None and len(prompts) < len(image_paths):
+        raise ValueError(
+            f"geneval_stage_prompts_short: have {len(prompts)} prompts for "
+            f"{len(image_paths)} images; pass --geneval-prompts with at "
+            "least as many lines as --geneval-images has files."
+        )
+
+    stage_dir.mkdir(parents=True, exist_ok=True)
+    for idx, img_path in enumerate(image_paths):
+        folder = stage_dir / str(idx)
+        samples = folder / "samples"
+        samples.mkdir(parents=True, exist_ok=True)
+        # Prefer symlink to avoid duplicating disk; fall back to copy.
+        target = samples / img_path.name
+        if target.exists() or target.is_symlink():
+            target.unlink()
+        try:
+            os.symlink(img_path.resolve(), target)
+        except OSError:
+            shutil.copy2(img_path, target)
+        prompt = prompts[idx] if prompts is not None else ""
+        tag = _infer_geneval_tag(prompt, _re=re)
+        metadata = {
+            "prompt": prompt,
+            "tag": tag,
+            "include": [],
+            "exclude": [],
+            "kwargs": {"category": tag},
+        }
+        (folder / "metadata.jsonl").write_text(
+            json.dumps(metadata) + "\n", encoding="utf-8"
+        )
+    return len(image_paths)
+
+
+def _infer_geneval_tag(prompt: str, *, _re: Any = None) -> str:
+    """Heuristically map a prompt string to one of GenEval's six task tags.
+
+    This is a wrapper-side fallback for the case where the operator's
+    prompts JSONL is a flat ``[prompt, ...]`` list (no upstream
+    metadata). It is **not** meant to replace
+    ``djghosh13/geneval/prompts/evaluation_metadata.jsonl``; when the
+    operator supplies that file directly, each line already carries
+    the canonical ``tag`` and this heuristic is bypassed (see
+    :func:`_stage_geneval_inputs` for the layout).
+
+    Returns one of ``GENEVAL_SUB_SCORES``. Order of checks matters:
+    counting/two-object before colors (because "two" can appear in
+    colors phrasing), color_attr only when two distinct color words
+    are detected.
+    """
+    if _re is None:
+        import re as _re  # local alias
+    p = prompt.lower()
+    # Counting / two-object: digits or number words.
+    if _re.search(r"\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b", p):
+        if " and " in p or _re.search(r"\b(two|2)\b", p):
+            return "two_object"
+        return "counting"
+    # Color binding with two distinct colors -> color_attr.
+    color_words = (
+        "red", "blue", "green", "yellow", "black", "white", "purple",
+        "orange", "pink", "brown", "gray", "grey",
+    )
+    found_colors = [w for w in color_words if _re.search(rf"\b{w}\b", p)]
+    if len(found_colors) >= 2:
+        return "color_attr"
+    if found_colors:
+        return "colors"
+    # Position keywords.
+    position_words = (
+        "left", "right", "top", "bottom", "above", "below",
+        "behind", "in front of", "next to", "beside",
+    )
+    for w in position_words:
+        if _re.search(rf"\b{w}\b", p):
+            return "position"
+    # Default to single_object -- the largest GenEval bucket.
+    return "single_object"
+
+
+def _parse_geneval_summary(stdout_text: str) -> dict[str, Any]:
+    """Parse the stdout of ``evaluation/summary_scores.py`` into a dict.
+
+    Upstream prints lines like::
+
+        single_object   = 92.50% (37 / 40)
+        Overall score (avg. over tasks): 0.78300
+
+    Returns ``{"value": float, "sub_scores": {...}, "raw_text": str}``.
+    Falls back to ``{"value": None, ...}`` if parsing fails.
+    """
+    import re
+
+    sub_scores: dict[str, float | None] = {tag: None for tag in GENEVAL_SUB_SCORES}
+    overall_value: float | None = None
+    for line in stdout_text.splitlines():
+        line = line.strip()
+        m = re.match(
+            r"^([a-zA-Z_]+)\s*=\s*([0-9.]+)%\s*\(\s*(\d+)\s*/\s*(\d+)\s*\)\s*$",
+            line,
+        )
+        if m:
+            tag, pct = m.group(1), m.group(2)
+            if tag in sub_scores:
+                try:
+                    sub_scores[tag] = float(pct) / 100.0
+                except ValueError:
+                    pass
+            continue
+        m2 = re.match(r"^Overall score \(avg\. over tasks\):\s*([0-9.]+)\s*$", line)
+        if m2:
+            try:
+                overall_value = float(m2.group(1))
+            except ValueError:
+                pass
+    return {"value": overall_value, "sub_scores": sub_scores, "raw_text": stdout_text}
+
+
+def run_geneval_metric(
+    *,
+    samples_dir: Path,
+    prompts_jsonl: Path | None,
+    python_bin: Path,
+    geneval_repo: Path,
+    detector_path: Path,
+    timeout_seconds: int = 600,
+    gpu_id: int | None = None,
+) -> dict[str, Any]:
+    """Run GenEval as a subprocess into the ``geva_venv`` interpreter.
+
+    Returns a JSON-shaped dict under ``metrics.geneval``:
+
+    On success::
+
+        {"metric": "geneval",
+         "value": <float overall>,       # 0..1, paper convention
+         "sub_scores": {"single_object": <float>, ..., "color_attr": <float>},
+         "n_images": <int>,
+         "elapsed_seconds": <float>,
+         "command": "<cmdline>",
+         "stdout_tail": <str>}            # last 2 KB for audit
+
+    On any failure (binary missing, repo missing, detector missing,
+    subprocess non-zero, timeout, parse failure) the wrapper emits a
+    ``marker: "not_installed"`` or ``marker: "external_error"`` block --
+    never raises -- so the surrounding ``run_image_eval`` continues to
+    write the eval report.
+    """
+    if (
+        not python_bin.exists()
+        or not geneval_repo.exists()
+        or not detector_path.exists()
+    ):
+        return _geneval_not_installed_marker(
+            python_bin=python_bin,
+            geneval_repo=geneval_repo,
+            detector_path=detector_path,
+        )
+    evaluate_py = geneval_repo / "evaluation" / "evaluate_images.py"
+    summary_py = geneval_repo / "evaluation" / "summary_scores.py"
+    if not evaluate_py.exists() or not summary_py.exists():
+        return {
+            "metric": "geneval",
+            "value": None,
+            "marker": "not_installed",
+            "note": (
+                f"geneval_repo_present_but_missing_scripts: expected "
+                f"{evaluate_py} and {summary_py}; clone the upstream repo "
+                "(github.com/djghosh13/geneval) into --geneval-repo."
+            ),
+            "sub_scores": {tag: None for tag in GENEVAL_SUB_SCORES},
+            "missing": [
+                str(p) for p in (evaluate_py, summary_py) if not p.exists()
+            ],
+        }
+
+    with tempfile.TemporaryDirectory(prefix="geva_stage_") as stage:
+        stage_dir = Path(stage)
+        results_dir = stage_dir / "results"
+        results_dir.mkdir()
+        results_jsonl = results_dir / "results.jsonl"
+        staged_root = stage_dir / "samples"
+        try:
+            n_staged = _stage_geneval_inputs(
+                samples_dir=samples_dir,
+                prompts_jsonl=prompts_jsonl,
+                stage_dir=staged_root,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return {
+                "metric": "geneval",
+                "value": None,
+                "marker": "external_error",
+                "stage": "input_staging",
+                "error": f"{type(exc).__name__}: {exc}",
+                "sub_scores": {tag: None for tag in GENEVAL_SUB_SCORES},
+            }
+
+        env = os.environ.copy()
+        if gpu_id is not None:
+            env["CUDA_VISIBLE_DEVICES"] = str(int(gpu_id))
+        env.setdefault("HF_HUB_OFFLINE", "1")
+        env.setdefault("TRANSFORMERS_OFFLINE", "1")
+
+        # Step A -- detector forward + scoring per image.
+        cmd_eval = [
+            str(python_bin),
+            str(evaluate_py),
+            str(staged_root),
+            "--outfile",
+            str(results_jsonl),
+            "--model-path",
+            str(detector_path),
+        ]
+        t0 = time.perf_counter()
+        try:
+            proc = subprocess.run(
+                cmd_eval,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=int(timeout_seconds),
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            return {
+                "metric": "geneval",
+                "value": None,
+                "marker": "external_error",
+                "stage": "evaluate_images",
+                "error": f"TimeoutExpired after {int(timeout_seconds)}s",
+                "command": " ".join(cmd_eval),
+                "sub_scores": {tag: None for tag in GENEVAL_SUB_SCORES},
+                "stderr_tail": (exc.stderr or "")[-2048:]
+                if getattr(exc, "stderr", None)
+                else "",
+            }
+        elapsed_eval = time.perf_counter() - t0
+        if proc.returncode != 0:
+            return {
+                "metric": "geneval",
+                "value": None,
+                "marker": "external_error",
+                "stage": "evaluate_images",
+                "error": f"non_zero_exit_{proc.returncode}",
+                "command": " ".join(cmd_eval),
+                "stderr_tail": (proc.stderr or "")[-2048:],
+                "stdout_tail": (proc.stdout or "")[-2048:],
+                "sub_scores": {tag: None for tag in GENEVAL_SUB_SCORES},
+            }
+        if not results_jsonl.exists():
+            return {
+                "metric": "geneval",
+                "value": None,
+                "marker": "external_error",
+                "stage": "evaluate_images",
+                "error": "results_jsonl_not_produced",
+                "command": " ".join(cmd_eval),
+                "sub_scores": {tag: None for tag in GENEVAL_SUB_SCORES},
+            }
+
+        # Step B -- summary: parse per-tag and overall score from stdout.
+        cmd_summary = [
+            str(python_bin),
+            str(summary_py),
+            str(results_jsonl),
+        ]
+        try:
+            proc_summary = subprocess.run(
+                cmd_summary,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            return {
+                "metric": "geneval",
+                "value": None,
+                "marker": "external_error",
+                "stage": "summary_scores",
+                "error": "TimeoutExpired after 60s",
+                "command": " ".join(cmd_summary),
+                "sub_scores": {tag: None for tag in GENEVAL_SUB_SCORES},
+                "stderr_tail": (exc.stderr or "")[-2048:]
+                if getattr(exc, "stderr", None)
+                else "",
+            }
+        if proc_summary.returncode != 0:
+            return {
+                "metric": "geneval",
+                "value": None,
+                "marker": "external_error",
+                "stage": "summary_scores",
+                "error": f"non_zero_exit_{proc_summary.returncode}",
+                "command": " ".join(cmd_summary),
+                "stderr_tail": (proc_summary.stderr or "")[-2048:],
+                "sub_scores": {tag: None for tag in GENEVAL_SUB_SCORES},
+            }
+
+        parsed = _parse_geneval_summary(proc_summary.stdout or "")
+        out: dict[str, Any] = {
+            "metric": "geneval",
+            "value": parsed["value"],
+            "sub_scores": parsed["sub_scores"],
+            "n_images": int(n_staged),
+            "elapsed_seconds": float(elapsed_eval),
+            "command": " ".join(cmd_eval),
+            "stdout_tail": (proc.stdout or "")[-2048:],
+            "summary_stdout_tail": (proc_summary.stdout or "")[-2048:],
+        }
+        if out["value"] is None:
+            out["marker"] = "external_error"
+            out["error"] = "summary_parse_failed"
+            out["stage"] = "summary_scores"
+        return out
+
+
+def _geneval_external_legacy_stub() -> dict[str, Any]:
+    """Return the original Phase-B ``{"value": null, "marker": "external"}`` stub.
+
+    Preserved verbatim (modulo ``sub_scores`` for byte-stable downstream
+    consumers) for backwards compatibility: when the operator runs
+    :func:`run_image_eval` without any ``--geneval-*`` flags the
+    runner emits the same shape it has emitted since Phase B, so
+    existing eval-report consumers do not need to be updated. The new
+    ``sub_scores`` block is additive and carries ``None`` per
+    :data:`GENEVAL_SUB_SCORES`.
+    """
+    return {
+        "value": None,
+        "marker": "external",
+        "note": "GenEval object-composition evaluation requires an mmdet/Mask2Former harness; see docs/r17-survey/image-eval-plan.md",
+        "sub_scores": {tag: None for tag in GENEVAL_SUB_SCORES},
+    }
+
+
+def _resolve_geneval_metric(
+    *,
+    samples_dir: Path,
+    prompts_jsonl: Path | None,
+    geneval_binary: Path | None,
+    geneval_repo: Path | None,
+    geneval_detector_path: Path | None,
+    geneval_timeout_seconds: int,
+    geneval_gpu_id: int | None,
+) -> dict[str, Any]:
+    """Decide between the Tier-2 subprocess wrapper and the legacy stub.
+
+    When any of ``geneval_binary`` / ``geneval_repo`` / ``geneval_detector_path``
+    is non-``None`` we run :func:`run_geneval_metric`; otherwise we
+    emit :func:`_geneval_external_legacy_stub` so the JSON contract
+    stays byte-stable for callers that have not opted into the Tier-2
+    build-out. When ``geneval_binary`` is set but ``geneval_repo`` /
+    ``geneval_detector_path`` are not, we resolve them to the documented
+    defaults (:data:`DEFAULT_GEVA_REPO_DIR`, :data:`DEFAULT_GEVA_DETECTOR_DIR`)
+    so the operator only has to pass the venv interpreter path.
+    """
+    if geneval_binary is None:
+        return _geneval_external_legacy_stub()
+    py_bin = Path(geneval_binary)
+    repo = (
+        Path(geneval_repo)
+        if geneval_repo is not None
+        else REPO_ROOT / DEFAULT_GEVA_REPO_DIR
+    )
+    det = (
+        Path(geneval_detector_path)
+        if geneval_detector_path is not None
+        else REPO_ROOT / DEFAULT_GEVA_DETECTOR_DIR
+    )
+    return run_geneval_metric(
+        samples_dir=samples_dir,
+        prompts_jsonl=prompts_jsonl,
+        python_bin=py_bin,
+        geneval_repo=repo,
+        detector_path=det,
+        timeout_seconds=int(geneval_timeout_seconds),
+        gpu_id=geneval_gpu_id,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Tier-2: ImageReward subprocess wrapper (HiDream §6.2 / Lumina Table 3)
+# ---------------------------------------------------------------------------
+
+
+#: Default path to the ``image_reward_venv`` Python interpreter used to drive the
+#: ImageReward scoring subprocess. The wrapper resolves this via
+#: :func:`resolve_image_reward_binary` so the operator can override with
+#: ``--image-reward-binary``.
+DEFAULT_IMAGE_REWARD_VENV_PYTHON: str = ".venvs/image_reward_venv/bin/python"
+
+#: Default path to the ImageReward driver script shipped under the
+#: ``image_reward_venv`` checkout. The wrapper invokes this script as a
+#: subprocess; the driver in turn imports :mod:`ImageReward` from the
+#: ``image_reward_venv`` site-packages and writes a JSON score block
+#: to ``--output-json``.
+DEFAULT_IMAGE_REWARD_DRIVER: str = ".venvs/image_reward_venv/scripts/image_reward_score.py"
+
+#: Default ImageReward checkpoint identifier. ``v1.0`` is the only
+#: published variant on :pypi:`image-reward` 1.5 (Jul 2023); the
+#: wrapper exposes :data:`--image-reward-model` for forward-compat
+#: with a hypothetical v1.1 release.
+DEFAULT_IMAGE_REWARD_MODEL: str = "ImageReward-v1.0"
+
+
+def _image_reward_not_installed_marker(
+    *,
+    python_bin: Path,
+    driver_script: Path,
+) -> dict[str, Any]:
+    """Return the ``metrics.image_reward`` ``not_installed`` fallback block.
+
+    Emitted by :func:`run_image_reward_metric` when one of the two
+    required external artefacts is absent so the operator can
+    distinguish "the Tier-2 harness is wired but not provisioned" from
+    a generic failure. The marker carries the explicit install hint
+    consumed by the operator checklist (see
+    ``docs/r17-survey/image-eval-tier2-progress.md`` §2.5).
+    """
+    missing: list[str] = []
+    if not python_bin.exists():
+        missing.append(f"--image-reward-binary={python_bin}")
+    if not driver_script.exists():
+        missing.append(f"--image-reward-driver={driver_script}")
+    return {
+        "metric": "image_reward",
+        "value": None,
+        "std": None,
+        "min": None,
+        "max": None,
+        "n_pairs": 0,
+        "marker": "not_installed",
+        "note": (
+            "ImageReward Tier-2 harness is wired (subprocess contract below) "
+            "but one or more external artefacts are missing. See "
+            "docs/r17-survey/image-eval-tier2-progress.md §2.5."
+        ),
+        "missing": missing,
+        "install_hint": (
+            "Provision a separate image_reward_venv. Run: "
+            "`uv venv --python 3.12 .venvs/image_reward_venv --seed && "
+            "uv pip install --python .venvs/image_reward_venv/bin/python image-reward && "
+            "uv pip install --python .venvs/image_reward_venv/bin/python "
+            "'clip @ git+https://github.com/openai/CLIP.git' && "
+            "uv pip install --python .venvs/image_reward_venv/bin/python "
+            "'transformers>=4.27.4,<4.40' "
+            "'diffusers>=0.16.0,<0.30' "
+            "'accelerate>=0.16.0,<0.30'`. "
+            "The driver script is shipped under "
+            "`.venvs/image_reward_venv/scripts/image_reward_score.py` and "
+            "does NOT need to be re-fetched. The image-reward model "
+            "checkpoint (~3.6 GB from huggingface.co/THUDM/ImageReward) "
+            "is fetched on the first RM.load() call."
+        ),
+    }
+
+
+def _image_reward_external_legacy_stub() -> dict[str, Any]:
+    """Return the byte-stable ImageReward ``{"value": null, "marker": "external"}`` stub.
+
+    Emitted by :func:`run_image_eval` when the operator does not pass
+    ``--image-reward-binary`` so the JSON contract is preserved across
+    the "wrapper not opted in" transition. The shape mirrors the
+    GenEval legacy stub and reserves the ``"metric": "image_reward"``
+    key for downstream consumers that already key off
+    ``report["metrics"]["image_reward"]``.
+    """
+    return {
+        "metric": "image_reward",
+        "value": None,
+        "std": None,
+        "min": None,
+        "max": None,
+        "n_pairs": 0,
+        "marker": "external",
+        "note": (
+            "ImageReward human-preference evaluation (Lumina-Image 2.0 "
+            "paper Table 3, HiDream optional §6.2) requires a separate "
+            "image_reward_venv. Pass --image-reward-binary "
+            ".venvs/image_reward_venv/bin/python to opt in. See "
+            "docs/r17-survey/image-eval-tier2-progress.md §2.5."
+        ),
+    }
+
+
+def run_image_reward_metric(
+    *,
+    samples_dir: Path,
+    prompts_jsonl: Path | None,
+    python_bin: Path,
+    driver_script: Path,
+    model_name: str = DEFAULT_IMAGE_REWARD_MODEL,
+    timeout_seconds: int = 1800,
+    gpu_id: int | None = None,
+) -> dict[str, Any]:
+    """Run the ImageReward driver as a subprocess and return its parsed JSON block.
+
+    On success returns the dict the driver wrote to ``--output-json``
+    (see :file:`.venvs/image_reward_venv/scripts/image_reward_score.py`
+    for the exact shape: ``value`` / ``std`` / ``min`` / ``max`` /
+    ``n_pairs`` / ``model`` / ``per_image`` + ``"metric":
+    "image_reward"``).
+
+    On any failure (binary missing, driver missing, prompts missing,
+    subprocess non-zero, timeout, parse failure, downstream error
+    block) the wrapper emits a ``marker: "not_installed"`` or
+    ``marker: "external_error"`` block — never raises — so the
+    surrounding :func:`run_image_eval` continues to write the eval
+    report.
+
+    The wrapper mirrors the :func:`run_hpsv2_metric` contract so the
+    operator-facing CLI surface is consistent across Tier-2 metrics.
+    The only differences: (a) ImageReward is a PyPI package import
+    rather than a repo checkout + weights, so the "external artefacts"
+    surface is just the venv interpreter + the bundled driver script
+    (no separate ``--image-reward-repo`` /
+    ``--image-reward-detector-path`` opt-ins); (b) the model variant
+    flag is ``--image-reward-model`` (default ``ImageReward-v1.0``)
+    instead of ``--hpsv2-version``.
+    """
+    if not python_bin.exists() or not driver_script.exists():
+        return _image_reward_not_installed_marker(
+            python_bin=python_bin, driver_script=driver_script
+        )
+    if prompts_jsonl is None or not prompts_jsonl.exists():
+        return {
+            "metric": "image_reward",
+            "value": None,
+            "std": None,
+            "min": None,
+            "max": None,
+            "n_pairs": 0,
+            "marker": "not_installed",
+            "note": (
+                "ImageReward requires a --image-reward-prompts (or "
+                "--prompts-jsonl) JSONL aligned with the samples. Pass "
+                "one of these flags."
+            ),
+            "missing": [f"--image-reward-prompts={prompts_jsonl}"]
+            if prompts_jsonl is not None
+            else ["--prompts-jsonl"],
+        }
+
+    with tempfile.TemporaryDirectory(prefix="image_reward_score_") as stage:
+        stage_dir = Path(stage)
+        output_json = stage_dir / "image_reward_result.json"
+        env = os.environ.copy()
+        if gpu_id is not None:
+            env["CUDA_VISIBLE_DEVICES"] = str(int(gpu_id))
+        # Allow first-run ImageReward checkpoint download (the upstream
+        # ``RM.load("ImageReward-v1.0")`` pulls ~3.6 GB from
+        # huggingface.co/THUDM/ImageReward). The operator can override
+        # this with HF_HUB_OFFLINE=1 if the model has been pre-cached.
+        env.setdefault("HF_HUB_OFFLINE", "0")
+
+        cmd = [
+            str(python_bin),
+            str(driver_script),
+            "--samples-dir",
+            str(samples_dir),
+            "--prompts-jsonl",
+            str(prompts_jsonl),
+            "--output-json",
+            str(output_json),
+            "--model",
+            str(model_name),
+        ]
+        t0 = time.perf_counter()
+        try:
+            proc = subprocess.run(
+                cmd,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=int(timeout_seconds),
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            return {
+                "metric": "image_reward",
+                "value": None,
+                "std": None,
+                "min": None,
+                "max": None,
+                "n_pairs": 0,
+                "marker": "external_error",
+                "stage": "image_reward_score",
+                "error": f"TimeoutExpired after {int(timeout_seconds)}s",
+                "command": " ".join(cmd),
+                "stderr_tail": (exc.stderr or "")[-2048:]
+                if getattr(exc, "stderr", None)
+                else "",
+            }
+        elapsed = time.perf_counter() - t0
+        if not output_json.exists():
+            return {
+                "metric": "image_reward",
+                "value": None,
+                "std": None,
+                "min": None,
+                "max": None,
+                "n_pairs": 0,
+                "marker": "external_error",
+                "stage": "image_reward_score",
+                "error": "output_json_not_produced",
+                "command": " ".join(cmd),
+                "stderr_tail": (proc.stderr or "")[-2048:],
+                "stdout_tail": (proc.stdout or "")[-2048:],
+            }
+        try:
+            parsed = json.loads(output_json.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            return {
+                "metric": "image_reward",
+                "value": None,
+                "std": None,
+                "min": None,
+                "max": None,
+                "n_pairs": 0,
+                "marker": "external_error",
+                "stage": "image_reward_score",
+                "error": f"output_json_parse_failed: {type(exc).__name__}: {exc}",
+                "command": " ".join(cmd),
+                "stderr_tail": (proc.stderr or "")[-2048:],
+            }
+        # Tag with subprocess metadata. The driver already emits
+        # ``metric`` / ``value`` / ``std`` / ``min`` / ``max`` /
+        # ``n_pairs`` / ``model`` so we only need to add the wrapper-
+        # side fields.
+        parsed.setdefault("metric", "image_reward")
+        parsed["elapsed_seconds"] = float(elapsed)
+        parsed["command"] = " ".join(cmd)
+        parsed["stdout_tail"] = (proc.stdout or "")[-2048:]
+        if proc.returncode != 0:
+            parsed["marker"] = "external_error"
+            parsed.setdefault(
+                "error", f"non_zero_exit_{proc.returncode}"
+            )
+            parsed["stderr_tail"] = (proc.stderr or "")[-2048:]
+        else:
+            parsed.setdefault("marker", "ok")
+        return parsed
+
+
+def _resolve_image_reward_metric(
+    *,
+    samples_dir: Path,
+    prompts_jsonl: Path | None,
+    image_reward_binary: Path | None,
+    image_reward_driver: Path | None,
+    image_reward_model: str,
+    image_reward_timeout_seconds: int,
+    image_reward_gpu_id: int | None,
+) -> dict[str, Any]:
+    """Decide between the Tier-2 subprocess wrapper and the legacy stub.
+
+    Mirrors :func:`_resolve_hpsv2_metric`. When ``image_reward_binary``
+    is non-``None`` we run :func:`run_image_reward_metric`; otherwise we
+    emit :func:`_image_reward_external_legacy_stub` so the JSON
+    contract stays byte-stable for callers that have not opted into
+    the Tier-2 build-out. When ``image_reward_binary`` is set but
+    ``image_reward_driver`` is not, we resolve to the documented
+    default (:data:`DEFAULT_IMAGE_REWARD_DRIVER`) so the operator
+    only has to pass the venv interpreter path.
+    """
+    if image_reward_binary is None:
+        return _image_reward_external_legacy_stub()
+    py_bin = Path(image_reward_binary)
+    drv = (
+        Path(image_reward_driver)
+        if image_reward_driver is not None
+        else REPO_ROOT / DEFAULT_IMAGE_REWARD_DRIVER
+    )
+    return run_image_reward_metric(
+        samples_dir=samples_dir,
+        prompts_jsonl=prompts_jsonl,
+        python_bin=py_bin,
+        driver_script=drv,
+        model_name=str(image_reward_model),
+        timeout_seconds=int(image_reward_timeout_seconds),
+        gpu_id=image_reward_gpu_id,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Tier-2: HPSv2.1 subprocess wrapper (HiDream paper §6.2 / Table 4)
+# ---------------------------------------------------------------------------
+
+#: Default path to the ``hpsv2_venv`` Python interpreter used to drive the
+#: HPSv2 scoring subprocess. The wrapper resolves this via
+#: :func:`resolve_hpsv2_binary` so the operator can override with
+#: ``--hpsv2-binary``.
+DEFAULT_HPSV2_VENV_PYTHON: str = ".venvs/hpsv2_venv/bin/python"
+
+#: Default path to the HPSv2 driver script shipped under the
+#: ``hpsv2_venv`` checkout. The wrapper invokes this script as a
+#: subprocess; the driver in turn imports :mod:`hpsv2` from the
+#: ``hpsv2_venv`` site-packages and writes a JSON score block to
+#: ``--output-json``.
+DEFAULT_HPSV2_DRIVER: str = ".venvs/hpsv2_venv/scripts/hpsv2_score.py"
+
+#: Default HPSv2 model variant. ``v2.1`` is what the HiDream-I1 paper
+#: reports (32.8 on the Style + Anime benchmark). ``v2.0`` is the
+#: earlier checkpoint and is NOT directly comparable to ``v2.1``
+#: (per the upstream README: "Scores cannot be directly compared
+#: between v2.0 and v2.1."). The wrapper honours ``--hpsv2-version``.
+DEFAULT_HPSV2_VERSION: str = "v2.1"
+
+
+def _hpsv2_not_installed_marker(
+    *,
+    python_bin: Path,
+    driver_script: Path,
+) -> dict[str, Any]:
+    """Return the ``metrics.hpsv2`` ``not_installed`` fallback block.
+
+    Emitted by :func:`run_hpsv2_metric` when one of the two required
+    external artefacts is absent so the operator can distinguish
+    "the Tier-2 harness is wired but not provisioned" from a generic
+    failure. The marker carries the explicit install hint consumed
+    by the operator checklist (see
+    ``docs/r17-survey/image-eval-tier2-progress.md`` §2.3).
+    """
+    missing: list[str] = []
+    if not python_bin.exists():
+        missing.append(f"--hpsv2-binary={python_bin}")
+    if not driver_script.exists():
+        missing.append(f"--hpsv2-driver={driver_script}")
+    return {
+        "metric": "hpsv2",
+        "value": None,
+        "std": None,
+        "n_pairs": 0,
+        "marker": "not_installed",
+        "note": (
+            "HPSv2.1 Tier-2 harness is wired (subprocess contract below) "
+            "but one or more external artefacts are missing. See "
+            "docs/r17-survey/image-eval-tier2-progress.md §2.3."
+        ),
+        "missing": missing,
+        "install_hint": (
+            "Provision a separate hpsv2_venv (it can be a sibling of "
+            "geva_venv; HPSv2 has no CUDA-extension build step). Run: "
+            "`uv venv --python 3.12 .venvs/hpsv2_venv --seed && "
+            "uv pip install --python .venvs/hpsv2_venv/bin/python hpsv2`. "
+            "The driver script is shipped under "
+            "`.venvs/hpsv2_venv/scripts/hpsv2_score.py` and does NOT need "
+            "to be re-fetched."
+        ),
+    }
+
+
+def _hpsv2_external_legacy_stub() -> dict[str, Any]:
+    """Return the byte-stable HPSv2 ``{"value": null, "marker": "external"}`` stub.
+
+    Emitted by :func:`run_image_eval` when the operator does not pass
+    ``--hpsv2-binary`` so the JSON contract is preserved across the
+    "wrapper not opted in" transition. The shape mirrors the GenEval
+    legacy stub (``"value": null`` + ``"marker": "external"``) and
+    reserves the ``"metric": "hpsv2"`` key for downstream consumers
+    that already key off ``report["metrics"]["hpsv2"]``.
+    """
+    return {
+        "metric": "hpsv2",
+        "value": None,
+        "std": None,
+        "n_pairs": 0,
+        "marker": "external",
+        "note": (
+            "HPSv2.1 human-preference evaluation (HiDream-I1 paper Table 4) "
+            "requires a separate hpsv2_venv. Pass --hpsv2-binary "
+            ".venvs/hpsv2_venv/bin/python to opt in. See "
+            "docs/r17-survey/image-eval-tier2-progress.md §2.3."
+        ),
+    }
+
+
+def run_hpsv2_metric(
+    *,
+    samples_dir: Path,
+    prompts_jsonl: Path | None,
+    python_bin: Path,
+    driver_script: Path,
+    hps_version: str = "v2.1",
+    timeout_seconds: int = 1800,
+    gpu_id: int | None = None,
+) -> dict[str, Any]:
+    """Run the HPSv2 driver as a subprocess and return its parsed JSON block.
+
+    On success returns the dict the driver wrote to ``--output-json``
+    (see :file:`.venvs/hpsv2_venv/scripts/hpsv2_score.py` for the
+    exact shape: ``value`` / ``std`` / ``n_pairs`` / ``hps_version`` /
+    ``per_image`` + ``"metric": "hpsv2"``).
+
+    On any failure (binary missing, driver missing, prompts missing,
+    subprocess non-zero, timeout, parse failure, downstream error
+    block) the wrapper emits a ``marker: "not_installed"`` or
+    ``marker: "external_error"`` block — never raises — so the
+    surrounding :func:`run_image_eval` continues to write the eval
+    report.
+
+    The wrapper mirrors the :func:`run_geneval_metric` contract so
+    the operator-facing CLI surface is consistent across Tier-2
+    metrics. The only differences: (a) HPSv2 is a Python package
+    import rather than a repo checkout + weights, so the
+    "external artefacts" surface is just the venv interpreter + the
+    bundled driver script (no separate ``--hpsv2-repo`` /
+    ``--hpsv2-detector-path`` opt-ins); (b) HPSv2 is single-GPU
+    (the upstream ``hpsv2.score`` re-uses the same model + tokenizer
+    across calls), so the GPU pin is honoured via the
+    ``CUDA_VISIBLE_DEVICES`` env-var passthrough rather than a
+    per-process torch device.
+    """
+    if not python_bin.exists() or not driver_script.exists():
+        return _hpsv2_not_installed_marker(
+            python_bin=python_bin, driver_script=driver_script
+        )
+    if prompts_jsonl is None or not prompts_jsonl.exists():
+        return {
+            "metric": "hpsv2",
+            "value": None,
+            "std": None,
+            "n_pairs": 0,
+            "marker": "not_installed",
+            "note": (
+                "HPSv2 requires a --hpsv2-prompts (or --prompts-jsonl) "
+                "JSONL aligned with the samples. Pass one of these flags."
+            ),
+            "missing": [f"--hpsv2-prompts={prompts_jsonl}"]
+            if prompts_jsonl is not None
+            else ["--prompts-jsonl"],
+        }
+
+    with tempfile.TemporaryDirectory(prefix="hpsv2_score_") as stage:
+        stage_dir = Path(stage)
+        output_json = stage_dir / "hpsv2_result.json"
+        env = os.environ.copy()
+        if gpu_id is not None:
+            env["CUDA_VISIBLE_DEVICES"] = str(int(gpu_id))
+        env.setdefault("HF_HUB_OFFLINE", "0")  # allow first-run HPSv2 checkpoint download
+        env.setdefault("HPS_ROOT", str(Path.home() / ".cache" / "hpsv2"))
+
+        cmd = [
+            str(python_bin),
+            str(driver_script),
+            "--samples-dir",
+            str(samples_dir),
+            "--prompts-jsonl",
+            str(prompts_jsonl),
+            "--output-json",
+            str(output_json),
+            "--hps-version",
+            str(hps_version),
+        ]
+        t0 = time.perf_counter()
+        try:
+            proc = subprocess.run(
+                cmd,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=int(timeout_seconds),
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            return {
+                "metric": "hpsv2",
+                "value": None,
+                "std": None,
+                "n_pairs": 0,
+                "marker": "external_error",
+                "stage": "hpsv2_score",
+                "error": f"TimeoutExpired after {int(timeout_seconds)}s",
+                "command": " ".join(cmd),
+                "stderr_tail": (exc.stderr or "")[-2048:]
+                if getattr(exc, "stderr", None)
+                else "",
+            }
+        elapsed = time.perf_counter() - t0
+        if not output_json.exists():
+            return {
+                "metric": "hpsv2",
+                "value": None,
+                "std": None,
+                "n_pairs": 0,
+                "marker": "external_error",
+                "stage": "hpsv2_score",
+                "error": "output_json_not_produced",
+                "command": " ".join(cmd),
+                "stderr_tail": (proc.stderr or "")[-2048:],
+                "stdout_tail": (proc.stdout or "")[-2048:],
+            }
+        try:
+            parsed = json.loads(output_json.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            return {
+                "metric": "hpsv2",
+                "value": None,
+                "std": None,
+                "n_pairs": 0,
+                "marker": "external_error",
+                "stage": "hpsv2_score",
+                "error": f"output_json_parse_failed: {type(exc).__name__}: {exc}",
+                "command": " ".join(cmd),
+                "stderr_tail": (proc.stderr or "")[-2048:],
+            }
+        # Tag with subprocess metadata. The driver already emits
+        # ``metric`` / ``value`` / ``std`` / ``n_pairs`` / ``hps_version``
+        # so we only need to add the wrapper-side fields.
+        parsed.setdefault("metric", "hpsv2")
+        parsed["elapsed_seconds"] = float(elapsed)
+        parsed["command"] = " ".join(cmd)
+        parsed["stdout_tail"] = (proc.stdout or "")[-2048:]
+        if proc.returncode != 0:
+            parsed["marker"] = "external_error"
+            parsed.setdefault(
+                "error", f"non_zero_exit_{proc.returncode}"
+            )
+            parsed["stderr_tail"] = (proc.stderr or "")[-2048:]
+        else:
+            parsed.setdefault("marker", "ok")
+        return parsed
+
+
+def _resolve_hpsv2_metric(
+    *,
+    samples_dir: Path,
+    prompts_jsonl: Path | None,
+    hpsv2_binary: Path | None,
+    hpsv2_driver: Path | None,
+    hpsv2_version: str,
+    hpsv2_timeout_seconds: int,
+    hpsv2_gpu_id: int | None,
+) -> dict[str, Any]:
+    """Decide between the Tier-2 subprocess wrapper and the legacy stub.
+
+    Mirrors :func:`_resolve_geneval_metric`. When ``hpsv2_binary`` is
+    non-``None`` we run :func:`run_hpsv2_metric`; otherwise we emit
+    :func:`_hpsv2_external_legacy_stub` so the JSON contract stays
+    byte-stable for callers that have not opted into the Tier-2
+    build-out. When ``hpsv2_binary`` is set but ``hpsv2_driver`` is
+    not, we resolve to the documented default
+    (:data:`DEFAULT_HPSV2_DRIVER`) so the operator only has to pass
+    the venv interpreter path.
+    """
+    if hpsv2_binary is None:
+        return _hpsv2_external_legacy_stub()
+    py_bin = Path(hpsv2_binary)
+    drv = (
+        Path(hpsv2_driver)
+        if hpsv2_driver is not None
+        else REPO_ROOT / DEFAULT_HPSV2_DRIVER
+    )
+    return run_hpsv2_metric(
+        samples_dir=samples_dir,
+        prompts_jsonl=prompts_jsonl,
+        python_bin=py_bin,
+        driver_script=drv,
+        hps_version=str(hpsv2_version),
+        timeout_seconds=int(hpsv2_timeout_seconds),
+        gpu_id=hpsv2_gpu_id,
+    )
 
 
 def run_fid_metric(
@@ -796,6 +2130,21 @@ def run_image_eval(
     per_round: bool = False,
     per_round_glob: str = "{arm}_round{r:02d}",
     arm: str = "framework",
+    geneval_binary: Path | None = None,
+    geneval_repo: Path | None = None,
+    geneval_detector_path: Path | None = None,
+    geneval_timeout_seconds: int = 600,
+    geneval_gpu_id: int | None = None,
+    hpsv2_binary: Path | None = None,
+    hpsv2_driver: Path | None = None,
+    hpsv2_version: str = "v2.1",
+    hpsv2_timeout_seconds: int = 1800,
+    hpsv2_gpu_id: int | None = None,
+    image_reward_binary: Path | None = None,
+    image_reward_driver: Path | None = None,
+    image_reward_model: str = DEFAULT_IMAGE_REWARD_MODEL,
+    image_reward_timeout_seconds: int = 1800,
+    image_reward_gpu_id: int | None = None,
 ) -> dict[str, Any]:
     """Top-level orchestrator: load images, run metrics, write JSON.
 
@@ -825,6 +2174,21 @@ def run_image_eval(
             image_target_size=image_target_size,
             per_round_glob=per_round_glob,
             arm=arm,
+            geneval_binary=geneval_binary,
+            geneval_repo=geneval_repo,
+            geneval_detector_path=geneval_detector_path,
+            geneval_timeout_seconds=geneval_timeout_seconds,
+            geneval_gpu_id=geneval_gpu_id,
+            hpsv2_binary=hpsv2_binary,
+            hpsv2_driver=hpsv2_driver,
+            hpsv2_version=hpsv2_version,
+            hpsv2_timeout_seconds=hpsv2_timeout_seconds,
+            hpsv2_gpu_id=hpsv2_gpu_id,
+            image_reward_binary=image_reward_binary,
+            image_reward_driver=image_reward_driver,
+            image_reward_model=image_reward_model,
+            image_reward_timeout_seconds=image_reward_timeout_seconds,
+            image_reward_gpu_id=image_reward_gpu_id,
         )
     t0 = time.perf_counter()
     samples = discover_samples(samples_dir)
@@ -842,16 +2206,39 @@ def run_image_eval(
         "metrics": {
             "fid": None,
             "clip_score": None,
-            "geneval": {
-                "value": None,
-                "marker": "external",
-                "note": "GenEval object-composition evaluation requires an mmdet/Mask2Former harness; see docs/r17-survey/image-eval-plan.md",
-            },
+            "geneval": _resolve_geneval_metric(
+                samples_dir=samples_dir,
+                prompts_jsonl=prompts_jsonl,
+                geneval_binary=geneval_binary,
+                geneval_repo=geneval_repo,
+                geneval_detector_path=geneval_detector_path,
+                geneval_timeout_seconds=geneval_timeout_seconds,
+                geneval_gpu_id=geneval_gpu_id,
+            ),
+            "hpsv2": _resolve_hpsv2_metric(
+                samples_dir=samples_dir,
+                prompts_jsonl=prompts_jsonl,
+                hpsv2_binary=hpsv2_binary,
+                hpsv2_driver=hpsv2_driver,
+                hpsv2_version=hpsv2_version,
+                hpsv2_timeout_seconds=hpsv2_timeout_seconds,
+                hpsv2_gpu_id=hpsv2_gpu_id,
+            ),
+            "image_reward": _resolve_image_reward_metric(
+                samples_dir=samples_dir,
+                prompts_jsonl=prompts_jsonl,
+                image_reward_binary=image_reward_binary,
+                image_reward_driver=image_reward_driver,
+                image_reward_model=image_reward_model,
+                image_reward_timeout_seconds=image_reward_timeout_seconds,
+                image_reward_gpu_id=image_reward_gpu_id,
+            ),
             "dpg_bench": {
                 "value": None,
                 "marker": "external",
                 "note": "DPG-Bench dense-prompt evaluation requires mPLUG-owl (Tier 2 self-host) or GPT-4V (paper); see docs/r17-survey/image-eval-plan.md",
             },
+            "t2i_compbench": _t2i_compbench_external_stub(),
         },
         "wall_clock_seconds": None,
         "status": "ok",
@@ -921,9 +2308,11 @@ def _build_argparser() -> argparse.ArgumentParser:
         prog="tools.run_image_eval",
         description=(
             "Unified image T2I evaluation runner: FID (InceptionV3 pool3) "
-            "+ CLIPScore (openai/clip-vit-base-patch32). GenEval and "
-            "DPG-Bench are emitted as external stubs. Each metric "
-            "returns NaN/null gracefully when its dependency is missing."
+            "+ CLIPScore (openai/clip-vit-base-patch32). GenEval, "
+            "DPG-Bench, and T2I-CompBench are emitted as external stubs "
+            "(sub-scores for T2I-CompBench color/shape/texture are "
+            "reserved even today). Each metric returns NaN/null gracefully "
+            "when its dependency is missing."
         ),
     )
     p.add_argument("--samples-dir", type=str, required=True,
@@ -970,6 +2359,131 @@ def _build_argparser() -> argparse.ArgumentParser:
                        "When set, --reference-stats is overridden (a stderr note is "
                        "emitted). When --synthetic-image is NOT set, behaviour is "
                        "byte-stable vs the pre-existing --reference-stats path."
+                   ))
+    # ----- Tier-2 (GenEval) subprocess wrapper flags (HiDream / Lumina §6.2) -----
+    p.add_argument("--geneval-binary", type=str, default=None,
+                   help=(
+                       "Path to the geva_venv Python interpreter (e.g. "
+                       "``.venvs/geva_venv/bin/python``). When set, the runner "
+                       "invokes the upstream GenEval detector as a subprocess "
+                       "instead of emitting the ``external`` stub. Leave unset "
+                       "to keep byte-stable Phase-B behaviour. See "
+                       "docs/r17-survey/image-eval-tier2-progress.md §B for the "
+                       "install contract."
+                   ))
+    p.add_argument("--geneval-prompts", type=str, default=None,
+                   help=(
+                       "Path to a JSONL prompts file aligned with the samples. "
+                       "When omitted, falls back to ``--prompts-jsonl``. Either "
+                       "the upstream GenEval ``evaluation_metadata.jsonl`` (with "
+                       "``tag`` / ``include`` / ``exclude`` keys) or a flat "
+                       "[prompt, ...] list is accepted; the wrapper heuristically "
+                       "tags flat lists so the upstream evaluator can group by "
+                       "task."
+                   ))
+    p.add_argument("--geneval-repo", type=str, default=None,
+                   help=(
+                       "Path to the cloned upstream ``djghosh13/geneval`` repo. "
+                       "Default: ``.venvs/geva_venv/repo`` (resolved relative "
+                       "to the repo root)."
+                   ))
+    p.add_argument("--geneval-detector-path", type=str, default=None,
+                   help=(
+                       "Directory holding the Mask2Former weights + config. "
+                       "Upstream expects ``<dir>/<model>.pth`` next to the "
+                       "``mmdet`` config. Default: ``data/geva_models``."
+                   ))
+    p.add_argument("--geneval-timeout", type=int, default=600,
+                   help="Subprocess timeout for ``evaluate_images.py`` (default: 600 s).")
+    p.add_argument("--geneval-gpu-id", type=int, default=None,
+                   help=(
+                       "Pin the GenEval subprocess to a specific CUDA device via "
+                       "``CUDA_VISIBLE_DEVICES`` (default: inherit the parent's "
+                       "CUDA_VISIBLE_DEVICES)."
+                   ))
+    # ----- Tier-2 (HPSv2.1) subprocess wrapper flags (HiDream paper Table 4) -----
+    p.add_argument("--hpsv2-binary", type=str, default=None,
+                   help=(
+                       "Path to the hpsv2_venv Python interpreter (e.g. "
+                       "``.venvs/hpsv2_venv/bin/python``). When set, the runner "
+                       "invokes the HPSv2 driver as a subprocess instead of "
+                       "emitting the ``external`` stub. Leave unset to keep "
+                       "byte-stable Phase-B behaviour. See "
+                       "docs/r17-survey/image-eval-tier2-progress.md §2.3 "
+                       "for the install contract."
+                   ))
+    p.add_argument("--hpsv2-driver", type=str, default=None,
+                   help=(
+                       "Path to the HPSv2 driver script (default: "
+                       "``.venvs/hpsv2_venv/scripts/hpsv2_score.py``). The driver "
+                       "imports :mod:`hpsv2` and writes a JSON result block to "
+                       "its ``--output-json`` path."
+                   ))
+    p.add_argument("--hpsv2-prompts", type=str, default=None,
+                   help=(
+                       "Path to a JSONL prompts file aligned with the samples "
+                       "(one prompt per non-empty line). When omitted, falls "
+                       "back to ``--prompts-jsonl``. The driver pads "
+                       "mismatched tails with empty strings so a short prompt "
+                       "file does not abort the run."
+                   ))
+    p.add_argument("--hpsv2-version", type=str, default="v2.1",
+                   choices=("v2.0", "v2.1"),
+                   help=(
+                       "HPSv2 model variant. ``v2.1`` is the HiDream-I1 paper "
+                       "default (32.8 on Style + Anime). ``v2.0`` is the "
+                       "earlier checkpoint and is NOT directly comparable to "
+                       "``v2.1`` (per upstream README: 'Scores cannot be "
+                       "directly compared between v2.0 and v2.1.')."
+                   ))
+    p.add_argument("--hpsv2-timeout", type=int, default=1800,
+                   help="Subprocess timeout for the HPSv2 driver (default: 1800 s = 30 min).")
+    p.add_argument("--hpsv2-gpu-id", type=int, default=None,
+                   help=(
+                       "Pin the HPSv2 subprocess to a specific CUDA device via "
+                       "``CUDA_VISIBLE_DEVICES`` (default: inherit the parent's "
+                       "CUDA_VISIBLE_DEVICES)."
+                   ))
+    # ----- Tier-2 (ImageReward) subprocess wrapper flags (HiDream §6.2 / Lumina Table 3) -----
+    p.add_argument("--image-reward-binary", type=str, default=None,
+                   help=(
+                       "Path to the image_reward_venv Python interpreter (e.g. "
+                       "``.venvs/image_reward_venv/bin/python``). When set, the "
+                       "runner invokes the ImageReward driver as a subprocess "
+                       "instead of emitting the ``external`` stub. Leave unset "
+                       "to keep byte-stable Phase-B behaviour. See "
+                       "docs/r17-survey/image-eval-tier2-progress.md §2.5 for "
+                       "the install contract (image-reward==1.5 + pinned "
+                       "transformers<4.40 + pinned diffusers<0.30)."
+                   ))
+    p.add_argument("--image-reward-driver", type=str, default=None,
+                   help=(
+                       "Path to the ImageReward driver script (default: "
+                       "``.venvs/image_reward_venv/scripts/image_reward_score.py``). "
+                       "The driver imports :mod:`ImageReward` and writes a JSON "
+                       "result block to its ``--output-json`` path."
+                   ))
+    p.add_argument("--image-reward-prompts", type=str, default=None,
+                   help=(
+                       "Path to a JSONL prompts file aligned with the samples "
+                       "(one prompt per non-empty line). When omitted, falls "
+                       "back to ``--prompts-jsonl``. The driver pads mismatched "
+                       "tails with empty strings so a short prompt file does "
+                       "not abort the run."
+                   ))
+    p.add_argument("--image-reward-model", type=str, default=DEFAULT_IMAGE_REWARD_MODEL,
+                   help=(
+                       "ImageReward model variant (default: "
+                       f"``{DEFAULT_IMAGE_REWARD_MODEL}``; only v1.0 is "
+                       "published on PyPI as of 2026-09)."
+                   ))
+    p.add_argument("--image-reward-timeout", type=int, default=1800,
+                   help="Subprocess timeout for the ImageReward driver (default: 1800 s = 30 min).")
+    p.add_argument("--image-reward-gpu-id", type=int, default=None,
+                   help=(
+                       "Pin the ImageReward subprocess to a specific CUDA device "
+                       "via ``CUDA_VISIBLE_DEVICES`` (default: inherit the "
+                       "parent's CUDA_VISIBLE_DEVICES)."
                    ))
     return p
 
@@ -1056,6 +2570,29 @@ def main(argv: list[str] | None = None) -> int:
             per_round=bool(args.per_round),
             per_round_glob=str(args.per_round_glob),
             arm=str(args.arm),
+            geneval_binary=Path(args.geneval_binary) if args.geneval_binary else None,
+            geneval_repo=Path(args.geneval_repo) if args.geneval_repo else None,
+            geneval_detector_path=Path(args.geneval_detector_path)
+            if args.geneval_detector_path
+            else None,
+            geneval_timeout_seconds=int(args.geneval_timeout),
+            geneval_gpu_id=int(args.geneval_gpu_id) if args.geneval_gpu_id is not None else None,
+            hpsv2_binary=Path(args.hpsv2_binary) if args.hpsv2_binary else None,
+            hpsv2_driver=Path(args.hpsv2_driver) if args.hpsv2_driver else None,
+            hpsv2_version=str(args.hpsv2_version),
+            hpsv2_timeout_seconds=int(args.hpsv2_timeout),
+            hpsv2_gpu_id=int(args.hpsv2_gpu_id) if args.hpsv2_gpu_id is not None else None,
+            image_reward_binary=Path(args.image_reward_binary)
+            if args.image_reward_binary
+            else None,
+            image_reward_driver=Path(args.image_reward_driver)
+            if args.image_reward_driver
+            else None,
+            image_reward_model=str(args.image_reward_model),
+            image_reward_timeout_seconds=int(args.image_reward_timeout),
+            image_reward_gpu_id=int(args.image_reward_gpu_id)
+            if args.image_reward_gpu_id is not None
+            else None,
         )
     except Exception as exc:  # noqa: BLE001 — final guard, report & exit 1
         print(f"[ERROR] image-eval run failed: {exc!r}", file=sys.stderr)
@@ -1065,11 +2602,14 @@ def main(argv: list[str] | None = None) -> int:
     # to grep the JSON.
     fid_block = report["metrics"]["fid"]
     clip_block = report["metrics"]["clip_score"]
+    hpsv2_block = report["metrics"].get("hpsv2", {})
     fid_value = fid_block.get("value") if fid_block else None
     clip_mean = clip_block.get("mean") if clip_block else None
+    hpsv2_value = hpsv2_block.get("value") if hpsv2_block else None
     print(
         f"[DONE] status={report['status']} n_samples={report['n_samples']} "
         f"fid={fid_value!s} clip_score_mean={clip_mean!s} "
+        f"hpsv2={hpsv2_value!s} "
         f"-> {args.output}"
     )
     return 0
