@@ -1,0 +1,112 @@
+# protbfn_venv lock — decision recorded 2026-09-03
+#
+# This file is a documentation-only artefact: the installable surface
+# for the `.venvs/protbfn_venv` virtual environment is the same one
+# captured here, plus `transformers`, `torch 2.7.0+cu128`, `biopython`,
+# `einops`, `huggingface_hub` (the framework-facing deps). The versions
+# below are the JAX/Haiku/Flax/Optax stack that the framework installs
+# for upstream-shim routing and that the upstream
+# `data/protbfn_abbfn/repo/{model,sample,inpaint,loss}.py` actually
+# imports. See `docs/environments.md` §"ProtBFN / JAX pin decision"
+# for the rationale and the trade-off matrix.
+#
+# Two candidate pin sets were considered:
+#
+#   Original (InstaDeep `environment.yaml`, paper-fidelity):
+#     dm-haiku == 0.0.9     flax == 0.7.2      jax == 0.4.13
+#     numpy == 1.24         biopython == 1.84  python == 3.9
+#
+#   Current (in-tree `protbfn_venv`, 2026-09-03):
+#     dm-haiku == 0.0.17    flax == 0.12.9     jax  == 0.11.1
+#     jaxlib  == 0.11.1     optax == 0.2.8     numpy >= 1.23, < 3
+#     python == 3.12        torch == 2.7.0+cu128
+#
+# The original pin set cannot be installed on this rig:
+#   * dm-haiku 0.0.9 declares `import jax` paths that are only present
+#     up to jaxlib 0.4.x; jax>=0.5 removed the private
+#     `jax.linear_transpose` symbol and the `jax.experimental.optimizers`
+#     module that dm-haiku 0.0.9 still calls. dm-haiku 0.0.9 also pulls
+#     numpy<2 transitively through dm-tree, but our project venv
+#     requires numpy<2.5 and the framework itself depends on numpy 2.x
+#     APIs (numpy._core.multiarray._reconstruct, used by
+#     protbfn_abbfn_jax_loader).
+#   * flax 0.7.2 imports `flax.linen` from a module layout that was
+#     reorganised in flax 0.8+; jax>=0.5 also renamed
+#     `jax.tree_util.tree_unflatten`'s default-keyword and removed
+#     `jax.experimental.host_callback`. On Python 3.12, flax 0.7.2
+#     raises `TypeError: 'type' object is not subscriptable` at import
+#     time (uses PEP-585 generics that landed in 3.9 but were removed
+#     from flax 0.8's pre-3.10 compat path).
+#   * `jax[cuda12]==0.4.13` does not have a manylinux wheel for
+#     Python 3.12 — only 3.9/3.10 are published on the JAX release
+#     channel for that version. Downgrading the rig to Python 3.9
+#     collides with the framework's `<2.5` numpy cap and the rest of
+#     the venv stack (torch 2.7.0+cu128 wheels are 3.9-3.13).
+#   * InstaDeep's environment.yaml specifies `python=3.9`. Python 3.9
+#     reached end-of-life on 2025-10 and Python 3.12 is what every
+#     other venv on this rig uses.
+#
+# The current pins work (verified 2026-09-03 by importing
+# `data/protbfn_abbfn/repo/model.get_transformer_fn` from
+# `protbfn_venv`; both `model.py` and `sample.py` import cleanly,
+# and `hk.transform(fn).init(rng)` succeeds for `model_size="ProtBFN"`).
+#
+# Reconciliation with upstream reproducibility:
+#   * InstaDeep's repo does not publish new pins — their
+#     `environment.yaml` (the file in `data/protbfn_abbfn/repo/`) is
+#     the original 0.0.9/0.7.2/0.4.13 set with no later commit. They
+#     ship the **Dockerfile** as the reproducibility mechanism, not the
+#     pin set. The Dockerfile pins Ubuntu 20.04 + nvidia/cuda:11.8.0-
+#     cudnn8-devel and uses micromamba to install the pins above.
+#     Reproducing that Docker build on a current rig is a separate
+#     multi-hour effort and not in scope.
+#   * The framework's *measurement* does NOT depend on JAX. The
+#     `adaptive_reflow/adapters/protbfn_abbfn_jax_loader.py` is a
+#     JAX-free pytree re-materialiser that reads the on-disk
+#     `tree_def.npy` + `array_<i>.npy` via a pickled-PyTreeDef stub.
+#     The framework's torch re-implementation in
+#     `protbfn_abbfn_model.py` is the canonical adapter path; JAX is
+#     only present so the upstream-shim (`protbfn_abbfn_upstream_shim`,
+#     `force_mode="upstream_jax"`) can route to the InstaDeep repo
+#     when a caller explicitly opts in.
+#
+# Recommendation (RESEARCH-ONLY, do not execute in this pass):
+#   KEEP the current 0.0.17/0.12.9/0.11.1 set as the installed
+#   `protbfn_venv` baseline. Document the original 0.0.9/0.7.2 pins as
+#   the "paper-fidelity" alternative with a Dockerfile-only reproducer,
+#   not as an in-tree install target. If a future project wants
+#   paper-fidelity numbers, it should build the InstaDeep Docker image
+#   on CUDA 11.8 + Python 3.9 and run `sample.py` inside that
+#   container; the framework's metrics are produced outside that
+#   environment.
+#
+# Pin set (recorded; not auto-installed by this file):
+dm-haiku==0.0.17
+flax==0.12.9
+jax==0.11.1
+jaxlib==0.11.1
+optax==0.2.8
+numpy>=1.23,<3     # framework's numpy<2.5 cap is enforced at the project venv; protbfn_venv does not re-cap
+
+# Plus the always-present framework-facing deps (transitive of the
+# adapter, not JAX-specific):
+#   torch==2.7.0+cu128
+#   transformers
+#   biopython>=1.84
+#   einops
+#   huggingface_hub
+
+# Reproducer (do NOT execute in this pass):
+#
+#   uv venv --python 3.12 .venvs/protbfn_venv
+#   uv pip install --python .venvs/protbfn_venv \
+#     --index-url https://download.pytorch.org/whl/cu128 \
+#     torch==2.7.0 torchvision==0.22.0
+#   uv pip install --python .venvs/protbfn_venv \
+#     "numpy<2.5" "scipy>=1.10"
+#   uv pip install --python .venvs/protbfn_venv \
+#     "dm-haiku==0.0.17" "flax==0.12.9" "jax==0.11.1" "jaxlib==0.11.1" \
+#     "optax==0.2.8" "transformers" "biopython>=1.84" "einops" \
+#     "huggingface_hub"
+#   .venvs/protbfn_venv/bin/python -c \
+#     "import jax, flax, haiku; print(jax.__version__, flax.__version__, haiku.__version__)"
