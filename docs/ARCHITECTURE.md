@@ -16,7 +16,8 @@ case 5 (source revocation) are now **hard gates** — the audit codes
 and
 [`AUDIT_SOURCE_REVOKED`](adaptive_reflow/contracts/validators.py)
 are re-exported from the public `__init__.py` and indexed by the
-doc-drift scanner. Top-level flat modules and the in-tree `.py` files
+doc-drift scanner. **Phase-4 status update:** the R3/R11 code review (52 findings) identified and triaged; P0/P1 fix plan published ([CLM-041](#CLM-041), [CLM-042](#CLM-042)). The r16 governance audit fix train closed six P0 paper-math + CI-gate items and landed the `algorithm/` package enumeration here ([CLM-044](#CLM-044)), the `e_rho / 4` derivation notes ([CLM-045](#CLM-045)), the paper-math `eps` scaling flags + NaN/inf safety boundary on `EvidenceScaleGapMetric` ([CLM-046](#CLM-046)), and the stress-nightly / cpu-tests / [test]-extra / Python-matrix CI hygiene fixes ([CLM-047](#CLM-047)). The Phase-4 audit introduced no gate regression but catalogued one P0 doc-drift risk ([CLM-042](#CLM-042) `CLM-025` raise-vs-return compatibility under the proposed P0-3 fix).
+Top-level flat modules and the in-tree `.py` files
 in the repo root are **stale re-export shims** that will be removed in
 a follow-up pass.
 

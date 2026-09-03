@@ -128,6 +128,12 @@ markdown_extensions:
 # ``--strict`` so doc drift is caught at PR time.
 strict: true
 
+
+# Exclude archived docs from the mkdocs build entirely. ARCHIVE/ holds
+# historical context that is intentionally not part of the live site.
+exclude_docs: |
+  ARCHIVE/**
+
 # The ``docs/`` directory contains many pages beyond the four nav
 # entries (ADRs, ``ADAPTER_INTERFACE_SPEC.md``, ``DEPRECATION.md``, ...)
 # that are intentionally NOT in the top-level nav -- they are linked
@@ -146,7 +152,6 @@ not_in_nav: |
   DEPRECATION.md
   PERFORMANCE_BUDGETS.md
   RELEASING.md
-  candidate_registry_init.md
   design/*.md
   lean/*.md
   lean_issue_re_inference_provenance.md
@@ -161,20 +166,15 @@ not_in_nav: |
   schedule-theory.md
   sequential-protocol.md
   defaults-matrix.md
-  _benchmark_ablation.md
-  algorithm-uplift-plan.md
   benchmark-uplifts.md
   benchmark-deep-uplifts.md
-  algorithm-deep-uplift-plan.md
-  algorithm-round2-uplift-plan.md
   benchmark-round2-uplifts.md
-  _test_ablation_quick.md
-  r3-survey/*.md
   r4-survey/*.md
   r4-survey/**/*.md
-  paper-plan.md
   r5-survey/*.md
   r17-survey/*.md
+  ARCHIVE/README.md
+  ARCHIVE/**/*.md
 
 validation:
   nav:
