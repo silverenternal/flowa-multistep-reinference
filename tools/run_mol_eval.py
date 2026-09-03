@@ -112,7 +112,29 @@ Output schema
         "n_conformer_failures": int,
         "pass_per_check": dict[str, float] | None
       },
+      "pb_validity_mmff": {
+        "value": null | float in [0, 1] (NaN when not computed),
+        "marker": "not_installed" | "stub_unavailable" | "computed_mmff",
+        "install_hint": "pip install posebusters" | null,
+        "note": "<stderr-equivalent string>",
+        "conformer_protocol": "ETKDGv3+MMFF(200)" | null,
+        "n_total": int,
+        "n_pb_valid": int,
+        "n_conformer_failures": int,
+        "pass_per_check": dict[str, float] | None,
+        "per_conformer_min_energy": list[float] | None
+      },
       "fg_deviation": float (NaN if RDKit missing or no reference set),
+      "fg_deviation_dundee_glaxo": {
+        "value": float (L1 over 85-element fr_* Dundee+Glaxo vocab; NaN if no RDKit),
+        "value_reos": float (L1 over Pat Walters rd_filters Dundee+Glaxo vocab),
+        "per_fg": dict[str, float] (p_gen - p_ref per fr_*),
+        "per_check_reos": dict[str, float] (p_gen - p_ref per REOS rule),
+        "flag_rate": float (mean per-rule flag rate, REOS shape),
+        "reos_cum_dev": float (sum |p_gen - p_ref| over REOS vocab; matches upstream),
+        "n_gen": int, "n_ref": int, "reference_source": str | None,
+        "note": str | None,
+      },
       "flowmol3_paper_metrics": {
         "metrics": null | dict[str, float],  # upstream dict, verbatim
         "marker": "not_requested" | "not_available"
@@ -189,7 +211,7 @@ SUPPORTED_DATASETS: tuple[str, ...] = (
 #: (upstream FlowMol3 ``SampleAnalyzer.analyze`` output, via
 #: ``adaptive_reflow.adapters.flowmol3_metrics_upstream``). Every
 #: pre-existing key keeps its meaning; the block is a pure addition.
-OUTPUT_SCHEMA_VERSION: str = "1.2.0"
+OUTPUT_SCHEMA_VERSION: str = "1.3.0"
 
 #: ``flowmol3_paper_metrics.marker`` vocabulary (closed set).
 #: ``not_requested`` — the caller did not ask for the block (or the
@@ -748,6 +770,7 @@ def compute_fcd(
 PB_VALIDITY_MARKER_NOT_INSTALLED: str = "not_installed"
 PB_VALIDITY_MARKER_COMPUTED: str = "computed"
 PB_VALIDITY_MARKER_COMPUTED_ETKDG_V3_ONLY: str = "computed_etkdg_v3_only"
+PB_VALIDITY_MARKER_COMPUTED_MMFF: str = "computed_mmff"
 PB_VALIDITY_MARKER_STUB_UNAVAILABLE: str = "stub_unavailable"
 PB_VALIDITY_INSTALL_HINT: str = "pip install posebusters"
 #: PoseBusters config name to use. ``"mol"`` is the de-novo
@@ -1034,6 +1057,200 @@ def compute_pb_validity(
     }
 
 
+def compute_pb_validity_mmff(
+    mols: Sequence[Any | None],
+    *,
+    num_confs: int = 10,
+    random_seed: int = 42,
+    max_mmff_iters: int = 200,
+) -> dict[str, Any]:
+    """Tier-2 paper metric: PoseBusters validity with MMFF-min conformer.
+
+    Full-fidelity path (Fix B). For every input RDKit mol:
+
+      1. Generate ``num_confs`` ETKDGv3 candidates via
+         ``AllChem.EmbedMultipleConfs`` (Wang et al. 2020 J Chem Inf
+         Model) at the given ``random_seed``;
+      2. MMFF94-minimize each with
+         ``AllChem.MMFFOptimizeMoleculeConfs(mol, maxIters=max_mmff_iters)``
+         (Rappe 1992 MMFF94);
+      3. Pick the lowest-energy conformer by single-point MMFF94
+         energy;
+      4. Hand that single conformer to
+         ``PoseBusters(config="mol").bust([mol])`` and read off
+         ``pb_valid``.
+
+    This mirrors the published PoseBusters energy_ratio pipeline
+    (Buttenschoen et al. 2024 Chem Sci §2.2.2, ETKDGv3 + MMFF94
+    reference). The PoseBusters package's own ``energy_ratio`` module
+    is COMMENTED OUT in the shipped ``pb_config.yaml`` so this
+    conformer sweep has to be done by the caller.
+
+    JSON shape mirrors :func:`compute_pb_validity` (the
+    ETKDGv3-only path); the marker is
+    :data:`PB_VALIDITY_MARKER_COMPUTED_MMFF` and
+    ``conformer_protocol`` reports ``"ETKDGv3+MMFF(200)"`` (the
+    ``200`` is ``max_mmff_iters``). ``per_conformer_min_energy`` is
+    added so consumers can audit the conformer-pick heuristic.
+
+    The function is independently callable; it does NOT mutate the
+    caller's molecule list (each input is deep-copied via
+    ``Chem.Mol(mol)`` before embedding).
+    """
+    pb_ok, pb_err = _probe_posebusters()
+    if not pb_ok:
+        return {
+            "value": None,
+            "marker": PB_VALIDITY_MARKER_NOT_INSTALLED,
+            "install_hint": PB_VALIDITY_INSTALL_HINT,
+            "note": (
+                f"{pb_err}:posebusters_unavailable:"
+                "install_with_uv_pip_install_posebusters_in_flowmol3_venv"
+            ),
+            "conformer_protocol": None,
+            "n_total": int(len(mols)),
+            "n_pb_valid": 0,
+            "n_conformer_failures": 0,
+            "pass_per_check": None,
+            "per_conformer_min_energy": None,
+        }
+
+    try:
+        from adaptive_reflow.eval.mmff_conformer import embed_mmff  # noqa: PLC0415
+    except Exception as exc:  # noqa: BLE001 — module may not be on PYTHONPATH
+        return {
+            "value": None,
+            "marker": PB_VALIDITY_MARKER_STUB_UNAVAILABLE,
+            "install_hint": None,
+            "note": (
+                f"mmff_conformer_module_unavailable:{type(exc).__name__}:{exc}:"
+                "see_pb_validity_mmff_block_for_failure"
+            ),
+            "conformer_protocol": None,
+            "n_total": int(len(mols)),
+            "n_pb_valid": 0,
+            "n_conformer_failures": 0,
+            "pass_per_check": None,
+            "per_conformer_min_energy": None,
+        }
+
+    real_mols: list[Any] = [m for m in mols if m is not None]
+    if not real_mols:
+        return {
+            "value": NAN,
+            "marker": PB_VALIDITY_MARKER_COMPUTED_MMFF,
+            "install_hint": None,
+            "note": "no_valid_input_molecules:pb_validity_mmff_is_NaN",
+            "conformer_protocol": f"ETKDGv3+MMFF({int(max_mmff_iters)})",
+            "n_total": 0,
+            "n_pb_valid": 0,
+            "n_conformer_failures": 0,
+            "pass_per_check": None,
+            "per_conformer_min_energy": None,
+        }
+
+    conformered_mols: list[Any] = []
+    per_conformer_min_energy: list[float] = []
+    n_conformer_failures = 0
+    for mol in real_mols:
+        from rdkit import Chem  # noqa: PLC0415 — local import to keep import-time light
+
+        try:
+            m_copy = Chem.Mol(mol)
+        except Exception:  # noqa: BLE001 — permissive on purpose
+            n_conformer_failures += 1
+            continue
+        cid, energy = embed_mmff(
+            m_copy,
+            num_confs=int(num_confs),
+            seed=int(random_seed),
+            max_iters=int(max_mmff_iters),
+        )
+        if cid < 0:
+            n_conformer_failures += 1
+            continue
+        conformered_mols.append(m_copy)
+        per_conformer_min_energy.append(float(energy))
+
+    if not conformered_mols:
+        return {
+            "value": 0.0,
+            "marker": PB_VALIDITY_MARKER_COMPUTED_MMFF,
+            "install_hint": None,
+            "note": (
+                f"all_{n_conformer_failures}_mmff_conformer_embeds_failed_"
+                f"etkdgv3_mmff{max_mmff_iters}_no_pb_checks_run:pb_validity_mmff_is_0"
+            ),
+            "conformer_protocol": f"ETKDGv3+MMFF({int(max_mmff_iters)})",
+            "n_total": int(len(real_mols)),
+            "n_pb_valid": 0,
+            "n_conformer_failures": int(n_conformer_failures),
+            "pass_per_check": None,
+            "per_conformer_min_energy": per_conformer_min_energy,
+        }
+
+    try:
+        from posebusters import PoseBusters  # type: ignore[import-not-found]
+
+        pb = PoseBusters(config=PB_VALIDITY_CONFIG)
+        df = pb.bust(conformered_mols)
+    except Exception as exc:  # noqa: BLE001 — permissive on purpose
+        return {
+            "value": None,
+            "marker": PB_VALIDITY_MARKER_STUB_UNAVAILABLE,
+            "install_hint": None,
+            "note": (
+                f"posebusters_call_failed:{type(exc).__name__}:{exc}:"
+                "see_pb_validity_mmff_block_for_failure"
+            ),
+            "conformer_protocol": f"ETKDGv3+MMFF({int(max_mmff_iters)})",
+            "n_total": int(len(real_mols)),
+            "n_pb_valid": 0,
+            "n_conformer_failures": int(n_conformer_failures),
+            "pass_per_check": None,
+            "per_conformer_min_energy": per_conformer_min_energy,
+        }
+
+    n_total = int(len(real_mols))
+    n_pass_all = 0
+    pass_per_check: dict[str, int] = {}
+    check_total: dict[str, int] = {}
+    for _, row in df.iterrows():
+        row_dict = row.to_dict()
+        all_ok = all(bool(v) for v in row_dict.values())
+        if all_ok:
+            n_pass_all += 1
+        for k, v in row_dict.items():
+            check_total[k] = check_total.get(k, 0) + 1
+            if bool(v):
+                pass_per_check[k] = pass_per_check.get(k, 0) + 1
+
+    pass_rates: dict[str, float] = {
+        k: float(pass_per_check.get(k, 0)) / float(check_total[k])
+        for k in check_total
+    }
+    pass_rates_public = {k: v for k, v in pass_rates.items() if k != "mol_pred_loaded"}
+
+    pb_validity_mmff = float(n_pass_all) / float(n_total)
+    return {
+        "value": pb_validity_mmff,
+        "marker": PB_VALIDITY_MARKER_COMPUTED_MMFF,
+        "install_hint": None,
+        "note": (
+            f"posebusters_computed_with_etkdgv3_mmff{max_mmff_iters}:"
+            f"{n_pass_all}_of_{n_total}_passed_all_checks:"
+            f"{n_conformer_failures}_conformer_failures:"
+            f"num_confs={int(num_confs)}:seed={int(random_seed)}"
+        ),
+        "conformer_protocol": f"ETKDGv3+MMFF({int(max_mmff_iters)})",
+        "n_total": n_total,
+        "n_pb_valid": int(n_pass_all),
+        "n_conformer_failures": int(n_conformer_failures),
+        "pass_per_check": pass_rates_public,
+        "per_conformer_min_energy": per_conformer_min_energy,
+    }
+
+
 # ---------------------------------------------------------------------------
 # FlowMol3 FG-deviation (Dundee + Glaxo Wellcome SMARTS, L1 distance)
 # ---------------------------------------------------------------------------
@@ -1281,6 +1498,60 @@ def compute_fg_deviation(
     return float(deviation), None
 
 
+def _compute_fg_deviation_dundee_glaxo(
+    gen_smiles: Sequence[str],
+    fg_ref_smiles: Sequence[str],
+    *,
+    reference_path: Path | None,
+) -> dict[str, Any]:
+    """Compute the Dundee + Glaxo FG-deviation block (Fix A).
+
+    Thin shim over
+    :func:`adaptive_reflow.eval.fg_deviation.compute_flowmol3_fg_deviation`
+    that:
+      * prefers the caller-supplied ``reference_path`` SMILES set
+        (the same ``--reference-smiles`` file FCD uses) when present,
+      * falls back to the in-module NCI-first-5K documented proxy
+        when no reference was supplied, and
+      * never raises — the upstream module returns ``{"value": NaN,
+        ...}`` on dependency failure.
+
+    Returns a dict with stable JSON shape so downstream consumers
+    see the same fields regardless of whether the computation
+    succeeded.
+    """
+    from adaptive_reflow.eval.fg_deviation import (  # noqa: PLC0415
+        DEFAULT_REFERENCE_PATH,
+        compute_flowmol3_fg_deviation,
+    )
+
+    if fg_ref_smiles:
+        # Use the caller-supplied set verbatim — the operator may
+        # have pointed --reference-smiles at GEOM-DRUGS train.
+        return compute_flowmol3_fg_deviation(
+            list(gen_smiles),
+            reference_smiles_path=None,
+            reference_smiles=list(fg_ref_smiles),
+        )
+
+    if reference_path is not None:
+        # Caller supplied a path but the SMILES could not be loaded
+        # (file missing / wrong format); surface that explicitly.
+        return compute_flowmol3_fg_deviation(
+            list(gen_smiles),
+            reference_smiles_path=str(reference_path),
+            reference_smiles=None,
+        )
+
+    # No caller-supplied reference: fall back to the documented
+    # in-tree proxy so the metric always computes.
+    return compute_flowmol3_fg_deviation(
+        list(gen_smiles),
+        reference_smiles_path=DEFAULT_REFERENCE_PATH,
+        reference_smiles=None,
+    )
+
+
 # ---------------------------------------------------------------------------
 # FlowMol3 upstream paper metrics (additive, Tier-1 fidelity)
 # ---------------------------------------------------------------------------
@@ -1495,8 +1766,21 @@ def evaluate(
             "logp": NAN,
             "fcd": NAN,
             "pb_validity": compute_pb_validity([]),
+            "pb_validity_mmff": compute_pb_validity_mmff([]),
             "flowmol3_paper_metrics": compute_flowmol3_paper_metrics([]),
             "fg_deviation": NAN,
+            "fg_deviation_dundee_glaxo": {
+                "value": NAN,
+                "value_reos": NAN,
+                "per_fg": {},
+                "per_check_reos": {},
+                "flag_rate": NAN,
+                "reos_cum_dev": NAN,
+                "n_gen": 0,
+                "n_ref": 0,
+                "reference_source": None,
+                "note": "rdkit_unavailable",
+            },
             "frac_atoms_stable": NAN,
             "frac_mols_stable_valence": NAN,
             "frac_connected": NAN,
@@ -1514,6 +1798,12 @@ def evaluate(
     if fcd_note is not None:
         notes.append(fcd_note)
     pb_validity = compute_pb_validity(mols)
+    # Fix B: full ETKDGv3 + MMFF94-minimize conformer path. Wired
+    # alongside the existing ETKDGv3-only path so consumers can
+    # compare both. PoseBusters-scoring stays on the same GPU-aware
+    # path (PoseBusters itself is CPU-bound per mol; the framework's
+    # GPU path only matters for the upstream FlowMol3 wrapper).
+    pb_validity_mmff = compute_pb_validity_mmff(mols)
     frac_atoms_stable, frac_mols_stable_valence = compute_atom_stability(mols)
     frac_connected, avg_num_components = compute_connectivity(mols)
 
@@ -1526,6 +1816,24 @@ def evaluate(
     fg_dev_value, fg_dev_note = compute_fg_deviation(mols, fg_ref_smiles)
     if fg_dev_note is not None:
         notes.append(fg_dev_note)
+
+    # Dundee + Glaxo Wellcome FG-deviation layer (Fix A): emits
+    # BOTH the paper-style L1 over the 85-element ``fr_*`` vocabulary
+    # AND a parallel L1 over the upstream Pat Walters rd_filters
+    # Dundee + Glaxo vocabulary (160 rules) so the two paths can
+    # be cross-validated on the same generated set. Reference set
+    # is the same --reference-smiles file when supplied, else the
+    # documented NCI first_5K proxy (per
+    # docs/r17-survey/baseline-deviation-review.md).
+    fg_dg_block = _compute_fg_deviation_dundee_glaxo(
+        smiles,
+        fg_ref_smiles,
+        reference_path=reference_path,
+    )
+    if fg_dg_block.get("note") and not fg_dev_note:
+        # Suppress the per_fg-level note when the upstream path
+        # already wrote a richer one.
+        notes.append(f"fg_deviation_dundee_glaxo:{fg_dg_block['note']}")
 
     # Additive Tier-1 block: upstream FlowMol3 SampleAnalyzer. Auto-gated
     # on the input looking like a FlowMol3 sample list unless the caller
@@ -1570,8 +1878,10 @@ def evaluate(
         "logp": float(logp),
         "fcd": float(fcd_value),
         "pb_validity": pb_validity,
+        "pb_validity_mmff": pb_validity_mmff,
         "flowmol3_paper_metrics": flowmol3_block,
         "fg_deviation": float(fg_dev_value),
+        "fg_deviation_dundee_glaxo": fg_dg_block,
         "frac_atoms_stable": float(frac_atoms_stable),
         "frac_mols_stable_valence": float(frac_mols_stable_valence),
         "frac_connected": float(frac_connected),
@@ -1616,8 +1926,14 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         type=Path,
         default=None,
         help=(
-            "Path to a SMILES-per-line text file used as the FCD "
-            "reference set. Optional; FCD is NaN when omitted."
+            "Path to a SMILES-per-line text file used as the FCD / "
+            "FG-deviation reference set. Defaults to the canonical "
+            "GEOM-DRUGS train SMILES file "
+            "(data/FlowMol3/references/geom_drugs_train.smi) when "
+            "present; falls back to the NCI first_5K proxy when the "
+            "GEOM-DRUGS file is not on disk. Pass the empty string "
+            "(``--reference-smiles=""``) to force the runner to skip "
+            "the reference entirely."
         ),
     )
     parser.add_argument(
@@ -1691,6 +2007,31 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
+    # Resolve ``--reference-smiles`` default. Prefers the canonical
+    # GEOM-DRUGS train SMILES file when present, falls back to the NCI
+    # ``first_5K.smi`` proxy. The empty-string flag means "skip the
+    # reference entirely" (FCD / FG-deviation will be NaN).
+    if args.reference_smiles is None:
+        from adaptive_reflow.eval.fg_deviation import (  # noqa: PLC0415
+            DEFAULT_GEOM_DRUGS_TRAIN_REFERENCE_PATH,
+            DEFAULT_REFERENCE_PATH,
+        )
+        args.reference_smiles = Path(DEFAULT_REFERENCE_PATH)
+        if DEFAULT_REFERENCE_PATH == DEFAULT_GEOM_DRUGS_TRAIN_REFERENCE_PATH:
+            print(
+                f"[run_mol_eval] reference_smiles=GEOM-DRUGS train "
+                f"({DEFAULT_GEOM_DRUGS_TRAIN_REFERENCE_PATH})",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"[run_mol_eval] reference_smiles=NCI first_5K proxy "
+                f"(GEOM-DRUGS train file not present at "
+                f"{DEFAULT_GEOM_DRUGS_TRAIN_REFERENCE_PATH}, "
+                f"falling back to {DEFAULT_REFERENCE_PATH})",
+                file=sys.stderr,
+            )
+
     report = evaluate(
         input_path=Path(args.input),
         reference_path=Path(args.reference_smiles) if args.reference_smiles else None,
@@ -1732,6 +2073,7 @@ __all__ = [
     "PB_VALIDITY_MARKER_NOT_INSTALLED",
     "PB_VALIDITY_MARKER_COMPUTED",
     "PB_VALIDITY_MARKER_COMPUTED_ETKDG_V3_ONLY",
+    "PB_VALIDITY_MARKER_COMPUTED_MMFF",
     "PB_VALIDITY_MARKER_STUB_UNAVAILABLE",
     "PB_VALIDITY_INSTALL_HINT",
     "PB_VALIDITY_CONFIG",
@@ -1744,8 +2086,10 @@ __all__ = [
     "compute_fcd",
     "compute_fg_deviation",
     "compute_flowmol3_paper_metrics",
+    "_compute_fg_deviation_dundee_glaxo",
     "compute_logp",
     "compute_pb_validity",
+    "compute_pb_validity_mmff",
     "compute_qed",
     "compute_sa",
     "compute_validity",

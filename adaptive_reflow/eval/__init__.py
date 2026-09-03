@@ -37,6 +37,15 @@ from .clip_score import (
     DEFAULT_CLIP_MODEL_NAME,
     HFCosineClipScoreEvaluator,
 )
+from .fg_deviation import (
+    DEFAULT_REFERENCE_PATH,
+    DUNDEE_FR_SMARTS_NAMES,
+    compute_flowmol3_fg_deviation,
+    count_fg_hits,
+    dundee_smarts_dict,
+    fg_deviation_l1,
+    glaxo_smarts_dict,
+)
 from .fid import (
     FID_AUDIT_INSUFFICIENT_STATS,
     FID_EIGENCLIP_EPS_DEFAULT,
@@ -60,6 +69,14 @@ from .manifests import (
     read_calibration_manifest,
     validate_manifest_frozen,
     write_calibration_manifest,
+)
+from .mmff_conformer import (
+    DEFAULT_MMFF_MAX_ITERS,
+    DEFAULT_NUM_CONFS,
+    DEFAULT_RANDOM_SEED,
+    MMFF_CONFORMER_FAILURE,
+    embed_mmff,
+    embed_mmff_smiles,
 )
 from .metric_panel import (
     TIER_LABELS,
