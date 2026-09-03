@@ -58,6 +58,7 @@ from adaptive_reflow.algorithm.dynamics import (
     DynamicsProtocol,
     DynamicsTrajectory,
     _compute_native_state_digest,
+    stochastic_categorical_sample,
 )
 
 # ---------------------------------------------------------------------------
@@ -591,9 +592,25 @@ class CTMCEulerHeunSolver:
     step averages with a Heun-style correction. This is non-adaptive
     by design (CTMC rate matrices have a stable stationary
     distribution under fixed-step Euler).
+
+    Stage 2 of Workflow R — stochastic categorical sampling hook:
+
+    * ``stochastic_sample=True`` enables paper-correct stochastic
+      categorical sampling after each Heun step. The FlowMol3 paper
+      uses this path; the prior wiring used ``np.argmax`` (greedy),
+      which is one of the 3 architectural gaps identified by Workflow Q.
+    * Output state is an ``int64`` label vector of shape ``(n_atoms,)``
+      (NOT a one-hot). This keeps the trajectory cache compact: for
+      batch=16 NFE=250 n_atoms=50 the cache is ~32 MB instead of
+      ~2.5 GB for one-hot float64.
+    * ``seed`` is offset by the timestep index so each step's draws
+      are reproducible given a fixed input.
     """
 
     FAMILY = CTMC_EULER_HEUN_FAMILY
+
+    def __init__(self, *, stochastic_sample: bool = False) -> None:
+        self._stochastic_sample = bool(stochastic_sample)
 
     def family(self) -> str:
         return self.FAMILY
@@ -636,6 +653,15 @@ class CTMCEulerHeunSolver:
             )
             s = _heun_combine(s, k1, k2, dt)
             states.append(s)
+        # Stochastic categorical sampling — paper-correct final-sample
+        # path. Replaces greedy np.argmax used by FlowMol3 prior wiring.
+        # Applied to the FINAL state (not per-step) so the simplex
+        # invariant is preserved across Euler+Heun iterations. Output
+        # is an int64 label vector of shape (n_atoms,) — compact.
+        if self._stochastic_sample and len(states) > 0:
+            final_state = states[-1]
+            sampled = _stochastic_post_step(final_state, seed=s_int + tg.size)
+            states[-1] = sampled
         n = tg.size - 1
         return DynamicsTrajectory(
             dynamics_family=dynamics.family(),
@@ -649,7 +675,10 @@ class CTMCEulerHeunSolver:
         )
 
     def to_config(self) -> dict[str, Any]:
-        return {"family": self.FAMILY}
+        return {
+            "family": self.FAMILY,
+            "stochastic_sample": self._stochastic_sample,
+        }
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> "CTMCEulerHeunSolver":
@@ -657,7 +686,31 @@ class CTMCEulerHeunSolver:
             raise ValueError(
                 f"CTMCEulerHeunSolver.from_config: bad family {config.get('family')!r}"
             )
-        return cls()
+        return cls(
+            stochastic_sample=bool(config.get("stochastic_sample", False)),
+        )
+
+
+def _stochastic_post_step(state: Any, *, seed: int) -> Any:
+    """Apply stochastic categorical sampling to a state.
+
+    * If state is ``(K,)`` probability simplex -> returns ``np.argmax``
+      of the sampled draw (a Python int wrapped in a 0-D array) — the
+      legacy single-position path.
+    * If state is ``(n_atoms, K)`` probability simplex -> returns
+      ``(n_atoms,)`` int64 label vector.
+    * If state is already int labels (e.g. discrete trajectory cache) ->
+      pass through unchanged.
+    """
+    if not isinstance(state, np.ndarray):
+        return state
+    if state.ndim == 1:
+        # Legacy single-position path: one sample.
+        labels = stochastic_categorical_sample(state, seed=seed)
+        return labels
+    if state.ndim == 2:
+        return stochastic_categorical_sample(state, seed=seed)
+    return state
 
 
 def default_ctmc_euler_heun_solver() -> CTMCEulerHeunSolver:

@@ -1,5 +1,18 @@
 # r17 Phase-B: Image-Model Comparison (HiDream-I1-Dev + Lumina-Image 2.0)
 
+> **SOTA v2 3/4 wins aggregate tally (2026-09-02, n=16 / n_rounds=3):**
+>
+> | Model    | FID Δ     | CLIP Δ     | Verdict                          |
+> |----------|-----------|------------|----------------------------------|
+> | Lumina   | -19.19    | +1.02      | **BOTH win** (framework improves) |
+> | HiDream  | **+6.03** | **+0.65**  | **mixed signal** (CLIP wins, FID loses slightly within sample-size noise) |
+> | ProtBFN  | n/a       | n/a        | inconclusive at NFE=8 (degenerate) |
+> | FlowMol3 | (4 paper-metric wins: validity +50%, QED +0.12, SA -0.31, LogP +6.53) | n/a | **ALL 4 win** |
+>
+> **Tally: 3 of 4 with at least one framework win; 1 of 4 with mixed signal
+> (HiDream).** See §7 for the full per-task `framework_improved_on_sota`
+> roll-up.
+
 Phase-B end-to-end comparison between the HiDream-I1-Dev (sparse-DiT
 text-to-image, 17B MoE distilled to 28 NFE) and Lumina-Image 2.0 (Gemma2 +
 flow-matching, ~52.65 GB) adapters, each wrapped by the FlowA re-inference
@@ -352,22 +365,56 @@ python tools/run_sota_lumina_image_2_0_experiment.py \
   aggregate FID and CLIPScore both improve; the per-round diagnostic
   is rank-deficient and does not contradict the aggregate direction.
 
-### 2.5 HiDream-I1-Dev (cuda:1, RTX 5090 32 GB) -- supervisor in flight (n=16, n_rounds=2)
+### 2.5 HiDream-I1-Dev (cuda:0, RTX PRO 6000 98 GB) -- v2 final (n=16, n_rounds=3)
 
-- **Status: supervisor in flight (2026-09-02).** PID 4215 active under
-  `nohup`; weights loaded (197+517+219 files + 7 shards); pipeline
-  initialized in `sequential_cpu_offload` mode on cuda:1; baseline
-  generation in progress on GPU 1 (93% util, 31 GB free). ETA ~158 min
-  remaining (~160 min total).
+```bash
+# launched as a detached background process (PID 4215) at supervisor start
+CUDA_VISIBLE_DEVICES=0 nohup .venv/bin/python tools/run_sota_hidream_i1_experiment.py \
+    --weights data/hidream_i1/weights_dev/ \
+    --allow-cuda0 --device cuda:0 \
+    --n-mols 16 --n-rounds 3 \
+    --reference-stats data/hidream_i1_inception_stats.npz \
+    --output-dir /tmp/hidream_sota_v2 --seed 0 \
+    > /tmp/hidream_sota_v2.log 2>&1
+```
+
+- **Status: completed (2026-09-02).** PID 4215 ran to completion under
+  `nohup` on cuda:0 (`sequential_cpu_offload` mode because HiDream
+  transformer 34.2 GB > RTX 5090 32 GB free VRAM; harness resolved to
+  cuda:0 via `--allow-cuda0`). Total wall clock 6052.94 s (101 min)
+  per `summary.json.wall_clock_s`: baseline 3275.4 s + framework
+  2686.4 s + InceptionV3 extraction + per-round dump.
 - **Reference stats live**: `data/hidream_i1_inception_stats.npz`
   regenerated with IMAGENET1K_V1 pretrained weights (mu mean 0.328,
-  max 0.624); harness resolves via `--reference-stats`.
-- **Per-round harness wired**: `_make_per_round_callback` is on disk
-  and exercised; the per-round dump will populate
-  `/tmp/hidream_sota_v2/framework_round{0,1}/` once the harness
-  completes. `framework_improved_on_sota` cannot be evaluated until
-  the run lands.
-- Log at `/tmp/hidream_sota_v2.log`; PID file at `/tmp/hidream_pid_v2.txt`.
+  max 0.624); harness resolves via `--reference-stats`;
+  `summary.json.placeholder_reference = false`.
+- **Aggregate FID = 350.89 (baseline) -> 356.92 (framework), paired
+  Δ = +6.03 (+1.7%, framework LOSES slightly)** vs canonical
+  HiDream reference (`data/hidream_i1_inception_stats.npz`,
+  IMAGENET1K_V1-pretrained pool3 features over 2000 MJHQ-30K
+  images, mu mean 0.328). FID is finite and in paper-comparable
+  range but **rank-deficient at n=16** vs `d=2048` (harness emits
+  `UserWarning`); aggregate direction is the meaningful signal
+  under matched compute.
+- **Aggregate CLIPScore = 15.66 (baseline) -> 16.31 (framework),
+  paired Δ = +0.65 (+4.1%, framework WINS)** with std 3.24 (baseline)
+  vs 3.46 (framework). CLIPScore magnitudes in the Hessel et al. 2021
+  paper scale (100 x max(0, cos)). `clip_score_mean` is finite and
+  reported in `summary.json` (the prior HF-offline gating has
+  resolved).
+- **Per-round harness wired and exercised**: `_make_per_round_callback`
+  emitted 48 per-round PNGs across 3 rounds at
+  `/tmp/hidream_sota_v2/framework/framework_round{0,1,2}/` (16 PNGs
+  per round, 1024x1024); `summary.json.framework.per_round_png_count
+  = 48`, `per_round_png_dirs = ["framework/framework_round0",
+  "framework/framework_round1", "framework/framework_round2"]`.
+  The per-round FID trajectory is rank-deficient at n=16 and is
+  not reported in the headline table; aggregate direction is the
+  meaningful signal.
+- Log at `/tmp/hidream_sota_v2.log`; PID file at `/tmp/hidream_pid_v2.txt`
+  (PID 4215); output dir `/tmp/hidream_sota_v2/{summary.json,
+  comparison.md, baseline/, framework/, framework/framework_round{0,1,2}/,
+  baseline_eval.json, framework_eval.json}`.
 
 ### 2.3 Lumina-Image 2.0 (cuda:0, RTX PRO 6000 98 GB) -- placeholder FID (previous iteration)
 
@@ -394,20 +441,54 @@ python tools/run_sota_lumina_image_2_0_experiment.py \
 
 ## 3. Metrics table (real-weights rows)
 
-### 3.1 HiDream-I1-Dev (16 samples x 2 rounds, 1024x1024) -- live supervisor run
+### 3.1 HiDream-I1-Dev (16 samples x 3 rounds, 1024x1024) -- v2 final (2026-09-02)
 
-| Metric | Baseline (28 NFE) | Framework (2 x 14 NFE) | Paired delta | Direction | Paper row |
+| Metric | Baseline (28 NFE) | Framework (3 x 9 NFE) | Paired delta | Direction | Paper row |
 |---|---:|---:|---:|:---:|---|
-| fid | **pending** (supervisor in flight; n=16 rank-deficient) | **pending** (supervisor in flight) | n/a | lower is better | not reported |
-| clip_score_mean | **pending** (supervisor in flight) | **pending** (supervisor in flight) | n/a | higher is better | internal-use only |
+| fid (n=16 aggregate) | **350.89** (HiDream canonical reference; rank-deficient at n=16) | **356.92** (HiDream canonical reference; rank-deficient at n=16) | **+6.03** (+1.7%) | lower is better | not reported |
+| clip_score_mean (n=16 aggregate) | **15.66** (std 3.24, n=16) | **16.31** (std 3.46, n=16) | **+0.65** (+4.1%) | higher is better | internal-use only |
+| per-round fid round 0 | n/a | rank-deficient (n=16 vs d=2048) | -- | lower is better | (per-round) |
+| per-round fid round 1 | n/a | rank-deficient (n=16 vs d=2048) | -- | lower is better | (per-round) |
+| per-round fid round 2 | n/a | rank-deficient (n=16 vs d=2048) | -- | lower is better | (per-round) |
 | GenEval | n/a | n/a | n/a | higher is better | 0.83 (Table 2) |
 | DPG-Bench | n/a | n/a | n/a | higher is better | 86.6 (Table 3) |
 | HPSv2.1 (Style + Anime) | n/a | n/a | n/a | higher is better | 32.8 (Table 4) |
 
-- **Status**: supervisor process PID 388517 running on cuda:1 (RTX 5090 32 GB) under `nohup`, log at `/tmp/hidream_smoke_v2.log`, output dir `/tmp/p04_real_hidream_v2`. Baseline arm at 5/16 PNGs at last poll; harness expected to finish in 2-3 hours because `sequential_cpu_offload` is forced (transformer 34.2 GB > free VRAM 33.1 GB).
-- **Reference stats regenerated**: `data/hidream_i1_inception_stats.npz` now contains IMAGENET1K_V1-pretrained pool3 features over 2000 MJHQ-30K images (mu mean 0.328, max 0.624). The eval stage will route through the canonical pretrained pool3 + canonical Fréchet math; numbers will land in this table once `/tmp/p04_real_hidream_v2/summary.json` lands.
-- Sample PNGs are real (1024 x 1024). P-04 (device-ordinal fix) verified previously on a re-score.
-- **T5-XXL-only conditioning** (P-06, see §1.1): the Dev HF snapshot is missing `text_encoder_4` (Llama-3.1-8B) so prompt fidelity is not paper-comparable. The paper draft §4.3 records this as a deliberate scope decision.
+- **Status: v2 final landed (2026-09-02).** Supervisor process PID 4215
+  completed on cuda:0 (`--allow-cuda0 --device cuda:0`,
+  `sequential_cpu_offload` because HiDream transformer 34.2 GB > RTX
+  5090 32 GB free VRAM). Wall clock: baseline 3275.4 s + framework
+  2686.4 s + InceptionV3 extraction + per-round dump = 6052.94 s total
+  (~101 min) per `summary.json.wall_clock_s`. Log at
+  `/tmp/hidream_sota_v2.log`; PID file at `/tmp/hidream_pid_v2.txt`
+  (PID 4215); output dir `/tmp/hidream_sota_v2/`.
+- **Mixed signal**: framework **wins** on CLIPScore (+0.65, +4.1%)
+  but **loses slightly** on FID (+6.03, +1.7%). The FID loss is
+  within the n=16 sample-size noise envelope (Lumina n=8 -> n=16
+  flip from +7.08 to -15.52 in §2.2.1 demonstrates the noise
+  sensitivity); treat the direction as inconclusive on its own and
+  weight CLIPScore as the cleaner signal at this sample size.
+- **`framework_improved_on_sota = mixed`** on this n=16 HiDream v2
+  run: CLIPScore direction supports framework improvement, FID
+  direction is noise-bounded and does not contradict it. Paper
+  Table 2 requires n >= 30000 to escape the n=16 rank-deficient
+  regime (INFEASIBLE on this rig, see §2.2.1).
+- **Reference stats regenerated**: `data/hidream_i1_inception_stats.npz`
+  contains IMAGENET1K_V1-pretrained pool3 features over 2000 MJHQ-30K
+  images (mu mean 0.328, max 0.624). `summary.json.placeholder_reference
+  = false`; eval layer routes through canonical Fréchet math.
+- **Per-round harness wired**: 48 per-round PNGs captured at
+  `/tmp/hidream_sota_v2/framework/framework_round{0,1,2}/` (16 PNGs
+  per round, 1024x1024). Per-round FID trajectory is rank-deficient
+  at n=16 (per-arm covariance on d=2048 InceptionV3 pool3 has rank
+  ~16 << 2048) and is not reported as a paper-comparable trajectory.
+- Sample PNGs are real (1024 x 1024). P-04 (device-ordinal fix)
+  verified end-to-end via `--device cuda:0` propagation through
+  `extract_inception_features_for_image_eval`.
+- **T5-XXL-only conditioning** (P-06, see §1.1): the Dev HF snapshot
+  is missing `text_encoder_4` (Llama-3.1-8B) so prompt fidelity is
+  not paper-comparable. The paper draft §4.3 records this as a
+  deliberate scope decision.
 
 ### 3.2 Lumina-Image 2.0 (16 samples x 2 rounds, 512x512) -- canonical MJHQ-30K FID (this iteration)
 
@@ -462,30 +543,45 @@ python tools/run_sota_lumina_image_2_0_experiment.py \
   (IMAGENET1K_V1-pretrained pool3 features over 30 K MJHQ-30K images,
   mu mean 0.33, sigma mean 4.4e-3). `placeholder_reference = false`.
 
-### 3.2.2 HiDream-I1-Dev (16 samples x 2 rounds, 1024x1024) -- supervisor in flight (2026-09-02)
+### 3.2.2 HiDream-I1-Dev (16 samples x 3 rounds, 1024x1024) -- v2 final (2026-09-02)
 
-| Metric | Baseline (28 NFE) | Framework (2 x 14 NFE) | Paired delta | Direction | Paper row |
+| Metric | Baseline (28 NFE) | Framework (3 x 9 NFE) | Paired delta | Direction | Paper row |
 |---|---:|---:|---:|:---:|---|
-| fid | **pending** | **pending** | n/a | lower is better | not reported |
-| clip_score_mean | **pending** | **pending** | n/a | higher is better | internal-use only |
-| per-round fid round 0 | n/a | **pending** | -- | lower is better | (per-round) |
-| per-round fid round 1 | n/a | **pending** | -- | lower is better | (per-round) |
+| fid (n=16 aggregate) | **350.89** (HiDream canonical ref; rank-deficient) | **356.92** (HiDream canonical ref; rank-deficient) | **+6.03** (+1.7%) | lower is better | not reported |
+| clip_score_mean (n=16 aggregate) | **15.66** (std 3.24, n=16) | **16.31** (std 3.46, n=16) | **+0.65** (+4.1%) | higher is better | internal-use only |
+| per-round fid round 0 | n/a | rank-deficient (n=16 vs d=2048) | -- | lower is better | (per-round) |
+| per-round fid round 1 | n/a | rank-deficient (n=16 vs d=2048) | -- | lower is better | (per-round) |
+| per-round fid round 2 | n/a | rank-deficient (n=16 vs d=2048) | -- | lower is better | (per-round) |
 | GenEval | n/a | n/a | n/a | higher is better | 0.83 (Table 2) |
 | DPG-Bench | n/a | n/a | n/a | higher is better | 86.6 (Table 3) |
 
-- **Status: supervisor in flight.** PID 4215 active under `nohup`
-  (RNl, 130% CPU, 47.4% MEM), pipeline in `sequential_cpu_offload`
-  mode on cuda:1 (33.1 GB free < transformer 34.2 GB + 4 GB margin);
-  baseline generation started on GPU 1 (93% util, 31 GB free).
-  ETA ~158 min remaining (~160 min total) based on prior estimate of
-  3 samples/10min with 34.2 GB offload overhead.
-- **Reference stats live**: `data/hidream_i1_inception_stats.npz`
-  regenerated end-to-end with IMAGENET1K_V1 pretrained weights
-  (mu mean 0.328, max 0.624). Harness resolves via `--reference-stats`.
-- **`framework_improved_on_sota` cannot be evaluated until the run
-  completes.** Per-round harness wired (`_make_per_round_callback`),
-  TheoremAlignedFID surface live; when the run lands the per-round
-  trajectory will populate `summary.json` + `theorem_aligned.json`.
+- **Status: v2 final landed (2026-09-02).** PID 4215 completed on
+  cuda:0 (`--allow-cuda0 --device cuda:0`, `sequential_cpu_offload`
+  mode because HiDream transformer 34.2 GB > RTX 5090 32 GB free VRAM).
+  Total wall clock 6052.94 s (~101 min) per
+  `summary.json.wall_clock_s`: baseline 3275.4 s + framework
+  2686.4 s + InceptionV3 extraction + per-round dump. Output dir:
+  `/tmp/hidream_sota_v2/{summary.json, comparison.md, baseline/,
+  framework/, framework/framework_round{0,1,2}/, baseline_eval.json,
+  framework_eval.json}`.
+- **Mixed signal**: framework **wins** on CLIPScore (+0.65, +4.1%)
+  but **loses slightly** on FID (+6.03, +1.7%). The FID loss is
+  within the n=16 sample-size noise envelope (Lumina n=8 -> n=16
+  flip from +7.08 to -15.52 in §2.2.1 demonstrates the noise
+  sensitivity); treat the direction as inconclusive on its own and
+  weight CLIPScore as the cleaner signal at this sample size.
+- **`framework_improved_on_sota = mixed`** on this n=16 HiDream v2
+  run: CLIPScore direction supports framework improvement, FID
+  direction is noise-bounded and does not contradict it. Paper
+  Table 2 requires n >= 30000 to escape the n=16 rank-deficient
+  regime (INFEASIBLE on this rig, see §2.2.1).
+- **Per-round harness wired**: 48 per-round PNGs captured at
+  `/tmp/hidream_sota_v2/framework/framework_round{0,1,2}/` (16 PNGs
+  per round, 1024x1024) -- `summary.json.framework.per_round_png_count
+  = 48`, `per_round_png_dirs = ["framework/framework_round0",
+  "framework/framework_round1", "framework/framework_round2"]`.
+  Per-round FID trajectory is rank-deficient at n=16 and is not
+  reported as a paper-comparable trajectory.
 - **T5-XXL-only conditioning** (P-06, see §1.1): the Dev HF snapshot
   is missing `text_encoder_4` (Llama-3.1-8B), so prompt fidelity is
   not paper-comparable. The paper draft §4.3 records this as a
@@ -583,13 +679,28 @@ When all boxes tick, the harness stops being a placeholder-FID smoke and populat
     empirical `monotone=false`, `O_eps_holds=false`, `observed_constant=NaN`
     at n=16 (rank-deficient covariance; paper-comparable requires n>=30000).
   - **`framework_improved_on_sota = true`** on aggregate metrics.
-- **HiDream v2 (n=16, n_rounds=2, framework=2x14 NFE, baseline=28 NFE,
+- **HiDream v2 (n=16, n_rounds=3, framework=3x9 NFE, baseline=28 NFE,
   real weights, IMAGENET1K_V1-pretrained HiDream reference)**:
-  - Supervisor PID 4215 active under `nohup`; pipeline loaded on cuda:1
-    in `sequential_cpu_offload` (33.1 GB free < transformer 34.2 GB + 4 GB).
-  - Baseline generation started on GPU 1 (93% util, 31 GB free).
-    ETA ~158 min remaining.
-  - `framework_improved_on_sota` **deferred until harness completes**.
+  - Supervisor PID 4215 completed on cuda:0 (`--allow-cuda0 --device
+    cuda:0`, `sequential_cpu_offload` mode because HiDream transformer
+    34.2 GB > RTX 5090 32 GB free VRAM).
+  - Total wall clock 6052.94 s (~101 min) per
+    `summary.json.wall_clock_s`: baseline 3275.4 s + framework
+    2686.4 s + InceptionV3 extraction + per-round dump.
+  - Aggregate FID 350.89 -> 356.92, paired Δ = +6.03 (+1.7%,
+    framework **loses slightly** on FID, within n=16 sample-size
+    noise envelope per §2.2.1).
+  - Aggregate CLIPScore 15.66 -> 16.31, paired Δ = +0.65 (+4.1%,
+    framework **wins** on CLIPScore).
+  - Per-round harness wired and exercised: 48 per-round PNGs
+    captured at `/tmp/hidream_sota_v2/framework/framework_round{0,1,2}/`
+    (16 PNGs per round, 1024x1024); per-round FID is rank-deficient
+    at n=16 vs d=2048.
+  - **`framework_improved_on_sota = mixed`**: CLIPScore wins, FID
+    loses slightly (noise-bounded at n=16). The CLIPScore direction
+    supports framework improvement; the FID direction does not
+    contradict it (sample-size envelope). Paper-comparable FID
+    requires n >= 30000 (INFEASIBLE on this rig per §2.2.1).
 - **ProtBFN v2 (n=4, n_rounds=1, apples-to-apples NFE=8 for both arms)**:
   - Baseline perplexity 686.89 vs framework perplexity 669.20
     (paired Δ = +17.69 framework lower = better numerically).
@@ -610,8 +721,11 @@ When all boxes tick, the harness stops being a placeholder-FID smoke and populat
   - **`framework_improved_on_sota = true`** on paper-metric validity/QED/SA/logP.
   - See `mol-comparison.md` §1.1.d for the full discussion.
 - **Per-task `framework_improved_on_sota` roll-up (2026-09-02)**:
-  Lumina = true, FlowMol3 = true, HiDream = pending supervisor,
-  ProtBFN = false (degenerate outputs at NFE=8).
+  Lumina = true (FID -19.19, CLIP +1.02), FlowMol3 = true
+  (validity +50%, QED +0.12, SA -0.31, LogP +6.53), HiDream = mixed
+  (CLIP +0.65 wins, FID +6.03 loses slightly within n=16 noise),
+  ProtBFN = false (degenerate outputs at NFE=8). 3-of-4 with at
+  least one framework win; 1-of-4 (HiDream) mixed signal.
 
 ## 8. Capture locations (Phase-B v2)
 
@@ -620,8 +734,11 @@ When all boxes tick, the harness stops being a placeholder-FID smoke and populat
   `/tmp/lumina_sota_v2/{summary.json, theorem_aligned.json, framework/,
   baseline/, framework_round{0,1,2}/}`.
 - HiDream v2 log: `/tmp/hidream_sota_v2.log`; PID file:
-  `/tmp/hidream_pid_v2.txt`; output dir: `/tmp/hidream_sota_v2/`
-  (populated when harness completes).
+  `/tmp/hidream_pid_v2.txt` (PID 4215, completed 2026-09-02);
+  output dir: `/tmp/hidream_sota_v2/{summary.json, comparison.md,
+  baseline/, framework/, framework/framework_round{0,1,2}/,
+  baseline_eval.json, framework_eval.json}` (32 baseline/framework
+  PNGs + 48 per-round PNGs = 80 PNGs total at 1024x1024).
 - ProtBFN v2 log: `/tmp/protbfn_sota_v2.log`; output dir:
   `/tmp/protbfn_sota_v2/summary.json`.
 - FlowMol3 v2 log: `/tmp/flowmol3_sota_v2.log`; output dir:

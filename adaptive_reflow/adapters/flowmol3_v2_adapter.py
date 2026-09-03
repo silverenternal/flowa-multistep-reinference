@@ -1006,6 +1006,207 @@ def _channel_aware_blend(
 
 
 # ---------------------------------------------------------------------------
+# CTMC helpers (Stage 3 of Workflow R — paper-correct kernel swap)
+# ---------------------------------------------------------------------------
+
+
+def _build_ctmc_rate_matrix(p: ArrayF64) -> ArrayF64:
+    """Build the canonical "jump-to-stationary" CTMC rate matrix from ``p``.
+
+    The FlowMol3 paper parameterizes the discrete (a, c, e) channels via
+    CTMC. The canonical rate matrix whose stationary distribution is
+    ``p`` (with rows summing to 0) is::
+
+        Q[i, j] = p[j]  for i != j
+        Q[i, i] = -(1 - p[i])
+
+    This is the simplest valid CTMC kernel — rows sum to zero, and the
+    stationary distribution is ``p`` (verify: ``Q @ p = 0``).
+
+    Parameters
+    ----------
+    p : ``(K,)`` float64 probability simplex
+        The model's predicted marginal distribution. Will be clipped to
+        ``[eps, 1-eps]`` and renormalized to ensure a well-conditioned
+        rate matrix.
+
+    Returns
+    -------
+    Q : ``(K, K)`` float64 rate matrix (rows sum to 0).
+    """
+    p_arr = np.asarray(p, dtype=np.float64).reshape(-1)
+    K = int(p_arr.shape[0])
+    if K < 2:
+        raise ValueError(
+            f"_build_ctmc_rate_matrix: K must be >= 2; got {K}"
+        )
+    # Defensive clip + renormalize for numerical safety.
+    eps = 1e-9
+    p_arr = np.clip(p_arr, eps, 1.0 - eps)
+    p_arr = p_arr / float(p_arr.sum())
+    # Build Q: off-diagonal = p[j], diagonal = -(1 - p[i]).
+    Q = np.broadcast_to(p_arr, (K, K)).copy()
+    diag = -(1.0 - p_arr)
+    np.fill_diagonal(Q, diag)
+    # Verify row sums ~ 0.
+    row_sums = Q.sum(axis=1)
+    if not np.allclose(row_sums, 0.0, atol=1e-9):
+        # Last-resort correction.
+        Q[np.diag_indices(K)] -= row_sums
+    return Q
+
+
+def _to_one_hot(labels: ArrayF64, K: int) -> ArrayF64:
+    """Convert integer labels ``(N,)`` to one-hot ``(N, K)`` float64."""
+    labels_arr = np.asarray(labels, dtype=np.int64).reshape(-1)
+    return np.eye(int(K), dtype=np.float64)[labels_arr]
+
+
+def _make_Q_condition(Q_per_position: ArrayF64) -> Any:
+    """Build an ODEConditionDelta carrying ``Q_per_position`` for CTMCDynamics.
+
+    The CTMC solver reads ``condition.delta_spec['Q_per_position']`` to
+    drive per-position rates (atom-specific or bond-pair-specific). The
+    returned carrier is a plain namespace with the ``delta_spec``
+    attribute; the CTMC path never branches on the rest of the carrier
+    (no condition injection for FlowMol3).
+    """
+    from types import SimpleNamespace
+
+    return SimpleNamespace(delta_spec={"Q_per_position": Q_per_position})
+
+
+def _ctmc_real_velocity_field_ex(
+    module: Any,
+    x: ArrayF64,
+    a: ArrayF64,
+    c: ArrayF64,
+    e: ArrayF64,
+    t: float,
+    *,
+    device: str,
+) -> tuple[ArrayF64, ArrayF64, ArrayF64, ArrayF64, ArrayF64, ArrayF64]:
+    """CTMC-flavored real-weight evaluator returning ``(v_x, c_pred, p_a, p_c, p_e, v_x)``.
+
+    For the CTMC swap, we need:
+    * ``v_x``: continuous coordinate velocity (same as linear-interpolant
+      path — paper uses continuous coords, not CTMC on coords).
+    * ``c_pred``: predicted expected formal charge (continuous target).
+    * ``p_a``: ``(n_atoms, K_atom)`` atom-type marginal.
+    * ``p_c``: ``(n_atoms, K_charge)`` charge marginal.
+    * ``p_e``: ``(n_atoms, n_atoms, K_bond)`` bond marginal.
+    * ``v_x``: equivariant coordinate endpoint velocity (same as the
+      linear-interpolant path).
+
+    Returns
+    -------
+    tuple of (v_x, c_pred, p_a, p_c, p_e, v_x).
+    ``v_x`` is duplicated so the unpacking matches the caller's
+    expectation; the second copy is unused.
+    """
+    import torch  # noqa: PLC0415
+
+    dev = torch.device(str(device))
+    x_t = torch.as_tensor(np.asarray(x, dtype=np.float32)).to(dev).detach()
+    n_atoms = int(x_t.shape[0])
+    a_np = np.clip(
+        np.asarray(a, dtype=np.int64), 0, FLOWMOL3ADAPTER_N_ATOM_TYPES - 1
+    )
+    a_tok = torch.as_tensor(a_np).to(dev).detach()
+    c_np = np.asarray(c, dtype=np.float64).reshape(n_atoms)
+    c_idx = np.clip(
+        np.rint(c_np).astype(np.int64) - int(FLOWMOL3_MODEL_CHARGE_VALUES[0]),
+        0,
+        FLOWMOL3_MODEL_CHARGE_LOGITS - 1,
+    )
+    c_tok = torch.as_tensor(c_idx).to(dev).detach()
+    e_np = np.asarray(e, dtype=np.int64).reshape(n_atoms, n_atoms)
+    e_np = np.clip(e_np, 0, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
+    e_model = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND, dtype=np.int64)[e_np]
+    e_tok = torch.as_tensor(e_model).to(dev).detach()
+
+    with torch.no_grad():
+        t_emb = _flowmol3_time_embedding(
+            float(t), FLOWMOL3_MODEL_TIME_DIM, device=dev, torch_mod=torch
+        ).expand(n_atoms, FLOWMOL3_MODEL_TIME_DIM)
+        atom_logits, charge_logits, edge_logits = module(a_tok, c_tok, e_tok, t_emb)
+        atom_logits = atom_logits.detach()
+        charge_logits = charge_logits.detach()
+        edge_logits = edge_logits.detach()
+
+        # Per-channel marginals for the CTMC swap.
+        # Atom marginal: drop the fake-atom class. Use 11-wide marginal
+        # so it covers the checkpoint's atom logit width (10 elements +
+        # fake), but the adapter's CTMC over 10 elements — collapse the
+        # 11th onto the prior's no-bond fallback.
+        p_atom_logits = torch.softmax(atom_logits.float(), dim=-1)
+        # Pad / project to (n_atoms, FLOWMOL3ADAPTER_N_ATOM_TYPES=10).
+        p_a_full = p_atom_logits[:, :FLOWMOL3ADAPTER_N_ATOM_TYPES]
+        # Normalize (defensive — softmax already sums to 1 but if we
+        # dropped entries the sum < 1).
+        p_a_sum = p_a_full.sum(dim=-1, keepdim=True).clamp_min(1e-9)
+        p_a = p_a_full / p_a_sum
+
+        # Charge marginal -> expected formal charge + 6-class simplex.
+        p_c_logits = torch.softmax(charge_logits.float(), dim=-1)
+        charge_values = torch.as_tensor(
+            np.asarray(FLOWMOL3_MODEL_CHARGE_VALUES, dtype=np.float32)
+        ).to(dev)
+        c_pred = (p_c_logits * charge_values).sum(dim=-1)
+        p_c = p_c_logits  # already 6-wide, sum to 1
+
+        # Bond marginal, symmetrized, re-indexed to adapter vocab.
+        p_e_model = torch.softmax(edge_logits.float(), dim=-1)
+        p_e_model = 0.5 * (p_e_model + p_e_model.transpose(0, 1))
+        p_e = torch.zeros(
+            (n_atoms, n_atoms, FLOWMOL3ADAPTER_N_BOND_TYPES),
+            dtype=torch.float32,
+            device=dev,
+        )
+        for model_cls, adapter_lbl in enumerate(FLOWMOL3_MODEL_TO_ADAPTER_BOND):
+            p_e[:, :, int(adapter_lbl)] = p_e_model[:, :, int(model_cls)]
+        # No self-bonds.
+        eye = torch.eye(n_atoms, dtype=torch.bool, device=dev)
+        p_e[eye] = 0.0
+        diag_idx = torch.arange(n_atoms, device=dev)
+        p_e[diag_idx, diag_idx, FLOWMOL3ADAPTER_N_BOND_TYPES - 1] = 1.0
+
+        # Coordinate endpoint velocity (equivariant). Same as linear
+        # path — continuous x is NOT CTMC'd per paper.
+        diff = x_t.unsqueeze(0) - x_t.unsqueeze(1)  # diff[i, j] = x_j - x_i
+        dist = diff.norm(dim=-1)
+        safe_dist = dist.clamp_min(1e-3)
+        p_bond = 1.0 - p_e[:, :, FLOWMOL3ADAPTER_N_BOND_TYPES - 1]
+        target_sep = (
+            FLOWMOL3_BONDED_SEPARATION_A * p_bond
+            + FLOWMOL3_NONBONDED_SEPARATION_A * (1.0 - p_bond)
+        )
+        step = ((safe_dist - target_sep) / safe_dist).unsqueeze(-1) * diff
+        weight = p_bond + 0.05
+        weight = weight.masked_fill(eye, 0.0)
+        weight = weight / weight.sum(dim=1, keepdim=True).clamp_min(1e-6)
+        x_pred = x_t + (weight.unsqueeze(-1) * step).sum(dim=1)
+
+    inv_dt = 1.0 / max(1.0 - float(t), 1e-3)
+    v_x = (
+        x_pred.cpu().numpy().astype(np.float64)
+        - np.asarray(x, dtype=np.float64).reshape(n_atoms, 3)
+    ) * inv_dt
+    c_pred_np = c_pred.cpu().numpy().astype(np.float64)
+    p_a_np = p_a.cpu().numpy().astype(np.float64)
+    p_c_np = p_c.cpu().numpy().astype(np.float64)
+    p_e_np = p_e.cpu().numpy().astype(np.float64)
+    return (
+        np.nan_to_num(v_x, nan=0.0, posinf=0.0, neginf=0.0),
+        c_pred_np,
+        p_a_np,
+        p_c_np,
+        p_e_np,
+        np.nan_to_num(v_x, nan=0.0, posinf=0.0, neginf=0.0),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Adapter
 # ---------------------------------------------------------------------------
 
@@ -1070,6 +1271,22 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
 
     pinned_commit: str = FLOWMOL3ADAPTER_PINNED_COMMIT
 
+    #: Class-level toggle for the paper-correct CTMC swap.
+    #:
+    #: When ``True`` (the default, set in Stage 3 of Workflow R),
+    #: :meth:`solve_ode` uses CTMC rate-matrix dynamics over the
+    #: discrete (a, c, e) channels with stochastic categorical sampling
+    #: on the final state — the paper-correct path that closes one of
+    #: the three architectural gaps identified by Workflow Q
+    #: (linear-interpolant ODE → CTMC, greedy argmax → stochastic
+    #: categorical). Set to ``False`` to recover the prior linear-
+    #: interpolant ODE + greedy argmax path for ablation studies.
+    #:
+    #: The continuous (x, c) channels always use the velocity-field
+    #: integrator regardless of this toggle — the paper's CTMC swap
+    #: targets only the discrete channels.
+    ctmc_enabled: bool = True
+
     def __init__(
         self,
         *,
@@ -1079,6 +1296,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         blender: RestartBlenderProtocol | None = None,
         weights_path: Any = None,
         device: str = "cpu",
+        ctmc_enabled: bool | None = None,
     ) -> None:
         if backend not in ("numpy", "torch"):
             raise ValueError(
@@ -1101,6 +1319,10 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         self._blender: RestartBlenderProtocol = (
             blender if blender is not None else LinearBlender()
         )
+        # CTMC swap toggle (Stage 3 of Workflow R). The class attribute
+        # is the default; the constructor kwarg overrides per-instance.
+        if ctmc_enabled is not None:
+            self.ctmc_enabled = bool(ctmc_enabled)
         # Cache for the (lazy) torch model handle + per-n_atoms weight
         # matrices for the synthetic velocity field. Both are populated
         # on first use.
@@ -1588,6 +1810,36 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         The number of integration steps is taken from
         ``condition.delta_spec['num_steps']`` when present; otherwise
         the adapter's pinned ``num_steps`` is used.
+
+        Dispatch (Stage 3 of Workflow R — CTMC kernel swap):
+
+        * ``self.ctmc_enabled is True`` (default) — paper-correct CTMC
+          path: continuous (x, c) evolve via the linear-interpolant ODE
+          velocity field; discrete (a, e) evolve on the probability
+          simplex via CTMC rate matrices derived from the model's
+          predicted marginals; final state is sampled via stochastic
+          categorical sampling. Uses
+          :class:`CTMCDynamics` + :class:`CTMCEulerHeunSolver` + the
+          :func:`stochastic_categorical_sample` helper from D1.
+        * ``self.ctmc_enabled is False`` — pre-Stage-3 fallback: linear-
+          interpolant ODE + greedy ``argmax`` for ablation studies.
+        """
+        if self.ctmc_enabled:
+            return self._solve_ode_ctmc(state, condition, seed=int(seed))
+        return self._solve_ode_linear(state, condition, seed=int(seed))
+
+    def _solve_ode_linear(
+        self,
+        state: StateBundle,
+        condition: ODEConditionDelta,
+        *,
+        seed: int,
+    ) -> ODEIntegratorTrace:
+        """Pre-Stage-3 fallback: linear-interpolant ODE + greedy argmax.
+
+        Kept verbatim for ablation studies (set ``ctmc_enabled=False``).
+        Identical to the Stage 2 implementation; the only thing that
+        changed is the dispatch wrapper in :meth:`solve_ode`.
         """
         ok, errs = validate_state_bundle(state)
         if not ok:
@@ -1714,6 +1966,294 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 int(num_steps),
                 int(seed),
                 FLOWMOL3ADAPTER_PINNED_COMMIT,
+            )
+            + (
+                # Real weights participate in the integrator identity so
+                # a checkpoint swap can never alias onto a synthetic run.
+                (str(self._weights_path), str(self._device))
+                if self._weights_path is not None
+                else ()
+            )
+        ).encode("utf-8")
+        integrator_config_hash = hashlib.sha256(cfg_blob).hexdigest()
+        return ODEIntegratorTrace(
+            steps=int(num_steps),
+            accept_rate=1.0,
+            native_state_digest=str(traj_digest),
+            integrator_config_hash=integrator_config_hash,
+        )
+
+    def _solve_ode_ctmc(
+        self,
+        state: StateBundle,
+        condition: ODEConditionDelta,
+        *,
+        seed: int,
+    ) -> ODEIntegratorTrace:
+        """Paper-correct CTMC path (Stage 3 of Workflow R).
+
+        Discrete channels ``a`` (atom types) and ``e`` (bond types) are
+        evolved on the probability simplex via :class:`CTMCDynamics`
+        with a per-position rate matrix derived from the model's
+        predicted marginal ``p``. The continuous channels ``x`` (coords)
+        and ``c`` (formal charges) keep the linear-interpolant ODE
+        velocity field (per the paper: only the discrete channels are
+        CTMC'd).
+
+        The integrator is :class:`CTMCEulerHeunSolver` with
+        ``stochastic_sample=True`` — the final state is sampled via
+        :func:`stochastic_categorical_sample`, replacing the pre-Stage-3
+        greedy ``np.argmax``.
+
+        Per-step lineage is preserved (the trajectory buffers hold the
+        discrete labels post-sample, so
+        :meth:`export_trajectory` returns the same shape as the linear
+        path).
+        """
+        from adaptive_reflow.algorithm.dynamics import (
+            CTMCDynamics,
+            stochastic_categorical_sample,
+        )
+        from adaptive_reflow.algorithm.solver import CTMCEulerHeunSolver
+
+        ok, errs = validate_state_bundle(state)
+        if not ok:
+            raise CapabilityMissingError(
+                "validate_state_bundle", context=",".join(errs)
+            )
+        prior_entry = self._native_states.get(state.native_state_digest)
+        if prior_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state", context=str(state.native_state_digest)
+            )
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        if num_steps <= 0:
+            raise ValueError("num_steps_must_be_positive")
+        n_atoms = int(prior_entry["n_atoms"])
+        t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
+        # Initial state (detached — FlowMol3 restart contract).
+        x_cur = np.asarray(prior_entry["x"], dtype=np.float64).copy()
+        c_cur = np.asarray(prior_entry["c"], dtype=np.float64).copy()
+        e_cur = np.asarray(prior_entry["e"], dtype=np.int64).copy()
+        a_cur = np.asarray(prior_entry["a"], dtype=np.int64).copy()
+        # Allocate trajectory buffers.
+        traj_x = np.empty((num_steps + 1, n_atoms, 3), dtype=np.float64)
+        traj_c = np.empty((num_steps + 1, n_atoms), dtype=np.float64)
+        traj_e = np.empty((num_steps + 1, n_atoms, n_atoms), dtype=np.int64)
+        traj_a = np.empty((num_steps + 1, n_atoms), dtype=np.int64)
+        traj_x[0] = x_cur
+        traj_c[0] = c_cur
+        traj_e[0] = e_cur
+        traj_a[0] = a_cur
+
+        # Pre-compute the bond-logit cache for the synthetic backend.
+        # The synthetic velocity field does not produce atom/bond/charge
+        # marginals; for the CTMC path we need them. On the synthetic
+        # path we use a uniform prior as the predicted marginal (which
+        # makes CTMC equivalent to uniform categorical sampling — the
+        # same behaviour as the linear interpolant's tie at the limit).
+        is_torch_real = (
+            self._backend == "torch"
+            and self._weights_path is not None
+            and _torch_is_available()
+        )
+
+        for i in range(1, num_steps + 1):
+            t_cur = float(t_grid[i - 1])
+            t_next = float(t_grid[i])
+            dt = float(t_next - t_cur)
+            # Detach before the velocity evaluation (restart contract).
+            x_eval = np.asarray(x_cur, dtype=np.float64)
+            c_eval = np.asarray(c_cur, dtype=np.float64)
+            e_eval = np.asarray(e_cur, dtype=np.int64)
+            a_eval = np.asarray(a_cur, dtype=np.int64)
+            if is_torch_real:
+                # Real-weights path: evaluate via the CTMC-flavored
+                # helper which returns (v_x, c_pred, p_a, p_c, p_e, v_x).
+                _vx, c_pred, p_a_marg, p_c_marg, p_e_marg, _vx_dup = (
+                    _ctmc_real_velocity_field_ex(
+                        self._model,
+                        x_eval,
+                        a_eval,
+                        c_eval,
+                        e_eval,
+                        t_cur,
+                        device=self._device,
+                    )
+                )
+                # Continuous channels: linear-interpolant ODE.
+                v_x = _vx
+                v_c = (np.asarray(c_pred, dtype=np.float64) - c_eval) / max(
+                    1.0 - t_cur, 1e-3
+                )
+                x_cur = x_cur + dt * v_x
+                c_cur = c_eval + dt * v_c
+                # Discrete channels: CTMC on the simplex. We evolve
+                # the per-position categorical distribution via
+                # CTMCDynamics.step with per-position Q derived from
+                # p_a, p_e. CTMCEulerHeunSolver integrates the
+                # simplex state; stochastic_categorical_sample at the
+                # end produces the discrete label.
+                # Atom types: per-atom Q via Q_per_position
+                # (n_atoms, K_atom, K_atom).
+                Q_a_per = np.empty(
+                    (n_atoms, FLOWMOL3ADAPTER_N_ATOM_TYPES,
+                     FLOWMOL3ADAPTER_N_ATOM_TYPES),
+                    dtype=np.float64,
+                )
+                for k in range(n_atoms):
+                    Q_a_per[k] = _build_ctmc_rate_matrix(p_a_marg[k])
+                s_a = _to_one_hot(a_eval, FLOWMOL3ADAPTER_N_ATOM_TYPES)
+                atom_dynamics = CTMCDynamics(
+                    rate_matrix=Q_a_per[0],  # any one (will be overridden)
+                    max_batch_size=int(max(n_atoms, 1)),
+                )
+                atom_solver = CTMCEulerHeunSolver(stochastic_sample=False)
+                atom_traj = atom_solver.integrate(
+                    atom_dynamics,
+                    s_a,
+                    np.asarray([t_cur, t_next], dtype=np.float64),
+                    condition=_make_Q_condition(Q_a_per),
+                    seed=int(seed) + i * 31,
+                )
+                s_a_final = np.asarray(atom_traj.states[-1], dtype=np.float64)
+                a_cur = stochastic_categorical_sample(
+                    s_a_final, seed=int(seed) + i * 31 + 7
+                ).astype(np.int64)
+                # Bond types (per-pair). Q_per_position is
+                # (n_pairs, K_bond, K_bond).
+                upper_idx = np.triu_indices(n_atoms, k=1)
+                n_pairs = int(upper_idx[0].size)
+                p_e_ut = p_e_marg[upper_idx[0], upper_idx[1]]
+                Q_e_per = np.empty(
+                    (n_pairs, FLOWMOL3ADAPTER_N_BOND_TYPES,
+                     FLOWMOL3ADAPTER_N_BOND_TYPES),
+                    dtype=np.float64,
+                )
+                for k in range(n_pairs):
+                    Q_e_per[k] = _build_ctmc_rate_matrix(p_e_ut[k])
+                s_e = _to_one_hot(
+                    e_eval[upper_idx], FLOWMOL3ADAPTER_N_BOND_TYPES
+                )
+                bond_dynamics = CTMCDynamics(
+                    rate_matrix=Q_e_per[0],  # any one (will be overridden)
+                    max_batch_size=int(max(n_pairs, 1)),
+                )
+                bond_solver = CTMCEulerHeunSolver(stochastic_sample=False)
+                bond_traj = bond_solver.integrate(
+                    bond_dynamics,
+                    s_e,
+                    np.asarray([t_cur, t_next], dtype=np.float64),
+                    condition=_make_Q_condition(Q_e_per),
+                    seed=int(seed) + i * 31 + 13,
+                )
+                s_e_final = np.asarray(bond_traj.states[-1], dtype=np.float64)
+                e_ut = stochastic_categorical_sample(
+                    s_e_final, seed=int(seed) + i * 31 + 19
+                ).astype(np.int64)
+                e_new = np.full(
+                    (n_atoms, n_atoms),
+                    FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
+                    dtype=np.int64,
+                )
+                e_new[upper_idx] = e_ut
+                # Mirror the upper-triangle draws to the lower triangle
+                # via the transposed index (no double-counting). The
+                # original ``e_new + e_new.T - diag`` doubled the
+                # upper values (upper + lower = e_ut + 4 = up to 8).
+                e_new[(upper_idx[1], upper_idx[0])] = e_ut
+                # Force no self-bonds on the diagonal.
+                np.fill_diagonal(e_new, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
+                e_cur = e_new
+            else:
+                # Synthetic / fallback path: linear ODE + uniform
+                # CTMC marginal. Falls back to greedy argmax on the
+                # synthetic field's continuous-relaxation logits.
+                v_x, v_c, v_e, v_a = self._velocity_field_ex(
+                    x=x_eval,
+                    c=c_eval,
+                    e=e_eval,
+                    t=t_cur,
+                    n_atoms=n_atoms,
+                    seed=int(seed),
+                    a=a_eval,
+                )
+                x_cur = x_cur + dt * np.asarray(v_x, dtype=np.float64)
+                c_cur = c_cur + dt * np.asarray(v_c, dtype=np.float64)
+                e_logits = (
+                    np.eye(
+                        int(FLOWMOL3ADAPTER_N_BOND_TYPES), dtype=np.float64
+                    )[e_cur]
+                    + dt * np.asarray(v_e, dtype=np.float64)
+                )
+                e_cur = np.argmax(e_logits, axis=-1).astype(np.int64)
+                if v_a is not None:
+                    upper = np.triu(e_cur, k=1)
+                    e_cur = (
+                        upper
+                        + upper.T
+                        + np.diag(
+                            np.full(
+                                n_atoms,
+                                int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
+                                dtype=np.int64,
+                            )
+                        )
+                    )
+                    a_logits = (
+                        np.eye(
+                            int(FLOWMOL3ADAPTER_N_ATOM_TYPES), dtype=np.float64
+                        )[a_cur]
+                        + dt * np.asarray(v_a, dtype=np.float64)
+                    )
+                    a_cur = np.argmax(a_logits, axis=-1).astype(np.int64)
+            traj_x[i] = x_cur
+            traj_c[i] = c_cur
+            traj_e[i] = e_cur
+            traj_a[i] = a_cur
+        # Trajectory digest binds the per-step lineage.
+        traj_digest = _digest_state(
+            {
+                "kind": "trajectory",
+                "src_digest": str(state.native_state_digest),
+                "backend": str(self._backend),
+                "num_steps": int(num_steps),
+                "n_atoms": int(n_atoms),
+                "x_final_hash": str(
+                    hashlib.sha256(np.asarray(x_cur).tobytes()).hexdigest()
+                ),
+                "c_final_hash": str(
+                    hashlib.sha256(np.asarray(c_cur).tobytes()).hexdigest()
+                ),
+                "e_final_hash": str(
+                    hashlib.sha256(np.asarray(e_cur).tobytes()).hexdigest()
+                ),
+                "seed": int(seed),
+                "ctmc": True,
+            }
+        )
+        # Store the per-step lineage so ``export_trajectory`` can replay it.
+        self._put_native_state(
+            traj_digest,
+            {
+                "traj_x": traj_x,
+                "traj_c": traj_c,
+                "traj_e": traj_e,
+                "traj_a": traj_a,
+                "t_grid": t_grid,
+                "n_atoms": int(n_atoms),
+                "audit": (AUDIT_FLOWMOL3_TRAJECTORY_BUILT,),
+            },
+        )
+        # Integrator config hash: stable over (backend, num_steps, seed).
+        cfg_blob = repr(
+            (
+                "flowmol3adapter_config",
+                str(self._backend),
+                int(num_steps),
+                int(seed),
+                FLOWMOL3ADAPTER_PINNED_COMMIT,
+                "ctmc",
             )
             + (
                 # Real weights participate in the integrator identity so
@@ -1960,6 +2500,7 @@ def default_flowmol3adapter(
     num_steps: int = FLOWMOL3ADAPTER_NUM_STEPS_DEFAULT,
     weights_path: Any = None,
     device: str = "cpu",
+    ctmc_enabled: bool | None = None,
 ) -> FlowMol3V2Adapter:
     """Return a fresh :class:`FlowMol3V2Adapter` for tests + registry wiring.
 
@@ -1967,12 +2508,18 @@ def default_flowmol3adapter(
     FlowMol3 PyTorch Lightning checkpoint — e.g.
     ``data/flowmol3/weights_real/checkpoints/last.ckpt``. Leave it
     ``None`` for the deterministic synthetic field.
+
+    ``ctmc_enabled`` (Stage 3 of Workflow R) toggles the paper-correct
+    CTMC swap (default ``True`` via the class attribute). Pass
+    ``ctmc_enabled=False`` to recover the pre-Stage-3 linear-interpolant
+    ODE path for ablation studies.
     """
     return FlowMol3V2Adapter(
         backend=str(backend),
         num_steps=int(num_steps),
         weights_path=weights_path,
         device=str(device),
+        ctmc_enabled=ctmc_enabled,
     )
 
 

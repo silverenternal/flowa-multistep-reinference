@@ -9,6 +9,11 @@ outputs/
 data/
 !adaptive_reflow/data/
 !adaptive_reflow/data/**
+# The two negations above re-include everything under adaptive_reflow/data/,
+# which also defeated the `__pycache__/` and `*.py[cod]` rules for that
+# subtree (interpreter bytecode was showing up as untracked / committable).
+# Re-exclude bytecode there explicitly.
+adaptive_reflow/data/__pycache__/
 *.pt
 *.pth
 *.ckpt

@@ -188,7 +188,7 @@ def _make_round_bundle_for_rdkit(state_bundle: StateBundle) -> RoundResultBundle
 def _make_envelope_manifest() -> FrozenEnvelopeManifest:
     """Build a single-layer frozen envelope manifest for the round-trip test.
 
-    Mirrors the manifest in :mod:`test_synthetic_oracle`; the RDKit
+    Mirrors the manifest in :mod:`test_synthetic_oracle_2d`; the RDKit
     oracle's only contract with the envelope is the manifest hash,
     so we use the same loose envelope shape.
     """

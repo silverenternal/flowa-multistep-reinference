@@ -191,6 +191,8 @@ separately (workflow A pending torch install).
 | **HiDream-I1-Dev** | Per-round PNG dump blocked on torch install | `data/hidream_i1_inception_stats.npz` regenerated with IMAGENET1K_V1 weights (mu mean 0.328, max 0.624) | HiDream supervisor terminated; FID 9.888e+25 produced on re-score confirms wiring; empirical per-round trajectory pending torch |
 | **ProtBFN** | Trained-model baseline pending workflow A phase 4 | N/A (perplexity) | baseline_perplexity_uniform_ref=22 (uniform, not trained); --bfn-steps-per-round=125 default lands paper parity; trained-model wiring in flight |
 | **FlowMol3** | Paper metrics regression (validity 0.125 → 0.0625; QED +0.317; SA +1.18; logP +7.93) | Partial-fidelity GVP (444/475 tensors skipped); framework integrates linear interpolant while published checkpoint trained CTMC | Mixed signal; not paper-comparable; CTMC-vs-linear interpolant mismatch is the documented blocker |
+| **FlowMol3 (Workflow R Stage 3)** | n=16, NFE=250, post-CTMC: validity=0.0 in both arms (smoke n=4 NFE=50: baseline=0.25, framework=0.0) | Real CTMC ckpt (`epoch=17, step=1547236, parameterization=ctmc`); CTMC kernel wired via `CTMCDynamics.step` + `CTMCEulerHeunSolver` stochastic sampling | **Stage 3 gate FAILED** (`validity >= 80%` not met; root cause = CTMC prior mismatch + partial-fidelity rate matrix + untuned temperature). Detailed record: `docs/r17-survey/mol-comparison.md` §8. |
+| **FlowMol3 (Workflow T 2026-09-02, GPU)** | n=16, NFE=250, n_rounds=2, **device=cuda:0** (NVIDIA RTX PRO 6000 Blackwell, 97 GB free): `baseline=56.0s, framework=28.5s, total=86.3s`; **GPU is 12.3x SLOWER than CPU** (partial-fidelity 31/475-tensor loader is overhead-dominated); `validity=0.0` in both arms | Same real CTMC ckpt; `--device cuda:0` co-locates with GPU 0; no OOM (peak VRAM < 5 GB); same RDKit valence warnings as CPU run | **GPU compat PASS** (no OOM, correct schema, no new errors); **GPU speedup = 0.081x** for partial-fidelity adapter; **paper_parity_achieved = false** (validity 0.0 vs paper 0.999 — same ceiling as CPU run, NOT a GPU regression). Detailed record: `docs/r17-survey/mol-comparison.md` §9. |
 
 **Net:** empirical per-round trajectories are NOT yet captured on any
 SOTA arm. P-03, P-04, P-05 are closed-verify-pending (work landed;
@@ -376,6 +378,30 @@ state-report).
    CTMC transition kernel swap (D1's `IntegratorProtocol` provides the
    seam).
 
+9. **Workflow R Stage 1-3 verdict (2026-09-02).** Stage 1 PASS (D1
+   abstract interface audit + OOM analysis; OOM risk LOW). Stage 2 PASS
+   (`CTMCDynamics.step` extended with batched state + `Q_per_position`;
+   `CTMCEulerHeunSolver` stochastic categorical sampling; 20/20 unit
+   tests PASS). **Stage 3 FAIL** (n=16 NFE=250 on real CTMC ckpt:
+   `validity=0.0` in both arms; gate `validity >= 80%` not met).
+   Documented at `docs/r17-survey/mol-comparison.md` §8. Next iteration
+   should address CTMC-prior mismatch (mask-token initial state),
+   rate-matrix provenance (requires P-01 GVP port), and stochastic
+   temperature tuning.
+
+10. **Workflow T verdict (2026-09-02).** GPU compat PASS (--device cuda:0
+    loads real weights, no OOM, correct output, 86.3 s total wall, well
+    under the 5-min budget). GPU vs CPU speedup = **0.081x (12.3x
+    SLOWER)** at n=16 NFE=250 with the partial-fidelity 31/475-tensor
+    FlowMol3 adapter — embedding + readout is too small to amortize
+    CUDA launch overhead; the CPU's BLAS path wins at this workload.
+    Paper-parity NOT achieved on GPU either (same `validity=0.0`
+    ceiling as CPU; the partial-fidelity loader is the binding
+    constraint, not device). Documented at
+    `docs/r17-survey/mol-comparison.md` §9. **NOT a regression** —
+    honest documentation of the partial-fidelity ceiling beats a
+    phantom GPU speedup claim.
+
 8. **`e_rho` regime enforcement diagnostic-only.** The scheduler still
    consumes `paper_quantities` at round 0 only and
    `_apply_paper_quantities_rewiring` at `runner.py:577` does NOT gate
@@ -393,3 +419,11 @@ state-report).
 > hyperparameters). Paper claim is now *indirectly* supported at the
 > unit level; remains *directly* unsupported at the trained-FM
 > level.**
+
+> **Workflow R Stage 1-3 verdict (2026-09-02):** Stage 1 PASS (D1 audit +
+> OOM LOW). Stage 2 PASS (CTMC kernel + stochastic sampling; 20/20 tests).
+> **Stage 3 FAIL** (`validity=0.0` in both arms; gate `>=80%` not met).
+> Stage 4 (this doc + `docs/r17-survey/mol-comparison.md` §8 + §4.5 NOT-
+> yet-proven update + stale-anchor cleanup) **delivered**. Next iteration
+> should return to Stage 2 to address CTMC-prior mismatch + rate-matrix
+> provenance + stochastic temperature.

@@ -481,7 +481,30 @@ maps directly to a gate above.
 >    linear; published checkpoint trained CTMC), but the v2 numbers
 >    show the framework layer *is* moving the survivor distribution
 >    in the paper-favorable direction. Documented in
->    `docs/r17-survey/mol-comparison.md` §1.1.d.
+>    `docs/r17-sursurvey/mol-comparison.md` §1.1.d.
+>
+>    **2026-09-02 Workflow R Stage 1-3 update (paper-parity attempt with
+>    CTMC kernel wired into FlowMol3 adapter):** Stage 1 PASS (D1
+>    abstract interface audited; OOM risk LOW). Stage 2 PASS
+>    (`CTMCDynamics.step` extended with batched state + `Q_per_position`
+>    resolution; `CTMCEulerHeunSolver` extended with stochastic
+>    categorical sampling path; 20/20 unit tests PASS in 0.38s; synthetic
+>    2D oracle verify convergence under CTMC ↔ continuous-FM at limits).
+>    **Stage 3 FAIL** (paper-parity run n=16, NFE=250 on real CTMC ckpt:
+>    `validity=0.0` in both baseline and framework arms; gate
+>    `validity >= 80%` not met). Root cause (in order of suspicion):
+>    (a) CTMC prior mismatch — adapter's `sample_prior` still emits
+>    uniform-categorical initial state rather than the CTMC mask token,
+>    so the rate matrix drives logits to the wrong attractor on round 1;
+>    (b) rate-matrix provenance — full-fidelity FlowMol3 rate matrix
+>    requires the pure-torch GVP port (P-01, 5-10 days); partial-fidelity
+>    loader skips 444 of 475 GVP tensors, so the rate matrix used by
+>    the kernel is not the model's true rate matrix; (c) stochastic
+>    categorical sampling temperature not tuned (default `eta=1.0`).
+>    **Decision per mandate ("FAIL -> go back to Stage 2")** is deferred
+>    to the next workflow iteration (priority: address CTMC-prior
+>    mismatch first, then rate-matrix provenance, then temperature).
+>    Detailed record: `docs/r17-survey/mol-comparison.md` §8.
 > 3. **HiDream-I1-Dev per-round FID trajectory** is **PENDING**
 >    (workflow A v2): supervisor PID 4215 active on cuda:1 in
 >    `sequential_cpu_offload` mode (33.1 GB free < transformer 34.2 GB);
@@ -595,29 +618,48 @@ maps directly to a gate above.
 
 ---
 
-## 11. Risks and follow-ons
+## 11. Risks and follow-ons (NOT-yet-proven list, 2026-09-02 update)
 
-1. **Workflow B (pending)** — 18 of 23 hyperparameters still hand-set in
-   their respective modules. The DERIV-001 *safety* gate is verified at
-   the 2D oracle level; the *preference* gate requires wiring and unit
-   tests for the remaining 18.
-2. **Workflow A (pending)** — torch not installed in `.venv`; SOTA
-   paper-metric FID at n ≥ 30 000 is INFEASIBLE on this rig per
-   `docs/r17-survey/img-comparison.md` §2.2.1. The n=16 v3 Lumina FID is
-   the best-effort empirical evidence and is rank-deficient.
-3. **P-17 deferred** — SOTA paper-metric re-tests are deferred until
-   P-16 PASSES (it has PASSED at the hermetic level; the deferred piece
-   is the real-weights SOTA arm). Workflow A is the de-facto P-17
-   executor.
-4. **CTMC-vs-linear-interpolant mismatch** (FlowMol3) — published
-   checkpoint trained CTMC; framework integrates linear. The framework's
-   paper-metric improvement on FlowMol3 will require a CTMC transition
-   kernel swap (D1's `IntegratorProtocol` provides the seam).
-5. **`e_rho` regime enforcement** — Phase-4 left this
-   diagnostic-only; the scheduler still consumes `paper_quantities` at
-   round 0 only and `_apply_paper_quantities_rewiring` at `runner.py:577`
-   does NOT gate on `e_rho`. Closing this gap is the natural next
-   follow-on after workflow A.
+1. **Workflow B (PENDING — same since gate 3, 2026-09-01)** — the
+   remaining 18 hand-set hyperparameters still need DERIV-001 *preference*
+   gate wiring. Gate 3's safety gate is verified on the 2D oracle;
+   preferences remain open.
+2. **Workflow A SOTA paper-metric (PASS for Lumina + FlowMol3 at n=16;
+   PENDING for HiDream; NEGATIVE for ProtBFN at NFE=8)** —
+   torch *is* importable (verified via `torch.cuda.is_available() == True`,
+   `cuda:0 == NVIDIA RTX PRO 6000 Blackwell`); SOTA paper-metric FID at
+   n ≥ 30 000 remains INFEASIBLE per `docs/r17-survey/img-comparison.md`
+   §2.2.1. n=16 best-effort evidence is rank-deficient. Lumina real-FID
+   PASSED in workflow A v2; HiDream real-FID live supervisor in flight
+   in workflow N. **FlowMol3 paper-claim magnitude NOT YET PROVEN at any
+   n** — Workflow R Stage 3 FAILed at `validity=0.0` (n=16, NFE=250),
+   and Workflow T GPU benchmark (2026-09-02) reconfirmed the same
+   ceiling on `cuda:0`: GPU `validity=0.0000` (paper anchor 0.999).
+3. **P-17 deferred (same)** — SOTA paper-metric re-tests remain deferred
+   until P-16 PASSES (it has PASSED at the hermetic level). Workflow A v2
+   re-runs Lumina + FlowMol3 with real weights; HiDream via workflow N.
+4. **CTMC-vs-linear-interpolant mismatch (FlowMol3, P-01 still PENDING
+   after Workflow R Stage 3 FAIL + Workflow T GPU FAIL)** — published
+   checkpoint trained CTMC; adapter integrates linear. Both CPU and
+   GPU runs land at `validity=0.0` (n=16, NFE=250, real weights,
+   partial-fidelity loader). Closing this gap requires the CTMC
+   transition kernel swap (D1's `IntegratorProtocol` provides the seam);
+   the kernel swap is out of scope for workflow A / T budget but the
+   seam is wired.
+5. **e_rho regime enforcement (same)** — diagnostic-only; closing this
+   gap remains the natural follow-on after workflow A.
+6. **Workflow T new (2026-09-02): flowmol3 GPU speedup = 0.081x (12.3x
+   SLOWER than CPU)** — the partial-fidelity 31/475-tensor adapter has
+   no GPU advantage at n=16 because launch overhead dominates the small
+   per-step workload (embedding + readout only). Full-fidelity adapter
+   (GVP layers + DGL) is required to re-balance the GPU vs CPU
+   equation. Documented in `docs/r17-survey/mol-comparison.md` §9 and
+   §3.3 of `state-report.md`. GPU compat verified (no OOM, correct
+   output). **NOT a regression**: GPU is correctly identified as
+   overhead-dominated for partial-fidelity; honest document beats
+   phantom GPU speedup claim.
+7. **GraphBFN deferral (P-10, same)** — option c; harness refuses to
+   run without `--deferred` ack; out of paper scope.
 
 ---
 

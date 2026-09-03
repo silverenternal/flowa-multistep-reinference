@@ -351,11 +351,27 @@ class CTMCDynamics:
 
     The rate matrix ``Q`` is supplied at construction time; rows MUST
     sum to ``0.0`` so the CTMC stays a probability distribution.
+
+    Batched state support (D1 supplement, Stage 2 of Workflow R):
+
+    * ``state_t`` may be 1D ``(K,)`` — single-position simplex — or
+      2D ``(n_atoms, K)`` — per-position categorical distribution.
+    * If the condition supplies ``delta_spec['Q_per_position']`` with
+      shape ``(n_atoms, K, K)``, the per-position rate is applied; if
+      it supplies ``(K, K)`` it is broadcast across positions.
+    * If no per-position Q is supplied, the constructor ``rate_matrix``
+      is broadcast across positions.
+    * Output SLOPE has shape ``(n_atoms, K)`` matching the state.
     """
 
     FAMILY = CTMC_FAMILY
 
-    def __init__(self, *, rate_matrix: np.ndarray | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        rate_matrix: np.ndarray | None = None,
+        max_batch_size: int = 1024,
+    ) -> None:
         if rate_matrix is None:
             raise ValueError("CTMCDynamics: rate_matrix required")
         Q = np.asarray(rate_matrix, dtype=np.float64)
@@ -368,13 +384,68 @@ class CTMCDynamics:
             raise ValueError(
                 f"CTMCDynamics: rate_matrix rows must sum to 0; got {row_sums!r}"
             )
+        if not (isinstance(max_batch_size, int) and max_batch_size > 0):
+            raise ValueError(
+                f"CTMCDynamics: max_batch_size must be positive int; got {max_batch_size!r}"
+            )
         self._Q = Q
+        self._max_batch_size = int(max_batch_size)
 
     def family(self) -> str:
         return self.FAMILY
 
     def config_hash(self) -> str:
         return DEFAULT_CTMC_CONFIG_HASH
+
+    def rate_matrix(self) -> np.ndarray:
+        """Expose the canonical rate matrix (read-only view)."""
+        q_view: np.ndarray = self._Q
+        return q_view
+
+    def _resolve_Q(
+        self, n_atoms: int, condition: Any
+    ) -> np.ndarray:
+        """Resolve per-position Q from condition.delta_spec if supplied.
+
+        Returns either ``(K, K)`` (broadcast) or ``(n_atoms, K, K)``
+        (per-position). Falls back to the constructor rate_matrix.
+        """
+        default_Q: np.ndarray = self._Q
+        if condition is None:
+            return default_Q
+        spec = getattr(condition, "delta_spec", None)
+        if not isinstance(spec, dict):
+            return default_Q
+        Q_per = spec.get("Q_per_position")
+        if Q_per is None:
+            return default_Q
+        Q_arr: np.ndarray = np.asarray(Q_per, dtype=np.float64)
+        if Q_arr.ndim == 2:
+            if Q_arr.shape != self._Q.shape:
+                raise ValueError(
+                    f"CTMCDynamics.step: delta_spec['Q_per_position'] "
+                    f"shape {Q_arr.shape!r} does not match rate matrix "
+                    f"shape {self._Q.shape!r}"
+                )
+            return Q_arr
+        if Q_arr.ndim == 3:
+            if Q_arr.shape[0] != n_atoms:
+                raise ValueError(
+                    f"CTMCDynamics.step: delta_spec['Q_per_position'] "
+                    f"batch {Q_arr.shape[0]!r} does not match state "
+                    f"batch {n_atoms!r}"
+                )
+            if Q_arr.shape[1:] != self._Q.shape:
+                raise ValueError(
+                    f"CTMCDynamics.step: delta_spec['Q_per_position'] "
+                    f"per-position shape {Q_arr.shape[1:]!r} does not "
+                    f"match rate matrix shape {self._Q.shape!r}"
+                )
+            return Q_arr
+        raise ValueError(
+            f"CTMCDynamics.step: delta_spec['Q_per_position'] must be "
+            f"(K,K) or (n_atoms,K,K); got ndim={Q_arr.ndim}"
+        )
 
     def step(
         self,
@@ -387,7 +458,16 @@ class CTMCDynamics:
         paper_quantities: PaperQuantitiesSnapshot | None = None,
         audit_codes: list[str] | None = None,
     ) -> Any:
-        """Return the rate ``Q @ s`` (the SLOPE)."""
+        """Return the rate ``Q @ s`` (the SLOPE).
+
+        State shape:
+
+        * ``(K,)`` simplex vector -> returns ``(K,)`` rate (legacy path).
+        * ``(n_atoms, K)`` per-position simplex -> returns ``(n_atoms, K)``
+          per-position rate. Per-position Q is read from
+          ``condition.delta_spec['Q_per_position']`` if supplied;
+          otherwise the constructor rate matrix is broadcast.
+        """
         dt_f = _coerce_dt(dt)
         _coerce_seed(seed)
         _validate_state_handle(state_t, kind="ctmc")
@@ -395,20 +475,47 @@ class CTMCDynamics:
             raise ValueError(
                 "CTMCDynamics.step: state must be np.ndarray simplex vector"
             )
-        if state_t.ndim != 1 or state_t.shape[0] != self._Q.shape[0]:
-            raise ValueError(
-                f"CTMCDynamics.step: state shape {state_t.shape!r} does not "
-                f"match rate matrix shape {self._Q.shape!r}"
-            )
         effective_dt, did_floor = _floor_dt(dt_f, paper_quantities)
         if did_floor and audit_codes is not None:
             audit_codes.append("dynamics_dt_floored_by_paper_exterior_gap")
-        return self._Q @ state_t
+        if state_t.ndim == 1:
+            if state_t.shape[0] != self._Q.shape[0]:
+                raise ValueError(
+                    f"CTMCDynamics.step: state shape {state_t.shape!r} does not "
+                    f"match rate matrix shape {self._Q.shape!r}"
+                )
+            return self._Q @ state_t
+        if state_t.ndim == 2:
+            n_atoms, K = state_t.shape
+            if K != self._Q.shape[0]:
+                raise ValueError(
+                    f"CTMCDynamics.step: state K={K!r} does not match "
+                    f"rate matrix K={self._Q.shape[0]!r}"
+                )
+            if n_atoms > self._max_batch_size:
+                raise ValueError(
+                    f"CTMCDynamics.step: n_atoms={n_atoms} exceeds "
+                    f"max_batch_size={self._max_batch_size}; raise "
+                    f"max_batch_size in constructor for larger batches"
+                )
+            Q_eff = self._resolve_Q(n_atoms, condition)
+            if Q_eff.ndim == 2:
+                # Broadcast shared (K,K) across positions -> einsum
+                return state_t @ Q_eff.T
+            # Per-position (n_atoms,K,K) -> batched matmul.
+            # state_t: (N,K), Q_eff: (N,K,K) -> out: (N,K)
+            # output[n, l] = sum_k state[n, k] * Q[n, k, l]
+            return np.einsum("nk,nkl->nl", state_t, Q_eff, optimize=True)
+        raise ValueError(
+            f"CTMCDynamics.step: state must be (K,) or (n_atoms,K); "
+            f"got shape {state_t.shape!r}"
+        )
 
     def to_config(self) -> dict[str, Any]:
         return {
             "family": self.FAMILY,
             "rate_matrix": self._Q.tolist(),
+            "max_batch_size": self._max_batch_size,
         }
 
     @classmethod
@@ -420,7 +527,11 @@ class CTMCDynamics:
         rm = config.get("rate_matrix")
         if rm is None:
             raise ValueError("CTMCDynamics.from_config: rate_matrix required")
-        return cls(rate_matrix=np.asarray(rm, dtype=np.float64))
+        mbs = config.get("max_batch_size", 1024)
+        return cls(
+            rate_matrix=np.asarray(rm, dtype=np.float64),
+            max_batch_size=int(mbs),
+        )
 
 
 def default_ctmc_dynamics() -> CTMCDynamics:
@@ -433,6 +544,137 @@ def default_ctmc_dynamics() -> CTMCDynamics:
         dtype=np.float64,
     )
     return CTMCDynamics(rate_matrix=Q)
+
+
+# ---------------------------------------------------------------------------
+# Stochastic categorical sampling (Stage 2 of Workflow R)
+# ---------------------------------------------------------------------------
+
+
+def stochastic_categorical_sample(
+    probs: np.ndarray,
+    *,
+    rng: np.random.Generator | None = None,
+    seed: int = 0,
+) -> np.ndarray:
+    """Stochastic categorical sampling — replace greedy np.argmax.
+
+    The FlowMol3 paper uses CTMC + stochastic categorical sampling; the
+    prior framework wiring uses ``np.argmax`` (greedy). This helper is
+    the paper-correct path: for each row, draw one categorical sample
+    from ``probs`` using ``np.random.choice``. The output is an int64
+    label vector (NOT a one-hot) so trajectory storage stays compact
+    (~32 MB for batch=16 NFE=250 n_atoms=50 instead of ~2.5 GB one-hot).
+
+    Parameters
+    ----------
+    probs:
+        Shape ``(..., K)`` probability simplex. The last axis is the
+        categorical axis; rows are sampled independently.
+    rng:
+        Optional pre-seeded ``np.random.Generator`` (preferred for
+        determinism across the trajectory).
+    seed:
+        Used to construct a local ``Generator`` if ``rng`` is ``None``.
+        The ``seed`` is offset by the row count so per-row draws are
+        reproducible given a fixed input.
+
+    Returns
+    -------
+    labels:
+        Shape ``(...,)`` int64 array of drawn category indices.
+
+    Notes
+    -----
+    * Input rows must sum to ``> 0`` (else ``argmax`` fallback).
+    * If a row is degenerate (one-hot), returns ``argmax`` (deterministic).
+    * Memory: output is int64 — cheap even at batch=16, n_atoms=50,
+      NFE=250 (~32 MB trajectory cache).
+    """
+    if not isinstance(probs, np.ndarray):
+        probs = np.asarray(probs, dtype=np.float64)
+    if probs.ndim < 1:
+        raise ValueError(
+            f"stochastic_categorical_sample: probs must have ndim>=1; got {probs.ndim}"
+        )
+    P = np.asarray(probs, dtype=np.float64)
+    if (P < 0).any():
+        raise ValueError("stochastic_categorical_sample: probs must be non-negative")
+    # Renormalize defensively (in case of small negative truncation).
+    row_sums = P.sum(axis=-1, keepdims=True)
+    row_sums = np.where(row_sums > 0, row_sums, 1.0)
+    P = P / row_sums
+    shape = P.shape[:-1]
+    K = P.shape[-1]
+    P_flat = P.reshape(-1, K)
+    if rng is None:
+        rng = np.random.default_rng(seed + P_flat.shape[0])
+    # Vectorized multinomial: cumulative-trick avoids Python loop.
+    # For K<=64 and N<=2^16, this is O(N*K) and memory O(N*K).
+    n = P_flat.shape[0]
+    u = rng.random(n)
+    cum = np.cumsum(P_flat, axis=-1)
+    # Clip numerical noise past 1.0.
+    np.clip(cum, 0.0, 1.0, out=cum)
+    labels_arr: np.ndarray = np.argmax(u[:, None] < cum, axis=-1).astype(np.int64)
+    if shape:
+        out_labels: np.ndarray = labels_arr.reshape(shape)
+        return out_labels
+    single: np.ndarray = labels_arr.reshape(())
+    return single
+
+
+def transition_probability_matrix(
+    Q: np.ndarray,
+    dt: float,
+) -> np.ndarray:
+    """Compute ``P = expm(Q * dt)`` — the CTMC transition kernel over dt.
+
+    Uses ``scipy.linalg.expm`` if available (preferred for accuracy and
+    stability on stiff rate matrices). Falls back to eigendecomposition
+    (closed-form for symmetric Q) if scipy is missing.
+
+    Memory: ``(K, K)`` float64 — for K<=100 this is <80 KB; safe at any
+    reasonable batch size. Avoids materializing a per-position
+    ``(n_atoms, K, K)`` tensor.
+
+    Parameters
+    ----------
+    Q:
+        Square ``(K, K)`` rate matrix with rows summing to 0.
+    dt:
+        Positive time step.
+
+    Returns
+    -------
+    P:
+        Square ``(K, K)`` transition matrix with rows summing to 1
+        (within ``1e-12``) and non-negative entries.
+    """
+    Q_arr = np.asarray(Q, dtype=np.float64)
+    if Q_arr.ndim != 2 or Q_arr.shape[0] != Q_arr.shape[1]:
+        raise ValueError(
+            f"transition_probability_matrix: Q must be square; got shape {Q_arr.shape!r}"
+        )
+    if not (isinstance(dt, (int, float)) and math.isfinite(float(dt)) and float(dt) > 0):
+        raise ValueError(
+            f"transition_probability_matrix: dt must be positive finite; got {dt!r}"
+        )
+    try:
+        from scipy.linalg import expm as _expm
+        P = np.asarray(_expm(Q_arr * float(dt)), dtype=np.float64)
+    except ImportError:
+        # Fallback: eigendecomposition. P = V diag(exp(eig*dt)) V^-1.
+        eig, V = np.linalg.eigh(Q_arr)
+        V_inv = np.linalg.inv(V)
+        P = (V * np.exp(eig * float(dt))) @ V_inv
+    # Clip small negative entries (numerical noise from expm).
+    np.clip(P, 0.0, None, out=P)
+    # Renormalize rows to 1 for probability-simplex invariant.
+    row_sums = P.sum(axis=-1, keepdims=True)
+    row_sums = np.where(row_sums > 0, row_sums, 1.0)
+    P_out: np.ndarray = P / row_sums
+    return P_out
 
 
 # ---------------------------------------------------------------------------
@@ -721,4 +963,6 @@ __all__ = [
     "default_bfn_dynamics",
     "default_continuous_fm_dynamics",
     "default_ctmc_dynamics",
+    "stochastic_categorical_sample",
+    "transition_probability_matrix",
 ]

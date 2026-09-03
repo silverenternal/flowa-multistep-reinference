@@ -167,7 +167,7 @@ def test_linear_blender_monotone_decreases_oracle_distance() -> None:
     moment-matched effective target ``N(0, diag(5, 1))`` is exactly
     ``(sqrt(1) - sqrt(5)) + 0 = sqrt(5) - 1 ≈ 1.23607`` (the
     framework's precomputed reference value, validated by
-    ``test_synthetic_oracle``). When the linear blender produces a
+    ``test_synthetic_oracle_2d``). When the linear blender produces a
     state that coincides with the target, the W2 distance drops to
     exactly ``0``.
 

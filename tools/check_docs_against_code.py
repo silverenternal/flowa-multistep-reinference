@@ -184,6 +184,21 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         # these are precisely the *example* names we want to skip.
         "MyAdapter", "PLUG_IN_YOUR_MODEL",
         "CLIPScoreEvaluator",
+        # ADR prose pointers to companion artefacts that the docs use as
+        # proper nouns but are NOT project-internal class/function names.
+        # ``TheoremAlignedFID`` names the module
+        # ``adaptive_reflow.eval.fid_theorem_aligned`` (the actual classes
+        # are ``TheoremAlignedFIDResult`` / ``TheoremAlignedFIDReport`` /
+        # ``InceptionV3TheoremAlignedFIDEvaluator``); ``Fallback`` is the
+        # common ADR-prose noun for "if derivation context is missing,
+        # fall back to the constant"; ``DEFAULT_X_FALLBACK`` is the
+        # generic placeholder pattern name; ``THEOREM_1_MAPPING`` is the
+        # ``docs/lean/THEOREM_1_MAPPING.md`` companion-doc pointer.
+        # Each is prose / placeholder / companion-anchor, not a
+        # project-internal symbol the scanner should demand a definition
+        # for.
+        "TheoremAlignedFID", "Fallback", "DEFAULT_X_FALLBACK",
+        "THEOREM_1_MAPPING",
     }
 )
 """Names that look like Python symbols but are almost always prose, not
