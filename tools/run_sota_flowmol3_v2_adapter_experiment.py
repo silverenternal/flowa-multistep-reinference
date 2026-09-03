@@ -104,10 +104,27 @@ METRIC_KEYS: tuple[str, ...] = (
     "fcd",
 )
 
+#: Optional paper-eq4 FG-deviation metric key. Surfaced as
+#: ``fg_deviation_eq4`` (float) inside the per-arm ``*_report`` and
+#: as a flat ``{baseline, framework, paired_delta}`` triplet in the
+#: comparison JSON when the wrapper imports successfully AND the
+#: caller passed ``--compute-fg-dev-eq4``. Falls back to ``None`` /
+#: empty dict when either condition fails. Mirrors the paper eq.4
+#: formulation (``sum |omega_f^gen - omega_f^ref|`` with
+#: ``omega_f := (# instances of f) / (# mols)``) over the
+#: 85-element ``fr_*`` vocabulary.
+PAPER_FG_DEV_EQ4_KEY: str = "fg_deviation_eq4"
+
 #: Schema version for the comparison JSON.
 #: 1.1.0 — added the additive ``flowmol3_paper_metrics`` block (upstream
 #: FlowMol3 ``SampleAnalyzer`` output for both arms + per-key delta).
-OUTPUT_SCHEMA_VERSION: str = "1.1.0"
+#: 1.2.0 — added the optional ``paper_fg_deviation_eq4`` block (paper
+#: eq.4 / eq.21 instance-count L1 over the 85-element ``fr_*``
+#: vocabulary). Emitted when the wrapper imports AND
+#: ``--compute-fg-dev-eq4`` is set. ``None`` / empty ``paired_delta``
+#: when the wrapper is unavailable or the flag is off. Existing keys
+#: keep their meaning.
+OUTPUT_SCHEMA_VERSION: str = "1.2.0"
 
 
 def _upstream_paper_metrics_available() -> bool:
@@ -128,6 +145,25 @@ def _upstream_paper_metrics_available() -> bool:
         return bool(_upstream.is_upstream_available())
     except BaseException:  # noqa: BLE001
         return False
+
+
+def _fg_dev_eq4_wrapper_available() -> bool:
+    """Return True iff the paper eq.4 FG-deviation wrapper imports here.
+
+    Lazy + failure-tolerant: this is only a default-value probe for
+    the ``--compute-fg-dev-eq4`` flag. The wrapper depends on RDKit
+    (for SMARTS matching) and on
+    :mod:`adaptive_reflow.eval.fg_deviation` (for the 85-element
+    ``fr_*`` vocabulary). A missing dependency simply turns the
+    default off rather than aborting the run.
+    """
+    try:
+        from adaptive_reflow.eval import (  # noqa: PLC0415
+            flowmol3_eq4_fg_deviation as _eq4,
+        )
+    except BaseException:  # noqa: BLE001
+        return False
+    return hasattr(_eq4, "compute_fg_deviation_eq4")
 
 
 def _compute_flowmol3_paper_metrics_for_arm(
@@ -204,6 +240,96 @@ def _paper_metrics_delta(
         except (TypeError, ValueError):
             out[str(key)] = float("nan")
     return out
+
+
+def _compute_fg_dev_eq4_for_arm(
+    mols: Sequence[Any],
+    *,
+    arm: str,
+    reference_path: Path | None,
+) -> dict[str, Any]:
+    """Compute the paper eq.4 FG-deviation for one arm's RDKit mols.
+
+    All computation is delegated to
+    :func:`tools.run_mol_eval._compute_fg_deviation_eq4_block`, which
+    in turn calls the wrapper at
+    :mod:`adaptive_reflow.eval.flowmol3_eq4_fg_deviation`. Returns
+    that function's stable dict, with ``arm`` added for traceability.
+
+    If the wrapper cannot be imported, returns ``{"arm": arm, "value":
+    None, "marker": "wrapper_unavailable", ...}`` so the comparison
+    JSON still has a stable shape for the eq4 block.
+    """
+    from tools.run_mol_eval import (  # noqa: PLC0415 - lazy on purpose
+        _compute_fg_deviation_eq4_block,
+    )
+
+    smiles: list[str] = []
+    try:
+        from rdkit import Chem  # noqa: PLC0415
+    except BaseException as exc:  # noqa: BLE001
+        return {
+            "arm": str(arm),
+            "value": None,
+            "n_gen": 0,
+            "n_ref": 0,
+            "n_gen_skipped": 0,
+            "n_ref_skipped": 0,
+            "vocabulary_size": 0,
+            "reference_source": None,
+            "note": f"rdkit_unavailable:{exc}",
+            "marker": "rdkit_unavailable",
+        }
+    for mol in mols:
+        if mol is None:
+            continue
+        try:
+            smi = Chem.MolToSmiles(mol)
+        except Exception:  # noqa: BLE001 - permissive on purpose
+            continue
+        if smi:
+            smiles.append(str(smi))
+
+    ref_smiles: list[str] = []
+    if reference_path is not None and reference_path.exists():
+        try:
+            for ln in reference_path.read_text(encoding="utf-8").splitlines():
+                ln = ln.strip()
+                if not ln:
+                    continue
+                ref_smiles.append(ln.split("\t", 1)[0])
+        except OSError:
+            ref_smiles = []
+
+    block = _compute_fg_deviation_eq4_block(
+        smiles,
+        ref_smiles,
+        reference_path=reference_path,
+    )
+    out: dict[str, Any] = {"arm": str(arm)}
+    out.update(block)
+    return out
+
+
+def _fg_dev_eq4_paired_delta(
+    baseline_block: Mapping[str, Any], framework_block: Mapping[str, Any]
+) -> dict[str, float]:
+    """Return ``framework - baseline`` for the paper eq.4 FG-deviation.
+
+    NaN-safe: emits ``{"fg_deviation_eq4": NaN}`` if either arm did
+    not produce a finite value (wrapper unavailable, RDKit missing,
+    or non-finite upstream). Empty when either ``value`` is ``None``
+    (wrapper-import failure) — downstream consumers can branch on
+    ``paired_delta == {}`` to detect that case.
+    """
+    bv = baseline_block.get("value")
+    fv = framework_block.get("value")
+    if bv is None or fv is None:
+        return {}
+    try:
+        return {PAPER_FG_DEV_EQ4_KEY: float(fv) - float(bv)}
+    except (TypeError, ValueError):
+        return {PAPER_FG_DEV_EQ4_KEY: float("nan")}
 
 
 # ---------------------------------------------------------------------------
@@ -833,9 +959,30 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         default=2,
         help="PoseBusters worker processes for the upstream analyzer (0 = serial).",
     )
+    parser.add_argument(
+        "--compute-fg-dev-eq4",
+        dest="compute_fg_dev_eq4",
+        action="store_true",
+        default=None,
+        help=(
+            "Compute the paper eq.4 / eq.21 instance-count FG-deviation "
+            "metric on both arms and emit the result in the comparison "
+            "JSON. Default: ON when the wrapper at "
+            "adaptive_reflow.eval.flowmol3_eq4_fg_deviation is "
+            "importable in the running venv."
+        ),
+    )
+    parser.add_argument(
+        "--no-compute-fg-dev-eq4",
+        dest="compute_fg_dev_eq4",
+        action="store_false",
+        help="Skip the paper eq.4 FG-deviation block.",
+    )
     args = parser.parse_args(argv)
     if args.compute_flowmol3_paper_metrics is None:
         args.compute_flowmol3_paper_metrics = _upstream_paper_metrics_available()
+    if args.compute_fg_dev_eq4 is None:
+        args.compute_fg_dev_eq4 = _fg_dev_eq4_wrapper_available()
     if bool(args.smoke):
         args.n_mols = 4
         args.n_rounds = 2
@@ -1000,6 +1147,51 @@ def main(argv: list[str] | None = None) -> int:
 
     total_wall = float(time.perf_counter() - overall_started)
 
+    # --- paper eq.4 FG-deviation (additive, optional) ---
+    ref_path_for_eq4: Path | None = (
+        Path(args.reference_smiles) if args.reference_smiles else None
+    )
+    if bool(args.compute_fg_dev_eq4):
+        print(
+            "[run_sota_flowmol3] computing paper eq.4 FG-deviation "
+            "(instance-count L1 over 85-rule fr_* vocab)",
+            flush=True,
+        )
+        baseline_fg_eq4 = _compute_fg_dev_eq4_for_arm(
+            baseline_mols,
+            arm="baseline",
+            reference_path=ref_path_for_eq4,
+        )
+        framework_fg_eq4 = _compute_fg_dev_eq4_for_arm(
+            framework_mols,
+            arm="framework",
+            reference_path=ref_path_for_eq4,
+        )
+        for block in (baseline_fg_eq4, framework_fg_eq4):
+            print(
+                f"[run_sota_flowmol3] fg_dev_eq4[{block['arm']}]: "
+                f"value={block.get('value')} marker={block.get('marker')} "
+                f"n_gen={block.get('n_gen')} n_ref={block.get('n_ref')} "
+                + (f" note={block.get('note')}" if block.get("note") else ""),
+                flush=True,
+            )
+        paper_fg_dev_eq4_block: dict[str, Any] = {
+            "enabled": True,
+            "baseline": baseline_fg_eq4,
+            "framework": framework_fg_eq4,
+            "paired_delta": _fg_dev_eq4_paired_delta(
+                baseline_fg_eq4, framework_fg_eq4
+            ),
+        }
+    else:
+        paper_fg_dev_eq4_block = {
+            "enabled": False,
+            "baseline": None,
+            "framework": None,
+            "paired_delta": {},
+            "note": "wrapper_unavailable_or_disabled_by_flag",
+        }
+
     # --- markdown + JSON ---
     md = _format_markdown(
         baseline_metrics=baseline_metrics,
@@ -1033,6 +1225,7 @@ def main(argv: list[str] | None = None) -> int:
         "framework": framework_metrics,
         "paired_delta": delta,
         "flowmol3_paper_metrics": flowmol3_paper_block,
+        "paper_fg_deviation_eq4": paper_fg_dev_eq4_block,
         "baseline_report": baseline_report,
         "framework_report": framework_report,
     }

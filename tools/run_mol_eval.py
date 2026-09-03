@@ -57,6 +57,25 @@ single JSON report containing:
   reports ``FG Deviation = 0.37 ± 0.01`` (generated) and
   ``FG Deviation = 0.28`` (training-data reference) on
   GEOM-DRUGS.
+* ``fg_deviation_eq4`` — FlowMol3 paper eq.4 / eq.21 (Dunn & Koes,
+  arXiv:2508.12629, Digital Discovery 2026) — the **instance-count**
+  L1 over the 85-element ``fr_*`` vocabulary:
+  ``sum |omega_f^gen - omega_f^ref|`` with
+  ``omega_f := (# instances of f) / (# mols)``. This is the
+  paper-faithful normalisation; the headline FlowMol3 number is
+  ``0.37 ± 0.01`` (Digital Discovery Table 1, N = 5000). Differs
+  from ``fg_deviation`` (binary-occurrence L1): ``fg_deviation``
+  treats each mol as 0/1 per FG; ``fg_deviation_eq4`` sums the raw
+  integer match count per mol. Wraps
+  :func:`adaptive_reflow.eval.flowmol3_eq4_fg_deviation.compute_fg_deviation_eq4`.
+  ``null`` when the wrapper is not importable; ``NaN`` with a
+  stderr note when RDKit is missing or the reference set is empty.
+* ``fg_deviation_eq4_block`` — companion dict for ``fg_deviation_eq4``
+  with shape ``{"value": float | None, "n_gen": int, "n_ref": int,
+  "n_gen_skipped": int, "n_ref_skipped": int, "vocabulary_size": int,
+  "reference_source": str | None, "note": str | None,
+  "marker": "computed_eq4" | "wrapper_unavailable" | ...}``. Same
+  shape language as ``fg_deviation_dundee_glaxo``.
 
 Each metric returns ``NaN`` with a deterministic stderr note when its
 dependency is missing so a partial run still produces a parseable
@@ -125,6 +144,21 @@ Output schema
         "per_conformer_min_energy": list[float] | None
       },
       "fg_deviation": float (NaN if RDKit missing or no reference set),
+      "fg_deviation_eq4": float | null (paper eq.4 / eq.21 instance-count
+                                          L1 over 85-rule fr_* vocab; NaN if
+                                          RDKit missing; null if wrapper
+                                          unavailable),
+      "fg_deviation_eq4_block": {
+        "value": float | null (same number as fg_deviation_eq4, surfaced
+                                here for one-stop inspection),
+        "n_gen": int, "n_ref": int,
+        "n_gen_skipped": int, "n_ref_skipped": int,
+        "vocabulary_size": int (85 for the default fr_* vocab),
+        "reference_source": str | None,
+        "note": str | None,
+        "marker": "computed_eq4" | "wrapper_unavailable"
+                | "rdkit_unavailable" | "reference_unavailable"
+      },
       "fg_deviation_dundee_glaxo": {
         "value": float (L1 over 85-element fr_* Dundee+Glaxo vocab; NaN if no RDKit),
         "value_reos": float (L1 over Pat Walters rd_filters Dundee+Glaxo vocab),
@@ -211,7 +245,17 @@ SUPPORTED_DATASETS: tuple[str, ...] = (
 #: (upstream FlowMol3 ``SampleAnalyzer.analyze`` output, via
 #: ``adaptive_reflow.adapters.flowmol3_metrics_upstream``). Every
 #: pre-existing key keeps its meaning; the block is a pure addition.
-OUTPUT_SCHEMA_VERSION: str = "1.3.0"
+#: 1.4.0 — added the additive ``fg_deviation_eq4`` (flat float, the
+#: raw paper eq.4 / eq.21 instance-count L1 over the 85-element
+#: ``fr_*`` vocabulary) + ``fg_deviation_eq4_block`` (rich dict with
+#: ``n_gen`` / ``n_ref`` / ``vocabulary_size`` / ``note`` / ref
+#: source). Wraps
+#: :mod:`adaptive_reflow.eval.flowmol3_eq4_fg_deviation`; falls back
+#: to ``None`` / ``{"value": None, "marker": "not_available", ...}``
+#: when the wrapper is not importable. Existing ``fg_deviation``
+#: (binary-occurrence L1) and ``fg_deviation_dundee_glaxo`` (160-rule
+#: REOS L1) entries are unchanged.
+OUTPUT_SCHEMA_VERSION: str = "1.4.0"
 
 #: ``flowmol3_paper_metrics.marker`` vocabulary (closed set).
 #: ``not_requested`` — the caller did not ask for the block (or the
@@ -1553,6 +1597,139 @@ def _compute_fg_deviation_dundee_glaxo(
 
 
 # ---------------------------------------------------------------------------
+# FlowMol3 paper eq.4 / eq.21 instance-count FG-deviation wrapper
+# ---------------------------------------------------------------------------
+#
+# The FlowMol3 paper (Dunn & Koes, arXiv:2508.12629, Digital Discovery
+# 2026, 5, 2052-2066) defines FG-deviation as the L1 sum of
+# per-FG absolute differences of ``omega_f := (# instances of f) / (# mols)``
+# (eq.21) over the 85-element RDKit ``fr_*`` vocabulary. The existing
+# ``compute_fg_deviation`` is a binary-occurrence variant (each mol
+# contributes 0/1 per FG); the new wrapper at
+# :mod:`adaptive_reflow.eval.flowmol3_eq4_fg_deviation` is the
+# paper-faithful instance-count variant. Both numbers are reported
+# side-by-side so a downstream consumer can audit the gap.
+#
+# Reference: paper Section 3.2.2 (Functional Group Composition), eq.21.
+# Headline: FlowMol3 0.37 +/- 0.01 (Digital Discovery Table 1, N = 5000)
+# on GEOM-DRUGS. The wrapper REUSES
+# :func:`adaptive_reflow.eval.fg_deviation.count_fg_hits` and
+# :data:`adaptive_reflow.eval.fg_deviation.DUNDEE_FR_SMARTS_NAMES` for
+# the per-mol raw instance counts and the 85-element vocabulary.
+
+
+#: Sentinel marker for the eq4 wrapper's stable JSON shape. Mirrors
+#: the ``PB_VALIDITY_MARKER_*`` / ``FLOWMOL3_MARKER_*`` vocabulary.
+FG_DEV_EQ4_MARKER_COMPUTED: str = "computed_eq4"
+FG_DEV_EQ4_MARKER_WRAPPER_UNAVAILABLE: str = "wrapper_unavailable"
+FG_DEV_EQ4_MARKER_RDKIT_UNAVAILABLE: str = "rdkit_unavailable"
+FG_DEV_EQ4_MARKER_REFERENCE_UNAVAILABLE: str = "reference_unavailable"
+
+
+def _compute_fg_deviation_eq4_block(
+    gen_smiles: Sequence[str],
+    fg_ref_smiles: Sequence[str],
+    *,
+    reference_path: Path | None,
+) -> dict[str, Any]:
+    """Compute the paper eq.4 / eq.21 instance-count FG-deviation block.
+
+    Thin shim over
+    :func:`adaptive_reflow.eval.flowmol3_eq4_fg_deviation.compute_fg_deviation_eq4`
+    that:
+      * prefers the caller-supplied ``reference_path`` SMILES set
+        (the same ``--reference-smiles`` file FCD uses) when present,
+      * falls back to the in-module NCI-first-5K documented proxy
+        when no reference was supplied, and
+      * never raises — the wrapper returns ``{"value": NaN, "note":
+        ..., ...}`` on dependency failure; the import itself is
+        guarded with a try/except so a missing wrapper is
+        surfaced as ``marker="wrapper_unavailable"`` rather than
+        aborting the run.
+
+    Returns a dict with stable JSON shape so downstream consumers
+    see the same fields regardless of which branch fired. The
+    ``value`` field is ``None`` when the wrapper was not importable
+    (so a consumer can branch on ``value is None`` / ``is NaN`` /
+    ``is a number``), and is a ``float`` (possibly ``NaN``) when the
+    wrapper was importable but the computation could not produce a
+    finite result.
+    """
+    nan = float("nan")
+    unavailable: dict[str, Any] = {
+        "value": None,
+        "n_gen": 0,
+        "n_ref": 0,
+        "n_gen_skipped": 0,
+        "n_ref_skipped": 0,
+        "vocabulary_size": 0,
+        "reference_source": None,
+        "note": "fg_dev_eq4_wrapper_unavailable",
+        "marker": FG_DEV_EQ4_MARKER_WRAPPER_UNAVAILABLE,
+    }
+    try:
+        from adaptive_reflow.eval.flowmol3_eq4_fg_deviation import (  # noqa: PLC0415
+            compute_fg_deviation_eq4,
+        )
+    except BaseException as exc:  # noqa: BLE001 — wrapper may raise anything
+        unavailable["note"] = (
+            f"fg_dev_eq4_wrapper_import_failed:{type(exc).__name__}:{exc}"
+        )
+        return unavailable
+
+    if fg_ref_smiles:
+        result = compute_fg_deviation_eq4(
+            list(gen_smiles),
+            reference_smiles_path=None,
+            reference_smiles=list(fg_ref_smiles),
+        )
+    elif reference_path is not None:
+        result = compute_fg_deviation_eq4(
+            list(gen_smiles),
+            reference_smiles_path=str(reference_path),
+            reference_smiles=None,
+        )
+    else:
+        from adaptive_reflow.eval.fg_deviation import (  # noqa: PLC0415
+            DEFAULT_REFERENCE_PATH,
+        )
+
+        result = compute_fg_deviation_eq4(
+            list(gen_smiles),
+            reference_smiles_path=DEFAULT_REFERENCE_PATH,
+            reference_smiles=None,
+        )
+
+    # The wrapper returns ``{"value": NaN, "n_gen": ..., ...,
+    # "note": "...reference_unavailable..."}`` when it could not
+    # load a reference. Surface that with a dedicated marker so
+    # downstream consumers can branch on it.
+    raw_value = result.get("value", nan)
+    try:
+        raw_value_float = float(raw_value)
+    except (TypeError, ValueError):
+        raw_value_float = nan
+    note = str(result.get("note") or "")
+    if "rdkit_unavailable" in note:
+        marker = FG_DEV_EQ4_MARKER_RDKIT_UNAVAILABLE
+    elif "reference_unavailable" in note or "reference_all_unparseable" in note:
+        marker = FG_DEV_EQ4_MARKER_REFERENCE_UNAVAILABLE
+    else:
+        marker = FG_DEV_EQ4_MARKER_COMPUTED
+    return {
+        "value": raw_value_float,
+        "n_gen": int(result.get("n_gen", 0) or 0),
+        "n_ref": int(result.get("n_ref", 0) or 0),
+        "n_gen_skipped": int(result.get("n_gen_skipped", 0) or 0),
+        "n_ref_skipped": int(result.get("n_ref_skipped", 0) or 0),
+        "vocabulary_size": int(result.get("vocabulary_size", 0) or 0),
+        "reference_source": result.get("reference_source"),
+        "note": note or None,
+        "marker": marker,
+    }
+
+
+# ---------------------------------------------------------------------------
 # FlowMol3 upstream paper metrics (additive, Tier-1 fidelity)
 # ---------------------------------------------------------------------------
 
@@ -1769,6 +1946,18 @@ def evaluate(
             "pb_validity_mmff": compute_pb_validity_mmff([]),
             "flowmol3_paper_metrics": compute_flowmol3_paper_metrics([]),
             "fg_deviation": NAN,
+            "fg_deviation_eq4": None,
+            "fg_deviation_eq4_block": {
+                "value": None,
+                "n_gen": 0,
+                "n_ref": 0,
+                "n_gen_skipped": 0,
+                "n_ref_skipped": 0,
+                "vocabulary_size": 0,
+                "reference_source": None,
+                "note": "rdkit_unavailable",
+                "marker": FG_DEV_EQ4_MARKER_RDKIT_UNAVAILABLE,
+            },
             "fg_deviation_dundee_glaxo": {
                 "value": NAN,
                 "value_reos": NAN,
@@ -1816,6 +2005,33 @@ def evaluate(
     fg_dev_value, fg_dev_note = compute_fg_deviation(mols, fg_ref_smiles)
     if fg_dev_note is not None:
         notes.append(fg_dev_note)
+
+    # Paper eq.4 / eq.21 instance-count FG-deviation (Dunn & Koes,
+    # arXiv:2508.12629, Digital Discovery 2026, eq.21): raw L1 of
+    # ``omega_f = (# instances of f) / (# mols)`` over the
+    # 85-element ``fr_*`` vocabulary. Reported ALONGSIDE the binary
+    # ``fg_deviation`` (no replacement — both are paper-aligned for
+    # different aspects of the metric). ``fg_deviation`` uses binary
+    # 0/1 flags; ``fg_deviation_eq4`` uses the raw integer match
+    # count per mol.
+    fg_eq4_block = _compute_fg_deviation_eq4_block(
+        smiles,
+        fg_ref_smiles,
+        reference_path=reference_path,
+    )
+    fg_eq4_value = fg_eq4_block.get("value")
+    # Surface only the "real failure" notes (not the success-path
+    # verbose note) so the stderr_notes list doesn't get noisy.
+    if fg_eq4_value is None or (
+        isinstance(fg_eq4_value, float) and not math.isfinite(fg_eq4_value)
+    ):
+        eq4_note = str(fg_eq4_block.get("note") or "")
+        if eq4_note and "rdkit_unavailable" not in eq4_note:
+            # The hard-stop path already covers RDKit-missing; this
+            # branch fires only when the wrapper imported but
+            # produced a non-finite value (e.g. reference path
+            # unparseable).
+            notes.append(f"fg_deviation_eq4:{eq4_note}")
 
     # Dundee + Glaxo Wellcome FG-deviation layer (Fix A): emits
     # BOTH the paper-style L1 over the 85-element ``fr_*`` vocabulary
@@ -1881,6 +2097,10 @@ def evaluate(
         "pb_validity_mmff": pb_validity_mmff,
         "flowmol3_paper_metrics": flowmol3_block,
         "fg_deviation": float(fg_dev_value),
+        "fg_deviation_eq4": (
+            None if fg_eq4_value is None else float(fg_eq4_value)
+        ),
+        "fg_deviation_eq4_block": fg_eq4_block,
         "fg_deviation_dundee_glaxo": fg_dg_block,
         "frac_atoms_stable": float(frac_atoms_stable),
         "frac_mols_stable_valence": float(frac_mols_stable_valence),
@@ -2082,11 +2302,16 @@ __all__ = [
     "FLOWMOL3_MARKER_COMPUTED_UPSTREAM",
     "FLOWMOL3_MARKER_UPSTREAM_ERROR",
     "FLOWMOL3_INSTALL_HINT",
+    "FG_DEV_EQ4_MARKER_COMPUTED",
+    "FG_DEV_EQ4_MARKER_WRAPPER_UNAVAILABLE",
+    "FG_DEV_EQ4_MARKER_RDKIT_UNAVAILABLE",
+    "FG_DEV_EQ4_MARKER_REFERENCE_UNAVAILABLE",
     "_embed_3d_etkdg_v3",
     "compute_fcd",
     "compute_fg_deviation",
     "compute_flowmol3_paper_metrics",
     "_compute_fg_deviation_dundee_glaxo",
+    "_compute_fg_deviation_eq4_block",
     "compute_logp",
     "compute_pb_validity",
     "compute_pb_validity_mmff",
