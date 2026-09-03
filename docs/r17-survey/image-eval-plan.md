@@ -20,7 +20,7 @@ operator must resolve before pressing go.
 | **GenEval** (Obj-Compose) | **Stub** — emits `{"value": null, "marker": "external", "note": "..."}` and references this document | `run_image_eval` writes the stub into `metrics.geneval` | **YES** — official `geva` package + Mask2Former / DINO detection head. Out of scope for the prep runner. |
 | **DPG-Bench** (Dense-Prompt) | **Stub** — `{"value": null, "marker": "external"}` | `run_image_eval.metrics.dpg_bench` | **YES** — either self-host mPLUG-owl / MiniCPM-V 2.6 (Tier 2) **or** pay for a GPT-4V judge (Tier 1; Lumina-Image 2.0 paper's choice). Out of scope for the prep runner. |
 | **HPSv2.1** (Human Preference Score v2) | **Not emitted** — paper §4 of HiDream-I1 reports HPSv2.1 alongside GenEval + DPG-Bench, but the runner does not include the metric block. | — | **YES, optional.** HPSv2.1 CLIP-H score. Could be added as a fourth metric later. |
-| **ImageReward** | **Not emitted** | — | **YES, optional.** Self-host the BLIP backbone + reward head. Tier 2. |
+| **ImageReward** | **Stub by default, subprocess-wrapped when `--image-reward-binary` is set** — emits `{"value": null, "marker": "external"}` legacy stub OR `{"value": ..., "std": ..., "n_pairs": ..., "model": "ImageReward-v1.0"}` when the operator provisions `.venvs/image_reward_venv` | `run_image_eval.metrics.image_reward` via `run_image_reward_metric` subprocess wrapper into `.venvs/image_reward_venv/scripts/image_reward_score.py` | **YES, optional.** Self-host the BLIP backbone + reward head. Tier 2. Install recipe at `.venvs/image_reward_venv/logs/install_outcome.md`. |
 
 The runner is **deliberately** scoped to "FID + CLIPScore in-process, GenEval + DPG as `external` stubs". This keeps the prep sandbox runnable without masked-detector / large-VLM dependencies and preserves a clean extension point: future Tier-2 work would add three more metric functions and two extra dispatch keys. Today the operator runs only FID + CLIPScore and reads the other two from external tool output.
 
@@ -59,7 +59,7 @@ The two SOTA models in scope both report GenEval + DPG-Bench; their canonical pa
 | GenEval | yes | yes | stub (`external`) |
 | DPG-Bench | yes | yes | stub (`external`) |
 | HPSv2.1 | yes | yes | not emitted (Phase B+ work) |
-| ImageReward | not reported | yes | not emitted (Phase B+ work) |
+| ImageReward | yes (subprocess) | yes | stub → subprocess wrapper (Phase B+ done, image-reward venv provisioned 2026-09-03) |
 
 ---
 

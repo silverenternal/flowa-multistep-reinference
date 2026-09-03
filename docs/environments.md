@@ -1,25 +1,243 @@
-# Model Environments (all GPU where possible)
+# Environments (1 project venv + 4 model venvs)
 
-Last verified: 2026-09-03
+Last verified: 2026-09-03 (post-r17 cleanup).
 
-## Model → Env → Venv → Source Map
+The repository uses a **two-tier venv layout**: one `flowa-multistep-reinference`
+project venv for framework dev/test/docs, and four model-specific venvs
+that each mirror the corresponding upstream repo's `requirements.txt` /
+`environment.yml`. Long-term the framework itself is targeted for a
+PyO3 → Rust rewrite (see `ROADMAP.md` later), so the project venv is kept
+minimal and torch-free; heavy model runtimes live in the per-model venvs
+and are pinned per-driver.
 
-| Model | Source | Venv | Python | torch | CUDA | Adapter Strategy |
+## Layout (frozen 2026-09-03)
+
+| Tier | Name | Path | Python | torch | CUDA build | sm_120 |
 |---|---|---|---|---|---|---|
-| **Lumina-Image 2.0** | HuggingFace (Alpha-VLLM/Lumina-Image-2.0, ~52 GB) | main `.venv` | 3.12 | 2.13+cu132 | sm_120 OK | diffusers-based, GPU |
-| **HiDream-I1 (Dev)** | HuggingFace (HiDream-ai/HiDream-I1-Full, 17B, 44 GB) | main `.venv` | 3.12 | 2.13+cu132 | sm_120 OK | diffusers-based, GPU |
-| **Wan2.2-T2V-A14B** | HuggingFace (Wan-AI/Wan2.2-T2V-A14B, ~130 GB partial) | main `.venv` | 3.12 | 2.13+cu132 | sm_120 OK | diffusers-based, GPU (LFS pointers only) |
-| **FlowMol3 (FlowMol)** | Pitt pretrained (bits.csb.pitt.edu, ~5 GB) | `flowmol3_venv` | 3.11 | 2.0+cu117 | sm_86 max → **CPU only** | partial-fidelity (444/475 GVP tensors skipped); runtime adapter `flowmol3_v2_adapter.py` uses numpy/torch on CPU |
-| **ProtBFN / AbBFN** | HuggingFace (InstaDeepAI/protein-sequence-bfn, 6.4 MB) | `.venv-flowmol311` | 3.11 | 2.6+cu126 | sm_120 OK | BFN refiner on GPU |
-| **GraphBFN** | N/A (HTTP 401) | N/A | N/A | N/A | N/A | deferred per P-10 |
+| project | **`.venv`** | `<repo>/.venv` | 3.12.13 | (none — stdlib-only framework) | — | n/a |
+| model | **`.venvs/flowmol3_venv`** | `<repo>/.venvs/flowmol3_venv` | 3.12.13 | 2.2.0+cu121 | cu121 | ❌ (sm_90 max; venv does NOT support sm_120) |
+| model | **`.venvs/hidream_venv`** | `<repo>/.venvs/hidream_venv` | 3.12.13 | 2.7.0+cu128 | cu128 | ✅ |
+| model | **`.venvs/lumina_venv`** | `<repo>/.venvs/lumina_venv` | 3.12.13 | 2.7.0+cu128 | cu128 | ✅ |
+| model | **`.venvs/wan2_2_venv`** | `<repo>/.venvs/wan2_2_venv` | 3.12.13 | 2.7.0+cu128 | cu128 | ✅ |
+| model | **`.venvs/protbfn_venv`** | `<repo>/.venvs/protbfn_venv` | 3.12.13 | 2.7.0+cu128 | cu128 | ✅ |
 
-## Venvs (frozen 2026-09-03)
+Driver / hardware:
+- Driver **595.71.05**, CUDA Version 13.2 (driver-level cap).
+- GPU 0: NVIDIA RTX PRO 6000 Blackwell, **sm_120**, 98 GB.
+- GPU 1: NVIDIA GeForce RTX 5090, **sm_120**, 32 GB.
+- `.venvs/{hidream,lumina,wan2_2,protbfn}_venv` report
+  `torch.cuda.get_device_capability(0) == (12, 0)` and have
+  `arch_list` containing `sm_120, compute_120` (cu128 torch 2.7.0+).
+- **`.venvs/flowmol3_venv` is the exception**: installed torch is
+  `2.2.0+cu121` with `arch_list` capped at `sm_50 sm_60 sm_70 sm_75
+  sm_80 sm_86 sm_90` (no sm_120). `torch.cuda.is_available()` returns
+  True (driver-level), and `get_device_capability(0)` reports `(12, 0)`
+  for the sm_120 GPU, **but** any kernel-launched op on the sm_120
+  devices will fail with `RuntimeError: no kernel image is available`
+  unless the kernel was JIT-compiled for sm_120. Closing this gap
+  requires a `uv pip install --upgrade torch==2.7.0+cu128 ...` rerun.
+- Venv torch-build policy: every model venv installs **GPU torch**
+  (`+cuX` wheels); **no `+cpu` torch** is permitted anywhere in the
+  tree. (Note: flowmol3_venv's binary still binds to cu121 even though
+  the driver is at cu13x; binary use is unaffected because cu121 is
+  forward-compatible with cu13x-only driver forward.)
 
-| Venv | Path | Python | torch | CUDA | Used for |
-|---|---|---|---|---|---|
-| **main .venv** | `/home/hugo/.venv` | 3.12 | 2.13+cu132 | sm_120 OK | Lumina, HiDream, Wan2.2 (diffusers stack) |
-| **.venv-flowmol311** | `/home/hugo/.venv-flowmol311` | 3.11 | 2.6+cu126 | sm_120 OK | ProtBFN, AbBFN (BFN refiner) |
-| **flowmol3_venv** | `/home/hugo/flowmol3_venv` | 3.11 | 2.0+cu117 | sm_86 max (CPU) | FlowMol3 partial-fidelity (CPU) |
+## Model → Venv → Source Map
+
+| Model | Source | Venv | Strategy |
+|---|---|---|---|
+| **Lumina-Image 2.0** | HuggingFace `Alpha-VLLM/Lumina-Image-2.0` (~52 GB LFS) | `.venvs/lumina_venv` | diffusers + fairscale + torchdiffeq |
+| **HiDream-I1 (Dev)** | HuggingFace `HiDream-ai/HiDream-I1-Full` (17 B, 44 GB safetensors) | `.venvs/hidream_venv` | diffusers; flash-attn optional |
+| **Wan2.2-T2V-A14B** | HuggingFace `Wan-AI/Wan2.2-T2V-A14B` (~130 GB LFS stubs) | `.venvs/wan2_2_venv` | diffusers; transformers ≤4.51.3; numpy<2 |
+| **FlowMol3 (FlowMol)** | Pitt pretrained (bits.csb.pitt.edu, ~5 GB) | `.venvs/flowmol3_venv` | pytorch-lightning 2.1.3 + rdkit + wandb; **adapter is self-contained** (numpy/torch on GPU; no FlowMol3 upstream import) |
+| **ProtBFN / AbBFN** | HuggingFace `InstaDeepAI/protein-sequence-bfn` (6.4 MB) | `.venvs/protbfn_venv` | transformers + biopython; BFN refiner is framework-internal |
+| **GraphBFN** | N/A (HTTP 401 from HF; AlgoMole/GraphBFN GitHub-only) | — | deferred per P-10 |
+
+## Why each model has its own venv
+
+The five families of upstream SOTA models have incompatible dependency
+graphs that cannot be merged into one venv:
+
+- **FlowMol3 / HiDream / Lumina / Wan2.2 / ProtBFN** — each upstream
+  pins different `torch` versions, transformers upper bounds, flash-attn
+  builds, and numpy ranges. The framework's adapters do not import the
+  upstream model code (they implement the channel vocabulary and
+  protocol surface in `adaptive_reflow/adapters/` directly), so per-model
+  venvs are sized only to the model's own deps.
+
+- **transformers** upper-bounds conflict (`<=4.51.3` for Wan2.2 vs no
+  cap for HiDream/Lumina/ProtBFN). Wan2.2 gets the pin; the others
+  ride the latest.
+
+- **numpy** range conflicts (`<2` for Wan2.2, `<2.5` for the framework's
+  `flow_matching` extra, no pin for HiDream/Lumina/ProtBFN).
+
+- **flash-attn** — Wan2.2 `pyproject.toml` declares `flash_attn` as a
+  required dep at install time, but PyPI has no cu128 manylinux wheel
+  for it (verified 2026-09-03) and source build needs the CUDA toolkit.
+  The framework's adapter for Wan2.2 uses diffusers and does not require
+  flash-attn at import time, so we install with `--no-deps` for the
+  upstream repo and skip flash-attn (re-enable when source-build
+  tooling lands).
+
+## Project venv (`.venv`) — what it carries and what it doesn't
+
+The project venv is the framework's own. It is **not** meant to host
+SOTA model runtimes. Contents (post-r17 cleanup):
+
+- **Editable install** of the framework itself:
+  `uv pip install -e ".[test,dev,flow_matching]"`
+  (test = pytest + hypothesis + pytest-benchmark;
+  dev = mkdocs + mkdocstrings + griffe;
+  flow_matching = numpy<2.5 + scipy).
+- **No torch, no diffusers, no transformers, no accelerate, no bitsandbytes,
+  no nvidia-*, no cuda-*.**
+- The framework's `universal/`, `contracts/`, `frame/`, `algorithm/`,
+  `policy/`, `schedule/`, `writer/`, `eval/`, `diagnostics/`,
+  `envelope/` are stdlib-only by design; the AST-level test guard
+  `tests/test_universal/test_no_molecular_import.py` enforces
+  `universal/` ⊄ molecules.
+- Total size: ~780 MB (mkdocs + griffe + dev tooling dominate).
+- Adapter modules in `adaptive_reflow/adapters/` that need torch /
+  diffusers are imported only inside their per-model venv at runtime.
+
+## Per-model venv recipes (reproducible with `uv`)
+
+All five model venvs were created with the same recipe:
+
+```bash
+# 1. Create the venv at the matching Python (uv 0.11.8):
+uv venv --python 3.12 .venvs/<name>_venv     # or 3.10/3.11 if upstream pins
+
+# 2. Install torch from the PyTorch cu128 (sm_120) index first:
+uv pip install --python .venvs/<name>_venv \
+  --index-url https://download.pytorch.org/whl/cu128 \
+  torch==2.7.0 torchvision==0.22.0          # or torchaudio where needed
+
+# 3. Pin numpy/scipy to match the framework's <2.5 cap (or the upstream
+#    pin, e.g. Wan2.2's <2):
+uv pip install --python .venvs/<name>_venv \
+  "numpy<2.5" "scipy>=1.10"                  # Wan2.2 uses "numpy>=1.23.5,<2"
+
+# 4. Install the per-model deps from the upstream requirements.txt /
+#    environment.yml (see table below).
+
+# 5. Verify (must print cuda=True cap=(12,0) on this rig):
+.venvs/<name>_venv/bin/python -c \
+  "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_capability(0))"
+```
+
+Per-model dep lists:
+
+- **`flowmol3_venv`** (translates `data/FlowMol3/repo/environment.yml`,
+  pre-r17 legacy torch pin: `torch==2.2.0+cu121`):
+  ```
+  pytorch-lightning==2.1.3 rdkit pystow einops wandb
+  useful-rdkit-utils py3Dmol torch-ema biopython
+  networkx<3.3 setuptools<81
+  ```
+  DGL is **not** installed (the conda-only `dglteam/label/cu121`
+  wheel tops out at sm_86 max and is incompatible with the install
+  of torch 2.2.0+cu121 on this rig). `torch_scatter` is installed
+  but is the **CPU-only** build (`torch_scatter-2.1.2`,
+  `v221_pt22cpu` suffix in `site-packages/`; only `_scatter_cpu.so`,
+  `_segment_coo_cpu.so`, `_segment_csr_cpu.so` are present — no
+  `_scatter_cuda.so`). The framework's `flowmol3_v2_adapter.py`
+  implements the partial-fidelity path in numpy/torch and does not
+  need DGL or torch_scatter at runtime; if/when full-fidelity
+  GVP-on-GPU is required, the venv needs to be rebuilt on the
+  cu128 torch 2.7.0 baseline with a GPU torch_scatter wheel, then
+  DGL rebuilt from source against torch 2.7+cu128.
+
+- **`hidream_venv`** (from `data/HiDream-I1/repo/requirements.txt`):
+  ```
+  diffusers>=0.32.1 transformers>=4.47.1 accelerate>=1.2.1 einops>=0.7.0
+  ```
+  `flash-attn` is recommended by HiDream but skipped for now (no cu128
+  prebuilt wheel + no source-build tooling). The framework's
+  `hidream_i1.py` adapter uses diffusers directly.
+
+- **`lumina_venv`** (from `data/lumina_image_2_0/repo/requirements.txt`):
+  ```
+  diffusers fairscale accelerate tensorboard transformers
+  torchdiffeq gradio click sentencepiece
+  ```
+
+- **`wan2_2_venv`** (from `data/wan2_2/repo/pyproject.toml [project.dependencies]`,
+  minus `flash_attn`):
+  ```
+  diffusers>=0.31.0 "transformers>=4.49.0,<=4.51.3" "tokenizers>=0.20.3"
+  accelerate>=1.1.1 opencv-python>=4.9.0.80 easydict ftfy
+  "imageio[ffmpeg]" imageio-ffmpeg "numpy>=1.23.5,<2" tqdm
+  ```
+
+- **`protbfn_venv`** (project-internal BFN refiner; upstream uses jax but
+  the framework's torch reimplementation doesn't):
+  ```
+  transformers einops biopython
+  # JAX stack (for upstream-shim routing only — the framework's torch
+  # adapter is the canonical path):
+  dm-haiku==0.0.17 flax==0.12.9 jax==0.11.1 jaxlib==0.11.1 optax==0.2.8
+  ```
+  `torch_scatter` is **not** installed — PyG's prebuilt index
+  (`data.pyg.org/whl/torch-2.7.0+cu128.html`) is DNS-blocked from this
+  rig and PyPI has no source-built wheel for cu128. The BFN refiner's
+  `segment_csr` op is implemented as a torch-native scatter
+  (`torch.zeros(...).index_add_(0, idx, src)`) in
+  `adaptive_reflow/adapters/protbfn_abbfn_model.py` — see `Loss
+  Definitions` in that file. The JAX/Haiku/Flax/Optax stack above is
+  installed only so the upstream shim
+  (`adaptive_reflow/adapters/protbfn_abbfn_upstream_shim.py`,
+  `force_mode="upstream_jax"`) can import
+  `data/protbfn_abbfn/repo/{model,sample,inpaint,loss}.py`; the
+  framework's JAX-free pytree loader
+  (`protbfn_abbfn_jax_loader.py`) does the actual weight materialisation
+  and does not need JAX. See **ProtBFN / JAX pin decision** below for
+  the pin rationale; the resolved set is recorded in
+  `requirements/protbfn.lock`.
+
+  **External binaries staged in `bin/`:**
+  - `mmseqs` — MMseqs2 8cc5ce367b5638c4306c2d7cfc652dd099a4643f
+    (release 18-8cc5c, 2025-07-27), Linux x86_64 AVX2 static build,
+    downloaded from
+    `https://github.com/soedinglab/MMseqs2/releases/download/18-8cc5c/mmseqs-linux-avx2.tar.gz`.
+    SHA-256 of tarball: `bd9b0234da5949ad528d5b5f9ea4cda9c1e23dce14b46c0791d4d919a76e61ce`.
+    Statically linked (`ldd` reports "not a dynamic executable"), no
+    glibc / MPI / libgomp system dependencies. Required by downstream
+    `protbfn_eval_venv` for the cluster-hit / coverage / CATH-S40
+    structural metrics; staged here so the venv is self-contained.
+    License: GPLv3 (open-source, no license gate).
+
+## Quick check of all venvs
+
+```bash
+for v in .venv .venvs/*/; do
+    echo "=== $v ==="
+    $v/bin/python -c "import torch; print(f'  torch={torch.__version__}, cuda={torch.cuda.is_available()}, cap={torch.cuda.get_device_capability(0) if torch.cuda.is_available() else None}')" 2>/dev/null \
+      || $v/bin/python -c "import sys; print(f'  py={sys.version_info.major}.{sys.version_info.minor}, framework (no torch)')"
+done
+```
+
+Expected output (2026-09-03):
+
+```
+- .venv/                : framework (no torch)
+- .venvs/flowmol3_venv/ : torch=2.2.0+cu121, cuda=True, cap=(12, 0), arch_list max=sm_90 (no sm_120 support)
+- .venvs/hidream_venv/  : torch=2.7.0+cu128, cuda=True, cap=(12, 0)
+- .venvs/lumina_venv/   : torch=2.7.0+cu128, cuda=True, cap=(12, 0)
+- .venvs/wan2_2_venv/   : torch=2.7.0+cu128, cuda=True, cap=(12, 0)
+- .venvs/protbfn_venv/  : torch=2.7.0+cu128, cuda=True, cap=(12, 0)
+```
+
+Note on the `flowmol3_venv` line: `cuda=True` and `cap=(12, 0)` come
+from the driver / device query and are **not** a statement that GPU
+ops will execute on sm_120 hardware. The installed torch 2.2.0+cu121
+binary has `arch_list` = `['sm_50','sm_60','sm_70','sm_75','sm_80',
+'sm_86','sm_90']`; running an op that needs JIT compilation against
+the sm_120 GPUs will raise
+`RuntimeError: no kernel image is available for execution on the
+device`. Imports succeed and CPU ops work; GPU ops fall back through
+PyTorch's existing JIT path or fail with the above error.
 
 ## Weight Provenance (frozen 2026-09-03, chmod 444)
 
@@ -34,75 +252,133 @@ Last verified: 2026-09-03
 | `data/wan2_2/weights/` | Wan-AI/Wan2.2-T2V-A14B (HF, LFS stubs) | frozen |
 | `data/graphbfn/weights/` | N/A (HTTP 401 from HF; AlgoMole/GraphBFN is GitHub-only) | frozen, no actual weights |
 
-## Why these venvs are split
+The FlowMol3 ckpt at `weights_real/checkpoints/last.ckpt` is
+`epoch=17 step=1547236` from the Pitt pretrained model (not a locally
+re-trained model: it was never opened by any local training job —
+local training jobs would have been invoked via
+`python flowmol/train.py`, which is on disk in
+`data/FlowMol3/repo/flowmol/train.py`, but the framework never runs that
+script).
 
-The Python ecosystem for the four families of models has incompatible dependencies:
+To prevent future "is this our weights or upstream's?" confusion, all
+`weights/` and `weights_real/` directories are `chmod 444` (read-only for
+owner, group, other). Any new model training would need to write to a
+separate path (e.g. `weights_local/`) so it cannot silently overwrite
+upstream.
 
-- **FlowMol3** needs PyTorch 2.0 + DGL (Deep Graph Library) 2.0–2.1 with cu121 build of the C++ graphbolt; there is no sm_120 cu128 DGL wheel as of 2026-09-03. Mixing DGL with a 2.6+ cu126 torch downgrades the DGL C++ lib to a path that no longer matches the torch version, breaking the DGL import.
-- **ProtBFN / AbBFN** historically ran on the upstream author's `environment.yaml` (Python 3.9 + jax + haiku + flax + jaxlib). The framework has been re-implementing the BFN refiner in `flowmol3_venv` (a separate PyTorch-only env) for the torch-based path that the framework's `protbfn_abbfn_adapter.py` actually uses. With `flowmol3_venv` and the ProtBFN harness, we only need `torch` (and not `dgl`); the sm_120 mismatch then collapses to just "we need torch built with sm_120 kernels". PyTorch 2.6+cu126 has those, so the path that worked on `2.0+cu117` (sm_86) was upgraded to `2.6+cu126` (sm_120). This still has torch_scatter pinned to the pre-2.6 ABI; if anything that uses `torch_scatter` on this venv breaks with a `undefined symbol` error after the upgrade, fall back to a numpy equivalent or a torch-native reimplementation of the scatter op the BFN refiner needs.
-- **Lumina, HiDream, Wan2.2** are all served by `diffusers` on the main `.venv` (torch 2.13+cu132, sm_120 OK). The framework's `lumina_image_2_0.py` and `hidream_i1.py` adapters use the upstream pipelines; they are already on the GPU and were exercised in workflow A v2.
-- **GraphBFN** has no HF mirror; the upstream is `AlgoMole/GraphBFN` on GitHub which this env could not reach (HTTP 401). Deferred to future work per P-10.
+## Open venv limitations
 
-## Open venv limitation (FlowMol3 stays on CPU)
+- **FlowMol3 / DGL + torch**: the `.venvs/flowmol3_venv` predates the
+  cu128 upgrade (still on torch 2.2.0+cu121 with `arch_list` capped
+  at sm_90 — see top-of-page table) and additionally has no GPU DGL
+  wheel available. The framework's FlowMol3 path is
+  partial-fidelity (444/475 GVP tensors) implemented in numpy/torch
+  on CPU/GPU (JIT-compiled sm_120 ops via PyTorch's runtime). To
+  bring flowmol3_venv back in line with the other four model venvs
+  (torch 2.7.0+cu128 with sm_120 in `arch_list`), rerun:
 
-`flowmol3_venv` with `torch==2.0+cu117` is the lowest common denominator for DGL+torch_scatter. Upstream `build_env.sh` uses the same `dglteam/label/cu121` constraint; the official cu126 cu128 DGL wheel does not exist as of 2026-09-03. The adapter `flowmol3_v2_adapter.py` is therefore currently running on CPU; the empirical FlowMol3 numbers in `docs/r17-survey/mol-comparison.md` are CPU-side partial-fidelity numbers. Closing the "FlowMol3 needs full GVP and GPU" gap is staged in workflow R Stage 5: build DGL from source against torch 2.6+cu126 (long, hours), or replace the GVP path with a pure-torch equivalent.
+  ```bash
+  /home/hugo/codes/flowa-multistep-reinference/.venvs/flowmol3_venv/bin/python -m pip install --upgrade --index-url https://download.pytorch.org/whl/cu128 torch==2.7.0
+  ```
 
-## Provenance enforcement
+  then re-verify `torch.cuda.get_arch_list()` includes
+  `sm_120, compute_120`. Closing the GVP-on-GPU gap (full DGL +
+  GPU torch_scatter) additionally requires building DGL and a GPU
+  torch_scatter wheel against torch 2.7+cu128.
 
-All weight files were downloaded by their respective upstream URLs and verified to NOT have been re-trained locally:
-- `flowmol3/weights_metadata.json` records the Pitt download.
-- `protbfn_abbfn/weights_metadata.json` records the InstaDeepAI download.
-- `hidream_i1/weights_metadata.json` records the HiDream-ai download.
-- `lumina_image_2_0/weights_metadata.json` records the Alpha-VLLM download.
-- `wan2_2/weights_metadata.json` records the Wan-AI download.
-- `graphbfn/weights_metadata.json` records the failed download.
-- The FlowMol3 ckpt at `weights_real/checkpoints/last.ckpt` is `epoch=17 step=1547236` from the Pitt pretrained model (not a locally re-trained model: it was never opened by any local training job — local training jobs would have been invoked via `python flowmol/train.py`, which is on disk in `data/FlowMol3/repo/flowmol/train.py`, but the framework never runs that script).
+- **Wan2.2 / flash-attn**: PyPI has no cu128 manylinux wheel for
+  `flash-attn`. The framework's Wan2.2 adapter uses diffusers and runs
+  fine without flash-attn. Re-enable when a prebuilt cu128 wheel ships
+  or when source-build tooling lands.
 
-To prevent future "is this our weights or upstream's?" confusion, all `weights/` and `weights_real/` directories are now `chmod 444` (read-only for owner, group, other). Any new model training would need to write to a separate path (e.g. `weights_local/`) so it cannot silently overwrite upstream.
+- **ProtBFN / torch_scatter**: PyG's wheel index is DNS-blocked and
+  PyPI has no source wheel for cu128. The BFN refiner uses a
+  torch-native scatter instead; the pre-2.6 ABI fallback in the
+  previous docs is no longer needed.
 
-## Reproducing the envs
+## Driver ↔ venv coupling
 
-For the main .venv (Lumina, HiDream, Wan2.2 — used as-is, no rebuild needed):
-```
-.venv/bin/python -c "import torch, diffusers; print(torch.__version__, diffusers.__version__)"
-```
+| Driver | CUDA Version | Compatible torch cuX | venv torch build |
+|---|---|---|---|
+| 595.71.05 (this rig) | 13.2 | cu128 / cu132 | cu128 (chosen for cross-model uniformity) |
 
-For the .venv-flowmol311 (ProtBFN, AbBFN — current state):
-```
-/home/hugo/.local/bin/python3.11 -m venv /home/hugo/.venv-flowmol311
-/home/hugo/.venv-flowmol311/bin/pip install --index-url https://download.pytorch.org/whl/cu126 torch==2.6.0 torchvision
-/home/hugo/.venv-flowmol311/bin/pip install --no-deps "torch-scatter==2.1.2+pt20cu117"
-# NOTE: torch-scatter pinned to pre-2.6 ABI. If anything that uses torch_scatter
-# breaks on this venv with a `undefined symbol: _ZN3c1017RegisterOperatorsD1Ev`
-# error, fall back to a numpy equivalent or torch-native reimplementation
-# of the scatter op. The BFN refiner in protbfn_abbfn_adapter.py uses
-# `torch_scatter` for `segment_csr` only.
-```
+If the driver is downgraded below 525.xx (CUDA 12.0 cut-off), torch
+will need to drop to cu118 or cu121 and the `arch_list` will lose
+sm_120 support. If a future driver adds sm_130 / sm_140 GPU support,
+torch must be upgraded to a cuX build whose `arch_list` includes the
+new compute capability.
 
-For the flowmol3_venv (FlowMol3 partial-fidelity — current state):
-```
-/home/hugo/.local/bin/python3.11 -m venv /home/hugo/flowmol3_venv
-/home/hugo/flowmol3_venv/bin/pip install --index-url https://download.pytorch.org/whl/cu117 torch==2.0.1 torchvision==0.15.2
-/home/hugo/flowmol3_venv/bin/pip install "torch-scatter==2.1.2+pt20cu117"
-/home/hugo/flowmol3_venv/bin/pip install --no-deps dgl pytorch-lightning
-/home/hugo/flowmol3_venv/bin/pip install -e /home/hugo/codes/flowa-multistep-reinference/data/FlowMol3/repo
-# NOTE: This venv is GPU-incompatible (cu117 = sm_86 max, this rig = sm_120). The
-# framework's flowmol3_v2_adapter.py uses the partial-fidelity path which is
-# CPU-only when dgl is required. Run on CPU for partial-fidelity; run on GPU
-# only for the torch_scatter + encoder path which has no DGL. To get full
-# GVP on GPU, build DGL from source against torch 2.6+cu126.
-```
+## ProtBFN / JAX pin decision (recorded 2026-09-03)
 
-## Quick check of all venvs
+`protbfn_venv` ships the JAX/Haiku/Flax/Optax stack only so the
+upstream-shim route
+(`adaptive_reflow.adapters.protbfn_abbfn_upstream_shim`,
+`force_mode="upstream_jax"`) can import
+`data/protbfn_abbfn/repo/{model,sample,inpaint,loss}.py` from the
+cloned InstaDeep repo. The framework's torch re-implementation in
+`adaptive_reflow.adapters.protbfn_abbfn_model.ProtBFNAbBFNModel` is the
+canonical adapter path, and the JAX-free pytree loader
+(`protbfn_abbfn_jax_loader.py`) reconstructs the Haiku param tree
+without importing JAX. JAX is therefore an *opt-in optional
+dependency* of the framework, not a measurement dependency.
 
-```bash
-for v in /home/hugo/.venv /home/hugo/flowmol3_venv /home/hugo/.venv-flowmol311; do
-    echo "=== $v ==="
-    $v/bin/python -c "import torch; print(f'  torch={torch.__version__}, cuda={torch.cuda.is_available()}, cap={torch.cuda.get_device_capability(0) if torch.cuda.is_available() else None}')" 2>/dev/null
-done
-```
+Two pin sets were considered:
 
-Expected output after the upgrade:
-- main .venv: torch=2.13.0+cu132 cuda=True cap=(12, 0)         # for diffusers-based models
-- flowmol3_venv: torch=2.0.1+cu117 cuda=True cap=(8, 6)          # CPU-only (DGL constraint)
-- .venv-flowmol311: torch=2.6.0+cu126 cuda=True cap=(12, 0)     # for BFN refiner on GPU
+| | Original (paper-fidelity) | Current (in-tree, 2026-09-03) |
+|---|---|---|
+| `dm-haiku` | `0.0.9` | `0.0.17` |
+| `flax` | `0.7.2` | `0.12.9` |
+| `jax` / `jaxlib` | `0.4.13` | `0.11.1` |
+| `numpy` | `1.24` | `>=1.23,<3` (project venv caps `<2.5`) |
+| `python` | `3.9` | `3.12.13` |
+| Source | `data/protbfn_abbfn/repo/environment.yaml` | `protbfn_venv` resolved set |
+
+**Original pin set cannot be installed on this rig:**
+
+- `dm-haiku 0.0.9` calls `jax.linear_transpose` (removed in jax≥0.5)
+  and `jax.experimental.optimizers` (removed in jax≥0.4.30). The
+  0.0.9/0.7.2/0.4.13 triple is internally consistent on jax 0.4.x,
+  but jax 0.4.x pre-dates the modern wheel format: the
+  `jax[cuda12]==0.4.13` release on the JAX release channel only
+  publishes cp39/cp40 wheels, **not cp312**. Installing on Python 3.12
+  would require building jaxlib from source against the CUDA 12.8
+  toolchain — multi-hour and out of scope.
+- `flax 0.7.2` imports `flax.linen` from a module layout that was
+  reorganised in flax 0.8+; on Python 3.12, `flax 0.7.2` raises
+  `TypeError: 'type' object is not subscriptable` at import time (it
+  still uses PEP-585 generics that landed in 3.9 but were removed
+  from flax 0.8's pre-3.10 compat shim path).
+- The framework's project venv requires `numpy<2.5`; the upstream
+  `environment.yaml` pins `numpy==1.24`, which the project's
+  `protbfn_abbfn_jax_loader` cannot tolerate (it uses the
+  `numpy._core.multiarray._reconstruct` path that landed in numpy
+  2.0+).
+- InstaDeep's upstream does **not** publish new pins. Their
+  `environment.yaml` (the file at `data/protbfn_abbfn/repo/`) is the
+  original 0.0.9/0.7.2/0.4.13 set with no later commit; they ship
+  the **Dockerfile** as the reproducibility mechanism. The
+  Dockerfile pins `nvidia/cuda:11.8.0-cudnn8-devel-ubuntu20.04` and
+  micromamba-installs the pins above; reproducing that Docker build
+  on a current rig is a separate multi-hour effort and is not in
+  scope for this task.
+
+**Current pins work** (verified 2026-09-03 by importing
+`data.protbfn_abbfn.repo.model.get_transformer_fn` and `sample.py`
+from `protbfn_venv`; both succeed and `hk.transform(fn).init(rng)`
+runs for `model_size="ProtBFN"`).
+
+**Recommendation (research-only, no install):**
+
+> Keep the current 0.0.17 / 0.12.9 / 0.11.1 set as the installed
+> `protbfn_venv` baseline. Treat the original 0.0.9/0.7.2/0.4.13 pins
+> as a "paper-fidelity" alternative that is reproducible **only via
+> the upstream Dockerfile on CUDA 11.8 + Python 3.9**, not as an
+> in-tree install target. If a future project wants paper-fidelity
+> numbers, it should build the InstaDeep Docker image and run
+> `sample.py` inside that container; the framework's metrics are
+> produced outside that environment.
+
+The full reasoning, the reproducer, and the resolved set are recorded
+in `requirements/protbfn.lock` (a documentation-only artefact, not a
+uv/pip-installable lockfile — the JAX stack is not a transitive
+project dependency and is not present in `pyproject.toml`).

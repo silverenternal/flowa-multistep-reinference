@@ -6,12 +6,35 @@ general protein-sequence Bayesian Flow Network) and **AbBFN**
 FlowA re-inference scheduler harness
 `tools/run_sota_protbfn_abbfn_adapter_experiment.py`. The Phase-C
 target is to demonstrate that FlowA's per-step re-inference budget
-maintains (or improves) per-sequence metrics -- `aar` (amino-acid
-recovery), `freq_l1` (frequency L1 distance to natural proteins),
-`novelty` (mean % sequence identity to the training set), `plddt_mean`
-(mean pLDDT under ESMFold), `n_cap` (constrained-token count), `beta`
-(diversity-vs-fidelity trade-off) -- relative to a fixed-NFE baseline
-at matched compute.
+maintains (or improves) per-sequence metrics -- **as currently emitted
+by the harness**: `mean_perplexity` (per-round perplexity mean +/- std
+under the trained model), `novelty_fraction` (mean % sequence novelty
+vs the bundled reference FASTA), `distinct_sequences` (uniqueness per
+round), `mean_repetition` (3-gram repetition score per the ProtBFN
+paper definition) -- relative to a fixed-NFE baseline at matched
+compute.
+
+**Doc-vs-code drift note (2026-09-03).** Earlier revisions of this
+opening paragraph advertised `aar / freq_l1 / plddt_mean /
+cluster_hit / cdr_recovery` as Phase-C metrics. As of 2026-09-03 the
+harness now also computes `aar` (AbBFN-only, when a reference FASTA
+is supplied) and `freq_l1` (always-on, pure-Python + numpy, with a
+flat 1/20 prior fallback or the bundled upstream example MSA as the
+empirical natural reference). The remaining three — `plddt_mean`,
+`cluster_hit`, `cdr_recovery` — are still the *target* paper-parity
+metric surface and are documented separately in the new
+`Phase-C+ metric surface (future work)` section below. The four
+Phase-C metrics plus the new `freq_l1` are what
+`tools/run_sota_protbfn_abbfn_adapter_experiment.py` **actually**
+writes into `summary.json` today.
+
+**Note on `recovery_rate`.** The harness JSON also carries a
+`recovery_rate_placeholder` field (see the rename in commit history +
+`docs/r17-survey/baseline-deviation-review.md` §6.1). It is intentionally
+NOT computed: no held-out AbBFN / ProtBFN reference set is bundled
+with the public weights, so the value is reported as `0.0` with
+`recovery_rate_status = "placeholder_no_heldout_set"`. Do not quote
+it as a paper metric.
 
 **P-05 update:** the harness now exposes `--bfn-steps-per-round`
 (default `125`). The default keeps the *total* FlowA NFE budget at
@@ -287,6 +310,34 @@ When those three land, §3 will be re-runnable and the `paired_delta` cells will
 - **Compute.** Phase-C is CPU-only by design: ProtBFN (650M params) and AbBFN (650M params, fine-tune) fit in <2 GB HBM at fp32 and the BFN update loop is not throughput-bound on the small batch sizes the protocol uses. No GPU required.
 - **Dependencies.** ESMFold for `plddt_mean` is the heaviest external dep (~3 GB params, runs on CPU at ~5 s/sequence). pLDDT can be skipped (set `--skip-plddt`) for a faster smoke; the metric block becomes four instead of five columns.
 - **Eval venv.** Same pattern as Phase-B image eval: ESMFold lives in an isolated venv (the framework venv does not host it). Pre-compute pLDDT for sequences cached in `data/protbfn_abbfn/runs/seqs.fasta` to amortise the cost across reruns.
+
+## 5a. Phase-C+ metric surface (future work)
+
+The five paper-parity metrics below are the *target* surface the
+harness will eventually emit. **None are wired today**; the
+`recovery_rate_placeholder` in `summary.json` is the closest the
+harness gets to `cluster_hit` and is currently reported as `0.0` with
+a status field. The list and cost estimates mirror §4.5 of
+`docs/r17-survey/baseline-deviation-review.md`.
+
+| Target metric | Definition | External dep | Cost estimate |
+|---|---|---|---|
+| `aar` (amino-acid recovery) | Per-position exact-AA-match rate between generated sequence and held-out reference (paper: ProtBFN §4, AbBFN §4.2). Pure Python + Biopython `SeqIO` for FASTA parsing. | None beyond `protbfn_venv`'s Biopython | ~2-4 h glue + a held-out reference set (~1 GB FASTA download) |
+| `freq_l1` (frequency L1 distance to natural proteins) | **Landed (2026-09-03)** — \|f_gen - f_natural\|_1 over the 20-standard AA alphabet, computed across a natural-protein MSA. Pure Python + numpy; see `adaptive_reflow.eval.freq_l1`. The harness always emits the block; reference defaults to the bundled `data/protbfn_abbfn/repo/example_inputs/sequences.fasta` upstream example MSA (12 VH chains) and falls back to the flat 1/20 prior when that file is unavailable. | None — pure Python; an optional caller-supplied `--reference-fasta` overrides the bundled default | 0 h glue (done); a larger empirical reference (UniRef50 cluster reps) can be plugged in later |
+| `plddt_mean` (mean pLDDT under ESMFold) | Mean predicted local-distance-difference-test score per-position from the ESMFold v1 model. Requires ESMFold weights (~3 GB, HF `facebook/esmfold_v1`). | `facebook/esmfold_v1` weights + ESMFold venv (~3 GB, ~5 s/sequence on CPU) | ~3-5 h glue + 3 GB weights + ~5 s/sequence wall-clock |
+| `cluster_hit` (UniRef50 / CATH S40 hit) | `mmseqs2 easy-search` of generated FASTA against a UniRef50 / CATH S40 reference DB; hit rate = fraction of sequences with identity >= 30 %. | `mmseqs2` system binary (`apt install mmseqs2`) + UniRef50 DB (~10 GB from EBI) + CATH S40 DB (~5 GB) | ~3-5 d for system install + DB download; per-eval ~minutes for 1k sequences |
+| `cdr_recovery` (per-region AAR on IMGT-numbered VH) | Per-region AAR across FR / CDR-H1 / H2 / H3 IMGT-numbered positions for AbBFN antibody-VH outputs. | Same as `aar` + an IMGT numbering table (literature) + a held-out VH reference set | ~4-6 h glue + the held-out VH reference (~100 MB) |
+
+**Total cost to lift the metric surface to paper parity** (all five):
+**~4-6 working days**, dominated by `mmseqs2 + UniRef50 + ESMFold`
+setup. AAR + `freq_l1` (both already landed in 2026-09-03) are the
+lowest-cost, highest-relevance first steps; the remaining three are
+still pending.
+
+The user's no-pure-torch rule is honored: AAR is pure-Python literature
+numbers, `cluster_hit` is the upstream `mmseqs2` binary (no rewrite),
+`plddt_mean` is the upstream `facebook/esmfold_v1` weights via the HF
+`transformers` ESMFold entry point.
 
 ## 6. Repro commands (the *intended* Phase-C runbook)
 
