@@ -61,7 +61,7 @@ import pickle
 import subprocess
 import sys
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -105,7 +105,105 @@ METRIC_KEYS: tuple[str, ...] = (
 )
 
 #: Schema version for the comparison JSON.
-OUTPUT_SCHEMA_VERSION: str = "1.0.0"
+#: 1.1.0 — added the additive ``flowmol3_paper_metrics`` block (upstream
+#: FlowMol3 ``SampleAnalyzer`` output for both arms + per-key delta).
+OUTPUT_SCHEMA_VERSION: str = "1.1.0"
+
+
+def _upstream_paper_metrics_available() -> bool:
+    """Return True iff the upstream FlowMol3 metrics wrapper imports here.
+
+    Lazy + failure-tolerant: this is only a default-value probe for the
+    ``--compute-flowmol3-paper-metrics`` flag, so any import problem
+    (missing ``torch_scatter``, missing upstream checkout) simply turns
+    the default off rather than aborting the run.
+    """
+    try:
+        from adaptive_reflow.adapters import (  # noqa: PLC0415
+            flowmol3_metrics_upstream as _upstream,
+        )
+    except BaseException:  # noqa: BLE001
+        return False
+    try:
+        return bool(_upstream.is_upstream_available())
+    except BaseException:  # noqa: BLE001
+        return False
+
+
+def _compute_flowmol3_paper_metrics_for_arm(
+    mols: Sequence[Any],
+    *,
+    arm: str,
+    run_posebusters: bool,
+    processed_data_dir: Path | None,
+    pb_workers: int,
+    device: str,
+) -> dict[str, Any]:
+    """Run the upstream FlowMol3 analyzer on one arm's RDKit mols.
+
+    All computation is delegated to
+    :func:`tools.run_mol_eval.compute_flowmol3_paper_metrics`, which in
+    turn calls the upstream wrapper verbatim — nothing is
+    reimplemented. Returns that function's stable dict, with ``arm``
+    added for traceability.
+    """
+    from tools.run_mol_eval import (  # noqa: PLC0415 - lazy on purpose
+        compute_flowmol3_paper_metrics,
+    )
+
+    smiles: list[str] = []
+    try:
+        from rdkit import Chem  # noqa: PLC0415
+    except BaseException as exc:  # noqa: BLE001
+        return {
+            "arm": arm,
+            "metrics": None,
+            "marker": "not_available",
+            "install_hint": "pip install rdkit",
+            "note": f"rdkit_unavailable:{exc}",
+            "n_total": 0,
+            "run_posebusters": bool(run_posebusters),
+        }
+    for mol in mols:
+        if mol is None:
+            continue
+        try:
+            smi = Chem.MolToSmiles(mol)
+        except Exception:  # noqa: BLE001 - permissive on purpose
+            continue
+        if smi:
+            smiles.append(str(smi))
+
+    block = compute_flowmol3_paper_metrics(
+        smiles,
+        processed_data_dir=processed_data_dir,
+        run_posebusters=bool(run_posebusters),
+        pb_workers=int(pb_workers),
+        device=str(device),
+    )
+    out: dict[str, Any] = {"arm": str(arm)}
+    out.update(block)
+    return out
+
+
+def _paper_metrics_delta(
+    baseline_block: Mapping[str, Any], framework_block: Mapping[str, Any]
+) -> dict[str, float]:
+    """Return ``framework - baseline`` for every shared upstream metric key.
+
+    Empty when either arm did not produce an upstream metrics dict.
+    """
+    b = baseline_block.get("metrics")
+    f = framework_block.get("metrics")
+    if not isinstance(b, Mapping) or not isinstance(f, Mapping):
+        return {}
+    out: dict[str, float] = {}
+    for key in sorted(set(b) & set(f)):
+        try:
+            out[str(key)] = float(f[key]) - float(b[key])
+        except (TypeError, ValueError):
+            out[str(key)] = float("nan")
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -432,6 +530,12 @@ def _run_mol_eval(
         str(output_json),
         "--dataset",
         str(dataset),
+        # The parent process computes the upstream FlowMol3 paper metrics
+        # itself (see _compute_flowmol3_paper_metrics_for_arm), so the
+        # subprocess must not repeat that expensive work via its own
+        # auto-gate. The per-metric outputs (validity/QED/FCD/...) are
+        # unchanged.
+        "--no-flowmol3-paper-metrics",
     ]
     if reference_smiles is not None and reference_smiles.exists():
         cmd.extend(["--reference-smiles", str(reference_smiles)])
@@ -686,7 +790,52 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "per-round-nfe 2. Overrides the relevant CLI flags."
         ),
     )
+    parser.add_argument(
+        "--compute-flowmol3-paper-metrics",
+        dest="compute_flowmol3_paper_metrics",
+        action="store_true",
+        default=None,
+        help=(
+            "Run the upstream FlowMol3 SampleAnalyzer on both arms' "
+            "samples and store the result in the comparison JSON. "
+            "Default: ON when the upstream wrapper is importable."
+        ),
+    )
+    parser.add_argument(
+        "--no-compute-flowmol3-paper-metrics",
+        dest="compute_flowmol3_paper_metrics",
+        action="store_false",
+        help="Skip the upstream FlowMol3 paper-metrics block.",
+    )
+    parser.add_argument(
+        "--flowmol3-processed-data-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Upstream processed dataset dir for the FlowMol3 analyzer "
+            "(needed only for energy-divergence metrics). Default: "
+            "upstream's own fallback."
+        ),
+    )
+    parser.add_argument(
+        "--flowmol3-no-posebusters",
+        dest="flowmol3_run_posebusters",
+        action="store_false",
+        default=True,
+        help=(
+            "Disable the PoseBusters stage inside the upstream FlowMol3 "
+            "analyzer (it is memory-hungry on tight GPUs)."
+        ),
+    )
+    parser.add_argument(
+        "--flowmol3-pb-workers",
+        type=int,
+        default=2,
+        help="PoseBusters worker processes for the upstream analyzer (0 = serial).",
+    )
     args = parser.parse_args(argv)
+    if args.compute_flowmol3_paper_metrics is None:
+        args.compute_flowmol3_paper_metrics = _upstream_paper_metrics_available()
     if bool(args.smoke):
         args.n_mols = 4
         args.n_rounds = 2
@@ -747,7 +896,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # --- baseline arm ---
-    baseline_pkl, baseline_wall, _ = _run_baseline(
+    baseline_pkl, baseline_wall, baseline_mols = _run_baseline(
         adapter=adapter,
         n_mols=int(n_mols),
         baseline_nfe=int(baseline_nfe),
@@ -761,7 +910,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # --- framework arm ---
-    framework_pkl, framework_wall, _ = _run_framework(
+    framework_pkl, framework_wall, framework_mols = _run_framework(
         adapter=adapter,
         n_mols=int(n_mols),
         n_rounds=int(n_rounds),
@@ -799,6 +948,56 @@ def main(argv: list[str] | None = None) -> int:
     framework_metrics = _safe_metrics(framework_report)
     delta = _paired_delta(baseline_metrics, framework_metrics)
 
+    # --- upstream FlowMol3 paper metrics (additive) ---
+    flowmol3_pdd = (
+        Path(args.flowmol3_processed_data_dir)
+        if args.flowmol3_processed_data_dir
+        else None
+    )
+    if bool(args.compute_flowmol3_paper_metrics):
+        print(
+            "[run_sota_flowmol3] computing upstream FlowMol3 paper metrics "
+            f"(posebusters={bool(args.flowmol3_run_posebusters)})",
+            flush=True,
+        )
+        baseline_paper = _compute_flowmol3_paper_metrics_for_arm(
+            baseline_mols,
+            arm="baseline",
+            run_posebusters=bool(args.flowmol3_run_posebusters),
+            processed_data_dir=flowmol3_pdd,
+            pb_workers=int(args.flowmol3_pb_workers),
+            device=str(args.device),
+        )
+        framework_paper = _compute_flowmol3_paper_metrics_for_arm(
+            framework_mols,
+            arm="framework",
+            run_posebusters=bool(args.flowmol3_run_posebusters),
+            processed_data_dir=flowmol3_pdd,
+            pb_workers=int(args.flowmol3_pb_workers),
+            device=str(args.device),
+        )
+        for block in (baseline_paper, framework_paper):
+            print(
+                f"[run_sota_flowmol3] flowmol3_paper_metrics[{block['arm']}]: "
+                f"marker={block['marker']} n_total={block['n_total']}"
+                + (f" note={block['note']}" if block.get("note") else ""),
+                flush=True,
+            )
+        flowmol3_paper_block: dict[str, Any] = {
+            "enabled": True,
+            "baseline": baseline_paper,
+            "framework": framework_paper,
+            "paired_delta": _paper_metrics_delta(baseline_paper, framework_paper),
+        }
+    else:
+        flowmol3_paper_block = {
+            "enabled": False,
+            "baseline": None,
+            "framework": None,
+            "paired_delta": {},
+            "note": "upstream_wrapper_unavailable_or_disabled_by_flag",
+        }
+
     total_wall = float(time.perf_counter() - overall_started)
 
     # --- markdown + JSON ---
@@ -833,6 +1032,7 @@ def main(argv: list[str] | None = None) -> int:
         "baseline": baseline_metrics,
         "framework": framework_metrics,
         "paired_delta": delta,
+        "flowmol3_paper_metrics": flowmol3_paper_block,
         "baseline_report": baseline_report,
         "framework_report": framework_report,
     }

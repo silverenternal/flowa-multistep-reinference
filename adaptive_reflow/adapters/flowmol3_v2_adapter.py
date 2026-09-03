@@ -48,9 +48,11 @@ Public surface
 from __future__ import annotations
 
 import hashlib
+import sys
 from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
@@ -202,8 +204,190 @@ AUDIT_FLOWMOL3_INJECT_FORWARD_NOISE: str = "flowmol3adapter_inject_forward_noise
 # framework.
 FLOWMOL3ADAPTER_MECHANISM_ID: str = "inference.adaptive_reflow.flowmol3adapter"
 
+#: Default absolute path to the upstream zavalab FlowMol3 repository
+#: (pinned at commit ``77cae22174b7792b0e25e9e0414038420736d841``).
+#: When ``FlowMol3V2Adapter(use_upstream=True)`` is constructed, the
+#: adapter :func:`sys.path.insert`s this directory and tries to
+#: ``from flowmol.models.flowmol import FlowMol``. The full-fidelity
+#: upstream sampler requires :mod:`dgl` + :mod:`torch_scatter`; on
+#: :sm_120 the upstream dependency chain is NOT installable from
+#: PyPI wheels (per ``docs/r17-survey/baseline-deviation-review.md``
+#: §3.4) so the hook stays dormant unless both dependencies import.
+FLOWMOL3ADAPTER_UPSTREAM_REPO_DIR: str = (
+    str(Path(__file__).resolve().parent.parent.parent / "data" / "FlowMol3" / "repo")
+)
+
+#: Sentinel kind in ``model_metadata`` when the upstream
+#: ``flowmol.models.flowmol.FlowMol`` was successfully instantiated.
+#: Distinct from ``"real"`` (the framework's partial-fidelity readout
+#: head built in :func:`_build_flowmol3_velocity_module`) and from
+#: ``"synthetic"`` (the deterministic NumPy field).
+FLOWMOL3ADAPTER_UPSTREAM_KIND: str = "upstream_flowmol"
+
+#: Marker stored under ``model_metadata['dgl_available']`` after the
+#: first ``_load_model()`` call. The flag is informational — the
+#: adapter does not require DGL on the partial-fidelity path; it only
+#: needs DGL on the ``use_upstream=True`` path.
+FLOWMOL3ADAPTER_DGL_PROBE: str = "dgl_available"
+
 # Local type alias to keep numpy dependency off hot annotation paths.
 ArrayF64 = NDArray[np.float64]
+
+
+def _probe_dgl() -> bool:
+    """Return ``True`` iff :mod:`dgl` imports cleanly in this interpreter.
+
+    Used by :meth:`FlowMol3V2Adapter._load_model` to gate the
+    ``use_upstream=True`` path. Distinct from :func:`_torch_is_available`
+    because DGL is a separate wheel that has its own torch-version
+    coupling (``libgraphbolt_pytorch_<X>.<Y>.<Z>.so`` is matched
+    against the running torch). On :sm_120 the published PyPI wheel
+    for ``dgl==2.1.0`` is built against ``torch==2.2.0+cu121``; the
+    framework's project venv runs ``torch==2.7.0+cu128``, hence the
+    three-step install dance in §3.4 of the baseline-deviation review.
+    """
+    import importlib.util as _il
+
+    spec = _il.find_spec("dgl")
+    if spec is None:
+        return False
+    try:
+        import dgl  # noqa: F401 - import side-effect only
+    except Exception:  # noqa: BLE001 - permissive: any import failure = missing
+        return False
+    return True
+
+
+def _install_upstream_stubs() -> None:
+    """Install pure-Python stubs for ``torch_scatter`` and ``posebusters``.
+
+    The upstream zavalab FlowMol3 code imports these two packages at
+    module load time:
+
+    * ``torch_scatter.segment_csr`` is the only torch_scatter symbol
+      actually used (in ``flowmol/utils/ctmc_utils.py:purity_sampling``).
+      We provide a minimal pure-torch segment-sum via CSR indptr — the
+      inputs are tiny (per-batch sizes) so a Python loop is acceptable.
+    * ``posebusters.PoseBusters`` is only used in the trainer's
+      :class:`SampleAnalyzer` (``flowmol/analysis/metrics.py``); we
+      never call it on the inference path but it must be importable
+      because ``FlowMol.__init__`` instantiates the analyzer eagerly.
+
+    The stubs are installed exactly once (idempotent via a module-level
+    sentinel) and BEFORE the ``flowmol`` package is added to
+    :data:`sys.path` so the upstream's absolute imports resolve against
+    the stubs. Both stubs are best-effort: if a real package later
+    becomes available, prefer that over the stub. Tested with
+    ``torch==2.7.0+cu128``, ``dgl==2.4.0+cu124``.
+
+    See ``tools/flowmol3_upstream_smoke.py`` for the smoke harness that
+    exercises the upstream path on sm_120.
+    """
+    import types as _types
+
+    if getattr(_install_upstream_stubs, "_installed", False):
+        return
+    # --- torch_scatter stub -------------------------------------------------
+    if "torch_scatter" not in sys.modules:
+        ts_mod = _types.ModuleType("torch_scatter")
+
+        def _segment_csr(src: Any, indptr: Any) -> Any:
+            """Pure-torch segment-sum over CSR indptr.
+
+            ``src`` has shape ``(N,)`` and ``indptr`` has shape
+            ``(batch+1,)`` with ``indptr[i+1] - indptr[i]`` = size of
+            group ``i``. Returns ``(batch,)`` with the per-group sum.
+            """
+            import torch as _torch  # lazy; keep the stub dep-light
+
+            out = []
+            for i in range(int(indptr.shape[0]) - 1):
+                start = int(indptr[i].item())
+                end = int(indptr[i + 1].item())
+                if end == start:
+                    out.append(_torch.zeros((), dtype=src.dtype, device=src.device))
+                else:
+                    out.append(src[start:end].sum())
+            return _torch.stack(out)
+
+        ts_mod.segment_csr = _segment_csr
+        sys.modules["torch_scatter"] = ts_mod
+    # --- posebusters stub ---------------------------------------------------
+    if "posebusters" not in sys.modules:
+        pb_mod = _types.ModuleType("posebusters")
+
+        class _PoseBustersStub:  # noqa: D401 — minimal no-op API surface
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                self._kwargs = dict(kwargs)
+
+            def bust(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+                return {}
+
+            def analyze(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+                return {}
+
+        pb_mod.PoseBusters = _PoseBustersStub  # type: ignore[attr-defined]
+        sys.modules["posebusters"] = pb_mod
+    # --- torch.serialization: allow pathlib.PosixPath for the Lightning ckpt
+    # PyTorch 2.6+ tightened the ``weights_only=True`` default in
+    # ``torch.load``; the FlowMol3 Lightning checkpoint pickles
+    # ``pathlib.PosixPath`` objects. Adding it to the safe-globals set
+    # is the standard torch-supported way to allow that single global.
+    try:
+        import pathlib as _pathlib
+        import torch as _torch
+
+        _torch.serialization.add_safe_globals([_pathlib.PosixPath])
+    except Exception:  # noqa: BLE001 - if torch isn't importable we don't care
+        pass
+    setattr(_install_upstream_stubs, "_installed", True)
+
+
+def _try_import_upstream_flowmol(
+    repo_dir: str = FLOWMOL3ADAPTER_UPSTREAM_REPO_DIR,
+) -> tuple[Any, str | None]:
+    """Lazy-import ``flowmol.models.flowmol.FlowMol`` from the cloned repo.
+
+    Performs the ``sys.path`` tweak the upstream repo requires (its
+    package layout uses absolute ``from flowmol.models...`` imports,
+    so the repo root must be on :data:`sys.path` before the first
+    ``flowmol`` import). Returns ``(FlowMol_class_or_None, error_str_or_None)``.
+
+    Failure modes (all swallowed into a ``None`` + reason string so the
+    adapter's ``use_upstream=True`` path degrades gracefully):
+
+    * Repo directory does not exist on disk.
+    * ``dgl`` is not importable in this interpreter.
+    * ``from flowmol.models.flowmol import FlowMol`` raises
+      :class:`ImportError` even after :func:`_install_upstream_stubs`
+      (e.g. ``flowmol`` package itself is corrupt or missing).
+
+    The :func:`_install_upstream_stubs` call is idempotent and must run
+    BEFORE the import so the upstream's top-level ``from posebusters
+    import PoseBusters`` (in ``flowmol/analysis/metrics.py``) and
+    ``from torch_scatter import segment_csr`` (in
+    ``flowmol/utils/ctmc_utils.py``) resolve against our pure-Python
+    stubs. Both stubs preserve the public surface the upstream actually
+    touches; everything else is left as a normal ImportError.
+    """
+    from pathlib import Path
+
+    p = Path(str(repo_dir))
+    if not p.is_dir():
+        return None, f"upstream_repo_dir_not_found:{repo_dir}"
+    repo_str = str(p.resolve())
+    # Install stubs BEFORE sys.path tweak so the upstream's absolute
+    # ``from flowmol...`` imports find the stubs via sys.modules.
+    _install_upstream_stubs()
+    # sys.path tweak: prepend so repo's __init__.py wins over any
+    # unrelated ``flowmol`` that may be installed system-wide.
+    if repo_str not in sys.path:
+        sys.path.insert(0, repo_str)
+    try:
+        from flowmol.models.flowmol import FlowMol  # type: ignore[import-not-found]
+    except Exception as exc:  # noqa: BLE001 - permissive on purpose
+        return None, f"upstream_flowmol_import_failed:{type(exc).__name__}:{exc}"
+    return FlowMol, None
 
 
 # ---------------------------------------------------------------------------
@@ -744,23 +928,31 @@ def _real_velocity_field(
     import torch  # noqa: PLC0415
 
     dev = torch.device(str(device))
-    x_t = torch.as_tensor(np.asarray(x, dtype=np.float32)).to(dev).detach()
+    # NB: numpy 2.x compatibility — `torch.as_tensor(np_arr)` fails with
+    # ``RuntimeError: Could not infer dtype of numpy.float32`` on
+    # torch==2.2.0 because the internal ``_infer_dtype`` path uses
+    # ``len(arr.dtype)`` which numpy 2.x no longer supports on 0-d/1-d
+    # dtype objects. Passing an explicit ``dtype=torch.float32`` bypasses
+    # the inference. Same fix in :func:`_ctmc_real_velocity_field_ex`.
+    x_t = torch.as_tensor(
+        np.asarray(x, dtype=np.float32), dtype=torch.float32
+    ).to(dev).detach()
     n_atoms = int(x_t.shape[0])
     a_np = np.clip(
         np.asarray(a, dtype=np.int64), 0, FLOWMOL3ADAPTER_N_ATOM_TYPES - 1
     )
-    a_tok = torch.as_tensor(a_np).to(dev).detach()
+    a_tok = torch.as_tensor(a_np, dtype=torch.long).to(dev).detach()
     c_np = np.asarray(c, dtype=np.float64).reshape(n_atoms)
     c_idx = np.clip(
         np.rint(c_np).astype(np.int64) - int(FLOWMOL3_MODEL_CHARGE_VALUES[0]),
         0,
         FLOWMOL3_MODEL_CHARGE_LOGITS - 1,
     )
-    c_tok = torch.as_tensor(c_idx).to(dev).detach()
+    c_tok = torch.as_tensor(c_idx, dtype=torch.long).to(dev).detach()
     e_np = np.asarray(e, dtype=np.int64).reshape(n_atoms, n_atoms)
     e_np = np.clip(e_np, 0, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
     e_model = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND, dtype=np.int64)[e_np]
-    e_tok = torch.as_tensor(e_model).to(dev).detach()
+    e_tok = torch.as_tensor(e_model, dtype=torch.long).to(dev).detach()
 
     with torch.no_grad():
         t_emb = _flowmol3_time_embedding(
@@ -777,8 +969,13 @@ def _real_velocity_field(
         )
         # --- charge marginal -> expected formal charge -----------------
         p_c = torch.softmax(charge_logits.float(), dim=-1)
+        # numpy 2.x compat: explicit torch dtype bypasses the broken
+        # ``_infer_dtype`` path that raises
+        # ``RuntimeError: Could not infer dtype of numpy.float32`` on
+        # torch==2.2.0.
         charge_values = torch.as_tensor(
-            np.asarray(FLOWMOL3_MODEL_CHARGE_VALUES, dtype=np.float32)
+            np.asarray(FLOWMOL3_MODEL_CHARGE_VALUES, dtype=np.float32),
+            dtype=torch.float32,
         ).to(dev)
         c_pred = (p_c * charge_values).sum(dim=-1)
         # --- bond marginal, symmetrized, re-indexed --------------------
@@ -1107,23 +1304,31 @@ def _ctmc_real_velocity_field_ex(
     import torch  # noqa: PLC0415
 
     dev = torch.device(str(device))
-    x_t = torch.as_tensor(np.asarray(x, dtype=np.float32)).to(dev).detach()
+    # NB: numpy 2.x compatibility — `torch.as_tensor(np_arr)` fails with
+    # ``RuntimeError: Could not infer dtype of numpy.float32`` on
+    # torch==2.2.0 because the internal ``_infer_dtype`` path uses
+    # ``len(arr.dtype)`` which numpy 2.x no longer supports on 0-d/1-d
+    # dtype objects. Passing an explicit ``dtype=torch.float32`` bypasses
+    # the inference. Same fix in :func:`_ctmc_real_velocity_field_ex`.
+    x_t = torch.as_tensor(
+        np.asarray(x, dtype=np.float32), dtype=torch.float32
+    ).to(dev).detach()
     n_atoms = int(x_t.shape[0])
     a_np = np.clip(
         np.asarray(a, dtype=np.int64), 0, FLOWMOL3ADAPTER_N_ATOM_TYPES - 1
     )
-    a_tok = torch.as_tensor(a_np).to(dev).detach()
+    a_tok = torch.as_tensor(a_np, dtype=torch.long).to(dev).detach()
     c_np = np.asarray(c, dtype=np.float64).reshape(n_atoms)
     c_idx = np.clip(
         np.rint(c_np).astype(np.int64) - int(FLOWMOL3_MODEL_CHARGE_VALUES[0]),
         0,
         FLOWMOL3_MODEL_CHARGE_LOGITS - 1,
     )
-    c_tok = torch.as_tensor(c_idx).to(dev).detach()
+    c_tok = torch.as_tensor(c_idx, dtype=torch.long).to(dev).detach()
     e_np = np.asarray(e, dtype=np.int64).reshape(n_atoms, n_atoms)
     e_np = np.clip(e_np, 0, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
     e_model = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND, dtype=np.int64)[e_np]
-    e_tok = torch.as_tensor(e_model).to(dev).detach()
+    e_tok = torch.as_tensor(e_model, dtype=torch.long).to(dev).detach()
 
     with torch.no_grad():
         t_emb = _flowmol3_time_embedding(
@@ -1149,8 +1354,13 @@ def _ctmc_real_velocity_field_ex(
 
         # Charge marginal -> expected formal charge + 6-class simplex.
         p_c_logits = torch.softmax(charge_logits.float(), dim=-1)
+        # numpy 2.x compat — explicit torch dtype bypasses the broken
+        # ``_infer_dtype`` path that raises
+        # ``RuntimeError: Could not infer dtype of numpy.float32`` on
+        # torch==2.2.0.
         charge_values = torch.as_tensor(
-            np.asarray(FLOWMOL3_MODEL_CHARGE_VALUES, dtype=np.float32)
+            np.asarray(FLOWMOL3_MODEL_CHARGE_VALUES, dtype=np.float32),
+            dtype=torch.float32,
         ).to(dev)
         c_pred = (p_c_logits * charge_values).sum(dim=-1)
         p_c = p_c_logits  # already 6-wide, sum to 1
@@ -1297,6 +1507,8 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         weights_path: Any = None,
         device: str = "cpu",
         ctmc_enabled: bool | None = None,
+        use_upstream: bool = False,
+        upstream_repo_dir: str | None = None,
     ) -> None:
         if backend not in ("numpy", "torch"):
             raise ValueError(
@@ -1309,11 +1521,35 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 "torch backend requested but torch is not importable; "
                 "either install torch or use backend='numpy'"
             )
+        # ``use_upstream`` is a hook for the §3.4 repair plan: when
+        # ``True`` the adapter, on first ``_load_model()`` call, tries
+        # to instantiate the upstream ``flowmol.models.flowmol.FlowMol``
+        # via :func:`_try_import_upstream_flowmol` and a ``sys.path``
+        # tweak. Default ``False`` preserves the partial-fidelity
+        # behaviour the baseline workflow has been exercising. The
+        # flag does nothing on the ``backend='numpy'`` path because
+        # the upstream FlowMol is fundamentally a torch / DGL model.
+        if use_upstream and backend != "torch":
+            raise ValueError(
+                "use_upstream_requires_backend_torch"
+            )
         self._backend = backend
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
         self._weights_path = str(weights_path) if weights_path is not None else None
         self._device = str(device)
+        self._use_upstream = bool(use_upstream)
+        self._upstream_repo_dir = (
+            str(upstream_repo_dir)
+            if upstream_repo_dir is not None
+            else FLOWMOL3ADAPTER_UPSTREAM_REPO_DIR
+        )
+        # Sentinel kind for ``model_metadata['kind']`` set when the
+        # upstream load succeeded. ``None`` until first ``_load_model``
+        # call. The default behaviour (no upstream) keeps the
+        # historical ``"real"`` / ``"synthetic"`` kinds.
+        self._upstream_flowmol_cls: Any = None
+        self._upstream_import_error: str | None = None
         self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._caps = FlowMol3V2AdapterCapabilities()
         self._blender: RestartBlenderProtocol = (
@@ -1329,6 +1565,27 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         self._model: Any = None
         self._model_meta: dict[str, Any] = {}
         self._synthetic_weights: dict[int, dict[str, ArrayF64]] = {}
+
+    @property
+    def use_upstream(self) -> bool:
+        """Return ``True`` iff the adapter was constructed with ``use_upstream=True``.
+
+        Informational; reflects the constructor flag, not whether the
+        upstream load ultimately succeeded (see ``model_metadata``.
+        ``['kind']`` for the runtime kind and ``['upstream_import_error']``
+        for the failure reason if the upstream load failed).
+        """
+        return self._use_upstream
+
+    @property
+    def upstream_import_error(self) -> str | None:
+        """Return the reason upstream load failed, or ``None`` on success / not attempted.
+
+        Populated on first ``_load_model()`` call when
+        ``use_upstream=True``. ``None`` when the upstream import
+        succeeded OR when ``use_upstream=False``.
+        """
+        return self._upstream_import_error
 
     # ------------------------------------------------------------------
     # 0. capability handshake
@@ -1368,8 +1625,19 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         vocabulary + CTMC settings, loads the PyTorch Lightning
         ``last.ckpt`` ``state_dict``, and instantiates the real-weight
         velocity head via :func:`_build_flowmol3_velocity_module`.
-        Caches the module on ``self._model`` and the parsed metadata on
+        Caches the module on ``self._model` and the parsed metadata on
         ``self._model_meta``.
+
+        When ``use_upstream=True`` (the §3.4 repair-plan hook), the
+        first call dispatches to :func:`_try_import_upstream_flowmol`
+        instead of the partial-fidelity readout head, attempting to
+        instantiate the canonical
+        ``flowmol.models.flowmol.FlowMol`` from the cloned repo at
+        ``upstream_repo_dir``. The upstream path requires both
+        :mod:`dgl` and :mod:`torch_scatter` to be importable; if
+        either fails the adapter records the error under
+        :attr:`upstream_import_error` and falls back to the
+        partial-fidelity path so the adapter stays runnable.
 
         When no ``weights_path`` was supplied the model handle is the
         sentinel string ``"synthetic"`` and
@@ -1391,16 +1659,71 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             )
         if self._weights_path is None:
             self._model = "synthetic"
-            self._model_meta = {"kind": "synthetic", "weights_path": None}
+            self._model_meta = {
+                "kind": "synthetic",
+                "weights_path": None,
+                FLOWMOL3ADAPTER_DGL_PROBE: bool(_probe_dgl()),
+                "use_upstream": bool(self._use_upstream),
+            }
             return self._model
+        # ------------------------------------------------------------------
+        # use_upstream=True dispatch (the §3.4 hook)
+        # ------------------------------------------------------------------
+        # Tries the upstream zavalab FlowMol3 import + checkpoint load.
+        # On any failure (missing dgl / missing torch_scatter /
+        # missing repo) records the reason in
+        # ``self._upstream_import_error`` and falls back to the
+        # partial-fidelity path so the adapter stays runnable.
+        if self._use_upstream:
+            upstream_cls, upstream_err = _try_import_upstream_flowmol(
+                self._upstream_repo_dir,
+            )
+            if upstream_cls is not None:
+                try:
+                    ckpt = self._weights_path
+                    upstream_model = upstream_cls.load_from_checkpoint(
+                        ckpt, map_location=self._device, strict=False
+                    )
+                    upstream_model.eval()
+                    self._upstream_flowmol_cls = upstream_cls
+                    self._model = upstream_model
+                    self._model_meta = {
+                        "kind": FLOWMOL3ADAPTER_UPSTREAM_KIND,
+                        "weights_path": str(self._weights_path),
+                        "device": str(self._device),
+                        FLOWMOL3ADAPTER_DGL_PROBE: bool(_probe_dgl()),
+                        "use_upstream": True,
+                        "upstream_repo_dir": str(self._upstream_repo_dir),
+                        "upstream_class": str(upstream_cls),
+                    }
+                    return self._model
+                except Exception as exc:  # noqa: BLE001 - permissive
+                    # Upstream load raised at construction or
+                    # ``load_from_checkpoint`` time — record and fall
+                    # through to the partial-fidelity path below.
+                    self._upstream_import_error = (
+                        f"upstream_load_from_checkpoint_failed:"
+                        f"{type(exc).__name__}:{exc}"
+                    )
+            else:
+                self._upstream_import_error = upstream_err
+        # ------------------------------------------------------------------
+        # Default partial-fidelity readout head (existing behaviour)
+        # ------------------------------------------------------------------
         config = _load_flowmol3_config(self._weights_path)
         loaded = _load_flowmol3_state_dict(self._weights_path)
         module = _build_flowmol3_velocity_module(
             loaded["state_dict"], device=self._device
         )
         self._model = module
+        meta_kind = "real"
+        # If use_upstream was requested but failed, surface that fact
+        # in the meta block so a downstream reader can see the
+        # partial-fidelity fallback rather than inferring it.
+        if self._use_upstream and self._upstream_import_error is not None:
+            meta_kind = "real_fallback_after_upstream_failure"
         self._model_meta = {
-            "kind": "real",
+            "kind": meta_kind,
             "weights_path": str(self._weights_path),
             "device": str(self._device),
             "n_checkpoint_tensors": int(loaded["n_tensors"]),
@@ -1413,7 +1736,14 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             "distort_t": float(config["distort_t"]),
             "explicit_aromaticity": bool(config["explicit_aromaticity"]),
             "config_path": config["config_path"],
+            FLOWMOL3ADAPTER_DGL_PROBE: bool(_probe_dgl()),
+            "use_upstream": bool(self._use_upstream),
+            "upstream_repo_dir": str(self._upstream_repo_dir),
         }
+        if self._upstream_import_error is not None:
+            self._model_meta["upstream_import_error"] = (
+                self._upstream_import_error
+            )
         return self._model
 
     @property
@@ -1823,10 +2153,331 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
           :func:`stochastic_categorical_sample` helper from D1.
         * ``self.ctmc_enabled is False`` — pre-Stage-3 fallback: linear-
           interpolant ODE + greedy ``argmax`` for ablation studies.
+        * ``self._model_kind == 'upstream_flowmol'`` — full upstream
+          GVP path: bypass the per-step velocity-field bridge (which
+          calls into ``FlowMol.forward(g)`` expecting a dgl graph and
+          raises a ``TypeError`` on the (x_t, t) call convention the
+          protocol expects) and instead call the upstream's own
+          end-to-end :meth:`FlowMol.sample` entrypoint with a single
+          batch entry of size ``n_atoms``. The trajectory buffer is
+          then populated from the resulting
+          :class:`SampledMolecule` so
+          :meth:`export_trajectory` + RDKit validity are well-defined.
         """
+        # ------------------------------------------------------------------
+        # Upstream GVP fast-path (closes P-22 forward()-signature gap).
+        # ------------------------------------------------------------------
+        # ``FlowMol.forward(self, g: dgl.DGLGraph)`` is the *training*
+        # forward — it takes a dgl graph, samples interpolants, computes
+        # losses. The protocol convention is a per-step velocity-field
+        # call ``f(x_t, t) -> tensor`` that returns ``(v_x, v_c, v_e, v_a)``.
+        # Bridging these requires building a dgl graph at every solver
+        # step (the upstream has its own edge-batch indices via
+        # ``build_edge_idxs`` + ``get_upper_edge_mask``), which is doable
+        # but duplicative: the upstream already has an end-to-end
+        # :meth:`FlowMol.sample` entrypoint that does prior sampling +
+        # GVP inference + RDKit materialization in one shot. We route to
+        # that. The per-step velocity-field bridge is only needed when
+        # the upstream is unavailable (the partial-fidelity path) or the
+        # caller asks for it explicitly (``ctmc_enabled=False``).
+        if self._use_upstream and self._loaded_model_kind() == "upstream_flowmol":
+            return self._solve_ode_upstream(state, condition, seed=int(seed))
         if self.ctmc_enabled:
             return self._solve_ode_ctmc(state, condition, seed=int(seed))
         return self._solve_ode_linear(state, condition, seed=int(seed))
+
+    def _loaded_model_kind(self) -> str:
+        """Return the kind label of the loaded model (or ``"synthetic"`` if none).
+
+        Cached after first ``_load_model()`` call. Mirrors the values
+        written to ``model_metadata['kind']`` so the upstream dispatch
+        does not need to re-probe the model object on every
+        :meth:`solve_ode` call.
+        """
+        if self._model is None:
+            return "synthetic"
+        return str(self._model_meta.get("kind", "synthetic"))
+
+    def _solve_ode_upstream(
+        self,
+        state: StateBundle,
+        condition: ODEConditionDelta,
+        *,
+        seed: int,
+    ) -> ODEIntegratorTrace:
+        """End-to-end upstream :meth:`FlowMol.sample` path (P-22 close-out).
+
+        This is the *paper-correct* path: the upstream zavalab FlowMol3
+        implementation owns its own prior sampling, CTMC step (when
+        ``parameterization='ctmc'``), and ``integrate`` loop. Trying to
+        re-implement those in the adapter would either rewrite the GVP
+        from scratch (forbidden) or call into ``FlowMol.forward(g)``
+        with a tensor instead of a dgl graph (the original P-22
+        TypeError).
+
+        Instead we delegate to ``self._model.sample`` with one batch
+        entry of size ``n_atoms`` (drawn from the prior entry's
+        ``n_atoms``). The resulting :class:`SampledMolecule` carries the
+        final ``(x, a, c, e)`` plus its built ``rdkit_mol``; we
+        extract the four channels back into the adapter's native-state
+        lineage so :meth:`export_trajectory` + the protocol surface
+        stay intact.
+
+        Per the FlowMol3 restart contract, the entire call is wrapped
+        in ``torch.no_grad()`` (FlowMol.sample is already decorated
+        ``@torch.no_grad``) and we re-detach the cached tensors before
+        the lineage is published.
+        """
+        import torch  # noqa: PLC0415 — torch backend only.
+        try:
+            from rdkit import Chem  # noqa: PLC0415 — only on upstream path.
+        except Exception:  # noqa: BLE001 — RDKit absent means no SMILES cache.
+            Chem = None  # type: ignore[assignment]
+
+        ok, errs = validate_state_bundle(state)
+        if not ok:
+            raise CapabilityMissingError(
+                "validate_state_bundle", context=",".join(errs)
+            )
+        prior_entry = self._native_states.get(state.native_state_digest)
+        if prior_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state", context=str(state.native_state_digest)
+            )
+        n_atoms = int(prior_entry["n_atoms"])
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        if num_steps <= 0:
+            raise ValueError("num_steps_must_be_positive")
+
+        # Hand the (x, a, c, e) prior to the upstream's sample() via the
+        # ``prior`` dict — the upstream pads/aligns to its batched
+        # graph's ndata shape. Convert to torch on the requested device.
+        dev = torch.device(str(self._device))
+        n = int(n_atoms)
+        x0_np = np.asarray(prior_entry["x"], dtype=np.float32).reshape(n, 3)
+        # Atom-type prior: shape (n, n_atom_types_upstream + 1). The
+        # upstream's ``ctmc_masked_prior(n, d)`` produces ``(n, d+1)``
+        # with the mask token at index ``d`` (= ``n_atom_types``).
+        # ``n_atom_types`` already includes the fake-atom class when
+        # ``fake_atoms=True`` (the published CTMC checkpoint was trained
+        # with ``fake_atom_p > 0`` so ``n_atom_types == 11``).
+        a_np = np.asarray(prior_entry["a"], dtype=np.int64).reshape(n)
+        n_atom_types_upstream = int(getattr(self._model, "n_atom_types", 11))
+        # We supply a "fully unmasked" prior — every atom starts at the
+        # sampled adapter label (0..9), and we place the mask token at
+        # its dedicated index so the CTMC step sees a clean one-hot for
+        # each class.
+        a0_one_hot = np.zeros(
+            (n, n_atom_types_upstream + 1), dtype=np.float32
+        )
+        clipped = np.clip(a_np, 0, n_atom_types_upstream - 1)
+        for i in range(n):
+            a0_one_hot[i, int(clipped[i])] = 1.0
+        # Charge prior: shape (n, n_atom_charges + 1) with the CTMC mask
+        # at index ``n_atom_charges`` (== 6).
+        c_np = np.asarray(prior_entry["c"], dtype=np.float64).reshape(n)
+        c_idx = np.clip(
+            np.rint(c_np).astype(np.int64) + 2, 0, int(
+                getattr(self._model, "n_atom_charges", 6)
+            ) - 1
+        )
+        n_charge_classes = int(getattr(self._model, "n_atom_charges", 6))
+        c0_one_hot = np.zeros((n, n_charge_classes + 1), dtype=np.float32)
+        for i in range(n):
+            c0_one_hot[i, int(c_idx[i])] = 1.0
+        # Edge prior: shape (n_pairs, n_bond_types + 1). The upstream's
+        # ``explicit_aromaticity=False`` ⇒ ``n_bond_types == 4``; the
+        # mask sits at index 4. The adapter's bond labels (0..4) fold
+        # onto the upstream's 0..3 (0 = no-bond, 1 = single, 2 = double,
+        # 3 = triple) via ``FLOWMOL3_ADAPTER_TO_MODEL_BOND``.
+        e_np = np.asarray(prior_entry["e"], dtype=np.int64).reshape(n, n)
+        e_np = np.clip(e_np, 0, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
+        e_model_lbl = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND,
+                                  dtype=np.int64)[e_np]
+        n_bond_types_upstream = int(getattr(self._model, "n_bond_types", 4))
+        e0_one_hot_full = np.zeros(
+            (n, n, n_bond_types_upstream + 1), dtype=np.float32
+        )
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    continue
+                e0_one_hot_full[i, j, int(e_model_lbl[i, j])] = 1.0
+        upper_idx = np.triu_indices(n, k=1)
+        e0_ut = e0_one_hot_full[upper_idx[0], upper_idx[1]]
+        # FlowMol's dgl graph stores edges as upper-triangle first, then
+        # lower-triangle (mirrored). ``build_edge_idxs`` returns
+        # ``[upper, lower]`` concatenated — so the prior ``e_0`` must
+        # carry both halves, NOT just the upper-triangle. Doubling the
+        # upper-tensor here is the cheapest correct fix; the upstream's
+        # ``integrate`` step symmetrises via ``e_t[~upper_edge_mask] =
+        # e_t[upper_edge_mask]`` so duplicating is safe.
+        e0_full = np.concatenate([e0_ut, e0_ut], axis=0)
+        prior_dict: dict[str, Any] = {
+            "x_0": torch.as_tensor(x0_np, dtype=torch.float32).to(dev),
+            "a_0": torch.as_tensor(a0_one_hot, dtype=torch.float32).to(dev),
+            "c_0": torch.as_tensor(c0_one_hot, dtype=torch.float32).to(dev),
+            "e_0": torch.as_tensor(e0_full, dtype=torch.float32).to(dev),
+            "fake_atoms": bool(getattr(self._model, "fake_atoms", False)),
+        }
+
+        n_atoms_tensor = torch.as_tensor([int(n)], dtype=torch.long,
+                                          device=dev)
+        with torch.no_grad():
+            sampled = self._model.sample(
+                n_atoms=n_atoms_tensor,
+                n_timesteps=int(num_steps),
+                device=str(self._device),
+                prior=prior_dict,
+            )
+        # ``sampled`` is a list with one SampledMolecule (single-mol batch).
+        mol = sampled[0]
+        # The upstream ``SampledMolecule`` constructor already filters
+        # out the CTMC mask + fake-atom tokens via ``extract_moldata_from_graph``
+        # and exposes the *clean* arrays as ``positions`` (torch tensor),
+        # ``atom_types`` (LIST of element-symbol STRINGS like
+        # ``['H', 'C', 'N']``), ``atom_charges`` (torch tensor of formal
+        # charges in [-2, +3]), and ``bond_types`` / ``bond_src_idxs`` /
+        # ``bond_dst_idxs`` (tensors in the upstream's kekulized
+        # vocabulary 0..3). Use those directly — bypassing the dgl graph's
+        # ndata (which still carries the mask/fake tokens and would
+        # produce shape mismatches on the post-CTMC atom count).
+        n_final = int(mol.num_atoms)
+        x_final = np.asarray(
+            mol.positions.detach().cpu().numpy()
+            if hasattr(mol.positions, "detach") else mol.positions,
+            dtype=np.float64,
+        ).reshape(n_final, 3)
+        # Atom types are element SYMBOLS — map them to the adapter's
+        # 10-wide integer vocabulary via the upstream's ``atom_type_map``.
+        upstream_atom_map = list(getattr(self._model, "atom_type_map", []))
+        # The model attribute already has the 10-element GEOM-Drugs vocab
+        # (it appends 'Sn' / 'Se' at runtime for fake / mask tokens,
+        # which have been filtered out by this point).
+        elem_to_idx = {sym: i for i, sym in enumerate(upstream_atom_map)}
+        a_idx = np.asarray(
+            [int(elem_to_idx.get(str(s), 0)) for s in mol.atom_types],
+            dtype=np.int64,
+        ).reshape(n_final)
+        # Atom charges — already decoded (subtract the +2 offset).
+        c_idx_arr = np.asarray(
+            mol.atom_charges.detach().cpu().numpy()
+            if hasattr(mol.atom_charges, "detach") else mol.atom_charges,
+            dtype=np.int64,
+        ).reshape(n_final)
+        c_final = c_idx_arr.astype(np.float64).reshape(n_final)
+        # Edges: ``mol`` exposes ``bond_src_idxs`` / ``bond_dst_idxs`` /
+        # ``bond_types`` in upstream class indices (kekulized: 0..3).
+        # Reconstruct the symmetric ``(n, n)`` adapter bond label.
+        e_full_model = np.full(
+            (n_final, n_final),
+            FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
+            dtype=np.int64,
+        )
+        b_src = np.asarray(
+            mol.bond_src_idxs.detach().cpu().numpy()
+            if hasattr(mol.bond_src_idxs, "detach") else mol.bond_src_idxs,
+            dtype=np.int64,
+        )
+        b_dst = np.asarray(
+            mol.bond_dst_idxs.detach().cpu().numpy()
+            if hasattr(mol.bond_dst_idxs, "detach") else mol.bond_dst_idxs,
+            dtype=np.int64,
+        )
+        b_types = np.asarray(
+            mol.bond_types.detach().cpu().numpy()
+            if hasattr(mol.bond_types, "detach") else mol.bond_types,
+            dtype=np.int64,
+        )
+        # Clip to the upstream's emitted vocabulary (no CTMC mask on the
+        # final graph; 0..3).
+        b_types = np.clip(b_types, 0, int(n_bond_types_upstream) - 1)
+        # Map upstream (kekulized) bond labels back to the adapter's
+        # (single, double, triple, aromatic, no-bond) vocabulary.
+        inv_map = np.asarray(FLOWMOL3_MODEL_TO_ADAPTER_BOND + (4,),
+                              dtype=np.int64)
+        adapter_labels = inv_map[b_types]
+        # Mirror upper-triangle to lower-triangle (cosmetic — the RDKit
+        # writer only reads the upper triangle).
+        e_full_model[b_src, b_dst] = adapter_labels
+        np.fill_diagonal(e_full_model, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
+        # Atom-type labels: re-map to adapter's 10-wide vocabulary
+        # (mask / fake already filtered by the upstream).
+        n_atom_types_adapter = FLOWMOL3ADAPTER_N_ATOM_TYPES
+        a_final = np.where(
+            a_idx < n_atom_types_adapter, a_idx, 0
+        ).astype(np.int64).reshape(n_final)
+
+        # Build per-step trajectory lineage. The upstream does not expose
+        # the per-step (x, a, c, e) lineage (only the final graph); we
+        # record the final state at every step index so the trajectory
+        # buffer has the right shape and ``export_trajectory`` returns
+        # the same ``(num_steps+1, ...)`` shape as the linear path.
+        traj_x = np.tile(x_final[None, :, :], (num_steps + 1, 1, 1))
+        traj_c = np.tile(c_final[None, :], (num_steps + 1, 1))
+        traj_e = np.tile(e_full_model[None, :, :], (num_steps + 1, 1, 1))
+        traj_a = np.tile(a_final[None, :], (num_steps + 1, 1))
+        t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
+
+        traj_digest = _digest_state(
+            {
+                "kind": "trajectory",
+                "src_digest": str(state.native_state_digest),
+                "backend": "torch-upstream",
+                "num_steps": int(num_steps),
+                "n_atoms": int(n_final),
+                "x_final_hash": str(
+                    hashlib.sha256(np.asarray(x_final).tobytes()).hexdigest()
+                ),
+                "c_final_hash": str(
+                    hashlib.sha256(np.asarray(c_final).tobytes()).hexdigest()
+                ),
+                "e_final_hash": str(
+                    hashlib.sha256(np.asarray(e_full_model).tobytes()).hexdigest()
+                ),
+                "seed": int(seed),
+            }
+        )
+        self._put_native_state(
+            traj_digest,
+            {
+                "traj_x": traj_x,
+                "traj_c": traj_c,
+                "traj_e": traj_e,
+                "traj_a": traj_a,
+                "t_grid": t_grid,
+                "n_atoms": int(n_final),
+                "audit": (AUDIT_FLOWMOL3_TRAJECTORY_BUILT,
+                          "flowmol3adapter_upstream_gvp"),
+                "rdkit_mol_smiles": (
+                    str(Chem.MolToSmiles(mol.rdkit_mol))
+                    if mol.rdkit_mol is not None
+                    else ""
+                ),
+            },
+        )
+        cfg_blob = repr(
+            (
+                "flowmol3adapter_config",
+                "torch-upstream",
+                int(num_steps),
+                int(seed),
+                FLOWMOL3ADAPTER_PINNED_COMMIT,
+                "upstream_sample",
+            )
+            + (
+                (str(self._weights_path), str(self._device))
+                if self._weights_path is not None
+                else ()
+            )
+        ).encode("utf-8")
+        integrator_config_hash = hashlib.sha256(cfg_blob).hexdigest()
+        return ODEIntegratorTrace(
+            steps=int(num_steps),
+            accept_rate=1.0,
+            native_state_digest=str(traj_digest),
+            integrator_config_hash=integrator_config_hash,
+        )
 
     def _solve_ode_linear(
         self,
