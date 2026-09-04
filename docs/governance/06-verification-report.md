@@ -127,10 +127,10 @@ The 4 new ACTIVE claims are:
 
 | ID | Title |
 |---|---|
-| [CLM-044](#CLM-044) | Algorithm/ package enumeration — outer framework + abstract algorithm layer is the largest subpackage (25 modules, 4 Protocols) |
-| [CLM-045](#CLM-045) | `e_rho / 4` factor carries an inline CLM-042 derivation note in `BoundedMergeOperator` and `CodimensionSheetScheduler` (A-02.M1 paper-math fidelity) |
-| [CLM-046](#CLM-046) | `EvidenceScaleGapMetric` honours paper-math `eps` scaling flags (quadratic Lemma 3 + Lemma 4 exponential suppression); NaN/inf `eps_round` rejected (A-02.M2 + A-02.G1 + A-02.M3) |
-| [CLM-047](#CLM-047) | Stress-nightly Windows path bug closed + `cpu-tests.yml` / `docs-validate.yml` deduplicated + Python version matrix landed (T-04.3 + T-04.2 + T-04.4 + T-04.5) |
+| [CLM-044](CLAIMS.md#CLM-044) | Algorithm/ package enumeration — outer framework + abstract algorithm layer is the largest subpackage (25 modules, 4 Protocols) |
+| [CLM-045](CLAIMS.md#CLM-045) | `e_rho / 4` factor carries an inline CLM-042 derivation note in `BoundedMergeOperator` and `CodimensionSheetScheduler` (A-02.M1 paper-math fidelity) |
+| [CLM-046](CLAIMS.md#CLM-046) | `EvidenceScaleGapMetric` honours paper-math `eps` scaling flags (quadratic Lemma 3 + Lemma 4 exponential suppression); NaN/inf `eps_round` rejected (A-02.M2 + A-02.G1 + A-02.M3) |
+| [CLM-047](CLAIMS.md#CLM-047) | Stress-nightly Windows path bug closed + `cpu-tests.yml` / `docs-validate.yml` deduplicated + Python version matrix landed (T-04.3 + T-04.2 + T-04.4 + T-04.5) |
 
 All 4 are cross-referenced from `docs/INSIGHTS.md` §7.1.5 (the new "r16 governance audit fix train" bullet) and `ARCHITECTURE.md` status header.
 

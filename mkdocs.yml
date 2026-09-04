@@ -58,8 +58,21 @@ nav:
       - Molecular: api/adaptive_reflow.molecular.md
       - Eval: api/adaptive_reflow.eval.md
       - Adapters: api/adaptive_reflow.adapters.md
-  - Architecture: ARCHITECTURE.md
+  - Architecture:
+      - System overview: ARCHITECTURE.md
+      - Environment setup: environments.md
+      - Framework scope strategy: STRATEGY_FRAMEWORK_SCOPE.md
+      - Algorithm implementation notes (中文): 算法实现说明.md
   - Testing: TESTING_STRATEGY.md
+  - Results & records:
+      - Consolidated experimental results: CONSOLIDATED_RESULTS.md
+  - Governance audits:
+      - 01 — code-organisation audit: governance/01-code-org-audit.md
+      - 02 — algorithm audit: governance/02-algorithm-audit.md
+      - 03 — framework audit: governance/03-framework-audit.md
+      - 04 — test + CI audit: governance/04-test-ci-audit.md
+      - 05 — fix plan: governance/05-fix-plan.md
+      - 06 — verification report: governance/06-verification-report.md
   - Paper-supporting survey (r4-survey):
       - Phase-4 code review: r4-survey/18-comprehensive-code-review.md
       - Phase-4 fix plan: r4-survey/19-fix-plan.md
