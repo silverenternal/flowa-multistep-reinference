@@ -56,7 +56,7 @@ r17-survey; the r4/r5/r17 surveys are the current ones.
 
 | File | Status before archive | Current home |
 |---|---|---|
-| `algorithm-uplift-plan.md`, `algorithm-deep-uplift-plan.md`, `algorithm-round2-uplift-plan.md` | pre-implementation planning for the 3 algorithm rounds | `ROADMAP.md`, `CHANGELOG.md`, `docs/r17-survey/` |
+| `algorithm-uplift-plan.md`, `algorithm-deep-uplift-plan.md`, `algorithm-round2-uplift-plan.md` (consolidated into `algorithm-uplift-plans.md`) | pre-implementation planning for the 3 algorithm rounds | `ROADMAP.md`, `CHANGELOG.md`, `docs/r17-survey/` |
 
 ## `tools/mutate/WINDOWS_LIMITATION.md`
 
