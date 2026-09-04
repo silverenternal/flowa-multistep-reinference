@@ -93,6 +93,19 @@ from .integrators import (
     build_integrator,
 )
 from .karras_preconditioner import KarrasPreconditioner
+from .self_flow import (
+    SELF_FLOW_CHANNEL_DOMAINS,
+    SELF_FLOW_CHANNELS,
+    SELF_FLOW_CONFIG_HASH,
+    SELF_FLOW_CONFIG_VERSION,
+    SELF_FLOW_MECHANISM_ID,
+    SELF_FLOW_NUM_STEPS_DEFAULT,
+    SELF_FLOW_STATE_SHAPE,
+    SelfFlowAdapter,
+    SelfFlowCapabilities,
+    default_self_flow_adapter,
+    self_flow_resolve_weights_path,
+)
 from .reference_flowa import (
     REFERENCE_FLOWA_CHANNEL_DOMAINS,
     REFERENCE_FLOWA_CHANNELS,
@@ -194,6 +207,7 @@ ADAPTER_REGISTRY: dict[str, Any] = {
     "mnist_fm": default_mnist_fm_adapter,
     "protbfn_abbfn": default_protbfnabbfn_adapter,
     "rectified_flow_cifar": default_rectified_flow_cifar_adapter,
+    "self_flow": default_self_flow_adapter,
     "toy_gaussian": default_toy_gaussian_adapter,
     "toy_linear": default_toy_linear_adapter,
     "twodim_fm": default_twodim_fm_adapter,

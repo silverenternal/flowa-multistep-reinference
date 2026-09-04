@@ -514,6 +514,58 @@ available on the user's machine.
 
 ---
 
+## Plug-in candidate: Self-Flow (Wave 9)
+
+Self-Flow (Hila et al. 2026, arXiv:2603.06507) is a self-supervised
+dual-timestep flow-matching framework for scalable multi-modal
+synthesis from Black Forest Labs + MIT CSAIL, accepted at ICML 2026.
+The public ImageNet-256 checkpoint is a SiT-XL/2 backbone (~675M
+parameters) with a per-token timestep encoder and an EMA teacher-
+student; the published numbers report FID 5.70 on ImageNet-256,
+~50x fewer training steps than vanilla flow matching, and explicit
+improvements over REPA.
+
+A **skeleton adapter** is wired at
+[`adaptive_reflow/adapters/self_flow.py`](../adaptive_reflow/adapters/self_flow.py):
+
+* State shape `(4, 32, 32)` (ImageNet-256 latent — note: this is the
+  SiT native 16-channel VAE collapsed to 4 channels in the
+  velocity field, distinct from HiDream-I1's FLUX.1-VAE `(16, 128,
+  128)`).
+* Channels: `image_latent` (latent domain) only — no text
+  conditioning cache; class-label injection (`y_embedder` is a
+  1001-entry table, 0 = unconditional) is the only side-channel.
+* Defaults: 50 NFE FlowMatchEulerDiscrete, CFG 1.0 (the published
+  Self-Flow checkpoint is guidance-distilled).
+* Synthetic-mode test path is fully wired (zero velocity field
+  with per-token-timestep + y_embedder inputs); the production
+  torch-mode loader uses
+  [`diffusers.SiTTransformer2DModel`](https://huggingface.co/docs/diffusers)
+  when available and falls back to a shape-only ``_StubSiT``
+  ``nn.Module`` so the 1.4 GB checkpoint load path is exercisable
+  without cloning the full BFL Self-Flow training repo.
+* 22 tests in
+  [`tests/test_adapters/test_self_flow.py`](../tests/test_adapters/test_self_flow.py)
+  exercise the Protocol surface end-to-end (handshake,
+  `build_initial_state`, `solve_ode`, `observe_endpoint`,
+  ledger-chain integrity, NaN/Inf guards, registry membership,
+  class-label validation, restart-blending, export_trajectory,
+  inject_forward_noise, Heun solver).
+
+Harness status: ``tools/run_sota_self_flow_experiment.py`` is a
+**stub** that documents the required CLI surface and exits with
+``75`` (EX_TEMPFAIL). The full harness depends on the published
+ImageNet-256 reference batch + a CUDA host + an InceptionV3 FID
+evaluation pipeline (3-channel 299x299 RGB normalization).
+
+This adapter is a **genuine plug-in candidate**: the surface
+(``SelfFlowAdapter`` + ``SelfFlowCapabilities`` + per-class
+defaults + 4-channel velocity field collapsing) is enough to run
+the framework's algorithm-layer code against Self-Flow once the
+evaluation stack is available on the user's machine.
+
+---
+
 ## See also
 
 - [`ADAPTER_INTERFACE_SPEC.md`](./ADAPTER_INTERFACE_SPEC.md) — full
