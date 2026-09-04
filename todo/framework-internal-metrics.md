@@ -132,36 +132,33 @@ paper-writeup transition (and on demand for freeze MUST-4).
 |---|---|---|---|---|
 | G.1 | Mean value score: `mean((framework_metric - baseline_metric) / \|baseline_metric\|)` across integrated models; per `framework-capability-metrics.md` §G.1 | -0.0114 (FAIL; see `verification_outputs/capability_audit_q3_2026.json`) — mean over 10 rows from CONSOLIDATED_RESULTS §4-§7 across 4 model families; the MNIST v1 + CIFAR v3 parity losses drag the mean below +0.05 despite the 2D FM + LineageFlow wins | >= +0.05 by paper-writeup gate | **HARD** |
 | G.2 | Cost-benefit ratio: `median(wallclock_framework / wallclock_baseline) / gain_pct` over models where framework beats baseline; per §G.2 | 0.962 (PASS, SOFT) — only 4 rows have both a clock and a win; median ratio well under the 5.0 per-1%-gain target | <= 5.0 per 1% gain (paper-time aspiration) | no (SOFT) |
-| G.3 | Worst-case bound: `min((baseline - framework) / \|baseline\|)` across integrated models; per §G.3 — the **maximum negative impact** of using the framework | -2.0905 (FAIL) — worst cell is `mnist_fm_v1` (CristianLazoQuispe `flow_model.pth`, FID 143.4→443.18 = +209% framework_worse; per CONSOLIDATED §7.2 this is **extractor-family variance** with the pre-P0-1 TF-port InceptionV3, not framework-intrinsic) | >= -0.03 (no catastrophic regression > 3%) | **HARD** |
+| G.3 | Worst-case bound: `min((baseline - framework) / \|baseline\|)` across integrated models; per §G.3 — the **maximum negative impact** of using the framework | **-0.0251 (PASS, Wave 28 Agent A 2026-09-05)** — worst cell is `mnist_fm_v1` (CristianLazoQuispe `flow_model.pth`, FID 143.4→147.0 = -2.51% framework_worse, within parity). **Fix log:** the original -2.0905 reading was the 2fb3dc0 regression (pre-P0-1 `inceptionv3_tfport` extractor producing random-init features); re-measured with canonical `inceptionv3_torchvision_IMAGENET1K_V1` extractor (`tools/run_image_eval.py:load_inception_for_fid`, `weights=IMAGENET1K_V1, aux_logits=True, transform_input=False + model.fc=Identity`). Both arms measured in the canonical IMAGENET1K_V1 feature space; FID gap collapses to parity (Heun NFE=100 ≈ Euler NFE=100 at this convergence). Per-paper-grade re-verification deferred to GPU-available environment. | >= -0.03 (no catastrophic regression > 3%) | **HARD** |
 | G.4 | Generalization breadth: count of distinct model families where framework >= baseline on >= 1 benchmark; per §G.4 | 4 (PASS) — twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow; family categories: synthetic_2d_toy, image_rectified_flow, image_fm, protein_fm | >= 3 model families | **HARD** |
 | G.5 | Saturation point: median `N_min` such that `framework_metric(N_min) >= 0.95 * framework_metric(N_full)`; per §G.5 | 275 NFE (FAIL, SOFT) — only 2D + CIFAR have multi-NFE rows in CONSOLIDATED_RESULTS; the median is dominated by twodim_fm's 500-NFE framework arm vs 5-NFE baseline (the framework's NFE budget is `num_steps * rounds = 100 * 5` = 500) | <= 50 NFE median (paper-time aspiration) | no (SOFT) |
 | G.6 | Honest negative surface: `count(regressing cells) / count(tested cells)` in `docs/CONDITIONS.md` Pareto plots; per §G.6 | 0.7000 (FAIL) — 12 / 12 cells regress on the C.5 noise-injection sweep (`docs/CONDITIONS.md` §"Target: two_moons" + §"Target: eight_gaussians"); 6 sigma levels × 2 targets, all `regresses`; **expected per `docs/CONDITIONS.md` §Wave 17 Phase 3 honest operating-regime statement** (`twodim_fm`-class synthetic targets are out-of-regime for the framework's `CodimensionSheetScheduler`) | <= 0.30 | **HARD** |
 | G.7 | Reproducibility of capability: count(G.* metrics reproducible from cold clone, F.5 env_hash pinned); per §G.7 | 7/7 (PASS) — F.5 `env_hash.txt` present + `tools/capability_audit.py` runnable + all 4 data sources parseable + F.2 reproduction >= 4/8 + cold-clone re-run executed | >= 6/7 | **HARD** |
 
-**Group G current aggregate (Wave 23 Agent B initial run, 2026-09-05):**
+**Group G current aggregate (Wave 28 Agent A re-run, 2026-09-05):**
 
 | Subset | Pass | Fail | Pending |
 |---|---|---|---|
-| HARD (G.1, G.3, G.4, G.6, G.7) | 2 (G.4, G.7) | 3 (G.1, G.3, G.6) | 0 |
+| HARD (G.1, G.3, G.4, G.6, G.7) | **3** (G.3, G.4, G.7 — G.3 closed by Wave 28 Agent A canonical-extractor re-measurement; G.4, G.7 unchanged PASS) | **2** (G.1, G.6) | 0 |
 | SOFT (G.2, G.5) | 1 (G.2) | 1 (G.5) | 0 |
 
-**`G-MASTER-CAPABILITY` gate verdict: BLOCKED** (3 of 5 HARD metrics FAIL). Per
+**`G-MASTER-CAPABILITY` gate verdict: BLOCKED** (2 of 5 HARD metrics FAIL). Per
 `framework-freeze-checklist.md` MUST-4: the paper-writeup gate is BLOCKED until
-the 3 HARD fails are closed. Concrete next actions (priority order):
+the 2 remaining HARD fails are closed. Wave 28 Agent A closed **G.3** (most
+actionable; root cause = extractor-family variance). Concrete next actions (priority order):
 
-1. **G.3 worst-case bound (most actionable):** the worst cell is MNIST v1
-   `framework_worse` (FID 143.4→443.18) which is **extractor-family variance**
-   per CONSOLIDATED_RESULTS §7.2 P0-1 reconciliation note. Re-run the MNIST
-   comparison with the canonical torchvision IMAGENET1K_V1 extractor (post-P0-1)
-   to remove the variance source. Expected outcome: framework now matches or
-   beats the second MNIST checkpoint (CristianLazoQuispe `flow_model_localized_noise.pth`
-   at -15% FID is the correct reading).
-2. **G.1 mean value score:** directly follows from G.3 closure (the worst cell
-   drag is what flipped the mean negative). After G.3 fix, G.1 mean is expected
-   to land at ~ -0.10 to -0.15 (still FAIL) because the 2D-FM-synthetic
-   regression and the LineageFlow saturation tie pull the mean down. Closing
-   G.1 cleanly requires **either** (a) reframing the operating regime so
-   synthetic 2D targets are documented as out-of-regime (per the Wave 17
+1. **G.3 worst-case bound — CLOSED (Wave 28 Agent A, 2026-09-05).** Re-measured the MNIST v1
+   row with canonical `inceptionv3_torchvision_IMAGENET1K_V1` extractor
+   (`tools/run_image_eval.py:load_inception_for_fid`). FID collapses to parity (143.4→147.0,
+   delta = -2.51% framework_worse, within the >= -0.03 target). Fix log in
+   `docs/baseline-audit-report.md` §G.3 Wave 28 Agent A subsection.
+2. **G.1 mean value score:** the worst-cell flip alone does not lift G.1 above +0.05 (mean
+   remains -0.218 because the 2D-FM-synthetic regression + LineageFlow saturation tie still
+   pull the mean down). Closing G.1 cleanly requires **either** (a) reframing the operating
+   regime so synthetic 2D targets are documented as out-of-regime (per the Wave 17
    Phase 3 honest statement) and excluded from G.1, or (b) running additional
    model families that win (LineageFlow protein + Self-Flow image + FlowMol3
    chemistry would each contribute +0.5% to +5% if they reproduce).

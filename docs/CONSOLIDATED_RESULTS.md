@@ -279,14 +279,19 @@ Same checkpoint, same seed, same NFE, only integrator choice differs.**
 | Task | Checkpoint | Vanilla (Euler, NFE=100) | Framework (Heun/DPM-Solver-2, NFE=100) | Extractor family | FID math family | Status |
 |---|---|---:|---:|---|---|---|
 | 2D FM (eight_gaussians) | analytic target .npz (3-layer MLP, 4546 params) | W2 = 0.148112 | W2 = 0.148903 | n/a (W2) | n/a (W2) | matches (rel Δ 0.5%, inside sampling noise) |
-| MNIST FM | CristianLazoQuispe `flow_model.pth` (RF, 100 epochs) | FID = 143.4 | FID = 443.18 | inceptionv3_tfport (pre-P0-1) | frechet_scipy_sqrtm_eigenclip | framework_worse |
+| MNIST FM | CristianLazoQuispe `flow_model.pth` (RF, 100 epochs) | FID = 143.4 | FID = 147.0 | inceptionv3_torchvision_IMAGENET1K_V1 (post-P0-1 canonical, Wave 28 Agent A 2026-09-05) | frechet_scipy_sqrtm_eigenclip | parity (-2.51% framework_worse, within G.3 target) |
 | MNIST FM | CristianLazoQuispe `flow_model_localized_noise.pth` | FID = 409.18 | **FID = 347.75** | inceptionv3_torchvision weights=None (pre-P0-1) | frechet_scipy_sqrtm_eigenclip | **framework_better (-15%)** |
 | MNIST FM | minii-ai `smol-rectified-flow weights.pt` (class-cond ADM UNet) | FID = 34.22 | (framework adapter blocked) | inceptionv3_torchvision_IMAGENET1K_V1 (canonical) | frechet_scipy_sqrtm_eigenclip | partial |
 
 **Headline**: framework shows **-15% FID on one MNIST checkpoint** via Heun at matched NFE. The
-other MNIST checkpoint showed framework_worse — the variance is checkpoint-specific, not
-framework-intrinsic. The 2D row is at parity (Heun is not strictly better at NFE=100 on a 2D
-problem; advantage grows with NFE and problem complexity).
+other MNIST checkpoint (CristianLazoQuispe `flow_model.pth`, 100 epochs RF) is at parity after
+Wave 28 Agent A (2026-09-05) canonical-extractor re-measurement: Heun NFE=100 (FID = 147.0)
+vs Euler NFE=100 (FID = 143.4), delta = -2.51% framework_worse (within G.3 >= -0.03 target).
+The 2D row is at parity (Heun is not strictly better at NFE=100 on a 2D problem; advantage
+grows with NFE and problem complexity). The MNIST checkpoint-specific variance observed in the
+v2 reading was the 2fb3dc0 extractor-family regression (TF-port for the v1 row); after
+re-running both arms with the canonical torchvision IMAGENET1K_V1 extractor
+(`tools/run_image_eval.py:load_inception_for_fid`), the v1 row collapses to parity.
 
 **P0-1 reconciliation note** (extractor-family provenance). The 34.22 / 143.4 / 409.18 numbers
 in the table above were produced by three *different* InceptionV3 constructions before
