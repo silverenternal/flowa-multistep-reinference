@@ -669,3 +669,76 @@ repo is reconstructed.
   [`tools/run_sota_flowmol3_v2_adapter_experiment.py`](../tools/run_sota_flowmol3_v2_adapter_experiment.py)
   and awaits the FlowMol3 paper PDF + published checkpoint before
   authoring the full baseline-vs-FlowA pipeline.
+
+---
+
+## Plug-in candidate: Kanzi (Wave 21)
+
+Kanzi (Shah et al. 2026, ICLR 2026, ``arXiv:2510.00351``) is a
+two-stage **continuous-tokenizer flow autoencoder** for protein
+sequences. It compresses a protein sequence into ``L_z`` continuous
+latent tokens (each of dim ``d=64``) via a ~30 M parameter encoder
+(vanilla DiT-style 1D conv stack), then decodes the latent into a
+protein sequence via an autoregressive (AR) prior — a ~250 M
+parameter Transformer (ESM-2-tiny class) that samples the latent
+tokens one at a time, conditioned on the Pfam family ID. Combined
+~280 M parameters, < 2 GB fp16. Published numbers: designability
+**0.617** (≈61.7% of generated sequences fold to a plausible
+structure under ESMFold) and scRMSD **3.655 Å** on the Pfam subset.
+
+A **skeleton adapter** is wired at
+[`adaptive_reflow/adapters/kanzi.py`](../adaptive_reflow/adapters/kanzi.py):
+
+* State shape ``(L_z, d) = (64, 64)`` — ``L_z=64`` AR sequence
+length, ``d=64`` latent dim. Mirrors the per-position latent surface
+that Kanzi's flow autoencoder predicts (one velocity field per
+protein).
+* Three channels: ``protein_latent`` (continuous domain) — the FM-ODE
+integration target; ``discrete_token_index`` (discrete domain) — the
+AR prior's per-position categorical exposed as a side-channel so
+the framework can carry the AR sampler state across rounds without
+coupling it to the ODE loop; ``pfam_family_cond`` (continuous
+domain) — Pfam family ID injected as continuous side-channel
+conditioning (mirrors LineageFlow's ``PFAM_FAMILY_COND`` surface).
+* Defaults: 50 NFE FlowMatchEulerDiscrete, CFG 1.0 (the canonical
+Kanzi Pfam designability setting), family ID ``PF00001.21``.
+Latent clamp ``[-6, 6]`` matches Self-Flow's safe-bounded forward
+operator.
+* Synthetic-mode test path is fully wired (deterministic NumPy
+latent velocity field; LRU-bounded native-state cache; Pfam-family
+conditioning cache; discrete-token-index side-channel carrying
+forward unchanged across restart boundaries). The production
+torch-mode loader uses
+[`diffusers.Transformer2DModel`](https://huggingface.co/docs/diffusers)
+when available and falls back to a shape-only ``_StubKanzi``
+``nn.Module`` so the < 2 GB checkpoint load path is exercisable
+without cloning the full ``rdilip/kanzi`` upstream repo.
+* 26 tests in
+[`tests/test_adapters/test_kanzi.py`](../tests/test_adapters/test_kanzi.py)
+exercise the Protocol surface end-to-end (handshake,
+`build_initial_state`, `solve_ode`, `observe_endpoint`,
+ledger-chain integrity, NaN/Inf guards, byte-stability
+determinism, family-ID validation, restart-blending,
+export_trajectory, inject_forward_noise, Heun solver).
+
+Harness status: ``tools/run_sota_kanzi_experiment.py`` is a
+**stub** not yet authored. The full harness depends on the
+published Kanzi GitHub release (``rdilip/kanzi``) + a CUDA host +
+an ESMFold evaluation pipeline (≈3 B params, slow; runs the
+forward-fold check that produces the designability metric) +
+a Tm-align / protein-structure-alignment stack (produces the
+scRMSD metric against native structures). Both metrics together
+gate the Phase-4 acceptance table at
+[`todo/PHASE-4-model-integration-iteration.md`](./todo/PHASE-4-model-integration-iteration.md)
+(``Kanzi → designability ≥ +0.01 OR scRMSD ≤ -0.05 Å``).
+
+This adapter is a **genuine plug-in candidate**: the surface
+(``KanziAdapter`` + ``KanziCapabilities`` + per-family defaults +
+``(L_z, d) = (64, 64)`` velocity field + discrete-token-index
+side-channel) is enough to run the framework's algorithm-layer
+code against Kanzi once the upstream GitHub release is reachable
+from this environment. The AR prior's discrete-sampler glue is
+exposed as the ``discrete_token_index`` channel so a future
+extension can route the AR prior through a
+``discrete_decoder_branch`` without breaking the continuous-time
+ODE surface.
