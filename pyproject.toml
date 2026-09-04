@@ -118,6 +118,12 @@ dev = [
     "mkdocs>=1.5",
     "mkdocstrings[python]>=0.24",
     "griffe>=1.0",
+    # ``mkdocs-autorefs`` is required for ``mkdocs build --strict`` to
+    # resolve cross-page references between docs/ pages (configured in
+    # mkdocs.yml plugins block). Without this, every cold clone hits
+    # ``ERROR - Config value 'plugins': The "autorefs" plugin is not
+    # installed`` — Wave 21 P1 issue.
+    "mkdocs-autorefs>=0.5",
     # ``hypothesis`` is added to ``dev`` (B.7 property-based testing —
     # ``framework-internal-metrics.md`` rev 2 §1.B.7) so a
     # ``pip install -e .[dev]`` brings the property-based test runner
