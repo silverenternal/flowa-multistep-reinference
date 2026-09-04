@@ -266,7 +266,7 @@ The decision is enforced by:
 * [docs/adr/0005](0005-fail-closed-audit-code-policy.md) — the
   audit-code catalogue that the round trace's
   `applied_policy_hash` recompute depends on.
-* [docs/adr/0007](0007-prev-anchored-bounded-merge.md) — the
+* [docs/adr/0007](../ARCHIVE/adr/0007-prev-anchored-bounded-merge.md) — the
   bounded-merge authority that consumes the schedule's `n_cap` as
   the *cap*, never the *prev*. The new wiring is the *memory
   fraction* counterpart: the schedule drives `beta` (the prior

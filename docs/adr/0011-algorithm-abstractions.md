@@ -26,7 +26,7 @@ hard-wired concrete choices scattered across three packages:
   whatever constant the caller baked into `beta_by_channel`".
 * The bounded update operator was **always**
   `adaptive_reflow/frame/merge.py::bounded_merge`. Its prev-anchored
-  envelope semantics ([ADR-0007](0007-prev-anchored-bounded-merge.md))
+  envelope semantics ([ADR-0007](../ARCHIVE/adr/0007-prev-anchored-bounded-merge.md))
   were reachable only as a module-level function, so there was no seam
   at which a different update rule could be substituted.
 * The prior/fresh blend was **always** the linear
@@ -69,7 +69,7 @@ should be one option each.
   the beta derivation *inside* `Engine.run_round`. That was the right
   call for one algorithm and the wrong call for many: the engine's
   job is one round through the adapter
-  ([ADR-0006](0006-engine-wraps-adapter-pattern.md)), not choosing
+  ([ADR-0006](../ARCHIVE/adr/0006-engine-wraps-adapter-pattern.md)), not choosing
   the algorithm that drives the rounds.
 
 ## Considered Options
@@ -267,9 +267,9 @@ The decision is enforced by:
 
 ## More Information
 
-* [docs/adr/0006](0006-engine-wraps-adapter-pattern.md) — the inner
+* [docs/adr/0006](../ARCHIVE/adr/0006-engine-wraps-adapter-pattern.md) — the inner
   engine/adapter invariant that the outer runner composes over.
-* [docs/adr/0007](0007-prev-anchored-bounded-merge.md) — the
+* [docs/adr/0007](../ARCHIVE/adr/0007-prev-anchored-bounded-merge.md) — the
   prev-anchored envelope semantics that `BoundedMergeOperator`
   preserves.
 * [docs/adr/0010](0010-cosine-driven-memory-fraction.md) — the
