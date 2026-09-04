@@ -57,6 +57,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import pickle
 import subprocess
 import sys
@@ -634,37 +635,117 @@ def _run_framework(
 # ---------------------------------------------------------------------------
 
 
+_SAFE_WRAP_THRESHOLD_MOLS: int = 200
+"""Auto-enable the subprocess+RLIMIT wrapper for any eval with
+``n_mols >= _SAFE_WRAP_THRESHOLD_MOLS``. Conservative: N=100 verified
+at 0.49 GB under a 24 GB cap (commit 28e3bf9), so anything N>=200 is
+well into the regime where the original 80 GB OOM (N=5000) becomes
+plausible. Override per-call via ``--no-safe-wrap`` or via the
+``MOL_EVAL_NO_WRAP=1`` env var.
+"""
+
+
+def _build_mol_eval_cmd(
+    *,
+    input_pkl: Path,
+    output_json: Path,
+    reference_smiles: Path | None,
+    dataset: str,
+    n_mols: int,
+    safe_wrap: bool,
+) -> list[str]:
+    """Build the subprocess ``cmd`` list for ``run_mol_eval.py``.
+
+    When ``n_mols >= _SAFE_WRAP_THRESHOLD_MOLS`` and ``safe_wrap`` is
+    True, route the call through ``tools/run_mol_eval_safe.py`` so the
+    child gets the 24 GB RLIMIT_AS cap + 1 s RSS poll + two-step
+    kill-on-timeout. Otherwise the bare ``tools/run_mol_eval.py`` is
+    invoked (preserves byte-identical JSON output for small smoke
+    tests). The FlowMol3-specific ``--no-flowmol3-paper-metrics`` flag
+    is preserved because the parent process computes the upstream
+    paper metrics itself (see
+    :func:`_compute_flowmol3_paper_metrics_for_arm`).
+
+    Implementation note: the wrapper does
+    ``subprocess.Popen(args.rest, preexec_fn=...)`` with no explicit
+    ``executable=``, so ``args.rest[0]`` must be executable. We
+    therefore prefix the inner cmd with ``sys.executable`` so the
+    wrapper re-invokes Python to load ``run_mol_eval.py``. The outer
+    cmd (the caller's Popen invocation) also uses ``sys.executable``
+    so the wrapper itself starts under the same Python.
+    """
+    use_safe = safe_wrap and n_mols >= _SAFE_WRAP_THRESHOLD_MOLS
+    cap_gb = int(os.environ.get("MOL_EVAL_MEM_GB", "24"))
+    runner_inner = [str(REPO_ROOT / "tools" / "run_mol_eval.py")]
+    if use_safe:
+        # Safe path: wrapper receives [sys.executable, run_mol_eval.py, ...]
+        # because the wrapper does Popen(args.rest) without explicit
+        # executable=. The outer Popen still launches the wrapper via
+        # sys.executable.
+        cmd: list[str] = [
+            sys.executable,
+            str(REPO_ROOT / "tools" / "run_mol_eval_safe.py"),
+            "--cap-gb",
+            str(cap_gb),
+            "--",
+            sys.executable,
+            *runner_inner,
+        ]
+    else:
+        # Bare path: parent invokes Python + script. No wrapper, no
+        # second sys.executable.
+        cmd = [sys.executable, *runner_inner]
+    cmd.extend(
+        [
+            "--input",
+            str(input_pkl),
+            "--output",
+            str(output_json),
+            "--dataset",
+            str(dataset),
+            # The parent process computes the upstream FlowMol3 paper
+            # metrics itself (see _compute_flowmol3_paper_metrics_for_arm),
+            # so the subprocess must not repeat that expensive work via
+            # its own auto-gate. The per-metric outputs
+            # (validity/QED/FCD/...) are unchanged.
+            "--no-flowmol3-paper-metrics",
+        ]
+    )
+    if reference_smiles is not None and reference_smiles.exists():
+        cmd.extend(["--reference-smiles", str(reference_smiles)])
+    return cmd
+
+
 def _run_mol_eval(
     *,
     input_pkl: Path,
     output_json: Path,
     reference_smiles: Path | None,
     dataset: str,
+    n_mols: int,
+    safe_wrap: bool,
 ) -> dict[str, Any]:
     """Run :mod:`tools.run_mol_eval` on ``input_pkl``; return parsed JSON.
 
     Returns ``{}`` when the subprocess exits non-zero or the JSON cannot
     be parsed so the caller can still emit a parseable summary.json with
-    NaN metrics.
+    NaN metrics. When ``n_mols >= 200`` and ``safe_wrap`` is True the
+    call is funnelled through ``tools/run_mol_eval_safe.py`` so the
+    child is RLIMIT_AS-capped (24 GB default; override via the
+    ``MOL_EVAL_MEM_GB`` env var) and the parent observes the child RSS
+    in a 1 s poll loop. ``MOL_EVAL_NO_WRAP=1`` is honoured as a global
+    opt-out for ad-hoc debugging.
     """
-    cmd: list[str] = [
-        sys.executable,
-        str(REPO_ROOT / "tools" / "run_mol_eval.py"),
-        "--input",
-        str(input_pkl),
-        "--output",
-        str(output_json),
-        "--dataset",
-        str(dataset),
-        # The parent process computes the upstream FlowMol3 paper metrics
-        # itself (see _compute_flowmol3_paper_metrics_for_arm), so the
-        # subprocess must not repeat that expensive work via its own
-        # auto-gate. The per-metric outputs (validity/QED/FCD/...) are
-        # unchanged.
-        "--no-flowmol3-paper-metrics",
-    ]
-    if reference_smiles is not None and reference_smiles.exists():
-        cmd.extend(["--reference-smiles", str(reference_smiles)])
+    if os.environ.get("MOL_EVAL_NO_WRAP", "0") == "1":
+        safe_wrap = False
+    cmd = _build_mol_eval_cmd(
+        input_pkl=input_pkl,
+        output_json=output_json,
+        reference_smiles=reference_smiles,
+        dataset=dataset,
+        n_mols=n_mols,
+        safe_wrap=safe_wrap,
+    )
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     except (OSError, subprocess.SubprocessError) as exc:  # pragma: no cover
@@ -917,6 +998,17 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--no-safe-wrap",
+        dest="no_safe_wrap",
+        action="store_true",
+        default=False,
+        help=(
+            "Skip the RLIMIT_AS subprocess wrapper (tools/run_mol_eval_safe.py) "
+            "even when n_mols >= 200. Default: ON (wrapper is applied for "
+            "any n_mols >= 200). Set MOL_EVAL_NO_WRAP=1 to skip globally."
+        ),
+    )
+    parser.add_argument(
         "--compute-flowmol3-paper-metrics",
         dest="compute_flowmol3_paper_metrics",
         action="store_true",
@@ -1082,6 +1174,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.reference_smiles
         else None,
         dataset=str(args.dataset),
+        n_mols=n_mols,
+        safe_wrap=not args.no_safe_wrap,
     )
     framework_report = _run_mol_eval(
         input_pkl=framework_pkl,
@@ -1090,6 +1184,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.reference_smiles
         else None,
         dataset=str(args.dataset),
+        n_mols=n_mols,
+        safe_wrap=not args.no_safe_wrap,
     )
     baseline_metrics = _safe_metrics(baseline_report)
     framework_metrics = _safe_metrics(framework_report)

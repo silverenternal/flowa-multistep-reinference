@@ -51,6 +51,8 @@ jobs:
         # r17-survey: explicit wire-in of the new ``run_*_eval.py`` driver
         # tests so a regression in either entry point fails the watchdog
         # even if the broader discovery sweep is masked by markers.
-        run: PYTHONPATH=. python -m pytest tests/test_tools/test_run_mol_eval.py tests/test_tools/test_run_image_eval.py --no-header -q
+        # P0-3: include the safe-wrapper test so the RLIMIT_AS wrapper's
+        # argparse + cap-banner path is exercised in CI (no GPU needed).
+        run: PYTHONPATH=. python -m pytest tests/test_tools/test_run_mol_eval.py tests/test_tools/test_run_mol_eval_safe.py tests/test_tools/test_run_image_eval.py --no-header -q
       - name: Check docs against code
         run: PYTHONPATH=. python tools/check_docs_against_code.py

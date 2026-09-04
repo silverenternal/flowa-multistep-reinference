@@ -192,7 +192,9 @@ framework has not been repaired.
 ### §3.3 Paper metric gaps beyond validity
 
 Even if we fix the partial-fidelity adapter, the framework's
-`tools/run_mol_eval.py` only computes validity / QED / SA / logP / FCD.
+`tools/run_mol_eval_safe.py` (for n_mols>=200; otherwise
+`tools/run_mol_eval.py`) only computes validity / QED / SA / logP /
+FCD.
 The paper claims:
 
 - **PB-validity** (PoseBusters) — not implemented.

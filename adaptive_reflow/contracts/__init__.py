@@ -7,14 +7,44 @@ No I/O, no torch, no other adaptive_reflow imports.
    ``RoundResultBundle`` and ``validate_round_result_bundle`` are
    molecule-aware. They are re-exported from
    :mod:`adaptive_reflow.molecular.bundle` (canonical home) under the
-   historical names for back-compat. The re-export goes through
-   :mod:`contracts.bundle`'s lazy ``__getattr__``; an eager
-   ``from .bundle import RoundResultBundle, ...`` here triggers the
-   lazy resolution but does not introduce a circular import because
-   the ``contracts`` ↔ ``molecular`` cycle is broken at the root
-   (see :mod:`contracts.types` for the stdlib-only contract surface).
+   historical names for back-compat. The re-export in
+   :mod:`contracts.bundle` is eager with a :class:`DeprecationWarning`
+   shim; a small ``__getattr__`` resolver here remains as
+   belt-and-suspenders because
+   :mod:`adaptive_reflow.molecular.__init__` runs an eager
+   ``_resolve_contracts_round_result_bundle`` lookup at its own module
+   import time, which would otherwise hit the partially-initialized
+   :mod:`adaptive_reflow.contracts` package.
 """
 from __future__ import annotations
+
+from typing import Any
+
+# ---------------------------------------------------------------------------
+# Lazy resolver for the molecule-aware atomic source bundle names.
+# ---------------------------------------------------------------------------
+# ``RoundResultBundle`` and ``validate_round_result_bundle`` live in
+# :mod:`adaptive_reflow.molecular.bundle` (canonical home) and are
+# re-exported under the historical names via :mod:`contracts.bundle`'s
+# own eager DeprecationWarning shim. We keep this resolver as
+# belt-and-suspenders for the partial-init cycle through
+# :mod:`adaptive_reflow.molecular.__init__`'s eager
+# ``_resolve_contracts_round_result_bundle`` call.
+_LAZY_BUNDLE_NAMES = frozenset({"RoundResultBundle", "validate_round_result_bundle"})
+
+
+def __getattr__(name: str) -> Any:  # pragma: no cover - exercised via re-export
+    """Lazy-load the molecule-aware bundle re-exports."""
+    if name in _LAZY_BUNDLE_NAMES:
+        from . import bundle as _bundle_module
+
+        value = getattr(_bundle_module, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(
+        f"module {__name__!r} has no attribute {name!r}"
+    )
+
 
 # ---- NewType aliases ----
 # ---- DTB-R1 + DTB-R2 contract (universal carriers) ----
@@ -35,9 +65,7 @@ from .bundle import (
     ChannelTransferEvidence,
     DynamicRestartTransferLedger,
     NoiseBiasInputRow,
-    RoundResultBundle,
     validate_channel_evidence,
-    validate_round_result_bundle,
 )
 
 # ---- DTB-NC1 / NC2 contract (re-exported molecule envelope) ----

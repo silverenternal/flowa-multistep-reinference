@@ -4,17 +4,14 @@
    The four molecule channel aliases (``CoordinateChannelRef`` /
    ``ChargeChannelRef`` / ``RawPairChannelRef`` /
    ``ProjectedPairChannelRef``) and the ``CHANNEL_NAMES`` literal set
-   were historically defined here. They are now canonical in
-   :mod:`adaptive_reflow.molecular.channels` (the molecule concrete
-   layer). They are re-exported here for back-compat so existing
+   are canonical in :mod:`adaptive_reflow.molecular.channels` (the
+   molecule concrete layer). They are re-exported here as
+   *placeholder* ``NewType('X', str)`` declarations so existing
    ``from adaptive_reflow.contracts import CoordinateChannelRef``
-   imports keep working.
-
-   The aliases exported here are *placeholder* ``NewType('X', str)``
-   declarations; the canonical ones (with ``Mapping[str, Any]`` as the
-   underlying type) live in
-   :mod:`adaptive_reflow.molecular.channels`. New code should import
-   the molecule channel vocabulary from :mod:`adaptive_reflow.molecular`:
+   imports keep working (the canonical NewTypes are not byte-
+   compatible — at runtime both are erased to ``str``). New code
+   should import the molecule channel vocabulary from
+   :mod:`adaptive_reflow.molecular`:
 
        from adaptive_reflow.molecular import (
            MOLECULE_CHANNELS,
@@ -92,6 +89,48 @@ _MOLECULE_CHANNELS: tuple[str, ...] = (
     "raw_pair",
     "projected_pair",
 )
+
+# ---------------------------------------------------------------------------
+# Molecule vocabulary anchor tables (stdlib-only; no eager molecular import)
+# ---------------------------------------------------------------------------
+# ``MOLECULE_CALIBRATION_TARGETS`` and ``MOLECULE_CHANNEL_TO_METRIC`` are
+# the canonical literal tables that used to live in
+# :mod:`adaptive_reflow.molecular.calibration_protocols`. They are now
+# canonical here (next to :data:`_MOLECULE_CHANNELS`) so both
+# :mod:`adaptive_reflow.molecular.calibration_protocols` and
+# :mod:`adaptive_reflow.eval.calibration` can import them from a single
+# stdlib-only home, removing the historical ``eval -> molecular``
+# coupling. The molecule concrete module and the eval layer both
+# re-export them under their historical names for back-compat.
+
+
+MOLECULE_CALIBRATION_TARGETS: Mapping[str, str] = {
+    "binding_affinity_kcal": "gnina",
+    "qed": "qed_target",
+    "admet_tox_flag": "admet_target",
+    "synthesizability": "synth_target",
+}
+"""Canonical mapping from molecule metric name → legacy evaluator-arm name.
+
+Replaces the legacy ``eval.calibration.PREDECLARED_SAFETY_METRICS``
+literal set. Each entry names the *kind* of evaluator arm that produces
+a primary score for the metric; the arm itself lives in
+:mod:`eval.protocol`.
+"""
+
+
+MOLECULE_CHANNEL_TO_METRIC: Mapping[str, str] = {
+    "coordinate": "binding_affinity_kcal",
+    "charge": "qed",
+    "raw_pair": "admet_tox_flag",
+    "projected_pair": "synthesizability",
+}
+"""Canonical mapping from molecule channel name → metric name.
+
+Replaces the legacy ``eval.calibration.CHANNEL_NAMES_FOR_CALIBRATION``
+literal set. The channels are exactly :data:`_MOLECULE_CHANNELS` in the
+same order.
+"""
 
 
 # ---------------------------------------------------------------------------

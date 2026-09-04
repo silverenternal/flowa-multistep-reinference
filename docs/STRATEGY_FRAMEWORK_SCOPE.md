@@ -180,7 +180,12 @@ against multiple SOTA baselines.
 - The OOM defenses wired in commit `28e3bf9` (mmap-friendly REOS,
   subprocess+RLIMIT cap, stream-line SMILES loaders, lru_cache
   synthetic weights, circular-import break) remain — they are
-  useful regardless of the model scale.
+  useful regardless of the model scale. P0-3 made the
+  ``tools/run_mol_eval_safe.py`` subprocess+RLIMIT wrapper the
+  default subprocess entry point for any eval with
+  ``n_mols >= 200`` (callers: ``run_sota_graphbfn_experiment.py``,
+  ``run_sota_flowmol3_v2_adapter_experiment.py``); opt out via
+  ``--no-safe-wrap`` per-call or ``MOL_EVAL_NO_WRAP=1`` globally.
 - The FlowMol3 adapter and partial paper-parity record remain —
   they are the Tier-2 evidence, not abandoned.
 

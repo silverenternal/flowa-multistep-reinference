@@ -343,8 +343,37 @@ def compute_fid_from_features(
     )
 
 
+#: Canonical ImageNet normalization mean (RGB, [0, 1] domain). Single
+#: source of truth shared by :func:`extract_inception_features_for_image_eval`
+#: and the redirected call sites in
+#: :mod:`tools.eval_rf_cifar` / :mod:`tools.compute_cifar_fid`. Pinned by
+#: P0-1 so the three prior copies (which drifted slightly in the legacy
+#: ``weights=None`` paths) collapse to one constant.
+_INCEPTION_MEAN: tuple[float, float, float] = (0.485, 0.456, 0.406)
+
+#: Canonical ImageNet normalization std (RGB, [0, 1] domain). Single
+#: source of truth; see :data:`_INCEPTION_MEAN`.
+_INCEPTION_STD: tuple[float, float, float] = (0.229, 0.224, 0.225)
+
+#: Stable identifier for the canonical torchvision construction. Downstream
+#: audit code and the FID contract use this label to assert extractor-family
+#: provenance (P0-1 plan, Step 5).
+CANONICAL_INCEPTION_FAMILY: str = "inceptionv3_torchvision_IMAGENET1K_V1"
+
+
 def load_inception_for_fid(device: Any) -> Any:
-    """Construct the IMAGENET1K_V1-pretrained InceptionV3 and move it to ``device``.
+    """Construct the *single canonical* InceptionV3 feature extractor and move it to ``device``.
+
+    This is the **only** canonical InceptionV3 construction the repo
+    advertises for FID (see :data:`CANONICAL_INCEPTION_FAMILY`). The
+    construction is::
+
+        tvm.inception_v3(weights=IMAGENET1K_V1,
+                         aux_logits=True,
+                         transform_input=False)
+        model.fc = nn.Identity()
+        model.AuxLogits = None
+        model.eval()
 
     The pretrained IMAGENET1K_V1 checkpoint forces ``aux_logits=True``
     (the aux head is baked into the state_dict); we keep that flag on
@@ -371,9 +400,12 @@ def load_inception_for_fid(device: Any) -> Any:
     blocks) is *not* used here because the Lumina/HiDream reference
     statistics were both downloaded as published paper-comparable
     MJHQ-30K stats with torchvision's pretrained Inception; mixing
-    the two would produce a feature-space mismatch. Operators who
-    want pytorch-fid's canonical Inception can override by passing
-    their own callable into
+    the two would produce a feature-space mismatch. The pytorch-fid
+    TF-port path is preserved as the *TF-aligned reference* path at
+    :func:`tools.run_sota_cifar_experiment._compute_fid_tfport_inline`
+    (renamed by P0-1) and is explicitly gated behind a ``pytorch_fid``
+    importability check. Operators who want pytorch-fid's canonical
+    Inception can override by passing their own callable into
     :func:`extract_inception_features_for_image_eval` via the test
     harness.
     """
@@ -419,6 +451,11 @@ def extract_inception_features_for_image_eval(
 
     model = load_inception_for_fid(device)
     out_feats: list[np.ndarray] = []
+    # Use the promoted canonical ImageNet mean/std (P0-1 — single source
+    # of truth, no more per-site drift between run_image_eval,
+    # eval_rf_cifar, and compute_cifar_fid).
+    mean = torch.tensor(_INCEPTION_MEAN, device=device).view(1, 3, 1, 1)
+    std = torch.tensor(_INCEPTION_STD, device=device).view(1, 3, 1, 1)
     with torch.no_grad():
         for i in range(0, images.shape[0], int(batch_size)):
             batch: np.ndarray = images[i : i + int(batch_size)].astype(np.float32)
@@ -426,8 +463,6 @@ def extract_inception_features_for_image_eval(
             x = x.to(device)
             x = F.interpolate(x, size=(299, 299), mode="bilinear", align_corners=False)
             x = (x + 1.0) / 2.0
-            mean = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
-            std = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
             x = (x - mean) / std
             feats_t = model(x)
             out_feats.append(np.asarray(feats_t.detach().cpu().numpy(), dtype=np.float32))

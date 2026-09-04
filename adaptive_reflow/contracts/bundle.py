@@ -11,9 +11,11 @@
    This module re-exports :class:`MoleculeRoundResultBundle` under the
    historic name ``RoundResultBundle`` so existing imports
    (``from adaptive_reflow.contracts import RoundResultBundle``) keep
-   working. The molecule-specific channel ``source_round`` check is
-   enforced by ``validate_molecule_round_result_bundle`` (the same
-   function, accessible here as ``validate_round_result_bundle``).
+   working. Accessing the historical names emits a
+   :class:`DeprecationWarning` pointing at the canonical home. The
+   molecule-specific channel ``source_round`` check is enforced by
+   ``validate_molecule_round_result_bundle`` (the same function,
+   accessible here as ``validate_round_result_bundle``).
 
 Stdlib-only: no torch, no other adaptive_reflow imports, no IO.
 """
@@ -66,6 +68,10 @@ from .validators import ValidationResult, _ok, validate_unit_factor
 # The lazy ``__getattr__`` defers the molecule import until first
 # attribute access. Type-checkers (mypy/pyright) see the names via the
 # ``TYPE_CHECKING`` block below; the runtime defers via ``__getattr__``.
+#
+# Once the canonical value is resolved, accessing it emits a
+# :class:`DeprecationWarning` pointing at the canonical home
+# (``adaptive_reflow.molecular.bundle``).
 if TYPE_CHECKING:
     from adaptive_reflow.molecular.bundle import (  # pragma: no cover - typing only
         MoleculeRoundResultBundle as RoundResultBundle,
@@ -76,20 +82,41 @@ if TYPE_CHECKING:
 
     from .phase import PhaseState
 
-_MOLECULE_BUNDLE_NAMES = frozenset({"RoundResultBundle", "validate_round_result_bundle"})
+_MOLECULE_BUNDLE_NAMES = frozenset(
+    {"RoundResultBundle", "validate_round_result_bundle"}
+)
 
 
 def __getattr__(name: str) -> Any:  # pragma: no cover - exercised via re-export
-    """Lazy-load the molecule bundle re-exports to break the import cycle."""
+    """Lazy-load the molecule bundle re-exports + emit DeprecationWarning.
+
+    Resolves the canonical value from
+    :mod:`adaptive_reflow.molecular.bundle` on first access, then
+    caches it in ``globals()`` for subsequent lookups. The wrapper
+    emits a one-time :class:`DeprecationWarning` so callers know to
+    migrate to the canonical home.
+    """
     if name in _MOLECULE_BUNDLE_NAMES:
         from adaptive_reflow.molecular import bundle as _mol_bundle
 
-        value = getattr(_mol_bundle, name)
-        globals()[name] = value
-        return value
+        canonical = getattr(_mol_bundle, name)
+        import warnings
+
+        warnings.warn(
+            (
+                f"adaptive_reflow.contracts.bundle.{name} is deprecated; "
+                f"import {canonical.__name__} from "
+                f"adaptive_reflow.molecular.bundle instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        globals()[name] = canonical
+        return canonical
     raise AttributeError(
         f"module {__name__!r} has no attribute {name!r}"
     )
+
 
 # ---------------------------------------------------------------------------
 # Atomic source bundle (CONTRACTS.md §1) — DTB-R1

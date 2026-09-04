@@ -173,6 +173,7 @@ not_in_nav: |
   r4-survey/**/*.md
   r5-survey/*.md
   r17-survey/*.md
+  README.md
   ARCHIVE/README.md
   ARCHIVE/**/*.md
 

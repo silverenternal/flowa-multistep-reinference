@@ -350,16 +350,14 @@ is published to GitHub Pages:
 | --- | --- |
 | [`TUTORIAL.md`](docs/TUTORIAL.md) | Five-minute quickstart: install, run the suite, plug in `ToyGaussianAdapter`, run a 2-D rectified-flow experiment with one of the four canonical schedulers. |
 | [`PLUG_IN_YOUR_MODEL.md`](docs/PLUG_IN_YOUR_MODEL.md) | Bring your own SOTA flow-matching checkpoint: five steps from `.npz` weights to baseline-vs-framework comparison table. |
-| [`ALGORITHMS.md`](docs/ALGORITHMS.md) | Full catalog of all 16 schedulers, 5 drivers, 8 merge operators, and 6 blenders, with paper grounding and copy-paste samples. |
-| [`QUICKSTART.md`](QUICKSTART.md) | Five-minute on-ramp for adapter authors: install, run the suite, walk one round against `ToyGaussianAdapter`, capture a golden, run the docs scanner. |
-| [`FAQ.md`](FAQ.md) | Twenty short answers to the questions that come up most often. |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Package layout, dependency DAG, governance invariants, the Adapter Protocol recipe for adding a new model, the file inventory. |
-| [`docs/adr/`](docs/adr/) | Load-bearing boundary decisions (universal/molecular split, typed-contracts core boundary, engine operation order, fail-closed audit-code policy). |
-| [`docs/ADAPTER_INTERFACE_SPEC.md`](docs/ADAPTER_INTERFACE_SPEC.md) | The authoritative spec for adapter authors (DTB-G1). |
-| [`docs/r4-survey/07-sota-experiment-protocol.md`](docs/r4-survey/07-sota-experiment-protocol.md) | The seven-step SOTA runbook: baseline vs framework on four schedulers (Cosine, Codim, Evidence, FreeTraj). |
-| [docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md) | What the six test layers cover and what bars a change has to clear before merge. |
-| [docs/PERFORMANCE_BUDGETS.md](docs/PERFORMANCE_BUDGETS.md) | Kernel p95 budgets, the bench runner, the regression gate. |
 | [`examples/01_quickstart.ipynb`](examples/01_quickstart.ipynb) | Executable Jupyter walk-through: load `TwoDimFMAdapter`, run baseline, run framework ablation across 4 schedulers, visualize samples. |
+
+For the full doc map (governance, ADRs, algorithms, evidence, quality
+gates, surveys) see [`docs/README.md`](docs/README.md).
+
+For the complete doc map, see `docs/README.md`. Keep this table to 3-4
+start-here links.
 
 Every claim in these docs is verified against the source tree by
 [`tools/check_docs_against_code.py`](tools/check_docs_against_code.py)

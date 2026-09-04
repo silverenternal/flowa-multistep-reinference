@@ -158,6 +158,24 @@ test = [
     "hypothesis>=6.0",
     "pytest-benchmark>=4.0",
 ]
+# Image-FID-only extra: closes P0-1 — the canonical InceptionV3 feature
+# extractor (:func:`tools.run_image_eval.load_inception_for_fid`)
+# requires :mod:`torchvision` to construct
+# ``tvm.inception_v3(weights=IMAGENET1K_V1, ...)``. Without torchvision
+# the call fails loud with an ``ImportError`` listing the missing
+# dependency (see :meth:`InceptionV3FIDEvaluator.__init__`). The
+# framework's chemistry + flow-matching paths are stdlib-only; this
+# extra keeps torchvision out of the default install footprint (~50 MB
+# compiled + the IMAGENET1K_V1 weights download of ~109 MB cached under
+# ``~/.cache/torch/hub/checkpoints/``). Pin ``<1.0`` to avoid the
+# torchvision-1.0+ InceptionV3 weight-format break. ``pytorch-fid`` is
+# deliberately NOT included here — the TF-aligned reference path at
+# :func:`tools.run_sota_cifar_experiment._compute_fid_tfport_inline` is
+# opt-in (only needed when paper-comparable scores against TF-FID
+# literature are required) and gates on ``pytorch_fid`` importability.
+image-fid = [
+    "torchvision>=0.15,<1.0",
+]
 
 [tool.pytest.ini_options]
 # Pytest configuration for adaptive_reflow. ``markers`` documents the

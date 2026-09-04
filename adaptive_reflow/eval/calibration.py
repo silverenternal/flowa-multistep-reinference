@@ -52,13 +52,15 @@ LOWER_BOUND_METHODS: tuple[str, ...] = ("wilson", "beta")
 # ---------------------------------------------------------------------------
 # The literal sets ``PREDECLARED_SAFETY_METRICS`` and
 # ``CHANNEL_NAMES_FOR_CALIBRATION`` are 100% molecule vocabulary. The
-# canonical home is :mod:`adaptive_reflow.molecular.calibration_protocols`
-# (``MOLECULE_CALIBRATION_TARGETS`` + ``MOLECULE_CHANNEL_TO_METRIC``).
-# We re-export them under the historical names here so existing imports
+# canonical home is :mod:`adaptive_reflow.contracts.types`
+# (``MOLECULE_CALIBRATION_TARGETS`` + ``MOLECULE_CHANNEL_TO_METRIC``);
+# :mod:`adaptive_reflow.molecular.calibration_protocols` re-exports them
+# under the molecule-prefixed names. We re-export them under the
+# historical names here so existing imports
 # (``from adaptive_reflow.eval.calibration import PREDECLARED_SAFETY_METRICS``)
 # keep working. The mappings expose ``.keys()`` as the canonical literal
 # tuple (sorted for determinism).
-from adaptive_reflow.molecular.calibration_protocols import (  # noqa: E402
+from adaptive_reflow.contracts.types import (  # noqa: E402
     MOLECULE_CALIBRATION_TARGETS,
     MOLECULE_CHANNEL_TO_METRIC,
 )

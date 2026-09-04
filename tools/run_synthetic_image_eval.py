@@ -352,7 +352,7 @@ def extract_round_features_for_synthetic_eval(
     import numpy as np
 
     from tools.run_image_eval import (
-        extract_inception_features_for_image_eval,
+        extract_inception_features_for_image_eval,  # P0-1 canonical extractor surface (torchvision IMAGENET1K_V1)
         load_images_as_tensor,
     )
 

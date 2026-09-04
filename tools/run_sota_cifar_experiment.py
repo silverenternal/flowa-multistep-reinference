@@ -160,6 +160,16 @@ DEFAULT_OUT_DIR: Path = REPO_ROOT / "data" / "rf_cifar_out"
 #: Default reference `.npz` for FID (CIFAR-10 test set in [-1, 1]).
 DEFAULT_REF_NPZ: Path = REPO_ROOT / "data" / "cifar10_test_ref.npz"
 
+#: Identifier for the FID feature-extractor family used by the inline
+#: path. P0-1: distinguishes this TF-aligned reference path
+#: (``pytorch_fid.inception.InceptionV3`` with ``use_fid_inception=True``)
+#: from the canonical torchvision IMAGENET1K_V1 surface exported by
+#: :func:`tools.run_image_eval.load_inception_for_fid`. Downstream
+#: audit code and the docs reconciliation at
+#: ``docs/CONSOLIDATED_RESULTS.md:220-225`` consume this label to flag
+#: cross-paper-comparable scores vs within-paper scores.
+FID_EXTRACTOR_FAMILY: str = "inceptionv3_tfport"
+
 
 # ---------------------------------------------------------------------------
 # Scheduler factory
@@ -292,16 +302,32 @@ def _torch_available() -> bool:
     return importlib.util.find_spec("torch") is not None
 
 
-def _compute_fid_inline(
+def _compute_fid_tfport_inline(
     gen: NDArray[np.float64],
     ref: NDArray[np.float64],
 ) -> float:
-    """Compute InceptionV3 FID inline using :mod:`torch` + :mod:`pytorch_fid`.
+    """Compute InceptionV3 FID inline using :mod:`torch` + :mod:`pytorch_fid` (TF-port reference path).
 
     ``gen`` and ``ref`` are ``(N, 3, 32, 32)`` float arrays in ``[-1, 1]``.
-    Returns the FID as a Python float. Falls back to a NumPy-only
-    ``||μ_r - μ_g||² + Tr(Σ_r + Σ_g - 2 sqrtm(Σ_r Σ_g))`` computation if
-    :mod:`torch` or :mod:`pytorch_fid` are not importable.
+    Returns the FID as a Python float. Raises ``RuntimeError`` if
+    :mod:`torch` or :mod:`pytorch_fid` are not importable (no NumPy
+    fallback here — see :func:`_compute_fid` for the full routing).
+
+    P0-1 — extractor family scope
+    -----------------------------
+
+    This function is the **TF-aligned reference path**
+    (:data:`FID_EXTRACTOR_FAMILY` = ``"inceptionv3_tfport"``). It is
+    NOT byte-comparable to the canonical
+    :func:`tools.run_image_eval.load_inception_for_fid` extractor
+    (torchvision IMAGENET1K_V1, family
+    :data:`tools.run_image_eval.CANONICAL_INCEPTION_FAMILY` =
+    ``"inceptionv3_torchvision_IMAGENET1K_V1"``).
+
+    Use this path when paper-comparable scores against the original
+    TF-FID literature (Heusel 2017 etc.) are required. Use the
+    canonical torchvision path for everything else (Lumina/HiDream
+    MJHQ-30K, CIFAR ablation, per-round FID).
     """
     try:
         import torch
@@ -377,12 +403,36 @@ def _compute_fid_subprocess(
         text=True,
         check=True,
     )
-    # The reference FID script prints "=== FID: <number> ===" on stdout.
+    # P0-1: prefer the JSON companion line emitted by
+    # ``tools.compute_cifar_fid.main`` (``{"fid": ..., "extractor_family": ...}``)
+    # over the literal-substring fallback. JSON wins if present; the
+    # ``=== FID: ... ===`` substring is the backward-compatible
+    # fallback for older subprocess scripts that have not yet been
+    # updated.
+    json_payload: float | None = None
+    substring_payload: float | None = None
     for line in result.stdout.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("{") and stripped.endswith("}"):
+            payload = json.loads(stripped)
+            if isinstance(payload, dict) and "fid" in payload:
+                try:
+                    json_payload = float(payload["fid"])
+                except (TypeError, ValueError):
+                    json_payload = None
+                continue
         marker = "=== FID:"
         if marker in line:
-            payload = line.split("FID:", 1)[1].strip().rstrip("=").strip()
-            return float(payload)
+            try:
+                substring_payload = float(
+                    line.split("FID:", 1)[1].strip().rstrip("=").strip()
+                )
+            except ValueError:
+                substring_payload = None
+    if json_payload is not None:
+        return float(json_payload)
+    if substring_payload is not None:
+        return float(substring_payload)
     raise RuntimeError(
         f"fid_subprocess_no_fid_line:stdout={result.stdout!r} "
         f"stderr={result.stderr!r}"
@@ -396,12 +446,22 @@ def _compute_fid(
     fid_python: Path | None,
     fid_script: Path | None,
 ) -> float:
-    """Compute FID, preferring inline (if torch is available) then subprocess."""
+    """Compute FID, preferring inline (if torch is available) then subprocess.
+
+    P0-1: the inline path uses :func:`_compute_fid_tfport_inline`
+    (TF-aligned reference family, ``inceptionv3_tfport``). The
+    subprocess path shells out to :mod:`tools.compute_cifar_fid`, which
+    now consumes the canonical torchvision IMAGENET1K_V1 surface. The
+    two paths therefore produce **different** FID numbers by design;
+    callers comparing across modes must account for the extractor
+    family label (:data:`FID_EXTRACTOR_FAMILY` for inline; the
+    JSON emission from ``compute_cifar_fid.main`` for subprocess).
+    """
     if _torch_available():
         gen = np.load(gen_npz)["samples"]
         ref = np.load(ref_npz)["samples"]
         n = min(int(gen.shape[0]), int(ref.shape[0]))
-        return _compute_fid_inline(
+        return _compute_fid_tfport_inline(
             np.asarray(gen[:n], dtype=np.float64),
             np.asarray(ref[:n], dtype=np.float64),
         )

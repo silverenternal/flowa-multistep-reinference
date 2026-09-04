@@ -1,5 +1,8 @@
 # API reference
 
+For a map of the entire `docs/` tree (tutorial, governance, ADRs,
+algorithms, evidence, surveys) see [`../README.md`](../README.md).
+
 This page is the index for the auto-generated API reference for the
 `adaptive_reflow` package. Each per-package page below is rendered by
 [mkdocstrings][mkdocstrings] directly from the module-level docstrings

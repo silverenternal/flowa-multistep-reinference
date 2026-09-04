@@ -29,7 +29,8 @@ REOS cumulative deviation against the GEOM-DRUGS REOS pkl is
 **0.455 +/- 0.0157** (N = 5000, 5 subsets), within the paper's
 expected bracket. The **paper-parity FG-dev fr_* eq.4 / eq.21
 wrapper** (`adaptive_reflow/eval/flowmol3_eq4_fg_deviation.py`,
-wired into `tools/run_mol_eval.py` and
+wired into `tools/run_mol_eval_safe.py` (for n_mols>=200; otherwise
+`tools/run_mol_eval.py`) and
 `tools/run_sota_flowmol3_v2_adapter_experiment.py`) emits
 `fg_deviation_eq4 = 8.6256 +/- 0.1200` against the NCI `first_5K.smi`
 proxy reference (vs paper 0.37 / 0.27 against the GEOM-DRUGS train

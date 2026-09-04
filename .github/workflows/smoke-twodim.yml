@@ -1,0 +1,130 @@
+# P2-10: Named smoke gate for the 2D FM restart-blend claim.
+#
+# This workflow is *additional* to the broad sweep in ``ci.yml`` (which
+# gates ruff / mypy / mkdocs + the full pytest discovery). Its job is
+# *speed*: on every pull request that touches the 2D FM surface, run
+# exactly six pinned tests in ``tests/test_adapters/test_twodim_fm.py``
+# so a regression in the restart-blend pipeline is named-explicitly in
+# the PR's checks panel, and cannot be silently masked by a green
+# broad-sweep pytest pass.
+#
+# The six pins (selected via pytest ``-k``, literal OR, no marker
+# guard) are:
+#
+#   * ``test_restart_improves_coverage_on_eight_gaussians`` (the
+#     load-bearing coverage claim — eight_gaussians Voronoi lift),
+#   * ``test_adapter_loads_handshake`` (engine-side capability flags),
+#   * ``test_protocol_surface_intact`` (Protocol @runtime_checkable),
+#   * ``test_restart_blend_respects_memory_fraction`` (the
+#     ``apply_restart_distribution`` math — center of the pipeline),
+#   * ``test_run_round_produces_target_resembling_samples`` (Engine
+#     end-to-end drive),
+#   * ``test_byte_determinism_across_runs`` (deterministic seeding).
+#
+# Each pin is un-marked (``@pytest.mark.slow`` / ``benchmark`` / ``
+#``stress`` do not gate it) so the ``-m "not slow and not benchmark"``
+# filter from ``ci.yml`` is a no-op here and the smoke job can skip it.
+#
+# Path-filter semantics: when a ``pull_request`` paths-filter excludes
+# every changed file, the workflow is *skipped* (per the GitHub Actions
+# docs on status checks), which is treated as "Success" by
+# branch-protection and does **not** block merging. PRs that touch only
+# unrelated files therefore see ``skipped`` instead of ``pending``.
+#
+# Branch-protection wiring (out-of-repo, manual): to make this check
+# block merges, add ``smoke-twodim / smoke`` to the required-check list
+# on ``main``. The plan documents the manual step; this file does not
+# configure branch protection.
+
+name: smoke-twodim
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/test_adapters/test_twodim_fm.py'
+      - 'tests/test_adapters/conftest.py'
+      - 'adaptive_reflow/adapters/twodim_fm*'
+      - 'adaptive_reflow/eval/twodim_fm_evaluator*'
+      - 'tools/materialize_twodim_fm.py'
+      - '.github/workflows/smoke-twodim.yml'
+
+# Cancel in-progress smoke on the same PR when a new commit lands.
+# Mirrors the ``ci.yml`` concurrency pattern so a fresh push supersedes
+# the previous run within ~30 s instead of consuming the Actions quota.
+concurrency:
+  group: smoke-twodim-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: 2D FM smoke pin set
+    runs-on: ubuntu-latest
+    # 6 tests + ~5-10 s materialize pre-step on cold cache. Set well
+    # above the expected wall-clock so a slow-cold-cache case still has
+    # room to complete; the broad sweep in ``ci.yml`` is the backstop.
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        # Python 3.12 only — the smoke gate's job is *speed*. The 3.12
+        # / 3.13 matrix coverage is already provided by ``ci.yml``;
+        # duplicating it on a per-test basis triples wall-clock for no
+        # new signal. ``pyproject.toml`` declares ``requires-python =
+        # ">=3.12"`` so 3.12 is the canonical floor.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: 'pyproject.toml'
+
+      - name: Install test + flow-matching toolchain
+        # ``[test]`` (pyproject.toml:156-160) brings pytest + hypothesis
+        # + pytest-benchmark. ``[flow_matching]`` (pyproject.toml:141-144)
+        # brings numpy + scipy; numpy is pinned ``>=2.0,<2.5`` so a
+        # wheel resolution past 2.5 cannot break the smoke job (it
+        # does not run mypy — only the broad sweep in ``ci.yml`` does).
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[test,flow_matching]
+
+      - name: Materialize 2D FM weights
+        # Idempotent: short-circuits when both
+        # ``data/twodim_fm_two_moons.npz`` and
+        # ``data/twodim_fm_eight_gaussians.npz`` exist; otherwise
+        # trains a small MLP from scratch with the canonical
+        # ``--steps 500`` budget (~5-10 s once per job on cold cache).
+        # The session-scoped autouse fixture in
+        # ``tests/test_adapters/conftest.py`` will also materialise on
+        # first collection; running the CLI explicitly here makes a CI
+        # failure point at materialisation as a named step in the
+        # workflow log, not as a fixture side-effect.
+        run: PYTHONPATH=. python -m tools.materialize_twodim_fm
+
+      - name: Run 6 pinned tests
+        # Literal OR of six test names. ``--no-header -q`` matches the
+        # ``ci.yml`` / ``cpu-tests.yml`` / ``stress-nightly.yml`` style.
+        # ``-p no:cacheprovider`` skips the ``--lf`` / ``--ff`` machinery
+        # which is not relevant to a smoke gate. ``PYTHONPATH=.`` is the
+        # project's import convention (``ci.yml:176``).
+        run: |
+          PYTHONPATH=. python -m pytest tests/test_adapters/test_twodim_fm.py \
+            -k "test_restart_improves_coverage_on_eight_gaussians or test_adapter_loads_handshake or test_protocol_surface_intact or test_restart_blend_respects_memory_fraction or test_run_round_produces_target_resembling_samples or test_byte_determinism_across_runs" \
+            --no-header -q -p no:cacheprovider
+
+      - name: Upload pytest log on failure
+        # Mirrors the ``cpu-tests.yml`` / ``stress-nightly.yml``
+        # convention: upload the pytest log as an artifact on failure
+        # so contributors see which of the six contracts was violated.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-log
+          path: pytest.log
+          if-no-files-found: warn
+          retention-days: 7

@@ -49,7 +49,11 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, NewType
 
 if TYPE_CHECKING:
-    from adaptive_reflow.contracts.condition import Condition
+    from adaptive_reflow.contracts.condition import (
+        Condition as _Condition,
+        MappingConditionAdapter as _MappingConditionAdapter,
+        validate_condition as _validate_condition,
+    )
 
     from .adapter import AdapterCapabilities
 
@@ -174,7 +178,7 @@ class ODEConditionDelta:
     * ``calibration_artifact_hash`` is a non-empty string.
     """
 
-    delta_spec: Condition
+    delta_spec: _Condition
     source: str
     target_round: int
     calibration_artifact_hash: str
@@ -189,22 +193,22 @@ class ODEConditionDelta:
         downstream consumers see a uniform :class:`Condition` view.
 
         Import is local to avoid the
-        ``state.py`` ↔ ``contracts/condition.py`` module-init cycle.
+        ``state.py`` ↔ ``contracts/condition.py`` ↔ ``contracts/__init__.py``
+        module-init cycle (the contracts ``__init__`` chain re-enters
+        ``universal.state`` via ``dynamic_noise_bias``).
         """
-        # Local import to break the module-init cycle:
-        # ``state.py`` ↔ ``contracts/condition.py`` ↔ ``contracts/__init__.py``.
         from adaptive_reflow.contracts.condition import (
-            Condition as _Condition,
-            MappingConditionAdapter as _MappingConditionAdapter,
+            Condition as _Condition_runtime,
+            MappingConditionAdapter as _MappingConditionAdapter_runtime,
         )
 
         if isinstance(self.delta_spec, Mapping) and not isinstance(
-            self.delta_spec, _Condition
+            self.delta_spec, _Condition_runtime
         ):
             object.__setattr__(
                 self,
                 "delta_spec",
-                _MappingConditionAdapter.from_mapping(dict(self.delta_spec)),
+                _MappingConditionAdapter_runtime.from_mapping(dict(self.delta_spec)),
             )
 
 
@@ -304,19 +308,17 @@ def validate_condition_delta(delta: ODEConditionDelta) -> tuple[bool, tuple[str,
     errors: list[str] = []
     if delta is None:
         return (False, ("condition_delta_must_not_be_none",))
-    # Local import to break the module-init cycle.
-    from adaptive_reflow.contracts.condition import Condition as _Condition
+    # Local import to break the module-init cycle:
+    # ``state.py`` ↔ ``contracts/condition.py`` ↔ ``contracts/__init__.py``.
+    from adaptive_reflow.contracts.condition import (
+        Condition as _Condition,
+        MappingConditionAdapter as _MappingConditionAdapter,
+        validate_condition as _validate_condition,
+    )
 
     spec = delta.delta_spec
     if isinstance(spec, _Condition):
         # Typed path (D8). Validate via the condition validator.
-        from adaptive_reflow.contracts.condition import (
-            MappingConditionAdapter as _MappingConditionAdapter,
-        )
-        from adaptive_reflow.contracts.condition import (
-            validate_condition as _validate_condition,
-        )
-
         # For :class:`MappingConditionAdapter` (the back-compat
         # wrapper for raw dicts), also reject empty underlying
         # mappings — ``to_mapping()`` injects a ``condition_kind``

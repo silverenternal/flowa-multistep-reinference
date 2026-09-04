@@ -65,7 +65,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 from tools.run_image_eval import (  # noqa: E402  — path setup above
     discover_samples,
-    extract_inception_features_for_image_eval,
+    extract_inception_features_for_image_eval,  # P0-1 canonical extractor surface (torchvision IMAGENET1K_V1)
     load_images_as_tensor,
     select_device,
 )

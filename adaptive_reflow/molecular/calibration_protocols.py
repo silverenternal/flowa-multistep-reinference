@@ -49,13 +49,55 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from adaptive_reflow.contracts.types import ArtifactHash
-from adaptive_reflow.universal import (
-    ArtifactHash as UniversalArtifactHash,
-)
-from adaptive_reflow.universal.evaluator import Evaluator
+
+if TYPE_CHECKING:
+    # Type-checker alias only; runtime uses the local ``_MoleculeEvaluator``
+    # Protocol below to break the
+    # ``molecular -> universal.evaluator`` import edge.
+    from adaptive_reflow.universal import (
+        ArtifactHash as UniversalArtifactHash,
+    )
+    from adaptive_reflow.universal.evaluator import Evaluator as _UniversalEvaluator
+else:
+    from adaptive_reflow.contracts.types import ArtifactHash as UniversalArtifactHash
+
+
+# ---------------------------------------------------------------------------
+# Local runtime_checkable Protocol — duplicates the
+# :class:`adaptive_reflow.universal.evaluator.Evaluator` Protocol surface.
+#
+# This breaks the ``molecular -> universal`` import edge so the
+# ``universal -> contracts -> molecular`` cycle can be eager-resolved.
+# The Protocol MUST be byte-equivalent to the universal ``Evaluator``
+# (same member names, same ``runtime_checkable`` flag) so that
+# ``isinstance(evaluator, universal.evaluator.Evaluator)`` checks still
+# succeed for the molecule-side evaluators.
+# ---------------------------------------------------------------------------
+
+
+@runtime_checkable
+class _MoleculeEvaluatorProtocol(Protocol):
+    """Local mirror of ``universal.evaluator.Evaluator``.
+
+    Concrete molecule evaluators satisfy this Protocol via duck typing;
+    the dataclass inheritance is provided by :class:`_MoleculeTargetEvaluator`
+    which subclasses the local Protocol and shares the same member
+    surface as ``universal.evaluator.Evaluator``.
+    """
+
+    def score(self, state_bundle: Any) -> float: ...
+
+    @property
+    def calibration_artifact_hash(self) -> UniversalArtifactHash: ...
+
+    def evaluate(
+        self,
+        *,
+        sample: Mapping[str, Any],
+    ) -> tuple[float, Mapping[str, float]]: ...
 
 
 def _hash_artifact_func(payload: Mapping[str, Any]) -> str:
@@ -75,32 +117,13 @@ def _hash_artifact_func(payload: Mapping[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 
-MOLECULE_CALIBRATION_TARGETS: Mapping[str, str] = {
-    "binding_affinity_kcal": "gnina",
-    "qed": "qed_target",
-    "admet_tox_flag": "admet_target",
-    "synthesizability": "synth_target",
-}
-"""Canonical mapping from metric name → legacy evaluator-arm name.
-
-Replaces ``eval.calibration.PREDECLARED_SAFETY_METRICS``. Each entry
-names the *kind* of evaluator arm that produces a primary score for the
-metric; the arm itself lives in :mod:`eval.protocol`.
-"""
-
-
-MOLECULE_CHANNEL_TO_METRIC: Mapping[str, str] = {
-    "coordinate": "binding_affinity_kcal",
-    "charge": "qed",
-    "raw_pair": "admet_tox_flag",
-    "projected_pair": "synthesizability",
-}
-"""Canonical mapping from molecule channel name → metric name.
-
-Replaces ``eval.calibration.CHANNEL_NAMES_FOR_CALIBRATION``. The
-channels are exactly :data:`adaptive_reflow.molecular.MOLECULE_CHANNELS`
-in the same order.
-"""
+# Canonical home: :data:`adaptive_reflow.contracts.types`. Re-exported here
+# so existing ``from adaptive_reflow.molecular import
+# MOLECULE_CALIBRATION_TARGETS`` paths continue to work.
+from adaptive_reflow.contracts.types import (  # noqa: E402
+    MOLECULE_CALIBRATION_TARGETS,
+    MOLECULE_CHANNEL_TO_METRIC,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -141,7 +164,7 @@ def _hash_artifact(payload: Mapping[str, Any]) -> ArtifactHash:
 
 
 @dataclass(frozen=True)
-class _MoleculeTargetEvaluator(Evaluator):
+class _MoleculeTargetEvaluator(_MoleculeEvaluatorProtocol):
     """Shared scaffolding for concrete molecule evaluator adapters.
 
     Concrete subclasses populate ``target_name``, ``default_target``,

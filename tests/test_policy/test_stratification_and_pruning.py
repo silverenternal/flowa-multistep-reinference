@@ -73,7 +73,7 @@ def _gate(threshold: float = 1.0) -> PruneGate:
 
 def _minimal_manifest() -> FrozenEnvelopeManifest:
     """Return a minimal frozen manifest used for accumulator snapshots."""
-    from adaptive_reflow.contracts import EnvelopeLayer
+    from adaptive_reflow.molecular.envelope import EnvelopeLayer
 
     layer = EnvelopeLayer(
         layer_index=0,

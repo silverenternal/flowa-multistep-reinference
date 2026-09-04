@@ -48,6 +48,7 @@ Numerical contract
 from __future__ import annotations
 
 import math
+from typing import ClassVar
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
@@ -268,12 +269,34 @@ class InceptionV3FIDEvaluator(FIDProtocol):
 
     FAMILY: str = "inceptionv3"
 
+    #: Hard dependency expectation for the canonical InceptionV3
+    #: construction (P0-1). The lazy ``__getattr__`` hook at the top of
+    #: this module surfaces a clear error if ``torchvision`` is not
+    #: importable when an evaluator instance is constructed via the
+    #: canonical feature-extractor surface. The :class:`FIDProtocol`
+    #: base deliberately does NOT advertise this — sibling families
+    #: (random projection, pytorch-fid TF port) have different deps.
+    requires: ClassVar[frozenset[str]] = frozenset({"torchvision", "torch"})
+
     def __init__(
         self,
         *,
         feature_dim: int = INCEPTION_POOL3_FEATURE_DIM,
         eigenclip_eps: float = FID_EIGENCLIP_EPS_DEFAULT,
     ) -> None:
+        # P0-1: gate construction on the canonical ``requires`` set so a
+        # caller who instantiates the canonical InceptionV3 evaluator in
+        # an environment without torchvision (or torch) fails loud with a
+        # descriptive ImportError. The check is cheap (a few importlib.util
+        # lookups) and runs once per construction.
+        missing = _missing_requires(self.requires)
+        if missing:
+            raise ImportError(
+                f"InceptionV3FIDEvaluator requires {sorted(self.requires)} "
+                f"to construct the canonical InceptionV3 feature extractor; "
+                f"missing: {missing}. Install with "
+                f"`pip install -e .[image-fid]`."
+            )
         if isinstance(feature_dim, bool) or not isinstance(feature_dim, int):
             raise ValueError(
                 f"feature_dim must be an int, got {type(feature_dim).__name__}"
@@ -445,10 +468,22 @@ class InceptionV3FIDEvaluator(FIDProtocol):
         return float(max(fid_value, 0.0))
 
     def config_hash(self) -> str:
-        """Stable digest binding family + hyperparameters."""
+        """Stable digest binding family + hyperparameters + torchvision version.
+
+        The torchvision version string is folded into the hash so a
+        torchvision major-bump that changes the InceptionV3 architecture
+        (which has happened historically — see
+        https://github.com/pytorch/vision/releases) surfaces as a hash
+        change in downstream audit reports.
+        """
+        tv_version = _torchvision_version_or_unknown()
         return _config_hash(
             self.FAMILY,
-            {"feature_dim": self._feature_dim, "eigenclip_eps": self._eigenclip_eps},
+            {
+                "feature_dim": self._feature_dim,
+                "eigenclip_eps": self._eigenclip_eps,
+                "torchvision_version": tv_version,
+            },
         )
 
 
@@ -599,3 +634,37 @@ def _config_hash(family: str, extra: dict[str, Any] | None = None) -> str:
         payload[str(key)] = val
     text = json.dumps(payload, sort_keys=True, default=str)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _torchvision_version_or_unknown() -> str:
+    """Return ``torchvision.__version__`` if importable, else ``"unknown"``.
+
+    Used by :meth:`InceptionV3FIDEvaluator.config_hash` to bind the
+    torchvision version string into the canonical hash so a torchvision
+    major-bump surfaces as a hash change.
+    """
+    try:
+        import torchvision as _tv  # type: ignore[import-not-found]
+    except ImportError:  # pragma: no cover — environment-dependent
+        return "unknown"
+    version = getattr(_tv, "__version__", None)
+    if not isinstance(version, str) or not version:
+        return "unknown"
+    return version
+
+
+def _missing_requires(requires: "frozenset[str] | set[str] | tuple[str, ...]") -> list[str]:
+    """Return the sorted list of names from ``requires`` that are not importable.
+
+    Used by :class:`InceptionV3FIDEvaluator.__init__` to fail loud when
+    the canonical feature-extractor construction cannot succeed. Uses
+    :func:`importlib.util.find_spec` to avoid actually importing the
+    dep — only a quick lookup.
+    """
+    import importlib.util
+
+    missing: list[str] = []
+    for name in sorted(requires):
+        if importlib.util.find_spec(name) is None:
+            missing.append(name)
+    return missing

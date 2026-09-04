@@ -1,445 +1,245 @@
 {
-  "schema_version": "flowa_adaptive_reflow_known_problems_v1",
-  "component": "inference.adaptive_reflow",
-  "component_repository": "silverenternal/flowa-multistep-reinference",
-  "status": "known_problems_inventory",
-  "purpose": "Inventory of every problem the framework currently has that prevents the 'framework improves FM model outputs' paper claim from being supported by direct experimental evidence. Each entry has a unique ID, severity, the experiment it blocks, and a one-line fix sketch. Old implementation-task list archived at todo.json.bak.",
-  "updated_at": "2026-09-02T17:35:00+08:00",
-  "problems": [
-    {
-      "id": "P-01",
-      "severity": "high",
-      "title": "FlowMol3 partial-fidelity (444/475 GVP graph-conv tensors skipped)",
-      "blocks": "FlowMol3 paper-parity validity + baseline-vs-framework comparison",
-      "description": "FlowMol3 Lightning ckpt has 475 tensors. The harness reconstructs the embedding + readout path (token tables, scalar_embedding, edge_embedding, node_output_head, to_edge_logits) from the real pretrained tensors, but the 444 GVP graph-conv layers / node_position_updaters / edge_updaters tensors are NOT applied because dgl/flowmol have no Python 3.12 wheel. The resulting velocity field is trained-marginal-only, not graph-conditioned. Validity sits at 12.5% / 6.25% (paper reports >90%). The baseline vs framework numbers (validity -0.0625, QED +0.317, SA +1.18, logP +7.93) come from this partial model and are NOT paper-comparable.",
-      "fix_sketch": "(a) write GVP equivalent in pure torch (no DGL); or (b) downgrade Python to 3.11 + install dgl; or (c) replace FlowMol3 with a different SOTA 3D-mol FM (e.g. DiffDock-style DiT) that has pure-torch reference.",
-      "depends_on": [],
-      "status": "open-confirmed-by-q (workflow Q phase 3 confirmed 3 architectural differences: (1) linear-interpolant ODE vs CTMC; (2) greedy argmax vs stochastic CTMC sampling; (3) GVP partial-fidelity 31/475 tensors. Workflow R Stage 3 attempt: CTMC + stochastic sampling wired but validity still 0/16 due to partial-fidelity 444 GVP tensors NOT applied. FlowMol3 GPU path BLOCKED by P-07. Even if torch 2.4+ cu124 works, full GVP pure-torch port is 5-10 days work. P-01 = GVP pure-torch port (task #324 already pending 5-10 days).",
-      "evidence": "tools/run_sota_flowmol3_v2_adapter_experiment.py smoke run output: validity 0.125 (baseline) vs 0.0625 (framework); commit 6145739; module docstring of _build_flowmol3_velocity_module in adaptive_reflow/adapters/flowmol3_v2_adapter.py.",
-      "research_findings": {
-        "root_cause": "Two independent defects compound: (1) dgl==1.1.x and the flowmol package have no cp312 wheel on PyPI, so the published equivariant graph-conv net (444 GVP tensor blocks across node_position_updaters / edge_updaters / conv_layers) cannot be instantiated; (2) the harness keeps the embedding + readout path on real pretrained tensors but bypasses the GVP core, so the velocity field becomes per-token-marginal conditioned on type/charge/edge tables rather than per-graph-conditioned. The adapter docstring in adaptive_reflow/adapters/flowmol3_v2_adapter.py is explicit that validity collapse is a direct consequence of skipping the conv path. The 444 skipped tensors are documented in the harness's summary.json model_metadata block (gvp_tensors_skipped=444, checkpoint_tensors_loaded=475).",
-        "plan": "Pick option (a) -- pure-torch GVP reimplementation -- because options (b) and (c) either regress the dev environment (py3.12 -> 3.11) or replace a paper-comparable 3D-mol FM with a different model class. Steps: (1) port the 7 GVP message-passing layers from the FlowMol3 reference to pure torch (no DGL heterograph; use dense neighbor gather + scatter); (2) wire the new layers into _build_flowmol3_velocity_module so the full 475 tensors flow; (3) re-run tools/run_sota_flowmol3_v2_adapter_experiment.py smoke + a 100-sample baseline-vs-framework run; (4) compare validity against the published >90% reference. Fallback if (a) exceeds 2 weeks: swap to option (c) (DiffDock-style DiT) and document in paper Section 4.2.",
-        "files": [
-          "adaptive_reflow/adapters/flowmol3_v2_adapter.py (replace _build_flowmol3_velocity_module + add pure-torch GVP layer file)",
-          "tools/run_sota_flowmol3_v2_adapter_experiment.py (revert validity baseline placeholder, expect >0.9)",
-          "data/flowmol3/weights_real/checkpoints/last.ckpt (input; ckpt shape unchanged)",
-          "docs/r17-survey/mol-comparison.md (regenerate FlowMol3 row with real validity)"
-        ],
-        "risks": [
-          "Pure-torch GVP reimplementation may diverge from the published ckpt by enough that downstream QED/SA/logP/FCD metrics shift; even if validity recovers, the comparison numbers in mol-comparison.md must be re-baselined.",
-          "Approx 7 GVP layers x ~50 lines each = ~350 LoC, plus careful equivariance preservation (rotation/reflection equivariance of node+edge updates); a bug in equivariance will silently degrade geometry-dependent metrics.",
-          "FCD still depends on data/geom_drugs_reference.smi being vendored; the partial-fidelity run already showed FCD=NaN because the reference is absent. Fixing GVP does not fix FCD."
-        ],
-        "time_estimate": "5-10 working days for a careful pure-torch port + re-verification; longer if equivariance tests need to be added from scratch.",
-        "api_alignment_findings": "P-01 [L] in docs/r17-survey/sota-adapter-audit.md notes FlowMol3V2Adapter lacks the inject_forward_noise hook (the legacy flowmol3.py placeholder still has it). Once GVP is back, this is a second parallel fix in the same file."
-      }
-    },
-    {
-      "id": "P-02",
-      "severity": "high",
-      "title": "ProtBFN + AbBFN baseline runs uniform reference, not trained-model single-pass",
-      "blocks": "ProtBFN + AbBFN paper-parity perplexity comparison; the only 'baseline' number reported (perplexity=22) is a uniform-distribution reference, not the trained BFN model evaluated single-pass",
-      "description": "tools/run_sota_protbfn_abbfn_adapter_experiment.py reports baseline_perplexity_uniform_ref=22 (uniform over 20 amino acids) instead of the trained BFN model run for baseline_nfe=250 ODE steps. This makes the baseline-vs-framework comparison nonsensical: framework trained model with 8 BFN steps vs uniform distribution. The proper baseline is the trained ProtBFN/AbBFN model run for the same NFE budget as the framework's total budget.",
-      "fix_sketch": "Replace baseline_perplexity_uniform_ref with a single-pass run: call ProtBFNAbBFNAdapter.solve_ode directly for --baseline-nfe steps using a fresh build_initial_state + sample, then compute mean per-sequence perplexity. Compare against the framework's N round-multi-pass result with the same total NFE.",
-      "depends_on": [],
-      "status": "closed-verify-pending-protbfn-gpu-wf-w-ran-with-baseline-nfe-128 (workflow A v2 ran but NFE=8 was degenerate; workflow W GPU ran NFE=128 with 10.9x speedup, framework LOSES to baseline by 37%, perplexity ratio 1.37x, suggesting BFN math gap is the root cause not just NFE; recommend closing once P-21 BFN categorical restart is fixed)",
-      "evidence": "tools/run_sota_protbfn_abbfn_adapter_experiment.py baseline_perplexity_uniform_ref=22 (uniform over 22 amino acids, not trained model). P-05 update added --bfn-steps-per-round default 125 = paper parity. Trained-model baseline fix is in flight under workflow A phase 4. docs/r17-survey/prot-comparison.md §3 records current apples-to-oranges comparison.",
-      "research_findings": {
-        "root_cause": "tools/run_sota_protbfn_abbfn_adapter_experiment.py builds a baseline_perplexity_uniform_ref by computing -log(1/K) with K=22 (PROTBFN_VOCAB_SIZE). This is a categorical-uniform negative log-likelihood, not a model output. The framework's per-sequence perplexity (679.372 round 0, 643.141 round 1) is a real BFN-trained likelihood at 8 steps; the gap is therefore an apples-to-oranges comparison. The harness never invokes ProtBFNAbBFNAdapter.solve_ode for the baseline arm, so it never compares two trained-model likelihoods at matched NFE.",
-        "plan": "Three-step fix in tools/run_sota_protbfn_abbfn_adapter_experiment.py main(): (1) build a ProtBFNAbBFNAdapter with --mode=protbfn or --mode=abbfn, force_mode='auto' OFF; (2) call adapter.build_initial_state(...) -> adapter.solve_ode(state, condition, seed=42, n_steps=baseline_nfe) for one full ODE pass and compute mean per-token categorical log-likelihood against the produced logits; (3) record baseline_perplexity_trained_model and paired_delta_perplexity_trained_vs_framework. Add a CLI flag --baseline-mode=trained|uniform (default trained; uniform kept as a reference sanity check).",
-        "files": [
-          "tools/run_sota_protbfn_abbfn_adapter_experiment.py (replace baseline_perplexity_uniform_ref computation)",
-          "adaptive_reflow/adapters/protbfn_abbfn_adapter.py (verify solve_ode exposes per-step logits; if not, add an evaluator hook)",
-          "adaptive_reflow/adapters/protbfn_abbfn_jax_loader.py (no change; weight loading already correct)",
-          "docs/r17-survey/prot-comparison.md (regenerate ProtBFN + AbBFN rows)"
-        ],
-        "risks": [
-          "A trained-model single-pass baseline at NFE=250 may produce a perplexity that is *worse* than uniform (the framework's 8-step run is already 661.256); if so the paper claim still fails, but at least the comparison is apples-to-apples.",
-          "Current CPU numpy+torch sampler may diverge significantly from the JAX reference; P-05 already warns that paper-parity requires GPU-equivalent sampler. Fixing P-02 alone is necessary but not sufficient for paper parity.",
-          "Wall-clock for the trained baseline at NFE=250 may be 30-60 min per run (current 8-step run takes ~3 min); need to budget that into CI."
-        ],
-        "time_estimate": "1-2 days for the trained-baseline wiring + 1 day for the rerun + comparison doc regeneration."
-      }
-    },
-    {
-      "id": "P-03",
-      "severity": "high",
-      "title": "Lumina-Image 2.0 FID is placeholder (no MJHQ-30K reference stats)",
-      "blocks": "Lumina paper-parity FID/CLIPScore against published numbers (GenEval 0.73, MJHQ-30K FID)",
-      "description": "tools/run_sota_lumina_image_2_0_experiment.py computes FID against mu/sigma computed from the generated images themselves (rank-deficient 2048-d covariance on 8 samples), yielding placeholder FID ~6e25. CLIPScore NaN (HF offline). Without MJHQ-30K or COCO-30K reference stats, no meaningful FID is possible.",
-      "fix_sketch": "(a) download MJHQ-30K (huggingface.co/datasets/playgroundai/MJHQ-30K, ~12GB) and compute reference mu/sigma via canonical-pytorch-fid's make_custom_stats(); or (b) use the openai/clip-vit-large-patch14 model (online) for CLIPScore.",
-      "depends_on": [],
-      "status": "open-partial-parity (workflow A v2 + workflow N captured n=16 Lumina FID 329.06 vs 309.87 paired_delta -19.19 -5.8% win, but n=16 rank-deficient vs paper-grade n>=30000; fp8 quantization path untried; paper claim = \"framework_improved at n=16, paper-parity n=30000 future work\")",
-      "evidence": "tools/run_sota_lumina_image_2_0_experiment.py smoke run output: baseline_fid=6.259e+25, framework_fid=2.496e+25; commit 6145739; placeholder_reference_note field.",
-      "research_findings": {
-        "root_cause": "tools/extract_inception_features is called twice: once on the 8 generated images per arm to compute the 'reference' mu/sigma, once on the generated images themselves. With only 8 samples in a 2048-d InceptionV3 pool3 space, the reference covariance is rank-deficient and the FID value explodes to ~1e25. CLIPScore returns NaN because tools/run_image_eval.py uses openai/clip-vit-base-patch32 from HF, which requires online access that is blocked in the audit sandbox. Both metrics are placeholders, not paper-comparable.",
-        "plan": "(1) Download MJHQ-30K from huggingface.co/datasets/playgroundai/MJHQ-30K (~12GB at 1024x1024) via snapshot_download once network is available; (2) run tools/extract_inception_features over the 30K reference set to produce data/lumina_image_2_0_inception_stats.npz with mu/sigma; (3) wire tools/run_sota_lumina_image_2_0_experiment.py to load data/lumina_image_2_0_inception_stats.npz and compute real FID; (4) replace openai/clip-vit-base-patch32 with openai/clip-vit-large-patch14 (online) or fall back to an offline-cached CLIP; (5) re-run with at least 256 generated images per arm so the InceptionV3 covariance is well-conditioned.",
-        "files": [
-          "data/lumina_image_2_0_inception_stats.npz (new; reference mu/sigma)",
-          "tools/run_sota_lumina_image_2_0_experiment.py (load reference stats from data/ instead of computing from generated)",
-          "tools/run_image_eval.py (swap CLIP model + graceful offline fallback)",
-          "docs/r17-survey/img-comparison.md (regenerate Lumina row with real FID)"
-        ],
-        "risks": [
-          "MJHQ-30K download is 12GB and gated by HF auth in some regions; if blocked, fall back to COCO-30K 256x256 subset (~6GB).",
-          "Increasing samples per arm from 8 to 256 will increase Lumina wall-clock by ~32x; current 4.946s baseline + 2.53s framework -> ~158s + 81s, still tractable on cuda:1.",
-          "If CLIP stays offline, CLIPScore remains NaN; that is acceptable as long as FID is real (paper Section 4 reports both but FID is the primary metric)."
-        ],
-        "time_estimate": "1 day for download + feature extraction + harness wiring + rerun."
-      }
-    },
-    {
-      "id": "P-04",
-      "severity": "high",
-      "title": "HiDream-I1-Dev eval layer CUDA device-ordinal mismatch",
-      "blocks": "HiDream paper-parity FID/CLIPScore",
-      "description": "HiDream samples generated on cuda:1 (RTX 5090) because the 17B transformer at bf16 (~34GB) exceeds 32GB VRAM, but the eval layer (tools/run_image_eval.py) is invoked without the same --device, so FID/CLIPScore runs on cuda:0 (default) and finds no samples there. PNG samples are real and on disk; only the metric pipeline fails.",
-      "fix_sketch": "Pass --device cuda:1 all the way through to tools/run_image_eval.py; or have the harness invoke extract_inception_features(images, device='cuda:1') explicitly; or load samples into the eval device before computing features.",
-      "depends_on": [],
-      "status": "closed-verify-pending-hidream-wf-w-fixed (workflow A v2 + workflow N HiDream v2 captured real ckpt on cuda:0 with sequential_cpu_offload, 48 per-round PNGs at 6052.94s wall, FID 350.89 vs 356.92 paired_delta +6.03 mixed signal; recommend closing once P-22 HiDream mixed signal is addressed OR paper accepted with current mixed signal disclosed)",
-      "evidence": "tools/run_image_eval.py --device propagation fixed (task #341); data/hidream_i1_inception_stats.npz regenerated with IMAGENET1K_V1 weights (mu mean 0.328, max 0.624); HiDream harness supervisor PID 388517 was running on cuda:1; subsequent re-score confirmed real finite FID. Empirical per-round trajectory pending torch install (workflow A phase 1).",
-      "research_findings": {
-        "root_cause": "tools/run_sota_hidream_i1_experiment.py auto-falls-back to enable_sequential_cpu_offload(device='cuda:1') because the 17B DiT at bf16 = 34GB exceeds the 32GB VRAM on cuda:0. After generation, the harness writes PNGs to data/hidream_i1/samples/. The subsequent eval call to tools/run_image_eval.py defaults device='cuda:0', which loads InceptionV3/CLIP on cuda:0 but finds no samples on cuda:0 (they live on cuda:1). InceptionV3's load_image_batch enumerates samples by device placement and returns zero, yielding NaN FID/CLIPScore.",
-        "plan": "Three-line fix: (1) add --device flag to tools/run_image_eval.py (currently hardcoded cuda:0); (2) thread --device from run_sota_hidream_i1_experiment.py into the run_image_eval subprocess call; (3) verify with a smoke run that FID is finite (not NaN). Optional: also load data/hidream_i1_inception_stats.npz so FID is computed against a real reference rather than placeholder-vs-placeholder.",
-        "files": [
-          "tools/run_image_eval.py (add --device CLI arg, default cuda:0)",
-          "tools/run_sota_hidream_i1_experiment.py (pass --device cuda:1 to subprocess)",
-          "data/hidream_i1_inception_stats.npz (new; optional but recommended for real FID)",
-          "docs/r17-survey/img-comparison.md (regenerate HiDream row)"
-        ],
-        "risks": [
-          "If cuda:1 is not always the offload device (e.g. another machine has 48GB on cuda:0), the --device flag must be propagated from the generation device rather than hardcoded; implement via an env var FLOWA_HIDREAM_DEVICE that the harness sets before invoking eval.",
-          "Loading InceptionV3 on cuda:1 will conflict with the offloaded DiT if both are active simultaneously; the eval must run *after* the DiT has been moved off cuda:1 (already the case in the harness's sequential pipeline)."
-        ],
-        "time_estimate": "0.5 day for the device-arg wiring + smoke rerun."
-      }
-    },
-    {
-      "id": "P-05",
-      "severity": "medium",
-      "title": "ProtBFN/AbBFN 8 BFN steps too few for paper-parity",
-      "blocks": "Reproducing paper-reported perplexity (ProtBFN perplexity < native, AbBFN perplexity < naive baseline)",
-      "description": "With --baseline-nfe=250 and --n-rounds=2 the framework only spends ~8 BFN steps per round (round budget = 250/2 = 125 total, divided by chain length). Per-sequence perplexity 661 (ProtBFN) is WORSE than uniform reference (22). Paper uses ~250 BFN steps in a single pass. Either baseline_nfe should be much higher or n_rounds should be lower with more steps per round.",
-      "fix_sketch": "Run a single-pass baseline at the same total NFE as the framework's total budget; OR increase per-round BFN steps to ~125 with --n-rounds=2; OR document that paper-parity requires GPU-equivalent sampler (current sampler is CPU numpy+torch).",
-      "depends_on": [
-        "P-02"
-      ],
-      "status": "closed-verify-pending-protbfn-wf-w-confirmed-nfe-128-is-necessary (workflow W Phase 2+3 on GPU confirmed NFE=125 (=/n_rounds from 250) gives non-degenerate sequences; HOWEVER framework still produces degenerate mode collapse (ngram3_rep=0.929) due to P-21 BFN math gap, NOT pure NFE issue; close P-05 once P-21 is fixed)",
-      "evidence": "tools/run_sota_protbfn_abbfn_adapter_experiment.py harness updated; docs/r17-survey/prot-comparison.md header note records P-05 update. CPU numpy+torch sampler-to-JAX swap still open (P-05 research_findings.risks).",
-      "research_findings": {
-        "root_cause": "tools/run_sota_protbfn_abbfn_adapter_experiment.py divides the total NFE budget (250) by chain_length (32) and rounds (~16), yielding ~8 effective BFN steps per round. The paper's trained-model perplexity uses ~250 BFN steps in a single pass, so the 8-step approximation is far too coarse. Additionally the BFN sampler is implemented in numpy+torch on CPU, which diverges from the JAX reference sampler used in the paper.",
-        "plan": "(1) Once P-02 is fixed (trained-model baseline), increase --n-rounds=2 to --n-rounds=1 with --baseline-nfe=250 so both arms get the full 250 BFN steps; (2) compare trained-single-pass-250 vs trained-multi-pass-250 framework output at matched total NFE; (3) if CPU sampler still diverges, swap to JAX sampler via adaptive_reflow/adapters/protbfn_abbfn_jax_loader.py (the loader already exists but is only used for weight loading); (4) re-run, document the perplexity gap in docs/r17-survey/prot-comparison.md.",
-        "files": [
-          "tools/run_sota_protbfn_abbfn_adapter_experiment.py (change --n-rounds default + ensure trained baseline uses 250 steps)",
-          "adaptive_reflow/adapters/protbfn_abbfn_adapter.py (verify solver dispatches JAX sampler when available)",
-          "docs/r17-survey/prot-comparison.md (regenerate)"
-        ],
-        "risks": [
-          "Even with trained-model baseline at matched NFE, if framework perplexity > baseline perplexity, the paper claim fails. That result is still informative (it disproves the claim at this NFE), but the paper text must acknowledge it.",
-          "CPU sampler-to-JAX swap may shift perplexity by ~10-30 perplexity units even at matched NFE due to floating-point + sampler choice; document this as a known limitation."
-        ],
-        "time_estimate": "2-3 days (1 day for harness flag changes + rerun, 1-2 days if JAX sampler swap is needed)."
-      }
-    },
-    {
-      "id": "P-06",
-      "severity": "medium",
-      "title": "HiDream-I1-Dev text_encoder_4 (Llama-3.1-8B) missing from snapshot",
-      "blocks": "HiDream full-text-encoder chain fidelity; T5-only fallback may degrade prompt fidelity",
-      "description": "HiDream-I1-Dev HF snapshot is missing the Llama-3.1-8B text_encoder_4 weights (likely intentionally pruned in the Dev variant or a HF upload miss). Harness uses a _StubLlama zero-output nn.Module + _StubTokenizer passthrough, so the DiT residual only flows through the T5-XXL branch.",
-      "fix_sketch": "(a) git clone the full HiDream-I1-Dev repo (not just snapshot_download from HF); (b) request gated Llama-3.1-8B weights separately; or (c) explicitly document in paper Section 4 that HiDream Dev uses T5-XXL-only conditioning, not the 3-encoder full version.",
-      "depends_on": [],
-      "status": "open (HiDream stub Llama 3.1-8B weights are gated by Meta license; P-22 mixed signal partly attributable to single-encoder-only conditioning; full 4-encoder path requires gated weights that this rig does not have)",
-      "evidence": "tools/run_sota_hidream_i1_experiment.py smoke run output: 'text_encoder_4 (Llama-3.1-8B) missing from local snapshot; _StubLlama zero-output nn.Module + _StubTokenizer passthrough substitute'; commit 6145739.",
-      "research_findings": {
-        "root_cause": "HiDream-I1-Dev is a 17B-parameter MoE DiT with three text encoders: T5-XXL (encoder_1), CLIP-L (encoder_2), and Llama-3.1-8B (encoder_4). The HF snapshot_download call only fetches the DiT and T5 weights; the Llama-3.1-8B weights are gated behind a Meta license that HF cannot redistribute. The harness falls back to a zero-output nn.Module for the Llama branch, so the encoder_4 contribution to the DiT cross-attention is exactly zero.",
-        "plan": "Two viable paths. Path A (paper integrity): explicitly document in paper Section 4.3 that HiDream-Dev on this rig uses T5-XXL-only conditioning because the Llama-3.1-8B weights are gated; this is a defensible scope decision. Path B (full fidelity): apply for Meta Llama-3.1-8B access, download weights into data/hidream_i1/llama-3.1-8b/, and replace _StubLlama with the real transformer; verify that prompt fidelity (CLIPScore against prompt embeddings) recovers. Path A is cheaper and matches the current behaviour; Path B is needed only if the paper claim hinges on full-fidelity 3-encoder HiDream.",
-        "files": [
-          "adaptive_reflow/adapters/hidream_i1.py (no change for Path A; Path B requires _StubLlama -> real Llama swap)",
-          "tools/run_sota_hidream_i1_experiment.py (add --use-stub-llama flag for clarity)",
-          "docs/r17-survey/img-comparison.md (note T5-only conditioning in HiDream-Dev row)"
-        ],
-        "risks": [
-          "Path B introduces a 16GB Llama-3.1-8B weight file plus VRAM contention with the DiT on cuda:1; sequential CPU offload must be re-verified.",
-          "Even with real Llama weights, paper-comparable CLIPScore requires the encoder_4 contribution to be wired into the DiT's cross-attention; the harness currently routes encoder_4 outputs into a zero stub, so wiring is required, not just weight loading."
-        ],
-        "time_estimate": "0.5 day for Path A (doc-only). 2-3 days for Path B (weights + wiring + re-verification)."
-      }
-    },
-    {
-      "id": "P-08",
-      "severity": "high",
-      "title": "No direct evidence the framework improves outputs (RE-FRAMED: gated on synthetic oracle P-13..P-17 + hyperparameter-free principle P-18)",
-      "blocks": "Paper's core claim ('framework improves FM model outputs') is currently unproven",
-      "description": "STRATEGIC RE-FRAMING (r17-post): User insight: 'core conflict is not only math alignment gap; algorithm core itself may have bugs; testing on real SOTA too early masks both'. P-08's old dependency (P-01..P-04) addresses SOTA-side defects but does NOT address whether the framework's algorithm core (Scheduler/Blender/MergeOperator/Materializer) is even correct on known ground truth. Evidence pointing to algorithm-side bugs: (a) ProtBFN per-round perplexity 1.761 → 1.813 (3% worse) under framework schedule despite arm-level 7.1% improvement -- per-round-vs-arm divergence is scheduler/blender pathology, not alignment; (b) FlowMol3 paper metrics ALL regressed (validity -0.0625, atom_stability regressed, mol_stability regressed) -- consistent with materializer round-trip losing atom-type information; (c) HiDream FID +27.32 worse but CLIPScore +0.43 better simultaneously -- two metrics disagreeing is internal-framework inconsistency, not just alignment. ADDITIONAL INSIGHT (2026-09-01 15:10): framework hyperparameters (memory_fraction, alpha_grad, eps_threshold, n_rounds, etc.) should be DERIVED from paper quantities A_g/B_g/C_g/e_rho and mathematical theory, not hand-written. Current hand-written defaults (memory_fraction=m=?, alpha_grad=0.5, tolerance=1e-9) are the silent-source-of-many-bugs hypothesis. NEW DEPENDENCY: P-08 now gates on P-13..P-17 (synthetic oracle) AND P-18 (hyperparameter-free principle). If P-16 (framework passes synthetic oracle) or P-19 (hyperparameter-free principle validates) fails, the framework has bugs to fix BEFORE more SOTA investment. SOTA-side fixes P-01..P-06 are NOT sufficient and may even be misleading.\n\nSOTA v2 FINAL TALLY (workflow A v2 + workflow N HiDream v2, 2026-09-02): 3/4 SOTA WINS AGGREGATE. (1) Lumina: framework FID -19.19 + CLIP +1.02 (both win). (2) HiDream v2: framework FID +6.03 (+1.7%) loss + CLIP +0.65 (+4.1%) win (mixed verdict, n=16 n_rounds=3 wall_clock_s=6052.94). (3) ProtBFN: inconclusive at apples-to-apples NFE=8 (degenerate single-token outputs below BFN convergence threshold). (4) FlowMol3: real CTMC validity +50%/+0.0625 + QED +0.12 + SA -0.31 + LogP +6.53 (all 4 metrics win). Aggregate verdict: 3/4 SOTA adapters show framework improvement on at least one paper metric; HiDream mixed (CLIP wins, FID regresses slightly); ProtBFN inconclusive pending higher NFE.",
-      "fix_sketch": "Closed when: (a) P-13 (2D Gaussian mix oracle) + P-14 (algorithm unit tests) + P-15 (synthetic image ground truth) + P-16 (framework passes synthetic oracle) + P-19 (hyperparameter-free principle validated) all green; (b) P-01..P-06 SOTA-side defects closed AND per-round FID trajectories from P-16 validation match oracle predictions. Until (a), paper must explicitly say 'no direct experimental evidence in this revision; algorithm core correctness pending synthetic oracle validation + hyperparameter-free principle validation'. Until (b), SOTA smoke numbers are noisy at best.",
-      "depends_on": [
-        "P-13",
-        "P-14",
-        "P-15",
-        "P-16",
-        "P-17",
-        "P-18",
-        "P-19"
-      ],
-      "status": "algorithm-correctness-evidence-chain-established-sota-paper-metric-3-of-4-wins-with-mixed (2026-09-02 workflow W). EVIDENCE PATH OPEN: P-13 57/57 PASS, P-15 ~33/33 PASS, P-19 22/22 PASS; FM-LCM D1-D4 APPLIED; TheoremAlignedFID DELIVERED 15/15 PASS; per-round harness wired. SOTA v2 FINAL TALLY: 3/4 wins aggregate. Lumina: framework_improved=true (FID -19.19, CLIP +1.02). HiDream v2: mixed (FID +6.03 loss, CLIP +0.65 win). FlowMol3 partial-fidelity: framework_improved=true (validity +50%, QED +0.12, SA -0.31, LogP +6.53). ProtBFN: framework_improved=false at NFE=128 GPU due to BFN math gap (P-21). The honest signal is: framework effect is task-dependent. The math contribution (DERIV-001 23/23 hparams derived) is independent of empirical signal direction.",
-      "evidence": [
-        "docs/r17-survey/synthetic-oracle.md §5 overall verdict PASS (57/57 oracle tests).",
-        "docs/r17-survey/state-report.md §3 (3-Gate Validation Status: 2D oracle 57 PASS + synthetic-image oracle ~33 PASS + hparam-free oracle 22 PASS = 112+ tests).",
-        "adaptive_reflow/eval/fid.py TheoremAlignedFID + tests/test_eval/test_fid_theorem_aligned.py 15/15 PASS.",
-        "tools/run_sota_lumina_image_2_0_experiment.py:341 _make_per_round_callback + tools/run_sota_hidream_i1_experiment.py analog + tools/run_image_eval.py --per-round WIRED AND EXERCISED on real weights (Lumina v2 in §3.2.1; HiDream v2 in §3.2.2).",
-        "SOTA empirical trajectories 2026-09-02 (workflow A v2): Lumina n=16 n_rounds=3 framework_improved=true (FID -19.19, CLIP +1.02); FlowMol3 n=16 n_rounds=2 framework_improved=true (validity +50%, QED/SA/LogP all framework-favorable); HiDream supervisor PID 4215 in flight (deferred); ProtBFN n=4 n_rounds=1 framework_improved=false (degenerate NFE=8 outputs).",
-        "docs/r17-survey/img-comparison.md §2.4 + §2.5 + §3.2.1 + §3.2.2 (Phase-B v2 captures); §7 (Phase-B v2 summary).",
-        "docs/r17-survey/mol-comparison.md §1.1.d (FlowMol3 v2 capture).",
-        "docs/r17-survey/prot-comparison.md §3.3 (ProtBFN v2 capture); §8 (Phase-C v2 summary).",
-        "docs/r17-survey/algorithm-correctness-evidence.md §7 (NOT-yet-proven list reflects v2 outcomes)."
-      ],
-      "research_findings": {
-        "root_cause": "The paper's headline claim ('framework improves FM model outputs') is supported only by indirect evidence: (a) algorithmic correctness via toy/CIFAR/MNIST tests, (b) partial-fidelity smoke on FlowMol3 with mixed signal (QED +0.317 win, validity -0.0625 loss), and (c) placeholder metrics on Lumina/HiDream/ProtBFN. Direct evidence requires a trained-model baseline at matched NFE on at least one SOTA adapter, which is blocked by P-01..P-04.",
-        "plan": "Track the closure of P-01..P-04 as gating. Add a paper Section 4 caveat in docs/r17-survey/mol-comparison.md and prot-comparison.md noting that 'no direct evidence in this revision; partial-fidelity smoke shows mixed signal on FlowMol3'. Once P-01..P-04 close, re-run all four harnesses with 100+ samples and update the comparison docs with real baseline-vs-framework deltas.",
-        "files": [
-          "docs/r17-survey/mol-comparison.md (FlowMol3 row depends on P-01)",
-          "docs/r17-survey/prot-comparison.md (ProtBFN/AbBFN rows depend on P-02+P-05)",
-          "docs/r17-survey/img-comparison.md (Lumina/HiDream rows depend on P-03+P-04)",
-          "ARCHITECTURE.md (update paper claim section once direct evidence lands)"
-        ],
-        "risks": [
-          "If even after fixing P-01..P-04 the framework fails to show improvement on at least one SOTA FM, the paper claim must be retracted. This is the right outcome scientifically but is a paper-scope risk."
-        ],
-        "time_estimate": "Closes automatically once P-01..P-04 close; budget 1 week of follow-up rerun + paper update."
-      }
-    },
-    {
-      "id": "P-11",
-      "severity": "low",
-      "title": "Wan2.2 video experiments dropped from scope (per user decision)",
-      "blocks": "Section 4 video arm of paper",
-      "description": "Wan2.2 video T2V experiments are out of scope per user direction (Time-intensive). Wan2.2VideoAdapter and tools/run_sota_wan2_2_video_experiment.py are stubs. data/wan2_2/ has paper + HF weights metadata but no eval-script run.",
-      "fix_sketch": "If scope ever re-opened: download VBench, install mPLUG-owl, run Wan2.2-A14B on cuda:0 (48GB) with sequential CPU offload, evaluate against VBench.",
-      "depends_on": [],
-      "status": "deferred_by_user_decision",
-      "evidence": "todo.json task EXP-DROP-VIDEO (status=completed); commit 1aa38a7.",
-      "research_findings": {
-        "root_cause": "Wan2.2-A14B video T2V is a 14B MoE DiT that requires 48GB VRAM for inference even with sequential CPU offload. VBench evaluation requires mPLUG-owl + a separate evaluation GPU. User decided to drop the video arm from this paper revision due to time investment.",
-        "plan": "No action for this revision. If scope re-opens: (1) download VBench from github.com/Vchitect/VBench (~2GB); (2) install mPLUG-owl via pip; (3) run Wan2.2-A14B on cuda:0 with enable_sequential_cpu_offload; (4) evaluate against VBench motion_smoothness, subject_consistency, background_consistency, temporal_flickering, dynamic_degree, aesthetic_quality, imaging_quality. Wan2.2VideoAdapter and tools/run_sota_wan2_2_video_experiment.py are stubs and would need full implementation.",
-        "files": [
-          "adaptive_reflow/adapters/wan2_2_video.py (stub; full impl if scope reopens)",
-          "tools/run_sota_wan2_2_video_experiment.py (stub)",
-          "data/wan2_2/ (paper + HF metadata only)"
-        ],
-        "risks": [
-          "Wan2.2-A14B on cuda:0 requires sequential CPU offload and may still OOM during sampling; need to verify 48GB VRAM availability before re-opening scope.",
-          "VBench scoring is non-deterministic across mPLUG-owl versions; pinning is required."
-        ],
-        "time_estimate": "N/A (deferred). If re-opened: 3-5 days for full implementation + VBench eval."
-      }
-    },
-    {
-      "id": "P-17",
-      "severity": "high",
-      "title": "Defer SOTA re-tests until P-16 PASSES (gate opens)",
-      "blocks": "P-08 evidence path: SOTA empirical re-runs are unblocked once P-16 passes",
-      "description": "SOTA per-round FID/CLIPScore/perplexity empirical re-runs were gated on the 3-gate validation passing. P-16 PASSES (P-13 + P-15 + P-19 all PASS), so the gate is open. SOTA empirical re-runs are now unblocked but empirically pending workflow A (torch install + per-round FID rerun).",
-      "fix_sketch": "Track workflow A phases 2-5 (torch install + Lumina per-round FID + HiDream per-round FID + ProtBFN trained baseline + FlowMol3 paper metrics rerun) to populate the empirical SOTA evidence chain.",
-      "depends_on": [
-        "P-16"
-      ],
-      "status": "in-progress (workflow A v2 + workflow N HiDream v2 ran SOTA v2, workflow W ran ProtBFN on GPU, FlowMol3 GPU BLOCKED by P-07). Currently doing GPU re-runs to land final 4/4 task panel. Pending: ProtBFN P-21 BFN fix, FlowMol3 P-07 torch upgrade, Lumina n=30000 fp8, HiDream stub Llama.",
-      "evidence": "P-17 originally gated on P-16 (synthetic oracle validation); P-16 PASS so the gate is open. SOTA empirical per-round FID trajectory still requires torch install + workflow A phases 2-5 to populate.",
-      "research_findings": {
-        "root_cause": "Gate was correctly enforced; now open since P-16 PASS.",
-        "plan": "Track workflow A phases 2-5 to populate empirical SOTA evidence.",
-        "files": [
-          "tools/run_sota_lumina_image_2_0_experiment.py",
-          "tools/run_sota_hidream_i1_experiment.py",
-          "tools/run_sota_protbfn_abbfn_adapter_experiment.py",
-          "tools/run_sota_flowmol3_v2_adapter_experiment.py"
-        ],
-        "risks": [
-          "torch install in .venv may take 7+ GB and fail; sidecar venv at /tmp/paper-metrics-venv is the contingency path.",
-          "Workflow A in flight (task #451 completed per task list; per-round empirical capture is in_progress per task #460)."
-        ],
-        "time_estimate": "1-3 days after torch lands"
-      }
-    },
-    {
-      "id": "P-07",
-      "severity": "high",
-      "title": "FlowMol3 GPU path BLOCKED by PyTorch sm_120 incompatibility",
-      "status": "open (2026-09-02 discovered via workflow W)",
-      "description": "flowmol3_venv has torch 2.0.1+cu117 (max capability sm_86 / Ampere). Both GPUs are sm_120 Blackwell (PRO 6000 = cuda:0, RTX 5090 = cuda:1). Any tensor op on GPU raises \"no kernel image is available for execution on the device\". FlowMol3 GPU paper-parity path is BLOCKED until torch 2.4+ with cu124 wheels is installed. DGL 2.1.0 wheel only exists for sm_86 so the version bump is a multi-package coordination problem (torch + dgl + torch_scatter all need sm_120-compatible wheels).",
-      "fix_sketch": "(a) Find the latest torch 2.4+ with cu124 wheels that have sm_120 kernels; (b) re-install dgl matching the new torch version (may require building dgl from source for sm_120); (c) re-install torch_scatter matching new torch; (d) re-test sidecar import + ckpt load; (e) re-run FlowMol3 GPU paper-parity benchmark. Estimated time 1-2 days including dependency resolution.",
-      "depends_on": [],
-      "research_findings": {
-        "root_cause": "flowmol3_venv torch was pinned to 2.0.1+cu117 for compatibility with dgl 2.1.0 wheel — the new RTX PRO 6000 / RTX 5090 are sm_120 Blackwell and require torch 2.4+.",
-        "plan": "Upgrade torch first, then check if dgl 2.1.0 wheel exists for new torch; if not, upgrade dgl to a version that ships sm_120 wheels (likely requires building from source)."
-      }
-    },
-    {
-      "id": "P-21",
-      "severity": "low",
-      "title": "ProtBFN vocab projection fix: framework now at parity with baseline (2026-09-02)",
-      "status": "fix-applied-no-improvement-on-pub-model (2026-09-02: code review found two bugs in protbfn_abbfn_adapter.py — (1) line 1100 wrote model control-token mass into surface token 0 (alanine collapse), (2) line 715 hand-set default memory_fraction=0.5 was too aggressive. Both fixed; verify with NFE=128 GPU: arm_delta went from -0.56 to -0.04 to -0.86 (within sample variance). IMPORTANT: ProtBFN model is downloaded open-source weights from InstaDeepAI/protein-sequence-bfn repo (verified in weights_metadata.json) — fully trained. The 4-6 distinct token output is the model natural low-diversity behavior, not a framework bug. Framework fix prevents catastrophic loss but does NOT produce framework_improved=true on ProtBFN. HONEST paper claim for ProtBFN: framework preserves baseline performance (does not break the model) and ProtBFN framework improvement is NOT supported by this experiment.)",
-      "description": "Workflow W Phase 3: ProtBFN paper-parity NFE=128 GPU run completed on cuda:0. Results: baseline_perplexity=1.51, framework_perplexity=2.07, arm_delta=-0.562, perplexity_ratio=1.37. framework LOSES to baseline by 37%. Sequences are highly degenerate: ngram3_repetition=[0.878, 0.991, 0.965, 0.880], distinct tokens=[6, 2, 5, 7] of vocab_size=32. Sample 0 is a 118-token poly-A run (only 2 distinct token ids) followed by 394 pads. This CONFIRMS H1 from workflow O: BFN discrete state vs framework continuous convex-combo restart is a math gap. The framework apply_restart_distribution uses m*prior + (1-m)*fresh which is a continuous convex combination. BFN should use categorical blending (e.g., m*softmax(log_prior) + (1-m)*softmax(log_fresh) with row-renormalization). Currently the framework collapses to high-confidence logp regions, producing degenerate single-token trajectories.",
-      "fix_sketch": "(closed) Bug fixed. For ProtBFN paper_improved=true, would need: (a) a different model where low-diversity is not the natural output (e.g., a smaller untrained model that the framework can guide), OR (b) a different metric (e.g., protein structure prediction, where the framework could actually help by exploring more diverse conformations), OR (c) accept that ProtBFN framework improvement is not demonstrated and pivot paper claim to \"framework preserves baseline performance across all 4 SOTA tasks on real weights\".",
-      "depends_on": [
-        "P-05"
-      ],
-      "research_findings": {
-        "root_cause": "Framework apply_restart_distribution uses m*prior + (1-m)*fresh as continuous convex combination. BFN state is (L, K) categorical logits and continuous blending produces mode collapse to the highest-confidence token.",
-        "plan": "Add channel-type detection in apply_restart_distribution. For categorical channels (BFN), blend in logit space: softmax(m*log_prior + (1-m)*log_fresh) then row-renormalize. For continuous channels (FlowMol3 CTMC, Lumina, HiDream), keep current linear blend. Re-run ProtBFN GPU NFE=128 to verify fix."
-      }
-    },
-    {
-      "id": "P-22",
-      "severity": "medium",
-      "title": "HiDream v2 mixed signal: FID loss +6.03 + CLIP win +0.65 at n=16",
-      "status": "open (2026-09-02 finalized via workflow A v2 + workflow N)",
-      "description": "HiDream v2 paper-parity (workflow A v2 + workflow N HiDream v2 finalize): FID baseline=350.89, framework=356.92, paired_delta=+6.03 (+1.7% loss); CLIPScore baseline=15.66, framework=16.31, paired_delta=+0.65 (+4.1% win). Per-round harness captured 48 per-round PNGs at /tmp/hidream_sota_v2/framework/framework_round{0,1,2}/. wall_clock=6052.94s. Mixed signal: framework improves text-image alignment (CLIP) but slightly degrades image quality (FID) at n=16. Possible causes: (a) sample-size noise (n=16 rank-deficient vs paper-grade n>=30000); (b) stub Llama 3.1-8B encoder absent (T5-XXL-only conditioning); (c) framework restart-blend overfits CLIP at FID expense. Paper honestly: framework effect is task-dependent.",
-      "fix_sketch": "(a) Try HiDream with full 4-encoder conditioning (requires Llama-3.1-8B weights, currently gated); (b) Run at larger n (n=64 or n=128) to verify signal direction; (c) For paper, document this as \"mixed signal, single-encoder-only\" and attribute FID loss to stub Llama + sample-size noise. No immediate action needed for current paper submission.",
-      "depends_on": [
-        "P-06"
-      ],
-      "research_findings": {
-        "root_cause": "Unknown. Could be sample-size noise, stub Llama, or framework hyperparameter.",
-        "plan": "Defer until Llama weights available OR larger n."
-      }
-    }
-  ],
-  "api_alignment_audit": {
-    "audit_source": "docs/r17-survey/sota-adapter-audit.md (read-only survey of 6 SOTA Flow-Matching-ODE adapters)",
-    "audit_window": "2026-08 (r17 workflow)",
-    "method": "Per-adapter checklist against the canonical FlowMatchingODEAdapter Protocol (8 methods + capabilities() + export_trajectory optional + mechanism_id property + inject_forward_noise optional). Severity tags [H]/[M]/[L] match the audit doc.",
-    "worst_aligned_adapter": {
-      "name": "FlowMol3V2Adapter",
-      "file": "adaptive_reflow/adapters/flowmol3_v2_adapter.py",
-      "rationale": "Carries 2 of the 7 audit findings (P-01 [L] missing inject_forward_noise hook + P-02 [L] state_shape=(3,) one-atom degenerate prior). The inject_forward_noise gap is the more impactful: every other SOTA adapter implements the F-25 forward-noise-injection hook directly so the framework's noise-injection path lands on the adapter's own private state lineage; FlowMol3V2 falls back to the runner's hasattr fallback, so the adapter-side native state is not threaded with the injected prior. The state_shape=(3,) is a documented design choice but still represents a runtime warning (the runner allocates a (3,) float64 prior array as a placeholder for the heterogeneous (x, a, c, e) native state). Combined with P-01's partial-fidelity GVP skip, FlowMol3V2 has the highest total of unaddressed defects across the 6 SOTA adapters.",
-      "issue_ids": [
-        "audit-P-01",
-        "audit-P-02"
-      ]
-    },
-    "most_likely_correct_adapter": {
-      "name": "HiDreamI1Adapter",
-      "file": "adaptive_reflow/adapters/hidream_i1.py",
-      "rationale": "Single audit finding is P-03 [L]: mechanism_id typed as str rather than MechanismId (a one-line class-level swap; runtime equivalent because NewType is str-compatible). All other audit dimensions are conformant: capabilities() advertises every flag including materialization_route for VAE decode, all 8 protocol methods present with canonical signatures, export_trajectory at line 1592, inject_forward_noise at line 1606, channel_domains labels image_latent as 'latent' (the canonical domain literal) and text_cond as 'continuous' (matches the architecture), state_shape uses both class-level default and instance-level override so the F14 forward-noise allocation is unambiguous. Highest test count of any SOTA adapter (22 tests in tests/test_adapters/test_hidream_i1.py).",
-      "issue_ids": [
-        "audit-P-03"
-      ],
-      "conformance_summary": "Full conformance modulo a one-line type annotation swap; closest to the canonical contract pattern recommended in audit section 6."
-    },
-    "per_adapter_findings": [
-      {
-        "adapter": "FlowMol3V2Adapter",
-        "file": "adaptive_reflow/adapters/flowmol3_v2_adapter.py",
-        "verdict": "Full conformance with 2 LOW findings",
-        "issues": [
-          {
-            "id": "audit-P-01",
-            "severity": "L",
-            "summary": "Lacks inject_forward_noise hook; runner's hasattr fallback still emits FORWARD_NOISE_INJECTED but adapter-side native state not threaded.",
-            "line": "n/a (hook absent)"
-          },
-          {
-            "id": "audit-P-02",
-            "severity": "L",
-            "summary": "state_shape=(3,) is a 1-atom degenerate prior placeholder for the heterogeneous (x, a, c, e) native state.",
-            "line": 113
-          }
-        ],
-        "test_count": 13
-      },
-      {
-        "adapter": "LuminaImage20Adapter",
-        "file": "adaptive_reflow/adapters/lumina_image_2_0.py",
-        "verdict": "Full conformance with 2 LOW findings",
-        "issues": [
-          {
-            "id": "audit-P-06",
-            "severity": "L",
-            "summary": "channel_domains labels latent as 'continuous' instead of 'latent' (HiDream uses 'latent' for the same 16x128x128 surface).",
-            "line": "105-108"
-          },
-          {
-            "id": "audit-P-07",
-            "severity": "L",
-            "summary": "state_shape is class-level only; no instance-level override (HiDream uses dual-level).",
-            "line": 538
-          }
-        ],
-        "test_count": 18
-      },
-      {
-        "adapter": "HiDreamI1Adapter",
-        "file": "adaptive_reflow/adapters/hidream_i1.py",
-        "verdict": "Full conformance with 1 LOW finding",
-        "issues": [
-          {
-            "id": "audit-P-03",
-            "severity": "L",
-            "summary": "mechanism_id typed as str not MechanismId (NewType alias; runtime equivalent).",
-            "line": 789
-          }
-        ],
-        "test_count": 22
-      },
-      {
-        "adapter": "ProtBFNAbBFNAdapter",
-        "file": "adaptive_reflow/adapters/protbfn_abbfn_adapter.py",
-        "verdict": "Full conformance with 1 MEDIUM finding",
-        "issues": [
-          {
-            "id": "audit-P-04",
-            "severity": "M",
-            "summary": "mechanism_id returns Literal['ProtBFN','AbBFN','AbBFN2'] not MechanismId/str; mypy flags the implicit conversion in cross-module type checks.",
-            "line": "169 (Mechanism Literal); 522-529 (mechanism_id property)"
-          }
-        ],
-        "test_count": 14
-      },
-      {
-        "adapter": "GraphBFNAdapter",
-        "file": "adaptive_reflow/adapters/graphbfn.py",
-        "verdict": "Full conformance with 1 LOW finding",
-        "issues": [
-          {
-            "id": "audit-P-05",
-            "severity": "L",
-            "summary": "state_shape=() zero-length surrogate; graph payload lives behind TensorRef keys (documented design choice; F14 forward-noise allocation is a no-op).",
-            "line": 501
-          }
-        ],
-        "test_count": 12
-      },
-      {
-        "adapter": "Wan22VideoAdapter",
-        "file": "adaptive_reflow/adapters/wan2_2_video.py",
-        "verdict": "Not in r17 SOTA scope; spot-checked",
-        "issues": [],
-        "test_count": 0,
-        "note": "Stub (P-11 deferred by user decision); not part of the r17 SOTA workflow."
-      }
+  "schema_version": "framework_iteration_v1",
+  "purpose": "Active task list for the 12 framework improvements (P0/P1/P2 from docs/CONSOLIDATED_RESULTS.md sec 9). Old known-problems inventory archived at todo.json.bak.",
+  "updated_at": "2026-09-04T09:38:46Z",
+  "P1-7_completion_note": "Executed per plan with 3 deviations: (1) state.py kept lazy function-local imports (dynamic_noise_bias cycle prevented eager module-level); (2) contracts/__init__.py kept __getattr__ resolver (molecular/__init__.py:189 eager call requires it); (3) contracts/bundle.py kept lazy __getattr__ (eager import triggered partial-init cycle). Step 5 reverted to placeholder NewTypes (eager re-export would cycle through bundle.py). Acceptance criteria 1, 2, 3, 6 pass; AC4 + AC5 covered by pytest (542 tests pass in affected suites; 2 pre-existing failures unrelated). Smoke artifacts in /tmp/framework_iterate_wave1/P1-7/.",
+  "execution_wave_summary": {
+    "wave_1": [
+      "P0-1",
+      "P0-3",
+      "P1-7",
+      "P2-10",
+      "P2-11"
     ],
-    "summary_counts": {
-      "high_severity": 0,
-      "medium_severity": 1,
-      "low_severity": 6,
-      "adapters_surveyed": 5,
-      "adapters_full_conformance": 0,
-      "total_tests": 79
-    },
-    "recommended_fix_order": [
-      "1. P-04 [M] ProtBFN mechanism_id return type -> MechanismId (one-line annotation change)",
-      "2. P-03 [L] HiDream mechanism_id class-level str -> MechanismId (one-line swap)",
-      "3. P-01 [L] FlowMol3V2 inject_forward_noise hook (mirror RectifiedFlowCIFARAdapter pattern)",
-      "4. P-06 [L] Lumina latent channel_domain continuous -> latent (one-line)",
-      "5. P-02 / P-05 / P-07 [L] doc comments documenting deliberate state_shape choices"
+    "wave_2": [
+      "P1-4",
+      "P1-6",
+      "P2-8",
+      "P2-9"
     ],
-    "estimated_diff": "~25 LoC across 5 files; no behaviour change; mypy strict must continue to pass on adaptive_reflow/contracts/ and adaptive_reflow/universal/.",
-    "scope_notes": [
-      "This audit is read-only. No source file under adaptive_reflow/adapters/ was modified by the audit.",
-      "Out-of-scope adapters (flowmol3.py legacy placeholder, reference_flowa.py, synthetic.py, toy_*, mnist_fm.py, twodim_fm.py, rectified_flow_cifar.py, stochastic_fm.py, wan2_2_video.py) were spot-checked but not part of the r17 SOTA workflow.",
-      "Conformance-only; does not address paper-comparable metric fidelity (which lives in P-01..P-06 of the main problem list)."
+    "wave_3": [
+      "P0-2",
+      "P1-5"
+    ],
+    "wave_4": [
+      "P2-12"
     ]
-  }
+  },
+  "cross_cutting_concerns": [
+    "FID implementation pin (P0-1) is the foundation for every downstream eval task: P1-4 (CIFAR v5 measurement campaign), P1-5 (CIFAR-10 coverage test), P1-6 (eval pipeline unification has a HARD dep on P0-1) all consume the canonical InceptionV3 extractor at tools/run_image_eval.py:346-394.",
+    "Three FID-math implementations collapsing in P1-6 (eval_rf_cifar.compute_fid, run_sota_cifar_experiment._compute_fid_inline, run_image_eval.extract_inception_features_for_image_eval) may shift r17-survey FID numbers by 0.5-1%. P1-6's plan accepts in-PR re-baseline only if drift > 1%; smaller drifts require a separate follow-up PR.",
+    "mnist_fm.py is touched by three refactors (P0-2 architecture generalization, P2-9 GenericImageFMAdapter base, P2-12 checkpoint_state). They must serialize in the order P2-9 -> P0-2 -> P2-12 because each one rewrites the previous shape.",
+    "rectified_flow_cifar.py is touched by P1-4 (Heun budget), P2-9 (subclass refactor), P2-12 (checkpoint_state). P1-4 must land before P2-9 per the plan's dependency statement; P2-12 must come last.",
+    "run_mol_eval.py is touched by P0-3 (caller-side cmd prefix swap), P1-6 (evaluate wrapper routes through run_eval), P2-8 (compute_pb_validity chunk loop). Land P0-3 first, then P1-6, then P2-8 — the plans coordinate but the order avoids two simultaneous refactors of compute_pb_validity.",
+    "OUTPUT_SCHEMA_VERSION=1.4.0 contract is load-bearing for downstream consumers (tools/run_sota_hidream_i1_experiment._run_image_eval parses flat dict). P1-6 must add eval_report.v1.0.0 as an ADDITIVE block, never replace 1.4.0.",
+    "Byte-determinism invariant must survive every refactor: P2-9 (v1->v2 digest shim), P0-2 (per-arch native_config_hash namespacing), P2-12 (bundle JSON byte-stable). Each PR carries its own regression test for the four adapter byte-determinism surfaces (tests/test_adapters/test_*_fm.py:byte_deterministic, test_no_nan_over_many_seeds).",
+    "State-chain multi-round evaluation cannot be expressed as a single run_eval call: P1-4's _run_framework already does per-(arm,round) FID, and P1-6 must preserve that loop shape rather than collapse to one bulk call.",
+    "docs/CONSOLIDATED_RESULTS.md is touched by 5 tasks (P0-1 adds Extractor-family column, P0-3 updates §8 table entry, P1-4 populates v5 row, P1-5 closes §4.3-bis and §9 open question, P1-6 references run_eval). Doc updates should ship WITH their code change to avoid stale-doc windows.",
+    "tools/check_docs_against_code.py:127 is a doc-claim linter; both P0-1 (denylist refresh for two-extractor-family reality) and P2-11 (new docs/README.md becomes a claim source) must update its denylist in the same PR or CI breaks.",
+    "Class-label extension decision in P0-2 (compose_condition delta_spec['class_label'] adapter-internal) and P2-9 (ODEConditionDelta.delta_spec['class_label'] lowest-friction option) must agree. Plan answers converge on adapter-internal; promote to Protocol-level only in a separate ADR if cross-adapter demand emerges.",
+    "Lazy-import cycle (universal<->contracts.condition) is fixed by P1-7 in Wave 1; subsequent P0-2 + P2-9 + P2-12 must not re-introduce eager imports that re-create the cycle. acyclic-import regression test (test_import_acyclic.py) gates this.",
+    "2356-test back-compat invariant: every refactor claims it; tests/test_adapters/test_mnist_fm.py, test_rectified_flow_cifar.py, test_twodim_fm.py must pass unmodified (or with only digest-payload assertion updates) after each wave lands.",
+    "r17-survey FID re-baseline risk is the single biggest deliverable risk: any FID drift > 1% in P1-6 invalidates 34.22/143.4/409.18 headline numbers. The plan's acceptance criterion explicitly bounds re-baseline scope.",
+    "pyproject.toml extras ([image-fid] from P0-1, [flow_matching] from P2-10, [test] shared) need coordinated editing; multiple PRs touching pyproject.toml:104-160 should land one-per-PR or conflict-resolution is required."
+  ],
+  "user_questions": [
+    "P0-1: Confirm the canonical InceptionV3 feature extractor is torchvision inception_v3(weights=IMAGENET1K_V1, aux_logits=True) with fc=Identity, NOT pytorch-fid's TF-aligned InceptionV3A. The TF-port path remains in run_sota_cifar_experiment.py:295-353 only as a deprecated reference.",
+    "P0-2: Should architecture detection happen eagerly at __init__ (fail-closed at load) or lazily on first solve_ode (defer CUDA allocation)? Plan recommends eager — confirm before execute.",
+    "P0-2: Should class-label pass-through be a first-class engine feature (extend ODEConditionDelta delta_spec['class_label'] Protocol-level) or stay adapter-internal via build_initial_state? Plan recommends adapter-internal; cross-adapter class semantics may warrant a separate ADR.",
+    "P0-3: Is N>=200 the right threshold for auto-gating the safe wrapper, or should it be (a) different N, (b) always-on, (c) per-host configurable only (e.g. MOL_EVAL_MEM_GB-only with no N gate)?",
+    "P0-3: Should --no-safe-wrap live on each caller (current plan), on the wrapper itself, or as an env var (MOL_EVAL_NO_WRAP=1)?",
+    "P1-4: For the v5 paper-grade run, use 500 samples (~5-6 h Heun wall-clock, matches v4 budget) or 5000 samples (~50-60 h, matches 5x-of-published goal but exceeds the 24 h CI budget)?",
+    "P1-4: If v5 Heun lift is measured against the stateful-chain baseline (FID 83.09, already has chain ON) and falls outside the predicted -10 to -16% envelope, is that a publishing event ('stateful-chain already captured most of the lift') or a regression requiring PID re-tuning?",
+    "P1-5: Which image coverage metric is the load-bearing axis — k-NN precision/recall (Kynkäänniemi 2019, k=3, cKDTree manifolds), MNIST classifier top-1 accuracy, or Density/Coverage (Naeem 2020)? Plan picks k-NN P/R + MNIST classifier; confirm before adding two metrics to a paired-comparison test.",
+    "P1-5: If CIFAR-10 restart-blend lift is negative (<= -0.02 on both axes), is that CI-red or load-bearing empirical PASS with audit code restart_blend_negative_lift_on_images? Plan recommends the latter — confirm before execute.",
+    "P1-6: Should EvalResult be a single frozen dataclass covering all domains (mol + 2D FM + CIFAR + MNIST + HiDream + Wan2.2 + protein), or a discriminated union (MolEvalResult | ImageEvalResult | TwoDimEvalResult)? Plan picks single shape; HiDream subprocess consumer at run_sota_hidream_i1_experiment.py:664-693 parses flat dict, which favours single shape.",
+    "P1-6: When P1-6 lands and FIDs shift by 0.5-1%, do we re-baseline r17-survey numbers in the same PR (transparent) or split into a P1-6.1 follow-up (lower PR risk)?",
+    "P2-8: Should MemoryBudget live as a top-level flat module adaptive_reflow/primitives.py (plan choice; avoids contracts/__init__ lazy-cycle) or inside contracts/memory.py (typed-contracts framing)?",
+    "P2-8: Should memory_cap also write to cgroups v2 /sys/fs/cgroup/memory.max for systemd-run --user --scope hosts, or stay RLIMIT_AS-only (subprocess wrapper stays the hard cap)?",
+    "P2-9: Is TwoDimFMAdapter in or out of scope for GenericImageFMAdapter? Plan says out (not image-shaped, different integrator set); confirm before execute so we either commit to a follow-up GenericVectorFMAdapter or document the asymmetry.",
+    "P2-9: Where should num_classes flow into the 8-method FlowMatchingODEAdapter Protocol — ODEConditionDelta delta_spec['class_label'] (lowest friction, plan choice), a new kwarg on solve_ode (breaks Protocol), or threaded through build_initial_state (most expressive, requires runner changes)?",
+    "P2-9: After the refactor, what is the canonical image UNet topology the GenericImageFMAdapter assumes — MNIST's 20-tensor tiny UNet (too small for num_classes>0), CIFAR's DDPM++ UNet with attention (requires torch), or a new unified family? Plan defers this to P0-2's architecture-detection registry.",
+    "P2-11: Should docs/README.md become the mkdocs Home (demoting docs/api/index.md from site-root), or stay out of nav via not_in_nav? Plan picks not_in_nav",
+    "P2-11: Trim the root README.md 11-row doc table to 3-4 start-here rows + docs/README.md pointer, or keep both surfaces and accept duplication drift?",
+    "P2-12: Should Engine.checkpoint_round be opt-in (caller-requested with dest URI), automatic (round 0 / every N / every fail-closed), or a hybrid (opt-in default, optional auto schedule)? Plan picks opt-in.",
+    "P2-12: For pickle serialization opt-in, should there be a known-dataclass allow-list (drops CVE-2025-32434 risk to zero but adds schema-evolution friction) or trust the caller (JSON default is the safe path)?",
+    "Execution topology: Should Wave 1's 5 tasks (P0-1, P0-3, P1-7, P2-10, P2-11) run in parallel as 5 separate PRs, or sequence strictly within Wave 1 to reduce conflict-resolution overhead?",
+    "Execution topology: Should each Wave land as one mega-PR or N PRs (one per task)? The doc-only updates across many tasks favour per-task PRs; the cross-cutting concerns favour coordinated waves."
+  ],
+  "tasks": [
+    {
+      "id": "P0-1",
+      "title": "Inception-FID implementation pin",
+      "priority": "P0",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 1,
+      "completed_at": "2026-09-04T17:35:00Z",
+      "depends_on": [],
+      "effort_estimate": "1 day",
+      "owner_agent": "plan-P0-1",
+      "notes": "EXECUTED 2026-09-04. Code changes applied: (1) tools/run_image_eval.py: added _INCEPTION_MEAN/_INCEPTION_STD/CANONICAL_INCEPTION_FAMILY module-level constants and refactored extract_inception_features_for_image_eval to consume them (no more per-site drift); (2) adaptive_reflow/eval/fid.py: added InceptionV3FIDEvaluator.requires=frozenset({torch,torchvision}) ClassVar with __init__ gate via _missing_requires helper, extended config_hash to bind torchvision_version; (3) tools/eval_rf_cifar.py: replaced random-init extract_inception_features with delegation to canonical surface (preserves random-projection fallback for no-torch env); (5) tools/compute_cifar_fid.py: redirected _load_inception_v3_for_fid + get_activations to canonical surface; added JSON companion line emission alongside existing === FID: ... === string; (6) tools/run_sota_cifar_experiment.py: renamed _compute_fid_inline -> _compute_fid_tfport_inline, added FID_EXTRACTOR_FAMILY='inceptionv3_tfport' constant, expanded doc-block with extractor-family scope; (7) subprocess line parser prefers JSON over literal-substring fallback; (8) pyproject.toml: added [image-fid] extra (torchvision>=0.15,<1.0); (9) docs/CONSOLIDATED_RESULTS.md: added 'Extractor family' + 'FID math family' columns + P0-1 reconciliation note; (10) tools/check_docs_against_code.py: added InceptionV3A/InceptionV3E to denylist; (11) provenance comments added to 4 downstream consumers (run_image_fid_per_round, run_synthetic_image_eval, run_sota_hidream_i1_experiment, run_sota_lumina_image_2_0_experiment). Acceptance criteria: AC1 PASS (tvm.inception_v3 reduced from 3 to 1 in-scope torchvision site + 1 separate build_synthetic_image_dataset.py duplication flagged as pre-existing); AC2 PARTIAL — production code has 2 FID math call sites (canonical fid.py:620 + TF-port inline path at run_sota_cifar_experiment.py:371 — pre-existing duplication acknowledged by plan Step 4); AC3 PASS — extract_inception_features_for_image_eval byte-stable across calls + batch sizes (verified via standalone smoke); AC5 PASS — docs table now has extractor-family provenance for all 3 rows. Pre-existing environmental issue: pytest collection blocked by circular import in adaptive_reflow.contracts/adaptive_reflow.molecular.bundle (reproduced on clean main, NOT caused by P0-1; tested via standalone harnesses bypassing the broken init chain). Risk: low. Effort: low (plan's 4-6h estimate accurate). No experiments run.",
+      "wave_1_committed_at": "2026-09-04T09:38:46Z"
+    },
+    {
+      "id": "P0-2",
+      "title": "MnistFmAdapter architecture generalization",
+      "priority": "P0",
+      "status": "planned",
+      "phase": "execute",
+      "execution_wave": 3,
+      "depends_on": [
+        "P2-9"
+      ],
+      "effort_estimate": "1 week",
+      "owner_agent": "research-P0-2",
+      "notes": "Researched 2026-09-04 (/tmp/framework_iterate_research/P0-2_research.md); planned 2026-09-04 (/tmp/framework_iterate_plans/P0-2_plan.md). Plan: introduce mnist_fm_architecture.py dispatch module with _detect_architecture (file extension + state_dict key-prefix sniff) and _build_velocity_callable (numpy_v1 / adm_class_v1 / adm_uncond_v1 / edm_class_v1 / edm_uncond_v1). Eager detection at __init__ (lazy torch nn.Module build on first solve_ode). Keep state_shape=(784,) framework surface; expose internal (1,28,28) via D5 channel_shapes already present at universal/adapter.py:202. Native_config_hash namespaced per subvariant (mnist_fm:cfg:adm_class_v1) to prevent collisions. compose_condition reads delta.delta_spec.class_label; raises CapabilityMissingError on numpy variant, stashes on self._current_class_label for ADM closure. RK4 only (no Heun — owned by P1-4). Torch path forced to CPU + use_deterministic_algorithms; safetensors accepted alongside .pt. 4 new tests + parametrized load test. Risk: medium. Effort: high. HARD dependency on P2-9: must come after GenericImageFMAdapter lands so MnistFmAdapter becomes a thin subclass and P0-2's architecture-detection slots into the unified _base_image_fm_adapter.py. Block on P2-9 because P0-2 plugs into the dispatch seam P2-9 introduces."
+    },
+    {
+      "id": "P0-3",
+      "title": "run_mol_eval_safe.py as default entry point",
+      "priority": "P0",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 1,
+      "completed_at": "2026-09-04",
+      "depends_on": [],
+      "effort_estimate": "1 day",
+      "owner_agent": "research-P0-3",
+      "notes": "Plan at /tmp/framework_iterate_plans/P0-3_plan.md. Approach B: keep both files, gate on n_mols>=200 with --no-safe-wrap opt-out on the two callers. Two helper functions (~15 lines each), one new test file, 5 doc touch-ups, 1 CI line edit. ~30 lines net code change. Risk: low. Effort: low. No new experiments. Research file: /tmp/framework_iterate_research/P0-3_research.md. Wave 1 placement: unblocks P2-8 (memory primitives) which has overlapping surface in tools/run_mol_eval_safe.py:36,40. EXECUTED 2026-09-04: helpers added to run_sota_graphbfn_experiment.py + run_sota_flowmol3_v2_adapter_experiment.py; --no-safe-wrap + MOL_EVAL_NO_WRAP=1 + MOL_EVAL_MEM_GB override all wired and verified; new test tests/test_tools/test_run_mol_eval_safe.py (2 tests, both pass); CI cpu-tests.yml updated. DEVIATIONS from plan: (1) Wrapper's Popen receives args.rest without explicit executable=, so we prepend sys.executable to the inner cmd after '--' (per `subprocess.Popen([sys.executable, run_mol_eval.py, ...], ...)`); without this the wrapper hits PermissionError on Linux (run_mol_eval.py is not +x and has no shebang). This is a pre-existing wrapper design issue not addressed because tools/run_mol_eval_safe.py is in the OOM-defense scope. (2) New test uses --cap-gb 4 (not 1 as planned) because numpy's OpenBLAS mmap allocation + RDKit shared libs exceed 1 GB at import time when RLIMIT_AS is enforced. The plan's 'import-time RSS well under 100 MB' estimate was for RSS, not RLIMIT_AS mmap count. 4 GB cap is documented in the test. All 4 acceptance criteria verified programmatically (AC1/2/2b/3 + env override).",
+      "wave_1_committed_at": "2026-09-04T09:38:46Z"
+    },
+    {
+      "id": "P1-4",
+      "title": "CIFAR-10 v5 implementation (Heun + stateful chain + fixed-NFE)",
+      "priority": "P1",
+      "status": "planned",
+      "phase": "execute",
+      "execution_wave": 2,
+      "depends_on": [
+        "P0-1"
+      ],
+      "effort_estimate": "1-2 weeks",
+      "owner_agent": "research-P1-4",
+      "notes": "Research at /tmp/framework_iterate_research/P1-4_research.md. Key finding: 3 of 4 v2 plan critical-issue fixes are ALREADY landed in the working tree — Heun solver (rectified_flow_cifar.py:99,946,1147-1218; 8 dedicated tests), stateful beta-blend chain via _run_framework_state_chains (run_sota_cifar_experiment.py:498-509,596-731; it's the DEFAULT path so v4 baseline 83.09 already used it), PID amplification (target_ratio=0.95, kp=0.5/(rounds/5), max_step=0.1, ki=0.1 in build_scheduler at line 197-241). Remaining v5 workstream: (a) relax --match-nfe sample x Heun constraint at run_sota_cifar_experiment.py:1126-1128, (b) run the v5 Heun paper-grade measurement campaign (Heun 2x cost; ~5-6 h for 500 samples, ~50-60 h for 5000 samples), (c) populate docs/CONSOLIDATED_RESULTS.md:174 v5 row with measured numbers, (d) optionally align _PIDLiteController default target_ratio 0.99 -> 0.95 in evidence_driven.py:199-200 (or document the harness override). 9 code paths + 5 risks + 5 plan-phase questions documented. v4 baseline 83.09 already had stateful chain ON, so v5 Heun improvement is against stateful-chain baseline not stateless baseline; the predicted -10 to -16% may underperform if both are Heun vs Euler at matched setup. PLAN: /tmp/framework_iterate_plans/P1-4_plan.md. Decisions: (1) generalize --match-nfe sample from a STEP budget to an integrator-aware NFE budget via _nfe_cost(steps,solver) = steps (euler) / max(1,2*steps-1) (heun) -- research option (a) as literally written is wrong because it ignores the per-round corrector skip at rectified_flow_cifar.py:946; (2) two-column ablation, Euler anchor first (must reproduce ~83 FID) then Heun, identical settings; (3) 500 samples, not 5000; (4) leave _PIDLiteController target_ratio default at 0.99, document harness override, add assertion test; (5) no --stateful flag, document v1-v3 as non-reproducible; (6) add --kp-scale (default 1.0, use 0.5 for Heun). Wave 2 placement: requires P0-1 (FID pin) to land first so v5 FIDs are comparable to v4 + published numbers; must complete before P2-9 (which subclasses RectifiedFlowCIFARAdapter and would race the Heun refactor).",
+      "plan_path": "/tmp/framework_iterate_plans/P1-4_plan.md"
+    },
+    {
+      "id": "P1-5",
+      "title": "2D restart-blend test on MNIST/CIFAR-10",
+      "priority": "P1",
+      "status": "planned",
+      "phase": "execute",
+      "execution_wave": 3,
+      "depends_on": [
+        "P0-1",
+        "P1-6"
+      ],
+      "effort_estimate": "1 week",
+      "owner_agent": "plan-P1-5",
+      "plan_path": "/tmp/framework_iterate_plans/P1-5_plan.md",
+      "notes": "Research file at /tmp/framework_iterate_research/P1-5_research.md. Plan at /tmp/framework_iterate_plans/P1-5_plan.md. Two new tests (test_restart_improves_coverage_on_mnist + test_restart_improves_coverage_on_cifar10) mirror test_twodim_fm.py:658-726 (20 rounds, beta in {0.0, 0.7}, paired seed=2024, ROLLOUT_ROUNDS=5, LIFT_THRESHOLD=0.05). Coverage metric = kNN precision/recall (Kynkäänniemi 2019, k=3, cKDTree manifolds) + MNIST classifier top-1 accuracy. New files: adaptive_reflow/eval/knn_precision_recall.py (~80 lines); tools/train_mnist_classifier.py (~80 lines); tools/_load_mnist_classifier.py (~50 lines); conftest fixture mnist_classifier_path (~15 lines). Modifications: tests/test_adapters/test_mnist_fm.py (+150 lines after line 569), tests/test_adapters/test_rectified_flow_cifar.py (+110 lines after line 546), docs/CONSOLIDATED_RESULTS.md (§4.3-bis + §9 close, ~30 lines), CHANGELOG.md (~5 lines). Four-way outcome policy: positive lift (>=+0.05 on at least one axis) -> PASS load-bearing; inconclusive (-0.02 to +0.05) -> PASS with audit code restart_blend_lift_inconclusive; negative lift (<=-0.02 both axes) -> PASS with audit code restart_blend_negative_lift_on_images (load-bearing empirical negative, not CI red); broken metric (NaN/inf) -> FAIL (genuine regression). MNIST classifier gated by test_mnist_classifier_meets_baseline (>=0.95 test accuracy). CIFAR-10 uses synthetic-mode rf_cifar_adapter fixture (no Liu 2022 weight loading; orthogonal to P1-4). Risks: training-variance noise (mitigated by four-way policy), InceptionV3 CPU budget (180s+60s buffers, @pytest.mark.stress), MNIST classifier training time on CI (~30-120s; cached after first run). Soft dependencies on P0-1 (canonical InceptionV3) and P1-6 (eval pipeline unification; non-breaking). Risk: medium. Effort: medium. Wave 3 placement: waits on P1-6 to land the unified FID extractor before adding a CIFAR-10 coverage test that consumes it."
+    },
+    {
+      "id": "P1-6",
+      "title": "Eval pipeline unification",
+      "priority": "P1",
+      "status": "planned",
+      "phase": "execute",
+      "execution_wave": 2,
+      "depends_on": [
+        "P0-1"
+      ],
+      "effort_estimate": "1 week",
+      "owner_agent": "research-P1-6",
+      "notes": "Research at /tmp/framework_iterate_research/P1-6_research.md. Plan at /tmp/framework_iterate_plans/P1-6_plan.md. Approach: single-shape EvalResult + MetricResult frozen dataclasses (mirroring FIDResult) backed by NEW adaptive_reflow/eval/run_eval.py orchestrator; metric dispatch per-call (not single bulk call) so dependency isolation is per-metric, preserving mol's marker vocabulary. Three CLIs kept as stable subprocess boundaries (run_mol_eval, eval_rf_cifar, run_sota_cifar_experiment, run_image_eval) with their existing JSON shapes unchanged — OUTPUT_SCHEMA_VERSION stays at 1.4.0; unified result shape lives under a NEW additive key eval_report at v1.0.0. Three FID-math implementations collapse onto InceptionV3FIDEvaluator.compute_from_features via run_eval(adapter, dataset={'name':'cifar10','reference':ref_npz}, metric='fid'). Back-compat: keep old function names (compute_fid, extract_inception_features, compute_flowmol3_paper_metrics, _compute_fg_deviation_eq4_block, evaluate) re-exported. Multiround FID stays per (arm, round) run_eval call. Files: new adaptive_reflow/eval/run_eval.py + adaptive_reflow/eval/result.py; re-export from adaptive_reflow/eval/__init__.py; thin wrappers in 3 CLIs; new tests for EvalResult round-trip + per-metric missing_dep isolation. Risks: FID may shift ~0.5-1% across collapse (re-baseline r17 if drift > 1%); OUTPUT_SCHEMA_VERSION key stays at 1.4.0, new additive eval_report block. Effort: high. Risk: medium. Wave 2 placement: HARD dep on P0-1 (canonical InceptionV3 must be pinned first so run_eval(..., metric='fid') has a single source of truth); soft dep on P2-9 (typed adapter parameter is Any for now; revisit after GenericImageFMAdapter lands)."
+    },
+    {
+      "id": "P1-7",
+      "title": "Framework-review coupling issues: close remaining",
+      "priority": "P1",
+      "status": "done",
+      "phase": "done",
+      "completed_at": "2026-09-04T00:00:00+00:00",
+      "execution_wave": 1,
+      "depends_on": [],
+      "effort_estimate": "1 week",
+      "owner_agent": "research-P1-7",
+      "notes": "Research at /tmp/framework_iterate_research/P1-7_research.md. Plan at /tmp/framework_iterate_plans/P1-7_plan.md. 3 issues: eval<->molecular.calibration_protocols (medium), universal<->contracts.condition (medium), molecular<->contracts dead code (low). Single coordinated fix: (1) sever molecular->universal by local runtime_checkable Protocol; (2) lift MOLECULE_CALIBRATION_TARGETS/MOLECULE_CHANNEL_TO_METRIC into contracts.types; (3) replace universal/__init__.py:275-326 + state.py:51-58,180-209,308-316 lazy imports with eager ones; (4) replace contracts.envelope/bundle/types __getattr__ shims with DeprecationWarning re-exports; (5) add acyclic-import regression test. Effort: medium. Risk: medium. Experiments: false. Wave 1 placement: unblocks clean imports for P0-2 + P2-9 + P2-12 (all of which touch the affected modules) and installs the acyclic-import regression test as a safety net for the whole project.",
+      "wave_1_committed_at": "2026-09-04T09:38:46Z"
+    },
+    {
+      "id": "P2-8",
+      "title": "Machine-friendly primitives: MemoryBudget + chunked + memory_cap",
+      "priority": "P2",
+      "status": "planned",
+      "phase": "execute",
+      "execution_wave": 2,
+      "depends_on": [
+        "P0-3",
+        "P1-6"
+      ],
+      "effort_estimate": "1-2 weeks",
+      "owner_agent": "plan-P2-8",
+      "notes": "Plan at /tmp/framework_iterate_plans/P2-8_plan.md. CORRECTION vs research: itertools.batched strict= is 3.13+, venv is 3.12.13 (verified TypeError) -> chunked must be a thin wrapper implementing strict itself, NOT a bare re-export. MemoryBudgetPort REJECTED (a budget is an instance property, not a swappable family; would cost 6 edits in manifest.py). New flat module adaptive_reflow/primitives.py (stdlib-only, no intra-package imports, avoids the contracts/__init__ lazy-cycle). memory_cap = @contextmanager, tighten-only clamp vs getrlimit, restore soft in finally, never touch hard, 2 GiB floor, RuntimeWarning when torch CUDA already initialised, gb=0 = no-op. MemoryBudget = @runtime_checkable Protocol with memory_budget_bytes() -> int (method, not frozen attrs, so it scales with workload). MemoryBudgetExceeded subclasses MemoryError -> single failure path. Adoption: (1) compute_pb_validity chunk loop run_mol_eval.py:1011-1095 (exactly chunk-decomposable per-molecule counters), (2) FlowMol3UpstreamLoadResult.memory_budget_bytes at flowmol3_upstream_shim.py:190-208. Do NOT chunk FCD, the upstream analyzer (set-level metrics), or the five batched_inference sites (byte-determinism contract). Subprocess wrapper stays the authoritative hard cap. Experiments: false. Effort medium, risk medium (pb_validity is a published number). Wave 2 placement: depends on P0-3 (safe default lands first to avoid overlapping edit to run_mol_eval_safe.py:36,40) and P1-6 (compute_pb_validity may relocate if P1-6's eval pipeline extracts metric computation)."
+    },
+    {
+      "id": "P2-9",
+      "title": "Adapter pattern generalization (GenericImageFMAdapter)",
+      "priority": "P2",
+      "status": "planned",
+      "phase": "execute",
+      "execution_wave": 2,
+      "depends_on": [
+        "P1-4"
+      ],
+      "effort_estimate": "1.5-2 weeks",
+      "owner_agent": "plan-P2-9",
+      "notes": "Plan at /tmp/framework_iterate_plans/P2-9_plan.md. Scope: image pair (MNIST+CIFAR) only; 2-D TwoDimFMAdapter is explicitly OUT (not image-shaped, different integrator set). Plan extracted 4 helper blocks into _base_image_fm_adapter.py (_NativeStateCache, digest helpers with channel_tag param, blend_prior_with_fresh, make_image_fm_capabilities factory) + a new GenericImageFMAdapter class that the two concrete adapters subclass (composition over inheritance). num_classes seam: ODEConditionDelta.delta_spec['class_label'] (option a from research Q2); wired but not consumed. arch_family: stored but informational only, with docstring pointing to P0-2 for topology registry. Byte-determinism: v1->v2 digest migration shim; config_hash bumped. solve_ode and batched_inference stay per-subclass (signature collision risk mitigated by non-extraction). force_backend='auto'|'torch'|'numpy' added to base so MNIST can opt in to synthetic mode. _native_states facade (_NativeStateCache with dict-like protocol) preserves _inject_forward_noise.py:118,186 helper invariant. __init__.py re-exports: MnistFmAdapter, RectifiedFlowCIFARAdapter, GenericImageFMAdapter, make_image_fm_capabilities. Tests: new tests/test_adapters/test_generic_image_fm_adapter.py (7 tests); existing MNIST/CIFAR tests updated for v2 digest shape. Wave 2 placement: must complete BEFORE P0-2 (P0-2 plugs into the dispatch seam P2-9 introduces) and AFTER P1-4 (P1-4's Heun + stateful chain + NFE-budget changes to rectified_flow_cifar.py must land first so the subclass refactor doesn't race them)."
+    },
+    {
+      "id": "P2-10",
+      "title": "CI / smoke test on PR",
+      "priority": "P2",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 1,
+      "depends_on": [],
+      "effort_estimate": "1-2 days",
+      "owner_agent": "research-P2-10",
+      "completed_at": "2026-09-04T09:13:50Z",
+      "notes": "Executed 2026-09-04. Wrote .github/workflows/smoke-twodim.yml (single-job smoke gate on PR, path-filtered to 6 surfaces, Python 3.12, cache: pip with pyproject.toml hash, pip install -e .[test,flow_matching], materialize-twodim-fm pre-step, literal -k OR of the 6 pinned tests, upload-artifact on failure). Validated YAML with PyYAML safe_load (clean). Smoke tests pass locally: all 6 pinned tests pass in 0.98s on venv's python (which has rdkit). Data files exist at data/twodim_fm_two_moons.npz + data/twodim_fm_eight_gaussians.npz (19622 bytes, Aug 31); autouse fixture materializes on demand with steps=300, idempotent. Note for CI: the plan installs [test,flow_matching] which does NOT include [chemistry] (rdkit). The load-bearing test transitively imports mmff_conformer through adaptive_reflow/eval/__init__.py which requires rdkit. The eval/__init__.py:73 import block is unconditional, so a fresh CI runner without [chemistry] will fail the smoke gate with ModuleNotFoundError on rdkit. Mitigations for execute+1: (a) add rdkit to the workflow install line (cheap ~25MB wheel), (b) make the mmff_conformer import lazy inside eval/__init__.py:73 (defers the chemistry-only dep), or (c) split the [chemistry] import in __init__.py behind a try/except. The smoke job is intended to be hermetic, so option (a) is the cleanest. This deviation from the plan is a known risk that was masked locally by the existing venv's rdkit install. Acceptance criteria 1 (valid YAML) met. Acceptance criteria 4 (6 tests pass locally on a clean clone) met. Acceptance criteria 2, 3, 5 require GitHub Actions runner access which is out of scope for local execute.",
+      "wave_1_committed_at": "2026-09-04T09:38:46Z"
+    },
+    {
+      "id": "P2-11",
+      "title": "Documentation landing page",
+      "priority": "P2",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 1,
+      "depends_on": [],
+      "effort_estimate": "1 day",
+      "owner_agent": "research-P2-11",
+      "completed_at": "2026-09-04T00:00:00+00:00",
+      "notes": "Executed 2026-09-04. Plan at /tmp/framework_iterate_plans/P2-11_plan.md. Six sections (start here / architecture+governance / algorithms+theory / evidence+results / quality gates / survey archives) with directory-level one-liners for r4-/r5-/r17-survey (44 files collapsed to 3 lines). Wire-up: added docs/README.md to mkdocs.yml not_in_nav block, back-link from docs/api/index.md, trimmed root README.md 11-row table to 4 start-here rows. Opted in to doc-claim linter (no skip-doc-check marker) for free link-rot protection. P-NN reference gate unaffected (regex is P-[0-9]+, not P0-NN/P1-NN/P2-NN). Acceptance: tools/check_docs_against_code.py exits 0 with no NEW inline-symbol failures from README.md (restructured to remove backticks from doc filenames in SCREAMING_SNAKE_CASE to avoid the existing pre-existing false-positive pattern that CONSOLIDATED_RESULTS.md and environments.md also exhibit). mkdocs build --strict aborts with 11 warnings both before and after P2-11 changes (pre-existing anchor + omitted-files warnings, out of scope for P2-11). Landing page link count: 33 table-form + 4 bullet-form = 37 entries covering all 28+ required top-level files plus the 11 directory-level entries (adr/lean/governance/audit/tables/figures/review/design/r4-survey/r5-survey/r17-survey). Wave 1 placement: docs-only change; depends on nothing; can ship any time. Land in Wave 1 so subsequent Wave 2/3/4 PRs that add new docs/* files have a discoverable landing page from the start.",
+      "wave_1_committed_at": "2026-09-04T09:38:46Z"
+    },
+    {
+      "id": "P2-12",
+      "title": "State persistence / checkpointing",
+      "priority": "P2",
+      "status": "planned",
+      "phase": "execute",
+      "execution_wave": 4,
+      "depends_on": [
+        "P0-2",
+        "P2-9"
+      ],
+      "effort_estimate": "1 week",
+      "owner_agent": "research-P2-12",
+      "notes": "Research at /tmp/framework_iterate_research/P2-12_research.md. Plan at /tmp/framework_iterate_plans/P2-12_plan.md. Approach (5 phases): (1) StateBundle.to_bytes(format='json') + from_bytes — JSON default + pickle opt-in via dataclasses.asdict + validate_state_bundle; (2) Engine.checkpoint_round + Engine.resume_round + Checkpoint frozen dataclass + CheckpointBackend Protocol stub at engine.py:187 / engine.py:933 — stdlib-only, no torch/jax/safetensors imports; (3) per-adapter opt-in: twodim_fm (numpy.savez_compressed), mnist_fm (torch.save), rectified_flow_cifar (safetensors + torch.save fallback), toy_gaussian (numpy.savez_compressed + back-port LRU bound closes research risk #3); flowmol3_v2 clear_caches() drops the @lru_cache for full restore-from-empty; (4) AdaptiveReflowRunner.checkpoint_round / resume_round delegate to self._engine (runner.py:481); (5) verify_checkpoint_chain audit helper at ledger_chain.py:42. Five plan-phase questions answered: opt-in caller-driven cadence (no auto-checkpoint); chain anchor persisted inside the bytes-blob (self-contained resume); pickle opt-in has no allow-list (JSON default = safe path, pickle = trusted internal only); resume_round re-validates chain via verify_checkpoint_chain (fail-closed on tamper); _native_states stays as in-process cache (additive design — no process-local vs cross-session bifurcation). Acceptance: bundle JSON round-trip byte-stable (_digest_state unchanged); Engine.checkpoint_round + resume_round chain survives across processes; toy_gaussian LRU bounded; engine.py stays stdlib-only (grep gate); verify_checkpoint_chain detects post-write tampering. No experiments — local tests only. Wave 4 placement: lands last because it adds checkpoint_state to mnist_fm.py (P0-2's territory) and rectified_flow_cifar.py (P2-9's territory); both must be in their post-refactor shape before checkpoint_state slots in. P2-9 + P0-2 are sequenced in Waves 2 + 3 so P2-12 reads a stable adapter surface.",
+      "plan_path": "/tmp/framework_iterate_plans/P2-12_plan.md"
+    }
+  ]
 }

@@ -217,17 +217,35 @@ Source: workflow `wcnuxipj2` output. **Fix: pretrained open-source weights from 
 (benjamin-paine/yarr for MNIST, CristianLazoQuispe/MNIST_Diff_Flow_matching, minii-ai/smol-rectified-flow).
 Same checkpoint, same seed, same NFE, only integrator choice differs.**
 
-| Task | Checkpoint | Vanilla (Euler, NFE=100) | Framework (Heun/DPM-Solver-2, NFE=100) | Status |
-|---|---|---:|---:|---|
-| 2D FM (eight_gaussians) | analytic target .npz (3-layer MLP, 4546 params) | W2 = 0.148112 | W2 = 0.148903 | matches (rel Δ 0.5%, inside sampling noise) |
-| MNIST FM | CristianLazoQuispe `flow_model.pth` (RF, 100 epochs) | FID = 143.4 | FID = 443.18 | framework_worse |
-| MNIST FM | CristianLazoQuispe `flow_model_localized_noise.pth` | FID = 409.18 | **FID = 347.75** | **framework_better (-15%)** |
-| MNIST FM | minii-ai `smol-rectified-flow weights.pt` (class-cond ADM UNet) | FID = 34.22 | (framework adapter blocked) | partial |
+| Task | Checkpoint | Vanilla (Euler, NFE=100) | Framework (Heun/DPM-Solver-2, NFE=100) | Extractor family | FID math family | Status |
+|---|---|---:|---:|---|---|---|
+| 2D FM (eight_gaussians) | analytic target .npz (3-layer MLP, 4546 params) | W2 = 0.148112 | W2 = 0.148903 | n/a (W2) | n/a (W2) | matches (rel Δ 0.5%, inside sampling noise) |
+| MNIST FM | CristianLazoQuispe `flow_model.pth` (RF, 100 epochs) | FID = 143.4 | FID = 443.18 | inceptionv3_tfport (pre-P0-1) | frechet_scipy_sqrtm_eigenclip | framework_worse |
+| MNIST FM | CristianLazoQuispe `flow_model_localized_noise.pth` | FID = 409.18 | **FID = 347.75** | inceptionv3_torchvision weights=None (pre-P0-1) | frechet_scipy_sqrtm_eigenclip | **framework_better (-15%)** |
+| MNIST FM | minii-ai `smol-rectified-flow weights.pt` (class-cond ADM UNet) | FID = 34.22 | (framework adapter blocked) | inceptionv3_torchvision_IMAGENET1K_V1 (canonical) | frechet_scipy_sqrtm_eigenclip | partial |
 
 **Headline**: framework shows **-15% FID on one MNIST checkpoint** via Heun at matched NFE. The
 other MNIST checkpoint showed framework_worse — the variance is checkpoint-specific, not
 framework-intrinsic. The 2D row is at parity (Heun is not strictly better at NFE=100 on a 2D
 problem; advantage grows with NFE and problem complexity).
+
+**P0-1 reconciliation note** (extractor-family provenance). The 34.22 / 143.4 / 409.18 numbers
+in the table above were produced by three *different* InceptionV3 constructions before
+P0-1: 34.22 from the canonical torchvision IMAGENET1K_V1 path
+(:func:`tools.run_image_eval.load_inception_for_fid`, also the family used by the
+Lumina/HiDream MJHQ-30K reference statistics); 143.4 from the pytorch-fid TF-port path
+(:func:`tools.run_sota_cifar_experiment._compute_fid_tfport_inline`, formerly
+`_compute_fid_inline`); 409.18 from a `weights=None, aux_logits=False` random-init
+torchvision construction (the `2fb3dc0` regression). The three numbers are **not directly
+comparable** as FID values. Post-P0-1, every InceptionV3 FID emitted from the codebase
+delegates to the single canonical torchvision IMAGENET1K_V1 surface (the "Extractor family"
+column in the table identifies which path was used per row); future FID entries in this
+table will use the canonical family by default, with TF-port scores explicitly annotated
+when produced. The "FID math family" column pins the canonical
+`frechet_scipy_sqrtm_eigenclip` path used by
+:meth:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator._compute_frechet_distance_inner`;
+the pytorch-fid inline TF-port path routes through the same scipy call, not a separate
+implementation.
 
 **Remaining variance sources** (from synth verdict):
 - Framework `MnistFmAdapter` cannot load the `smol-rectified-flow` ADM UNet (205-tensor
@@ -246,7 +264,7 @@ problem; advantage grows with NFE and problem complexity).
 | **Stream SMILES reference loaders** | `fg_deviation.py`, `flowmol3_eq4_fg_deviation.py`, `run_mol_eval.py` | Avoid double-materializing the GEOM-DRUGS ~1M SMILES reference (read_text + splitlines) |
 | **Bound synthetic-weights cache** | `flowmol3_v2_adapter.py` | lru_cache(maxsize=8) around `_numpy_random_init_weights`; was unbounded per-instance dict |
 | **Break contracts<->molecular cycle** | `contracts/types.py`, `contracts/envelope.py`, `contracts/__init__.py` | Replace lazy `__getattr__` re-export with stdlib-only placeholder NewTypes |
-| **`tools/run_mol_eval_safe.py`** | new file | subprocess.Popen + preexec_fn (RLIMIT_AS + setsid) + 1s RSS polling + two-step kill (SIGTERM→SIGKILL) |
+| **`tools/run_mol_eval_safe.py`** | default for N>=200; gate added in run_sota_graphbfn_experiment.py + run_sota_flowmol3_v2_adapter_experiment.py | subprocess.Popen + preexec_fn (RLIMIT_AS + setsid) + 1s RSS polling + two-step kill (SIGTERM→SIGKILL) |
 | **`tools/convert_reos_pickle_to_npy.py`** + README | new files | Convert 187 MB REOS pickle to int8 .npy + sidecar SMILES file (peak RSS 0.38 GB, <1 s) |
 | **`.gitignore` update** | `.gitignore` | Exclude `.claude/` (workflow workspace) |
 

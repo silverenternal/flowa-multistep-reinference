@@ -62,6 +62,23 @@ from adaptive_reflow.eval.fid import (  # noqa: E402
     InceptionV3FIDEvaluator,
 )
 
+# P0-1: import the canonical InceptionV3 feature-extractor surface
+# directly from ``tools.run_image_eval``. Loaded via spec_from_file_location
+# so this module remains self-contained when invoked as
+# ``python tools/eval_rf_cifar.py`` (the ``tools/`` directory is not a
+# package, so a plain ``import`` would fail).
+import importlib.util as _importlib_util  # noqa: E402
+
+_RUN_IMAGE_EVAL_PATH = Path(__file__).resolve().parent / "run_image_eval.py"
+_RUN_IMAGE_EVAL_SPEC = _importlib_util.spec_from_file_location(
+    "tools_run_image_eval", str(_RUN_IMAGE_EVAL_PATH)
+)
+if _RUN_IMAGE_EVAL_SPEC is None or _RUN_IMAGE_EVAL_SPEC.loader is None:  # pragma: no cover — defensive
+    raise ImportError(f"could not load {_RUN_IMAGE_EVAL_PATH}")
+tools_run_image_eval = _importlib_util.module_from_spec(_RUN_IMAGE_EVAL_SPEC)
+sys.modules.setdefault("tools_run_image_eval", tools_run_image_eval)
+_RUN_IMAGE_EVAL_SPEC.loader.exec_module(tools_run_image_eval)
+
 # Published baseline from Liu 2022 (Table 2 — 2-rectified flow, 1-NFE
 # Euler on CIFAR-10 32×32).
 PUBLISHED_BASELINE_FID: float = 2.21
@@ -157,6 +174,16 @@ def extract_inception_features(
     299×299 (InceptionV3's expected input) and runs the network in
     ``eval()`` / ``no_grad()`` mode. Falls back to a deterministic
     random-projection when :mod:`torchvision` is not installed.
+
+    P0-1 redirect: the InceptionV3 construction is now a thin
+    delegation to :func:`tools.run_image_eval.extract_inception_features_for_image_eval`
+    (the *single canonical* IMAGENET1K_V1 extractor surface). The
+    historical ``weights=None, aux_logits=False`` body — which produced
+    a randomly-initialized network and ~1e25-magnitude FID values (see
+    commit ``2fb3dc0`` audit) — is removed; the canonical surface is
+    the only path that produces paper-comparable pool3 features. The
+    random-projection fallback (environment-driven, not feature-
+    extractor-driven) is preserved.
     """
     if images.ndim != 4 or images.shape[1:] != (3, 32, 32):
         raise ValueError("images_must_have_shape_n_3_32_32")
@@ -170,40 +197,18 @@ def extract_inception_features(
         feats = flat @ proj
         return np.asarray(feats, dtype=np.float32)  # type: ignore[no-any-return]
 
+    # Delegate to the canonical IMAGENET1K_V1 surface. The CIFAR
+    # ``batch_size`` is forwarded through. The function moves tensors
+    # to CPU; for GPU callers, wrap with a host-side ``device`` argument
+    # in the future (out of scope here).
     import torch
-    import torch.nn.functional as F
-    import torchvision.models as tvm
 
-    weights_obj = tvm.Inception_V3_Weights.IMAGENET1K_V1 if hasattr(tvm, "Inception_V3_Weights") else None
-    # pytorch-fid convention: load InceptionV3 with no torchvision pretrained
-    # weights, drop the aux head, replace the final fc with Identity so the
-    # forward returns the 2048-dim pool3 features directly. Loading the
-    # IMAGENET1K_V1 weights requires aux_logits=True (the aux head is part
-    # of the pretrained checkpoint), which then makes the forward return a
-    # 1000-dim classifier-logits tensor — not the 2048-dim pool3 features
-    # FID is defined against. The converted TF-pretrained Inception weights
-    # are loaded separately when needed (see docs/r4-survey/06-mnist-
-    # inceptionv3-fid.md); this function is the canonical feature-extraction
-    # shape, not the canonical weight-loading shape.
-    _ = weights_obj
-    model = tvm.inception_v3(weights=None, aux_logits=False, transform_input=False)
-    model.fc = torch.nn.Identity()
-    model.eval()
-    out_feats: list[np.ndarray] = []
-    with torch.no_grad():
-        for i in range(0, images.shape[0], int(batch_size)):
-            batch: np.ndarray = images[i : i + int(batch_size)].astype(np.float32)
-            x = torch.from_numpy(batch)
-            x = F.interpolate(x, size=(299, 299), mode="bilinear", align_corners=False)
-            # Adapter samples use [-1, 1]. Convert to ImageNet's [0, 1]
-            # domain, then apply the published ImageNet normalization.
-            x = (x + 1.0) / 2.0
-            mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-            std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
-            x = (x - mean) / std
-            feats_t = model(x)
-            out_feats.append(np.asarray(feats_t.detach().cpu().numpy(), dtype=np.float32))
-    return np.concatenate(out_feats, axis=0)  # type: ignore[no-any-return]
+    feats = tools_run_image_eval.extract_inception_features_for_image_eval(
+        images,
+        device=torch.device("cpu"),
+        batch_size=int(batch_size),
+    )
+    return feats  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
