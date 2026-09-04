@@ -77,7 +77,7 @@ jobs:
         # duplicating it on a per-test basis triples wall-clock for no
         # new signal. ``pyproject.toml`` declares ``requires-python =
         # ">=3.12"`` so 3.12 is the canonical floor.
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
           cache: 'pip'
