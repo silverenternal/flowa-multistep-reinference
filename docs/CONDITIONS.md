@@ -140,3 +140,84 @@ regime **until evidence to the contrary is published**.
   per target × 2 targets).
 * Honest unknowns section present (above).
 * Commit (push deferred to Wave 17 verify).
+
+---
+
+## Wave 29 Agent B — Controlled empirical audit (additive)
+
+**Source task brief:** `Wave 29 Agent B: Empirical layer audit -- why does framework regress on CIFAR-10/twodim_fm/LineageFlow?`
+**Author:** Wave 29 Agent B (2026-09-05)
+**Primary output:** `docs/audit/empirical-conditions.md` (full analysis)
+**Tool:** `tools/run_controlled_audit.py`
+**JSON report:** `verification_outputs/controlled_audit_q3_2026.json` (gitignored, Wave 18 / Wave 28 pattern)
+
+### Headline verdict
+
+The three workload regressions fall in three different categories
+under the matched-NFE controlled re-run (3 models × 3 seeds × 3 NFEs
+× 3 σs = 81 cells):
+
+| Workload | Is the regression real? | Layer responsible | Cells audited |
+|---|---|---|---:|
+| **CIFAR-10 RF** | **NO** (matched-NFE audit shows parity within noise; paper §4 +24-31% is the cosine-ramp half-NFE signal) | Measurement (cosine-ramp half-NFE in the paper §4 setup, not the framework) | 27 |
+| **twodim_fm** | **YES** (consistent +3-10% across all 9 (NFE, σ) cells at matched NFE) | Algorithm (`CodimensionSheetScheduler` adds W2 error at matched NFE; per-seed std ~11%, mean consistently positive) | 27 |
+| **LineageFlow** | **NO** (decision metric saturates at 1.0 on both arms) | Measurement (synthetic-shim saturation, not algorithm) | 27 |
+
+### Per-cell matched-NFE verdict (additive to the Wave 17 P3 Pareto plots)
+
+| Model | Cells | matched-NFE | sigma-supported |
+|---|---:|---|---|
+| `twodim_fm` | 27 | ✓ on every cell (5-round framework arm = `nfe/5` × 5) | ✓ (noise_sigma plumbed into the velocity field) |
+| `cifar10_rf` | 27 | ✗ on 9 cells at NFE=10 (framework_nfe=8 vs baseline_nfe=10, an integer-divide artefact); ✓ on the other 18 | ✗ (adapter does not plumb noise_sigma into the velocity field; 18 cells at σ > 0 are degenerate) |
+| `lineageflow` | 27 | ✓ on every cell | ✗ (same sigma-not-supported gap as CIFAR-10; 18 cells at σ > 0 are degenerate) |
+
+The matched-NFE mismatch on CIFAR-10 / NFE=10 is itself a real
+**measurement artifact**: the framework arm uses `nfe // n_rounds`
+steps per round, so for `nfe=10, n_rounds=4` the framework consumes
+`2 * 4 = 8` NFE instead of 10. At NFE=50 the gap is 4% (matched);
+at NFE=200 it is 0% (matched).
+
+The sigma-not-supported cells on CIFAR-10 / LineageFlow are a
+**gap in the adapter's API surface** — neither adapter currently
+exposes a noise_sigma that perturbs the velocity field. This
+matches the Wave 17 P3 honest-unknowns entry "the noise sigma in
+this sweep is twodim_fm-specific; other adapters have not been
+subjected to a controlled-noise sweep under matched conditions".
+
+### Cross-reference
+
+* `docs/audit/empirical-conditions.md` — full audit doc with
+  per-cell tables, per-model verdicts, smallest-experiment
+  recipes, and acceptance gate.
+* `tools/run_controlled_audit.py` — controlled-run tool (this
+  audit).
+* `verification_outputs/controlled_audit_q3_2026.json` —
+  machine-readable per-cell report.
+* `docs/theory/operating-regime.md` (Wave 17 P3) — the `twodim_fm`
+  regression is consistent with the operating-regime statement that
+  "twodim_fm-class targets are out-of-regime for the framework's
+  `CodimensionSheetScheduler` as of Wave 17 P3".
+
+### Honest unknowns (audit-specific)
+
+1. **twodim_fm per-seed std is ~11%**: the 3-seed mean is positive
+   on all 9 cells, but the per-seed spread is large. A 10-seed
+   confirmation would be needed for a publishable regression claim.
+   Cheapest next step: re-run with `--seeds` extended to 10 — wallclock
+   scales linearly (~10 min for the 27 cells).
+2. **CIFAR-10 + LineageFlow sigma-axis gap**: the audit's σ > 0
+   cells are no-ops on these two adapters. Cheapest next step: add a
+   `noise_sigma` constructor argument that perturbs the velocity
+   field per step (mirroring `twodim_fm`'s `_batched_integrate_rk4`
+   path) and re-run.
+3. **LineageFlow real-ckpt saturation**: the synthetic shim
+   saturates at 1.0; the published 9.788 GB torch ckpt is unreachable
+   here. Cheapest next step: build a non-saturated perturbation (noisy
+   / stiff velocity field) so `family_validity` differentiates
+   baseline from framework.
+4. **CIFAR-10 v5**: the matched-NFE result here shows parity, but
+   the v5 (Heun + stateful chain + fixed-NFE) experiment has not yet
+   been re-run on the synthetic velocity field. Cheapest next step:
+   implement and run CIFAR-10 v5.
+
+* Commit (push deferred to Wave 29 verify).
