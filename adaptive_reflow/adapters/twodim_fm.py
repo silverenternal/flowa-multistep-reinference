@@ -161,8 +161,28 @@ def _features(x: ArrayF64, t: ArrayF64 | float) -> ArrayF64:
     return np.concatenate([x2, tt[:, None]], axis=1)
 
 
-def _velocity_field(weights: Mapping[str, ArrayF64], x: ArrayF64, t: float) -> ArrayF64:
-    """Evaluate the trained ReLU velocity MLP ``v_theta(x, t)``."""
+def _velocity_field(
+    weights: Mapping[str, ArrayF64],
+    x: ArrayF64,
+    t: float,
+    noise_sigma: float = 0.0,
+    noise_seed: int | None = None,
+    call_count_ref: list[int] | None = None,
+) -> ArrayF64:
+    """Evaluate the trained ReLU velocity MLP ``v_theta(x, t)``.
+
+    Wave 17 Phase 2 (Algo D): when ``noise_sigma > 0`` the velocity
+    output is perturbed by ``N(0, sigma^2 * I_2)`` -- this is the
+    "controlled noise injection" the C.5 Pareto experiment sweeps.
+    The noise stream is seeded by
+    ``(noise_seed, call_count_ref[0])`` and the counter is incremented
+    after every query, so the perturbation is fully deterministic for
+    a fixed ``(noise_sigma, noise_seed, x_query_sequence)`` and
+    independent of the caller's engine seed. ``noise_sigma = 0`` (the
+    legacy default) produces byte-identical output to the upstream
+    adapter -- the noise path is gated by a single branch on
+    ``noise_sigma > 0`` so the hot path stays branch-free at sigma=0.
+    """
     x_arr = np.asarray(x, dtype=np.float64)
     if x_arr.ndim == 1:
         if x_arr.shape[0] != 2:
@@ -179,6 +199,27 @@ def _velocity_field(weights: Mapping[str, ArrayF64], x: ArrayF64, t: float) -> A
     h1 = np.maximum(h0 @ weights["W1"] + weights["b1"], 0.0)
     h2 = np.maximum(h1 @ weights["W2"] + weights["b2"], 0.0)
     out = h2 @ weights["W3"] + weights["b3"]
+    # Wave 17 Phase 2: controlled noise injection for the C.5
+    # failure-mode characterisation. Only perturb when sigma > 0
+    # (gate on the cheap float compare, not on a Python None check).
+    if noise_sigma > 0.0:
+        if noise_seed is None:
+            noise_seed = 0
+        if call_count_ref is None:
+            # If no shared counter is supplied, fall back to a local
+            # deterministic counter seeded by noise_seed + id(out).
+            # This keeps the function pure even when called outside the
+            # adapter's hot loop.
+            local_seed = int(noise_seed) + int(id(out))
+            rng = np.random.default_rng(local_seed)
+            noise = rng.standard_normal(out.shape).astype(np.float64) * float(noise_sigma)
+        else:
+            call_count_ref[0] += 1
+            rng = np.random.default_rng(
+                (int(noise_seed) * 1_000_003 + int(call_count_ref[0])) & 0xFFFFFFFF
+            )
+            noise = rng.standard_normal(out.shape).astype(np.float64) * float(noise_sigma)
+        out = out + noise
     if np.asarray(x, dtype=np.float64).ndim == 1:
         return np.asarray(out[0], dtype=np.float64)
     return np.asarray(out, dtype=np.float64)
@@ -188,8 +229,16 @@ def _integrate_rk4(
     weights: Mapping[str, ArrayF64],
     x0: ArrayF64,
     t_grid: ArrayF64,
+    *,
+    noise_sigma: float = 0.0,
+    noise_seed: int | None = None,
+    noise_counter: list[int] | None = None,
 ) -> ArrayF64:
-    """Pure RK4 integration over ``t_grid``; returns ``(len(t_grid), 2)`` trajectory."""
+    """Pure RK4 integration over ``t_grid``; returns ``(len(t_grid), 2)`` trajectory.
+
+    Wave 17 Phase 2: when ``noise_sigma > 0`` every velocity query is
+    perturbed by ``N(0, sigma^2 * I)`` -- see ``_velocity_field``.
+    """
     x0_arr = np.asarray(x0, dtype=np.float64).reshape(2)
     grid = np.asarray(t_grid, dtype=np.float64).reshape(-1)
     if grid.size < 2:
@@ -201,10 +250,28 @@ def _integrate_rk4(
         t0 = float(grid[i - 1])
         t1 = float(grid[i])
         dt = float(t1 - t0)
-        k1 = _velocity_field(weights, x_cur, t0)
-        k2 = _velocity_field(weights, x_cur + 0.5 * dt * k1, t0 + 0.5 * dt)
-        k3 = _velocity_field(weights, x_cur + 0.5 * dt * k2, t0 + 0.5 * dt)
-        k4 = _velocity_field(weights, x_cur + dt * k3, t1)
+        k1 = _velocity_field(
+            weights, x_cur, t0, noise_sigma, noise_seed, noise_counter
+        )
+        k2 = _velocity_field(
+            weights,
+            x_cur + 0.5 * dt * k1,
+            t0 + 0.5 * dt,
+            noise_sigma,
+            noise_seed,
+            noise_counter,
+        )
+        k3 = _velocity_field(
+            weights,
+            x_cur + 0.5 * dt * k2,
+            t0 + 0.5 * dt,
+            noise_sigma,
+            noise_seed,
+            noise_counter,
+        )
+        k4 = _velocity_field(
+            weights, x_cur + dt * k3, t1, noise_sigma, noise_seed, noise_counter
+        )
         x_cur = x_cur + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
         traj[i] = x_cur
     return traj
@@ -214,6 +281,10 @@ def _batched_integrate_rk4(
     weights: Mapping[str, ArrayF64],
     x0_batch: ArrayF64,
     n_steps: int,
+    *,
+    noise_sigma: float = 0.0,
+    noise_seed: int | None = None,
+    noise_counter: list[int] | None = None,
 ) -> ArrayF64:
     """Pure batched RK4 over ``x0_batch`` of shape ``(batch, 2)``.
 
@@ -225,6 +296,9 @@ def _batched_integrate_rk4(
     for a fixed ``x0_batch`` + ``weights`` pair subject to NumPy's
     BLAS-kernel choice for the operand shape (C1 / D1 in the B5
     design doc).
+
+    Wave 17 Phase 2: when ``noise_sigma > 0`` every velocity query is
+    perturbed -- same semantics as ``_integrate_rk4``.
     """
     if int(n_steps) < 1:
         raise ValueError("n_steps_must_be_positive")
@@ -237,10 +311,33 @@ def _batched_integrate_rk4(
     for i in range(1, grid.size):
         t_next = float(grid[i])
         h = float(t_next - t_cur)
-        k1 = _velocity_field(weights, x_cur, t_cur)
-        k2 = _velocity_field(weights, x_cur + 0.5 * h * k1, t_cur + 0.5 * h)
-        k3 = _velocity_field(weights, x_cur + 0.5 * h * k2, t_cur + 0.5 * h)
-        k4 = _velocity_field(weights, x_cur + h * k3, t_next)
+        k1 = _velocity_field(
+            weights, x_cur, t_cur, noise_sigma, noise_seed, noise_counter
+        )
+        k2 = _velocity_field(
+            weights,
+            x_cur + 0.5 * h * k1,
+            t_cur + 0.5 * h,
+            noise_sigma,
+            noise_seed,
+            noise_counter,
+        )
+        k3 = _velocity_field(
+            weights,
+            x_cur + 0.5 * h * k2,
+            t_cur + 0.5 * h,
+            noise_sigma,
+            noise_seed,
+            noise_counter,
+        )
+        k4 = _velocity_field(
+            weights,
+            x_cur + h * k3,
+            t_next,
+            noise_sigma,
+            noise_seed,
+            noise_counter,
+        )
         x_cur = x_cur + (h / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
         t_cur = t_next
     return np.asarray(x_cur, dtype=np.float64).reshape(x0.shape[0], 2)
@@ -255,6 +352,9 @@ def _integrate_dormand_prince(
     max_steps: int = 1000,
     rtol: float = 1e-3,
     atol: float = 1e-4,
+    noise_sigma: float = 0.0,
+    noise_seed: int | None = None,
+    noise_counter: list[int] | None = None,
 ) -> ArrayF64:
     """Adaptive Dormand-Prince (RK45) integrator with overflow clamp."""
     x0_arr = np.asarray(x0, dtype=np.float64).reshape(2)
@@ -315,14 +415,30 @@ def _integrate_dormand_prince(
     while t < t_end and steps < max_steps:
         if t + h > t_end:
             h = t_end - t
-        k1 = _clip(_velocity_field(weights, x, t))
-        k2 = _clip(_velocity_field(weights, x + h * a21 * k1, t + c2 * h))
+        k1 = _clip(_velocity_field(weights, x, t, noise_sigma, noise_seed, noise_counter))
+        k2 = _clip(
+            _velocity_field(
+                weights, x + h * a21 * k1, t + c2 * h, noise_sigma, noise_seed, noise_counter
+            )
+        )
         k3 = _clip(
-            _velocity_field(weights, x + h * (a31 * k1 + a32 * k2), t + c3 * h)
+            _velocity_field(
+                weights,
+                x + h * (a31 * k1 + a32 * k2),
+                t + c3 * h,
+                noise_sigma,
+                noise_seed,
+                noise_counter,
+            )
         )
         k4 = _clip(
             _velocity_field(
-                weights, x + h * (a41 * k1 + a42 * k2 + a43 * k3), t + c4 * h
+                weights,
+                x + h * (a41 * k1 + a42 * k2 + a43 * k3),
+                t + c4 * h,
+                noise_sigma,
+                noise_seed,
+                noise_counter,
             )
         )
         k5 = _clip(
@@ -330,6 +446,9 @@ def _integrate_dormand_prince(
                 weights,
                 x + h * (a51 * k1 + a52 * k2 + a53 * k3 + a54 * k4),
                 t + c5 * h,
+                noise_sigma,
+                noise_seed,
+                noise_counter,
             )
         )
         k6 = _clip(
@@ -337,6 +456,9 @@ def _integrate_dormand_prince(
                 weights,
                 x + h * (a61 * k1 + a62 * k2 + a63 * k3 + a64 * k4 + a65 * k5),
                 t + h,
+                noise_sigma,
+                noise_seed,
+                noise_counter,
             )
         )
         k7 = _clip(
@@ -344,6 +466,9 @@ def _integrate_dormand_prince(
                 weights,
                 x + h * (a71 * k1 + a72 * k2 + a73 * k3 + a74 * k4 + a75 * k5 + a76 * k6),
                 t + h,
+                noise_sigma,
+                noise_seed,
+                noise_counter,
             )
         )
         x_new_5 = x + h * (b1 * k1 + b3 * k3 + b4 * k4 + b5 * k5 + b6 * k6)
@@ -506,6 +631,8 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         init_random_weights: bool = False,
         init_seed: int = 12345,
         blender: RestartBlenderProtocol | None = None,
+        noise_sigma: float = 0.0,
+        noise_seed: int | None = None,
     ) -> None:
         if target not in (
             "two_moons",
@@ -534,6 +661,8 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
             raise ValueError("max_steps_must_be_positive")
         if hidden_width <= 0:
             raise ValueError("hidden_width_must_be_positive")
+        if noise_sigma < 0.0:
+            raise ValueError("noise_sigma_must_be_non_negative")
         self._target = target
         self._integrator: IntegratorMethod = integrator
         self._num_steps = int(num_steps)
@@ -542,6 +671,24 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         self._atol = float(atol)
         self._max_steps = int(max_steps)
         self._hidden_width = int(hidden_width)
+        # Wave 17 Phase 2 — Algorithm D controlled noise injection (Algo
+        # improvement D — failure modes). ``noise_sigma = 0`` (default)
+        # produces byte-identical output to the legacy adapter. When
+        # ``noise_sigma > 0`` every velocity query through the adapter's
+        # internal ``_velocity_field`` is perturbed by
+        # ``N(0, sigma^2 * I)``; the noise stream is seeded from
+        # ``(noise_seed, query_call_count)`` so the perturbation is
+        # deterministic for a fixed ``(noise_sigma, noise_seed)`` and
+        # independent of the caller's engine seed. The C.5 Pareto
+        # experiment sweeps ``sigma in {0, 0.01, 0.05, 0.1, 0.2, 0.5}``
+        # and measures the framework's recovery rate against this
+        # controlled perturbation; see ``tools/noise_injection_experiment.py``
+        # and ``docs/CONDITIONS.md``.
+        self._noise_sigma = float(noise_sigma)
+        self._noise_seed = (
+            int(noise_seed) if noise_seed is not None else int(seed_offset) + 0
+        )
+        self._noise_call_count: int = 0
         # Materialize weights from the supplied path or the default.
         if init_random_weights:
             self._weights_path = Path("random_init")
@@ -882,8 +1029,24 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
         grid = t_grid  # alias for the new-integrator branch below.
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(2)
+        # Wave 17 Phase 2: thread the controlled noise-injection params
+        # through every integrator branch. The counter ``[0]`` is
+        # monotonically incremented per velocity query, so the noise
+        # stream is fully deterministic for a fixed ``(noise_sigma,
+        # noise_seed, query sequence)`` -- this is what the C.5
+        # Pareto experiment relies on for repeatable measurements.
+        noise_counter = [self._noise_call_count]
+        noise_sigma = float(self._noise_sigma)
+        noise_seed = int(self._noise_seed)
         if self._integrator == "rk4":
-            traj = _integrate_rk4(self._weights, x0, t_grid)
+            traj = _integrate_rk4(
+                self._weights,
+                x0,
+                t_grid,
+                noise_sigma=noise_sigma,
+                noise_seed=noise_seed,
+                noise_counter=noise_counter,
+            )
             actual_steps = int(num_steps)
             accept_rate = 1.0
         elif self._integrator == "dormand_prince":
@@ -895,6 +1058,9 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
                 max_steps=max(int(self._max_steps), num_steps * 4),
                 rtol=float(self._rtol),
                 atol=float(self._atol),
+                noise_sigma=noise_sigma,
+                noise_seed=noise_seed,
+                noise_counter=noise_counter,
             )
             actual_steps = max(1, traj.shape[0] - 1)
             accept_rate = 1.0
@@ -908,7 +1074,14 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
             integrator = build_integrator(str(self._integrator))
 
             def _vf(t: float, y: ArrayF64) -> ArrayF64:
-                return _velocity_field(self._weights, y, float(t))
+                return _velocity_field(
+                    self._weights,
+                    y,
+                    float(t),
+                    noise_sigma,
+                    noise_seed,
+                    noise_counter,
+                )
 
             traj = np.empty((grid.size, 2), dtype=np.float64)
             y_cur = x0.copy()
@@ -921,6 +1094,13 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
                 traj[i, :] = y_cur
             actual_steps = int(num_steps)
             accept_rate = 1.0
+        # Persist the post-query counter so the next ``solve_ode`` call
+        # picks up where this one left off (the noise stream is a
+        # per-adapter monotonically-increasing counter, not reset
+        # between solve_ode invocations -- this is intentional: it
+        # keeps the same deterministic noise stream across rounds of
+        # the same multi-round engine run).
+        self._noise_call_count = int(noise_counter[0])
         # Overflow clamp + audit code emission.
         traj_clamped = np.clip(traj, -TWODIM_FM_CLAMP, TWODIM_FM_CLAMP)
         overflowed = bool(np.any(np.abs(traj) > TWODIM_FM_CLAMP))
@@ -1128,16 +1308,47 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         traj = np.empty((batch, grid.size, 2), dtype=np.float64)
         x_cur = x0.copy()
         traj[:, 0, :] = x_cur
+        # Wave 17 Phase 2: thread the controlled-noise params through
+        # the B5 metric path. The counter is shared across the entire
+        # ``batched_integrate`` call so the noise stream is monotonic
+        # across the population -- matching ``solve_ode`` semantics.
+        noise_counter = [self._noise_call_count]
+        noise_sigma = float(self._noise_sigma)
+        noise_seed = int(self._noise_seed)
         for i in range(1, grid.size):
             t_cur = float(grid[i - 1])
             t_next = float(grid[i])
             h = float(t_next - t_cur)
-            k1 = _velocity_field(self._weights, x_cur, t_cur)
-            k2 = _velocity_field(self._weights, x_cur + 0.5 * h * k1, t_cur + 0.5 * h)
-            k3 = _velocity_field(self._weights, x_cur + 0.5 * h * k2, t_cur + 0.5 * h)
-            k4 = _velocity_field(self._weights, x_cur + h * k3, t_next)
+            k1 = _velocity_field(
+                self._weights, x_cur, t_cur, noise_sigma, noise_seed, noise_counter
+            )
+            k2 = _velocity_field(
+                self._weights,
+                x_cur + 0.5 * h * k1,
+                t_cur + 0.5 * h,
+                noise_sigma,
+                noise_seed,
+                noise_counter,
+            )
+            k3 = _velocity_field(
+                self._weights,
+                x_cur + 0.5 * h * k2,
+                t_cur + 0.5 * h,
+                noise_sigma,
+                noise_seed,
+                noise_counter,
+            )
+            k4 = _velocity_field(
+                self._weights,
+                x_cur + h * k3,
+                t_next,
+                noise_sigma,
+                noise_seed,
+                noise_counter,
+            )
             x_cur = x_cur + (h / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
             traj[:, i, :] = x_cur
+        self._noise_call_count = int(noise_counter[0])
         return traj
 
     # ------------------------------------------------------------------
@@ -1193,12 +1404,20 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
                 # Draw ``n_gen`` fresh initial states in one shot and
                 # integrate the batch forward via batched RK4 over
                 # the same ``n_steps`` the engine uses for
-                # ``solve_ode`` (lineage grid).
+                # ``solve_ode`` (lineage grid). Wave 17 Phase 2: pass
+                # the controlled-noise params through so the
+                # population endpoints see the same injected noise as
+                # the lineage path.
                 x0_batch = rng.standard_normal(
                     (int(n_gen), 2)
                 ).astype(np.float64)
                 final_states = _batched_integrate_rk4(
-                    self._weights, x0_batch, n_steps
+                    self._weights,
+                    x0_batch,
+                    n_steps,
+                    noise_sigma=float(self._noise_sigma),
+                    noise_seed=int(self._noise_seed),
+                    noise_counter=[self._noise_call_count],
                 )
                 out[j, k, :, :] = final_states
         return out

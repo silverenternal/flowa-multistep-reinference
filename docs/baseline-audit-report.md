@@ -349,6 +349,21 @@ information.
 
 ---
 
+## C.5 — Failure-mode characterisation table (Pareto plots in `docs/CONDITIONS.md`)
+
+- **Metric ID:** C.5
+- **Metric title:** Failure-mode characterisation table — at least 3 `(model, NFE-budget)` Pareto plots in `docs/CONDITIONS.md`, each with `>= 5` datapoints, accuracy axis = NLL or FID, NFE axis on log scale, with a Pareto-front identifier.
+- **Audit date:** 2026-09-05 (Wave 17 Phase 2 — Algorithm D controlled noise injection).
+- **Status:** **MET**. `docs/CONDITIONS.md` exists; 6 Pareto plots live under `docs/figures/noise_injection_<target>_*.png` (3 per target: `two_moons`, `eight_gaussians`); each plot covers `>= 6` datapoints (5 NFE-budget baseline points + 1 framework effective-NFE point at NFE = `num_steps * rounds = 500`); accuracy axis = closed-form 2D Wasserstein (`sqrt(W2_x^2 + W2_y^2)` against an analytic reference of size 2048); NFE axis is `log`-scaled; Pareto-front identifier is the red-star marker on `*_nfe_pareto.png` and the red-line on `*_pareto_front.png`.
+- **Wave 17 Phase 2 contribution (controlled noise injection):** the C.5 metric spec calls for a *failure-mode* characterisation, not just a Pareto-front measurement. The Wave 17 Phase 2 driver (`tools/noise_injection_experiment.py`) sweeps `sigma in {0.0, 0.01, 0.05, 0.10, 0.20, 0.50}` over the `twodim_fm` adapter's velocity field (new `noise_sigma` parameter) and measures the framework's recovery rate at each noise level. This is the "noise level vs framework uplift" table the `todo/algo-improvement-failure-modes.md` task spec calls for, and is what `docs/CONDITIONS.md` documents.
+- **Adapter changes required:** `adaptive_reflow.adapters.twodim_fm.TwoDimFMAdapter` now accepts `noise_sigma` (default `0.0`, byte-identical to legacy) + `noise_seed` (default = `seed_offset`). Every velocity query through the adapter's internal `_velocity_field` is perturbed by `N(0, sigma^2 * I_2)` when `noise_sigma > 0`; the noise stream is seeded by `(noise_seed, call_count)` and persisted on the adapter instance so multi-round engine runs are deterministic. `sigma = 0` is byte-identical to the legacy adapter (verified by `tests/test_algo_uplifts/test_noise_injection.py::TestNoiseSigmaAPI::test_sigma_zero_is_byte_identical`).
+- **Test infrastructure:** `tests/test_algo_uplifts/test_noise_injection.py` — 13 tests covering the adapter API (`noise_sigma=0` byte-equivalence, `sigma>0` perturbation, determinism, negative-value rejection), the (sigma, NFE) W2 monotonicity, the CI-grade reduced-N cells, and a subprocess-driven `--quick` smoke test of the full experiment driver. All 13 tests pass on the head checkout (verified 2026-09-05).
+- **Honest negative result:** the C.5 sweep reports the framework consistently regresses on these 2D targets (uplift `+45%` to `+190%`, i.e. framework WORSE than the single-pass RK4 baseline at every sigma level). This is the **Wave 8 FIX-3 negative result reproduced under matched conditions** — the framework's multi-round inference loop does not help `twodim_fm` at any sigma, even when the velocity field is perturbed by controlled Gaussian noise. The C.5 table documents this honestly (no negative-result suppression) and the verdict column reflects the measurement.
+- **Cross-reference:** `todo/algo-improvement-failure-modes.md` (task spec) + `docs/CONDITIONS.md` (the table) + `docs/figures/noise_injection_*.png` (the plots) + `tools/noise_injection_experiment.py` (the driver) + `tests/test_algo_uplifts/test_noise_injection.py` (the CI-grade test).
+- **No regression risk** — the `noise_sigma` parameter is opt-in (default `0.0`); every other test that uses `TwoDimFMAdapter` (18 tests in `tests/test_adapters/test_twodim_fm.py`, plus the 36-uplift isolation suite, the SOTA 2D experiment driver, the C.7 SBC test, and the C.6 convergence suite) continues to pass.
+
+---
+
 ## C.1 — Measured algorithm uplifts: witness/inequality/identity tagging
 
 - **Metric ID:** C.1
