@@ -62,11 +62,13 @@ nav:
       - System overview: ARCHITECTURE.md
       - Environment setup: environments.md
       - Framework scope strategy: STRATEGY_FRAMEWORK_SCOPE.md
+      - Adapter dependencies: adapter-dependencies.md
       - Algorithm implementation notes (中文): 算法实现说明.md
   - Testing: TESTING_STRATEGY.md
   - Results & records:
       - Consolidated experimental results: CONSOLIDATED_RESULTS.md
       - Wave-6 reproducibility record: reproducibility_record.md
+      - Wave-14 baseline audit report: baseline-audit-report.md
   - Governance audits:
       - 01 — code-organisation audit: governance/01-code-org-audit.md
       - 02 — algorithm audit: governance/02-algorithm-audit.md
