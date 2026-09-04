@@ -1,5 +1,7 @@
 # Paper-grounded algorithm layer: how Li 2026 Theorem 1 maps to flowa's algorithm abstractions
 
+> See also: [`docs/算法实现说明.md`](算法实现说明.md) (中文版本 / Chinese version — same paper-grounded walkthrough, audience split kept for now).
+
 Status: insight document (narrative, not a load-bearing governance record).
 Audience: maintainers, reviewers, and newcomers asking "why does the algorithm layer look like it does?"
 Related: ADR-0013 (`docs/adr/0013-posterior-selection-drives-algorithm.md`), ADR-0010, ADR-0011, ADR-0012, `docs/ABLATION.md`, `docs/CHANGELOG.md`.
