@@ -25,8 +25,8 @@ layout landed. The current governance is at:
 | `REFACTOR_PLAN_V2.md` | superseded | `docs/ARCHITECTURE.md` |
 | `SPLIT_NOTES.md` | superseded | `docs/ARCHITECTURE.md` |
 | `FINAL_STATUS.md` | stale snapshot | `CHANGELOG.md` |
-| `UNIVERSAL_CONTRACT_NOTES.md` | superseded | `docs/ARCHITECTURE.md` |
-| `UNIVERSAL_MOLECULAR_MAPPING.md` | superseded | `docs/ARCHITECTURE.md` |
+| `UNIVERSAL_CONTRACT_NOTES.md` (now `REFACTOR_PLAN_V2.md` Appendix A) | superseded | `docs/ARCHITECTURE.md` |
+| `UNIVERSAL_MOLECULAR_MAPPING.md` (now `REFACTOR_PLAN_V2.md` Appendix B) | superseded | `docs/ARCHITECTURE.md` |
 | `NoiseSelectedRectification_EN.md` | English extract of a noise-selection derivation; not part of current scope | (no current home) |
 | `_benchmark_ablation.md`, `_test_ablation_quick.md` (consolidated into `_ablation_scratch.md`) | ad-hoc ablation scratch (5-round smoke + 20-round canonical runs) | `docs/ABLATION.md` |
 | `candidate_registry_init.md` | initial design notes | `adaptive_reflow/writer/registry.py` |
