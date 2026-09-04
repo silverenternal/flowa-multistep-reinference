@@ -1,0 +1,124 @@
+name: nightly
+
+# Nightly C.7 Simulation-Based Calibration audit (Wave 25 Agent A).
+#
+# ``framework-internal-metrics.md`` rev 2 §1 C.7 marks the SBC suite as
+# "behind ``--runslow``; nightly only, not per-PR" — the tests are cheap
+# in absolute terms (~2 s for the canonical N=1000 sweep) but they are
+# *statistical* gates, and running a p-value threshold on every PR would
+# turn a nominal 5 % false-reject rate into a steady drip of red builds
+# on unrelated branches. Nightly is the right cadence: one sample per
+# day, with the marginal-algorithm fourth pass to disambiguate the
+# borderline verdicts.
+#
+# This workflow runs two jobs:
+#
+#   * ``sbc-audit``    — the canonical N=1000 sweep with the p<0.20
+#                        fourth-pass auto-gate armed. Fails the nightly
+#                        if any algorithm is miscalibrated (p <= 0.05)
+#                        *after* the fourth pass has had its say.
+#   * ``sbc-tests``    — the ``tests/test_sbc/`` pytest suite behind
+#                        ``--runslow``, which covers the structural
+#                        (non-chi-squared) checks the runner does not.
+#
+# Related nightly workflows: ``mutation-nightly.yml`` (03:00 UTC daily),
+# ``stress-nightly.yml`` (03:00 UTC Mondays), ``experiments-nightly.yml``.
+# This one is scheduled at 04:17 UTC so it does not contend with those
+# for runner quota, and off the :00 mark so it does not pile onto the
+# hour boundary with every other repository's cron.
+
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      n:
+        description: 'Prior draws per algorithm (200 | 1000 | 10000)'
+        required: false
+        default: '1000'
+      fourth_pass:
+        description: 'Marginal-algorithm fourth pass (auto | on | off)'
+        required: false
+        default: 'auto'
+
+jobs:
+  sbc-audit:
+    name: C.7 SBC audit (N=${{ github.event.inputs.n || '1000' }})
+    runs-on: ubuntu-latest
+    # The N=1000 sweep plus a worst-case all-six fourth pass at N=10000
+    # measures ~10 s locally. 30 minutes is pure headroom for a cold
+    # runner and the pip install.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      # ``tools/run_sbc_audit.py`` imports the simulator / re_inference
+      # callables out of ``tests/test_sbc/*.py`` via importlib, and those
+      # modules import ``pytest`` at module scope — so the test extra is
+      # required even for the non-pytest runner path.
+      - name: Install dependencies
+        run: |
+          pip install -e .[test] || pip install pytest hypothesis numpy
+
+      # The canonical second pass. ``--fourth-pass auto`` arms the
+      # p<0.20 marginal gate (it is a no-op at --n 200), which re-runs
+      # only the marginal algorithms at N=10000 and takes *that* verdict
+      # as authoritative. Exit code 1 iff an algorithm is still
+      # miscalibrated (p <= 0.05) after the deeper sweep.
+      - name: Run SBC audit
+        run: |
+          python tools/run_sbc_audit.py \
+            --n "${{ github.event.inputs.n || '1000' }}" \
+            --fourth-pass "${{ github.event.inputs.fourth_pass || 'auto' }}" \
+            --output "verification_outputs/sbc_audit_nightly_$(date -u +%Y%m%d).json"
+
+      # Human-readable table in the job log, so a reviewer can see which
+      # algorithms were marginal without downloading the artifact. Runs
+      # even when the audit above fails, which is exactly the case where
+      # the table is worth reading.
+      - name: SBC summary table
+        if: always()
+        run: |
+          python tools/run_sbc_audit.py \
+            --n "${{ github.event.inputs.n || '1000' }}" \
+            --fourth-pass "${{ github.event.inputs.fourth_pass || 'auto' }}" \
+            --print-only
+
+      - name: Upload SBC report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbc-audit-report
+          path: verification_outputs/sbc_audit_nightly_*.json
+          if-no-files-found: error
+          # 90 days of nightly reports is enough history to spot an
+          # algorithm drifting from calibrated to marginal to failing.
+          retention-days: 90
+
+  sbc-tests:
+    name: C.7 SBC pytest suite (--runslow)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install dependencies
+        run: |
+          pip install -e .[test] || pip install pytest hypothesis numpy
+      # The 11 SBC tests are all ``@pytest.mark.slow``; ``-m slow``
+      # selects exactly them plus the other slow markers in that path.
+      # These cover the structural Theorem1DynamicNoiseBias checks that
+      # the chi-squared runner deliberately excludes (see
+      # docs/baseline-audit-report.md §C.7).
+      - name: Run tests/test_sbc/
+        run: PYTHONPATH=. python -m pytest tests/test_sbc/ -m slow --no-header -q

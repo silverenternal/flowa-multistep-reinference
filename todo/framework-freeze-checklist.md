@@ -112,7 +112,34 @@ not bespoke per-model logic.
 
 **Evidence file**: `wc -l adaptive_reflow/core/*.py` + `grep "from adaptive_reflow.core" adaptive_reflow/adapters/*.py`
 
-**Current state**: NOT STARTED. Blocked on Wave 21 completion (need 3 adapters to see patterns).
+**Current state**: PARTIAL (Wave 24 Agent B landed 2026-09-05).
+
+* **Modules shipped**: `adaptive_reflow/core/{ckpt_loader,diffusers_wrapper,graph_wrapper,vae_decoder}.py`
+  + the `adaptive_reflow/core/__init__.py` re-export surface. All four are
+  stdlib + numpy at module level with lazy ``torch``/``diffusers``/``dgl``/
+  ``torch_geometric`` imports so the framework never requires those at
+  import time.
+* **Tests shipped**: `tests/test_core/{__init__,test_ckpt_loader,test_diffusers_wrapper,test_graph_wrapper,test_vae_decoder}.py`
+  — 84 tests, all PASS (CPU-only sandbox; the diffusers/torch-dependent
+  branches exercise a fake-torch shim so the suite runs on offline, weight-free
+  sandboxes).
+* **Per-adapter refactor**: NOT STARTED. Per the MUST-3 contract, the
+  per-adapter refactor (rewriting Kanzi / FreqFlow / MM-FM / Self-Flow /
+  HiDream-I1 / Lumina to consume `adaptive_reflow.core.*`) ships in a
+  follow-up wave that is gated on **all 4 RANKING adapters existing** (the
+  RANKING trio at Wave 21 had 3 of 4 — MM-FM is being re-spawned in
+  Wave 21.5 and LineageFlow is BLOCKED on upstream `core` source per
+  `todo/models/lineageflow.md`). The byte-stable surface ships today so the
+  follow-up refactor can adopt without breaking digests.
+* **Adoption footprint today**: `grep "from adaptive_reflow.core"
+  adaptive_reflow/adapters/*.py` returns zero hits — the refactor is
+  intentionally deferred. The public surface defined in
+  `adaptive_reflow/core/__init__.py` is the canonical "framework-core glue"
+  namespace the per-adapter refactor will consume.
+
+Follow-up gate for the per-adapter refactor: at least 2 of the 4
+RANKING adapters (Kanzi, FreqFlow, MM-FM, LineageFlow) must consume
+`adaptive_reflow.core` before MUST-3 flips from PARTIAL to PASS.
 
 ### MUST-4: `G-MASTER-CAPABILITY` gate PASSED (group G capability metrics measured cold-clone)
 
