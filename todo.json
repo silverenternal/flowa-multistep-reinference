@@ -148,6 +148,7 @@
       "status": "done",
       "phase": "done",
       "completed_at": "2026-09-04T12:00:00+00:00",
+      "wave_2_committed_at": "2026-09-04T20:08:30+08:00",
       "execution_wave": 2,
       "depends_on": [
         "P0-1"
@@ -193,6 +194,7 @@
       "status": "done",
       "phase": "done",
       "completed_at": "2026-09-04",
+      "wave_2_committed_at": "2026-09-04T20:08:30+08:00",
       "execution_wave": 2,
       "depends_on": [
         "P1-4"
@@ -249,7 +251,7 @@
       "notes": "Research at /tmp/framework_iterate_research/P2-12_research.md. Plan at /tmp/framework_iterate_plans/P2-12_plan.md. Approach (5 phases): (1) StateBundle.to_bytes(format='json') + from_bytes — JSON default + pickle opt-in via dataclasses.asdict + validate_state_bundle; (2) Engine.checkpoint_round + Engine.resume_round + Checkpoint frozen dataclass + CheckpointBackend Protocol stub at engine.py:187 / engine.py:933 — stdlib-only, no torch/jax/safetensors imports; (3) per-adapter opt-in: twodim_fm (numpy.savez_compressed), mnist_fm (torch.save), rectified_flow_cifar (safetensors + torch.save fallback), toy_gaussian (numpy.savez_compressed + back-port LRU bound closes research risk #3); flowmol3_v2 clear_caches() drops the @lru_cache for full restore-from-empty; (4) AdaptiveReflowRunner.checkpoint_round / resume_round delegate to self._engine (runner.py:481); (5) verify_checkpoint_chain audit helper at ledger_chain.py:42. Five plan-phase questions answered: opt-in caller-driven cadence (no auto-checkpoint); chain anchor persisted inside the bytes-blob (self-contained resume); pickle opt-in has no allow-list (JSON default = safe path, pickle = trusted internal only); resume_round re-validates chain via verify_checkpoint_chain (fail-closed on tamper); _native_states stays as in-process cache (additive design — no process-local vs cross-session bifurcation). Acceptance: bundle JSON round-trip byte-stable (_digest_state unchanged); Engine.checkpoint_round + resume_round chain survives across processes; toy_gaussian LRU bounded; engine.py stays stdlib-only (grep gate); verify_checkpoint_chain detects post-write tampering. No experiments — local tests only. Wave 4 placement: lands last because it adds checkpoint_state to mnist_fm.py (P0-2's territory) and rectified_flow_cifar.py (P2-9's territory); both must be in their post-refactor shape before checkpoint_state slots in. P2-9 + P0-2 are sequenced in Waves 2 + 3 so P2-12 reads a stable adapter surface.",
       "plan_path": "/tmp/framework_iterate_plans/P2-12_plan.md",
       "completed_at": "2026-09-04T11:55:00Z",
-      "wave_2_committed_at": null,
+      "wave_2_committed_at": "2026-09-04T20:08:30+08:00",
       "apply_notes": "APPLIED 2026-09-04 via plan at /tmp/code_fix_wave2/P2-12/plan.md. Code changes landed: (1) NEW adaptive_reflow/universal/checkpoint.py (~370 lines): Checkpoint frozen dataclass + CheckpointError + DEFAULT_BUNDLE_FORMAT_VERSION='p2-12.checkpoint/v1' + save_checkpoint/load_checkpoint/verify_checkpoint + engine_digest_seed + _checkpoint_to_payload/_ledger_row_to_dict/_decode_checkpoint_payload; (2) adaptive_reflow/universal/state.py: added state_bundle_to_dict() JSON-canonical helper + 'state_bundle_to_dict' in __all__; (3) adaptive_reflow/frame/engine.py: added _engine_digest_seed + checkpoint_round + resume_round methods on Engine (lazy-imported Checkpoint) + Path import; (4) adaptive_reflow/algorithm/runner.py: added ReInferenceRunner.checkpoint_round + resume_round delegate methods; (5) adaptive_reflow/frame/ledger_chain.py: added verify_checkpoint_chain helper (handles empty_chain + external_head_mismatch + chain_invalid); (6) tests/test_universal/test_checkpoint.py (NEW, 11 tests); (7) tests/test_frame/test_engine.py: appended 3 tests; (8) tests/test_frame/test_ledger_chain.py: appended 3 tests. SMOKE RESULTS (104 passed in 0.80s): test_universal/test_checkpoint.py 11/11 + test_frame/test_engine.py 72/72 + test_frame/test_ledger_chain.py 17/17 + test_framework/test_import_acyclic.py 4/4. All AC met. Smoke artifacts in /tmp/code_fix_wave2/P2-12/smoke_test_results.txt. No deletions, no Protocol edits, no OOM-defense-resume scope changes, no experiments."
     },
     {
@@ -260,6 +262,8 @@
       "status": "blocked",
       "phase": "done",
       "execution_wave": 2,
+      "wave_2_committed_at": "2026-09-04T20:08:30+08:00",
+      "wave_2_status": "partial",
       "owner_agent": "apply-P2-8",
       "blocked_reason": "P2-9 C3 reserves the same module paths (_atomic_identity.py, _adapter_common.py, universal/_atomic/bounded_cache.py) and class name (NativeStateCache). P2-9 is upstream of P2-8 in the wave-2 order. Cluster C (NewType re-exports in universal/state.py + envelope.py + materialization.py) was attempted but broke a6dffd3 acyclic test gate via contracts/dynamic_noise_bias.py -> universal.state round-trip; reverted. Defer until P2-9 lands.",
       "depends_on": [
@@ -295,6 +299,7 @@
         "/home/hugo/codes/flowa-multistep-reinference/tools/run_image_eval.py"
       ],
       "completed_at": "2026-09-04T19:55:00Z",
+      "wave_2_committed_at": "2026-09-04T20:08:30+08:00",
       "completion_sub_note": "APPLIED 2026-09-04 via plan at /tmp/code_fix_wave2/P0-1-outliers/plan.md. Step 1b: rewrote SyntheticImageOracle._extract_inception_pool3 (tools/build_synthetic_image_dataset.py:836-918 -> 836-878, ~63 net lines removed) to thin-delegate to tools.run_image_eval.extract_inception_features_for_image_eval with the [0,1]->[-1,1] shift done in one place. No more direct `import torchvision.models` or `inception_v3(...)` construction in build_synthetic_image_dataset.py — those references are now only inside string literals (error message + cache-filename tuple). Step 2: rewrote tools/run_image_eval.py module docstring (lines 8-14) to describe the canonical IMAGENET1K_V1 construction in load_inception_for_fid and explicitly warn against the weights=None/aux_logits=False pattern (commit 2fb3dc0 regression). SMOKE RESULTS (all 7 ACs PASS unless noted): (1) canonical-surface import OK; (2) build module import OK + _extract_inception_pool3 present on GeometricShapeImageOracle (Protocol class hides it from hasattr); (3) reference-stats smoke n=4 OK (mu.shape (2048,), sigma.shape (2048,2048), feature_dim 2048, n_samples 4); (4) test_image_algorithm_determinism.py 7/7 PASS including test_inception_features_bit_identical_across_calls (byte-stable across calls); (5) test_run_image_fid_per_round.py 8/8 PASS (monkeypatched load_inception_for_fid still effective because _extract_inception_pool3 routes via extract_inception_features_for_image_eval which calls load_inception_for_fid); (6) test_run_synthetic_image_eval.py 4/6 PASS (2 failures are from parallel P2-9 agent's mid-edit IndentationError in adaptive_reflow/adapters/lumina_image_2_0.py:1117 — NOT caused by P0-1; pre-existing env issue from concurrent wave-2 work); (7) test_image_algorithm_on_synthetic_oracle.py 1/4 PASS within budget (test_framework_trajectory_decreases_fid_monotonically — exercises the rewritten compute_inception_reference_stats path; remaining 3 tests are large-N slow tests timed out at 240s). DEVIATION from plan: the plan's grep `torchvision.models|inception_v3|Inception_V3_Weights tools/build_synthetic_image_dataset.py` is NOT empty (4 matches) — but all 4 are string literals (1 error message + 3 cache-filename references), not imports or constructions. Spirit of AC1 (no direct `import torchvision.models` and no direct `inception_v3(...)` call) is fully satisfied; literal-grep interpretation is the deviation. No experiments. No OOM-defense-resume scope touched. 28e3bf9 lazy __getattr__ + a6dffd3 acyclic test gate remain intact. Smoke artifacts at /tmp/code_fix_wave2/P0-1-outliers/smoke_test_results.md + test_image_algorithm_on_synthetic_oracle.log + test_synthetic_oracle_targeted.log."
     }
   ]
