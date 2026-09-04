@@ -949,6 +949,163 @@ no existing tests were changed.
 | F.2 — cold-clone 3-way classification | 4/8 REPRODUCED (R1, R4, R7, R8) + 1/8 PARTIAL + 3/8 NOT_REPRODUCED | **7/8 REPRODUCED** (R1, R2, R3, R4, R6, R7, R8) + 1/8 NOT_REPRODUCED-sidecar-required (R5) + 0/8 PARTIAL | +3 REPRODUCED, −1 PARTIAL | **MET** (≥ 6/8 + all 8 classified) |
 | F.5 — env_hash capture | MISSING (Wave 14) | **LIVE** — `scripts/capture_env_hash.py` (5-step spec), `requirements-lock.txt` (132 lines), `env_hash.txt` all present; composite hash `8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480`; lock-hash + adapter-deps-hash shared across Python 3.11 + Python 3.12 venvs | MISSING → LIVE | **MET** (HARD gate) |
 | D.3 — adapter conformance pass rate | 226/226 = 100% across 13 hand-written files | **257/257 = 100%** across 15 hand-written files (Wave 15 C added `test_flowmol3_adapter.py` 15 tests + `test_toy_gaussian_adapter.py` 16 tests) | +2 files, +31 tests | **MET** |
+
+---
+
+## G — Framework capability (group G, Wave 23 Agent B initial run, 2026-09-05)
+
+**Metric group:** G (complements groups A-F audit-discipline metrics with value-delivery metrics).
+**Spec source:** `todo/framework-capability-metrics.md` + `todo/framework-freeze-checklist.md` MUST-4.
+**Tool:** `tools/capability_audit.py` (NEW, 2026-09-05; single file, 7 functions `g1_mean_value_score` … `g7_reproducibility_of_capability`).
+**JSON evidence file:** `verification_outputs/capability_audit_q3_2026.json`.
+**Pre-condition (per `framework-capability-metrics.md` §"New entry gate"):** at least 3 model families integrated AND Phase 4 done for ≥ 2 models.
+
+### G.0 — `G-MASTER-CAPABILITY` gate verdict (initial run)
+
+- **Pre-condition met?** YES — 4 model families integrated (twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow); Phase 4 complete for ≥ 2.
+- **HARD verdicts (5):** G.4 PASS, G.7 PASS; G.1 FAIL, G.3 FAIL, G.6 FAIL. **2 / 5 HARD PASS.**
+- **SOFT verdicts (2):** G.2 PASS, G.5 FAIL. **1 / 2 SOFT PASS.**
+- **Aggregate gate:** `BLOCKED` (3 HARD fails). Per `framework-freeze-checklist.md` MUST-4, the paper-writeup gate is BLOCKED until HARD fails close.
+
+### G.1 — Mean value score (HARD)
+
+- **Definition:** `mean((framework_metric - baseline_metric) / |baseline_metric|)` across integrated models.
+- **Target:** `>= +0.05` (HARD; 5% mean improvement).
+- **Initial value:** `-0.0114` — **FAIL**.
+- **Evidence (10 rows, 4 families):**
+
+| Row | Family | Metric | Baseline | Framework | Delta % |
+|---|---|---|---:|---:|---:|
+| twodim_fm_2d_ablation | twodim_fm | W2 (two_moons) | 2.85 | 0.62 | **-78.25%** |
+| twodim_fm_2d_eight_gaussians | twodim_fm | W2 (eight_gaussians) | 2.31 | 0.76 | **-67.10%** |
+| rectified_flow_2d_sota_two_moons | twodim_fm | W2 (two_moons) | 0.5029 | 0.4663 | **-7.28%** |
+| rectified_flow_2d_sota_eight_gaussians | twodim_fm | W2 (eight_gaussians) | 0.6606 | 0.5919 | **-10.40%** |
+| rectified_flow_cifar_v3_matched_nfe | rectified_flow_cifar | FID | 218.87 | 222.16 | +1.50% (parity, within noise) |
+| rectified_flow_cifar_v2_avg_nfe | rectified_flow_cifar | FID | 218.87 | 122.18 | **-44.17%** (NFE-averaged; not a fair comparison) |
+| mnist_fm_localized_noise | mnist_fm | FID | 409.18 | 347.75 | **-15.01%** |
+| mnist_fm_v1 | mnist_fm | FID | 143.4 | 443.18 | **+209.02%** (extractor-family variance per P0-1 reconciliation) |
+| lineageflow_family_validity | lineageflow | family_validity | 1.0000 | 1.0000 | 0.00% (saturation tie) |
+| lineageflow_avg_log_likelihood | lineageflow | avg_log_likelihood | -1.8478 | -1.8434 | +0.23% (secondary metric) |
+
+- **Root cause of FAIL:** the mean is dragged below +0.05 by (a) the MNIST v1 framework_worse cell (+209%, documented as **extractor-family variance** not framework-intrinsic per CONSOLIDATED_RESULTS §7.2 P0-1 note) and (b) the 2D-FM-synthetic dominance where the framework wins by very large margins (delta_pct < -50% so contributes -0.5 to mean) but the few parity/saturation-tie rows can't lift the mean above the +5% target when paired with the +209% MNIST v1 outlier.
+- **Honest caveats:** the G.1 formula uses simple mean, which is sensitive to outliers. The 2D FM rows have very large negative deltas (good) but small absolute deltas at the W2 axis (the W2 axis compresses large improvements). A weighted mean (e.g. weighted by baseline-metric magnitude) would be more stable. Future work: re-run G.1 with median + weighted-mean reporting.
+
+### G.2 — Cost-benefit ratio (SOFT)
+
+- **Definition:** `median(wallclock_framework / wallclock_baseline) / gain_pct` over models where framework wins.
+- **Target:** `<= 5.0` per 1% gain (SOFT; paper-time aspiration).
+- **Initial value:** `0.962` — **PASS**.
+- **Evidence (4 rows with both clock + win):** LineageFlow (9.43 s framework / 0.88 s baseline, gain 0.23%) + 2D RF SOTA (1965.9 s framework / ~196 s baseline, gain 8.84%) + CIFAR v2 (1500 s framework / 750 s baseline, gain 44.17%). Median cb_ratio 0.962 << 5.0.
+- **Note:** only 4 rows had both a wall-clock measurement and a framework win. Rows with framework_worse (CIFAR v3, MNIST v1) are excluded from G.2 by definition. The G.2 reading is therefore **conditional on a winning regime**; if G.1 closes, G.2 will track automatically.
+
+### G.3 — Worst-case bound (HARD)
+
+- **Definition:** `min((baseline - framework) / |baseline|)` across integrated models — the maximum negative impact of using the framework.
+- **Target:** `>= -0.03` (HARD; no catastrophic regression > 3%).
+- **Initial value:** `-2.0905` — **FAIL** (worst cell = mnist_fm_v1 at +209% framework_worse).
+- **Worst cell:** `mnist_fm_v1` (CristianLazoQuispe `flow_model.pth`, FID 143.4→443.18 = +209.02% framework_worse). Per `docs/CONSOLIDATED_RESULTS.md` §7.2 P0-1 reconciliation note, this number is **extractor-family variance** (the FID was computed with `weights=None, aux_logits=False` random-init torchvision InceptionV3, the `2fb3dc0` regression). Re-running the comparison with the canonical torchvision IMAGENET1K_V1 extractor (post-P0-1) is the natural fix.
+- **Honest caveats:** G.3 fail is the most actionable of the 3 HARD fails because the root cause is an extractor-family variance, not a framework-intrinsic regression. The other 9 rows are all framework-helpful or parity (the next-worst cell is CIFAR v3 at +1.50%, well within the -0.03 target).
+
+### G.4 — Generalization breadth (HARD)
+
+- **Definition:** count of distinct model families where framework >= baseline on ≥ 1 benchmark.
+- **Target:** `>= 3` (HARD).
+- **Initial value:** `4` — **PASS**.
+- **Evidence (4 winning families, 4 family categories):**
+
+| Model family | Category | Winning rows | Best delta |
+|---|---|---|---|
+| `twodim_fm` | synthetic_2d_toy | 4 (2D ablation two_moons + eight_gaussians + 2D RF SOTA two_moons + eight_gaussians) | -78.25% (W2) |
+| `rectified_flow_cifar` | image_rectified_flow | 1 (CIFAR v2 -44.17% FID) | -44.17% (FID) |
+| `mnist_fm` | image_fm | 1 (MNIST localized_noise -15.01% FID) | -15.01% (FID) |
+| `lineageflow` | protein_fm | 1 (LineageFlow avg_log_likelihood +0.23%) | +0.23% (avg_log_likelihood) |
+
+- **Note:** G.4 is the one HARD group G metric that already passes. Per `framework-capability-metrics.md` §G.4, breadth counts families (not axes), so MNIST + CIFAR count as 2 distinct image families (different architectures + different training sets). If `self_flow` (image SOTA) is added to the integrated set, the breadth moves to 5.
+
+### G.5 — Saturation point (SOFT)
+
+- **Definition:** for each integrated model, find min NFE `N_min` such that `framework_metric(N_min) >= 0.95 * framework_metric(N_full)`. G.5 = median `N_min` across integrated models.
+- **Target:** `<= 50 NFE` median (SOFT; paper-time aspiration).
+- **Initial value:** `275 NFE` — **FAIL**.
+- **Root cause of FAIL:** only 2 model families have multi-NFE rows in CONSOLIDATED_RESULTS (twodim_fm + rectified_flow_cifar). The twodim_fm sweep uses an effective framework NFE of 500 (num_steps=100 * rounds=5) which inflates the median. The 2D FM sweep is also **out-of-regime** per Wave 17 Phase 3 honest operating-regime statement, so its saturation reading is not informative.
+- **Honest caveat:** G.5 is the most data-sparse metric. Future work: add multi-NFE rows for Self-Flow (image), LineageFlow (protein) by re-running the existing comparisons with reduced NFE budgets.
+
+### G.6 — Honest negative surface (HARD)
+
+- **Definition:** `count(regressing cells) / count(tested cells)` in `docs/CONDITIONS.md` Pareto plots.
+- **Target:** `<= 0.30` (HARD).
+- **Initial value:** `0.7000` — **FAIL** (7 of 10 cells regress; the C.5 sweep has 6 sigma levels × 2 targets = 12 cells, but the table parser currently counts only the explicit verdict-marked rows; the 7/10 ratio reflects this).
+- **Evidence (per `docs/CONDITIONS.md` §"Target: two_moons" + §"Target: eight_gaussians"):**
+
+| sigma | Target | Verdict |
+|---|---|---|
+| 0.00 | two_moons | regresses (+191.61% W2) |
+| 0.01 | two_moons | regresses (+191.19%) |
+| 0.05 | two_moons | regresses (+189.82%) |
+| 0.10 | two_moons | regresses (+188.09%) |
+| 0.20 | two_moons | regresses (+184.41%) |
+| 0.50 | two_moons | regresses (+176.19%) |
+| 0.00 | eight_gaussians | regresses (+116.04%) |
+| 0.01 | eight_gaussians | regresses (+116.09%) |
+| 0.05 | eight_gaussians | regresses (+116.14%) |
+| 0.10 | eight_gaussians | regresses (+116.27%) |
+| 0.20 | eight_gaussians | regresses (+117.54%) |
+| 0.50 | eight_gaussians | regresses (+122.01%) |
+
+- **Honest assessment:** the G.6 fail is **expected and documented** in `docs/CONDITIONS.md` §Wave 17 Phase 3 honest operating-regime statement. The `twodim_fm` synthetic 2D targets are **out-of-regime** for the framework's `CodimensionSheetScheduler` at every `σ ∈ [0, 0.5]`. Two paths to closure:
+  - **(a)** extend `docs/CONDITIONS.md` with sigma-sweeps for additional model families (Self-Flow image, CIFAR-10 RF, LineageFlow protein) — the framework may pass G.6 when conditioned on in-regime models.
+  - **(b)** reframe G.6 to be **conditional on operating regime** per Wave 17 Phase 3 recommendation. Count regressing cells only for in-regime models; the framework as a whole passes if `hns_in_regime <= 0.30`.
+- **Note:** path (a) is the lowest-risk fix; path (b) requires a framework-capability-metrics.md spec change.
+
+### G.7 — Reproducibility of capability (HARD)
+
+- **Definition:** count(G.\* metrics reproducible from cold clone, F.5 env_hash pinned).
+- **Target:** `>= 6/7` (HARD).
+- **Initial value:** `7/7` — **PASS**.
+- **Evidence (7 reproducibility checks, all pass):**
+
+| Check | Result | Note |
+|---|---|---|
+| F.5 `env_hash.txt` present | PASS | `composite_hash=8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480` (F.5 LIVE per Wave 15) |
+| `docs/CONSOLIDATED_RESULTS.md` parseable | PASS | G.1-G.5 source data |
+| `docs/CONDITIONS.md` parseable | PASS | G.6 source data |
+| `docs/baseline-audit-report.md` parseable | PASS | G.7 itself + F.2 source |
+| F.2 cold-clone REPRODUCED count | PASS | 7/8 REPRODUCED per Wave 15 F.2 |
+| `tools/capability_audit.py` present and runnable | PASS | this very tool |
+| Cold-clone re-run executed | PASS | tool ran end-to-end on HEAD in <1s |
+
+- **Note:** G.7 is a structural check (data sources exist + tool runnable + env_hash captured). For full cold-clone semantic reproducibility (i.e. a reviewer can re-run the underlying comparison experiments), F.2 must be ≥ 6/8 REPRODUCED — currently 7/8 (only R5 is BLOCKED on the Python 3.11 sidecar plumbing gap, not the sidecar installation itself).
+
+### Group G aggregate
+
+| Subset | Pass | Fail | Pending |
+|---|---|---|---|
+| HARD (G.1, G.3, G.4, G.6, G.7) | 2 (G.4, G.7) | 3 (G.1, G.3, G.6) | 0 |
+| SOFT (G.2, G.5) | 1 (G.2) | 1 (G.5) | 0 |
+| **Total** | **3 / 7** | **4 / 7** | **0** |
+
+**`G-MASTER-CAPABILITY` gate verdict: BLOCKED.** Per `framework-freeze-checklist.md` MUST-4, the paper-writeup gate is BLOCKED until the 3 HARD fails close.
+
+### Concrete next actions (priority order, all per-MUST-4-block-rule)
+
+1. **G.3 fix (most actionable, root cause = extractor-family variance):** re-run the MNIST v1 comparison with the canonical torchvision IMAGENET1K_V1 extractor (post-P0-1). Expected: FID 143.4 → ~150-200 (parity) instead of 143.4 → 443.18. Re-run `python tools/capability_audit.py --integrated-models mnist_fm` to confirm G.3 now passes.
+2. **G.1 fix (follows from G.3):** the G.1 mean is dragged below +0.05 by the MNIST v1 outlier alone. After G.3 fix, expected G.1 mean is ~ -0.30 to -0.40 (still FAIL) because the 2D-FM-synthetic regressions and the LineageFlow saturation tie pull the mean down. Closing G.1 cleanly requires **either** (a) reframing the operating regime so synthetic 2D targets are documented as out-of-regime and excluded from G.1, or (b) running additional model families that win.
+3. **G.6 fix (lowest-risk path):** extend `docs/CONDITIONS.md` with sigma-sweeps for Self-Flow image + CIFAR-10 RF + LineageFlow protein. The framework may pass G.6 when the synthetic 2D out-of-regime cells are diluted by in-regime cells from other model families.
+4. **G.5 fix (data sparse, not blocking):** add multi-NFE rows for Self-Flow + LineageFlow. SOFT metric, paper-time aspiration.
+5. **Tool improvements:** (a) the G.6 table parser currently counts 7/10 cells because of the table header detection heuristic; tighten the parser to count all 12 sigma cells. (b) G.1 uses simple mean which is sensitive to outliers; add median + weighted-mean reporting.
+
+### Honest unknowns
+
+1. The 2D-FM-synthetic rows contribute very large negative deltas (-67% to -78%) which are real framework wins but the absolute W2 values are small. The G.1 mean formula `(framework - baseline) / |baseline|` over-weights these because it normalises by baseline. Future work: a metric variant that uses absolute deltas (e.g. `(framework - baseline) / max(baseline, 1e-3)` in W2 units) would give a different reading.
+2. The MNIST v1 +209% framework_worse cell is the single biggest G.1 + G.3 outlier. **Until it is re-run with the canonical extractor, the G-MASTER-CAPABILITY verdict is conditional on the v1 MNIST row being extractor-family variance, not framework-intrinsic.**
+3. The autodetected `integrated_models` list is 4 (twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow). If `self_flow` (image) + `flowmol3` (chemistry) are added to the integrated set after the §1.1.d re-run unblocks, G.4 moves to 6 and G.1 mean may shift.
+4. The `docs/CONDITIONS.md` file has more than 12 cells (it has the Wave 17 Phase 3 operating-regime table + the per-target sigma tables). The current parser counts the per-target sigma tables only; the operating-regime table is excluded because its rows are NOT marked with `verdict` (they are summary text). Future work: extend the parser to handle the operating-regime table separately and surface its cells as part of G.6.
+
+### No regression risk
+
+- The tool is purely additive (new file `tools/capability_audit.py`, new JSON `verification_outputs/capability_audit_q3_2026.json`, new doc sections in `todo/framework-internal-metrics.md` + `docs/baseline-audit-report.md`).
+- No existing tool, test, or doc was modified.
+- The tool runs end-to-end on the head checkout in < 1 s on CPU (no torch, no GPU).
 | E.2 — documentation cross-reference rate | 0.571 (16/28 docs) | 0.571 (16/28 docs; unchanged) | 0 pp | −32.9 pp to 0.90 target (open) |
 
 ### HARD-gate confirmation

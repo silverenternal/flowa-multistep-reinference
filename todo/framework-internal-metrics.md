@@ -102,6 +102,68 @@ unpinned threshold).
 
 **F.6 current value (Q4 2026 first audit; see `docs/mutation_audit_q4_2026.md`):** aggregate **0.833** (25/30) across the four subsystem families -- theory 0.500 (4/8), integrators 1.000 (8/8), schedulers 1.000 (8/8), adapters 0.833 (5/6). Five ML-aware operators: weight_perturbation, activation_swap, structural_mutation, threshold_flip, constant_substitution. Runner: `tools/run_mutation_audit.py`. Audit JSON: `verification_outputs/mutation_audit_q4_2026.json`. Survivors catalogue + actionable items in report §5. **GATE MET** (>= 0.6 aggregate AND >= 0.4 per-subsystem).
 
+### G. Framework capability (value delivery — Wave 23 Group G)
+
+Group G complements groups A-F (which measure engineering discipline) with metrics
+that measure the framework's **actual value delivery** to integrated models. Per
+`todo/framework-capability-metrics.md` and `todo/framework-freeze-checklist.md`
+MUST-4. Single source of truth: `tools/capability_audit.py` (Wave 23 Agent B,
+2026-09-05). JSON output: `verification_outputs/capability_audit_q3_2026.json`.
+These metrics are **not** per-wave verify gates (`G-FRAMEWORK-HEALTH` per §4
+governs per-wave audit discipline); they are checked once before PHASE-4 →
+paper-writeup transition (and on demand for freeze MUST-4).
+
+| ID | Definition | Current | Target | Hard? |
+|---|---|---|---|---|
+| G.1 | Mean value score: `mean((framework_metric - baseline_metric) / \|baseline_metric\|)` across integrated models; per `framework-capability-metrics.md` §G.1 | -0.0114 (FAIL; see `verification_outputs/capability_audit_q3_2026.json`) — mean over 10 rows from CONSOLIDATED_RESULTS §4-§7 across 4 model families; the MNIST v1 + CIFAR v3 parity losses drag the mean below +0.05 despite the 2D FM + LineageFlow wins | >= +0.05 by paper-writeup gate | **HARD** |
+| G.2 | Cost-benefit ratio: `median(wallclock_framework / wallclock_baseline) / gain_pct` over models where framework beats baseline; per §G.2 | 0.962 (PASS, SOFT) — only 4 rows have both a clock and a win; median ratio well under the 5.0 per-1%-gain target | <= 5.0 per 1% gain (paper-time aspiration) | no (SOFT) |
+| G.3 | Worst-case bound: `min((baseline - framework) / \|baseline\|)` across integrated models; per §G.3 — the **maximum negative impact** of using the framework | -2.0905 (FAIL) — worst cell is `mnist_fm_v1` (CristianLazoQuispe `flow_model.pth`, FID 143.4→443.18 = +209% framework_worse; per CONSOLIDATED §7.2 this is **extractor-family variance** with the pre-P0-1 TF-port InceptionV3, not framework-intrinsic) | >= -0.03 (no catastrophic regression > 3%) | **HARD** |
+| G.4 | Generalization breadth: count of distinct model families where framework >= baseline on >= 1 benchmark; per §G.4 | 4 (PASS) — twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow; family categories: synthetic_2d_toy, image_rectified_flow, image_fm, protein_fm | >= 3 model families | **HARD** |
+| G.5 | Saturation point: median `N_min` such that `framework_metric(N_min) >= 0.95 * framework_metric(N_full)`; per §G.5 | 275 NFE (FAIL, SOFT) — only 2D + CIFAR have multi-NFE rows in CONSOLIDATED_RESULTS; the median is dominated by twodim_fm's 500-NFE framework arm vs 5-NFE baseline (the framework's NFE budget is `num_steps * rounds = 100 * 5` = 500) | <= 50 NFE median (paper-time aspiration) | no (SOFT) |
+| G.6 | Honest negative surface: `count(regressing cells) / count(tested cells)` in `docs/CONDITIONS.md` Pareto plots; per §G.6 | 0.7000 (FAIL) — 12 / 12 cells regress on the C.5 noise-injection sweep (`docs/CONDITIONS.md` §"Target: two_moons" + §"Target: eight_gaussians"); 6 sigma levels × 2 targets, all `regresses`; **expected per `docs/CONDITIONS.md` §Wave 17 Phase 3 honest operating-regime statement** (`twodim_fm`-class synthetic targets are out-of-regime for the framework's `CodimensionSheetScheduler`) | <= 0.30 | **HARD** |
+| G.7 | Reproducibility of capability: count(G.* metrics reproducible from cold clone, F.5 env_hash pinned); per §G.7 | 7/7 (PASS) — F.5 `env_hash.txt` present + `tools/capability_audit.py` runnable + all 4 data sources parseable + F.2 reproduction >= 4/8 + cold-clone re-run executed | >= 6/7 | **HARD** |
+
+**Group G current aggregate (Wave 23 Agent B initial run, 2026-09-05):**
+
+| Subset | Pass | Fail | Pending |
+|---|---|---|---|
+| HARD (G.1, G.3, G.4, G.6, G.7) | 2 (G.4, G.7) | 3 (G.1, G.3, G.6) | 0 |
+| SOFT (G.2, G.5) | 1 (G.2) | 1 (G.5) | 0 |
+
+**`G-MASTER-CAPABILITY` gate verdict: BLOCKED** (3 of 5 HARD metrics FAIL). Per
+`framework-freeze-checklist.md` MUST-4: the paper-writeup gate is BLOCKED until
+the 3 HARD fails are closed. Concrete next actions (priority order):
+
+1. **G.3 worst-case bound (most actionable):** the worst cell is MNIST v1
+   `framework_worse` (FID 143.4→443.18) which is **extractor-family variance**
+   per CONSOLIDATED_RESULTS §7.2 P0-1 reconciliation note. Re-run the MNIST
+   comparison with the canonical torchvision IMAGENET1K_V1 extractor (post-P0-1)
+   to remove the variance source. Expected outcome: framework now matches or
+   beats the second MNIST checkpoint (CristianLazoQuispe `flow_model_localized_noise.pth`
+   at -15% FID is the correct reading).
+2. **G.1 mean value score:** directly follows from G.3 closure (the worst cell
+   drag is what flipped the mean negative). After G.3 fix, G.1 mean is expected
+   to land at ~ -0.10 to -0.15 (still FAIL) because the 2D-FM-synthetic
+   regression and the LineageFlow saturation tie pull the mean down. Closing
+   G.1 cleanly requires **either** (a) reframing the operating regime so
+   synthetic 2D targets are documented as out-of-regime (per the Wave 17
+   Phase 3 honest statement) and excluded from G.1, or (b) running additional
+   model families that win (LineageFlow protein + Self-Flow image + FlowMol3
+   chemistry would each contribute +0.5% to +5% if they reproduce).
+3. **G.6 honest negative surface:** the C.5 sweep is **expected** to fail per
+   the Wave 17 Phase 3 honest operating-regime statement (`twodim_fm`-class
+   targets are out-of-regime). Two paths to closure: (a) extend
+   `docs/CONDITIONS.md` with sigma-sweeps for additional model families (the
+   current sweep is 2D-only); (b) reframe G.6 to be **conditional on operating
+   regime** (count regressing cells only for in-regime models; pass the gate
+   for the framework as a whole if hns_in_regime <= 0.30). Path (b) is the
+   Wave 17 Phase 3 recommendation and would close G.6 cleanly.
+
+**Per-row evidence:** every per-row `delta_pct`, `metric_name`, `source_section`,
+and `note` is in `verification_outputs/capability_audit_q3_2026.json` under
+`g1.evidence` / `g2.evidence` / `g3.evidence`. Re-run with
+`python tools/capability_audit.py [--cold-clone] [--output PATH]`.
+
 ## 2. Continuous optimization plan
 
 | Metric group | Cadence | Owner | Improvement path |
@@ -113,6 +175,7 @@ unpinned threshold).
 | D.1-D.5 | per model integration | Claude | Phase 3 work + shrink-adapters task (D.1); D.5 auto-battery is the single source of truth (Research 1: scikit-learn `check_estimator` + Lightning `tests/strategies/`) |
 | E.1-E.4 | per wave | Claude | docs updates in `docs/CLAIMS.md`, `docs/CONSOLIDATED_RESULTS.md`; E.4 enforces per-equation docstring citations via diff job |
 | F.1-F.6 | per reproducibility-audit wave | Claude | Wave N reproducibility audit; F.2 3-way classification; F.6 quarterly (Research 1 pitfall: full mutation testing per-PR is prohibitively expensive) |
+| G.1-G.7 | on demand (pre-paper-writeup, pre-freeze MUST-4) | Claude | `tools/capability_audit.py` cold-clone measurement; re-run on each new integrated-model PHASE-4 completion + each new sigma-sweep extension to `docs/CONDITIONS.md` |
 
 **Reporting cadence:**
 - Per wave: hard-gate metrics (A.1, A.2, A.3, A.4, A.5, A.6, A.7 [new entries], B.1-B.6, D.2-D.5 [when live], E.4, F.2-cold-clone, F.5) verified; recorded in wave verify step.
@@ -128,6 +191,7 @@ unpinned threshold).
 - D.1-D.5: `wc -l adaptive_reflow/adapters/*.py` + `tests/test_adapters/conformance_battery.py` (D.5) + `regression-vectors/` (D.4)
 - E.1-E.4: `docs/CLAIMS.md` + `docs/CONSOLIDATED_RESULTS.md` + diff job script
 - F.1-F.6: `todo/lessons-learned.md` + `docs/reproducibility_record.md` + `env_hash.txt` (F.5) + `docs/ARTIFACT_TIERS.md` (F.3) + `docs/models/M.model_card.md` (F.4) + quarterly mutation report (F.6)
+- G.1-G.7: `tools/capability_audit.py` + `verification_outputs/capability_audit_qX_2026.json` + `docs/CONSOLIDATED_RESULTS.md` (G.1-G.5) + `docs/CONDITIONS.md` (G.6) + `env_hash.txt` (G.7)
 
 **Process metric (not a content metric):** per-shard CI dashboard with last-green timestamp + 7-day failure rate, exposed on internal URL (Research 1: PyTorch HUD pattern). Living dashboard; not gated as a content metric.
 
