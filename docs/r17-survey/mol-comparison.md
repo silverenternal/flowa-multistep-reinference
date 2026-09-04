@@ -65,6 +65,28 @@ Configuration: baseline = 16 mols x 250-NFE Euler single-pass; framework = 16 ch
 
 > **Per-round harness v2 (this iteration).** Source: `/tmp/flowmol3_sota_v2/summary.json`. Wall-clock 9.0 s. Real CTMC checkpoint (epoch=17, step=1547236, geom_drugs, atom_map=C/H/N/O/F/P/S/Cl/Br/I, parameterization=ctmc, distort_p=0.7, distort_t=0.25, explicit_aromaticity=false). Baseline = 16 mols x 250-NFE Euler single-pass (CPU); framework = 16 chains x 2 rounds x 125 NFE/round (CPU). **`framework_improved_on_sota = true`** on the paper-metric set at n=16 (validity, QED, SA, LogP all move in the framework-favorable direction).
 
+**⚠️ REPRODUCIBILITY CAVEAT (added 2026-09-05, Wave 8 FIX-4):**
+The 0.1250/0.1875 baseline/framework numbers above were produced via a
+**Python 3.11 + dgl 2.1.0 sidecar at `/home/hugo/.venv-flowmol311`** which
+is **no longer present on this rig** (deleted). The current native
+`.venvs/flowmol3_venv` (Python 3.12.13 + torch 2.7.0+cu128 + dgl
+2.4.0+cu124) does NOT have a Python-3.12-compatible wheel of dgl 2.1.0
+that upstream flowmol pins, so the v2 adapter's `_probe_dgl()` returns
+True but the sidecar subprocess is never launched; instead the
+**partial-fidelity 31/475-tensor readout head** runs. Wave 6 R5
+control re-run at the **exact same parameters** (n=16, n_rounds=2,
+seed=0, device=cpu, same CTMC checkpoint) returns **validity=0.0/0.0
+with n_valid=0/16 in both arms** (cross-link
+`/tmp/repro_wave6/R5-flowmol3-framework-vs-baseline/summary.json`
+and `/tmp/repro_wave6/R5_ctrl_n16r2_cpu/summary.json`). Per the
+three-way §1.1.d / §2 / §3 contradiction in this document, the
+authoritative framing is **§2 / §3 ("the sidecar is no longer
+reachable")**; the `framework_improved_on_sota=true` headline is
+**NOT reproducible on the current rig**. Cross-link:
+- Wave 6 reproduction record: `docs/reproducibility_record.md` §R5
+- Wave 7 root-cause investigation: `/tmp/wave7_investigation/I2-CLM040-flowmol3/diagnose.md`
+- Wave 7 sidecar investigation: `/tmp/wave7_investigation/I5-sidecar-hypothesis/diagnose.md`
+
 | Metric | Baseline (250 NFE) | Framework (2 x 125 NFE) | Paired delta | Direction | Paper anchor (FlowMol3 GEOM-DRUGS) |
 |---|---:|---:|---:|:---:|---|
 | validity | 0.1250 | **0.1875** | **+0.0625** (+50% rel) | higher is better | **0.999 (paper Table 1, % Valid) / 0.959 (PB-Valid)** |

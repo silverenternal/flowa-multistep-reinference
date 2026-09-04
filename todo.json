@@ -1,7 +1,7 @@
 {
   "schema_version": "divergence_fixes_v1",
   "purpose": "Active task list: 4 divergence fixes from Wave 7 SYNTHESIS. Old framework_iteration_v1 tasks pruned per user directive (\"老的完成任务可删除\"). One-at-a-time execution model per user directive.",
-  "updated_at": "2026-09-05T00:18:00Z",
+  "updated_at": "2026-09-05T00:25:00Z",
   "tasks": [
     {
       "id": "P0-2",
@@ -141,8 +141,8 @@
       "id": "FIX-4-doc-mol-comparison",
       "title": "Amend docs/r17-survey/mol-comparison.md §1.1.d + docs/CLAIMS.md CLM-040 (sidecar GONE, native venv 0/0)",
       "priority": "P0",
-      "status": "planned",
-      "phase": "planned",
+      "status": "done",
+      "phase": "done",
       "execution_wave": 8,
       "depends_on": [],
       "effort_estimate": "15 minutes (doc-only)",
@@ -156,7 +156,10 @@
         "Cross-reference docs/reproducibility_record.md §R5"
       ],
       "created_at": "2026-09-04T11:30:00Z",
-      "notes": "FIX-5 (rebuild sidecar) explicitly SKIPPED per user directive — use current env, update docs instead. Sidecar was a Python 3.11 + dgl 2.1.0 artifact incompatible with Python 3.12 native venv (PEP 695 syntax in state_machine.py requires 3.12+)."
+      "notes": "FIX-5 (rebuild sidecar) explicitly SKIPPED per user directive — use current env, update docs instead. Sidecar was a Python 3.11 + dgl 2.1.0 artifact incompatible with Python 3.12 native venv (PEP 695 syntax in state_machine.py requires 3.12+).",
+      "completed_at": "2026-09-05T00:25:00Z",
+      "wave_8_committed_at": "2026-09-05T00:25:00Z",
+      "completion_sub_note": "FIX-4 applied: docs/r17-survey/mol-comparison.md §1.1.d gets REPRODUCIBILITY CAVEAT block (8 lines, 2026-09-05 Wave 8 FIX-4): states0.1250/0.1875 numbers depend on Python 3.11 + dgl 2.1.0 sidecar at /home/hugo/.venv-flowmol311 which is GONE; native-venv control returns 0.0/0.0; §2/§3 framing is authoritative (\"sidecar no longer reachable\"); cross-link Wave 6 R5 reproduction records + Wave 7 I2/I5 root-cause diagnoses. docs/CLAIMS.md CLM-040 gets Disputed-by entry referencing Wave 8 FIX-4. Three-way §1.1.d/§2/§3 contradiction resolved by adopting §2/§3 framing. Wall-clock: ~3 min (pure doc edits). No sidecar rebuild attempted per user directive \"use current env\"."
     }
   ],
   "artifacts": {

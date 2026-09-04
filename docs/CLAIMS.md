@@ -1153,7 +1153,11 @@ How it works:
   `docs/r4-survey/cifar_results_v4/per_round_metrics.csv` (the
   v4 per-round `n_cap` / `num_steps` trace showing the FreeTraj
   sinusoidal substep fires at `n_cap` resolution 50)
-- Disputed by: —
+- Disputed by: Wave 8 FIX-4 (2026-09-05, see addendum below) — the
+  §1.1.d FlowMol3 framework-improvement sub-claim depends on a Python
+  3.11 + dgl 2.1.0 sidecar (`/home/hugo/.venv-flowmol311`) that no longer
+  exists; the native-venv control returns 0.0/0.0 validity instead of
+  the documented 0.1250/0.1875.
 - Statement: FlowA's CIFAR-10 Rectified Flow experiment
   ([`docs/r4-survey/20-cifar-experiment-v3-results.md`](r4-survey/20-cifar-experiment-v3-results.md)
   + [`docs/r4-survey/17-cifar-experiment-results-v2.md`](r4-survey/17-cifar-experiment-results-v2.md))
