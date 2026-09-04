@@ -39,10 +39,18 @@ __all__ = [
 class NotInFsideClassError(ValueError):
     """Raised when a profile ``g`` does NOT satisfy the F-side hypotheses.
 
+    Implements the fail-closed surface for the **F-side hypotheses
+    (Theorem 1, line 87-92, conditions at line 22-26)** which require
+    ``g in C^3(R)`` with nonempty ``Z_g``, uniform separation
+    ``|r - s| >= d``, uniform simplicity ``|g(r + u)| >= c * |u|``
+    on ``|u| <= rho``, and exterior gap ``dist(x, Z_g) >= rho =>
+    |g(x)| >= eta``.
+
     Used by :func:`validate_g_admissible` and emitted from
     :class:`adaptive_reflow.contracts.dynamic_noise_bias.PaperQuantitiesSnapshot`
-    when the caller's ``g`` is a Proposition 6 sharpness example
-    (e.g. ``H(x) = e^{-x^2/2} * sin(pi * x)``).
+    when the caller's ``g`` is a **Proposition 6, "Escaping-sharpness
+    counterexample" (line 294-300)** sharpness example
+    (``H(x) = e^{-x^2/2} * sin(pi * x)``).
     """
     pass
 
@@ -95,7 +103,12 @@ def _detect_zeros(
 ) -> list[float]:
     """Return the linearly-interpolated zeros of ``g`` on ``[-K, K]``.
 
-    Matches the zero-detection algorithm in
+    Implements the literal zero-detection step from
+    **Lemma 5, "Uniform cells, Gaussian packing, and physical
+    exterior gap" (line 132, line 135-138)** which bounds the
+    countable packing ``\\sum_{z in Z_g} e^{-z^2/4}`` by the
+    uniform-separation constant ``d``. Matches the zero-detection
+    algorithm in
     :func:`adaptive_reflow.theory.paper_quantities.root_cell_packing_B`:
     each sign change on the uniform grid contributes one
     linearly-interpolated zero; an exact zero on a grid node is
@@ -146,10 +159,19 @@ def validate_g_admissible(
 ) -> bool:
     """Return ``True`` iff ``g`` together with ``(d, c, rho, eta)`` is F-side admissible.
 
+    Implements the four F-side hypotheses of **Theorem 1 (line 87-92,
+    conditions at line 22-26)**: ``g in C^3(R)`` with nonempty
+    ``Z_g``, uniform separation ``|r - s| >= d``, uniform simplicity
+    ``|g(r + u)| >= c * |u|`` on ``|u| <= rho``, and exterior gap
+    ``dist(x, Z_g) >= rho => |g(x)| >= eta``. The disjoint-cell
+    constraint ``rho < d/4`` is **Lemma 5, "Uniform cells, Gaussian
+    packing, and physical exterior gap" (line 135-138)**.
+
     Three checks (in order):
 
     1. ``validate_f_side(d, c, rho, eta)`` returns ``(True, ())``
-       (F-side constants are mutually consistent).
+       (F-side constants are mutually consistent; covers the
+       Lemma 5 disjoint-cell constraint ``rho < d/4``).
     2. ``g`` has at least one detected zero on ``[-zero_set_K, zero_set_K]``
        (``Z_g`` is nonempty per the Theorem 1 hypothesis).
     3. **Uniform simplicity** (Wave 12 A1-med-2): for every detected

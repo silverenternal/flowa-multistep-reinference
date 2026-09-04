@@ -127,6 +127,17 @@ def sheet_evidence_A(
         primitives; ``g`` is invoked exactly once per grid point and no
         global state is read. Two calls with identical inputs return
         bit-identical floats.
+
+    Example
+    -------
+    >>> from adaptive_reflow.theory.paper_quantities import sheet_evidence_A
+    >>> # Trivial case g(x) = 0: integrand reduces to e^{-s^2/2}, and
+    >>> # (2*pi)^{-1/2} * int_R e^{-s^2/2} ds == 1.
+    >>> round(sheet_evidence_A(lambda x: 0.0, K=8.0, h=0.01), 6)
+    1.0
+    >>> # Non-trivial g(s) = sin(s): A_g < 1 because |sqrt(1+sin^2 s)| >= 1.
+    >>> 0.0 < sheet_evidence_A(lambda s: s, K=8.0, h=0.01) <= 1.0
+    True
     """
     if h <= 0.0:
         raise ValueError(f"step size h must be positive, got {h!r}")
@@ -207,6 +218,22 @@ def root_cell_packing_B(
         ``g`` is invoked exactly once per grid point and no global state
         is read. Two calls with identical inputs return bit-identical
     floats.
+
+    Example
+    -------
+    >>> from adaptive_reflow.theory.paper_quantities import root_cell_packing_B
+    >>> # g(x) = sin(pi*x) has zeros at every integer in [-4, 4], i.e.
+    >>> # 9 roots; sum_{k=-4}^{4} e^{-k^2/4} = 2 + 2*e^{-1/4} + 2*e^{-1} + 2*e^{-9/4} + e^{-4}
+    >>> # ~ 3.5042 (matches the line-detection tally on a h=0.01 grid).
+    >>> val = root_cell_packing_B(
+    ...     lambda x: __import__('math').sin(__import__('math').pi * x),
+    ...     separation_d=0.5, K=4.0, h=0.01,
+    ... )
+    >>> 3.5 <= val <= 3.6
+    True
+    >>> # Trivial case g(x) = 1 (no zeros): B_g == 0.
+    >>> root_cell_packing_B(lambda x: 1.0, separation_d=1.0, K=4.0, h=0.01)
+    0.0
     """
     if h <= 0.0:
         raise ValueError(f"step size h must be positive, got {h!r}")
@@ -304,6 +331,19 @@ def per_cell_coefficient_C(
 
         Pure ``math.exp`` / arithmetic; no global state. Two calls with
         identical inputs return bit-identical floats.
+
+    Example
+    -------
+    >>> from adaptive_reflow.theory.paper_quantities import per_cell_coefficient_C
+    >>> # C_g = e^{rho^2/2} / ((1-rho)^2 * min(c^2, 1)). For rho=0.1, c=1.0:
+    >>> # a = 0.81, so C_g = e^{0.005}/0.81 ~ 1.2407...
+    >>> round(per_cell_coefficient_C(rho=0.1, c=1.0), 6)
+    1.240756
+    >>> # rho >= 1/4 violates the disjoint-cell guarantee (Lemma 5,
+    >>> # line 135-138); per_cell_coefficient_C only enforces rho < 1,
+    >>> # so callers must combine with validate_f_side.
+    >>> per_cell_coefficient_C(rho=0.2, c=2.0) > per_cell_coefficient_C(rho=0.1, c=2.0)
+    True
     """
     if rho <= 0.0 or rho >= 1.0:
         raise ValueError(f"rho must be in (0, 1), got {rho!r}")
@@ -359,6 +399,17 @@ def exterior_gap_e_rho(
 
         Pure ``math`` primitives; two calls with identical inputs return
         bit-identical floats.
+
+    Example
+    -------
+    >>> from adaptive_reflow.theory.paper_quantities import exterior_gap_e_rho
+    >>> # e_rho = min(rho^4, (1-rho)^2 eta^2). For rho=0.1, eta=0.1:
+    >>> # 0.0001 vs 0.0081 -- min is 0.0001.
+    >>> round(exterior_gap_e_rho(rho=0.1, eta=0.1), 4)
+    0.0001
+    >>> # For rho=0.5, eta=0.3: rho^4=0.0625 vs (0.5)^2*0.09=0.0225 -- min is 0.0225.
+    >>> round(exterior_gap_e_rho(rho=0.5, eta=0.3), 6)
+    0.0225
     """
     if rho <= 0.0 or rho >= 1.0:
         raise ValueError(f"rho must be in (0, 1), got {rho!r}")
@@ -444,7 +495,10 @@ def sheet_evidence_with_result(
 ) -> SheetEvidenceResult:
     """Return :class:`SheetEvidenceResult` for ``g`` (A17 uplift).
 
-    Wraps :func:`sheet_evidence_A` and computes a closed-form trapezoidal
+    Implements the literal paper quantity ``A_g`` from
+    **Proposition 3, "Posterior assembly" (line 116-117)** with the
+    selection-mechanism display at **line 161**. Wraps
+    :func:`sheet_evidence_A` and computes a closed-form trapezoidal
     error bound ``discretization_error``. The bound is
     ``(b - a) * h^2 / 12 * M_2`` where ``a = -K``, ``b = K``, and
     ``M_2 = K^2 + 1`` is a conservative bound on
@@ -483,9 +537,13 @@ def root_cell_packing_with_result(
 ) -> RootCellPackingResult:
     """Return :class:`RootCellPackingResult` for ``g`` (B13 uplift).
 
-    Wraps :func:`root_cell_packing_B` and computes a closed-form
-    *tail bound* on the contribution from roots ``z in Z_g`` with
-    ``|z| > K``. The bound comes from Lemma 5's packing estimate:
+    Implements the literal paper quantity ``B_g`` from
+    **Lemma 5, "Uniform cells, Gaussian packing, and physical
+    exterior gap" (line 132, with the displayed definition at
+    line 159)**. Wraps :func:`root_cell_packing_B` and computes a
+    closed-form *tail bound* on the contribution from roots
+    ``z in Z_g`` with ``|z| > K``. The bound comes from Lemma 5's
+    packing estimate:
     each side ``[k, k+1]`` for ``k >= ceil(K)`` contains at most
     ``ceil(1/d) + 1`` roots, and the smallest root in that interval
     has ``|z| >= k``. So the tail contribution is bounded by
@@ -542,6 +600,10 @@ def per_cell_coefficient_with_result(
 ) -> PerCellCoefficientResult:
     """Return :class:`PerCellCoefficientResult` (B14 uplift).
 
+    Implements the literal paper quantity ``C_g`` from
+    **Lemma 3, "Countable root-cell contribution" (line 107, with the
+    displayed coefficient in the proof at line 191)**: ``C_g =
+    e^{rho^2/2} / a`` where ``a = (1-rho)^2 * min(c^2, 1)`` (line 188).
     Wraps :func:`per_cell_coefficient_C` and adds a *drift-robustness
     factor* ``C_g * (1 + 2 * rho)``. The factor is a conservative upper
     bound on the per-cell coefficient under a small positive perturbation
@@ -628,13 +690,14 @@ class PhysicalComplement:
     def lemma4_floor_value(self) -> float:
         """Return the paper-derived ``e_rho`` floor (NOT the heuristic ``e_rho/4``).
 
-        Per Lemma 4 (line 110-113), the exterior posterior mass is
-        bounded by ``exp(-e_rho / (2 eps^2)) = o(eps)``. Any positive
-        fraction of ``e_rho`` is admissible as a merge floor; the
-        framework's legacy ``e_rho/4`` constant is a heuristic
-        tightening, not a paper-derived value. This method returns
-        the literal paper quantity ``e_rho`` so callers can opt into
-        the paper-faithful floor.
+        Implements the literal paper quantity ``e_rho`` from
+        **Lemma 4, "Physical-complement suppression" (line 110-113)**,
+        which the paper uses to deduce ``\\int p_eps <= exp(-e_rho /
+        (2 eps^2)) = o(eps)``. Any positive fraction of ``e_rho`` is
+        admissible as a merge floor; the framework's legacy ``e_rho/4``
+        constant is a heuristic tightening, not a paper-derived value.
+        This method returns the literal paper quantity ``e_rho`` so
+        callers can opt into the paper-faithful floor.
         """
         return float(self.e_rho)
 
@@ -644,7 +707,12 @@ def paper_selection_ratio(
 ) -> float:
     """Return the paper-grounded selection ratio (Wave 11 lift).
 
-    Paper Corollary 1 (line 165) divides ``Z_{g,eps}`` (which scales
+    Implements the literal paper **Corollary 1, "Quantitative
+    allocation after normalization" (line 165)** which deduces
+    ``Z_{g,eps} >= C_1 * eps`` from the positive limit of ``A_g``
+    (Proposition 3, line 161), the packing finiteness of ``B_g``
+    (Lemma 5, line 159), and the per-cell bound ``C_g``
+    (Lemma 3, line 191). Divides ``Z_{g,eps}`` (which scales
     as ``sheet_A * eps``) by ``C_1 * eps`` and deduces the per-round
     selection ratio at finite ``L``:
 
@@ -662,6 +730,19 @@ def paper_selection_ratio(
 
     Byte-stability: pure arithmetic; two calls with identical inputs
     return bit-identical floats.
+
+    Example
+    -------
+    >>> from adaptive_reflow.theory.paper_quantities import paper_selection_ratio
+    >>> # Corollary 1 (line 165): selection_ratio = sheet*eps / (sheet*eps + cell*packing*eps^2).
+    >>> # For sheet_A=0.5, packing_B=0.3, cell_C=1.2, eps=0.1:
+    >>> # 0.05 / (0.05 + 0.0036) = 0.93283582...
+    >>> round(paper_selection_ratio(0.5, 0.3, 1.2, eps=0.1), 6)
+    0.932836
+    >>> # As eps -> 0 the sheet term dominates; at eps=0.01 with unit constants
+    >>> # the ratio is 0.99... (one cell-decade of headroom over the cell term).
+    >>> paper_selection_ratio(1.0, 1.0, 1.0, eps=0.01)
+    0.9900990099009902
 
     Raises
     ------
