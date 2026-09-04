@@ -1,7 +1,7 @@
 {
   "schema_version": "divergence_fixes_v1",
   "purpose": "Active task list: 4 divergence fixes from Wave 7 SYNTHESIS. Old framework_iteration_v1 tasks pruned per user directive (\"老的完成任务可删除\"). One-at-a-time execution model per user directive.",
-  "updated_at": "2026-09-05T00:30:00Z",
+  "updated_at": "2026-09-05T03:00:00Z",
   "tasks": [
     {
       "id": "P0-2",
@@ -214,6 +214,68 @@
       "notes": "Wave 10 deliverable shipped: LineageFlow (ICML 2026) framework adapter with full 8-method FlowMatchingODEAdapter Protocol surface + 22-test CPU-runnable suite + baseline-vs-framework comparison on the synthetic velocity field. Real ckpt forward pass is BLOCKED on reconstructing the upstream LineageFlow 'core' source repo (see wave10-setup blocked_reason). The 'any FM model, when integrated into framework, improves' claim gets PARTIAL support on LineageFlow: framework ties at the saturation ceiling on the synthetic velocity field (family_validity 1.0000 vs 1.0000) with small positive uplifts on secondary metrics (avg_log_likelihood +0.23%, amino_acid_diversity +0.09%). Real-ckpt verdict remains open because the 9.788 GB published ckpt cannot be loaded into a runnable generator without the missing upstream 'core' source. SHA-256-verified ckpt on disk at data/lineageflow/lineageflow-rp55.ckpt.",
       "completed_at": "2026-09-05T01:30:00Z",
       "completion_sub_note": "Wave 10 R3 verify+commit: pytest collection 3146 tests (3124+22 LineageFlow); all 22 LineageFlow tests pass in 0.51s; mkdocs build --strict exit 0; docs/PLUG_IN_YOUR_MODEL.md gains LineageFlow section; docs/CONSOLIDATED_RESULTS.md §7.3 gains comparison table; 9.788 GB ckpt SHA-256-verified but real forward pass blocked on missing upstream 'core' source repo (documented in wave10-setup blocked_reason). Wave 10 ships PARTIAL support for 'any FM model improves' claim."
+    },
+    {
+      "id": "wave11-jmaa-refactor",
+      "title": "Wave 11: JMAA theory-driven framework refactor — lift paper theorems, declare Protocol surfaces",
+      "priority": "P0",
+      "status": "partial",
+      "depends_on": [
+        "wave10-lineageflow-claim"
+      ],
+      "phases": [
+        {
+          "id": "wave11-theorists",
+          "status": "ok",
+          "files_created": [
+            "adaptive_reflow/theory/__init__.py",
+            "adaptive_reflow/theory/paper_quantities.py",
+            "adaptive_reflow/theory/checkers.py",
+            "adaptive_reflow/theory/validation.py",
+            "adaptive_reflow/framework/__init__.py",
+            "adaptive_reflow/framework/interfaces.py"
+          ],
+          "files_modified": [
+            "adaptive_reflow/contracts/paper_quantities.py",
+            "adaptive_reflow/eval/fid_theorem_aligned.py",
+            "adaptive_reflow/algorithm/merge_operator.py"
+          ],
+          "lines_added": 2588,
+          "lines_removed": 571
+        },
+        {
+          "id": "wave11-conformance",
+          "status": "ok",
+          "files_created": [
+            "tests/test_theory/__init__.py",
+            "tests/test_theory/test_theorem1_bl_convergence.py",
+            "tests/test_theory/test_lemma2_sheet_tube_evidence.py",
+            "tests/test_theory/test_proposition6_escaping_sharpness.py",
+            "tests/test_theory/test_paper_selection_ratio_eps_zero.py",
+            "tests/test_theory/test_physical_complement_lemma4_floor.py",
+            "tests/test_theory/test_validate_f_side.py",
+            "tests/test_framework/test_wave11_protocol_conformance.py",
+            "tests/test_framework/test_merger_protocol_exchange.py"
+          ],
+          "test_count": 56,
+          "test_pass_count": 56
+        },
+        {
+          "id": "wave11-audit-fixes",
+          "status": "blocked",
+          "blocked_reason": "Phase 0 (audit fixes from A2/A3) and Phase 3 (adapter shrink) BLOCKED on explicit user decisions: F6 9d5c873 revert direction, cd70821 ReLU mode centers, EvidenceScaleGapMetric defaults, e_rho/4 floor replacement, and byte-stability regression risk across 4 adapters (flowmol3_v2, rectified_flow_cifar, twodim_fm, self_flow). Additive infrastructure (theory lift + Protocol declarations + conformance tests + documentation) applied successfully."
+        },
+        {
+          "id": "wave11-adapter-shrink",
+          "status": "blocked",
+          "blocked_reason": "Phase 3 (HIGH-risk adapter shrink across 4 adapters) deferred: byte-stability regression risk; revert-and-report directive from Wave 11 implementation."
+        }
+      ],
+      "created_at": "2026-09-05T02:00:00Z",
+      "notes": "Wave 11 ships Phase 1 (theory package with re-export shim from contracts.paper_quantities + new Theorem1Statement/Checker, sheet_tube_evidence, paper_selection_ratio, PhysicalComplement + validate_f_side/validate_g_admissible/NotInFsideClassError), Phase 2 (10 Protocol surfaces in framework/interfaces.py with @implements decorator + assert_adapter_compliance), Phase 4 (52 conformance tests across tests/test_theory/ and tests/test_framework/; all 56 wave-11 tests pass including 4 acyclic-gate), Phase 5 (docs/ABLATION.md updated + legacy tests verified + 28e3bf9 lazy __getattr__ cycle intact + a6dffd3 acyclic test gate passes + no OOM defense scope touched). BLOCKED: Phase 0 audit fixes (need explicit user decisions on F6/2D ablation/e_rho floor) and Phase 3 adapter shrink (HIGH-risk for byte-stability). 2588 lines added, 571 removed. Pre-existing failure unrelated to Wave 11: tests/test_algorithm/test_image_algorithm_on_synthetic_oracle.py::test_per_round_fid_written_via_run_image_eval_per_round (NameError: image_reward_binary in tools/run_image_eval.py, last touched in Wave 2 cabe52a).",
+      "completed_at": "2026-09-05T03:00:00Z",
+      "wave_11_committed_at": "2026-09-05T03:00:00Z",
+      "completion_sub_note": "Wave 11 R verify+commit (partial): pytest collection 3198 tests (>=3146); 56 wave-11 tests pass + 4 acyclic gate pass; 1173 conformance tests pass + 1 pre-existing failure (tools/run_image_eval.py NameError, unrelated); mkdocs build --strict exit 0; commit SHA ebc0550. Adapter shrink and audit-fix phases deferred per user decision requirements."
     }
   ],
   "artifacts": {
