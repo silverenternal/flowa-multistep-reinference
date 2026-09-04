@@ -24,6 +24,18 @@ Initial population (Wave 15 A.7.1):
   (Lemma 2 / 4 / 5 dedicated modules, Proposition 6 dedicated
   module, etc.) will land here in subsequent waves.
 
+Wave 23 E addition:
+
+* ``test_proposition2_symmetry.py`` -- closes the final A.7 strict
+  gap. Proposition 2 (line 62-64) was previously recorded as
+  "covered-by-symmetry via Proposition 6"; this module replaces the
+  symmetry argument with an explicit fixture set that violates
+  Proposition 2's own hypothesis ``0 < m <= a(x) <= M < infinity``
+  (4 rejections for ``inf a = 0``, 2 positive controls, 1 delegation
+  control documenting that ``M < infinity`` is NOT enforced at fixed
+  ``(d, c, rho, eta)``). With it, strict A.7 = 8 / 8 = 100 % of
+  constructive A.0 entries.
+
 See also:
 
 * ``docs/baseline-audit-report.md`` §A.7 for the per-statement
