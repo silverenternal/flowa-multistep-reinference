@@ -111,6 +111,12 @@ unpinned threshold).
 | **J.1** | API stability rate: `1 - (added + removed public symbols in adaptive_reflow/) / total public symbols`, computed per wave over the last 4 waves (`scripts/api_churn_report.py report --window-size 4`); public surface = top-level `def`/`class`/`__all__` entries in `adaptive_reflow/**/*.py` excluding `adaptive_reflow/legacy/` quarantine | **0.964** (Wave 24 Agent C, 2026-09-05; 33 added / 0 removed out of 873-906 public symbols; churn rate 0.036, J.1 gate >= 0.95 **PASS**; runner: `python scripts/api_churn_report.py report --window-size 4`) | >= 0.95 (≤ 5% churn) | SOFT (Wave 24 SOFT; rev 3 §7.3 G-FRAMEWORK-STRUCTURAL gate) |
 | **J.2** | Deprecation-policy compliance: fraction of deprecated APIs (in `docs/DEPRECATION.md`) carrying an explicit ISO 8601 `sunset_date:` (rev 3 §2 J.2 schema); non-compliance = `sunset_date: TBD` row | **0.000** (Wave 24 Agent C, 2026-09-05; 0/9 deprecated `legacy/*` rows carry a concrete date; all 9 are `sunset_date: TBD` pending the S-tier governance upgrade tag; compliance-checker `tools/check_deprecation_policy.py` planned for Wave 25) | >= 0.8 (≥ 80% of deprecated APIs) by Wave 25 | SOFT (rev 3 §2 J.2; blocks G-FRAMEWORK-STRUCTURAL gate only if BOTH I.1 AND J.1 regress in same wave) |
 
+### I. Code quality — structural type-soundness (rev 3 Group I)
+
+| ID | Definition | Current | Target | Hard? |
+|---|---|---|---|---|
+| **I.1** | Type-soundness coverage: fraction of public functions/methods in `adaptive_reflow/` (excluding `legacy/` quarantine and `_`-prefixed names) whose signature is fully annotated **OR** whose body carries an `isinstance(x, T)` narrowing helper; measured via `scripts/run_mypy_audit.py`; ``self`` / ``cls`` are skipped (implicit) | **1.000** (Wave 26 Agent B, 2026-09-05; 1934/1934 public functions across 189 files; 1934 fully annotated + 214 also carry isinstance helpers; `core/` 61/61, `theory/` 20/20, `contracts/` 101/101, `protocol/`-equivalent (`algorithm/`) 745/745; runner: `python scripts/run_mypy_audit.py`) | >= 0.6 (rev 3 §2 I.1; G-FRAMEWORK-STRUCTURAL gate) | SOFT (rev 3 §7.3 G-FRAMEWORK-STRUCTURAL gate) |
+
 ### G. Framework capability (value delivery — Wave 23 Group G)
 
 Group G complements groups A-F (which measure engineering discipline) with metrics

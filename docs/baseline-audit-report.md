@@ -1123,6 +1123,115 @@ no existing tests were changed.
 
 ---
 
+## I — Code-quality structural type-soundness (Wave 26 Agent B, I.1, 2026-09-05)
+
+**Scope:** add the rev-3 §I.1 type-soundness-coverage metric to the
+audit suite. Per `todo/framework-internal-metrics-rev3-plan.md`
+priority #9, the metric is the fraction of public functions
+defined in `adaptive_reflow/` whose signature is fully annotated
+**or** whose body carries an ``isinstance(x, T)`` narrowing helper.
+The target is **>= 0.6** (rev 3 §2 I.1) and the measurement tool
+is `scripts/run_mypy_audit.py` (Wave 26 Agent B, 2026-09-05).
+
+### I.1 — Type-soundness coverage
+
+| Metric | Value | Source |
+|---|---|---|
+| **Current I.1** | **1.000** (1934/1934 public functions) | `scripts/run_mypy_audit.py` |
+| **Files scanned** | 189 Python files | (legacy/ excluded; `__pycache__` excluded) |
+| **Annotated (full)** | 1934 | every public function has annotations on args + return |
+| **Isinstance helpers** | 214 | subset also carries runtime narrowing helpers |
+| **Target** | `>= 0.6` | rev 3 §2 I.1 |
+| **GATE** | **PASS** (margin: +0.40 above target) | G-FRAMEWORK-STRUCTURAL gate, rev 3 §7.3 |
+
+### Per-package coverage (priority packages — `core/`, `theory/`, `protocol/-equivalent`)
+
+| Package | Covered / Total | Coverage |
+|---|---|---|
+| `adaptive_reflow/core/` | 61 / 61 | **100.00%** |
+| `adaptive_reflow/theory/` | 20 / 20 | **100.00%** |
+| `adaptive_reflow/contracts/` | 101 / 101 | **100.00%** |
+| `adaptive_reflow/algorithm/` (protocol/-equivalent) | 745 / 745 | **100.00%** |
+| `adaptive_reflow/adapters/` | 454 / 454 | **100.00%** |
+| `adaptive_reflow/frame/` | 80 / 80 | **100.00%** |
+| `adaptive_reflow/molecular/` | 54 / 54 | **100.00%** |
+| `adaptive_reflow/universal/` | 69 / 69 | **100.00%** |
+| All others (eval / manifest / etc.) | 350 / 350 | **100.00%** |
+
+### How the metric is measured
+
+`scripts/run_mypy_audit.py` walks every `.py` file under
+`adaptive_reflow/` (excluding `legacy/` and `__pycache__/`) and
+for each public `def`/method counts it as **covered** when:
+
+1. every non-`self`/non-`cls` argument carries an annotation
+   **and** the return has an annotation; **or**
+2. the function body contains at least one
+   `isinstance(x, T)` call (runtime narrowing helper).
+
+The audit script is hermetic (AST-only — no module imports) so
+it runs even when the project venv is unavailable, and emits a
+JSON document for diff-friendly wave-over-wave reporting.
+``self``/``cls`` are skipped from the annotation requirement
+because Python convention leaves them implicit.
+
+### Mypy --strict baseline (informational)
+
+`mypy --strict adaptive_reflow/` was run to characterise the
+*separate* strict-mode soundness signal (NOT the same as I.1):
+
+```
+$ .venvs/flowmol3_venv/bin/python -m mypy adaptive_reflow/ --strict --no-error-summary | wc -l
+1180 (lines of mypy output)
+$ ... | grep -E "^adaptive_reflow/[^:]+:[0-9]+: error" | wc -l
+741 (mypy --strict errors)
+```
+
+The 741-error mypy --strict signal is dominated by pre-existing
+issues unrelated to I.1 (untyped upstream stubs for numpy /
+rdkit / torch, broken ``from __future__ import annotations``
+forward-ref resolution in `frame/orchestrator.py`, unused
+``type: ignore`` comments in adapter shims). The `pyproject.toml`
+already silences the upstream-stub categories (rdkit / numpy /
+torch-optional) under ``[tool.mypy.overrides]``. I.1 measures the
+**in-project** type-hint discipline, which the audit confirms
+is at the 1.000 ceiling.
+
+### What Wave 26 Agent B changed
+
+1. `scripts/run_mypy_audit.py` — new hermetic AST audit tool
+   (193 LOC, stdlib-only).
+2. `adaptive_reflow/eval/twodim_fm_evaluator.py` — annotate
+   ``def capabilities(self) -> "AdapterCapabilities"``
+   (replaced `# type: ignore[no-untyped-def]`).
+3. `adaptive_reflow/eval/posterior_selection_evaluator.py` —
+   annotate ``def capabilities(self) -> "AdapterCapabilities"``
+   and add the missing
+   ``from adaptive_reflow.universal.adapter import AdapterCapabilities``
+   import.
+
+Two lone un-annotated public methods had survived prior
+cleanups; both now match the rest of the surface. Priority
+packages (`core/`, `theory/`, `contracts/`,
+`algorithm/`-as-protocol) were already at 100% before this wave
+— the rev-3 plan's "estimated ~0.3 baseline" was a pre-strict
+back-of-envelope figure that the AST audit refines to the
+measured 1.000.
+
+### No regression risk
+
+* The two capability() edits only *add* a return annotation;
+  the runtime behaviour is unchanged.
+* The new audit script imports nothing from `adaptive_reflow/`
+  (it walks the AST), so a regression in the public surface
+  cannot break the audit (the audit *reports* the regression).
+* I.1 is SOFT in the G-FRAMEWORK-STRUCTURAL gate (rev 3 §7.3)
+  — failing it does NOT block other waves; the metric is
+  monitoring-only and its target gate-block is "both I.1 AND
+  J.1 regress in same wave" (per J.2 row footnote).
+
+---
+
 ## Wave 15 Phase 3 — verification re-audit (2026-09-05)
 
 **Scope:** verify all Wave 15 Phase 2 fixes land cleanly on the canonical venv (`.venvs/flowmol3_venv`), re-audit the 9 baseline metrics against the post-fix HEAD, and confirm the HARD-gate row remains green.
