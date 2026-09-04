@@ -609,6 +609,11 @@ def run_image_eval_per_round(
     hpsv2_version: str = "v2.1",
     hpsv2_timeout_seconds: int = 1800,
     hpsv2_gpu_id: int | None = None,
+    image_reward_binary: Path | None = None,
+    image_reward_driver: Path | None = None,
+    image_reward_model: str = "ImageReward-v1.0",
+    image_reward_timeout_seconds: int = 1800,
+    image_reward_gpu_id: int | None = None,
 ) -> dict[str, Any]:
     """Top-level per-round orchestrator: load per-round images, run metrics.
 
