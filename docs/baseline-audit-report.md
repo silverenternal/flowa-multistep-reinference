@@ -476,7 +476,7 @@ information.
 - **Metric ID:** C.7
 - **Metric title:** Simulation-Based Calibration (SBC) for stochastic re-inference — every public stochastic algorithm verified via Talts et al. 2018 rank-uniformity test (chi-squared against the uniform null; threshold ``p > 0.05``). Behind `--runslow`; nightly only; N=200 first pass then N=1000 second pass; per-stochastic-algorithm compute budget tracked.
 - **Audit date:** 2026-09-05 (Wave 18 Phase 2).
-- **Status:** **MET** — 6/6 public stochastic algorithms pass at both N=200 and N=1000 with p > 0.05. Wave 18 P2 contribution.
+- **Status:** **MET** — 6/6 public stochastic algorithms pass at N=200, N=1000 and N=10000 with p > 0.05. Wave 18 P2 contribution; **Wave 25 Agent A** adds the N=10000 fourth pass and the `p < 0.20` marginal auto-gate (rev 3 priority #7 / Talts et al. 2018 §6.2), plus the nightly cron wire-up.
 
 ### Stochastic algorithms tested (Wave 18 P2)
 
@@ -490,6 +490,110 @@ information.
 | `cosine_inject_noise` | `adaptive_reflow/algorithm/scheduler/_core.py::CosineAnnealScheduler.inject_noise` | noise_schedule_stochastic | 13.57 / 0.852 | 13.04 / 0.876 | 0.106 s |
 
 All 6 algorithms pass the chi-squared p > 0.05 threshold at both sample sizes; total wall-clock at N=1000 is 0.5 s (well within the 6-12 hr GPU budget per the task spec).
+
+### N=10000 fourth pass + `p < 0.20` marginal auto-gate (Wave 25 Agent A)
+
+Talts et al. 2018 §6.2 observes that a chi-squared p-value near the
+rejection threshold is *itself* weak evidence: at N=1000 the sampling
+noise on `chi^2_20` is large enough that a p in `(0.05, 0.20]` neither
+confirms nor refutes calibration. Two of the six algorithms sit in
+exactly that band at N=1000 — `adaptive_policy_driver` (p=0.095) and
+`sde_heun_sde_step` (p=0.154) — so the "6/6 pass" claim above was, for
+those two, resting on a coin-flip's worth of statistical power.
+
+`tools/run_sbc_audit.py` now treats `p < 0.20` as **marginal** (distinct
+from the `p <= 0.05` failure threshold) and re-runs *only those*
+algorithms at `--fourth-pass-n` (default 10000). A 10x increase in prior
+draws shrinks the chi-squared standard error by ~3.2x, which resolves
+the marginal verdict one way or the other. The gate is `auto` by
+default: armed whenever the primary sweep runs at `--n >= 1000`,
+disarmed for the N=200 smoke pass where marginal p-values are expected
+and uninformative.
+
+The fourth pass draws its prior with a fixed seed offset
+(`_FOURTH_PASS_SEED_OFFSET = 700001`) rather than extending the primary
+sweep's draws. A nested prior would make the two verdicts statistically
+dependent and defeat the point of re-verification; the offset keeps the
+deeper sweep independent while leaving it reproducible.
+
+**Result — both marginal algorithms resolve cleanly at N=10000:**
+
+| Algorithm | N=1000 chi² / p | N=10000 (4th pass) chi² / p | Verdict |
+|---|---|---|---|
+| `adaptive_policy_driver` | 28.66 / 0.095 (MARGINAL) | 19.05 / **0.518** | resolved — calibrated |
+| `sde_heun_sde_step` | 26.35 / 0.154 (MARGINAL) | 23.60 / **0.260** | resolved — calibrated |
+
+**Full standalone N=10000 sweep** (`--n 10000`, all six algorithms,
+measured 2026-09-05; 4.95 s total wall-clock):
+
+| Algorithm | chi² | p | mean_rank_norm | Marginal at N=10000? |
+|---|---|---|---|---|
+| `jittered_constant_scheduler` | 15.86 | 0.725 | -0.026 | no |
+| `adaptive_policy_driver` | 15.14 | 0.769 | -0.042 | no |
+| `euler_maruyama_sde_step` | 20.47 | 0.429 | -0.046 | no |
+| `sde_heun_sde_step` | 12.01 | 0.916 | -0.041 | no |
+| `identity_dynamic_noise_bias` | 29.78 | 0.073 | -0.070 | yes → re-verified at p=0.442 |
+| `cosine_inject_noise` | 19.75 | 0.474 | -0.044 | no |
+
+`identity_dynamic_noise_bias` is the one algorithm that lands marginal
+at N=10000 as well; its own fourth pass (independent seed, same N)
+returns chi²=20.25 / p=0.442, so the marginal reading is sampling noise
+rather than a calibration defect. This is the expected behaviour of the
+gate rather than a finding: with six algorithms and a 0.20 threshold,
+roughly one marginal reading per sweep is what the uniform null
+predicts.
+
+**Backward compatibility.** The primary sweep passes `seed_offset=0`, so
+the committed `sbc_audit_n200.json` and `sbc_audit_n1000.json` reports
+reproduce byte-identically against the extended runner (verified
+2026-09-05). The exit code is unchanged in meaning — 0 iff every
+algorithm is calibrated — but `summary.n_failed` now takes the
+fourth-pass verdict as authoritative for any re-verified algorithm, so a
+marginal-but-recoverable algorithm no longer needs a manual re-run to
+clear the nightly.
+
+New CLI surface:
+
+```bash
+python tools/run_sbc_audit.py --n 10000 --output verification_outputs/sbc_audit_n10000.json
+python tools/run_sbc_audit.py --n 1000 --fourth-pass on          # force the gate
+python tools/run_sbc_audit.py --n 1000 --fourth-pass off         # primary sweep only
+python tools/run_sbc_audit.py --n 10000 --algorithm sde_heun_sde_step   # one algorithm
+python tools/run_sbc_audit.py --n 1000 --marginal-p-threshold 0.30      # widen the gate
+```
+
+New JSON report fields: top-level `pass_label`
+(`first_pass` / `second_pass` / `fourth_pass` / `non_canonical`) and
+`fourth_pass` (`enabled`, `n`, `marginal_p_threshold`, `triggered_by`,
+`algorithms`); per-algorithm `marginal` and `pass_label`; and
+`summary.n_marginal` / `marginal_algorithms` / `n_fourth_pass_run` /
+`n_fourth_pass_resolved` / `n_fourth_pass_failed`.
+
+Also fixed in passing: `python tools/run_sbc_audit.py` (direct
+invocation) previously died with `ModuleNotFoundError: No module named
+'adaptive_reflow'` because only `python -m tools.run_sbc_audit` put the
+repo root on `sys.path`. The runner now inserts it unconditionally, so
+both invocations work — which is what the nightly workflow needs.
+
+### Nightly cron wire-up (Wave 25 Agent A)
+
+`.github/workflows/nightly.yml` runs the C.7 audit daily at **04:17
+UTC** (off the `:00` mark and clear of `mutation-nightly` at 03:00 and
+`stress-nightly` at 03:00 Mondays, so the three do not contend for
+runner quota). Two jobs:
+
+* `sbc-audit` — `tools/run_sbc_audit.py --n 1000 --fourth-pass auto`,
+  writing `verification_outputs/sbc_audit_nightly_<YYYYMMDD>.json` and
+  uploading it as a 90-day artifact. A second `--print-only` step runs
+  with `if: always()` so the summary table lands in the job log even
+  when the audit exits non-zero. `workflow_dispatch` inputs expose `n`
+  and `fourth_pass` for a manual deeper run.
+* `sbc-tests` — `pytest tests/test_sbc/ -m slow`, covering the 11
+  structural tests (including the `Theorem1DynamicNoiseBias`
+  closed-form checks) that the chi-squared runner deliberately excludes.
+
+90 days of retained reports is enough history to see an algorithm drift
+from calibrated → marginal → failing before it trips the gate.
 
 ### Why the Theorem1DynamicNoiseBias is not in the chi-squared table
 
@@ -554,6 +658,8 @@ file (the canonical home for the algorithm-under-test wrappers).
 | N=1000 second pass | <0.2 s per algorithm | `tools/run_sbc_audit.py` |
 | Aggregate (all 6) | <1 s at N=1000 | measured 0.5 s on 2026-09-05 |
 | Nightly CI | <5 min (margin for 4th-pass N=10000 if needed) | budget allocation |
+| N=10000 fourth pass (per marginal algorithm) | ~0.5-0.8 s | measured 2026-09-05 (Wave 25) |
+| N=10000 full sweep (all 6) | 4.95 s | measured 2026-09-05 (Wave 25) |
 
 ### Reports (machine-checkable)
 
@@ -561,16 +667,26 @@ file (the canonical home for the algorithm-under-test wrappers).
   chi-squared + rank histogram per algorithm.
 * `verification_outputs/sbc_audit_n1000.json` — canonical second-pass
   report, same schema.
+* `verification_outputs/sbc_audit_n10000.json` — fourth-pass report
+  (Wave 25), extended schema with the `fourth_pass` block and the
+  per-algorithm `marginal` / `pass_label` fields.
+* `sbc-audit-report` CI artifact — per-night
+  `sbc_audit_nightly_<YYYYMMDD>.json` from
+  `.github/workflows/nightly.yml`, retained 90 days.
 
 ### Concrete next actions (for a future wave)
 
-1. Add a 4th-pass N=10000 sweep for any algorithm that flunks at
-   N=1000 due to statistical noise (the chi-squared false-reject
-   rate is <1% at N=1000 for a calibrated algorithm).
-2. Wire `tools/run_sbc_audit.py` into the project's nightly CI
-   cron; capture per-night `sbc_audit_<date>.json` to
-   `verification_outputs/` and alert on any algorithm that
-   transitions from calibrated to miscalibrated (or vice versa).
+1. ~~Add a 4th-pass N=10000 sweep for any algorithm that flunks at
+   N=1000 due to statistical noise.~~ **DONE (Wave 25 Agent A)** — the
+   `p < 0.20` marginal auto-gate re-runs marginal algorithms at
+   N=10000; see the fourth-pass subsection above.
+2. ~~Wire `tools/run_sbc_audit.py` into the project's nightly CI
+   cron.~~ **DONE (Wave 25 Agent A)** — `.github/workflows/nightly.yml`,
+   04:17 UTC daily, 90-day report artifacts. The *alerting* half of
+   this item is still open: the workflow fails the build on a
+   miscalibration but does not yet diff last night's report against
+   tonight's to flag a calibrated → marginal transition that has not
+   yet crossed p=0.05.
 3. Add SBC coverage for `MultiChannelJitteredConstantScheduler`
    (P1 #19) — currently the test suite covers only the
    single-channel `JitteredConstantScheduler`. The per-channel
@@ -1167,6 +1283,7 @@ Single commit (this section) — `docs/baseline-audit-report.md` (Wave 15 Phase 
 | F.2 | Wave 6 head experiments (3-way) | REPRODUCED = 4 / 8 (R1, R4, R7, R8); PARTIAL = 1 (R2); NOT_REPRODUCED = 3 (R3, R5, R6); all 8 classified | ≥ 6/8 REPRODUCED by Wave 14 | −2 REPRODUCED rows |
 | F.5 | env_hash capture | MISSING (no `scripts/capture_env_hash.py`, `requirements-lock.txt`, `env_hash.txt`, or per-adapter dep list) | 100 % of reproductions ship env_hash.txt by Wave 14 (HARD gate) | 4 artifacts missing + no framework uv-managed venv |
 | F.6 | ML-aware mutation score (Q4 2026 first audit) | **0.833 aggregate** (25/30 killed) -- theory 0.500, integrators 1.000, schedulers 1.000, adapters 0.833 | >= 0.6 aggregate AND >= 0.4 per-subsystem by Wave 18 | **MET** (see `docs/mutation_audit_q4_2026.md`; 5 ML-aware operators: weight_perturbation / activation_swap / structural_mutation / threshold_flip / constant_substitution; runner `tools/run_mutation_audit.py`; JSON `verification_outputs/mutation_audit_q4_2026.json`). Theory SM/TF + synthetic-adapter SM have actionable survivors in `docs/mutation_audit_q4_2026.md` §5. |
+| F.6 (Wave 25 follow-up) | theory subsystem floor (actionable SM/TF survivors from §5) | **0.533** (16/30 killed; was 0.500 / 4/8); per-op: WP 8/8, SM 0/8 (audit `_copy_tree` line-shift tooling bug — see §5.1), TF 1/7 (improvement from 0/2), CS 7/7 | >= 0.4 per-subsystem floor | **MET** with margin (clears 0.4 floor; 4 must-pass fixtures in `tests/test_theory/test_f6_mutation_survivors.py` targeting the 4 actionable SM/TF survivors); full detail in `docs/mutation_audit_q4_2026.md` §5.1. |
 
 ### Next actions (priority order)
 

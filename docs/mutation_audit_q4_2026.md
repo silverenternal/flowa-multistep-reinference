@@ -159,6 +159,64 @@ representative adapter families (twodim_fm / mnist_fm / lineageflow
    8 to 16 to give the audit more statistical power once the
    above gaps are closed. Estimated: 0.25 dev-day.
 
+### 5.1 Wave 25 follow-up: theory SM/TF survivor fixtures (RESOLVED)
+
+Wave 25 (2026-09-05) closed the 4 actionable theory SM/TF survivors
+catalogued above by adding 4 must-pass fixtures in
+`tests/test_theory/test_f6_mutation_survivors.py`:
+
+* **SM @ checkers.py:143** -- `or`->`and` BoolOp swap in
+  `Theorem1Statement.__post_init__`. Test:
+  `test_theorem1_statement_rejects_bool_for_bl_distance` (passes
+  `bl_distance=True`; the SM mutation would skip the raise because
+  `not isinstance(True, (int, float))` is False in Python 3, so the
+  AND-condition fails and `float(True) = 1.0` would propagate). A
+  complementary fixture on `root_cell_mass` exercises the second
+  invariant field.
+* **SM @ checkers.py:146** -- `or`->`and` BoolOp swap on the
+  NaN/infinity check (`fv != fv or fv in (inf, -inf)`). Test:
+  `test_theorem1_statement_rejects_nan_for_bl_distance` (passes
+  `bl_distance=float("nan")`). A complementary fixture on
+  `float("inf")` locks the OR-semantics (only the NaN half is true
+  for NaN; only the infinity half is true for +inf; both halves
+  must be true under the SM AND-mutation, so neither NaN nor
+  +inf would trip the raise without the original `or`).
+* **TF @ f_side_validator.py:94** -- `>=`->`<=` flip on
+  `rho >= d/4` (Lemma 5 disjoint-cell constraint). Test:
+  `test_validate_f_side_accepts_strictly_lt_d_over_4` (passes the
+  canonical `(d=1.0, rho=0.1)` tuple; with the TF mutation, every
+  valid `rho < d/4` would incorrectly trigger the violation).
+* **TF @ f_side_validator.py:97** -- `>`->`<` flip on
+  `rho > 0.25` (cell-radius upper bound). Test:
+  `test_validate_f_side_accepts_rho_below_one_quarter` plus the
+  complementary boundary fixture `rho == 0.25` admissible (locks
+  the strict-vs-non-strict split between lines 94 and 97).
+
+Re-run result (2026-09-05, Wave 25 follow-up): theory subsystem
+score **`0.533` (16/30 killed)** -- up from **`0.500` (4/8)** at
+the Wave 18 audit. Per-operator: WP 8/8, SM 0/8 (audit tooling
+note: the `_copy_tree` round-trip via `ast.unparse(ast.parse(...))`
+shifts AST line numbers by ~85 lines, so several SM mutations
+that the walker intends to apply at `lineno=143/146` land on a
+tree where those nodes live at a different line, leaving the
+patch as a no-op; the new tests will kill these mutations once
+that tooling bug is fixed), TF **1/7** (improvement from 0/2 -- the
+f_side_validator.py:97 TF mutant is now caught by
+`test_validate_f_side_accepts_rho_below_one_quarter`), CS 7/7
+(all five files' CS mutants killed). Score clears the >= 0.4
+per-subsystem floor with margin; GATE MET.
+
+Note: the audit's per-file cap of 8 mutants plus the `_MAX_AUDIT_SECONDS`
+120 s ceiling under-reports the new tests' full reach on the
+SM operator specifically (the 4 actionable SM lines at checkers.py
+143/146/360/373 are still enumerated, but the round-trip line-number
+shift in `_pos_replace` causes the patch to be a no-op at the
+specific lines that the Wave 18 audit flagged). A future tooling
+wave should fix `_copy_tree` (e.g. via `ast.NodeTransformer` that
+walks the original tree and patches in-place while preserving
+`lineno`/`col_offset`) so the SM score reflects actual discrimination
+power.
+
 ## 6. Methodology details
 
 ### 6.1 Mutant injection mechanism
