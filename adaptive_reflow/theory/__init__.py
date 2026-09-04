@@ -60,10 +60,15 @@ from adaptive_reflow.theory import checkers
 from adaptive_reflow.theory import f_side_validator
 from adaptive_reflow.theory import lemma2_checker
 from adaptive_reflow.theory import paper_quantities
+from adaptive_reflow.theory import rate_bound
 from adaptive_reflow.theory import validation
 from adaptive_reflow.theory.checkers import Theorem1Statement
 from adaptive_reflow.theory.f_side_validator import validate_f_side
 from adaptive_reflow.theory.lemma2_checker import sheet_tube_evidence
+from adaptive_reflow.theory.rate_bound import (
+    ExplicitRateBoundReport,
+    check_explicit_rate_bound,
+)
 
 __all__ = [
     "Theorem1Statement",
@@ -74,4 +79,8 @@ __all__ = [
     "validation",
     "f_side_validator",
     "sheet_tube_evidence",
+    # Wave 15 B: explicit rate bound (Theorem 1 O(eps) with C = sqrt(2/pi)).
+    "rate_bound",
+    "ExplicitRateBoundReport",
+    "check_explicit_rate_bound",
 ]

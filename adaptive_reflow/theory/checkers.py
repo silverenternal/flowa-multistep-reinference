@@ -1,8 +1,30 @@
-"""JMAA theorem-statement checkers (Wave 11 addition, Wave 14 A repointed).
+"""JMAA theorem-statement checkers (Wave 11 addition, Wave 14 A repointed, Wave 15 C paper anchors).
 
 This module exposes the unified ``Theorem1Statement`` dataclass and
 its checker, plus the Lemma 2 LHS sheet-tube evidence evaluator and a
 planar BL-convergence witness.
+
+**Paper anchors (Wave 15 C — A.4 traceability hardening):**
+
+* :class:`Theorem1Statement` -- **Theorem 1 (line 87-92)** — the
+  unified 3-claim statement ``BL(mu_{g,eps}, nu_g) -> 0`` (a),
+  ``mu_{g,eps}(union_z I_z) = O(eps)`` (b), and the bounded-Lipschitz
+  equivalence display (line 91-92) (c).
+* :class:`Theorem1StatementChecker` -- **Theorem 1 (line 87-89)** for
+  the BL witness; **Corollary 1 (line 165)** for the root-cell mass
+  formula.
+* :func:`sheet_tube_evidence` -- **Lemma 2 (line 100-104)** for the
+  LHS / RHS convergence display.
+* :class:`LipschitzConvergenceReport` -- **Theorem 1 (line 87-89)**.
+
+**Wave 15 C — importlib bypass REMOVED.** Wave 14 A added an
+``importlib.util`` loader to bypass ``adaptive_reflow.eval.__init__``
+(which eagerly pulled rdkit). The real fix landed in
+:mod:`adaptive_reflow.eval.__init__` (PEP 562 ``__getattr__``
+lazy-loader for rdkit-dependent submodules); this module now does a
+**direct import** of
+:func:`adaptive_reflow.eval.lipschitz_diagnostic.planar_bl_convergence_witness`
+without the importlib bypass.
 
 * :class:`Theorem1Statement` -- carries ``(bl_distance, root_cell_mass,
   posterior_evidence)`` together, the single artifact the audit
@@ -25,59 +47,44 @@ planar BL-convergence witness.
   this dataclass is preserved for callers but its values are now
   sourced from :func:`planar_bl_convergence_witness` (true ``R^2``).
 
+**Wave 15 C — importlib bypass REMOVED.** Wave 14 A added an
+``importlib.util`` loader to bypass ``adaptive_reflow.eval.__init__``
+(which eagerly pulled rdkit). The real fix landed in
+:mod:`adaptive_reflow.eval.__init__` (PEP 562 ``__getattr__``
+lazy-loader for rdkit-dependent submodules); this module now does a
+**direct import** of
+:func:`adaptive_reflow.eval.lipschitz_diagnostic.planar_bl_convergence_witness`
+without the importlib bypass.
+
 Stdlib-only at the checker surface; the planar witness itself uses
 ``numpy`` + ``scipy.optimize`` (loaded lazily).
 """
 from __future__ import annotations
 
-import importlib.util
 import math
-import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from adaptive_reflow.theory.paper_quantities import (
     paper_selection_ratio,
     sheet_evidence_A,
 )
 
-if TYPE_CHECKING:  # pragma: no cover -- typing-only import
-    from adaptive_reflow.eval.lipschitz_diagnostic import PlanarBLConvergenceReport
-
-
-# Wave 14 A: lazy loader for ``adaptive_reflow.eval.lipschitz_diagnostic``.
-# The package's ``__init__`` pulls optional chemistry deps (rdkit) that
-# are not vendored in every sandbox. We bypass ``__init__`` entirely by
-# loading the submodule file directly via ``importlib.util``, so this
-# module stays importable in environments without rdkit.
-_PLANAR_BL_DIAG_PATH = (
-    Path(__file__).resolve().parent.parent / "eval" / "lipschitz_diagnostic.py"
+# Wave 15 C: the importlib.util bypass (Wave 14 A hack) has been
+# removed. This module now does a direct import of the planar BL
+# witness; the eval package's ``__init__`` lazy-loads rdkit-dependent
+# submodules via PEP 562 ``__getattr__``, so this works in every
+# sandbox (with or without rdkit).
+from adaptive_reflow.eval.lipschitz_diagnostic import (
+    PlanarBLConvergenceReport,
+    planar_bl_convergence_witness,
 )
-
-
-def _load_planar_bl_witness():
-    """Return the ``planar_bl_convergence_witness`` symbol from the
-    lipschitz_diagnostic submodule, bypassing the eval package's
-    ``__init__``.
-    """
-    cached = sys.modules.get("_ar_planar_bl_diag_bypass_init")
-    if cached is not None:
-        return cached.planar_bl_convergence_witness
-    spec = importlib.util.spec_from_file_location(
-        "_ar_planar_bl_diag_bypass_init",
-        str(_PLANAR_BL_DIAG_PATH),
-    )
-    if spec is None or spec.loader is None:  # pragma: no cover -- importable env
-        raise ImportError(
-            f"could not load planar_bl_convergence_witness from "
-            f"{_PLANAR_BL_DIAG_PATH!s}"
-        )
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = mod
-    spec.loader.exec_module(mod)
-    return mod.planar_bl_convergence_witness
+# Wave 15 B additive re-export — explicit rate bound theorem.
+from adaptive_reflow.theory.rate_bound import (
+    ExplicitRateBoundReport,
+    check_explicit_rate_bound,
+)
 
 
 __all__ = [
@@ -88,6 +95,9 @@ __all__ = [
     "LipschitzConvergenceReport",
     "theorem1_bl_convergence_witness",
     "PlanarBLConvergenceReport",
+    # Wave 15 B additive re-export — explicit rate bound theorem.
+    "ExplicitRateBoundReport",
+    "check_explicit_rate_bound",
 ]
 
 
@@ -110,6 +120,15 @@ class Theorem1Statement:
 
     All three fields MUST be present (non-None) for the witness to be
     complete. The dataclass is immutable; build via :meth:`from_parts`.
+
+    Examples
+    --------
+    >>> stmt = Theorem1Statement(bl_distance=0.1, root_cell_mass=0.4,
+    ...                           posterior_evidence=2.0)
+    >>> stmt.bl_distance
+    0.1
+    >>> stmt.root_cell_mass
+    0.4
     """
 
     bl_distance: float
@@ -136,6 +155,18 @@ class Theorem1Statement:
         root_cell_mass: float,
         posterior_evidence: float,
     ) -> "Theorem1Statement":
+        """Build a :class:`Theorem1Statement` from explicit numeric parts.
+
+        Example
+        -------
+        >>> stmt = Theorem1Statement.from_parts(0.1, 0.4, 2.0)
+        >>> round(stmt.bl_distance, 4)
+        0.1
+        >>> round(stmt.root_cell_mass, 4)
+        0.4
+        >>> stmt.posterior_evidence > 0
+        True
+        """
         return cls(
             bl_distance=float(bl_distance),
             root_cell_mass=float(root_cell_mass),
@@ -222,10 +253,11 @@ class Theorem1StatementChecker:
         # sequence (Wave 14 A repointing: no more 1-D y=0 projection).
         # The canonical value is the planar BL distance at the smallest
         # eps -- where Theorem 1's O(eps) bound is tightest.
-        # The witness is loaded via ``_load_planar_bl_witness`` (bypasses
-        # ``adaptive_reflow.eval.__init__`` which pulls rdkit).
-        _planar_bl_witness = _load_planar_bl_witness()
-        planar_report = _planar_bl_witness(
+        # Wave 15 C: direct import of ``planar_bl_convergence_witness``
+        # (the eval package's ``__init__`` now lazy-loads rdkit-dependent
+        # submodules via PEP 562 ``__getattr__``, so the direct import
+        # works in every sandbox).
+        planar_report = planar_bl_convergence_witness(
             g, list(eps_sequence), n_samples=int(n_samples), seed=int(seed),
         )
         idx_min = list(planar_report.eps_sequence).index(eps_min)
@@ -301,6 +333,22 @@ def sheet_tube_evidence(
         A bounded continuous test function ``R^2 -> R``.
 
     Stdlib-only.
+
+    Examples
+    --------
+    Identity test function on the canonical ``g(x) = 0`` profile.
+    At small ``eps`` the LHS / RHS converge so ``rel_err`` is finite
+    and the witness emits both quantities:
+
+    >>> def g_zero(x): return 0.0
+    >>> def phi_id(x, y): return 1.0 + 0.0 * x * y
+    >>> ev = sheet_tube_evidence(g_zero, 0.1, phi_id, n_x=64, n_y=16)
+    >>> ev.eps
+    0.1
+    >>> 0.0 <= ev.rhs <= 1.5
+    True
+    >>> ev.lhs >= 0.0
+    True
     """
     if eps <= 0.0:
         raise ValueError(f"eps must be positive, got {eps!r}")
@@ -413,13 +461,29 @@ def theorem1_bl_convergence_witness(
     relied on the rejection-sampler path must either accept the new
     dependency or call the wrapper only on a Python with numpy/scipy
     installed.
+
+    Examples
+    --------
+    Minimal witness on the zero profile:
+
+    >>> def g_zero(x): return 0.0
+    >>> rep = theorem1_bl_convergence_witness(g_zero, (0.5, 0.1),
+    ...                                        n_samples=64, seed=0)
+    >>> len(rep.bl_distances)
+    2
+    >>> rep.bl_distance_at_eps_min >= 0.0
+    True
+    >>> rep.eps_sequence == (0.5, 0.1)
+    True
     """
     if not eps_sequence:
         raise ValueError("eps_sequence must be non-empty")
 
-    # The witness is loaded via ``_load_planar_bl_witness`` (bypasses
-    # ``adaptive_reflow.eval.__init__`` which pulls rdkit).
-    planar = _load_planar_bl_witness()(
+    # Wave 15 C: direct import of ``planar_bl_convergence_witness``
+    # (the eval package's ``__init__`` now lazy-loads rdkit-dependent
+    # submodules via PEP 562 ``__getattr__``, so the direct import
+    # works in every sandbox).
+    planar = planar_bl_convergence_witness(
         g,
         [float(e) for e in eps_sequence],
         n_samples=int(n_samples),
