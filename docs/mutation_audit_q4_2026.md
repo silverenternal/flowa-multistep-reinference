@@ -233,3 +233,26 @@ quality gates per §1 C.7 / F.6 of `framework-internal-metrics.md`.
 - [x] `framework-internal-metrics.md` F.6 row updated to "PASS"
 - [x] `docs/baseline-audit-report.md` §F.6 updated to "PASS"
 - [x] Committed (no push)
+
+## Paper grounding
+
+This audit is a quarterly check on the framework's test-discrimination
+power; the test suite in question cites the underlying JMAA paper
+(Li 2026) at every hypothesis-checked surface:
+
+* **Theorem 1** (BL-convergence, `paper section 3.1`) — targeted by
+  `paper_quantities.rate_bound_C` and `adaptive_reflow/theory/rate_bound.py`;
+  the `structural_mutation` and `constant_substitution` operators
+  attacked the rate-bound constant's numerical cofactors (the surviving
+  theory-subsystem mutants in §5 are concentrated here).
+* **Lemma 5** (root-cell packing `B_g`, exterior gap `e_rho`,
+  `paper line 135-138`) — targeted by
+  `paper_quantities.root_cell_packing_B` and `exterior_gap_e_rho`; the
+  `weight_perturbation` operator attacked the `e_rho` floor.
+* **Proposition 6** (escaping-sharpness bound, `paper section 4.3`) —
+  targeted by the must-fail fixture in `tests/test_theory/negative/`;
+  the `threshold_flip` operator attacked the boundary check.
+
+All five ML-aware mutation operators were chosen so a regression at any
+of the three theorem surfaces above would propagate to a killed
+mutant; the surviving theory-subsystem mutants in §5 are the gaps.

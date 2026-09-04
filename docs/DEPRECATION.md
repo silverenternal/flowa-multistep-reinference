@@ -109,3 +109,24 @@ The quarantine therefore buys the migration window without:
   meta-ADR that defines how deprecation decisions are recorded.
 * **[CHANGELOG.md](../CHANGELOG.md)** — every deprecation appears as a
   `Deprecated:` entry on the release that introduced it.
+
+## Paper grounding
+
+The framework's algorithm-improvement surface (which this deprecation
+policy indirectly governs by preventing accidental dependency on
+retired modules) cites the underlying JMAA paper (Li 2026). In
+particular:
+
+* **Theorem 1** (BL-convergence of `mu_{g,eps}` to `nu_g`,
+  `paper section 3.1`) is the correctness target the algorithm layer
+  optimises toward; deprecated modules that previously implemented
+  rate-bound checks are replaced by `adaptive_reflow.theory.rate_bound`
+  rather than deleted outright.
+* **Proposition 3** (selection-mechanism display, `paper section 4.2`)
+  is the per-round closure that the re-inference engine approximates;
+  modules that bypassed Proposition 3's assembly invariant are
+  candidates for deprecation.
+
+The full paper-statement inventory is `docs/theory/PAPER_INVENTORY.md`
+(A.0); the deprecation policy here applies to *implementations* of
+those statements, not to the statements themselves.

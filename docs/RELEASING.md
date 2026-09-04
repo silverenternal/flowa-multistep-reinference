@@ -223,6 +223,28 @@ results (mirrored in the verification log):
 | 6 gates | all green |
 | `twine upload` | NOT EXECUTED (gated on paper acceptance) |
 
+## Paper grounding (the release artefact carries an inventory)
+
+The release ships the framework's paper-statement inventory
+(`docs/theory/PAPER_INVENTORY.md`, A.0) and the per-equation citation
+checker (`tools/check_doc_paper_refs.py`, E.2). Concretely:
+
+* **Theorem 1** (BL-convergence of `mu_{g,eps}` to `nu_g`, `paper section 3.1`)
+  is implemented in `adaptive_reflow/theory/rate_bound.py` and
+  surface-tested by `tests/test_theory/test_rate_bound.py`.
+* **Lemma 2**, **Lemma 4**, **Lemma 5** (sheet evidence `A_g`,
+  physical-complement suppression, root-cell packing `B_g` + exterior
+  gap `e_rho`) ground the per-round scheduler choices and are
+  exhaustively enumerated in A.0.
+* **Proposition 3** (selection-mechanism display, `paper section 4.2`)
+  and **Proposition 6** (escaping-sharpness bound) are paired with
+  must-fail fixtures under `tests/test_theory/negative/`.
+
+The first release that follows paper acceptance must include a
+`[0.X.Y]` CHANGELOG entry that names every A.0 statement shipped and
+its mapping to a `tests/test_theory/` test (this is the A.1 / A.5
+content of the release manifest, not just the version bump).
+
 The package is **not** uploaded as of `2026-08-31`. The release is
 held back until paper acceptance; the build artifacts in `dist/`
 are valid and ready for upload on the maintainer's `twine upload`

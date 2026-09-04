@@ -152,3 +152,26 @@ The bench + gate is wired so that CI runs the perf suite against the
 declared budgets. A failing gate blocks the PR — if the regression is
 intentional, bump the budget in `tools/bench/budgets.json` together with a
 changelog entry explaining why the ceiling was raised.
+
+## Paper grounding (why we measure these kernels)
+
+The four hot-path kernels above are the implementation surfaces of the
+framework's correctness layer — they cite the underlying JMAA paper
+(Li 2026) at every check:
+
+* `bounded_merge` — implements the merge-envelope part of **Proposition 3**
+  (selection-mechanism display, `paper section 4.2`); the budget
+  protects the closed-form `n_cap(r)` interpolation from drifting out
+  of the convex combination `[floor, cap]` that Proposition 3 predicts.
+* `compute_channel_decision` — implements the per-channel gating that
+  backs **Lemma 5** (root-cell packing `B_g`, `paper line 135-138`).
+* `evaluate_claim_gate` — implements the closure rule that **Theorem 1**
+  (BL-convergence, `paper section 3.1`) requires for the BL limit.
+* `engine_round_loop` — runs the full per-round loop that the rate-bound
+  constant `rate_bound_C(eps)` from `adaptive_reflow/theory/rate_bound.py`
+  bounds. A 20% regression here is the early-warning signal that the
+  rate-bound's constants have been perturbed.
+
+In short, every budget on this page is a **downstream invariant of a
+paper-grounded theorem**; the budget gate is a CI-friendly proxy for
+the theorem's numerical cofactors holding.

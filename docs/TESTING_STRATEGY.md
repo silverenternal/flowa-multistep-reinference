@@ -260,3 +260,27 @@ trend is captured in the `mutation-report` artifact from
 `.github/workflows/mutation-nightly.yml`; the current snapshot is in
 [FINAL_STATUS.md](../FINAL_STATUS.md), and a sustained drop below
 the targets above is a release blocker.
+
+## 8. Paper-grounded invariants under test
+
+The whole strategy above targets one thing: prove the framework's
+implementations of the underlying JMAA paper (Li 2026) stay correct
+across edits. The specific paper surfaces under test are:
+
+* **Theorem 1** (BL-convergence, `paper section 3.1`) — exercised by
+  `tests/test_theory/test_rate_bound.py` (rate-bound constant
+  `rate_bound_C(eps)` from `adaptive_reflow/theory/rate_bound.py`) and
+  by the per-equation citations in `adaptive_reflow/theory/paper_quantities.py`.
+* **Lemma 2** (sheet evidence `A_g`) — `tests/test_theory/`
+  (sheet-tube LHS/RHS ratio witness from `adaptive_reflow/theory/lemma2_checker.py`).
+* **Lemma 5** (root-cell packing `B_g`, `paper line 135-138`) — `K=32`
+  invariant under `paper_quantities.root_cell_packing_B`.
+* **Proposition 3** (selection-mechanism display, `paper section 4.2`)
+  — exercised by the per-round scheduler choice tests.
+* **Proposition 6** (escaping-sharpness bound) — paired with a
+  must-fail fixture under `tests/test_theory/negative/` (A.7).
+
+All of these are part of the **golden + property + adversarial**
+test layers (§2.2 / §2.3 / §2.4); a release that flips the rate-bound
+constant without re-running the rate-bound test is rejected by §6
+step 6.

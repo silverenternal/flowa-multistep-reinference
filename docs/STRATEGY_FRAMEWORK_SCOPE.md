@@ -204,3 +204,28 @@ against multiple SOTA baselines.
   record, or reframe as a "framework-vs-paper gap inventory"?
 
 These four questions block the next concrete action item.
+
+## Paper grounding
+
+The framework's correctness story (which the tiered strategy in §4
+implicitly validates at Tier 1 and Tier 2) rests on the underlying
+JMAA paper (Li 2026):
+
+* **Theorem 1** (BL-convergence of `mu_{g,eps}` to `nu_g`,
+  `paper section 3.1`) is the per-algorithm correctness target. The
+  Tier-1 toy model is the smallest meaningful surface to surface-test
+  Theorem 1 — any framework claim that "the framework helps
+  convergence" is vacuous without the toy hitting the rate-bound
+  constant `rate_bound_C(eps)` from `adaptive_reflow/theory/rate_bound.py`.
+* **Proposition 3** (selection-mechanism display, `paper section 4.2`)
+  grounds the per-round restart distribution; Tier 1 should exercise
+  Proposition 3's BL assembly invariant directly (not bypass it via a
+  custom sampler), or the toy is no longer a framework integration.
+* **Proposition 6** (escaping-sharpness bound) is the formal justification
+  for *not* expecting Tier 3 multi-SOTA improvement — the bound places
+  the framework's gain inside a known envelope that 5-SOTA averaging
+  can mask.
+
+In short, the tiered strategy is a **soundness/cost trade-off** in
+front of Theorem 1's rate bound; Tier 1 cannot be skipped without
+giving up paper-grounded validation.

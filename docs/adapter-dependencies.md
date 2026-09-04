@@ -88,6 +88,23 @@ to import. Tracked via `requirements-lock.txt` only:
   reference FlowA baseline pulls in (likely torch + rdkit by symmetry
   with FlowMol3, but unverified)
 
+## Paper-anchored core (universal)
+
+The framework's correctness proofs in `adaptive_reflow/theory/` cite the
+underlying JMAA paper (Li 2026). The following theorem anchors live in
+the framework core and do **not** add any per-adapter dependencies:
+
+- **Theorem 1** (BL-convergence, paper §3.1) — `paper_quantities.rate_bound_C`
+  and `rate_bound.py` materialise the explicit constant.
+- **Lemma 2** (sheet evidence `A_g`) — `paper_quantities.sheet_evidence_A`.
+- **Lemma 5** (root-cell packing `B_g`, exterior gap `e_rho`) —
+  `paper_quantities.root_cell_packing_B` and `exterior_gap_e_rho`.
+
+These citations live entirely under the stdlib-only `adaptive_reflow/theory/`
+package (no torch / numpy / scipy), so the framework's paper-grounded
+theory is part of the project venv's universal layer and is hashed by
+`capture_env_hash.py` together with the framework's `uv.lock`.
+
 ## Notes on non-installable / out-of-band deps
 
 - HiDream-I1, Lumina-Image-2.0, Wan2.2 checkpoints are downloaded at

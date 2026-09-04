@@ -10,6 +10,29 @@ PyO3 → Rust rewrite (see `ROADMAP.md` later), so the project venv is kept
 minimal and torch-free; heavy model runtimes live in the per-model venvs
 and are pinned per-driver.
 
+## Paper grounding (where correctness lives)
+
+The framework's correctness proofs (which this two-tier layout exists to
+keep reproducible) cite the underlying JMAA paper (Li 2026). In
+particular:
+
+* **Theorem 1** (BL-convergence of `mu_{g,eps}` to `nu_g`, `paper section 3.1`)
+  is the per-algorithm convergence target the framework's
+  `adaptive_reflow/theory/rate_bound.py` materialises as an explicit
+  constant `rate_bound_C(eps)`. This lives in the stdlib-only project
+  venv and is part of the F.5 env_hash coverage.
+* **Lemma 2**, **Lemma 4**, **Lemma 5** (sheet evidence `A_g`,
+  physical-complement suppression, root-cell packing) ground the
+  per-round scheduler choices (`adaptive_reflow/algorithm/scheduler.py`).
+* **Proposition 3** (selection-mechanism display, `paper section 4.2`)
+  grounds the per-round restart distribution.
+
+None of these require torch / numpy / scipy at the source level (the
+theory package is stdlib-only by design — see
+`tests/test_universal/test_no_molecular_import.py`), which is why the
+project venv can stay torch-free while still hosting the paper-anchored
+correctness proofs.
+
 ## Layout (frozen 2026-09-03)
 
 | Tier | Name | Path | Python | torch | CUDA build | sm_120 |

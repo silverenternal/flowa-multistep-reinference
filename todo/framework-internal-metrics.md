@@ -74,7 +74,7 @@ unpinned threshold).
 | ID | Definition | Current | Target | Hard? |
 |---|---|---|---|---|
 | E.1 | CLM claim count in `docs/CLAIMS.md` — split into **total count** + **test-coupled count** | 47 total, ~0 test-coupled | **>= 50 total, >= 70% test-coupled by Wave 16** | **HARD** (test-coupled floor; reconciled with paper-writeup gate) |
-| E.2 | Docs cross-referencing >= 1 paper theorem, machine-checkable via A.5 | ? | >= 0.9 by Wave 14 | **HARD** |
+| E.2 | Docs cross-referencing >= 1 paper theorem, machine-checkable via A.5 | **1.000 (31 / 31 docs, machine-checkable via `tools/check_doc_paper_refs.py`; Wave 23 Agent A update 2026-09-05)** | >= 0.9 by Wave 14 | **HARD** |
 | E.3 | CONSOLIDATED_RESULTS sections per integrated model | 7+ | >= 10 by Wave 16 | no |
 | E.4 | Doc-builder diff job: per-equation citation check fails if a refactor drops paper equation/section reference from a public function | not running | live by Wave 13 | **HARD** |
 
@@ -183,6 +183,15 @@ on the model-under-integration can start once Phase 2.5 passes for
 - [ ] **F.1 >= 4** + **F.2 (3-way) >= 6/8 REPRODUCED** + all 8 classified (HARD cold-clone)
 - [ ] **F.3** ACM-tier declared for all integrated models
 - [ ] **F.6** mutation score >= 0.6 aggregate AND >= 0.4 per-subsystem
+- [ ] **`G-MASTER-CAPABILITY`** gate PASSED — see `todo/GATES.md`
+  (canonical gate definition) and `todo/framework-internal-metrics-rev3-plan.md`
+  §7.1. The 5 HARD capability metrics (G.1 mean value score, G.3 worst-case
+  bound, G.4 generalization breadth, G.6 honest negative surface, G.7
+  reproducibility) must all report PASS. If any HARD fails, this
+  paper-writeup gate is BLOCKED per `G-MASTER-CAPABILITY`'s block rule
+  (a reviewer cannot be told "framework helps" if G.3 or G.6 fail).
+  Measured via `tools/capability_audit.py` against
+  `verification_outputs/capability_audit_qX_2026.json`.
 
 ### Gate: algorithm-improvement A → B
 
@@ -225,6 +234,16 @@ on the model-under-integration can start once Phase 2.5 passes for
 **Block rule:** if any hard gate fails, the next wave is BLOCKED. Append
 to `lessons-learned.md` with the failure mode + fix.
 
+**Sibling gate:** `G-MASTER-CAPABILITY` (canonical definition:
+`todo/GATES.md`; source plan: `todo/framework-internal-metrics-rev3-plan.md`
+§7.1) is the **value-delivery** sibling of this audit-discipline gate.
+`G-FRAMEWORK-HEALTH` measures engineering discipline (audit metrics);
+`G-MASTER-CAPABILITY` measures value delivery (G.1-G.7 group-G metrics).
+Both must pass for paper-writeup. `G-MASTER-CAPABILITY` is **not**
+checked per-wave — it is checked once before PHASE-4 → paper-writeup
+transition (and on demand for freeze MUST-4). Per-wave verify is
+governed solely by `G-FRAMEWORK-HEALTH`.
+
 ## 5. Removed metrics (with rationale)
 
 | ID (rev 1) | Status | Reason |
@@ -256,7 +275,7 @@ All 9 audits completed in Wave 14. Full report: `docs/baseline-audit-report.md` 
 | B.4 | vacuous pass (0 doctests collected) | 0 failures | MET vacuously; add doctests + CI wire | **MET vacuous** |
 | D.3 | 226/226 = 100% hand-written (13 adapter files) | 18/18 against D.5 | need D.5 (MISSING) | **GAP** |
 | D.5 | MISSING | live by Wave 14 | 1 file missing | **GAP** |
-| E.2 | 0.571 (16/28 docs) | ≥ 0.9 | -0.329 (~+9 docs) | **GAP** |
+| E.2 | 0.571 (16/28 docs) → **1.000 (31 / 31 docs, Wave 23 Agent A 2026-09-05; machine-checkable via `tools/check_doc_paper_refs.py`)** | ≥ 0.9 | closed (+0.100 margin over 0.9) | **MET** |
 | F.2 | 4/8 REPRODUCED, 1/8 PARTIAL, 3/8 NOT_REPRODUCED | ≥ 6/8 REPRODUCED | -2 rows | **GAP** |
 | F.5 | MISSING (4 artifacts: scripts/capture_env_hash.py, requirements-lock.txt, env_hash.txt, per-adapter dep list) | HARD gate | 4 artifacts missing + uv drift | **GAP (HARD gate blocker)** |
 

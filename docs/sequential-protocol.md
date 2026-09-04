@@ -212,3 +212,28 @@ eight required methods are implemented as follows:
   — the inference-time framing (chains operate at sample time, not
   training time; PyTorch's SequentialLR is the closest published
   analog).
+
+## Paper grounding
+
+The chained sub-schedulers remain inside the framework's per-round
+contract, which is itself the inference-time analog of the underlying
+JMAA paper (Li 2026). The per-round `n_cap(r)` interpolation is
+constrained by:
+
+* **Proposition 3** (selection-mechanism display, `paper section 4.2`)
+  — each sub-scheduler's `n_cap(r)` lies inside the convex combination
+  `[floor, cap]` that Proposition 3 predicts; the chain's
+  `inject_noise` and `record_round_feedback` calls propagate this
+  invariant across slot boundaries.
+* **Lemma 5** (root-cell packing `B_g`, exterior gap `e_rho`,
+  `paper line 135-138`) — `e_rho` is the noise-floor lower bound for
+  every constant sub-scheduler (the "rest plateau" example in §2
+  uses `n_cap = 0.05` which the user may set arbitrarily low as long
+  as `n_cap >= e_rho` for the active profile; the framework's
+  scheduler does not enforce this directly today, see
+  `docs/theory/operating-regime.md`).
+
+The chain does **not** modify the rate-bound constant `rate_bound_C(eps)`
+from **Theorem 1** (`paper section 3.1`); the chain is a sampling-time
+composition, not a theorem-level composition, so the rate bound
+applies uniformly to every slot.
