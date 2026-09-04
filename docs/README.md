@@ -27,7 +27,7 @@ different audiences.
 
 | Doc | Read it for |
 | --- | --- |
-| [ARCHITECTURE.md](../ARCHITECTURE.md) (linked from [ARCHITECTURE.md](../ARCHITECTURE.md) at the repo root) | Package layout, dependency DAG, governance invariants, the four-step Adapter Protocol recipe for adding a new model, the full file inventory. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Package layout, dependency DAG, governance invariants, the four-step Adapter Protocol recipe for adding a new model, the full file inventory. |
 | [STRATEGY_FRAMEWORK_SCOPE.md](STRATEGY_FRAMEWORK_SCOPE.md) | Framework scope strategy (2026-09-04 draft): why SOTA-model reproduction is the wrong validation strategy and what to do instead. |
 | [ADAPTER_INTERFACE_SPEC.md](ADAPTER_INTERFACE_SPEC.md) | Authoritative adapter spec (DTB-G1): the eight-method `FlowMatchingODEAdapter` Protocol, capability handshake, hard rules, and a `ToyLinearAdapter` worked example. |
 | [DEPRECATION.md](DEPRECATION.md) | Versioned deprecation table for `adaptive_reflow.legacy/` and friends, with replacement paths and sunset versions. |

@@ -101,6 +101,10 @@ from adaptive_reflow.contracts import (  # noqa: E402
 )
 from adaptive_reflow.frame.engine import Engine  # noqa: E402
 from adaptive_reflow.frame.phase import build_phase_state  # noqa: E402
+from adaptive_reflow.eval.fid import (  # noqa: E402  P0-1 dedup
+    FID_EIGENCLIP_EPS_DEFAULT,
+    compute_frechet_distance,
+)
 from adaptive_reflow.universal.state import ODEConditionDelta  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -332,10 +336,9 @@ def _compute_fid_tfport_inline(
     try:
         import torch
         from pytorch_fid.inception import InceptionV3
-        from scipy import linalg
     except ImportError as exc:  # pragma: no cover — environment-dependent
         raise RuntimeError(
-            f"torch + pytorch_fid + scipy required for inline FID: {exc}"
+            f"torch + pytorch_fid required for inline FID: {exc}"
         ) from exc
 
     block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[2048]
@@ -367,15 +370,20 @@ def _compute_fid_tfport_inline(
     a_ref = _activations(ref)
     mu1, sigma1 = a_gen.mean(axis=0), np.cov(a_gen, rowvar=False)
     mu2, sigma2 = a_ref.mean(axis=0), np.cov(a_ref, rowvar=False)
-    diff = mu1 - mu2
-    covmean = linalg.sqrtm(sigma1.dot(sigma2))
-    if not np.isfinite(covmean).all():
-        offset = np.eye(sigma1.shape[0]) * 1e-6
-        covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
-    if np.iscomplexobj(covmean):
-        covmean = covmean.real
+    # P0-1 math dedup: route the (μ, Σ) Fréchet arithmetic through the
+    # canonical helper in :mod:`adaptive_reflow.eval.fid` so any future
+    # numerical refinement (eigenclip fallback, non-negative clipping,
+    # nan-vs-inf sentinels) lands in one place. The TF-port extractor
+    # family stays separate by design (see ``FID_EXTRACTOR_FAMILY``);
+    # only the *math* is shared.
     return float(
-        diff.dot(diff) + np.trace(sigma1) + np.trace(sigma2) - 2 * np.trace(covmean)
+        compute_frechet_distance(
+            mu_s=np.asarray(mu1, dtype=np.float64),
+            sigma_s=np.asarray(sigma1, dtype=np.float64),
+            mu_r=np.asarray(mu2, dtype=np.float64),
+            sigma_r=np.asarray(sigma2, dtype=np.float64),
+            eigenclip_eps=FID_EIGENCLIP_EPS_DEFAULT,
+        )
     )
 
 
