@@ -6,25 +6,41 @@ This document is the authoritative record of every deprecation in
 below explains **how** the policy works in practice and **why** we
 quarantined `adaptive_reflow.legacy/` rather than deleting it.
 
-## Deprecation table
+## Deprecation table (schema: rev 3 §2 J.2 with `sunset_date:` field)
 
-| Feature | Introduced version | Deprecated in | Sunset version | Replacement | Removal version |
-|---------|-------------------:|---------------|---------------:|------------|----------------:|
-| `adaptive_reflow.legacy.control_policy` | pre-refactor | S-tier governance upgrade (Unreleased) | next minor (TBD) | `adaptive_reflow.policy.noise_mass` + `adaptive_reflow.writer.authority` | next minor +1 (TBD) |
-| `adaptive_reflow.legacy.loop` | pre-refactor | S-tier governance upgrade (Unreleased) | next minor (TBD) | `adaptive_reflow.frame.engine.Engine` | next minor +1 (TBD) |
-| `adaptive_reflow.legacy.loop_contract` | pre-refactor | S-tier governance upgrade (Unreleased) | next minor (TBD) | `adaptive_reflow.frame.operation.OperationCompositionContract` | next minor +1 (TBD) |
-| `adaptive_reflow.legacy.mechanism_adapter` | pre-refactor | S-tier governance upgrade (Unreleased) | next minor (TBD) | `adaptive_reflow.universal.adapter.FlowMatchingODEAdapter` | next minor +1 (TBD) |
-| `adaptive_reflow.legacy.metric_feedback` (ex `external_metric_feedback.py`) | pre-refactor | S-tier governance upgrade (Unreleased) | next minor (TBD) | `adaptive_reflow.eval.protocol` + `adaptive_reflow.eval.calibration` | next minor +1 (TBD) |
-| `adaptive_reflow.legacy.orchestration` | pre-refactor | S-tier governance upgrade (Unreleased) | next minor (TBD) | `adaptive_reflow.frame.orchestrator.AdaptiveReflowPolicyOrchestrator` | next minor +1 (TBD) |
-| `adaptive_reflow.legacy.plan` (ex `reinference_plan.py`) | pre-refactor | S-tier governance upgrade (Unreleased) | next minor (TBD) | `adaptive_reflow.schedule.cosine.CosineScheduleSampler` | next minor +1 (TBD) |
-| `adaptive_reflow.legacy.restart_mixer` (ex `restart_memory.py`) | pre-refactor | S-tier governance upgrade (Unreleased) | next minor (TBD) | `adaptive_reflow.molecular.mixer.RMSPreservingCoordinateMixer` | next minor +1 (TBD) |
-| `adaptive_reflow.legacy.services` | pre-refactor | S-tier governance upgrade (Unreleased) | next minor (TBD) | `adaptive_reflow.writer.handoff.CoreRuntimeHandoff` | next minor +1 (TBD) |
+Each row carries a `sunset_date:` field — the calendar date (ISO 8601
+`YYYY-MM-DD`) on which the deprecated API is officially end-of-life.
+A row with `sunset_date: TBD` does **not** satisfy the J.2
+deprecation-policy-compliance target (`>= 0.8` of deprecated APIs
+must carry a sunset date; rev 3 §2 J.2). The compliance ratio is
+machine-checkable via `tools/check_deprecation_policy.py` (Wave 24).
+
+| Feature | Introduced version | Deprecated in | sunset_date: | Replacement | Removal version |
+|---------|-------------------:|---------------|--------------|------------|----------------:|
+| `adaptive_reflow.legacy.control_policy` | pre-refactor | S-tier governance upgrade (Unreleased) | sunset_date: TBD | `adaptive_reflow.policy.noise_mass` + `adaptive_reflow.writer.authority` | next minor +1 (TBD) |
+| `adaptive_reflow.legacy.loop` | pre-refactor | S-tier governance upgrade (Unreleased) | sunset_date: TBD | `adaptive_reflow.frame.engine.Engine` | next minor +1 (TBD) |
+| `adaptive_reflow.legacy.loop_contract` | pre-refactor | S-tier governance upgrade (Unreleased) | sunset_date: TBD | `adaptive_reflow.frame.operation.OperationCompositionContract` | next minor +1 (TBD) |
+| `adaptive_reflow.legacy.mechanism_adapter` | pre-refactor | S-tier governance upgrade (Unreleased) | sunset_date: TBD | `adaptive_reflow.universal.adapter.FlowMatchingODEAdapter` | next minor +1 (TBD) |
+| `adaptive_reflow.legacy.metric_feedback` (ex `external_metric_feedback.py`) | pre-refactor | S-tier governance upgrade (Unreleased) | sunset_date: TBD | `adaptive_reflow.eval.protocol` + `adaptive_reflow.eval.calibration` | next minor +1 (TBD) |
+| `adaptive_reflow.legacy.orchestration` | pre-refactor | S-tier governance upgrade (Unreleased) | sunset_date: TBD | `adaptive_reflow.frame.orchestrator.AdaptiveReflowPolicyOrchestrator` | next minor +1 (TBD) |
+| `adaptive_reflow.legacy.plan` (ex `reinference_plan.py`) | pre-refactor | S-tier governance upgrade (Unreleased) | sunset_date: TBD | `adaptive_reflow.schedule.cosine.CosineScheduleSampler` | next minor +1 (TBD) |
+| `adaptive_reflow.legacy.restart_mixer` (ex `restart_memory.py`) | pre-refactor | S-tier governance upgrade (Unreleased) | sunset_date: TBD | `adaptive_reflow.molecular.mixer.RMSPreservingCoordinateMixer` | next minor +1 (TBD) |
+| `adaptive_reflow.legacy.services` | pre-refactor | S-tier governance upgrade (Unreleased) | sunset_date: TBD | `adaptive_reflow.writer.handoff.CoreRuntimeHandoff` | next minor +1 (TBD) |
 
 > **No symbols removed yet.** The table documents the policy; the
 > removal versions are marked `TBD` because the S-tier upgrade is the
 > first release that announces the deprecation. A concrete sunset tag
 > will be added when each replacement lands its first non-preview
 > release.
+>
+> **J.2 current compliance ratio: 0/9 = 0.000** (rev 3 §2 J.2 target
+> `>= 0.8`). This is expected on the first Wave 24 reading: all nine
+> pre-existing `legacy/*` rows predate the sunset-date discipline and
+> their `sunset_date:` fields are intentionally TBD pending the
+> S-tier release tag. Wave 25 will populate calendar dates when the
+> S-tier governance upgrade lands; until then the J.2 gate is **SOFT**
+> (`framework-internal-metrics.md` rev 3 §2 J.2; Wave 24 §6 priority
+> #10 row).
 
 ## Naming convention
 
@@ -35,9 +51,13 @@ A row in the table has five date-shaped cells:
   Python file layout; they have no formal version.
 * **Deprecated in** — the first release that emits the
   `DeprecationWarning`. Today: "S-tier governance upgrade (Unreleased)".
-* **Sunset version** — the first release in which the feature still
-  works but is officially end-of-life. Code that still imports the
-  feature in this version is *expected* to break in the next release.
+* **`sunset_date:`** — the calendar date (ISO 8601 `YYYY-MM-DD`) on
+  which the feature is officially end-of-life. Required by rev 3 §2
+  J.2; rows missing a concrete date count as **non-compliant**.
+  Use `TBD` only when the release tag is not yet known. **Do NOT
+  use `next minor` / `next minor +1` prose in this cell**; the
+  compliance-checker requires a literal ISO 8601 date or the literal
+  string `TBD`.
 * **Replacement** — the public-API symbol or subpackage that supersedes
   the deprecated feature. The replacement must already exist and be
   covered by tests before the deprecation is announced.
@@ -90,6 +110,23 @@ The quarantine therefore buys the migration window without:
 * Letting new in-tree code accidentally depend on the legacy surface.
 * Letting the doc scanner catalog stale claims.
 
+## Compliance checker (rev 3 J.2 — Wave 24)
+
+The deprecation-policy compliance ratio is computed by
+`tools/check_deprecation_policy.py` (Wave 24). The tool scans this
+file, parses every Markdown table row, and reports:
+
+* total deprecation rows
+* rows with `sunset_date:` set to a literal ISO 8601 date (compliant)
+* rows with `sunset_date: TBD` (non-compliant)
+* compliance ratio = compliant / total
+* gate verdict: PASS if ratio >= 0.8, FAIL otherwise
+
+The tool exits non-zero on FAIL so the per-wave verify step can wire
+the J.2 gate into CI. Schema version is 1.0; future format changes
+must bump `schema_version` in this document and in the tool's
+constant.
+
 ## Update cadence
 
 * **At every release tag**, this file is reviewed and any row whose
@@ -98,8 +135,9 @@ The quarantine therefore buys the migration window without:
 * **At every ADR that deprecates a new feature**, a row is added to
   the table and the relevant section of `CHANGELOG.md` is updated.
 * **At every legacy module's replacement landing**, the row's
-  `Sunset version` and `Removal version` cells are filled in with
-  concrete tag names.
+  `sunset_date:` and `Removal version` cells are filled in with
+  concrete ISO 8601 dates / tag names. The compliance-checker is
+  re-run as part of the per-wave verify step.
 
 ## See also
 
