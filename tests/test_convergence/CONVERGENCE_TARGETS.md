@@ -30,6 +30,7 @@ All four pass the C.6 gate (slope within `claimed_order - 0.2`).
 | **RK4** | `adaptive_reflow.adapters.integrators.RK4Integrator` | 4 | 0.2 | (20, 40, 80, 160, 320) | `test_rk4_convergence.py` |
 | **Midpoint** (local helper) | `_midpoint_step` in `test_midpoint_convergence.py` | 2 | 0.2 | (10, 20, 40, 80, 160, 320) | `test_midpoint_convergence.py` |
 | **Euler** | `adaptive_reflow.adapters.integrators.AMEDSolverIntegrator` (documented "order-1 forward Euler step") | 1 | 0.2 | (40, 80, 160, 320, 640) | `test_euler_convergence.py` |
+| **Dormand-Prince RK45** (Wave 20 P1) | `adaptive_reflow.adapters.integrators.DormandPrinceRK45Integrator` | 5 | 0.2 | (10, 20, 40, 80, 160) | `test_rk45_convergence.py` |
 
 ### Tolerance direction (one-sided)
 
@@ -83,14 +84,20 @@ four integrators listed above. Other public deterministic integrators
 in the framework are NOT tested in this wave for the reasons
 documented below.
 
-### `DormandPrinceRK45Integrator` — KNOWN-BROKEN
+### `DormandPrinceRK45Integrator` — FIXED in Wave 20 P1
 
 The framework's `DormandPrinceRK45Integrator.step` claims order 5 (the
-propagated 5th-order solution of the embedded 4(5) pair). On the
-linear ODE `dx/dt = -x` the single-step error scales as **O(dt)** (slope
-~1.0), not O(dt^5). Empirical measurement:
+propagated 5th-order solution of the embedded 4(5) pair). Wave 18 P1
+discovered the bug; Wave 20 P1 fixed it.
 
-| dt | err |
+**Pre-Wave-20 bug**: the propagated 5th-order weights
+``[35/384, 500/1113, 125/192, -2187/6784, 11/84, 0]`` were paired
+naively with stages ``k1..k6``. This violates the order-2 condition
+``sum(b_i c_i) = 1/2`` (numerical ``0.144``) and silently degrades
+the method to forward-Euler order 1. Empirical single-step error on
+``dx/dt = -x``:
+
+| dt | err (broken) |
 |---|---|
 | 1.0 | 2.02e-1 |
 | 0.5 | 6.80e-2 |
@@ -98,15 +105,23 @@ linear ODE `dx/dt = -x` the single-step error scales as **O(dt)** (slope
 | 0.01 | 3.55e-5 |
 | 0.001 | 3.56e-7 |
 
-The error/dy^dt ratio is constant (~0.36), which is the forward-Euler
-signature, not RK45. The Butcher tableau coefficients in the source
-file match the standard DOPRI5 values (verified by manual computation),
-so the bug is in the step assembly (likely the propagated state
-computation or a sign error in one of the stages).
+The ``err/dt`` ratio is constant (~0.36), which is the
+forward-Euler signature.
 
-DOPRI5 is excluded from the Wave 18 P1 convergence suite. The bug is
-**not fixed here** (verification scope only); a follow-up task should
-diagnose the step assembly and patch the integrator.
+**Wave 20 P1 fix**: align the weights with the scipy ``RK45``
+verified-order-5 formulation: ``b5 = [35/384, 0, 500/1113, 125/192,
+-2187/6784, 11/84]``. The trailing ``0`` at position 1 (paired with
+``k2`` at ``c=1/5``) makes ``sum(b_i c_i) = 1/2`` exactly and
+restores the order-5 contract. Side-effect corrections: the
+``b_err`` array had sign errors on ``b_err[3]`` and ``b_err[4]``
+(used ``+`` instead of ``-``); both fixed; the array was extended
+to 7 entries to cover the FSAL ``k7`` contribution
+(``b_err[6] = -1/40``).
+
+DOPRI5 is now covered by
+`tests/test_convergence/test_rk45_convergence.py` (added in
+Wave 20 P1), with order-5 slopes verified on linear/nonlinear/stiff
+drift at NFE = (10, 20, 40, 80, 160) within ±0.2 tolerance.
 
 ### `DPMSolverIntegrator` — specialized diffusion-ODE solver
 

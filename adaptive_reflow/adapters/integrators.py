@@ -182,21 +182,36 @@ class DormandPrinceRK45Integrator:
             11.0 / 84.0,
         ]
         # 5th-order solution weights.
+        # NOTE: the 0 at position 1 is essential — it makes the
+        # second-stage evaluation ``k2`` (at ``c=1/5``) not contribute
+        # directly to the propagated solution while still feeding
+        # into ``k3..k6`` via the ``a_ij`` rows above. The canonical
+        # "Wikipedia" DOPRI5 tableau lists the same five non-zero
+        # weights (``35/384, 500/1113, 125/192, -2187/6784, 11/84``)
+        # but unshifted; pairing those with ``k1..k6`` violates the
+        # order-2 condition ``sum(b_i c_i) = 1/2`` (numerical
+        # ``0.144``) and silently degrades the method to forward-
+        # Euler order 1. The scipy ``RK45`` class uses the
+        # formulation below and is verified to converge at order 5.
         b5 = [
             35.0 / 384.0,
+            0.0,
             500.0 / 1113.0,
             125.0 / 192.0,
             -2187.0 / 6784.0,
             11.0 / 84.0,
-            0.0,
         ]
-        # Error estimator (difference of 4th and 5th order).
+        # Error estimator (difference of 4th and 5th order, applied
+        # to ``k1..k7``). The 7th entry uses ``b7' = 1/40`` from
+        # the FSAL extension (``k7 = f(t+h, y5)``) and ``b7 = 0`` for
+        # the 5th-order solution, giving ``b_err[6] = 1/40``.
         b_err = [
             35.0 / 384.0 - 5179.0 / 57600.0,
+            0.0 - 0.0,
             500.0 / 1113.0 - 7571.0 / 16695.0,
             125.0 / 192.0 - 393.0 / 640.0,
-            -2187.0 / 6784.0 + (-92097.0 / 339200.0),
-            11.0 / 84.0 + 187.0 / 2100.0,
+            -2187.0 / 6784.0 - (-92097.0 / 339200.0),
+            11.0 / 84.0 - 187.0 / 2100.0,
             0.0 - 1.0 / 40.0,
         ]
         k1 = np.asarray(velocity(t, y), dtype=np.float64)

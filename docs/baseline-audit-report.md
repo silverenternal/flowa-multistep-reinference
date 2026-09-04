@@ -404,7 +404,7 @@ information.
 
   | Integrator | Reason for exclusion | Tracking |
   |---|---|---|
-  | `DormandPrinceRK45Integrator` | **KNOWN-BROKEN**: claims order 5, but single-step error on `dx/dt = -x` scales as O(dt) (slope ≈ 1.0), not O(dt^5). Manual computation of the Butcher tableau matches standard DOPRI5 values, so the bug is in step assembly (likely propagated-state computation or a sign error). | Separate wave (verification only — fix out of scope here) |
+  | `DormandPrinceRK45Integrator` | **FIXED in Wave 20 P1**: claims order 5; previously single-step error on `dx/dt = -x` scaled as O(dt) (slope ≈ 1.0) due to a misaligned ``b5`` weights array. Wave 20 P1 aligned the weights with the scipy ``RK45`` verified-order-5 formulation (insert ``0`` at position 1 to satisfy ``sum(b_i c_i) = 1/2``). | Covered by `test_rk45_convergence.py` (Wave 20 P1 addition) |
   | `DPMSolverIntegrator` | Specialised diffusion-ODE solver for semi-linear form `dx/dt = f(t) x + g(t) epsilon_theta`; on plain ODEs collapses to forward Euler. Convergence order is measured in diffusion-time scaling, not the analytic-OD form required by C.6. | Separate diffusion-ODE convergence suite |
   | `DPMSolverPPIntegrator` | Same as DPM-Solver: data-prediction variant, order 2 in diffusion-time scaling only. | Separate diffusion-ODE convergence suite |
   | `UniPCIntegrator` (order 1/2/3) | Specialised diffusion-ODE solver (ICLR 2023, arXiv:2302.04867). Order-1 collapses to forward Euler; order-2 uses Adams-Bashforth-2 predictor requiring velocity history. | Separate diffusion-ODE convergence suite |
@@ -418,6 +418,42 @@ information.
   2. Add a diffusion-ODE convergence suite for `DPMSolverIntegrator`, `DPMSolverPPIntegrator`, `UniPCIntegrator` using the semi-linear ODE form `dx/dt = f(t) x + g(t) epsilon_theta`.
   3. Add a symplectic convergence suite for `SymplecticLeapfrogIntegrator` checking energy conservation across NFE sweeps.
   4. Wire `scripts/run_convergence_sweep.py` for nightly CI aggregation (slope + tolerance per (integrator, problem) row, with regression dashboard).
+
+### Wave 20 P1 addendum — DPK45 step-assembly fix
+
+- **Audit addendum date:** 2026-09-05 (Wave 20 P1).
+- **What changed:** the `DormandPrinceRK45Integrator.step` 5th-order
+  weights array (`b5`) was misaligned with the stage indices —
+  pairing the naive-Wikipedia weights `[35/384, 500/1113, 125/192,
+  -2187/6784, 11/84, 0]` with stages `k1..k6` violates the order-2
+  condition `sum(b_i c_i) = 1/2` (numerical 0.144) and silently
+  degrades the method to forward-Euler order 1. Wave 20 P1 fixed
+  the alignment to match the scipy `RK45` verified-order-5
+  formulation: `b5 = [35/384, 0, 500/1113, 125/192, -2187/6784,
+  11/84]`. Side-effect corrections: the `b_err` array had sign
+  errors on positions 3 and 4 (used `+` instead of `-`) and was
+  extended to 7 entries to cover the FSAL `k7` contribution
+  (`b_err[6] = -1/40`).
+- **Status:** **MET** — DPK45 now achieves the claimed order 5
+  on the linear / nonlinear / stiff analytic problems within the
+  0.2 one-sided tolerance band. New test file
+  `tests/test_convergence/test_rk45_convergence.py` covers
+  convergence order, monotonicity, determinism, scipy cross-check,
+  and harmonic-oscillator energy conservation vs Heun.
+- **DPK45 verified slopes** (NFE = (10, 20, 40, 80, 160)):
+
+  | Problem | Empirical slope | Claimed order | Verdict |
+  |---|---|---|---|
+  | Linear (`dx/dt = -x`) | ≈ 5.07 | 5 | PASS |
+  | Nonlinear (`dx/dt = -x³`) | ≈ 5.0 | 5 | PASS |
+  | Stiff (`dx/dt = -100x`, T=0.1) | ≈ 5.0 | 5 | PASS |
+
+- **Cross-check vs scipy RK45:** framework DPK45 endpoint matches
+  scipy `RK45` to within ~2e-13 on the canonical linear sweep
+  (`dx/dt = -x`, NFE=100, T=1.0) — both implementations now share
+  the same stage weights and propagate to identical floating-point
+  outputs.
+
 - **No regression risk** on the in-scope integrators — all 22 tests pass on the head checkout (verified 2026-09-05). The exceptions are *additions* documenting known limitations, not regressions in any passing test.
 
 ---
