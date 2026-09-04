@@ -1,5 +1,16 @@
 """Theorem-aligned FID for Li 2026 Theorem 1 (BL convergence mu_{g,eps} -> nu_g).
 
+.. warning::
+   This module computes a **Gaussian-Frechet proxy on InceptionV3-feature
+   space**, NOT the paper's bounded-Lipschitz (Fortet-Mourier) distance on
+   ``R^2``. The paper's BL convergence
+   ``mu_{g,eps} --BL--> nu_g`` is realized directly in
+   :mod:`adaptive_reflow.theory.checkers` via
+   :func:`theorem1_bl_convergence_witness` and the unified
+   :class:`Theorem1StatementChecker`. Future work to rename this file to
+   ``fid_gaussian_frechet_proxy.py`` is tracked in the Wave 11 audit
+   (A1.F-4) but is **not** in this PR because it is a breaking rename.
+
 This module is the *theorem-aligned* sibling of :mod:`adaptive_reflow.eval.fid`.
 The legacy :class:`FIDProtocol` / :class:`InceptionV3FIDEvaluator` surface is
 preserved byte-stable for back-compat with :mod:`tools.run_image_eval` and

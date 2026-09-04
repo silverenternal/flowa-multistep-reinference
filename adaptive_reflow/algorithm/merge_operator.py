@@ -113,6 +113,15 @@ MERGE_FLOOR_OUT_OF_RANGE: str = "merge_floor_out_of_range"
 #: envelope exceeded the schedule-supplied floor.
 MERGE_PAPER_QUANTITY_FLOOR_LIFTED: str = "merge_paper_quantity_floor_lifted"
 
+#: Default ``e_rho`` value matching paper Lemma 5 with
+#: ``rho = eta = 0.1``:
+#: ``e_rho = min(rho^4, (1-rho)^2 * eta^2) = min(1e-4, 8.1e-3) = 1e-4``.
+#: Used as the default paper-uplift-27 floor by adapters that do not
+#: override it (e.g. ``rectified_flow_cifar``). Wave 11 lift: replaces
+#: the inline ``_paper_uplift_27_e_rho = 1e-4`` constant in adapter
+#: code (A4.F12).
+PAPER_UPLIFT_27_DEFAULT_E_RHO: float = 1e-4
+
 #: Error code raised when the orchestrator-driven merge path is
 #: asked to merge without supplying ``prev``. The schedule's
 #: ``n_cap`` is the cap; the prev must come from the previous
@@ -885,6 +894,7 @@ __all__ = [
     "MERGE_NONFINITE_PREV_CLIPPED",
     "MERGE_PAPER_QUANTITY_FLOOR_LIFTED",
     "MERGE_PREV_ANCHORED_TO_LAST_EMITTED",
+    "PAPER_UPLIFT_27_DEFAULT_E_RHO",
     "MeanFlowMergeOperator",
     "MergeAuthorityError",
     "MergeOperatorProtocol",
