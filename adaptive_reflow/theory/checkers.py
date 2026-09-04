@@ -1,4 +1,4 @@
-"""JMAA theorem-statement checkers (Wave 11 addition).
+"""JMAA theorem-statement checkers (Wave 11 addition, Wave 14 A repointed).
 
 This module exposes the unified ``Theorem1Statement`` dataclass and
 its checker, plus the Lemma 2 LHS sheet-tube evidence evaluator and a
@@ -10,28 +10,75 @@ planar BL-convergence witness.
   and ``algorithm.dynamic_noise_bias.Theorem1DynamicNoiseBias`` (b)+(c).
 
 * :class:`Theorem1StatementChecker` -- emits ``Theorem1Statement``
-  given ``g``, ``eps_sequence``, and a :class:`PaperQuantitiesSnapshot`.
+  given ``g``, ``eps_sequence``, and a :class:`PaperQuantitiesSnapshot``.
+  The ``bl_distance`` field is the true ``R^2`` planar BL distance
+  (Wave 14 A repointing): the checker now consumes
+  :func:`planar_bl_convergence_witness` rather than the legacy 1-D
+  ``y=0`` projection + rejection sampler.
 
 * :func:`sheet_tube_evidence` -- Lemma 2 LHS ``eps^{-1} int_T phi p_eps``
   via 2D-grid Monte-Carlo, compared against the paper RHS
   ``(2*pi)^{-1/2} int_R phi(s, 0) e^{-s^2/2} / sqrt(1+g(s)^2) ds``.
 
 * :class:`LipschitzConvergenceReport` -- report of
-  ``BL(mu_{g,eps_k}, nu_g) -> 0`` over ``eps_sequence``.
+  ``BL(mu_{g,eps_k}, nu_g) -> 0`` over ``eps_sequence``. Wave 14 A:
+  this dataclass is preserved for callers but its values are now
+  sourced from :func:`planar_bl_convergence_witness` (true ``R^2``).
 
-Stdlib-only.
+Stdlib-only at the checker surface; the planar witness itself uses
+``numpy`` + ``scipy.optimize`` (loaded lazily).
 """
 from __future__ import annotations
 
+import importlib.util
 import math
+import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from adaptive_reflow.theory.paper_quantities import (
     paper_selection_ratio,
     sheet_evidence_A,
 )
+
+if TYPE_CHECKING:  # pragma: no cover -- typing-only import
+    from adaptive_reflow.eval.lipschitz_diagnostic import PlanarBLConvergenceReport
+
+
+# Wave 14 A: lazy loader for ``adaptive_reflow.eval.lipschitz_diagnostic``.
+# The package's ``__init__`` pulls optional chemistry deps (rdkit) that
+# are not vendored in every sandbox. We bypass ``__init__`` entirely by
+# loading the submodule file directly via ``importlib.util``, so this
+# module stays importable in environments without rdkit.
+_PLANAR_BL_DIAG_PATH = (
+    Path(__file__).resolve().parent.parent / "eval" / "lipschitz_diagnostic.py"
+)
+
+
+def _load_planar_bl_witness():
+    """Return the ``planar_bl_convergence_witness`` symbol from the
+    lipschitz_diagnostic submodule, bypassing the eval package's
+    ``__init__``.
+    """
+    cached = sys.modules.get("_ar_planar_bl_diag_bypass_init")
+    if cached is not None:
+        return cached.planar_bl_convergence_witness
+    spec = importlib.util.spec_from_file_location(
+        "_ar_planar_bl_diag_bypass_init",
+        str(_PLANAR_BL_DIAG_PATH),
+    )
+    if spec is None or spec.loader is None:  # pragma: no cover -- importable env
+        raise ImportError(
+            f"could not load planar_bl_convergence_witness from "
+            f"{_PLANAR_BL_DIAG_PATH!s}"
+        )
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod.planar_bl_convergence_witness
+
 
 __all__ = [
     "Theorem1Statement",
@@ -40,6 +87,7 @@ __all__ = [
     "sheet_tube_evidence",
     "LipschitzConvergenceReport",
     "theorem1_bl_convergence_witness",
+    "PlanarBLConvergenceReport",
 ]
 
 
@@ -105,11 +153,14 @@ class Theorem1StatementChecker:
       evidence floor from :func:`sheet_evidence_A`).
     * ``root_cell_mass`` = the paper ``C_g * B_g * eps^2`` per-round
       cell mass (``cell_C * packing_B * eps ** 2``).
-    * ``bl_distance`` = a planar BL-distance witness computed from
-      :func:`theorem1_bl_convergence_witness` over the supplied
-      ``eps_sequence``.
+    * ``bl_distance`` = the true ``R^2`` planar BL distance at
+      ``eps_min = min(eps_sequence)``, computed by
+      :func:`planar_bl_convergence_witness` over the supplied
+      ``eps_sequence`` (Wave 14 A repointing). The previous 1-D
+      ``y=0`` projection + rejection sampler is removed.
 
-    Stdlib-only; pure modulo ``g``.
+    Stdlib-only at this surface; the planar witness uses ``numpy`` +
+    ``scipy.optimize`` internally.
     """
 
     FAMILY: str = "theorem1"
@@ -119,6 +170,9 @@ class Theorem1StatementChecker:
         g: Callable[[float], float],
         eps_sequence: Sequence[float],
         paper_qty: Any,
+        *,
+        n_samples: int = 512,
+        seed: int = 0,
     ) -> Theorem1Statement:
         """Compute the unified Theorem 1 statement.
 
@@ -134,11 +188,18 @@ class Theorem1StatementChecker:
         paper_qty
             A :class:`adaptive_reflow.contracts.dynamic_noise_bias.PaperQuantitiesSnapshot`
             carrying ``sheet_A, packing_B, cell_C, exterior_gap_e_rho``.
+        n_samples
+            Number of points per planar measure (forwarded to
+            :func:`planar_bl_convergence_witness`).
+        seed
+            RNG seed for the planar witness.
 
         Returns
         -------
         Theorem1Statement
             Immutable dataclass with all three claims populated.
+            ``bl_distance`` is the planar BL distance at ``eps_min``
+            on the ambient ``R^2`` (the paper's metric).
         """
         if not eps_sequence:
             raise ValueError("eps_sequence must be non-empty")
@@ -157,9 +218,18 @@ class Theorem1StatementChecker:
             paper_selection_ratio(sheet_A, packing_B, cell_C, eps_min)
         )
 
-        # bl_distance via the planar witness over the full sequence.
-        report = theorem1_bl_convergence_witness(g, eps_sequence)
-        bl_distance = float(report.bl_distance_at_eps_min)
+        # bl_distance via the true R^2 planar witness over the supplied
+        # sequence (Wave 14 A repointing: no more 1-D y=0 projection).
+        # The canonical value is the planar BL distance at the smallest
+        # eps -- where Theorem 1's O(eps) bound is tightest.
+        # The witness is loaded via ``_load_planar_bl_witness`` (bypasses
+        # ``adaptive_reflow.eval.__init__`` which pulls rdkit).
+        _planar_bl_witness = _load_planar_bl_witness()
+        planar_report = _planar_bl_witness(
+            g, list(eps_sequence), n_samples=int(n_samples), seed=int(seed),
+        )
+        idx_min = list(planar_report.eps_sequence).index(eps_min)
+        bl_distance = float(planar_report.bl_distances[idx_min])
 
         return Theorem1Statement.from_parts(
             bl_distance=bl_distance,
@@ -299,6 +369,14 @@ class LipschitzConvergenceReport:
       trail).
     * ``monotone`` -- ``True`` iff ``bl_distances`` is monotone
       decreasing (a sanity check for the audit).
+
+    .. note::
+       **Wave 14 A repointing:** the values here are now sourced from
+       :func:`planar_bl_convergence_witness` (true ``R^2`` bounded-
+       Lipschitz). The previous 1-D ``y=0`` projection + rejection
+       sampler is removed; use
+       :func:`planar_bl_convergence_witness` directly for the full
+       planar report (``mc_floor``, ``within_bound``, ...).
     """
 
     bl_distance_at_eps_min: float
@@ -311,95 +389,50 @@ def theorem1_bl_convergence_witness(
     g: Callable[[float], float],
     eps_sequence: Sequence[float],
     *,
-    n_samples: int = 1024,
+    n_samples: int = 512,
     seed: int = 0,
 ) -> LipschitzConvergenceReport:
     """Compute ``BL(mu_{g,eps_k}, nu_g)`` for each ``eps_k`` in ``eps_sequence``.
 
-    Pure stdlib Monte-Carlo: for each ``eps_k`` we draw ``n_samples``
-    points from the unnormalized posterior on ``R^2`` (truncated to
-    a finite box ``[-K, K]^2`` with ``K = 3 * eps``), reject any
-    point with ``|F_g| > eps``, then compare against the paper's
-    limiting density ``nu_g`` via 1-Wasserstein over sorted order
-    statistics (a 1-D BL bound for any rotationally-symmetric sample
-    family).
+    **Wave 14 A repointing:** this function is now a thin wrapper that
+    forwards to :func:`planar_bl_convergence_witness` -- the paper's
+    bounded-Lipschitz distance on the ambient ``R^2``, computed via
+    the Hungarian assignment on ``n_samples``-point empirical measures.
+    The previous stdlib 1-D ``y=0`` projection + rejection sampler is
+    removed; the planar witness gives the true ``R^2`` BL distance
+    throughout, which is the metric the paper's Theorem 1 is stated on.
 
-    Stdlib-only.
+    The dataclass shape (:class:`LipschitzConvergenceReport` with
+    ``bl_distance_at_eps_min``, ``bl_distances``, ``eps_sequence``,
+    ``monotone``) is preserved for byte-stable callers; for the full
+    planar report (``mc_floor``, ``within_bound``, ...) call
+    :func:`planar_bl_convergence_witness` directly.
+
+    The wrapper relies on ``numpy`` + ``scipy.optimize`` (loaded lazily
+    inside the planar witness). Stdlib-only callers that previously
+    relied on the rejection-sampler path must either accept the new
+    dependency or call the wrapper only on a Python with numpy/scipy
+    installed.
     """
     if not eps_sequence:
         raise ValueError("eps_sequence must be non-empty")
-    if n_samples < 32:
-        raise ValueError("n_samples must be >= 32 for a meaningful BL estimate")
 
-    import random
-
-    rng = random.Random(int(seed))
-    eps_list = [float(e) for e in eps_sequence]
-    bl_list: list[float] = []
-
-    # Reference nu_g: density proportional to e^{-s^2/2}/sqrt(1+g(s)^2)
-    # (the 1-D marginal along y = 0). Draw reference samples by
-    # rejection-sampling from a unit Gaussian envelope.
-    nu_g_ref: list[float] = []
-    envelope_norm = 1.0 / math.sqrt(2.0 * math.pi)
-    K = max(8.0, max(eps_list) * 3.0 + 2.0)
-    while len(nu_g_ref) < n_samples:
-        s = rng.gauss(0.0, 1.0)
-        if abs(s) > K:
-            continue
-        g_val = float(g(s))
-        target = math.exp(-0.5 * s * s) / math.sqrt(1.0 + g_val * g_val)
-        if rng.random() * envelope_norm <= target:
-            nu_g_ref.append(s)
-    nu_g_ref.sort()
-
-    for eps in eps_list:
-        K_eps = max(3.0 * eps, 1.0)
-        # Sample mu_{g,eps} on R^2 (truncated to [-K_eps, K_eps]^2).
-        mu_samples: list[float] = []
-        attempts = 0
-        target = n_samples
-        while len(mu_samples) < target and attempts < n_samples * 200:
-            attempts += 1
-            x = rng.gauss(0.0, 1.0)
-            y = rng.uniform(-0.5, 0.5)
-            if abs(x) > K_eps or abs(y) > 0.5:
-                continue
-            F_g = y - float(g(x))
-            if abs(F_g) > eps:
-                # Outside the high-density region: the unnormalized
-                # posterior is exp(-F_g^2 / (2 eps^2)) which is
-                # negligible for |F_g| > eps.
-                if rng.random() > math.exp(
-                    -0.5 * (F_g * F_g) / (eps * eps) + 0.5
-                ):
-                    continue
-            # Project to y=0 marginal (the BL distance is rotation-
-            # invariant on the sheet; the 1-D marginal along y=0
-            # captures the paper's nu_g shape).
-            mu_samples.append(x)
-        mu_samples.sort()
-
-        # 1-Wasserstein over sorted order stats: mean of |mu_i - nu_i|
-        # truncated at bound=2 (paper convention ||f||_inf <= 1).
-        m = min(len(mu_samples), len(nu_g_ref))
-        if m == 0:
-            bl_list.append(float("inf"))
-            continue
-        diffs = [
-            min(abs(mu_samples[i] - nu_g_ref[i]), 2.0) for i in range(m)
-        ]
-        bl = sum(diffs) / m
-        bl_list.append(float(bl))
-
-    monotone = all(bl_list[i] >= bl_list[i + 1] for i in range(len(bl_list) - 1))
+    # The witness is loaded via ``_load_planar_bl_witness`` (bypasses
+    # ``adaptive_reflow.eval.__init__`` which pulls rdkit).
+    planar = _load_planar_bl_witness()(
+        g,
+        [float(e) for e in eps_sequence],
+        n_samples=int(n_samples),
+        seed=int(seed),
+    )
+    eps_list = list(planar.eps_sequence)
+    bl_list = list(planar.bl_distances)
     eps_min = min(eps_list)
     eps_min_idx = eps_list.index(eps_min)
     bl_at_min = bl_list[eps_min_idx]
-
     return LipschitzConvergenceReport(
         bl_distance_at_eps_min=float(bl_at_min),
-        bl_distances=tuple(bl_list),
-        eps_sequence=tuple(eps_list),
-        monotone=bool(monotone),
+        bl_distances=tuple(float(v) for v in bl_list),
+        eps_sequence=tuple(float(v) for v in eps_list),
+        monotone=bool(planar.monotone),
     )

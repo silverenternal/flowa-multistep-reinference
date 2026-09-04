@@ -1,4 +1,4 @@
-"""Conformance tests for the unified Theorem1Statement + emit_theorem1_statement (Wave 12 A1-high-1).
+"""Conformance tests for the unified Theorem1Statement + emit_theorem1_statement (Wave 12 A1-high-1, Wave 14 A repointed).
 
 Closes the audit finding that Paper Theorem 1 (line 87-92) was split across
 two non-cooperating modules:
@@ -12,7 +12,12 @@ function now expose a SINGLE module that emits a fully populated
 ``Theorem1Statement`` carrying all three claims together
 (``bl_distance``, ``root_cell_mass``, ``posterior_evidence``).
 
-Stdlib-only tests; no torch, no numpy.
+**Wave 14 A repointing:** ``bl_distance`` is now sourced from
+:func:`planar_bl_convergence_witness` -- the true ``R^2`` bounded-
+Lipschitz distance on the ambient plane. The previous 1-D ``y=0``
+projection + rejection sampler is removed throughout.
+
+Tests rely on ``numpy`` + ``scipy`` (the planar witness's deps).
 """
 from __future__ import annotations
 
@@ -135,6 +140,97 @@ def test_emit_theorem1_statement_bl_distance_decreases_with_eps():
     # The smaller-eps BL distance is <= the larger-eps one in expectation
     # (Theorem 1: monotone decrease as eps -> 0). Allow equality.
     assert stmt_small.bl_distance <= stmt_large.bl_distance + 0.05
+
+
+def test_emit_theorem1_statement_bl_distance_is_planar_R2():
+    """Wave 14 A: bl_distance matches planar_bl_convergence_witness at eps_min.
+
+    Locks the repointing: the unified emitter's ``bl_distance`` is the
+    value the planar witness reports at the supplied ``eps``, NOT the
+    legacy 1-D ``y=0`` projection. Verified by independently running
+    the planar witness over the bracketed ``eps`` sequence and asserting
+    agreement.
+
+    The witness is loaded via the production bypass helper so this test
+    stays runnable in environments where ``adaptive_reflow.eval``'s
+    ``__init__`` would pull optional chemistry deps (e.g. rdkit).
+    """
+    from adaptive_reflow.theory.checkers import _load_planar_bl_witness
+
+    planar_bl_convergence_witness = _load_planar_bl_witness()
+
+    g = _profile_g
+    eps = 0.05
+    n_samples = 512
+    seed = 42
+    eps_hi = eps * 2.0  # = 0.1
+    eps_lo = eps
+    stmt = emit_theorem1_statement(
+        g=g, eps=eps, d=1.0, c=1.0, rho=0.1, eta=0.1,
+        n_samples=n_samples, seed=seed,
+    )
+    planar = planar_bl_convergence_witness(
+        g, (eps_hi, eps_lo), n_samples=n_samples, seed=seed,
+    )
+    eps_list = list(planar.eps_sequence)
+    bl_list = list(planar.bl_distances)
+    expected_bl = bl_list[eps_list.index(eps_lo)]
+    # The emitter takes the eps_min entry (here = eps_lo).
+    assert abs(stmt.bl_distance - expected_bl) < 1e-12
+    # And it must equal the planar witness's within_bound check
+    # candidate for the bracket, modulo the MC noise floor.
+    assert math.isfinite(stmt.bl_distance)
+    assert stmt.bl_distance >= 0.0
+
+
+def test_theorem1_statement_checker_bl_distance_is_planar_R2():
+    """Wave 14 A: Theorem1StatementChecker.check uses planar_bl_convergence_witness.
+
+    The checker consumes the planar witness over the supplied
+    ``eps_sequence`` and takes ``bl_distances[idx_min]`` as the
+    canonical Theorem1Statement.bl_distance. Verified by direct
+    comparison (witness loaded via the production bypass helper so the
+    test runs without rdkit).
+    """
+    from adaptive_reflow.contracts.dynamic_noise_bias import (
+        PaperQuantitiesSnapshot,
+    )
+    from adaptive_reflow.theory.checkers import (
+        Theorem1StatementChecker,
+        _load_planar_bl_witness,
+    )
+    from adaptive_reflow.theory.paper_quantities import (
+        per_cell_coefficient_C,
+        root_cell_packing_B,
+        sheet_evidence_A,
+    )
+
+    planar_bl_convergence_witness = _load_planar_bl_witness()
+
+    g = _profile_g
+    pqty = PaperQuantitiesSnapshot(
+        sheet_A=sheet_evidence_A(g),
+        packing_B=root_cell_packing_B(g),
+        cell_C=per_cell_coefficient_C(rho=0.1, c=1.0),
+        exterior_gap_e_rho=1e-4,
+    )
+    eps_sequence = [0.5, 0.1, 0.05, 0.01]
+    checker = Theorem1StatementChecker()
+    stmt = checker.check(
+        g, eps_sequence=eps_sequence, paper_qty=pqty,
+        n_samples=512, seed=42,
+    )
+    planar = planar_bl_convergence_witness(
+        g, eps_sequence, n_samples=512, seed=42,
+    )
+    eps_min = min(eps_sequence)
+    eps_list = list(planar.eps_sequence)
+    expected = planar.bl_distances[eps_list.index(eps_min)]
+    # The checker must consume the planar witness at eps_min.
+    assert abs(stmt.bl_distance - expected) < 1e-12
+    # And it must be finite / non-negative (post-init invariants).
+    assert math.isfinite(stmt.bl_distance)
+    assert stmt.bl_distance >= 0.0
 
 
 def test_emit_theorem1_statement_root_cell_mass_is_paper_formula():
