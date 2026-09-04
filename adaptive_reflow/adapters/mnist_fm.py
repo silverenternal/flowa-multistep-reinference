@@ -33,7 +33,7 @@ from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -113,6 +113,16 @@ MNIST_FM_DEFAULT_BASE_CHANNELS: int = 16
 #: Public re-export of the flat 784-dim surface alias (mirrors the
 #: trainer module's :data:`MNIST_FLAT_DIM`).
 MNIST_FM_FLAT_DIM: int = MNIST_FLAT_DIM
+
+# Default Dormand-Prince RK45 tolerances (P0-2 — configurable rtol/atol/max_steps
+# per adapter, mirroring :data:`twodim_fm.TWODIM_FM_DEFAULT_RTOL`).
+MNIST_FM_DEFAULT_RTOL: float = 1e-3
+MNIST_FM_DEFAULT_ATOL: float = 1e-4
+MNIST_FM_DEFAULT_MAX_STEPS: int = 1000
+
+# Integrator method literal (P0-2 — mirrors :data:`twodim_fm.IntegratorMethod`
+# but scoped to the two integrators the MNIST adapter actually exposes today).
+MnistFmIntegratorMethod = Literal["rk4", "dormand_prince"]
 
 
 # ---------------------------------------------------------------------------
@@ -232,6 +242,149 @@ def _batched_integrate_rk4(
     return np.asarray(x_cur, dtype=np.float64).reshape(x0.shape[0], MNIST_FLAT_DIM)
 
 
+def _integrate_dormand_prince(
+    weights: list[ArrayF64],
+    x0: ArrayF64,
+    t0: float,
+    t1: float,
+    *,
+    max_steps: int = 1000,
+    rtol: float = 1e-3,
+    atol: float = 1e-4,
+) -> ArrayF64:
+    """Adaptive Dormand-Prince (RK45) integrator over the 784-dim UNet velocity field.
+
+    Mirrors :func:`adaptive_reflow.adapters.twodim_fm._integrate_dormand_prince`
+    byte-for-byte in structure (Dormand-Prince 1980 Butcher tableau; safety
+    factor 0.9; max grow 5x; min shrink 0.2x), but the velocity call is the
+    UNet ``_unet_evaluate(weights, x, t)`` and the per-step clamp range is
+    ``[-1, 1]^784`` (MNIST pixel domain) rather than ``[-5, 5]^2``.
+    """
+    x0_arr = np.asarray(x0, dtype=np.float64).reshape(MNIST_FLAT_DIM)
+    t_start = float(t0)
+    t_end = float(t1)
+    if t_end <= t_start:
+        raise ValueError("t1_must_exceed_t0")
+    if int(max_steps) <= 0:
+        raise ValueError("max_steps_must_be_positive")
+
+    # Standard Dormand-Prince RK45 coefficients (Dormand & Prince 1980).
+    c2, c3, c4, c5 = 1.0 / 5.0, 3.0 / 10.0, 4.0 / 5.0, 8.0 / 9.0
+    a21 = 1.0 / 5.0
+    a31, a32 = 3.0 / 40.0, 9.0 / 40.0
+    a41, a42, a43 = 44.0 / 45.0, -56.0 / 15.0, 32.0 / 9.0
+    a51, a52, a53, a54 = (
+        19372.0 / 6561.0, -25360.0 / 2187.0, 64448.0 / 6561.0, -212.0 / 729.0
+    )
+    a61, a62, a63, a64, a65 = (
+        9017.0 / 3168.0,
+        -355.0 / 33.0,
+        46732.0 / 5247.0,
+        49.0 / 176.0,
+        -5103.0 / 18656.0,
+    )
+    a71, a72, a73, a74, a75, a76 = (
+        35.0 / 384.0,
+        0.0,
+        500.0 / 1113.0,
+        125.0 / 192.0,
+        -2187.0 / 6784.0,
+        11.0 / 84.0,
+    )
+    b1, b3, b4, b5, b6 = (
+        35.0 / 384.0,
+        500.0 / 1113.0,
+        125.0 / 192.0,
+        -2187.0 / 6784.0,
+        11.0 / 84.0,
+    )
+    # Embedded (lower-order 4th) coefficients for error estimation.
+    b1s, b3s, b4s, b5s, b6s, b7s = (
+        5179.0 / 57600.0,
+        7571.0 / 16695.0,
+        393.0 / 640.0,
+        -92097.0 / 339200.0,
+        187.0 / 2100.0,
+        1.0 / 40.0,
+    )
+
+    x = x0_arr.copy()
+    t = t_start
+    h = min(1e-3, (t_end - t_start) / float(max_steps))
+    traj = [x.copy()]
+    steps = 0
+
+    def _clip(arr: ArrayF64) -> ArrayF64:
+        return np.clip(arr, -MNIST_FM_CLAMP, MNIST_FM_CLAMP)
+
+    while t < t_end and steps < max_steps:
+        if t + h > t_end:
+            h = t_end - t
+        k1 = _clip(_unet_evaluate(weights, x, t))
+        k2 = _clip(_unet_evaluate(weights, x + h * a21 * k1, t + c2 * h))
+        k3 = _clip(_unet_evaluate(weights, x + h * (a31 * k1 + a32 * k2), t + c3 * h))
+        k4 = _clip(
+            _unet_evaluate(weights, x + h * (a41 * k1 + a42 * k2 + a43 * k3), t + c4 * h)
+        )
+        k5 = _clip(
+            _unet_evaluate(
+                weights,
+                x + h * (a51 * k1 + a52 * k2 + a53 * k3 + a54 * k4),
+                t + c5 * h,
+            )
+        )
+        k6 = _clip(
+            _unet_evaluate(
+                weights,
+                x + h * (a61 * k1 + a62 * k2 + a63 * k3 + a64 * k4 + a65 * k5),
+                t + h,
+            )
+        )
+        k7 = _clip(
+            _unet_evaluate(
+                weights,
+                x + h * (a71 * k1 + a72 * k2 + a73 * k3 + a74 * k4 + a75 * k5 + a76 * k6),
+                t + h,
+            )
+        )
+        x_new_5 = x + h * (b1 * k1 + b3 * k3 + b4 * k4 + b5 * k5 + b6 * k6)
+        x_new_4 = x + h * (b1s * k1 + b3s * k3 + b4s * k4 + b5s * k5 + b6s * k6 + b7s * k7)
+        err_vec = x_new_5 - x_new_4
+        err_norm = float(np.max(np.abs(err_vec))) if err_vec.size else 0.0
+        x_norm = float(np.max(np.abs(x_new_5))) if x_new_5.size else 0.0
+        tol = atol + rtol * x_norm
+        if err_norm <= tol or h <= 1e-12:
+            x = _clip(x_new_5)
+            t = t + h
+            traj.append(x.copy())
+            steps += 1
+            if err_norm > 0.0:
+                factor = min(5.0, max(0.2, 0.9 * (tol / max(err_norm, 1e-30)) ** 0.2))
+                h = min(h * factor, t_end - t)
+        else:
+            factor = max(0.2, 0.9 * (tol / max(err_norm, 1e-30)) ** 0.25)
+            h = max(h * factor, 1e-12)
+    return np.asarray(traj, dtype=np.float64)
+
+
+def _random_init_weights(*, base_channels: int, seed: int) -> list[ArrayF64]:
+    """Kaiming-uniform init of the velocity UNet for the random-init escape hatch.
+
+    Mirrors :func:`adaptive_reflow.adapters.twodim_fm._random_init_weights`
+    so the wider-base_channels runtime path is byte-comparable to the
+    trainer's random-init baseline. Used when ``init_random_weights=True``
+    on :class:`MnistFmAdapter`'s constructor (no ``.npz`` file required).
+    """
+    if int(base_channels) <= 0:
+        raise ValueError("base_channels_must_be_positive")
+    if int(base_channels) % 8 != 0:
+        raise ValueError("base_channels_must_be_multiple_of_gn_groups")
+    from .mnist_fm_train import velocity_field_unet_init
+
+    rng = np.random.default_rng(int(seed))
+    return list(velocity_field_unet_init(rng, base_channels=int(base_channels)))
+
+
 # ---------------------------------------------------------------------------
 # Adapter
 # ---------------------------------------------------------------------------
@@ -264,18 +417,46 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         self,
         *,
         weights_path: Path | None = None,
+        integrator: MnistFmIntegratorMethod = "rk4",
         num_steps: int = MNIST_FM_NUM_STEPS,
         seed_offset: int = 0,
+        rtol: float = MNIST_FM_DEFAULT_RTOL,
+        atol: float = MNIST_FM_DEFAULT_ATOL,
+        max_steps: int = MNIST_FM_DEFAULT_MAX_STEPS,
+        base_channels: int = MNIST_FM_DEFAULT_BASE_CHANNELS,
+        init_random_weights: bool = False,
+        init_seed: int = 12345,
         blender: RestartBlenderProtocol | None = None,
     ) -> None:
+        if integrator not in ("rk4", "dormand_prince"):
+            raise ValueError(f"unknown_integrator:{integrator}")
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
-        self._weights_path = (
-            Path(weights_path) if weights_path is not None else MNIST_FM_DEFAULT_WEIGHTS
-        )
-        self._weights: list[ArrayF64] = load_weights(self._weights_path)
+        if rtol <= 0.0:
+            raise ValueError("rtol_must_be_positive")
+        if atol <= 0.0:
+            raise ValueError("atol_must_be_positive")
+        if max_steps <= 0:
+            raise ValueError("max_steps_must_be_positive")
+        if base_channels <= 0:
+            raise ValueError("base_channels_must_be_positive")
+        self._integrator: MnistFmIntegratorMethod = integrator
         self._num_steps = int(num_steps)
         self._seed_offset = int(seed_offset)
+        self._rtol = float(rtol)
+        self._atol = float(atol)
+        self._max_steps = int(max_steps)
+        if init_random_weights:
+            self._weights_path = Path("random_init")
+            self._weights = _random_init_weights(
+                base_channels=int(base_channels),
+                seed=int(init_seed),
+            )
+        else:
+            self._weights_path = (
+                Path(weights_path) if weights_path is not None else MNIST_FM_DEFAULT_WEIGHTS
+            )
+            self._weights: list[ArrayF64] = load_weights(self._weights_path)
         self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._caps = MnistFMCapabilities()
         self._blender: RestartBlenderProtocol = (
@@ -494,6 +675,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         new_spec = dict(delta.delta_spec)
         new_spec.setdefault("target_distribution", "mnist")
         new_spec.setdefault("integrator_config_hash", MNIST_FM_CONFIG_HASH)
+        new_spec.setdefault("integrator", self._integrator)
         return ODEConditionDelta(
             delta_spec=new_spec,
             source=str(delta.source),
@@ -526,9 +708,25 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
-        t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(MNIST_FLAT_DIM)
-        traj = _integrate_rk4(self._weights, x0, t_grid)
+        if self._integrator == "rk4":
+            t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
+            traj = _integrate_rk4(self._weights, x0, t_grid)
+            actual_steps = int(num_steps)
+        elif self._integrator == "dormand_prince":
+            traj = _integrate_dormand_prince(
+                self._weights,
+                x0,
+                0.0,
+                1.0,
+                max_steps=max(int(self._max_steps), num_steps * 4),
+                rtol=float(self._rtol),
+                atol=float(self._atol),
+            )
+            actual_steps = max(1, traj.shape[0] - 1)
+            t_grid = np.linspace(0.0, 1.0, int(actual_steps) + 1, dtype=np.float64)
+        else:  # pragma: no cover — guarded by __init__ validation
+            raise ValueError(f"unknown_integrator:{self._integrator}")
         traj_clamped = np.clip(traj, -MNIST_FM_CLAMP, MNIST_FM_CLAMP)
         overflowed = bool(np.any(np.abs(traj) > MNIST_FM_CLAMP))
         traj = traj_clamped
@@ -536,21 +734,21 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
-                "integrator": "rk4",
+                "integrator": str(self._integrator),
                 "num_steps": int(num_steps),
-                "actual_steps": int(num_steps),
+                "actual_steps": int(actual_steps),
                 "x0_head": [float(x0[i]) for i in range(8)],
             }
         )
         stored: dict[str, Any] = {
             "trajectory": traj,
             "t_grid": t_grid,
-            "integrator": "rk4",
+            "integrator": str(self._integrator),
         }
         if overflowed:
             stored["_audit"] = ERR_MNIST_FM_INTEGRATOR_OVERFLOW
         self._put_native_state(traj_digest, stored)
-        cfg_blob = repr(("mnist_fm_config", "rk4", int(num_steps), 0)).encode("utf-8")
+        cfg_blob = repr(("mnist_fm_config", str(self._integrator), int(num_steps), 0)).encode("utf-8")
         integrator_config_hash = hashlib.sha256(cfg_blob).hexdigest()
         return ODEIntegratorTrace(
             steps=int(num_steps),
@@ -741,7 +939,10 @@ __all__ = [
     "MNIST_FM_CLAMP",
     "MNIST_FM_CONFIG_HASH",
     "MNIST_FM_CONFIG_VERSION",
+    "MNIST_FM_DEFAULT_ATOL",
     "MNIST_FM_DEFAULT_BASE_CHANNELS",
+    "MNIST_FM_DEFAULT_MAX_STEPS",
+    "MNIST_FM_DEFAULT_RTOL",
     "MNIST_FM_DEFAULT_WEIGHTS",
     "MNIST_FM_FLAT_DIM",
     "MNIST_FM_IMAGE_SHAPE",
@@ -749,5 +950,6 @@ __all__ = [
     "MNIST_FM_NUM_STEPS",
     "MnistFmAdapter",
     "MnistFMCapabilities",
+    "MnistFmIntegratorMethod",
     "default_mnist_fm_adapter",
 ]

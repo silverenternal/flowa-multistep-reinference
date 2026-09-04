@@ -470,41 +470,77 @@ def test_protocol_surface_intact(mnist_fm_weights_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_restart_blend_respects_memory_fraction(mnist_fm_weights_path: Path) -> None:
-    """``beta = 0`` keeps prior; ``beta = 1`` draws fresh; ``beta = 0.5`` midpoints."""
+@pytest.mark.parametrize(
+    ("beta", "integrator"),
+    [
+        (0.0, "rk4"),
+        (0.3, "rk4"),
+        (0.5, "rk4"),
+        (0.7, "rk4"),
+        (1.0, "rk4"),
+        (0.0, "dormand_prince"),
+        (0.5, "dormand_prince"),
+        (1.0, "dormand_prince"),
+    ],
+)
+def test_restart_blend_respects_memory_fraction(
+    mnist_fm_weights_path: Path,
+    *,
+    beta: float,
+    integrator: str,
+) -> None:
+    """``beta`` controls memory_fraction per channel; ``integrator`` selects RK4 vs DOPRI5.
+
+    For each (beta, integrator) pair the test asserts that
+    ``apply_restart_distribution`` blends the prior with fresh noise at
+    the expected ratio, and ``solve_ode`` returns a finite endpoint
+    inside ``[-1, 1]^784`` regardless of the integrator family. The
+    beta=0 / beta=1 anchors exercise the prior-keep / fresh-only paths;
+    the beta=0.5 midpoint verifies the convex blend; the beta=0.3 and
+    beta=0.7 points confirm the (1 - beta) interpolation lands between
+    them. The dormand_prince rows exercise the new adaptive-integrator
+    path added in P0-2; rk4 rows preserve the prior coverage.
+    """
     from adaptive_reflow.adapters.mnist_fm import MnistFmAdapter
 
-    adapter = MnistFmAdapter(weights_path=mnist_fm_weights_path)
+    adapter = MnistFmAdapter(
+        weights_path=mnist_fm_weights_path,
+        integrator=integrator,
+    )
     bundle = adapter.build_initial_state(
-        batch_id="batch-restart-blend-mnist", sample_id="sample-restart-blend-mnist"
+        batch_id=f"batch-restart-blend-mnist-{beta:.2f}-{integrator}",
+        sample_id=f"sample-restart-blend-mnist-{beta:.2f}-{integrator}",
     )
     prior_x0 = _native_x0(adapter, bundle.native_state_digest).copy()
 
-    policy_keep = _make_final_policy(
-        policy_id="policy-keep-mnist", run_id="run-keep-mnist", beta=0.0
+    policy = _make_final_policy(
+        policy_id=f"policy-blend-mnist-{beta:.2f}-{integrator}",
+        run_id=f"run-blend-mnist-{beta:.2f}-{integrator}",
+        beta=beta,
     )
-    kept = adapter.apply_restart_distribution(bundle, policy_keep)
-    kept_x0 = _native_x0(adapter, kept.native_state_digest)
-    assert np.allclose(kept_x0, prior_x0), "beta=0.0 should keep prior verbatim"
+    blended = adapter.apply_restart_distribution(bundle, policy)
+    blended_x0 = _native_x0(adapter, blended.native_state_digest)
+    expected_x0 = (
+        (1.0 - beta) * prior_x0
+        + beta * _compute_fresh_x0(policy, source_round=bundle.source_round)
+    )
+    assert np.allclose(blended_x0, expected_x0, atol=1e-12), (
+        f"beta={beta:.2f}, integrator={integrator!r}: blended x0 deviates from "
+        f"(1-beta)*prior + beta*fresh; max |delta|={np.abs(blended_x0 - expected_x0).max():.3e}"
+    )
 
-    policy_fresh = _make_final_policy(
-        policy_id="policy-fresh-mnist", run_id="run-fresh-mnist", beta=1.0
+    # Forward-solve the post-restart bundle end-to-end; endpoint must be
+    # finite and in-bounds for both integrator families.
+    condition = _make_condition_delta(target_round=0, num_steps=10)
+    trace = adapter.solve_ode(blended, condition, seed=42)
+    endpoint = _endpoint_from_trace(adapter, trace)
+    assert np.all(np.isfinite(endpoint)), (
+        f"beta={beta:.2f}, integrator={integrator!r}: endpoint has NaN/Inf"
     )
-    fresh = adapter.apply_restart_distribution(bundle, policy_fresh)
-    fresh_x0_expected = _compute_fresh_x0(policy_fresh, source_round=bundle.source_round)
-    fresh_x0_actual = _native_x0(adapter, fresh.native_state_digest)
-    assert np.allclose(fresh_x0_actual, fresh_x0_expected)
-    assert not np.allclose(fresh_x0_actual, prior_x0), "beta=1.0 must not retain the prior"
-
-    policy_mid = _make_final_policy(
-        policy_id="policy-mid-mnist", run_id="run-mid-mnist", beta=0.5
+    assert np.all(np.abs(endpoint) <= 1.0), (
+        f"beta={beta:.2f}, integrator={integrator!r}: endpoint escapes "
+        f"[-1, 1]^784; max abs = {float(np.max(np.abs(endpoint))):.3f}"
     )
-    mid = adapter.apply_restart_distribution(bundle, policy_mid)
-    mid_x0 = _native_x0(adapter, mid.native_state_digest)
-    expected_mid = 0.5 * prior_x0 + 0.5 * _compute_fresh_x0(
-        policy_mid, source_round=bundle.source_round
-    )
-    assert np.allclose(mid_x0, expected_mid, atol=1e-12)
 
 
 # ---------------------------------------------------------------------------
@@ -583,3 +619,63 @@ def test_inject_forward_noise_hook(mnist_fm_weights_path: Path) -> None:
     assert AUDIT_MNIST_FM_FORWARD_NOISE_APPLIED in new_bundle.provenance
     new_x0 = _native_x0(adapter, new_bundle.native_state_digest)
     assert np.allclose(new_x0, np.clip(prior_x0 + injected, -1.0, 1.0), atol=1e-12)
+
+
+# ---------------------------------------------------------------------------
+# 12. integrator="dormand_prince" returns a finite endpoint in [-1, 1]^784.
+# ---------------------------------------------------------------------------
+
+
+def test_dormand_prince_solve_ode_returns_finite_endpoint(
+    mnist_fm_weights_path: Path,
+) -> None:
+    """``integrator="dormand_prince"`` returns a finite endpoint inside ``[-1, 1]^784``."""
+    from adaptive_reflow.adapters.mnist_fm import MnistFmAdapter
+
+    adapter = MnistFmAdapter(
+        weights_path=mnist_fm_weights_path,
+        integrator="dormand_prince",
+        rtol=1e-2,  # generous rtol — random-initialised weights have large v
+        atol=1e-3,
+        max_steps=200,
+    )
+    bundle = adapter.build_initial_state(
+        batch_id="batch-dopri-mnist", sample_id="sample-dopri-mnist"
+    )
+    condition = _make_condition_delta(target_round=0, num_steps=5)
+    trace = adapter.solve_ode(bundle, condition, seed=0)
+    endpoint = _endpoint_from_trace(adapter, trace)
+    assert np.all(np.isfinite(endpoint)), "dormand_prince endpoint has NaN/Inf"
+    assert np.all(np.abs(endpoint) <= 1.0), (
+        f"dormand_prince endpoint escapes [-1, 1]^784; "
+        f"max abs = {float(np.max(np.abs(endpoint))):.3f}"
+    )
+    # The trace's ``steps`` field records the actual adaptive step count
+    # (at least ``num_steps`` minus rejections; capped by ``max_steps``).
+    assert int(trace.steps) >= 1, "dormand_prince must take at least one step"
+
+
+# ---------------------------------------------------------------------------
+# 13. init_random_weights=True boots the adapter without a .npz file on disk.
+# ---------------------------------------------------------------------------
+
+
+def test_init_random_weights_no_npz_required(tmp_path) -> None:
+    """``init_random_weights=True`` boots the adapter without a ``.npz`` file."""
+    from adaptive_reflow.adapters.mnist_fm import MnistFmAdapter
+
+    adapter = MnistFmAdapter(
+        weights_path=tmp_path / "missing.npz",  # does not exist on disk
+        init_random_weights=True,
+        base_channels=8,
+        init_seed=0,
+    )
+    bundle = adapter.build_initial_state(
+        batch_id="batch-random-init-mnist", sample_id="sample-random-init-mnist"
+    )
+    condition = _make_condition_delta(target_round=0, num_steps=5)
+    trace = adapter.solve_ode(bundle, condition, seed=0)
+    endpoint = _endpoint_from_trace(adapter, trace)
+    assert np.all(np.isfinite(endpoint)), (
+        "random-init adapter produces non-finite endpoint"
+    )

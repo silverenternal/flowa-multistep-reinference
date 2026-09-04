@@ -8,10 +8,26 @@ checkpoint contract (the IMAGENET1K_V1 aux head is part of the
 checkpoint, so ``aux_logits=False`` triggers a ``ValueError`` at
 construct-time) and (b) leaves the canonical-pytorch-fid shape broken
 (``model.fc`` is the 1000-class classifier head, not the 2048-dim
-``pool3`` features that FID is defined against). The fix swapped to
+``pool3`` features that FID is defined against). That fix swapped to
 ``weights=None, aux_logits=False, transform_input=False`` and replaced
 ``model.fc`` with ``torch.nn.Identity()`` so the forward returns the
 2048-dim pool3 vector directly.
+
+**Wave 1 P0-1 supersedes the ``weights=None`` half of that fix.**
+``extract_inception_features`` is now a thin delegation to the single
+canonical extractor surface
+:func:`tools.run_image_eval.extract_inception_features_for_image_eval`
+-> :func:`tools.run_image_eval.load_inception_for_fid`, which builds
+``inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1,
+aux_logits=True, transform_input=False)``, replaces ``model.fc`` with
+``Identity`` and drops ``model.AuxLogits``. Rationale and the FID
+provenance reconciliation are in ``docs/CONSOLIDATED_RESULTS.md``
+("P0-1 reconciliation note", the ``Extractor family`` column): the
+``weights=None`` construction is a *randomly initialised* network whose
+pool3 magnitudes (~1e10-1e12) drove the ~1e25 / 409.18 FID outliers, so
+random-init is now the named defect rather than the desired state. The
+2048-dim ``Identity``-fc half of ``2fb3dc0`` is unchanged and still
+guarded below.
 
 These tests lock in the fix at the regression level so future refactors
 do not silently regress to the 1000-dim logits path. They are gated on
@@ -25,10 +41,16 @@ Tests
 * ``test_extract_inception_features_returns_2048_dim`` — calling
   :func:`extract_inception_features` on a synthetic ``(4, 3, 32, 32)``
   batch of floats in ``[-1, 1]`` returns a ``(4, 2048)`` array.
-* ``test_extract_inception_features_does_not_use_imagenet_weights_when_extracting``
-  — the function must NOT load torchvision's pretrained weights. We
-  patch ``torchvision.models.inception_v3`` with a tiny stub and assert
-  it is invoked with ``weights=None``.
+* ``test_extract_inception_features_uses_canonical_imagenet_weights``
+  — the function must construct InceptionV3 with *deliberately chosen*
+  pretrained weights, never a random init. We patch
+  ``torchvision.models.inception_v3`` with a tiny stub and assert it is
+  invoked with ``weights=Inception_V3_Weights.IMAGENET1K_V1``. Renamed
+  from ``..._does_not_use_imagenet_weights_when_extracting`` in Wave 3:
+  the guarded regression (silent random-init feature extraction) is
+  unchanged, but P0-1 inverted the pinned value, and asserting the
+  IMAGENET1K_V1 identity is strictly stronger than the old
+  ``weights is None`` assertion for that regression.
 * ``test_extract_inception_features_finite`` — outputs contain no
   ``NaN`` / ``Inf``.
 * ``test_extract_inception_features_deterministic`` — two calls with
@@ -216,12 +238,15 @@ def test_extract_inception_features_returns_2048_dim(
 ) -> None:
     """``extract_inception_features`` must return ``(N, 2048)`` for ``(N, 3, 32, 32)`` input.
 
-    Regression guard for commit ``2fb3dc0``: the previous incarnation
-    built the model with the IMAGENET1K_V1 weights and (eventually)
-    ``aux_logits=False``, which made ``model.forward`` return a 1000-dim
-    classifier-logits tensor instead of the 2048-dim pool3 features FID
-    is defined against. The fix swaps to ``weights=None`` + ``model.fc
-    = Identity`` so the forward returns ``(N, 2048)`` directly.
+    Regression guard for commit ``2fb3dc0``: an earlier incarnation
+    made ``model.forward`` return a 1000-dim classifier-logits tensor
+    instead of the 2048-dim pool3 features FID is defined against. The
+    surviving half of that fix is ``model.fc = Identity``, which the
+    canonical Wave 1 P0-1 surface
+    (:func:`tools.run_image_eval.load_inception_for_fid`) still applies
+    on top of ``weights=IMAGENET1K_V1, aux_logits=True``. This test
+    pins the *shape* contract only; the weights contract is pinned by
+    ``test_extract_inception_features_uses_canonical_imagenet_weights``.
     """
     feats = eval_rf_module.extract_inception_features(
         sample_batch, batch_size=4
@@ -235,26 +260,39 @@ def test_extract_inception_features_returns_2048_dim(
     )
 
 
-def test_extract_inception_features_does_not_use_imagenet_weights_when_extracting(
+def test_extract_inception_features_uses_canonical_imagenet_weights(
     eval_rf_module: Any,
     tiny_inception_v3: list[dict[str, Any]],
     sample_batch: np.ndarray,
 ) -> None:
-    """``extract_inception_features`` must NOT load torchvision pretrained weights.
+    """``extract_inception_features`` must build Inception with IMAGENET1K_V1.
 
-    Regression guard for commit ``2fb3dc0``: the fix comment explains
-    that loading ``IMAGENET1K_V1`` forces ``aux_logits=True`` (the aux
-    head is part of the checkpoint), which makes ``model.forward``
-    return ``InceptionOutputs(logits, aux_logits)`` with a 1000-dim
-    ``logits`` tensor. The function explicitly assigns
-    ``weights_obj`` to ``_`` and passes ``weights=None`` to
-    ``inception_v3``; this test pins that contract by inspecting the
-    kwargs captured by the stub factory.
+    Regression guard, provenance ``2fb3dc0`` -> Wave 1 P0-1.
+
+    The guarded regression is unchanged: **no production caller may
+    silently extract FID features from a network whose weights were not
+    deliberately chosen.** At ``2fb3dc0`` the deliberate choice was
+    ``weights=None`` (believed necessary because the pretrained
+    checkpoint forces ``aux_logits=True``); P0-1 established that a
+    random-init Inception produces pool3 magnitudes ~1e10-1e12 and the
+    ~1e25 / 409.18 FID outliers recorded in
+    ``docs/CONSOLIDATED_RESULTS.md`` ("P0-1 reconciliation note"), and
+    pinned ``torchvision`` ``IMAGENET1K_V1`` as the single canonical
+    extractor family (``tools.run_image_eval.CANONICAL_INCEPTION_FAMILY
+    == "inceptionv3_torchvision_IMAGENET1K_V1"``).
+
+    Asserting the IMAGENET1K_V1 identity **subsumes** the old
+    ``weights is None`` assertion as a random-init guard: it rules out
+    ``None`` and every other checkpoint enum, so a future revert to
+    random init still fails here, loudly, on the first assertion below.
     """
+    import torchvision.models as tvm
+
     feats = eval_rf_module.extract_inception_features(
         sample_batch, batch_size=4
     )
-    # Sanity: extraction still returns 2048-dim features.
+    # Sanity: extraction still returns 2048-dim pool3 features (the
+    # surviving ``model.fc = Identity`` half of the 2fb3dc0 fix).
     assert feats.shape == (4, 2048)
 
     # At least one inception_v3 construction call must have happened.
@@ -264,24 +302,47 @@ def test_extract_inception_features_does_not_use_imagenet_weights_when_extractin
         "construction."
     )
 
+    expected_weights = tvm.Inception_V3_Weights.IMAGENET1K_V1
     for call_idx, kwargs in enumerate(tiny_inception_v3):
-        # The ``weights`` kwarg is the load-bearing one. ``None`` means
-        # "do not download / use the IMAGENET1K_V1 checkpoint".
-        assert kwargs.get("weights", "SENTINEL_UNSET") is None, (
+        got_weights = kwargs.get("weights", "SENTINEL_UNSET")
+        # (a) The original 2fb3dc0-era regression guard, restated:
+        #     never a randomly-initialised feature extractor.
+        assert got_weights is not None, (
             f"call #{call_idx}: torchvision.models.inception_v3 was "
-            f"called with weights={kwargs.get('weights')!r}; the "
-            f"production code must pass weights=None so the model "
-            f"returns pool3 features (2048-dim) instead of the "
-            f"1000-dim classifier logits. Regression of commit "
-            f"2fb3dc0."
+            f"called with weights=None, i.e. a RANDOMLY INITIALISED "
+            f"InceptionV3. Random pool3 activations have magnitude "
+            f"~1e10-1e12 and collapse FID to ~1e25 (see the P0-1 "
+            f"reconciliation note in docs/CONSOLIDATED_RESULTS.md). "
+            f"Production must load deliberately chosen weights."
         )
-        # ``aux_logits`` must be False so the forward does not try to
-        # route through the aux head (the pretrained aux head requires
-        # weights=None; the canonical pytorch-fid shape is
-        # ``aux_logits=False``).
-        assert kwargs.get("aux_logits") is False, (
-            f"call #{call_idx}: aux_logits expected False; got "
+        # (b) The Wave 1 P0-1 canonical pin: not merely 'some weights',
+        #     but the one family the published reference statistics
+        #     (MJHQ-30K / CIFAR) were computed with. A different
+        #     checkpoint would silently break cross-paper comparability.
+        assert got_weights is expected_weights, (
+            f"call #{call_idx}: expected "
+            f"weights=Inception_V3_Weights.IMAGENET1K_V1 (the single "
+            f"canonical extractor family pinned by Wave 1 P0-1 at "
+            f"tools/run_image_eval.py load_inception_for_fid); got "
+            f"{got_weights!r}."
+        )
+        # (c) The IMAGENET1K_V1 checkpoint carries the aux head, so
+        #     torchvision requires ``aux_logits=True`` at construction.
+        #     The canonical loader satisfies that and then drops the
+        #     head (``model.AuxLogits = None``) plus replaces
+        #     ``model.fc`` with ``Identity``, so the forward still
+        #     returns the 2048-dim pool3 vector asserted above.
+        assert kwargs.get("aux_logits") is True, (
+            f"call #{call_idx}: aux_logits expected True (required by "
+            f"the IMAGENET1K_V1 checkpoint contract); got "
             f"{kwargs.get('aux_logits')!r}."
+        )
+        # (d) ``transform_input=False`` — the canonical surface does its
+        #     own [-1,1] -> [0,1] -> ImageNet normalisation; letting
+        #     torchvision re-transform would double-normalise.
+        assert kwargs.get("transform_input") is False, (
+            f"call #{call_idx}: transform_input expected False; got "
+            f"{kwargs.get('transform_input')!r}."
         )
 
 
