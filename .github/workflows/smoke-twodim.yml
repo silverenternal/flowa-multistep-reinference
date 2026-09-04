@@ -122,7 +122,7 @@ jobs:
         # convention: upload the pytest log as an artifact on failure
         # so contributors see which of the six contracts was violated.
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pytest-log
           path: pytest.log
