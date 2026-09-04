@@ -742,3 +742,76 @@ exposed as the ``discrete_token_index`` channel so a future
 extension can route the AR prior through a
 ``discrete_decoder_branch`` without breaking the continuous-time
 ODE surface.
+
+## Plug-in candidate: FreqFlow (CVPR 2026, latent flow matching)
+
+`adaptive_reflow/adapters/freqflow.py` — adapter wrapping the
+published FreqFlow frequency-domain flow matching model
+(Ren et al. 2026, CVPR 2026, `arXiv:2604.15521`). The paper's
+central contribution is a **two-branch DiT** that fuses a
+spatial-domain velocity field with an FFT-magnitude side-channel;
+the adapter surfaces the FFT branch as the ``freq_magnitude``
+channel and exposes a ``frequency_mix`` knob that controls the
+weighting between the spatial and frequency branches (0.0 = pure
+spatial, 1.0 = pure frequency).
+
+* **Architecture**: SiT-XL/2-class backbone (28-block DiT with
+  adaLN-zero modulation, 1152 hidden, 16-head attention) at the
+  ``/2`` patch resolution. The published checkpoint at
+  `github.com/OliverRensu/FreqFlow` references ``nnet_ema.pth``;
+  the HF Hub download URL is not surfaced in the indexed README
+  (ckpt URL is conditional).
+* **Params**: ~675 M total (matches SiT-XL/2 + a small FFT branch).
+* **Native state shape**: ``(4, 32, 32)`` float32 latent
+  (DC-AE / SD-VAE convention; 32x downsample from a 256x256 RGB
+  image).
+* **Conditioning**: ImageNet class labels 0..999 + 1 unconditional
+  token via SiT adaLN class embedding. Class-label cache is
+  preserved across rounds so re-inference does not re-encode.
+* **Reported metric**: FID 1.38 on ImageNet-256 (paper-claimed
+  SOTA; beats DiT by 0.79 and SiT by 0.58). NOTE — the paper
+  uses 50 NFE Euler by default; our framework's higher-order
+  integrators (Heun / RK4 / DPM-Solver) may diverge from paper
+  FID numbers if not carefully tuned (saturation check needed
+  per `lessons-learned.md` LL-002: at FID 1.38 we are near
+  saturation relative to SiT baseline FID ~2.0).
+
+Three channels, mirroring the two-branch DiT structure:
+
+| Channel | Domain | Description |
+|---|---|---|
+| ``image_latent`` | ``latent`` | The (4, 32, 32) DC-AE / SD-VAE latent. |
+| ``class_cond`` | ``continuous`` | Cached class-label embedding (1001-dim one-hot of which 1000 are class indices + 1 unconditional) as an opaque ``TensorRef``. |
+| ``freq_magnitude`` | ``continuous`` | The FFT-magnitude side-channel (paper's central innovation); re-derived from the spatial latent at every round boundary so the side-channel stays consistent. |
+
+The adapter ships a deterministic NumPy **two-branch synthetic
+velocity field** so the Protocol surface can be exercised on CPU
+without the ~2.7 GB torch checkpoint:
+
+```python
+v_spatial(x, t) = W2_s @ tanh(W1_s @ flatten(x) + b1_s + t * t_bias) + b2_s
+v_freq(x, t)     = W2_f @ flatten(|FFT2(x)|_norm) + b2_f
+v_theta(x, t)    = (1 - freq_mix) * v_spatial + freq_mix * v_freq
+```
+
+The spatial branch is a two-layer MLP (matches ``SelfFlowAdapter``'s
+synthetic field); the frequency branch is a single dense projection
+from the FFT-magnitude side-channel so the side-channel
+contribution is observable in the Protocol surface. The field is
+**not** a trained FM model — it is a Protocol-surface shim.
+
+Public surface:
+
+* ``FreqFlowAdapter`` — concrete ``FlowMatchingODEAdapter`` with
+  ``state_shape=(4, 32, 32)``.
+* ``FreqFlowCapabilities`` — frozen capability surface (matches
+  ``SelfFlowCapabilities`` aside from the addition of the
+  ``freq_magnitude`` channel and the ``frequency_mix`` knob).
+* ``default_freqflow_adapter`` — factory.
+
+Tasks satisfied: Wave 21 PHASE-3 priority 2 — FreqFlow CVPR 2026
+latent FM adapter (design-skeleton release; production baseline
+depends on user-supplied FreqFlow weights + a CUDA host with
+>= 32 GB HBM). 30 tests in
+`tests/test_adapters/test_freqflow.py` (smoke + 8 conformance
++ byte-stability + synthetic-mode + frequency-mix knob).
