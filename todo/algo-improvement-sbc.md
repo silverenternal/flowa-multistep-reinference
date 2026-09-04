@@ -1,7 +1,6 @@
 # Algorithm improvement — Simulation-Based Calibration for stochastic re-inference (C.7)
 
-**Status:** pending (rev 2 §1 says deferred to Wave 18; bumping forward
-per user "framework depth" priority)
+**Status:** done (Wave 18 C.7 — commit c0e2fe2; 6/6 stochastic algorithms pass chi-squared at N=200 + N=1000; tests/test_sbc/ + tools/run_sbc_audit.py)
 **Date:** 2026-09-05
 **Priority:** medium (per rev 2 §1 C.7 = 0%; stochastic algorithm
 verification missing — without it, framework could converge to a wrong
