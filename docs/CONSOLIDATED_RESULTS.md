@@ -388,6 +388,68 @@ forward pass on the 9.788 GB published ckpt is **blocked** on reconstructing the
 upstream `core.sampler.SamplerConfig` runtime from the missing LineageFlow source
 repo. Whether framework improves on the REAL LineageFlow ckpt remains unproven.
 
+### 7.4 Wave 19 P1A2: LineageFlow comparison re-run on refactored framework (ebc0550 + HEAD)
+
+Source: workflow `wave19-p1a2-rerun-wave10-with-refactored-framework`,
+artifacts in `/tmp/wave10_lineageflow/refactor_retry/`. Trigger: Wave 11
+(JMAA theory-driven framework refactor — "theory up, adapter glue down",
+commit `ebc0550`) lifted paper-theorem code out of the four pre-existing
+adapters (`flowmol3_v2`, `rectified_flow_cifar`, `twodim_fm`, `self_flow`)
+and into `adaptive_reflow/theory/` + `adaptive_reflow/framework/`. The
+question: does re-running the Wave 10 R2 comparison against the refactored
+framework change the headline verdict? Per the task brief, if
+`framework_improves_baseline=True` then add CLM-048.
+
+**Settings** (identical to Wave 10 R2): `n_samples=32, n_rounds=5, num_steps=8,
+seed=42, state_shape=(256, 33)`, Euler ODE. Wrapper invoked with
+`RLIMIT_AS=28 GiB`, `CUDA_VISIBLE_DEVICES=1` (no GPU compute used by the
+synthetic velocity field), total wallclock 131.24 s (~2.2 min, well under the
+30-min budget).
+
+#### Before/after refactor — decision metric = family_validity
+
+| Run | commit | fv baseline | fv framework | fv delta | fv delta % | baseline wallclock | framework wallclock |
+|---|---|---:|---:|---:|---:|---:|---:|
+| **Pre-refactor (Wave 10 R2)** | `1cda977` | 1.0000 (32/32) | 1.0000 (32/32) | +0.0000 | +0.00 % | 0.88 s | 8.54 s |
+| **Post-refactor (Wave 19 P1A2)** | `ebc0550` + HEAD | 1.0000 (32/32) | 1.0000 (32/32) | +0.0000 | +0.00 % | 2.21 s | 129.01 s |
+| Δ metric values | — | 0.0000 | 0.0000 | 0.0000 | 0.00 pp | +1.33 s (×2.5) | +120.47 s (×15.1) |
+
+#### Before/after refactor — secondary metrics
+
+| Run | commit | log_lik baseline | log_lik framework | div baseline | div framework | seq_len baseline | seq_len framework |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Pre-refactor (Wave 10 R2) | `1cda977` | -1.8478 | -1.8434 (+0.23 %) | 32.9688 | 33.0000 (+0.09 %) | 256.0000 | 256.0000 |
+| Post-refactor (Wave 19 P1A2) | `ebc0550` + HEAD | -1.8478 | -1.8434 (+0.23 %) | 32.9688 | 33.0000 (+0.09 %) | 256.0000 | 256.0000 |
+| Δ | — | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+
+#### Verdict (Wave 19 P1A2)
+
+* **Metric values are bit-identical to the pre-refactor run.** The synthetic
+  velocity field is byte-deterministic for a fixed seed; any change would
+  indicate a non-deterministic regression. Refactor preserved numerical
+  behaviour end-to-end.
+* **Wallclock cost grew by ~2.5× (baseline) and ~15× (framework).** Expected
+  cost of the Wave 11 refactor's Protocol-conformance surface
+  (`adaptive_reflow/framework/interfaces.py`, 374 lines) and the
+  `theory`-package checkers (`adaptive_reflow/theory/checkers.py`, 405
+  lines). Per-round overhead from the lifted JMAA-quantity dataclasses.
+* **`framework_improves_baseline = False` on the decision metric.** The
+  decision metric is saturated (1.0 = 1.0); the refactor cannot lift it.
+  Per `todo/GATES.md` G-MASTER-PHASE-4 block rule: "verdict = not_supported →
+  Phase 4 is blocked → back to Phase 1."
+* **CLM-048 is NOT added.** Decision metric did not improve, so the task's
+  "If framework_improves: add CLM-048" condition is not met.
+* **User's hypothesis (theory-lift → framework improvement) is NOT confirmed
+  on the saturated decision metric.** The saturation is a synthetic-shim
+  property, not an implementation property; the next experiment should add a
+  non-saturated perturbation (noisy or stiff velocity field) to make
+  `family_validity` a discriminating decision metric before re-testing the
+  hypothesis.
+
+Full analysis: `/tmp/wave10_lineageflow/refactor_retry/comparison.md`
+(147 lines; auto-generated 38-line script output replaced with hand-written
+before/after table).
+
 ---
 
 ## 8. Defensive engineering (commit `28e3bf9`)
