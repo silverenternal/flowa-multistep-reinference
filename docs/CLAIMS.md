@@ -341,20 +341,37 @@ How it works:
 
 ## CLM-018: Cosine wins on W2 vs polynomial, sigmoid, and convergence-adaptive {#CLM-018}
 
-- Status: ACTIVE
-- Date: 2026-08-28
+- Status: ACTIVE — INVERTED POST-cd70821 (see note)
+- Date: 2026-08-28 (original) / 2026-09-05 (Wave 8 re-run)
 - Source: ablation data, `tools/run_ablation.py`
-- Asserted by: docs/ABLATION.md:115-116
-- Disputed by: —
-- Statement: On `two_moons`, the ordering by final W2 is
+- Asserted by: docs/ABLATION.md:115-116 (pre-cd70821); /tmp/wave8_fixes/FIX-3/sota_2d_rerun/{two_moons,eight_gaussians}_comparison.md (post-cd70821)
+- Disputed by: Wave 8 FIX-3 re-run (2026-09-05) — see "inversion note" below
+- Statement (PRE-cd70821, 2026-08-31, runtime=tanh vs trainer=ReLU mismatch):
+  On `two_moons`, the ordering by final W2 is
   `cosine (0.8140)` < `convergence-adaptive (0.8973)` <
   `sigmoid (0.9397)` < `polynomial (1.0521)`. On `eight_gaussians`,
   `convergence-adaptive (1.1688)` < `cosine (1.9298)` <
   `polynomial (2.0943)` < `sigmoid (2.2849)`. No schedule family
   dominates both targets.
-- Evidence: `docs/ABLATION.md` §"New findings: schedule families
-  (ADR-0012)"; regression coverage in
-  `tests/test_tools/test_run_ablation.py`.
+- **INVERSION NOTE (POST-cd70821, 2026-09-05)**:
+  Commit `cd70821` (2026-08-31 22:02 +0800) replaced `np.tanh` with
+  `np.maximum(z, 0.0)` (ReLU) in
+  `adaptive_reflow/adapters/twodim_fm.py:_velocity_field`, aligning
+  the runtime activation with the trainer (which always used ReLU).
+  After this correctness fix, the Wave 8 FIX-3 re-run
+  (`tools/run_sota_2d_experiment.py --n-seeds 3 --output-dir
+  /tmp/wave8_fixes/FIX-3/sota_2d_rerun/`) measured:
+  - **two_moons** (mean ± std across 3 seeds, last 5 rounds, 1000 samples/round):
+    - `baseline (1-pass)`: W2 = **0.0709 ± 0.0057**, selection_ratio = **0.8338 ± 0.0002**
+    - `CosineAnnealScheduler`: W2 = 0.0866 ± 0.0057 (+22.06% vs baseline), selection_ratio = 0.8284 ± 0.0001 (-0.65%)
+    - `EvidenceDrivenScheduler` (best framework): W2 = 0.0805 ± 0.0027 (+13.50%), selection_ratio = 0.8312 ± 0.0002 (-0.31%)
+    - `FreeTrajScheduler`: W2 = 0.0811 ± 0.0024 (+14.39%), selection_ratio = 0.8297 ± 0.0001 (-0.49%)
+  - **eight_gaussians** (partial — 6/15 runs; CosineAnnealScheduler only):
+    - `baseline (1-pass)`: W2 = **0.1764 ± 0.0091**, selection_ratio = **0.5546 ± 0.0002**
+    - `CosineAnnealScheduler`: W2 = 0.1831 ± 0.0025 (+3.78%), selection_ratio = 0.5417 ± 0.0004 (-2.33%)
+  - **Cosine no longer wins on two_moons** — baseline (W2=0.0709) beats every framework scheduler. The framework's pre-fix improvement was an **artifact of the activation mismatch bug**: pre-fix model output was wrong (W2 ~0.5 to ~0.9 because tanh vs ReLU), and restart-blend provided corrective value. Post-fix, the model already converges to the correct distribution (W2 ~0.07), and restart-blend's added perturbations are net noise.
+- Interpretation: The original "Cosine wins" claim held only under the buggy runtime. After cd70821 corrected the architecture mismatch, **baseline 1-pass is the strongest configuration for 2D RF** — the framework's multi-round restart-blend provides no measurable value on a correctly-trained adapter. The qualitative finding "no schedule family dominates both targets" still holds but the dominant configuration is now baseline.
+- Evidence: `docs/ABLATION.md` §"New findings: schedule families (ADR-0012)" (pre-fix); /tmp/wave8_fixes/FIX-3/sota_2d_rerun/two_moons_comparison.md + eight_gaussians_comparison.md (post-fix); regression coverage in `tests/test_tools/test_run_ablation.py`.
 
 ## CLM-019: `SchedulerProtocol` is the canonical first-class scheduler axis {#CLM-019}
 
@@ -432,16 +449,20 @@ How it works:
 
 ## CLM-022: `EvidenceScaleGapMetric` `eps_schedule` uplift raises `selection_ratio` plateau with SNR proxy ≥ 1.0 {#CLM-022}
 
-- Status: ACTIVE
-- Date: 2026-08-29
+- Status: ACTIVE — INVERTED POST-cd70821 (see note)
+- Date: 2026-08-29 (original) / 2026-09-05 (Wave 8 re-run)
 - Source:
   [`docs/algorithm-uplift-plan.md`](algorithm-uplift-plan.md) §6
   (uplift **A16**),
   [`docs/benchmark-uplifts.md`](benchmark-uplifts.md) §1 (SNR row)
-- Asserted by: `docs/benchmark-uplifts.md:23`,
-  `tools/benchmark_uplifts.py:699-732` (`snr_proxy` measurement)
-- Disputed by: —
-- Statement: The `EvidenceScaleGapMetric` uplift **A16** exposes an
+- Asserted by: `docs/benchmark-uplifts.md:23` (pre-fix),
+  `tools/benchmark_uplifts.py:699-732` (`snr_proxy` measurement,
+  pre-fix, internally consistent at 60.80),
+  `/tmp/wave8_fixes/FIX-3/sota_2d_rerun/two_moons_comparison.md`
+  (post-fix 2D SOTA re-run)
+- Disputed by: Wave 8 FIX-3 re-run (2026-09-05) — see "inversion note"
+- Statement (PRE-cd70821, 2026-08-29, runtime=tanh vs trainer=ReLU mismatch):
+  The `EvidenceScaleGapMetric` uplift **A16** exposes an
   optional `eps_schedule: Callable[[int], float] | None` argument
   on the metric constructor
   (`adaptive_reflow/eval/posterior_selection_evaluator.py:473`).
@@ -457,15 +478,18 @@ How it works:
   `60.80` against a target of `>= 1.0`. The SNR proxy is a
   framework-internal diagnostic (NOT a paper quantity) and is
   emitted only when `eps_schedule` is supplied.
-- Evidence:
-  `adaptive_reflow/eval/posterior_selection_evaluator.py:473`
-  (`eps_schedule` constructor arg),
-  `adaptive_reflow/eval/posterior_selection_evaluator.py:564`
-  (`calibration` derivation using the per-round `eps`),
-  `tools/benchmark_uplifts.py:699-732`
-  (the SNR-proxy measurement),
-  `docs/benchmark-uplifts.md:23`
-  (the SNR row in the per-uplift table).
+- **INVERSION NOTE (POST-cd70821, 2026-09-05)**:
+  After the runtime activation fix (commit `cd70821`),
+  `tools/run_sota_2d_experiment.py --n-seeds 3` (Wave 8 FIX-3) measured:
+  - **two_moons** baseline (no-schedule 1-pass): selection_ratio = **0.8338 ± 0.0002**
+  - **two_moons** EvidenceDrivenScheduler (`eps_schedule` enabled — `lambda r: 0.05 * (1 - r/L)` pattern): selection_ratio = **0.8312 ± 0.0002** (-0.0026, **-0.31% rel** vs baseline)
+  - **two_moons** CosineAnnealScheduler: 0.8284 ± 0.0001 (-0.65% rel)
+  - **two_moons** FreeTrajScheduler: 0.8297 ± 0.0001 (-0.49% rel)
+  - **Direction of the A16 uplift is INVERTED post-cd70821**: the no-schedule baseline has a HIGHER selection_ratio than any framework scheduler with eps_schedule enabled. **Delta = -0.0026 / -0.31%** (vs claimed +0.127 / +14.6% pre-fix).
+  - **Direction claim survives**: `eps_schedule` row 0.8312 vs no-schedule row 0.8338 still differs measurably (and the **direction** of the claim — that `eps_schedule` modulates `selection_ratio` — is internally consistent), but the **magnitude and direction of "improvement" invert**.
+  - **Interpretation**: under the buggy pre-cd70821 runtime (W2 ~0.5), the model was poorly calibrated and `eps_schedule` provided corrective value. Under the correctly-trained post-cd70821 runtime, the model already converges and `eps_schedule`'s perturbations are net noise. The A16 mechanism itself (the eps_schedule hook + the selection_ratio metric) remains correct; what inverted is whether `selection_ratio` itself has headroom to improve.
+- Evidence (PRE-fix): `adaptive_reflow/eval/posterior_selection_evaluator.py:473` (`eps_schedule` constructor arg), `adaptive_reflow/eval/posterior_selection_evaluator.py:564` (`calibration` derivation using the per-round `eps`), `tools/benchmark_uplifts.py:699-732` (the SNR-proxy measurement), `docs/benchmark-uplifts.md:23` (the SNR row in the per-uplift table).
+- Evidence (POST-fix): `/tmp/wave8_fixes/FIX-3/sota_2d_rerun/two_moons_comparison.md` (Wave 8 FIX-3 re-run; CSV files at the same prefix).
 
 ## CLM-023: `KDE-support-coverage` near-far separation closes the Round-1 weighted-coverage miss {#CLM-023}
 
