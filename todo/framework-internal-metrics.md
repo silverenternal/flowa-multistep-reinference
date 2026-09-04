@@ -43,7 +43,7 @@ unpinned threshold).
 | B.4 | Doctest execution: `pytest --doctest-modules adaptive_reflow/theory/` exits 0 | not running | pass by Wave 13 | **HARD** |
 | B.5 | Determinism gate: **every test is EITHER marked `@pytest.mark.deterministic` (must produce identical output across 2 consecutive runs) OR `@pytest.mark.stochastic-with-tolerance` (must pass a relaxed check with documented atol); unmarked tests fail CI** | not running | enforced by Wave 14 | **HARD** |
 | B.6 | Float-dtype coverage: numerical algorithms parametrised over float16/32/64 with parity (or explicit dtype rejection) | 0% | 100% of new code from Wave 15; 100% of public numerical algorithms by Wave 16 | **HARD** (new code); **HARD** for all (Wave 16) |
-| B.7 | Property-based test coverage: fraction of public deterministic algorithm modules with >= 1 Hypothesis-style `@given` test with explicit seed pin | 0% | >= 0.4 by Wave 16 | no |
+| B.7 | Property-based test coverage: fraction of public deterministic algorithm modules with >= 1 Hypothesis-style `@given` test with explicit seed pin | **0.769 (10 / 13)** | >= 0.4 by Wave 16 | no |
 | B.8 | Flakiness tagging + quarantine: per-test 7-day failure-rate dashboard; **auto-quarantine at >5% 7-day failure rate; manual review at >2%** | none | dashboard live by Wave 14; 0 quarantined tests above threshold | no |
 | ~~B.1 (rev 1)~~ | ~~Total test count~~ | ~~3228~~ | REMOVED — see §5 | n/a |
 

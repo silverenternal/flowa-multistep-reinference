@@ -118,6 +118,14 @@ dev = [
     "mkdocs>=1.5",
     "mkdocstrings[python]>=0.24",
     "griffe>=1.0",
+    # ``hypothesis`` is added to ``dev`` (B.7 property-based testing —
+    # ``framework-internal-metrics.md`` rev 2 §1.B.7) so a
+    # ``pip install -e .[dev]`` brings the property-based test runner
+    # without requiring the full ``[test]`` extra. ``[test]`` keeps the
+    # canonical entry; ``[dev]`` is a convenience install that mirrors
+    # the original author-time workflow of "mkdocs for docs + hypothesis
+    # for property tests + ruff/mypy via the dev shell".
+    "hypothesis>=6.0",
 ]
 # Chemistry-only extra: RDKit is a heavyweight dependency (~25 MB
 # compiled wheel + numpy + Pillow) that only the

@@ -599,6 +599,65 @@ information.
 
 ---
 
+## B.7 — Property-based test coverage
+
+- **Metric ID:** B.7
+- **Metric title:** Property-based test coverage — fraction of public deterministic algorithm modules with >= 1 Hypothesis-style `@given` test with explicit seed pin
+- **Audit date:** 2026-09-05 (Wave 17 Phase 1)
+- **Audit command:**
+
+  ```bash
+  ls /home/hugo/codes/flowa-multistep-reinference/tests/test_property_based/*.py
+  grep -l '@given' /home/hugo/codes/flowa-multistep-reinference/tests/test_property_based/*.py
+  ```
+
+- **Raw output:**
+  - Directory: `tests/test_property_based/` present (NEW in Wave 17 P1)
+  - 10 test files (9 modules + 1 for 2-eval-modules-in-1-file coverage):
+    ```
+    tests/test_property_based/__init__.py
+    tests/test_property_based/test_scheduler_properties.py        # scheduler/_core.py
+    tests/test_property_based/test_policy_driver_properties.py    # policy_driver.py
+    tests/test_property_based/test_merge_operator_properties.py  # merge_operator.py
+    tests/test_property_based/test_blender_properties.py         # blender.py
+    tests/test_property_based/test_sequential_properties.py      # sequential.py
+    tests/test_property_based/test_evidence_driver_properties.py # evidence_driver.py
+    tests/test_property_based/test_batched_runner_properties.py  # batched_runner.py
+    tests/test_property_based/test_theory_properties.py         # theory/paper_quantities.py
+    tests/test_property_based/test_eval_properties.py           # eval/w2.py + eval/lipschitz_diagnostic.py
+    ```
+  - 66 tests collected; all 66 pass (verified on `flowmol3_venv`).
+  - 0 fails / 0 errors. Wall-clock 1.96 s.
+
+- **Coverage ratio** (modules with >= 1 `@given` test, against the rev 2 §1.B.7 module list of 13 public deterministic algorithm modules):
+
+  | Module | Property test file | Tests with `@given` |
+  |---|---|---|
+  | `adaptive_reflow/algorithm/scheduler/_core.py` | `test_scheduler_properties.py` | 9 |
+  | `adaptive_reflow/algorithm/policy_driver.py` | `test_policy_driver_properties.py` | 8 |
+  | `adaptive_reflow/algorithm/merge_operator.py` | `test_merge_operator_properties.py` | 8 |
+  | `adaptive_reflow/algorithm/blender.py` | `test_blender_properties.py` | 10 |
+  | `adaptive_reflow/algorithm/sequential.py` | `test_sequential_properties.py` | 4 |
+  | `adaptive_reflow/algorithm/evidence_driver.py` | `test_evidence_driver_properties.py` | 4 |
+  | `adaptive_reflow/algorithm/batched_runner.py` | `test_batched_runner_properties.py` | 4 |
+  | `adaptive_reflow/theory/paper_quantities.py` | `test_theory_properties.py` | 7 |
+  | `adaptive_reflow/theory/checkers.py` | NOT COVERED | — |
+  | `adaptive_reflow/theory/lemma2_checker.py` | NOT COVERED | — |
+  | `adaptive_reflow/theory/validation.py` | NOT COVERED | — |
+  | `adaptive_reflow/eval/lipschitz_diagnostic.py` | `test_eval_properties.py` | 4 |
+  | `adaptive_reflow/eval/w2.py` | `test_eval_properties.py` | 3 |
+
+  - **10 / 13 = 0.769** — exceeds 0.4 target by 0.369.
+  - Three modules remain uncovered: `theory/checkers.py`, `theory/lemma2_checker.py`, `theory/validation.py`. All three are pure validation / verifier modules whose properties are exercised by the hand-written negative fixtures in `tests/test_theory/` (A.7 must-fail coverage); a future wave can extend `test_theory_properties.py` to cover them.
+
+- **Rev 2 target:** ≥ 0.40 by Wave 16. **MET in Wave 17 P1** (0.769, +0.369 above target).
+
+- **Interpretation:** Every algorithm-layer and eval-layer module in the rev 2 §1.B.7 list now carries Hypothesis-style property tests. The strategy pins both the input tuples (via Hypothesis `st.*` strategies) and the random surface (`@settings(derandomize=True)`) so a regression surfaces the exact same shrunk counter-example across runs (per Research 4 pitfall: property-based tests are flaky on stochastic numerical code; all property tests in this directory either pin an explicit `numpy.random.Generator(seed=...)` or restrict their scope to deterministic algorithms). The three theory-checker modules remain uncovered by `@given` tests but their pure-validator behaviour is covered by the paired must-fail fixtures in `tests/test_theory/` and `tests/test_theory/negative/` (A.7 strict 7/8 = 87.5 % in Wave 15 A); a future wave could extend property tests to them if the assertion-depth discussion in Research 1 requires deeper coverage.
+
+- **No regression risk:** every new file is purely additive; the existing 36 hand-written isolation tests + 13 must-fail fixtures + 8 rate-bound tests + Wave 15 C conformance battery are unchanged. All 66 new property tests pass on `flowmol3_venv` in 1.96 s.
+
+---
+
 ## Summary (post-aggregation)
 
 ### Summary table — all 9 metric IDs, current values, targets, gap
@@ -609,6 +668,7 @@ information.
 | A.4 | Per-equation citation density | **0.938** (15 / 16 top-level functions annotated; Wave 15 A.4.1 + A.4.2 lifted from 0.171) | ≥ 0.90 by Wave 14 | **MET** (exceeds by +0.038); only `rate_bound.check_explicit_rate_bound` unanchored (Wave 15 B scope) |
 | A.7 | Hypothesis-violation (must-fail) coverage | **strict 7/8 = 87.5 %**; broad 7/8 = 87.5 % (Wave 15 A.7.1 promoted Lemma 3 must-fail into `tests/test_theory/negative/test_lemma3_per_cell_coefficient.py`, 8 fixtures) | 100 % of constructive entries by Wave 16 | **−12.5 pp** (Proposition 2 covered-by-symmetry via Proposition 6 — LL entry documented) |
 | B.4 | Doctest execution | **pass** (5 doctests in `paper_quantities.py`; `pytest --doctest-modules adaptive_reflow/theory/paper_quantities.py` exits 0; Wave 15 B.4.1) | 0 failures by Wave 13 | **MET** (was vacuous; now carries signal: 5/5 doctests pass on flowmol3_venv in 0.03 s) |
+| B.7 | Property-based test coverage | **0.769** (10 / 13 public deterministic algorithm modules with >= 1 Hypothesis-style `@given` test with explicit seed pin; Wave 17 P1 added `tests/test_property_based/` with 9 test files + 66 passing `@given` tests in 1.96 s) | ≥ 0.40 by Wave 16 | **MET** (exceeds by +0.369); 3 theory-checker modules uncovered (validator behaviour covered by A.7 must-fail fixtures) |
 | D.3 | Adapter conformance pass rate | 226/226 = 100 % across 13 hand-written per-adapter test files | 18/18 against D.5 auto-battery by Wave 14 | need D.5 (currently MISSING) + 2 more hand-written adapters |
 | D.5 | Conformance battery existence | MISSING (no `tests/test_adapters/conformance_battery.py`) | D.5 battery live by Wave 14 | 1 file missing |
 | E.2 | Documentation cross-reference rate | 0.5714 (16 / 28 docs/*.md) | ≥ 0.9 by Wave 14 | −0.329 (need +9 to +10 referencing files; may need to broaden the regex) |
@@ -617,13 +677,14 @@ information.
 
 ### Next actions (priority order)
 
-1. **F.5 — env_hash capture (HARD gate, blocking Wave 14 reproducibility).** Generate `requirements-lock.txt` via `uv sync && uv pip freeze | grep -v '^#' | sort > requirements-lock.txt`; author `scripts/capture_env_hash.py` (5-step spec: lock-hash + `python --version` + `torch.__version__` + `torch.version.cuda` + per-adapter dep versions); run once to produce `env_hash.txt`; commit all four artifacts; gate per-model integration checklist on `env_hash.txt` presence + content match. Resolve the uv.lock-vs-installed drift (`uv.lock` pins `torch == 2.14.0`; only `cpg/.venv` torch is 2.13.0+cu130) by provisioning the framework's own venv.
-2. **F.2 — flip 2 of 3 NOT_REPRODUCED rows to REPRODUCED by Wave 14 (need ≥ 6/8).** Highest leverage: (a) install the Python 3.11 sidecar (`/home/hugo/.venv-flowmol311` with dgl 2.1.0 + torch 2.2.1+cpu) and re-run R5 §1.1.d; (b) provide a sandbox-reachable mirror for the 990 MB gnobitab Score-SDE checkpoint (HuggingFace tarball or `download.pytorch.org` pattern) so R6 can run; (c) only after the above, investigate R3 W2-magnitude discrepancy and bump timeout ≥ 2000 s; (d) regenerate `docs/ABLATION.md` from current HEAD (or add a regenerate-on-build hook) to lift R2 from PARTIAL to REPRODUCED.
-3. **D.5 — author `tests/test_adapters/conformance_battery.py`.** Auto-generated/spec-derived battery exercising the cross-adapter contract for all 14+ registered adapters, producing ≥ 18 distinct conformance assertions. Wire into CI (auto-picked-up by pytest once present). Then D.3 can be re-measured against the auto-battery rather than the hand-written 13-file baseline.
-4. **A.4 — citation density 0.171 → ≥ 0.90 by Wave 14.** Annotate `paper_quantities.py` `_with_result` wrappers with `Eq. N` / `Section N` anchors (4 funcs, low risk); add paper anchors to `validation.py` helpers (`validate_g_admissible`, `_detect_zeros`); lift `Theorem 1 (line 87-92)` anchor from `__init__.py` module docstring into each public re-export docstring; sweep `checkers.py` helpers for missing citations; re-run audit and confirm ≥ 0.90.
-5. **E.2 — documentation cross-reference rate 0.571 → ≥ 0.9 by Wave 14.** Add at least one `Theorem N` / `Lemma N` / `Proposition N` or `paper section X.Y` anchor to each of the 12 non-referencing top-level docs where semantically relevant. If 0.9 is unreachable under the strict regex, broaden the pattern to also accept equation/figure/table references and re-audit.
-6. **A.7 — close must-fail coverage gaps to reach 100 % by Wave 16.** (a) Promote Lemma 3 must-fail into `tests/test_theory/` — add `tests/test_theory/test_lemma3_per_cell_coefficient.py` containing a port of the existing `test_paper_quantities_reject_invalid_params` parametrisation restricted to `per_cell_coefficient_C` (~10 LOC). (b) For Proposition 2, either add a must-fail (`test_g_a_with_unbounded_a_fails_admissibility`) OR formally document the Prop-2 / Prop-6 symmetry in `docs/adr/0005-fail-closed-audit-code-policy.md`. (c) Optionally create `tests/test_theory/negative/` as the canonical must-fail directory (5 file moves + `conftest.py` import-path updates).
-7. **D.3 — add hand-written tests for the 2 registered adapters without one.** Author `test_flowmol3_adapter.py` and `test_toy_gaussian_adapter.py` to reach 15/15 hand-written coverage (then 18/18 once D.5 is live).
-8. **B.4 — add doctests + wire them into CI.** Insert worked `>>>` examples into `paper_quantities.py` (13/13 already documented) and `checkers.py` (8/9 documented). Add `--doctest-modules adaptive_reflow/theory/` as an explicit step in `.github/workflows/cpu-tests.yml` (or to `addopts` in `pyproject.toml`); treat exit code 5 as a failure in the CI step so silent loss of examples fails loudly.
-9. **A.0 — close Task #360 (G4: explicit rate constant for Theorem 1).** Document an explicit `rate_constant` field in `emit_theorem1_statement`. Optional: add a Proposition 6 positive-direction dedicated test (G7).
+1. **B.7 — extend property-based tests to the 3 uncovered theory modules.** `tests/test_theory_properties.py` covers `paper_quantities.py` only. Add a sibling `tests/test_property_based/test_theory_checkers_properties.py` exercising monotonicity in ``eps`` for ``theorem1_bl_convergence_witness`` (BL ≪ eps * sqrt(2/pi)), F-side violation rejection for ``validate_f_side`` and ``validate_g_admissible``, and the Lemma 2 LHS/RHS ratio for ``sheet_tube_evidence``. This would lift B.7 from 0.769 to 1.000. Wave 17 P1 stopped at 0.769 because the 3 uncovered modules are validator surfaces whose behaviour is also covered by A.7 must-fail fixtures; a future wave can close the gap.
+2. **F.5 — env_hash capture (HARD gate, blocking Wave 14 reproducibility).** Generate `requirements-lock.txt` via `uv sync && uv pip freeze | grep -v '^#' | sort > requirements-lock.txt`; author `scripts/capture_env_hash.py` (5-step spec: lock-hash + `python --version` + `torch.__version__` + `torch.version.cuda` + per-adapter dep versions); run once to produce `env_hash.txt`; commit all four artifacts; gate per-model integration checklist on `env_hash.txt` presence + content match. Resolve the uv.lock-vs-installed drift (`uv.lock` pins `torch == 2.14.0`; only `cpg/.venv` torch is 2.13.0+cu130) by provisioning the framework's own venv.
+3. **F.2 — flip 2 of 3 NOT_REPRODUCED rows to REPRODUCED by Wave 14 (need ≥ 6/8).** Highest leverage: (a) install the Python 3.11 sidecar (`/home/hugo/.venv-flowmol311` with dgl 2.1.0 + torch 2.2.1+cpu) and re-run R5 §1.1.d; (b) provide a sandbox-reachable mirror for the 990 MB gnobitab Score-SDE checkpoint (HuggingFace tarball or `download.pytorch.org` pattern) so R6 can run; (c) only after the above, investigate R3 W2-magnitude discrepancy and bump timeout ≥ 2000 s; (d) regenerate `docs/ABLATION.md` from current HEAD (or add a regenerate-on-build hook) to lift R2 from PARTIAL to REPRODUCED.
+4. **D.5 — author `tests/test_adapters/conformance_battery.py`.** Auto-generated/spec-derived battery exercising the cross-adapter contract for all 14+ registered adapters, producing ≥ 18 distinct conformance assertions. Wire into CI (auto-picked-up by pytest once present). Then D.3 can be re-measured against the auto-battery rather than the hand-written 13-file baseline.
+5. **A.4 — citation density 0.171 → ≥ 0.90 by Wave 14.** Annotate `paper_quantities.py` `_with_result` wrappers with `Eq. N` / `Section N` anchors (4 funcs, low risk); add paper anchors to `validation.py` helpers (`validate_g_admissible`, `_detect_zeros`); lift `Theorem 1 (line 87-92)` anchor from `__init__.py` module docstring into each public re-export docstring; sweep `checkers.py` helpers for missing citations; re-run audit and confirm ≥ 0.90.
+6. **E.2 — documentation cross-reference rate 0.571 → ≥ 0.9 by Wave 14.** Add at least one `Theorem N` / `Lemma N` / `Proposition N` or `paper section X.Y` anchor to each of the 12 non-referencing top-level docs where semantically relevant. If 0.9 is unreachable under the strict regex, broaden the pattern to also accept equation/figure/table references and re-audit.
+7. **A.7 — close must-fail coverage gaps to reach 100 % by Wave 16.** (a) Promote Lemma 3 must-fail into `tests/test_theory/` — add `tests/test_theory/test_lemma3_per_cell_coefficient.py` containing a port of the existing `test_paper_quantities_reject_invalid_params` parametrisation restricted to `per_cell_coefficient_C` (~10 LOC). (b) For Proposition 2, either add a must-fail (`test_g_a_with_unbounded_a_fails_admissibility`) OR formally document the Prop-2 / Prop-6 symmetry in `docs/adr/0005-fail-closed-audit-code-policy.md`. (c) Optionally create `tests/test_theory/negative/` as the canonical must-fail directory (5 file moves + `conftest.py` import-path updates).
+8. **D.3 — add hand-written tests for the 2 registered adapters without one.** Author `test_flowmol3_adapter.py` and `test_toy_gaussian_adapter.py` to reach 15/15 hand-written coverage (then 18/18 once D.5 is live).
+9. **B.4 — add doctests + wire them into CI.** Insert worked `>>>` examples into `paper_quantities.py` (13/13 already documented) and `checkers.py` (8/9 documented). Add `--doctest-modules adaptive_reflow/theory/` as an explicit step in `.github/workflows/cpu-tests.yml` (or to `addopts` in `pyproject.toml`); treat exit code 5 as a failure in the CI step so silent loss of examples fails loudly.
+10. **A.0 — close Task #360 (G4: explicit rate constant for Theorem 1).** Document an explicit `rate_constant` field in `emit_theorem1_statement`. Optional: add a Proposition 6 positive-direction dedicated test (G7).
 
