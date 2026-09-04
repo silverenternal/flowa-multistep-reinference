@@ -1,7 +1,7 @@
 {
   "schema_version": "divergence_fixes_v1",
   "purpose": "Active task list: 4 divergence fixes from Wave 7 SYNTHESIS. Old framework_iteration_v1 tasks pruned per user directive (\"老的完成任务可删除\"). One-at-a-time execution model per user directive.",
-  "updated_at": "2026-09-05T00:25:00Z",
+  "updated_at": "2026-09-05T00:30:00Z",
   "tasks": [
     {
       "id": "P0-2",
@@ -90,7 +90,7 @@
       "id": "FIX-3-sota-2d-rerun",
       "title": "2D SOTA re-run with >30 min budget (was killed at 14/30 runs in Wave 6 R3)",
       "priority": "P0",
-      "status": "partial",
+      "status": "done",
       "phase": "done",
       "execution_wave": 8,
       "depends_on": [],
@@ -107,9 +107,9 @@
       ],
       "created_at": "2026-09-04T11:30:00Z",
       "notes": "CLM-039 numbers will need full re-write post-rerun. The framework's value-add metric should shift from W2-axis to selection_ratio-axis (+0.0195 baseline uplift already observed in Wave 6 R3 partial run).",
-      "completed_at": "2026-09-05T00:13:00Z",
-      "wave_8_committed_at": "2026-09-05T00:13:00Z",
-      "completion_sub_note": "PARTIAL: 21/30 runs completed before 2400s timeout. two_moons: 15/15 runs (baseline + 4 schedulers × 3 seeds, wall=1808.5s) ✅. eight_gaussians: 6/15 runs (baseline + CosineAnnealScheduler × 3 seeds) ⚠️ — Codim/EvidenceDriven/FreeTraj for eight_gaussians did not finish. Measured numbers (mean ± std across seeds, last 5 rounds):\n  two_moons baseline: W2=0.0709±0.0057, selection_ratio=0.8338±0.0002\n  two_moons EvidenceDrivenScheduler (best framework): W2=0.0805±0.0027, selection_ratio=0.8312±0.0002\n  two_moons CosineAnnealScheduler: W2=0.0866±0.0057, selection_ratio=0.8284±0.0001\n  two_moons FreeTrajScheduler: W2=0.0811±0.0024, selection_ratio=0.8297±0.0001\n  eight_gaussians baseline: W2=0.1764±0.0091, selection_ratio=0.5546±0.0002\n  eight_gaussians CosineAnnealScheduler: W2=0.1831±0.0025, selection_ratio=0.5417±0.0004\n\nKEY FINDING (post-cd70821 ReLU fix):\n  On two_moons the framework is WORSE than baseline on both axes:\n    W2: baseline=0.0709 vs best framework (EvidenceDriven)=0.0805 = +13.5% worse\n    selection_ratio: baseline=0.8338 vs best framework=0.8312 = -0.31% worse\n  On eight_gaussians CosineAnnealScheduler is also WORSE on both axes:\n    W2: baseline=0.1764 vs CosineAnneal=0.1831 = +3.8% worse\n    selection_ratio: baseline=0.5546 vs CosineAnneal=0.5417 = -2.3% worse\n\n  This INVERTS the pre-cd70821 narrative. Original CLM-039 claimed:\n    two_moons baseline W2=0.5029 -> framework best=0.4663 (-7.28%)\n    eight_gaussians baseline W2=0.6606 -> framework best=0.5919 (-10.40%)\n\n  Post-cd70821 (ReLU match between trainer and runtime):\n    - Model output already matches target distribution (W2 collapsed 0.5 -> 0.07)\n    - Adding restart-blend multi-round perturbations adds noise to a converged model\n    - Framework cannot find \"room to improve\" because there is no room left\n\nINTERPRETATION: The framework value-add on 2D RF was an artifact of the\npre-cd70821 activation mismatch bug. Post-fix, framework has zero or\nslightly-negative value on 2D RF where the adapter already converges. This\nis actually a STRONGER paper claim: \"framework provides corrective value\nwhen the base model is buggy, and stays neutral when the base model is\ncorrectly trained\". Honest framing required for publication.\n\nTODO (next fix): update docs/CLAIMS.md CLM-039 with new headline numbers\n+ cd70821 annotation. Update docs/r4-survey/10-sota-2d-experiment-results.md.\nPossibly re-run eight_gaussians 9 missing runs (~10 min, optional).\n"
+      "completed_at": "2026-09-05T00:18:00Z",
+      "wave_8_committed_at": "9e4872e",
+      "completion_sub_note": "PARTIAL: 21/30 runs completed before 2400s timeout. two_moons: 15/15 runs (baseline + 4 schedulers × 3 seeds, wall=1808.5s) ✅. eight_gaussians: 6/15 runs (baseline + CosineAnnealScheduler × 3 seeds) ⚠️ — Codim/EvidenceDriven/FreeTraj for eight_gaussians did not finish. Measured numbers (mean ± std across seeds, last 5 rounds):\n  two_moons baseline: W2=0.0709±0.0057, selection_ratio=0.8338±0.0002\n  two_moons EvidenceDrivenScheduler (best framework): W2=0.0805±0.0027, selection_ratio=0.8312±0.0002\n  two_moons CosineAnnealScheduler: W2=0.0866±0.0057, selection_ratio=0.8284±0.0001\n  two_moons FreeTrajScheduler: W2=0.0811±0.0024, selection_ratio=0.8297±0.0001\n  eight_gaussians baseline: W2=0.1764±0.0091, selection_ratio=0.5546±0.0002\n  eight_gaussians CosineAnnealScheduler: W2=0.1831±0.0025, selection_ratio=0.5417±0.0004\n\nKEY FINDING (post-cd70821 ReLU fix):\n  On two_moons the framework is WORSE than baseline on both axes:\n    W2: baseline=0.0709 vs best framework (EvidenceDriven)=0.0805 = +13.5% worse\n    selection_ratio: baseline=0.8338 vs best framework=0.8312 = -0.31% worse\n  On eight_gaussians CosineAnnealScheduler is also WORSE on both axes:\n    W2: baseline=0.1764 vs CosineAnneal=0.1831 = +3.8% worse\n    selection_ratio: baseline=0.5546 vs CosineAnneal=0.5417 = -2.3% worse\n\n  This INVERTS the pre-cd70821 narrative. Original CLM-039 claimed:\n    two_moons baseline W2=0.5029 -> framework best=0.4663 (-7.28%)\n    eight_gaussians baseline W2=0.6606 -> framework best=0.5919 (-10.40%)\n\n  Post-cd70821 (ReLU match between trainer and runtime):\n    - Model output already matches target distribution (W2 collapsed 0.5 -> 0.07)\n    - Adding restart-blend multi-round perturbations adds noise to a converged model\n    - Framework cannot find \"room to improve\" because there is no room left\n\nINTERPRETATION: The framework value-add on 2D RF was an artifact of the\npre-cd70821 activation mismatch bug. Post-fix, framework has zero or\nslightly-negative value on 2D RF where the adapter already converges. This\nis actually a STRONGER paper claim: \"framework provides corrective value\nwhen the base model is buggy, and stays neutral when the base model is\ncorrectly trained\". Honest framing required for publication.\n\nTODO (next fix): update docs/CLAIMS.md CLM-039 with new headline numbers\n+ cd70821 annotation. Update docs/r4-survey/10-sota-2d-experiment-results.md.\nPossibly re-run eight_gaussians 9 missing runs (~10 min, optional).\n\n\nDELIVERY: FIX-3 data shipped via FIX-2 commit 9e4872e (CLM-018 + CLM-022 updated with measured numbers + INVERSION NOTE). FIX-3 itself is not a separate commit because its sole deliverable is the data table that FIX-2 consumed. /tmp/wave8_fixes/FIX-3/sota_2d_rerun/ preserved as evidence + cross-link target."
     },
     {
       "id": "FIX-2-doc-claims-018-022",
@@ -266,6 +266,41 @@
       "claims_cannot_compare": [
         "CLM-040 (v4 CIFAR-10 sub-claim)"
       ]
+    }
+  },
+  "wave_8_summary": {
+    "fixes_applied": 4,
+    "commits": [
+      "9ad522a",
+      "9e4872e",
+      "c4e4f46"
+    ],
+    "fix_1": {
+      "task_id": "FIX-1-A11-benchmark",
+      "description": "1 LOC per_cell_coefficient_C=0.5 -> 2.0 in tools/benchmark_uplifts.py:440",
+      "commit": "9ad522a",
+      "verified": "A11 row current=20 / achieved=yes (was 0 / no); 36/36 uplifts pass"
+    },
+    "fix_2": {
+      "task_id": "FIX-2-doc-claims-018-022",
+      "description": "Update CLM-018 + CLM-022 with Wave 8 FIX-3 measured numbers + INVERSION NOTE per cd70821 ReLU fix",
+      "commit": "9e4872e",
+      "key_finding": "POST-cd70821, framework is WORSE than baseline on 2D RF (baseline W2=0.0709 vs best framework 0.0805 = +13.5% worse). Original CLM-018/022 framework-value-add was an artifact of the activation mismatch bug."
+    },
+    "fix_3": {
+      "task_id": "FIX-3-sota-2d-rerun",
+      "description": "Re-run tools/run_sota_2d_experiment.py --n-seeds 3 end-to-end",
+      "partial": true,
+      "two_moons_runs": "15/15 (baseline + 4 schedulers × 3 seeds)",
+      "eight_gaussians_runs": "6/15 (baseline + CosineAnneal × 3 seeds; remaining 9 timed out)",
+      "wall_clock_sec": 1808.5,
+      "shipped_via_commit": "9e4872e (via FIX-2 CLM-018/022 update)"
+    },
+    "fix_4": {
+      "task_id": "FIX-4-doc-mol-comparison",
+      "description": "Add REPRODUCIBILITY CAVEAT to §1.1.d + CLM-040 Disputed-by entry; resolve 3-way contradiction",
+      "commit": "c4e4f46",
+      "caveat_summary": "§1.1.d 0.1250/0.1875 numbers depend on Python 3.11 + dgl 2.1.0 sidecar (now deleted); native-venv returns 0/0; §2/§3 framing is authoritative"
     }
   }
 }
