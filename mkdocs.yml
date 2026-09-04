@@ -165,10 +165,14 @@ not_in_nav: |
   ABLATION_METRIC_PROBE.md
   ADAPTER_INTERFACE_SPEC.md
   CLAIMS.md
+  CONDITIONS.md
   DEPRECATION.md
   PERFORMANCE_BUDGETS.md
   RELEASING.md
+  mutation_audit_q4_2026.md
   design/*.md
+  theory/operating-regime.md
+  theory/theorem1_rate_bound.md
   lean/*.md
   lean_issue_re_inference_provenance.md
   paper-draft.md

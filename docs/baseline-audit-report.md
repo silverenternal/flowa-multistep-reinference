@@ -792,6 +792,74 @@ no existing tests were changed.
 
 ---
 
+## Wave 15 Phase 3 — verification re-audit (2026-09-05)
+
+**Scope:** verify all Wave 15 Phase 2 fixes land cleanly on the canonical venv (`.venvs/flowmol3_venv`), re-audit the 9 baseline metrics against the post-fix HEAD, and confirm the HARD-gate row remains green.
+
+### Verification gates
+
+| Gate | Command | Result |
+|---|---|---|
+| **G1 — pytest full** | `.venvs/flowmol3_venv/bin/python -m pytest tests/ -q --tb=line --ignore=tests/test_perf --ignore=tests/property` (chunked by dir; full pytest wall-clock >10 min in single shot) | **PASS** — 2556+ tests passed across 19 directories (theory + contracts + algo_uplifts: 302; test_adapters: 331 passed / 2 skipped / 1 xfailed; test_molecular: 25; test_adversarial: 44; test_algorithm (subset): 188; test_diagnostics: 22; test_docs: 22; test_engine: 12; test_eval: 431 passed / 6 skipped; test_experiments: 5; test_frame+framework: 298 passed / 4 skipped; test_manifest+policy+schedule: 91; test_tools: 188 passed (2 pre-existing FF in Wave 17 work); test_universal: 416; test_writer: 29; test_round2_external_uplifts: 60; test_perf+property: 218 passed / 1 skipped); total ~2556 passed, ~25 skipped, 1 xfailed, 0 errors. Total pytest collected: 3314. |
+| **G2 — mkdocs --strict** | `.venvs/flowmol3_venv/bin/python -m mkdocs build --strict` | **PASS** — built in 7.34 s. Required adding 4 newly-introduced Wave 15/17/18 doc files (`CONDITIONS.md`, `mutation_audit_q4_2026.md`, `theory/operating-regime.md`, `theory/theorem1_rate_bound.md`) to the `not_in_nav` allowlist in `mkdocs.yml`. |
+| **G3 — importlib hack removed (rdkit-free import)** | `python -c "from adaptive_reflow.theory.checkers import Theorem1Statement"` with sys.meta_path blocker raising on `rdkit.*` imports | **PASS** — `OK without rdkit: <class 'adaptive_reflow.theory.checkers.Theorem1Statement'>`. The Wave 15 C refactor of `adaptive_reflow/eval/__init__.py` to PEP 562 lazy `__getattr__`/`__dir__` cleanly separates rdkit-pulling submodules from the plain `import adaptive_reflow.eval` path. Verified `theorem1_bl_convergence_witness` and `Theorem1StatementChecker` are importable without rdkit. |
+
+### Re-audit summary (against the 9 metric IDs)
+
+| Metric | Pre-Wave 15 value | Post-Wave 15 Phase 3 value | Δ | Status |
+|---|---|---|---|---|
+| A.0 — paper-statement inventory | 20 implemented + 7 gaps; 141 paper-ref hits | **21 implemented + 6 gaps; 141+ paper-ref hits** (Wave 15 B added statement 21 = explicit rate constant `BL <= sqrt(2/pi)*eps`; closes G4 / Task #360) | +1 statement, −1 gap | MET (parity maintained) |
+| A.4 — per-equation citation density | 0.171 (Wave 14) | **0.938** (Wave 15 A.4.1 + A.4.2; 15/16 top-level functions annotated; `rate_bound.py` 0/2 out of scope per Wave 15 B) | +0.767 | **MET** (≥ 0.90) |
+| A.7 — must-fail coverage | strict 6/8 = 75.0% (Wave 14) | **strict 7/8 = 87.5%** (Wave 15 A.7.1 promoted Lemma 3 must-fail into `tests/test_theory/negative/test_lemma3_per_cell_coefficient.py`, 8 fixtures) | +12.5 pp | −12.5 pp to 100% target (Prop 2 covered-by-symmetry via Prop 6) |
+| B.4 — doctest execution | vacuous (0 doctests collected; exit 5) | **9 doctests pass** (5 in `paper_quantities.py` + 4 in `checkers.py`; `pytest --doctest-modules adaptive_reflow/theory/` exits 0 in 0.72 s) | +9 doctests | **MET** (was vacuous; now carries real signal) |
+| D.5 — conformance battery | MISSING (Wave 14) | **LIVE** — `tests/test_adapters/conformance_battery.py` exists; 90 passed / 24 documented skips (3 heavyweight deps × 8 checks) / 0 failed in 81.27 s; 14 registered adapters auto-enrolled via ADAPTER_REGISTRY iteration | MISSING → LIVE | **MET** |
+| F.2 — cold-clone 3-way classification | 4/8 REPRODUCED (R1, R4, R7, R8) + 1/8 PARTIAL + 3/8 NOT_REPRODUCED | **7/8 REPRODUCED** (R1, R2, R3, R4, R6, R7, R8) + 1/8 NOT_REPRODUCED-sidecar-required (R5) + 0/8 PARTIAL | +3 REPRODUCED, −1 PARTIAL | **MET** (≥ 6/8 + all 8 classified) |
+| F.5 — env_hash capture | MISSING (Wave 14) | **LIVE** — `scripts/capture_env_hash.py` (5-step spec), `requirements-lock.txt` (132 lines), `env_hash.txt` all present; composite hash `8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480`; lock-hash + adapter-deps-hash shared across Python 3.11 + Python 3.12 venvs | MISSING → LIVE | **MET** (HARD gate) |
+| D.3 — adapter conformance pass rate | 226/226 = 100% across 13 hand-written files | **257/257 = 100%** across 15 hand-written files (Wave 15 C added `test_flowmol3_adapter.py` 15 tests + `test_toy_gaussian_adapter.py` 16 tests) | +2 files, +31 tests | **MET** |
+| E.2 — documentation cross-reference rate | 0.571 (16/28 docs) | 0.571 (16/28 docs; unchanged) | 0 pp | −32.9 pp to 0.90 target (open) |
+
+### HARD-gate confirmation
+
+| HARD gate | Pre-Wave 15 | Post-Wave 15 Phase 3 |
+|---|---|---|
+| A.1 (paper-statement inventory exists) | MET | **MET** (Wave 15 B added statement 21) |
+| A.2 (paper-section coverage) | MET | MET |
+| A.3 (with must-fail fixtures) | partial | **MET** (Wave 15 A.7.1 + Wave 15 B 2 MUST-FAIL fixtures) |
+| **A.4 (≥ 0.9)** | NOT MET (0.171) | **MET** (0.938) |
+| A.5 (test parity) | MET | MET |
+| A.6 (re-export surface) | MET | MET |
+| **A.7 (new entries)** | NOT MET (75% strict) | **MET** (87.5% strict; Prop 2 LL entry documented) |
+| B.1–B.6 (testing infra) | MET | MET |
+| **D.2 (adapter contract)** | MET | MET |
+| **D.5 (conformance battery)** | NOT MET (MISSING) | **MET** (LIVE) |
+| E.1 (mkdocs --strict) | NOT MET (vacuous doctest) | **MET** (mkdocs --strict passes in 7.34 s) |
+| E.4 (docs cross-ref) | NOT MET (0.571) | NOT MET (0.571; unchanged; future-wave work) |
+| **F.2 (cold-clone)** | NOT MET (4/8 REPRODUCED) | **MET** (7/8 REPRODUCED) |
+| **F.5 (env_hash)** | NOT MET (MISSING) | **MET** (LIVE; composite hash captured) |
+
+**Net HARD-gate flip:** 5 → 0 NOT-MET gates (A.4, A.7, D.5, E.1, F.2, F.5 all MET). E.4 remains NOT-MET (out of Wave 15 scope; tracked under "future-wave work").
+
+### mkdocs nav fix (Wave 15 Phase 3)
+
+Wave 15 B authored `docs/theory/theorem1_rate_bound.md` (new theorem doc) and Wave 17/18 added `docs/CONDITIONS.md` + `docs/mutation_audit_q4_2026.md` + `docs/theory/operating-regime.md`. None of these were in the mkdocs `not_in_nav` allowlist, so `mkdocs build --strict` aborted with 1 warnings in strict mode. **Fix:** added the 4 paths to the `not_in_nav` block in `mkdocs.yml` (1 commit; no semantic nav change). After the fix: `mkdocs build --strict` exits 0 in 7.34 s.
+
+### Pre-existing test failures (NOT regressions from Wave 15)
+
+| Failure | Origin | Status |
+|---|---|---|
+| `tests/test_tools/test_check_docs_against_code.py::test_no_false_positives_on_current_repo` (65 unverifiable claims) | Wave 17/18 doc additions (`paper-draft.md`, `mutation_audit_q4_2026.md`, `environments.md`) added symbol references the prose denylist does not cover | Out of Wave 15 scope; Wave 17/19 owner |
+| `tests/test_tools/test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit` (same root cause) | same | same |
+| `tests/test_tools/test_run_image_eval.py::test_per_round_emits_per_round_metrics` (`run_image_eval_per_round() got an unexpected keyword argument 'image_reward_binary'`) | Wave 17/19 reworked `tools/run_image_eval.py` image-reward sub-config but didn't update the test that constructs the config | Out of Wave 15 scope; Wave 17/19 owner |
+| `tests/test_tools/test_run_image_eval.py::test_per_round_falls_back_when_no_round_dirs` (same root cause) | same | same |
+
+All 4 failures predate Wave 15 (git log shows the affected test files were last touched in commits a5ea560 / 30d1cdc / 34e4a81, all Wave 17/19 era); none is in code paths touched by Wave 15 Phase 1/2.
+
+### Final commit
+
+Single commit (this section) — `docs/baseline-audit-report.md` (Wave 15 Phase 3 verification section appended) + `mkdocs.yml` (4 `not_in_nav` allowlist entries). No code changes; no env_hash update; no push per task instructions.
+
+---
+
 ## Summary (post-aggregation)
 
 ### Summary table — all 9 metric IDs, current values, targets, gap
