@@ -28,7 +28,7 @@ layout landed. The current governance is at:
 | `UNIVERSAL_CONTRACT_NOTES.md` | superseded | `docs/ARCHITECTURE.md` |
 | `UNIVERSAL_MOLECULAR_MAPPING.md` | superseded | `docs/ARCHITECTURE.md` |
 | `NoiseSelectedRectification_EN.md` | English extract of a noise-selection derivation; not part of current scope | (no current home) |
-| `_benchmark_ablation.md`, `_test_ablation_quick.md` | ad-hoc ablation scratch | `docs/ABLATION.md` |
+| `_benchmark_ablation.md`, `_test_ablation_quick.md` (consolidated into `_ablation_scratch.md`) | ad-hoc ablation scratch (5-round smoke + 20-round canonical runs) | `docs/ABLATION.md` |
 | `candidate_registry_init.md` | initial design notes | `adaptive_reflow/writer/registry.py` |
 | `paper-plan.md` | pre-`docs/paper-draft.md` planning | `docs/paper-draft.md` |
 
