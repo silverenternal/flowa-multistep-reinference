@@ -126,6 +126,13 @@ dev = [
     # the original author-time workflow of "mkdocs for docs + hypothesis
     # for property tests + ruff/mypy via the dev shell".
     "hypothesis>=6.0",
+    # ``mutmut`` is the Python point-mutation tester used by the F.6
+    # quarterly ML-aware mutation audit (``tools/run_mutation_audit.py``).
+    # Pinned ``>=2.4`` for the modern mutmut2 AST-only design (the legacy
+    # mutmut 1.x regenerates source files and was unreliable on Windows
+    # per ``tools/mutate/WINDOWS_LIMITATION.md``). F.6 is quarterly by
+    # design so the tool is dev-only and never required at runtime.
+    "mutmut>=2.4",
 ]
 # Chemistry-only extra: RDKit is a heavyweight dependency (~25 MB
 # compiled wheel + numpy + Pillow) that only the

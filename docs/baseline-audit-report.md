@@ -792,6 +792,7 @@ no existing tests were changed.
 | E.2 | Documentation cross-reference rate | 0.5714 (16 / 28 docs/*.md) | ≥ 0.9 by Wave 14 | −0.329 (need +9 to +10 referencing files; may need to broaden the regex) |
 | F.2 | Wave 6 head experiments (3-way) | REPRODUCED = 4 / 8 (R1, R4, R7, R8); PARTIAL = 1 (R2); NOT_REPRODUCED = 3 (R3, R5, R6); all 8 classified | ≥ 6/8 REPRODUCED by Wave 14 | −2 REPRODUCED rows |
 | F.5 | env_hash capture | MISSING (no `scripts/capture_env_hash.py`, `requirements-lock.txt`, `env_hash.txt`, or per-adapter dep list) | 100 % of reproductions ship env_hash.txt by Wave 14 (HARD gate) | 4 artifacts missing + no framework uv-managed venv |
+| F.6 | ML-aware mutation score (Q4 2026 first audit) | **0.833 aggregate** (25/30 killed) -- theory 0.500, integrators 1.000, schedulers 1.000, adapters 0.833 | >= 0.6 aggregate AND >= 0.4 per-subsystem by Wave 18 | **MET** (see `docs/mutation_audit_q4_2026.md`; 5 ML-aware operators: weight_perturbation / activation_swap / structural_mutation / threshold_flip / constant_substitution; runner `tools/run_mutation_audit.py`; JSON `verification_outputs/mutation_audit_q4_2026.json`). Theory SM/TF + synthetic-adapter SM have actionable survivors in `docs/mutation_audit_q4_2026.md` §5. |
 
 ### Next actions (priority order)
 

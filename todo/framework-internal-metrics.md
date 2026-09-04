@@ -89,6 +89,8 @@ unpinned threshold).
 | F.5 | Environment-fingerprint reproducibility: `env_hash.txt` shipped with every reproduction; `env_hash = SHA256( requirements-lock.txt + python --version + torch.__version__ + torch.version.cuda + adapter-specific dependency versions )`; **NOT full pip freeze** (sensitive to install order, --extra-index-url, OS package mgr artifacts) | none | 100% of reproductions by Wave 14; mismatched-hash auto-classified PARTIAL or NOT_REPRODUCED | **HARD** |
 | F.6 | ML-aware mutation score (MuNN/DeepMutation operators, quarterly): **scope = theory checkers + integrators + schedulers + adapters (one representative per family); report per-subsystem scores so theory-checker score doesn't mask algorithmic gaps** | none | >= 0.6 aggregate AND >= 0.4 per-subsystem by Wave 18 | no |
 
+**F.6 current value (Q4 2026 first audit; see `docs/mutation_audit_q4_2026.md`):** aggregate **0.833** (25/30) across the four subsystem families -- theory 0.500 (4/8), integrators 1.000 (8/8), schedulers 1.000 (8/8), adapters 0.833 (5/6). Five ML-aware operators: weight_perturbation, activation_swap, structural_mutation, threshold_flip, constant_substitution. Runner: `tools/run_mutation_audit.py`. Audit JSON: `verification_outputs/mutation_audit_q4_2026.json`. Survivors catalogue + actionable items in report §5. **GATE MET** (>= 0.6 aggregate AND >= 0.4 per-subsystem).
+
 ## 2. Continuous optimization plan
 
 | Metric group | Cadence | Owner | Improvement path |
