@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" font-family="Helvetica,Arial,sans-serif">
+<rect width="900" height="540" fill="#FAFAFA"/>
+<text x="450" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#222831">FlowA Framework — Conditions for Value-Add</text>
+<text x="450" y="56" text-anchor="middle" font-size="12" fill="#222831">Three measured outcomes on three published flow-matching models</text>
+<rect x="60" y="90" width="260" height="420" rx="10" ry="10" fill="#e7f3fb" stroke="#0077B6" stroke-width="2.5"/>
+<rect x="60" y="90" width="260" height="36" rx="10" ry="10" fill="#0077B6"/>
+<text x="190.0" y="114" text-anchor="middle" font-size="14" font-weight="bold" fill="white">HELPS</text>
+<text x="76" y="160" font-size="11" font-weight="bold" fill="#222831">Model:</text>
+<text x="76" y="174" font-size="11" fill="#222831">2D Rectified Flow</text>
+<text x="76" y="187" font-size="11" fill="#222831">(Liu 2022)</text>
+<text x="76" y="221" font-size="11" font-weight="bold" fill="#222831">Metric:</text>
+<text x="76" y="235" font-size="11" fill="#222831">W₂</text>
+<text x="76" y="269" font-size="11" font-weight="bold" fill="#222831">Result:</text>
+<text x="76" y="283" font-size="11" fill="#222831">−7.28% (two_moons)</text>
+<text x="76" y="296" font-size="11" fill="#222831">−10.40% (eight_gauss)</text>
+<text x="76" y="330" font-size="11" font-weight="bold" fill="#222831">Condition:</text>
+<text x="76" y="344" font-size="11" fill="#222831">Chained state carries</text>
+<text x="76" y="357" font-size="11" fill="#222831">information across rounds;</text>
+<text x="76" y="370" font-size="11" fill="#222831">the ramp is productive.</text>
+<text x="76" y="404" font-size="11" font-weight="bold" fill="#222831">Evidence:</text>
+<text x="76" y="418" font-size="11" fill="#222831">3 seeds, 1965.9 s CPU</text>
+<rect x="320" y="90" width="260" height="420" rx="10" ry="10" fill="#f5f5f5" stroke="#888888" stroke-width="2.5"/>
+<rect x="320" y="90" width="260" height="36" rx="10" ry="10" fill="#888888"/>
+<text x="450.0" y="114" text-anchor="middle" font-size="14" font-weight="bold" fill="white">NEUTRAL (at saturation)</text>
+<text x="336" y="160" font-size="11" font-weight="bold" fill="#222831">Model:</text>
+<text x="336" y="174" font-size="11" fill="#222831">LineageFlow</text>
+<text x="336" y="187" font-size="11" fill="#222831">(ICML 2026, protein)</text>
+<text x="336" y="221" font-size="11" font-weight="bold" fill="#222831">Metric:</text>
+<text x="336" y="235" font-size="11" fill="#222831">family_validity</text>
+<text x="336" y="269" font-size="11" font-weight="bold" fill="#222831">Result:</text>
+<text x="336" y="283" font-size="11" fill="#222831">1.0000 → 1.0000 (ties)</text>
+<text x="336" y="296" font-size="11" fill="#222831">+0.23% log-lik; +0.09% div</text>
+<text x="336" y="330" font-size="11" font-weight="bold" fill="#222831">Condition:</text>
+<text x="336" y="344" font-size="11" fill="#222831">Decision metric saturated</text>
+<text x="336" y="357" font-size="11" fill="#222831">for both arms; only secondary</text>
+<text x="336" y="370" font-size="11" fill="#222831">metrics differentiate.</text>
+<text x="336" y="404" font-size="11" font-weight="bold" fill="#222831">Evidence:</text>
+<text x="336" y="418" font-size="11" fill="#222831">32 samples, 131.24 s CPU</text>
+<rect x="580" y="90" width="260" height="420" rx="10" ry="10" fill="#fbeae5" stroke="#E76F51" stroke-width="2.5"/>
+<rect x="580" y="90" width="260" height="36" rx="10" ry="10" fill="#E76F51"/>
+<text x="710.0" y="114" text-anchor="middle" font-size="14" font-weight="bold" fill="white">HURTS (matched-NFE)</text>
+<text x="596" y="160" font-size="11" font-weight="bold" fill="#222831">Model:</text>
+<text x="596" y="174" font-size="11" fill="#222831">CIFAR-10 Rectified Flow</text>
+<text x="596" y="187" font-size="11" fill="#222831">(Liu 2022, 61.8 M params)</text>
+<text x="596" y="221" font-size="11" font-weight="bold" fill="#222831">Metric:</text>
+<text x="596" y="235" font-size="11" fill="#222831">FID</text>
+<text x="596" y="269" font-size="11" font-weight="bold" fill="#222831">Result:</text>
+<text x="596" y="283" font-size="11" fill="#222831">Baseline 83.09</text>
+<text x="596" y="296" font-size="11" fill="#222831">Framework 103.4–108.6</text>
+<text x="596" y="309" font-size="11" fill="#222831">(+24 to +31%)</text>
+<text x="596" y="343" font-size="11" font-weight="bold" fill="#222831">Condition:</text>
+<text x="596" y="357" font-size="11" fill="#222831">Harness discards per-round</text>
+<text x="596" y="370" font-size="11" fill="#222831">state; cosine ramp degenerates</text>
+<text x="596" y="383" font-size="11" fill="#222831">into noise-pool aggregator.</text>
+<text x="596" y="417" font-size="11" font-weight="bold" fill="#222831">Evidence:</text>
+<text x="596" y="431" font-size="11" fill="#222831">500 samples, 2643 s CPU</text>
+<text x="450" y="525" text-anchor="middle" font-size="11" font-style="italic" fill="#222831">Honest framing: framework provides selectable, auditable inference behaviour with a theory-grounded knob — not a universal win.</text>
+</svg>

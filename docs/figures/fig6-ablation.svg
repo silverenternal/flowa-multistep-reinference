@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="Helvetica,Arial,sans-serif">
+<rect width="900" height="520" fill="#FAFAFA"/>
+<text x="450" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#222831">2D Rectified Flow Ablation — Final W₂ by Scheduler</text>
+<text x="450" y="56" text-anchor="middle" font-size="12" fill="#222831">Same checkpoint, same evaluator; only the inference strategy varies. Lower is better.</text>
+<rect x="60" y="90" width="360" height="380" fill="white" stroke="#222831" stroke-width="1.5"/>
+<text x="240.0" y="112" text-anchor="middle" font-size="14" font-weight="bold" fill="#222831">two_moons</text>
+<line x1="140" y1="140" x2="140" y2="420" stroke="#222831" stroke-width="1"/>
+<rect x="170" y="153.8226666666667" width="36" height="266.1773333333333" fill="#888888" stroke="#888888" stroke-width="1"/>
+<text x="188.0" y="147.8226666666667" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">2.85</text>
+<text x="188.0" y="434" text-anchor="middle" font-size="9" fill="#222831">single_pass</text>
+<rect x="220" y="338.884" width="36" height="81.116" fill="#0077B6" stroke="#0077B6" stroke-width="1"/>
+<text x="238.0" y="332.884" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">0.87</text>
+<text x="238.0" y="434" text-anchor="middle" font-size="9" fill="#222831">multi_round</text>
+<text x="238.0" y="445" text-anchor="middle" font-size="9" fill="#222831">cosine</text>
+<rect x="270" y="338.884" width="36" height="81.116" fill="#00ADB5" stroke="#00ADB5" stroke-width="1"/>
+<text x="288.0" y="332.884" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">0.87</text>
+<text x="288.0" y="434" text-anchor="middle" font-size="9" fill="#222831">multi_round</text>
+<text x="288.0" y="445" text-anchor="middle" font-size="9" fill="#222831">codim_sheet</text>
+<rect x="320" y="337.23199999999997" width="36" height="82.76800000000001" fill="#7B2CBF" stroke="#7B2CBF" stroke-width="1"/>
+<text x="338.0" y="331.23199999999997" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">0.89</text>
+<text x="338.0" y="434" text-anchor="middle" font-size="9" fill="#222831">multi_round</text>
+<text x="338.0" y="445" text-anchor="middle" font-size="9" fill="#222831">evidence_driven</text>
+<rect x="370" y="361.72266666666667" width="36" height="58.277333333333324" fill="#FFD460" stroke="#FFD460" stroke-width="1"/>
+<text x="388.0" y="355.72266666666667" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">0.62</text>
+<text x="388.0" y="434" text-anchor="middle" font-size="9" fill="#222831">multi_round</text>
+<text x="388.0" y="445" text-anchor="middle" font-size="9" fill="#222831">no_restart</text>
+<line x1="136" y1="420.0" x2="140" y2="420.0" stroke="#222831" stroke-width="1"/>
+<text x="132" y="424.0" text-anchor="end" font-size="10" fill="#222831">0.0</text>
+<line x1="136" y1="373.3333333333333" x2="140" y2="373.3333333333333" stroke="#222831" stroke-width="1"/>
+<text x="132" y="377.3333333333333" text-anchor="end" font-size="10" fill="#222831">0.5</text>
+<line x1="136" y1="326.6666666666667" x2="140" y2="326.6666666666667" stroke="#222831" stroke-width="1"/>
+<text x="132" y="330.6666666666667" text-anchor="end" font-size="10" fill="#222831">1.0</text>
+<line x1="136" y1="280.0" x2="140" y2="280.0" stroke="#222831" stroke-width="1"/>
+<text x="132" y="284.0" text-anchor="end" font-size="10" fill="#222831">1.5</text>
+<line x1="136" y1="233.33333333333334" x2="140" y2="233.33333333333334" stroke="#222831" stroke-width="1"/>
+<text x="132" y="237.33333333333334" text-anchor="end" font-size="10" fill="#222831">2.0</text>
+<line x1="136" y1="186.66666666666666" x2="140" y2="186.66666666666666" stroke="#222831" stroke-width="1"/>
+<text x="132" y="190.66666666666666" text-anchor="end" font-size="10" fill="#222831">2.5</text>
+<line x1="136" y1="140.0" x2="140" y2="140.0" stroke="#222831" stroke-width="1"/>
+<text x="132" y="144.0" text-anchor="end" font-size="10" fill="#222831">3.0</text>
+<text x="80" y="280.0" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831" transform="rotate(-90 80 280.0)">Final W₂</text>
+<rect x="490" y="90" width="360" height="380" fill="white" stroke="#222831" stroke-width="1.5"/>
+<text x="670.0" y="112" text-anchor="middle" font-size="14" font-weight="bold" fill="#222831">eight_gaussians</text>
+<line x1="570" y1="140" x2="570" y2="420" stroke="#222831" stroke-width="1"/>
+<rect x="600" y="204.4466666666667" width="36" height="215.5533333333333" fill="#888888" stroke="#888888" stroke-width="1"/>
+<text x="618.0" y="198.4466666666667" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">2.31</text>
+<text x="618.0" y="434" text-anchor="middle" font-size="9" fill="#222831">single_pass</text>
+<rect x="650" y="229.25466666666668" width="36" height="190.74533333333332" fill="#0077B6" stroke="#0077B6" stroke-width="1"/>
+<text x="668.0" y="223.25466666666668" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">2.04</text>
+<text x="668.0" y="434" text-anchor="middle" font-size="9" fill="#222831">multi_round</text>
+<text x="668.0" y="445" text-anchor="middle" font-size="9" fill="#222831">cosine</text>
+<rect x="700" y="229.25466666666668" width="36" height="190.74533333333332" fill="#00ADB5" stroke="#00ADB5" stroke-width="1"/>
+<text x="718.0" y="223.25466666666668" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">2.04</text>
+<text x="718.0" y="434" text-anchor="middle" font-size="9" fill="#222831">multi_round</text>
+<text x="718.0" y="445" text-anchor="middle" font-size="9" fill="#222831">codim_sheet</text>
+<rect x="750" y="229.25466666666668" width="36" height="190.74533333333332" fill="#7B2CBF" stroke="#7B2CBF" stroke-width="1"/>
+<text x="768.0" y="223.25466666666668" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">2.04</text>
+<text x="768.0" y="434" text-anchor="middle" font-size="9" fill="#222831">multi_round</text>
+<text x="768.0" y="445" text-anchor="middle" font-size="9" fill="#222831">evidence_driven</text>
+<rect x="800" y="349.15066666666667" width="36" height="70.84933333333333" fill="#FFD460" stroke="#FFD460" stroke-width="1"/>
+<text x="818.0" y="343.15066666666667" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831">0.76</text>
+<text x="818.0" y="434" text-anchor="middle" font-size="9" fill="#222831">multi_round</text>
+<text x="818.0" y="445" text-anchor="middle" font-size="9" fill="#222831">no_restart</text>
+<line x1="566" y1="420.0" x2="570" y2="420.0" stroke="#222831" stroke-width="1"/>
+<text x="562" y="424.0" text-anchor="end" font-size="10" fill="#222831">0.0</text>
+<line x1="566" y1="373.3333333333333" x2="570" y2="373.3333333333333" stroke="#222831" stroke-width="1"/>
+<text x="562" y="377.3333333333333" text-anchor="end" font-size="10" fill="#222831">0.5</text>
+<line x1="566" y1="326.6666666666667" x2="570" y2="326.6666666666667" stroke="#222831" stroke-width="1"/>
+<text x="562" y="330.6666666666667" text-anchor="end" font-size="10" fill="#222831">1.0</text>
+<line x1="566" y1="280.0" x2="570" y2="280.0" stroke="#222831" stroke-width="1"/>
+<text x="562" y="284.0" text-anchor="end" font-size="10" fill="#222831">1.5</text>
+<line x1="566" y1="233.33333333333334" x2="570" y2="233.33333333333334" stroke="#222831" stroke-width="1"/>
+<text x="562" y="237.33333333333334" text-anchor="end" font-size="10" fill="#222831">2.0</text>
+<line x1="566" y1="186.66666666666666" x2="570" y2="186.66666666666666" stroke="#222831" stroke-width="1"/>
+<text x="562" y="190.66666666666666" text-anchor="end" font-size="10" fill="#222831">2.5</text>
+<line x1="566" y1="140.0" x2="570" y2="140.0" stroke="#222831" stroke-width="1"/>
+<text x="562" y="144.0" text-anchor="end" font-size="10" fill="#222831">3.0</text>
+<text x="510" y="280.0" text-anchor="middle" font-size="11" font-weight="bold" fill="#222831" transform="rotate(-90 510 280.0)">Final W₂</text>
+<rect x="60" y="480" width="14" height="14" fill="#888888" stroke="#888888"/>
+<text x="80" y="490" font-size="10" fill="#222831">single_pass baseline</text>
+<rect x="220" y="480" width="14" height="14" fill="#0077B6" stroke="#0077B6"/>
+<text x="240" y="490" font-size="10" fill="#222831">CosineAnnealScheduler</text>
+<rect x="380" y="480" width="14" height="14" fill="#00ADB5" stroke="#00ADB5"/>
+<text x="400" y="490" font-size="10" fill="#222831">CodimensionSheetScheduler</text>
+<rect x="540" y="480" width="14" height="14" fill="#7B2CBF" stroke="#7B2CBF"/>
+<text x="560" y="490" font-size="10" fill="#222831">EvidenceDrivenScheduler</text>
+<rect x="700" y="480" width="14" height="14" fill="#FFD460" stroke="#FFD460"/>
+<text x="720" y="490" font-size="10" fill="#222831">multi_round_no_restart</text>
+</svg>

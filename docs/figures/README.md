@@ -1,17 +1,76 @@
 # Figures — paper-ready diagrams for FlowA
 
-The four PNG assets in this directory are the canonical figures cited
-by the paper draft and the r4/r17 survey results. They are regenerable
-from `tools/_make_figures.py` (output paths documented inline on each
-section below) and committed as static binaries for ease of paper
-integration.
+The seven figure assets in this directory are the canonical figures cited
+by the paper draft and the r4/r17 survey results. The four PNG assets
+(fig1–fig4) are regenerable from `tools/_make_figures.py`; the three
+SVG assets (fig5–fig7) are regenerable from
+`tools/_make_wave19_figures.py`. Both are committed as static binaries
+for ease of paper integration.
 
 > **Regeneration note:** to rebuild any PNG from the source matplotlib
 > script, run `./venv/Scripts/python tools/_make_figures.py` (or
 > `python tools/_make_figures.py` from a Linux dev environment).
 > Source-code paths to the per-figure generation blocks (referenced in
 > the section captions below): line 141 (Figure 1), line 226 (Figure 2),
-> line 303 (Figure 3), line 375 (Figure 4).
+> line 303 (Figure 3), line 375 (Figure 4). To rebuild any SVG from
+> `tools/_make_wave19_figures.py`, run `python3 tools/_make_wave19_figures.py`.
+
+---
+
+## Figure 5 — FlowA 4-layer architecture
+
+![FlowA 4-layer architecture](fig5-architecture.svg)
+
+**Caption.** The four pluggable layers of FlowA: L4 adapter protocol
+(user-supplied), L3 algorithm layer (paper-grounded schedulers +
+DERIV-001 derivation rules), L2 engine + runner orchestration
+(hash-chained ledger, byte-deterministic transitions), L1 contracts +
+metrics (InceptionV3 FID, $W_2$, `selection_ratio`,
+`TheoremAlignedFID`). User-supplied pre-trained model plugs into L4;
+layers 1–3 are model-agnostic.
+
+**Source**: `tools/_make_wave19_figures.py::fig5_architecture`.
+**Paper reference**: `docs/paper-draft.md` §2.5 (Layer architecture).
+
+---
+
+## Figure 6 — 2D Rectified Flow ablation
+
+![2D Rectified Flow ablation](fig6-ablation.svg)
+
+**Caption.** Per-scheduler final-$W_2$ ablation on `two_moons` (left
+panel) and `eight_gaussians` (right panel). Same checkpoint, same
+evaluator; only the inference strategy varies. `multi_round_no_restart`
+is the strongest single-pass re-inference row on both targets. The
+`single_pass` baseline (gray) is the 1-pass counterfactual.
+`CosineAnnealScheduler`, `CodimensionSheetScheduler`, and
+`EvidenceDrivenScheduler` are the three paper-grounded schedulers.
+
+**Source data**: `docs/CONSOLIDATED_RESULTS.md` §4 (2D FM ablation
+table), `docs/benchmark-deep-uplifts.md` §5 (13-cell × 2-target ablation).
+**Source**: `tools/_make_wave19_figures.py::fig6_ablation`.
+**Paper reference**: `docs/paper-draft.md` §4.2 (2D Rectified Flow results).
+
+---
+
+## Figure 7 — Conditions for framework value-add
+
+![Conditions for framework value-add](fig7-conditions.svg)
+
+**Caption.** Three measured outcomes on three published flow-matching
+models. **Helps**: 2D Rectified Flow — $W_2$ −7.28% / −10.40% across 3
+seeds; chained state carries information across rounds, the ramp is
+productive. **Neutral (at saturation)**: LineageFlow protein FM —
+decision metric `family_validity` ties at 1.0000 for both arms; secondary
+metrics +0.23% / +0.09%. **Hurts (matched-NFE)**: CIFAR-10 Rectified
+Flow — baseline FID 83.09 vs framework 103.4–108.6 (+24 to +31%);
+harness discards per-round state and the cosine ramp degenerates into
+a noise-pool aggregator.
+
+**Source data**: `docs/CONSOLIDATED_RESULTS.md` §5, §6, §7.4.
+**Source**: `tools/_make_wave19_figures.py::fig7_conditions`.
+**Paper reference**: `docs/paper-draft.md` §4.8 (Cross-model summary),
+§5.3 (When does the framework help, and when does it not?).
 
 ---
 
@@ -131,3 +190,17 @@ spread across a ~5.1-FID window).
 CLM-040 / CLM-041.
 **Generator path**: `tools/_make_figures.py` line 375 (fig4 block).
 **Paper reference**: `docs/ARCHIVE/top-level/paper-plan.md` §4.3.
+
+---
+
+## Figure index
+
+| Figure | Format | Generator | Paper section |
+|---|---|---|---|
+| 1 — `FlowMatchingODEAdapter` Protocol | PNG | `tools/_make_figures.py::fig1_protocol` | §2.1 |
+| 2 — Four feedback loops | PNG | `tools/_make_figures.py::fig2_loops` | §2.2 |
+| 3 — `selection_ratio` convergence | PNG | `tools/_make_figures.py::fig3_selection_ratio` | §4.6 |
+| 4 — CIFAR-10 FID bars | PNG | `tools/_make_figures.py::fig4_cifar_fid` | §4.3 |
+| 5 — 4-layer architecture | SVG | `tools/_make_wave19_figures.py::fig5_architecture` | §2.5 |
+| 6 — 2D Rectified Flow ablation | SVG | `tools/_make_wave19_figures.py::fig6_ablation` | §4.2 |
+| 7 — Conditions for value-add | SVG | `tools/_make_wave19_figures.py::fig7_conditions` | §4.8, §5.3 |
