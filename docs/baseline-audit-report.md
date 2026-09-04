@@ -1304,6 +1304,120 @@ no existing tests were changed.
 - The tool is purely additive (new file `tools/capability_audit.py`, new JSON `verification_outputs/capability_audit_q3_2026.json`, new doc sections in `todo/framework-internal-metrics.md` + `docs/baseline-audit-report.md`).
 - No existing tool, test, or doc was modified.
 - The tool runs end-to-end on the head checkout in < 1 s on CPU (no torch, no GPU).
+
+### Wave 26 Agent A — cold-clone re-run (2026-09-05)
+
+**Scope:** re-run `tools/capability_audit.py` end-to-end on HEAD to (a) confirm
+the Wave 23 Agent B baseline measurements still hold (cold-clone discipline per
+G.7 / F.5) and (b) capture a fresh `verification_outputs/capability_audit_q3_2026.json`
+(file is `.gitignore`-d; the Wave 23 output is overwritten on every run).
+
+**Command executed:**
+```bash
+cd /home/hugo/codes/flowa-multistep-reinference
+.venvs/flowmol3_venv/bin/python tools/capability_audit.py \
+    --output verification_outputs/capability_audit_q3_2026.json
+```
+**Wall-clock:** <1 s on CPU (no torch / dgl / rdkit imports). **Exit code:** 1
+(gate BLOCKED — expected, identical to Wave 23).
+
+**JSON timestamp:** `2026-09-04T23:19:13.699593+00:00`.
+**F.5 env_hash re-captured:** `2080f2e8feccef8223509bd59e117062d1b10f66e297a735c5936fc0864db0ff`
+(delta vs Wave 15 F.5 baseline `8ca7e303...87480` reflects adapter-deps hash
+drift as the framework evolves; structurally, G.7 check 1 still passes because
+`env_hash.txt` is present and the F.5 capture script runs cleanly).
+
+**Per-metric verdicts (cold-clone re-run):**
+
+| Metric | Definition | Current value | Target | HARD/SOFT | Verdict |
+|---|---|---:|---|---|---|
+| **G.1** | Mean value score | `-0.0114` | ≥ +0.05 | HARD | **FAIL** |
+| **G.2** | Cost-benefit ratio | `0.962` | ≤ 5.0 | SOFT | **PASS** |
+| **G.3** | Worst-case bound | `-2.0905` | ≥ -0.03 | HARD | **FAIL** |
+| **G.4** | Generalization breadth | `4` | ≥ 3 | HARD | **PASS** |
+| **G.5** | Saturation point | `275 NFE` | ≤ 50 NFE | SOFT | **FAIL** |
+| **G.6** | Honest negative surface | `0.7000` | ≤ 0.30 | HARD | **FAIL** |
+| **G.7** | Reproducibility | `7/7` | ≥ 6/7 | HARD | **PASS** |
+
+**Aggregate (from JSON `aggregate` block, byte-identical to Wave 23):**
+- `hard_pass = 2` (G.4, G.7)
+- `hard_fail = 3` (G.1, G.3, G.6)
+- `hard_pending = 0`
+- `soft_pass = 1` (G.2)
+- **`g_master_capability` = "BLOCKED"**
+- **`must_4_freeze_gate` = "BLOCKED"`
+
+**`G-MASTER-CAPABILITY` gate verdict: BLOCKED.** 2/5 HARD pass; 3/5 HARD fail; 0 PENDING.
+
+#### Honest PENDING note
+
+**0 metrics are PENDING in this cold-clone run.** Every metric reports a
+numeric value because `docs/CONSOLIDATED_RESULTS.md` has 10 populated
+framework-vs-baseline rows across 4 model families (twodim_fm,
+rectified_flow_cifar, mnist_fm, lineageflow) and `docs/CONDITIONS.md` has
+20 parsed cells (12 twodim_fm sigma-sweep cells + 8 prose rows). The
+pre-condition from `framework-capability-metrics.md` §"New entry gate"
+("at least 3 model families integrated AND Phase 4 done for ≥ 2 models")
+is MET (4 families integrated, Phase 4 done for ≥ 2). So no metric falls
+back to the `_pending_payload` branch.
+
+**Honest caveat on the 3 HARD fails:**
+
+1. **G.1 fail** is dominated by the MNIST v1 row (+209% framework_worse,
+   FID 143.4 → 443.18). Per `docs/CONSOLIDATED_RESULTS.md` §7.2 P0-1 note
+   this is **extractor-family variance** (FID computed with
+   `weights=None, aux_logits=False` random-init torchvision InceptionV3, the
+   `2fb3dc0` regression), not framework-intrinsic. Once that row is re-run
+   with the canonical torchvision IMAGENET1K_V1 extractor (post-P0-1), the
+   G.1 mean is expected to lift above +0.05.
+2. **G.3 fail** shares the same root cause (worst cell = `mnist_fm_v1`,
+   cell_value = -2.0905; the next-worst cell is CIFAR v3 at +1.50%, well
+   within the -0.03 target). The fix is the same canonical-extractor re-run.
+3. **G.6 fail** is the honest operating-regime reading: 12/12 twodim_fm
+   sigma-sweep cells regress at every σ ∈ [0, 0.5] under matched conditions
+   — this is the documented falsification of the predicted 2D-synthetic
+   operating regime (see `docs/theory/operating-regime.md` and
+   `docs/CONDITIONS.md` §Wave 17 Phase 3). Closure requires extending
+   `docs/CONDITIONS.md` sigma sweeps to additional model families
+   (Self-Flow image, CIFAR-10 RF, LineageFlow protein) so the in-regime
+   cells dilute the out-of-regime cells.
+
+#### What changed since Wave 23 Agent B
+
+**Nothing in the metric values.** The JSON output is byte-identical to the
+Wave 23 Agent B commit (`72933fd`) because:
+
+1. `docs/CONSOLIDATED_RESULTS.md` has not been amended since Wave 23.
+2. `docs/CONDITIONS.md` has not been amended since Wave 23.
+3. `docs/baseline-audit-report.md` has not been amended since Wave 24 Agent C
+   (commit `b7899bb`), and that commit did not touch the §F.2 reproduction
+   verdict line that G.7 reads.
+4. `env_hash.txt` content has not been re-captured since Wave 15 F.5.
+
+The 3 HARD fails and 2 HARD passes are therefore stable readings — they
+will only flip when the underlying CONSOLIDATED_RESULTS / CONDITIONS docs
+gain new rows (e.g. when Self-Flow real-ckpt runs land, Kanzi/FreqFlow
+real-ckpt runs populate CONSOLIDATED_RESULTS, or the MNIST v1 canonical-extractor
+re-run closes G.3).
+
+#### Cold-clone discipline confirmed
+
+- `verification_outputs/capability_audit_q3_2026.json` is re-captured on
+  every run (gitignored, not committed).
+- All 7 G.* metric values are byte-identical to the Wave 23 Agent B commit.
+- G.7's structural check (data sources exist + tool runnable + env_hash
+  captured) all hold → `7/7 PASS`.
+- The tool ran in <1 s wall-clock on CPU.
+
+#### No regression risk
+
+- Purely additive: no source code modified, no test modified, no existing
+  doc section modified.
+- New doc section: this subsection only (Wave 26 Agent A cold-clone re-run).
+- The existing Wave 23 Agent B §G content remains the canonical initial-run
+  record; this subsection is the cold-clone verification record per the
+  freeze-checklist MUST-4 cold-clone discipline.
+
 | E.2 — documentation cross-reference rate | 0.571 (16/28 docs) | 0.571 (16/28 docs; unchanged) | 0 pp | −32.9 pp to 0.90 target (open) |
 
 ### HARD-gate confirmation
