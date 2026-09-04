@@ -152,7 +152,7 @@ The remaining 68 functions in `validation.py`, `paper_quantities.py`, `__init__.
 4. Sweep `checkers.py` for any helper that emits a Theorem/Lemma check but currently lacks the paper-line reference in its docstring. (Mostly done by Wave 15 C — see `checkers.py` docstring + `Theorem1StatementChecker` paper anchors — but a residual sweep over `lemma2_checker.py` `LipschitzConvergenceReport.from_parts` is open.)
 5. Re-run this audit after Wave 14 and confirm ratio ≥ 0.90; if denominator grows (new witnesses added), recompute on the new counts. ✅ DONE — A.4 = 0.938.
 
-**Rev 2 target status:** MET. 0.938 vs target 0.90 — exceeds by 0.038; one Wave 15 B function pending.
+**Rev 2 target status:** MET. 0.938 vs target 0.90 — exceeds by 0.038; Wave 15 B function (rate-bound citation in `lemma2_checker.py::LipschitzConvergenceReport.from_parts`) closed in commit `f9d34e1` (Wave 15 B).
 
 ---
 
