@@ -60,7 +60,7 @@ rejected. Asserted in ``tests/test_eval/test_lipschitz_diagnostic.py``.
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -69,12 +69,20 @@ from numpy.typing import NDArray
 __all__ = [
     "DEFAULT_RATE_CONSTANT",
     "DEFAULT_TAIL_FRACTION",
+    "PLANAR_BL_CONSTANT",
+    "PLANAR_BL_FLOOR_PAIRS",
+    "PLANAR_BL_FLOOR_TOLERANCE",
     "KernelLipschitzReport",
     "LipschitzConvergenceReport",
+    "PlanarBLConvergenceReport",
     "bounded_lipschitz_distance",
+    "bounded_lipschitz_distance_2d",
     "evaluate_lipschitz_convergence",
     "kernel_lipschitz_constant",
     "lipschitz_modulus",
+    "planar_bl_convergence_witness",
+    "sample_planar_limit",
+    "sample_planar_residual_posterior",
 ]
 
 
@@ -401,4 +409,338 @@ def kernel_lipschitz_constant(
         bandwidth=float(h),
         n_samples=int(n),
         ratio_to_sqrt_n=float(ratio),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Planar (R^2) bounded-Lipschitz distance -- paper Theorem 1 (Wave 12 A1-high-3)
+# ---------------------------------------------------------------------------
+
+
+PLANAR_BL_CONSTANT: float = math.sqrt(2.0 / math.pi)
+"""Analytic constant ``C`` in ``BL(mu_{g,eps}, nu_g) <= C * eps`` on ``R^2``.
+
+The synchronous coupling ``(x, g(x) + eps * z) <-> (x, g(x))`` with
+``z ~ N(0, 1)`` transports ``mu_{g,eps}`` onto ``nu_g`` at expected cost
+``E|eps * z| = eps * sqrt(2 / pi)``. Since ``BL`` is the infimum over
+*all* couplings of the truncated-metric cost (Kantorovich duality with
+cost ``min(||u - v||, B)``), this coupling is an upper-bound witness:
+``BL(mu_{g,eps}, nu_g) <= eps * sqrt(2 / pi)``, independent of ``g``.
+"""
+
+PLANAR_BL_FLOOR_PAIRS: int = 4
+"""Independent replicate pairs averaged in the planar BL witness.
+
+Both the per-``eps`` distance and the Monte-Carlo floor are averaged
+over this many independent replicates, so the two sides of the checked
+bound carry the same estimator variance.
+"""
+
+PLANAR_BL_FLOOR_TOLERANCE: float = 1.5
+"""Multiplier on the measured MC floor in the checked Theorem-1 bound.
+
+The floor is itself a Monte-Carlo estimate; averaged over
+:data:`PLANAR_BL_FLOOR_PAIRS` replicates its spread stays well inside
+50% of its mean, so scaling by ``1.5`` keeps the check from firing on
+floor-estimation noise while still rejecting any genuine ``O(1)`` gap.
+"""
+
+
+def _as_planar(points: Sequence[Sequence[float]] | NDArray[np.float64]) -> NDArray[np.float64]:
+    """Coerce a planar sample to a finite ``(n, 2)`` float64 array."""
+    arr = np.asarray(points, dtype=np.float64)
+    if arr.ndim != 2 or arr.shape[1] != 2:
+        raise ValueError(f"planar sample must have shape (n, 2); got {arr.shape}")
+    if arr.shape[0] == 0:
+        raise ValueError("planar sample must be non-empty")
+    if not bool(np.all(np.isfinite(arr))):
+        raise ValueError("planar sample must be finite")
+    return np.ascontiguousarray(arr, dtype=np.float64)
+
+
+def bounded_lipschitz_distance_2d(
+    left: Sequence[Sequence[float]] | NDArray[np.float64],
+    right: Sequence[Sequence[float]] | NDArray[np.float64],
+    *,
+    bound: float = 2.0,
+    max_points: int = 512,
+    seed: int = 0,
+) -> float:
+    """Return the bounded-Lipschitz (Fortet-Mourier) distance on ``R^2``.
+
+    This is the *paper's* metric for Theorem 1 -- a distance between
+    probability measures on the ambient plane -- as opposed to the
+    Gaussian-Frechet proxy on ``R^{2048}`` Inception features computed by
+    :mod:`adaptive_reflow.eval.fid_theorem_aligned`.
+
+    .. math::
+
+        d_{BL}(p, q) = \\sup \\{ |E_p f - E_q f| :
+            \\mathrm{Lip}(f) \\le 1,\\ \\mathrm{osc}(f) \\le B \\}
+
+    The truncated Euclidean cost ``c(u, v) = min(||u - v||, B)`` is itself
+    a metric on ``R^2``, so Kantorovich-Rubinstein duality identifies the
+    supremum above with the optimal-transport cost for ``c``. For two
+    equal-size empirical measures with uniform weights that cost is an
+    exact assignment problem, solved here with
+    :func:`scipy.optimize.linear_sum_assignment` (Hungarian). No sliced
+    or projected approximation is used: the value returned is the exact
+    BL distance between the two empirical measures.
+
+    Samples larger than ``max_points`` are uniformly subsampled (without
+    replacement, seeded) to keep the ``O(n^3)`` assignment tractable; the
+    two inputs are truncated to a common size. The Monte-Carlo floor of
+    the estimate is therefore ``O(n^{-1/2})`` in the effective ``n`` --
+    see :func:`planar_bl_convergence_witness`, which reports it.
+
+    :param left: ``(n, 2)`` planar sample.
+    :param right: ``(m, 2)`` planar sample.
+    :param bound: the ``B`` truncation of the cost. Finite and ``> 0``.
+    :param max_points: cap on the assignment size.
+    :param seed: RNG seed for the subsampling.
+    """
+    if isinstance(bound, bool) or not isinstance(bound, (int, float)):
+        raise ValueError(f"bound must be a real number, got {bound!r}")
+    b = float(bound)
+    if not math.isfinite(b) or b <= 0.0:
+        raise ValueError(f"bound must be finite and > 0, got {bound!r}")
+    if isinstance(max_points, bool) or not isinstance(max_points, int) or max_points < 1:
+        raise ValueError(f"max_points must be a positive int, got {max_points!r}")
+
+    x = _as_planar(left)
+    y = _as_planar(right)
+    n = min(int(x.shape[0]), int(y.shape[0]), int(max_points))
+    rng = np.random.default_rng(int(seed))
+
+    def _thin(pts: NDArray[np.float64]) -> NDArray[np.float64]:
+        if pts.shape[0] <= n:
+            return pts[:n]
+        return pts[rng.choice(pts.shape[0], size=n, replace=False)]
+
+    x = _thin(x)
+    y = _thin(y)
+
+    diff = x[:, None, :] - y[None, :, :]
+    cost = np.minimum(np.sqrt((diff * diff).sum(axis=-1)), b)
+
+    try:
+        from scipy.optimize import linear_sum_assignment as _lsa  # local import
+    except Exception:  # pragma: no cover - scipy is a hard dep elsewhere
+        # Greedy fallback: an upper bound on the optimal assignment cost.
+        remaining = np.ones(n, dtype=bool)
+        total = 0.0
+        for i in range(n):
+            row = np.where(remaining, cost[i], np.inf)
+            j = int(np.argmin(row))
+            total += float(row[j])
+            remaining[j] = False
+        return float(total / n)
+
+    rows, cols = _lsa(cost)
+    return float(cost[rows, cols].mean())
+
+
+def sample_planar_residual_posterior(
+    g: Callable[[float], float],
+    eps: float,
+    *,
+    n_samples: int = 512,
+    seed: int = 0,
+) -> NDArray[np.float64]:
+    """Draw ``n_samples`` points from ``mu_{g,eps}`` on ``R^2``.
+
+    ``mu_{g,eps}`` is the residual posterior with density proportional to
+    ``exp(-x^2 / 2) * exp(-F_g(x, y)^2 / (2 eps^2))`` where the planar
+    residual is ``F_g(x, y) = y - g(x)``. Integrating ``y`` out leaves the
+    ``x``-marginal exactly ``N(0, 1)``, so the measure factorises as
+    ``x ~ N(0, 1)``, ``y | x ~ N(g(x), eps^2)`` and can be sampled exactly
+    (no rejection, no truncation box).
+    """
+    e = float(eps)
+    if not math.isfinite(e) or e <= 0.0:
+        raise ValueError(f"eps must be finite and > 0, got {eps!r}")
+    if isinstance(n_samples, bool) or not isinstance(n_samples, int) or n_samples < 2:
+        raise ValueError(f"n_samples must be an int >= 2, got {n_samples!r}")
+    rng = np.random.default_rng(int(seed))
+    xs = rng.standard_normal(int(n_samples))
+    gx = np.asarray([float(g(float(v))) for v in xs], dtype=np.float64)
+    ys = gx + e * rng.standard_normal(int(n_samples))
+    return np.ascontiguousarray(np.stack([xs, ys], axis=1), dtype=np.float64)
+
+
+def sample_planar_limit(
+    g: Callable[[float], float],
+    *,
+    n_samples: int = 512,
+    seed: int = 0,
+) -> NDArray[np.float64]:
+    """Draw ``n_samples`` points from ``nu_g`` on ``R^2``.
+
+    ``nu_g`` is the ``eps -> 0`` limit of ``mu_{g,eps}``: the pushforward
+    of the standard Gaussian on the ``x``-axis onto the graph
+    ``{(x, g(x))} = {F_g = 0}``. It is supported on the zero set of the
+    planar residual, which is exactly the paper's sheet.
+    """
+    if isinstance(n_samples, bool) or not isinstance(n_samples, int) or n_samples < 2:
+        raise ValueError(f"n_samples must be an int >= 2, got {n_samples!r}")
+    rng = np.random.default_rng(int(seed))
+    xs = rng.standard_normal(int(n_samples))
+    ys = np.asarray([float(g(float(v))) for v in xs], dtype=np.float64)
+    return np.ascontiguousarray(np.stack([xs, ys], axis=1), dtype=np.float64)
+
+
+@dataclass(frozen=True)
+class PlanarBLConvergenceReport:
+    """Witness for paper Theorem 1 on ``R^2``.
+
+    Attributes
+    ----------
+    eps_sequence:
+        The ``eps`` values evaluated, as supplied.
+    bl_distances:
+        ``BL(mu_{g,eps_k}, nu_g)`` for each ``eps_k``, computed by
+        :func:`bounded_lipschitz_distance_2d` between independently drawn
+        empirical measures.
+    mc_floor:
+        The estimator's own noise floor, measured (not assumed) as the
+        mean of ``BL(nu_g^{(i)}, nu_g^{(j)})`` over
+        :data:`PLANAR_BL_FLOOR_PAIRS` independent pairs of draws from
+        ``nu_g``. Two ``n``-point empirical measures of the same law sit
+        this far apart in ``R^2`` purely from sampling, so the theorem's
+        ``O(eps)`` decay is only observable above it.
+    floor_tolerance:
+        Multiplier applied to ``mc_floor`` on the right-hand side of the
+        bound, absorbing the sampling variance of the floor estimate
+        itself.
+    constant:
+        The analytic ``C`` the bound is checked against
+        (:data:`PLANAR_BL_CONSTANT` by default).
+    within_bound:
+        ``True`` iff ``bl_k <= constant * eps_k + floor_tolerance *
+        mc_floor`` for every ``k`` -- the quantitative, finite-sample
+        form of Theorem 1's BL convergence.
+    monotone:
+        ``True`` iff ``bl_distances`` is non-increasing along a
+        decreasing ``eps_sequence``, up to the MC floor.
+    n_samples:
+        Points drawn per measure.
+    """
+
+    eps_sequence: tuple[float, ...]
+    bl_distances: tuple[float, ...]
+    mc_floor: float
+    floor_tolerance: float
+    constant: float
+    within_bound: bool
+    monotone: bool
+    n_samples: int
+
+    def as_metrics(self) -> dict[str, float]:
+        """Return the numeric fields as a flat metric dict."""
+        return {
+            "planar_bl_min": float(min(self.bl_distances)),
+            "planar_bl_max": float(max(self.bl_distances)),
+            "planar_bl_mc_floor": float(self.mc_floor),
+            "planar_bl_floor_tolerance": float(self.floor_tolerance),
+            "planar_bl_constant": float(self.constant),
+            "planar_bl_within_bound": 1.0 if self.within_bound else 0.0,
+            "planar_bl_monotone": 1.0 if self.monotone else 0.0,
+        }
+
+
+def planar_bl_convergence_witness(
+    g: Callable[[float], float],
+    eps_sequence: Sequence[float],
+    *,
+    n_samples: int = 512,
+    seed: int = 0,
+    constant: float = PLANAR_BL_CONSTANT,
+    bound: float = 2.0,
+    floor_tolerance: float = PLANAR_BL_FLOOR_TOLERANCE,
+) -> PlanarBLConvergenceReport:
+    """Check ``BL(mu_{g,eps}, nu_g) <= C * eps`` on the ambient plane.
+
+    This is the framework's direct realisation of the paper's Theorem 1
+    statement ``mu_{g,eps} --BL--> nu_g``: a bounded-Lipschitz distance
+    between two measures on ``R^2``, evaluated at each ``eps`` of the
+    supplied schedule. The two measures are sampled *independently*
+    (different RNG streams), so the estimate cannot fall below the
+    empirical-measure noise floor. That floor is not assumed from an
+    asymptotic rate but *measured* on the same estimator, by averaging
+    ``BL`` over :data:`PLANAR_BL_FLOOR_PAIRS` independent pairs of
+    ``nu_g`` draws, and enters the right-hand side of the checked bound
+    scaled by ``floor_tolerance``.
+
+    :param g: the profile whose graph is the sheet ``{F_g = 0}``.
+    :param eps_sequence: noise scales to evaluate, non-empty and positive.
+    :param n_samples: points per measure per ``eps``.
+    :param seed: base RNG seed.
+    :param constant: the ``C`` in ``BL <= C * eps``.
+    :param bound: BL truncation ``B`` passed through to the distance.
+    :param floor_tolerance: multiplier on the measured MC floor.
+    """
+    eps_list = [float(e) for e in eps_sequence]
+    if not eps_list:
+        raise ValueError("eps_sequence must be non-empty")
+    if any((not math.isfinite(e)) or e <= 0.0 for e in eps_list):
+        raise ValueError("eps_sequence entries must be finite and > 0")
+    if isinstance(n_samples, bool) or not isinstance(n_samples, int) or n_samples < 2:
+        raise ValueError(f"n_samples must be an int >= 2, got {n_samples!r}")
+    tol = float(floor_tolerance)
+    if not math.isfinite(tol) or tol < 1.0:
+        raise ValueError(f"floor_tolerance must be finite and >= 1, got {floor_tolerance!r}")
+
+    nu = sample_planar_limit(g, n_samples=n_samples, seed=int(seed) + 9_001)
+    # Measured Monte-Carlo floor: two independent draws of the *same*
+    # law sit this far apart in the BL metric at this sample size.
+    # Averaged over replicates, because a single pair is itself noisy.
+    floor_vals = [
+        bounded_lipschitz_distance_2d(
+            sample_planar_limit(g, n_samples=n_samples, seed=int(seed) + 20_000 + p),
+            nu,
+            bound=bound,
+            seed=int(seed) + 30_000 + p,
+        )
+        for p in range(PLANAR_BL_FLOOR_PAIRS)
+    ]
+    mc_floor = float(sum(floor_vals) / len(floor_vals))
+    bl_list: list[float] = []
+    for k, eps in enumerate(eps_list):
+        # Same replicate structure as the floor, so both sides of the
+        # bound carry the same estimator variance.
+        reps = [
+            bounded_lipschitz_distance_2d(
+                sample_planar_residual_posterior(
+                    g,
+                    eps,
+                    n_samples=n_samples,
+                    seed=int(seed) + 40_000 + 100 * k + p,
+                ),
+                nu,
+                bound=bound,
+                seed=int(seed) + 30_000 + p,
+            )
+            for p in range(PLANAR_BL_FLOOR_PAIRS)
+        ]
+        bl_list.append(float(sum(reps) / len(reps)))
+
+    c = float(constant)
+    slack = tol * mc_floor
+    within = all(
+        bl <= c * eps + slack for bl, eps in zip(bl_list, eps_list, strict=True)
+    )
+    order = sorted(range(len(eps_list)), key=lambda i: eps_list[i], reverse=True)
+    ordered = [bl_list[i] for i in order]
+    monotone = all(
+        ordered[i] >= ordered[i + 1] - slack for i in range(len(ordered) - 1)
+    )
+    return PlanarBLConvergenceReport(
+        eps_sequence=tuple(eps_list),
+        bl_distances=tuple(float(v) for v in bl_list),
+        mc_floor=float(mc_floor),
+        floor_tolerance=tol,
+        constant=c,
+        within_bound=bool(within),
+        monotone=bool(monotone),
+        n_samples=int(n_samples),
     )

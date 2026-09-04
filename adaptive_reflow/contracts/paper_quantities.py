@@ -8,6 +8,15 @@ byte-stable re-export shim so existing callers
 ``tests/test_contracts/test_paper_quantities.py``) keep working
 without modification.
 
+**Theorem 1 is periodicity-free (Remark 1, paper line 54-56):**
+
+The main theorem does NOT require periodicity of ``g``; Lemma 1 is
+only a verification convenience. Any ``g`` satisfying the F-side
+hypotheses is admissible, including the nonperiodic family
+``g_a(x) = a(x) * sin(x)`` from Proposition 2 (line 62-64). This
+shim re-exports the same set of paper-quantity evaluators regardless
+of whether ``g`` is periodic or not.
+
 .. note::
    The new theory-only additions ``PhysicalComplement`` and
    ``paper_selection_ratio`` live in

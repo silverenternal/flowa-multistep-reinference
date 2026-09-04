@@ -39,6 +39,11 @@ verifies the structural typing at import time.
   scheduling per paper Proposition 3.
 * :class:`SelectionRatioWitness` -- paper-grounded selection ratio
   ``sheet_A * eps / (sheet_A * eps + cell_C * packing_B * eps^2)``.
+* :class:`Theorem1Statement` -- unified Theorem 1 dataclass carrying
+  all three claims (``bl_distance``, ``root_cell_mass``,
+  ``posterior_evidence``) together.
+* :func:`emit_theorem1_statement` -- single canonical emitter that
+  returns a fully populated :class:`Theorem1Statement`.
 * :class:`Theorem1StatementChecker` -- unified Theorem 1 statement.
 * :class:`PosteriorEvaluator` -- planar BL distance on ``R^2``.
 * :class:`AdapterCompliance` -- aggregate Protocol set enforcement.
@@ -50,7 +55,18 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Protocol, runtime_checkable
 
-from adaptive_reflow.theory.paper_quantities import PhysicalComplement
+from adaptive_reflow.theory.checkers import (
+    Theorem1Statement,
+    theorem1_bl_convergence_witness,
+)
+from adaptive_reflow.theory.paper_quantities import (
+    PhysicalComplement,
+    exterior_gap_e_rho,
+    paper_selection_ratio,
+    per_cell_coefficient_C,
+    root_cell_packing_B,
+    sheet_evidence_A,
+)
 
 __all__ = [
     "ChannelwiseBlender",
@@ -60,6 +76,8 @@ __all__ = [
     "MergeOperatorProtocol",
     "SheetSchedulerProtocol",
     "SelectionRatioWitness",
+    "Theorem1Statement",
+    "emit_theorem1_statement",
     "Theorem1StatementChecker",
     "PosteriorEvaluator",
     "AdapterCompliance",
@@ -238,6 +256,135 @@ class SelectionRatioWitness(Protocol):
     ) -> float:
         """Deprecated heuristic; retained for byte-stable legacy callers."""
         ...
+
+
+# ---------------------------------------------------------------------------
+# Theorem1Statement + emit_theorem1_statement
+# ---------------------------------------------------------------------------
+
+
+def emit_theorem1_statement(
+    g: Callable[[float], float],
+    eps: float,
+    d: float,
+    c: float,
+    rho: float,
+    eta: float,
+    *,
+    n_samples: int = 1024,
+    seed: int = 0,
+) -> Theorem1Statement:
+    """Emit the unified Theorem 1 statement combining all three claims.
+
+    Paper Theorem 1 (line 87-92) is a SINGLE statement that combines:
+
+    (a) BL convergence ``mu_{g,eps} --BL--> nu_g`` (line 87-89).
+    (b) root-cell mass ``mu_{g,eps}(\\bigcup_z I_z) = O(eps)`` (line 90).
+    (c) the bounded-Lipschitz equivalence display (line 91-92).
+
+    Closes the A1-high-1 audit finding: the framework previously realised
+    (a) only as the FID surrogate in ``eval.fid_theorem_aligned`` and
+    (b)+(c) only through ``Theorem1DynamicNoiseBias.compute_noise_bias``,
+    with no single module emitting a ``Theorem1Statement`` carrying all
+    three claims together. This function is the canonical emitter.
+
+    Parameters
+    ----------
+    g
+        The profile ``R -> R``. Need not be uniformly separated (the
+        caller is responsible for F-side admissibility via
+        :mod:`adaptive_reflow.theory.validation`).
+    eps
+        The noise scale at which the three claims are evaluated. Must
+        be positive.
+    d
+        Separation constant (Lemma 5: ``rho < d/4`` requirement).
+    c
+        Simplicity constant (Lemma 3: ``a = (1-rho)^2 * min(c^2, 1)``).
+    rho
+        Cell half-width; must lie in ``(0, 1)``.
+    eta
+        Physical complement constant (Lemma 5 ``e_rho = min{rho^4,
+        (1-rho)^2 eta^2}``); must be positive.
+    n_samples
+        Monte-Carlo sample count for the BL-distance witness. Default
+        ``1024``; minimum ``32`` (enforced by the witness).
+    seed
+        Random seed for the BL witness; controls byte-stability.
+
+    Returns
+    -------
+    Theorem1Statement
+        Immutable dataclass carrying all three claims populated:
+
+        * ``bl_distance`` -- the BL convergence witness at the
+          supplied ``eps`` (claim (a)).
+        * ``root_cell_mass`` -- ``paper_selection_ratio(sheet_A,
+          packing_B, cell_C, eps)``, the per-round sheet-dominance
+          mass (claim (b) reduced to the paper formula).
+        * ``posterior_evidence`` -- ``sheet_evidence_A(g) = A_g``,
+          the sheet evidence floor from Proposition 3 / line 161
+          (the LHS of claim (c)).
+
+    Raises
+    ------
+    ValueError
+        If ``eps <= 0``, ``rho not in (0, 1)``, ``eta <= 0``, ``d <= 0``
+        or ``c <= 0``.
+
+    Stdlib-only.
+    """
+    if eps <= 0.0:
+        raise ValueError(f"eps must be positive, got {eps!r}")
+    if d <= 0.0:
+        raise ValueError(f"d must be positive, got {d!r}")
+    if c <= 0.0:
+        raise ValueError(f"c must be positive, got {c!r}")
+    if rho <= 0.0 or rho >= 1.0:
+        raise ValueError(f"rho must be in (0, 1), got {rho!r}")
+    if eta <= 0.0:
+        raise ValueError(f"eta must be positive, got {eta!r}")
+
+    # Compute the four paper quantities from the F-side parameters.
+    sheet_A = sheet_evidence_A(g)
+    packing_B = root_cell_packing_B(g, separation_d=d)
+    cell_C = per_cell_coefficient_C(rho=rho, c=c)
+    # exterior_gap_e_rho is computed for the audit trail but is NOT one
+    # of the three Theorem-1 claims (it appears in Lemma 4 only).
+    _exterior = exterior_gap_e_rho(rho=rho, eta=eta)
+
+    # (a) BL distance: run the planar witness over an eps-bracketed
+    # sequence and return the value at the supplied eps. The 2x upper
+    # bracket exists so the witness has two points for monotonicity
+    # (the audit's monotone sanity flag).
+    eps_hi = float(eps) * 2.0
+    eps_lo = float(eps)
+    eps_sequence: tuple[float, ...] = (eps_hi, eps_lo)
+    report = theorem1_bl_convergence_witness(
+        g, eps_sequence, n_samples=n_samples, seed=seed
+    )
+    bl_distance = float(report.bl_distance_at_eps_min)
+
+    # (b) Root-cell mass at the supplied eps. The paper formula
+    # ``sheet_A * eps / (sheet_A * eps + cell_C * packing_B * eps^2)``
+    # is the per-round sheet-dominance mass from Corollary 1, line 165.
+    # It converges to 1 as ``eps -> 0`` (selection dominates) and to 0
+    # as ``eps -> infty`` (cells dominate).
+    root_cell_mass = float(
+        paper_selection_ratio(sheet_A, packing_B, cell_C, eps)
+    )
+
+    # (c) Posterior evidence: ``A_g`` from Proposition 3 / line 161.
+    # This is the limiting ``eps^{-1} int_T p_eps`` value that pins the
+    # normalization of the selected sheet, and is the LHS of the
+    # bounded-Lipschitz equivalence display (line 91-92).
+    posterior_evidence = float(sheet_A)
+
+    return Theorem1Statement.from_parts(
+        bl_distance=bl_distance,
+        root_cell_mass=root_cell_mass,
+        posterior_evidence=posterior_evidence,
+    )
 
 
 # ---------------------------------------------------------------------------

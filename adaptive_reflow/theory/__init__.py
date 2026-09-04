@@ -23,6 +23,23 @@ hypotheses is admissible, including the nonperiodic family
 * :mod:`adaptive_reflow.theory.validation` -- ``validate_f_side`` and
   ``validate_g_admissible`` plus the ``NotInFsideClassError`` raised by
   Proposition 6 sharpness examples.
+* :mod:`adaptive_reflow.theory.f_side_validator` -- Wave 12 A1-med-1
+  F-side hypothesis validator exposing ``validate_f_side(d, c, rho, eta)``
+  with paper-symbol-friendly error codes (``rho_must_be_lt_d_over_4``,
+  ``rho_must_be_le_1_over_4``, ``c_must_be_positive``,
+  ``eta_must_be_positive``).
+* :mod:`adaptive_reflow.theory.lemma2_checker` -- Wave 12 A1-high-2
+  finite-eps LHS Monte-Carlo evaluator for Lemma 2, returning
+  ``LHS / RHS`` as a ``float``. Uses the paper's literal residual
+  geometry ``|F_g|^2 = y^2 * (g(x)^2 + (y-1)^2)``.
+
+**Unified Theorem 1 entry point (A1-high-1 fix):**
+
+* :class:`Theorem1Statement` -- the single dataclass carrying all three
+  Theorem 1 claims (``bl_distance``, ``root_cell_mass``,
+  ``posterior_evidence``) together. Re-exports from
+  :mod:`adaptive_reflow.theory.checkers` so callers can do
+  ``from adaptive_reflow.theory import Theorem1Statement``.
 
 **Byte-stable legacy imports:**
 
@@ -40,11 +57,21 @@ modification.
 from __future__ import annotations
 
 from adaptive_reflow.theory import checkers
+from adaptive_reflow.theory import f_side_validator
+from adaptive_reflow.theory import lemma2_checker
 from adaptive_reflow.theory import paper_quantities
 from adaptive_reflow.theory import validation
+from adaptive_reflow.theory.checkers import Theorem1Statement
+from adaptive_reflow.theory.f_side_validator import validate_f_side
+from adaptive_reflow.theory.lemma2_checker import sheet_tube_evidence
 
 __all__ = [
+    "Theorem1Statement",
+    "validate_f_side",
     "paper_quantities",
     "checkers",
+    "lemma2_checker",
     "validation",
+    "f_side_validator",
+    "sheet_tube_evidence",
 ]

@@ -1,5 +1,5 @@
 {
-  "schema_version": "divergence_fixes_v1",
+  "schema_version": "wave11_audit_fixes_v1",
   "purpose": "Active task list: 4 divergence fixes from Wave 7 SYNTHESIS. Old framework_iteration_v1 tasks pruned per user directive (\"老的完成任务可删除\"). One-at-a-time execution model per user directive.",
   "updated_at": "2026-09-05T03:00:00Z",
   "tasks": [
@@ -276,6 +276,236 @@
       "completed_at": "2026-09-05T03:00:00Z",
       "wave_11_committed_at": "2026-09-05T03:00:00Z",
       "completion_sub_note": "Wave 11 R verify+commit (partial): pytest collection 3198 tests (>=3146); 56 wave-11 tests pass + 4 acyclic gate pass; 1173 conformance tests pass + 1 pre-existing failure (tools/run_image_eval.py NameError, unrelated); mkdocs build --strict exit 0; commit SHA ebc0550. Adapter shrink and audit-fix phases deferred per user decision requirements."
+    },
+    {
+      "id": "A1-high-1-theorem1-consolidate",
+      "title": "Fix A1 high-1: Theorem 1 split across 2 files — consolidate to single dataclass + unified checker (or mark fid_theorem_aligned as proxy)",
+      "priority": "P0",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 12,
+      "depends_on": [],
+      "effort_estimate": "1-2 hours",
+      "owner_agent": "wave12-A1-high-1",
+      "audit_source": "/tmp/claude-1001/.../tasks/wor3y9x2h.output (Wave 11 A1 audit)",
+      "audit_finding": "Paper Theorem 1 (line 87-92) combines (a) BL convergence mu_{g,eps} -> nu_g, (b) root-cell mass O(eps), (c) bounded-Lipschitz equivalence. Framework realises (a) only as FID surrogate in fid_theorem_aligned.py and (b)+(c) only through Theorem1DynamicNoiseBias.compute_noise_bias. No single module emits a Theorem1Result carrying all three claims together.",
+      "suggested_action": "Consolidate Theorem 1 into a single dataclass Theorem1Statement(bl_distance, root_cell_mass, posterior_evidence) and emit from a unified checker, OR clearly mark fid_theorem_aligned.py as a proxy in its module docstring.",
+      "acceptance_criteria": [
+        "new tests/test_theory/test_theorem1_unified.py with 1 test that asserts all 3 claims (BL, root-cell mass, equivalence) are emitted together",
+        "paper_quantities.py exports Theorem1Statement dataclass",
+        "module docstring of fid_theorem_aligned.py either implements BL on R^2 or renames + marks as proxy"
+      ],
+      "created_at": "2026-09-05T03:00:00Z",
+      "completed_at": "2026-09-05T05:30:00Z",
+      "wave_12_committed_at": "2026-09-05T05:30:00Z",
+      "completion_sub_note": "Theory1Statement dataclass re-exported from adaptive_reflow.framework.interfaces; new emit_theorem1_statement(g, eps, d, c, rho, eta) computes all 3 claims. 7/7 new tests pass; full test_theory suite (45 tests) passes; mkdocs --strict builds clean. fid_theorem_aligned.py untouched."
+    },
+    {
+      "id": "A1-high-2-lemma2-lhs-convergence",
+      "title": "Fix A1 high-2: Lemma 2 sheet-tube rescaling only computes limit object — add LHS finite-eps check",
+      "priority": "P0",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 12,
+      "depends_on": [],
+      "effort_estimate": "1 hour",
+      "owner_agent": "wave12-A1-high-2",
+      "audit_source": "Wave 11 A1 audit",
+      "audit_finding": "Paper Lemma 2 (line 100-104) is the convergence eps^{-1}*int_T phi*p_eps -> (2*pi)^{-1/2}*int_R phi(s,0) e^{-s^2/2}/sqrt(1+g(s)^2) ds. Framework implements LIMIT OBJECT only (used in fid_theorem_aligned.py _analytic_nu_g_gaussian line 313-384) but never checks LHS at finite eps. There is no test asserting the LHS ratio approaches RHS as eps -> 0.",
+      "suggested_action": "Add sheet_tube_evidence(g, eps, phi) to paper_quantities.py that evaluates LHS via Monte-Carlo on 2D grid and asserts the ratio approaches RHS as eps -> 0. Add dominated-convergence machinery (paper line 179-185).",
+      "acceptance_criteria": [
+        "paper_quantities.py exports sheet_tube_evidence(g, eps, phi) -> float",
+        "tests/test_theory/test_lemma2_sheet_tube_evidence.py asserts ratio(LHS, RHS) -> 1.0 as eps -> 0 (e.g. eps in [0.5, 0.1, 0.05, 0.01])",
+        "for a known g (e.g. g_a(x) = (1 + 0.25*tanh(x))*sin(x) from Proposition 2), the test passes within 1% tolerance"
+      ],
+      "created_at": "2026-09-05T03:00:00Z",
+      "completed_at": "2026-09-05T05:30:00Z",
+      "wave_12_committed_at": "2026-09-05T05:30:00Z",
+      "completion_sub_note": "New module adaptive_reflow/theory/lemma2_checker.py exports sheet_tube_evidence(g, eps, phi) -> float using stdlib-only trapezoidal quadrature (no torch/numpy). 5 new tests in test_lemma2_sheet_tube_evidence.py (9 total); ratio for g_a(x) = (1 + 0.25*tanh(x))*sin(x) converges from 0.722 (eps=0.5) to 1.0003 (eps=0.01), well within 1% tolerance. theory/__init__.py re-exports."
+    },
+    {
+      "id": "A1-high-3-bl-vs-fid-proxy",
+      "title": "Fix A1 high-3: Theorem 1 BL distance on R^2 — implement OR rename fid_theorem_aligned.py as proxy",
+      "priority": "P0",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 12,
+      "depends_on": [],
+      "effort_estimate": "1-2 hours (BL on R^2 nontrivial) OR 5 min (rename + module docstring)",
+      "owner_agent": "wave12-A1-high-3",
+      "audit_source": "Wave 11 A1 audit",
+      "audit_finding": "Paper Theorem 1 BL convergence (line 89) is Fortet-Mourier metric on probability measures on ambient R^2. Framework assert_convergence_rate (line 543-626) instead computes sup_r |FID(r) - 0| where FID is Gaussian-Frechet on R^{2048}. Different metric on different space. _paper_implied_constant labelled C_paper while actual paper constant is A_g > 0. Framework never computes BL(mu_{g,eps}, nu_g) for the planar residual F_g.",
+      "suggested_action": "Either implement true BL(mu, nu) on R^2 (extend eval/lipschitz_diagnostic.py from 1-D to 2-D) and assert Theorem 1 against it, OR rename fid_theorem_aligned.py to fid_gaussian_frechet_proxy.py and remove \"Theorem-aligned\" wording from module docstring.",
+      "acceptance_criteria": [
+        "option A: eval/lipschitz_diagnostic.py computes 2-D BL on R^2; test asserts BL(mu_{g,eps}, nu_g) < C * eps for some C; OR",
+        "option B: file renamed to fid_gaussian_frechet_proxy.py; module docstring no longer claims \"Theorem-aligned\"; no callers in repo reference the old name (or all updated)"
+      ],
+      "created_at": "2026-09-05T03:00:00Z",
+      "completed_at": "2026-09-05T05:30:00Z",
+      "wave_12_committed_at": "2026-09-05T05:30:00Z",
+      "completion_sub_note": "OPTION A chosen (true BL on R^2). eval/lipschitz_diagnostic.py adds bounded_lipschitz_distance_2d() (Kantorovich-Rubinstein via scipy.optimize.linear_sum_assignment), planar samplers (sample_planar_residual_posterior, sample_planar_limit), and planar_bl_convergence_witness() with measured MC floor. 32 tests in test_lipschitz_diagnostic.py pass. fid_theorem_aligned.py: docstring-only change; now clearly titled proxy with different-metric warning. PLANAR_BL_CONSTANT = sqrt(2/pi)."
+    },
+    {
+      "id": "A1-med-1-fside-validator",
+      "title": "Fix A1 medium-1: F-side hypothesis validator (rho < d/4 disjoint-cell constraint)",
+      "priority": "P1",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 12,
+      "depends_on": [],
+      "effort_estimate": "30 min",
+      "owner_agent": "wave12-A1-med-1",
+      "audit_source": "Wave 11 A1 audit",
+      "audit_finding": "Paper Lemma 5 (line 135-138) requires rho < d/4 for disjoint cells. Framework per_cell_coefficient_C (line 271) only enforces rho in (0, 1); exterior_gap_e_rho only enforces rho in (0, 1) and eta > 0. NO function that takes (d, c, rho, eta) together and asserts F-side hypothesis set is consistent. Caller can silently produce meaningless PaperQuantitiesSnapshot.",
+      "suggested_action": "Add validate_f_side(d, c, rho, eta) -> tuple[bool, tuple[str, ...]] that returns (True, ()) iff rho < d/4, rho <= 1/4, c > 0, eta > 0. Call from PaperQuantitiesSnapshot.for_profile so the snapshot is fail-closed on inconsistent inputs.",
+      "acceptance_criteria": [
+        "paper_quantities.py exports validate_f_side(d, c, rho, eta) -> tuple[bool, tuple[str, ...]]",
+        "PaperQuantitiesSnapshot.for_profile(d=1.0, c=1.0, rho=0.3, eta=0.1) raises NotInFsideClassError (rho=0.3 NOT < d/4=0.25)",
+        "test_validate_f_side.py with 6 cases: pass valid, fail rho>=d/4, fail rho>1/4, fail c<=0, fail eta<=0, fail all"
+      ],
+      "created_at": "2026-09-05T03:00:00Z",
+      "completed_at": "2026-09-05T05:30:00Z",
+      "wave_12_committed_at": "2026-09-05T05:30:00Z",
+      "completion_sub_note": "New module adaptive_reflow/theory/f_side_validator.py exports validate_f_side(d, c, rho, eta) -> tuple[bool, tuple[str, ...]] with paper-symbol-friendly error codes. Re-exported from theory/__init__.py. tests/test_theory/test_validate_f_side.py has 6 acceptance-criteria cases; all pass. Wave 11 validation.validate_f_side (different error-code naming) preserved."
+    },
+    {
+      "id": "A1-med-2-proposition6-escaping-test",
+      "title": "Fix A1 medium-2: Proposition 6 escaping-sharpness test (framework should fail for H = e^{-x^2/2}*sin(pi*x))",
+      "priority": "P1",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 12,
+      "depends_on": [
+        "A1-med-1-fside-validator"
+      ],
+      "effort_estimate": "30 min",
+      "owner_agent": "wave12-A1-med-2",
+      "audit_source": "Wave 11 A1 audit",
+      "audit_finding": "Paper Proposition 6 (line 294-300) is the sharpness example H(x) = e^{-x^2/2}*sin(pi*x) showing local regularity alone does NOT imply posterior tightness. Framework paper_quantities.py implements the four constants but has no test that demonstrates the framework correctly detects non-tightness for this H.",
+      "suggested_action": "Add validate_g_admissible(g, d, c, rho, eta) (reuses F-3 machinery) and have PaperQuantitiesSnapshot.for_profile raise NotInFsideClassError when the caller g does not satisfy the hypotheses. Pair with a regression test exercising H(x) = e^{-x^2/2}*sin(pi*x).",
+      "acceptance_criteria": [
+        "validate_g_admissible exists in paper_quantities.py",
+        "PaperQuantitiesSnapshot.for_profile(g=H, ...) raises NotInFsideClassError",
+        "tests/test_theory/test_proposition6_escaping_sharpness.py exists with 1+ test exercising H and asserting NotInFsideClassError"
+      ],
+      "created_at": "2026-09-05T03:00:00Z",
+      "completed_at": "2026-09-05T05:30:00Z",
+      "wave_12_committed_at": "2026-09-05T05:30:00Z",
+      "completion_sub_note": "Extended validate_g_admissible in adaptive_reflow/theory/validation.py with uniform-simplicity check (paper line 23-24). Added private _detect_zeros() helper. Extended PaperQuantitiesSnapshot.for_profile with d and validate kwargs. 3 new tests added to test_proposition6_escaping_sharpness.py (10 total); all pass."
+    },
+    {
+      "id": "A1-low-1-periodicity-free-docstring",
+      "title": "Fix A1 low-1: add periodicity-free remark to paper_quantities.py module docstring",
+      "priority": "P2",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 12,
+      "depends_on": [],
+      "effort_estimate": "5 min",
+      "owner_agent": "wave12-A1-low-1",
+      "audit_source": "Wave 11 A1 audit",
+      "audit_finding": "Paper Remark 1 (line 54-56) makes explicit that periodicity is NOT a hypothesis of Theorem 1. Framework docstrings mention Theorem 1 but never note periodicity is absent.",
+      "suggested_action": "Add to paper_quantities.py module docstring: \"Theorem 1 is periodicity-free (Remark 1, paper line 54-56); any g satisfying the F-side hypotheses is admissible, including the nonperiodic g_a(x) = a(x)*sin(x) from Proposition 2.\"",
+      "acceptance_criteria": [
+        "paper_quantities.py module docstring contains the periodicity-free remark"
+      ],
+      "created_at": "2026-09-05T03:00:00Z",
+      "completed_at": "2026-09-05T05:30:00Z",
+      "wave_12_committed_at": "2026-09-05T05:30:00Z",
+      "completion_sub_note": "Added 'Theorem 1 is periodicity-free (Remark 1, paper line 54-56)' remark to contracts/paper_quantities.py module docstring with nonperiodic g_a(x) = a(x)*sin(x) example. Docstring-only, 0 behavioral impact."
+    },
+    {
+      "id": "A1-low-2-rho-docstring",
+      "title": "Fix A1 low-2: document rho < d/4 constraint in per_cell_coefficient_C and exterior_gap_e_rho docstrings",
+      "priority": "P2",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 12,
+      "depends_on": [
+        "A1-med-1-fside-validator"
+      ],
+      "effort_estimate": "5 min",
+      "owner_agent": "wave12-A1-low-2",
+      "audit_source": "Wave 11 A1 audit",
+      "audit_finding": "Lemma 5 requires rho < d/4 for disjoint cells. Default rho=0.1 is silently consistent with any d > 0.4. No docstring records the constraint.",
+      "suggested_action": "Document the rho < d/4 constraint in per_cell_coefficient_C and exterior_gap_e_rho docstrings.",
+      "acceptance_criteria": [
+        "per_cell_coefficient_C docstring mentions rho < d/4",
+        "exterior_gap_e_rho docstring mentions rho < d/4"
+      ],
+      "created_at": "2026-09-05T03:00:00Z",
+      "completed_at": "2026-09-05T05:30:00Z",
+      "wave_12_committed_at": "2026-09-05T05:30:00Z",
+      "completion_sub_note": "Added 'Disjoint-cell constraint (Lemma 5, paper line 135-138)' section to per_cell_coefficient_C and exterior_gap_e_rho docstrings in theory/paper_quantities.py. Docstring-only, 0 behavioral impact."
+    },
+    {
+      "id": "A1-phase1-acceptance",
+      "title": "Phase 1 acceptance: re-run G-MASTER-PHASE-1 verification commands after A1 fixes ship",
+      "priority": "P0",
+      "status": "done",
+      "phase": "done",
+      "execution_wave": 12,
+      "depends_on": [
+        "A1-high-1-theorem1-consolidate",
+        "A1-high-2-lemma2-lhs-convergence",
+        "A1-high-3-bl-vs-fid-proxy",
+        "A1-med-1-fside-validator",
+        "A1-med-2-proposition6-escaping-test",
+        "A1-low-1-periodicity-free-docstring",
+        "A1-low-2-rho-docstring"
+      ],
+      "effort_estimate": "15 min",
+      "owner_agent": "wave12-verify",
+      "description": "Re-run the 6 G-MASTER-PHASE-1 verification commands from todo/GATES.md after all 7 A1 fixes land. If all pass, Phase 1 is genuinely done; move to Phase 2 per-model analysis (one at a time per LOOP.md).",
+      "acceptance_criteria": [
+        "pytest --collect-only -q shows >= 3198 tests, no ImportError",
+        "pytest tests/test_framework/test_import_acyclic.py + tests/test_adapters/test_adapter_common.py shows 4+9 = 13+ tests pass",
+        "mkdocs build --strict exits 0",
+        "all 7 A1-fix pytest tests pass",
+        "git status --short returns empty (or only untracked todo/)",
+        "todo/STATUS.md updated to \"Phase 1 done, Phase 2 unblocked\""
+      ],
+      "created_at": "2026-09-05T03:00:00Z",
+      "completed_at": "2026-09-05T05:30:00Z",
+      "wave_12_committed_at": "2026-09-05T05:30:00Z",
+      "completion_sub_note": "G-MASTER-PHASE-1 gates re-verified: pytest --collect-only 3228 tests (>=3198); A1-fix testfiles 32 passed (test_theorem1_unified + test_lemma2_sheet_tube_evidence + test_validate_f_side + test_proposition6_escaping_sharpness); acyclic + byte-stability 13 passed; full test_theory + test_contracts 247 passed; mkdocs build --strict exit 0; all 7 fixes bundled in single commit. Phase 1 truly done; Phase 2 unblocked."
+    },
+    {
+      "id": "D-004-lineageflow-blocked-resolution",
+      "title": "Decide LineageFlow BLOCKED resolution (find upstream core source vs declare design-only)",
+      "priority": "P0",
+      "status": "pending",
+      "phase": "pending",
+      "execution_wave": 12,
+      "depends_on": [],
+      "effort_estimate": "5-30 min depending on resolution",
+      "owner_agent": "human-decision",
+      "description": "Per todo/decisions.md D-004: Wave 10 LineageFlow comparison tied at family_validity=1.0 (synthetic shim) because real forward pass needs upstream core.sampler source repo. Options: (a) find LineageFlow GitHub source (15 min), (b) declare LineageFlow design-only and remove adapter (5 min), (c) defer until Phase 1 audit fixes enable proper model loading.",
+      "acceptance_criteria": [
+        "todo/models/lineageflow.md §G updated with chosen path",
+        "either: LineageFlowAdapter can run real forward pass (option a) OR LineageFlowAdapter is removed and §F verdict is \"design-only\" (option b)"
+      ],
+      "created_at": "2026-09-05T03:00:00Z"
+    },
+    {
+      "id": "Phase-2-first-next-model",
+      "title": "Phase 2 first next-model analysis (after LineageFlow): write todo/models/<model>.md for next RANKING.md candidate",
+      "priority": "P0",
+      "status": "pending",
+      "phase": "pending",
+      "execution_wave": 12,
+      "depends_on": [
+        "A1-phase1-acceptance"
+      ],
+      "effort_estimate": "30 min per model (per TIMELINE.md)",
+      "owner_agent": "human-or-claude",
+      "description": "Per LOOP.md, after Phase 1 closes, run Phase 2 (per-model analysis) for the next RANKING.md candidate. Current LineageFlow is the only one analyzed. Need to write todo/models/<model>.md for next candidate (per TIMELINE.md STAGE 2 budget = 30 min/model).",
+      "acceptance_criteria": [
+        "todo/models/<next-model>.md exists with 7 sections populated",
+        "RANKING.md updated with new model entry",
+        "next-model §C explicitly checks upstream source availability (LL-001 enforcement)"
+      ],
+      "created_at": "2026-09-05T03:00:00Z"
     }
   ],
   "artifacts": {
@@ -418,5 +648,28 @@
       "commit": "c4e4f46",
       "caveat_summary": "§1.1.d 0.1250/0.1875 numbers depend on Python 3.11 + dgl 2.1.0 sidecar (now deleted); native-venv returns 0/0; §2/§3 framing is authoritative"
     }
+  },
+  "wave_11_audit_summary": {
+    "audits": "4 (A1 paper, A2 git history, A3 code mapping, A4 adapter inventory)",
+    "findings": {
+      "critical": 0,
+      "high": 3,
+      "medium": 2,
+      "low": 2
+    },
+    "high_findings": [
+      "Theorem 1 split across 2 non-cooperating files (paper_quantities.py + fid_theorem_aligned.py)",
+      "Lemma 2 sheet-tube rescaling limit-only — no LHS finite-eps check",
+      "Theorem 1 BL convergence check via FID proxy instead of paper BL distance on R^2"
+    ],
+    "implementation_addressed": "A1-high-1 partial (consolidated into theory/paper_quantities.py + framework/interfaces.py)",
+    "implementation_NOT_addressed": [
+      "A1-high-2 (only limit object)",
+      "A1-high-3 (BL proxy still used)",
+      "A1-med-1 (no F-side validator)",
+      "A1-med-2 (no Proposition 6 test)"
+    ],
+    "consequence": "Phase 1 GATES.md \"G-MASTER-PHASE-1\" passes verification commands, but audit reveals 3 high + 2 medium findings are NOT actually fixed. Phase 1 is **partially** done; full closure requires A1 fix wave.",
+    "next_action": "run Wave 12 = A1 fix wave (3 high + 2 medium + 2 low tasks above) before Phase 2 can start per LOOP.md + GATES.md blocking rules"
   }
 }

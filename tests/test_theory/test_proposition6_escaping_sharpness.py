@@ -9,6 +9,10 @@ Asserts:
   which is NOT in the F-side class.
 * :func:`validate_g_admissible` accepts the canonical
   ``g_a(x) = (1 + 0.25 * tanh(x)) * sin(x)`` from Proposition 2.
+* :meth:`PaperQuantitiesSnapshot.for_profile` raises
+  :class:`NotInFsideClassError` when ``validate=True`` and the
+  profile violates the F-side hypotheses (Wave 12 A1-med-2:
+  Proposition 6 escaping-sharpness regression test).
 """
 from __future__ import annotations
 
@@ -16,6 +20,7 @@ import math
 
 import pytest
 
+from adaptive_reflow.eval.fid_theorem_aligned import PaperQuantitiesSnapshot
 from adaptive_reflow.theory.validation import (
     NotInFsideClassError,
     validate_f_side,
@@ -92,3 +97,73 @@ def test_validate_g_admissible_rejects_profile_with_no_zeros():
     g = lambda x: 1.0 + x * x  # noqa: E731 -- never zero
     with pytest.raises(NotInFsideClassError):
         validate_g_admissible(g, d=1.0, c=1.0, rho=0.1, eta=0.1)
+
+
+# ---------------------------------------------------------------------------
+# Wave 12 A1-med-2: PaperQuantitiesSnapshot.for_profile fail-closed path.
+# ---------------------------------------------------------------------------
+#
+# Paper Proposition 6 (line 294-300) presents H(x) = e^{-x^2/2} * sin(pi*x)
+# as a sharpness example: H is in C^infinity but does NOT satisfy the
+# uniform-simplicity hypothesis (line 23-24) because the Gaussian envelope
+# shrinks |H(r+u)|/|u| to zero as |r| -> infty (so no positive c works
+# uniformly across Z_g). The framework must detect this and refuse to
+# materialise a snapshot via for_profile(validate=True).
+
+
+def test_for_profile_rejects_proposition_6_sharpness_example():
+    """``for_profile(H, validate=True)`` raises ``NotInFsideClassError``.
+
+    H(x) = e^{-x^2/2} * sin(pi*x) has Z_g = Z (the integers) so the
+    non-emptiness hypothesis is satisfied, and the default F-side
+    constants (d=1.0, c=1.0, rho=0.1, eta=0.1) are mutually consistent.
+    But uniform simplicity fails at root r=3, u=0.05:
+
+        |H(3.05)| = e^{-(3.05)^2/2} * |sin(pi * 3.05)|
+                 ~ 0.0091 * 0.156
+                 ~ 1.41e-3
+        c * |u|  = 1.0 * 0.05 = 5.0e-2
+
+    so |H(3.05)| < c * |u| triggers the fail-closed path.
+    """
+    H = lambda x: math.exp(-0.5 * x * x) * math.sin(math.pi * x)  # noqa: E731
+    with pytest.raises(NotInFsideClassError):
+        PaperQuantitiesSnapshot.for_profile(
+            H, validate=True, d=1.0, c=1.0, rho=0.1, eta=0.1
+        )
+
+
+def test_for_profile_rejects_empty_zero_set_when_validate():
+    """``for_profile(g, validate=True)`` rejects ``g`` with empty ``Z_g``.
+
+    Regression guard: the existing
+    :func:`adaptive_reflow.eval.fid_theorem_aligned` test fixtures
+    use ``g(x) = 1`` (no zeros) and pass ``validate=False`` (the
+    default). When ``validate=True`` is requested the framework must
+    raise the same ``NotInFsideClassError`` that
+    :func:`validate_g_admissible` raises for empty ``Z_g``.
+    """
+    g_no_zeros = lambda x: 1.0  # noqa: E731 -- constant function, Z_g empty
+    with pytest.raises(NotInFsideClassError):
+        PaperQuantitiesSnapshot.for_profile(g_no_zeros, validate=True)
+
+
+def test_for_profile_accepts_canonical_nonperiodic_profile_when_validate():
+    """``for_profile(g_a, validate=True)`` succeeds for the canonical
+    ``g_a(x) = (1 + 0.25 * tanh(x)) * sin(x)`` from Proposition 2.
+
+    g_a has Z_g = pi * Z, the bounded amplitude ``|1 + 0.25 tanh| <= 1.25``
+    gives ``|g_a(r+u)|/|u| ~= 1.0`` near each root, so c=0.5 is admissible
+    uniformly across the detected roots. Combined with d=0.5 (which gives
+    rho=0.1 < d/4=0.125) the F-side hypotheses are consistent and the
+    snapshot materialises without raising.
+    """
+    g_a = lambda x: (1.0 + 0.25 * math.tanh(x)) * math.sin(x)  # noqa: E731
+    snap = PaperQuantitiesSnapshot.for_profile(
+        g_a, validate=True, d=0.5, c=0.5, rho=0.1, eta=0.1
+    )
+    # The four paper quantities are positive and finite.
+    assert math.isfinite(snap.A_g) and snap.A_g > 0.0
+    assert math.isfinite(snap.B_g) and snap.B_g > 0.0
+    assert math.isfinite(snap.C_g) and snap.C_g > 0.0
+    assert math.isfinite(snap.e_rho) and snap.e_rho > 0.0

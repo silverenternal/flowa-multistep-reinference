@@ -288,6 +288,18 @@ def per_cell_coefficient_C(
         Corollary 1 divides by the linear evidence lower bound
         ``C_1 eps``.
 
+    **Disjoint-cell constraint (Lemma 5, paper line 135-138):**
+
+        Lemma 5's disjoint-cell guarantee (the packing estimate in
+        ``root_cell_packing_B``) requires ``rho < d / 4`` where ``d`` is
+        the F-side uniform-separation constant. This function only
+        validates ``rho in (0, 1)``; it does NOT enforce ``rho < d / 4``
+        directly. Callers should invoke
+        :func:`adaptive_reflow.theory.validation.validate_f_side_hypotheses`
+        to assert the full F-side hypothesis set is consistent. The
+        default ``rho = 0.1`` is silently consistent with any
+        ``d > 0.4``.
+
     Byte-stability:
 
         Pure ``math.exp`` / arithmetic; no global state. Two calls with
@@ -329,6 +341,19 @@ def exterior_gap_e_rho(
         Corollary 1 (line 165) divides this exponential bound by the
         linear evidence lower bound ``C_1 eps`` to obtain the
         ``C_3 eps^{-1} e^{-e_rho/(2 eps^2)}`` posterior complement mass.
+
+    **Disjoint-cell constraint (Lemma 5, paper line 135-138):**
+
+        Lemma 5's disjoint-cell guarantee (relied upon by the
+        physical-complement statement above) requires
+        ``rho < d / 4`` where ``d`` is the F-side uniform-separation
+        constant. This function only validates ``rho in (0, 1)``; it
+        does NOT enforce ``rho < d / 4`` directly. Callers should
+        invoke
+        :func:`adaptive_reflow.theory.validation.validate_f_side_hypotheses`
+        to assert the full F-side hypothesis set is consistent. The
+        default ``rho = 0.1`` is silently consistent with any
+        ``d > 0.4``.
 
     Byte-stability:
 

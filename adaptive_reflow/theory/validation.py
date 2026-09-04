@@ -87,6 +87,50 @@ def validate_f_side(
     return (not errors, tuple(errors))
 
 
+def _detect_zeros(
+    g: Callable[[float], float],
+    *,
+    K: float,
+    h: float,
+) -> list[float]:
+    """Return the linearly-interpolated zeros of ``g`` on ``[-K, K]``.
+
+    Matches the zero-detection algorithm in
+    :func:`adaptive_reflow.theory.paper_quantities.root_cell_packing_B`:
+    each sign change on the uniform grid contributes one
+    linearly-interpolated zero; an exact zero on a grid node is
+    counted once and the adjacent crossing is skipped. The two
+    endpoints (``x = -K`` and ``x = K``) are guarded so an exact zero
+    at either endpoint is not dropped (F-46/P1-14 fix).
+    """
+    n_steps = int(round(2.0 * K / h))
+    if n_steps < 1:
+        raise ValueError("grid too coarse")
+
+    xs: list[float] = []
+    ys: list[float] = []
+    x = -K
+    for _ in range(n_steps + 1):
+        xs.append(x)
+        ys.append(float(g(x)))
+        x += h
+
+    zeros: list[float] = []
+    for i in range(len(xs) - 1):
+        y0 = ys[i]
+        y1 = ys[i + 1]
+        x0 = xs[i]
+        x1 = xs[i + 1]
+        if y0 == 0.0:
+            zeros.append(float(x0))
+        elif y0 * y1 < 0.0:
+            t = -y0 / (y1 - y0)
+            zeros.append(float(x0 + t * (x1 - x0)))
+    if ys[-1] == 0.0:
+        zeros.append(float(xs[-1]))
+    return zeros
+
+
 def validate_g_admissible(
     g: Callable[[float], float],
     d: float,
@@ -96,25 +140,39 @@ def validate_g_admissible(
     *,
     zero_set_K: float = 8.0,
     zero_set_h: float = 0.01,
+    simplicity_K: float = 4.0,
+    simplicity_h: float = 0.001,
+    simplicity_n_u: int = 21,
 ) -> bool:
     """Return ``True`` iff ``g`` together with ``(d, c, rho, eta)`` is F-side admissible.
 
-    Two checks:
+    Three checks (in order):
 
     1. ``validate_f_side(d, c, rho, eta)`` returns ``(True, ())``
        (F-side constants are mutually consistent).
     2. ``g`` has at least one detected zero on ``[-zero_set_K, zero_set_K]``
        (``Z_g`` is nonempty per the Theorem 1 hypothesis).
+    3. **Uniform simplicity** (Wave 12 A1-med-2): for every detected
+       zero ``r`` with ``|r| <= simplicity_K`` and every sampled
+       ``u`` in ``(-rho, rho)`` with ``|r + u| <= simplicity_K``,
+       ``|g(r + u)| >= c * |u|`` (paper line 23-24). The check uses a
+       uniform grid of ``simplicity_n_u`` samples spanning
+       ``[-rho, rho]`` and is bounded to ``[-simplicity_K, simplicity_K]``
+       so the cost stays ``O(simplicity_n_u * |Z_g ∩ [-sim_K, sim_K]|)``.
 
     Raises
     ------
     NotInFsideClassError
-        If either check fails. For the F-side constants check the
-        message lists the specific codes from :func:`validate_f_side`;
-        for the ``Z_g`` check the message notes "no zeros detected".
+        If any check fails. The error message distinguishes the three
+        failure modes:
 
-    Byte-stability: ``g`` is sampled on a uniform grid; the function
-    is pure modulo ``g`` itself.
+        * F-side constants: lists the codes from :func:`validate_f_side`.
+        * ``Z_g`` nonempty: notes "no zeros detected".
+        * Uniform simplicity: notes "uniform_simplicity_violated" with
+          the witness ``(r, u, |g(r+u)|, c*|u|)``.
+
+    Byte-stability: ``g`` is sampled on uniform grids; the function is
+    pure modulo ``g`` itself.
     """
     ok, errors = validate_f_side(d, c, rho, eta)
     if not ok:
@@ -122,30 +180,51 @@ def validate_g_admissible(
             f"profile violates F-side hypotheses: {','.join(errors)}"
         )
 
-    # Detect at least one zero of g on [-K, K].
+    # Detect zeros of g on [-K, K] (shared zero-detection routine).
     K = float(zero_set_K)
     h = float(zero_set_h)
     if K <= 0.0 or h <= 0.0:
         raise ValueError("zero_set_K and zero_set_h must be positive")
-    n_steps = int(round(2.0 * K / h))
-    if n_steps < 1:
-        raise ValueError("grid too coarse")
+    zeros = _detect_zeros(g, K=K, h=h)
 
-    x = -K
-    prev = float(g(x))
-    found_zero = prev == 0.0
-    for _ in range(n_steps):
-        x_next = x + h
-        cur = float(g(x_next))
-        # Sign change OR exact zero at either endpoint.
-        if prev == 0.0 or cur == 0.0 or (prev * cur) < 0.0:
-            found_zero = True
-            break
-        prev = cur
-        x = x_next
-
-    if not found_zero:
+    if not zeros:
         raise NotInFsideClassError(
             f"profile has no zeros on [-{K}, {K}]; Z_g must be nonempty"
         )
+
+    # Uniform-simplicity check (paper line 23-24). For each detected
+    # zero r in Z_g ∩ [-sim_K, sim_K] and each sampled u in
+    # [-rho, rho] with r + u in the same window, verify
+    # |g(r + u)| >= c * |u|. The window bounding keeps the cost
+    # independent of the count of far-away zeros (whose Gaussian
+    # envelope in the typical sharpness example decays super-fast).
+    sim_K = float(simplicity_K)
+    sim_h = float(simplicity_h)
+    n_u = int(simplicity_n_u)
+    if sim_K <= 0.0 or sim_h <= 0.0 or n_u < 2:
+        raise ValueError(
+            "simplicity_K, simplicity_h must be positive; "
+            f"simplicity_n_u must be >= 2 (got {n_u})"
+        )
+    if rho <= 0.0:
+        raise ValueError(f"rho must be positive, got {rho!r}")
+
+    # Sample u on a uniform grid spanning (-rho, rho). We use n_u
+    # INTERIOR samples (excluding u = 0 to avoid the 0/0 singular).
+    for r in zeros:
+        if abs(r) > sim_K:
+            continue
+        for i in range(1, n_u + 1):
+            u = -rho + (2.0 * rho) * (i / float(n_u + 1))
+            x = r + u
+            if abs(x) > sim_K:
+                continue
+            lhs = abs(float(g(x)))
+            rhs = float(c) * abs(u)
+            if lhs < rhs:
+                raise NotInFsideClassError(
+                    "uniform_simplicity_violated: "
+                    f"|g({x})| = {lhs:.6e} < c*|u| = {rhs:.6e} "
+                    f"(r = {r}, u = {u})"
+                )
     return True

@@ -1,17 +1,36 @@
-"""Theorem-aligned FID for Li 2026 Theorem 1 (BL convergence mu_{g,eps} -> nu_g).
+"""Gaussian-Frechet FID proxy for Li 2026 Theorem 1 (NOT the paper's BL metric).
 
 .. warning::
-   This module computes a **Gaussian-Frechet proxy on InceptionV3-feature
-   space**, NOT the paper's bounded-Lipschitz (Fortet-Mourier) distance on
-   ``R^2``. The paper's BL convergence
-   ``mu_{g,eps} --BL--> nu_g`` is realized directly in
-   :mod:`adaptive_reflow.theory.checkers` via
-   :func:`theorem1_bl_convergence_witness` and the unified
-   :class:`Theorem1StatementChecker`. Future work to rename this file to
-   ``fid_gaussian_frechet_proxy.py`` is tracked in the Wave 11 audit
-   (A1.F-4) but is **not** in this PR because it is a breaking rename.
+   **This module does not compute the paper's Theorem 1 distance.** It
+   computes a Gaussian-Frechet distance on ``R^{2048}`` InceptionV3
+   features. The paper's Theorem 1 is bounded-Lipschitz
+   (Fortet-Mourier) convergence ``mu_{g,eps} --BL--> nu_g`` between
+   probability measures on the *ambient plane* ``R^2``. Different
+   metric, different space, different constants: the two agree only in
+   the qualitative sense that both go to zero as ``eps -> 0``.
 
-This module is the *theorem-aligned* sibling of :mod:`adaptive_reflow.eval.fid`.
+   The paper's statement is computed for real, on ``R^2``, by
+   :func:`adaptive_reflow.eval.lipschitz_diagnostic.planar_bl_convergence_witness`
+   (built on
+   :func:`~adaptive_reflow.eval.lipschitz_diagnostic.bounded_lipschitz_distance_2d`,
+   an exact BL distance between planar empirical measures), and is
+   surfaced through :mod:`adaptive_reflow.theory.checkers` via
+   :func:`theorem1_bl_convergence_witness` and the unified
+   :class:`Theorem1StatementChecker`. Use those when you need a
+   paper-grade Theorem 1 claim; use this module for image-space
+   reporting only. Renaming this file to
+   ``fid_gaussian_frechet_proxy.py`` remains desirable (Wave 11 audit
+   A1.F-4) but is a breaking rename kept out of this PR.
+
+   The constant this module calls ``C_paper``,
+   ``(C_g * B_g + 1 / e_rho) / A_g``, is a *framework-defined*
+   aggregate of the four paper quantities, not a constant the paper
+   states; the paper's own Theorem 1 constant is ``A_g > 0``. It is
+   applied to a Frechet distance, so it carries no paper-derived
+   guarantee -- treat ``assert_convergence_rate`` as a monotonicity and
+   order-of-magnitude regression gate, not as a proof of Theorem 1.
+
+This module is the *proxy* sibling of :mod:`adaptive_reflow.eval.fid`.
 The legacy :class:`FIDProtocol` / :class:`InceptionV3FIDEvaluator` surface is
 preserved byte-stable for back-compat with :mod:`tools.run_image_eval` and
 the existing test suite. The new surface introduced here binds the four paper
@@ -23,9 +42,10 @@ obligations:
    :class:`TheoremAlignedFIDResult` per round, carrying the four paper
    constants plus the regime flag ``eps^2 < e_rho / log 2`` (Lemma 4).
 2. :meth:`InceptionV3TheoremAlignedFIDEvaluator.assert_convergence_rate` checks
-   monotonic decrease and the quantitative ``O(eps)`` paper-bound
+   monotonic decrease and the quantitative ``O(eps)`` regression bound
    ``FID(r) <= C_paper * eps_r`` where
-   ``C_paper = (C_g * B_g + 1 / e_rho) / A_g``.
+   ``C_paper = (C_g * B_g + 1 / e_rho) / A_g`` -- a framework-defined
+   aggregate, not a paper-stated constant (see the warning above).
 3. :class:`PerRoundFIDTracker.run` orchestrates the round loop and consumes
    the framework's ``eps_schedule`` (read-only — does NOT mutate scheduler
    state) plus a profile ``g`` for which a ``nu_g`` reference is built by
@@ -123,12 +143,51 @@ class PaperQuantitiesSnapshot:
         eta: float = _DEFAULT_ETA,
         K: float = _DEFAULT_K,
         h: float = _DEFAULT_H,
+        d: float = 1.0,
+        validate: bool = False,
     ) -> "PaperQuantitiesSnapshot":
         """Build the snapshot by calling the four paper-quantity evaluators.
 
         Stdlib-only computation; byte-stable: two calls with identical
         arguments return bit-identical ``(A_g, B_g, C_g, e_rho)``.
+
+        Parameters
+        ----------
+        g
+            Profile ``g : R -> R`` for the four paper quantities.
+        rho, c, eta, K, h
+            Paper-quantity knobs and discretization knobs.
+        d
+            F-side uniform-separation constant (default ``1.0``). Used
+            only when ``validate=True``.
+        validate
+            If True (default False for back-compat with existing
+            callers using synthetic ``_constant_g`` profiles with
+            empty ``Z_g``), call
+            :func:`adaptive_reflow.theory.validation.validate_g_admissible`
+            to assert ``g`` satisfies the F-side hypotheses (paper
+            line 22-26) together with uniform simplicity (line 23-24).
+            Raises :class:`NotInFsideClassError` on any violation.
+            Wave 12 A1-med-2: defaults to ``False`` so existing test
+            profiles (e.g. ``g(x) = 1``) keep working; the
+            Proposition 6 escaping-sharpness regression test
+            explicitly passes ``validate=True``.
+
+        Raises
+        ------
+        adaptive_reflow.theory.validation.NotInFsideClassError
+            If ``validate=True`` and ``g`` does not satisfy the F-side
+            hypotheses (Proposition 6 sharpness examples such as
+            ``H(x) = e^{-x^2/2} * sin(pi*x)`` violate uniform
+            simplicity because the Gaussian envelope shrinks
+            ``|H(r+u)|/|u|`` to zero as ``|r| -> infty``).
         """
+        if validate:
+            from adaptive_reflow.theory.validation import validate_g_admissible
+
+            validate_g_admissible(
+                g, d=float(d), c=float(c), rho=float(rho), eta=float(eta)
+            )
         return cls(
             A_g=float(sheet_evidence_A(g, K=K, h=h)),
             B_g=float(root_cell_packing_B(g, K=K, h=h)),
@@ -722,8 +781,13 @@ def _paper_implied_constant(snap: PaperQuantitiesSnapshot) -> float:
     Conservative constant absorbing all four paper quantities: ``A_g``
     bounds the asymptotic scale of ``nu_g``; ``C_g * B_g`` bounds the
     codim-2 tail; ``1 / e_rho`` bounds the exterior exponential tail.
-    The bound is paper-aligned (Theorem 1 + Corollary 1) and
-    intentionally conservative.
+
+    The name ``C_paper`` is historical and slightly misleading: this
+    aggregate is *defined by the framework*, not stated by the paper
+    (the paper's Theorem 1 constant is ``A_g > 0``), and it is applied
+    here to a Gaussian-Frechet distance rather than to the paper's
+    planar BL distance. It is deliberately conservative and serves as a
+    regression bound, not as a theorem.
     """
     if snap.A_g <= 0.0:
         return float("inf")

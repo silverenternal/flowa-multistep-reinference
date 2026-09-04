@@ -19,8 +19,10 @@ from adaptive_reflow.framework.interfaces import (  # noqa: F401
     PosteriorEvaluator,
     SelectionRatioWitness,
     SheetSchedulerProtocol,
+    Theorem1Statement,
     Theorem1StatementChecker,
     assert_adapter_compliance,
+    emit_theorem1_statement,
     implements,
 )
 
@@ -34,7 +36,9 @@ __all__ = [
     "PosteriorEvaluator",
     "SelectionRatioWitness",
     "SheetSchedulerProtocol",
+    "Theorem1Statement",
     "Theorem1StatementChecker",
     "assert_adapter_compliance",
+    "emit_theorem1_statement",
     "implements",
 ]
