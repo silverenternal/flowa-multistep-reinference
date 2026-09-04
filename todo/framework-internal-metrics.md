@@ -84,7 +84,7 @@ unpinned threshold).
 
 | ID | Definition | Current | Target | Hard? |
 |---|---|---|---|---|
-| E.1 | CLM claim count in `docs/CLAIMS.md` — split into **total count** + **test-coupled count** | 47 total, ~0 test-coupled | **>= 50 total, >= 70% test-coupled by Wave 16** | **HARD** (test-coupled floor; reconciled with paper-writeup gate) |
+| E.1 | CLM claim count in `docs/CLAIMS.md` — split into **total count** + **test-coupled count** | 43 total (43 active + 2 deprecated, gap CLM-035..038 reserved; target 50 still open), **11 test-coupled** (Wave 26 Agent C 2026-09-05: wired CLM-005, 006, 011, 019, 020, 021, 027, 028, 029, 030, 047 — all category-(a) trivially testable claims; 11/41 active ≈ 0.268 of active / 0.256 of total; new tests under `tests/test_claims/`, 37/37 passing in 0.64 s) | **>= 50 total, >= 70% test-coupled by Wave 16** | **HARD** (test-coupled floor; reconciled with paper-writeup gate) |
 | E.2 | Docs cross-referencing >= 1 paper theorem, machine-checkable via A.5 | **1.000 (31 / 31 docs, machine-checkable via `tools/check_doc_paper_refs.py`; Wave 23 Agent A update 2026-09-05)** | >= 0.9 by Wave 14 | **HARD** |
 | E.3 | CONSOLIDATED_RESULTS sections per integrated model | 7+ | >= 10 by Wave 16 | no |
 | E.4 | Doc-builder diff job: per-equation citation check fails if a refactor drops paper equation/section reference from a public function | not running | live by Wave 13 | **HARD** |

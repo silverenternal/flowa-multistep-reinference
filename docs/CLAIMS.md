@@ -104,6 +104,7 @@ How it works:
   `adaptive_reflow/algorithm/scheduler/_core.py:347`
   (`CosineAnnealScheduler.sample(...)` produces
   `n_cap(r) = n_min + 0.5 * (n_max - n_min) * (1 - cos(pi * r / (L - 1)))`).
+- Test: tests/test_claims/test_claim_005.py
 
 ## CLM-006: CodimensionSheetScheduler implements paper Lemma 2 + Lemma 3 as closed form {#CLM-006}
 
@@ -122,6 +123,7 @@ How it works:
   (`CodimensionSheetScheduler` class),
   `adaptive_reflow/algorithm/scheduler/_core.py:2136`
   (`_paper_evidence_balance` helper).
+- Test: tests/test_claims/test_claim_006.py
 
 ## CLM-007: Physical complement is exponentially suppressed {#CLM-007}
 
@@ -209,6 +211,7 @@ How it works:
   (`AdaptivePolicyDriver` accepts `per_cell_coefficient_C`);
   `adaptive_reflow/algorithm/runner.py:155`
   (`ReInferenceConfig.paper_quantities_provider`).
+- Test: tests/test_claims/test_claim_011.py
 
 ## CLM-012: Paper Theorem 1 proves bounded-Lipschitz convergence {#CLM-012}
 
@@ -396,6 +399,7 @@ How it works:
   `adaptive_reflow/algorithm/sequential_handoff.py`
   (`SequentialScheduler`),
   `docs/defaults-matrix.md` §"The matrix".
+- Test: tests/test_claims/test_claim_019.py
 
 ## CLM-020: `BoundedMergeOperator` enforces a non-zero noise floor {#CLM-020}
 
@@ -420,6 +424,7 @@ How it works:
   (`floor`/`cap` keyword arguments),
   `tests/test_algorithm/test_merge_operator.py`
   (the bounded-merge regression suite).
+- Test: tests/test_claims/test_claim_020.py
 
 ## CLM-021: `SequentialScheduler` mirrors PyTorch's SequentialLR composite scheduler {#CLM-021}
 
@@ -446,6 +451,7 @@ How it works:
   (`SCHEDULER_REGISTRY["sequential"]` entry),
   `tests/test_algorithm/test_sequential.py`
   (16+ regression tests).
+- Test: tests/test_claims/test_claim_021.py
 
 ## CLM-022: `EvidenceScaleGapMetric` `eps_schedule` uplift raises `selection_ratio` plateau with SNR proxy ≥ 1.0 {#CLM-022}
 
@@ -625,6 +631,7 @@ How it works:
   `adaptive_reflow/algorithm/scheduler/_core.py:201,411,687,894,1121,1357,1609`
   (`record_round_feedback` hooks across all built-in families),
   `tests/test_algorithm/test_evidence_driven_scheduler.py`
+- Test: tests/test_claims/test_claim_027.py
 - Disputed by: —
 - Statement: `EvidenceDrivenScheduler` (registered under the family
   key `"evidence_driven"`) subscribes to the runner's per-round
@@ -682,6 +689,7 @@ How it works:
   `adaptive_reflow/algorithm/protocol_registry.py:281-323`
   (the manifest → `PROTOCOL_REGISTRY` rewire),
   `tests/test_manifest/`.
+- Test: tests/test_claims/test_claim_028.py
 
 ## CLM-029: `FreeTrajScheduler` (arXiv:2507.10532) registered as a plug-in scheduler family {#CLM-029}
 
@@ -713,6 +721,7 @@ How it works:
   (registration),
   `tests/test_algorithm/test_freetraj.py`
   (regression coverage).
+- Test: tests/test_claims/test_claim_029.py
 
 ## CLM-030: `MeanFlowMergeOperator` (arXiv:2505.13447) registered as a plug-in merge operator {#CLM-030}
 
@@ -744,6 +753,7 @@ How it works:
   (registration),
   `tests/test_algorithm/test_meanflow_merge.py`
   (regression coverage).
+- Test: tests/test_claims/test_claim_030.py
 
 ## CLM-031: R3 adversarial survey confirms 17 findings and refutes 5 {#CLM-031}
 
@@ -1716,6 +1726,7 @@ How it works:
   [`pyproject.toml:60-67`](../pyproject.toml) (the new
   `[project.optional-dependencies.test]` block declaring
   `pytest`, `hypothesis`, `pytest-benchmark`).
+- Test: tests/test_claims/test_claim_047.py
 - Disputed by: —
 - Statement: The four CI-gate issues closed by the test/CI agent
   are now structurally impossible to regress: the stress-nightly

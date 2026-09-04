@@ -792,6 +792,25 @@ no existing tests were changed.
 
 ---
 
+## E.1 — CLM claim count + test-coupled floor
+
+- **Audit command:**
+  ```bash
+  grep -cE '^## CLM-[0-9]+' docs/CLAIMS.md            # total count
+  grep -cE '^- Test: tests/test_claims/' docs/CLAIMS.md # test-coupled count
+  pytest tests/test_claims/ -v --tb=short --no-header -q  # verify all wired tests pass
+  ```
+- **Raw output (baseline, 2026-09-05, pre-Wave 26):**
+  - Total claim headings in `docs/CLAIMS.md`: 43 (CLM-001..034 then CLM-039..047; gaps CLM-035..038 reserved)
+  - Test-coupled claims (carrying a `Test:` field): **0** — every claim referenced code or docs but no claim pointed at a regression test
+- **Current value (Wave 26 Agent C, 2026-09-05):** **43 total / 11 test-coupled** (≈ 25.6% of total / ≈ 26.8% of 41 active). Wired claims: CLM-005 (cosine closed form), CLM-006 (CodimensionSheetScheduler), CLM-011 (four paper quantities in `__all__`), CLM-019 (9 concrete scheduler families in SCHEDULER_REGISTRY), CLM-020 (BoundedMergeOperator envelope), CLM-021 (SequentialScheduler mirroring SequentialLR), CLM-027 (EvidenceDrivenScheduler registered as `evidence_driven`), CLM-028 (eight Port classes + PORT_MANIFEST carrier), CLM-029 (FreeTrajScheduler registered as `freetraj`), CLM-030 (MeanFlowMergeOperator registered as `meanflow`), CLM-047 (CI workflow T-04.3 / T-04.2 / T-04.5 facts). All 11 picked from category-(a) trivially testable; the test-coupled / active ratio is now ≈ 0.268.
+- **Test-coupled files:** `tests/test_claims/test_claim_{005,006,011,019,020,021,027,028,029,030,047}.py` (11 files, 37 test functions, 37/37 passing in 0.64 s).
+- **Rev 2 target:** ≥ 50 total AND ≥ 70% test-coupled by Wave 16.
+- **Interpretation:** E.1 was the binding HARD gate blocking paper-writeup (0/43 test-coupled). Wave 26's first batch closes the *easy* claims (category-(a)) but only lifts the test-coupled floor to ≈ 25.6% — **far below the 0.70 target**. The remaining gap (≈ 44 percentage points) requires (a) authoring category-(b) fixture tests for the empirical / paper-quantity claims (CLM-003, 004, 009, 022, 023, 032, 046 — 7 claims), (b) blocking the category-(c) empirical-experiment claims behind a framework-managed fixture or sub-claim pointer (CLM-018, 039, 040, 041, 042 — 5 claims; these need real checkpoints / SOTA re-runs), and (c) closing the CLM-035..038 gap to push the total toward 50. Category-(d) (human evaluation) claims (CLM-031, 043) are out of scope for the test-coupled floor. Estimated path to 0.70: add 24 more test-coupled claims (target: 35 / 50) — Wave 27 batch + Wave 28 framework-managed fixtures.
+- **Target gap:** Open. Two parallel tracks needed: (1) author category-(b) fixture tests (≈ 7 claims); (2) draft a framework-managed sub-claim indirection so category-(c) experiment claims can point at a pinned CSV/JSON summary as their `Test:` field (≈ 5 claims). With those + a 4-claim CLM-035..038 fill, E.1 reaches the 0.70 floor.
+
+---
+
 ## E.2 — Documentation cross-reference rate
 
 - **Audit command:**
