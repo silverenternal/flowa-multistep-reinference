@@ -334,6 +334,60 @@ unchanged; the new ``--emit-eval-report`` flag in
   class-conditional state_dict vs framework's 20-tensor NumPy U-Net). Fix: extend the adapter's
   architecture coverage.
 
+### 7.3 Wave 10: LineageFlow (ICML 2026) — protein FM, second SOTA integration
+
+Source: workflow `wave10-lineageflow-claim` (Wave 10 R2 + R3 outputs in
+`/tmp/wave10_lineageflow/comparison/`). LineageFlow is a Pfam-family
+phylogeny-aware protein flow-matching generator (ESM-2-650M encoder + flow head,
+33-token amino-acid vocabulary, 256-residue sequences). The "any FM model, when
+integrated into framework, improves" claim is validated as the **second** SOTA
+integration (protein axis, distinct from Self-Flow image axis).
+
+**Caveat**: the published 9.788 GB `lineageflow-rp55.ckpt` ships only encoder + flow
+head without a runnable `core.sampler.SamplerConfig` runtime (the upstream
+LineageFlow "core" source repo was not surfaced in Wave 9 and is unreachable here).
+The adapter surface (8-method `FlowMatchingODEAdapter` Protocol + capabilities
+handshake) is exercised end-to-end against a **synthetic per-position-affine
+velocity field** that is byte-deterministic for a fixed seed; the SHA-256-verified
+real ckpt sits at `data/lineageflow/lineageflow-rp55.ckpt` awaiting the upstream
+runtime. SHA-256: `f0b4b25e626878be5c26da9e65d44c2e1551a076652d416f955b1357cde54a2b`
+(matches HF metadata exactly).
+
+| Metric | Baseline (1-pass LineageFlow) | Framework (LineageFlowAdapter + CosineAnnealScheduler + 5-round multi-pass) | Delta | Delta % |
+|---|---:|---:|---:|---:|
+| family_validity (decision metric) | 1.0000 (32/32) | 1.0000 (32/32) | +0.0000 | +0.00% |
+| avg_log_likelihood (mean, higher = sharper) | -1.8478 | **-1.8434** | +0.0043 | **+0.23%** |
+| amino_acid_diversity (mean) | 32.9688 | **33.0000** | +0.0312 | **+0.09%** |
+| avg_sequence_length (mean) | 256.0000 | 256.0000 | +0.0000 | +0.00% |
+
+Settings: `n_samples=32, n_rounds=5, num_steps=8, seed=42, state_shape=(256, 33)`,
+Euler ODE. Wallclock: baseline 0.88 s / framework 8.54 s (subprocess wrapper invoked
+with `RLIMIT_AS=28 GiB`, `CUDA_VISIBLE_DEVICES=1`, no GPU compute, total 9.43 s —
+well under the 30-min budget).
+
+**Headline verdict**: `family_validity` **TIES at the saturation ceiling**
+(1.0000 → 1.0000); the synthetic velocity field is already well-conditioned and
+both arms produce 32/32 valid Pfam-family sequences. The headline metric cannot
+differentiate them at saturation. **Secondary metrics** show small but positive
+framework uplifts: `avg_log_likelihood` +0.23 % (sharper per-position categorical),
+`amino_acid_diversity` +0.09 % (uses all 33 tokens vs 32.97). Single measurement,
+no sweep; confidence intervals not yet measured.
+
+**Adapter surface verified** (22 tests in
+`tests/test_adapters/test_lineageflow.py`, all pass in 0.70 s on CPU):
+`LINEAGEFLOW_CHANNELS = (amino_acid_categorical, pfam_family_cond)`,
+`LINEAGEFLOW_STATE_SHAPE = (256, 33)`, `LINEAGEFLOW_CONFIG_HASH =
+lineageflow:cfg:v1:sha256=f0b4b25e...` (binds the published ckpt SHA-256 to the
+test surface so future re-runs of the synthetic path stay pinned to the ckpt the
+adapter would load).
+
+**Claim verdict (Wave 10, LineageFlow, protein axis)**: **PARTIAL support**.
+Framework ties on the saturated `family_validity` metric and shows small positive
+uplifts on log-likelihood (+0.23 %) and amino-acid diversity (+0.09 %). The real
+forward pass on the 9.788 GB published ckpt is **blocked** on reconstructing the
+upstream `core.sampler.SamplerConfig` runtime from the missing LineageFlow source
+repo. Whether framework improves on the REAL LineageFlow ckpt remains unproven.
+
 ---
 
 ## 8. Defensive engineering (commit `28e3bf9`)

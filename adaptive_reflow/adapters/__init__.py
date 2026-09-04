@@ -35,6 +35,19 @@ from .lumina_image_2_0 import (  # noqa: I001
     LuminaImage20Capabilities,
     default_lumina_image_2_0_adapter,
 )
+from .lineageflow import (
+    LINEAGEFLOW_CHANNEL_DOMAINS,
+    LINEAGEFLOW_CHANNELS,
+    LINEAGEFLOW_CONFIG_HASH,
+    LINEAGEFLOW_CONFIG_VERSION,
+    LINEAGEFLOW_MECHANISM_ID,
+    LINEAGEFLOW_NUM_STEPS_DEFAULT,
+    LINEAGEFLOW_STATE_SHAPE,
+    LineageFlowAdapter,
+    LineageFlowCapabilities,
+    default_lineageflow_adapter,
+    lineageflow_resolve_weights_path,
+)
 from .protbfn_abbfn_adapter import (
     AMINO_ACID_CATEGORICAL,
     PROTBFN_ABBFN_CHANNELS,
@@ -203,6 +216,7 @@ ADAPTER_REGISTRY: dict[str, Any] = {
     "flowmol3_v2": default_flowmol3adapter,
     "graphbfn": default_graphbfn_adapter,
     "hidream_i1": default_hidream_i1_adapter,
+    "lineageflow": default_lineageflow_adapter,
     "lumina_image_2_0": default_lumina_image_2_0_adapter,
     "mnist_fm": default_mnist_fm_adapter,
     "protbfn_abbfn": default_protbfnabbfn_adapter,

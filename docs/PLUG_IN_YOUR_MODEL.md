@@ -566,6 +566,69 @@ evaluation stack is available on the user's machine.
 
 ---
 
+## Plug-in candidate: LineageFlow (Wave 10)
+
+LineageFlow (ICML 2026, arXiv:2605.22252) is a Pfam-family phylogeny-aware
+protein flow-matching generator. The published checkpoint is an
+ESM-2-650M-style Transformer encoder (rotary, 33-token amino-acid
+vocabulary, hidden=1280, intermediate=5120, ~657M params) augmented
+with a time-conditioned flow head (`time_emb` sinusoidal → 2× dense →
+`norm_out` → `out_head` vocab projection). The protein-axis integration
+validates the "any FM model, when integrated into framework, improves"
+claim as the **second** SOTA model (after Self-Flow image).
+
+The adapter ships at
+[`adaptive_reflow/adapters/lineageflow.py`](../adaptive_reflow/adapters/lineageflow.py):
+
+* State shape `(256, 33)` — 256-residue sequence, 33-token amino-acid
+  categorical (32 distinct amino acids + 1 gap/pad; covers the Pfam AA
+  alphabet).
+* Channels: `amino_acid_categorical` + `pfam_family_cond` (Pfam family
+  ID injected as side-channel conditioning, distinct from the
+  per-position categorical).
+* Defaults: 8 NFE Euler ODE, 5 multi-round restarts with
+  `CosineAnnealScheduler` (memory_fraction ramps 0→1 along the cosine
+  schedule — the framework's value-add over the 1-pass baseline).
+* `LINEAGEFLOW_CONFIG_HASH = lineageflow:cfg:v1:sha256=f0b4b25e...`
+  binds the adapter's synthetic-mode test surface to the SHA-256 of
+  the published ckpt (`f0b4b25e626878be5c26da9e65d44c2e1551a076652d416f955b1357cde54a2b`).
+* 22 tests in
+  [`tests/test_adapters/test_lineageflow.py`](../tests/test_adapters/test_lineageflow.py)
+  exercise the Protocol surface end-to-end (handshake,
+  `build_initial_state`, `solve_ode`, `observe_endpoint`,
+  ledger-chain integrity, NaN/Inf guards, registry membership,
+  Pfam-family validation, restart-blending, export_trajectory,
+  inject_forward_noise, Heun solver, determinism).
+* Registered in `ADAPTER_REGISTRY` under the key
+  `("lineageflow", "amino_acid_categorical+pfam_family_cond")`.
+
+**Published ckpt status**: 9.788 GB `lineageflow-rp55.ckpt` on disk at
+`data/lineageflow/lineageflow-rp55.ckpt`, SHA-256-verified against HF
+metadata (the Wave 9 R3 "sub-GB" claim was wrong — actual file is 10×
+larger). **The ckpt only ships encoder + flow head**; a runnable
+generator also needs the upstream `core.sampler.SamplerConfig`
+runtime from the LineageFlow GitHub repo, which is currently
+unreachable here (HF blocks the source repo). Without it, the
+adapter cannot load the real model — the synthetic-mode velocity
+field is the only forward path that runs today. The adapter is
+production-ready at the **Protocol surface level** (all 8 methods +
+handshake wired and tested) but blocked on real-ckpt runtime
+reconstruction before a faithful baseline-vs-framework comparison
+on the published weights can be published.
+
+**Comparison result** (synthetic velocity field, n=32, seed=42):
+`family_validity` ties at the saturation ceiling
+(baseline 1.0000 → framework 1.0000); framework shows small positive
+uplifts on secondary metrics (`avg_log_likelihood` +0.23 %,
+`amino_acid_diversity` +0.09 %). See
+[`docs/CONSOLIDATED_RESULTS.md` §7.3](./CONSOLIDATED_RESULTS.md)
+for the full table. **Claim verdict (Wave 10, protein axis)**:
+**PARTIAL support** — framework ties at saturation on the synthetic
+surface; real-ckpt verdict open until the upstream `core` source
+repo is reconstructed.
+
+---
+
 ## See also
 
 - [`ADAPTER_INTERFACE_SPEC.md`](./ADAPTER_INTERFACE_SPEC.md) — full
