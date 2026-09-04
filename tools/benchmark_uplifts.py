@@ -437,7 +437,13 @@ def measure_driver_merge_blender_uplifts() -> list[dict[str, Any]]:
     )
 
     # ---- (b2) AdaptivePolicyDriver exposes beta_saturation_count (A11) -
-    adaptive = AdaptivePolicyDriver(per_cell_coefficient_C=0.5)
+    # NOTE: per_cell_coefficient_C=2.0 (not 0.5) — post-F6 fix (commit 9d5c873)
+    # in AdaptivePolicyDriver.compute_policy inverted the math from
+    # `raw = raw / C_g` to `raw = raw * C_g`. With C_g=0.5 the envelope
+    # lives in [0.25, 0.5] (never > 1.0) so the saturation branch is
+    # structurally unreachable; C_g=2.0 keeps the envelope > 1.0 and
+    # saturation fires every round. See /tmp/wave7_investigation/I3-A11-regression/diagnose.md.
+    adaptive = AdaptivePolicyDriver(per_cell_coefficient_C=2.0)
     # Build a real base policy (the driver consults base_policy even
     # though it ignores most of it; this avoids a NoneType error in
     # _override_beta_by_channel).
