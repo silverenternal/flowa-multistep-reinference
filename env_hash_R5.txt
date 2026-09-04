@@ -1,0 +1,5 @@
+lock_hash=983f7707e7207ed6dee1972cc1fb9306448ad6367963edefd612f88b76519092
+python_version=Python 3.11.15
+torch_version=torch:2.2.1+cpu+cudaNone
+adapter_deps_hash=0e9e0b9c3c5eb7b5f87566160043f8b8736719847ddb4da319c94b258afc3eac
+composite_hash=2c05d22012bd9cf7f58ad88cfca96176afb54bf10e16bdb98dba0092e9a4cb4f
