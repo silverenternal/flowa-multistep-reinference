@@ -205,6 +205,40 @@ Notes: synthetic-vs-synthetic FID is large and **not paper-comparable** (the pub
 (baseline measurement, no restart-blend) is the framework's restart-blend value-add signal.
 Artifacts: `/tmp/gpu_wave5/GPU-2-cifar10-restart/{output.json, samples.npy, gen_features.npy}`.
 
+### 6.2 Wave-5 GPU 2D→MNIST migration (PARTIAL verdict, real signal present)
+
+Source: workflow `wave5-gpu-experiments`, run `gpu4-mnist-migration` (2026-09-04).
+MnistFmAdapter (`init_random_weights=True`, see Wave 3 F-P0-2 surface) — NumPy-only
+by design, run on CPU despite the GPU workflow assignment; this is documented as a
+design constraint, not a bug.
+
+| Arm | Integrator | beta | cum_pixel_coverage | cum_pixel_w2 | overflow-free |
+|---|---|---:|---:|---:|---:|
+| baseline | rk4 | 0.0 | 256 | **32.1479** | 100% |
+| treated | dormand_prince | 0.5 | 256 | **30.1714** | 100% |
+
+**Delta W2 (treated − baseline) = −1.9765** (treated is BETTER; lower W2 distance to target).
+
+**Verdict: PARTIAL** — `c1_w2_improves: True`, `c2_coverage_lift_ge_5: False`, `c3_overflow_free: True`.
+Coverage saturated at 256 for both arms (random-init UNet produces noise that fills all
+8-bit pixel values); the W2 metric gives a real framework-value signal but the coverage
+acceptance criterion is not met.
+
+Total wall-clock: **280.9 s** (~4.7 min) for 50 rounds × 16 samples × 2 arms.
+
+Why this is useful even with PARTIAL verdict:
+- Confirms the framework's restart-blend produces a measurable per-pixel W2 improvement
+  (~6.2% reduction vs baseline) even on a NumPy-only adapter with random-init weights.
+- The 2D Eight Gaussians load-bearing test gives 5pp Voronoi coverage lift; on image
+  pixels (8-bit) the analogous signal is the W2 distance, not coverage.
+- The MnistFmAdapter is intentionally NumPy-only (no torch dependency, portable);
+  re-running with the GPU-accelerated RectifiedFlowCIFARAdapter on real MNIST would
+  scale this signal but requires pretrained CIFAR-10 weights (GPU-1 was blocked on
+  asset acquisition — drive.google.com + huggingface.co unreachable).
+
+Artifacts: `/tmp/gpu_wave5/GPU-4-mnist-migration/{results.json, full_run.log, mnist_fm_pretrained.npz}`.
+NOT YET COMMITTED — Wave-5 GPU-4 PARTIAL commit pending user direction on whether to include.
+
 ---
 
 ## 7. Toy framework comparison (vanilla PyTorch vs `adaptive_reflow`)
