@@ -1,7 +1,7 @@
 {
   "schema_version": "framework_iteration_v1",
   "purpose": "Active task list for the 12 framework improvements (P0/P1/P2 from docs/CONSOLIDATED_RESULTS.md sec 9). Old known-problems inventory archived at todo.json.bak.",
-  "updated_at": "2026-09-04T13:07:44Z",
+  "updated_at": "2026-09-04T15:02:53Z",
   "P1-7_completion_note": "Executed per plan with 3 deviations: (1) state.py kept lazy function-local imports (dynamic_noise_bias cycle prevented eager module-level); (2) contracts/__init__.py kept __getattr__ resolver (molecular/__init__.py:189 eager call requires it); (3) contracts/bundle.py kept lazy __getattr__ (eager import triggered partial-init cycle). Step 5 reverted to placeholder NewTypes (eager re-export would cycle through bundle.py). Acceptance criteria 1, 2, 3, 6 pass; AC4 + AC5 covered by pytest (542 tests pass in affected suites; 2 pre-existing failures unrelated). Smoke artifacts in /tmp/framework_iterate_wave1/P1-7/.",
   "execution_wave_summary": {
     "wave_1": [
@@ -472,5 +472,111 @@
         "gdown_log": "/tmp/gpu_wave5/GPU-1-cifar10-baseline/gdown.log"
       }
     }
-  ]
+  ],
+  "artifacts": {
+    "reproducibility_record": {
+      "path": "docs/reproducibility_record.md",
+      "absolute_path": "/home/hugo/codes/flowa-multistep-reinference/docs/reproducibility_record.md",
+      "purpose": "Aggregate record of the 8 Wave 6 reproducibility experiments (R1-R8) \u2014 per-task script/metric/claim_match, summary, reproduction guide, known limitations.",
+      "generated_at": "2026-09-04T15:02:53Z",
+      "trigger": "user requested reproducible data demonstrating framework capability",
+      "commit": "27dcb9cb829785bbd5b01783d4cfc85eb7c11743",
+      "covers_tasks": [
+        {
+          "id": "R1-algorithm-uplifts",
+          "status": "ok",
+          "claim_match": "diverges",
+          "claims": [
+            "CLM-005",
+            "CLM-006",
+            "CLM-009",
+            "CLM-018",
+            "CLM-019",
+            "CLM-020",
+            "CLM-022",
+            "CLM-025",
+            "CLM-026",
+            "CLM-027"
+          ]
+        },
+        {
+          "id": "R2-2d-ablation",
+          "status": "ok",
+          "claim_match": "partial_match",
+          "claims": [
+            "CLM-018",
+            "CLM-022"
+          ]
+        },
+        {
+          "id": "R3-2d-rf-sota",
+          "status": "partial",
+          "claim_match": "diverges",
+          "claims": [
+            "CLM-039"
+          ]
+        },
+        {
+          "id": "R4-flowmol3-paper-parity",
+          "status": "ok",
+          "claim_match": "matches",
+          "claims": [
+            "CLM-040"
+          ]
+        },
+        {
+          "id": "R5-flowmol3-framework-vs-baseline",
+          "status": "ok",
+          "claim_match": "diverges",
+          "claims": [
+            "CLM-040"
+          ]
+        },
+        {
+          "id": "R6-cifar10-v4-matched-nfe",
+          "status": "skipped",
+          "claim_match": "cannot_compare",
+          "claims": [
+            "CLM-040"
+          ]
+        },
+        {
+          "id": "R7-byte-stability",
+          "status": "ok",
+          "claim_match": "partial_match",
+          "claims": []
+        },
+        {
+          "id": "R8-acyclic-test-gate",
+          "status": "ok",
+          "claim_match": "matches",
+          "claims": []
+        }
+      ],
+      "claims_supported": [
+        "CLM-003",
+        "CLM-004",
+        "CLM-005",
+        "CLM-006",
+        "CLM-009",
+        "CLM-020",
+        "CLM-026",
+        "CLM-027",
+        "CLM-029",
+        "CLM-030"
+      ],
+      "claims_partial": [
+        "CLM-018",
+        "CLM-022",
+        "CLM-040"
+      ],
+      "claims_diverged": [
+        "CLM-039",
+        "CLM-040 (framework sub-claim \u00a71.1.d)"
+      ],
+      "claims_cannot_compare": [
+        "CLM-040 (v4 CIFAR-10 sub-claim)"
+      ]
+    }
+  }
 }
