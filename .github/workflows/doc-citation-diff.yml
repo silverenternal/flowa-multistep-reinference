@@ -1,0 +1,71 @@
+name: doc-citation-diff
+
+# E.4 doc-builder diff job (per-framework-internal-metrics.md §1.E.4).
+#
+# Fails the build if a refactor drops a paper equation/section reference
+# from a public function docstring between the merge base (the parent of
+# the merge commit, ``github.event.before`` for push events and
+# ``github.pull_request.base.sha`` for PR events) and the current head.
+#
+# Wire-in: this workflow runs on both push-to-main (catching direct
+# commits that bypass the PR gate) and on every PR (catching refactors
+# before merge). The single ``doc-citation-diff`` job calls
+# ``tools/check_doc_paper_refs_diff.py`` and propagates its exit code
+# (1 = at least one citation regression) to the GitHub status check.
+#
+# Scope: the diff is restricted to ``adaptive_reflow/`` minus the
+# ``legacy/`` quarantine (per framework-internal-metrics rev 3 §2 J.2),
+# which is consistent with the E.4 metric definition's "public
+# function" scope and the J.1 public-surface scope.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: doc-citation-diff-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  doc-citation-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch enough history for ``git rev-parse HEAD~1`` to succeed
+          # on a freshly-cloned shallow checkout (the default is depth 1
+          # which cannot resolve a parent).
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run E.4 doc-citation diff job
+        env:
+          # Resolve the diff base from the GitHub event payload:
+          #   * push event   -> ``github.event.before`` (the parent of
+          #     the pushed commit); fall back to HEAD~1 if before is
+          #     the all-zeros sha (initial push onto an empty branch).
+          #   * pull_request -> ``github.event.pull_request.base.sha``
+          #     (the merge-base candidate); fall back to HEAD~1.
+          E4_BASE: ${{ github.event_name == 'push' && github.event.before || github.event.pull_request.base.sha }}
+          E4_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # If the resolved base is the all-zeros sha (initial push onto
+          # an empty branch), fall back to HEAD~1 so the diff is well
+          # defined. ``github.event.before`` is 40 zero chars for the
+          # very first push onto a fresh repo.
+          if [ "${E4_BASE}" = "0000000000000000000000000000000000000000" ]; then
+            E4_BASE="HEAD~1"
+          fi
+          echo "E.4 diff base=${E4_BASE} head=${E4_HEAD}"
+          PYTHONPATH=. python tools/check_doc_paper_refs_diff.py \
+            --base "${E4_BASE}" \
+            --head "${E4_HEAD}"

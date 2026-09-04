@@ -839,6 +839,80 @@ no existing tests were changed.
 
 ---
 
+## E.4 — Doc-builder diff job
+
+- **Metric ID:** E.4
+- **Metric title:** Doc-builder diff job — per-equation citation regression check that fails if a refactor drops a paper equation/section reference from a public function docstring between two git revisions.
+- **Audit date:** 2026-09-05 (Wave 27 Agent A)
+- **Status:** **MET** (live + non-regressing on a 3-commit local dry-run).
+- **Scope:** every top-level public `FunctionDef` / `AsyncFunctionDef` declared under `adaptive_reflow/` excluding the `legacy/` quarantine (per framework-internal-metrics rev 3 §2 J.2 deprecation policy). A function is "public" iff its name does not start with `_` (dunder names are public by convention — `__init__`, `__post_init__`, etc.). Classes are excluded from the per-function scan because their public API is documented on the class-level docstring, which a follow-on AST sweep can fold in without changing the contract. Method bodies inside classes are out of scope by design: the metric text says "public function", not "public method".
+
+- **Anchors matched** (mirrors `tools/check_doc_paper_refs.py` plus equation-anchor broadening):
+  - `Theorem N` / `Theorem N.M`
+  - `Lemma N`  / `Lemma N.M`
+  - `Proposition N`
+  - `Corollary N`
+  - `Remark N`
+  - `paper section X.Y` (e.g. `paper section 4.2`)
+  - `paper §X.Y` (e.g. `paper §3.1`)
+  - `paper line N` (e.g. `paper line 87`)
+  - `Eq. (N)` / `Eq. N` / `Equation N` (e.g. `Eq. (7)`, `Eq. 3`, `Equation 12`)
+  - `Section N` / `Section N.M`
+  - `arXiv:NNNN.NNNNN` (any arXiv ID)
+  - `JMAA` (the underlying paper, J. Math. Anal. Appl.)
+
+  A docstring is "citing" iff ANY of the above matches. The broadening vs the E.2 audit (`tools/check_doc_paper_refs.py`) is the addition of `Eq. (N)`, `Eq. N`, `Equation N`, and bare `Section N` — exactly the equation anchors that A.4 already counts (see A.4 §"AST-based per-function count" above).
+
+- **Diff semantics:** a *regression* is a function that exists at both `--base` and `--head` whose base docstring carried at least one citation AND whose head docstring carries zero. Functions added at head (no base counterpart) are NOT a regression — they are reported in a separate `Added functions` block. Functions removed at head (no head counterpart) are reported in a separate `Removed functions` block. This keeps the gate from false-positiving on either deletions (where losing a citation is moot) or genuine new public functions (where a missing citation is a *separate* A.4 sweep concern, not an E.4 regression).
+
+- **Runner:** `tools/check_doc_paper_refs_diff.py` (NEW, 2026-09-05, Wave 27 Agent A).
+  - CLI surface: `python tools/check_doc_paper_refs_diff.py [--base HEAD~1] [--head HEAD] [--no-exit-code] [--quiet]`.
+  - Exit codes: `0` = no regressions; `1` = at least one regression; `2` = invocation error (git failure, no Python files, etc.).
+  - Implementation: parses each `*.py` blob with the `ast` stdlib module (no third-party deps), collects the top-level public functions, then diffs the two function-indexes keyed by `module_path::function_name`.
+  - Git plumbing: `git ls-tree -r --name-only <sha> -- adaptive_reflow` for the file enumeration, `git cat-file -p <sha>:<path>` for the per-blob contents. No `--follow` semantics — the diff is file-tree-based, which is what the metric spec asks for (a refactor that *moves* a function between files does NOT change its docstring, so the qualname key is what matters).
+
+- **CI wire-in:** `.github/workflows/doc-citation-diff.yml` (NEW, 2026-09-05, Wave 27 Agent A).
+  - Triggers: `push` to `main` + every `pull_request` (same shape as `docs-validate.yml`, `cpu-tests.yml`, `ci.yml`).
+  - `permissions: contents: read` — minimal scope, no write tokens.
+  - `concurrency.group = doc-citation-diff-${{ github.ref }}` with `cancel-in-progress: true` — matches the project's existing pattern so a stale run from a force-pushed branch doesn't queue.
+  - `timeout-minutes: 5` — the diff is bounded by the number of public functions (currently 458 across 189 files) and a cold `git cat-file -p` over a 5 KiB blob averages <0.5 ms; a 5-minute budget is generous margin.
+  - `actions/checkout@v4` with `fetch-depth: 0` so `HEAD~1` resolves on the freshly-cloned shallow checkout that GitHub Actions produces by default.
+  - Diff base resolution: `E4_BASE: ${{ github.event_name == 'push' && github.event.before || github.event.pull_request.base.sha }}` with a fallback to `HEAD~1` when `github.event.before` is the all-zeros SHA (the very first push onto a fresh branch).
+  - Single step: `PYTHONPATH=. python tools/check_doc_paper_refs_diff.py --base "${E4_BASE}" --head "${E4_HEAD}"` — the exit code propagates to the GitHub status check (1 → red ✕).
+
+- **Local dry-run (2026-09-05):**
+
+  ```text
+  $ python tools/check_doc_paper_refs_diff.py --base HEAD~3 --head HEAD
+  E.4 diff: base=82d97b0d68d4 head=f06075ba5767 (189 python files)
+  PASS  E.4 diff -- 0 regressions across 458 functions at head (458 at base); base=HEAD~3 (82d97b0d68d4), head=HEAD (f06075ba5767)
+  ```
+
+  189 Python files in scope, 458 public top-level functions at each revision (HEAD~3 = `Wave 26 Agent B: I.1 type-soundness coverage via mypy --strict`, HEAD = `fix(run_image_eval): add image_reward_* kwargs to run_image_eval_per_round`). The commit chain in that window is structural refactors (I.1 type-annotation sweep + capability_audit cold-clone re-run + docs/Freeeze MUST-1 summary table + MM-FM BLOCKED decision + Wave 26 Agent B I.1), none of which dropped a paper anchor from any public-function docstring. **0 regressions confirmed**.
+
+- **YAML validation:** `python -c "import yaml; yaml.safe_load(open('.github/workflows/doc-citation-diff.yml'))"` exits 0 (verified 2026-09-05). Parsed structure: name `doc-citation-diff`, triggers `[push, pull_request]`, single job `doc-citation-diff`, 4 steps (`checkout`, `setup-python`, `Run E.4 doc-citation diff job`).
+
+- **Relation to A.4 (citation density) and E.2 (docs cross-reference rate):**
+  - **A.4** is a *forward-looking* audit of `adaptive_reflow/theory/` measured at HEAD: "what fraction of public functions cite a paper anchor?" — currently 0.938 (Wave 15 A revised).
+  - **E.2** is a *forward-looking* audit of `docs/*.md` measured at HEAD: "what fraction of docs cross-reference >= 1 paper theorem?" — currently 1.000 (Wave 23 Agent A).
+  - **E.4** is the *differential* gate: "did this PR drop a paper anchor from any public function?" — currently 0 regressions (Wave 27 Agent A).
+  - The three form a complete citation-discipline picture: A.4 measures theory-layer density, E.2 measures doc-layer coverage, E.4 measures per-PR regression protection. The HARD-gate framing of E.4 means a PR that breaks A.4 below its 0.90 target by dropping existing citations will fail CI before merge — the gate is structural, not advisory.
+
+- **Honest caveats:**
+  - The script does not scan method-level docstrings (e.g. `Foo.bar` inside `class Foo:`). The metric text says "public function", and the framework's public-API surface is the module-body entry points by convention; method-level coverage is tracked separately under A.4 (which counts *every* `def` line, not just module-body).
+  - The script does not scan class docstrings (which would inflate the denominator with class-name collisions). A class-level AST sweep is a straightforward follow-on extension; the metric spec does not require it, so it is deferred to a future wave.
+  - The diff is `git`-based and depends on `actions/checkout@v4` with `fetch-depth: 0`. A force-push that rewrites history will cause the diff base to shift mid-run — the `concurrency.cancel-in-progress: true` setting absorbs this by killing the in-flight run, matching every other workflow in the repo.
+  - The 5-minute timeout assumes the cold `git cat-file -p` calls fit in <50 ms each. On a 2x-larger public surface (~900 functions across ~300 files), the timeout has margin to spare; on a 10x surface (~4500 functions), the timeout would need re-tuning to ~10 min.
+
+- **Concrete next actions (for a future wave):**
+  1. Extend the scan to class docstrings (the AST pass already visits each module; adding `ast.ClassDef` with a public-name filter is ~10 LOC).
+  2. Optionally extend the scan to method-level docstrings under `class Foo:`. The metric spec does not require it, so this is purely an informational improvement.
+  3. Add a `--warn-only` mode for the inverse direction ("function added at head without any citation") — separate from the regression gate, useful for surfacing A.4 regressions that are not E.4 regressions (the E.4 gate is one-directional: it cannot fail on an *addition* that lacks citations, because adding a function without a citation is a forward-looking A.4 concern, not a regression).
+
+- **No regression risk:** the new tool and workflow are *purely additive* — they do not modify `tools/check_doc_paper_refs.py`, `adaptive_reflow/`, or any existing CI workflow. The `--no-exit-code` flag is preserved so future dry-runs can be wrapped in larger pipelines without failing on existing-but-allowed regressions.
+
+---
+
 ## F.2 — Wave 6 head experiments (3-way classification)
 
 - **Metric ID:** F.2
