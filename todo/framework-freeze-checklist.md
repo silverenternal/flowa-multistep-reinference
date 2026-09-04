@@ -40,24 +40,28 @@ backlog, not into main.
 **What it checks**: every HARD gate in `framework-internal-metrics.md` §4
 (A.1, A.2, A.3, A.4, A.5, A.6, A.7, B.1-B.6, D.2, D.3, D.4, D.5, E.1
 test-coupled floor, E.4, F.2 cold-clone, F.5) plus group G HARD gates
-(G.1, G.3, G.4, G.6, G.7 from `framework-capability-metrics.md`).
+(G.1, G.3, G.4, G.6, G.7 from `framework-capability-metrics.md`,
+gated as the standalone `G-MASTER-CAPABILITY` entry gate — see MUST-4
+below for the canonical gate definition).
 
 **How to verify**:
 ```bash
 # Run framework-internal-metrics audit (Wave 15 / Wave 22 produced this)
 python tools/run_metrics_audit.py  # if exists, else manual walkthrough
 
-# Run group G audit
+# Run group G audit (= G-MASTER-CAPABILITY gate; see MUST-4)
 python tools/capability_audit.py  # NEW, written in Wave 23+
 
 # Confirm no FAIL line in output
 ```
 
 **Evidence file**: `docs/baseline-audit-report.md` (most recent version)
-+ `docs/mutation_audit_q4_2026.md` for F.6 + `verification_outputs/sbc_audit_n1000.json` for C.7.
++ `docs/mutation_audit_q4_2026.md` for F.6 + `verification_outputs/sbc_audit_n1000.json` for C.7
++ `verification_outputs/capability_audit_*.json` for the group G HARD gates
+(now formalised as the `G-MASTER-CAPABILITY` gate; see MUST-4).
 
 **Current state**: 12 of 13 audit HARD gates pass (E.1 test-coupled = 0% is NOT MET).
-Group G not yet measured.
+Group G not yet measured (gated as `G-MASTER-CAPABILITY`; see MUST-4).
 
 ### MUST-2: G-MASTER-PHASE-3 passes
 
@@ -110,31 +114,63 @@ not bespoke per-model logic.
 
 **Current state**: NOT STARTED. Blocked on Wave 21 completion (need 3 adapters to see patterns).
 
-### MUST-4: Group G capability metrics measured (cold-clone)
+### MUST-4: `G-MASTER-CAPABILITY` gate PASSED (group G capability metrics measured cold-clone)
 
-**What it checks**: per `framework-capability-metrics.md`, the 5 HARD capability
-metrics have been measured from a cold clone (F.5 env hash pinned):
+**What it checks**: per `framework-capability-metrics.md` and
+`todo/GATES.md` (canonical gate definition), the **`G-MASTER-CAPABILITY`**
+entry gate must PASS — i.e., the 5 HARD capability metrics have been
+measured from a cold clone (F.5 env hash pinned):
 - **G.1** Mean value score ≥ +0.05
 - **G.3** Worst-case bound ≥ -0.03
 - **G.4** Generalization breadth ≥ 3 model families
 - **G.6** Honest negative surface ≤ 0.30
 - **G.7** Reproducibility ≥ 6/7 cold-clone reproducible
 
-**How to verify**: `tools/capability_audit.py` runs end-to-end on a fresh
-checkout. JSON output in `verification_outputs/capability_audit_qX_2026.json`.
+The two SOFT targets (G.2 cost-benefit ratio ≤ 5.0; G.5 saturation
+point ≤ 50 NFE median) are also recorded in the JSON output but do NOT
+block MUST-4 — they are paper-time aspirations.
 
-**Acceptance for MUST-4**:
-- All 5 metrics measured (target met OR explicitly waived with rationale)
-- Cold-clone reproducibility verified (G.7)
-- Honest negative results documented per G.6
+**Gate definition source**: `todo/framework-internal-metrics-rev3-plan.md`
+§7.1 (rev 3 entry-gate changes) and `todo/GATES.md` §G-MASTER-CAPABILITY.
+
+**How to verify**: `tools/capability_audit.py` runs end-to-end on a fresh
+checkout. JSON output in `verification_outputs/capability_audit_qX_2026.json`
+must show all 5 HARD verdicts = PASS. The gate's `jq` extraction pattern
+from `todo/GATES.md` should be used:
+```bash
+jq '.metrics | {G1: .G1.verdict, G3: .G3.verdict, G4: .G4.verdict, G6: .G6.verdict, G7: .G7.verdict}' \
+   verification_outputs/capability_audit_qX_2026.json
+```
+
+**Acceptance for MUST-4** (i.e., `G-MASTER-CAPABILITY` PASS):
+- All 5 HARD metrics report PASS in the JSON output
+- Cold-clone reproducibility verified (G.7 ≥ 6/7 metrics reproducible)
+- Honest negative results documented per G.6 — if G.6 fails, the
+  operating-regime claim in `docs/theory/operating-regime.md` must be
+  tightened (Wave 17 P3 falsification already documents this risk)
+- Any HARD failure blocks the paper-writeup gate (`G-MASTER-PAPER`)
 
 **Note**: G.6 may initially fail (twodim_fm regression at every σ ∈ [0, 0.5]
 already documented in Wave 17 P3). If G.6 fails, that's data — either tighten
-the operating-regime claim OR document the cells as out-of-scope.
+the operating-regime claim OR document the cells as out-of-scope. The
+G-MASTER-CAPABILITY gate's block rule explicitly says: a reviewer cannot
+be told "framework helps" if G.3 (worst-case) or G.6 (honest negative
+surface) fail.
 
-**Evidence file**: `tools/capability_audit.py` + `verification_outputs/capability_audit_*.json` + `docs/capability_report.md`
+**Evidence file**: `tools/capability_audit.py` +
+`verification_outputs/capability_audit_*.json` +
+`docs/capability_report.md`.
 
-**Current state**: NOT STARTED. Tool not yet authored. Wave 23+ task.
+**Cross-references**: this MUST-4 item is the operational mirror of the
+`G-MASTER-CAPABILITY` gate defined in `todo/GATES.md` (canonical). The
+gate's HARD + SOFT conditions, pass criteria, and fail-action paths are
+authoritative in `todo/GATES.md`. Wave 24 P1+P2+P3 (rev 3 plan §6 priority
+#2) builds out the audit infrastructure; Wave 24 P3 (priority #11) wires
+this gate into the freeze checklist. Until the audit tool exists, this
+MUST-4 item MUST be marked "BLOCKED on Wave 24 capability infrastructure".
+
+**Current state**: NOT STARTED. Tool not yet authored. Wave 24 capability
+infrastructure task (priority #2 in rev 3 plan §6).
 
 ### MUST-5: All unpushed commits pushed to origin/main
 

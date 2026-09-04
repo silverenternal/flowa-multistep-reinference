@@ -33,6 +33,17 @@ unpinned threshold).
 | A.6 | Scope and deviation register (`docs/theory/DEVIATIONS.md` non-empty): each A.0 entry that maps to a code path under `adaptive_reflow/theory/` has either (a) >= 1 deviation entry OR (b) explicit "no deviations" declaration | no | complete coverage by Wave 13 | **HARD** |
 | A.7 | Hypothesis-violation (must-fail) coverage: count of A.0 entries with >= 1 paired negative fixture; **target applies only to entries with constructive content (excludes pure existence / qualitative theorems)**, with an LL entry per non-constructive entry explaining the gap | 0 | 100% of A.0 *constructive* entries by Wave 16 | **HARD** (new entries from Wave 15 onward) |
 
+> **A.7 status (Wave 23 Agent E, 2026-09-05): 8 / 8 = 100 % strict.** The last
+> open entry (Proposition 2, line 62-64) is no longer recorded as
+> "covered-by-symmetry via Proposition 6": it now has its own module
+> `tests/test_theory/negative/test_proposition2_symmetry.py` (7 fixtures) which
+> violates Proposition 2's *own* hypothesis `0 < m <= a(x) <= M < infinity`
+> (amplitudes with `inf a = 0` → `NotInFsideClassError`
+> `uniform_simplicity_violated`) rather than inferring coverage from Prop 6.
+> One fixture is a delegation control documenting that `validate_g_admissible`
+> enforces the `m > 0` half but NOT `M < infinity` at fixed `(d, c, rho, eta)`.
+
+
 ### B. Test health
 
 | ID | Definition | Current | Target | Hard? |
@@ -271,7 +282,7 @@ All 9 audits completed in Wave 14. Full report: `docs/baseline-audit-report.md` 
 |---|---|---|---|---|
 | A.0 | 20 paper statements + 7 gaps documented; 141 paper-reference hits | parity | none blocking (G4 = Task #360, G7 = Prop 6 positive dir) | **MET** |
 | A.4 | 0.171 (14/82 public functions annotated) | ≥ 0.90 | -0.729 (~+60 annotated functions) | **GAP** |
-| A.7 | 75% strict / 87.5% broad | 100% constructive | -25pp strict | **GAP** |
+| A.7 | 75% strict / 87.5% broad → **100% strict (8/8 constructive), Wave 23 Agent E 2026-09-05** | 100% constructive | closed (Prop 2 gap closed by `tests/test_theory/negative/test_proposition2_symmetry.py`, 7 fixtures: 4 rejections + 2 positive controls + 1 delegation control) | **MET** |
 | B.4 | vacuous pass (0 doctests collected) | 0 failures | MET vacuously; add doctests + CI wire | **MET vacuous** |
 | D.3 | 226/226 = 100% hand-written (13 adapter files) | 18/18 against D.5 | need D.5 (MISSING) | **GAP** |
 | D.5 | MISSING | live by Wave 14 | 1 file missing | **GAP** |
