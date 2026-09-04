@@ -16,22 +16,33 @@ hypotheses is admissible, including the nonperiodic family
 
 * :mod:`adaptive_reflow.theory.paper_quantities` -- the four JMAA paper
   quantities ``A_g``, ``B_g``, ``C_g``, ``e_rho`` plus rich result
-  dataclasses and ``PhysicalComplement``.
+  dataclasses and ``PhysicalComplement``. Paper anchors:
+  **Proposition 3 (line 161, ``A_g``)**, **Lemma 5 (line 132, 135-138,
+  ``B_g`` / disjoint-cell)**, **Lemma 3 (``C_g``)**,
+  **Lemma 4 (line 110-113, ``e_rho``)**.
 * :mod:`adaptive_reflow.theory.checkers` -- the unified Theorem 1
   statement, sheet-tube evidence (Lemma 2 LHS), and the lifted
-  ``paper_selection_ratio`` formula.
+  ``paper_selection_ratio`` formula. Paper anchors:
+  **Theorem 1 (line 87-92)**, **Lemma 2 (line 100-104)**,
+  **Corollary 1 (line 165)**.
 * :mod:`adaptive_reflow.theory.validation` -- ``validate_f_side`` and
   ``validate_g_admissible`` plus the ``NotInFsideClassError`` raised by
-  Proposition 6 sharpness examples.
+  Proposition 6 sharpness examples. Paper anchors:
+  **F-side hypotheses (line 22-26)**, **Proposition 6 (line 294-300)**.
 * :mod:`adaptive_reflow.theory.f_side_validator` -- Wave 12 A1-med-1
   F-side hypothesis validator exposing ``validate_f_side(d, c, rho, eta)``
   with paper-symbol-friendly error codes (``rho_must_be_lt_d_over_4``,
   ``rho_must_be_le_1_over_4``, ``c_must_be_positive``,
-  ``eta_must_be_positive``).
+  ``eta_must_be_positive``). Paper anchors: **Lemma 5 (line 132,
+  135-138)**, **line 22-26**.
 * :mod:`adaptive_reflow.theory.lemma2_checker` -- Wave 12 A1-high-2
   finite-eps LHS Monte-Carlo evaluator for Lemma 2, returning
   ``LHS / RHS`` as a ``float``. Uses the paper's literal residual
-  geometry ``|F_g|^2 = y^2 * (g(x)^2 + (y-1)^2)``.
+  geometry ``|F_g|^2 = y^2 * (g(x)^2 + (y-1)^2)``. Paper anchor:
+  **Lemma 2 (line 100-104)**.
+* :mod:`adaptive_reflow.theory.rate_bound` -- Wave 15 B explicit
+  rate bound for Theorem 1 (``C = sqrt(2/pi)``). Paper anchor:
+  **Theorem 1 (line 87-92)** with the explicit ``O(eps)`` constant.
 
 **Unified Theorem 1 entry point (A1-high-1 fix):**
 

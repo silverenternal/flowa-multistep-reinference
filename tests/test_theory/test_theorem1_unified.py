@@ -155,9 +155,11 @@ def test_emit_theorem1_statement_bl_distance_is_planar_R2():
     stays runnable in environments where ``adaptive_reflow.eval``'s
     ``__init__`` would pull optional chemistry deps (e.g. rdkit).
     """
-    from adaptive_reflow.theory.checkers import _load_planar_bl_witness
-
-    planar_bl_convergence_witness = _load_planar_bl_witness()
+    # Wave 15 C: the importlib bypass has been removed (real fix landed
+    # in :mod:`adaptive_reflow.eval.__init__`). Use the direct import.
+    from adaptive_reflow.eval.lipschitz_diagnostic import (
+        planar_bl_convergence_witness,
+    )
 
     g = _profile_g
     eps = 0.05
@@ -195,17 +197,19 @@ def test_theorem1_statement_checker_bl_distance_is_planar_R2():
     from adaptive_reflow.contracts.dynamic_noise_bias import (
         PaperQuantitiesSnapshot,
     )
+    # Wave 15 C: direct import of the planar witness (the importlib
+    # bypass has been removed in :mod:`theory.checkers`).
+    from adaptive_reflow.eval.lipschitz_diagnostic import (
+        planar_bl_convergence_witness,
+    )
     from adaptive_reflow.theory.checkers import (
         Theorem1StatementChecker,
-        _load_planar_bl_witness,
     )
     from adaptive_reflow.theory.paper_quantities import (
         per_cell_coefficient_C,
         root_cell_packing_B,
         sheet_evidence_A,
     )
-
-    planar_bl_convergence_witness = _load_planar_bl_witness()
 
     g = _profile_g
     pqty = PaperQuantitiesSnapshot(

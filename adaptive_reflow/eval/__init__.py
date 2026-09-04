@@ -2,6 +2,13 @@
 
 CPU-only DTB-R7 (calibration + paired evaluation + manifest I/O) and
 DTB-R8 (claim gate + promotion + rollback + layered metric panel).
+
+Wave 15 C: rdkit-dependent submodules (:mod:`mmff_conformer`,
+:mod:`fg_deviation`, :mod:`flowmol3_eq4_fg_deviation`,
+:mod:`rdkit_oracle`) are **lazy-imported** via PEP 562 module-level
+``__getattr__`` so that ``import adaptive_reflow.eval`` succeeds in
+environments where rdkit is NOT installed (this is the real fix for
+the Wave 14 A importlib bypass on :mod:`theory.checkers`).
 """
 from .calibration import (
     CHANNEL_NAMES_FOR_CALIBRATION,
@@ -37,15 +44,6 @@ from .clip_score import (
     DEFAULT_CLIP_MODEL_NAME,
     HFCosineClipScoreEvaluator,
 )
-from .fg_deviation import (
-    DEFAULT_REFERENCE_PATH,
-    DUNDEE_FR_SMARTS_NAMES,
-    compute_flowmol3_fg_deviation,
-    count_fg_hits,
-    dundee_smarts_dict,
-    fg_deviation_l1,
-    glaxo_smarts_dict,
-)
 from .fid import (
     FID_AUDIT_INSUFFICIENT_STATS,
     FID_EIGENCLIP_EPS_DEFAULT,
@@ -69,14 +67,6 @@ from .manifests import (
     read_calibration_manifest,
     validate_manifest_frozen,
     write_calibration_manifest,
-)
-from .mmff_conformer import (
-    DEFAULT_MMFF_MAX_ITERS,
-    DEFAULT_NUM_CONFS,
-    DEFAULT_RANDOM_SEED,
-    MMFF_CONFORMER_FAILURE,
-    embed_mmff,
-    embed_mmff_smiles,
 )
 from .metric_panel import (
     TIER_LABELS,
@@ -179,3 +169,78 @@ from .run_eval import run_eval  # noqa: E402
 # :class:`DeprecationWarning` via the PEP 562 module-level
 # ``__getattr__`` defined in that submodule. Downstream callers
 # should switch to ``EvidenceScaleGapMetric`` directly.
+
+
+# ---------------------------------------------------------------------------
+# Wave 15 C — lazy import surface for rdkit-dependent submodules
+# ---------------------------------------------------------------------------
+#
+# The four submodules below eagerly import rdkit at module load time
+# (``from rdkit import Chem``). Wave 14 A added an importlib.util bypass
+# on :mod:`adaptive_reflow.theory.checkers` to avoid the rdkit trigger;
+# the REAL fix is here: route the four submodules through a PEP 562
+# ``__getattr__`` so ``import adaptive_reflow.eval`` does NOT execute
+# them. Downstream callers that need the symbols must
+# ``import adaptive_reflow.eval.mmff_conformer`` directly (or trigger
+# the attribute access below).
+#
+# Why a module-level ``__getattr__`` rather than a per-call helper:
+#   - PEP 562 ``__getattr__`` fires only on attribute access, so plain
+#     ``import adaptive_reflow.eval`` never loads rdkit.
+#   - Existing call sites that do ``from adaptive_reflow.eval import
+#     embed_mmff`` continue to work: the ``__getattr__`` resolves the
+#     attribute, importing the submodule on demand.
+#   - The eager ``from .mmff_conformer import ...`` form (used before
+#     Wave 15 C) is replaced by lazy loaders, removing the
+#     ``rdkit-not-installed`` import error that previously surfaced in
+#     ``adaptive_reflow.theory.checkers``.
+# ---------------------------------------------------------------------------
+
+_RDKIT_LAZY_MODULES: dict[str, str] = {
+    "DEFAULT_MMFF_MAX_ITERS": "mmff_conformer",
+    "DEFAULT_NUM_CONFS": "mmff_conformer",
+    "DEFAULT_RANDOM_SEED": "mmff_conformer",
+    "MMFF_CONFORMER_FAILURE": "mmff_conformer",
+    "embed_mmff": "mmff_conformer",
+    "embed_mmff_smiles": "mmff_conformer",
+    "DEFAULT_REFERENCE_PATH": "fg_deviation",
+    "DUNDEE_FR_SMARTS_NAMES": "fg_deviation",
+    "compute_flowmol3_fg_deviation": "fg_deviation",
+    "count_fg_hits": "fg_deviation",
+    "dundee_smarts_dict": "fg_deviation",
+    "fg_deviation_l1": "fg_deviation",
+    "glaxo_smarts_dict": "fg_deviation",
+    "fg_deviation_eq4": "flowmol3_eq4_fg_deviation",
+    "RDKIT_AUDIT_REASON": "rdkit_oracle",
+    "RDKIT_BUNDLE_ID_PREFIX": "rdkit_oracle",
+    "RDKitOracle": "rdkit_oracle",
+    "SyntheticEvaluator": "rdkit_oracle",  # only if re-exported; see below
+}
+
+
+def __getattr__(name: str):  # PEP 562 lazy loader
+    """Lazily import rdkit-dependent submodules on first attribute access.
+
+    Triggered when ``from adaptive_reflow.eval import X`` (or
+    ``adaptive_reflow.eval.X``) is used and ``X`` is a symbol that
+    lives in one of the rdkit-pulling submodules. Without this hook,
+    importing the package would unconditionally pull rdkit, which is
+    not vendored in every sandbox (this is the root cause of the
+    Wave 14 A importlib bypass in :mod:`theory.checkers`).
+    """
+    mod_name = _RDKIT_LAZY_MODULES.get(name)
+    if mod_name is None:
+        raise AttributeError(
+            f"module 'adaptive_reflow.eval' has no attribute {name!r}"
+        )
+    import importlib
+
+    full = f"adaptive_reflow.eval.{mod_name}"
+    mod = importlib.import_module(full)
+    value = getattr(mod, name)
+    globals()[name] = value  # cache for subsequent accesses
+    return value
+
+
+def __dir__() -> list[str]:  # PEP 562 dir() support
+    return sorted(set(globals().keys()) | _RDKIT_LAZY_MODULES.keys())
