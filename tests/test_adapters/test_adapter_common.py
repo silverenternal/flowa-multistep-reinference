@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import hashlib
 
+import pytest
+
 
 def test_seed_from_ids_matches_frozen_vector() -> None:
     """Byte-stability guard: the seed is recorded in published digests."""
@@ -89,3 +91,50 @@ def test_memory_fraction_for_returns_default_when_channel_missing() -> None:
 
     beta, mem = memory_fraction_for(_Policy(), "x")
     assert (beta, mem) == (0.5, 0.5)
+
+
+def test_memory_fraction_for_paper_uplift_27_emits_audit_when_lift_fires() -> None:
+    """P0-A12 — paper-uplift-27: e_rho/4 floor lift emits audit code."""
+    from adaptive_reflow.adapters._adapter_common import memory_fraction_for
+
+    class _Policy:
+        beta_by_channel = {"x": 1.0}  # beta=1.0 -> floor=0.0, lift fires when e_rho/4 > 0
+
+    audit_codes: list[str] = []
+    beta, mem = memory_fraction_for(
+        _Policy(), "x", exterior_gap_e_rho=0.4, audit_codes=audit_codes
+    )
+    # floor was 0.0; lift to 0.4 / 4 = 0.1
+    assert beta == 1.0
+    assert mem == pytest.approx(0.1)
+    assert any(c.startswith("merge_paper_quantity_floor_lifted") for c in audit_codes)
+
+
+def test_memory_fraction_for_paper_uplift_27_no_audit_when_no_lift() -> None:
+    """When the schedule floor already dominates e_rho/4, no audit emission."""
+    from adaptive_reflow.adapters._adapter_common import memory_fraction_for
+
+    class _Policy:
+        beta_by_channel = {"x": 0.5}  # beta=0.5 -> floor=0.5, dominates e_rho/4=2.5e-5
+
+    audit_codes: list[str] = []
+    beta, mem = memory_fraction_for(
+        _Policy(), "x", exterior_gap_e_rho=1e-4, audit_codes=audit_codes
+    )
+    assert beta == 0.5
+    assert mem == 0.5
+    assert audit_codes == []
+
+
+def test_memory_fraction_for_paper_uplift_27_disabled_by_default() -> None:
+    """When exterior_gap_e_rho is None, behaviour is unchanged from baseline."""
+    from adaptive_reflow.adapters._adapter_common import memory_fraction_for
+
+    class _Policy:
+        beta_by_channel = {"x": 1.0}
+
+    audit_codes: list[str] = []
+    beta, mem = memory_fraction_for(_Policy(), "x", audit_codes=audit_codes)
+    assert beta == 1.0
+    assert mem == 0.0
+    assert audit_codes == []

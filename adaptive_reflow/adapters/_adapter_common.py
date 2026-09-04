@@ -66,18 +66,50 @@ def torch_is_available() -> bool:
     return True
 
 
-def memory_fraction_for(policy: Any, channel: ChannelName) -> tuple[float, float]:
+def memory_fraction_for(
+    policy: Any,
+    channel: ChannelName,
+    *,
+    exterior_gap_e_rho: float | None = None,
+    audit_codes: list[str] | None = None,
+) -> tuple[float, float]:
     """Return ``(beta, memory_fraction)`` for ``channel`` under ``policy``.
 
     Replaces the 9 copies of the same block (each carrying its own
     ``# type: ignore[arg-type]``). Missing channel defaults to
     ``beta = memory_fraction = 0.5``, matching every prior copy.
+
+    Paper-uplift-27 (P0-A12 — Lemma 5)
+    ----------------------------------
+
+    When ``exterior_gap_e_rho`` is supplied, the memory-fraction floor is
+    lifted to ``max(1 - beta, e_rho / 4)`` so the bounded-merge envelope
+    respects the paper's physical-complement minimum. Emits the audit
+    code ``merge_paper_quantity_floor_lifted`` whenever the lift fires.
+    The audit emission is gated on ``audit_codes is not None`` so the
+    8 existing call sites stay byte-identical (no audit_codes kwarg
+    => no behaviour change). The audit code constant is imported lazily
+    to avoid a circular import at module load.
     """
     beta_raw = policy.beta_by_channel.get(channel)
     if beta_raw is None:
         return (0.5, 0.5)
     beta = float(beta_raw)
-    return (beta, 1.0 - beta)
+    floor = 1.0 - beta
+    if exterior_gap_e_rho is not None and float(exterior_gap_e_rho) > 0.0:
+        paper_floor = float(exterior_gap_e_rho) / 4.0
+        if floor < paper_floor:
+            floor = paper_floor
+            if audit_codes is not None:
+                from adaptive_reflow.algorithm.merge_operator import (
+                    MERGE_PAPER_QUANTITY_FLOOR_LIFTED,
+                )
+                audit_codes.append(
+                    f"{MERGE_PAPER_QUANTITY_FLOOR_LIFTED}"
+                    f":floor={floor:.6f}"
+                    f":e_rho={float(exterior_gap_e_rho):.6f}"
+                )
+    return (beta, floor)
 
 
 class NativeStateCache:

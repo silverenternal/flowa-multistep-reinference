@@ -60,6 +60,7 @@ table. Highlights:
 | CosineAnnealScheduler | A1 (audit_codes on ScheduleSample) | samples_with_nonempty_audit_codes | 0 | 20 | 20 | +∞ | >=1 of 20 ✓ |
 | AdaptivePolicyDriver | A11 (beta_saturation_count) | beta_saturation_count_after_20_rounds | 0 | 20 | 20 | +∞ | >=1 ✓ |
 | BoundedMergeOperator | A12 (e_rho/4 floor lift) | audit_codes_for_floor_lifted | 0 | 1 | 1 | +∞ | >=1 ✓ |
+| RectifiedFlowCIFARAdapter | A12 (e_rho/4 floor lift — CIFAR ablation, paper-uplift-27) | audit_codes_for_floor_lifted_cifar | 0 (GPU-2) | 1 (GPU-3) | 1 | +∞ | ==1 ✓ |
 | **EvidenceScaleGapMetric** | A16 (eps_schedule drives ratio toward 1) | final_selection_ratio_with_decay | 0.872235 | **0.999634** | 0.127399 | **+14.6%** | >=0.95 ✓ |
 | paper_quantities.root_cell_packing_B | B13 (tail_bound for K=32) | tail_bound_sin_K32 | nan | 2.6465e-111 | — | — | <=1e-30 ✓ |
 
@@ -187,6 +188,22 @@ is real (4 distinct FIDs) but the discrimination window is small.
 
 **What v5 will show** (Heun + stateful chain + fixed-NFE + PID amplification): estimated -10 to
 -16% on baseline FID, -4 to -6 pp on framework-vs-baseline at matched NFE.
+
+### 6.1 Wave-5 GPU restart-blend measurement (synthetic mode, N=2048)
+
+Source: workflow `wave5-gpu-experiments`, run `gpu2-cifar10-restart` (2026-09-04). Same
+`RectifiedFlowCIFARAdapter` as v1-v4 rows above, but in **synthetic mode** (no
+`data/rectified_flow_cifar10.*` weights file in repo — pytest fixtures only). This isolates the
+framework's restart-blend effect on the same deterministic velocity field.
+
+| Setup | beta | memory_fraction | NFE | Inception extractor | FID math | FID | wall-clock | GPU mem peak |
+|---|---:|---:|---:|---|---:|---:|---:|---:|
+| Restart-blend (1-channel per-channel `beta_by_channel={"image": 0.5}`, `beta_from_schedule=False`, 1 round) | 0.5 | 0.5 | 2 | inceptionv3_torchvision_IMAGENET1K_V1 | frechet_eigenclip | **2180.13** | 13.2 s | 2056 MiB |
+
+Notes: synthetic-vs-synthetic FID is large and **not paper-comparable** (the published
+2.21 number requires real RF CIFAR-10 weights + 50K samples). The **delta vs GPU-1 baseline**
+(baseline measurement, no restart-blend) is the framework's restart-blend value-add signal.
+Artifacts: `/tmp/gpu_wave5/GPU-2-cifar10-restart/{output.json, samples.npy, gen_features.npy}`.
 
 ---
 

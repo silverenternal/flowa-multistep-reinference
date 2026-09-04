@@ -597,6 +597,8 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         synthetic_seed: int = RF_CIFAR_SYNTHETIC_SEED_DEFAULT,
         solver: str = RF_CIFAR_INTEGRATOR_EULER,
         device: str = "cpu",
+        enable_paper_uplift_27: bool = False,
+        paper_uplift_27_e_rho: float | None = None,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_RF_CIFAR_NUM_STEPS)
@@ -613,6 +615,18 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         self._synthetic_seed = int(synthetic_seed)
         self._solver: str = str(solver)
         self._device_name = str(device)
+        # Paper-uplift-27 (P0-A12 — Lemma 5): when enabled, the
+        # apply_restart_distribution floor is lifted to max(1-beta, e_rho/4).
+        # Default e_rho mirrors the paper defaults (rho=0.1, eta=0.1) so
+        # callers can opt in with a single boolean.
+        self._enable_paper_uplift_27: bool = bool(enable_paper_uplift_27)
+        if paper_uplift_27_e_rho is None:
+            # Paper defaults: rho=0.1, eta=0.1 -> e_rho = min(rho**4, (1-rho)**2 * eta**2) = 1e-4.
+            self._paper_uplift_27_e_rho: float | None = float(1e-4) if self._enable_paper_uplift_27 else None
+        else:
+            self._paper_uplift_27_e_rho = float(paper_uplift_27_e_rho) if float(paper_uplift_27_e_rho) > 0.0 else None
+        if self._enable_paper_uplift_27 and self._paper_uplift_27_e_rho is None:
+            raise ValueError("enable_paper_uplift_27_requires_positive_e_rho")
 
         # Resolve weights path.
         explicit = Path(weights_path) if weights_path is not None else None
@@ -667,6 +681,8 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         # LRU-bounded native-states cache (audit A-3 mirror of twodim_fm).
         self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._caps = RectifiedFlowCIFARCapabilities()
+        # Paper-uplift-27 audit-code buffer (counted post-hoc for AC3).
+        self._audit_codes_buffer: list[str] = []
 
     # ------------------------------------------------------------------
     # 1. capability handshake
@@ -799,7 +815,12 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
 
-        beta, memory_fraction = memory_fraction_for(policy, ChannelName("image"))
+        beta, memory_fraction = memory_fraction_for(
+            policy,
+            ChannelName("image"),
+            exterior_gap_e_rho=self._paper_uplift_27_e_rho,
+            audit_codes=self._audit_codes_buffer,
+        )
         prior_value = prior_entry["x0"]
         prior_x = np.asarray(prior_value, dtype=np.float64).reshape(
             RF_CIFAR_STATE_SHAPE
@@ -836,6 +857,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 "mode": self._mode,
             },
         )
+        provenance = tuple(state.provenance) + (AUDIT_RF_CIFAR_RESTART_BLEND,)
         return StateBundle(
             channels={
                 ChannelName("image"): _make_ref(
@@ -853,7 +875,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
             source_round=int(next_round),
             detach_proof=True,
             native_state_digest=str(next_digest),
-            provenance=tuple(state.provenance) + (AUDIT_RF_CIFAR_RESTART_BLEND,),
+            provenance=provenance,
             capability_token=self.capabilities(),
         )
 

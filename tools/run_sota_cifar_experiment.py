@@ -266,6 +266,8 @@ def _make_adapter(
     num_steps: int,
     solver: str = "euler",
     device: str = "cpu",
+    enable_paper_uplift_27: bool = False,
+    paper_uplift_27_e_rho: float | None = None,
 ) -> Any:
     """Return a fresh :class:`RectifiedFlowCIFARAdapter`.
 
@@ -279,18 +281,20 @@ def _make_adapter(
     ``docs/r4-survey/21-fix-v2-plan.md`` §2.2 / §3.2.
     """
     from adaptive_reflow.adapters.rectified_flow_cifar import (
-        default_rectified_flow_cifar_adapter,
+        RectifiedFlowCIFARAdapter,
     )
 
-    if checkpoint is None:
-        return default_rectified_flow_cifar_adapter(
-            num_steps=num_steps, solver=solver, device=device,
-        )
-    return default_rectified_flow_cifar_adapter(
+    return RectifiedFlowCIFARAdapter(
         weights_path=checkpoint,
         num_steps=num_steps,
         solver=solver,
         device=device,
+        enable_paper_uplift_27=bool(enable_paper_uplift_27),
+        paper_uplift_27_e_rho=(
+            float(paper_uplift_27_e_rho)
+            if paper_uplift_27_e_rho is not None
+            else None
+        ),
     )
 
 
@@ -1116,6 +1120,29 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "all four). Valid names: " + ", ".join(SCHEDULER_NAMES)
         ),
     )
+    parser.add_argument(
+        "--paper-uplift-27",
+        dest="paper_uplift_27",
+        action="store_true",
+        default=False,
+        help=(
+            "Enable the e_rho/4 paper-quantity floor lift (P0-A12, "
+            "BoundedMergeOperator paper-uplift). When enabled, the "
+            "apply_restart_distribution memory-fraction floor is lifted to "
+            "max(1 - beta, e_rho / 4). Default off."
+        ),
+    )
+    parser.add_argument(
+        "--paper-uplift-27-e-rho",
+        dest="paper_uplift_27_e_rho",
+        type=float,
+        default=None,
+        help=(
+            "Override the e_rho value used by paper-uplift-27 (paper "
+            "default is 1e-4 from rho=0.1, eta=0.1). Only effective "
+            "when --paper-uplift-27 is set."
+        ),
+    )
     args = parser.parse_args(argv)
     if bool(args.quick):
         args.n_samples = QUICK_N_SAMPLES
@@ -1222,13 +1249,17 @@ def main(argv: list[str] | None = None) -> int:
         num_steps=int(args.baseline_num_steps),
         solver=str(args.integrator),
         device=str(args.device),
+        enable_paper_uplift_27=bool(args.paper_uplift_27),
+        paper_uplift_27_e_rho=args.paper_uplift_27_e_rho,
     )
     if str(args.device) == "cuda" and str(adapter._mode) != "torch":  # noqa: SLF001
         raise RuntimeError("cuda experiment requires torch and a valid checkpoint")
     caps = adapter.capabilities()
     print(
         f"[run_sota_cifar_experiment] adapter: state_shape={caps.state_shape} "
-        f"channels={caps.supported_channels}",
+        f"channels={caps.supported_channels} "
+        f"paper_uplift_27_enabled={bool(getattr(adapter, '_enable_paper_uplift_27', False))} "
+        f"paper_uplift_27_e_rho={getattr(adapter, '_paper_uplift_27_e_rho', None)}",
         flush=True,
     )
     baseline_path, baseline_wall = _run_baseline(
@@ -1343,7 +1374,7 @@ def main(argv: list[str] | None = None) -> int:
             is_finite=_is_finite,
             marker=None if _is_finite else "fid_insufficient_stats",
             diagnostics={"family": FID_EXTRACTOR_FAMILY},
-            n_samples=int(args.num_samples),
+            n_samples=int(args.n_samples),
             feature_dim=2048,
         )
         _eval = _EvalResult(
@@ -1377,6 +1408,13 @@ def main(argv: list[str] | None = None) -> int:
     md_path.write_text(md, encoding="utf-8")
     print(f"[run_sota_cifar_experiment] wrote {md_path}", flush=True)
 
+    # Paper-uplift-27 audit-code counter (P0-A12 — paper-quantity floor lift).
+    audit_codes_for_floor_lifted = sum(
+        1
+        for c in getattr(adapter, "_audit_codes_buffer", [])
+        if c.startswith("merge_paper_quantity_floor_lifted")
+    )
+
     summary: dict[str, Any] = {
         "n_samples": int(n_samples),
         "n_rounds": int(n_rounds),
@@ -1384,6 +1422,9 @@ def main(argv: list[str] | None = None) -> int:
         "baseline_num_steps": int(args.baseline_num_steps),
         "match_nfe": str(args.match_nfe),
         "wall_clock_s": float(total_wall),
+        "paper_uplift_27_enabled": bool(getattr(args, "paper_uplift_27", False)),
+        "paper_uplift_27_e_rho": getattr(adapter, "_paper_uplift_27_e_rho", None),
+        "audit_codes_for_floor_lifted": int(audit_codes_for_floor_lifted),
         "rows": [
             {
                 "name": r["name"],
