@@ -54,7 +54,6 @@ different audiences.
 | [CONSOLIDATED_RESULTS.md](CONSOLIDATED_RESULTS.md) | Single source of truth for every measured framework evidence record: 27 + 80 algorithm uplifts, SOTA 2-D RF + CIFAR-10 RF verifications, two toy framework comparisons, defensive engineering. |
 | [CLAIMS.md](CLAIMS.md) | CLM-NNN claim ledger (governance document) — every substantive claim the framework makes, with `Asserted by` / `Disputed by` references verified by `tools/check_claims_consistency.py`. |
 | [ABLATION.md](ABLATION.md) | 23-cell 2-D RF ablation (eight canonical configurations × two targets + three paper-grounded + two post-fix cells); every cell run with `seed=42`, 20 rounds, 30 RK4 steps. |
-| [ABLATION_METRIC_PROBE.md](ABLATION_METRIC_PROBE.md) | Per-round `selection_ratio` probe across scheduler families and target distributions, with monotone-up counts and last-5-round means. |
 | [benchmark-uplifts.md](benchmark-uplifts.md) | Round-1 Phase-2 algorithm-uplift benchmark: 27 uplifts, before/after. |
 | [benchmark-round2-uplifts.md](benchmark-round2-uplifts.md) | Round-2 comprehensive uplift benchmark: 83 framework-internal + framework-external uplifts, before/after. |
 | [benchmark-deep-uplifts.md](benchmark-deep-uplifts.md) | Comprehensive P0/P1 deep-uplift benchmark across both internal and external algorithm surfaces. |
