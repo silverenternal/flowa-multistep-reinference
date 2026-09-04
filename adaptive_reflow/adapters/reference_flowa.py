@@ -42,7 +42,11 @@ from adaptive_reflow.frame.adapter import (
     StateBundle,
     TensorRef,
 )
-from adaptive_reflow.universal.adapter import CapabilityMissingError, ChannelDomain
+from adaptive_reflow.universal.adapter import (
+    CapabilityMissingError,
+    ChannelDomain,
+    FlowMatchingODEAdapter,
+)
 from adaptive_reflow.universal.state import ChannelName, validate_state_bundle
 
 # ---------------------------------------------------------------------------
@@ -127,7 +131,7 @@ def _canonicalise_channels(
 
 
 @dataclass(frozen=True)
-class ReferenceFlowAAdapter:
+class ReferenceFlowAAdapter(FlowMatchingODEAdapter):
     """Reference Flow-A adapter implementing :class:`FlowMatchingODEAdapter`.
 
     All methods are pure: given identical inputs they produce identical

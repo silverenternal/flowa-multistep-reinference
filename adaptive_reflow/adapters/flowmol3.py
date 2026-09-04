@@ -51,8 +51,11 @@ from adaptive_reflow.frame.adapter import (
     TensorRef,
     validate_state_bundle,
 )
-from adaptive_reflow.universal.adapter import ChannelDomain
-from adaptive_reflow.universal.state import ChannelName
+from adaptive_reflow.universal.adapter import ChannelDomain, FlowMatchingODEAdapter
+from adaptive_reflow.universal.state import (
+    ChannelName,
+    ODEConditionDelta,
+)
 from adaptive_reflow.writer.registry import (
     FLOWMOL3_PINNED_COMMIT,
     make_default_flowmol3_entry,
@@ -187,7 +190,7 @@ def _make_tensor_ref(label: str, **parts: Any) -> TensorRef:
     return TensorRef(f"flowmol3:{hashlib.sha256(blob).hexdigest()[:16]}")
 
 
-class FlowMol3Adapter:
+class FlowMol3Adapter(FlowMatchingODEAdapter):
     """Read-only FlowMol3 mechanics adapter.
 
     This is the **placeholder** adapter. It does not import FlowMol3
@@ -210,16 +213,16 @@ class FlowMol3Adapter:
 
     def build_initial_state(
         self,
+        *,
         batch_id: str,
         sample_id: str,
-        *,
-        source_round: int = 0,
     ) -> StateBundle:
         """Construct the prior ``(x, a, c, e)`` state at t=0.
 
         The returned bundle has ``detach_proof=True`` and a deterministic
         native digest derived from ``(batch_id, sample_id, source_round)``.
         """
+        source_round = 0
         channels: dict[str, TensorRef] = {
             ch: _make_tensor_ref(
                 "initial", channel=ch, batch=batch_id, sample=sample_id, r=source_round
@@ -268,17 +271,17 @@ class FlowMol3Adapter:
             )
         return state
 
-    def detach_and_validate_endpoint(self, state: StateBundle) -> StateBundle:
+    def detach_and_validate_endpoint(self, bundle: StateBundle) -> StateBundle:
         """Fail-closed detach gate; the placeholder state already
         carries ``detach_proof=True``, so this is a re-validation."""
-        ok, errs = validate_state_bundle(state)
+        ok, errs = validate_state_bundle(bundle)
         if not ok:
             raise CapabilityMissingError(
                 "detach_proof_must_be_true", context=",".join(errs)
             )
-        if state.detach_proof is not True:
+        if bundle.detach_proof is not True:
             raise CapabilityMissingError("detach_proof_must_be_true")
-        return state
+        return bundle
 
     def apply_restart_distribution(
         self,
@@ -319,9 +322,9 @@ class FlowMol3Adapter:
 
     def compose_condition(
         self,
-        state: StateBundle,
-        delta: Mapping[str, Any],
-    ) -> StateBundle:
+        bundle: StateBundle,
+        delta: ODEConditionDelta,
+    ) -> ODEConditionDelta:
         """Condition injection (D3 — null-condition injector).
 
         FlowMol3 is an unconditional model; the engine-side handshake
@@ -334,7 +337,7 @@ class FlowMol3Adapter:
         between the engine's fail-closed audit policy and FlowMol3's
         unconditional ODE.
         """
-        ok, errs = validate_state_bundle(state)
+        ok, errs = validate_state_bundle(bundle)
         if not ok:
             raise CapabilityMissingError(
                 "validate_state_bundle", context=",".join(errs)
@@ -343,51 +346,37 @@ class FlowMol3Adapter:
         from adaptive_reflow.universal.condition_injection import (
             NullConditionInjector,
         )
-        from adaptive_reflow.universal.state import ODEConditionDelta
 
         injector = NullConditionInjector(
             dataset="flowmol3_smiles_pl", variant="v1"
         )
         od_delta = ODEConditionDelta(
-            delta_spec=dict(delta),
+            delta_spec=dict(delta.delta_spec),
             source="flowmol3_adapter",
-            target_round=int(state.source_round) + 1,
+            target_round=int(bundle.source_round) + 1,
             calibration_artifact_hash="flowmol3_null_calibration",
         )
-        composed = injector.compose_delta(state, od_delta)
-        # The composed delta's spec is recorded as provenance on the
-        # returned bundle so the per-round ledger row captures the
-        # null-condition provenance. (Production wiring uses the
-        # round-trace ledger row directly.)
-        return StateBundle(
-            channels=dict(state.channels),
-            masks=dict(state.masks),
-            batch_id=state.batch_id,
-            sample_id=state.sample_id,
-            reference_frame=state.reference_frame,
-            normalization=state.normalization,
-            source_round=state.source_round,
-            detach_proof=True,
-            native_state_digest=state.native_state_digest,
-            provenance=state.provenance
-            + ("flowmol3_null_condition",)
-            + tuple(f"null_spec:{k}" for k in sorted(composed.delta_spec)),
-            capability_token=state.capability_token,
-        )
+        composed = injector.compose_delta(bundle, od_delta)
+        # The composed delta's spec is returned as the new ODEConditionDelta
+        # so the engine's solve_ode call receives the null-condition
+        # provenance. (Production wiring records the round-trace ledger
+        # row directly.)
+        return composed
 
     def solve_ode(
         self,
         state: StateBundle,
-        seed: int,
+        condition: ODEConditionDelta,
         *,
-        steps: int = 1,
-    ) -> tuple[StateBundle, ODEIntegratorTrace]:
+        seed: int,
+    ) -> ODEIntegratorTrace:
         """Single deterministic integration step.
 
-        The placeholder returns the input state unchanged plus an
-        :class:`ODEIntegratorTrace` whose digest is hash-derived from
-        ``(state.native_state_digest, seed, steps)``.
+        The placeholder returns the trace derived from
+        ``(state.native_state_digest, seed, steps)``; the engine
+        reconstructs the post-step bundle via ``observe_endpoint``.
         """
+        steps = int(condition.delta_spec.get("num_steps", 1))
         if steps <= 0:
             raise ValueError("steps_must_be_positive")
         ok, errs = validate_state_bundle(state)
@@ -398,19 +387,6 @@ class FlowMol3Adapter:
         new_digest = _make_tensor_ref(
             "post_step", source=state.native_state_digest, seed=seed, steps=steps
         )
-        next_state = StateBundle(
-            channels=dict(state.channels),
-            masks=dict(state.masks),
-            batch_id=state.batch_id,
-            sample_id=state.sample_id,
-            reference_frame=state.reference_frame,
-            normalization=state.normalization,
-            source_round=state.source_round,
-            detach_proof=True,
-            native_state_digest=new_digest,
-            provenance=state.provenance + ("flowmol3_step",),
-            capability_token=state.capability_token,
-        )
         trace = ODEIntegratorTrace(
             steps=int(steps),
             accept_rate=1.0,
@@ -419,10 +395,15 @@ class FlowMol3Adapter:
                 "integrator_config", seed=seed, steps=steps
             ),
         )
-        return next_state, trace
+        return trace
 
-    def observe_endpoint(self, state: StateBundle) -> StateBundle:
+    def observe_endpoint(
+        self,
+        trace: ODEIntegratorTrace,
+        state: StateBundle,
+    ) -> StateBundle:
         """Observation-only post-step; placeholder re-validates and returns."""
+        del trace  # placeholder preserves no native trajectory (see export_trajectory)
         ok, errs = validate_state_bundle(state)
         if not ok:
             raise CapabilityMissingError(

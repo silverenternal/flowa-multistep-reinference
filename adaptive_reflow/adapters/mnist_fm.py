@@ -55,8 +55,16 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
+from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
+    make_adapter_capabilities,
+    make_ref,
+    memory_fraction_for,
+    seed_from_ids,
+)
 
 from .mnist_fm_train import (  # noqa: E402 — runtime numpy dep, opt-in extra
+    
     MNIST_FLAT_DIM,
     load_weights,
     velocity_field_forward,
@@ -113,22 +121,32 @@ MNIST_FM_FLAT_DIM: int = MNIST_FLAT_DIM
 
 
 def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """Derive a deterministic 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
-    hex8 = hashlib.sha256(blob).hexdigest()[:8]
-    return int(hex8, 16)
+    """Derive a deterministic 32-bit seed from ``(batch_id, sample_id, source_round)``.
+
+    Byte-stable alias for ``adaptive_reflow.adapters._adapter_common.seed_from_ids``
+    (P2-9); the body is identical to the prior local implementation so digests
+    recorded against ``MNIST_FM_CONFIG_HASH`` remain byte-identical.
+    """
+    return seed_from_ids(batch_id, sample_id, source_round)
 
 
 def _digest_state(payload: Mapping[str, Any]) -> str:
-    """Return a deterministic SHA-256 hex digest of a payload (sorted keys)."""
-    blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode("utf-8")
-    return hashlib.sha256(blob).hexdigest()
+    """Return a deterministic SHA-256 hex digest of a payload (sorted keys).
+
+    Byte-stable alias for ``adaptive_reflow.adapters._adapter_common.digest_state``
+    (P2-9).
+    """
+    return digest_state(payload)
 
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Build a deterministic hash-stable :class:`TensorRef` from ``label`` + parts."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"mnist:x:{hashlib.sha256(blob).hexdigest()[:16]}")
+    """Build a deterministic hash-stable :class:`TensorRef` from ``label`` + parts.
+
+    Byte-stable alias for ``adaptive_reflow.adapters._adapter_common.make_ref``
+    (P2-9). The ``"mnist:x"`` namespace is load-bearing for recorded trajectory
+    digests; do not change it.
+    """
+    return make_ref("mnist:x", label, **parts)
 
 
 def _unet_evaluate(weights: list[ArrayF64], x: ArrayF64, t: float) -> ArrayF64:
@@ -225,24 +243,14 @@ class MnistFMCapabilities(AdapterCapabilities):
 
     def __init__(self) -> None:  # noqa: D401 — dataclass __init__ override
         super().__init__(
-            has_ode_integration_surface=True,
-            has_prior_export=True,
-            has_state_export=True,
-            has_condition_injection=True,
-            has_restart_boundary=True,
-            has_continuous_channels=True,
-            has_discrete_channels=False,
-            has_trajectory_digest=True,
-            has_deterministic_seed=True,
-            has_materialization_route=True,
-            state_shape=(MNIST_FLAT_DIM,),
-            supported_channels=MNIST_FM_CHANNELS,
-            channel_domains=MNIST_FM_CHANNEL_DOMAINS,
-            required_mixer=NoOpMixer,
-            exposed_envelope_criteria=(),
-            exposed_evaluators=(),
-            native_config_hash=MNIST_FM_CONFIG_HASH,
-            native_config_version=MNIST_FM_CONFIG_VERSION,
+            **make_adapter_capabilities(
+                state_shape=(MNIST_FLAT_DIM,),
+                supported_channels=MNIST_FM_CHANNELS,
+                channel_domains=MNIST_FM_CHANNEL_DOMAINS,
+                required_mixer=NoOpMixer,
+                native_config_hash=MNIST_FM_CONFIG_HASH,
+                native_config_version=MNIST_FM_CONFIG_VERSION,
+            )
         )
 
 
@@ -402,17 +410,11 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
             raise CapabilityMissingError(
                 "missing_native_state", context=state.native_state_digest
             )
-        beta_raw = policy.beta_by_channel.get(ChannelName("x"))  # type: ignore[call-overload]
-        if beta_raw is None:
-            beta = 0.5
-            memory_fraction = 0.5
-        else:
-            beta = float(beta_raw)
-            memory_fraction = 1.0 - beta
+        beta, memory_fraction = memory_fraction_for(policy, ChannelName("x"))
         prior_value = prior_entry.get("x0", prior_entry.get("x"))
         if prior_value is None:
             raise CapabilityMissingError(
-                "missing_endpoint_value", context=state.native_state_digest
+                "missing_prior_value", context=str(prior_entry)
             )
         prior_x0 = np.asarray(prior_value, dtype=np.float64).reshape(MNIST_FLAT_DIM)
         next_round = int(state.source_round) + 1

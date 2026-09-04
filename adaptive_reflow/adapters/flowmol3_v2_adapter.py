@@ -77,6 +77,12 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 
+from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
+    make_ref,
+    seed_from_ids,
+)
+
 # ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
@@ -1981,7 +1987,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
     # 4. detach_and_validate_endpoint
     # ------------------------------------------------------------------
 
-    def detach_and_validate_endpoint(self, state: StateBundle) -> StateBundle:
+    def detach_and_validate_endpoint(self, bundle: StateBundle) -> StateBundle:
         """Fail-closed detach gate.
 
         The FlowMol3 restart contract requires ``.detach()`` at every
@@ -1989,14 +1995,14 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         re-validates the bundle and rejects when ``detach_proof`` is
         not ``True``.
         """
-        ok, errs = validate_state_bundle(state)
+        ok, errs = validate_state_bundle(bundle)
         if not ok:
             raise CapabilityMissingError(
                 "detach_proof_must_be_true", context=",".join(errs)
             )
-        if state.detach_proof is not True:
+        if bundle.detach_proof is not True:
             raise CapabilityMissingError("detach_proof_must_be_true")
-        return state
+        return bundle
 
     # ------------------------------------------------------------------
     # 5. apply_restart_distribution

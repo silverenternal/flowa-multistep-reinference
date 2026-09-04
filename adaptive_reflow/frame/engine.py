@@ -44,6 +44,7 @@ import json
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 from typing import Any
 
 from adaptive_reflow.contracts import (
@@ -1814,6 +1815,116 @@ class Engine:
             ledger_row=ledger,
             applied_policy_hash=applied_policy_hash,
         )
+
+    # -- state persistence (P2-12) ----------------------------------------
+
+    def _engine_digest_seed(self, *, engine_version: str, adapter_id: str) -> str:
+        """Build a deterministic seed tying the checkpoint to its engine + adapter.
+
+        Re-derived on ``resume_round`` via
+        :func:`adaptive_reflow.universal.checkpoint.engine_digest_seed`.
+        Stdlib-only (sha256 over a JSON-stable payload). Mirrors the
+        ``engine_version`` + ``adapter_id`` pair so adapters can
+        override it without forcing the engine module to import them.
+        """
+        from adaptive_reflow.universal.checkpoint import engine_digest_seed as _seed
+
+        return _seed(engine_version=str(engine_version), adapter_id=str(adapter_id))
+
+    def checkpoint_round(
+        self,
+        *,
+        round_trace: RoundTrace,
+        ledger_row: LedgerRow,
+        next_phase: PhaseState,
+        state_bundle_at_round_start: StateBundle,
+        engine_version: str,
+        path: str | Path,
+        native_payload_paths: Mapping[str, str] | None = None,
+        calibration_manifest: Any | None = None,
+    ) -> "Any":
+        """Persist a round's state to ``path``. Stdlib-only.
+
+        The caller decides cadence (no auto-checkpoint inside
+        :meth:`run_round`): pass a destination path on every round you
+        want to persist, ``None`` to skip. The returned
+        :class:`~adaptive_reflow.universal.checkpoint.Checkpoint` is
+        also written to ``path`` in JSON form (atomic write via
+        ``.tmp`` + replace). ``calibration_manifest`` is optional; when
+        supplied, its :func:`manifest_digest` is recorded in the
+        bundle so a resume can re-validate the calibration context.
+        """
+        from adaptive_reflow.universal.checkpoint import (
+            DEFAULT_BUNDLE_FORMAT_VERSION,
+            Checkpoint as _Checkpoint,
+            IsoTimestamp as _IsoTimestamp,
+            save_checkpoint as _save,
+        )
+
+        manifest_hash: str | None = None
+        if calibration_manifest is not None:
+            # Local import keeps the engine module decoupled from
+            # ``adaptive_reflow.eval.calibration`` (a downstream module
+            # the framework's import surface does not need eagerly).
+            from adaptive_reflow.eval.calibration import (
+                CalibrationManifest as _CalibrationManifest,
+                manifest_digest as _manifest_digest,
+            )
+
+            if not isinstance(calibration_manifest, _CalibrationManifest):
+                raise TypeError(
+                    "calibration_manifest must be a CalibrationManifest or None; "
+                    f"got {type(calibration_manifest).__name__}"
+                )
+            manifest_hash = str(_manifest_digest(calibration_manifest))
+
+        # Lazy import of the time module keeps the engine stdlib-only
+        # without forcing a top-level ``import time`` (the original
+        # engine.py already imports only ``hashlib`` + ``json`` + ``math``).
+        import time as _time
+
+        cp = _Checkpoint(
+            bundle_format_version=DEFAULT_BUNDLE_FORMAT_VERSION,
+            engine_digest_seed=self._engine_digest_seed(
+                engine_version=engine_version, adapter_id="runner-default"
+            ),
+            ledger_chain_head_hash=(
+                str(ledger_row.row_hash) if ledger_row is not None else None
+            ),
+            state_bundle=state_bundle_at_round_start,
+            last_round_trace=round_trace,
+            last_ledger_row=ledger_row,
+            phase_state=next_phase,
+            calibration_manifest_hash=manifest_hash,
+            native_payload_paths=dict(native_payload_paths or {}),
+            created_at=_IsoTimestamp(
+                _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime())
+            ),
+            extras={},
+        )
+        _save(cp, path)
+        return cp
+
+    def resume_round(self, path: str | Path) -> "Any":
+        """Load a checkpoint from ``path`` and re-validate the chain.
+
+        Re-derives :attr:`Checkpoint.engine_digest_seed`, walks the
+        ledger row via :func:`verify_ledger_chain`, and re-validates
+        the state bundle via :func:`validate_state_bundle`. Raises
+        :class:`~adaptive_reflow.universal.checkpoint.CheckpointError`
+        on any failure (fail-closed).
+        """
+        from adaptive_reflow.universal.checkpoint import (
+            CheckpointError as _CPError,
+            load_checkpoint as _load,
+            verify_checkpoint as _verify,
+        )
+
+        cp = _load(path)
+        ok, errs = _verify(cp)
+        if not ok:
+            raise _CPError(";".join(errs))
+        return cp
 
 
 # ---------------------------------------------------------------------------

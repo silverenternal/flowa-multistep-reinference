@@ -25,6 +25,7 @@ from adaptive_reflow.frame import (
     StateBundle,
     validate_state_bundle,
 )
+from adaptive_reflow.universal.state import ODEConditionDelta
 from adaptive_reflow.molecular.domain import MOLECULE_DOMAIN_BY_CHANNEL
 from adaptive_reflow.writer import (
     DEFAULT_AUDIT_TEMPLATE,
@@ -379,7 +380,7 @@ def test_flowmol3_adapter_capabilities_match_engine_protocol():
 
 def test_flowmol3_build_initial_state_validates():
     adapter = default_flowmol3_adapter()
-    state = adapter.build_initial_state("batch-1", "sample-1", source_round=0)
+    state = adapter.build_initial_state(batch_id="batch-1", sample_id="sample-1")
     ok, errs = validate_state_bundle(state)
     assert ok, errs
     assert state.detach_proof is True
@@ -389,8 +390,8 @@ def test_flowmol3_build_initial_state_validates():
 
 def test_flowmol3_build_initial_state_deterministic():
     adapter = default_flowmol3_adapter()
-    s1 = adapter.build_initial_state("b", "s", source_round=0)
-    s2 = adapter.build_initial_state("b", "s", source_round=0)
+    s1 = adapter.build_initial_state(batch_id="b", sample_id="s")
+    s2 = adapter.build_initial_state(batch_id="b", sample_id="s")
     assert s1.native_state_digest == s2.native_state_digest
     for ch in FLOWMOL3_CHANNELS:
         assert s1.channels[ch] == s2.channels[ch]
@@ -398,11 +399,18 @@ def test_flowmol3_build_initial_state_deterministic():
 
 def test_flowmol3_solve_ode_produces_trace():
     adapter = default_flowmol3_adapter()
-    state = adapter.build_initial_state("b", "s", source_round=0)
-    next_state, trace = adapter.solve_ode(state, seed=42, steps=10)
+    state = adapter.build_initial_state(batch_id="b", sample_id="s")
+    from adaptive_reflow.universal.state import ODEConditionDelta
+    delta = ODEConditionDelta(
+        delta_spec={"pocket": "ligand", "num_steps": 10},
+        source="test",
+        target_round=1,
+        calibration_artifact_hash="a" * 64,
+    )
+    trace = adapter.solve_ode(state, delta, seed=42)
     assert trace.steps == 10
     assert 0.0 <= trace.accept_rate <= 1.0
-    assert trace.native_state_digest == next_state.native_state_digest
+    assert trace.native_state_digest is not None
 
 
 def test_flowmol3_compose_condition_accepts_delta_via_null_injector():
@@ -414,20 +422,34 @@ def test_flowmol3_compose_condition_accepts_delta_via_null_injector():
     dataset='flowmol3_smiles_pl', variant='v1', round_trace_only=True``).
     """
     adapter = default_flowmol3_adapter()
-    state = adapter.build_initial_state("b", "s", source_round=0)
+    state = adapter.build_initial_state(batch_id="b", sample_id="s")
     # Non-empty delta is now accepted via NullConditionInjector (D3).
-    out = adapter.compose_condition(state, {"pocket": "ligand"})
-    assert isinstance(out, StateBundle)
-    assert "flowmol3_null_condition" in out.provenance
+    delta = ODEConditionDelta(
+        delta_spec={"pocket": "ligand"},
+        source="test",
+        target_round=1,
+        calibration_artifact_hash="a" * 64,
+    )
+    out = adapter.compose_condition(state, delta)
+    assert isinstance(out, ODEConditionDelta)
     # Empty delta is still allowed (back-compat).
-    same = adapter.compose_condition(state, {})
-    assert isinstance(same, StateBundle)
-    assert "flowmol3_null_condition" in same.provenance
+    empty_delta = ODEConditionDelta(
+        delta_spec={},
+        source="test",
+        target_round=1,
+        calibration_artifact_hash="a" * 64,
+    )
+    same = adapter.compose_condition(state, empty_delta)
+    assert isinstance(same, ODEConditionDelta)
+    # P2-9: compose_condition now returns an ODEConditionDelta (Protocol
+    # conformance). Provenance is recorded on the trace's source_round
+    # delta_spec, not on the bundle.
+    assert "flowmol3_adapter" in same.source
 
 
 def test_flowmol3_apply_restart_distribution_revalidates():
     adapter = default_flowmol3_adapter()
-    state = adapter.build_initial_state("b", "s", source_round=0)
+    state = adapter.build_initial_state(batch_id="b", sample_id="s")
     out = adapter.apply_restart_distribution(state, policy=None)
     assert out.detach_proof is True
     assert out.native_state_digest != state.native_state_digest
@@ -435,7 +457,7 @@ def test_flowmol3_apply_restart_distribution_revalidates():
 
 def test_flowmol3_export_endpoint_is_identity():
     adapter = default_flowmol3_adapter()
-    state = adapter.build_initial_state("b", "s", source_round=0)
+    state = adapter.build_initial_state(batch_id="b", sample_id="s")
     assert adapter.export_endpoint(state) is state
 
 

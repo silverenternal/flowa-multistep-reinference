@@ -81,6 +81,12 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 
+from adaptive_reflow.adapters._adapter_common import (
+    make_ref,
+    memory_fraction_for,
+)
+
+
 # ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
@@ -256,8 +262,7 @@ def _digest_state(payload: Mapping[str, Any]) -> str:
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Deterministic hash-stable :class:`TensorRef`."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"wan22:{label}:{hashlib.sha256(blob).hexdigest()[:16]}")
+    return make_ref(f"wan22:{label}", label, **parts)
 
 
 def _state_shape_for_variant(variant: Variant) -> tuple[int, ...]:
@@ -1012,19 +1017,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
 
-        beta_raw = policy.beta_by_channel.get(ChannelName("video_latent"))  # type: ignore[arg-type]
-        if beta_raw is None:
-            beta = 0.5
-            memory_fraction = 0.5
-        else:
-            beta = float(beta_raw)
-            memory_fraction = 1.0 - beta
-
-        prior_x = _validate_state_shape(
-            prior_entry.get("x0", prior_entry.get("x")),
-            tuple(self._state_shape),
-        )
-        # Reuse text_emb from the prior (no need to re-encode).
+        beta, memory_fraction = memory_fraction_for(policy, ChannelName("video_latent"))
         prior_text = np.asarray(
             prior_entry["text_emb"], dtype=np.float64
         ).reshape(int(WAN22_TEXT_SEQ_LEN), int(WAN22_TEXT_DIM))
@@ -1035,6 +1028,10 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
             np.random.default_rng(restart_seed), tuple(self._state_shape)
         )
 
+        prior_x = _validate_state_shape(
+            prior_entry.get("x0", prior_entry.get("x")),
+            tuple(self._state_shape),
+        )
         m = max(0.0, min(1.0, float(memory_fraction)))
         blended = (m * prior_x + (1.0 - m) * fresh_x).astype(np.float64)
         # Per-channel std clamp on the *fresh-noise component only*

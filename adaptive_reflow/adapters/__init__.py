@@ -4,6 +4,8 @@ Concrete :class:`FlowMatchingODEAdapter` implementations. The synthetic
 fixtures live here (not in ``tests/``) so external parity harnesses can
 import them too.
 """
+from typing import Any
+
 from .flowmol3 import (  # noqa: I001 -- alphabetical re-export ordering
     FLOWMOL3_CHANNEL_DOMAINS,
     FLOWMOL3_CHANNELS,
@@ -137,6 +139,26 @@ from .twodim_fm import (
     TwoDimFMAdapter,
     default_twodim_fm_adapter,
 )
+from .mnist_fm import (
+    MNIST_FM_CHANNELS,
+    MNIST_FM_CHANNEL_DOMAINS,
+    MNIST_FM_CONFIG_HASH,
+    MNIST_FM_CONFIG_VERSION,
+    MnistFMCapabilities,
+    MnistFmAdapter,
+    default_mnist_fm_adapter,
+)
+from .rectified_flow_cifar import (
+    RF_CIFAR_CHANNELS,
+    RF_CIFAR_CONFIG_HASH,
+    RF_CIFAR_CONFIG_VERSION,
+    RF_CIFAR_STATE_SHAPE,
+    RectifiedFlowCIFARAdapter,
+    RectifiedFlowCIFARCapabilities,
+    default_rectified_flow_cifar_adapter,
+    rectified_flow_cifar_resolve_weights_path,
+)
+from .stochastic_fm import StochasticFMAdapter
 from .wan2_2_video import (
     AUDIT_WAN22_FORWARD_NOISE_APPLIED,
     AUDIT_WAN22_OBSERVED,
@@ -155,3 +177,48 @@ from .wan2_2_video import (
     default_wan22_video_flowmatchingodeadapter,
     wan22_resolve_weights_path,
 )
+
+# ---------------------------------------------------------------------------
+# Adapter registry (P2-9)
+# ---------------------------------------------------------------------------
+
+#: Family name -> zero-arg default factory. Mirrors INTEGRATOR_REGISTRY
+#: (integrators.py:1110). Values are callables, not instances, so
+#: importing this module never constructs an adapter or touches weights.
+ADAPTER_REGISTRY: dict[str, Any] = {
+    "flowmol3": default_flowmol3_adapter,
+    "flowmol3_v2": default_flowmol3adapter,
+    "graphbfn": default_graphbfn_adapter,
+    "hidream_i1": default_hidream_i1_adapter,
+    "lumina_image_2_0": default_lumina_image_2_0_adapter,
+    "mnist_fm": default_mnist_fm_adapter,
+    "protbfn_abbfn": default_protbfnabbfn_adapter,
+    "rectified_flow_cifar": default_rectified_flow_cifar_adapter,
+    "toy_gaussian": default_toy_gaussian_adapter,
+    "toy_linear": default_toy_linear_adapter,
+    "twodim_fm": default_twodim_fm_adapter,
+    "wan2_2_video": default_wan22_video_flowmatchingodeadapter,
+}
+
+
+def build_adapter(family: str, **kwargs: Any) -> Any:
+    """Construct the default adapter for ``family``.
+
+    Raises ``KeyError`` naming the known families — same fail-closed shape as
+    ``build_integrator`` (integrators.py:1136).
+    """
+    if family not in ADAPTER_REGISTRY:
+        raise KeyError(
+            f"unknown adapter family {family!r}; "
+            f"known: {sorted(ADAPTER_REGISTRY)}"
+        )
+    return ADAPTER_REGISTRY[family](**kwargs)
+
+
+# Naming aliases (P2-9): the canonical form is ``default_<family>_adapter``.
+# ``default_flowmol3adapter`` is one character from ``default_flowmol3_adapter``
+# but builds a DIFFERENT adapter (v2 vs the v1 placeholder); the aliases below
+# are unambiguous. Originals are retained for back-compat.
+default_flowmol3_v2_adapter = default_flowmol3adapter
+default_protbfn_abbfn_adapter = default_protbfnabbfn_adapter
+default_wan2_2_video_adapter = default_wan22_video_flowmatchingodeadapter

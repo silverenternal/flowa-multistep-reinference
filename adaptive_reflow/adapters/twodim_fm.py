@@ -49,6 +49,13 @@ from .twodim_fm_train import (  # noqa: E402 — runtime numpy dep, opt-in extra
     sample_two_moons,
 )
 
+from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
+    make_ref,
+    seed_from_ids,
+    memory_fraction_for,
+)
+
 # ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
@@ -128,21 +135,17 @@ TWODIM_FM_DEFAULT_MAX_STEPS: int = 1000
 
 def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
     """Derive a deterministic 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
-    hex8 = hashlib.sha256(blob).hexdigest()[:8]
-    return int(hex8, 16)
+    return seed_from_ids(batch_id, sample_id, source_round)
 
 
 def _digest_state(payload: Mapping[str, Any]) -> str:
     """Return a deterministic SHA-256 hex digest of a payload (sorted keys)."""
-    blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode("utf-8")
-    return hashlib.sha256(blob).hexdigest()
+    return digest_state(payload)
 
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Build a deterministic hash-stable :class:`TensorRef` from ``label`` + parts."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"twodim:xy:{hashlib.sha256(blob).hexdigest()[:16]}")
+    return make_ref("twodim:xy", label, **parts)
 
 
 def _features(x: ArrayF64, t: ArrayF64 | float) -> ArrayF64:
@@ -730,19 +733,8 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
         # Memory fraction defaults to 0.5 when the policy omits ``xy``.
-        beta_raw = policy.beta_by_channel.get(ChannelName("xy"))  # type: ignore[arg-type]
-        if beta_raw is None:
-            beta = 0.5
-            memory_fraction = 0.5
-        else:
-            beta = float(beta_raw)
-            memory_fraction = 1.0 - beta
-        # Look up the prior x0 (the prior endpoint that will be blended).
-        prior_value = prior_entry.get("x0", prior_entry.get("x"))
-        if prior_value is None:
-            raise CapabilityMissingError(
-                "missing_endpoint_value", context=state.native_state_digest
-            )
+        beta, memory_fraction = memory_fraction_for(policy, ChannelName("xy"))
+        prior_value = prior_entry["x0"]
         prior_x0 = np.asarray(prior_value, dtype=np.float64).reshape(2)
         # Fresh noise N(0, I_2) seeded by (policy_hash, source_round+1).
         next_round = int(state.source_round) + 1

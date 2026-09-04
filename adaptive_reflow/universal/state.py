@@ -248,6 +248,32 @@ NORMALIZATION_KINDS: tuple[str, ...] = ("none", "per_atom_std", "per_pocket_std"
 # ---------------------------------------------------------------------------
 
 
+def state_bundle_to_dict(bundle: StateBundle) -> dict[str, Any]:
+    """Return a JSON-canonical dict of ``bundle`` fields (no validation).
+
+    Used by both :func:`adaptive_reflow.universal.checkpoint.save_checkpoint`
+    and the byte-determinism regression tests. Stable contract: every
+    field on :class:`StateBundle` appears once; :class:`TensorRef` and
+    :class:`ChannelName` coerce to plain ``str``.
+    """
+    return {
+        "channels": {
+            str(k): str(v) for k, v in sorted(bundle.channels.items())
+        },
+        "masks": {
+            str(k): str(v) for k, v in sorted(bundle.masks.items())
+        },
+        "batch_id": str(bundle.batch_id),
+        "sample_id": str(bundle.sample_id),
+        "reference_frame": str(bundle.reference_frame),
+        "normalization": str(bundle.normalization),
+        "source_round": int(bundle.source_round),
+        "detach_proof": bool(bundle.detach_proof),
+        "native_state_digest": str(bundle.native_state_digest),
+        "provenance": list(bundle.provenance),
+    }
+
+
 def validate_state_bundle(bundle: StateBundle) -> tuple[bool, tuple[str, ...]]:
     """Return ``(True, ())`` iff ``bundle`` satisfies the engine invariants.
 
@@ -386,4 +412,6 @@ __all__ = [
     "validate_integrator_trace",
     # Validators
     "validate_state_bundle",
+    # JSON-canonical dict helper (P2-12)
+    "state_bundle_to_dict",
 ]

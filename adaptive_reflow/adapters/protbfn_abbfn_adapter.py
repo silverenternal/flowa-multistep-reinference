@@ -61,6 +61,12 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 
+from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
+    make_ref,
+)
+
+
 # ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
@@ -204,18 +210,12 @@ def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
 
 def _digest_state(payload: Mapping[str, Any]) -> str:
     """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
-    blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode(
-        "utf-8"
-    )
-    return hashlib.sha256(blob).hexdigest()
+    return digest_state(payload)
 
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Deterministic hash-stable :class:`TensorRef`."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(
-        f"protbfn:{label}:{hashlib.sha256(blob).hexdigest()[:16]}"
-    )
+    return make_ref(f"protbfn:{label}", label, **parts)
 
 
 # ---------------------------------------------------------------------------

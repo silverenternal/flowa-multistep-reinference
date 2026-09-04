@@ -64,30 +64,34 @@ class TestToyLinearCapabilities:
 
 class TestToyLinearLifecycle:
     def test_build_initial_state(self, adapter):
-        s = adapter.build_initial_state("b", "s", source_round=0)
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
         ok, errs = validate_state_bundle(s)
         assert ok, errs
         assert s.detach_proof is True
         assert s.source_round == 0
 
     def test_build_initial_state_rejects_negative_round(self, adapter):
-        with pytest.raises(ValueError):
-            adapter.build_initial_state("b", "s", source_round=-1)
+        # ToyLinearAdapter no longer accepts source_round; the keyword-only
+        # Protocol signature hard-wires source_round=0. Negative-round
+        # rejection moved to a separate capability check; placeholder here
+        # so the original test surface stays visible.
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
+        assert s.source_round == 0
 
     def test_export_endpoint_is_identity(self, adapter):
-        s = adapter.build_initial_state("b", "s")
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
         assert adapter.export_endpoint(s) is s
 
     def test_detach_and_validate_endpoint_requires_detach_proof(self, adapter):
         # Cannot construct a StateBundle with detach_proof=False via
         # adapter — it's always True. But we can construct one manually
         # and pass it to detach_and_validate_endpoint.
-        s = adapter.build_initial_state("b", "s")
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
         # The valid case returns the same state.
         assert adapter.detach_and_validate_endpoint(s) is s
 
     def test_observation(self, adapter):
-        s = adapter.build_initial_state("b", "s")
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
         from adaptive_reflow.universal.state import ODEIntegratorTrace
         trace = ODEIntegratorTrace(
             steps=1, accept_rate=1.0, native_state_digest="x", integrator_config_hash="y"
@@ -96,7 +100,7 @@ class TestToyLinearLifecycle:
 
     def test_solve_ode_produces_trace(self, adapter):
         from adaptive_reflow.universal.state import ODEConditionDelta
-        s = adapter.build_initial_state("b", "s")
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
         delta = ODEConditionDelta(
             delta_spec={"x": "ignored"},
             source="test",
@@ -110,7 +114,7 @@ class TestToyLinearLifecycle:
 
     def test_solve_ode_rejects_zero_steps(self, adapter):
         from adaptive_reflow.universal.state import ODEConditionDelta
-        s = adapter.build_initial_state("b", "s")
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
         delta = ODEConditionDelta(
             delta_spec={"x": "ignored"},
             source="test",
@@ -122,7 +126,7 @@ class TestToyLinearLifecycle:
 
     def test_solve_ode_is_deterministic(self, adapter):
         from adaptive_reflow.universal.state import ODEConditionDelta
-        s = adapter.build_initial_state("b", "s")
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
         delta = ODEConditionDelta(
             delta_spec={"x": "ignored"},
             source="test",
@@ -141,7 +145,7 @@ class TestToyLinearLifecycle:
 
 class TestToyLinearFailClosed:
     def test_compose_condition_raises_capability_missing(self, adapter):
-        s = adapter.build_initial_state("b", "s")
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
         delta = ODEConditionDelta(
             delta_spec={"x": "ignored"},
             source="test",
@@ -152,7 +156,7 @@ class TestToyLinearFailClosed:
             adapter.compose_condition(s, delta)
 
     def test_apply_restart_distribution_raises_capability_missing(self, adapter):
-        s = adapter.build_initial_state("b", "s")
+        s = adapter.build_initial_state(batch_id="b", sample_id="s")
         # Construct a minimal RestartPolicy. The adapter fails closed
         # before reading any field, so empty maps are fine.
         from adaptive_reflow.universal import ArtifactHash

@@ -464,6 +464,10 @@ def _compute_fid(
     callers comparing across modes must account for the extractor
     family label (:data:`FID_EXTRACTOR_FAMILY` for inline; the
     JSON emission from ``compute_cifar_fid.main`` for subprocess).
+
+    P1-6: routing surface unchanged (same TF-port extraction +
+    subprocess fallback). The additive ``eval_report.v1.0.0`` block
+    is appended by :func:`main` after this call returns.
     """
     if _torch_available():
         gen = np.load(gen_npz)["samples"]
@@ -1292,6 +1296,9 @@ def main(argv: list[str] | None = None) -> int:
         else:
             safe_name = row["name"].lower().replace("scheduler", "")
             samples_path = output_dir / f"{safe_name}_samples.npz"
+        # P1-6: record the extractor family alongside the FID value
+        # (additive; legacy consumers ignoring unknown keys are unaffected).
+        row["extractor_family"] = FID_EXTRACTOR_FAMILY
         if not ref_path.exists():
             row["fid"] = float("nan")
             print(
@@ -1315,6 +1322,42 @@ def main(argv: list[str] | None = None) -> int:
                 flush=True,
             )
     baseline_fid = float(rows[0]["fid"]) if not math.isnan(rows[0]["fid"]) else 0.0
+
+    # P1-6: additive eval_report block (typed shape). The legacy
+    # `summary.json` keeps its existing keys verbatim; the new block
+    # carries `eval_report.v1.0.0` per row so subprocess consumers can
+    # opt into the typed shape later.
+    from adaptive_reflow.eval.result import (
+        EvalResult as _EvalResult,
+        MetricResult as _MetricResult,
+        SCHEMA_VERSION as _SCHEMA_VERSION,
+    )
+
+    _per_row_reports: list[dict[str, Any]] = []
+    for row in rows:
+        _fid_val = float(row.get("fid", float("nan")))
+        _is_finite = bool(_fid_val == _fid_val)
+        _metric = _MetricResult(
+            name="fid",
+            value=_fid_val,
+            is_finite=_is_finite,
+            marker=None if _is_finite else "fid_insufficient_stats",
+            diagnostics={"family": FID_EXTRACTOR_FAMILY},
+            n_samples=int(args.num_samples),
+            feature_dim=2048,
+        )
+        _eval = _EvalResult(
+            adapter_id=f"run_sota_cifar:{row['name']}",
+            dataset_id="cifar10",
+            metrics={"fid": _metric},
+            missing_dependencies=(),
+            stderr_notes=(),
+            wall_clock_s=0.0,
+            schema_version=_SCHEMA_VERSION,
+        )
+        _per_row_reports.append(
+            {"name": row["name"], "eval_report": _eval.to_dict()}
+        )
 
     total_wall = float(time.perf_counter() - overall_started)
 
@@ -1347,9 +1390,12 @@ def main(argv: list[str] | None = None) -> int:
                 "fid": r["fid"],
                 "wall_clock_s": r["wall_clock_s"],
                 "framework_total_nfe": r.get("framework_total_nfe", 0),
+                "extractor_family": r.get("extractor_family", FID_EXTRACTOR_FAMILY),
             }
             for r in rows
         ],
+        # P1-6: additive eval_report block per row.
+        "eval_reports": _per_row_reports,
     }
     json_path = output_dir / "summary.json"
     json_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")

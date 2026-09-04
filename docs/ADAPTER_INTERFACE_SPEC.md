@@ -43,43 +43,56 @@ envelope criteria, and evaluators they declare.
 
 An adapter is any class that satisfies
 `adaptive_reflow.universal.adapter.FlowMatchingODEAdapter`. The Protocol
-has **eight** members. Every member is required unless the matching
+has **nine** members. Every member is required unless the matching
 `AdapterCapabilities` boolean is `False` (see §3).
 
-```
-class MyAdapter:
+```python
+class MyAdapter(FlowMatchingODEAdapter):
     # 1. Capability handshake (always required)
     def capabilities(self) -> AdapterCapabilities: ...
 
-    # 2. Initial state (required if has_prior_export)
+    # 2. Initial state (required if has_prior_export). KEYWORD-ONLY.
     def build_initial_state(
-        self, batch_id: str, sample_id: str, *, source_round: int = 0,
+        self, *, batch_id: str, sample_id: str,
     ) -> StateBundle: ...
 
     # 3. Endpoint export (required if has_state_export)
     def export_endpoint(self, state: StateBundle) -> StateBundle: ...
 
     # 4. Detach gate (always required)
-    def detach_and_validate_endpoint(self, state: StateBundle) -> StateBundle: ...
+    def detach_and_validate_endpoint(self, bundle: StateBundle) -> StateBundle: ...
 
     # 5. Restart distribution (required if has_restart_boundary)
     def apply_restart_distribution(
         self, state: StateBundle, policy: RestartPolicy,
     ) -> StateBundle: ...
 
-    # 6. Condition composition (required if has_condition_injection)
+    # 6. Condition composition (required if has_condition_injection).
+    #    Returns an ODEConditionDelta — NOT a StateBundle.
     def compose_condition(
-        self, state: StateBundle, delta: ODEConditionDelta,
+        self, bundle: StateBundle, delta: ODEConditionDelta,
+    ) -> ODEConditionDelta: ...
+
+    # 7. ODE step (required if has_ode_integration_surface). Takes the
+    #    composed condition; returns the trace alone.
+    def solve_ode(
+        self, state: StateBundle, condition: ODEConditionDelta, *, seed: int,
+    ) -> ODEIntegratorTrace: ...
+
+    # 8. Endpoint observation (always required). Takes the trace FIRST.
+    def observe_endpoint(
+        self, trace: ODEIntegratorTrace, state: StateBundle,
     ) -> StateBundle: ...
 
-    # 7. ODE step (required if has_ode_integration_surface)
-    def solve_ode(
-        self, state: StateBundle, seed: int, *, steps: int = 1,
-    ) -> tuple[StateBundle, ODEIntegratorTrace]: ...
-
-    # 8. Endpoint observation (always required)
-    def observe_endpoint(self, state: StateBundle) -> StateBundle: ...
+    # 9. Native trajectory (return None, or raise NotImplementedError,
+    #    when the adapter preserves no trajectory across solve_ode).
+    def export_trajectory(self, trace: ODEIntegratorTrace) -> Any | None: ...
 ```
+
+> Adapters SHOULD write `class MyAdapter(FlowMatchingODEAdapter)`. The Protocol
+> is `@runtime_checkable`, but `isinstance()` verifies method **presence only** —
+> inheriting the base is what lets a type-checker compare signatures. See
+> `tests/test_universal/test_adapter_protocol_conformance.py`.
 
 ### 2.1 Hard invariants
 
@@ -157,9 +170,17 @@ class AdapterCapabilities:
     channel_shapes: Mapping[ChannelName, tuple[tuple[int, ...], tuple[int, ...]]] = field(default_factory=dict)
 
     # Pluggable-backend declarations (engine uses these at registration).
-    required_mixer: type = field(default=None)         # type[RestartMixer]; None ⇒ NoOpMixer
+    required_mixer: type | None = field(default=None)         # type[RestartMixer]; None ⇒ NoOpMixer
     exposed_envelope_criteria: tuple[type, ...] = ()
     exposed_evaluators: tuple[type, ...] = ()
+
+    # Native state shape (F14) — the runner allocates
+    # np.zeros(state_shape) before scheduler.inject_noise.
+    state_shape: tuple[int, ...] = (2,)
+
+    # D2 / D10 — materialization route.
+    materializer: type | None = field(default=None)
+    materializer_instance: MaterializationRoute | None = field(default=None)
 
     # Native integration config (informational; engine does not parse).
     native_config_hash: str = ""
@@ -804,9 +825,17 @@ class LatentImageAdapter:
 
 ### Step 4 — write tests
 
-The adapter MUST pass the universal test battery at
-`tests/test_universal/test_adapter_universality.py`. The battery
-checks:
+The adapter MUST be registered in the signature-conformance battery at
+`tests/test_universal/test_adapter_protocol_conformance.py` (add the
+class to `_adapter_classes()`), which checks:
+
+- Every Protocol method is present with the Protocol's parameter names
+  and kinds — `isinstance()` alone does not check signatures.
+- The class inherits `FlowMatchingODEAdapter`.
+
+A behavioural battery is NOT yet shared across adapters; each adapter
+carries its own `tests/test_adapters/test_<model>.py`. The checks below
+are the recommended shape for that per-adapter file:
 
 - Capability handshake matches implementation.
 - Every advertised capability's method passes a deterministic round.
@@ -824,7 +853,7 @@ optional.
 
 | # | Rule | Why |
 |---|---|---|
-| 1 | NO `import torch` (or any other non-stdlib import) in the adapter module | Stdlib-only contract. |
+| 1 | NO module-level `import torch`. A `torch` backend MUST use a function-local lazy import guarded by `torch_is_available()` (see `rectified_flow_cifar.py:307`, `lumina_image_2_0.py:394`) | The framework must import without torch installed; the numpy/synthetic path is the Protocol-conformance backend. |
 | 2 | Capability handshake MUST be called before any per-round method | Fail-closed at registration. |
 | 3 | `source_round` MUST be `>= 0` | State lifecycle invariant. |
 | 4 | Same `(state, seed, steps)` MUST always produce the same next state | R7 paired-evaluation reproducibility. |

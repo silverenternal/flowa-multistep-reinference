@@ -290,6 +290,26 @@ def run_baseline(
     summary["fid"] = float(fid)
     summary["within_5pct_band"] = bool(fid <= PUBLISHED_BASELINE_FID * 1.05)
 
+    # P1-6: additive eval_report block (typed shape). The legacy
+    # baseline_summary.json shape is preserved verbatim; consumers
+    # that ignore unknown keys see no change.
+    from adaptive_reflow.eval.run_eval import run_eval
+
+    _eval_result = run_eval(
+        adapter=summary.get("samples_path", "rf_cifar_adapter"),
+        dataset={"name": "cifar10"},
+        metric="fid",
+        reference=(
+            reference_features
+            if reference_features is not None
+            else output_dir / "cifar10_reference.npz"
+        ),
+        device="cpu",
+        seed=int(seed),
+        output_dir=None,
+    )
+    summary["eval_report"] = _eval_result.to_dict()
+
     out_json = output_dir / "baseline_summary.json"
     out_json.write_text(json.dumps(summary, indent=2, sort_keys=True))
     summary["summary_path"] = str(out_json)

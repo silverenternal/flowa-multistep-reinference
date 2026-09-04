@@ -841,81 +841,31 @@ class GeometricShapeImageOracle:
     ) -> Any:
         """Run the canonical pretrained InceptionV3 over ``images``.
 
-        Output shape is ``(n, 2048)`` ``float32``. The pipeline
-        mirrors :func:`tools.run_image_eval
-        .extract_inception_features_for_image_eval` (the production
-        FID extractor) so the feature-space geometry is byte-stable.
+        Output shape is ``(n, 2048)`` ``float32``. Thin delegate to
+        :func:`tools.run_image_eval.extract_inception_features_for_image_eval`
+        (the P0-1 canonical feature-extractor surface). The only
+        local work is the ``[0, 1] -> [-1, 1]`` shift required by
+        the canonical extractor's input contract — all construction,
+        preprocessing, batching, and ImageNet-norm math happens in
+        one place (``tools.run_image_eval``).
         """
-        import numpy as _np
-        import torch
-        import torch.nn as nn
-        import torch.nn.functional as F
-        import torchvision.models as tvm
+        # Local import keeps this module importable in envs without
+        # ``torch`` / ``torchvision`` installed.
+        from tools.run_image_eval import extract_inception_features_for_image_eval
 
-        # Resolve the device exactly the same way
-        # :func:`tools.run_image_eval.select_device` does — we keep
-        # the local copy so the build script does not need to import
-        # the image-eval runner.
-        if str(device) == "auto":
-            torch_device = torch.device(
-                "cuda" if torch.cuda.is_available() else "cpu"
-            )
-        else:
-            torch_device = torch.device(str(device))
+        if images.size == 0:
+            import numpy as _np  # noqa: PLC0415 — local import
+            return _np.zeros((0, 2048), dtype=_np.float32)
 
-        # Force IMAGENET1K_V1 (never random init). ``aux_logits=True``
-        # because the canonical state_dict aux head expects that
-        # flag. ``transform_input=False`` because we apply the
-        # canonical ``[-1, 1]`` → ``[0, 1]`` → ImageNet norm mapping
-        # explicitly below.
-        weights = tvm.Inception_V3_Weights.IMAGENET1K_V1
-        model = tvm.inception_v3(
-            weights=weights, aux_logits=True, transform_input=False
+        # Canonical extractor contract: input is ``(N, 3, H, W)``
+        # ``float32`` in ``[-1, 1]``. We hand it ``[0, 1]``-domain
+        # PIL renderings so the shift happens here.
+        images_minus1 = (images.astype("float32", copy=False) * 2.0) - 1.0
+        return extract_inception_features_for_image_eval(
+            images_minus1,
+            device=("cuda" if str(device) == "auto" else str(device)),
+            batch_size=16,
         )
-        model.fc = nn.Identity()
-        if hasattr(model, "AuxLogits") and model.AuxLogits is not None:
-            model.AuxLogits = None
-        model.eval()
-        model = model.to(torch_device)
-
-        batch_size = 16
-        out_feats: list[_np.ndarray] = []
-        with torch.no_grad():
-            for i in range(0, int(images.shape[0]), int(batch_size)):
-                batch = images[i : i + int(batch_size)].astype(_np.float32)
-                x = torch.from_numpy(_np.ascontiguousarray(batch)).to(torch_device)
-                # Map ``[0, 1]`` -> ``[-1, 1]`` -> resize to 299x299
-                # -> ``[0, 1]`` -> ImageNet-normalised. The bilinear
-                # resize + ImageNet-mean subtraction is the canonical
-                # InceptionV3 preprocessing contract used by
-                # ``tools/run_image_eval.py``.
-                x = (x * 2.0) - 1.0
-                x = F.interpolate(
-                    x, size=(299, 299), mode="bilinear", align_corners=False
-                )
-                x = (x + 1.0) / 2.0
-                mean = torch.tensor(
-                    [0.485, 0.456, 0.406], device=torch_device
-                ).view(1, 3, 1, 1)
-                std = torch.tensor(
-                    [0.229, 0.224, 0.225], device=torch_device
-                ).view(1, 3, 1, 1)
-                x = (x - mean) / std
-                feats_t = model(x)
-                # ``feats_t`` is shape ``(B, 2048)`` (model.fc =
-                # Identity). Sanity-check the dim before stacking.
-                if int(feats_t.shape[1]) != 2048:
-                    raise RuntimeError(
-                        "InceptionV3 pool3 dim is not 2048; got "
-                        f"{int(feats_t.shape[1])}. Check that model.fc "
-                        "was replaced with Identity."
-                    )
-                out_feats.append(
-                    _np.asarray(
-                        feats_t.detach().cpu().numpy(), dtype=_np.float32
-                    )
-                )
-        return _np.concatenate(out_feats, axis=0).astype(_np.float32, copy=False)
 
 
 # ---------------------------------------------------------------------------

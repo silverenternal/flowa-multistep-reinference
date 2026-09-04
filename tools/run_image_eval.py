@@ -7,11 +7,19 @@ a JSON report with the following metrics:
 
 * **FID** — Fréchet Inception Distance between sample InceptionV3
   ``pool3`` features and a user-supplied reference statistics ``.npz``
-  (``mu`` + ``sigma`` arrays). Uses the canonical-pytorch-fid shape:
-  ``torchvision.models.inception_v3(weights=None, aux_logits=False)``
-  with ``model.fc = torch.nn.Identity()`` so the forward returns the
-  2048-dim ``pool3`` vector directly (see
-  :mod:`tools.eval_rf_cifar` for the same construction).
+  (``mu`` + ``sigma`` arrays). The single canonical InceptionV3
+  construction lives in :func:`load_inception_for_fid` (line below)
+  and uses ``torchvision.models.inception_v3(
+  weights=IMAGENET1K_V1, aux_logits=True, transform_input=False)``
+  with ``model.fc = torch.nn.Identity()`` and ``model.AuxLogits =
+  None`` so the forward returns the 2048-dim ``pool3`` vector
+  directly. The Fréchet arithmetic is delegated to
+  :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator
+  .compute_from_precomputed`. **Do not** construct InceptionV3 with
+  ``weights=None, aux_logits=False`` anywhere in this codebase —
+  that pattern was the root cause of the ~3e25 FID regression
+  documented in commit ``2fb3dc0`` (random-init pool3 features have
+  magnitudes ~1e10–1e12).
 * **CLIPScore** — mean ± std of cosine similarity between sample image
   embeddings and prompt text embeddings using
   ``openai/clip-vit-base-patch32`` from :mod:`transformers`. The
@@ -2520,6 +2528,13 @@ def _build_argparser() -> argparse.ArgumentParser:
                        "via ``CUDA_VISIBLE_DEVICES`` (default: inherit the "
                        "parent's CUDA_VISIBLE_DEVICES)."
                    ))
+    p.add_argument("--emit-eval-report", action="store_true",
+                   help=(
+                       "Append the additive ``eval_report.v1.0.0`` block "
+                       "to the JSON output. Default off so the HiDream "
+                       "and lumina subprocess consumers see the same "
+                       "flat-dict shape as before."
+                   ))
     return p
 
 
@@ -2632,6 +2647,45 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # noqa: BLE001 — final guard, report & exit 1
         print(f"[ERROR] image-eval run failed: {exc!r}", file=sys.stderr)
         return 1
+
+    # P1-6: opt-in additive eval_report block. Default off so the
+    # HiDream / lumina subprocess consumers (which parse the flat-dict
+    # ``img_eval_report.v1`` shape) are unaffected.
+    if bool(getattr(args, "emit_eval_report", False)):
+        from adaptive_reflow.eval.result import (
+            EvalResult as _ImgEvalResult,
+            MetricResult as _ImgMetricResult,
+            SCHEMA_VERSION as _IMG_SCH,
+        )
+
+        _fid_v = fid_value if fid_value is not None else float("nan")
+        try:
+            _fid_v_float = float(_fid_v)
+        except (TypeError, ValueError):
+            _fid_v_float = float("nan")
+        _fid_is_finite = bool(_fid_v_float == _fid_v_float)
+        _fid_metric = _ImgMetricResult(
+            name="fid",
+            value=_fid_v_float,
+            is_finite=_fid_is_finite,
+            marker=None if _fid_is_finite else "fid_insufficient_stats",
+            diagnostics={"family": "inceptionv3_torchvision_IMAGENET1K_V1"},
+            n_samples=int(report.get("n_samples", 0)),
+            feature_dim=2048,
+        )
+        _img_eval = _ImgEvalResult(
+            adapter_id="tools.run_image_eval",
+            dataset_id="samples_dir",
+            metrics={"fid": _fid_metric},
+            missing_dependencies=(),
+            stderr_notes=(),
+            wall_clock_s=0.0,
+            schema_version=_IMG_SCH,
+        )
+        report["eval_report"] = _img_eval.to_dict()
+        Path(args.output).write_text(
+            json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
+        )
 
     # Pretty-printhighlight the headline numbers so operators don't have
     # to grep the JSON.

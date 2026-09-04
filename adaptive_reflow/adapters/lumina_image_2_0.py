@@ -90,6 +90,12 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 
+from adaptive_reflow.adapters._adapter_common import (
+    make_ref,
+    memory_fraction_for,
+)
+
+
 # ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
@@ -266,8 +272,7 @@ def _digest_state(payload: Mapping[str, Any]) -> str:
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Deterministic hash-stable :class:`TensorRef`."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"lumina_image_2_0:{label}:{hashlib.sha256(blob).hexdigest()[:16]}")
+    return make_ref(f"lumina_image_2_0:{label}", label, **parts)
 
 
 def _validate_state_shape(x: ArrayF64) -> ArrayF64:
@@ -1108,17 +1113,10 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
 
-        beta_raw = policy.beta_by_channel.get(ChannelName("latent"))  # type: ignore[arg-type]
-        if beta_raw is None:
-            beta = 0.5
-            memory_fraction = 0.5
-        else:
-            beta = float(beta_raw)
-            memory_fraction = 1.0 - beta
-
-        prior_x = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
-            LUMINA_IMAGE_2_0_STATE_SHAPE
-        )
+        beta, memory_fraction = memory_fraction_for(policy, ChannelName("latent"))
+        prior_x = np.asarray(
+            prior_entry["x0"], dtype=np.float64
+        ).reshape(LUMINA_IMAGE_2_0_STATE_SHAPE)
         next_round = int(state.source_round) + 1
         restart_seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
         restart_seed = int(hashlib.sha256(restart_seed_blob).hexdigest()[:8], 16)

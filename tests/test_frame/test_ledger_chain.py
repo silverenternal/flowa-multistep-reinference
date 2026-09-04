@@ -191,3 +191,157 @@ def test_functional_wrapper_accepts_a_clean_chain() -> None:
     assert result.length == 7
     assert result.hash_computations == 7
     assert result.head_hash == rows[-1].row_hash
+
+
+# ---------------------------------------------------------------------------
+# P2-12 — checkpoint chain verification helper
+# ---------------------------------------------------------------------------
+
+
+def test_verify_checkpoint_chain_matches_persisted_head(tmp_path) -> None:
+    """``verify_checkpoint_chain`` accepts a checkpoint whose
+    ``ledger_chain_head_hash`` matches the row's ``row_hash``."""
+    from adaptive_reflow.frame.ledger_chain import verify_checkpoint_chain
+    from adaptive_reflow.universal.checkpoint import (
+        DEFAULT_BUNDLE_FORMAT_VERSION,
+        Checkpoint,
+        IsoTimestamp,
+        load_checkpoint,
+        save_checkpoint,
+    )
+    from adaptive_reflow.universal.adapter import AdapterCapabilities
+    from adaptive_reflow.universal.state import (
+        ChannelName,
+        StateBundle,
+        TensorRef,
+    )
+
+    rows = _chain_rows(1)
+    row = rows[0]
+    token = AdapterCapabilities(
+        has_ode_integration_surface=False,
+        has_prior_export=False,
+        has_state_export=False,
+        has_condition_injection=False,
+        has_restart_boundary=False,
+        has_continuous_channels=False,
+        has_discrete_channels=False,
+        has_trajectory_digest=False,
+        has_deterministic_seed=False,
+        has_materialization_route=False,
+        supported_channels=("xy",),
+        channel_domains={},
+    )
+    bundle = StateBundle(
+        channels={ChannelName("xy"): TensorRef("r")},
+        masks={},
+        batch_id="b",
+        sample_id="s",
+        reference_frame="pocket_centered",
+        normalization="per_atom_std",
+        source_round=0,
+        detach_proof=True,
+        native_state_digest="d",
+        provenance=("p",),
+        capability_token=token,
+    )
+    cp = Checkpoint(
+        bundle_format_version=DEFAULT_BUNDLE_FORMAT_VERSION,
+        engine_digest_seed="seed",
+        ledger_chain_head_hash=str(row.row_hash),
+        state_bundle=bundle,
+        last_round_trace=None,
+        last_ledger_row=row,
+        phase_state=None,
+        calibration_manifest_hash=None,
+        native_payload_paths={},
+        created_at=IsoTimestamp("2026-09-04T00:00:00Z"),
+        extras={},
+    )
+    path = tmp_path / "ckpt.json"
+    save_checkpoint(cp, path)
+    loaded = load_checkpoint(path)
+    result = verify_checkpoint_chain(loaded)
+    assert result.ok
+    assert result.head_hash == row.row_hash
+
+
+def test_verify_checkpoint_chain_rejects_external_head_drift(tmp_path) -> None:
+    """A checkpoint whose ``ledger_chain_head_hash`` does not match the
+    row's ``row_hash`` fails closed via ``verify_checkpoint_chain``."""
+    from adaptive_reflow.frame.ledger_chain import verify_checkpoint_chain
+    from adaptive_reflow.universal.checkpoint import (
+        DEFAULT_BUNDLE_FORMAT_VERSION,
+        Checkpoint,
+        IsoTimestamp,
+    )
+    from adaptive_reflow.universal.adapter import AdapterCapabilities
+    from adaptive_reflow.universal.state import (
+        ChannelName,
+        StateBundle,
+        TensorRef,
+    )
+
+    rows = _chain_rows(1)
+    row = rows[0]
+    token = AdapterCapabilities(
+        has_ode_integration_surface=False,
+        has_prior_export=False,
+        has_state_export=False,
+        has_condition_injection=False,
+        has_restart_boundary=False,
+        has_continuous_channels=False,
+        has_discrete_channels=False,
+        has_trajectory_digest=False,
+        has_deterministic_seed=False,
+        has_materialization_route=False,
+        supported_channels=("xy",),
+        channel_domains={},
+    )
+    bundle = StateBundle(
+        channels={ChannelName("xy"): TensorRef("r")},
+        masks={},
+        batch_id="b",
+        sample_id="s",
+        reference_frame="pocket_centered",
+        normalization="per_atom_std",
+        source_round=0,
+        detach_proof=True,
+        native_state_digest="d",
+        provenance=("p",),
+        capability_token=token,
+    )
+    cp = Checkpoint(
+        bundle_format_version=DEFAULT_BUNDLE_FORMAT_VERSION,
+        engine_digest_seed="seed",
+        ledger_chain_head_hash="0" * 64,  # intentionally mismatched
+        state_bundle=bundle,
+        last_round_trace=None,
+        last_ledger_row=row,
+        phase_state=None,
+        calibration_manifest_hash=None,
+        native_payload_paths={},
+        created_at=IsoTimestamp("2026-09-04T00:00:00Z"),
+        extras={},
+    )
+    result = verify_checkpoint_chain(cp)
+    assert not result.ok
+    assert "external_head_mismatch" in result.error
+
+
+def test_verify_checkpoint_chain_handles_empty_chain() -> None:
+    """A checkpoint without a ledger row returns ``(ok=True, error="empty_chain")``."""
+    from dataclasses import dataclass
+    from typing import Any
+
+    from adaptive_reflow.frame.ledger_chain import verify_checkpoint_chain
+
+    @dataclass
+    class _EmptyCP:
+        last_ledger_row: Any = None
+        ledger_chain_head_hash: str | None = None
+
+    result = verify_checkpoint_chain(_EmptyCP())
+    assert result.ok
+    assert result.error == "empty_chain"
+    assert result.head_hash is None

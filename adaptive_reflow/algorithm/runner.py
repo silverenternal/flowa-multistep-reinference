@@ -38,7 +38,7 @@ Tasks satisfied:
 """
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -1213,6 +1213,47 @@ class ReInferenceRunner:
         """Convenience alias of :meth:`run` (always uses a fresh :class:`Engine`)."""
         self._engine = Engine()
         return self.run(config)
+
+    # -- state persistence (P2-12) ----------------------------------------
+
+    def checkpoint_round(
+        self,
+        *,
+        round_trace: RoundTrace,
+        ledger_row: LedgerRow,
+        next_phase: PhaseState,
+        state_bundle_at_round_start: StateBundle,
+        engine_version: str,
+        path: "str | Path",
+        native_payload_paths: "Mapping[str, str] | None" = None,
+        calibration_manifest: Any | None = None,
+    ) -> Any:
+        """Persist a round's state to ``path`` via the engine.
+
+        Thin delegate over :meth:`Engine.checkpoint_round`. The runner
+        owns no extra logic — the engine is the single boundary at
+        which round artefacts become a :class:`Checkpoint`.
+        """
+        from pathlib import Path as _Path
+
+        return self._engine.checkpoint_round(
+            round_trace=round_trace,
+            ledger_row=ledger_row,
+            next_phase=next_phase,
+            state_bundle_at_round_start=state_bundle_at_round_start,
+            engine_version=engine_version,
+            path=_Path(path) if not isinstance(path, _Path) else path,
+            native_payload_paths=native_payload_paths,
+            calibration_manifest=calibration_manifest,
+        )
+
+    def resume_round(self, *, path: "str | Path") -> Any:
+        """Restore a :class:`Checkpoint` through the engine. Raises on tamper."""
+        from pathlib import Path as _Path
+
+        return self._engine.resume_round(
+            _Path(path) if not isinstance(path, _Path) else path
+        )
 
 
 # ---------------------------------------------------------------------------

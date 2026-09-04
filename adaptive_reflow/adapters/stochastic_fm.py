@@ -39,6 +39,7 @@ from adaptive_reflow.universal import (
 )
 from adaptive_reflow.universal.adapter import CapabilityMissingError
 from adaptive_reflow.universal.state import (
+    
     ChannelName,
     ODEConditionDelta,
     ODEIntegratorTrace,
@@ -46,6 +47,13 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
+
+from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
+    make_ref,
+    seed_from_ids,
+)
+
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -80,9 +88,13 @@ def _digest(*parts: Any) -> str:
 
 
 def _make_tensor_ref(label: str, **parts: Any) -> TensorRef:
-    """Build a deterministic ``TensorRef`` from ``label`` and a parts dict."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"sfm:{hashlib.sha256(blob).hexdigest()[:16]}")
+    """Build a deterministic ``TensorRef`` from ``label`` and a parts dict.
+
+    Byte-stable alias for ``adaptive_reflow.adapters._adapter_common.make_ref``
+    (P2-9). The ``"sfm"`` namespace is load-bearing for recorded trajectory
+    digests.
+    """
+    return make_ref("sfm", label, **parts)
 
 
 def _capabilities() -> AdapterCapabilities:

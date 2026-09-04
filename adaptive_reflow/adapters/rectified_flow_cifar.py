@@ -65,6 +65,7 @@ from adaptive_reflow.universal import (
     NoOpMixer,
 )
 from adaptive_reflow.universal.state import (
+    
     ChannelName,
     ODEConditionDelta,
     ODEIntegratorTrace,
@@ -72,6 +73,14 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
+
+from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
+    make_ref,
+    seed_from_ids,
+    memory_fraction_for,
+)
+
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -194,14 +203,12 @@ def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
 
 def _digest_state(payload: Mapping[str, Any]) -> str:
     """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
-    blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode("utf-8")
-    return hashlib.sha256(blob).hexdigest()
+    return digest_state(payload)
 
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Deterministic hash-stable :class:`TensorRef`."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"rf_cifar:image:{hashlib.sha256(blob).hexdigest()[:16]}")
+    return make_ref("rf_cifar:image", label, **parts)
 
 
 def _validate_state_shape(x: ArrayF64) -> ArrayF64:
@@ -792,19 +799,8 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
 
-        beta_raw = policy.beta_by_channel.get(ChannelName("image"))  # type: ignore[arg-type]
-        if beta_raw is None:
-            beta = 0.5
-            memory_fraction = 0.5
-        else:
-            beta = float(beta_raw)
-            memory_fraction = 1.0 - beta
-
-        prior_value = prior_entry.get("x0", prior_entry.get("x"))
-        if prior_value is None:
-            raise CapabilityMissingError(
-                "missing_endpoint_value", context=state.native_state_digest
-            )
+        beta, memory_fraction = memory_fraction_for(policy, ChannelName("image"))
+        prior_value = prior_entry["x0"]
         prior_x = np.asarray(prior_value, dtype=np.float64).reshape(
             RF_CIFAR_STATE_SHAPE
         )

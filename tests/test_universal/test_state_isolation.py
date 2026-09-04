@@ -105,7 +105,6 @@ class TestBatchIndependence:
             bundle = adapter.build_initial_state(
                 batch_id="batch-A",
                 sample_id=f"sample-{idx:03d}",
-                source_round=0,
             )
             # Each bundle MUST validate — this is the engine-level
             # structural invariant that isolation must not break.
@@ -138,7 +137,6 @@ class TestBatchIndependence:
             bundle = adapter.build_initial_state(
                 batch_id="b",
                 sample_id=sample_id,
-                source_round=0,
             )
             assert bundle.sample_id == sample_id
             seen_ids.add(sample_id)
@@ -185,7 +183,6 @@ class TestCleanupDoesNotLeak:
             adapter_a.build_initial_state(
                 batch_id="bA",
                 sample_id=f"s-{idx:03d}",
-                source_round=0,
             )
         adapter_a._drift = 999.0
 
@@ -196,7 +193,6 @@ class TestCleanupDoesNotLeak:
         bundle_b = adapter_b.build_initial_state(
             batch_id="bB",
             sample_id="s-fresh",
-            source_round=0,
         )
         # The fresh adapter must validate its own bundle cleanly.
         ok, errs = validate_state_bundle(bundle_b)
@@ -237,7 +233,6 @@ class TestConcurrentBuildInitialState:
             adapter.build_initial_state(
                 batch_id="batch-shared",
                 sample_id=f"sample-{idx:02d}",
-                source_round=0,
             )
             for idx in range(n)
         ]
@@ -290,10 +285,10 @@ class TestConcurrentBuildInitialState:
         adapter = ToyLinearAdapter()
 
         b1 = adapter.build_initial_state(
-            batch_id="b", sample_id="s", source_round=0
+            batch_id="b", sample_id="s"
         )
         b2 = adapter.build_initial_state(
-            batch_id="b", sample_id="s", source_round=0
+            batch_id="b", sample_id="s"
         )
 
         # Determinism.

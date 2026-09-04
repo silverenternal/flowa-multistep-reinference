@@ -36,6 +36,7 @@ from adaptive_reflow.universal import (
     NoOpMixer,
 )
 from adaptive_reflow.universal.state import (
+    
     ChannelName,
     ODEConditionDelta,
     ODEIntegratorTrace,
@@ -43,6 +44,13 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
+
+from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
+    make_ref,
+    seed_from_ids,
+)
+
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -84,8 +92,7 @@ def gauss_score(x: float, mean: float, stddev: float) -> float:
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Build a deterministic hash-stable TensorRef from ``label`` + parts."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"toy:gauss:{hashlib.sha256(blob).hexdigest()[:16]}")
+    return make_ref("toy:gauss", label, **parts)
 
 
 def _digest(*parts: Any) -> str:
@@ -291,15 +298,15 @@ class ToyGaussianAdapter(FlowMatchingODEAdapter):
     # 4. detach_and_validate_endpoint (always required)
     # ------------------------------------------------------------------
 
-    def detach_and_validate_endpoint(self, state: StateBundle) -> StateBundle:
-        if state.detach_proof is not True:
+    def detach_and_validate_endpoint(self, bundle: StateBundle) -> StateBundle:
+        if bundle.detach_proof is not True:
             raise CapabilityMissingError("detach_proof_must_be_true")
-        ok, errs = validate_state_bundle(state)
+        ok, errs = validate_state_bundle(bundle)
         if not ok:
             raise CapabilityMissingError(
                 "detach_proof_must_be_true", context=",".join(errs)
             )
-        return state
+        return bundle
 
     # ------------------------------------------------------------------
     # 5. apply_restart_distribution (required by has_restart_boundary=True)

@@ -107,6 +107,12 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 
+from adaptive_reflow.adapters._adapter_common import (
+    make_ref,
+    memory_fraction_for,
+)
+
+
 # ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
@@ -283,8 +289,7 @@ def _digest_state(payload: Mapping[str, Any]) -> str:
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Deterministic hash-stable :class:`TensorRef`."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"hidream_i1:{label}:{hashlib.sha256(blob).hexdigest()[:16]}")
+    return make_ref(f"hidream_i1:{label}", label, **parts)
 
 
 def _validate_state_shape(x: ArrayF64) -> ArrayF64:
@@ -1274,16 +1279,7 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=state.native_state_digest
             )
 
-        beta_raw = policy.beta_by_channel.get(ChannelName("image_latent"))  # type: ignore[arg-type]
-        if beta_raw is None:
-            # Fall back to the first non-None beta on the policy (some
-            # callers key on a non-image-latent channel name); this
-            # matches the RectifiedFlowCIFAR fallback behaviour.
-            beta = 0.5
-            memory_fraction = 0.5
-        else:
-            beta = float(beta_raw)
-            memory_fraction = 1.0 - beta
+        beta, memory_fraction = memory_fraction_for(policy, ChannelName("image_latent"))
 
         prior_x = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
             HIDREAM_I1_STATE_SHAPE

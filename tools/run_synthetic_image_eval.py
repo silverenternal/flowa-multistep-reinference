@@ -708,6 +708,15 @@ def run_synthetic_image_eval(
         "theorem_aligned_diagnostic": theorem_diagnostic,
         "wall_clock_seconds": float(time.perf_counter() - t0),
         "status": str(status),
+        # P1-6: additive eval_report block (typed shape). The legacy
+        # ``synthetic_image_theorem_aligned_report.v1`` shape is preserved
+        # verbatim; the new block carries ``eval_report.v1.0.0`` for
+        # consumers that opt into the typed shape.
+        "eval_report": _build_synthetic_eval_report(
+            framework_fid_per_round=framework_fid_per_round,
+            baseline_fid_per_round=baseline_fid_per_round,
+            n_rounds=len(framework_fid_per_round),
+        ),
     }
 
     # Use ``numpy`` types defensively in case ``framework_fid_per_round``
@@ -731,6 +740,65 @@ def _json_default(obj: Any) -> Any:
     if isinstance(obj, (np.floating, np.integer)):
         return obj.item()
     return str(obj)
+
+
+def _build_synthetic_eval_report(
+    *,
+    framework_fid_per_round: list[float],
+    baseline_fid_per_round: list[float],
+    n_rounds: int,
+) -> dict[str, Any]:
+    """Build the additive ``eval_report.v1.0.0`` block for the
+    synthetic-image path (P1-6).
+
+    Per-round FID semantics land under
+    ``metrics["fid"].diagnostics["per_round"]`` mirroring the
+    multi-round ``run_eval`` aggregation convention.
+    """
+    from adaptive_reflow.eval.result import (
+        EvalResult,
+        MetricResult,
+        SCHEMA_VERSION,
+    )
+
+    def _finite_or_nan(x: Any) -> float:
+        try:
+            v = float(x)
+        except (TypeError, ValueError):
+            return float("nan")
+        if v != v:
+            return float("nan")
+        return v
+
+    fw_per_round = [_finite_or_nan(x) for x in framework_fid_per_round]
+    base_per_round = [_finite_or_nan(x) for x in baseline_fid_per_round]
+    last_fw = fw_per_round[-1] if fw_per_round else float("nan")
+    is_finite = bool(last_fw == last_fw)
+    metric = MetricResult(
+        name="fid",
+        value=last_fw,
+        is_finite=is_finite,
+        marker=None if is_finite else "fid_insufficient_stats",
+        diagnostics={
+            "family": "inceptionv3_torchvision_IMAGENET1K_V1",
+            "per_round": {
+                "framework": fw_per_round,
+                "baseline": base_per_round,
+            },
+        },
+        n_samples=int(n_rounds),
+        feature_dim=2048,
+    )
+    eval_res = EvalResult(
+        adapter_id="tools.run_synthetic_image_eval",
+        dataset_id="synthetic_images",
+        metrics={"fid": metric},
+        missing_dependencies=(),
+        stderr_notes=(),
+        wall_clock_s=0.0,
+        schema_version=SCHEMA_VERSION,
+    )
+    return eval_res.to_dict()
 
 
 # ---------------------------------------------------------------------------

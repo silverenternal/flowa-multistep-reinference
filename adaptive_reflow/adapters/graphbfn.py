@@ -95,6 +95,11 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 
+from adaptive_reflow.adapters._adapter_common import (
+    make_ref,
+)
+
+
 # ---------------------------------------------------------------------------
 # Module-level constants
 # ---------------------------------------------------------------------------
@@ -241,8 +246,7 @@ def _digest_state(payload: Mapping[str, Any]) -> str:
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Deterministic hash-stable :class:`TensorRef` for GraphBFN."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"graphbfn:{label}:{hashlib.sha256(blob).hexdigest()[:16]}")
+    return make_ref(f"graphbfn:{label}", label, **parts)
 
 
 def _memory_fraction_for(policy: RestartPolicy, channel: ChannelName) -> float:

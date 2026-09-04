@@ -2064,3 +2064,230 @@ def test_engine_apply_schedule_beta_override_disabled_when_both_flags_false() ->
         audit_codes=[],
     )
     assert applied is original
+
+
+# ---------------------------------------------------------------------------
+# Tests: P2-12 — state persistence / checkpointing
+# ---------------------------------------------------------------------------
+
+
+def test_engine_checkpoint_round_and_resume(tmp_path) -> None:
+    """Engine.checkpoint_round + resume_round round-trip via a tiny bundle."""
+    from adaptive_reflow.universal.checkpoint import (
+        DEFAULT_BUNDLE_FORMAT_VERSION,
+    )
+    from adaptive_reflow.universal.state import (
+        StateBundle,
+        ChannelName,
+        TensorRef,
+    )
+
+    engine = Engine()
+    caps = ReferenceFlowAAdapter().capabilities()
+    bundle = StateBundle(
+        channels={ChannelName("coordinate"): TensorRef("r")},
+        masks={},
+        batch_id="b",
+        sample_id="s",
+        reference_frame="pocket_centered",
+        normalization="per_atom_std",
+        source_round=0,
+        detach_proof=True,
+        native_state_digest="d",
+        provenance=("p",),
+        capability_token=caps,
+    )
+    rt = RoundTrace(
+        round_index=0,
+        operation_steps=("build_initial_state", "solve_ode"),
+        source_bundle_digest="d",
+        applied_policy_hash="p",
+        initial_state_digest="d",
+        condition_digest="c",
+        integrator_trace=None,
+        endpoint_digest="e",
+        detached=True,
+        audit_codes=(),
+        extras={},
+    )
+    from adaptive_reflow.frame.engine import build_ledger_row
+
+    lr = build_ledger_row(
+        round_index=0,
+        policy_hash="p",
+        bundle_digest="d",
+        source_round=0,
+        applied_policy_hash="p",
+        audit_codes=(),
+        per_channel_decision={"coordinate": True},
+        prev_ledger_row_hash=None,
+    )
+    ps = PhaseState(
+        outer_cycle_id=0,
+        round_in_cycle=0,
+        schedule_phase="init",
+        schedule_phase_index=0,
+        horizon_remaining=10,
+        seed_lineage_digest="d",
+        recorded_at_round=0,
+    )
+    cp = engine.checkpoint_round(
+        round_trace=rt,
+        ledger_row=lr,
+        next_phase=ps,
+        state_bundle_at_round_start=bundle,
+        engine_version="test-engine",
+        path=tmp_path / "ckpt.json",
+    )
+    assert cp.ledger_chain_head_hash == lr.row_hash
+    assert cp.bundle_format_version == DEFAULT_BUNDLE_FORMAT_VERSION
+    loaded = engine.resume_round(tmp_path / "ckpt.json")
+    assert loaded.state_bundle.native_state_digest == "d"
+    assert loaded.ledger_chain_head_hash == lr.row_hash
+
+
+def test_engine_resume_rejects_tampered_chain(tmp_path) -> None:
+    """Engine.resume_round raises CheckpointError on a tampered ledger row hash."""
+    from adaptive_reflow.universal.checkpoint import CheckpointError
+    from adaptive_reflow.universal.state import (
+        StateBundle,
+        ChannelName,
+        TensorRef,
+    )
+    from adaptive_reflow.frame.engine import build_ledger_row
+
+    engine = Engine()
+    caps = ReferenceFlowAAdapter().capabilities()
+    bundle = StateBundle(
+        channels={ChannelName("coordinate"): TensorRef("r")},
+        masks={},
+        batch_id="b",
+        sample_id="s",
+        reference_frame="pocket_centered",
+        normalization="per_atom_std",
+        source_round=0,
+        detach_proof=True,
+        native_state_digest="d",
+        provenance=("p",),
+        capability_token=caps,
+    )
+    rt = RoundTrace(
+        round_index=0,
+        operation_steps=("build_initial_state", "solve_ode"),
+        source_bundle_digest="d",
+        applied_policy_hash="p",
+        initial_state_digest="d",
+        condition_digest="c",
+        integrator_trace=None,
+        endpoint_digest="e",
+        detached=True,
+        audit_codes=(),
+        extras={},
+    )
+    lr = build_ledger_row(
+        round_index=0,
+        policy_hash="p",
+        bundle_digest="d",
+        source_round=0,
+        applied_policy_hash="p",
+        audit_codes=(),
+        per_channel_decision={"coordinate": True},
+        prev_ledger_row_hash=None,
+    )
+    ps = PhaseState(
+        outer_cycle_id=0,
+        round_in_cycle=0,
+        schedule_phase="init",
+        schedule_phase_index=0,
+        horizon_remaining=10,
+        seed_lineage_digest="d",
+        recorded_at_round=0,
+    )
+    path = tmp_path / "ckpt.json"
+    engine.checkpoint_round(
+        round_trace=rt,
+        ledger_row=lr,
+        next_phase=ps,
+        state_bundle_at_round_start=bundle,
+        engine_version="test-engine",
+        path=path,
+    )
+    # Tamper: flip one byte of the row's hash in the saved JSON.
+    real_hash = lr.row_hash
+    text = path.read_text(encoding="utf-8")
+    bad_text = text.replace(real_hash, "0" * len(real_hash))
+    path.write_text(bad_text, encoding="utf-8")
+    with pytest.raises(CheckpointError):
+        engine.resume_round(path)
+
+
+def test_engine_checkpoint_round_persists_to_disk(tmp_path) -> None:
+    """Engine.checkpoint_round writes a file that ``load_checkpoint`` can read."""
+    from adaptive_reflow.universal.checkpoint import load_checkpoint
+    from adaptive_reflow.universal.state import (
+        StateBundle,
+        ChannelName,
+        TensorRef,
+    )
+    from adaptive_reflow.frame.engine import build_ledger_row
+
+    engine = Engine()
+    caps = ReferenceFlowAAdapter().capabilities()
+    bundle = StateBundle(
+        channels={ChannelName("coordinate"): TensorRef("r")},
+        masks={},
+        batch_id="b",
+        sample_id="s",
+        reference_frame="pocket_centered",
+        normalization="per_atom_std",
+        source_round=0,
+        detach_proof=True,
+        native_state_digest="d",
+        provenance=("p",),
+        capability_token=caps,
+    )
+    rt = RoundTrace(
+        round_index=0,
+        operation_steps=("build_initial_state",),
+        source_bundle_digest="d",
+        applied_policy_hash="p",
+        initial_state_digest="d",
+        condition_digest="c",
+        integrator_trace=None,
+        endpoint_digest="e",
+        detached=True,
+        audit_codes=(),
+        extras={},
+    )
+    lr = build_ledger_row(
+        round_index=0,
+        policy_hash="p",
+        bundle_digest="d",
+        source_round=0,
+        applied_policy_hash="p",
+        audit_codes=(),
+        per_channel_decision={"coordinate": True},
+        prev_ledger_row_hash=None,
+    )
+    ps = PhaseState(
+        outer_cycle_id=0,
+        round_in_cycle=0,
+        schedule_phase="init",
+        schedule_phase_index=0,
+        horizon_remaining=10,
+        seed_lineage_digest="d",
+        recorded_at_round=0,
+    )
+    path = tmp_path / "ckpt.json"
+    engine.checkpoint_round(
+        round_trace=rt,
+        ledger_row=lr,
+        next_phase=ps,
+        state_bundle_at_round_start=bundle,
+        engine_version="test-engine",
+        path=path,
+    )
+    assert path.exists()
+    loaded = load_checkpoint(path)
+    assert loaded.state_bundle.batch_id == "b"
+    assert loaded.ledger_chain_head_hash == lr.row_hash

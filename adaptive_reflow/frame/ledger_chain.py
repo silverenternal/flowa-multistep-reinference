@@ -50,6 +50,7 @@ __all__ = [
     "LedgerChain",
     "LedgerChainError",
     "ParallelLedgerChain",
+    "verify_checkpoint_chain",
     "verify_ledger_chain_incremental",
 ]
 
@@ -334,3 +335,74 @@ class ParallelLedgerChain:
         for rid in sorted(self._rows):
             chain.append(self._rows[rid])
         return chain
+
+
+def verify_checkpoint_chain(checkpoint: Any, *, path: str | None = None) -> "ChainVerification":
+    """Validate that ``checkpoint``'s ledger row sits at the chain head.
+
+    Walks the row's ``prev_ledger_row_hash`` linkage by replaying
+    :func:`~adaptive_reflow.frame.engine.verify_ledger_chain`. Pass
+    ``path=checkpoint.ledger_chain_head_hash`` to assert that the
+    external persistence layer (file/socket) observed the same head.
+
+    Returns the same :class:`ChainVerification` shape used by
+    :meth:`LedgerChain.verify_full`. The function is total: an empty
+    checkpoint (no ledger row) returns ``(ok=True, error="empty_chain")``
+    so callers can distinguish "no chain yet" from "tampered".
+
+    Parameters
+    ----------
+    checkpoint:
+        A :class:`~adaptive_reflow.universal.checkpoint.Checkpoint`
+        (any object exposing ``last_ledger_row`` and
+        ``ledger_chain_head_hash`` will do).
+    path:
+        Optional external head hash to compare against
+        ``checkpoint.ledger_chain_head_hash``. When supplied and
+        mismatched the function returns ``error="external_head_mismatch"``
+        with ``ok=False``.
+    """
+    if checkpoint is None or getattr(checkpoint, "last_ledger_row", None) is None:
+        return ChainVerification(
+            ok=True,
+            error="empty_chain",
+            length=0,
+            head_hash=None,
+            hash_computations=0,
+        )
+    row = checkpoint.last_ledger_row
+    chain_ok, chain_msg = verify_ledger_chain((row,))
+    head = str(row.row_hash)
+    declared_head = getattr(checkpoint, "ledger_chain_head_hash", None)
+    declared_digest = "" if declared_head is None else str(declared_head)
+    if declared_digest and declared_digest != head:
+        return ChainVerification(
+            ok=False,
+            head_hash=head,
+            error="external_head_mismatch",
+            length=1,
+            hash_computations=1,
+        )
+    if path is not None and str(path) != declared_digest:
+        return ChainVerification(
+            ok=False,
+            head_hash=head,
+            error="external_head_mismatch",
+            length=1,
+            hash_computations=1,
+        )
+    if not chain_ok:
+        return ChainVerification(
+            ok=False,
+            head_hash=head,
+            error=str(chain_msg),
+            length=1,
+            hash_computations=1,
+        )
+    return ChainVerification(
+        ok=True,
+        error="",
+        head_hash=head,
+        length=1,
+        hash_computations=1,
+    )

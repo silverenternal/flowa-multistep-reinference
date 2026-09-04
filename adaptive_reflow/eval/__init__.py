@@ -164,6 +164,15 @@ from .w2 import (
     compute_w2,
 )
 
+# P1-6: unified eval orchestrator + typed result shape.
+from .result import (  # noqa: E402
+    SCHEMA_VERSION,
+    EvalResult,
+    MetricKind,
+    MetricResult,
+)
+from .run_eval import run_eval  # noqa: E402
+
 # Note: ``PosteriorSelectionEvaluator`` is the deprecated alias for
 # :class:`EvidenceScaleGapMetric`. Accessing it on
 # ``adaptive_reflow.eval.posterior_selection_evaluator`` triggers a

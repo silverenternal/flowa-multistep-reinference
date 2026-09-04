@@ -257,6 +257,15 @@ SUPPORTED_DATASETS: tuple[str, ...] = (
 #: REOS L1) entries are unchanged.
 OUTPUT_SCHEMA_VERSION: str = "1.4.0"
 
+# P1-6: additive eval_report block. We import lazily inside the
+# ``_build_eval_report_block`` helper below to keep import-cost low;
+# the canonical surface (result.py + run_eval.py) was added in P1-6
+# without changing the legacy 50-key ``OUTPUT_SCHEMA_VERSION = "1.4.0"``
+# JSON shape. Consumers that ignore unknown keys are unaffected; the
+# HiDream / lumina subprocess consumers are far downstream and parse
+# a different module's flat dict.
+EVAL_REPORT_SCHEMA_VERSION: str = "eval_report.v1.0.0"
+
 #: ``flowmol3_paper_metrics.marker`` vocabulary (closed set).
 #: ``not_requested`` — the caller did not ask for the block (or the
 #: auto-gate decided the input does not look like a FlowMol3 sample
@@ -1884,6 +1893,53 @@ def _safe_dataset_tag(raw: str | None) -> str:
     return raw if raw in SUPPORTED_DATASETS else "unknown"
 
 
+def _build_eval_report_block(
+    *,
+    adapter: Any,
+    dataset_id: str,
+    metric_values: Mapping[str, float | None],
+    diagnostics: Mapping[str, Mapping[str, Any]],
+    missing_dependencies: Sequence[str],
+    stderr_notes: Sequence[str],
+    wall_clock_s: float,
+) -> dict[str, Any]:
+    """Build the additive ``eval_report.v1.0.0`` block (P1-6).
+
+    The legacy 50-key ``OUTPUT_SCHEMA_VERSION = "1.4.0"`` dict shape
+    is preserved verbatim. This helper is the only new emit surface;
+    consumers that ignore unknown keys see no change.
+    """
+    from adaptive_reflow.eval.result import (
+        EvalResult,
+        MetricResult,
+        SCHEMA_VERSION,
+    )
+
+    metric_results: dict[str, MetricResult] = {}
+    for name, value in metric_values.items():
+        diag = dict(diagnostics.get(name, {}))
+        v = float("nan") if value is None else float(value)
+        metric_results[name] = MetricResult(
+            name=name,
+            value=v,
+            is_finite=bool(v == v),  # not NaN
+            marker=None if (v == v) else "stub_unavailable",
+            diagnostics=diag,
+            n_samples=int(diag.get("n_samples", 0)),
+            feature_dim=int(diag.get("feature_dim", 0)),
+        )
+    result = EvalResult(
+        adapter_id=str(adapter),
+        dataset_id=str(dataset_id),
+        metrics=metric_results,
+        missing_dependencies=tuple(missing_dependencies),
+        stderr_notes=tuple(stderr_notes),
+        wall_clock_s=float(wall_clock_s),
+        schema_version=SCHEMA_VERSION,
+    )
+    return result.to_dict()
+
+
 def evaluate(
     *,
     input_path: Path,
@@ -1989,6 +2045,29 @@ def evaluate(
             "avg_num_components": NAN,
             "missing_dependencies": missing,
             "stderr_notes": notes,
+            # P1-6: additive eval_report block (typed shape).
+            "eval_report": _build_eval_report_block(
+                adapter="mol_eval_no_rdkit_path",
+                dataset_id=_safe_dataset_tag(dataset),
+                metric_values={
+                    "validity": NAN,
+                    "qed": NAN,
+                    "sa": NAN,
+                    "logp": NAN,
+                    "fcd": NAN,
+                    "pb_validity": NAN,
+                    "pb_validity_mmff": NAN,
+                    "fg_deviation": NAN,
+                    "fg_deviation_eq4": None,
+                    "flowmol3_paper_metrics": None,
+                    "atom_stability": NAN,
+                    "connectivity": NAN,
+                },
+                diagnostics={},
+                missing_dependencies=missing,
+                stderr_notes=notes,
+                wall_clock_s=0.0,
+            ),
         }
 
     smiles, mols = _normalize_items(items)
@@ -2121,6 +2200,56 @@ def evaluate(
         "avg_num_components": float(avg_num_components),
         "missing_dependencies": missing,
         "stderr_notes": notes,
+        # P1-6: additive eval_report block (typed shape).
+        "eval_report": _build_eval_report_block(
+            adapter="tools.run_mol_eval.evaluate",
+            dataset_id=_safe_dataset_tag(dataset),
+            metric_values={
+                "validity": float(validity),
+                "qed": float(qed),
+                "sa": float(sa),
+                "logp": float(logp),
+                "fcd": float(fcd_value),
+                "pb_validity": (
+                    float(pb_validity.get("value", NAN))
+                    if isinstance(pb_validity, dict)
+                    else float(pb_validity) if pb_validity is not None else NAN
+                ),
+                "pb_validity_mmff": (
+                    float(pb_validity_mmff.get("value", NAN))
+                    if isinstance(pb_validity_mmff, dict)
+                    else float(pb_validity_mmff) if pb_validity_mmff is not None else NAN
+                ),
+                "fg_deviation": float(fg_dev_value),
+                "fg_deviation_eq4": (
+                    None if (fg_eq4_value is None)
+                    else float(fg_eq4_value)
+                ),
+                "flowmol3_paper_metrics": (
+                    flowmol3_block.get("value") if isinstance(flowmol3_block, dict) else None
+                ),
+                "atom_stability": float(frac_atoms_stable),
+                "connectivity": float(frac_connected),
+            },
+            diagnostics={
+                "validity": {"feature_dim": 0, "n_samples": int(n_total)},
+                "qed": {"feature_dim": 0, "n_samples": int(n_total)},
+                "sa": {"feature_dim": 0, "n_samples": int(n_total)},
+                "logp": {"feature_dim": 0, "n_samples": int(n_total)},
+                "fcd": {"feature_dim": 0, "n_samples": int(n_total)},
+                "fg_deviation_eq4": {"feature_dim": 0, "n_samples": int(n_total)},
+                "flowmol3_paper_metrics": {
+                    "marker": (
+                        flowmol3_block.get("marker")
+                        if isinstance(flowmol3_block, dict)
+                        else None
+                    ),
+                },
+            },
+            missing_dependencies=missing,
+            stderr_notes=notes,
+            wall_clock_s=0.0,
+        ),
     }
 
 

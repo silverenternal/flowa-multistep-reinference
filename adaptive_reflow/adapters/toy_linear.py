@@ -27,6 +27,7 @@ from adaptive_reflow.universal import (
     RestartMixer,
 )
 from adaptive_reflow.universal.state import (
+    
     ChannelName,
     ODEConditionDelta,
     ODEIntegratorTrace,
@@ -34,6 +35,11 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
+
+from adaptive_reflow.adapters._adapter_common import (
+    make_ref,
+)
+
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -53,8 +59,7 @@ NATIVE_CONFIG_VERSION = "1.0.0"
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Build a deterministic hash-stable TensorRef from ``label`` + parts."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(f"toy:{hashlib.sha256(blob).hexdigest()[:16]}")
+    return make_ref("toy", label, **parts)
 
 
 # ---------------------------------------------------------------------------
@@ -112,13 +117,11 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
 
     def build_initial_state(
         self,
+        *,
         batch_id: str,
         sample_id: str,
-        *,
-        source_round: int = 0,
     ) -> StateBundle:
-        if source_round < 0:
-            raise ValueError("source_round_must_be_non_negative")
+        source_round = 0
         bundle = StateBundle(
             channels={
                 ChannelName("x"): _make_ref(
@@ -159,15 +162,15 @@ class ToyLinearAdapter(FlowMatchingODEAdapter):
     # 4. detach_and_validate_endpoint (always required)
     # ------------------------------------------------------------------
 
-    def detach_and_validate_endpoint(self, state: StateBundle) -> StateBundle:
-        if state.detach_proof is not True:
+    def detach_and_validate_endpoint(self, bundle: StateBundle) -> StateBundle:
+        if bundle.detach_proof is not True:
             raise CapabilityMissingError("detach_proof_must_be_true")
-        ok, errs = validate_state_bundle(state)
+        ok, errs = validate_state_bundle(bundle)
         if not ok:
             raise CapabilityMissingError(
                 "detach_proof_must_be_true", context=",".join(errs)
             )
-        return state
+        return bundle
 
     # ------------------------------------------------------------------
     # 5. apply_restart_distribution (required by has_restart_boundary=False → not used)

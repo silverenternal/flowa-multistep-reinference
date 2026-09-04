@@ -247,6 +247,29 @@ when produced. The "FID math family" column pins the canonical
 the pytorch-fid inline TF-port path routes through the same scipy call, not a separate
 implementation.
 
+**P1-6 eval pipeline unification** (additive `eval_report.v1.0.0` block).
+Post-P1-6, every eval CLI emits an additive typed block under a top-level
+``"eval_report"`` (mol / RF-CIFAR baselines) or ``"eval_reports"`` (per-row,
+sota-cifar) key. The block is a JSON-friendly ``EvalResult`` /
+``MetricResult`` shape (see :mod:`adaptive_reflow.eval.result`); the legacy
+JSON shapes (``OUTPUT_SCHEMA_VERSION = "1.4.0"`` at
+``tools/run_mol_eval.py``, ``baseline_summary.json``, ``summary.json``,
+``img_eval_report.v1``, ``synthetic_image_theorem_aligned_report.v1``) are
+preserved verbatim. The new orchestrator
+:func:`adaptive_reflow.eval.run_eval.run_eval` is the single canonical
+entry point with per-metric dep-isolation (a ``metric="fid"`` call does
+NOT trigger the RDKit / posebusters / fcd probes). The mol path stays on
+the legacy 50-key dict because the legacy subprocess consumers
+(``tools/run_sota_flowmol3_v2_adapter_experiment``,
+``tools/run_rf_cifar_ablation``) still import
+``tools.run_mol_eval.compute_flowmol3_paper_metrics`` /
+``_compute_fg_deviation_eq4_block`` and
+``tools.eval_rf_cifar.{compute_fid, extract_inception_features,
+random_inception_features, PUBLISHED_BASELINE_FID, run_baseline}``. The
+HiDream / lumina subprocess consumers parse the flat-dict JSON shape
+unchanged; the new ``--emit-eval-report`` flag in
+``tools/run_image_eval.py`` is opt-in.
+
 **Remaining variance sources** (from synth verdict):
 - Framework `MnistFmAdapter` cannot load the `smol-rectified-flow` ADM UNet (205-tensor
   class-conditional state_dict vs framework's 20-tensor NumPy U-Net). Fix: extend the adapter's
