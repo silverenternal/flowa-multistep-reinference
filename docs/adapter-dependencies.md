@@ -171,3 +171,50 @@ theory is part of the project venv's universal layer and is hashed by
 1. Add/remove a dep above.
 2. Re-run: `python scripts/capture_env_hash.py capture`
 3. Commit `env_hash.txt` alongside the change.
+
+## HuggingFace Hub upload pipeline (Wave 38 / R-3)
+
+`tools/hf_pipeline.py` + the convenience wrapper
+`scripts/upload_model_card.py` upload each `docs/models/M.model_card.md`
+to a HuggingFace Hub `<user>/M` repo. This closes
+**Papers-with-Code ML Code Completeness Checklist item (d)** (F.7) and
+adds the YAML metadata block (F.8) per the Wave 32 Agent B audit.
+
+### Pipeline deps
+
+- `huggingface_hub>=0.20` — `HfApi.create_repo` + `upload_file`. Already
+  in the framework's CI venv (declared transitive of `diffusers`); the
+  upload script does a **lazy import** so `--help` and `--upload-dry-run`
+  work on environments that lack it. NOT in the framework core's
+  hard-required set: the upload is a release-time tool, not a runtime
+  adapter dep, so the F.5 env_hash capture does not fold it in.
+
+### CLI usage
+
+```bash
+# Validate + render-only (no HF Hub contact; no token required).
+.venvs/flowmol3_venv/bin/python tools/hf_pipeline.py \
+    --model kanzi --repo-id flowa-test/kanzi --upload-dry-run
+
+# Real upload (requires `huggingface-cli login` OR `$HF_TOKEN`).
+.venvs/flowmol3_venv/bin/python tools/hf_pipeline.py \
+    --model lineageflow --repo-id <your-hf-user>/lineageflow
+```
+
+### Per-card YAML schema source
+
+The `MODEL_METADATA` dict in `tools/hf_pipeline.py` is the single
+source of truth for `library_name`, `pipeline_tag`, `license`,
+`tags`, `datasets`. Adding a new integration = appending one entry
+(no per-card file to maintain). Mirrors the SciMLBenchmarks.jl
+`benchmark_attributes.jl` pattern.
+
+### Editing protocol (HF Hub pipeline)
+
+1. Add a new model to `tools/hf_pipeline.py:MODEL_METADATA`.
+2. Author `docs/models/<model>.model_card.md` (Mitchell/Gebru 8 fields,
+   Wave 24 Agent A F.4 schema).
+3. Run the upload pipeline in `--upload-dry-run` first; verify the
+   rendered README.md with `--render-only --output /tmp/<model>_README.md`
+   and `git diff` (the local card is the source of truth).
+4. Trigger the real upload with `huggingface-cli login` set up.

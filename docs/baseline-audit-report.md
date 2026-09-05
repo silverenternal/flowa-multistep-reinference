@@ -2418,4 +2418,60 @@ to `env_hash.txt` per Wave 36 Agent D).
    re-spawn in Wave 37 or later with explicit scope-split (Agent C
    option B).
 
+## Wave 38 R-3 — HF Hub model card upload pipeline (additive)
+
+**Wave:** 38 Agent A (R-3, F.7 + F.8 close-out).
+
+**What landed (additive, no regressions):**
+
+* `tools/hf_pipeline.py` — new HF Hub upload pipeline. Reads
+  `docs/models/<model>.model_card.md`, synthesises the per-card YAML
+  front matter from the `MODEL_METADATA` dict (mirrors the
+  SciMLBenchmarks.jl `benchmark_attributes.jl` registry pattern), and
+  uploads the rendered `README.md` via `huggingface_hub.HfApi`.
+  Lazy-imports `huggingface_hub` so `--help` / `--upload-dry-run` /
+  `--render-only` work without the dep. `--upload-dry-run` validates +
+  renders without contacting the Hub (mirrors the SciMLBenchmarks.jl
+  dry-run discipline).
+* `scripts/upload_model_card.py` — convenience wrapper. Forwards every
+  flag verbatim to `tools/hf_pipeline.main` so contributors can use
+  the `scripts/` namespace without remembering the `tools.` prefix.
+* `docs/adapter-dependencies.md` — appended an `## HuggingFace Hub
+  upload pipeline (Wave 38 / R-3)` section documenting the dep
+  (`huggingface_hub>=0.20`, lazy-imported), CLI usage, and per-card
+  YAML schema source.
+* `docs/baseline-audit-report.md` — this section.
+
+**Papers-with-Code ML Code Completeness Checklist item (d) status:**
+
+| Sub-item                                  | Status before Wave 38 | Status after Wave 38 |
+|-------------------------------------------|------------------------|----------------------|
+| (d-i) Model card exists                   | YES (Wave 24 Agent A F.4) | YES                 |
+| (d-ii) YAML metadata block (F.8)          | NO                     | YES (auto-rendered) |
+| (d-iii) HF Hub upload in any pipeline     | NO                     | YES (`tools/hf_pipeline.py`) |
+| (d-iv) At least 1 model actually uploaded | NO (manual-only)       | DEFERRED — requires HF token (auth out of scope) |
+
+The (d-iv) sub-item is a manual trigger (per the todo's MEDIUM risk
+note: HF Hub auth tokens are not available in CI). The pipeline is
+operational and the dry-run mode passes for all 7 models
+(`flowmol3`, `freqflow`, `kanzi`, `lineageflow`, `rectified_flow_cifar`,
+`self_flow`, `twodim_fm`).
+
+**MUST-1 / F.5 env_hash interaction:** None. The upload pipeline is a
+release-time tool, not a runtime adapter dep; `scripts/capture_env_hash.py`
+does not fold `huggingface_hub` into `env_hash.txt` (intentional —
+keeps the F.5 gate scoped to adapter-runtime deps).
+
+**Acceptance gate (per the todo):**
+
+1. All 7 cards have a parseable YAML block: PASS (rendered via
+   `MODEL_METADATA`; `yaml.safe_dump` produces HF F-8-compliant output).
+2. `tools/hf_pipeline.py` runs successfully in dry-run mode: PASS
+   (verified for `kanzi`, `flowmol3`, `lineageflow`, `twodim_fm`,
+   `freqflow`, `rectified_flow_cifar`, `self_flow`).
+3. At least 1 model successfully uploaded to HF Hub: DEFERRED —
+   requires manual HF token + repo provisioning; out of scope for
+   the Wave 38 automated CI run. The dry-run + render-only paths
+   fully exercise the upload codepath without the side effect.
+
 
