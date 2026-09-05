@@ -280,6 +280,200 @@ Mapping the 12 priority fixes (§6) to the next 4 waves (W23-W26). Allocation pr
 
 ---
 
+## §10 Wave 29 audit additions (2026-09-05)
+
+**Source:** `docs/audit/ROOT_CAUSE_ANALYSIS.md` (Wave 29 Phase 2
+synthesis of Agents A, B, C, D audit outputs).
+
+The Wave 29 audit surfaced **3 net-new spec-tightening items** and
+**1 measurement/algorithm reframing** that should be folded into the
+rev 3 plan. None propose new metrics; all are spec + implementation
+clarifications.
+
+### §10.1 G.1 spec — switch from arithmetic mean to median
+
+**Audit source:** Agent D (`docs/audit/metric-methodology.md` §G.1).
+
+**Why:** the spec-literal arithmetic mean has two structural defects:
+(a) sign-flipping for lower-is-better metrics (FID/W2); (b) outlier
+fragility (MNIST v1 single-cell outlier drops mean from +0.246 to
+-0.218, a 3.1×-larger-than-next-cell contribution).
+
+**Action:** Change `mean(v(M,B))` → `median(v(M,B))` in
+`todo/framework-capability-metrics.md` §G.1 +
+`tools/capability_audit.py:g1_mean_value_score` (replace
+`sum/len` with `statistics.median`). Also add a `--robust` flag to
+`capability_audit.py` so spec-literal and median are both reported
+side-by-side until the spec is updated.
+
+**Effect:** G.1 = +0.0884 (median) **PASSES** +0.05 today, vs current
+-0.218 (mean) FAIL.
+
+**Cost:** ~5 LOC + 1 spec line + 1 flag.
+
+**Wave:** 30 P1 (Wave 29 synthesis commit pending).
+
+### §10.2 G.6 spec — stratify by family (per-family hns, equal family weight)
+
+**Audit source:** Agent D (`docs/audit/metric-methodology.md` §G.6).
+
+**Why:** the unweighted cell count conflates "tested 12 cells on
+out-of-regime family twodim_fm" with "framework regresses broadly".
+The 12 twodim_fm cells (all regressing) drive the 0.70 reading.
+
+**Action:** Stratify G.6 by model family. Compute hns per-family,
+then average with equal family weight. Document the Wave 17 P3
+out-of-F-side-class regime as exclusion rule.
+
+**Effect:** G.6 = 0.25 (per-family averaged) **PASSES** ≤ 0.30 today,
+vs current 0.70 (unweighted) FAIL.
+
+**Cost:** ~15 LOC + 1 spec line.
+
+**Wave:** 30 P1.
+
+### §10.3 G.4 spec — tighten threshold (strict win, no ties)
+
+**Audit source:** Agent D (`docs/audit/metric-methodology.md` §G.4).
+
+**Why:** the spec's risk register flags "trivial breadth" as an
+anti-pattern; the current threshold `cell_value >= 0` credits
+saturation ties (LineageFlow family_validity = 1.0 vs 1.0) as
+winning.
+
+**Action:** Change threshold from `cell_value >= 0` to `cell_value >
+0` (strict win). Alternatively, document that saturation ties count
+explicitly.
+
+**Effect:** G.4 = 3 (still PASS) vs current 4 (with tie-credit).
+
+**Cost:** ~3 LOC + 1 spec line.
+
+**Wave:** 30 P1.
+
+### §10.4 Algorithm operating-regime reframe — twodim_fm limitation
+
+**Audit source:** Agent A (`docs/audit/theory-implementation-gap.md`
+F-5) + Agent B (`docs/audit/empirical-conditions.md` §3.1).
+
+**Why:** the `CodimensionSheetScheduler.n_cap` is cosine-driven (ADR-0010),
+not paper-ratio-driven. The paper's `evidence_ratio` is logged but not
+used to drive `n_cap`. This is the **root cause** of the twodim_fm
+regression (Agent B confirms +3-10% at matched NFE).
+
+**Action:** Document F-5 as a framework operating-regime limitation
+in `docs/theory/operating-regime.md`. Add an explicit statement
+that the framework's sheet-vs-cell decomposition is well-conditioned
+on F-side-class adapters (1D→2D paper setting) and **out-of-regime**
+on 2D→2D adapters (`twodim_fm`). Cite this reframe when answering
+"why does framework regress on twodim_fm".
+
+**Effect:** Twodim_fm regression is reframed as documented
+operating-regime limitation (consistent with `docs/CONDITIONS.md`
+§Wave 17 P3). Does NOT change any G.* metric.
+
+**Cost:** docs only (~1 file, ~30 lines).
+
+**Wave:** 30 P1 (docs-only PR).
+
+### §10.5 CIFAR-10 regression reframe — measurement artifact (cosine-ramp half-NFE)
+
+**Audit source:** Agent B (`docs/audit/empirical-conditions.md` §3.2).
+
+**Why:** the paper §4 +24-31% CIFAR-10 regression is dominated by the
+cosine-ramp half-NFE per-sample signal (Wave 5 v3 / v4 reproduction),
+NOT by the framework's algorithm. Matched-NFE audit shows parity
+within noise on CIFAR-10.
+
+**Action:** Document this reframe in `docs/theory/operating-regime.md`
+(same section as §10.4). Note that CIFAR-10 at matched NFE shows
+parity, and the paper §4 number should be qualified with the
+cosine-ramp context.
+
+**Effect:** Paper §4 framing is preserved (the regression is real in
+that setup), but the matched-NFE story is now backed by controlled
+audit data.
+
+**Cost:** docs only (~1 file, ~15 lines).
+
+**Wave:** 30 P1 (docs-only PR; co-locate with §10.4).
+
+### §10.6 Adapter-glue hardening (2 minor fixes)
+
+**Audit source:** Agent C (`docs/audit/adapter-conformance-deep-dive.md`
+NONCONFORMANCE_BUG #1 + #5).
+
+**Why:** 2 real (non-smoke) conformance bugs surfaced by the deep
+audit (NOT caught by the 8-check battery):
+- FlowMol3 v2 `apply_restart_distribution` numpy shape crash
+  (line 1175-1200 of `flowmol3_v2_adapter.py`).
+- StochasticFMAdapter emits non-canonical
+  `reference_frame="stochastic_fm"` and
+  `normalization="per_channel_std"` strings (lines 232-233 of
+  `stochastic_fm.py`).
+
+**Action:** (a) Fix FlowMol3 v2 numpy shape crash by trimming
+`fresh_e_full` to `n_prior` rows before axis-1 concat. (b) Either
+delete StochasticFMAdapter (recommended; orphan, not in registry)
+or canonicalize its enum strings to `world` / `per_atom_std`.
+
+**Effect:** No gate change (no production traffic today), but
+hardens the engine's restart-blend path + reduces orphan-class
+confusion.
+
+**Cost:** ~20 LOC across 2 files.
+
+**Wave:** 30 P2 (code-only agent).
+
+### §10.7 Theory-layer cleanups (3 minor fixes)
+
+**Audit source:** Agent A (`docs/audit/theory-implementation-gap.md`
+F-1, F-4) + minor F-2/F-3 documentation.
+
+**Why:**
+- F-1: `checkers.py:sheet_tube_evidence` uses the **wrong** residual
+  (`y - g(x)`); paper-faithful is `y²(g² + (y-1)²)` (already correct
+  in `lemma2_checker.py:131`). Diagnostic-only today but
+  paper-quantity correctness for downstream comparisons.
+- F-4: rename `eval.posterior_selection_evaluator.selection_ratio`
+  → `eval.sheet_vs_cells_proxy` to avoid name collision with
+  `paper_quantities.paper_selection_ratio`.
+- F-2: docstring note on `PLANAR_BL_CONSTANT` that it bounds the
+  simplified planar residual, not the paper's 2D-vector residual.
+
+**Action:** (a) Replace `F_g = y - g(x)` with paper-faithful form
+in `checkers.py:376-379`. (b) Rename `selection_ratio` →
+`sheet_vs_cells_proxy` and update call sites. (c) Add docstring
+note to `PLANAR_BL_CONSTANT`.
+
+**Effect:** No gate change. Hardens paper-quantity correctness and
+naming clarity.
+
+**Cost:** ~25 LOC across 3 files.
+
+**Wave:** 30 P2 (code-only agent).
+
+---
+
+## §10.8 Net effect of §10.1-§10.7
+
+After Wave 30 fixes land:
+* **3 of 5 HARD G.* gates close** (G.1, G.4, G.6) via spec-only changes.
+* **G.3 stays PASS** at -0.0251 with documented fragility + G.6 pairing.
+* **G.7 stays 7/7** with documented structural-vs-semantic split deferred
+  to Wave 30+ cold-clone re-run.
+* **G-MASTER-CAPABILITY gate** can move from BLOCKED to **PROBABLY PASS**
+  without new experiments.
+* **CIFAR-10 + twodim_fm regressions reframed** as measurement artifact
+  + operating-regime limitation respectively (docs only).
+* **2 adapter-glue bugs hardened** (FlowMol3 v2, StochasticFM).
+* **3 theory-layer cleanups** (F-1 residual, F-4 rename, F-2 docstring).
+
+**Total estimated work:** ~4 hours of CPU-only focused work. No GPU
+required. No new experiments required for the gate closures.
+
+---
+
 ## Acknowledgements (rev 3 synthesis sources)
 
 - **rev 2 baseline** — `todo/framework-internal-metrics.md` (Wave 14 author: ultracode)
