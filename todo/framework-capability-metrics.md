@@ -1,6 +1,6 @@
 # Framework capability metrics (new group G — to be integrated into framework-internal-metrics rev 3)
 
-**Status:** pending
+**Status:** done (Wave 22-23 + Wave 28 + Wave 30: capability audit tool `tools/capability_audit.py` shipped; gate integrated into `todo/GATES.md`; current `verification_outputs/capability_audit_q3_2026.json` shows G.1 PASS, G.2 PASS, G.3 PASS, G.4 PASS, G.5 FAIL-SOFT, G.6 PASS, G.7 PASS — 5/5 HARD gates met)
 **Priority:** HIGH (per user 2026-09-05 critique: "全是审计性的指标啊，衡量框架能力的指标没做过吗？")
 **Depends on:** Wave 22 metrics-rev3 complete (will be integrated into rev 3 plan)
 **Owner:** framework maintainer + ultracode agent

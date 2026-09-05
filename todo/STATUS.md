@@ -1,10 +1,10 @@
 # `todo/STATUS.md` — single source of truth (auto-updated per wave)
 
-**Last updated:** 2026-09-05 (Wave 15/16/17/18/19/20 ALL landed; Phase 1 + framework-depth gaps done; paper-draft.md 990 lines)
+**Last updated:** 2026-09-05 (Wave 32 Agent A — todo audit + gap analysis; **mkdocs --strict FAILING** with 8 unnavmed files; freeze-checklist MUST-1 stale: E.4 + F.6 + G.1 + G.3 + G.6 all flipped PASS since last update)
 
 ## Current state (one line)
 
-> **Phase 1 (framework + theory) DONE. Wave 15 MASSIVE HARDENING + Wave 17-18-19-20 framework-depth + Wave 20 DPK45 bug fix ALL landed.** Wave 15: 7 commits (11 framework gaps closed: A.4 0.171→0.938, A.7 75%→87.5%, D.5 LIVE, F.2 4/8→7/8, F.5 env_hash LIVE, B.4 +5 doctests, Algo B rate bound). Wave 16: docs reorganized (3 exec agents executed, mkdocs strict exit 0). Wave 17: B.7 property-based + Algo D + operating-regime (CRITICAL gap). Wave 18: C.6 convergence (5/5 integrators) + C.7 SBC (6/6 algorithms) + F.6 mutation. Wave 19: PHASE-2 (3 models + RANKING) + rerun-wave10 (decision metric saturated) + paper-draft.md (990 lines, 6 sections). Wave 20: DPK45 step assembly bug fixed (5/5 integrators now pass). Honest negative results reported throughout.
+> **Phase 1 (framework + theory) DONE. Wave 15 MASSIVE HARDENING + Wave 17-18-19-20 framework-depth + Wave 20 DPK45 bug fix + Wave 27 E.4 doc-citation-diff LIVE + Wave 25 F.6 theory 0.533 + Wave 28 G.3 extractor-variance fix + Wave 30 G.1/G.6/G.4 spec-only + Wave 31 F-5 ratio-driven n_cap ALL landed.** Wave 32 Agent A authored `docs/audit/gap-audit.md` (per-task audit of 38 todo files + 11 gaps identified, 7 without plan files).
 
 ## Last completed wave (Wave 20, 2026-09-05, NOT YET PUSHED)
 
@@ -76,6 +76,15 @@ Plus deferred from earlier:
 - [PENDING] 5 NEW framework-depth tasks (B.7, C.6, C.7, F.6, operating-regime)
 - [PENDING] Algo D (controlled noise injection; GPU)
 - [OPEN] LineageFlow real-ckpt verdict: blocked on `core` source (R5 in F.2)
+- [DONE] Wave 27 Agent A: E.4 doc-builder diff job LIVE (`tools/check_doc_paper_refs_diff.py` + `.github/workflows/doc-citation-diff.yml`; 458 functions checked)
+- [DONE] Wave 25 Agent B: F.6 theory 0.500 → 0.533 (16/30 killed)
+- [DONE] Wave 28 Agent A: G.3 extractor-family variance fix (canonical-extractor reading on MNIST v1 row)
+- [DONE] Wave 30 Agent A: G.1/G.6/G.4 spec-only close 3 HARD gates
+- [DONE] Wave 30 commit 8944a09: F-1 (sheet_tube_evidence residual) + F-4 (selection_ratio → sheet_vs_cells_proxy) fixed
+- [DONE] Wave 31 commit 64429c9: F-5 removed (PaperRatioAdaptiveScheduler + ratio-driven n_cap in CodimensionSheetScheduler)
+- [NEW GAP] Wave 32 Agent A: mkdocs --strict FAILING with 8 unnavmed files (5 model_cards + capability_g1_analysis.md + theory/DEVIATIONS.md + 1 other) — B.3 HARD gate at risk; no plan file
+- [NEW GAP] Wave 32 Agent A: D.4 (regression vectors) + E.1 (test-coupled 70%) + StochasticFMAdapter enum bug + FlowMol3V2 restart shape — 4 NOT-MET gaps without plan files
+- [AUDIT DOC] `docs/audit/gap-audit.md` (Wave 32 Agent A, 2026-09-05): per-task audit + 11-gap table + plan coverage matrix + mkdocs surface
 
 ## Files in `todo/` (count + status)
 

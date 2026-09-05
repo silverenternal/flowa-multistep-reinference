@@ -1,6 +1,6 @@
 # Framework-internal metrics rev 3 — research-aligned plan
 
-**Status:** pending (rev 3 plan; awaiting owner approval)
+**Status:** done (Wave 22 P3: rev 3 plan synthesized + written to `todo/framework-internal-metrics-rev3-plan.md`; capability-metrics (group G) folded into rev 3 plan via Wave 22 Phase 2 task #487; 12 new metrics + 6 raised targets + 3 entry-gate changes authored; structurally validated via Wave 23 Agent D `G-MASTER-CAPABILITY` gate integration into `todo/GATES.md`)
 **Goal:** drive metric values to higher standards with research-backed
 justification. Rev 2 reached "audit-style" saturation on most
 engineering-discipline metrics (10/30 metrics now report HARD-pass);
