@@ -1,0 +1,28 @@
+# LineageFlow sidecar venv (.venvs/lineageflow_venv, Python 3.12)
+#
+# Wave 40 Agent A. Installed with:
+#
+#   python3.12 -m venv .venvs/lineageflow_venv
+#   .venvs/lineageflow_venv/bin/pip install \
+#       --extra-index-url https://download.pytorch.org/whl/cpu \
+#       -r requirements-lineageflow.txt
+#
+# Upstream source is NOT pip-installable (no setup.py / pyproject.toml in
+# github.com/Jinx-byebye/LineageFlow @ ccef84ad). It is a plain source tree
+# that must be placed on sys.path; tools/run_lineageflow_real_ckpt.py inserts
+# data/lineageflow_upstream/ into sys.path[0] instead of pip-installing it.
+#
+# Upstream requirements.txt pins torch>=2.1,<2.6; we take the CPU wheel to
+# keep the machine burden light (no CUDA runtime, no GPU memory).
+
+numpy>=1.24,<3
+pandas>=2.0
+torch==2.5.1+cpu
+transformers>=4.40,<5
+huggingface_hub>=0.23,<1
+biopython>=1.81
+scipy>=1.11
+
+# Upstream also lists matplotlib / fair-esm / biotite, but those are only
+# used by evaluation/ (HMMER / OmegaFold / MMseqs2 scoring), not by the
+# forward pass this sidecar exercises. They are deliberately omitted.
