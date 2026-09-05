@@ -511,6 +511,40 @@ def _torch_velocity_field(
     return out.reshape(LINEAGEFLOW_STATE_SHAPE)
 
 
+def _install_checkpoint_compat() -> type:
+    """Install a stub ``core.sampler.SamplerConfig`` for safe-globals unpickling.
+
+    Mirrors upstream LineageFlow's ``_install_checkpoint_compat()`` in
+    ``inference/inference.py:39-59`` (Wave 36 Agent C breakthrough).
+    The class is never called at runtime; it exists only so
+    ``torch.load`` can resolve the pickled class reference. The
+    upstream's own shim is an empty ``class SamplerConfig: pass`` body
+    — the ckpt pickle stores it as a placeholder and the inference
+    code never instantiates or calls any methods on it.
+
+    Difference from upstream: the upstream ships the ``core`` package
+    so it only needs to fabricate ``core.sampler``. We don't ship
+    ``core``, so we also fabricate a minimal ``core`` parent module
+    so Python's import machinery can resolve
+    ``core.sampler.SamplerConfig`` during unpickling.
+    """
+    import sys
+    import types
+    if "core.sampler" in sys.modules and hasattr(sys.modules["core.sampler"], "SamplerConfig"):
+        return sys.modules["core.sampler"].SamplerConfig
+    if "core" not in sys.modules:
+        sys.modules["core"] = types.ModuleType("core")
+    mod = types.ModuleType("core.sampler")
+    class SamplerConfig:  # noqa: D401 - upstream-mandated empty shim
+        pass
+    SamplerConfig.__module__ = "core.sampler"
+    SamplerConfig.__qualname__ = "SamplerConfig"
+    mod.SamplerConfig = SamplerConfig
+    sys.modules["core.sampler"] = mod
+    sys.modules["core"].sampler = mod
+    return SamplerConfig
+
+
 def _load_torch_model(weights_path: Path) -> Any:
     """Load the published LineageFlow ESM-2 + flow head from ``weights_path``.
 
@@ -526,15 +560,17 @@ def _load_torch_model(weights_path: Path) -> Any:
     ``weights_path`` existing; both gates are enforced by the adapter
     constructor before this function is called.
 
-    NOTE (Wave 10 caveat): the published ckpt only ships the encoder
-    + flow-matching head parameters - not the full ``core.sampler.*``
-    runtime. Without the LineageFlow upstream ``core`` source repo
-    (currently unreachable from this environment), the function
-    cannot construct a runnable network; in that case it returns a
-    stub that emits zeros of the right shape so the protocol-boundary
-    call still type-checks.
+    NOTE (Wave 39 / Wave 36 Agent C): the upstream
+    ``_install_checkpoint_compat()`` shim installs an empty
+    ``core.sampler.SamplerConfig`` class so ``torch.load`` can resolve
+    the pickled class reference. The class is never called at runtime
+    — it is a pickle-only placeholder. With the shim in place, the
+    real forward pass can run on a CUDA host with the upstream
+    ``models/model.py`` available; without the upstream source the
+    function falls back to a shape-only stub (mirrors Wave 10).
     """
     import torch  # local import - torch is optional.
+    _install_checkpoint_compat()  # safe-globals shim before torch.load.
 
     state = torch.load(
         str(weights_path), map_location="cpu", weights_only=False

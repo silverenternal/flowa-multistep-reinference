@@ -448,3 +448,100 @@ def test_torch_is_available_smoke() -> None:
 def test_mechanism_id_matches_class_attribute() -> None:
     adapter = _make_adapter()
     assert adapter.mechanism_id == LINEAGEFLOW_MECHANISM_ID
+
+
+# ---------------------------------------------------------------------------
+# Wave 39 Agent B: 5-LOC SamplerConfig shim (Wave 36 Agent C breakthrough)
+# ---------------------------------------------------------------------------
+
+
+def test_install_checkpoint_compat_shim_installs_class() -> None:
+    """The SamplerConfig shim installs ``core.sampler.SamplerConfig`` in
+    ``sys.modules`` so ``torch.load`` can resolve the pickled class
+    reference. Mirrors upstream LineageFlow's
+    ``_install_checkpoint_compat()`` in
+    ``inference/inference.py:39-59``."""
+    import sys
+
+    from adaptive_reflow.adapters.lineageflow import _install_checkpoint_compat
+
+    # Force-clean to assert idempotent re-install behaviour.
+    sys.modules.pop("core.sampler", None)
+
+    cls = _install_checkpoint_compat()
+    assert cls is not None
+    assert cls.__module__ == "core.sampler"
+    assert cls.__qualname__ == "SamplerConfig"
+    # The shim must register both the module + attribute so torch.load's
+    # safe-globals lookup can resolve ``core.sampler.SamplerConfig``.
+    assert "core.sampler" in sys.modules
+    assert hasattr(sys.modules["core.sampler"], "SamplerConfig")
+    assert sys.modules["core.sampler"].SamplerConfig is cls
+    # Re-installing must return the *same* class (idempotent).
+    cls2 = _install_checkpoint_compat()
+    assert cls2 is cls
+
+
+def test_install_checkpoint_compat_shim_marks_class_as_empty() -> None:
+    """The shim class has no methods or attributes beyond ``pass``
+    because the upstream's own shim is exactly ``class SamplerConfig:
+    pass`` — the class is never called at runtime, only its qualified
+    name is referenced by ``torch.load``."""
+    from adaptive_reflow.adapters.lineageflow import _install_checkpoint_compat
+
+    cls = _install_checkpoint_compat()
+    # Empty body class - no callable members beyond the implicit
+    # object inheritance.
+    own_callables = {
+        name
+        for name in dir(cls)
+        if name not in {"__class__", "__dict__", "__doc__", "__module__",
+                        "__qualname__", "__weakref__"}
+        and callable(getattr(cls, name, None))
+    }
+    # No public methods are defined on the empty shim.
+    assert "sample" not in own_callables
+    assert "forward" not in own_callables
+
+
+def test_shim_unblocks_torch_load_on_real_ckpt() -> None:
+    """End-to-end: with the shim installed, ``torch.load`` can resolve
+    the pickled ``core.sampler.SamplerConfig`` class reference in the
+    published ``lineageflow-rp55.ckpt``.
+
+    This test is gated on both ``torch`` availability AND the
+    downloaded ckpt presence so it skips gracefully on CPU-only /
+    ckpt-absent environments. When the ckpt is absent the test
+    confirms the shim install alone does not raise.
+    """
+    if not torch_is_available():
+        pytest.skip("torch not installed in this environment")
+    import torch
+
+    from adaptive_reflow.adapters.lineageflow import (
+        _install_checkpoint_compat,
+        lineageflow_resolve_weights_path,
+    )
+
+    _install_checkpoint_compat()
+    p = lineageflow_resolve_weights_path()
+    if p is None or not p.exists():
+        pytest.skip(
+            "lineageflow-rp55.ckpt not present at data/lineageflow/ "
+            "(download from HF before running this test)"
+        )
+    state = torch.load(str(p), map_location="cpu", weights_only=False)
+    sd = state.get("state_dict", state)
+    assert isinstance(sd, dict)
+    # Paper headline: word_embeddings shape = (33, 1280).
+    w = sd.get("model.encoder.embeddings.word_embeddings.weight")
+    if w is None:
+        w = sd.get("encoder.embeddings.word_embeddings.weight")
+    assert w is not None, (
+        "real ckpt missing the encoder word_embeddings tensor — "
+        "structural mismatch with the published paper."
+    )
+    assert tuple(w.shape) == (33, 1280), (
+        f"unexpected word_embeddings shape {tuple(w.shape)}; "
+        "paper says (33, 1280)."
+    )

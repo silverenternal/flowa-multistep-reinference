@@ -3,9 +3,16 @@
 **Schema:** Mitchell/Gebru, 8 required fields (F.4 metric).
 **Adapter key:** `lineageflow`
 **Card status:** COMPLETE (8/8 fields populated; production torch-mode
-is **BLOCKED on upstream `core` source repo**; synthetic-mode Protocol
-surface is fully wired and tested; 22/22 tests pass on CPU in 0.70 s).
-**Last updated:** 2026-09-05.
+ckpt loading is **UNBLOCKED** via the Wave 39 5-LOC `_install_checkpoint_compat`
+shim — mirrors upstream `_install_checkpoint_compat()` in
+`inference/inference.py:39-59`. The real forward pass additionally
+requires the upstream `core` source repo + a CUDA host; the
+synthetic-mode Protocol surface remains fully wired and tested.
+25/25 tests pass on CPU in ~18 s; 1 real-ckpt end-to-end test loads
+the 10.5 GB published checkpoint with the shim installed and confirms
+the encoder `word_embeddings` tensor shape = `(33, 1280)` matches the
+paper).
+**Last updated:** 2026-09-05 (Wave 39 Agent B).
 **F.4 gate:** PASS (≥ 0.8 per-model target met).
 
 ---
@@ -122,13 +129,29 @@ the real-ckpt case.
 
 ## 6. Caveats
 
-- **Production torch-mode BLOCKED on upstream `core`.** The
-  ckpt references `core.sampler.SamplerConfig`,
-  `core.sampler.FlowMatchingSampler / PhylogenySampler`, and
-  `core.flow_model.flow_step`; the upstream `core` source repo
-  is unreachable from this environment. **Without `core`, the
-  real forward pass cannot run; the synthetic-mode velocity
-  field is the only forward path that runs today.**
+- **Production torch-mode: ckpt loading UNBLOCKED via 5-LOC shim (Wave 39).**
+  Wave 39 Agent B added `_install_checkpoint_compat()` to
+  `adaptive_reflow/adapters/lineageflow.py` (mirrors upstream's own
+  `_install_checkpoint_compat()` in
+  `inference/inference.py:39-59`). The shim installs an empty
+  `class SamplerConfig: pass` plus a fabricated `core.sampler` /
+  `core` module pair so `torch.load` can resolve the pickled
+  class reference. The class is **never called at runtime** —
+  it is a pickle-only placeholder, which is why the upstream's
+  own shim is exactly an empty body. **Verified end-to-end** by
+  `tests/test_adapters/test_lineageflow.py::test_shim_unblocks_torch_load_on_real_ckpt`
+  which loads the 10.5 GB published ckpt and confirms the encoder
+  `word_embeddings` tensor shape = `(33, 1280)` matches the paper.
+  The full forward pass still requires the upstream `core`
+  source repo + a CUDA host; the Wave 10 synthetic-mode path
+  remains the only forward path that runs end-to-end today.
+- **Production torch-mode BLOCKED on upstream `core` runtime.**
+  The ckpt references `core.sampler.FlowMatchingSampler /
+  PhylogenySampler` and `core.flow_model.flow_step`; the upstream
+  `core` source repo is unreachable from this environment.
+  **Without `core`, the real forward pass cannot run; the
+  synthetic-mode velocity field is the only forward path that
+  runs today.**
 - **HF ckpt is 10× larger than Wave 9 R3 estimate.** Wave 9 R3
   reported "sub-GB"; the actual ckpt is 9.788 GB on disk.
 - **Synthetic-mode is not a baseline reproduction.** When
@@ -182,10 +205,21 @@ the real-ckpt case.
 
 ## 8. Known Failure Modes
 
-- **BLOCKED on upstream `core` source repo.** The ckpt pickle
-  references `core.sampler.SamplerConfig`; only stubbed for
-  introspection today. **Without `core.sampler.*` /
-  `core.flow_model.*`, the real forward pass cannot run.**
+- **Wave 39 (PHASE-4 unblock): ckpt loading is now UNBLOCKED.**
+  The 5-LOC `_install_checkpoint_compat()` shim (added by Wave 39
+  Agent B) mirrors the upstream's own shim and resolves the
+  `core.sampler.SamplerConfig` pickle reference. **End-to-end
+  verified** by
+  `tests/test_adapters/test_lineageflow.py::test_shim_unblocks_torch_load_on_real_ckpt`
+  (10.5 GB ckpt loads successfully, encoder `word_embeddings`
+  tensor shape = `(33, 1280)` matches the paper). The full
+  forward pass additionally requires the upstream `core` source
+  repo + a CUDA host.
+- **BLOCKED on upstream `core` source repo runtime.** The ckpt
+  pickle references `core.sampler.SamplerConfig` (now shimmed,
+  Wave 39) but **also** `core.sampler.FlowMatchingSampler /
+  PhylogenySampler` and `core.flow_model.flow_step` (still
+  MISSING). Without these, the real forward pass cannot run.
   This blocks every quantitative result that requires a real
   forward pass (§3 evaluation data, §4 quantitative analyses
   real-ckpt row).
@@ -204,7 +238,7 @@ the real-ckpt case.
   adapters.
 - **D.5 auto-battery skips.** All 8 conformance checks skip
   because `lineageflow` requires the `core` module
-  (`baseline-audit-report.md` §D.5). 22/22 hand-written tests
+  (`baseline-audit-report.md` §D.5). 25/25 hand-written tests
   pass (`baseline-audit-report.md` §D.3 row `test_lineageflow`).
 - **Synthetic-mode saturation.** `family_validity` ties at
   1.0 in both arms on the synthetic velocity field; the
