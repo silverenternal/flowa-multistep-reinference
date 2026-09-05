@@ -65,6 +65,8 @@ from typing import Any
 
 import numpy as np
 
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
+
 # Make ``adaptive_reflow`` importable when the script is invoked as
 # ``python tools/run_controlled_audit.py``.
 _HERE = Path(__file__).resolve().parent
@@ -1084,7 +1086,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(with_host_fingerprint(report), indent=2) + "\n", encoding="utf-8"
+    )
     print(
         f"[controlled-audit] report written: {args.output}\n"
         f"[controlled-audit] cells audited: {len(cells)}\n"

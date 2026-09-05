@@ -95,6 +95,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
+
 # Make the test_sbc helpers importable when this script is invoked
 # directly (not via ``python -m tools.run_sbc_audit``).
 _HERE = Path(__file__).resolve().parent
@@ -650,7 +652,7 @@ def main() -> int:
                     f"{status:>5}"
                 )
     else:
-        json_text = json.dumps(report, indent=2, default=lambda x: dataclasses.asdict(x) if dataclasses.is_dataclass(x) else str(x))
+        json_text = json.dumps(with_host_fingerprint(report), indent=2, default=lambda x: dataclasses.asdict(x) if dataclasses.is_dataclass(x) else str(x))
         if args.output is not None:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(json_text + "\n", encoding="utf-8")

@@ -106,6 +106,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
+
 SCHEMA_VERSION = "1.0"
 # rev 3 §2 J.1 target: stability_rate >= 0.95 (≤ 5% churn).
 J1_GATE_THRESHOLD = 0.95
@@ -452,7 +454,7 @@ def main(argv: list[str] | None = None) -> int:
         window_size_commits=args.window_size,
     )
     if args.json:
-        payload = _to_json_dict(report)
+        payload = with_host_fingerprint(_to_json_dict(report))
         text = json.dumps(payload, indent=2, sort_keys=True)
         if args.output is not None:
             args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -463,7 +465,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.output is not None:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(
-                json.dumps(_to_json_dict(report), indent=2, sort_keys=True) + "\n"
+                json.dumps(
+                    with_host_fingerprint(_to_json_dict(report)),
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n"
             )
     return 0 if report.passes_j1_gate else 1
 

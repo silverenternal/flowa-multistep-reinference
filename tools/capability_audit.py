@@ -62,6 +62,8 @@ import subprocess
 import sys
 from typing import Any
 
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
+
 # ---------------------------------------------------------------------------
 # Paths (anchored to repo root)
 # ---------------------------------------------------------------------------
@@ -1247,7 +1249,12 @@ def main(argv: list[str] | None = None) -> int:
         "must_4_freeze_gate": "PASS" if hard_fail == 0 and hard_pending == 0 else ("BLOCKED" if hard_fail > 0 else "PENDING cold-clone measurement"),
     }
 
-    out_json = json.dumps(payload, indent=2, sort_keys=False, ensure_ascii=False)
+    out_json = json.dumps(
+        with_host_fingerprint(payload),
+        indent=2,
+        sort_keys=False,
+        ensure_ascii=False,
+    )
 
     if args.print_only:
         print(out_json)

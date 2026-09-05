@@ -50,6 +50,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = REPO_ROOT / "adaptive_reflow"
 SKIP_DIRS = {"__pycache__", "legacy"}
@@ -305,7 +307,7 @@ def main(argv: list[str] | None = None) -> int:
             )
 
     print()
-    print(json.dumps(summary, indent=2))
+    print(json.dumps(with_host_fingerprint(summary), indent=2))
 
     return 0 if summary["meets_target"] else 1
 

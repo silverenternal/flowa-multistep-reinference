@@ -14,13 +14,23 @@ biopython>=2.0 bump that breaks Wave 10 LineageFlow encoding).
 
 NOT full pip freeze (sensitive to install order, --extra-index-url, OS pkg mgr).
 
+Wave 38 R-2 extension: the ``capture`` sub-command additionally writes
+a JSON sidecar ``env_hash_host_fingerprint.json`` (per
+``todo/algo-improvement-host-fingerprint.md``) that records the host
+that captured this env_hash. The sidecar carries the
+``_host_fingerprint`` field produced by
+:func:`adaptive_reflow.util.host_fingerprint.with_host_fingerprint`
+and the ``env_hash`` text content for easy cross-reference.
+
 Usage:
-    python scripts/capture_env_hash.py capture  # writes env_hash.txt
+    python scripts/capture_env_hash.py capture  # writes env_hash.txt + sidecar
     python scripts/capture_env_hash.py verify   # compares to committed env_hash.txt
     python scripts/capture_env_hash.py show     # prints to stdout
 """
-import hashlib, sys, subprocess, pathlib, platform
+import hashlib, json, sys, subprocess, pathlib, platform
 from typing import Optional
+
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
 
 # PHASE-4 SOTA-integration dep probes. Each entry is a (import_name,
 # label) pair. When importable, the version is captured; otherwise
@@ -99,9 +109,21 @@ def verify_env_hash(path: pathlib.Path) -> bool:
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "capture"
     env_hash_path = pathlib.Path(__file__).resolve().parent.parent / "env_hash.txt"
+    sidecar_path = env_hash_path.with_name("env_hash_host_fingerprint.json")
     if cmd == "capture":
         write_env_hash(env_hash_path)
+        # Wave 38 R-2: emit host_fingerprint sidecar JSON.
+        sidecar_payload = with_host_fingerprint(
+            {
+                "env_hash_path": str(env_hash_path),
+                "env_hash_text": env_hash_path.read_text(),
+            }
+        )
+        sidecar_path.write_text(
+            json.dumps(sidecar_payload, indent=2, sort_keys=True) + "\n"
+        )
         print(f"wrote {env_hash_path}")
+        print(f"wrote {sidecar_path}")
     elif cmd == "verify":
         sys.exit(0 if verify_env_hash(env_hash_path) else 1)
     elif cmd == "show":

@@ -1,0 +1,12 @@
+{
+  "_host_fingerprint": {
+    "captured_at": "2026-09-05T10:50:56.586190+00:00",
+    "cuda": "12.8",
+    "hostname_hash": "sha256:92ae71c7c2d0cf3d",
+    "platform": "Linux-7.0.9-hardened1-1-hardened-x86_64-with-glibc2.43",
+    "python": "3.12.13",
+    "torch": "2.7.0+cu128"
+  },
+  "env_hash_path": "/home/hugo/codes/flowa-multistep-reinference/env_hash.txt",
+  "env_hash_text": "lock_hash=fc6c6ce11ff994028af175fa875e32bfab81345cf4dc22e38ac91bd3922cb120\npython_version=Python 3.12.13\ntorch_version=torch:2.7.0+cu128+cuda12.8\nadapter_deps_hash=c3c0294d0795e89e89c567a8da52002a825257df893c173b2fac6b4e734e0beb\nrdkit_version=rdkit:2026.03.5\nbiopython_version=biopython:1.88\ntransformers_version=transformers:not-installed\ndiffusers_version=diffusers:0.40.0\ntorchvision_version=torchvision:0.22.0+cu128\ntorch_geometric_version=torch_geometric:not-installed\ndgl_version=dgl:2.4.0+cu124\ncomposite_hash=17c56995791f2ab424230ded201d34ca47c8872dcaaed67db7a583b5dea6bce2\n"
+}
