@@ -94,6 +94,7 @@ Tasks satisfied
 from __future__ import annotations
 
 import hashlib
+import inspect
 from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -299,6 +300,167 @@ def torch_is_available() -> bool:
     import importlib.util as _il
 
     return _il.find_spec("torch") is not None
+
+
+# ---------------------------------------------------------------------------
+# GPT-prior monkey-patch (Wave 40 Agent B)
+# ---------------------------------------------------------------------------
+#
+# The upstream ``kanzi`` package at commit ``cfed9cf4`` carries a bug in
+# ``kanzi.models.GPT.forward`` (line 145): it invokes each
+# ``TransformerBlock`` as
+#
+#     block(s_BLD, block_mask, pair_bias_BLLD=None)
+#
+# but ``kanzi.attention.TransformerBlock.forward`` declares
+# ``(self, s_BLD, pair_bias_BLLD, **attn_kwargs)``, so ``block_mask`` ends
+# up bound positionally to ``pair_bias_BLLD`` and the kwarg
+# ``pair_bias_BLLD=None`` raises
+# ``TypeError: got multiple values for argument 'pair_bias_BLLD'``.
+# This breaks the GPT-prior loss branch inside ``DAE.forward`` for any
+# GPT-enabled ckpt (the Wave 36/39 Kanzi ckpt has ``gpt_prior=True``).
+#
+# Wave 39 worked around this by monkey-patching ``DAE.forward`` (in
+# ``tools/run_kanzi_real_ckpt.py``) to report ``gpt_prior_loss = 0``.
+# That left the GPT-prior loss branch unexercised end-to-end on real
+# checkpoint weights.
+#
+# The function below installs a *correct* monkey-patch on
+# ``kanzi.models.GPT.forward`` from our side (without modifying the
+# upstream package, per the disjoint-file scope). The patch:
+#
+# 1. Uses ``inspect`` to introspect ``TransformerBlock.forward`` and
+#    decide whether ``block_mask`` is a named positional parameter or
+#    absorbed by ``**attn_kwargs``. (The current upstream absorbs it via
+#    ``**attn_kwargs``; the introspection lets us adapt if the upstream
+#    ever promotes it to a named positional parameter.)
+# 2. Re-implements ``GPT.forward`` in the patched wrapper so the
+#    ``block_mask`` argument lands in the correct namespace.
+# 3. Is idempotent: re-invocation is a no-op via the
+#    ``_kanzi_gpt_prior_patched`` marker attribute.
+# 4. Defensively no-ops when the ``kanzi`` package is not installed
+#    (synthetic-only mode).
+
+_GPT_PRIOR_PATCH_MARKER: str = "_kanzi_gpt_prior_patched"
+
+
+def _install_gpt_prior_patch() -> bool:
+    """Monkey-patch ``kanzi.models.GPT.forward`` to fix the block_mask mapping.
+
+    The upstream ``kanzi`` package has a known signature mismatch on
+    :class:`kanzi.models.GPT`'s forward call to its
+    :class:`kanzi.attention.TransformerBlock` modules. This helper
+    installs a wrapper that introspects the block's ``forward``
+    signature and routes the ``block_mask`` argument to the correct
+    positional / kwarg slot. The patch is idempotent: re-invocation is
+    a no-op (verified via a marker attribute on the class).
+
+    Returns
+    -------
+    bool
+        ``True`` iff the patch was installed or was already installed.
+        ``False`` when ``kanzi`` is not importable (synthetic-only
+        mode), in which case this helper is a no-op.
+    """
+    import importlib.util as _il
+
+    if _il.find_spec("kanzi") is None:
+        return False
+    if _il.find_spec("kanzi.models") is None:
+        return False
+    if _il.find_spec("kanzi.attention") is None:
+        return False
+
+    import functools
+    import importlib
+
+    _km = importlib.import_module("kanzi.models")
+    _ka = importlib.import_module("kanzi.attention")
+
+    # Idempotency: if the marker attribute is set, the patch is already
+    # in place — re-installation would only re-wrap the wrapper and
+    # leak state, so we short-circuit.
+    if getattr(_km.GPT, _GPT_PRIOR_PATCH_MARKER, False):
+        return True
+
+    _original_forward = _km.GPT.forward
+
+    # Introspect TransformerBlock.forward to decide whether block_mask
+    # is a named positional parameter (pass positionally) or absorbed
+    # by **attn_kwargs (pass as kwarg). The current upstream absorbs
+    # it via **attn_kwargs, but the introspection lets us adapt if the
+    # upstream ever promotes it to a named positional parameter.
+    _tb_signature = inspect.signature(_ka.TransformerBlock.forward)
+    _tb_params = set(_tb_signature.parameters)
+    _block_mask_is_positional = "block_mask" in _tb_params
+
+    # Pre-build the per-block kwargs set we always need to forward
+    # through (defensive defaults match the upstream's expected
+    # ``attn_kwargs`` namespace). ``score_mod=None`` is needed because
+    # ``TransformerBlock.forward`` -> ``SelfAttention.forward`` (flex
+    # backend) reads ``attn_kwargs["score_mod"]`` unconditionally.
+    _always_kwargs: dict[str, Any] = {"score_mod": None}
+
+    @functools.wraps(_original_forward)
+    def _patched_gpt_forward(self: Any, tok_BL: Any, tgt_BL: Any = None) -> tuple[Any, Any]:
+        s_BLD = self.embed(tok_BL)
+        device = s_BLD.device
+        L = s_BLD.size(-2)
+        block_mask = self.get_block_mask(L, device)
+        if _block_mask_is_positional:
+            for block in self.blocks:
+                s_BLD = block(
+                    s_BLD,
+                    block_mask,
+                    pair_bias_BLLD=None,
+                    **_always_kwargs,
+                )
+        else:
+            for block in self.blocks:
+                s_BLD = block(
+                    s_BLD,
+                    pair_bias_BLLD=None,
+                    block_mask=block_mask,
+                    **_always_kwargs,
+                )
+        s_BLD = self.ln(s_BLD)
+
+        loss: Any = None
+        if tgt_BL is not None:
+            import torch.nn.functional as _F  # local — torch optional at import time.
+
+            logits_BLV = self.proj(s_BLD)
+            loss = _F.cross_entropy(
+                logits_BLV.view(-1, self.cfg.vocab_size),
+                tgt_BL.view(-1),
+                reduction="none",
+            ).mean()
+        else:
+            logits_BLV = self.proj(s_BLD[:, [-1], :])
+        return logits_BLV, loss
+
+    _km.GPT.forward = _patched_gpt_forward
+    setattr(_km.GPT, _GPT_PRIOR_PATCH_MARKER, True)
+    return True
+
+
+#: Marker constant — exposed for tests / introspection.
+GPT_PRIOR_PATCH_MARKER: str = _GPT_PRIOR_PATCH_MARKER
+
+
+# Install the GPT-prior monkey-patch at module-load time. The helper
+# is idempotent (returns ``False`` when ``kanzi`` is unavailable, so
+# synthetic-only mode is unaffected) and never raises; any exception
+# during installation is silently swallowed because the adapter's
+# synthetic-mode path must remain import-safe regardless of the
+# upstream package's state.
+try:
+    _install_gpt_prior_patch()
+except Exception:
+    # Defensive: a failing monkey-patch must never break the
+    # synthetic-mode adapter import path. Tests verify the patch
+    # behaviour on a best-effort basis.
+    pass
 
 
 def kanzi_resolve_weights_path(
@@ -1561,6 +1723,7 @@ __all__ = [
     "ERR_KANZI_INTEGRATOR_UNKNOWN",
     "ERR_KANZI_NUM_STEPS",
     "ERR_KANZI_WEIGHTS_MISSING",
+    "GPT_PRIOR_PATCH_MARKER",
     "KANZI_AR_SEQ_LENGTH",
     "KANZI_CHANNEL_DOMAINS",
     "KANZI_CHANNELS",
@@ -1586,6 +1749,7 @@ __all__ = [
     "KanziCapabilities",
     "PFAM_FAMILY_COND",
     "PROTEIN_LATENT",
+    "_install_gpt_prior_patch",
     "default_kanzi_adapter",
     "kanzi_resolve_weights_path",
     "torch_is_available",

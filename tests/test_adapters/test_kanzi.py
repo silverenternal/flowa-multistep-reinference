@@ -494,3 +494,164 @@ def test_module_constants_consistent() -> None:
     assert KANZI_CHANNEL_DOMAINS[PROTEIN_LATENT] == "continuous"
     assert KANZI_CHANNEL_DOMAINS[DISCRETE_TOKEN_INDEX] == "discrete"
     assert KANZI_CHANNEL_DOMAINS[PFAM_FAMILY_COND] == "continuous"
+
+
+# ---------------------------------------------------------------------------
+# GPT-prior monkey-patch (Wave 40 Agent B)
+# ---------------------------------------------------------------------------
+#
+# These tests verify the wave-40 monkey-patch that fixes the
+# upstream ``kanzi.models.GPT.forward`` signature mismatch on its
+# ``TransformerBlock`` block-call. They are best-effort: when the
+# upstream ``kanzi`` package is unavailable (synthetic-only mode),
+# the tests short-circuit cleanly.
+
+
+def test_gpt_prior_patch_idempotent_when_kanzi_present() -> None:
+    """Calling ``_install_gpt_prior_patch()`` twice does not double-wrap."""
+    import importlib.util as _il
+
+    if _il.find_spec("kanzi") is None:
+        pytest.skip("kanzi package not installed in this venv")
+
+    from adaptive_reflow.adapters.kanzi import (
+        _install_gpt_prior_patch,
+        GPT_PRIOR_PATCH_MARKER,
+    )
+
+    # First call (idempotent against the at-import-time install).
+    assert _install_gpt_prior_patch() is True
+    # Second call must remain idempotent.
+    assert _install_gpt_prior_patch() is True
+
+    import kanzi.models as _km
+
+    assert getattr(_km.GPT, GPT_PRIOR_PATCH_MARKER, False) is True
+
+
+def test_gpt_prior_patch_returns_false_when_kanzi_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """When ``kanzi`` is not importable, the patch helper is a no-op."""
+    import importlib.util as _il
+    from adaptive_reflow.adapters import kanzi as _kanzi_adapter
+
+    # Override find_spec for the three modules the patch checks, so it
+    # sees them as absent.
+    real_find_spec = _il.find_spec
+
+    def _fake_find_spec(name: str, *args: object, **kwargs: object):
+        if name in ("kanzi", "kanzi.models", "kanzi.attention"):
+            return None
+        return real_find_spec(name, *args, **kwargs)
+
+    monkeypatch.setattr(_il, "find_spec", _fake_find_spec)
+    assert _kanzi_adapter._install_gpt_prior_patch() is False
+
+
+def test_gpt_prior_patch_runs_gpt_forward_end_to_end() -> None:
+    """The patched ``GPT.forward`` accepts (tok_BL, tgt_BL) without TypeError.
+
+    This regression-tests the upstream bug documented in
+    ``docs/audit/wave39-kanzi-real-ckpt-forward.md`` (the
+    ``block_mask`` / ``pair_bias_BLLD`` signature mismatch inside
+    ``kanzi.models.GPT.forward``). The patch must let the GPT-prior
+    loss branch run end-to-end on the small synthetic GPT constructed
+    below; the legacy upstream raises
+    ``TypeError: got multiple values for argument 'pair_bias_BLLD'``
+    without the patch.
+    """
+    import importlib.util as _il
+
+    if _il.find_spec("kanzi") is None:
+        pytest.skip("kanzi package not installed in this venv")
+    if not _il.find_spec("torch"):
+        pytest.skip("torch not installed in this venv")
+
+    import torch  # noqa: E402  — local import gated on availability.
+    import kanzi.models as _km  # noqa: E402
+    from adaptive_reflow.adapters.kanzi import (  # noqa: E402
+        _install_gpt_prior_patch,
+    )
+
+    # Install the patch in case earlier tests unloaded kanzi.
+    assert _install_gpt_prior_patch() is True
+
+    gpt = _km.GPT(
+        _km.GPTConfig(
+            vocab_size=21,
+            n_channels=128,
+            n_layers=1,
+            n_heads=8,
+            dropout=0.0,
+            block_size=64,
+            mlp_factor=4,
+            bos=0,
+            eos=1,
+        )
+    )
+    gpt.eval()
+    tok_BL = torch.randint(0, 21, (1, 8))
+    tgt_BL = torch.randint(0, 21, (1, 8))
+
+    with torch.no_grad():
+        logits, loss = gpt(tok_BL, tgt_BL)
+
+    assert logits.shape == (1, 8, 21)
+    # The loss must be a finite scalar (cross-entropy between logits
+    # and the target indices). The exact value is not load-bearing —
+    # only that the call returned a finite scalar and not the
+    # upstream's TypeError.
+    assert torch.isfinite(logits).all()
+    assert torch.isfinite(loss).item()
+
+
+def test_gpt_prior_patch_runs_dae_gpt_prior_branch() -> None:
+    """``DAE.forward`` (with ``gpt_prior=True``) computes ``gpt_prior_loss``.
+
+    Regression-tests the end-to-end path that Wave 39 worked around
+    by patching ``DAE.forward`` to report ``gpt_prior_loss = 0``.
+    The patch must let the real GPT-prior branch run; the loss
+    returned must be a finite scalar.
+    """
+    import importlib.util as _il
+
+    if _il.find_spec("kanzi") is None:
+        pytest.skip("kanzi package not installed in this venv")
+    if not _il.find_spec("torch"):
+        pytest.skip("torch not installed in this venv")
+
+    import torch  # noqa: E402
+    import kanzi.models as _km  # noqa: E402
+    from adaptive_reflow.adapters.kanzi import (  # noqa: E402
+        _install_gpt_prior_patch,
+    )
+
+    # Re-installation is idempotent.
+    assert _install_gpt_prior_patch() is True
+
+    dae = _km.DAE(
+        _km.DAEConfig(
+            n_channels_decoder=64,
+            n_channels_encoder=64,
+            n_layers_encoder=1,
+            n_layers_decoder=1,
+            n_heads=8,
+            mlp_factor=4,
+            use_qknorm=False,
+            gpt_prior=True,
+        )
+    )
+    dae.eval()
+
+    x_BLD = torch.randn(2, 16, 3)
+    with torch.no_grad():
+        idx_BL, loss_dict = dae(x_BLD)
+
+    assert "gpt_prior_loss" in loss_dict
+    assert "flow_loss" in loss_dict
+    # Both losses must be finite scalars.
+    assert torch.isfinite(loss_dict["gpt_prior_loss"]).item()
+    assert torch.isfinite(loss_dict["flow_loss"]).item()
+    # The legacy Wave-39 workaround forced gpt_prior_loss = 0; the
+    # patched path computes a real cross-entropy loss > 0 (token
+    # indices are non-trivial relative to logits).
+    assert float(loss_dict["gpt_prior_loss"]) > 0.0
