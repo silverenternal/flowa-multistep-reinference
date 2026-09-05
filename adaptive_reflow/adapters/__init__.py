@@ -184,7 +184,8 @@ from .rectified_flow_cifar import (
     default_rectified_flow_cifar_adapter,
     rectified_flow_cifar_resolve_weights_path,
 )
-from .stochastic_fm import StochasticFMAdapter
+# StochasticFMAdapter removed in Wave 33 (orphan; see docs/audit/adapter-conformance-deep-dive.md
+# NONCONFORMANCE_BUG #5 — RESOLVED via deletion).
 from .wan2_2_video import (
     AUDIT_WAN22_FORWARD_NOISE_APPLIED,
     AUDIT_WAN22_OBSERVED,

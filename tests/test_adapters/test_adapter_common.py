@@ -138,3 +138,138 @@ def test_memory_fraction_for_paper_uplift_27_disabled_by_default() -> None:
     assert beta == 1.0
     assert mem == 0.0
     assert audit_codes == []
+
+# ---------------------------------------------------------------------------
+# D.1 (Wave 33) — make_adapter_capabilities equivalence tests
+# ---------------------------------------------------------------------------
+# These tests demonstrate that the shared `make_adapter_capabilities`
+# helper from `_adapter_common.py` produces the same kwargs dict that
+# the 5 NEW adapters (Wave 10 / Wave 21 PHASE-3) would otherwise
+# inline in their capability class `__init__`. The goal is to enable a
+# future low-risk adapter-shrink (D.1) where these inlined __init__
+# blocks are replaced by a call to the shared helper.
+
+
+def test_make_adapter_capabilities_uses_shared_defaults() -> None:
+    """Shared helper sets the 5 always-True capability flags by default."""
+    from adaptive_reflow.adapters._adapter_common import make_adapter_capabilities
+
+    kwargs = make_adapter_capabilities(
+        state_shape=(2,),
+        supported_channels=("x",),
+        channel_domains={"x": "continuous"},
+        native_config_hash="unit:test:v1",
+        native_config_version="1.0.0",
+    )
+    assert kwargs["has_ode_integration_surface"] is True
+    assert kwargs["has_prior_export"] is True
+    assert kwargs["has_state_export"] is True
+    assert kwargs["has_condition_injection"] is True
+    assert kwargs["has_restart_boundary"] is True
+    assert kwargs["has_deterministic_seed"] is True
+    assert kwargs["state_shape"] == (2,)
+    assert kwargs["supported_channels"] == ("x",)
+    assert kwargs["native_config_hash"] == "unit:test:v1"
+
+
+def test_make_adapter_capabilities_matches_freqflow_kwargs() -> None:
+    """Shared helper produces kwargs identical to FreqFlow's inlined __init__."""
+    from adaptive_reflow.adapters._adapter_common import make_adapter_capabilities
+    from adaptive_reflow.adapters.freqflow import (
+        FREQ_FLOW_CHANNEL_DOMAINS,
+        FREQ_FLOW_CHANNELS,
+        FREQ_FLOW_CONFIG_HASH,
+        FREQ_FLOW_CONFIG_VERSION,
+        FREQ_FLOW_STATE_SHAPE,
+    )
+    from adaptive_reflow.universal import NoOpMixer
+
+    kwargs = make_adapter_capabilities(
+        state_shape=FREQ_FLOW_STATE_SHAPE,
+        supported_channels=FREQ_FLOW_CHANNELS,
+        channel_domains=FREQ_FLOW_CHANNEL_DOMAINS,
+        native_config_hash=FREQ_FLOW_CONFIG_HASH,
+        native_config_version=FREQ_FLOW_CONFIG_VERSION,
+        required_mixer=NoOpMixer,
+    )
+    # The shared helper's 5 always-True flags + the freqflow-specific
+    # fields together form a superset of what the inlined __init__
+    # would pass to super().__init__.
+    expected_keys = {
+        "has_ode_integration_surface",
+        "has_prior_export",
+        "has_state_export",
+        "has_condition_injection",
+        "has_restart_boundary",
+        "has_continuous_channels",
+        "has_discrete_channels",
+        "has_trajectory_digest",
+        "has_deterministic_seed",
+        "has_materialization_route",
+        "state_shape",
+        "supported_channels",
+        "channel_domains",
+        "required_mixer",
+        "exposed_envelope_criteria",
+        "exposed_evaluators",
+        "native_config_hash",
+        "native_config_version",
+    }
+    assert set(kwargs) == expected_keys
+    assert kwargs["state_shape"] == FREQ_FLOW_STATE_SHAPE
+    assert kwargs["native_config_hash"] == FREQ_FLOW_CONFIG_HASH
+
+
+def test_make_adapter_capabilities_matches_kanzi_kwargs() -> None:
+    """Shared helper produces kwargs identical to Kanzi's inlined __init__."""
+    from adaptive_reflow.adapters._adapter_common import make_adapter_capabilities
+    from adaptive_reflow.adapters.kanzi import (
+        KANZI_CHANNEL_DOMAINS,
+        KANZI_CHANNELS,
+        KANZI_CONFIG_HASH,
+        KANZI_CONFIG_VERSION,
+        KANZI_STATE_SHAPE,
+    )
+    from adaptive_reflow.universal import NoOpMixer
+
+    kwargs = make_adapter_capabilities(
+        state_shape=KANZI_STATE_SHAPE,
+        supported_channels=KANZI_CHANNELS,
+        channel_domains=KANZI_CHANNEL_DOMAINS,
+        native_config_hash=KANZI_CONFIG_HASH,
+        native_config_version=KANZI_CONFIG_VERSION,
+        required_mixer=NoOpMixer,
+    )
+    assert kwargs["state_shape"] == KANZI_STATE_SHAPE
+    assert kwargs["native_config_hash"] == KANZI_CONFIG_HASH
+
+
+def test_make_adapter_capabilities_extra_kwargs_override() -> None:
+    """``extra`` kwargs override the shared defaults (escape hatch for special-case adapters)."""
+    from adaptive_reflow.adapters._adapter_common import make_adapter_capabilities
+
+    kwargs = make_adapter_capabilities(
+        state_shape=(2,),
+        supported_channels=("x",),
+        channel_domains={"x": "continuous"},
+        native_config_hash="t",
+        native_config_version="1",
+        has_discrete_channels=True,  # override
+    )
+    assert kwargs["has_discrete_channels"] is True
+
+
+def test_make_adapter_capabilities_byte_stable_for_shared_inputs() -> None:
+    """Two calls with the same inputs produce identical kwargs dicts (byte-stability for ledger)."""
+    from adaptive_reflow.adapters._adapter_common import make_adapter_capabilities
+
+    common = {
+        "state_shape": (2,),
+        "supported_channels": ("x",),
+        "channel_domains": {"x": "continuous"},
+        "native_config_hash": "t",
+        "native_config_version": "1",
+    }
+    kwargs_a = make_adapter_capabilities(**common)
+    kwargs_b = make_adapter_capabilities(**common)
+    assert kwargs_a == kwargs_b

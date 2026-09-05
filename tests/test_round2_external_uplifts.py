@@ -24,12 +24,11 @@ from adaptive_reflow.adapters.integrators import (
     adaptive_integrate,
     build_integrator,
 )
-from adaptive_reflow.adapters.stochastic_fm import (
-    DEFAULT_ADAPTIVE_NOISE_GAMMA,
-    DEFAULT_NOISE_SCALE,
-    StochasticFMAdapter,
-    stochastic_velocity,
-)
+# StochasticFMAdapter removed in Wave 33 (orphan; see
+# docs/audit/adapter-conformance-deep-dive.md NONCONFORMANCE_BUG #5).
+# The P0 #9 tests below are now archive-only documentation of the
+# reproduction setup; they are skipped because the adapter no longer
+# exists.
 from adaptive_reflow.algorithm.handoff import (
     HANDOFF_FAMILY,
     HandoffSequentialScheduler,
@@ -447,55 +446,33 @@ def test_adaptive_integrate_returns_arrays() -> None:
 
 
 # ---------------------------------------------------------------------------
-# P0 #9 — Stochastic FM adapter
+# P0 #9 — Stochastic FM adapter (REMOVED Wave 33; orphan; see
+# docs/audit/adapter-conformance-deep-dive.md NONCONFORMANCE_BUG #5)
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.skip(
+    reason="StochasticFMAdapter removed in Wave 33; this test is "
+    "documentation of the original 25% W2-reduction claim (XFAIL on "
+    "the original setup). See docs/r4-survey/09-paper-experimental-records.md §4.4."
+)
 def test_stochastic_fm_adapter_capabilities() -> None:
-    a = StochasticFMAdapter()
-    caps = a.capabilities()
-    assert caps.has_continuous_channels
-    assert caps.supported_channels == ("x_continuous", "x_stochastic")
+    a = None  # StochasticFMAdapter()  # removed Wave 33
+    assert a is None or a.capabilities().has_continuous_channels
 
 
+@pytest.mark.skip(
+    reason="StochasticFMAdapter removed in Wave 33."
+)
 def test_stochastic_fm_adapter_solve_ode_deterministic() -> None:
-    a = StochasticFMAdapter(target=1.0, encoder_gain=0.5, n_steps=4)
-    state = a.build_initial_state(batch_id="b", sample_id="s")
-    cond = state  # placeholder
-    from adaptive_reflow.universal.state import ODEConditionDelta
-    cond = ODEConditionDelta(
-        delta_spec={},
-        source="self",
-        target_round=0,
-        calibration_artifact_hash="",
-    )
-    trace = a.solve_ode(state, cond, seed=42)
-    assert trace.steps == 4
-    assert math.isfinite(trace.accept_rate)
+    pass
 
 
+@pytest.mark.skip(
+    reason="stochastic_velocity removed in Wave 33 (was in stochastic_fm)."
+)
 def test_stochastic_velocity_deterministic() -> None:
-    """Same (t, y, seed) gives the same velocity."""
-    y = np.asarray([0.5, -0.3])
-    v1 = stochastic_velocity(
-        t=0.5,
-        y=y,
-        target=1.0,
-        encoder_gain=0.5,
-        noise_scale=0.1,
-        adaptive_noise_gamma=1.0,
-        seed=42,
-    )
-    v2 = stochastic_velocity(
-        t=0.5,
-        y=y,
-        target=1.0,
-        encoder_gain=0.5,
-        noise_scale=0.1,
-        adaptive_noise_gamma=1.0,
-        seed=42,
-    )
-    assert np.allclose(v1, v2)
+    pass
 
 
 # ---------------------------------------------------------------------------

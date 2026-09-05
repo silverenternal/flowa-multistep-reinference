@@ -149,10 +149,10 @@ def _class_from_module(module: str, name: str) -> type:
 #: the audit catches a class of latent bugs the conformance battery
 #: silently misses.
 UNREGISTERED_ADAPTER_CLASSES: tuple[type, ...] = (
-    # StochasticFM is exported via :mod:`adaptive_reflow.adapters` but
-    # is NOT in ADAPTER_REGISTRY. It carries design-level bugs (see
-    # test_g_stochastic_fm_has_invalid_enumeration_strings).
-    _class_from_module("adaptive_reflow.adapters.stochastic_fm", "StochasticFMAdapter"),
+    # StochasticFM was removed in Wave 33 (orphan; see
+    # docs/audit/adapter-conformance-deep-dive.md NONCONFORMANCE_BUG #5 —
+    # RESOLVED via deletion). FreqFlow + Kanzi remain design-skeleton
+    # releases below.
     # FreqFlow (Wave 21 PHASE-3 CVPR 2026 image SiT-XL/2 + FFT-branch)
     # is a *design-skeleton* release — the adapter is wired and the
     # Protocol surface is conformant in synthetic mode, but the
@@ -431,14 +431,15 @@ def test_b_build_initial_state_field_completeness(
     PASS — every required :class:`StateBundle` field is populated with
     the correct type and ``validate_state_bundle`` returns ``True``.
 
-    Nonconformance design: :class:`StochasticFMAdapter` uses
-    ``reference_frame="stochastic_fm"`` and
+    Nonconformance design (historical, Wave 32 FIXED + Wave 33
+    DELETED): the previously-orphan :class:`StochasticFMAdapter` once
+    used ``reference_frame="stochastic_fm"`` and
     ``normalization="per_channel_std"`` (not in the canonical
-    ``REFERENCE_FRAMES`` / ``NORMALIZATION_KINDS`` enums). The audit
-    catches this as a bug because
-    :func:`validate_state_bundle` would reject these bundles — but
-    :class:`StochasticFMAdapter` is not registered, so this test only
-    sees the registered adapters (which all use canonical enums).
+    ``REFERENCE_FRAMES`` / ``NORMALIZATION_KINDS`` enums). The enum
+    bug was fixed in Wave 32 (canonical strings), and the adapter was
+    deleted in Wave 33 (orphan; see NONCONFORMANCE_BUG #5 in
+    ``docs/audit/adapter-conformance-deep-dive.md``). This test now
+    only sees the registered adapters (which all use canonical enums).
     """
     adapter = registered_adapter
     bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
@@ -540,10 +541,12 @@ def test_b_apply_restart_distribution_contract(registered_adapter: Any) -> None:
     Nonconformance design: adapters that always return ``state``
     unchanged (e.g. :class:`SyntheticContinuousAdapter`,
     :class:`SyntheticDiscreteAdapter`,
-    :class:`SyntheticMixedChannelAdapter`, :class:`StochasticFMAdapter`)
+    :class:`SyntheticMixedChannelAdapter`)
     are documented as accepting the restart contract but not
     implementing it; this is acceptable as a no-op (the engine treats
     no-op restart as a valid "no blend" signal).
+    :class:`StochasticFMAdapter` (formerly listed here) was removed in
+    Wave 33.
     """
     adapter = registered_adapter
     caps = adapter.capabilities()
@@ -919,8 +922,9 @@ def test_g_unregistered_adapter_protocol_conformance(adapter_cls: type) -> None:
     PASS — every concrete :class:`FlowMatchingODEAdapter` subclass must
     satisfy the runtime Protocol surface, even if not enrolled in
     :data:`ADAPTER_REGISTRY`. The conformance battery silently skips
-    these adapters; this test catches protocol regressions in
-    ``StochasticFMAdapter`` and any future orphan class.
+    these adapters; this test catches protocol regressions in any
+    orphan / design-skeleton class (``FreqFlow``, ``Kanzi``,
+    ``ReferenceFlowA``).
     """
     adapter = adapter_cls()
     assert isinstance(adapter, FlowMatchingODEAdapter), (
@@ -932,42 +936,33 @@ def test_g_unregistered_adapter_protocol_conformance(adapter_cls: type) -> None:
 
 
 @pytest.mark.parametrize("adapter_cls", UNREGISTERED_ADAPTER_CLASSES)
-def test_g_stochastic_fm_has_invalid_enumeration_strings(
+def test_g_unregistered_adapter_emits_canonical_enumeration_strings(
     adapter_cls: type,
 ) -> None:
-    """G.2 — ``StochasticFMAdapter`` emits non-canonical enumeration strings.
+    """G.2 — unregistered adapters emit canonical enumeration strings.
 
-    NONCONFORMANCE_BUG — ``StochasticFMAdapter.build_initial_state``
-    sets ``reference_frame="stochastic_fm"`` and
-    ``normalization="per_channel_std"``, neither of which is in
-    :data:`REFERENCE_FRAMES` / :data:`NORMALIZATION_KINDS`. This means
-    :func:`validate_state_bundle` would reject the bundle — the
-    engine's universal invariant is violated.
+    PASS — every registered and unregistered adapter's
+    :meth:`build_initial_state` must emit a :class:`StateBundle`
+    whose ``reference_frame`` and ``normalization`` fields are in
+    the canonical :data:`REFERENCE_FRAMES` / :data:`NORMALIZATION_KINDS`
+    enums. This protects the engine's universal invariant
+    (``validate_state_bundle``).
 
-    Impact:
-      * The adapter is not in :data:`ADAPTER_REGISTRY` (so the
-        conformance battery does not run it), which is why this
-        regression has gone uncaught.
-      * If anyone wires ``StochasticFMAdapter`` into the engine
-        end-to-end, ``compose_condition`` and ``detach_and_validate_endpoint``
-        would crash (they call ``validate_state_bundle`` on the
-        adapter's own bundle).
-
-    Fix options:
-      * Change ``reference_frame="world"`` and
-        ``normalization="per_atom_std"`` to canonical values, OR
-      * Add ``"stochastic_fm"`` and ``"per_channel_std"`` to the
-        canonical enums (D-2 design choice), OR
-      * Delete ``StochasticFMAdapter`` if no longer needed (it is
-        not in the registry and not referenced by the conformance
-        battery or any other adapter).
+    Historical note: this test was originally named
+    ``test_g_stochastic_fm_has_invalid_enumeration_strings`` and was
+    written to document the now-fixed-and-deleted
+    :class:`StochasticFMAdapter` enum bug (Wave 32 fixed the enum,
+    Wave 33 deleted the orphan). The test now asserts the *positive*
+    invariant for all surviving unregistered adapters
+    (``FreqFlow``, ``Kanzi``, ``ReferenceFlowA``).
     """
     adapter = adapter_cls()
     bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
     assert isinstance(bundle, StateBundle)
     canonical_frames = set(REFERENCE_FRAMES)
     canonical_norms = set(NORMALIZATION_KINDS)
-    # The audit asserts the bug — if the adapter is later fixed, this
+    # The audit asserts the positive invariant (every adapter's emitted
+    # enum strings are in the canonical sets).
     # assertion still passes (the canonical strings are a subset of the
     # canonical sets).
     assert (
@@ -1006,9 +1001,10 @@ def test_h_unregistered_adapter_signature_audit(
     """H.1 — unregistered adapter's signature matches Protocol shape.
 
     NONCONFORMANCE design — same audit as A.2, but for the
-    unregistered ``StochasticFMAdapter``. The audit confirms the
-    adapter's signatures are Protocol-conformant at the type-system
-    level (they declare the right parameter names + kinds).
+    unregistered design-skeleton classes (``FreqFlow``, ``Kanzi``,
+    ``ReferenceFlowA``). The audit confirms the adapter's signatures
+    are Protocol-conformant at the type-system level (they declare the
+    right parameter names + kinds).
     """
     try:
         adapter = adapter_cls()

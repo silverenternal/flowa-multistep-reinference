@@ -3116,37 +3116,22 @@ def measure_round2_external_uplifts() -> list[dict[str, Any]]:
         "achieved": bool(dopri5_dist <= 0.05),
     })
 
-    # ---- P0 #9 -- Stochastic FM adapter presence + W2 reduction.
-    # The adapter is exercised on a deterministic synthetic trajectory
-    # (no upstream W2 oracle under stochasticity here); the contract
-    # is that the adapter runs and emits an endpoint matrix that the
-    # runner can score with the canonical W2 helper.
-    try:
-        from adaptive_reflow.adapters.stochastic_fm import StochasticFMAdapter
-
-        adapter = StochasticFMAdapter(seed=42)
-        adapter_present = True
-        # The stochastic FM adapter is a runtime class; assert it has
-        # the canonical ``build_initial_state`` / ``observe_endpoint``
-        # API the runner expects.
-        present_methods = (
-            hasattr(adapter, "build_initial_state")
-            and hasattr(adapter, "observe_endpoint")
-        )
-    except Exception as exc:  # pragma: no cover — env-specific
-        adapter_present = False
-        present_methods = False
-        _ = exc
+    # ---- P0 #9 -- Stochastic FM adapter REMOVED in Wave 33 (orphan).
+    # The stochastic FM adapter was an arXiv:2410.19814 reproduction that
+    # was never wired into the engine. It was deleted in Wave 33 per
+    # ``docs/audit/adapter-conformance-deep-dive.md`` NONCONFORMANCE_BUG
+    # #5. We keep a row with ``achieved=False`` for backwards-compat
+    # with downstream consumers that parse the benchmark CSV.
     rows.append({
         "algorithm": "StochasticFMAdapter",
-        "uplift": "P0 #9 stochastic FM adapter (arXiv:2410.19814)",
+        "uplift": "P0 #9 stochastic FM adapter (arXiv:2410.19814) — REMOVED Wave 33",
         "metric": "adapter present with runner-compatible API",
         "baseline": 0.0,
-        "current": 1.0 if (adapter_present and present_methods) else 0.0,
-        "delta": 1.0 if (adapter_present and present_methods) else 0.0,
-        "pct_change": float("inf") if present_methods else 0.0,
-        "target": "stochastic FM adapter importable + API ready",
-        "achieved": bool(adapter_present and present_methods),
+        "current": 0.0,
+        "delta": 0.0,
+        "pct_change": 0.0,
+        "target": "stochastic FM adapter importable + API ready (deleted Wave 33)",
+        "achieved": False,
     })
 
     # ---- SDE integrators (P0 #6) -- SDEIntegratorProtocol registry membership.

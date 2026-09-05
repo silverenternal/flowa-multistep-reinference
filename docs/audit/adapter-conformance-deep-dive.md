@@ -41,6 +41,7 @@ blend invariants.
 | `rectified_flow_cifar` | yes | PASS | PASS | PASS | PASS | PASS | PASS (numpy.ndarray) | — |
 | `reference_flowa` | NO (orphan) | PASS | PASS | PASS | PASS | PASS | PASS | **NONCONFORMANCE_DESIGN #2 (orphan)** |
 | `self_flow` | yes | PASS | PASS | PASS | PASS | PASS | PASS (numpy.ndarray) | — |
+| ~~`stochastic_fm`~~ (REMOVED Wave 33) | NO (orphan) | n/a | n/a | n/a | n/a | n/a | n/a | **NONCONFORMANCE_BUG #5 RESOLVED (deleted)** |
 | `toy_gaussian` | yes | PASS | PASS | PASS | PASS | PASS | PASS (returns None) | — |
 | `toy_linear` | yes | PASS | PASS | PASS | PASS (capability False → raises) | PASS | PASS (raises NotImpl) | — |
 | `twodim_fm` | yes | PASS | PASS | PASS | PASS | PASS | PASS (numpy.ndarray) | — |
@@ -436,3 +437,49 @@ imported directly). Both bugs are now fixed (Wave 30 Agent B for
 NONCONFORMANCE_BUG #1, Wave 32 Phase 3 Agent StochFM for
 NONCONFORMANCE_BUG #5); the fix log above records the diffs and the
 test transitions.
+
+### 2026-09-05 — NONCONFORMANCE_BUG #5 RESOLVED (Wave 33 deletion)
+
+**File removed**: `adaptive_reflow/adapters/stochastic_fm.py` (440 LOC)
+
+**Adapter removed**: `StochasticFMAdapter` (the entire file)
+
+**Reason for deletion**: Per Wave 29 Agent C + Wave 32 Agent A
+audit recommendations (`docs/audit/gap-audit.md` §2.3), the
+recommended resolution for NONCONFORMANCE_BUG #5 was option (3)
+"*Delete StochasticFMAdapter — it is not in the registry, not
+referenced by any production adapter, and not documented in
+`docs/PLUG_IN_YOUR_MODEL.md`*". Wave 32 Phase 3 Agent StochFM
+executed option (1) (canonical enum strings) to remove the
+non-canonical-enum bug, but the adapter remained an orphan. Wave 33
+deleted the orphan to remove the dead-code namespace footprint.
+
+**Diff summary**:
+
+| File | Change |
+|---|---|
+| `adaptive_reflow/adapters/stochastic_fm.py` | DELETED (440 LOC removed) |
+| `adaptive_reflow/adapters/__init__.py` | Replaced `from .stochastic_fm import StochasticFMAdapter` with a deletion-mark comment |
+| `tests/test_adapters/test_exp2_stochastic_fm_repro.py` | DELETED (the entire EXP-2 reproduction test file is moot without the adapter) |
+| `tests/test_adapters/test_protocol_deep_audit.py` | Removed `StochasticFMAdapter` from `UNREGISTERED_ADAPTER_CLASSES`; renamed `test_g_stochastic_fm_has_invalid_enumeration_strings` → `test_g_unregistered_adapter_emits_canonical_enumeration_strings`; updated docstrings |
+| `tests/test_adapters/test_inject_forward_noise.py` | Removed `StochasticFMAdapter` from `PASSTHROUGH_ADAPTERS`; removed the `stochastic_fm as _stochastic_mod` import |
+| `tests/test_round2_external_uplifts.py` | Replaced 3 `test_stochastic_fm_*` tests with `@pytest.mark.skip` stubs (documentation of the original 25% W2 claim); removed the `stochastic_fm` import |
+| `tests/test_tools/test_benchmark_internal_uplifts.py` | Removed `"StochasticFMAdapter"` from `EXPECTED_ROUND2_EXTERNAL_KEYS` |
+| `tests/test_universal/test_adapter_protocol_conformance.py` | Removed `stochastic_fm` from the parametrised adapter list |
+| `tools/benchmark_uplifts.py` | Replaced the live `StochasticFMAdapter(...)` import with a `achieved=False` row for backwards-compat |
+| `docs/audit/adapter-conformance-deep-dive.md` | This log entry + summary-table row update |
+
+**Test impact**: 3 tests marked `@pytest.mark.skip` (the EXP-2
+reproduction suite, which is XFAIL anyway). All other stochastic_fm
+tests (the deep audit's G.1/G.2/H.1 parametrised suites) now run
+with the surviving unregistered adapters (FreqFlow, Kanzi,
+ReferenceFlowA) — `UNREGISTERED_ADAPTER_CLASSES` shrinks from 4
+classes to 3. Full test suite: **637 passed, 42 skipped** (the 3
+new skips are the stochastic_fm placeholder stubs above; the other
+39 skips are pre-existing env-specific skips for mnist_fm,
+SyntheticUnsupportedAdapter, etc.).
+
+**Reversibility**: deletion is reversible via `git checkout HEAD --
+adaptive_reflow/adapters/stochastic_fm.py` + the reverse of the
+above diff. The file remains in git history at the
+`pre-wave33-stochfm-deletion` commit.

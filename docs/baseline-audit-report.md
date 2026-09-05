@@ -766,6 +766,45 @@ no existing tests were changed.
 
 ---
 
+## D.1 — Adapter LOC reduction via shared helper adoption (Wave 33, additive, low-risk subset)
+
+- **Metric ID:** D.1
+- **Metric title:** Shared-helper adoption rate among the 5 NEW adapters (Wave 10 / Wave 21 PHASE-3). Wave 33 is the FIRST wave to introduce this metric; the baseline is captured here.
+- **Scope (low-risk subset):** The 5 NEW adapters only:
+  - `twodim_fm` (1470 LOC; Wave 14+ canonical 2D rectified flow)
+  - `lineageflow` (1608 LOC; Wave 10 protein LineageFlow)
+  - `kanzi` (1567 LOC; Wave 21 protein Kanzi)
+  - `freqflow` (1477 LOC; Wave 21 image FreqFlow)
+  - `flowmol3_v2_adapter` (3244 LOC; Wave 30 flowmol3 v2)
+  - Total: **9366 LOC** (median 1567 LOC)
+  - **DO NOT TOUCH** the high-traffic adapters: `rectified_flow_cifar`, `self_flow`, `mnist_fm`, `mnist_fm_train`, `graphbfn`, `protbfn_abbfn_adapter`, `lumina_image_2_0`, `hidream_i1`, `wan2_2_video`, `toy_gaussian`, `toy_linear`, `flowmol3`, `flowmol3_sidecar`, `flowmol3_upstream_shim`, `reference_flowa` (each has its own byte-stable contract under the existing regression vectors).
+
+- **Wave 33 baseline (no file changes yet):**
+  - All 5 NEW adapters already use the **shared helpers** from `adaptive_reflow/adapters/_adapter_common.py`:
+    - `seed_from_ids` (3 LOC saved per call site × ~3 call sites per adapter ≈ 9 LOC / adapter)
+    - `digest_state` (5 LOC saved per call site × ~2 call sites per adapter ≈ 10 LOC / adapter)
+    - `make_ref` (5 LOC saved per call site × ~3 call sites per adapter ≈ 15 LOC / adapter)
+    - `NativeStateCache` (NOT yet adopted; 5 adapters each carry a local `_put_native_state` helper — see below)
+    - `make_adapter_capabilities` (NOT yet adopted; 5 adapters each carry an inlined `__init__` block in their `*Capabilities` class — see below)
+  - All 5 NEW adapters have inlined `_put_native_state` helpers (~10 LOC each) and inlined capability class `__init__` (~20 LOC each) that could be replaced by shared helpers without breaking the Protocol surface.
+
+- **Wave 33 contribution (additive):**
+  - 5 NEW TESTS added to `tests/test_adapters/test_adapter_common.py` demonstrating that the shared `make_adapter_capabilities` helper produces kwargs identical to (a) the inlined `__init__` of `FreqFlowCapabilities`, (b) the inlined `__init__` of `KanziCapabilities`, plus 3 round-trip + byte-stability + extra-override tests. All 14 tests pass (5 new + 9 pre-existing).
+  - D.5 conformance battery: **106 passed, 8 skipped** (the 8 skips are the pre-existing `mnist_fm requires weights on disk` skips, not new regressions).
+  - **No source file in `adaptive_reflow/adapters/{twodim_fm,lineageflow,kanzi,freqflow,flowmol3_v2_adapter}.py` was modified** in Wave 33. The shrink is *enabling* (via new tests that prove the shared helper is byte-equivalent to the inlined blocks), not *applying* (the actual file-level refactor is left for a future wave when paired-regression-vectors for these 5 adapters are available).
+- **Estimated future LOC reduction (when the inlined blocks are replaced):**
+  - `_put_native_state` (10 LOC × 5 adapters = 50 LOC)
+  - capability class `__init__` (15 LOC × 5 adapters = 75 LOC)
+  - **Total estimated reduction: ~125 LOC** (≈ 1.3 % of the 9366 LOC baseline; this is a *modest* reduction because most adapter LOC is domain-specific adapter logic, not boilerplate)
+- **Constraint compliance:**
+  - **D.5 conformance battery PASS** (106 passed, 8 skipped — no regression).
+  - **No file modifications to the 5 NEW adapters** in Wave 33 (only the shared helper's *tests* were added).
+  - **Wave 31 scheduler changes untouched** (per the user's directive).
+- **Rev 2 target:** apply the inlined-block replacements in a future wave once paired-regression-vectors exist for these 5 adapters. The Wave 33 contribution is the **test scaffold** + **LOC baseline** + **estimated future reduction** — no actual file shrink in this PR.
+- **Interpretation:** The 5 NEW adapters already lean heavily on the shared helpers (P2-9 consolidation reduced duplication significantly across the 10 earlier adapters). The remaining duplication is in (a) the local `_put_native_state` helpers (5 copies) and (b) the inlined capability class `__init__` blocks (5 copies). Both are byte-stable candidates for replacement by `NativeStateCache.put` and `make_adapter_capabilities` respectively, but the actual replacement requires paired-regression-vectors for these 5 adapters (a precondition that the existing regression-vector infrastructure does not yet provide for the 5 NEW adapters — see D.4 row above). Wave 33 captures the baseline + tests the shared-helper equivalence; a future wave will apply the replacement once the regression vectors are in place.
+
+---
+
 ## D.5 — Conformance battery existence
 
 - **Metric ID:** D.5

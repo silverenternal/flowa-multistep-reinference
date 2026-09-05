@@ -127,10 +127,10 @@ EXPECTED_ROUND2_EXTERNAL_KEYS = {
     "UniPCIntegrator2",
     "UniPCIntegrator3",
     "DormandPrinceRK45Integrator",
-    "StochasticFMAdapter",
     "EulerMaruyamaIntegrator",
     "SDEHeunIntegrator",
     "SymplecticLeapfrogIntegrator",
+    # StochasticFMAdapter removed in Wave 33 (orphan; deleted).
 }
 
 

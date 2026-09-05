@@ -35,14 +35,14 @@ from adaptive_reflow.adapters import (
     ToyLinearAdapter,
     TwoDimFMAdapter,
 )
-from adaptive_reflow.adapters import stochastic_fm as _stochastic_mod
 from adaptive_reflow.adapters._inject_forward_noise import (
     INJECT_FORWARD_NOISE_TAG,
     inject_forward_noise_into_state,
 )
 from adaptive_reflow.universal.adapter import CapabilityMissingError
 
-StochasticFMAdapter = _stochastic_mod.StochasticFMAdapter
+# StochasticFMAdapter removed in Wave 33 (orphan; see
+# docs/audit/adapter-conformance-deep-dive.md NONCONFORMANCE_BUG #5).
 
 
 # Adapters with state-keyed ``_native_states`` and the canonical key.
@@ -60,7 +60,6 @@ PASSTHROUGH_ADAPTERS: tuple[type, ...] = (
     SyntheticUnsupportedAdapter,
     FlowMol3Adapter,
     ReferenceFlowAAdapter,
-    StochasticFMAdapter,
     ToyLinearAdapter,
 )
 
