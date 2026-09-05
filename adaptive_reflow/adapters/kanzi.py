@@ -307,16 +307,28 @@ def kanzi_resolve_weights_path(
 ) -> Path | None:
     """Return the candidate Kanzi weights path.
 
-    Resolves to ``data_dir / "kanzi" / "kanzi_encoder.pt"`` (the
-    canonical Kanzi GitHub-release filename pattern). Returns
-    ``None`` when no candidate exists. Mirrors
+    Resolves (in order) to:
+
+    1. ``data_dir / "kanzi" / "kanzi_encoder.pt"`` — canonical
+       Kanzi GitHub-release subdir layout.
+    2. ``data_dir / "kanzi_ckpt" / "kanzi_encoder.pt"`` — Wave 36
+       real-ckpt integration layout (the file is also kept as
+       ``cleaned_model.pt`` in that dir alongside ``SHA256SUMS``;
+       ``kanzi_encoder.pt`` is a symlink to ``cleaned_model.pt`` so
+       both names resolve to the same SHA-256).
+    3. ``data_dir / "kanzi_encoder.pt"`` — flat fallback (matches the
+       hidream_i1 layout).
+
+    Returns ``None`` when no candidate exists. Mirrors
     :func:`adaptive_reflow.adapters.rectified_flow_cifar.rectified_flow_cifar_resolve_weights_path`.
     """
     base = Path(data_dir) if data_dir is not None else Path("data")
-    candidate = base / "kanzi" / "kanzi_encoder.pt"
-    if candidate.exists():
-        return candidate
-    # Fallback: flat data dir (matches the hidream_i1 layout).
+    sub = base / "kanzi" / "kanzi_encoder.pt"
+    if sub.exists():
+        return sub
+    ckpt_dir = base / "kanzi_ckpt" / "kanzi_encoder.pt"
+    if ckpt_dir.exists():
+        return ckpt_dir
     flat = base / "kanzi_encoder.pt"
     if flat.exists():
         return flat
