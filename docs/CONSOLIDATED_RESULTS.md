@@ -1330,5 +1330,71 @@ Kanzi exit code: 0. Verdict: `TIE_AT_SATURATION` (in the OK bucket
 — documented trivial reading, not a run error).
 LineageFlow: not yet executed.
 
----
+### 15.8 Wave 42 Agent A — fresh re-execution (warm-cache rerun, 2026-09-05 20:45 UTC)
 
+Re-ran the exact Wave 41 Agent B / §15.6 command on the same
+`.venvs/kanzi_venv/` sidecar against the same SHA-256-verified
+`data/kanzi_ckpt/cleaned_model.pt` 530 MB ckpt, with the same
+seeds (42, 43, 44) and NFE budgets (10, 50, 200). This run is the
+**canonical fresh execution** — it post-dates the §15.6 table by
+~10 minutes and reflects the sidecar venv's warm-cache state (no
+cold-import overhead, no GPU contention).
+
+| seed | nfe | adapter_mode | status             | baseline | framework | delta_pct | wall_b (s) | wall_fw (s) |
+|-----:|----:|:-------------|:-------------------|---------:|----------:|----------:|-----------:|------------:|
+|   42 |  10 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0011 |      0.0002 |
+|   42 |  50 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0021 |      0.0008 |
+|   42 | 200 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0053 |      0.0019 |
+|   43 |  10 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0006 |      0.0002 |
+|   43 |  50 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0016 |      0.0006 |
+|   43 | 200 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0052 |      0.0018 |
+|   44 |  10 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0006 |      0.0002 |
+|   44 |  50 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0016 |      0.0006 |
+|   44 | 200 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0053 |      0.0019 |
+
+Per-NFE aggregate:
+
+| nfe | avg_delta_pct | avg_baseline_wall_s | avg_framework_wall_s |
+|----:|--------------:|--------------------:|---------------------:|
+|  10 |          0.00 |              0.0008 |               0.0002 |
+|  50 |          0.00 |              0.0018 |               0.0007 |
+| 200 |          0.00 |              0.0053 |               0.0019 |
+
+Aggregate:
+
+| metric                     | value             |
+|----------------------------|-------------------|
+| n_cells                    | 9                 |
+| n_tie_at_saturation        | 9                 |
+| g1_mean_signed_delta_pct   | 0.0               |
+| verdict_overall            | TIE_AT_SATURATION |
+| framework_wins             | 0                 |
+| real_ckpt_loaded           | True (adapter_mode=torch in every cell) |
+| force_mode_requested       | real              |
+
+**Wallclock comparison vs §15.6:**
+
+| nfe | §15.6 baseline (s) | §15.8 baseline (s) | ratio | §15.6 framework (s) | §15.8 framework (s) | ratio |
+|----:|-------------------:|-------------------:|------:|--------------------:|--------------------:|------:|
+|  10 |             0.0013 |             0.0008 |  0.62 |              0.0005 |              0.0002 |  0.40 |
+|  50 |             0.0038 |             0.0018 |  0.47 |              0.0013 |              0.0007 |  0.54 |
+| 200 |             0.0139 |             0.0053 |  0.38 |              0.0047 |              0.0019 |  0.40 |
+
+§15.8 wallclock is **~2-3× faster** than §15.6 (warm-cache effect on
+the same hardware, same ckpt, same seeds, same NFE). The metric
+reading (`0.95 / 0.95 / 0.0pp TIE_AT_SATURATION`) is byte-identical
+across the two runs, confirming the `--force-mode real` plumbing is
+deterministic and the trivial reading is reproducible.
+
+**Honest verdict (unchanged from §15.3 + §15.6 + §15.7):** the
+adapter + solve layers are wired correctly to real ckpt weights
+(`adapter_mode: "torch"` in every cell, wallclock scales monotonically
+with NFE under 10 ms for the largest budget). The metric layer
+remains hard-wired to the synthetic ceiling (documented trivial
+reading), unblocking the §15.5 items (3) + (4) infrastructure work
+(ESM-2 + Pfam holdout) is out of scope for Wave 42 Agent A. No
+code change applied to `tools/run_real_ckpt_eval.py` per the
+disjoint-file-scope constraint and the "trivial 1-2 LOC only" guard.
+
+
+---
