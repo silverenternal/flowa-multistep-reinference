@@ -222,6 +222,34 @@ ERR_FREQ_FLOW_FREQ_MIX_INVALID: str = "freqflow_frequency_mix_invalid"
 
 Mode = Literal["torch", "synthetic"]
 
+#: Filename of the published FreqFlow EMA checkpoint. The upstream
+#: README's inference recipe takes ``--nnet_path=/path/to/nnet_ema.pth``;
+#: this is the only weights filename the authors reference.
+FREQ_FLOW_CKPT_FILENAME: str = "nnet_ema.pth"
+
+#: Environment variable that overrides the checkpoint search path.
+#: May point at the ``nnet_ema.pth`` file or at a directory that
+#: contains it. See :func:`freqflow_resolve_weights_path`.
+FREQ_FLOW_CKPT_ENV_VAR: str = "FREQFLOW_CKPT"
+
+#: Upstream source repository. As of Wave 36 the repo publishes the
+#: **training / inference code only** — there is no ``nnet_ema.pth``
+#: in the git tree, no GitHub release asset, and no Hugging Face
+#: mirror under either the model name or the author's account. The
+#: checkpoint referenced by the README is a local placeholder path,
+#: not a download URL. See ``docs/models/freqflow.model_card.md``
+#: for the manual-acquisition procedure.
+FREQ_FLOW_UPSTREAM_REPO: str = "https://github.com/OliverRensu/FreqFlow"
+
+#: SHA-256 of the vendored upstream source tarball
+#: (``codeload.github.com/OliverRensu/FreqFlow/tar.gz/refs/heads/main``
+#: as fetched 2026-09-05). Recorded so a later re-fetch can detect an
+#: upstream change that would invalidate the adapter's assumptions
+#: about the two-branch architecture.
+FREQ_FLOW_UPSTREAM_TARBALL_SHA256: str = (
+    "e42d0eb1fac596ba5acf2dca36490fd67b0a7dbebea81485eafbe8e861c7d56e"
+)
+
 #: Provenance marker / mechanism_id token. Used both as a class-level
 #: identifier and as the leading entry in the per-bundle ``provenance``
 #: tuple so the audit trail can trace a round back to the adapter.
@@ -254,19 +282,45 @@ def freqflow_resolve_weights_path(
 ) -> Path | None:
     """Return the candidate ``nnet_ema.pth`` weights path.
 
-    Resolves to ``data_dir / "freqflow" / "nnet_ema.pth"`` (the only
-    filename the FreqFlow authors reference on GitHub). Returns
-    ``None`` when no candidate exists. Mirrors
+    Resolution order (first existing wins):
+
+    1. ``$FREQFLOW_CKPT`` — explicit override. May point either at the
+       ``nnet_ema.pth`` file itself or at a directory containing it.
+       This is the escape hatch for a host that stores the checkpoint
+       outside the repo (the published FreqFlow weights are ~2.7 GB
+       and are **not** redistributable, so they are never vendored).
+    2. ``data_dir / "freqflow_ckpt" / "nnet_ema.pth"`` — the Wave 36
+       canonical layout, matching the ``data/freqflow_ckpt/``
+       directory that carries ``SHA256SUMS`` + the vendored upstream
+       source tree.
+    3. ``data_dir / "freqflow" / "nnet_ema.pth"`` — the Wave 21
+       legacy layout, kept so an existing host install keeps working.
+    4. ``data_dir / "nnet_ema.pth"`` — flat fallback (self_flow layout).
+
+    ``nnet_ema.pth`` is the only filename the FreqFlow authors
+    reference (README ``--nnet_path=/path/to/nnet_ema.pth``). Returns
+    ``None`` when no candidate exists, which drives the adapter into
+    ``synthetic`` mode. Mirrors
     :func:`adaptive_reflow.adapters.self_flow.self_flow_resolve_weights_path`.
     """
+    import os
+
+    env = os.environ.get(FREQ_FLOW_CKPT_ENV_VAR, "").strip()
+    if env:
+        env_path = Path(env)
+        if env_path.is_dir():
+            env_path = env_path / FREQ_FLOW_CKPT_FILENAME
+        if env_path.exists():
+            return env_path
+
     base = Path(data_dir) if data_dir is not None else Path("data")
-    candidate = base / "freqflow" / "nnet_ema.pth"
-    if candidate.exists():
-        return candidate
-    # Fallback: flat data dir (matches the self_flow layout).
-    flat = base / "nnet_ema.pth"
-    if flat.exists():
-        return flat
+    for candidate in (
+        base / "freqflow_ckpt" / FREQ_FLOW_CKPT_FILENAME,
+        base / "freqflow" / FREQ_FLOW_CKPT_FILENAME,
+        base / FREQ_FLOW_CKPT_FILENAME,
+    ):
+        if candidate.exists():
+            return candidate
     return None
 
 
@@ -1452,6 +1506,8 @@ __all__ = [
     "ERR_FREQ_FLOW_WEIGHTS_MISSING",
     "FREQ_FLOW_CHANNEL_DOMAINS",
     "FREQ_FLOW_CHANNELS",
+    "FREQ_FLOW_CKPT_ENV_VAR",
+    "FREQ_FLOW_CKPT_FILENAME",
     "FREQ_FLOW_CLAMP",
     "FREQ_FLOW_CFG_SCALE_DEFAULT",
     "FREQ_FLOW_CLASS_LABEL_DEFAULT",
@@ -1469,6 +1525,8 @@ __all__ = [
     "FREQ_FLOW_SYNTHETIC_HIDDEN",
     "FREQ_FLOW_SYNTHETIC_SEED_DEFAULT",
     "FREQ_FLOW_T_END",
+    "FREQ_FLOW_UPSTREAM_REPO",
+    "FREQ_FLOW_UPSTREAM_TARBALL_SHA256",
     "FreqFlowAdapter",
     "FreqFlowCapabilities",
     "default_freqflow_adapter",

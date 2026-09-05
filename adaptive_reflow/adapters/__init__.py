@@ -106,6 +106,21 @@ from .integrators import (
     build_integrator,
 )
 from .karras_preconditioner import KarrasPreconditioner
+from .freqflow import (
+    FREQ_FLOW_CHANNEL_DOMAINS,
+    FREQ_FLOW_CHANNELS,
+    FREQ_FLOW_CKPT_ENV_VAR,
+    FREQ_FLOW_CKPT_FILENAME,
+    FREQ_FLOW_CONFIG_HASH,
+    FREQ_FLOW_CONFIG_VERSION,
+    FREQ_FLOW_MECHANISM_ID,
+    FREQ_FLOW_NUM_STEPS_DEFAULT,
+    FREQ_FLOW_STATE_SHAPE,
+    FreqFlowAdapter,
+    FreqFlowCapabilities,
+    default_freqflow_adapter,
+    freqflow_resolve_weights_path,
+)
 from .self_flow import (
     SELF_FLOW_CHANNEL_DOMAINS,
     SELF_FLOW_CHANNELS,
@@ -215,6 +230,7 @@ from .wan2_2_video import (
 ADAPTER_REGISTRY: dict[str, Any] = {
     "flowmol3": default_flowmol3_adapter,
     "flowmol3_v2": default_flowmol3adapter,
+    "freqflow": default_freqflow_adapter,
     "graphbfn": default_graphbfn_adapter,
     "hidream_i1": default_hidream_i1_adapter,
     "lineageflow": default_lineageflow_adapter,

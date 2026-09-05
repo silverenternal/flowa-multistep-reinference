@@ -71,6 +71,7 @@ nav:
       - FlowMol3 (Dunn & Koes 2025): models/flowmol3.model_card.md
       - LineageFlow (ICML 2026 protein): models/lineageflow.model_card.md
       - Kanzi (ICLR 2026 protein flow-AE): models/kanzi.model_card.md
+      - FreqFlow (CVPR 2026 image): models/freqflow.model_card.md
   - Testing: TESTING_STRATEGY.md
   - Acceptance gates: GATES.md
   - Results & records:
