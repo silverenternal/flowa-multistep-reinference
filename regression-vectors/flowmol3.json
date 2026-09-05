@@ -1,0 +1,400 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T02:53:05Z",
+  "git_sha": "404d962",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "flowmol3",
+  "adapter_version": "",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "flowmol3",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "flowmol3:ccf1613bd1d00bfc",
+        "integrator_config_hash": "flowmol3:458e224249527046"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "flowmol3:e4ebda97374ef94f",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 placeholder"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "7c1ad50f009029e24091dbbc101f9f15634ee6fdae23edb8d85fa0a48a6f85c6"
+    },
+    {
+      "adapter": "flowmol3",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "flowmol3:676bed3865909539",
+        "integrator_config_hash": "flowmol3:e6db6ea06d77d57d"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "flowmol3:e4ebda97374ef94f",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 placeholder"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "fd7a3b6b25c47ca9403c106e298afae2aeb0eb4f078f9e2488b653940f9f3672"
+    },
+    {
+      "adapter": "flowmol3",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "flowmol3:54cff28f4cb0f934",
+        "integrator_config_hash": "flowmol3:5f0772278b837c02"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "flowmol3:e4ebda97374ef94f",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 placeholder"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "a782f3b7dfb51875a8cfbfb091e2173c5b179a46b38d5a32a554307247fd7292"
+    },
+    {
+      "adapter": "flowmol3",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "flowmol3:387f3faef330ddfc",
+        "integrator_config_hash": "flowmol3:31f7ea3670954c13"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "flowmol3:ef5c513b99562b16",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 placeholder"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "83c5a4b9c202b0456537836522ba649f79698b8271605bafe68146f90f156cdf"
+    },
+    {
+      "adapter": "flowmol3",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "flowmol3:039165e11d658baa",
+        "integrator_config_hash": "flowmol3:becf230aff45821a"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "flowmol3:ef5c513b99562b16",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 placeholder"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "746519df2832c25832d27b2bb9b9c132c60f4d4c9c0e1d3e53378a6bb7cba11b"
+    },
+    {
+      "adapter": "flowmol3",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "flowmol3:69833c5679e300b9",
+        "integrator_config_hash": "flowmol3:fdccb3262acb8e6f"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "flowmol3:ef5c513b99562b16",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 placeholder"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "33b988ae4fc40eef2020ac24783219f7417601e854e1c1b7f84eb223edab959a"
+    },
+    {
+      "adapter": "flowmol3",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "flowmol3:6f2fb87e47b3df75",
+        "integrator_config_hash": "flowmol3:4e082d7970678f42"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "flowmol3:a27a2d5a15ce4819",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 placeholder"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "c75f11acd6e2046a44eee040882c64d880f09061e820daa910c7286f0efaac14"
+    },
+    {
+      "adapter": "flowmol3",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "flowmol3:156c38839242108c",
+        "integrator_config_hash": "flowmol3:d0b1a30c0ac548ca"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "flowmol3:a27a2d5a15ce4819",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 placeholder"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "c168b2c04d3a38e1e7778c5f21ee7a9e97c6577f2e950771726152d43697efe1"
+    },
+    {
+      "adapter": "flowmol3",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "flowmol3:9a420f09ea2fa8a5",
+        "integrator_config_hash": "flowmol3:1e462bb6b1f0c603"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "flowmol3:a27a2d5a15ce4819",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 placeholder"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "0a44f20c25d291df77cdc34a48963792b888f08be30fced10778ae859d775d79"
+    }
+  ]
+}

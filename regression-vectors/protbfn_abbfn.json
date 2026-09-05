@@ -1,0 +1,454 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T02:52:28Z",
+  "git_sha": "404d962",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "protbfn_abbfn",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "protbfn_abbfn",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "649bec3389f6b5b7c608474b5c797fe2898e4da8ceefe0fcf768eadaf24d0ab0",
+        "integrator_config_hash": "109dfd5b73f8cea1f0d66fd9abe3d0d87fe8168b43067e826afcca13b8252e90"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "ec2c426654c0af9adc028be533863b0bb73d7d4ce95297ca888b612d728befce",
+        "channels": [
+          "amino_acid_categorical"
+        ],
+        "provenance": [
+          "protbfn_abbfn@v1:ProtBFN",
+          "protbfn_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          8,
+          22
+        ],
+        "dtype": "float64",
+        "sha256": "448d7ac9e65adc501ba0cfdf82f0ad6ddff58e0593217e26b56b9fa4d9d7a1f1",
+        "finite": true
+      },
+      "output_sha256": "4b70d8b8404f5775e33bb580115cf1dfece0c512e85b6602ee4a86ced3ba6c7a"
+    },
+    {
+      "adapter": "protbfn_abbfn",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "e7e641dc19455c6d42e524dc3343b1c887df099471df6cf54e553a2c546c628e",
+        "integrator_config_hash": "265fb9fa397319b6c2c6e8509330746bf6d2b571ccb54245bd9852cf559f7573"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "62d7b761466f064e2d72ea514ee9e2d6b63b74eae2af78a4b4853ba25d350980",
+        "channels": [
+          "amino_acid_categorical"
+        ],
+        "provenance": [
+          "protbfn_abbfn@v1:ProtBFN",
+          "protbfn_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          8,
+          22
+        ],
+        "dtype": "float64",
+        "sha256": "be90190dc89f9db04603e0d4752f029f6168c69442a02940be607050fac74286",
+        "finite": true
+      },
+      "output_sha256": "51e9c210c0f97b55df7cb598133b4497d31b4bb08a529a9c64e8db04be1ef5b8"
+    },
+    {
+      "adapter": "protbfn_abbfn",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "4f123f658c85ebedf68aeb7ae96b769598a8fac9d4c2d1d66e87c20572c89d99",
+        "integrator_config_hash": "177e9791698628b11ac82cb50c6ee195dc12c780e121e0af2955eb4849e37001"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "3ecd8cc4cc61e7679b3f21690571e8e22906ce3e33737ce581fee6e9e8f2d119",
+        "channels": [
+          "amino_acid_categorical"
+        ],
+        "provenance": [
+          "protbfn_abbfn@v1:ProtBFN",
+          "protbfn_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          8,
+          22
+        ],
+        "dtype": "float64",
+        "sha256": "d369f8fe0fb6336cf4529012a3e6816c14eb7b271673d1e5f77eb778eda4a523",
+        "finite": true
+      },
+      "output_sha256": "6812bb252ced02394a91837399b0125c2c97e2153bd335d561515ae6478934a8"
+    },
+    {
+      "adapter": "protbfn_abbfn",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "657ce160c2c826017c70e674225202847cab60b557ff11757fde31d6aaa25a1f",
+        "integrator_config_hash": "a4f09999ff08c8d4682edc302268edc2701b140121d4e37a589a2b5fd30a510a"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "7505a2d8afc7f4288b34dd1f06015d8e4ae418d0271517a84714ed1ee4af44a2",
+        "channels": [
+          "amino_acid_categorical"
+        ],
+        "provenance": [
+          "protbfn_abbfn@v1:ProtBFN",
+          "protbfn_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          8,
+          22
+        ],
+        "dtype": "float64",
+        "sha256": "de7863a18f911d9f141f237aedb99ca0bc72fa503104376a64bc91bda6c1b553",
+        "finite": true
+      },
+      "output_sha256": "7e8b9faaba8477621f3655efbe311a1f0aedeb80a50aa5db16012764e220d547"
+    },
+    {
+      "adapter": "protbfn_abbfn",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "65c3195606016c867c5740e049d4f4f7efddcf175c6d62f3e184ab56155e4200",
+        "integrator_config_hash": "0dd07a9c803e97cf895feac4ff50ac1f72ee3d2d3b243d282f2b546be171a2a7"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "c0162990e7f7fac1040ac876d1126e82d95450d6a19d12ca183a48d7e33e2e8a",
+        "channels": [
+          "amino_acid_categorical"
+        ],
+        "provenance": [
+          "protbfn_abbfn@v1:ProtBFN",
+          "protbfn_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          8,
+          22
+        ],
+        "dtype": "float64",
+        "sha256": "97e5cc2633a9c5678e6fcc9eb9c7f2ff3472ec801c78c445a94564b822c7e146",
+        "finite": true
+      },
+      "output_sha256": "1c349e91b6717eff814e5915a922835413539ac6592feae7eed74f6126f8b367"
+    },
+    {
+      "adapter": "protbfn_abbfn",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "05ff3a7994f0c5c8d0be6d8c892f292db2104989a0e6da5e17559c81af8c85f3",
+        "integrator_config_hash": "b5cdbda5a298279acd12a7ce00c0eaa3e317a89f5dce1ac843b2bc10ea44cf90"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "0f196050fe2bb1a390c21e9a6cd841b3bcf91e2d277af1e97e4d520c5e0e4d08",
+        "channels": [
+          "amino_acid_categorical"
+        ],
+        "provenance": [
+          "protbfn_abbfn@v1:ProtBFN",
+          "protbfn_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          8,
+          22
+        ],
+        "dtype": "float64",
+        "sha256": "15b6f998a330b83ba5b3f6721e856b392233ae79a01d0fad96983c8cecb850a9",
+        "finite": true
+      },
+      "output_sha256": "1c59f93e4288d24dbf437a09921db28db3a8c0e5072825f20d25649b08d0e676"
+    },
+    {
+      "adapter": "protbfn_abbfn",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "f5a7193aa34b5d018a019649ef263bfe444453f97fbae6a70eab4d6bb6308414",
+        "integrator_config_hash": "fba0cb94a04806b6b6d1eb5029316410d71af0faae2d469dae72eb6a83ec08c7"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "e11b1488313e79444cddffdf85790c9c685850384314398471807e1c8873c1ce",
+        "channels": [
+          "amino_acid_categorical"
+        ],
+        "provenance": [
+          "protbfn_abbfn@v1:ProtBFN",
+          "protbfn_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          8,
+          22
+        ],
+        "dtype": "float64",
+        "sha256": "e22b1bfa3cd8a35fd1a7ab55f2126a674bc779007b908526a4759389f8d0d698",
+        "finite": true
+      },
+      "output_sha256": "2492fdbb444717baa2e82bf5a091a1aa0d281ea276d03fb4124085c98a5b9c69"
+    },
+    {
+      "adapter": "protbfn_abbfn",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "767f8d6e002304740e61d5a8bb524b04d602ba04123fdf15336a2516fc19a9ea",
+        "integrator_config_hash": "e17288740ea7513a3c83a6ef790fc35d95788cc572712910d75b2975a86e8fbb"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "aae322321839ad14d571ff78f3f24d7746c37ea4d6136e017183183a7cbf4dd5",
+        "channels": [
+          "amino_acid_categorical"
+        ],
+        "provenance": [
+          "protbfn_abbfn@v1:ProtBFN",
+          "protbfn_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          8,
+          22
+        ],
+        "dtype": "float64",
+        "sha256": "fa894176c20f90255b3371431cb8256643ed39b483dc550da3e6059dc6085fde",
+        "finite": true
+      },
+      "output_sha256": "91f9bf4c7f4128f862891b44a45136eacf93474596c9bfb90742c92abf15ea21"
+    },
+    {
+      "adapter": "protbfn_abbfn",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "430f650d72bd1888b73c66864672d7f65846c39cebd1851d0eb63bffddae526d",
+        "integrator_config_hash": "d9a12159513cbba2345b32e0172ba9c5198c8aae4ae7ebc765cbfd8b75883406"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "fe46cb3bca2a812959f6afa54e51f123d1b116357b3ba384d1c90f2cce9010af",
+        "channels": [
+          "amino_acid_categorical"
+        ],
+        "provenance": [
+          "protbfn_abbfn@v1:ProtBFN",
+          "protbfn_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          8,
+          22
+        ],
+        "dtype": "float64",
+        "sha256": "2a17c08201672ad6b907b2f5ef2280ee32a437a6f09b9d16bf05b805376597d2",
+        "finite": true
+      },
+      "output_sha256": "3ab77782caa3d8384b2f9ac8038e4eef19daaa9136810bf4abaef5797b0cf42f"
+    }
+  ]
+}

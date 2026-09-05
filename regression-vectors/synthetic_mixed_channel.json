@@ -1,0 +1,445 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T02:53:05Z",
+  "git_sha": "404d962",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "synthetic_mixed_channel",
+  "adapter_version": "",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "synthetic_mixed_channel",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 0.5,
+        "native_state_digest": "syn:6f6fedb014a536313144e6fa0104474633a393b2a60a63d9dd28d04ee295c833",
+        "integrator_config_hash": "syn:d02a28200b85ee6af8996a60c7d0f305b2913f53d32a2b3874e9baf71e596028"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:a683a7221592b870b69058890c33de3c2ca0148af880b65bc8a0f9f6c5af1c0a",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous",
+          "projected_pair",
+          "projected_pair.discrete",
+          "raw_pair",
+          "raw_pair.discrete"
+        ],
+        "provenance": [
+          "SyntheticMixedChannelAdapter.build_initial_state",
+          "SyntheticMixedChannelAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "f2f41c41eeb5935e55e69b680c29e94e7ea4e5528f24539b5ea6d90c1f71744c"
+    },
+    {
+      "adapter": "synthetic_mixed_channel",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 0.5,
+        "native_state_digest": "syn:6f6fedb014a536313144e6fa0104474633a393b2a60a63d9dd28d04ee295c833",
+        "integrator_config_hash": "syn:d02a28200b85ee6af8996a60c7d0f305b2913f53d32a2b3874e9baf71e596028"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:a683a7221592b870b69058890c33de3c2ca0148af880b65bc8a0f9f6c5af1c0a",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous",
+          "projected_pair",
+          "projected_pair.discrete",
+          "raw_pair",
+          "raw_pair.discrete"
+        ],
+        "provenance": [
+          "SyntheticMixedChannelAdapter.build_initial_state",
+          "SyntheticMixedChannelAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "303ecb869ce0085330145e5806898df18a05d5f668f80141cbb0104fd0b61812"
+    },
+    {
+      "adapter": "synthetic_mixed_channel",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 0.5,
+        "native_state_digest": "syn:6f6fedb014a536313144e6fa0104474633a393b2a60a63d9dd28d04ee295c833",
+        "integrator_config_hash": "syn:d02a28200b85ee6af8996a60c7d0f305b2913f53d32a2b3874e9baf71e596028"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:a683a7221592b870b69058890c33de3c2ca0148af880b65bc8a0f9f6c5af1c0a",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous",
+          "projected_pair",
+          "projected_pair.discrete",
+          "raw_pair",
+          "raw_pair.discrete"
+        ],
+        "provenance": [
+          "SyntheticMixedChannelAdapter.build_initial_state",
+          "SyntheticMixedChannelAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "c324f8860135396765a29094e788d2a09cb6c58359e35a86e1e3a51e7df86de5"
+    },
+    {
+      "adapter": "synthetic_mixed_channel",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 0.5,
+        "native_state_digest": "syn:6a1c04e214cf0bc277ca1792d9ae34bec57d237ebb678722264688e3969c862f",
+        "integrator_config_hash": "syn:d02a28200b85ee6af8996a60c7d0f305b2913f53d32a2b3874e9baf71e596028"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:061430eca6d1835f9d34b7e0fa25de151844889b5b494cf55c08fd9e785c65c3",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous",
+          "projected_pair",
+          "projected_pair.discrete",
+          "raw_pair",
+          "raw_pair.discrete"
+        ],
+        "provenance": [
+          "SyntheticMixedChannelAdapter.build_initial_state",
+          "SyntheticMixedChannelAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "101f63a0a3c967fbf4f3e9471201aa19c8e54b8dc659f4e805decff2da774690"
+    },
+    {
+      "adapter": "synthetic_mixed_channel",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 0.5,
+        "native_state_digest": "syn:6a1c04e214cf0bc277ca1792d9ae34bec57d237ebb678722264688e3969c862f",
+        "integrator_config_hash": "syn:d02a28200b85ee6af8996a60c7d0f305b2913f53d32a2b3874e9baf71e596028"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:061430eca6d1835f9d34b7e0fa25de151844889b5b494cf55c08fd9e785c65c3",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous",
+          "projected_pair",
+          "projected_pair.discrete",
+          "raw_pair",
+          "raw_pair.discrete"
+        ],
+        "provenance": [
+          "SyntheticMixedChannelAdapter.build_initial_state",
+          "SyntheticMixedChannelAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "55a7edfc78bab9d611091758d42c3b92dc7780187be894075ad6ba193ca8eed0"
+    },
+    {
+      "adapter": "synthetic_mixed_channel",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 0.5,
+        "native_state_digest": "syn:6a1c04e214cf0bc277ca1792d9ae34bec57d237ebb678722264688e3969c862f",
+        "integrator_config_hash": "syn:d02a28200b85ee6af8996a60c7d0f305b2913f53d32a2b3874e9baf71e596028"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:061430eca6d1835f9d34b7e0fa25de151844889b5b494cf55c08fd9e785c65c3",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous",
+          "projected_pair",
+          "projected_pair.discrete",
+          "raw_pair",
+          "raw_pair.discrete"
+        ],
+        "provenance": [
+          "SyntheticMixedChannelAdapter.build_initial_state",
+          "SyntheticMixedChannelAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "9827a175d14e6b0bbffa6ff5ad9e2ba766067560653d506e5fbd1c9292062e58"
+    },
+    {
+      "adapter": "synthetic_mixed_channel",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 0.5,
+        "native_state_digest": "syn:022ccce6570df26cebd0a06b1605b27182bae11a06e75b046c403dfd88cea52b",
+        "integrator_config_hash": "syn:d02a28200b85ee6af8996a60c7d0f305b2913f53d32a2b3874e9baf71e596028"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:00fa60e1cb2a5769c9bf31716d9b7981a6a5c22829db305cc09377e2b22581dc",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous",
+          "projected_pair",
+          "projected_pair.discrete",
+          "raw_pair",
+          "raw_pair.discrete"
+        ],
+        "provenance": [
+          "SyntheticMixedChannelAdapter.build_initial_state",
+          "SyntheticMixedChannelAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "144c3a39942898ed84e3ba27cfbd22e0a1cd3f7bc7289e5ed31c9301447b776d"
+    },
+    {
+      "adapter": "synthetic_mixed_channel",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 0.5,
+        "native_state_digest": "syn:022ccce6570df26cebd0a06b1605b27182bae11a06e75b046c403dfd88cea52b",
+        "integrator_config_hash": "syn:d02a28200b85ee6af8996a60c7d0f305b2913f53d32a2b3874e9baf71e596028"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:00fa60e1cb2a5769c9bf31716d9b7981a6a5c22829db305cc09377e2b22581dc",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous",
+          "projected_pair",
+          "projected_pair.discrete",
+          "raw_pair",
+          "raw_pair.discrete"
+        ],
+        "provenance": [
+          "SyntheticMixedChannelAdapter.build_initial_state",
+          "SyntheticMixedChannelAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "3b7f67f43201c3ec991f2710aa9fda01d385c0a0f5eef46cc2dd17f482d7728b"
+    },
+    {
+      "adapter": "synthetic_mixed_channel",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 0.5,
+        "native_state_digest": "syn:022ccce6570df26cebd0a06b1605b27182bae11a06e75b046c403dfd88cea52b",
+        "integrator_config_hash": "syn:d02a28200b85ee6af8996a60c7d0f305b2913f53d32a2b3874e9baf71e596028"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:00fa60e1cb2a5769c9bf31716d9b7981a6a5c22829db305cc09377e2b22581dc",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous",
+          "projected_pair",
+          "projected_pair.discrete",
+          "raw_pair",
+          "raw_pair.discrete"
+        ],
+        "provenance": [
+          "SyntheticMixedChannelAdapter.build_initial_state",
+          "SyntheticMixedChannelAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "0478cee76c41d52a108e2e9afa5a30364871120142e70dc5e40b50b3506acc4e"
+    }
+  ]
+}

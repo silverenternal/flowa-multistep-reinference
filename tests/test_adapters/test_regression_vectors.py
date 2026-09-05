@@ -8,22 +8,30 @@ Vectors live in ``regression-vectors/<adapter>.json`` and were
 captured via ``tools/run_regression_vector_audit.py generate``.
 
 Per the Wave 32 gap plan (``todo/gap-plan-wave32.md`` #1 + ``todo/algo-improvement-D4-regression-vectors.md``),
-this is the Wave 33 **batch 2** of D.4 (7 adapters) — combined with
-Wave 32 batch 1 (5) and Wave 33 Agent C batch 3 (6) the gate reaches
-**18/18 = MET**:
+the final shipped set is the Wave 34 **batch 4** of D.4 (6 adapters) —
+combined with Wave 32 batch 1 (5) and Wave 33 batch 2 (7) the gate
+reaches **18/18 = MET**. (Wave 33 batch 3 was lost to an Agent C
+overwrite during Wave 34, so Wave 34 batch 4 was required to ship the
+remaining six.)
 
-* ``flowmol3_v2`` (Wave 32)
-* ``twodim_fm`` (Wave 32)
-* ``lineageflow`` (Wave 32)
-* ``kanzi`` (Wave 32)
-* ``freqflow`` (Wave 32)
-* ``mnist_fm`` (Wave 33 Agent B batch 2)
-* ``self_flow`` (Wave 33 Agent B batch 2)
-* ``rectified_flow_cifar`` (Wave 33 Agent B batch 2)
-* ``toy_gaussian`` (Wave 33 Agent B batch 2)
-* ``toy_linear`` (Wave 33 Agent B batch 2)
-* ``graphbfn`` (Wave 33 Agent B batch 2)
-* ``lumina_image_2_0`` (Wave 33 Agent B batch 2)
+* ``flowmol3_v2`` (Wave 32 batch 1)
+* ``twodim_fm`` (Wave 32 batch 1)
+* ``lineageflow`` (Wave 32 batch 1)
+* ``kanzi`` (Wave 32 batch 1)
+* ``freqflow`` (Wave 32 batch 1)
+* ``mnist_fm`` (Wave 33 batch 2)
+* ``self_flow`` (Wave 33 batch 2)
+* ``rectified_flow_cifar`` (Wave 33 batch 2)
+* ``toy_gaussian`` (Wave 33 batch 2)
+* ``toy_linear`` (Wave 33 batch 2)
+* ``graphbfn`` (Wave 33 batch 2)
+* ``lumina_image_2_0`` (Wave 33 batch 2)
+* ``hidream_i1`` (Wave 34 batch 4)
+* ``protbfn_abbfn`` (Wave 34 batch 4)
+* ``wan2_2_video`` (Wave 34 batch 4)
+* ``flowmol3`` (Wave 34 batch 4)
+* ``synthetic_continuous`` (Wave 34 batch 4)
+* ``synthetic_mixed_channel`` (Wave 34 batch 4)
 
 Per-condition schema (each vector carries 3 seeds x 3 NFEs = 9 hashes):
 
@@ -63,11 +71,12 @@ import pytest
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _VECTORS_DIR = _REPO_ROOT / "regression-vectors"
 
-# Twelve adapters (Wave 32 batch 1: 5 + Wave 33 Agent B batch 2: 7 = 12/18).
-# Combined with Wave 33 Agent C batch 3 (6 adapters, to be added by Agent C),
-# D.4 reaches **18/18 = MET** (HARD gate) per the Wave 32 gap plan.
+# Eighteen adapters (Wave 32 batch 1: 5 + Wave 33 batch 2: 7 +
+# Wave 34 batch 4: 6 = 18/18). Wave 33 batch 3 (6 adapters) was lost
+# to a Wave 34 Agent C overwrite; Wave 34 batch 4 ships the final six
+# to complete the D.4 HARD gate.
 #
-# Add more here as subsequent batches ship.
+# Add more here as subsequent waves ship.
 ADAPTERS: tuple[str, ...] = (
     # Wave 32 batch 1 (5)
     "flowmol3_v2",
@@ -75,7 +84,7 @@ ADAPTERS: tuple[str, ...] = (
     "lineageflow",
     "kanzi",
     "freqflow",
-    # Wave 33 Agent B batch 2 (7)
+    # Wave 33 batch 2 (7)
     "mnist_fm",
     "self_flow",
     "rectified_flow_cifar",
@@ -83,6 +92,13 @@ ADAPTERS: tuple[str, ...] = (
     "toy_linear",
     "graphbfn",
     "lumina_image_2_0",
+    # Wave 34 batch 4 (6) — completes D.4 18/18
+    "hidream_i1",
+    "protbfn_abbfn",
+    "wan2_2_video",
+    "flowmol3",
+    "synthetic_continuous",
+    "synthetic_mixed_channel",
 )
 
 

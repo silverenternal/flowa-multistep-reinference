@@ -2196,4 +2196,89 @@ $ python -m pytest tests/test_adapters/test_regression_vectors.py -v --tb=short
 **D.4 status update:** 5/18 PARTIAL → **12/18 PARTIAL** (Wave 33 Agent B batch 2
 adds 7 vectors; Wave 33 Agent C batch 3 will close to 18/18 = MET).
 
+### Wave 34 Agent B batch 4 update (additive, 2026-09-05) — D.4 = MET, 18 / 18
+
+**Added 6 final regression vectors** to the D.4 schema, completing the
+18/18 HARD gate. The Wave 33 Agent C batch 3 work (which had been
+expected to ship the final 6) was lost to an Agent C overwrite during
+Wave 34; Wave 34 Agent B batch 4 ships the missing six to actually
+satisfy the gate on disk.
+
+* `hidream_i1` (synthetic mode; latent flow matching, MoE)
+* `protbfn_abbfn` (synthetic mode; protein Bayesian flow)
+* `wan2_2_video` (synthetic mode; video flow matching, MoE)
+* `flowmol3` (v1 placeholder; hash-stable native state)
+* `synthetic_continuous` (DTB-G1 fixture; continuous channels only)
+* `synthetic_mixed_channel` (DTB-G1 fixture; continuous + discrete)
+
+Combined with Wave 32 batch 1 (5) and Wave 33 Agent B batch 2 (7),
+D.4 is now **18/18 = MET** on disk.
+
+Per-vector capture (3 seeds × 3 NFEs = 9 hashes per adapter):
+
+* `seed`: 41, 42, 43 (deterministic).
+* `input_id`: canonical `batch_id` + `sample_id` (synthetic, fixed
+  per seed).
+* `nfe`: 5, 10, 50 (ODE solver step count sweep).
+* `host_fingerprint`: SHA-256 over the locked environment
+  (`env_hash.txt` `composite_hash` field); required to match for CI
+  byte-stability assertion.
+* `output_sha256`: SHA-256 over the canonicalised trajectory
+  (initial state, trajectory, endpoint, integrator config).
+
+**Adapter-specific notes:**
+
+* `hidream_i1`, `protbfn_abbfn`, `wan2_2_video` — these adapters
+  require a `prompt` slot in the condition delta (their text-encoder
+  pipeline expects a non-empty placeholder); the runner pins
+  `prompt="d4-audit-placeholder"` so the synthetic velocity field runs
+  against a fixed text-embedding cache key.
+* `flowmol3` (v1 placeholder) — its `solve_ode` ignores `num_steps`
+  but the per-condition hash still pins the trace + endpoint surface.
+* `synthetic_continuous`, `synthetic_mixed_channel` — DTB-G1 fixtures
+  used by the conformance battery; `solve_ode` returns a fixed-step
+  trace (`steps=2` and `steps=4` respectively) and ignores `num_steps`.
+
+**Files added/changed (Wave 34 Agent B batch 4):**
+
+* `tools/run_regression_vector_audit.py` (extended: 18
+  `AdapterSpec` entries; 6 new factory functions
+  `_make_hidream_i1`, `_make_protbfn_abbfn`, `_make_wan2_2_video`,
+  `_make_flowmol3`, `_make_synthetic_continuous`,
+  `_make_synthetic_mixed_channel`; `spec_extra` block covers the new
+  adapters' `prompt` slot for hidream/protbfn/wan2_2).
+* `tests/test_adapters/test_regression_vectors.py` (extended:
+  ADAPTERS tuple now contains 18 entries; **42 tests, all PASS**
+  in 47.87 s on this host).
+* `regression-vectors/{hidream_i1,protbfn_abbfn,wan2_2_video,
+  flowmol3,synthetic_continuous,synthetic_mixed_channel}.json`
+  (NEW × 6, per-adapter 9 hashes each = 54 new hashes).
+* `todo/framework-internal-metrics.md` (additive: D.4 row update
+  to `D.4 = MET, 18 / 18 COMPLETE` with Wave 34 Agent B batch 4
+  provenance).
+* `docs/baseline-audit-report.md` (this additive section).
+
+**Verification (host fingerprint `8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480`):**
+
+```
+$ python tools/run_regression_vector_audit.py generate \
+    --adapter hidream_i1 --adapter protbfn_abbfn \
+    --adapter wan2_2_video --adapter flowmol3 \
+    --adapter synthetic_continuous --adapter synthetic_mixed_channel
+... 6/6 adapters: GENERATED, per_adapter_hash_count=9 each
+
+$ python tools/run_regression_vector_audit.py verify
+... 18/18 adapters: PASS; per_condition match=true across 9
+conditions each; host_fingerprint_match=true for all 18.
+overall_ok: true
+
+$ python -m pytest tests/test_adapters/test_regression_vectors.py -v --tb=short
+============================= 42 passed, 3 warnings in 47.87s ==============================
+```
+
+**D.4 status update:** 12/18 PARTIAL → **D.4 = MET, 18 / 18 COMPLETE**
+(HARD gate satisfied; 162 hashes = 9 conditions × 18 adapters pinned
+across the three additive batches: Wave 32 batch 1 = 45 hashes, Wave 33
+batch 2 = 63 hashes, Wave 34 batch 4 = 54 hashes).
+
 

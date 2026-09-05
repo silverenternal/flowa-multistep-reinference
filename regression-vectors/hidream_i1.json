@@ -1,0 +1,472 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T02:52:22Z",
+  "git_sha": "404d962",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "hidream_i1",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "hidream_i1",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "9d5b188800481eb7ec0cbaa0ab1d55e1736d0421d26ec3cab6b12f9af117cc23",
+        "integrator_config_hash": "412b44632ca577d242110fe757d3e1bbbf4a2387258023a655a305cb376ce0d7"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "0982eee75f1ee66787d711c621817a7c5c091cbafc3fc7df72db9edce186478b",
+        "channels": [
+          "image_latent",
+          "text_cond"
+        ],
+        "provenance": [
+          "hidream_i1@v1",
+          "hidream_i1_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          16,
+          128,
+          128
+        ],
+        "dtype": "float64",
+        "sha256": "971bfb8127764aa0b55e4f17221fcafd34bfe78d731f937ca41120db11c68570",
+        "finite": true
+      },
+      "output_sha256": "342b9ec3ca29b909f2d582f345cc972e920b58bfbbf8a27bde506d674797cd13"
+    },
+    {
+      "adapter": "hidream_i1",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "692e80c0e81e1d1a2a2937bb777a43f962db2af56dd6ce197463372666a28100",
+        "integrator_config_hash": "67b3e6072332486d772191384a7dda3f5615959f24abfee962e829d37bcc2479"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "443d00355b60d3480c201d0e73453ee38161919bff777103618384071f658445",
+        "channels": [
+          "image_latent",
+          "text_cond"
+        ],
+        "provenance": [
+          "hidream_i1@v1",
+          "hidream_i1_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          16,
+          128,
+          128
+        ],
+        "dtype": "float64",
+        "sha256": "e9ffa1f4b1a01ebebc2393d3810b16a5d3bd9ab33be7b3100b9240b05fa7bc08",
+        "finite": true
+      },
+      "output_sha256": "f01eac298590989a451d6b2a71b5546597e20d547ffc2ca4c5d570c5b1acb6d1"
+    },
+    {
+      "adapter": "hidream_i1",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "ad15092687379c1c95c078d8ea4e58c62516f857867b615d829284c4ca32d210",
+        "integrator_config_hash": "0c09e7b881acc545fa0327240f549f59868c280f7a72abda2ea785c0d3f6cc67"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "44b532ccfd6212af9e68dc200f55783c69285040a271c177b5c7cb8dc4141e9b",
+        "channels": [
+          "image_latent",
+          "text_cond"
+        ],
+        "provenance": [
+          "hidream_i1@v1",
+          "hidream_i1_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          16,
+          128,
+          128
+        ],
+        "dtype": "float64",
+        "sha256": "ca3279ad3ebdf8f17b3f9e6990696ccfab61e9343bd68973006f6561916f3c09",
+        "finite": true
+      },
+      "output_sha256": "0f53fad7858797d6f5ae84fbf795200fca74fa7905b43bab62897256a63eb8a3"
+    },
+    {
+      "adapter": "hidream_i1",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "c09aba1bd52cee4a0d1ba6bddbfe434be4669bc61b9089939c16154acb2ac24b",
+        "integrator_config_hash": "d196243ad00311fdd7f20f1ef03fa4c1d40416e042c3ae07829cc32a4a9e4821"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "58e58a93b234898512e7ef2667b5d6dbbbfbcba5663cb2cbad3549db4bf7ef34",
+        "channels": [
+          "image_latent",
+          "text_cond"
+        ],
+        "provenance": [
+          "hidream_i1@v1",
+          "hidream_i1_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          16,
+          128,
+          128
+        ],
+        "dtype": "float64",
+        "sha256": "5ec094d5f42bb8f5f235bc0f16b97835ada7bde9d687b6faf3a49d2729410f97",
+        "finite": true
+      },
+      "output_sha256": "94a286bcaa28f1983f0fed736c91b16d066002fba6e43d362dc77908beeb27b6"
+    },
+    {
+      "adapter": "hidream_i1",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "649e0a291d8ab56b11307d106465521cece0098562d0f006df9561fced927aab",
+        "integrator_config_hash": "e2dea5e265bec0ae7ae2c4ac64baae510a7365a302d50a5752127e5936d9db85"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "05829399ceba58a9481449596fea23e3b31e8dacea4b24c28798723eb34aa9e3",
+        "channels": [
+          "image_latent",
+          "text_cond"
+        ],
+        "provenance": [
+          "hidream_i1@v1",
+          "hidream_i1_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          16,
+          128,
+          128
+        ],
+        "dtype": "float64",
+        "sha256": "4bc5f160dc755eb3a1df7789d138b9751c59681f4591605b27d57de38e0ff941",
+        "finite": true
+      },
+      "output_sha256": "55ec7611dacf3cec606e6c996fd8d226a50611397146cb1700fd654cb09092ea"
+    },
+    {
+      "adapter": "hidream_i1",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "23c7597852e223ce50bb1abea150d717bbfc8dcacf7ca6979fbe663eee9e6514",
+        "integrator_config_hash": "62f8ee6c07cff0d22013d7051ef218406024356b24ce926139289a977f3ccc5f"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "10f435a56245bae0c740bd794e46f3c09119854d4326520a2b897193a9e4e959",
+        "channels": [
+          "image_latent",
+          "text_cond"
+        ],
+        "provenance": [
+          "hidream_i1@v1",
+          "hidream_i1_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          16,
+          128,
+          128
+        ],
+        "dtype": "float64",
+        "sha256": "34f9541eae86426c655dfc87af1d33d014c5e3e6c5906084104173fb60da1562",
+        "finite": true
+      },
+      "output_sha256": "1b4d6b338ff6256475425f69aaf79fae62ec83718651d810455abd82a4a3bc48"
+    },
+    {
+      "adapter": "hidream_i1",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "3f619c0ac3700efdb8bb20e200b662efddfc698ca22ffd901b5bddaffdf968af",
+        "integrator_config_hash": "cb7494da9d96e6d968210dbc759348f21aab79ffc1977db661a4fe998e8c8d6e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "988ddc9f568527f77c73312300fd1168592589387dc913fbf0c3bb06a57a5688",
+        "channels": [
+          "image_latent",
+          "text_cond"
+        ],
+        "provenance": [
+          "hidream_i1@v1",
+          "hidream_i1_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          16,
+          128,
+          128
+        ],
+        "dtype": "float64",
+        "sha256": "9e6c251f1dc8cfe72a37b7b092a439cb3c3231e5ea24c13b5f69e830747f20fb",
+        "finite": true
+      },
+      "output_sha256": "04e95073e93fcdc3563f397208afa5f9697328dfaef1a91502e8c20ed10d6a12"
+    },
+    {
+      "adapter": "hidream_i1",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "2a5fb91f0441e11bf14383a3960aee76c1677640c375b3f6db70259c9743ce93",
+        "integrator_config_hash": "f7d0915baa6d89674b2a1a5a9ea194926e967cce2bdf9123ff62af17b5bf2d7c"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "5a3765f34c17de7630296d9c8659b653956f59c017cd2b878a9963480d3dc96b",
+        "channels": [
+          "image_latent",
+          "text_cond"
+        ],
+        "provenance": [
+          "hidream_i1@v1",
+          "hidream_i1_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          16,
+          128,
+          128
+        ],
+        "dtype": "float64",
+        "sha256": "eeaa1536734c6b7dbb8e585a9a1577502ae884a94b3f27322f0d80fa4b52326f",
+        "finite": true
+      },
+      "output_sha256": "0515d5c991e3a5a5b7d0299ce7c5313c0ebd9d24daeab1fb7862664a6b44c5fd"
+    },
+    {
+      "adapter": "hidream_i1",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "13d967274f5185a18d2d0a85f89908f0574722a2ea5afa837da813fc86ab84c7",
+        "integrator_config_hash": "c7ffc564f5bf53e4952a9c4487f1c5576ab581cf53c41573e2168c44f4c220e6"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "07c6220d374935776736e4c473f2c7188ac60aeb4b4929b9aacb88f5248dfccb",
+        "channels": [
+          "image_latent",
+          "text_cond"
+        ],
+        "provenance": [
+          "hidream_i1@v1",
+          "hidream_i1_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          16,
+          128,
+          128
+        ],
+        "dtype": "float64",
+        "sha256": "a5030aab97802c98cdb3cf473c9f6cb37970199b5300f6a893a2bb12e10b913f",
+        "finite": true
+      },
+      "output_sha256": "31f931a3dffcc1ce73960be91e201219245d42d606f121f4dae86cc86673bac6"
+    }
+  ]
+}

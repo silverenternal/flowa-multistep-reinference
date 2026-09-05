@@ -1,0 +1,508 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T02:52:29Z",
+  "git_sha": "404d962",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "wan2_2_video",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "wan2_2_video",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "9d5efbfc9346420d82a819f0fe7d9fcb07586a01474135e3b8eb25a4b9b201c2",
+        "integrator_config_hash": "0b972284de278273774825234693b89c35c24922a37930204426ea11bd1ad43c"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "f52f66d63073c16ffc4b2d8754524ae831f4d9b8ede715bef870af47eceaedda",
+        "channels": [
+          "moe_route",
+          "text_embedding",
+          "timestep",
+          "vae_pixel_video",
+          "video_latent"
+        ],
+        "provenance": [
+          "wan2.2_video_fm_moe@v1",
+          "wan2_2_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          16,
+          30,
+          45,
+          80
+        ],
+        "dtype": "float64",
+        "sha256": "e50e77893f15a4b620cae616920eb49cfc731eee1f543a56fc713740cb6a676d",
+        "finite": true
+      },
+      "output_sha256": "881a3929f2233c82e343e33aed7f5e85ca5b21380dde3339365b49cbea87a61d"
+    },
+    {
+      "adapter": "wan2_2_video",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "d94f8f3b1e80dd148efe3754bf760e473e47a63d4b5f8ddb1e1c94f9db0bc727",
+        "integrator_config_hash": "e65b6983789c41e08a0bca58bc17e488816067aff0d4d3ec054a4eae22090736"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "5c94ad1d9b0340665caab5f896901da80bd7bbcb4c5856f01b65ff1ce24a6d78",
+        "channels": [
+          "moe_route",
+          "text_embedding",
+          "timestep",
+          "vae_pixel_video",
+          "video_latent"
+        ],
+        "provenance": [
+          "wan2.2_video_fm_moe@v1",
+          "wan2_2_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          16,
+          30,
+          45,
+          80
+        ],
+        "dtype": "float64",
+        "sha256": "5f3c41d2605994ad9c55022ed518ff3ad065479d19d8363f4f4da5307758682f",
+        "finite": true
+      },
+      "output_sha256": "4da51a728a1ced1aff93077fe307c4c65738ae5fda83a5a1e0d3babe29ed12cc"
+    },
+    {
+      "adapter": "wan2_2_video",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "f6e5bb84f3bee1a912fb52ba9c92362cd056283b5aa2e7427fee877097a0e040",
+        "integrator_config_hash": "75107fedc3b4004bff370306f3a0ee1d1b6d337c5ab6e78a38457ee77e824bbf"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "c3d961a858739765d944d52de84f17703c257bc5aa483f361976f439c9ba64fc",
+        "channels": [
+          "moe_route",
+          "text_embedding",
+          "timestep",
+          "vae_pixel_video",
+          "video_latent"
+        ],
+        "provenance": [
+          "wan2.2_video_fm_moe@v1",
+          "wan2_2_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          16,
+          30,
+          45,
+          80
+        ],
+        "dtype": "float64",
+        "sha256": "fee7ddae0a1022c1014e7166e1d9d3879f825e46d8edb1080a35f3752cdbcd6f",
+        "finite": true
+      },
+      "output_sha256": "4866eb3f54f45618d66f371934b3e65630b115893b50e6050169a147830958da"
+    },
+    {
+      "adapter": "wan2_2_video",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "7b30ebe1fa8546da065163b2197b495007473c7edc3085f4bc6f22b1bfcdad4f",
+        "integrator_config_hash": "97178276749eafa6cc427732270c9bdf33dec73941685d6598abe729e3075fdb"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "6b69089d227103349b9ce0ea48cc57edf9b75a862f83ea81bb0e56fb722c5b16",
+        "channels": [
+          "moe_route",
+          "text_embedding",
+          "timestep",
+          "vae_pixel_video",
+          "video_latent"
+        ],
+        "provenance": [
+          "wan2.2_video_fm_moe@v1",
+          "wan2_2_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          16,
+          30,
+          45,
+          80
+        ],
+        "dtype": "float64",
+        "sha256": "66fd9fe1a5941e0df36d7d2118f732ea42b2a3226cdd42660af3d6128862426f",
+        "finite": true
+      },
+      "output_sha256": "0e5d1efb281042f994ae314341dfb460a03beea25bd6100989afff7bf513e97b"
+    },
+    {
+      "adapter": "wan2_2_video",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "101a7b3472c9a66a14d64960588b1dbde215e78014c49bcebf37dec7bbcd41da",
+        "integrator_config_hash": "1c7fe470f048c7dce17ccf80c42f67deb9cc1e9c57b27c3ac4c7aced8620a85d"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "2a0658e8180948bf1448b30d37c8654b7fb64388a6231d6f17f9386451edf29f",
+        "channels": [
+          "moe_route",
+          "text_embedding",
+          "timestep",
+          "vae_pixel_video",
+          "video_latent"
+        ],
+        "provenance": [
+          "wan2.2_video_fm_moe@v1",
+          "wan2_2_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          16,
+          30,
+          45,
+          80
+        ],
+        "dtype": "float64",
+        "sha256": "456224a19e81e1565054ea50484c47ee3c9b1926279592c3c1aaf54174ee9f4e",
+        "finite": true
+      },
+      "output_sha256": "752b3b9f8ced767594015bbcc188140edf578ae8f540abf7e52d34f46b7159b1"
+    },
+    {
+      "adapter": "wan2_2_video",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "889fdfd8f5293862e5676bd99045479f4fda41248cc069120a280ea0e460b363",
+        "integrator_config_hash": "3a798831e68eacc11a2ae6fba365343220555eba3721bfb83708c606a07142e0"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "0d60bc0d55dced8151dd9726cffb12a2604cc7fbc9e500b69370f0e869008a30",
+        "channels": [
+          "moe_route",
+          "text_embedding",
+          "timestep",
+          "vae_pixel_video",
+          "video_latent"
+        ],
+        "provenance": [
+          "wan2.2_video_fm_moe@v1",
+          "wan2_2_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          16,
+          30,
+          45,
+          80
+        ],
+        "dtype": "float64",
+        "sha256": "0f64c601df7e7cb390da6abd35d255ed654dbde256e9e7e69c113e75234f699f",
+        "finite": true
+      },
+      "output_sha256": "571e21c96291d6828751150c2e4150ad224f18dc2687189efd6d15af2ce7ded9"
+    },
+    {
+      "adapter": "wan2_2_video",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "13bc9490e7411739b285f9611d9bd336e0f176671f5347e3a761ccb48877d1e2",
+        "integrator_config_hash": "7f05623b8930857f8806e8340b36ed77971a20a56ed13e3a4beb1b2431194248"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "3566350cdd15cf2f047deb48698286c947e4a39d09f24276f245a49bd5219569",
+        "channels": [
+          "moe_route",
+          "text_embedding",
+          "timestep",
+          "vae_pixel_video",
+          "video_latent"
+        ],
+        "provenance": [
+          "wan2.2_video_fm_moe@v1",
+          "wan2_2_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          16,
+          30,
+          45,
+          80
+        ],
+        "dtype": "float64",
+        "sha256": "0f02dd568ebeeb80667f891dd051c28127b69c6cfc0873b8aac4ff63c50bdaaa",
+        "finite": true
+      },
+      "output_sha256": "bd1fa5a0c40a59c54628562989e422382517dfa1681fb751a5d9edab6e3cf387"
+    },
+    {
+      "adapter": "wan2_2_video",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "24b4c7c22b970b3fc90363e0c13a9fba561f20e826f431765f83d55258eb70f1",
+        "integrator_config_hash": "4717c7d495e000a28435b33ca1c4fb14273dd4c72cd460672cfedd272a138d8f"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "823841a0e9e4466ed94916b7eb17212208befa5dd9c93789b7f939ada7f2f45f",
+        "channels": [
+          "moe_route",
+          "text_embedding",
+          "timestep",
+          "vae_pixel_video",
+          "video_latent"
+        ],
+        "provenance": [
+          "wan2.2_video_fm_moe@v1",
+          "wan2_2_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          16,
+          30,
+          45,
+          80
+        ],
+        "dtype": "float64",
+        "sha256": "d5b98ae61122e524d04feed1add798d8581b48d98079714a37998ef68bb75d1e",
+        "finite": true
+      },
+      "output_sha256": "23b399f4e4d6b67068f429de2606f6f89c0784158c4717e139e8d948b5440186"
+    },
+    {
+      "adapter": "wan2_2_video",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "748af11e05a73a64a7405c6a8e3cfc864f959a370b7deaf9d4d86d9f5348ae3a",
+        "integrator_config_hash": "b86c092182ca56a8157250a974c20b62ee1e5d3600a89c8e425ff14b4f886d17"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "405db068eb3a43c48c85c630eb25b951725e1ac37ee58d9a6e8889068eda3eac",
+        "channels": [
+          "moe_route",
+          "text_embedding",
+          "timestep",
+          "vae_pixel_video",
+          "video_latent"
+        ],
+        "provenance": [
+          "wan2.2_video_fm_moe@v1",
+          "wan2_2_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          16,
+          30,
+          45,
+          80
+        ],
+        "dtype": "float64",
+        "sha256": "edb7f9d69e4353b57c963bd6a7fe85ce48cb2d2127d72636d6e48954a96ee917",
+        "finite": true
+      },
+      "output_sha256": "ca7befc6d203e006bfff7f73eebb486d7885499d0821d8a5dca162cc6801a334"
+    }
+  ]
+}

@@ -1,0 +1,409 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T02:53:05Z",
+  "git_sha": "404d962",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "synthetic_continuous",
+  "adapter_version": "",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "synthetic_continuous",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 2,
+        "accept_rate": 1.0,
+        "native_state_digest": "syn:9a96bd2f266baef6dd0108bab088f058111f3d65e373d15c4efbf99b707c5edc",
+        "integrator_config_hash": "syn:c24965384b31a48cc3c57ad22842b359ce26c09437a098499e26e27cc4b96971"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:a05bb6dbc17515de274ed529602a47ad82ff3877d6680f8e8728acc94a2fd502",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous"
+        ],
+        "provenance": [
+          "SyntheticContinuousAdapter.build_initial_state",
+          "SyntheticContinuousAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "0a2fde0d972ae9d4fe4b33d5fac31b3d6188a73d4f0278d8d16d5c4bb4d2296f"
+    },
+    {
+      "adapter": "synthetic_continuous",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 2,
+        "accept_rate": 1.0,
+        "native_state_digest": "syn:9a96bd2f266baef6dd0108bab088f058111f3d65e373d15c4efbf99b707c5edc",
+        "integrator_config_hash": "syn:c24965384b31a48cc3c57ad22842b359ce26c09437a098499e26e27cc4b96971"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:a05bb6dbc17515de274ed529602a47ad82ff3877d6680f8e8728acc94a2fd502",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous"
+        ],
+        "provenance": [
+          "SyntheticContinuousAdapter.build_initial_state",
+          "SyntheticContinuousAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "154f2f6394389b75478e3b73c270f7c00a3a4fc8addf0864544180ab8655d780"
+    },
+    {
+      "adapter": "synthetic_continuous",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 2,
+        "accept_rate": 1.0,
+        "native_state_digest": "syn:9a96bd2f266baef6dd0108bab088f058111f3d65e373d15c4efbf99b707c5edc",
+        "integrator_config_hash": "syn:c24965384b31a48cc3c57ad22842b359ce26c09437a098499e26e27cc4b96971"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:a05bb6dbc17515de274ed529602a47ad82ff3877d6680f8e8728acc94a2fd502",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous"
+        ],
+        "provenance": [
+          "SyntheticContinuousAdapter.build_initial_state",
+          "SyntheticContinuousAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "c6311729af1d9fccae70fc58114d4614218d31d2c0856ad1326d60c5cc9f48e5"
+    },
+    {
+      "adapter": "synthetic_continuous",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 2,
+        "accept_rate": 1.0,
+        "native_state_digest": "syn:e7c8d815838fbb91ff2254c8b21c6dc4b63ab8d239b0197e0849a970df4b69c0",
+        "integrator_config_hash": "syn:c24965384b31a48cc3c57ad22842b359ce26c09437a098499e26e27cc4b96971"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:d74952a7ac3d9e717831a63a75a6907e0bc9653f23e78828ae4dd8e2251a76c1",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous"
+        ],
+        "provenance": [
+          "SyntheticContinuousAdapter.build_initial_state",
+          "SyntheticContinuousAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "8d77899c84252d1c45a56c5ddbe6c7bd207887183c0f40a10c4328dd7384a69a"
+    },
+    {
+      "adapter": "synthetic_continuous",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 2,
+        "accept_rate": 1.0,
+        "native_state_digest": "syn:e7c8d815838fbb91ff2254c8b21c6dc4b63ab8d239b0197e0849a970df4b69c0",
+        "integrator_config_hash": "syn:c24965384b31a48cc3c57ad22842b359ce26c09437a098499e26e27cc4b96971"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:d74952a7ac3d9e717831a63a75a6907e0bc9653f23e78828ae4dd8e2251a76c1",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous"
+        ],
+        "provenance": [
+          "SyntheticContinuousAdapter.build_initial_state",
+          "SyntheticContinuousAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "bb48e290e1c5ab359fa8b5d99641831f32038efc5cfd6ca0e08557eace7843b8"
+    },
+    {
+      "adapter": "synthetic_continuous",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 2,
+        "accept_rate": 1.0,
+        "native_state_digest": "syn:e7c8d815838fbb91ff2254c8b21c6dc4b63ab8d239b0197e0849a970df4b69c0",
+        "integrator_config_hash": "syn:c24965384b31a48cc3c57ad22842b359ce26c09437a098499e26e27cc4b96971"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:d74952a7ac3d9e717831a63a75a6907e0bc9653f23e78828ae4dd8e2251a76c1",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous"
+        ],
+        "provenance": [
+          "SyntheticContinuousAdapter.build_initial_state",
+          "SyntheticContinuousAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "6375cdb66bd8223f6fc669b554bacd6425db065b683a68898c95389614f34bde"
+    },
+    {
+      "adapter": "synthetic_continuous",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 2,
+        "accept_rate": 1.0,
+        "native_state_digest": "syn:5b6bbb30307c3bfa46bae16669b3ed1341d5fbe87440d4eb6e672cbf2c94487c",
+        "integrator_config_hash": "syn:c24965384b31a48cc3c57ad22842b359ce26c09437a098499e26e27cc4b96971"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:6050b1d94f9ec6b0ae68dd82da9d7375974d46389dfac291dd56565298aad421",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous"
+        ],
+        "provenance": [
+          "SyntheticContinuousAdapter.build_initial_state",
+          "SyntheticContinuousAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "4096f5f012f6834a0f4b95b24c35846c7cb6a02066ea1e08e63f42f489ac11c0"
+    },
+    {
+      "adapter": "synthetic_continuous",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 2,
+        "accept_rate": 1.0,
+        "native_state_digest": "syn:5b6bbb30307c3bfa46bae16669b3ed1341d5fbe87440d4eb6e672cbf2c94487c",
+        "integrator_config_hash": "syn:c24965384b31a48cc3c57ad22842b359ce26c09437a098499e26e27cc4b96971"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:6050b1d94f9ec6b0ae68dd82da9d7375974d46389dfac291dd56565298aad421",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous"
+        ],
+        "provenance": [
+          "SyntheticContinuousAdapter.build_initial_state",
+          "SyntheticContinuousAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "2403cc443a2d6801a5e2c14d60c4eb665b03f4686a18df77ddb96c7dbfe96110"
+    },
+    {
+      "adapter": "synthetic_continuous",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 2,
+        "accept_rate": 1.0,
+        "native_state_digest": "syn:5b6bbb30307c3bfa46bae16669b3ed1341d5fbe87440d4eb6e672cbf2c94487c",
+        "integrator_config_hash": "syn:c24965384b31a48cc3c57ad22842b359ce26c09437a098499e26e27cc4b96971"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "pocket_centered",
+        "normalization": "per_atom_std",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "syn:6050b1d94f9ec6b0ae68dd82da9d7375974d46389dfac291dd56565298aad421",
+        "channels": [
+          "charge",
+          "charge.continuous",
+          "coordinate",
+          "coordinate.continuous"
+        ],
+        "provenance": [
+          "SyntheticContinuousAdapter.build_initial_state",
+          "SyntheticContinuousAdapter.observe_endpoint"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "0fb314fdd365484093273bd37a201d42be4850ff598ca2083221cde23bc41af2"
+    }
+  ]
+}

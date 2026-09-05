@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""D.4 regression-vector audit tool (Wave 32 + Wave 33 batches 2 + 3, 12/18).
+"""D.4 regression-vector audit tool (Wave 32 + Wave 33 + Wave 34, 18/18).
 
 Generates and verifies pinned regression vectors for adapter conformance:
 
@@ -27,11 +27,23 @@ Generates and verifies pinned regression vectors for adapter conformance:
   (synthetic mode; GraphBFN Bayesian update, QM9).
 * :class:`adaptive_reflow.adapters.lumina_image_2_0.LuminaImage20Adapter`
   (synthetic mode; 16x128x128 latent flow matching).
+* :class:`adaptive_reflow.adapters.hidream_i1.HiDreamI1Adapter`
+  (synthetic mode; latent flow matching, MoE).
+* :class:`adaptive_reflow.adapters.protbfn_abbfn_adapter.ProtBFNAbBFNAdapter`
+  (synthetic mode; protein Bayesian flow).
+* :class:`adaptive_reflow.adapters.wan2_2_video.Wan22VideoAdapter`
+  (synthetic mode; video flow matching, MoE).
+* :class:`adaptive_reflow.adapters.flowmol3.FlowMol3Adapter`
+  (v1 placeholder; hash-stable).
+* :class:`adaptive_reflow.adapters.synthetic.SyntheticContinuousAdapter`
+  (DTB-G1 fixture; continuous channels).
+* :class:`adaptive_reflow.adapters.synthetic.SyntheticMixedChannelAdapter`
+  (DTB-G1 fixture; continuous + discrete).
 
 Per the Wave 32 gap plan (``todo/gap-plan-wave32.md`` #1 + ``todo/algo-improvement-D4-regression-vectors.md``),
-this is the Wave 33 Agent B **batch 2** of D.4 (7 of 18; Wave 32 batch 1
-= 5; Wave 33 Agent C batch 3 = 6). After all 3 batches ship, D.4 is
-**18/18 = MET** (HARD gate).
+this is the Wave 34 Agent B **batch 4** of D.4 (6 of 18; Wave 32 batch 1
+= 5; Wave 33 batch 2 = 7; Wave 33 batch 3 = 0 — was lost to Agent C
+overwrite). With Wave 34 batch 4, D.4 is **18/18 = MET** (HARD gate).
 
 What a vector captures (per adapter):
 * ``seed``: RNG seed (3 seeds swept: 41, 42, 43).
@@ -51,7 +63,7 @@ matches the recorded hash on the same host fingerprint.
 
 Usage::
 
-    python tools/run_regression_vector_audit.py generate    # write all 12 vectors
+    python tools/run_regression_vector_audit.py generate    # write all 18 vectors
     python tools/run_regression_vector_audit.py verify      # re-run + assert match
     python tools/run_regression_vector_audit.py --adapter mnist_fm generate
 
@@ -123,9 +135,10 @@ class AdapterSpec:
     version_constant: str  # module-level config version string
 
 
-# Twelve adapters across Wave 32 (5) + Wave 33 batch 2 (7) = 12/18.
-# Wave 33 Agent B batch 2 (7 adapters) and Agent C batch 3 (6 adapters)
-# combined complete the D.4 HARD gate (18/18 = MET).
+# Eighteen adapters across Wave 32 batch 1 (5) + Wave 33 batch 2 (7) +
+# Wave 34 Agent B batch 4 (6) = 18/18. The Wave 33 Agent C batch 3 (6
+# adapters) was lost to a Wave 34 Agent C overwrite — Wave 34 Agent B
+# batch 4 ships the final six to complete the D.4 HARD gate (18/18).
 # Each spec is loaded lazily inside the runner so a single broken
 # import does not block the other adapters.
 ADAPTER_SPECS: tuple[AdapterSpec, ...] = (
@@ -200,6 +213,43 @@ ADAPTER_SPECS: tuple[AdapterSpec, ...] = (
         module="adaptive_reflow.adapters.lumina_image_2_0",
         adapter_cls="LuminaImage20Adapter",
         version_constant="LUMINA_IMAGE_2_0_CONFIG_VERSION",
+    ),
+    # Wave 34 Agent B batch 4 (6) — completes D.4 18/18
+    AdapterSpec(
+        name="hidream_i1",
+        module="adaptive_reflow.adapters.hidream_i1",
+        adapter_cls="HiDreamI1Adapter",
+        version_constant="HIDREAM_I1_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="protbfn_abbfn",
+        module="adaptive_reflow.adapters.protbfn_abbfn_adapter",
+        adapter_cls="ProtBFNAbBFNAdapter",
+        version_constant="PROTBFN_ABBFN_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="wan2_2_video",
+        module="adaptive_reflow.adapters.wan2_2_video",
+        adapter_cls="Wan22VideoAdapter",
+        version_constant="WAN22_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="flowmol3",
+        module="adaptive_reflow.adapters.flowmol3",
+        adapter_cls="FlowMol3Adapter",
+        version_constant="",
+    ),
+    AdapterSpec(
+        name="synthetic_continuous",
+        module="adaptive_reflow.adapters.synthetic",
+        adapter_cls="SyntheticContinuousAdapter",
+        version_constant="",
+    ),
+    AdapterSpec(
+        name="synthetic_mixed_channel",
+        module="adaptive_reflow.adapters.synthetic",
+        adapter_cls="SyntheticMixedChannelAdapter",
+        version_constant="",
     ),
 )
 
@@ -390,6 +440,31 @@ def _run_one_condition(
         # field is still recorded in the condition spec for symmetry
         # with the other 17 adapters, but it does not alter the hash.
         spec_extra = {"num_steps": int(nfe)}
+    elif spec.name in {"hidream_i1", "protbfn_abbfn"}:
+        # These adapters read num_steps + a small deterministic placeholder
+        # for the prompt slot (used by compose_condition / inference
+        # scaffolding). The synthetic velocity field is NFE-agnostic, so
+        # the num_steps is recorded but does not change the trace.
+        spec_extra = {
+            "num_steps": int(nfe),
+            "prompt": "d4-audit-placeholder",
+            "negative_prompt": "",
+        }
+    elif spec.name == "wan2_2_video":
+        # Wan2.2 also takes a text-prompt slot; supply a fixed placeholder
+        # so the synthetic velocity field runs against the same
+        # text-embedding cache key across NFE sweeps.
+        spec_extra = {
+            "num_steps": int(nfe),
+            "prompt": "d4-audit-placeholder",
+            "negative_prompt": "",
+        }
+    elif spec.name in {"flowmol3", "synthetic_continuous",
+                       "synthetic_mixed_channel"}:
+        # FlowMol3 v1 placeholder + synthetic fixtures ignore num_steps
+        # in their solve_ode bodies. We still record num_steps in the
+        # condition spec for symmetry with the other 17 adapters.
+        spec_extra = {"num_steps": int(nfe)}
 
     delta = ODEConditionDelta(
         delta_spec=spec_extra,  # type: ignore[arg-type]
@@ -546,6 +621,55 @@ def _make_lumina_image_2_0(spec: AdapterSpec) -> Any:
     )
 
 
+def _make_hidream_i1(spec: AdapterSpec) -> Any:
+    """HiDream-I1 adapter; synthetic mode (no torch ckpt)."""
+    from adaptive_reflow.adapters.hidream_i1 import default_hidream_i1_adapter
+    return default_hidream_i1_adapter(
+        force_mode="synthetic",
+        num_steps=10,
+    )
+
+
+def _make_protbfn_abbfn(spec: AdapterSpec) -> Any:
+    """ProtBFN-AbBFN adapter; synthetic mode (no torch ckpt)."""
+    from adaptive_reflow.adapters.protbfn_abbfn_adapter import (
+        default_protbfnabbfn_adapter,
+    )
+    return default_protbfnabbfn_adapter(
+        force_mode="synthetic",
+        num_steps=10,
+    )
+
+
+def _make_wan2_2_video(spec: AdapterSpec) -> Any:
+    """Wan2.2-Video adapter; synthetic mode (no torch ckpt)."""
+    from adaptive_reflow.adapters.wan2_2_video import (
+        default_wan22_video_flowmatchingodeadapter,
+    )
+    return default_wan22_video_flowmatchingodeadapter(
+        force_mode="synthetic",
+        num_steps=10,
+    )
+
+
+def _make_flowmol3(spec: AdapterSpec) -> Any:
+    """FlowMol3 v1 placeholder adapter (deterministic hash-stable output)."""
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+    return default_flowmol3_adapter()
+
+
+def _make_synthetic_continuous(spec: AdapterSpec) -> Any:
+    """Synthetic continuous adapter (DTB-G1 fixture; not num_steps-aware)."""
+    from adaptive_reflow.adapters.synthetic import SyntheticContinuousAdapter
+    return SyntheticContinuousAdapter()
+
+
+def _make_synthetic_mixed_channel(spec: AdapterSpec) -> Any:
+    """Synthetic mixed-channel adapter (DTB-G1 fixture; not num_steps-aware)."""
+    from adaptive_reflow.adapters.synthetic import SyntheticMixedChannelAdapter
+    return SyntheticMixedChannelAdapter()
+
+
 def _factory_for(spec: AdapterSpec):
     factories = {
         "flowmol3_v2": _make_flowmol3_v2,
@@ -560,6 +684,13 @@ def _factory_for(spec: AdapterSpec):
         "toy_linear": _make_toy_linear,
         "graphbfn": _make_graphbfn,
         "lumina_image_2_0": _make_lumina_image_2_0,
+        # Wave 34 Agent B batch 4 (6) — completes D.4 18/18
+        "hidream_i1": _make_hidream_i1,
+        "protbfn_abbfn": _make_protbfn_abbfn,
+        "wan2_2_video": _make_wan2_2_video,
+        "flowmol3": _make_flowmol3,
+        "synthetic_continuous": _make_synthetic_continuous,
+        "synthetic_mixed_channel": _make_synthetic_mixed_channel,
     }
     return factories[spec.name]
 
