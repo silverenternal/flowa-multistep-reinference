@@ -111,6 +111,7 @@ from adaptive_reflow.adapters._adapter_common import (
     memory_fraction_for,
     seed_from_ids,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -552,6 +553,7 @@ class FreqFlowCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class FreqFlowAdapter(FlowMatchingODEAdapter):
     """FreqFlow frequency-domain flow-matching class-conditional image adapter.
 

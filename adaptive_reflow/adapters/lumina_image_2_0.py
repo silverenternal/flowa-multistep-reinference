@@ -94,6 +94,7 @@ from adaptive_reflow.adapters._adapter_common import (
     make_ref,
     memory_fraction_for,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -730,6 +731,7 @@ class LuminaImage20Capabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class LuminaImage20Adapter(FlowMatchingODEAdapter):
     """Lumina-Image 2.0 Flow Matching text-to-image adapter.
 

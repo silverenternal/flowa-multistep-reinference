@@ -55,6 +55,7 @@ from adaptive_reflow.adapters._adapter_common import (
     seed_from_ids,
     memory_fraction_for,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -596,6 +597,7 @@ class TwoDimFMCapabilities(AdapterCapabilities):
         )
 
 
+@implements(FlowMatchingODEAdapter)
 class TwoDimFMAdapter(FlowMatchingODEAdapter):
     """2D rectified flow adapter (CPU, NumPy).
 

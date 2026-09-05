@@ -52,9 +52,14 @@ verifies the structural typing at import time.
 """
 from __future__ import annotations
 
+import warnings
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, Protocol, runtime_checkable
 
+from adaptive_reflow.framework._compliance import (
+    MissingProtocolError,
+    implements,
+)
 from adaptive_reflow.theory.checkers import (
     Theorem1Statement,
     theorem1_bl_convergence_witness,
@@ -85,11 +90,6 @@ __all__ = [
     "assert_adapter_compliance",
     "MissingProtocolError",
 ]
-
-
-class MissingProtocolError(TypeError):
-    """Raised when an adapter fails to satisfy a declared Protocol."""
-    pass
 
 
 # ---------------------------------------------------------------------------
@@ -448,43 +448,10 @@ class PosteriorEvaluator(Protocol):
 # ---------------------------------------------------------------------------
 
 
-def implements(*protocols: type) -> Callable[[type], type]:
-    """Class decorator that declares which Protocols the class satisfies.
-
-    Usage::
-
-        @implements(ChannelwiseBlender, IntegratorProtocol)
-        class MyAdapter:
-            ...
-
-    Stores the Protocol set on the class as ``__protocols__``. The
-    set is consulted by :func:`assert_adapter_compliance`. This
-    decorator is purely declarative (no runtime checks at decoration
-    time); call :func:`assert_adapter_compliance` to enforce.
-
-    Returns the class unchanged.
-    """
-    for protocol in protocols:
-        if not isinstance(protocol, type):
-            raise TypeError(
-                f"implements() expects Protocol *type* arguments, got {protocol!r}"
-            )
-    # Filter to runtime_checkable Protocols (the only kind we can
-    # structurally check); pass-through non-Protocol types are stored
-    # as opaque markers.
-    proto_set = tuple(protocols)
-
-    def decorator(cls: type) -> type:
-        existing = getattr(cls, "__protocols__", ())
-        # Union, dedup, preserve order.
-        merged: list[type] = list(existing)
-        for p in proto_set:
-            if p not in merged:
-                merged.append(p)
-        cls.__protocols__ = tuple(merged)  # type: ignore[attr-defined]
-        return cls
-
-    return decorator
+# NOTE: ``implements`` is defined ABOVE this section (before the heavy
+# ``adaptive_reflow.theory`` imports) to break the
+# ``adapters.twodim_fm → framework.interfaces`` cyclic import. See the
+# NOTE block at the top of this file for details.
 
 
 def assert_adapter_compliance(adapter_cls: type) -> None:
@@ -511,6 +478,18 @@ def assert_adapter_compliance(adapter_cls: type) -> None:
         if not (isinstance(protocol, type) and getattr(
             protocol, "_is_runtime_protocol", False
         )):
+            # HIGH-4 fix: explicit warning when a non-runtime Protocol
+            # is declared. Without this, assert_adapter_compliance
+            # silently skips non-@runtime_checkable Protocols (line 514
+            # `continue`), which masks real conformance gaps when a
+            # future contributor adds a Protocol without the decorator.
+            warnings.warn(
+                f"Protocol {protocol.__name__} is not @runtime_checkable; "
+                f"assert_adapter_compliance will silently skip it. "
+                f"Add @runtime_checkable decorator to enforce conformance.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
             continue
         if not isinstance(adapter_cls, protocol):
             missing.append(protocol)

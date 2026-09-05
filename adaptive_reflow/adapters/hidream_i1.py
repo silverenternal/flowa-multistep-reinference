@@ -111,6 +111,7 @@ from adaptive_reflow.adapters._adapter_common import (
     make_ref,
     memory_fraction_for,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -782,6 +783,7 @@ class HiDreamI1Capabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class HiDreamI1Adapter(FlowMatchingODEAdapter):
     """HiDream-I1 latent flow-matching text-to-image adapter (R17 skeleton).
 

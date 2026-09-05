@@ -39,6 +39,7 @@ from adaptive_reflow.universal.state import (
 from adaptive_reflow.adapters._adapter_common import (
     make_ref,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +68,7 @@ def _make_ref(label: str, **parts: Any) -> TensorRef:
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class ToyLinearAdapter(FlowMatchingODEAdapter):
     """Minimal one-channel linear-Flow-Matching adapter.
 

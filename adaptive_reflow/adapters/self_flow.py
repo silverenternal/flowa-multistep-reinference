@@ -110,6 +110,7 @@ from adaptive_reflow.adapters._adapter_common import (
     seed_from_ids,
     digest_state,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -572,6 +573,7 @@ class SelfFlowCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class SelfFlowAdapter(FlowMatchingODEAdapter):
     """Self-Flow latent flow-matching class-conditional image adapter (Wave 9 skeleton).
 

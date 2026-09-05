@@ -85,6 +85,7 @@ from adaptive_reflow.adapters._adapter_common import (
     make_ref,
     memory_fraction_for,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -597,6 +598,7 @@ class Wan22VideoAdapterCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class Wan22VideoAdapter(FlowMatchingODEAdapter):
     """Wan2.2 video Flow Matching ODE adapter (DiT, MoE / dense).
 

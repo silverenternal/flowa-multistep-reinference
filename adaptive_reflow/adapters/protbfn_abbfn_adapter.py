@@ -65,6 +65,7 @@ from adaptive_reflow.adapters._adapter_common import (
     digest_state,
     make_ref,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -385,6 +386,7 @@ class ProtBFNAbBFNCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
     """Adapter wrapping the published ProtBFN / AbBFN / AbBFN2 BFNs.
 

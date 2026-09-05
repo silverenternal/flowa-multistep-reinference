@@ -62,6 +62,7 @@ from adaptive_reflow.adapters._adapter_common import (
     memory_fraction_for,
     seed_from_ids,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 from .mnist_fm_train import (  # noqa: E402 — runtime numpy dep, opt-in extra
     
@@ -407,6 +408,7 @@ class MnistFMCapabilities(AdapterCapabilities):
         )
 
 
+@implements(FlowMatchingODEAdapter)
 class MnistFmAdapter(FlowMatchingODEAdapter):
     """MNIST 28x28 rectified flow adapter (CPU, NumPy)."""
 

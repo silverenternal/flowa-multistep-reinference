@@ -50,6 +50,7 @@ from adaptive_reflow.adapters._adapter_common import (
     make_ref,
     seed_from_ids,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -193,6 +194,7 @@ class GaussianAdapterCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class ToyGaussianAdapter(FlowMatchingODEAdapter):
     """1D Gaussian-mixture Flow Matching ODE adapter.
 

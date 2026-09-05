@@ -98,6 +98,7 @@ from adaptive_reflow.universal.state import (
 from adaptive_reflow.adapters._adapter_common import (
     make_ref,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -539,6 +540,7 @@ class GraphBFNCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class GraphBFNAdapter(FlowMatchingODEAdapter):
     """GraphBFN (Bayesian Flow Network on graphs) adapter.
 

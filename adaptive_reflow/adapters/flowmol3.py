@@ -51,6 +51,7 @@ from adaptive_reflow.frame.adapter import (
     TensorRef,
     validate_state_bundle,
 )
+from adaptive_reflow.framework.interfaces import implements
 from adaptive_reflow.universal.adapter import ChannelDomain, FlowMatchingODEAdapter
 from adaptive_reflow.universal.state import (
     ChannelName,
@@ -190,6 +191,7 @@ def _make_tensor_ref(label: str, **parts: Any) -> TensorRef:
     return TensorRef(f"flowmol3:{hashlib.sha256(blob).hexdigest()[:16]}")
 
 
+@implements(FlowMatchingODEAdapter)
 class FlowMol3Adapter(FlowMatchingODEAdapter):
     """Read-only FlowMol3 mechanics adapter.
 

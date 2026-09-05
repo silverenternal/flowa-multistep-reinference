@@ -80,6 +80,7 @@ from adaptive_reflow.adapters._adapter_common import (
     seed_from_ids,
     memory_fraction_for,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -535,6 +536,7 @@ class RectifiedFlowCIFARCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
     """Rectified Flow (Liu 2022) on CIFAR-10 32×32.
 
