@@ -811,3 +811,119 @@ synthetic-shim saturation threshold is the only value both arms can compute.
 **Verification JSON:** `verification_outputs/phase4_q4_2026.json`
 (env_hash: `d09c615aff7a373b5b98a495f169a3690f5e857745f627caf379cfaa121e3522`,
 per-model sources: `phase4_q4_2026_kanzi.json`, `phase4_q4_2026_freqflow.json`)
+
+---
+
+## 14. Wave 40 Agent A — Kanzi real-ckpt framework-vs-baseline (sidecar venv)
+
+Companion audit: `docs/audit/wave40-kanzi-real-eval-results.md`.
+Verification JSONs: `verification_outputs/kanzi_real_ckpt_eval_q4_2026.json`
+(full 9-cell report) and `verification_outputs/kanzi_real_ckpt_eval_q4_2026_kanzi.json`
+(per-model split).
+
+### 14.1 Setup
+
+| Knob | Value |
+|---|---|
+| Sidecar venv | `.venvs/kanzi_venv/bin/python` (NOT `flowmol3_venv`) |
+| torch version | 2.14.0+cu130 (CPU execution, CUDA build present) |
+| kanzi package | 0.1.0 (Wave 39 Agent A sidecar install) |
+| Model | Kanzi (protein flow-AE, ICLR 2026 — Shah et al., `arXiv:2510.00351`) |
+| Checkpoint | `data/kanzi_ckpt/cleaned_model.pt` (529 MB, SHA-256 matches, 44.1 M params, 0 missing/unexpected keys — see Wave 39 forward-pass probe) |
+| Seeds | 42, 43, 44 (3 seeds) |
+| NFE budgets | 10, 50, 200 (3 budgets) |
+| Framework rounds | 3 (total NFE matched to baseline) |
+| Downstream metric | `protein_sequence_validity_rate` (higher-is-better, saturation 0.95) |
+| Adapter mode (reported) | `synthetic` (runner hard-codes `force_mode="synthetic"` at `tools/run_real_ckpt_eval.py:427`) |
+| Total cells | 9 = 1 model × 3 seeds × 3 NFE budgets |
+
+### 14.2 Per-cell value surface
+
+| seed | nfe_budget | baseline | framework | delta_pct | signed_delta_pct | status | wall_baseline_s | wall_framework_s | wall_ratio |
+|---:|---:|---:|---:|---:|---:|---|---:|---:|---:|
+| 42 | 10  | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION | 0.2067 | 0.0537 | 0.260 |
+| 42 | 50  | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION | 0.9561 | 0.3057 | 0.320 |
+| 42 | 200 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION | 3.5719 | 1.0377 | 0.290 |
+| 43 | 10  | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION | 0.1902 | 0.0537 | 0.283 |
+| 43 | 50  | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION | 0.7330 | 0.2307 | 0.315 |
+| 43 | 200 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION | 1.8410 | 0.4597 | 0.250 |
+| 44 | 10  | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION | 0.1119 | 0.0208 | 0.186 |
+| 44 | 50  | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION | 0.3680 | 0.1028 | 0.279 |
+| 44 | 200 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION | 1.4210 | 0.3997 | 0.281 |
+
+### 14.3 Per-NFE wall-clock aggregate
+
+| nfe_budget | n_cells | baseline_total_s | framework_total_s | framework/baseline | avg_signed_delta_pct |
+|---:|---:|---:|---:|---:|---:|
+| 10  | 3 | 0.5088 | 0.1282 | 0.252 | 0.0000 |
+| 50  | 3 | 2.0571 | 0.6392 | 0.311 | 0.0000 |
+| 200 | 3 | 6.8339 | 1.8971 | 0.278 | 0.0000 |
+
+### 14.4 Aggregate verdict
+
+| Stat | Value |
+|---|---:|
+| n_cells | 9 |
+| n_supported (framework strictly better) | **0** |
+| n_tie_at_saturation | 9 |
+| n_regression | 0 |
+| n_pending | 0 |
+| n_blocked | 0 |
+| n_run_error | 0 |
+| **framework_wins** | **0** |
+| G.1 mean signed Δ% | 0.0 |
+| Verdict | **TIE_AT_SATURATION** |
+
+### 14.5 Reading (honest failure-path documentation)
+
+All 9 cells are TIE_AT_SATURATION for the **same documented reason as §13**:
+`tools/run_real_ckpt_eval.py` is hard-coded by Wave 36 Agent D to operate in
+`synthetic` fallback mode. Two independent hard-codes cause the trivial
+reading:
+
+1. `_resolve_adapter` (line 411-430) calls the adapter factory with
+   `force_mode="synthetic"` unconditionally. There is no auto-detection of
+   `data/kanzi_ckpt/cleaned_model.pt`, no CLI flag, no env-var override.
+2. `_compute_metric` (line 516-579) returns the metric-spec's
+   `saturation_threshold` directly on both arms, so `delta_pct = 0.0` by
+   construction. The function docstring (lines 531-538) explicitly says this
+   is the **known trivial reading** waiting on Wave 36 Agents A/B/C to land
+   their real-ckpt forward paths.
+
+**Sidecar venv + torch availability alone is NOT sufficient** to flip the
+runner off synthetic mode. The Wave 39 Agent A forward-pass probe
+(`tools/run_kanzi_real_ckpt.py`, results in
+`verification_outputs/kanzi_real_ckpt_forward_q4_2026.json`) proved the
+sidecar venv + ckpt path works (44.1 M params, 0 missing/unexpected keys,
+CPU forward at 0.057 s for B=2, L=64, coord_dim=3, sane token distribution).
+That path is **separate from** the framework-vs-baseline comparison in
+`tools/run_real_ckpt_eval.py`. Bridging the two would require edits to
+`tools/` and `adaptive_reflow/adapters/kanzi.py` — both out of scope for
+Wave 40 Agent A's disjoint file scope.
+
+### 14.6 Wall-clock signal (the one non-trivial observation)
+
+Even though the value surface is the documented trivial reading, the
+wall-clock measurements are real: the framework loop runs ~3-4× faster than
+the baseline on the synthetic shim, because the per-round NFE is `nfe/3` and
+the framework spends less wall-clock time per round than a single
+full-budget baseline pass. This is consistent with the Wave 36 §13 numbers
+(baseline 1.95 s / framework 0.66 s ≈ 0.34 ratio on Kanzi + FreqFlow
+combined). On a real ckpt the ratio would compress (more time inside the
+forward call), but the relative ordering should hold.
+
+### 14.7 What would close the gap (not done in Wave 40)
+
+To produce non-trivial `framework_wins` counts on Kanzi:
+
+1. Add `force_mode="auto"` + ckpt discovery to `tools/run_real_ckpt_eval.py`.
+2. Add a real-ckpt code path to `adaptive_reflow/adapters/kanzi.py` that
+   loads `data/kanzi_ckpt/cleaned_model.pt`, runs encoder+flow+decoder on
+   the `build_initial_state` bundle, and threads outputs to `solve_ode`.
+3. Extend `_compute_metric` to compute `protein_sequence_validity_rate`
+   from generated tokens (decode → amino-acid sequence → `<unk>`-proportion
+   threshold), not the synthetic ceiling.
+4. Verify on a held-out batch and capture per-cell delta.
+
+This is multi-wave work; the right home is a dedicated wave that owns the
+Kanzi adapter and the eval runner as its disjoint scope.
