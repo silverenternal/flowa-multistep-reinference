@@ -659,7 +659,7 @@ class ConstantScheduler:
         """Return the most recent sample, or ``None`` after :meth:`reset`."""
         return self._last_sample
 
-    # -- SchedulerProtocol -------------------------------------------------
+
 
     def sample(
         self,
@@ -1990,6 +1990,92 @@ class ConvergenceAdaptiveScheduler:
         """Return the most recent sample, or ``None`` after :meth:`reset`."""
         return self._last_sample
 
+    # -- Wave 31 paper-quantity accessors ----------------------------------
+
+    @property
+    def paper_quantity_weights(self) -> dict[str, float]:
+        """Return the paper-quantity EMA weights (Wave 31)."""
+        return dict(self._paper_quantity_weights)
+
+    @property
+    def smoothed_sheet_A(self) -> float | None:
+        """Return the latest EMA-smoothed ``sheet_A`` (``A_g``), or ``None``.
+
+        ``A_g`` is the literal paper quantity from
+        :func:`adaptive_reflow.theory.paper_quantities.sheet_evidence_A`
+        (Proposition 3 / line 161). It is the positive denominator that
+        normalises the sheet posterior mass.
+        """
+        return (
+            float(self._sheet_A_ema)
+            if self._sheet_A_ema is not None
+            else None
+        )
+
+    @property
+    def smoothed_packing_B(self) -> float | None:
+        """Return the latest EMA-smoothed ``packing_B`` (``B_g``), or ``None``.
+
+        ``B_g`` is the literal paper quantity from
+        :func:`adaptive_reflow.theory.paper_quantities.root_cell_packing_B`
+        (line 159). It summarises the countable family of root cells
+        and is the cell-evidence scale used as the ``cell_signal`` in
+        the paper-quantity-aware PID ratio.
+        """
+        return (
+            float(self._packing_B_ema)
+            if self._packing_B_ema is not None
+            else None
+        )
+
+    @property
+    def smoothed_exterior_gap(self) -> float | None:
+        """Return the latest EMA-smoothed ``exterior_gap`` (``e_rho``), or ``None``.
+
+        ``e_rho`` is the literal paper quantity from
+        :func:`adaptive_reflow.theory.paper_quantities.exterior_gap_e_rho`
+        (line 128). It bounds the squared-residual energy on the
+        physical complement and is exposed for the audit trail; it is
+        tracked alongside the other two but does not enter the PID
+        ratio (which only needs sheet-vs-cell).
+        """
+        return (
+            float(self._exterior_gap_ema)
+            if self._exterior_gap_ema is not None
+            else None
+        )
+
+    @property
+    def paper_ratio_history(self) -> tuple[float, ...]:
+        """Return the recorded paper-quantity ratio history as a tuple.
+
+        The paper-quantity ratio is ``sheet_A_ema / (sheet_A_ema +
+        packing_B_ema)`` at each round for which both paper-quantity
+        EMAs are finite. The ratio lies in ``[0, 1]`` (it is a
+        normalised sheet-vs-cell share) and drives the PID branch
+        alongside (not in place of) the W2 history when paper
+        quantities are supplied.
+        """
+        return tuple(self._paper_ratio_history)
+
+    @property
+    def last_paper_quantity_keys(self) -> tuple[str, ...]:
+        """Return the paper-quantity names used by the most recent feedback call."""
+        return tuple(self._last_paper_quantity_keys)
+
+    @property
+    def paper_quantity_enabled(self) -> bool:
+        """Return ``True`` once at least one paper-quantity signal has been observed.
+
+        When ``False`` (default), the controller is in the legacy
+        W2-only branch and the PID ratio / delta are computed on the
+        aggregated W2 signal exactly as before Wave 31. When ``True``,
+        the PID ratio / delta are computed on the paper-quantity ratio
+        ``sheet_A_ema / (sheet_A_ema + packing_B_ema)`` instead.
+        """
+        return bool(self._paper_quantity_enabled)
+
+    # -- SchedulerProtocol -------------------------------------------------
     # -- SchedulerProtocol -------------------------------------------------
 
     def sample(
@@ -2058,6 +2144,14 @@ class ConvergenceAdaptiveScheduler:
                 )
                 if self._last_feedback_keys
                 else ()
+            )
+            + (
+                (
+                    "schedule_paper_quantity_enabled:"
+                    + ",".join(sorted(self._last_paper_quantity_keys)),
+                )
+                if self._paper_quantity_enabled
+                else ()
             ),
         )
         self._last_sample = sample
@@ -2082,6 +2176,13 @@ class ConvergenceAdaptiveScheduler:
         self._shift = 0.0
         self._last_feedback_keys = ()
         self._last_sample = None
+        # Wave 31: also clear paper-quantity EMA state.
+        self._sheet_A_ema = None
+        self._packing_B_ema = None
+        self._exterior_gap_ema = None
+        self._paper_ratio_history = []
+        self._last_paper_quantity_keys = ()
+        self._paper_quantity_enabled = False
         self._base.reset()
 
     def inject_noise(
@@ -2103,7 +2204,7 @@ class ConvergenceAdaptiveScheduler:
 
     def to_config(self) -> dict[str, Any]:
         """Return a JSON-serialisable config dict for the adaptive scheduler."""
-        return {
+        out: dict[str, Any] = {
             "family": "convergence_adaptive",
             "base_config": self._base.to_config(),
             "kp": float(self._kp),
@@ -2114,6 +2215,14 @@ class ConvergenceAdaptiveScheduler:
                 str(k): float(v) for k, v in sorted(self._metric_weights.items())
             },
         }
+        # Wave 31: include paper-quantity weights only when they differ
+        # from the defaults so legacy configs round-trip bit-identical.
+        if self._paper_quantity_weights != dict(DEFAULT_PAPER_QUANTITY_WEIGHTS):
+            out["paper_quantity_weights"] = {
+                str(k): float(v)
+                for k, v in sorted(self._paper_quantity_weights.items())
+            }
+        return out
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> ConvergenceAdaptiveScheduler:
@@ -2129,6 +2238,12 @@ class ConvergenceAdaptiveScheduler:
             if isinstance(raw_weights, dict) and raw_weights
             else None
         )
+        raw_pq_weights = config.get("paper_quantity_weights")
+        pq_weights = (
+            {str(k): float(v) for k, v in dict(raw_pq_weights).items()}
+            if isinstance(raw_pq_weights, dict) and raw_pq_weights
+            else None
+        )
         return ConvergenceAdaptiveScheduler(
             base=base,
             kp=float(config["kp"]),
@@ -2136,18 +2251,20 @@ class ConvergenceAdaptiveScheduler:
             shift_max=float(config["shift_max"]),
             ema=float(config["ema"]),
             metric_weights=weights,
+            paper_quantity_weights=pq_weights,
         )
 
     def record_round_feedback(
         self,
         round_in_cycle: int,
         metrics: Mapping[str, float],
+        paper_quantities: Mapping[str, float] | None = None,
     ) -> None:
         """Consume one round's metrics and update the shift via PID-lite.
 
-        P0-A6 — multi-metric aggregation. The controller no longer reads
-        ``metrics["W2"]`` alone; it aggregates every metric named in
-        :attr:`metric_weights` into a single *loss-form* signal:
+        P0-A6 — multi-metric aggregation. The controller aggregates every
+        metric named in :attr:`metric_weights` into a single *loss-form*
+        signal:
 
         1. For each ``(key, weight)`` in :attr:`metric_weights`, read
            ``metrics[key]``. Missing / non-numeric / non-finite values are
@@ -2163,6 +2280,36 @@ class ConvergenceAdaptiveScheduler:
            ``shift += kp * (1 - ratio) - kd * delta`` clipped to
            ``[-shift_max, +shift_max]``, where ``ratio`` and ``delta`` are
            computed on consecutive aggregated signals.
+
+        Wave 31 — paper-quantity-aware PID (optional). When
+        ``paper_quantities`` is supplied, the controller additionally
+        updates three EMAs (``sheet_A_ema``, ``packing_B_ema``,
+        ``exterior_gap_ema``) from the literal paper quantities
+        ``sheet_evidence_A``, ``root_cell_packing_B`` and
+        ``exterior_gap_e_rho`` (paper Lemma 2 / Lemma 3 / Lemma 5). Once
+        at least one finite ``sheet_A`` and ``packing_B`` sample has
+        been observed, the PID switches from the legacy
+        ``ratio = w2[-1] / w2[-2]`` branch to a paper-quantity
+        ``ratio = sheet_A_ema / (sheet_A_ema + cell_signal)`` branch
+        where ``cell_signal`` is the current ``packing_B_ema``. The
+        aggregated W2 path remains the single source of truth for the
+        audit trail and for callers that never supply paper
+        quantities — the switch is monotone in
+        ``paper_quantity_enabled`` and the legacy W2 branch is
+        reproduced bit-for-bit until the first paper-quantity sample
+        arrives.
+
+        :param round_in_cycle: round index within the current outer
+            cycle (passed through for audit; not used in the PID math).
+        :param metrics: framework-side metrics dict (e.g. ``W2``,
+            ``coverage``, ``selection_ratio``). Same semantics as
+            before Wave 31.
+        :param paper_quantities: optional mapping with paper-quantity
+            values keyed by ``"sheet_A"``, ``"packing_B"`` and / or
+            ``"exterior_gap"``. Missing or non-finite entries are
+            silently dropped. ``None`` (the default) disables the
+            paper-quantity-aware PID branch and the controller behaves
+            bit-identically to the Wave 31-Pre release.
         """
         aggregate = 0.0
         weight_sum = 0.0
@@ -2205,20 +2352,74 @@ class ConvergenceAdaptiveScheduler:
         # computed and stored but never consumed by the controller.
         self._w2_history.append(float(self._smoothed_w2))
 
-        # Need at least two samples to compute ratio / delta.
-        if len(self._w2_history) < 2:
-            return
+        # Wave 31: paper-quantity EMA updates + paper-ratio history.
+        # These run in parallel to the W2 history; the paper-quantity
+        # state does NOT affect the W2 history above (so the legacy
+        # audit trail is preserved bit-for-bit).
+        paper_ratio_appended = False
+        if paper_quantities is not None:
+            pq_used: list[str] = []
+            sheet_A_raw = self._safe_fetch_paper_quantity(
+                paper_quantities, "sheet_A"
+            )
+            packing_B_raw = self._safe_fetch_paper_quantity(
+                paper_quantities, "packing_B"
+            )
+            exterior_gap_raw = self._safe_fetch_paper_quantity(
+                paper_quantities, "exterior_gap"
+            )
+            if sheet_A_raw is not None:
+                self._update_ema("sheet_A", sheet_A_raw)
+                pq_used.append("sheet_A")
+            if packing_B_raw is not None:
+                self._update_ema("packing_B", packing_B_raw)
+                pq_used.append("packing_B")
+            if exterior_gap_raw is not None:
+                self._update_ema("exterior_gap", exterior_gap_raw)
+                pq_used.append("exterior_gap")
+            if pq_used:
+                self._last_paper_quantity_keys = tuple(sorted(pq_used))
+            # Compute paper-quantity ratio when both halves are finite.
+            if (
+                self._sheet_A_ema is not None
+                and self._packing_B_ema is not None
+            ):
+                sheet_f = float(self._sheet_A_ema)
+                pack_f = float(self._packing_B_ema)
+                denom = sheet_f + pack_f
+                if denom > 0.0 and math.isfinite(denom):
+                    self._paper_ratio_history.append(float(sheet_f / denom))
+                    paper_ratio_appended = True
+                    self._paper_quantity_enabled = True
 
-        prev = float(self._w2_history[-2])
-        curr = float(self._w2_history[-1])
-        # Guard against division by zero in ratio.
-        if not math.isfinite(prev) or prev == 0.0:
-            ratio = 1.0 if curr == 0.0 else float("inf")
+        # Need at least two samples to compute ratio / delta.
+        # Wave 31: prefer the paper-quantity ratio once it has produced
+        # at least two samples; otherwise fall back to the legacy
+        # W2 history. The switch is monotone in
+        # ``paper_quantity_enabled``.
+        if paper_ratio_appended and len(self._paper_ratio_history) >= 2:
+            prev = float(self._paper_ratio_history[-2])
+            curr = float(self._paper_ratio_history[-1])
+            if not math.isfinite(prev) or prev == 0.0:
+                ratio = 1.0 if curr == 0.0 else float("inf")
+            else:
+                ratio = curr / prev
+            if not math.isfinite(ratio):
+                ratio = 1.0
+            delta = curr - prev
+        elif len(self._w2_history) >= 2:
+            prev = float(self._w2_history[-2])
+            curr = float(self._w2_history[-1])
+            # Guard against division by zero in ratio.
+            if not math.isfinite(prev) or prev == 0.0:
+                ratio = 1.0 if curr == 0.0 else float("inf")
+            else:
+                ratio = curr / prev
+            if not math.isfinite(ratio):
+                ratio = 1.0
+            delta = curr - prev
         else:
-            ratio = curr / prev
-        if not math.isfinite(ratio):
-            ratio = 1.0
-        delta = curr - prev
+            return
 
         shift_update = float(self._kp) * (1.0 - ratio) - float(self._kd) * delta
         new_shift = float(self._shift) + shift_update
@@ -2227,6 +2428,65 @@ class ConvergenceAdaptiveScheduler:
         elif new_shift < -float(self._shift_max):
             new_shift = -float(self._shift_max)
         self._shift = float(new_shift)
+
+    # -- Wave 31 internal helpers -----------------------------------------
+
+    def _safe_fetch_paper_quantity(
+        self,
+        paper_quantities: Mapping[str, float],
+        name: str,
+    ) -> float | None:
+        """Return a finite float for ``paper_quantities[name]`` or ``None``.
+
+        Skips missing, non-numeric, or non-finite entries so a broken
+        oracle (NaN / inf / wrong type) cannot poison the EMA.
+        """
+        try:
+            raw = paper_quantities.get(name, float("nan"))
+        except Exception:
+            return None
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if not math.isfinite(value) or value < 0.0:
+            # Paper quantities are non-negative by construction
+            # (sheet_A, packing_B, exterior_gap all >= 0). Negative
+            # inputs are dropped defensively.
+            return None
+        return float(value)
+
+    def _update_ema(self, name: str, sample: float) -> None:
+        """Update the named paper-quantity EMA in-place.
+
+        Mirrors the W2 EMA recursion ``new = ema*sample + (1-ema)*prev``
+        so the paper-quantity and W2 paths share the same smoothing
+        semantics; with ``ema = 0`` (no smoothing) the EMA snaps to the
+        latest sample, with ``ema = 1`` it freezes at the first sample.
+        """
+        if not math.isfinite(float(sample)):
+            return
+        prev: float | None
+        if name == "sheet_A":
+            prev = self._sheet_A_ema
+        elif name == "packing_B":
+            prev = self._packing_B_ema
+        elif name == "exterior_gap":
+            prev = self._exterior_gap_ema
+        else:
+            return
+        if prev is None:
+            ema_value = float(sample)
+        else:
+            ema_value = float(
+                self._ema * float(sample) + (1.0 - self._ema) * float(prev)
+            )
+        if name == "sheet_A":
+            self._sheet_A_ema = float(ema_value)
+        elif name == "packing_B":
+            self._packing_B_ema = float(ema_value)
+        else:
+            self._exterior_gap_ema = float(ema_value)
 
     # -- derived -----------------------------------------------------------
 
@@ -3281,7 +3541,6 @@ class PaperRatioAdaptiveScheduler:
         """Return the most recent sample, or ``None`` after :meth:`reset`."""
         return self._last_sample
 
-    # -- SchedulerProtocol -------------------------------------------------
 
     def sample(
         self,

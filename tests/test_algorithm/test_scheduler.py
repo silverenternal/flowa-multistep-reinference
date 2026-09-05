@@ -798,15 +798,24 @@ def test_paper_evidence_balance_helper_rejects_invalid_eps() -> None:
         _paper_evidence_balance(0.5, -0.01)
 
 
-def test_codimension_sheet_scheduler_n_cap_tracks_cosine_ramp() -> None:
-    """``n_cap`` follows the cosine ramp; the evidence ratio is separate.
+def test_codimension_sheet_scheduler_n_cap_is_ratio_driven() -> None:
+    """``n_cap`` is driven by the paper's sheet-vs-cell evidence ratio.
 
-    The framework's coarse-to-fine anneal is driven by the cosine base
-    (ADR-0010), not by the paper's evidence ratio. The codimension
-    scheduler composes over the cosine ramp and exposes the
-    sheet-vs-cell evidence ratio as a separate metric via
-    :attr:`last_evidence_ratio`. At any ``eps_implicit`` the n_cap
-    output matches the cosine base round-by-round.
+    The framework's coarse-to-fine anneal is driven by the paper's
+    sheet-vs-cell evidence ratio (paper Lemma 2 ``Theta(eps^{+1})``
+    versus Lemma 3 ``O(eps^{+2})``), NOT by the cosine ramp. With
+    the paper-quantity-augmented path active (no
+    ``profile_residual_fn`` ⇒ heuristic fallback), ``n_cap``
+    equals ``n_min + (n_max - n_min) * ratio`` where ``ratio =
+    sheet / (sheet + cell)``.
+
+    We verify:
+
+    * The per-round ``n_cap`` equals the literal closed form.
+    * The per-round ``n_cap`` differs from the cosine ramp's
+      ``n_cap`` (the cosine ramp is no longer the driver).
+    * Different ``eps_implicit`` values yield different ``n_cap``
+      (the ratio is sensitive to the paper-quantity scale).
     """
     base = default_cosine_scheduler(cycle_length=10, n_min=0.0, n_max=1.0)
     for eps in (1.0, 0.05, 0.01):
@@ -815,10 +824,29 @@ def test_codimension_sheet_scheduler_n_cap_tracks_cosine_ramp() -> None:
         )
         for r in range(10):
             base_cap = base.sample(0, r, r).n_cap
-            codim_cap = codim.sample(0, r, r).n_cap
-            # n_cap follows the cosine ramp (eps_implicit does not
-            # modulate n_cap; it only drives the reportable ratio).
-            assert codim_cap == pytest.approx(base_cap, abs=1e-12)
+            sample = codim.sample(0, r, r)
+            # ratio-driven: n_cap = n_min + (n_max - n_min) * ratio.
+            assert sample.n_cap == pytest.approx(
+                sample.evidence_ratio, abs=1e-12
+            ), (
+                f"n_cap at round {r} must equal the evidence ratio "
+                f"(eps_implicit={eps}); got n_cap={sample.n_cap}, "
+                f"ratio={sample.evidence_ratio}"
+            )
+            # n_cap differs from the cosine ramp's base value at
+            # late-round slots where the heuristic ratio is < 1
+            # (the cosine ramp's terminal round emits n_cap=0, but
+            # the ratio-driven n_cap stays near 1 for small eps).
+            # We skip r=0 because both the cosine base and the
+            # heuristic ratio at n_cap_base=1.0 happen to equal 1.0
+            # (degenerate identity at the high-noise end).
+            if eps < 0.5 and r > 0:
+                assert abs(sample.n_cap - base_cap) > 1e-6, (
+                    f"n_cap at round {r} (eps_implicit={eps}) "
+                    f"should differ from the cosine base ({base_cap}); "
+                    f"got n_cap={sample.n_cap}. The cosine ramp must "
+                    f"NOT be the driver of n_cap."
+                )
 
 
 def test_codimension_sheet_scheduler_evidence_ratio_low_eps_near_one() -> None:
@@ -840,32 +868,43 @@ def test_codimension_sheet_scheduler_evidence_ratio_low_eps_near_one() -> None:
 
 
 def test_codimension_sheet_scheduler_handles_degenerate_base() -> None:
-    """When the base cosine emits 0 (cycle terminal round), n_cap is 0.
+    """``n_cap`` is now driven by the ratio, not the cosine ramp.
 
-    The n_cap output follows the cosine ramp directly (not the
-    evidence ratio). At the terminal round the cosine base with
-    n_min=0 emits exactly 0.0, and so does the codimension scheduler.
-    The evidence ratio at that point is ``eps / (eps + eps^2)``,
-    which is near 1 (sheet dominance) per Theorem 1.
+    At the cycle terminal round ``n_cap_base`` from the cosine ramp
+    is 0.0, but the per-round ``n_cap`` equals the ratio at that
+    ``n_cap_base`` (heuristic formula ``sheet / (sheet + cell)``
+    with ``sheet = max(n_base, eps)`` and ``cell = (1 - n_base)^2
+    * eps^2``). For ``eps_implicit = 0.05`` and ``n_base = 0``:
+
+        sheet = max(0, 0.05) = 0.05
+        cell  = 1 * 0.05^2   = 0.0025
+        ratio = 0.05 / (0.05 + 0.0025) ≈ 0.9524
+
+    so ``n_cap`` is ≈ 0.9524 (n_min=0, n_max=1), NOT 0. The
+    cosine ramp is no longer the driver — the paper's sheet-vs-cell
+    evidence ratio is. And with a large ``eps_implicit`` the ratio
+    depends on ``n_cap_base`` via the heuristic cell term.
     """
     codim = CodimensionSheetScheduler(
         cycle_length=4, n_min=0.0, n_max=1.0, eps_implicit=0.05
     )
     # r=3 is the cycle terminal round; the cosine base with n_min=0
-    # emits exactly 0.0 at this slot.
+    # emits exactly 0.0 at this slot, but the ratio-driven n_cap is
+    # the heuristic ratio at n_base=0, which is eps / (eps + eps^2).
     sample = codim.sample(0, 3, 3)
-    assert sample.n_cap == pytest.approx(0.0, abs=1e-9)
-    # The evidence ratio at the terminal round is
-    # ``eps / (eps + eps^2) = 1 / (1 + eps)``, near 1 for small eps.
-    assert codim.last_evidence_ratio == pytest.approx(1.0 / 1.05, abs=1e-9)
-    # And with a large eps the ratio is more balanced.
+    expected_ratio = 0.05 / (0.05 + 0.0025)  # ≈ 0.9524
+    assert sample.n_cap == pytest.approx(expected_ratio, abs=1e-9)
+    # And the evidence ratio equals n_cap directly (n_min=0, n_max=1).
+    assert codim.last_evidence_ratio == pytest.approx(expected_ratio, abs=1e-9)
+    # And with a large eps the ratio is sensitive to n_cap_base.
     big_codim = CodimensionSheetScheduler(
         cycle_length=2, n_min=0.5, n_max=1.0, eps_implicit=1.0
     )
     sample = big_codim.sample(0, 1, 1)
-    # n_cap_base = 0 at r=1; the cosine ramp gives n_cap = 0.5.
-    assert sample.n_cap == pytest.approx(0.5, abs=1e-9)
-    # And the evidence ratio at this point is 0.5 (sheet == cell).
+    # At r=1 (terminal), n_cap_base=0 (cosine with n_min=0).
+    # ratio = max(0, 1) / (max(0, 1) + 1^2 * 1^2) = 1 / 2 = 0.5.
+    # n_cap = n_min + (n_max - n_min) * ratio = 0.5 + 0.5 * 0.5 = 0.75.
+    assert sample.n_cap == pytest.approx(0.75, abs=1e-9)
     assert big_codim.last_evidence_ratio == pytest.approx(0.5, abs=1e-9)
 
 
@@ -1017,25 +1056,33 @@ def test_codimension_sheet_scheduler_build_scheduler_factory() -> None:
 
 
 def test_codimension_sheet_scheduler_eps_direction_default_matches_paper() -> None:
-    """Default ``eps_direction='decreasing'`` realises paper Theorem 1.
+    """Default ``eps_direction='decreasing'`` keeps the paper ratio direction.
 
-    The paper's ``eps -> 0`` selects the sheet; the framework's
-    cycle maps the same direction onto ``r -> L-1`` (terminal round =
-    small noise = sheet dominance). At default settings,
-    ``r=0`` emits a large ``n_cap`` (lots of fresh noise) and
-    ``r=L-1`` emits a small ``n_cap`` (memory dominant).
+    With the new ratio-driven design, ``n_cap`` is computed from
+    the paper's sheet-vs-cell evidence ratio. The legacy
+    ``eps_direction`` flips the ratio (``ratio -> 1 - ratio``) for
+    backward compatibility with the prior cosine-based
+    interpretation. Under the paper-aligned default
+    ``eps_direction='decreasing'``, the ratio is used as-is. In
+    heuristic fallback mode (no ``profile_residual_fn``) the ratio
+    varies with ``n_cap_base`` from the cosine ramp, so
+    ``n_cap`` is approximately monotone non-increasing (smaller
+    ``n_cap_base`` → smaller ratio for ``n_cap_base < 1``).
     """
     scheduler = CodimensionSheetScheduler(
         cycle_length=8, n_min=0.0, n_max=1.0, eps_implicit=0.05
     )
     assert scheduler.eps_direction == "decreasing"
     caps = [scheduler.sample(0, r, r).n_cap for r in range(8)]
-    # Paper-aligned: r=0 -> lots of fresh noise (n_cap near 1), r=L-1
-    # -> almost pure (n_cap near 0).
+    # Paper-aligned (ratio as-is). At r=0 with the heuristic formula,
+    # n_cap_base = 1.0 → ratio = 1.0 → n_cap = 1.0.
     assert caps[0] == pytest.approx(1.0, abs=1e-9)
-    assert caps[-1] < 0.05
-    # And the output is monotone non-increasing in r (cosine base
-    # composed with paper-positive powers).
+    # At r=7 (terminal), n_cap_base ≈ 0.0 → ratio = eps / (eps + eps^2)
+    # ≈ 0.9524. So caps[-1] ≈ 0.95 (NOT near 0 as before — the cosine
+    # ramp is no longer the driver of n_cap).
+    assert caps[-1] == pytest.approx(0.05 / (0.05 + 0.0025), abs=1e-9)
+    # The output is monotone non-increasing in r (the heuristic ratio
+    # is monotone non-increasing in n_cap_base which is the cosine ramp).
     for prev, curr in pairwise(caps):
         assert curr <= prev + 1e-9
 
@@ -1044,7 +1091,10 @@ def test_codimension_sheet_scheduler_eps_direction_increasing_legacy_warns() -> 
     """``eps_direction='increasing'`` emits a DeprecationWarning and reverses.
 
     The legacy ``'increasing'`` mode is the opposite of paper Theorem
-    1's ``eps -> 0`` limit (r=0 small noise, r=L-1 large noise). It is
+    1's ``eps -> 0`` limit. Under the new ratio-driven design, the
+    ``'increasing'`` mode flips the per-round ratio
+    (``ratio -> 1 - ratio``), so r=0 sits at the *small-ratio* end
+    of the cycle and r=L-1 sits at the *large-ratio* end. It is
     retained only for backward compatibility and emits a
     :class:`DeprecationWarning` on the FIRST :meth:`sample` call
     (not at construction time — P2-18 audit; legacy callers that
@@ -1060,11 +1110,12 @@ def test_codimension_sheet_scheduler_eps_direction_increasing_legacy_warns() -> 
     with pytest.warns(DeprecationWarning, match="legacy inverted convention"):
         scheduler.sample(0, 0, 0)
     caps = [scheduler.sample(0, r, r).n_cap for r in range(1, 8)]
-    # Reversed: r=0 -> small n_cap (no fresh noise), r=L-1 -> large
-    # n_cap (lots of fresh noise). This is the opposite of the
-    # paper-aligned default.
+    # Reversed: r=0 -> small n_cap (1 - 1 = 0 in heuristic mode),
+    # r=L-1 -> large n_cap (1 - eps/(eps + eps^2)).
     assert caps[0] < 0.05
-    assert caps[-1] == pytest.approx(1.0, abs=1e-9)
+    assert caps[-1] == pytest.approx(
+        1.0 - 0.05 / (0.05 + 0.0025), abs=1e-9
+    )
     # Subsequent sample() calls do not re-emit the warning.
     with warnings.catch_warnings():
         warnings.simplefilter("error", DeprecationWarning)
@@ -1179,8 +1230,13 @@ def test_codimension_sheet_scheduler_without_profile_uses_inline_formula() -> No
     Backward compatibility: when ``profile_residual_fn`` is ``None``
     the scheduler does NOT cache paper quantities (all four accessors
     return ``None``) and the per-round sheet-vs-cell evidence ratio
-    uses the framework-side heuristic closed form — byte-identical
-    to the legacy inline formula.
+    uses the framework-side heuristic closed form (``sheet / (sheet +
+    cell)`` with ``sheet = max(n_base, eps)`` and ``cell = (1 -
+    n_base)^2 * eps^2``, where ``n_base`` is the cosine ramp's
+    per-round value). Under the new ratio-driven design, ``n_cap`` is
+    ``n_min + (n_max - n_min) * ratio`` (with ``n_min = n_max = 0``
+    case excluded by the cycle_length > 1 check); for
+    ``n_min = 0, n_max = 1`` this reduces to ``n_cap = ratio``.
     """
     scheduler = CodimensionSheetScheduler(
         cycle_length=10,
@@ -1197,19 +1253,29 @@ def test_codimension_sheet_scheduler_without_profile_uses_inline_formula() -> No
     assert scheduler.packing_B is None
     assert scheduler.cell_C is None
     assert scheduler.exterior_gap_e_rho is None
-    # Legacy inline formula: ratio matches the framework heuristic.
+    # Legacy inline formula: ratio matches the framework heuristic
+    # applied to the cosine ramp's per-round value ``n_cap_base``.
     eps = 0.05
     for r in range(10):
-        scheduler.sample(0, r, r)
+        sample = scheduler.sample(0, r, r)
         assert scheduler.last_evidence_ratio is not None
-        n_base = max(0.0, min(1.0, scheduler.last_sample.n_cap))
+        # ``n_cap_base`` is the cosine ramp's value at this round
+        # (ADR-0010). We can recover it by querying the base scheduler.
+        n_base = scheduler.base.sample(0, r, r).n_cap
         # The heuristic formula is ``sheet / (sheet + cell)`` with
-        # ``sheet = max(n_clipped, eps)`` and
-        # ``cell = (1 - n_clipped) ** 2 * eps ** 2``.
-        sheet = max(n_base, eps)
-        cell = (1.0 - n_base) ** 2 * eps * eps
-        expected = sheet / (sheet + cell)
-        assert scheduler.last_evidence_ratio == pytest.approx(expected, rel=1e-12)
+        # ``sheet = max(n_base, eps)`` and
+        # ``cell = (1 - n_base) ** 2 * eps ** 2``.
+        n_base_clipped = max(0.0, min(1.0, n_base))
+        sheet = max(n_base_clipped, eps)
+        cell = (1.0 - n_base_clipped) ** 2 * eps * eps
+        expected_ratio = sheet / (sheet + cell)
+        assert scheduler.last_evidence_ratio == pytest.approx(
+            expected_ratio, rel=1e-12
+        )
+        # With n_min=0, n_max=1, the per-round n_cap equals the ratio.
+        assert sample.n_cap == pytest.approx(
+            scheduler.last_evidence_ratio, abs=1e-12
+        )
 
 
 def test_codimension_sheet_scheduler_paper_quantity_diagnostics_emitted() -> None:
@@ -1839,6 +1905,206 @@ def test_convergence_adaptive_sample_audit_codes() -> None:
         scheduler.record_round_feedback(r, {"W2": w2, "coverage": 0.5})
     codes = scheduler.sample(0, 1, 1).audit_codes
     assert "schedule_feedback_multi_metric:W2,coverage" in codes
+
+
+# ---------------------------------------------------------------------------
+# Wave 31 - paper-quantity-aware PID branch in ConvergenceAdaptiveScheduler
+# ---------------------------------------------------------------------------
+
+
+_PAPER_QUANTITY_TRACE = (
+    {"sheet_A": 0.7, "packing_B": 0.3, "exterior_gap": 0.1},
+    {"sheet_A": 0.8, "packing_B": 0.2, "exterior_gap": 0.1},
+    {"sheet_A": 0.9, "packing_B": 0.1, "exterior_gap": 0.1},
+    {"sheet_A": 0.95, "packing_B": 0.05, "exterior_gap": 0.1},
+)
+
+
+def test_convergence_adaptive_paper_quantity_default_disabled() -> None:
+    """Wave 31: a fresh scheduler is in the legacy W2-only branch."""
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=6)
+    )
+    assert scheduler.paper_quantity_enabled is False
+    assert scheduler.smoothed_sheet_A is None
+    assert scheduler.smoothed_packing_B is None
+    assert scheduler.smoothed_exterior_gap is None
+    assert scheduler.paper_ratio_history == ()
+    assert scheduler.last_paper_quantity_keys == ()
+
+
+def test_convergence_adaptive_paper_quantity_emas_track_samples() -> None:
+    """Wave 31: ``record_round_feedback`` updates paper-quantity EMAs.
+
+    With ``ema=0.5`` and the monotonic sheet_A trace, the EMA recursion
+    is ``new = 0.5*sample + 0.5*prev``:
+      round 0: 0.7
+      round 1: 0.5*0.8 + 0.5*0.7 = 0.75
+      round 2: 0.5*0.9 + 0.5*0.75 = 0.825
+      round 3: 0.5*0.95 + 0.5*0.825 = 0.8875
+    """
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=6),
+        ema=0.5,
+    )
+    for r, pq in enumerate(_PAPER_QUANTITY_TRACE):
+        scheduler.record_round_feedback(r, {"W2": 0.5}, paper_quantities=pq)
+    assert scheduler.paper_quantity_enabled is True
+    assert scheduler.smoothed_sheet_A == pytest.approx(0.8875)
+    # packing_B shrinks: round 3 EMA = 0.5*0.05 + 0.5*0.175 = 0.1125.
+    assert scheduler.smoothed_packing_B == pytest.approx(0.1125)
+    assert scheduler.smoothed_exterior_gap == pytest.approx(0.1)
+    assert scheduler.last_paper_quantity_keys == (
+        "exterior_gap",
+        "packing_B",
+        "sheet_A",
+    )
+
+
+def test_convergence_adaptive_paper_quantity_ratio_formula() -> None:
+    """Wave 31: PID uses ``sheet_A_ema / (sheet_A_ema + packing_B_ema)``.
+
+    With ``ema=1.0`` (no smoothing: EMA = latest sample), the
+    paper-quantity ratio tracks the literal ``sheet_A / (sheet_A +
+    packing_B)`` formula.
+    """
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=8),
+        kp=0.30,
+        kd=0.10,
+        shift_max=0.5,
+        ema=1.0,
+    )
+    for r, pq in enumerate(_PAPER_QUANTITY_TRACE):
+        scheduler.record_round_feedback(r, {"W2": 0.5}, paper_quantities=pq)
+    expected_ratios = (0.7, 0.8, 0.9, 0.95)
+    assert scheduler.paper_ratio_history == pytest.approx(expected_ratios)
+    # Ratio climbs monotonically; (1 - ratio) shrinks; the shift trends
+    # negative (more exploration) because the sheet-vs-cell share grows.
+    assert scheduler.shift < 0.0
+
+
+def test_convergence_adaptive_legacy_w2_branch_unchanged_without_paper_quantities() -> None:
+    """Wave 31: backward-compat - no paper quantities -> identical legacy path."""
+    base = default_cosine_scheduler(cycle_length=8)
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=base,
+        metric_weights={"W2": 1.0},
+    )
+    for r, w2 in enumerate(_W2_TRACE):
+        scheduler.record_round_feedback(r, {"W2": w2})
+    assert scheduler.paper_quantity_enabled is False
+    assert scheduler.smoothed_sheet_A is None
+    assert scheduler.paper_ratio_history == ()
+    assert scheduler.last_paper_quantity_keys == ()
+    assert scheduler.smoothed_w2 is not None
+    s0 = _W2_TRACE[0]
+    s1 = 0.3 * _W2_TRACE[1] + 0.7 * s0
+    s2 = 0.3 * _W2_TRACE[2] + 0.7 * s1
+    s3 = 0.3 * _W2_TRACE[3] + 0.7 * s2
+    s4 = 0.3 * _W2_TRACE[4] + 0.7 * s3
+    assert scheduler.w2_history == pytest.approx((s0, s1, s2, s3, s4))
+
+
+def test_convergence_adaptive_paper_quantity_ignores_broken_samples() -> None:
+    """Wave 31: non-finite / negative paper-quantity samples are ignored."""
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=6),
+        ema=0.3,
+    )
+    scheduler.record_round_feedback(
+        0,
+        {"W2": 0.5},
+        paper_quantities={
+            "sheet_A": float("nan"),
+            "packing_B": float("inf"),
+            "exterior_gap": -0.1,
+        },
+    )
+    assert scheduler.smoothed_sheet_A is None
+    assert scheduler.smoothed_packing_B is None
+    assert scheduler.smoothed_exterior_gap is None
+    assert scheduler.paper_ratio_history == ()
+    assert scheduler.paper_quantity_enabled is False
+    scheduler.record_round_feedback(
+        1,
+        {"W2": 0.5},
+        paper_quantities={"sheet_A": 0.6, "packing_B": 0.4},
+    )
+    assert scheduler.smoothed_sheet_A == pytest.approx(0.6)
+    assert scheduler.smoothed_packing_B == pytest.approx(0.4)
+    assert scheduler.paper_ratio_history == (0.6,)
+    assert scheduler.paper_quantity_enabled is True
+
+
+def test_convergence_adaptive_paper_quantity_weights_round_trip() -> None:
+    """Wave 31: paper_quantity_weights survive ``to_config`` / ``from_config``."""
+    custom = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=4),
+        paper_quantity_weights={
+            "sheet_A": 2.0,
+            "packing_B": 0.5,
+            "exterior_gap": 0.0,
+        },
+    )
+    rebuilt = ConvergenceAdaptiveScheduler.from_config(custom.to_config())
+    assert rebuilt.paper_quantity_weights == {
+        "sheet_A": 2.0,
+        "packing_B": 0.5,
+        "exterior_gap": 0.0,
+    }
+    assert rebuilt.config_hash() == custom.config_hash()
+    default_sched = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=4)
+    )
+    assert "paper_quantity_weights" not in default_sched.to_config()
+    legacy_like = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=4)
+    )
+    assert default_sched.config_hash() == legacy_like.config_hash()
+
+
+def test_convergence_adaptive_rejects_bad_paper_quantity_weights() -> None:
+    """Wave 31: negative / empty paper-quantity weight maps are rejected."""
+    with pytest.raises(ValueError):
+        ConvergenceAdaptiveScheduler(paper_quantity_weights={"sheet_A": -1.0})
+    with pytest.raises(ValueError):
+        ConvergenceAdaptiveScheduler(paper_quantity_weights={})
+
+
+def test_convergence_adaptive_paper_quantity_reset_clears_state() -> None:
+    """Wave 31: ``reset()`` clears paper-quantity EMA + ratio history."""
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=6),
+        ema=0.3,
+    )
+    for r, pq in enumerate(_PAPER_QUANTITY_TRACE):
+        scheduler.record_round_feedback(r, {"W2": 0.5}, paper_quantities=pq)
+    assert scheduler.paper_quantity_enabled is True
+    assert scheduler.paper_ratio_history != ()
+    scheduler.reset()
+    assert scheduler.smoothed_sheet_A is None
+    assert scheduler.smoothed_packing_B is None
+    assert scheduler.smoothed_exterior_gap is None
+    assert scheduler.paper_ratio_history == ()
+    assert scheduler.last_paper_quantity_keys == ()
+    assert scheduler.paper_quantity_enabled is False
+    assert scheduler.w2_history == ()
+    assert scheduler.smoothed_w2 is None
+
+
+def test_convergence_adaptive_sample_audit_codes_paper_quantity() -> None:
+    """Wave 31: paper-quantity-aware mode appears in ``audit_codes``."""
+    scheduler = ConvergenceAdaptiveScheduler(
+        base=default_cosine_scheduler(cycle_length=6)
+    )
+    for r, pq in enumerate(_PAPER_QUANTITY_TRACE[:2]):
+        scheduler.record_round_feedback(r, {"W2": 0.5}, paper_quantities=pq)
+    codes = scheduler.sample(0, 2, 2).audit_codes
+    assert (
+        "schedule_paper_quantity_enabled:exterior_gap,packing_B,sheet_A"
+        in codes
+    )
 
 
 # ---------------------------------------------------------------------------
