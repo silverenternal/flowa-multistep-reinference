@@ -314,3 +314,88 @@ power; the test suite in question cites the underlying JMAA paper
 All five ML-aware mutation operators were chosen so a regression at any
 of the three theorem surfaces above would propagate to a killed
 mutant; the surviving theory-subsystem mutants in §5 are the gaps.
+
+## 10. Acting on survivors (Wave 32 Agent B R-4 / Wave 34 R-4)
+
+Survivors are actionable — they are real fault classes the test
+suite does not catch. The audit runner ships a `--apply-survivor`
+helper that materializes a single survivor on disk so the
+developer can iterate against it (write a killing test, then
+revert). This closes the mutmut-style "apply on disk" feedback loop
+(see `docs/audit/web-research-2026.md` Finding F-10 + F-19).
+
+### 10.1 Survivor-ID format
+
+Survivors are addressed by a three-segment colon-separated ID of
+the form:
+
+```
+<file>:<lineno>:<operator>
+```
+
+For example `adaptive_reflow/adapters/synthetic.py:545:TF` selects
+the threshold-flip mutant at line 545 of `synthetic.py`. Operator
+IDs are the short forms `WP`/`AS`/`SM`/`TF`/`CS` (the same keys
+that appear in the per-operator rollup of the audit JSON).
+
+### 10.2 Apply a survivor
+
+```bash
+# Apply a surviving mutant to disk for inspection
+python tools/run_mutation_audit.py \
+    --apply-survivor adaptive_reflow/adapters/synthetic.py:545:TF
+```
+
+On success the runner writes three artifacts under `mutants/`:
+
+* `mutants/survivor_<safe_id>.before.py` — exact pre-mutation
+  source (use this for the in-place revert).
+* `mutants/survivor_<safe_id>.after.py` — the mutated source
+  (what was written to the original location).
+* `mutants/survivor_<safe_id>.patch` — unified diff between the
+  two (suitable for `git apply` / `git apply -R`).
+
+The mutated source is also written over the original file so the
+developer can iterate against it directly.
+
+### 10.3 Revert
+
+```bash
+# Either via git (the original is unchanged in git's tree, just dirty):
+git checkout -- adaptive_reflow/adapters/synthetic.py
+
+# Or via the backup:
+cp mutants/survivor_<safe_id>.before.py adaptive_reflow/adapters/synthetic.py
+```
+
+### 10.4 Failure modes
+
+The runner returns a non-zero exit code and prints to stderr when:
+
+* **Invalid ID format** (exit 1) — the ID is not `<file>:<lineno>:<operator>`.
+* **Unknown operator** (exit 1) — `<operator>` is not in
+  `WP/AS/SM/TF/CS` (or the long forms `weight_perturbation`/...).
+* **File not found** (exit 1) — the path is not relative to the
+  repo root, or the file was moved since the audit.
+* **No mutant at that line** (exit 1) — the operator ran on the
+  file but no candidate matched `<lineno>`. This typically means
+  the file has been edited since the audit; re-run the audit
+  for an up-to-date list.
+* **No-op patch** (exit 2) — the operator was found and the line
+  matched, but the `_copy_tree` round-trip via
+  `ast.unparse(ast.parse(...))` shifted AST line numbers so the
+  patch is a no-op. This is the Wave 25 tooling bug called out
+  in §5.1; the patch is **not** written to disk in this case,
+  so the source remains untouched.
+
+### 10.5 Scope note
+
+`--apply-survivor` bypasses the audit — it does **not** require a
+fresh `verification_outputs/mutation_audit_q4_2026.json`. This
+keeps the iteration loop fast (no 200 s audit wait) at the cost
+of relying on the developer to know the survivor ID from the
+catalog in §5 (or a previous audit run).
+
+CI integration (auto-list survivors on each PR) and a visual patch
+viewer (`code --diff mutants/survivor_*.patch`) are deferred per
+the todo follow-up section.

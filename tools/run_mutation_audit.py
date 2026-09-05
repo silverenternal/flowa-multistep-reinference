@@ -91,6 +91,7 @@ from __future__ import annotations
 import argparse
 import ast
 import dataclasses
+import difflib
 import json
 import os
 import statistics
@@ -102,6 +103,8 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
 
 # ---------------------------------------------------------------------------
 # Subsystem definition -- one row per (family, file-glob, test-glob).
@@ -804,7 +807,9 @@ def _run_audit(
         },
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    output_path.write_text(
+        json.dumps(with_host_fingerprint(report), indent=2), encoding="utf-8"
+    )
     print(f"[mutation-audit] report written: {output_path}", file=sys.stderr)
     print(json.dumps(report["aggregate"], indent=2))
 
@@ -839,12 +844,216 @@ def _summary(json_path: Path) -> int:
     return 0
 
 
+# Short operator IDs (WP/AS/SM/TF/CS) -- the public IDs the audit
+# surfaces -- mapped to their long-form function names. Used by the
+# --apply-survivor flag so the user can pass ``TF`` instead of
+# ``threshold_flip`` (the former matches the per_operator keys in the
+# audit JSON; the latter matches the function names in this module).
+_OPERATOR_ID_TO_LONG: dict[str, str] = {
+    "WP": "weight_perturbation",
+    "AS": "activation_swap",
+    "SM": "structural_mutation",
+    "TF": "threshold_flip",
+    "CS": "constant_substitution",
+}
+
+
+def _resolve_operator(op_id: str):
+    """Return the operator function for a short (WP/AS/SM/TF/CS) or
+    long (``weight_perturbation``/``threshold_flip``/...) ID, or
+    ``None`` if the ID is unknown.
+    """
+    long_id = _OPERATOR_ID_TO_LONG.get(op_id, op_id)
+    return globals().get(f"_op_{long_id}")
+
+
+def _materialize_survivor(
+    file_path: Path,
+    lineno: int,
+    op_id: str,
+) -> ast.AST | None:
+    """Re-run a single operator on ``file_path`` and return the mutant
+    tree whose ``lineno`` matches.
+
+    Returns ``None`` if the operator finds no candidate at the
+    requested line (e.g. the line was edited since the original audit,
+    or the operator name is wrong).
+    """
+    op_func = _resolve_operator(op_id)
+    if op_func is None:
+        return None
+    try:
+        source = file_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    try:
+        tree = ast.parse(source, filename=str(file_path))
+    except SyntaxError:
+        return None
+    for _, found_lineno, _payload, mutant_tree in op_func(tree):
+        if found_lineno == lineno:
+            return mutant_tree
+    return None
+
+
+def _apply_survivor(survivor_id: str) -> int:
+    """Apply a surviving mutant to disk; emit a backup + unified-diff
+    patch (Wave 32 Agent B recommendation R-4 / Wave 34 R-4).
+
+    The ``survivor_id`` is ``<file>:<lineno>:<operator>``, e.g.
+    ``adaptive_reflow/theory/checkers.py:143:SM``. Survivors are
+    enumerated in ``docs/mutation_audit_q4_2026.md`` §5 (actionable
+    items) and §5.1 (Wave 25 follow-up).
+
+    On success this writes:
+
+    * ``mutants/survivor_<safe_id>.before.py`` -- a copy of the file
+      as it was before the mutation was applied (so the developer can
+      revert in-place without ``git checkout``).
+    * ``mutants/survivor_<safe_id>.after.py`` -- the mutated source.
+    * ``mutants/survivor_<safe_id>.patch`` -- a unified diff between
+      the two, suitable for ``git apply`` / ``git apply -R``.
+
+    The mutated source is then written to the original ``file_path``
+    so the developer can iterate against it.
+
+    Exit codes:
+
+    * 0 -- applied (or emitted in ``--patch-only`` mode)
+    * 1 -- invalid ID, missing file, or unknown operator
+    * 2 -- the operator was found but produced a no-op at that line
+      (this is the known Wave 25 ``_copy_tree`` line-shift tooling
+      bug; see §5.1 of the report)
+    """
+    if survivor_id.count(":") < 2:
+        print(
+            f"[mutation-audit] apply-survivor: invalid ID {survivor_id!r}; "
+            "expected format <file>:<lineno>:<operator> "
+            "(e.g. adaptive_reflow/theory/checkers.py:143:SM)",
+            file=sys.stderr,
+        )
+        return 1
+    file_rel, lineno_str, op_id = survivor_id.rsplit(":", 2)
+    try:
+        lineno = int(lineno_str)
+    except ValueError:
+        print(
+            f"[mutation-audit] apply-survivor: invalid lineno {lineno_str!r}",
+            file=sys.stderr,
+        )
+        return 1
+
+    file_path = (_REPO_ROOT / file_rel).resolve()
+    if not file_path.exists():
+        print(
+            f"[mutation-audit] apply-survivor: file not found: {file_rel}",
+            file=sys.stderr,
+        )
+        return 1
+
+    op_func = _resolve_operator(op_id)
+    if op_func is None:
+        print(
+            f"[mutation-audit] apply-survivor: unknown operator {op_id!r} "
+            "(expected one of WP/AS/SM/TF/CS)",
+            file=sys.stderr,
+        )
+        return 1
+
+    mutant_tree = _materialize_survivor(file_path, lineno, op_id)
+    if mutant_tree is None:
+        print(
+            f"[mutation-audit] apply-survivor: no {op_id} mutant at "
+            f"{file_rel}:{lineno} (the line may have been edited since "
+            "the last audit; re-run the audit for an up-to-date list)",
+            file=sys.stderr,
+        )
+        return 1
+
+    original_source = file_path.read_text(encoding="utf-8")
+    mutated_source = ast.unparse(mutant_tree)
+    if mutated_source == original_source:
+        # The operator was found and the line matched, but the
+        # round-trip via _copy_tree shifted the line numbers so the
+        # patch is a no-op. This is the Wave 25 tooling bug; we
+        # surface it loudly rather than silently writing a no-op.
+        print(
+            f"[mutation-audit] apply-survivor: operator {op_id} at "
+            f"{file_rel}:{lineno} produced a no-op (this is the "
+            "Wave 25 _copy_tree line-shift tooling bug -- see "
+            "docs/mutation_audit_q4_2026.md §5.1). Patch NOT applied.",
+            file=sys.stderr,
+        )
+        return 2
+
+    mutants_dir = _REPO_ROOT / "mutants"
+    mutants_dir.mkdir(exist_ok=True)
+    safe_id = survivor_id.replace("/", "_").replace(":", "_")
+    backup_path = mutants_dir / f"survivor_{safe_id}.before.py"
+    mutated_path = mutants_dir / f"survivor_{safe_id}.after.py"
+    patch_path = mutants_dir / f"survivor_{safe_id}.patch"
+
+    backup_path.write_text(original_source, encoding="utf-8")
+    mutated_path.write_text(mutated_source, encoding="utf-8")
+    diff = difflib.unified_diff(
+        original_source.splitlines(keepends=True),
+        mutated_source.splitlines(keepends=True),
+        fromfile=f"a/{file_rel}",
+        tofile=f"b/{file_rel}",
+    )
+    patch_path.write_text("".join(diff), encoding="utf-8")
+
+    file_path.write_text(mutated_source, encoding="utf-8")
+
+    print(
+        f"[mutation-audit] applied survivor {survivor_id} "
+        f"(operator={op_id}, line={lineno})",
+        file=sys.stderr,
+    )
+    print(
+        f"[mutation-audit] backup retained: {backup_path}",
+        file=sys.stderr,
+    )
+    print(
+        f"[mutation-audit] mutated source: {mutated_path}",
+        file=sys.stderr,
+    )
+    print(
+        f"[mutation-audit] unified-diff patch: {patch_path}",
+        file=sys.stderr,
+    )
+    print(
+        f"[mutation-audit] revert with: "
+        f"`cp {backup_path} {file_path}` "
+        f"or `git checkout -- {file_rel}`",
+        file=sys.stderr,
+    )
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run_mutation_audit",
         description="F.6 quarterly ML-aware mutation audit runner",
     )
-    sub = parser.add_subparsers(dest="command", required=True)
+    parser.add_argument(
+        "--apply-survivor",
+        type=str,
+        default=None,
+        metavar="ID",
+        help=(
+            "Apply a surviving mutant to disk for inspection "
+            "(Wave 32 Agent B R-4 / Wave 34 R-4). "
+            "ID format: <file>:<lineno>:<operator> "
+            "(e.g. adaptive_reflow/theory/checkers.py:143:SM). "
+            "Survivors are listed in docs/mutation_audit_q4_2026.md §5. "
+            "Emits mutants/survivor_<id>.{before,after}.py + .patch and "
+            "writes the mutated source over the original file. "
+            "Revert with `git checkout -- <file>` or copy the "
+            ".before.py backup back. Bypasses the audit."
+        ),
+    )
+    sub = parser.add_subparsers(dest="command", required=False)
 
     run_p = sub.add_parser("run", help="run the F.6 audit")
     run_p.add_argument(
@@ -872,6 +1081,15 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
+    # Top-level --apply-survivor bypasses the audit subcommands so the
+    # developer can iterate against a surviving mutant without paying
+    # the 200s+ audit cost.
+    if args.apply_survivor is not None:
+        try:
+            return _apply_survivor(args.apply_survivor)
+        except Exception as exc:  # pragma: no cover -- defensive
+            print(f"[mutation-audit] FATAL: {exc!r}", file=sys.stderr)
+            return 2
     if args.command == "run":
         try:
             return _run_audit(args.output, args.max_mutants, args.subsystem)
