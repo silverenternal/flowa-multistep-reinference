@@ -29,7 +29,6 @@ flat surface over a 2D coordinate vector.
 from __future__ import annotations
 
 import hashlib
-from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -56,6 +55,7 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
     digest_state,
     make_adapter_capabilities,
     make_ref,
@@ -131,31 +131,14 @@ MnistFmIntegratorMethod = Literal["rk4", "dormand_prince"]
 # ---------------------------------------------------------------------------
 
 
-def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """Derive a deterministic 32-bit seed from ``(batch_id, sample_id, source_round)``.
-
-    Byte-stable alias for ``adaptive_reflow.adapters._adapter_common.seed_from_ids``
-    (P2-9); the body is identical to the prior local implementation so digests
-    recorded against ``MNIST_FM_CONFIG_HASH`` remain byte-identical.
-    """
-    return seed_from_ids(batch_id, sample_id, source_round)
-
-
-def _digest_state(payload: Mapping[str, Any]) -> str:
-    """Return a deterministic SHA-256 hex digest of a payload (sorted keys).
-
-    Byte-stable alias for ``adaptive_reflow.adapters._adapter_common.digest_state``
-    (P2-9).
-    """
-    return digest_state(payload)
-
-
 def _make_ref(label: str, **parts: Any) -> TensorRef:
     """Build a deterministic hash-stable :class:`TensorRef` from ``label`` + parts.
 
     Byte-stable alias for ``adaptive_reflow.adapters._adapter_common.make_ref``
     (P2-9). The ``"mnist:x"`` namespace is load-bearing for recorded trajectory
-    digests; do not change it.
+    digests; do not change it. Kept as a back-compat export because
+    :mod:`tests.test_adapters.test_adapter_common` imports it by name to verify
+    the adapter's historical TensorRef namespace is preserved verbatim.
     """
     return make_ref("mnist:x", label, **parts)
 
@@ -459,7 +442,9 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
                 Path(weights_path) if weights_path is not None else MNIST_FM_DEFAULT_WEIGHTS
             )
             self._weights: list[ArrayF64] = load_weights(self._weights_path)
-        self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        self._native_states: NativeStateCache = NativeStateCache(
+            maxsize=MNIST_FM_NATIVE_STATES_MAXSIZE
+        )
         self._caps = MnistFMCapabilities()
         self._blender: RestartBlenderProtocol = (
             blender if blender is not None else LinearBlender()
@@ -473,24 +458,6 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         return self._caps
 
     # ------------------------------------------------------------------
-    # 0. LRU-bounded native_states helper
-    # ------------------------------------------------------------------
-
-    def _put_native_state(self, digest: str, entry: dict[str, Any]) -> None:
-        """Insert ``entry`` under ``digest``; evict the oldest entry past maxsize."""
-        if digest in self._native_states:
-            self._native_states[digest] = entry
-            self._native_states.move_to_end(digest)
-            return
-        self._native_states[digest] = entry
-        while len(self._native_states) > MNIST_FM_NATIVE_STATES_MAXSIZE:
-            self._native_states.popitem(last=False)
-
-    def _evict_native_state(self, digest: str) -> None:
-        """Remove ``digest`` from the cache if present."""
-        self._native_states.pop(digest, None)
-
-    # ------------------------------------------------------------------
     # 2. build_initial_state
     # ------------------------------------------------------------------
 
@@ -500,7 +467,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         batch_id: str,
         sample_id: str,
     ) -> StateBundle:
-        seed = _seed_from_ids(
+        seed = seed_from_ids(
             str(batch_id),
             str(sample_id),
             int(self._seed_offset) + 0,
@@ -508,7 +475,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         rng = np.random.default_rng(seed)
         x0 = rng.standard_normal(MNIST_FLAT_DIM).astype(np.float64)
         np.clip(x0, -MNIST_FM_CLAMP, MNIST_FM_CLAMP, out=x0)
-        digest = _digest_state(
+        digest = digest_state(
             {
                 "kind": "initial",
                 "batch_id": str(batch_id),
@@ -517,7 +484,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
                 "x0_last8": [float(x0[i]) for i in range(MNIST_FLAT_DIM - 8, MNIST_FLAT_DIM)],
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             digest,
             {
                 "x0": np.asarray(x0, dtype=np.float64).reshape(MNIST_FLAT_DIM),
@@ -617,7 +584,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
 
         # Compact digest payload: include the blended x0 head and tail so
         # the digest differs across beta values but stays deterministic.
-        next_digest = _digest_state(
+        next_digest = digest_state(
             {
                 "kind": "restart",
                 "src_digest": state.native_state_digest,
@@ -629,7 +596,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
                 "blended_tail": [float(blended_x0[i]) for i in range(MNIST_FLAT_DIM - 8, MNIST_FLAT_DIM)],
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             next_digest,
             {
                 "x0": np.asarray(blended_x0, dtype=np.float64).reshape(MNIST_FLAT_DIM),
@@ -732,7 +699,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         traj_clamped = np.clip(traj, -MNIST_FM_CLAMP, MNIST_FM_CLAMP)
         overflowed = bool(np.any(np.abs(traj) > MNIST_FM_CLAMP))
         traj = traj_clamped
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
@@ -749,7 +716,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         }
         if overflowed:
             stored["_audit"] = ERR_MNIST_FM_INTEGRATOR_OVERFLOW
-        self._put_native_state(traj_digest, stored)
+        self._native_states.put(traj_digest, stored)
         cfg_blob = repr(("mnist_fm_config", str(self._integrator), int(num_steps), 0)).encode("utf-8")
         integrator_config_hash = hashlib.sha256(cfg_blob).hexdigest()
         return ODEIntegratorTrace(
@@ -780,7 +747,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
             )
         trajectory = np.asarray(traj_entry["trajectory"], dtype=np.float64)
         x_final = np.asarray(trajectory[-1], dtype=np.float64).reshape(MNIST_FLAT_DIM)
-        endpoint_digest = _digest_state(
+        endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": trace.native_state_digest,
@@ -796,7 +763,7 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         }
         if "_audit" in traj_entry:
             stored["_audit"] = traj_entry["_audit"]
-        self._put_native_state(endpoint_digest, stored)
+        self._native_states.put(endpoint_digest, stored)
         next_round = int(state.source_round) + 1
         provenance = tuple(state.provenance) + ("mnist_fm_observed",)
         if "_audit" in traj_entry:
@@ -854,14 +821,14 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
         x0_old = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(MNIST_FLAT_DIM)
         x0_new = np.clip(x0_old + injected_arr, -MNIST_FM_CLAMP, MNIST_FM_CLAMP)
         next_round = int(bundle.source_round) + 1
-        new_digest = _digest_state(
+        new_digest = digest_state(
             {
                 "kind": "forward_noise",
                 "src_digest": bundle.native_state_digest,
                 "x0_new_head": [float(x0_new[i]) for i in range(8)],
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             new_digest,
             {
                 "x0": np.asarray(x0_new, dtype=np.float64).reshape(MNIST_FLAT_DIM),
