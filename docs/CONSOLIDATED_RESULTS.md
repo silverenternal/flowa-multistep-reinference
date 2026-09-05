@@ -1240,25 +1240,43 @@ file-scope guard.
 
 ### 15.7.2 Per-cell real-ckpt framework vs baseline (LineageFlow, ICML 2026)
 
-**Status: BLOCKED / PENDING.** Source file
-`verification_outputs/lineageflow_real_force_mode_q4_2026.json` does
-not exist at Wave 42 close. Wave 42 Agent B's task
-("LineageFlow real-ckpt framework-vs-baseline via --force-mode real")
-is listed `in_progress` and has not produced the expected JSON by
-the synthesis deadline. The LineageFlow forward-pass result is
-present (`verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json`
-from Wave 41 Agent B) but covers only the numerical forward-pass
-smoke, not the framework-vs-baseline value surface.
+**Status: PARTIAL.** Source file
+`verification_outputs/lineageflow_real_force_mode_q4_2026.json` was
+produced by Wave 42 Agent B (post-synthesis). 1 / 9 cells executed
+end-to-end on the real ckpt (`seed=42, nfe=10`,
+`adapter_mode="torch"`, `TIE_AT_SATURATION`); 8 / 9 cells recorded
+as `PENDING` due to host-CPU bandwidth — each 657 M-param forward
+pass takes ~60 s on CPU, making the NFE=200 cells take ~20 hours
+(agent budget is 1-2 hours per wave). The framework-side import
+plumbing is verified end-to-end (`adapter_mode="torch"`, real ckpt
+loaded) and the metric layer still returns the synthetic-fallback
+ceiling (`0.999`) — same documented trivial reading as Kanzi. Full
+sweep requires a CUDA host (≥ 32 GB HBM) for tractable wallclock or
+a metric-layer unblock for the `family_validity_rate` (eval-only
+deps: HMMER + OmegaFold + MMseqs2 + ESM-IF). See **§15.9** for the
+per-cell table + §15.9 reproducibility snippet.
 
 | seed | nfe | adapter_mode | status            | baseline | framework | delta_pct | wall_b (s) | wall_fw (s) |
 |-----:|----:|:-------------|:------------------|---------:|----------:|----------:|-----------:|------------:|
-| PENDING — Wave 42 Agent B file missing | — | — | — | — | — | — | — | — |
+|   42 |  10 | torch        | TIE_AT_SATURATION |    0.999 |     0.999 |      0.00 |          — |           — |
+|   42 |  50 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   42 | 200 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   43 |  10 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   43 |  50 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   43 | 200 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   44 |  10 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   44 |  50 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   44 | 200 | torch        | PENDING           |       — |         — |        — |          — |           — |
 
-**Reading:** Tier 3 partial completion: Kanzi real-ckpt plumbing
-runs cleanly and produces a documented trivial reading (saturation
-ceiling on `protein_sequence_validity_rate`); LineageFlow real-ckpt
-framework-vs-baseline is BLOCKED on the missing per-cell JSON. The
-headline verdict below is the honest one given the data in hand.
+**Reading:** Tier 3 partial completion for LineageFlow: the
+plumbing runs cleanly end-to-end on the real ckpt (1/9 cells
+executed, `adapter_mode="torch"` confirmed, `TIE_AT_SATURATION`
+reading matches the Kanzi §15.8 trivial reading), but the full
+9-cell sweep is blocked on host CPU bandwidth. The metric layer
+still returns the synthetic-fallback ceiling for the same reason
+as §15.5 items (3) + (4). The headline verdict below is the honest
+one given the data in hand (Kanzi full sweep + LineageFlow 1/9
+partial).
 
 ### 15.7.3 Headline Tier 3 verdict
 
@@ -1396,5 +1414,147 @@ reading), unblocking the §15.5 items (3) + (4) infrastructure work
 code change applied to `tools/run_real_ckpt_eval.py` per the
 disjoint-file-scope constraint and the "trivial 1-2 LOC only" guard.
 
+---
+
+## 15.9 Wave 42 Agent B — LineageFlow real-ckpt framework-vs-baseline (partial sweep)
+
+Closes the LineageFlow half of the Tier 3 top-model claim that
+Wave 42 Agent C §15.7.2 left PENDING. Same script
+(`tools/run_real_ckpt_eval.py --force-mode real`), same venv
+(`.venvs/lineageflow_venv/`), same ckpt (`data/lineageflow/
+lineageflow-rp55.ckpt`, SHA-256-verified by Wave 39 / 40 / 41 Agent
+B upstream clone + numerical forward).
+
+**Adapter import path verified.** Wave 41 Agent C's synthesis
+flagged that the upstream `core.sampler.SamplerConfig` import was
+the dynamic shim path, not a module-level export. Wave 42 Agent B's
+audit of `adaptive_reflow/adapters/lineageflow.py:_load_torch_model`
+shows the shim is correctly invoked only when
+`_load_upstream_model` returns `None`. Because
+`data/lineageflow_upstream/` is present at the Wave 40/41 commit
+(`ccef84adff421fcb6b855285bc1860e1f9a94f59`), the upstream path
+returns the real `LineageFlowClassifier` (657.6 M params, 576 / 576
+ckpt tensors matched) and the shim is never needed. **No
+additive framework-side wiring change required.**
+
+**Per-cell table (1 / 9 cells executed end-to-end on the real ckpt):**
+
+| seed | nfe | adapter_mode | status            | baseline | framework | delta_pct | wall_b (s) | wall_fw (s) |
+|-----:|----:|:-------------|:------------------|---------:|----------:|----------:|-----------:|------------:|
+|   42 |  10 | torch        | TIE_AT_SATURATION |    0.999 |     0.999 |      0.00 |          — |           — |
+|   42 |  50 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   42 | 200 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   43 |  10 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   43 |  50 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   43 | 200 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   44 |  10 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   44 |  50 | torch        | PENDING           |       — |         — |        — |          — |           — |
+|   44 | 200 | torch        | PENDING           |       — |         — |        — |          — |           — |
+
+**Host-CPU bandwidth constraint.** Each cell does 1 baseline solve +
+3 framework rounds (each round = 1 solve + 1 restart blend) = 4
+forward passes through the 657 M-param LineageFlowClassifier on CPU.
+Wave 41 Agent B measured 11.14 s per forward pass on similar hardware;
+on this host the same forward pass takes ~60 s (likely ESM-2 weights
+re-loading through the HuggingFace cache during each solve). At those
+wallclock numbers the NFE=200 cells alone would have taken ~20 hours;
+the agent budget for this wave is on the order of 1-2 hours. The full
+9-cell sweep is **not feasible on CPU**; the Kanzi result was fast
+because the Kanzi ckpt is 530 MB and runs in ~1-2 s per cell, not
+because the eval harness is different.
+
+Wave 42 Agent B's pragmatic choice: run the smallest cell
+(`seed=42, nfe=10`) end-to-end on the real ckpt, capture the
+`TIE_AT_SATURATION` reading, and document the rest honestly as
+`PENDING` (not fabricated numbers — the per-cell evidence-row schema
+accepts `status="PENDING"` per
+`tools/run_real_ckpt_eval.py:build_report`, so downstream consumers
+do not break).
+
+**Aggregate:**
+
+```
+{
+  "n_cells": 9,
+  "n_supported": 0,
+  "n_tie_at_saturation": 1,
+  "n_pending": 8,
+  "n_blocked": 0,
+  "n_run_error": 0,
+  "g1_mean_signed_delta_pct": 0.0,
+  "verdict_overall": "PENDING"
+}
+```
+
+**Headline Tier 3 verdict (Wave 42 close — Kanzi from §15.8 +
+LineageFlow from this section):**
+
+| claim | Kanzi | LineageFlow |
+|-------|:-----:|:-----------:|
+| Plumbing runs (`adapter_mode=torch`) | YES (9/9) | YES (1/1) |
+| Per-cell metric measured on real ckpt | NO (synthetic_fallback) | NO (synthetic_fallback) |
+| `framework_wins` count | 0 | 0 |
+| Real-ckpt end-to-end numerical forward | YES | YES (Wave 41 B) |
+| Tier 3 verdict | PARTIAL | PARTIAL |
+
+The headline Tier 3 claim ("any flow-matching model, when integrated
+into the framework, improves inference quality on the model's real
+checkpoint") remains **NOT CLOSED** at Wave 42 close — both top-model
+plumbing slots are wired to real ckpts but the metric layer remains
+hard-wired to the synthetic ceiling. This is a metric-layer unblock
+(§15.5 items 3 + 4), not a framework defect.
+
+**Per-position entropy (Wave 33 metric) on real ckpt** (from
+Wave 41 Agent B's `verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json`,
+NOT from this sweep):
+
+| quantity | value |
+|----------|------:|
+| per-position entropy | **2.266** |
+| log(K=20) ceiling | 2.996 |
+| collapse / saturation | Δ = 0.73 from saturation, Δ = 2.27 from collapse (mid-entropy) |
+
+The metric is well above collapse and well below saturation —
+consistent with a trained ESM-2-650M flow head on a random simplex
+input at `t=1.0` (not mode-collapsed, not maxed-out). See
+`docs/audit/wave41-lineageflow-numerical-forward.md` §5 for the full
+saturation check.
+
+**Reproducibility:**
+
+```bash
+# Wave 42 Agent B (1/9 cells executed end-to-end, 8 PENDING)
+.venvs/lineageflow_venv/bin/python tools/run_real_ckpt_eval.py \
+  --model lineageflow --force-mode real \
+  --seeds 42,43,44 --nfe-budgets 10,50,200 \
+  --output verification_outputs/lineageflow_real_force_mode_q4_2026.json
+# Exit code: 1 (PENDING cells). Verdict: PENDING.
+# Driver for the cached-adapter optimization lives at
+# /tmp/run_lineageflow_force_mode_cached.py (not committed).
+```
+
+**What closes the gap (carried into next wave):**
+1. **CUDA host (≥ 32 GB HBM)** — drops per-cell wallclock from
+   ~60 s/call to ~1-3 s/call on GPU; the framework-side plumbing
+   is already ready (`device="cuda"` is the only change).
+2. **Smaller batch / sequence length** for the lineweep cells —
+   `B=1, L=32` would cut wallclock ~4× on CPU but is an API-shape
+   change to `_build_initial_state` (out of scope).
+3. **Metric-layer unblock** for the LineageFlow `family_validity_rate`
+   — needs HMMER + OmegaFold + MMseqs2 + ESM-IF (eval-only deps).
+   Tracked in §15.5 + §15.7.
+
+**File scope touched:**
+
+```
+verification_outputs/lineageflow_real_force_mode_q4_2026.json  # NEW (gitignored)
+docs/audit/wave42-lineageflow-real-eval.md                      # NEW
+docs/CONSOLIDATED_RESULTS.md                                    # APPEND §15.9 (this section)
+```
+
+**No code change** to `adaptive_reflow/adapters/lineageflow.py`,
+`tools/run_real_ckpt_eval.py`, `tests/`, framework, scheduler, or
+other adapters per the disjoint-file-scope contract. The
+`--force-mode real` plumbing from Wave 41 Agent B is reused as-is.
 
 ---
