@@ -64,6 +64,12 @@ nav:
       - Framework scope strategy: STRATEGY_FRAMEWORK_SCOPE.md
       - Adapter dependencies: adapter-dependencies.md
       - Algorithm implementation notes (中文): 算法实现说明.md
+  - Models (F.4 model cards):
+      - 2D Rectified Flow: models/twodim_fm.model_card.md
+      - CIFAR-10 Rectified Flow: models/rectified_flow_cifar.model_card.md
+      - Self-Flow (ICML 2026): models/self_flow.model_card.md
+      - FlowMol3 (Dunn & Koes 2025): models/flowmol3.model_card.md
+      - LineageFlow (ICML 2026 protein): models/lineageflow.model_card.md
   - Testing: TESTING_STRATEGY.md
   - Acceptance gates: GATES.md
   - Results & records:
@@ -174,6 +180,8 @@ not_in_nav: |
   design/*.md
   theory/operating-regime.md
   theory/theorem1_rate_bound.md
+  theory/DEVIATIONS.md
+  capability_g1_analysis.md
   lean/*.md
   lean_issue_re_inference_provenance.md
   paper-draft.md

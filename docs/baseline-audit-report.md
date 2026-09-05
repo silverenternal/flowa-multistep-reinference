@@ -1911,3 +1911,41 @@ Single commit (this section) — `docs/baseline-audit-report.md` (Wave 15 Phase 
 9. **B.4 — add doctests + wire them into CI.** Insert worked `>>>` examples into `paper_quantities.py` (13/13 already documented) and `checkers.py` (8/9 documented). Add `--doctest-modules adaptive_reflow/theory/` as an explicit step in `.github/workflows/cpu-tests.yml` (or to `addopts` in `pyproject.toml`); treat exit code 5 as a failure in the CI step so silent loss of examples fails loudly.
 10. **A.0 — close Task #360 (G4: explicit rate constant for Theorem 1).** Document an explicit `rate_constant` field in `emit_theorem1_statement`. Optional: add a Proposition 6 positive-direction dedicated test (G7).
 
+---
+
+## Wave 32 Phase 3 — Mkdocs strict nav-fix (additive)
+
+**Date:** 2026-09-05
+**Agent:** Wave 32 Phase 3 Agent Mkdocs
+**Scope:** `mkdocs.yml` (nav + `not_in_nav`), additive nav-fix note here.
+
+**Problem:** `mkdocs build --strict` aborted with `"5 model_card.md files exist in docs/models/ but are NOT included in mkdocs nav"`. Wave 24 Agent A (commit `7cc7224`) authored the 5 F.4 model cards but never registered them in `mkdocs.yml`.
+
+**Fix:**
+
+1. **`mkdocs.yml` nav — new `Models (F.4 model cards)` section**, between `Architecture` and `Testing`. Five entries, paths relative to `docs/`:
+   - `models/twodim_fm.model_card.md` → "2D Rectified Flow"
+   - `models/rectified_flow_cifar.model_card.md` → "CIFAR-10 Rectified Flow"
+   - `models/self_flow.model_card.md` → "Self-Flow (ICML 2026)"
+   - `models/flowmol3.model_card.md` → "FlowMol3 (Dunn & Koes 2025)"
+   - `models/lineageflow.model_card.md` → "LineageFlow (ICML 2026 protein)"
+
+2. **`mkdocs.yml` `not_in_nav` block — 2 additional entries** (necessary to make `strict` exit 0; both files were committed in earlier waves without nav registration):
+   - `capability_g1_analysis.md` (Wave 28 Agent B commit `c9fa2da`) — G.1 deep-dive analysis; research output, not a primary landing surface.
+   - `theory/DEVIATIONS.md` (Wave 29 Agent A commit `7cf27fd`) — additive paper-vs-implementation deviation log; cross-referenced from F.4 model cards.
+
+**Verification:**
+
+```bash
+$ ./.venv/bin/mkdocs build --strict
+INFO    -  Cleaning site directory
+INFO    -  Building documentation to directory: .../site
+INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
+INFO    -  Documentation built in 7.34 seconds
+EXIT=0
+```
+
+`mkdocs build --strict` now exits 0 with 0 warnings (was: 7 missing-from-nav warnings, abort). The Material team "MkDocs 2.0 deprecation" banner is a non-blocking upstream advisory and not part of strict validation.
+
+**Files changed:** `mkdocs.yml` (nav + `not_in_nav` additions); `docs/baseline-audit-report.md` (this additive note). No code changes; no env_hash update.
+
