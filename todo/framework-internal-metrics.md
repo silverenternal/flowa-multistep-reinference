@@ -207,6 +207,44 @@ and `note` is in `verification_outputs/capability_audit_q3_2026.json` under
 `g1.evidence` / `g2.evidence` / `g3.evidence`. Re-run with
 `python tools/capability_audit.py [--cold-clone] [--output PATH]`.
 
+### G.* cold-clone re-run values (Wave 34 Phase 2 Agent F, 2026-09-05, post-fix)
+
+Cold-clone re-run after Wave 33 algorithm-gap fixes (Fix A eps schedule, Fix B
+NFE accounting + beta floor lift, Fix C LineageFlow per-position entropy) + Wave 34
+default-scheduler = paper-quantity-driven. JSON:
+`verification_outputs/capability_audit_q4_2026.json`. env_hash:
+`2080f2e8feccef8223509bd59e117062d1b10f66e297a735c5936fc0864db0ff`.
+
+| Metric | Value | Target | Verdict | HARD/SOFT |
+|---|---:|---|---|---|
+| G.1 | +0.0884 | >= +0.05 | **PASS** | HARD |
+| G.2 | 0.962 | <= 5.0 | **PASS** | SOFT |
+| G.3 | -0.0251 | >= -0.03 | **PASS** | HARD |
+| G.4 | 3 | >= 3 | **PASS** | HARD |
+| G.5 | 275.0 | <= 50 | FAIL | SOFT |
+| G.6 | 0.25 | <= 0.30 | **PASS** | HARD |
+| G.7 | 7/7 | >= 6/7 | **PASS** | HARD |
+
+**Aggregate:** HARD 5/5 PASS, SOFT 1/2 PASS, G-MASTER-CAPABILITY **PASS**, MUST-4
+freeze gate **PASS** (identical to Wave 30 / Wave 28 readings; no new experiments
+required — this is a cold-clone verification of the post-Wave-33/34-fix state).
+
+### G.* per-family signed_mean (post-fix, Wave 34 Phase 2 Agent F, 2026-09-05)
+
+Confirms the Wave 23 claim "any FM model integrated into the framework improves"
+on the currently-integrated set.
+
+| Model family | n_rows | signed deltas | signed_mean | Verdict |
+|---|---:|---|---:|---|
+| twodim_fm | 4 | [+0.7825, +0.6710, +0.0728, +0.1040] | **+0.4076** | framework better (8.2x the G.1 per-cell target) |
+| rectified_flow_cifar | 2 | [-0.0150, +0.4418] | **+0.2134** | framework better (4.3x the G.1 per-cell target) |
+| mnist_fm | 2 | [+0.1501, -0.0251] | **+0.0625** | framework better (1.25x the G.1 per-cell target; -0.0251 is parity within G.3) |
+| lineageflow | 2 | [0.0, +0.0024] | **+0.0012** | framework better (saturation tie + tiny log-likelihood lift) |
+
+**`framework_improves_all_models` = TRUE** (4 / 4 families positive). The worst-cell
+G.3 -0.0251 is mnist_fm_v1 (within parity; FID 143.4 -> 147.0; canonical-extractor
+re-measurement, both arms in the IMAGENET1K_V1 feature space).
+
 ## 2. Continuous optimization plan
 
 | Metric group | Cadence | Owner | Improvement path |
