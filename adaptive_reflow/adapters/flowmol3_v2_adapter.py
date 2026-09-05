@@ -82,6 +82,7 @@ from adaptive_reflow.adapters._adapter_common import (
     make_ref,
     seed_from_ids,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -1496,6 +1497,7 @@ class FlowMol3V2AdapterCapabilities(AdapterCapabilities):
         )
 
 
+@implements(FlowMatchingODEAdapter)
 class FlowMol3V2Adapter(FlowMatchingODEAdapter):
     """Real FlowMol3 3D molecule generator adapter (unconditional).
 
@@ -2029,11 +2031,37 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         categorical resample. ``memory_fraction = 1 - beta_by_channel``
         per channel. Result is detached (matches the FlowMol3 restart
         contract).
+
+        The state bundle MUST carry all three FlowMol3 channels
+        (``coordinate``, ``charge``, ``raw_pair``); a missing channel
+        raises :class:`ValueError` with a clear error message rather
+        than crashing deeper in the blend math with an opaque
+        shape-mismatch error (NONCONFORMANCE_BUG #1).
         """
         ok, errs = validate_state_bundle(state)
         if not ok:
             raise CapabilityMissingError(
                 "validate_state_bundle", context=",".join(errs)
+            )
+        # NONCONFORMANCE_BUG #1 — channel-set pre-validation. The
+        # 3-channel blend math downstream (``_channel_aware_blend``)
+        # assumes the bundle carries every FlowMol3 channel; a
+        # bundle missing one of them would crash deep in the blend
+        # call stack with an opaque shape-mismatch error. Validate
+        # the channel set here so the failure mode is explicit.
+        expected_channels = {
+            ChannelName("coordinate"),
+            ChannelName("charge"),
+            ChannelName("raw_pair"),
+        }
+        actual_channels = set(state.channels)
+        missing_channels = expected_channels - actual_channels
+        if missing_channels:
+            raise ValueError(
+                "FlowMol3V2Adapter.apply_restart_distribution: "
+                f"state bundle missing channels {sorted(missing_channels)!r}; "
+                f"expected {sorted(expected_channels)!r}, "
+                f"got {sorted(actual_channels)!r}"
             )
         prior_entry = self._native_states.get(state.native_state_digest)
         if prior_entry is None:

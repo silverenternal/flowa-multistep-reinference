@@ -378,6 +378,67 @@ def test_restart_blend_channel_aware(
     assert AUDIT_FLOWMOL3_RESTART_BLEND in next_bundle.provenance
 
 
+def test_apply_restart_distribution_rejects_missing_channel_with_clear_error(
+    adapter: FlowMol3V2Adapter,
+) -> None:
+    """Regression — NONCONFORMANCE_BUG #1.
+
+    A state bundle that is missing one or more of the three
+    FlowMol3 channels (``coordinate``, ``charge``, ``raw_pair``)
+    must raise a clear :class:`ValueError` rather than crashing
+    deep inside the blend math with an opaque shape-mismatch
+    error.
+    """
+    # Build a bundle that only carries the ``coordinate`` channel.
+    partial_bundle = adapter.build_initial_state(batch_id="b1", sample_id="s1")
+    partial_bundle = StateBundle(
+        channels={ChannelName("coordinate"): partial_bundle.channels[ChannelName("coordinate")]},
+        masks={ChannelName("coordinate"): partial_bundle.masks[ChannelName("coordinate")]},
+        batch_id=partial_bundle.batch_id,
+        sample_id=partial_bundle.sample_id,
+        reference_frame=partial_bundle.reference_frame,
+        normalization=partial_bundle.normalization,
+        source_round=partial_bundle.source_round,
+        detach_proof=partial_bundle.detach_proof,
+        native_state_digest=partial_bundle.native_state_digest,
+        provenance=partial_bundle.provenance,
+        capability_token=partial_bundle.capability_token,
+    )
+    policy = _make_final_policy(beta=0.5)
+    with pytest.raises(ValueError, match=r"missing channels"):
+        adapter.apply_restart_distribution(partial_bundle, policy)
+
+
+def test_apply_restart_distribution_happy_path_all_channels(
+    adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
+) -> None:
+    """Regression — NONCONFORMANCE_BUG #1 happy path.
+
+    With all three FlowMol3 channels present, the channel-set
+    pre-validation must NOT short-circuit; the existing 3-channel
+    blend math must run and produce a detached restart bundle.
+    """
+    # Sanity check: the initial bundle carries all 3 channels.
+    expected = {
+        ChannelName("coordinate"),
+        ChannelName("charge"),
+        ChannelName("raw_pair"),
+    }
+    assert set(initial_bundle.channels) == expected
+
+    policy = _make_final_policy(beta=0.5)
+    next_bundle = adapter.apply_restart_distribution(initial_bundle, policy)
+    assert isinstance(next_bundle, StateBundle)
+    assert next_bundle.detach_proof is True
+    assert next_bundle.source_round == 1
+    assert set(next_bundle.channels) == expected
+    # Restart entry stored under the new digest.
+    assert next_bundle.native_state_digest in adapter._native_states
+    entry = adapter._native_states[next_bundle.native_state_digest]
+    assert "flowmol3adapter_restart_blend" in entry.get("audit", ())
+    assert AUDIT_FLOWMOL3_RESTART_BLEND in next_bundle.provenance
+
+
 def test_compose_condition_rejects_channel_keys(
     adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
 ) -> None:
