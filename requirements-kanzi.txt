@@ -1,0 +1,23 @@
+# Wave 39 Agent A — Kanzi sidecar venv requirements.
+#
+# Sidecar-only; does NOT touch flowmol3_venv or any other venv in
+# .venvs/. Used by tools/run_kanzi_real_ckpt.py to perform a real
+# forward pass over data/kanzi_ckpt/cleaned_model.pt.
+#
+# Installed via:
+#   uv pip install --python .venvs/kanzi_venv/bin/python -r requirements-kanzi.txt
+#
+# Pin torch to CPU-only from the pytorch CPU index so the sidecar
+# stays light (~200 MB instead of ~800 MB for the CUDA build).
+# diffusers + esm + biopython are Kanzi-ecosystem deps the real
+# forward-pass glue pulls in; minimum version floors match what the
+# upstream Kanzi GitHub release expects.
+
+--index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://pypi.org/simple
+
+torch>=2.1,<3.0
+diffusers>=0.27,<1.0
+fair-esm>=2.0,<3.0
+biopython>=1.81,<2.0
+numpy>=1.24,<2.2
