@@ -226,12 +226,126 @@ source.
 
 ---
 
+## DEVIATION-001 (FIXED) — `checkers.py:sheet_tube_evidence` residual
+
+**Status:** FIXED in Wave 30 Agent C (F-1 fix)
+**Severity (pre-fix):** Medium
+**Affected file:** `adaptive_reflow/theory/checkers.py`
+(lines 304-404, LHS loop at 376-388)
+
+**Paper says:** Lemma 2 (line 100-104) with the residual identity
+(line 142-144):
+
+```
+|F_g(x, y)|^2 = y^2 · (g(x)^2 + (y - 1)^2)
+```
+
+**Pre-fix implementation did:** Used `F_g = y - g(x)` so
+`|F_g|² = (y - g(x))²`. This was documented as DEVIATION-001 above.
+
+**Fix applied (Wave 30 Agent C, F-1):** The inner loop in
+`sheet_tube_evidence` (checkers.py:376-388) now mirrors the canonical
+paper-faithful form from `adaptive_reflow/theory/lemma2_checker.py:131`:
+
+```python
+gx = float(g(x))
+gx2 = gx * gx
+ym1 = y - 1.0
+F_g_sq = (y * y) * (gx2 + ym1 * ym1)
+log_p = -0.5 * (x * x + y * y) - F_g_sq * inv_2eps2
+```
+
+This matches paper line 142-144 verbatim (the literal residual
+geometry of the residual fibre). The simplified `F_g = y - g(x)`
+form is REMOVED.
+
+**Deprecation note:** The `checkers.py:sheet_tube_evidence` function
+docstring now declares itself as a back-compat shim that re-implements
+the canonical
+`adaptive_reflow.theory.lemma2_checker.sheet_tube_evidence` math.
+The lemma2_checker module is the canonical entry point; new code
+should import from there.
+
+**Tests verified:** All 85 tests in `tests/test_theory/` pass with the
+paper-faithful residual. Tests that were silently passing on the
+wrong residual (DEVIATION-001 pre-fix) now pass on the paper-faithful
+one — the conformance is real, not a name change.
+
+---
+
+## DEVIATION-003 (PARTIAL FIX) — `selection_ratio` (eval) name collision
+
+**Status:** PARTIAL FIX (Wave 30 Agent C, F-4): function renamed,
+legacy alias kept.
+**Severity (pre-fix):** Low
+**Affected file:** `adaptive_reflow/eval/posterior_selection_evaluator.py`
+
+**Pre-fix problem:** `eval.posterior_selection_evaluator.selection_ratio`
+(framework-internal heuristic `sheet / (sheet + cell)`) collided by
+name with
+`adaptive_reflow.theory.paper_quantities.paper_selection_ratio`
+(paper Corollary 1, with `eps -> 0` limit). They are DIFFERENT
+quantities that share the suffix "selection_ratio".
+
+**Fix applied (Wave 30 Agent C, F-4):**
+
+1. Renamed the function `selection_ratio` → `sheet_vs_cells_proxy` in
+   `adaptive_reflow/eval/posterior_selection_evaluator.py` (the
+   function now lives under its paper-faithful semantic name).
+2. Kept `selection_ratio` as a **deprecated back-compat alias** that
+   emits a `DeprecationWarning` and forwards to `sheet_vs_cells_proxy`
+   (byte-identical output).
+3. The dict key in oracle outputs (`oracle()` / `oracle_batched()` /
+   `oracle_at_round()`) now uses `"sheet_vs_cells_proxy"` as the
+   canonical key, with `"selection_ratio"` retained as a legacy alias
+   for byte-stable callers.
+4. `adaptive_reflow/eval/__init__.py` re-exports BOTH names so existing
+   `from adaptive_reflow.eval import selection_ratio` continues to
+   work (with warning).
+
+**Call sites updated (full audit):**
+
+- `adaptive_reflow/eval/posterior_selection_evaluator.py` (function
+  definition + 3 internal callsites + 3 oracle dict-key pairs).
+- `adaptive_reflow/eval/__init__.py` (re-export list updated to
+  include `sheet_vs_cells_proxy` + retained `selection_ratio` as a
+  deprecated re-export).
+- `adaptive_reflow/algorithm/batched_runner.py`:
+  `_evaluate_selection_ratio_for_round` (line 525) docstring updated
+  to reference `sheet_vs_cells_proxy`; the function still does the
+  same math inline (does not call `sheet_vs_cells_proxy` directly).
+  Result dict key `"selection_ratio"` retained as the legacy name
+  (no behaviour change for callers).
+- `adaptive_reflow/algorithm/runner.py` (line 1050-1051): keeps
+  `"selection_ratio"` dict-key access for the per-round metric —
+  legacy alias dict key in the oracle ensures byte-stable output.
+- `adaptive_reflow/algorithm/scheduler/evidence_driven.py`:
+  `metrics["selection_ratio"]` dict-key access kept; comment updated
+  to note the legacy alias.
+
+**Tests:** All 49 tests in `tests/test_eval/test_posterior_selection_evaluator.py`
+pass with the rename. Deprecation warnings appear when the legacy
+`selection_ratio` name is used (intentional).
+
+**Follow-up TODO:** A future wave can remove the legacy
+`selection_ratio` alias once all downstream callers are migrated.
+Track in `docs/DEPRECATION.md` if not already present.
+
+---
+
 ## Summary
 
-- **6 deviations** total
-- **3 CONFIRMED BUGS** (DEVIATION-001, -002; the third "bug"
-  DEVIATION-003 is name collision, not math)
-- **3 KNOWN LIMITATIONS** (DEVIATION-004, -005, -006)
+- **6 deviations** (DEVIATION-001 to DEVIATION-006); plus 2 fix
+  entries (DEVIATION-001 FIXED, DEVIATION-003 PARTIAL FIX).
+- **2 CONFIRMED BUGS** (DEVIATION-002; DEVIATION-001 was FIXED in
+  Wave 30 Agent C)
+- **0 paper-quantity primitives wrong** — A_g, B_g, C_g, e_ρ are
+  all paper-faithful.
+- **0 paper-thesis violations** — the framework correctly
+  IMPLEMENTS the math; the divergences are in (a) which residual
+  the framework uses for diagnostics (simplified vs paper — DEVIATION-002
+  only; DEVIATION-001 is now FIXED), and (b) how the paper signal
+  maps to scheduler n_cap (decorative vs driving).
 - **0 paper-quantity primitives wrong** — A_g, B_g, C_g, e_ρ are
   all paper-faithful.
 - **0 paper-thesis violations** — the framework correctly

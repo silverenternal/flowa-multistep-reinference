@@ -65,7 +65,7 @@ Module boundary
   :class:`TwoDimFMEvaluator`.
 * ``oracle(bundle, *, channel, seed) -> dict[str, float]`` -- same
   evidence plus the three diagnostic metrics (``sheet_evidence``,
-  ``cell_evidence``, ``selection_ratio``) as a plain mapping; tests
+  ``cell_evidence``, ``sheet_vs_cells_proxy``) as a plain mapping; tests
   assert ``evaluate(b, c, s) == oracle(b, c, s)`` byte-for-byte.
 * ``capabilities()`` -- returns the full :class:`AdapterCapabilities`
   surface of the wrapped :class:`TwoDimFMAdapter` (single ``"xy"``
@@ -90,7 +90,7 @@ Functions
     :func:`sheet_cell_centers`
     :func:`sheet_evidence`
     :func:`cell_evidence`
-    :func:`selection_ratio`
+    :func:`sheet_vs_cells_proxy`
 
 Class
     :class:`EvidenceScaleGapMetric` (renamed from
@@ -102,7 +102,7 @@ Tasks satisfied:
 * ``DTB-R7`` -- real (replay-through-adapter) evaluator that runs on
   CPU without depending on a calibration artifact or external oracle
   service, AND emits a heuristic evidence-scale-gap triple
-  (``sheet_evidence``, ``cell_evidence``, ``selection_ratio``).
+  (``sheet_evidence``, ``cell_evidence``, ``sheet_vs_cells_proxy``).
 * ``DTB-R8`` -- provides a deterministic surface that future
   end-point-conditioned variants can compare against. The
   convergence claim is NOT made: the metric plateaus at a fixed noise
@@ -327,19 +327,30 @@ def cell_evidence(cells: NDArray[np.float64]) -> float:
     return float(np.sum(densities))
 
 
-def selection_ratio(
+def sheet_vs_cells_proxy(
     endpoints: NDArray[np.float64],
     cells: NDArray[np.float64],
 ) -> tuple[float, float, float]:
-    """Return ``(sheet_evidence, cell_evidence, selection_ratio)``.
+    """Return ``(sheet_evidence, cell_evidence, sheet_vs_cells_proxy)``.
 
     Framework-internal heuristic, NOT a paper claim. The
-    ``selection_ratio`` is
+    ``sheet_vs_cells_proxy`` ratio is
     ``sheet_evidence / (sheet_evidence + cell_evidence)``,
     clipped to ``[0, 1]``. It mirrors the qualitative scale gap
     between paper Lemma 2's ``Theta(eps^{+1})`` sheet evidence and
     paper Lemma 3's ``O(eps^{+2})`` cell evidence; it is NOT a paper
     quantity and is NOT claimed to converge to 1 as rounds progress.
+
+    .. note::
+       Renamed from ``selection_ratio`` in Wave 30 (F-4) to avoid the
+       name collision with
+       :func:`adaptive_reflow.theory.paper_quantities.paper_selection_ratio`
+       (paper Corollary 1, with ``eps -> 0`` limit). The two quantities
+       are different: ``paper_selection_ratio`` is the paper's
+       closed-form ``sheet_A * eps / (sheet_A * eps + cell_C * packing_B *
+       eps^2)``; this function is a framework-internal heuristic over
+       replayed trajectory endpoints.
+
     Returns ``(0.0, 0.0, 0.0)`` for empty inputs (degenerate case
     where neither sheet nor cells contribute).
     """
@@ -428,7 +439,7 @@ class EvidenceScaleGapMetric:
       ``(x, 0)`` after projecting ``y -> 0``).
     * ``cell_evidence`` -- the sum over all cell-root mode centres of
       ``exp(-|z|^2 / 2) / (2pi)``.
-    * ``selection_ratio`` --
+    * ``sheet_vs_cells_proxy`` --
       ``sheet_evidence / (sheet_evidence + cell_evidence)``,
       clipped to ``[0, 1]``. Framework heuristic only -- NOT a paper
       claim of convergence to 1.
@@ -436,9 +447,9 @@ class EvidenceScaleGapMetric:
     The four canonical :class:`ChannelTransferEvidence` diagnostics
     are filled from the selection ratio:
 
-    * ``raw_score = selection_ratio``
+    * ``raw_score = sheet_vs_cells_proxy``
     * ``bounded_score = clip(raw_score, 0, 1)`` (the canonical
-      unit-factor clip; selection_ratio is already in ``[0, 1]``).
+      unit-factor clip; sheet_vs_cells_proxy is already in ``[0, 1]``).
     * ``calibration_lower_bound = 0.95``
     * ``perturbation_stability_lower_bound = 0.85``
 
@@ -606,8 +617,9 @@ class EvidenceScaleGapMetric:
         In addition to the four canonical :class:`ChannelTransferEvidence`
         diagnostics, the oracle surfaces the three paper-Theorem-1
         evidence metrics (``sheet_evidence``, ``cell_evidence``,
-        ``selection_ratio``) and the run configuration (``n_gen``,
-        ``n_ref``, ``eps_implicit``).
+        ``sheet_vs_cells_proxy`` (legacy alias ``selection_ratio``
+        retained for back-compat at the byte-for-byte level) and the
+        run configuration (``n_gen``, ``n_ref``, ``eps_implicit``).
         """
         if not self.channel_supported(channel):
             raise NotImplementedError(
@@ -630,7 +642,8 @@ class EvidenceScaleGapMetric:
             "perturbation_stability_lower_bound": float(perturbation),
             "sheet_evidence": float(sheet_ev),
             "cell_evidence": float(cell_ev),
-            "selection_ratio": float(ratio),
+            "sheet_vs_cells_proxy": float(ratio),
+            "selection_ratio": float(ratio),  # legacy alias (Wave 30 F-4 rename)
             "n_gen": int(self._n_gen),
             "n_ref": int(self._n_ref),
             "eps_implicit": float(self._eps_implicit),
@@ -673,7 +686,7 @@ class EvidenceScaleGapMetric:
         """Return :meth:`oracle`-style dict with the schedule-aware ratio.
 
         A16 uplift: when an ``eps_schedule`` is configured, the
-        ``cell_evidence`` and ``selection_ratio`` are scaled by
+        ``cell_evidence`` and ``sheet_vs_cells_proxy`` are scaled by
         ``eps_schedule(round_index)`` so the ratio rises toward 1
         as the schedule's noise scale decays. With no schedule the
         returned dict is byte-identical to :meth:`oracle`.
@@ -745,7 +758,7 @@ class EvidenceScaleGapMetric:
         * ``cell_evidence`` — sum of ``exp(-|z_j|^2/2) / (2 pi)`` over
           the analytic mode-centre set for ``self._target`` (paper
           Lemma 3 heuristic, unchanged);
-        * ``bounded_score`` — ``selection_ratio`` clipped to ``[0, 1]``.
+        * ``bounded_score`` — ``sheet_vs_cells_proxy`` clipped to ``[0, 1]``.
 
         B5 architectural fix: this entry point is endpoint-conditioned
         end-to-end. The legacy :meth:`evaluate` /
@@ -755,7 +768,7 @@ class EvidenceScaleGapMetric:
         is preserved on the legacy path.
 
         B12 uplift: ``round_index`` is consumed by the configured
-        ``eps_schedule`` (when set) so the per-round ``selection_ratio``
+        ``eps_schedule`` (when set) so the per-round ``sheet_vs_cells_proxy``
         reflects the schedule-driven noise-scale decay. With
         ``round_index = 0`` and no schedule, the returned ratio is
         byte-identical to the legacy path.
@@ -777,7 +790,7 @@ class EvidenceScaleGapMetric:
         else:
             flat = _flatten_endpoints(arr)
         sheet_arr, cells_arr = sheet_cell_centers(self._target)
-        s_ev, c_ev, ratio = selection_ratio(flat, cells_arr)
+        s_ev, c_ev, ratio = sheet_vs_cells_proxy(flat, cells_arr)
         if self._eps_schedule is not None:
             eps = float(self._eps_schedule(int(round_index)))
             if not math.isfinite(eps):
@@ -836,7 +849,7 @@ class EvidenceScaleGapMetric:
         :meth:`evaluate_trajectory` path instead of the legacy replay
         path. ``evaluate_trajectory`` and ``oracle_batched`` agree
         byte-for-byte for the same input (same underlying
-        :func:`selection_ratio` call).
+        :func:`sheet_vs_cells_proxy` call).
 
         B12 uplift: ``round_index`` is consumed by the configured
         ``eps_schedule`` so the dict reflects the schedule's per-round
@@ -854,7 +867,7 @@ class EvidenceScaleGapMetric:
             arr = arr[0]
         flat = _flatten_endpoints(arr)
         sheet_arr, cells_arr = sheet_cell_centers(self._target)
-        s_ev, c_ev, ratio = selection_ratio(flat, cells_arr)
+        s_ev, c_ev, ratio = sheet_vs_cells_proxy(flat, cells_arr)
         if self._eps_schedule is not None:
             eps = float(self._eps_schedule(int(round_index)))
             if not math.isfinite(eps):
@@ -946,7 +959,7 @@ class EvidenceScaleGapMetric:
         """
         endpoints = self._generate_endpoints(seed=int(seed))
         _sheet_arr, cells_arr = sheet_cell_centers(self._target)
-        s_ev, c_ev, ratio = selection_ratio(endpoints, cells_arr)
+        s_ev, c_ev, ratio = sheet_vs_cells_proxy(endpoints, cells_arr)
         if self._eps_schedule is not None:
             eps = float(self._eps_schedule(int(round_index)))
             if not math.isfinite(eps):
@@ -1146,10 +1159,46 @@ __all__ = [
     "POSTERIOR_SELECTION_TARGETS",
     "cell_evidence",
     "mode_centers_for",
-    "selection_ratio",
     "sheet_cell_centers",
     "sheet_evidence",
+    "sheet_vs_cells_proxy",
+    # Wave 30 F-4: legacy back-compat alias for ``selection_ratio``.
+    # Kept for callers that still import the old name; emits a
+    # ``DeprecationWarning`` on first call.
+    "selection_ratio",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Wave 30 F-4: back-compat alias ``selection_ratio`` -> ``sheet_vs_cells_proxy``
+# ---------------------------------------------------------------------------
+
+
+def selection_ratio(  # noqa: D401 — simple back-compat shim
+    endpoints: NDArray[np.float64],
+    cells: NDArray[np.float64],
+) -> tuple[float, float, float]:
+    """Back-compat alias for :func:`sheet_vs_cells_proxy` (Wave 30 F-4).
+
+    .. deprecated::
+       Use :func:`sheet_vs_cells_proxy` directly. The old name
+       ``selection_ratio`` collides with
+       :func:`adaptive_reflow.theory.paper_quantities.paper_selection_ratio`
+       (paper Corollary 1); the two are different quantities.
+
+    Kept as a thin wrapper that emits a :class:`DeprecationWarning`
+    on first call. The result is byte-identical to
+    :func:`sheet_vs_cells_proxy`.
+    """
+    warnings.warn(
+        "selection_ratio has been renamed to sheet_vs_cells_proxy "
+        "(Wave 30 F-4); the old name will be removed in a future "
+        "release. Update imports to use sheet_vs_cells_proxy.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return sheet_vs_cells_proxy(endpoints, cells)
+
 
 # Ensure unused-import linters do not flag ``Any`` (kept for symmetry
 # with sibling evaluators).

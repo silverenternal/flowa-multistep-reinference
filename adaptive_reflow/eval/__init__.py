@@ -90,9 +90,10 @@ from .posterior_selection_evaluator import (
     EvidenceScaleGapMetric,
     cell_evidence,
     mode_centers_for,
-    selection_ratio,
+    selection_ratio,  # Wave 30 F-4: back-compat alias
     sheet_cell_centers,
     sheet_evidence,
+    sheet_vs_cells_proxy,
 )
 from .promotion import (
     DEFERRED_COST,

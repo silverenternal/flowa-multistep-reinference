@@ -311,6 +311,20 @@ def sheet_tube_evidence(
 ) -> SheetTubeEvidence:
     """Return Lemma 2 LHS / RHS witness at finite ``eps``.
 
+    .. deprecated::
+       This implementation is kept for backwards compatibility, but the
+       **canonical** Lemma 2 LHS / RHS witness is now
+       :func:`adaptive_reflow.theory.lemma2_checker.sheet_tube_evidence`
+       (paper-residual ``|F_g|^2 = y^2 * (g(x)^2 + (y-1)^2)``,
+       paper line 142-144). This function was updated in Wave 30 (F-1
+       fix) to use that same paper-faithful residual; the legacy
+       simplified ``F_g = y - g(x)`` form is REMOVED. New callers
+       should import
+       :func:`adaptive_reflow.theory.lemma2_checker.sheet_tube_evidence`
+       directly; this wrapper exists only so that
+       :class:`Theorem1StatementChecker` and any byte-stable
+       consumers keep their surface contract.
+
     Paper Lemma 2 (line 100-104):
 
         ``eps^{-1} int_T phi p_eps -> (2*pi)^{-1/2} int_R phi(s,0) e^{-s^2/2} / sqrt(1+g(s)^2) ds``
@@ -371,13 +385,22 @@ def sheet_tube_evidence(
         x = -K + i * hx
         # Trapezoidal endpoint weight: 1.0 interior, 0.5 boundaries.
         wx = inv_2 if (i == 0 or i == n_x) else 1.0
+        gx = float(g(x))
+        gx2 = gx * gx
         for j in range(n_y + 1):
             y = -inv_2 + j * hy
             wy = inv_2 if (j == 0 or j == n_y) else 1.0
-            # |F_g(x,y)|^2 = (y - 1 - g(x))^2 = y^2 (when F_g = y - g(x))
-            # We use the standard paper residual: F_g(x, y) = y - g(x).
-            F_g = y - float(g(x))
-            log_p = -0.5 * (x * x + y * y) - (F_g * F_g) * inv_2eps2
+            ym1 = y - 1.0
+            # Paper residual (paper line 142-144, mirrored from
+            # :func:`adaptive_reflow.theory.lemma2_checker.sheet_tube_evidence`
+            # which is the canonical Lemma 2 LHS evaluator):
+            # |F_g(x, y)|^2 = y^2 * (g(x)^2 + (y - 1)^2). This is the
+            # literal residual geometry of the residual fibre and
+            # differs from the simplified ``F_g = y - g(x)`` form used
+            # here pre-Wave-30 F-1 fix (which under-resolves the cell
+            # mass near ``y in {0, 1}``).
+            F_g_sq = (y * y) * (gx2 + ym1 * ym1)
+            log_p = -0.5 * (x * x + y * y) - F_g_sq * inv_2eps2
             if log_p < -50.0:
                 # Negligible contribution; skip.
                 continue
