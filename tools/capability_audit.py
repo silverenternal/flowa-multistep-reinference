@@ -745,10 +745,28 @@ def g5_saturation_point(integrated_models: list[str]) -> dict[str, Any]:
             continue
         if len(sweep) < 2:
             continue
-        # Lower metric = better for W2/FID
+        # Wave 35 FIX-3b -- saturation-criterion orientation.
+        #
+        # Every metric in ``nfe_sweeps`` is lower-is-better (W2 / FID).
+        # The spec reads ``framework_metric(N_min) >= 0.95 *
+        # framework_metric(N_full)``, i.e. "N_min reaches 95% of the
+        # QUALITY that the full-NFE run reaches". Translating that to a
+        # distance metric d (quality ~ 1/d) gives
+        # ``d(N_min) <= d(N_full) / 0.95``: the candidate is allowed to
+        # be up to ~5.3% WORSE than the full-NFE run.
+        #
+        # The pre-Wave-35 implementation tested
+        # ``d(N_min) <= 0.95 * d(N_full)`` -- 5% BETTER than the full
+        # run. Whenever N_full is the best point of the sweep (the
+        # normal case for a converged metric) that test is unsatisfiable
+        # by construction, so ``n_min`` silently fell back to
+        # ``nfe_full`` and the gate reported "never saturates" for a
+        # sweep that was in fact flat. See
+        # docs/audit/saturation-improvement-plan.md §2 FIX-3, and
+        # docs/audit/web-research-saturation-2026.md Rec 3.
         nfe_full, metric_full, _ = sweep[-1]
-        threshold = metric_full * 0.95
-        n_min = nfe_full  # default: full NFE
+        threshold = metric_full / 0.95
+        n_min = nfe_full  # default: full NFE (no earlier point qualifies)
         for nfe, metric, note in sweep:
             if metric <= threshold:
                 n_min = nfe
@@ -756,6 +774,8 @@ def g5_saturation_point(integrated_models: list[str]) -> dict[str, Any]:
         n_mins.append({"family": family, "n_min": n_min, "nfe_full": nfe_full, "threshold": threshold})
         evidence.append({
             "model_family": family,
+            "metric_orientation": "lower_is_better",
+            "saturation_test": "metric(N_min) <= metric(N_full) / 0.95",
             "nfe_sweep": [{"nfe": n, "metric": m, "note": n_} for n, m, n_ in sweep],
             "n_min_saturation": n_min,
         })
@@ -778,7 +798,11 @@ def g5_saturation_point(integrated_models: list[str]) -> dict[str, Any]:
         "n_families": len(n_mins),
         "notes": "SOFT target - paper-time aspiration. Multi-NFE data is sparse; only 2D + CIFAR "
         "have multi-NFE rows in CONSOLIDATED_RESULTS. Other families mark PENDING until their "
-        "NFE sweep lands.",
+        "NFE sweep lands. Wave 35 FIX-3b: the saturation test is applied with the metric's "
+        "orientation. Every sweep here is lower-is-better (W2 / FID), so '95% of the full-NFE "
+        "quality' is 'metric(N_min) <= metric(N_full) / 0.95' (up to ~5.3% worse), NOT "
+        "'metric(N_min) <= 0.95 * metric(N_full)' (5% better), which is unsatisfiable whenever "
+        "N_full is the best point of the sweep and made flat/saturated sweeps report N_min = N_full.",
     }
 
 

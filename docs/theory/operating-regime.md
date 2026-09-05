@@ -848,3 +848,101 @@ explicitly.
 * ``tests/test_algorithm/test_runner.py`` +
   ``tests/test_algorithm/test_state_machine_integration.py`` —
   assertions updated; new tests added.
+---
+
+## 13. Wave 35 — saturation speed: closing the round loop
+
+**Status:** applied (Wave 35 Phase 2). Additive; every change here is
+opt-in or observational, so §§1–12 stand unchanged.
+
+**Problem.** The G.5 capability gate (saturation point = median
+smallest NFE reaching 95 % of the full-NFE quality) read **275 NFE**
+against a **≤ 50 NFE** target. Three independent Wave 35 audits —
+`docs/audit/algorithm-saturation-review.md` (code),
+`docs/audit/web-research-fm-restart-2026.md` and
+`docs/audit/web-research-saturation-2026.md` (2026 literature) — agreed
+on the root cause: **the framework was structurally open-loop on round
+count and structurally uniform on per-round NFE allocation.** The
+synthesis and the full cross-reference matrix live in
+`docs/audit/saturation-improvement-plan.md`.
+
+### 13.1 The three fixes
+
+| Fix | What changed | Where |
+|---|---|---|
+| **FIX-1** | `CodimensionSheetScheduler.record_round_feedback` was a documented no-op — the runner called it every round and the signal was dropped. It now records the round's `W2` / `evidence_ratio` and exposes `smoothed_w2`, `smoothed_evidence_ratio`, `w2_history`. | `algorithm/scheduler/_core.py` |
+| **FIX-2** | `CodimensionSheetScheduler.should_terminate_round()` reports a W2 plateau (window of consecutive relative changes below `early_stop_plateau_rel_tol`, default 0.5 %), and `BatchedRunnerConfig.early_termination` lets the runner `break` on it. `BatchedTrajectoryResult` gained `rounds_run` and `early_terminated`. | `algorithm/scheduler/_core.py`, `algorithm/batched_runner.py` |
+| **FIX-3** | `nfe_steps_for_evidence()` allocates the NFE budget inversely to the per-round `eps` (bounded skew, exact sum, every round ≥ 1 step), available in `run_controlled_audit.py` as `--nfe-allocation evidence`. The G.5 saturation test in `capability_audit.py` is now applied *with the metric's orientation*. | `algorithm/nfe_allocation.py` (new), `tools/run_controlled_audit.py`, `tools/capability_audit.py` |
+
+### 13.2 The NFE-allocation rule §7.5 asked for
+
+Wave 35 Agent A Finding 18 noted that §9.5 acknowledged the terminal
+round may not need full NFE but proposed no concrete rule. The rule is
+now implemented and named:
+
+> `nfe_per_round(r) ∝ 1 / eps_per_round(r)`, with the weights clipped
+> to a bounded ratio (default 8×) so the terminal round's `eps` floor
+> (`1e-9`) cannot absorb the whole budget.
+
+Motivation: round 0 runs at the largest `eps` — dominated by fresh
+noise, so extra integration steps buy little; the terminal rounds run
+at the smallest `eps`, where the trajectory is being refined onto the
+sheet and an extra step is worth the most (Theorem 1's `eps → 0` limit
+selects the sheet). The 2026 literature converges on the same shape:
+CACFM's U-shaped difficulty profile (arXiv:2606.22394) and ECT's
+progressive-approximation ramp (arXiv:2410.11046).
+
+### 13.3 Measurement correction (G.5 orientation)
+
+Every metric in the G.5 sweep table is **lower-is-better** (W2 / FID).
+The spec reads `framework_metric(N_min) >= 0.95 * framework_metric(N_full)`
+— *95 % of the quality*. For a distance metric that is
+`d(N_min) <= d(N_full) / 0.95` (up to ~5.3 % worse). The pre-Wave-35
+implementation tested `d(N_min) <= 0.95 * d(N_full)` — 5 % **better**
+than the full run, which is unsatisfiable by construction whenever
+`N_full` is the best point of the sweep. `N_min` therefore silently
+defaulted to `N_full` and a *flat* (i.e. already saturated) sweep was
+reported as "never saturates".
+
+The `twodim_fm` sweep is `(5, 0.33) → (500, 0.33)`: saturated at NFE 5,
+reported as 500. Corrected:
+
+| Family | `N_min` before | `N_min` after |
+|---|---|---|
+| `rectified_flow_cifar` | 50 | 50 (unchanged — genuinely improves to NFE 50) |
+| `twodim_fm` | 500 | 5 |
+| **G.5 = median** | **275 FAIL** | **27.5 PASS** |
+
+### 13.4 What did NOT change
+
+* **No schedule changed.** FIX-1 is observational and FIX-2/FIX-3 are
+  opt-in, so `sample()` output, `config_hash()`, `to_config()` and the
+  pinned D.4 regression vectors are byte-identical. The three
+  `early_stop_*` knobs are runtime-control parameters and are
+  deliberately excluded from the config hash.
+* **`should_terminate_round` is not a `SchedulerProtocol` member.**
+  The Protocol is `runtime_checkable`; declaring the method there
+  would make every family that does not define it fail `isinstance`.
+  Consumers use `hasattr` and treat its absence as "never terminate".
+* **The other HARD gates are unmoved.** G.1 remains FAIL (pre-existing,
+  unrelated); G.3/G.4/G.6/G.7 keep their prior verdicts.
+
+### 13.5 Still open (deferred, with reasons)
+
+Per the HIGH-confidence-only constraint, the following were identified
+but **not** applied — see `docs/audit/saturation-improvement-plan.md` §4:
+
+* **The audit tool's framework arms are not framework-shaped.** Agent A
+  Finding 15 / R3: `_run_twodim_fm` and `_run_lineageflow` run
+  `n_rounds` independent cold-start integration calls, without
+  `apply_restart_distribution`, forward-noise injection, or a merge
+  operator between rounds. The published matched-NFE grid therefore
+  characterises "cold-restart vs single-pass", not "framework vs
+  baseline". Fixing it invalidates every published cell and needs its
+  own wave.
+* Learned per-step reliability heads (DSA, Probe-Select, VeriLatent),
+  MeanFlow velocity reformulation, perceptual supervision — all need
+  training or break adapter interfaces.
+* Merge-envelope collapse audit code, `EMAOperator` alpha freeze,
+  SMC-weighted blend, `restart_distribution`, per-adapter
+  `saturation_eps` — MEDIUM confidence, single audit each.

@@ -193,6 +193,19 @@ class SchedulerProtocol(Protocol):
     :meth:`to_config` / :meth:`from_config` (classmethod) so the schedule
     family + its hyperparameters can be serialized to JSON and replayed
     byte-for-byte.
+
+    Convergence termination (Wave 35 FIX-2): a family MAY additionally
+    expose ``should_terminate_round(round_in_cycle=None) -> bool``,
+    reporting from the feedback it received via
+    :meth:`record_round_feedback` that further rounds would not move
+    the metric, so the caller may stop spending NFE.
+    :class:`CodimensionSheetScheduler` implements it. The hook is
+    **deliberately not a Protocol member**: this Protocol is
+    ``runtime_checkable``, so declaring the method here would make
+    every family that does not define it fail ``isinstance``. Consumers
+    discover it with ``hasattr(scheduler, "should_terminate_round")``
+    and treat its absence as "never terminate early"; see
+    ``BatchedRunnerConfig.early_termination``.
     """
 
     def sample(
@@ -2760,6 +2773,13 @@ def _paper_evidence_balance(
     return float(sheet / (sheet + cell))
 
 
+#: Wave 35 FIX-1 -- EMA weight applied to each new per-round feedback
+#: observation in :meth:`CodimensionSheetScheduler.record_round_feedback`.
+#: Matches :class:`ConvergenceAdaptiveScheduler`'s default ``ema=0.3`` so
+#: the two adaptive families smooth their W2 signal identically.
+_FEEDBACK_EMA: float = 0.3
+
+
 class CodimensionSheetScheduler:
     """Codimension-driven :class:`SchedulerProtocol` implementation.
 
@@ -2848,6 +2868,9 @@ class CodimensionSheetScheduler:
         eps_implicit: float = 0.05,
         eps_direction: str = "decreasing",
         seed: int = 0,
+        early_stop_min_rounds: int = 2,
+        early_stop_window: int = 2,
+        early_stop_plateau_rel_tol: float = 0.005,
     ) -> None:
         """Construct the codimension-driven scheduler.
 
@@ -2895,6 +2918,23 @@ class CodimensionSheetScheduler:
             stochastic schedulers; the codimension family is
             deterministic and only participates in the frozen
             :attr:`config_hash`.
+        :param early_stop_min_rounds: Wave 35 FIX-2. Minimum number of
+            rounds that must be recorded via
+            :meth:`record_round_feedback` before
+            :meth:`should_terminate_round` may return ``True``
+            (``>= 1``). Guards against terminating on a single noisy
+            observation.
+        :param early_stop_window: Wave 35 FIX-2. Number of consecutive
+            smoothed-W2 observations compared when testing for a
+            plateau (``>= 1``).
+        :param early_stop_plateau_rel_tol: Wave 35 FIX-2. Relative
+            change below which the smoothed W2 counts as plateaued
+            (``>= 0``; default ``0.005`` = 0.5 %).
+
+        The three ``early_stop_*`` parameters are runtime-control
+        knobs: they never influence :meth:`sample`, and are therefore
+        deliberately excluded from :meth:`to_config` and
+        :attr:`config_hash` so pinned schedule vectors stay valid.
         """
         if isinstance(cycle_length, bool) or not isinstance(cycle_length, int):
             raise ValueError(
@@ -2943,6 +2983,29 @@ class CodimensionSheetScheduler:
             raise ValueError(
                 "eps_direction must be one of 'decreasing' or "
                 f"'increasing', got {eps_direction!r}"
+            )
+        # Wave 35 FIX-2 -- early-stop knob validation.
+        for _nm, _val in (
+            ("early_stop_min_rounds", early_stop_min_rounds),
+            ("early_stop_window", early_stop_window),
+        ):
+            if isinstance(_val, bool) or not isinstance(_val, int):
+                raise ValueError(f"{_nm} must be int, got {_val!r}")
+            if int(_val) < 1:
+                raise ValueError(f"{_nm} must be >= 1, got {_val!r}")
+        if isinstance(early_stop_plateau_rel_tol, bool) or not isinstance(
+            early_stop_plateau_rel_tol, (int, float)
+        ):
+            raise ValueError(
+                "early_stop_plateau_rel_tol must be a real number, got "
+                f"{early_stop_plateau_rel_tol!r}"
+            )
+        if not math.isfinite(float(early_stop_plateau_rel_tol)) or float(
+            early_stop_plateau_rel_tol
+        ) < 0.0:
+            raise ValueError(
+                "early_stop_plateau_rel_tol must be finite and >= 0, got "
+                f"{early_stop_plateau_rel_tol!r}"
             )
         if normalised_direction == "increasing":
             # The DeprecationWarning is intentionally deferred to the
@@ -3006,6 +3069,25 @@ class CodimensionSheetScheduler:
 
         self._last_sample: ScheduleSample | None = None
         self._last_evidence_ratio: float | None = None
+
+        # Wave 35 FIX-1 / FIX-2 -- runner feedback loop + convergence
+        # detection. These attributes are *observational only*: nothing
+        # here feeds :meth:`sample`, so every schedule this scheduler
+        # produced before Wave 35 is byte-identical afterwards. For the
+        # same reason the three early-stop knobs are deliberately kept
+        # out of :meth:`to_config` / :attr:`config_hash` (they are
+        # runtime-control parameters, not schedule parameters), so the
+        # pinned D.4 regression vectors stay valid.
+        self._w2_history: list[float] = []
+        self._smoothed_w2: float | None = None
+        self._smoothed_w2_history: list[float] = []
+        self._evidence_ratio_history: list[float] = []
+        self._smoothed_evidence_ratio: float | None = None
+        self._feedback_ema = float(_FEEDBACK_EMA)
+        self._early_stop_min_rounds = int(early_stop_min_rounds)
+        self._early_stop_window = int(early_stop_window)
+        self._early_stop_plateau_rel_tol = float(early_stop_plateau_rel_tol)
+
         self._config_hash_value = hash_artifact(
             {
                 "algorithm": "codimension_sheet",
@@ -3343,6 +3425,9 @@ class CodimensionSheetScheduler:
             eps_implicit=float(self._eps_implicit),
             eps_direction=str(self._eps_direction),
             seed=int(self._seed),
+            early_stop_min_rounds=int(self._early_stop_min_rounds),
+            early_stop_window=int(self._early_stop_window),
+            early_stop_plateau_rel_tol=float(self._early_stop_plateau_rel_tol),
         )
 
     def schedule_family(self) -> str:
@@ -3363,15 +3448,175 @@ class CodimensionSheetScheduler:
         """Drop the cached sample so a re-run starts from a clean state."""
         self._last_sample = None
         self._last_evidence_ratio = None
+        # Wave 35 FIX-1 -- the feedback histories are per-run state and
+        # must not leak across a reset (otherwise a replayed cycle
+        # would early-terminate on the previous run's plateau).
+        self._w2_history = []
+        self._smoothed_w2 = None
+        self._smoothed_w2_history = []
+        self._evidence_ratio_history = []
+        self._smoothed_evidence_ratio = None
         self._base.reset()
+
+    # -- Wave 35 FIX-1 / FIX-2: convergence feedback + termination ---------
+
+    @property
+    def w2_history(self) -> tuple[float, ...]:
+        """Return the raw per-round ``W2`` observations recorded so far."""
+        return tuple(self._w2_history)
+
+    @property
+    def smoothed_w2(self) -> float | None:
+        """Return the EMA-smoothed ``W2``, or ``None`` before any feedback."""
+        return self._smoothed_w2
+
+    @property
+    def smoothed_evidence_ratio(self) -> float | None:
+        """Return the EMA-smoothed sheet-vs-cell ratio from feedback.
+
+        ``None`` until :meth:`record_round_feedback` has been called
+        with an ``evidence_ratio`` / ``selection_ratio`` key. Distinct
+        from :attr:`last_evidence_ratio`, which is the *scheduler's own*
+        per-round ratio computed in :meth:`sample`; this property is the
+        smoothed *observed* ratio fed back by the runner.
+        """
+        return self._smoothed_evidence_ratio
 
     def record_round_feedback(
         self,
         round_in_cycle: int,
         metrics: Mapping[str, float],
+        paper_quantities: Mapping[str, float] | None = None,
     ) -> None:
-        """Default no-op: the codimension scheduler is open-loop on rounds."""
+        """Consume one round's oracle metrics (Wave 35 FIX-1).
+
+        Prior to Wave 35 this was a documented no-op: the runner
+        (:meth:`BatchedTrajectoryRunner.run`) called the hook every
+        round and the codimension scheduler dropped the signal on the
+        floor, so the framework's default paper-quantity-driven
+        scheduler was structurally blind to convergence
+        (``docs/audit/algorithm-saturation-review.md`` Findings 2 / 7).
+
+        The hook is now **observational**: it records the round's
+        signals and updates EMA-smoothed summaries which
+        :meth:`should_terminate_round` consumes. It deliberately does
+        NOT mutate any quantity read by :meth:`sample`, so every
+        schedule this class produced before Wave 35 is byte-identical
+        afterwards (the paper-aligned ``n_cap`` closed form stays the
+        single source of truth for capacity; only the *round count* can
+        now respond to convergence).
+
+        Recognised keys, all optional and individually skipped when
+        missing / non-numeric / non-finite (a broken oracle cannot
+        poison the scheduler):
+
+        * ``W2`` -- the round's Wasserstein-2 estimate (lower better).
+        * ``evidence_ratio`` or ``selection_ratio`` -- the observed
+          sheet-vs-cell balance (higher better).
+
+        ``paper_quantities`` is accepted for signature parity with
+        :meth:`PaperRatioAdaptiveScheduler.record_round_feedback` so a
+        caller can pass the same payload to either family; its
+        ``sheet_vs_cells_proxy`` key, when present and no explicit
+        ratio was supplied in ``metrics``, is used as the ratio.
+
+        :param round_in_cycle: the round index the metrics belong to
+            (recorded for ordering only; must be ``>= 0``).
+        :param metrics: mapping of metric name to value.
+        :param paper_quantities: optional literal paper quantities.
+        """
+        _coerce_int_nonneg(round_in_cycle, "round_in_cycle")
+
+        def _finite(value: object) -> float | None:
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                return None
+            fv = float(value)
+            return fv if math.isfinite(fv) else None
+
+        if isinstance(metrics, Mapping):
+            w2 = _finite(metrics.get("W2"))
+            ratio = _finite(metrics.get("evidence_ratio"))
+            if ratio is None:
+                ratio = _finite(metrics.get("selection_ratio"))
+        else:  # defensive: a non-mapping oracle payload is ignored
+            w2 = None
+            ratio = None
+        if ratio is None and isinstance(paper_quantities, Mapping):
+            ratio = _finite(paper_quantities.get("sheet_vs_cells_proxy"))
+
+        alpha = self._feedback_ema
+        if w2 is not None:
+            self._w2_history.append(w2)
+            self._smoothed_w2 = (
+                w2
+                if self._smoothed_w2 is None
+                else (1.0 - alpha) * float(self._smoothed_w2) + alpha * w2
+            )
+            self._smoothed_w2_history.append(float(self._smoothed_w2))
+        if ratio is not None:
+            self._evidence_ratio_history.append(ratio)
+            self._smoothed_evidence_ratio = (
+                ratio
+                if self._smoothed_evidence_ratio is None
+                else (1.0 - alpha) * float(self._smoothed_evidence_ratio)
+                + alpha * ratio
+            )
         return None
+
+    def should_terminate_round(
+        self,
+        round_in_cycle: int | None = None,
+    ) -> bool:
+        """Return ``True`` when the cycle's W2 signal has plateaued.
+
+        Wave 35 FIX-2 — the convergence-detection half of the
+        saturation fix (``docs/audit/algorithm-saturation-review.md``
+        R1; ``docs/audit/web-research-fm-restart-2026.md`` R-5;
+        ``docs/audit/web-research-saturation-2026.md`` Rec 1). A caller
+        that opts in (``BatchedRunnerConfig.early_termination=True``)
+        can stop paying NFE for rounds that no longer move the metric.
+
+        The rule is training-free and reads only signals the runner
+        already computes:
+
+        1. At least :attr:`early_stop_min_rounds` W2 observations must
+           have been recorded via :meth:`record_round_feedback`, and at
+           least ``early_stop_window + 1`` of them must exist.
+        2. Over the last :attr:`early_stop_window` steps of the W2
+           series, every consecutive relative change
+           ``|w[i] - w[i-1]| / max(|w[i-1]|, tiny)`` must be below
+           :attr:`early_stop_plateau_rel_tol`.
+
+        The test runs on the *raw* W2 series rather than the EMA:
+        the EMA lags a genuine plateau by ``O(1/alpha)`` rounds, which
+        would spend exactly the NFE the hook exists to save. The
+        ``early_stop_window`` requirement (consecutive small changes)
+        supplies the noise rejection the EMA would otherwise provide,
+        and :attr:`smoothed_w2` remains available as the summary
+        statistic.
+
+        Returns ``False`` whenever the evidence is insufficient, so the
+        default behaviour of every caller that does not opt in is
+        exactly the pre-Wave-35 behaviour (run the full cycle).
+
+        :param round_in_cycle: accepted and ignored; present so callers
+            can pass the round index for symmetry with
+            :meth:`record_round_feedback`.
+        """
+        del round_in_cycle  # signature parity only
+        history = self._w2_history
+        window = self._early_stop_window
+        if len(history) < self._early_stop_min_rounds:
+            return False
+        if len(history) < window + 1:
+            return False
+        tol = self._early_stop_plateau_rel_tol
+        recent = history[-(window + 1):]
+        for prev, cur in zip(recent[:-1], recent[1:]):
+            denom = max(abs(float(prev)), 1e-12)
+            if abs(float(cur) - float(prev)) / denom >= tol:
+                return False
+        return True
 
     def inject_noise(
         self,

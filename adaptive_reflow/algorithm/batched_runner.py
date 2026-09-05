@@ -267,6 +267,15 @@ class BatchedRunnerConfig:
     #: to the sequential loop when the adapter does not declare the
     #: capability, so opting in is always safe.
     vectorised: bool = False
+    #: Wave 35 FIX-2 -- convergence-aware early termination. When
+    #: ``True`` and the scheduler exposes ``should_terminate_round``,
+    #: the runner stops the round loop as soon as the scheduler reports
+    #: that the cycle's metric has plateaued, instead of always paying
+    #: ``cycle_length * nfe_per_round``. ``False`` (default) preserves
+    #: the legacy open-loop behaviour exactly, so no existing run or
+    #: pinned vector changes. See
+    #: ``docs/audit/saturation-improvement-plan.md`` §2 FIX-2.
+    early_termination: bool = False
 
     def __post_init__(self) -> None:
         """Emit deprecation warnings for unused legacy slots.
@@ -355,6 +364,14 @@ class BatchedTrajectoryResult:
     #: or because the adapter does not implement
     #: :class:`BatchedVectorisedAdapterProtocol`).
     vectorised_rounds: int = 0
+    #: Wave 35 FIX-2 -- number of rounds actually executed. Equal to
+    #: ``cfg.cycle_length`` unless ``early_termination`` was enabled and
+    #: the scheduler reported convergence, in which case it is smaller.
+    rounds_run: int = 0
+    #: Wave 35 FIX-2 -- ``True`` when the round loop exited early
+    #: because the scheduler reported convergence. Always ``False``
+    #: when ``early_termination`` was not enabled.
+    early_terminated: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -482,6 +499,8 @@ def _config_hash(cfg: BatchedRunnerConfig) -> str:
     if str(cfg.w2_family).strip().lower() != DEFAULT_W2_FAMILY or cfg.w2_kwargs:
         payload["w2_family"] = str(cfg.w2_family).strip().lower()
         payload["w2_kwargs"] = _stable(dict(cfg.w2_kwargs or {}))
+    if cfg.early_termination:
+        payload["early_termination"] = True
     if cfg.vectorised:
         payload["vectorised"] = True
     if cfg.selection_evaluator is not None:
@@ -741,6 +760,13 @@ class BatchedTrajectoryRunner:
         # the fast path engaged rather than silently falling back.
         vectorised_rounds = 0
 
+        # Wave 35 FIX-2 -- round-loop bookkeeping. ``rounds_run`` is
+        # updated at the end of each iteration; the initial ``0``
+        # covers a ``cycle_length`` of 0 rounds (which the config
+        # validation forbids, but the accounting stays honest).
+        rounds_run = 0
+        early_terminated = False
+
         for r in range(int(cfg.cycle_length)):
             sample = scheduler.sample(int(cfg.outer_cycle_id), r, r)
             n_cap_r = float(sample.n_cap)
@@ -885,6 +911,20 @@ class BatchedTrajectoryRunner:
                 feedback: Mapping[str, float] = {"W2": float(w2)}
                 scheduler.record_round_feedback(r, feedback)
 
+            # Wave 35 FIX-2 -- convergence-aware early termination.
+            # Opt-in only (``cfg.early_termination``), and only for
+            # schedulers that expose the hook, so the legacy open-loop
+            # behaviour is preserved bit-for-bit by default. The check
+            # runs AFTER the feedback call so the scheduler judges on a
+            # history that includes the round just completed.
+            rounds_run = r + 1
+            if cfg.early_termination and hasattr(
+                scheduler, "should_terminate_round"
+            ):
+                if bool(scheduler.should_terminate_round(r)):
+                    early_terminated = True
+                    break
+
         # P0-8 — verify the ledger chain integrity on every run when
         # ``ledger_chain=True``. A tamper-evident recompute confirms
         # that the runner-built chain round-trips byte-for-byte. The
@@ -932,6 +972,8 @@ class BatchedTrajectoryRunner:
             ledger_chain_integrity=bool(chain_ok),
             w2_family=str(cfg.w2_family).strip().lower(),
             vectorised_rounds=int(vectorised_rounds),
+            rounds_run=int(rounds_run),
+            early_terminated=bool(early_terminated),
         )
 
 

@@ -89,6 +89,15 @@ DEFAULT_NFE_BUDGETS: tuple[int, ...] = (10, 50, 200)
 #: ``0.1, 0.5`` levels span Wave 17 P2 noise-injection regime.
 DEFAULT_SIGMAS: tuple[float, ...] = (0.0, 0.1, 0.5)
 
+#: Wave 35 FIX-3 -- per-round NFE allocation policy, set by
+#: ``--nfe-allocation``. ``"uniform"`` (default) is the legacy
+#: equal-split; ``"evidence"`` weights rounds inversely to the
+#: codimension scheduler's per-round ``eps`` so the small-``eps``
+#: refinement rounds get more integration steps. See
+#: :func:`_nfe_steps_per_round` and
+#: ``docs/audit/saturation-improvement-plan.md`` §2 FIX-3.
+NFE_ALLOCATION: str = "uniform"
+
 #: Models under audit. Each entry is the adapter module + adapter class
 #: + synthetic_mode flag + sigma_support flag + metric family + an
 #: adapter_factory(seed, nfe, sigma) closure.
@@ -583,9 +592,21 @@ def _nfe_steps_per_round(nfe: int, n_rounds: int) -> list[int]:
     so the framework's total per-endpoint NFE matches the baseline's
     single-pass NFE (the matched-NFE criterion).
 
-    Returns ``[nfe // n_rounds + (1 if i < remainder else 0) for i in range(n_rounds)]``
-    where ``remainder = nfe % n_rounds``. The first ``remainder`` rounds
-    get the carry.
+    Wave 35 FIX-3: the allocation *policy* is selectable via the module
+    global :data:`NFE_ALLOCATION` (set by ``--nfe-allocation``).
+
+    * ``"uniform"`` (default, legacy) —
+      ``[nfe // n_rounds + (1 if i < remainder else 0) ...]`` where
+      ``remainder = nfe % n_rounds``; the first ``remainder`` rounds
+      get the carry.
+    * ``"evidence"`` — steps are allocated inversely to the
+      codimension scheduler's per-round ``eps``, so the small-``eps``
+      refinement rounds get more steps than the high-noise early
+      rounds (``adaptive_reflow.algorithm.nfe_allocation``). The
+      matched-NFE criterion is preserved: the result still sums to
+      ``nfe`` exactly with every round ``>= 1``.
+
+    The default keeps every previously published grid cell unchanged.
 
     :raises ValueError: on ``nfe < 1`` or ``n_rounds < 1``.
     """
@@ -595,6 +616,20 @@ def _nfe_steps_per_round(nfe: int, n_rounds: int) -> list[int]:
         raise ValueError(f"nfe must be >= 1, got {nfe!r}")
     if n_rounds < 1:
         raise ValueError(f"n_rounds must be >= 1, got {n_rounds!r}")
+    if NFE_ALLOCATION == "evidence" and nfe >= n_rounds:
+        from adaptive_reflow.algorithm.nfe_allocation import (
+            nfe_steps_for_evidence,
+        )
+        from adaptive_reflow.algorithm.scheduler import (
+            CodimensionSheetScheduler,
+        )
+
+        scheduler = CodimensionSheetScheduler(cycle_length=n_rounds)
+        eps_per_round = [
+            float(scheduler.sample(0, r, r).eps_implicit)
+            for r in range(n_rounds)
+        ]
+        return nfe_steps_for_evidence(nfe, eps_per_round)
     base, remainder = divmod(nfe, n_rounds)
     return [base + (1 if i < remainder else 0) for i in range(n_rounds)]
 
@@ -947,7 +982,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--limit", type=int, default=0,
         help="Stop after N cells (debug aid; 0 = run all).",
     )
+    parser.add_argument(
+        "--nfe-allocation",
+        choices=("uniform", "evidence"),
+        default="uniform",
+        help=(
+            "Per-round NFE allocation policy (Wave 35 FIX-3). 'uniform' "
+            "(default) splits the budget equally; 'evidence' weights "
+            "rounds inversely to the codimension scheduler's per-round "
+            "eps, giving the small-eps refinement rounds more steps."
+        ),
+    )
     args = parser.parse_args(argv)
+
+    global NFE_ALLOCATION
+    NFE_ALLOCATION = str(args.nfe_allocation)
 
     # Validate model names.
     for m in args.models:
