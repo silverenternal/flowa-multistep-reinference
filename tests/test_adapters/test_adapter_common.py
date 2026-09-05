@@ -28,8 +28,13 @@ def test_make_ref_prefixes_are_unchanged() -> None:
     """Each adapter's historical TensorRef namespace must be preserved."""
     from adaptive_reflow.adapters._adapter_common import make_ref
     from adaptive_reflow.adapters.mnist_fm import _make_ref as mnist_ref
-    from adaptive_reflow.adapters.rectified_flow_cifar import _make_ref as rf_ref
     from adaptive_reflow.adapters.twodim_fm import _make_ref as td_ref
+
+    # Wave 42 (D.1 shrink): rectified_flow_cifar dropped its ``_make_ref``
+    # wrapper and now calls the shared helper with its historical prefix
+    # inline. The namespace guarded here is unchanged.
+    def rf_ref(label: str, **parts: object) -> object:
+        return make_ref("rf_cifar:image", label, **parts)
 
     assert str(mnist_ref("initial", batch="b", sample="s")).startswith("mnist:x:")
     assert str(td_ref("initial", batch="b", sample="s")).startswith("twodim:xy:")
