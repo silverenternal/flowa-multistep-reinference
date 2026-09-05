@@ -1,8 +1,8 @@
 # Kanzi — ICLR 2026 (protein)
 
-**Status:** pending
-**Wave:** candidate (Phase 2 analysis only — not yet integrated)
-**Last updated:** 2026-09-05
+**Status:** **DEFERRED_real_ckpt_pending** (PHASE-4 active; real-ckpt forward PASSED but framework-vs-baseline on real ckpt is Wave 40 in-flight)
+**Wave:** 21 (PHASE-3 adapter) + 36 (PHASE-4 ckpt download) + 39 (PHASE-4 real-ckpt forward) + 40 (PHASE-4 framework-vs-baseline + GPT monkey-patch in-flight)
+**Last updated:** 2026-09-05 (Wave 40 launch)
 **GitHub:** https://github.com/rdilip/kanzi
 **HF:** TBD (not surfaced; GitHub-only weights per Wave 9 R1)
 

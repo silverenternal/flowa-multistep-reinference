@@ -1,12 +1,38 @@
 # Wave 32 — Master gap plan (synthesis from Agent A / B / C audits)
 
-**Status:** pending (NEW — synthesizes 3 audit agents into actionable plan)
+**Status:** done (Wave 38 closed all 14 gaps from this plan)
 **Date:** 2026-09-05
 **Wave:** Wave 32 (5-agent audit-and-research wave)
 **Owner:** framework maintainer
 **Goal:** consolidate the three Wave 32 audit reports (todo audit + 2026 web
 research + framework code review) into a single prioritised plan with
 concrete `todo/*.md` follow-ups, wave assignments, and acceptance gates.
+
+## Wave 38 close-out (2026-09-05)
+
+All 14 gaps in §"Priority matrix" below were closed in Wave 38 (5 parallel
+workflows, 12 implementation agents, 17 commits). Per-gap wave landing:
+
+| # | Gap | Wave 38 commit | Wave 38 WF |
+|---|---|---|---|
+| 1 | D.4 pinned regression vectors | b88b32f | WF2 |
+| 2 | E.1 test-coupled floor (8/8 remaining CLM claims) | 7da571c | WF2 |
+| 3 | paper_quantities threading (HIGH-1 + MED-6 + MED-8) | ff56e55 | WF1 |
+| 4 | assert_adapter_compliance enforcement (HIGH-4 + MED-11) | f7ee3ae | WF1 |
+| 5 | bounded_lipschitz_distance_2d scipy fallback (HIGH-2) | 89c088f | WF1 |
+| 6 | mkdocs --strict nav fix | 0674ac8 | WF3 |
+| 7 | StochasticFMAdapter enum orphan | ba619bf | Wave 39 close-out |
+| 8 | FlowMol3V2Adapter restart shape crash | b9ef18b | WF4 |
+| 9 | HF Hub model card upload pipeline (R-3) | 7cbf085 | WF5 |
+| 10 | Hypothesis derandomize=True for CI (R-5) | 15621b7 | WF3 |
+| 11 | host_fingerprint in every JSON output (R-2) | d55b601 | WF3 |
+| 12 | D.1 shrink adapters (deferred — gated on Kanzi + FreqFlow registration) | (not in Wave 38; Kanzi + FreqFlow now registered, follow-up wave candidate) |
+| 13 | expecttest for text-output regression tests (R-1) | 5e1731f | WF2 |
+| 14 | Mutation apply survivor feature (R-4) | 5e1731f | WF4 |
+
+Wave 38 plan-doc sweep (commit facc008) flipped all Status lines in the 12
+`algo-improvement-*.md` files to CLOSED. Gap plan itself is closed; only #12
+(D.1 shrink adapters) remains as a candidate for a future wave.
 
 ## Source audits (all READ-ONLY)
 

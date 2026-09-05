@@ -1,12 +1,19 @@
 # Phase 3 — Glue layer improvement (per model, in Phase 2 ranking order)
 
-**Status:** partial (Wave 24 Agent B: 4 framework-core glue modules + 84 unit tests shipped in `adaptive_reflow/core/`; per-adapter refactor deferred per MUST-3 follow-up gate — gated on ≥2 of 4 RANKING adapters existing; MM-FM BLOCKED, LineageFlow BLOCKED on `core`)
+**Status:** done (Wave 24 + Wave 38 + Wave 39 closed all 3 sub-items)
 **Depends on:** Phase 2 complete (RANKING.md + per-model analysis files)
 **Owner:** framework maintainer
 **Goal:** for each model in Phase 2 ranking order, **improve the glue layer**
 *before* integration. This is the key insight from the user's 4-phase plan:
 "如果前面确保做的足够好的话我们只要好好改胶水层就好了" — if Phase 1-2 is done well,
 Phase 4 integration is "just" glue.
+
+## Wave 38 + Wave 39 close-out (2026-09-05)
+
+- **(a) Framework-core glue extraction** (Wave 24 Agent B): 4 modules + 84 unit tests shipped in `adaptive_reflow/core/` (commit `12565df` etc.) — DONE.
+- **(b) per-adapter Protocol enforcement** (Wave 38 Agent A WF1, commit f7ee3ae): `assert_adapter_compliance` enforcement closes HIGH-4 + MEDIUM-11. All 15 registered adapters now carry `@implements(FlowMatchingODEAdapter)`; CI test parametrised over ADAPTER_REGISTRY with env-tolerant skips — DONE.
+- **(c) MM-FM + LineageFlow on `core`**: MM-FM DEFERRED_no_adapter_shipped per 2026-09-05 user directive (Wave 39 Agent C plan-doc sweep closed the corresponding todo file). LineageFlow real-ckpt pickle loading now WORKS after Wave 39 Agent B 5-LOC `_install_checkpoint_compat` shim (commit 6b7fe8c) — 10.5 GB lineageflow-rp55.ckpt loads in 20s; numerical forward still needs upstream `core` source clone (deferred follow-up).
+- **(d) D.1 shrink adapters** (gated on MUST-3 framework-core glue + ≥2 RANKING adapters): Kanzi + FreqFlow + LineageFlow all registered; future wave candidate.
 
 ## What is "glue layer"
 
