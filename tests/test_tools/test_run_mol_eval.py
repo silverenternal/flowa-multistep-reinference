@@ -165,7 +165,11 @@ def test_module_imports() -> None:
     assert hasattr(module, "compute_logp")
     assert hasattr(module, "compute_fcd")
     assert hasattr(module, "OUTPUT_SCHEMA_VERSION")
-    assert module.OUTPUT_SCHEMA_VERSION == "1.0.0"
+    # Pinned so a schema bump is a deliberate, reviewed edit. The legacy
+    # 50-key dict shape has been ``"1.4.0"`` in tools/run_mol_eval.py since
+    # the extra-metric passes; this assertion still read ``"1.0.0"``, so it
+    # was failing on every run rather than guarding anything.
+    assert module.OUTPUT_SCHEMA_VERSION == "1.4.0"
 
 
 # ---------------------------------------------------------------------------

@@ -58,9 +58,32 @@ VENV_PYTHON: Path = REPO_ROOT / ".venv" / "bin" / "python"
 
 @pytest.fixture(scope="module")
 def _venv_python() -> Path:
-    """Return the venv python executable path; skip if missing."""
+    """Return the venv python executable path; skip if unusable.
+
+    The harness spawned by these tests imports ``numpy`` at module
+    scope, so a bare interpreter satisfies :meth:`Path.exists` while
+    still being unable to run the script. Checking only for the path
+    therefore turns an *unprovisioned sandbox* into a hard failure
+    instead of the intended skip. Probe the interpreter for the
+    harness's third-party import as well so a repo whose ``.venv``
+    exists but has no packages installed skips cleanly — the same
+    outcome as a repo with no ``.venv`` at all.
+    """
+    import subprocess
+
     if not VENV_PYTHON.exists():
         pytest.skip(f"venv python not found at {VENV_PYTHON}")
+    probe = subprocess.run(
+        [str(VENV_PYTHON), "-c", "import numpy"],
+        capture_output=True,
+        text=True,
+    )
+    if probe.returncode != 0:
+        pytest.skip(
+            f"venv python at {VENV_PYTHON} cannot import numpy, which "
+            f"tools/run_sota_hidream_i1_experiment.py requires at import "
+            f"time: {probe.stderr.strip().splitlines()[-1:] or ['(no stderr)']}"
+        )
     return VENV_PYTHON
 
 
