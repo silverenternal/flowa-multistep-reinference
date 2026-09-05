@@ -387,6 +387,7 @@ How it works:
   - **Cosine no longer wins on two_moons** — baseline (W2=0.0709) beats every framework scheduler. The framework's pre-fix improvement was an **artifact of the activation mismatch bug**: pre-fix model output was wrong (W2 ~0.5 to ~0.9 because tanh vs ReLU), and restart-blend provided corrective value. Post-fix, the model already converges to the correct distribution (W2 ~0.07), and restart-blend's added perturbations are net noise.
 - Interpretation: The original "Cosine wins" claim held only under the buggy runtime. After cd70821 corrected the architecture mismatch, **baseline 1-pass is the strongest configuration for 2D RF** — the framework's multi-round restart-blend provides no measurable value on a correctly-trained adapter. The qualitative finding "no schedule family dominates both targets" still holds but the dominant configuration is now baseline.
 - Evidence: `docs/ABLATION.md` §"New findings: schedule families (ADR-0012)" (pre-fix); /tmp/wave8_fixes/FIX-3/sota_2d_rerun/two_moons_comparison.md + eight_gaussians_comparison.md (post-fix); regression coverage in `tests/test_tools/test_run_ablation.py`.
+- Tested by: tests/test_claims/test_claim_018.py
 
 ## CLM-019: `SchedulerProtocol` is the canonical first-class scheduler axis {#CLM-019}
 
@@ -507,6 +508,7 @@ How it works:
   - **Direction claim survives**: `eps_schedule` row 0.8312 vs no-schedule row 0.8338 still differs measurably (and the **direction** of the claim — that `eps_schedule` modulates `selection_ratio` — is internally consistent), but the **magnitude and direction of "improvement" invert**.
   - **Interpretation**: under the buggy pre-cd70821 runtime (W2 ~0.5), the model was poorly calibrated and `eps_schedule` provided corrective value. Under the correctly-trained post-cd70821 runtime, the model already converges and `eps_schedule`'s perturbations are net noise. The A16 mechanism itself (the eps_schedule hook + the selection_ratio metric) remains correct; what inverted is whether `selection_ratio` itself has headroom to improve.
 - Evidence (PRE-fix): `adaptive_reflow/eval/posterior_selection_evaluator.py:473` (`eps_schedule` constructor arg), `adaptive_reflow/eval/posterior_selection_evaluator.py:564` (`calibration` derivation using the per-round `eps`), `tools/benchmark_uplifts.py:699-732` (the SNR-proxy measurement), `docs/benchmark-uplifts.md:23` (the SNR row in the per-uplift table).
+- Tested by: tests/test_claims/test_claim_022.py
 - Evidence (POST-fix): `/tmp/wave8_fixes/FIX-3/sota_2d_rerun/two_moons_comparison.md` (Wave 8 FIX-3 re-run; CSV files at the same prefix).
 
 ## CLM-023: `KDE-support-coverage` near-far separation closes the Round-1 weighted-coverage miss {#CLM-023}
@@ -831,6 +833,7 @@ How it works:
   `docs/r3-survey/05-verified-findings.md:1133-1177`
   (the 7-line summary table),
   the regression tests listed in `Asserted by` above.
+- Tested by: tests/test_claims/test_claim_031.py
 
 ## CLM-032: C4 Loop 2 closure verified — `selection_ratio` moves toward 1 on the paper-grounded rows {#CLM-032}
 
@@ -1124,6 +1127,7 @@ How it works:
   `tests/test_tools/test_run_sota_2d_experiment.py` (smoke regression),
   `docs/r4-survey/10-sota-2d-experiment-results.md` (canonical
   experiment record).
+- Tested by: tests/test_claims/test_claim_039.py
 
 ## CLM-040: CIFAR-10 SOTA reproduction — FlowA framework improves over baseline on published Rectified Flow; n_cap fix landed; v4 scheduler discrimination verified at 50-NFE budget {#CLM-040}
 
@@ -1300,6 +1304,7 @@ How it works:
   of the `n_cap=1.0` collapse),
   `docs/r4-survey/16-harness-fix-plan.md` (Phase 2 fix plan,
   executed).
+- Tested by: tests/test_claims/test_claim_040.py
 
 ## CLM-041: Comprehensive bug review (R3/R11) + CIFAR-10 v3 verification + scheduler-discrimination verified at v4 (4 distinct FIDs); all 6 gates green {#CLM-041}
 
@@ -1434,6 +1439,7 @@ How it works:
   52-bug audit with severity rankings),
   `docs/r4-survey/19-fix-plan.md` (the fix plan with effort
   estimates and verification steps for each P0 fix).
+- Tested by: tests/test_claims/test_claim_041.py
 
 ## CLM-042: Fix-v2 capability set — Heun 2nd-order integrator + state-propagation β-blend chain + fixed-NFE comparison {#CLM-042}
 
@@ -1510,6 +1516,7 @@ How it works:
   (the full design + research record),
   [`docs/r4-survey/22-fix-v2-results.md`](r4-survey/22-fix-v2-results.md)
   (the post-fix verification record with concrete numbers).
+- Tested by: tests/test_claims/test_claim_042.py
 
 ## CLM-043: Phase-4 docstring audit + cross-reference gap registry — 37 modules surface stale / thin / missing docstrings; canonical remediation plan published {#CLM-043}
 
@@ -1583,6 +1590,7 @@ How it works:
   [`docs/audit/PHASE4_DOCSTRING_AUDIT.md`](audit/PHASE4_DOCSTRING_AUDIT.md)
   (the canonical 37-row audit + vocabulary cross-reference +
   action items).
+- Tested by: tests/test_claims/test_claim_043.py
 
 ## CLM-044: Algorithm/ package enumeration — outer framework + abstract algorithm layer is the largest subpackage (25 modules, 4 Protocols) {#CLM-044}
 
