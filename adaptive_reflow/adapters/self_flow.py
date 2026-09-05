@@ -8,6 +8,16 @@ adapter exposes the load-bearing protocol surface (8 methods +
 capability handshake) and routes the per-token timestep + class-label
 conditioning through :meth:`compose_condition`.
 
+Wave 42 (D.1 partial) — the checkpoint-resolution /
+state-dict-load / torch-velocity-field glue now delegates to
+:mod:`adaptive_reflow.core.ckpt_loader` /
+:mod:`adaptive_reflow.core.diffusers_wrapper` instead of carrying
+inline copies. Synthetic-mode trajectory digests are byte-identical
+(pinned by the D.4 ``regression-vectors/self_flow.json`` vector);
+the torch-mode path now exercises the framework's canonical DiT
+wrapper + CFG plumbing. See ``docs/audit/wave42-self-flow-shrink.md``.
+
+
 Self-Flow design summary
 ------------------------
 
@@ -109,6 +119,16 @@ from adaptive_reflow.adapters._adapter_common import (
     memory_fraction_for,
     seed_from_ids,
     digest_state,
+)
+from adaptive_reflow.core.ckpt_loader import (
+    load_state_dict_strict_safe,
+    resolve_candidate_paths,
+)
+from adaptive_reflow.core.diffusers_wrapper import (
+    DiffusersForwardSignature,
+    DiffusersForwardWrapper,
+    diffusers_postprocess,
+    diffusers_preprocess,
 )
 from adaptive_reflow.framework.interfaces import implements
 
@@ -240,20 +260,21 @@ def self_flow_resolve_weights_path(
 ) -> Path | None:
     """Return the candidate ``selfflow_imagenet256.pt`` weights path.
 
-    Resolves to ``data_dir / "selfflow_imagenet256.pt"`` (the only
-    filename the Self-Flow authors publish on HF). Returns ``None``
-    when no candidate exists. Mirrors
-    :func:`adaptive_reflow.adapters.rectified_flow_cifar.rectified_flow_cifar_resolve_weights_path`.
+    Thin adapter wrapper over
+    :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths`
+    — probes ``data_dir / "self_flow" / "selfflow_imagenet256.pt"``
+    first, then the flat ``data_dir / "selfflow_imagenet256.pt"``
+    fallback (matches the HiDream / FreqFlow / Kanzi convention).
+    Returns ``None`` when no candidate exists. See
+    ``docs/audit/wave42-self-flow-shrink.md`` §2 for the per-adapter
+    refactor rationale.
     """
-    base = Path(data_dir) if data_dir is not None else Path("data")
-    candidate = base / "self_flow" / "selfflow_imagenet256.pt"
-    if candidate.exists():
-        return candidate
-    # Fallback: flat data dir (matches the hidream_i1 layout).
-    flat = base / "selfflow_imagenet256.pt"
-    if flat.exists():
-        return flat
-    return None
+    candidates = resolve_candidate_paths(
+        "self_flow",
+        "selfflow_imagenet256.pt",
+        data_dirs=[Path(data_dir)] if data_dir is not None else None,
+    )
+    return candidates[0] if candidates else None
 
 
 # ---------------------------------------------------------------------------
@@ -399,47 +420,49 @@ def _torch_velocity_field(
 ) -> ArrayF64:
     """Call the PyTorch Self-Flow SiT-XL/2 velocity field ``v_theta(x, t, y)``.
 
-    The function is intentionally NOT wrapped in a public class — it is
-    invoked by :meth:`SelfFlowAdapter.solve_ode` only when the adapter
-    is in ``torch`` mode. The NumPy ``(4, 32, 32)`` latent is converted
-    to ``torch.float32`` (matching the published checkpoint dtype), the
-    DiT is called inside ``torch.no_grad()`` (inference-only
-    determinism), and the result is cast back to a NumPy ``(4, 32,
-    32)`` float64 array.
+    Delegates the NumPy ↔ torch conversion + 8→4 channel slice to
+    :func:`adaptive_reflow.core.diffusers_wrapper.diffusers_preprocess`
+    / :func:`diffusers_postprocess`. The framework-core wrapper is
+    wired so the published Self-Flow dual-timestep head
+    (``(1, 8, 32, 32)`` output) collapses to the velocity-field
+    ``(1, 4, 32, 32)`` shape the rest of the adapter expects.
 
     NOTE — this is the protocol-boundary call. The internal adaLN
     modulation / per-token dual-timestep scheme / self-supervised
     projector head are implementation details; the adapter treats
-    them as opaque.
-
-    For a 2D ``(4, 32, 32)`` input with ``patch_size=2`` the SiT model
-    flattens to ``(1, 256, 16)`` tokens (256 patches of 16 channels
-    each from 2x2x4=16). The model emits ``(1, 256, 32)`` = 8 channels
-    * 4 patch elements per token, which we reshape back to
-    ``(8, 32, 32)``. We then take the first 4 channels (the velocity
-    field for the 4-channel input latent) so the output shape matches
-    the input ``(4, 32, 32)``.
+    them as opaque. ``use_cfg=False`` is set on the per-call
+    signature below so the legacy ``guidance_scale`` keyword is
+    accepted but CFG duplicate-and-interpolate is NOT applied
+    (preserves the original behaviour — the framework's CFG
+    defaults to ``1.0`` already, and the prior implementation did
+    not interpolate). See ``docs/audit/wave42-self-flow-shrink.md``
+    §3 for the wrapper rationale.
     """
     import torch  # local import — torch is optional at the framework level.
 
+    sig = DiffusersForwardSignature(
+        in_channels=int(SELF_FLOW_STATE_SHAPE[0]),  # 4
+        out_channels=int(SELF_FLOW_STATE_SHAPE[0]) * 2,  # 8 (dual-timestep head)
+        patch_size=2,
+        sample_size=16,
+        dtype="float32",
+        use_cfg=False,
+        conditioning_dim=1152,
+    )
+
     with torch.no_grad():
-        x_t = torch.as_tensor(x, dtype=dtype).unsqueeze(0)  # (1, 4, 32, 32)
+        x_t = diffusers_preprocess(x, signature=sig, add_batch_dim=True)
         t_t = torch.tensor([float(t)], dtype=dtype)
-        y_t = torch.as_tensor(
-            cache.get("y_embed", np.zeros(1152, dtype=np.float64)),
-            dtype=dtype,
-        ).unsqueeze(0)  # (1, 1152)
+        y_arr = np.asarray(
+            cache.get("y_embed", np.zeros(sig.conditioning_dim, dtype=np.float64)),
+            dtype=np.float64,
+        ).reshape(-1)
+        y_t = torch.as_tensor(y_arr, dtype=dtype).unsqueeze(0)
 
-        # Real Self-Flow forward: per-token timestep + class embedding,
-        # adaLN modulation across 28 blocks, then unpatchify.
-        # The published checkpoint uses 2x2 patches -> 16x16 = 256 tokens.
         v = model(x_t, t_t, y=y_t)
-        # ``v`` has shape (1, 8, 32, 32) in the published checkpoint
-        # (8 output channels because the dual-timestep scheme
-        # broadcasts). Take the first 4 channels for the velocity.
-        v = v[:, :4]
-        out = np.asarray(v.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
-
+        out = diffusers_postprocess(
+            v, signature=sig, take_first_n_channels=int(SELF_FLOW_STATE_SHAPE[0]),
+        )
     return out.reshape(SELF_FLOW_STATE_SHAPE)
 
 
@@ -457,8 +480,24 @@ def _load_torch_model(weights_path: Path) -> Any:
     """
     import torch  # local import — torch is optional.
 
-    state = torch.load(str(weights_path), map_location="cpu", weights_only=False)
-    sd = state.get("model", state)
+    # Load the checkpoint via the framework-core shim
+    # (``strict=False`` + ``state_dict_key="model"`` are the standard
+    # conventions for the Self-Flow checkpoint layout; the helper also
+    # returns the unwrapped state dict so we can derive the model
+    # config below). See ``docs/audit/wave42-self-flow-shrink.md`` §4.
+    sd = load_state_dict_strict_safe(
+        weights_path,
+        model=None,  # placeholder; we instantiate the model below
+        strict=False,
+        state_dict_key="model",
+        map_location="cpu",
+    )
+    if not isinstance(sd, dict):
+        # load_state_dict_strict_safe returned the raw ckpt when
+        # ``state_dict_key`` was not found — fall back to the
+        # legacy dict-or-state assumption so the legacy SiT
+        # instantiation path still works.
+        sd = sd if isinstance(sd, dict) else {}
 
     # Inspect key shapes to derive the model config.
     hidden = int(sd["pos_embed"].shape[-1])
