@@ -72,6 +72,8 @@ nav:
       - LineageFlow (ICML 2026 protein): models/lineageflow.model_card.md
       - Kanzi (ICLR 2026 protein flow-AE): models/kanzi.model_card.md
       - FreqFlow (CVPR 2026 image): models/freqflow.model_card.md
+      - Capability G.1 analysis: capability_g1_analysis.md
+      - Theory deviations: theory/DEVIATIONS.md
   - Testing: TESTING_STRATEGY.md
   - Acceptance gates: GATES.md
   - Results & records:
@@ -182,8 +184,6 @@ not_in_nav: |
   design/*.md
   theory/operating-regime.md
   theory/theorem1_rate_bound.md
-  theory/DEVIATIONS.md
-  capability_g1_analysis.md
   lean/*.md
   lean_issue_re_inference_provenance.md
   paper-draft.md

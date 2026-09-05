@@ -1990,6 +1990,41 @@ EXIT=0
 
 ---
 
+## Wave 38 Agent C — mkdocs strict nav-fix Option (a) (additive)
+
+**Date:** 2026-09-05
+**Agent:** Wave 38 Agent C
+**Scope:** `mkdocs.yml` (Models nav + `not_in_nav`), additive nav-fix note here.
+
+**Problem:** Per `todo/algo-improvement-mkdocs-strict-nav.md` (Wave 32 audit gap B.3 HARD gate): the 2 supporting docs `docs/capability_g1_analysis.md` (Wave 28 Agent B G.1 deep-dive) and `docs/theory/DEVIATIONS.md` (Wave 29 Agent A paper-vs-implementation deviation log) were in the `mkdocs.yml` `not_in_nav` allowlist. Although `--strict` was exiting 0 via the allowlist, the cards were not discoverable from the nav tree — defeating the Wave 24 Agent A goal for F.4 model-card discoverability.
+
+**Fix (Option (a) — preferred):**
+
+1. **`mkdocs.yml` Models nav section — 2 additional entries** (replaces their previous `not_in_nav` allowlist slots):
+   - `capability_g1_analysis.md` → "Capability G.1 analysis"
+   - `theory/DEVIATIONS.md` → "Theory deviations"
+
+2. **`mkdocs.yml` `not_in_nav` block — 2 entries removed** (now nav-registered, no longer need silencing):
+   - `capability_g1_analysis.md` removed
+   - `theory/DEVIATIONS.md` removed
+
+**Verification:**
+
+```bash
+$ .venvs/flowmol3_venv/bin/mkdocs build --strict
+INFO    -  Cleaning site directory
+INFO    -  Building documentation to directory: .../site
+INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
+INFO    -  Documentation built in 8.08 seconds
+EXIT=0
+```
+
+`mkdocs build --strict` exits 0 with 0 warnings. Both files now resolve from the rendered Models nav section (was: silently allow-listed). The Material team "MkDocs 2.0 deprecation" banner is a non-blocking upstream advisory and not part of strict validation.
+
+**Files changed:** `mkdocs.yml` (2 nav additions + 2 `not_in_nav` removals); `docs/baseline-audit-report.md` (this additive note). No code changes; no env_hash update.
+
+---
+
 ## D.4 — Pinned adapter regression vectors (additive, Wave 33 #1 first batch)
 
 **Date:** 2026-09-05
