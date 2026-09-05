@@ -21,6 +21,11 @@ state family.
 Tasks satisfied:
 
 * ``DTB-G2`` — first registered candidate (FlowMol3) mechanics adapter.
+* ``MUST-3`` / ``D.1`` (Wave 41) — per-adapter refactor onto the
+  framework-core glue in :mod:`adaptive_reflow.core`. FlowMol3's native
+  ``(x, a, c, e)`` state is graph-shaped, so the restart boundary now
+  delegates to :mod:`adaptive_reflow.core.graph_wrapper` rather than
+  carrying an inlined no-op. See ``docs/audit/wave41-flowmol3-shrink.md``.
 
 Design notes
 ------------
@@ -34,15 +39,24 @@ Design notes
 * No third-party FlowMol3 source is imported. ``from flowmol3 import …``
   is forbidden here; the adapter is the **placeholder** the actual
   integration would replace.
+* The fail-closed ``validate_state_bundle`` gate is centralised in
+  :func:`_require_valid` — every protocol entry point routes through
+  it instead of repeating the check inline.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from typing import Any, cast
 
+from adaptive_reflow.core.graph_wrapper import (
+    GraphPayload,
+    blend_graph_features,
+    random_graph_payload,
+)
 from adaptive_reflow.frame.adapter import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -141,9 +155,12 @@ class FlowMol3Capabilities:
     def to_engine_caps(self) -> AdapterCapabilities:
         """Project this token into the engine's ``AdapterCapabilities``.
 
+        Every field here is named exactly as its ``AdapterCapabilities``
+        counterpart, so the projection is an ``**asdict(self)`` splat
+        rather than the eighteen-line manual copy this adapter carried.
+
         D2 — wires the FlowMol3-specific materializer via the
-        ``AdapterCapabilities.materializer`` field. The default
-        constructor for the placeholder adapter uses
+        ``AdapterCapabilities.materializer`` field. The placeholder uses
         :class:`NoOpMaterializer` (no real (x, a, c, e) tensor to
         project); the real FlowMol3 v2 adapter wires the
         :class:`ConcreteFlowMol3Materializer`.
@@ -156,28 +173,16 @@ class FlowMol3Capabilities:
                 ConcreteFlowMol3Materializer,
             )
 
-            materializer_cls = ConcreteFlowMol3Materializer
+            materializer_cls: type | None = ConcreteFlowMol3Materializer
         except ImportError:
             materializer_cls = None
 
-        return AdapterCapabilities(
-            has_ode_integration_surface=self.has_ode_integration_surface,
-            has_prior_export=self.has_prior_export,
-            has_state_export=self.has_state_export,
-            has_condition_injection=self.has_condition_injection,
-            has_restart_boundary=self.has_restart_boundary,
-            has_continuous_channels=self.has_continuous_channels,
-            has_discrete_channels=self.has_discrete_channels,
-            has_trajectory_digest=self.has_trajectory_digest,
-            has_deterministic_seed=self.has_deterministic_seed,
-            has_materialization_route=self.has_materialization_route,
-            supported_channels=self.supported_channels,
-            channel_domains=cast(
-                "Mapping[ChannelName, ChannelDomain]",
-                dict(self.channel_domains),
-            ),
-            materializer=materializer_cls,
+        fields_ = asdict(self)
+        fields_["channel_domains"] = cast(
+            "Mapping[ChannelName, ChannelDomain]",
+            dict(self.channel_domains),
         )
+        return AdapterCapabilities(**fields_, materializer=materializer_cls)
 
 
 def _make_tensor_ref(label: str, **parts: Any) -> TensorRef:
@@ -186,9 +191,69 @@ def _make_tensor_ref(label: str, **parts: Any) -> TensorRef:
     The engine never inspects the value; this function exists only to
     give the placeholder state a stable hash-derived identifier so the
     parity tests can assert byte-equality across replays.
+
+    .. note::
+       The exact pre-image of this digest is pinned by the D.4
+       regression vector ``regression-vectors/flowmol3.json``. Do not
+       change the ``repr((label, sorted(parts.items())))`` encoding
+       without regenerating that vector.
     """
     blob = repr((label, sorted(parts.items()))).encode("utf-8")
     return TensorRef(f"flowmol3:{hashlib.sha256(blob).hexdigest()[:16]}")
+
+
+def _require_valid(bundle: Any, code: str) -> StateBundle:
+    """Fail-closed ``validate_state_bundle`` gate shared by every entry point.
+
+    Replaces the six inlined copies of this block the adapter carried.
+    """
+    ok, errs = validate_state_bundle(bundle)
+    if not ok:
+        raise CapabilityMissingError(code, context=",".join(errs))
+    return cast(StateBundle, bundle)
+
+
+# ---------------------------------------------------------------------------
+# Restart boundary — framework-core graph glue (MUST-3 / D.1)
+# ---------------------------------------------------------------------------
+
+#: Node / edge counts of the placeholder molecular graph. FlowMol3's
+#: native ``(x, a, c, e)`` state is per-atom; the placeholder pins a
+#: fixed 8-atom / 12-bond topology so the restart blend is reproducible.
+FLOWMOL3_PLACEHOLDER_NUM_NODES: int = 8
+FLOWMOL3_PLACEHOLDER_NUM_EDGES: int = 12
+
+
+def _seed_from(*parts: str) -> int:
+    """Derive a 32-bit deterministic seed from string material."""
+    blob = "\x1f".join(str(p) for p in parts).encode("utf-8")
+    return int(hashlib.sha256(blob).hexdigest()[:8], 16)
+
+
+def _graph_payload_for(*parts: str) -> GraphPayload:
+    """Deterministic placeholder molecule via the framework-core builder."""
+    return random_graph_payload(
+        num_nodes=FLOWMOL3_PLACEHOLDER_NUM_NODES,
+        num_edges=FLOWMOL3_PLACEHOLDER_NUM_EDGES,
+        seed=_seed_from(*parts),
+    )
+
+
+def _restart_memory_fraction(policy: Any) -> float:
+    """Mean restart memory ``beta`` over :data:`FLOWMOL3_CHANNELS`, clamped.
+
+    The engine encodes per-channel ``beta`` in ``policy.beta_by_channel``;
+    a policy without it yields ``0.0`` (full refresh).
+    """
+    by_channel = getattr(policy, "beta_by_channel", None)
+    if not isinstance(by_channel, Mapping):
+        return 0.0
+    values = [
+        float(by_channel[ch]) for ch in FLOWMOL3_CHANNELS if ch in by_channel
+    ]
+    if not values:
+        return 0.0
+    return max(0.0, min(1.0, sum(values) / len(values)))
 
 
 @implements(FlowMatchingODEAdapter)
@@ -266,21 +331,12 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         """
         if not isinstance(state, StateBundle):
             raise TypeError("state_must_be_state_bundle")
-        ok, errs = validate_state_bundle(state)
-        if not ok:
-            raise CapabilityMissingError(
-                "validate_state_bundle", context=",".join(errs)
-            )
-        return state
+        return _require_valid(state, "validate_state_bundle")
 
     def detach_and_validate_endpoint(self, bundle: StateBundle) -> StateBundle:
         """Fail-closed detach gate; the placeholder state already
         carries ``detach_proof=True``, so this is a re-validation."""
-        ok, errs = validate_state_bundle(bundle)
-        if not ok:
-            raise CapabilityMissingError(
-                "detach_proof_must_be_true", context=",".join(errs)
-            )
+        _require_valid(bundle, "detach_proof_must_be_true")
         if bundle.detach_proof is not True:
             raise CapabilityMissingError("detach_proof_must_be_true")
         return bundle
@@ -290,36 +346,45 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         state: StateBundle,
         policy: Any,
     ) -> StateBundle:
-        """Return ``state`` unchanged in the placeholder.
+        """Restart boundary via the framework-core graph glue.
 
-        A real FlowMol3 adapter would invoke its native
-        ``integrate``/``step`` boundary here. The placeholder only
-        verifies that the input bundle is well-formed.
+        MUST-3 / D.1 (Wave 41). FlowMol3's native ``(x, a, c, e)`` state
+        is graph-shaped, so the restart boundary delegates to
+        :func:`adaptive_reflow.core.graph_wrapper.blend_graph_features`
+        — the framework's canonical
+        ``blended = m * prior + (1 - m) * fresh`` restart mixer — instead
+        of the inlined no-op this adapter used to carry. ``m`` comes from
+        :func:`_restart_memory_fraction`; the digest is
+        :meth:`GraphPayload.digest` over the blended payload.
+
+        This also fixes the previous digest, which was derived from
+        ``id(policy)`` — a process-local memory address, so the old
+        restart digest was **not** reproducible across processes and
+        silently violated the B.2 byte-stability contract. See
+        ``docs/audit/wave41-flowmol3-shrink.md``.
         """
-        ok, errs = validate_state_bundle(state)
-        if not ok:
-            raise CapabilityMissingError(
-                "validate_state_bundle", context=",".join(errs)
-            )
-        # beta is encoded in policy.beta_by_channel by the engine; the
-        # placeholder doesn't interpret it. We re-export the state with
-        # an updated native_state_digest so parity tests can see a round
-        # boundary without an actual numeric integration.
-        new_digest = _make_tensor_ref(
-            "post_restart", source=state.native_state_digest, policy_id=id(policy)
+        _require_valid(state, "validate_state_bundle")
+        memory_fraction = _restart_memory_fraction(policy)
+        prior = _graph_payload_for(
+            "prior",
+            str(state.batch_id),
+            str(state.sample_id),
+            str(state.native_state_digest),
         )
-        return StateBundle(
+        fresh = _graph_payload_for(
+            "fresh",
+            str(state.batch_id),
+            str(state.sample_id),
+            str(state.source_round),
+        )
+        blended = blend_graph_features(prior, fresh, memory_fraction)
+        return replace(
+            state,
             channels=dict(state.channels),
             masks=dict(state.masks),
-            batch_id=state.batch_id,
-            sample_id=state.sample_id,
-            reference_frame=state.reference_frame,
-            normalization=state.normalization,
-            source_round=state.source_round,
             detach_proof=True,
-            native_state_digest=new_digest,
+            native_state_digest=f"flowmol3:restart:{blended.digest()}",
             provenance=state.provenance + ("flowmol3_restart_boundary",),
-            capability_token=state.capability_token,
         )
 
     def compose_condition(
@@ -339,11 +404,7 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         between the engine's fail-closed audit policy and FlowMol3's
         unconditional ODE.
         """
-        ok, errs = validate_state_bundle(bundle)
-        if not ok:
-            raise CapabilityMissingError(
-                "validate_state_bundle", context=",".join(errs)
-            )
+        _require_valid(bundle, "validate_state_bundle")
         # D3 — delegate to NullConditionInjector for audit provenance.
         from adaptive_reflow.universal.condition_injection import (
             NullConditionInjector,
@@ -381,11 +442,7 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         steps = int(condition.delta_spec.get("num_steps", 1))
         if steps <= 0:
             raise ValueError("steps_must_be_positive")
-        ok, errs = validate_state_bundle(state)
-        if not ok:
-            raise CapabilityMissingError(
-                "validate_state_bundle", context=",".join(errs)
-            )
+        _require_valid(state, "validate_state_bundle")
         new_digest = _make_tensor_ref(
             "post_step", source=state.native_state_digest, seed=seed, steps=steps
         )
@@ -406,12 +463,7 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
     ) -> StateBundle:
         """Observation-only post-step; placeholder re-validates and returns."""
         del trace  # placeholder preserves no native trajectory (see export_trajectory)
-        ok, errs = validate_state_bundle(state)
-        if not ok:
-            raise CapabilityMissingError(
-                "validate_state_bundle", context=",".join(errs)
-            )
-        return state
+        return _require_valid(state, "validate_state_bundle")
 
     def export_trajectory(self, trace: ODEIntegratorTrace) -> Any:
         """FlowMol3 adapter: no native trajectory preserved (P0-7)."""
@@ -429,21 +481,14 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         injected: Any,
     ) -> StateBundle:
         """P1-8 (F-25): FlowMol3 carries no native state — pass through."""
-        import hashlib as _hl
-        import json as _json
-
-        ok, errs = validate_state_bundle(bundle)
-        if not ok:
-            raise CapabilityMissingError(
-                "inject_forward_noise_invalid_bundle", context=",".join(errs),
-            )
+        _require_valid(bundle, "inject_forward_noise_invalid_bundle")
         try:
             flat = list(getattr(injected, "flat", injected))
         except TypeError:
             flat = [injected]
         flat = flat[:32]
-        new_digest = _hl.sha256(
-            _json.dumps(
+        new_digest = hashlib.sha256(
+            json.dumps(
                 {
                     "kind": "forward_noise",
                     "src_digest": str(bundle.native_state_digest),
@@ -452,13 +497,10 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest()
-        return StateBundle(
+        return replace(
+            bundle,
             channels=dict(bundle.channels),
             masks=dict(bundle.masks),
-            batch_id=str(bundle.batch_id),
-            sample_id=str(bundle.sample_id),
-            reference_frame=str(bundle.reference_frame),
-            normalization=str(bundle.normalization),
             source_round=int(bundle.source_round) + 1,
             detach_proof=True,
             native_state_digest=new_digest,
@@ -485,6 +527,8 @@ def flowmol3_registry_entry() -> Any:
 __all__ = [
     "FLOWMOL3_CHANNELS",
     "FLOWMOL3_CHANNEL_DOMAINS",
+    "FLOWMOL3_PLACEHOLDER_NUM_EDGES",
+    "FLOWMOL3_PLACEHOLDER_NUM_NODES",
     "FlowMol3Adapter",
     "FlowMol3Capabilities",
     "default_flowmol3_adapter",
