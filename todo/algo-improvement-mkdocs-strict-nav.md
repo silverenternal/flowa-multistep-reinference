@@ -1,6 +1,6 @@
 # Algorithm improvement — mkdocs --strict nav fix (Wave 32 audit gap)
 
-**Status:** pending (NEW — Wave 32 audit gap; small fix)
+**Status:** CLOSED in Wave 38 (commit 0674ac8, Wave 38 Agent C WF3) — B.3 mkdocs --strict HARD gate at risk closed: capability_g1_analysis.md + theory/DEVIATIONS.md moved to Models nav per Option (a)
 **Date:** 2026-09-05
 **Priority:** high (B.3 mkdocs --strict HARD gate at risk)
 **Depends on:** none (purely mkdocs.yml configuration)
@@ -168,3 +168,19 @@ This fix restores B.3 PASS but does not address the broader
 discoverability of model cards on HF Hub (see
 `todo/algo-improvement-hf-model-card-pipeline.md` for the
 HF-side fix).
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **0674ac8** (Wave 38 Agent C WF3).
+
+**Result summary**:
+- B.3 mkdocs `--strict` HARD gate at risk closed: the two doc pages that previously lived outside the Models nav (and were therefore missing from the strict-nav audit) are now moved into the Models nav per Option (a)
+  - `docs/capability_g1_analysis.md` added to `mkdocs.yml` Models nav
+  - `docs/theory/DEVIATIONS.md` added to `mkdocs.yml` Models nav
+- `mkdocs build --strict` exits 0; the B.3 gate is restored to PASS
+- The Option (a) approach (move into Models nav) was preferred over Option (b) (drop the pages) because both pages carry first-party analysis that downstream readers cite
+
+**Files shipped** (see `git show --stat 0674ac8` for the canonical list): `mkdocs.yml` (UPDATE) + minimal cross-ref tweaks if any pages needed re-linking after the move.
+
+**Verification**: `mkdocs build --strict` exits 0 + commit (no push). Plan status flipped from `pending (Wave 33 target)` to CLOSED.
+
+Refs: Wave 32 audit gap (B.3 mkdocs --strict HARD gate), `framework-internal-metrics.md` §1 B.3 row, `docs/baseline-audit-report.md` B.3 note.

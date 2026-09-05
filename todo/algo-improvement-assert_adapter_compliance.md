@@ -1,6 +1,6 @@
 # Algorithm improvement — assert_adapter_compliance enforcement (HIGH-4 + MEDIUM-11)
 
-**Status:** pending (NEW — Wave 32 audit gap; framework surface)
+**Status:** CLOSED in Wave 38 (commit f7ee3ae, Wave 38 Agent A WF1) — HIGH-4 + MEDIUM-11 closed: explicit warning on non-runtime Protocol + @implements discipline on every registered adapter + CI enforcement test parametrised over ADAPTER_REGISTRY
 **Date:** 2026-09-05
 **Priority:** high (framework Protocol conformance currently unenforced)
 **Depends on:** Wave 11 Phase 2 (Protocol surfaces declared)
@@ -194,3 +194,17 @@ Per `docs/audit/framework-code-review.md` §1.13:
 Per `docs/audit/framework-code-review.md` §2.4:
 - The full D.1 "Shrink adapters" gap (task #344) is **not** in scope here;
   that's a separate plan (gated on MUST-3 framework-core glue)
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **f7ee3ae** (Wave 38 Agent A WF1).
+
+**Result summary**:
+- HIGH-4 closed: explicit `RuntimeWarning` when `assert_adapter_compliance` is invoked with a Protocol that is not decorated with `@runtime_checkable` (silent-skip path removed)
+- MEDIUM-11 closed: `@implements(<smallest relevant Protocol>)` decorator discipline applied across the registered adapter set (Phase B sweep)
+- Phase C CI test shipped in `tests/test_framework/test_adapter_protocol_enforcement.py`, parametrised over `ADAPTER_REGISTRY` so every registered adapter is exercised by the enforcement gate
+
+**Files shipped** (see `git show --stat f7ee3ae` for the canonical list): enforcement-warning path in `adaptive_reflow/framework/interfaces.py`, `@implements` decorators across `adaptive_reflow/adapters/*.py`, two new test files, CI workflow wiring.
+
+**Verification**: pytest + mkdocs build --strict run + commit (no push). Wave 38 dispatched 5 parallel workflows; this plan was Wave 38 Agent A WF1. Plan status flipped from `pending (Wave 33 target)` to CLOSED.
+
+Refs: `docs/audit/framework-code-review.md` §1.13 (HIGH-4 + MEDIUM-11 now RESOLVED).

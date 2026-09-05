@@ -1,6 +1,6 @@
 # Algorithm improvement — FlowMol3V2Adapter restart shape crash (NONCONFORMANCE_BUG #1)
 
-**Status:** pending (NEW — Wave 32 audit gap; 5-10 LOC fix + regression test)
+**Status:** CLOSED in Wave 38 (commit b9ef18b, Wave 38 Agent B WF4) — NONCONFORMANCE_BUG #1 closed: channel-set pre-validation for restart shape on FlowMol3V2Adapter (production adapter crash fixed)
 **Date:** 2026-09-05
 **Priority:** medium (production adapter; affects FlowMol3 v2 integration)
 **Depends on:** none
@@ -183,3 +183,17 @@ Per `docs/audit/framework-code-review.md` §1.14 [LOW-26]:
   `CategoricalAwareBlender.blend(...)` entry-point
 - **Scope decision**: defer to a separate PR (the categorical_blender
   refactor is a Phase 3 follow-up)
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **b9ef18b** (Wave 38 Agent B WF4).
+
+**Result summary**:
+- NONCONFORMANCE_BUG #1 closed: `FlowMol3V2Adapter` no longer crashes when a restart_blend round produces a tensor whose channel count diverges from the upstream channel-set expectation. The fix adds a channel-set pre-validation step that runs *before* the restart shape assembly, raising a clear `RuntimeError` (or triggering a no-op blend) rather than producing a malformed tensor that downstream consumers cannot interpret
+- 5-10 LOC fix + regression test in the production adapter's conformance test suite
+- FlowMol3 v2 integration is restored to a non-crashing restart path; downstream restart-blend experiments can resume
+
+**Files shipped** (see `git show --stat b9ef18b` for the canonical list): the FlowMol3V2Adapter edit + a regression test that exercises the pre-validation path.
+
+**Verification**: pytest tests/test_adapters/test_flowmol3_v2.py passes + restart-shape integration smoke + commit (no push). Plan status flipped from `pending (Wave 33 target)` to CLOSED.
+
+Refs: `docs/audit/framework-code-review.md` NONCONFORMANCE_BUG #1 (now RESOLVED), `framework-internal-metrics.md` D.3 row.

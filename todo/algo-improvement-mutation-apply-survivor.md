@@ -1,6 +1,6 @@
 # Algorithm improvement — mutation audit apply-survivor feature (R-4)
 
-**Status:** pending (NEW — Wave 32 Agent B recommendation R-4)
+**Status:** CLOSED in Wave 38 (commit 5e1731f, Wave 38 Agent A WF4) — R-4 closed: --apply-survivor flag shipped on tools/run_mutation_audit.py + docs/mutation_audit_q4_2026.md APPENDED with apply-survivor section + docs/baseline-audit-report.md F.6 row updated
 **Date:** 2026-09-05
 **Priority:** low (current workflow works; this is an enhancement)
 **Depends on:** Wave 17 Phase 2 + Wave 25 F.6 mutation audit (live; 0.833 score)
@@ -261,3 +261,17 @@ Per `docs/audit/framework-code-review.md` §1.15 [LOW-28]:
 - `_run_twodim_fm` calls `self._adapter._batched_integrate_rk4(...)`
   accessing a private method
 - Add the `# test seam` comment (1-line; include in this PR)
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **5e1731f** (Wave 38 Agent A WF4 — note the same commit also bundles the R-1 expecttest work, see `todo/algo-improvement-expecttest-adoption.md`).
+
+**Result summary**:
+- R-4 closed: `tools/run_mutation_audit.py` gains a `--apply-survivor` flag that, when set, automatically rewrites the surviving mutants back into the source tree as TODO-marked commits-ready hunks. This converts the mutation-audit workflow from "report + manual fix" to "report + one-flag fix-it-yourself loop"
+- `docs/mutation_audit_q4_2026.md` APPENDED with an apply-survivor section explaining the new flag, the safety guarantees (no auto-commit; output is a patch file or `--write` mode writes to source), and a worked example using a Wave 17 SM/TF survivor
+- `docs/baseline-audit-report.md` F.6 row updated (Wave 34 R-4 reference) to record that the apply-survivor flag now ships
+
+**Files shipped** (see `git show --stat 5e1731f` for the canonical list): `tools/run_mutation_audit.py` (+222 / -3 LOC; new flag + apply loop) + `docs/mutation_audit_q4_2026.md` (+87 / -1; new section) + `docs/baseline-audit-report.md` (+1; F.6 row text).
+
+**Verification**: `tools/run_mutation_audit.py --help` shows the new flag + smoke run on one subsystem family confirms behaviour + commit (no push). Plan status flipped from `pending (Wave 34 target)` to CLOSED.
+
+Refs: Wave 17 Phase 2 + Wave 25 F.6 mutation audit (live, 0.833 score), `framework-internal-metrics.md` F.6 row.

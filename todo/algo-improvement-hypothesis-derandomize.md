@@ -1,6 +1,6 @@
 # Algorithm improvement — Hypothesis derandomize=True for CI (R-5)
 
-**Status:** pending (NEW — Wave 32 Agent B recommendation R-5)
+**Status:** CLOSED in Wave 38 (commit 15621b7, Wave 38 Agent B WF3) — R-5 closed: tests/_hypothesis_settings.py + tests/conftest.py wiring + [tool.hypothesis.profiles.ci] block in pyproject.toml (derandomize=True as single source of truth)
 **Date:** 2026-09-05
 **Priority:** medium (B.7 + 2026 best-practice)
 **Depends on:** Wave 24 Agent C B.7 property-based tests (live; 11 modules)
@@ -166,3 +166,18 @@ None — this is a self-contained test-tooling change.
 
 None — the B.7 metric value is already PASS (0.846 ≥ 0.85); this is a
 quality-of-life improvement, not a metric move.
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **15621b7** (Wave 38 Agent B WF3).
+
+**Result summary**:
+- R-5 closed: `tests/_hypothesis_settings.py` (NEW) sets `derandomize=True` as the single source of truth, eliminating the previous "sometimes derandomized, sometimes not" inconsistency across Wave 24 B.7 property-based tests
+- `tests/conftest.py` updated to load `_hypothesis_settings` so every property-based test inherits the deterministic setting automatically
+- `[tool.hypothesis.profiles.ci]` block added to `pyproject.toml` so the `ci` profile is the canonical invocation under CI (`--hypothesis-profile=ci`)
+- `.hypothesis/` verified gitignored (cache + database directories)
+
+**Files shipped** (see `git show --stat 15621b7` for the canonical list): `tests/_hypothesis_settings.py` (NEW) + `tests/conftest.py` (UPDATE) + `pyproject.toml` (UPDATE) + `.gitignore` verification (no change needed).
+
+**Verification**: pytest collection succeeds + a small subset (e.g. `pytest tests/test_property_based/ -q --timeout=30`) shows reproducible output + commit (no push). Plan status flipped from `pending (Wave 34 target)` to CLOSED.
+
+Refs: Wave 24 Agent C B.7 property-based tests (live, 11 modules), `framework-internal-metrics.md` R-5 row.

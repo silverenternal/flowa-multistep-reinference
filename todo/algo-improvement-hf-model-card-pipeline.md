@@ -1,6 +1,6 @@
 # Algorithm improvement — HF Hub model card upload pipeline (R-3)
 
-**Status:** pending (NEW — Wave 32 Agent B recommendation R-3)
+**Status:** CLOSED in Wave 38 (commit 7cbf085, Wave 38 Agent A WF5) — R-3 closed: tools/hf_pipeline.py + scripts/upload_model_card.py for HF Hub model card upload pipeline
 **Date:** 2026-09-05
 **Priority:** medium (cards exist locally; HF upload missing)
 **Depends on:** Wave 24 Agent A F.4 model cards (live)
@@ -252,3 +252,19 @@ Passes if:
 
 - B.7 additive sentence (Hypothesis replay DB) per Wave 32 Agent B §8:
   add to `framework-internal-metrics.md` §1 B.7 alongside the F.4 update
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **7cbf085** (Wave 38 Agent A WF5).
+
+**Result summary**:
+- R-3 closed: HF Hub model card upload pipeline ships as two complementary scripts
+  - `tools/hf_pipeline.py` — wraps `huggingface_hub.HfApi.upload_folder` / `upload_file` with the model's repo-id resolution + per-adapter card metadata path. Exposes a `publish_model_card(local_card_path, repo_id, revision)` helper
+  - `scripts/upload_model_card.py` — the user-facing CLI. Takes a local `model_card.md` path + a target `repo_id` + optional `--revision` + `--commit-message`. Wraps `tools/hf_pipeline.publish_model_card` with sane defaults and a `--dry-run` flag
+- Together with Wave 24 Agent A's local model cards (live; 5 integrated models), Wave 38 closes the gap from "cards exist locally" → "cards can be published to HF Hub without manual upload"
+- The pipeline reuses the existing `HUGGINGFACE_HUB_TOKEN` env var convention so no new credential surface is added
+
+**Files shipped** (see `git show --stat 7cbf085` for the canonical list): `tools/hf_pipeline.py` (NEW) + `scripts/upload_model_card.py` (NEW) + minimal README snippet in `docs/PLUG_IN_YOUR_MODEL.md`.
+
+**Verification**: `--help` output validates + dry-run against a dummy repo-id returns expected structure + commit (no push). Plan status flipped from `pending (Wave 34 target)` to CLOSED.
+
+Refs: Wave 24 Agent A F.4 model cards (live, 5 models), `framework-internal-metrics.md` F.4 row.

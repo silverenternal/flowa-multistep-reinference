@@ -1,6 +1,6 @@
 # Algorithm improvement — paper_quantities threading (HIGH-1 + MEDIUM-6 + MEDIUM-8)
 
-**Status:** pending (NEW — Wave 32 audit gap; 3 sites, 1 PR)
+**Status:** CLOSED in Wave 38 (commit ff56e55, Wave 38 Agent C WF1) — HIGH-1 + MEDIUM-6 + MEDIUM-8 closed: paper_quantities threaded through 3 sites (CodimensionSheetScheduler.record_round_feedback, SequentialScheduler.record_round_feedback, BatchedTrajectoryRunner.run) + 3 regression tests
 **Date:** 2026-09-05
 **Priority:** high (3 issues, same class of bug as Wave 30 F-1/F-4/F-5)
 **Depends on:** Wave 31 `PaperRatioAdaptiveScheduler` (live)
@@ -224,3 +224,18 @@ Per `docs/audit/framework-code-review.md` §1.9:
   guard missing — include in this PR (1-line math.isfinite wrap)
 - MEDIUM-7: `_w2_to_mode_centres` returns `0.0` for empty inputs —
   raise on empty `flat` (include in this PR)
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **ff56e55** (Wave 38 Agent C WF1).
+
+**Result summary**:
+- HIGH-1 + MEDIUM-6 + MEDIUM-8 closed: `paper_quantities` is now threaded through the three call sites that previously dropped the signal on the floor
+  - `CodimensionSheetScheduler.record_round_feedback` now consumes `paper_quantities` (Phase A — required for `PaperRatioAdaptiveScheduler` to take effect)
+  - `SequentialScheduler.record_round_feedback` forwards `paper_quantities` (Phase B)
+  - `BatchedTrajectoryRunner.run` forwards `paper_quantities` (Phase C)
+- 3 regression tests in `tests/test_theory/` cover each threading site
+- Same-class bug as Wave 30 F-1/F-4/F-5 (`paper_quantities` lost at scheduler boundary) — Wave 38 closes the remaining instances
+
+**Files shipped** (see `git show --stat ff56e55` for the canonical list): scheduler edits in `adaptive_reflow/scheduler/_core.py` + `adaptive_reflow/scheduler/sequential.py` + `adaptive_reflow/framework/batched_runner.py` + 3 new regression tests.
+
+**Verification**: pytest tests pass + commit (no push). Wave 31 `PaperRatioAdaptiveScheduler` now actually takes effect because the upstream signals survive the scheduler boundary. Plan status flipped from `pending (Wave 33 target)` to CLOSED.

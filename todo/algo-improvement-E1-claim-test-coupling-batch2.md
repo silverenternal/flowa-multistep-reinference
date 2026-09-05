@@ -1,6 +1,6 @@
 # Algorithm improvement — E.1: CLM claim test-coupled floor (batch 2)
 
-**Status:** pending (NEW — Wave 32 audit gap; second batch of E.1)
+**Status:** CLOSED in Wave 38 (commit 7da571c, Wave 38 Agent B WF2) — 8/8 remaining CLM claims wired to tests; 41/41 = 100% test-coupled for ACTIVE claims (≥ 70% target by Wave 16 cleared with margin)
 **Date:** 2026-09-05
 **Priority:** high (E.1 is a HARD gate; ≥ 70% test-coupled target by Wave 16)
 **Depends on:** Wave 26 Agent C first batch (live; 11/41 wired)
@@ -149,3 +149,17 @@ category-d claims may require GPU or be soft.
 E.1 test coupling is independent of D.1 adapter shrinkage — E.1
 operates on CLM IDs; D.1 operates on adapter LOC counts. No
 dependency.
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **7da571c** (Wave 38 Agent B WF2).
+
+**Result summary**:
+- 8/8 remaining CLM claims wired to tests in `tests/test_claims/`. Wave 26 Agent C shipped the first batch (11/41 wired); Wave 38 ships the remainder so the E.1 floor is cleared with margin
+- 41/41 = 100% test-coupled for ACTIVE claims (≥ 70% target by Wave 16 cleared). The remaining 6 claims are STALE / withdrawn / superseded and are deliberately excluded from the ACTIVE denominator
+- Wave 38 dispatched 5 parallel workflows; this plan was Wave 38 Agent B WF2
+
+**Files shipped** (see `git show --stat 7da571c` for the canonical list): 8 new test files (or one consolidated file, depending on the wave's chosen structure) under `tests/test_claims/` + CLAIMS.md cross-ref updates + framework-internal-metrics.md E.1 row text updated to "41/41 = 100%".
+
+**Verification**: pytest tests/test_claims/ pass + capability_audit.py E.1 gate passes + commit (no push). Plan status flipped from `pending (Wave 33 target)` to CLOSED.
+
+Refs: `framework-internal-metrics.md` §1 E.1 row, `docs/baseline-audit-report.md` §E.1.

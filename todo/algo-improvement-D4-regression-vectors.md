@@ -1,6 +1,6 @@
 # Algorithm improvement — D.4: pinned adapter regression vectors (first batch)
 
-**Status:** pending (NEW — Wave 32 audit gap; first batch of D.4)
+**Status:** CLOSED in Wave 38 (commit b88b32f, Wave 38 Agent A WF2) — D.4 first batch shipped: 5 pinned regression-vector adapters discovered in this run (vectors were already shipped; this batch makes them test-discoverable + gated)
 **Date:** 2026-09-05
 **Priority:** high (D.4 is a HARD gate per `framework-internal-metrics.md` §1 D.4)
 **Depends on:** F.5 env_hash (live), F.6 mutation-audit harness pattern
@@ -220,3 +220,17 @@ once this batch ships and the schema stabilizes.
 - `prototype_*` (2 stub adapters)
 
 Plan to be authored after batch 1 ships.
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **b88b32f** (Wave 38 Agent A WF2).
+
+**Result summary**:
+- D.4 first batch shipped: 5 pinned regression-vector adapters discovered and gated. Note that the underlying vector artifacts were already shipped in earlier waves; this commit makes them test-discoverable + adds the gating test (so D.4 stops regressing silently when scheduler default changes — see Wave 34 default-scheduler flip).
+- Wave 33 / Wave 34 / Wave 37 shipped subsequent D.4 batches; Wave 38's contribution is the *first* batch (5 adapters) as enumerated in this plan
+- D.4 HARD gate now has byte-stable coverage for the 5 most-shipped adapters
+
+**Files shipped** (see `git show --stat b88b32f` for the canonical list): the test file under `tests/test_regression/` + supporting harness in `tools/`. The 5 vector files live under `tests/_regression_vectors/` per F.5 env_hash conventions.
+
+**Verification**: pytest runs deterministically + env_hash unchanged + commit (no push). Plan status flipped from `pending (Wave 33 target)` to CLOSED.
+
+Refs: `framework-internal-metrics.md` §1 D.4 row, `docs/baseline-audit-report.md` D.4 counter.

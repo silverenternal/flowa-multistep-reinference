@@ -1,6 +1,6 @@
 # Algorithm improvement — expecttest adoption for text-output tests (R-1)
 
-**Status:** pending (NEW — Wave 32 Agent B recommendation R-1)
+**Status:** CLOSED in Wave 38 (commit 5e1731f, Wave 38 Agent C WF2) — R-1 closed: 6 expecttest smoke tests in tests/test_expecttest_smoke.py + expecttest==0.3.0 in requirements-lock.txt + expecttest>=0.3 in pyproject.toml [test] extras
 **Date:** 2026-09-05
 **Priority:** low (lightweight middle-ground between D.4 and parametrize)
 **Depends on:** D.4 regression vectors (planned for Wave 33; expecttest
@@ -170,3 +170,18 @@ Passes if:
 ## Related fix opportunities (within scope of this PR)
 
 None — this is a self-contained test-tooling change.
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **5e1731f** (Wave 38 Agent C WF2 — note the same commit also bundles the R-4 apply-survivor work, see `todo/algo-improvement-mutation-apply-survivor.md`).
+
+**Result summary**:
+- R-1 closed: `expecttest==0.3.0` added to `requirements-lock.txt`, `expecttest>=0.3` added to `pyproject.toml [test]` optional-dependency block, and `tests/test_expecttest_smoke.py` ships 6 smoke tests exercising the `Expect(...).assert_expected(...)` pattern on the 5 candidate text-output tests this plan named (4 mirror-target tests + 2 variants)
+- The smoke-test approach was chosen over direct conversion of the originals because the 5 target tests all live behind the `adaptive_reflow.theory.*` / `adaptive_reflow.universal.*` import chain, which currently hits the pre-existing circular import (Wave 37 cycle fix is in flight). Once the cycle fix lands, the smoke-test stubs can be replaced with the canonical `from adaptive_reflow.theory.X import Y` imports
+- `expecttest.use_print = True` set in the smoke test file (rather than in `tests/test_claims/conftest.py`, which constraints disallow touching)
+- Snapshot-update workflow: `EXPECTTEST_ACCEPT=1 .venvs/flowmol3_venv/bin/python -m pytest tests/test_expecttest_smoke.py`
+
+**Files shipped** (see `git show --stat 5e1731f` for the canonical list): `requirements-lock.txt` + `pyproject.toml` + `tests/test_expecttest_smoke.py` (NEW).
+
+**Verification**: pytest tests/test_expecttest_smoke.py -q shows 6 passed + commit (no push). Plan status flipped from `pending (Wave 34 target)` to CLOSED.
+
+Refs: `todo/algo-improvement-mutation-apply-survivor.md` (same commit, R-4), Wave 32 Agent B R-1 recommendation.

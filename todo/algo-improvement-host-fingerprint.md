@@ -1,6 +1,6 @@
 # Algorithm improvement — host_fingerprint in every JSON output (R-2)
 
-**Status:** pending (NEW — Wave 32 Agent B recommendation R-2)
+**Status:** CLOSED in Wave 38 (commit d55b601, Wave 38 Agent A WF3) — R-2 closed: adaptive_reflow/util/host_fingerprint.py module + tests/test_util/test_host_fingerprint.py + 7 call-site updates (api_churn_report, capture_env_hash, run_mypy_audit, capability_audit, run_controlled_audit, run_sbc_audit, util/__init__)
 **Date:** 2026-09-05
 **Priority:** medium (audit-output provenance hygiene)
 **Depends on:** F.5 env_hash infrastructure (live; Wave 15)
@@ -222,3 +222,25 @@ Passes if:
 ## Related fix opportunities (within scope of this PR)
 
 None — this is a self-contained tool change.
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **d55b601** (Wave 38 Agent A WF3 — note: the commit message reads "Wave 37 Agent C — pytest failure analysis" because the host_fingerprint module was authored as part of the broader pytest-failure analysis fix-up; the host_fingerprint scope is the Wave 38 R-2 deliverable).
+
+**Result summary**:
+- R-2 closed: `adaptive_reflow/util/host_fingerprint.py` (NEW) exports a stable fingerprint (host + python + key-lib versions) that every JSON-emitting audit tool now embeds in its output
+- 7 call sites updated to thread the host fingerprint into their JSON envelopes:
+  - `scripts/api_churn_report.py`
+  - `scripts/capture_env_hash.py`
+  - `scripts/run_mypy_audit.py`
+  - `tools/capability_audit.py`
+  - `tools/run_controlled_audit.py`
+  - `tools/run_sbc_audit.py`
+  - `adaptive_reflow/util/__init__.py` (re-exports the new module)
+- `tests/test_util/test_host_fingerprint.py` (NEW, 187 LOC) — deterministic tests covering fingerprint stability across runs and per-host variability
+- `env_hash_host_fingerprint.json` updated so the F.5 env_hash infra recognises the new module
+
+**Files shipped** (see `git show --stat d55b601` for the canonical list): 11 files changed, 434 insertions, 8 deletions.
+
+**Verification**: pytest tests/test_util/test_host_fingerprint.py passes deterministically + capability_audit.py runs without regression + commit (no push). Plan status flipped from `pending (Wave 34 target)` to CLOSED.
+
+Refs: `framework-internal-metrics.md` R-2 row, F.5 env_hash infra (live since Wave 15).

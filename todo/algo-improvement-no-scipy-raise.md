@@ -1,6 +1,6 @@
 # Algorithm improvement — bounded_lipschitz_distance_2d no-scipy raise (HIGH-2)
 
-**Status:** pending (NEW — Wave 32 audit gap; paper Theorem 1 contract)
+**Status:** CLOSED in Wave 38 (commit 89c088f, Wave 38 Agent B WF1) — HIGH-2 closed: greedy fallback in `bounded_lipschitz_distance_2d` replaced with explicit ImportError naming scipy>=1.7; paper Theorem 1 contract preserved under no-scipy env
 **Date:** 2026-09-05
 **Priority:** high (paper Theorem 1 contract breaks under no-scipy env)
 **Depends on:** none (single function)
@@ -193,3 +193,17 @@ Per `docs/audit/framework-code-review.md` §1.10:
     alternative (include in this PR if rename is < 5 LOC; otherwise defer)
 - DOC-8: `kernel_lipschitz_constant` (P2 #30) unanchored addition —
   add docstring note (include in this PR; doc-only)
+## Wave 38 close-out
+
+CLOSED in Wave 38 by commit **89c088f** (Wave 38 Agent B WF1).
+
+**Result summary**:
+- HIGH-2 closed: the silent greedy fallback in `bounded_lipschitz_distance_2d` (formerly `adaptive_reflow/eval/lipschitz_diagnostic.py` lines 530-537) is replaced with an explicit `ImportError` that names `scipy>=1.7` as the dependency requirement
+- Paper Theorem 1 contract preserved under no-scipy environments: the function now fails loud rather than returning a semantically-wrong greedy upper bound, so the `planar_bl_convergence_witness` and downstream `Theorem1StatementChecker` / `ExplicitRateBoundReport` consumers see consistent behaviour across CI minimal / Windows / scipy-installed environments
+- Misleading docstring claim ("the value returned is the exact BL distance") updated so the contract is true by construction
+
+**Files shipped** (see `git show --stat 89c088f` for the canonical list): the lipschitz_diagnostic edit + a regression test in `tests/test_eval/test_bounded_lipschitz_no_scipy.py` covering both the negative (no-scipy raises ImportError) and happy (scipy-present exact distance) paths.
+
+**Verification**: pytest tests pass deterministically + mkdocs build --strict + commit (no push). Plan status flipped from `pending (Wave 33 target)` to CLOSED.
+
+Refs: `docs/audit/framework-code-review.md` §1.10 (HIGH-2 now RESOLVED).
