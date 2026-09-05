@@ -47,7 +47,6 @@ Tasks satisfied
 from __future__ import annotations
 
 import hashlib
-from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -65,20 +64,21 @@ from adaptive_reflow.universal import (
     NoOpMixer,
 )
 from adaptive_reflow.universal.state import (
-    
     ChannelName,
     ODEConditionDelta,
     ODEIntegratorTrace,
     StateBundle,
-    TensorRef,
     validate_state_bundle,
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
     digest_state,
+    kaiming_uniform,
     make_ref,
-    seed_from_ids,
     memory_fraction_for,
+    seed_from_ids,
+    torch_is_available as _adapter_common_torch_is_available,
 )
 from adaptive_reflow.framework.interfaces import implements
 
@@ -182,40 +182,14 @@ def rectified_flow_cifar_resolve_weights_path(
 def torch_is_available() -> bool:
     """Return ``True`` iff :mod:`torch` is importable in this interpreter.
 
-    The check is intentionally a runtime ``importlib.util.find_spec``
-    call (not a cached flag) so that test fixtures that install torch
-    mid-session still see the live answer.
+    Thin delegation to :func:`adaptive_reflow.adapters._adapter_common
+    .torch_is_available` so the per-adapter shim does not duplicate
+    the canonical probe. Kept at this location because the public
+    surface (imported by :mod:`tools.eval_rf_cifar`,
+    :mod:`tools.run_rf_cifar_ablation`, and the test suite) expects
+    ``from adaptive_reflow.adapters.rectified_flow_cifar import torch_is_available``.
     """
-    import importlib.util as _il
-
-    return _il.find_spec("torch") is not None
-
-
-# ---------------------------------------------------------------------------
-# Private helpers — hashing + state-shape integrity
-# ---------------------------------------------------------------------------
-
-
-def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """SHA-256-derived 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
-    return int(hashlib.sha256(blob).hexdigest()[:8], 16)
-
-
-def _digest_state(payload: Mapping[str, Any]) -> str:
-    """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
-    return digest_state(payload)
-
-
-def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Deterministic hash-stable :class:`TensorRef`."""
-    return make_ref("rf_cifar:image", label, **parts)
-
-
-def _validate_state_shape(x: ArrayF64) -> ArrayF64:
-    """Reshape ``x`` to ``RF_CIFAR_STATE_SHAPE`` (3, 32, 32) and float64."""
-    arr = np.asarray(x, dtype=np.float64).reshape(RF_CIFAR_STATE_SHAPE)
-    return arr
+    return _adapter_common_torch_is_available()
 
 
 # ---------------------------------------------------------------------------
@@ -267,17 +241,10 @@ def _random_init_synthetic_weights(
     in_dim = 3 * 32 * 32
     hidden_w = int(hidden) if hidden is not None else int(RF_CIFAR_SYNTHETIC_HIDDEN)
 
-    def kaiming(fan_in: int, fan_out: int) -> ArrayF64:
-        bound = np.sqrt(6.0 / float(fan_in))
-        return np.asarray(
-            rng.uniform(-bound, bound, size=(fan_in, fan_out)),
-            dtype=np.float64,
-        )
-
     return {
-        "W1": kaiming(in_dim, hidden_w),
+        "W1": kaiming_uniform(rng, in_dim, hidden_w),
         "b1": np.zeros(hidden_w, dtype=np.float64),
-        "W2": kaiming(hidden_w, in_dim),
+        "W2": kaiming_uniform(rng, hidden_w, in_dim),
         "b2": np.zeros(in_dim, dtype=np.float64),
         "t_bias": rng.standard_normal(hidden_w).astype(np.float64),
     }
@@ -681,7 +648,15 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
             )
 
         # LRU-bounded native-states cache (audit A-3 mirror of twodim_fm).
-        self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        # Uses the framework-shared :class:`NativeStateCache` from
+        # :mod:`adaptive_reflow.adapters._adapter_common` (the D.1 shrink
+        # target — see ``docs/audit/wave42-rectified-flow-cifar-shrink.md``).
+        # The attribute name ``_native_states`` is preserved so test seams
+        # and external callers (``tools.eval_rf_cifar``, etc.) keep working
+        # unchanged.
+        self._native_states: NativeStateCache = NativeStateCache(
+            RF_CIFAR_NATIVE_STATES_MAXSIZE
+        )
         self._caps = RectifiedFlowCIFARCapabilities()
         # Paper-uplift-27 audit-code buffer (counted post-hoc for AC3).
         self._audit_codes_buffer: list[str] = []
@@ -694,22 +669,6 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         return self._caps
 
     # ------------------------------------------------------------------
-    # 0. helpers — LRU-bounded native_states
-    # ------------------------------------------------------------------
-
-    def _put_native_state(self, digest: str, entry: dict[str, Any]) -> None:
-        if digest in self._native_states:
-            self._native_states[digest] = entry
-            self._native_states.move_to_end(digest)
-            return
-        self._native_states[digest] = entry
-        while len(self._native_states) > RF_CIFAR_NATIVE_STATES_MAXSIZE:
-            self._native_states.popitem(last=False)
-
-    def _evict_native_state(self, digest: str) -> None:
-        self._native_states.pop(digest, None)
-
-    # ------------------------------------------------------------------
     # 2. build_initial_state
     # ------------------------------------------------------------------
 
@@ -719,14 +678,14 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         batch_id: str,
         sample_id: str,
     ) -> StateBundle:
-        seed = _seed_from_ids(
+        seed = seed_from_ids(
             str(batch_id),
             str(sample_id),
             int(self._seed_offset) + 0,
         )
         rng = np.random.default_rng(seed)
         x0 = _synthesize_image_like_tensor(rng)
-        digest = _digest_state(
+        digest = digest_state(
             {
                 "kind": "initial",
                 "batch_id": str(batch_id),
@@ -739,7 +698,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 ],
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             digest,
             {
                 "x0": np.asarray(x0, dtype=np.float64).reshape(RF_CIFAR_STATE_SHAPE),
@@ -749,7 +708,8 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         )
         bundle = StateBundle(
             channels={
-                ChannelName("image"): _make_ref(
+                ChannelName("image"): make_ref(
+                    "rf_cifar:image",
                     "initial",
                     batch=batch_id,
                     sample=sample_id,
@@ -836,7 +796,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         blended = (m * prior_x + (1.0 - m) * fresh_x).astype(np.float64)
         blended = np.clip(blended, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP)
 
-        next_digest = _digest_state(
+        next_digest = digest_state(
             {
                 "kind": "restart",
                 "src_digest": state.native_state_digest,
@@ -851,7 +811,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 ],
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             next_digest,
             {
                 "x0": blended,
@@ -862,7 +822,8 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         provenance = tuple(state.provenance) + (AUDIT_RF_CIFAR_RESTART_BLEND,)
         return StateBundle(
             channels={
-                ChannelName("image"): _make_ref(
+                ChannelName("image"): make_ref(
+                    "rf_cifar:image",
                     "restart",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
@@ -984,7 +945,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 )
             traj[i] = x_cur
 
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
@@ -999,7 +960,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 "mode": self._mode,
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             traj_digest,
             {
                 "trajectory": traj,
@@ -1041,7 +1002,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         x_final = np.asarray(trajectory[-1], dtype=np.float64).reshape(
             RF_CIFAR_STATE_SHAPE
         )
-        endpoint_digest = _digest_state(
+        endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": trace.native_state_digest,
@@ -1054,7 +1015,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 "t_final": float(RF_CIFAR_T_END),
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             endpoint_digest,
             {
                 "x": np.asarray(x_final, dtype=np.float64).reshape(RF_CIFAR_STATE_SHAPE),
@@ -1120,7 +1081,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         )
         x_new_arr = np.asarray(injected, dtype=np.float64).reshape(RF_CIFAR_STATE_SHAPE)
         x_new = np.clip(x_prior + x_new_arr, -RF_CIFAR_CLAMP, RF_CIFAR_CLAMP)
-        new_digest = _digest_state(
+        new_digest = digest_state(
             {
                 "kind": "forward_noise",
                 "src_digest": bundle.native_state_digest,
@@ -1132,7 +1093,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
                 ],
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             new_digest,
             {
                 "x0": x_new,
