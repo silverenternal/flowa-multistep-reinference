@@ -283,9 +283,9 @@ Per the task spec §"What we DON'T know", the following are
 
 ---
 
-## 5. F-5 limitation: architectural choice (cosine-driven `n_cap`)
+## 5. F-5 limitation (Wave 30 P1) — **resolved in Wave 31 Agent A**
 
-**Status:** Accepted (Wave 30 P1, ADR-0017).
+**Status:** **Resolved** (Wave 31 Agent A — F-5 wire ratio to n_cap).
 
 **Background.** Wave 29 Agent A's theory ↔ implementation audit
 ([`docs/audit/theory-implementation-gap.md`](../audit/theory-implementation-gap.md),
@@ -301,77 +301,45 @@ The paper's prediction (Theorem 1 + Corollary 1, line 165) is that
 as `ε → 0`, sheet evidence `Θ(ε⁺¹)` dominates cell evidence
 `O(ε⁺²)`; the natural mapping is `n_cap ∝ (1 − eps_implicit)` or
 `n_cap = paper_selection_ratio(sheet_A, packing_B, cell_C, eps)`.
-The framework's actual driver is **cosine annealing**
-([ADR-0010](../adr/0010-cosine-driven-memory-fraction.md)):
+
+**Wave 31 resolution.** The
+`CodimensionSheetScheduler.sample()` method now drives `n_cap`
+directly from the paper's sheet-vs-cell evidence ratio:
 
 ```python
-n_cap = n_min + (n_max - n_min) * cosine_base_value
+sheet = sheet_A * eps
+cell  = cell_C * packing_B * eps ** 2
+ratio = sheet / (sheet + cell)
+n_cap = n_min + (n_max - n_min) * ratio
 ```
 
-The paper-derived `ratio` is computed per-round (line 2748-2757) and
-emitted as `ScheduleSample.evidence_ratio` — a **reportable metric**,
-not a driver of `n_cap`.
+The cosine ramp is retained only as a `u_r` reference and to feed
+the framework-side heuristic evidence ratio when no residual profile
+has been supplied; in the canonical paper-quantity-augmented path,
+`n_cap` is the direct ratio mapping. The legacy `eps_direction`
+flip (`ratio -> 1 - ratio`) is preserved for backward compatibility
+with the prior cosine-based interpretation.
 
-**Honest architectural statement.** Per ADR-0017
-([`docs/adr/0017-cosine-vs-paper-ratio-n-cap.md`](../adr/0017-cosine-vs-paper-ratio-n-cap.md)),
-the framework's choice of cosine-driven `n_cap` is a **deliberate
-architectural decision**, not a bug:
-
-* **In regime** (F-side-admissible adapters, paper Theorem 1's
-  `R → R²` setting): the cosine-anneal `n_cap` is sufficient. The
-  paper's `evidence_ratio` is a reportable sheet-vs-cell indicator;
-  the cosine-anneal schedule is the framework's documented
-  coarse-to-fine exploration/refinement split. The 36
-  algorithm-level uplifts in `docs/benchmark-uplifts.md` hold.
-* **Out of regime** (out-of-F-side-class adapters, e.g.
-  `twodim_fm`): the cosine-anneal `n_cap` does not respond to the
-  paper's sheet-vs-cell signal (which is degenerate because there is
-  no `g` profile). The framework regresses; this is **expected
-  behaviour**, not a bug.
-
-**Why the framework stays with cosine annealing.** Per
-[ADR-0017](../adr/0017-cosine-vs-paper-ratio-n-cap.md) §"Why we are
-NOT redesigning in Wave 30":
-
-1. **ADR-0010 is canonical.** All 36 algorithm-level uplifts rely
-   on cosine annealing in their (current, achieved) assertions;
-   switching to a paper-evidence-driven driver would invalidate the
-   byte-for-byte audit invariant on every existing fixture.
-2. **The `evidence_ratio` signal is logged, not driving.** The
-   per-round `paper_selection_ratio` is emitted as
-   `ScheduleSample.evidence_ratio`; it is preserved for future
-   redesigns and audit-trail completeness.
-3. **The architectural choice does not determine the regression on
-   `twodim_fm`.** A paper-evidence-driven `n_cap` would still
-   regress because the paper signal is degenerate for out-of-F-side
-   adapters. The F-side hypothesis class (not the driver choice)
-   determines whether the framework helps or regresses.
-
-**Wave 30 P1 directive.** "Document rather than redesign". The full
-redesign path is a multi-wave effort (new driver + F-side gate +
-uplift migration + re-audit of 12 regressions), explicitly out of
-scope for Wave 30 P1. The honest path is this section.
+**Consequence.** The "ratio is logged, not used" F-5 limitation
+is no longer an architectural choice. `n_cap` now responds
+directly to the paper's sheet-vs-cell signal. The `twodim_fm`
+regression documented in §1.3 / §2.2 is still expected behaviour
+because the paper signal itself is degenerate for out-of-F-side-class
+adapters (no 1-D profile `g`), but the architectural driver is
+now paper-aligned per ADR-0013.
 
 **Cross-references:**
 
 * [`docs/audit/theory-implementation-gap.md`](../audit/theory-implementation-gap.md)
   §F-5 — the Wave 29 Agent A finding (audit source).
-* [`docs/adr/0017-cosine-vs-paper-ratio-n-cap.md`](../adr/0017-cosine-vs-paper-ratio-n-cap.md)
-  — the architectural decision record (this section's parent).
-* [`docs/adr/0010-cosine-driven-memory-fraction.md`](../adr/0010-cosine-driven-memory-fraction.md)
-  — the cosine-anneal `n_cap` driver that this section documents as
-  the architectural choice.
+* [`docs/adr/0013-posterior-selection-drives-algorithm.md`](../adr/0013-posterior-selection-drives-algorithm.md)
+  — the paper-quantity naming ADR whose naming convention is now
+  the actual driver of `n_cap` (per Wave 31 Agent A).
 * `docs/baseline-audit-report.md` §C.5 — the C.5 audit entry now
-  carries an additive F-5 cross-reference to this section.
-
-**Corollary (user-facing guidance, F-5).** The framework's `n_cap`
-driver is **cosine-anneal**, not paper-evidence-driven. Users who
-need the paper's `evidence_ratio` to actually drive `n_cap` must
-either (a) build a F-side-admissible adapter (so the signal is
-non-degenerate) or (b) author a custom scheduler that consumes
-`ScheduleSample.evidence_ratio` and emits a paper-driven `n_cap`.
-Both paths are out-of-scope for the framework's canonical
-deployment.
+  carries an additive F-5 cross-reference and a note that F-5 is
+  **resolved** as of Wave 31 Agent A.
+* `adaptive_reflow/algorithm/scheduler/_core.py::CodimensionSheetScheduler.sample`
+  — the ratio-driven `n_cap` formula.
 
 ---
 
