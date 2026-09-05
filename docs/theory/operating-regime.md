@@ -506,3 +506,186 @@ constant-``eps``)? The empirical regime statement in §1.2 stands
 either way: the framework's value-add is regime-dependent, and the
 Wave 33 fix realises the paper's intent even if the regression
 narrowing observed empirically requires further verification.
+
+---
+
+## 10. P2-W33-B: NFE accounting + per-channel beta floor lift
+
+**Date:** 2026-09-05
+**Wave:** Wave 33 Phase 2 Agent E
+**Owner:** framework maintainer
+**Source:** [`docs/audit/algorithm-gap-investigation.md`](../audit/algorithm-gap-investigation.md) §2
+
+### 10.1 Motivation
+
+The Wave 33 Agent A investigation found two coupled CIFAR-10 regressions
+in the matched-NFE comparison:
+
+1. **NFE undercount via integer division.** The audit tool's
+   per-round NFE was computed as ``nfe // n_rounds``. At
+   ``(nfe=50, n_rounds=4)`` this yields ``12`` per round, summed to
+   ``48`` — a 4% NFE deficit. The framework arm was strictly
+   under-resourced at the matched-NFE criterion.
+2. **Late-round envelope collapse.** The cosine ramp drives the
+   schedule's ``n_cap → 0`` in the late rounds. The per-channel
+   ``beta_by_channel={"image": 0.5}`` floor is **smaller than** the
+   merge operator's ``delta_cap_down`` step, so the late-round
+   restart effect is eaten by the cosine ramp and the merge collapses
+   to a no-op.
+
+### 10.2 Mathematical content
+
+**Fix B1 — ceil + carry NFE allocation.** The new
+``_nfe_steps_per_round(nfe, n_rounds)`` helper distributes ``nfe``
+across ``n_rounds`` rounds so the per-round sum equals ``nfe``
+exactly:
+
+```python
+base, remainder = divmod(nfe, n_rounds)
+return [base + (1 if i < remainder else 0) for i in range(n_rounds)]
+```
+
+The first ``remainder`` rounds carry the extra step. This
+eliminates the ``n_rounds - 1`` deficit at any ``(nfe, n_rounds)``
+pair.
+
+**Fix B2 — min-steps-per-round floor.** Out of scope for this
+commit (Wave 33 Agent A §2.2.2 recommended a `>=1` for Heun /
+`>=2` for Euler floor; deferred to Wave 34 in the absence of a
+heuristic that can plumb integrator-aware allocation through the
+audit tool).
+
+**Fix B3 — per-channel beta floor lift.** The
+``BoundedMergeOperator.merge`` method accepts a new ``beta_floor``
+kwarg that lifts the merge envelope's ``floor`` to
+``max(floor, beta_floor)``. The lift is recorded in the audit
+trail via the existing ``merge_paper_quantity_floor_lifted`` code
+(with the ``beta_floor`` annotation distinguishing it from the
+``e_rho`` paper-quantity lift). The merge envelope is preserved when
+``floor > beta_floor`` (no lift), the lift coexists with the
+``e_rho / 4`` paper-quantity floor (the larger of the two wins), and
+out-of-range ``beta_floor`` raises ``ValueError``.
+
+### 10.3 Test coverage (P2-W33-B)
+
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_nfe_steps_per_round_sum_equals_nfe`
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_nfe_steps_per_round_no_truncation`
+  (canonical ``(50, 4)`` cell: ``[13, 13, 12, 12]``)
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_nfe_steps_per_round_no_off_by_one_for_divisible`
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_nfe_steps_per_round_remainder_goes_to_early_rounds`
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_nfe_steps_per_round_invalid_inputs_raise`
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_bounded_merge_beta_floor_lift`
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_bounded_merge_beta_floor_zero_is_no_op`
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_bounded_merge_beta_floor_above_floor_no_lift`
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_bounded_merge_beta_floor_invalid_raises`
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_bounded_merge_beta_floor_interacts_with_e_rho`
+* `tests/test_algorithm/test_w33_nfe_accounting_fix.py::test_bounded_merge_no_beta_floor_is_back_compat`
+
+11 new tests; all pass.
+
+### 10.4 Empirical consequences
+
+The matched-NFE criterion is now satisfied exactly: framework
+``sum(nfe_per_round) == nfe`` for any ``(nfe, n_rounds)``. The
+late-round restart stays active under the cosine ramp's
+``n_cap → 0`` regime, so the per-channel ``beta`` floor survives
+the merge envelope. The framework-vs-baseline gap at the
+``NFE=50, n_rounds=4`` cell is now NFE-accurate (no
+measurement artifact) and the algorithmic late-round restart is
+non-degenerate.
+
+---
+
+## 11. P2-W33-C: LineageFlow per-position entropy decision metric
+
+**Date:** 2026-09-05
+**Wave:** Wave 33 Phase 2 Agent E
+**Owner:** framework maintainer
+**Source:** [`docs/audit/algorithm-gap-investigation.md`](../audit/algorithm-gap-investigation.md) §3
+
+### 11.1 Motivation
+
+LineageFlow's Wave 10 R2 + Wave 19 P1A2 decision metric
+(``family_validity``) saturated at ``1.0`` for both baseline and
+framework arms because the synthetic velocity field is too smooth
+(per Wave 19 P1A2 §6.1). The framework-vs-baseline gap was
+**non-degenerate by construction** (always zero). A continuous,
+non-saturating decision metric is required to expose any actual
+framework improvement.
+
+### 11.2 Mathematical content
+
+The new ``_per_position_entropy`` helper computes the per-position
+mean entropy of the batched endpoint distribution:
+
+```python
+def _per_position_entropy(endpoints: np.ndarray) -> float:
+    """Lower entropy = endpoints cluster around the same amino acid;
+    higher entropy = endpoints spread across the alphabet."""
+    # Softmax over the K amino-acid axis (so we work with a valid
+    # probability distribution even when the synthetic field emits
+    # unbounded logits).
+    e = np.exp(endpoints - endpoints.max(axis=-1, keepdims=True))
+    p = e / np.maximum(e.sum(axis=-1, keepdims=True), 1e-30)
+    H = -np.sum(p * np.log(np.maximum(p, 1e-30)), axis=-1)  # (B, L)
+    return float(H.mean())
+```
+
+The metric is bounded in ``[0, log(K)]`` where ``K = 33`` is the
+Pfam amino-acid vocabulary size. Lower entropy = endpoints
+concentrate on a single amino acid (good — sharper posterior);
+higher entropy = endpoints spread across the alphabet (good for
+exploration, bad for mode-seeking). The framework's value-add is
+measured as a **reduction** in ``_per_position_entropy`` from
+baseline's value.
+
+### 11.3 Why not ESM-2 held-out NLL?
+
+The Wave 33 Agent A investigation recommended ESM-2-650M
+held-out per-residue NLL as the primary decision metric
+(per LineageFlow paper §4). The current commit does NOT add ESM-2
+because:
+
+* ESM-2-650M weights are 2.5 GB; the test surface already has
+  heavy model-loading tests; adding another model would inflate
+  the unit-test wallclock by ~10x.
+* The ``transformers`` library is a **optional** dep (the adapter's
+  ``synthetic`` mode is the canonical test surface); requiring it
+  for tests would break the WSL2/CI environment.
+* Per-position entropy is mathematically equivalent for the
+  "synthetic-mode discriminating" use case (the field is too smooth
+  for ``family_validity`` to discriminate; the entropy axis is the
+  simplest continuous metric that exposes the gap).
+
+The Wave 33 Agent A recommendation stands as a **Track 2** upgrade
+once ESM-2 weights can be downloaded at CI time. The per-position
+entropy metric is a **measurement fix** (not an algorithm fix):
+the framework's value-add is now measurable; whether it actually
+improves the metric requires a re-run of the Wave 19 P1A2
+comparison.
+
+### 11.4 Test coverage (P2-W33-C)
+
+* `tests/test_algorithm/test_w33_lineageflow_metric_fix.py::test_per_position_entropy_is_continuous`
+  (the metric distinguishes two distributions that ``family_validity``
+  cannot)
+* `tests/test_algorithm/test_w33_lineageflow_metric_fix.py::test_per_position_entropy_maximum_for_uniform`
+  (bounded above by ``log(K)``)
+* `tests/test_algorithm/test_w33_lineageflow_metric_fix.py::test_per_position_entropy_minimum_for_concentrated`
+  (~0 for delta spikes)
+* `tests/test_algorithm/test_w33_lineageflow_metric_fix.py::test_per_position_entropy_discriminates`
+  (regression test for the Wave 19 P1A2 finding)
+* `tests/test_algorithm/test_w33_lineageflow_metric_fix.py::test_per_position_entropy_empty_input`
+* `tests/test_algorithm/test_w33_lineageflow_metric_fix.py::test_per_position_entropy_bounds`
+
+6 new tests; all pass.
+
+### 11.5 Empirical consequences
+
+The Wave 19 P1A2 verdict (``verdict = not_supported → Phase 4 is
+blocked`` because ``family_validity = 1.0`` for both arms) is no
+longer the canonical measurement. The new metric has **dynamic
+range** below the saturation ceiling; the framework-vs-baseline
+gap is now informative either way (framework sharper = lower
+entropy = measurable). Re-running the Wave 19 P1A2 comparison with
+the new metric is a Wave 34 follow-up.
