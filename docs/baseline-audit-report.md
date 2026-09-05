@@ -2069,4 +2069,92 @@ $ python -m pytest tests/test_adapters/test_regression_vectors.py -v --tb=short
 satisfied). Closes Wave 32 gap-audit §3 finding "D.4 NOT MET, 0/18"
 via three additive batches (5 + 7 + 6 = 18 vectors).
 
+### Wave 33 Agent B batch 2 update (additive, 2026-09-05) — 7 batch-2 vectors pinned
+
+**Added 7 batch-2 regression vectors** to the D.4 schema, bringing the
+D.4 HARD gate from 5/18 to **12/18 PARTIAL**:
+
+* `mnist_fm` (CPU-only; RK4 integrator, random-init weights)
+* `self_flow` (synthetic mode; image SiT-XL/2, latent)
+* `rectified_flow_cifar` (synthetic mode; CIFAR-10 rectified flow)
+* `toy_gaussian` (CPU-only; scalar Gaussian flow, 1D)
+* `toy_linear` (CPU-only; placeholder scalar flow)
+* `graphbfn` (synthetic mode; GraphBFN Bayesian update, QM9)
+* `lumina_image_2_0` (synthetic mode; 16x128x128 latent flow matching,
+  requires non-empty `prompt` in condition delta)
+
+Combined with Wave 32 batch 1 (5), D.4 is now **12/18 = 66.7% PARTIAL**.
+Wave 33 Agent C batch 3 (the remaining 6 adapters) closes the gate to
+**18/18 = MET**.
+
+Per-vector capture (3 seeds × 3 NFEs = 9 hashes per adapter):
+
+* `seed`: 41, 42, 43 (deterministic).
+* `input_id`: canonical `batch_id` + `sample_id` (synthetic, fixed
+  per seed).
+* `nfe`: 5, 10, 50 (ODE solver step count sweep).
+* `host_fingerprint`: SHA-256 over the locked environment
+  (`env_hash.txt` `composite_hash` field); required to match for CI
+  byte-stability assertion.
+* `output_sha256`: SHA-256 over the canonicalised trajectory
+  (initial state, trajectory, endpoint, integrator config).
+
+**Per-adapter hash counts:** `mnist_fm`=9, `self_flow`=9,
+`rectified_flow_cifar`=9, `toy_gaussian`=9, `toy_linear`=9,
+`graphbfn`=9, `lumina_image_2_0`=9. Total = 63 new pinned hashes.
+Combined with Wave 32 batch 1 (45 hashes): **108 hashes across 12 adapters**.
+
+**Adapter-specific notes:**
+
+* `toy_linear` — its `solve_ode(state, condition, *, seed, steps=1)`
+  signature ignores `num_steps` from the condition; the runner records
+  `num_steps` in the condition for symmetry but the per-condition hash
+  is invariant across NFE for this adapter. The trace + endpoint surface
+  is still pinned, so the regression gate still catches adapter drift.
+* `toy_gaussian` — reads `target_mean` from the condition delta;
+  the runner pins `target_mean=1.0` so the trajectory is byte-stable.
+* `graphbfn` — synthetic mode generates a variable-node graph
+  scaffold per call (Geometric distribution); the per-condition hash
+  pins the (node count, edge count, theta arrays) deterministic surface.
+* `lumina_image_2_0` — synthetic mode is offline-friendly (no
+  Gemma2 + diffusers stack required); the runner pins a deterministic
+  placeholder `prompt="d4-lumina-audit-placeholder"` so the text-embed
+  cache key is byte-stable.
+
+**Files added/changed (Wave 33 Agent B batch 2):**
+
+* `tools/run_regression_vector_audit.py` (extended: 12
+  `AdapterSpec` entries; `_make_lumina_image_2_0` factory; lumina's
+  `compose_condition` requires `prompt` in the condition delta).
+* `tests/test_adapters/test_regression_vectors.py` (extended:
+  ADAPTERS tuple now contains 12 entries; **30 tests, all PASS**
+  in 3.65 s on this host).
+* `regression-vectors/{mnist_fm,self_flow,rectified_flow_cifar,
+  toy_gaussian,toy_linear,graphbfn,lumina_image_2_0}.json`
+  (NEW × 7, per-adapter 9 hashes each = 63 new hashes).
+* `todo/framework-internal-metrics.md` (additive: D.4 row update
+  to `12/18 PARTIAL` with Wave 33 Agent B batch 2 provenance).
+* `docs/baseline-audit-report.md` (this additive section).
+
+**Verification (host fingerprint `8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480`):**
+
+```
+$ python tools/run_regression_vector_audit.py generate \
+    --adapter mnist_fm --adapter self_flow \
+    --adapter rectified_flow_cifar --adapter toy_gaussian \
+    --adapter toy_linear --adapter graphbfn --adapter lumina_image_2_0
+... 7/7 adapters: GENERATED, per_adapter_hash_count=9 each
+
+$ python tools/run_regression_vector_audit.py verify
+... 12/12 adapters: PASS; per_condition match=true across 9
+conditions each; host_fingerprint_match=true for all 12.
+overall_ok: true
+
+$ python -m pytest tests/test_adapters/test_regression_vectors.py -v --tb=short
+============================= 30 passed, 3 warnings in 3.65s ==============================
+```
+
+**D.4 status update:** 5/18 PARTIAL → **12/18 PARTIAL** (Wave 33 Agent B batch 2
+adds 7 vectors; Wave 33 Agent C batch 3 will close to 18/18 = MET).
+
 
