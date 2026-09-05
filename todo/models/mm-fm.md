@@ -1,8 +1,10 @@
 # MM-FM — CVPR 2026 (image)
 
-**Status:** pending
-**Wave:** candidate (Phase 2 analysis only — not yet integrated)
-**Last updated:** 2026-09-05
+**Status:** **DEFERRED_no_adapter_shipped** (PHASE-4 out-of-scope per 2026-09-05 user directive)
+**Wave:** candidate (Phase 2 analysis only — adapter not shipped; Wave 21 + 21.5
+stalled 2×). Future re-spawn with explicit 4-sub-agent scope-split documented in
+`docs/audit/mm-fm-unblock-investigation.md` but is NOT on the PHASE-4 critical path
+**Last updated:** 2026-09-05 (Wave 36 Agent C + post-Wave-36 user directive)
 **GitHub:** https://github.com/GaoxiangLuo/MM-FM
 **HF:** https://huggingface.co/luo00042/mm-fm
 

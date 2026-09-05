@@ -17,17 +17,51 @@ Per `todo/PHASE-4-model-integration-iteration.md` §"Wave 33 Phase 3 Agent I
 | Rank | Model | PHASE-3 status | PHASE-4 status |
 |---|---|---|---|
 | 1 | Kanzi (ICLR 2026, protein) | DONE | READY (Wave 36 Agent A in flight) |
-| 2 | FreqFlow (CVPR 2026, image SiT-XL/2) | DONE | READY (Wave 36 Agent B in flight) |
-| 3 | MM-FM (CVPR 2026, image DiT-XL/2) | **BLOCKED** (no adapter, 2 stall rounds) | CANNOT START |
-| 4 | LineageFlow (ICML 2026, protein) | PARTIALLY_INTEGRATED (adapter ships, synthetic shim) | **BLOCKED on real forward pass** |
+| ~~2~~ | ~~FreqFlow (CVPR 2026, image SiT-XL/2)~~ | DONE | **DEFERRED** (no upstream ckpt) — see §2.0 |
+| ~~3~~ | ~~MM-FM (CVPR 2026, image DiT-XL/2)~~ | **BLOCKED** (no adapter, 2 stall rounds) | **DEFERRED** — see §2.1 |
+| 4 | LineageFlow (ICML 2026, protein) | PARTIALLY_INTEGRATED (adapter ships, synthetic shim) | **DEFERRED on real forward pass** — see §2.2 |
 
-This document investigates workarounds for the two BLOCKED items (MM-FM
-+ LineageFlow). Detailed per-model investigations:
+> **Post-Wave-36 user directive (2026-09-05):** FreqFlow and MM-FM are **DEFERRED**
+> (not blocking PHASE-4). LineageFlow is also DEFERRED but is the easiest unblock —
+> a 5-LOC shim. The PHASE-4 active roster is now **Kanzi + LineageFlow + the 4 already-
+> integrated families (twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow)**, which
+> satisfies G.4 (HARD capability gate ≥ 3 families).
+
+This document investigates workarounds for the DEFERRED items (MM-FM + LineageFlow)
+and documents the no-upstream-ckpt DEFER status for FreqFlow. Detailed per-model
+investigations:
 
 - `/home/hugo/codes/flowa-multistep-reinference/docs/audit/mm-fm-unblock-investigation.md`
 - `/home/hugo/codes/flowa-multistep-reinference/docs/audit/lineageflow-upstream-investigation.md`
+- `/home/hugo/codes/flowa-multistep-reinference/docs/models/freqflow.model_card.md` §0
 
 ## 2. Per-blocker status + proposed workaround
+
+### 2.0 FreqFlow (CVPR 2026, image SiT-XL/2)
+
+| Aspect | Status |
+|---|---|
+| Upstream source | **REACHABLE** (`https://github.com/OliverRensu/FreqFlow`) |
+| **Upstream ckpt** | **DOES NOT EXIST** — README's `--nnet_path=/path/to/nnet_ema.pth` is a placeholder in the authors' own command line, NOT a download URL. Probed 2026-09-05: `api.github.com/repos/OliverRensu/FreqFlow/releases` returns `[]`; recursive git tree of `main` has 23 files (code + `figs/img.png` only, no `.pth`, no `.safetensors`, no LFS pointer); HF Hub searches for `FreqFlow`, `Frequency-Aware Flow Matching`, `nnet_ema`, and `author=OliverRensu` all return `[]`. No FID number is claimed for FreqFlow anywhere. |
+| Adapter | Ships (Wave 21), registered in `ADAPTER_REGISTRY` (Wave 36 Agent B fix), 8 conformance checks pass in synthetic mode |
+| PHASE-4 verdict | **`DEFERRED_no_upstream_ckpt`** (cannot be unblocked without upstream cooperation) |
+
+**Proposed workaround (recommended: option A = defer; option B as follow-up if
+upstream releases weights):**
+
+| Option | Effort | Risk | Likelihood | Verdict |
+|---|---|---|---|---|
+| **A. Defer / classify as out-of-scope** | 0 hours | LOW | HIGH (already met) | **RECOMMENDED** (2026-09-05 user directive) |
+| **B. Upstream coordination** (request weights release) | n/a | n/a | n/a (out of our control) | Future wave — conditional on upstream action |
+
+**Cost / risk summary:**
+
+- Cost (option A): 0 LOC, 0 GPU hours, 0 GB download
+- Risk (option A): image SiT-XL/2 family not represented at PHASE-4; covered by
+  twodim_fm + rectified_flow_cifar (already integrated)
+- Likelihood of success (option A): 100% (already met)
+- G.4 stays at 3 families PASS per Wave 34 Agent F + 4 families (twodim_fm,
+  rectified_flow_cifar, mnist_fm, lineageflow) per Wave 36 Agent F cold-clone audit
 
 ### 2.1 MM-FM (CVPR 2026, image DiT-XL/2)
 
@@ -40,21 +74,22 @@ This document investigates workarounds for the two BLOCKED items (MM-FM
 | RAE decoder | Loads from `artifacts/decoders/<encoder>/ViTXL_n08/model.pt` (separate HF artifact) |
 | AutoGuidance | DiT-S guide ckpts ship in HF repo (`checkpoints/autoguidance/dit-s-{uncond,mode}-gmm-25k.pt`) |
 | PHASE-3 deliverable | NOT PRODUCED (Wave 21 + 21.5 stalled) |
+| PHASE-4 verdict | **`DEFERRED_no_adapter_shipped`** |
 
-**Proposed workaround (recommended: option B = skip / defer; option A as
-documented follow-up):**
+**Proposed workaround (recommended: option B = defer per 2026-09-05 user directive;
+option A as future-wave follow-up if needed):**
 
 | Option | Effort | Risk | Likelihood | Saturation | Verdict |
 |---|---|---|---|---|---|
 | **A. New MMFMAdapter** (full integration) | ~4 hours agent + ~2 hours GPU + ~5 GB download | LOW–MEDIUM | HIGH | FID 2.78 vs SiT 1.96 = ΔFID 0.82 (NOT saturated) | DEFER (stall pattern) |
-| **B. Skip / classify as low-priority** | 0 hours | LOW | HIGH | n/a | **RECOMMENDED** |
+| **B. Defer / classify as out-of-scope** | 0 hours | LOW | HIGH | n/a | **RECOMMENDED** (2026-09-05 user directive) |
 | **C. FlowMol3 v2 latent-space proxy** | ~2 hours | HIGH (semantic mismatch — molecular vs image latent) | LOW | n/a | REJECT |
 
 **Cost / risk summary:**
 
 - Cost (option B): 0 LOC, 0 GPU hours, 0 GB download
-- Risk (option B): G.4 stays at 3 families (image: FreqFlow; protein:
-  Kanzi + LineageFlow); already PASS per Wave 34 Agent F
+- Risk (option B): G.4 stays at 3+ families PASS per Wave 36 Agent F; MM-FM is not
+  on the PHASE-4 critical path
 - Likelihood of success (option B): 100% (already met)
 - Follow-up (option A): 4-sub-agent scope split — see §3.2 of
   `mm-fm-unblock-investigation.md` for the breakdown

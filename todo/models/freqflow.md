@@ -1,8 +1,10 @@
 # FreqFlow — CVPR 2026 (image)
 
-**Status:** pending
-**Wave:** candidate (Phase 2 analysis only — not yet integrated)
-**Last updated:** 2026-09-05
+**Status:** **DEFERRED_no_upstream_ckpt** (PHASE-4 out-of-scope per 2026-09-05 user directive)
+**Wave:** Wave 21 PHASE-3 integrated (synthetic-mode); PHASE-4 deferred — no
+upstream ckpt anywhere (no GitHub releases, no HF Hub, no PyPI; README's
+`--nnet_path=/path/to/nnet_ema.pth` is a placeholder, not a download URL)
+**Last updated:** 2026-09-05 (Wave 36 Agent B + post-Wave-36 user directive)
 **GitHub:** https://github.com/OliverRensu/FreqFlow
 **HF:** TBD (not exposed in indexed README; ckpt referenced as `nnet_ema.pth`)
 

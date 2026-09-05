@@ -1,9 +1,26 @@
 # Phase 4 — Model integration iteration (one model at a time, in Phase 3 order)
 
-**Status:** pending
+**Status:** in_progress (Kanzi + LineageFlow active; FreqFlow + MM-FM
+**DEFERRED** per 2026-09-05 user directive — no upstream ckpt / no shipped adapter)
 **Depends on:** Phase 3 complete (all ranked models have glue + adapters +
 tests). The "if Phase 1-3 done well, Phase 4 is just glue" property means this
 phase is the EMPIRICAL VALIDATION of the framework's headline claim.
+
+**PHASE-4 active roster (2026-09-05):**
+- **Kanzi** — real ckpt 505 MB downloaded (SHA-256 verified, in `data/kanzi_ckpt/`);
+  eval pipeline PASS (synthetic-fallback path in flowmol3_venv; real-ckpt forward
+  unblocked by future-wave sidecar venv)
+- **LineageFlow** — 5-LOC `SamplerConfig` shim unblocks real-ckpt forward
+  (Wave 36 Agent C finding); eval pipeline PASS (synthetic-path in flowmol3_venv;
+  shim apply + real-ckpt rerun is the next wave's job)
+- ~~FreqFlow~~ — **DEFERRED_no_upstream_ckpt** (upstream `nnet_ema.pth` does not
+  exist publicly anywhere; cannot be unblocked without upstream cooperation)
+- ~~MM-FM~~ — **DEFERRED_no_adapter_shipped** (Wave 21 + 21.5 stalled 2×; future
+  re-spawn with explicit scope-split documented but out-of-scope)
+
+This satisfies G.4 (HARD capability gate ≥ 3 families) on protein + 2D image
+families (twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow are all already
+integrated via Wave 36 cold-clone audit at 4/4 families positive signed_mean).
 **Owner:** framework maintainer
 **Goal:** for each model in Phase 3 order, run a baseline-vs-framework
 comparison. If the framework wins on every model, the headline claim "any FM

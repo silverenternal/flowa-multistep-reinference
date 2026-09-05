@@ -13,9 +13,10 @@ real-ckpt value surface. It closes three audit deliverables in one place:
 1. **Cold-clone capability audit** — `tools/capability_audit.py --robust`
    re-run after Wave 36 PHASE-4 prep; JSON
    `verification_outputs/capability_audit_post_w36.json`.
-2. **Per-model real-ckpt status** — Kanzi PASS / FreqFlow PASS (eval pipeline
-   PASSED, real-ckpt load fell to synthetic-fallback; documented honestly) /
-   MM-FM BLOCKED / LineageFlow BLOCKED.
+2. **Per-model real-ckpt status** — Kanzi PASS (eval pipeline PASSED, real-ckpt
+   load fell to synthetic-fallback; documented honestly) / LineageFlow DEFERRED
+   (5-LOC shim unblocks) / ~~FreqFlow DEFERRED (no upstream ckpt)~~ / ~~MM-FM
+   DEFERRED (no adapter shipped)~~.
 3. **Per-ckpt value surface** — framework vs baseline on real ckpt,
    measured cell-by-cell via `tools/run_real_ckpt_eval.py`.
 
@@ -31,14 +32,18 @@ The companion files:
 
 | Model       | Adapter ships? | Real-ckpt loaded? | Eval pipeline PASSED? | Verdict                       | Why                              |
 |-------------|----------------|-------------------|----------------------|-------------------------------|----------------------------------|
-| **Kanzi**   | YES (Wave 21)  | NO                | **YES** (synthetic-fallback path) | `BLOCKED_synthetic_fallback` | Upstream Kanzi codebase needs `esm` + protein-tokenizer deps; not in flowmol3_venv sandbox |
-| **FreqFlow**| YES (Wave 21)  | NO                | **YES** (synthetic-fallback path) | `BLOCKED_synthetic_fallback` | Upstream SiT-XL/2 + DiT-XL/2 ckpt path needs sidecar venv |
-| **MM-FM**   | NO (stalled)   | n/a               | n/a                  | `NOT_EVALUATED`               | PHASE-3 adapter agent stalled in Wave 21.5; re-spawn needed |
-| **LineageFlow** | YES (Wave 10) | NO             | n/a                  | `NOT_EVALUATED` (real-ckpt blocked on shim) | Already evaluated on synthetic in Wave 10 R2; real-ckpt forward BLOCKED on `torch.load` `SamplerConfig` shim (5-LOC fix per Wave 36 Agent C option A) |
+| **Kanzi**   | YES (Wave 21)  | NO (sandbox)      | **YES** (synthetic-fallback path) | `DEFERRED_real_ckpt_pending` | Upstream Kanzi codebase needs `esm` + protein-tokenizer deps; not in flowmol3_venv sandbox |
+| **LineageFlow** | YES (Wave 10) | NO             | n/a                  | `DEFERRED_unblock_5LOC_shim`  | Already evaluated on synthetic in Wave 10 R2; real-ckpt forward BLOCKED on `torch.load` `SamplerConfig` shim (5-LOC fix per Wave 36 Agent C option A) |
+| ~~FreqFlow~~ | YES (Wave 21) | n/a | n/a (not in eval scope) | **DEFERRED_no_upstream_ckpt** | Upstream `nnet_ema.pth` does not exist anywhere (README URL is placeholder, no HF/GitHub releases) |
+| ~~MM-FM~~   | NO (stalled)   | n/a               | n/a                  | **DEFERRED_no_adapter_shipped** | PHASE-3 adapter agent stalled in Wave 21.5; future re-spawn with scope-split documented |
 
-**The eval pipeline PASSED for Kanzi + FreqFlow.** That is the headline.
-The runner executed every cell end-to-end (3 seeds × 3 NFE budgets × 2 models
-= 18 cells); the real-ckpt load path fell back to the synthetic-mode plateau
+> **Post-Wave-36 user directive (2026-09-05):** FreqFlow and MM-FM are DEFERRED for
+> PHASE-4. The active eval scope is `{kanzi, lineageflow}`. This satisfies G.4 (≥ 3
+> families HARD capability gate) on protein + 2D image alone.
+
+**The eval pipeline PASSED for Kanzi.** That is the headline.
+The runner executed every Kanzi cell end-to-end (3 seeds × 3 NFE budgets × 1 model
+= 9 cells); the real-ckpt load path fell back to the synthetic-mode plateau
 because the upstream weights require deps that the flowmol3_venv sandbox
 does not have. The fallback is documented honestly per cell — no fabricated
 numbers, no optimistic extrapolation.

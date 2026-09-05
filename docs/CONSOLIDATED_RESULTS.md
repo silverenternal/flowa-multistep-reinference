@@ -712,22 +712,30 @@ parseable, F.5 env_hash pinned, G.7 reproduces the same 5/5 PASS without re-runn
 
 ---
 
-## 13. Wave 36 Phase 2 — real-ckpt Kanzi + FreqFlow sweep (small NFE)
+## 13. Wave 36 Phase 2 — real-ckpt Kanzi sweep (small NFE)
 
 Document: `verification_outputs/phase4_q4_2026.json` (single source of truth
 for the Q4-2026 real-ckpt value surface). Runner:
 `tools/run_real_ckpt_eval.py` (Wave 36 Agent D authored).
 
+> **PHASE-4 scope revision (2026-09-05 user directive):** the active eval scope
+> is `{kanzi, lineageflow}`. FreqFlow and MM-FM are **DEFERRED** — FreqFlow's
+> `nnet_ema.pth` does not exist publicly anywhere; MM-FM has no shipped adapter.
+> The 18-cell Kanzi + FreqFlow sweep below was run on 2026-09-05 (before the
+> revision) and is retained for historical continuity; new waves run Kanzi +
+> LineageFlow only by default.
+
 ### 13.1 Setup
 
 | Knob | Value |
 |---|---|
-| Models | `kanzi` (protein, ICLR 2026 — Shah et al., `arXiv:2510.00351`) and `freqflow` (image, CVPR 2026 — Yang et al., `arXiv:2503.00317`) |
+| Models (initial sweep, before scope revision) | `kanzi` (protein, ICLR 2026 — Shah et al., `arXiv:2510.00351`) and `freqflow` (image, CVPR 2026 — Yang et al., `arXiv:2503.00317`) |
+| Models (PHASE-4 active after 2026-09-05) | `kanzi`, `lineageflow` (FreqFlow + MM-FM DEFERRED) |
 | Seeds | 42, 43, 44 (3 seeds) |
 | NFE budgets | 10, 50, 200 (3 budgets) |
 | Framework rounds | 3 (total NFE matched to baseline) |
 | Downstream metric | Kanzi → `protein_sequence_validity_rate` (higher-is-better, saturation 0.95); FreqFlow → `FID` (lower-is-better, saturation 2.0) |
-| Adapter mode | `synthetic` (Kanzi encoder and FreqFlow `nnet_ema.pth` were not loaded — Wave 36 Agent A/B delivered the upstream-file inventory only; the published Kanzi encoder requires user-side GPU and the FreqFlow ckpt is user-supplied) |
+| Adapter mode | `synthetic` (Kanzi encoder was not loaded — Wave 36 Agent A delivered the upstream-file inventory; the published Kanzi encoder requires user-side GPU + `esm` + `protein-tokenizer` deps not in flowmol3_venv sandbox; FreqFlow `nnet_ema.pth` does not exist publicly anywhere) |
 | Total cells | 18 = 2 models × 3 seeds × 3 NFE budgets |
 
 ### 13.2 Per-model value surface

@@ -110,7 +110,11 @@ CLI
         --output verification_outputs/real_ckpt_eval_kanzi_q4_2026.json
 
     # Multi-model sweep (one report file per model).
-    for M in kanzi freqflow lineageflow mm_fm; do
+    # PHASE-4 default scope: {kanzi, lineageflow} per 2026-09-05 user directive.
+    # FreqFlow and MM-FM are DEFERRED — FreqFlow has no upstream ckpt anywhere;
+    # MM-FM has no shipped adapter. Pass them explicitly only if you want a
+    # `DEFERRED_no_upstream_ckpt` / `DEFERRED_no_adapter_shipped` marker cell.
+    for M in kanzi lineageflow; do
         python tools/run_real_ckpt_eval.py \\
             --model $M \\
             --seeds 42,43,44 \\
@@ -292,11 +296,17 @@ DOWNSTREAM_METRICS: dict[str, dict[str, Any]] = {
         "axis": "image_sota",
         "paper": "CVPR 2026 (arXiv:2504.12345) - Chen et al. DiT-XL/2 multi-modal",
         "primary_metric": {
-            "name": "BLOCKED",
+            "name": "DEFERRED_no_adapter_shipped",
             "direction": "n/a",
             "saturation_threshold": None,
             "improvement_bar": None,
-            "definition": "no shipped MM-FM adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled)",
+            "definition": (
+                "DEFERRED per 2026-09-05 user directive: no shipped MM-FM adapter "
+                "file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled). Future "
+                "re-spawn with explicit scope-split is documented in "
+                "docs/audit/mm-fm-unblock-investigation.md but is NOT on the "
+                "PHASE-4 critical path."
+            ),
         },
         "secondary_metrics": [],
         "adapter_factory": None,
@@ -304,8 +314,38 @@ DOWNSTREAM_METRICS: dict[str, dict[str, Any]] = {
         "adapter_module_alias": None,
         "channel_name": "image_latent",
         "nfe_paper_default": 250,
+        "deferred_reason": "no_adapter_shipped",
+    },
+    "freqflow": {
+        "domain": "image_sota",
+        "axis": "image_sota",
+        "paper": "CVPR 2026 (arXiv:2503.00317) - Yang et al. SiT-XL/2 freq. domain",
+        "primary_metric": {
+            "name": "DEFERRED_no_upstream_ckpt",
+            "direction": "n/a",
+            "saturation_threshold": None,
+            "improvement_bar": None,
+            "definition": (
+                "DEFERRED per 2026-09-05 user directive: upstream `nnet_ema.pth` "
+                "does not exist publicly anywhere (README URL is a placeholder, "
+                "no HF/GitHub releases, no PyPI package). PHASE-4 active scope is "
+                "{kanzi, lineageflow} + the 4 already-integrated families. Adapter "
+                "remains registered for synthetic conformance-battery coverage."
+            ),
+        },
+        "secondary_metrics": [],
+        "adapter_factory": "adaptive_reflow.adapters.freqflow:default_freqflow_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.freqflow",
+        "adapter_module_alias": "freqflow",
+        "channel_name": "image_latent",
+        "nfe_paper_default": 250,
+        "deferred_reason": "no_upstream_ckpt",
     },
 }
+
+#: PHASE-4 active model roster (per 2026-09-05 user directive: FreqFlow + MM-FM
+#: are DEFERRED — out of the default eval scope).
+PHASE4_ACTIVE_MODELS: tuple[str, ...] = ("kanzi", "lineageflow")
 
 VALID_MODELS: tuple[str, ...] = tuple(DOWNSTREAM_METRICS.keys())
 

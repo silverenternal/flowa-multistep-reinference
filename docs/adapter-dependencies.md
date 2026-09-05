@@ -75,25 +75,41 @@ to import. Tracked via `requirements-lock.txt` only:
 
 ## freqflow / freqflow_adapter (Wave 21 PHASE-3)
 
-- `torch>=2.1` — FreqFlow forward + frequency-domain head
+> **PHASE-4 status (2026-09-05 user directive):** **DEFERRED_no_upstream_ckpt**.
+> Adapter file remains registered (Wave 36 Agent B fixed the missing-from-registry
+> bug) and the D.5 conformance battery synthetic-mode coverage (8 checks) is
+> complete. The real-ckpt forward path is **not buildable**: upstream
+> `nnet_ema.pth` does not exist publicly anywhere (no GitHub releases, no HF Hub
+> releases, no PyPI package; README's `--nnet_path=/path/to/nnet_ema.pth` is a
+> placeholder in the authors' own command line, not a download URL). PHASE-4
+> active scope is now `{kanzi, lineageflow}`; FreqFlow is not in
+> `tools/run_real_ckpt_eval.py:PHASE4_ACTIVE_MODELS`.
+
+- `torch>=2.1` — FreqFlow forward + frequency-domain head (registered, but not
+  loadable with a real ckpt — listed for future-wave unblock via sidecar venv)
 - `numpy>=2.0,<2.5` — already in framework core
 - `torchvision>=0.15,<1.0` — image pre/post-processing + canonical
   InceptionV3 (IMAGENET1K_V1) for FID computation per
   ``tools/run_image_eval.py:load_inception_for_fid``
 - `diffusers>=0.32` — optional; only required when FreqFlow is loaded
-  via the HF Hub pipeline (Wave 36 PHASE-4 forward path)
+  via the HF Hub pipeline (deferred until upstream releases weights)
 
 ## mm_fm / mm_fm_adapter (Wave 21 PHASE-3)
 
-- **BLOCKED** — no shipped adapter file (Wave 21 M-agent + Wave 21.5
-  re-spawn both stalled; per ``docs/audit/gap-audit.md`` MM-FM is
-  BLOCKED-with-fallback). When the PHASE-3 deliverable lands, expect:
-  - `torch>=2.1`
-  - `diffusers>=0.32` — multi-modal pipeline
-  - `transformers` — text encoder + tokenizer (transitive of diffusers)
-  - `safetensors` — weight loading (transitive)
-  - `Pillow` — image I/O (transitive)
-- Wave 36 PHASE-4 eval reports MM-FM cells as ``BLOCKED`` in
+> **PHASE-4 status (2026-09-05 user directive):** **DEFERRED_no_adapter_shipped**.
+> No shipped adapter file (Wave 21 M-agent + Wave 21.5 re-spawn both stalled).
+> Future re-spawn with explicit 4-sub-agent scope-split is documented in
+> `docs/audit/mm-fm-unblock-investigation.md` but is NOT on the PHASE-4
+> critical path. Per 2026-09-05 user directive, MM-FM is classified as
+> out-of-scope.
+
+- `torch>=2.1` (expected when/if adapter ships)
+- `diffusers>=0.32` — multi-modal pipeline
+- `transformers` — text encoder + tokenizer (transitive of diffusers)
+- `safetensors` — weight loading (transitive)
+- `Pillow` — image I/O (transitive)
+- Wave 36 PHASE-4 eval reports MM-FM cells as
+  ``DEFERRED_no_adapter_shipped`` in
   ``tools/run_real_ckpt_eval.py`` rather than fabricating numbers
 
 ## protbfn_abbfn / protbfn_abbfn_adapter / protbfn_abbfn_model

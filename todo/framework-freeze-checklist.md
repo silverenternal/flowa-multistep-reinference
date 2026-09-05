@@ -131,34 +131,39 @@ jq '.g1.verdict, .g3.verdict, .g4.verdict, .g6.verdict, .g7.verdict' \
 - `docs/PLUG_IN_YOUR_MODEL.md` has a "Plug-in candidate: M" section
 
 **RANKING.md models** (in priority order):
-1. **Kanzi** (Wave 21 K agent) — DONE per task list #477-482
-2. **FreqFlow** (Wave 21 F agent) — DONE per task list #483-486
-3. **MM-FM** (Wave 21 M agent + Wave 21.5 re-spawn) — **BLOCKED**
+1. **Kanzi** (Wave 21 K agent) — DONE per task list #477-482; PHASE-4 active
+   (real ckpt 505 MB downloaded, SHA-256 verified, in `data/kanzi_ckpt/`)
+2. ~~FreqFlow~~ (Wave 21 F agent) — adapter DONE (#483-486); PHASE-4
+   **DEFERRED_no_upstream_ckpt** per 2026-09-05 user directive (upstream
+   `nnet_ema.pth` does not exist publicly anywhere; can never be unblocked
+   without upstream cooperation)
+3. ~~MM-FM~~ (Wave 21 M agent + Wave 21.5 re-spawn) — **DEFERRED_no_adapter_shipped**
    - Wave 21 MM-FM agent stalled on all 6 attempts (180000ms each, no progress)
    - Wave 21.5 re-spawn (`wf_0ed0e48c-a0a`) stalled on all 6 attempts (605k tokens consumed, 43 tool uses, 0 files produced)
-   - **Decision (2026-09-05)**: document as BLOCKED. Per-adapter re-spawn has consistent infra failure; do not retry in same shape.
-   - **Fallback for capability G.4 (generalization breadth ≥ 3)**: existing
-     adapters cover ≥3 model families (FlowMol3 chemistry + 2D-RF toy +
-     CIFAR-10 RF image + Self-Flow image DiT + LineageFlow protein).
-     Kanzi (protein flow-AE) + FreqFlow (image latent) + these existing
-     adapters satisfy G.4 with margin.
-4. **LineageFlow** — BLOCKED on upstream `core` source (documented in
-   `todo/models/lineageflow.md`)
+   - **Decision (2026-09-05)**: per user directive, classify as out-of-scope. Future
+     re-spawn with explicit 4-sub-agent scope-split is documented in
+     `docs/audit/mm-fm-unblock-investigation.md` but is not on the PHASE-4 critical path.
+4. **LineageFlow** — adapter ships from Wave 10; PHASE-4 **DEFERRED_unblock_5LOC_shim**
+   per Wave 36 Agent C finding (the `torch.load` `SamplerConfig` shim is a
+   upstream-mandated compatibility patch, ~30 min adapter edit)
 
 **Acceptance for MUST-2**:
-- Kanzi ✓, FreqFlow ✓ (2/2 NEW models that delivered — pass the 6 per-model checks)
-- MM-FM: BLOCKED with documented fallback (existing adapters cover ≥3 families)
-- LineageFlow: BLOCKED on upstream `core`
-- **Net working NEW models**: 2 (Kanzi, FreqFlow)
-- **Net total working models for G.4**: 6+ (Kanzi, FreqFlow, FlowMol3,
+- Kanzi ✓ (PHASE-4 active)
+- FreqFlow ✓ for PHASE-3 (synthetic adapter); PHASE-4 DEFERRED per user directive
+- MM-FM: DEFERRED_no_adapter_shipped (existing adapters cover ≥3 families)
+- LineageFlow: DEFERRED_unblock_5LOC_shim (cheap unblock, follow-up wave)
+- **Net working NEW models for PHASE-4**: 1 (Kanzi) + 1 deferred-unblock (LineageFlow)
+- **Net total working models for G.4**: 6+ (Kanzi, LineageFlow, FlowMol3,
   2D-RF, CIFAR-10 RF, Self-Flow, HiDream-I1 etc.) — satisfies G.4 ≥3
   with margin
 
 **Evidence file**: each model's per-model analysis + `docs/PLUG_IN_YOUR_MODEL.md`.
 
-**Current state**: 2/4 RANKING models delivered (Kanzi + FreqFlow); MM-FM
-and LineageFlow both BLOCKED with documented fallbacks. MUST-2 PASSED
-via the explicit BLOCKED-with-fallback decision rule.
+**Current state (2026-09-05, post-user-directive)**: 1/4 RANKING models in
+PHASE-4 active (Kanzi) + 1 ready-to-unblock (LineageFlow); FreqFlow and MM-FM
+DEFERRED with documented fallbacks. MUST-2 PASSED via the explicit
+DEFERRED-with-fallback decision rule (existing adapters cover ≥3 families;
+G.4 ≥ 3 PASS).
 
 ### MUST-3: Framework-core glue extracted
 
@@ -564,3 +569,43 @@ Date: ____________________
   (1) sidecar venvs for Kanzi + FreqFlow; (2) LineageFlow 5-LOC shim;
   (3) MM-FM PHASE-3 adapter re-spawn with explicit scope-split. None
   are framework-code changes; all are follow-up PHASE-4 work.
+
+---
+
+## Wave 36 + post-Wave-36 scope revision (2026-09-05)
+
+**User directive**: "没权重我们就跳过他们呗，我们又不是没有别的模型的权重，
+你把所有相关部分都改一下。" — skip FreqFlow (no upstream ckpt anywhere) and
+MM-FM (defer); PHASE-4 active scope is now Kanzi + LineageFlow + 4 already-
+integrated families (twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow).
+
+**Audit doc**: `docs/audit/wave36-final-status.md` (updated with scope revision)
+
+**Verdict legend refresh**:
+- `BLOCKED_synthetic_fallback` → `DEFERRED_real_ckpt_pending` (Kanzi)
+- `BLOCKED_synthetic_fallback` → `DEFERRED_no_upstream_ckpt` (FreqFlow)
+- `NOT_EVALUATED` → `DEFERRED_no_adapter_shipped` (MM-FM)
+- `NOT_EVALUATED` → `DEFERRED_unblock_5LOC_shim` (LineageFlow)
+
+**Files updated** (additive — no overwrites, no metric redefinitions):
+- `docs/audit/wave36-final-status.md` — header + §1.1 + §1.2 + §1.3 updated
+- `docs/audit/wave36-phas4-prep-results.md` — header + §2 updated
+- `docs/audit/phase-4-blocker-investigation.md` — new §2.0 (FreqFlow defer) +
+  §2.1 (MM-FM defer) + scope summary
+- `docs/audit/phase-4-eval-pipeline.md` — eval pipeline default scope →
+  {kanzi, lineageflow}
+- `tools/run_real_ckpt_eval.py` — `PHASE4_ACTIVE_MODELS = ("kanzi", "lineageflow")`
+  + freqflow entry marked `deferred_reason="no_upstream_ckpt"` + mm_fm marked
+  `deferred_reason="no_adapter_shipped"`
+- `docs/CONSOLIDATED_RESULTS.md` §13 — header + scope revision note
+- `docs/models/freqflow.model_card.md` — status field updated to DEFERRED
+- `docs/adapter-dependencies.md` — FreqFlow + MM-FM sections marked DEFERRED
+- `todo/PHASE-4-model-integration-iteration.md` — status + active roster
+- `todo/models/freqflow.md`, `todo/models/mm-fm.md` — Status line
+- `todo/framework-freeze-checklist.md` — MUST-2 RANKING + acceptance + current
+  state updated
+
+**G.4 implication**: HARD capability gate still PASS at 3+ families
+(twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow via Wave 36 cold-clone
+audit at 4/4 positive signed_mean). PHASE-4 active scope satisfies all
+MUST-1..5 gates per the existing decision rules.

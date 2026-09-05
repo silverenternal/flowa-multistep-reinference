@@ -4,10 +4,14 @@
 **Adapter key:** `freqflow`
 **Card status:** COMPLETE (8/8 fields populated). Adapter Protocol
 surface is fully wired and tested in `synthetic` mode; the production
-`torch` mode is **BLOCKED** — upstream has not published a checkpoint.
-**Last updated:** 2026-09-05 (Wave 36 Agent B, PHASE-4).
+`torch` mode is **DEFERRED** — upstream has not published a checkpoint
+anywhere (no GitHub releases, no HF Hub releases, no PyPI package).
+**Last updated:** 2026-09-05 (Wave 36 Agent B, PHASE-4; post-Wave-36 user
+directive marked `DEFERRED_no_upstream_ckpt`).
 **F.4 gate:** PASS (≥ 0.8 per-model target met).
-**PHASE-4 real-ckpt gate:** **BLOCKED — no public weights** (§6).
+**PHASE-4 real-ckpt gate:** **DEFERRED — no public weights, no upstream
+ckpt anywhere** (§6). Adapter file remains registered for the D.5 conformance
+battery synthetic-mode coverage (8 checks pass).
 
 ---
 

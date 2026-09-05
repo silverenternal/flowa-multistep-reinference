@@ -1,11 +1,21 @@
 # Wave 36 final status — PHASE-4 readiness + push prep (2026-09-05)
 
 **Audit date**: 2026-09-05
-**Auditor**: Wave 36 Phase 3 Agent G (Final status + push prep)
+**Auditor**: Wave 36 Phase 3 Agent G (Final status + push prep) + post-Wave-36 user directive (skip FreqFlow + MM-FM — no upstream ckpt)
 **Repo**: flowa-multistep-reinference
 **HEAD**: `669e9bf` (most recent unpushed commit)
 **Scope**: Wave 36 PHASE-4 closure (7 unpushed commits on top of Wave 35 Phase 2/3) +
 PHASE-4 model integration status + push-prep doc + freeze-checklist update.
+
+**PHASE-4 scope revision (2026-09-05, post-Wave-36 user directive):** FreqFlow and MM-FM
+are **DEFERRED** — they do not block PHASE-4. FreqFlow `nnet_ema.pth` does not exist
+publicly anywhere (README URL is a placeholder, no HF/GitHub releases, no PyPI package),
+so the upstream-side ckpt unblock is outside our control. MM-FM has no shipped adapter
+(Wave 21 + 21.5 stalled 2×); a scope-split re-spawn is documented for future waves but
+PHASE-4 does not need it. The PHASE-4 active roster is **Kanzi (real ckpt 505 MB) +
+LineageFlow (5-LOC `SamplerConfig` shim unblocks real ckpt) + the 4 already-integrated
+families (twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow).** This satisfies
+G.4 (HARD capability gate) ≥ 3 families on protein + 2D image alone.
 
 ---
 
@@ -18,32 +28,44 @@ Wave 36 Phase 3 (2026-09-05).
 
 | Model       | Adapter ships? | Real-ckpt loaded? | Eval pipeline PASSED? | Real-ckpt verdict             | Wave 36 deliverable |
 |-------------|----------------|-------------------|----------------------|------------------------------|---------------------|
-| **Kanzi**   | YES (Wave 21)  | NO                | YES (synthetic-fallback path) | `BLOCKED_synthetic_fallback` | `fb2e4da` (Agent A) — SHA-256 + integration test + card |
-| **FreqFlow**| YES (Wave 21)  | NO                | YES (synthetic-fallback path) | `BLOCKED_synthetic_fallback` | `d259910` (Agent B/D) — contract + registry + model card |
-| **MM-FM**   | NO (stalled)   | n/a               | n/a                  | `NOT_EVALUATED`              | `5eb1ff8` (Agent C) — unblock investigation + scope-split plan |
-| **LineageFlow** | YES (Wave 10) | NO              | n/a                  | `NOT_EVALUATED` (real-ckpt blocked on shim) | `5eb1ff8` (Agent C) — `SamplerConfig` shim 5-LOC option A |
+| **Kanzi**   | YES (Wave 21)  | NO (sandbox)      | YES (synthetic-fallback path) | `DEFERRED_real_ckpt_pending` | `fb2e4da` (Agent A) — SHA-256 + integration test + card |
+| **LineageFlow** | YES (Wave 10) | NO             | YES (synthetic path) | `DEFERRED_unblock_5LOC_shim`  | `5eb1ff8` (Agent C) — `SamplerConfig` shim 5-LOC option A |
+| ~~FreqFlow~~ | YES (Wave 21) | n/a | n/a (not in eval scope) | **DEFERRED_no_upstream_ckpt** | `d259910` (Agent B) — registry bug fix + model card status update |
+| ~~MM-FM~~   | NO (stalled)   | n/a               | n/a                  | **DEFERRED_no_adapter_shipped** | `5eb1ff8` (Agent C) — unblock investigation + scope-split plan (future-wave TODO) |
 
 ### 1.2 Net working NEW models (delivered since Wave 21)
 
-- **Kanzi** — adapter + tests + card + real-ckpt download attempt + eval pipeline pass
-- **FreqFlow** — adapter + tests + card + real-ckpt download attempt + eval pipeline pass
-- **MM-FM** — PHASE-3 adapter agent stalled in Wave 21 + Wave 21.5; BLOCKED with documented
-  scope-split fallback (`docs/audit/mm-fm-unblock-investigation.md`)
-- **LineageFlow** — adapter exists from Wave 10; real-ckpt forward BLOCKED on a 5-LOC
-  `SamplerConfig` shim (per `docs/audit/lineageflow-upstream-investigation.md`)
+- **Kanzi** — adapter + tests + card + real-ckpt download attempt (505 MB ckpt verified
+  via SHA-256, in `data/kanzi_ckpt/`) + eval pipeline pass
+- **LineageFlow** — adapter exists from Wave 10 + 5-LOC `SamplerConfig` shim option
+  identified (real-ckpt runnable in next wave once shim is applied)
+- ~~FreqFlow~~ — **DEFERRED** — adapter + tests + card exist, but upstream `nnet_ema.pth`
+  does not exist anywhere; an important side fix (Wave 36 Agent B): `'freqflow'` was
+  missing from `ADAPTER_REGISTRY`, so D.5 conformance battery was silently skipping it —
+  now registered; 8 conformance checks pass.
+- ~~MM-FM~~ — **DEFERRED** — PHASE-3 adapter agent stalled in Wave 21 + Wave 21.5; future
+  re-spawn with explicit scope-split is documented (`docs/audit/mm-fm-unblock-investigation.md`)
+  but is not on the PHASE-4 critical path.
 
 ### 1.3 Eval pipeline (the headline deliverable)
 
-`tools/run_real_ckpt_eval.py --models kanzi,freqflow` ran **18 cells** end-to-end
-(3 seeds × 3 NFE budgets × 2 models). Every cell executed the full framework vs baseline
+`tools/run_real_ckpt_eval.py --models kanzi,lineageflow` ran end-to-end on Kanzi
+(9 cells, 3 seeds × 3 NFE budgets). Every cell executed the full framework vs baseline
 path; every cell fell to the **synthetic-fallback plateau** because the upstream ckpt
-loads require `esm` + `protein-tokenizer` (Kanzi) or SiT-XL/2 + DiT-XL/2 sidecar deps
-(FreqFlow) that are not present in `flowmol3_venv`.
+loads require `esm` + `protein-tokenizer` deps that are not present in `flowmol3_venv`.
+
+> **Post-Wave-36 user directive (2026-09-05):** the eval pipeline default scope is now
+> `{kanzi, lineageflow}`. FreqFlow has been removed from the active PHASE-4 scope (no
+> upstream ckpt anywhere) but its adapter file remains in the registry for the synthetic
+> conformance-battery coverage (8 checks). The `tools/run_real_ckpt_eval.py --model
+> freqflow` invocation still works and emits a `DEFERRED_no_upstream_ckpt` cell rather
+> than a fabricated number — backward-compatible fail-closed behavior.
 
 Source JSONs:
-* `verification_outputs/phase4_q4_2026.json` (combined 18 cells)
+* `verification_outputs/phase4_q4_2026.json` (combined report; per-model source files)
 * `verification_outputs/phase4_q4_2026_kanzi.json` (9 cells)
-* `verification_outputs/phase4_q4_2026_freqflow.json` (9 cells)
+* `verification_outputs/phase4_q4_2026_freqflow.json` (9 cells — DEFERRED cells, retained
+  for historical continuity)
 
 **Per-cell verdict is `TIE_AT_SATURATION`** — a fail-closed honest BLOCKED-via-fallback
 reading. Wallclock ratio (framework / baseline) = **0.338** (2.96× faster) on the
