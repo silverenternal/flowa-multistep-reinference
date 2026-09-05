@@ -427,7 +427,14 @@ def test_scheduler_log_byte_deterministic() -> None:
 
 
 def test_runner_state_machine_default_factory() -> None:
-    """The default ``default_cosine_scheduler`` is wrapped by the runner."""
+    """The default paper-quantity-driven scheduler is wrapped by the runner.
+
+    Wave 34 wire change: the runner's default scheduler is now the
+    paper-quantity-driven :class:`CodimensionSheetScheduler` (formerly
+    the cosine ramp). The state-machine wrapper preserves the
+    ``schedule_family()`` string and the runner end-state machine
+    remains IDLE before any round is run.
+    """
     from adaptive_reflow.algorithm.runner import ReInferenceRunner
     from tests.test_algorithm.test_runner import _twodim_adapter  # type: ignore
 
@@ -438,7 +445,8 @@ def test_runner_state_machine_default_factory() -> None:
     except Exception:
         pytest.skip("twodim_adapter fixture not available")
     runner = ReInferenceRunner(adapter=adapter)
-    assert isinstance(runner.scheduler, CosineAnnealScheduler)
+    # Wave 34 default: paper-quantity-driven CodimensionSheetScheduler.
+    assert isinstance(runner.scheduler, CodimensionSheetScheduler)
     assert hasattr(runner, "state_machine")
     assert isinstance(runner.state_machine, StateMachine)
     assert runner.state_machine.state == "IDLE"

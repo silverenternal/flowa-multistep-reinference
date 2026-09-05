@@ -24,6 +24,7 @@ from adaptive_reflow.algorithm import (
     build_scheduler,
     build_scheduler_from_config,
     default_cosine_scheduler,
+    default_paper_ratio_scheduler,
 )
 from adaptive_reflow.algorithm.scheduler import _paper_evidence_balance
 from adaptive_reflow.schedule.cosine import CosineScheduleSampler
@@ -36,9 +37,18 @@ def _legacy_sampler(config) -> CosineScheduleSampler:
 
 
 def test_scheduler_protocol_runtime_checkable() -> None:
-    scheduler = default_cosine_scheduler()
+    """Wave 34: the framework's *default* scheduler is paper-quantity-driven.
+
+    ``default_paper_ratio_scheduler()`` returns a
+    :class:`CodimensionSheetScheduler` whose ``n_cap`` is driven by
+    the paper Lemma 2 / Lemma 3 sheet-vs-cell evidence balance (not
+    the cosine closed form). It still conforms to
+    :class:`SchedulerProtocol` (the framework depends only on the
+    Protocol, never on a concrete schedule family).
+    """
+    scheduler = default_paper_ratio_scheduler()
     assert isinstance(scheduler, SchedulerProtocol)
-    assert isinstance(scheduler, CosineAnnealScheduler)
+    assert isinstance(scheduler, CodimensionSheetScheduler)
 
 
 def test_cosine_anneal_scheduler_matches_legacy() -> None:
@@ -82,9 +92,22 @@ def test_scheduler_reset_clears_state() -> None:
 
 
 def test_scheduler_accessors() -> None:
-    scheduler = default_cosine_scheduler(cycle_length=6)
+    """Wave 34: the framework's *default* scheduler is paper-quantity-driven.
+
+    ``default_paper_ratio_scheduler`` returns a
+    :class:`CodimensionSheetScheduler` whose ``schedule_family`` is
+    ``"codimension_sheet"`` (the paper-quantity-driven family).
+    Cosine annealing remains available as a legacy opt-in via
+    ``default_cosine_scheduler`` (deprecated) or
+    ``build_scheduler("cosine", ...)``.
+    """
+    scheduler = default_paper_ratio_scheduler(cycle_length=6)
     assert scheduler.cycle_length() == 6
-    assert scheduler.schedule_family() == "cosine_no_restart"
+    assert scheduler.schedule_family() == "codimension_sheet"
+    # Default eps_implicit matches the canonical CodimensionSheetScheduler
+    # default of 0.05 (paper Theorem 1 / Lemma 2 / Lemma 3 sensitivity).
+    assert scheduler.eps_implicit == pytest.approx(0.05)
+    assert scheduler.eps_direction == "decreasing"
 
 
 def test_legacy_sampler_emits_deprecation_warning() -> None:
@@ -92,6 +115,136 @@ def test_legacy_sampler_emits_deprecation_warning() -> None:
     with pytest.warns(DeprecationWarning):
         CosineScheduleSampler(config)
 
+
+# ---------------------------------------------------------------------------
+# Wave 34: default_paper_ratio_scheduler (paper-quantity-driven default)
+# ---------------------------------------------------------------------------
+
+
+def test_default_paper_ratio_scheduler_returns_codimension() -> None:
+    """Wave 34: the framework's default scheduler is paper-quantity-driven.
+
+    ``default_paper_ratio_scheduler()`` returns a
+    :class:`CodimensionSheetScheduler` whose ``n_cap`` is driven by
+    the paper Lemma 2 / Lemma 3 sheet-vs-cell evidence balance
+    (paper-quantity-driven, not cosine annealing).
+    """
+    scheduler = default_paper_ratio_scheduler()
+    assert isinstance(scheduler, CodimensionSheetScheduler)
+    assert scheduler.schedule_family() == "codimension_sheet"
+    assert scheduler.cycle_length() == 20  # canonical default
+
+
+def test_default_paper_ratio_scheduler_carries_evidence_ratio() -> None:
+    """Wave 34: paper-quantity-driven n_cap carries the evidence ratio.
+
+    The sample's :attr:`ScheduleSample.evidence_ratio` is the
+    paper Lemma 2 / Lemma 3 sheet-vs-cell balance that *drives*
+    ``n_cap`` (not a post-hoc annotation). The ratio lies in
+    ``[0, 1]`` and reflects the per-round paper-aligned
+    ```` -> 0`` schedule.
+    """
+    scheduler = default_paper_ratio_scheduler(cycle_length=8)
+    for r in range(8):
+        sample = scheduler.sample(0, r, r)
+        assert sample.evidence_ratio is not None
+        assert 0.0 <= sample.evidence_ratio <= 1.0
+        # n_cap is driven by the ratio, not the cosine ramp.
+        # Concretely, n_cap == n_min + (n_max - n_min) * ratio.
+        expected = float(
+            sample.n_min + (sample.n_max - sample.n_min) * sample.evidence_ratio
+        )
+        assert sample.n_cap == pytest.approx(expected, rel=1e-12)
+
+
+def test_default_paper_ratio_scheduler_byte_deterministic() -> None:
+    """Wave 34: byte-stable across reset + re-sample (no RNG drift)."""
+    scheduler = default_paper_ratio_scheduler(cycle_length=6)
+    first = [scheduler.sample(0, r, r).n_cap for r in range(6)]
+    scheduler.reset()
+    second = [scheduler.sample(0, r, r).n_cap for r in range(6)]
+    assert first == second
+    # And across a fresh construction with the same args.
+    fresh = default_paper_ratio_scheduler(cycle_length=6)
+    third = [fresh.sample(0, r, r).n_cap for r in range(6)]
+    assert first == third
+
+
+def test_default_paper_ratio_scheduler_differs_from_cosine() -> None:
+    """Wave 34: paper-quantity-driven n_cap is NOT the cosine ramp.
+
+    The same ``(cycle_length, n_min, n_max)`` arguments must yield
+    a different ``n_cap`` sequence for the paper-quantity-driven
+    default vs the legacy cosine ramp (the paper evidence ratio
+    is not the cosine closed form).
+    """
+    cycle_length = 10
+    paper = default_paper_ratio_scheduler(cycle_length=cycle_length)
+    cosine = default_cosine_scheduler(cycle_length=cycle_length)
+    paper_caps = [paper.sample(0, r, r).n_cap for r in range(cycle_length)]
+    cosine_caps = [cosine.sample(0, r, r).n_cap for r in range(cycle_length)]
+    # The two n_cap sequences must differ at some round (paper-driven
+    # default ≠ cosine ramp; this is the load-bearing Wave 34 invariant).
+    assert paper_caps != cosine_caps
+
+
+def test_default_cosine_scheduler_emits_deprecation_warning() -> None:
+    """Wave 34: ``default_cosine_scheduler`` emits a DeprecationWarning.
+
+    The framework's default is now paper-quantity-driven; cosine
+    annealing is retained as a legacy opt-in for callers that
+    explicitly want it.
+    """
+    with pytest.warns(DeprecationWarning, match="default_paper_ratio_scheduler"):
+        default_cosine_scheduler()
+
+
+def test_default_paper_ratio_scheduler_audit_codes() -> None:
+    """Wave 34: paper-quantity-driven samples carry audit codes.
+
+    :class:`CodimensionSheetScheduler` samples emit
+    ``"codimension_framework_heuristic"`` (no profile) or
+    ``"codimension_paper_quantity_grounded"`` (with profile) on
+    :attr:`ScheduleSample.audit_codes` so the audit trail can
+    identify paper-quantity-driven rounds.
+    """
+    scheduler = default_paper_ratio_scheduler(cycle_length=4)
+    sample = scheduler.sample(0, 0, 0)
+    codes = sample.audit_codes
+    assert any(c.startswith("codimension_") for c in codes)
+    # Per-round eps_implicit is populated (paper-aligned diminishing).
+    assert sample.eps_implicit is not None
+    assert sample.eps_implicit > 0.0
+
+
+def test_default_paper_ratio_scheduler_rejects_non_positive_eps() -> None:
+    """``eps_implicit`` must be > 0 (Theorem 1 ``eps -> 0`` sensitivity)."""
+    with pytest.raises(ValueError, match="eps_implicit"):
+        default_paper_ratio_scheduler(eps_implicit=0.0)
+    with pytest.raises(ValueError, match="eps_implicit"):
+        default_paper_ratio_scheduler(eps_implicit=-0.1)
+
+
+def test_default_paper_ratio_scheduler_with_profile_wires_paper_quantities() -> None:
+    """Wave 34 + P1-A2: with a profile, paper quantities are wired.
+
+    When ``profile_residual_fn`` is supplied to
+    ``default_paper_ratio_scheduler``, the scheduler computes the
+    four paper quantities ``A_g``, ``B_g``, ``C_g``, ``e_rho``
+    from :mod:`adaptive_reflow.contracts.paper_quantities` and
+    caches them on the scheduler (the canonical
+    paper-quantity-driven path).
+    """
+    scheduler = default_paper_ratio_scheduler(
+        cycle_length=4, profile_residual_fn=_constant_profile_3
+    )
+    assert scheduler.sheet_A is not None
+    assert scheduler.packing_B is not None
+    assert scheduler.cell_C is not None
+    assert scheduler.exterior_gap_e_rho is not None
+    # Audit trail records paper-quantity-grounded status.
+    sample = scheduler.sample(0, 0, 0)
+    assert "codimension_paper_quantity_grounded" in sample.audit_codes
 
 # ---------------------------------------------------------------------------
 # ConstantScheduler

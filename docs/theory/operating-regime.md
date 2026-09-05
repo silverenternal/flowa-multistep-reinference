@@ -509,6 +509,74 @@ narrowing observed empirically requires further verification.
 
 ---
 
+## 10. Wave 34 — paper-quantity-driven default scheduler
+
+**Date:** 2026-09-05
+**Wave:** Wave 34 Agent C
+**Owner:** framework maintainer
+**Constraint:** user 2026-09-05 — framework MUST have algorithm-determined
+noise bias ratio (n_cap), not hardcoded cosine.
+
+### 10.1 Motivation
+
+Per the 2026-09-05 user constraint, the framework's *default*
+scheduler can no longer be a hardcoded cosine ramp. Wave 31
+(Wave 31 Agent A) wired the paper Lemma 2 / Lemma 3 sheet-vs-cell
+evidence ratio into ``CodimensionSheetScheduler.n_cap``, and
+Wave 31 Agent C integrated ``PaperRatioAdaptiveScheduler`` for
+fully-integrated paper-quantity control. The remaining gap was
+that the *default* scheduler (the one a caller receives when
+they ask the framework for "a scheduler") was still cosine.
+
+### 10.2 Wave 34 change
+
+A new factory :func:`adaptive_reflow.algorithm.scheduler._core.default_paper_ratio_scheduler`
+returns a :class:`CodimensionSheetScheduler` with the canonical
+defaults (``eps_implicit=0.05``, ``eps_direction="decreasing"``,
+the paper-aligned monotone ``eps -> 0`` schedule from
+P2-W33-A). The factory uses the cached paper quantities
+``A_g``, ``B_g``, ``C_g``, ``e_rho`` (paper Lemma 2 / Lemma 3
+/ Lemma 4 / Lemma 5) when ``profile_residual_fn`` is supplied,
+and falls back to the framework-side heuristic closed form
+otherwise (mathematically equivalent up to normalisation
+constants).
+
+:func:`default_cosine_scheduler` is **retained for backward
+compatibility** but emits a :class:`DeprecationWarning` on each
+call. Callers that explicitly want cosine annealing should use
+``build_scheduler("cosine", ...)`` instead.
+
+### 10.3 Concrete change set
+
+* **Default factory** (Wave 34): ``default_paper_ratio_scheduler``
+  (new, paper-quantity-driven) is the framework's default.
+* **Legacy factory** (DEPRECATED): ``default_cosine_scheduler``
+  emits :class:`DeprecationWarning` with migration guidance.
+* **Engine runner** (Wave 34): ``adaptive_reflow.algorithm.runner``
+  defaults to ``default_paper_ratio_scheduler()`` when no
+  scheduler is supplied (replacing the prior
+  ``default_cosine_scheduler()`` fallback).
+* **Public surface** (Wave 34): both factories are re-exported
+  from ``adaptive_reflow.algorithm`` and
+  ``adaptive_reflow.algorithm.scheduler``.
+
+### 10.4 Forward path
+
+After Wave 34 the framework's per-round ``n_cap`` is
+algorithm-determined by the paper's sheet-vs-cell evidence
+balance (Theorem 1 / Lemma 2 / Lemma 3) by default, with
+cosine annealing available as a legacy opt-in for callers
+that need it explicitly. The 2026-09-05 user constraint is
+closed at the framework level: no future default scheduler
+can silently reintroduce a hardcoded cosine ramp.
+
+This document remains the canonical reference for the
+operating-regime analysis (§1–§9); Wave 34 closes the
+2026-09-05 default-scheduler user concern additively without
+disrupting the empirical findings recorded above.
+
+---
+
 ## 10. P2-W33-B: NFE accounting + per-channel beta floor lift
 
 **Date:** 2026-09-05

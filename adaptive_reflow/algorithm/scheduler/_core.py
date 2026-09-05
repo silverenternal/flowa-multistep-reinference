@@ -530,6 +530,102 @@ class CosineAnnealScheduler:
 # ---------------------------------------------------------------------------
 
 
+def default_paper_ratio_scheduler(
+    *,
+    cycle_length: int = 20,
+    n_min: float = 0.0,
+    n_max: float = 1.0,
+    eps_implicit: float = 0.05,
+    seed: int = 0,
+    profile_residual_fn: Callable[[float], float] | None = None,
+) -> CodimensionSheetScheduler:
+    """Build the framework-default paper-quantity-driven scheduler.
+
+    Wave 34 — closure of the 2026-09-05 user constraint that the
+    framework's *default* scheduler must be **algorithm-determined**,
+    not a hardcoded cosine ramp. This factory returns a
+    :class:`CodimensionSheetScheduler` whose ``n_cap`` is driven by
+    the paper Lemma 2 / Lemma 3 sheet-vs-cell evidence balance
+    (Wave 31 Agent A, ADR-0013) rather than by the framework's
+    canonical cosine closed form (ADR-0010).
+
+    When ``profile_residual_fn`` is supplied the scheduler uses the
+    **literal** paper quantities
+    ``A_g = paper_quantities.sheet_evidence_A(profile)`` (Lemma 2 /
+    Proposition 3),
+    ``B_g = paper_quantities.root_cell_packing_B(profile)`` (Lemma 5),
+    ``C_g = paper_quantities.per_cell_coefficient_C()`` (Lemma 3), and
+    ``e_rho = paper_quantities.exterior_gap_e_rho()`` (Lemma 4 / 5) as
+    ground truth in the per-round sheet-vs-cell evidence ratio.
+    When ``None`` (the default) the scheduler falls back to the
+    framework-side heuristic (mathematically equivalent up to
+    normalisation constants; the two paths agree on the direction of
+    sheet dominance as ``eps -> 0`` per Theorem 1).
+
+    Concretely:
+
+        sheet = A_g * eps_per_round               # Lemma 2 / Cor. 1
+        cell  = C_g * B_g * eps_per_round ** 2    # Lemma 3 + Lemma 5
+        ratio = sheet / (sheet + cell)            # sheet-vs-cell balance
+        n_cap = n_min + (n_max - n_min) * ratio   # driver of capacity
+
+    where ``eps_per_round(r) = eps_implicit * (1 - u_r)`` with
+    ``u_r = r / (L - 1)`` — the paper-aligned
+    ``eps -> 0`` schedule realised as a cycle ramp (P2-W33-A).
+
+    :param cycle_length: number of rounds in one outer cycle (``>= 1``).
+    :param n_min: capacity floor (output lower bound); must lie in
+        ``[0, 1]``.
+    :param n_max: capacity ceiling (output upper bound); must lie in
+        ``[0, 1]``.
+    :param eps_implicit: round-0 implicit noise scale in evidence
+        units; must satisfy ``eps_implicit > 0``. Default ``0.05``
+        (matching the :class:`CodimensionSheetScheduler` canonical
+        default). The per-round ``eps`` diminishes monotonically
+        across the cycle, exercising paper Theorem 1's
+        ``eps -> 0`` limit at ``r = L - 1``.
+    :param seed: included for protocol signature parity with
+        stochastic schedulers; the codimension family is
+        deterministic and only participates in the frozen
+        ``config_hash``.
+    :param profile_residual_fn: optional callable mapping
+        ``x -> g(x)`` (paper Lemma 2's coarea weight
+        ``1 / sqrt(1 + g(x)^2)``). When supplied, the scheduler
+        computes the four paper quantities exactly once at
+        construction time and uses them as ground truth in the
+        per-round sheet-vs-cell evidence ratio (the canonical
+        paper-quantity-driven path). When ``None``, the scheduler
+        falls back to the framework-side heuristic closed form
+        (backward-compatible byte-for-byte with the Wave 31 inline
+        path).
+    :returns: a fresh :class:`CodimensionSheetScheduler` whose
+        ``schedule_family()`` is ``"codimension_sheet"`` and whose
+        ``n_cap`` is fully paper-quantity-driven (or framework-side
+        heuristic in the no-profile fallback). The cosine ramp
+        remains available as the *base* sampler (``scheduler.base``)
+        for introspection but does NOT drive ``n_cap`` in the
+        canonical path.
+
+    .. note::
+
+       This is the **framework's default scheduler** as of Wave 34.
+       :func:`default_cosine_scheduler` is retained for backward
+       compatibility but emits a :class:`DeprecationWarning` on each
+       invocation; callers that need cosine annealing should pass
+       an explicit ``CosineAnnealScheduler`` (or
+       :func:`build_scheduler("cosine", ...)`).
+    """
+    return CodimensionSheetScheduler(
+        cycle_length=int(cycle_length),
+        n_min=float(n_min),
+        n_max=float(n_max),
+        profile_residual_fn=profile_residual_fn,
+        eps_implicit=float(eps_implicit),
+        eps_direction="decreasing",  # paper Theorem 1 aligned
+        seed=int(seed),
+    )
+
+
 def default_cosine_scheduler(
     *,
     cycle_length: int = 20,
@@ -539,17 +635,52 @@ def default_cosine_scheduler(
     seed: int = 0,
     profile_residual_fn: Callable[[float], float] | None = None,
 ) -> CosineAnnealScheduler:
-    """Build the default :class:`CosineAnnealScheduler`.
+    """Build the legacy :class:`CosineAnnealScheduler` (DEPRECATED).
 
-    ``seed`` is accepted for signature parity with stochastic schedulers; the
-    cosine family is deterministic, so it only participates in the frozen
-    ``config_hash`` (so two schedulers with different seeds remain
-    distinguishable in provenance).
+    .. deprecated:: Wave 34 (2026-09-05)
 
-    ``profile_residual_fn`` (P1-A2) is forwarded to the scheduler so the
-    per-round forward-noise mass is the paper quantity ``A_g`` rather than
-    the raw ``n_cap``; ``None`` (default) keeps the legacy behaviour.
+       The framework's default scheduler is now paper-quantity-driven
+       (see :func:`default_paper_ratio_scheduler`, Wave 34 closure
+       of the user constraint that ``n_cap`` MUST be
+       algorithm-determined, not a hardcoded cosine ramp). Cosine
+       annealing remains available as a legacy opt-in for callers
+       that explicitly want the canonical cosine closed form (e.g.
+       reproduction baselines, ablation studies, or callers that
+       rely on the cosine-family-specific forward-noise mass).
+
+       **Migration path.** Replace::
+
+           default_cosine_scheduler()
+
+       with::
+
+           default_paper_ratio_scheduler()           # paper-quantity-driven default
+           # or, for cosine-equivalent legacy behaviour:
+           build_scheduler("cosine", cycle_length=...)
+
+       Emits a :class:`DeprecationWarning` on each call so callers
+       see the migration guidance immediately.
+
+    ``seed`` is accepted for signature parity with stochastic
+    schedulers; the cosine family is deterministic, so it only
+    participates in the frozen ``config_hash`` (so two schedulers
+    with different seeds remain distinguishable in provenance).
+
+    ``profile_residual_fn`` (P1-A2) is forwarded to the scheduler so
+    the per-round forward-noise mass is the paper quantity ``A_g``
+    rather than the raw ``n_cap``; ``None`` (default) keeps the
+    legacy behaviour.
     """
+    warnings.warn(
+        "default_cosine_scheduler() is deprecated as of Wave 34 "
+        "(2026-09-05). The framework default is now paper-quantity-"
+        "driven via default_paper_ratio_scheduler(). Migrate to "
+        "default_paper_ratio_scheduler() for the algorithm-determined "
+        "n_cap; for legacy cosine-only behaviour use "
+        "build_scheduler('cosine', ...).",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     config_hash = hash_artifact(
         {
             "schedule_family": str(schedule_family),
@@ -4366,6 +4497,7 @@ __all__ = [
     "build_scheduler",
     "build_scheduler_from_config",
     "default_cosine_scheduler",
+    "default_paper_ratio_scheduler",
     "derive_default_convergence_adaptive_ema",
     "derive_default_convergence_adaptive_kd",
     "derive_default_convergence_adaptive_kp",

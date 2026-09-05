@@ -62,6 +62,7 @@ from adaptive_reflow.algorithm.scheduler import (
     CodimensionSheetScheduler,
     SchedulerProtocol,
     default_cosine_scheduler,
+    default_paper_ratio_scheduler,
 )
 from adaptive_reflow.algorithm.state_machine_integration import (
     OrchestratorEvent,
@@ -461,7 +462,9 @@ class ReInferenceRunner:
         # / ``reset()`` / ``inject_noise()`` all delegate to the inner
         # scheduler byte-for-byte.
         inner_scheduler: SchedulerProtocol = (
-            scheduler if scheduler is not None else default_cosine_scheduler()
+            scheduler
+            if scheduler is not None
+            else default_paper_ratio_scheduler()
         )
         self._scheduler: SchedulerProtocol = wrap_scheduler_with_state_machine(
             inner_scheduler

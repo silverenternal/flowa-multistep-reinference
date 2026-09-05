@@ -224,6 +224,7 @@ from .scheduler import (
     SigmoidScheduler,
     build_scheduler,
     default_cosine_scheduler,
+    default_paper_ratio_scheduler,
 )
 from .scheduler_extra import (
     EDM_RHO_DEFAULT,
@@ -390,7 +391,9 @@ __all__ = [
     "default_bounded_merge_operator",
     "default_categorical_blender",
     "default_continuous_fm_dynamics",
+    "default_codimension_sheet_scheduler",
     "default_cosine_scheduler",
+    "default_paper_ratio_scheduler",
     "default_ctmc_dynamics",
     "default_ctmc_euler_heun_solver",
     "default_dynamic_noise_bias",

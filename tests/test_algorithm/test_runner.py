@@ -15,6 +15,7 @@ import pytest
 
 from adaptive_reflow.algorithm import (
     AdaptivePolicyDriver,
+    CodimensionSheetScheduler,
     ConstantPolicyDriver,
     ConstantScheduler,
     ConvergenceAdaptiveScheduler,
@@ -25,6 +26,7 @@ from adaptive_reflow.algorithm import (
     ScheduleDerivedPolicyDriver,
     default_bounded_merge_operator,
     default_cosine_scheduler,
+    default_paper_ratio_scheduler,
     default_policy_driver,
 )
 from adaptive_reflow.contracts import (
@@ -495,10 +497,19 @@ def test_runner_algorithm_signatures_present(_twodim_adapter) -> None:
 
 
 def test_runner_default_factories(_twodim_adapter) -> None:
-    """A runner built without explicit components uses the canonical defaults."""
+    """A runner built without explicit components uses the canonical defaults.
+
+    Wave 34 wire change: the runner's default scheduler is now the
+    paper-quantity-driven :class:`CodimensionSheetScheduler` (formerly
+    the cosine ramp). The runner is therefore composed with a
+    codimension-driven scheduler by default; the cosine ramp remains
+    available via :func:`default_cosine_scheduler` for callers that
+    need the legacy behaviour.
+    """
     adapter = _twodim_adapter
     runner = ReInferenceRunner(adapter=adapter)
-    assert isinstance(runner.scheduler, CosineAnnealScheduler)
+    # Wave 34 default: paper-quantity-driven CodimensionSheetScheduler.
+    assert isinstance(runner.scheduler, CodimensionSheetScheduler)
     assert isinstance(runner.policy_driver, ScheduleDerivedPolicyDriver)
     # Endpoints array has the right shape even though no evaluator was supplied.
     result = runner.run(
@@ -506,6 +517,58 @@ def test_runner_default_factories(_twodim_adapter) -> None:
     )
     assert result.endpoints.shape == (2, 2)
     assert result.endpoints.dtype == np.float64
+
+
+def test_runner_default_factory_is_paper_quantity_driven(_twodim_adapter) -> None:
+    """Wave 34: default scheduler is paper-quantity-driven (codimension_sheet).
+
+    Asserts the family string on the wrapped scheduler is
+    ``"codimension_sheet"`` (not ``"cosine"``). The paper-quantity-driven
+    default is the canonical wire per Wave 31 / Wave 34; the cosine
+    ramp remains available for callers that explicitly opt in.
+    """
+    adapter = _twodim_adapter
+    runner = ReInferenceRunner(adapter=adapter)
+    # The state-machine wrapper preserves the schedule_family() string.
+    assert runner.scheduler.schedule_family() == "codimension_sheet"
+
+
+def test_runner_cosine_default_factory_available_explicitly(_twodim_adapter) -> None:
+    """The cosine ramp is still available for callers that explicitly opt in.
+
+    Backward-compat: existing test fixtures that pass an explicit
+    :func:`default_cosine_scheduler` continue to work. This test pins
+    the cosubstitution contract so a future change cannot silently
+    remove the cosine factory.
+    """
+    import warnings
+
+    adapter = _twodim_adapter
+    # Wave 34: ``default_cosine_scheduler`` is deprecated; suppress the
+    # DeprecationWarning so the test asserts behaviour, not the warning.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        scheduler = default_cosine_scheduler(cycle_length=4)
+    runner = ReInferenceRunner(adapter=adapter, scheduler=scheduler)
+    assert isinstance(runner.scheduler, CosineAnnealScheduler)
+    # The cosine family identifier is the ``schedule_family`` value
+    # (``"cosine_no_restart"`` by default).
+    assert runner.scheduler.schedule_family().startswith("cosine")
+
+
+def test_runner_default_factory_returns_codimension_sheet(_twodim_adapter) -> None:
+    """Wave 34: ``default_paper_ratio_scheduler`` is the canonical wire.
+
+    Pins that the framework's default-scheduler factory returns a
+    :class:`CodimensionSheetScheduler` (less aggressive than
+    :class:`PaperRatioAdaptiveScheduler`). The factory name is
+    ``default_paper_ratio_scheduler`` (paper-quantity-driven naming)
+    but the underlying class is the codimension sheet (Wave 31
+    ADR-0013).
+    """
+    scheduler = default_paper_ratio_scheduler()
+    assert isinstance(scheduler, CodimensionSheetScheduler)
+    assert scheduler.schedule_family() == "codimension_sheet"
 
 
 # ---------------------------------------------------------------------------

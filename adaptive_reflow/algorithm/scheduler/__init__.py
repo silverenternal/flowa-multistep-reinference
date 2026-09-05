@@ -46,6 +46,7 @@ from ._core import (
     build_scheduler,
     build_scheduler_from_config,
     default_cosine_scheduler,
+    default_paper_ratio_scheduler,
 )
 from .evidence_driven import (
     EVIDENCE_PID_ADJUSTED,
@@ -112,6 +113,7 @@ __all__ = [
     "build_scheduler_from_config",
     "default_cosine_scheduler",
     "default_e_rho_provider",
+    "default_paper_ratio_scheduler",
     "regime_ceiling",
     "regime_holds",
 ]
