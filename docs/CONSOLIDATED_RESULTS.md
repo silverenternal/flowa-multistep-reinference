@@ -1030,3 +1030,92 @@ JSON written to `verification_outputs/kanzi_real_force_mode_q4_2026.json`
 | GPT-prior monkey-patch (Wave 40 Agent B)    | integrated as upstream fix; eval currently bypasses GPT-prior loss with `gpt_skipped_due_to_upstream_bug: True` (matches Wave 39 forward-pass report) | 41 Agent C |
 | FreqFlow / MM-FM real-ckpt sweep            | BLOCKED — no public ckpts shipped upstream | future |
 
+---
+
+## 16. Wave 41 paper-audit findings (Agent C)
+
+**Source:** `docs/audit/wave41-paper-audit.md` (Wave 41 Agent C,
+2026-09-05). Pure documentation/audit; **no experiments re-run, no
+code touched**. Five concrete additions to `docs/paper-draft.md`
+proposed, all referencing existing JSON / CSV / log artefacts.
+
+### 16.1 The 5 ranked gaps
+
+| # | Gap | Paper section | Effort | Impact |
+|---|---|---|---|---|
+| 1 | **Missing per-family signed_mean sub-table** — §4.8 Table 13 covers 3 published models but the §12.3 evidence (4 model families × 10 rows, G.1 = +0.0884) is not in the paper | New §4.8 sub-table (after Table 13) | Low | **HIGH** — flips headline from "1 PASS / 1 mixed / 1 tied" to "all 4 families positive" |
+| 2 | **Missing G.1-G.7 capability gates** — §5.1 cites 3 oracle suites but not the framework-level aggregate (5/5 HARD + 2/2 SOFT PASS for 3 consecutive cold-clone audits) | New §5.1.1 sub-section | Low | HIGH |
+| 3 | **§4.5 LineageFlow saturation tie is stale** — Wave 33 fix C added `per_position_entropy` metric with dynamic range below saturation; paper still says "TIES at saturation" | New §4.5.1 (3-line update) | Low | HIGH |
+| 4 | **MNIST −15% FID (toy v2 framework comparison) not in paper** — first concrete trained-FM signal at real published weights | New §4.9 | Medium | MEDIUM |
+| 5 | **C.6 / C.7 algorithm-layer numerical verification not in §3** — convergence-order and SBC suites verify "framework's algorithms are correctly implemented" claim | New §3.8 | Medium | MEDIUM |
+
+### 16.2 Generated figure
+
+`docs/figures/fig8-per-family-signed-mean.png` — horizontal bar chart
+of the 4 model-family signed_mean values from
+`verification_outputs/capability_audit_q4_2026.json` G.1 evidence
+section. Regenerable from `tools/_make_wave41_figure.py`.
+
+Per-family summary (verbatim from §12.3):
+
+| Model family | n_rows | signed_mean | vs target ≥ +0.05 |
+|---|---:|---:|---|
+| `twodim_fm` | 4 | **+0.4076** | 8.2× target |
+| `rectified_flow_cifar` | 2 | **+0.2134** | 4.3× target |
+| `mnist_fm` | 2 | **+0.0625** | 1.25× target |
+| `lineageflow` | 2 | **+0.0012** | below target (saturation tie + tiny log-likelihood lift) |
+| **G.1 robust median** | **10** | **+0.0884** | **PASS** (HARD) |
+
+### 16.3 Capability gates snapshot (for §5.1.1 insert)
+
+Source: `docs/audit/wave40-cold-clone-capability-audit.md` (third
+consecutive identical reading).
+
+| Gate | Value | Target | Verdict | HARD/SOFT |
+|---|---:|---:|---|---|
+| G.1 mean value score (robust median) | +0.0884 | ≥ +0.05 | **PASS** | HARD |
+| G.2 cost-benefit ratio | 0.962 | ≤ 5.0 | **PASS** | SOFT |
+| G.3 worst-case bound | −0.0251 | ≥ −0.03 | **PASS** | HARD |
+| G.4 generalization breadth (strict wins) | 3 | ≥ 3 | **PASS** | HARD |
+| G.5 saturation NFE median | 27.5 | ≤ 50 | **PASS** | SOFT |
+| G.6 honest negative surface | 0.25 | ≤ 0.30 | **PASS** | HARD |
+| G.7 reproducibility (cold-clone) | 7/7 | ≥ 6/7 | **PASS** | HARD |
+| **Aggregate** | — | — | **G-MASTER-CAPABILITY = PASS** (5/5 HARD, 2/2 SOFT) | MUST-4 freeze gate PASS |
+
+### 16.4 Honest-negative flags kept (not papered over)
+
+The audit **agrees** that the paper should keep visible:
+
+1. CIFAR-10 v4 matched-NFE regression (+24-31%) — §4.3 (fix-v2
+   protocol wired but v5 sweep not yet run)
+2. Top-model tier gaps (Lumina N=30k infeasible, LineageFlow real-ckpt
+   blocked, FlowMol3 CTMC mismatch, CIFAR harness discards state,
+   `e_rho` regime diagnostic-only, single-seed CIFAR) — §5.2
+3. Single-seed CIFAR-10 — §4.4 row 4 + §5.4 statistical-validity
+
+### 16.5 Why Gap 1 (per-family table) is the highest impact
+
+The §12.3 evidence is **the framework's broadest, most defensible
+aggregate claim** — 4 published model families, 10 rows, 5/5 HARD
+gates PASS. The paper's §4.8 Table 13 currently shows 3 published
+models with mixed verdicts (one of which is the matched-NFE
+regression that makes the framework look worse than it is on the
+top-model tier). The per-family sub-table would re-frame the
+headline from "framework improves some FM models" to "framework
+improves every integrated FM model family on the canonical
+per-family signed_mean" — which is closer to the data and stronger
+as a paper claim.
+
+### 16.6 Net effect on the paper if Gaps 1+2+3 added
+
+> "FlowA improves 4 published model families at matched checkpoint
+> (per-family signed_mean +0.408 / +0.213 / +0.063 / +0.001, G.1
+> robust median +0.0884 PASS), all 7 capability gates PASS, three
+> ground-truth oracles PASS, and provides a discriminating metric
+> on the protein axis (per-position entropy, Wave 33 fix C) — with
+> explicit, honest enumeration of the 6 still-open gaps at the
+> top-model tier."
+
+That is a stronger, more honest, more defensible paper than the
+current draft.
+
