@@ -313,9 +313,19 @@ def test_invalid_constructor_args() -> None:
 # (10) Default factory + bias family tags.
 
 
-def test_default_factory_returns_identity() -> None:
+def test_default_factory_returns_theorem1() -> None:
+    """Per 2026-09-05 user directive: default noise bias is paper-grounded Theorem1,
+    not the legacy cosine back-compat IdentityDynamicNoiseBias.
+
+    The IdentityDynamicNoiseBias class remains exported for back-compat callers
+    (it is still used as the no-paper-quantities / zero-sheet fallback inside
+    Theorem1DynamicNoiseBias.compute_noise_bias itself), but is no longer the
+    factory default.
+    """
     bias = default_dynamic_noise_bias()
-    assert isinstance(bias, IdentityDynamicNoiseBias)
+    assert isinstance(bias, Theorem1DynamicNoiseBias)
+    assert bias.bias_family() == "theorem1"
+    assert not isinstance(bias, IdentityDynamicNoiseBias)
 
 
 def test_bias_family_tags() -> None:

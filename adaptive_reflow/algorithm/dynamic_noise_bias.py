@@ -421,8 +421,21 @@ class CategoricalDynamicNoiseBias:
 
 
 def default_dynamic_noise_bias() -> DynamicNoiseBiasProtocol:
-    """Return the canonical :class:`IdentityDynamicNoiseBias` (back-compat)."""
-    return IdentityDynamicNoiseBias()
+    """Return the canonical paper-grounded :class:`Theorem1DynamicNoiseBias`.
+
+    Per user directive 2026-09-05: the framework's default dynamic-noise-bias
+    implementation is the **Theorem 1 iterative** version, which derives
+    ``eps(r) = max(e_rho/4, sheet_A * (1 - r/(L-1)))`` from the paper-quantity
+    snapshot (sheet_A, packing_B, cell_C, exterior_gap_e_rho). The previous
+    :class:`IdentityDynamicNoiseBias` (legacy cosine back-compat no-op
+    returning ``epsilon_per_channel = n_cap`` with
+    ``bias_source='schedule_fallback'``) is retained as an exportable class
+    for back-compat callers but is no longer the default.
+
+    For categorical channels use :class:`CategoricalDynamicNoiseBias`
+    explicitly (it wraps :class:`Theorem1DynamicNoiseBias` internally).
+    """
+    return Theorem1DynamicNoiseBias()
 
 
 __all__ = [
