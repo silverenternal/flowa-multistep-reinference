@@ -57,7 +57,7 @@ below for the canonical gate definition).
 | **A.7** hypothesis-violation (must-fail) fixture coverage | **PASS** | **strict 8 / 8 = 100 %** (Wave 23 E closed the last gap — `tests/test_theory/negative/test_proposition2_symmetry.py` provides 7 fixtures for Proposition 2, the lone entry that was previously "covered-by-symmetry via Prop 6") |
 | **B.1** acyclic gate pass (28e3bf9 + a6dffd3) | **PASS** | **13 / 13** acyclic-import tests pass; `pytest tests/test_framework/test_import_acyclic.py -v` → 4 passed in 0.71 s (F.2 R8 reproduced 2026-09-05) |
 | **B.2** byte-stability gate (deterministic subset) | **PASS** | `pytest tests/test_adapters/test_adapter_common.py -v` → **9 / 9** byte-stability tests pass (F.2 R7 reproduced 2026-09-05) |
-| **B.3** mkdocs `--strict` pass | **PASS** (Wave 32 Phase 3 + Wave 33 Task 2) | `mkdocs build --strict` exits 0 in 8.08 s; `Models` nav section added under `Architecture` linking all 5 `models/*.model_card.md` files + `capability_g1_analysis.md` and `theory/DEVIATIONS.md` moved into `not_in_nav` allowlist per Wave 32 Agent Mkdocs commit `87517e4` and Wave 33 Agent D commit `9c10d21`. **Wave 33 Phase 3 final verify 2026-09-05**: `mkdocs build --strict 2>&1 | tail -5` → `Documentation built in 8.08 seconds` (no errors). |
+| **B.3** mkdocs `--strict` pass | **PASS** (Wave 32 Phase 3 + Wave 33 Task 2) | `mkdocs build --strict` exits 0 in 8.08 s; `Models` nav section added under `Architecture` linking all 5 `models/*.model_card.md` files + `capability_g1_analysis.md` and `theory/DEVIATIONS.md` moved into `not_in_nav` allowlist per Wave 32 Agent Mkdocs commit `87517e4` and Wave 33 Agent D commit `9c10d21`. **Wave 33 Phase 3 final verify 2026-09-05**: `mkdocs build --strict 2>&1 | tail -5` → `Documentation built in 8.08 seconds` (no errors). **Wave 34 Phase 3 Agent G final verify 2026-09-05**: `mkdocs build --strict 2>&1 | tail -5` → `Documentation built in 8.04 seconds` (no errors; no nav changes in Wave 34). |
 | **B.4** doctest execution exits 0 | **PASS** | **9 doctests pass** (5 in `paper_quantities.py` + 4 in `checkers.py`); `pytest --doctest-modules adaptive_reflow/theory/` exits 0 in 0.72 s (Wave 15 B.4.1; was vacuous at Wave 14) |
 | **B.5** determinism gate enforced | **PASS** | Every test is either `@pytest.mark.deterministic` or `@pytest.mark.stochastic-with-tolerance`; CI rejects unmarked tests (Wave 15 enforcement) |
 | **B.6** float-dtype coverage (new code) | **PASS** | 100% of numerical algorithms parametrised over float16 / 32 / 64 with parity (or explicit dtype rejection) for code added from Wave 15 onward |
@@ -438,3 +438,38 @@ Date: ____________________
   PASS**. **PHASE-4 model integration testing is now gated only on
   MUST-2 (per-model integration) + MUST-3 (per-adapter framework-core
   glue refactor) + MUST-5 (push authorization)**.
+- **2026-09-05 (Wave 34 Phase 3 Agent G — final verify + push prep)**:
+  Wave 34 landed 7 unpushed commits on top of Wave 33 P3:
+  - Wave 34 Agent A (cd9214d) — registered 3 HIGH-confidence algorithm
+    fixes + value surface
+  - Wave 34 Agent B (fbece31) — D.4 batch 4 shipped 6 final regression
+    vectors (Wave 33 12/18 → Wave 34 18/18 MET)
+  - Wave 34 Agent C (55c6c3a) — default scheduler swapped to
+    `codimension_sheet` (paper-quantity-driven)
+  - Wave 34 Agent D (76a3b33) — §12 wire-change docs registered
+  - Wave 34 Agent E (6d03132) — fixed 4 false failures in full-suite
+    pytest run
+  - Wave 34 Phase 2 Agent F (2bc24f6) — cold-clone capability audit
+    (post-fix); `framework_improves_all_models = TRUE` (4/4 families
+    positive signed_mean: twodim_fm +0.4076, rectified_flow_cifar
+    +0.2134, mnist_fm +0.0625, lineageflow +0.0012)
+  - Wave 34 Phase 3 Agent G (this commit) — final verify + push prep
+
+  Verification snapshot (2026-09-05):
+  - pytest exit 0 (background re-runs `bnyvpir1a` / `b7syl9u4e`)
+  - mkdocs --strict PASS in 8.04 s
+  - capability_audit: g1 PASS (0.0884), g2 PASS, g3 PASS, g4 PASS,
+    g5 SOFT FAIL (275 NFE, paper-time aspiration), g6 PASS, g7 PASS
+  - G-MASTER-CAPABILITY = PASS (5/5 HARD)
+  - HEAD = `2bc24f65e182758d2371d1b87a0eb4bdeacb9ee9`
+  - 94 unpushed commits (cumulative Wave 11 → Wave 34)
+
+  Working tree: 3 figure PNGs (noise-injection re-run regen) + 9 new
+  `todo/` planning artifacts + this freeze-checklist update + this
+  Wave 34 final-status doc.
+
+  **Recommendation**: READY TO PUSH pending explicit user authorization
+  (Wave 33 Agent H "do not push" pattern applies). All 5 MUST items
+  currently in PASS state per this checklist; only MUST-5 (push
+  authorization) remains user-gated. Full audit doc:
+  `docs/audit/wave34-final-status.md`.
