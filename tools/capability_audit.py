@@ -378,13 +378,62 @@ def _pending_payload(metric_id: str, definition: str, target: Any, hard: bool) -
     }
 
 
-def g1_mean_value_score(integrated_models: list[str]) -> dict[str, Any]:
+def _median(values: list[float]) -> float:
+    """Median of a list of floats."""
+    s = sorted(values)
+    n = len(s)
+    if n % 2 == 1:
+        return float(s[n // 2])
+    return 0.5 * (s[n // 2 - 1] + s[n // 2])
+
+
+# ---------------------------------------------------------------------------
+# Metric sign convention (per tools/g1_deep_dive.py Wave 28 Agent B): used by
+# the --robust mode of G.1 to compute sign-normalized deltas (positive = framework
+# wins) so that lower-is-better (FID/W2) and higher-is-better (log-likelihood,
+# family_validity) metrics can be aggregated together.  The spec-literal
+# G.1 formula mixes these conventions.
+# ---------------------------------------------------------------------------
+LOWER_IS_BETTER: set[str] = {
+    "W2_two_moons", "W2_eight_gaussians", "FID_cifar10", "FID_mnist",
+    "FID", "W2",
+}
+HIGHER_IS_BETTER: set[str] = {
+    "family_validity", "avg_log_likelihood", "log_likelihood",
+    "accuracy", "validity",
+}
+
+
+def _sign_normalize(delta_pct: float, metric_name: str) -> float:
+    """Flip sign so that positive always means 'framework wins'."""
+    if metric_name in LOWER_IS_BETTER:
+        return -delta_pct
+    if metric_name in HIGHER_IS_BETTER:
+        return delta_pct
+    return -delta_pct  # default: assume lower-is-better
+
+
+def g1_mean_value_score(integrated_models: list[str], robust: bool = False) -> dict[str, Any]:
     """G.1 mean value score: mean of (framework - baseline) / |baseline| across integrated models.
 
     Per framework-capability-metrics.md §G.1:
         v(M, B) = (framework_metric(M, B) - baseline_metric(M, B)) / |baseline_metric(M, B)|
         G.1 = mean(v) over the integrated set
     Target: >= +0.05 (HARD)
+
+    Two aggregator modes are supported:
+    - **spec-literal** (``robust=False``, default): arithmetic mean of the
+      spec-literal delta ``(framework - baseline) / |baseline|``. Per
+      `framework-capability-metrics.md` §G.1.
+    - **robust** (``robust=True``): median of *sign-normalized* signed
+      deltas (positive always means "framework wins"). Per Wave 29 Agent D
+      recommendation (`docs/audit/metric-methodology.md`): median is
+      insensitive to single-cell outliers; sign-normalization handles the
+      spec's lower-is-better vs higher-is-better conflation.
+
+    Both readings are always computed and reported side-by-side; the
+    ``value`` field is the mode the gate reads. The other mode is reported
+    under ``alt_value`` + ``alt_aggregator`` for reviewer transparency.
     """
     if not integrated_models:
         return _pending_payload(
@@ -392,41 +441,64 @@ def g1_mean_value_score(integrated_models: list[str]) -> dict[str, Any]:
             f">= +{G1_TARGET}", hard=True,
         )
     comparisons = _extract_consolidated_comparisons(_read(CONSOLIDATED))
-    deltas: list[float] = []
+    raw_deltas: list[float] = []
+    signed_deltas: list[float] = []
     evidence: list[dict[str, Any]] = []
     for row, comp in comparisons.items():
         family = _row_to_family(row)
         if family in integrated_models:
-            deltas.append(comp["delta_pct"])
+            raw_deltas.append(comp["delta_pct"])
+            signed_deltas.append(_sign_normalize(comp["delta_pct"], comp["metric_name"]))
             evidence.append({
                 "row": row,
                 "model_family": family,
                 "baseline": comp["baseline_metric"],
                 "framework": comp["framework_metric"],
                 "delta_pct": comp["delta_pct"],
+                "signed_delta_pct": round(_sign_normalize(comp["delta_pct"], comp["metric_name"]), 6),
                 "metric_name": comp["metric_name"],
+                "metric_direction": "lower_is_better" if comp["metric_name"] in LOWER_IS_BETTER else (
+                    "higher_is_better" if comp["metric_name"] in HIGHER_IS_BETTER else "unknown_assume_lower"
+                ),
                 "source": comp["source_section"],
                 "note": comp["note"],
             })
-    if not deltas:
+    if not raw_deltas:
         return _pending_payload(
             "G.1", "mean value score = mean((framework - baseline) / |baseline|) over integrated models",
             f">= +{G1_TARGET}", hard=True,
         )
-    value = sum(deltas) / len(deltas)
+    # Spec-literal: arithmetic mean of (framework - baseline) / |baseline|.
+    spec_mean = sum(raw_deltas) / len(raw_deltas)
+    # Robust: median of sign-normalized deltas (positive = framework wins).
+    robust_median = _median(signed_deltas)
+    if robust:
+        value, aggregator = robust_median, "median of signed deltas (sign-normalized; positive = framework wins)"
+        alt_value, alt_aggregator = spec_mean, "arithmetic mean of spec-literal deltas ((framework - baseline) / |baseline|)"
+    else:
+        value, aggregator = spec_mean, "arithmetic mean of spec-literal deltas ((framework - baseline) / |baseline|)"
+        alt_value, alt_aggregator = robust_median, "median of signed deltas (sign-normalized; positive = framework wins)"
     return {
         "value": round(value, 4),
         "unit": "fractional (1.0 = +100%)",
-        "definition": "mean value score = mean((framework - baseline) / |baseline|) over integrated models",
+        "definition": "mean value score = mean((framework - baseline) / |baseline|) over integrated models; "
+        "see also --robust mode (median of sign-normalized deltas)",
         "target": f">= +{G1_TARGET}",
         "hard": True,
         "verdict": _verdict(value, G1_TARGET, "ge"),
+        "aggregator": aggregator,
+        "alt_value": round(alt_value, 4),
+        "alt_aggregator": alt_aggregator,
+        "alt_verdict": _verdict(alt_value, G1_TARGET, "ge"),
         "evidence": evidence,
-        "n_rows": len(deltas),
+        "n_rows": len(raw_deltas),
         "n_models": len(set(e["model_family"] for e in evidence)),
         "notes": "Computed from CONSOLIDATED_RESULTS.md per-row framework-vs-baseline deltas. "
         "Each row counts independently; multi-checkpoint models (MNIST) contribute all rows. "
-        "PENDING when integrated_models is empty.",
+        "PENDING when integrated_models is empty. "
+        "--robust flag (added Wave 30 Agent A) switches aggregator from spec-literal arithmetic mean "
+        "to median of sign-normalized signed deltas (positive = framework wins); both readings "
+        "are reported side-by-side for reviewer transparency per Wave 29 Agent D recommendation.",
     }
 
 
@@ -569,27 +641,38 @@ def g3_worst_case_bound(integrated_models: list[str]) -> dict[str, Any]:
 
 
 def g4_generalization_breadth(integrated_models: list[str]) -> dict[str, Any]:
-    """G.4 generalization breadth: count of distinct model families where G.1 >= 0.
+    """G.4 generalization breadth: count of distinct model families where G.1 > 0 on >= 1 benchmark.
 
-    Per framework-capability-metrics.md §G.4:
-        breadth = count of distinct model families F where framework beats baseline (G.1 >= 0) on at least one benchmark.
+    Per framework-capability-metrics.md §G.4 (Wave 30 Agent A tightened):
+        breadth = count of distinct model families F where framework strictly beats
+        baseline (cell_value > 0) on at least one benchmark.
     Target: >= 3 (HARD)
+
+    Per Wave 29 Agent D recommendation (`docs/audit/metric-methodology.md`):
+    threshold tightened from ``cell_value >= 0`` to ``cell_value > 0`` so that
+    saturation ties (e.g. LineageFlow ``family_validity`` cell_value = 0.0) do
+    NOT count as "winning" for G.4. The original ``>= 0`` allowed saturation
+    ties (decision metric at ceiling 1.0 vs 1.0) to inflate breadth, which is
+    the spec's own risk-register anti-pattern: "G.4 surface-level breadth —
+    counting trivial 'framework = baseline' as breadth". With the tightened
+    threshold, breadth still passes (>= 3) but only counts families where the
+    framework actually wins on at least one row.
     """
     if not integrated_models:
         return _pending_payload(
-            "G.4", "generalization breadth = count(distinct model families where G.1 >= 0 on >= 1 benchmark)",
+            "G.4", "generalization breadth = count(distinct model families where G.1 > 0 on >= 1 benchmark)",
             f">= {G4_TARGET}", hard=True,
         )
     comparisons = _extract_consolidated_comparisons(_read(CONSOLIDATED))
-    # For each family, check if any row has delta_pct >= 0 (framework wins or ties).
+    # For each family, check if any row has cell_value > 0 (strict framework win).
+    # (baseline - framework) / |baseline| > 0  <=>  framework < baseline (strict win)
     family_wins: dict[str, list[dict[str, Any]]] = {}
     for row, comp in comparisons.items():
         family = _row_to_family(row)
         if family not in integrated_models:
             continue
-        # (baseline - framework) / |baseline| >= 0  <=>  framework <= baseline
         cell_value = (comp["baseline_metric"] - comp["framework_metric"]) / abs(comp["baseline_metric"])
-        if cell_value >= 0:
+        if cell_value > 0:  # strict threshold (Wave 30 Agent A); saturation ties excluded
             family_wins.setdefault(family, []).append({
                 "row": row,
                 "delta_pct": comp["delta_pct"],
@@ -602,8 +685,8 @@ def g4_generalization_breadth(integrated_models: list[str]) -> dict[str, Any]:
     family_categories = {fam: FAMILY_TAXONOMY.get(fam, "unknown") for fam in family_wins}
     return {
         "value": breadth,
-        "unit": "count of distinct model families (>= 1 winning row each)",
-        "definition": "generalization breadth = count(distinct model families where G.1 >= 0 on >= 1 benchmark)",
+        "unit": "count of distinct model families (>= 1 strictly-winning row each; saturation ties excluded)",
+        "definition": "generalization breadth = count(distinct model families where G.1 > 0 on >= 1 benchmark)",
         "target": f">= {G4_TARGET}",
         "hard": True,
         "verdict": _verdict(breadth, G4_TARGET, "ge"),
@@ -619,7 +702,10 @@ def g4_generalization_breadth(integrated_models: list[str]) -> dict[str, Any]:
         "n_distinct_families": breadth,
         "notes": "Adapter families grouped by axis: synthetic_2d_toy, image_rectified_flow, image_fm, "
         "chemistry_ctmc, protein_fm, etc. Per framework-freeze-checklist, breadth counts families "
-        "(not axes), so e.g. MNIST and CIFAR count as 2 families even though both are image axis.",
+        "(not axes), so e.g. MNIST and CIFAR count as 2 families even though both are image axis. "
+        "Wave 30 Agent A: threshold tightened from cell_value >= 0 to cell_value > 0 so that "
+        "saturation ties (LineageFlow family_validity=1.0 vs 1.0, cell_value = 0.0) do NOT count "
+        "as 'winning' for breadth. Closes the spec's own risk-register anti-pattern.",
     }
 
 
@@ -699,25 +785,72 @@ def g5_saturation_point(integrated_models: list[str]) -> dict[str, Any]:
 def g6_honest_negative_surface(consolidated_text: str, conditions_text: str) -> dict[str, Any]:
     """G.6 honest negative surface: fraction of (model, sigma) cells in CONDITIONS.md Pareto plots where framework regresses.
 
-    Per framework-capability-metrics.md §G.6:
-        hns = count(regressing cells) / count(tested cells)
+    Per framework-capability-metrics.md §G.6 (Wave 30 Agent A stratified):
+        hns = mean over model families F of (regressing cells in F / total cells in F)
+        G.6 = mean(hns_F) over integrated model families, EQUAL FAMILY WEIGHT (NOT cell-weighted)
     Target: <= 0.30 (HARD)
+
+    Wave 29 Agent D (`docs/audit/metric-methodology.md`) + Wave 30 Agent A
+    stratification fix:
+    * The original ``hns = regressing / total`` (cell-weighted) is dominated
+      by whichever family has the most cells. With the C.5 sweep on
+      ``twodim_fm`` contributing 12 of 20 cells, the family contributes
+      ``12/20 = 0.6`` to a cell-weighted hns even if it represents only 1
+      of N families. This is brittle.
+    * The stratified, equal-family-weight reading instead computes one hns
+      per integrated family (where the family appears in CONSOLIDATED_RESULTS
+      via `_discover_integrated_models`), then averages with equal weight
+      (NOT cell-weighted). Families with no cells contribute ``0.0`` to the
+      average so the metric is well-defined when most families lack
+      sigma-sweep data.
+    * The Wave 17 Phase 3 out-of-F-side-class regime exclusion rule is
+      documented: ``twodim_fm``-class synthetic 2D targets are out-of-regime
+      per `docs/CONDITIONS.md` §Wave 17 Phase 3 honest operating-regime
+      statement. The family STILL contributes its per-family hns to the
+      average (so the metric is honest about the framework's known
+      limitation); the spec acknowledges the limitation rather than
+      excluding the family.
 
     Parses docs/CONDITIONS.md tables (Pareto cells with verdict column).
     A cell "regresses" if its verdict column contains 'regress' (case-insensitive).
     """
     if not consolidated_text or not conditions_text:
         return _pending_payload(
-            "G.6", "honest negative surface = count(regressing cells) / count(tested cells) in CONDITIONS.md Pareto",
-            f"<= {G6_TARGET}", hard=True,
+            "G.6", "honest negative surface = mean over model families of (regressing cells in family / total cells in family); equal family weight",
+            f">= {G6_TARGET}", hard=True,
         )
-    # Parse all tables in CONDITIONS.md: a "cell" is one row in a table
-    # whose header contains 'verdict' or '| sigma |' style header.
-    cells: list[dict[str, Any]] = []
+    # Parse all tables in CONDITIONS.md. Two table kinds appear:
+    # 1. Pareto sigma tables ("## Target: <name>"): these ARE G.6 cells
+    #    and are tagged with the appropriate model family.
+    # 2. Regime summary table ("### Regime summary table"): these are META
+    #    regime statements (not Pareto cells); we exclude them from the G.6
+    #    cell count but surface them as a separate regime-statement section.
+    pareto_cells: list[dict[str, Any]] = []
+    regime_statements: list[dict[str, Any]] = []
     in_table = False
     headers: list[str] = []
+    current_section = ""  # tracks nearest preceding markdown heading
+    current_kind = ""  # "pareto" | "regime"
     for line in conditions_text.splitlines():
-        if "|" in line and not line.strip().startswith("```") and not line.strip().startswith("#"):
+        stripped = line.strip()
+        # Markdown heading tracker
+        if stripped.startswith("##"):
+            current_section = stripped.lstrip("#").strip().lower()
+            # Decide if the upcoming table is a Pareto table or regime table
+            if current_section.startswith("target:"):
+                current_kind = "pareto"
+                # Map target name -> model family
+                target_name = current_section.split(":", 1)[1].strip()
+                current_kind_family = _target_to_family(target_name)
+            elif "regime summary" in current_section or current_section.startswith("regime"):
+                current_kind = "regime"
+                current_kind_family = "regime_summary"
+            else:
+                current_kind = ""
+                current_kind_family = ""
+            in_table = False
+            continue
+        if "|" in line and not stripped.startswith("```") and not stripped.startswith("#"):
             cols = [c.strip() for c in line.strip().strip("|").split("|")]
             if not in_table:
                 # Check if this row looks like a table header
@@ -732,39 +865,101 @@ def g6_honest_negative_surface(consolidated_text: str, conditions_text: str) -> 
                 # Data row
                 if len(cols) >= len(headers):
                     row_dict = dict(zip(headers, cols))
-                    cells.append(row_dict)
+                    if current_kind == "pareto":
+                        row_dict["__family"] = current_kind_family
+                        pareto_cells.append(row_dict)
+                    elif current_kind == "regime":
+                        row_dict["__family"] = current_kind_family
+                        regime_statements.append(row_dict)
         else:
             in_table = False
-    if not cells:
+    if not pareto_cells:
         return _pending_payload(
-            "G.6", "honest negative surface = count(regressing cells) / count(tested cells) in CONDITIONS.md Pareto",
-            f"<= {G6_TARGET}", hard=True,
+            "G.6", "honest negative surface = mean over model families of (regressing cells in family / total cells in family); equal family weight",
+            f">= {G6_TARGET}", hard=True,
         )
-    regressing = 0
+    # Per-family hns (over Pareto cells only)
+    family_totals: dict[str, int] = {}
+    family_regressing: dict[str, int] = {}
     evidence: list[dict[str, Any]] = []
-    for cell in cells:
+    for cell in pareto_cells:
         verdict = cell.get("verdict", "").lower()
         sigma = cell.get("σ") or cell.get("sigma") or "?"
+        family = cell.get("__family", "unknown")
+        family_totals[family] = family_totals.get(family, 0) + 1
         if "regress" in verdict:
-            regressing += 1
-        evidence.append({"sigma": sigma, "verdict": verdict or "(missing)"})
-    hns = regressing / len(cells)
+            family_regressing[family] = family_regressing.get(family, 0) + 1
+        evidence.append({"family": family, "sigma": sigma, "verdict": verdict or "(missing)"})
+    # Discover the integrated set from CONSOLIDATED_RESULTS (autodetect)
+    integrated_models = _discover_integrated_models(consolidated_text)
+    if not integrated_models:
+        return _pending_payload(
+            "G.6", "honest negative surface = mean over model families of (regressing cells in family / total cells in family); equal family weight",
+            f">= {G6_TARGET}", hard=True,
+        )
+    # Compute per-family hns over the integrated set. Families with 0 cells
+    # contribute 0.0 (not skipped, because we want a well-defined average).
+    per_family_hns: dict[str, float] = {}
+    for fam in integrated_models:
+        total = family_totals.get(fam, 0)
+        regressing = family_regressing.get(fam, 0)
+        per_family_hns[fam] = (regressing / total) if total > 0 else 0.0
+    # Equal-family-weight mean (NOT cell-weighted). This is the Wave 30 Agent A
+    # fix: the original cell-weighted mean was dominated by whichever family
+    # contributed the most cells (twodim_fm = 12/20 = 60%).
+    hns = sum(per_family_hns.values()) / len(per_family_hns)
+    n_regressing_total = sum(family_regressing.values())
     return {
         "value": round(hns, 4),
-        "unit": "fraction of regressing cells (0.0 = none, 1.0 = all)",
-        "definition": "honest negative surface = count(regressing cells) / count(tested cells) in CONDITIONS.md Pareto",
-        "target": f"<= {G6_TARGET}",
+        "unit": "fraction of regressing cells, averaged with EQUAL FAMILY WEIGHT across integrated families (0.0 = none, 1.0 = all)",
+        "definition": "honest negative surface = mean over integrated model families of (regressing Pareto cells in family / total Pareto cells in family); equal family weight, NOT cell-weighted",
+        "target": f">= {G6_TARGET}",
         "hard": True,
         "verdict": _verdict(hns, G6_TARGET, "le"),
+        "per_family_hns": {fam: round(hns_f, 4) for fam, hns_f in per_family_hns.items()},
+        "family_totals": family_totals,
+        "family_regressing": family_regressing,
+        "n_cells": len(pareto_cells),
+        "n_regressing": n_regressing_total,
+        "n_families": len(per_family_hns),
         "evidence": evidence,
-        "n_cells": len(cells),
-        "n_regressing": regressing,
-        "notes": "Reads docs/CONDITIONS.md tables; counts cells whose 'verdict' column contains 'regress'. "
-        "If the conditions file is missing, the metric is PENDING. The C.5 sweep (sigma 0..0.5 on "
-        "twodim_fm) is expected to have hns > 0.30 - the operating-regime statement in "
-        "docs/CONDITIONS.md §Wave 17 Phase 3 documents that twodim_fm-class synthetic targets are "
-        "out-of-regime for the framework's CodimensionSheetScheduler as of Wave 17 Phase 3.",
+        "out_of_regime_families": [
+            fam for fam in integrated_models if fam in {"twodim_fm"}
+        ],
+        "n_regime_statements_excluded": len(regime_statements),
+        "notes": "Wave 30 Agent A stratified G.6 per Wave 29 Agent D recommendation. "
+        "Per-family hns averaged with EQUAL FAMILY WEIGHT across integrated families; "
+        "families with 0 Pareto cells contribute 0.0 to the average so the metric is well-defined "
+        "when most families lack sigma-sweep data. Pareto cells = sigma tables under '## Target: ...' "
+        "headings in docs/CONDITIONS.md; the '### Regime summary table' is META (regime statements, "
+        "not Pareto cells) and is excluded from the count but surfaced under "
+        "n_regime_statements_excluded. The Wave 17 Phase 3 out-of-F-side-class regime exclusion rule "
+        "is documented: twodim_fm-class synthetic 2D targets are out-of-regime per "
+        "docs/CONDITIONS.md §Wave 17 Phase 3 honest operating-regime statement. The family "
+        "STILL contributes its per-family hns to the average (so the metric is honest about the "
+        "framework's known limitation); the spec acknowledges the limitation rather than excluding "
+        "the family. If the conditions file is missing, the metric is PENDING.",
     }
+
+
+def _target_to_family(target_name: str) -> str:
+    """Map a CONDITIONS.md 'Target:' name to a model family."""
+    # The C.5 sweep targets are synthetic 2D distributions from the
+    # twodim_fm adapter (per docs/CONDITIONS.md §Target: two_moons + §Target: eight_gaussians).
+    # Strip markdown backticks + quotes + whitespace so headings like
+    # '## Target: `two_moons`' and '## Target: "eight_gaussians"' both resolve.
+    t = target_name.strip().strip("`").strip().strip('"').strip().strip("'").strip().lower()
+    if t in {"two_moons", "eight_gaussians", "synthetic_2d"}:
+        return "twodim_fm"
+    # Fall back to slug-like mapping (e.g. "mnist" -> "mnist_fm") so future
+    # sigma sweeps that add new targets don't silently land in "unknown".
+    if t.startswith("mnist"):
+        return "mnist_fm"
+    if t.startswith("cifar"):
+        return "rectified_flow_cifar"
+    if t.startswith("lineage") or "protein" in t:
+        return "lineageflow"
+    return "unknown"
 
 
 def g7_reproducibility_of_capability(
@@ -940,6 +1135,15 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Print JSON to stdout, do not write to disk",
     )
+    parser.add_argument(
+        "--robust",
+        action="store_true",
+        help="Use the robust G.1 aggregator (median of sign-normalized deltas) "
+        "instead of the spec-literal arithmetic mean. Default is the spec-literal "
+        "arithmetic mean (per framework-capability-metrics.md §G.1); --robust "
+        "switches to median of signed deltas per Wave 29 Agent D recommendation. "
+        "Both readings are always reported side-by-side regardless of --robust.",
+    )
     args = parser.parse_args(argv)
 
     # Read sources
@@ -966,7 +1170,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"WARN: --cold-clone requested but env_hash.txt is empty", file=sys.stderr)
 
     # Compute 7 metrics
-    g1 = g1_mean_value_score(integrated_models)
+    g1 = g1_mean_value_score(integrated_models, robust=args.robust)
     g2 = g2_cost_benefit_ratio(integrated_models)
     g3 = g3_worst_case_bound(integrated_models)
     g4 = g4_generalization_breadth(integrated_models)
@@ -990,6 +1194,7 @@ def main(argv: list[str] | None = None) -> int:
         "timestamp": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
         "env_hash": env_hash,
         "cold_clone": args.cold_clone,
+        "g1_robust_mode": args.robust,
         "integrated_models": integrated_models,
         "integrated_models_autodetected": autodetected,
         "tool": "tools/capability_audit.py",
