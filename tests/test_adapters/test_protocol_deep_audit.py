@@ -1159,8 +1159,194 @@ def test_j_audit_inventory_smoke() -> None:
     )
 
 
+# ---------------------------------------------------------------------------
+# K. Restart-blend shape regression (Wave 30 Agent B)
+# ---------------------------------------------------------------------------
+
+
+#: ``(n_prior, n_fresh)`` molecule-size pairs exercising all three
+#: branches of :func:`_channel_aware_blend`: fresh larger than prior
+#: (the crashing branch), fresh smaller, and equal sizes. Values are
+#: drawn from ``DEFAULT_N_ATOMS_PRIOR`` plus two off-grid pairs so the
+#: test does not silently depend on the size prior's support.
+RESTART_BLEND_SIZE_PAIRS: tuple[tuple[int, int], ...] = (
+    (20, 28),  # the reported crash (2 * 28 - 20 = 36 vs 28)
+    (8, 32),   # widest fresh > prior gap on the size-prior grid
+    (12, 13),  # off-grid, minimal fresh > prior gap
+    (28, 20),  # fresh < prior
+    (32, 8),
+    (13, 12),
+    (20, 20),  # equal sizes
+    (1, 1),    # degenerate single-atom molecule
+)
+
+
+@pytest.mark.parametrize(("n_prior", "n_fresh"), RESTART_BLEND_SIZE_PAIRS)
+def test_flowmol3_v2_restart_blend_shape(n_prior: int, n_fresh: int) -> None:
+    """K.1 — ``_channel_aware_blend`` returns prior-shaped arrays for every size pair.
+
+    Regression for NONCONFORMANCE_BUG #1 (Wave 29 Agent C, fixed by
+    Wave 30 Agent B). In the ``n_fresh > n_prior`` branch the blender
+    used to concatenate ``(n_fresh - n_prior, n_fresh)`` pad rows onto
+    ``fresh["e"]`` — producing a ``(2 * n_fresh - n_prior, n_fresh)``
+    intermediate — and then concatenate a ``(n_fresh, 1)`` pad column
+    on axis 1. Axis 0 mismatched and numpy raised::
+
+        ValueError: all the input array dimensions except for the
+        concatenation axis must match exactly, but along dimension 0,
+        the array at index 0 has size 36 and the array at index 1 has
+        size 28
+
+    The blend contract is that the *prior's* molecule size wins, so
+    every returned channel MUST be prior-shaped regardless of the
+    fresh draw's size, with in-range discrete labels and unmutated
+    inputs.
+    """
+    import numpy as np
+
+    from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+        FLOWMOL3ADAPTER_N_ATOM_TYPES,
+        FLOWMOL3ADAPTER_N_BOND_TYPES,
+        _channel_aware_blend,
+        _sample_a0,
+        _sample_c0,
+        _sample_e0,
+        _sample_x0,
+    )
+    from adaptive_reflow.universal.state import ChannelName
+
+    def _native(seed: int, n_atoms: int) -> dict[str, Any]:
+        return {
+            "x": _sample_x0(seed, n_atoms),
+            "a": _sample_a0(seed, n_atoms),
+            "c": _sample_c0(seed, n_atoms),
+            "e": _sample_e0(seed, n_atoms),
+            "n_atoms": int(n_atoms),
+        }
+
+    prior = _native(1, n_prior)
+    fresh = _native(2, n_fresh)
+    prior_x_before = np.array(prior["x"], copy=True)
+    fresh_e_before = np.array(fresh["e"], copy=True)
+    memory_fraction = {
+        ChannelName("coordinate"): 0.5,
+        ChannelName("charge"): 0.5,
+        ChannelName("raw_pair"): 0.5,
+    }
+
+    blended = _channel_aware_blend(prior, fresh, memory_fraction)
+
+    assert np.shape(blended["x"]) == (n_prior, 3), (
+        f"coordinate channel must keep the prior's size: expected "
+        f"{(n_prior, 3)}, got {np.shape(blended['x'])}"
+    )
+    assert np.shape(blended["c"]) == (n_prior,), (
+        f"charge channel must keep the prior's size: expected "
+        f"{(n_prior,)}, got {np.shape(blended['c'])}"
+    )
+    assert np.shape(blended["e"]) == (n_prior, n_prior), (
+        f"raw_pair channel must keep the prior's size: expected "
+        f"{(n_prior, n_prior)}, got {np.shape(blended['e'])}"
+    )
+    assert np.shape(blended["a"]) == (n_prior,), (
+        f"atom-type labels must keep the prior's size: expected "
+        f"{(n_prior,)}, got {np.shape(blended['a'])}"
+    )
+    assert int(blended["n_atoms"]) == n_prior
+
+    # Discrete labels stay inside their categorical support (a padded
+    # or trimmed label must never leak an out-of-range class index).
+    e_out = np.asarray(blended["e"])
+    a_out = np.asarray(blended["a"])
+    assert e_out.dtype == np.int64 and a_out.dtype == np.int64
+    assert int(e_out.min()) >= 0
+    assert int(e_out.max()) < int(FLOWMOL3ADAPTER_N_BOND_TYPES)
+    assert int(a_out.min()) >= 0
+    assert int(a_out.max()) < int(FLOWMOL3ADAPTER_N_ATOM_TYPES)
+    assert np.all(np.isfinite(np.asarray(blended["x"], dtype=float)))
+    assert np.all(np.isfinite(np.asarray(blended["c"], dtype=float)))
+
+    # The blender is documented as detached — inputs are not mutated.
+    assert np.array_equal(np.asarray(prior["x"]), prior_x_before)
+    assert np.array_equal(np.asarray(fresh["e"]), fresh_e_before)
+
+
+def test_flowmol3_v2_restart_blend_shape_end_to_end() -> None:
+    """K.2 — ``apply_restart_distribution`` survives a larger fresh draw.
+
+    The unit-level K.1 check drives ``_channel_aware_blend`` directly.
+    This check drives the public Protocol method, which samples the
+    fresh state from ``policy_hash`` — so it also proves the crashing
+    branch is reachable from the real restart path (the audit's B.5
+    finding), not just from a hand-built dict.
+
+    The test searches deterministically for a ``policy_id`` whose
+    restart seed draws a molecule *larger* than the prior; that is the
+    branch that used to raise ``ValueError``.
+    """
+    import hashlib
+    from dataclasses import replace
+
+    import numpy as np
+
+    import adaptive_reflow.adapters.flowmol3_v2_adapter as flowmol3_v2
+
+    from adaptive_reflow.contracts import PolicyId, hash_policy_hash
+
+    try:
+        adapter = build_adapter("flowmol3_v2")
+    except (FileNotFoundError, ImportError, RuntimeError) as exc:  # pragma: no cover
+        pytest.skip(f"flowmol3_v2 unavailable: {exc}")
+
+    bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+    prior_entry = adapter._native_states.get(bundle.native_state_digest)
+    assert prior_entry is not None, "adapter must retain its own native state"
+    n_prior = int(np.asarray(prior_entry["x"]).shape[0])
+
+    base_policy = _make_minimal_restart_policy(
+        tuple(str(ch) for ch in bundle.channels)
+    )
+    next_round = int(bundle.source_round) + 1
+
+    def _fresh_size(policy: Any) -> int:
+        """Mirror the adapter's restart seed derivation."""
+        seed = int(
+            hashlib.sha256(
+                repr((str(policy.policy_hash), int(next_round))).encode("utf-8")
+            ).hexdigest()[:8],
+            16,
+        )
+        return int(flowmol3_v2._sample_n_atoms(seed))
+
+    policy = None
+    for candidate in (base_policy,) + tuple(
+        replace(base_policy, policy_id=PolicyId(f"audit-policy-{i}"))
+        for i in range(64)
+    ):
+        candidate = replace(candidate, policy_hash=hash_policy_hash(candidate))
+        if _fresh_size(candidate) > n_prior:
+            policy = candidate
+            break
+    if policy is None:  # pragma: no cover — size prior would have to change
+        pytest.skip("no candidate policy draws a molecule larger than the prior")
+
+    result = adapter.apply_restart_distribution(bundle, policy)
+
+    assert isinstance(result, StateBundle)
+    ok, errs = validate_state_bundle(result)
+    assert ok, f"restart bundle must stay canonical: {errs}"
+    blended = adapter._native_states.get(result.native_state_digest)
+    assert blended is not None, "restart must register its blended native state"
+    assert int(blended["n_atoms"]) == n_prior
+    assert np.shape(blended["x"]) == (n_prior, 3)
+    assert np.shape(blended["c"]) == (n_prior,)
+    assert np.shape(blended["e"]) == (n_prior, n_prior)
+    assert np.shape(blended["a"]) == (n_prior,)
+
+
 __all__ = [
     "PROTOCOL_METHOD_SHAPE",
     "REGISTERED_ADAPTERS",
+    "RESTART_BLEND_SIZE_PAIRS",
     "UNREGISTERED_ADAPTER_CLASSES",
 ]

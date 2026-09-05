@@ -1175,27 +1175,37 @@ def _channel_aware_blend(
         prior_a = np.asarray(prior["a"], dtype=np.int64)
         fresh_a = np.asarray(fresh["a"], dtype=np.int64)
     elif n_fresh > n_prior:
-        # Build padded fresh labels at the prior's shape.
-        pad_e = np.full(
-            (n_fresh - n_prior, n_fresh), int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1, dtype=np.int64
-        )
-        fresh_e_full = np.concatenate(
-            [
-                np.asarray(fresh["e"], dtype=np.int64),
-                pad_e,
-            ],
-            axis=0,
-        )
-        # Top-left block + pad column for the pair dim.
-        pad_e_col = np.full(
-            (n_fresh, 1), int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1, dtype=np.int64
-        )
-        fresh_e_full = np.concatenate([fresh_e_full, pad_e_col], axis=1)
+        # Fresh draw is *larger* than the prior. Keep the prior's
+        # molecule size: trim the fresh bond matrix to ``n_prior`` rows
+        # FIRST, then align the pair (column) dim.
+        #
+        # Wave 30 Agent B fix (NONCONFORMANCE_BUG #1, Wave 29 Agent C):
+        # the previous code concatenated ``(n_fresh - n_prior, n_fresh)``
+        # pad rows onto ``fresh["e"]`` -- yielding a
+        # ``(2 * n_fresh - n_prior, n_fresh)`` intermediate -- and then
+        # concatenated a ``(n_fresh, 1)`` pad column on axis 1. Axis 0
+        # then mismatched (``2 * n_fresh - n_prior != n_fresh``) and
+        # numpy raised ``ValueError: all the input array dimensions
+        # except for the concatenation axis must match exactly``.
+        # Trimming to ``n_prior`` rows before the axis-1 concat removes
+        # the mismatch, and is behaviour-preserving: every padded row
+        # was discarded by the final ``[:n_prior, :n_prior]`` slice.
+        fresh_e_full = np.asarray(fresh["e"], dtype=np.int64)[:n_prior]
+        n_cols_fresh = int(fresh_e_full.shape[1])
+        if n_cols_fresh < n_prior:
+            # Defensive: a non-square fresh bond matrix still has to
+            # reach the prior's pair dim. Pad the missing columns with
+            # the no-bond sentinel.
+            pad_e_col = np.full(
+                (n_prior, n_prior - n_cols_fresh),
+                int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
+                dtype=np.int64,
+            )
+            fresh_e_full = np.concatenate([fresh_e_full, pad_e_col], axis=1)
         fresh_e = fresh_e_full[:n_prior, :n_prior]
-        pad_a = np.zeros(n_fresh - n_prior, dtype=np.int64)
-        fresh_a = np.concatenate(
-            [np.asarray(fresh["a"], dtype=np.int64), pad_a], axis=0
-        )[:n_prior]
+        # ``fresh["a"]`` is longer than the prior — trim (the previous
+        # zero-pad was likewise discarded by the ``[:n_prior]`` slice).
+        fresh_a = np.asarray(fresh["a"], dtype=np.int64)[:n_prior]
         prior_e = np.asarray(prior["e"], dtype=np.int64)
         prior_a = np.asarray(prior["a"], dtype=np.int64)
     else:

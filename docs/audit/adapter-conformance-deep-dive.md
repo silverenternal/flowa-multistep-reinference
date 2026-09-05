@@ -59,6 +59,10 @@ inventory because they are test shims, not production adapters.)
 
 ### NONCONFORMANCE_BUG #1 — `FlowMol3V2Adapter.apply_restart_distribution` crashes on shape mismatch
 
+> **Status (2026-09-05): FIXED** by Wave 30 Agent B — see
+> [Fix log](#fix-log) below. The finding text is preserved as written
+> at audit time.
+
 **File**:
 [`adaptive_reflow/adapters/flowmol3_v2_adapter.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_v2_adapter.py)
 lines 1175–1200 (``_channel_aware_blend`` — ``elif n_fresh > n_prior`` branch).
@@ -288,6 +292,83 @@ python -m pytest tests/test_adapters/conformance_battery.py -v --tb=short
 
 No adapter code was changed in this audit. The 2 findings above are
 documented for a follow-up code-only fix wave.
+
+## Fix log
+
+Findings above are the Wave 29 audit-time snapshot (including the
+per-adapter table and the Summary counts). This section records what
+later waves did about them; the audit text itself is left unedited so
+the finding and its fix can be read side by side.
+
+### 2026-09-05 — NONCONFORMANCE_BUG #1 FIXED (Wave 30 Agent B)
+
+**Fix**:
+[`adaptive_reflow/adapters/flowmol3_v2_adapter.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/flowmol3_v2_adapter.py)
+— `_channel_aware_blend`, the `n_fresh > n_prior` branch. The fresh
+bond matrix is now trimmed to `n_prior` rows **before** the axis-1
+concatenation, which is what removes the mismatch:
+
+```python
+# was: concat (n_fresh - n_prior, n_fresh) pad rows -> a
+#      (2 * n_fresh - n_prior, n_fresh) intermediate, then concat a
+#      (n_fresh, 1) pad column on axis 1 -> ValueError on axis 0.
+fresh_e_full = np.asarray(fresh["e"], dtype=np.int64)[:n_prior]
+n_cols_fresh = int(fresh_e_full.shape[1])
+if n_cols_fresh < n_prior:  # defensive: non-square fresh bond matrix
+    fresh_e_full = np.concatenate([fresh_e_full, pad_e_col], axis=1)
+fresh_e = fresh_e_full[:n_prior, :n_prior]
+fresh_a = np.asarray(fresh["a"], dtype=np.int64)[:n_prior]
+```
+
+The fix is behaviour-preserving in the counterfactual where the crash
+did not fire: every padded row and every padded `a` entry was already
+discarded by the trailing `[:n_prior, :n_prior]` / `[:n_prior]` slice,
+so trimming produces exactly the arrays the branch was reaching for.
+The remaining column pad is kept, guarded, for a non-square fresh bond
+matrix.
+
+**Verification**:
+
+| Check | Before fix | After fix |
+| --- | --- | --- |
+| `test_b_apply_restart_distribution_contract[reg:flowmol3_v2]` (B.5) | FAILED (`ValueError`, 36 vs 28) | PASSED |
+| `test_flowmol3_v2_restart_blend_shape` (K.1, 8 size pairs) | n/a (new) | 8 passed |
+| `test_flowmol3_v2_restart_blend_shape_end_to_end` (K.2) | n/a (new) | PASSED |
+| `tests/test_adapters/test_protocol_deep_audit.py` | 2 failed | 1 failed (BUG #5 only), 464 passed, 38 skipped |
+
+The one remaining failure in the deep-audit file is
+`test_g_stochastic_fm_has_invalid_enumeration_strings`
+(NONCONFORMANCE_BUG #5), which is out of Wave 30 Agent B's scope and
+still open.
+
+**Regression coverage added** (section K of
+[`tests/test_adapters/test_protocol_deep_audit.py`](/home/hugo/codes/flowa-multistep-reinference/tests/test_adapters/test_protocol_deep_audit.py)):
+
+* **K.1** `test_flowmol3_v2_restart_blend_shape` — drives
+  `_channel_aware_blend` over `RESTART_BLEND_SIZE_PAIRS`, covering all
+  three size branches (fresh larger — the crashing one — fresh smaller,
+  and equal), including a degenerate single-atom molecule and two
+  off-grid sizes so the test does not silently depend on the support of
+  `DEFAULT_N_ATOMS_PRIOR`. Asserts every channel keeps the prior's
+  shape, that discrete labels stay inside their categorical support
+  (a trimmed or padded label must never leak an out-of-range class
+  index), that continuous channels stay finite, and that the inputs are
+  not mutated.
+* **K.2** `test_flowmol3_v2_restart_blend_shape_end_to_end` — drives the
+  public `apply_restart_distribution` and searches deterministically for
+  a `policy_id` whose restart seed draws a molecule larger than the
+  prior, proving the crashing branch is reachable from the real restart
+  path rather than only from a hand-built dict. Asserts the returned
+  bundle stays canonical under `validate_state_bundle` and that the
+  registered native state is prior-shaped.
+
+**Note on why B.5 caught it**: the default policy built by
+`_make_minimal_restart_policy` (`policy_id="audit-policy"`) happens to
+seed a fresh draw of 28 atoms against a 20-atom prior — hence the
+`36 vs 28` in the reported traceback (`2 * 28 - 20 = 36`). B.6
+(`test_b_apply_restart_does_not_mutate_input`) hit the same crash but
+routes through `_safe_call`, which swallows `ValueError`, so only B.5
+reported it.
 
 ## Closing
 
