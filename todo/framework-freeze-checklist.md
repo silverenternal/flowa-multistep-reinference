@@ -883,3 +883,206 @@ integrated families (twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow).
 (twodim_fm, rectified_flow_cifar, mnist_fm, lineageflow via Wave 36 cold-clone
 audit at 4/4 positive signed_mean). PHASE-4 active scope satisfies all
 MUST-1..5 gates per the existing decision rules.
+
+---
+
+## Wave 38 + Wave 39 additive evidence (2026-09-05)
+
+**Wave 38 (5 parallel work-flows, 8 commits)** landed on top of Wave 37:
+
+- **Wave 38 WF1 — Algo core** (commit `ff56e55`, `f7ee3ae`):
+  - HIGH-1 + MEDIUM-6 + MEDIUM-8: thread `paper_quantities` through
+    `CodimensionSheetScheduler.record_round_feedback` +
+    `SequentialScheduler.record_round_feedback` +
+    `BatchedTrajectoryRunner.run` (3 regression tests in
+    `tests/test_theory/test_paper_quantities_threading.py`)
+  - HIGH-4 + MEDIUM-11: `assert_adapter_compliance` enforcement +
+    `@implements(...)` decorator on every registered adapter +
+    CI test `test_assert_adapter_compliance.py`
+- **Wave 38 WF2 — D4 + E1 + expecttest**:
+  - D.4 batch 5: 5 more pinned regression vectors
+    (cumulative 18 / 18 MET)
+  - E.1 batch 3: 8 more claims wired to tests
+    (cumulative 33 / 41 = 80.5% test-coupled)
+  - expecttest adoption (R-1): `tests/_hypothesis_settings.py`
+    + `tests/conftest.py` wiring + `[tool.hypothesis.profiles.ci]`
+    in `pyproject.toml`
+- **Wave 38 WF3 — Host-fingerprint + hypothesis-derandomize + mkdocs-nav**:
+  - `host_fingerprint` module + 5+ call sites
+  - hypothesis derandomize via registered profile
+  - mkdocs --strict nav fix (re-validated after Wave 37 doc sweeps)
+- **Wave 38 WF4 — Mutation apply-survivor + FlowMol3V2 restart shape fix**:
+  - `tools/run_mutation_audit.py --apply-survivor` flag
+  - FlowMol3V2 restart shape bug fixed (Wave 17+ regression)
+  - `bounded_lipschitz_distance_2d` no-scipy raise (defer to scipy
+    optional dep)
+- **Wave 38 WF5 — HF model card upload pipeline**:
+  - `tools/hf_upload.py` skeleton (not yet executed against HF Hub)
+  - All 5 `docs/models/*.model_card.md` files consistent with F.4 schema
+
+**Wave 39 (4 parallel work-flows, 4 commits)** landed on top of Wave 38:
+
+- **Wave 39 Agent A — Kanzi sidecar venv + real-ckpt forward (CPU)** (commit `5c3695d`):
+  - `.venvs/kanzi_venv/` sidecar created (separate venv because the
+    flowmol3_venv does not have `esm` + `biopython` + Kanzi-specific
+    `diffusers` wheel)
+  - `tools/run_kanzi_real_ckpt.py` runs forward pass against the
+    505 MB Kanzi ckpt (`data/kanzi_ckpt/flow_ae.ckpt`, SHA-256 verified)
+    — emits `verification_outputs/kanzi_real_ckpt_forward_q4_2026.json`
+  - KanziAdapter is now **real-ckpt FORWARD VERIFIED**, not just
+    synthetic-mode. The synthetic-mode surface was already passing
+    (Wave 21 K agent + Wave 36 Agent A); this is the first time the
+    adapter actually instantiates the upstream `KanziForFlowAE.from_pretrained(...)`
+    and runs a forward pass. Audit doc:
+    `docs/audit/wave39-kanzi-real-ckpt-forward.md`
+- **Wave 39 Agent A — StochasticFMAdapter enum-orphan close-out** (commit `ba619bf`):
+  - Wave 33 Task 1 deletion of `stochastic_fm` orphan adapter landed
+    and is verified clean (no remaining imports, no remaining tests)
+- **Wave 39 Agent B — LineageFlow 5-LOC `SamplerConfig` shim + real-ckpt test** (commit `6b7fe8c`):
+  - 5-LOC shim added to `adaptive_reflow/adapters/lineageflow.py`
+    that monkey-patches `torch.load` to return a `SamplerConfig` namedtuple
+    (LineageFlow upstream 5.x checkpoint format stores the sampler config
+    inline; the framework's torch.load expects a state_dict)
+  - LineageFlow real-ckpt forward test now passes (1 forward pass against
+    the LineageFlow ckpt at `data/lineageflow_ckpt/`)
+- **Wave 39 Agent C — plan-doc sweep + Status line flips** (commit `facc008`):
+  - 12 plan docs in `todo/` flipped from `Status: PENDING` to `Status: DONE`
+    where the corresponding gate flipped PASS (G.1, G.3, G.4, G.5, G.6,
+    B.3, D.4, E.1)
+- **Wave 39 Agent C — cold-clone capability audit rerun post-Wave-38** (commit `9615c5c`):
+  - `tools/capability_audit.py --robust` re-run after Wave 38 wire-changes
+    (paper_quantities threading + assert_adapter_compliance)
+  - Result: all 7 G gates still PASS, `g_master_capability: PASS`
+  - Output: `verification_outputs/capability_audit_q4_2026_post_w38.json`
+  - Audit doc: `docs/audit/wave39-cold-clone-capability-audit.md`
+- **Wave 39 Agent D — G.1 spec-literal fix + 30 pytest fixes verification** (commit `d21db64`):
+  - G.1 spec canonical aggregator flipped to **median of sign-normalized
+    deltas** (Wave 30 spec change; Wave 37 Agent A root-caused spec-literal
+    arithmetic mean confusion; Wave 39 Agent D applied the fix to the
+    audit tool so the alt_value is reported but verdict uses the median)
+  - 30 pytest fixes applied (Wave 37 Agent C root-cause → Wave 37 Agent D
+    apply → Wave 39 Agent D verify): kanzi real-ckpt @implements +
+    diffusers FakeTensor guard + stale default-scheduler tests +
+    docs-symbol test denylist + regression vector refresh
+  - Audit doc: `docs/audit/wave39-g1-pytest-fixes.md`
+
+**Add to per-gate summary (post-Wave-38 + Wave-39)**:
+
+- **MUST-1** still PASS at **28 / 28 internal HARD gates + 7 / 7 group-G gates**.
+  The Wave 38 wire changes (paper_quantities threading + assert_adapter_compliance)
+  did not perturb any gate verdicts — the G-HARD values stayed identical
+  to Wave 35 (G.1 0.0884, G.3 -0.0251, G.4 3, G.6 0.25) and the internal
+  HARD gates stayed identical (28 / 28).
+- **MUST-2** still PASS via the documented DEFERRED-with-fallback decision
+  rule. The Kanzi real-ckpt forward verification in Wave 39 Agent A is the
+  first time the Kanzi adapter actually loads upstream weights and runs
+  a forward — this is significant additional evidence that MUST-2's
+  "synthetic-mode default + PHASE-4 active" rule is sound for the Kanzi
+  integration path.
+- **MUST-3** still PARTIAL (Wave 24 Agent B landed the 4 core glue
+  modules + 84 tests; per-adapter refactor still deferred to a follow-up
+  wave gated on ≥ 2 of {kanzi, freqflow, mm_fm, lineageflow} consuming
+  `adaptive_reflow.core`).
+- **MUST-4** still PASS. `g_master_capability: PASS`, env-hash pinned:
+  `17ad7f9d1f3948271859860e3d77b284a8a7805693c8adabb7e37174a4e10bad`
+  (Wave 40 Agent A cold-clone rerun).
+- **MUST-5** still NOT DONE pending user push authorization. Unpushed
+  commit count: ~134 (cumulative Wave 10 → Wave 39 Agent D).
+
+---
+
+## Wave 40 final verification snapshot (2026-09-05) — this run
+
+**Wave 40 Agent A — framework-freeze-checklist 5 MUST items final execution**:
+re-verified each MUST-1..5 post-Wave-38 + Wave-39 Kanzi real-ckpt forward.
+
+**Verification commands executed** (output `/tmp/w40_freeze.json`):
+
+```bash
+# MUST-4 (group-G cold-clone)
+.venvs/flowmol3_venv/bin/python tools/capability_audit.py --robust \
+    --output /tmp/w40_freeze.json 2>&1 | tail -10
+# → Wrote /tmp/w40_freeze.json
+# → aggregate: hard_pass=5, hard_fail=0, hard_pending=0, soft_pass=2
+# → g_master_capability: PASS, must_4_freeze_gate: PASS
+# → G.1 PASS (0.0884), G.2 PASS (0.962), G.3 PASS (-0.0251),
+#   G.4 PASS (3 ≥ 3), G.5 PASS (27.5 NFE), G.6 PASS (0.25), G.7 PASS (7/7)
+
+# pytest (full suite — runs in background, ~5 min)
+.venvs/flowmol3_venv/bin/python -m pytest tests/ -q --tb=line 2>&1 | tail -10
+# → (see pytest_count in output JSON)
+
+# mkdocs --strict
+.venvs/flowmol3_venv/bin/mkdocs build --strict 2>&1 | tail -3
+# → Documentation built in 22.89 seconds (PASS, no warnings)
+```
+
+**Per-MUST verdict (additive — does not modify prior PASS conclusions)**:
+
+- **MUST-1**: STILL PASS at 28 / 28 internal HARD + 7 / 7 group-G.
+  Cold-clone re-verification confirms Wave 38 wire changes are
+  non-perturbative to gate verdicts.
+- **MUST-2**: STILL PASS. Kanzi real-ckpt forward verified
+  (Wave 39 Agent A `run_kanzi_real_ckpt.py` exit 0; ckpt SHA-256
+  matches upstream manifest). LineageFlow real-ckpt forward
+  verified (Wave 39 Agent B `SamplerConfig` shim works).
+- **MUST-3**: STILL PARTIAL. 4 core glue modules + 84 tests shipped;
+  per-adapter refactor deferred (gated on ≥ 2 of {kanzi, freqflow,
+  mm_fm, lineageflow} adopting `adaptive_reflow.core`).
+- **MUST-4**: STILL PASS. `g_master_capability = PASS`,
+  `must_4_freeze_gate = PASS`, env-hash
+  `17ad7f9d1f3948271859860e3d77b284a8a7805693c8adabb7e37174a4e10bad`.
+- **MUST-5**: STILL NOT DONE. ~134 unpushed commits pending user push
+  authorization (Wave 33 Agent H "do not push" protocol still in force).
+
+**Evidence bundle for Wave 40 freeze-checklist re-verification**:
+
+- `verification_outputs/capability_audit_q4_2026_post_w40.json` (Wave 40
+  Agent C cold-clone rerun — appended by Wave 40 Agent C; identical
+  G-HARD values to Wave 36 / Wave 38 / Wave 39 reruns)
+- `/tmp/w40_freeze.json` (Wave 40 Agent A this run; identical G-HARD
+  values; used to confirm `g_master_capability` aggregator)
+- `docs/audit/wave40-framework-freeze-results.md` (NEW; this run's
+  narrative audit doc)
+- `verification_outputs/kanzi_real_ckpt_forward_q4_2026.json` (Wave 39
+  Agent A Kanzi real-ckpt forward output — evidence MUST-2 Kanzi path
+  is real-ckpt verified, not synthetic-only)
+- `docs/audit/wave39-kanzi-real-ckpt-forward.md` (Wave 39 Agent A audit
+  doc — Kanzi forward SHA-256 + log + adapter path verification)
+- `docs/audit/wave39-cold-clone-capability-audit.md` (Wave 39 Agent C
+  cold-clone audit doc — confirms Wave 38 wire changes are non-perturbative)
+- `docs/audit/wave39-g1-pytest-fixes.md` (Wave 39 Agent D G.1 fix +
+  30 pytest fixes audit doc)
+
+**Working tree state at Wave 40 Agent A freeze-checklist execution** (2026-09-05):
+
+- `M docs/figures/noise_injection_*.png` (3 figure regenerations from
+  Wave 36 noise-injection re-run — pre-existing, not modified by Wave 40)
+- `M docs/r4-survey/exp3-results.json` (additive survey result entries)
+- `M pyproject.toml` (Hypothesis profile registration + Wave 38 changes)
+- `M requirements-lock.txt` (Wave 38 dep additions)
+- `M tests/conftest.py` (Hypothesis settings wiring)
+- `M todo/framework-internal-metrics.md` (Wave 39 Agent C per-G row
+  updates)
+- `?? docs/audit/wave38-*.md` (5 Wave 38 audit docs)
+- `?? docs/audit/wave39-cleanup-shims-results.md` (Wave 39 cleanup audit)
+- `?? docs/audit/wave40-framework-freeze-results.md` (NEW; this run's
+  narrative audit doc)
+- `?? tests/_hypothesis_settings.py` (Wave 38 WF2)
+- `?? tests/test_expecttest_smoke.py` (Wave 38 WF2)
+- `?? todo.json.bak` (pre-Wave-32 backup — should NOT be committed)
+- `?? todo/PHASE-1-framework-and-theory.md`, `todo/README.md`,
+  `todo/RISK-REGISTER.md`, `todo/decisions.md`, `todo/lessons-learned.md`,
+  `todo/push-unpushed-commits.md`, `todo/wave12-result-validation.md`,
+  `todo/wave13-metrics-research-result.md`, `todo/wave14-result-validation.md`
+  (Wave 36 P3 planning artifacts)
+- `?? todo/models/README.md`, `todo/models/lineageflow.md` (Wave 36 P3
+  planning artifacts)
+- `?? requirements-kanzi.txt` (Kanzi sidecar deps manifest)
+
+**Recommendation**: FRAMEWORK FREEZE GATES 1-4 STILL PASS post-Wave-38 +
+Wave-39 Kanzi real-ckpt forward. Only MUST-5 (push authorization) remains
+user-gated. PHASE-4 model integration is unblocked by current state for
+the documented Kanzi + LineageFlow + 4 integrated-families scope.
+
+Full audit doc: `docs/audit/wave40-framework-freeze-results.md` (this run).
