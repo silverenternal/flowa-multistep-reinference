@@ -509,6 +509,7 @@ class BoundedMergeOperator:
         audit_codes: list[str] | None = None,
         prev_source: str = "default",
         schedule_sample: Any | None = None,
+        beta_floor: float | None = None,
     ) -> float:
         """Return the bounded merge of ``prev`` and ``dynamic`` (P0-3).
 
@@ -592,6 +593,38 @@ class BoundedMergeOperator:
                         f"{MERGE_PAPER_QUANTITY_FLOOR_LIFTED}"
                         f":floor={floor_f:.6f}"
                         f":e_rho={self._exterior_gap_e_rho:.6f}"
+                    )
+
+        # P2-W33-B3 — per-channel beta floor lift. When the caller
+        # supplies ``beta_floor`` (the minimum per-channel ``beta`` from
+        # the engine's ``policy.beta_by_channel``), we lift ``floor``
+        # to ``max(floor, beta_floor)`` so the late-round restart stays
+        # active even when the cosine ramp drives the schedule's
+        # ``n_cap`` to 0. Without this lift the per-channel beta's
+        # floor effect is eaten by the cosine ramp's late-round
+        # under-capacity. The lift is recorded in the audit trail.
+        if beta_floor is not None:
+            try:
+                beta_floor_f = float(beta_floor)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"beta_floor must be a real number, got {beta_floor!r}"
+                ) from exc
+            if not math.isfinite(beta_floor_f):
+                raise ValueError(
+                    f"beta_floor must be finite, got {beta_floor!r}"
+                )
+            if not (0.0 <= beta_floor_f <= 1.0):
+                raise ValueError(
+                    f"beta_floor must lie in [0, 1], got {beta_floor_f!r}"
+                )
+            if floor_f < beta_floor_f:
+                floor_f = float(beta_floor_f)
+                if audit_codes is not None:
+                    audit_codes.append(
+                        f"{MERGE_PAPER_QUANTITY_FLOOR_LIFTED}"
+                        f":floor={floor_f:.6f}"
+                        f":beta_floor={beta_floor_f:.6f}"
                     )
 
         # Delta caps are clipped into ``[0, 1]`` silently (no audit

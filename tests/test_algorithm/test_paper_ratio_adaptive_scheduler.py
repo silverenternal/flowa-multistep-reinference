@@ -395,6 +395,12 @@ def test_paper_ratio_adaptive_scheduler_inherits_base_evidence_ratio() -> None:
     The fully-integrated scheduler is paper-quantity-driven at every
     layer; the base's sheet-vs-cell evidence ratio flows through
     ``sample.evidence_ratio`` without modification.
+
+    P2-W33-A: ``sample.eps_implicit`` is now the *per-round* value
+    (``eps_0 * (1 - u_r)`` for ``eps_direction="decreasing"``) so the
+    paper's ``eps -> 0`` limit is realised across the cycle. At
+    ``r=0`` (``u_r=0``) the value equals the constructor constant
+    ``eps_implicit``; at ``r=L-1`` it equals the floor ``1e-9``.
     """
     base = CodimensionSheetScheduler(
         cycle_length=10, n_min=0.0, n_max=1.0, eps_implicit=0.05
@@ -404,7 +410,12 @@ def test_paper_ratio_adaptive_scheduler_inherits_base_evidence_ratio() -> None:
         sample = scheduler.sample(0, r, r)
         assert sample.evidence_ratio is not None
         assert 0.0 <= float(sample.evidence_ratio) <= 1.0
-        assert sample.eps_implicit == pytest.approx(0.05)
+        # P2-W33-A: per-round eps equals eps_0 * (1 - u_r) for
+        # ``decreasing`` direction. At r=0 the value matches the
+        # constructor constant; at r=L-1 it equals the floor 1e-9.
+        u_r = float(r) / (10 - 1)
+        expected_eps = max(0.05 * (1.0 - u_r), 1e-9)
+        assert sample.eps_implicit == pytest.approx(expected_eps, abs=1e-9)
 
 
 # ---------------------------------------------------------------------------

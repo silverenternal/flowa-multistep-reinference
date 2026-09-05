@@ -154,6 +154,12 @@ class CellResult:
     framework_metric: float = float("nan")
     baseline_runtime_s: float = 0.0
     framework_runtime_s: float = 0.0
+    # P2-W33-C: secondary metrics (LineageFlow ``family_validity`` kept
+    # for back-compat; the new primary decision metric is
+    # ``baseline_metric`` / ``framework_metric`` which now holds the
+    # continuous per-position entropy).
+    baseline_family_validity: float = float("nan")
+    framework_family_validity: float = float("nan")
 
     nfe_matched: bool = False
     metric_extractor_matched: bool = True
@@ -269,7 +275,9 @@ def _run_twodim_fm(spec: CellSpec) -> CellResult:
         # ``n_rounds`` rounds *with each round costing ``nfe_per_round``
         # integration steps*. We allocate NFE / n_rounds per round so the
         # total per-endpoint NFE matches the baseline.
-        nfe_per_round = max(1, int(spec.nfe) // n_rounds)
+        # P2-W33-B1: ceil + carry so the sum equals ``nfe`` exactly.
+        nfe_per_round_list = _nfe_steps_per_round(int(spec.nfe), int(n_rounds))
+        nfe_per_round = int(nfe_per_round_list[0])
         adapter_fw_pinned = TwoDimFMAdapter(
             target="two_moons",
             integrator="rk4",
@@ -294,7 +302,7 @@ def _run_twodim_fm(spec: CellSpec) -> CellResult:
         result.framework_metric = float(_wasserstein_2d(last_round))
         result.framework_runtime_s = float(time.perf_counter() - t0)
         # Effective per-endpoint NFE in the multi-round arm.
-        result.framework_nfe = int(nfe_per_round) * int(n_rounds)
+        result.framework_nfe = sum(int(x) for x in nfe_per_round_list)
 
     except Exception as exc:  # pragma: no cover -- defensive
         result.error = f"{type(exc).__name__}: {exc}"
@@ -366,7 +374,13 @@ def _run_cifar10_rf(spec: CellSpec) -> CellResult:
 
         # --- Framework arm: n_rounds * batched_inference with NFE/K. ---
         n_rounds = MODEL_TABLE["cifar10_rf"]["n_rounds"]
-        nfe_per_round = max(1, int(spec.nfe) // n_rounds)
+        # P2-W33-B1: ceil + carry NFE allocation. ``nfe // n_rounds``
+        # under-counts NFE by up to ``n_rounds - 1`` (e.g. nfe=10,
+        # n_rounds=4 yields 8 not 10). The fix distributes the
+        # remainder across the first ``nfe % n_rounds`` rounds so the
+        # total framework NFE equals ``nfe`` exactly.
+        nfe_per_round_list = _nfe_steps_per_round(int(spec.nfe), int(n_rounds))
+        nfe_per_round = int(nfe_per_round_list[0])
         adapter_fw = RectifiedFlowCIFARAdapter(
             weights_path=None,
             num_steps=int(nfe_per_round),
@@ -379,17 +393,17 @@ def _run_cifar10_rf(spec: CellSpec) -> CellResult:
             seed=int(spec.seed),
         )
         for r in range(1, int(n_rounds)):
-            # Each round consumes ``nfe_per_round`` integration steps;
-            # total framework NFE = ``nfe_per_round * n_rounds`` ==
-            # baseline NFE by construction.
+            # Each round consumes the carried ``nfe_per_round`` steps;
+            # total framework NFE = sum(nfe_per_round_list) == baseline
+            # NFE by construction.
             last_round = adapter_fw.batched_inference(
                 n_samples=MODEL_TABLE["cifar10_rf"]["n_samples"],
-                num_steps=int(nfe_per_round),
+                num_steps=int(nfe_per_round_list[r]),
                 seed=int(spec.seed) + r,
             )
         result.framework_metric = float(_pixel_proxy_metric(last_round))
         result.framework_runtime_s = float(time.perf_counter() - t0)
-        result.framework_nfe = int(nfe_per_round) * int(n_rounds)
+        result.framework_nfe = sum(int(x) for x in nfe_per_round_list)
 
     except Exception as exc:  # pragma: no cover -- defensive
         result.error = f"{type(exc).__name__}: {exc}"
@@ -475,14 +489,18 @@ def _run_lineageflow(spec: CellSpec) -> CellResult:
                 raise RuntimeError("missing_trajectory_in_native_states")
             trajectory = np.asarray(traj_entry["trajectory"], dtype=np.float64)
             baseline_endpoints[i] = np.asarray(trajectory[-1])
-        result.baseline_metric = float(_family_validity(baseline_endpoints))
+        result.baseline_metric = float(_per_position_entropy(baseline_endpoints))
+        result.baseline_family_validity = float(_family_validity(baseline_endpoints))
         result.baseline_runtime_s = float(time.perf_counter() - t0)
         result.baseline_nfe = int(spec.nfe)
 
         # --- Framework arm: n_rounds * per-sample Protocol call,
         # num_steps = nfe / n_rounds per round (NFE-matched). ---
         n_rounds = MODEL_TABLE["lineageflow"]["n_rounds"]
-        nfe_per_round = max(1, int(spec.nfe) // n_rounds)
+        # P2-W33-B1: ceil + carry NFE allocation; the sum across
+        # rounds equals ``nfe`` exactly (no NFE under-count).
+        nfe_per_round_list = _nfe_steps_per_round(int(spec.nfe), int(n_rounds))
+        nfe_per_round = int(nfe_per_round_list[0])
         adapter_fw = LineageFlowAdapter(
             force_mode="synthetic",
             num_steps=int(nfe_per_round),
@@ -511,7 +529,7 @@ def _run_lineageflow(spec: CellSpec) -> CellResult:
                     bundle,
                     ODEConditionDelta(
                         delta_spec={
-                            "num_steps": int(nfe_per_round),
+                            "num_steps": int(nfe_per_round_list[r]),
                             "sampler_id": LINEAGEFLOW_INTEGRATOR_EULER,
                             "family_id": LINEAGEFLOW_FAMILY_ID_DEFAULT,
                         },
@@ -527,9 +545,10 @@ def _run_lineageflow(spec: CellSpec) -> CellResult:
                 trajectory = np.asarray(traj_entry["trajectory"], dtype=np.float64)
                 new_endpoints[i] = np.asarray(trajectory[-1])
             last_round_state = new_endpoints
-        result.framework_metric = float(_family_validity(last_round_state))
+        result.framework_metric = float(_per_position_entropy(last_round_state))
+        result.framework_family_validity = float(_family_validity(last_round_state))
         result.framework_runtime_s = float(time.perf_counter() - t0)
-        result.framework_nfe = int(nfe_per_round) * int(n_rounds)
+        result.framework_nfe = sum(int(x) for x in nfe_per_round_list)
 
     except Exception as exc:  # pragma: no cover -- defensive
         result.error = f"{type(exc).__name__}: {exc}"
@@ -554,6 +573,30 @@ def seed_digest(seed: int) -> str:
     import hashlib
 
     return hashlib.sha256(f"s={int(seed)}".encode()).hexdigest()[:8]
+
+
+def _nfe_steps_per_round(nfe: int, n_rounds: int) -> list[int]:
+    """Distribute ``nfe`` integration steps across ``n_rounds`` rounds.
+
+    P2-W33-B1: ceil + carry allocation. The result is a list of
+    ``n_rounds`` positive integers whose sum equals ``nfe`` exactly,
+    so the framework's total per-endpoint NFE matches the baseline's
+    single-pass NFE (the matched-NFE criterion).
+
+    Returns ``[nfe // n_rounds + (1 if i < remainder else 0) for i in range(n_rounds)]``
+    where ``remainder = nfe % n_rounds``. The first ``remainder`` rounds
+    get the carry.
+
+    :raises ValueError: on ``nfe < 1`` or ``n_rounds < 1``.
+    """
+    nfe = int(nfe)
+    n_rounds = int(n_rounds)
+    if nfe < 1:
+        raise ValueError(f"nfe must be >= 1, got {nfe!r}")
+    if n_rounds < 1:
+        raise ValueError(f"n_rounds must be >= 1, got {n_rounds!r}")
+    base, remainder = divmod(nfe, n_rounds)
+    return [base + (1 if i < remainder else 0) for i in range(n_rounds)]
 
 
 # ---------------------------------------------------------------------------
@@ -603,6 +646,11 @@ def _family_validity(endpoints: np.ndarray) -> float:
     A sequence is "valid" if its per-position categorical logits are
     finite, in [-10, 10], and not all-zero. Returns the fraction of
     valid sequences.
+
+    NOTE: this metric saturates at 1.0 on the synthetic LineageFlow
+    velocity field (per Wave 19 P1A2 §6.1) and is NOT used as the
+    primary decision metric. ``_per_position_entropy`` is the
+    continuous, discriminating alternative (P2-W33-C).
     """
     if endpoints.size == 0:
         return float("nan")
@@ -612,6 +660,40 @@ def _family_validity(endpoints: np.ndarray) -> float:
     nonzero = np.any(np.abs(flat) > 1e-6, axis=1)
     valid = finite & in_range & nonzero
     return float(np.mean(valid))
+
+
+def _per_position_entropy(endpoints: np.ndarray) -> float:
+    """LineageFlow decision metric (continuous, discriminating).
+
+    P2-W33-C: per-position mean entropy of the batched endpoint
+    distribution. Lower entropy = endpoints cluster around the
+    high-density target = framework "sharpens" the posterior; higher
+    entropy = endpoints spread = baseline does not converge.
+
+    The metric treats the endpoint as a per-position probability
+    distribution over the ``K`` (amino-acid) dimension (softmax along
+    ``K``), then computes the Shannon entropy per position averaged
+    across positions. The result is bounded by ``log(K)`` (maximum
+    entropy = uniform distribution) and is **continuous** (so the
+    framework-vs-baseline gap is non-degenerate).
+
+    For the synthetic LineageFlow velocity field this metric is
+    finite, never saturated, and discriminates between baseline and
+    framework runs.
+    """
+    if endpoints.size == 0 or endpoints.shape[0] < 2:
+        return float("nan")
+    # ``endpoints`` shape: (N, L, K) where K is the vocab dimension.
+    # Normalise along the K axis with a numerically-stable softmax.
+    z = endpoints - np.max(endpoints, axis=-1, keepdims=True)
+    exp_z = np.exp(z)
+    p = exp_z / np.sum(exp_z, axis=-1, keepdims=True)
+    # Per-position entropy: -sum(p * log(p + eps)) along K, averaged
+    # across positions L. We average across samples too (the metric is
+    # the batch-level mean per-position entropy).
+    eps = 1e-12
+    per_position = -np.sum(p * np.log(p + eps), axis=-1)  # (N, L)
+    return float(np.mean(per_position))
 
 
 # ---------------------------------------------------------------------------

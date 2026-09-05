@@ -884,42 +884,45 @@ def test_codimension_sheet_scheduler_evidence_ratio_low_eps_near_one() -> None:
 def test_codimension_sheet_scheduler_handles_degenerate_base() -> None:
     """``n_cap`` is now driven by the ratio, not the cosine ramp.
 
-    At the cycle terminal round ``n_cap_base`` from the cosine ramp
-    is 0.0, but the per-round ``n_cap`` equals the ratio at that
-    ``n_cap_base`` (heuristic formula ``sheet / (sheet + cell)``
-    with ``sheet = max(n_base, eps)`` and ``cell = (1 - n_base)^2
-    * eps^2``). For ``eps_implicit = 0.05`` and ``n_base = 0``:
+    P2-W33-A: with ``eps_direction="decreasing"`` (paper convention,
+    default) the per-round ``eps`` diminishes across the cycle
+    (``eps(r) = eps_0 * (1 - u_r)``, floored at ``1e-9``). At the
+    cycle terminal round ``u_r=1`` so ``eps_per_round = 1e-9``
+    (the floor); for the framework heuristic with ``n_base = 0``:
 
-        sheet = max(0, 0.05) = 0.05
-        cell  = 1 * 0.05^2   = 0.0025
-        ratio = 0.05 / (0.05 + 0.0025) ≈ 0.9524
+        sheet = max(0, 1e-9)        = 1e-9
+        cell  = 1 * (1e-9)^2       = 1e-18
+        ratio = 1e-9 / (1e-9 + 1e-18) ≈ 1.0
 
-    so ``n_cap`` is ≈ 0.9524 (n_min=0, n_max=1), NOT 0. The
-    cosine ramp is no longer the driver — the paper's sheet-vs-cell
-    evidence ratio is. And with a large ``eps_implicit`` the ratio
-    depends on ``n_cap_base`` via the heuristic cell term.
+    so ``n_cap`` is ≈ 1.0 (n_min=0, n_max=1) — the paper-aligned
+    "sheet dominates as eps -> 0" claim (Theorem 1). With a large
+    ``eps_implicit`` at the early rounds the ratio is sensitive to
+    ``n_cap_base`` via the heuristic cell term.
     """
     codim = CodimensionSheetScheduler(
         cycle_length=4, n_min=0.0, n_max=1.0, eps_implicit=0.05
     )
-    # r=3 is the cycle terminal round; the cosine base with n_min=0
-    # emits exactly 0.0 at this slot, but the ratio-driven n_cap is
-    # the heuristic ratio at n_base=0, which is eps / (eps + eps^2).
+    # r=3 is the cycle terminal round; ``eps_per_round`` is floored
+    # at ``1e-9``, so ``n_cap`` ≈ ``n_max`` (sheet dominance).
     sample = codim.sample(0, 3, 3)
-    expected_ratio = 0.05 / (0.05 + 0.0025)  # ≈ 0.9524
-    assert sample.n_cap == pytest.approx(expected_ratio, abs=1e-9)
+    assert sample.n_cap == pytest.approx(1.0, abs=1e-7)
     # And the evidence ratio equals n_cap directly (n_min=0, n_max=1).
-    assert codim.last_evidence_ratio == pytest.approx(expected_ratio, abs=1e-9)
-    # And with a large eps the ratio is sensitive to n_cap_base.
+    assert codim.last_evidence_ratio == pytest.approx(1.0, abs=1e-7)
+    # And at the early round (r=0), eps_per_round equals the
+    # constructor constant and the n_cap is also sheet-dominated.
+    early_sample = codim.sample(0, 0, 0)
+    assert early_sample.n_cap == pytest.approx(1.0, abs=1e-7)
+    # Now exercise a NON-terminal round with a large eps; here the
+    # framework heuristic IS sensitive to n_cap_base.
     big_codim = CodimensionSheetScheduler(
         cycle_length=2, n_min=0.5, n_max=1.0, eps_implicit=1.0
     )
-    sample = big_codim.sample(0, 1, 1)
-    # At r=1 (terminal), n_cap_base=0 (cosine with n_min=0).
-    # ratio = max(0, 1) / (max(0, 1) + 1^2 * 1^2) = 1 / 2 = 0.5.
-    # n_cap = n_min + (n_max - n_min) * ratio = 0.5 + 0.5 * 0.5 = 0.75.
-    assert sample.n_cap == pytest.approx(0.75, abs=1e-9)
-    assert big_codim.last_evidence_ratio == pytest.approx(0.5, abs=1e-9)
+    # r=0: eps_per_round = 1.0 * (1 - 0) = 1.0. At r=0 with cosine
+    # n_min=0.5, n_base = n_max = 1.0. sheet = max(1, 1) = 1.
+    # cell = (1-1)^2 * 1^2 = 0. ratio = 1 / (1 + 0) = 1.
+    # n_cap = 0.5 + 0.5 * 1 = 1.0.
+    sample_r0 = big_codim.sample(0, 0, 0)
+    assert sample_r0.n_cap == pytest.approx(1.0, abs=1e-7)
 
 
 def test_codimension_sheet_scheduler_is_byte_deterministic() -> None:
@@ -1022,14 +1025,22 @@ def test_codimension_sample_carries_eps_implicit() -> None:
         assert sample.eps_implicit is not None, (
             f"C4 regression: round {r} sample.eps_implicit is None"
         )
-        assert sample.eps_implicit == pytest.approx(0.07, abs=1e-12)
+        # P2-W33-A: ``eps_implicit`` on the sample is now the per-round
+        # value ``eps_0 * (1 - u_r)`` for ``eps_direction="decreasing"``
+        # (default). At ``r=0`` (``u_r=0``) this equals the constructor
+        # constant; at ``r=L-1`` it equals the floor ``1e-9``.
+        u_r = float(r) / (8 - 1)
+        expected = max(0.07 * (1.0 - u_r), 1e-9)
+        assert sample.eps_implicit == pytest.approx(expected, abs=1e-12)
     # And a different eps_implicit propagates too.
     codim_hi = CodimensionSheetScheduler(
         cycle_length=4, n_min=0.0, n_max=1.0, eps_implicit=0.5,
     )
     for r in range(4):
         sample_hi = codim_hi.sample(0, r, r)
-        assert sample_hi.eps_implicit == pytest.approx(0.5, abs=1e-12)
+        u_r_hi = float(r) / (4 - 1)
+        expected_hi = max(0.5 * (1.0 - u_r_hi), 1e-9)
+        assert sample_hi.eps_implicit == pytest.approx(expected_hi, abs=1e-12)
 
 
 def test_cosine_sample_eps_implicit_is_none() -> None:
@@ -1072,33 +1083,27 @@ def test_codimension_sheet_scheduler_build_scheduler_factory() -> None:
 def test_codimension_sheet_scheduler_eps_direction_default_matches_paper() -> None:
     """Default ``eps_direction='decreasing'`` keeps the paper ratio direction.
 
-    With the new ratio-driven design, ``n_cap`` is computed from
-    the paper's sheet-vs-cell evidence ratio. The legacy
-    ``eps_direction`` flips the ratio (``ratio -> 1 - ratio``) for
-    backward compatibility with the prior cosine-based
-    interpretation. Under the paper-aligned default
-    ``eps_direction='decreasing'``, the ratio is used as-is. In
-    heuristic fallback mode (no ``profile_residual_fn``) the ratio
-    varies with ``n_cap_base`` from the cosine ramp, so
-    ``n_cap`` is approximately monotone non-increasing (smaller
-    ``n_cap_base`` → smaller ratio for ``n_cap_base < 1``).
+    With the ratio-driven design, ``n_cap`` is computed from the
+    paper's sheet-vs-cell evidence ratio. P2-W33-A: with the
+    paper-aligned ``eps_direction='decreasing'``, the per-round
+    ``eps`` diminishes monotonically (``eps(r) = eps_0 * (1 - u_r)``)
+    and the ratio is used as-is. Under the framework heuristic
+    (no ``profile_residual_fn``) and at the cycle terminal round,
+    ``eps_per_round`` is floored at ``1e-9`` and ``n_cap`` is
+    sheet-dominated (``n_cap`` ≈ 1.0). At early rounds with the
+    cosine ramp near its peak, ``n_cap`` is also sheet-dominated.
     """
     scheduler = CodimensionSheetScheduler(
         cycle_length=8, n_min=0.0, n_max=1.0, eps_implicit=0.05
     )
     assert scheduler.eps_direction == "decreasing"
     caps = [scheduler.sample(0, r, r).n_cap for r in range(8)]
-    # Paper-aligned (ratio as-is). At r=0 with the heuristic formula,
-    # n_cap_base = 1.0 → ratio = 1.0 → n_cap = 1.0.
+    # P2-W33-A: at every round the framework heuristic puts the
+    # sheet in dominance (eps small, sheet dominates), so ``n_cap``
+    # is essentially ``n_max`` throughout the cycle.
     assert caps[0] == pytest.approx(1.0, abs=1e-9)
-    # At r=7 (terminal), n_cap_base ≈ 0.0 → ratio = eps / (eps + eps^2)
-    # ≈ 0.9524. So caps[-1] ≈ 0.95 (NOT near 0 as before — the cosine
-    # ramp is no longer the driver of n_cap).
-    assert caps[-1] == pytest.approx(0.05 / (0.05 + 0.0025), abs=1e-9)
-    # The output is monotone non-increasing in r (the heuristic ratio
-    # is monotone non-increasing in n_cap_base which is the cosine ramp).
-    for prev, curr in pairwise(caps):
-        assert curr <= prev + 1e-9
+    # At r=7 (terminal), eps_per_round = 1e-9 → ratio ≈ 1 → n_cap ≈ 1.
+    assert caps[-1] == pytest.approx(1.0, abs=1e-7)
 
 
 def test_codimension_sheet_scheduler_eps_direction_increasing_legacy_warns() -> None:
@@ -1269,19 +1274,25 @@ def test_codimension_sheet_scheduler_without_profile_uses_inline_formula() -> No
     assert scheduler.exterior_gap_e_rho is None
     # Legacy inline formula: ratio matches the framework heuristic
     # applied to the cosine ramp's per-round value ``n_cap_base``.
-    eps = 0.05
-    for r in range(10):
+    # P2-W33-A: with the per-round ``eps`` schedule, the formula uses
+    # ``eps_per_round = eps_0 * (1 - u_r)`` (floored at ``1e-9``).
+    eps_0 = 0.05
+    cycle_length = 10
+    for r in range(cycle_length):
         sample = scheduler.sample(0, r, r)
         assert scheduler.last_evidence_ratio is not None
         # ``n_cap_base`` is the cosine ramp's value at this round
         # (ADR-0010). We can recover it by querying the base scheduler.
         n_base = scheduler.base.sample(0, r, r).n_cap
+        # P2-W33-A: per-round eps.
+        u_r = float(r) / (cycle_length - 1)
+        eps_per_round = max(eps_0 * (1.0 - u_r), 1e-9)
         # The heuristic formula is ``sheet / (sheet + cell)`` with
-        # ``sheet = max(n_base, eps)`` and
-        # ``cell = (1 - n_base) ** 2 * eps ** 2``.
+        # ``sheet = max(n_base, eps_per_round)`` and
+        # ``cell = (1 - n_base) ** 2 * eps_per_round ** 2``.
         n_base_clipped = max(0.0, min(1.0, n_base))
-        sheet = max(n_base_clipped, eps)
-        cell = (1.0 - n_base_clipped) ** 2 * eps * eps
+        sheet = max(n_base_clipped, eps_per_round)
+        cell = (1.0 - n_base_clipped) ** 2 * eps_per_round * eps_per_round
         expected_ratio = sheet / (sheet + cell)
         assert scheduler.last_evidence_ratio == pytest.approx(
             expected_ratio, rel=1e-12
@@ -1356,12 +1367,18 @@ def test_codimension_sheet_scheduler_paper_quantity_path_matches_paper_quantitie
         profile_residual_fn=profile,
         eps_implicit=0.05,
     )
-    eps = scheduler.eps_implicit
-    sheet = sheet_A * eps
-    cell = cell_C * packing_B * eps * eps
-    expected_ratio = sheet / (sheet + cell)
-    for r in range(4):
+    eps_0 = scheduler.eps_implicit
+    cycle_length = 4
+    for r in range(cycle_length):
         scheduler.sample(0, r, r)
+        # P2-W33-A: with the per-round ``eps`` schedule, the formula
+        # uses ``eps_per_round = eps_0 * (1 - u_r)`` (floored at
+        # ``1e-9``). The ratio is recomputed for each round.
+        u_r = float(r) / (cycle_length - 1)
+        eps_per_round = max(eps_0 * (1.0 - u_r), 1e-9)
+        sheet = sheet_A * eps_per_round
+        cell = cell_C * packing_B * eps_per_round * eps_per_round
+        expected_ratio = sheet / (sheet + cell)
         assert scheduler.last_evidence_ratio == pytest.approx(
             expected_ratio, rel=1e-12
         )

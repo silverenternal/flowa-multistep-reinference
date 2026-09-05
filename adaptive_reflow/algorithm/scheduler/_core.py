@@ -3092,6 +3092,26 @@ class CodimensionSheetScheduler:
                 n_cap_for_round(self._base.config, int(round_in_cycle))
             )
 
+        # P2-W33-A: compute the per-round ``eps`` so the paper's
+        # ``eps -> 0`` limit is realised as a *schedule* across the
+        # cycle, not as a flip applied to a constant ``eps``. With
+        # ``eps_direction="decreasing"`` (paper convention, default)
+        # the implicit noise scale diminishes monotonically from
+        # ``eps_0`` at ``r=0`` to a floor (``1e-9``) at ``r=L-1`` —
+        # matching Theorem 1's ``eps -> 0`` claim. The legacy
+        # ``"increasing"`` direction reverses the ramp
+        # (``r=0`` small, ``r=L-1`` large) for byte-compatibility with
+        # the prior cosine-based interpretation.
+        if self._eps_direction == "decreasing":
+            # Paper-aligned: implicit noise scale diminishes across
+            # the cycle. ``u_r in [0, 1]`` is the round's progress;
+            # the floor avoids the degenerate ``eps=0`` cell-collapse
+            # that would yield ``sheet=0, ratio=0`` at ``r=L-1``.
+            eps_per_round = float(self._eps_implicit) * (1.0 - u_r)
+        else:  # legacy "increasing"
+            eps_per_round = float(self._eps_implicit) * u_r
+        eps_per_round = max(float(eps_per_round), 1e-9)
+
         # Compute the paper's sheet-vs-cell evidence ratio. The
         # "paper-quantity-augmented" path uses the cached ``A_g`` /
         # ``B_g`` / ``C_g`` literals (round-independent when
@@ -3099,11 +3119,13 @@ class CodimensionSheetScheduler:
         # paper-quantity-driven path. The framework-side heuristic
         # (no profile) uses ``n_cap_base`` (cosine ramp) as the
         # cell-evidence weight; the two closed forms agree up to
-        # normalisation constants.
+        # normalisation constants. The ``eps`` plug is now the
+        # per-round ``eps_per_round`` so the cycle's terminal round
+        # actually exercises the Theorem 1 ``eps -> 0`` limit.
         ratio = float(
             _paper_evidence_balance(
                 n_cap_base,
-                self._eps_implicit,
+                eps_per_round,
                 sheet_A=self._sheet_A,
                 packing_B=self._packing_B,
                 cell_C=self._cell_C,
@@ -3157,7 +3179,12 @@ class CodimensionSheetScheduler:
             schedule_hash=str(self._config_hash_value),
             audit_codes=codes,
             evidence_ratio=float(ratio),
-            eps_implicit=float(self._eps_implicit),
+            # P2-W33-A: surface the per-round ``eps`` (not the
+            # constructor-time constant) so a downstream reader sees
+            # the actual schedule value used in the closed form.
+            # The constructor constant remains at
+            # ``self._eps_implicit`` for back-compat introspection.
+            eps_implicit=float(eps_per_round),
         )
         self._last_sample = sample
         return sample

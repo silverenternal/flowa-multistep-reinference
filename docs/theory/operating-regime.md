@@ -399,3 +399,110 @@ exists.
   **empirical** + **post-hoc-justification**; a mathematical
   derivation would require extending Theorem 1 to the 2-D-velocity
   setting, which is non-trivial).
+
+---
+
+## 9. P2-W33-A: per-round diminishing `eps` schedule
+
+**Date:** 2026-09-05
+**Wave:** Wave 33 Phase 2 Agent E
+**Owner:** framework maintainer
+**Source:** [`docs/audit/algorithm-gap-investigation.md`](../audit/algorithm-gap-investigation.md) §1
+
+### 9.1 Motivation
+
+The Wave 33 Agent A investigation found that
+`CodimensionSheetScheduler.sample` plugged a **constant**
+`eps_implicit` (constructor-time value, default `0.05`) into the
+per-round closed form. Paper Theorem 1's ``eps → 0`` is realised as
+a *schedule* across the cycle, not as a fixed scale. The legacy
+behaviour treats the paper's limit as a single hyperparameter
+rather than as the cycle's terminal round.
+
+The legacy constant-`eps` interpretation is mathematically
+consistent with the paper but does not exercise the cycle's
+**monotone coarse-to-fine** structure. At ``r=0`` (``u_r=0``) the
+new schedule returns ``eps_per_round = eps_0`` (matches legacy,
+bit-safe); at ``r=L-1`` (``u_r=1``) the schedule returns the
+canonical floor ``1e-9`` (the ``eps → 0`` limit).
+
+### 9.2 Mathematical content
+
+Concretely, the per-round ``eps`` is
+
+```
+eps_per_round(r) = eps_0 · (1 - u_r)        # paper-aligned "decreasing"
+```
+
+with ``u_r = r / (L - 1)`` and ``eps_per_round >= 1e-9`` (floor to
+avoid the degenerate cell-side collapse at ``r = L-1``). The legacy
+``"increasing"`` direction reverses the ramp for back-compat with
+the prior cosine-based interpretation.
+
+The schedule is plugged into the closed-form sheet-vs-cell evidence
+ratio at the same point as the constant ``eps_implicit`` was
+previously:
+
+```
+sheet = max(n_cap_base, eps_per_round)
+cell  = (1 - n_cap_base)² · eps_per_round²
+ratio = sheet / (sheet + cell)
+```
+
+Paper-aligned: as ``eps_per_round → 0`` the cell-side scales as
+``eps²`` (Lemma 3) while the sheet-side scales as ``eps¹`` (Lemma 2
++ Corollary 1), so ``ratio → 1`` (sheet dominance). The cycle's
+terminal round now actually exercises the paper's limit instead of
+plugging a constant ``eps = 0.05``.
+
+### 9.3 Backwards compatibility
+
+* ``r = 0`` behaviour is byte-identical (legacy caller that read
+  ``sample.eps_implicit == eps_implicit`` at the first round still
+  sees the same value).
+* ``CodimensionSheetScheduler.eps_implicit`` (constructor
+  introspection) returns the constructor constant unchanged.
+* The legacy ``"increasing"`` direction emits a
+  :class:`DeprecationWarning` on the first ``sample()`` call (the
+  cosine-based interpretation predates the paper alignment).
+* The paper-quantity-augmented path (when ``profile_residual_fn`` is
+  supplied) uses the per-round ``eps`` for the closed-form
+  ``sheet_A · eps`` and ``cell_C · packing_B · eps²`` terms (so the
+  terminal round's ``eps → 0`` is exercised in both heuristic and
+  augmented paths).
+
+### 9.4 Sample.eps_implicit semantics change
+
+P2-W33-A surfaces the per-round ``eps`` on
+``ScheduleSample.eps_implicit`` (so a downstream reader sees the
+actual schedule value used in the closed form). The constructor
+constant remains introspectable via
+``CodimensionSheetScheduler.eps_implicit``. Two test suites were
+updated to reflect this semantic:
+
+* `tests/test_algorithm/test_scheduler.py::test_codimension_sample_carries_eps_implicit`
+  — now verifies the per-round value, not the constant.
+* `tests/test_algorithm/test_paper_ratio_adaptive_scheduler.py::test_paper_ratio_adaptive_scheduler_inherits_base_evidence_ratio`
+  — same update.
+
+The change is bit-safe for legacy callers that only inspect ``r=0``
+samples. Callers that historically read ``sample.eps_implicit`` at
+later rounds will see the per-round value (smaller than the
+constructor constant at ``r > 0``).
+
+### 9.5 Empirical consequences
+
+The framework heuristic (``n_cap_base`` from the cosine ramp) keeps
+``n_cap ≈ n_max`` throughout the cycle (sheet dominance at small
+``eps``). The profile-driven path (``profile_residual_fn``
+supplied) sees the literal paper quantities and benefits from the
+paper-aligned limit at the cycle's terminal round.
+
+**Open question (deferred to Wave 34):** does the cycle's terminal
+``n_cap ≈ 1`` actually deliver framework improvement on
+``twodim_fm``, or does the cosine ramp still dominate the
+``n_cap`` envelope (so the framework heuristic behaves like
+constant-``eps``)? The empirical regime statement in §1.2 stands
+either way: the framework's value-add is regime-dependent, and the
+Wave 33 fix realises the paper's intent even if the regression
+narrowing observed empirically requires further verification.
