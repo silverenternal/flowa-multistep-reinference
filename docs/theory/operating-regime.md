@@ -757,3 +757,94 @@ range** below the saturation ceiling; the framework-vs-baseline
 gap is now informative either way (framework sharper = lower
 entropy = measurable). Re-running the Wave 19 P1A2 comparison with
 the new metric is a Wave 34 follow-up.
+
+## 12. Wave 34 wire change — engine default scheduler is paper-quantity-driven
+
+**Status.** Wave 34 (2026-09-05). One-line semantic shift in
+``adaptive_reflow.algorithm.runner.ReInferenceRunner.__init__``:
+the default scheduler when no ``scheduler=`` is supplied is no
+longer the framework's canonical cosine ramp; it is the
+paper-quantity-driven :class:`CodimensionSheetScheduler` (Wave 31
+ADR-0013). The cosine ramp is retained as a backward-compatible
+opt-in (now emitting a :class:`DeprecationWarning`).
+
+### 12.1 What changed
+
+| Aspect | Before Wave 34 | After Wave 34 |
+|---|---|---|
+| Default factory call | ``default_cosine_scheduler()`` | ``default_paper_ratio_scheduler()`` |
+| Scheduler class | :class:`CosineAnnealScheduler` | :class:`CodimensionSheetScheduler` |
+| ``schedule_family()`` string | ``"cosine_no_restart"`` | ``"codimension_sheet"`` |
+| ``n_cap`` driver | cosine closed form (ADR-0010) | paper Lemma 2 / Lemma 3 evidence balance |
+| Evidence on sample | none | ``evidence_ratio`` + ``eps_implicit`` (per-round) |
+| Backward-compat | n/a | :func:`default_cosine_scheduler` emits ``DeprecationWarning`` |
+
+### 12.2 Why codimension_sheet (not paper_ratio_adaptive)
+
+Both schedulers are paper-quantity-driven (Wave 31 / Wave 34 family),
+but they differ in *aggressiveness*:
+
+* :class:`CodimensionSheetScheduler` — paper-aligned, deterministic
+  per-round ``n_cap`` driven by the sheet-vs-cell evidence ratio.
+  No closed-loop adaptation; the framework can branch on the
+  exposed ``evidence_ratio`` without a second read.
+* :class:`PaperRatioAdaptiveScheduler` — same paper-quantity
+  grounding, plus a closed-loop adaptation signal (drift correction
+  via the paper-quantity reference). More aggressive; appropriate
+  when the runner explicitly opts in.
+
+The default is :class:`CodimensionSheetScheduler` because it is
+**less aggressive** (no adaptation noise) and **fully observable**
+(the ``evidence_ratio`` lives on the sample). Callers that want the
+adaptation signal pass ``scheduler=PaperRatioAdaptiveScheduler(...)``
+explicitly.
+
+### 12.3 Test coverage (Wave 34 Agent D)
+
+* ``tests/test_algorithm/test_runner.py::test_runner_default_factories``
+  — runner built without explicit components returns a
+  ``CodimensionSheetScheduler`` (not a ``CosineAnnealScheduler``).
+* ``tests/test_algorithm/test_runner.py::test_runner_default_factory_is_paper_quantity_driven``
+  — ``runner.scheduler.schedule_family() == "codimension_sheet"``.
+* ``tests/test_algorithm/test_runner.py::test_runner_default_factory_returns_codimension_sheet``
+  — ``default_paper_ratio_scheduler()`` returns a
+  ``CodimensionSheetScheduler`` with the expected family string.
+* ``tests/test_algorithm/test_runner.py::test_runner_cosine_default_factory_available_explicitly``
+  — the cosine ramp is still available for callers that explicitly
+  opt in (backward-compat pin).
+* ``tests/test_algorithm/test_state_machine_integration.py::test_runner_state_machine_default_factory``
+  — the state-machine wrapper exposes a ``CodimensionSheetScheduler``
+  end-to-end.
+
+### 12.4 Migration guide for callers
+
+* **Implicit default** (``ReInferenceRunner(adapter=...)``): now
+  paper-quantity-driven. Per-round ``n_cap`` and
+  ``evidence_ratio`` will differ from the previous cosine ramp;
+  baselines that hardcoded the cosine closed form must use the
+  ``runner.scheduler`` properties directly.
+* **Explicit cosine** (``scheduler=default_cosine_scheduler(...)``):
+  still works, but emits a ``DeprecationWarning``. Replace with
+  ``default_paper_ratio_scheduler(...)`` for the
+  algorithm-determined path or ``build_scheduler("cosine", ...)``
+  for the legacy closed form.
+* **Explicit codimension** (``scheduler=CodimensionSheetScheduler(...)``):
+  unchanged. The factory is now ``default_paper_ratio_scheduler``.
+* **Explicit PaperRatioAdaptive**
+  (``scheduler=PaperRatioAdaptiveScheduler(...)``): unchanged. This
+  is the *more aggressive* paper-quantity-driven opt-in.
+
+### 12.5 Files touched
+
+* ``adaptive_reflow/algorithm/runner.py`` — replace
+  ``default_cosine_scheduler()`` with ``default_paper_ratio_scheduler()``
+  in the runner ``__init__``.
+* ``adaptive_reflow/algorithm/scheduler/_core.py`` —
+  :func:`default_paper_ratio_scheduler` factory added; emits
+  ``DeprecationWarning`` on :func:`default_cosine_scheduler` calls.
+* ``adaptive_reflow/algorithm/scheduler/__init__.py`` +
+  ``adaptive_reflow/algorithm/__init__.py`` — export the new
+  factory.
+* ``tests/test_algorithm/test_runner.py`` +
+  ``tests/test_algorithm/test_state_machine_integration.py`` —
+  assertions updated; new tests added.
