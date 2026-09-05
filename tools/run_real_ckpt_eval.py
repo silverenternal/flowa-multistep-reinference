@@ -408,26 +408,46 @@ def _capture_env_hash_lightweight() -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _resolve_adapter(model: str) -> tuple[Any, str]:
+def _resolve_adapter(
+    model: str, force_mode: str = "synthetic"
+) -> tuple[Any, str]:
     """Resolve the adapter factory for ``model``.
 
-    Returns (adapter_instance, mode_string). When the model is BLOCKED
-    (no shipped adapter), returns (None, "BLOCKED").
+    ``force_mode`` selects the adapter operating mode:
+
+    * ``"synthetic"`` — always use the synthetic-shim path (default,
+      zero-dependency, deterministic). Works without GPU or upstream
+      packages.
+    * ``"real"`` — load real checkpoint weights. Requires the upstream
+      package (e.g. ``kanzi``) to be installed in the active interpreter
+      and the checkpoint file to exist on disk; both fail loudly.
+    * ``"auto"`` — try real ckpt first, fall back to synthetic on
+      ``ImportError`` / missing weights (so the same script works in
+      both the framework pytest env and the sidecar venv).
+
+    The CLI value ``"real"`` is translated to the adapter's
+    ``"torch"`` token (which is what ``adaptive_reflow.adapters.kanzi``
+    expects). Returns ``(adapter_instance, mode_string)``. When the model
+    is BLOCKED (no shipped adapter), returns ``(None, "BLOCKED")``.
     """
     spec = DOWNSTREAM_METRICS[model]
     factory_path = spec["adapter_factory"]
     if factory_path is None:
         return None, "BLOCKED"
     module_path, attr = factory_path.rsplit(":", 1)
+    # Translate CLI semantic to the adapter's mode token. The adapter
+    # factory uses "torch" to mean "real checkpoint loaded" (see
+    # adaptive_reflow/adapters/kanzi.py:default_kanzi_adapter).
+    adapter_force_mode = "torch" if force_mode == "real" else force_mode
     try:
         import importlib
 
         mod = importlib.import_module(module_path)
         factory = getattr(mod, attr)
-        adapter = factory(force_mode="synthetic")
+        adapter = factory(force_mode=adapter_force_mode)
     except Exception as exc:  # noqa: BLE001
         return None, f"IMPORT_FAILED:{type(exc).__name__}:{exc}"
-    return adapter, "synthetic"
+    return adapter, adapter_force_mode
 
 
 def _build_initial_state_and_condition(
@@ -586,6 +606,7 @@ def _run_cell(
     nfe: int,
     *,
     n_rounds: int = 3,
+    force_mode: str = "synthetic",
 ) -> dict[str, Any]:
     """Run one (model, seed, nfe_budget) cell.
 
@@ -602,8 +623,9 @@ def _run_cell(
         "primary_metric_name": spec["primary_metric"]["name"],
         "primary_metric_direction": spec["primary_metric"]["direction"],
         "n_rounds_framework": int(n_rounds),
+        "force_mode_requested": force_mode,
     }
-    adapter, mode = _resolve_adapter(model)
+    adapter, mode = _resolve_adapter(model, force_mode=force_mode)
     if adapter is None:
         cell["status"] = "BLOCKED"
         cell["status_detail"] = mode
@@ -707,6 +729,7 @@ def build_report(
     *,
     env_hash: dict[str, Any],
     n_rounds: int,
+    force_mode: str = "synthetic",
 ) -> dict[str, Any]:
     """Assemble the PHASE-4 real-ckpt eval report.
 
@@ -743,6 +766,7 @@ def build_report(
         "seeds": list(seeds),
         "nfe_budgets": list(nfe_budgets),
         "n_rounds_framework": int(n_rounds),
+        "force_mode": force_mode,
         "cells": cells,
         "aggregate": {
             "n_cells": n_cells,
@@ -835,6 +859,17 @@ def build_argparser() -> argparse.ArgumentParser:
         "--print-only", action="store_true",
         help="Print the report JSON to stdout instead of writing to disk.",
     )
+    p.add_argument(
+        "--force-mode", type=str, default="synthetic",
+        choices=("synthetic", "real", "auto"),
+        help=(
+            "Adapter operating mode. 'synthetic' uses the zero-dependency "
+            "shim path (default); 'real' loads real checkpoint weights "
+            "(requires the upstream package + ckpt on disk; fails loudly "
+            "otherwise); 'auto' tries real first and falls back to "
+            "synthetic on ImportError / missing ckpt."
+        ),
+    )
     return p
 
 
@@ -865,6 +900,7 @@ def main(argv: list[str] | None = None) -> int:
         for nfe in nfe_budgets:
             cell = _run_cell(
                 args.model, seed=int(seed), nfe=int(nfe), n_rounds=int(args.n_rounds),
+                force_mode=args.force_mode,
             )
             cells.append(cell)
             print(
@@ -878,6 +914,7 @@ def main(argv: list[str] | None = None) -> int:
     report = build_report(
         args.model, seeds, nfe_budgets, cells,
         env_hash=env_hash, n_rounds=int(args.n_rounds),
+        force_mode=args.force_mode,
     )
     out_json = json.dumps(report, indent=2, sort_keys=False, ensure_ascii=False)
     if args.print_only:

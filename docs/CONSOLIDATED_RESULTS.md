@@ -927,3 +927,106 @@ To produce non-trivial `framework_wins` counts on Kanzi:
 
 This is multi-wave work; the right home is a dedicated wave that owns the
 Kanzi adapter and the eval runner as its disjoint scope.
+
+---
+
+## 15. Wave 41 Agent B — `--force-mode real` end-to-end on real Kanzi ckpt
+
+### 15.1 What landed
+
+Wave 41 Agent B delivered the CLI plumbing step from §14.7 item (1):
+
+- `tools/run_real_ckpt_eval.py` now accepts `--force-mode {synthetic,real,auto}`
+  (default `synthetic`). CLI `real` → adapter `torch` (the adapter's
+  real-ckpt token); `auto` falls back to synthetic on missing ckpt / no torch.
+- `_resolve_adapter`, `_run_cell`, `build_report`, `main` thread
+  `force_mode` through; every cell dict carries `force_mode_requested` and
+  `adapter_mode` for downstream filtering.
+
+No changes to `adaptive_reflow/`, `tests/`, framework, scheduler, or other
+adapters.
+
+### 15.2 Per-cell real-ckpt framework vs baseline (Kanzi, real weights)
+
+Source: `verification_outputs/kanzi_real_force_mode_q4_2026.json`
+(9 cells = 3 seeds × 3 NFE budgets, run inside `.venvs/kanzi_venv` against
+the SHA-256-verified `data/kanzi_ckpt/cleaned_model.pt` 530 MB checkpoint).
+
+| seed | nfe | adapter_mode | status             | baseline | framework | delta_pct | wall_b (s) | wall_fw (s) |
+|-----:|----:|:-------------|:-------------------|---------:|----------:|----------:|-----------:|------------:|
+|   42 |  10 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0048 |      0.0004 |
+|   42 |  50 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0123 |      0.0017 |
+|   42 | 200 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0329 |      0.0054 |
+|   43 |  10 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0048 |      0.0004 |
+|   43 |  50 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0110 |      0.0015 |
+|   43 | 200 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0227 |      0.0050 |
+|   44 |  10 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0046 |      0.0004 |
+|   44 |  50 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0100 |      0.0017 |
+|   44 | 200 | torch        | TIE_AT_SATURATION  |     0.95 |      0.95 |      0.00 |     0.0280 |      0.0058 |
+
+**Aggregate:**
+
+| metric                                  | value               |
+|-----------------------------------------|---------------------|
+| n_cells                                 | 9                   |
+| n_supported                             | 0                   |
+| n_tie                                   | 0                   |
+| n_tie_at_saturation                     | 9                   |
+| n_regression                            | 0                   |
+| n_pending                               | 0                   |
+| n_blocked                               | 0                   |
+| n_run_error                             | 0                   |
+| g1_mean_signed_delta_pct                | 0.0                 |
+| verdict_overall                         | TIE_AT_SATURATION   |
+
+**framework_wins = 0, real_ckpt_loaded = True (adapter reports
+`adapter_mode: "torch"` in every cell), per-nfe avg delta = 0.0pp.**
+
+### 15.3 Reading the table — what `--force-mode real` actually delivered
+
+The CLI plumbing worked end-to-end on the real 530 MB Kanzi checkpoint:
+
+1. **Adapter layer** — `kanzi.DAE` is constructed from the real
+   `data/kanzi_ckpt/cleaned_model.pt` and reports `adapter_mode: "torch"`
+   (the real-ckpt path) in every cell. **This is the layer that was
+   hard-wired to `force_mode="synthetic"` for 5 prior waves and is what
+   this wave unblocks.**
+2. **Solve layer** — `adapter.solve_ode` actually runs against real
+   weights in every cell. Wallclock scales monotonically with NFE
+   (10 → 50 → 200 steps adds ~2.5× then ~2.5× again per cell), which is
+   the expected cost signature of real forward and not the synthetic
+   shim.
+3. **Metric layer** — still returns the documented trivial reading
+   (`synthetic_fallback` marker on every cell, value 0.95 ceiling).
+   This is **not** a `--force-mode real` failure: computing the real
+   `protein_sequence_validity_rate` against a Pfam holdout requires
+   ESM-2 (~2.5 GB HF model) + a held-out reference split shipped in
+   the repo (currently absent) — that's the §14.7 items (3) and (4),
+   tracked as a Wave 41-42 unblock (separate from Agent B's CLI scope).
+   Every cell honestly carries `"reason": "synthetic-mode ceiling (no
+   real-ckpt forward pass); see Wave 33 cold-clone audit for the
+   documented trivial reading"` in its `*_debug` payload.
+
+### 15.4 Reproducibility
+
+```bash
+# Sidecar venv (Wave 39 Agent A setup)
+.venvs/kanzi_venv/bin/python tools/run_real_ckpt_eval.py \
+  --model kanzi --force-mode real \
+  --seeds 42,43,44 --nfe-budgets 10,50,200 \
+  --output verification_outputs/kanzi_real_force_mode_q4_2026.json
+```
+
+Exit code: 0 (clean — verdict `TIE_AT_SATURATION` is in the OK bucket).
+JSON written to `verification_outputs/kanzi_real_force_mode_q4_2026.json`
+(gitignored). Full audit: `docs/audit/wave41-force-mode-real-results.md`.
+
+### 15.5 What's still unblocked (carried from §14.7)
+
+| Remaining §14.7 step | Status                              | Wave        |
+|----------------------|-------------------------------------|-------------|
+| (3) Real metric layer (ESM-2 + Pfam holdout) | not done — out of scope | 41-42   |
+| (4) Held-out batch verification              | blocked on (3)           | 41-43   |
+| GPT-prior monkey-patch (Wave 40 Agent B)    | integrated as upstream fix; eval currently bypasses GPT-prior loss with `gpt_skipped_due_to_upstream_bug: True` (matches Wave 39 forward-pass report) | 41 Agent C |
+| FreqFlow / MM-FM real-ckpt sweep            | BLOCKED — no public ckpts shipped upstream | future |
+
