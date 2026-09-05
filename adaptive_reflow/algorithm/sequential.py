@@ -36,6 +36,7 @@ Contract
 """
 from __future__ import annotations
 
+import inspect
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -55,6 +56,46 @@ from adaptive_reflow.contracts.hashes import hash_artifact as _hash_artifact_glo
 
 SEQUENTIAL_FAMILY: str = "sequential"
 """Registry key for :class:`SequentialScheduler` (P1-2)."""
+
+
+def _scheduler_accepts_paper_quantities(scheduler: Any) -> bool:
+    """Return ``True`` when ``scheduler.record_round_feedback`` accepts the
+    ``paper_quantities`` kwarg (Wave 38 MEDIUM-6).
+
+    Introspects the bound method's signature once per sub-scheduler
+    instance; the result is cached on the scheduler object by the
+    caller to avoid re-introspecting on every feedback call. A
+    scheduler whose method is missing or not callable (legacy family
+    without the hook) returns ``False`` so the chain falls back to
+    the metrics-only forwarding path.
+    """
+    method = getattr(scheduler, "record_round_feedback", None)
+    if method is None or not callable(method):
+        return False
+    try:
+        sig = inspect.signature(method)
+    except (TypeError, ValueError):
+        return False
+    return "paper_quantities" in sig.parameters
+
+
+def _scheduler_accepts_metrics(scheduler: Any) -> bool:
+    """Return ``True`` when ``scheduler.record_round_feedback`` accepts the
+    ``metrics`` kwarg (Wave 38 MEDIUM-6 dispatcher).
+
+    Mirror of :func:`_scheduler_accepts_paper_quantities`. A scheduler
+    that accepts only ``paper_quantities`` (e.g. the fully-integrated
+    :class:`PaperRatioAdaptiveScheduler`) returns ``False`` here, so
+    the dispatcher passes the paper-quantities payload only.
+    """
+    method = getattr(scheduler, "record_round_feedback", None)
+    if method is None or not callable(method):
+        return False
+    try:
+        sig = inspect.signature(method)
+    except (TypeError, ValueError):
+        return False
+    return "metrics" in sig.parameters
 
 # ---------------------------------------------------------------------------
 # Public types
@@ -315,6 +356,7 @@ class SequentialScheduler:
         self,
         round_in_cycle: int,
         metrics: Mapping[str, float],
+        paper_quantities: Mapping[str, float] | None = None,
     ) -> None:
         """Forward per-round feedback to *every* sub-scheduler (A8 uplift).
 
@@ -328,6 +370,15 @@ class SequentialScheduler:
         accepts arbitrary round indices (e.g.
         :class:`ConvergenceAdaptiveScheduler`) can build history
         across the entire chain length.
+
+        Wave 38 MEDIUM-6: ``paper_quantities`` is forwarded to slots
+        whose ``record_round_feedback`` accepts the kwarg (detected
+        via :func:`inspect.signature` introspection) so paper-quantity
+        signals propagate through the chain. Slots whose signature
+        predates Wave 38 (no ``paper_quantities`` parameter) still
+        receive the legacy ``metrics``-only call without raising.
+        A non-``None`` ``paper_quantities`` mapping is forwarded
+        verbatim; ``None`` is the legacy default.
 
         Falls back to no-op when ``round_in_cycle`` is out of range
         (the chain was constructed with a shorter total length than
@@ -359,10 +410,55 @@ class SequentialScheduler:
                 sub_round = 0
             elif sub_round >= int(slot.n_rounds):
                 sub_round = int(slot.n_rounds) - 1
-            slot.scheduler.record_round_feedback(
-                round_in_cycle=int(sub_round),
-                metrics=metrics,
-            )
+            # Wave 38 MEDIUM-6: forward ``paper_quantities`` to slots
+            # that accept the kwarg (introspected lazily; the result
+            # is cached on the bound method via functools-like
+            # short-circuit on a per-instance ``hasattr`` probe). The
+            # dispatcher forwards *only* the kwargs the sub-scheduler's
+            # ``record_round_feedback`` signature accepts, so a
+            # metrics-only slot keeps the metrics kwarg, a
+            # paper-quantities-only slot keeps that kwarg, and a
+            # both-kwargs slot receives both.
+            sub = slot.scheduler
+            try:
+                accepts_pq = getattr(
+                    sub, "_wave38_accepts_paper_quantities", None
+                )
+                if accepts_pq is None:
+                    accepts_pq = _scheduler_accepts_paper_quantities(sub)
+                    try:
+                        sub._wave38_accepts_paper_quantities = accepts_pq
+                    except (AttributeError, TypeError):
+                        pass  # Slot doesn't allow attribute set; retry next call.
+                accepts_metrics = getattr(
+                    sub, "_wave38_accepts_metrics", None
+                )
+                if accepts_metrics is None:
+                    accepts_metrics = _scheduler_accepts_metrics(sub)
+                    try:
+                        sub._wave38_accepts_metrics = accepts_metrics
+                    except (AttributeError, TypeError):
+                        pass
+                kwargs: dict[str, object] = {"round_in_cycle": int(sub_round)}
+                if accepts_metrics:
+                    kwargs["metrics"] = metrics
+                if accepts_pq:
+                    kwargs["paper_quantities"] = paper_quantities
+                sub.record_round_feedback(**kwargs)
+            except TypeError:
+                # Defensive fallback: try the legacy metrics-only path
+                # so a slot whose signature changed under us still
+                # receives the feedback.
+                try:
+                    sub.record_round_feedback(
+                        round_in_cycle=int(sub_round),
+                        metrics=metrics,
+                    )
+                except TypeError:
+                    sub.record_round_feedback(
+                        round_in_cycle=int(sub_round),
+                        paper_quantities=paper_quantities,
+                    )
 
     def inject_noise(
         self,

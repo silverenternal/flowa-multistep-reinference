@@ -61,9 +61,10 @@ Tasks satisfied:
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import warnings
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
@@ -99,6 +100,44 @@ in this module break. :func:`_build_w2_estimator` asserts the two
 constants agree the first time a non-default estimator is built, so the
 duplication cannot silently drift.
 """
+
+
+def _scheduler_accepts_paper_quantities(scheduler: Any) -> bool:
+    """Return ``True`` when ``scheduler.record_round_feedback`` accepts the
+    ``paper_quantities`` kwarg (Wave 38 MEDIUM-8 dispatcher).
+
+    Introspects the bound method's signature once per scheduler
+    instance; the caller caches the result on the scheduler so the
+    per-round cost is constant. Mirrors the helper of the same name
+    in :mod:`adaptive_reflow.algorithm.sequential`.
+    """
+    method = getattr(scheduler, "record_round_feedback", None)
+    if method is None or not callable(method):
+        return False
+    try:
+        sig = inspect.signature(method)
+    except (TypeError, ValueError):
+        return False
+    return "paper_quantities" in sig.parameters
+
+
+def _scheduler_accepts_metrics(scheduler: Any) -> bool:
+    """Return ``True`` when ``scheduler.record_round_feedback`` accepts the
+    ``metrics`` kwarg (Wave 38 MEDIUM-8 dispatcher).
+
+    Mirror of :func:`_scheduler_accepts_paper_quantities`. A scheduler
+    that accepts only ``paper_quantities`` (e.g. the fully-integrated
+    :class:`PaperRatioAdaptiveScheduler`) returns ``False`` here so the
+    dispatcher passes the paper-quantities payload only.
+    """
+    method = getattr(scheduler, "record_round_feedback", None)
+    if method is None or not callable(method):
+        return False
+    try:
+        sig = inspect.signature(method)
+    except (TypeError, ValueError):
+        return False
+    return "metrics" in sig.parameters
 
 
 # ---------------------------------------------------------------------------
@@ -621,6 +660,8 @@ class BatchedTrajectoryRunner:
         self,
         config: BatchedRunnerConfig,
         adapter: _BatchedAdapterProtocol,
+        *,
+        paper_quantities_fn: Callable[[int], Mapping[str, float] | None] | None = None,
     ) -> None:
         if config is None:
             raise ValueError("config_required")
@@ -634,8 +675,22 @@ class BatchedTrajectoryRunner:
             raise ValueError("endpoints_per_trajectory must be >= 1")
         if config.scheduler is None:
             raise ValueError("scheduler_required")
+        if paper_quantities_fn is not None and not callable(paper_quantities_fn):
+            raise ValueError(
+                "paper_quantities_fn must be callable or None, got "
+                f"{paper_quantities_fn!r}"
+            )
         self._config = config
         self._adapter = adapter
+        # Wave 38 MEDIUM-8: optional callable ``paper_quantities_fn(round)
+        # -> Mapping | None`` invoked per round so the runner can
+        # forward literal paper quantities (``sheet_A`` / ``cell_C`` /
+        # ``packing_B`` / ``sheet_vs_cells_proxy``) to the scheduler's
+        # ``record_round_feedback`` hook. ``None`` (default) preserves
+        # the legacy behaviour where only ``{"W2": float(w2)}`` is
+        # forwarded, so paper-quantity-aware schedulers stay dormant
+        # until the caller wires the carrier explicitly.
+        self._paper_quantities_fn = paper_quantities_fn
         self._mode_centres = _canonical_mode_centres(adapter)
         # P0 #3 -- resolved once per runner so the per-round loop pays
         # no factory cost. ``None`` keeps the legacy inline surrogate.
@@ -909,7 +964,54 @@ class BatchedTrajectoryRunner:
             # scheduler families that ignore the hook.
             if hasattr(scheduler, "record_round_feedback"):
                 feedback: Mapping[str, float] = {"W2": float(w2)}
-                scheduler.record_round_feedback(r, feedback)
+                # Wave 38 MEDIUM-8: when ``paper_quantities_fn`` was
+                # supplied to the runner constructor, resolve it for
+                # the current round and forward the literal paper
+                # quantities alongside ``feedback``. The legacy
+                # ``metrics``-only call is preserved when the callable
+                # returns ``None`` (or no callable was supplied), so
+                # every existing scheduler keeps working unchanged.
+                pq_payload: Mapping[str, float] | None = None
+                if self._paper_quantities_fn is not None:
+                    try:
+                        pq_payload = self._paper_quantities_fn(int(r))
+                    except Exception:
+                        pq_payload = None
+                if pq_payload is None:
+                    scheduler.record_round_feedback(r, feedback)
+                else:
+                    # Mirror the dispatcher pattern in
+                    # :class:`SequentialScheduler`: inspect the
+                    # scheduler's ``record_round_feedback`` signature so
+                    # we forward *only* the kwargs it actually accepts.
+                    # A scheduler that takes ``metrics`` only (legacy
+                    # family) keeps the metrics-only call; one that
+                    # takes ``paper_quantities`` only (the fully
+                    # integrated :class:`PaperRatioAdaptiveScheduler`)
+                    # receives the paper-quantities payload only.
+                    accepts_metrics = _scheduler_accepts_metrics(scheduler)
+                    accepts_pq = _scheduler_accepts_paper_quantities(scheduler)
+                    kwargs: dict[str, object] = {
+                        "round_in_cycle": int(r),
+                    }
+                    if accepts_metrics:
+                        kwargs["metrics"] = feedback
+                    if accepts_pq:
+                        kwargs["paper_quantities"] = pq_payload
+                    try:
+                        scheduler.record_round_feedback(**kwargs)
+                    except TypeError:
+                        # Defensive fallback — keep the runner
+                        # backward-compatible with any scheduler family
+                        # whose signature changed under us.
+                        try:
+                            scheduler.record_round_feedback(
+                                int(r), feedback
+                            )
+                        except TypeError:
+                            scheduler.record_round_feedback(
+                                int(r), paper_quantities=pq_payload
+                            )
 
             # Wave 35 FIX-2 -- convergence-aware early termination.
             # Opt-in only (``cfg.early_termination``), and only for

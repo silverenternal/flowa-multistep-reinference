@@ -3087,6 +3087,14 @@ class CodimensionSheetScheduler:
         self._early_stop_min_rounds = int(early_stop_min_rounds)
         self._early_stop_window = int(early_stop_window)
         self._early_stop_plateau_rel_tol = float(early_stop_plateau_rel_tol)
+        # Wave 38 HIGH-1: per-round paper-quantity shift history. Appended
+        # to by :meth:`record_round_feedback` whenever a caller supplies a
+        # ``paper_quantities`` mapping carrying the sheet-vs-cell ratio
+        # (``sheet_A`` / ``cell_C`` / ``packing_B``). Independent of
+        # :attr:`_evidence_ratio_history`, which tracks the sheet-vs-cell
+        # *proxy* ratio from ``selection_ratio`` / ``evidence_ratio``
+        # keys (legacy Wave 35 path).
+        self._shift_history: list[float] = []
 
         self._config_hash_value = hash_artifact(
             {
@@ -3456,6 +3464,9 @@ class CodimensionSheetScheduler:
         self._smoothed_w2_history = []
         self._evidence_ratio_history = []
         self._smoothed_evidence_ratio = None
+        # Wave 38 HIGH-1 -- paper-quantity shift history must also be
+        # cleared so a replayed cycle starts at zero PID state.
+        self._shift_history = []
         self._base.reset()
 
     # -- Wave 35 FIX-1 / FIX-2: convergence feedback + termination ---------
@@ -3464,6 +3475,24 @@ class CodimensionSheetScheduler:
     def w2_history(self) -> tuple[float, ...]:
         """Return the raw per-round ``W2`` observations recorded so far."""
         return tuple(self._w2_history)
+
+    @property
+    def shift_history(self) -> tuple[float, ...]:
+        """Return the per-round paper-quantity sheet-vs-cell ratio history.
+
+        Wave 38 HIGH-1 — each entry is
+        ``paper_quantities["sheet_A"] / max(paper_quantities["cell_C"]
+        * paper_quantities["packing_B"], 1e-12)`` for one
+        :meth:`record_round_feedback` call that supplied all three
+        paper-quantity keys. Empty until the first such call (a broken
+        oracle or missing keys leave the history untouched, mirroring
+        :attr:`w2_history`'s missing-value tolerance). Independent of
+        :attr:`evidence_ratio_history`, which tracks the legacy
+        ``selection_ratio`` / ``evidence_ratio`` path; the two
+        histories may diverge when callers supply different signal
+        sources.
+        """
+        return tuple(self._shift_history)
 
     @property
     def smoothed_w2(self) -> float | None:
@@ -3543,6 +3572,28 @@ class CodimensionSheetScheduler:
             ratio = None
         if ratio is None and isinstance(paper_quantities, Mapping):
             ratio = _finite(paper_quantities.get("sheet_vs_cells_proxy"))
+
+        # Wave 38 HIGH-1 -- paper-quantity-aware shift history. When the
+        # caller supplies a ``paper_quantities`` mapping carrying the
+        # canonical sheet-vs-cell ratio (``sheet_A`` /
+        # ``cell_C * packing_B``), append the ratio to
+        # :attr:`_shift_history`. The shift itself is intentionally NOT
+        # applied to ``sample`` (the canonical n_cap closed form is the
+        # single source of truth for capacity), so every schedule this
+        # class produced before Wave 38 stays byte-identical. The history
+        # is an observability surface for the runner / audit trail (the
+        # same separation as :attr:`_w2_history`).
+        if isinstance(paper_quantities, Mapping):
+            pq_sheet_A = _finite(paper_quantities.get("sheet_A"))
+            pq_cell_C = _finite(paper_quantities.get("cell_C"))
+            pq_packing_B = _finite(paper_quantities.get("packing_B"))
+            if (
+                pq_sheet_A is not None
+                and pq_cell_C is not None
+                and pq_packing_B is not None
+            ):
+                denom = max(float(pq_cell_C) * float(pq_packing_B), 1e-12)
+                self._shift_history.append(float(pq_sheet_A) / denom)
 
         alpha = self._feedback_ema
         if w2 is not None:
