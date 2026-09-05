@@ -1,0 +1,445 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T01:53:28Z",
+  "git_sha": "93aab60",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "mnist_fm",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "mnist_fm",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "22172bdc741b8933c3e2ecd0169902e3334ac6c84962b2c84720d8bc7392e021",
+        "integrator_config_hash": "0e09479edde00105ff643bbf419680bceb7141c12dfe1ec8db0b0a9969f07142"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "per_atom_std",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "54954ac276bfbdac71c561667118c658d11c7ad1e783f820447909cfe8d33372",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "mnist_fm@v1",
+          "mnist_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          784
+        ],
+        "dtype": "float64",
+        "sha256": "32a3723a2fb48920711b9856a61ea925113e2ec72727e86e2c35de8bc965621c",
+        "finite": true
+      },
+      "output_sha256": "281c87bb8b1421ad3bb002631968768cf3296e74108ea9f3a433e613c2414b77"
+    },
+    {
+      "adapter": "mnist_fm",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "cd095247d6f1610b8a4a5487e82a3e758ff7748997d9815b9c208f6ea0b87f5d",
+        "integrator_config_hash": "e6a6ea3aaedaee034a95310866304f6febde71a41b918c638b8d2e2591cbd419"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "per_atom_std",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "f451a675f1d153c0942f407db5c593282900dbdd242dc936599bad183fd37c3a",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "mnist_fm@v1",
+          "mnist_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          784
+        ],
+        "dtype": "float64",
+        "sha256": "26132bc207509c2861e6845498fdacc724fbf489803940f904b4308ddd6fa666",
+        "finite": true
+      },
+      "output_sha256": "496fba50cb4bf08684b93b86a0a43eba4def20ead1d71aa32641947233747c1a"
+    },
+    {
+      "adapter": "mnist_fm",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "9c64c26f6e0f281a9833481d862389129240847a7b7f0df4b6a927650e7157f4",
+        "integrator_config_hash": "165fb98695288e67eb31596554fcefc5327dafc64b02a2bb39d697ce225bf65a"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "per_atom_std",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "d3f3e13a0f9891b38024d3b744dbbbfd6fb1c33bafd3239480fd098f1cf9eb7e",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "mnist_fm@v1",
+          "mnist_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          784
+        ],
+        "dtype": "float64",
+        "sha256": "3fb2ee1d339485e8ab74c34744296868d467d883f95a9a7d3f419344cc008177",
+        "finite": true
+      },
+      "output_sha256": "7ad544921fe9480c3456d262df26f05957bd4df6ccee18578974cee883c1bce4"
+    },
+    {
+      "adapter": "mnist_fm",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "fa376738259c4c35ffd0d791653b5cbe876d6846997e098ac5cd2062fc407e91",
+        "integrator_config_hash": "0e09479edde00105ff643bbf419680bceb7141c12dfe1ec8db0b0a9969f07142"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "per_atom_std",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "0bf8120fc53f10ac7c0fbe74d6001bef8d4fcdb2028ea757a7edde9e01d64f9f",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "mnist_fm@v1",
+          "mnist_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          784
+        ],
+        "dtype": "float64",
+        "sha256": "2f7dc0283114ea0c6edac6b7e421fcda7ade6f63c5227fab8af96c2224511b18",
+        "finite": true
+      },
+      "output_sha256": "0f6d76d0896d03cd4d7ecd6febbe697f03d59b65ba0100febec307adab0cd261"
+    },
+    {
+      "adapter": "mnist_fm",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "aeae23723af8ccffa3322d666d9baa4e3ef3bffaa39be233baba7e498bcd33a3",
+        "integrator_config_hash": "e6a6ea3aaedaee034a95310866304f6febde71a41b918c638b8d2e2591cbd419"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "per_atom_std",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "94fd7b989c0aef8596a6e091ff9c3b4e817185440ad8857896c285623070b6c9",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "mnist_fm@v1",
+          "mnist_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          784
+        ],
+        "dtype": "float64",
+        "sha256": "c05546841d776e3719af972beb86e7596526425697d8c5d8c9165c8ec03717c2",
+        "finite": true
+      },
+      "output_sha256": "cded7a44708f5ff792b9d9319a0e3ec9df7f9214628b569a4623399d40f19c4b"
+    },
+    {
+      "adapter": "mnist_fm",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "e61e9fc58b9fb38d82cf309b09d5d38ef745c29143d071c1342976c34cb9b99e",
+        "integrator_config_hash": "165fb98695288e67eb31596554fcefc5327dafc64b02a2bb39d697ce225bf65a"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "per_atom_std",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "8f507c6079265d95de5557ca4cb985ec00361df6abe1ee84da47ac1d6b3a3a63",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "mnist_fm@v1",
+          "mnist_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          784
+        ],
+        "dtype": "float64",
+        "sha256": "49fbf940b9e7adf8fc5146a26f3e348f64c4cdd9cd8672f6258c88be6d8e8c39",
+        "finite": true
+      },
+      "output_sha256": "47080707a53180ddf8410f83cc79afb4b5fbaaee2fcce1f0206597d9227d3535"
+    },
+    {
+      "adapter": "mnist_fm",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "39abdcb3d7e97658d15951b640842b9e2c0213d67f5248c7e54b372a07ee69ae",
+        "integrator_config_hash": "0e09479edde00105ff643bbf419680bceb7141c12dfe1ec8db0b0a9969f07142"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "per_atom_std",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "004ae6ff5ccfab16e1654eba8df66e1c74dc46ce459179ea7ef494d967e8522f",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "mnist_fm@v1",
+          "mnist_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          784
+        ],
+        "dtype": "float64",
+        "sha256": "e893d27f8daf3cc1233669e720d724f65677265b8d34432789212e89685fa4b6",
+        "finite": true
+      },
+      "output_sha256": "e4a979e29fe056af2d30ca19b78fccff6c889710db9c37f8cdd9b365e94ea48b"
+    },
+    {
+      "adapter": "mnist_fm",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "bf5a457b7cfdc6fc166ee6c6778b46a68017516ad43a6ae8181232e17cad5ba5",
+        "integrator_config_hash": "e6a6ea3aaedaee034a95310866304f6febde71a41b918c638b8d2e2591cbd419"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "per_atom_std",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "52169921ccd5767207242c9c1b006ef9d4ac812589b4bf1d17dec13e4cda6a43",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "mnist_fm@v1",
+          "mnist_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          784
+        ],
+        "dtype": "float64",
+        "sha256": "9f30b6dff8708bfbfed24bb670fc56a013730e63bf6f279797afa1831fb90c08",
+        "finite": true
+      },
+      "output_sha256": "447c08f1056c95502fd2233d3f8e913df39895c742555d002cb3a3372f145ef8"
+    },
+    {
+      "adapter": "mnist_fm",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "782357c134241b6a55651ce3edb74a2872417e273ecd4f58f194b8a667d622df",
+        "integrator_config_hash": "165fb98695288e67eb31596554fcefc5327dafc64b02a2bb39d697ce225bf65a"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "per_atom_std",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "f270893b5c4782d5a976e89f939e75e82a402da78cd1753f771a8afb37305f4a",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "mnist_fm@v1",
+          "mnist_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          784
+        ],
+        "dtype": "float64",
+        "sha256": "45709d8703b81b29a6946b58988dd6708de53331bff6a692ad7e5c34a8ebf78c",
+        "finite": true
+      },
+      "output_sha256": "177303fe56c663688e071ebb529185169d472151e9d592319aca1fba4e537f7e"
+    }
+  ]
+}

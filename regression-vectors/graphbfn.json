@@ -1,0 +1,931 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T01:53:30Z",
+  "git_sha": "93aab60",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "graphbfn",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "graphbfn",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "dad5bd0980cea93e66069cec18460d764fee61224fa4176145922126d86c4c83",
+        "integrator_config_hash": "ac517f2b7a18819414313527a830eb26032e0dbb583c5228613c22e6102aabfa"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "1caa086f26032a6a8f60503cc9f4f3ae00bccbe27409762b500ee879663aa54c",
+        "channels": [
+          "adjacency",
+          "atoms",
+          "bonds",
+          "charge",
+          "valence"
+        ],
+        "provenance": [
+          "graphbfn@v1",
+          "variant:iclr2025",
+          "graphbfn_observed",
+          "variant:iclr2025",
+          "dataset:qm9",
+          "cond_kind:unconditional"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "adjacency_logits",
+          "charge",
+          "theta_edge",
+          "theta_node",
+          "valence"
+        ],
+        "per_key": {
+          "adjacency_logits": {
+            "shape": [
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "bc20502655d6f547913be6a0fbec6c9b2a21e6bf8d0f3d012bdadb205bfd13f1",
+            "finite": false
+          },
+          "charge": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          },
+          "theta_edge": {
+            "shape": [
+              1,
+              4
+            ],
+            "dtype": "float64",
+            "sha256": "8074722ca605e638a40e33d5069de957bbfe99d962324c0cf427dbf0a47f70de",
+            "finite": true
+          },
+          "theta_node": {
+            "shape": [
+              2,
+              9
+            ],
+            "dtype": "float64",
+            "sha256": "66e17c806dbbe09c1be3c750ce1077b91f428d39e3e03d19328d90028c657c34",
+            "finite": true
+          },
+          "valence": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          }
+        },
+        "sha256": "f0b5679176c9162fa78c927bc24667aee04bbbe6ab85a23f3ac2b311028444b2"
+      },
+      "output_sha256": "db82628bf32f521e095e8fd5bd3d867e1afef3cd51fd4576cd7491ae5fb2e50a"
+    },
+    {
+      "adapter": "graphbfn",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "f4473b79cf69cb594d9a02ca97de132a41e66a5d0b8248b28586ac4b7743dea1",
+        "integrator_config_hash": "17f13d9ea12189eb6f2b4e9d4a0afbcfe77e5ff3aa543bbe13458d268d04909b"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "b4dfeda6f77187b032a7f1370e91a8db97ac6ce55a45052544bcb56587919bd4",
+        "channels": [
+          "adjacency",
+          "atoms",
+          "bonds",
+          "charge",
+          "valence"
+        ],
+        "provenance": [
+          "graphbfn@v1",
+          "variant:iclr2025",
+          "graphbfn_observed",
+          "variant:iclr2025",
+          "dataset:qm9",
+          "cond_kind:unconditional"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "adjacency_logits",
+          "charge",
+          "theta_edge",
+          "theta_node",
+          "valence"
+        ],
+        "per_key": {
+          "adjacency_logits": {
+            "shape": [
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "b504b9b309980fa00eb3ed386be80611ec7fb5b28b9fd317c98626716567a28e",
+            "finite": false
+          },
+          "charge": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          },
+          "theta_edge": {
+            "shape": [
+              1,
+              4
+            ],
+            "dtype": "float64",
+            "sha256": "5358bd31abbeb0e54b03c153bf0945da7e266f394088728174474ffb21152729",
+            "finite": true
+          },
+          "theta_node": {
+            "shape": [
+              2,
+              9
+            ],
+            "dtype": "float64",
+            "sha256": "f93063fd8a88029245901bf883a393be23f1b8562f212406314b91d567a9d4d9",
+            "finite": true
+          },
+          "valence": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          }
+        },
+        "sha256": "a6033d38b9af854c8718a1fc260e382939c687034721350f8ab0f2c09a0e6a3a"
+      },
+      "output_sha256": "3f2ddb5ef5bd36bf3d1dcf97f067e16f99efdaed7d9bf8258d0002dca1cce4d5"
+    },
+    {
+      "adapter": "graphbfn",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "4e3fe05f754a1b65e5caf1ac5241e3ded0e946a4d70c6b770d76ac151ee314bb",
+        "integrator_config_hash": "32d924e858285a01d3f3659948f5e8c1024d218ae125dbe9512ead9ebd700fc6"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "39f7c5503a58e2c16a64986a332f0b15b71d78f746a89134ad7618726cdf38ea",
+        "channels": [
+          "adjacency",
+          "atoms",
+          "bonds",
+          "charge",
+          "valence"
+        ],
+        "provenance": [
+          "graphbfn@v1",
+          "variant:iclr2025",
+          "graphbfn_observed",
+          "variant:iclr2025",
+          "dataset:qm9",
+          "cond_kind:unconditional"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "adjacency_logits",
+          "charge",
+          "theta_edge",
+          "theta_node",
+          "valence"
+        ],
+        "per_key": {
+          "adjacency_logits": {
+            "shape": [
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "4784d931acd617482c7d474922a1f507c0c3e939c2cab9cffb45a079c40bb8f5",
+            "finite": false
+          },
+          "charge": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          },
+          "theta_edge": {
+            "shape": [
+              1,
+              4
+            ],
+            "dtype": "float64",
+            "sha256": "0110da304a30cf9470a6527f712a4507d7799fc49b2a64548a74f362078c5408",
+            "finite": true
+          },
+          "theta_node": {
+            "shape": [
+              2,
+              9
+            ],
+            "dtype": "float64",
+            "sha256": "8b49c5d6100f9dd6c28f405e7ce8d85af9a8954ca717589f9322ac00b031c0f5",
+            "finite": true
+          },
+          "valence": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          }
+        },
+        "sha256": "01b39045f8e2816353c98e350732a77e9b08777fc639a4904e3207236a786dc6"
+      },
+      "output_sha256": "3fdb2c84bb0c0ba68fe28d736d2bee1325f46aff51714c6c4cdb6d3d77cd83e4"
+    },
+    {
+      "adapter": "graphbfn",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "2149a5f27a9f2e06598de4a65b1af0e3e66b89d3dce8e1579afff301258231af",
+        "integrator_config_hash": "17e4ba589090d40aea6ab24394ceb893f18b276abecc53f28fb3f3b3a82bd4a5"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "766c5c555cada606eff53544bdb3f1cc5a8d3a54cc361bbc74cd12ba33698714",
+        "channels": [
+          "adjacency",
+          "atoms",
+          "bonds",
+          "charge",
+          "valence"
+        ],
+        "provenance": [
+          "graphbfn@v1",
+          "variant:iclr2025",
+          "graphbfn_observed",
+          "variant:iclr2025",
+          "dataset:qm9",
+          "cond_kind:unconditional"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "adjacency_logits",
+          "charge",
+          "theta_edge",
+          "theta_node",
+          "valence"
+        ],
+        "per_key": {
+          "adjacency_logits": {
+            "shape": [
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "e3268781dc088be71d9277a85f52c0bcd5269fc51e963a91ac536f7149c04473",
+            "finite": false
+          },
+          "charge": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          },
+          "theta_edge": {
+            "shape": [
+              2,
+              4
+            ],
+            "dtype": "float64",
+            "sha256": "588101caa2e2df25cc0bc9e09ab59cc88e9d5c61aa96e99de1d268c55eb85a45",
+            "finite": true
+          },
+          "theta_node": {
+            "shape": [
+              2,
+              9
+            ],
+            "dtype": "float64",
+            "sha256": "00bec07dcf117d33337e0daae2be743a0b6b8fafdaadbe9293a7e58958980706",
+            "finite": true
+          },
+          "valence": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          }
+        },
+        "sha256": "573109f272360070d2350e03078779a2daf13df9d8f9e25cb9a390f4bff14f01"
+      },
+      "output_sha256": "76ccc5394df645495c8649f4b1f09cf3d2e382f63bf79de07231684e5405d063"
+    },
+    {
+      "adapter": "graphbfn",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "8ce9cafdd937c5204fc0122afba3f97925b989ce22c1eebffc0dfb58eeae664a",
+        "integrator_config_hash": "5df45697fb41473632da50bbafebbaaa3148e399419bae65a4fe78035f4f9151"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "0a67233c397dc1fc4c9b15eea5981bc281277e896061d0df0b949e28c3dd38e1",
+        "channels": [
+          "adjacency",
+          "atoms",
+          "bonds",
+          "charge",
+          "valence"
+        ],
+        "provenance": [
+          "graphbfn@v1",
+          "variant:iclr2025",
+          "graphbfn_observed",
+          "variant:iclr2025",
+          "dataset:qm9",
+          "cond_kind:unconditional"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "adjacency_logits",
+          "charge",
+          "theta_edge",
+          "theta_node",
+          "valence"
+        ],
+        "per_key": {
+          "adjacency_logits": {
+            "shape": [
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "ab6404e3ed1ac92b28b44920ae8b90e9b010cf312a5e359f5373970cf97cffb3",
+            "finite": false
+          },
+          "charge": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          },
+          "theta_edge": {
+            "shape": [
+              2,
+              4
+            ],
+            "dtype": "float64",
+            "sha256": "2b4573976283938d0a2ce92cb36f8c41d7de3eaab591903c4cf992e519fe3175",
+            "finite": true
+          },
+          "theta_node": {
+            "shape": [
+              2,
+              9
+            ],
+            "dtype": "float64",
+            "sha256": "a998a121852e7cd361b461256c284a557ca037b13c8dd54ea486c6f329fd9e42",
+            "finite": true
+          },
+          "valence": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          }
+        },
+        "sha256": "99728b1e86cd1f490952c7ef20b32252ecd725f520a40dc28196aba511b1791a"
+      },
+      "output_sha256": "cd703ec5a50eea792205a0c75cadb940ef713bcc2a7f0b82e8ba5626972695c0"
+    },
+    {
+      "adapter": "graphbfn",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "4351aa51b998e1adfc15d9355e4e58be36e9e188ed492971025582a932aca6c3",
+        "integrator_config_hash": "e8ffc8d7944f6bfb7979318feb463f4ed442ebc19b6bc470249f0b5ab50b300d"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "97e4c609272a033db6f34d56bfa4a4b16bfba193a7cae21788838687d16c0fbf",
+        "channels": [
+          "adjacency",
+          "atoms",
+          "bonds",
+          "charge",
+          "valence"
+        ],
+        "provenance": [
+          "graphbfn@v1",
+          "variant:iclr2025",
+          "graphbfn_observed",
+          "variant:iclr2025",
+          "dataset:qm9",
+          "cond_kind:unconditional"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "adjacency_logits",
+          "charge",
+          "theta_edge",
+          "theta_node",
+          "valence"
+        ],
+        "per_key": {
+          "adjacency_logits": {
+            "shape": [
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "e4a1db1a735d859680c4a48f7c4c5a2a0c09c1953d06c0ade10ce5e43844105b",
+            "finite": false
+          },
+          "charge": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          },
+          "theta_edge": {
+            "shape": [
+              2,
+              4
+            ],
+            "dtype": "float64",
+            "sha256": "82c68eaaca6ad51c414dda25563eff9028afa768e82f6813554f8d9005cf23da",
+            "finite": true
+          },
+          "theta_node": {
+            "shape": [
+              2,
+              9
+            ],
+            "dtype": "float64",
+            "sha256": "7e58297aba8269208c8979ba558c75b7a0b8e7ef49c39b04d5568fe4f1899a7f",
+            "finite": true
+          },
+          "valence": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          }
+        },
+        "sha256": "cc8f7b75525be90e434ec46b2ae63f6ca64437b4e8efa416b75ec2ded0a30f78"
+      },
+      "output_sha256": "c8022cc47b9caba8962af4c93ba923751d060fbb8628853e8ceaf710973fd18b"
+    },
+    {
+      "adapter": "graphbfn",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "1e8f02fbedbc65d3b0cd45a389331840cbfc0fd884de7c2a13c9663e86cbb0a0",
+        "integrator_config_hash": "e92a7fba8d23b4641a42f0113d7d497a72802a60b10fdc8c912c035fad54c981"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "ea20f34dc08ef79376caeb6965d97cac643fc556dde600cda84ca5fd161570c4",
+        "channels": [
+          "adjacency",
+          "atoms",
+          "bonds",
+          "charge",
+          "valence"
+        ],
+        "provenance": [
+          "graphbfn@v1",
+          "variant:iclr2025",
+          "graphbfn_observed",
+          "variant:iclr2025",
+          "dataset:qm9",
+          "cond_kind:unconditional"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "adjacency_logits",
+          "charge",
+          "theta_edge",
+          "theta_node",
+          "valence"
+        ],
+        "per_key": {
+          "adjacency_logits": {
+            "shape": [
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "a5f582064461e2013c24cbd6a6a603e8f8c53596ccff0266f93e924f9b7e2e70",
+            "finite": false
+          },
+          "charge": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          },
+          "theta_edge": {
+            "shape": [
+              2,
+              4
+            ],
+            "dtype": "float64",
+            "sha256": "670f2233792c48d69a5d3a70f453e7384c644d06c3de427407f0a5dc9138a8d0",
+            "finite": true
+          },
+          "theta_node": {
+            "shape": [
+              2,
+              9
+            ],
+            "dtype": "float64",
+            "sha256": "05c246eee143c15c16663c85c293f3c16fbf2891f0d5b86d30bcb65eb4f5e190",
+            "finite": true
+          },
+          "valence": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          }
+        },
+        "sha256": "3d0697029de8e5560497eceb4d59ab3d4812a5ab0fbf369efd4ba4682057c124"
+      },
+      "output_sha256": "c2717320b01f2b64b9a0ee9e97641cddbf073de8e8bb9db277e674ed1ac3dba2"
+    },
+    {
+      "adapter": "graphbfn",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "b520884c4a0601f886c59bb4971743c47986bd916cbffb2527924e888760dbe9",
+        "integrator_config_hash": "8b5658c6e7b36c34d05761c9fd6ccec7ecddbc4dffec0efb9ad8c09b63f20d07"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "221557f512c427e69d2ecfec87ce3439297a5f2df8f38ac7eaefe0343e91be84",
+        "channels": [
+          "adjacency",
+          "atoms",
+          "bonds",
+          "charge",
+          "valence"
+        ],
+        "provenance": [
+          "graphbfn@v1",
+          "variant:iclr2025",
+          "graphbfn_observed",
+          "variant:iclr2025",
+          "dataset:qm9",
+          "cond_kind:unconditional"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "adjacency_logits",
+          "charge",
+          "theta_edge",
+          "theta_node",
+          "valence"
+        ],
+        "per_key": {
+          "adjacency_logits": {
+            "shape": [
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "a4099a64be1119f5a8fa08af2f366585240055deef7a7927641931895671b45d",
+            "finite": false
+          },
+          "charge": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          },
+          "theta_edge": {
+            "shape": [
+              2,
+              4
+            ],
+            "dtype": "float64",
+            "sha256": "e60dace3cb77df64e716f935a24dc33db99d16c2b11ab850fa49d72dd4264ed4",
+            "finite": true
+          },
+          "theta_node": {
+            "shape": [
+              2,
+              9
+            ],
+            "dtype": "float64",
+            "sha256": "b60c8ef5f01f1115634643fbe6865d3413bb86864a65834a48a4e1545d1b9512",
+            "finite": true
+          },
+          "valence": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          }
+        },
+        "sha256": "628af7190226760a964f0887d43e13175a6eadc7f38fa8d6ff59d827011ae9c9"
+      },
+      "output_sha256": "d52e8ccd06f35d916936abc23f7a967a0e947f6de7a49144d37dbc7ba58913c1"
+    },
+    {
+      "adapter": "graphbfn",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "8aa1e8c36a68219d941a2afd7528619095c3dd45577110d0a97359a8d10f86eb",
+        "integrator_config_hash": "9fd6523db511d8eac4ab3315b9ccc8c3c660abc5314b9efac31df281f87455ec"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "ad0f44d9f1c93d7f2990cc41fa39e5542df6584cda560687e5fef3917cc713e3",
+        "channels": [
+          "adjacency",
+          "atoms",
+          "bonds",
+          "charge",
+          "valence"
+        ],
+        "provenance": [
+          "graphbfn@v1",
+          "variant:iclr2025",
+          "graphbfn_observed",
+          "variant:iclr2025",
+          "dataset:qm9",
+          "cond_kind:unconditional"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "adjacency_logits",
+          "charge",
+          "theta_edge",
+          "theta_node",
+          "valence"
+        ],
+        "per_key": {
+          "adjacency_logits": {
+            "shape": [
+              2,
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "279ea3ed5a401d8353e95f70b43b806f6e9b50607fe9c402a7b1fd9552feb9e2",
+            "finite": false
+          },
+          "charge": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          },
+          "theta_edge": {
+            "shape": [
+              2,
+              4
+            ],
+            "dtype": "float64",
+            "sha256": "0d778b6df9b22e718dbe0c6d750785da98f715907fd718cd00028a609e74d8c6",
+            "finite": true
+          },
+          "theta_node": {
+            "shape": [
+              2,
+              9
+            ],
+            "dtype": "float64",
+            "sha256": "aa1fca57086da90a4b9a4235cbb86351858d1542ea3c4b20838797549e489456",
+            "finite": true
+          },
+          "valence": {
+            "shape": [
+              2
+            ],
+            "dtype": "float64",
+            "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb",
+            "finite": true
+          }
+        },
+        "sha256": "bc00ebf7bb2e19b1e0185c2996e1d18afe9ea537e91f9a1b5f3929c7036fe2f3"
+      },
+      "output_sha256": "9cecdbfefc2c227fa483fc6dce253b2c13cecccfa487c2c7b3420791c469744c"
+    }
+  ]
+}

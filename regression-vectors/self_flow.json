@@ -1,0 +1,472 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T01:53:30Z",
+  "git_sha": "93aab60",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "self_flow",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "self_flow",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "7cb8ee37237a0ed4af31bd189b9d1e965a91db76500ba400fb2127d23e197994",
+        "integrator_config_hash": "65b55ce48d3a31fb8a9f19c08cb03e9d60860eadda0e9a23530a781d76869398"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "b840d0ecef4636527641c8bdd248774e306de97bb0385590cc8a03250b5c7895",
+        "channels": [
+          "class_cond",
+          "image_latent"
+        ],
+        "provenance": [
+          "self_flow@v1",
+          "self_flow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "7eabf30554449f426c7e1a2652ced6681602845d6c05c59d18779983c7fcff57",
+        "finite": true
+      },
+      "output_sha256": "121d1a1f4ed1b41cab424fc8013e76d72cbca0e6610de7bd1a828de32d17f903"
+    },
+    {
+      "adapter": "self_flow",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "8c4a3d0b982867fa8347344689a11a60ffc08fb45ff7a12dfc0cc6e90abe3c52",
+        "integrator_config_hash": "dba8005357a185bbebaf503800fff3795657f35322e4148a05d5c10086421c68"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "c4b93b23445894291d5969b83d5c5b855304bda072ffd25ece49419842aafebf",
+        "channels": [
+          "class_cond",
+          "image_latent"
+        ],
+        "provenance": [
+          "self_flow@v1",
+          "self_flow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "d421e533c90071aadaec9017f9efc0a2af5f31e774f7aff98020de7500d9cb27",
+        "finite": true
+      },
+      "output_sha256": "0d735ac2dbc927e9839520549d2704d1da801298e6f999c061cdef619062448c"
+    },
+    {
+      "adapter": "self_flow",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "cd369aa3a4eca7221c28ece00617f4457bc82e6b8b09a02dd581d38b1f40c228",
+        "integrator_config_hash": "a1a7fbbf381c8115e0320d1cc458389d503fe239fbc4b313e6455bcf12321ac3"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "f69e8806ff5d22c5aebe21fb4ac03dba432126414353193af88c1ef30ff8b669",
+        "channels": [
+          "class_cond",
+          "image_latent"
+        ],
+        "provenance": [
+          "self_flow@v1",
+          "self_flow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "e9ff219be99833d264eb2168cf09bf14ea7a11d5bc907428be6f7f9b27faf338",
+        "finite": true
+      },
+      "output_sha256": "8cb238644a6db058470163902596d7625d74d2f4a253b15f8093b5a8d3b9feba"
+    },
+    {
+      "adapter": "self_flow",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "5bab6a2c9610d7915da6658177cdee50fb5a9de5a01f56216f09c34ea9adab5a",
+        "integrator_config_hash": "47ddb33cd4aa5a3469937f24164339ee06d96ac06c7bf13797bd1fa5259d9b3b"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "c8a212e3c52364856f9a9453eab5f31d5cde54efd82c7a5e564f89457c6dfac4",
+        "channels": [
+          "class_cond",
+          "image_latent"
+        ],
+        "provenance": [
+          "self_flow@v1",
+          "self_flow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "f8aeb1eac7945de3ebe2e5313a1c8e1420b2253de9d3755196d1eaee0050bd9e",
+        "finite": true
+      },
+      "output_sha256": "79b50663a79f32d50529ccfea465ec30afa1cb9134b8d97cf99310a65acee2e3"
+    },
+    {
+      "adapter": "self_flow",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "7f5a6f4cb16e382c384cf5ec9a4d69cac8142104e64a26d7f3ec9987f9bfdf41",
+        "integrator_config_hash": "d88d1f7d8f868cf4a0ae31c732b793b7935f685b066f139123afc1ebffdffd89"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "306fa4da70306005d8ffa89cec2c42b5255dd849a4dfca672975d0e175c08364",
+        "channels": [
+          "class_cond",
+          "image_latent"
+        ],
+        "provenance": [
+          "self_flow@v1",
+          "self_flow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "912f8f93c70222204dda299c75d5b142333b1fa9d26b31d34150edba0ce62b7d",
+        "finite": true
+      },
+      "output_sha256": "fc13200014e1fabf5aff06eeb8a81d5c0230a2d8bcebb6fae06b1d23a7099e91"
+    },
+    {
+      "adapter": "self_flow",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "e0f7db71712e09d17ed9d975f04d07028f50064109efc7022576b6776bb8ccd0",
+        "integrator_config_hash": "706d3730fe9c6e9bce6d55a336234eb0516db106e7290d889942a8b0ace9ed1e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "1077ea1b148fd6a3c3b4e930829456a65b20c05014152dd494c4e72e73ffd676",
+        "channels": [
+          "class_cond",
+          "image_latent"
+        ],
+        "provenance": [
+          "self_flow@v1",
+          "self_flow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "41663a4c1a9bf5d9d3e7aab525203888fdd69782246266570267b250f3c5df35",
+        "finite": true
+      },
+      "output_sha256": "a76baf42daba7f263908af6ff7f669cb3bc7c6402710320ea3486f71a9481ff4"
+    },
+    {
+      "adapter": "self_flow",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "29b7cc5728ef386b53f0c68b9f99253eb522d99d04c2f93195328dc37e4f4cd2",
+        "integrator_config_hash": "ae1e6fe0bfe9947055e4e36c65637b50bd55047a13f7c28afead0f8e3615b176"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "f2627aed3f536043c0c00b8136cd945c7f2695c91706a46fedd9e7ea929e189b",
+        "channels": [
+          "class_cond",
+          "image_latent"
+        ],
+        "provenance": [
+          "self_flow@v1",
+          "self_flow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "9b0ee3583e7829f14721cceeb027c08d023a237328ffffacc42b657627223148",
+        "finite": true
+      },
+      "output_sha256": "92ae452f9cc1adbcafe0e5327f8d3fac3365aa8dc64a78e03df72e349b9b32b6"
+    },
+    {
+      "adapter": "self_flow",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "c7d83d21a3a77118567d144bf265564e0cd2afd144ae792c6fa98570efdfb3bb",
+        "integrator_config_hash": "4e1dd17a56424e28e57b9e1c70ec6dc772889dddf3cdb87e06e0487330f7c9b1"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "cb1fa45dda85140d2fdc7d39112bf908a691472dc8dddf6471ecdbb2043f3452",
+        "channels": [
+          "class_cond",
+          "image_latent"
+        ],
+        "provenance": [
+          "self_flow@v1",
+          "self_flow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "1fc1d704b6ac583b0003d1b46d5619a390f8d3354ae76a30665ea0fcff29e734",
+        "finite": true
+      },
+      "output_sha256": "8c6c16bff82df0cb9e9f797110c07e1d1d11dd96532676cbabec871878104aac"
+    },
+    {
+      "adapter": "self_flow",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "35aaedbbac56591a59d391ea4510912289ef23ed8b8e57fc36cd4ce7f4057229",
+        "integrator_config_hash": "fa011b96396d7e3df4f35b62ab61c66e73152674de8cb5f4ded4e17037dc73d9"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "561a79667e727e47cfad4c04b3a1a4d3e726f084b8ed3c17fe381ac5277a96ef",
+        "channels": [
+          "class_cond",
+          "image_latent"
+        ],
+        "provenance": [
+          "self_flow@v1",
+          "self_flow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "f1f8e52cb786a0fa7eca9b7471710f5dba408a57cad6529fe2c5169c30d29992",
+        "finite": true
+      },
+      "output_sha256": "abbb66a9f9a3939f07e6fc49b905483b20195001b6667df2336c6aa0d9e32f26"
+    }
+  ]
+}

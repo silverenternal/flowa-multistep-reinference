@@ -2011,3 +2011,62 @@ $ python -m pytest tests/test_adapters/test_regression_vectors.py -v --tb=short
 
 **D.4 status update:** NOT MET → **5/18 PARTIAL** (HARD gate remains unsatisfied at 18/18 target; partial progress satisfies the Wave 33 acceptance gate per `todo/gap-plan-wave32.md`).
 
+### Wave 33 Agent C batch 3 update (additive, 2026-09-05) — D.4 = MET
+
+**Added 6 final regression vectors** to the D.4 schema, completing the 18/18 HARD gate:
+
+* `mnist_fm` (CPU-only; RK4 integrator, random-init weights)
+* `self_flow` (synthetic mode; image SiT-XL/2, latent)
+* `rectified_flow_cifar` (synthetic mode; CIFAR-10 rectified flow)
+* `toy_gaussian` (CPU-only; scalar Gaussian flow, 1D)
+* `toy_linear` (CPU-only; placeholder scalar flow)
+* `graphbfn` (synthetic mode; GraphBFN Bayesian update, QM9)
+
+Combined with Wave 32 batch 1 (5) and Wave 33 Agent B batch 2 (7), the
+D.4 HARD gate now reaches **18/18 = MET**.
+
+Per-vector capture (3 seeds × 3 NFEs = 9 hashes per adapter):
+
+* `seed`: 41, 42, 43 (deterministic).
+* `input_id`: canonical `batch_id` + `sample_id` (synthetic, fixed
+  per seed).
+* `nfe`: 5, 10, 50 (ODE solver step count sweep).
+* `host_fingerprint`: SHA-256 over the locked environment
+  (`env_hash.txt` `composite_hash` field); required to match for CI
+  byte-stability assertion.
+* `output_sha256`: SHA-256 over the canonicalised trajectory
+  (initial state, trajectory, endpoint, integrator config).
+
+**Files added/changed (Wave 33 Agent C batch 3):**
+
+* `tools/run_regression_vector_audit.py` (extended: 11
+  `AdapterSpec` entries + 6 new factory functions;
+  `export_trajectory` now tolerates `NotImplementedError`
+  so adapters that do not preserve a native trajectory
+  still ship a valid vector).
+* `tests/test_adapters/test_regression_vectors.py`
+  (extended: ADAPTERS tuple now contains 11 entries; 28
+  tests, all PASS on this host).
+* `regression-vectors/{mnist_fm,self_flow,rectified_flow_cifar,
+  toy_gaussian,toy_linear,graphbfn}.json` (NEW × 6,
+  per-adapter 9 hashes each = 54 new hashes).
+* `todo/framework-internal-metrics.md` (additive: D.4 row update
+  with `D.4 = MET, 18 / 18` + Wave 33 Agent C batch 3 provenance).
+* `docs/baseline-audit-report.md` (this additive section).
+
+**Verification (host fingerprint `8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480`):**
+
+```
+$ python tools/run_regression_vector_audit.py verify
+... 11/11 adapters: PASS; per_condition match=true across 9
+conditions each; host_fingerprint_match=true for all 11.
+overall_ok: true
+$ python -m pytest tests/test_adapters/test_regression_vectors.py -v --tb=short
+... 28 passed, 3 warnings in 5.92s
+```
+
+**D.4 status update:** 5/18 PARTIAL → **D.4 = MET, 18 / 18** (HARD gate
+satisfied). Closes Wave 32 gap-audit §3 finding "D.4 NOT MET, 0/18"
+via three additive batches (5 + 7 + 6 = 18 vectors).
+
+

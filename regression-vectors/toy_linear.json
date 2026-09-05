@@ -1,0 +1,373 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T01:53:30Z",
+  "git_sha": "93aab60",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "toy_linear",
+  "adapter_version": "1.0.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "toy_linear",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 1,
+        "accept_rate": 1.0,
+        "native_state_digest": "toy:32bd0129ca7a248e",
+        "integrator_config_hash": "toy:85b333d126477181"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "toy:e4ebda97374ef94f",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_linear@v1"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "a26bdb04dcb5beb4deb852e852600c7e9c8392e81e58f1bd06fc3761296d310c"
+    },
+    {
+      "adapter": "toy_linear",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 1,
+        "accept_rate": 1.0,
+        "native_state_digest": "toy:32bd0129ca7a248e",
+        "integrator_config_hash": "toy:85b333d126477181"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "toy:e4ebda97374ef94f",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_linear@v1"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "b07a5a11e131a5a70177e9c2f42f4b127dcbe57712db69c7df76e5669b7c4779"
+    },
+    {
+      "adapter": "toy_linear",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 1,
+        "accept_rate": 1.0,
+        "native_state_digest": "toy:32bd0129ca7a248e",
+        "integrator_config_hash": "toy:85b333d126477181"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "toy:e4ebda97374ef94f",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_linear@v1"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "bdd74f2ae9f9506f6239275d698dc848b605ba714f5ccc89c886c8eb66737e7c"
+    },
+    {
+      "adapter": "toy_linear",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 1,
+        "accept_rate": 1.0,
+        "native_state_digest": "toy:6a802013792989f8",
+        "integrator_config_hash": "toy:5a0abeb37c888485"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "toy:ef5c513b99562b16",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_linear@v1"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "e1800803026fcd60300ffe895a06691a06cce195f45718890a5b2013f0a71925"
+    },
+    {
+      "adapter": "toy_linear",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 1,
+        "accept_rate": 1.0,
+        "native_state_digest": "toy:6a802013792989f8",
+        "integrator_config_hash": "toy:5a0abeb37c888485"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "toy:ef5c513b99562b16",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_linear@v1"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "5a7eb4618773faf5913e5a486e391d382834b4599dbbd2ec81f9ddc12215463e"
+    },
+    {
+      "adapter": "toy_linear",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 1,
+        "accept_rate": 1.0,
+        "native_state_digest": "toy:6a802013792989f8",
+        "integrator_config_hash": "toy:5a0abeb37c888485"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "toy:ef5c513b99562b16",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_linear@v1"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "af5d1b62c8b1c3eb4e35a28d41cd195ca72c965af70aa5c3f80e7fbddeced552"
+    },
+    {
+      "adapter": "toy_linear",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 1,
+        "accept_rate": 1.0,
+        "native_state_digest": "toy:b258981399a8bd6c",
+        "integrator_config_hash": "toy:76fc04056ae445f8"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "toy:a27a2d5a15ce4819",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_linear@v1"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "b4785c37e8da3f31be4f18ccc13f04e08d8aa5b991bdf36a713accbebea23af6"
+    },
+    {
+      "adapter": "toy_linear",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 1,
+        "accept_rate": 1.0,
+        "native_state_digest": "toy:b258981399a8bd6c",
+        "integrator_config_hash": "toy:76fc04056ae445f8"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "toy:a27a2d5a15ce4819",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_linear@v1"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "f8bd58a7006788c20563859120e07cfe89edd1599e4d79dc9a320300a1628064"
+    },
+    {
+      "adapter": "toy_linear",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 1,
+        "accept_rate": 1.0,
+        "native_state_digest": "toy:b258981399a8bd6c",
+        "integrator_config_hash": "toy:76fc04056ae445f8"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "toy:a27a2d5a15ce4819",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_linear@v1"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "bc182fd5359832d0b1b35a53179b7faa70ef2b9bbdeb2b8fb860a9589c5b109d"
+    }
+  ]
+}

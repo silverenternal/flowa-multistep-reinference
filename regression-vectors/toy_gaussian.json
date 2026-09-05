@@ -1,0 +1,382 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T01:53:30Z",
+  "git_sha": "93aab60",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "toy_gaussian",
+  "adapter_version": "1.0.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "toy_gaussian",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 1.0,
+        "native_state_digest": "51d868b6654e01182e0350fe727fdd5b0d7acd967f2e27adf59f865c77ee5150",
+        "integrator_config_hash": "973b64400889569a629cce9e3d5f565dc9e0ad2e7fedf180f3e1eebd3dea054e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "90dadab665ffb4a70addb5b4768c4cb870f37a16e5e2ac5b93ad3f2f2c52ea4e",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_gaussian@v1",
+          "toy_gaussian_observed"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "9a98b7a53abffbc59bb6a9fed4ec844bbc503e9f40e35189cf91cbe994c2c30e"
+    },
+    {
+      "adapter": "toy_gaussian",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 1.0,
+        "native_state_digest": "51d868b6654e01182e0350fe727fdd5b0d7acd967f2e27adf59f865c77ee5150",
+        "integrator_config_hash": "973b64400889569a629cce9e3d5f565dc9e0ad2e7fedf180f3e1eebd3dea054e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "90dadab665ffb4a70addb5b4768c4cb870f37a16e5e2ac5b93ad3f2f2c52ea4e",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_gaussian@v1",
+          "toy_gaussian_observed"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "6e5ff79af6fb5214bd23ceae2282022968ad1165b29b1d88f2948dcee5f54e86"
+    },
+    {
+      "adapter": "toy_gaussian",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 1.0,
+        "native_state_digest": "51d868b6654e01182e0350fe727fdd5b0d7acd967f2e27adf59f865c77ee5150",
+        "integrator_config_hash": "973b64400889569a629cce9e3d5f565dc9e0ad2e7fedf180f3e1eebd3dea054e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "90dadab665ffb4a70addb5b4768c4cb870f37a16e5e2ac5b93ad3f2f2c52ea4e",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_gaussian@v1",
+          "toy_gaussian_observed"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "18fc0301e64750c1cc33c8f1aac7c21a73fdc7be59568801b91e0873faf4cc23"
+    },
+    {
+      "adapter": "toy_gaussian",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 1.0,
+        "native_state_digest": "fb2875edb0da57f9a45483d9f653841a131892624c3d4d0d415ce3f2406eda7e",
+        "integrator_config_hash": "973b64400889569a629cce9e3d5f565dc9e0ad2e7fedf180f3e1eebd3dea054e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "16e0f11828745d9d5a865e13e06d6dc6845afcf8cc73378ebf1faf43c2176d0b",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_gaussian@v1",
+          "toy_gaussian_observed"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "ad986d1c68eecfb817d2137c51d9685b8b1de3b3de7b86255c8a4409c8c6914b"
+    },
+    {
+      "adapter": "toy_gaussian",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 1.0,
+        "native_state_digest": "fb2875edb0da57f9a45483d9f653841a131892624c3d4d0d415ce3f2406eda7e",
+        "integrator_config_hash": "973b64400889569a629cce9e3d5f565dc9e0ad2e7fedf180f3e1eebd3dea054e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "16e0f11828745d9d5a865e13e06d6dc6845afcf8cc73378ebf1faf43c2176d0b",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_gaussian@v1",
+          "toy_gaussian_observed"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "bf83d95dfffc6c386cd5677d4c024b235e18b79cd050c3534e7f4668efe05feb"
+    },
+    {
+      "adapter": "toy_gaussian",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 1.0,
+        "native_state_digest": "fb2875edb0da57f9a45483d9f653841a131892624c3d4d0d415ce3f2406eda7e",
+        "integrator_config_hash": "973b64400889569a629cce9e3d5f565dc9e0ad2e7fedf180f3e1eebd3dea054e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "16e0f11828745d9d5a865e13e06d6dc6845afcf8cc73378ebf1faf43c2176d0b",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_gaussian@v1",
+          "toy_gaussian_observed"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "f6d6e76d154bb428aeb10dbd7f7beb4b4f672fd544cde1e68834d8700e32e64b"
+    },
+    {
+      "adapter": "toy_gaussian",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 1.0,
+        "native_state_digest": "29c25c461e56220704796d274a5ecab372817662bcf01817bc1c8f9c803baa05",
+        "integrator_config_hash": "973b64400889569a629cce9e3d5f565dc9e0ad2e7fedf180f3e1eebd3dea054e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "863bb49d2153484eaa33383df041d149399443fa6bfd6aa9b97cfe8582ca3bed",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_gaussian@v1",
+          "toy_gaussian_observed"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "5591f33b4f91ee64fa44c8f9c0747d743749a7cd3a77ea7a44f65e39b6171542"
+    },
+    {
+      "adapter": "toy_gaussian",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 1.0,
+        "native_state_digest": "29c25c461e56220704796d274a5ecab372817662bcf01817bc1c8f9c803baa05",
+        "integrator_config_hash": "973b64400889569a629cce9e3d5f565dc9e0ad2e7fedf180f3e1eebd3dea054e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "863bb49d2153484eaa33383df041d149399443fa6bfd6aa9b97cfe8582ca3bed",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_gaussian@v1",
+          "toy_gaussian_observed"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "c50a83a5da6bf439fcc42c11d5623a15cc50f5c6627a2d591d5338e496650070"
+    },
+    {
+      "adapter": "toy_gaussian",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 4,
+        "accept_rate": 1.0,
+        "native_state_digest": "29c25c461e56220704796d274a5ecab372817662bcf01817bc1c8f9c803baa05",
+        "integrator_config_hash": "973b64400889569a629cce9e3d5f565dc9e0ad2e7fedf180f3e1eebd3dea054e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 0,
+        "detach_proof": true,
+        "native_state_digest": "863bb49d2153484eaa33383df041d149399443fa6bfd6aa9b97cfe8582ca3bed",
+        "channels": [
+          "x"
+        ],
+        "provenance": [
+          "toy_gaussian@v1",
+          "toy_gaussian_observed"
+        ]
+      },
+      "trajectory": {
+        "present": false,
+        "kind": "none"
+      },
+      "output_sha256": "a3f38d272e66bafe027453628f79cc1e31bbcd55ca792aee31daa89c722741af"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""D.4 regression-vector audit tool (Wave 33 #1, first batch of 5 adapters).
+"""D.4 regression-vector audit tool (Wave 32 + Wave 33 batches 2 + 3, 12/18).
 
 Generates and verifies pinned regression vectors for adapter conformance:
 
@@ -13,11 +13,25 @@ Generates and verifies pinned regression vectors for adapter conformance:
   (synthetic mode; protein flow-AE).
 * :class:`adaptive_reflow.adapters.freqflow.FreqFlowAdapter`
   (synthetic mode; image SiT-XL/2).
+* :class:`adaptive_reflow.adapters.mnist_fm.MnistFmAdapter`
+  (CPU-only; MNIST rectified flow, RK4 integrator, random-init weights).
+* :class:`adaptive_reflow.adapters.self_flow.SelfFlowAdapter`
+  (synthetic mode; image SiT-XL/2, latent).
+* :class:`adaptive_reflow.adapters.rectified_flow_cifar.RectifiedFlowCIFARAdapter`
+  (synthetic mode; CIFAR-10 rectified flow).
+* :class:`adaptive_reflow.adapters.toy_gaussian.ToyGaussianAdapter`
+  (CPU-only; scalar Gaussian flow, 1D).
+* :class:`adaptive_reflow.adapters.toy_linear.ToyLinearAdapter`
+  (CPU-only; placeholder scalar flow).
+* :class:`adaptive_reflow.adapters.graphbfn.GraphBFNAdapter`
+  (synthetic mode; GraphBFN Bayesian update, QM9).
+* :class:`adaptive_reflow.adapters.lumina_image_2_0.LuminaImage20Adapter`
+  (synthetic mode; 16x128x128 latent flow matching).
 
 Per the Wave 32 gap plan (``todo/gap-plan-wave32.md`` #1 + ``todo/algo-improvement-D4-regression-vectors.md``),
-this is the first batch of D.4 (5 of 18). The remaining 13 adapters
-(MM-FM, wan2_2_video, mnist_fm, rectified_flow_cifar, self_flow, ...)
-are deferred until their integration gate clears.
+this is the Wave 33 Agent B **batch 2** of D.4 (7 of 18; Wave 32 batch 1
+= 5; Wave 33 Agent C batch 3 = 6). After all 3 batches ship, D.4 is
+**18/18 = MET** (HARD gate).
 
 What a vector captures (per adapter):
 * ``seed``: RNG seed (3 seeds swept: 41, 42, 43).
@@ -37,9 +51,9 @@ matches the recorded hash on the same host fingerprint.
 
 Usage::
 
-    python tools/run_regression_vector_audit.py generate    # write all 5 vectors
+    python tools/run_regression_vector_audit.py generate    # write all 12 vectors
     python tools/run_regression_vector_audit.py verify      # re-run + assert match
-    python tools/run_regression_vector_audit.py --adapter twodim_fm generate
+    python tools/run_regression_vector_audit.py --adapter mnist_fm generate
 
 Exit codes:
 
@@ -109,9 +123,11 @@ class AdapterSpec:
     version_constant: str  # module-level config version string
 
 
-# Five adapters per the Wave 32 first-batch scope. Each spec is
-# loaded lazily inside the runner so a single broken import does not
-# block the other adapters.
+# Twelve adapters across Wave 32 (5) + Wave 33 batch 2 (7) = 12/18.
+# Wave 33 Agent B batch 2 (7 adapters) and Agent C batch 3 (6 adapters)
+# combined complete the D.4 HARD gate (18/18 = MET).
+# Each spec is loaded lazily inside the runner so a single broken
+# import does not block the other adapters.
 ADAPTER_SPECS: tuple[AdapterSpec, ...] = (
     AdapterSpec(
         name="flowmol3_v2",
@@ -142,6 +158,48 @@ ADAPTER_SPECS: tuple[AdapterSpec, ...] = (
         module="adaptive_reflow.adapters.freqflow",
         adapter_cls="FreqFlowAdapter",
         version_constant="FREQ_FLOW_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="mnist_fm",
+        module="adaptive_reflow.adapters.mnist_fm",
+        adapter_cls="MnistFmAdapter",
+        version_constant="MNIST_FM_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="self_flow",
+        module="adaptive_reflow.adapters.self_flow",
+        adapter_cls="SelfFlowAdapter",
+        version_constant="SELF_FLOW_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="rectified_flow_cifar",
+        module="adaptive_reflow.adapters.rectified_flow_cifar",
+        adapter_cls="RectifiedFlowCIFARAdapter",
+        version_constant="RF_CIFAR_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="toy_gaussian",
+        module="adaptive_reflow.adapters.toy_gaussian",
+        adapter_cls="ToyGaussianAdapter",
+        version_constant="NATIVE_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="toy_linear",
+        module="adaptive_reflow.adapters.toy_linear",
+        adapter_cls="ToyLinearAdapter",
+        version_constant="NATIVE_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="graphbfn",
+        module="adaptive_reflow.adapters.graphbfn",
+        adapter_cls="GraphBFNAdapter",
+        version_constant="GRAPHBFN_CONFIG_VERSION",
+    ),
+    AdapterSpec(
+        name="lumina_image_2_0",
+        module="adaptive_reflow.adapters.lumina_image_2_0",
+        adapter_cls="LuminaImage20Adapter",
+        version_constant="LUMINA_IMAGE_2_0_CONFIG_VERSION",
     ),
 )
 
@@ -298,10 +356,9 @@ def _run_one_condition(
     batch_id, sample_id = _input_ids_for_seed(seed)
     initial = adapter.build_initial_state(batch_id=batch_id, sample_id=sample_id)
 
-    # Build the per-adapter ODEConditionDelta. Most adapters (FlowMol3 v2,
-    # LineageFlow, Kanzi, FreqFlow) need a *condition delta* injected
-    # before solve_ode; TwoDimFMAdapter accepts an empty delta and
-    # derives num_steps from the delta or its own pinned default.
+    # Build the per-adapter ODEConditionDelta. Most adapters need a
+    # *condition delta* injected before solve_ode with ``num_steps``
+    # so the trajectory length varies by NFE.
     spec_extra: dict[str, object] = {}
     if spec.name == "flowmol3_v2":
         spec_extra = {"num_steps": int(nfe)}
@@ -310,7 +367,28 @@ def _run_one_condition(
             "num_steps": int(nfe),
             "sampler_id": "euler",
         }
-    elif spec.name == "twodim_fm":
+    elif spec.name in {"twodim_fm", "mnist_fm", "self_flow",
+                       "rectified_flow_cifar", "graphbfn"}:
+        spec_extra = {"num_steps": int(nfe)}
+    elif spec.name == "lumina_image_2_0":
+        # Lumina's ``compose_condition`` requires a non-empty
+        # ``prompt`` (Gemma2 text-encoding path); we supply a
+        # deterministic placeholder so the synthetic velocity field
+        # runs against a fixed text-embedding cache key.
+        spec_extra = {
+            "num_steps": int(nfe),
+            "prompt": "d4-lumina-audit-placeholder",
+            "negative_prompt": "",
+        }
+    elif spec.name == "toy_gaussian":
+        # toy_gaussian reads ``target_mean`` from the delta_spec; the
+        # NFE enters via ``self._num_steps`` set in the constructor.
+        spec_extra = {"target_mean": 1.0, "num_steps": int(nfe)}
+    elif spec.name == "toy_linear":
+        # toy_linear's ``solve_ode`` ignores ``num_steps`` (it uses the
+        # ``steps`` kwarg, hard-coded to 1 by the runner). The NFE
+        # field is still recorded in the condition spec for symmetry
+        # with the other 17 adapters, but it does not alter the hash.
         spec_extra = {"num_steps": int(nfe)}
 
     delta = ODEConditionDelta(
@@ -329,7 +407,15 @@ def _run_one_condition(
 
     trace = adapter.solve_ode(initial, delta, seed=int(seed))
     endpoint = adapter.observe_endpoint(trace, initial)
-    traj = adapter.export_trajectory(trace)
+    traj: Any | None
+    try:
+        traj = adapter.export_trajectory(trace)
+    except NotImplementedError:
+        # Some adapters (e.g. ToyLinearAdapter, StochasticFMAdapter)
+        # do not preserve a native trajectory. We record ``None`` for
+        # ``trajectory`` rather than failing the vector capture, so
+        # the regression vector still pins the trace + endpoint surface.
+        traj = None
 
     record: dict[str, Any] = {
         "adapter": spec.name,
@@ -383,6 +469,83 @@ def _make_freqflow(spec: AdapterSpec) -> Any:
     return FreqFlowAdapter(force_mode="synthetic", num_steps=10)
 
 
+def _make_mnist_fm(spec: AdapterSpec) -> Any:
+    """MNIST FM adapter; CPU, random-init weights to avoid .npz."""
+    from adaptive_reflow.adapters.mnist_fm import MnistFmAdapter
+    return MnistFmAdapter(
+        integrator="rk4",
+        num_steps=10,
+        init_random_weights=True,
+        init_seed=12345,
+        seed_offset=0,
+    )
+
+
+def _make_self_flow(spec: AdapterSpec) -> Any:
+    """Self-Flow adapter; synthetic mode (no torch ckpt)."""
+    from adaptive_reflow.adapters.self_flow import SelfFlowAdapter
+    return SelfFlowAdapter(
+        force_mode="synthetic",
+        num_steps=10,
+        class_label=0,
+        synthetic_hidden=64,
+        synthetic_seed=0x5E1FF10,
+    )
+
+
+def _make_rectified_flow_cifar(spec: AdapterSpec) -> Any:
+    """RectifiedFlowCIFAR adapter; synthetic mode (no torch ckpt)."""
+    from adaptive_reflow.adapters.rectified_flow_cifar import (
+        RectifiedFlowCIFARAdapter,
+    )
+    return RectifiedFlowCIFARAdapter(
+        force_mode="synthetic",
+        num_steps=2,
+        synthetic_hidden=8,
+        synthetic_seed=0x5F3759DF,
+        solver="euler",
+    )
+
+
+def _make_toy_gaussian(spec: AdapterSpec) -> Any:
+    """ToyGaussianAdapter; CPU-only scalar 1D Gaussian flow."""
+    from adaptive_reflow.adapters.toy_gaussian import ToyGaussianAdapter
+    return ToyGaussianAdapter(dt=0.25, num_steps=4)
+
+
+def _make_toy_linear(spec: AdapterSpec) -> Any:
+    """ToyLinearAdapter; minimal Protocol-bound placeholder."""
+    from adaptive_reflow.adapters.toy_linear import ToyLinearAdapter
+    return ToyLinearAdapter(drift=0.1)
+
+
+def _make_graphbfn(spec: AdapterSpec) -> Any:
+    """GraphBFNAdapter; synthetic mode (no torch ckpt)."""
+    from adaptive_reflow.adapters.graphbfn import GraphBFNAdapter
+    return GraphBFNAdapter(
+        variant="iclr2025",
+        dataset="qm9",
+        num_steps=4,
+        max_nodes=8,
+        force_mode="synthetic",
+    )
+
+
+def _make_lumina_image_2_0(spec: AdapterSpec) -> Any:
+    """Lumina-Image-2.0 adapter; synthetic mode (no torch ckpt)."""
+    from adaptive_reflow.adapters.lumina_image_2_0 import LuminaImage20Adapter
+    return LuminaImage20Adapter(
+        force_mode="synthetic",
+        num_steps=10,
+        guidance_scale=1.5,
+        cfg_trunc_ratio=0.25,
+        cfg_normalization=True,
+        synthetic_hidden=16,
+        synthetic_seed=0xA5A5A5A5,
+        solver="euler",
+    )
+
+
 def _factory_for(spec: AdapterSpec):
     factories = {
         "flowmol3_v2": _make_flowmol3_v2,
@@ -390,6 +553,13 @@ def _factory_for(spec: AdapterSpec):
         "lineageflow": _make_lineageflow,
         "kanzi": _make_kanzi,
         "freqflow": _make_freqflow,
+        "mnist_fm": _make_mnist_fm,
+        "self_flow": _make_self_flow,
+        "rectified_flow_cifar": _make_rectified_flow_cifar,
+        "toy_gaussian": _make_toy_gaussian,
+        "toy_linear": _make_toy_linear,
+        "graphbfn": _make_graphbfn,
+        "lumina_image_2_0": _make_lumina_image_2_0,
     }
     return factories[spec.name]
 

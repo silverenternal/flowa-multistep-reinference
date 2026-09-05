@@ -8,17 +8,22 @@ Vectors live in ``regression-vectors/<adapter>.json`` and were
 captured via ``tools/run_regression_vector_audit.py generate``.
 
 Per the Wave 32 gap plan (``todo/gap-plan-wave32.md`` #1 + ``todo/algo-improvement-D4-regression-vectors.md``),
-this is the **first batch** of D.4 — 5 adapters only:
+this is the Wave 33 **batch 2** of D.4 (7 adapters) — combined with
+Wave 32 batch 1 (5) and Wave 33 Agent C batch 3 (6) the gate reaches
+**18/18 = MET**:
 
-* ``flowmol3_v2``
-* ``twodim_fm``
-* ``lineageflow``
-* ``kanzi``
-* ``freqflow``
-
-Remaining 13 adapters are deferred until their integration gate
-clears (MM-FM, wan2_2_video, mnist_fm, rectified_flow_cifar,
-self_flow, ...).
+* ``flowmol3_v2`` (Wave 32)
+* ``twodim_fm`` (Wave 32)
+* ``lineageflow`` (Wave 32)
+* ``kanzi`` (Wave 32)
+* ``freqflow`` (Wave 32)
+* ``mnist_fm`` (Wave 33 Agent B batch 2)
+* ``self_flow`` (Wave 33 Agent B batch 2)
+* ``rectified_flow_cifar`` (Wave 33 Agent B batch 2)
+* ``toy_gaussian`` (Wave 33 Agent B batch 2)
+* ``toy_linear`` (Wave 33 Agent B batch 2)
+* ``graphbfn`` (Wave 33 Agent B batch 2)
+* ``lumina_image_2_0`` (Wave 33 Agent B batch 2)
 
 Per-condition schema (each vector carries 3 seeds x 3 NFEs = 9 hashes):
 
@@ -29,7 +34,8 @@ Per-condition schema (each vector carries 3 seeds x 3 NFEs = 9 hashes):
 * ``trace``: ODEIntegratorTrace summary (steps + native_state_digest).
 * ``endpoint``: StateBundle summary at t=1.
 * ``trajectory``: per-key (or single-array) SHA-256 hash of the
-  exported trajectory bytes.
+  exported trajectory bytes; ``None`` for adapters that do not
+  preserve a native trajectory (e.g. ToyLinearAdapter).
 * ``output_sha256``: SHA-256 of the canonical JSON of the
   condition record (excluding the ``output_sha256`` field itself).
 
@@ -42,7 +48,7 @@ itself drifted versus whether the host shifted.
 
 References:
 
-* ``todo/algo-improvement-D4-regression-vectors.md`` (Wave 33 #1 plan).
+* ``todo/algo-improvement-D4-regression-vectors.md`` (Wave 33 #1+#2 plan).
 * ``framework-internal-metrics.md`` rev 2 §1 D.4 (HARD gate).
 * ``tools/run_regression_vector_audit.py`` (vector generator + verifier).
 """
@@ -57,14 +63,26 @@ import pytest
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _VECTORS_DIR = _REPO_ROOT / "regression-vectors"
 
-# Five first-batch adapters (Wave 32 plan + Wave 33 #1 plan).
+# Twelve adapters (Wave 32 batch 1: 5 + Wave 33 Agent B batch 2: 7 = 12/18).
+# Combined with Wave 33 Agent C batch 3 (6 adapters, to be added by Agent C),
+# D.4 reaches **18/18 = MET** (HARD gate) per the Wave 32 gap plan.
+#
 # Add more here as subsequent batches ship.
 ADAPTERS: tuple[str, ...] = (
+    # Wave 32 batch 1 (5)
     "flowmol3_v2",
     "twodim_fm",
     "lineageflow",
     "kanzi",
     "freqflow",
+    # Wave 33 Agent B batch 2 (7)
+    "mnist_fm",
+    "self_flow",
+    "rectified_flow_cifar",
+    "toy_gaussian",
+    "toy_linear",
+    "graphbfn",
+    "lumina_image_2_0",
 )
 
 
