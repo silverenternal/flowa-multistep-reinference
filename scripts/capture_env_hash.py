@@ -3,6 +3,15 @@
 env_hash = SHA256( requirements-lock.txt + python --version + torch.__version__ +
                    torch.version.cuda + adapter-specific dependency versions )
 
+Wave 36 PHASE-4 extension: the capture() function additionally reports
+the *importable* versions of PHASE-4 SOTA-integration deps (rdkit,
+biopython, transformers, diffusers, torchvision). These are the
+packages the Wave 21 Kanzi / FreqFlow / LineageFlow adapters
+additionally depend on; folding them into env_hash.txt ensures the F.5
+cold-clone reproducibility gate (per framework-freeze-checklist MUST-1)
+catches drift in the PHASE-4 dependency surface (e.g. a future
+biopython>=2.0 bump that breaks Wave 10 LineageFlow encoding).
+
 NOT full pip freeze (sensitive to install order, --extra-index-url, OS pkg mgr).
 
 Usage:
@@ -12,6 +21,20 @@ Usage:
 """
 import hashlib, sys, subprocess, pathlib, platform
 from typing import Optional
+
+# PHASE-4 SOTA-integration dep probes. Each entry is a (import_name,
+# label) pair. When importable, the version is captured; otherwise
+# ``not-installed`` is recorded (the env_hash gate stays operational
+# on CPU-only sandboxes that lack rdkit/biopython/etc.).
+_PHASE4_DEPS: tuple[tuple[str, str], ...] = (
+    ("rdkit", "rdkit"),
+    ("Bio", "biopython"),
+    ("transformers", "transformers"),
+    ("diffusers", "diffusers"),
+    ("torchvision", "torchvision"),
+    ("torch_geometric", "torch_geometric"),
+    ("dgl", "dgl"),
+)
 
 def capture() -> dict[str, str]:
     # 1. requirements-lock.txt content hash
@@ -33,12 +56,23 @@ def capture() -> dict[str, str]:
     deps_path = pathlib.Path(__file__).resolve().parent.parent / "docs" / "adapter-dependencies.md"
     deps_hash = hashlib.sha256(deps_path.read_bytes()).hexdigest()
 
-    return {
+    out: dict[str, str] = {
         "lock_hash": lock_hash,
         "python_version": py_version,
         "torch_version": torch_info,
         "adapter_deps_hash": deps_hash,
     }
+
+    # 5. PHASE-4 SOTA-integration dep versions (Wave 36 extension)
+    for import_name, label in _PHASE4_DEPS:
+        try:
+            mod = __import__(import_name)
+            ver = getattr(mod, "__version__", "unknown")
+            out[f"{label}_version"] = f"{label}:{ver}"
+        except Exception:
+            out[f"{label}_version"] = f"{label}:not-installed"
+
+    return out
 
 def write_env_hash(path: pathlib.Path) -> None:
     info = capture()

@@ -62,6 +62,40 @@ to import. Tracked via `requirements-lock.txt` only:
 - `transformers`, `accelerate`, `safetensors` — transitive of diffusers
 - Optional `ftfy` + `bs4` — caption preprocessing for VBench
 
+## kanzi / kanzi_adapter (Wave 21 PHASE-3)
+
+- `torch>=2.1` — Kanzi encoder forward + flow-head
+- `numpy>=2.0,<2.5` — already in framework core
+- `biopython>=1.88` — protein alphabet (one-letter amino-acid vocabulary
+  helpers; same dep as LineageFlow since both adapters speak the same
+  alphabet)
+- `rdkit>=2024.3.1` — amino-acid SMILES round-trip validity oracle
+  (optional; only exercised by ``run_real_ckpt_eval.py --model kanzi``
+  when computing protein_sequence_validity_rate)
+
+## freqflow / freqflow_adapter (Wave 21 PHASE-3)
+
+- `torch>=2.1` — FreqFlow forward + frequency-domain head
+- `numpy>=2.0,<2.5` — already in framework core
+- `torchvision>=0.15,<1.0` — image pre/post-processing + canonical
+  InceptionV3 (IMAGENET1K_V1) for FID computation per
+  ``tools/run_image_eval.py:load_inception_for_fid``
+- `diffusers>=0.32` — optional; only required when FreqFlow is loaded
+  via the HF Hub pipeline (Wave 36 PHASE-4 forward path)
+
+## mm_fm / mm_fm_adapter (Wave 21 PHASE-3)
+
+- **BLOCKED** — no shipped adapter file (Wave 21 M-agent + Wave 21.5
+  re-spawn both stalled; per ``docs/audit/gap-audit.md`` MM-FM is
+  BLOCKED-with-fallback). When the PHASE-3 deliverable lands, expect:
+  - `torch>=2.1`
+  - `diffusers>=0.32` — multi-modal pipeline
+  - `transformers` — text encoder + tokenizer (transitive of diffusers)
+  - `safetensors` — weight loading (transitive)
+  - `Pillow` — image I/O (transitive)
+- Wave 36 PHASE-4 eval reports MM-FM cells as ``BLOCKED`` in
+  ``tools/run_real_ckpt_eval.py`` rather than fabricating numbers
+
 ## protbfn_abbfn / protbfn_abbfn_adapter / protbfn_abbfn_model
 
 - `torch>=2.0`
