@@ -51,9 +51,10 @@ from .twodim_fm_train import (  # noqa: E402 — runtime numpy dep, opt-in extra
 
 from adaptive_reflow.adapters._adapter_common import (
     digest_state,
+    kaiming_uniform,
     make_ref,
-    seed_from_ids,
     memory_fraction_for,
+    seed_from_ids,
 )
 from adaptive_reflow.framework.interfaces import implements
 
@@ -134,18 +135,14 @@ TWODIM_FM_DEFAULT_MAX_STEPS: int = 1000
 # ---------------------------------------------------------------------------
 
 
-def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """Derive a deterministic 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    return seed_from_ids(batch_id, sample_id, source_round)
-
-
-def _digest_state(payload: Mapping[str, Any]) -> str:
-    """Return a deterministic SHA-256 hex digest of a payload (sorted keys)."""
-    return digest_state(payload)
-
-
 def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Build a deterministic hash-stable :class:`TensorRef` from ``label`` + parts."""
+    """Build a deterministic hash-stable :class:`TensorRef` from ``label`` + parts.
+
+    Back-compat alias for ``make_ref("twodim:xy", label, **parts)``. Kept
+    as a thin wrapper because :mod:`tests.test_adapters.test_adapter_common`
+    imports it directly to assert the adapter's historical TensorRef
+    namespace (``"twodim:xy:"``) is preserved verbatim.
+    """
     return make_ref("twodim:xy", label, **parts)
 
 
@@ -545,23 +542,20 @@ def _random_init_weights(*, hidden: int, seed: int) -> dict[str, ArrayF64]:
     so the wider-MLP runtime path is byte-comparable to the trainer's
     random-init baseline. Used when ``init_random_weights=True`` on
     :class:`TwoDimFMAdapter`'s constructor (no ``.npz`` file required).
+    Delegates the per-layer He-uniform draw to the shared helper
+    :func:`adaptive_reflow.adapters._adapter_common.kaiming_uniform` so
+    the init scheme stays consistent with the other 6 adapters
+    (Wave 33 ``D.1 shrink`` directive).
     """
     if hidden <= 0:
         raise ValueError("hidden_must_be_positive")
     rng = np.random.default_rng(int(seed))
-
-    def kaiming(fan_in: int, fan_out: int) -> ArrayF64:
-        bound = np.sqrt(6.0 / float(fan_in))
-        return np.asarray(
-            rng.uniform(-bound, bound, size=(fan_in, fan_out)), dtype=np.float64
-        )
-
     return {
-        "W1": kaiming(3, hidden),
+        "W1": kaiming_uniform(rng, 3, hidden),
         "b1": np.zeros(hidden, dtype=np.float64),
-        "W2": kaiming(hidden, hidden),
+        "W2": kaiming_uniform(rng, hidden, hidden),
         "b2": np.zeros(hidden, dtype=np.float64),
-        "W3": kaiming(hidden, 2),
+        "W3": kaiming_uniform(rng, hidden, 2),
         "b3": np.zeros(2, dtype=np.float64),
     }
 
@@ -787,14 +781,14 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         batch_id: str,
         sample_id: str,
     ) -> StateBundle:
-        seed = _seed_from_ids(
+        seed = seed_from_ids(
             str(batch_id),
             str(sample_id),
             int(self._seed_offset) + 0,
         )
         rng = np.random.default_rng(seed)
         x0 = rng.standard_normal(2).astype(np.float64)
-        digest = _digest_state(
+        digest = digest_state(
             {
                 "kind": "initial",
                 "batch_id": str(batch_id),
@@ -922,7 +916,7 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
             dtype=np.float64,
         ).reshape(2)
 
-        next_digest = _digest_state(
+        next_digest = digest_state(
             {
                 "kind": "restart",
                 "src_digest": state.native_state_digest,
@@ -1107,7 +1101,7 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
         traj_clamped = np.clip(traj, -TWODIM_FM_CLAMP, TWODIM_FM_CLAMP)
         overflowed = bool(np.any(np.abs(traj) > TWODIM_FM_CLAMP))
         traj = traj_clamped
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
@@ -1163,7 +1157,7 @@ class TwoDimFMAdapter(FlowMatchingODEAdapter):
             )
         trajectory = np.asarray(traj_entry["trajectory"], dtype=np.float64)
         x_final = np.asarray(trajectory[-1], dtype=np.float64).reshape(2)
-        endpoint_digest = _digest_state(
+        endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": trace.native_state_digest,
