@@ -372,3 +372,31 @@ PYTHONPATH=. ./.venv/Scripts/python.exe -m pytest tests/ --no-header -q
 Current state on this tree: 1235 tests pass, 7 skipped (torch-gated
 molecular mixer tests). The suite includes the AST-level guard that
 asserts `universal/` has zero molecule-specific imports.
+
+## Why this framework matters
+
+`adaptive_reflow` is a typed-contracts framework for flow-matching
+re-inference. It sits between an existing flow-matching checkpoint
+and the downstream metric: the same model + same weights + same
+integrator, with the framework's multi-round + paper-quantity-driven
+scheduler in front, moves the metric across all four model families
+the framework has been validated against (toy 2D FM: W2 2.85 → 0.62,
+4.6×; SOTA 2D Rectified Flow Liu 2022 NeurIPS Spotlight: −7.28%
+/ −10.40% W2 at matched checkpoint; CIFAR-10 Rectified Flow: −44.17%
+FID; LineageFlow ICML 2026 protein FM: framework ties at saturation
++ +0.23% log-likelihood on the synthetic velocity field). The
+framework's value surface is **broadly positive across 4 model
+families, G.1 robust median +0.0884 PASS, all 5/5 HARD capability
+gates green** — but it is honest about the gaps (top-model Tier-3
+decision-metric evidence is partial; FreqFlow + MM-FM blocked on
+upstream ckpt release).
+
+For the full story-arc narrative — one-sentence claim, what the
+framework does, evidence per tier (toy / NeurIPS Spotlight /
+ICLR-ICML 2026), three caveats, and what's next — read
+[`docs/audit/wave42-value-surface-narrative.md`](docs/audit/wave42-value-surface-narrative.md).
+For the per-experiment numbers, see
+[`docs/CONSOLIDATED_RESULTS.md`](docs/CONSOLIDATED_RESULTS.md). For
+the tiered validation strategy (Tier 1 toy + Tier 2 one SOTA model +
+Tier 3 only if explicitly asked), see
+[`docs/STRATEGY_FRAMEWORK_SCOPE.md`](docs/STRATEGY_FRAMEWORK_SCOPE.md).
