@@ -370,6 +370,58 @@ seed a fresh draw of 28 atoms against a 20-atom prior — hence the
 routes through `_safe_call`, which swallows `ValueError`, so only B.5
 reported it.
 
+### 2026-09-05 — NONCONFORMANCE_BUG #5 FIXED (Wave 32 Phase 3 Agent StochFM)
+
+**Fix**:
+[`adaptive_reflow/adapters/stochastic_fm.py`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/adapters/stochastic_fm.py)
+— `StochasticFMAdapter.build_initial_state` (lines 232–233). The
+adapter previously emitted `reference_frame="stochastic_fm"` and
+`normalization="per_channel_std"`, neither of which is in the
+canonical enums
+[`REFERENCE_FRAMES = ("pocket_centered", "world", "lattice")`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/universal/state.py)
+or
+[`NORMALIZATION_KINDS = ("none", "per_atom_std", "per_pocket_std")`](/home/hugo/codes/flowa-multistep-reinference/adaptive_reflow/universal/state.py).
+The universal `validate_state_bundle` rejected it; every downstream
+method that called `validate_state_bundle` (`compose_condition`,
+`detach_and_validate_endpoint`) would crash.
+
+The fix adopts option 1 from the audit doc's recommended fix list
+(change to canonical strings). Both choices preserve stochastic-FM
+semantics because the strings are pure round-trace metadata:
+
+```python
+# before:
+reference_frame="stochastic_fm",
+normalization="per_channel_std",
+
+# after:
+reference_frame="world",
+normalization="per_atom_std",
+```
+
+**Regression coverage added**:
+[`tests/test_adapters/test_exp2_stochastic_fm_repro.py`](/home/hugo/codes/flowa-multistep-reinference/tests/test_adapters/test_exp2_stochastic_fm_repro.py)
+— new `test_exp2_stochastic_fm_emits_canonical_enums`. The test
+asserts the adapter's emitted `reference_frame` is in
+`REFERENCE_FRAMES`, that `normalization` is in `NORMALIZATION_KINDS`,
+and that `validate_state_bundle` accepts the bundle.
+
+**Verification**:
+
+| Check | Before fix | After fix |
+| --- | --- | --- |
+| `test_g_stochastic_fm_has_invalid_enumeration_strings[StochasticFMAdapter]` (G.2) | FAILED (audit doc says "1 failed, 464 passed, 38 skipped" after Wave 30) | PASSED |
+| `test_g_stochastic_fm_has_invalid_enumeration_strings[FreqFlowAdapter]` (G.2, control) | PASSED | PASSED |
+| `test_g_stochastic_fm_has_invalid_enumeration_strings[KanziAdapter]` (G.2, control) | PASSED | PASSED |
+| `test_g_stochastic_fm_has_invalid_enumeration_strings[ReferenceFlowAAdapter]` (G.2, control) | PASSED | PASSED |
+| `test_exp2_stochastic_fm_emits_canonical_enums` (new) | n/a | PASSED |
+| `tests/test_adapters/test_exp2_stochastic_fm_repro.py` (full file) | 3 passed, 1 xfail | 4 passed, 1 xfail |
+| `tests/test_adapters/` (full regression) | 833 passed, 41 skipped, 1 xfail (Wave 30) | 833 passed, 41 skipped, 1 xfail — no regression |
+
+Both the previously failing test and the new regression-coverage test
+now pass; full `tests/test_adapters/` regression is green (no new
+failures or regressions).
+
 ## Closing
 
 The 8-check conformance battery (D.5) is the right *smoke* layer: it
@@ -380,5 +432,7 @@ the adapter/glue conformance contract end-to-end. The 2 bugs found
 in this wave are non-smoke (no production traffic today) but
 non-trivial (would surface as soon as the engine wires the restart
 blend path against FlowMol3 v2, or as soon as StochasticFM is
-imported directly). Both are recommended for the next code-only fix
-wave.
+imported directly). Both bugs are now fixed (Wave 30 Agent B for
+NONCONFORMANCE_BUG #1, Wave 32 Phase 3 Agent StochFM for
+NONCONFORMANCE_BUG #5); the fix log above records the diffs and the
+test transitions.

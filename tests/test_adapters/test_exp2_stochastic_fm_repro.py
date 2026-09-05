@@ -50,10 +50,16 @@ from numpy.typing import NDArray
 from adaptive_reflow.adapters.stochastic_fm import (
     DEFAULT_ENCODER_GAIN,
     DEFAULT_NOISE_SCALE,
+    StochasticFMAdapter,
     stochastic_velocity,
 )
 from adaptive_reflow.adapters.twodim_fm_train import sample_two_moons
 from adaptive_reflow.eval.w2 import ProjectionFreeExactW2
+from adaptive_reflow.universal.state import (
+    NORMALIZATION_KINDS,
+    REFERENCE_FRAMES,
+    validate_state_bundle,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -337,4 +343,45 @@ def test_exp2_stochastic_velocity_signature() -> None:
     assert abs(observed_std - expected_std) < 0.05, (
         f"stochastic_velocity signature drifted: "
         f"observed_std={observed_std:.4f}, expected={expected_std:.4f}"
+    )
+
+
+def test_exp2_stochastic_fm_emits_canonical_enums() -> None:
+    """Canonical-enum check for ``StochasticFMAdapter.build_initial_state``.
+
+    Regression coverage for Wave 29 Agent C
+    ``NONCONFORMANCE_BUG #5``: the adapter's :class:`StateBundle` MUST
+    emit ``reference_frame`` and ``normalization`` strings that are in
+    the canonical enums :data:`REFERENCE_FRAMES` and
+    :data:`NORMALIZATION_KINDS`. If those strings drift, the universal
+    :func:`validate_state_bundle` would reject the bundle and every
+    subsequent method that calls the validator
+    (``compose_condition``, ``detach_and_validate_endpoint``) would
+    crash.
+
+    The current canonical emission is ``reference_frame="world"`` and
+    ``normalization="per_atom_std"``. Both choices were documented in
+    the Wave 29 audit doc as the lowest-friction fix that preserves
+    stochastic-FM semantics (the strings are pure round-trace
+    metadata).
+    """
+    bundle = StochasticFMAdapter().build_initial_state(
+        batch_id="audit-b", sample_id="audit-s"
+    )
+    canonical_frames = set(REFERENCE_FRAMES)
+    canonical_norms = set(NORMALIZATION_KINDS)
+    assert bundle.reference_frame in canonical_frames, (
+        f"StochasticFMAdapter.build_initial_state emits "
+        f"reference_frame={bundle.reference_frame!r} which is not in the "
+        f"canonical enum {canonical_frames}"
+    )
+    assert bundle.normalization in canonical_norms, (
+        f"StochasticFMAdapter.build_initial_state emits "
+        f"normalization={bundle.normalization!r} which is not in the "
+        f"canonical enum {canonical_norms}"
+    )
+    ok, errs = validate_state_bundle(bundle)
+    assert ok, (
+        f"StochasticFMAdapter.build_initial_state emitted a bundle that "
+        f"fails validate_state_bundle: {errs}"
     )

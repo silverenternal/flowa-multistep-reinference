@@ -229,8 +229,8 @@ class StochasticFMAdapter(FlowMatchingODEAdapter):
             masks=masks,
             batch_id=str(batch_id),
             sample_id=str(sample_id),
-            reference_frame="stochastic_fm",
-            normalization="per_channel_std",
+            reference_frame="world",
+            normalization="per_atom_std",
             source_round=0,
             detach_proof=True,
             native_state_digest=_make_tensor_ref(
