@@ -413,6 +413,14 @@ def test_build_scheduler_dispatches_polynomial_and_sigmoid() -> None:
 
 def test_all_schedulers_conform_to_protocol() -> None:
     """Every registered scheduler class must satisfy SchedulerProtocol structurally."""
+    # Ensure Phase-2 extra families (edm / adaptive_pid / jittered_constant) are
+    # registered before asserting on SCHEDULER_REGISTRY contents — these are
+    # registered lazily via _register_extra_scheduler_families on first
+    # build_scheduler call, so we trigger that explicitly here.
+    from adaptive_reflow.algorithm.scheduler._core import (
+        _ensure_extra_families_registered,
+    )
+    _ensure_extra_families_registered()
     assert set(SCHEDULER_REGISTRY) == {
         "codimension_sheet",
         "cosine",
@@ -428,11 +436,14 @@ def test_all_schedulers_conform_to_protocol() -> None:
         "edm",
         "adaptive_pid",
         "jittered_constant",
+        # Wave 31 — paper-quantity-driven + paper-quantity-aware scheduler.
+        "paper_ratio_adaptive",
     }
     from adaptive_reflow.algorithm import (
         AdaptivePIDScheduler,
         EDMScheduler,
         JitteredConstantScheduler,
+        PaperRatioAdaptiveScheduler,
     )
     instances: list[SchedulerProtocol] = [
         default_cosine_scheduler(cycle_length=5),
@@ -446,6 +457,9 @@ def test_all_schedulers_conform_to_protocol() -> None:
         EDMScheduler(cycle_length=5),
         AdaptivePIDScheduler(),
         JitteredConstantScheduler(cycle_length=5, n_cap=0.5),
+        PaperRatioAdaptiveScheduler(
+            base=CodimensionSheetScheduler(cycle_length=5),
+        ),
     ]
     for instance in instances:
         assert isinstance(instance, SchedulerProtocol)
