@@ -1,0 +1,448 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T01:21:18Z",
+  "git_sha": "87517e4",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "twodim_fm",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "twodim_fm",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "3e77afc4dd684a9780048d77a2b130b97af63401e1d504fb930fcf0538261a61",
+        "integrator_config_hash": "23926a639cc0da6bf750202b5dabbe3a424996a5858a5371cca85af4d0253fa1"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "61e1318afe6490bf854b278fde41ca4593d796daf7f549c6f82795f8e0968e65",
+        "channels": [
+          "xy"
+        ],
+        "provenance": [
+          "twodim_fm@v1",
+          "twodim_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          2
+        ],
+        "dtype": "float64",
+        "sha256": "88a1742c1dc83fe3530c484874f816c605cfea2b856764d72264b24f9ea6c811",
+        "finite": true
+      },
+      "output_sha256": "ac174155c4d232f521c9a6daa1fcd6c2eaa292aaa543e526f3f4d5d19a9e421b"
+    },
+    {
+      "adapter": "twodim_fm",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "a193ab68983acbf99f90a7e97e2dfc9729d87b798195a7b45b9c33f8c9eb6ef8",
+        "integrator_config_hash": "529dcf97da6cf16a1cf057e9ed7554a73b73b2da8162ec03c6c4a205735ac6b2"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "beec432a96118bef891fc347f0e20cc05a727ff77f7c81a460515eec9ef6130a",
+        "channels": [
+          "xy"
+        ],
+        "provenance": [
+          "twodim_fm@v1",
+          "twodim_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          2
+        ],
+        "dtype": "float64",
+        "sha256": "846d1cb14f2841021ff73039a720e322610fde708cf5f595cd50b685c29720a0",
+        "finite": true
+      },
+      "output_sha256": "04c0fb28a62e283673d2133533f0ca9be5a4480acfa49cb58836f4220a4768a4"
+    },
+    {
+      "adapter": "twodim_fm",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "4f0bbcee2d7aa50ae063c40a155f098169a8faa0f282e9b92553fae0f8a878d0",
+        "integrator_config_hash": "c2641afba5e88a9ad29c6f614012500ff1bb9ca5fb99467e90b24a9118436b10"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "38c2490467ad0443a7804f303407486b5fbfcc2a01333661b66b01a83f564b35",
+        "channels": [
+          "xy"
+        ],
+        "provenance": [
+          "twodim_fm@v1",
+          "twodim_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          2
+        ],
+        "dtype": "float64",
+        "sha256": "5cce2aa2f6a6652a939681b28d923a38826fbf21d6ffed3a3410ebf1619340b1",
+        "finite": true
+      },
+      "output_sha256": "e8d41beb03c550ae3b5343484eda1d74ab17ac4ef1117bd461b62be96bbd5f85"
+    },
+    {
+      "adapter": "twodim_fm",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "f20f233176f0db58491335a62a94c8999e6ee1d726eb5bd58f94cfa4e20bbe8b",
+        "integrator_config_hash": "8a88fa7e4d508380c64127d9212b9aa6b89b4d839e17de7f76c5293ea021ef85"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "67d7057ba5a90b5976caa1709b898f84257ed1d7137d68e53cdb2ed15c3d735e",
+        "channels": [
+          "xy"
+        ],
+        "provenance": [
+          "twodim_fm@v1",
+          "twodim_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          2
+        ],
+        "dtype": "float64",
+        "sha256": "a3c4d2bda185e6dc797fa2029841a007f1bb1aa54e6117c8a8cff9e68ae40237",
+        "finite": true
+      },
+      "output_sha256": "6cb8589d1f47501f30f3ba73ba63c7e7be691ae59f35793d459220dd45fb0a8a"
+    },
+    {
+      "adapter": "twodim_fm",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "ecc103bbf6794778935d3259ab89813f008b2a64ee7743e121a0dc0613edf0d3",
+        "integrator_config_hash": "25a88a1ca0b2c484315f3d1857ad817a02d92a2e0c9877cad6e676fe51e83c16"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "b793b131344474f81106d65ffdb850b81cb6472225134b13f6f32a44dae521a6",
+        "channels": [
+          "xy"
+        ],
+        "provenance": [
+          "twodim_fm@v1",
+          "twodim_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          2
+        ],
+        "dtype": "float64",
+        "sha256": "7d1014f825dd74200a92e7f8e2b86fe2ba8fb3662c5eaf2147066a0fe2cc5b3a",
+        "finite": true
+      },
+      "output_sha256": "5d30574b9322f32cedf020358bc96f8763154bc5f6f196280c2e224476f8176b"
+    },
+    {
+      "adapter": "twodim_fm",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "e0e83b44225e62ff57c9de745adb97cc8671a839de88aefc363b9f2b714e9fcb",
+        "integrator_config_hash": "b632aad375f20b719ba51c546d6d067598e54756a5a935bfc02acea58c3159f7"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "0e127512e38e8a2854390ea5b5e676359fb47a73befe757f8e9577e9934b4ada",
+        "channels": [
+          "xy"
+        ],
+        "provenance": [
+          "twodim_fm@v1",
+          "twodim_fm_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          2
+        ],
+        "dtype": "float64",
+        "sha256": "6c6292a37bd05bebc8d7d62536e88d1df1fb974a938fe4160b9d327a6ad82490",
+        "finite": true
+      },
+      "output_sha256": "9ac53f83df1e8bd35eda62d8d25121e3855781386a6f2ad1e90730961ea3a244"
+    },
+    {
+      "adapter": "twodim_fm",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "c831928bcfd6e3d0e3ee2488bd6dfc3440e20d9fc1559fb9139733a994a7bdd6",
+        "integrator_config_hash": "1930f9efe7f6a049ad6f0b09774aa2b376f26335e776297911a5b6734b11b68c"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "0c50f2095132e5539641949a5331ad9726b9ec4b7b06d4d68ad24ec917d29e76",
+        "channels": [
+          "xy"
+        ],
+        "provenance": [
+          "twodim_fm@v1",
+          "twodim_fm_observed",
+          "twodim_fm_integrator_overflow"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          2
+        ],
+        "dtype": "float64",
+        "sha256": "ecfb9f378a9eceb0f9e623b668e80ee2f12fecacc098befd1e43654eb86df61a",
+        "finite": true
+      },
+      "output_sha256": "70368ca24c5d10c8ed4a810afabf29ccb07b7ed23751f397f79880998f0a0e17"
+    },
+    {
+      "adapter": "twodim_fm",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "fb0a412bcd6f9baba9210ce71d172ecebe52f6460930d143b00baf8d3e82eb7b",
+        "integrator_config_hash": "3446462ec3aefd3523dadba1a83023434e901cd9ad7dd0ed846688dd9f20aa96"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "423cc3a534916a5c9ea0333b3de51f3b6534b327d6f1da151fd32e2b210e461d",
+        "channels": [
+          "xy"
+        ],
+        "provenance": [
+          "twodim_fm@v1",
+          "twodim_fm_observed",
+          "twodim_fm_integrator_overflow"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          2
+        ],
+        "dtype": "float64",
+        "sha256": "30de7a9f6829f6021197e42a5634e121bda917e6a192461786ad62ae19d6664e",
+        "finite": true
+      },
+      "output_sha256": "4abb5fe7d96766f294b4b027bded558ace67ad283b306fe542cd09600f5d5f7a"
+    },
+    {
+      "adapter": "twodim_fm",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "9466aef274e34b779313509ff1266d200b7e07dc35f6114607bc06c24c314a41",
+        "integrator_config_hash": "94128912f1c8135475696f851c2f5493a6745c90a6736459ecdd20b53d0cd30d"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "12a5e19c0019aa8a7cb1d5ada414a3943a55021dca01fa9aaa7369beff958924",
+        "channels": [
+          "xy"
+        ],
+        "provenance": [
+          "twodim_fm@v1",
+          "twodim_fm_observed",
+          "twodim_fm_integrator_overflow"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          2
+        ],
+        "dtype": "float64",
+        "sha256": "9134b2c0e741eb8cbf7a9efc9293b557fed1f7e863f67be53b19d03f2237b287",
+        "finite": true
+      },
+      "output_sha256": "9039aa85bf903c6e2e51a06369e03816078affb8fe70e4976bd6f5b75d44358a"
+    }
+  ]
+}

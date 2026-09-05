@@ -1,0 +1,841 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T01:21:18Z",
+  "git_sha": "87517e4",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "flowmol3_v2",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "flowmol3_v2",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "1e82cc2bb16a47fcdbb4594b220e16c2a6572bbd1a07ce6431237dab284ed515",
+        "integrator_config_hash": "dd36cd6afbc69a1f4bf84dad0b4d14c0e003ef4e99c1b275f54cf5fc4d50226c"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "2caf4c1a961deebca1856188148aeaf623595595f0612ab4a106527865e6e029",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3adapter@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 mechanics-adapter",
+          "flowmol3adapter_observed",
+          "flowmol3adapter_trajectory_built"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "traj_a",
+          "traj_c",
+          "traj_e",
+          "traj_x"
+        ],
+        "per_key": {
+          "traj_a": {
+            "shape": [
+              6,
+              28
+            ],
+            "dtype": "int64",
+            "sha256": "bfe3e713d84f8e599d6d0d0a7ab0dddfd8705ef6781c3849e11d71a5a4c5236f",
+            "finite": true
+          },
+          "traj_c": {
+            "shape": [
+              6,
+              28
+            ],
+            "dtype": "float64",
+            "sha256": "0d387744200764e5f7900dac17770eec2b36777b890bc70a2322bb41d6684e0d",
+            "finite": true
+          },
+          "traj_e": {
+            "shape": [
+              6,
+              28,
+              28
+            ],
+            "dtype": "int64",
+            "sha256": "7f34211ed0a3d63138b8406ff1cae122c966c11201d1e8c46a07874e46326602",
+            "finite": true
+          },
+          "traj_x": {
+            "shape": [
+              6,
+              28,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "179dac992da499506fd36f0b33883ef2e03d75aa20956378b94f90bf4e21049c",
+            "finite": true
+          }
+        },
+        "sha256": "4cec1d9946e0770b2980f8978a42ad1c19e73c7469fce4d803b6758f5032f203"
+      },
+      "output_sha256": "194da940e706f1e0d67f872a659a4ed65edcf3dfce98da2bcf9b898d38122774"
+    },
+    {
+      "adapter": "flowmol3_v2",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "be020194853b81226dd3ac2399bdb1c313bac9a79830fbb489813f33c43b2126",
+        "integrator_config_hash": "c3a7ed481c288d497c57c8c8e5ee8dc025d6041df7f62cf5923ccd200e0e0f2f"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "5061e117ddc2b0fa72c23b0754ff9f9b853ce71eb8844bd5e4b3b712d71e5812",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3adapter@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 mechanics-adapter",
+          "flowmol3adapter_observed",
+          "flowmol3adapter_trajectory_built"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "traj_a",
+          "traj_c",
+          "traj_e",
+          "traj_x"
+        ],
+        "per_key": {
+          "traj_a": {
+            "shape": [
+              11,
+              28
+            ],
+            "dtype": "int64",
+            "sha256": "f41e05f773b6f5491ec1c54781b2a813089d50217a17c66238c1884a11fc78a6",
+            "finite": true
+          },
+          "traj_c": {
+            "shape": [
+              11,
+              28
+            ],
+            "dtype": "float64",
+            "sha256": "9161d68446c40d331bfa406ab3e3fe3f235dbca45b4258df1b0e3dd751760c70",
+            "finite": true
+          },
+          "traj_e": {
+            "shape": [
+              11,
+              28,
+              28
+            ],
+            "dtype": "int64",
+            "sha256": "0e455ce047efa0b21f0632084051a69659c1788a33df9a98de990725d273f4ef",
+            "finite": true
+          },
+          "traj_x": {
+            "shape": [
+              11,
+              28,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "b9c18362c7ac757edd0af65d17e96692311ed90c15afd11b5da75475c9a09d63",
+            "finite": true
+          }
+        },
+        "sha256": "5e58b7c3f0d2ec45b34eab2bcf0928007eb5df0f8cc57b9623e83d3759ab3b1c"
+      },
+      "output_sha256": "67e6722e0de1dfd273605ded03764d20a8c17cfeaa3f837922a980bab1c69aff"
+    },
+    {
+      "adapter": "flowmol3_v2",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "4d647537de4e7b74967462c433bde823f49c5f2f8aee20f677c99e38c1c25787",
+        "integrator_config_hash": "ce7a28990c20606e849bf9cdf77d2eee9906292469b4aeddcb1699ea84acd448"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "442b192d4b5d6be5552b55aacc35575a076749150fed3db9e232ccd0c6c2259d",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3adapter@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 mechanics-adapter",
+          "flowmol3adapter_observed",
+          "flowmol3adapter_trajectory_built"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "traj_a",
+          "traj_c",
+          "traj_e",
+          "traj_x"
+        ],
+        "per_key": {
+          "traj_a": {
+            "shape": [
+              51,
+              28
+            ],
+            "dtype": "int64",
+            "sha256": "6f56722704acfac3d07f8df24ec000bcd548fc74dc370b68ad6595162519591d",
+            "finite": true
+          },
+          "traj_c": {
+            "shape": [
+              51,
+              28
+            ],
+            "dtype": "float64",
+            "sha256": "5cc79acaf3441b397b61cb0aea13a94845419ddde2c0bd14c2bd0a2267eaf290",
+            "finite": true
+          },
+          "traj_e": {
+            "shape": [
+              51,
+              28,
+              28
+            ],
+            "dtype": "int64",
+            "sha256": "d83cc0b6a053272434c526331a24b2af33b7120d5387cd8dc67be6e7cae62ef7",
+            "finite": true
+          },
+          "traj_x": {
+            "shape": [
+              51,
+              28,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "5c1ba0993a4ed82503366c5bf064a3f3a44ef26eb7f67a6a5ad4548cf1b4ee04",
+            "finite": true
+          }
+        },
+        "sha256": "148d2fbf2f423a5260c7dc873b96262f9b0981a5ed87b4e5541b1170a6bbd3a4"
+      },
+      "output_sha256": "04a5f9ff5ddee8b4933eee97ef8333a23dc869aa8f9cc4b192e7e668fa883487"
+    },
+    {
+      "adapter": "flowmol3_v2",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "42894753f4d264306b3646779ba03fd495250abef3fd7df9cd2c17c4c49fe9a3",
+        "integrator_config_hash": "70e78946ea36d61bbb00dcff1d3a2a6b521966a829eef3abd7ffffeed41972e4"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "3bf1fd67b6ec5977b24d9205e8260988f5a9f3468de2df8f3e7184fb4d9a55d4",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3adapter@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 mechanics-adapter",
+          "flowmol3adapter_observed",
+          "flowmol3adapter_trajectory_built"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "traj_a",
+          "traj_c",
+          "traj_e",
+          "traj_x"
+        ],
+        "per_key": {
+          "traj_a": {
+            "shape": [
+              6,
+              24
+            ],
+            "dtype": "int64",
+            "sha256": "3c257b4da86691135b6284798434ee85e68a85f3a275df98af68c52c5cb50103",
+            "finite": true
+          },
+          "traj_c": {
+            "shape": [
+              6,
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "65b8390cef5aecbf582bc0a7b1030a2a037aea8974a4c6e5cc09cf57000c5357",
+            "finite": true
+          },
+          "traj_e": {
+            "shape": [
+              6,
+              24,
+              24
+            ],
+            "dtype": "int64",
+            "sha256": "2590fcafedf1117a1309179d16e880c6cff042bb0727c22e1888cd2bed4048ad",
+            "finite": true
+          },
+          "traj_x": {
+            "shape": [
+              6,
+              24,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "58ffa669033bb1a9afb235de830115159ccbe9692b506fa676614beec167e1cf",
+            "finite": true
+          }
+        },
+        "sha256": "95eac45497ffceddddadb0df4b17776b56f5f8112888acdd8424f845108bb596"
+      },
+      "output_sha256": "30c698cc968e7e0e2bd319e56f71a7eacaac78331ed35b8d644c91c158384807"
+    },
+    {
+      "adapter": "flowmol3_v2",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "bc297ce4b5d1b1a70e327f43a48c060be5ee49b52f66635e7a4e07340b63d441",
+        "integrator_config_hash": "f09abf40579a74470090ec281c6d40544c9e07b1170561231ff797d3be5b2072"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "a46fc2732ac173c4dc9bc561e4d77a431960aba7b3aa5ddc372c715f7177364e",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3adapter@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 mechanics-adapter",
+          "flowmol3adapter_observed",
+          "flowmol3adapter_trajectory_built"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "traj_a",
+          "traj_c",
+          "traj_e",
+          "traj_x"
+        ],
+        "per_key": {
+          "traj_a": {
+            "shape": [
+              11,
+              24
+            ],
+            "dtype": "int64",
+            "sha256": "c5972ece0cdb44adc50e3035991db793c2fd0dad606cb01423dbdc039f48c64f",
+            "finite": true
+          },
+          "traj_c": {
+            "shape": [
+              11,
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "bef96309d62f609fc0fdbf554290fa1bbd02a321b4cf57e0d88258c20a14d11c",
+            "finite": true
+          },
+          "traj_e": {
+            "shape": [
+              11,
+              24,
+              24
+            ],
+            "dtype": "int64",
+            "sha256": "23b05e0d7032921bf155651d53f27bb79b12030c00f3979f86d879e7c92bebe6",
+            "finite": true
+          },
+          "traj_x": {
+            "shape": [
+              11,
+              24,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "ad2b12ea44bbff6df4439f28b294f6b1bd851d6776bd01db1125db3d34ddfacb",
+            "finite": true
+          }
+        },
+        "sha256": "9600cc2b2490773c24366180849d27d3429a6958463274e076583e305810ee28"
+      },
+      "output_sha256": "64a2daed36b8df61137a4267e6103ba8c00a4dafdba136aeb0adedbb3e453df5"
+    },
+    {
+      "adapter": "flowmol3_v2",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "fcf8e993cf82e8c6a0487fddbf80db5fe97e2a92e490532079231e404eabb055",
+        "integrator_config_hash": "e6c5924caa3f02c519a95253065552146bf8297d5e6dfd1aae4898200a85cb0c"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "ec432c9e01fe43f14f65b0c417a232fba4cb49757f0cf33c475b3283d222b0a1",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3adapter@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 mechanics-adapter",
+          "flowmol3adapter_observed",
+          "flowmol3adapter_trajectory_built"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "traj_a",
+          "traj_c",
+          "traj_e",
+          "traj_x"
+        ],
+        "per_key": {
+          "traj_a": {
+            "shape": [
+              51,
+              24
+            ],
+            "dtype": "int64",
+            "sha256": "7379e395708a3899298f400076a53995c228120717d0b1f568a39a6218a94131",
+            "finite": true
+          },
+          "traj_c": {
+            "shape": [
+              51,
+              24
+            ],
+            "dtype": "float64",
+            "sha256": "39a0875fb7fea9c73c8cc577ab2e09bcedcd7b3ca34e87c5d983a7d1f3dc1c5c",
+            "finite": true
+          },
+          "traj_e": {
+            "shape": [
+              51,
+              24,
+              24
+            ],
+            "dtype": "int64",
+            "sha256": "ad7d73d277513096096a3108d7669faaab63533d84eeb9334697ef83bad86df3",
+            "finite": true
+          },
+          "traj_x": {
+            "shape": [
+              51,
+              24,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "6b86f3d43dfc710d261d6d90af1890c16fc80469b1b43368f6c48ad4915912cd",
+            "finite": true
+          }
+        },
+        "sha256": "80591c3132bb398abb8f8cd00a58418b8ad054ff433db0f3d9ae4c79a11e67c3"
+      },
+      "output_sha256": "33c0a0d897ca910e9bacaedaa81c7ee0d90b9465497cd777e9699edb31e3ce0a"
+    },
+    {
+      "adapter": "flowmol3_v2",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "ddcb0131eb7be51865c92f72a72982ca06afbeed5790f713bc4b8ea5f030d968",
+        "integrator_config_hash": "14b154b1585b95f4191ae4df510539b4b91395f5416c5e7f399fda8888d38483"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "ad52800a0da0f6f735bfb4c93573ec4dd0659f6d827c2563cf492c6141bbfcb0",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3adapter@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 mechanics-adapter",
+          "flowmol3adapter_observed",
+          "flowmol3adapter_trajectory_built"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "traj_a",
+          "traj_c",
+          "traj_e",
+          "traj_x"
+        ],
+        "per_key": {
+          "traj_a": {
+            "shape": [
+              6,
+              20
+            ],
+            "dtype": "int64",
+            "sha256": "3ddc597141cf3f88146286b75d4edadbec2e0439bc4433355a3280e52e8570da",
+            "finite": true
+          },
+          "traj_c": {
+            "shape": [
+              6,
+              20
+            ],
+            "dtype": "float64",
+            "sha256": "22fbe3f1a8f297ac401154a61b731e0e95c568eae756562a9bf7868c8f774f83",
+            "finite": true
+          },
+          "traj_e": {
+            "shape": [
+              6,
+              20,
+              20
+            ],
+            "dtype": "int64",
+            "sha256": "befedc02f029bff4b43832d8137416c38428feb453668a657fe227390f250c36",
+            "finite": true
+          },
+          "traj_x": {
+            "shape": [
+              6,
+              20,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "84258e3243d67f71d08e9912f8aec891e0131b83a530576a016c06d3ff24af05",
+            "finite": true
+          }
+        },
+        "sha256": "1fa0386aa85301b605539a8d1cc5a73b228cce0015424ef2450276508bfc69df"
+      },
+      "output_sha256": "962b39f5253deccb72479652113b38150a5fad26025d7e6aa97bc5761ef5a422"
+    },
+    {
+      "adapter": "flowmol3_v2",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "944c14b716a70f9d4f4f8bb0cdad2553c4f4ab9a2580f433f8684c4f0f0ab54f",
+        "integrator_config_hash": "2d2469ad906b34ea5c10bdb215575c778700227a6a5bd6b7badd5f1ea11c135f"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "ad1f1ce09a90cfb404be1f851ae6bd2ea6306d72bb820695cda5a4ac72424dec",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3adapter@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 mechanics-adapter",
+          "flowmol3adapter_observed",
+          "flowmol3adapter_trajectory_built"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "traj_a",
+          "traj_c",
+          "traj_e",
+          "traj_x"
+        ],
+        "per_key": {
+          "traj_a": {
+            "shape": [
+              11,
+              20
+            ],
+            "dtype": "int64",
+            "sha256": "00f83366d2714430ab67d2c8d5d7a39ae5c6c077adfa5b981a8a0ebd82eab798",
+            "finite": true
+          },
+          "traj_c": {
+            "shape": [
+              11,
+              20
+            ],
+            "dtype": "float64",
+            "sha256": "89cfe36553814a78cd8c3b8ea8eefea6633841cf25658becd32e948d4cbe1814",
+            "finite": true
+          },
+          "traj_e": {
+            "shape": [
+              11,
+              20,
+              20
+            ],
+            "dtype": "int64",
+            "sha256": "260d0d2934b24df73c6ae6f891fe1b6a44999b9a9a209397de160039094c25e6",
+            "finite": true
+          },
+          "traj_x": {
+            "shape": [
+              11,
+              20,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "b72410d76ff2b3596909cee48837bd1a3682963b30145cda78ec90606bbc42be",
+            "finite": true
+          }
+        },
+        "sha256": "4ee9ebd3e11def5ab2841e55bceec81af3a34f6589de4ffd8f4b0053b4ca99ca"
+      },
+      "output_sha256": "65f9f38ae78e40c1a6f383fabd1122f984b88a5d0fbb3086fc2a5321c03d3dbc"
+    },
+    {
+      "adapter": "flowmol3_v2",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "default",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "2871c742129cb4cfbfb07da5c812dbb2de1986e6b30a5b8e4013e68cf47e96ff",
+        "integrator_config_hash": "0d1b55dfee472c6cf2735ff19905409db33dc771dd3d03699da0cb64d5014d07"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "0be5c71e846030ad8c4d2e97aa2399f3345920d8d8e20d30d0d5d69d670a3de7",
+        "channels": [
+          "charge",
+          "coordinate",
+          "raw_pair"
+        ],
+        "provenance": [
+          "flowmol3adapter@77cae22174b7792b0e25e9e0414038420736d841",
+          "DTB-G2 mechanics-adapter",
+          "flowmol3adapter_observed",
+          "flowmol3adapter_trajectory_built"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "mapping",
+        "keys": [
+          "traj_a",
+          "traj_c",
+          "traj_e",
+          "traj_x"
+        ],
+        "per_key": {
+          "traj_a": {
+            "shape": [
+              51,
+              20
+            ],
+            "dtype": "int64",
+            "sha256": "1477586d8ef72757e53ac2f445eced31e5a6e4b510f9da2ad37964f4234d3525",
+            "finite": true
+          },
+          "traj_c": {
+            "shape": [
+              51,
+              20
+            ],
+            "dtype": "float64",
+            "sha256": "782b275d033bc3154c5c4ae8ea6b51f44df317583d438839c234114c2d9f0572",
+            "finite": true
+          },
+          "traj_e": {
+            "shape": [
+              51,
+              20,
+              20
+            ],
+            "dtype": "int64",
+            "sha256": "4b15db78ef7cbddc4f62e6440794c009d6e36e139756391645c92c04f6fdfc15",
+            "finite": true
+          },
+          "traj_x": {
+            "shape": [
+              51,
+              20,
+              3
+            ],
+            "dtype": "float64",
+            "sha256": "07867cc57c09a74858ad4bf492153d4fff014d14596b804dc70c50e818834098",
+            "finite": true
+          }
+        },
+        "sha256": "0011cc49db501c504ff42b701d94ce5d5956f5b695b05fbd22fa3087d0d11f6b"
+      },
+      "output_sha256": "a0a0355f91b2911c2b5b086e7feecf3040b2e5bd154b21b87518470091e4275e"
+    }
+  ]
+}

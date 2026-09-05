@@ -1,0 +1,463 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T01:21:18Z",
+  "git_sha": "87517e4",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "lineageflow",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "lineageflow",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "f95413fd07af54ceeefd90ad93666345ce78c72ebb105b2887624cb2a2d13a68",
+        "integrator_config_hash": "6e8592f87e0155864d153d09977c0fdcb9857daea0d8c43a9ba2899fa0b32f1e"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "4e6d080c6fe8c5e870d5ebcb55a09d9921f08c0429484074e6a8c946a5ea5151",
+        "channels": [
+          "amino_acid_categorical",
+          "pfam_family_cond"
+        ],
+        "provenance": [
+          "lineageflow@v1",
+          "lineageflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          256,
+          33
+        ],
+        "dtype": "float64",
+        "sha256": "9a972c410d75c96613713723b7dde481646899041799a1d74a528f47e406eaa4",
+        "finite": true
+      },
+      "output_sha256": "fd79c202acf60e303878800381158dffdd5980a6f251c1d4d6b0f248aea2fbaa"
+    },
+    {
+      "adapter": "lineageflow",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "8cc6df521eb8d14137f902621945ad826f79c4e16f8be1ffa2ac3f18024f884d",
+        "integrator_config_hash": "189b97911f6b138e2d2c7631c31b0b63d447b7539f0f9652e1e05fd3fb523307"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "ebcb65a5d127c4bb0ca26e8850869de538b0e993dbb0fb2174a9ab864f15363a",
+        "channels": [
+          "amino_acid_categorical",
+          "pfam_family_cond"
+        ],
+        "provenance": [
+          "lineageflow@v1",
+          "lineageflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          256,
+          33
+        ],
+        "dtype": "float64",
+        "sha256": "a6c1dfe941c5898d7a40ea100f77f47d864ea4943885690e4a0e538310066657",
+        "finite": true
+      },
+      "output_sha256": "8439924135bb1912e41b08ecdb5f4dc3c8f6a4883313676892c815bdc94caaab"
+    },
+    {
+      "adapter": "lineageflow",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "a41f66b46fc806706ebc80acce570edb1af70e63f7218031cd64257ad4b840b7",
+        "integrator_config_hash": "8f674c5b5a2cf5456b634b24a88e3180325410ca6612d71d84a0428b34d58074"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "d1a247b0b0bf7a83dc0aae0d554df8d2aaf41ffc26d8567c7eaec5bd06341e50",
+        "channels": [
+          "amino_acid_categorical",
+          "pfam_family_cond"
+        ],
+        "provenance": [
+          "lineageflow@v1",
+          "lineageflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          256,
+          33
+        ],
+        "dtype": "float64",
+        "sha256": "d98e3a62508c056d78a27bbe8adbbcfc113859178839019e29cd28ce0974e9be",
+        "finite": true
+      },
+      "output_sha256": "1ce76ad3a48b02c278c41d4e27341b1ea76d512802a283b8b3d29502ef50bcd5"
+    },
+    {
+      "adapter": "lineageflow",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "96226f8c3de84195b7f2dcc5eec6ec5a15c9f98ca1a65b0549efaa30c0e5d731",
+        "integrator_config_hash": "98bf22e034da0c4d2e1f2a7405b061bc1736f8dbff2767e56ae8b4decdb40d51"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "c9b998e2a168aaff0b5712acd20760f44535550bc10b2f6969f198fe5b36329a",
+        "channels": [
+          "amino_acid_categorical",
+          "pfam_family_cond"
+        ],
+        "provenance": [
+          "lineageflow@v1",
+          "lineageflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          256,
+          33
+        ],
+        "dtype": "float64",
+        "sha256": "54a6e3e11c1c5109ee2227ed8e768e4718c086ae7987ac77fb1962aa48563966",
+        "finite": true
+      },
+      "output_sha256": "8236aee51c8f167d0d87542643a3647b2f9f0d4a5a00acb6d1d43cd1c91a44f7"
+    },
+    {
+      "adapter": "lineageflow",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "6bc7f3746201276184b1938e84851e55e520dc1ec9f7ada4983ed5fa0b6e88ef",
+        "integrator_config_hash": "d1dbcbe412cef1cfbffc010ed3e34a084fb2f3972022548fd9d97d1e1da38f10"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "d9550d2d94bd387655cbad48237301735f021a91ca4955158d484fa3fbc2d2ca",
+        "channels": [
+          "amino_acid_categorical",
+          "pfam_family_cond"
+        ],
+        "provenance": [
+          "lineageflow@v1",
+          "lineageflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          256,
+          33
+        ],
+        "dtype": "float64",
+        "sha256": "29f67281a5263bf19fe7893069be3abb64bcb5f6395adf9713df1221d25e6628",
+        "finite": true
+      },
+      "output_sha256": "c961ad20b3517c8829f00a3695726deb733310052319b09155c3a52f41b489ca"
+    },
+    {
+      "adapter": "lineageflow",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "9777b670d0fd3dc504b3bac7a1a9b28b32d81d8194f428b6aee346f2a47bbfe1",
+        "integrator_config_hash": "cda789ff8a0cda3ff8239817ba463e884494f5cd8c293f5cf15cea520819c4f6"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "85a36bd577c9e8eeae316975b56d18c9dab5067291af09479b075e190e473f41",
+        "channels": [
+          "amino_acid_categorical",
+          "pfam_family_cond"
+        ],
+        "provenance": [
+          "lineageflow@v1",
+          "lineageflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          256,
+          33
+        ],
+        "dtype": "float64",
+        "sha256": "e1f59d2cd2b00cd2935ba16e0ccbe4f8a85d860e96ac67a538ad058da5fe85ac",
+        "finite": true
+      },
+      "output_sha256": "3d016581b1c6a9b2dc5c9c7c6abb927ddb7beeef42776611baa6bfbb41f07cd7"
+    },
+    {
+      "adapter": "lineageflow",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "2078da5553a50c4d0362d6f8974a9d29f4458ad1f73886e2ddd1e87620193fa8",
+        "integrator_config_hash": "9d6f1673a019dee1ab1aba6eec531538e7a8a613f7d1a4d06895a1e1f7fe634b"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "0fb11ad6d01c02a4f1fe7e826b1a7f4964bc83fe82bac52f106f03f6608768db",
+        "channels": [
+          "amino_acid_categorical",
+          "pfam_family_cond"
+        ],
+        "provenance": [
+          "lineageflow@v1",
+          "lineageflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          256,
+          33
+        ],
+        "dtype": "float64",
+        "sha256": "60b51eabca5123c4ce874039b78f731a6269b31b5866e19e0d1c131108060d9a",
+        "finite": true
+      },
+      "output_sha256": "2b1b86e290cef7607c2fdedc637d01333f738f320e078f1619f631232352c547"
+    },
+    {
+      "adapter": "lineageflow",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "7ce3effdf700bb7b12695176c5fc9f06811aac849b7d8cff3b92b4968cf25b1f",
+        "integrator_config_hash": "a15c6fd307acf3dcabc353b84fd557e4c0e5cfe2755f63183a2a880a4383b57b"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "3a20f9f75293912fd211543ecb923abf7ddeba06edd2f91e3a626afd2425d6c6",
+        "channels": [
+          "amino_acid_categorical",
+          "pfam_family_cond"
+        ],
+        "provenance": [
+          "lineageflow@v1",
+          "lineageflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          256,
+          33
+        ],
+        "dtype": "float64",
+        "sha256": "a7e9767a6867447701c583b79ff1979302c1be8d33f2887330b8545aa07c47cc",
+        "finite": true
+      },
+      "output_sha256": "1c8717a57f9ccf7007c5edc453fc344b7d04995ec2a7e22d9f34e18eb727dba9"
+    },
+    {
+      "adapter": "lineageflow",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "7ff6581f749f4afeccaf0d28715a54eefa6db6731d54e9b44a43e4addc4431bd",
+        "integrator_config_hash": "9faa76866664f812d89ace570c40261e43522e1855632e03e4631ad0bea20e8c"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "b00a50d51b15ec071910fa37766390c860fc43b05729d220342152a2c14f650b",
+        "channels": [
+          "amino_acid_categorical",
+          "pfam_family_cond"
+        ],
+        "provenance": [
+          "lineageflow@v1",
+          "lineageflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          256,
+          33
+        ],
+        "dtype": "float64",
+        "sha256": "a7c37ef5ec4374abaa2ea6d0cab09912365a7205cd4601bff423849f31a31e80",
+        "finite": true
+      },
+      "output_sha256": "d29080e5db6183eebe1194d41819b23952b511645248eecad64121298dc066c2"
+    }
+  ]
+}

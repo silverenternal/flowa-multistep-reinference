@@ -1949,3 +1949,65 @@ EXIT=0
 
 **Files changed:** `mkdocs.yml` (nav + `not_in_nav` additions); `docs/baseline-audit-report.md` (this additive note). No code changes; no env_hash update.
 
+---
+
+## D.4 — Pinned adapter regression vectors (additive, Wave 33 #1 first batch)
+
+**Date:** 2026-09-05
+**Agent:** Wave 32 Phase 3 Agent D4
+**Scope:** 5 of 18 adapters (`flowmol3_v2`, `twodim_fm`, `lineageflow`, `kanzi`, `freqflow`); 13 deferred per `todo/algo-improvement-D4-regression-vectors.md` until their integration gate clears.
+**Status:** **5 / 18 = 27.8% PARTIAL** (up from **0 / 18 NOT MET** pre-Wave 33).
+
+**Problem (Wave 32 Agent A `docs/audit/gap-audit.md` §3):** D.4 was a HARD gate in `framework-internal-metrics.md` §1 D.4 (target 18/18 by Wave 14) but had no plan file, no `regression-vectors/` directory, and zero pinned vectors. Any framework refactor could silently change adapter byte-output without CI catching it.
+
+**What shipped (Wave 33 #1 first batch):**
+
+1. **`regression-vectors/` directory (NEW)** with one JSON file per adapter:
+   - `flowmol3_v2.json` — molecule generator (NumPy backend)
+   - `twodim_fm.json` — 2D rectified flow (CPU-only, `init_random_weights=True`)
+   - `lineageflow.json` — protein flow matching (synthetic mode)
+   - `kanzi.json` — protein flow-AE (synthetic mode)
+   - `freqflow.json` — image SiT-XL/2 (synthetic mode)
+
+   Each vector pins **3 seeds × 3 NFEs = 9 conditions** (seeds ∈ {41, 42, 43}, NFEs ∈ {5, 10, 50}), with per-condition SHA-256 (`output_sha256`) over a canonical JSON of (integrator trace + endpoint StateBundle + trajectory bytes). 5 × 9 = **45 hashes** pinned in total. Schema: `d4.v1` (forward-compatible).
+
+2. **`tools/run_regression_vector_audit.py` (NEW):** CLI with `generate` + `verify` modes. Generator writes vectors; verifier re-runs every (adapter, seed, NFE) tuple and asserts hash match. Host-fingerprint (`env_hash.txt` `composite_hash` field) is captured per vector; a fingerprint mismatch is *reported* via `host_fingerprint_match` boolean but does not mask per-condition hash drift.
+
+3. **`tests/test_adapters/test_regression_vectors.py` (NEW):** 16 tests, all PASS in 4.92 s. Covers schema, sweep shape, fingerprint capture, hash format, byte-stability, per-adapter verify, and per-adapter fingerprint match.
+
+**Verification (2026-09-05, this commit):**
+
+```bash
+$ python tools/run_regression_vector_audit.py verify
+overall_ok: True
+  flowmol3_v2: PASS  match=True   (9 conditions, all 9 hashes match)
+  freqflow:     PASS  match=True   (9 conditions, all 9 hashes match)
+  kanzi:        PASS  match=True   (9 conditions, all 9 hashes match)
+  lineageflow:  PASS  match=True   (9 conditions, all 9 hashes match)
+  twodim_fm:    PASS  match=True   (9 conditions, all 9 hashes match)
+
+$ python -m pytest tests/test_adapters/test_regression_vectors.py -v --tb=short
+============================= 16 passed, 3 warnings in 4.92s ==============================
+```
+
+**Per-adapter hash counts:** `flowmol3_v2`=9, `twodim_fm`=9, `lineageflow`=9, `kanzi`=9, `freqflow`=9. Total = 45 pinned hashes across 5 adapters.
+
+**Host fingerprint:** `composite_hash=8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480` (matches `env_hash.txt` at capture time, verified on the same host).
+
+**Adapter versions captured:** all 5 vectors recorded `adapter_version=0.1.0` from each module's `*_CONFIG_VERSION` constant.
+
+**Why the remaining 13 are deferred (per `todo/algo-improvement-D4-regression-vectors.md`):** the 5 first-batch adapters cover the **active PHASE-2 / PHASE-3 model integration candidates** plus the CPU-only `twodim_fm` fast-feedback adapter. The remaining 13 (MM-FM, wan2_2_video, mnist_fm, rectified_flow_cifar, self_flow, hi_dream_i1, lumina_image_2_0, protbfn_abbfn, hidream_i1, graphbfn, toy_gaussian, toy_linear, stochastic_fm) require either upstream weights on disk or follow-up integration work; vectors for those land when their integration gate clears.
+
+**Files changed (additive):**
+- `regression-vectors/flowmol3_v2.json` (NEW)
+- `regression-vectors/twodim_fm.json` (NEW)
+- `regression-vectors/lineageflow.json` (NEW)
+- `regression-vectors/kanzi.json` (NEW)
+- `regression-vectors/freqflow.json` (NEW)
+- `tools/run_regression_vector_audit.py` (NEW)
+- `tests/test_adapters/test_regression_vectors.py` (NEW)
+- `todo/framework-internal-metrics.md` (additive: D.4 row update with 5/18 PARTIAL status + Wave 33 #1 provenance)
+- `docs/baseline-audit-report.md` (this additive §D.4 section)
+
+**D.4 status update:** NOT MET → **5/18 PARTIAL** (HARD gate remains unsatisfied at 18/18 target; partial progress satisfies the Wave 33 acceptance gate per `todo/gap-plan-wave32.md`).
+

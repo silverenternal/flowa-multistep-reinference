@@ -77,7 +77,7 @@ unpinned threshold).
 | D.1 | Adapter line count median | ~1500 (across 18) | <= 500 by Wave 16 (shrink task) | no |
 | D.2 | Adapters using abstract interfaces (SchedulerProtocol etc.) — verified at runtime (`isinstance` check) | 18/18 declared | 18/18 verified | **HARD** |
 | D.3 | Adapters passing conformance tests — auto-generated conformance battery (D.5) | hand-written | 18/18 against D.5 by Wave 14 | **HARD** (after D.5 live) |
-| D.4 | Pinned adapter regression vectors: fixed (seed, input, NFE) tuple per adapter, hash compared in CI | none | 18/18 by Wave 14 | **HARD** |
+| D.4 | Pinned adapter regression vectors: fixed (seed, input, NFE) tuple per adapter, hash compared in CI | **5 / 18 = 27.8% PARTIAL (Wave 33 #1, 2026-09-05; first batch of 5 shipped: `flowmol3_v2`, `twodim_fm`, `lineageflow`, `kanzi`, `freqflow`; 9 conditions × 5 adapters = 45 hashes pinned at `regression-vectors/<adapter>.json`; verified in CI by `tests/test_adapters/test_regression_vectors.py` (16 tests, all PASS) against `tools/run_regression_vector_audit.py`; remaining 13 deferred until their integration gate clears per `todo/algo-improvement-D4-regression-vectors.md` plan)** | 18/18 by Wave 14 | **HARD** |
 | D.5 | Plugin/strategy auto-generated conformance battery (single source of truth, `tests/test_adapters/conformance_battery.py`) | none | live by Wave 14; per-check pass/fail aggregated | **HARD** (when live) |
 
 ### E. Documentation

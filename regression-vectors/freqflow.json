@@ -1,0 +1,481 @@
+{
+  "schema_version": "d4.v1",
+  "captured_at": "2026-09-05T01:21:21Z",
+  "git_sha": "87517e4",
+  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "adapter": "freqflow",
+  "adapter_version": "0.1.0",
+  "seeds": [
+    41,
+    42,
+    43
+  ],
+  "nfes": [
+    5,
+    10,
+    50
+  ],
+  "per_adapter_hash_count": 9,
+  "conditions": [
+    {
+      "adapter": "freqflow",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "63eff87e16ce99503f9f3c78f6fb98d890afe05607b664a1fdccde7f7c7e5622",
+        "integrator_config_hash": "3f8d63cf8602c081d3ab07971013f35120fc7dc319a35fee656f2ead8f1c879d"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "8433ba11eb9884a8ebcf291850bb49cc6143452c7a82d15fe22b1aac2bcd6775",
+        "channels": [
+          "class_cond",
+          "freq_magnitude",
+          "image_latent"
+        ],
+        "provenance": [
+          "freqflow@v1",
+          "freqflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "7e800516e34468e86331dc5a3ef0ab7499233c77a474df1b2f696a5359307dc2",
+        "finite": true
+      },
+      "output_sha256": "590cc3916741326a36638c5503157dacfd270d6c498bc88add287e9d544c65ff"
+    },
+    {
+      "adapter": "freqflow",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "6610a431008f9ba65025f44647e6d56c67f4221d2ea430c3f0364cc3a70e2994",
+        "integrator_config_hash": "867a6a48584515eddb27b10fbc647c35acda9e01788a784bc0fe5dd963380569"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "54de11fb320571a62b647eb1471841e493b649da24aafbfcc7a311f4c772baca",
+        "channels": [
+          "class_cond",
+          "freq_magnitude",
+          "image_latent"
+        ],
+        "provenance": [
+          "freqflow@v1",
+          "freqflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "e6718f593575dbffe7e0010b4a5063b08280476902b3a9a4543f47d621525ed3",
+        "finite": true
+      },
+      "output_sha256": "8c0ebc0e346f8685e84875a54470478b7b8e8830ef7227a38411937f1f2798fa"
+    },
+    {
+      "adapter": "freqflow",
+      "adapter_version": "",
+      "seed": 41,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "ab137d864f8c63ffe9349d5488c09f16711fd0a96ff2328d04ad063842084964",
+        "integrator_config_hash": "3d0f07b20ef7ca6b6962201e5678482cddbbfcc43af42e88e43b6bc3b1f4e96c"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b41",
+        "sample_id": "d4-s41",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "84f7cb474e7443c2ec07f8d0ec89e6936529dc7d11a285d22ceddb0c7d62296e",
+        "channels": [
+          "class_cond",
+          "freq_magnitude",
+          "image_latent"
+        ],
+        "provenance": [
+          "freqflow@v1",
+          "freqflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "7edcd146ed9e03ddb7dabbd1553cc886ec3d9587dfd7f20602851239e89c7fa2",
+        "finite": true
+      },
+      "output_sha256": "2e608bb919bf2cb37431a80ff6a6e44ecfd976a13b0fbee4fa2196745b3b1ee2"
+    },
+    {
+      "adapter": "freqflow",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "886831aa2aff37ca175d06d8587f23ecb1e1a9f6c4d97b29ff13eef8f653a87b",
+        "integrator_config_hash": "c7711474f9465ef6e00b1015e5435711e6bc8263d922300af32153956054d527"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "15e52aba3a5496d7030310dcfb4e5674f38c4bfd84d9f3e8fb5777719e00b634",
+        "channels": [
+          "class_cond",
+          "freq_magnitude",
+          "image_latent"
+        ],
+        "provenance": [
+          "freqflow@v1",
+          "freqflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "2949d58a1d5298cb2e4a0fd2b02ea3e5ca34029faa5d2a27f929e6f23618c00e",
+        "finite": true
+      },
+      "output_sha256": "f68623df1d74fb6a1db4337120620f613b39fbbe781a91626d78c13cb6d0b210"
+    },
+    {
+      "adapter": "freqflow",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "bb3992cfbb96dda52385e013e4580a776bd8b2ea7b7cfcdd8dc428484d872845",
+        "integrator_config_hash": "48e61ab37093e79f9aabd23aa231d2f777f764748f97eddaf6e547ddcad2e1cc"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "47ae40d5b639d34edf955cec8d60eaf103a386862c3fdcffcc5447c7d893468d",
+        "channels": [
+          "class_cond",
+          "freq_magnitude",
+          "image_latent"
+        ],
+        "provenance": [
+          "freqflow@v1",
+          "freqflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "36bb2d1f244a30b4f4ee91f0db1ea7405108237a6d235e003612cfd6d37cc8e9",
+        "finite": true
+      },
+      "output_sha256": "1ce65e5c4a215d0f29b8f7a45a54882bf2f7a5438d8a886dd45f8b33db475498"
+    },
+    {
+      "adapter": "freqflow",
+      "adapter_version": "",
+      "seed": 42,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "0e6c051f10ce184a7cc1e1b330679f5f39d2f724b5a53589ac0ac8772f6b3f4a",
+        "integrator_config_hash": "c52175f4b86e7a4e9a13b0b50a5a8a0d68f287902343b350f234915b763fa065"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b42",
+        "sample_id": "d4-s42",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "591974d999a6d299de478d96a9c82c6db03ef87eb1fe181c8b81cfe968aa0114",
+        "channels": [
+          "class_cond",
+          "freq_magnitude",
+          "image_latent"
+        ],
+        "provenance": [
+          "freqflow@v1",
+          "freqflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "298d3ad02e0ec09d9c6e26d5daa9af2dccaf532112451783b0637cd44e7c809f",
+        "finite": true
+      },
+      "output_sha256": "01ec92b38d6e9811a15c42bab7b2590ec68fc9f2a99167bc7cdac07f8d612f21"
+    },
+    {
+      "adapter": "freqflow",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 5,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 5,
+        "accept_rate": 1.0,
+        "native_state_digest": "1f25c67bd545f0518c06ffe218889f06f5b0e87ffc16399f88a2e4ece9bb030b",
+        "integrator_config_hash": "f5d79ce1f64722ca1a825907e380fa813eb758093f22443969f52803857e87dc"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "d4576a881822f318e8dff2a72c2e1e4c7bb45bbd19bda4d58b31647c45149f4f",
+        "channels": [
+          "class_cond",
+          "freq_magnitude",
+          "image_latent"
+        ],
+        "provenance": [
+          "freqflow@v1",
+          "freqflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          6,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "3e17da455d0c9c51a562904076a78876b10d6624718cb72327d558421254e651",
+        "finite": true
+      },
+      "output_sha256": "d0b7a8ecb20d3d2ec1d7e98744e0ae9c3ed8286abfd233c8cf313d92506e6a22"
+    },
+    {
+      "adapter": "freqflow",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 10,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 10,
+        "accept_rate": 1.0,
+        "native_state_digest": "f838777c854aed115bc91ea05fb95b778588dc6019cc21270c42e9a14ccb709f",
+        "integrator_config_hash": "a0b94457d4043ef73795527e04fbb87981227fb11cb7a3d98f698e1791abaa7d"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "d817e165d7e07f380b674bb0e927b7065a9da42dc757f25b27ddb2908f7e7146",
+        "channels": [
+          "class_cond",
+          "freq_magnitude",
+          "image_latent"
+        ],
+        "provenance": [
+          "freqflow@v1",
+          "freqflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          11,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "4236f7736ea79f94f45acf8f9cf78f22175fb5fd5475b776fda2f0b09e3d1843",
+        "finite": true
+      },
+      "output_sha256": "25f6ee2008f49f0e7015258372da678bb4462de5c84df2a0d9fe6ef83f55e11a"
+    },
+    {
+      "adapter": "freqflow",
+      "adapter_version": "",
+      "seed": 43,
+      "nfe": 50,
+      "input_id": {
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43"
+      },
+      "integrator": "euler",
+      "trace": {
+        "kind": "integrator_trace",
+        "steps": 50,
+        "accept_rate": 1.0,
+        "native_state_digest": "a3c256a68f242d6d299bda29e1c5ff2b867ef0cf3e626b3f364048f11dd4c119",
+        "integrator_config_hash": "89d6cece4d259dd4a2cdd04e9f808f195fc313616928202014e3feac4a0d67bc"
+      },
+      "endpoint": {
+        "kind": "state_bundle",
+        "batch_id": "d4-b43",
+        "sample_id": "d4-s43",
+        "reference_frame": "world",
+        "normalization": "none",
+        "source_round": 1,
+        "detach_proof": true,
+        "native_state_digest": "5113c97d2b4d50fd99dd86efaf25ab2a713b570d4140482246ec657210d49c40",
+        "channels": [
+          "class_cond",
+          "freq_magnitude",
+          "image_latent"
+        ],
+        "provenance": [
+          "freqflow@v1",
+          "freqflow_observed"
+        ]
+      },
+      "trajectory": {
+        "present": true,
+        "kind": "ndarray",
+        "shape": [
+          51,
+          4,
+          32,
+          32
+        ],
+        "dtype": "float64",
+        "sha256": "6720572681703720dbf8c4f45f1bf800473cc4f1f7aa2c63126ea9539c70481d",
+        "finite": true
+      },
+      "output_sha256": "fe645e914aba17665f09a4ce5dc9069e3a35f71c6e4522b20d7932298a9321b4"
+    }
+  ]
+}
