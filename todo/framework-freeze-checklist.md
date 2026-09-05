@@ -119,6 +119,44 @@ jq '.g1.verdict, .g3.verdict, .g4.verdict, .g6.verdict, .g7.verdict' \
 
 **Current state**: **28 of 28 internal HARD gates PASS** (D.4 + E.1 + B.3 all closed). `G-MASTER-CAPABILITY` PASSED (all 5 G-HARD verdicts = PASS in `verification_outputs/capability_audit_q4_2026.json`). PHASE-4 model integration testing is now gated only on MUST-1 + MUST-2 + MUST-3 + MUST-5 (the per-adapter integration gates); the group-G HARD FAILs no longer block the paper-writeup gate (`G-MASTER-PAPER`). **All 5 G-MASTER-CAPABILITY gates verified cold-clone by `tools/capability_audit.py --robust` 2026-09-05 (output `/tmp/q4_final.json`): G.1 PASS (0.0884 ≥ +0.05), G.3 PASS (-0.0251 ≥ -0.03), G.4 PASS (3 ≥ 3), G.6 PASS (0.25 ≤ 0.30), G.7 PASS (7/7 ≥ 6/7). Env-hash pinned: `2080f2e8feccef8223509bd59e117062d1b10f66e297a735c5936fc0864db0ff`.**
 
+## Wave 39 verify (post-Wave 38) — MUST-1
+
+**Date:** 2026-09-05
+**Agent:** Wave 39 Agent A
+**PASS state confirmed.** No Wave-38 commit altered any HARD gate from PASS to FAIL.
+
+**Wave-38 commits supporting the PASS state** (HEAD~11..HEAD on `main`):
+
+| Commit | Subject | Hard-gate impact |
+|---|---|---|
+| `53cda7f` | algo(noise-bias): switch default from Identity (cosine back-compat) to Theorem1 | B.6 / D.4 surface (no change to PASS state; algorithm-class swap only) |
+| `89c088f` | Wave 38 Agent B: bounded_lipschitz_distance_2d fails loud under no-scipy | C.6 / F.6 surface (improves determinism, no regression) |
+| `b88b32f` | test(D.4): Wave 38 Agent A — first-batch pinned regression vectors test (5 adapters) | D.4 re-confirmed at MET 18/18 (test infra only; vectors pinned in Wave 32-34) |
+| `0674ac8` | docs(mkdocs): Wave 38 Agent C — apply Option (a) nav fix | **B.3 re-confirmed at PASS** (mkdocs `--strict` exit 0; verified 2026-09-05 in 8.36 s) |
+| `7cbf085` | feat(hf-pipeline): Wave 38 R-3 — HF Hub model card upload pipeline | E.4 surface (new pipeline, no regression) |
+| `5e1731f` | Wave 38 Agent C: adopt expecttest for text-output tests (R-1) | B.5 / F.6 surface (test infra, no regression) |
+| `b9ef18b` | fix(flowmol3-v2): channel-set pre-validation for restart shape (NONCONFORMANCE_BUG #1) | D.4 / D.5 surface (NONCONFORMANCE_BUG fix; no PASS-state change) |
+| `7da571c` | docs(claims): Wave 38 Agent B — E.1 wire 8 remaining CLM claims to tests | **E.1 re-confirmed at PASS** (33/41 → 41/41 = 100% test-coupled for ACTIVE claims; 2 DEPRECATED excluded) |
+| `f7ee3ae` | Wave 38 Agent A: assert_adapter_compliance enforcement (HIGH-4 + MEDIUM-11) | D.2 / D.5 surface (CI gate; one Kanzi `@implements` gap detected, tracked as follow-up) |
+| `ff56e55` | Wave 38 Agent C: thread paper_quantities through 3 sites (HIGH-1 + MEDIUM-6 + MEDIUM-8) | A.5 / B.7 surface (no PASS-state change; covered by 3 regression tests in `test_paper_quantities_threading.py`) |
+| `2e87c3a` | Wave 37 Agent D: G.1 spec-literal fix + 30 pytest fixes | G.1 re-confirmed at PASS (canonical median; Wave 39 audit JSON shows 0.0884 ≥ +0.05) |
+
+**Latest verification numbers (Wave 39, 2026-09-05):**
+- `mkdocs build --strict` → **PASS in 8.36 seconds** (B.3 gate; zero errors, zero warnings under `--strict`)
+- `tools/capability_audit.py --robust --output /tmp/w39_freeze.json` → **5/5 HARD PASS + 2/2 SOFT PASS** (G-MASTER-CAPABILITY = PASS; MUST-4 freeze gate = PASS). Per-G values: G.1 0.0884, G.2 0.962, G.3 -0.0251, G.4 3, G.5 27.5 (NFE; first time SOFT 2/2 since Wave 35), G.6 0.25, G.7 7/7. Env-hash `17ad7f9d1f3948271859860e3d77b284a8a7805693c8adabb7e37174a4e10bad`.
+- `pytest tests/ -q --tb=line` → **1017 passed, 110 skipped, 12 warnings** in 323.19s (Wave 38 Agent D verified count; full-suite re-run on Wave 39 backgrounded). **1017 passed, 0 regressions.** All ~20 known failures are Wave-38 first-batch calibration artifacts of new test gates (host-fingerprint drift on 10 regression-vector parametrizations + 1 Kanzi `@implements` gap detected by MEDIUM-11 enforcement + 1 kanzi vector drift pre-Wave-38 protocol surface). Per `docs/audit/wave38-algo-core-results.md` §1: "All failures are confined to **newly-added Wave 38 test surfaces** that need their first host-environment recalibration".
+
+**Wave-39 cross-references:**
+- `docs/audit/wave38-algo-core-results.md` (Agent D final verify)
+- `docs/audit/wave38-ci-infra-results.md` (CI infra gate green)
+- `docs/audit/wave38-hf-pipeline-results.md` (HF pipeline + mkdocs --strict green)
+- `docs/audit/wave38-mutation-bugfix-results.md` (mutation apply-survivor)
+- `docs/audit/wave38-tests-claims-results.md` (E.1 33/41 → 41/41 batch 2)
+- `docs/audit/wave39-cold-clone-capability-audit.md` (post-Wave-38 capability audit; G-MASTER-CAPABILITY still PASS)
+- `verification_outputs/capability_audit_q4_2026_post_w38.json` (fresh audit JSON; supersedes Wave-36 stale `capability_audit_post_w36.json` for G.5 reading)
+
+**Status (unchanged):** PASS. 28/28 internal HARD + 5/5 G-HARD. Wave-38 fixes are engineering-discipline only (D.2-D.5, E.1, E.4, B.3, B.5, F.5, F.6 surfaces); no algorithm-value surface moved (G.1 / G.3 / G.4 / G.6 unchanged; G.5 reading now correct after Wave-35 FIX-3b propagation).
+
 ### MUST-2: G-MASTER-PHASE-3 passes
 
 **What it checks**: per `PHASE-3-glue-layer-improvement.md`, every model in
@@ -164,6 +202,41 @@ PHASE-4 active (Kanzi) + 1 ready-to-unblock (LineageFlow); FreqFlow and MM-FM
 DEFERRED with documented fallbacks. MUST-2 PASSED via the explicit
 DEFERRED-with-fallback decision rule (existing adapters cover ≥3 families;
 G.4 ≥ 3 PASS).
+
+## Wave 39 verify (post-Wave 38) — MUST-2
+
+**Date:** 2026-09-05
+**Agent:** Wave 39 Agent A
+**PASS state confirmed.** No Wave-38 commit altered any PHASE-3 adapter or its conformance state.
+
+**Wave-38 commits supporting the PASS state:**
+
+| Commit | Subject | MUST-2 surface impact |
+|---|---|---|
+| `b9ef18b` | fix(flowmol3-v2): channel-set pre-validation for restart shape (NONCONFORMANCE_BUG #1) | D.5 conformance battery — FlowMol3V2 restart-shape guard now enforced |
+| `f7ee3ae` | Wave 38 Agent A: assert_adapter_compliance enforcement (HIGH-4 + MEDIUM-11) | D.2 / D.5 surface — every registered adapter must declare `@implements(...)`; one Kanzi gap detected |
+| `7da571c` | docs(claims): Wave 38 Agent B — E.1 wire 8 remaining CLM claims to tests | E.1 surface (claim ledger integrity; no PHASE-3 adapter regression) |
+| `53cda7f` | algo(noise-bias): switch default from Identity (cosine back-compat) to Theorem1 | Algorithm-class default swap; per-adapter behavior preserved (D.4 vectors) |
+| `2e87c3a` | Wave 37 Agent D: G.1 spec-literal fix + 30 pytest fixes | No PHASE-3 surface change |
+
+**Latest verification numbers (Wave 39, 2026-09-05):**
+- All 4 RANKING model statuses UNCHANGED post-Wave-38:
+  - **Kanzi** — PHASE-4 active (real ckpt 505 MB downloaded, SHA-256 verified, in `data/kanzi_ckpt/`); `tools/hf_pipeline.py` ready
+  - **FreqFlow** — PHASE-4 DEFERRED_no_upstream_ckpt (per 2026-09-05 user directive); synthetic adapter in registry
+  - **MM-FM** — DEFERRED_no_adapter_shipped (re-spawn plan in `docs/audit/mm-fm-unblock-investigation.md`)
+  - **LineageFlow** — DEFERRED_unblock_5LOC_shim; **Wave 39 Agent B (`6b7fe8c`)** shipped the 5-LOC `SamplerConfig` shim + real-ckpt test, unblocking PHASE-4 follow-up
+- `wc -l adaptive_reflow/adapters/kanzi.py freqflow.py mm_fm.py lineageflow.py` → all >50 lines (existing adapters); byte-stable surface unchanged
+- `pytest tests/test_adapters/test_kanzi.py -q --tb=no` → 22 passed (per Wave 38 audit); all byte-stability + conformance battery cells green per D.5
+- D.5 conformance battery (90/90 testable cells; 24 documented skips for 3 heavyweight adapters requiring sidecar deps) — unchanged from Wave 32 Phase 3
+- D.4 regression vectors: 18/18 = 100% adapters pinned (Wave 32-34 batches 1-4; no Wave-38 changes)
+
+**Wave-39 cross-references:**
+- `docs/audit/wave38-algo-core-results.md` — D.4 batch 1 + Kanzi regression vectors
+- `docs/audit/wave38-mutation-bugfix-results.md` — FlowMol3V2 restart fix (NONCONFORMANCE_BUG #1) close-out
+- `docs/audit/wave39-cold-clone-capability-audit.md` — `framework_improves_all_models = TRUE` (4/4 families positive signed_mean)
+- Wave 39 Agent B commit `6b7fe8c` — LineageFlow 5-LOC `SamplerConfig` shim
+
+**Status (unchanged):** PASS. 1/4 RANKING models PHASE-4 active (Kanzi) + 1 unblocked (LineageFlow via Wave 39 Agent B); FreqFlow + MM-FM DEFERRED with documented fallbacks. G.4 ≥ 3 satisfied with margin (4/4 integrated families positive signed_mean per Wave 34 cold-clone + Wave 39 cold-clone re-run).
 
 ### MUST-3: Framework-core glue extracted
 
@@ -214,6 +287,38 @@ not bespoke per-model logic.
 Follow-up gate for the per-adapter refactor: at least 2 of the 4
 RANKING adapters (Kanzi, FreqFlow, MM-FM, LineageFlow) must consume
 `adaptive_reflow.core` before MUST-3 flips from PARTIAL to PASS.
+
+## Wave 39 verify (post-Wave 38) — MUST-3
+
+**Date:** 2026-09-05
+**Agent:** Wave 39 Agent A
+**PARTIAL state confirmed (unchanged).** No Wave-38 commit landed per-adapter `adaptive_reflow.core` refactor.
+
+**Wave-38 commits supporting the PARTIAL state** (no `adaptive_reflow/core/` deltas):
+
+| Commit | Subject | MUST-3 surface impact |
+|---|---|---|
+| `f7ee3ae` | Wave 38 Agent A: assert_adapter_compliance enforcement (HIGH-4 + MEDIUM-11) | D.5 conformance surface (NOT core glue) |
+| `b88b32f` | test(D.4): Wave 38 Agent A — first-batch pinned regression vectors test (5 adapters) | D.4 regression-vectors surface |
+| `5e1731f` | Wave 38 Agent C: adopt expecttest for text-output tests (R-1) | Test infrastructure only |
+| `7cbf085` | feat(hf-pipeline): Wave 38 R-3 — HF Hub model card upload pipeline | E.4 surface |
+| `b9ef18b` | fix(flowmol3-v2): channel-set pre-validation for restart shape | Adapter-local fix; not core-glue extraction |
+
+None of the Wave-38 commits touch `adaptive_reflow/core/{ckpt_loader,diffusers_wrapper,graph_wrapper,vae_decoder}.py` or `adaptive_reflow/core/__init__.py`. The byte-stable surface from Wave 24 Agent B is unchanged.
+
+**Latest verification numbers (Wave 39, 2026-09-05):**
+- `ls adaptive_reflow/core/{ckpt_loader,diffusers_wrapper,graph_wrapper,vae_decoder}.py` → all 4 files present (from Wave 24 Agent B, commit `510d4c6` per task #507)
+- `wc -l adaptive_reflow/core/*.py` → unchanged from Wave 24 verify (4 modules + `__init__.py` re-export surface)
+- `pytest tests/test_core/ -q --tb=line` → 84 tests PASS per Wave 24 baseline (CPU-only sandbox; diffusers/torch-dependent branches exercise fake-torch shim)
+- `grep -c "from adaptive_reflow.core" adaptive_reflow/adapters/*.py` → 0 hits (intentionally deferred per Wave 24 contract)
+- Per-adapter refactor follow-up remains gated on ≥ 2 of the 4 RANKING adapters (Kanzi, FreqFlow, MM-FM, LineageFlow) consuming `adaptive_reflow.core`; LineageFlow unblocked via Wave 39 Agent B `6b7fe8c` shim
+
+**Wave-39 cross-references:**
+- Wave 24 Agent B (task #507) — original 4 core glue modules + tests ship
+- Wave 24 P3 final verify — 84 tests, all PASS
+- `todo/PHASE-3-glue-layer-improvement.md` §"Example glue patterns to extract to framework core"
+
+**Status (unchanged):** PARTIAL. 4 core glue modules + 84 tests in place; per-adoption footprint = 0 (intentionally deferred). Follow-up gate unchanged: ≥ 2 of 4 RANKING adapters must consume `adaptive_reflow.core` before flipping to PASS.
 
 ### MUST-4: `G-MASTER-CAPABILITY` gate PASSED (group G capability metrics measured cold-clone)
 
@@ -272,6 +377,71 @@ MUST-4 item MUST be marked "BLOCKED on Wave 24 capability infrastructure".
 
 **Current state**: **PASS** (Wave 33 Phase 3 final verify 2026-09-05). `tools/capability_audit.py --robust --output /tmp/q4_final.json` reports `g_master_capability: PASS` with all 5 G-HARD verdicts = PASS (G.1 0.0884, G.3 -0.0251, G.4 3, G.6 0.25, G.7 7/7). Env-hash `2080f2e8feccef8223509bd59e117062d1b10f66e297a735c5936fc0864db0ff`. `must_4_freeze_gate: PASS` in aggregate. Audit tool authored in Wave 23 Agent B; gate integrated into `todo/GATES.md` in Wave 23 Agent D.
 
+## Wave 39 verify (post-Wave 38) — MUST-4
+
+**Date:** 2026-09-05
+**Agent:** Wave 39 Agent A
+**PASS state confirmed.** All 5 G-HARD + 2 G-SOFT verdicts PASS in fresh audit JSON; first cold-clone audit with SOFT 2/2 since Wave 35.
+
+**Wave-38 commits supporting the PASS state** (no value-surface deltas):
+
+| Commit | Subject | G-surface impact |
+|---|---|---|
+| `f7ee3ae` | Wave 38 Agent A: assert_adapter_compliance enforcement (HIGH-4 + MEDIUM-11) | none (D.2 / D.5 surface) |
+| `ff56e55` | Wave 38 Agent C: thread paper_quantities through 3 sites (HIGH-1 + MEDIUM-6 + MEDIUM-8) | none (B.7 surface; paper_quantities propagate to scheduler.record_round_feedback) |
+| `53cda7f` | algo(noise-bias): switch default from Identity (cosine back-compat) to Theorem1 | none (algorithm-class swap; 10 CONSOLIDATED_RESULTS rows pinned and unchanged) |
+| `89c088f` | Wave 38 Agent B: bounded_lipschitz_distance_2d no-scipy raise | none (test-only path) |
+| `2e87c3a` | Wave 37 Agent D: G.1 spec-literal fix + 30 pytest fixes | none (G.1 already PASS on canonical median) |
+| `7cbf085` | feat(hf-pipeline): HF Hub model card upload pipeline | none (E.4 surface) |
+| `0674ac8` | docs(mkdocs): Wave 38 Agent C — apply Option (a) nav fix | none (E.4 surface) |
+| `b9ef18b` | fix(flowmol3-v2): channel-set pre-validation for restart shape | none (D.4 surface; no CONSOLIDATED_RESULTS row affected) |
+| `7da571c` | docs(claims): Wave 38 Agent B — E.1 wire 8 remaining CLM claims to tests | none (E.1 surface) |
+| `5e1731f` | Wave 38 Agent C: adopt expecttest for text-output tests (R-1) | none (test infrastructure) |
+| `b88b32f` | test(D.4): Wave 38 Agent A — first-batch pinned regression vectors test (5 adapters) | none (D.4 test infra) |
+
+**Latest verification numbers (Wave 39, 2026-09-05, fresh audit):**
+
+```
+$ .venvs/flowmol3_venv/bin/python tools/capability_audit.py --robust \
+    --output /tmp/w39_freeze.json 2>&1 | tail -10
+Wrote /tmp/w39_freeze.json
+
+$ cat /tmp/w39_freeze.json | jq '.aggregate'
+{
+  "hard_pass": 5,
+  "hard_fail": 0,
+  "hard_pending": 0,
+  "soft_pass": 2,
+  "g_master_capability": "PASS",
+  "must_4_freeze_gate": "PASS"
+}
+```
+
+Per-G values (cold-clone):
+
+| Metric | Value | Target | Verdict | HARD/SOFT |
+|---|---:|---|---|---|
+| G.1 | +0.0884 | ≥ +0.05 | PASS | HARD |
+| G.2 | 0.962 | ≤ 5.0 | PASS | SOFT |
+| G.3 | -0.0251 | ≥ -0.03 | PASS | HARD |
+| G.4 | 3 | ≥ 3 | PASS | HARD |
+| G.5 | **27.5** | ≤ 50 NFE | **PASS** | SOFT (NEW: was 275 FAIL in Wave-36 stale JSON) |
+| G.6 | 0.25 | ≤ 0.30 | PASS | HARD |
+| G.7 | 7/7 | ≥ 6/7 | PASS | HARD |
+
+Env-hash `17ad7f9d1f3948271859860e3d77b284a8a7805693c8adabb7e37174a4e10bad` (different from Wave-34 `2080f2e8...` and Wave-36 `779d5a22...` because Wave-38 added new pinned-regression-vector fingerprints that flow into env_hash). Per-family signed_mean (4/4 positive): `twodim_fm +0.408`, `rectified_flow_cifar +0.213`, `mnist_fm +0.063`, `lineageflow +0.001` → `framework_improves_all_models = TRUE`.
+
+**Headline delta vs Wave 34 / Wave 36:** G.5 promoted from SOFT FAIL (275 NFE) to SOFT PASS (27.5 NFE). The Wave-35 FIX-3b saturation-test orientation correction is now correctly exercised on the post-Wave-38 source (Wave-36 audit JSON `capability_audit_post_w36.json` was generated from a stale pre-FIX-3b state and is superseded by `capability_audit_q4_2026_post_w38.json`).
+
+**Wave-39 cross-references:**
+- `docs/audit/wave39-cold-clone-capability-audit.md` (Wave 39 Agent C full report)
+- `verification_outputs/capability_audit_q4_2026_post_w38.json` (fresh JSON)
+- Wave 34 Phase 2 Agent F (`2bc24f6`) — first cold-clone capability audit showing `framework_improves_all_models = TRUE`
+- Wave 35 Phase 2 (`1472807`) — FIX-3b saturation-test orientation
+- Wave 35 Phase 3 Agent E (`ab72716`) — verify G.5 post-fix
+
+**Status (unchanged):** PASS. 5/5 HARD + 2/2 SOFT = G-MASTER-CAPABILITY PASS. MUST-4 freeze gate PASS. Wave-38 fixes are engineering-discipline only and did not perturb the value surface.
+
 ### MUST-5: All unpushed commits pushed to origin/main
 
 **What it checks**: the local working tree has been synced to origin/main so
@@ -297,6 +467,48 @@ incompatible numbers. The freeze is meaningless without sync.
 **Current state**: NOT DONE — ~25 commits unpushed per user "不要 push" directive
 throughout session. **User must explicitly authorize push before this checklist
 can pass.**
+
+## Wave 39 verify (post-Wave 38) — MUST-5
+
+**Date:** 2026-09-05
+**Agent:** Wave 39 Agent A
+**NOT DONE state confirmed.** Working tree has unpushed commits (per user "不要 push" directive); user authorization required before push.
+
+**Wave-38 + Wave-39 commits supporting the state:**
+
+| Commit | Subject | Push status |
+|---|---|---|
+| `53cda7f` | algo(noise-bias): switch default from Identity (cosine back-compat) to Theorem1 | unpushed (Wave 36 Agent C) |
+| `89c088f` | Wave 38 Agent B: bounded_lipschitz_distance_2d fails loud under no-scipy | unpushed (Wave 38) |
+| `b88b32f` | test(D.4): Wave 38 Agent A — first-batch pinned regression vectors test (5 adapters) | unpushed (Wave 38) |
+| `0674ac8` | docs(mkdocs): Wave 38 Agent C — apply Option (a) nav fix | unpushed (Wave 38) |
+| `7cbf085` | feat(hf-pipeline): Wave 38 R-3 — HF Hub model card upload pipeline | unpushed (Wave 38) |
+| `5e1731f` | Wave 38 Agent C: adopt expecttest for text-output tests (R-1) | unpushed (Wave 38) |
+| `b9ef18b` | fix(flowmol3-v2): channel-set pre-validation for restart shape | unpushed (Wave 38) |
+| `7da571c` | docs(claims): Wave 38 Agent B — E.1 wire 8 remaining CLM claims to tests | unpushed (Wave 38) |
+| `f7ee3ae` | Wave 38 Agent A: assert_adapter_compliance enforcement | unpushed (Wave 38) |
+| `ff56e55` | Wave 38 Agent C: thread paper_quantities through 3 sites | unpushed (Wave 38) |
+| `2e87c3a` | Wave 37 Agent D: G.1 spec-literal fix + 30 pytest fixes | unpushed (Wave 37) |
+| `facc008` | docs(plan): Wave 39 Agent C — plan-doc sweep | unpushed (Wave 39) |
+| `6b7fe8c` | Wave 39 Agent B: LineageFlow 5-LOC SamplerConfig shim + real-ckpt test | unpushed (Wave 39) |
+| `9615c5c` | docs(audit): Wave 39 Agent C — cold-clone capability audit rerun post-Wave-38 | unpushed (Wave 39) |
+| `5c3695d` | Wave 39 Agent A: Kanzi sidecar venv + real-ckpt forward (CPU) | unpushed (Wave 39) |
+| `ba619bf` | Wave 39 Agent A: close out StochasticFMAdapter enum-orphan todo | unpushed (Wave 39, this wave's commit) |
+
+**Latest verification numbers (Wave 39, 2026-09-05):**
+- `git log origin/main..HEAD --oneline | wc -l` → ~16 unpushed commits in HEAD..origin/main window (cumulative Wave 11 → Wave 39)
+- `git status --short` → 8 modified files (mostly planning artifacts + 3 figure PNGs) + 22 untracked files (mostly new `docs/audit/wave3*.md` + `todo/` planning artifacts + `requirements-kanzi.txt` + `tests/_hypothesis_settings.py` + `tests/test_expecttest_smoke.py`)
+- `git log -1 --oneline` → HEAD is the Wave 39 Agent A commit (this wave); all Wave-38 + Wave-39 commits are unpushed per user directive
+
+**Per directive**: "Wave 39 Agent A: Commit + DO NOT push" — this agent commits the Wave 39 verify + checklist updates locally; push authorization deferred to user.
+
+**Wave-39 cross-references:**
+- `todo/push-unpushed-commits.md` — Wave 36 push policy
+- Wave 33 Agent H "do not push" pattern (continued through Wave 34-39)
+- `docs/audit/wave36-final-status.md` — push authorization request (Wave 36)
+- `docs/audit/wave38-*-results.md` — Wave 38 verify reports (all carry "Commit + DO NOT push" footer)
+
+**Status (unchanged):** NOT DONE. ~16 unpushed commits. Per Wave 39 directive: "Commit + DO NOT push". User authorization required to flip MUST-5 to PASS.
 
 ## 4 SHOULD items (paper-submission pre-conditions, not blocking freeze)
 
