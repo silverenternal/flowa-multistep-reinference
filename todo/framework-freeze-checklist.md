@@ -320,6 +320,65 @@ None of the Wave-38 commits touch `adaptive_reflow/core/{ckpt_loader,diffusers_w
 
 **Status (unchanged):** PARTIAL. 4 core glue modules + 84 tests in place; per-adoption footprint = 0 (intentionally deferred). Follow-up gate unchanged: ≥ 2 of 4 RANKING adapters must consume `adaptive_reflow.core` before flipping to PASS.
 
+## Wave 43 verify (post-Wave 42 D.1 shrink) — MUST-3
+
+**Date:** 2026-09-05
+**Agent:** Wave 43 Agent A (WF2)
+**PARTIAL state maintained.** Wave 42's 4 D.1-shrink commits landed cleanly (no pytest regressions per `wave43-pytest-pollution-fix.md`), but the resulting per-adapter footprint uses the **older** P2-9 helper (`adaptive_reflow.adapters._adapter_common`) rather than the **new** framework-core glue (`adaptive_reflow/core/`). The MUST-3 acceptance gate ("≥5 adapters import from `adaptive_reflow/core/`") is therefore **not met** as of end-of-Wave-43.
+
+**Wave-42 D.1-shrink commit impact on MUST-3:**
+
+| Commit | Adapter | Adopted `adaptive_reflow/core/`? | Adopted `_adapter_common`? |
+|---|---|---|---|
+| `491eca3` | mnist_fm | No | Yes |
+| `09c08c0` | twodim_fm | No | Yes |
+| `1d3cd2f` | rectified_flow_cifar | No | Yes |
+| `16c8c3a` (Wave 40 Agent B / Wave 42 Agent D partial) | self_flow | **Yes** (ckpt_loader + diffusers_wrapper) | Yes |
+| `7d18e33` (Wave 41 Agent B) | flowmol3 | **Yes** (graph_wrapper) | (already on core from Wave 24) |
+
+**Per-adapter LOC delta (verified):**
+
+| Adapter | Before Wave 42 | After Wave 42 | Delta |
+|---|---|---|---|
+| mnist_fm | 957 | 924 | **−33** |
+| twodim_fm | 1472 | 1466 | **−6** |
+| rectified_flow_cifar | 1356 | 1317 | **−39** |
+| self_flow | 1449 | 1488 | **+39** (executable ~−15, docstring +65; honest accounting per `wave42-self-flow-shrink.md` §5) |
+
+Net executable code reduction across 4 Wave 42 commits: ~−93 LOC.
+3/4 adapters shrunk in total file LOC; self_flow grew because the
+refactor rationale docstring + framework-core call-site commentary
+outpaced the inlined-glue removal.
+
+**Current `adaptive_reflow/core/` adoption count = 2 adapters** (flowmol3 + self_flow).
+MUST-3 acceptance gate requires **≥5**. **Gate not flipped.**
+
+**Pytest state post-Wave 42 (verified 2026-09-05):**
+- `tests/test_adapters/` full suite: **976 passed, 77 skipped, 0 failed**
+  (first run observed 1 flaky `test_heun_wallclock_within_factor_of_euler` failure; reruns pass 3/3)
+- 4 Wave-42 shrunk adapter test files: **85 passed** (mnist_fm 31 + twodim_fm 20 + rectified_flow_cifar 26 + self_flow 8)
+- All 18 D.4 regression vectors intact
+
+**Why the gate didn't flip (and what would):** The Wave 42 agents
+prioritized the lighter-touch `_adapter_common` extraction over the
+deeper `core/` refactor (likely because D.4 regression vectors block
+adoption of `core.diffusers_wrapper.DiffusersForwardWrapper` in
+mnist_fm / twodim_fm / rectified_flow_cifar). A future "Wave 44
+MUST-3 close" agent could apply the same
+`core.ckpt_loader.resolve_candidate_paths` +
+`load_state_dict_strict_safe` refactor pattern (documented in
+`wave42-self-flow-shrink.md` §2 + §4) to the 3 lightweight adapters,
+lifting the count from 2 to 5 and flipping MUST-3 to PASS. That work
+is explicitly out of Wave 43 scope.
+
+**Wave-43 cross-references:**
+- `docs/audit/wave43-pytest-pollution-fix.md` — 0 real pytest pollution; flaky wallclock test confirmed
+- `docs/audit/wave43-must3-finalize.md` — full honest accounting
+- `docs/audit/wave42-self-flow-shrink.md` — the refactor template Wave 44 should reuse
+- `docs/audit/wave41-flowmol3-shrink.md` — flowmol3's core/ adoption pattern
+
+**Status (unchanged):** PARTIAL. 4 core glue modules + 84 tests + 2 per-adapter consumers (flowmol3, self_flow). 3 more adapters need `core/` adoption to flip MUST-3 to PASS.
+
 ### MUST-4: `G-MASTER-CAPABILITY` gate PASSED (group G capability metrics measured cold-clone)
 
 **What it checks**: per `framework-capability-metrics.md` and
