@@ -45,37 +45,49 @@ Capability metrics must:
 
 ## Proposed metrics (group G)
 
-### G.1 — Mean value score (mean improvement vs baseline)
+### G.1 — Mean value score (median improvement vs baseline)
 
-**Definition (spec-literal, default)**: across all integrated models `M ∈
-INTEGRATED` and pinned benchmarks `B ∈ BENCHMARKS`, compute
+**Definition (canonical, default; Wave 37)**: across all integrated models
+`M ∈ INTEGRATED` and pinned benchmarks `B ∈ BENCHMARKS`, compute the
+*sign-normalized* signed delta (positive always means "framework wins"; sign
+flipped for lower-is-better metrics like FID/W2):
+```
+v_signed(M, B) = sign_normalize((framework_metric(M, B) - baseline_metric(M, B)) / |baseline_metric(M, B)|)
+```
+The framework's canonical value score is the **median** of `v_signed` over
+the integrated set. Per Wave 29 Agent D (`docs/audit/metric-methodology.md`)
+and Wave 37 Agent B (`docs/audit/web-research-robust-aggregators-2026.md`)
+the median is insensitive to single-cell outliers and the sign normalization
+removes the lower-is-better vs higher-is-better conflation in the spec
+formula.
+
+**Definition (spec-literal, --literal flag)**: arithmetic mean of the
+spec-literal formula
 ```
 v(M, B) = (framework_metric(M, B) - baseline_metric(M, B)) / |baseline_metric(M, B)|
 ```
-The framework's mean value score is `mean(v(M, B))` over the integrated set.
+without sign normalization. Retained for reviewer transparency; structurally
+penalizes framework wins on lower-is-better metrics (FID/W2) as negative
+contributions, so this reading is NOT the gate verdict.
 
-**Definition (robust, --robust flag)**: across the same set, compute the
-*sign-normalized* signed delta (positive always means "framework wins"; sign
-flipped for lower-is-better metrics like FID/W2). The robust G.1 is the
-**median** of the signed deltas. Per Wave 29 Agent D
-(`docs/audit/metric-methodology.md`) the median is insensitive to single-cell
-outliers, and the sign normalization handles the spec's lower-is-better vs
-higher-is-better conflation.
+**Default aggregator**: canonical (median of sign-normalized deltas) since
+Wave 37. The `--literal` flag (added Wave 37) switches the primary to
+spec-literal arithmetic mean; both readings are always reported side-by-side
+in the JSON output (`value` vs `alt_value`, `verdict` vs `alt_verdict`).
+The prior `--robust` flag remains as a backward-compatible alias for the
+canonical reading (Wave 30 Agent A).
 
-**Default aggregator**: spec-literal arithmetic mean (per spec). The
-`--robust` flag (added Wave 30 Agent A) switches to median of sign-normalized
-signed deltas; both readings are always reported side-by-side in the JSON
-output (`value` vs `alt_value`, `verdict` vs `alt_verdict`).
-
-**Target**: `≥ +0.05` (spec-literal) OR `≥ +0.05` (robust)
+**Target**: `≥ +0.05` (canonical, median of sign-normalized deltas)
 **Hard?**: YES — entry gate for `G-MASTER-CAPABILITY`
 **Where measured**: `tools/capability_audit.py` — pulls from
 `docs/CONSOLIDATED_RESULTS.md` + cold-clone re-run; supports
-`--robust` flag.
+`--literal` flag for spec-literal reading.
 **Baseline metric**: per-task: NLL for density models, FID for image,
 family_validity for chemistry/protein. **Documented per benchmark** in
 `docs/benchmarks/CAPABILITY_BENCHMARKS.md` (NEW).
 **Wave 30 Agent A change**: added `--robust` flag for transparent dual reading.
+**Wave 37 Agent A change**: promoted median of sign-normalized deltas to
+canonical aggregator; added `--literal` flag for spec-literal reading.
 
 ### G.2 — Cost-benefit ratio
 

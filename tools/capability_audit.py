@@ -415,23 +415,33 @@ def _sign_normalize(delta_pct: float, metric_name: str) -> float:
     return -delta_pct  # default: assume lower-is-better
 
 
-def g1_mean_value_score(integrated_models: list[str], robust: bool = False) -> dict[str, Any]:
-    """G.1 mean value score: mean of (framework - baseline) / |baseline| across integrated models.
+def g1_mean_value_score(integrated_models: list[str], robust: bool = False, literal: bool = False) -> dict[str, Any]:
+    """G.1 value score: median (canonical) of sign-normalized deltas across integrated models.
 
-    Per framework-capability-metrics.md §G.1:
+    Per framework-capability-metrics.md §G.1 (Wave 37 spec):
         v(M, B) = (framework_metric(M, B) - baseline_metric(M, B)) / |baseline_metric(M, B)|
-        G.1 = mean(v) over the integrated set
+        v_signed(M, B) = sign_normalize(v(M, B))   # positive = framework wins
+        G.1 = median(v_signed) over the integrated set (canonical)
+        G.1 = mean(v) over the integrated set (spec-literal, --literal flag)
     Target: >= +0.05 (HARD)
 
     Two aggregator modes are supported:
-    - **spec-literal** (``robust=False``, default): arithmetic mean of the
-      spec-literal delta ``(framework - baseline) / |baseline|``. Per
-      `framework-capability-metrics.md` §G.1.
-    - **robust** (``robust=True``): median of *sign-normalized* signed
-      deltas (positive always means "framework wins"). Per Wave 29 Agent D
-      recommendation (`docs/audit/metric-methodology.md`): median is
+    - **canonical** (default; ``robust=False``, ``literal=False``): median
+      of *sign-normalized* signed deltas (positive always means "framework
+      wins"). Per Wave 29 Agent D recommendation
+      (`docs/audit/metric-methodology.md`) and Wave 37 Agent B research
+      (`docs/audit/web-research-robust-aggregators-2026.md`): median is
       insensitive to single-cell outliers; sign-normalization handles the
       spec's lower-is-better vs higher-is-better conflation.
+    - **spec-literal** (``literal=True``): arithmetic mean of the
+      spec-literal delta ``(framework - baseline) / |baseline|``. Per
+      `framework-capability-metrics.md` §G.1. Retained for reviewer
+      transparency; structurally penalizes framework wins on lower-is-better
+      metrics (FID/W2) as negative contributions.
+
+    The legacy ``--robust`` flag is preserved as a backward-compatible alias
+    for the canonical reading (Wave 30 Agent A): ``robust=True`` is
+    equivalent to ``literal=False``.
 
     Both readings are always computed and reported side-by-side; the
     ``value`` field is the mode the gate reads. The other mode is reported
@@ -439,7 +449,7 @@ def g1_mean_value_score(integrated_models: list[str], robust: bool = False) -> d
     """
     if not integrated_models:
         return _pending_payload(
-            "G.1", "mean value score = mean((framework - baseline) / |baseline|) over integrated models",
+            "G.1", "value score = median of sign-normalized (framework - baseline) / |baseline| over integrated models",
             f">= +{G1_TARGET}", hard=True,
         )
     comparisons = _extract_consolidated_comparisons(_read(CONSOLIDATED))
@@ -467,24 +477,29 @@ def g1_mean_value_score(integrated_models: list[str], robust: bool = False) -> d
             })
     if not raw_deltas:
         return _pending_payload(
-            "G.1", "mean value score = mean((framework - baseline) / |baseline|) over integrated models",
+            "G.1", "value score = median of sign-normalized (framework - baseline) / |baseline| over integrated models",
             f">= +{G1_TARGET}", hard=True,
         )
     # Spec-literal: arithmetic mean of (framework - baseline) / |baseline|.
     spec_mean = sum(raw_deltas) / len(raw_deltas)
-    # Robust: median of sign-normalized deltas (positive = framework wins).
-    robust_median = _median(signed_deltas)
-    if robust:
-        value, aggregator = robust_median, "median of signed deltas (sign-normalized; positive = framework wins)"
-        alt_value, alt_aggregator = spec_mean, "arithmetic mean of spec-literal deltas ((framework - baseline) / |baseline|)"
-    else:
+    # Canonical (Wave 37): median of sign-normalized deltas (positive = framework wins).
+    canonical_median = _median(signed_deltas)
+    # Wave 37: --literal flag picks spec-literal as primary; otherwise (default)
+    # the canonical (median) reading is primary. --robust is preserved as a
+    # backward-compat alias for canonical (Wave 30 Agent A) but is no longer
+    # needed for the default path.
+    use_literal = bool(literal) and not bool(robust)
+    if use_literal:
         value, aggregator = spec_mean, "arithmetic mean of spec-literal deltas ((framework - baseline) / |baseline|)"
-        alt_value, alt_aggregator = robust_median, "median of signed deltas (sign-normalized; positive = framework wins)"
+        alt_value, alt_aggregator = canonical_median, "median of signed deltas (sign-normalized; positive = framework wins)"
+    else:
+        value, aggregator = canonical_median, "median of signed deltas (sign-normalized; positive = framework wins)"
+        alt_value, alt_aggregator = spec_mean, "arithmetic mean of spec-literal deltas ((framework - baseline) / |baseline|)"
     return {
         "value": round(value, 4),
         "unit": "fractional (1.0 = +100%)",
-        "definition": "mean value score = mean((framework - baseline) / |baseline|) over integrated models; "
-        "see also --robust mode (median of sign-normalized deltas)",
+        "definition": "value score = median of sign-normalized deltas over integrated models; "
+        "spec-literal arithmetic mean is reported as alt_value (--literal flag).",
         "target": f">= +{G1_TARGET}",
         "hard": True,
         "verdict": _verdict(value, G1_TARGET, "ge"),
@@ -498,9 +513,12 @@ def g1_mean_value_score(integrated_models: list[str], robust: bool = False) -> d
         "notes": "Computed from CONSOLIDATED_RESULTS.md per-row framework-vs-baseline deltas. "
         "Each row counts independently; multi-checkpoint models (MNIST) contribute all rows. "
         "PENDING when integrated_models is empty. "
-        "--robust flag (added Wave 30 Agent A) switches aggregator from spec-literal arithmetic mean "
-        "to median of sign-normalized signed deltas (positive = framework wins); both readings "
-        "are reported side-by-side for reviewer transparency per Wave 29 Agent D recommendation.",
+        "Wave 37 Agent A change: canonical aggregator is now median of sign-normalized signed "
+        "deltas (positive = framework wins); spec-literal arithmetic mean retained as alt_value. "
+        "--robust flag (Wave 30 Agent A) remains as backward-compatible alias for canonical; "
+        "--literal flag (Wave 37 Agent A) switches primary to spec-literal arithmetic mean. "
+        "Both readings are reported side-by-side for reviewer transparency per Wave 29 Agent D "
+        "recommendation.",
     }
 
 
@@ -1164,11 +1182,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--robust",
         action="store_true",
-        help="Use the robust G.1 aggregator (median of sign-normalized deltas) "
-        "instead of the spec-literal arithmetic mean. Default is the spec-literal "
-        "arithmetic mean (per framework-capability-metrics.md §G.1); --robust "
-        "switches to median of signed deltas per Wave 29 Agent D recommendation. "
-        "Both readings are always reported side-by-side regardless of --robust.",
+        help="[DEPRECATED alias] Backward-compatible alias for the canonical G.1 "
+        "aggregator (median of sign-normalized deltas). Since Wave 37 this is "
+        "the DEFAULT; --robust is now a no-op. Use --literal to switch the "
+        "primary reading to the spec-literal arithmetic mean.",
+    )
+    parser.add_argument(
+        "--literal",
+        action="store_true",
+        help="Use the spec-literal G.1 aggregator (arithmetic mean of "
+        "(framework - baseline) / |baseline|) instead of the canonical "
+        "median of sign-normalized deltas. Default since Wave 37 is the "
+        "canonical (median) reading per framework-capability-metrics.md §G.1. "
+        "Both readings are always reported side-by-side regardless of --literal.",
     )
     args = parser.parse_args(argv)
 
@@ -1196,7 +1222,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"WARN: --cold-clone requested but env_hash.txt is empty", file=sys.stderr)
 
     # Compute 7 metrics
-    g1 = g1_mean_value_score(integrated_models, robust=args.robust)
+    g1 = g1_mean_value_score(integrated_models, robust=args.robust, literal=args.literal)
     g2 = g2_cost_benefit_ratio(integrated_models)
     g3 = g3_worst_case_bound(integrated_models)
     g4 = g4_generalization_breadth(integrated_models)

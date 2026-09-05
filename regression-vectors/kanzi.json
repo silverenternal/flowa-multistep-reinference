@@ -1,9 +1,9 @@
 {
   "schema_version": "d4.v1",
-  "captured_at": "2026-09-05T01:21:19Z",
-  "git_sha": "87517e4",
-  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
-  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "captured_at": "2026-09-05T11:22:56Z",
+  "git_sha": "6dcc7e1",
+  "host_fingerprint": "3bbab6fef2471772a5d49834419b40c43a45104a7f9bd865eb708aa48ff73ed0",
+  "env_composite_hash": "3bbab6fef2471772a5d49834419b40c43a45104a7f9bd865eb708aa48ff73ed0",
   "adapter": "kanzi",
   "adapter_version": "0.1.0",
   "seeds": [
@@ -32,7 +32,7 @@
         "kind": "integrator_trace",
         "steps": 5,
         "accept_rate": 1.0,
-        "native_state_digest": "b9928770a0b74b75eb45aa90c00914e4a2fffbdcf6f8adf190e9e54ff084dd73",
+        "native_state_digest": "b95fcf5f4764ea721777a85ac9da262be90d7ebeda7adfc53f8c9dcb114ed05e",
         "integrator_config_hash": "5a3ec8ff1e44b0d1172ed400fc3a8ec4b132198dff86df47345be22dc214f503"
       },
       "endpoint": {
@@ -43,7 +43,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "e4ee719abf5d2d0e57523dc676e949d1d7d9eecd9715262960e3c91bf6fbc450",
+        "native_state_digest": "4f95e1348bd5ef43666077c8bbdc70212b60ce90caec3b676df7864abeeb0ce5",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -63,10 +63,10 @@
           64
         ],
         "dtype": "float64",
-        "sha256": "00f9da0e74056a87c3d60a2754531d03cf0debd62218f4d978dd3710bf1d3170",
+        "sha256": "e77c34e8cacf3f0dd8e13e785266325fd139f55abb8a8669b7eed07d7a504531",
         "finite": true
       },
-      "output_sha256": "35c39f09c922fe09b83cbc4b1e3aeaf94bc616740e987cf6267736b1936763a3"
+      "output_sha256": "d16481cd44caba2a7870a738e7cc25243c4eb59b0c9247a3831a6296245c9d5a"
     },
     {
       "adapter": "kanzi",
@@ -82,7 +82,7 @@
         "kind": "integrator_trace",
         "steps": 10,
         "accept_rate": 1.0,
-        "native_state_digest": "cb20f38839e8bd2bda52dc71e713cde17fa3f3addf999f8b126e6e44e644cb55",
+        "native_state_digest": "e93f057024024d1982627eed132fff4c1f369b6709dd9d64ffa42823a990af94",
         "integrator_config_hash": "484251374275683878ee519d43dabf60a9ebc6e0cd4acf66342eb99d591bb4dc"
       },
       "endpoint": {
@@ -93,7 +93,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "7060e3e2ecf4ff7bf18ed0caececcdc707450416436caaa1f4bc791f20fe0bcd",
+        "native_state_digest": "a080c513933e51b6c797cbaf64dcfc2f3440aaa8f236ff4112bd567ef798695a",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -113,10 +113,10 @@
           64
         ],
         "dtype": "float64",
-        "sha256": "08d14de8a20c8e1fc49eaed7b8460fd3c83af82952e7ac935bd417c2d1a1f72b",
+        "sha256": "8b2d03f4c59aff7503fff02fe5c63ea3f5af7b825c4dd8166076741fa2dd50b8",
         "finite": true
       },
-      "output_sha256": "fe7d2bee5d60bad53c14e86bb69d9104522f0c80322732344a9c9e1d5beaeb49"
+      "output_sha256": "04406c9a6489fcea167324d2f1a7f5696eeb619c99d2cf125cebd0979365af36"
     },
     {
       "adapter": "kanzi",
@@ -132,7 +132,7 @@
         "kind": "integrator_trace",
         "steps": 50,
         "accept_rate": 1.0,
-        "native_state_digest": "b0d6fc4de73ba3a1dc4730526e6b8004eb6022200f38355e1dafb2910dad3869",
+        "native_state_digest": "74abb674a3d2208b673f8f48a46f2b6f43b9d9647b8313c9e6e98699a7ed85f0",
         "integrator_config_hash": "2a0f50d7cfc6380f77f98433ccde781c498e30ec1cbbd716ce75e904bb0ff061"
       },
       "endpoint": {
@@ -143,7 +143,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "e4d80f7ebf7ae6d5026227d1dddcb60c69c9d5811b884f2b5da74d15d4c3ca90",
+        "native_state_digest": "6e522489add1e060164f493e95fc814e67b63830d9a9a7d028eb4f1064a33280",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -163,10 +163,10 @@
           64
         ],
         "dtype": "float64",
-        "sha256": "61e9a43413757ab8418c6424be442ffae2cc54ac46c3dd1dcbfdff9c96318728",
+        "sha256": "b0206faae03cf6c4f4e3a18779a7dd8917054b4ddf4048829259874d42fae7db",
         "finite": true
       },
-      "output_sha256": "3558f1ed1b87e8f1bb8d7e69a4ec56cf697ab145f63aca1cf337ee94a267811d"
+      "output_sha256": "7388b522ac0922431872d493bd454fa408b21e9106c934ad9d09ecccd43b32f3"
     },
     {
       "adapter": "kanzi",
@@ -182,7 +182,7 @@
         "kind": "integrator_trace",
         "steps": 5,
         "accept_rate": 1.0,
-        "native_state_digest": "aa1f494d366123069f2ccc86c517ba02215477bc578c3539f36cdf367c7704c1",
+        "native_state_digest": "7a68b084c19ccc6db9f2466dfc866650c5ca304bf843664ed19c25a37e38727f",
         "integrator_config_hash": "1dbfe9a0452bbf519bef267997958ea6b812edd6d8631fda971792fffc5fe042"
       },
       "endpoint": {
@@ -193,7 +193,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "41e990a8c2c3b431b8b65747437e452f3dceb10eaf1aad1125bb91c9b0394f66",
+        "native_state_digest": "c533d16466188e3940c9732a6968b2bd8bc94e7da2e02480045bf9a1eb42ac71",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -213,10 +213,10 @@
           64
         ],
         "dtype": "float64",
-        "sha256": "bc3d932f38850ced1034c0573f4fbda0bc223513f93e5a75f3eba284ad0bec8c",
+        "sha256": "3a948bfc1fc456bcb1e2782186673082a72df6ae933baae5e3ca72919915d680",
         "finite": true
       },
-      "output_sha256": "ad60382b7e8257b822f486d0f357abffa2b4fa50454573d796ab9de28b70a616"
+      "output_sha256": "78f03c8b613d58328e4514969ef3cf9e58039cf429d678a79119754708f1c5d2"
     },
     {
       "adapter": "kanzi",
@@ -232,7 +232,7 @@
         "kind": "integrator_trace",
         "steps": 10,
         "accept_rate": 1.0,
-        "native_state_digest": "676eed33d4d6a7f1baa21a8e2968073c56bf24802e19726877087e025347e41d",
+        "native_state_digest": "60977c8532b8c652a8e610b68a89b2dc5c847e4c34918ae9c42567f8a0f42966",
         "integrator_config_hash": "9943395bd718d6105161e0af52650d1f6e6c55536ea4e2551ab5e821c8cae6c3"
       },
       "endpoint": {
@@ -243,7 +243,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "829f802648bddfedcba4447da558416dbc8f6ad6b5819ffcce012ba41a47a2f3",
+        "native_state_digest": "bd51d92cfb9741b363ba076f8956a382c12521ff4bd9876cd2a3d425995b5cf1",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -263,10 +263,10 @@
           64
         ],
         "dtype": "float64",
-        "sha256": "2ca9c9253abf162bc1be13ebb822726a1ec20610c3bc8726ef5342b53c5221e8",
+        "sha256": "e90d8345ce0907fd1aa720dc385b12219142dc2ece9582479a3a74eb907e91a3",
         "finite": true
       },
-      "output_sha256": "fec688fbaf3c79c7e62d17f2c531de8b70b90636388ea575ea50561895fbf5b9"
+      "output_sha256": "e0fafb5d977ca86d3c76b31257bcc80d1de6669100798dbeeb57c98b1701ea21"
     },
     {
       "adapter": "kanzi",
@@ -282,7 +282,7 @@
         "kind": "integrator_trace",
         "steps": 50,
         "accept_rate": 1.0,
-        "native_state_digest": "f52f38e2782d0b88c57bc3beeb433e49663341e97809a1b144864afbdb36d05f",
+        "native_state_digest": "4c3c3b492c3c1ff5ffca4e63ad8be1d5cfa30d4858c14dc2393fb2e305ebb0ab",
         "integrator_config_hash": "6fa2ce8798b5cbbdba37e6b453217cdf9243840ec4331235247a3ef2a319853a"
       },
       "endpoint": {
@@ -293,7 +293,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "694dc1a8a2743aec54fe8c62a475e49827423821fde94a0552593550131c2cd2",
+        "native_state_digest": "02ef2e37f3e9b9c6816a708428207b3e7b6fbf2b1cd25ce03a9a7085ae4aa846",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -313,10 +313,10 @@
           64
         ],
         "dtype": "float64",
-        "sha256": "6322d16e5fb7f5b17a3b6994257d29d15fecf97980be0dc7692a728cf53a2f5c",
+        "sha256": "559a049c06e66baba45c489589f48d4cab16a33ba2d3d6be6155294438766295",
         "finite": true
       },
-      "output_sha256": "b44b5a764674e580bd9bedacfec41cb0ebd8561e443f5f9ff9533cb4e5f3f033"
+      "output_sha256": "7d41c1fddbed52920d8c1c0e7ac472f70ddfde65329f8fced0c96a7aeb86140e"
     },
     {
       "adapter": "kanzi",
@@ -332,7 +332,7 @@
         "kind": "integrator_trace",
         "steps": 5,
         "accept_rate": 1.0,
-        "native_state_digest": "cccd372b1a81a1771c43cd5b254a9bf4d3e2cdb315c2a00da0e487e891f70767",
+        "native_state_digest": "694193410426be4667bdde5ec9fab5b7af4fec55a6c241400ca2fa632a41027a",
         "integrator_config_hash": "82bf158ff12eac13e97622988bcdb925b3057138f0ae0e861c79c09985cc5074"
       },
       "endpoint": {
@@ -343,7 +343,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "7d3cbbd229c53278729439da2a8042bcbcfb4bf3fbf4d0dcde091548b606aeae",
+        "native_state_digest": "3cc012329a7d04aa085259789abafed91dd49db335f74fa6370d823a62e014e1",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -363,10 +363,10 @@
           64
         ],
         "dtype": "float64",
-        "sha256": "09ef80c76d2bcac4c3a39d1c8ce136a1e55fd7b457ae9ddbd7e4955764e237bd",
+        "sha256": "56e38fbc7e5ae0b540c7012c7853955b20573758c5cad49813bd78872c480964",
         "finite": true
       },
-      "output_sha256": "2662a6c84ea6a2920e58c023ec9f1056294fd84e47e978c6bcd3b6ed789035a8"
+      "output_sha256": "9a6ce7859685634257e7f70f71ee0f4d677ab162fe2bae32f6e8ab952b84e1f9"
     },
     {
       "adapter": "kanzi",
@@ -382,7 +382,7 @@
         "kind": "integrator_trace",
         "steps": 10,
         "accept_rate": 1.0,
-        "native_state_digest": "b22776a493129320c1f55fdc7bd05d66e637e1c31bb3166f5ca39e1656e9daee",
+        "native_state_digest": "e550935372d1645b1a2b5938fd21496aef0d08399a161484901d3b60eb13ad1f",
         "integrator_config_hash": "032fe6fa9608ba94f0ee32293118d0d8c38ecd5966f8107567efe22e35b2e140"
       },
       "endpoint": {
@@ -393,7 +393,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "1bf5fec8f75c7c36b37d4c3b811a8867d6bfed4daab348ca1183d425bf858420",
+        "native_state_digest": "49779626aa9d04368cec8f6297afa9e4d9a30386bb357c89e7f6ddca3ee6ab35",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -413,10 +413,10 @@
           64
         ],
         "dtype": "float64",
-        "sha256": "6d81017c3ca2f87984ee4083369996f01eacf958f288e72aac2510c46bfa50bb",
+        "sha256": "89ea7c0f204d6b21ef8145fc8427f9c371f7a6b6b9f5dc64d306aaaf211d439c",
         "finite": true
       },
-      "output_sha256": "880515478fb7e48a7c68f73e01aa22b29825f1ff8d25445f41d90f8f76b89b75"
+      "output_sha256": "d6b3382eeb4d46e8469a26e9f748f17082e4e12af33d9f2c83ef4e3ef3c5550b"
     },
     {
       "adapter": "kanzi",
@@ -432,7 +432,7 @@
         "kind": "integrator_trace",
         "steps": 50,
         "accept_rate": 1.0,
-        "native_state_digest": "16d1b239926022feec735611faf9ff401a18559b7398cefdb4ed9a27bd561369",
+        "native_state_digest": "135d7368b90c69622231bdf9660d199fd5898d9ce63a60f0bb3851f9b0f65216",
         "integrator_config_hash": "3dba8a3d517bb1e858379eabd91d9e85f4274a3539d72540b249a05647ad5c89"
       },
       "endpoint": {
@@ -443,7 +443,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "5f0cf5666d397e75bceef755719d4bd413441947f588c280f379ef47624d6b8a",
+        "native_state_digest": "705b74e15938620365989e539e3c69e62c0d1d43bb7a58bd0c91a94af468f152",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -463,10 +463,10 @@
           64
         ],
         "dtype": "float64",
-        "sha256": "7f291a003089be43d05eb436bc152b0538a17932e60f50847dc4c888fbc623e0",
+        "sha256": "e5c645c547ceff1a80b9b084f25fef1c2dfd93262002e6df7f1dbd5d24faf915",
         "finite": true
       },
-      "output_sha256": "2f10c3d20d38b265168339c50e4ea16b9c59d2b0c43d8a7cb799ac86b86676ee"
+      "output_sha256": "ed07d19b532817ef9adcd4e7de8ed482156c8decfcb6fd0daacdaeed6b41f38c"
     }
   ]
 }

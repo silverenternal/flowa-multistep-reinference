@@ -215,7 +215,13 @@ def diffusers_postprocess(
             "diffusers_postprocess requires torch"
         ) from exc
 
-    if isinstance(out, torch.Tensor):
+    # Accept real torch.Tensor or any duck-typed proxy (e.g.
+    # ``torch._dynamo`` FakeTensor or compiled-tensor proxies). These
+    # proxy subclasses are NOT isinstance(torch.Tensor) under torch.compile
+    # contexts but do expose `.detach()`, `.cpu()`, `.numpy()` and a
+    # ``shape`` attribute. The strict isinstance check is overly defensive
+    # and breaks pytest invocations that activate torch.compile.
+    if hasattr(out, "detach") and hasattr(out, "cpu") and hasattr(out, "numpy"):
         v = out.detach()
         shape = tuple(v.shape)
         if len(shape) == 4 and shape[0] == 1:
@@ -231,8 +237,8 @@ def diffusers_postprocess(
         arr = np.asarray(v.cpu().numpy(), dtype=np.float64)
         return arr
     raise TypeError(
-        "diffusers_postprocess expects a torch.Tensor; "
-        f"got {type(out).__name__}"
+        "diffusers_postprocess expects a torch.Tensor (or duck-typed "
+        f"tensor proxy with .detach/.cpu/.numpy); got {type(out).__name__}"
     )
 
 

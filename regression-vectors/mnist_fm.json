@@ -1,9 +1,9 @@
 {
   "schema_version": "d4.v1",
-  "captured_at": "2026-09-05T01:53:28Z",
-  "git_sha": "93aab60",
-  "host_fingerprint": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
-  "env_composite_hash": "8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480",
+  "captured_at": "2026-09-05T11:04:30Z",
+  "git_sha": "ff56e55",
+  "host_fingerprint": "3bbab6fef2471772a5d49834419b40c43a45104a7f9bd865eb708aa48ff73ed0",
+  "env_composite_hash": "3bbab6fef2471772a5d49834419b40c43a45104a7f9bd865eb708aa48ff73ed0",
   "adapter": "mnist_fm",
   "adapter_version": "0.1.0",
   "seeds": [

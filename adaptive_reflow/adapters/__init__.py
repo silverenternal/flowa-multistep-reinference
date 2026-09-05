@@ -106,6 +106,19 @@ from .integrators import (
     build_integrator,
 )
 from .karras_preconditioner import KarrasPreconditioner
+from .kanzi import (
+    KANZI_CHANNEL_DOMAINS,
+    KANZI_CHANNELS,
+    KANZI_CONFIG_HASH,
+    KANZI_CONFIG_VERSION,
+    KANZI_MECHANISM_ID,
+    KANZI_NUM_STEPS_DEFAULT,
+    KANZI_STATE_SHAPE,
+    KanziAdapter,
+    KanziCapabilities,
+    default_kanzi_adapter,
+    kanzi_resolve_weights_path,
+)
 from .freqflow import (
     FREQ_FLOW_CHANNEL_DOMAINS,
     FREQ_FLOW_CHANNELS,
@@ -233,6 +246,7 @@ ADAPTER_REGISTRY: dict[str, Any] = {
     "freqflow": default_freqflow_adapter,
     "graphbfn": default_graphbfn_adapter,
     "hidream_i1": default_hidream_i1_adapter,
+    "kanzi": default_kanzi_adapter,
     "lineageflow": default_lineageflow_adapter,
     "lumina_image_2_0": default_lumina_image_2_0_adapter,
     "mnist_fm": default_mnist_fm_adapter,
