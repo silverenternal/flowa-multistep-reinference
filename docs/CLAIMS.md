@@ -36,6 +36,7 @@ How it works:
   `adaptive_reflow/contracts/paper_quantities.py:64`
   (`sheet_evidence_A` returns `A_g`, the positive limit derived from
   Lemma 2's sheet tube).
+- Test: tests/test_claims/test_claim_001.py
 
 ## CLM-002: Root cell evidence scales as `O(eps^{+2})` per cell {#CLM-002}
 
@@ -51,6 +52,7 @@ How it works:
   `adaptive_reflow/contracts/paper_quantities.py:226`
   (`per_cell_coefficient_C` returns `C_g = e^{rho^2/2} / a`,
   the per-cell coefficient Lemma 3 proves is literal and explicit).
+- Test: tests/test_claims/test_claim_002.py
 
 ## CLM-003: Framework `selection_ratio` metric is invariant to scheduler {#CLM-003}
 
@@ -70,6 +72,7 @@ How it works:
   per-round values across all five scheduler families on both targets
   (`two_moons`, `eight_gaussians`); pinned by
   `tests/test_eval/test_posterior_selection_evaluator.py`.
+- Test: tests/test_claims/test_claim_003.py
 
 ## CLM-004: Framework `selection_ratio` plateaus, does NOT converge to 1 {#CLM-004}
 
@@ -88,6 +91,7 @@ How it works:
 - Evidence: `docs/ABLATION.md` §"What the data shows WITHOUT claiming
   paper backing" reports `two_moons` plateau `~0.81`,
   `eight_gaussians` plateau `~0.49` across 20 rounds.
+- Test: tests/test_claims/test_claim_004.py
 
 ## CLM-005: Cosine annealing is the canonical implementation of paper Lemma 2 {#CLM-005}
 
@@ -139,6 +143,7 @@ How it works:
   `e_rho = min{rho^4, (1 - rho)^2 eta^2}`.
 - Evidence: `adaptive_reflow/contracts/paper_quantities.py:271`
   (`exterior_gap_e_rho` returns `e_rho`, the literal Lemma 5 constant).
+- Test: tests/test_claims/test_claim_007.py
 
 ## CLM-008: Framework's heuristic `selection_ratio` is NOT a paper quantity {#CLM-008}
 
@@ -156,6 +161,7 @@ How it works:
   `adaptive_reflow/eval/posterior_selection_evaluator.py:396`
   (`EvidenceScaleGapMetric` class); pinned by
   `tests/test_eval/test_posterior_selection_evaluator.py::test_metric_classification_does_not_claim_paper_theorem`.
+- Test: tests/test_claims/test_claim_008.py
 
 ## CLM-009: `eight_gaussians` plateau is lower than `two_moons` {#CLM-009}
 
@@ -173,6 +179,7 @@ How it works:
   pins the ordering; `docs/ABLATION.md` §"What the data shows WITHOUT
   claiming paper backing" reports the per-family mean values
   (`~0.49` for `eight_gaussians`, `~0.81` for `two_moons`).
+- Test: tests/test_claims/test_claim_009.py
 
 ## CLM-010: Bounded noise floor prevents escape from the fibre {#CLM-010}
 
@@ -189,6 +196,7 @@ How it works:
 - Evidence: `adaptive_reflow/algorithm/merge_operator.py` /
   `adaptive_reflow/algorithm/scheduler/_core.py:347`
   (`CosineAnnealScheduler` carries the `n_min` field).
+- Test: tests/test_claims/test_claim_010.py
 
 ## CLM-011: Four paper quantities are first-class algorithm inputs {#CLM-011}
 
@@ -228,6 +236,7 @@ How it works:
 - Evidence: paper Theorem 1 (line 88-91);
   `adaptive_reflow/contracts/paper_quantities.py:1-31`
   (module docstring quotes the theorem statement).
+- Test: tests/test_claims/test_claim_012.py
 
 ## CLM-013: Paper Corollary 1 yields `Z_{g,eps} >= C_1 * eps` {#CLM-013}
 
@@ -245,6 +254,7 @@ How it works:
 - Evidence: paper Corollary 1 (line 165);
   `adaptive_reflow/contracts/paper_quantities.py:64`
   (`sheet_evidence_A` returns `A_g`).
+- Test: tests/test_claims/test_claim_013.py
 
 ## CLM-014: Posterior mass on isolated cells is `O(eps)` {#CLM-014}
 
@@ -260,6 +270,7 @@ How it works:
   `int_{I_z} p_eps <= C_g e^{-z^2/4} eps^2` unnormalised bound divided
   by Corollary 1's `C_1 * eps` lower bound.
 - Evidence: paper Corollary 1 (line 165-168).
+- Test: tests/test_claims/test_claim_014.py
 
 ## CLM-015: Framework does NOT prove paper Theorem 1 magnitude-level competition {#CLM-015}
 
@@ -277,6 +288,7 @@ How it works:
   parameter is a tunable hyperparameter, not the paper's `eps`.
 - Evidence: `docs/audit/EPSILON_DIRECTION.md` (canonical audit record
   of the dimensional-orthogonality finding).
+- Test: tests/test_claims/test_claim_015.py
 
 ## CLM-016: (DEPRECATED) Original `_paper_evidence_balance` used inverted `eps` exponents {#CLM-016}
 
@@ -530,6 +542,7 @@ How it works:
   §1 of `benchmark-round2-uplifts.md`),
   `docs/benchmark-round2-uplifts.md:55`
   (the near - far score separation row).
+- Test: tests/test_claims/test_claim_023.py
 
 ## CLM-024: Round-2 type/lint cleanup brings mypy 33→0 and ruff 32→0 across 118 source files {#CLM-024}
 
@@ -560,6 +573,7 @@ How it works:
   run: `Success: no issues found in 118 source files`),
   `python -m ruff check .` (current run:
   `All checks passed!`).
+- Test: tests/test_claims/test_claim_024.py
 
 ## CLM-025: `BoundedMergeOperator` fails closed on `cap < floor` (post-clip) {#CLM-025}
 
@@ -589,6 +603,7 @@ How it works:
   `tests/test_algorithm/test_merge_operator.py`
   (`test_bounded_merge_rejects_cap_below_floor_post_clip`),
   `docs/r3-survey/05-verified-findings.md` §F5.
+- Test: tests/test_claims/test_claim_025.py
 
 ## CLM-026: `ConvergenceAdaptiveScheduler` PID consumes `_smoothed_w2` (not raw `w2_history[-2]`) {#CLM-026}
 
@@ -618,6 +633,7 @@ How it works:
   `tests/test_algorithm/test_scheduler.py`
   (`test_pid_uses_smoothed_w2_as_prev`),
   `docs/r3-survey/05-verified-findings.md` §F16.
+- Test: tests/test_claims/test_claim_026.py
 
 ## CLM-027: `EvidenceDrivenScheduler` closes Loop 2 (paper quantities → scheduler feedback) {#CLM-027}
 
@@ -820,6 +836,7 @@ How it works:
 
 - Status: ACTIVE
 - Date: 2026-08-30
+- Test: tests/test_claims/test_claim_032.py
 - Source:
   [`docs/r3-survey/09-c4-investigation.md`](r3-survey/09-c4-investigation.md)
   §2 (structural cause) / §4 (recommended fix = Option A + B + minimal C variant),
@@ -947,6 +964,7 @@ How it works:
   covering generic dispatch, decorators, HSM, history, parallel
   regions, async guards, visualization export, idempotent
   transitions).
+- Test: tests/test_claims/test_claim_033.py
 
 ## CLM-034: Universal state machine coverage — every scheduler + `ReInferenceRunner` orchestrator is wrapped {#CLM-034}
 
@@ -1011,7 +1029,8 @@ How it works:
   (per-family extension transitions: PID, codimension,
   evidence-driven, FreeTraj, EDM, AdaptivePID, multi-channel,
   sequential, handoff),
-  `adaptive_reflow/algorithm/state_machine_integration.py:503-514`
+  `adaptive_reflow/algorithm/state_machine_integration.py:503-514`,
+- Test: tests/test_claims/test_claim_034.py
   (`_sm_init` per-instance build),
   `adaptive_reflow/algorithm/state_machine_integration.py:516-606`
   (`sample` / `reset` / `record_round_feedback` event emission),
@@ -1612,6 +1631,7 @@ How it works:
   [`ARCHITECTURE.md:141,188-197,260-302`](../../ARCHITECTURE.md),
   [`docs/governance/01-code-org-audit.md`](governance/01-code-org-audit.md)
   §5 + §7.1.
+- Test: tests/test_claims/test_claim_044.py
 
 ## CLM-045: `e_rho / 4` factor carries an inline CLM-042 derivation note in `BoundedMergeOperator` and `CodimensionSheetScheduler` (A-02.M1 paper-math fidelity) {#CLM-045}
 
@@ -1653,6 +1673,7 @@ How it works:
   [`adaptive_reflow/algorithm/merge_operator.py:558-572`](../adaptive_reflow/algorithm/merge_operator.py),
   [`adaptive_reflow/algorithm/scheduler/_core.py:2858-2867`](../adaptive_reflow/algorithm/scheduler/_core.py),
   [`tests/test_eval/test_posterior_selection_evaluator.py:1204-1235`](../tests/test_eval/test_posterior_selection_evaluator.py).
+- Test: tests/test_claims/test_claim_045.py
 
 ## CLM-046: `EvidenceScaleGapMetric` honours paper-math `eps` scaling flags (quadratic Lemma 3 + Lemma 4 exponential suppression); NaN/inf `eps_round` rejected (A-02.M2 + A-02.G1 + A-02.M3) {#CLM-046}
 
@@ -1701,6 +1722,7 @@ How it works:
 - Evidence:
   [`adaptive_reflow/eval/posterior_selection_evaluator.py:474-514,779-797,856-873,948-977,989-1049`](../adaptive_reflow/eval/posterior_selection_evaluator.py),
   [`tests/test_eval/test_posterior_selection_evaluator.py:958-1199`](../tests/test_eval/test_posterior_selection_evaluator.py).
+- Test: tests/test_claims/test_claim_046.py
 
 ## CLM-047: Stress-nightly Windows path bug closed + `cpu-tests.yml` / `docs-validate.yml` deduplicated + Python version matrix landed (T-04.3 + T-04.2 + T-04.4 + T-04.5) {#CLM-047}
 
