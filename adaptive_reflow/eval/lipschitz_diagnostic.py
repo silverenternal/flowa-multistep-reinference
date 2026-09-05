@@ -482,10 +482,16 @@ def bounded_lipschitz_distance_2d(
     a metric on ``R^2``, so Kantorovich-Rubinstein duality identifies the
     supremum above with the optimal-transport cost for ``c``. For two
     equal-size empirical measures with uniform weights that cost is an
-    exact assignment problem, solved here with
+    exact assignment problem, solved with
     :func:`scipy.optimize.linear_sum_assignment` (Hungarian). No sliced
     or projected approximation is used: the value returned is the exact
     BL distance between the two empirical measures.
+
+    **Requires** ``scipy>=1.7`` for
+    :func:`scipy.optimize.linear_sum_assignment`. If ``scipy`` is not
+    importable, this function raises :class:`ImportError` rather than
+    silently returning a greedy upper bound — the paper Theorem 1
+    contract requires the *exact* BL distance.
 
     Samples larger than ``max_points`` are uniformly subsampled (without
     replacement, seeded) to keep the ``O(n^3)`` assignment tractable; the
@@ -498,6 +504,13 @@ def bounded_lipschitz_distance_2d(
     :param bound: the ``B`` truncation of the cost. Finite and ``> 0``.
     :param max_points: cap on the assignment size.
     :param seed: RNG seed for the subsampling.
+
+    :raises ImportError: if :func:`scipy.optimize.linear_sum_assignment`
+        is unavailable. The paper Theorem 1 contract requires the exact
+        BL distance; a greedy fallback would silently produce a
+        non-equivalent upper bound under scipy-missing deployments
+        (CI minimal, Windows). Install scipy with
+        ``pip install 'scipy>=1.7'``.
     """
     if isinstance(bound, bool) or not isinstance(bound, (int, float)):
         raise ValueError(f"bound must be a real number, got {bound!r}")
@@ -525,16 +538,14 @@ def bounded_lipschitz_distance_2d(
 
     try:
         from scipy.optimize import linear_sum_assignment as _lsa  # local import
-    except Exception:  # pragma: no cover - scipy is a hard dep elsewhere
-        # Greedy fallback: an upper bound on the optimal assignment cost.
-        remaining = np.ones(n, dtype=bool)
-        total = 0.0
-        for i in range(n):
-            row = np.where(remaining, cost[i], np.inf)
-            j = int(np.argmin(row))
-            total += float(row[j])
-            remaining[j] = False
-        return float(total / n)
+    except ImportError as exc:  # pragma: no cover - explicit hard-dep guard
+        raise ImportError(
+            "bounded_lipschitz_distance_2d requires scipy>=1.7 "
+            "for `scipy.optimize.linear_sum_assignment` (Hungarian algorithm). "
+            "The paper Theorem 1 contract requires the exact BL distance; "
+            "a greedy fallback would silently produce a non-equivalent upper bound. "
+            "Install scipy with: pip install 'scipy>=1.7'"
+        ) from exc
 
     rows, cols = _lsa(cost)
     return float(cost[rows, cols].mean())
