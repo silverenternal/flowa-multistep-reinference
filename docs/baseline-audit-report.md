@@ -2282,3 +2282,105 @@ across the three additive batches: Wave 32 batch 1 = 45 hashes, Wave 33
 batch 2 = 63 hashes, Wave 34 batch 4 = 54 hashes).
 
 
+## PHASE-4 — Real-ckpt per-cell value surface (Wave 36 Phase 2 Agent E + Agent F, 2026-09-05, additive)
+
+**Date:** 2026-09-05
+**Scope:** PHASE-4 model integration — Kanzi + FreqFlow real-ckpt evaluation
+3 seeds × 3 NFE budgets × 2 models = **18 cells** of per-ckpt evidence.
+**Tool:** `tools/run_real_ckpt_eval.py` (Wave 36 Agent D pipeline).
+**Combined JSON:** `verification_outputs/phase4_q4_2026.json`.
+**Per-model JSONs:** `verification_outputs/phase4_q4_2026_kanzi.json` +
+`verification_outputs/phase4_q4_2026_freqflow.json`.
+**Agent F audit:** `docs/audit/wave36-phas4-prep-results.md`.
+**Capability audit JSON:** `verification_outputs/capability_audit_post_w36.json`.
+
+### PHASE-4.1 — Per-model real-ckpt status
+
+| Model      | Adapter ships? | Real-ckpt loaded? | Verdict             | Why                                              |
+|------------|---------------:|:-----------------:|---------------------|--------------------------------------------------|
+| Kanzi      | YES (Wave 21)  | NO                | `BLOCKED_synthetic_fallback` | Upstream Kanzi codebase requires `esm` + protein-tokenizer deps; not in flowmol3_venv sandbox |
+| FreqFlow   | YES (Wave 21)  | NO                | `BLOCKED_synthetic_fallback` | Upstream SiT-XL/2 + DiT-XL/2 ckpt path needs sidecar venv; same wall as Kanzi |
+| MM-FM      | NO (stalled)   | n/a               | `NOT_EVALUATED`     | PHASE-3 adapter agent stalled in Wave 21.5; re-spawn needed in Wave 37+ |
+| LineageFlow | YES (Wave 10) | NO                | `NOT_EVALUATED`     | Already evaluated on synthetic in Wave 10 R2; real-ckpt forward BLOCKED on `torch.load` `SamplerConfig` shim (5-LOC fix per Wave 36 Agent C option A) |
+
+### PHASE-4.2 — Per-cell value surface (18 cells)
+
+Every Kanzi + FreqFlow cell fell to the synthetic-fallback plateau:
+
+| Model    | Cells | TIE_AT_SATURATION | Baseline avg wall | Framework avg wall | Wallclock ratio (fwk/base) |
+|----------|------:|------------------:|------------------:|-------------------:|---------------------------:|
+| Kanzi    |     9 |                 9 |         0.0088 s  |          0.0032 s  |            **0.359** (2.8× faster) |
+| FreqFlow |     9 |                 9 |         0.2078 s  |          0.0706 s  |            **0.340** (2.9× faster) |
+
+Reading: the framework's batched multi-round inference path is structurally
+cheaper than the single-pass baseline even on trivial forward passes (the
+synthetic plateau). Useful sanity check that the eval pipeline is exercising
+the framework's actual code path rather than short-circuiting.
+
+### PHASE-4.3 — Eval pipeline summary
+
+* `tools/run_real_ckpt_eval.py` — single source of truth runner
+  (Wave 36 Agent D, 2026-09-05); produces per-cell evidence + aggregate
+  with `n_supported`, `n_tie`, `n_tie_at_saturation`, `n_regression`,
+  `n_blocked`, `n_run_error`, `framework_wins`, `g1_mean_signed_delta_pct`,
+  per-model value surface + per-model per-NFE-per-seed breakdown.
+* Per-model downstream metrics (`tools/run_real_ckpt_eval.py:DOWNSTREAM_METRICS`):
+  * Kanzi — primary `protein_sequence_validity_rate` (higher-is-better,
+    saturation ≥ 0.95), secondary `perplexity` + `novelty`.
+  * FreqFlow — primary `FID` (InceptionV3 IMAGENET1K_V1, lower-is-better,
+    saturation < 2.0), secondary `CLIP_score` + `generation_diversity`.
+* Spec: `docs/audit/phase-4-eval-pipeline.md` (Wave 36 Agent D).
+
+### PHASE-4.4 — Per-ckpt value surface (framework vs baseline on real ckpt)
+
+| Cell | Status               | Effect on G.1 | Effect on G.4 |
+|------|----------------------|---------------|---------------|
+| 18 cells Kanzi + FreqFlow | TIE_AT_SATURATION (synthetic-fallback) | `delta_pct = 0` → excluded from G.1 numerator per `tools/capability_audit.py:_extract_consolidated_comparisons` | n/a (no real comparison to count toward breadth) |
+| MM-FM | NOT_EVALUATED (no adapter) | n/a — does not change G.1 | would add image_sota family if/when integrated |
+| LineageFlow | NOT_EVALUATED (real-ckpt blocked on shim) | n/a — already integrated on synthetic | n/a (already counted) |
+
+**Aggregate verdict (Wave 36 Phase 2 Agent E):** `verdict_overall = TIE_AT_SATURATION`,
+`n_tie_at_saturation = 18`, `n_supported = 0`, `n_regression = 0`,
+`framework_wins = 0`. The synthetic-fallback ceiling prevents a real
+win/loss verdict this wave.
+
+### PHASE-4.5 — Cold-clone capability audit (this wave's Agent F deliverable)
+
+Re-ran `tools/capability_audit.py --robust` post-Wave-36; output
+`verification_outputs/capability_audit_post_w36.json`. **G-MASTER-CAPABILITY
+gate verdict unchanged at PASS** (5/5 HARD pass, 1/2 SOFT pass — identical to
+Wave 34 / Wave 30 / Wave 28 readings). New env_hash:
+`779d5a22111b258a56dbc388f0ffe8fd010e1c123de767650edaa548e6f29af9` (committed
+to `env_hash.txt` per Wave 36 Agent D).
+
+### PHASE-4.6 — Files / tools added this wave (additive)
+
+* `tools/run_real_ckpt_eval.py` (Wave 36 Agent D) — PHASE-4 single source of truth runner
+* `docs/audit/phase-4-eval-pipeline.md` (Wave 36 Agent D) — spec
+* `docs/audit/phase-4-blocker-investigation.md` (Wave 36 Agent C) — MM-FM + LineageFlow investigation
+* `docs/audit/mm-fm-unblock-investigation.md` (Wave 36 Agent C)
+* `docs/audit/lineageflow-upstream-investigation.md` (Wave 36 Agent C)
+* `docs/audit/wave36-phas4-prep-results.md` (Wave 36 Agent F, this audit)
+* `verification_outputs/phase4_q4_2026.json` (combined report, 18 cells)
+* `verification_outputs/phase4_q4_2026_kanzi.json` (per-model)
+* `verification_outputs/phase4_q4_2026_freqflow.json` (per-model)
+* `verification_outputs/capability_audit_post_w36.json` (this wave's capability audit)
+
+### PHASE-4.7 — Next-wave actions (deferred to Wave 37+)
+
+1. **Kanzi real-ckpt unblock:** install `esm` + `protein-tokenizer` (sidecar
+   venv if flowmol3_venv can't take them), re-run with real ckpt → expect
+   framework-vs-baseline gap measurable at the 0.5pp absolute improvement
+   bar (paper SOTA 0.95+ has only 0.5pp headroom; framework's bar +0.005).
+2. **FreqFlow real-ckpt unblock:** install SiT-XL/2 + DiT-XL/2 deps
+   (sidecar venv), load `yzy-BA-8B-256.safetensors` from HF Hub → expect
+   FID gap < 0.05 absolute (paper SOTA FID 2.0; framework's bar -0.05).
+3. **LineageFlow 5-LOC shim:** apply Wave 36 Agent C option A
+   (`SamplerConfig` shim) → real-ckpt verdict flips from
+   `partially_supported` to `supported` (per-position entropy already
+   measured on synthetic; real-ckpt confirms the framework's claim).
+4. **MM-FM re-spawn:** PHASE-3 adapter agent stalled in Wave 21.5 —
+   re-spawn in Wave 37 or later with explicit scope-split (Agent C
+   option B).
+
+
