@@ -76,25 +76,18 @@ from .metric_panel import (
     build_default_layered_metric_panel,
     enforce_separation,
 )
-from .posterior_selection_evaluator import (
-    EVIDENCE_SCALE_GAP_AUDIT_REASON,
-    EVIDENCE_SCALE_GAP_CHANNELS,
-    POSTERIOR_SELECTION_AUDIT_REASON,
-    POSTERIOR_SELECTION_BUNDLE_ID_PREFIX,
-    POSTERIOR_SELECTION_CALIBRATION,
-    POSTERIOR_SELECTION_CELLS_FOR_TARGET,
-    POSTERIOR_SELECTION_CHANNELS,
-    POSTERIOR_SELECTION_PERTURBATION,
-    POSTERIOR_SELECTION_SHEET_FOR_TARGET,
-    POSTERIOR_SELECTION_TARGETS,
-    EvidenceScaleGapMetric,
-    cell_evidence,
-    mode_centers_for,
-    selection_ratio,  # Wave 30 F-4: back-compat alias
-    sheet_cell_centers,
-    sheet_evidence,
-    sheet_vs_cells_proxy,
-)
+# Wave 41 Agent C: the seventeen ``posterior_selection_evaluator``
+# symbols below used to be imported eagerly at module load time. That
+# form broke ``tests/test_algo_uplifts/`` collection (the conftest
+# uses ``spec.loader.exec_module`` to load the submodule directly,
+# which fires an import chain that re-enters ``adaptive_reflow.eval``
+# while ``posterior_selection_evaluator`` is still partially loaded —
+# the first unresolved name raises ``ImportError``). Moving these
+# symbols through the PEP 562 ``__getattr__`` below breaks the cycle
+# because plain ``import adaptive_reflow.eval`` no longer triggers the
+# submodule at all; the symbols are still available via
+# ``from adaptive_reflow.eval import X`` (the ``__getattr__`` resolves
+# them on first access, by which point the submodule is fully loaded).
 from .promotion import (
     DEFERRED_COST,
     DEFERRED_GAIN,
@@ -173,21 +166,40 @@ from .run_eval import run_eval  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
-# Wave 15 C — lazy import surface for rdkit-dependent submodules
+# Wave 15 C — lazy import surface (rdkit-dependent + cycle-dependent)
 # ---------------------------------------------------------------------------
 #
-# The four submodules below eagerly import rdkit at module load time
-# (``from rdkit import Chem``). Wave 14 A added an importlib.util bypass
-# on :mod:`adaptive_reflow.theory.checkers` to avoid the rdkit trigger;
-# the REAL fix is here: route the four submodules through a PEP 562
-# ``__getattr__`` so ``import adaptive_reflow.eval`` does NOT execute
-# them. Downstream callers that need the symbols must
-# ``import adaptive_reflow.eval.mmff_conformer`` directly (or trigger
-# the attribute access below).
+# Two flavours of lazy import live in this single PEP 562 ``__getattr__``:
+#
+# 1. **rdkit-dependent submodules** (``mmff_conformer``, ``fg_deviation``,
+#    ``flowmol3_eq4_fg_deviation``, ``rdkit_oracle``). They eagerly import
+#    ``from rdkit import Chem`` at module load time. Wave 14 A added an
+#    ``importlib.util`` bypass on :mod:`adaptive_reflow.theory.checkers`
+#    to avoid the rdkit trigger; the REAL fix is here: route the four
+#    submodules through PEP 562 ``__getattr__`` so plain
+#    ``import adaptive_reflow.eval`` does NOT execute them. Downstream
+#    callers that need the symbols must ``import
+#    adaptive_reflow.eval.mmff_conformer`` directly (or trigger the
+#    attribute access below).
+#
+# 2. **posterior_selection_evaluator symbols** (Wave 41 Agent C). The
+#    conftest for ``tests/test_algo_uplifts/`` calls
+#    ``spec.loader.exec_module`` on the submodule directly, which fires
+#    an import chain that re-enters ``adaptive_reflow.eval`` while
+#    ``posterior_selection_evaluator`` is still partially loaded. An
+#    eager ``from .posterior_selection_evaluator import (...)`` at the
+#    top of this file would then fail with ``ImportError: cannot import
+#    name 'EVIDENCE_SCALE_GAP_AUDIT_REASON'``. Routing the seventeen
+#    symbols through ``__getattr__`` breaks the cycle: ``import
+#    adaptive_reflow.eval`` no longer triggers the submodule at all,
+#    and ``from adaptive_reflow.eval import EVIDENCE_SCALE_GAP_AUDIT_REASON``
+#    still resolves correctly on first access (the submodule is fully
+#    loaded by then).
 #
 # Why a module-level ``__getattr__`` rather than a per-call helper:
 #   - PEP 562 ``__getattr__`` fires only on attribute access, so plain
-#     ``import adaptive_reflow.eval`` never loads rdkit.
+#     ``import adaptive_reflow.eval`` never loads rdkit and never
+#     re-enters ``posterior_selection_evaluator``.
 #   - Existing call sites that do ``from adaptive_reflow.eval import
 #     embed_mmff`` continue to work: the ``__getattr__`` resolves the
 #     attribute, importing the submodule on demand.
@@ -197,7 +209,8 @@ from .run_eval import run_eval  # noqa: E402
 #     ``adaptive_reflow.theory.checkers``.
 # ---------------------------------------------------------------------------
 
-_RDKIT_LAZY_MODULES: dict[str, str] = {
+_LAZY_MODULE_SYMBOLS: dict[str, str] = {
+    # rdkit-dependent submodules (Wave 15 C)
     "DEFAULT_MMFF_MAX_ITERS": "mmff_conformer",
     "DEFAULT_NUM_CONFS": "mmff_conformer",
     "DEFAULT_RANDOM_SEED": "mmff_conformer",
@@ -216,20 +229,45 @@ _RDKIT_LAZY_MODULES: dict[str, str] = {
     "RDKIT_BUNDLE_ID_PREFIX": "rdkit_oracle",
     "RDKitOracle": "rdkit_oracle",
     "SyntheticEvaluator": "rdkit_oracle",  # only if re-exported; see below
+    # posterior_selection_evaluator cycle-dependent (Wave 41 Agent C)
+    "EVIDENCE_SCALE_GAP_AUDIT_REASON": "posterior_selection_evaluator",
+    "EVIDENCE_SCALE_GAP_CHANNELS": "posterior_selection_evaluator",
+    "POSTERIOR_SELECTION_AUDIT_REASON": "posterior_selection_evaluator",
+    "POSTERIOR_SELECTION_BUNDLE_ID_PREFIX": "posterior_selection_evaluator",
+    "POSTERIOR_SELECTION_CALIBRATION": "posterior_selection_evaluator",
+    "POSTERIOR_SELECTION_CELLS_FOR_TARGET": "posterior_selection_evaluator",
+    "POSTERIOR_SELECTION_CHANNELS": "posterior_selection_evaluator",
+    "POSTERIOR_SELECTION_PERTURBATION": "posterior_selection_evaluator",
+    "POSTERIOR_SELECTION_SHEET_FOR_TARGET": "posterior_selection_evaluator",
+    "POSTERIOR_SELECTION_TARGETS": "posterior_selection_evaluator",
+    "EvidenceScaleGapMetric": "posterior_selection_evaluator",
+    "cell_evidence": "posterior_selection_evaluator",
+    "mode_centers_for": "posterior_selection_evaluator",
+    "selection_ratio": "posterior_selection_evaluator",
+    "sheet_cell_centers": "posterior_selection_evaluator",
+    "sheet_evidence": "posterior_selection_evaluator",
+    "sheet_vs_cells_proxy": "posterior_selection_evaluator",
 }
 
 
 def __getattr__(name: str):  # PEP 562 lazy loader
-    """Lazily import rdkit-dependent submodules on first attribute access.
+    """Lazily import rdkit- and cycle-dependent submodules on first access.
 
     Triggered when ``from adaptive_reflow.eval import X`` (or
     ``adaptive_reflow.eval.X``) is used and ``X`` is a symbol that
-    lives in one of the rdkit-pulling submodules. Without this hook,
-    importing the package would unconditionally pull rdkit, which is
-    not vendored in every sandbox (this is the root cause of the
-    Wave 14 A importlib bypass in :mod:`theory.checkers`).
+    lives in one of the lazy-loaded submodules. Without this hook:
+
+    * Plain ``import adaptive_reflow.eval`` would unconditionally pull
+      rdkit, which is not vendored in every sandbox (root cause of the
+      Wave 14 A ``importlib.util`` bypass in :mod:`theory.checkers`).
+    * Plain ``import adaptive_reflow.eval`` would eagerly execute
+      ``posterior_selection_evaluator``, which fires an import chain
+      that re-enters ``adaptive_reflow.eval`` while the submodule is
+      still partially loaded and breaks ``tests/test_algo_uplifts/``
+      collection with ``ImportError: cannot import name
+      'EVIDENCE_SCALE_GAP_AUDIT_REASON'`` (Wave 41 Agent C fix).
     """
-    mod_name = _RDKIT_LAZY_MODULES.get(name)
+    mod_name = _LAZY_MODULE_SYMBOLS.get(name)
     if mod_name is None:
         raise AttributeError(
             f"module 'adaptive_reflow.eval' has no attribute {name!r}"
@@ -244,4 +282,4 @@ def __getattr__(name: str):  # PEP 562 lazy loader
 
 
 def __dir__() -> list[str]:  # PEP 562 dir() support
-    return sorted(set(globals().keys()) | _RDKIT_LAZY_MODULES.keys())
+    return sorted(set(globals().keys()) | _LAZY_MODULE_SYMBOLS.keys())
