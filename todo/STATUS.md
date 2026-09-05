@@ -1,6 +1,8 @@
 # `todo/STATUS.md` — single source of truth (auto-updated per wave)
 
-**Last updated:** 2026-09-05 (Wave 32 Agent A — todo audit + gap analysis; **mkdocs --strict FAILING** with 8 unnavmed files; freeze-checklist MUST-1 stale: E.4 + F.6 + G.1 + G.3 + G.6 all flipped PASS since last update)
+**Last updated:** 2026-09-05 (Wave 32 Phase 2 — author `todo/gap-plan-wave32.md` (master plan) + 13 focused `todo/algo-improvement-*.md` plans covering D.4 + E.1 + paper_quantities threading + assert_adapter_compliance + no-scipy + mkdocs nav + stochastic-fm orphan + FlowMol3V2 restart + HF model card pipeline + host_fingerprint + expecttest + Hypothesis derandomize + mutation apply-survivor; appended D.1 shrink to PHASE-3-glue-layer-improvement.md; updated `framework-freeze-checklist.md` MUST-1 summary with Wave 33 plan pointers; updated `framework-internal-metrics.md` B.7 + F.4 additive sentences with plan pointers)
+
+**Previous update:** 2026-09-05 (Wave 32 Agent A — todo audit + gap analysis; **mkdocs --strict FAILING** with 8 unnavmed files; freeze-checklist MUST-1 stale: E.4 + F.6 + G.1 + G.3 + G.6 all flipped PASS since last update)
 
 ## Current state (one line)
 
@@ -85,6 +87,7 @@ Plus deferred from earlier:
 - [NEW GAP] Wave 32 Agent A: mkdocs --strict FAILING with 8 unnavmed files (5 model_cards + capability_g1_analysis.md + theory/DEVIATIONS.md + 1 other) — B.3 HARD gate at risk; no plan file
 - [NEW GAP] Wave 32 Agent A: D.4 (regression vectors) + E.1 (test-coupled 70%) + StochasticFMAdapter enum bug + FlowMol3V2 restart shape — 4 NOT-MET gaps without plan files
 - [AUDIT DOC] `docs/audit/gap-audit.md` (Wave 32 Agent A, 2026-09-05): per-task audit + 11-gap table + plan coverage matrix + mkdocs surface
+- [WAVE 32 PHASE 2] 2026-09-05: Authored `todo/gap-plan-wave32.md` master plan + 13 focused `todo/algo-improvement-*.md` files covering the 13 gaps identified across Wave 32 Agent A/B/C audits. D.1 shrink appended to PHASE-3-glue-layer-improvement.md. Sidecar updates to `framework-freeze-checklist.md` (MUST-1 summary) + `framework-internal-metrics.md` (B.7 + F.4 additive). All 14 plans include scope, tasks, acceptance, gate, estimated time, risk, and Wave assignment. Wave 33 plans (#1-8): code-level fixes (CPU-only, no GPU). Wave 34 plans (#9-14): tooling improvements (CPU-only, no GPU).
 
 ## Files in `todo/` (count + status)
 

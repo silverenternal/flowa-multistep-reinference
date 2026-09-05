@@ -99,3 +99,58 @@ This is a **per-model** gate, not project-wide.
 ## Exit criteria (move to Phase 4)
 
 `G-MASTER-PHASE-3` passed for all ranked models.
+
+## Follow-up gate (D.1 shrink adapters — Wave 32 audit addition)
+
+**Status:** pending (NEW — Wave 32 Agent A audit; not in original Phase 3 plan)
+**Date:** 2026-09-05
+**Depends on:** ≥2 of 4 RANKING adapters consuming `adaptive_reflow.core.*` (MM-FM + LineageFlow BLOCKED; Kanzi + FreqFlow are the 2 needed; both shipped Wave 21)
+**Wave:** Wave 34 (target — once Kanzi + FreqFlow registration is verified)
+
+Per Wave 32 Agent A (`docs/audit/gap-audit.md` §2.4) + Wave 32 Agent C
+(`docs/audit/framework-code-review.md` §1.14):
+
+**D.1** adapter line count median (rev 3 target ≤ 350; rev 2 target
+≤ 500; currently ~1500 median). Deferred per Wave 11 Phase 3 note; gated
+on MUST-3 framework-core glue (this Phase 3 plan).
+
+### What to do (Wave 34)
+
+For each of the 18 registered adapters:
+
+1. **Audit the current LOC** (`cloc adaptive_reflow/adapters/<adapter>.py`)
+2. **Identify glue candidates** — code that duplicates framework-core
+   patterns (e.g. restart_blend math, channel extraction, SHA-256 digest,
+   adapter init boilerplate)
+3. **Refactor to consume `adaptive_reflow.core.*`** — Wave 24 Agent B
+   shipped 4 glue modules; verify all adapters consume them
+4. **Target ≤ 500 LOC** per adapter (rev 2 target; pragmatic for first
+   pass; rev 3 target ≤ 350 in a follow-up)
+5. **Verify byte-stability** post-refactor (B.2 gate must remain PASS)
+6. **Verify protocol conformance** post-refactor (D.3 + D.5 gates must
+   remain PASS)
+
+### Acceptance
+
+- [ ] D.1 metric median ≤ 500 LOC (rev 2 target)
+- [ ] Every adapter consumes `adaptive_reflow.core.*` for glue patterns
+- [ ] B.2 byte-stability gate still PASS
+- [ ] D.3 + D.5 conformance still PASS
+- [ ] No regression in `pytest tests/`
+
+### Estimated time
+
+~4-8 hours per adapter once unblocked; per-adapter refactor with
+verification.
+
+### Risk
+
+- **HIGH**: shrinking an adapter while preserving byte-stability is a
+  careful refactor; must run regression vectors after each change
+- **MEDIUM**: refactoring may expose previously-silent bugs; each fix
+  should be in a separate commit for bisect-ability
+
+### Related follow-up
+
+- D.4 regression vectors (Wave 33 #1) provide the byte-stability net for
+  the D.1 shrink refactor; ship D.4 first, then D.1

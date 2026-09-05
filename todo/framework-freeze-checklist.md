@@ -78,17 +78,26 @@ below for the canonical gate definition).
 | **G.6** honest negative surface (HARD) | **PASS** (Wave 30) | **0.25 ≤ 0.30** (Wave 30 Agent A equal-family-weight stratification: each integrated family gets equal weight in the average). Per `verification_outputs/capability_audit_q3_2026.json` `g6` verdict=PASS |
 | **G.7** reproducibility of capability (HARD) | **PASS** | **7 / 7 ≥ 6 / 7** reproducibility checks pass (F.5 env_hash present + tool runnable + 4 data sources parseable + F.2 ≥ 4 / 8 + cold-clone re-run executed). Per `verification_outputs/capability_audit_q3_2026.json` `g7` verdict=PASS |
 
-**Headline counts** (post Wave 32 Agent A audit, 2026-09-05):
+**Headline counts** (post Wave 32 Phase 2 synthesis, 2026-09-05):
 - **20 of 24 internal HARD gates PASS** (A.1-A.7, B.1-B.6, D.2, D.3, D.5, E.4, F.2, F.5, F.6)
-- **2 internal PARTIAL/NOT-MET**: D.4 (regression vectors; no plan), E.1 (11/41 test-coupled; no plan)
-- **1 internal AT RISK**: B.3 (mkdocs --strict; 8 unnavmed files; no plan)
+- **2 internal PARTIAL/NOT-MET**: D.4 (regression vectors; plan now in `todo/algo-improvement-D4-regression-vectors.md` for Wave 33), E.1 (11/41 test-coupled; plan now in `todo/algo-improvement-E1-claim-test-coupling-batch2.md` for Wave 33 to reach 33/41 = 80.5%)
+- **1 internal AT RISK**: B.3 (mkdocs --strict; 8 unnavmed files; plan now in `todo/algo-improvement-mkdocs-strict-nav.md` for Wave 33)
 - **5 of 7 group-G HARD PASS** (G.1, G.3, G.4, G.6, G.7 — all 5 flipped since checklist was last updated)
 - **1 group-G SOFT FAIL**: G.5 saturation point (paper-time aspiration)
 - **1 group-G SOFT PASS**: G.2 cost-benefit ratio
 
-The 2 NOT-MET internal gates are:
-- **D.4** (no regression vectors) — out of scope for the Wave 23-25 audit work; this is a per-adapter integration discipline that requires each adapter to commit its `(seed, input, NFE)` vector before PHASE-4 model integration testing. **No plan file in `todo/`** — Wave 32 Agent A gap-audit.md recommends authoring `todo/algo-improvement-D4-regression-vectors.md`.
-- **E.1** (11 / 41 active claims test-coupled = 26.8%; target 70%) — partial closure by Wave 26 Agent C on category-(a) claims; remaining 18-20 claims are categories (b)/(c)/(d). **No plan file in `todo/`** — Wave 32 Agent A gap-audit.md recommends authoring `todo/algo-improvement-E1-claim-test-coupling.md`.
+**Wave 32 Phase 2 addition** (2026-09-05; master plan: `todo/gap-plan-wave32.md`):
+- Authored 13 focused `todo/algo-improvement-*.md` plans covering 13 distinct gaps identified by Wave 32 Agent A/B/C audits
+- D.1 shrink adapters appended to `todo/PHASE-3-glue-layer-improvement.md` (Wave 34+ gated on Kanzi + FreqFlow registration)
+- Wave 33 plans (8 tasks): D.4 batch 1, E.1 batch 2, paper_quantities threading, assert_adapter_compliance enforcement, no-scipy raise, mkdocs nav, stochastic-fm orphan, FlowMol3V2 restart fix
+- Wave 34 plans (6 tasks): HF model card pipeline, Hypothesis derandomize, host_fingerprint, D.1 shrink adapters, expecttest, mutation apply-survivor
+
+The 2 NOT-MET internal gates now have plans:
+- **D.4** (no regression vectors) — `todo/algo-improvement-D4-regression-vectors.md` (Wave 33; first batch of 5 adapters: flowmol3_v2, twodim_fm, lineageflow, kanzi, freqflow)
+- **E.1** (11 / 41 active claims test-coupled = 26.8%; target 70%) — `todo/algo-improvement-E1-claim-test-coupling-batch2.md` (Wave 33; second batch of 22 claims to reach 33/41 = 80.5%)
+
+The 1 AT RISK internal gate now has a plan:
+- **B.3** (mkdocs --strict; 8 unnavmed files) — `todo/algo-improvement-mkdocs-strict-nav.md` (Wave 33; add `Models` nav section under `Architecture` linking 5 `models/*.model_card.md` + `capability_g1_analysis.md` + `theory/DEVIATIONS.md`)
 
 **The 5 group-G HARD FAILs listed in the prior version of this checklist all closed** (post Wave 28 + 30 fixes). MUST-4 (`G-MASTER-CAPABILITY` PASSED) is now PASS per `verification_outputs/capability_audit_q3_2026.json`. The previous freeze-checklist entry saying "BLOCKED on 3 of 5 group-G HARD FAILs" was **stale** — those FAILs flipped to PASS post-Wave 28 (G.3) and post-Wave 30 (G.1, G.4, G.6) but the checklist summary was not updated. Wave 32 Agent A corrects this.
 
