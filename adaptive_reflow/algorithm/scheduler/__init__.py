@@ -35,6 +35,7 @@ from ._core import (
     CosineScheduleConfig,
     ExponentialScheduler,
     LinearScheduler,
+    PaperRatioAdaptiveScheduler,
     PolynomialScheduler,
     SchedulerProtocol,
     ScheduleSample,

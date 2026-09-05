@@ -1724,6 +1724,30 @@ _HIGHER_IS_BETTER_METRICS: frozenset[str] = frozenset(
     {"coverage", "selection_ratio"}
 )
 
+DEFAULT_PAPER_QUANTITY_WEIGHTS: dict[str, float] = {
+    "sheet_A": 1.0,
+    "packing_B": 0.3,
+    "exterior_gap": 0.5,
+}
+"""Default paper-quantity weights for :class:`ConvergenceAdaptiveScheduler` (Wave 31).
+
+When :meth:`ConvergenceAdaptiveScheduler.record_round_feedback` is called
+with a non-``None`` ``paper_quantities`` dict, the controller updates
+EMA-smoothed copies of ``sheet_evidence_A``, ``root_cell_packing_B`` and
+``exterior_gap_e_rho`` (paper Lemma 2 / Lemma 3 / Lemma 5), then drives
+the PID shift from the *paper-quantity ratio*
+
+    ratio = sheet_A_ema / (sheet_A_ema + cell_signal)
+
+where the cell signal defaults to ``packing_B_ema`` (matching the
+literal ``B_g`` from line 159 of ``NoiseSelectedRectification_EN.md``).
+
+These weights mirror :data:`DEFAULT_FEEDBACK_METRIC_WEIGHTS`: the
+defaults are inert unless the caller explicitly passes a non-``None``
+``paper_quantities`` dict, so the legacy W2-only controller is
+reproduced bit-for-bit when paper quantities are absent (backward-compat).
+"""
+
 
 class ConvergenceAdaptiveScheduler:
     """PID-lite adaptive :class:`SchedulerProtocol` wrapper.
@@ -1761,6 +1785,7 @@ class ConvergenceAdaptiveScheduler:
         shift_max: float = 0.15,
         ema: float = 0.3,
         metric_weights: Mapping[str, float] | None = None,
+        paper_quantity_weights: Mapping[str, float] | None = None,
     ) -> None:
         """Construct the convergence-adaptive scheduler.
 
@@ -1782,6 +1807,21 @@ class ConvergenceAdaptiveScheduler:
             their weight is dropped from the normaliser, so a W2-only
             feedback dict reproduces the legacy single-metric controller
             bit-for-bit.
+        :param paper_quantity_weights: Wave 31 paper-quantity weights
+            used by the optional paper-quantity-aware PID branch. Maps
+            each paper-quantity name (``"sheet_A"``, ``"packing_B"``,
+            ``"exterior_gap"``) to its weight in the EMA tracking and
+            audit aggregation. Defaults to
+            ``{"sheet_A": 1.0, "packing_B": 0.3, "exterior_gap": 0.5}``.
+            Like :paramref:`metric_weights`, ``None`` (the default) leaves
+            the defaults in place and the legacy W2-only controller is
+            reproduced bit-for-bit when ``paper_quantities`` is not
+            supplied to :meth:`record_round_feedback`. The
+            paper-quantity-aware PID branch is only activated when that
+            method is called with a non-``None`` ``paper_quantities``
+            mapping; the weights are stored regardless so the EMA
+            update can weight each paper-quantity sample consistently
+            when it is supplied.
         """
         self._base: CosineAnnealScheduler = (
             base if base is not None else default_cosine_scheduler()
@@ -1824,12 +1864,47 @@ class ConvergenceAdaptiveScheduler:
             if not weights:
                 raise ValueError("metric_weights must not be empty")
         self._metric_weights: dict[str, float] = weights
+        # Wave 31: paper-quantity weights. Defaults are inert unless
+        # ``record_round_feedback`` is invoked with a non-``None``
+        # ``paper_quantities`` mapping; the PID remains in legacy mode.
+        pq_weights: dict[str, float]
+        if paper_quantity_weights is None:
+            pq_weights = dict(DEFAULT_PAPER_QUANTITY_WEIGHTS)
+        else:
+            pq_weights = {}
+            for key, val in dict(paper_quantity_weights).items():
+                if isinstance(val, bool) or not isinstance(val, (int, float)):
+                    raise ValueError(
+                        f"paper_quantity_weights[{key!r}] must be a real number, got {val!r}"
+                    )
+                fv = float(val)
+                if not math.isfinite(fv) or fv < 0.0:
+                    raise ValueError(
+                        f"paper_quantity_weights[{key!r}] must be finite and >= 0, got {fv!r}"
+                    )
+                pq_weights[str(key)] = fv
+            if not pq_weights:
+                raise ValueError("paper_quantity_weights must not be empty")
+        self._paper_quantity_weights: dict[str, float] = pq_weights
         # Mutable state — cleared by reset().
         self._w2_history: list[float] = []
         self._smoothed_w2: float | None = None
         self._shift: float = 0.0
         self._last_feedback_keys: tuple[str, ...] = ()
         self._last_sample: ScheduleSample | None = None
+        # Wave 31: paper-quantity EMA state. Each field is ``None`` until
+        # the first finite sample arrives via
+        # :meth:`record_round_feedback` with a non-``None`` ``paper_quantities``
+        # mapping; the EMA then tracks the paper-quantity in the same
+        # direction as the W2 EMA. ``_paper_quantity_enabled`` flips to
+        # ``True`` once any paper-quantity signal has been observed and
+        # gates the paper-quantity-aware PID branch.
+        self._sheet_A_ema: float | None = None
+        self._packing_B_ema: float | None = None
+        self._exterior_gap_ema: float | None = None
+        self._paper_ratio_history: list[float] = []
+        self._last_paper_quantity_keys: tuple[str, ...] = ()
+        self._paper_quantity_enabled: bool = False
         hash_payload: dict[str, Any] = {
             "algorithm": "convergence_adaptive_cosine",
             "base_config_hash": str(self._base.config_hash()),
@@ -1843,6 +1918,13 @@ class ConvergenceAdaptiveScheduler:
             # before P0-A6 keep their historical ``config_hash``.
             hash_payload["metric_weights"] = {
                 str(k): float(v) for k, v in sorted(self._metric_weights.items())
+            }
+        if self._paper_quantity_weights != dict(DEFAULT_PAPER_QUANTITY_WEIGHTS):
+            # Only non-default paper-quantity weights enter the digest
+            # so legacy schedulers keep their historical ``config_hash``.
+            hash_payload["paper_quantity_weights"] = {
+                str(k): float(v)
+                for k, v in sorted(self._paper_quantity_weights.items())
             }
         self._config_hash_value = hash_artifact(hash_payload)
 
@@ -2292,21 +2374,32 @@ class CodimensionSheetScheduler:
 
     Direct instantiation of paper Theorem 1's posterior-selection mechanism
     (ADR-0013, "Posterior selection drives the algorithm layer"). The
-    per-round ``n_cap`` follows the framework's canonical cosine ramp
-    (ADR-0010); a separate sheet-vs-cell evidence ratio
-    (:func:`_paper_evidence_balance`) is computed per round from paper
-    Lemma 2 (sheet ``Theta(eps^{+1})``) and Lemma 3 (cell
-    ``O(eps^{+2})``) and exposed via :attr:`last_evidence_ratio` for
-    audit-trail purposes.
+    per-round ``n_cap`` is **driven by the paper's sheet-vs-cell
+    evidence ratio** (paper Lemma 2 ``Theta(eps^{+1})`` versus Lemma 3
+    ``O(eps^{+2})``) rather than the framework's canonical cosine ramp
+    (ADR-0010). The cosine ramp is retained only as a ``u_r``
+    reference and to feed the framework-heuristic evidence ratio when
+    no residual profile is supplied; in the canonical
+    paper-quantity-augmented path ``n_cap`` is the direct mapping
+    ``n_cap = n_min + (n_max - n_min) * ratio``, with ``ratio``
+    exposed on :attr:`last_evidence_ratio` and on
+    :attr:`ScheduleSample.evidence_ratio`.
 
     Mathematically:
 
-        n_cap_base(r) — closed-form cosine value for round ``r``
-                        (the "underlying base schedule").
-        ratio(r)      = sheet / (sheet + cell)  ∈ [0, 1]
-        n_cap(r)      = n_min + (n_max - n_min) * n_cap_base(r)
-        ratio         is reported via ``last_evidence_ratio``,
-                        not used as the driver of ``n_cap``.
+        sheet = sheet_A * eps               # Lemma 2 / Corollary 1
+        cell  = cell_C * packing_B * eps^2  # Lemma 3 + Lemma 5
+        ratio = sheet / (sheet + cell)      ∈ [0, 1]
+        n_cap(r) = n_min + (n_max - n_min) * ratio(r)
+
+    When ``profile_residual_fn is None`` the scheduler falls back to
+    the framework-side heuristic
+    (:func:`_paper_evidence_balance`) using the cosine ramp's
+    ``n_cap_base`` as the cell-evidence weight; this preserves the
+    legacy contract for callers that have not supplied a profile
+    (backward compat). The two closed forms agree up to normalisation
+    constants; the paper-quantity-augmented form is the canonical
+    version for callers that have configured ``profile_residual_fn``.
 
     The :class:`Callable` ``profile_residual_fn`` maps state ``x`` to the
     residual profile ``g(x)`` (paper Lemma 2's coarea weight
@@ -2638,11 +2731,13 @@ class CodimensionSheetScheduler:
     def last_evidence_ratio(self) -> float | None:
         """Return the most recent sheet-vs-cell evidence ratio.
 
-        The ratio is a reportable metric derived from paper Lemma 2 +
-        Lemma 3 (sheet ``Theta(eps^{+1})``, cell ``O(eps^{+2})``). It
-        is not the driver of :attr:`last_sample.n_cap`; the framework's
-        coarse-to-fine anneal lives in the cosine ramp. ``None`` until
-        the first :meth:`sample` call.
+        The ratio is the per-round paper Lemma 2 / Lemma 3 evidence
+        balance (``sheet / (sheet + cell)``, sheet ``Theta(eps^{+1})``,
+        cell ``O(eps^{+2})``). It is the **driver** of
+        :attr:`last_sample.n_cap` — ``n_cap = n_min + (n_max - n_min)
+        * ratio`` — so the per-round capacity now responds directly to
+        the paper's sheet-vs-cell signal. ``None`` until the first
+        :meth:`sample` call.
         """
         return self._last_evidence_ratio
 
@@ -2659,20 +2754,37 @@ class CodimensionSheetScheduler:
         Pipeline:
 
         1. Ask the underlying cosine base for ``n_cap_base(r)`` (canonical
-           closed form, ADR-0010).
-        2. Apply ``eps_direction``: ``"decreasing"`` (paper's convention,
-           default) keeps the cosine ramp so ``r=0`` is the high-noise
-           end and ``r=L-1`` is the low-noise end; ``"increasing"``
-           (legacy) flips the ramp.
-        3. Map the ramped value into the configured ``[n_min, n_max]``
-           envelope and clip into ``[0, 1]`` defensively.
-        4. Compute the sheet-vs-cell evidence ratio
+           closed form, ADR-0010). This value is used to populate the
+           ``u_r`` field on the :class:`ScheduleSample` and to feed the
+           framework-side heuristic evidence ratio when no residual
+           profile has been supplied.
+        2. Compute the sheet-vs-cell evidence ratio
            ``ratio = _paper_evidence_balance(n_cap_base, eps_implicit)``
            using paper's positive ``eps`` powers (Lemma 2: sheet
-           ``Theta(eps^{+1})``; Lemma 3: cell ``O(eps^{+2})``) and cache
-           it on the scheduler for the audit trail. The ratio is a
-           *reportable metric*, not the driver of ``n_cap``; the
-           framework's coarse-to-fine anneal lives in the cosine ramp.
+           ``Theta(eps^{+1})``; Lemma 3: cell ``O(eps^{+2})``). When a
+           ``profile_residual_fn`` is supplied, the literal paper
+           quantities ``A_g``, ``B_g`` and ``C_g`` are used as ground
+           truth (round-independent); otherwise the framework-side
+           heuristic (which depends on ``n_cap_base``) is used. The
+           ratio is **the driver of ``n_cap``** — the coarse-to-fine
+           anneal lives in the paper's evidence signal, not in the
+           cosine ramp.
+        3. Apply ``eps_direction``: ``"decreasing"`` (paper's convention,
+           default) keeps the ratio as-is; ``"increasing"`` (legacy)
+           flips the ratio (``ratio -> 1 - ratio``) so the cycle's
+           start sits at the small-ratio end and the cycle's end sits
+           at the large-ratio end. The legacy flip is retained for
+           backward compatibility with the prior cosine-based
+           interpretation and emits a :class:`DeprecationWarning` on
+           the first sample call.
+        4. Map the ratio into the configured ``[n_min, n_max]``
+           envelope: ``n_cap = n_min + (n_max - n_min) * ratio`` and
+           clip into ``[0, 1]`` defensively. With the paper's
+           sheet-vs-cell signal, ``n_cap`` is naturally HIGH when
+           sheet evidence dominates (in-regime adapters) and LOW when
+           cell evidence dominates (out-of-F-side adapters),
+           providing the regime-aware throttling that ADR-0017
+           documented as the desired future behaviour.
         """
         outer_cycle_id = _coerce_int_nonneg(outer_cycle_id, "outer_cycle_id")
         target_round = _coerce_int_nonneg(target_round, "target_round")
@@ -2707,7 +2819,11 @@ class CodimensionSheetScheduler:
 
         if length == 1:
             # Single-round edge: mirror the cosine family's deterministic
-            # behaviour and return n_max (the cycle's only capacity slot).
+            # behaviour. ``n_cap_base`` is set to ``n_max`` (the cycle's
+            # only capacity slot under the legacy cosine driver); the
+            # ratio is then computed from this value — in the
+            # paper-quantity-augmented path it is ignored, in the
+            # framework heuristic path it determines the ratio.
             u_r = 0.5
             n_cap_base = float(self._n_max)
         else:
@@ -2716,35 +2832,14 @@ class CodimensionSheetScheduler:
                 n_cap_for_round(self._base.config, int(round_in_cycle))
             )
 
-        # Apply the eps_direction. ``decreasing`` is paper's convention:
-        # the cycle's terminal round sits at the low-noise end of the
-        # anneal (paper Theorem 1's eps -> 0 selects the sheet). The
-        # legacy ``increasing`` mode reverses the ramp so r=0 sits at
-        # the low-noise end; this is the opposite of paper Theorem 1
-        # and is kept only for backward compatibility.
-        if self._eps_direction == "increasing":
-            n_cap_base = 1.0 - n_cap_base
-
-        raw = self._n_min + (self._n_max - self._n_min) * n_cap_base
-        if not math.isfinite(raw):
-            raise ValueError(
-                f"codimension closed form produced a non-finite n_cap={raw!r}"
-            )
-        n_cap = float(max(0.0, min(1.0, raw)))
-
-        # The paper's evidence balance is a reportable metric, not the
-        # driver of n_cap. With paper-positive eps powers the ratio
-        # tends to 1 (sheet dominance) at small effective eps, matching
-        # Theorem 1.
-        #
-        # When a ``profile_residual_fn`` was supplied at construction
-        # time, the scheduler has cached the literal paper quantities
-        # ``A_g``, ``B_g``, ``C_g`` from :mod:`paper_quantities` and
-        # uses them as ground truth (the
-        # "paper-quantity-augmented" path in
-        # :func:`_paper_evidence_balance`). Otherwise it falls back to
-        # the framework-side heuristic — the two closed forms agree up
-        # to normalisation constants.
+        # Compute the paper's sheet-vs-cell evidence ratio. The
+        # "paper-quantity-augmented" path uses the cached ``A_g`` /
+        # ``B_g`` / ``C_g`` literals (round-independent when
+        # ``profile_residual_fn`` is supplied) — this is the canonical
+        # paper-quantity-driven path. The framework-side heuristic
+        # (no profile) uses ``n_cap_base`` (cosine ramp) as the
+        # cell-evidence weight; the two closed forms agree up to
+        # normalisation constants.
         ratio = float(
             _paper_evidence_balance(
                 n_cap_base,
@@ -2754,6 +2849,30 @@ class CodimensionSheetScheduler:
                 cell_C=self._cell_C,
             )
         )
+
+        # Apply the legacy ``eps_direction`` flip. ``decreasing`` (paper
+        # convention, default) keeps the ratio as-is. The legacy
+        # ``increasing`` mode flips ``ratio -> 1 - ratio`` so that the
+        # cycle's start sits at the small-ratio end and the cycle's
+        # end sits at the large-ratio end; this preserves the
+        # backward-compatibility semantics of the prior cosine-based
+        # interpretation while making the regime-aware throttling
+        # consistent with the historical direction.
+        if self._eps_direction == "increasing":
+            ratio = 1.0 - ratio
+
+        # ``n_cap`` is now driven by the ratio. With paper-quantity
+        # augmentation this gives a regime-aware capacity that
+        # naturally throttles when out-of-F-side-class (low sheet,
+        # low ratio, low n_cap) and increases when in-regime (high
+        # sheet, high ratio, high n_cap).
+        raw = self._n_min + (self._n_max - self._n_min) * ratio
+        if not math.isfinite(raw):
+            raise ValueError(
+                f"codimension ratio-driven closed form produced a "
+                f"non-finite n_cap={raw!r}"
+            )
+        n_cap = float(max(0.0, min(1.0, raw)))
         self._last_evidence_ratio = ratio
 
         # P0-A1 / P0-A7: surface the round's provenance and the
@@ -2974,6 +3093,424 @@ class CodimensionSheetScheduler:
 
 
 # ---------------------------------------------------------------------------
+# Paper-ratio adaptive scheduler — fully-integrated paper-quantity control
+# ---------------------------------------------------------------------------
+
+
+class PaperRatioAdaptiveScheduler:
+    """Fully-integrated paper-quantity-driven + paper-quantity-adaptive
+    :class:`SchedulerProtocol` wrapper.
+
+    The **fully-integrated** scheduler for paper-quantity control (Wave 31
+    Agent C). Combines the paper-ratio-driven base
+    (:class:`CodimensionSheetScheduler`, Agent A — paper Lemma 2 / Lemma 3
+    drives ``n_cap`` via sheet-vs-cell evidence) with a paper-quantity-aware
+    PID-lite controller (analogous to
+    :class:`ConvergenceAdaptiveScheduler`, Agent B — but driven by the
+    sheet-evidence ``A_g`` EMA delta rather than by the W2 metric delta).
+
+    Pipeline:
+
+    1. :meth:`sample` asks the wrapped
+       :class:`CodimensionSheetScheduler` for ``n_cap_base(r)`` (the
+       paper-quantity-driven base schedule).
+    2. A *shift_delta* is added to ``n_cap_base`` based on the
+       paper-quantity-aware PID-lite controller:
+
+           shift_update = kp * (1.0 - sheet_ratio) - kd * sheet_delta
+
+       where ``sheet_ratio = sheet_A_ema[-1] / sheet_A_ema[-2]`` and
+       ``sheet_delta = sheet_A_ema[-1] - sheet_A_ema[-2]``.
+
+    3. The shifted ``n_cap`` is clipped into ``[0, 1]`` defensively so
+       the engine never sees a value outside the canonical capacity
+       range.
+
+    :meth:`record_round_feedback` consumes a *paper-quantities dict*
+    carrying the paper Lemma 2 / Lemma 4 / Lemma 5 quantities:
+
+        {"sheet_A": float, "packing_B": float, "exterior_gap_e_rho": float}
+
+    It maintains an EMA of ``sheet_A`` and (from the second sample
+    onwards) applies the PID-lite update above. The first round is
+    recorded without shifting (no prior history).
+
+    Empty / missing ``paper_quantities`` dicts are a **safe default**:
+    no EMA update, no shift change. This matches the
+    :class:`ConvergenceAdaptiveScheduler` backward-compat behaviour for
+    missing W2 values.
+
+    The ``record_round_feedback`` interface uses an *alternative* signature
+    relative to :class:`ConvergenceAdaptiveScheduler` because the
+    feedback is paper-quantity-derived, not W2-derived:
+
+        def record_round_feedback(self, round_in_cycle, paper_quantities)
+
+    The framework's runner uses ``hasattr(scheduler,
+    "record_round_feedback")`` to discover adaptive schedulers, so this
+    signature variant is forward-compatible — the runner can branch on
+    the scheduler class or fall back to the metric-based interface for
+    the W2-driven controller.
+
+    This is the *fully-integrated* scheduler: the base is
+    paper-quantity-driven and the controller is paper-quantity-aware,
+    so the entire scheduling decision is grounded in paper quantities
+    (Lemma 2 / Lemma 3 / Lemma 4 / Lemma 5) — no heuristic metrics
+    anywhere in the stack.
+
+    Conforms to :class:`SchedulerProtocol`. Pure w.r.t. arguments.
+    """
+
+    def __init__(
+        self,
+        *,
+        base: CodimensionSheetScheduler | None = None,
+        kp: float = 0.10,
+        kd: float = 0.05,
+        shift_max: float = 0.15,
+        ema: float = 0.3,
+    ) -> None:
+        """Construct the paper-ratio adaptive scheduler.
+
+        :param base: the wrapped :class:`CodimensionSheetScheduler`.
+            Defaults to a fresh one with the canonical ``eps_implicit=0.05``
+            and the paper-aligned ``eps_direction="decreasing"``.
+        :param kp: proportional gain on ``(1.0 - sheet_ratio)``.
+            Positive ``kp`` means a *decreasing* sheet-evidence signal
+            (sheet_ratio < 1) pushes the shift *up* (more n_cap).
+        :param kd: derivative gain on ``sheet_delta``. A negative
+            ``sheet_delta`` (sheet_A growing) pushes the shift positive.
+        :param shift_max: maximum absolute shift in ``n_cap`` units
+            (the additive correction is clipped into
+            ``[-shift_max, +shift_max]``).
+        :param ema: smoothing factor for the sheet-A EMA. ``0`` = no
+            smoothing (raw samples), ``1`` = ignore new samples.
+        """
+        if base is None:
+            base = CodimensionSheetScheduler(
+                cycle_length=20,
+                n_min=0.0,
+                n_max=1.0,
+                eps_implicit=0.05,
+                eps_direction="decreasing",
+            )
+        if not isinstance(base, CodimensionSheetScheduler):
+            raise TypeError(
+                "base must be a CodimensionSheetScheduler, got "
+                f"{type(base).__name__}"
+            )
+        for nm, val in (("kp", kp), ("kd", kd), ("shift_max", shift_max), ("ema", ema)):
+            if isinstance(val, bool) or not isinstance(val, (int, float)):
+                raise ValueError(f"{nm} must be a real number, got {val!r}")
+            fv = float(val)
+            if not math.isfinite(fv):
+                raise ValueError(f"{nm} must be finite, got {val!r}")
+        if float(ema) < 0.0 or float(ema) > 1.0:
+            raise ValueError(
+                f"ema must lie in [0, 1], got {float(ema)!r}"
+            )
+        if float(shift_max) < 0.0:
+            raise ValueError(
+                f"shift_max must be >= 0, got {float(shift_max)!r}"
+            )
+        self._base: CodimensionSheetScheduler = base
+        self._kp = float(kp)
+        self._kd = float(kd)
+        self._shift_max = float(shift_max)
+        self._ema = float(ema)
+        # Mutable state — cleared by reset().
+        self._sheet_A_history: list[float] = []
+        self._smoothed_sheet_A: float | None = None
+        self._shift: float = 0.0
+        self._last_sample: ScheduleSample | None = None
+        self._config_hash_value = hash_artifact(
+            {
+                "algorithm": "paper_ratio_adaptive",
+                "base_config_hash": str(self._base.config_hash()),
+                "kp": float(self._kp),
+                "kd": float(self._kd),
+                "shift_max": float(self._shift_max),
+                "ema": float(self._ema),
+            }
+        )
+
+    # -- accessors ---------------------------------------------------------
+
+    @property
+    def base(self) -> CodimensionSheetScheduler:
+        """Return the wrapped base :class:`CodimensionSheetScheduler`."""
+        return self._base
+
+    @property
+    def kp(self) -> float:
+        """Return the proportional gain."""
+        return float(self._kp)
+
+    @property
+    def kd(self) -> float:
+        """Return the derivative gain."""
+        return float(self._kd)
+
+    @property
+    def shift_max(self) -> float:
+        """Return the maximum absolute shift in n_cap units."""
+        return float(self._shift_max)
+
+    @property
+    def ema(self) -> float:
+        """Return the EMA smoothing factor."""
+        return float(self._ema)
+
+    @property
+    def shift(self) -> float:
+        """Return the current shift value (in n_cap units)."""
+        return float(self._shift)
+
+    @property
+    def smoothed_sheet_A(self) -> float | None:
+        """Return the latest EMA-smoothed sheet_A, or ``None`` if no feedback yet."""
+        return self._smoothed_sheet_A
+
+    @property
+    def sheet_A_history(self) -> tuple[float, ...]:
+        """Return the recorded EMA-smoothed sheet_A history as a tuple."""
+        return tuple(self._sheet_A_history)
+
+    @property
+    def last_sample(self) -> ScheduleSample | None:
+        """Return the most recent sample, or ``None`` after :meth:`reset`."""
+        return self._last_sample
+
+    # -- SchedulerProtocol -------------------------------------------------
+
+    def sample(
+        self,
+        outer_cycle_id: int,
+        round_in_cycle: int,
+        target_round: int,
+    ) -> ScheduleSample:
+        """Return the paper-ratio-adapted capacity sample for one round.
+
+        Pipeline:
+
+        1. Ask the wrapped :class:`CodimensionSheetScheduler` for
+           ``n_cap_base(r)`` (paper-quantity-driven base schedule).
+        2. Compute the effective ``n_cap = clip(n_cap_base + shift, 0, 1)``.
+        3. Re-emit a :class:`ScheduleSample` carrying the same audit
+           codes (paper-quantity-grounded) plus an extra
+           ``schedule_paper_ratio_adaptive_shift`` marker so the audit
+           trail can identify rounds whose ``n_cap`` was modified by the
+           PID-lite controller.
+        """
+        base_sample = self._base.sample(
+            outer_cycle_id, round_in_cycle, target_round
+        )
+        base_n_cap = float(base_sample.n_cap)
+        effective_n_cap = float(
+            max(0.0, min(1.0, base_n_cap + float(self._shift)))
+        )
+
+        # Compose audit codes: start from the base's codes (carries the
+        # paper-quantity-grounded marker) and append the adaptive shift
+        # marker.
+        codes: tuple[str, ...] = base_sample.audit_codes + (
+            "schedule_paper_ratio_adaptive_shift",
+            f"schedule_paper_ratio_shift_applied:{float(self._shift):+.6f}",
+        )
+
+        sample = ScheduleSample(
+            outer_cycle_id=int(base_sample.outer_cycle_id),
+            round_in_cycle=int(round_in_cycle),
+            cycle_length=int(base_sample.cycle_length),
+            n_cap=float(effective_n_cap),
+            n_min=float(base_sample.n_min),
+            n_max=float(base_sample.n_max),
+            u_r=float(base_sample.u_r),
+            family="paper_ratio_adaptive_codimension",
+            computed_at_round=int(target_round),
+            schedule_hash=str(self._config_hash_value),
+            audit_codes=codes,
+            evidence_ratio=base_sample.evidence_ratio,
+            eps_implicit=base_sample.eps_implicit,
+        )
+        self._last_sample = sample
+        return sample
+
+    def cycle_length(self) -> int:
+        """Return the configured cycle length (from the base scheduler)."""
+        return self._base.cycle_length()
+
+    def schedule_family(self) -> str:
+        """Return the algorithm family identifier."""
+        return "paper_ratio_adaptive_codimension"
+
+    def config_hash(self) -> str:
+        """Return a stable identifier for this algorithm + config choice."""
+        return str(self._config_hash_value)
+
+    def reset(self) -> None:
+        """Clear all adaptive state and delegate to the base scheduler."""
+        self._sheet_A_history = []
+        self._smoothed_sheet_A = None
+        self._shift = 0.0
+        self._last_sample = None
+        self._base.reset()
+
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(noise_mass) * generator.standard_normal``.
+
+        The paper-ratio adaptive family delegates to its base
+        :class:`CodimensionSheetScheduler`'s ``inject_noise`` so the
+        noise mass tracks the (possibly-shifted) ``n_cap`` produced by
+        the PID-lite controller and the paper-quantity ``A_g`` from the
+        base scheduler. The base scheduler's ``inject_noise`` uses the
+        cached paper-quantity ``A_g`` (when ``profile_residual_fn`` was
+        supplied at construction time) as the noise mass, with the
+        paper-aligned exterior-gap floor from Lemma 5.
+        """
+        return self._base.inject_noise(
+            state, schedule_sample, generator=generator
+        )
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for this scheduler."""
+        return {
+            "family": "paper_ratio_adaptive",
+            "base_config": self._base.to_config(),
+            "kp": float(self._kp),
+            "kd": float(self._kd),
+            "shift_max": float(self._shift_max),
+            "ema": float(self._ema),
+        }
+
+    @classmethod
+    def from_config(
+        cls, config: dict[str, Any]
+    ) -> PaperRatioAdaptiveScheduler:
+        """Build a :class:`PaperRatioAdaptiveScheduler` from ``config`` (P1-1)."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        base_cfg = dict(config["base_config"])
+        base = CodimensionSheetScheduler.from_config(base_cfg)
+        return PaperRatioAdaptiveScheduler(
+            base=base,
+            kp=float(config["kp"]),
+            kd=float(config["kd"]),
+            shift_max=float(config["shift_max"]),
+            ema=float(config["ema"]),
+        )
+
+    def record_round_feedback(
+        self,
+        round_in_cycle: int,
+        paper_quantities: Mapping[str, float] | None = None,
+    ) -> None:
+        """Consume one round's paper quantities and update the shift via PID-lite.
+
+        Signature differs from
+        :meth:`ConvergenceAdaptiveScheduler.record_round_feedback` because
+        the feedback here is paper-quantity-derived (``sheet_A``,
+        ``packing_B``, ``exterior_gap_e_rho``), not W2-derived. The
+        runner discovers adaptive schedulers via
+        ``hasattr(scheduler, "record_round_feedback")``, so both
+        signatures coexist at the protocol surface.
+
+        Pipeline:
+
+        1. Read ``paper_quantities["sheet_A"]``. Missing /
+           non-numeric / non-finite values skip the round (a broken
+           oracle cannot poison the controller).
+        2. Update the EMA of ``sheet_A``.
+        3. Append the EMA-smoothed value to ``_sheet_A_history`` (the
+           F16 invariant from
+           :class:`ConvergenceAdaptiveScheduler` — the PID ``prev``
+           reference reads the smoothed value, NOT the raw value).
+        4. From the second sample onwards, apply
+
+               shift += kp * (1 - sheet_ratio) - kd * sheet_delta
+
+           where ``sheet_ratio = sheet_A_ema[-1] / sheet_A_ema[-2]``
+           and ``sheet_delta = sheet_A_ema[-1] - sheet_A_ema[-2]``.
+           The shift is clipped into ``[-shift_max, +shift_max]``.
+
+        Empty ``paper_quantities`` dict (or ``None``) is a safe
+        default: no EMA update, no shift change. This is the
+        backward-compat behaviour for callers that wire the paper
+        quantities dict later (or never).
+        """
+        if paper_quantities is None:
+            return
+        # Read sheet_A; missing / non-numeric / non-finite -> ignore.
+        try:
+            raw = paper_quantities.get("sheet_A", float("nan"))
+        except Exception:
+            return
+        try:
+            sheet_A = float(raw)
+        except (TypeError, ValueError):
+            return
+        if not math.isfinite(sheet_A) or sheet_A < 0.0:
+            return
+
+        # Update EMA.
+        if self._smoothed_sheet_A is None:
+            self._smoothed_sheet_A = float(sheet_A)
+        else:
+            self._smoothed_sheet_A = float(
+                self._ema * sheet_A
+                + (1.0 - self._ema) * float(self._smoothed_sheet_A)
+            )
+
+        # F16: history holds the smoothed value (not the raw sheet_A)
+        # so the PID ``prev`` reference below reads the EMA.
+        self._sheet_A_history.append(float(self._smoothed_sheet_A))
+
+        # Need at least two samples to compute ratio / delta.
+        if len(self._sheet_A_history) < 2:
+            return
+
+        prev = float(self._sheet_A_history[-2])
+        curr = float(self._sheet_A_history[-1])
+        # Guard against division by zero in ratio.
+        if not math.isfinite(prev) or prev == 0.0:
+            sheet_ratio = 1.0 if curr == 0.0 else float("inf")
+        else:
+            sheet_ratio = curr / prev
+        if not math.isfinite(sheet_ratio):
+            sheet_ratio = 1.0
+        sheet_delta = curr - prev
+
+        shift_update = (
+            float(self._kp) * (1.0 - sheet_ratio)
+            - float(self._kd) * sheet_delta
+        )
+        new_shift = float(self._shift) + shift_update
+        if new_shift > float(self._shift_max):
+            new_shift = float(self._shift_max)
+        elif new_shift < -float(self._shift_max):
+            new_shift = -float(self._shift_max)
+        self._shift = float(new_shift)
+
+    # -- derived -----------------------------------------------------------
+
+    def memory_fraction_for(
+        self,
+        outer_cycle_id: int,
+        round_in_cycle: int,
+        target_round: int,
+    ) -> float:
+        """Return ``1 - n_cap`` for one round, via the canonical helper."""
+        sample = self.sample(outer_cycle_id, round_in_cycle, target_round)
+        return memory_fraction_from_schedule(sample.as_cosine_schedule_sample())
+
+
+# ---------------------------------------------------------------------------
 # Registry + factory
 # ---------------------------------------------------------------------------
 
@@ -3039,6 +3576,7 @@ SCHEDULER_REGISTRY: dict[str, Callable[..., SchedulerProtocol]] = {
     "sigmoid": SigmoidScheduler,
     "convergence_adaptive": ConvergenceAdaptiveScheduler,
     "codimension_sheet": _codimension_sheet_factory,
+    "paper_ratio_adaptive": PaperRatioAdaptiveScheduler,
     "sequential": _sequential_factory,
 }
 """Mapping from schedule family name to its :class:`SchedulerProtocol` factory.
@@ -3207,6 +3745,8 @@ def build_scheduler_from_config(config: dict[str, Any]) -> SchedulerProtocol:
         return ConvergenceAdaptiveScheduler.from_config(config)
     if key == "codimension_sheet":
         return CodimensionSheetScheduler.from_config(config)
+    if key == "paper_ratio_adaptive":
+        return PaperRatioAdaptiveScheduler.from_config(config)
     if key == "sequential":
         # Lazy import to break the cycle: :mod:`.sequential` imports
         # the concrete scheduler classes from this module.
@@ -3529,6 +4069,7 @@ __all__ = [
     "DEFAULT_FEEDBACK_METRIC_WEIGHTS",
     "ExponentialScheduler",
     "LinearScheduler",
+    "PaperRatioAdaptiveScheduler",
     "PolynomialScheduler",
     "SCHEDULER_REGISTRY",
     "ScheduleSample",
