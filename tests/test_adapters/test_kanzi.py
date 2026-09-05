@@ -51,6 +51,7 @@ from adaptive_reflow.adapters.kanzi import (
     kanzi_resolve_weights_path,
     torch_is_available,
 )
+from adaptive_reflow.framework._compliance import implements
 from adaptive_reflow.universal import FlowMatchingODEAdapter
 from adaptive_reflow.universal.state import (
     ChannelName,
@@ -655,3 +656,66 @@ def test_gpt_prior_patch_runs_dae_gpt_prior_branch() -> None:
     # patched path computes a real cross-entropy loss > 0 (token
     # indices are non-trivial relative to logits).
     assert float(loss_dict["gpt_prior_loss"]) > 0.0
+
+
+# ---------------------------------------------------------------------------
+# MEDIUM-11 conformance gate — Wave 41 Agent A
+# ---------------------------------------------------------------------------
+
+
+def test_kanzi_adapter_declares_implements_decorator() -> None:
+    """KanziAdapter MUST carry an ``@implements(FlowMatchingODEAdapter)`` decorator.
+
+    MEDIUM-11 of the Wave 32 framework code review
+    (``docs/audit/framework-code-review.md`` §1.13) requires every
+    registered adapter to declare its Protocol surface via the
+    ``@implements`` decorator so that
+    :func:`assert_adapter_compliance` can walk ``__protocols__`` and
+    enforce structural typing. The Wave 39 Agent B regression check
+    (``commit fb652bb6``) found this decorator missing on
+    :class:`KanziAdapter`; the Wave 41 Agent A fix restores it.
+
+    The test is a trip-wire: removing the decorator drops
+    ``FlowMatchingODEAdapter`` from ``KanziAdapter.__protocols__`` and
+    the ``isinstance(KanziAdapter, FlowMatchingODEAdapter)`` structural
+    check (the registry-level CI gate) will start failing.
+    """
+    # The decorator records the declared Protocol set on the class.
+    declared = getattr(KanziAdapter, "__protocols__", ())
+    assert FlowMatchingODEAdapter in declared, (
+        f"KanziAdapter missing @implements(FlowMatchingODEAdapter); "
+        f"__protocols__={declared!r}"
+    )
+
+    # ``isinstance`` structural check passes for ``@runtime_checkable``
+    # Protocols — the same path ``assert_adapter_compliance`` walks.
+    assert isinstance(KanziAdapter, FlowMatchingODEAdapter)
+
+
+def test_kanzi_adapter_default_factory_carries_implements() -> None:
+    """``default_kanzi_adapter()`` instances MUST inherit the @implements set.
+
+    Regression guard: the decorator is on the class, so every
+    instance — including those produced by the ``default_kanzi_adapter``
+    factory — exposes the same ``__protocols__`` tuple.
+    """
+    adapter = default_kanzi_adapter()
+    assert FlowMatchingODEAdapter in getattr(KanziAdapter, "__protocols__", ())
+    assert isinstance(adapter, FlowMatchingODEAdapter)
+
+
+def test_kanzi_adapter_passes_assert_adapter_compliance() -> None:
+    """``assert_adapter_compliance(KanziAdapter)`` MUST pass.
+
+    End-to-end check that mirrors the CI gate in
+    ``tests/test_framework/test_assert_adapter_compliance.py``. The
+    registry-level CI gate already covers this for every registered
+    family, but a local check pins the KanziAdapter-specific contract
+    so a future regression (e.g. someone removes the decorator while
+    editing the class signature) surfaces immediately.
+    """
+    from adaptive_reflow.framework.interfaces import (
+        assert_adapter_compliance,
+    )
+
+    assert_adapter_compliance(KanziAdapter)

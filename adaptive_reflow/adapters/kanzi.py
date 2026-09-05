@@ -128,6 +128,7 @@ from adaptive_reflow.adapters._adapter_common import (
     memory_fraction_for,
     seed_from_ids,
 )
+from adaptive_reflow.framework.interfaces import implements
 
 
 # ---------------------------------------------------------------------------
@@ -804,6 +805,7 @@ class KanziCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
+@implements(FlowMatchingODEAdapter)
 class KanziAdapter(FlowMatchingODEAdapter):
     """Kanzi protein flow-autoencoder adapter (Wave 21 skeleton).
 
