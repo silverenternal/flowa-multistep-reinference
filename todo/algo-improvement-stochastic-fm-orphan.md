@@ -1,11 +1,11 @@
 # Algorithm improvement — StochasticFMAdapter enum orphan (Wave 29 Agent C follow-up)
 
-**Status:** pending (NEW — Wave 32 audit gap; single-file fix)
+**Status:** done (Wave 39; deleted orphan per audit recommendation)
 **Date:** 2026-09-05
 **Priority:** medium (audit cleanup; no production impact)
 **Depends on:** none (orphan adapter)
 **Owner:** framework maintainer
-**Wave:** Wave 33 (target)
+**Wave:** Wave 39 (target — Wave 33 actually performed the deletion; Wave 39 closes out the todo + verifies)
 **Goal:** resolve the StochasticFMAdapter enum-bug orphan by **deleting
 the adapter** (per Wave 29 Agent C + Wave 32 Agent A audit
 recommendation — lowest-risk option since the adapter is unused).
