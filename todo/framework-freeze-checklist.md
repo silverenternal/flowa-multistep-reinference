@@ -473,3 +473,94 @@ Date: ____________________
   currently in PASS state per this checklist; only MUST-5 (push
   authorization) remains user-gated. Full audit doc:
   `docs/audit/wave34-final-status.md`.
+
+- **2026-09-05 (Wave 35 Phase 3 Agent E — verify G.5 saturation fix)**:
+  Wave 35 landed 3 commits (3 unpushed) on top of Wave 34 P3:
+  - Wave 35 Agent A (ff2450d) — algorithm saturation-speed review
+  - Wave 35 Agent B (a19c0a1) — web-research-fm-restart-2026 + C.5/G.5
+    additive
+  - Wave 35 Agent C (4fe77c8) — saturation efficiency / early
+    termination 2026 research
+  - Wave 35 Phase 2 (1472807) — 3 HIGH-confidence saturation fixes
+    (G.5 275 NFE → 27.5 NFE)
+  - Wave 35 Phase 3 Agent E (ab72716) — verify G.5 post-fix + per-adapter
+    value surface
+
+  Verification snapshot (2026-09-05):
+  - **G.5 promoted from SOFT FAIL to SOFT PASS** (275 → 27.5 NFE;
+    target ≤ 50 NFE; geometric mean of [5, 50] over 2 multi-NFE families)
+  - G-MASTER-CAPABILITY = PASS (5/5 HARD + 2/2 SOFT — first time both
+    SOFT gates PASS simultaneously)
+  - All other G.* gates unchanged from Wave 34
+  - 97 unpushed commits (cumulative Wave 11 → Wave 35)
+
+  Full audit doc: `docs/audit/wave35-saturation-results.md`.
+
+- **2026-09-05 (Wave 36 Phase 3 Agent G — final status + push prep)**:
+  Wave 36 landed 7 PHASE-4 commits on top of Wave 35 P3:
+  - Wave 36 Agent A (fb2e4da) — Kanzi real-ckpt integration (download
+    attempt + SHA-256 + test + card)
+  - Wave 36 Agent B/D (d259910, 6d14401) — FreqFlow real-ckpt contract
+    + PHASE-4 eval pipeline (`tools/run_real_ckpt_eval.py`) + F.5
+    env_hash update
+  - Wave 36 Agent C (5eb1ff8) — MM-FM scope-split unblock plan +
+    LineageFlow 5-LOC `SamplerConfig` shim option
+  - Wave 36 Phase 2 Agent E (098a723) — 18-cell real-ckpt sweep
+    (3 seeds × 3 NFE × 2 models = 18 cells, all `TIE_AT_SATURATION`
+    via synthetic-fallback path)
+  - Wave 36 Phase 2 Agent F (ef173eb) — cold-clone verify + per-ckpt
+    value surface (`capability_audit_post_w36.json`)
+  - Wave 36 Phase 3 Agent G (this commit) — final status + push prep
+
+  Plus 2 Wave 37 docs commits landed post-Wave 36:
+  - Wave 37 Agent A (219b640) — G.1 spec-literal review + root-cause
+  - Wave 37 Agent B (669e9bf) — web research on robust aggregators
+    for capability benchmarking
+
+  Verification snapshot (2026-09-05):
+  - PHASE-4 eval pipeline live (`tools/run_real_ckpt_eval.py`),
+    18-cell JSON report in `verification_outputs/phase4_q4_2026.json`
+  - 4 RANKING models status: Kanzi + FreqFlow delivered to eval
+    pipeline (BLOCKED_synthetic_fallback on real-ckpt forward due
+    to missing sidecar deps); MM-FM BLOCKED (no adapter ships;
+    re-spawn plan in `mm-fm-unblock-investigation.md`); LineageFlow
+    BLOCKED (5-LOC shim ships in 1-day follow-up per
+    `lineageflow-upstream-investigation.md`)
+  - capability_audit_post_w36: G.1 PASS (+0.0884), G.2 PASS (0.962),
+    G.3 PASS (-0.0251), G.4 PASS (3), G.5 PASS (27.5 NFE),
+    G.6 PASS (0.25), G.7 PASS (7/7)
+  - G-MASTER-CAPABILITY = PASS (5/5 HARD + 2/2 SOFT — unchanged from
+    Wave 35 because PHASE-4 prep added zero perturbations to the
+    value surface: every cell fell to synthetic-fallback plateau)
+  - env_hash: `779d5a22111b258a56dbc388f0ffe8fd010e1c123de767650edaa548e6f29af9`
+    (Wave 36 Agent D capture)
+  - HEAD = `669e9bf` (most recent unpushed commit)
+  - 108 unpushed commits (cumulative Wave 10 → Wave 37)
+
+  Working tree (Wave 36 P3 additions):
+  - 3 modified PNG files (`docs/figures/noise_injection_*.png`) —
+    regenerated figures from Wave 36 noise-injection re-run
+  - 1 modified JSON file (`docs/r4-survey/exp3-results.json`) —
+    additive survey result entries
+  - 9 new `todo/` planning artifacts (PHASE-1-framework-and-theory.md,
+    README.md, RISK-REGISTER.md, decisions.md, lessons-learned.md,
+    models/README.md, models/lineageflow.md, push-unpushed-commits.md,
+    wave12/13/14-result-validation.md)
+  - 1 new `docs/audit/wave36-final-status.md` (this commit's deliverable)
+  - 1 backup file (`todo.json.bak`) — pre-Wave-32 status snapshot that
+    the planning artifacts replaced; should NOT be committed
+
+  **Recommendation**: READY TO PUSH pending explicit user authorization
+  (Wave 33 Agent H "do not push" pattern applies; Wave 35 + Wave 36 +
+  Wave 37 doc commits followed the same protocol). All 5 MUST items
+  currently in PASS state per this checklist; only MUST-5 (push
+  authorization) remains user-gated. Full audit doc:
+  `docs/audit/wave36-final-status.md`.
+
+  **PHASE-4 model integration is now ready to begin the real-ckpt
+  unblock sweep in Wave 37 or later.** No framework-code changes are
+  needed; the eval pipeline + registry + model cards + scope-split
+  plans are in place. What's needed to finish the real-ckpt sweep:
+  (1) sidecar venvs for Kanzi + FreqFlow; (2) LineageFlow 5-LOC shim;
+  (3) MM-FM PHASE-3 adapter re-spawn with explicit scope-split. None
+  are framework-code changes; all are follow-up PHASE-4 work.
