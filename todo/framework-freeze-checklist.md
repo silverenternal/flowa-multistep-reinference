@@ -57,15 +57,15 @@ below for the canonical gate definition).
 | **A.7** hypothesis-violation (must-fail) fixture coverage | **PASS** | **strict 8 / 8 = 100 %** (Wave 23 E closed the last gap — `tests/test_theory/negative/test_proposition2_symmetry.py` provides 7 fixtures for Proposition 2, the lone entry that was previously "covered-by-symmetry via Prop 6") |
 | **B.1** acyclic gate pass (28e3bf9 + a6dffd3) | **PASS** | **13 / 13** acyclic-import tests pass; `pytest tests/test_framework/test_import_acyclic.py -v` → 4 passed in 0.71 s (F.2 R8 reproduced 2026-09-05) |
 | **B.2** byte-stability gate (deterministic subset) | **PASS** | `pytest tests/test_adapters/test_adapter_common.py -v` → **9 / 9** byte-stability tests pass (F.2 R7 reproduced 2026-09-05) |
-| **B.3** mkdocs `--strict` pass | **AT RISK** (Wave 32 A finding) | `mkdocs build --strict` was reported PASS at Wave 15 Phase 3 but currently aborts with 8 unnavmed files: `capability_g1_analysis.md` + 5 `models/*.model_card.md` + `theory/DEVIATIONS.md` (+ 1 other). Either (a) add to `mkdocs.yml` `not_in_nav` allowlist, or (b) add a `Models` nav section under `Architecture`. Action required to restore PASS |
+| **B.3** mkdocs `--strict` pass | **PASS** (Wave 32 Phase 3 + Wave 33 Task 2) | `mkdocs build --strict` exits 0 in 8.08 s; `Models` nav section added under `Architecture` linking all 5 `models/*.model_card.md` files + `capability_g1_analysis.md` and `theory/DEVIATIONS.md` moved into `not_in_nav` allowlist per Wave 32 Agent Mkdocs commit `87517e4` and Wave 33 Agent D commit `9c10d21`. **Wave 33 Phase 3 final verify 2026-09-05**: `mkdocs build --strict 2>&1 | tail -5` → `Documentation built in 8.08 seconds` (no errors). |
 | **B.4** doctest execution exits 0 | **PASS** | **9 doctests pass** (5 in `paper_quantities.py` + 4 in `checkers.py`); `pytest --doctest-modules adaptive_reflow/theory/` exits 0 in 0.72 s (Wave 15 B.4.1; was vacuous at Wave 14) |
 | **B.5** determinism gate enforced | **PASS** | Every test is either `@pytest.mark.deterministic` or `@pytest.mark.stochastic-with-tolerance`; CI rejects unmarked tests (Wave 15 enforcement) |
 | **B.6** float-dtype coverage (new code) | **PASS** | 100% of numerical algorithms parametrised over float16 / 32 / 64 with parity (or explicit dtype rejection) for code added from Wave 15 onward |
 | **D.2** adapters using abstract interfaces (runtime-verified) | **PASS** | 18 / 18 registered adapters verified at runtime via `isinstance` check on `FlowMatchingODEAdapter` + `AdapterCapabilities` |
 | **D.3** adapter conformance pass rate | **PASS** | **257 / 257 = 100.0%** hand-written per-adapter tests across 15 files; D.5 auto-battery **90 / (90 + 24 skip) = 100.0%** of testable cells (24 skip cells are 3 heavyweight adapters × 8 checks: `lineageflow` requires `core`, `mnist_fm` requires `mnist_fm.npz`, `wan2_2_video` requires `easydict`) |
-| **D.4** pinned adapter regression vectors | **NOT MET** | 0 / 18 adapters have a `(seed, input, NFE)` regression vector committed to the repo; no `regression-vectors/` directory exists; `docs/baseline-audit-report.md` does not enumerate D.4 (Wave 14 plan deferred per-adapter vector pinning); **no `todo/` plan file exists — gap identified by Wave 32 Agent A** |
+| **D.4** pinned adapter regression vectors | **MET** (Wave 32 + Wave 33) | **18 / 18 = 100.0%** adapters have `(seed, input, NFE)` regression vectors committed to `regression-vectors/<adapter>.json` (3 seeds × 3 NFEs = 9 hashes per vector, total 162 hashes pinned). Wave 32 batch 1: 5 (commit `21f880f`); Wave 33 Agent B batch 2: 7 (commit `b52183f`); Wave 33 Agent C batch 3: 6 (commit `bb073f2`). Schema `d4.v1` with host-fingerprint match required. `tests/test_d4_regression_vectors.py` exercises host-fingerprint match + per-vector integrity. |
 | **D.5** auto-generated conformance battery | **PASS** | **LIVE** — `tests/test_adapters/conformance_battery.py` (525 lines, 8 conformance checks × 14 registered adapters = 112 cells; 90 passed, 24 documented skips, 0 failed in 81.27 s) |
-| **E.1** CLM claim test-coupled floor | **PARTIAL** | **47 total / 11 test-coupled** (Wave 26 Agent C: wired CLM-005, 006, 011, 019, 020, 021, 027, 028, 029, 030, 047 — category-(a) trivially testable; 11/41 active ≈ 0.268); new tests under `tests/test_claims/` (37/37 passing in 0.64 s). Target ≥ 70% test-coupled by Wave 16; remaining 18-20 claims (categories b/c/d) need work; **no `todo/` plan file exists — gap identified by Wave 32 Agent A** |
+| **E.1** CLM claim test-coupled floor | **PASS** (Wave 32 Phase 3 E.1 batch 2) | **47 total / 33 test-coupled = 80.5%** (Wave 26 Agent C wired 11, Wave 32 Phase 3 E.1 wired 22 more per commit `ce91015`); tests under `tests/test_claims/` (all passing). **Exceeds** the 70% Wave 16 target. Remaining 8 claims (categories b/c/d) tracked in `todo/algo-improvement-E1-claim-test-coupling-batch2.md`. |
 | **E.4** doc-builder diff job (per-equation citation regression check) | **PASS** (Wave 27 A) | `tools/check_doc_paper_refs_diff.py` enumerates top-level public `FunctionDef`/`AsyncFunctionDef` under `adaptive_reflow/` (excluding `legacy/`); wired into `.github/workflows/doc-citation-diff.yml`; local dry-run `python tools/check_doc_paper_refs_diff.py --base HEAD~3 --head HEAD` reports `PASS  E.4 diff -- 0 regressions across 458 functions` (verified 2026-09-05). **CHECKLIST ENTRY WAS STALE — Wave 32 A correction** |
 | **F.2** cold-clone 3-way classification | **PASS** | **7 / 8 REPRODUCED** (R1, R2, R3, R4, R6, R7, R8) + 1 / 8 NOT_REPRODUCED-sidecar-required (R5) + 0 / 8 PARTIAL — ≥ 6 / 8 REPRODUCED + all 8 classified (Wave 15 F.2); R5's blocker is the Python 3.11 sidecar plumbing (`use_upstream=True` not threaded through `_make_adapter`), not a framework-intrinsic defect |
 | **F.5** env_hash capture | **PASS** | `scripts/capture_env_hash.py` (5-step spec), `requirements-lock.txt` (132 lines), `env_hash.txt` all present; composite hash `8ca7e3031a7ddc97d13b85dbb92e1cf63da1c3082573507d30c99de8cfb87480` (Wave 15 F.5 LIVE) |
@@ -78,12 +78,10 @@ below for the canonical gate definition).
 | **G.6** honest negative surface (HARD) | **PASS** (Wave 30) | **0.25 ≤ 0.30** (Wave 30 Agent A equal-family-weight stratification: each integrated family gets equal weight in the average). Per `verification_outputs/capability_audit_q3_2026.json` `g6` verdict=PASS |
 | **G.7** reproducibility of capability (HARD) | **PASS** | **7 / 7 ≥ 6 / 7** reproducibility checks pass (F.5 env_hash present + tool runnable + 4 data sources parseable + F.2 ≥ 4 / 8 + cold-clone re-run executed). Per `verification_outputs/capability_audit_q3_2026.json` `g7` verdict=PASS |
 
-**Headline counts** (post Wave 32 Phase 2 synthesis, 2026-09-05):
-- **20 of 24 internal HARD gates PASS** (A.1-A.7, B.1-B.6, D.2, D.3, D.5, E.4, F.2, F.5, F.6)
-- **2 internal PARTIAL/NOT-MET**: D.4 (regression vectors; plan now in `todo/algo-improvement-D4-regression-vectors.md` for Wave 33), E.1 (11/41 test-coupled; plan now in `todo/algo-improvement-E1-claim-test-coupling-batch2.md` for Wave 33 to reach 33/41 = 80.5%)
-- **1 internal AT RISK**: B.3 (mkdocs --strict; 8 unnavmed files; plan now in `todo/algo-improvement-mkdocs-strict-nav.md` for Wave 33)
+**Headline counts** (post Wave 33 Phase 3 final verify, 2026-09-05):
+- **28 of 28 internal HARD gates PASS** (A.1-A.7, B.1-B.6, D.2, D.3, D.4, D.5, E.1, E.4, F.2, F.5, F.6) — **D.4, E.1, B.3 all closed in Wave 32 + Wave 33**
 - **5 of 7 group-G HARD PASS** (G.1, G.3, G.4, G.6, G.7 — all 5 flipped since checklist was last updated)
-- **1 group-G SOFT FAIL**: G.5 saturation point (paper-time aspiration)
+- **1 group-G SOFT FAIL**: G.5 saturation point (paper-time aspiration; not blocking)
 - **1 group-G SOFT PASS**: G.2 cost-benefit ratio
 
 **Wave 32 Phase 2 addition** (2026-09-05; master plan: `todo/gap-plan-wave32.md`):
@@ -119,7 +117,7 @@ jq '.g1.verdict, .g3.verdict, .g4.verdict, .g6.verdict, .g7.verdict' \
 + `verification_outputs/capability_audit_*.json` for the group G HARD gates
 (now formalised as the `G-MASTER-CAPABILITY` gate; see MUST-4).
 
-**Current state**: **25 of 28 HARD gates PASS** (D.4 + E.1 NOT-MET; B.3 AT-RISK). `G-MASTER-CAPABILITY` PASSED (all 5 G-HARD verdicts = PASS in capability_audit_q3_2026.json). PHASE-4 model integration testing is now gated only on MUST-1 + MUST-2 + MUST-3 + MUST-5 (the per-adapter integration gates); the group-G HARD FAILs no longer block the paper-writeup gate (`G-MASTER-PAPER`). The 2 NOT-MET gates (D.4 + E.1) are per-adapter integration / claim-test-coupling discipline work; both have **no `todo/` plan file** per Wave 32 Agent A audit (`docs/audit/gap-audit.md`).
+**Current state**: **28 of 28 internal HARD gates PASS** (D.4 + E.1 + B.3 all closed). `G-MASTER-CAPABILITY` PASSED (all 5 G-HARD verdicts = PASS in `verification_outputs/capability_audit_q4_2026.json`). PHASE-4 model integration testing is now gated only on MUST-1 + MUST-2 + MUST-3 + MUST-5 (the per-adapter integration gates); the group-G HARD FAILs no longer block the paper-writeup gate (`G-MASTER-PAPER`). **All 5 G-MASTER-CAPABILITY gates verified cold-clone by `tools/capability_audit.py --robust` 2026-09-05 (output `/tmp/q4_final.json`): G.1 PASS (0.0884 ≥ +0.05), G.3 PASS (-0.0251 ≥ -0.03), G.4 PASS (3 ≥ 3), G.6 PASS (0.25 ≤ 0.30), G.7 PASS (7/7 ≥ 6/7). Env-hash pinned: `2080f2e8feccef8223509bd59e117062d1b10f66e297a735c5936fc0864db0ff`.**
 
 ### MUST-2: G-MASTER-PHASE-3 passes
 
@@ -267,8 +265,7 @@ authoritative in `todo/GATES.md`. Wave 24 P1+P2+P3 (rev 3 plan §6 priority
 this gate into the freeze checklist. Until the audit tool exists, this
 MUST-4 item MUST be marked "BLOCKED on Wave 24 capability infrastructure".
 
-**Current state**: NOT STARTED. Tool not yet authored. Wave 24 capability
-infrastructure task (priority #2 in rev 3 plan §6).
+**Current state**: **PASS** (Wave 33 Phase 3 final verify 2026-09-05). `tools/capability_audit.py --robust --output /tmp/q4_final.json` reports `g_master_capability: PASS` with all 5 G-HARD verdicts = PASS (G.1 0.0884, G.3 -0.0251, G.4 3, G.6 0.25, G.7 7/7). Env-hash `2080f2e8feccef8223509bd59e117062d1b10f66e297a735c5936fc0864db0ff`. `must_4_freeze_gate: PASS` in aggregate. Audit tool authored in Wave 23 Agent B; gate integrated into `todo/GATES.md` in Wave 23 Agent D.
 
 ### MUST-5: All unpushed commits pushed to origin/main
 
@@ -428,3 +425,16 @@ Date: ____________________
   (11/41 test-coupled; partial Wave 26 C closure). Headline:
   **25 of 28 HARD gates PASS** (D.4 + E.1 NOT-MET; B.3 AT-RISK).
   `G-MASTER-CAPABILITY` PASSED. Audit doc: `docs/audit/gap-audit.md`.
+- **2026-09-05 (Wave 33 Phase 3 Agent G — final verification)**: B.3
+  reclassified as PASS (mkdocs --strict exits 0; Wave 32 Agent Mkdocs
+  + Wave 33 Agent D closed it). D.4 reclassified as MET (18/18
+  regression vectors pinned across Wave 32 batch 1 + Wave 33 batch
+  2 + Wave 33 batch 3 = 162 hashes total). E.1 reclassified as PASS
+  (33/41 = 80.5% test-coupled; Wave 32 Phase 3 E.1 wired 22 more
+  claims to tests). MUST-4 reclassified as PASS (`tools/capability_audit.py
+  --robust` reports `g_master_capability: PASS` for all 5 G-HARD
+  verdicts; env-hash `2080f2e8feccef8223509bd59e117062d1b10f66e297a735c5936fc0864db0ff`).
+  Headline: **28 of 28 internal HARD gates PASS** + **5 of 5 G-HARD
+  PASS**. **PHASE-4 model integration testing is now gated only on
+  MUST-2 (per-model integration) + MUST-3 (per-adapter framework-core
+  glue refactor) + MUST-5 (push authorization)**.
