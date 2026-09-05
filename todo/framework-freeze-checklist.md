@@ -442,6 +442,68 @@ Env-hash `17ad7f9d1f3948271859860e3d77b284a8a7805693c8adabb7e37174a4e10bad` (dif
 
 **Status (unchanged):** PASS. 5/5 HARD + 2/2 SOFT = G-MASTER-CAPABILITY PASS. MUST-4 freeze gate PASS. Wave-38 fixes are engineering-discipline only and did not perturb the value surface.
 
+## Wave 39 Agent E verify (post-Wave 38) — MUST-4
+
+**Date:** 2026-09-05
+**Agent:** Wave 39 Agent E
+**PASS state re-confirmed (independent re-run by this agent).**
+
+**Verification commands run:**
+
+```bash
+$ .venvs/flowmol3_venv/bin/python tools/capability_audit.py --output /tmp/q4_w39_final.json
+Wrote /tmp/q4_w39_final.json
+$ python -c "import json; d=json.load(open('/tmp/q4_w39_final.json')); print(d['g1']['value'], d['g1']['verdict']); print(d['aggregate'])"
+0.0884 PASS
+{'hard_pass': 5, 'hard_fail': 0, 'hard_pending': 0, 'soft_pass': 2,
+ 'g_master_capability': 'PASS', 'must_4_freeze_gate': 'PASS'}
+
+$ .venvs/flowmol3_venv/bin/python tools/capability_audit.py --robust --output /tmp/q4_w39_robust.json
+Wrote /tmp/q4_w39_robust.json
+$ python -c "import json; d=json.load(open('/tmp/q4_w39_robust.json')); print(d['g1_robust_mode']); print(d['aggregate'])"
+True
+{'hard_pass': 5, 'hard_fail': 0, 'hard_pending': 0, 'soft_pass': 2,
+ 'g_master_capability': 'PASS', 'must_4_freeze_gate': 'PASS'}
+```
+
+Both the default (canonical median) and `--robust` (backward-compat
+alias for canonical median) modes report `g_master_capability: PASS`.
+G.1 = 0.0884 ≥ +0.05 (1.8× target).
+
+**mkdocs `--strict` verify (this agent):**
+```bash
+$ .venvs/flowmol3_venv/bin/mkdocs build --strict 2>&1 | tail -5
+INFO    -  Building documentation to directory: /home/hugo/codes/flowa-multistep-reinference/site
+INFO    -  Documentation built in 13.89 seconds
+```
+
+mkdocs `--strict` PASS in 13.89 s. B.3 gate held.
+
+**Pytest fix-target verify (this agent — full-suite re-run in flight):**
+- Per Wave 39 Agent D record: 105 passed, 2 skipped (env-only) on the
+  5 fix-target files in 168.95 s.
+- Wave 39 Agent E launched a fresh full-suite `pytest tests/ -q --tb=line`
+  in the background (PID 897113) at verify time; expected outcome is
+  parity with Wave 38 Agent D's `1017 passed, 110 skipped, 12 warnings
+  in 323.19s` baseline.
+
+**Files authored this verify (additive):**
+- `docs/audit/wave37-final-status.md` — Wave 37 final-status record
+  (G.1 spec-literal fix before/after + pytest 14 → 0 fix-list +
+  capability gates final state).
+
+**Cross-references:**
+- `docs/audit/wave37-final-status.md` — Wave 37 final-status record
+- `docs/audit/wave39-g1-pytest-fixes.md` — Wave 39 Agent D verification
+- `docs/audit/wave39-cold-clone-capability-audit.md` — Wave 39 Agent C
+  cold-clone re-run post-Wave-38
+- `/tmp/q4_w39_final.json` + `/tmp/q4_w39_robust.json` — fresh audit
+  JSONs (this verify)
+
+**Status (unchanged):** PASS. 5/5 HARD + 2/2 SOFT = G-MASTER-CAPABILITY
+PASS. MUST-4 freeze gate PASS. Wave-39 Agent E verify confirms the Wave
+37 Agent D fix holds in the post-Wave-38 working tree.
+
 ### MUST-5: All unpushed commits pushed to origin/main
 
 **What it checks**: the local working tree has been synced to origin/main so
