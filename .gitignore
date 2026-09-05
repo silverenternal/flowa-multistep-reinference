@@ -6,7 +6,7 @@ __pycache__/
 artifacts/
 checkpoints/
 outputs/
-data/
+data/*
 !adaptive_reflow/data/
 !adaptive_reflow/data/**
 # The two negations above re-include everything under adaptive_reflow/data/,
@@ -14,6 +14,13 @@ data/
 # subtree (interpreter bytecode was showing up as untracked / committable).
 # Re-exclude bytecode there explicitly.
 adaptive_reflow/data/__pycache__/
+# Wave 43: re-include the Pfam held-out reference subset (Kanzi protein_sequence_validity_rate).
+# Note: a parent-dir `data/` exclusion in gitignore cannot be re-included for
+# subpaths (Git refuses), so we use the looser `data/*` (matches files+dirs one
+# level deep) plus negation for data/pfam_holdout/. This allows nested files
+# under data/pfam_holdout/ to be re-included via `!data/pfam_holdout/**`.
+!data/pfam_holdout/
+!data/pfam_holdout/**
 *.pt
 *.pth
 *.ckpt
