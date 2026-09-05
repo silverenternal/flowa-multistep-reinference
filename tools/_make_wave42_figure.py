@@ -250,9 +250,10 @@ def main() -> str:
     note_text = (
         "Tier 3 honest reading: Kanzi real-ckpt eval (9 cells, adapter_mode=torch) hits the\n"
         "synthetic-mode saturation ceiling for protein_sequence_validity_rate (0.95).\n"
-        "LineageFlow forward smoke passes (44.1M params, no NaN/Inf), but the real-ckpt\n"
+        "LineageFlow forward smoke passes (657.6M params, no NaN/Inf), but the real-ckpt\n"
         "eval-vs-baseline cell has not yet been wrapped; signed_mean = 0.0 by construction.\n"
-        "See docs/audit/wave42-paper-writeup.md for the unblock plan."
+        "Wave 43 WF1 metric-layer fix (Pfam held-out + per-cell real-metric branches) is the\n"
+        "unblock; see docs/audit/wave43-paper-tier3-writeup.md + CONSOLIDATED_RESULTS §15.10."
     )
     ax.text(
         0.01,

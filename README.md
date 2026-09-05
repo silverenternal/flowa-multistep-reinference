@@ -400,3 +400,44 @@ For the per-experiment numbers, see
 the tiered validation strategy (Tier 1 toy + Tier 2 one SOTA model +
 Tier 3 only if explicitly asked), see
 [`docs/STRATEGY_FRAMEWORK_SCOPE.md`](docs/STRATEGY_FRAMEWORK_SCOPE.md).
+
+## Tier 3 evidence (2026 real-ckpt)
+
+The framework has been wired to two top-venue 2026 real flow-matching
+checkpoints. Both adapter + sidecar plumbing slots execute end-to-end
+on the SHA-256-verified weights:
+
+- **Kanzi (ICLR 2026 protein flow-AE, Shah et al., `arXiv:2510.00351`)**:
+  `tools/run_real_ckpt_eval.py --model kanzi --force-mode real`
+  completes a 9-cell sweep (3 seeds × 3 NFE budgets = 10, 50, 200)
+  with `adapter_mode: torch` in every cell. Baseline + framework
+  wall-clock scales monotonically with NFE on the warm-cache CPU
+  (10 ms / 50 ms / 200 ms → 0.001 → 0.005 s per forward pass).
+  See `docs/CONSOLIDATED_RESULTS.md` §15.8 for the per-cell table.
+- **LineageFlow (ICML 2026 protein flow matching, Jinx-byebye)**:
+  forward smoke passes on the 657 M-param
+  `data/lineageflow/lineageflow-rp55.ckpt`; 1/9 cells executed
+  end-to-end on the real ckpt via `--force-mode real`
+  (`TIE_AT_SATURATION` reading); per-position entropy 2.266 / log(K=20)
+  2.996 — well above collapse, well below saturation. See
+  `docs/CONSOLIDATED_RESULTS.md` §15.9 for the per-cell table.
+
+![Tier 3 real-ckpt signed_mean by family](docs/figures/tier3_real_ckpt_signed_mean.png)
+
+**Honest Tier 3 reading.** The Tier 3 bars sit at zero in the figure
+above because `_compute_metric()` in `tools/run_real_ckpt_eval.py` is
+hard-wired to the documented trivial-reading fallback
+(`saturation_threshold = 0.95` for Kanzi, `0.999` for LineageFlow) for
+both arms. The framework's adapter + sidecar venv plumbing runs
+correctly (wall-clock is the expected 0.4–0.6× of baseline on Kanzi;
+forward smoke is byte-clean on LineageFlow); the metric layer is the
+unblock. The Wave 43 WF1 metric-layer fix (Pfam held-out reference +
+per-cell real-metric branches) is the next-wave deliverable that will
+move the orange bars off zero in the same way the blue and green bars
+did. When it lands, `docs/CONSOLIDATED_RESULTS.md` §15.10 will carry
+the real per-cell metric numbers.
+
+The full paper-side digest lives in [`docs/paper-draft.md`](docs/paper-draft.md)
+§7 (Tier 3 real-ckpt results). The Wave 43 audit trail for this
+writeup lives in
+[`docs/audit/wave43-paper-tier3-writeup.md`](docs/audit/wave43-paper-tier3-writeup.md).
