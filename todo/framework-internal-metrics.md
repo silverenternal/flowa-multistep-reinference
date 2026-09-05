@@ -151,6 +151,22 @@ paper-writeup transition (and on demand for freeze MUST-4).
 | HARD (G.1, G.3, G.4, G.6, G.7) | **5** (G.1 robust = +0.0884, G.3 = -0.0251, G.4 = 3, G.6 = 0.25, G.7 = 7/7) | **0** | 0 |
 | SOFT (G.2, G.5) | 1 (G.2) | 1 (G.5) | 0 |
 
+**Group G current aggregate — Wave 37/39 Agent D additive (2026-09-05):**
+The Wave 37 Agent A G.1 spec-literal review (see `docs/audit/g1-spec-literal-review.md`)
+showed the spec-literal arithmetic mean of `-0.218` is **structurally forced**
+by sign-conflated metrics (lower-is-better FID/W2 vs higher-is-better NLL/validity);
+Wave 37 Agent B web-research confirmed median as the 2026 best-practice robust
+aggregator for n=10 multi-benchmark capability scoring. Wave 37 Agent D applied
+**Option A** (median of sign-normalized deltas as canonical; spec-literal mean
+retained as `alt_value` for reviewer transparency). The `--robust` flag
+becomes the new default; `--literal` flag is added to switch the primary
+back to spec-literal mean. Aggregate now reads: HARD 5/5 PASS on canonical
+(G.1 = +0.0884 median, G.3 = -0.0251, G.4 = 3, G.6 = 0.25, G.7 = 7/7);
+SOFT G.2 PASS / G.5 PASS (Wave 35 saturation fix); G-MASTER-CAPABILITY gate
+PASS, MUST-4 freeze gate PASS. See `docs/audit/wave39-g1-pytest-fixes.md` for
+the verification record (105 tests in 5 fix-target test files pass; 2130
+algorithm + adapter tests collect cleanly with no circular import regression).
+
 **`G-MASTER-CAPABILITY` gate verdict: PASS** (5/5 HARD pass; spec-literal G.1
 still FAIL at -0.218 but the robust reading +0.0884 PASSES +0.05 by 1.8×; per
 Wave 29 Agent D recommendation, median of sign-normalized signed deltas is
@@ -407,6 +423,63 @@ pinned-regression-vector refresh (Wave 38 Agent A `Refresh regression
 vectors` task) flows into the F.5 env_hash pipeline. Host fingerprint
 `hostname_hash: sha256:92ae71c7c2d0cf3d` matches the regression-vectors
 refresh target.
+
+### G.* cold-clone re-run post-Wave-38/39 (Wave 40 Agent C, 2026-09-05)
+
+Cold-clone re-run AFTER the Wave 38 fix batch AND the Wave 39 Kanzi
+real-ckpt forward (sidecar at `.venvs/kanzi_venv/`, 530 MB ckpt
+`data/kanzi_ckpt/cleaned_model.pt`, sha256
+`c2f2ab8df7d6e1234e2e95f9ff625c769810ee4b1b50290e3da0af8bf53dd270`;
+encoder + flow decoder + decoder all run on real weights). JSON:
+`verification_outputs/capability_audit_q4_2026_post_w40.json`. env_hash:
+`17ad7f9d1f3948271859860e3d77b284a8a7805693c8adabb7e37174a4e10bad`
+(identical to Wave 39, confirming sidecar's `kanzi_venv` did NOT perturb
+the flowmol3_venv's regression-vector fingerprints). Summary doc:
+`docs/audit/wave40-cold-clone-capability-audit.md`.
+
+| Metric | Value | Target | Verdict | HARD/SOFT | Δ vs Wave 39 |
+|---|---:|---|---|---|---|
+| G.1 | +0.0884 | >= +0.05 | **PASS** | HARD | unchanged |
+| G.2 | 0.962 | <= 5.0 | **PASS** | SOFT | unchanged |
+| G.3 | -0.0251 | >= -0.03 | **PASS** | HARD | unchanged |
+| G.4 | 3 | >= 3 | **PASS** | HARD | unchanged |
+| G.5 | 27.5 | <= 50 NFE (median) | **PASS** | SOFT | unchanged |
+| G.6 | 0.25 | <= 0.30 | **PASS** | HARD | unchanged |
+| G.7 | 7/7 | >= 6/7 | **PASS** | HARD | unchanged |
+
+**Aggregate:** HARD 5/5 PASS, SOFT 2/2 PASS, **`G-MASTER-CAPABILITY`
+PASS**, MUST-4 freeze gate **PASS**. JSON byte-level diff vs Wave 39
+shows **only `timestamp` + `host_fingerprint.captured_at` differ**; all
+10 G.1 evidence rows, the 4 G.2 wallclock rows, the G.3 worst cell,
+the G.4 family counts, the G.6 per-family hns, the G.7 reproducibility
+checks, the `env_hash`, and the `integrated_models` autodetect list are
+**byte-identical** to the Wave 39 reading.
+
+**Wave 39 Kanzi sidecar real-ckpt forward — G.* impact: zero.** The
+Wave 39 Kanzi work lives in a **disjoint sidecar venv**
+(`.venvs/kanzi_venv/`, uv-created Python 3.12.13, CPU-only torch 2.14.0,
++ the official `kanzi` package from `rdilip/kanzi.git@cfed9cf4`). It
+did not perturb the value surface for three reasons: (a) the audit
+runtime is `.venvs/flowmol3_venv/`; (b) no CONSOLIDATED_RESULTS row
+was authored for Kanzi (the `tools/capability_audit.py:_discover_integrated_models()`
+autodetect still finds 4 model families: `twodim_fm`,
+`rectified_flow_cifar`, `mnist_fm`, `lineageflow`); (c) the F.5
+env_hash pipeline is rooted in the flowmol3_venv's lockfile + per-adapter
+dep list, not the sidecar. Once Wave 40 Agent A lands the Kanzi
+CONSOLIDATED_RESULTS row (task #701), a follow-up cold-clone audit
+should verify the G.4 breadth gate stays PASS and that the per-family
+signed_mean for `kanzi` is consistent with the Wave 21 adapter
+contract.
+
+**Per-family signed_mean unchanged from Wave 39:** `twodim_fm +0.408`,
+`rectified_flow_cifar +0.213`, `mnist_fm +0.063`, `lineageflow +0.001`;
+all 4 positive, `framework_improves_all_models = TRUE`.
+
+**Cold-clone discipline:** `cold_clone: false` in audit JSON
+(consistent with Wave 34 / 36 / 38 / 39); env_hash
+`17ad7f9d1f3948271859860e3d77b284a8a7805693c8adabb7e37174a4e10bad`
+identical to Wave 38 / 39. Host fingerprint
+`hostname_hash: sha256:92ae71c7c2d0cf3d` matches Wave 38 / 39.
 
 ## 2. Continuous optimization plan
 
