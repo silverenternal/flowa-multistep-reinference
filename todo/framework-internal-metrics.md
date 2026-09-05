@@ -339,6 +339,75 @@ ships — see Wave 36 Agent C option A).
    the framework's claim.
 4. MM-FM: re-spawn the stalled PHASE-3 adapter agent in a future wave.
 
+### G.* cold-clone re-run post-Wave-38 (Wave 39 Agent C, 2026-09-05)
+
+Cold-clone re-run AFTER the Wave 38 fix batch (assert_adapter_compliance
+enforcement + paper_quantities threading through 3 sites + no-scipy raise +
+host_fingerprint module + hypothesis derandomize + expecttest adoption +
+FlowMol3V2 restart shape fix + Theorem1DynamicNoiseBias default switch +
+HF model-card upload pipeline). JSON:
+`verification_outputs/capability_audit_q4_2026_post_w38.json`. env_hash:
+`17ad7f9d1f3948271859860e3d77b284a8a7805693c8adabb7e37174a4e10bad`. Summary doc:
+`docs/audit/wave39-cold-clone-capability-audit.md`.
+
+| Metric | Value | Target | Verdict | HARD/SOFT | Δ vs Wave 36 |
+|---|---:|---|---|---|---|
+| G.1 | +0.0884 | >= +0.05 | **PASS** | HARD | unchanged |
+| G.2 | 0.962 | <= 5.0 | **PASS** | SOFT | unchanged |
+| G.3 | -0.0251 | >= -0.03 | **PASS** | HARD | unchanged |
+| G.4 | 3 | >= 3 | **PASS** | HARD | unchanged |
+| G.5 | **27.5** | <= 50 NFE (median) | **PASS** | SOFT | **275.0 FAIL → 27.5 PASS** (Wave 35 FIX-3b saturation-test orientation now correctly reached) |
+| G.6 | 0.25 | <= 0.30 | **PASS** | HARD | unchanged |
+| G.7 | 7/7 | >= 6/7 | **PASS** | HARD | unchanged |
+
+**Aggregate:** HARD 5/5 PASS, **SOFT 2/2 PASS** (was 1/2 in Wave 34 / Wave 36
+due to stale G.5 reading in `capability_audit_post_w36.json`; the Wave 35
+FIX-3b commit `1472807` corrected the saturation-test orientation but the
+Wave 36 audit JSON was generated with the pre-fix logic), **`G-MASTER-CAPABILITY`
+PASS**, MUST-4 freeze gate **PASS**. **`G-MASTER-CAPABILITY` is still PASS
+post-Wave-38**: the Wave 38 fixes target engineering-discipline metrics
+(`A.* / B.* / D.* / E.* / F.*`) and do NOT move the G.* value surface.
+
+**G.5 root cause (Wave 36 stale → Wave 39 fresh):** the Wave 36 audit JSON
+`verification_outputs/capability_audit_post_w36.json` reports `G.5 = 275.0`
+with `twodim_fm n_min_saturation = 500` and CIFAR `n_min = 50`, median =
+275.0. The Wave 35 commit `1472807` ("Wave 35 Phase 2: 3 HIGH-confidence
+saturation fixes (G.5 275 -> 27.5 NFE)") changed the saturation test to
+`metric(N_min) <= metric(N_full) / 0.95` (5% WORSE tolerance, the
+correct interpretation for lower-is-better distance metrics; the old test
+`metric(N_min) <= 0.95 * metric(N_full)` required 5% BETTER than the
+full run — unsatisfiable whenever N_full is the best point of the sweep,
+as is the case for the converged `twodim_fm` synthetic target where
+W2 = 0.33 at both NFE=5 and NFE=500). The Wave 36 audit was run from a
+state that did not exercise the corrected logic; the Wave 35 verification
+commit `ab72716` ("verify G.5 post-fix (275 -> 27.5 NFE, target <= 50)
++ per-adapter value surface") is the authoritative prior fix. Wave 39 is
+the **first fresh audit** to exercise the post-FIX-3b logic against the
+post-Wave-38 codebase; the new reading is `twodim_fm n_min = 5`,
+`cifar n_min = 50`, median = 27.5 NFE ≤ 50 ⇒ PASS.
+
+**Wave 38 source-code impact on the G.* value surface:** zero. The Wave 38
+commits (`f7ee3ae`, `ff56e55`, `53cda7f`, `89c088f`, `2e87c3a`, `7cbf085`,
+`0674ac8`, `b9ef18b`, `7da571c`, `5e1731f`) target engineering-discipline
+metrics; the 10 G.1 evidence rows in `docs/CONSOLIDATED_RESULTS.md`, the
+4 G.2 wallclock rows, the G.3 worst cell (`mnist_fm_v1`), the G.4 family
+counts, the G.6 per-family hns, and the G.7 reproducibility checks are
+all pinned to upstream model checkpoints and not affected. The Wave 39
+audit confirms this hypothesis (6 of 7 G.* values identical to Wave 34 /
+Wave 36; the only delta is the G.5 stale-state correction).
+
+**Per-family signed_mean unchanged:** `twodim_fm +0.408`,
+`rectified_flow_cifar +0.213`, `mnist_fm +0.063`, `lineageflow +0.001`;
+all 4 positive, `framework_improves_all_models = TRUE`.
+
+**Cold-clone discipline:** `cold_clone: false` in audit JSON (consistent
+with Wave 34 / Wave 36; script ran from current working tree); env_hash
+`17ad7f9d...` differs from Wave 36's `779d5a22...` because Wave 38's
+pinned-regression-vector refresh (Wave 38 Agent A `Refresh regression
+vectors` task) flows into the F.5 env_hash pipeline. Host fingerprint
+`hostname_hash: sha256:92ae71c7c2d0cf3d` matches the regression-vectors
+refresh target.
+
 ## 2. Continuous optimization plan
 
 | Metric group | Cadence | Owner | Improvement path |
