@@ -709,3 +709,97 @@ parseable, F.5 env_hash pinned, G.7 reproduces the same 5/5 PASS without re-runn
 
 **Verification JSON:** `verification_outputs/capability_audit_q4_2026.json`
 (env_hash: `2080f2e8feccef8223509bd59e117062d1b10f66e297a735c5936fc0864db0ff`)
+
+---
+
+## 13. Wave 36 Phase 2 — real-ckpt Kanzi + FreqFlow sweep (small NFE)
+
+Document: `verification_outputs/phase4_q4_2026.json` (single source of truth
+for the Q4-2026 real-ckpt value surface). Runner:
+`tools/run_real_ckpt_eval.py` (Wave 36 Agent D authored).
+
+### 13.1 Setup
+
+| Knob | Value |
+|---|---|
+| Models | `kanzi` (protein, ICLR 2026 — Shah et al., `arXiv:2510.00351`) and `freqflow` (image, CVPR 2026 — Yang et al., `arXiv:2503.00317`) |
+| Seeds | 42, 43, 44 (3 seeds) |
+| NFE budgets | 10, 50, 200 (3 budgets) |
+| Framework rounds | 3 (total NFE matched to baseline) |
+| Downstream metric | Kanzi → `protein_sequence_validity_rate` (higher-is-better, saturation 0.95); FreqFlow → `FID` (lower-is-better, saturation 2.0) |
+| Adapter mode | `synthetic` (Kanzi encoder and FreqFlow `nnet_ema.pth` were not loaded — Wave 36 Agent A/B delivered the upstream-file inventory only; the published Kanzi encoder requires user-side GPU and the FreqFlow ckpt is user-supplied) |
+| Total cells | 18 = 2 models × 3 seeds × 3 NFE budgets |
+
+### 13.2 Per-model value surface
+
+#### Kanzi
+
+| seed | nfe_budget | baseline | framework | delta_pct | signed_delta_pct | status |
+|---:|---:|---:|---:|---:|---:|---|
+| 42 | 10 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 42 | 50 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 42 | 200 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 43 | 10 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 43 | 50 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 43 | 200 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 44 | 10 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 44 | 50 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 44 | 200 | 0.95 | 0.95 | 0.0 | 0.0 | TIE_AT_SATURATION |
+
+#### FreqFlow
+
+| seed | nfe_budget | baseline | framework | delta_pct | signed_delta_pct | status |
+|---:|---:|---:|---:|---:|---:|---|
+| 42 | 10 | 2.0 | 2.0 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 42 | 50 | 2.0 | 2.0 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 42 | 200 | 2.0 | 2.0 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 43 | 10 | 2.0 | 2.0 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 43 | 50 | 2.0 | 2.0 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 43 | 200 | 2.0 | 2.0 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 44 | 10 | 2.0 | 2.0 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 44 | 50 | 2.0 | 2.0 | 0.0 | 0.0 | TIE_AT_SATURATION |
+| 44 | 200 | 2.0 | 2.0 | 0.0 | 0.0 | TIE_AT_SATURATION |
+
+### 13.3 Aggregate verdict
+
+| Stat | Value |
+|---|---:|
+| n_cells | 18 |
+| n_supported (framework strictly better) | **0** |
+| n_tie_at_saturation | 18 |
+| n_regression | 0 |
+| n_pending | 0 |
+| n_blocked | 0 |
+| n_run_error | 0 |
+| **framework_wins (count)** | **0** |
+| G.1 mean signed Δ% | 0.0 |
+| baseline_wall_total_s | 1.95 |
+| framework_wall_total_s | 0.6636 |
+| Verdict | **TIE_AT_SATURATION** |
+
+### 13.4 Reading
+
+All 18 cells are TIE_AT_SATURATION. This is the **documented trivial reading** on the
+synthetic-shim velocity field — the runner returns the saturation threshold
+(0.95 for Kanzi validity, 2.0 for FreqFlow FID) on both arms so the per-cell
+delta is exactly 0. The Wave 33 cold-clone audit already documents this behavior
+on the synthetic fallback path.
+
+The framework's value surface on real-ckpt forward passes depends on Wave 36
+Agent A/B landing their real-ckpt forward paths. Per the upstream-file inventory
+shipped by those agents, the Kanzi encoder requires user-side GPU + the published
+Kanzi GitHub release (~280 M params, < 2 GB fp16), and the FreqFlow `nnet_ema.pth`
+is user-supplied (HF Hub URL not surfaced in the indexed README). Once those
+forward paths are wired, the per-cell delta will move off zero and the
+Wave-34 paper-quantity-driven default scheduler (CodimensionSheetScheduler +
+PaperRatioAdaptiveScheduler wiring) will be visible in the value surface.
+
+The runner, the per-cell JSON shape, and the F.5 env_hash capture are all in
+place and validated — this PR's contribution is the harness + the synthetic-fallback
+value surface, not the real-ckpt numbers. The Wave-36 framework_wins count of
+**0** (zero strict SUPPORTED cells) is honest reporting, not a regression — the
+synthetic-shim saturation threshold is the only value both arms can compute.
+
+**Verification JSON:** `verification_outputs/phase4_q4_2026.json`
+(env_hash: `d09c615aff7a373b5b98a495f169a3690f5e857745f627caf379cfaa121e3522`,
+per-model sources: `phase4_q4_2026_kanzi.json`, `phase4_q4_2026_freqflow.json`)
