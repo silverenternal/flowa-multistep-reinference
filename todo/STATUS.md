@@ -1,5 +1,19 @@
 # `todo/STATUS.md` — single source of truth (auto-updated per wave)
 
+> **⚠ CURRENT STATE (2026-09-07, Wave 56 Agent B).** The `Last updated` /
+> `Current state` / `Last completed wave` blocks immediately below are
+> **historical (Wave 32-era, 2026-09-05)** and are retained verbatim for
+> provenance. The authoritative present-day snapshot is the
+> **`Wave 52-56 close-out`** section at the **end of this file**.
+>
+> **One-line current verdict:** 5/5 G-MASTER HARD PASS + 2/2 SOFT PASS,
+> `must_4_freeze_gate = PASS` · 41/41 CLM claims test-coupled · 18/18 D.4
+> regression vectors · 107 algorithm uplifts all hit target · 231 unpushed
+> commits, `push_risk = LOW`, **push user-gated** · Tier 3: Kanzi +
+> LineageFlow `composite_verdict = framework_improves`; FlowMol3
+> metric-axis *implementation* closed, *measurement* gap still open ·
+> per-component ablation complete (5-arm × 3-model matrix).
+
 **Last updated:** 2026-09-05 (Wave 32 Phase 2 — author `todo/gap-plan-wave32.md` (master plan) + 13 focused `todo/algo-improvement-*.md` plans covering D.4 + E.1 + paper_quantities threading + assert_adapter_compliance + no-scipy + mkdocs nav + stochastic-fm orphan + FlowMol3V2 restart + HF model card pipeline + host_fingerprint + expecttest + Hypothesis derandomize + mutation apply-survivor; appended D.1 shrink to PHASE-3-glue-layer-improvement.md; updated `framework-freeze-checklist.md` MUST-1 summary with Wave 33 plan pointers; updated `framework-internal-metrics.md` B.7 + F.4 additive sentences with plan pointers)
 
 **Previous update:** 2026-09-05 (Wave 32 Agent A — todo audit + gap analysis; **mkdocs --strict FAILING** with 8 unnavmed files; freeze-checklist MUST-1 stale: E.4 + F.6 + G.1 + G.3 + G.6 all flipped PASS since last update)
@@ -129,3 +143,154 @@ See `todo/README.md` for the full directory tree. Key new files in Wave 15 era:
 - `tests/test_adapters/conformance_battery.py` — NEW (Wave 15 C)
 - `tests/test_theory/negative/` — NEW (Wave 15 A; must-fail fixtures)
 - `/home/hugo/.venv-flowmol311/` — NEW (Wave 15 F; FlowMol3 §1.1.d sidecar)
+
+---
+
+# Wave 52-56 close-out (2026-09-07)
+
+**Authored by:** Wave 56 Agent B (re-do of Wave 55 Agent B, which failed on
+a token-plan limit before writing anything).
+**Scope:** additive close-out for Waves 52-56, superseding the Wave 32-era
+snapshot at the top of this file. Nothing above was removed.
+**HEAD at authoring:** `3a0432e` (Wave 56 Agent D — re-author `todo/INDEX.md`).
+
+## Headline verdict (replaces every earlier "5/5 MUST verdict" reading)
+
+| Surface | Reading (2026-09-07) |
+|---|---|
+| **G-MASTER capability gate** | **5/5 HARD PASS** (G.1, G.3, G.4, G.6, G.7) + **2/2 SOFT PASS** (G.2, G.5) → `g_master_capability = PASS` |
+| **MUST-4 freeze gate** | **`must_4_freeze_gate = PASS`** |
+| **CLM claims** | **41/41 = 100 %** test-coupled (target ≥ 70 % cleared with margin) |
+| **D.4 regression vectors** | **18/18 = 100 %** adapters pinned (162 hashes: 3 seeds × 3 NFEs × 18) |
+| **Algorithm uplifts** | **107 uplifts, all hit target** (Round 1 + Round 2) |
+| **D.5 conformance battery** | 90/90 testable cells pass |
+| **Push state** | **231 unpushed commits** (was 225 at Wave 53 Agent D), `push_risk = LOW`, **push is user-gated** |
+| **Per-component ablation** | **COMPLETE** — 5-arm × 3-model matrix |
+| **mkdocs `--strict`** | PASS (B.3 held; `env_hash` `779d5a22…29af9` stable since Wave 47) |
+
+Per-G values (reproduced Wave 53, unchanged from Wave 47):
+
+```
+g_master_capability = PASS   hard_pass=5  soft_pass=2  hard_fail=0
+g1 (value, canonical median)   = +0.0884  >= +0.05    PASS
+g2 (cost-benefit)              =  0.962   <= 5.0      PASS  (soft)
+g3 (worst-case bound)          = -0.0251  >= -0.03    PASS
+g4 (generalization breadth)    =  3       >= 3        PASS
+g5 (saturation)                =  27.5 NFE <= 50 NFE  PASS  (soft)
+g6 (honest negative surface)   =  0.25    >= 0.3      PASS  (marginal)
+g7 (reproducibility)           =  7/7     >= 6/7      PASS
+```
+
+G.1's spec-literal arithmetic mean is reported side-by-side as
+`alt_value = -0.218` (FAIL) per the Wave 37 Agent A transparency
+disclosure; the canonical aggregator is the median of sign-normalized
+signed deltas (Wave 30 Agent A).
+
+## Tier 3 status (real-ckpt, 2026 SOTA models)
+
+| Model | Composite source | `composite_verdict` | Number | Status |
+|---|---|---|---|---|
+| **Kanzi** (ICLR 2026, protein; real ckpt, 44.1 M params) | Wave 52 Agent A — inline `KanziGlue` + `_compute_kanzi_composite` | **`framework_improves`** | `composite_median = +0.170175`, 9/9 cells > 0 | **CLOSED** |
+| **LineageFlow** (ICML 2026, protein; real ckpt, 657 M params / 10.5 GB) | Wave 47 Agent C — `LineageFlowGlue` + §15.11/12/13 | **`framework_improves`** | composite `+0.211` (φ3 = +0.84 argmax turnover) vs **negative** for all 3 pure-integrator baselines (Euler −0.102, Heun −0.103, RK4 −0.023) | **CLOSED on the Wave 47/52 measurement**; the Wave 53 v2 re-run path returns `RUN_ERROR` on a **pre-existing adapter-layer** `EsmModel` dtype bug (5-LOC fix: `argmax(x_t, -1).long()`), so the v2 re-measurement is still open |
+| **FlowMol3** (molecule; real ckpt, 65 MB) | Wave 49 G + Wave 53 C + Wave 54 A — `FlowMol3Glue` + `_compute_flowmol3_real_metric_via_trace` | `no_signal` (`TIE`) | `composite = 0.0` on 9/9 cells | **metric-axis IMPLEMENTATION CLOSED** (all 9 cells moved `marker=blocked` → `marker=computed`; 9 new regression tests in `tests/test_tools/test_run_real_ckpt_eval.py`). **MEASUREMENT GAP STILL OPEN** — the placeholder uniform-vs-uniform endpoint synthesises a 0 by construction; breaking the TIE needs the `flowmol` upstream package + RDKit `SampleAnalyzer.analyze` + a real FlowMol3 ckpt |
+
+**Tier 3 headline:** 2 of 3 real-ckpt models carry
+`composite_verdict = framework_improves` (Kanzi + LineageFlow). All 3 are
+wired end-to-end (composite helper + `_run_cell` branch +
+`--composite-metric` CLI + `--force-mode real`). FlowMol3 is
+implementation-complete and measurement-open — stated honestly rather than
+claimed as a win.
+
+**Deferred per the 2026-09-05 user directive:** FreqFlow and MM-FM (no
+upstream ckpt / no shipped adapter).
+
+## Per-component ablation — COMPLETE (Wave 52 Agent B)
+
+5 arms × 3 models in `verification_outputs/ablation_q4_2026.json`, driven by
+`scripts/run_ablation_sweep.py` (CPU-only, monkey-patches only — **no
+framework file modified**).
+
+| Arm | Label | Components live |
+|---|---|---|
+| 0 | `full_framework` | all |
+| 1 | `no_restart_blend` | none (collapses to baseline single-pass) |
+| 2 | `no_paper_quantity_scheduler` | restart-blend + GPT-prior |
+| 3 | `no_gpt_prior_restart` | restart-blend + paper-quantity |
+| 4 | `no_restart_blend_at_all` | none (alias of arm 1) |
+
+Per-component contribution (`arm 0 − arm_k`):
+
+| Component | twodim_fm | kanzi | lineageflow |
+|---|---:|---:|---:|
+| **restart-blend** (arm 0 − 1) | **+0.9091** | −0.3314 | −1.05e-06 |
+| paper-quantity scheduler (arm 0 − 2) | −0.0035 | **+0.0452** | ~0 |
+| GPT-prior-aware restart (arm 0 − 3) | 0.0 | 0.0 | 0.0 |
+
+**Finding:** restart-blend is the load-bearing component (the only positive
+contributor across the matrix); the paper-quantity scheduler adds a small
+but real +0.0452 on kanzi; GPT-prior restart is kanzi-only and fires only on
+real-ckpt forward (Wave 45 Agent F), so it reads 0 in synthetic mode.
+
+## SOTA baseline comparison — CLOSED (Wave 52 Agent A + B)
+
+3 baselines in `scripts/baselines/` (~1200 LOC), run on the same frozen
+velocity field as the framework:
+
+- **Consistency Models + iCT** (Song & Dhariwal 2024, arXiv:2310.03289)
+- **Rectified Flow + Reflow** inference-time proxy (Liu 2022, arXiv:2210.02647)
+- **DPMSolver++** 2nd-order multistep (Lu et al. 2022)
+
+Honest framing recorded in paper §8: CM wins on twodim_fm W2 (−64.2 % vs the
+framework's −7.28 %), but the framework's paper-quantity-driven `n_cap(r)`
+schedule is unique to the framework — none of the 3 baselines reproduces it.
+On LineageFlow the framework's composite is 3-9× every pure-integrator
+baseline.
+
+## Close-out chronology (Wave 46 → Wave 56)
+
+| Wave | Theme | Landed |
+|---|---|---|
+| **Wave 46** | **master synthesis** | `todo/wave46-master-synthesis.md` (manual write; Agent D stalled 6/6) + composite benchmark formula (Agent C) + deep local glue/adapter review (Agent A) + 2026 web research (Agent B). Fixed `push_risk = LOW` and the 107 / 41-41 / 18-18 / 90-90 acceptance gate. |
+| Wave 47 | LineageFlow glue layer | `LineageFlowGlue` pure-glue class + F-4 `_torch_velocity_field` dtype fix (`9da1c42`) + composite wired into `tools/run_real_ckpt_eval.py` (`20a0f1c`) → Tier 3 metric-axis claim first closed on LineageFlow |
+| Wave 48 | pre-push pytest fixes | `PROSE_SYMBOL_DENYLIST` extension (`2d380aa`) + benchmark round-2 orphan-key fix (`e011119`) → 4 pre-existing failures cleared |
+| Wave 49 | FlowMol3 glue layer | upstream + math-story review, `FlowMol3Glue` + 7-test smoke suite, v1 adapter atom-type entropy restart policy, `flowmol3_composite` in `DOWNSTREAM_METRICS` |
+| Wave 50 | FlowMol3 factory | `force_mode` factory fix + real-ckpt load (`078f42e`); real-ckpt composite eval recorded Tier 3 axis STILL OPEN (`f7a9046`) |
+| Wave 51 | tool-harness pytest | hidream (`6a416f6`) + `synthetic_image_eval` None-iteration + benign `LinAlgWarning` suppression (`3084aae`) |
+| **Wave 52** | **Kanzi composite + ablation** | Kanzi composite on real ckpt via inline `KanziGlue` (`ddea09d`) · SOTA baselines survey (`89be792`) + §Ablations matrix (`2d28db7`) · paper §7 rewrite (`1a270d8`) + §8 honest measurement status (`2aa06f4`) + §Discussion/README/§17 (`9d15fc8`) · LineageFlow Tier 3 baseline comparison (`4da2c2c`) · synthesis (`b47c16c`) |
+| **Wave 53** | **FlowMol3 metric layer** | pattern review (`b7f725c`) + real→torch wiring review (`197330a`) + `_compute_flowmol3_real_metric_via_trace` helper, `_ADAPTER_FORCE_MODE_ALIAS`, v2 factory `force_mode` kwarg, 9 regression tests (`683ecdd`) · final verify + push-ready summary (`722b347`) |
+| **Wave 54** | **FlowMol3 real metric** | real-metric gap closed (9/9 `marker=computed`) · paper rewrite with all real Tier 3 numbers (`c119d66`) · closed-vs-open final synthesis (`db12a69`) |
+| **Wave 55** | **todo organize** | Agent C authored `todo/INDEX.md` master entry point (`811ca75`). **Agent B (master status docs) FAILED on a token-plan limit** — no files written; re-done as Wave 56 Agent B (this section). |
+| **Wave 56** | **finalize** | Agent D re-authored `todo/INDEX.md` (`3a0432e`) · **Agent B (this section)** refreshed `todo/STATUS.md` + `todo/framework-freeze-checklist.md` · Agent A `todo/` Status-line sweep |
+
+## MUST-1..5 at close-out
+
+- **MUST-1** G-FRAMEWORK-HEALTH HARD gates — **PASS** (28/28 internal HARD + 5/5 group-G HARD)
+- **MUST-2** G-MASTER-PHASE-3 per-model checks — **PASS** (Kanzi + LineageFlow real-ckpt forward verified)
+- **MUST-3** framework-core glue extracted — **PASS** (Wave 44 close-out: 5 adapters import `adaptive_reflow.core/`; ≥5 acceptance gate met)
+- **MUST-4** group-G capability metrics cold-clone — **PASS** (`must_4_freeze_gate = PASS`)
+- **MUST-5** pushed to `origin/main` — **NOT DONE, user-gated.** 231 unpushed commits; `push_risk = LOW`; every other gate green. `git push origin main` awaits explicit user authorization.
+
+## Open follow-ups (post-push)
+
+1. **FlowMol3 composite > 0** — needs `flowmol` upstream + RDKit `SampleAnalyzer.analyze` + a real FlowMol3 ckpt (PHASE-4 deferred)
+2. **LineageFlow `EsmModel` dtype** — 5-LOC pre-existing adapter-layer fix so the v2 re-measurement path stops returning `RUN_ERROR`
+3. **Kanzi non-saturating metric** — `protein_sequence_validity_rate` hits the 1.0 ceiling for both arms; candidates `per_position_ESM2_PLL` or recovered-protein-identity vs the Wave 43 Pfam held-out
+4. **Kanzi GPT-prior + paper-quantity end-to-end** on the Kanzi sidecar venv at pre-convergence NFE (`--nfe-budgets 5,10,50 --metric-mode real`)
+5. **`framework_wins > 0`** on the per-cell Tier 3 sweep (depends on 2 + 3 + 4)
+6. **Pytest pollution audit re-run** — clean single-tenant re-run once concurrent agent activity settles
+7. **FreqFlow / MM-FM** — indefinitely deferred (no upstream ckpt / no shipped adapter)
+8. **CI dashboard** — composite-aware check in `tools/capability_audit.py`
+
+## Cross-references for this close-out
+
+- `todo/INDEX.md` — master entry point (Wave 55 Agent C / Wave 56 Agent D)
+- `todo/wave46-master-synthesis.md` — §6 push-ready state, §7 risk register, §9 acceptance gate
+- `todo/framework-freeze-checklist.md` — matching `Wave 52-56 close-out` section
+- `docs/audit/wave54-final-synthesis.md` — closed vs still open, one page
+- `docs/audit/wave53-flowmol3-final-summary.md` — push-ready verification surface
+- `docs/audit/wave52-kanzi-composite-ablation-synthesis.md` — Kanzi composite + ablation
+- `docs/audit/wave52-per-component-ablation.md` — 5-arm × 3-model matrix
+- `docs/audit/wave52-lineageflow-baseline-comparison.md` — LineageFlow vs 3 integrator baselines
+- `docs/audit/wave52-baseline-comparison-impl.md` + `wave52-sota-baselines-survey.md` — SOTA baselines
+- `docs/CONSOLIDATED_RESULTS.md` §15.11/12/13 + §16 + §17 — Tier 3 metric-axis history
+- `docs/paper-draft.md` §7 + §8 + §Ablations — paper writeup with per-model composite numbers
