@@ -1719,3 +1719,152 @@ python tools/run_real_ckpt_eval.py \
 adapters per the disjoint-file-scope contract.
 
 ---
+
+## 15.11 Wave 44 Agent B — `--metric-mode real` consumes ODE trajectory via `observe_token_indices`
+
+(Wave 44 Agent B shipped the metric-axis close in commit `0d47230`.
+This section documents what landed and is the surface the Wave 44
+Agent C Tier 3 sweep (next section) exercises. The C-agent sweep is
+in §15.12; this section is the B-agent's own writeup.)
+
+### 15.11.1 What landed
+
+* `FlowMatchingODEAdapter` Protocol gained
+  `observe_token_indices(trace, paper_quantities)` as a typed method.
+* `kanzi.observe_token_indices` decodes the AR prior's
+  `discrete_token_index` channel into a `(L_z,)` float64 array.
+* `lineageflow.observe_token_indices` decodes the per-position
+  categorical trajectory via `argmax(theta_final, axis=-1)` into a
+  `(L,)` float64 array.
+* `tools/run_real_ckpt_eval.py:_compute_metric` (Agent B owns) prefers
+  the via-trace path when `adapter is not None and trace is not None`,
+  and falls back to the legacy fresh-forward path on `blocked`.
+
+This closes the Wave 43 finding that both arms ran the same upstream
+forward with the same seed and therefore produced identical metrics.
+After this commit, the **baseline arm consumes the captured baseline
+ODE trajectory** and the **framework arm consumes the captured
+framework (3-round restart-blended) trajectory**; the two trajectories
+differ and the metric layer can therefore in principle distinguish
+them.
+
+### 15.11.2 Smoke-test status
+
+Smoke-tested on the kanzi sidecar (`verification_outputs/kanzi_real_metric_v2_q4_2026.json`,
+9 cells) and the lineageflow sidecar (`verification_outputs/lineageflow_real_metric_v2_q4_2026.json`,
+1 cell). Full per-cell reading is in §15.12.
+
+---
+
+## 15.12 Wave 44 Agent C — Tier 3 final eval (sweep output, 2026-09-07)
+
+### 15.12.1 Headline
+
+* **kanzi**: 9 cells, all `TIE_AT_SATURATION`. Baseline = framework
+  = 1.0 on every cell. `framework_wins = 0`.
+* **lineageflow**: 1 cell, `RUN_ERROR`. Adapter-layer bug in
+  `_torch_velocity_field` (EsmModel dtype mismatch) aborts
+  `solve_ode` before the metric layer runs. `framework_wins = 0`.
+* **Tier 3 metric-axis claim: NOT closed** (this run).
+
+### 15.12.2 Kanzi per-cell table (real-ckpt, real-metric)
+
+| seed | NFE  | status            | baseline | framework | delta_pct | wallclock_ratio |
+|------|------|-------------------|----------|-----------|-----------|-----------------|
+| 42   | 10   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 0.2221          |
+| 42   | 50   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 0.3580          |
+| 42   | 200  | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 0.3374          |
+| 43   | 10   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 0.3636          |
+| 43   | 50   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 0.3595          |
+| 43   | 200  | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 0.3401          |
+| 44   | 10   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 0.3578          |
+| 44   | 50   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 0.3563          |
+| 44   | 200  | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 0.3425          |
+
+All cells: `marker='computed'`, `n_real_computed=9`,
+`n_synthetic_fallback=0`. `verdict_overall='TIE_AT_SATURATION'`,
+`g1_mean_signed_delta_pct=0.0`. The metric layer IS being exercised
+via `kanzi.observe_token_indices(trace, paper_quantities=None)` —
+both arms now decode their captured ODE trajectory (baseline vs
+3-round restart-blended), but the `mod-20 AA proxy + Pfam round-trip`
+decode lands both arms on the ceiling (1.0).
+
+### 15.12.3 LineageFlow per-cell table
+
+| seed | NFE | status    | baseline | framework | delta_pct | detail                                                                                                              |
+|------|-----|-----------|----------|-----------|-----------|---------------------------------------------------------------------------------------------------------------------|
+| 42   | 10  | RUN_ERROR | None     | None      | None      | `RuntimeError: Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.FloatTensor instead (while checking arguments for embedding)` |
+
+`aggregate.verdict_overall='RUN_ERROR'`, `n_run_error=1`,
+`n_real_computed=0`. The crash originates in
+`LineageFlowAdapter._torch_velocity_field` (`adaptive_reflow/adapters/lineageflow.py:464-511`),
+which passes `x_t` (a `torch.float32` per-position categorical
+tensor) into `transformers.EsmModel`, which expects a `Long` `input_ids`
+tensor. The model's `word_embeddings(input_ids)` call aborts before
+the metric layer is even reached. This is a pre-existing adapter-layer
+bug; Wave 45 Agent C owns the fix (task #807-814).
+
+### 15.12.4 Why `framework_wins = 0` — honest reading
+
+* **kanzi**: the `protein_sequence_validity_rate` metric is at the
+  saturation ceiling (1.0) for both arms. The metric layer
+  differentiates the per-position categorical trajectory, but the
+  **mod-20 AA decode + Pfam round-trip** lands both arms on the same
+  ceiling value. Closing this requires either (a) a metric that does
+  NOT saturate at 1.0 (e.g., per-position ESM-2 PLL perplexity, or
+  recovered-protein-identity against the held-out Pfam reference), or
+  (b) a sharper downstream task (secondary-structure recovery, not
+  raw round-trip).
+* **lineageflow**: the cell never reaches metric computation. The
+  pre-existing `_torch_velocity_field` EsmModel dtype bug aborts
+  `solve_ode` on the first call.
+
+### 15.12.5 What lands next (handed to Wave 45 / next wave)
+
+1. **Unblock lineageflow** — fix the EsmModel dtype bug in
+   `_torch_velocity_field`. The fix is straightforward: convert `x_t`
+   to a `(1, L)` long-token-id tensor via `argmax(x_t, axis=-1)`
+   before feeding into the encoder, OR short-circuit
+   `_load_torch_model`'s EsmModel branch to the `_StubLineageFlow`
+   stub for CPU eval.
+2. **Tighten the kanzi metric** — swap `mod-20 AA proxy + Pfam
+   round-trip` for a continuous-valued metric that does not saturate
+   at 1.0. Candidates: `perplexity` (ESM-2 PLL, the secondary metric
+   with headroom), or `recovered-protein-identity` against the Wave 43
+   held-out Pfam subset.
+3. **Re-run the sweep** — once 1 + 2 land, this same command set
+   (`verification_outputs/{kanzi,lineageflow}_real_metric_v2_q4_2026.json`)
+   will produce a meaningful `framework_wins > 0` count on at least one
+   model.
+
+### 15.12.6 Reproducibility
+
+```bash
+# Kanzi (9 cells, NFE {10,50,200} × seeds {42,43,44})
+.venvs/kanzi_venv/bin/python tools/run_real_ckpt_eval.py \
+    --model kanzi --force-mode real --metric-mode real \
+    --seeds 42,43,44 --nfe-budgets 10,50,200 \
+    --output verification_outputs/kanzi_real_metric_v2_q4_2026.json
+
+# LineageFlow (1 cell, NFE 10 × seed 42 — CPU-bound at 657M params)
+.venvs/lineageflow_venv/bin/python tools/run_real_ckpt_eval.py \
+    --model lineageflow --force-mode real --metric-mode real \
+    --seeds 42 --nfe-budgets 10 \
+    --output verification_outputs/lineageflow_real_metric_v2_q4_2026.json
+```
+
+**Files added/modified (this section):**
+
+* `verification_outputs/kanzi_real_metric_v2_q4_2026.json` — NEW
+  (gitignored under `verification_outputs/`).
+* `verification_outputs/lineageflow_real_metric_v2_q4_2026.json` —
+  NEW (gitignored).
+* `docs/audit/wave44-tier3-final-eval.md` — NEW.
+* `docs/CONSOLIDATED_RESULTS.md` — APPENDED §15.11 + §15.12.
+
+**No code change** to `adaptive_reflow/`, `tests/`, framework,
+scheduler, `tools/run_real_ckpt_eval.py`, or other adapters per the
+disjoint-file-scope contract.
+
+---
+
