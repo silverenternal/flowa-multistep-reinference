@@ -5,22 +5,25 @@
 **Owner:** framework maintainer
 **Constraint (per user 2026-09-07):** before developing any new algorithm, **design abstraction interface at the access point** so old implementation can be preserved (no data loss); new algorithm is opt-in.
 
-## 0. JMAA attribution (honest)
+## 0. JMAA attribution (corrected: JMAA is the author's own paper)
+
+**User clarification 2026-09-07**: JMAA paper is the author's own work (same research program). The whole framework is the implementation + extension of JMAA.
 
 Per `docs/STRATEGY_FRAMEWORK_SCOPE.md:212` + `docs/CONDITIONS.md:80,107`:
-- **JMAA paper (Li 2026)** provides:
+- **JMAA paper (Li 2026, author's own)** provides:
   - Theorem 1: BL-convergence of velocity fields
   - Rate bound: `BL ≤ √(2/π) · ε`
   - 4 paper-quantity signals: `sheet_A`, `packing_B`, `cell_C`, `e_rho`
   - Paper Lemma 2 / Lemma 3 (referenced in `CodimensionSheetScheduler` docstring)
+  - These are the author's own novel contributions
 
-- **Framework infrastructure** (already shipped, no novelty claim):
+- **Framework infrastructure** (already shipped, implements the JMAA math in code):
   - `FlowMatchingODEAdapter` Protocol (`adaptive_reflow/universal/adapter.py`)
   - `MergeOperatorProtocol` with `BoundedMergeOperator`, `IdentityOperator`, `EMAOperator` (`adaptive_reflow/algorithm/merge_operator.py`)
   - `SchedulerProtocol` with `CosineAnnealScheduler`, `CodimensionSheetScheduler`, `EvidenceDrivenScheduler` (`adaptive_reflow/algorithm/scheduler/_core.py`)
   - `PerPositionEntropy` helper (Wave 33)
 
-- **NEW algorithms proposed (this doc)**: MFPQA (Paper A) + BRAI (Paper B). They USE the JMAA signals (sheet_A, packing_B, cell_C, e_rho) in new ways — but the specific algorithm is novel to this work.
+- **NEW algorithms proposed (this doc)**: MFPQA (Paper A) + BRAI (Paper B). They USE the JMAA signals in new ways. Since JMAA is the author's own paper, the entire research program is novel — the framework implements JMAA's math, and MFPQA / BRAI are new applications of JMAA's signals.
 
 ## 1. Constraint (locked in by user 2026-09-07)
 

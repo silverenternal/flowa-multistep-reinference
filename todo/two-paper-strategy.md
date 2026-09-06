@@ -4,6 +4,8 @@
 **Status:** strategy doc (decision record)
 **Owner:** framework maintainer
 
+**Note 2026-09-07 (corrected)**: JMAA paper is the author's own work (same research program). The whole framework is the implementation + extension of JMAA. Novelty table updated to reflect this.
+
 ## TL;DR
 
 The framework supports **two distinct, both publishable, contributions** that emerge from the same core algorithm. These should be split into **two separate papers** at different venues, not bundled.
