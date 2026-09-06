@@ -119,22 +119,18 @@ from .rollback import (
     apply_rollback,
     build_disabled_rollback_flag,
 )
-from .twodim_fm_evaluator import (
-    TWODIM_FM_COVERAGE_RADIUS,
-    TWODIM_FM_EVALUATOR_AUDIT_REASON,
-    TWODIM_FM_EVALUATOR_BUNDLE_ID_PREFIX,
-    TWODIM_FM_EVALUATOR_CALIBRATION,
-    TWODIM_FM_EVALUATOR_CHANNELS,
-    TWODIM_FM_EVALUATOR_PERTURBATION,
-    TWODIM_FM_GRID_BOUND,
-    TWODIM_FM_GRID_RESOLUTION,
-    TWODIM_FM_W2_MAX,
-    TwoDimFMEvaluator,
-    analytic_samples,
-    coverage_score,
-    energy_distance,
-    voronoi_grid,
-)
+# Wave 44 Agent A: the fourteen ``twodim_fm_evaluator`` symbols below used
+# to be imported eagerly at module load time. That form broke the cold
+# import of :mod:`adaptive_reflow.theory` (``from .twodim_fm_evaluator
+# import (...)`` re-enters the cycle
+# ``theory → checkers → eval.lipschitz_diagnostic → eval → adapters →
+# framework.interfaces → theory.checkers`` while
+# :mod:`adaptive_reflow.theory.checkers` is still partially loaded).
+# Routing the symbols through the PEP 562 ``__getattr__`` below breaks
+# the cycle because plain ``import adaptive_reflow.eval`` no longer
+# triggers the submodule at all; the symbols are still available via
+# ``from adaptive_reflow.eval import X`` (the ``__getattr__`` resolves
+# them on first access, by which point the submodule is fully loaded).
 from .w2 import (
     DEFAULT_W2_FAMILY,
     W2_REGISTRY,
@@ -247,6 +243,21 @@ _LAZY_MODULE_SYMBOLS: dict[str, str] = {
     "sheet_cell_centers": "posterior_selection_evaluator",
     "sheet_evidence": "posterior_selection_evaluator",
     "sheet_vs_cells_proxy": "posterior_selection_evaluator",
+    # twodim_fm_evaluator cycle-dependent (Wave 44 Agent A)
+    "TWODIM_FM_COVERAGE_RADIUS": "twodim_fm_evaluator",
+    "TWODIM_FM_EVALUATOR_AUDIT_REASON": "twodim_fm_evaluator",
+    "TWODIM_FM_EVALUATOR_BUNDLE_ID_PREFIX": "twodim_fm_evaluator",
+    "TWODIM_FM_EVALUATOR_CALIBRATION": "twodim_fm_evaluator",
+    "TWODIM_FM_EVALUATOR_CHANNELS": "twodim_fm_evaluator",
+    "TWODIM_FM_EVALUATOR_PERTURBATION": "twodim_fm_evaluator",
+    "TWODIM_FM_GRID_BOUND": "twodim_fm_evaluator",
+    "TWODIM_FM_GRID_RESOLUTION": "twodim_fm_evaluator",
+    "TWODIM_FM_W2_MAX": "twodim_fm_evaluator",
+    "TwoDimFMEvaluator": "twodim_fm_evaluator",
+    "analytic_samples": "twodim_fm_evaluator",
+    "coverage_score": "twodim_fm_evaluator",
+    "energy_distance": "twodim_fm_evaluator",
+    "voronoi_grid": "twodim_fm_evaluator",
 }
 
 
