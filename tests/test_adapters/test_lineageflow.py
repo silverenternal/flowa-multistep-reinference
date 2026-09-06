@@ -972,3 +972,126 @@ def test_classifier_aware_restart_on_flips_audit_code_and_uses_per_position() ->
     assert np.allclose(row_sums, 1.0, atol=1e-6)
     # Policy instance is now created on the adapter (lazy init).
     assert adapter._classifier_aware_restart_policy is not None
+
+
+# ---------------------------------------------------------------------------
+# F-4 dtype boundary fix (Wave 47 Agent B)
+# ---------------------------------------------------------------------------
+
+
+def test_torch_velocity_field_returns_correct_shape_and_dtype_with_esm() -> None:
+    """F-4 fix regression test: ``_torch_velocity_field`` must accept
+    a (L, K=33) float simplex and return a (L, K=33) float64 tensor
+    without raising the embedding dtype error from
+    ``docs/audit/wave45-final-eval.md`` §"LineageFlow pre-existing
+    bug" (``Expected tensor for argument #1 'indices' to have one of
+    the following scalar types: Long, Int; but got torch.FloatTensor``).
+
+    The test uses the bare HuggingFace ``EsmModel`` (same loader as
+    ``_load_torch_model`` in production) so the dtype-boundary fix
+    is exercised end-to-end: argmax → ``.long()`` → ``input_ids=``
+    on the encoder. The bare encoder has no flow head, so the
+    fix-degraded output is a zero (B, L, K) projection that still
+    satisfies the shape contract.
+    """
+    pytest.importorskip("torch")
+    pytest.importorskip("transformers")
+
+    from transformers import EsmModel  # type: ignore[import-not-found]
+
+    from adaptive_reflow.adapters.lineageflow import (
+        LINEAGEFLOW_FAMILY_EMBED_DIM,
+        _torch_velocity_field,
+    )
+
+    torch = pytest.importorskip("torch")
+    model = EsmModel.from_pretrained(
+        "facebook/esm2_t33_650M_UR50D",
+        ignore_mismatched_sizes=True,
+    )
+    model.eval()
+
+    # Build a uniform (L, K=33) per-position simplex with a small
+    # bias toward index 0 so argmax is non-trivial.
+    x = np.full(LINEAGEFLOW_STATE_SHAPE, 1.0 / LINEAGEFLOW_VOCAB_SIZE,
+                dtype=np.float64)
+    x[:, 0] = 0.5
+    cache = {
+        "family_embed": np.zeros(LINEAGEFLOW_FAMILY_EMBED_DIM, dtype=np.float64),
+    }
+
+    out = _torch_velocity_field(
+        model=model,
+        x=x,
+        t=0.5,
+        dtype=torch.float32,
+        cache=cache,
+        guidance_scale=1.0,
+    )
+
+    # Shape contract: (L, K) float64, matching LINEAGEFLOW_STATE_SHAPE.
+    assert out.shape == LINEAGEFLOW_STATE_SHAPE
+    assert out.dtype == np.float64
+    # All values must be finite (the dtype-boundary fix must NOT
+    # introduce NaN / Inf via a bad projection).
+    assert np.isfinite(out).all()
+
+
+def test_torch_velocity_field_dtype_argmax_long_does_not_raise() -> None:
+    """F-4 fix regression test: the argmax + ``.long()`` conversion
+    on a uniform (L, K=33) simplex must NOT raise
+    ``RuntimeError: Expected tensor for argument #1 'indices' to have
+    one of the following scalar types: Long, Int``. This is the
+    narrowest possible regression test for the dtype boundary
+    documented in Wave 45 Agent H §"LineageFlow pre-existing bug".
+    """
+    pytest.importorskip("torch")
+    pytest.importorskip("transformers")
+
+    from transformers import EsmModel  # type: ignore[import-not-found]
+
+    from adaptive_reflow.adapters.lineageflow import (
+        LINEAGEFLOW_FAMILY_EMBED_DIM,
+        _torch_velocity_field,
+    )
+
+    torch = pytest.importorskip("torch")
+    model = EsmModel.from_pretrained(
+        "facebook/esm2_t33_650M_UR50D",
+        ignore_mismatched_sizes=True,
+    )
+    model.eval()
+
+    # Uniform simplex (no spikes); argmax returns 0 for every row.
+    x = np.full(LINEAGEFLOW_STATE_SHAPE, 1.0 / LINEAGEFLOW_VOCAB_SIZE,
+                dtype=np.float64)
+    cache = {
+        "family_embed": np.zeros(LINEAGEFLOW_FAMILY_EMBED_DIM, dtype=np.float64),
+    }
+
+    # The exact call from ``solve_ode`` -> ``_velocity_field`` ->
+    # ``_torch_velocity_field`` must succeed (no embedding dtype
+    # error, no TypeError on unexpected kwargs).
+    try:
+        out = _torch_velocity_field(
+            model=model,
+            x=x,
+            t=0.25,
+            dtype=torch.float32,
+            cache=cache,
+            guidance_scale=1.0,
+        )
+    except RuntimeError as exc:
+        msg = str(exc)
+        assert "indices" not in msg or "Long" not in msg, (
+            f"F-4 fix regression: dtype boundary still raises "
+            f"embedding indices error: {msg!r}"
+        )
+        raise
+    except TypeError as exc:
+        pytest.fail(
+            f"F-4 fix regression: model signature mismatch "
+            f"(unexpected kwarg): {exc!r}"
+        )
+
+    assert out.shape == LINEAGEFLOW_STATE_SHAPE

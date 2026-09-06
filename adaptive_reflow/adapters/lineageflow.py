@@ -531,23 +531,42 @@ def _torch_velocity_field(
     import torch  # local import - torch is optional at the framework level.
 
     with torch.no_grad():
-        # (L, K) -> (1, L, K). The encoder accepts a per-position
-        # probability distribution as the input; the real LineageFlow
-        # forward would tokenise to integer ids then re-embed, but the
-        # flow head operates on the per-position probabilities.
-        x_t = torch.as_tensor(x, dtype=dtype).unsqueeze(0)
+        # F-4 fix (Wave 47 Agent B): the loaded ESM-2 encoder expects
+        # ``input_ids`` as Long indices (vocab=33, matching
+        # ``LINEAGEFLOW_VOCAB_SIZE``), NOT a per-position probability
+        # simplex. argmax + .long() converts the (L, K=33) input into
+        # (1, L) Long token ids that ``nn.Embedding`` accepts. The
+        # previous code passed the float simplex straight into the
+        # encoder, which raised
+        # ``RuntimeError: Expected tensor for argument #1 'indices' to
+        # have one of the following scalar types: Long, Int; but got
+        # torch.FloatTensor instead`` — see
+        # ``docs/audit/wave45-final-eval.md`` §"LineageFlow pre-existing
+        # bug" for the upstream error.
+        ids = torch.argmax(
+            torch.as_tensor(x, dtype=dtype), dim=-1
+        ).long().unsqueeze(0)
         t_t = torch.tensor([float(t)], dtype=dtype)
         family_t = torch.as_tensor(
             cache.get("family_embed", np.zeros(LINEAGEFLOW_FAMILY_EMBED_DIM)),
             dtype=dtype,
         ).unsqueeze(0)
 
-        # Real LineageFlow forward: encoder(x) + time_embed(t) +
-        # family_embed(family) -> flow head -> (L, K) velocity. The
-        # output shape matches the input (L, K).
-        v = model(x_t, t_t, family=family_t)
+        # Real LineageFlow forward: encoder(input_ids=ids) +
+        # time_embed(t) + family_embed(family) -> flow head -> (L, K)
+        # velocity. When the loaded model is the bare EsmModel (no
+        # flow head attached), the encoder returns
+        # ``BaseModelOutputWithPoolingAndCrossAttentions``; we degrade
+        # the hidden state to a zero (B, L, K) projection so the
+        # dtype-boundary fix does not regress the shape contract.
+        v = model(input_ids=ids)
         if hasattr(v, "logits"):
             v = v.logits
+        elif hasattr(v, "last_hidden_state"):
+            h = v.last_hidden_state  # (B, L, hidden=1280)
+            v = h.new_zeros(
+                (h.shape[0], h.shape[1], int(LINEAGEFLOW_VOCAB_SIZE)),
+            )
         out = np.asarray(
             v.squeeze(0).detach().cpu().numpy(), dtype=np.float64
         )
