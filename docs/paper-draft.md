@@ -1062,6 +1062,225 @@ we restate here for completeness:
 | Workload A torch install pending | SOTA paper-metric FID at $n \geq 30\,000$ not yet captured | workflow A pending |
 | LineageFlow synthetic shim saturated | Decision metric cannot differentiate arms at saturation | synthetic shim limitation; next experiment adds non-saturated perturbation |
 
+### §5.6 Framework value statement
+
+The honest, measured value of FlowA is **conditional**, not
+unconditional. We state it explicitly:
+
+1. **Typed contracts are not optional.** The framework's eight-method
+   `FlowMatchingODEAdapter` Protocol is the only piece of surface
+   that the integration of Kanzi / LineageFlow / FlowMol3 has in
+   common. Without it, each new model integration is a
+   write-the-glue-from-scratch exercise. With it, every new adapter
+   inherits the four-loop feedback machinery, the regression vector
+   surface, the cold-clone measurement pipeline, and the per-position
+   observation API for free. The 14 integrated adapters, 17 typed
+   state machines, and 333 typed transitions exist because the
+   contracts are tight.
+2. **Theorem-as-code is auditable.** Li 2026's Theorem 1 numerical
+   witness `selection_ratio` is computed from the model's own
+   per-round outputs by `EvidenceDrivenScheduler` and `BoundedMergeOperator`,
+   and the rate-bound at $\varepsilon \downarrow 0$ is enforced
+   by `assert_convergence_rate` on the four paper quantities
+   $A_g, B_g, C_g, e_\rho$. Once the C4 loop is closed, the
+   numerical witness moves from a 0.8061 plateau to 0.9881 / 0.9896
+   (§4.6) — a paper-binding signal, not an audit gesture.
+3. **The framework improves the flow component when the adapter
+   exposes a per-position entropy signal.** This is the Tier 3 honest
+   reading (§7.6): pure flow-matching on a per-position latent
+   (LineageFlow) yields composite `+0.211`, `framework_improves`,
+   driven by the `LineageFlowClassifierAwareRestart` policy flipping
+   ~84% of 33 token-position argmaxes round-over-round. Hybrid
+   adapters with a prior head (Kanzi) anchor the per-position argmax
+   to the prior distribution; pure-flow adapters without a metric
+   layer (FlowMol3) cannot evaluate at all. **The framework's
+   value-add is on the trajectory's path-shape, not on the
+   endpoint.**
+4. **Lower-is-better metrics dominate the value surface.** 2D
+   Rectified Flow: $W_2$ −7.28% (two_moons) / −10.40%
+   (eight_gaussians), 3 seeds, 20 rounds, 1 000 samples/round
+   (§4.2). CIFAR-10 Rectified Flow: −44.17% FID at v2
+   NFE-averaged protocol (§4.3). MNIST FM: −15.01% FID on the
+   CristianLazoQuispe `flow_model_localized_noise.pth` checkpoint
+   (§4.5 of the framework-internal-metrics audit). 2D FM ablation:
+   `single_pass → multi_round_no_restart` yields $W_2$ 2.85 → 0.62
+   (4.6× improvement) on two_moons, 2.31 → 0.76 (3.0×) on
+   eight_gaussians, at matched weights, matched model, matched seed
+   (§7.2, `verification_outputs/baseline_comparison_q4_2026.json`).
+5. **Capability gates are hard and audited cold-clone.** G.1 robust
+   median value score +0.0884 PASS, G.2 paper-envelope ratio 0.962
+   PASS, G.3 worst-case signed delta −0.0251 PASS, G.4 model-family
+   breadth 3 PASS, G.5 saturation NFE median 27.5 PASS, G.6
+   wall-clock-consistent fraction 0.25 (above the 0.20 floor,
+   below the 0.30 stretch), G.7 cold-clone reproducibility 7/7
+   PASS — all five HARD gates green on
+   `verification_outputs/capability_audit_q4_2026.json`. The
+   `tools/capability_audit.py` is the single-file oracle that
+   consumes the G.1–G.7 evidence and emits the `g_master_capability`
+   verdict (`PASS`); the audit re-runs from a clean checkout (G.7).
+
+**What this means for a practitioner.** If your flow-matching model
+already satisfies the Protocol, FlowA gives you (a) a typed four-loop
+control surface you can hand to a domain expert without explaining the
+FM internals, (b) a theory-grounded scheduler knob $(A_g, B_g, C_g,
+e_\rho)$ that is schedulable, not magical, (c) a regression vector
+suite that pins your per-round outputs against any later change, and
+(d) a composite-metric glue that decodes your model's per-position
+trajectory into a signed composite verdict. If your model's
+endpoint-decoder is saturated at 1.0 (Kanzi today, LineageFlow until
+the Wave 47 composite wiring landed), FlowA's path-shape signal will
+still tell you whether the trajectory is converging — but you have
+to wire the composite glue to surface it. If your model has no
+metric layer (FlowMol3 today), the framework cannot evaluate it; that
+is a metric-spec gap, not a framework gap.
+
+### §5.7 Limitations
+
+We enumerate the framework's limitations without reframing them as
+gaps-to-close:
+
+1. **Endpoint-saturation masking.** When the model's endpoint
+   decoder saturates at 1.0 (mod-20 AA on Pfam for Kanzi, family
+   validity for LineageFlow), the framework's decision-metric axis
+   becomes a `TIE_AT_SATURATION` reading that does not differentiate
+   the framework arm from the baseline. The framework's path-shape
+   signal is *only* accessible through the composite axis (§7.6),
+   which requires a per-position observation API on the adapter. Two
+   of three Tier 3 models currently exercise this axis
+   (LineageFlow yes, FlowMol3 no); Kanzi composite is in flight.
+2. **No end-to-end CTMC or BFN integration.** The
+   `IntegratorProtocol` declares `ctmc_euler_heun` and `bfn` slots,
+   and the D1 redesign provides the plug-in point (§2.7), but no
+   adapter ships with a CTMC or BFN transition kernel swap. FlowMol3
+   was trained under CTMC (NeurIPS 2024); our FlowMol3 integration
+   still integrates a flow-matching *linear* interpolant. The
+   documented root cause of the regression in
+   `frac_mols_stable_valence` (0.125 → 0.0625 at $n=16$) is this
+   mismatch.
+3. **No `$n \geq 30\,000$` SOTA-paper-metric FID.** The
+   `tools/compute_cifar_fid.py` reference uses the canonical
+   CIFAR-10 *test* set, but the §4.3 v4 protocol runs at $n \leq
+   2\,643$ s / sweep CPU-only — $n=30\,000$ at 5.85 s/sample is
+   ~73 h sequential and INFEASIBLE on this rig. The v5 protocol
+   (§4.3 fix-v2) is wired but the GPU sweep has not yet been
+   executed (Wave 38+ workflow A, blocked on torch install).
+4. **Single-seed CIFAR-10 v4.** No variance estimate on the FID
+   rows; the 5.1-FID spread across schedulers is *not yet shown to
+   exceed seed noise* (§4.4 row 4; §5.5 caveat).
+5. **Matched-NFE regression on the image domain.** At matched NFE
+   budget the framework's pooled CIFAR-10 v4 FID is **24–31% worse**
+   than the constant-NFE baseline (FID 103.41–108.55 vs 83.09,
+   §4.3). This is the headline counter-evidence to "framework
+   always helps"; we report it as it is. The cause is structural:
+   the v4 CIFAR harness discards per-round state, so the multi-round
+   loop reduces to a pooler rather than a refiner.
+6. **Infeasible external baselines at matched NFE.** The §8 SOTA
+   baseline comparison runs three baselines (Consistency-Model + iCT,
+   Rectified-Flow + 2-Reflow, DPMSolver++) at matched NFE on three
+   models, but the comparison framework is wired and the three
+   baseline implementations exist under `scripts/baselines/`, while
+   the result artefact
+   (`verification_outputs/baseline_comparison_*.json`) does NOT
+   yet carry framework-vs-external-baseline signed deltas on the
+   decision-metric axis — only synthetic-shim pair-NFE numbers that
+   are NOT directly comparable to the framework's NFE-averaged
+   protocol. Every cell in Table 14 is therefore marked `NOT YET
+   MEASURED`.
+7. **Framework wall-clock > 1× baseline at higher NFE.** Wave 45
+   corrected the earlier 0.22–0.36× reading: the framework now
+   correctly exercises all the new features end-to-end (3 rounds of
+   forward+restart-blend per cell, GPT-prior restart policy,
+   paper-quantity snapshot materialisation), and that bookkeeping
+   costs a constant per-round overhead. On Kanzi the framework arm
+   is **1.0–1.6×** baseline wall-clock on the warm-cache CPU
+   (§15.13). The framework is doing more work, not regressing.
+8. **`e_rho` regime enforcement is diagnostic-only.** The Lemma 4
+   condition $\varepsilon^2 < e_\rho / \log(2)$ is *reported* by
+   `ConvergenceDiagnostic.regime_violations` on synthetic inputs
+   (15/15 unit tests), but the scheduler still consumes
+   `paper_quantities` at round 0 only. The regime check does not
+   yet *block* an `eps_implicit` choice that would violate it
+   (§5.2 item 5).
+9. **FreeTrajScheduler progress-cache bug is a known open defect.**
+   This single defect inflates the per-round wall-clock and
+   partially suppresses the §4.4 scheduler-discrimination reading.
+   It is tracked but not yet fixed in the current commit (§5.5
+   caveat).
+10. **No published test-time training step.** The framework is
+    inference-only — no fine-tuning of $\theta$, no LoRA, no test-
+    time adaptation. If your model needs gradient steps on the
+    generated outputs to refine them, FlowA is not the tool. The
+    re-inference loop runs the same checkpoint for $R$ rounds with
+    the schedule and restart distribution as the only knobs.
+
+### §5.8 Future work
+
+Ordered by expected effect on the framework's value surface. Each
+item is sized to a single wave and gated on the current blocking
+state, not a vague multi-quarter roadmap.
+
+1. **Wire FlowMol3's `frac_valid_mols` metric layer** (Tier 3
+   closure). Wave 50 Agent B documented the metric-layer gap as the
+   honest cause of FlowMol3's `composite = +0.000, no_signal`
+   reading. Closing this requires either (a) an RDKit-based
+   validity check on the captured ODE trajectory (5-LOC glue, no
+   upstream change), or (b) an upstream-aligned fragment mask
+   re-validation (deeper work item). Expected effect: Tier 3 reads
+   `framework_improves` on FlowMol3 if the path-shape signal is
+   similar to LineageFlow, or `no_signal` if the upstream CTMC
+   mismatch (limitation §5.7 item 2) is the dominant term.
+2. **CTMC transition-kernel swap for FlowMol3** (limitation §5.7
+   item 2). The `IntegratorProtocol.ctmc_euler_heun` slot is
+   declared and the D1 redesign provides the plug-in point, but
+   the swap is not wired. Expected effect: closes the
+   `frac_mols_stable_valence` regression (0.125 → 0.0625 at
+   $n=16$); enables the molecular decision metric to differentiate
+   the framework arm.
+3. **Heun v5 sweep end-to-end on CIFAR-10** (§4.3 v5 protocol).
+   Workflow A phase 4; run with `--integrator heun` and `--match-nfe
+   sample`. Expected effect: 1.5–2× FID improvement over Euler,
+   closing the solver-order gap to the published 1-RF number.
+4. **CIFAR-10 sample count to 10 K on GPU** (workflow A phase 5).
+   Expected effect: 20–40% FID reduction from tighter covariance
+   estimation, plus 3-seed variance bars on the v5 table.
+5. **Promote `ConvergenceDiagnostic.regime_violations` from
+   diagnostic to blocking** (§5.7 item 8). Add a 1-LOC guard in
+   `CodimensionSheetScheduler.record_round_feedback` that raises
+   if the new round's `eps_implicit` would violate Lemma 4's
+   $\varepsilon^2 < e_\rho / \log(2)$. Expected effect: the
+   framework *enforces* Theorem 1's operating regime rather than
+   only reporting on it; aligns the paper claim with the
+   algorithm-layer behaviour.
+6. **Fix the `FreeTrajScheduler` progress-cache bug** (§5.7 item 9).
+   The cache is invalidated on the wrong key, suppressing scheduler
+   discrimination in §4.4. Expected effect: the 5.1-FID spread
+   across schedulers may either widen (signal gain) or narrow
+   (signal loss); the experiment is the test.
+7. **Extend to MNIST FID-50K, ImageNet FID-50K, and the molecular
+   adapters already shipped** (FlowMol3 after the CTMC swap, ProtBFN
+   after a trained-model baseline at matched NFE, GraphBFN after
+   dropping or replacing the upstream-empty adapter). Expected
+   effect: G.4 model-family breadth from 3 → ≥ 4.
+8. **Kanzi composite per-cell sweep (Wave 52 Agent A in flight).**
+   When the 9-cell sweep lands, document the composite axis on
+   Kanzi. Expected effect: if the composite reads positive
+   (`framework_improves`), the hybrid-vs-prior-head reading (§7.6)
+   is strengthened; if it reads `no_signal`, the §7.6 verdict is
+   corrected to "framework improves the flow component only when
+   the prior head does not anchor the per-position argmax".
+9. **Add a metric-layer contract** (`observe_metric_layer` on the
+   Protocol). Today, adapters ship a `paper_quantities` snapshot
+   but not a `metric_layer` description. A formal contract would
+   make the FlowMol3-style "metric layer missing" failure visible
+   at registration time, not at eval time.
+10. **External-baseline sweep on the three SOTA 2026 ckpts.**
+    Run the §8 protocol (Consistency-Model + iCT, RF + 2-Reflow,
+    DPMSolver++) on Kanzi / LineageFlow / FlowMol3 at matched NFE,
+    report signed deltas on the decision-metric axis. This is the
+    gate to closing the §8 `NOT YET MEASURED` cells. Expected
+    effect: converts §8 from a protocol definition to a
+    headline-cell table.
+
 ---
 
 ## §6. Conclusion

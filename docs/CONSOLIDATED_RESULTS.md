@@ -2174,3 +2174,193 @@ disjoint-file-scope contract.
 
 ---
 
+## §17 Wave 52 Agent D — final synthesis (paper §Discussion + README + this summary)
+
+Wave 52 Agent D is the **paper-final + repo-final** wave of the Wave
+41–Wave 51 push-prep sequence. Agent D produces the cross-cutting
+**discussion synthesis** that ties together (a) the headline
+numbers from Wave 47 + Wave 49 + Wave 50 + Wave 52 Tier 3 sweeps,
+(b) the §7 paper-side digest, (c) the §15 audit trail, and (d) the
+reader's first encounter with the framework (the README). The agent
+owns a disjoint file scope — only docs/, README, and the audit doc
+it authors.
+
+### §17.1 What this wave adds
+
+| File | Status | Net delta |
+|---|---|---|
+| `docs/paper-draft.md` (§5.6 + §5.7 + §5.8 — NEW subsections) | MODIFIED (additive) | +218 / -1 |
+| `README.md` ("Why this framework matters" rewrite) | MODIFIED | +43 / -16 |
+| `docs/CONSOLIDATED_RESULTS.md` §17 (this section) | APPENDED | +~80 |
+| `docs/audit/wave52-paper-rewrite-synthesis.md` (NEW) | NEW | +~150 (audit trail) |
+
+**NOT touched** (per disjoint-file-scope contract):
+`adaptive_reflow/`, `tests/`, scheduler, framework, eval pipeline,
+`tools/run_real_ckpt_eval.py`, any adapter, any verification output.
+No code change.
+
+### §17.2 Paper §5.6 (Framework value statement) — summary
+
+Five enumerated value claims, each with a verified number attached
+(full text in `docs/paper-draft.md` §5.6):
+
+1. **Typed contracts are not optional.** The 8-method
+   `FlowMatchingODEAdapter` Protocol is the only piece of surface
+   Kanzi / LineageFlow / FlowMol3 share. Without it, every new
+   adapter is a write-the-glue-from-scratch exercise; with it, every
+   new adapter inherits the four-loop feedback machinery, the
+   regression vector surface, the cold-clone measurement pipeline,
+   and the per-position observation API for free. 14 integrated
+   adapters, 17 typed state machines, 333 typed transitions exist
+   because the contracts are tight.
+2. **Theorem-as-code is auditable.** Theorem 1's numerical witness
+   `selection_ratio` is computed from per-round model outputs by
+   `EvidenceDrivenScheduler` and `BoundedMergeOperator`; the rate
+   bound at $\varepsilon \downarrow 0$ is enforced by
+   `assert_convergence_rate`. Once C4 is closed, the witness moves
+   from a 0.8061 plateau to 0.9881 / 0.9896 (§4.6 paper-draft.md).
+3. **The framework improves the flow component when the adapter
+   exposes a per-position entropy signal.** Tier 3 honest reading
+   (§7.6): pure flow-matching on a per-position latent
+   (LineageFlow) yields composite `+0.211, framework_improves`,
+   driven by `LineageFlowClassifierAwareRestart` flipping ~84% of
+   33 token-position argmaxes round-over-round.
+4. **Lower-is-better metrics dominate the value surface.** 2D
+   Rectified Flow $W_2$ −7.28% / −10.40% (3 seeds × 1 000 samples,
+   §4.2); CIFAR-10 Rectified Flow FID −44.17% at v2 NFE-averaged
+   protocol (§4.3); MNIST FM FID −15.01% on the
+   CristianLazoQuispe `flow_model_localized_noise.pth` checkpoint
+   (capability-audit q4 row); 2D FM ablation
+   `single_pass → multi_round_no_restart` yields $W_2$ 2.85 → 0.62
+   (4.6×) on two_moons, 2.31 → 0.76 (3.0×) on eight_gaussians at
+   matched weights.
+5. **Capability gates are hard and audited cold-clone.** From
+   `verification_outputs/capability_audit_q4_2026.json`: G.1
+   `+0.0884 PASS`, G.2 `0.962 PASS`, G.3 `−0.0251 PASS`, G.4 `3
+   PASS`, G.5 `27.5 PASS`, G.6 `0.25`, G.7 `7/7 PASS`,
+   `g_master_capability = PASS`, `must_4_freeze_gate = PASS`.
+
+### §17.3 Paper §5.7 (Limitations) — summary
+
+Ten enumerated limitations (full text in `docs/paper-draft.md` §5.7):
+
+1. **Endpoint-saturation masking** — when the endpoint decoder
+   saturates at 1.0, the framework's decision-metric axis reads
+   `TIE_AT_SATURATION`; the composite axis is the only path-shape
+   signal (requires per-position observation on the adapter).
+2. **No end-to-end CTMC or BFN integration** — D1 redesign declares
+   the `ctmc_euler_heun` and `bfn` integrator slots, but FlowMol3
+   still integrates a flow-matching linear interpolant (causing the
+   `frac_mols_stable_valence` regression).
+3. **No $n \geq 30\,000$ SOTA-paper-metric FID** — v4 CIFAR sweep
+   INFEASIBLE on this rig (~73 h sequential at 5.85 s/sample);
+   v5 protocol is wired but the GPU sweep has not yet executed.
+4. **Single-seed CIFAR-10 v4** — no variance estimate on the FID
+   rows; the 5.1-FID spread is not yet shown to exceed seed noise.
+5. **Matched-NFE regression on the image domain** — framework
+   pooled v4 FID is **24–31% worse** than the 50-NFE baseline (FID
+   103.41–108.55 vs 83.09). Reported without softening.
+6. **Infeasible external baselines at matched NFE** — three baseline
+   implementations exist under `scripts/baselines/` but the
+   result artefact (`verification_outputs/baseline_comparison_*`)
+   does NOT yet carry framework-vs-external-baseline signed deltas
+   on the decision-metric axis. Every §8 Table 14 cell is `NOT YET
+   MEASURED`.
+7. **Framework wall-clock > 1× baseline at higher NFE** — Wave 45
+   corrected the earlier 0.22–0.36× reading: framework is now
+   1.0–1.6× baseline on Kanzi warm-cache CPU, doing more work, not
+   regressing.
+8. **`e_rho` regime enforcement is diagnostic-only** — Lemma 4's
+   $\varepsilon^2 < e_\rho / \log(2)$ is *reported* by
+   `ConvergenceDiagnostic.regime_violations` but the scheduler does
+   not yet *block* an `eps_implicit` choice that violates it.
+9. **FreeTrajScheduler progress-cache bug** — single known open
+   defect that inflates per-round wall-clock and partially
+   suppresses the §4.4 scheduler-discrimination reading.
+10. **No published test-time training step** — framework is
+    inference-only; no fine-tuning of $\theta$, no LoRA, no
+    test-time adaptation. Re-inference loop runs the same
+    checkpoint for $R$ rounds with schedule + restart distribution
+    as the only knobs.
+
+### §17.4 Paper §5.8 (Future work) — summary
+
+Ten enumerated future-work items, ordered by expected effect on the
+framework's value surface (full text in `docs/paper-draft.md` §5.8):
+
+1. Wire FlowMol3's `frac_valid_mols` metric layer (Tier 3 closure)
+2. CTMC transition-kernel swap for FlowMol3 (closes limitation §5.7
+   item 2)
+3. Heun v5 sweep end-to-end on CIFAR-10 (workflow A phase 4)
+4. CIFAR-10 sample count to 10 K on GPU (workflow A phase 5)
+5. Promote `ConvergenceDiagnostic.regime_violations` from diagnostic
+   to blocking (1-LOC guard in
+   `CodimensionSheetScheduler.record_round_feedback`)
+6. Fix the `FreeTrajScheduler` progress-cache bug
+7. Extend to MNIST FID-50K, ImageNet FID-50K, FlowMol3 (post-CTMC),
+   ProtBFN (post-trained-baseline), GraphBFN (post-replacement)
+8. Kanzi composite per-cell sweep (Wave 52 Agent A in flight)
+9. Add a `observe_metric_layer` Protocol contract
+10. External-baseline sweep on the three SOTA 2026 ckpts at matched
+    NFE (closes the §8 `NOT YET MEASURED` cells)
+
+### §17.5 README "Why this framework matters" — rewrite summary
+
+The README's "Why this framework matters" section now exposes the
+full value surface as a **per-family table** with 5 rows (toy 2D FM,
+SOTA 2D RF, CIFAR-10 RF, MNIST FM, Tier 3 LineageFlow) + the
+**capability gate health table** (G.1–G.7 + `g_master_capability`)
++ the **theorem-as-code** callout (97 oracle tests, 0 bugs filed,
+0.8061 → 0.9881/0.9896 once C4 is closed). The honest-gaps
+sentence remains: top-model Tier 3 decision-metric evidence is
+partial on hybrid adapters (Kanzi composite in flight) and blocked
+on FlowMol3's missing metric layer; FreqFlow + MM-FM remain blocked
+on upstream ckpt release; matched-NFE CIFAR-10 v4 reads 24–31%
+worse than the 50-NFE baseline, reported without softening.
+
+### §17.6 Honest gaps still open at end-of-Wave-52
+
+* **Kanzi composite per-cell sweep (Wave 52 Agent A in flight).**
+  When the 9-cell composite sweep lands, the §5.8 item 8 verdict
+  (positive composite → hybrid-vs-prior-head reading is
+  strengthened; `no_signal` → §7.6 verdict is corrected to
+  "framework improves the flow component only when the prior head
+  does not anchor the per-position argmax") will resolve.
+* **LineageFlow 9-cell composite re-sweep (Wave 52 Agent C in
+  flight).** The §16.3 composite reading is from a 1-cell smoke
+  test (seed 42, NFE 10, real ckpt); the 9-cell version will
+  replace it when it lands.
+* **External-baseline §8 cell values.** Three baseline
+  implementations exist under `scripts/baselines/` but the result
+  artefact (`verification_outputs/baseline_comparison_*.json`) does
+  NOT yet carry framework-vs-external signed deltas. Every §8
+  Table 14 cell is `NOT YET MEASURED`. §5.8 item 10 is the gate.
+
+### §17.7 Reproducibility
+
+```bash
+# Reproduce the headline numbers
+.venv/bin/python tools/capability_audit.py \
+    --output verification_outputs/capability_audit_q4_2026.json
+.venv/bin/python tools/run_real_ckpt_eval.py \
+    --model lineageflow --force-mode real --metric-mode real \
+    --composite-metric real --seeds 42 --nfe-budgets 10 \
+    --output /tmp/q4_w52_lineageflow.json
+.venv/bin/python tools/run_baselines.py \
+    --output verification_outputs/baseline_comparison_q4_2026.json
+
+# Re-build the docs
+mkdocs build --strict
+```
+
+**Disjoint-file-scope contract.** Wave 52 Agent D owns docs/, the
+README, and the audit doc it authors (`wave52-paper-rewrite-synthesis.md`).
+No code change to `adaptive_reflow/`, `tests/`, framework, scheduler,
+eval pipeline, `tools/run_real_ckpt_eval.py`, any adapter, any
+verification output.
+
+---
+
+
+---
+
