@@ -80,38 +80,13 @@ def script_module() -> object:
 # ---------------------------------------------------------------------------
 
 
-def test_help_exits_zero_and_prints_usage(_venv_python: Path) -> None:
-    """``--help`` exits ``0`` and prints the canonical usage banner."""
-    env = os.environ.copy()
-    env.setdefault("PYTHONIOENCODING", "utf-8")
-    completed = subprocess.run(
-        [str(_venv_python), str(SCRIPT_PATH), "--help"],
-        cwd=str(REPO_ROOT),
-        env=env,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    assert completed.returncode == 0, (
-        f"--help failed (rc={completed.returncode}); "
-        f"stderr={completed.stderr!r}"
-    )
-    stdout = completed.stdout.lower()
-    assert "usage" in stdout or "options" in stdout, (
-        f"missing usage banner in --help output: {completed.stdout!r}"
-    )
-    # All four documented flags appear in the help text.
-    for flag in (
-        "--adapter-class",
-        "--n-samples",
-        "--n-rounds",
-        "--output-dir",
-    ):
-        assert flag in completed.stdout, (
-            f"flag {flag!r} missing from --help output; "
-            f"got: {completed.stdout!r}"
-        )
+# NOTE (Wave 62): ``test_help_exits_zero_and_prints_usage`` was
+# deleted. ``test_can_invoke_with_stub_adapter_via_argparse`` (below)
+# drives ``main()`` via subprocess and ``test_parser_accepts_canonical_arguments``
+# (below) verifies the four documented flags through ``_build_parser()``
+# + ``parse_args``. The standalone ``--help`` smoke that asserted
+# only ``"usage" in stdout`` plus flag-name substrings was duplicate
+# coverage; a flag rename surfaces through the parser / e2e path.
 
 
 def test_missing_required_args_nonzero(_venv_python: Path) -> None:
@@ -136,17 +111,6 @@ def test_missing_required_args_nonzero(_venv_python: Path) -> None:
 # ---------------------------------------------------------------------------
 # Direct-import tests — no subprocess, exercises argparse + parser API
 # ---------------------------------------------------------------------------
-
-
-def test_module_exports_main_and_parser(script_module: object) -> None:
-    """The script module re-exports :func:`main` and a CLI builder."""
-    assert hasattr(script_module, "main"), (
-        "script must expose a top-level main() entry point"
-    )
-    assert hasattr(script_module, "_build_parser"), (
-        "script must expose _build_parser() so tests can introspect "
-        "the CLI surface without invoking the full subprocess path"
-    )
 
 
 def test_parser_accepts_canonical_arguments(script_module: object) -> None:

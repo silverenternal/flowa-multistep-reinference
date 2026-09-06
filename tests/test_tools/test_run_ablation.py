@@ -249,20 +249,13 @@ def test_run_ablation_quick_generates_table(
         )
 
 
-def test_run_ablation_help_exits_zero(_venv_python: Path) -> None:
-    """``--help`` exits 0 and prints the usage banner."""
-    completed = subprocess.run(
-        [str(_venv_python), str(SCRIPT_PATH), "--help"],
-        cwd=str(REPO_ROOT),
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    assert completed.returncode == 0, (
-        f"--help failed: stderr={completed.stderr!r}"
-    )
-    assert "ablation" in completed.stdout.lower()
+# NOTE (Wave 62): ``test_run_ablation_help_exits_zero`` was deleted.
+# The end-to-end ``test_run_ablation_quick_generates_table`` (above)
+# already invokes the script via subprocess and asserts the
+# 22-row markdown structure is emitted. The standalone ``--help``
+# smoke that only checked ``"ablation" in completed.stdout.lower()``
+# added no unique contract coverage -- every ``--help`` banner
+# contains the program name by argparse convention.
 
 
 # ---------------------------------------------------------------------------
@@ -285,14 +278,14 @@ def test_run_one_rejects_unknown_config() -> None:
         )
 
 
-def test_run_ablation_module_imports_clean() -> None:
-    """The script module is importable as ``tools.run_ablation``."""
-    import importlib
-
-    module = importlib.import_module("tools.run_ablation")
-    assert hasattr(module, "main")
-    assert hasattr(module, "_run_one")
-    assert hasattr(module, "_format_markdown")
+# NOTE (Wave 62): ``test_run_ablation_module_imports_clean`` was
+# deleted. ``test_run_one_rejects_unknown_config`` (above) already
+# imports ``tools.run_ablation`` and exercises ``_run_one`` directly;
+# the standalone ``test_run_ablation_quick_generates_table`` smoke
+# below exercises ``main`` + ``_format_markdown`` end-to-end via
+# subprocess. A separate smoke test asserting only ``hasattr(module,
+# name)`` is duplicate coverage. Pytest collection itself fails if the
+# module fails to import, so the smoke was redundant.
 
 
 # ---------------------------------------------------------------------------

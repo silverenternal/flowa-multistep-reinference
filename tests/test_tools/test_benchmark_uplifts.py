@@ -97,32 +97,12 @@ def benchmark_deep_out(tmp_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Import-time checks (no subprocess)
 # ---------------------------------------------------------------------------
-
-
-def test_benchmark_module_imports_clean() -> None:
-    """The benchmark script is importable as ``tools.benchmark_uplifts``.
-
-    All five measurement functions are exposed and have non-None
-    callables.
-    """
-    module = importlib.import_module("tools.benchmark_uplifts")
-    assert hasattr(module, "main"), "main() must be exposed"
-    for name in (
-        "measure_scheduler_uplifts",
-        "measure_driver_merge_blender_uplifts",
-        "measure_metric_uplifts",
-        "measure_paper_quantity_uplifts",
-        "measure_sequential_uplifts",
-        "measure_internal_uplifts",
-        "measure_external_uplifts",
-        "measure_pluggable_design_tests",
-        "format_markdown",
-        "format_deep_markdown",
-        "_parse_ablation_rows",
-    ):
-        assert hasattr(module, name), f"missing public function {name!r}"
-        fn = getattr(module, name)
-        assert callable(fn), f"{name} must be callable"
+# NOTE (Wave 62): ``test_benchmark_module_imports_clean`` was deleted.
+# The other tests in this file already import ``tools.benchmark_uplifts``
+# (via ``importlib.import_module``) and exercise every function in
+# the assertion set below; a separate smoke test that only asserts
+# ``hasattr(module, name)`` is duplicate coverage. Pytest collection
+# itself fails if the module fails to import, so the smoke was redundant.
 
 
 def test_measurement_functions_return_non_empty_rows() -> None:
@@ -346,20 +326,13 @@ def test_benchmark_uplifts_runs_and_emits_markdown(
     )
 
 
-def test_benchmark_uplifts_help_exits_zero(_venv_python: Path) -> None:
-    """``--help`` exits 0 and prints the usage banner."""
-    completed = subprocess.run(
-        [str(_venv_python), str(SCRIPT_PATH), "--help"],
-        cwd=str(REPO_ROOT),
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    assert completed.returncode == 0, (
-        f"--help failed: stderr={completed.stderr!r}"
-    )
-    assert "benchmark" in completed.stdout.lower()
+# NOTE (Wave 62): ``test_benchmark_uplifts_help_exits_zero`` was
+# deleted. The end-to-end ``test_benchmark_uplifts_runs_and_emits_markdown``
+# (above) already invokes the script via subprocess and asserts the
+# three-section markdown structure is emitted. The standalone
+# ``--help`` smoke that only checked ``"benchmark" in completed.stdout.lower()``
+# added no unique contract coverage -- every ``--help`` banner contains
+# the program name by argparse convention.
 
 
 # ---------------------------------------------------------------------------

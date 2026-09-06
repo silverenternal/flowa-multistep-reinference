@@ -96,39 +96,23 @@ def hidream_out_dir(tmp_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Import + --help smoke tests
 # ---------------------------------------------------------------------------
+# NOTE (Wave 62): ``test_module_imports`` was deleted. The
+# ``test_emit_synthetic_pngs_emits_per_round`` and
+# ``test_make_per_round_callback_signature`` tests below already
+# import the script via ``importlib`` and exercise
+# ``_emit_synthetic_pngs`` / ``_make_per_round_callback`` directly;
+# a separate smoke test asserting only ``hasattr(module, name)`` is
+# duplicate coverage. Pytest collection itself fails if the module
+# fails to import, so the smoke was redundant.
 
 
-def test_module_imports() -> None:
-    """The script must import without errors (catches typos / bad imports)."""
-    spec = importlib.util.spec_from_file_location(
-        "run_sota_hidream_i1_experiment", str(SCRIPT_PATH)
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
-    assert hasattr(module, "main")
-    assert hasattr(module, "_generate_pngs_framework")
-    assert hasattr(module, "_emit_synthetic_pngs")
-    assert hasattr(module, "_make_per_round_callback")
-
-
-def test_help_flag_exits_cleanly(_venv_python: Path) -> None:
-    """``--help`` must exit with code 0 and print argparse usage."""
-    import subprocess
-
-    result = subprocess.run(
-        [str(_venv_python), str(SCRIPT_PATH), "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(REPO_ROOT),
-        timeout=60,
-    )
-    assert result.returncode == 0, f"stderr: {result.stderr!r}"
-    assert "--n-mols" in result.stdout
-    assert "--n-rounds" in result.stdout
-    assert "--per-round-nfe" in result.stdout
-    assert "--output-dir" in result.stdout
-    assert "--skip-eval" in result.stdout
+# NOTE (Wave 62): ``test_help_flag_exits_cleanly`` was deleted.
+# The end-to-end parametrized ``test_per_round_dumps_subdirs``
+# (below) invokes the script via subprocess with ``--n-mols``,
+# ``--n-rounds``, ``--per-round-nfe``, ``--output-dir``, ``--skip-eval``
+# and exercises argparse end-to-end. The standalone ``--help``
+# smoke that asserted rc==0 + flag-name substrings was duplicate
+# coverage; a flag rename surfaces via the e2e suite.
 
 
 # ---------------------------------------------------------------------------
@@ -136,26 +120,47 @@ def test_help_flag_exits_cleanly(_venv_python: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_per_round_dumps_subdirs(_venv_python: Path, hidream_out_dir: Path) -> None:
-    """Synthetic-mode smoke test: per-round PNG dirs are emitted correctly.
+@pytest.mark.parametrize(
+    ("n_rounds", "expected_subdir_count"),
+    [
+        (3, 3),   # framework arm collapses to 3 per-round dirs
+        (1, 0),   # n_rounds==1 -> no per-round dirs (single-shot fallback)
+    ],
+)
+def test_per_round_dumps_subdirs(
+    _venv_python: Path,
+    hidream_out_dir: Path,
+    n_rounds: int,
+    expected_subdir_count: int,
+) -> None:
+    """Synthetic-mode smoke test: per-round PNG dir count is right for the
+    given ``n_rounds``.
 
-    Runs ``tools/run_sota_hidream_i1_experiment.py`` with
-    ``--skip-eval`` so the FID subprocess bridge is not invoked. The
-    synthetic backend emits PIL-noise PNGs; we verify:
+    Phase 4 contract:
 
     * ``framework_round{r}/sample_{i:04d}.png`` exists for every
-      ``r in [0, n_rounds)`` and every ``i in [0, n_mols)``.
+      ``r in [0, n_rounds)`` and every ``i in [0, n_mols)`` when
+      ``n_rounds > 1``.
     * The legacy ``framework/sample_{i:04d}.png`` endpoint path is
-      preserved (byte-stable for the existing ``_run_image_eval``
+      always preserved (byte-stable for the existing ``_run_image_eval``
       subprocess).
-    * ``summary.json`` carries ``framework.per_round_png_dirs`` (length
-      ``n_rounds``) and ``framework.per_round_png_count ==
-      n_mols * n_rounds``.
+    * ``summary.json`` carries ``framework.per_round_png_dirs``
+      (length == ``n_rounds``) and ``framework.per_round_png_count ==
+      n_mols * n_rounds`` (or 0 when ``n_rounds == 1``).
+
+    Wave 62 merged the previous ``test_per_round_dumps_subdirs`` (n_rounds=3)
+    and ``test_per_round_dumps_n_rounds_one`` (n_rounds=1) tests into a
+    single parametrized body. The two cases exercise opposite branches of
+    the ``n_rounds == 1`` fallback in ``_emit_synthetic_pngs`` so the
+    parametrization keeps both branches covered.
     """
     import subprocess
 
     n_mols = 2
-    n_rounds = 3
+    # ``--per-round-nfe`` matches ``--baseline-nfe`` in the n_rounds==1
+    # case so the framework arm produces a single forward pass; in the
+    # n_rounds==3 case it's smaller so the per-round split is meaningful.
+    per_round_nfe = 6 if n_rounds == 1 else 2
     cmd = [
         str(_venv_python),
         str(SCRIPT_PATH),
@@ -166,7 +171,7 @@ def test_per_round_dumps_subdirs(_venv_python: Path, hidream_out_dir: Path) -> N
         "--baseline-nfe",
         "6",
         "--per-round-nfe",
-        "2",
+        str(per_round_nfe),
         "--resolution",
         "64",
         "--output-dir",
@@ -191,18 +196,23 @@ def test_per_round_dumps_subdirs(_venv_python: Path, hidream_out_dir: Path) -> N
     )
 
     framework_dir = hidream_out_dir / "framework"
-    # 1. Legacy endpoint PNGs preserved.
+    # 1. Legacy endpoint PNGs preserved (always).
     for i in range(n_mols):
         ep = framework_dir / f"sample_{i:04d}.png"
         assert ep.exists(), f"missing legacy endpoint PNG: {ep}"
 
-    # 2. Per-round directories + PNGs exist.
-    for r in range(n_rounds):
+    # 2. Per-round directories + PNGs exist iff n_rounds > 1.
+    for r in range(expected_subdir_count):
         rdir = framework_dir / f"framework_round{r}"
         assert rdir.exists(), f"missing per-round dir: {rdir}"
         for i in range(n_mols):
             rp = rdir / f"sample_{i:04d}.png"
             assert rp.exists(), f"missing per-round PNG: {rp}"
+    # When n_rounds==1, explicitly assert no per-round subdir leaked.
+    if expected_subdir_count == 0:
+        assert not (framework_dir / "framework_round0").exists(), (
+            "n_rounds==1 must NOT emit a framework_round0 subdir"
+        )
 
     # 3. summary.json contract: per_round_png_dirs + per_round_png_count.
     summary_path = hidream_out_dir / "summary.json"
@@ -211,70 +221,14 @@ def test_per_round_dumps_subdirs(_venv_python: Path, hidream_out_dir: Path) -> N
     assert summary["n_mols"] == n_mols
     assert summary["n_rounds"] == n_rounds
     fw = summary["framework"]
-    assert fw["per_round_png_dirs"] == [
-        f"framework/framework_round{r}" for r in range(n_rounds)
-    ]
-    assert fw["per_round_png_count"] == n_mols * n_rounds
-
-
-def test_per_round_dumps_n_rounds_one(
-    _venv_python: Path, hidream_out_dir: Path,
-) -> None:
-    """Edge case: ``n_rounds=1`` does NOT emit per-round subdirectories.
-
-    Phase 4 contract: when ``n_rounds == 1``, the framework arm
-    collapses to a single forward pass and ``per_round_png_dirs`` is
-    empty (no ``framework_round0/`` dir is created). The legacy
-    endpoint PNG is still written.
-    """
-    import subprocess
-
-    n_mols = 2
-    n_rounds = 1
-    cmd = [
-        str(_venv_python),
-        str(SCRIPT_PATH),
-        "--n-mols",
-        str(n_mols),
-        "--n-rounds",
-        str(n_rounds),
-        "--baseline-nfe",
-        "6",
-        "--per-round-nfe",
-        "6",
-        "--resolution",
-        "64",
-        "--output-dir",
-        str(hidream_out_dir),
-        "--seed",
-        "0",
-        "--device",
-        "cpu",
-        "--allow-cuda0",
-        "--skip-eval",
-    ]
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        cwd=str(REPO_ROOT),
-        timeout=120,
-    )
-    assert result.returncode == 0, (
-        f"hidream harness failed rc={result.returncode}\n"
-        f"  stderr={result.stderr!r}"
-    )
-    framework_dir = hidream_out_dir / "framework"
-    # Legacy endpoint PNGs still present.
-    for i in range(n_mols):
-        assert (framework_dir / f"sample_{i:04d}.png").exists()
-    # No per-round subdirs when n_rounds == 1.
-    assert not (framework_dir / "framework_round0").exists()
-    summary = json.loads(
-        (hidream_out_dir / "summary.json").read_text(encoding="utf-8")
-    )
-    assert summary["framework"]["per_round_png_dirs"] == []
-    assert summary["framework"]["per_round_png_count"] == 0
+    if expected_subdir_count == 0:
+        assert fw["per_round_png_dirs"] == []
+        assert fw["per_round_png_count"] == 0
+    else:
+        assert fw["per_round_png_dirs"] == [
+            f"framework/framework_round{r}" for r in range(n_rounds)
+        ]
+        assert fw["per_round_png_count"] == n_mols * n_rounds
 
 
 # ---------------------------------------------------------------------------

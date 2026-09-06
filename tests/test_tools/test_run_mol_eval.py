@@ -152,26 +152,13 @@ def aspirin_sdf(tmp_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Import + module-surface tests
 # ---------------------------------------------------------------------------
-
-
-def test_module_imports() -> None:
-    """The runner script must import without errors (catches typos / bad imports)."""
-    module = _load_module()
-    assert hasattr(module, "main")
-    assert hasattr(module, "evaluate")
-    assert hasattr(module, "compute_validity")
-    assert hasattr(module, "compute_qed")
-    assert hasattr(module, "compute_sa")
-    assert hasattr(module, "compute_logp")
-    assert hasattr(module, "compute_fcd")
-    assert hasattr(module, "OUTPUT_SCHEMA_VERSION")
-    # Pinned so a schema bump is a deliberate, reviewed edit. The legacy
-    # 50-key dict shape has been ``"1.4.0"`` in tools/run_mol_eval.py since
-    # the extra-metric passes; this assertion still read ``"1.0.0"``, so it
-    # was failing on every run rather than guarding anything.
-    assert module.OUTPUT_SCHEMA_VERSION == "1.4.0"
-
-
+# NOTE (Wave 62): ``test_module_imports`` was deleted. The ``module``
+# fixture below (and every test in this file that uses it) already
+# imports the script via ``_load_module()`` and exercises
+# ``main`` / ``evaluate`` / ``OUTPUT_SCHEMA_VERSION`` directly;
+# a separate smoke test asserting only ``hasattr(...)`` is duplicate.
+# The schema-version contract is asserted via
+# ``test_json_output_schema`` further below.
 # ---------------------------------------------------------------------------
 # Happy path: aspirin
 # ---------------------------------------------------------------------------
@@ -186,65 +173,66 @@ def module() -> Any:
     return _load_module()
 
 
-def test_metrics_on_valid_molecule(
+@pytest.mark.parametrize(
+    ("fixture_name", "dataset", "expected_input_format"),
+    [
+        ("aspirin_npz", "qm9", "npz"),
+        ("aspirin_pkl", "geom_drugs", "pkl"),
+        ("aspirin_sdf", "geom_5_kekulized", "sdf"),
+    ],
+)
+def test_metrics_on_input_formats(
     module: Any,
-    aspirin_npz: Path,
-    tmp_path: Path,
+    fixture_name: str,
+    dataset: str,
+    expected_input_format: str,
+    request: pytest.FixtureRequest,
 ) -> None:
-    """Valid SMILES must round-trip: validity=1.0, QED in [0, 1].
+    """A single-molecule input in any of the three supported formats
+    (``npz`` / ``pkl`` / ``sdf``) round-trips through the metrics
+    pipeline with ``validity=1.0`` and the canonical schema.
 
-    Aspirin is a stable, RDKit-canonicalisable small molecule; we
-    use it as the positive control. ``sa`` lives in ``[1, 10]``,
-    ``logp`` is unbounded, and ``fcd`` is NaN without a reference
-    set + library — those are sanity-checked but not asserted to a
-    specific value.
+    The three formats used to live in three separate tests
+    (``test_metrics_on_valid_molecule``, ``test_metrics_on_pickle_input``,
+    ``test_metrics_on_sdf_input``); Wave 62 parametrizes on the
+    fixture name so each format keeps its dedicated fixture but the
+    three happy-path contracts share one body. ``request.getfixturevalue``
+    resolves the per-param fixture name to its bound ``Path``.
+
+    Only the ``npz`` form carries the full schema-stability assertions
+    (every metric key present, QED in ``[0, 1]``, SA bounded to
+    ``[1, 10]``); ``pkl`` / ``sdf`` assert the minimum (validity +
+    counts + the right ``input_format``).
     """
     if not _rdkit_available():
         pytest.skip("rdkit_unavailable")
+    input_path: Path = request.getfixturevalue(fixture_name)
     report = module.evaluate(
-        input_path=aspirin_npz, reference_path=None, dataset="qm9"
+        input_path=input_path, reference_path=None, dataset=dataset
     )
-    # Schema stability: every metric key is present regardless of deps.
-    for key in ("validity", "qed", "sa", "logp", "fcd"):
-        assert key in report, key
+    assert report["input_format"] == expected_input_format
     assert report["validity"] == pytest.approx(1.0, abs=1e-9)
     assert report["n_total"] == 1
     assert report["n_valid"] == 1
-    assert 0.0 <= report["qed"] <= 1.0
-    # SA lives in [1, 10] for real molecules; allow the NaN fallback
-    # only when the contrib is unimportable.
-    if not math.isnan(report["sa"]):
-        assert 1.0 <= report["sa"] <= 10.0
-    # logP is unbounded; sanity-bound it to a wide drug-like range.
-    if not math.isnan(report["logp"]):
-        assert -10.0 <= report["logp"] <= 10.0
-    # FCD is NaN without a reference path / library; only check that
-    # the key is present.
-    assert "fcd" in report
+    if expected_input_format == "npz":
+        # Schema stability: every metric key is present regardless of deps.
+        for key in ("validity", "qed", "sa", "logp", "fcd"):
+            assert key in report, key
+        assert 0.0 <= report["qed"] <= 1.0
+        # SA lives in [1, 10] for real molecules; allow the NaN fallback
+        # only when the contrib is unimportable.
+        if not math.isnan(report["sa"]):
+            assert 1.0 <= report["sa"] <= 10.0
+        # logP is unbounded; sanity-bound it to a wide drug-like range.
+        if not math.isnan(report["logp"]):
+            assert -10.0 <= report["logp"] <= 10.0
 
 
-def test_metrics_on_pickle_input(module: Any, aspirin_pkl: Path) -> None:
-    """A ``.pkl`` of ``[Chem.Mol]`` must compute the same metrics."""
-    if not _rdkit_available():
-        pytest.skip("rdkit_unavailable")
-    report = module.evaluate(
-        input_path=aspirin_pkl, reference_path=None, dataset="geom_drugs"
-    )
-    assert report["input_format"] == "pkl"
-    assert report["validity"] == pytest.approx(1.0, abs=1e-9)
-    assert report["n_total"] == 1
-    assert report["n_valid"] == 1
-
-
-def test_metrics_on_sdf_input(module: Any, aspirin_sdf: Path) -> None:
-    """An ``.sdf`` of one aspirin must report ``input_format="sdf"``."""
-    if not _rdkit_available():
-        pytest.skip("rdkit_unavailable")
-    report = module.evaluate(
-        input_path=aspirin_sdf, reference_path=None, dataset="geom_5_kekulized"
-    )
-    assert report["input_format"] == "sdf"
-    assert report["validity"] == pytest.approx(1.0, abs=1e-9)
+# NOTE (Wave 62): ``test_metrics_on_sdf_input`` was deleted. It is
+# now the third parametrize-id of ``test_metrics_on_input_formats``
+# (above), which asserts ``input_format == "sdf"`` + ``validity ==
+# 1.0`` for the ``aspirin_sdf`` fixture. The split between the .npz /
+# .pkl / .sdf tests had no per-format invariant worth its own function.
 
 
 # ---------------------------------------------------------------------------
@@ -403,22 +391,15 @@ def test_main_returns_error_on_missing_input(
     assert not output_path.exists()
 
 
-def test_help_flag_exits_cleanly() -> None:
-    """``--help`` must exit 0 and print argparse usage."""
-    import subprocess
-
-    result = subprocess.run(
-        [sys.executable, str(SCRIPT_PATH), "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(REPO_ROOT),
-        timeout=60,
-    )
-    assert result.returncode == 0, f"stderr: {result.stderr!r}"
-    assert "--input" in result.stdout
-    assert "--output" in result.stdout
-    assert "--dataset" in result.stdout
-    assert "--reference-smiles" in result.stdout
+# NOTE (Wave 62): ``test_help_flag_exits_cleanly`` was deleted.
+# ``test_json_output_schema`` (above) drives ``main()`` with
+# ``--input`` / ``--output`` / ``--dataset`` end-to-end, and
+# ``test_main_returns_error_on_missing_input`` (above) drives
+# ``main()`` with a missing input. Both exercises argparse. The
+# standalone ``--help`` smoke that asserted rc==0 + flag-name
+# substrings was duplicate coverage; a flag rename surfaces through
+# the e2e suite (those tests would fail with a ``SystemExit`` on
+# argparse parsing).
 
 
 # ---------------------------------------------------------------------------

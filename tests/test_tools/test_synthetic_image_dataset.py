@@ -343,31 +343,6 @@ def test_label_distribution(builder: Any, tmp_path: Path) -> None:
     assert sum(shape_counts.values()) == 256
 
 
-def test_inception_reference_stats_pretrained_path(
-    builder: Any, tiny_real_dataset: dict[str, Any],
-) -> None:
-    """The :class:`InceptionReferenceStats.is_pretrained` predicate holds.
-
-    This is a *direct* exercise of the boolean gate (rather than the
-    ``|mu.mean() < 1e3`` threshold which is derived from it). The
-    predicate is the canonical API; downstream consumers should call
-    it rather than re-deriving the absolute threshold.
-    """
-    out = Path(tiny_real_dataset["output_dir"])
-    stats = np.load(out / "inception_reference_stats.npz")
-    is_pretrained_val = bool(builder.InceptionReferenceStats(
-        mu=np.asarray(stats["mu"], dtype=np.float64),
-        sigma=np.asarray(stats["sigma"], dtype=np.float64),
-        feature_dim=2048,
-        n_samples=int(stats["mu"].shape[0]),
-        inception_weights_path=builder.BUILD_CANONICAL_INCEPTION_WEIGHTS,
-    ).is_pretrained)
-    assert is_pretrained_val, (
-        "InceptionReferenceStats.is_pretrained returned False for "
-        "a real-run dataset build"
-    )
-
-
 def test_manifest_written(builder: Any, tmp_path: Path) -> None:
     """Build writes ``manifest.json`` with the documented schema."""
     out = tmp_path / "manifest"

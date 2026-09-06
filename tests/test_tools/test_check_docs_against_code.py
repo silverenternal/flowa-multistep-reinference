@@ -268,17 +268,11 @@ def test_no_false_positives_on_current_repo() -> None:
         )
 
 
-def test_self_test_quiet_mode_returns_zero_exit() -> None:
-    """``collect_claims()`` with no arguments and a quiet run should
-    produce zero missing on the current repo -- the same contract as
-    ``test_no_false_positives_on_current_repo`` but invoked via the
-    end-to-end orchestrator (which exercises the same code path the
-    CLI uses).
-    """
-    claims = checker.collect_claims()
-    missing_count = sum(1 for c in claims if c.status == "missing")
-    assert missing_count == 0, (
-        "The CLI reported unverifiable claims on the current repo; "
-        "either fix the docs (run the tool to see what is missing) or "
-        "tighten the PROSE_SYMBOL_DENYLIST."
-    )
+# NOTE (Wave 62): ``test_self_test_quiet_mode_returns_zero_exit`` was
+# deleted. It called ``checker.collect_claims()`` with no arguments and
+# asserted ``missing_count == 0`` -- the *identical* contract asserted
+# by ``test_no_false_positives_on_current_repo`` (above). The only
+# difference was the assertion message ("via end-to-end orchestrator"),
+# but both tests exercise the same code path (``collect_claims()``),
+# and pytest collection would fail if the orchestrator failed to
+# import. Keeping both was redundant coverage of one boolean invariant.

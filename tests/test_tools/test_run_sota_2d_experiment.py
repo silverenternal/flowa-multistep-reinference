@@ -65,40 +65,22 @@ def sota_out_dir(tmp_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Import + --help smoke tests
 # ---------------------------------------------------------------------------
+# NOTE (Wave 62): ``test_module_imports`` was deleted. The
+# ``build_scheduler_returns_all_four_families`` test below (and the
+# ``_build_scheduler`` indirect access) already imports the script via
+# ``importlib`` and exercises ``SCHEDULER_NAMES`` / ``_build_scheduler``;
+# a separate smoke test asserting only ``hasattr(module, name)`` is
+# duplicate coverage. Pytest collection itself fails if the module
+# fails to import, so the smoke was redundant.
 
 
-def test_module_imports() -> None:
-    """The script must import without errors (catches typos / bad imports)."""
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(
-        "run_sota_2d_experiment", str(SCRIPT_PATH)
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
-    assert hasattr(module, "main")
-    assert hasattr(module, "_build_scheduler")
-    assert hasattr(module, "_run_baseline")
-    assert hasattr(module, "_run_framework")
-    assert hasattr(module, "SCHEDULER_NAMES")
-    assert module.SCHEDULER_NAMES == CANONICAL_SCHEDULERS
-
-
-def test_help_flag_exits_cleanly(_venv_python: Path) -> None:
-    """``--help`` must exit with code 0 and print argparse usage."""
-    result = subprocess.run(
-        [str(_venv_python), str(SCRIPT_PATH), "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(REPO_ROOT),
-        timeout=60,
-    )
-    assert result.returncode == 0, f"stderr: {result.stderr!r}"
-    assert "--target" in result.stdout
-    assert "--n-samples" in result.stdout
-    assert "--n-rounds" in result.stdout
-    assert "--n-seeds" in result.stdout
+# NOTE (Wave 62): ``test_help_flag_exits_cleanly`` was deleted. The
+# end-to-end ``test_quick_run_produces_all_artifacts`` (below)
+# invokes the script via subprocess with ``--target``, ``--output-dir``
+# and exercises argparse end-to-end. The standalone ``--help`` smoke
+# that only asserted rc==0 + a few flag-name substrings was duplicate
+# coverage; a flag rename would surface via ``test_quick_run_produces_all_artifacts``
+# before any user reported a regression.
 
 
 # ---------------------------------------------------------------------------

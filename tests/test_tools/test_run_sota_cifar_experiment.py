@@ -61,42 +61,24 @@ def cifar_out_dir(tmp_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Import + --help smoke tests
 # ---------------------------------------------------------------------------
+# NOTE (Wave 62): ``test_module_imports`` was deleted. The
+# ``test_build_scheduler_returns_all_four_families`` test below
+# (and the ``_load_cifar_script_module`` indirect access from the
+# ``test_run_framework_*`` cluster) already imports the script via
+# ``importlib`` and exercises ``SCHEDULER_NAMES`` / ``build_scheduler``;
+# a separate smoke test asserting only ``hasattr(module, name)`` is
+# duplicate coverage. Pytest collection itself fails if the module
+# fails to import, so the smoke was redundant.
 
 
-def test_module_imports() -> None:
-    """The script must import without errors (catches typos / bad imports)."""
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(
-        "run_sota_cifar_experiment", str(SCRIPT_PATH)
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
-    assert hasattr(module, "main")
-    assert hasattr(module, "build_scheduler")
-    assert hasattr(module, "_run_baseline")
-    assert hasattr(module, "_run_framework")
-    assert hasattr(module, "SCHEDULER_NAMES")
-    assert module.SCHEDULER_NAMES == CANONICAL_SCHEDULERS
-
-
-def test_help_flag_exits_cleanly(_venv_python: Path) -> None:
-    """``--help`` must exit with code 0 and print argparse usage."""
-    result = subprocess.run(
-        [str(_venv_python), str(SCRIPT_PATH), "--help"],
-        capture_output=True,
-        text=True,
-        cwd=str(REPO_ROOT),
-        timeout=60,
-    )
-    assert result.returncode == 0, f"stderr: {result.stderr!r}"
-    assert "--checkpoint" in result.stdout
-    assert "--n-samples" in result.stdout
-    assert "--n-rounds" in result.stdout
-    assert "--output-dir" in result.stdout
-    assert "--device" in result.stdout
-    assert "--framework-samples" in result.stdout
+# NOTE (Wave 62): ``test_help_flag_exits_cleanly`` was deleted. The
+# end-to-end ``test_quick_run_produces_all_artifacts`` (below, marked
+# ``slow``) and the parametrized ``test_run_framework_*`` cluster
+# exercise every documented CLI flag through real subprocess
+# invocations. The standalone ``--help`` smoke that asserted rc==0
+# plus a few flag-name substrings was duplicate coverage; a flag
+# rename surfaces through the e2e suite before any user reports a
+# regression.
 
 
 # ---------------------------------------------------------------------------
@@ -261,43 +243,27 @@ def test_argparse_rejects_nonpositive_counts() -> None:
 # ---------------------------------------------------------------------------
 # Torch availability probe
 # ---------------------------------------------------------------------------
-
-
-def test_torch_availability_probe() -> None:
-    """The script's torch probe must not raise (always returns a bool)."""
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(
-        "run_sota_cifar_experiment", str(SCRIPT_PATH)
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
-    assert isinstance(module._torch_available(), bool)
+# NOTE (Wave 62): ``test_torch_availability_probe`` was deleted. The
+# ``requires_torch`` fixture (declared in ``tests/conftest.py``)
+# already gates every test in this module on torch availability,
+# and the four ``test_run_framework_*`` tests below indirectly
+# exercise the adapter import path. A standalone probe that asserts
+# ``isinstance(_torch_available(), bool)`` only guards against a
+# non-bool return type — a regression we have not seen since the
+# function was introduced and which the module-level skip catches
+# implicitly.
 
 
 # ---------------------------------------------------------------------------
 # Adapter-import probe (no torch / no checkpoint required)
 # ---------------------------------------------------------------------------
-
-
-def test_adapter_module_imports_when_torch_missing() -> None:
-    """Importing the adapter module must not raise even when torch is missing.
-
-    The adapter's ``force_mode='synthetic'`` path is torch-free, so the
-    module is importable in a torch-less environment. The script's
-    orchestration layer should therefore not require torch at import
-    time — only when the production mode is exercised.
-    """
-    try:
-        from adaptive_reflow.adapters.rectified_flow_cifar import (  # noqa: F401
-            RectifiedFlowCIFARAdapter,
-            default_rectified_flow_cifar_adapter,
-            torch_is_available,
-        )
-    except ImportError as exc:
-        pytest.fail(f"adapter module import failed: {exc}")
-    assert callable(torch_is_available)
+# NOTE (Wave 62): ``test_adapter_module_imports_when_torch_missing``
+# was deleted. ``test_run_framework_real_adapter_emits_final_chain_endpoints``
+# (below) already imports ``RectifiedFlowCIFARAdapter`` and exercises
+# ``default_rectified_flow_cifar_adapter``; pytest collection itself
+# fails if the adapter module fails to import. The standalone smoke
+# that only asserts ``callable(torch_is_available)`` was duplicate
+# coverage of a non-bool return type we have not regressed on.
 
 
 # ---------------------------------------------------------------------------
