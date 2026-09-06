@@ -49,7 +49,6 @@ from __future__ import annotations
 
 import hashlib
 import sys
-from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import lru_cache
@@ -78,9 +77,12 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
     digest_state,
+    kaiming_uniform,
     make_ref,
     seed_from_ids,
+    torch_is_available as _torch_is_available,
 )
 from adaptive_reflow.framework.interfaces import implements
 
@@ -408,28 +410,22 @@ def _try_import_upstream_flowmol(
 # ---------------------------------------------------------------------------
 # Pure helpers — hashing
 # ---------------------------------------------------------------------------
-
-
-def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """SHA-256-derived 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
-    return int(hashlib.sha256(blob).hexdigest()[:8], 16)
-
-
-def _digest_state(payload: Mapping[str, Any]) -> str:
-    """Deterministic SHA-256 hex digest of a payload (sorted keys)."""
-    blob = repr(
-        (sorted(payload.items(), key=lambda kv: str(kv[0])),)
-    ).encode("utf-8")
-    return hashlib.sha256(blob).hexdigest()
+#
+# ``_seed_from_ids`` / ``_digest_state`` / ``_make_ref`` are no longer inlined
+# here — they delegate to ``adaptive_reflow.adapters._adapter_common``
+# (Wave 44 D.1 shrink). The local ``_make_ref`` historically used the
+# ``"flowmol3adapter:"`` namespace; the wrapper below pre-bakes that prefix
+# so the TensorRef digest is byte-identical to the prior inlined form.
 
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Build a deterministic hash-stable :class:`TensorRef`."""
-    blob = repr((label, sorted(parts.items()))).encode("utf-8")
-    return TensorRef(
-        f"flowmol3adapter:{hashlib.sha256(blob).hexdigest()[:16]}"
-    )
+    """Build a deterministic :class:`TensorRef` in the ``flowmol3adapter`` namespace.
+
+    Thin wrapper over :func:`adaptive_reflow.adapters._adapter_common.make_ref`
+    that pre-bakes the adapter's historical namespace (``flowmol3adapter``).
+    The returned digest is byte-stable across replays.
+    """
+    return make_ref("flowmol3adapter", label, **parts)
 
 
 # ---------------------------------------------------------------------------
@@ -518,13 +514,6 @@ def _sample_native_state(seed: int) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Velocity-field backends
 # ---------------------------------------------------------------------------
-
-
-def _torch_is_available() -> bool:
-    """Return ``True`` iff :mod:`torch` is importable in this interpreter."""
-    import importlib.util as _il
-
-    return _il.find_spec("torch") is not None
 
 
 def _numpy_velocity_field(
@@ -632,21 +621,18 @@ def _numpy_random_init_weights(*, seed: int, n_atoms: int) -> dict[str, ArrayF64
     rng = np.random.default_rng(int(seed))
     in_dim_x = 3 * max(int(n_atoms), 1)
 
-    def kaiming(fan_in: int, fan_out: int) -> ArrayF64:
-        bound = np.sqrt(6.0 / float(fan_in))
-        return np.asarray(
-            rng.uniform(-bound, bound, size=(fan_in, fan_out)),
-            dtype=np.float64,
-        )
-
     return {
-        "W_x": kaiming(in_dim_x, in_dim_x),
+        "W_x": kaiming_uniform(rng, in_dim_x, in_dim_x),
         "b_x": np.zeros(in_dim_x, dtype=np.float64),
         "t_bias_x": rng.standard_normal(in_dim_x).astype(np.float64),
-        "W_c": kaiming(max(int(n_atoms), 1), max(int(n_atoms), 1)),
+        "W_c": kaiming_uniform(rng, max(int(n_atoms), 1), max(int(n_atoms), 1)),
         "b_c": np.zeros(max(int(n_atoms), 1), dtype=np.float64),
         "t_bias_c": rng.standard_normal(max(int(n_atoms), 1)).astype(np.float64),
-        "W_e": kaiming(int(FLOWMOL3ADAPTER_N_BOND_TYPES), int(FLOWMOL3ADAPTER_N_BOND_TYPES)),
+        "W_e": kaiming_uniform(
+            rng,
+            int(FLOWMOL3ADAPTER_N_BOND_TYPES),
+            int(FLOWMOL3ADAPTER_N_BOND_TYPES),
+        ),
         "b_e": np.zeros(int(FLOWMOL3ADAPTER_N_BOND_TYPES), dtype=np.float64),
     }
 
@@ -1595,7 +1581,9 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # historical ``"real"`` / ``"synthetic"`` kinds.
         self._upstream_flowmol_cls: Any = None
         self._upstream_import_error: str | None = None
-        self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        self._native_states: NativeStateCache = NativeStateCache(
+            maxsize=FLOWMOL3ADAPTER_NATIVE_STATES_MAXSIZE,
+        )
         self._caps = FlowMol3V2AdapterCapabilities()
         self._blender: RestartBlenderProtocol = (
             blender if blender is not None else LinearBlender()
@@ -1648,14 +1636,11 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
     # ------------------------------------------------------------------
 
     def _put_native_state(self, digest: str, entry: dict[str, Any]) -> None:
-        """Insert ``entry`` under ``digest``; evict the oldest entry past maxsize."""
-        if digest in self._native_states:
-            self._native_states[digest] = entry
-            self._native_states.move_to_end(digest)
-            return
-        self._native_states[digest] = entry
-        while len(self._native_states) > FLOWMOL3ADAPTER_NATIVE_STATES_MAXSIZE:
-            self._native_states.popitem(last=False)
+        """Insert ``entry`` under ``digest``; evicts the oldest entry past maxsize.
+
+        Thin delegation to :class:`NativeStateCache` (P2-9 shared LRU).
+        """
+        self._native_states.put(digest, entry)
 
     # ------------------------------------------------------------------
     # 0a. lazy torch backend loader
@@ -1893,13 +1878,13 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         per-channel draw so the round's lineage is byte-deterministic
         across replays.
         """
-        seed = _seed_from_ids(
+        seed = seed_from_ids(
             str(batch_id),
             str(sample_id),
             int(self._seed_offset) + 0,
         )
         native = _sample_native_state(int(seed))
-        digest = _digest_state(
+        digest = digest_state(
             {
                 "kind": "initial",
                 "batch_id": str(batch_id),
@@ -2096,7 +2081,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         )
         fresh = _sample_native_state(int(restart_seed))
         blended = _channel_aware_blend(prior_entry, fresh, memory_fraction)
-        next_digest = _digest_state(
+        next_digest = digest_state(
             {
                 "kind": "restart",
                 "src_digest": str(state.native_state_digest),
@@ -2493,7 +2478,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         traj_a = np.tile(a_final[None, :], (num_steps + 1, 1))
         t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
 
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": str(state.native_state_digest),
@@ -2651,7 +2636,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             traj_e[i] = e_cur
             traj_a[i] = a_cur
         # Trajectory digest binds the per-step lineage.
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": str(state.native_state_digest),
@@ -2937,7 +2922,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             traj_e[i] = e_cur
             traj_a[i] = a_cur
         # Trajectory digest binds the per-step lineage.
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": str(state.native_state_digest),
@@ -3027,7 +3012,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         x_final = np.asarray(traj_x[-1], dtype=np.float64)
         c_final = np.asarray(traj_c[-1], dtype=np.float64)
         e_final = np.asarray(traj_e[-1], dtype=np.int64)
-        endpoint_digest = _digest_state(
+        endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": str(trace.native_state_digest),
@@ -3148,7 +3133,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             # one-atom noise to the centroid (audit-replayability).
             x_new = x_prior + noise_x.reshape(1, 3)
 
-        new_digest = _digest_state(
+        new_digest = digest_state(
             {
                 "kind": "forward_noise",
                 "src_digest": str(bundle.native_state_digest),
