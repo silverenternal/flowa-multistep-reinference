@@ -143,6 +143,7 @@ def _build_scheduler_registry() -> dict[str, Any]:
         CosineAnnealScheduler,
         ExponentialScheduler,
         LinearScheduler,
+        NFEAwareMemoryScheduler,
         PolynomialScheduler,
         SigmoidScheduler,
         default_cosine_scheduler,
@@ -173,6 +174,9 @@ def _build_scheduler_registry() -> dict[str, Any]:
         "handoff_sequential": HandoffSequentialScheduler,
         "evidence_driven": EvidenceDrivenScheduler,
         "freetraj": FreeTrajScheduler,
+        # Wave 61 Agent 2 — NFE-aware memory scheduler (Wave 57 Agent D's
+        # B2 / successor to Wave 58 Agent 1's binary gate).
+        "nfe_aware_memory": NFEAwareMemoryScheduler,
     }
     # Cosine factory defaults live behind a kwargs API rather than the
     # bare constructor; expose it under the same family key so callers

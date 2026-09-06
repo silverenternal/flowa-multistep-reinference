@@ -4224,6 +4224,418 @@ class PaperRatioAdaptiveScheduler:
 
 
 # ---------------------------------------------------------------------------
+# NFE-aware memory scheduler — Wave 57 Agent D's B2 / Wave 61 Agent 2
+# ---------------------------------------------------------------------------
+
+
+DEFAULT_NFE_AWARE_THRESHOLD: int = 10
+"""Default NFE-per-round threshold at which ``memory_fraction`` saturates at
+``max_memory_fraction``.
+
+Wave 57 Agent D's recommendation B2: scale the per-round ``memory_fraction``
+smoothly from 0 (at low NFE) up to ``max_memory_fraction`` (at high NFE),
+rather than Wave 58 Agent 1's binary gate (which fires only on
+``effective_nfe < min_nfe`` and leaves half the regressions untouched).
+The default ``10`` matches Wave 58's gate threshold so the two
+formulations agree at the boundary.
+"""
+
+
+DEFAULT_NFE_AWARE_MAX: float = 0.5
+"""Default saturation value for ``memory_fraction`` (matches the framework's
+canonical ``m = 0.5`` restart-blend). Mirrors the
+``apply_restart_distribution`` default in :mod:`adaptive_reflow.adapters`.
+"""
+
+
+class NFEAwareMemoryScheduler:
+    """NFE-aware constant-capacity :class:`SchedulerProtocol`.
+
+    Wave 61 Agent 2 — smooth-scaling answer to Wave 58 Agent 1's binary
+    NFE-adaptive gate (`docs/audit/wave58-nfe-adaptive-gate-impl.md`).
+    Where the gate fires only when ``effective_nfe < min_nfe`` (a step
+    function at the threshold), this scheduler scales ``memory_fraction``
+    *smoothly* from 0 (low NFE) to ``max_memory_fraction`` (high NFE) per
+    Wave 57 Agent D's recommendation B2 in
+    `docs/audit/wave57-nfe-adaptive-research.md` §4.
+
+    Closed form
+    -----------
+
+    For a cycle with ``n_rounds`` rounds, a TOTAL NFE budget ``nfe_budget``
+    split evenly across rounds, and a threshold ``threshold``:
+
+        nfe_per_round = nfe_budget / n_rounds
+        ratio         = nfe_per_round / threshold
+        m(r)          = min(max_memory_fraction, max_memory_fraction * ratio ** 2)
+
+    where :attr:`m(r)` is the per-round ``memory_fraction`` returned via
+    :meth:`ScheduleSample.memory_fraction` (equivalently, ``n_cap = 1 - m(r)``).
+
+    Worked examples (with ``max_memory_fraction=0.5``,
+    ``threshold=10``, ``n_rounds=3``):
+
+    +-----------------+----------------+-------------------+---------------------+
+    | ``nfe_budget``  | nfe_per_round  | ratio             | m(r) / memory_frac  |
+    +=================+================+===================+=====================+
+    | 10              | 3.33           | 0.333             | ``~0.028``          |
+    | 50              | 16.67          | 1.667             | ``0.5`` (saturated) |
+    | 200             | 66.67          | 6.667             | ``0.5`` (saturated) |
+    | 500             | 166.67         | 16.667            | ``0.5`` (saturated) |
+    +-----------------+----------------+-------------------+---------------------+
+
+    Why the squared curve
+    ---------------------
+
+    The quadratic ``ratio ** 2`` front-loads the schedule so the
+    ``memory_fraction`` only really starts climbing once ``nfe_per_round``
+    approaches ``threshold``; below the threshold the blend is so soft
+    that the framework essentially passes through (which is exactly what
+    the Wave 58 gate's ``m = 0`` corner provides). A linear ramp would
+    reach ``max_memory_fraction / 2`` at ``ratio = 0.5`` (i.e. ``nfe_per_round
+    = threshold / 2``), which is too aggressive given the empirical
+    evidence that the framework only starts helping once the round has
+    enough steps to re-absorb a fresh-prior perturbation.
+
+    Where this differs from Wave 58's gate
+    ---------------------------------------
+
+    The Wave 58 gate (``FLOWMOL3_RESTART_MIN_NFE = 20`` in
+    `adaptive_reflow/adapters/flowmol3.py`) is a **per-adapter**,
+    **binary** mechanism: at ``effective_nfe < min_nfe`` the adapter
+    skips the blend entirely; at ``effective_nfe >= min_nfe`` it blends
+    at the canonical ``m = 0.5``. That addresses the NFE=10 stratum but
+    does nothing for the NFE=50 / NFE=200 strata where the framework
+    was also regressing in Wave 57's 9-cell v3 grid.
+
+    This scheduler is a **per-scheduler**, **continuous** mechanism: at
+    every NFE budget it picks a *smaller* blend coefficient. At low NFE
+    the blend is so soft the corruption vanishes; at high NFE the blend
+    saturates at ``max_memory_fraction = 0.5``, matching the canonical
+    framework. This is the ``m(r)`` shape that Wave 57 Agent D identified
+    as the strictly-more-expressive successor to the gate.
+
+    Configuration
+    -------------
+
+    :param cycle_length: number of rounds in one outer cycle (``>= 1``).
+        All rounds share the same ``memory_fraction`` (the schedule is
+        *constant* within a cycle by design; only the cross-cycle
+        parameter ``nfe_budget`` varies).
+    :param nfe_budget: TOTAL NFE budget for the cycle (default ``50``,
+        the FlowMol3 paper default). The per-round count is
+        ``nfe_budget / n_rounds``.
+    :param n_rounds: number of restart rounds the budget splits across
+        (default ``3``, matching Wave 57's grid).
+    :param threshold: NFE-per-round value at which ``m(r)`` saturates
+        (default :data:`DEFAULT_NFE_AWARE_THRESHOLD` = 10, matching
+        Wave 58's gate).
+    :param max_memory_fraction: saturation cap (default
+        :data:`DEFAULT_NFE_AWARE_MAX` = 0.5, matching the canonical
+        framework).
+    :param seed: included for protocol signature parity with stochastic
+        schedulers; the NFE-aware family is deterministic and only
+        participates in the frozen :attr:`config_hash`.
+
+    Conforms to :class:`SchedulerProtocol`. Pure w.r.t. arguments.
+    """
+
+    def __init__(
+        self,
+        *,
+        cycle_length: int = 20,
+        nfe_budget: int = 50,
+        n_rounds: int = 3,
+        threshold: int = DEFAULT_NFE_AWARE_THRESHOLD,
+        max_memory_fraction: float = DEFAULT_NFE_AWARE_MAX,
+        seed: int = 0,
+    ) -> None:
+        """Construct the NFE-aware memory scheduler.
+
+        :param cycle_length: number of rounds in one outer cycle
+            (``>= 1``).
+        :param nfe_budget: TOTAL NFE budget for the cycle; must be
+            ``> 0``. ``nfe_budget <= 0`` is rejected because the
+            scheduler cannot derive a meaningful per-round NFE.
+        :param n_rounds: number of restart rounds (``>= 1``); must be
+            ``>= 1``.
+        :param threshold: NFE-per-round value at which the
+            ``memory_fraction`` saturates; must be ``> 0``.
+        :param max_memory_fraction: saturation cap; must lie in
+            ``[0, 1]``. Values outside this range are rejected.
+        :param seed: included for signature parity; only enters the
+            :attr:`config_hash`.
+        """
+        if isinstance(cycle_length, bool) or not isinstance(cycle_length, int):
+            raise ValueError(
+                f"cycle_length must be int, got {cycle_length!r}"
+            )
+        if int(cycle_length) < 1:
+            raise ValueError(
+                f"cycle_length must be >= 1, got {cycle_length!r}"
+            )
+        for nm, val in (
+            ("nfe_budget", nfe_budget),
+            ("n_rounds", n_rounds),
+            ("threshold", threshold),
+        ):
+            if isinstance(val, bool) or not isinstance(val, int):
+                raise ValueError(f"{nm} must be int, got {val!r}")
+            if int(val) < 1:
+                raise ValueError(f"{nm} must be >= 1, got {val!r}")
+        if isinstance(max_memory_fraction, bool) or not isinstance(
+            max_memory_fraction, (int, float)
+        ):
+            raise ValueError(
+                f"max_memory_fraction must be a real number, "
+                f"got {max_memory_fraction!r}"
+            )
+        max_mf_f = float(max_memory_fraction)
+        if not math.isfinite(max_mf_f):
+            raise ValueError(
+                f"max_memory_fraction must be finite, "
+                f"got {max_memory_fraction!r}"
+            )
+        if not (0.0 <= max_mf_f <= 1.0):
+            raise ValueError(
+                f"max_memory_fraction must lie in [0, 1], got "
+                f"{max_mf_f!r}"
+            )
+        self._cycle_length = int(cycle_length)
+        self._nfe_budget = int(nfe_budget)
+        self._n_rounds = int(n_rounds)
+        self._threshold = int(threshold)
+        self._max_memory_fraction = max_mf_f
+        self._seed = int(seed)
+        # Compute the per-round ``memory_fraction`` once at construction
+        # time — it depends only on ``nfe_budget`` / ``n_rounds`` /
+        # ``threshold`` / ``max_memory_fraction``, not on ``r``.
+        self._memory_fraction = float(self._compute_memory_fraction())
+        self._n_cap = float(max(0.0, min(1.0, 1.0 - self._memory_fraction)))
+        self._last_sample: ScheduleSample | None = None
+        self._config_hash_value = hash_artifact(
+            {
+                "algorithm": "nfe_aware_memory",
+                "schedule_family": "nfe_aware_memory",
+                "cycle_length": int(self._cycle_length),
+                "nfe_budget": int(self._nfe_budget),
+                "n_rounds": int(self._n_rounds),
+                "threshold": int(self._threshold),
+                "max_memory_fraction": float(self._max_memory_fraction),
+                "seed": int(self._seed),
+            }
+        )
+
+    def _compute_memory_fraction(self) -> float:
+        """Return the closed-form ``m(r) = min(M, M * (NFE_per_round / T) ** 2)``.
+
+        Pure function of the constructor inputs; kept private so callers
+        cannot mutate the cached value through :meth:`memory_fraction`.
+        """
+        nfe_per_round = float(self._nfe_budget) / float(self._n_rounds)
+        ratio = nfe_per_round / float(self._threshold)
+        # ``ratio ** 2`` is finite for every finite ``ratio`` and never
+        # produces a NaN; the ``min`` clamps to ``max_memory_fraction``
+        # once the quadratic term exceeds it (saturated regime).
+        m = float(self._max_memory_fraction) * ratio * ratio
+        return float(min(self._max_memory_fraction, m))
+
+    # -- accessors ---------------------------------------------------------
+
+    @property
+    def nfe_budget(self) -> int:
+        """Return the configured TOTAL NFE budget for the cycle."""
+        return int(self._nfe_budget)
+
+    @property
+    def n_rounds(self) -> int:
+        """Return the configured number of restart rounds."""
+        return int(self._n_rounds)
+
+    @property
+    def nfe_per_round(self) -> float:
+        """Return the per-round NFE count (``nfe_budget / n_rounds``)."""
+        return float(self._nfe_budget) / float(self._n_rounds)
+
+    @property
+    def threshold(self) -> int:
+        """Return the NFE-per-round saturation threshold."""
+        return int(self._threshold)
+
+    @property
+    def max_memory_fraction(self) -> float:
+        """Return the configured saturation cap for ``memory_fraction``."""
+        return float(self._max_memory_fraction)
+
+    @property
+    def memory_fraction(self) -> float:
+        """Return the cached per-round ``memory_fraction`` (constant across ``r``)."""
+        return float(self._memory_fraction)
+
+    @property
+    def n_cap(self) -> float:
+        """Return ``1 - memory_fraction`` (the canonical capacity for the round)."""
+        return float(self._n_cap)
+
+    @property
+    def seed(self) -> int:
+        """Return the seed used for provenance hashing."""
+        return int(self._seed)
+
+    @property
+    def last_sample(self) -> ScheduleSample | None:
+        """Return the most recent sample, or ``None`` after :meth:`reset`."""
+        return self._last_sample
+
+    # -- SchedulerProtocol -------------------------------------------------
+
+    def sample(
+        self,
+        outer_cycle_id: int,
+        round_in_cycle: int,
+        target_round: int,
+    ) -> ScheduleSample:
+        """Return the NFE-aware constant-capacity sample for one round.
+
+        The returned :class:`ScheduleSample` carries the constant
+        ``memory_fraction`` (and hence ``n_cap``) computed at
+        construction time. The ``u_r`` field is filled with the round's
+        progress fraction so downstream consumers can branch on round
+        index without recomputing it; the schedule itself does not
+        vary across rounds — only the ``family`` audit marker
+        (``nfe_aware_memory_constant``) and the constructor-time
+        ``memory_fraction`` propagate.
+        """
+        outer_cycle_id = _coerce_int_nonneg(outer_cycle_id, "outer_cycle_id")
+        target_round = _coerce_int_nonneg(target_round, "target_round")
+        length = int(self._cycle_length)
+        if length > 1 and not (
+            0 <= int(round_in_cycle) <= length - 1
+        ):
+            raise ValueError(
+                f"round_in_cycle must be in [0, {length - 1}] for "
+                f"cycle_length={length}, got {round_in_cycle!r}"
+            )
+
+        if length == 1:
+            u_r = 0.5
+        else:
+            u_r = float(round_in_cycle) / (length - 1)
+
+        codes: tuple[str, ...] = (
+            "schedule_nfe_aware_memory",
+            f"schedule_nfe_aware_memory:m={self._memory_fraction:.6f}",
+            f"schedule_nfe_aware_memory:nfe_per_round={self.nfe_per_round:.4f}",
+        )
+
+        sample = ScheduleSample(
+            outer_cycle_id=outer_cycle_id,
+            round_in_cycle=int(round_in_cycle),
+            cycle_length=length,
+            n_cap=float(self._n_cap),
+            n_min=float(self._n_cap),
+            n_max=float(self._n_cap),
+            u_r=u_r,
+            family="nfe_aware_memory",
+            computed_at_round=target_round,
+            schedule_hash=str(self._config_hash_value),
+            audit_codes=codes,
+        )
+        self._last_sample = sample
+        return sample
+
+    def cycle_length(self) -> int:
+        """Return the configured cycle length."""
+        return int(self._cycle_length)
+
+    def schedule_family(self) -> str:
+        """Return the schedule family identifier."""
+        return "nfe_aware_memory"
+
+    def config_hash(self) -> str:
+        """Return a stable identifier for this algorithm + config choice."""
+        return str(self._config_hash_value)
+
+    def reset(self) -> None:
+        """Drop the cached sample so a re-run starts from a clean state."""
+        self._last_sample = None
+
+    def record_round_feedback(
+        self,
+        round_in_cycle: int,
+        metrics: Mapping[str, float],
+    ) -> None:
+        """Default no-op: NFE-aware scheduler ignores per-round feedback."""
+        return None
+
+    def inject_noise(
+        self,
+        state: NDArray[np.float64],
+        schedule_sample: CosineScheduleSample,
+        *,
+        generator: np.random.Generator,
+    ) -> NDArray[np.float64]:
+        """Return ``state + sqrt(n_cap) * generator.standard_normal`` (P0-7).
+
+        Uses the schedule sample's ``n_cap`` directly. Since
+        :class:`NFEAwareMemoryScheduler` produces a constant ``n_cap``
+        per cycle, the noise mass is identical across every round — the
+        forward-noise injection here mirrors the constant family
+        (``state + sqrt(self._n_cap) * generator.standard_normal``).
+        """
+        state_arr = np.asarray(state, dtype=np.float64)
+        n_cap = float(schedule_sample.n_cap)
+        if n_cap < 0.0:
+            n_cap = 0.0
+        scale = math.sqrt(n_cap)
+        noise = generator.standard_normal(state_arr.shape).astype(np.float64)
+        return state_arr + scale * noise
+
+    def to_config(self) -> dict[str, Any]:
+        """Return a JSON-serialisable config dict for the NFE-aware scheduler."""
+        return {
+            "family": "nfe_aware_memory",
+            "cycle_length": int(self._cycle_length),
+            "nfe_budget": int(self._nfe_budget),
+            "n_rounds": int(self._n_rounds),
+            "threshold": int(self._threshold),
+            "max_memory_fraction": float(self._max_memory_fraction),
+            "seed": int(self._seed),
+        }
+
+    @classmethod
+    def from_config(
+        cls, config: dict[str, Any]
+    ) -> NFEAwareMemoryScheduler:
+        """Build an :class:`NFEAwareMemoryScheduler` from ``config`` (P1-1)."""
+        if not isinstance(config, dict):
+            raise TypeError(f"config must be a dict, got {type(config).__name__}")
+        return NFEAwareMemoryScheduler(
+            cycle_length=int(config["cycle_length"]),
+            nfe_budget=int(config["nfe_budget"]),
+            n_rounds=int(config["n_rounds"]),
+            threshold=int(config.get("threshold", DEFAULT_NFE_AWARE_THRESHOLD)),
+            max_memory_fraction=float(
+                config.get(
+                    "max_memory_fraction", DEFAULT_NFE_AWARE_MAX
+                )
+            ),
+            seed=int(config.get("seed", 0)),
+        )
+
+    # -- derived -----------------------------------------------------------
+
+    def memory_fraction_for(
+        self,
+        outer_cycle_id: int,
+        round_in_cycle: int,
+        target_round: int,
+    ) -> float:
+        """Return the (constant) cached ``memory_fraction`` for any round."""
+        return float(self._memory_fraction)
+
+
+# ---------------------------------------------------------------------------
 # Registry + factory
 # ---------------------------------------------------------------------------
 
@@ -4291,6 +4703,9 @@ SCHEDULER_REGISTRY: dict[str, Callable[..., SchedulerProtocol]] = {
     "codimension_sheet": _codimension_sheet_factory,
     "paper_ratio_adaptive": PaperRatioAdaptiveScheduler,
     "sequential": _sequential_factory,
+    # Wave 61 Agent 2 — smooth NFE-aware memory_fraction scaling
+    # (Wave 57 Agent D's B2 / successor to Wave 58 Agent 1's binary gate).
+    "nfe_aware_memory": NFEAwareMemoryScheduler,
 }
 """Mapping from schedule family name to its :class:`SchedulerProtocol` factory.
 
@@ -4460,6 +4875,8 @@ def build_scheduler_from_config(config: dict[str, Any]) -> SchedulerProtocol:
         return CodimensionSheetScheduler.from_config(config)
     if key == "paper_ratio_adaptive":
         return PaperRatioAdaptiveScheduler.from_config(config)
+    if key == "nfe_aware_memory":
+        return NFEAwareMemoryScheduler.from_config(config)
     if key == "sequential":
         # Lazy import to break the cycle: :mod:`.sequential` imports
         # the concrete scheduler classes from this module.
@@ -4780,8 +5197,11 @@ __all__ = [
     "CosineAnnealScheduler",
     "CosineScheduleConfig",
     "DEFAULT_FEEDBACK_METRIC_WEIGHTS",
+    "DEFAULT_NFE_AWARE_MAX",
+    "DEFAULT_NFE_AWARE_THRESHOLD",
     "ExponentialScheduler",
     "LinearScheduler",
+    "NFEAwareMemoryScheduler",
     "PaperRatioAdaptiveScheduler",
     "PolynomialScheduler",
     "SCHEDULER_REGISTRY",

@@ -33,8 +33,11 @@ from ._core import (
     ConvergenceAdaptiveScheduler,
     CosineAnnealScheduler,
     CosineScheduleConfig,
+    DEFAULT_NFE_AWARE_MAX,
+    DEFAULT_NFE_AWARE_THRESHOLD,
     ExponentialScheduler,
     LinearScheduler,
+    NFEAwareMemoryScheduler,
     PaperRatioAdaptiveScheduler,
     PolynomialScheduler,
     SchedulerProtocol,
@@ -76,6 +79,8 @@ from .regime_selector import (
 
 __all__ = [
     "DEFAULT_REGIME_SLACK",
+    "DEFAULT_NFE_AWARE_MAX",
+    "DEFAULT_NFE_AWARE_THRESHOLD",
     "EPS_FLOOR",
     "EPS_REGIME_CLAMPED",
     "EPS_REGIME_INFEASIBLE",
@@ -87,6 +92,7 @@ __all__ = [
     "EvidenceDrivenScheduler",
     "FREETRAJ_SUBSTEP_AUDIT",
     "FreeTrajScheduler",
+    "NFEAwareMemoryScheduler",
     "REGIME_SELECTOR_REGISTRY",
     "REGIME_VIOLATION_WARNING",
     "SCHEDULER_REGISTRY",
