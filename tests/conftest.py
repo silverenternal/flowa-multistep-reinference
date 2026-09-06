@@ -228,6 +228,7 @@ def serial_tool() -> None:
     CPU pressure to a single session's worth at a time.
     """
     if not os.environ.get("PYTEST_SERIAL"):
+        yield
         return
 
     lock_path = Path(_PYTEST_SERIAL_LOCKFILE)

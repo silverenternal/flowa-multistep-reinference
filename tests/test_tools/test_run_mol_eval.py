@@ -426,25 +426,28 @@ def test_help_flag_exits_cleanly() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_probe_rdkit_returns_bool(module: Any) -> None:
-    """The RDKit probe must always return ``(bool, str | None)``."""
-    ok, err = module._probe_rdkit()
-    assert isinstance(ok, bool)
-    assert err is None or isinstance(err, str)
+_PROBE_NAMES: tuple[str, ...] = (
+    "_probe_rdkit",
+    "_probe_fcd",
+    "_probe_posebusters",
+)
 
 
-def test_probe_fcd_returns_bool(module: Any) -> None:
-    """The FCD probe must always return ``(bool, str | None)``."""
-    ok, err = module._probe_fcd()
-    assert isinstance(ok, bool)
-    assert err is None or isinstance(err, str)
+def test_all_dependency_probes_return_bool(module: Any) -> None:
+    """Every dependency probe must always return ``(bool, str | None)``.
 
-
-def test_probe_posebusters_returns_bool(module: Any) -> None:
-    """The PoseBusters probe must always return ``(bool, str | None)``."""
-    ok, err = module._probe_posebusters()
-    assert isinstance(ok, bool)
-    assert err is None or isinstance(err, str)
+    Aggregates the three single-probe contracts (``_probe_rdkit``,
+    ``_probe_fcd``, ``_probe_posebusters``) into a single loop-based
+    test because each probe has the identical shape contract; a
+    regression in any probe surfaces with the offending name in the
+    assertion message.
+    """
+    for name in _PROBE_NAMES:
+        ok, err = getattr(module, name)()
+        assert isinstance(ok, bool), f"{name}() must return bool"
+        assert err is None or isinstance(err, str), (
+            f"{name}() second return must be None or str"
+        )
 
 
 def test_compute_pb_validity_json_shape(module: Any) -> None:

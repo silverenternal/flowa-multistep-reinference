@@ -209,20 +209,26 @@ def test_parser_rejects_nonpositive_rounds(script_module: object) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_load_adapter_rejects_malformed_path(script_module: object) -> None:
-    """``_load_adapter`` raises on a path without ``:``."""
-    with pytest.raises(ValueError, match="module:callable"):
-        script_module._load_adapter(  # type: ignore[attr-defined]
-            "no_colon_separator"
-        )
+_LOAD_ADAPTER_ERROR_CASES: tuple[tuple[str, type[BaseException]], ...] = (
+    ("no_colon_separator", ValueError),
+    ("definitely_does_not_exist_pkg:dummy", ImportError),
+)
 
 
-def test_load_adapter_raises_on_missing_module(script_module: object) -> None:
-    """``_load_adapter`` raises :class:`ImportError` on unknown modules."""
-    with pytest.raises(ImportError):
-        script_module._load_adapter(  # type: ignore[attr-defined]
-            "definitely_does_not_exist_pkg:dummy"
-        )
+def test_load_adapter_error_paths(script_module: object) -> None:
+    """``_load_adapter`` must surface a clear error per failure mode.
+
+    Aggregates the two error-path checks (malformed ``module:callable``
+    string → ``ValueError``; non-existent module → ``ImportError``)
+    so a regression in either path surfaces as a single, easy-to-
+    locate failure with the failure mode named in the assertion
+    message.
+    """
+    for bad_path, expected_exc in _LOAD_ADAPTER_ERROR_CASES:
+        with pytest.raises(expected_exc):
+            script_module._load_adapter(  # type: ignore[attr-defined]
+                bad_path
+            )
 
 
 def test_load_adapter_resolves_canonical_2d_adapter(

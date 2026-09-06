@@ -94,11 +94,30 @@ def test_rows_render_as_a_markdown_table(rows: list[dict[str, object]]) -> None:
     assert " no " not in table
 
 
-def test_measurement_is_reproducible() -> None:
-    """Deterministic seeds: two runs must agree exactly."""
-    first = measure_internal_uplifts()
-    second = measure_internal_uplifts()
-    assert first == second
+_REPRODUCIBILITY_FNS = (
+    measure_internal_uplifts,
+    measure_round2_internal_uplifts,
+    measure_round2_external_uplifts,
+    measure_round2_pluggable_design_tests,
+)
+
+
+def test_all_uplift_measurements_are_reproducible() -> None:
+    """Deterministic seeds: all four uplift-measurement entry points
+    must agree across two calls.
+
+    Aggregates the four ``measure_*`` reproducibility checks into a
+    single test because they exercise the exact same contract (the
+    function is deterministic given its seed). The loop surfaces
+    any non-deterministic call path with the offending function name
+    in the assertion message.
+    """
+    for fn in _REPRODUCIBILITY_FNS:
+        first = fn()
+        second = fn()
+        assert first == second, (
+            f"{fn.__name__}() is not deterministic across two calls"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +149,13 @@ EXPECTED_ROUND2_EXTERNAL_KEYS = {
     "EulerMaruyamaIntegrator",
     "SDEHeunIntegrator",
     "SymplecticLeapfrogIntegrator",
-    # StochasticFMAdapter removed in Wave 33 (orphan; deleted).
+    # StochasticFMAdapter is deliberately absent: the adapter was an
+    # orphan (never in ADAPTER_REGISTRY, never wired into the engine)
+    # and was deleted in Wave 33. Wave 33 dropped it from this set but
+    # left a permanent ``achieved=False`` placeholder row in
+    # ``tools/benchmark_uplifts.py``, so producer and expectation
+    # disagreed until Wave 48 removed that row. Do not re-add either
+    # half. See ``docs/audit/wave48-benchmark-uplifts-fix.md``.
 }
 
 
@@ -188,11 +213,6 @@ def test_round2_internal_rows_carry_the_full_schema(
         assert str(row["target"]).strip()
 
 
-def test_round2_internal_is_reproducible() -> None:
-    """Round-2 internal rows are deterministic across two runs."""
-    first = measure_round2_internal_uplifts()
-    second = measure_round2_internal_uplifts()
-    assert first == second
 
 
 def test_round2_external_covers_expected_keys(
@@ -212,6 +232,12 @@ def test_round2_external_every_target_is_achieved(
     actual measured value missed the documented target. The headline
     claim is the count of achieved rows, not the universal success of
     every row.
+
+    The one tolerated miss is currently spent: ``DPMSolverPPIntegrator``
+    measures L2 = 0.716 against a target of 0.05, because the benchmark
+    drives the x0-prediction branch with a plain velocity field (see
+    ``docs/audit/wave48-benchmark-uplifts-fix.md``). This budget is not
+    spare slack -- any second miss fails here.
     """
     achieved = sum(1 for r in round2_external_rows if r["achieved"])
     total = len(round2_external_rows)
@@ -250,11 +276,6 @@ def test_round2_external_dpm_solver_pp_at_nfe10(
     assert measured >= 0.0, "L2 distance is non-negative by construction"
 
 
-def test_round2_external_is_reproducible() -> None:
-    """Round-2 external rows are deterministic across two runs."""
-    first = measure_round2_external_uplifts()
-    second = measure_round2_external_uplifts()
-    assert first == second
 
 
 def test_round2_pluggable_contains_all_protocols(
@@ -311,11 +332,6 @@ def test_round2_pluggable_registry_size_grew() -> None:
     assert len(RUNNER_REGISTRY) >= 5  # Round-1: 2 -> Round-2: >= 5
 
 
-def test_round2_pluggable_is_reproducible() -> None:
-    """Round-2 pluggable design rows are deterministic across two runs."""
-    first = measure_round2_pluggable_design_tests()
-    second = measure_round2_pluggable_design_tests()
-    assert first == second
 
 
 def test_round2_markdown_includes_six_sections() -> None:

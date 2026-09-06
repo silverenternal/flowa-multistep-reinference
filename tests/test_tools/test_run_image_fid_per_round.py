@@ -200,13 +200,19 @@ def test_wrapper_propagates_paper_quantities_via_cli(
     assert float(pq["eta"]) == 0.3
 
 
-def test_wrapper_rejects_mismatched_lengths(
+def test_wrapper_input_validation(
     wrapper: Any,
     tmp_path: Path,
     tmp_round_dirs: list[Path],
     inception_stub: None,
 ) -> None:
-    """Mismatched ``per_round_dirs`` vs ``epsilon_schedule`` raises ValueError."""
+    """Both input-validation failure modes raise ``ValueError`` with a useful message.
+
+    Aggregates the two distinct input-validation paths into a single
+    test because they exercise the same contract: a malformed input
+    raises ``ValueError`` whose message matches a documented prefix.
+    """
+    # Mismatched ``per_round_dirs`` vs ``epsilon_schedule``.
     with pytest.raises(ValueError, match="must match"):
         wrapper.run_image_fid_per_round(
             per_round_dirs=tmp_round_dirs,
@@ -214,14 +220,7 @@ def test_wrapper_rejects_mismatched_lengths(
             reference_stats_path=None,
             output=None,
         )
-
-
-def test_wrapper_rejects_empty_round_dirs(
-    wrapper: Any,
-    tmp_path: Path,
-    inception_stub: None,
-) -> None:
-    """Empty ``per_round_dirs`` raises ValueError."""
+    # Empty ``per_round_dirs``.
     with pytest.raises(ValueError, match="non-empty"):
         wrapper.run_image_fid_per_round(
             per_round_dirs=[],
@@ -231,58 +230,47 @@ def test_wrapper_rejects_empty_round_dirs(
         )
 
 
-def test_wrapper_cli_parses_epsilon_schedule_json(
+def test_wrapper_cli_parses_and_rejects_epsilon_schedule(
     wrapper: Any,
     tmp_path: Path,
     tmp_round_dirs: list[Path],
     monkeypatch: pytest.MonkeyPatch,
     inception_stub: None,
 ) -> None:
-    """CLI accepts a JSON list of floats and routes through the wrapper."""
+    """CLI accepts a JSON list of floats and rejects malformed input.
+
+    Combines the happy-path parse and the malformed-schedule
+    rejection into one test because they exercise the same argparse
+    surface (``--epsilon-schedule``) on opposite sides of the
+    success/failure boundary.
+    """
+    # Happy path: a JSON list of floats routes through the wrapper.
     out_path = tmp_path / "report.json"
-    args = [
-        "--per-round-dir",
-        str(tmp_round_dirs[0]),
-        "--per-round-dir",
-        str(tmp_round_dirs[1]),
-        "--epsilon-schedule",
-        "[0.1, 0.05]",
-        "--output",
-        str(out_path),
-        "--device",
-        "cpu",
-        "--image-target-size",
-        "8",
-        "--fid-batch-size",
-        "4",
-        "--feature-dim",
-        "2048",
-        "--monte-carlo-n",
-        "0",
-    ]
-    rc = wrapper.main(args)
+    rc = wrapper.main(
+        [
+            "--per-round-dir", str(tmp_round_dirs[0]),
+            "--per-round-dir", str(tmp_round_dirs[1]),
+            "--epsilon-schedule", "[0.1, 0.05]",
+            "--output", str(out_path),
+            "--device", "cpu",
+            "--image-target-size", "8",
+            "--fid-batch-size", "4",
+            "--feature-dim", "2048",
+            "--monte-carlo-n", "0",
+        ]
+    )
     assert rc == 0
     on_disk = json.loads(out_path.read_text(encoding="utf-8"))
     assert on_disk["n_rounds"] == 2
-
-
-def test_wrapper_cli_rejects_malformed_schedule(
-    wrapper: Any,
-    tmp_path: Path,
-    tmp_round_dirs: list[Path],
-) -> None:
-    """Malformed ``--epsilon-schedule`` exits non-zero with a useful message."""
-    out_path = tmp_path / "report.json"
-    args = [
-        "--per-round-dir",
-        str(tmp_round_dirs[0]),
-        "--epsilon-schedule",
-        "not-a-json-list",
-        "--output",
-        str(out_path),
-    ]
-    rc = wrapper.main(args)
-    assert rc == 1
+    # Sad path: malformed JSON exits non-zero.
+    bad_rc = wrapper.main(
+        [
+            "--per-round-dir", str(tmp_round_dirs[0]),
+            "--epsilon-schedule", "not-a-json-list",
+            "--output", str(out_path),
+        ]
+    )
+    assert bad_rc == 1
 
 
 def test_wrapper_default_profile_is_x_squared(
