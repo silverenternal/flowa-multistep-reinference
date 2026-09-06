@@ -1210,6 +1210,11 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "source_round": next_round,
                 "mode": self._mode,
                 "conditioning_hash": str(cond_hash),
+                # F-1 fix (Wave 45): persist ``src_digest`` so
+                # ``observe_token_indices`` chain-walk can step past
+                # this entry to an earlier ``discrete_idx`` carrier if
+                # a future protocol removes the discrete_idx carry.
+                "src_digest": str(state.native_state_digest),
             },
         )
         return StateBundle(
@@ -1494,6 +1499,11 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "t_grid": t_grid,
                 "mode": self._mode,
                 "conditioning_hash": str(conditioning.get("cache_hash", "")),
+                # F-1 fix (Wave 45): persist ``src_digest`` so
+                # ``observe_token_indices`` chain-walk can find the
+                # AR-prior ``discrete_idx`` entry without falling
+                # through to the uniform-random fallback.
+                "src_digest": str(state.native_state_digest),
             },
         )
         cfg_blob = repr(
@@ -1766,6 +1776,11 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "source_round": int(bundle.source_round),
                 "mode": self._mode,
                 "conditioning_hash": str(prior_entry.get("conditioning_hash", "")),
+                # F-1 fix (Wave 45): persist ``src_digest`` so a
+                # downstream ``observe_token_indices`` chain-walk can
+                # step past this entry even if the discrete_idx carry
+                # is ever dropped.
+                "src_digest": str(bundle.native_state_digest),
             },
         )
         return StateBundle(

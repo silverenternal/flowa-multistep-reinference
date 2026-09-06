@@ -719,3 +719,126 @@ def test_kanzi_adapter_passes_assert_adapter_compliance() -> None:
     )
 
     assert_adapter_compliance(KanziAdapter)
+
+
+# ---------------------------------------------------------------------------
+# Wave 45 F-1 regression: src_digest chain-walk
+# ---------------------------------------------------------------------------
+
+
+def test_observe_token_indices_returns_stored_discrete_idx_not_random() -> None:
+    """F-1 (Wave 45): ``observe_token_indices`` must return the stored AR-prior
+    ``discrete_idx`` carried through the native-state chain, NOT the
+    uniform-random fallback.
+
+    Before the F-1 fix the ``solve_ode`` ``_native_states.put`` payload did
+    NOT carry a ``src_digest`` key, so the chain-walk at
+    ``kanzi.py:1680`` always read ``""`` and immediately fell through to
+    the deterministic random fallback at ``1695-1710``. Every Kanzi
+    Tier-3 metric produced since Wave 44 was therefore measuring noise in
+    both arms. This test pins the contract so the bug cannot silently
+    return.
+    """
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w45_f1", sample_id="s_f1")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    # Capture the AR prior discrete_idx that the build_initial_state
+    # step deposited in the cache. This is the value the chain-walk
+    # MUST surface through observe_token_indices.
+    prior_entry = adapter._native_states[bundle.native_state_digest]
+    expected_discrete_idx = np.asarray(
+        prior_entry["discrete_idx"], dtype=np.float64,
+    ).copy()
+    assert expected_discrete_idx.shape == (int(KANZI_AR_SEQ_LENGTH),)
+
+    # Confirm the trajectory entry now carries ``src_digest`` so the
+    # chain-walk can step back to the prior entry. This is the
+    # F-1 invariant.
+    traj_entry = adapter._native_states[trace.native_state_digest]
+    assert "src_digest" in traj_entry, (
+        "F-1 regression: solve_ode must persist src_digest in the "
+        "trajectory native-state entry so the observe_token_indices "
+        "chain-walk can find discrete_idx without falling back to "
+        "random. See docs/audit/wave45-f1-fix.md."
+    )
+    assert traj_entry["src_digest"] == str(bundle.native_state_digest)
+
+    result = adapter.observe_token_indices(trace, paper_quantities=None)
+
+    assert str(DISCRETE_TOKEN_INDEX) in result
+    observed = np.asarray(result[str(DISCRETE_TOKEN_INDEX)], dtype=np.float64)
+
+    # Shape sanity.
+    assert observed.shape == (int(KANZI_AR_SEQ_LENGTH),)
+    arr_int = observed.astype(np.int64)
+    assert arr_int.min() >= 0
+    assert arr_int.max() < int(KANZI_VOCAB_SIZE)
+
+    # The defining F-1 invariant: the observed indices equal the
+    # stored prior — NOT the uniform-random fallback. A random draw
+    # over [0, 64) for a 64-length sequence is overwhelmingly unlikely
+    # (probability ~ 64^{-64} for an exact match).
+    np.testing.assert_array_equal(observed, expected_discrete_idx)
+
+
+def test_observe_token_indices_chain_walk_through_restart() -> None:
+    """F-1 robustness: the chain-walk terminates at the latest prior
+    entry that carries ``discrete_idx``, even after a restart round.
+
+    Exercises the second F-1 invariant — adding ``src_digest`` to the
+    ``apply_restart_distribution`` put payload at lines 1205-1214 —
+    which keeps the chain-walk honest through multi-round inference.
+    """
+    adapter = _make_adapter(num_steps=2)
+    bundle = adapter.build_initial_state(batch_id="w45_chain", sample_id="s_chain")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace1 = adapter.solve_ode(bundle, delta, seed=42)
+
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId("uniform-beta-0.5"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("test-run-chain"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={PROTEIN_LATENT: FactorValue(0.5)},
+        alpha_by_channel={PROTEIN_LATENT: FactorValue(1.0)},
+        fresh_noise_floor_by_channel={PROTEIN_LATENT: FactorValue(0.0)},
+        schedule_sample=None,
+        freeze_admission_by_channel={PROTEIN_LATENT: True},
+        ledger_row_id=LedgerRowId("ledger-uniform-beta-0.5"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    restarted = adapter.apply_restart_distribution(bundle, policy)
+
+    delta2 = _make_delta(target_round=2)
+    delta2 = adapter.compose_condition(restarted, delta2)
+    trace2 = adapter.solve_ode(restarted, delta2, seed=42)
+
+    # Restart entry must carry src_digest (F-1 robustness at 1205).
+    restart_entry = adapter._native_states[restarted.native_state_digest]
+    assert "src_digest" in restart_entry
+    assert restart_entry["src_digest"] == str(bundle.native_state_digest)
+
+    # Trajectory entry from round 2 must also carry src_digest so the
+    # chain-walk can step back through the restart to the original
+    # prior's discrete_idx.
+    traj2_entry = adapter._native_states[trace2.native_state_digest]
+    assert "src_digest" in traj2_entry
+    assert traj2_entry["src_digest"] == str(restarted.native_state_digest)
+
+    # The discrete_idx carried through restart equals the original
+    # prior's discrete_idx (apply_restart_distribution preserves it
+    # untouched at 1183-1187). observe_token_indices must surface it.
+    expected = np.asarray(
+        adapter._native_states[bundle.native_state_digest]["discrete_idx"],
+        dtype=np.float64,
+    )
+    result = adapter.observe_token_indices(trace2, paper_quantities=None)
+    observed = np.asarray(result[str(DISCRETE_TOKEN_INDEX)], dtype=np.float64)
+    np.testing.assert_array_equal(observed, expected)
