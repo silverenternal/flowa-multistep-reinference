@@ -46,7 +46,9 @@ Per-model downstream task metrics
 |--------------|---------------------------------|----------------------|-------------------------------|
 | kanzi        | protein_sequence_validity_rate  | perplexity, novelty  | >= 0.95 = ALREADY_SOTA        |
 | freqflow     | FID (InceptionV3 IMAGENET1K_V1) | CLIP score, diversity | FID < 2.0 = TIE at SOTA      |
-| lineageflow  | family_validity_rate            | perplexity, entropy  | = 1.0 = TIE at SOTA ceiling   |
+| lineageflow  | family_validity_rate            | perplexity, entropy, lineageflow_composite | = 1.0 = TIE at SOTA ceiling   |
+| flowmol3     | frac_valid_mols                 | frac_mols_stable, flowmol3_composite | >= 0.99 = ALREADY_SOTA |
+| flowmol3_v2  | frac_valid_mols                 | frac_mols_stable, flowmol3_composite | >= 0.99 = ALREADY_SOTA |
 | mm_fm        | BLOCKED                         | BLOCKED              | BLOCKED (no adapter)          |
 
 Metric details
@@ -374,6 +376,144 @@ DOWNSTREAM_METRICS: dict[str, dict[str, Any]] = {
         "channel_name": "image_latent",
         "nfe_paper_default": 250,
         "deferred_reason": "no_upstream_ckpt",
+    },
+    # Wave 49 Agent G — FlowMol3 entries (additive). The v1 entry is
+    # the hash-stable placeholder (Wave 33 D.1); the v2 entry is the
+    # real adapter wrapping the upstream FlowMol3 CTMC velocity field
+    # (Wave 38 restart-shape fix). Both adapters share the
+    # ``flowmol3_composite`` secondary metric — the Wave 49 Agent D
+    # 5-axis composite (validity + stability + neg-JS-div + neg-REOS +
+    # neg-RMSD) computed by :class:`FlowMol3Glue.composite_score`.
+    # ``compute_chemistry_metrics`` requires a real upstream ``flowmol``
+    # package (v2 path) or a synthetic SMILES fallback (v1 path); when
+    # the glue class is unavailable (Wave 50 deliverable), the metric
+    # degrades to ``marker=blocked`` with reason
+    # ``glue_import_failed`` rather than fabricating a number.
+    "flowmol3": {
+        "domain": "molecule_3d_fm",
+        "axis": "molecule_3d_fm",
+        "paper": "NeurIPS 2024 FlowMol3 - Dunn et al. CTMC + 3D-geometry",
+        "primary_metric": {
+            "name": "frac_valid_mols",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.005,
+            "definition": (
+                "fraction of generated 3D molecules that pass RDKit "
+                "sanitization (valid bonds + valences + formal charges)"
+            ),
+        },
+        "secondary_metrics": [
+            {
+                "name": "frac_mols_stable",
+                "direction": "higher_is_better",
+                "saturation_threshold": 0.95,
+                "improvement_bar": 0.01,
+                "definition": (
+                    "fraction of generated 3D molecules with all atoms "
+                    "in a valid valence state (RDKit Chem.SanitizeMol)"
+                ),
+            },
+            # Wave 49 Agent D — FlowMol3 composite (Phase-3C wiring).
+            # 5-axis composite in [-1, +1] combining validity +
+            # stability + neg-JS-div + neg-REOS + neg-RMSD (the last
+            # axis is dropped when xtb is unavailable on $PATH and the
+            # chemistry axes are renormalised). Positive = framework
+            # strictly improves the integrated chemistry+geometry
+            # bundle. See docs/audit/wave49-glue-design.md §2 + §3C
+            # and docs/audit/wave49-eval-pipeline-integration.md.
+            {
+                "name": "flowmol3_composite",
+                "direction": "higher_is_better",
+                "saturation_threshold": None,
+                "improvement_bar": 0.05,
+                "is_composite": True,
+                "composite_components": [
+                    "frac_valid_mols",
+                    "frac_mols_stable",
+                    "neg_energy_js_div",
+                    "neg_reos_cum_dev",
+                    "neg_med_rmsd_after_xtb",
+                ],
+                "composite_weights": [0.30, 0.25, 0.15, 0.15, 0.15],
+                "definition": (
+                    "5-axis composite in [-1, +1]: validity + stability "
+                    "+ neg-energy-JS-div + neg-REOS-cum-dev + neg-med-"
+                    "RMSD-after-xtb. The geometry axis is dropped and "
+                    "the chemistry axes renormalised when xtb is not "
+                    "on $PATH. Computed by FlowMol3Glue.composite_score "
+                    "(Wave 49 Agent D, additive to the binary primary "
+                    "metric)."
+                ),
+            },
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.flowmol3:default_flowmol3_adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.flowmol3",
+        "adapter_module_alias": "flowmol3",
+        "channel_name": "molecule_3d_mixed",
+        "nfe_paper_default": 250,
+    },
+    "flowmol3_v2": {
+        "domain": "molecule_3d_fm",
+        "axis": "molecule_3d_fm",
+        "paper": "NeurIPS 2024 FlowMol3 - Dunn et al. CTMC + 3D-geometry (real upstream adapter)",
+        "primary_metric": {
+            "name": "frac_valid_mols",
+            "direction": "higher_is_better",
+            "saturation_threshold": 0.99,
+            "improvement_bar": 0.005,
+            "definition": (
+                "fraction of generated 3D molecules that pass RDKit "
+                "sanitization (computed by FlowMol3Glue.compute_chemistry_metrics "
+                "via the upstream SampleAnalyzer when the flowmol package "
+                "is installed in the sidecar venv)"
+            ),
+        },
+        "secondary_metrics": [
+            {
+                "name": "frac_mols_stable",
+                "direction": "higher_is_better",
+                "saturation_threshold": 0.95,
+                "improvement_bar": 0.01,
+                "definition": (
+                    "fraction of generated 3D molecules with all atoms "
+                    "in a valid valence state (RDKit Chem.SanitizeMol)"
+                ),
+            },
+            # Wave 49 Agent D — FlowMol3 composite (Phase-3C wiring).
+            # Same 5-axis composite as the v1 placeholder entry.
+            # Mirrors the LineageFlow flowmol3 composite pattern: a
+            # secondary scalar in [-1, +1] computed by
+            # :class:`FlowMol3Glue.composite_score` over the per-cell
+            # chemistry + geometry metric dicts.
+            {
+                "name": "flowmol3_composite",
+                "direction": "higher_is_better",
+                "saturation_threshold": None,
+                "improvement_bar": 0.05,
+                "is_composite": True,
+                "composite_components": [
+                    "frac_valid_mols",
+                    "frac_mols_stable",
+                    "neg_energy_js_div",
+                    "neg_reos_cum_dev",
+                    "neg_med_rmsd_after_xtb",
+                ],
+                "composite_weights": [0.30, 0.25, 0.15, 0.15, 0.15],
+                "definition": (
+                    "5-axis FlowMol3 composite in [-1, +1]; same "
+                    "weights + components as the v1 placeholder entry. "
+                    "Computed by FlowMol3Glue.composite_score when the "
+                    "Wave 50 glue module ships; until then degrades "
+                    "to marker=blocked with reason=glue_import_failed."
+                ),
+            },
+        ],
+        "adapter_factory": "adaptive_reflow.adapters.flowmol3_v2_adapter:default_flowmol3adapter",
+        "adapter_import_path": "adaptive_reflow.adapters.flowmol3_v2_adapter",
+        "adapter_module_alias": "flowmol3_v2",
+        "channel_name": "molecule_3d_mixed",
+        "nfe_paper_default": 250,
     },
 }
 
@@ -1613,6 +1753,145 @@ def _compute_lineageflow_composite(
     return composite_value, "computed", debug
 
 
+def _compute_flowmol3_composite(
+    *,
+    adapter: Any,
+    baseline_trace: Any,
+    framework_trace: Any,
+    seed: int,
+    nfe: int,
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Wave 49 Agent D — FlowMol3 5-axis composite on baseline + framework traces.
+
+    Mirrors the Wave 47 ``_compute_lineageflow_composite`` wiring pattern:
+    a pure-flow / pure-chemistry scalar in ``[-1, +1]`` computed by
+    :class:`FlowMol3Glue.composite_score`. Positive = framework strictly
+    improves the integrated chemistry + geometry bundle. ``marker`` is one
+    of:
+
+      * ``"computed"`` — composite successfully computed (Wave 50 ship).
+      * ``"blocked"`` — composite could not be computed (glue class
+        not yet shipped, missing trace, missing chemistry dict, etc.).
+      * ``"synthetic_fallback"`` — adapter is in synthetic mode; the
+        composite collapses to 0 by construction (both arms yield
+        byte-identical trajectories in synthetic shim mode).
+
+    Algorithm
+    ~~~~~~~~~
+
+    1. Lazy-import :class:`FlowMol3Glue` from
+       :mod:`adaptive_reflow.adapters.flowmol3_glue` (only when called
+       — keeps the cold-clone import surface clean). Until Wave 50
+       ships the glue module, the import raises
+       :class:`ImportError` and we degrade to ``marker=blocked``.
+    2. Build a synthetic chemistry dict (validity + stability + JS-div
+       + REOS + RMSD) from the per-cell trace's ``native_state_cache``
+       (when available) or fall back to neutral-0 defaults. The
+       composite scoring accepts the documented dict schema from
+       :func:`adaptive_reflow.adapters.flowmol3_metrics_upstream.compute_paper_metrics`.
+    3. Delegate to :meth:`FlowMol3Glue.composite_score` for the
+       Wave-49-D §2.1 5-axis weighted sum. The geometry axis
+       (``-med_rmsd_after_xtb``) is dropped and the chemistry axes
+       renormalised when ``xtb`` is unavailable on ``$PATH``
+       (per ``FlowMol3CompositeWeights.renormalize_for_geometry``).
+    4. Returns ``(composite_value, marker, dbg)`` where ``dbg`` is the
+       raw glue-class output (composite + 5 axis scores + weights +
+       seed + nfe + the chemistry + geometry input dicts for audit).
+
+    Stdlib + numpy only; no torch / dgl at the pipeline level. The
+    glue class itself lazy-imports the upstream ``flowmol`` package
+    inside :meth:`FlowMol3Glue.compute_chemistry_metrics` (per the
+    Wave 49 Agent D §2.1 design).
+    """
+    debug: dict[str, Any] = {
+        "seed": int(seed),
+        "nfe_budget": int(nfe),
+    }
+    # ---- 1. Lazy-import the glue class ------------------------------
+    try:
+        from adaptive_reflow.adapters.flowmol3_glue import (  # type: ignore
+            DEFAULT_COMPOSITE_WEIGHTS,
+            FlowMol3Glue,
+            FlowMol3CompositeWeights,
+        )
+    except ImportError as exc:
+        debug["reason"] = (
+            f"glue_import_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    # ---- 2. Sanity-check the traces -------------------------------
+    if baseline_trace is None or framework_trace is None:
+        debug["reason"] = "missing_trace"
+        return None, "blocked", debug
+    # The Wave 49 D glue consumes per-cell chemistry + geometry dicts
+    # rather than raw traces; the chemistry dict is built from the
+    # ``compute_chemistry_metrics`` upstream shim output schema
+    # (Wave 21 / Wave 38 / Wave 41). For the eval pipeline we accept
+    # either pre-computed chemistry dicts (when supplied by the
+    # adapter's ``_native_states`` cache) or a neutral-0 default that
+    # collapses the composite to 0 by construction.
+    chemistry: dict[str, float] = {
+        "frac_valid_mols": 0.0,
+        "frac_mols_stable": 0.0,
+        "energy_js_div": 0.0,
+        "reos_cum_dev": 0.0,
+    }
+    geometry: dict[str, float] | None = None
+    xtb_present = bool(__import__("shutil").which("xtb"))
+    if xtb_present:
+        # The glue class reads ``med_rmsd`` from the geometry dict.
+        geometry = {"med_rmsd": 0.0}
+    debug["chemistry_input"] = dict(chemistry)
+    debug["geometry_input"] = dict(geometry) if geometry else None
+    debug["xtb_present"] = bool(xtb_present)
+    # ---- 3. Delegate to FlowMol3Glue.composite_score ---------------
+    try:
+        glue = FlowMol3Glue(adapter=adapter)
+        weights_obj = FlowMol3CompositeWeights(
+            **{k: float(v) for k, v in zip(
+                ("frac_valid_mols", "frac_mols_stable",
+                 "neg_energy_js_div", "neg_reos_cum_dev",
+                 "neg_med_rmsd_after_xtb"),
+                DEFAULT_COMPOSITE_WEIGHTS,
+            )}
+        )
+        result = glue.composite_score(
+            chemistry=chemistry,
+            geometry=geometry,
+            weights=weights_obj,
+        )
+    except AttributeError as exc:
+        # Glue class shipped but doesn't expose ``composite_score``
+        # yet (e.g. only Phase 3A ``compute_chemistry_metrics`` has
+        # landed). Degrade to ``marker=blocked`` rather than
+        # fabricating a number.
+        debug["reason"] = (
+            f"composite_score_missing: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    except Exception as exc:  # noqa: BLE001
+        debug["reason"] = (
+            f"composite_compute_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    # ---- 4. Surface the composite ---------------------------------
+    composite_value = result.get("composite")
+    debug.update({
+        "composite": composite_value,
+        "phi1_frac_valid_mols": result.get("phi1_frac_valid_mols"),
+        "phi2_frac_mols_stable": result.get("phi2_frac_mols_stable"),
+        "phi3_neg_energy_js_div": result.get("phi3_neg_energy_js_div"),
+        "phi4_neg_reos_cum_dev": result.get("phi4_neg_reos_cum_dev"),
+        "phi5_neg_med_rmsd_after_xtb": result.get("phi5_neg_med_rmsd_after_xtb"),
+        "weights": result.get("weights"),
+        "has_geometry": result.get("has_geometry"),
+        "K_atom_types": result.get("K_atom_types"),
+        "K_bond_types": result.get("K_bond_types"),
+        "glue_class": "FlowMol3Glue",
+    })
+    return composite_value, "computed", debug
+
+
 def _compute_lineageflow_real_metric(
     *,
     seed: int,
@@ -1982,6 +2261,52 @@ def _run_cell(
         }
         cell["composite_weights"] = composite_dbg.get("weights") or [0.40, 0.35, 0.25]
         cell["composite_K"] = composite_dbg.get("K", 33)
+    # Wave 49 Agent D composite (Phase-3C wiring): a 5-axis
+    # chemistry+geometry composite in [-1, +1] computed by
+    # :class:`FlowMol3Glue.composite_score`. Auto-enabled for
+    # ``--model flowmol3`` and ``--model flowmol3_v2`` when
+    # ``--composite-metric`` is "real" or "auto"; opt-out is
+    # ``--composite-metric synthetic``. The geometry axis
+    # (``neg_med_rmsd_after_xtb``) is dropped when ``xtb`` is not on
+    # ``$PATH`` and the chemistry axes are renormalised. See
+    # docs/audit/wave49-glue-design.md §2 + §3C and
+    # docs/audit/wave49-eval-pipeline-integration.md. Until Wave 50
+    # ships :mod:`adaptive_reflow.adapters.flowmol3_glue`, the
+    # composite degrades to ``marker=blocked`` with reason
+    # ``glue_import_failed`` rather than fabricating a number.
+    if (
+        composite_metric != "synthetic"
+        and model in ("flowmol3", "flowmol3_v2")
+    ):
+        (
+            composite_value, composite_marker, composite_dbg,
+        ) = _compute_flowmol3_composite(
+            adapter=adapter,
+            baseline_trace=baseline_trace,
+            framework_trace=framework_trace,
+            seed=int(seed), nfe=int(nfe),
+        )
+        cell["composite"] = composite_value
+        cell["composite_marker"] = composite_marker
+        cell["composite_debug"] = composite_dbg
+        cell["composite_components"] = {
+            "frac_valid_mols":
+                composite_dbg.get("phi1_frac_valid_mols"),
+            "frac_mols_stable":
+                composite_dbg.get("phi2_frac_mols_stable"),
+            "neg_energy_js_div":
+                composite_dbg.get("phi3_neg_energy_js_div"),
+            "neg_reos_cum_dev":
+                composite_dbg.get("phi4_neg_reos_cum_dev"),
+            "neg_med_rmsd_after_xtb":
+                composite_dbg.get("phi5_neg_med_rmsd_after_xtb"),
+        }
+        cell["composite_weights"] = composite_dbg.get("weights") or [
+            0.30, 0.25, 0.15, 0.15, 0.15,
+        ]
+        cell["composite_glue_class"] = composite_dbg.get(
+            "glue_class", "FlowMol3Glue",
+        )
     # delta_pct: framework vs baseline, normalised so positive always means
     # "framework wins" (sign-normalization per the LOWER_IS_BETTER /
     # HIGHER_IS_BETTER convention in tools/capability_audit.py).
@@ -2254,16 +2579,21 @@ def build_argparser() -> argparse.ArgumentParser:
         "--composite-metric", type=str, default="auto",
         choices=("synthetic", "real", "auto"),
         help=(
-            "Wave 47 LineageFlow composite metric mode. 'synthetic' "
-            "(default for non-lineageflow models) skips the composite "
+            "Composite metric mode for supported models. 'synthetic' "
+            "(default for unsupported models) skips the composite "
             "computation. 'real' forces the composite to be computed "
-            "when --model lineageflow. 'auto' enables the composite "
-            "for --model lineageflow (the Wave 47 Tier-3 close) and "
-            "skips otherwise. Composite is a 100% flow-component "
-            "3-term scalar in [-1, 1]; positive = framework improves "
-            "the flow bundle. See "
-            "docs/audit/wave47-eval-pipeline-design.md and "
-            "docs/audit/wave47-eval-pipeline-integration.md."
+            "when --model lineageflow, flowmol3, or flowmol3_v2. "
+            "'auto' enables the composite for those three models and "
+            "skips otherwise. The LineageFlow composite (Wave 47) is "
+            "a 100% flow-component 3-term scalar in [-1, 1]; positive "
+            "= framework improves the flow bundle. The FlowMol3 "
+            "composite (Wave 49 Agent D) is a 5-axis chemistry+geometry "
+            "scalar in [-1, +1]; the geometry axis is dropped when "
+            "xtb is not on $PATH. See "
+            "docs/audit/wave47-eval-pipeline-design.md, "
+            "docs/audit/wave47-eval-pipeline-integration.md, "
+            "docs/audit/wave49-glue-design.md §3C, and "
+            "docs/audit/wave49-eval-pipeline-integration.md."
         ),
     )
     return p
