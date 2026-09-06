@@ -416,6 +416,188 @@ def _capture_env_hash_lightweight() -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+#: Per-model default ``g : R -> R`` profiles for the paper-quantity
+#: snapshot. These are the *F-side* profiles that
+#: :class:`PaperQuantitiesSnapshot.for_profile` consumes to materialise
+#: the four paper quantities ``(A_g, B_g, C_g, e_rho)``. The profiles
+#: are stdlib-only (``math.sin`` / ``math.cos``), byte-stable across
+#: (model, profile_source) and yield non-trivial ``A_g < 1`` so the
+#: paper-quantity-aware scheduler / blender has a real signal to work
+#: with. Pre-Wave-45 the eval tool hardcoded ``paper_quantities=None``
+#: at every adapter call site, so the framework's paper-quantity-
+#: driven scheduler had no signal at all (F-3 finding in
+#: ``docs/audit/wave45-local-review.md``).
+_PAPER_QUANTITY_PROFILES: dict[str, str] = {
+    # Kanzi: protein-flow autoencoder, latent. Non-trivial profile
+    # captures the non-monotonic sheet evidence that drives the
+    # codimension-1 sheet integral.
+    "kanzi": "0.5 * math.sin(x)",
+    # LineageFlow: per-position categorical flow. Same profile
+    # convention; the framework's per-position entropy headroom
+    # surfaces differently than Kanzi's continuous latent but the
+    # paper-quantity surface is identical.
+    "lineageflow": "0.5 * math.sin(x)",
+}
+
+#: Module-level cache of ``(model, profile_source) -> PaperQuantitiesSnapshot``
+#: so repeated (model, seed, nfe) cells don't re-pay the ~1 ms cost
+#: of materialising the four paper quantities. Cache key uses the
+#: textual profile source for transparency — switching the profile
+#: in ``_PAPER_QUANTITY_PROFILES`` invalidates the cache automatically.
+_PAPER_QUANTITIES_CACHE: dict[str, Any] = {}
+
+
+def _parse_g_profile_source(source: str) -> Any:
+    """Compile a textual ``g(x)`` expression into a pure-Python callable.
+
+    Mirrors :func:`tools.run_synthetic_image_eval.parse_g_profile_source`
+    (stdlib-only, ast-parsed, restricted to ``math`` symbols + ``x``).
+    Reimplemented locally so this tool does not gain a hard import
+    edge on ``tools/run_synthetic_image_eval`` (which in turn imports
+    a torch stack).
+    """
+    import ast as _ast
+    import math as _math
+
+    allowed_math_names = set(dir(_math))
+    try:
+        tree = _ast.parse(source, mode="eval")
+    except SyntaxError as exc:
+        raise ValueError(f"g profile source not parseable: {exc}") from exc
+    compiled = compile(tree, filename="<g_profile>", mode="eval")
+
+    def _callable(x: float) -> float:
+        return float(
+            eval(  # noqa: S307 — restricted scope below
+                compiled,
+                {"__builtins__": {}},
+                {"math": _math, "x": float(x)},
+            )
+        )
+
+    return _callable
+
+
+def _compute_paper_quantities_for_model(
+    model: str,
+    *,
+    seed: int,
+    nfe: int,
+) -> tuple[Any, dict[str, Any]]:
+    """Materialise a real :class:`PaperQuantitiesSnapshot` for ``model``.
+
+    Returns ``(snapshot_or_None, debug_dict)``. The snapshot is the
+    frozen carrier of the four paper quantities ``(A_g, B_g, C_g,
+    e_rho)`` consumed by the framework's paper-quantity-driven
+    scheduler. The debug dict always carries a
+    ``paper_quantities_status`` field (``"computed"``,
+    ``"degraded_to_none"``, or ``"blocked"``) so the eval JSON can
+    surface whether the thread succeeded per cell.
+
+    The materialisation is:
+
+    1. Look up the per-model default profile ``g`` from
+       :data:`_PAPER_QUANTITY_PROFILES`.
+    2. Compile the profile to a pure-Python callable.
+    3. Call :meth:`PaperQuantitiesSnapshot.for_profile` with the
+       default paper knobs (matches :data:`fid_theorem_aligned`
+       default constants).
+    4. Return the snapshot + a debug dict with the four paper
+       quantities, the profile source, the (model, seed, nfe) cell
+       key, and the cache key.
+
+    Failure modes (any return ``(None, debug)`` with a non-``computed``
+    status):
+
+    * ``adaptive_reflow.eval.fid_theorem_aligned.PaperQuantitiesSnapshot``
+      not importable (CPU-only / synthetic-only env) → status
+      ``"degraded_to_none"``.
+    * Profile compilation failure → status ``"degraded_to_none"``
+      with the syntax error captured.
+    * Any other exception during materialisation → status
+      ``"degraded_to_none"`` with the exception captured.
+    """
+    debug: dict[str, Any] = {
+        "model": str(model),
+        "seed": int(seed),
+        "nfe_budget": int(nfe),
+    }
+    profile_source = _PAPER_QUANTITY_PROFILES.get(model)
+    if profile_source is None:
+        debug["paper_quantities_status"] = "degraded_to_none"
+        debug["paper_quantities_reason"] = (
+            f"no _PAPER_QUANTITY_PROFILES entry for model={model!r}"
+        )
+        return None, debug
+
+    cache_key = f"{model}|{profile_source}"
+    if cache_key in _PAPER_QUANTITIES_CACHE:
+        snap = _PAPER_QUANTITIES_CACHE[cache_key]
+        debug["paper_quantities_status"] = "computed"
+        debug["paper_quantities_cache_hit"] = True
+        debug["paper_quantities_cache_key"] = cache_key
+        debug["paper_quantities_profile_source"] = profile_source
+        debug["paper_quantities_values"] = {
+            "A_g": float(snap.A_g),
+            "B_g": float(snap.B_g),
+            "C_g": float(snap.C_g),
+            "e_rho": float(snap.e_rho),
+            "rho": float(snap.rho),
+            "c": float(snap.c),
+            "eta": float(snap.eta),
+            "K": float(snap.K),
+            "h": float(snap.h),
+        }
+        return snap, debug
+
+    try:
+        from adaptive_reflow.eval.fid_theorem_aligned import (  # type: ignore
+            PaperQuantitiesSnapshot as _PaperQuantitiesSnapshot,
+        )
+    except Exception as exc:  # noqa: BLE001
+        debug["paper_quantities_status"] = "degraded_to_none"
+        debug["paper_quantities_reason"] = (
+            f"import failed: {type(exc).__name__}:{exc}"
+        )
+        return None, debug
+
+    try:
+        g_callable = _parse_g_profile_source(profile_source)
+    except Exception as exc:  # noqa: BLE001
+        debug["paper_quantities_status"] = "degraded_to_none"
+        debug["paper_quantities_reason"] = (
+            f"profile compile failed: {type(exc).__name__}:{exc}"
+        )
+        return None, debug
+
+    try:
+        snap = _PaperQuantitiesSnapshot.for_profile(g_callable)
+    except Exception as exc:  # noqa: BLE001
+        debug["paper_quantities_status"] = "degraded_to_none"
+        debug["paper_quantities_reason"] = (
+            f"for_profile raised: {type(exc).__name__}:{exc}"
+        )
+        return None, debug
+
+    _PAPER_QUANTITIES_CACHE[cache_key] = snap
+    debug["paper_quantities_status"] = "computed"
+    debug["paper_quantities_cache_hit"] = False
+    debug["paper_quantities_cache_key"] = cache_key
+    debug["paper_quantities_profile_source"] = profile_source
+    debug["paper_quantities_values"] = {
+        "A_g": float(snap.A_g),
+        "B_g": float(snap.B_g),
+        "C_g": float(snap.C_g),
+        "e_rho": float(snap.e_rho),
+        "rho": float(snap.rho),
+        "c": float(snap.c),
+        "eta": float(snap.eta),
+        "K": float(snap.K),
+        "h": float(snap.h),
+    }
+    return snap, debug
+
+
 def _resolve_adapter(
     model: str, force_mode: str = "synthetic"
 ) -> tuple[Any, str]:
@@ -497,13 +679,109 @@ def _solve_baseline(adapter: Any, *, nfe: int, seed: int) -> tuple[Any, float]:
     return trace, wall
 
 
+def _make_framework_policy(adapter: Any, *, target_round: int, seed: int) -> Any:
+    """Build a fresh ``FinalRestartPolicy`` for one framework round.
+
+    The policy's ``beta_by_channel`` covers every channel declared in
+    ``adapter.capabilities().channel_domains`` (NOT a hard-coded list
+    per model) so this works for kanzi, lineageflow, freqflow, and any
+    future adapter that ships a per-channel :class:`ChannelDomain`
+    declaration. Per
+    ``docs/audit/wave45-local-review.md`` §F-2, the previous version
+    passed ``policy=None`` and the bare ``except`` swallowed the
+    resulting :class:`TypeError` so the framework arm silently fell
+    back to baseline. Building a real policy restores the multi-round
+    restart-blend signal that Wave 31 / Wave 34 paper-quantity-aware
+    schedulers were meant to drive.
+    """
+    from dataclasses import replace as _dc_replace
+
+    from adaptive_reflow.contracts import (  # type: ignore
+        ArtifactHash,
+        ChannelName,
+        FactorValue,
+        FinalRestartPolicy,
+        LedgerRowId,
+        MechanismId,
+        PolicyId,
+        RunId,
+        hash_policy_hash,
+    )
+
+    caps = adapter.capabilities() if hasattr(adapter, "capabilities") else None
+    if caps is not None and getattr(caps, "channel_domains", None):
+        # ``ChannelName`` is a ``typing.NewType`` (not a class) so
+        # ``isinstance(ch, ChannelName)`` raises TypeError. Filter via
+        # ``isinstance(ch, str)`` (NewType is str at runtime) and cast
+        # back into a ``ChannelName`` for the policy payload. Sort the
+        # channel list so the policy_hash is deterministic across
+        # adapters with the same channel set.
+        channel_names = sorted(
+            ChannelName(ch)
+            for ch in caps.channel_domains.keys()
+            if isinstance(ch, str)
+        ) or [ChannelName("latent")]
+    else:
+        # Fallback when the adapter does not declare capabilities
+        # (e.g. a non-flow adapter). Single anonymous channel is enough
+        # for the contract hash.
+        channel_names = [ChannelName("latent")]
+
+    beta = 0.5  # constant beta per round; framework's scheduler drives
+                # the per-round beta in production, this value only
+                # shapes the restart blend math.
+    policy_id = PolicyId(
+        f"run_real_ckpt_eval:framework:r{target_round}:s{seed}"
+    )
+    draft = FinalRestartPolicy(
+        policy_id=policy_id,
+        writer_id=MechanismId("inference.adaptive_reflow"),
+        run_id=RunId("run_real_ckpt_eval:framework"),
+        target_round=int(target_round),
+        outer_cycle_id=0,
+        beta_by_channel={ch: FactorValue(float(beta)) for ch in channel_names},
+        alpha_by_channel={ch: FactorValue(1.0) for ch in channel_names},
+        fresh_noise_floor_by_channel={
+            ch: FactorValue(0.0) for ch in channel_names
+        },
+        schedule_sample=None,
+        freeze_admission_by_channel={ch: True for ch in channel_names},
+        ledger_row_id=LedgerRowId(f"ledger-run_real_ckpt_eval-r{target_round}"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=int(target_round),
+        beta_from_schedule=True,
+    )
+    return _dc_replace(draft, policy_hash=hash_policy_hash(draft))
+
+
 def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3) -> tuple[Any, float]:
     """Framework multi-round ODE solve with the same total NFE budget.
 
     Splits the total NFE across ``n_rounds`` and chains the adapter's
-    ``solve_ode`` + ``apply_restart_distribution`` in a paper-quantity-
-    driven loop. Total NFE is matched to the baseline (so the per-cell
-    delta isolates scheduler / restart-blend / paper-quantity value-add).
+    ``solve_ode`` + ``export_endpoint` + ``apply_restart_distribution``
+    in a paper-quantity-driven loop. Total NFE is matched to the
+    baseline (so the per-cell delta isolates scheduler / restart-blend
+    / paper-quantity value-add).
+
+    F-2 fix (Wave 45 Agent B): the previous version called
+    ``export_endpoint(trace)`` and
+    ``apply_restart_distribution(bundle=..., trace=..., policy=None, ...)``
+    — both signatures were wrong (export_endpoint wants a
+    :class:`StateBundle`, not an :class:`ODEIntegratorTrace`;
+    apply_restart_distribution wants ``(state, policy)`` not keyword
+    arguments). The bare ``except`` swallowed both errors so the
+    framework arm executed exactly ONE ``solve_ode`` and was
+    byte-identical to baseline. This implementation:
+
+    * passes ``cur_bundle`` to ``export_endpoint`` (identity
+      pass-through — see ``kanzi.py:1108`` / ``lineageflow.py:989``);
+    * builds a real per-round :class:`FinalRestartPolicy` (above) and
+      passes it positionally to ``apply_restart_distribution``;
+    * narrows both bare ``except`` blocks to the specific exception
+      types we expect to handle (the framework's own
+      :class:`CapabilityMissingError`); all other exceptions
+      propagate so signature regressions fail closed rather than
+      silently degrade to baseline.
     """
     from adaptive_reflow.universal.state import ODEConditionDelta  # type: ignore
 
@@ -511,6 +789,13 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3) ->
     nfe_per_round = max(1, int(round(nfe / max(1, int(n_rounds)))))
     t0 = time.monotonic()
     cur_bundle = bundle
+    trace: Any = None
+    # Lazy imports to avoid the import cost on cold clone and to keep
+    # the eval tool's import surface tight.
+    from adaptive_reflow.universal.adapter import (  # type: ignore
+        CapabilityMissingError,
+    )
+
     for r in range(int(n_rounds)):
         condition = ODEConditionDelta(
             delta_spec={"num_steps": int(nfe_per_round), "sampler_id": "euler"},
@@ -519,23 +804,35 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3) ->
             calibration_artifact_hash="run_real_ckpt_eval:default",
         )
         trace = adapter.solve_ode(cur_bundle, condition, seed=int(seed) + int(r))
-        # Restart distribution step: blend the trace's endpoint into a
-        # new initial state for the next round.
+        # Restart distribution step: blend the current round's bundle
+        # (the prior round's endpoint, identity-passed through
+        # ``export_endpoint``) with the per-round restart policy to
+        # produce the next round's initial state.
         try:
-            endpoint = adapter.export_endpoint(trace) if hasattr(adapter, "export_endpoint") else None
-        except Exception:
-            endpoint = None
+            # F-2: was ``adapter.export_endpoint(trace)`` — AttributeError
+            # because :class:`ODEIntegratorTrace` has no
+            # ``native_state_digest`` accessor matching the
+            # :class:`StateBundle` that ``export_endpoint`` expects.
+            endpoint = adapter.export_endpoint(cur_bundle)
+        except CapabilityMissingError:
+            # Framework has no restart-blend surface for this adapter —
+            # the honest reading is "framework degenerates to baseline".
+            break
         if endpoint is None:
-            # Without a restart-blend surface, framework degenerates to baseline
             break
         try:
-            cur_bundle = adapter.apply_restart_distribution(
-                bundle=cur_bundle, trace=trace, policy=None, round_index=int(r),
+            # F-2: was
+            #   ``adapter.apply_restart_distribution(
+            #       bundle=cur_bundle, trace=trace, policy=None,
+            #       round_index=int(r))``
+            # — TypeError because the Protocol expects
+            # ``apply_restart_distribution(state, policy)``.
+            policy = _make_framework_policy(
+                adapter, target_round=int(r), seed=int(seed)
             )
-        except Exception:
-            # Restart path unavailable; degenerate to baseline (this is the
-            # honest reading: when the framework has no restart blend, the
-            # total delta is 0).
+            cur_bundle = adapter.apply_restart_distribution(endpoint, policy)
+        except CapabilityMissingError:
+            # Restart path unavailable; degenerate to baseline.
             break
     wall = time.monotonic() - t0
     return trace, wall
@@ -873,8 +1170,11 @@ def _compute_kanzi_real_metric_via_trace(
     Algorithm
     ~~~~~~~~~
 
-    1. Call ``adapter.observe_token_indices(trace, paper_quantities=None)``
-       → ``{DISCRETE_TOKEN_INDEX: np.ndarray(shape=(L_z,), dtype=float64)}``.
+    1. Call ``adapter.observe_token_indices(trace, paper_quantities=...)``
+       where the snapshot is a real :class:`PaperQuantitiesSnapshot`
+       materialised by :func:`_compute_paper_quantities_for_model`
+       keyed on a per-model ``g`` profile (Wave 45 F-3 fix).
+       Returns ``{DISCRETE_TOKEN_INDEX: np.ndarray(shape=(L_z,), dtype=float64)}``.
     2. Decode the (L_z,) index array via
        :func:`_decode_kanzi_idx_to_aa` (mod-20 mapping) to one AA
        string of length ``L_z``.
@@ -897,12 +1197,22 @@ def _compute_kanzi_real_metric_via_trace(
                 "reason": "adapter_missing_observe_token_indices",
                 "adapter": str(type(adapter).__name__),
             }
-        # paper_quantities is currently a no-op consumer at the
-        # Protocol layer (Wave 44 surface only; Wave 45 will thread
-        # e_rho / sheet_A through to bias the decoding).
+        # Wave 45 Agent C — F-3 fix: thread real ``paper_quantities``
+        # through to the adapter so the paper-quantity-driven
+        # scheduler has actual signal. The previous hardcoded
+        # ``paper_quantities=None`` made every paper-quantity-aware
+        # downstream code path a no-op. We materialise a real
+        # :class:`PaperQuantitiesSnapshot` via
+        # :meth:`PaperQuantitiesSnapshot.for_profile` keyed on a
+        # model-appropriate ``g`` profile. Failures degrade to
+        # ``paper_quantities=None`` with a debug stamp so the
+        # metric layer never crashes on a missing framework import.
+        pq_snap, pq_dbg = _compute_paper_quantities_for_model(
+            "kanzi", seed=seed, nfe=nfe,
+        )
         try:
             tokens_dict = adapter.observe_token_indices(
-                trace, paper_quantities=None,
+                trace, paper_quantities=pq_snap,
             )
         except Exception as exc:  # noqa: BLE001
             return None, "blocked", {
@@ -995,6 +1305,13 @@ def _compute_kanzi_real_metric_via_trace(
             "trace_source": "captured_via_solve_ode",
             "seed": int(seed),
             "nfe_budget": int(nfe),
+            # Wave 45 Agent C — F-3 fix: surface the per-cell
+            # paper_quantities thread result. ``status="computed"``
+            # means the snapshot was successfully built; values are
+            # the four paper quantities + knobs so downstream
+            # consumers can correlate framework-vs-baseline deltas
+            # to the paper-quantity surface that was in effect.
+            "paper_quantities": pq_dbg,
         }
     except Exception as exc:  # noqa: BLE001
         return None, "blocked", {
@@ -1022,8 +1339,11 @@ def _compute_lineageflow_real_metric_via_trace(
     Algorithm
     ~~~~~~~~~
 
-    1. Call ``adapter.observe_token_indices(trace, paper_quantities=None)``
-       → ``{AMINO_ACID_CATEGORICAL: np.ndarray(shape=(L,), dtype=float64)}``.
+    1. Call ``adapter.observe_token_indices(trace, paper_quantities=...)``
+       where the snapshot is a real :class:`PaperQuantitiesSnapshot`
+       materialised by :func:`_compute_paper_quantities_for_model`
+       keyed on a per-model ``g`` profile (Wave 45 F-3 fix).
+       Returns ``{AMINO_ACID_CATEGORICAL: np.ndarray(shape=(L,), dtype=float64)}``.
     2. Decode the (L,) array via :func:`_decode_lineageflow_idx_to_aa`
        (mod-20 mapping matching the upstream
        ``inference/trace_trajectory.py:_decode_argmax`` helper).
@@ -1046,9 +1366,18 @@ def _compute_lineageflow_real_metric_via_trace(
                 "reason": "adapter_missing_observe_token_indices",
                 "adapter": str(type(adapter).__name__),
             }
+        # Wave 45 Agent C — F-3 fix: thread real ``paper_quantities``
+        # through to the adapter (see the matching comment in
+        # :func:`_compute_kanzi_real_metric_via_trace` for the full
+        # rationale). Same per-model profile source as kanzi; the
+        # paper-quantity surface is identical at the framework layer
+        # even though the channel shape differs.
+        pq_snap, pq_dbg = _compute_paper_quantities_for_model(
+            "lineageflow", seed=seed, nfe=nfe,
+        )
         try:
             tokens_dict = adapter.observe_token_indices(
-                trace, paper_quantities=None,
+                trace, paper_quantities=pq_snap,
             )
         except Exception as exc:  # noqa: BLE001
             return None, "blocked", {
@@ -1131,6 +1460,11 @@ def _compute_lineageflow_real_metric_via_trace(
             "trace_source": "captured_via_solve_ode",
             "seed": int(seed),
             "nfe_budget": int(nfe),
+            # Wave 45 Agent C — F-3 fix: surface the per-cell
+            # paper_quantities thread result (see
+            # _compute_kanzi_real_metric_via_trace for the matching
+            # comment).
+            "paper_quantities": pq_dbg,
         }
     except Exception as exc:  # noqa: BLE001
         return None, "blocked", {
@@ -1272,7 +1606,7 @@ def _compute_metric(
     ``adapter`` (Wave 44): when provided alongside a non-synthetic
     ``metric_mode``, the metric layer first attempts the
     **trajectory-aware** path
-    (``adapter.observe_token_indices(trace, paper_quantities=None)``)
+    (``adapter.observe_token_indices(trace, paper_quantities=...)``)
     so the baseline and framework arms consume their own captured
     ODE trajectories instead of a fresh upstream forward. This
     closes the Wave 43 Tier-3 finding where both arms ran the same
@@ -1281,7 +1615,10 @@ def _compute_metric(
     a ``blocked`` marker (e.g. the adapter doesn't implement
     ``observe_token_indices``), we fall through to the legacy
     fresh-forward path so existing behaviour is preserved on legacy
-    adapters.
+    adapters. Wave 45 Agent C F-3: the ``paper_quantities`` argument
+    is a real :class:`PaperQuantitiesSnapshot` materialised by
+    :func:`_compute_paper_quantities_for_model` rather than the
+    pre-Wave-45 hardcoded ``None``.
     """
     spec = DOWNSTREAM_METRICS[model]
     if spec["primary_metric"]["name"] == "BLOCKED":
