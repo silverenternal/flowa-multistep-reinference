@@ -821,6 +821,326 @@ def _is_valid_protein_string(seq: str, alphabet: str) -> bool:
     return True
 
 
+def _decode_lineageflow_idx_to_aa(idx_1d: Any) -> str:
+    """Decode a single ``(L,)`` lineageflow token-index array to one AA string.
+
+    Mirrors the upstream ``_decode_argmax`` helper (mod-20 mapping over
+    the 20-standard-AA alphabet) used by the LineageFlow upstream
+    ``inference/trace_trajectory.py``. The 33-token vocabulary
+    includes gap/pad/cls tokens; we deterministically fold the index
+    via ``% 20`` (same convention as the upstream ``_decode_argmax``).
+    Returns ``""`` when ``idx_1d`` is empty.
+    """
+    try:
+        import numpy as _np  # local import; numpy is optional at the tool layer
+    except ImportError:
+        # Fall back to a pure-Python list decoder when numpy is not
+        # installed (CI / synthetic-only envs).
+        flat = list(idx_1d) if hasattr(idx_1d, "__iter__") else [idx_1d]
+        alphabet = AMINO_ACID_ALPHABET
+        K = len(alphabet)
+        if not flat:
+            return ""
+        return "".join(alphabet[int(v) % K] for v in flat)
+    arr = _np.asarray(idx_1d).reshape(-1)
+    alphabet = AMINO_ACID_ALPHABET
+    K = len(alphabet)
+    if arr.size == 0:
+        return ""
+    return "".join(alphabet[int(v) % K] for v in arr)
+
+
+def _compute_kanzi_real_metric_via_trace(
+    *,
+    adapter: Any,
+    trace: Any,
+    seed: int,
+    nfe: int,
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Real ``protein_sequence_validity_rate`` via ``adapter.observe_token_indices``.
+
+    Wave 44 Tier-3 metric-axis close: consumes the adapter's ODE
+    trajectory (returned by ``solve_ode``) via the
+    ``observe_token_indices`` Protocol method (added by Wave 44
+    Agent A) instead of running a fresh ``kanzi.DAE.encode()``
+    forward. The baseline and framework arms now produce different
+    ``trace`` objects (baseline: 1 round @ ``nfe``, framework: 3
+    rounds @ ``ceil(nfe/3)`` with restart-blend between rounds), so
+    the decoded per-position token-index arrays differ and the
+    downstream Pfam-strict round-trip can in principle distinguish
+    them.
+
+    Algorithm
+    ~~~~~~~~~
+
+    1. Call ``adapter.observe_token_indices(trace, paper_quantities=None)``
+       → ``{DISCRETE_TOKEN_INDEX: np.ndarray(shape=(L_z,), dtype=float64)}``.
+    2. Decode the (L_z,) index array via
+       :func:`_decode_kanzi_idx_to_aa` (mod-20 mapping) to one AA
+       string of length ``L_z``.
+    3. Apply the (a)/(b)/(c) Pfam-strict round-trip check on that
+       single AA string. For the framework arm, if
+       ``apply_restart_distribution`` preserves ``discrete_idx``
+       byte-identically (it does, by design — the discrete AR-prior
+       state is not affected by the latent blend), the validity
+       rate equals the baseline arm's validity rate; the framework
+       value-add at this metric then shows up as ``TIE_AT_SATURATION``
+       and is not a regression. This is documented behaviour, not a
+       bug — closing the framework-vs-baseline *delta* on
+       ``discrete_token_index`` for Kanzi is Wave 45's job (the
+       Wave 45 GPT-prior restart blend is the planned fix).
+    4. Returns ``(validity_rate, marker, debug_dict)``.
+    """
+    try:
+        if not hasattr(adapter, "observe_token_indices"):
+            return None, "blocked", {
+                "reason": "adapter_missing_observe_token_indices",
+                "adapter": str(type(adapter).__name__),
+            }
+        # paper_quantities is currently a no-op consumer at the
+        # Protocol layer (Wave 44 surface only; Wave 45 will thread
+        # e_rho / sheet_A through to bias the decoding).
+        try:
+            tokens_dict = adapter.observe_token_indices(
+                trace, paper_quantities=None,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return None, "blocked", {
+                "reason": (
+                    f"observe_token_indices raised: "
+                    f"{type(exc).__name__}:{exc}"
+                ),
+            }
+        if not tokens_dict:
+            return None, "blocked", {
+                "reason": "observe_token_indices returned empty dict",
+            }
+        # Resolve the kanzi discrete-token-index channel name. Import
+        # locally to avoid making the tools/ module a hard import
+        # edge to the adapter (the adapter import is already on
+        # this module's path via _resolve_adapter).
+        from adaptive_reflow.adapters.kanzi import (  # type: ignore
+            DISCRETE_TOKEN_INDEX as _KANZI_DISCRETE,
+        )
+        idx_arr = tokens_dict.get(str(_KANZI_DISCRETE))
+        if idx_arr is None:
+            return None, "blocked", {
+                "reason": (
+                    "kanzi observe_token_indices missing "
+                    "discrete_token_index channel"
+                ),
+                "channels": list(tokens_dict.keys()),
+            }
+        # _decode_kanzi_idx_to_aa expects (B, L); the trajectory yields
+        # a single (L_z,) sequence so we treat it as B=1. Local numpy
+        # import (always available in kanzi / lineageflow sidecar
+        # venvs which carry numpy as a torch/transformers dep).
+        import numpy as _np  # type: ignore
+        idx_2d = _np.asarray(idx_arr, dtype=_np.float64).reshape(1, -1)
+        aa_strings = _decode_kanzi_idx_to_aa(idx_2d)
+        n_seqs = len(aa_strings)
+        s = aa_strings[0] if aa_strings else ""
+        # Pfam-strict round-trip check on the single trajectory-derived
+        # sequence. We use the same Pfam held-out reference subset
+        # when present (mirroring the fresh-forward path).
+        pfam_path = KANZI_PFAM_HOLDOUT_PATH
+        pfam_present = pfam_path.exists()
+        round_trip_via = "aa_alphabet_only"
+        valid_count = 0
+        if pfam_present:
+            try:
+                from Bio import SeqIO  # type: ignore
+
+                ref_chars: set[str] = set()
+                ref_lengths: list[int] = []
+                for rec in SeqIO.parse(str(pfam_path), "fasta"):
+                    seq_str = str(rec.seq).upper()
+                    ref_chars.update(seq_str)
+                    ref_lengths.append(len(seq_str))
+                if ref_chars and ref_lengths:
+                    round_trip_via = "pfam_holdout_strict"
+                    ref_lengths_sorted = sorted(ref_lengths)
+                    lo = min(ref_lengths_sorted[0], 30)
+                    hi = 1024
+                    s_up = s.upper()
+                    if (
+                        all((c in ref_chars) for c in s_up)
+                        and (lo <= len(s_up) <= hi)
+                        and (len(set(s_up)) >= 4)
+                    ):
+                        valid_count = 1
+                else:
+                    if _is_valid_protein_string(s, AMINO_ACID_ALPHABET):
+                        valid_count = 1
+            except Exception as exc:  # noqa: BLE001
+                return None, "blocked", {
+                    "reason": f"pfam round-trip failed: {type(exc).__name__}:{exc}",
+                    "pfam_path": str(pfam_path),
+                }
+        else:
+            if _is_valid_protein_string(s, AMINO_ACID_ALPHABET):
+                valid_count = 1
+        validity_rate = float(valid_count) / float(max(1, n_seqs))
+        return validity_rate, "computed", {
+            "n_sequences": n_seqs,
+            "n_valid": int(valid_count),
+            "validity_rate": validity_rate,
+            "decode_strategy": (
+                "adapter.observe_token_indices + mod-20 AA proxy (Wave 44 Tier-3 close)"
+            ),
+            "round_trip_via": round_trip_via,
+            "pfam_reference": (
+                str(pfam_path.relative_to(REPO_ROOT)) if pfam_present else None
+            ),
+            "trace_source": "captured_via_solve_ode",
+            "seed": int(seed),
+            "nfe_budget": int(nfe),
+        }
+    except Exception as exc:  # noqa: BLE001
+        return None, "blocked", {
+            "reason": (
+                f"kanzi via-trajectory metric failed: "
+                f"{type(exc).__name__}:{exc}"
+            ),
+        }
+
+
+def _compute_lineageflow_real_metric_via_trace(
+    *,
+    adapter: Any,
+    trace: Any,
+    seed: int,
+    nfe: int,
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Real ``family_validity_rate`` via ``adapter.observe_token_indices``.
+
+    Wave 44 Tier-3 metric-axis close: consumes the adapter's ODE
+    trajectory (returned by ``solve_ode``) via
+    ``observe_token_indices`` (added by Wave 44 Agent A) instead of
+    sampling fresh uniform-random token sequences.
+
+    Algorithm
+    ~~~~~~~~~
+
+    1. Call ``adapter.observe_token_indices(trace, paper_quantities=None)``
+       → ``{AMINO_ACID_CATEGORICAL: np.ndarray(shape=(L,), dtype=float64)}``.
+    2. Decode the (L,) array via :func:`_decode_lineageflow_idx_to_aa`
+       (mod-20 mapping matching the upstream
+       ``inference/trace_trajectory.py:_decode_argmax`` helper).
+    3. Compute ESM-2 PLL perplexity on the single trajectory-derived
+       sequence. Validity threshold: ``perplexity <= 50.0`` (matches
+       the Wave 43 fresh-forward path).
+    4. Returns ``(validity_rate, marker, debug_dict)``.
+
+    The framework arm produces a different ``trace`` than the
+    baseline (round-2 trajectory integrated from the restart-blended
+    per-position categorical), so ``argmax(theta_final, axis=-1)``
+    yields a different per-position token-index array. The
+    downstream ESM-2 PLL validity check can therefore distinguish
+    the two arms; framework_wins > 0 is the closing condition for
+    the Tier-3 lineageflow claim.
+    """
+    try:
+        if not hasattr(adapter, "observe_token_indices"):
+            return None, "blocked", {
+                "reason": "adapter_missing_observe_token_indices",
+                "adapter": str(type(adapter).__name__),
+            }
+        try:
+            tokens_dict = adapter.observe_token_indices(
+                trace, paper_quantities=None,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return None, "blocked", {
+                "reason": (
+                    f"observe_token_indices raised: "
+                    f"{type(exc).__name__}:{exc}"
+                ),
+            }
+        if not tokens_dict:
+            return None, "blocked", {
+                "reason": "observe_token_indices returned empty dict",
+            }
+        from adaptive_reflow.adapters.lineageflow import (  # type: ignore
+            AMINO_ACID_CATEGORICAL as _LF_AMINO,
+        )
+        idx_arr = tokens_dict.get(str(_LF_AMINO))
+        if idx_arr is None:
+            return None, "blocked", {
+                "reason": (
+                    "lineageflow observe_token_indices missing "
+                    "amino_acid_categorical channel"
+                ),
+                "channels": list(tokens_dict.keys()),
+            }
+        seq = _decode_lineageflow_idx_to_aa(idx_arr)
+        if not seq:
+            return None, "blocked", {
+                "reason": "trajectory-derived sequence is empty",
+            }
+
+        # Lazy-load ESM-2 (small enough that one load per runner is OK).
+        try:
+            import torch  # type: ignore
+            from transformers import (  # type: ignore
+                AutoModelForMaskedLM, AutoTokenizer,
+            )
+        except ImportError as exc:  # noqa: BLE001
+            return None, "blocked", {
+                "reason": f"missing dep: {type(exc).__name__}:{exc}",
+            }
+        esm_key = "facebook/esm2_t33_650M_UR50D"
+        if esm_key not in _LINEAGEFLOW_ESM_CACHE:
+            try:
+                tok = AutoTokenizer.from_pretrained(esm_key)
+                mdl = AutoModelForMaskedLM.from_pretrained(esm_key)
+                mdl.eval()
+                _LINEAGEFLOW_ESM_CACHE[esm_key] = (tok, mdl)
+            except Exception as exc:  # noqa: BLE001
+                return None, "blocked", {
+                    "reason": f"ESM-2 load failed: {type(exc).__name__}:{exc}",
+                }
+        tok, esm = _LINEAGEFLOW_ESM_CACHE[esm_key]
+        try:
+            enc = tok(seq, return_tensors="pt")
+            input_ids = enc["input_ids"]
+            with torch.no_grad():
+                outputs = esm(input_ids=input_ids, labels=input_ids)
+            ppl = float(torch.exp(outputs.loss).item())
+        except Exception as exc:  # noqa: BLE001
+            return None, "blocked", {
+                "reason": (
+                    f"esm2_pll_failed: {type(exc).__name__}:{exc}"
+                ),
+            }
+        threshold = 50.0
+        valid_count = 1 if ppl <= threshold else 0
+        validity_rate = float(valid_count)  # 1 sample, so rate is 0 or 1
+        return validity_rate, "computed", {
+            "n_sequences": 1,
+            "n_valid": int(valid_count),
+            "validity_rate": validity_rate,
+            "perplexity_threshold": threshold,
+            "per_seq_perplexity": [round(ppl, 4)],
+            "decode_strategy": (
+                "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL "
+                "(Wave 44 Tier-3 close)"
+            ),
+            "esm_model": esm_key,
+            "seq_length": int(len(seq)),
+            "trace_source": "captured_via_solve_ode",
+            "seed": int(seed),
+            "nfe_budget": int(nfe),
+        }
+    except Exception as exc:  # noqa: BLE001
+        return None, "blocked", {
+            "reason": (
+                f"lineageflow via-trajectory metric failed: "
+                f"{type(exc).__name__}:{exc}"
+            ),
+        }
+
+
 def _compute_lineageflow_real_metric(
     *,
     seed: int,
@@ -929,6 +1249,7 @@ def _compute_metric(
     nfe: int,
     metric_name: str,
     metric_mode: str = "synthetic",
+    adapter: Any | None = None,
 ) -> tuple[float | None, str, dict[str, Any]]:
     """Compute the named metric on the adapter's ODE trace.
 
@@ -947,6 +1268,20 @@ def _compute_metric(
       venv + checkpoint.
     * ``"auto"``:      try ``real`` first; on ImportError or missing
       checkpoint, fall back to ``synthetic``.
+
+    ``adapter`` (Wave 44): when provided alongside a non-synthetic
+    ``metric_mode``, the metric layer first attempts the
+    **trajectory-aware** path
+    (``adapter.observe_token_indices(trace, paper_quantities=None)``)
+    so the baseline and framework arms consume their own captured
+    ODE trajectories instead of a fresh upstream forward. This
+    closes the Wave 43 Tier-3 finding where both arms ran the same
+    upstream forward with the same seed and ``framework_wins = 0``.
+    The trajectory-aware path is the preferred path; if it returns
+    a ``blocked`` marker (e.g. the adapter doesn't implement
+    ``observe_token_indices``), we fall through to the legacy
+    fresh-forward path so existing behaviour is preserved on legacy
+    adapters.
     """
     spec = DOWNSTREAM_METRICS[model]
     if spec["primary_metric"]["name"] == "BLOCKED":
@@ -964,6 +1299,46 @@ def _compute_metric(
         real_value: float | None
         real_marker: str
         real_dbg: dict[str, Any]
+        # Wave 44: prefer the trajectory-aware path when an adapter
+        # is supplied. The via-trace helpers consume the captured
+        # ODE trajectory via the Protocol-level
+        # ``observe_token_indices`` method instead of running a
+        # fresh upstream forward, which is what closes the
+        # framework-vs-baseline metric delta.
+        if adapter is not None and trace is not None:
+            if model == "kanzi":
+                (
+                    real_value, real_marker, real_dbg,
+                ) = _compute_kanzi_real_metric_via_trace(
+                    adapter=adapter, trace=trace,
+                    seed=seed, nfe=nfe,
+                )
+            elif model == "lineageflow":
+                (
+                    real_value, real_marker, real_dbg,
+                ) = _compute_lineageflow_real_metric_via_trace(
+                    adapter=adapter, trace=trace,
+                    seed=seed, nfe=nfe,
+                )
+            else:
+                return None, "blocked", {
+                    "reason": f"no real-ckpt metric implementation for model={model!r}",
+                }
+            if real_value is not None and real_marker == "computed":
+                return real_value, real_marker, real_dbg
+            # Trajectory-aware path unavailable for this arm; fall
+            # through to the legacy fresh-forward path so the metric
+            # still resolves (Wave 43 ship-it behaviour is preserved).
+            if metric_mode == "real" and real_marker == "blocked":
+                # Only short-circuit when the via-trace path actually
+                # tried and failed; auto-mode may want to try the
+                # fresh-forward path next.
+                via_dbg = dict(real_dbg)
+                via_dbg["via_trace_attempted"] = True
+                via_dbg["via_trace_failed_reason"] = str(
+                    real_dbg.get("reason", "unknown")
+                )
+                return real_value, real_marker, via_dbg
         if model == "kanzi":
             real_value, real_marker, real_dbg = _compute_kanzi_real_metric(
                 seed=seed, nfe=nfe,
@@ -1087,10 +1462,12 @@ def _run_cell(
     baseline_value, baseline_marker, baseline_dbg = _compute_metric(
         model, baseline_trace, seed=int(seed), nfe=int(nfe),
         metric_name=primary["name"], metric_mode=metric_mode,
+        adapter=adapter,
     )
     framework_value, framework_marker, framework_dbg = _compute_metric(
         model, framework_trace, seed=int(seed), nfe=int(nfe),
         metric_name=primary["name"], metric_mode=metric_mode,
+        adapter=adapter,
     )
     cell["baseline_metric"] = baseline_value
     cell["baseline_marker"] = baseline_marker
