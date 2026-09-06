@@ -1,10 +1,20 @@
-"""Wave 42 + Wave 44 + Wave 52 paper-writeup figure — Tier 3 (Kanzi ICLR 2026 + LineageFlow ICML 2026 + FlowMol3 NeurIPS 2024) real-ckpt
+"""Wave 42 + Wave 44 + Wave 52 + Wave 54 paper-writeup figure — Tier 3 (Kanzi ICLR 2026 + LineageFlow ICML 2026 + FlowMol3 NeurIPS 2024) real-ckpt
 framework advantage shown alongside Tier 1 (toy FM) + Tier 2 (SOTA image RF) values.
 
 Wave 52 Agent A update: now reads 3 Tier 3 JSONs (Kanzi, LineageFlow, FlowMol3)
 and renders **two readings per Tier 3 model** (decision-metric axis +
 composite axis). The Tier 3 bars are paired: decision-metric (light orange)
 and composite-axis (dark orange, when available).
+
+Wave 54 Agent B final-paper-rewrite update: the Kanzi composite-axis
+bar now reads from `verification_outputs/kanzi_real_composite_q4_2026.json`
+(Wave 52 Agent A — 9 cells computed, composite_median = +0.170175,
+verdict = "framework_improves"). FlowMol3 composite-axis still reads
++0.000 from `verification_outputs/flowmol3_real_composite_q4_2026.json`
+(Wave 50 Agent B + Wave 53 Agent C `marker=computed`, placeholder
+uniform-vs-uniform by construction). LineageFlow composite-axis still
+reads +0.2109 from the Wave 47 Agent A smoke test (1 cell, gitignored
+`/tmp/q4_w47.json`); the Wave 52 Agent C 9-cell re-sweep is in flight.
 
 Renders a horizontal bar chart of per-family signed_mean for the 7 integrated model rows
 (colored by tier: Tier 1 toy = blue, Tier 2 SOTA image = green, Tier 3 SOTA 2026 = orange),
@@ -13,8 +23,9 @@ with a reference line at y=0.
 Inputs:
   - verification_outputs/capability_audit_q4_2026.json (G.1 evidence for Tier 1 + Tier 2 rows)
   - verification_outputs/kanzi_real_metric_v2_q4_2026.json (Tier 3 Kanzi decision-metric axis, Wave 44 Agent C)
+  - verification_outputs/kanzi_real_composite_q4_2026.json (Tier 3 Kanzi composite axis, Wave 52 Agent A — Wave 54 update)
   - verification_outputs/lineageflow_real_metric_v2_q4_2026.json (Tier 3 LineageFlow decision-metric axis, Wave 44 Agent C)
-  - verification_outputs/flowmol3_real_composite_q4_2026.json (Tier 3 FlowMol3 composite axis, Wave 50 Agent B)
+  - verification_outputs/flowmol3_real_composite_q4_2026.json (Tier 3 FlowMol3 composite axis, Wave 50 Agent B + Wave 53 Agent C)
 
 Output: docs/figures/tier3_real_ckpt_signed_mean.png
 
@@ -62,6 +73,13 @@ KANZI_JSON = os.path.join(
     "..",
     "verification_outputs",
     "kanzi_real_metric_v2_q4_2026.json",
+)
+# Wave 52 Agent A JSON (Kanzi composite — 9 cells, real-ckpt, composite_median = 0.170175):
+KANZI_COMPOSITE_JSON = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "verification_outputs",
+    "kanzi_real_composite_q4_2026.json",
 )
 LINEAGEFLOW_JSON = os.path.join(
     os.path.dirname(__file__),
@@ -151,11 +169,15 @@ def _aggregate_tier3_lineageflow(lf: dict) -> tuple[float, list[float], int, int
 
 
 def _aggregate_tier3_flowmol3_composite(fm3: dict) -> tuple[float, list[float], int, int]:
-    """Tier 3 FlowMol3 composite-axis (Wave 50 Agent B).
+    """Tier 3 FlowMol3 composite-axis (Wave 50 Agent B + Wave 53 Agent C).
 
-    The Wave 50 sweep runs FlowMol3Glue end-to-end on all 9 cells, but
-    every phi term is 0.0 (metric layer blocked). composite_median = 0.0,
-    composite_verdict = "no_signal". We surface 0.0 as the honest reading.
+    The Wave 53 Agent C metric helper is now wired (`marker=computed` on
+    all 9 cells, was `blocked` in Wave 50), but every phi term is 0.0
+    because the placeholder adapter synthesises a uniform `(8, 10)`
+    distribution at `flowmol3.py:975-979`. composite_median = 0.0,
+    composite_verdict = "no_signal" — the wiring is correct, the
+    measurement is blocked on a real FlowMol3 ckpt + upstream `flowmol`
+    package (PHASE-4 scope-excluded).
     """
     cells = fm3.get("cells", [])
     agg = fm3.get("aggregate", {})
@@ -171,6 +193,31 @@ def _aggregate_tier3_flowmol3_composite(fm3: dict) -> tuple[float, list[float], 
     return sm, composites, n_composite, n_blocked
 
 
+def _aggregate_tier3_kanzi_composite(kc: dict) -> tuple[float, list[float], int, int]:
+    """Tier 3 Kanzi composite-axis (Wave 52 Agent A — landed).
+
+    The Wave 52 Agent A sweep runs `KanziGlue` (inline in
+    `tools/run_real_ckpt_eval.py`) end-to-end on all 9 cells. Every
+    cell's `composite_marker = "computed"`. The composite is positive on
+    every cell (φ3 dominates, range +0.78 to +0.91 per-seed); the
+    9-cell median lands at `composite_median = 0.170175` with
+    `composite_verdict = "framework_improves"`. This is the load-bearing
+    Tier 3 number the paper's §7.3 + §7.6 narrative hangs on.
+    """
+    cells = kc.get("cells", [])
+    agg = kc.get("aggregate", {})
+    composites = []
+    for c in cells:
+        comp = c.get("composite")
+        if comp is None:
+            continue
+        composites.append(float(comp))
+    sm = sum(composites) / len(composites) if composites else 0.0
+    n_composite = int(agg.get("n_composite_computed", 0))
+    n_blocked = int(agg.get("n_composite_blocked", 0))
+    return sm, composites, n_composite, n_blocked
+
+
 def main() -> str:
     with open(AUDIT_JSON, "r", encoding="utf-8") as f:
         audit = json.load(f)
@@ -178,6 +225,14 @@ def main() -> str:
         kanzi = json.load(f)
     with open(LINEAGEFLOW_JSON, "r", encoding="utf-8") as f:
         lf = json.load(f)
+    # Wave 52 Agent A Kanzi composite (9 cells, landed — Wave 54 update)
+    kc = None
+    if os.path.exists(KANZI_COMPOSITE_JSON):
+        try:
+            with open(KANZI_COMPOSITE_JSON, "r", encoding="utf-8") as f:
+                kc = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            kc = None
     # FlowMol3 may not exist (e.g. fresh checkout); treat as missing data
     fm3 = None
     if os.path.exists(FLOWMOL3_JSON):
@@ -194,6 +249,11 @@ def main() -> str:
         tier3_fm3_sm, tier3_fm3_comps, fm3_n_comp, fm3_n_blocked = _aggregate_tier3_flowmol3_composite(fm3)
     else:
         tier3_fm3_sm, tier3_fm3_comps, fm3_n_comp, fm3_n_blocked = 0.0, [], 0, 9
+    # Wave 52 Agent A Kanzi composite — read from the real JSON when present
+    if kc is not None:
+        tier3_kc_sm, tier3_kc_comps, kc_n_comp, kc_n_blocked = _aggregate_tier3_kanzi_composite(kc)
+    else:
+        tier3_kc_sm, tier3_kc_comps, kc_n_comp, kc_n_blocked = 0.0, [], 0, 0
 
     # Order: x-axis ascending (Tier 1 toy -> Tier 2 -> Tier 3 decision -> Tier 3 composite).
     # Brief says X-axis is model families; Y-axis is signed_mean.
@@ -218,9 +278,12 @@ def main() -> str:
          len(tier3_lf_deltas), tier3_lf_sm, tier3_lf_deltas, "tier3"),
         ("flowmol3\n(Tier 3 NeurIPS 2024, decision-metric)",
          0, 0.0, [], "tier3"),
-        # Tier 3 composite axis (dark tier3)
-        ("kanzi\n(Tier 3 ICLR 2026, composite-axis, in flight)",
-         0, 0.0, [], "tier3_composite"),
+        # Tier 3 composite axis (dark tier3) — Wave 54 update:
+        # Kanzi now reads from the Wave 52 Agent A JSON (9 cells, median = 0.170175);
+        # LineageFlow reads from the Wave 47 Agent A smoke test (1 cell, 0.210937);
+        # FlowMol3 reads from the Wave 50/53 JSON (9 cells, 0.0, no_signal).
+        ("kanzi\n(Tier 3 ICLR 2026, composite-axis, +0.170)",
+         len(tier3_kc_comps), tier3_kc_sm, tier3_kc_comps, "tier3_composite"),
         ("lineageflow\n(Tier 3 ICML 2026, composite-axis, +0.211)",
          1, LINEAGEFLOW_COMPOSITE_SINGLE_CELL, [LINEAGEFLOW_COMPOSITE_SINGLE_CELL], "tier3_composite"),
         ("flowmol3\n(Tier 3 NeurIPS 2024, composite-axis, no_signal)",
@@ -252,7 +315,13 @@ def main() -> str:
     )
 
     # Annotate each bar with its value
-    x_max = max(max(means), 0.05, LINEAGEFLOW_COMPOSITE_SINGLE_CELL) * 1.4
+    # Wave 54 update: x_max now also covers the Kanzi composite median (0.170175).
+    x_max = max(
+        max(means),
+        0.05,
+        LINEAGEFLOW_COMPOSITE_SINGLE_CELL,
+        tier3_kc_sm if kc is not None else 0.0,
+    ) * 1.4
     for bar, sm, deltas, tier in zip(bars, means, deltas_list, tiers):
         ax.text(
             bar.get_width() + 0.01,
@@ -329,20 +398,24 @@ def main() -> str:
         edgecolor=PALETTE["neutral"],
     )
 
-    # Honest reading note (Wave 52 Agent A: dual-axis Tier 3 reading)
+    # Honest reading note (Wave 54 Agent B — final paper rewrite):
     note_text = (
-        "Tier 3 honest reading (Wave 52 Agent A — dual-axis):\n"
+        "Tier 3 honest reading (Wave 54 Agent B — final paper rewrite):\n"
         "  decision-metric axis (light orange): Kanzi 9/9 cells TIE_AT_SATURATION (real metric,\n"
         "    n_real_computed=9, ceiling=1.0); LineageFlow 1/1 cell RUN_ERROR (pre-Wave 47 F-4 fix);\n"
-        "    FlowMol3 metric layer missing.\n"
+        "    FlowMol3 metric layer placeholder uniform-vs-uniform (post-Wave 53 Agent C marker=computed).\n"
         "  composite axis (dark orange, formula: 0.40*phi1 + 0.35*phi2 + 0.25*phi3 ∈ [-1,+1]):\n"
-        f"    Kanzi (in flight, Wave 52 Agent A); LineageFlow +{LINEAGEFLOW_COMPOSITE_SINGLE_CELL:.4f}\n"
-        "    (Wave 47 Agent A smoke test: phi3_argmax_turnover=+0.844 across 33 ESM-2 token slots\n"
-        "    via LineageFlowClassifierAwareRestart, composite_verdict=framework_improves);\n"
-        "    FlowMol3 +0.0000 (Wave 50 Agent B no_signal — FlowMol3Glue ran end-to-end but\n"
-        "    metric layer returns None on every cell).\n"
-        "  See docs/audit/wave52-paper-tier3-rewrite.md + CONSOLIDATED_RESULTS §16\n"
-        "  + docs/audit/wave47-eval-pipeline-integration.md for the full accounting."
+        f"    Kanzi +{tier3_kc_sm:+.4f} (Wave 52 Agent A: 9/9 cells composite>0, KanziGlue phi3_argmax_turnover\n"
+        f"      +0.781..+0.906 across 64 latent codebook positions via KanziGPTPriorRestartPolicy,\n"
+        "      composite_verdict=framework_improves);\n"
+        f"    LineageFlow +{LINEAGEFLOW_COMPOSITE_SINGLE_CELL:.4f}\n"
+        "      (Wave 47 Agent A smoke test: phi3_argmax_turnover=+0.844 across 33 ESM-2 token slots\n"
+        "      via LineageFlowClassifierAwareRestart, composite_verdict=framework_improves);\n"
+        f"    FlowMol3 +{tier3_fm3_sm:+.4f} (Wave 50 Agent B + Wave 53 Agent C no_signal — FlowMol3Glue ran\n"
+        "      end-to-end on 9 cells with marker=computed, but the placeholder uniform-vs-uniform\n"
+        "      adapter gives reduction=0 by construction; needs a real FlowMol3 ckpt + flowmol upstream).\n"
+        "  See docs/audit/wave52-kanzi-composite.md + docs/audit/wave53-flowmol3-metric-impl.md\n"
+        "  + CONSOLIDATED_RESULTS §18 (Wave 54 final) for the full accounting."
     )
     ax.text(
         0.01,
