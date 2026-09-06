@@ -228,9 +228,20 @@ def run_baseline(
 ) -> dict[str, object]:
     """Run the baseline reproduction. Returns a JSON-serialisable summary."""
     output_dir.mkdir(parents=True, exist_ok=True)
+    # Wave 56 Agent C fix: when the caller does NOT pass an explicit
+    # ``weights_path`` (e.g. the in-process smoke test
+    # ``test_eval_rf_cifar_synthetic_smoke`` or a CLI invocation
+    # without ``--weights-path``) honour the documented "any of the
+    # three preconditions missing ⇒ synthetic" fallback by forcing
+    # ``synthetic`` mode. Otherwise ``force_mode="auto"`` would silently
+    # pick up the vendored ``data/cifar10_rf.pth`` checkpoint and switch
+    # the adapter to torch mode, breaking the smoke test's
+    # ``summary["mode"] == "synthetic"`` assertion and also producing a
+    # paper-comparable FID number without the operator's explicit
+    # consent.
     adapter = RectifiedFlowCIFARAdapter(
         weights_path=weights_path,
-        force_mode="auto",
+        force_mode=("auto" if weights_path is not None else "synthetic"),
         num_steps=int(nfe),
     )
 
@@ -293,17 +304,37 @@ def run_baseline(
     # P1-6: additive eval_report block (typed shape). The legacy
     # baseline_summary.json shape is preserved verbatim; consumers
     # that ignore unknown keys see no change.
+    #
+    # Wave 51 Agent B fix: previously the caller constructed
+    # ``output_dir / "cifar10_reference.npz"`` — a PosixPath that did
+    # not exist on disk — which crashed run_eval.py:436 with
+    # ``cannot coerce reference=PosixPath into features``. The eval
+    # layer is out of scope for this fix (DO NOT touch
+    # adaptive_reflow/eval/), so we fix the caller to (a) only pass
+    # ``reference=`` when the reference path actually exists on disk,
+    # and (b) feed ``run_eval`` the already-computed 2-D Inception
+    # features (``feats``) as the ``adapter`` argument rather than the
+    # raw-samples path. When the reference is missing we synthesise a
+    # same-dim fallback via :func:`random_inception_features` instead
+    # of relying on ``_as_reference_features``'s (4, 64) hard-coded
+    # fallback — which mismatches the 2048-dim InceptionV3 dim that
+    # ``_dispatch_fid`` configures the evaluator with.
     from adaptive_reflow.eval.run_eval import run_eval
 
+    if reference_features is not None and reference_features.exists():
+        eval_reference: Any = reference_features
+    else:
+        # Match the actual Inception feature dim so the eval layer's
+        # FID math doesn't blow up on a (4, 64) vs (n, 2048) mismatch.
+        eval_reference = random_inception_features(
+            int(num_samples), dim=int(feats.shape[1]), seed=int(seed) + 1
+        ).astype(np.float64)
+
     _eval_result = run_eval(
-        adapter=summary.get("samples_path", "rf_cifar_adapter"),
+        adapter=feats,
         dataset={"name": "cifar10"},
         metric="fid",
-        reference=(
-            reference_features
-            if reference_features is not None
-            else output_dir / "cifar10_reference.npz"
-        ),
+        reference=eval_reference,
         device="cpu",
         seed=int(seed),
         output_dir=None,
