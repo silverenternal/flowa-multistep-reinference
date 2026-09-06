@@ -839,20 +839,30 @@ def _resolve_adapter(
       ``ImportError`` / missing weights (so the same script works in
       both the framework pytest env and the sidecar venv).
 
-    The CLI value ``"real"`` is translated to the adapter's
-    ``"torch"`` token (which is what ``adaptive_reflow.adapters.kanzi``
-    expects). Returns ``(adapter_instance, mode_string)``. When the model
-    is BLOCKED (no shipped adapter), returns ``(None, "BLOCKED")``.
+    The CLI value ``"real"`` is translated to the adapter's native
+    ``"torch"`` token via the per-model :data:`_ADAPTER_FORCE_MODE_ALIAS`
+    table (Wave 53 Agent C — closes the Wave 50 Agent B Phase-4
+    flowmol3 block). Returns ``(adapter_instance, mode_string)``.
+    When the model is BLOCKED (no shipped adapter), returns
+    ``(None, "BLOCKED")``.
     """
     spec = DOWNSTREAM_METRICS[model]
     factory_path = spec["adapter_factory"]
     if factory_path is None:
         return None, "BLOCKED"
     module_path, attr = factory_path.rsplit(":", 1)
-    # Translate CLI semantic to the adapter's mode token. The adapter
-    # factory uses "torch" to mean "real checkpoint loaded" (see
-    # adaptive_reflow/adapters/kanzi.py:default_kanzi_adapter).
-    adapter_force_mode = "torch" if force_mode == "real" else force_mode
+    # Wave 53 Agent C: per-model force-mode token translation.
+    # Legacy adapters (kanzi, lineageflow, freqflow, hidream, lumina,
+    # rectified_flow_cifar, graphbfn, self_flow, wan2_2_video,
+    # protbfn_abbfn) accept ``"torch"`` to mean "real checkpoint
+    # loaded". The flowmol3 v1 factory (Wave 50 Agent A) and the
+    # flowmol3_v2 factory (Wave 50 / Wave 53 Agent B fix) accept the
+    # CLI-native ``"real"`` token. The mapping table lives next to
+    # :data:`DOWNSTREAM_METRICS` so future adapter authors see both
+    # surfaces in one place.
+    adapter_force_mode = _ADAPTER_FORCE_MODE_ALIAS.get(
+        model, {},
+    ).get(force_mode, force_mode)
     try:
         import importlib
 
@@ -862,6 +872,25 @@ def _resolve_adapter(
     except Exception as exc:  # noqa: BLE001
         return None, f"IMPORT_FAILED:{type(exc).__name__}:{exc}"
     return adapter, adapter_force_mode
+
+
+# Wave 53 Agent C — per-model force_mode token translation table.
+# Default identity: CLI token = adapter token. Legacy adapters that
+## ship pre-Wave-50 use ``"torch"`` to mean "real ckpt loaded" and
+# receive a per-model entry here. New adapters (flowmol3 v1 + v2)
+# use the CLI-native ``"real"`` token directly and need no entry.
+# If a future adapter author adds a new force_mode token, they
+# extend this table; see docs/audit/wave53-eval-pipeline-wiring-review.md §3.
+_ADAPTER_FORCE_MODE_ALIAS: dict[str, dict[str, str]] = {
+    "kanzi": {"real": "torch"},
+    "lineageflow": {"real": "torch"},
+    "freqflow": {"real": "torch"},
+    "hidream_i1": {"real": "torch"},
+    "rectified_flow_cifar": {"real": "torch"},
+    "graphbfn": {"real": "torch"},
+    "self_flow": {"real": "torch"},
+    # flowmol3 + flowmol3_v2 are identity — no entry needed.
+}
 
 
 def _build_initial_state_and_condition(
@@ -1699,6 +1728,142 @@ def _compute_lineageflow_real_metric_via_trace(
         }
 
 
+def _compute_flowmol3_real_metric_via_trace(
+    *,
+    adapter: Any,
+    trace: Any,
+    seed: int,
+    nfe: int,
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Real ``per_position_atom_type_entropy_reduction`` via ``adapter.observe_entropy_reduction``.
+
+    Wave 53 Tier-3 metric-axis close (closes the Wave 50 Agent B
+    blocker): consumes the adapter's ODE trajectory (returned by
+    ``solve_ode``) via :meth:`FlowMol3Adapter.observe_entropy_reduction`
+    (Wave 49 Agent F P2-W33-C) instead of trying to materialise
+    decoded 3D molecules (the Wave 50 design that depended on
+    ``rdkit`` + upstream ``flowmol`` that we don't ship here).
+
+    The metric is the per-atom Shannon-entropy *reduction*
+    ``H(theta_before) - H(theta_after)`` over the
+    :data:`adaptive_reflow.adapters.flowmol3.FLOWMOL3_ATOM_TYPE_VOCAB_SIZE`
+    = 10-dim heavy-atom categorical. Bounded in
+    ``[-log 10, +log 10]`` ≈ ``[-2.303, +2.303]``. Positive = framework
+    sharpened the atom-type posterior relative to the baseline.
+
+    Algorithm
+    ~~~~~~~~~
+
+    1. Call :meth:`adapter.observe_entropy_reduction(trace,
+       paper_quantities=...)` where the snapshot is a real
+       :class:`PaperQuantitiesSnapshot` materialised by
+       :func:`_compute_paper_quantities_for_model` keyed on a
+       per-model ``g`` profile (Wave 45 F-3 fix parity). Returns
+       ``{PER_POSITION_ENTROPY_REDUCTION: <float>}``.
+    2. The reduction is surfaced as the metric. The sign convention
+       is "framework sharpens → positive" (mirrors LineageFlow /
+       Kanzi). A framework-vs-baseline delta of ``+0.5`` means the
+       framework arm's per-atom atom-type distribution has
+       ``0.5 / log 10 ≈ 22%`` lower entropy than the baseline.
+    3. Returns ``(reduction_value, marker, debug_dict)``.
+
+    The helper is stdlib + numpy only; the entropy reduction is
+    computed inside the adapter via the shared
+    :func:`adaptive_reflow.adapters._adapter_common.per_position_entropy_reduction`
+    helper (Wave 45 P2-W33-C). The synthetic-mode fallback inside
+    :meth:`FlowMol3Adapter.observe_entropy_reduction` returns
+    ``0.0`` by construction (uniform-vs-uniform); this is the
+    placeholder's documented trivial reading (no real ``flowmol``
+    ckpt).
+    """
+    try:
+        if not hasattr(adapter, "observe_entropy_reduction"):
+            return None, "blocked", {
+                "reason": "adapter_missing_observe_entropy_reduction",
+                "adapter": str(type(adapter).__name__),
+            }
+        # Wave 45 Agent C — F-3 fix parity: thread real
+        # ``paper_quantities`` through to the adapter so the
+        # paper-quantity-driven scheduler has actual signal. Same
+        # per-model profile source as kanzi / lineageflow.
+        pq_snap, pq_dbg = _compute_paper_quantities_for_model(
+            "flowmol3", seed=seed, nfe=nfe,
+        )
+        try:
+            entropy_dict = adapter.observe_entropy_reduction(
+                trace, paper_quantities=pq_snap,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return None, "blocked", {
+                "reason": (
+                    f"observe_entropy_reduction raised: "
+                    f"{type(exc).__name__}:{exc}"
+                ),
+            }
+        if not entropy_dict:
+            return None, "blocked", {
+                "reason": "observe_entropy_reduction returned empty dict",
+            }
+        from adaptive_reflow.adapters.flowmol3 import (  # type: ignore
+            FLOWMOL3_ATOM_TYPE_VOCAB_SIZE,
+            PER_POSITION_ENTROPY_REDUCTION as _FLOWMOL3_ENTROPY_KEY,
+        )
+        reduction_value = entropy_dict.get(str(_FLOWMOL3_ENTROPY_KEY))
+        if reduction_value is None:
+            return None, "blocked", {
+                "reason": (
+                    "flowmol3 observe_entropy_reduction missing "
+                    "per_position_entropy_reduction channel"
+                ),
+                "channels": list(entropy_dict.keys()),
+            }
+        # NaN handling: per the helper's contract, degenerate inputs
+        # (fewer than 2 atoms in either arm) return ``nan``. Surface
+        # ``marker=blocked`` rather than fabricating a number so the
+        # eval pipeline can distinguish ``metric undefined`` from
+        # ``metric == 0``.
+        try:
+            reduction_float = float(reduction_value)
+        except (TypeError, ValueError):
+            return None, "blocked", {
+                "reason": (
+                    f"observe_entropy_reduction returned "
+                    f"non-numeric reduction: {reduction_value!r}"
+                ),
+            }
+        if reduction_float != reduction_float:  # NaN check
+            return None, "blocked", {
+                "reason": "entropy_reduction_is_nan",
+                "reduction_value": reduction_float,
+            }
+        import math  # stdlib only; avoid module-level import.
+        log_K_bound = math.log(float(FLOWMOL3_ATOM_TYPE_VOCAB_SIZE))
+        return reduction_float, "computed", {
+            "metric_axis": "per_position_atom_type_entropy_reduction",
+            "metric_kind": "entropy_reduction",
+            "K_atom_types": int(FLOWMOL3_ATOM_TYPE_VOCAB_SIZE),
+            "reduction_value": reduction_float,
+            "log_K_bound": float(log_K_bound),
+            "decode_strategy": (
+                "adapter.observe_entropy_reduction + per_position_entropy_reduction "
+                "(Wave 53 FlowMol3 metric layer)"
+            ),
+            "trace_source": "captured_via_solve_ode",
+            "seed": int(seed),
+            "nfe_budget": int(nfe),
+            # Wave 45 Agent C — F-3 fix parity: surface the per-cell
+            # paper_quantities thread result.
+            "paper_quantities": pq_dbg,
+        }
+    except Exception as exc:  # noqa: BLE001
+        return None, "blocked", {
+            "reason": (
+                f"flowmol3 via-trajectory metric failed: "
+                f"{type(exc).__name__}:{exc}"
+            ),
+        }
+
+
 def _compute_lineageflow_composite(
     *,
     adapter: Any,
@@ -2457,6 +2622,20 @@ def _compute_metric(
                 (
                     real_value, real_marker, real_dbg,
                 ) = _compute_lineageflow_real_metric_via_trace(
+                    adapter=adapter, trace=trace,
+                    seed=seed, nfe=nfe,
+                )
+            elif model in ("flowmol3", "flowmol3_v2"):
+                # Wave 53 Agent C: closes the Wave 50 Agent B blocker
+                # (no real-ckpt metric implementation for flowmol3).
+                # The placeholder v1 + the real upstream v2 adapter
+                # both ship ``observe_entropy_reduction``; the helper
+                # returns the per-atom atom-type entropy reduction
+                # (continuous, framework-improving on Flow + CTMC).
+                # See docs/audit/wave53-flowmol3-metric-pattern-review.md §3.
+                (
+                    real_value, real_marker, real_dbg,
+                ) = _compute_flowmol3_real_metric_via_trace(
                     adapter=adapter, trace=trace,
                     seed=seed, nfe=nfe,
                 )

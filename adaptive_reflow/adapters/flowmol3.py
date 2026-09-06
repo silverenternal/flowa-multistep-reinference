@@ -1130,6 +1130,14 @@ def default_flowmol3_adapter(
     Backward-compat: callers that omit ``force_mode`` see the same
     byte-identical placeholder behaviour they did before Wave 50.
     """
+    # Wave 53 Agent C: defensive alias. The eval pipeline translates
+    # CLI ``"real"`` → ``"torch"`` for the 10 legacy ``{torch,
+    # synthetic, auto}`` adapters. flowmol3 v1 adopted the new
+    # ``{synthetic, real, auto}`` convention (Wave 50 Agent A); to
+    # keep callers from other contexts (not the eval pipeline)
+    # working, accept ``"torch"`` as a synonym for ``"real"``.
+    if force_mode == "torch":
+        force_mode = "real"
     if force_mode not in {"synthetic", "real", "auto"}:
         raise ValueError(
             f"unknown_force_mode:{force_mode} "

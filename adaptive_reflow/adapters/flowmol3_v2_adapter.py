@@ -3211,6 +3211,7 @@ def default_flowmol3adapter(
     weights_path: Any = None,
     device: str = "cpu",
     ctmc_enabled: bool | None = None,
+    force_mode: str | None = None,
 ) -> FlowMol3V2Adapter:
     """Return a fresh :class:`FlowMol3V2Adapter` for tests + registry wiring.
 
@@ -3223,7 +3224,31 @@ def default_flowmol3adapter(
     CTMC swap (default ``True`` via the class attribute). Pass
     ``ctmc_enabled=False`` to recover the pre-Stage-3 linear-interpolant
     ODE path for ablation studies.
+
+    ``force_mode`` (Wave 53 Agent C — closes Wave 50 Agent B Bug B):
+    optional CLI-friendly selector for the backend. Accepts
+    ``{"synthetic", "real", "auto", "torch"}`` (the latter mirrors the
+    legacy adapter convention). When provided, ``backend`` defaults
+    from ``force_mode`` (``real`` / ``auto`` / ``torch`` → ``"torch"``;
+    ``synthetic`` → ``"numpy"``) unless ``backend`` is also passed as
+    a non-default value.
     """
+    # Wave 53 Agent C: defensive alias mapping. The eval pipeline
+    # translates ``"real"`` to ``"torch"`` for legacy adapters; the
+    # v2 adapter's native ``backend`` token is ``"torch"``, so accept
+    # both forms.
+    if force_mode == "torch":
+        force_mode = "real"
+    if force_mode is not None:
+        if force_mode not in {"synthetic", "real", "auto"}:
+            raise ValueError(
+                f"unknown_force_mode:{force_mode} "
+                "(expected 'synthetic' | 'real' | 'auto' | 'torch')"
+            )
+        if backend == "numpy":
+            # Caller did not override ``backend`` explicitly; map
+            # from force_mode to the native backend token.
+            backend = "torch" if force_mode in {"real", "auto"} else "numpy"
     return FlowMol3V2Adapter(
         backend=str(backend),
         num_steps=int(num_steps),
