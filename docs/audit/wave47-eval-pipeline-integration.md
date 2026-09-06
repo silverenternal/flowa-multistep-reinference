@@ -18,7 +18,7 @@ alongside.
 
 ## 1. TL;DR
 
-* **DOWNSTREAM_METRICS["lineageflow"]["secondary_metrics"]** — added an
+* **DOWNSTREAM_METRICS\["lineageflow"\]\["secondary_metrics"\]** — added an
   additive `lineageflow_composite` entry (after the existing `novelty` entry).
   Existing metric surfaces unchanged.
 * **NEW CLI flag `--composite-metric`** — choices are

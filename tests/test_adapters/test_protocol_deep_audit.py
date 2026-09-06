@@ -212,6 +212,7 @@ PROTOCOL_METHOD_SHAPE: dict[
         {"seed": int},
     ),
     "observe_endpoint": (("trace", "state"), {}),
+    "observe_token_indices": (("trace", "paper_quantities"), {}),
     "export_trajectory": (("trace",), {}),
 }
 
