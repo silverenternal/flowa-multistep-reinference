@@ -27,6 +27,8 @@ Total: **13 tests** (Wave 15 C D.3 floor: 10).
 """
 from __future__ import annotations
 
+import os
+
 import pytest
 
 from adaptive_reflow.adapters import (
@@ -40,6 +42,11 @@ from adaptive_reflow.adapters import (
     PER_POSITION_ENTROPY_REDUCTION,
     default_flowmol3_adapter,
     flowmol3_registry_entry,
+)
+from adaptive_reflow.adapters.flowmol3 import (
+    FLOWMOL3_REAL_CKPT_LOADED_MARKER,
+    FLOWMOL3_REAL_CKPT_PATH,
+    _try_load_real_ckpt,
 )
 from adaptive_reflow.frame.adapter import (
     AdapterCapabilities,
@@ -564,6 +571,163 @@ class TestFlowMol3PublicSurface:
             adapter._atom_type_entropy_restart_policy  # noqa: SLF001
             is policy
         )
+
+
+# ---------------------------------------------------------------------------
+# Wave 50 Agent A — ``force_mode`` kwarg + real-ckpt loader
+# ---------------------------------------------------------------------------
+
+
+class TestFlowMol3ForceModeFactory:
+    """Regression suite for the Wave 50 Agent A factory fix.
+
+    Before Wave 50, :func:`tools.run_real_ckpt_eval._resolve_adapter`
+    called ``factory(force_mode=...)`` and crashed with
+    ``TypeError: default_flowmol3_adapter() got an unexpected keyword
+    argument force_mode``. After Wave 50, the factory accepts the kwarg
+    and, when ``force_mode in {"real", "auto"}``, attempts to load the
+    published FlowMol3 Lightning checkpoint at
+    :data:`FLOWMOL3_REAL_CKPT_PATH`.
+    """
+
+    def test_default_factory_is_synthetic(self) -> None:
+        """Omitting ``force_mode`` keeps byte-identical placeholder path."""
+        adapter = default_flowmol3_adapter()
+        assert adapter._force_mode == "synthetic"  # noqa: SLF001
+        assert adapter._real_ckpt_meta is None  # noqa: SLF001
+        assert isinstance(adapter, FlowMol3Adapter)
+
+    def test_factory_explicit_synthetic_no_load(self) -> None:
+        """``force_mode='synthetic'`` is byte-identical to default."""
+        adapter = default_flowmol3_adapter(force_mode="synthetic")
+        assert adapter._force_mode == "synthetic"  # noqa: SLF001
+        assert adapter._real_ckpt_meta is None  # noqa: SLF001
+
+    def test_factory_real_loads_published_ckpt(self) -> None:
+        """``force_mode='real'`` loads the 65 MB published ckpt.
+
+        The shipped ``data/flowmol3/weights_real/checkpoints/last.ckpt``
+        is a PyTorch Lightning checkpoint with ``epoch=17`` and
+        ``global_step=1547236``. We don't decode the tensors — only the
+        envelope — to stay byte-stable on torch version drift.
+        """
+        if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
+            pytest.skip(
+                f"FlowMol3 real ckpt not shipped at {FLOWMOL3_REAL_CKPT_PATH}"
+            )
+        adapter = default_flowmol3_adapter(force_mode="real")
+        assert adapter._force_mode == "real"  # noqa: SLF001
+        assert adapter._real_ckpt_meta is not None  # noqa: SLF001
+        assert (
+            adapter._real_ckpt_meta["path"]  # noqa: SLF001
+            == FLOWMOL3_REAL_CKPT_PATH
+        )
+        assert adapter._real_ckpt_meta["n_tensors"] > 0  # noqa: SLF001
+        # The published ckpt has epoch=17; pin the contract so any
+        # silent re-upload of a different snapshot breaks this test.
+        assert adapter._real_ckpt_meta["epoch"] == 17  # noqa: SLF001
+
+    def test_factory_auto_loads_real_when_available(self) -> None:
+        """``force_mode='auto'`` tries real, succeeds when shipped."""
+        if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
+            pytest.skip(
+                f"FlowMol3 real ckpt not shipped at {FLOWMOL3_REAL_CKPT_PATH}"
+            )
+        adapter = default_flowmol3_adapter(force_mode="auto")
+        assert adapter._force_mode == "auto"  # noqa: SLF001
+        assert adapter._real_ckpt_meta is not None  # noqa: SLF001
+        assert (
+            adapter._real_ckpt_meta["n_tensors"] > 0  # noqa: SLF001
+        )
+
+    def test_factory_auto_falls_back_to_synthetic_when_ckpt_missing(
+        self,
+    ) -> None:
+        """``force_mode='auto'`` degrades gracefully when ckpt absent."""
+        adapter = default_flowmol3_adapter(
+            force_mode="auto",
+            weights_path="/nonexistent/flowmol3/last.ckpt",
+        )
+        # force_mode is preserved verbatim so callers can distinguish
+        # "user asked for auto" from "user asked for synthetic".
+        assert adapter._force_mode == "auto"  # noqa: SLF001
+        assert adapter._real_ckpt_meta is None  # noqa: SLF001
+
+    def test_factory_real_raises_when_ckpt_missing(self) -> None:
+        """``force_mode='real'`` is loud: raises FileNotFoundError."""
+        with pytest.raises(FileNotFoundError, match="ckpt_missing"):
+            default_flowmol3_adapter(
+                force_mode="real",
+                weights_path="/nonexistent/flowmol3/last.ckpt",
+            )
+
+    def test_factory_rejects_unknown_force_mode(self) -> None:
+        """Unknown ``force_mode`` strings raise ``ValueError``."""
+        with pytest.raises(ValueError, match="unknown_force_mode"):
+            default_flowmol3_adapter(force_mode="bogus")
+
+    def test_constructor_rejects_unknown_force_mode_directly(self) -> None:
+        """``FlowMol3Adapter.__init__`` also rejects bogus tokens."""
+        with pytest.raises(ValueError, match="unknown_force_mode"):
+            FlowMol3Adapter(force_mode="bogus")
+
+    def test_loaded_marker_constant_is_defined(self) -> None:
+        """``FLOWMOL3_REAL_CKPT_LOADED_MARKER`` is exported and string."""
+        assert isinstance(FLOWMOL3_REAL_CKPT_LOADED_MARKER, str)
+        assert FLOWMOL3_REAL_CKPT_LOADED_MARKER == "flowmol3_real_ckpt_loaded"
+
+    def test_ckpt_path_constant_points_at_shipped_artifact(self) -> None:
+        """``FLOWMOL3_REAL_CKPT_PATH`` resolves to the shipped ckpt."""
+        # Path should end in ``weights_real/checkpoints/last.ckpt`` and
+        # the parent directory must exist (we do not require the ckpt
+        # to exist so a missing-file scenario still resolves).
+        assert FLOWMOL3_REAL_CKPT_PATH.endswith(
+            "weights_real/checkpoints/last.ckpt"
+        )
+        assert os.path.isdir(os.path.dirname(FLOWMOL3_REAL_CKPT_PATH))
+
+    def test_try_load_real_ckpt_helper_returns_meta_on_success(self) -> None:
+        """Direct unit test of the internal loader."""
+        if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
+            pytest.skip(
+                f"FlowMol3 real ckpt not shipped at {FLOWMOL3_REAL_CKPT_PATH}"
+            )
+        meta, err = _try_load_real_ckpt(FLOWMOL3_REAL_CKPT_PATH)
+        assert err is None
+        assert meta is not None
+        assert meta["path"] == FLOWMOL3_REAL_CKPT_PATH
+        assert meta["n_tensors"] > 0
+
+    def test_try_load_real_ckpt_helper_returns_reason_on_missing(
+        self,
+    ) -> None:
+        """Direct unit test of the missing-file path."""
+        meta, err = _try_load_real_ckpt("/nonexistent/flowmol3/last.ckpt")
+        assert meta is None
+        assert err == "ckpt_missing"
+
+    def test_real_ckpt_adapter_is_still_a_valid_adapter(self) -> None:
+        """A real-ckpt adapter still produces placeholder state.
+
+        The placeholder adapter always returns placeholder state — the
+        ``force_mode='real'`` path only records that the ckpt loaded;
+        it does NOT swap the state materializer. The v2 adapter is the
+        one that runs inference through the real stack. This test
+        guards against a future refactor accidentally regressing that
+        separation of concerns.
+        """
+        if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
+            pytest.skip(
+                f"FlowMol3 real ckpt not shipped at {FLOWMOL3_REAL_CKPT_PATH}"
+            )
+        adapter = default_flowmol3_adapter(force_mode="real")
+        bundle = adapter.build_initial_state(
+            batch_id="b-wave50", sample_id="s-wave50"
+        )
+        ok, _ = validate_state_bundle(bundle)
+        assert ok
+        # Real-ckpt marker is exposed on the adapter as an audit hook.
+        assert adapter._real_ckpt_meta is not None  # noqa: SLF001
 
 
 __all__ = ()

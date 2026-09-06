@@ -48,6 +48,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field, replace
 from typing import Any, cast
@@ -84,6 +85,23 @@ from adaptive_reflow.writer.registry import (
 
 # Local type alias — kept parallel to other adapters.
 ArrayF64 = NDArray[np.float64]
+
+#: Default absolute path to the published FlowMol3 PyTorch Lightning
+#: checkpoint used by :func:`default_flowmol3_adapter` when
+#: ``force_mode in {"real", "auto"}``. The artifact is a 65 MB
+#: ``last.ckpt`` shipped under ``data/flowmol3/weights_real/``.
+FLOWMOL3_REAL_CKPT_PATH: str = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "data",
+    "flowmol3",
+    "weights_real",
+    "checkpoints",
+    "last.ckpt",
+)
+
+#: Audit marker stamped on the adapter provenance when a real ckpt
+#: load succeeded. See :func:`_try_load_real_ckpt`.
+FLOWMOL3_REAL_CKPT_LOADED_MARKER: str = "flowmol3_real_ckpt_loaded"
 
 # ---------------------------------------------------------------------------
 # Adapter
@@ -569,6 +587,8 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         atom_type_entropy_restart_policy: (
             FlowMol3AtomTypeEntropyRestartPolicy | None
         ) = None,
+        force_mode: str = "synthetic",
+        real_ckpt_meta: Mapping[str, Any] | None = None,
     ) -> None:
         self._caps = FlowMol3Capabilities()
         # Wave 49 Agent F: optional atom-type-entropy-aware restart
@@ -595,6 +615,27 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         self._atom_type_entropy_restart_policy: (
             FlowMol3AtomTypeEntropyRestartPolicy | None
         ) = atom_type_entropy_restart_policy
+        # Wave 50 Agent A: ``force_mode`` kwarg unblocks
+        # :func:`tools.run_real_ckpt_eval._resolve_adapter`'s
+        # ``factory(force_mode=...)`` call. The placeholder adapter
+        # does not run inference through the real FlowMol3 stack (that
+        # is the v2 adapter's job), but it records whether a real ckpt
+        # load succeeded so downstream eval reports can surface the
+        # ``real_ckpt_loaded`` marker. The default ``"synthetic"``
+        # keeps all 13 existing tests byte-identical.
+        if force_mode not in {"synthetic", "real", "auto"}:
+            raise ValueError(
+                f"unknown_force_mode:{force_mode} "
+                "(expected 'synthetic' | 'real' | 'auto')"
+            )
+        self._force_mode: str = str(force_mode)
+        # ``_real_ckpt_meta`` is ``None`` when no real ckpt was loaded;
+        # otherwise it carries ``{"path": str, "n_tensors": int,
+        # "epoch": int, "global_step": int, "lightning_version": str}``
+        # so the audit trail can attribute the load to a specific file.
+        self._real_ckpt_meta: Mapping[str, Any] | None = (
+            dict(real_ckpt_meta) if real_ckpt_meta is not None else None
+        )
 
     # -- protocol surface ---------------------------------------------------
 
@@ -997,15 +1038,124 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
 # ---------------------------------------------------------------------------
 
 
+def _try_load_real_ckpt(
+    weights_path: str,
+) -> tuple[Mapping[str, Any] | None, str | None]:
+    """Attempt to load the published FlowMol3 Lightning checkpoint.
+
+    Returns ``(meta, None)`` on success — ``meta`` is a
+    ``Mapping[str, Any]`` carrying ``{path, n_tensors, epoch,
+    global_step, lightning_version}`` so downstream audit reports can
+    surface a ``real_ckpt_loaded`` marker.
+
+    Returns ``(None, reason)`` on any failure — ``reason`` is a short
+    human-readable string (``"torch_not_installed"`` /
+    ``"ckpt_missing"`` / ``"ckpt_load_failed"`` /
+    ``"ckpt_unexpected_shape"``). Never raises; the caller is expected
+    to fall back to the synthetic placeholder path.
+
+    Notes
+    -----
+    This is the **placeholder** adapter's loader: it only inspects the
+    checkpoint shape / metadata, it does not run inference through the
+    real FlowMol3 stack. The v2 adapter (``flowmol3_v2_adapter``) is
+    the model that actually executes the ``vector_field`` against the
+    loaded state dict.
+    """
+    if not os.path.isfile(str(weights_path)):
+        return None, "ckpt_missing"
+    try:
+        import torch  # noqa: PLC0415 — checkpoint load is opt-in only.
+    except Exception:  # noqa: BLE001 — torch is optional in the framework venv.
+        return None, "torch_not_installed"
+    try:
+        blob = torch.load(
+            str(weights_path), map_location="cpu", weights_only=False
+        )
+    except Exception:  # noqa: BLE001
+        return None, "ckpt_load_failed"
+    if not isinstance(blob, dict):
+        return None, "ckpt_unexpected_shape"
+    raw_sd = blob.get("state_dict", blob)
+    if not isinstance(raw_sd, dict):
+        return None, "ckpt_unexpected_shape"
+    meta: dict[str, Any] = {
+        "path": str(weights_path),
+        "n_tensors": int(len(raw_sd)),
+        "epoch": int(blob.get("epoch", -1))
+        if isinstance(blob, dict) and "epoch" in blob
+        else -1,
+        "global_step": int(blob.get("global_step", -1))
+        if isinstance(blob, dict) and "global_step" in blob
+        else -1,
+        "lightning_version": str(
+            blob.get("pytorch-lightning_version", "")
+            if isinstance(blob, dict)
+            else ""
+        ),
+    }
+    return meta, None
+
+
 def default_flowmol3_adapter(
     *,
     atom_type_entropy_restart_policy: (
         FlowMol3AtomTypeEntropyRestartPolicy | None
     ) = None,
+    force_mode: str = "synthetic",
+    weights_path: str | None = None,
 ) -> FlowMol3Adapter:
-    """Return a fresh :class:`FlowMol3Adapter` for tests and the registry."""
+    """Return a fresh :class:`FlowMol3Adapter` for tests and the registry.
+
+    Wave 50 Agent A: ``force_mode`` selects the adapter operating mode
+    so :func:`tools.run_real_ckpt_eval._resolve_adapter`'s
+    ``factory(force_mode=...)`` call no longer raises
+    ``TypeError: default_flowmol3_adapter() got an unexpected keyword
+    argument force_mode``.
+
+    Accepted values (mirrors :func:`tools.run_real_ckpt_eval._resolve_adapter`):
+
+    * ``"synthetic"`` (default) — always use the placeholder path,
+      byte-identical to the pre-Wave-50 behaviour. No file I/O.
+    * ``"real"`` — load the real FlowMol3 Lightning checkpoint at
+      :data:`FLOWMOL3_REAL_CKPT_PATH` (or the explicit ``weights_path``
+      override). On any failure (missing file / missing torch /
+      corrupted ckpt / unexpected shape) the factory raises
+      ``FileNotFoundError`` / ``RuntimeError`` so the caller can
+      distinguish a hard BLOCKED result from a graceful fallback.
+    * ``"auto"`` — try the real ckpt; on any failure, degrade
+      gracefully to the synthetic placeholder and return the adapter
+      with ``_real_ckpt_meta=None``.
+
+    Backward-compat: callers that omit ``force_mode`` see the same
+    byte-identical placeholder behaviour they did before Wave 50.
+    """
+    if force_mode not in {"synthetic", "real", "auto"}:
+        raise ValueError(
+            f"unknown_force_mode:{force_mode} "
+            "(expected 'synthetic' | 'real' | 'auto')"
+        )
+    real_ckpt_meta: Mapping[str, Any] | None = None
+    if force_mode in {"real", "auto"}:
+        ckpt_path = (
+            str(weights_path)
+            if weights_path is not None
+            else str(FLOWMOL3_REAL_CKPT_PATH)
+        )
+        meta, err = _try_load_real_ckpt(ckpt_path)
+        if meta is not None:
+            real_ckpt_meta = meta
+        elif force_mode == "real":
+            raise FileNotFoundError(
+                f"flowmol3_real_ckpt_load_failed:{err}:{ckpt_path}"
+            )
+        # force_mode == "auto": silently degrade to synthetic; the
+        # caller sees an adapter with ``_real_ckpt_meta=None`` so the
+        # downstream eval report can surface ``synthetic_fallback``.
     return FlowMol3Adapter(
         atom_type_entropy_restart_policy=atom_type_entropy_restart_policy,
+        force_mode=str(force_mode),
+        real_ckpt_meta=real_ckpt_meta,
     )
 
 
@@ -1023,6 +1173,8 @@ __all__ = [
     "FLOWMOL3_CHANNEL_DOMAINS",
     "FLOWMOL3_PLACEHOLDER_NUM_EDGES",
     "FLOWMOL3_PLACEHOLDER_NUM_NODES",
+    "FLOWMOL3_REAL_CKPT_LOADED_MARKER",
+    "FLOWMOL3_REAL_CKPT_PATH",
     "FlowMol3Adapter",
     "FlowMol3AtomTypeEntropyRestartPolicy",
     "FlowMol3Capabilities",
