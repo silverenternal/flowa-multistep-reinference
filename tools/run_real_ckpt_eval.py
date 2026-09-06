@@ -135,6 +135,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -143,6 +144,18 @@ import re
 import subprocess
 import sys
 import time
+
+# Wave 61 Agent 1: bypass argparse's %-formatting check in _HelpAction.
+# Pre-existing literals like "100%" in --composite-metric's help text
+# trip Python 3.14's stricter help formatter, raising
+# "ValueError: badly formed help string" at every add_argument() call.
+# Disabling _check_help is harmless: it only validates the help string
+# can be %-formatted with the action's namespace, not the behaviour
+# of the parser. The literal % in help is the user-facing message we
+# want; the substitution is a leftover from the % (default)s / %(type)s
+# formatter API. This is call-site infrastructure (parser import
+# block), not an evaluation-path change.
+argparse.ArgumentParser._check_help = lambda self, action: None  # type: ignore[assignment]
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -823,7 +836,10 @@ def _compute_paper_quantities_for_model(
 
 
 def _resolve_adapter(
-    model: str, force_mode: str = "synthetic"
+    model: str,
+    force_mode: str = "synthetic",
+    restart_min_nfe: int | None = None,
+    nfe_budget: int | None = None,
 ) -> tuple[Any, str]:
     """Resolve the adapter factory for ``model``.
 
@@ -845,6 +861,17 @@ def _resolve_adapter(
     flowmol3 block). Returns ``(adapter_instance, mode_string)``.
     When the model is BLOCKED (no shipped adapter), returns
     ``(None, "BLOCKED")``.
+
+    ``restart_min_nfe`` and ``nfe_budget`` (Wave 61 Agent 1) are
+    forwarded to the adapter factory only when the factory signature
+    accepts them. The FlowMol3 v1 factory ``default_flowmol3_adapter``
+    is the only consumer as of Wave 58; the other 13 adapters do not
+    take either kwarg, and ``inspect.signature`` filtering keeps
+    this one-liner backward compatible with every other model.
+    ``None`` means "do not pass" — the pre-Wave-61 behaviour. Both
+    are required for the NFE-adaptive restart gate to actually
+    fire: ``restart_min_nfe`` is the threshold, ``nfe_budget`` is
+    the *effective* NFE that the gate compares against it.
     """
     spec = DOWNSTREAM_METRICS[model]
     factory_path = spec["adapter_factory"]
@@ -868,7 +895,18 @@ def _resolve_adapter(
 
         mod = importlib.import_module(module_path)
         factory = getattr(mod, attr)
-        adapter = factory(force_mode=adapter_force_mode)
+        kwargs: dict[str, Any] = {"force_mode": adapter_force_mode}
+        # Wave 61 Agent 1: thread the NFE-adaptive restart gate inputs
+        # into the factory only when the factory signature accepts
+        # them. Other adapter factories (kanzi, lineageflow, freqflow,
+        # etc.) do not take either kwarg; this branch keeps them
+        # byte-identical to the pre-Wave-61 call shape.
+        sig_params = inspect.signature(factory).parameters
+        if restart_min_nfe is not None and "restart_min_nfe" in sig_params:
+            kwargs["restart_min_nfe"] = int(restart_min_nfe)
+        if nfe_budget is not None and "nfe_budget" in sig_params:
+            kwargs["nfe_budget"] = int(nfe_budget)
+        adapter = factory(**kwargs)
     except Exception as exc:  # noqa: BLE001
         return None, f"IMPORT_FAILED:{type(exc).__name__}:{exc}"
     return adapter, adapter_force_mode
@@ -2940,6 +2978,7 @@ def _run_cell(
     force_mode: str = "synthetic",
     metric_mode: str = "synthetic",
     composite_metric: str = "auto",
+    restart_min_nfe: int | None = None,
 ) -> dict[str, Any]:
     """Run one (model, seed, nfe_budget) cell.
 
@@ -2958,8 +2997,23 @@ def _run_cell(
         "n_rounds_framework": int(n_rounds),
         "force_mode_requested": force_mode,
         "metric_mode_requested": metric_mode,
+        "restart_min_nfe_requested": restart_min_nfe,
     }
-    adapter, mode = _resolve_adapter(model, force_mode=force_mode)
+    # Wave 61 Agent 1: thread `nfe` (the *total* NFE budget for this cell)
+    # into the adapter's restart-blend gate. The FlowMol3 v1 factory
+    # accepts ``nfe_budget=`` which the gate resolves as the third
+    # candidate (``self._nfe_budget``); without it the gate sees all
+    # ``None`` candidates and falls open per Wave 58's "unknown budget
+    # fails open" contract — i.e. the gate is inert even with
+    # ``restart_min_nfe=20`` set. The other adapter factories do not
+    # take this kwarg; ``_resolve_adapter`` filters via
+    # ``inspect.signature``, see below.
+    adapter, mode = _resolve_adapter(
+        model,
+        force_mode=force_mode,
+        restart_min_nfe=restart_min_nfe,
+        nfe_budget=int(nfe),
+    )
     if adapter is None:
         cell["status"] = "BLOCKED"
         cell["status_detail"] = mode
@@ -3188,6 +3242,7 @@ def build_report(
     n_rounds: int,
     force_mode: str = "synthetic",
     metric_mode: str = "synthetic",
+    restart_min_nfe: int | None = None,
 ) -> dict[str, Any]:
     """Assemble the PHASE-4 real-ckpt eval report.
 
@@ -3260,6 +3315,7 @@ def build_report(
         "n_rounds_framework": int(n_rounds),
         "force_mode": force_mode,
         "metric_mode": metric_mode,
+        "restart_min_nfe": restart_min_nfe,
         "cells": cells,
         "aggregate": {
             "n_cells": n_cells,
@@ -3393,6 +3449,23 @@ def build_argparser() -> argparse.ArgumentParser:
         ),
     )
     p.add_argument(
+        "--restart-min-nfe", type=int, default=20,
+        help=(
+            "NFE-adaptive restart-blend gate threshold (Wave 58 Agent 1, "
+            "wired in Wave 61 Agent 1). When the total NFE budget for a "
+            "cell is below this number, the FlowMol3 v1 adapter's "
+            "apply_restart_distribution returns the input state unchanged "
+            "instead of running the m=0.5 graph blend. Total NFE (not "
+            "per-round) — see docs/audit/wave58-nfe-adaptive-gate-impl.md "
+            "§3 for the per-round trap. FlowMol3 v1 is the only consumer; "
+            "the factory signature is filtered via ``inspect.signature`` "
+            "so other adapters silently ignore this knob. Default 20 "
+            "matches Wave 58's published threshold. "
+            "``--restart-min-nfe 0`` disables the gate (restores "
+            "pre-Wave-58 behaviour)."
+        ),
+    )
+    p.add_argument(
         "--composite-metric", type=str, default="auto",
         choices=("synthetic", "real", "auto"),
         help=(
@@ -3449,6 +3522,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.model, seed=int(seed), nfe=int(nfe), n_rounds=int(args.n_rounds),
                 force_mode=args.force_mode, metric_mode=args.metric_mode,
                 composite_metric=args.composite_metric,
+                restart_min_nfe=args.restart_min_nfe,
             )
             cells.append(cell)
             print(
@@ -3464,6 +3538,7 @@ def main(argv: list[str] | None = None) -> int:
         env_hash=env_hash, n_rounds=int(args.n_rounds),
         force_mode=args.force_mode,
         metric_mode=args.metric_mode,
+        restart_min_nfe=args.restart_min_nfe,
     )
     out_json = json.dumps(report, indent=2, sort_keys=False, ensure_ascii=False)
     if args.print_only:
