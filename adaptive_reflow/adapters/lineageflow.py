@@ -116,6 +116,7 @@ from adaptive_reflow.adapters._adapter_common import (
     make_adapter_capabilities,
     make_ref,
     memory_fraction_for,
+    per_position_entropy_reduction,
     seed_from_ids,
 )
 from adaptive_reflow.framework.interfaces import implements
@@ -150,6 +151,14 @@ AMINO_ACID_CATEGORICAL: ChannelName = ChannelName("amino_acid_categorical")
 #: into a continuous conditioning vector via a small MLP. The
 #: framework treats the cache as an opaque :class:`TensorRef`.
 PFAM_FAMILY_COND: ChannelName = ChannelName("pfam_family_cond")
+
+#: Metric key returned by
+#: :meth:`LineageFlowAdapter.observe_entropy_reduction`. Named for the
+#: P2-W33-C quantity specified in ``docs/theory/operating-regime.md``
+#: §11 so a duck-typed metric caller can key on it without importing
+#: the adapter. Not a :class:`ChannelName`: this is a scalar metric,
+#: not a state channel crossing the protocol boundary.
+PER_POSITION_ENTROPY_REDUCTION: str = "per_position_entropy_reduction"
 
 #: Supported channel set. Per-position amino-acid categorical +
 #: Pfam-family continuous conditioning.
@@ -281,6 +290,35 @@ def torch_is_available() -> bool:
     import importlib.util as _il
 
     return _il.find_spec("torch") is not None
+
+
+def _theta_to_logits(theta: ArrayF64, eps: float = 1e-12) -> ArrayF64:
+    """Convert a per-position categorical to logits over the vocab axis.
+
+    LineageFlow's native state is an **already-normalised** probability
+    distribution: :meth:`LineageFlowAdapter.solve_ode` divides every
+    integration step by ``x.sum(axis=-1, keepdims=True)``, and
+    ``test_solve_ode_returns_finite_trace`` pins ``traj.sum(axis=-1) ==
+    1``. But
+    :func:`adaptive_reflow.adapters._adapter_common.per_position_entropy_reduction`
+    documents its inputs as **logits** and applies a softmax along the
+    trailing axis.
+
+    Feeding raw probabilities to a softmax double-normalises them and
+    crushes the entropy signal towards uniform: a delta-spike measured
+    that way scores ``0.0275`` against a true ``log K = 3.4965`` (a
+    127x understatement), which would leave the metric all but
+    degenerate. Taking ``log`` first inverts the helper's softmax
+    exactly -- ``softmax(log theta) == theta`` whenever ``theta`` sums
+    to 1 -- so the helper computes the genuine Shannon entropy of the
+    residue distribution.
+
+    The ``eps`` floor keeps ``log(0)`` finite for clamped-to-zero
+    residues and matches the helper's own ``eps`` convention; it
+    perturbs the recovered distribution by ``O(eps)``
+    (measured: ``6.3e-12``).
+    """
+    return np.log(np.asarray(theta, dtype=np.float64) + eps)
 
 
 def lineageflow_resolve_weights_path(
@@ -1583,6 +1621,132 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         return {str(AMINO_ACID_CATEGORICAL): token_indices}
 
     # ------------------------------------------------------------------
+    # 9b. observe_entropy_reduction (Wave 45 — P2-W33-C metric promotion)
+    # ------------------------------------------------------------------
+
+    def observe_entropy_reduction(
+        self,
+        trace: ODEIntegratorTrace,
+        paper_quantities: Any = None,
+        *,
+        reference_theta: ArrayF64 | None = None,
+    ) -> dict[str, float]:
+        """Per-position Shannon-entropy reduction over the ODE trajectory.
+
+        Wave 45 addition. Promotes the P2-W33-C metric specified in
+        ``docs/theory/operating-regime.md`` §11 from the tools layer to
+        the adapter layer. The arithmetic is **not** re-derived here:
+        this method only selects the two ``theta`` arrays and delegates
+        to
+        :func:`adaptive_reflow.adapters._adapter_common.per_position_entropy_reduction`,
+        which is the single definition of the formula in the tree.
+
+        Why this is a *plain* computation for LineageFlow
+        -------------------------------------------------
+
+        LineageFlow's ODE trajectory state **is** the per-position
+        categorical: ``trajectory`` has shape ``(N+1, L, K)`` with
+        ``K = LINEAGEFLOW_VOCAB_SIZE = 33`` the Pfam amino-acid
+        alphabet, and :meth:`observe_token_indices` decodes a residue
+        by a plain ``argmax(trajectory[-1], axis=-1)``. Softmaxing along
+        the trailing axis therefore yields a genuine residue
+        distribution and its Shannon entropy is a residue-level
+        quantity, bounded by ``log K``.
+
+        This is **not** true for every adapter. Kanzi's trajectory is a
+        continuous latent, so a softmax along its trailing axis is not a
+        residue distribution and the §11 formula must not be reused
+        there without a separate justification — see
+        ``docs/audit/wave45-lineageflow-entropy-metric.md`` §"Kanzi
+        deferred".
+
+        Probabilities, not logits
+        -------------------------
+
+        LineageFlow's ``theta`` is already row-normalised, whereas the
+        shared helper documents its inputs as *logits* and softmaxes
+        them. Both arrays therefore go through :func:`_theta_to_logits`
+        first so the helper's softmax is inverted exactly; see that
+        function for why skipping the conversion would understate the
+        metric by two orders of magnitude.
+
+        Two modes
+        ---------
+
+        * ``reference_theta is None`` (default) — **within-trajectory**
+          reduction: ``H(trajectory[0]) - H(trajectory[-1])``. This is
+          self-contained (it needs no second run) and measures whether
+          integrating the ODE *sharpened* the per-position posterior.
+          A positive value means the endpoint is more concentrated than
+          the prior; a negative value means the ODE widened it.
+        * ``reference_theta`` given — **framework-vs-baseline** gap:
+          ``H(reference_theta) - H(trajectory[-1])``, where the caller
+          supplies the baseline arm's endpoint. Positive means this run
+          sharpened the posterior relative to the baseline.
+
+        Parameters
+        ----------
+        trace
+            The :class:`ODEIntegratorTrace` returned by the most recent
+            :meth:`solve_ode` call. Only ``native_state_digest`` is
+            consumed.
+        paper_quantities
+            Accepted for signature-parity with
+            :meth:`observe_token_indices` so a duck-typed metric caller
+            can invoke both the same way. Not consumed: the entropy
+            reduction is a property of the trajectory alone.
+        reference_theta
+            Optional baseline endpoint, broadcastable against
+            ``(L, K)``. When omitted the within-trajectory mode is used.
+
+        Returns
+        -------
+        dict[str, float]
+            ``{"per_position_entropy_reduction": <float>}``. The value
+            is bounded in ``[-log K, log K]``; it is ``0.0`` exactly for
+            a zero-step trajectory (where ``trajectory[0]`` *is*
+            ``trajectory[-1]``), and ``nan`` if either array degenerates
+            to fewer than two leading rows (never the case at
+            ``LINEAGEFLOW_MAX_LENGTH = 256``, but the helper's contract
+            is preserved rather than papered over).
+
+        Raises
+        ------
+        CapabilityMissingError
+            If ``trace.native_state_digest`` is not in the adapter's
+            native-state cache (e.g. evicted by LRU pressure), or the
+            cache entry carries no trajectory.
+        """
+        traj_entry = self._native_states.get(trace.native_state_digest)
+        if traj_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state",
+                context=trace.native_state_digest,
+            )
+        trajectory = traj_entry.get("trajectory")
+        if trajectory is None:
+            raise CapabilityMissingError(
+                "missing_trajectory",
+                context=trace.native_state_digest,
+            )
+        trajectory_arr = np.asarray(trajectory, dtype=np.float64)
+        theta_final = np.asarray(
+            trajectory_arr[-1], dtype=np.float64
+        ).reshape(LINEAGEFLOW_STATE_SHAPE)
+        if reference_theta is None:
+            theta_before = np.asarray(
+                trajectory_arr[0], dtype=np.float64
+            ).reshape(LINEAGEFLOW_STATE_SHAPE)
+        else:
+            theta_before = np.asarray(
+                reference_theta, dtype=np.float64
+            ).reshape(LINEAGEFLOW_STATE_SHAPE)
+        reduction = per_position_entropy_reduction(
+            _theta_to_logits(theta_before), _theta_to_logits(theta_final)
+        )
+        return {PER_POSITION_ENTROPY_REDUCTION: float(reduction)}
+
+    # ------------------------------------------------------------------
     # 10. inject_forward_noise
     # ------------------------------------------------------------------
 
@@ -1724,6 +1888,7 @@ __all__ = [
     "LINEAGEFLOW_VOCAB_SIZE",
     "LineageFlowAdapter",
     "LineageFlowCapabilities",
+    "PER_POSITION_ENTROPY_REDUCTION",
     "PFAM_FAMILY_COND",
     "default_lineageflow_adapter",
     "lineageflow_resolve_weights_path",
