@@ -56,6 +56,7 @@ from adaptive_reflow.adapters._adapter_common import (
     memory_fraction_for,
     seed_from_ids,
 )
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
 from adaptive_reflow.framework.interfaces import implements
 
 # ---------------------------------------------------------------------------
@@ -75,13 +76,19 @@ TWODIM_FM_CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = {
 }
 
 # Default weights path resolution: data/ at the repo root.
+# Values are filename *stems* (basename + extension) only — the full
+# ``data/<stem>`` vs ``data/twodim_fm/<stem>`` probe is delegated to
+# :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths` so
+# the multi-layout convention is shared with Self-Flow / HiDream /
+# FreqFlow / Kanzi / FlowMol3 / LineageFlow (Wave 44 adoption —
+# MUST-3 PARTIAL → PASS).
 _DEFAULT_WEIGHTS: Mapping[str, str] = {
-    "two_moons": "data/twodim_fm_two_moons.npz",
-    "eight_gaussians": "data/twodim_fm_eight_gaussians.npz",
-    "swiss_roll": "data/twodim_fm_swiss_roll.npz",
-    "pinwheel": "data/twodim_fm_pinwheel.npz",
-    "checkerboard": "data/twodim_fm_checkerboard.npz",
-    "gaussian_grid": "data/twodim_fm_gaussian_grid.npz",
+    "two_moons": "twodim_fm_two_moons.npz",
+    "eight_gaussians": "twodim_fm_eight_gaussians.npz",
+    "swiss_roll": "twodim_fm_swiss_roll.npz",
+    "pinwheel": "twodim_fm_pinwheel.npz",
+    "checkerboard": "twodim_fm_checkerboard.npz",
+    "gaussian_grid": "twodim_fm_gaussian_grid.npz",
 }
 
 # RK4 integration defaults.
@@ -511,10 +518,29 @@ def _blend_endpoint_with_prior(
 
 
 def _default_weights_path(target: str) -> Path:
-    """Resolve the canonical weights file for ``target`` under ``data/``."""
+    """Resolve the canonical weights file for ``target`` under ``data/``.
+
+    Probes both the per-adapter subdir layout
+    (``data/twodim_fm/<stem>``) and the flat-file layout
+    (``data/<stem>``) via the framework-core helper
+    :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths`
+    so the multi-layout convention is shared with Self-Flow /
+    HiDream / FreqFlow / Kanzi / FlowMol3 / LineageFlow (Wave 44
+    MUST-3 PARTIAL → PASS adoption). Returns the first existing
+    candidate, or falls back to the canonical ``data/<stem>`` path
+    string when neither layout has the file so :func:`_load_weights`
+    can raise :class:`FileNotFoundError` with the same error
+    message as the legacy path.
+    """
     if target not in _DEFAULT_WEIGHTS:
         raise ValueError(f"unknown_target:{target}")
-    return Path(_DEFAULT_WEIGHTS[target])
+    stem = _DEFAULT_WEIGHTS[target]
+    candidates = resolve_candidate_paths(
+        "twodim_fm", stem, data_dirs=[Path("data")],
+    )
+    if candidates:
+        return candidates[0]
+    return Path("data") / stem
 
 
 def _load_weights(path: Path) -> dict[str, ArrayF64]:
