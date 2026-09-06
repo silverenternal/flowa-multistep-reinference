@@ -8,6 +8,18 @@
 (see §6 — that is a Wave 59 step, `tools/run_real_ckpt_eval.py` was
 out of this agent's file scope)
 
+> **Commit-trail note.** This change landed split across two commits, not
+> by intent. A concurrent Wave 58 agent committed with a whole-tree `git
+> add`/`git commit -a` while these files were staged, so `c3eac21`
+> ("docs(todo): correct §10 novelty table") carries the bulk of the gate
+> code and `db01e28` carries the remainder plus this document and the
+> full descriptive message. Nothing was lost — the complete change is
+> present at `db01e28` — but `git log -- adaptive_reflow/adapters/flowmol3.py`
+> will attribute most of it to a docs commit. History was **not**
+> rewritten: other agents were committing to this branch concurrently,
+> and a rebase risked destroying their work. Coordination lesson for
+> parallel waves: commit with explicit pathspecs, never `-a`/`-A`.
+
 ---
 
 ## 1. What was implemented
