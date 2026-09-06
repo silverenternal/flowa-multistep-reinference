@@ -2071,3 +2071,106 @@ disjoint-file-scope contract.
 
 ---
 
+## §16 Wave 52 Agent A — paper §7 Tier 3 substantive rewrite
+
+Wave 52 Agent A rewrites `docs/paper-draft.md` §7 from a Wave 44/45
+placeholder (`framework_wins = 0` saturation framing) to a substantive
+Tier 3 section that exposes both the **decision-metric axis** AND the
+**composite axis** for all three SOTA 2026 ckpts (Kanzi, LineageFlow,
+FlowMol3). The §7 numbering now reads §7.1 Setup / §7.2 Composite
+formula / §7.3 Kanzi / §7.4 LineageFlow / §7.5 FlowMol3 / §7.6 honest
+verdict / §7.7 figure / §7.8 Wave 52 audit trail.
+
+### §16.1 What changed
+
+| File | Status | LOC delta (approx) |
+|---|---|---:|
+| `docs/paper-draft.md` (§7 full rewrite) | MODIFIED | +~440 / -~350 (net +~90) |
+| `docs/figures/tier3_real_ckpt_signed_mean.png` | REGENERATED | 3 Tier 3 models × 2 axes (decision-metric + composite) |
+| `tools/_make_wave42_figure.py` | MODIFIED (additive) | +~110 (FlowMol3 JSON load + tier3_composite color + 6-bar layout) |
+| `docs/CONSOLIDATED_RESULTS.md` §16 | APPENDED | +~80 |
+| `docs/audit/wave52-paper-tier3-rewrite.md` | NEW | +~600 (full audit trail) |
+
+### §16.2 Composite formula (universal across Kanzi / LineageFlow / FlowMol3)
+
+```
+composite  = 0.40 * phi1 + 0.35 * phi2 + 0.25 * phi3
+phi1       = entropy_reduction_normalised             # ∈ [-1, +1]
+phi2       = per_position_max_prob_delta_signed       # ∈ [-1, +1]
+phi3       = argmax_turnover_signed                    # ∈ [-1, +1]
+weights    = [0.40, 0.35, 0.25]                        # sum = 1.0
+composite  ∈ [-1, +1]
+composite_verdict = "framework_improves" iff median(composite) > 0
+                   else "no_signal"
+```
+
+### §16.3 Per-model composite summary (current state)
+
+| Model | params | composite (best known) | composite_verdict | source |
+|---|---:|---:|:---|---|
+| Kanzi (ICLR 2026 protein flow-AE) | 44.1 M | (in flight, Wave 52 Agent A) | (in flight) | KanziGlue per-cell — Wave 52 Agent A in flight |
+| LineageFlow (ICML 2026 protein flow-matching) | 657 M | **+0.210937** | **framework_improves** | Wave 47 Agent A smoke test (seed 42, NFE 10, real ckpt) |
+| FlowMol3 (NeurIPS 2024 molecular 3D flow-matching) | 65 M | +0.000000 | no_signal | Wave 50 Agent B 9-cell sweep; metric layer missing |
+
+**LineageFlow composite decomposition (Wave 47 Agent A smoke test):**
+`phi1_entropy_reduction_normalised = -7.24e-15`, `phi2_max_prob_delta =
+-1.20e-07`, `phi3_argmax_turnover_signed = +0.84375`. The composite
+signal is dominated by phi3 (per-position argmax turnover across 33
+ESM-2 token-position slots, driven by `LineageFlowClassifierAwareRestart`).
+Weights `0.40 / 0.35 / 0.25` produce `composite = 0.40 * 0 + 0.35 * 0 +
+0.25 * 0.84375 = +0.210937`.
+
+### §16.4 Honest verdict (§7.6 of paper-draft.md)
+
+The framework improves the **flow component** when the adapter
+exposes a per-position entropy signal that the multi-round
+restart-blend can drive systematically:
+
+* **LineageFlow (pure flow-matching on ESM-2 latent)** — composite
+  `+0.211`, `framework_improves`. The framework's
+  `LineageFlowClassifierAwareRestart` policy flips ~84% of the 33
+  token-position argmaxes round-over-round without contradicting
+  any upstream prior.
+* **Kanzi (hybrid: GPT-prior → flow-AE)** — decision metric saturated
+  on all 9 cells; composite axis in flight (Wave 52 Agent A). The
+  GPT-prior head anchors the per-position argmax, so the
+  framework's path-shape signal may collapse to the same endpoint.
+* **FlowMol3 (pure flow-matching on RDKit conformer)** — composite
+  `+0.000`, `no_signal`. The composite glue ran end-to-end on every
+  cell but cannot evaluate: the FlowMol3 metric layer
+  (`frac_valid_mols`) is not implemented for the real ckpt.
+
+### §16.5 File scope contract (verified)
+
+* **Modified:** `docs/paper-draft.md`, `tools/_make_wave42_figure.py`,
+  `docs/figures/tier3_real_ckpt_signed_mean.png`,
+  `docs/CONSOLIDATED_RESULTS.md` (this §16 appended).
+* **NOT touched:** `adaptive_reflow/`, `tests/`, framework, scheduler,
+  eval pipeline, `tools/run_real_ckpt_eval.py`, any adapter
+  (`adaptive_reflow/adapters/{kanzi,lineageflow,flowmol3}.py`),
+  the eval JSONs in `verification_outputs/`.
+
+### §16.6 Reproducibility
+
+```bash
+# Regenerate figure (3 Tier 3 models, dual-axis)
+.venvs/flowmol3_venv/bin/python tools/_make_wave42_figure.py
+
+# Composite eval commands per model (require ckpts):
+.venvs/lineageflow_venv/bin/python tools/run_real_ckpt_eval.py \
+    --model lineageflow --force-mode real --metric-mode real \
+    --composite-metric real --seeds 42 --nfe-budgets 10 \
+    --output /tmp/q4_w52.json
+
+.venvs/flowmol3_venv/bin/python tools/run_real_ckpt_eval.py \
+    --model flowmol3 --force-mode auto --metric-mode real \
+    --composite-metric real --seeds 42,43,44 --nfe-budgets 10,50,200 \
+    --output verification_outputs/flowmol3_real_composite_q4_2026.json
+```
+
+**No code change** to `adaptive_reflow/`, `tests/`, framework,
+scheduler, `tools/run_real_ckpt_eval.py`, or other adapters per the
+disjoint-file-scope contract.
+
+---
+
