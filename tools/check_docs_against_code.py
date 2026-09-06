@@ -223,8 +223,18 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         # * ``Heun``, ``Midpoint`` are ODE-integrator names
         #   (third-party math classes); they show up in
         #   baseline-audit-report.md when comparing solver order.
+        # * ``LineageFlowClassifier`` is the upstream LineageFlow model
+        #   class imported by ``tools/run_lineageflow_real_ckpt.py:94``
+        #   (``from models.model import LineageFlowClassifier``). The
+        #   class lives in the upstream
+        #   ``github.com/Jinx-byebye/LineageFlow`` package and is NOT a
+        #   project-internal symbol; ``docs/CONSOLIDATED_RESULTS.md``
+        #   §15.2 references it as a proper noun when describing the
+        #   real-ckpt eval, so the inline extractor would otherwise
+        #   demand a definition.
         "FlowMol3", "ProtBFNAbBFNModel", "Lumina", "HiDream", "Wan2",
         "Alpha", "Image", "MMseqs2", "Heun", "Midpoint",
+        "LineageFlowClassifier",
         # Companion-doc / ADR file + run-id pointers referenced inline
         # in CLM / INSIGHTS / baseline-audit prose:
         # * ``CONSOLIDATED_RESULTS``, ``PAPER_INVENTORY``,
@@ -1050,7 +1060,16 @@ def collect_claims(
     addresses, and we want ``TestName`` to resolve).
     """
     tests_root_path = tests_root if tests_root is not None else REPO_ROOT / "tests"
-    code_symbols = _build_symbol_index(CODE_ROOT, tests_root_path)
+    # ``tools/`` is also part of the project codebase: top-level CLI /
+    # audit / run scripts live there and frequently define module-level
+    # constants (e.g. ``TIE_AT_SATURATION`` in
+    # ``tools/run_real_ckpt_eval.py``) that the governance docs reference
+    # inline. Indexing it makes those references verifiable without
+    # denylisting, which is the Wave 44 Group-B push-blocker fix.
+    tools_root_path = REPO_ROOT / "tools"
+    code_symbols = _build_symbol_index(
+        CODE_ROOT, tests_root_path, tools_root_path
+    )
     claims: list[Claim] = []
     paths = list(_iter_markdown_files())
     if include_all_top_level_md:

@@ -15,6 +15,18 @@ that produces the ``.npz`` weights files). It is the second NumPy
 adapter under :mod:`adaptive_reflow.adapters` (the first being
 :class:`TwoDimFMAdapter`).
 
+Wave 44 (D.1 partial) — the default-weight-path resolution now
+delegates to
+:func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths` (the
+subdir-then-flat probe used by every PHASE-3 adapter) instead of a
+hard-coded :data:`MNIST_FM_DEFAULT_WEIGHTS` constant. The NumPy UNet
+runtime path is byte-identical (no torch state-dict load, no DiT
+forward wrapper) so the existing regression vectors stay frozen. See
+``docs/audit/wave44-mnist-fm-core.md`` for the per-adapter refactor
+rationale and the explicit list of core helpers that **do not** apply
+to this NumPy-only adapter (``load_state_dict_strict_safe`` /
+``diffusers_preprocess`` / ``diffusers_postprocess`` / etc.).
+
 State shape convention
 ----------------------
 
@@ -62,6 +74,7 @@ from adaptive_reflow.adapters._adapter_common import (
     memory_fraction_for,
     seed_from_ids,
 )
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
 from adaptive_reflow.framework.interfaces import implements
 
 from .mnist_fm_train import (  # noqa: E402 — runtime numpy dep, opt-in extra
@@ -88,7 +101,14 @@ MNIST_FM_CHANNEL_DOMAINS: Mapping[ChannelName, ChannelDomain] = {
     ChannelName("x"): "continuous",
 }
 
-# Default weights path resolution: data/ at the repo root.
+# Default weights path resolution: data/ at the repo root. The
+# :func:`mnist_fm_resolve_weights_path` helper below probes the same
+# ``data_dir`` (and the ``data_dir / "mnist_fm"`` subdir) via the
+# framework-core :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths`
+# helper, so this constant is now only used as the post-resolution
+# fallback when no candidate exists on disk (the constructor still
+# surfaces a clear ``missing_weight_keys`` error via
+# :func:`load_weights`).
 MNIST_FM_DEFAULT_WEIGHTS: Path = Path("data/mnist_fm.npz")
 
 # RK4 integration defaults.
@@ -124,6 +144,43 @@ MNIST_FM_DEFAULT_MAX_STEPS: int = 1000
 # Integrator method literal (P0-2 — mirrors :data:`twodim_fm.IntegratorMethod`
 # but scoped to the two integrators the MNIST adapter actually exposes today).
 MnistFmIntegratorMethod = Literal["rk4", "dormand_prince"]
+
+
+# ---------------------------------------------------------------------------
+# Public helpers — checkpoint discovery
+# ---------------------------------------------------------------------------
+
+
+def mnist_fm_resolve_weights_path(
+    *,
+    data_dir: Path | None = None,
+) -> Path | None:
+    """Return the candidate ``mnist_fm.npz`` weights path, or ``None`` if missing.
+
+    Thin adapter wrapper over
+    :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths` —
+    probes ``data_dir / "mnist_fm" / "mnist_fm.npz"`` first, then the
+    flat ``data_dir / "mnist_fm.npz"`` fallback (matches the HiDream /
+    Self-Flow / FreqFlow / Kanzi / LineageFlow convention). The probe
+    uses ``"mnist_fm.npz"`` as an explicit extension-bearing stem so the
+    default extension list in the framework-core helper
+    (``.pt / .pth / .bin / .safetensors / .npy``) is bypassed — NumPy
+    ``.npz`` artefacts are not in that default list. Returns ``None``
+    when no candidate exists; the constructor still surfaces a clear
+    :func:`load_weights` ``missing_weight_keys`` error in that case.
+
+    Wave 44 (D.1 partial) — adoption of the framework-core resolver
+    removes the per-adapter ``Path("data/mnist_fm.npz")`` hard-code
+    while preserving byte-identical behaviour for callers that pass an
+    explicit ``weights_path``. See ``docs/audit/wave44-mnist-fm-core.md``
+    for the per-adapter refactor rationale.
+    """
+    candidates = resolve_candidate_paths(
+        "mnist_fm",
+        "mnist_fm.npz",
+        data_dirs=[Path(data_dir)] if data_dir is not None else None,
+    )
+    return candidates[0] if candidates else None
 
 
 # ---------------------------------------------------------------------------
@@ -438,9 +495,18 @@ class MnistFmAdapter(FlowMatchingODEAdapter):
                 seed=int(init_seed),
             )
         else:
-            self._weights_path = (
-                Path(weights_path) if weights_path is not None else MNIST_FM_DEFAULT_WEIGHTS
-            )
+            if weights_path is not None:
+                # Caller-supplied explicit path wins — no probing.
+                self._weights_path = Path(weights_path)
+            else:
+                # Probe via the framework-core resolver; fall back to
+                # the historical default-path constant when no
+                # candidate exists so :func:`load_weights` can still
+                # raise the canonical ``missing_weight_keys`` error.
+                resolved = mnist_fm_resolve_weights_path()
+                self._weights_path = (
+                    Path(resolved) if resolved is not None else MNIST_FM_DEFAULT_WEIGHTS
+                )
             self._weights: list[ArrayF64] = load_weights(self._weights_path)
         self._native_states: NativeStateCache = NativeStateCache(
             maxsize=MNIST_FM_NATIVE_STATES_MAXSIZE
@@ -921,4 +987,5 @@ __all__ = [
     "MnistFMCapabilities",
     "MnistFmIntegratorMethod",
     "default_mnist_fm_adapter",
+    "mnist_fm_resolve_weights_path",
 ]

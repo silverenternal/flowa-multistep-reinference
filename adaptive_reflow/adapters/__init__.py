@@ -201,6 +201,7 @@ from .mnist_fm import (
     MnistFMCapabilities,
     MnistFmAdapter,
     default_mnist_fm_adapter,
+    mnist_fm_resolve_weights_path,
 )
 from .rectified_flow_cifar import (
     RF_CIFAR_CHANNELS,

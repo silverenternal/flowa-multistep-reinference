@@ -156,6 +156,14 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 ENV_HASH_FILE = REPO_ROOT / "env_hash.txt"
 CAPABILITY_AUDIT = REPO_ROOT / "tools" / "capability_audit.py"
 
+#: Cell-level status literal used when both arms sit at the saturation
+#: ceiling (i.e. the metric is already SOTA, so the framework cannot
+#: improve it but the baseline has not regressed either). Promoted to
+#: a module-level constant so the governance docs and the inline
+#: symbol extractor (``tools/check_docs_against_code``) see it as a
+#: real, defined project symbol rather than a bare string literal.
+TIE_AT_SATURATION: str = "TIE_AT_SATURATION"
+
 # ---------------------------------------------------------------------------
 # Per-model downstream metric registry (single source of truth)
 # ---------------------------------------------------------------------------
@@ -1122,7 +1130,7 @@ def _run_cell(
                 )
             cell["saturation_at_ceiling"] = bool(at_sat)
             if at_sat:
-                cell["status"] = "TIE_AT_SATURATION"
+                cell["status"] = TIE_AT_SATURATION
             elif cell["signed_delta_pct"] > 0:
                 cell["status"] = "SUPPORTED"
             elif cell["signed_delta_pct"] == 0:
@@ -1168,7 +1176,7 @@ def build_report(
     n_blocked = sum(1 for c in cells if c.get("status") == "BLOCKED")
     n_run_error = sum(1 for c in cells if c.get("status") == "RUN_ERROR")
     n_supported = sum(1 for c in cells if c.get("status") == "SUPPORTED")
-    n_tie_sat = sum(1 for c in cells if c.get("status") == "TIE_AT_SATURATION")
+    n_tie_sat = sum(1 for c in cells if c.get("status") == TIE_AT_SATURATION)
     n_tie = sum(1 for c in cells if c.get("status") == "TIE")
     n_regression = sum(1 for c in cells if c.get("status") == "REGRESSION")
     n_pending = sum(1 for c in cells if c.get("status") == "PENDING")
@@ -1258,7 +1266,7 @@ def _overall_verdict(
         return "BLOCKED"
     if n_supported > 0:
         return "SUPPORTED"
-    return "TIE_AT_SATURATION"
+    return TIE_AT_SATURATION
 
 
 # ---------------------------------------------------------------------------
