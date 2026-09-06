@@ -119,6 +119,7 @@ Two further deliberate asymmetries:
 
 | Check | Result |
 |---|---|
+| `tests/test_adapters/` (whole suite, all 14 adapters) | **1111 passed, 4 failed, 70 skipped** — the 4 are the pre-existing ones below; no other adapter regressed |
 | `tests/test_adapters/test_flowmol3_adapter.py` | **75 passed, 4 failed** |
 | — of which Wave 58 gate tests | **30 passed** (`-k NfeAdaptive`) |
 | — the 4 failures | **pre-existing at HEAD** (`torch_not_installed`; `TestFlowMol3ForceModeFactory` needs the torch sidecar). Verified by re-running the suite with the three changed files stashed: identical 4 failures, 45 passed. |

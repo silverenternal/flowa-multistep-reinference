@@ -208,7 +208,7 @@ def make_adapter_capabilities(
 
 
 def coerce_nfe_budget(value: Any) -> int | None:
-    """Return ``value`` as a positive-int NFE budget, or ``None``.
+    """Return ``value`` as a usable integer NFE budget, or ``None``.
 
     Wave 58: shared coercion for the NFE-adaptive restart gate (see
     :func:`low_nfe_restart_gate`). ``None`` means "this candidate does

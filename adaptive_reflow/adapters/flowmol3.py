@@ -353,7 +353,7 @@ def _explicit_nfe_budget(value: Any, *, field: str) -> int | None:
     """Validate an **explicitly supplied** total-NFE budget (Wave 58).
 
     ``None`` means "not supplied" and is returned as-is. Anything else
-    must be a positive integer step count per
+    must be an integer step count greater than 1, per
     :func:`~adaptive_reflow.adapters._adapter_common.coerce_nfe_budget`;
     a value that is not raises ``ValueError`` naming ``field``.
 
