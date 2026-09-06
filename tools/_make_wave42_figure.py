@@ -1,5 +1,12 @@
-"""Wave 42 paper-writeup figure — Tier 3 (Kanzi ICLR 2026 + LineageFlow ICML 2026) real-ckpt
+"""Wave 42 + Wave 44 paper-writeup figure — Tier 3 (Kanzi ICLR 2026 + LineageFlow ICML 2026) real-ckpt
 framework advantage shown alongside Tier 1 (toy FM) + Tier 2 (SOTA image RF) values.
+
+Wave 44 Agent D update: now reads from the Wave 44 Agent C real-ckpt metric JSONs
+(`kanzi_real_metric_v2_q4_2026.json`, `lineageflow_real_metric_v2_q4_2026.json`)
+instead of the Wave 42 synthetic-fallback JSON (`kanzi_real_ckpt_eval_q4_2026_kanzi.json`).
+The Kanzi bars still sit at +0.0000 (saturation at the REAL ceiling, 1.0, not
+the synthetic fallback 0.95), and LineageFlow now shows 1/1 RUN_ERROR (pre-existing
+adapter-layer EsmModel dtype bug).
 
 Renders a horizontal bar chart of per-family signed_mean for the 5 integrated model families,
 colored by tier (Tier 1 toy = blue, Tier 2 SOTA image = green, Tier 3 SOTA 2026 = orange),
@@ -7,8 +14,8 @@ with a reference line at y=0.
 
 Inputs:
   - verification_outputs/capability_audit_q4_2026.json (G.1 evidence for Tier 1 + Tier 2 rows)
-  - verification_outputs/kanzi_real_ckpt_eval_q4_2026_kanzi.json (Tier 3 Kanzi cells)
-  - verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json (Tier 3 LineageFlow forward-smoke)
+  - verification_outputs/kanzi_real_metric_v2_q4_2026.json (Tier 3 Kanzi cells, Wave 44 Agent C)
+  - verification_outputs/lineageflow_real_metric_v2_q4_2026.json (Tier 3 LineageFlow cells, Wave 44 Agent C)
 
 Output: docs/figures/tier3_real_ckpt_signed_mean.png
 
@@ -50,25 +57,34 @@ AUDIT_JSON = os.path.join(
     "verification_outputs",
     "capability_audit_q4_2026.json",
 )
+# Wave 44 Agent C JSONs (real metric, real-ckpt forward path):
 KANZI_JSON = os.path.join(
     os.path.dirname(__file__),
     "..",
     "verification_outputs",
-    "kanzi_real_ckpt_eval_q4_2026_kanzi.json",
+    "kanzi_real_metric_v2_q4_2026.json",
 )
 LINEAGEFLOW_JSON = os.path.join(
     os.path.dirname(__file__),
     "..",
     "verification_outputs",
-    "lineageflow_real_ckpt_forward_q4_2026.json",
+    "lineageflow_real_metric_v2_q4_2026.json",
 )
 
 
 def _signed_mean_from_cells(cells: list[dict]) -> float:
-    """Return mean signed_delta_pct across cells (0.0 if no cells)."""
+    """Return mean signed_delta_pct across cells (0.0 if no cells or all-None)."""
     if not cells:
         return 0.0
-    deltas = [float(c.get("signed_delta_pct", 0.0)) for c in cells]
+    deltas = []
+    for c in cells:
+        sdp = c.get("signed_delta_pct")
+        if sdp is None:
+            # RUN_ERROR / BLOCKED cell: skip (do NOT count it as 0).
+            continue
+        deltas.append(float(sdp))
+    if not deltas:
+        return 0.0
     return sum(deltas) / len(deltas)
 
 
@@ -85,39 +101,42 @@ def _aggregate_tier1_tier2(audit: dict) -> dict[str, tuple[float, list[float]]]:
     return out
 
 
-def _aggregate_tier3_kanzi(kanzi: dict) -> tuple[float, list[float]]:
-    """Tier 3 Kanzi real-ckpt eval cells (9 = 3 seeds x 3 NFE budgets)."""
+def _aggregate_tier3_kanzi(kanzi: dict) -> tuple[float, list[float], int, int]:
+    """Tier 3 Kanzi real-ckpt eval cells (Wave 44 Agent C: 9 = 3 seeds x 3 NFE).
+
+    Returns (signed_mean, [deltas], n_real_computed, n_run_error)."""
     cells = kanzi.get("cells", [])
-    deltas = [float(c.get("signed_delta_pct", 0.0)) for c in cells]
-    return _signed_mean_from_cells(cells), deltas
+    agg = kanzi.get("aggregate", {})
+    deltas = []
+    for c in cells:
+        sdp = c.get("signed_delta_pct")
+        if sdp is None:
+            continue
+        deltas.append(float(sdp))
+    sm = sum(deltas) / len(deltas) if deltas else 0.0
+    n_real = int(agg.get("n_real_computed", 0))
+    n_run = int(agg.get("n_run_error", 0))
+    return sm, deltas, n_real, n_run
 
 
-def _aggregate_tier3_lineageflow(lf: dict) -> tuple[float, list[float]]:
-    """Tier 3 LineageFlow real-ckpt forward-pass probe.
+def _aggregate_tier3_lineageflow(lf: dict) -> tuple[float, list[float], int, int]:
+    """Tier 3 LineageFlow real-ckpt eval cells (Wave 44 Agent C: 1 RUN_ERROR).
 
-    The forward JSON has no per-cell comparison cells (Wave 41 Agent B produced
-    only the numerical forward smoke); the comparison-vs-baseline number comes
-    from the Wave 10 R2 + Wave 19 P1A2 synthetic-shim runs captured in
-    capability_audit (lineageflow_avg_log_likelihood row: +0.0024) plus the
-    LineageFlow synthetic family_validity saturation tie (0.0).
-
-    We present Tier 3 LineageFlow here as 0.0 because the real-ckpt eval has
-    not yet been wrapped through tools/run_real_ckpt_eval.py; the forward probe
-    is documented in lineageflow_real_ckpt_forward_q4_2026.json (success status,
-    parameter count, output statistics).
-    """
-    # Forward smoke status is the only binary signal in the JSON; forward-pass
-    # round-trip without NaN/Inf is the success criterion (status field).
-    # Real-ckpt eval vs baseline not yet captured -> 0.0 honest reading.
-    status = lf.get("status", "missing")
-    has_nan = lf.get("forward_pass", {}).get("has_nan", True)
-    has_inf = lf.get("forward_pass", {}).get("has_inf", True)
-    if status == "success" and not has_nan and not has_inf:
-        # Forward smoke passes, but the synthetic-shim comparison-vs-baseline
-        # number remains 0.0 (synthetic shim saturation tie); we surface that
-        # honestly rather than importing the Wave 10 R2 number (synthetic).
-        return 0.0, [0.0]
-    return 0.0, [0.0]
+    The single cell is RUN_ERROR (EsmModel dtype bug in
+    LineageFlowAdapter._torch_velocity_field), so signed_delta_pct is None.
+    We surface 0.0 as the honest reading (no computable cells)."""
+    cells = lf.get("cells", [])
+    agg = lf.get("aggregate", {})
+    deltas = []
+    for c in cells:
+        sdp = c.get("signed_delta_pct")
+        if sdp is None:
+            continue
+        deltas.append(float(sdp))
+    sm = sum(deltas) / len(deltas) if deltas else 0.0
+    n_real = int(agg.get("n_real_computed", 0))
+    n_run = int(agg.get("n_run_error", 0))
+    return sm, deltas, n_real, n_run
 
 
 def main() -> str:
@@ -129,8 +148,8 @@ def main() -> str:
         lf = json.load(f)
 
     tier1_tier2 = _aggregate_tier1_tier2(audit)
-    tier3_kanzi_sm, tier3_kanzi_deltas = _aggregate_tier3_kanzi(kanzi)
-    tier3_lf_sm, tier3_lf_deltas = _aggregate_tier3_lineageflow(lf)
+    tier3_kanzi_sm, tier3_kanzi_deltas, k_n_real, k_n_run = _aggregate_tier3_kanzi(kanzi)
+    tier3_lf_sm, tier3_lf_deltas, l_n_real, l_n_run = _aggregate_tier3_lineageflow(lf)
 
     # Order: x-axis ascending (Tier 1 toy -> Tier 2 -> Tier 3)
     # Brief says X-axis is model families; Y-axis is signed_mean.
@@ -246,14 +265,17 @@ def main() -> str:
         edgecolor=PALETTE["neutral"],
     )
 
-    # Honest reading note (Tier 3 saturation explanation)
+    # Honest reading note (Tier 3 saturation explanation, Wave 44 update)
     note_text = (
-        "Tier 3 honest reading: Kanzi real-ckpt eval (9 cells, adapter_mode=torch) hits the\n"
-        "synthetic-mode saturation ceiling for protein_sequence_validity_rate (0.95).\n"
-        "LineageFlow forward smoke passes (657.6M params, no NaN/Inf), but the real-ckpt\n"
-        "eval-vs-baseline cell has not yet been wrapped; signed_mean = 0.0 by construction.\n"
-        "Wave 43 WF1 metric-layer fix (Pfam held-out + per-cell real-metric branches) is the\n"
-        "unblock; see docs/audit/wave43-paper-tier3-writeup.md + CONSOLIDATED_RESULTS §15.10."
+        "Tier 3 honest reading (Wave 44 Agent D):\n"
+        "  Kanzi real-ckpt eval (9/9 cells marker=computed, n_real_computed=9) hits the\n"
+        f"  REAL saturation ceiling for protein_sequence_validity_rate (1.0), NOT the\n"
+        f"  Wave-42 synthetic fallback (0.95). The metric layer (Wave 44 Agent B\n"
+        f"  observe_token_indices + Wave 43 Pfam held-out reference) IS working; both arms\n"
+        f"  decode the captured ODE trajectory to the same mod-20 AA sequences.\n"
+        f"  LineageFlow (1/1 cell RUN_ERROR) is blocked on a pre-existing adapter-layer\n"
+        f"  EsmModel dtype bug (Wave 45 fix). See docs/audit/wave44-paper-tier3-final.md\n"
+        f"  + CONSOLIDATED_RESULTS §15.12 for the full accounting."
     )
     ax.text(
         0.01,
