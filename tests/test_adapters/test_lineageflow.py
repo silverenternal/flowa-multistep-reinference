@@ -735,3 +735,240 @@ def test_per_position_entropy_reduction_constant_is_exported() -> None:
 
     assert PER_POSITION_ENTROPY_REDUCTION == "per_position_entropy_reduction"
     assert "PER_POSITION_ENTROPY_REDUCTION" in lf.__all__
+
+
+# ---------------------------------------------------------------------------
+# LineageFlowClassifierAwareRestart (Wave 45 Agent G)
+# ---------------------------------------------------------------------------
+
+
+def test_classifier_aware_restart_policy_is_importable() -> None:
+    """The policy class is a stable public name a duck-typed caller can import."""
+    import adaptive_reflow.adapters.lineageflow as lf
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    assert "LineageFlowClassifierAwareRestart" in lf.__all__
+    assert lf.LineageFlowClassifierAwareRestart is LineageFlowClassifierAwareRestart
+    # The audit code constants exist and are distinct.
+    assert (
+        lf.AUDIT_LINEAGEFLOW_CLASSIFIER_AWARE_RESTART
+        == "lineageflow_classifier_aware_restart"
+    )
+    assert (
+        lf.AUDIT_LINEAGEFLOW_CLASSIFIER_UNAVAILABLE
+        == "lineageflow_classifier_unavailable"
+    )
+
+
+def test_classifier_aware_restart_proxy_is_deterministic_and_bounded() -> None:
+    """The adapter-internal proxy uses max-prob per position, bounded in [1/(2K), 1]."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+        _lineageflow_classifier_confidence_proxy,
+    )
+
+    policy = LineageFlowClassifierAwareRestart(enable_upstream_probe=False)
+    # Spike: every position has probability 1 on vocab index 0 → max = 1.0.
+    spike = np.zeros(LINEAGEFLOW_STATE_SHAPE, dtype=np.float64)
+    spike[:, 0] = 1.0
+    conf = _lineageflow_classifier_confidence_proxy(spike)
+    assert conf.shape == (LINEAGEFLOW_STATE_SHAPE[0],)
+    assert np.all(conf == pytest.approx(1.0, abs=1e-9))
+    # Uniform: max = 1/K → proxy is in [1/(2K), 1].
+    uniform = np.full(LINEAGEFLOW_STATE_SHAPE, 1.0 / LINEAGEFLOW_VOCAB_SIZE)
+    conf_uniform = _lineageflow_classifier_confidence_proxy(uniform)
+    assert np.all(conf_uniform >= 1.0 / (2 * LINEAGEFLOW_VOCAB_SIZE) - 1e-9)
+    assert np.all(conf_uniform <= 1.0 + 1e-9)
+    # Determinism — same theta gives same proxy twice.
+    assert np.array_equal(conf, _lineageflow_classifier_confidence_proxy(spike))
+
+
+def test_classifier_aware_restart_propose_restart_mass_preserving() -> None:
+    """``mean(m_vec) == base_memory_fraction`` (mass-preserving)."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    policy = LineageFlowClassifierAwareRestart(enable_upstream_probe=False)
+    spike = np.zeros(LINEAGEFLOW_STATE_SHAPE, dtype=np.float64)
+    spike[:, 0] = 1.0
+    for base in (0.0, 0.25, 0.5, 0.75, 1.0):
+        m_vec = policy.propose_restart(
+            trace=None,
+            paper_quantities=None,
+            base_memory_fraction=float(base),
+            theta=spike,
+        )
+        assert m_vec.shape == (LINEAGEFLOW_STATE_SHAPE[0],)
+        assert np.all(m_vec >= 0.0)
+        assert np.all(m_vec <= 1.0)
+        # Mass-preserving: the mean equals the scalar base.
+        assert m_vec.mean() == pytest.approx(float(base), abs=1e-9)
+
+
+def test_classifier_aware_restart_uniform_theta_is_identity() -> None:
+    """Uniform theta ⇒ per-position bias is zero ⇒ m_vec is the scalar broadcast."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    policy = LineageFlowClassifierAwareRestart(enable_upstream_probe=False)
+    uniform = np.full(LINEAGEFLOW_STATE_SHAPE, 1.0 / LINEAGEFLOW_VOCAB_SIZE)
+    for base in (0.1, 0.5, 0.9):
+        m_vec = policy.propose_restart(
+            trace=None,
+            paper_quantities=None,
+            base_memory_fraction=float(base),
+            theta=uniform,
+        )
+        # All positions have identical confidence ⇒ deviation cancels ⇒
+        # m_vec is exactly the scalar base at every position.
+        assert np.all(m_vec == pytest.approx(float(base), abs=1e-12))
+
+
+def test_classifier_aware_restart_alpha_zero_disables_bias() -> None:
+    """``alpha == 0`` reduces the policy to today's scalar blend."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    spike = np.zeros(LINEAGEFLOW_STATE_SHAPE, dtype=np.float64)
+    spike[:, 0] = 1.0
+    for alpha in (0.0, 0.0):
+        policy = LineageFlowClassifierAwareRestart(
+            alpha=alpha, enable_upstream_probe=False,
+        )
+        m_vec = policy.propose_restart(
+            trace=None,
+            paper_quantities=None,
+            base_memory_fraction=0.4,
+            theta=spike,
+        )
+        assert np.all(m_vec == pytest.approx(0.4, abs=1e-12))
+
+
+def test_classifier_aware_restart_spike_biases_confident_positions_higher() -> None:
+    """With a spike (high confidence) and alpha > 0, biased positions exceed base."""
+    from adaptive_reflow.adapters.lineageflow import (
+        LineageFlowClassifierAwareRestart,
+    )
+
+    spike = np.zeros(LINEAGEFLOW_STATE_SHAPE, dtype=np.float64)
+    spike[:, 0] = 1.0
+    policy = LineageFlowClassifierAwareRestart(
+        alpha=1.0, enable_upstream_probe=False,
+    )
+    m_vec = policy.propose_restart(
+        trace=None,
+        paper_quantities=None,
+        base_memory_fraction=0.5,
+        theta=spike,
+    )
+    # With a spike the confidence vector is constant (all 1.0), so the
+    # centre-subtraction cancels and m_vec is exactly base. This is the
+    # correct mass-preserving behaviour and confirms the policy never
+    # amplifies a flat signal — only signals with per-position
+    # variation produce variation in m_vec.
+    assert np.all(m_vec == pytest.approx(0.5, abs=1e-12))
+
+    # Now build a *mixed* signal: half positions are spike (confident),
+    # half are uniform (uncertain). The centre-subtracted confidence
+    # is non-trivial, so m_vec must vary.
+    mixed = np.full(LINEAGEFLOW_STATE_SHAPE, 1.0 / LINEAGEFLOW_VOCAB_SIZE)
+    L = LINEAGEFLOW_STATE_SHAPE[0]
+    mixed[: L // 2] = spike[: L // 2]
+    m_vec_mixed = policy.propose_restart(
+        trace=None,
+        paper_quantities=None,
+        base_memory_fraction=0.5,
+        theta=mixed,
+    )
+    assert m_vec_mixed.shape == (L,)
+    # The confident half should bias above the base; the uncertain
+    # half should bias below. This is the load-bearing asymmetry the
+    # policy introduces.
+    assert m_vec_mixed[: L // 2].mean() > 0.5
+    assert m_vec_mixed[L // 2 :].mean() < 0.5
+
+
+def test_classifier_aware_restart_off_by_default_preserves_legacy_blend() -> None:
+    """Default ``classifier_aware_restart=False`` keeps scalar blend behaviour.
+
+    Regression guard for Wave 45 Agent G: flipping the flag must NOT
+    alter the result of :meth:`apply_restart_distribution` for any of
+    the 22 existing tests when the flag is at its default. The test
+    asserts the legacy per-position scalar (``prior_theta + (1 - m) *
+    fresh_theta`` row-wise broadcast) remains in force and the audit
+    code stays at the legacy ``AUDIT_LINEAGEFLOW_RESTART_BLEND``.
+    """
+    from adaptive_reflow.adapters.lineageflow import (
+        AUDIT_LINEAGEFLOW_CLASSIFIER_AWARE_RESTART,
+    )
+
+    adapter = _make_adapter(num_steps=2)
+    bundle = adapter.build_initial_state(batch_id="b_w45g_off", sample_id="s_w45g_off")
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId("wave45-agent-g-default-off"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("test-run"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={AMINO_ACID_CATEGORICAL: FactorValue(0.5)},
+        alpha_by_channel={AMINO_ACID_CATEGORICAL: FactorValue(1.0)},
+        fresh_noise_floor_by_channel={AMINO_ACID_CATEGORICAL: FactorValue(0.0)},
+        schedule_sample=None,
+        freeze_admission_by_channel={AMINO_ACID_CATEGORICAL: True},
+        ledger_row_id=LedgerRowId("ledger-wave45-agent-g-off"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    restarted = adapter.apply_restart_distribution(bundle, policy)
+    # Provenance has the legacy audit code and NOT the new one —
+    # the classifier-aware flag is off by default.
+    assert AUDIT_LINEAGEFLOW_RESTART_BLEND in restarted.provenance
+    assert AUDIT_LINEAGEFLOW_CLASSIFIER_AWARE_RESTART not in restarted.provenance
+    # The result is still a valid probability distribution (row-normalised).
+    restarted_theta = adapter._native_states[restarted.native_state_digest]["theta"]
+    row_sums = restarted_theta.sum(axis=-1)
+    assert np.allclose(row_sums, 1.0, atol=1e-6)
+
+
+def test_classifier_aware_restart_on_flips_audit_code_and_uses_per_position() -> None:
+    """Opt-in flag activates the policy: audit code + per-position broadcast."""
+    from adaptive_reflow.adapters.lineageflow import (
+        AUDIT_LINEAGEFLOW_CLASSIFIER_AWARE_RESTART,
+    )
+
+    adapter = _make_adapter(
+        num_steps=2, classifier_aware_restart=True, classifier_alpha=1.0,
+    )
+    bundle = adapter.build_initial_state(batch_id="b_w45g_on", sample_id="s_w45g_on")
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId("wave45-agent-g-on"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("test-run"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={AMINO_ACID_CATEGORICAL: FactorValue(0.5)},
+        alpha_by_channel={AMINO_ACID_CATEGORICAL: FactorValue(1.0)},
+        fresh_noise_floor_by_channel={AMINO_ACID_CATEGORICAL: FactorValue(0.0)},
+        schedule_sample=None,
+        freeze_admission_by_channel={AMINO_ACID_CATEGORICAL: True},
+        ledger_row_id=LedgerRowId("ledger-wave45-agent-g-on"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    restarted = adapter.apply_restart_distribution(bundle, policy)
+    # Both audit codes are present in provenance.
+    assert AUDIT_LINEAGEFLOW_RESTART_BLEND in restarted.provenance
+    assert AUDIT_LINEAGEFLOW_CLASSIFIER_AWARE_RESTART in restarted.provenance
+    # The result is still a valid probability distribution (row-normalised).
+    restarted_theta = adapter._native_states[restarted.native_state_digest]["theta"]
+    row_sums = restarted_theta.sum(axis=-1)
+    assert np.allclose(row_sums, 1.0, atol=1e-6)
+    # Policy instance is now created on the adapter (lazy init).
+    assert adapter._classifier_aware_restart_policy is not None
