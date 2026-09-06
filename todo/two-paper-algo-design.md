@@ -225,18 +225,18 @@ Steps 1-4 are Paper A work; steps 5-8 are Paper B work. **Each step lands a comm
 2. **Composite metric compatibility**: when MFPQA is used, does the composite metric still produce same value? Recommendation: yes (composite is on endpoint state, not on integrator path).
 3. **BRAI gradient computation cost**: finite-difference is O(K) per perturbation; analytic is O(1) if available. Use analytic when paper-quantity distribution has closed-form; finite-difference otherwise.
 
-## 10. Honest novelty assessment
+## 10. Honest novelty assessment (corrected: JMAA is author's own work)
 
-| Component | From JMAA? | From Framework infrastructure? | NEW (this work)? |
+| Component | From JMAA (author's own novel math) | Framework infrastructure (implements JMAA) | NEW (this work) |
 |---|---|---|---|
-| Theorem 1 BL-convergence | ✅ yes | no | no |
-| 4 paper-quantity signals | ✅ yes | no | no |
-| `MergeOperatorProtocol` (BoundedMerge / Identity / EMA) | no | ✅ yes (Wave 31) | no |
-| `SchedulerProtocol` (Cosine / Codimension / Evidence) | no | ✅ yes (Wave 31) | no |
-| `IntegratorProtocol` (Euler / MFPQA) | no | infrastructure | **✅ MFPQA is NEW** |
-| `PerturbationPolicy` (UniformFresh / BRAI) | no | infrastructure | **✅ BRAI is NEW** |
-| Composite metric (3 phi terms) | no | ✅ yes (Wave 47) | no |
-| NFE-adaptive gate | no | ✅ yes (Wave 58) | no |
-| PerPositionEntropy | no | ✅ yes (Wave 33) | no |
+| Theorem 1 BL-convergence | ✅ novel (author's paper) — implemented in code | ✅ code | — |
+| 4 paper-quantity signals | ✅ novel (author's paper) — implemented in code | ✅ code | — |
+| `MergeOperatorProtocol` (BoundedMerge / Identity / EMA) | — | ✅ code (Wave 31) | — |
+| `SchedulerProtocol` (CosineAnneal / Codimension / Evidence) | — | ✅ code (Wave 31) | — |
+| `IntegratorProtocol` (Euler / MFPQA) | uses JMAA signals | ✅ code (this work) | **✅ MFPQA is NEW application** |
+| `PerturbationPolicy` (UniformFresh / BRAI) | uses JMAA gradient | ✅ code (this work) | **✅ BRAI is NEW application** |
+| Composite metric (3 phi terms) | uses JMAA signals | ✅ code (Wave 47) | ✅ novel framing |
+| NFE-adaptive gate | uses JMAA signals | ✅ code (Wave 58) | ✅ novel application |
+| PerPositionEntropy | — | ✅ code (Wave 33) | — |
 
-**Honest reading**: MFPQA and BRAI are the only 2 NEW algorithm-level contributions in this work. Everything else is JMAA math + framework infrastructure.
+**Honest reading (corrected)**: Since JMAA is the author's own work, the framework IS the implementation of JMAA. The research program is one coherent contribution: JMAA paper (novel math) + framework (implements the math) + MFPQA / BRAI (new applications of JMAA signals). MFPQA and BRAI are the 2 NEW algorithm-level applications of JMAA signals in this work.

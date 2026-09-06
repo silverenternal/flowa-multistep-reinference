@@ -207,6 +207,72 @@ def make_adapter_capabilities(
     return kwargs
 
 
+def coerce_nfe_budget(value: Any) -> int | None:
+    """Return ``value`` as a positive-int NFE budget, or ``None``.
+
+    Wave 58: shared coercion for the NFE-adaptive restart gate (see
+    :func:`low_nfe_restart_gate`). ``None`` means "this candidate does
+    not carry a usable NFE budget" — it is **not** an error, because
+    the gate reads its inputs off duck-typed restart policies where the
+    attribute is frequently absent or unrelated.
+
+    Rejected (⇒ ``None``): ``None``, ``bool`` (``True`` is an ``int``
+    subclass but is never a budget), non-finite floats, non-integral
+    floats, anything not coercible via ``int()``, and any value ``<= 1``
+    (a one-step "budget" cannot be split across restart rounds).
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, float) and not np.isfinite(value):
+        return None
+    try:
+        coerced = int(value)
+    except (TypeError, ValueError):
+        return None
+    # Guard against a silently-truncating float (``17.5`` is not a
+    # step count; treating it as ``17`` would hide a caller bug).
+    if isinstance(value, float) and float(coerced) != value:
+        return None
+    return coerced if coerced > 1 else None
+
+
+def low_nfe_restart_gate(
+    *candidates: Any,
+    min_nfe: int,
+) -> tuple[int | None, bool]:
+    """Resolve the effective NFE budget and decide whether to skip restart.
+
+    Wave 58 (FlowMol3 NFE-adaptive gate; see
+    ``docs/audit/wave58-nfe-adaptive-gate-impl.md``). Returns
+    ``(effective_nfe, skip_restart)`` where ``effective_nfe`` is the
+    first entry of ``candidates`` that :func:`coerce_nfe_budget` accepts
+    — so callers pass their candidates in **priority order** (explicit
+    call argument, then policy attribute, then adapter default) — and
+    ``skip_restart`` is ``effective_nfe < min_nfe``.
+
+    Two contract points, both load-bearing:
+
+    * **Unknown budget fails open.** When no candidate resolves,
+      ``effective_nfe`` is ``None`` and ``skip_restart`` is ``False``:
+      the caller applies its normal restart blend. This is what keeps
+      the gate byte-stable for every existing caller that does not yet
+      thread an NFE budget (the pinned D.4 regression vectors included).
+    * **The budget is the TOTAL, not the per-round, NFE.** A caller
+      that splits ``nfe`` across ``n_rounds`` must pass the total, not
+      ``nfe // n_rounds``: at the FlowMol3 paper default (``nfe=50``,
+      ``n_rounds=3``) the per-round count is 17, which would trip a
+      threshold of 20 and silently disable restart in exactly the
+      stratum where it currently helps.
+
+    ``min_nfe <= 0`` disables the gate (no positive budget is below it).
+    """
+    for candidate in candidates:
+        effective = coerce_nfe_budget(candidate)
+        if effective is not None:
+            return (effective, effective < int(min_nfe))
+    return (None, False)
+
+
 def per_position_entropy_reduction(
     theta_before: NDArray[np.float64],
     theta_after: NDArray[np.float64],
@@ -263,8 +329,10 @@ def per_position_entropy_reduction(
 
 __all__ = [
     "NativeStateCache",
+    "coerce_nfe_budget",
     "digest_state",
     "kaiming_uniform",
+    "low_nfe_restart_gate",
     "make_adapter_capabilities",
     "make_ref",
     "memory_fraction_for",

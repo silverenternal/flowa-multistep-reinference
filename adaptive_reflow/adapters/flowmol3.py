@@ -57,6 +57,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 from adaptive_reflow.adapters._adapter_common import (
+    coerce_nfe_budget,
+    low_nfe_restart_gate,
     per_position_entropy_reduction,
 )
 from adaptive_reflow.core.graph_wrapper import (
@@ -181,6 +183,29 @@ PER_POSITION_ENTROPY_REDUCTION: str = "per_position_entropy_reduction"
 AUDIT_FLOWMOL3_RESTART_BLEND: str = "flowmol3_restart_blend"
 AUDIT_FLOWMOL3_ATOM_TYPE_ENTROPY_RESTART: str = "flowmol3_atom_type_entropy_restart"
 AUDIT_FLOWMOL3_OBSERVED: str = "flowmol3_observed"
+
+#: Audit code stamped on the returned bundle's ``provenance`` when the
+#: Wave 58 NFE-adaptive gate skips the restart blend. Downstream eval
+#: rows can key on this to tell a *gated* framework arm (≡ baseline
+#: trajectory, one extra provenance entry) apart from a blended one.
+AUDIT_FLOWMOL3_RESTART_SKIPPED_LOW_NFE: str = (
+    "flowmol3adapter_restart_skipped_low_nfe"
+)
+
+#: Default total-NFE budget below which
+#: :meth:`FlowMol3Adapter.apply_restart_distribution` skips the restart
+#: blend (Wave 58 backup path B1; see
+#: ``docs/audit/wave58-nfe-adaptive-gate-impl.md`` and
+#: ``docs/audit/wave57-synthesis-design.md`` §6).
+#:
+#: Provenance of the number: Wave 57 Agent A's read of the 2026
+#: NFE-adaptive literature plus Agent B's 9-cell v3 grid, where the
+#: NFE=10 stratum carried 3/3 regressions. It is a **weakly-supported**
+#: threshold (n=3 per stratum, no monotonicity established), which is
+#: why it is a per-adapter constructor kwarg rather than a hard-wired
+#: literal: pass ``restart_min_nfe=`` to recalibrate, or ``0`` to
+#: disable the gate entirely.
+FLOWMOL3_RESTART_MIN_NFE: int = 20
 
 
 @dataclass(frozen=True)
@@ -322,6 +347,32 @@ def _restart_memory_fraction(policy: Any) -> float:
     if not values:
         return 0.0
     return max(0.0, min(1.0, sum(values) / len(values)))
+
+
+def _explicit_nfe_budget(value: Any, *, field: str) -> int | None:
+    """Validate an **explicitly supplied** total-NFE budget (Wave 58).
+
+    ``None`` means "not supplied" and is returned as-is. Anything else
+    must be a positive integer step count per
+    :func:`~adaptive_reflow.adapters._adapter_common.coerce_nfe_budget`;
+    a value that is not raises ``ValueError`` naming ``field``.
+
+    The strictness boundary is deliberate: a caller that *types out* an
+    NFE budget and gets it wrong (``nfe_budget="fifty"``,
+    ``nfe_budget=0``) has a bug that must surface, whereas the
+    duck-typed ``policy.nfe_budget`` probe in
+    :meth:`FlowMol3Adapter.apply_restart_distribution` stays lenient —
+    an unrelated attribute of that name on someone's restart policy must
+    never crash a restart round.
+    """
+    if value is None:
+        return None
+    coerced = coerce_nfe_budget(value)
+    if coerced is None:
+        raise ValueError(
+            f"{field}_must_be_int_gt_1_or_None:got {value!r}"
+        )
+    return coerced
 
 
 # ---------------------------------------------------------------------------
@@ -589,6 +640,8 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         ) = None,
         force_mode: str = "synthetic",
         real_ckpt_meta: Mapping[str, Any] | None = None,
+        nfe_budget: int | None = None,
+        restart_min_nfe: int = FLOWMOL3_RESTART_MIN_NFE,
     ) -> None:
         self._caps = FlowMol3Capabilities()
         # Wave 49 Agent F: optional atom-type-entropy-aware restart
@@ -636,6 +689,37 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         self._real_ckpt_meta: Mapping[str, Any] | None = (
             dict(real_ckpt_meta) if real_ckpt_meta is not None else None
         )
+        # Wave 58 — NFE-adaptive restart gate (backup path B1 of
+        # ``docs/audit/wave57-synthesis-design.md`` §6).
+        #
+        # ``nfe_budget`` is the cell's **total** NFE budget (not the
+        # per-round split — see :func:`low_nfe_restart_gate`). It is the
+        # lowest-priority of the three sources
+        # :meth:`apply_restart_distribution` consults, so a caller that
+        # constructs one adapter per ``(model, seed, nfe)`` cell can pin
+        # it here and never touch the call site.
+        #
+        # Default ``None`` ⇒ budget unknown ⇒ the gate never fires, so
+        # every pre-Wave-58 caller (and the pinned D.4 regression
+        # vectors in ``regression-vectors/flowmol3.json``) sees a
+        # byte-identical restart blend.
+        self._nfe_budget: int | None = _explicit_nfe_budget(
+            nfe_budget, field="nfe_budget"
+        )
+        # ``restart_min_nfe`` is a constructor kwarg rather than a
+        # hard-wired literal because the threshold rests on n=3 per
+        # stratum (Wave 57 Agent B); ``0`` disables the gate.
+        if isinstance(restart_min_nfe, bool) or not isinstance(
+            restart_min_nfe, int
+        ):
+            raise TypeError(
+                f"restart_min_nfe_must_be_int:got {restart_min_nfe!r}"
+            )
+        if restart_min_nfe < 0:
+            raise ValueError(
+                f"restart_min_nfe_must_be_non_negative:got {restart_min_nfe!r}"
+            )
+        self._restart_min_nfe: int = int(restart_min_nfe)
 
     # -- protocol surface ---------------------------------------------------
 
@@ -709,6 +793,8 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         self,
         state: StateBundle,
         policy: Any,
+        *,
+        nfe_budget: int | None = None,
     ) -> StateBundle:
         """Restart boundary via the framework-core graph glue.
 
@@ -734,8 +820,61 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         ``atom_type_distribution`` payload. The default (``policy`` is
         ``None``) keeps the schedule-driven scalar blend byte-identical
         for the 13 existing tests.
+
+        Wave 58 — NFE-adaptive gate
+        ---------------------------
+
+        The blend above replaces ``1 - m`` of the state with *fresh*
+        noise. At the FlowMol3 paper default ``m = 0.5``, that is half
+        the state per restart round, which corrupts the CTMC chain when
+        there are too few remaining integration steps to re-absorb it.
+        When the effective **total** NFE budget is below
+        ``restart_min_nfe`` (default :data:`FLOWMOL3_RESTART_MIN_NFE`),
+        this method therefore returns ``state`` with its channels,
+        masks, source round and ``native_state_digest`` **unchanged**,
+        adding only :data:`AUDIT_FLOWMOL3_RESTART_SKIPPED_LOW_NFE` to
+        ``provenance`` so the skip is auditable rather than invisible.
+        The framework arm then degenerates to the baseline trajectory
+        for that cell — which is the point: at low NFE the measured
+        blend was worse than baseline.
+
+        The budget is resolved from three sources, in priority order:
+
+        1. the ``nfe_budget`` keyword argument to this call;
+        2. a duck-typed ``policy.nfe_budget`` attribute;
+        3. the adapter's own ``nfe_budget`` constructor kwarg.
+
+        If none of them yields a usable budget the gate does **not**
+        fire and the blend proceeds — so every caller that predates this
+        kwarg, the engine included, is byte-unchanged. See
+        ``docs/audit/wave58-nfe-adaptive-gate-impl.md`` for the
+        threshold's (weak) empirical basis and for why the *total*
+        rather than the per-round NFE is the gate's input.
         """
         _require_valid(state, "validate_state_bundle")
+        effective_nfe, skip_restart = low_nfe_restart_gate(
+            _explicit_nfe_budget(nfe_budget, field="nfe_budget"),
+            getattr(policy, "nfe_budget", None),
+            self._nfe_budget,
+            min_nfe=self._restart_min_nfe,
+        )
+        if skip_restart:
+            # The blend is skipped, so nothing derived from it (the
+            # ``flowmol3:restart:`` digest, the restart-boundary audit
+            # code, the atom-type-entropy audit code) may be stamped:
+            # the state must read as "this round did not restart".
+            return replace(
+                state,
+                channels=dict(state.channels),
+                masks=dict(state.masks),
+                detach_proof=True,
+                provenance=state.provenance
+                + (
+                    f"{AUDIT_FLOWMOL3_RESTART_SKIPPED_LOW_NFE}"
+                    f":nfe={effective_nfe}"
+                    f":min_nfe={self._restart_min_nfe}",
+                ),
+            )
         memory_fraction = _restart_memory_fraction(policy)
         # Wave 49 Agent F: optionally bias the per-atom memory
         # fraction via the atom-type entropy signal. The placeholder
@@ -1104,6 +1243,8 @@ def default_flowmol3_adapter(
     ) = None,
     force_mode: str = "synthetic",
     weights_path: str | None = None,
+    nfe_budget: int | None = None,
+    restart_min_nfe: int = FLOWMOL3_RESTART_MIN_NFE,
 ) -> FlowMol3Adapter:
     """Return a fresh :class:`FlowMol3Adapter` for tests and the registry.
 
@@ -1129,6 +1270,14 @@ def default_flowmol3_adapter(
 
     Backward-compat: callers that omit ``force_mode`` see the same
     byte-identical placeholder behaviour they did before Wave 50.
+
+    Wave 58: ``nfe_budget`` (the cell's **total** NFE budget) and
+    ``restart_min_nfe`` are forwarded to :class:`FlowMol3Adapter` and
+    drive the NFE-adaptive restart gate in
+    :meth:`FlowMol3Adapter.apply_restart_distribution`. Omitting
+    ``nfe_budget`` leaves the budget unknown, which keeps the gate
+    inert — so this factory's default behaviour is byte-identical to
+    pre-Wave-58 as well.
     """
     # Wave 53 Agent C: defensive alias. The eval pipeline translates
     # CLI ``"real"`` → ``"torch"`` for the 10 legacy ``{torch,
@@ -1164,6 +1313,8 @@ def default_flowmol3_adapter(
         atom_type_entropy_restart_policy=atom_type_entropy_restart_policy,
         force_mode=str(force_mode),
         real_ckpt_meta=real_ckpt_meta,
+        nfe_budget=nfe_budget,
+        restart_min_nfe=restart_min_nfe,
     )
 
 
@@ -1176,6 +1327,7 @@ __all__ = [
     "AUDIT_FLOWMOL3_ATOM_TYPE_ENTROPY_RESTART",
     "AUDIT_FLOWMOL3_OBSERVED",
     "AUDIT_FLOWMOL3_RESTART_BLEND",
+    "AUDIT_FLOWMOL3_RESTART_SKIPPED_LOW_NFE",
     "FLOWMOL3_ATOM_TYPE_VOCAB_SIZE",
     "FLOWMOL3_CHANNELS",
     "FLOWMOL3_CHANNEL_DOMAINS",
@@ -1183,6 +1335,7 @@ __all__ = [
     "FLOWMOL3_PLACEHOLDER_NUM_NODES",
     "FLOWMOL3_REAL_CKPT_LOADED_MARKER",
     "FLOWMOL3_REAL_CKPT_PATH",
+    "FLOWMOL3_RESTART_MIN_NFE",
     "FlowMol3Adapter",
     "FlowMol3AtomTypeEntropyRestartPolicy",
     "FlowMol3Capabilities",

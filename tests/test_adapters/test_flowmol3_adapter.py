@@ -23,7 +23,9 @@ Tests in this file (Wave 15 C — D.3 ≥ 10 tests):
 * Forward-noise injection (1)
 * Channel vocabulary (1)
 
-Total: **13 tests** (Wave 15 C D.3 floor: 10).
+Total: **13 tests** (Wave 15 C D.3 floor: 10). Later waves appended
+their own classes below (Wave 49 Agent F, Wave 50 Agent A, Wave 58), so
+the live count is higher than the Wave 15 baseline recorded here.
 """
 from __future__ import annotations
 
@@ -44,8 +46,10 @@ from adaptive_reflow.adapters import (
     flowmol3_registry_entry,
 )
 from adaptive_reflow.adapters.flowmol3 import (
+    AUDIT_FLOWMOL3_RESTART_SKIPPED_LOW_NFE,
     FLOWMOL3_REAL_CKPT_LOADED_MARKER,
     FLOWMOL3_REAL_CKPT_PATH,
+    FLOWMOL3_RESTART_MIN_NFE,
     _try_load_real_ckpt,
 )
 from adaptive_reflow.frame.adapter import (
@@ -66,6 +70,11 @@ from adaptive_reflow.writer.registry import FLOWMOL3_PINNED_COMMIT
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
+#: Sentinel distinguishing "argument omitted" from "argument is None"
+#: in the Wave 58 gate helpers below (``None`` is itself one of the
+#: values under test).
+_UNSET: object = object()
 
 
 @pytest.fixture
@@ -728,6 +737,311 @@ class TestFlowMol3ForceModeFactory:
         assert ok
         # Real-ckpt marker is exposed on the adapter as an audit hook.
         assert adapter._real_ckpt_meta is not None  # noqa: SLF001
+
+
+# ---------------------------------------------------------------------------
+# Wave 58 — NFE-adaptive restart gate
+# ---------------------------------------------------------------------------
+
+
+def _restart_policy(nfe_budget: object = _UNSET) -> object:
+    """Minimal duck-typed restart policy for the gate tests.
+
+    Carries a ``beta_by_channel`` over all three FlowMol3 channels so
+    ``_restart_memory_fraction`` returns the paper-default ``m = 0.5``
+    (the blend the gate exists to suppress). ``nfe_budget`` is attached
+    only when supplied, so the default policy exercises the
+    "policy does not carry a budget" branch.
+    """
+    from types import SimpleNamespace
+
+    policy = SimpleNamespace(
+        policy_hash="wave58-test",
+        beta_by_channel={ch: 0.5 for ch in FLOWMOL3_CHANNELS},
+    )
+    if nfe_budget is not _UNSET:
+        policy.nfe_budget = nfe_budget
+    return policy
+
+
+def _skip_codes(bundle: StateBundle) -> list[str]:
+    """Provenance entries stamped by the low-NFE gate."""
+    return [
+        entry
+        for entry in bundle.provenance
+        if entry.startswith(AUDIT_FLOWMOL3_RESTART_SKIPPED_LOW_NFE)
+    ]
+
+
+class TestFlowMol3NfeAdaptiveRestartGate:
+    """NFE-adaptive restart gate (Wave 58).
+
+    FlowMol3's restart blend replaces ``1 - m`` of the state with fresh
+    noise (``m = 0.5`` at the paper default). Wave 57 measured
+    ``framework_improves=False`` on 9 real-ckpt cells with every NFE=10
+    cell regressing, and Agent C traced it to that blend corrupting the
+    CTMC chain when too few integration steps remain to re-absorb the
+    noise. The gate skips the blend below
+    :data:`FLOWMOL3_RESTART_MIN_NFE`.
+
+    See ``docs/audit/wave58-nfe-adaptive-gate-impl.md``.
+    """
+
+    def test_low_nfe_skips_restart_and_leaves_state_unchanged(
+        self, adapter
+    ) -> None:
+        """``nfe_budget=10`` ⇒ blend skipped, payload identical.
+
+        "Unchanged" means every field the blend would have rewritten:
+        the channel + mask refs, the source round, and — critically —
+        ``native_state_digest``, which on the blended path becomes
+        ``flowmol3:restart:<blended digest>``. Only ``provenance`` grows,
+        by the audit entry that makes the skip visible downstream.
+        """
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=10
+        )
+
+        assert result.native_state_digest == bundle.native_state_digest
+        assert not result.native_state_digest.startswith("flowmol3:restart:")
+        assert dict(result.channels) == dict(bundle.channels)
+        assert dict(result.masks) == dict(bundle.masks)
+        assert result.source_round == bundle.source_round
+        assert result.detach_proof is True
+        ok, errs = validate_state_bundle(result)
+        assert ok, errs
+
+        # Provenance: the prior trail is preserved verbatim and exactly
+        # one skip entry is appended.
+        assert result.provenance[: len(bundle.provenance)] == bundle.provenance
+        assert len(_skip_codes(result)) == 1
+        # The blend's own audit code must NOT appear — this round did
+        # not restart, and an eval reading provenance must not be told
+        # otherwise.
+        assert "flowmol3_restart_boundary" not in result.provenance
+
+    def test_high_nfe_applies_restart_blend(self, adapter) -> None:
+        """``nfe_budget=200`` ⇒ normal blend, no skip audit code."""
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=200
+        )
+
+        assert result.native_state_digest.startswith("flowmol3:restart:")
+        assert result.native_state_digest != bundle.native_state_digest
+        assert "flowmol3_restart_boundary" in result.provenance
+        assert _skip_codes(result) == []
+
+    def test_unknown_nfe_budget_is_byte_identical_to_pre_wave58(
+        self, adapter
+    ) -> None:
+        """No budget anywhere ⇒ the gate is inert (fail-open).
+
+        This is the byte-stability guard for every pre-Wave-58 caller —
+        the engine, and the pinned D.4 vectors in
+        ``regression-vectors/flowmol3.json``. A gate that fired on an
+        unknown budget would silently flatten the framework arm to
+        baseline for all of them.
+        """
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        gated = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=200
+        )
+        ungated = adapter.apply_restart_distribution(bundle, _restart_policy())
+
+        assert ungated.native_state_digest == gated.native_state_digest
+        assert ungated.provenance == gated.provenance
+        assert _skip_codes(ungated) == []
+
+    def test_threshold_boundary_is_exclusive(self, adapter) -> None:
+        """The gate fires on ``nfe < min_nfe``, not ``<=``."""
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        at_threshold = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=FLOWMOL3_RESTART_MIN_NFE
+        )
+        below = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=FLOWMOL3_RESTART_MIN_NFE - 1
+        )
+
+        assert at_threshold.native_state_digest.startswith("flowmol3:restart:")
+        assert _skip_codes(at_threshold) == []
+        assert below.native_state_digest == bundle.native_state_digest
+        assert len(_skip_codes(below)) == 1
+
+    def test_skip_audit_code_records_nfe_and_threshold(self, adapter) -> None:
+        """The audit entry carries the numbers that drove the decision.
+
+        A bare marker would make a v4 sweep un-auditable: the reader
+        could see *that* a cell was gated but not at what budget or
+        against which threshold (which is a constructor kwarg, so it
+        varies per adapter).
+        """
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=10
+        )
+        (code,) = _skip_codes(result)
+        assert code == (
+            f"{AUDIT_FLOWMOL3_RESTART_SKIPPED_LOW_NFE}"
+            f":nfe=10:min_nfe={FLOWMOL3_RESTART_MIN_NFE}"
+        )
+
+    def test_gate_reads_budget_from_policy_attribute(self, adapter) -> None:
+        """A duck-typed ``policy.nfe_budget`` drives the gate."""
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        skipped = adapter.apply_restart_distribution(
+            bundle, _restart_policy(nfe_budget=10)
+        )
+        blended = adapter.apply_restart_distribution(
+            bundle, _restart_policy(nfe_budget=200)
+        )
+
+        assert len(_skip_codes(skipped)) == 1
+        assert _skip_codes(blended) == []
+
+    def test_gate_reads_budget_from_constructor_kwarg(self) -> None:
+        """``FlowMol3Adapter(nfe_budget=...)`` drives the gate.
+
+        This is the seam a per-cell eval harness uses: one adapter per
+        ``(model, seed, nfe)`` cell, no change at the restart call site.
+        """
+        low = FlowMol3Adapter(nfe_budget=10)
+        high = FlowMol3Adapter(nfe_budget=200)
+        bundle = low.build_initial_state(batch_id="b", sample_id="s")
+
+        assert len(
+            _skip_codes(low.apply_restart_distribution(bundle, _restart_policy()))
+        ) == 1
+        assert _skip_codes(
+            high.apply_restart_distribution(bundle, _restart_policy())
+        ) == []
+
+    def test_call_kwarg_outranks_policy_and_constructor(self) -> None:
+        """Resolution order: call kwarg > policy attribute > constructor."""
+        adapter = FlowMol3Adapter(nfe_budget=10)
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+
+        # Call kwarg (200) beats both the policy (10) and the ctor (10).
+        assert _skip_codes(
+            adapter.apply_restart_distribution(
+                bundle, _restart_policy(nfe_budget=10), nfe_budget=200
+            )
+        ) == []
+        # Policy attribute (200) beats the ctor (10).
+        assert _skip_codes(
+            adapter.apply_restart_distribution(
+                bundle, _restart_policy(nfe_budget=200)
+            )
+        ) == []
+
+    def test_restart_min_nfe_zero_disables_the_gate(self) -> None:
+        """``restart_min_nfe=0`` restores the unconditional blend."""
+        adapter = FlowMol3Adapter(nfe_budget=2, restart_min_nfe=0)
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(bundle, _restart_policy())
+
+        assert result.native_state_digest.startswith("flowmol3:restart:")
+        assert _skip_codes(result) == []
+
+    def test_custom_threshold_is_honoured(self) -> None:
+        """The threshold is recalibratable, not a hard-wired literal.
+
+        Wave 57 Agent B estimated 20 from n=3 per stratum, so the v4
+        18-cell grid must be able to move it without a code edit.
+        """
+        adapter = FlowMol3Adapter(restart_min_nfe=100)
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=50
+        )
+
+        assert result.native_state_digest == bundle.native_state_digest
+        assert _skip_codes(result) == [
+            f"{AUDIT_FLOWMOL3_RESTART_SKIPPED_LOW_NFE}:nfe=50:min_nfe=100"
+        ]
+
+    def test_skipped_restart_suppresses_atom_type_entropy_audit(self) -> None:
+        """A gated round emits no blend-side audit code at all.
+
+        The Wave 49 atom-type-entropy policy stamps its own code from
+        inside the blend path. When the gate fires that path never runs,
+        so the code must be absent — otherwise an eval would attribute
+        an atom-type-aware restart to a round that did not restart.
+        """
+        adapter = FlowMol3Adapter(
+            atom_type_entropy_restart_policy=(
+                FlowMol3AtomTypeEntropyRestartPolicy()
+            ),
+            nfe_budget=10,
+        )
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(bundle, _restart_policy())
+
+        assert (
+            AUDIT_FLOWMOL3_ATOM_TYPE_ENTROPY_RESTART not in result.provenance
+        )
+        assert "flowmol3_restart_boundary" not in result.provenance
+        assert len(_skip_codes(result)) == 1
+
+    @pytest.mark.parametrize("bad", ["fifty", 0, 1, -5, 17.5, True, object()])
+    def test_invalid_explicit_budget_fails_closed(self, bad) -> None:
+        """An explicitly-typed bad budget raises, both entry points.
+
+        ``0``/``1`` are rejected because a budget that cannot be split
+        across restart rounds is a caller bug, and ``17.5`` because
+        silently truncating it to 17 would hide one.
+        """
+        with pytest.raises((ValueError, TypeError)):
+            FlowMol3Adapter(nfe_budget=bad)
+
+        adapter = FlowMol3Adapter()
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        with pytest.raises((ValueError, TypeError)):
+            adapter.apply_restart_distribution(
+                bundle, _restart_policy(), nfe_budget=bad
+            )
+
+    @pytest.mark.parametrize("bad", ["fifty", 0, -5, None, object()])
+    def test_junk_policy_budget_attribute_falls_through(self, bad) -> None:
+        """An unusable ``policy.nfe_budget`` never breaks a restart.
+
+        Unlike an explicit argument, this attribute is *discovered* on a
+        third-party policy object — a same-named field meaning something
+        else must degrade to "no budget here", not raise mid-round.
+        """
+        adapter = FlowMol3Adapter()
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(
+            bundle, _restart_policy(nfe_budget=bad)
+        )
+
+        assert result.native_state_digest.startswith("flowmol3:restart:")
+        assert _skip_codes(result) == []
+
+    @pytest.mark.parametrize("bad", [-1, "20", 20.0, True, None])
+    def test_invalid_restart_min_nfe_rejected(self, bad) -> None:
+        with pytest.raises((ValueError, TypeError)):
+            FlowMol3Adapter(restart_min_nfe=bad)
+
+    def test_factory_threads_gate_kwargs(self) -> None:
+        """The registry factory exposes both gate knobs."""
+        adapter = default_flowmol3_adapter(nfe_budget=10, restart_min_nfe=25)
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(bundle, _restart_policy())
+
+        assert _skip_codes(result) == [
+            f"{AUDIT_FLOWMOL3_RESTART_SKIPPED_LOW_NFE}:nfe=10:min_nfe=25"
+        ]
+
+    def test_factory_default_leaves_gate_inert(self) -> None:
+        """``default_flowmol3_adapter()`` is unchanged by Wave 58."""
+        adapter = default_flowmol3_adapter()
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(bundle, _restart_policy())
+
+        assert result.native_state_digest.startswith("flowmol3:restart:")
+        assert _skip_codes(result) == []
 
 
 __all__ = ()
