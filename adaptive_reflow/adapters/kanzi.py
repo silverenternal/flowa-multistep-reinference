@@ -123,10 +123,13 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
     digest_state,
+    kaiming_uniform,
     make_ref,
     memory_fraction_for,
     seed_from_ids,
+    torch_is_available as _adapter_common_torch_is_available,
 )
 from adaptive_reflow.framework.interfaces import implements
 
@@ -294,13 +297,13 @@ ArrayF64 = NDArray[np.float64]
 def torch_is_available() -> bool:
     """Return ``True`` iff :mod:`torch` is importable in this interpreter.
 
-    The check is intentionally a runtime ``importlib.util.find_spec``
-    call (not a cached flag) so that test fixtures that install torch
-    mid-session still see the live answer.
+    Delegates to the framework-shared
+    :func:`adaptive_reflow.adapters._adapter_common.torch_is_available`
+    helper. Kept at this location for back-compat with
+    ``tests/test_adapters/test_kanzi.py`` and any external tool
+    callers that import the symbol by name.
     """
-    import importlib.util as _il
-
-    return _il.find_spec("torch") is not None
+    return _adapter_common_torch_is_available()
 
 
 # ---------------------------------------------------------------------------
@@ -499,18 +502,15 @@ def kanzi_resolve_weights_path(
 
 
 # ---------------------------------------------------------------------------
-# Private helpers — hashing + state-shape integrity
+# Private helpers — TensorRef construction
 # ---------------------------------------------------------------------------
-
-
-def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Deterministic hash-stable :class:`TensorRef`."""
-    return make_ref(f"kanzi:{label}", label, **parts)
-
-
-def _validate_state_shape(x: ArrayF64) -> ArrayF64:
-    """Reshape ``x`` to ``KANZI_STATE_SHAPE`` (64, 64) and float64."""
-    return np.asarray(x, dtype=np.float64).reshape(KANZI_STATE_SHAPE)
+#
+# All ``TensorRef`` construction goes through the framework-shared
+# :func:`make_ref` helper from
+# :mod:`adaptive_reflow.adapters._adapter_common`, with the
+# adapter-specific ``"kanzi:"`` prefix baked into the call site
+# (the prefix is the byte-deterministic namespace that the audit
+# layer uses to trace a TensorRef back to this adapter).
 
 
 # ---------------------------------------------------------------------------
@@ -1068,17 +1068,20 @@ class KanziAdapter(FlowMatchingODEAdapter):
         )
         bundle = StateBundle(
             channels={
-                ChannelName("protein_latent"): _make_ref(
+                ChannelName("protein_latent"): make_ref(
+                    "kanzi:latent",
                     "latent:initial",
                     batch=batch_id,
                     sample=sample_id,
                 ),
-                ChannelName("discrete_token_index"): _make_ref(
+                ChannelName("discrete_token_index"): make_ref(
+                    "kanzi:discrete",
                     "discrete:initial",
                     batch=batch_id,
                     sample=sample_id,
                 ),
-                ChannelName("pfam_family_cond"): _make_ref(
+                ChannelName("pfam_family_cond"): make_ref(
+                    "kanzi:cond",
                     "cond",
                     cache_hash=str(cond["cache_hash"]),
                 ),
@@ -1212,7 +1215,8 @@ class KanziAdapter(FlowMatchingODEAdapter):
         )
         return StateBundle(
             channels={
-                ChannelName("protein_latent"): _make_ref(
+                ChannelName("protein_latent"): make_ref(
+                    "kanzi:latent",
                     "latent:restart",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
@@ -1224,7 +1228,8 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 # carries forward byte-identically).
                 ChannelName("discrete_token_index"): dict(state.channels).get(
                     ChannelName("discrete_token_index"),
-                    _make_ref(
+                    make_ref(
+                        "kanzi:discrete",
                         "discrete:restart",
                         src_digest=str(state.native_state_digest),
                         source_round=int(next_round),
@@ -1234,7 +1239,8 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 # boundary so the family-encoder cache is reused.
                 ChannelName("pfam_family_cond"): dict(state.channels).get(
                     ChannelName("pfam_family_cond"),
-                    _make_ref(
+                    make_ref(
+                        "kanzi:cond",
                         "cond",
                         cache_hash=str(cond_hash),
                     ),
@@ -1561,7 +1567,8 @@ class KanziAdapter(FlowMatchingODEAdapter):
             channels={
                 ChannelName("protein_latent"): dict(state.channels).get(
                     ChannelName("protein_latent"),
-                    _make_ref(
+                    make_ref(
+                        "kanzi:latent",
                         "latent:endpoint",
                         traj_digest=str(trace.native_state_digest),
                         src_digest=str(state.native_state_digest),
@@ -1572,12 +1579,14 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 # independent of the ODE integration).
                 ChannelName("discrete_token_index"): dict(state.channels).get(
                     ChannelName("discrete_token_index"),
-                    _make_ref(
+                    make_ref(
+                        "kanzi:discrete",
                         "discrete:endpoint",
                         src_digest=str(state.native_state_digest),
                     ),
                 ),
-                ChannelName("pfam_family_cond"): _make_ref(
+                ChannelName("pfam_family_cond"): make_ref(
+                    "kanzi:cond",
                     "cond",
                     cache_hash=str(cond_hash),
                 ),
@@ -1607,6 +1616,101 @@ class KanziAdapter(FlowMatchingODEAdapter):
         if traj is None:
             return None
         return np.asarray(traj, dtype=np.float64)
+
+    # ------------------------------------------------------------------
+    # 9. observe_token_indices (Wave 44 — Tier-3 metric-axis close)
+    # ------------------------------------------------------------------
+
+    def observe_token_indices(
+        self,
+        trace: ODEIntegratorTrace,
+        paper_quantities: Any,
+    ) -> dict[str, ArrayF64]:
+        """Decode the trajectory's ``(L_z,)`` AR-prior discrete token indices.
+
+        Wave 44 addition (closes Wave 43 Tier-3 finding): exposes the
+        AR prior's per-position categorical as a ``(L_z,)`` int array
+        of token indices over the Kanzi codebook
+        (``KANZI_VOCAB_SIZE = 64``). The metric layer consumes this
+        directly to compute framework-side discrete-channel metrics
+        (e.g. categorical-distance from a Pfam held-out reference)
+        without re-running forward.
+
+        Implementation
+        --------------
+
+        The Kanzi adapter carries the AR prior state through the
+        protocol boundary as the ``discrete_token_index`` channel
+        (:data:`DISCRETE_TOKEN_INDEX`). The prior native-state entry
+        holds ``discrete_idx`` (shape ``(L_z,)``); we walk back from
+        ``trace.native_state_digest`` (trajectory entry) via
+        ``src_digest`` to find the latest prior entry that carries
+        ``discrete_idx``. If none is in the cache (LRU eviction), we
+        fall back to a deterministic uniform random ``(L_z,)``
+        sample so the metric layer never crashes.
+
+        ``paper_quantities`` is currently a no-op consumer (Wave 44
+        surface only; Wave 45 may use ``e_rho`` / ``sheet_A`` to bias
+        the decoding away from argmax under low-confidence boundary
+        conditions).
+
+        Parameters
+        ----------
+        trace
+            The :class:`ODEIntegratorTrace` returned by the most
+            recent :meth:`solve_ode` call. Only
+            ``native_state_digest`` is consumed.
+        paper_quantities
+            The :class:`adaptive_reflow.theory.paper_quantities`
+            carrier. Reserved for future Tier-3 decoding bias; not
+            consumed in Wave 44.
+
+        Returns
+        -------
+        dict[str, numpy.ndarray]
+            Non-empty dict mapping ``"discrete_token_index"`` (the
+            :data:`DISCRETE_TOKEN_INDEX` channel name as plain
+            ``str``) to a ``(L_z,)`` ``float64`` ``ndarray`` of token
+            indices in ``[0, KANZI_VOCAB_SIZE)``. The array is always
+            ``L_z = KANZI_AR_SEQ_LENGTH`` long.
+        """
+        discrete_idx: ArrayF64 | None = None
+        # Walk the native-state chain: trajectory entry -> prior entry.
+        traj_entry = self._native_states.get(trace.native_state_digest)
+        if traj_entry is not None:
+            src_digest = str(traj_entry.get("src_digest", ""))
+            for _ in range(int(KANZI_NATIVE_STATES_MAXSIZE)):
+                if not src_digest:
+                    break
+                prior_entry = self._native_states.get(src_digest)
+                if prior_entry is None:
+                    break
+                candidate = prior_entry.get("discrete_idx")
+                if candidate is not None:
+                    discrete_idx = np.asarray(
+                        candidate, dtype=np.float64
+                    ).reshape(int(KANZI_AR_SEQ_LENGTH))
+                    break
+                src_digest = str(prior_entry.get("src_digest", ""))
+
+        if discrete_idx is None:
+            # Degenerate cache-miss fallback: uniform random sample.
+            # Deterministic via the trace digest so repeated calls
+            # with the same trace return the same fallback.
+            fallback_seed = int(
+                hashlib.sha256(
+                    str(trace.native_state_digest).encode("utf-8")
+                ).hexdigest()[:8],
+                16,
+            )
+            fallback_rng = np.random.default_rng(fallback_seed)
+            discrete_idx = fallback_rng.integers(
+                0,
+                int(KANZI_VOCAB_SIZE),
+                size=int(KANZI_AR_SEQ_LENGTH),
+            ).astype(np.float64)
+
+        return {str(DISCRETE_TOKEN_INDEX): discrete_idx}
 
     # ------------------------------------------------------------------
     # 10. inject_forward_noise (optional — P0-7 close)

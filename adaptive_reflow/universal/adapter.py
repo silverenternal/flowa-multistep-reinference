@@ -288,6 +288,8 @@ class FlowMatchingODEAdapter(Protocol):
     6. ``compose_condition(bundle, delta)`` — declarative condition.
     7. ``solve_ode(state, condition, seed)`` — native integration step.
     8. ``observe_endpoint(trace, state)`` — observation-only post-step.
+    9. ``observe_token_indices(trace, paper_quantities)`` — decode
+       per-channel token indices (Wave 44, Tier-3 metric-axis close).
 
     All methods are documented in the engine module; see
     :meth:`flow_matching_engine.Engine.run_round` for the call order.
@@ -322,6 +324,54 @@ class FlowMatchingODEAdapter(Protocol):
         trace: ODEIntegratorTrace,
         state: StateBundle,
     ) -> StateBundle: ...
+
+    def observe_token_indices(
+        self,
+        trace: Any,
+        paper_quantities: Any,
+    ) -> dict[str, Any]:
+        """Decode per-channel token indices from the native ODE trajectory.
+
+        Wave 44 addition: closes the Tier-3 metric-axis gap (Wave 43
+        finding) where framework-vs-baseline metric delta was 0 because
+        both arms ran the same upstream forward with the same seed.
+        Adapters that carry discrete-domain channels (Kanzi
+        :data:`adaptive_reflow.adapters.kanzi.DISCRETE_TOKEN_INDEX`,
+        LineageFlow
+        :data:`adaptive_reflow.adapters.lineageflow.AMINO_ACID_CATEGORICAL`)
+        implement this to surface the decoded token-index arrays to
+        the metric layer without re-running forward.
+
+        Parameters
+        ----------
+        trace
+            The ``ODEIntegratorTrace`` (or duck-typed equivalent) that
+            was returned by :meth:`solve_ode` for this round.
+        paper_quantities
+            The :class:`adaptive_reflow.theory.paper_quantities`
+            carrier (or duck-typed equivalent) carrying ``e_rho``,
+            ``sheet_A``, ``packing_B``, ``cell_C`` etc. Adapters may
+            consume these signals to bias the decoding (e.g. select a
+            non-argmax index when the scheduler-driven restart-blend
+            indicates the boundary layer is unstable).
+
+        Returns
+        -------
+        dict[str, numpy.ndarray]
+            Mapping from each discrete-domain channel name (the
+            ``ChannelName`` as plain ``str``) to a decoded
+            ``np.ndarray`` of token indices. Implementations MUST
+            return a non-empty dict when any discrete-domain channel
+            is declared in
+            :attr:`AdapterCapabilities.supported_channels`; an empty
+            dict signals "no discrete tokens for this trace".
+
+        Stdlib-only at the Protocol layer (annotations are stringified
+        so ``numpy`` is never imported here). Adapters that
+        implement this method are responsible for any numpy
+        conversion; the metric layer is the canonical consumer.
+        """
+        ...
 
     def export_trajectory(
         self, trace: ODEIntegratorTrace

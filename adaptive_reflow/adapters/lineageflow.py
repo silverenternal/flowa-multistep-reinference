@@ -1498,6 +1498,91 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         return np.asarray(traj, dtype=np.float64)
 
     # ------------------------------------------------------------------
+    # 9. observe_token_indices (Wave 44 — Tier-3 metric-axis close)
+    # ------------------------------------------------------------------
+
+    def observe_token_indices(
+        self,
+        trace: ODEIntegratorTrace,
+        paper_quantities: Any,
+    ) -> dict[str, ArrayF64]:
+        """Decode the trajectory's ``(L,)`` per-position amino-acid token indices.
+
+        Wave 44 addition (closes Wave 43 Tier-3 finding): exposes the
+        per-position ``argmax`` over the final-step per-position
+        categorical as a ``(L,)`` int array of amino-acid token
+        indices over the Pfam 33-token alphabet
+        (``LINEAGEFLOW_VOCAB_SIZE = 33``). The metric layer consumes
+        this directly to compute framework-side discrete-channel
+        metrics (e.g. categorical-distance from a Pfam held-out
+        reference, recovered-protein identity) without re-running
+        forward.
+
+        Implementation
+        --------------
+
+        The LineageFlow adapter carries the per-position categorical
+        ``theta`` (shape ``(L, K)``) through the protocol boundary as
+        the :data:`AMINO_ACID_CATEGORICAL` channel. The ODE trajectory
+        ``trajectory`` is stored at
+        ``self._native_states[trace.native_state_digest]`` with shape
+        ``(N+1, L, K)``. We decode the final-step categorical via
+        ``argmax(trajectory[-1], axis=-1)`` which yields the
+        per-position amino-acid token index.
+
+        ``paper_quantities`` is currently a no-op consumer (Wave 44
+        surface only; Wave 45 may use ``e_rho`` / ``sheet_A`` to bias
+        the decoding away from argmax under low-confidence boundary
+        conditions, e.g. swap to a temperature-1.0 sampling when
+        ``e_rho < floor``).
+
+        Parameters
+        ----------
+        trace
+            The :class:`ODEIntegratorTrace` returned by the most
+            recent :meth:`solve_ode` call. Only
+            ``native_state_digest`` is consumed.
+        paper_quantities
+            The :class:`adaptive_reflow.theory.paper_quantities`
+            carrier. Reserved for future Tier-3 decoding bias; not
+            consumed in Wave 44.
+
+        Returns
+        -------
+        dict[str, numpy.ndarray]
+            Non-empty dict mapping ``"amino_acid_categorical"`` (the
+            :data:`AMINO_ACID_CATEGORICAL` channel name as plain
+            ``str``) to a ``(L,)`` ``float64`` ``ndarray`` of token
+            indices in ``[0, LINEAGEFLOW_VOCAB_SIZE)``. The array is
+            always ``L = LINEAGEFLOW_MAX_LENGTH`` long (PAD / masked
+            positions may carry any value in ``[0, K)``).
+
+        Raises
+        ------
+        CapabilityMissingError
+            If ``trace.native_state_digest`` is not in the adapter's
+            native-state cache (e.g. evicted by LRU pressure).
+        """
+        traj_entry = self._native_states.get(trace.native_state_digest)
+        if traj_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state",
+                context=trace.native_state_digest,
+            )
+        trajectory = traj_entry.get("trajectory")
+        if trajectory is None:
+            raise CapabilityMissingError(
+                "missing_trajectory",
+                context=trace.native_state_digest,
+            )
+        trajectory_arr = np.asarray(trajectory, dtype=np.float64)
+        theta_final = np.asarray(
+            trajectory_arr[-1], dtype=np.float64
+        ).reshape(LINEAGEFLOW_STATE_SHAPE)
+        token_indices = np.argmax(theta_final, axis=-1).astype(np.float64)
+        return {str(AMINO_ACID_CATEGORICAL): token_indices}
+
+    # ------------------------------------------------------------------
     # 10. inject_forward_noise
     # ------------------------------------------------------------------
 
