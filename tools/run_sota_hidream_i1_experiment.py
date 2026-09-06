@@ -79,10 +79,12 @@ import argparse
 import json
 import math
 import os
+import struct
 import subprocess
 import sys
 import time
 import warnings
+import zlib
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
@@ -201,18 +203,21 @@ def _build_pipeline_and_adapter(
     ``enable_model_cpu_offload``: diffusers warns that this defeats
     the offload and is a memory-leak footgun.
     """
-    import torch
-
     from adaptive_reflow.adapters.hidream_i1 import (
         HiDreamI1Adapter,
     )
 
+    # Wave 51: defer ``import torch`` past the synthetic branch so the
+    # no-weights synthetic smoke path (used by tests) does not require
+    # a torch-enabled venv. The synthetic backend is numpy + PIL only.
     if weights is None or not weights.exists():
         adapter = HiDreamI1Adapter(
             weights_path=weights,
             force_mode="synthetic",
         )
         return None, adapter
+
+    import torch
 
     dtype_map = {
         "bf16": torch.bfloat16,
@@ -853,7 +858,39 @@ def _emit_synthetic_pngs(
 
     Returns ``(wall_clock_s, endpoint_png_paths, per_round_png_paths)``.
     """
-    from PIL import Image
+    # Wave 51: prefer PIL (full-featured), but fall back to a stdlib-
+    # only PNG writer when PIL is unavailable (synthetic smoke path on
+    # test venvs that only ship numpy). The output bytes are byte-stable
+    # enough for the test harness — both produce valid PNGs.
+    Image: Any | None
+    try:
+        from PIL import Image as _PILImage  # type: ignore[import-not-found]
+        Image = _PILImage
+    except ImportError:
+        Image = None
+
+    def _save_rgb_png(arr_np: np.ndarray, out: Path) -> None:
+        """Write ``arr_np`` (H, W, 3) uint8 as a PNG; PIL or stdlib."""
+        if Image is not None:
+            Image.fromarray(np.asarray(arr_np), mode="RGB").save(out)
+            return
+        # Stdlib fallback: 8-bit RGB PNG, filter byte 0 per row, zlib.
+        h, w = int(arr_np.shape[0]), int(arr_np.shape[1])
+        raw = b"".join(
+            b"\x00" + np.ascontiguousarray(arr_np[i]).tobytes()
+            for i in range(h)
+        )
+        compressed = zlib.compress(raw)
+        sig = b"\x89PNG\r\n\x1a\n"
+        ihdr = struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)
+        def _chunk(typ: bytes, data: bytes) -> bytes:
+            crc = zlib.crc32(typ + data) & 0xFFFFFFFF
+            return struct.pack(">I", len(data)) + typ + data + struct.pack(">I", crc)
+        with open(out, "wb") as fh:
+            fh.write(sig)
+            fh.write(_chunk(b"IHDR", ihdr))
+            fh.write(_chunk(b"IDAT", compressed))
+            fh.write(_chunk(b"IEND", b""))
 
     output_dir.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(int(seed))
@@ -865,7 +902,7 @@ def _emit_synthetic_pngs(
             0, 256, size=(int(resolution), int(resolution), 3), dtype=np.uint8,
         )
         endpoint_path = output_dir / f"sample_{i:04d}.png"
-        Image.fromarray(arr, mode="RGB").save(endpoint_path)
+        _save_rgb_png(arr, endpoint_path)
         endpoint_paths.append(endpoint_path)
         # Phase 4 contract: per-round dirs ONLY exist for the framework
         # arm with ``n_rounds > 1``. Baseline (or framework with
@@ -878,7 +915,7 @@ def _emit_synthetic_pngs(
                 rdir.mkdir(parents=True, exist_ok=True)
                 rp = rdir / f"sample_{i:04d}.png"
                 if not rp.exists():
-                    Image.fromarray(arr, mode="RGB").save(rp)
+                    _save_rgb_png(arr, rp)
                 per_round_paths.append(rp)
     wall = float(time.perf_counter() - started)
     return wall, endpoint_paths, per_round_paths
