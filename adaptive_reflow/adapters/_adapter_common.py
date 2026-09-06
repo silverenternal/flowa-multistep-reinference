@@ -207,6 +207,60 @@ def make_adapter_capabilities(
     return kwargs
 
 
+def per_position_entropy_reduction(
+    theta_before: NDArray[np.float64],
+    theta_after: NDArray[np.float64],
+    eps: float = 1e-12,
+) -> float:
+    """Continuous, non-saturating framework-vs-baseline gap metric (P2-W33-C, Wave 45).
+
+    Returns the per-position Shannon-entropy *reduction* from a baseline
+    endpoint ``theta_before`` to a framework endpoint ``theta_after``::
+
+        reduction = H(theta_before) - H(theta_after)
+
+    A **positive** reduction means the framework ``sharpened`` the
+    posterior relative to the baseline (entropy went down); a **negative**
+    reduction means the framework widened it. The metric is bounded in
+    ``[-log K, log K]`` where ``K`` is the cardinality of the last axis
+    (e.g. ``K = 33`` for Pfam, ``K = 64`` for Kanzi's discrete vocab).
+
+    The math is ported verbatim from
+    ``tools/run_controlled_audit.py:702 _per_position_entropy`` (Wave 33
+    P2-W33-C) and is the only place in the tree where this computation
+    lives. Numerically-stable softmax along the last axis; the ``eps``
+    floor is added *inside* the log (not on the entropy denominator) so
+    the metric stays finite on a delta-spike input.
+
+    Shape contract: ``theta_before`` and ``theta_after`` must broadcast on
+    leading axes (samples, positions) and share the trailing ``K`` axis.
+    Either may have an arbitrary number of leading axes; both are treated
+    as logits over the trailing axis. The returned scalar is the mean of
+    ``-sum(p * log(p + eps), axis=-1)`` across **all** leading axes.
+
+    Degenerate inputs (empty or fewer than two samples in either argument)
+    return ``float("nan")`` so callers can distinguish ``metric
+    undefined`` from ``metric == 0`` (which would be the
+    delta-spike-on-both-arms case).
+
+    Stdlib + numpy only. No torch at module level (Wave 45 / P2-9
+    contract).
+    """
+    def _entropy(endpoints: NDArray[np.float64]) -> float:
+        if endpoints.size == 0 or endpoints.shape[0] < 2:
+            return float("nan")
+        # numerically-stable softmax along the K axis (last axis).
+        z = endpoints - np.max(endpoints, axis=-1, keepdims=True)
+        exp_z = np.exp(z)
+        p = exp_z / np.sum(exp_z, axis=-1, keepdims=True)
+        # Per-position Shannon entropy; mean across all leading axes
+        # (samples, positions, ...) yields the batch-level scalar.
+        per_position = -np.sum(p * np.log(p + eps), axis=-1)
+        return float(np.mean(per_position))
+
+    return _entropy(theta_before) - _entropy(theta_after)
+
+
 __all__ = [
     "NativeStateCache",
     "digest_state",
@@ -214,6 +268,7 @@ __all__ = [
     "make_adapter_capabilities",
     "make_ref",
     "memory_fraction_for",
+    "per_position_entropy_reduction",
     "seed_from_ids",
     "torch_is_available",
 ]

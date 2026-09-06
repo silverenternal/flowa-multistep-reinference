@@ -278,3 +278,175 @@ def test_make_adapter_capabilities_byte_stable_for_shared_inputs() -> None:
     kwargs_a = make_adapter_capabilities(**common)
     kwargs_b = make_adapter_capabilities(**common)
     assert kwargs_a == kwargs_b
+
+
+# ---------------------------------------------------------------------------
+# Wave 45 — per_position_entropy_reduction (P2-W33-C math, promoted)
+# ---------------------------------------------------------------------------
+# The shared helper is the single canonical definition of the per-position
+# entropy math (lifted verbatim from tools/run_controlled_audit.py:702).
+# Both Kanzi and LineageFlow's observe_entropy_reduction methods will call
+# this helper; ``tools/run_controlled_audit.py`` will also be re-pointed
+# at it in a follow-up so there is exactly one definition in the tree.
+
+
+def test_per_position_entropy_reduction_zero_for_identical_inputs() -> None:
+    """If before and after are identical, the reduction must be exactly 0."""
+    import numpy as np
+
+    from adaptive_reflow.adapters._adapter_common import (
+        per_position_entropy_reduction,
+    )
+
+    rng = np.random.default_rng(0)
+    theta = rng.standard_normal((8, 16, 33))
+    r = per_position_entropy_reduction(theta, theta)
+    assert r == pytest.approx(0.0, abs=1e-12)
+
+
+def test_per_position_entropy_reduction_positive_when_after_is_sharper() -> None:
+    """A delta-spike ``after`` must yield a positive reduction (entropy drops)."""
+    import numpy as np
+
+    from adaptive_reflow.adapters._adapter_common import (
+        per_position_entropy_reduction,
+    )
+
+    rng = np.random.default_rng(1)
+    # baseline = uniform-ish logits (high entropy).
+    theta_before = rng.standard_normal((4, 12, 33))
+    # framework = concentrate on one residue per position (low entropy).
+    theta_after = np.zeros((4, 12, 33))
+    spike_idx = rng.integers(0, 33, size=(4, 12))
+    theta_after[np.arange(4)[:, None], np.arange(12)[None, :], spike_idx] = 50.0
+    r = per_position_entropy_reduction(theta_before, theta_after)
+    # baseline ~ log(33) ~ 3.50; after ~ 0; reduction ~ 3.50, strictly > 0.
+    assert r > 0.0
+    # the upper bound is ``log K``; with K=33 this is ~ 3.4965.
+    assert r <= np.log(33.0) + 1e-9
+
+
+def test_per_position_entropy_reduction_negative_when_after_is_uniform() -> None:
+    """A uniform-logit ``after`` (high entropy) yields a *negative* reduction."""
+    import numpy as np
+
+    from adaptive_reflow.adapters._adapter_common import (
+        per_position_entropy_reduction,
+    )
+
+    rng = np.random.default_rng(2)
+    # baseline = concentrated (low entropy).
+    theta_before = np.zeros((4, 12, 33))
+    spike_idx = rng.integers(0, 33, size=(4, 12))
+    theta_before[np.arange(4)[:, None], np.arange(12)[None, :], spike_idx] = 50.0
+    # framework = uniform logits (high entropy ~ log K).
+    theta_after = rng.standard_normal((4, 12, 33))
+    r = per_position_entropy_reduction(theta_before, theta_after)
+    assert r < 0.0
+    assert r >= -np.log(33.0) - 1e-9
+
+
+def test_per_position_entropy_reduction_bounded_in_logK() -> None:
+    """The metric must be bounded in ``[-log K, log K]`` for any inputs."""
+    import numpy as np
+
+    from adaptive_reflow.adapters._adapter_common import (
+        per_position_entropy_reduction,
+    )
+
+    rng = np.random.default_rng(3)
+    K = 33
+    # Worst case: before is uniform, after is a delta-spike (max reduction).
+    theta_before = rng.standard_normal((4, 12, K))
+    theta_after = np.zeros((4, 12, K))
+    spike_idx = rng.integers(0, K, size=(4, 12))
+    theta_after[np.arange(4)[:, None], np.arange(12)[None, :], spike_idx] = 100.0
+    r_max = per_position_entropy_reduction(theta_before, theta_after)
+    # Worst case reversed (most negative).
+    r_min = per_position_entropy_reduction(theta_after, theta_before)
+    assert r_max <= np.log(K) + 1e-9
+    assert r_min >= -np.log(K) - 1e-9
+
+
+def test_per_position_entropy_reduction_nan_on_empty_input() -> None:
+    """Empty input must yield NaN (not 0.0) so callers see ``metric undefined``."""
+    import numpy as np
+
+    from adaptive_reflow.adapters._adapter_common import (
+        per_position_entropy_reduction,
+    )
+
+    empty = np.zeros((0, 12, 33))
+    theta = np.zeros((4, 12, 33))
+    # the leading axis of ``before`` is empty -> NaN
+    r_empty_before = per_position_entropy_reduction(empty, theta)
+    r_empty_after = per_position_entropy_reduction(theta, empty)
+    assert np.isnan(r_empty_before)
+    assert np.isnan(r_empty_after)
+
+
+def test_per_position_entropy_reduction_nan_on_single_sample() -> None:
+    """Fewer than 2 samples in either arg must yield NaN (matches §11 guard)."""
+    import numpy as np
+
+    from adaptive_reflow.adapters._adapter_common import (
+        per_position_entropy_reduction,
+    )
+
+    one = np.zeros((1, 12, 33))
+    many = np.zeros((4, 12, 33))
+    assert np.isnan(per_position_entropy_reduction(one, many))
+    assert np.isnan(per_position_entropy_reduction(many, one))
+
+
+def test_per_position_entropy_reduction_deterministic() -> None:
+    """The metric is deterministic — repeated calls on the same input agree."""
+    import numpy as np
+
+    from adaptive_reflow.adapters._adapter_common import (
+        per_position_entropy_reduction,
+    )
+
+    rng = np.random.default_rng(4)
+    a = rng.standard_normal((4, 12, 33))
+    b = rng.standard_normal((4, 12, 33))
+    r1 = per_position_entropy_reduction(a, b)
+    r2 = per_position_entropy_reduction(a, b)
+    assert r1 == pytest.approx(r2, abs=0.0)
+
+
+def test_per_position_entropy_reduction_matches_run_controlled_audit_formula() -> None:
+    """The math is verbatim from ``run_controlled_audit.py:702``: H = -sum(p * log(p + eps)) on the K axis.
+
+    Reproduce the per-arg entropy by hand and confirm the helper
+    equals ``hand(before) - hand(after)`` to within float eps.
+    """
+    import numpy as np
+
+    from adaptive_reflow.adapters._adapter_common import (
+        per_position_entropy_reduction,
+    )
+
+    rng = np.random.default_rng(5)
+    a = rng.standard_normal((4, 12, 33))
+    b = rng.standard_normal((4, 12, 33))
+    eps = 1e-12
+
+    def hand(theta: np.ndarray) -> float:
+        z = theta - np.max(theta, axis=-1, keepdims=True)
+        e = np.exp(z)
+        p = e / np.sum(e, axis=-1, keepdims=True)
+        per_pos = -np.sum(p * np.log(p + eps), axis=-1)
+        return float(np.mean(per_pos))
+
+    expected = hand(a) - hand(b)
+    actual = per_position_entropy_reduction(a, b, eps=eps)
+    assert actual == pytest.approx(expected, abs=1e-15)
+
+
+def test_per_position_entropy_reduction_export_via_dunder_all() -> None:
+    """The helper is exported from ``_adapter_common`` (``__all__`` membership)."""
+    import adaptive_reflow.adapters._adapter_common as mod
+
+    assert "per_position_entropy_reduction" in mod.__all__
+    assert hasattr(mod, "per_position_entropy_reduction")
