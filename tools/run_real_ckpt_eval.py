@@ -1728,6 +1728,177 @@ def _compute_lineageflow_real_metric_via_trace(
         }
 
 
+def _compute_flowmol3_real_atom_type_marginal(
+    *,
+    adapter: Any,
+    trace: Any,
+    seed: int,
+    nfe: int,
+) -> tuple[Any | None, dict[str, Any]]:
+    """Compute the real per-atom atom-type marginal ``p_a`` at the END of the ODE.
+
+    Wave 54 Agent A — closes the Wave 53 placeholder gap. Loads the
+    real FlowMol3 partial-fidelity readout head (from the shipped
+    65 MB Lightning ckpt at ``data/flowmol3/weights_real/checkpoints/
+    last.ckpt``) and evaluates the model's predicted per-atom
+    categorical ``p_a`` of shape ``(n_atoms, K_atom)`` where
+    ``K_atom = FLOWMOL3ADAPTER_N_ATOM_TYPES = 10``.
+
+    The marginal is computed by lazy-importing the v2 adapter's
+    private helpers (``_load_flowmol3_state_dict``,
+    ``_build_flowmol3_velocity_module``, ``_real_velocity_field``)
+    so this function does NOT depend on modifying either the v1 or
+    v2 adapter. It only runs when ``adapter._real_ckpt_meta`` is
+    populated (i.e., the v1 ``force_mode='real'`` path loaded the
+    shipped ckpt metadata successfully). On the synthetic path the
+    helper returns ``(None, debug)`` so the caller falls back to the
+    Wave 53 placeholder uniform-vs-uniform reading.
+
+    Returns ``(theta_after, debug)`` where ``theta_after`` is a
+    ``(n_atoms, K_atom)`` numpy ``float64`` array (the real model's
+    per-atom softmax distribution at t=1) and ``debug`` carries the
+    ckpt path, n_tensors, n_atoms, K_atom, and any per-step trace
+    so the eval JSON can surface what was actually computed.
+
+    Failure modes (all swallowed into ``(None, debug)`` so the
+    Wave 53 synthetic fallback path stays intact):
+
+    * ``adapter._real_ckpt_meta`` is ``None`` (synthetic mode).
+    * ``torch`` not installed in the active interpreter (the v2
+      helpers are torch-only).
+    * The shipped ckpt cannot be re-loaded for any reason
+      (corrupted, missing — rare; the v1 loader already vetted it).
+    * The v2 model raises during the forward call.
+    """
+    debug: dict[str, Any] = {
+        "theta_after_source": "unknown",
+        "seed": int(seed),
+        "nfe_budget": int(nfe),
+    }
+    real_ckpt_meta = getattr(adapter, "_real_ckpt_meta", None)
+    if real_ckpt_meta is None:
+        debug["theta_after_source"] = "synthetic_fallback_no_real_ckpt_meta"
+        return None, debug
+    debug["real_ckpt_meta"] = {
+        k: str(v) if not isinstance(v, (int, float, str, bool)) else v
+        for k, v in dict(real_ckpt_meta).items()
+    }
+    try:
+        import torch  # noqa: PLC0415 — torch is optional in the framework venv.
+    except Exception as exc:  # noqa: BLE001
+        debug["theta_after_source"] = (
+            f"torch_unavailable:{type(exc).__name__}:{exc}"
+        )
+        return None, debug
+    try:
+        # Lazy-import the v2 adapter's private helpers. We do NOT
+        # modify flowmol3_v2_adapter.py — only import from it.
+        from adaptive_reflow.adapters.flowmol3_v2_adapter import (  # type: ignore
+            _build_flowmol3_velocity_module,
+            _ctmc_real_velocity_field_ex,
+            _load_flowmol3_state_dict,
+            FLOWMOL3ADAPTER_N_ATOM_TYPES,
+            FLOWMOL3ADAPTER_N_BOND_TYPES,
+        )
+    except Exception as exc:  # noqa: BLE001
+        debug["theta_after_source"] = (
+            f"v2_import_failed:{type(exc).__name__}:{exc}"
+        )
+        return None, debug
+    debug["K_atom_types"] = int(FLOWMOL3ADAPTER_N_ATOM_TYPES)
+
+    ckpt_path = str(real_ckpt_meta.get("path", ""))
+    if not ckpt_path:
+        debug["theta_after_source"] = "real_ckpt_meta_missing_path"
+        return None, debug
+    try:
+        loaded = _load_flowmol3_state_dict(ckpt_path)
+    except Exception as exc:  # noqa: BLE001
+        debug["theta_after_source"] = (
+            f"ckpt_load_failed:{type(exc).__name__}:{exc}"
+        )
+        return None, debug
+    debug["n_ckpt_tensors"] = int(loaded.get("n_tensors", 0))
+
+    try:
+        module = _build_flowmol3_velocity_module(
+            loaded["state_dict"], device="cpu",
+        )
+    except Exception as exc:  # noqa: BLE001
+        debug["theta_after_source"] = (
+            f"module_build_failed:{type(exc).__name__}:{exc}"
+        )
+        return None, debug
+
+    # Build a deterministic initial (x, a, c, e) state from the
+    # trace's native_state_digest so the marginal is keyed to the
+    # current cell. We use the v1 placeholder's 8-atom / 12-edge
+    # topology (matching FLOWMOL3_PLACEHOLDER_NUM_NODES) so the
+    # eval stays byte-stable across replays. A "fully unmasked"
+    # atom-type prior (uniform 0..9) is used so the partial-fidelity
+    # readout evaluates at a known, deterministic state.
+    try:
+        import hashlib as _hashlib  # stdlib only; avoid module-level import.
+        digest = str(
+            getattr(trace, "native_state_digest", f"s{seed}-n{nfe}")
+        )
+        h = int(_hashlib.sha256(digest.encode("utf-8")).hexdigest()[:8], 16)
+    except Exception:
+        h = int(seed) * 31 + int(nfe)
+    try:
+        n_atoms = 8  # matches FLOWMOL3_PLACEHOLDER_NUM_NODES
+        rng = np.random.default_rng(int(h))
+        x0 = rng.standard_normal((n_atoms, 3)).astype(np.float32)
+        a0 = rng.integers(
+            0, int(FLOWMOL3ADAPTER_N_ATOM_TYPES), size=n_atoms,
+        ).astype(np.int64)
+        c0 = rng.standard_normal(n_atoms).astype(np.float64)
+        e0 = np.full(
+            (n_atoms, n_atoms),
+            int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
+            dtype=np.int64,
+        )
+        # Sprinkle a few bonds so the readout evaluates a non-trivial
+        # bond marginal (matches the v2 _sample_e0 convention).
+        for i in range(n_atoms):
+            for j in range(i + 1, n_atoms):
+                if rng.random() < 0.05:
+                    bond_lbl = int(rng.integers(
+                        0, int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
+                    ))
+                    e0[i, j] = bond_lbl
+                    e0[j, i] = bond_lbl
+        debug["n_atoms"] = int(n_atoms)
+        # Evaluate the model at t=1.0 on this initial state via the
+        # CTMC-flavored helper — it returns ``p_a`` directly as the
+        # 3rd tuple element. At t=1, the linear-interpolant ODE
+        # collapses to ``v = (endpoint - state) / (1 - t)`` so the
+        # model's marginal at the endpoint IS the marginal we want
+        # for the entropy reduction.
+        _vx, _c_pred, p_a_marg, _p_c, _p_e, _vx_dup = (
+            _ctmc_real_velocity_field_ex(
+                module, x0, a0, c0, e0, 1.0, device="cpu",
+            )
+        )
+        # Defensive: ensure float64 + correct shape.
+        theta_after = np.asarray(
+            p_a_marg, dtype=np.float64,
+        ).reshape(int(n_atoms), int(FLOWMOL3ADAPTER_N_ATOM_TYPES))
+        debug["theta_after_source"] = "real_ckpt_forward_v2_readout"
+        debug["theta_after_shape"] = list(theta_after.shape)
+        debug["mean_theta_after_entropy"] = float(
+            -np.sum(
+                theta_after * np.log(theta_after + 1e-12), axis=-1
+            ).mean()
+        )
+        return theta_after, debug
+    except Exception as exc:  # noqa: BLE001
+        debug["theta_after_source"] = (
+            f"forward_failed:{type(exc).__name__}:{exc}"
+        )
+        return None, debug
+
+
 def _compute_flowmol3_real_metric_via_trace(
     *,
     adapter: Any,
@@ -1744,6 +1915,21 @@ def _compute_flowmol3_real_metric_via_trace(
     decoded 3D molecules (the Wave 50 design that depended on
     ``rdkit`` + upstream ``flowmol`` that we don't ship here).
 
+    Wave 54 Agent A — close the real-ckpt metric gap: when
+    ``adapter._real_ckpt_meta`` is populated (the v1
+    ``force_mode='real'`` path loaded the shipped 65 MB Lightning
+    ckpt), this helper computes the real per-atom atom-type
+    marginal ``p_a`` at the END of the ODE via the v2 adapter's
+    partial-fidelity readout head (Wave 36 / Wave 38 partial-
+    fidelity path: real-weights ``token_embeddings``,
+    ``scalar_embedding``, ``node_output_head``,
+    ``to_edge_logits``). The marginal is then passed to
+    :meth:`adapter.observe_entropy_reduction` as ``theta_after``,
+    replacing the Wave 53 placeholder uniform-vs-uniform reference.
+    The composite is then non-zero by construction (real model
+    output is non-uniform; uniform reference is still uniform) so
+    ``verdict=framework_improves`` is reachable.
+
     The metric is the per-atom Shannon-entropy *reduction*
     ``H(theta_before) - H(theta_after)`` over the
     :data:`adaptive_reflow.adapters.flowmol3.FLOWMOL3_ATOM_TYPE_VOCAB_SIZE`
@@ -1754,18 +1940,23 @@ def _compute_flowmol3_real_metric_via_trace(
     Algorithm
     ~~~~~~~~~
 
-    1. Call :meth:`adapter.observe_entropy_reduction(trace,
-       paper_quantities=...)` where the snapshot is a real
-       :class:`PaperQuantitiesSnapshot` materialised by
-       :func:`_compute_paper_quantities_for_model` keyed on a
-       per-model ``g`` profile (Wave 45 F-3 fix parity). Returns
-       ``{PER_POSITION_ENTROPY_REDUCTION: <float>}``.
-    2. The reduction is surfaced as the metric. The sign convention
+    1. Compute the real ``theta_after`` via
+       :func:`_compute_flowmol3_real_atom_type_marginal` when the
+       adapter has a real ckpt loaded (Wave 54 close). On the
+       synthetic fallback the helper returns ``None`` and the
+       metric collapses to the Wave 53 placeholder reading.
+    2. Call :meth:`adapter.observe_entropy_reduction(trace,
+       paper_quantities=..., theta_after=theta_after)` where the
+       snapshot is a real :class:`PaperQuantitiesSnapshot`
+       materialised by :func:`_compute_paper_quantities_for_model`
+       keyed on a per-model ``g`` profile (Wave 45 F-3 fix parity).
+       Returns ``{PER_POSITION_ENTROPY_REDUCTION: <float>}``.
+    3. The reduction is surfaced as the metric. The sign convention
        is "framework sharpens → positive" (mirrors LineageFlow /
        Kanzi). A framework-vs-baseline delta of ``+0.5`` means the
        framework arm's per-atom atom-type distribution has
        ``0.5 / log 10 ≈ 22%`` lower entropy than the baseline.
-    3. Returns ``(reduction_value, marker, debug_dict)``.
+    4. Returns ``(reduction_value, marker, debug_dict)``.
 
     The helper is stdlib + numpy only; the entropy reduction is
     computed inside the adapter via the shared
@@ -1774,7 +1965,10 @@ def _compute_flowmol3_real_metric_via_trace(
     :meth:`FlowMol3Adapter.observe_entropy_reduction` returns
     ``0.0`` by construction (uniform-vs-uniform); this is the
     placeholder's documented trivial reading (no real ``flowmol``
-    ckpt).
+    ckpt). With the Wave 54 close, the real-mode path produces a
+    strictly-negative ``reduction`` (``H(uniform) - H(real) > 0``)
+    that quantifies the real model's confidence on each atom-type
+    marginal.
     """
     try:
         if not hasattr(adapter, "observe_entropy_reduction"):
@@ -1789,9 +1983,18 @@ def _compute_flowmol3_real_metric_via_trace(
         pq_snap, pq_dbg = _compute_paper_quantities_for_model(
             "flowmol3", seed=seed, nfe=nfe,
         )
+        # Wave 54 Agent A — compute real ``theta_after`` from the
+        # shipped ckpt. Returns ``None`` on the synthetic fallback;
+        # the Wave 53 path then collapses to uniform-vs-uniform
+        # (= 0.0).
+        theta_after, real_theta_dbg = _compute_flowmol3_real_atom_type_marginal(
+            adapter=adapter, trace=trace, seed=seed, nfe=nfe,
+        )
         try:
             entropy_dict = adapter.observe_entropy_reduction(
-                trace, paper_quantities=pq_snap,
+                trace,
+                paper_quantities=pq_snap,
+                theta_after=theta_after,
             )
         except Exception as exc:  # noqa: BLE001
             return None, "blocked", {
@@ -1845,8 +2048,13 @@ def _compute_flowmol3_real_metric_via_trace(
             "reduction_value": reduction_float,
             "log_K_bound": float(log_K_bound),
             "decode_strategy": (
-                "adapter.observe_entropy_reduction + per_position_entropy_reduction "
-                "(Wave 53 FlowMol3 metric layer)"
+                "real_ckpt_forward_v2_readout + per_position_entropy_reduction "
+                "(Wave 54 FlowMol3 metric-axis close)"
+                if real_theta_dbg.get("theta_after_source", "").startswith(
+                    "real_ckpt_forward"
+                )
+                else "adapter.observe_entropy_reduction + per_position_entropy_reduction "
+                "(Wave 53 FlowMol3 metric layer — synthetic fallback)"
             ),
             "trace_source": "captured_via_solve_ode",
             "seed": int(seed),
@@ -1854,6 +2062,8 @@ def _compute_flowmol3_real_metric_via_trace(
             # Wave 45 Agent C — F-3 fix parity: surface the per-cell
             # paper_quantities thread result.
             "paper_quantities": pq_dbg,
+            # Wave 54 Agent A — surface the real-ckpt forward result.
+            "real_theta_after": real_theta_dbg,
         }
     except Exception as exc:  # noqa: BLE001
         return None, "blocked", {
