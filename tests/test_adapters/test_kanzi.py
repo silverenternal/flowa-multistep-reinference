@@ -21,6 +21,7 @@ from adaptive_reflow.adapters.kanzi import (
     AUDIT_FORWARD_NOISE_APPLIED,
     AUDIT_KANZI_GPT_PRIOR_RESTART,
     AUDIT_KANZI_OBSERVED,
+    AUDIT_KANZI_PERTURBATION_POLICY,
     AUDIT_KANZI_RESTART_BLEND,
     DISCRETE_TOKEN_INDEX,
     ERR_KANZI_FAMILY_ID_INVALID,
@@ -52,6 +53,10 @@ from adaptive_reflow.adapters.kanzi import (
     default_kanzi_adapter,
     kanzi_resolve_weights_path,
     torch_is_available,
+)
+from adaptive_reflow.algorithm.perturbation import (
+    PaperQuantityAttractorInversion,
+    UniformFreshPerturbation,
 )
 from adaptive_reflow.framework._compliance import implements
 from adaptive_reflow.universal import FlowMatchingODEAdapter
@@ -1046,3 +1051,143 @@ def test_kanzi_adapter_constructor_rejects_non_policy_arg() -> None:
     """
     with pytest.raises(TypeError, match="gpt_prior_restart_policy_must_be"):
         _make_adapter(gpt_prior_restart_policy="not-a-policy")  # type: ignore[arg-type]
+
+# ---------------------------------------------------------------------------
+# Wave 59 Agent 4 — PerturbationPolicy wiring
+# ---------------------------------------------------------------------------
+
+
+def _w59_restart_policy(run_suffix: str) -> FinalRestartPolicy:
+    """Build the canonical beta=0.5 restart policy used by Wave 59 tests."""
+    return FinalRestartPolicy(
+        policy_id=PolicyId("uniform-beta-0.5"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId(f"test-run-{run_suffix}"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={PROTEIN_LATENT: FactorValue(0.5)},
+        alpha_by_channel={PROTEIN_LATENT: FactorValue(1.0)},
+        fresh_noise_floor_by_channel={PROTEIN_LATENT: FactorValue(0.0)},
+        schedule_sample=None,
+        freeze_admission_by_channel={PROTEIN_LATENT: True},
+        ledger_row_id=LedgerRowId("ledger-uniform-beta-0.5"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+
+
+def test_kanzi_default_perturbation_is_uniform_fresh() -> None:
+    """No-arg constructor installs :class:`UniformFreshPerturbation`.
+
+    Wave 59 Agent 4 acceptance: the DEFAULT must stay the legacy
+    uniform-fresh policy so Wave 47 / 52 / 58 composite data is
+    preserved.
+    """
+    adapter = _make_adapter()
+    assert isinstance(adapter._perturbation, UniformFreshPerturbation)
+    assert adapter._perturbation.seed_offset == 0
+
+
+def test_kanzi_default_perturbation_preserves_legacy_restart_blend() -> None:
+    """Default (implicit) == explicit UniformFresh == pinned legacy blend.
+
+    The blend is recomputed here from first principles with the
+    PRESERVED ``(policy_hash, source_round)`` seed so a future
+    refactor of the perturbation seam cannot silently rotate the
+    noise stream.
+    """
+    import hashlib
+
+    from adaptive_reflow.adapters.kanzi import (
+        _synthesize_latent_like_tensor,
+    )
+
+    policy = _w59_restart_policy("w59-default")
+
+    implicit = _make_adapter()
+    bundle_i = implicit.build_initial_state(
+        batch_id="w59_default", sample_id="s_w59"
+    )
+    restarted_i = implicit.apply_restart_distribution(bundle_i, policy)
+
+    explicit = _make_adapter(perturbation=UniformFreshPerturbation())
+    bundle_e = explicit.build_initial_state(
+        batch_id="w59_default", sample_id="s_w59"
+    )
+    restarted_e = explicit.apply_restart_distribution(bundle_e, policy)
+
+    # 1. Implicit default and explicit UniformFresh agree bit-for-bit.
+    assert restarted_i.native_state_digest == restarted_e.native_state_digest
+    x_i = implicit._native_states[restarted_i.native_state_digest]["x0"]
+    x_e = explicit._native_states[restarted_e.native_state_digest]["x0"]
+    assert np.array_equal(np.asarray(x_i), np.asarray(x_e))
+
+    # 2. Both match the legacy inline recomputation.
+    prior_x = np.asarray(
+        implicit._native_states[bundle_i.native_state_digest]["x0"],
+        dtype=np.float64,
+    ).reshape(KANZI_STATE_SHAPE)
+    next_round = int(bundle_i.source_round) + 1
+    seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
+    seed = int(hashlib.sha256(seed_blob).hexdigest()[:8], 16)
+    fresh_x = _synthesize_latent_like_tensor(np.random.default_rng(seed))
+    expected = np.clip(
+        (0.5 * prior_x + 0.5 * fresh_x).astype(np.float64),
+        -KANZI_LATENT_CLAMP,
+        KANZI_LATENT_CLAMP,
+    )
+    assert np.array_equal(np.asarray(x_i, dtype=np.float64), expected)
+
+    # 3. The legacy default emits NO new audit code.
+    assert AUDIT_KANZI_PERTURBATION_POLICY not in restarted_i.provenance
+    assert AUDIT_KANZI_RESTART_BLEND in restarted_i.provenance
+
+
+def test_kanzi_brai_perturbation_is_opt_in_and_changes_restart() -> None:
+    """Passing BRAI routes the restart through the attractor-inversion path.
+
+    The prior native-state entry carries an ``e_rho`` paper-quantity
+    snapshot, so :class:`PaperQuantityAttractorInversion` uses the
+    analytic Gaussian gradient: ``fresh = x + eps * x / sigma^2``.
+    """
+    policy = _w59_restart_policy("w59-brai")
+    brai = PaperQuantityAttractorInversion(eps_scale=0.25, default_sigma=1.0)
+    adapter = _make_adapter(perturbation=brai)
+    bundle = adapter.build_initial_state(batch_id="w59_brai", sample_id="s_brai")
+    prior_entry = adapter._native_states[bundle.native_state_digest]
+    prior_entry["paper_quantities"] = {"e_rho": 1.0}
+    prior_x = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
+        KANZI_STATE_SHAPE
+    )
+
+    restarted = adapter.apply_restart_distribution(bundle, policy)
+
+    # BRAI path is recorded in provenance.
+    assert AUDIT_KANZI_PERTURBATION_POLICY in restarted.provenance
+    # ``fresh = x + eps * (-grad log P) = x + eps * x / sigma^2``.
+    fresh_expected = prior_x + 0.25 * prior_x
+    expected = np.clip(
+        (0.5 * prior_x + 0.5 * fresh_expected).astype(np.float64),
+        -KANZI_LATENT_CLAMP,
+        KANZI_LATENT_CLAMP,
+    )
+    got = np.asarray(
+        adapter._native_states[restarted.native_state_digest]["x0"],
+        dtype=np.float64,
+    )
+    assert np.allclose(got, expected)
+
+    # And it genuinely differs from the uniform-fresh default.
+    legacy = _make_adapter()
+    legacy_bundle = legacy.build_initial_state(
+        batch_id="w59_brai", sample_id="s_brai"
+    )
+    legacy_restart = legacy.apply_restart_distribution(legacy_bundle, policy)
+    assert legacy_restart.native_state_digest != restarted.native_state_digest
+
+
+def test_kanzi_constructor_rejects_non_perturbation_policy() -> None:
+    """A non-policy ``perturbation`` arg surfaces a ``TypeError``."""
+    with pytest.raises(TypeError, match="perturbation_must_implement"):
+        _make_adapter(perturbation="not-a-policy")  # type: ignore[arg-type]

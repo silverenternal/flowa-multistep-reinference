@@ -120,6 +120,10 @@ from adaptive_reflow.adapters._adapter_common import (
     seed_from_ids,
 )
 from adaptive_reflow.framework.interfaces import implements
+from adaptive_reflow.algorithm.perturbation import (
+    PerturbationPolicy,
+    UniformFreshPerturbation,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -263,6 +267,14 @@ AUDIT_LINEAGEFLOW_CLASSIFIER_UNAVAILABLE: str = (
     "lineageflow_classifier_unavailable"
 )
 AUDIT_FORWARD_NOISE_APPLIED: str = "forward_noise_applied"
+#: Wave 59 Agent 4 — emitted by ``apply_restart_distribution`` when a
+#: NON-default :class:`PerturbationPolicy` supplies the fresh restart
+#: state (the opt-in path). The legacy
+#: :class:`UniformFreshPerturbation` default emits nothing so the
+#: Wave 47 / 52 / 58 provenance tuples stay byte-identical.
+AUDIT_LINEAGEFLOW_PERTURBATION_POLICY: str = (
+    "lineageflow_perturbation_policy"
+)
 ERR_LINEAGEFLOW_NUM_STEPS: str = "lineageflow_num_steps_must_be_positive"
 ERR_LINEAGEFLOW_WEIGHTS_MISSING: str = "lineageflow_weights_missing"
 ERR_LINEAGEFLOW_INTEGRATOR_UNKNOWN: str = "lineageflow_integrator_unknown"
@@ -1178,6 +1190,7 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         conditioning_cache_size: int = LINEAGEFLOW_NATIVE_STATES_MAXSIZE,
         classifier_aware_restart: bool = False,
         classifier_alpha: float = 1.0,
+        perturbation: PerturbationPolicy | None = None,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_LINEAGEFLOW_NUM_STEPS)
@@ -1273,6 +1286,27 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         self._classifier_aware_restart_policy: (
             LineageFlowClassifierAwareRestart | None
         ) = None
+
+        # Wave 59 Agent 4 — saturation-time perturbation policy.
+        # ``None`` (the default) instantiates
+        # :class:`UniformFreshPerturbation`, which routes
+        # ``apply_restart_distribution`` through the PRESERVED legacy
+        # uniform-prior-plus-jitter path (seeded from
+        # ``(policy_hash, source_round)``) so every Wave 47 / 52 / 58
+        # composite number and pinned regression vector stays
+        # byte-identical. Passing any OTHER policy (e.g.
+        # :class:`PaperQuantityAttractorInversion`) is the opt-in new
+        # path: the fresh restart state comes from
+        # ``policy.propose(...)`` instead.
+        if perturbation is not None and not hasattr(perturbation, "propose"):
+            raise TypeError(
+                "perturbation_must_implement_PerturbationPolicy_or_be_None:"
+                f"got {type(perturbation).__name__!r}"
+            )
+        self._perturbation: PerturbationPolicy = (
+            perturbation if perturbation is not None
+            else UniformFreshPerturbation()
+        )
 
     # ------------------------------------------------------------------
     # 1. capability handshake
@@ -1476,8 +1510,47 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             (str(policy.policy_hash), next_round)
         ).encode("utf-8")
         restart_seed = int(hashlib.sha256(restart_seed_blob).hexdigest()[:8], 16)
-        fresh_rng = np.random.default_rng(restart_seed)
-        fresh_theta = _synthesize_latent_like_tensor(fresh_rng)
+        # Wave 59 Agent 4 — the fresh restart state now comes from the
+        # adapter's :class:`PerturbationPolicy`. The DEFAULT policy
+        # (:class:`UniformFreshPerturbation`) keeps the PRESERVED
+        # inline path below so the ``(policy_hash, source_round)``
+        # seed -> uniform-prior-plus-jitter mapping — and therefore
+        # every Wave 47 / 52 / 58 composite number — is byte-identical.
+        # Any other policy is the opt-in path and delegates to
+        # ``policy.propose(...)``.
+        perturbation = getattr(self, "_perturbation", None)
+        if perturbation is None or isinstance(
+            perturbation, UniformFreshPerturbation
+        ):
+            seed = restart_seed
+            offset = int(getattr(perturbation, "seed_offset", 0) or 0)
+            if offset:
+                seed = (seed + offset) & 0xFFFF_FFFF
+            fresh_rng = np.random.default_rng(seed)
+            fresh_theta = _synthesize_latent_like_tensor(fresh_rng)
+            perturbation_audit: tuple[str, ...] = ()
+        else:
+            # Opt-in path. ``paper_quantities`` is read from the prior
+            # native-state entry when the caller stashed a snapshot
+            # there; ``None`` makes BRAI degrade gracefully to its own
+            # uniform-fresh fallback (see
+            # :class:`PaperQuantityAttractorInversion`).
+            proposed = np.asarray(
+                perturbation.propose(
+                    prior_theta,
+                    prior_entry.get("paper_quantities"),
+                    float(prior_entry.get("t", 0.0)),
+                ),
+                dtype=np.float64,
+            ).reshape(LINEAGEFLOW_STATE_SHAPE)
+            # Project back onto the per-position simplex — the
+            # perturbation protocol works in an unconstrained state
+            # space, but this channel is a categorical.
+            proposed = np.clip(proposed, 0.0, None)
+            fresh_theta = proposed / np.maximum(
+                proposed.sum(axis=-1, keepdims=True), 1e-30
+            )
+            perturbation_audit = (AUDIT_LINEAGEFLOW_PERTURBATION_POLICY,)
 
         m = max(0.0, min(1.0, float(memory_fraction)))
         # Wave 45 Agent G — classifier-aware restart. When opted
@@ -1583,14 +1656,18 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             source_round=int(next_round),
             detach_proof=True,
             native_state_digest=str(next_digest),
-            provenance=tuple(state.provenance)
-            + (
-                AUDIT_LINEAGEFLOW_RESTART_BLEND,
-                AUDIT_LINEAGEFLOW_CLASSIFIER_AWARE_RESTART,
-            )
-            if self._classifier_aware_restart_enabled
-            else tuple(state.provenance)
-            + (AUDIT_LINEAGEFLOW_RESTART_BLEND,),
+            provenance=(
+                tuple(state.provenance)
+                + (
+                    AUDIT_LINEAGEFLOW_RESTART_BLEND,
+                    AUDIT_LINEAGEFLOW_CLASSIFIER_AWARE_RESTART,
+                )
+                + perturbation_audit
+                if self._classifier_aware_restart_enabled
+                else tuple(state.provenance)
+                + (AUDIT_LINEAGEFLOW_RESTART_BLEND,)
+                + perturbation_audit
+            ),
             capability_token=self.capabilities(),
         )
 

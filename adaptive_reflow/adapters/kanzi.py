@@ -130,6 +130,10 @@ from adaptive_reflow.adapters._adapter_common import (
     torch_is_available as _adapter_common_torch_is_available,
 )
 from adaptive_reflow.framework.interfaces import implements
+from adaptive_reflow.algorithm.perturbation import (
+    PerturbationPolicy,
+    UniformFreshPerturbation,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -269,6 +273,12 @@ KANZI_SYNTHETIC_SEED_DEFAULT: int = 0x4B_4E_5A_49  # "KANZI" hex-word — determ
 #: Audit / error codes (deterministic ASCII strings).
 AUDIT_KANZI_RESTART_BLEND: str = "kanzi_restart_blend"
 AUDIT_KANZI_GPT_PRIOR_RESTART: str = "kanzi_gpt_prior_restart"
+#: Wave 59 Agent 4 — emitted by ``apply_restart_distribution`` when a
+#: NON-default :class:`PerturbationPolicy` supplies the fresh restart
+#: state (i.e. the opt-in path). The legacy
+#: :class:`UniformFreshPerturbation` default emits nothing so the
+#: Wave 47 / 52 / 58 provenance tuples stay byte-identical.
+AUDIT_KANZI_PERTURBATION_POLICY: str = "kanzi_perturbation_policy"
 AUDIT_KANZI_OBSERVED: str = "kanzi_observed"
 AUDIT_FORWARD_NOISE_APPLIED: str = "forward_noise_applied"
 ERR_KANZI_NUM_STEPS: str = "kanzi_num_steps_must_be_positive"
@@ -1117,6 +1127,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         synthetic_seed: int = KANZI_SYNTHETIC_SEED_DEFAULT,
         conditioning_cache_size: int = KANZI_CONDITIONING_CACHE_SIZE,
         gpt_prior_restart_policy: KanziGPTPriorRestartPolicy | None = None,
+        perturbation: PerturbationPolicy | None = None,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_KANZI_NUM_STEPS)
@@ -1162,6 +1173,27 @@ class KanziAdapter(FlowMatchingODEAdapter):
             )
         self._gpt_prior_restart_policy: KanziGPTPriorRestartPolicy | None = (
             gpt_prior_restart_policy
+        )
+
+        # Wave 59 Agent 4 — saturation-time perturbation policy.
+        # ``None`` (the default) instantiates
+        # :class:`UniformFreshPerturbation`, which routes
+        # ``apply_restart_distribution`` through the PRESERVED legacy
+        # uniform-fresh path (seeded from
+        # ``(policy_hash, source_round)``) so every Wave 47 / 52 / 58
+        # composite number and pinned regression vector stays
+        # byte-identical. Passing any OTHER policy (e.g.
+        # :class:`PaperQuantityAttractorInversion`) is the opt-in new
+        # path: the fresh restart state comes from
+        # ``policy.propose(...)`` instead.
+        if perturbation is not None and not hasattr(perturbation, "propose"):
+            raise TypeError(
+                "perturbation_must_implement_PerturbationPolicy_or_be_None:"
+                f"got {type(perturbation).__name__!r}"
+            )
+        self._perturbation: PerturbationPolicy = (
+            perturbation if perturbation is not None
+            else UniformFreshPerturbation()
         )
 
         # Resolve weights path.
@@ -1431,8 +1463,39 @@ class KanziAdapter(FlowMatchingODEAdapter):
         next_round = int(state.source_round) + 1
         restart_seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
         restart_seed = int(hashlib.sha256(restart_seed_blob).hexdigest()[:8], 16)
-        fresh_rng = np.random.default_rng(restart_seed)
-        fresh_x = _synthesize_latent_like_tensor(fresh_rng)
+        # Wave 59 Agent 4 — the fresh restart state now comes from the
+        # adapter's :class:`PerturbationPolicy`. The DEFAULT policy
+        # (:class:`UniformFreshPerturbation`) keeps the PRESERVED
+        # inline path below so the ``(policy_hash, source_round)``
+        # seed -> noise mapping — and therefore every Wave 47 / 52 / 58
+        # composite number — is byte-identical. Any other policy is
+        # the opt-in path and delegates to ``policy.propose(...)``.
+        perturbation = getattr(self, "_perturbation", None)
+        if perturbation is None or isinstance(
+            perturbation, UniformFreshPerturbation
+        ):
+            seed = restart_seed
+            offset = int(getattr(perturbation, "seed_offset", 0) or 0)
+            if offset:
+                seed = (seed + offset) & 0xFFFF_FFFF
+            fresh_rng = np.random.default_rng(seed)
+            fresh_x = _synthesize_latent_like_tensor(fresh_rng)
+            perturbation_audit: tuple[str, ...] = ()
+        else:
+            # Opt-in path. ``paper_quantities`` is read from the prior
+            # native-state entry when the caller stashed a snapshot
+            # there; ``None`` makes BRAI degrade gracefully to its own
+            # uniform-fresh fallback (see
+            # :class:`PaperQuantityAttractorInversion`).
+            fresh_x = np.asarray(
+                perturbation.propose(
+                    prior_x,
+                    prior_entry.get("paper_quantities"),
+                    float(prior_entry.get("t", 0.0)),
+                ),
+                dtype=np.float64,
+            ).reshape(KANZI_STATE_SHAPE)
+            perturbation_audit = (AUDIT_KANZI_PERTURBATION_POLICY,)
 
         m_base = max(0.0, min(1.0, float(memory_fraction)))
         # Wave 45 Agent F: optionally bias ``m`` per-position via the
@@ -1567,6 +1630,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 tuple(state.provenance)
                 + (AUDIT_KANZI_RESTART_BLEND,)
                 + gpt_prior_audit
+                + perturbation_audit
             ),
             capability_token=self.capabilities(),
         )
