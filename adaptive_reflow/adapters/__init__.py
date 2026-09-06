@@ -7,10 +7,16 @@ import them too.
 from typing import Any
 
 from .flowmol3 import (  # noqa: I001 -- alphabetical re-export ordering
+    AUDIT_FLOWMOL3_ATOM_TYPE_ENTROPY_RESTART,
+    AUDIT_FLOWMOL3_OBSERVED,
+    AUDIT_FLOWMOL3_RESTART_BLEND,
+    FLOWMOL3_ATOM_TYPE_VOCAB_SIZE,
     FLOWMOL3_CHANNEL_DOMAINS,
     FLOWMOL3_CHANNELS,
     FlowMol3Adapter,
+    FlowMol3AtomTypeEntropyRestartPolicy,
     FlowMol3Capabilities,
+    PER_POSITION_ENTROPY_REDUCTION,
     default_flowmol3_adapter,
     flowmol3_registry_entry,
 )
