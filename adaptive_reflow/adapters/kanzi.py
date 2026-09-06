@@ -95,7 +95,6 @@ from __future__ import annotations
 
 import hashlib
 import inspect
-from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -118,7 +117,6 @@ from adaptive_reflow.universal.state import (
     ODEConditionDelta,
     ODEIntegratorTrace,
     StateBundle,
-    TensorRef,
     validate_state_bundle,
 )
 
@@ -556,22 +554,23 @@ def _random_init_synthetic_weights(
     seed: int,
     hidden: int | None = None,
 ) -> dict[str, ArrayF64]:
-    """Kaiming-uniform init of the synthetic velocity field's two linear layers."""
+    """Kaiming-uniform init of the synthetic velocity field's two linear layers.
+
+    Uses the framework-shared :func:`kaiming_uniform` helper from
+    :mod:`adaptive_reflow.adapters._adapter_common` for the per-layer
+    He-uniform draws. The local ``kaiming`` closure is removed (the
+    shared helper reproduces the same ``rng.uniform(-bound, bound,
+    size=(fan_in, fan_out))`` call shape, advancing the RNG in the
+    same W1 -> W2 -> t_bias order).
+    """
     rng = np.random.default_rng(int(seed))
     in_dim = int(KANZI_FLAT_LATENT_DIM)
     hidden_w = int(hidden) if hidden is not None else int(KANZI_SYNTHETIC_HIDDEN)
 
-    def kaiming(fan_in: int, fan_out: int) -> ArrayF64:
-        bound = np.sqrt(6.0 / float(fan_in))
-        return np.asarray(
-            rng.uniform(-bound, bound, size=(fan_in, fan_out)),
-            dtype=np.float64,
-        )
-
     return {
-        "W1": kaiming(in_dim, hidden_w),
+        "W1": kaiming_uniform(rng, in_dim, hidden_w),
         "b1": np.zeros(hidden_w, dtype=np.float64),
-        "W2": kaiming(hidden_w, in_dim),
+        "W2": kaiming_uniform(rng, hidden_w, in_dim),
         "b2": np.zeros(in_dim, dtype=np.float64),
         "t_bias": rng.standard_normal(hidden_w).astype(np.float64),
     }
@@ -948,9 +947,19 @@ class KanziAdapter(FlowMatchingODEAdapter):
         # LRU-bounded native-states cache (audit A-3 mirror of
         # RectifiedFlowCIFAR). The cache holds the (latent, conditioning)
         # tuple per digest + trajectory / endpoint entries; the
-        # conditioning-only cache is bounded separately.
-        self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
-        self._conditioning_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        # conditioning-only cache is bounded separately. Uses the
+        # framework-shared :class:`NativeStateCache` from
+        # :mod:`adaptive_reflow.adapters._adapter_common` (the D.1
+        # shrink target — see ``docs/audit/wave44-kanzi-shrink.md``).
+        # The attribute name ``_native_states`` is preserved so test
+        # seams and the 4 read sites in ``tests/test_adapters/test_kanzi.py``
+        # keep working unchanged.
+        self._native_states: NativeStateCache = NativeStateCache(
+            KANZI_NATIVE_STATES_MAXSIZE
+        )
+        self._conditioning_cache: NativeStateCache = NativeStateCache(
+            self._conditioning_cache_size
+        )
         self._caps = KanziCapabilities()
 
     # ------------------------------------------------------------------
@@ -963,27 +972,14 @@ class KanziAdapter(FlowMatchingODEAdapter):
     # ------------------------------------------------------------------
     # 0. helpers — LRU-bounded native_states + conditioning cache
     # ------------------------------------------------------------------
-
-    def _put_native_state(self, digest: str, entry: dict[str, Any]) -> None:
-        if digest in self._native_states:
-            self._native_states[digest] = entry
-            self._native_states.move_to_end(digest)
-            return
-        self._native_states[digest] = entry
-        while len(self._native_states) > KANZI_NATIVE_STATES_MAXSIZE:
-            self._native_states.popitem(last=False)
-
-    def _evict_native_state(self, digest: str) -> None:
-        self._native_states.pop(digest, None)
-
-    def _put_conditioning(self, cache_hash: str, entry: dict[str, Any]) -> None:
-        if cache_hash in self._conditioning_cache:
-            self._conditioning_cache[cache_hash] = entry
-            self._conditioning_cache.move_to_end(cache_hash)
-            return
-        self._conditioning_cache[cache_hash] = entry
-        while len(self._conditioning_cache) > self._conditioning_cache_size:
-            self._conditioning_cache.popitem(last=False)
+    #
+    # The LRU-bound + move-to-end + popitem semantics now live in
+    # :class:`NativeStateCache` (see :mod:`_adapter_common`). The
+    # three inlined glue methods that used to live here
+    # (``_put_native_state``, ``_evict_native_state``,
+    # ``_put_conditioning``) are removed — every call site now goes
+    # through ``self._native_states.put(...)`` /
+    # ``self._conditioning_cache.put(...)`` directly.
 
     def _resolve_conditioning(
         self, *, family_id: str, seed: int
@@ -999,12 +995,15 @@ class KanziAdapter(FlowMatchingODEAdapter):
         cache_hash = _family_id_cache_hash(family_id)
         existing = self._conditioning_cache.get(cache_hash)
         if existing is not None:
-            self._conditioning_cache.move_to_end(cache_hash)
+            # Re-``put`` to move-to-end (LRU touch). NativeStateCache
+            # absorbs this into ``put`` so we don't need a separate
+            # ``move_to_end`` method on the cache.
+            self._conditioning_cache.put(cache_hash, existing)
             return existing
         entry = _synthetic_family_conditioning(
             family_id=family_id, seed=int(seed),
         )
-        self._put_conditioning(cache_hash, entry)
+        self._conditioning_cache.put(cache_hash, entry)
         return entry
 
     # ------------------------------------------------------------------
@@ -1056,7 +1055,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "conditioning_hash": str(cond["cache_hash"]),
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             digest,
             {
                 "x0": np.asarray(x0, dtype=np.float64).reshape(KANZI_STATE_SHAPE),
@@ -1069,13 +1068,13 @@ class KanziAdapter(FlowMatchingODEAdapter):
         bundle = StateBundle(
             channels={
                 ChannelName("protein_latent"): make_ref(
-                    "kanzi:latent",
+                    "kanzi:latent:initial",
                     "latent:initial",
                     batch=batch_id,
                     sample=sample_id,
                 ),
                 ChannelName("discrete_token_index"): make_ref(
-                    "kanzi:discrete",
+                    "kanzi:discrete:initial",
                     "discrete:initial",
                     batch=batch_id,
                     sample=sample_id,
@@ -1203,7 +1202,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "conditioning_hash": str(cond_hash),
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             next_digest,
             {
                 "x0": blended,
@@ -1216,7 +1215,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         return StateBundle(
             channels={
                 ChannelName("protein_latent"): make_ref(
-                    "kanzi:latent",
+                    "kanzi:latent:restart",
                     "latent:restart",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
@@ -1229,7 +1228,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 ChannelName("discrete_token_index"): dict(state.channels).get(
                     ChannelName("discrete_token_index"),
                     make_ref(
-                        "kanzi:discrete",
+                        "kanzi:discrete:restart",
                         "discrete:restart",
                         src_digest=str(state.native_state_digest),
                         source_round=int(next_round),
@@ -1488,7 +1487,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "mode": self._mode,
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             traj_digest,
             {
                 "trajectory": traj,
@@ -1550,7 +1549,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "t_final": float(KANZI_T_END),
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             endpoint_digest,
             {
                 "x": np.asarray(x_final, dtype=np.float64).reshape(KANZI_STATE_SHAPE),
@@ -1568,7 +1567,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 ChannelName("protein_latent"): dict(state.channels).get(
                     ChannelName("protein_latent"),
                     make_ref(
-                        "kanzi:latent",
+                        "kanzi:latent:endpoint",
                         "latent:endpoint",
                         traj_digest=str(trace.native_state_digest),
                         src_digest=str(state.native_state_digest),
@@ -1580,7 +1579,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 ChannelName("discrete_token_index"): dict(state.channels).get(
                     ChannelName("discrete_token_index"),
                     make_ref(
-                        "kanzi:discrete",
+                        "kanzi:discrete:endpoint",
                         "discrete:endpoint",
                         src_digest=str(state.native_state_digest),
                     ),
@@ -1753,7 +1752,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 ],
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             new_digest,
             {
                 "x0": x_new,
