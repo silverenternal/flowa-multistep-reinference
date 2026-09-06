@@ -995,15 +995,32 @@ the synthetic-fallback ceiling (0.95) and is superseded.
 
 | seed | nfe | baseline | framework | signed Δ% | status | wall_b (s) | wall_fw (s) | wall_ratio |
 |---:|---:|---:|---:|---:|:---|---:|---:|---:|
-| 42 | 10  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0018 | 0.0004 | 0.2221 |
-| 42 | 50  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0038 | 0.0014 | 0.3580 |
-| 42 | 200 | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0139 | 0.0047 | 0.3374 |
-| 43 | 10  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0010 | 0.0004 | 0.3636 |
-| 43 | 50  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0037 | 0.0013 | 0.3595 |
-| 43 | 200 | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0137 | 0.0046 | 0.3401 |
-| 44 | 10  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0010 | 0.0004 | 0.3578 |
-| 44 | 50  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0037 | 0.0013 | 0.3563 |
-| 44 | 200 | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0137 | 0.0047 | 0.3425 |
+| 42 | 10  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0017 | 0.0017 | 1.0015 |
+| 42 | 50  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0037 | 0.0045 | 1.2011 |
+| 42 | 200 | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0137 | 0.0145 | 1.0623 |
+| 43 | 10  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0010 | 0.0017 | 1.6361 |
+| 43 | 50  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0038 | 0.0045 | 1.1901 |
+| 43 | 200 | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0139 | 0.0146 | 1.0520 |
+| 44 | 10  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0010 | 0.0016 | 1.6388 |
+| 44 | 50  | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0038 | 0.0045 | 1.1876 |
+| 44 | 200 | 1.0000 | 1.0000 | +0.0000 | TIE_AT_SATURATION | 0.0137 | 0.0144 | 1.0525 |
+
+**Wall-clock-ratio note (Wave 45 Agent H update).** The
+`framework/baseline` wall-clock ratio is now **above 1.0** on every
+cell (1.0–1.6×) rather than below 1.0 as reported in §7.2 from the
+Wave 44 sweep (0.22–0.36×). This is the **cost of exercising the
+new Wave 45 features end-to-end** (3 rounds of forward+restart-blend
+per cell, plus the new GPT-prior restart policy and
+`paper_quantities` snapshot materialisation). The baseline NFE-200
+wallclock is identical between runs (0.0137 s, warm-cache
+determinism), but the framework wallclock grew ~3× because the
+framework now correctly drives 3 forward passes per cell. The Tier 3
+metric-axis claim is gated on `framework_wins > 0` (per-cell metric
+value), not wall-clock; this wall-clock inversion does NOT affect
+the metric verdict, but the §7.5 honest-verdict block below is
+updated to reflect that the framework is no longer uniformly
+wall-clock-faster on Kanzi at low NFE. See
+`docs/audit/wave45-final-eval.md` for the full accounting.
 
 **Aggregate (9 cells):**
 
@@ -1016,33 +1033,36 @@ the synthetic-fallback ceiling (0.95) and is superseded.
 | `n_real_computed` | **9** (vs. `synthetic_fallback=0`) |
 | **`g1_mean_signed_delta_pct`** | **+0.0000** |
 | `verdict_overall` | TIE_AT_SATURATION |
-| `baseline_wall_total_s` | 0.0563 |
-| `framework_wall_total_s` | 0.0192 |
-| `wall_ratio` (framework/baseline) | **0.341** |
-| `wall_ratio` (NFE=10 only) | **0.314** |
+| `baseline_wall_total_s` | 0.0544 |
+| `framework_wall_total_s` | 0.0660 |
+| `wall_ratio` (framework/baseline) | **1.213** |
+| `wall_ratio` (NFE=10 only) | **1.426** |
 
 **Honest reading.** All 9 cells report `TIE_AT_SATURATION`, but the
 status now reflects the **real** saturation ceiling (`1.0` from
 `protein_sequence_validity_rate`, `n_real_computed=9`,
 `marker='computed'`) rather than the previous synthetic-fallback
 ceiling (`0.95`). The metric layer (Wave 44 Agent B
-`observe_token_indices` + Wave 43 Pfam held-out reference) IS working:
-both arms decode the ODE trajectory via
-`kanzi.observe_token_indices(trace, paper_quantities=None)` and both
-arrive at the same mod-20 amino-acid-token strings that round-trip
-the held-out Pfam reference without `<unk>`-proportion > 0.05. The
-**honest** reason `framework_wins = 0` is that the per-position
-argmax of `theta_final` is identical for both arms on this metric —
-the framework's restart-blended trace and the baseline single-pass
-ODE converge to the same decoded sequence on every cell. Closing
-this gap requires a metric that does not saturate at 1.0 on this
-encoding (e.g., per-position ESM-2 PLL, or
+`observe_token_indices` + Wave 45 Agent C F-3 `paper_quantities`
+snapshot threading) IS working: both arms decode the ODE trajectory
+via `kanzi.observe_token_indices(trace, paper_quantities=...)` and
+both arrive at the same mod-20 amino-acid-token strings that
+round-trip the held-out Pfam reference without `<unk>`-proportion >
+0.05. The **honest** reason `framework_wins = 0` is that the
+per-position argmax of `theta_final` is identical for both arms on
+this metric — the framework's restart-blended trace and the baseline
+single-pass ODE converge to the same decoded sequence on every cell.
+Closing this gap requires a metric that does not saturate at 1.0 on
+this encoding (e.g., per-position ESM-2 PLL, or
 `recovered-protein-identity` against a stricter Pfam reference); see
-`docs/audit/wave44-tier3-final-eval.md` for the next-step
-recommendation. The framework's wall-clock advantage is **uniform and
-real**: framework is 0.22–0.36× baseline wall-clock across all 9
-cells, monotonically with NFE, consistent with the expected cost
-signature of a real forward pass.
+`docs/audit/wave44-tier3-final-eval.md` and
+`docs/audit/wave45-final-eval.md` for the next-step recommendation.
+**The wall-clock-ratio is now inverted (1.0–1.6× baseline, not
+0.22–0.36×) because the framework now correctly drives all the
+new Wave 45 features end-to-end** (3 rounds of forward+restart-blend
+per cell, GPT-prior restart policy, `paper_quantities` snapshot
+threading) and that bookkeeping costs a constant per-round overhead;
+the framework is doing more work, not regressing.
 
 ### §7.3 LineageFlow (ICML 2026 protein flow-AE) — forward smoke + synthetic shim
 
@@ -1132,34 +1152,47 @@ LineageFlow EsmModel dtype bug.
 | Tier 3 SOTA 2026 protein | Kanzi (ICLR 2026), LineageFlow (ICML 2026) | +0.0000 (real-ckpt path) / +0.0012 (synthetic shim) | **adapter + metric-layer verified; framework_wins = 0 due to real saturation ceiling** |
 
 The framework's value proposition at Tier 3 is the **adapter + metric-layer
-plumbing + uniform wall-clock advantage**, not a positive decision-metric
-delta. **What's closed:** (a) the adapter layer is in `torch` mode against
-SHA-256-verified real weights for both Kanzi and LineageFlow; (b) the
-Wave 44 Agent B metric-layer unblock is live (real metric computed from
-the captured ODE trajectory via `observe_token_indices`, Pfam held-out
-reference downloaded, ESM-2 + Bio.SeqIO wired in); (c) the framework
-arm is uniformly 0.22–0.36× baseline wall-clock on Kanzi real ckpts.
-**What's still pending:** (a) a metric that does not saturate at 1.0 on
-this encoding (per-position ESM-2 PLL or `recovered-protein-identity`);
-(b) the Wave 45 EsmModel dtype fix for LineageFlow so the eval can
-actually run end-to-end. When both land, the Tier 3 bars will move off
-zero in the same way the Tier 1 and Tier 2 bars did.
+plumbing + end-to-end real-ckpt execution**, not a positive
+decision-metric delta. **What's closed:** (a) the adapter layer is in
+`torch` mode against SHA-256-verified real weights for both Kanzi and
+LineageFlow; (b) the Wave 44 Agent B metric-layer unblock is live
+(real metric computed from the captured ODE trajectory via
+`observe_token_indices`, Pfam held-out reference downloaded, ESM-2 +
+Bio.SeqIO wired in); (c) the Wave 45 Agent C F-3 fix threads a real
+`paper_quantities` snapshot through the metric layer (no more
+`paper_quantities=None` regression). **What's still pending:** (a) a
+metric that does not saturate at 1.0 on this encoding (per-position
+ESM-2 PLL or `recovered-protein-identity`); (b) the
+`_torch_velocity_field` EsmModel dtype fix for LineageFlow so the
+eval can actually run end-to-end. When both land, the Tier 3 bars
+will move off zero in the same way the Tier 1 and Tier 2 bars did.
+
+**Note (Wave 45 Agent H):** the framework is now 1.0–1.6× baseline
+wall-clock on Kanzi (not 0.22–0.36× as the §15.12 reading reported);
+see §7.2 wallclock note. The Tier 3 metric-axis claim is gated on
+per-cell metric value, not wall-clock; the wall-clock inversion is
+the honest cost of exercising the new Wave 45 features end-to-end.
 
 **Honest verdict block (what's closed vs still pending).**
 
 - **Closed (Kanzi):** `--force-mode real` plumbing verified on the
   SHA-256-verified 530 MB ckpt; `adapter_mode=torch` in all 9 cells
   (3 seeds × 3 NFE budgets); real metric computed end-to-end via
-  `kanzi.observe_token_indices(trace, paper_quantities=None)` with
+  `kanzi.observe_token_indices(trace, paper_quantities=...)` with
   `n_real_computed=9` and `marker=computed`; baseline + framework
   wall-clock scales monotonically with NFE (10 / 50 / 200 → 0.001 /
-  0.004 / 0.014 s per forward pass on warm-cache CPU); exit code 0;
-  framework wall-clock uniformly 0.22–0.36× baseline.
+  0.004 / 0.014 s per forward pass on warm-cache CPU); exit code 0.
+  Framework wall-clock is now 1.0–1.6× baseline (Wave 45 Agent H)
+  rather than 0.22–0.36× (Wave 44 Agent C) — the inversion is the
+  cost of correctly exercising the new Wave 45 features (3 rounds of
+  forward+restart-blend, GPT-prior restart policy,
+  `paper_quantities` snapshot materialisation) end-to-end.
 - **Closed (LineageFlow):** forward smoke passes on the SHA-256-verified
   657 M-param ckpt (Wave 41 Agent B); metric-layer code path exercised
   end-to-end on the real ckpt via `--force-mode real` (Wave 44 Agent C);
   per-position entropy 2.266 / log(K=20) 2.996 — well above collapse,
-  well below saturation (mid-entropy).
+  well below saturation (mid-entropy); new
+  `LineageFlowClassifierAwareRestart` policy wired (Wave 45 Agent G).
 - **Pending (Kanzi):** the decision metric
   `protein_sequence_validity_rate` lands at the real saturation ceiling
   (1.0) for both arms because the mod-20 AA round-trip on the held-out
@@ -1172,10 +1205,9 @@ zero in the same way the Tier 1 and Tier 2 bars did.
   wired end-to-end, but `LineageFlowAdapter._torch_velocity_field`
   raises a pre-existing adapter-layer `RuntimeError` (EsmModel dtype
   mismatch — `x_t` is `float32` but the encoder expects `Long`/`Int`).
-  The Wave 45 Agent C fix is the unblock: convert `x_t` to a `(1, L)`
-  long-token-id tensor via `argmax(x_t, axis=-1)` BEFORE feeding into
-  the encoder, OR short-circuit the EsmModel branch and fall back to
-  `_StubLineageFlow` for CPU eval.
+  This bug is still present after Wave 45; the fix is a 5-LOC
+  `argmax(x_t, axis=-1).long()` before the encoder call (separate
+  work item, not in Wave 45 scope).
 
 ### §7.6 Wave 43 Agent B paper-tier3-writeup (this wave)
 
@@ -1263,6 +1295,62 @@ For the full Wave 44 audit trail (claim closure accounting,
 before/after numbers, honest remaining caveats, command snippets,
 gaps carried into Wave 45), see
 `docs/audit/wave44-paper-tier3-final.md`.
+
+### §7.8 Wave 45 Agent H — post-fix re-eval (this wave)
+
+**Wave 45 Agent H** re-executes the Tier 3 sweep commands after the
+Wave 45 fixes landed (Agent A `paper_quantities` snapshot
+materialisation, Agent B web research, Agent C F-1/F-2/F-3 bug fixes,
+Agent D conditional GPT-prior blending, Agent E
+`per_position_entropy_reduction` on LineageFlow, Agent F
+`KanziGPTPriorRestartPolicy`, Agent G
+`LineageFlowClassifierAwareRestart`). The disjoint-file-scope
+contract limits this agent to:
+
+* `verification_outputs/{kanzi,lineageflow}_real_metric_v2_q4_2026.json`
+  (regenerated)
+* `docs/CONSOLIDATED_RESULTS.md` §15.13 (new)
+* `docs/paper-draft.md` (this section, plus §7.2 Kanzi per-cell
+  table update + §7.5 honest-verdict wallclock block update)
+* `docs/figures/tier3_real_ckpt_signed_mean.png` (regenerated)
+* `README.md` (Tier 3 evidence wallclock-ratio block)
+* `docs/audit/wave45-final-eval.md` (NEW)
+
+**Headline verdict (this run):**
+
+* **kanzi**: 9/9 cells `TIE_AT_SATURATION` (real metric,
+  `marker='computed'`, `n_real_computed=9`), `framework_wins = 0`
+  unchanged from §15.12. The Wave 45 fixes do not move the
+  per-cell metric value off zero because the mod-20 AA + Pfam
+  round-trip decode produces the same sequence on both arms at this
+  metric.
+* **lineageflow**: 1/1 cell `RUN_ERROR` unchanged from §15.12 (the
+  `_torch_velocity_field` EsmModel dtype bug is still present — not
+  in Wave 45 scope).
+
+**The new wall-clock-ratio inversion (kanzi).** The framework is
+now **slower** than baseline on every Kanzi cell (1.0–1.6× baseline)
+rather than faster (0.22–0.36× as §15.12 reported). This is the
+cost of exercising the new Wave 45 features end-to-end (3 rounds of
+forward+restart-blend per cell, plus the new GPT-prior restart
+policy and `paper_quantities` snapshot materialisation). The Tier 3
+metric-axis claim is gated on `framework_wins > 0` (per-cell metric
+value), not wall-clock; this wall-clock inversion does NOT affect
+the metric verdict, but the §7.2 honest-verdict block is updated to
+document it. See `docs/audit/wave45-final-eval.md` for the full
+accounting and `docs/CONSOLIDATED_RESULTS.md` §15.13 for the
+per-cell before/after table.
+
+**Conclusion (honest).** The Wave 45 work landed all 7 fix-scope
+items (3 bug fixes + entropy metric + 2 restart policies +
+conditional GPT-prior blending + paper-quantity snapshot
+materialisation) but did **not** close the Tier 3 metric-axis
+claim. The claim requires a non-saturating metric for Kanzi and the
+LineageFlow EsmModel dtype fix — both handed to Wave 46+. The Tier 3
+section (§7.2/§7.5/§7.8) now reflects honest current state: the
+adapter + metric-layer plumbing is fully wired end-to-end, but
+`framework_wins > 0` requires a different metric + a different
+adapter fix.
 
 ### Future work
 

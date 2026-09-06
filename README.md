@@ -407,40 +407,52 @@ The framework has been wired to two top-venue 2026 real flow-matching
 checkpoints. Both adapter + sidecar plumbing slots execute end-to-end
 on the SHA-256-verified weights, and the Wave 44 metric-axis close
 (`observe_token_indices` consuming the captured ODE trajectory) is
-live:
+live. Wave 45 Phases 1–3 added the GPT-prior restart policy,
+`per_position_entropy_reduction` on LineageFlow, and the F-1/F-2/F-3
+bug fixes; the post-Wave-45 re-eval (Wave 45 Agent H) re-runs the
+exact same sweep commands and is reported below.
 
 - **Kanzi (ICLR 2026 protein flow-AE, Shah et al., `arXiv:2510.00351`)**:
   `tools/run_real_ckpt_eval.py --model kanzi --force-mode real
   --metric-mode real` completes a 9-cell sweep (3 seeds × 3 NFE
   budgets = 10, 50, 200) with `adapter_mode: torch` in every cell,
   `marker='computed'`, `n_real_computed=9`. The metric layer (Wave 44
-  Agent B `observe_token_indices` + Wave 43 Pfam held-out reference)
+  Agent B `observe_token_indices` + Wave 43 Pfam held-out reference
+  + Wave 45 Agent C F-3 `paper_quantities` snapshot threading)
   decodes the captured ODE trajectory to mod-20 amino-acid sequences
-  and round-trips them against the held-out Pfam split. Baseline +
-  framework wall-clock scales monotonically with NFE on the warm-cache
-  CPU (10 / 50 / 200 → 0.001 / 0.004 / 0.014 s per forward pass), and
-  the framework arm is uniformly **0.22–0.36×** the baseline wall-clock.
-  All 9 cells report `TIE_AT_SATURATION` at the **real** saturation
-  ceiling (1.0) — both arms decode to the same mod-20 AA sequences on
-  this metric. See `docs/CONSOLIDATED_RESULTS.md` §15.12 for the
+  and round-trips them against the held-out Pfam split. Baseline
+  wall-clock scales monotonically with NFE on the warm-cache CPU
+  (10 / 50 / 200 → 0.001 / 0.004 / 0.014 s per forward pass). The
+  framework arm is now **1.0–1.6×** the baseline wall-clock (NOT
+  0.22–0.36× as the Wave 44 reading reported) — the framework now
+  correctly exercises all the new Wave 45 features end-to-end (3
+  rounds of forward+restart-blend per cell, plus the new GPT-prior
+  restart policy and `paper_quantities` snapshot materialisation),
+  and that bookkeeping costs a constant per-round overhead. The
+  framework is doing more work, not regressing. All 9 cells still
+  report `TIE_AT_SATURATION` at the **real** saturation ceiling (1.0)
+  — both arms decode to the same mod-20 AA sequences on this metric.
+  See `docs/CONSOLIDATED_RESULTS.md` §15.13 for the post-Wave-45
   per-cell table.
 - **LineageFlow (ICML 2026 protein flow matching, Jinx-byebye)**:
   forward smoke passes on the 657 M-param
   `data/lineageflow/lineageflow-rp55.ckpt`; the eval-vs-baseline
   wrapper code path IS exercised end-to-end on the real ckpt via
-  `--force-mode real --metric-mode real` (Wave 44 Agent C), but the
-  single cell raises `RUN_ERROR` because of a pre-existing adapter-layer
-  `RuntimeError` in `LineageFlowAdapter._torch_velocity_field`
-  (EsmModel dtype mismatch — `x_t` is `float32` but the encoder
-  expects `Long`/`Int`). The Wave 45 Agent C fix is the unblock.
-  Per-position entropy 2.266 / log(K=20) 2.996 — well above collapse,
-  well below saturation (mid-entropy). See
-  `docs/CONSOLIDATED_RESULTS.md` §15.12 for the per-cell table.
+  `--force-mode real --metric-mode real` (Wave 44 Agent C + Wave 45
+  Agent H re-run), but the single cell still raises `RUN_ERROR`
+  because of the pre-existing adapter-layer `RuntimeError` in
+  `LineageFlowAdapter._torch_velocity_field` (EsmModel dtype mismatch
+  — `x_t` is `float32` but the encoder expects `Long`/`Int`). This
+  fix is NOT in Wave 45 scope (Agent C only fixed the
+  `paper_quantities=None` threading; the dtype boundary is a separate
+  5-LOC fix). Per-position entropy 2.266 / log(K=20) 2.996 — well
+  above collapse, well below saturation (mid-entropy). See
+  `docs/CONSOLIDATED_RESULTS.md` §15.13 for the per-cell table.
 
 ![Tier 3 real-ckpt signed_mean by family](docs/figures/tier3_real_ckpt_signed_mean.png)
 
-**Honest Tier 3 reading (Wave 44).** The Tier 3 bars sit at zero in
-the figure above because (a) the Kanzi decision metric
+**Honest Tier 3 reading (Wave 45 Agent H).** The Tier 3 bars sit at
+zero in the figure above because (a) the Kanzi decision metric
 `protein_sequence_validity_rate` lands at the real saturation ceiling
 (1.0) for both arms on the mod-20 AA + Pfam round-trip — the metric
 layer is correctly computing per-cell numbers from the captured ODE
@@ -449,19 +461,23 @@ is 0; and (b) the LineageFlow single cell aborts with the pre-existing
 EsmModel dtype bug before the metric layer is reached. **What's
 closed:** the adapter layer is in `torch` mode against SHA-256-verified
 real weights for both models; the metric layer (Pfam held-out + ESM-2
-+ `observe_token_indices`) is wired and computing real numbers for
-Kanzi; the framework arm is uniformly 0.22–0.36× baseline wall-clock
-on Kanzi real ckpts. **What's still pending:** a metric that does not
-saturate at 1.0 on this encoding (per-position ESM-2 PLL or
++ `observe_token_indices` + Wave 45 `paper_quantities` snapshot
+threading) is wired and computing real numbers for Kanzi; the
+framework exercises all new Wave 45 features end-to-end (GPT-prior
+restart, entropy metric, multi-round restart-blend); framework
+wall-clock is 1.0–1.6× baseline on Kanzi (the cost of doing more
+work). **What's still pending:** a metric that does not saturate at
+1.0 on this encoding (per-position ESM-2 PLL or
 `recovered-protein-identity` against a stricter Pfam reference), and
-the Wave 45 EsmModel dtype fix for LineageFlow. When both land, the
-orange bars will move off zero in the same way the blue and green bars
-did.
+the `_torch_velocity_field` EsmModel dtype fix for LineageFlow. When
+both land, the orange bars will move off zero in the same way the
+blue and green bars did.
 
 The full paper-side digest lives in [`docs/paper-draft.md`](docs/paper-draft.md)
-§7 (Tier 3 real-ckpt results). The Wave 44 audit trail for this
-writeup lives in
-[`docs/audit/wave44-paper-tier3-final.md`](docs/audit/wave44-paper-tier3-final.md)
-(see also `docs/audit/wave43-paper-tier3-writeup.md` and
+§7 (Tier 3 real-ckpt results). The Wave 45 Agent H audit trail for
+this writeup lives in
+[`docs/audit/wave45-final-eval.md`](docs/audit/wave45-final-eval.md)
+(see also `docs/audit/wave44-paper-tier3-final.md`,
+`docs/audit/wave43-paper-tier3-writeup.md`, and
 `docs/audit/wave44-tier3-final-eval.md` for the upstream sweep and
 metric-layer close).

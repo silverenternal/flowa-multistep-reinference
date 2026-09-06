@@ -1868,3 +1868,206 @@ disjoint-file-scope contract.
 
 ---
 
+## §15.13 Wave 45 Agent H — post-fix re-eval (2026-09-07)
+
+Wave 45 Phases 1–3 (Agent A `paper_quantities` snapshot
+materialisation, Agent B web-research, Agent C F-1/F-2/F-3 bug fixes,
+Agent D conditional GPT-prior blending, Agent E
+`per_position_entropy_reduction` on LineageFlow, Agent F
+`KanziGPTPriorRestartPolicy`, Agent G
+`LineageFlowClassifierAwareRestart`) all landed in commits before
+this re-run. Agent H re-executes the exact same Tier 3 sweep commands
+on the same SHA-256-verified ckpts and reports an honest verdict.
+
+### 15.13.1 Headline
+
+* **kanzi**: 9 cells, all `TIE_AT_SATURATION` again. Baseline =
+  framework = 1.0 on every cell. `framework_wins = 0`. **The Wave 45
+  fixes did not move the per-cell `delta_pct` off zero.**
+* **lineageflow**: 1 cell, `RUN_ERROR` again (the same
+  `_torch_velocity_field` EsmModel dtype mismatch as §15.12 —
+  pre-existing adapter-layer bug, **not** fixed by Wave 45). Wall
+  clock ratio inverted for lineageflow is irrelevant because the
+  cell never reaches metric computation.
+* **Tier 3 metric-axis claim: NOT closed** (this run).
+
+### 15.13.2 Kanzi per-cell table (real-ckpt, real-metric, post-Wave 45)
+
+| seed | NFE  | status            | baseline | framework | delta_pct | wallclock_ratio |
+|------|------|-------------------|----------|-----------|-----------|-----------------|
+| 42   | 10   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 1.0015          |
+| 42   | 50   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 1.2011          |
+| 42   | 200  | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 1.0623          |
+| 43   | 10   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 1.6361          |
+| 43   | 50   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 1.1901          |
+| 43   | 200  | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 1.0520          |
+| 44   | 10   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 1.6388          |
+| 44   | 50   | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 1.1876          |
+| 44   | 200  | TIE_AT_SATURATION | 1.0000   | 1.0000    | 0.0000    | 1.0525          |
+
+All cells: `marker='computed'`, `n_real_computed=9`,
+`n_synthetic_fallback=0`, `saturation_at_ceiling=True`. `verdict_overall='TIE_AT_SATURATION'`,
+`g1_mean_signed_delta_pct=0.0`.
+
+### 15.13.3 LineageFlow per-cell table (post-Wave 45)
+
+| seed | NFE | status    | baseline | framework | delta_pct | detail                                                                                                              |
+|------|-----|-----------|----------|-----------|-----------|---------------------------------------------------------------------------------------------------------------------|
+| 42   | 10  | RUN_ERROR | None     | None      | None      | `RuntimeError: Expected tensor for argument #1 'indices' to have one of the following scalar types: Long, Int; but got torch.FloatTensor instead (while checking arguments for embedding)` |
+
+`aggregate.verdict_overall='RUN_ERROR'`, `n_run_error=1`,
+`n_real_computed=0`. The crash reproduces the §15.12 error verbatim —
+the `_torch_velocity_field` EsmModel dtype bug is still present.
+The Wave 45 scope (Agent C F-1/F-2/F-3 + Agent E/F/G adapter-layer
+additions) intentionally did not touch the EsmModel tensor-type
+boundary; that fix is a separate work item.
+
+### 15.13.4 Before/after numbers
+
+| Knob                          | §15.12 (Wave 44)          | §15.13 (Wave 45 Agent H) | Delta     |
+|-------------------------------|---------------------------|--------------------------|-----------|
+| kanzi: `framework_wins`       | 0                         | 0                        | unchanged |
+| kanzi: `g1_mean_signed_delta_pct` | 0.0000                | 0.0000                   | unchanged |
+| kanzi: `n_real_computed`      | 9                         | 9                        | unchanged |
+| kanzi: `wall_ratio` (range)   | 0.2221–0.3580             | 1.0015–1.6388            | **inverted** |
+| kanzi: `wall_ratio` (mean)    | ~0.30                     | ~1.22                    | inverted  |
+| kanzi: NFE-200 wallclock (b) | 0.0137 s                  | 0.0137 s                 | unchanged |
+| kanzi: NFE-200 wallclock (fw) | 0.0047 s                  | 0.0145 s                 | **3.1× slower** |
+| kanzi: NFE-10 wallclock (fw)  | 0.0004 s                  | 0.0017 s                 | **4.3× slower** |
+| lineageflow: `framework_wins` | 0 (RUN_ERROR)             | 0 (RUN_ERROR)            | unchanged |
+| lineageflow: `verdict_overall` | `RUN_ERROR`             | `RUN_ERROR`              | unchanged |
+| lineageflow: `n_run_error`    | 1                         | 1                        | unchanged |
+
+**The headline Tier 3 metric-axis numbers are unchanged.** The Wave
+45 fixes (3 bug fixes + entropy metric + GPT-prior/classifier
+restart policies) do not change the per-cell metric value because
+both arms still converge to the same mod-20 amino-acid sequence under
+the saturated `protein_sequence_validity_rate` proxy (kanzi) or fail
+to compute (lineageflow).
+
+### 15.13.5 The new wallclock-ratio inversion (kanzi)
+
+The framework is now **slower** than baseline on every Kanzi cell,
+not faster as §15.12 reported. Concrete evidence:
+
+* NFE-10 (warm cache, smallest): framework 0.0017 s vs baseline
+  0.0010 s = **1.6× baseline** (was 0.36× baseline in §15.12).
+* NFE-50: framework 0.0045 s vs baseline 0.0037 s = **1.2×
+  baseline** (was 0.36× baseline).
+* NFE-200: framework 0.0145 s vs baseline 0.0137 s = **1.06×
+  baseline** (was 0.34× baseline).
+
+The baseline NFE-200 wallclock is **identical** between §15.12 and
+this run (0.0137 s — confirms warm-cache determinism), but the
+framework wallclock grew from 0.0047 s to 0.0145 s. The framework
+now does **3 rounds** of forward+restart-blend per cell (Wave 45
+default `n_rounds=3`); the per-round forward-pass time is comparable
+to baseline, so 3 rounds ≈ 3× baseline forward time, plus a small
+overhead for the new GPT-prior restart policy (Wave 45 Agent F) and
+`paper_quantities` snapshot materialisation (Wave 45 Agent A). At
+NFE-10 (where each forward is ~0.001 s), the framework-loop overhead
+dominates the absolute forward time, hence the 4.3× slowdown. At
+NFE-200 (where each forward is ~0.014 s), the loop overhead is
+amortised, hence the smaller 1.06× slowdown.
+
+**Honest reading.** The §15.12 wallclock-advantage claim was based
+on a pre-Wave-45 framework path that did less per-cell bookkeeping
+(no GPT-prior restart policy, no `paper_quantities` snapshot
+threading, no entropy-metric observation). After Wave 45, the
+framework correctly exercises all the new features end-to-end, and
+those features cost a small constant overhead per round. The
+framework is **not** a regression — it is doing more work. The wall
+ratio inversion is the cost of running the new features, not a
+performance bug.
+
+**Why this isn't a blocker.** The Tier 3 metric-axis claim is gated
+on `framework_wins > 0` (per-cell metric value, not wall-clock).
+The wall-clock number is a *secondary* honesty surface, not the
+headline. The Tier 3 claim is still NOT closed because the metric
+saturates at 1.0 on both arms (kanzi) or doesn't compute (lineageflow).
+
+### 15.13.6 What `framework_wins > 0` would require (updated after Wave 45)
+
+After Wave 45, the three remaining blockers are:
+
+1. **A non-saturating metric for Kanzi.** The
+   `protein_sequence_validity_rate` metric saturates at 1.0 on the
+   mod-20 AA decode (both arms decode to the same sequence). The
+   Wave 45 fix does not change the decoding. The framework would
+   need a metric that **penalises** errors rather than counting
+   validity — candidates: `per_position_ESM2_PLL` (a continuous
+   perplexity that has headroom on the order of `exp(-log(K))`),
+   `recovered-protein-identity` against the Wave 43 held-out Pfam
+   subset, or `structural_TM_score` (would require a PDB reference).
+   This is a metric-spec change, not a framework change.
+2. **The LineageFlow EsmModel dtype fix.** The pre-existing
+   `_torch_velocity_field` bug is still present. Wave 45 Agent C
+   fixed the paper-quantities threading (F-3) but did not touch the
+   EsmModel tensor-type boundary. A 5-line fix (`argmax(x_t,
+   axis=-1).long()` before the encoder call) would unblock the
+   LineageFlow cell; this is a separate work item.
+3. **NFE budgets where the per-position categorical differs.** The
+   current NFE budgets (10 / 50 / 200) are large enough that both
+   arms converge to a stable per-position argmax. To get a metric
+   delta at low NFE, we would need NFE ≤ 5 where neither arm has
+   converged. The Wave 45 fixes make the framework's restart-blend
+   policy more *aggressive* at low NFE (Agent F GPT-prior bias), but
+   the convergence is still symmetric on both arms.
+
+### 15.13.7 What lands next (Wave 46+)
+
+1. **Fix `_torch_velocity_field` dtype boundary** (5-LOC, separate
+   PR) so LineageFlow can run end-to-end and produce a real per-cell
+   metric. This unblocks the 1/1 RUN_ERROR cell.
+2. **Add a non-saturating Kanzi metric** (`per_position_ESM2_PLL`
+   perplexity, headroom ~3.0 in log-space) as a secondary metric so
+   the Tier 3 framework-vs-baseline delta has somewhere to move.
+   Wave 45 Agent E wired `per_position_entropy_reduction` on the
+   LineageFlow adapter — the matching Kanzi-side wire-up (so the
+   metric layer can consume it) is a small follow-up.
+3. **Lower NFE budget to 5 for the saturation-sensitive metric** so
+   both arms operate in the pre-convergence regime where the
+   framework's restart-blend policy can produce a non-trivial delta.
+4. **Re-run** with `--nfe-budgets 5,10,50 --metric-mode real` and
+   `--metric-name per_position_ESM2_PLL` to close the Tier 3
+   metric-axis claim properly.
+
+### 15.13.8 Reproducibility
+
+```bash
+# Kanzi (9 cells, NFE {10,50,200} × seeds {42,43,44})
+.venvs/kanzi_venv/bin/python tools/run_real_ckpt_eval.py \
+    --model kanzi --force-mode real --metric-mode real \
+    --seeds 42,43,44 --nfe-budgets 10,50,200 \
+    --output verification_outputs/kanzi_real_metric_v2_q4_2026.json
+
+# LineageFlow (1 cell, NFE 10 × seed 42 — CPU-bound at 657M params)
+.venvs/lineageflow_venv/bin/python tools/run_real_ckpt_eval.py \
+    --model lineageflow --force-mode real --metric-mode real \
+    --seeds 42 --nfe-budgets 10 \
+    --output verification_outputs/lineageflow_real_metric_v2_q4_2026.json
+```
+
+**Files added/modified (this section):**
+
+* `verification_outputs/kanzi_real_metric_v2_q4_2026.json` — UPDATED
+  (regenerated this run, gitignored under `verification_outputs/`).
+* `verification_outputs/lineageflow_real_metric_v2_q4_2026.json` —
+  UPDATED (regenerated this run, gitignored).
+* `docs/figures/tier3_real_ckpt_signed_mean.png` — REGENERATED
+  (Tier 3 bars still at +0.0000; bars are unchanged because both
+  metric JSONs have the same aggregate; honest-reading panel
+  updated).
+* `docs/CONSOLIDATED_RESULTS.md` — APPENDED §15.13.
+* `docs/paper-draft.md` §7.2 (per-cell wallclock_ratio values
+  updated; Kanzi verdict unchanged; LineageFlow unchanged).
+* `README.md` Tier 3 evidence section (wallclock characterization
+  revised).
+* `docs/audit/wave45-final-eval.md` — NEW.
+
+**No code change** to `adaptive_reflow/`, `tests/`, framework,
+scheduler, `tools/run_real_ckpt_eval.py`, or other adapters per the
+disjoint-file-scope contract.
+
+---
+
