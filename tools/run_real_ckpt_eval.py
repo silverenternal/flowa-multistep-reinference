@@ -136,12 +136,14 @@ import argparse
 import datetime
 import hashlib
 import json
+import math
 import os
 import pathlib
 import re
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 from typing import Any, Callable
 
 # Make the project importable when running as ``python tools/run_real_ckpt_eval.py``
@@ -149,6 +151,13 @@ from typing import Any, Callable
 REPO_ROOT_HERE = pathlib.Path(__file__).resolve().parent.parent
 if str(REPO_ROOT_HERE) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT_HERE))
+
+# Local import for the shared entropy-reduction helper (Wave 45 Agent E /
+# P2-W33-C). The helper lives in :mod:`adaptive_reflow.adapters._adapter_common`
+# and is stdlib + numpy only — safe to import at module level.
+from adaptive_reflow.adapters._adapter_common import (
+    per_position_entropy_reduction,
+)
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -165,6 +174,18 @@ CAPABILITY_AUDIT = REPO_ROOT / "tools" / "capability_audit.py"
 #: symbol extractor (``tools/check_docs_against_code``) see it as a
 #: real, defined project symbol rather than a bare string literal.
 TIE_AT_SATURATION: str = "TIE_AT_SATURATION"
+
+#: Type alias used by the inline ``KanziGlue`` class (Wave 52 Agent A).
+#: Stdlib + numpy only; mirrors the alias used by
+#: :mod:`adaptive_reflow.adapters.lineageflow_glue`.
+try:
+    import numpy as np  # noqa: F401  (kept for the KanziGlue.compute_composite path)
+    from numpy.typing import NDArray as _NDArray
+
+    ArrayF64 = _NDArray[np.float64]
+except ImportError:
+    # Fallback when numpy is not installed (CI / synthetic-only envs).
+    ArrayF64 = Any  # type: ignore[assignment,misc]
 
 # ---------------------------------------------------------------------------
 # Per-model downstream metric registry (single source of truth)
@@ -207,6 +228,43 @@ DOWNSTREAM_METRICS: dict[str, dict[str, Any]] = {
                 "improvement_bar": 0.01,
                 "definition": (
                     "1 - |generated intersect reference| / |generated| against Pfam"
+                ),
+            },
+            # Wave 52 Agent A — Kanzi composite (pure-flow 3-term
+            # scalar in [-1, +1]). Mirrors the LineageFlow composite
+            # (Wave 47) but consumes Kanzi's continuous latent
+            # trajectory endpoint instead of the discrete AR-prior
+            # categorical. The framework side runs 3 rounds @ NFE/3
+            # with the GPT-prior-aware restart blend (Wave 45 Agent
+            # F) — so the composite surfaces framework-vs-baseline
+            # *latent-flow* improvements even when the saturated
+            # ``protein_sequence_validity_rate`` primary metric is
+            # at the 0.95 ceiling. ``K_lf = KANZI_LATENT_DIM = 64``
+            # is the per-position softmax cardinality for the
+            # continuous latent codebook decode. Positive composite
+            # = framework strictly improves the integrated flow
+            # bundle. Computed by :class:`KanziGlue.compute_composite`
+            # (Wave 52 Agent A, additive to the binary primary metric).
+            {
+                "name": "kanzi_composite",
+                "direction": "higher_is_better",
+                "saturation_threshold": None,
+                "improvement_bar": 0.05,
+                "is_composite": True,
+                "composite_components": [
+                    "per_position_entropy_reduction_normalised",
+                    "per_position_max_prob_delta",
+                    "argmax_turnover_signed",
+                ],
+                "composite_weights": [0.40, 0.35, 0.25],
+                "definition": (
+                    "100% flow-component composite on Kanzi continuous "
+                    "latent: framework-vs-baseline delta on per-position "
+                    "entropy reduction (normalised by log(K_lf)), max-prob "
+                    "sharpness, and argmax turnover in latent codebook "
+                    "space. Bounded in [-1, 1]. Positive = framework "
+                    "improves the latent flow bundle. Computed by "
+                    "KanziGlue.compute_composite (Wave 52 Agent A)."
                 ),
             },
         ],
@@ -1753,6 +1811,334 @@ def _compute_lineageflow_composite(
     return composite_value, "computed", debug
 
 
+# ---------------------------------------------------------------------------
+# Wave 52 Agent A — Kanzi composite (pure-flow 3-term on continuous latent).
+# Inline in this module because the disjoint-file scope (per the Wave 52
+# task brief) excludes :mod:`adaptive_reflow.adapters.kanzi` and any new
+# file under ``adaptive_reflow/adapters/``. The class is a pure consumer
+# of the Kanzi adapter's native-state cache: it reads the trajectory's
+# endpoint (``trajectory[-1]``, shape ``(L_z, d)``) and produces the same
+# 3-term composite as :class:`LineageFlowGlue` but on Kanzi's *continuous
+# latent* (NOT the discrete AR-prior categorical — that channel is not
+# touched by the framework's latent restart blend).
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class KanziGlue:
+    """Pure-glue composite metric layer for the Kanzi adapter (Wave 52).
+
+    Holds a reference to a :class:`KanziAdapter` and computes a
+    100 % flow-component composite benchmark on the Kanzi *continuous
+    latent* trajectory endpoint. Mirrors :class:`LineageFlowGlue` but
+    differs in two ways:
+
+    1. Kanzi's per-position state is a real vector of dimension
+       ``KANZI_LATENT_DIM = 64`` (the latent codebook decode axis),
+       not a discrete categorical. We treat the (L_z, d) endpoint as
+       logits over the d axis and apply numerically-stable softmax
+       along that axis (the same convention as
+       :func:`per_position_entropy_reduction`).
+
+    2. The framework's value-add for Kanzi comes from the latent
+       restart blend (:class:`KanziGPTPriorRestartPolicy` and the
+       Wave 34 paper-quantity-driven scheduler). The discrete AR-prior
+       state (``discrete_token_index`` channel) is not affected by the
+       framework's restart blend, so reading that channel would always
+       yield ``TIE_AT_SATURATION`` (the Wave 43 Tier-3 finding for
+       Kanzi). The latent endpoint, in contrast, differs arm-to-arm.
+
+    Stdlib + numpy only. **No model logic lives here** — that lives
+    in the adapter. The class never invokes model forward, never
+    touches weights, never mutates adapter state.
+
+    Constructor parameters
+    ----------------------
+
+    adapter
+        The :class:`KanziAdapter` whose native-state cache carries the
+        ODE trajectories consumed by :meth:`compute_composite`. The
+        adapter must expose ``_native_states`` as a ``dict``-like
+        (the concrete adapter uses an ``OrderedDict`` LRU; the glue
+        only does ``adapter._native_states[trace.native_state_digest]``).
+    """
+
+    adapter: Any  # KanziAdapter (forward-declared as Any to avoid circular import)
+
+    def compute_composite(
+        self,
+        baseline_trace: Any,
+        framework_trace: Any,
+        *,
+        weights: tuple[float, float, float] = (0.40, 0.35, 0.25),
+        seed: int | None = None,
+        nfe: int | None = None,
+    ) -> dict[str, float | None]:
+        """Compute the Wave 52 Kanzi composite benchmark.
+
+        Args:
+            baseline_trace: ``ODEIntegratorTrace`` from the baseline arm
+                (1 round @ NFE). Must carry ``native_state_digest`` that
+                resolves to a trajectory entry in
+                ``self.adapter._native_states``.
+            framework_trace: ``ODEIntegratorTrace`` from the framework arm
+                (``n_rounds`` rounds @ ``ceil(NFE / n_rounds)``).
+            weights: ``(w1, w2, w3)`` non-negative floats summing to
+                1.0 (default ``(0.40, 0.35, 0.25)`` — the LineageFlow
+                canonical weights, applied to Kanzi's latent composite).
+            seed: Optional audit-field echo of the run-level seed.
+            nfe: Optional audit-field echo of the NFE budget.
+
+        Returns:
+            dict with keys (all floats unless noted):
+              * ``"composite"`` — the scalar composite ∈ ``[-1, +1]``.
+              * ``"phi1_entropy_reduction_normalised"`` — φ1 ∈ ``[-1, +1]``.
+              * ``"phi2_max_prob_delta"`` — φ2 ∈ ``[-1, +1]``.
+              * ``"phi3_argmax_turnover_signed"`` — φ3 ∈ ``[-1, +1]``.
+              * ``"weights"`` — list ``[w1, w2, w3]`` (echo for audit).
+              * ``"K"`` — ``KANZI_LATENT_DIM = 64`` (echo for audit).
+              * ``"seed"`` — echo of the input ``seed`` (or ``None``).
+              * ``"nfe"`` — echo of the input ``nfe`` (or ``None``).
+
+        Raises:
+            ValueError: if ``weights`` does not sum to 1.0 (within
+                ``1e-9``) or any weight is negative.
+            KeyError: if a trace's ``native_state_digest`` is not in
+                ``self.adapter._native_states`` (LRU-evicted).
+        """
+        # ---- 1. Validate weights --------------------------------------
+        if len(weights) != 3:
+            raise ValueError(
+                f"weights must have length 3 (got {len(weights)})"
+            )
+        for w in weights:
+            if not math.isfinite(float(w)) or float(w) < 0.0:
+                raise ValueError(
+                    f"weights must be non-negative finite floats (got {w!r})"
+                )
+        weights_sum = float(sum(weights))
+        if abs(weights_sum - 1.0) > 1e-9:
+            raise ValueError(
+                f"weights must sum to 1.0 within 1e-9 (got {weights_sum})"
+            )
+        w1, w2, w3 = float(weights[0]), float(weights[1]), float(weights[2])
+
+        # ---- 2. Extract trajectory endpoints --------------------------
+        # K_lf = KANZI_LATENT_DIM = 64. We use the *continuous latent
+        # codebook decode* axis (the d axis of the (L_z, d) endpoint)
+        # as the categorical softmax axis. This is the same convention
+        # :func:`per_position_entropy_reduction` already handles: the
+        # last axis is treated as the "categorical" axis and all
+        # leading axes (here just the L_z sequence axis) as the
+        # "position" axis. We mirror the LineageFlowGlue math
+        # verbatim and only swap the ``K`` constant.
+        K_lf = 64  # KANZI_LATENT_DIM; inline to avoid the adapter import edge
+        theta_b = self._extract_endpoint(baseline_trace)
+        theta_f = self._extract_endpoint(framework_trace)
+
+        # ---- 3. Compute the three phi terms ---------------------------
+        # phi1: per-position entropy reduction normalised by log K_lf.
+        # Uses the shared helper from
+        # :mod:`adaptive_reflow.adapters._adapter_common`
+        # (P2-W33-C, Wave 45 Agent E — same helper the LineageFlow
+        # glue uses).
+        raw_reduction = per_position_entropy_reduction(theta_b, theta_f)
+        log_k = math.log(float(K_lf))
+        if log_k <= 0.0 or not math.isfinite(raw_reduction):
+            phi1 = float("nan")
+        else:
+            phi1 = float(raw_reduction) / log_k
+
+        # phi2: mean per-position max-prob delta (framework − baseline).
+        # Per-position softmax along the d axis; take max prob.
+        z_b = theta_b - np.max(theta_b, axis=-1, keepdims=True)
+        z_f = theta_f - np.max(theta_f, axis=-1, keepdims=True)
+        p_b = np.exp(z_b) / np.sum(np.exp(z_b), axis=-1, keepdims=True)
+        p_f = np.exp(z_f) / np.sum(np.exp(z_f), axis=-1, keepdims=True)
+        max_b = np.max(p_b, axis=-1)
+        max_f = np.max(p_f, axis=-1)
+        phi2 = float(np.mean(max_f - max_b))
+
+        # phi3: argmax turnover signed = 2 * mean(argmax_f != argmax_b) - 1.
+        argmax_b = np.argmax(theta_b, axis=-1)
+        argmax_f = np.argmax(theta_f, axis=-1)
+        turnover = float(np.mean(argmax_f != argmax_b))
+        phi3 = 2.0 * turnover - 1.0
+
+        # ---- 4. Composite (clamp to [-1, 1] for numerical safety) -----
+        composite_raw = w1 * phi1 + w2 * phi2 + w3 * phi3
+        composite = float(
+            max(-1.0, min(1.0, composite_raw)) if math.isfinite(composite_raw)
+            else float("nan")
+        )
+
+        # ---- 5. Audit dict --------------------------------------------
+        return {
+            "composite": composite,
+            "phi1_entropy_reduction_normalised": phi1,
+            "phi2_max_prob_delta": phi2,
+            "phi3_argmax_turnover_signed": phi3,
+            "weights": [w1, w2, w3],
+            "K": int(K_lf),
+            "seed": (int(seed) if seed is not None else None),
+            "nfe": (int(nfe) if nfe is not None else None),
+        }
+
+    def _extract_endpoint(self, trace: Any) -> ArrayF64:
+        """Pull ``theta = trajectory[-1]`` from the adapter's native-state cache.
+
+        The Kanzi adapter stores the trajectory as a numpy array of
+        shape ``(T, L_z, d)`` in ``adapter._native_states[digest]
+        ['trajectory']``. The endpoint is the last timestep:
+
+            trajectory[-1]  # shape (L_z, d)
+
+        where ``L_z = KANZI_AR_SEQ_LENGTH = 64`` and
+        ``d = KANZI_LATENT_DIM = 64``. The endpoint is treated as
+        logits over the d axis (the "categorical" softmax axis);
+        per-position entropy is computed along the L_z axis.
+
+        Shape contract: returns ``np.ndarray(shape=(L_z, d), dtype=float64)``.
+
+        Raises:
+            KeyError: if ``trace.native_state_digest`` is not in
+                ``self.adapter._native_states`` (LRU-evicted).
+            AttributeError: if the cached entry lacks a ``"trajectory"``
+                key (defensive; should not happen for adapter-produced
+                traces).
+        """
+        native_states = self.adapter._native_states
+        digest = str(trace.native_state_digest)
+        entry = native_states[digest]
+        trajectory = np.asarray(entry["trajectory"], dtype=np.float64)
+        # trajectory has shape (T, L_z, d); the endpoint is the last step.
+        theta = trajectory[-1]
+        # Guard against any future change in cache shape; flatten any
+        # leading batch axis to a canonical (L_z, d).
+        if theta.ndim == 3:
+            # (B, L_z, d) — squeeze the batch axis (B=1 in current path).
+            theta = theta.reshape(-1, theta.shape[-1]) if theta.shape[0] == 1 else theta[0]
+        if theta.ndim != 2:
+            raise ValueError(
+                f"Kanzi endpoint must be (L_z, d); got shape {theta.shape!r}"
+            )
+        return theta
+
+
+#: Default composite weights for the Kanzi glue. Mirrors the
+#: LineageFlow canonical weights ``(0.40, 0.35, 0.25)`` per the
+#: Wave 47 / Wave 52 design synthesis. The weights are kept identical
+#: to LineageFlow so the cross-adapter composite surface is directly
+#: comparable in ``CONSOLIDATED_RESULTS`` / ``framework-internal-metrics``
+#: roll-ups.
+DEFAULT_KANZI_COMPOSITE_WEIGHTS: tuple[float, float, float] = (0.40, 0.35, 0.25)
+
+
+def _compute_kanzi_composite(
+    *,
+    adapter: Any,
+    baseline_trace: Any,
+    framework_trace: Any,
+    seed: int,
+    nfe: int,
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Wave 52 Agent A — Kanzi composite (pure-flow 3-term) on continuous latent.
+
+    Returns ``(composite_value, marker, debug_dict)``. The composite
+    lies in ``[-1, 1]``; positive = framework strictly improves the
+    integrated flow bundle (the latent restart blend + paper-quantity
+    scheduler produce a sharper posterior than the baseline 1-round
+    solve). ``marker`` is one of:
+
+      * ``"computed"`` — composite successfully computed.
+      * ``"blocked"`` — composite could not be computed (missing
+        trace, missing native-state cache, etc.).
+      * ``"synthetic_fallback"`` — adapter is in synthetic mode; the
+        composite collapses to 0 by construction (both arms yield
+        byte-identical trajectories).
+
+    Algorithm
+    ~~~~~~~~~
+
+    1. Delegate to :meth:`KanziGlue.compute_composite` for the
+       3-term ``phi`` calculation:
+
+       * ``phi1 = (H(theta_b) - H(theta_f)) / log 64``
+         via the shared
+         :func:`adaptive_reflow.adapters._adapter_common.per_position_entropy_reduction`
+         helper. ``theta`` is the (L_z, d) trajectory endpoint treated
+         as logits over the d axis.
+       * ``phi2 = mean(softmax(theta_f).max(-1) - softmax(theta_b).max(-1))``
+       * ``phi3 = 2 * mean(argmax(theta_f, -1) != argmax(theta_b, -1)) - 1``
+
+       ``composite = 0.40 * phi1 + 0.35 * phi2 + 0.25 * phi3``.
+    2. Returns ``(composite_value, marker, dbg)`` where ``dbg`` is the
+       raw glue-class output (composite + 3 phi terms + weights + K +
+       seed + nfe).
+
+    Stdlib + numpy only; no torch at the pipeline level. The glue
+    class uses the shared :func:`per_position_entropy_reduction`
+    helper from :mod:`adaptive_reflow.adapters._adapter_common`.
+
+    This mirrors the Wave 47 ``_compute_lineageflow_composite`` wiring
+    pattern exactly — only the glue class (LineageFlowGlue → KanziGlue),
+    the per-position state shape (``(L, K)`` → ``(L_z, d)``), the
+    softmax axis (last-axis categorical → last-axis continuous), and
+    the ``K`` constant (33 → 64) differ.
+    """
+    debug: dict[str, Any] = {
+        "seed": int(seed),
+        "nfe_budget": int(nfe),
+    }
+    # ---- 1. Sanity-check the traces -------------------------------
+    if baseline_trace is None or framework_trace is None:
+        debug["reason"] = "missing_trace"
+        return None, "blocked", debug
+    for label, trace in (
+        ("baseline_trace", baseline_trace),
+        ("framework_trace", framework_trace),
+    ):
+        if not hasattr(trace, "native_state_digest"):
+            debug["reason"] = f"{label}_missing_native_state_digest"
+            debug[label] = str(type(trace).__name__)
+            return None, "blocked", debug
+    # ---- 2. Delegate to KanziGlue.compute_composite ---------------
+    try:
+        glue = KanziGlue(adapter=adapter)
+        result = glue.compute_composite(
+            baseline_trace, framework_trace,
+            weights=DEFAULT_KANZI_COMPOSITE_WEIGHTS,
+            seed=int(seed), nfe=int(nfe),
+        )
+    except KeyError as exc:
+        # LRU-evicted native-state digest; the framework arm's
+        # trajectory is no longer in the adapter's cache.
+        debug["reason"] = (
+            f"native_state_cache_miss: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    except Exception as exc:  # noqa: BLE001
+        debug["reason"] = (
+            f"composite_compute_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    # ---- 3. Surface the composite ---------------------------------
+    composite_value = result.get("composite")
+    debug.update({
+        "composite": composite_value,
+        "phi1_entropy_reduction_normalised":
+            result.get("phi1_entropy_reduction_normalised"),
+        "phi2_max_prob_delta":
+            result.get("phi2_max_prob_delta"),
+        "phi3_argmax_turnover_signed":
+            result.get("phi3_argmax_turnover_signed"),
+        "weights": result.get("weights"),
+        "K": result.get("K"),
+        "glue_class": "KanziGlue",
+    })
+    return composite_value, "computed", debug
+
+
 def _compute_flowmol3_composite(
     *,
     adapter: Any,
@@ -2261,6 +2647,48 @@ def _run_cell(
         }
         cell["composite_weights"] = composite_dbg.get("weights") or [0.40, 0.35, 0.25]
         cell["composite_K"] = composite_dbg.get("K", 33)
+    # Wave 52 Agent A composite (Phase-4K wiring): a 3-term pure-flow
+    # composite in [-1, +1] computed by the inline ``KanziGlue`` class
+    # on Kanzi's *continuous latent* trajectory endpoint. Auto-enabled
+    # for ``--model kanzi`` when ``--composite-metric`` is "real" or
+    # "auto"; opt-out is ``--composite-metric synthetic``. The
+    # composite consumes Kanzi's ``(L_z, d)`` trajectory endpoint
+    # (NOT the discrete AR-prior categorical — that channel is not
+    # touched by the framework's restart blend, so the Wave 43 Tier-3
+    # finding would still hold). ``K_lf = KANZI_LATENT_DIM = 64``
+    # is the per-position softmax cardinality for the continuous
+    # latent codebook decode. Positive composite = framework strictly
+    # improves the integrated latent flow bundle. Closes the Tier-3
+    # Kanzi metric-axis gap (per Wave 43 / Wave 47). See
+    # docs/audit/wave52-kanzi-composite.md.
+    if (
+        composite_metric != "synthetic"
+        and model == "kanzi"
+    ):
+        (
+            composite_value, composite_marker, composite_dbg,
+        ) = _compute_kanzi_composite(
+            adapter=adapter,
+            baseline_trace=baseline_trace,
+            framework_trace=framework_trace,
+            seed=int(seed), nfe=int(nfe),
+        )
+        cell["composite"] = composite_value
+        cell["composite_marker"] = composite_marker
+        cell["composite_debug"] = composite_dbg
+        cell["composite_components"] = {
+            "phi1_entropy_reduction_normalised":
+                composite_dbg.get("phi1_entropy_reduction_normalised"),
+            "phi2_max_prob_delta":
+                composite_dbg.get("phi2_max_prob_delta"),
+            "phi3_argmax_turnover_signed":
+                composite_dbg.get("phi3_argmax_turnover_signed"),
+        }
+        cell["composite_weights"] = composite_dbg.get("weights") or [0.40, 0.35, 0.25]
+        cell["composite_K"] = composite_dbg.get("K", 64)
+        cell["composite_glue_class"] = composite_dbg.get(
+            "glue_class", "KanziGlue",
+        )
     # Wave 49 Agent D composite (Phase-3C wiring): a 5-axis
     # chemistry+geometry composite in [-1, +1] computed by
     # :class:`FlowMol3Glue.composite_score`. Auto-enabled for
@@ -2582,18 +3010,22 @@ def build_argparser() -> argparse.ArgumentParser:
             "Composite metric mode for supported models. 'synthetic' "
             "(default for unsupported models) skips the composite "
             "computation. 'real' forces the composite to be computed "
-            "when --model lineageflow, flowmol3, or flowmol3_v2. "
-            "'auto' enables the composite for those three models and "
+            "when --model kanzi, lineageflow, flowmol3, or flowmol3_v2. "
+            "'auto' enables the composite for those four models and "
             "skips otherwise. The LineageFlow composite (Wave 47) is "
             "a 100% flow-component 3-term scalar in [-1, 1]; positive "
             "= framework improves the flow bundle. The FlowMol3 "
             "composite (Wave 49 Agent D) is a 5-axis chemistry+geometry "
             "scalar in [-1, +1]; the geometry axis is dropped when "
-            "xtb is not on $PATH. See "
-            "docs/audit/wave47-eval-pipeline-design.md, "
+            "xtb is not on $PATH. The Kanzi composite (Wave 52 "
+            "Agent A) is a 100% flow-component 3-term scalar in "
+            "[-1, 1] on Kanzi's continuous latent (NOT the AR-prior "
+            "discrete categorical); K_lf = KANZI_LATENT_DIM = 64. "
+            "See docs/audit/wave47-eval-pipeline-design.md, "
             "docs/audit/wave47-eval-pipeline-integration.md, "
-            "docs/audit/wave49-glue-design.md §3C, and "
-            "docs/audit/wave49-eval-pipeline-integration.md."
+            "docs/audit/wave49-glue-design.md §3C, "
+            "docs/audit/wave49-eval-pipeline-integration.md, and "
+            "docs/audit/wave52-kanzi-composite.md."
         ),
     )
     return p
