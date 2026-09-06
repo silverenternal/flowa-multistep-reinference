@@ -34,7 +34,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -57,13 +56,16 @@ from adaptive_reflow.universal.state import (
     ODEConditionDelta,
     ODEIntegratorTrace,
     StateBundle,
-    TensorRef,
     validate_state_bundle,
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
     digest_state,
+    kaiming_uniform,
     make_ref,
+    seed_from_ids,
+    torch_is_available as _adapter_common_torch_is_available,
 )
 from adaptive_reflow.framework.interfaces import implements
 
@@ -201,39 +203,26 @@ ArrayF64 = NDArray[np.float64]
 # ---------------------------------------------------------------------------
 # Helpers - hashing + tensor-ref construction
 # ---------------------------------------------------------------------------
-
-
-def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """SHA-256-derived 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
-    return int(hashlib.sha256(blob).hexdigest()[:8], 16)
-
-
-def _digest_state(payload: Mapping[str, Any]) -> str:
-    """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
-    return digest_state(payload)
-
-
-def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Deterministic hash-stable :class:`TensorRef`."""
-    return make_ref(f"protbfn:{label}", label, **parts)
-
-
-# ---------------------------------------------------------------------------
-# Torch availability probe
-# ---------------------------------------------------------------------------
+#
+# The 4 module-level helpers below (``_seed_from_ids`` / ``_digest_state``
+# / ``_make_ref`` / ``torch_is_available``) were thin wrappers over the
+# shared helpers in :mod:`adaptive_reflow.adapters._adapter_common`. As of
+# the Wave-44 D.1 shrink they are removed; the call sites now invoke
+# the shared helpers directly. ``torch_is_available`` is kept as a
+# back-compat shim (delegates to the shared helper) so the test suite
+# can keep importing it by name.
 
 
 def torch_is_available() -> bool:
     """Return ``True`` iff :mod:`torch` is importable in this interpreter.
 
-    Mirrors :func:`adaptive_reflow.adapters.rectified_flow_cifar
-    .torch_is_available`. Used at adapter construction time to decide
-    which backend is reachable.
+    Delegates to
+    :func:`adaptive_reflow.adapters._adapter_common.torch_is_available`.
+    Kept as a back-compat alias because
+    ``tests/test_adapters/test_protbfn_abbfn_adapter.py`` imports it by
+    name at module level (test seam).
     """
-    import importlib.util as _il
-
-    return _il.find_spec("torch") is not None
+    return bool(_adapter_common_torch_is_available())
 
 
 # ---------------------------------------------------------------------------
@@ -300,11 +289,8 @@ def _random_init_synthetic_bfn_weights(
 ) -> dict[str, ArrayF64]:
     """Kaiming-uniform init of the synthetic BFN refiner's W / b."""
     rng = np.random.default_rng(int(seed))
-    bound = float(np.sqrt(6.0 / float(vocab_size)))
     return {
-        "W": rng.uniform(-bound, bound, size=(vocab_size, vocab_size)).astype(
-            np.float64
-        ),
+        "W": kaiming_uniform(rng, vocab_size, vocab_size),
         "b": np.zeros(vocab_size, dtype=np.float64),
     }
 
@@ -595,8 +581,16 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         # Upstream-jax handles keep ``self._synthetic_weights=None``;
         # solve_ode() routes through ``make_sample_fn`` instead.
 
-        # LRU-bounded native-states cache (audit A-3 mirror).
-        self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        # LRU-bounded native-states cache (audit A-3 mirror of TwoDimFMAdapter).
+        # Uses the framework-shared :class:`NativeStateCache` from
+        # :mod:`adaptive_reflow.adapters._adapter_common` (the Wave-44
+        # D.1 shrink target). The attribute name ``_native_states`` is
+        # preserved so test seams that read
+        # ``adapter._native_states[digest]`` keep working unchanged via
+        # the cache's ``__getitem__`` surface.
+        self._native_states: NativeStateCache = NativeStateCache(
+            maxsize=PROTBFN_NATIVE_STATES_MAXSIZE
+        )
         self._caps = ProtBFNAbBFNCapabilities()
 
     # ------------------------------------------------------------------
@@ -625,28 +619,6 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         return self._caps
 
     # ------------------------------------------------------------------
-    # 0. LRU-bounded native_states helpers
-    # ------------------------------------------------------------------
-
-    def _put_native_state(
-        self,
-        digest: str,
-        entry: dict[str, Any],
-    ) -> None:
-        """Insert ``entry`` under ``digest``; evict the oldest entry past maxsize."""
-        if digest in self._native_states:
-            self._native_states[digest] = entry
-            self._native_states.move_to_end(digest)
-            return
-        self._native_states[digest] = entry
-        while len(self._native_states) > PROTBFN_NATIVE_STATES_MAXSIZE:
-            self._native_states.popitem(last=False)
-
-    def _evict_native_state(self, digest: str) -> None:
-        """Remove ``digest`` from the cache if present (no-op when absent)."""
-        self._native_states.pop(digest, None)
-
-    # ------------------------------------------------------------------
     # 2. build_initial_state
     # ------------------------------------------------------------------
 
@@ -666,7 +638,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         categorical, and (d) compute a SHA-256 ``native_state_digest``
         over the per-position probabilities + IDs.
         """
-        seed = _seed_from_ids(
+        seed = seed_from_ids(
             str(batch_id),
             str(sample_id),
             int(self._seed_offset) + 0,
@@ -678,7 +650,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
             vocab_size=int(self._vocab_size),
         )
         L, K = theta.shape
-        digest = _digest_state(
+        digest = digest_state(
             {
                 "kind": "initial",
                 "batch_id": str(batch_id),
@@ -693,7 +665,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 "theta_sum": float(theta.sum(axis=1).mean()),
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             digest,
             {
                 "theta": theta,
@@ -704,7 +676,8 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         )
         bundle = StateBundle(
             channels={
-                AMINO_ACID_CATEGORICAL: _make_ref(
+                AMINO_ACID_CATEGORICAL: make_ref(
+                    "protbfn:initial",
                     "initial",
                     batch=batch_id,
                     sample=sample_id,
@@ -827,7 +800,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         # Row-renormalize so the result is a valid probability
         # distribution.
         blended = blended / np.maximum(blended.sum(axis=1, keepdims=True), 1e-30)
-        next_digest = _digest_state(
+        next_digest = digest_state(
             {
                 "kind": "restart",
                 "src_digest": state.native_state_digest,
@@ -843,7 +816,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 "mechanism": str(self._mechanism),
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             next_digest,
             {
                 "theta": blended,
@@ -854,7 +827,8 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         )
         return StateBundle(
             channels={
-                AMINO_ACID_CATEGORICAL: _make_ref(
+                AMINO_ACID_CATEGORICAL: make_ref(
+                    "protbfn:restart",
                     "restart",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
@@ -1863,7 +1837,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                         traj_np[step + 1] = theta
                     traj = traj_np
         # Store the trajectory keyed by digest.
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
@@ -1882,7 +1856,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 ],
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             traj_digest,
             {
                 "trajectory": traj,
@@ -1944,7 +1918,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         # argmax sequence - the engine never inspects native tensors,
         # only the opaque digest. We still compute the digest over the
         # final categorical.
-        endpoint_digest = _digest_state(
+        endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": trace.native_state_digest,
@@ -1970,7 +1944,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 ],
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             endpoint_digest,
             {
                 "theta": theta_final,
@@ -2050,7 +2024,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         theta_new = theta_new / np.maximum(
             theta_new.sum(axis=1, keepdims=True), 1e-30
         )
-        new_digest = _digest_state(
+        new_digest = digest_state(
             {
                 "kind": "forward_noise",
                 "src_digest": bundle.native_state_digest,
@@ -2063,7 +2037,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
                 "mechanism": str(self._mechanism),
             }
         )
-        self._put_native_state(
+        self._native_states.put(
             new_digest,
             {
                 "theta": theta_new,
