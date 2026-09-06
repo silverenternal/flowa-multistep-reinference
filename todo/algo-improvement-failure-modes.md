@@ -1,6 +1,6 @@
 # Algorithm improvement D — failure-mode controlled noise injection
 
-**Status:** done (Wave 17 P2 = Algo D — noise_sigma in twodim_fm + docs/CONDITIONS.md Pareto plots + framework-internal-metrics C.5; 2026-09-05)
+**Status:** done (Wave 17 P2 = Algo D — noise_sigma in twodim_fm + docs/CONDITIONS.md Pareto plots + framework-internal-metrics C.5; 2026-09-05) (+ Wave 41-52: failure-mode signals now consumed by LineageFlow + Kanzi composite evals via paper_quantities threading; Wave 52 per-component ablation matrix tests 5 failure-mode combinations)
 **Priority:** medium
 **Depends on:** at least one base adapter (twodim_fm or self_flow)
 **Owner:** framework maintainer
@@ -108,3 +108,7 @@ established.
   bounds from the rate bound in task B).
 - Negative-result suppression: all σ levels are reported, including
   the ones where framework regresses.
+
+## Wave 56 close-out
+
+Status line updated: failure-mode controlled noise injection was the Wave 17 P2 foundation; subsequent Wave 41-52 work threaded the paper_quantities signals (which encode failure-mode thresholds) into CodimensionSheetScheduler.record_round_feedback, SequentialScheduler.record_round_feedback, and BatchedTrajectoryRunner.run. Wave 52 per-component ablation matrix (Agent B) explicitly tests failure-mode combinations. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

@@ -1,6 +1,6 @@
 # Algorithm improvement — operating-regime theoretical analysis
 
-**Status:** done (Wave 17 P3 — CRITICAL gap closed; docs/theory/operating-regime.md + framework-internal-metrics C.5 + docs/CONDITIONS.md APPEND)
+**Status:** done (Wave 17 P3 — CRITICAL gap closed; docs/theory/operating-regime.md + framework-internal-metrics C.5 + docs/CONDITIONS.md APPEND) (+ Wave 30 F-5 limitation section; Wave 34 default-scheduler flip referenced; Wave 52 ablation matrix tests operating-regime combinations)
 **Date:** 2026-09-05
 **Priority:** CRITICAL (this is the framework's core claim — without it,
 all empirical claims are unfounded; reviewer's first question will be
@@ -152,3 +152,7 @@ is publishable.
 - `todo/algo-improvement-failure-modes.md` (Algo D; provides σ sweep)
 - `docs/CONDITIONS.md` (existing; per C.5 spec, needs operating regime
   addition)
+
+## Wave 56 close-out
+
+Status refreshed: operating-regime theoretical analysis (Wave 17 P3) closed the CRITICAL gap. Wave 30 added F-5 limitation (env_hash caveats); Wave 34 default-scheduler flip is the canonical "operating regime" boundary the theory references. Wave 52 ablation matrix now exercises combinations of operating regimes. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

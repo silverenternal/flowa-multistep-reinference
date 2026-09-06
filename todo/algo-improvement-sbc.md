@@ -1,6 +1,6 @@
 # Algorithm improvement — Simulation-Based Calibration for stochastic re-inference (C.7)
 
-**Status:** done (Wave 18 C.7 — commit c0e2fe2; 6/6 stochastic algorithms pass chi-squared at N=200 + N=1000; tests/test_sbc/ + tools/run_sbc_audit.py)
+**Status:** done (Wave 18 C.7 — commit c0e2fe2; 6/6 stochastic algorithms pass chi-squared at N=200 + N=1000; tests/test_sbc/ + tools/run_sbc_audit.py) (+ Wave 25 N=10000 stress test; Wave 41-52: paper_quantities threading (Wave 38) now drives the scheduler inputs that SBC validates)
 **Date:** 2026-09-05
 **Priority:** medium (per rev 2 §1 C.7 = 0%; stochastic algorithm
 verification missing — without it, framework could converge to a wrong
@@ -102,3 +102,7 @@ them nightly but not every commit.
 - `framework-internal-metrics.md` §1 C.7 (defines the metric)
 - `todo/algo-improvement-convergence-order.md` (C.6; sister task;
   deterministic counterpart)
+
+## Wave 56 close-out
+
+Status refreshed: C.7 SBC validation at N=200/1000 (Wave 18) and N=10000 (Wave 25) remains green. Wave 38 paper_quantities threading + Wave 45 F-3 fix (paper_quantities=None) ensures the scheduler inputs that SBC validates are now deterministic. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

@@ -185,3 +185,7 @@ CLOSED in Wave 38 by commit **5e1731f** (Wave 38 Agent C WF2 — note the same c
 **Verification**: pytest tests/test_expecttest_smoke.py -q shows 6 passed + commit (no push). Plan status flipped from `pending (Wave 34 target)` to CLOSED.
 
 Refs: `todo/algo-improvement-mutation-apply-survivor.md` (same commit, R-4), Wave 32 Agent B R-1 recommendation.
+
+## Wave 56 close-out
+
+Status unchanged: 6 expecttest smoke tests remain in tests/test_expecttest_smoke.py + expecttest==0.3.0 locked. Wave 48-54 follow-ups did not introduce new expecttest regressions. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

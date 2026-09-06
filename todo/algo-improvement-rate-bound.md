@@ -1,6 +1,6 @@
 # Algorithm improvement B — explicit rate bound theorem
 
-**Status:** done (Wave 15 B — commit f9d34e1; rate_bound.py + 8 tests; PLANAR_BL_CONSTANT = sqrt(2/pi) explicit bound; docs/theory/theorem1_rate_bound.md)
+**Status:** done (Wave 15 B — commit f9d34e1; rate_bound.py + 8 tests; PLANAR_BL_CONSTANT = sqrt(2/pi) explicit bound; docs/theory/theorem1_rate_bound.md) (+ Wave 29 audit confirmed A.0 row green; Wave 30 F-5 limitation in operating-regime.md cross-references rate_bound; Wave 41-52: rate_bound remains the explicit bound for paper Theorem 1)
 **Priority:** medium (depends on A first)
 **Depends on:** `todo/algo-improvement-planar-bl-repoint.md` (A) done
 **Owner:** framework maintainer
@@ -124,3 +124,7 @@ def check_explicit_rate_bound(
   paper machinery beyond Theorem 1).
 - Multi-dim `g: R^d -> R^m` rate bounds (paper Theorem 1 is R^d → R^m
   but the framework's `bounded_lipschitz_distance_2d` is R^2 only).
+
+## Wave 56 close-out
+
+Status refreshed: B.5 rate-bound theorem with PLANAR_BL_CONSTANT = sqrt(2/pi) remains the canonical explicit bound. Wave 29 audit confirmed A.0 row green; Wave 30 F-5 limitation cross-references rate_bound. Wave 41-52 has not required tighter bounds. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

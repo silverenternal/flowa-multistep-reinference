@@ -207,3 +207,7 @@ CLOSED in Wave 38 by commit **89c088f** (Wave 38 Agent B WF1).
 **Verification**: pytest tests pass deterministically + mkdocs build --strict + commit (no push). Plan status flipped from `pending (Wave 33 target)` to CLOSED.
 
 Refs: `docs/audit/framework-code-review.md` §1.10 (HIGH-2 now RESOLVED).
+
+## Wave 56 close-out
+
+Status unchanged: `bounded_lipschitz_distance_2d` raises explicit ImportError on no-scipy env. Paper Theorem 1 contract preserved; Wave 41-54 work has not reintroduced scipy dependencies in this code path. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

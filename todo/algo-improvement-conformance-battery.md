@@ -1,6 +1,6 @@
 # Algorithm improvement — D.5: conformance battery
 
-**Status:** done (Wave 15 C — commit 4d30f41; D.5 LIVE: tests/test_adapters/conformance_battery.py — 8 conformance checks × 14 adapters = 90 passed)
+**Status:** done (Wave 15 C — commit 4d30f41; D.5 LIVE: tests/test_adapters/conformance_battery.py — 8 conformance checks × 14 adapters = 90 passed) (+ Wave 47: composite_verdict=framework_improves on LineageFlow real ckpt; Wave 48: pytest pre-push fixes; Wave 52: Kanzi composite 9/9 cells framework_improves median=+0.170175; Wave 54: paper §7-8 honest verdict rewrite with Tier 3 numbers)
 **Date:** 2026-09-05
 **Priority:** high (D.5 enables D.3 to become a real HARD gate; currently
 D.3 is soft because hand-written tests are easy to game)
@@ -93,3 +93,7 @@ Rev 2 §6 baseline audit found:
 - Adapters currently failing (resolve those separately; don't gate the
   battery on them)
 - F.2 reproduction (separate task)
+
+## Wave 56 close-out
+
+Status line updated to reflect Wave 47-54 stack: composite metric layer (Wave 47), pytest pre-push fixes (Wave 48), FlowMol3 glue + composite (Wave 49), Kanzi/LineageFlow real-ckpt composite eval (Wave 50-52), paper §Tier 3 honest verdict with 3 real numbers (Wave 54). D.5 conformance battery remains the foundational gate; downstream composite closes (kanzi 9/9, lineageflow framework_improves) build on top of it. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

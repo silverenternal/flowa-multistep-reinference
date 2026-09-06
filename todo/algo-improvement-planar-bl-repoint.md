@@ -1,6 +1,6 @@
 # Algorithm improvement A — re-point Theorem 1 to true R^2 BL
 
-**Status:** done (Wave 14 A — commit 6d12744; Theorem1StatementChecker consumes true R² BL throughout via planar_bl_convergence_witness)
+**Status:** done (Wave 14 A — commit 6d12744; Theorem1StatementChecker consumes true R² BL throughout via planar_bl_convergence_witness) (+ Wave 29 audit confirmed A.0 row remains green; Wave 30 F-1 sheet_tube_evidence residual fix; Wave 41-52: theorem checkers still load via theory package re-exports)
 **Priority:** high (Wave 12 high-3 agent's own follow-up)
 **Depends on:** Wave 12 done (e0238ab); `planar_bl_convergence_witness()`
 in `adaptive_reflow/eval/lipschitz_diagnostic.py` available
@@ -88,3 +88,7 @@ adaptive_reflow/eval/fid_theorem_aligned.py::assert_convergence_rate
   proxy for downstream evaluation; the paper's BL is now the audit
   metric, not the evaluation metric).
 - Re-running any SOTA model comparison (this is framework-internal).
+
+## Wave 56 close-out
+
+Status refreshed: Theorem1StatementChecker → planar_bl_convergence_witness re-point remains the canonical R² BL check. Wave 29 audit confirmed A.0 row green; Wave 30 F-1 fixed sheet_tube_evidence residual. Wave 41-52 work has not required re-pointing the checker. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

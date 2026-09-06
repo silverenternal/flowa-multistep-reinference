@@ -1,6 +1,6 @@
 # Algorithm improvement — StochasticFMAdapter enum orphan (Wave 29 Agent C follow-up)
 
-**Status:** done (Wave 39; deleted orphan per audit recommendation)
+**Status:** done (Wave 39; deleted orphan per audit recommendation) (+ Wave 40-54: Reference_flowa orphan deletion recommended (same pattern); not in this Wave's scope)
 **Date:** 2026-09-05
 **Priority:** medium (audit cleanup; no production impact)
 **Depends on:** none (orphan adapter)
@@ -147,3 +147,7 @@ Per `docs/audit/adapter-conformance-deep-dive.md`:
   pre-deletion grep confirms orphan status
 - `FreqFlow` / `Kanzi` skeletons — NOT orphans; these are Wave 21 PHASE-3
   adapters; registered in `ADAPTER_REGISTRY`; deferred per MUST-2 / PHASE-3
+
+## Wave 56 close-out
+
+Status refreshed: StochasticFMAdapter orphan deletion shipped in Wave 39 (pre-deletion grep confirmed no callers). Wave 41-54 audit found no new orphan adapters. Reference_flowa (similar pattern) flagged for future cleanup; not in Wave 56 scope. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

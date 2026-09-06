@@ -1,6 +1,6 @@
 # Wave 11 result validation (JMAA theory refactor)
 
-**Status:** done (Wave 11 JMAA theory-driven framework refactor shipped; 10 Protocol surfaces + 52 conformance tests + theory package extraction + A.4-1.7 audits)
+**Status:** done (Wave 11 JMAA theory-driven framework refactor shipped; 10 Protocol surfaces + 52 conformance tests + theory package extraction + A.4-1.7 audits) (+ Wave 12: 7 A1 audit fixes; Wave 29: re-audit confirmed A.0 row green; Wave 38 + Wave 41 extended the JMAA-derived Protocol surfaces; Wave 47-52 composite eval pipelines consume them)
 **Depends on:** Wave 11 completion
 **Owner:** framework maintainer
 **Goal:** verify that the JMAA theory-driven refactor preserves all existing
@@ -68,3 +68,7 @@ valuable even without the refactor landing.
 
 - Re-running Wave 10 with the refactored framework (that is
   `rerun-wave10-with-refactored-framework.md`).
+
+## Wave 56 close-out
+
+Status refreshed: Wave 11 JMAA theory-driven framework refactor remains the foundation. Wave 12 added 7 A1 audit fixes, Wave 29 re-audit confirmed A.0 row green, Wave 38 + Wave 41 extended the JMAA-derived Protocol surfaces (FLOW match ODE adapter), and Wave 47-52 composite eval pipelines now consume these Protocol surfaces. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

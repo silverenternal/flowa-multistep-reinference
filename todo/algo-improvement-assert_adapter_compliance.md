@@ -208,3 +208,7 @@ CLOSED in Wave 38 by commit **f7ee3ae** (Wave 38 Agent A WF1).
 **Verification**: pytest + mkdocs build --strict run + commit (no push). Wave 38 dispatched 5 parallel workflows; this plan was Wave 38 Agent A WF1. Plan status flipped from `pending (Wave 33 target)` to CLOSED.
 
 Refs: `docs/audit/framework-code-review.md` §1.13 (HIGH-4 + MEDIUM-11 now RESOLVED).
+
+## Wave 56 close-out
+
+Status refreshed to acknowledge Wave 41-54 work: every adapter is now `@implements`-decorated and the enforcement gate has been exercised against the new real-ckpt glue classes (KanziAdapter, LineageFlowAdapter, FlowMol3Adapter). No new HIGH/MEDIUM follow-ups identified in Wave 41-54 audits. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

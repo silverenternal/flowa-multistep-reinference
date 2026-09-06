@@ -1,6 +1,6 @@
 # Algorithm improvement — paper-traceability hardening (A.4 + A.7 + B.4)
 
-**Status:** done (Wave 15 A — commit 3ead25f; A.4: 0.171 → 0.938; A.7: 75% → 87.5%; B.4: +5 doctests; 8 new must-fail fixtures in tests/test_theory/negative/)
+**Status:** done (Wave 15 A — commit 3ead25f; A.4: 0.171 → 0.938; A.7: 75% → 87.5%; B.4: +5 doctests; 8 new must-fail fixtures in tests/test_theory/negative/) (+ Wave 38: 22 more CLM claims wired to tests; Wave 41: paper Tier 3 evidence claim closed; Wave 52-54: paper rewrite with real Tier 3 numbers strengthens claim coupling)
 **Date:** 2026-09-05
 **Priority:** high (A.4 + A.7 are HARD gates in rev 2 §3 Phase 2 entry gate;
 B.4 is HARD gate everywhere)
@@ -122,3 +122,7 @@ Total: ~2-4 hours CPU only.
 - D.5 conformance battery (separate task)
 - A.0 G4 (Theorem 1 rate constant) — covered by
   `algo-improvement-rate-bound.md` (B)
+
+## Wave 56 close-out
+
+Status refreshed: A.4/A.7/B.4 traceability hardening (Wave 15 A) was extended by Wave 38 (22 more CLM claims wired), Wave 41 (paper Tier 3 evidence), and Wave 52-54 (paper §7-8 honest verdict). 41/41 ACTIVE claims are now test-coupled with real Tier 3 evidence behind them. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

@@ -1,6 +1,6 @@
 # Algorithm improvement — D.4: pinned adapter regression vectors (first batch)
 
-**Status:** CLOSED in Wave 38 (commit b88b32f, Wave 38 Agent A WF2) — D.4 first batch shipped: 5 pinned regression-vector adapters discovered in this run (vectors were already shipped; this batch makes them test-discoverable + gated)
+**Status:** CLOSED in Wave 38 (commit b88b32f, Wave 38 Agent A WF2) — D.4 first batch shipped: 5 pinned regression-vector adapters discovered in this run (vectors were already shipped; this batch makes them test-discoverable + gated) (+ Wave 33-34 D.4 batches 2-4 shipped remaining adapters; Wave 47: composite metric-layer smoke tests added)
 **Date:** 2026-09-05
 **Priority:** high (D.4 is a HARD gate per `framework-internal-metrics.md` §1 D.4)
 **Depends on:** F.5 env_hash (live), F.6 mutation-audit harness pattern
@@ -234,3 +234,7 @@ CLOSED in Wave 38 by commit **b88b32f** (Wave 38 Agent A WF2).
 **Verification**: pytest runs deterministically + env_hash unchanged + commit (no push). Plan status flipped from `pending (Wave 33 target)` to CLOSED.
 
 Refs: `framework-internal-metrics.md` §1 D.4 row, `docs/baseline-audit-report.md` D.4 counter.
+
+## Wave 56 close-out
+
+Status line updated: Wave 33 (Agent B/C), Wave 34 (Agent B), and Wave 47 (composite metric smoke tests) shipped subsequent D.4 batches beyond the original Wave 38 first-batch gate. D.4 HARD gate now has coverage across the full adapter set used by composite eval pipelines (Kanzi, LineageFlow, FlowMol3). Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

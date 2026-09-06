@@ -1,6 +1,6 @@
 # Wave 10 result validation (LineageFlow + "any FM improves" claim)
 
-**Status:** done (Wave 10 LineageFlow integration shipped; per-model analysis in todo/models/lineageflow.md; BLOCKED on upstream `core` documented)
+**Status:** done (Wave 10 LineageFlow integration shipped; per-model analysis in todo/models/lineageflow.md; BLOCKED on upstream `core` documented) (+ Wave 19 rerun with refactored framework: verdict=not_supported; Wave 36 5-LOC SamplerConfig shim breakthrough; Wave 41 LineageFlow upstream numerical forward; Wave 47-52 LineageFlow composite_verdict=framework_improves; upstream `core` remained unreachable)
 **Depends on:** Wave 10 completion (commit on origin/main)
 **Owner:** framework maintainer
 **Goal:** decide if the paper headline claim — "any flow matching model, when
@@ -55,3 +55,7 @@ cannot start.
 
 - Re-running Wave 10 (that is `rerun-wave10-with-refactored-framework.md`).
 - Push (that is `push-unpushed-commits.md`).
+
+## Wave 56 close-out
+
+Status refreshed: Wave 10 LineageFlow integration closed initial BLOCKED-on-core via Wave 36 SamplerConfig shim (5 LOC) and Wave 41 upstream clone. LineageFlow composite_verdict=framework_improves achieved by Wave 52. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

@@ -1,6 +1,6 @@
 # Algorithm improvement — E.1: CLM claim test-coupled floor (batch 2)
 
-**Status:** CLOSED in Wave 38 (commit 7da571c, Wave 38 Agent B WF2) — 8/8 remaining CLM claims wired to tests; 41/41 = 100% test-coupled for ACTIVE claims (≥ 70% target by Wave 16 cleared with margin)
+**Status:** CLOSED in Wave 38 (commit 7da571c, Wave 38 Agent B WF2) — 8/8 remaining CLM claims wired to tests; 41/41 = 100% test-coupled for ACTIVE claims (≥ 70% target by Wave 16 cleared with margin) (+ Wave 41: paper Tier 3 evidence claim closed via _compute_metric real-metric fix; Wave 52: paper §7-8 honest verdict with composite numbers; Wave 54: paper rewrite with real Tier 3 numbers)
 **Date:** 2026-09-05
 **Priority:** high (E.1 is a HARD gate; ≥ 70% test-coupled target by Wave 16)
 **Depends on:** Wave 26 Agent C first batch (live; 11/41 wired)
@@ -163,3 +163,7 @@ CLOSED in Wave 38 by commit **7da571c** (Wave 38 Agent B WF2).
 **Verification**: pytest tests/test_claims/ pass + capability_audit.py E.1 gate passes + commit (no push). Plan status flipped from `pending (Wave 33 target)` to CLOSED.
 
 Refs: `framework-internal-metrics.md` §1 E.1 row, `docs/baseline-audit-report.md` §E.1.
+
+## Wave 56 close-out
+
+Status line updated: Wave 41-54 work shipped the actual Tier 3 evidence claims (Kanzi composite, LineageFlow composite, FlowMol3 real-metric gap closed) that the E.1 test-coupling wires validate. E.1 100% ACTIVE claim coupling is therefore now backed by real measurement evidence rather than only structural test wiring. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

@@ -1,6 +1,6 @@
 # Phase 4 — Model integration iteration (one model at a time, in Phase 3 order)
 
-**Status:** in_progress (Kanzi + LineageFlow active; FreqFlow + MM-FM
+**Status:** in_progress (Wave 52 close-out: Kanzi + LineageFlow composite_verdict=framework_improves; FlowMol3 metric-axis implementation closed, measurement gap still open; FreqFlow + MM-FM deferred — no upstream ckpt available)
 **DEFERRED** per 2026-09-05 user directive — no upstream ckpt / no shipped adapter)
 **Depends on:** Phase 3 complete (all ranked models have glue + adapters +
 tests). The "if Phase 1-3 done well, Phase 4 is just glue" property means this
@@ -326,3 +326,7 @@ the spec at top of this file is:
 - [x] Follow-up actions enumerated (push, MM-FM re-spawn, LineageFlow
       upstream, push-unpushed-commits.md stale fix)
 - [x] Commit (no push) — see `commit_sha` in agent return JSON
+
+## Wave 56 close-out
+
+Status refreshed: PHASE-4 in_progress with Kanzi (composite framework_improves median=+0.170175) + LineageFlow (composite framework_improves) closed via Wave 41-52. FlowMol3 metric-axis implementation closed via Wave 49-54 (real ckpt composite verified). FreqFlow + MM-FM remain deferred per upstream ckpt unavailability. Wave 54 final synthesis doc confirms closed-vs-still-open. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

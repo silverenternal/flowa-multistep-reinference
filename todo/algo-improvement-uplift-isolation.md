@@ -1,6 +1,6 @@
 # Algorithm improvement C — uplift isolation test suite
 
-**Status:** done (Wave 14/15 rescue — commit a1f8650; 37 tests in tests/test_algo_uplifts/test_uplifts.py)
+**Status:** done (Wave 14/15 rescue — commit a1f8650; 37 tests in tests/test_algo_uplifts/test_uplifts.py) (+ Wave 41 Agent C: circular import fix in test_algo_uplifts; Wave 47: composite metric smoke tests added)
 **Priority:** medium
 **Depends on:** `docs/benchmark-uplifts.md` inventory complete
 **Owner:** framework maintainer
@@ -95,3 +95,7 @@ After all 36 isolated tests:
 - Re-measuring uplifts on different base models (that's a Phase 4
   task).
 - Adding NEW uplifts (this task characterises what exists).
+
+## Wave 56 close-out
+
+Status refreshed: 37-uplift isolation test suite (Wave 14/15 rescue) is now the canonical per-uplift characterisation layer. Wave 41 circular-import fix (Agent C) unblocked test_algo_uplifts collection; Wave 47 composite metric smoke tests added on top. Wave 52 ablation matrix tests individual uplift combinations. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

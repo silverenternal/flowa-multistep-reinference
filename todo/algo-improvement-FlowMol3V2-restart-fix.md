@@ -197,3 +197,7 @@ CLOSED in Wave 38 by commit **b9ef18b** (Wave 38 Agent B WF4).
 **Verification**: pytest tests/test_adapters/test_flowmol3_v2.py passes + restart-shape integration smoke + commit (no push). Plan status flipped from `pending (Wave 33 target)` to CLOSED.
 
 Refs: `docs/audit/framework-code-review.md` NONCONFORMANCE_BUG #1 (now RESOLVED), `framework-internal-metrics.md` D.3 row.
+
+## Wave 56 close-out
+
+Status refreshed: FlowMol3V2 restart-shape fix remains the foundation; Wave 49-50 FlowMol3Glue + FlowMol3 factory force_mode fix + real-ckpt composite metric shipped on top. Wave 54 closed the FlowMol3 real-ckpt metric gap. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

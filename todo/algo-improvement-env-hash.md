@@ -1,6 +1,6 @@
 # Algorithm improvement — F.5: env_hash infrastructure
 
-**Status:** done (Wave 15 P1 — commit 43b862d; F.5 LIVE: env_hash.txt + scripts/capture_env_hash.py + requirements-lock.txt + docs/adapter-dependencies.md)
+**Status:** done (Wave 15 P1 — commit 43b862d; F.5 LIVE: env_hash.txt + scripts/capture_env_hash.py + requirements-lock.txt + docs/adapter-dependencies.md) (+ Wave 38: host_fingerprint module added to api_churn_report + capture_env_hash + 5 other call sites; Wave 41: KanziAdapter @implements + LineageFlow upstream numerical forward verified via env_hash-locked venv)
 **Date:** 2026-09-05
 **Priority:** high (HARD gate per framework-internal-metrics rev 2 §1 F.5;
 blocks Phase 2 entry gate, Phase 4 gate, and paper-writeup gate)
@@ -92,3 +92,7 @@ collect.
 
 - Per-model integration work (Phase 3 onwards) — separate task
 - Algorithm improvement B (rate bound theorem) — separate task
+
+## Wave 56 close-out
+
+Status line updated: F.5 env_hash infrastructure is now consumed by the host_fingerprint module (Wave 38 Agent A WF3) and used to lock Kanzi/LineageFlow sidecar venvs (Wave 39 Agent A, Wave 41 Agent B). F.5 remains the canonical "environment state" gate; all later per-model real-ckpt verifications depend on it. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

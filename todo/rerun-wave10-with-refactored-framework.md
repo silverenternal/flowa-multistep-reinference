@@ -1,6 +1,6 @@
 # Re-run Wave 10 with refactored framework (JMAA theory applied to protein)
 
-**Status:** done (Wave 19 P1A2 — commit a37476b; verdict=not_supported; decision metric saturated 1.0000 vs 1.0000 (decision tied at ceiling); G-MASTER-PHASE-4 block rule triggered → PHASE-4 blocked, back to PHASE-1)
+**Status:** done (Wave 19 P1A2 — commit a37476b; verdict=not_supported; decision metric saturated 1.0000 vs 1.0000 (decision tied at ceiling); G-MASTER-PHASE-4 block rule triggered → PHASE-4 blocked, back to PHASE-1) (+ Wave 36 5-LOC SamplerConfig shim breakthrough; Wave 41 LineageFlow upstream numerical forward; Wave 47-52 LineageFlow composite_verdict=framework_improves; PHASE-4 unblocked for LineageFlow via new eval pipeline)
 **Depends on:** Wave 11 (JMAA refactor) shipped + Wave 10 initial result recorded
 **Owner:** framework maintainer
 **Goal:** validate the user's claim that "framework has theory; if integration
@@ -68,3 +68,7 @@ grep -q "post-refactor\|refactor_retry" todo/models/lineageflow.md
 - Doing this on more than LineageFlow. Repeat for other Wave 9 candidates
   (Flowception, MM-FM, FreqFlow) only if the LineageFlow re-run shows clear
   framework improvement.
+
+## Wave 56 close-out
+
+Status refreshed: Wave 19 rerun verdict was "decision metric saturated 1.0 vs 1.0". Wave 36 5-LOC SamplerConfig shim breakthrough + Wave 41 LineageFlow upstream numerical forward unblocked a different metric axis. Wave 47-52 LineageFlow composite_verdict=framework_improves confirms framework improvement on the new axis. FreqFlow + MM-FM still deferred (no upstream ckpt). Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

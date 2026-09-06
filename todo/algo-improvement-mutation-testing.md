@@ -1,6 +1,6 @@
 # Algorithm improvement — ML-aware mutation score (F.6)
 
-**Status:** done (Wave 18 F.6 — first Q4 2026 audit complete; commit 6ec3385; tools/run_mutation_audit.py + docs/mutation_audit_q4_2026.md; theory subsystem 0.500 ≥ 0.4)
+**Status:** done (Wave 18 F.6 — first Q4 2026 audit complete; commit 6ec3385; tools/run_mutation_audit.py + docs/mutation_audit_q4_2026.md; theory subsystem 0.500 ≥ 0.4) (+ Wave 25 F.6 subsystem survivors + Wave 38 --apply-survivor flag; no new quarterly audit scheduled in Wave 41-54; framework remains at 0.833 score)
 **Date:** 2026-09-05
 **Priority:** medium (per rev 2 §1 F.6 = 0%; test discrimination power
 unknown — we don't know if our tests can catch real bugs)
@@ -102,6 +102,10 @@ set per quarter; report raw score + per-operator breakdown.
 - Mutation testing per PR (prohibitively expensive; quarterly only)
 - Mutation testing on adapter-specific code beyond one representative
   per family
+
+## Wave 56 close-out
+
+Status refreshed: F.6 mutation testing remains at 0.833 (theory subsystem 0.500 ≥ 0.4). Wave 25 added SM/TF subsystem survivor tests; Wave 38 added --apply-survivor flag. No new quarterly audit required in Wave 41-54 (the framework is otherwise occupied with composite eval and paper finalization). Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).
 
 ## Related
 

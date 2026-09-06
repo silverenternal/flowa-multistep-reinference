@@ -1,6 +1,6 @@
 # Phase 2 — Model complexity analysis + integration difficulty ranking (one at a time)
 
-**Status:** done (Wave 19 P1A1 — commit a6e574d; 3 per-model analysis files: FreqFlow/MM-FM/Kanzi + todo/models/RANKING.md; 8 sections per model)
+**Status:** done (Wave 19 P1A1 — commit a6e574d; 3 per-model analysis files: FreqFlow/MM-FM/Kanzi + todo/models/RANKING.md; 8 sections per model) (+ Wave 21-23: PHASE-3 adapters (Kanzi + FreqFlow) shipped; LineageFlow analysis in todo/models/lineageflow.md; Wave 36: Kanzi + LineageFlow real-ckpt integration; Wave 47-52: composite eval pipelines built on top of these analyses)
 **Depends on:** Phase 1 complete (framework + theory + algorithm + conformance
 tests all solid)
 **Owner:** framework maintainer
@@ -100,3 +100,7 @@ time; do not batch.
 ## Exit criteria (move to Phase 3)
 
 `G-MASTER-PHASE-2` passed.
+
+## Wave 56 close-out
+
+Status refreshed: Per-model analyses (Kanzi, LineageFlow, FreqFlow, MM-FM) are the foundation for the Wave 47-52 composite eval pipelines. PHASE-2 model-complexity analysis continues to feed downstream design decisions in Wave 41-54. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

@@ -181,3 +181,7 @@ CLOSED in Wave 38 by commit **15621b7** (Wave 38 Agent B WF3).
 **Verification**: pytest collection succeeds + a small subset (e.g. `pytest tests/test_property_based/ -q --timeout=30`) shows reproducible output + commit (no push). Plan status flipped from `pending (Wave 34 target)` to CLOSED.
 
 Refs: Wave 24 Agent C B.7 property-based tests (live, 11 modules), `framework-internal-metrics.md` R-5 row.
+
+## Wave 56 close-out
+
+Status unchanged: hypothesis derandomize=True (CI profile) shipped via tests/_hypothesis_settings.py + conftest.py + pyproject.toml [tool.hypothesis.profiles.ci]. Property tests remain deterministic across Wave 41-54 runs; no follow-ups required. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

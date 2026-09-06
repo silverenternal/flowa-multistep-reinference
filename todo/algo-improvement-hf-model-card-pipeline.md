@@ -268,3 +268,7 @@ CLOSED in Wave 38 by commit **7cbf085** (Wave 38 Agent A WF5).
 **Verification**: `--help` output validates + dry-run against a dummy repo-id returns expected structure + commit (no push). Plan status flipped from `pending (Wave 34 target)` to CLOSED.
 
 Refs: Wave 24 Agent A F.4 model cards (live, 5 models), `framework-internal-metrics.md` F.4 row.
+
+## Wave 56 close-out
+
+Status unchanged: HF model card upload pipeline shipped at Wave 38, with F.4 cards live for the 5 models (Kanzi, LineageFlow, FlowMol3, FreqFlow, MM-FM). The pipeline was used in Wave 36-43 for Kanzi/LineageFlow real-ckpt integration; no follow-up changes required. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

@@ -239,3 +239,7 @@ CLOSED in Wave 38 by commit **ff56e55** (Wave 38 Agent C WF1).
 **Files shipped** (see `git show --stat ff56e55` for the canonical list): scheduler edits in `adaptive_reflow/scheduler/_core.py` + `adaptive_reflow/scheduler/sequential.py` + `adaptive_reflow/framework/batched_runner.py` + 3 new regression tests.
 
 **Verification**: pytest tests pass + commit (no push). Wave 31 `PaperRatioAdaptiveScheduler` now actually takes effect because the upstream signals survive the scheduler boundary. Plan status flipped from `pending (Wave 33 target)` to CLOSED.
+
+## Wave 56 close-out
+
+Status refreshed: paper_quantities threading through 3 sites (CodimensionSheetScheduler.record_round_feedback, SequentialScheduler.record_round_feedback, BatchedTrajectoryRunner.run) is now the foundation for Wave 41-52 composite eval pipelines and Wave 52 per-component ablation matrix. Wave 45 F-3 fix (paper_quantities=None) closed the regression vector. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

@@ -1,6 +1,6 @@
 # Phase 3 — Glue layer improvement (per model, in Phase 2 ranking order)
 
-**Status:** done (Wave 24 + Wave 38 + Wave 39 closed all 3 sub-items)
+**Status:** done (Wave 24 + Wave 38 + Wave 39 closed all 3 sub-items) (+ Wave 41 KanziAdapter @implements; Wave 47 LineageFlowGlue; Wave 49 FlowMol3Glue; Wave 50 flowmol3 factory force_mode fix; Wave 52 Kanzi + LineageFlow composite_verdict=framework_improves)
 **Depends on:** Phase 2 complete (RANKING.md + per-model analysis files)
 **Owner:** framework maintainer
 **Goal:** for each model in Phase 2 ranking order, **improve the glue layer**
@@ -161,3 +161,7 @@ verification.
 
 - D.4 regression vectors (Wave 33 #1) provide the byte-stability net for
   the D.1 shrink refactor; ship D.4 first, then D.1
+
+## Wave 56 close-out
+
+Status refreshed: PHASE-3 glue layer improvement closed all 3 sub-items, then Wave 41 (KanziAdapter @implements), Wave 47 (LineageFlowGlue), Wave 49 (FlowMol3Glue) extended the glue-layer pattern across all top-model adapters. Wave 52 Kanzi + LineageFlow composite_verdict=framework_improves is the canonical PHASE-3 success. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

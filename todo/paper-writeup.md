@@ -1,6 +1,6 @@
 # Workshop paper writeup (typed-contracts framework for flow matching re-inference)
 
-**Status:** done (Wave 19 P2 — commit 2f436f1; docs/paper-draft.md restructured to 5-section outline, 990 lines, 13 tables, 3 SVG figures via tools/_make_wave19_figures.py; honest negative results reported)
+**Status:** done (Wave 19 P2 — commit 2f436f1; docs/paper-draft.md restructured to 5-section outline, 990 lines, 13 tables, 3 SVG figures via tools/_make_wave19_figures.py; honest negative results reported) (+ Wave 41 paper Tier 3 evidence + per-family signed_mean bar chart; Wave 44 paper §Tier 3 update + regenerated tier3 figure; Wave 52 paper §7 Tier 3 substantive rewrite + §Ablations per-component; Wave 54 final rewrite with 3 real Tier 3 numbers; §7.6 honest verdict)
 **Depends on:** Wave 11 (theory refactor shipped) + Wave 10 (LineageFlow result) +
 `push-unpushed-commits.md` (so reviewers can pull)
 **Owner:** framework maintainer
@@ -70,3 +70,7 @@ grep -c "Per-model\|per-model" docs/paper-draft.md # expect: >= 3 (model citatio
 
 **Block rule:** if any pass condition fails, the paper cannot be submitted.
 Continue drafting.
+
+## Wave 56 close-out
+
+Status refreshed: paper-draft.md evolved from Wave 19 P2 (5-section outline, 990 lines, 13 tables, 3 SVG figures) through Wave 41 (per-family signed_mean bar chart + Wave 41 paper-audit), Wave 44 (§Tier 3 update + regenerated figure + README Tier 3 evidence), Wave 52 (§7 Tier 3 substantive rewrite + §Ablations per-component), and Wave 54 (final rewrite with 3 real Tier 3 numbers + §7.6 honest verdict). Paper is final-form with all real numbers as of Wave 54 Agent B commit `c119d66`. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

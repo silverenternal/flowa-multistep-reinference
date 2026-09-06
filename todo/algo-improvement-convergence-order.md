@@ -1,6 +1,6 @@
 # Algorithm improvement — convergence-order verification (C.6)
 
-**Status:** done (Wave 18 C.6 + Wave 20 P1 DPK45 fix — commits d7cd65b + 53e5d52; 5/5 in-scope integrators pass convergence tests, DPK45 step assembly bug fixed)
+**Status:** done (Wave 18 C.6 + Wave 20 P1 DPK45 fix — commits d7cd65b + 53e5d52; 5/5 in-scope integrators pass convergence tests, DPK45 step assembly bug fixed) (+ Wave 47-54: integrators used by LineageFlow/Kanzi composite eval pipelines; C.6 metric remains LIVE; Wave 52 ablation sweep uses these integrators in 5-arm matrix)
 **Date:** 2026-09-05
 **Priority:** medium-high (FM integrators without verified convergence
 order silently degrade every reported number; SciML's test_convergence
@@ -134,3 +134,7 @@ tracks accuracy AND cost, never just cost.
 - `framework-internal-metrics.md` §1 C.6 (defines the metric)
 - `todo/algo-improvement-property-based-testing.md` (B.7; sister task)
 - `todo/algo-improvement-sbc.md` (C.7; sister task)
+
+## Wave 56 close-out
+
+Status line refreshed to acknowledge Wave 47-54 integration: C.6 integrators remain a foundational metric now consumed by the LineageFlow + Kanzi composite eval pipelines (Wave 47, Wave 52) and the 5-arm ablation matrix (Wave 52 Agent B). Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

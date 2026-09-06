@@ -275,3 +275,7 @@ CLOSED in Wave 38 by commit **5e1731f** (Wave 38 Agent A WF4 — note the same c
 **Verification**: `tools/run_mutation_audit.py --help` shows the new flag + smoke run on one subsystem family confirms behaviour + commit (no push). Plan status flipped from `pending (Wave 34 target)` to CLOSED.
 
 Refs: Wave 17 Phase 2 + Wave 25 F.6 mutation audit (live, 0.833 score), `framework-internal-metrics.md` F.6 row.
+
+## Wave 56 close-out
+
+Status refreshed: --apply-survivor flag shipped in tools/run_mutation_audit.py and consumed by Wave 25 F.6 quarterly audit. No new mutation audit runs required in Wave 41-54. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

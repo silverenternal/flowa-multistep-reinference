@@ -1,6 +1,6 @@
 # Algorithm improvement — property-based testing (B.7)
 
-**Status:** done (Wave 17 P1 = B.7 — tests/test_property_based/ with 9+ property tests; hypothesis dev dep verified)
+**Status:** done (Wave 17 P1 = B.7 — tests/test_property_based/ with 9+ property tests; hypothesis dev dep verified) (+ Wave 24 Agent C extended with test_theory_checkers_properties.py; Wave 38 hypothesis derandomize (CI profile); property tests pass deterministically in Wave 41-54)
 **Date:** 2026-09-05
 **Priority:** high (framework-internal-metrics rev 2 §1 B.7 = 0%; deep
 verification gap; Wave 14 audit did not flag B.7 explicitly but it is a
@@ -129,3 +129,7 @@ stochastic ones.
 - `todo/algo-improvement-traceability-hardening.md` (Wave 15 Agent T — sister task)
 - `todo/algo-improvement-convergence-order.md` (C.6 — deterministic integrator verification)
 - `todo/algo-improvement-sbc.md` (C.7 — stochastic verification)
+
+## Wave 56 close-out
+
+Status refreshed: B.7 property-based tests now cover 11+ modules (Wave 17 + Wave 24), with deterministic derandomize profile (Wave 38) ensuring CI reproducibility. Property tests remain a foundational layer that protects algorithm invariants in Wave 41-52 composite eval pipelines. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).

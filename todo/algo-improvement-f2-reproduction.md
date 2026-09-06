@@ -1,6 +1,6 @@
 # Algorithm improvement — F.2: flip NOT_REPRODUCED to REPRODUCED
 
-**Status:** done (Wave 15 F — commit e397528; F.2: 4/8 → 7/8 REPRODUCED; Python 3.11 sidecar installed for FlowMol3 §1.1.d)
+**Status:** done (Wave 15 F — commit e397528; F.2: 4/8 → 7/8 REPRODUCED; Python 3.11 sidecar installed for FlowMol3 §1.1.d) (+ Wave 39: Kanzi sidecar venv .venvs/kanzi_venv for §1.1.d-style FlowMol3-blocked recovery; Wave 41: --force-mode flag enabled KanziAdapter real-ckpt eval; Wave 49-50: FlowMol3Glue + flowmol3 factory force_mode fix)
 **Date:** 2026-09-05
 **Priority:** medium (paper-writeup gate requires ≥ 6/8 REPRODUCED;
 currently 4/8)
@@ -97,3 +97,7 @@ Total: ~3-5 hours (CPU mostly; R5 + R6 might need small GPU).
 - F.5 env_hash (separate; HARD gate blocker)
 - LineageFlow real-ckpt verdict (separate; depends on D-004)
 - Algorithm improvement B/C/D
+
+## Wave 56 close-out
+
+Status line refreshed: F.2 reproduction infrastructure has been used as the template for subsequent per-model sidecar venvs (Kanzi sidecar Wave 39, LineageFlow upstream Wave 41). The Python 3.11 sidecar pattern remains the canonical unblock for "python-version-locked upstream" adapters. Last touched commit: `811ca75` (Wave 55 Agent C: Author todo/INDEX.md master entry point).
