@@ -381,6 +381,15 @@ def compute_per_round_fid_against_reference(
     production canonical Fréchet arithmetic); a NaN sentinel is
     returned for any round with fewer than 2 feature rows so the
     downstream convergence diagnostic can skip degenerate rounds.
+
+    The :class:`numpy.linalg.LinAlgWarning` emitted by
+    :func:`scipy.linalg.sqrtm` when ``Σ_s Σ_r`` is numerically
+    singular (e.g. the rank-1 deterministic stub features used by
+    ``tests/test_tools/test_run_synthetic_image_eval.py``) is benign
+    here: ``sqrtm(0) = 0`` is exact, and the FID value remains finite
+    and well-defined. The downstream convergence diagnostic consumes
+    ``math.isfinite(fid)`` so a non-finite value would be re-rendered
+    as ``None`` rather than crashing the run.
     """
     from tools.run_image_eval import compute_fid_from_features
 
@@ -399,9 +408,21 @@ def compute_per_round_fid_against_reference(
                 }
             )
             continue
-        fid_value = float(
-            compute_fid_from_features(feats, ref_mu, ref_sigma)
-        )
+        with warnings.catch_warnings():
+            # Suppress the benign LinAlgWarning emitted when the sample
+            # covariance is rank-1 (e.g. the test fixture's constant
+            # stub). ``sqrtm(0) = 0`` is exact, the FID value is finite
+            # (≈ ``||mu_r||^2 + tr(sigma_r)``), and the warning is
+            # noise that pollutes pytest output. We use a message-based
+            # filter so we don't accidentally swallow unrelated
+            # LinAlgWarning emissions from downstream scipy calls.
+            warnings.filterwarnings(
+                "ignore",
+                message=r"^Matrix is singular.*",
+            )
+            fid_value = float(
+                compute_fid_from_features(feats, ref_mu, ref_sigma)
+            )
         out.append(
             {
                 "round_index": int(r),
@@ -744,8 +765,8 @@ def _json_default(obj: Any) -> Any:
 
 def _build_synthetic_eval_report(
     *,
-    framework_fid_per_round: list[float],
-    baseline_fid_per_round: list[float],
+    framework_fid_per_round: list[dict[str, Any]],
+    baseline_fid_per_round: list[dict[str, Any]] | None,
     n_rounds: int,
 ) -> dict[str, Any]:
     """Build the additive ``eval_report.v1.0.0`` block for the
@@ -754,6 +775,12 @@ def _build_synthetic_eval_report(
     Per-round FID semantics land under
     ``metrics["fid"].diagnostics["per_round"]`` mirroring the
     multi-round ``run_eval`` aggregation convention.
+
+    ``baseline_fid_per_round`` may be ``None`` when the orchestrator
+    was invoked without a baseline arm (the no-baseline-dir path);
+    in that case the ``per_round["baseline"]`` diagnostics field is
+    serialised as an empty list (``[]``) so downstream consumers see
+    a stable list-typed field.
     """
     from adaptive_reflow.eval.result import (
         EvalResult,
@@ -770,8 +797,15 @@ def _build_synthetic_eval_report(
             return float("nan")
         return v
 
-    fw_per_round = [_finite_or_nan(x) for x in framework_fid_per_round]
-    base_per_round = [_finite_or_nan(x) for x in baseline_fid_per_round]
+    fw_per_round = [_finite_or_nan(e.get("fid")) for e in framework_fid_per_round]
+    # ``baseline_fid_per_round`` is ``None`` when the no-baseline path
+    # is taken; serialise the per-round baseline diagnostics as an
+    # empty list so the JSON shape is stable across both code paths.
+    base_per_round: list[float] = (
+        [_finite_or_nan(e.get("fid")) for e in baseline_fid_per_round]
+        if baseline_fid_per_round is not None
+        else []
+    )
     last_fw = fw_per_round[-1] if fw_per_round else float("nan")
     is_finite = bool(last_fw == last_fw)
     metric = MetricResult(
