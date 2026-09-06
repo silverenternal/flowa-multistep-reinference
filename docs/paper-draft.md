@@ -1641,11 +1641,14 @@ Ordered by expected effect on the headline numbers:
 
 > **Measurement status (read this first).** This section defines the
 > external-baseline comparison — the baselines, the protocol, and the
-> per-model matrix — but **reports no external-baseline numbers**. At
-> the time of writing, none of the three SOTA baselines below has been
-> executed against any checkpoint in this repository: the baseline
-> implementations (`scripts/baselines/`) do not yet exist. Every
-> external-baseline cell in Table 14 is therefore marked
+> per-model matrix — but **reports no external-baseline numbers**. The
+> three baseline implementations now exist under `scripts/baselines/`
+> (`consistency_model`, `rectified_flow_reflow`,
+> `dpm_solver_plus_plus`, driven by `run_baselines.py`), but at the time
+> of writing **no baseline run has completed against any checkpoint in
+> this repository**: the result artefact
+> (`verification_outputs/baseline_comparison*.json`) does not yet
+> exist. Every external-baseline cell in Table 14 is therefore marked
 > `NOT YET MEASURED`, not estimated, not copied from the source papers'
 > own reported numbers, and not inferred from the framework's internal
 > baseline. See §8.5 for exactly what is blocked and what would close
@@ -1731,9 +1734,9 @@ comparison this paper has actually measured.
 |---|---|---|---|---|---|
 | 2D Rectified Flow (Liu 2022) | `NOT YET MEASURED` | `NOT YET MEASURED` | `NOT YET MEASURED` | **PASS** — $W_2$ −7.28% (two_moons), −10.40% (eight_gaussians) | §4.2 |
 | CIFAR-10 Rectified Flow (Liu 2022) | `NOT YET MEASURED` | `NOT YET MEASURED` | `NOT YET MEASURED` | scheduler-discriminating at v4; 4 FIDs spread 103.41–108.55 vs baseline 83.09 (framework does **not** beat baseline FID) | §4.3 |
-| Kanzi (ICLR 2026, protein) | `NOT YET MEASURED` | `NOT YET MEASURED` | `NOT YET MEASURED` | 9/9 cells `TIE_AT_SATURATION`, `framework_wins = 0` | §7.2, §7.8 |
-| LineageFlow (ICML 2026, protein) | `NOT YET MEASURED` | `NOT YET MEASURED` | `NOT YET MEASURED` | Tier 3 real-ckpt: 1/1 cell `RUN_ERROR` (`_torch_velocity_field` dtype bug); synthetic shim: ties, +0.23% LL | §4.5, §7.3, §7.8 |
-| FlowMol3 (NeurIPS 2024, molecule) | `NOT YET MEASURED` | `NOT YET MEASURED` | `NOT YET MEASURED` | 9/9 cells `PENDING`, `baseline_marker = blocked` (no real-ckpt metric implementation) | Wave 50 |
+| Kanzi (ICLR 2026, protein) | `NOT YET MEASURED` | `NOT YET MEASURED` | `NOT YET MEASURED` | decision metric: 9/9 cells `TIE_AT_SATURATION`, `framework_wins = 0`; composite axis in flight | §7.3, §7.6 |
+| LineageFlow (ICML 2026, protein) | `NOT YET MEASURED` | `NOT YET MEASURED` | `NOT YET MEASURED` | decision metric saturated (ties); **composite axis +0.211 → `framework_improves`** | §7.4, §7.6 |
+| FlowMol3 (NeurIPS 2024, molecule) | `NOT YET MEASURED` | `NOT YET MEASURED` | `NOT YET MEASURED` | composite +0.000, `no_signal` — metric layer missing (no real-ckpt `frac_valid_mols`) | §7.5, §7.6 |
 
 Two properties of this table are worth stating explicitly rather than
 leaving to the reader to notice.
@@ -1748,34 +1751,50 @@ comparison, it would be a category error. The cells stay empty until
 the baselines are run in-repo, on these checkpoints, through the same
 evaluator.
 
-**Second, the measured column does not currently support a strong
-framework claim on the trained-FM models.** Of the five models, one
-shows a clear win (2D), one shows the framework losing on the headline
-metric while discriminating between schedulers (CIFAR-10), two tie at
-metric saturation (Kanzi, LineageFlow) and one is blocked (FlowMol3).
-The SOTA comparison is therefore not a formality that will confirm an
-already-established result — on three of five models the framework has
-not yet demonstrated an advantage over its *own* baseline, which is a
-strictly weaker bar than iCT or DPMSolver++. §5.2 and §7.5 make the
+**Second, the measured column is mixed, and the axis on which the
+framework wins is narrower than the headline decision metric.** Of the
+five models, one shows a clear decision-metric win (2D), one shows the
+framework losing on the headline metric while discriminating between
+schedulers (CIFAR-10), one shows `framework_improves` on the
+**composite** axis while the decision metric ties at saturation
+(LineageFlow, +0.211), one ties on the decision metric with the
+composite still in flight (Kanzi), and one cannot be evaluated at all
+(FlowMol3, metric layer missing). §7.6 explains the pattern: the
+framework improves the *flow component* when the adapter exposes a
+per-position entropy signal the restart-blend can drive, and that is a
+claim about the trajectory path, not the endpoint. The SOTA comparison
+is therefore not a formality that will confirm an already-established
+result — on the decision-metric axis the framework has demonstrated an
+advantage over its *own* baseline on one of five models, which is a
+strictly weaker bar than iCT or DPMSolver++. §5.2 and §7.6 make the
 same point; this section does not soften it.
 
 ### §8.4 What the comparison can and cannot show
 
 Even fully populated, Table 14 would be bounded in what it can
-establish. The saturation problem documented in §7.5 applies to the
+establish. The saturation problem documented in §7.6 applies to the
 baselines too: on Kanzi, the decision metric is already at its ceiling
 for both arms, so *every* method — iCT, Reflow, DPMSolver++ and the
 framework — will tie there. A comparison on a saturated metric
-discriminates nothing. Closing the Kanzi and LineageFlow rows requires
-the non-saturating metric called for in §7.5 (per-position ESM-2
-pseudo-log-likelihood, or a stricter Pfam identity reference)
+discriminates nothing. Closing the Kanzi and LineageFlow
+*decision-metric* rows requires a non-saturating metric (per-position
+ESM-2 pseudo-log-likelihood, or a stricter Pfam identity reference)
 **before** the baseline numbers are worth collecting; running
 baselines against a saturated metric first would produce a table of
 ties that reads as a result but carries no information.
 
-The 2D and CIFAR-10 rows do not have this problem: $W_2$ and FID are
-unsaturated on those models, so those two rows are the ones where the
-comparison is immediately meaningful and should be run first.
+Note that the composite axis of §7.2 partially sidesteps this: it is
+non-saturating by construction, which is why LineageFlow registers
+`framework_improves` there while tying on the decision metric. The
+baselines should therefore be compared on **both** axes — but the
+composite is this paper's own construction, not a published standard,
+so a composite-only win over iCT or DPMSolver++ would be a weaker
+claim than a decision-metric win and must be reported as such.
+
+The 2D and CIFAR-10 rows do not have the saturation problem: $W_2$ and
+FID are unsaturated on those models, so those two rows are the ones
+where the comparison is immediately meaningful and should be run
+first.
 
 ### §8.5 Measurement status and blockers
 
@@ -1783,20 +1802,22 @@ comparison is immediately meaningful and should be run first.
 |---|---|---|
 | Baseline selection + justification | **DONE** | — (`docs/audit/wave52-sota-baselines-survey.md`) |
 | Comparison protocol (Table 14b) | **DONE** | — (survey §6) |
-| `scripts/baselines/` implementations | **NOT STARTED** | Wave 52 WF2 in flight |
-| Baseline runs on 3 models | **NOT STARTED** | depends on the above |
+| `scripts/baselines/` implementations | **DONE** | — 3 baselines + `run_baselines.py`; pure NumPy/SciPy, consume the adapter Protocol (`batched_inference`, `_velocity_field`), touch no framework code |
+| Baseline runs on the models | **IN FLIGHT** | no completed run; `verification_outputs/baseline_comparison*.json` absent |
 | Table 14 external columns | **BLOCKED** | depends on the above |
-| Kanzi / LineageFlow row meaningfulness | **BLOCKED** | metric saturation (§7.5); needs non-saturating metric first |
-| FlowMol3 row | **BLOCKED** | no real-ckpt metric implementation (`baseline_marker = blocked`) |
+| Kanzi / LineageFlow decision-metric row meaningfulness | **BLOCKED** | metric saturation (§7.6); needs non-saturating metric first |
+| FlowMol3 row | **BLOCKED** | metric layer missing — no real-ckpt `frac_valid_mols` (§7.5) |
 
-Populating Table 14 requires, in order: (1) the three baseline
-implementations under `scripts/baselines/`; (2) a run of each against
-the 2D and CIFAR-10 checkpoints, where the decision metrics are
-unsaturated; (3) the non-saturating protein metric of §7.5 before the
-Kanzi and LineageFlow rows carry information; and (4) the FlowMol3
-real-ckpt metric implementation. Steps 1–2 are sufficient to fill the
-two rows that are currently meaningful; steps 3–4 are prerequisites,
-not follow-ups, for the remaining three.
+Populating Table 14 requires, in order: (1) a completed run of
+`scripts/baselines/run_baselines.py` against the 2D and CIFAR-10
+checkpoints, where the decision metrics are unsaturated; (2) a
+non-saturating protein decision metric before the Kanzi and LineageFlow
+decision-metric rows carry information; and (3) the FlowMol3 real-ckpt
+metric implementation. Step 1 is sufficient to fill the two rows that
+are currently meaningful; steps 2–3 are prerequisites, not follow-ups,
+for the remaining three. The composite axis (§7.2) can be compared
+earlier than step 2, with the caveat in §8.4 that it is a non-standard
+axis.
 
 Until then, the paper's claim is scoped as stated in §5.2: the
 framework is validated **algorithmically** against ground-truth
