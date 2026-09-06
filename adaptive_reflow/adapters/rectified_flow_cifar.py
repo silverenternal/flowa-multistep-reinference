@@ -80,6 +80,10 @@ from adaptive_reflow.adapters._adapter_common import (
     seed_from_ids,
     torch_is_available as _adapter_common_torch_is_available,
 )
+from adaptive_reflow.core.ckpt_loader import (
+    load_state_dict_strict_safe,
+    resolve_candidate_paths,
+)
 from adaptive_reflow.framework.interfaces import implements
 
 
@@ -168,14 +172,34 @@ def rectified_flow_cifar_resolve_weights_path(
 
     Returns ``None`` when none of the candidates exist. Used by the
     adapter factory when the caller does not pass an explicit
-    ``weights_path``. Mirrors :func:`adaptive_reflow.adapters.twodim_fm
-    ._default_weights_path` (no torch dependency in this helper).
+    ``weights_path``.
+
+    Thin wrapper over :func:`adaptive_reflow.core.ckpt_loader
+    .resolve_candidate_paths` — collapses the hand-rolled per-adapter
+    probe loop into the framework-core shim. The shim probes
+    ``data_dir / "rectified_flow_cifar" / <stem>`` first (the per-adapter
+    subdir layout) and then ``data_dir / <stem>`` (the flat-file layout
+    used by HiDream-I1 / Self-Flow when ``data_dir`` already holds the
+    checkpoint directly), matching the conventions documented in
+    ``docs/audit/wave42-self-flow-shrink.md`` §2.
+
+    The legacy flat-name probe order
+    (``.pth`` → ``.safetensors`` → ``.pth`` → ``.pt`` from
+    ``RF_CIFAR_WEIGHTS_CANDIDATES``) is preserved by passing the bare
+    candidate filenames to ``resolve_candidate_paths`` (one per call,
+    keeping the original priority). When no candidates exist in either
+    layout the shim returns ``None``.
     """
     base = Path(data_dir) if data_dir is not None else Path("data")
     for name in candidates:
-        candidate = base / name
-        if candidate.exists():
-            return candidate
+        # One framework-core probe per legacy candidate — the shim
+        # handles the ``subdir / stem`` + flat-file fallbacks so the
+        # original priority order is preserved.
+        hits = resolve_candidate_paths(
+            "rectified_flow_cifar", name, data_dirs=[base]
+        )
+        if hits:
+            return hits[0]
     return None
 
 
@@ -295,14 +319,25 @@ def _load_torch_unet(weights_path: Path, *, device: Any) -> Any:
     Two checkpoint layouts are recognised:
 
     1. **gnobitab Score-SDE DDPM++** (the published Liu 2022 CIFAR-10
-       1-Rectified-Flow checkpoint). Detected either by the ``format``
-       marker written by the weights-acquisition phase or by the
+       1-Rectified-Flow checkpoint). Detected by the
        ``module.all_modules.`` key prefix. The topology is rebuilt by
        :mod:`adaptive_reflow.adapters._gnobitab_ddpmpp`, which also folds
        the reference sampler's ``t * 999`` rescale into the wrapper so
        the caller integrates on ``t ∈ [0, 1]``.
     2. **Framework-native ``DDPMppUNet``** — the minimal builder below,
        used by checkpoints saved from this repo.
+
+    The torch-mode load goes through
+    :func:`adaptive_reflow.core.ckpt_loader.load_state_dict_strict_safe`
+    (``state_dict_key="state_dict"``) which collapses the
+    ``torch.load + state_dict_key unwrap + load_state_dict(strict=False)``
+    chain into a single call. Matches the convention adopted by
+    self_flow in Wave 42 — see ``docs/audit/wave42-self-flow-shrink.md``
+    §4. The helper sets ``weights_only=False`` (the framework-core
+    convention) which is a security-tradeoff vs. the prior
+    ``weights_only=True`` — see ``docs/audit/wave44-rectified-flow-cifar-core.md``
+    §3 for the rationale and the gnobitab-key-prefix detection
+    explanation.
     """
     import torch  # local import.
 
@@ -314,13 +349,24 @@ def _load_torch_unet(weights_path: Path, *, device: Any) -> Any:
                 "safetensors checkpoint requires the safetensors package"
             ) from exc
         raw: Any = load_file(str(weights_path), device=str(device))
+        state_dict = raw.get("state_dict", raw) if isinstance(raw, dict) else raw
     else:
-        # Model checkpoints are data, not executable Python.  Refuse legacy
-        # pickle objects so an untrusted checkpoint cannot execute on load.
-        raw = torch.load(str(weights_path), map_location=device, weights_only=True)
-    state_dict = raw.get("state_dict", raw) if isinstance(raw, dict) else raw
-    fmt = raw.get("format") if isinstance(raw, dict) else None
-    is_gnobitab = fmt == RF_CIFAR_FORMAT_GNOBITAB or any(
+        # torch.load + state_dict_key unwrap via the framework-core shim.
+        # ``model=None`` skips the in-helper ``load_state_dict`` call so
+        # we can dispatch into gnobitab vs framework-native below.
+        state_dict = load_state_dict_strict_safe(
+            weights_path,
+            model=None,
+            strict=False,
+            state_dict_key="state_dict",
+            map_location=str(device),
+        )
+    # Gnobitab detection: relies on the canonical ``module.all_modules.``
+    # key prefix in the state dict (the ``format`` marker written by the
+    # weights-acquisition phase is at the raw-ckpt top level and is not
+    # accessible through the unwrapped state dict — the key-prefix check
+    # is the load-bearing indicator for gnobitab checkpoints).
+    is_gnobitab = any(
         str(k).startswith(("module.all_modules.", "all_modules."))
         for k in list(state_dict)[:8]
     )
