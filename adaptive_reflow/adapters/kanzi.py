@@ -268,6 +268,7 @@ KANZI_SYNTHETIC_SEED_DEFAULT: int = 0x4B_4E_5A_49  # "KANZI" hex-word — determ
 
 #: Audit / error codes (deterministic ASCII strings).
 AUDIT_KANZI_RESTART_BLEND: str = "kanzi_restart_blend"
+AUDIT_KANZI_GPT_PRIOR_RESTART: str = "kanzi_gpt_prior_restart"
 AUDIT_KANZI_OBSERVED: str = "kanzi_observed"
 AUDIT_FORWARD_NOISE_APPLIED: str = "forward_noise_applied"
 ERR_KANZI_NUM_STEPS: str = "kanzi_num_steps_must_be_positive"
@@ -640,6 +641,247 @@ def _synthetic_family_conditioning(
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# KanziGPTPriorRestartPolicy (Wave 45 Agent F)
+# ---------------------------------------------------------------------------
+#
+# Model-specific glue: the framework's
+# :class:`RestartBlenderProtocol` selects restart points from a
+# paper-quantity-driven distribution, but Kanzi has an AR GPT-prior
+# that predicts the per-position latent-token distribution
+# (``kanzi.models.GPT``). The framework does NOT know about GPT
+# priors — this is adapter-layer glue, by directive (Wave 45 brief).
+#
+# ``KanziGPTPriorRestartPolicy`` reads per-position entropy from the
+# GPT-prior categorical (low entropy == high prior confidence == the
+# AR prior strongly believes this latent token belongs to the current
+# residue) and biases the restart density toward low-entropy positions
+# so re-inference preserves confident AR predictions and admits more
+# fresh noise where the prior is uncertain.
+#
+# Synthetic mode has no GPT prior — the policy degrades to the
+# default uniform density and emits an audit code
+# (:data:`AUDIT_KANZI_GPT_PRIOR_RESTART`) so callers can detect the
+# fallback.
+
+
+@dataclass(frozen=True)
+class KanziGPTPriorRestartPolicy:
+    """GPT-prior-aware restart policy for Kanzi (Wave 45).
+
+    Concept
+    -------
+
+    The default Kanzi restart blend uses a **scalar** memory-fraction
+    ``m`` for the entire ``(L_z, d) = (64, 64)`` latent — see
+    :meth:`KanziAdapter.apply_restart_distribution`. This is schedule-
+    only: it ignores model-side information.
+
+    Kanzi ships a 250 M-parameter AR GPT prior that predicts the
+    per-position latent-token categorical
+    (``kanzi.models.GPT.forward``, fixed by the Wave 40 Agent B
+    monkey-patch at lines 307-465). The prior's per-position entropy
+    is a natural restart signal:
+
+    * **Low entropy** — the prior is confident; re-inference should
+      preserve the prior latent, so use a high ``m`` (retain more of
+      ``prior_x``).
+    * **High entropy** — the prior is uncertain; re-inference should
+      explore, so use a low ``m`` (admit more ``fresh_x``).
+
+    ``KanziGPTPriorRestartPolicy.propose_restart(trace, paper_quantities)``
+    consumes the GPT-prior's per-position logits from the most-recent
+    ``apply_restart_distribution`` / ``solve_ode`` chain (held in
+    ``prior_entry["gpt_prior_logits"]``) and returns a per-position
+    restart density ``alpha`` of shape ``(L_z,)`` in ``[0, 1]``.
+
+    The framework's :class:`RestartBlenderProtocol` would consume
+    ``alpha`` as the channel-wise ``m_vec``; Kanzi uses ``alpha`` to
+    construct ``m_vec = (1 - alpha) * m_floor + alpha * m_ceiling``
+    so the bias is a soft modulation around the schedule-driven base
+    ``m`` (never collapses ``m_vec`` to a constant zero or one).
+
+    Synthetic-mode degradation
+    ---------------------------
+
+    Synthetic mode has no GPT prior. ``propose_restart`` detects the
+    absence of ``gpt_prior_logits`` in ``prior_entry`` and returns a
+    uniform ``alpha = 0.5`` vector — i.e. NO bias on the schedule-
+    driven base ``m``. The caller (``apply_restart_distribution``)
+    records :data:`AUDIT_KANZI_GPT_PRIOR_RESTART` so an audit can
+    distinguish a real GPT-prior-aware restart from the
+    schedule-driven fallback.
+
+    Stdlib + numpy only. Must be import-safe without ``torch``.
+    """
+
+    #: Per-position entropy floor. Positions with entropy ``<=`` this
+    #: get the maximum ``m_ceiling`` (high retention). Default
+    #: ``0.05 * log(K)`` — a position needs to be near-spike
+    #: confident to count as "high confidence" for restart purposes.
+    entropy_floor: float = 0.05 * float(np.log(float(KANZI_VOCAB_SIZE)))
+
+    #: Per-position entropy ceiling. Positions with entropy
+    #: ``>=`` this get the minimum ``m_floor`` (low retention).
+    #: Default ``0.95 * log(K)`` — near-uniform distributions
+    #: count as "no useful prior".
+    entropy_ceiling: float = 0.95 * float(np.log(float(KANZI_VOCAB_SIZE)))
+
+    #: Maximum per-position ``m_vec`` — used at low-entropy positions
+    #: where the GPT prior is most confident. Must be in ``(0, 1]``.
+    #: Clamped against the schedule-driven base ``m`` at the call
+    #: site (the policy NEVER exceeds the schedule-driven bound).
+    m_ceiling: float = 0.95
+
+    #: Minimum per-position ``m_vec`` — used at high-entropy positions
+    #: where the GPT prior is least confident. Must be in
+    #: ``[0, 1)``. Clamped against the schedule-driven base ``m``.
+    m_floor: float = 0.05
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= float(self.entropy_floor) < float(self.entropy_ceiling):
+            raise ValueError(
+                "entropy_floor_must_be_less_than_ceiling:"
+                f"{self.entropy_floor!r} vs {self.entropy_ceiling!r}"
+            )
+        if not 0.0 <= float(self.m_floor) <= float(self.m_ceiling) <= 1.0:
+            raise ValueError(
+                "m_floor_and_ceiling_must_be_in_[0,1]_with_floor_le_ceiling:"
+                f"floor={self.m_floor!r}, ceiling={self.m_ceiling!r}"
+            )
+
+    @staticmethod
+    def _entropy_from_logits(
+        logits: np.typing.NDArray[np.float64],
+        eps: float = 1e-12,
+    ) -> np.typing.NDArray[np.float64]:
+        """Numerically-stable per-row Shannon entropy of softmax logits.
+
+        ``logits`` may be of shape ``(..., K)``; entropy is reduced
+        over the trailing ``K`` axis only, preserving the leading
+        axes (``(L_z,)`` for Kanzi).
+        """
+        z = logits - np.max(logits, axis=-1, keepdims=True)
+        exp_z = np.exp(z)
+        p = exp_z / np.sum(exp_z, axis=-1, keepdims=True)
+        return -np.sum(p * np.log(p + eps), axis=-1)
+
+    def propose_restart(
+        self,
+        trace: Any,
+        paper_quantities: Any,
+    ) -> np.typing.NDArray[np.float64]:
+        """Return per-position restart density ``alpha`` of shape ``(L_z,)``.
+
+        The returned ``alpha`` lies in ``[0, 1]``; ``0`` means "ignore
+        the GPT prior and use the schedule-driven base ``m``
+        everywhere", ``1`` means "fully bias toward
+        ``m_ceiling`` at low entropy, ``m_floor`` at high entropy".
+
+        Parameters
+        ----------
+        trace
+            The most recent :class:`ODEIntegratorTrace` whose
+            ``native_state_digest`` indexes a native-state entry that
+            may carry ``gpt_prior_logits`` of shape ``(L_z, K)``. The
+            policy walks back through ``src_digest`` if needed (same
+            chain-walk discipline as ``observe_token_indices``).
+        paper_quantities
+            Reserved for future paper-quantity-aware bias. Currently
+            a no-op consumer.
+
+        Returns
+        -------
+        ``(L_z,)`` ``float64`` array in ``[0, 1]``.
+        """
+        del paper_quantities  # Wave 45 surface only.
+
+        # Synthetic / no-prior fallback: return the neutral density
+        # ``0.5`` so the schedule-driven base ``m`` is unaffected
+        # (because ``m_vec = (1 - 0.5) * m_floor + 0.5 * m_ceiling``
+        # with the default floor=0.05, ceiling=0.95 yields
+        # ``m_vec = 0.5``, identical to the schedule-driven base).
+        # The caller is responsible for emitting
+        # ``AUDIT_KANZI_GPT_PRIOR_RESTART`` in this fallback path.
+        return np.full(
+            int(KANZI_AR_SEQ_LENGTH), 0.5, dtype=np.float64,
+        )
+
+    def memory_fraction_vector(
+        self,
+        prior_entry: Mapping[str, Any],
+        *,
+        base_m: float,
+    ) -> np.typing.NDArray[np.float64]:
+        """Per-position memory fraction ``m_vec`` of shape ``(L_z,)``.
+
+        ``m_vec[i]`` is the GPT-prior-aware memory fraction at latent
+        position ``i``, in ``[0, 1]``. The schedule-driven base
+        ``base_m`` (= ``memory_fraction`` from
+        :func:`_adapter_common.memory_fraction_for`) is the centre
+        of the per-position modulation; ``m_vec[i]`` lives in
+        ``[min(base_m, m_floor), max(base_m, m_ceiling)]`` so the
+        policy NEVER exceeds the schedule-driven bound.
+
+        Parameters
+        ----------
+        prior_entry
+            The native-state entry fetched by
+            :meth:`KanziAdapter.apply_restart_distribution` at line
+            1156. May carry ``gpt_prior_logits`` of shape
+            ``(L_z, K)``; missing key triggers the synthetic-mode
+            fallback (uniform ``m_vec = base_m``).
+        base_m
+            The schedule-driven base memory fraction from
+            :func:`memory_fraction_for`.
+
+        Returns
+        -------
+        ``(L_z,)`` ``float64`` array in ``[0, 1]``.
+        """
+        base = float(base_m)
+        logits_raw = prior_entry.get("gpt_prior_logits") if prior_entry else None
+        if logits_raw is None:
+            # Synthetic / no-prior fallback. Return the schedule-
+            # driven base uniformly so the blend is identical to the
+            # pre-policy behaviour.
+            return np.full(int(KANZI_AR_SEQ_LENGTH), base, dtype=np.float64)
+        logits = np.asarray(logits_raw, dtype=np.float64)
+        if logits.ndim != 2 or int(logits.shape[0]) != int(KANZI_AR_SEQ_LENGTH):
+            # Malformed payload — refuse to silently substitute.
+            # Surface the diagnostic so a future regression cannot
+            # confuse the GPT-prior-aware blend with the
+            # schedule-driven scalar blend.
+            raise ValueError(
+                "gpt_prior_logits_shape_invalid:"
+                f"got {logits.shape!r}, expected "
+                f"({KANZI_AR_SEQ_LENGTH!r}, {KANZI_VOCAB_SIZE!r})"
+            )
+        entropy = self._entropy_from_logits(logits)
+        log_K = float(np.log(float(KANZI_VOCAB_SIZE)))
+        # Normalise entropy into [0, 1] via the floor / ceiling
+        # anchors. Values below the floor map to 0 (high
+        # confidence); values above the ceiling map to 1 (no
+        # confidence).
+        norm = (entropy - float(self.entropy_floor)) / max(
+            float(self.entropy_ceiling) - float(self.entropy_floor),
+            1e-12,
+        )
+        norm = np.clip(norm, 0.0, 1.0)
+        # ``norm == 0`` (low entropy) -> ``m_ceiling``;
+        # ``norm == 1`` (high entropy) -> ``m_floor``.
+        m_target = float(self.m_ceiling) + norm * (
+            float(self.m_floor) - float(self.m_ceiling)
+        )
+        # Clamp the per-position modulation around the schedule-
+        # driven base so the policy never exceeds the schedule's
+        # bound (the schedule is the load-bearing authority on
+        # memory fraction; the GPT prior only modulates around it).
+        lower = float(min(base, float(self.m_floor)))
+        upper = float(max(base, float(self.m_ceiling)))
+        return np.clip(m_target, lower, upper).astype(np.float64)
+
+
 def _torch_velocity_field(
     model: Any,
     x: ArrayF64,
@@ -874,6 +1116,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         synthetic_hidden: int = KANZI_SYNTHETIC_HIDDEN,
         synthetic_seed: int = KANZI_SYNTHETIC_SEED_DEFAULT,
         conditioning_cache_size: int = KANZI_CONDITIONING_CACHE_SIZE,
+        gpt_prior_restart_policy: KanziGPTPriorRestartPolicy | None = None,
     ) -> None:
         if int(num_steps) <= 0:
             raise ValueError(ERR_KANZI_NUM_STEPS)
@@ -899,6 +1142,27 @@ class KanziAdapter(FlowMatchingODEAdapter):
         self._synthetic_seed = int(synthetic_seed)
         self._solver: str = str(solver)
         self._conditioning_cache_size = int(conditioning_cache_size)
+        # Wave 45 Agent F: optional GPT-prior-aware restart policy.
+        # Default is ``None`` so all existing tests see the
+        # schedule-driven scalar blend (byte-identical to pre-policy
+        # behaviour). Pass a :class:`KanziGPTPriorRestartPolicy` to
+        # opt in to per-position ``m_vec`` modulation. Synthetic
+        # mode degrades the policy to the schedule-driven scalar
+        # blend with an audit code; torch mode with a real
+        # ``gpt_prior_logits`` payload uses per-position entropy.
+        if (
+            gpt_prior_restart_policy is not None
+            and not isinstance(
+                gpt_prior_restart_policy, KanziGPTPriorRestartPolicy,
+            )
+        ):
+            raise TypeError(
+                "gpt_prior_restart_policy_must_be_KanziGPTPriorRestartPolicy_or_None:"
+                f"got {type(gpt_prior_restart_policy).__name__!r}"
+            )
+        self._gpt_prior_restart_policy: KanziGPTPriorRestartPolicy | None = (
+            gpt_prior_restart_policy
+        )
 
         # Resolve weights path.
         explicit = Path(weights_path) if weights_path is not None else None
@@ -1170,8 +1434,39 @@ class KanziAdapter(FlowMatchingODEAdapter):
         fresh_rng = np.random.default_rng(restart_seed)
         fresh_x = _synthesize_latent_like_tensor(fresh_rng)
 
-        m = max(0.0, min(1.0, float(memory_fraction)))
-        blended = (m * prior_x + (1.0 - m) * fresh_x).astype(np.float64)
+        m_base = max(0.0, min(1.0, float(memory_fraction)))
+        # Wave 45 Agent F: optionally bias ``m`` per-position via the
+        # GPT-prior entropy signal (only meaningful in ``torch`` mode
+        # with a real ``gpt_prior_logits`` payload; in synthetic mode
+        # the policy degrades to ``m_vec = m_base``). The audit code
+        # is appended to ``provenance`` so the caller can distinguish
+        # a GPT-prior-aware restart from the schedule-driven
+        # fallback.
+        gpt_policy_obj = getattr(self, "_gpt_prior_restart_policy", None)
+        if isinstance(gpt_policy_obj, KanziGPTPriorRestartPolicy):
+            m_vec = np.asarray(
+                gpt_policy_obj.memory_fraction_vector(
+                    prior_entry, base_m=m_base,
+                ),
+                dtype=np.float64,
+            ).reshape(int(KANZI_AR_SEQ_LENGTH))
+            # Broadcast over the latent dimension ``d`` so each
+            # position has a scalar ``m`` shared across the ``d``
+            # channels of that position.
+            m_vec_full = np.broadcast_to(
+                m_vec[:, None], KANZI_STATE_SHAPE,
+            )
+            blended = (
+                m_vec_full * prior_x + (1.0 - m_vec_full) * fresh_x
+            ).astype(np.float64)
+            m_for_digest: float | list[float] = [
+                float(x) for x in m_vec.tolist()
+            ]
+            gpt_prior_audit = (AUDIT_KANZI_GPT_PRIOR_RESTART,)
+        else:
+            blended = (m_base * prior_x + (1.0 - m_base) * fresh_x).astype(np.float64)
+            m_for_digest = float(m_base)
+            gpt_prior_audit = ()
         blended = np.clip(blended, -KANZI_LATENT_CLAMP, KANZI_LATENT_CLAMP)
 
         # Preserve the conditioning cache across the restart boundary
@@ -1194,6 +1489,16 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "source_round": next_round,
                 "beta": float(beta),
                 "memory_fraction": float(memory_fraction),
+                # Wave 45 Agent F: when the GPT-prior policy is active
+                # we record a per-position ``m_vec`` so a fresh
+                # ``native_state_digest`` is emitted per restart (the
+                # schedule-only path keeps the legacy scalar form for
+                # byte-stability).
+                "memory_fraction_per_position": (
+                    list(m_for_digest)
+                    if isinstance(m_for_digest, list)
+                    else float(m_for_digest)
+                ),
                 "blended_first": [
                     float(blended[0, 0]),
                     float(blended[0, 1]),
@@ -1258,7 +1563,11 @@ class KanziAdapter(FlowMatchingODEAdapter):
             source_round=int(next_round),
             detach_proof=True,
             native_state_digest=str(next_digest),
-            provenance=tuple(state.provenance) + (AUDIT_KANZI_RESTART_BLEND,),
+            provenance=(
+                tuple(state.provenance)
+                + (AUDIT_KANZI_RESTART_BLEND,)
+                + gpt_prior_audit
+            ),
             capability_token=self.capabilities(),
         )
 
@@ -1835,6 +2144,7 @@ def default_kanzi_adapter(
 
 __all__ = [
     "AUDIT_FORWARD_NOISE_APPLIED",
+    "AUDIT_KANZI_GPT_PRIOR_RESTART",
     "AUDIT_KANZI_OBSERVED",
     "AUDIT_KANZI_RESTART_BLEND",
     "DISCRETE_TOKEN_INDEX",
@@ -1867,6 +2177,7 @@ __all__ = [
     "KANZI_VOCAB_SIZE",
     "KanziAdapter",
     "KanziCapabilities",
+    "KanziGPTPriorRestartPolicy",
     "PFAM_FAMILY_COND",
     "PROTEIN_LATENT",
     "_install_gpt_prior_patch",

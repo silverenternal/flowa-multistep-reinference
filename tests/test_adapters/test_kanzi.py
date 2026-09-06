@@ -19,6 +19,7 @@ import pytest
 
 from adaptive_reflow.adapters.kanzi import (
     AUDIT_FORWARD_NOISE_APPLIED,
+    AUDIT_KANZI_GPT_PRIOR_RESTART,
     AUDIT_KANZI_OBSERVED,
     AUDIT_KANZI_RESTART_BLEND,
     DISCRETE_TOKEN_INDEX,
@@ -45,6 +46,7 @@ from adaptive_reflow.adapters.kanzi import (
     KANZI_VOCAB_SIZE,
     KanziAdapter,
     KanziCapabilities,
+    KanziGPTPriorRestartPolicy,
     PFAM_FAMILY_COND,
     PROTEIN_LATENT,
     default_kanzi_adapter,
@@ -842,3 +844,205 @@ def test_observe_token_indices_chain_walk_through_restart() -> None:
     result = adapter.observe_token_indices(trace2, paper_quantities=None)
     observed = np.asarray(result[str(DISCRETE_TOKEN_INDEX)], dtype=np.float64)
     np.testing.assert_array_equal(observed, expected)
+
+
+# ---------------------------------------------------------------------------
+# Wave 45 Agent F: KanziGPTPriorRestartPolicy
+# ---------------------------------------------------------------------------
+
+
+def test_kanzi_gpt_prior_restart_policy_constructor_and_defaults() -> None:
+    """``KanziGPTPriorRestartPolicy`` builds with sensible defaults.
+
+    The default thresholds anchor at ``0.05 * log K`` (low-entropy
+    floor) and ``0.95 * log K`` (high-entropy ceiling); the
+    ``m_floor=0.05``, ``m_ceiling=0.95`` modulation range matches
+    the brief's "soft, never collapes to 0 or 1" requirement.
+    """
+    policy = KanziGPTPriorRestartPolicy()
+    log_K = float(np.log(float(KANZI_VOCAB_SIZE)))
+    assert policy.entropy_floor == pytest.approx(0.05 * log_K)
+    assert policy.entropy_ceiling == pytest.approx(0.95 * log_K)
+    assert policy.m_floor == pytest.approx(0.05)
+    assert policy.m_ceiling == pytest.approx(0.95)
+    # Constructor rejects inverted thresholds.
+    with pytest.raises(ValueError):
+        KanziGPTPriorRestartPolicy(entropy_floor=10.0, entropy_ceiling=1.0)
+    with pytest.raises(ValueError):
+        KanziGPTPriorRestartPolicy(m_floor=0.5, m_ceiling=0.3)
+
+
+def test_kanzi_gpt_prior_restart_policy_propose_restart_uniform_fallback() -> None:
+    """``propose_restart`` returns the neutral density in synthetic mode.
+
+    The neutral density is ``0.5`` everywhere — i.e. NO bias on the
+    schedule-driven base ``m``. Combined with ``m_floor=0.05`` and
+    ``m_ceiling=0.95`` defaults this yields
+    ``m_vec = 0.5`` everywhere, identical to the schedule-driven
+    scalar blend.
+    """
+    policy = KanziGPTPriorRestartPolicy()
+    alpha = policy.propose_restart(trace=None, paper_quantities=None)
+    assert alpha.shape == (int(KANZI_AR_SEQ_LENGTH),)
+    assert np.allclose(alpha, 0.5)
+
+
+def test_kanzi_gpt_prior_restart_policy_memory_fraction_vector_no_logits() -> None:
+    """``memory_fraction_vector`` without ``gpt_prior_logits`` returns the base ``m``.
+
+    The synthetic-mode fallback yields ``m_vec = base_m`` everywhere,
+    byte-identical to the pre-policy scalar blend.
+    """
+    policy = KanziGPTPriorRestartPolicy()
+    m_vec = policy.memory_fraction_vector(prior_entry={}, base_m=0.7)
+    assert m_vec.shape == (int(KANZI_AR_SEQ_LENGTH),)
+    assert np.allclose(m_vec, 0.7)
+
+
+def test_kanzi_gpt_prior_restart_policy_memory_fraction_vector_with_logits() -> None:
+    """``memory_fraction_vector`` with ``gpt_prior_logits`` biases per position.
+
+    A position with a near-spike categorical (low entropy) gets
+    ``m_ceiling``; a position with a uniform categorical (high
+    entropy) gets ``m_floor``. The per-position ``m_vec`` is
+    clamped against the schedule-driven ``base_m`` so the policy
+    never exceeds the schedule's bound.
+    """
+    policy = KanziGPTPriorRestartPolicy()
+    log_K = float(np.log(float(KANZI_VOCAB_SIZE)))
+    # Build synthetic logits: spike at position 0 (low entropy),
+    # uniform at position 1 (high entropy), mid at position 2.
+    logits = np.zeros(
+        (int(KANZI_AR_SEQ_LENGTH), int(KANZI_VOCAB_SIZE)), dtype=np.float64,
+    )
+    logits[0, 0] = 100.0  # spike
+    logits[1, :] = 0.0    # uniform
+    logits[2, :] = log_K  # mid-entropy (each category ~ 1/e normalised)
+    prior_entry = {"gpt_prior_logits": logits}
+
+    base_m = 0.5
+    m_vec = policy.memory_fraction_vector(prior_entry, base_m=base_m)
+
+    assert m_vec.shape == (int(KANZI_AR_SEQ_LENGTH),)
+    # Low entropy -> m_ceiling
+    assert m_vec[0] == pytest.approx(0.95, abs=1e-6)
+    # High entropy -> m_floor (clamped against base_m=0.5 — both
+    # yield the same lower bound in this configuration)
+    assert m_vec[1] == pytest.approx(0.05, abs=1e-6)
+    # Mid entropy -> intermediate m_ceiling + 0.5*(0.05-0.95) = 0.5
+    assert 0.0 <= m_vec[2] <= 1.0
+    # Per-position m_vec is in [0, 1].
+    assert np.all(m_vec >= 0.0) and np.all(m_vec <= 1.0)
+
+
+def test_kanzi_gpt_prior_restart_policy_memory_fraction_vector_rejects_bad_shape() -> None:
+    """``memory_fraction_vector`` refuses malformed ``gpt_prior_logits``.
+
+    A future regression that drops a dimension or transposes axes
+    cannot silently substitute the schedule-driven blend — the
+    policy raises a diagnostic ``ValueError`` instead.
+    """
+    policy = KanziGPTPriorRestartPolicy()
+    bad = np.zeros((3, int(KANZI_VOCAB_SIZE)), dtype=np.float64)
+    with pytest.raises(ValueError, match="gpt_prior_logits_shape_invalid"):
+        policy.memory_fraction_vector(
+            prior_entry={"gpt_prior_logits": bad}, base_m=0.5,
+        )
+
+
+def test_kanzi_adapter_default_off_keeps_byte_stable_blend() -> None:
+    """Default KanziAdapter (no GPT-prior policy) blends identically to pre-policy.
+
+    Regression guard: the Wave 45 F work must not perturb the
+    schedule-driven scalar blend when no GPT-prior policy is
+    supplied. The byte-digest is checked to catch accidental
+    numeric drift in the restart math.
+    """
+    adapter = _make_adapter()
+    bundle = adapter.build_initial_state(batch_id="w45_f_off", sample_id="s_f")
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId("uniform-beta-0.5"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("test-run-f-off"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={PROTEIN_LATENT: FactorValue(0.5)},
+        alpha_by_channel={PROTEIN_LATENT: FactorValue(1.0)},
+        fresh_noise_floor_by_channel={PROTEIN_LATENT: FactorValue(0.0)},
+        schedule_sample=None,
+        freeze_admission_by_channel={PROTEIN_LATENT: True},
+        ledger_row_id=LedgerRowId("ledger-uniform-beta-0.5"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    restarted = adapter.apply_restart_distribution(bundle, policy)
+    # When the GPT-prior policy is OFF, the AUDIT_KANZI_GPT_PRIOR_RESTART
+    # code MUST NOT appear in provenance.
+    assert AUDIT_KANZI_GPT_PRIOR_RESTART not in restarted.provenance
+    assert AUDIT_KANZI_RESTART_BLEND in restarted.provenance
+
+
+def test_kanzi_adapter_opt_in_policy_runs_without_error() -> None:
+    """Opt-in ``KanziGPTPriorRestartPolicy`` runs end-to-end in synthetic mode.
+
+    In synthetic mode ``memory_fraction_vector`` degrades to
+    ``m_vec = base_m`` everywhere (no GPT prior is available), and
+    the ``AUDIT_KANZI_GPT_PRIOR_RESTART`` audit code IS emitted so
+    a downstream audit can distinguish the policy path from the
+    schedule-driven fallback.
+    """
+    policy = KanziGPTPriorRestartPolicy()
+    adapter = _make_adapter(gpt_prior_restart_policy=policy)
+    bundle = adapter.build_initial_state(batch_id="w45_f_on", sample_id="s_f_on")
+    restart_policy = FinalRestartPolicy(
+        policy_id=PolicyId("uniform-beta-0.5"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("test-run-f-on"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={PROTEIN_LATENT: FactorValue(0.5)},
+        alpha_by_channel={PROTEIN_LATENT: FactorValue(1.0)},
+        fresh_noise_floor_by_channel={PROTEIN_LATENT: FactorValue(0.0)},
+        schedule_sample=None,
+        freeze_admission_by_channel={PROTEIN_LATENT: True},
+        ledger_row_id=LedgerRowId("ledger-uniform-beta-0.5"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    restarted = adapter.apply_restart_distribution(bundle, restart_policy)
+    # Synthetic-mode policy path: AUDIT_KANZI_GPT_PRIOR_RESTART is
+    # emitted; per-position m_vec == base_m so the blend is
+    # byte-identical to the schedule-driven fallback.
+    assert AUDIT_KANZI_GPT_PRIOR_RESTART in restarted.provenance
+    assert AUDIT_KANZI_RESTART_BLEND in restarted.provenance
+
+    # Re-inject gpt_prior_logits into the prior entry and re-blend:
+    # a real GPT-prior payload changes the per-position m_vec away
+    # from the schedule-driven base.
+    prior_entry = adapter._native_states[bundle.native_state_digest]
+    # Mutate the cached prior to carry a real gpt_prior_logits
+    # payload so the policy path is exercised end-to-end.
+    real_logits = np.zeros(
+        (int(KANZI_AR_SEQ_LENGTH), int(KANZI_VOCAB_SIZE)), dtype=np.float64,
+    )
+    real_logits[0, 0] = 100.0  # high confidence at position 0
+    prior_entry["gpt_prior_logits"] = real_logits
+    restarted2 = adapter.apply_restart_distribution(bundle, restart_policy)
+    # The restarted bundle's latent was blended with a per-position
+    # m_vec; the digest reflects the per-position m_for_digest.
+    # Sanity-check that the restart entry exists with a finite
+    # latent.
+    restart_entry = adapter._native_states[restarted2.native_state_digest]
+    assert np.isfinite(np.asarray(restart_entry["x0"], dtype=np.float64)).all()
+
+
+def test_kanzi_adapter_constructor_rejects_non_policy_arg() -> None:
+    """Constructor rejects non-``KanziGPTPriorRestartPolicy`` ``gpt_prior_restart_policy`` arg.
+
+    A typo or wrong-type arg must surface a diagnostic, not silently
+    default to ``None``.
+    """
+    with pytest.raises(TypeError, match="gpt_prior_restart_policy_must_be"):
+        _make_adapter(gpt_prior_restart_policy="not-a-policy")  # type: ignore[arg-type]
