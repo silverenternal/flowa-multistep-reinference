@@ -292,6 +292,32 @@ DOWNSTREAM_METRICS: dict[str, dict[str, Any]] = {
                     "1 - |generated intersect reference| / |generated| against Pfam"
                 ),
             },
+            # Wave 47 Agent C / Agent D composite (additive to the
+            # binary primary metric). Pure-flow 3-term composite in
+            # [-1, +1]; positive = framework strictly improves the
+            # integrated flow bundle. See
+            # docs/audit/wave47-eval-pipeline-design.md §3 and
+            # docs/audit/wave47-eval-pipeline-integration.md.
+            {
+                "name": "lineageflow_composite",
+                "direction": "higher_is_better",
+                "saturation_threshold": None,
+                "improvement_bar": 0.05,
+                "is_composite": True,
+                "composite_components": [
+                    "per_position_entropy_reduction_normalised",
+                    "per_position_max_prob_delta",
+                    "argmax_turnover_signed",
+                ],
+                "composite_weights": [0.40, 0.35, 0.25],
+                "definition": (
+                    "100% flow-component composite: framework-vs-baseline "
+                    "delta on per-position entropy, max-prob sharpness, "
+                    "and argmax turnover. Bounded in [-1, 1]. Positive = "
+                    "framework improves the flow bundle. Computed by "
+                    "LineageFlowGlue.compute_composite (Wave 47)."
+                ),
+            },
         ],
         "adapter_factory": "adaptive_reflow.adapters.lineageflow:default_lineageflow_adapter",
         "adapter_import_path": "adaptive_reflow.adapters.lineageflow",
@@ -1475,6 +1501,118 @@ def _compute_lineageflow_real_metric_via_trace(
         }
 
 
+def _compute_lineageflow_composite(
+    *,
+    adapter: Any,
+    baseline_trace: Any,
+    framework_trace: Any,
+    seed: int,
+    nfe: int,
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Wave 47 LineageFlow composite (pure-flow 3-term) on baseline + framework traces.
+
+    Returns ``(composite_value, marker, debug_dict)``. The composite
+    lies in ``[-1, 1]``; positive = framework strictly improves the
+    integrated flow bundle. ``marker`` is one of:
+
+      * ``"computed"`` — composite successfully computed.
+      * ``"blocked"`` — composite could not be computed (missing
+        trace, missing native-state cache, missing glue class).
+      * ``"synthetic_fallback"`` — adapter is in synthetic mode; the
+        composite collapses to 0 by construction (both arms yield
+        byte-identical trajectories).
+
+    Algorithm
+    ~~~~~~~~~
+
+    1. Lazy-import :class:`LineageFlowGlue` from
+       :mod:`adaptive_reflow.adapters.lineageflow_glue` (only when
+       called — keeps the cold-clone import surface clean).
+    2. Delegate to :meth:`LineageFlowGlue.compute_composite` for the
+       3-term ``phi`` calculation (per Wave 47 Agent C §3):
+
+       * ``phi1 = (H(theta_b) - H(theta_f)) / log 33``
+         via the shared
+         :func:`adaptive_reflow.adapters._adapter_common.per_position_entropy_reduction`
+         helper.
+       * ``phi2 = mean(max(theta_f, axis=-1) - max(theta_b, axis=-1))``
+       * ``phi3 = 2 * mean(argmax(theta_f, axis=-1) != argmax(theta_b, axis=-1)) - 1``
+
+       ``composite = 0.40 * phi1 + 0.35 * phi2 + 0.25 * phi3``.
+    3. Returns ``(composite_value, marker, dbg)`` where ``dbg`` is the
+       raw glue-class output (composite + 3 phi terms + weights + K +
+       seed + nfe).
+
+    Stdlib + numpy only; no torch at the pipeline level. The glue
+    class uses the shared :func:`per_position_entropy_reduction`
+    helper from :mod:`adaptive_reflow.adapters._adapter_common`.
+    """
+    debug: dict[str, Any] = {
+        "seed": int(seed),
+        "nfe_budget": int(nfe),
+    }
+    # ---- 1. Lazy-import the glue class ----------------------------
+    try:
+        from adaptive_reflow.adapters.lineageflow_glue import (  # type: ignore
+            DEFAULT_COMPOSITE_WEIGHTS,
+            LineageFlowGlue,
+        )
+    except ImportError as exc:
+        debug["reason"] = (
+            f"glue_import_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    # ---- 2. Sanity-check the traces -------------------------------
+    if baseline_trace is None or framework_trace is None:
+        debug["reason"] = "missing_trace"
+        return None, "blocked", debug
+    for label, trace in (
+        ("baseline_trace", baseline_trace),
+        ("framework_trace", framework_trace),
+    ):
+        if not hasattr(trace, "native_state_digest"):
+            debug["reason"] = (
+                f"{label}_missing_native_state_digest"
+            )
+            debug[label] = str(type(trace).__name__)
+            return None, "blocked", debug
+    # ---- 3. Delegate to LineageFlowGlue.compute_composite ---------
+    try:
+        glue = LineageFlowGlue(adapter=adapter)
+        result = glue.compute_composite(
+            baseline_trace, framework_trace,
+            weights=DEFAULT_COMPOSITE_WEIGHTS,
+            seed=int(seed), nfe=int(nfe),
+        )
+    except KeyError as exc:
+        # LRU-evicted native-state digest; the framework arm's
+        # trajectory is no longer in the adapter's cache.
+        debug["reason"] = (
+            f"native_state_cache_miss: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    except Exception as exc:  # noqa: BLE001
+        debug["reason"] = (
+            f"composite_compute_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    # ---- 4. Surface the composite ---------------------------------
+    composite_value = result.get("composite")
+    debug.update({
+        "composite": composite_value,
+        "phi1_entropy_reduction_normalised":
+            result.get("phi1_entropy_reduction_normalised"),
+        "phi2_max_prob_delta":
+            result.get("phi2_max_prob_delta"),
+        "phi3_argmax_turnover_signed":
+            result.get("phi3_argmax_turnover_signed"),
+        "weights": result.get("weights"),
+        "K": result.get("K"),
+        "glue_class": "LineageFlowGlue",
+    })
+    return composite_value, "computed", debug
+
+
 def _compute_lineageflow_real_metric(
     *,
     seed: int,
@@ -1747,6 +1885,7 @@ def _run_cell(
     n_rounds: int = 3,
     force_mode: str = "synthetic",
     metric_mode: str = "synthetic",
+    composite_metric: str = "auto",
 ) -> dict[str, Any]:
     """Run one (model, seed, nfe_budget) cell.
 
@@ -1812,6 +1951,37 @@ def _run_cell(
     cell["framework_metric"] = framework_value
     cell["framework_marker"] = framework_marker
     cell["framework_debug"] = framework_dbg
+    # Wave 47 composite (Phase-2B wiring): a 3-term pure-flow composite
+    # in [-1, 1] computed by LineageFlowGlue. Auto-enabled for
+    # --model lineageflow when --composite-metric is "real" or "auto";
+    # opt-out is --composite-metric synthetic. See
+    # docs/audit/wave47-eval-pipeline-design.md §3 and
+    # docs/audit/wave47-eval-pipeline-integration.md.
+    if (
+        composite_metric != "synthetic"
+        and model == "lineageflow"
+    ):
+        (
+            composite_value, composite_marker, composite_dbg,
+        ) = _compute_lineageflow_composite(
+            adapter=adapter,
+            baseline_trace=baseline_trace,
+            framework_trace=framework_trace,
+            seed=int(seed), nfe=int(nfe),
+        )
+        cell["composite"] = composite_value
+        cell["composite_marker"] = composite_marker
+        cell["composite_debug"] = composite_dbg
+        cell["composite_components"] = {
+            "phi1_entropy_reduction_normalised":
+                composite_dbg.get("phi1_entropy_reduction_normalised"),
+            "phi2_max_prob_delta":
+                composite_dbg.get("phi2_max_prob_delta"),
+            "phi3_argmax_turnover_signed":
+                composite_dbg.get("phi3_argmax_turnover_signed"),
+        }
+        cell["composite_weights"] = composite_dbg.get("weights") or [0.40, 0.35, 0.25]
+        cell["composite_K"] = composite_dbg.get("K", 33)
     # delta_pct: framework vs baseline, normalised so positive always means
     # "framework wins" (sign-normalization per the LOWER_IS_BETTER /
     # HIGHER_IS_BETTER convention in tools/capability_audit.py).
@@ -1910,6 +2080,32 @@ def build_report(
         1 for c in cells
         if c.get("baseline_marker") == "synthetic_fallback"
     )
+    # Wave 47 composite aggregate (Phase-2B wiring): surface the median
+    # composite + tallies of computed/blocked cells. The verdict is
+    # "framework_improves" iff median composite > 0 (per Wave 29 Agent D
+    # metric-methodology.md §G.1 — median is robust to single-cell
+    # outliers).
+    composite_values: list[float] = [
+        c["composite"] for c in cells
+        if c.get("composite") is not None
+    ]
+    if composite_values:
+        import numpy as _np  # local import; numpy is stdlib-adjacent
+        composite_median: float | None = round(
+            float(_np.median(composite_values)), 6,
+        )
+    else:
+        composite_median = None
+    n_composite_computed = sum(
+        1 for c in cells if c.get("composite_marker") == "computed"
+    )
+    n_composite_blocked = sum(
+        1 for c in cells if c.get("composite_marker") == "blocked"
+    )
+    if composite_median is not None and composite_median > 0.0:
+        composite_verdict = "framework_improves"
+    else:
+        composite_verdict = "no_signal"
     return {
         "schema": "real_ckpt_eval_report.v1",
         "model": model,
@@ -1934,6 +2130,11 @@ def build_report(
             "n_run_error": n_run_error,
             "n_real_computed": n_real_computed,
             "n_synthetic_fallback": n_synthetic_fallback,
+            # Wave 47 composite aggregate (Phase-2B wiring)
+            "composite_median": composite_median,
+            "composite_verdict": composite_verdict,
+            "n_composite_computed": n_composite_computed,
+            "n_composite_blocked": n_composite_blocked,
             "g1_mean_signed_delta_pct": g1_value,
             "verdict_overall": _overall_verdict(n_cells, n_supported, n_regression, n_blocked, n_run_error),
         },
@@ -2049,6 +2250,22 @@ def build_argparser() -> argparse.ArgumentParser:
             "implementation."
         ),
     )
+    p.add_argument(
+        "--composite-metric", type=str, default="auto",
+        choices=("synthetic", "real", "auto"),
+        help=(
+            "Wave 47 LineageFlow composite metric mode. 'synthetic' "
+            "(default for non-lineageflow models) skips the composite "
+            "computation. 'real' forces the composite to be computed "
+            "when --model lineageflow. 'auto' enables the composite "
+            "for --model lineageflow (the Wave 47 Tier-3 close) and "
+            "skips otherwise. Composite is a 100% flow-component "
+            "3-term scalar in [-1, 1]; positive = framework improves "
+            "the flow bundle. See "
+            "docs/audit/wave47-eval-pipeline-design.md and "
+            "docs/audit/wave47-eval-pipeline-integration.md."
+        ),
+    )
     return p
 
 
@@ -2080,6 +2297,7 @@ def main(argv: list[str] | None = None) -> int:
             cell = _run_cell(
                 args.model, seed=int(seed), nfe=int(nfe), n_rounds=int(args.n_rounds),
                 force_mode=args.force_mode, metric_mode=args.metric_mode,
+                composite_metric=args.composite_metric,
             )
             cells.append(cell)
             print(
