@@ -318,12 +318,8 @@ def test_cli_exits_zero_on_clean(
     ledger_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """``main()`` returns ``0`` when the ledger is clean."""
-    monkeypatch.setattr(
-        "sys.argv", ["check_claims_consistency.py", "--quiet"]
-    )
-    rc = checker.main(["--quiet"])
-    # Re-run with the synthetic ledger path so the CLI sees it
-    # directly; the default REPO_ROOT-based path resolves to the
+    # Drive ``main()`` with the synthetic ledger path so the CLI sees
+    # it directly; the default REPO_ROOT-based path resolves to the
     # production ledger which may or may not be clean.
     rc = checker.main(["--quiet", "--claims-file", str(ledger_path)])
     assert rc == 0

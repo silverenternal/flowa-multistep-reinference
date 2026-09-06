@@ -35,8 +35,10 @@ run on offline, CPU-only, weight-free sandboxes.
 
 from __future__ import annotations
 
+import os
 import socket
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -187,6 +189,101 @@ def requires_weights() -> bool:
     return True
 
 
+# ---------------------------------------------------------------------------
+# serial_tool fixture — enforce serial pytest execution
+# ---------------------------------------------------------------------------
+#
+# Background: tests/test_tools/ has 215 tests that each pull in heavy
+# framework imports (multiple registry modules, numpy, subprocess CLI
+# probes, hypothesis). Running four concurrent pytest processes on
+# this rig has been observed to spike each CPU to 9-10 cores — total
+# ~40 cores — and trigger thrash that drops pass-rate.
+#
+# The ``serial_tool`` fixture below enforces a single-writer lockfile
+# semantics: the first pytest process to start acquires the lockfile,
+# any subsequent pytest process waits on the lockfile until the
+# original holder releases it. Only the holder enters the test body;
+# waiters block at session start.
+#
+# Scope: ``session``, autouse=True only when env var ``PYTEST_SERIAL`` is
+# set. Default off (opt-in) to keep unrelated test runs unaffected.
+# Set ``PYTEST_SERIAL=1`` (or any non-empty value) to enable.
+#
+# Lockfile path: ``/tmp/pytest_serial.lock`` by default, overridable
+# via ``PYTEST_SERIAL_LOCKFILE`` env var.
+
+_PYTEST_SERIAL_LOCKFILE = os.environ.get(
+    "PYTEST_SERIAL_LOCKFILE", "/tmp/pytest_serial.lock"
+)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def serial_tool() -> None:
+    """Hold a process-level lockfile for the entire pytest session.
+
+    Skipped entirely when ``PYTEST_SERIAL`` is unset. When enabled,
+    this fixture blocks at session start until the lockfile is free,
+    then writes its PID and holds the lockfile until session teardown.
+    Concurrent pytest processes serialize on this fixture, capping
+    CPU pressure to a single session's worth at a time.
+    """
+    if not os.environ.get("PYTEST_SERIAL"):
+        return
+
+    lock_path = Path(_PYTEST_SERIAL_LOCKFILE)
+    poll_interval = float(os.environ.get("PYTEST_SERIAL_POLL", "1.0"))
+    timeout = float(os.environ.get("PYTEST_SERIAL_TIMEOUT", "3600"))
+
+    deadline = time.time() + timeout
+    while True:
+        try:
+            # ``x`` (exclusive create) succeeds iff the file does not exist.
+            # Atomic on POSIX; on Windows this would need adjustment but
+            # the test rig is Linux-only.
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+            os.write(fd, f"{os.getpid()}\n".encode())
+            os.close(fd)
+            break
+        except FileExistsError:
+            try:
+                stale_pid = int(lock_path.read_text().strip() or "0")
+            except (OSError, ValueError):
+                stale_pid = 0
+            if stale_pid and not _pid_alive(stale_pid):
+                try:
+                    lock_path.unlink()
+                except OSError:
+                    pass
+                continue
+            if time.time() > deadline:
+                raise RuntimeError(
+                    f"serial_tool: lockfile {lock_path} held by PID "
+                    f"{stale_pid} after {timeout}s — aborting."
+                )
+            time.sleep(poll_interval)
+
+    try:
+        yield
+    finally:
+        try:
+            lock_path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _pid_alive(pid: int) -> bool:
+    """Return True iff ``pid`` corresponds to a live process."""
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
 @pytest.fixture(scope="session")
 def requires_network() -> bool:
     """Skip the calling test unless ``ossci-datasets.s3.amazonaws.com`` is reachable.
@@ -215,4 +312,5 @@ __all__ = (
     "requires_network",
     "requires_torch",
     "requires_weights",
+    "serial_tool",
 )

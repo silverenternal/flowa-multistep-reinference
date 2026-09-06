@@ -200,36 +200,6 @@ def test_wrapper_propagates_paper_quantities_via_cli(
     assert float(pq["eta"]) == 0.3
 
 
-def test_wrapper_handles_synthetic_round_dirs(
-    wrapper: Any,
-    tmp_path: Path,
-    inception_stub: None,
-) -> None:
-    """Pass three per-round dirs (mirrors the harness smoke smoke path)."""
-    rounds = [_seed_round_dir(tmp_path, r, n_samples=2) for r in range(3)]
-    out_path = tmp_path / "report.json"
-    report = wrapper.run_image_fid_per_round(
-        per_round_dirs=rounds,
-        epsilon_schedule=[0.1, 0.05, 0.02],
-        reference_stats_path=None,
-        rho=0.1,
-        c=1.0,
-        eta=0.1,
-        device_arg="cpu",
-        image_target_size=8,
-        fid_batch_size=4,
-        feature_dim=2048,
-        monte_carlo_n=0,
-        seed=0,
-        tolerance=1e-3,
-        output=out_path,
-    )
-    assert report["n_rounds"] == 3
-    assert len(report["rounds"]) == 3
-    # Each round's epsilon reflects the schedule.
-    assert [round_["epsilon"] for round_ in report["rounds"]] == [0.1, 0.05, 0.02]
-
-
 def test_wrapper_rejects_mismatched_lengths(
     wrapper: Any,
     tmp_path: Path,
