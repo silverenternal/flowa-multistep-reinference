@@ -346,6 +346,48 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         "StochasticFMAdapter", "AdapterSpec", "HfApi", "Pillow",
         "IMAGENET1K_V1", "Identity", "CLIP_score",
         "PaperSelectionRatioMemoryFraction", "_README",
+        # Wave 48 Agent A additions: inline references introduced by
+        # Wave 44 Agent D's Tier-3 paper / CONSOLIDATED_RESULTS writeup
+        # (`7fcabbe`) and Wave 45's §15.13 followup that are not
+        # project-internal symbols the scanner should require a
+        # definition for. Each was confirmed to be either a third-
+        # party type or an inline prose token that the inline-symbol
+        # extractor latches onto but should silently skip:
+        # * ``RUN_ERROR`` is the per-cell verdict status code returned
+        #   inline by ``tools/run_real_ckpt_eval.py:_aggregate_status``
+        #   (Wave 15 onward). It is referenced inline in
+        #   ``docs/paper-draft.md`` §15, ``docs/CONSOLIDATED_RESULTS.md``
+        #   §15.12 / §15.13, and ``README.md`` Tier-3 paragraph as a
+        #   status-code prose token. Denylisted alongside the existing
+        #   ``NOT_REPRODUCED`` status-code entry.
+        # * ``Long`` is the ``torch.long`` dtype (a torch scalar-type
+        #   name, not a class). Docs reference it as ``Long`` /
+        #   ``Int`` to describe the ``input_ids`` token-id tensor
+        #   type the EsmModel encoder expects. Third-party torch
+        #   reference, denylisted alongside other torch / third-party
+        #   short CamelCase prose pointers.
+        # * ``FloatTensor`` is the ``torch.FloatTensor`` tensor
+        #   subclass (``torch/_C/__init__.pyi:1952``). The docs quote
+        #   the verbatim PyTorch runtime error
+        #   ``Expected ... but got torch.FloatTensor instead``;
+        #   denylist keeps the error-message inline from triggering a
+        #   false-positive missing-symbol claim.
+        # * ``EsmModel`` is the upstream ``transformers.EsmModel``
+        #   class (HuggingFace protein language model). Docs reference
+        #   it as the encoder that ``LineageFlowAdapter._torch_velocity_field``
+        #   feeds ``x_t`` into. Third-party HuggingFace class,
+        #   denylisted alongside the existing ``PreTrainedModel`` /
+        #   ``PretrainedConfig`` third-party entries.
+        # * ``Expected`` is the leading CamelCase word of a quoted
+        #   PyTorch ``RuntimeError`` message
+        #   (``RuntimeError: Expected tensor for argument #1
+        #   'indices' to have one of the following scalar types:
+        #   Long, Int; but got torch.FloatTensor instead``). It is a
+        #   prose sentence-starter inside a quoted error string, not
+        #   a project-internal symbol; denylisted alongside the
+        #   existing prose-sentence-starter block (``Today`` /
+        #   ``Toward`` / ``Hence`` / ``Thereafter`` / ``Otherwise``).
+        "RUN_ERROR", "Long", "FloatTensor", "EsmModel", "Expected",
     }
 )
 """Names that look like Python symbols but are almost always prose, not
