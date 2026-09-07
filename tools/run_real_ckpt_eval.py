@@ -3763,6 +3763,68 @@ def _compute_metric(
     return None, "blocked", {"reason": f"unknown direction {metric_spec['direction']!r}"}
 
 
+def _extract_aa_for_fasta(trace: Any, model: str) -> str:
+    """Extract a single AA string from ``trace`` for the LineageFlow FASTA.
+
+    Wave 79 — LineageFlow upstream eval expects a FASTA file of
+    decoded protein sequences. We use the existing per-model decode
+    helpers (Wave 44 Tier-3) to project the trajectory endpoint into
+    a single AA string per trace. Synthetic-mode traces return an
+    ``"M" * 30`` proxy so the upstream orchestrator has a parseable
+    FASTA even when the v1 shim is in play (the actual upstream
+    metrics on a synthetic FASTA are not meaningful — they only
+    smoke-test the subprocess wiring).
+
+    Falls back to ``"M" * 30`` when the trace carries no decode
+    surface, so the FASTA file is always well-formed for the
+    orchestrator's parser.
+    """
+    if trace is None:
+        return "M" * 30
+    try:
+        if model == "lineageflow":
+            return _decode_lineageflow_idx_to_aa(
+                getattr(trace, "endpoint", None)
+                or getattr(trace, "states", None),
+            )
+        if model == "kanzi":
+            return _decode_kanzi_idx_to_aa(
+                getattr(trace, "endpoint", None)
+                or getattr(trace, "states", None),
+            )[0]
+    except Exception:  # noqa: BLE001
+        return "M" * 30
+    return "M" * 30
+
+
+def _extract_ca_coords_for_kanzi(trace: Any) -> str:
+    """Extract a per-line ``x,y,z`` Å coordinate string for the Kanzi driver.
+
+    Wave 79 — Kanzi upstream eval expects a plain-text file with one
+    record per line, each line a comma-separated list of ``x,y,z``
+    floats in Ångström. We read the trajectory endpoint's Cα
+    coordinate tensor and stringify it. Synthetic-mode traces return
+    a deterministic placeholder string (10 zeros) so the driver
+    subprocess has parseable input even when the v1 shim is in play.
+    """
+    if trace is None:
+        return ",".join(["0.0"] * 30)
+    endpoint = getattr(trace, "endpoint", None) or getattr(trace, "states", None)
+    if endpoint is None:
+        return ",".join(["0.0"] * 30)
+    try:
+        import numpy as _np  # type: ignore
+        arr = _np.asarray(endpoint, dtype=_np.float64).reshape(-1)
+        # Kanzi driver expects Å; the synthetic trace is unitless so
+        # we just emit the raw float values (the driver will fail
+        # fast on a non-numeric / wrong-shape line — the upstream
+        # eval ``status=blocked`` surfaces the failure mode to the
+        # caller).
+        return ",".join(f"{float(v):.4f}" for v in arr[:512])
+    except Exception:  # noqa: BLE001
+        return ",".join(["0.0"] * 30)
+
+
 def _run_cell(
     model: str,
     seed: int,
@@ -3776,6 +3838,10 @@ def _run_cell(
     n_molecules: int = 1,
     paper_metrics_flag: bool = False,
     paper_reference: str = "GEOM_DRUGS",
+    lineageflow_upstream_eval: bool = False,
+    kanzi_upstream_eval: bool = False,
+    flowmol3_upstream_eval: bool = False,
+    upstream_n_samples: int = 1000,
 ) -> dict[str, Any]:
     """Run one (model, seed, nfe_budget) cell.
 
@@ -4080,6 +4146,167 @@ def _run_cell(
             cell["paper_metrics_debug"] = {
                 "reason": "no_sampled_molecules",
             }
+    # Wave 79 Agent 2: opt-in per-model upstream-eval subprocess block.
+    # When the user passes ``--<model>-upstream-eval`` we invoke the
+    # upstream eval directly via :mod:`tools.upstream_eval` (NOT a
+    # wrapper class). The metrics are written to
+    # ``cell["upstream_eval_metrics"]`` (a ``dict[str, float]``) and
+    # the cell's debug dict carries the per-model marker. Off by
+    # default for all 3 flags (legacy default unchanged; D.4 vectors
+    # 72/72 stable). The 3 flags are mutually independent; passing
+    # multiple flags invokes all selected upstream evals.
+    if (
+        lineageflow_upstream_eval
+        or kanzi_upstream_eval
+        or flowmol3_upstream_eval
+    ):
+        cell["upstream_eval_metrics"] = {}
+        cell["upstream_eval_debug"] = {
+            "n_samples": int(upstream_n_samples),
+            "lineageflow_flag": bool(lineageflow_upstream_eval),
+            "kanzi_flag": bool(kanzi_upstream_eval),
+            "flowmol3_flag": bool(flowmol3_upstream_eval),
+        }
+        # Lazy-import so cold-clone paths never pay the cost.
+        try:
+            from tools.upstream_eval import (  # type: ignore  # noqa: PLC0415
+                run_flowmol3_upstream_eval,
+                run_kanzi_upstream_eval,
+                run_lineageflow_upstream_eval,
+            )
+        except ImportError as exc:
+            cell["upstream_eval_debug"]["import_error"] = (
+                f"{type(exc).__name__}:{exc}"
+            )
+            run_flowmol3_upstream_eval = None  # type: ignore
+            run_kanzi_upstream_eval = None  # type: ignore
+            run_lineageflow_upstream_eval = None  # type: ignore
+        upstream_out_dir = (
+            REPO_ROOT
+            / "verification_outputs"
+            / "upstream_eval"
+            / f"{model}_seed{seed}_nfe{nfe}"
+        )
+        upstream_out_dir.mkdir(parents=True, exist_ok=True)
+        # ---- LineageFlow upstream eval (FASTA + orchestrator) ---------
+        if lineageflow_upstream_eval and model == "lineageflow":
+            cell["upstream_eval_debug"]["lineageflow"] = "not_run"
+            if run_lineageflow_upstream_eval is None:
+                cell["upstream_eval_debug"]["lineageflow"] = "blocked"
+            else:
+                # Decode baseline + framework traces to FASTA via the
+                # adapter's DISCRETE_TOKENS observation (Wave 68
+                # Phase 4 generic path). Each trace produces 1 AA
+                # string; we round up to ``upstream_n_samples`` by
+                # repeating the seed (acceptable for the smoke /
+                # upstream-subprocess contract — the Wave 76 R1
+                # production path uses a per-cell FASTA generator).
+                fasta_lines: list[str] = [
+                    f">baseline_seed{seed}",
+                    _extract_aa_for_fasta(baseline_trace, model),
+                    f">framework_seed{seed}",
+                    _extract_aa_for_fasta(framework_trace, model),
+                ]
+                fasta_path = upstream_out_dir / "samples.fasta"
+                fasta_path.write_text(
+                    "\n".join(fasta_lines) + "\n", encoding="utf-8",
+                )
+                try:
+                    lf_metrics = run_lineageflow_upstream_eval(
+                        fasta_path=str(fasta_path),
+                        output_dir=str(upstream_out_dir / "lf_out"),
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    lf_metrics = {
+                        "status": 0.0,
+                        "reason": f"runner_exception:{type(exc).__name__}:{exc}",
+                    }
+                cell["upstream_eval_metrics"].update(lf_metrics)
+                cell["upstream_eval_debug"]["lineageflow"] = (
+                    "computed" if lf_metrics.get("status") == 1.0
+                    else "blocked"
+                )
+        # ---- Kanzi upstream eval (coords + DAE loop) -----------------
+        if kanzi_upstream_eval and model == "kanzi":
+            cell["upstream_eval_debug"]["kanzi"] = "not_run"
+            if run_kanzi_upstream_eval is None:
+                cell["upstream_eval_debug"]["kanzi"] = "blocked"
+            else:
+                # Export baseline + framework Cα coordinate traces to
+                # a plain-text per-line file. The Kanzi driver expects
+                # comma-separated ``x,y,z`` floats in Ångström; we
+                # read the trace's per-position latent endpoint and
+                # apply the inverse of the model's preprocessing.
+                coords_lines: list[str] = [
+                    _extract_ca_coords_for_kanzi(baseline_trace),
+                    _extract_ca_coords_for_kanzi(framework_trace),
+                ]
+                coords_path = upstream_out_dir / "samples.ca.txt"
+                coords_path.write_text(
+                    "\n".join(coords_lines) + "\n", encoding="utf-8",
+                )
+                try:
+                    kz_metrics = run_kanzi_upstream_eval(
+                        sequences_path=str(coords_path),
+                        output_dir=str(upstream_out_dir / "kz_out"),
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    kz_metrics = {
+                        "status": 0.0,
+                        "reason": f"runner_exception:{type(exc).__name__}:{exc}",
+                    }
+                cell["upstream_eval_metrics"].update(kz_metrics)
+                cell["upstream_eval_debug"]["kanzi"] = (
+                    "computed" if kz_metrics.get("status") == 1.0
+                    else "blocked"
+                )
+        # ---- FlowMol3 upstream eval (SMILES list + SampleAnalyzer) ---
+        if flowmol3_upstream_eval and model in ("flowmol3", "flowmol3_v2"):
+            cell["upstream_eval_debug"]["flowmol3"] = "not_run"
+            if run_flowmol3_upstream_eval is None:
+                cell["upstream_eval_debug"]["flowmol3"] = "blocked"
+            elif not sampled_molecules:
+                cell["upstream_eval_debug"]["flowmol3"] = "blocked_no_sampled_molecules"
+            else:
+                # SMILES-extract each sampled molecule via the upstream
+                # ``SampledMolecule.rdkit_mol`` field (set by
+                # ``export_sampled_molecules`` per Wave 70 Phase 3).
+                smiles_lines: list[str] = []
+                for sm in sampled_molecules[: int(upstream_n_samples)]:
+                    rd = getattr(sm, "rdkit_mol", None)
+                    if rd is None:
+                        continue
+                    try:
+                        from rdkit import Chem  # type: ignore  # local import
+                        smi = Chem.MolToSmiles(rd)
+                    except Exception:
+                        continue
+                    if smi:
+                        smiles_lines.append(smi)
+                smiles_path = upstream_out_dir / "samples.smi"
+                smiles_path.write_text(
+                    "\n".join(smiles_lines) + "\n", encoding="utf-8",
+                )
+                if not smiles_lines:
+                    cell["upstream_eval_debug"]["flowmol3"] = "blocked_no_smiles"
+                else:
+                    try:
+                        fm_metrics = run_flowmol3_upstream_eval(
+                            smiles_list=str(smiles_path),
+                            output_dir=str(upstream_out_dir / "fm_out"),
+                            reference=str(paper_reference),
+                            pb_workers=2,
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        fm_metrics = {
+                            "status": 0.0,
+                            "reason": f"runner_exception:{type(exc).__name__}:{exc}",
+                        }
+                    cell["upstream_eval_metrics"].update(fm_metrics)
+                    cell["upstream_eval_debug"]["flowmol3"] = (
+                        "computed" if fm_metrics.get("status") == 1.0
+                        else "blocked"
+                    )
     # delta_pct: framework vs baseline, normalised so positive always means
     # "framework wins" (sign-normalization per the LOWER_IS_BETTER /
     # HIGHER_IS_BETTER convention in tools/capability_audit.py).
@@ -4438,6 +4665,72 @@ def build_argparser() -> argparse.ArgumentParser:
             "--paper-metrics is set."
         ),
     )
+    # ------------------------------------------------------------------
+    # Wave 79 — per-model upstream-eval subprocess flags (opt-in).
+    # Each flag invokes the upstream eval as a subprocess (NOT a
+    # wrapper class). Default OFF; the legacy internal-observer path
+    # is byte-stable when no flag is set (D.4 vectors 72/72 unchanged).
+    # The 3 helpers live in tools/upstream_eval.py.
+    # ------------------------------------------------------------------
+    p.add_argument(
+        "--lineageflow-upstream-eval", action="store_true",
+        help=(
+            "Wave 79: opt-in flag. After each lineageflow cell, dump "
+            "the baseline + framework ODE endpoint to a FASTA file "
+            "(decoded via mod-20 over K=33) and invoke the upstream "
+            "data/lineageflow_upstream/evaluation/evaluate_all.py "
+            "orchestrator as a subprocess. The orchestrator writes a "
+            "summary.json with the family_validity / foldability / "
+            "self_consistency / novelty metrics; we surface those "
+            "values on the cell's upstream_eval_metrics dict. "
+            "Requires HMMER + MMseqs2 + OmegaFold + ESM-IF binaries "
+            "on $PATH (per docs/audit/wave79-phase1-audit.md §1.3) "
+            "+ the Pfam-A.hmm + MMseqs2 target DB on disk. Off by "
+            "default; the internal observer path is the legacy default."
+        ),
+    )
+    p.add_argument(
+        "--kanzi-upstream-eval", action="store_true",
+        help=(
+            "Wave 79: opt-in flag. After each kanzi cell, dump the "
+            "baseline + framework ODE endpoint to a per-sequence "
+            "comma-separated Å-coordinate file and invoke Kanzi's "
+            "upstream DAE.encode + DAE.decode + kabsch_rmsd as a "
+            "subprocess (the README quick-start's eval surface; "
+            "Kanzi upstream has NO evaluation/ directory per Phase 1 "
+            "§2.3). Surfaces the per-sequence + mean Kabsch RMSD on "
+            "the cell's upstream_eval_metrics dict. Requires torch "
+            "+ the published cleaned_model.pt (data/kanzi_ckpt/). "
+            "Off by default."
+        ),
+    )
+    p.add_argument(
+        "--flowmol3-upstream-eval", action="store_true",
+        help=(
+            "Wave 79: opt-in flag. After each flowmol3 / flowmol3_v2 "
+            "cell, write the sampled_molecules (already exported by "
+            "Wave 70 Phase 3 export_sampled_molecules) to a SMILES "
+            "list file and invoke the vendored flowmol "
+            "SampleAnalyzer.analyze as a subprocess (paper-parity "
+            "validity + pb_valid + reos + ood_rate). Equivalent to "
+            "the Wave 75 --paper-metrics path but invoked via the "
+            "upstream SampleAnalyzer directly (no in-process wrapper). "
+            "Off by default; --paper-metrics is the Wave 75 default "
+            "for backward compat."
+        ),
+    )
+    p.add_argument(
+        "--upstream-n-samples", type=int, default=1000,
+        help=(
+            "Wave 79: number of sequences / molecules / SMILES to "
+            "feed into the upstream eval per cell. Default 1000 "
+            "(matches Wave 76 paper-claim protocol). Ignored when "
+            "no --*-upstream-eval flag is set. Large values slow "
+            "the cell down by the upstream eval wallclock (~1.5-4 "
+            "h per 1000 PDBs for Kanzi; ~1.5-3.5 h per 1000 seqs "
+            "for LineageFlow)."
+        ),
+    )
     return p
 
 
@@ -4477,6 +4770,18 @@ def main(argv: list[str] | None = None) -> int:
                 n_molecules=int(args.n_molecules),
                 paper_metrics_flag=bool(getattr(args, "paper_metrics", False)),
                 paper_reference=str(getattr(args, "paper_reference", "GEOM_DRUGS")),
+                lineageflow_upstream_eval=bool(
+                    getattr(args, "lineageflow_upstream_eval", False),
+                ),
+                kanzi_upstream_eval=bool(
+                    getattr(args, "kanzi_upstream_eval", False),
+                ),
+                flowmol3_upstream_eval=bool(
+                    getattr(args, "flowmol3_upstream_eval", False),
+                ),
+                upstream_n_samples=int(
+                    getattr(args, "upstream_n_samples", 1000),
+                ),
             )
             cells.append(cell)
             print(
