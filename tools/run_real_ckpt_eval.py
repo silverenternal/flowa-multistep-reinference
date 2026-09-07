@@ -1027,17 +1027,29 @@ def _build_initial_state_and_condition(
     return bundle, condition
 
 
-def _solve_baseline(adapter: Any, *, nfe: int, seed: int) -> tuple[Any, float]:
+def _solve_baseline(adapter: Any, *, nfe: int, seed: int, n_molecules: int = 1) -> tuple[Any, float]:
     """Baseline single-pass ODE solve with the paper-default NFE.
 
     Returns (trace, wallclock_seconds). No framework glue: just the
     adapter's ``solve_ode`` invocation.
+
+    ``n_molecules`` (Wave 74 F1) — when > 1, the adapter's
+    :meth:`solve_ode` call generates ``n_molecules`` independent
+    trajectories per cell. Currently only consumed by the FlowMol3
+    v2 adapter; other adapters ignore the kwarg.
     """
     bundle, condition = _build_initial_state_and_condition(
         adapter, seed=seed, nfe=nfe
     )
     t0 = time.monotonic()
-    trace = adapter.solve_ode(bundle, condition, seed=int(seed))
+    try:
+        trace = adapter.solve_ode(
+            bundle, condition, seed=int(seed), n_molecules=int(n_molecules),
+        )
+    except TypeError:
+        # Backward-compat: legacy adapters do not accept the
+        # ``n_molecules`` kwarg.
+        trace = adapter.solve_ode(bundle, condition, seed=int(seed))
     wall = time.monotonic() - t0
     return trace, wall
 
@@ -1117,7 +1129,7 @@ def _make_framework_policy(adapter: Any, *, target_round: int, seed: int) -> Any
     return _dc_replace(draft, policy_hash=hash_policy_hash(draft))
 
 
-def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3) -> tuple[Any, float]:
+def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3, n_molecules: int = 1) -> tuple[Any, float]:
     """Framework multi-round ODE solve with the same total NFE budget.
 
     Splits the total NFE across ``n_rounds`` and chains the adapter's
@@ -1145,6 +1157,11 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3) ->
       :class:`CapabilityMissingError`); all other exceptions
       propagate so signature regressions fail closed rather than
       silently degrade to baseline.
+
+    ``n_molecules`` (Wave 74 F1) — when > 1, threaded into the
+    per-round :meth:`solve_ode` call so each round generates
+    ``n_molecules`` independent trajectories. Currently only
+    consumed by the FlowMol3 v2 adapter; others ignore it.
     """
     from adaptive_reflow.universal.state import ODEConditionDelta  # type: ignore
 
@@ -1178,7 +1195,17 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3) ->
             target_round=int(r),
             calibration_artifact_hash="run_real_ckpt_eval:default",
         )
-        trace = adapter.solve_ode(cur_bundle, condition, seed=int(seed) + int(r))
+        try:
+            trace = adapter.solve_ode(
+                cur_bundle, condition, seed=int(seed) + int(r),
+                n_molecules=int(n_molecules),
+            )
+        except TypeError:
+            # Backward-compat: legacy adapters do not accept the
+            # ``n_molecules`` kwarg.
+            trace = adapter.solve_ode(
+                cur_bundle, condition, seed=int(seed) + int(r),
+            )
         # Restart distribution step: blend the current round's bundle
         # (the prior round's endpoint, identity-passed through
         # ``export_endpoint``) with the per-round restart policy to
@@ -3582,11 +3609,17 @@ def _run_cell(
     metric_mode: str = "synthetic",
     composite_metric: str = "auto",
     restart_min_nfe: int | None = None,
+    n_molecules: int = 1,
 ) -> dict[str, Any]:
     """Run one (model, seed, nfe_budget) cell.
 
     Returns a single dict ready to drop into the ``evidence[]`` list of
     a capability_audit-style report.
+
+    ``n_molecules`` (Wave 74 F1) — when > 1, threaded through to the
+    adapter's :meth:`solve_ode` so each cell produces
+    ``n_molecules`` independent trajectories. Currently only consumed
+    by the FlowMol3 v2 adapter (other adapters ignore it).
     """
     spec = DOWNSTREAM_METRICS[model]
     cell: dict[str, Any] = {
@@ -3633,10 +3666,11 @@ def _run_cell(
     primary = spec["primary_metric"]
     try:
         baseline_trace, baseline_wall = _solve_baseline(
-            adapter, nfe=int(nfe), seed=int(seed)
+            adapter, nfe=int(nfe), seed=int(seed), n_molecules=int(n_molecules),
         )
         framework_trace, framework_wall = _solve_framework(
-            adapter, nfe=int(nfe), seed=int(seed), n_rounds=int(n_rounds)
+            adapter, nfe=int(nfe), seed=int(seed), n_rounds=int(n_rounds),
+            n_molecules=int(n_molecules),
         )
     except Exception as exc:  # noqa: BLE001
         cell["status"] = "RUN_ERROR"
@@ -3875,6 +3909,7 @@ def build_report(
     force_mode: str = "synthetic",
     metric_mode: str = "synthetic",
     restart_min_nfe: int | None = None,
+    n_molecules: int = 1,
 ) -> dict[str, Any]:
     """Assemble the PHASE-4 real-ckpt eval report.
 
@@ -4122,6 +4157,20 @@ def build_argparser() -> argparse.ArgumentParser:
             "docs/audit/wave52-kanzi-composite.md."
         ),
     )
+    p.add_argument(
+        "--n-molecules", type=int, default=1,
+        help=(
+            "Number of molecules sampled per cell (Wave 74 F1, "
+            "opt-in). When > 1, the adapter's ``solve_ode`` generates "
+            "``n_molecules`` independent trajectories and the eval "
+            "pipeline's FlowMol3 composite consumes the batch via "
+            "``adapter.export_sampled_molecules(trace)``. Currently "
+            "honoured by the FlowMol3 v2 adapter only; other "
+            "adapters ignore the kwarg (legacy callers are "
+            "byte-stable). Default 1 preserves the legacy "
+            "single-molecule-cell contract."
+        ),
+    )
     return p
 
 
@@ -4130,6 +4179,9 @@ def main(argv: list[str] | None = None) -> int:
     args = build_argparser().parse_args(argv)
     if args.n_rounds <= 0:
         print("[ERROR] --n-rounds must be positive", file=sys.stderr)
+        return 2
+    if int(args.n_molecules) < 1:
+        print("[ERROR] --n-molecules must be >= 1", file=sys.stderr)
         return 2
     try:
         seeds = [int(s.strip()) for s in args.seeds.split(",") if s.strip()]
@@ -4155,6 +4207,7 @@ def main(argv: list[str] | None = None) -> int:
                 force_mode=args.force_mode, metric_mode=args.metric_mode,
                 composite_metric=args.composite_metric,
                 restart_min_nfe=args.restart_min_nfe,
+                n_molecules=int(args.n_molecules),
             )
             cells.append(cell)
             print(
@@ -4171,6 +4224,7 @@ def main(argv: list[str] | None = None) -> int:
         force_mode=args.force_mode,
         metric_mode=args.metric_mode,
         restart_min_nfe=args.restart_min_nfe,
+        n_molecules=int(args.n_molecules),
     )
     out_json = json.dumps(report, indent=2, sort_keys=False, ensure_ascii=False)
     if args.print_only:

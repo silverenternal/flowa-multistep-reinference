@@ -1754,6 +1754,134 @@ def test_resolve_adapter_threads_weights_path_for_flowmol3_real() -> None:
     )
 
 
+def test_run_real_ckpt_eval_n_molecules_flag() -> None:
+    """``--n-molecules N`` is accepted by the CLI and threaded into ``_run_cell``.
+
+    Locks in the Wave 74 F1 wire: the new ``--n-molecules`` CLI flag
+    (default 1) must be parseable via ``build_argparser().parse_args``
+    AND must thread through ``_run_cell`` (captured via the
+    ``_solve_baseline`` capture point — same pattern as the Phase-4
+    sampled-molecules test).
+
+    The stub adapter inherits the v1 placeholder's
+    ``build_initial_state`` / ``solve_ode`` surface and adds an
+    ``export_sampled_molecules`` method. ``_solve_baseline`` and
+    ``_solve_framework`` are stubbed to record the kwargs they
+    receive.
+    """
+    tools = _import_tools_module()
+    # 1. CLI flag must parse (default 1).
+    args_default = tools.build_argparser().parse_args(
+        ["--model", "flowmol3", "--seeds", "42", "--nfe-budgets", "10",
+         "--output", "/tmp/_wave74_f1_default.json"],
+    )
+    assert int(args_default.n_molecules) == 1, (
+        f"--n-molecules default must be 1, got "
+        f"{int(args_default.n_molecules)!r}"
+    )
+    # 2. CLI flag must accept --n-molecules 4.
+    args_explicit = tools.build_argparser().parse_args(
+        ["--model", "flowmol3", "--seeds", "42", "--nfe-budgets", "10",
+         "--output", "/tmp/_wave74_f1_explicit.json", "--n-molecules", "4"],
+    )
+    assert int(args_explicit.n_molecules) == 4
+    # 3. Negative value rejected at argparse cast — argparse accepts
+    # any int but the value-validation guard is in ``main()``, not
+    # argparse. Verify the type is accepted by argparse and that the
+    # value is preserved (the runtime guard runs in main()).
+    args_zero = tools.build_argparser().parse_args(
+        ["--model", "flowmol3", "--seeds", "42", "--nfe-budgets", "10",
+         "--output", "/tmp/_wave74_f1_zero.json", "--n-molecules", "0"],
+    )
+    assert int(args_zero.n_molecules) == 0, (
+        "argparse must preserve the raw value; runtime guard in main() "
+        "rejects 0 with the 'must be >= 1' error"
+    )
+    # 4. _run_cell must thread n_molecules to _solve_baseline +
+    # _solve_framework. Stub the inner chain so the test only exercises
+    # the wire.
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic")
+    # attach the new export method the v1 placeholder does NOT ship
+    def _stub_export(self: Any, trace: Any) -> tuple[list[Any], dict[str, Any]]:
+        return [object(), object()], {"marker": "ok", "sanitize_status": "ok"}
+
+    adapter.export_sampled_molecules = _stub_export.__get__(  # type: ignore[method-assign]
+        adapter, type(adapter),
+    )
+    captured_baseline: dict[str, Any] = {}
+    captured_framework: dict[str, Any] = {}
+    captured_compute: dict[str, Any] = {}
+
+    original_resolve = tools._resolve_adapter
+    original_solve_baseline = tools._solve_baseline
+    original_solve_framework = tools._solve_framework
+    original_compute_metric = tools._compute_metric
+    original_compute_flowmol3 = tools._compute_flowmol3_composite
+
+    def _stub_resolve(
+        model: str, force_mode: str = "synthetic",
+        restart_min_nfe: int | None = None,
+        nfe_budget: int | None = None,
+        n_molecules: int = 1,
+    ) -> tuple[Any, str]:
+        return adapter, "synthetic"
+
+    def _stub_solve_baseline(*args: Any, **kwargs: Any) -> tuple[Any, float]:
+        captured_baseline.update(kwargs)
+        return _make_placeholder_trace(adapter), 0.0
+
+    def _stub_solve_framework(*args: Any, **kwargs: Any) -> tuple[Any, float]:
+        captured_framework.update(kwargs)
+        return _make_placeholder_trace(adapter), 0.0
+
+    def _stub_compute_metric(*args: Any, **kwargs: Any) -> tuple[Any, str, dict[str, Any]]:
+        return 1.0, "synthetic_fallback", {"value": 1.0}
+
+    def _capturing_compute(**kwargs: Any) -> tuple[float | None, str, dict[str, Any]]:
+        captured_compute.update(kwargs)
+        return 0.0, "computed", {"chemistry_input_source": "neutral_zero_stub"}
+
+    tools._resolve_adapter = _stub_resolve  # type: ignore[assignment]
+    tools._solve_baseline = _stub_solve_baseline  # type: ignore[assignment]
+    tools._solve_framework = _stub_solve_framework  # type: ignore[assignment]
+    tools._compute_metric = _stub_compute_metric  # type: ignore[assignment]
+    tools._compute_flowmol3_composite = _capturing_compute  # type: ignore[assignment]
+    try:
+        cell = tools._run_cell(
+            model="flowmol3",
+            seed=42,
+            nfe=10,
+            n_rounds=3,
+            force_mode="synthetic",
+            metric_mode="synthetic",
+            composite_metric="real",
+            n_molecules=4,
+        )
+    finally:
+        tools._resolve_adapter = original_resolve  # type: ignore[assignment]
+        tools._solve_baseline = original_solve_baseline  # type: ignore[assignment]
+        tools._solve_framework = original_solve_framework  # type: ignore[assignment]
+        tools._compute_metric = original_compute_metric  # type: ignore[assignment]
+        tools._compute_flowmol3_composite = original_compute_flowmol3  # type: ignore[assignment]
+    # ``_solve_baseline`` MUST have received ``n_molecules=4``.
+    assert int(captured_baseline.get("n_molecules", -1)) == 4, (
+        f"_solve_baseline did NOT receive n_molecules=4; got "
+        f"{int(captured_baseline.get('n_molecules', -1))!r}"
+    )
+    # ``_solve_framework`` MUST have received ``n_molecules=4``.
+    assert int(captured_framework.get("n_molecules", -1)) == 4, (
+        f"_solve_framework did NOT receive n_molecules=4; got "
+        f"{int(captured_framework.get('n_molecules', -1))!r}"
+    )
+    # ``sampled_molecules`` must still flow into the composite call
+    # (the Wave 70 wire is intact).
+    assert captured_compute.get("sampled_molecules") is not None
+    # And the cell dict carries composite_marker='computed'.
+    assert cell.get("composite_marker") == "computed"
+
+
 def test_resolve_adapter_no_weights_path_for_synthetic_mode() -> None:
     """Synthetic mode + unrelated models keep the pre-Wave-73 call shape.
 

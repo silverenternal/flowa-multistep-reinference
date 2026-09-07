@@ -687,6 +687,104 @@ class TestFlowMol3V2ExportSampledMolecules:
 
 
 # ---------------------------------------------------------------------------
+# Wave 74 F1 — multi-molecule cells (``n_molecules`` kwarg).
+#
+# Interface-first contract:
+# * ``n_molecules=1`` (default) preserves the legacy single-molecule
+#   trajectory shape — D.4 byte-stability.
+# * ``n_molecules>1`` triggers the synthetic batch path (or upstream
+#   batch path when ``use_upstream=True``); the cached entry carries
+#   ``traj_x_batch`` / ``traj_c_batch`` / ``traj_e_batch`` /
+#   ``traj_a_batch`` of shape ``(n_molecules, num_steps+1, n, ...)``
+#   plus ``n_molecules`` integer key.
+# ---------------------------------------------------------------------------
+
+
+class TestFlowMol3V2NMoleculesBatch:
+    """``solve_ode(..., n_molecules=N)`` returns batched lineage for N>1."""
+
+    def test_v2_supports_n_molecules_kwarg(
+        self, adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
+    ) -> None:
+        """n_molecules=4 returns 4 molecules via ``export_sampled_molecules``."""
+        cond = _make_condition_delta(num_steps=3)
+        trace = adapter.solve_ode(
+            initial_bundle, cond, seed=42, n_molecules=4,
+        )
+        mols, meta = adapter.export_sampled_molecules(trace)
+        assert isinstance(mols, list)
+        assert len(mols) == 4
+        for mol in mols:
+            assert hasattr(mol, "GetNumAtoms")
+            assert hasattr(mol, "GetNumBonds")
+            assert int(mol.GetNumAtoms()) > 0
+        assert isinstance(meta, Mapping)
+        assert meta.get("marker") in ("ok_batch", "ok_partial_batch", "ok")
+        assert int(meta.get("n_molecules", -1)) == 4
+
+    def test_v2_n_molecules_aggregates_composite(
+        self, adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
+    ) -> None:
+        """Mean (not median) aggregation across the n_molecules batch.
+
+        The glue's ``compute_chemistry_metrics`` consumes the list and
+        the upstream ``SampleAnalyzer.analyze`` aggregates over the
+        batch internally. We verify that ``export_sampled_molecules``
+        returns the full N-molecule list (not collapsed) so the
+        downstream consumer can aggregate freely.
+
+        Note on aggregation choice: the F1 plan uses **mean** over
+        molecules per cell (rather than median). Justification: the
+        chemistry axes ``frac_valid_mols`` / ``frac_mols_stable_valence``
+        are themselves expected values of the per-mol Bernoulli
+        indicators (sample-mean across molecules), so taking the
+        per-cell mean aligns with the upstream ``SampleAnalyzer``
+        semantics. Median would discard information for n<10 and
+        bias against the very small n range where the F1 win matters
+        most (cutting the ±0.6 spread to ±0.2 at n=10 requires using
+        the sample-mean estimator, not a robust median).
+        """
+        cond = _make_condition_delta(num_steps=3)
+        trace = adapter.solve_ode(
+            initial_bundle, cond, seed=42, n_molecules=5,
+        )
+        mols, meta = adapter.export_sampled_molecules(trace)
+        assert len(mols) == 5
+        # Mean aggregation: every mol contributes equally. We verify
+        # the contract that the list is NOT collapsed to length 1
+        # (which would be the median-style "representative" output).
+        assert sum(1 for m in mols if m is not None) == 5
+
+    def test_v2_n_molecules_default_1_preserves_byte_stability(
+        self, adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
+    ) -> None:
+        """D.4 byte-stability: ``n_molecules=1`` produces the legacy trajectory shape.
+
+        Locks in the byte-stable contract: when ``n_molecules=1`` (the
+        default) the cached entry uses ``traj_x`` / ``traj_c`` /
+        ``traj_e`` / ``traj_a`` (NOT the ``*_batch`` keys) and the
+        output length is 1 molecule. ``export_sampled_molecules``
+        returns ``marker='ok'`` (or ``'ok_partial'`` for synthetic data).
+        """
+        cond = _make_condition_delta(num_steps=5)
+        # Default n_molecules.
+        trace = adapter.solve_ode(initial_bundle, cond, seed=42)
+        mols, meta = adapter.export_sampled_molecules(trace)
+        assert len(mols) == 1
+        assert meta.get("marker") in ("ok", "ok_partial")
+        # Explicit n_molecules=1 — must be identical to default.
+        trace_explicit = adapter.solve_ode(
+            initial_bundle, cond, seed=42, n_molecules=1,
+        )
+        assert (
+            trace_explicit.native_state_digest == trace.native_state_digest
+        ), (
+            "Explicit n_molecules=1 must produce the same digest as "
+            "the default (D.4 byte-stability)."
+        )
+
+
+# ---------------------------------------------------------------------------
 # Wave 68 Phase 3 — :meth:`FlowMol3V2Adapter.observe` closes the Wave 66
 # v2 wire gap (``adapter_missing_observe_entropy_reduction`` BLOCKED).
 # ---------------------------------------------------------------------------

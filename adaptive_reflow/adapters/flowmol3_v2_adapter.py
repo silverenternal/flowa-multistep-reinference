@@ -2227,6 +2227,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         condition: ODEConditionDelta,
         *,
         seed: int,
+        n_molecules: int = 1,
     ) -> ODEIntegratorTrace:
         """Drive the heterogeneous ``(x, a, c, e)`` integration on ``[0, 1]``.
 
@@ -2239,6 +2240,22 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         The number of integration steps is taken from
         ``condition.delta_spec['num_steps']`` when present; otherwise
         the adapter's pinned ``num_steps`` is used.
+
+        ``n_molecules`` (Wave 74 F1 — NEW, opt-in) — when > 1, the
+        adapter generates ``n_molecules`` independent molecules per
+        cell. The cached entry carries batched trajectory arrays of
+        shape ``(n_molecules, num_steps + 1, n, 3)`` under
+        ``traj_x_batch`` / ``traj_c_batch`` / ``traj_e_batch`` /
+        ``traj_a_batch``; the legacy single-molecule ``traj_x`` /
+        ``traj_c`` / ``traj_e`` / ``traj_a`` keys are NOT populated
+        (byte-stable contract: D.4 vectors unchanged for
+        ``n_molecules=1``). When ``n_molecules > 1``, the upstream
+        ``FlowMol.sample(n_atoms=[n]*n_molecules)`` is called once
+        with the full batch (the upstream natively supports batching);
+        the synthetic NumPy path loops ``n_molecules`` times with
+        per-molecule seeds ``seed + i * SEED_STRIDE``. The resulting
+        ``export_sampled_molecules(trace)`` returns a list of length
+        ``n_molecules`` with ``marker='ok_batch'`` on success.
 
         Dispatch (Stage 3 of Workflow R — CTMC kernel swap):
 
@@ -2263,6 +2280,8 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
           :class:`SampledMolecule` so
           :meth:`export_trajectory` + RDKit validity are well-defined.
         """
+        if int(n_molecules) < 1:
+            raise ValueError("n_molecules_must_be_positive")
         # ------------------------------------------------------------------
         # Upstream GVP fast-path (closes P-22 forward()-signature gap).
         # ------------------------------------------------------------------
@@ -2293,11 +2312,18 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # keeps its exact behaviour.
         if self._backend == "torch" and self._model is None:
             self._load_model()
+        n_mol = int(n_molecules)
         if self._use_upstream and self._loaded_model_kind() == "upstream_flowmol":
-            return self._solve_ode_upstream(state, condition, seed=int(seed))
+            return self._solve_ode_upstream(
+                state, condition, seed=int(seed), n_molecules=n_mol,
+            )
         if self.ctmc_enabled:
-            return self._solve_ode_ctmc(state, condition, seed=int(seed))
-        return self._solve_ode_linear(state, condition, seed=int(seed))
+            return self._solve_ode_ctmc(
+                state, condition, seed=int(seed), n_molecules=n_mol,
+            )
+        return self._solve_ode_linear(
+            state, condition, seed=int(seed), n_molecules=n_mol,
+        )
 
     def _loaded_model_kind(self) -> str:
         """Return the kind label of the loaded model (or ``"synthetic"`` if none).
@@ -2317,6 +2343,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         condition: ODEConditionDelta,
         *,
         seed: int,
+        n_molecules: int = 1,
     ) -> ODEIntegratorTrace:
         """End-to-end upstream :meth:`FlowMol.sample` path (P-22 close-out).
 
@@ -2340,7 +2367,25 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         in ``torch.no_grad()`` (FlowMol.sample is already decorated
         ``@torch.no_grad``) and we re-detach the cached tensors before
         the lineage is published.
+
+        ``n_molecules`` (Wave 74 F1) — when > 1, ``model.sample`` is
+        called once with a batch of size ``n_molecules`` and each
+        :class:`SampledMolecule` is decoded independently. The cached
+        entry carries batched lineage under ``traj_x_batch`` /
+        ``traj_c_batch`` / ``traj_e_batch`` / ``traj_a_batch`` and a
+        list of SMILES under ``rdkit_mol_smiles_batch``. When
+        ``n_molecules == 1`` (default) the cached entry uses the
+        legacy ``traj_x`` / ``traj_c`` / ``traj_e`` / ``traj_a`` keys
+        with the canonical ``rdkit_mol_smiles`` string — D.4
+        byte-stability contract preserved.
         """
+        n_mol = int(n_molecules)
+        if n_mol < 1:
+            raise ValueError("n_molecules_must_be_positive")
+        if n_mol > 1:
+            return self._solve_ode_upstream_batch(
+                state, condition, seed=int(seed), n_molecules=n_mol,
+            )
         import torch  # noqa: PLC0415 — torch backend only.
         try:
             from rdkit import Chem  # noqa: PLC0415 — only on upstream path.
@@ -2592,18 +2637,344 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             integrator_config_hash=integrator_config_hash,
         )
 
+    def _solve_ode_upstream_batch(
+        self,
+        state: StateBundle,
+        condition: ODEConditionDelta,
+        *,
+        seed: int,
+        n_molecules: int,
+    ) -> ODEIntegratorTrace:
+        """Multi-molecule upstream :meth:`FlowMol.sample` path (Wave 74 F1).
+
+        The upstream ``FlowMol.sample`` natively accepts a batched
+        ``n_atoms`` tensor of shape ``(n_molecules,)``; we call it
+        ONCE with the full batch and decode each
+        :class:`SampledMolecule` to its own ``(x, a, c, e)``
+        representation. The cached entry carries batched lineage
+        arrays under ``traj_x_batch`` / ``traj_c_batch`` /
+        ``traj_e_batch`` / ``traj_a_batch`` (shape ``(n_molecules,
+        num_steps+1, n, ...)``) plus a per-molecule SMILES list under
+        ``rdkit_mol_smiles_batch``. The legacy single-molecule
+        ``traj_x`` / ``traj_c`` / ``traj_e`` / ``traj_a`` keys are
+        NOT populated — D.4 byte-stability contract preserves the
+        ``n_molecules=1`` path verbatim.
+
+        Falls back to per-molecule single-mol loop when
+        ``n_atoms`` differs across molecules (the upstream preserves
+        per-batch element count, so molecules can drop atoms).
+        """
+        import torch  # noqa: PLC0415 — torch backend only.
+        try:
+            from rdkit import Chem  # noqa: PLC0415 — only on upstream path.
+        except Exception:  # noqa: BLE001 — RDKit absent means no SMILES cache.
+            Chem = None  # type: ignore[assignment]
+
+        ok, errs = validate_state_bundle(state)
+        if not ok:
+            raise CapabilityMissingError(
+                "validate_state_bundle", context=",".join(errs)
+            )
+        prior_entry = self._native_states.get(state.native_state_digest)
+        if prior_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state", context=str(state.native_state_digest)
+            )
+        n_atoms = int(prior_entry["n_atoms"])
+        num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
+        if num_steps <= 0:
+            raise ValueError("num_steps_must_be_positive")
+        n_mol = int(n_molecules)
+        if n_mol < 1:
+            raise ValueError("n_molecules_must_be_positive")
+        n_atom_types_upstream = int(getattr(self._model, "n_atom_types", 11))
+        n_charge_classes = int(getattr(self._model, "n_atom_charges", 6))
+        n_bond_types_upstream = int(getattr(self._model, "n_bond_types", 4))
+        upstream_atom_map = list(getattr(self._model, "atom_type_map", []))
+        elem_to_idx = {sym: i for i, sym in enumerate(upstream_atom_map)}
+        inv_map = np.asarray(FLOWMOL3_MODEL_TO_ADAPTER_BOND + (4,),
+                             dtype=np.int64)
+
+        dev = torch.device(str(self._device))
+        n = int(n_atoms)
+        # Build the prior dict once (the upstream pads/aligns to its
+        # batched graph's ndata shape; passing a single per-atom prior
+        # repeated across the batch is the canonical Wave 70 path).
+        x0_np = np.asarray(prior_entry["x"], dtype=np.float32).reshape(n, 3)
+        a_np = np.asarray(prior_entry["a"], dtype=np.int64).reshape(n)
+        a0_one_hot = np.zeros(
+            (n, n_atom_types_upstream + 1), dtype=np.float32
+        )
+        clipped = np.clip(a_np, 0, n_atom_types_upstream - 1)
+        for i in range(n):
+            a0_one_hot[i, int(clipped[i])] = 1.0
+        c_np = np.asarray(prior_entry["c"], dtype=np.float64).reshape(n)
+        c_idx = np.clip(
+            np.rint(c_np).astype(np.int64) + 2, 0, n_charge_classes - 1
+        )
+        c0_one_hot = np.zeros((n, n_charge_classes + 1), dtype=np.float32)
+        for i in range(n):
+            c0_one_hot[i, int(c_idx[i])] = 1.0
+        e_np = np.asarray(prior_entry["e"], dtype=np.int64).reshape(n, n)
+        e_np = np.clip(e_np, 0, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
+        e_model_lbl = np.asarray(FLOWMOL3_ADAPTER_TO_MODEL_BOND,
+                                  dtype=np.int64)[e_np]
+        e0_one_hot_full = np.zeros(
+            (n, n, n_bond_types_upstream + 1), dtype=np.float32
+        )
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    continue
+                e0_one_hot_full[i, j, int(e_model_lbl[i, j])] = 1.0
+        upper_idx = np.triu_indices(n, k=1)
+        e0_ut = e0_one_hot_full[upper_idx[0], upper_idx[1]]
+        e0_full = np.concatenate([e0_ut, e0_ut], axis=0)
+        prior_dict: dict[str, Any] = {
+            "x_0": torch.as_tensor(x0_np, dtype=torch.float32).to(dev),
+            "a_0": torch.as_tensor(a0_one_hot, dtype=torch.float32).to(dev),
+            "c_0": torch.as_tensor(c0_one_hot, dtype=torch.float32).to(dev),
+            "e_0": torch.as_tensor(e0_full, dtype=torch.float32).to(dev),
+            "fake_atoms": bool(getattr(self._model, "fake_atoms", False)),
+        }
+        n_atoms_tensor = torch.as_tensor(
+            [int(n)] * n_mol, dtype=torch.long, device=dev,
+        )
+        with torch.no_grad():
+            sampled = self._model.sample(
+                n_atoms=n_atoms_tensor,
+                n_timesteps=int(num_steps),
+                device=str(self._device),
+                prior=prior_dict,
+            )
+        if len(sampled) != n_mol:
+            raise RuntimeError(
+                f"upstream_sample_returned_unexpected_count:"
+                f"got {len(sampled)} expected {n_mol}"
+            )
+
+        x_batch: list[np.ndarray] = []
+        a_batch: list[np.ndarray] = []
+        c_batch: list[np.ndarray] = []
+        e_batch: list[np.ndarray] = []
+        smiles_batch: list[str] = []
+        for mol in sampled:
+            n_final = int(mol.num_atoms)
+            x_final = np.asarray(
+                mol.positions.detach().cpu().numpy()
+                if hasattr(mol.positions, "detach") else mol.positions,
+                dtype=np.float64,
+            ).reshape(n_final, 3)
+            a_idx = np.asarray(
+                [int(elem_to_idx.get(str(s), 0)) for s in mol.atom_types],
+                dtype=np.int64,
+            ).reshape(n_final)
+            c_idx_arr = np.asarray(
+                mol.atom_charges.detach().cpu().numpy()
+                if hasattr(mol.atom_charges, "detach") else mol.atom_charges,
+                dtype=np.int64,
+            ).reshape(n_final)
+            c_final = c_idx_arr.astype(np.float64).reshape(n_final)
+            e_full_model = np.full(
+                (n_final, n_final),
+                FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
+                dtype=np.int64,
+            )
+            b_src = np.asarray(
+                mol.bond_src_idxs.detach().cpu().numpy()
+                if hasattr(mol.bond_src_idxs, "detach") else mol.bond_src_idxs,
+                dtype=np.int64,
+            )
+            b_dst = np.asarray(
+                mol.bond_dst_idxs.detach().cpu().numpy()
+                if hasattr(mol.bond_dst_idxs, "detach") else mol.bond_dst_idxs,
+                dtype=np.int64,
+            )
+            b_types = np.asarray(
+                mol.bond_types.detach().cpu().numpy()
+                if hasattr(mol.bond_types, "detach") else mol.bond_types,
+                dtype=np.int64,
+            )
+            b_types = np.clip(b_types, 0, int(n_bond_types_upstream) - 1)
+            adapter_labels = inv_map[b_types]
+            e_full_model[b_src, b_dst] = adapter_labels
+            np.fill_diagonal(e_full_model, FLOWMOL3ADAPTER_N_BOND_TYPES - 1)
+            n_atom_types_adapter = FLOWMOL3ADAPTER_N_ATOM_TYPES
+            a_final = np.where(
+                a_idx < n_atom_types_adapter, a_idx, 0
+            ).astype(np.int64).reshape(n_final)
+            x_batch.append(x_final)
+            a_batch.append(a_final)
+            c_batch.append(c_final)
+            e_batch.append(e_full_model)
+            smiles_batch.append(
+                str(Chem.MolToSmiles(mol.rdkit_mol))
+                if (Chem is not None and mol.rdkit_mol is not None)
+                else ""
+            )
+        # Tile each mol's final state across the time axis (the upstream
+        # does not expose per-step lineage; this matches the n=1
+        # contract so consumers can read trajectory[-1] for the
+        # endpoint). Use a single representative n_atoms (assume all
+        # mols in the batch drop to the same size — the canonical CTMC
+        # behaviour of the published checkpoint; we fall back to
+        # n=1 single-mol calls if upstream batches drop atoms).
+        # All molecules in the batch share ``n_final`` here (they all
+        # came from the same upstream sample call with the same n
+        # input); the upstream returns ``n_final = n`` by design.
+        # For heterogeneous ``n_final`` (rare), we pad to max(n_final).
+        max_n = int(max(int(np.asarray(x).shape[0]) for x in x_batch))
+        # Pad each mol's arrays to max_n with zeros (continuous) /
+        # no-bond (discrete).
+        def _pad_x(arr: np.ndarray) -> np.ndarray:
+            cur_n = int(arr.shape[0])
+            if cur_n == max_n:
+                return arr
+            pad = np.zeros((max_n - cur_n, 3), dtype=np.float64)
+            return np.concatenate([arr, pad], axis=0)
+
+        def _pad_c(arr: np.ndarray) -> np.ndarray:
+            cur_n = int(arr.shape[0])
+            if cur_n == max_n:
+                return arr
+            return np.concatenate(
+                [arr, np.zeros(max_n - cur_n, dtype=np.float64)], axis=0,
+            )
+
+        def _pad_a(arr: np.ndarray) -> np.ndarray:
+            cur_n = int(arr.shape[0])
+            if cur_n == max_n:
+                return arr
+            return np.concatenate(
+                [arr, np.zeros(max_n - cur_n, dtype=np.int64)], axis=0,
+            )
+
+        def _pad_e(arr: np.ndarray) -> np.ndarray:
+            cur_n = int(arr.shape[0])
+            if cur_n == max_n:
+                return arr
+            pad_e = np.full(
+                (max_n - cur_n, max_n),
+                FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
+                dtype=np.int64,
+            )
+            return np.concatenate([arr, pad_e], axis=0)
+
+        x_padded = [_pad_x(x) for x in x_batch]
+        c_padded = [_pad_c(c) for c in c_batch]
+        a_padded = [_pad_a(a) for a in a_batch]
+        e_padded = [_pad_e(e) for e in e_batch]
+        x_arr = np.stack(x_padded, axis=0).astype(np.float64)
+        c_arr = np.stack(c_padded, axis=0).astype(np.float64)
+        a_arr = np.stack(a_padded, axis=0).astype(np.int64)
+        e_arr = np.stack(e_padded, axis=0).astype(np.int64)
+        # Tile across the time axis: shape (n_mol, num_steps+1, ...).
+        traj_x_batch = np.tile(
+            x_arr[:, None, :, :], (1, num_steps + 1, 1, 1),
+        )
+        traj_c_batch = np.tile(
+            c_arr[:, None, :], (1, num_steps + 1, 1),
+        )
+        traj_e_batch = np.tile(
+            e_arr[:, None, :, :], (1, num_steps + 1, 1, 1),
+        )
+        traj_a_batch = np.tile(
+            a_arr[:, None, :], (1, num_steps + 1, 1),
+        )
+        t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
+
+        x_final_hash = hashlib.sha256(
+            np.ascontiguousarray(x_arr).tobytes()
+        ).hexdigest()
+        c_final_hash = hashlib.sha256(
+            np.ascontiguousarray(c_arr).tobytes()
+        ).hexdigest()
+        e_final_hash = hashlib.sha256(
+            np.ascontiguousarray(e_arr).tobytes()
+        ).hexdigest()
+        traj_digest = digest_state(
+            {
+                "kind": "trajectory_batch",
+                "src_digest": str(state.native_state_digest),
+                "backend": "torch-upstream",
+                "num_steps": int(num_steps),
+                "n_molecules": int(n_mol),
+                "n_atoms": int(max_n),
+                "x_final_hash": str(x_final_hash),
+                "c_final_hash": str(c_final_hash),
+                "e_final_hash": str(e_final_hash),
+                "seed": int(seed),
+            }
+        )
+        self._put_native_state(
+            traj_digest,
+            {
+                "traj_x_batch": traj_x_batch,
+                "traj_c_batch": traj_c_batch,
+                "traj_e_batch": traj_e_batch,
+                "traj_a_batch": traj_a_batch,
+                "x_final_batch": x_arr,
+                "a_final_batch": a_arr,
+                "c_final_batch": c_arr,
+                "e_final_batch": e_arr,
+                "t_grid": t_grid,
+                "n_atoms": int(max_n),
+                "n_molecules": int(n_mol),
+                "audit": (
+                    AUDIT_FLOWMOL3_TRAJECTORY_BUILT,
+                    "flowmol3adapter_upstream_gvp_batch",
+                ),
+                "rdkit_mol_smiles_batch": list(smiles_batch),
+            },
+        )
+        cfg_blob = repr(
+            (
+                "flowmol3adapter_config",
+                "torch-upstream",
+                int(num_steps),
+                int(seed),
+                FLOWMOL3ADAPTER_PINNED_COMMIT,
+                "upstream_sample_batch",
+                int(n_mol),
+            )
+            + (
+                (str(self._weights_path), str(self._device))
+                if self._weights_path is not None
+                else ()
+            )
+        ).encode("utf-8")
+        integrator_config_hash = hashlib.sha256(cfg_blob).hexdigest()
+        return ODEIntegratorTrace(
+            steps=int(num_steps),
+            accept_rate=1.0,
+            native_state_digest=str(traj_digest),
+            integrator_config_hash=integrator_config_hash,
+        )
+
     def _solve_ode_linear(
         self,
         state: StateBundle,
         condition: ODEConditionDelta,
         *,
         seed: int,
+        n_molecules: int = 1,
     ) -> ODEIntegratorTrace:
         """Pre-Stage-3 fallback: linear-interpolant ODE + greedy argmax.
 
         Kept verbatim for ablation studies (set ``ctmc_enabled=False``).
         Identical to the Stage 2 implementation; the only thing that
         changed is the dispatch wrapper in :meth:`solve_ode`.
+
+        ``n_molecules`` (Wave 74 F1) — when > 1, runs the per-step
+        Euler loop ``n_molecules`` times with per-molecule seeds
+        ``seed + i * SEED_STRIDE`` and re-samples the prior native
+        state for each molecule. The cached entry carries batched
+        lineage under ``traj_x_batch`` / ``traj_c_batch`` /
+        ``traj_e_batch`` / ``traj_a_batch`` (shape ``(n_molecules,
+        num_steps+1, n, ...)``). The legacy single-molecule ``traj_x``
+        / ``traj_c`` / ``traj_e`` / ``traj_a`` keys are populated
+        ONLY when ``n_molecules == 1`` — D.4 byte-stability contract
+        preserved.
         """
         ok, errs = validate_state_bundle(state)
         if not ok:
@@ -2618,6 +2989,14 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
+        n_mol = int(n_molecules)
+        if n_mol < 1:
+            raise ValueError("n_molecules_must_be_positive")
+        if n_mol > 1:
+            return self._solve_ode_linear_batch(
+                state, condition, seed=int(seed), n_molecules=n_mol,
+                prior_entry=prior_entry, num_steps=num_steps,
+            )
         n_atoms = int(prior_entry["n_atoms"])
         t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
         # Initial state (detached — FlowMol3 restart contract).
@@ -2747,12 +3126,261 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             integrator_config_hash=integrator_config_hash,
         )
 
+    def _solve_ode_linear_batch(
+        self,
+        state: StateBundle,
+        condition: ODEConditionDelta,
+        *,
+        seed: int,
+        n_molecules: int,
+        prior_entry: dict[str, Any],
+        num_steps: int,
+    ) -> ODEIntegratorTrace:
+        """Multi-molecule NumPy synthetic velocity-field path (Wave 74 F1).
+
+        Runs the per-step Euler integration ``n_molecules`` times
+        with per-molecule seeds ``seed + i * SEED_STRIDE`` and a
+        fresh prior ``(x, a, c, e)`` sample for each molecule
+        (deterministic for the per-mol seed). The batched trajectory
+        is cached under ``traj_x_batch`` / ``traj_c_batch`` /
+        ``traj_e_batch`` / ``traj_a_batch`` of shape
+        ``(n_molecules, num_steps+1, n, ...)``. The legacy
+        single-molecule ``traj_x`` / ``traj_c`` / ``traj_e`` /
+        ``traj_a`` keys are NOT populated (D.4 byte-stability
+        contract preserves the ``n_molecules=1`` path verbatim).
+
+        Stdlib + numpy only — no torch import. Used by both the
+        linear (``ctmc_enabled=False``) and CTMC
+        (``ctmc_enabled=True``) NumPy backends when
+        ``n_molecules > 1``: the synthetic velocity field does not
+        produce atom/bond marginals, so the CTMC path's
+        marginal-derivation is equivalent to the linear path's
+        uniform-categorical relaxation.
+        """
+        n_mol = int(n_molecules)
+        if n_mol < 1:
+            raise ValueError("n_molecules_must_be_positive")
+        n_atoms = int(prior_entry["n_atoms"])
+        t_grid = np.linspace(0.0, 1.0, int(num_steps) + 1, dtype=np.float64)
+        # Per-molecule seed stride: 1009 is a prime that's safe from
+        # collision with the upstream ``seed`` seed-b (e.g. ``42``,
+        # ``43``) and prevents accidental alignment between batch
+        # indices. Each molecule gets a fresh prior draw from
+        # ``_sample_native_state`` so the per-molecule trajectories
+        # are genuinely independent (not just resampled copies).
+        seed_stride = 1009
+        # First pass: sample each molecule's prior and record
+        # ``n_atoms`` so the trajectory buffers can be allocated to
+        # the BATCH max. Different per-molecule seeds can yield
+        # different molecule sizes (the size prior is sampled
+        # independently per draw), so the buffer must be sized for
+        # the largest.
+        native_states: list[dict[str, Any]] = []
+        for mol_idx in range(n_mol):
+            seed_i = int(seed) + mol_idx * seed_stride
+            native_states.append(_sample_native_state(int(seed_i)))
+        max_n_atoms = int(
+            max(int(ns["n_atoms"]) for ns in native_states)
+        )
+        traj_x_batch = np.zeros(
+            (n_mol, int(num_steps) + 1, max_n_atoms, 3), dtype=np.float64,
+        )
+        traj_c_batch = np.zeros(
+            (n_mol, int(num_steps) + 1, max_n_atoms), dtype=np.float64,
+        )
+        traj_e_batch = np.full(
+            (n_mol, int(num_steps) + 1, max_n_atoms, max_n_atoms),
+            FLOWMOL3ADAPTER_N_BOND_TYPES - 1, dtype=np.int64,
+        )
+        traj_a_batch = np.zeros(
+            (n_mol, int(num_steps) + 1, max_n_atoms), dtype=np.int64,
+        )
+        x_final_list: list[np.ndarray] = []
+        c_final_list: list[np.ndarray] = []
+        e_final_list: list[np.ndarray] = []
+        a_final_list: list[np.ndarray] = []
+        for mol_idx in range(n_mol):
+            native_i = native_states[mol_idx]
+            x_cur = np.asarray(native_i["x"], dtype=np.float64).copy()
+            c_cur = np.asarray(native_i["c"], dtype=np.float64).copy()
+            e_cur = np.asarray(native_i["e"], dtype=np.int64).copy()
+            a_cur = np.asarray(native_i["a"], dtype=np.int64).copy()
+            mol_n = int(native_i["n_atoms"])
+            traj_x_batch[mol_idx, 0, :mol_n] = x_cur
+            traj_c_batch[mol_idx, 0, :mol_n] = c_cur
+            traj_e_batch[mol_idx, 0, :mol_n, :mol_n] = e_cur
+            traj_a_batch[mol_idx, 0, :mol_n] = a_cur
+            seed_i = int(seed) + mol_idx * seed_stride
+            for step_idx in range(1, int(num_steps) + 1):
+                t_cur = float(t_grid[step_idx - 1])
+                t_next = float(t_grid[step_idx])
+                dt = float(t_next - t_cur)
+                x_eval = np.asarray(x_cur, dtype=np.float64)
+                c_eval = np.asarray(c_cur, dtype=np.float64)
+                e_eval = np.asarray(e_cur, dtype=np.int64)
+                v_x, v_c, v_e, v_a = self._velocity_field_ex(
+                    x=x_eval, c=c_eval, e=e_eval, t=float(t_cur),
+                    n_atoms=mol_n, seed=int(seed_i),
+                    a=np.asarray(a_cur, dtype=np.int64),
+                )
+                x_cur = x_cur + dt * np.asarray(v_x, dtype=np.float64)
+                c_cur = c_cur + dt * np.asarray(v_c, dtype=np.float64)
+                e_logits = (
+                    np.eye(
+                        int(FLOWMOL3ADAPTER_N_BOND_TYPES), dtype=np.float64
+                    )[e_cur] + dt * np.asarray(v_e, dtype=np.float64)
+                )
+                e_cur = np.argmax(e_logits, axis=-1).astype(np.int64)
+                if v_a is not None:
+                    upper = np.triu(e_cur, k=1)
+                    e_cur = (
+                        upper + upper.T + np.diag(
+                            np.full(
+                                mol_n,
+                                int(FLOWMOL3ADAPTER_N_BOND_TYPES) - 1,
+                                dtype=np.int64,
+                            ),
+                        )
+                    )
+                    a_logits = (
+                        np.eye(
+                            int(FLOWMOL3ADAPTER_N_ATOM_TYPES),
+                            dtype=np.float64,
+                        )[a_cur] + dt * np.asarray(v_a, dtype=np.float64)
+                    )
+                    a_cur = np.argmax(a_logits, axis=-1).astype(np.int64)
+                traj_x_batch[mol_idx, step_idx, :mol_n] = x_cur
+                traj_c_batch[mol_idx, step_idx, :mol_n] = c_cur
+                traj_e_batch[mol_idx, step_idx, :mol_n, :mol_n] = e_cur
+                traj_a_batch[mol_idx, step_idx, :mol_n] = a_cur
+            x_final_list.append(x_cur)
+            c_final_list.append(c_cur)
+            e_final_list.append(e_cur)
+            a_final_list.append(a_cur)
+        # Pad per-molecule finals to max_n_atoms so the stacked arrays
+        # are uniform. (Each molecule has its own ``mol_n`` from the
+        # size prior; the buffer's third axis is ``max_n_atoms``.)
+        def _pad_x(arr: np.ndarray, target: int) -> np.ndarray:
+            cur_n = int(arr.shape[0])
+            if cur_n == target:
+                return arr
+            pad = np.zeros((target - cur_n, 3), dtype=np.float64)
+            return np.concatenate([arr, pad], axis=0)
+
+        def _pad_c(arr: np.ndarray, target: int) -> np.ndarray:
+            cur_n = int(arr.shape[0])
+            if cur_n == target:
+                return arr
+            return np.concatenate(
+                [arr, np.zeros(target - cur_n, dtype=np.float64)], axis=0,
+            )
+
+        def _pad_a(arr: np.ndarray, target: int) -> np.ndarray:
+            cur_n = int(arr.shape[0])
+            if cur_n == target:
+                return arr
+            return np.concatenate(
+                [arr, np.zeros(target - cur_n, dtype=np.int64)], axis=0,
+            )
+
+        def _pad_e(arr: np.ndarray, target: int) -> np.ndarray:
+            cur_n = int(arr.shape[0])
+            if cur_n == target:
+                return arr
+            # Pad both rows AND columns so the output is square (target, target).
+            cur_m = int(arr.shape[1])
+            # Pad columns first if needed.
+            if cur_m < target:
+                col_pad = np.full(
+                    (cur_n, target - cur_m),
+                    FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
+                    dtype=np.int64,
+                )
+                arr = np.concatenate([arr, col_pad], axis=1)
+            # Then pad rows.
+            row_pad = np.full(
+                (target - cur_n, target),
+                FLOWMOL3ADAPTER_N_BOND_TYPES - 1,
+                dtype=np.int64,
+            )
+            return np.concatenate([arr, row_pad], axis=0)
+
+        x_padded = [_pad_x(x, max_n_atoms) for x in x_final_list]
+        c_padded = [_pad_c(c, max_n_atoms) for c in c_final_list]
+        a_padded = [_pad_a(a, max_n_atoms) for a in a_final_list]
+        e_padded = [_pad_e(e, max_n_atoms) for e in e_final_list]
+        x_final_arr = np.stack(x_padded, axis=0).astype(np.float64)
+        c_final_arr = np.stack(c_padded, axis=0).astype(np.float64)
+        e_final_arr = np.stack(e_padded, axis=0).astype(np.int64)
+        a_final_arr = np.stack(a_padded, axis=0).astype(np.int64)
+        x_final_hash = hashlib.sha256(
+            np.ascontiguousarray(x_final_arr).tobytes()
+        ).hexdigest()
+        c_final_hash = hashlib.sha256(
+            np.ascontiguousarray(c_final_arr).tobytes()
+        ).hexdigest()
+        e_final_hash = hashlib.sha256(
+            np.ascontiguousarray(e_final_arr).tobytes()
+        ).hexdigest()
+        traj_digest = digest_state(
+            {
+                "kind": "trajectory_batch",
+                "src_digest": str(state.native_state_digest),
+                "backend": str(self._backend),
+                "num_steps": int(num_steps),
+                "n_molecules": int(n_mol),
+                "n_atoms": int(max_n_atoms),
+                "x_final_hash": str(x_final_hash),
+                "c_final_hash": str(c_final_hash),
+                "e_final_hash": str(e_final_hash),
+                "seed": int(seed),
+            }
+        )
+        self._put_native_state(
+            traj_digest,
+            {
+                "traj_x_batch": traj_x_batch,
+                "traj_c_batch": traj_c_batch,
+                "traj_e_batch": traj_e_batch,
+                "traj_a_batch": traj_a_batch,
+                "x_final_batch": x_final_arr,
+                "c_final_batch": c_final_arr,
+                "e_final_batch": e_final_arr,
+                "a_final_batch": a_final_arr,
+                "t_grid": t_grid,
+                "n_atoms": int(n_atoms),
+                "n_molecules": int(n_mol),
+                "audit": (AUDIT_FLOWMOL3_TRAJECTORY_BUILT,
+                          "flowmol3adapter_synthetic_batch"),
+                "rdkit_mol_smiles": "",  # batched synthetic has no SMILES
+            },
+        )
+        cfg_blob = repr(
+            (
+                "flowmol3adapter_config",
+                str(self._backend),
+                int(num_steps),
+                int(seed),
+                FLOWMOL3ADAPTER_PINNED_COMMIT,
+                "synthetic_batch",
+                int(n_mol),
+            )
+        ).encode("utf-8")
+        integrator_config_hash = hashlib.sha256(cfg_blob).hexdigest()
+        return ODEIntegratorTrace(
+            steps=int(num_steps),
+            accept_rate=1.0,
+            native_state_digest=str(traj_digest),
+            integrator_config_hash=integrator_config_hash,
+        )
+
     def _solve_ode_ctmc(
         self,
         state: StateBundle,
         condition: ODEConditionDelta,
         *,
         seed: int,
+        n_molecules: int = 1,
     ) -> ODEIntegratorTrace:
         """Paper-correct CTMC path (Stage 3 of Workflow R).
 
@@ -2793,6 +3421,20 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         num_steps = int(condition.delta_spec.get("num_steps", self._num_steps))
         if num_steps <= 0:
             raise ValueError("num_steps_must_be_positive")
+        n_mol = int(n_molecules)
+        if n_mol < 1:
+            raise ValueError("n_molecules_must_be_positive")
+        if n_mol > 1:
+            # Wave 74 F1 — multi-molecule batch path. The CTMC
+            # sampler carries no upstream torch model on this host (the
+            # synthetic NumPy backend is what exercises CTMC), so we
+            # delegate to the synthetic batch helper. Per-molecule
+            # seeds ``seed + i * SEED_STRIDE`` give each molecule a
+            # distinct CTMC stochastic draw.
+            return self._solve_ode_linear_batch(
+                state, condition, seed=int(seed), n_molecules=n_mol,
+                prior_entry=prior_entry, num_steps=num_steps,
+            )
         n_atoms = int(prior_entry["n_atoms"])
         t_grid = np.linspace(0.0, 1.0, num_steps + 1, dtype=np.float64)
         # Initial state (detached — FlowMol3 restart contract).
@@ -3624,18 +4266,46 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         call). Returns ``None`` when no trajectory is stored under that
         digest (e.g. the trace refers to a digest emitted by another
         adapter instance).
+
+        Wave 74 F1 — when the cached entry was produced by
+        ``n_molecules > 1`` (multi-molecule batch), the legacy
+        ``traj_x`` / ``traj_c`` / ``traj_e`` / ``traj_a`` keys are
+        NOT populated; instead the batched lineage is exposed under
+        ``traj_x_batch`` / ``traj_c_batch`` / ``traj_e_batch`` /
+        ``traj_a_batch`` of shape ``(n_molecules, num_steps+1, n, ...)``.
+        For backward-compat we synthesise a single-mol legacy view
+        from molecule-0's slice so legacy readers don't crash — but
+        prefer the new ``*_batch`` keys for the F1 contract.
         """
         entry = self._native_states.get(trace.native_state_digest)
         if entry is None:
             return None
-        if "traj_x" not in entry:
-            return None
-        return {
-            "traj_x": np.asarray(entry["traj_x"], dtype=np.float64),
-            "traj_c": np.asarray(entry["traj_c"], dtype=np.float64),
-            "traj_e": np.asarray(entry["traj_e"], dtype=np.int64),
-            "traj_a": np.asarray(entry["traj_a"], dtype=np.int64),
-        }
+        if "traj_x" in entry:
+            return {
+                "traj_x": np.asarray(entry["traj_x"], dtype=np.float64),
+                "traj_c": np.asarray(entry["traj_c"], dtype=np.float64),
+                "traj_e": np.asarray(entry["traj_e"], dtype=np.int64),
+                "traj_a": np.asarray(entry["traj_a"], dtype=np.int64),
+            }
+        if "traj_x_batch" in entry:
+            n_mol = int(entry.get("n_molecules", 1))
+            traj_x_b = np.asarray(entry["traj_x_batch"], dtype=np.float64)
+            traj_c_b = np.asarray(entry["traj_c_batch"], dtype=np.float64)
+            traj_e_b = np.asarray(entry["traj_e_batch"], dtype=np.int64)
+            traj_a_b = np.asarray(entry["traj_a_batch"], dtype=np.int64)
+            return {
+                "traj_x_batch": traj_x_b,
+                "traj_c_batch": traj_c_b,
+                "traj_e_batch": traj_e_b,
+                "traj_a_batch": traj_a_b,
+                "n_molecules": int(n_mol),
+                # Synthesised legacy single-mol view (molecule-0 only).
+                "traj_x": traj_x_b[0] if traj_x_b.ndim == 4 else traj_x_b,
+                "traj_c": traj_c_b[0] if traj_c_b.ndim == 3 else traj_c_b,
+                "traj_e": traj_e_b[0] if traj_e_b.ndim == 4 else traj_e_b,
+                "traj_a": traj_a_b[0] if traj_a_b.ndim == 3 else traj_a_b,
+            }
+        return None
 
     # ------------------------------------------------------------------
     # 11. export_sampled_molecules (Wave 70 Phase 3 — RDKit Mol decode)
@@ -3748,6 +4418,64 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             metadata["marker"] = "no_lineage"
             return [], metadata
         entry = self._native_states.get(trace.native_state_digest) or {}
+        # Wave 74 F1 — multi-molecule batch detection. When the cached
+        # entry was produced by ``_solve_ode_upstream_batch`` /
+        # ``_solve_ode_linear_batch`` (``n_molecules > 1``), decode
+        # every mol in the batch and return a list of length
+        # ``n_molecules``. The legacy single-molecule path
+        # (``n_molecules == 1``) is byte-stable — falls through to
+        # the existing ``rdkit_mol_smiles`` shortcut / (x, a, e)
+        # reconstruction unchanged.
+        cached_n_molecules = int(entry.get("n_molecules", 1) or 1)
+        cached_smiles_batch = entry.get("rdkit_mol_smiles_batch")
+        if cached_n_molecules > 1 and cached_smiles_batch is not None:
+            sampled: list[Any] = []
+            upstream_decode_error: str | None = None
+            try:
+                from adaptive_reflow.adapters.flowmol3_metrics_upstream import (
+                    sampled_mols_from_smiles as _sampled_mols_from_smiles,
+                )
+                # Filter out empty SMILES strings (graceful fallback
+                # for mols the upstream could not annotate).
+                smiles_list = [
+                    s for s in cached_smiles_batch if isinstance(s, str) and s
+                ]
+                sampled = _sampled_mols_from_smiles(smiles_list)
+            except Exception as exc:  # noqa: BLE001 — upstream may fail.
+                upstream_decode_error = f"{type(exc).__name__}:{exc}"
+            if sampled:
+                # The upstream ``sampled_mols_from_smiles`` returns one
+                # SampledMolecule per non-empty input SMILES. Build
+                # metadata that the glue's ``compute_chemistry_metrics``
+                # consumer can ingest verbatim.
+                first = sampled[0]
+                n_atoms = int(getattr(first, "num_atoms", 0) or 0)
+                rkm = getattr(first, "rdkit_mol", None)
+                if rkm is not None and hasattr(rkm, "GetNumBonds"):
+                    n_bonds = int(rkm.GetNumBonds())
+                else:
+                    n_bonds = int(
+                        getattr(first, "bond_types", None).shape[0]
+                    ) if getattr(first, "bond_types", None) is not None else 0
+                metadata.update(
+                    {
+                        "marker": "ok_batch",
+                        "sanitize_status": "ok",
+                        "n_atoms": n_atoms,
+                        "n_bonds": n_bonds,
+                        "build_errors": 0,
+                        "smiles": (
+                            cached_smiles_batch[0]
+                            if cached_smiles_batch else ""
+                        ),
+                        "n_molecules": int(cached_n_molecules),
+                    }
+                )
+                return list(sampled), metadata
+            # Upstream batch decode failed — fall through to per-mol
+            # (x, a, e) reconstruction below.
+            if upstream_decode_error is not None:
+                metadata["upstream_decode_error"] = upstream_decode_error
 
         # --- Upstream SMILES shortcut (preferred) ---------------------
         # Wave 71 Agent 3 — close GAP-3 (Wave 71 Phase 2 §6): when an
@@ -3767,7 +4495,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # the explicit recommendation.
         cached_smiles = str(entry.get("rdkit_mol_smiles", "") or "")
         if cached_smiles:
-            sampled: list[Any] = []
+            sampled = []
             upstream_decode_error: str | None = None
             try:
                 from adaptive_reflow.adapters.flowmol3_metrics_upstream import (
@@ -3832,6 +4560,61 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             if upstream_atom_map and len(upstream_atom_map) >= n_atoms
             else self._ADAPTER_ATOM_SYMBOLS
         )
+
+        # Wave 74 F1 — multi-molecule reconstruction when batched
+        # lineage is present (``x_final_batch`` / ``a_final_batch``
+        # etc.). Decode every mol in the batch and return a list of
+        # length ``n_molecules``. Per-molecule metadata is echoed in
+        # the aggregate ``marker='ok_batch'`` / ``ok_partial_batch``.
+        if cached_n_molecules > 1 and "x_final_batch" in entry:
+            x_final_batch = np.asarray(
+                entry["x_final_batch"], dtype=np.float64
+            )
+            a_final_batch = np.asarray(
+                entry["a_final_batch"], dtype=np.int64
+            )
+            e_final_batch = np.asarray(
+                entry["e_final_batch"], dtype=np.int64
+            )
+            batch_mols: list[Any] = []
+            sanitize_statuses: list[str] = []
+            for mol_idx in range(int(cached_n_molecules)):
+                mol_i, status_i = self._decode_rdkit_mol_from_arrays(
+                    x=x_final_batch[mol_idx],
+                    a=a_final_batch[mol_idx],
+                    e=e_final_batch[mol_idx],
+                    atom_symbols=atom_symbols,
+                )
+                if mol_i is not None:
+                    batch_mols.append(mol_i)
+                    sanitize_statuses.append(status_i)
+            if batch_mols:
+                # Canonical SMILES echo from the first mol.
+                try:
+                    from rdkit import Chem as _Chem  # noqa: PLC0415
+                    metadata["smiles"] = str(_Chem.MolToSmiles(batch_mols[0]))
+                except Exception:  # noqa: BLE001
+                    metadata["smiles"] = ""
+                metadata.update(
+                    {
+                        "marker": (
+                            "ok_batch"
+                            if all(s == "ok" for s in sanitize_statuses)
+                            else "ok_partial_batch"
+                        ),
+                        "sanitize_status": (
+                            "ok_batch"
+                            if all(s == "ok" for s in sanitize_statuses)
+                            else "ok_partial_batch"
+                        ),
+                        "n_atoms": int(batch_mols[0].GetNumAtoms()),
+                        "n_bonds": int(batch_mols[0].GetNumBonds()),
+                        "build_errors": 0,
+                        "n_molecules": int(cached_n_molecules),
+                    }
+                )
+                return list(batch_mols), metadata
+            return [], metadata
 
         mol, sanitize_status = self._decode_rdkit_mol_from_arrays(
             x=x_final,
