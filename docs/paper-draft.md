@@ -11,68 +11,17 @@ The companion detail files (`docs/paper-plan.md`,
 
 ## §1. Introduction
 
-Flow matching [Lipman 2023] and its straightened variant Rectified Flow
-[Liu 2022] define generation as integrating a learned velocity field
-$v_\theta(x, t)$ from $t = 0$ to $t = 1$ along a single ODE
-trajectory. One pass, one sample, no feedback. Yet the applications that
-motivate flow matching — image editing, molecular docking, conditional
-re-generation, protein engineering — are natively *iterative*: the user
-observes an output, forms an opinion, and asks the model again. The
-natural computational primitive for this setting is **re-inference**:
-run the *same* pre-trained model for $R$ rounds, where round $r+1$'s
-initial condition, noise scale, and step budget are functions of round
-$r$'s observed outputs. Re-inference is orthogonal to training — it is
-an inference-time control problem.
+Flow matching [Lipman 2023] and Rectified Flow [Liu 2022] define generation as integrating a learned velocity field $v_\theta(x, t)$ along a single ODE. The applications that motivate flow matching — image editing, molecular docking, protein engineering — are natively *iterative*: the user observes an output and asks the model again. The natural primitive is **re-inference**: run the same pre-trained checkpoint for $R$ rounds, where round $r+1$'s initial condition, noise scale, and step budget depend on round $r$'s outputs. Re-inference is orthogonal to training — an inference-time control problem.
 
-The gap is that no existing framework wires a theory of selection into
-that control loop. Diffusers [von Platen et al. 2022] exposes schedulers
-but no outcome-conditioned feedback across generations. Probabilistic
-programming systems such as Pyro [Bingham et al. 2019] give effect
-handlers that could express a loop, but the loop body carries no
-generative-theory quantities. JAXopt [Blondel et al. 2022] composes
-chains driven by a convergence criterion, not by a schedule. LangGraph
-[LangChain 2024] gives typed state machines for *agents*, not for flow
-matching. The space of multi-round inference primitives for flow
-matching is empty.
+No existing framework wires a theory of selection into that loop. Diffusers [von Platen et al. 2022] exposes schedulers without outcome-conditioned feedback. Pyro [Bingham et al. 2019] gives effect handlers but no generative-theory quantities. JAXopt [Blondel et al. 2022] drives chains by a convergence criterion. LangGraph [LangChain 2024] gives typed state machines for agents. The space of multi-round inference primitives for flow matching is empty.
 
-Li 2026's noise-selected rectification result [Li 2026] supplies exactly
-the missing ingredient. **Theorem 1** states that as the implicit noise
-scale $\varepsilon \downarrow 0$, the noised profile measure $\mu_{g,
-\varepsilon}$ converges in bounded-Lipschitz distance to the sheet
-measure $\nu_g$, with root-cell mass $O(\varepsilon)$ — controlled by
-four computable constants $A_g, B_g, C_g, e_\rho$. Those constants are
-*schedulable*: they say how much noise a round should carry, how
-aggressive a round's merge operator should be, and how many steps each
-round should spend. No published framework consumes them as algorithm
-inputs.
+The author's JMAA paper (Li 2026) supplies the missing ingredient. **Theorem 1** states that as $\varepsilon \downarrow 0$, the noised profile measure converges in bounded-Lipschitz distance to the sheet measure, with root-cell mass $O(\varepsilon)$ — controlled by four constants $A_g, B_g, C_g, e_\rho$. Those constants are schedulable: they specify noise scale, merge-operator aggressiveness, and step budget per round. No published framework consumes them as algorithm inputs.
 
-We present **FlowA**, a re-inference framework organised as four
-pluggable layers (contracts/metrics, engine and runner orchestration, a
-four-protocol algorithm layer, and an adapter protocol) wired by four
-feedback loops (self-reflexive PID, theory-grounded paper quantities,
-hash-chained integrity, and symmetric forward/reverse). The four loops
-are codified as **17 typed state machines with 333 typed transitions**,
-and the theory enters through three new algorithms —
-`CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, and
-`BoundedMergeOperator` — each of which reads a specific lemma of Li 2026
-as an executable formula. A pre-trained model plugs in through an
-eight-method `FlowMatchingODEAdapter` Protocol; no training and no
-fine-tuning happens inside FlowA.
+We present **FlowA**, a re-inference framework with four pluggable layers wired by four feedback loops, codified as **17 typed state machines with 333 typed transitions**. Three algorithms — `CodimensionSheetScheduler`, `EvidenceDrivenScheduler`, `BoundedMergeOperator` — each read a specific lemma of Li 2026 as an executable formula. A 2026 SOTA checkpoint — Kanzi (ICLR 2026 protein flow-AE), LineageFlow (ICML 2026 protein FM), or FlowMol3 (NeurIPS 2024 molecular 3D FM) — plugs in via an eight-method `FlowMatchingODEAdapter` Protocol; no training happens inside FlowA.
 
-**Contributions.** (i) *Paper-as-algorithm* — three new algorithms consume
-Li 2026's $A_g, B_g, C_g, e_\rho$ as inputs, not as motivation, and
-move the Theorem 1 numerical witness `selection_ratio` from a 0.8061
-plateau to 0.988+ once the C4 loop is closed. (ii) *Four-loop composition
-as typed state machines* — 17 machines / 333 transitions, PEP 695
-generic, decorator-registered, byte-deterministic transition log,
-`to_mermaid()` / `to_dot()` export. (iii) *Measured re-inference gains on
-three published models* — 2D Rectified Flow
-($W_2$ −7.28% / −10.40%, 3 seeds), CIFAR-10 Rectified Flow
-(scheduler-discriminating FIDs across a ~5.1-FID window), and
-LineageFlow protein FM (secondary-metric uplift at saturation ceiling).
-We report, without softening, that at matched NFE budget the framework's
-pooled FID is **worse** than the 50-NFE baseline, and we explain exactly
-why (§4.3).
+**Contributions.** (i) *Paper-as-algorithm scheduler* — three algorithms consume Li 2026's constants, moving `selection_ratio` from 0.8061 to 0.988+ (§4.6). (ii) *NFE-aware restart gate* — routes to baseline at low NFE and restart-blend at high NFE (§7.10). (iii) *Composite benchmark* — entropy-reduction + max-prob + argmax-turnover surfaces framework signal at saturated endpoints (§7.2). (iv) *Evaluation on 3 real 2026 SOTA checkpoints* — Kanzi composite **+0.1695** byte-stable across NFE 10…2000 (§7.3); LineageFlow composite **+0.2083** byte-stable across NFE 10…200 (§7.4); FlowMol3 TIE_AT_SATURATION with byte-stable entropy metric (§7.5). Two honest negatives: matched-NFE CIFAR-10 FID is 24–31% worse than the constant-NFE baseline (§4.3); a candidate "converges faster" claim was tested on all three Tier 3 models and is **not made** (`speedup_95 = 1.0` everywhere, §7.7.7). The reframing the data supports: the gain is **NFE-independent, not NFE-accelerating** — composite lift is byte-stable within seed across the full NFE sweep at wallclock parity. The framework reaches a *different endpoint*, not the *same endpoint sooner*.
+
+**Outline.** §2 presents the four pluggable layers and feedback loops. §3 grounds the algorithms in Theorem 1 and Lemmas 2–4. §4 reports toy and image-domain experiments. §5 discusses limitations. §7 carries the Tier 3 evaluation on Kanzi, LineageFlow, and FlowMol3. §8 compares against external baselines.
 
 ---
 
