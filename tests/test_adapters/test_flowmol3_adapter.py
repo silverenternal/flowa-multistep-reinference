@@ -1492,4 +1492,89 @@ class TestFlowMol3ObserveProtocol:
         assert PER_POSITION_ENTROPY_REDUCTION in ent
 
 
+# ---------------------------------------------------------------------------
+# Wave 54 Phase 2 fix: v1 (hash stub) FlowMol3 is first-class alongside v2
+# (real integration) via the new
+# ``FlowMatchingODEAdapterWithObservation`` Protocol declared in
+# ``adaptive_reflow/framework/interfaces.py``.
+# ---------------------------------------------------------------------------
+
+
+class TestFlowMol3Wave54V1Protocol:
+    """Wave 54 Phase 2 — v1 first-class Protocol conformance.
+
+    The :class:`FlowMatchingODEAdapterWithObservation` Protocol
+    (declared in
+    :mod:`adaptive_reflow.framework.interfaces`) captures the structural
+    surface both v1 (hash stub) and v2 (real integration) FlowMol3
+    adapters satisfy. v1's hash-based behaviour is preserved
+    byte-identically (the 9 D.4 regression vectors in
+    ``regression-vectors/flowmol3.json`` must remain byte-stable).
+    """
+
+    def test_v1_satisfies_protocol(self, adapter) -> None:
+        """v1 instance satisfies ``FlowMatchingODEAdapterWithObservation``."""
+        from adaptive_reflow.framework.interfaces import (
+            FlowMatchingODEAdapterWithObservation,
+        )
+        assert isinstance(adapter, FlowMatchingODEAdapterWithObservation)
+
+    def test_v2_satisfies_protocol(self) -> None:
+        """v2 instance satisfies ``FlowMatchingODEAdapterWithObservation``.
+
+        The v2 adapter is imported here (not as a fixture) because
+        v2 is constructed by :func:`default_flowmol3adapter` which is
+        not exercised by the v1 test file. We construct it with the
+        default numpy backend so the constructor does not require
+        torch or upstream FlowMol3 source.
+        """
+        from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+            FlowMol3V2Adapter,
+        )
+        from adaptive_reflow.framework.interfaces import (
+            FlowMatchingODEAdapterWithObservation,
+        )
+        v2 = FlowMol3V2Adapter(backend="numpy", num_steps=5)
+        assert isinstance(v2, FlowMatchingODEAdapterWithObservation)
+
+    def test_v1_byte_stable_after_protocol_add(self, adapter) -> None:
+        """Adding the Protocol does NOT change v1's byte-stable surface.
+
+        Verifies the three byte-stable artefacts:
+
+        * :meth:`build_initial_state` initial digest for
+          ``(batch_id="d4-b41", sample_id="d4-s41")`` matches
+          ``flowmol3:e4ebda97374ef94f`` (D.4 vector condition 1).
+        * :meth:`solve_ode` trace digest matches the D.4 vector for
+          seed=41, nfe=5 (``flowmol3:ccf1613bd1d00bfc``).
+        * :meth:`solve_ode` integrator config hash matches the D.4
+          vector for seed=41, nfe=5 (``flowmol3:458e224249527046``).
+
+        These SHAs are derived from ``_make_tensor_ref`` (flowmol3.py
+        line 286) using the deterministic
+        ``repr((label, sorted(parts.items())))`` encoding. The Protocol
+        addition only added a structural declaration; it did not
+        modify any method body.
+        """
+        # Initial state digest for D.4 condition 1 (seed=41).
+        bundle = adapter.build_initial_state(
+            batch_id="d4-b41", sample_id="d4-s41"
+        )
+        assert str(bundle.native_state_digest) == "flowmol3:e4ebda97374ef94f"
+
+        # Trace digests for D.4 condition 1 (seed=41, nfe=5).
+        cond = ODEConditionDelta(
+            delta_spec={"num_steps": 5},
+            source="test_wave54_byte_stable",
+            target_round=1,
+            calibration_artifact_hash="a" * 64,
+        )
+        trace = adapter.solve_ode(bundle, cond, seed=41)
+        assert str(trace.native_state_digest) == "flowmol3:ccf1613bd1d00bfc"
+        assert (
+            str(trace.integrator_config_hash)
+            == "flowmol3:458e224249527046"
+        )
+
+
 __all__ = ()

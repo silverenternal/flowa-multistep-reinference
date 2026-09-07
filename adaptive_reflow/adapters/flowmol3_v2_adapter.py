@@ -87,6 +87,7 @@ from adaptive_reflow.adapters._adapter_common import (
 )
 from adaptive_reflow.framework.interfaces import (
     AdapterObservationProtocol,
+    FlowMatchingODEAdapterWithObservation,
     ObservationKind,
     ObservationResult,
     implements,
@@ -1489,7 +1490,11 @@ class FlowMol3V2AdapterCapabilities(AdapterCapabilities):
         )
 
 
-@implements(FlowMatchingODEAdapter)
+@implements(
+    FlowMatchingODEAdapter,
+    AdapterObservationProtocol,
+    FlowMatchingODEAdapterWithObservation,
+)
 class FlowMol3V2Adapter(FlowMatchingODEAdapter):
     """Real FlowMol3 3D molecule generator adapter (unconditional).
 

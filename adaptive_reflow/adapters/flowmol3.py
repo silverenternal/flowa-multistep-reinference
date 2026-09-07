@@ -76,6 +76,7 @@ from adaptive_reflow.frame.adapter import (
 )
 from adaptive_reflow.framework.interfaces import (
     AdapterObservationProtocol,
+    FlowMatchingODEAdapterWithObservation,
     ObservationKind,
     ObservationResult,
     implements,
@@ -623,7 +624,11 @@ class FlowMol3AtomTypeEntropyRestartPolicy:
         return np.clip(m_target, lower, upper).astype(np.float64)
 
 
-@implements(FlowMatchingODEAdapter)
+@implements(
+    FlowMatchingODEAdapter,
+    AdapterObservationProtocol,
+    FlowMatchingODEAdapterWithObservation,
+)
 class FlowMol3Adapter(FlowMatchingODEAdapter):
     """Read-only FlowMol3 mechanics adapter.
 

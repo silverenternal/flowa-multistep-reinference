@@ -50,6 +50,11 @@ verifies the structural typing at import time.
   surface every adapter satisfies (Wave 68). Returns a tuple of
   :class:`ObservationResult` keyed by model-agnostic
   :class:`ObservationKind` tags (NOT by per-model channel names).
+* :class:`FlowMatchingODEAdapterWithObservation` -- Wave 54 Phase 2
+  fix surface that makes a v1 (hash stub) FlowMol3 adapter and a v2
+  (real integration) FlowMol3 adapter both first-class via a single
+  structural Protocol (see :class:`AdapterObservationProtocol` for the
+  underlying typed ``observe(...)`` method).
 * :class:`AdapterCompliance` -- aggregate Protocol set enforcement.
 
 **Stdlib-only, no torch, no numpy.**
@@ -94,6 +99,7 @@ __all__ = [
     "AdapterObservationProtocol",
     "ObservationKind",
     "ObservationResult",
+    "FlowMatchingODEAdapterWithObservation",
     "AdapterCompliance",
     "implements",
     "assert_adapter_compliance",
@@ -635,6 +641,116 @@ class AdapterObservationProtocol(Protocol):
             none of the requested strategies).
         """
         ...
+
+
+# ---------------------------------------------------------------------------
+# FlowMatchingODEAdapterWithObservation (Wave 54 Phase 2)
+# ---------------------------------------------------------------------------
+
+
+@runtime_checkable
+class FlowMatchingODEAdapterWithObservation(Protocol):
+    """Wave 54 Phase 2 fix surface: makes v1 (hash stub) FlowMol3 first-class alongside v2.
+
+    Captures the structural surface shared by:
+
+    * :class:`adaptive_reflow.adapters.flowmol3.FlowMol3Adapter` (v1
+      placeholder / hash stub — default behaviour, byte-stable).
+    * :class:`adaptive_reflow.adapters.flowmol3_v2_adapter.FlowMol3V2Adapter`
+      (v2 real CTMC / linear / upstream integration — opt-in via
+      ``--force-mode real``).
+
+    Both adapters satisfy this Protocol structurally (the methods exist
+    on both, with v1 using a hash stub for ``solve_ode`` and v2 doing
+    real integration). The Protocol does NOT specify integration
+    semantics — it is the SHAPE of the adapter, not the underlying
+    math. Downstream metric helpers can now ``isinstance``-dispatch on
+    this Protocol instead of switching on ``model == "flowmol3"``.
+
+    **Why this Protocol exists (Wave 54 review A).** The Wave 66 wire
+    at :mod:`tools.run_real_ckpt_eval` routes ``force_mode in {real,
+    auto}`` to v2's ``default_flowmol3adapter`` regardless of the
+    registry's adapter_factory. v1 was effectively demoted to a
+    synthetic-path stub with no first-class surface. Wave 54 Phase 2
+    makes v1 first-class alongside v2 by giving both a single Protocol
+    surface the metric layer can dispatch on; v1's hash-based
+    behaviour is preserved byte-identically (the 9 D.4 regression
+    vectors in ``regression-vectors/flowmol3.json`` are gated).
+
+    **Interface-first pattern (Wave 11 / Wave 59 / Wave 68).** This
+    Protocol mirrors the existing
+    :class:`AdapterObservationProtocol` pattern: structural, runtime-
+    checkable, additive (no method signatures change on either
+    adapter). Adapters opt in via the :func:`implements` decorator;
+    :func:`assert_adapter_compliance` enforces structural typing at
+    import time.
+
+    **Byte-stable guarantee.** v1's :meth:`solve_ode` continues to
+    return a hash-stable ``ODEIntegratorTrace`` whose
+    ``native_state_digest`` and ``integrator_config_hash`` are
+    SHA-256-derived from ``(state.digest, seed, steps)`` — see the
+    ``_make_tensor_ref`` helper in ``flowmol3.py:286-300``. Adding
+    this Protocol changes nothing in v1's behaviour. The 9 D.4
+    vectors (``flowmol3.json`` schema ``d4.v1``, pinned at git SHA
+    ``ff56e55``) remain byte-stable.
+
+    **Method list.** Combines the 8-method
+    :class:`adaptive_reflow.universal.adapter.FlowMatchingODEAdapter`
+    base surface (capabilities / build_initial_state / export_endpoint
+    / detach_and_validate_endpoint / apply_restart_distribution /
+    compose_condition / solve_ode / observe_endpoint /
+    observe_token_indices / export_trajectory) with the typed
+    :meth:`observe` from :class:`AdapterObservationProtocol`. Every
+    method here is a structural signature only — concrete
+    implementations may differ in semantics (v1 vs v2).
+    """
+
+    # --- FlowMatchingODEAdapter 8-method base -------------------------------
+    def capabilities(self) -> Any: ...
+    def build_initial_state(
+        self, *, batch_id: str, sample_id: str
+    ) -> Any: ...
+    def export_endpoint(self, state: Any) -> Any: ...
+    def detach_and_validate_endpoint(self, bundle: Any) -> Any: ...
+    def apply_restart_distribution(
+        self,
+        state: Any,
+        policy: Any,
+        *,
+        nfe_budget: int | None = ...,
+    ) -> Any: ...
+    def compose_condition(
+        self, bundle: Any, delta: Any
+    ) -> Any: ...
+    def solve_ode(
+        self,
+        state: Any,
+        condition: Any,
+        *,
+        seed: int,
+    ) -> Any: ...
+    def observe_endpoint(self, trace: Any, state: Any) -> Any: ...
+    def observe_token_indices(
+        self, trace: Any, paper_quantities: Any
+    ) -> dict[str, Any]: ...
+    def export_trajectory(self, trace: Any) -> Any | None: ...
+
+    # --- Wave 68 typed observation surface ---------------------------------
+    def observe(
+        self,
+        trace: Any,
+        state: Any,
+        paper_quantities: Any = None,
+        *,
+        strategies: tuple[Any, ...] = (
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+            ObservationKind.TRAJECTORY_NATIVE,
+        ),
+        theta_before: Any = None,
+        theta_after: Any = None,
+    ) -> tuple[Any, ...]: ...
 
 
 # ---------------------------------------------------------------------------
