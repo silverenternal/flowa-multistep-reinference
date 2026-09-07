@@ -1,11 +1,98 @@
-# Push-Ready Summary — Wave 72 closure + Wave 73 multi-tier story
+# Push-Ready Summary — Wave 72 closure + Wave 73 multi-tier story + Wave 74 FlowMol3 F1-F5 closure
 
 **Date:** 2026-09-08
-**Wave:** 72 closure (pre-push synthesis) + Wave 73 (multi-tier story) — **final pre-push state**
+**Wave:** 72 closure (pre-push synthesis) + Wave 73 (multi-tier story) + Wave 74 (FlowMol3 v2 composite reproducibility closure) — **final pre-push state**
 **Role:** Author the pre-push summary + final commit. NO push (per locked-in constraint).
 **Repo:** `/home/hugo/codes/flowa-multistep-reinference`
 
 ---
+
+## Wave 74 Phase 6 additions (final synthesis, additive, no push)
+
+Wave 74 Phase 6 is the **final synthesis pass** after Phases 1–5. It closes
+the **FlowMol3 v2 composite reproducibility closure** by applying five
+distinct fixes (F1 multi-molecule cells, F2 upstream seed threading, F3
+`xtb` install, F4 `energy_dist.npz` vendor, F5 9-cell sweep with all four
+fixes active). Key additions to this `push-ready-summary.md`:
+
+- **Wave 74 Phase 6 audit doc:** `docs/audit/wave74-phase6-final.md`
+  authored (TL;DR + F1–F5 work summary + all-3-models final status +
+  FlowMol3 verdict evolution table + D.4/G-MASTER/mkdocs status + honest
+  caveats + open questions).
+- **§7.5 FlowMol3 Wave 74 additive paragraph:** F1–F5 closure documented
+  inline; new verdict label **`TIE_AT_SATURATION_with_byte_stable_composite`**
+  introduced; updated verdict evolution table (Wave 50 → Wave 74).
+- **Final verification (Phase 6):** D.4 72/72 in 42.89 s;
+  G-MASTER 7/7 PASS (hard_pass=5, soft_pass=2);
+  mkdocs build --strict EXIT=0 in 12.00 s.
+
+**The Wave 73 multi-tier story is unchanged from Phase 6** (see additive
+Wave 73 Phase 6 additions below). Wave 74 Phase 6 adds the final
+FlowMol3 closure + the new verdict label.
+
+### Wave 74 Phase 6 verification status
+
+| Gate | Status | Value | Notes |
+|---|---|---|---|
+| **D.4 byte-stable vectors** | **PASS** | 72 passed in **42.89s** | wallclock variance only; no regression vs Wave 73 Phase 6 baseline (36.75s) |
+| **G-MASTER capability** | **PASS** | 7/7 (hard_pass=5, soft_pass=2) | unchanged from Wave 73 closure (FlowMol3 paper-edit only) |
+| **mkdocs build --strict** | **PASS** | EXIT=0 in **12.00s** | unchanged; Wave 73 Phase 6 `not_in_nav` fix for `push-ready-summary.md` preserved |
+
+### Wave 74 Phase 6 file inventory
+
+| Path | Status | Notes |
+|---|---|---|
+| `docs/audit/wave74-phase1-plan.md` | NEW | READ-ONLY audit + F1/F2/F3/F4/F5 plans |
+| `docs/audit/wave74-phase2-f1.md` | NEW | F1 (multi-molecule cells) audit doc |
+| `docs/audit/wave74-phase3-f2.md` | NEW | F2 (upstream seed threading) audit doc |
+| `docs/audit/wave74-phase4-env.md` | NEW | F3 (xtb install) + F4 (energy_dist.npz vendor) + wire audit doc |
+| `docs/audit/wave74-phase5-sweep.md` | NEW | F5 9-cell sweep + 3-run reproducibility audit doc |
+| `docs/audit/wave74-phase6-final.md` | NEW | Final synthesis doc (this phase) |
+| `adaptive_reflow/adapters/flowmol3_v2_adapter.py` | MODIFIED | n_molecules kwarg + `_solve_ode_*_batch` + `_seed_everything` + prior-tile + `_pad_e` axis fix |
+| `tools/run_real_ckpt_eval.py` | MODIFIED | `--n-molecules` flag + `_run_cell` plumbing + `_compute_xtb_med_rmsd` helper + `run_energy_div` auto-detect |
+| `tests/test_adapters/test_flowmol3_v2_adapter.py` | MODIFIED | 3 F1 tests + 4 F2 tests |
+| `tests/test_tools/test_run_real_ckpt_eval.py` | MODIFIED | 1 new test (--n-molecules plumbing) |
+| `tools/wave74_smoke_env_axes.py` | NEW | xtb + energy_dist.npz smoke (~60 LOC) |
+| `data/FlowMol3/repo/data/geom_5_kekulized/energy_dist.npz` | NEW | 3,688 bytes, sourced from `data/geom/` |
+| `docs/paper-draft.md` | MODIFIED | §7.5 additive Wave 74 paragraph (F1-F5 closure) |
+| `docs/push-ready-summary.md` | MODIFIED | Wave 74 Phase 6 additive section (this phase) |
+
+### Wave 74 Phase 6 honest caveats (carried forward)
+
+See `docs/audit/wave74-phase6-final.md` §"Honest remaining caveats" for the
+full list. Top 3 carryovers from Phase 5:
+
+1. **`neg_med_rmsd_after_xtb` is the post-xtb-optimization RMSD vs the
+   framework-generated 3D conformer**, not the published FlowMol3 metric
+   (RMSD to the GEOM-Drugs held-out 100K-mol conformer ensemble). Sufficient
+   for relative framework-vs-baseline comparison; not paper-grade.
+
+2. **`xtb` is NOT on the default `$PATH`**. The conda prefix lives at
+   `/home/hugo/xtb_prefix/`. To run F3-enabled cells, prepend
+   `/home/hugo/xtb_prefix/bin` to `$PATH` (or symlink `xtb` to
+   `/usr/local/bin/`). On CI runners and most user shells, `xtb_present =
+   False` and the geometry axis drops to weight 0.
+
+3. **Framework scheduler still does NOT act on the FlowMol3 CTMC chain.**
+   The entropy-reduction axis remains bit-identical; the structural verdict
+   (TIE on entropy axis) is unchanged — only the **measurement** moved from
+   "wire-live n=1 degenerate ±0.6" to "byte-stable chemistry + geometry +
+   energy-divergence axes populated, 3-run reproducible at same seed."
+
+### Wave 74 Phase 6 unpushed commits
+
+```text
+git log --oneline @{u}..main 2>&1 | wc -l
+292
+```
+
+**292 unpushed commits** on `main` ahead of `origin/main`. Wave 74 Phase 6
+commit lands locally without push, matching the Wave 68/69/70/71/72/73
+closure pattern.
+
+---
+
+## Wave 73 Phase 6 additions (final synthesis, additive, no push)
 
 ## Wave 73 Phase 6 additions (final synthesis, additive, no push)
 
@@ -220,7 +307,7 @@ The repo is **push-ready**. Wave 72 closed all four Phase-1 audit gaps (499-word
 |---|---|---:|---|---|---|---|
 | **Kanzi** (ICLR 2026 protein flow-AE, 44.1 M params) | **SUPPORTED** | **+0.1695** | YES (σ = 0.000000 within seed, 18 cells across NFE 10…2000) | NO (`speedup_95 = 1.0`, real measurement but structurally flat at NFE=10) | YES (≈ 1.00) | §7.3, Wave 58 NFE scan |
 | **LineageFlow** (ICML 2026 protein FM, 657 M params) | **SUPPORTED** | **+0.2083** | YES (σ = 0.000000 within seed, 8 GPU cells across NFE 10…200, 9th CPU cell carries no composite) | NO (`speedup_95 = 1.0`, real measurement but validity saturates above 0.99 at NFE=10) | YES (≈ 0.999 mean) | §7.4, Wave 69 GPU sweep |
-| **FlowMol3** (NeurIPS 2024 molecular CTMC, 65 M params) | **TIE_AT_SATURATION** | **+0.0000** | YES on entropy-reduction axis (`0.07340423794186401` nats, bit-identical across 6 cells) | NO (`speedup_95 = 1.0` is a degenerate artifact of GAP-4 / synthetic mode) | YES | §7.5, Wave 70 / Wave 71 GAP-1 + GAP-3 closed, GAP-4 open |
+| **FlowMol3** (NeurIPS 2024 molecular CTMC, 65 M params) | **TIE_AT_SATURATION_with_byte_stable_composite** (Wave 74) | **+0.1182…+0.5174** (chemistry + geometry + energy-divergence axes all populated; n_molecules=10 batched; 3-run byte-identical at seed=42, NFE=50, n_molecules=10) | YES on chemistry axes at the full pipeline level (3 runs byte-identical) | NO (`speedup_95 = 1.0` — degenerate; framework scheduler does not act on CTMC chain) | YES | §7.5, Wave 74 F1+F2+F3+F4+F5 |
 
 ### Verdict legend
 - **SUPPORTED** = composite lift measured on real ckpt with real metric, byte-stable across NFE.

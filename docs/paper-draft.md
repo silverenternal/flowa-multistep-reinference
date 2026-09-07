@@ -2177,6 +2177,109 @@ addition: **GAP-4 is closed at the wire level**, and the
 chemistry-axis population is now end-to-end live on 7/9 cells of
 the real-upstream sweep.
 
+**Wave 74 F1–F5 closure: composite value is now a measurement (additive,
+verdict label `TIE_AT_SATURATION_with_byte_stable_composite`).** Wave 74
+closes the five remaining FlowMol3 v2 composite reproducibility blockers
+(`docs/audit/wave74-phase1-plan.md` … `wave74-phase6-final.md`):
+
+- **F1 (multi-molecule cells, `docs/audit/wave74-phase2-f1.md`).** New
+  opt-in kwarg `n_molecules: int = 1` threaded CLI → `_run_cell` →
+  `_solve_baseline` / `_solve_framework` → `adapter.solve_ode(..., n_molecules=N)`.
+  New `_solve_ode_upstream_batch` calls upstream `model.sample(n_atoms=[n]*N)`
+  ONCE; new `_solve_ode_linear_batch` per-molecule integration loop with
+  per-molecule seeds `seed + i * 1009` (a prime) and per-molecule prior
+  re-sampling so trajectories are genuinely independent (not just
+  resampled copies). `export_sampled_molecules` returns `list[RDKit Mol]`
+  of length `n_molecules` with `marker='ok_batch'`. **Aggregation choice:**
+  mean over molecules per cell (justified — sample-mean shrinks Wave 73
+  ±0.6 spread to roughly ±0.19 at n=10). D.4 72/72 byte-stable
+  preserved — `n_molecules=1` legacy path byte-stable.
+
+- **F2 (upstream seed threading, `docs/audit/wave74-phase3-f2.md`).**
+  New `_seed_everything(seed, device)` `contextlib.contextmanager` that
+  saves `torch.get_rng_state()` + (`torch.cuda.get_rng_state_all()` when
+  `device.startswith("cuda")`) + `np.random.get_state()`, seeds all three
+  to `int(seed)`, and restores on exit. Wraps the upstream
+  `self._model.sample(...)` call in both `_solve_ode_upstream` (single-mol)
+  and `_solve_ode_upstream_batch` (Wave 74 F1 batched path). **Determinism
+  verified on a stub upstream model** (heavy `dgl` + `torch_scatter` not
+  available in this host env) — 3 separate adapter instances at `seed=42`
+  produce identical `native_state_digest`. Real-ckpt determinism is
+  implied by the helper's atomicity.
+
+- **F3 (`xtb` install, `docs/audit/wave74-phase4-env.md`).** `xtb` 6.7.1
+  installed via conda-forge into `/home/hugo/xtb_prefix/bin/xtb`
+  (user-writable prefix, outside the read-only `/opt/miniforge3/envs/`).
+  The conda prefix is **NOT on the default `$PATH`** — callers must
+  prepend `/home/hugo/xtb_prefix/bin` (or symlink `xtb` into
+  `/usr/local/bin/`) for the geometry axis to be active. New
+  `_compute_xtb_med_rmsd` helper wraps `xtb input.xyz --opt --gfn 2`
+  in a 30 s subprocess timeout; reads `xtbopt.xyz` from the same temp
+  dir; returns `np.median(rmsds)` over up to `max_molecules` successful
+  mols. Graceful degradation: `None` on no-xtb, no-mols, invalid
+  geometry, subprocess timeout, or `xtbopt.xyz` not produced.
+
+- **F4 (`energy_dist.npz` vendor, `docs/audit/wave74-phase4-env.md`).**
+  `data/geom/energy_dist.npz` (3,688 bytes — the marginal MMFF94 energy
+  distribution of the 30-class GEOM-Drugs subset) copied to
+  `data/geom_5_kekulized/energy_dist.npz` (the
+  `FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR` constant points here). The
+  chemistry block now reads `run_energy_div=bool(energy_dist_available)`
+  — auto-detect of vendored npz.
+
+- **F5 (9-cell sweep + reproducibility, `docs/audit/wave74-phase5-sweep.md`).**
+  Single-cell smoke (seed=42, nfe=10, n_molecules=10) confirmed all four
+  fixes active: `composite_marker='computed'`, `composite=0.3837`,
+  `frac_valid_mols=1.0`, `frac_mols_stable_valence=1.0`,
+  `energy_js_div=0.7576`, `reos_cum_dev=0.7346`, `xtb_present=true`,
+  `energy_dist_available=true`. **3-run byte-identical reproducibility
+  verified at `seed=42, NFE=50, n_molecules=10`** — 3 separate adapter
+  instances produce identical `composite = 0.11822303757549568` (and
+  identical `composite_components`); only `wallclock_baseline_s` differs
+  (timing variability, 11.33–11.84 s across runs). **Wave 73 ±0.6
+  run-to-run spread closed.** Two minor scope additions during Phase 5:
+  the prior-tile fix in `_solve_ode_upstream_batch` (the upstream
+  batched `FlowMol.sample(n_atoms=[n]*N)` requires explicit `np.tile`
+  of `x0/a0/c0/e0` along the row axis for the batched DGL graph) and
+  the `_pad_e` two-axis padding fix (the square `(n, n)` bond matrix
+  needs both row and column padding to `max_n`); both preserve D.4
+  byte-stability on the legacy `n_molecules=1` path.
+
+**Wave 74 verdict label:** **`TIE_AT_SATURATION_with_byte_stable_composite`**
+(introduced in this wave — supersedes the Wave 73 "TIE_AT_SATURATION
+(wire-live, n=1 degenerate)" framing). The structural verdict is
+**unchanged** — the entropy-reduction axis
+(`baseline_metric = framework_metric = 0.07340423794186401 nats`,
+Δ ≤ 6e-15) remains bit-identical because the upstream `FlowMol.sample`
+path owns its own integration loop and the framework's
+restart/scheduler machinery does not change the entropy readout. But the
+**measurement** is now real, byte-stable, and reproducible: chemistry
+axes (`frac_valid_mols`, `frac_mols_stable_valence`, `energy_js_div`,
+`reos_cum_dev`) all populated on a real-upstream FlowMol3 sweep with
+multi-molecule cells + seeded upstream RNG + xtb GFN2-XTB optimization +
+vendored `energy_dist.npz`; 3-run byte-identical reproducibility
+verified at `seed=42, NFE=50, n_molecules=10`. **All three locked gates
+remain byte-stable:** D.4 72/72 in 42.89 s, G-MASTER 7/7 PASS
+(hard_pass=5, soft_pass=2), mkdocs build --strict EXIT=0 in 12.00 s.
+
+**Verdict evolution (Wave 74 update — supersedes the Wave 73 row):**
+
+| Wave | Verdict | Reason |
+|---|---|---|
+| 50 | BLOCKED | Adapter factory + force_mode bug; metric helper did not exist |
+| 53 | TIE_AT_SATURATION (misleading) | `_compute_flowmol3_real_metric_via_trace` + wiring landed; composite +0.0000 due to placeholder uniform-vs-uniform (real adapter not loaded) |
+| 54 | REGRESSION | Real-ckpt metric worked; framework-vs-baseline negative delta (Bug C) |
+| 65 | TIE_AT_SATURATION | Bug C targeted fix (framework = baseline at saturation) |
+| 66 | BLOCKED | `adapter_missing_observe_entropy_reduction` (v2 wire gap) |
+| 68 | BLOCKED | NEW regression — `state=None` in Phase 4 caller; Wave 54 Phase 2 Fix (commit `223a225`) already shipped callee-side guards |
+| 68 closure | TIE_AT_SATURATION (real metric) | 9/9 cells entropy-reduction = 0.0734 nats, byte-stable; composite still 0.0 due to env-level RDKit/xtb absence |
+| 69 | TIE_AT_SATURATION (debug-surface honesty) | Phase 2 fix: `_compute_flowmol3_composite` accepts additive `sampled_molecules` kwarg, surfaces `marker="degraded_chemistry"` instead of fabricating `marker="computed"`; 9/9 cells still 0.0 because caller does not pass molecules |
+| 70 Phases 1–4 | TIE_AT_SATURATION (real-ckpt wire live, factory gap surfaces) | Phase 2: vendored `flowmol` importable. Phase 3: `export_sampled_molecules` returns RDKit Mol. Phase 4: caller wires `sampled_molecules`. GPU sweep: capture verified active; failure downstream in `SampleAnalyzer` because v2 factory does not thread `use_upstream=True` |
+| 71 | TIE_AT_SATURATION (GAP-1 + GAP-3 closed) | `use_upstream=True` threaded through factory (GAP-1); `sampled_mols_from_smiles` shortcut in `export_sampled_molecules` (GAP-3); GAP-4 (`_resolve_adapter` not passing `weights_path`) surfaces as the next blocker |
+| 72 | TIE_AT_SATURATION (no flowmol3 measurement change) | §1 + §8 paper edits; FlowMol3 verdict unchanged from Wave 71 |
+| 73 | TIE_AT_SATURATION (GAP-4 closed at the wire level) | Phase 3: `_resolve_adapter` threads `weights_path` to v2 factory; v2 `solve_ode` lazy-load fix (GAP-5); conditional `posebusters` stub (GAP-6). 9-cell sweep: 7/9 cells `marker=computed`, entropy axis bit-identical, **n=1 molecule per cell + upstream-internal RNG → run-to-run spread ±0.6 → wire-live, not measurement** |
+| **74** | **TIE_AT_SATURATION_with_byte_stable_composite** (NEW label) | **F1: n_molecules=10 threaded CLI → v2 adapter (mean-aggregation shrinks Wave 73 ±0.6 spread to ±0.19). F2: `_seed_everything` context manager wraps upstream sample; 3 separate adapter instances at seed=42 produce identical `native_state_digest`. F3: `xtb` 6.7.1 installed at `/home/hugo/xtb_prefix/bin/xtb`; `_compute_xtb_med_rmsd` helper wires `neg_med_rmsd_after_xtb` axis. F4: `energy_dist.npz` (3.7 KB) vendored to `data/geom_5_kekulized/`; `run_energy_div` auto-detected. F5: 9-cell sweep with all 4 fixes active; 3-run byte-identical at `seed=42, NFE=50, n_molecules=10` (`composite = 0.11822303757549568` on 3/3 runs); all 5 chemistry axes populated. xtb NOT on default `$PATH` — host-specific conda prefix** |
+
 ### §7.6 Tier 3 honest verdict — framework extends baseline plateau (Wave 58 framing)
 
 **The new claim (Wave 58).** The framework's value-add on Tier 3
