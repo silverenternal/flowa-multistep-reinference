@@ -2121,6 +2121,62 @@ chemistry once GAP-1 + RDKit land, but the final `energy_js_div`-term
 weight (`0.1765`) will continue to read 0.0 unless the upstream
 reference distribution is downloaded.
 
+**Wave 71 update (Phases 1–5) — GAP-1 + GAP-3 closed at the adapter
+layer; the convergence-speed question is NOT yet measurable on
+FlowMol3.** Wave 71 set out to test a *different* claim shape than
+"framework beats baseline at the same NFE": because the FlowMol3
+entropy axis sits near its saturation ceiling, the meaningful question
+is whether the **framework reaches the baseline's saturation at a
+lower NFE** (i.e. converges faster). Phase 1
+(`docs/audit/wave71-phase1-analysis.md`) showed the existing 9-cell
+grid cannot answer it — a 2-parameter inverse-decay fit
+`metric(NFE) = sat − decay/NFE` returns `R² ∈ [0.06, 0.59]` across all
+six (seed, group) fits, i.e. the fit is worse than the per-cell noise
+(≈ 0.005, against a total metric range ≈ 0.010) — and recommended a
+finer log-spaced grid `NFE ∈ {5, 10, 25, 50, 100, 200}`. Phase 2
+closed **GAP-1**: the factory at
+`adaptive_reflow/adapters/flowmol3_v2_adapter.py:3975` now threads
+`use_upstream=(force_mode in {"real", "auto"})`, verified in-process by
+`_load_model()` returning `kind="upstream_flowmol"` (4.88 s ckpt load),
+plus 2 new byte-stability guard tests. Phase 3 closed **GAP-3**: the
+SMILES shortcut in `export_sampled_molecules`
+(`flowmol3_v2_adapter.py:3709-3752`) now calls
+`sampled_mols_from_smiles` so the consumer receives upstream
+`SampledMolecule` objects (with `.atom_types` / `.valencies` /
+`.charges` / `.positions`) instead of plain `rdkit.Chem.Mol` — the
+exact `AttributeError` the Wave 70 Phase 5 sweep surfaced, verified
+resolved in isolation (`type(mols[0]).__name__ == "SampledMolecule"`,
+`n_atoms=25`, `n_bonds=20`). **Both fixes are byte-stable (D.4 72/72).**
+
+Phase 3 then ran the finer 6-cell grid on RTX PRO 6000 Blackwell — and
+it surfaced a **third, previously unknown blocker, GAP-4**: the eval
+pipeline's `_resolve_adapter` (`tools/run_real_ckpt_eval.py:947`) never
+passes `weights_path` to the factory, so `weights_path=None` takes
+effect and `_load_model()` falls back to `kind="synthetic"` *even
+though* `use_upstream=True` is now threaded correctly. The consequence
+is that all 6 cells return the **bit-identical** synthetic reading
+`baseline_metric = framework_metric = 0.07340423794186401` with
+`composite = 0.0` and `composite_marker = "degraded_chemistry"`;
+per-cell `wallclock_baseline_s ∈ [0.001, 0.535]` against ~2.5 s
+measured in-process for a real ckpt forward at NFE=50 — a **580× gap**
+that independently confirms no cell exercised the real upstream model.
+**The honest consequence for this section: the "framework reaches the
+baseline's saturation at a lower NFE" claim is neither confirmed nor
+refuted on FlowMol3 — it is currently _unmeasurable_, and we do not
+assert it.** A flat curve cannot distinguish "both arms already
+saturated below NFE=5" from "the measurement never ran". Closing GAP-4
+is a scoped 5–10 LOC change (thread `weights_path` when
+`model ∈ {flowmol3, flowmol3_v2}` and `force_mode ∈ {real, auto}`),
+after which the acceptance checks are explicit:
+`wallclock_baseline_s > 2 s` at NFE=50, `composite_marker = "computed"`,
+`chemistry_input_source = "compute_chemistry_metrics"`, and a
+`baseline_metric` that actually *varies* across NFE. **FlowMol3's
+verdict therefore REMAINS `TIE_AT_SATURATION`** — unchanged from Wave
+70, with the blocker chain now advanced from GAP-1 → GAP-3 → GAP-4 and
+each link individually verified. See §7.7.7 for the cross-model
+convergence-speed result and `docs/audit/wave71-phase6-final.md` for
+the full Wave 71 synthesis.
+
 ### §7.6 Tier 3 honest verdict — framework extends baseline plateau (Wave 58 framing)
 
 **The new claim (Wave 58).** The framework's value-add on Tier 3
@@ -2326,6 +2382,36 @@ framework's restart-blend is gated to a no-op on FlowMol3 (the
 only adapter currently carrying the gate), which avoids a
 regression on small NFE budgets where the restart-blend would add
 noise without enough integration steps to recover it (§7.7.6).
+
+**Wave 71 closure update (Phases 1–6 —
+`docs/audit/wave71-phase1-analysis.md` … `wave71-phase6-final.md`).**
+Wave 71 tested a candidate **third claim axis — "the framework
+converges faster" (reaches the baseline's saturation quality at lower
+NFE)** — across all 3 Tier 3 models, and **the claim did not land. It
+is NOT made in this paper.** All three models report
+`speedup_95 = speedup_99 = 1.0`, giving
+**`cross_model_consistency = "none"`** (§7.7.7): on Kanzi (18/18 real
+cells) and LineageFlow (8/9 real GPU cells) this is a *real measurement*
+— both arms are already at the decision-metric ceiling at the smallest
+NFE probed, so neither can arrive earlier; on FlowMol3 it is a
+*degenerate artefact* of the still-open GAP-4 (§7.5), not a measurement
+at all. The reframing that **is** supported is the one §7.7.3 / §7.7.4
+already state: the framework's gain is **NFE-independent, not
+NFE-accelerating** — a byte-stable composite lift (σ = 0.000000 within
+every seed) of **+0.1695** on Kanzi across NFE 10…2000 and **+0.2083**
+on LineageFlow across NFE 10…200, at wallclock parity. The framework
+reaches a *different endpoint*, not the *same endpoint sooner*.
+**All 3 model verdicts are unchanged from Wave 70: Kanzi SUPPORTED,
+LineageFlow SUPPORTED, FlowMol3 TIE_AT_SATURATION.** Wave 71 did
+advance the FlowMol3 blocker chain — GAP-1 (factory `use_upstream`
+threading) and GAP-3 (`export_sampled_molecules` returning upstream
+`SampledMolecule`) are both closed and individually verified, with
+GAP-4 (eval-pipeline `weights_path` threading,
+`tools/run_real_ckpt_eval.py:947`) newly identified as the remaining
+blocker. D.4 **72/72 byte-stable**; G-MASTER **7/7 PASS**
+(`hard_pass=5, hard_fail=0, hard_pending=0, soft_pass=2,
+g_master_capability=PASS, must_4_freeze_gate=PASS`). See Wave 71
+Phase 6 synthesis for the full table.
 
 ### §7.7 NFE-aware framework — extends baseline's saturation ceiling (Wave 58)
 
@@ -2560,6 +2646,104 @@ Three honest caveats specific to §7.7:
    other 8 are PENDING on CPU bandwidth. The "framework composite
    constant across NFE" prediction for LineageFlow is not yet
    empirically validated beyond NFE = 10.
+
+#### §7.7.7 Convergence-speed claim — tested across all 3 models and NOT supported (Wave 71)
+
+**This subsection reports a negative result.** Wave 71 tested a
+candidate *third* publishable axis — "the framework converges faster,
+i.e. it reaches the baseline's saturation quality at a lower NFE" —
+across all three Tier 3 real-ckpt models. **The claim does not hold, and
+we do not make it.** We report the non-finding here rather than omit it,
+because the reframing was well-motivated (all three models sit at their
+decision-metric ceiling, so a same-NFE comparison is the wrong shape)
+and because the negative result is itself informative about *where* the
+framework's value actually comes from.
+
+**Method.** For each arm (baseline, framework) and each model we take
+`saturation_value = max(metric)` over that model's NFE grid, form the
+per-cell ratio `metric[NFE] / saturation_value`, and define
+`NFE_95` (resp. `NFE_99`) as the smallest NFE whose ratio reaches 0.95
+(resp. 0.99). The convergence speedup is
+`speedup_95 = NFE_95_baseline / NFE_95_framework` — greater than 1
+would mean the framework needs fewer function evaluations to reach the
+same quality. Data: `verification_outputs/kanzi_nfe_scan_q4_2026.json`,
+`lineageflow_v2_aggregated_q4_2026.json`,
+`flowmol3_fine_nfe_q4_2026.json`.
+
+| Model | NFE grid | seeds × NFE = cells | `NFE_95` baseline / framework | `speedup_95` per seed | mean | Real measurement? |
+|---|---|---:|---:|---|---:|---|
+| **Kanzi** | {10, 50, 200, 500, 1000, 2000} | 3 × 6 = **18** | 10 / 10 | 1.0 / 1.0 / 1.0 | **1.0** | **YES** — 18/18 `marker=computed`, real ckpt + real metric + real composite |
+| **LineageFlow** | {10, 50, 200} | 3 × 3 = **9** | 10 / 10 | 1.0 / 1.0 / 1.0 | **1.0** | **YES** — 8/9 cells real GPU; 9th is the legacy CPU cell (carries no composite) |
+| **FlowMol3** | {5, 10, 25, 50, 100, 200} | 1 × 6 = **6** | 5 / 5 | 1.0 / — / — | **1.0** (degenerate) | **NO** — synthetic mode, GAP-4 open (§7.5) |
+
+`NFE_99` is identical to `NFE_95` in every row. **Cross-model
+consistency: `none`** — no model shows a convergence speedup, so the
+claim is not "supported on some models and not others"; it is simply
+absent everywhere.
+
+**The three `1.0` readings are numerically identical but
+epistemically different, and conflating them would be the trap.** On
+Kanzi and LineageFlow, `speedup_95 = 1.0` is a *real measurement with a
+real explanation*: the primary metric
+(`protein_sequence_validity_rate` = 1.000 at every one of the 18 Kanzi
+cells; `family_validity_rate` = 0.999 → 1.000 on LineageFlow) is
+already at its ceiling at the smallest NFE probed, so *both* arms
+"reach 95% of saturation" at the grid's first point and there is no
+headroom for either to arrive earlier. On FlowMol3, `speedup_95 = 1.0`
+is a *fit artefact*: the 6 cells are bit-identical because the eval
+pipeline never loaded the real ckpt (§7.5, GAP-4), so the ratio is
+trivially 1.0 at every NFE. Reporting a pooled "mean Tier 3 speedup =
+1.0×" would launder a measurement failure into an empirical result, and
+reporting per-model speedups without this column would imply FlowMol3's
+number is a measurement. Neither framing is honest;
+`docs/figures/flowmol3_convergence_speed_q4_2026.png` plots the
+FlowMol3 case with the degeneracy annotated on the figure itself so the
+flat lines cannot be misread as "framework has caught up to baseline".
+
+**What the data does support — and it is the claim already made in
+§7.7.3 / §7.7.4, not a new one.** The framework's gain is
+**NFE-independent**, not NFE-accelerating. The composite lift is
+byte-stable *within each seed across the entire sweep* (σ = 0.000000 at
+every seed on both models): Kanzi `+0.1857 / +0.1702 / +0.1525` for
+seeds 42/43/44 across NFE 10…2000 (all-cell mean **+0.1695**), and
+LineageFlow `+0.2031 / +0.1992 / +0.2207` across NFE 10…200 (8-cell
+mean **+0.2083**), at a framework-vs-baseline wallclock ratio of ≈ 1.00.
+So the framework does not get to the baseline's endpoint sooner; it
+arrives at a **qualitatively different endpoint**, and it does so at
+every budget from the smallest tested to the largest, for free. That is
+a claim about the *destination*, not the *speed* — which is why the
+convergence-speed framing fails on exactly the models where the
+framework demonstrably works.
+
+**Honest caveats on this negative result.**
+
+1. **`NFE_95` is floored by each grid's smallest point.** Kanzi and
+   LineageFlow are saturated at NFE = 10, the first point probed, so
+   their true saturation NFE may be lower. This does **not** rescue the
+   speedup claim: both arms read identically at that first point, so
+   the *ratio* stays 1.0 however far down the grid is extended.
+2. **FlowMol3 is the only model whose metric could show a speedup at
+   all, and it is the one that is blocked.** Kanzi's and LineageFlow's
+   endpoints are NFE-independent by construction (the solver's terminal
+   latent is a deterministic function of `(seed, weights)`), so their
+   curves are structurally flat. FlowMol3's CTMC chain is integrated
+   step-by-step and its atom-type marginal genuinely does move with
+   NFE — making it the one informative probe, and GAP-4 is precisely
+   what stops it. A future wave that closes GAP-4 could still find a
+   FlowMol3 speedup; it could equally find a flat curve, which would
+   convert this "unmeasurable" into a genuine refutation.
+3. **FlowMol3 has n = 1 seed.** No significance test is possible on 6
+   cells from one seed; Phase 4 deliberately did **not** extend to
+   seeds 43/44, since more synthetic cells would add zero information.
+4. **Metric-axis dependence.** All three speedup measurements ride on
+   each model's primary metric. A speedup that manifested only on a
+   different composite axis (e.g. stability or REOS on FlowMol3) would
+   be invisible to this analysis.
+5. **Supersession note.** §7.7.4's title and caveat 3 above describe
+   LineageFlow as "1/9 cells computed (8 PENDING)"; that was accurate
+   at Wave 58 and was closed by the Wave 69 GPU sweep. The table in
+   this subsection uses the completed 9-cell data, and §7.4 carries the
+   updated per-cell numbers.
 
 ### §7.8 Framework extends baseline's saturation ceiling via paper-quantity signals (Wave 59 framing)
 

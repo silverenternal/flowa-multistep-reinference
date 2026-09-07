@@ -501,6 +501,53 @@ def test_default_factory() -> None:
     assert isinstance(a.capabilities(), AdapterCapabilities)
 
 
+def test_factory_threads_use_upstream_when_force_mode_real() -> None:
+    """Wave 71 Agent 2 — closes GAP-1 (Wave 70 Phase 1 audit §1.8).
+
+    When ``force_mode in {"real", "auto"}`` the factory MUST thread
+    ``use_upstream=True`` to ``FlowMol3V2Adapter(...)`` so the real
+    FlowMol3 ckpt forward is taken (instead of the partial-fidelity
+    fallback). Without this plumbing the ``solve_ode`` upstream
+    branch at ``flowmol3_v2_adapter.py:2253`` is dead code in
+    practice.
+    """
+    for force_mode in ("real", "auto"):
+        a = default_flowmol3adapter(
+            backend="torch",
+            num_steps=5,
+            device="cpu",
+            force_mode=force_mode,
+        )
+        assert isinstance(a, FlowMol3V2Adapter)
+        # The ``use_upstream`` property reflects the constructor
+        # flag — the integration test below verifies the flag was
+        # actually set, not silently defaulted.
+        assert a.use_upstream is True, (
+            f"force_mode={force_mode!r} must yield use_upstream=True"
+        )
+
+
+def test_factory_preserves_use_upstream_false_when_force_mode_synthetic() -> None:
+    """Wave 71 Agent 2 — backward-compat (byte-stability contract).
+
+    When ``force_mode in {None, "synthetic"}`` the factory MUST keep
+    the legacy ``use_upstream=False`` default. This preserves the
+    synthetic-mode verdict (composite=0.0 + marker="synthetic_fallback")
+    and the D.4 byte-stable regression vectors.
+    """
+    for force_mode in (None, "synthetic"):
+        a = default_flowmol3adapter(
+            backend="numpy",
+            num_steps=5,
+            force_mode=force_mode,
+        )
+        assert isinstance(a, FlowMol3V2Adapter)
+        assert a.use_upstream is False, (
+            f"force_mode={force_mode!r} must yield use_upstream=False "
+            "(byte-stability contract)"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Wave 70 Phase 3 — :meth:`FlowMol3V2Adapter.export_sampled_molecules`
 # decodes the cached trajectory to ``list[RDKit Mol]`` + metadata.

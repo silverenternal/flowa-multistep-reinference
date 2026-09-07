@@ -3707,23 +3707,62 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         entry = self._native_states.get(trace.native_state_digest) or {}
 
         # --- Upstream SMILES shortcut (preferred) ---------------------
+        # Wave 71 Agent 3 — close GAP-3 (Wave 71 Phase 2 §6): when an
+        # upstream SMILES is cached, call ``sampled_mols_from_smiles``
+        # (from ``flowmol3_metrics_upstream``) instead of the legacy
+        # ``_decode_rdkit_mol_from_smiles`` so we return upstream
+        # :class:`SampledMolecule` objects. The downstream
+        # :class:`SampleAnalyzer.analyze` consumer (in
+        # ``data/FlowMol3/repo/flowmol/analysis/metrics.py:349``)
+        # accesses ``molecule.atom_types`` / ``.valencies`` /
+        # ``.charges`` / ``.positions`` — attributes that ONLY exist
+        # on :class:`SampledMolecule`. Returning a plain
+        # :class:`rdkit.Chem.Mol` previously raised
+        # ``AttributeError: 'Mol' object has no attribute 'atom_types'``
+        # and forced every cell to ``composite_marker =
+        # degraded_chemistry``. See Wave 70 Phase 1 audit §2.1 for
+        # the explicit recommendation.
         cached_smiles = str(entry.get("rdkit_mol_smiles", "") or "")
         if cached_smiles:
-            mol = self._decode_rdkit_mol_from_smiles(cached_smiles)
-            if mol is not None:
+            sampled: list[Any] = []
+            upstream_decode_error: str | None = None
+            try:
+                from adaptive_reflow.adapters.flowmol3_metrics_upstream import (
+                    sampled_mols_from_smiles as _sampled_mols_from_smiles,
+                )
+                sampled = _sampled_mols_from_smiles([cached_smiles])
+            except Exception as exc:  # noqa: BLE001 — upstream may fail.
+                upstream_decode_error = f"{type(exc).__name__}:{exc}"
+            if sampled:
+                first = sampled[0]
+                # Use SampledMolecule attributes (not rdkit.Chem.Mol API).
+                n_atoms = int(getattr(first, "num_atoms", 0) or 0)
+                # ``SampledMolecule`` exposes an underlying rdkit mol at
+                # ``.rdkit_mol``; bond count is a simple integer from
+                # there. (``bond_types`` is a torch.Tensor — ``len()``
+                # raises on multi-element tensors, so we avoid it.)
+                rkm = getattr(first, "rdkit_mol", None)
+                if rkm is not None and hasattr(rkm, "GetNumBonds"):
+                    n_bonds = int(rkm.GetNumBonds())
+                else:
+                    n_bonds = int(
+                        getattr(first, "bond_types", None).shape[0]
+                    ) if getattr(first, "bond_types", None) is not None else 0
                 metadata.update(
                     {
                         "marker": "ok",
                         "sanitize_status": "ok",
-                        "n_atoms": int(mol.GetNumAtoms()),
-                        "n_bonds": int(mol.GetNumBonds()),
+                        "n_atoms": n_atoms,
+                        "n_bonds": n_bonds,
                         "build_errors": 0,
                         "smiles": cached_smiles,
                     }
                 )
-                return [mol], metadata
-            # SMILES cached but RDKit failed to decode → fall through
-            # to the (x, a, e) reconstruction below.
+                return list(sampled), metadata
+            # Upstream decode failed — record it and fall through to
+            # the (x, a, e) reconstruction below.
+            if upstream_decode_error is not None:
+                metadata["upstream_decode_error"] = upstream_decode_error
 
         # --- Linear / CTMC / placeholder reconstruction ---------------
         traj_x = lineage["traj_x"]
@@ -3970,6 +4009,14 @@ def default_flowmol3adapter(
         weights_path=weights_path,
         device=str(device),
         ctmc_enabled=ctmc_enabled,
+        # Wave 71 Agent 2 — close GAP-1 (Wave 70 Phase 1 audit §1.8):
+        # when ``force_mode in {"real", "auto"}``, thread
+        # ``use_upstream=True`` so the real FlowMol3 ckpt loads on first
+        # ``_load_model()`` call (instead of the partial-fidelity path).
+        # ``force_mode is None`` or ``"synthetic"`` keeps the legacy
+        # ``use_upstream=False`` default (byte-stable for all existing
+        # callers).
+        use_upstream=(force_mode in {"real", "auto"}),
     )
 
 
