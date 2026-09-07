@@ -74,7 +74,12 @@ from adaptive_reflow.frame.adapter import (
     TensorRef,
     validate_state_bundle,
 )
-from adaptive_reflow.framework.interfaces import implements
+from adaptive_reflow.framework.interfaces import (
+    AdapterObservationProtocol,
+    ObservationKind,
+    ObservationResult,
+    implements,
+)
 from adaptive_reflow.universal.adapter import ChannelDomain, FlowMatchingODEAdapter
 from adaptive_reflow.universal.state import (
     ChannelName,
@@ -996,6 +1001,126 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
         """Observation-only post-step; placeholder re-validates and returns."""
         del trace  # placeholder preserves no native trajectory (see export_trajectory)
         return _require_valid(state, "validate_state_bundle")
+
+    # ------------------------------------------------------------------
+    # 8b. observe (Wave 68 Phase 3 — AdapterObservationProtocol)
+    # ------------------------------------------------------------------
+
+    def observe(
+        self,
+        trace: ODEIntegratorTrace,
+        state: StateBundle,
+        paper_quantities: Any = None,
+        *,
+        strategies: tuple[ObservationKind, ...] = (
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+            ObservationKind.TRAJECTORY_NATIVE,
+        ),
+        theta_before: NDArray[np.float64] | None = None,
+        theta_after: NDArray[np.float64] | None = None,
+    ) -> tuple[ObservationResult, ...]:
+        """Single typed observation surface (Wave 68 — :class:`AdapterObservationProtocol`).
+
+        Wraps the existing :meth:`observe_endpoint` and
+        :meth:`observe_entropy_reduction` into a tagged tuple. The
+        DISCRETE_TOKENS and TRAJECTORY_NATIVE strategies are NOT natural
+        for the v1 placeholder (no per-token integer channel and
+        :meth:`export_trajectory` raises ``NotImplementedError``) so
+        the result tuple contains only the supported subset.
+
+        This method is ADDITIVE per Wave 11 / Wave 59 interface-first
+        constraint. The existing ``observe_endpoint`` and
+        ``observe_entropy_reduction`` methods stay in place and
+        remain the single source of truth for the metric layer until
+        the metric helper is refactored in Wave 67 Phase D.
+
+        Why DISCRETE_TOKENS is skipped
+        ------------------------------
+
+        FlowMol3's native state carries a per-atom atom-type
+        categorical over the 10 heavy-atom types
+        (``FLOWMOL3_ATOM_TYPE_VOCAB_SIZE``), not a discrete token
+        index channel like Kanzi / LineageFlow. The metric helper
+        has no DISCRETE_TOKENS metric for FlowMol3 (its natural
+        observation is the per-atom entropy reduction, not an argmax
+        index lookup), so this strategy is intentionally omitted.
+
+        Why TRAJECTORY_NATIVE is skipped
+        --------------------------------
+
+        :meth:`export_trajectory` raises ``NotImplementedError`` on
+        the placeholder — the v1 adapter does not preserve a native
+        trajectory. Per the Protocol, empty-tuple entries are valid;
+        skipping this strategy is the natural response.
+
+        Parameters
+        ----------
+        trace
+            The :class:`ODEIntegratorTrace` from the most recent
+            :meth:`solve_ode` call.
+        state
+            The :class:`StateBundle` at t=1 (passed to
+            :meth:`observe_endpoint`).
+        paper_quantities
+            Forwarded to :meth:`observe_entropy_reduction` for
+            signature parity. Not consumed (entropy is a property
+            of the trajectory / explicit ``theta_after`` alone).
+        strategies
+            Tuple of :class:`ObservationKind` the caller wants.
+            The default requests all four kinds; the result tuple
+            only contains the supported subset.
+        theta_before, theta_after
+            Optional entropy-reduction prior/posterior. Forwarded
+            to :meth:`observe_entropy_reduction` when
+            POSITION_ENTROPY_REDUCTION is in ``strategies``.
+
+        Returns
+        -------
+        tuple[ObservationResult, ...]
+            The supported subset of observation results. Length 0
+            if ``strategies`` requests only unsupported kinds;
+            length 2 when the default strategies tuple is supplied
+            (ENDPOINT_BUNDLE + POSITION_ENTROPY_REDUCTION).
+        """
+        results: list[ObservationResult] = []
+        if ObservationKind.ENDPOINT_BUNDLE in strategies:
+            endpoint_bundle = self.observe_endpoint(trace, state)
+            results.append(
+                ObservationResult(
+                    kind=ObservationKind.ENDPOINT_BUNDLE,
+                    channel="endpoint_bundle",
+                    payload=endpoint_bundle,
+                    units="state_bundle",
+                )
+            )
+        if ObservationKind.POSITION_ENTROPY_REDUCTION in strategies:
+            reduction_dict = self.observe_entropy_reduction(
+                trace,
+                paper_quantities,
+                theta_before=theta_before,
+                theta_after=theta_after,
+            )
+            reduction_value = reduction_dict.get(
+                PER_POSITION_ENTROPY_REDUCTION
+            )
+            results.append(
+                ObservationResult(
+                    kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+                    channel=PER_POSITION_ENTROPY_REDUCTION,
+                    payload=float(reduction_value)
+                    if reduction_value is not None
+                    else None,
+                    units="nats",
+                    metadata={
+                        "theta_before_supplied": theta_before is not None,
+                        "theta_after_supplied": theta_after is not None,
+                        "trace_digest": str(trace.native_state_digest),
+                    },
+                )
+            )
+        return tuple(results)
 
     def export_trajectory(self, trace: ODEIntegratorTrace) -> Any:
         """FlowMol3 adapter: no native trajectory preserved (P0-7)."""

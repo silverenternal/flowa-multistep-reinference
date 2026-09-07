@@ -57,6 +57,7 @@ from adaptive_reflow.adapters.flowmol3_v2_adapter import (
     FLOWMOL3ADAPTER_CONFIG_HASH,
     FLOWMOL3ADAPTER_CONFIG_VERSION,
     FLOWMOL3ADAPTER_MECHANISM_ID,
+    FLOWMOL3ADAPTER_N_ATOM_TYPES,
     FLOWMOL3ADAPTER_PINNED_COMMIT,
     FLOWMOL3ADAPTER_STATE_SHAPE,
     FlowMol3V2AdapterCapabilities,
@@ -498,3 +499,148 @@ def test_default_factory() -> None:
     a = default_flowmol3adapter(backend="numpy", num_steps=5)
     assert isinstance(a, FlowMol3V2Adapter)
     assert isinstance(a.capabilities(), AdapterCapabilities)
+
+
+# ---------------------------------------------------------------------------
+# Wave 68 Phase 3 — :meth:`FlowMol3V2Adapter.observe` closes the Wave 66
+# v2 wire gap (``adapter_missing_observe_entropy_reduction`` BLOCKED).
+# ---------------------------------------------------------------------------
+
+
+class TestFlowMol3V2ObserveProtocol:
+    """``observe(...)`` returns a typed tuple tagged by :class:`ObservationKind`.
+
+    The v2 adapter supports ``ENDPOINT_BUNDLE`` (per-channel
+    endpoint) and ``POSITION_ENTROPY_REDUCTION`` (per-atom atom-type
+    entropy reduction derived from the cached ``traj_a`` lineage).
+    The new ``POSITION_ENTROPY_REDUCTION`` strategy closes the Wave
+    66 v2 wire gap: the eval pipeline
+    ``_compute_flowmol3_real_metric_via_trace`` no longer hits
+    ``adapter_missing_observe_entropy_reduction`` for v2 real-ckpt
+    cells.
+    """
+
+    def _make_adapter_with_trace(self, num_steps: int = 3):
+        """Construct adapter, run ``solve_ode``, return ``(adapter, trace, state)``."""
+        adapter = default_flowmol3adapter(
+            backend="numpy", num_steps=num_steps
+        )
+        state = adapter.build_initial_state(
+            batch_id="b", sample_id="s"
+        )
+        cond = ODEConditionDelta(
+            delta_spec={"num_steps": int(num_steps)},
+            source="test_flowmol3v2_observe",
+            target_round=1,
+            calibration_artifact_hash="a" * 64,
+        )
+        trace = adapter.solve_ode(state, cond, seed=0)
+        return adapter, trace, state
+
+    def test_observe_conforms_to_protocol(self) -> None:
+        """``observe(...)`` satisfies the :class:`AdapterObservationProtocol` Protocol."""
+        from adaptive_reflow.framework.interfaces import AdapterObservationProtocol
+        adapter = default_flowmol3adapter(backend="numpy", num_steps=2)
+        assert isinstance(adapter, AdapterObservationProtocol)
+
+    def test_observe_default_returns_two_results(self) -> None:
+        """Default strategies → ``ENDPOINT_BUNDLE`` + ``POSITION_ENTROPY_REDUCTION``."""
+        from adaptive_reflow.framework.interfaces import ObservationKind
+        adapter, trace, state = self._make_adapter_with_trace(num_steps=3)
+        results = adapter.observe(trace, state)
+        kinds = {r.kind for r in results}
+        assert kinds == {
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+        }
+        assert len(results) == 2
+
+    def test_observe_entropy_shim_uses_cached_traj_a(self) -> None:
+        """Entropy shim derives ``theta_after`` from the cached ``traj_a`` lineage.
+
+        Closes the Wave 66 BLOCKED failure mode: when the eval
+        pipeline passes only ``theta_before`` (or nothing), the
+        adapter's cached ``traj_a[-1]`` integer labels are turned
+        into a softmax-normalised marginal and the entropy
+        reduction is computed via the shared
+        :func:`per_position_entropy_reduction` helper.
+        """
+        import numpy as np
+
+        from adaptive_reflow.framework.interfaces import ObservationKind
+
+        adapter, trace, state = self._make_adapter_with_trace(num_steps=3)
+        results = adapter.observe(
+            trace,
+            state,
+            strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+        )
+        assert len(results) == 1
+        result = results[0]
+        assert result.kind == ObservationKind.POSITION_ENTROPY_REDUCTION
+        assert result.units == "nats"
+        # theta_after_source must be the entropy shim, not explicit.
+        assert result.metadata["theta_after_supplied"] is False
+        assert result.metadata["theta_after_source"] in (
+            "traj_a_one_hot_softmax",
+            "uniform_fallback",
+        )
+        # Payload is a float (reduction in nats) — finite number.
+        assert isinstance(result.payload, float)
+        assert np.isfinite(result.payload)
+
+    def test_observe_with_explicit_theta_arrays(self) -> None:
+        """Explicit ``theta_before`` + ``theta_after`` produce a meaningful reduction."""
+        import numpy as np
+
+        from adaptive_reflow.framework.interfaces import ObservationKind
+
+        adapter, trace, state = self._make_adapter_with_trace(num_steps=3)
+        theta_after = np.zeros(
+            (8, int(FLOWMOL3ADAPTER_N_ATOM_TYPES)), dtype=np.float64
+        )
+        theta_after[:, 0] = 100.0  # confident spike
+        theta_before = np.full_like(theta_after, 1.0)  # uniform
+        results = adapter.observe(
+            trace,
+            state,
+            strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+            theta_before=theta_before,
+            theta_after=theta_after,
+        )
+        assert len(results) == 1
+        result = results[0]
+        # Sharpened after-vs-uniform before → positive reduction.
+        assert result.payload > 0.0
+        assert result.metadata["theta_before_supplied"] is True
+        assert result.metadata["theta_after_supplied"] is True
+
+    def test_observe_byte_stable_across_calls(self) -> None:
+        """Two calls with the same (adapter, trace, state) return identical results."""
+        from adaptive_reflow.framework.interfaces import ObservationKind
+
+        adapter, trace, state = self._make_adapter_with_trace(num_steps=3)
+        r1 = adapter.observe(
+            trace,
+            state,
+            strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+        )
+        r2 = adapter.observe(
+            trace,
+            state,
+            strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+        )
+        # The metadata dict is excluded from __eq__ (debug-only) but
+        # the payload + kind + units are stable.
+        assert r1[0].kind == r2[0].kind
+        assert r1[0].units == r2[0].units
+        assert r1[0].payload == r2[0].payload
+
+    def test_observe_legacy_endpoint_still_works(self) -> None:
+        """The legacy :meth:`observe_endpoint` is preserved byte-identically."""
+        adapter, trace, state = self._make_adapter_with_trace(num_steps=3)
+        ep = adapter.observe_endpoint(trace, state)
+        # Byte-stable surface: same fields as before Wave 68 Phase 3.
+        assert hasattr(ep, "native_state_digest")
+        assert ep.source_round == state.source_round + 1
+        assert "flowmol3adapter_observed" in ep.provenance

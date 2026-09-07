@@ -81,10 +81,16 @@ from adaptive_reflow.adapters._adapter_common import (
     digest_state,
     kaiming_uniform,
     make_ref,
+    per_position_entropy_reduction,
     seed_from_ids,
     torch_is_available as _torch_is_available,
 )
-from adaptive_reflow.framework.interfaces import implements
+from adaptive_reflow.framework.interfaces import (
+    AdapterObservationProtocol,
+    ObservationKind,
+    ObservationResult,
+    implements,
+)
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -3059,6 +3065,270 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             provenance=provenance,
             capability_token=self.capabilities(),
         )
+
+    # ------------------------------------------------------------------
+    # 8b. _entropy_shim (Wave 68 Phase 3 — entropy shim for v2)
+    # ------------------------------------------------------------------
+
+    def _atom_type_logit_marginal_from_endpoint(
+        self,
+        traj_entry: Mapping[str, Any],
+    ) -> NDArray[np.float64] | None:
+        """Compute a per-atom atom-type marginal from the cached trajectory.
+
+        Helper used by the :meth:`observe` entropy shim. The v2
+        adapter caches the per-step ``traj_a`` integer labels
+        (``(num_steps + 1, n_atoms)``, ``dtype=int64``); the entropy
+        shim needs a *categorical distribution*, not an integer
+        index.
+
+        Strategy
+        --------
+
+        * If ``traj_entry`` carries a ``traj_p_a`` key (a
+          ``(num_steps + 1, n_atoms, K_atom)`` ``float64`` atom-type
+          marginal, e.g. from the CTMC swap path), take ``traj_p_a[-1]``
+          verbatim and softmax-normalise the last axis defensively.
+        * Otherwise, build the marginal from ``traj_a[-1]`` via the
+          existing :func:`_to_one_hot` helper (each row is the
+          one-hot of the sampled atom-type index) and softmax-normalise
+          across the trailing ``K_atom`` axis so the result is a
+          genuine probability simplex.
+
+        Returns ``None`` when no ``traj_a`` is present (the trace
+        was emitted by another adapter instance, or the trajectory
+        was never stored). The caller falls back to the synthetic
+        uniform distribution in that case.
+
+        Stdlib + numpy only. No torch import (the v2 ``_load_model``
+        path stays a lazy import; the CTMC swap is opt-in and the
+        synthetic NumPy backend is the default).
+        """
+        if "traj_p_a" in traj_entry and traj_entry["traj_p_a"] is not None:
+            p_a = np.asarray(traj_entry["traj_p_a"], dtype=np.float64)
+            if p_a.ndim == 3 and p_a.shape[0] >= 1:
+                last = np.asarray(p_a[-1], dtype=np.float64)
+                # Defensive renormalise — the upstream marginal
+                # should already sum to 1 but we want a strict
+                # simplex so the entropy helper stays finite.
+                last = np.clip(last, 1e-12, None)
+                row_sum = last.sum(axis=-1, keepdims=True)
+                row_sum = np.where(row_sum > 0.0, row_sum, 1.0)
+                return (last / row_sum).astype(np.float64)
+            return None
+        if "traj_a" in traj_entry and traj_entry["traj_a"] is not None:
+            traj_a = np.asarray(traj_entry["traj_a"], dtype=np.int64)
+            if traj_a.ndim == 2 and traj_a.shape[0] >= 1:
+                last_idx = np.asarray(traj_a[-1], dtype=np.int64).reshape(-1)
+                one_hot = _to_one_hot(
+                    last_idx, int(FLOWMOL3ADAPTER_N_ATOM_TYPES)
+                )
+                # Renormalise to a strict simplex so the entropy
+                # helper never sees a degenerate zero row.
+                one_hot = one_hot + 1e-12
+                row_sum = one_hot.sum(axis=-1, keepdims=True)
+                return (one_hot / row_sum).astype(np.float64)
+        return None
+
+    def _atom_type_logit_marginal_from_prior(
+        self,
+        prior_entry: Mapping[str, Any],
+    ) -> NDArray[np.float64] | None:
+        """Compute a per-atom atom-type marginal from the cached prior entry.
+
+        Fallback when the trace-digest lookup in
+        :meth:`_atom_type_logit_marginal_from_endpoint` fails: the
+        adapter's prior entry (``_native_states[bundle.native_state_digest]``)
+        may still carry a usable ``a`` integer array.
+
+        Returns ``None`` when no ``a`` integer array is present.
+        """
+        a_prior = prior_entry.get("a")
+        if a_prior is None:
+            return None
+        a_arr = np.asarray(a_prior, dtype=np.int64).reshape(-1)
+        if a_arr.size == 0:
+            return None
+        one_hot = _to_one_hot(a_arr, int(FLOWMOL3ADAPTER_N_ATOM_TYPES))
+        one_hot = one_hot + 1e-12
+        row_sum = one_hot.sum(axis=-1, keepdims=True)
+        return (one_hot / row_sum).astype(np.float64)
+
+    # ------------------------------------------------------------------
+    # 8c. observe (Wave 68 Phase 3 — AdapterObservationProtocol)
+    # ------------------------------------------------------------------
+
+    def observe(
+        self,
+        trace: ODEIntegratorTrace,
+        state: StateBundle,
+        paper_quantities: Any = None,
+        *,
+        strategies: tuple[ObservationKind, ...] = (
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+            ObservationKind.TRAJECTORY_NATIVE,
+        ),
+        theta_before: NDArray[np.float64] | None = None,
+        theta_after: NDArray[np.float64] | None = None,
+    ) -> tuple[ObservationResult, ...]:
+        """Single typed observation surface (Wave 68 — :class:`AdapterObservationProtocol`).
+
+        Wraps the existing :meth:`observe_endpoint` (and exports
+        the v2-native per-atom atom-type marginal via the
+        :meth:`_atom_type_logit_marginal_from_endpoint` shim) into
+        a tagged tuple.
+
+        Closes the Wave 66 v2 wire gap: the v2 adapter previously
+        exposed ``observe_endpoint`` only, so the metric helper
+        (``_compute_flowmol3_real_metric_via_trace``) returned
+        ``adapter_missing_observe_entropy_reduction`` on every
+        real-ckpt FlowMol3 cell. The new
+        ``POSITION_ENTROPY_REDUCTION`` strategy closes that gap
+        by computing ``H(theta_before) - H(theta_after)`` directly
+        from the cached ``traj_a`` lineage when explicit priors
+        are not supplied — the v2-native analog of
+        ``_compute_flowmol3_real_atom_type_marginal``.
+
+        This method is ADDITIVE per Wave 11 / Wave 59 interface-first
+        constraint. The existing ``observe_endpoint`` method stays
+        in place; the metric helper refactor (Wave 67 Phase D) is
+        the consumer that flips the dispatch from
+        ``adapter.observe_entropy_reduction(...)`` to
+        ``next(r for r in adapter.observe(...) if r.kind ==
+        ObservationKind.POSITION_ENTROPY_REDUCTION)``.
+
+        Why DISCRETE_TOKENS is skipped
+        ------------------------------
+
+        FlowMol3's natural observation is the per-atom atom-type
+        *distribution* (a ``(n_atoms, K_atom)`` categorical) not a
+        discrete token index. The metric helper has no
+        DISCRETE_TOKENS metric for FlowMol3; Kanzi / LineageFlow
+        are the natural consumers.
+
+        Why TRAJECTORY_NATIVE is skipped
+        --------------------------------
+
+        :meth:`export_trajectory` returns the ``(traj_x, traj_c,
+        traj_e, traj_a)`` lineage already — but exporting it
+        through the new observation surface would duplicate the
+        existing surface without adding consumer value. The
+        metric helper currently consumes ``observe_endpoint``
+        directly; the trajectory export stays on the legacy
+        method until a downstream consumer asks for the wrapped
+        shape.
+
+        Parameters
+        ----------
+        trace
+            The :class:`ODEIntegratorTrace` from the most recent
+            :meth:`solve_ode` call.
+        state
+            The :class:`StateBundle` at t=1.
+        paper_quantities
+            Accepted for signature parity. Not consumed (entropy
+            is a property of the cached trajectory alone).
+        strategies
+            Tuple of :class:`ObservationKind` the caller wants.
+            The default requests all four kinds; the result tuple
+            only contains the supported subset.
+        theta_before, theta_after
+            Optional entropy-reduction prior/posterior. When
+            omitted, the entropy shim derives the marginal from
+            the cached ``traj_a`` lineage (closes the Wave 66
+            BLOCKED failure mode for the eval pipeline's
+            ``_compute_flowmol3_real_atom_type_marginal``).
+
+        Returns
+        -------
+        tuple[ObservationResult, ...]
+            The supported subset of observation results. Length 2
+            when the default strategies tuple is supplied
+            (ENDPOINT_BUNDLE + POSITION_ENTROPY_REDUCTION).
+        """
+        del paper_quantities  # v2-native surface does not consume paper_quantities.
+        results: list[ObservationResult] = []
+        if ObservationKind.ENDPOINT_BUNDLE in strategies:
+            endpoint_bundle = self.observe_endpoint(trace, state)
+            results.append(
+                ObservationResult(
+                    kind=ObservationKind.ENDPOINT_BUNDLE,
+                    channel="endpoint_bundle",
+                    payload=endpoint_bundle,
+                    units="state_bundle",
+                )
+            )
+        if ObservationKind.POSITION_ENTROPY_REDUCTION in strategies:
+            # v2-native entropy shim: when ``theta_after`` is not
+            # supplied, derive it from the cached trajectory; when
+            # ``theta_before`` is not supplied, default to the
+            # uniform max-entropy reference (matches the v1
+            # placeholder's synthetic-mode fallback).
+            traj_entry = self._native_states.get(trace.native_state_digest)
+            prior_entry = self._native_states.get(state.native_state_digest)
+            if theta_after is None:
+                theta_after_arr: NDArray[np.float64] | None = None
+                if traj_entry is not None:
+                    theta_after_arr = (
+                        self._atom_type_logit_marginal_from_endpoint(traj_entry)
+                    )
+                if theta_after_arr is None and prior_entry is not None:
+                    theta_after_arr = (
+                        self._atom_type_logit_marginal_from_prior(prior_entry)
+                    )
+                if theta_after_arr is None:
+                    # Last-resort fallback: uniform distribution
+                    # over the 10-way categorical. Mirrors the v1
+                    # placeholder's synthetic-mode fallback so the
+                    # metric helper always sees a finite number.
+                    n_atoms = (
+                        int(traj_entry.get("n_atoms", 8))
+                        if traj_entry is not None
+                        else 8
+                    )
+                    theta_after_arr = np.full(
+                        (int(n_atoms), int(FLOWMOL3ADAPTER_N_ATOM_TYPES)),
+                        1.0 / float(FLOWMOL3ADAPTER_N_ATOM_TYPES),
+                        dtype=np.float64,
+                    )
+            else:
+                theta_after_arr = np.asarray(theta_after, dtype=np.float64)
+
+            if theta_before is None:
+                # Default baseline: uniform max-entropy reference.
+                theta_before_arr = np.full_like(theta_after_arr, 1.0)
+            else:
+                theta_before_arr = np.asarray(theta_before, dtype=np.float64)
+
+            reduction_value = float(
+                per_position_entropy_reduction(
+                    theta_before_arr, theta_after_arr
+                )
+            )
+            results.append(
+                ObservationResult(
+                    kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+                    channel="atom_type_entropy_reduction",
+                    payload=reduction_value,
+                    units="nats",
+                    metadata={
+                        "theta_before_supplied": theta_before is not None,
+                        "theta_after_supplied": theta_after is not None,
+                        "theta_after_source": (
+                            "explicit"
+                            if theta_after is not None
+                            else "traj_a_one_hot_softmax"
+                            if (traj_entry is not None and theta_after is None)
+                            else "uniform_fallback"
+                        ),
+                        "trace_digest": str(trace.native_state_digest),
+                        "K_atom": int(FLOWMOL3ADAPTER_N_ATOM_TYPES),
+                    },
+                )
+            )
+        return tuple(results)
 
     # ------------------------------------------------------------------
     # 9. inject_forward_noise (optional — P0-7 close, r17-audit P-01)

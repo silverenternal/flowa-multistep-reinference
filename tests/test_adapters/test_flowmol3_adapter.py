@@ -1386,4 +1386,110 @@ class TestFlowMol3BugCMetricSeedIsCellKey:
         assert seed_200 == int(43) * 31 + 200
 
 
+# ---------------------------------------------------------------------------
+# Wave 68 Phase 3 — :meth:`FlowMol3Adapter.observe` wraps the legacy
+# ``observe_endpoint`` + ``observe_entropy_reduction`` into a typed tuple.
+# ---------------------------------------------------------------------------
+
+
+class TestFlowMol3ObserveProtocol:
+    """``observe(...)`` returns a typed :class:`ObservationResult` tuple.
+
+    Mirrors the Wave 68 Phase 1 ``AdapterObservationProtocol`` design.
+    The v1 placeholder supports two of the four observation kinds
+    (``ENDPOINT_BUNDLE`` and ``POSITION_ENTROPY_REDUCTION``); the
+    remaining two are intentionally omitted (no discrete-token
+    channel, no preserved native trajectory).
+    """
+
+    def _make_trace(self, adapter, seed: int = 0):
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        cond = ODEConditionDelta(
+            delta_spec={"num_steps": 1},
+            source="test_flowmol3_observe",
+            target_round=1,
+            calibration_artifact_hash="a" * 64,
+        )
+        return adapter.solve_ode(bundle, cond, seed=seed), bundle
+
+    def test_observe_conforms_to_protocol(self, adapter) -> None:
+        """``observe(...)`` satisfies the :class:`AdapterObservationProtocol` Protocol."""
+        from adaptive_reflow.framework.interfaces import AdapterObservationProtocol
+        assert isinstance(adapter, AdapterObservationProtocol)
+
+    def test_observe_default_returns_two_results(self, adapter) -> None:
+        """Default strategies → ``ENDPOINT_BUNDLE`` + ``POSITION_ENTROPY_REDUCTION``."""
+        from adaptive_reflow.framework.interfaces import ObservationKind
+        trace, bundle = self._make_trace(adapter, seed=0)
+        results = adapter.observe(trace, bundle)
+        kinds = {r.kind for r in results}
+        assert kinds == {
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+        }
+        # Length 2.
+        assert len(results) == 2
+
+    def test_observe_endpoint_only_returns_one_result(self, adapter) -> None:
+        """Restricted ``strategies`` skips the entropy strategy."""
+        from adaptive_reflow.framework.interfaces import ObservationKind
+        trace, bundle = self._make_trace(adapter, seed=0)
+        results = adapter.observe(
+            trace, bundle, strategies=(ObservationKind.ENDPOINT_BUNDLE,)
+        )
+        assert len(results) == 1
+        assert results[0].kind == ObservationKind.ENDPOINT_BUNDLE
+        # Payload is the StateBundle from observe_endpoint.
+        assert results[0].payload is bundle or hasattr(
+            results[0].payload, "native_state_digest"
+        )
+
+    def test_observe_discrete_tokens_skipped_for_v1(self, adapter) -> None:
+        """FlowMol3 v1 has no DISCRETE_TOKENS observation (no token index channel)."""
+        from adaptive_reflow.framework.interfaces import ObservationKind
+        trace, bundle = self._make_trace(adapter, seed=0)
+        results = adapter.observe(
+            trace, bundle, strategies=(ObservationKind.DISCRETE_TOKENS,)
+        )
+        assert results == ()
+
+    def test_observe_trajectory_native_skipped_for_v1(self, adapter) -> None:
+        """FlowMol3 v1 raises ``NotImplementedError`` on ``export_trajectory``."""
+        from adaptive_reflow.framework.interfaces import ObservationKind
+        trace, bundle = self._make_trace(adapter, seed=0)
+        results = adapter.observe(
+            trace, bundle, strategies=(ObservationKind.TRAJECTORY_NATIVE,)
+        )
+        assert results == ()
+
+    def test_observe_entropy_reduction_byte_stable(self, adapter) -> None:
+        """Two calls return identical POSITION_ENTROPY_REDUCTION results."""
+        from adaptive_reflow.framework.interfaces import ObservationKind
+        trace, bundle = self._make_trace(adapter, seed=42)
+        r1 = adapter.observe(
+            trace,
+            bundle,
+            strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+        )
+        r2 = adapter.observe(
+            trace,
+            bundle,
+            strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+        )
+        assert r1 == r2
+        assert r1[0].kind == ObservationKind.POSITION_ENTROPY_REDUCTION
+        assert r1[0].units == "nats"
+        assert r1[0].channel == PER_POSITION_ENTROPY_REDUCTION
+
+    def test_observe_legacy_methods_still_work(self, adapter) -> None:
+        """The legacy ``observe_endpoint`` / ``observe_entropy_reduction`` are unchanged."""
+        trace, bundle = self._make_trace(adapter, seed=0)
+        # Direct call to observe_endpoint → StateBundle.
+        ep = adapter.observe_endpoint(trace, bundle)
+        assert hasattr(ep, "native_state_digest")
+        # Direct call to observe_entropy_reduction → dict[str, float].
+        ent = adapter.observe_entropy_reduction(trace)
+        assert PER_POSITION_ENTROPY_REDUCTION in ent
+
+
 __all__ = ()
