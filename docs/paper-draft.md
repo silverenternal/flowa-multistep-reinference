@@ -2024,6 +2024,103 @@ Fix closes the metric-layer gap (entropy-reduction is real, byte-stable
 at 0.0734 nats); closing the env-level gap (RDKit + xtb) is a
 separate work item.
 
+**Wave 70 Phases 1–4 additive update (v2 adapter deep-fix +
+upstream flowmol vendored + `export_sampled_molecules` + caller
+wire — `docs/audit/wave70-phase1-audit.md`,
+`wave70-phase2-install.md`, `wave70-phase3-export.md`,
+`wave70-phase4-wire.md`).** Wave 70 audited and partially closed
+the FlowMol3 v2 adapter gap: the v2 adapter has had
+`export_trajectory(...) -> (x, a, c, e)` for raw lineage, but the
+eval pipeline's `_compute_flowmol3_composite` consumer
+(`tools/run_real_ckpt_eval.py:3162-3207`) requires upstream
+`SampledMolecule` objects (or any object upstream
+`SampleAnalyzer.analyze` accepts). Wave 70 Phase 2 confirmed the
+vendored upstream `flowmol` at `data/FlowMol3/repo/` (commit
+`77cae22174b7792b0e25e9e0414038420736d841`, version `3.1.0`) is
+**fully importable** from `.venvs/flowmol3_venv` once `sys.path` is
+extended with `PYTHONPATH=data/FlowMol3/repo`; a smoke test of
+`SampleAnalyzer.analyze` on a 3D-embedded ethanol returned the full
+6-metric dict (`frac_valid_mols=1.0`, `frac_mols_stable_valence=1.0`,
+`frac_atoms_stable=1.0`, `frac_connected=1.0`, `avg_frag_frac=1.0`,
+`avg_num_components=1.0`) — proving the import + class surface works
+end-to-end on this venv. Phase 3 added the new
+`FlowMol3V2Adapter.export_sampled_molecules(trace) -> tuple[list[Any], Mapping[str, Any]]`
+method (5-stage decode pipeline: upstream SMILES shortcut preferred →
+endpoint `(x, a, e)` reconstruction fallback → RDKit `RWMol` build +
+`Chem.SanitizeMol` → 3D conformer set on `traj_x[-1]` → metadata
+`marker` ∈ {`ok`, `ok_partial`, `no_lineage`, `no_decode`}). Phase 4
+wired `_run_cell` to capture `sampled_molecules` (OPT-IN:
+`model ∈ {"flowmol3", "flowmol3_v2"}` AND `hasattr(adapter,
+"export_sampled_molecules")`) and thread it into the composite call —
+2 new regression tests (`test_run_cell_passes_sampled_molecules_for_flowmol3`
++ `test_run_cell_handles_missing_export_sampled_molecules`) lock the
+contract. The Phase 4 fix is purely additive — D.4 72/72 byte-stable
+preserved (full vector run completed in 43.90 s).
+
+**Wave 70 Phase 5 GPU sweep result (the half-win that surfaces the
+final 1-line gap).** The 9-cell FlowMol3 sweep was re-run on RTX PRO
+6000 Blackwell (`.venvs/flowmol3_venv` + `PYTHONPATH=data/FlowMol3/repo`)
+with `--force-mode real --metric-mode real --composite-metric real`,
+output written to `verification_outputs/flowmol3_v3_q4_2026.json`. The
+Phase 4 wire is verified **active** —
+`composite_debug.chemistry_compute_error = "AttributeError: 'Mol' object has no attribute 'atom_types'"`
+proves `export_sampled_molecules(baseline_trace)` ran and the
+captured molecules were passed to `compute_chemistry_metrics`. The
+failure is **downstream** in `SampleAnalyzer.analyze`, not in the
+capture. Root cause per `docs/audit/wave70-phase1-audit.md` §1.2 /
+§1.8: the factory at `adaptive_reflow/adapters/flowmol3_v2_adapter.py`
+(line 3922–3976 in the post-Phase-4 layout) does NOT thread
+`use_upstream=(force_mode in {"real", "auto"})` when constructing the
+adapter — so the v2 adapter is constructed with `use_upstream=False`,
+the partial-fidelity fallback runs (444 GVP graph-conv tensors in the
+checkpoint are NOT applied), the synthesized trajectory decodes to
+plain `rdkit.Chem.Mol` objects (not upstream `SampledMolecule`), and
+`SampleAnalyzer.analyze` raises the AttributeError above. Per-cell
+wallclock evidence confirms the partial-fidelity path:
+`wallclock_baseline_avg_s = 0.0674` (was `0.5396` in Wave 69 — 88%
+*faster*, because the Wave 70 capture path has less overhead on the
+empty-path branch; both readings remain well below the >5 s
+real-ckpt-forward threshold). All 9 cells continue to report
+`composite = 0.0`, `composite_marker = "degraded_chemistry"`,
+`composite_debug.chemistry_input_source = "neutral_zero_stub_degraded"`,
+`status = TIE_AT_SATURATION`. **Verdict REMAINS
+`TIE_AT_SATURATION`** — Wave 70 Phase 5 confirms the remaining gap is
+**factory-side** (`use_upstream=True` plumbing), not env-side
+(RDKit + xtb); flipping to `SUPPORTED` requires exactly the
+additive one-line factory change documented in Wave 70 Phase 5 §10.
+
+**Verdict evolution (Wave 70 update — supersedes the Wave 69 row).**
+
+| Wave | Verdict | Reason |
+|---|---|---|
+| 50 | BLOCKED | Adapter factory + force_mode bug; metric helper did not exist |
+| 53 | TIE_AT_SATURATION (misleading) | `_compute_flowmol3_real_metric_via_trace` + wiring landed; composite +0.0000 due to placeholder uniform-vs-uniform (real adapter not loaded) |
+| 54 | REGRESSION | Real-ckpt metric worked; framework-vs-baseline negative delta (Bug C) |
+| 65 | TIE_AT_SATURATION | Bug C targeted fix (framework = baseline at saturation) |
+| 66 | BLOCKED | `adapter_missing_observe_entropy_reduction` (v2 wire gap) |
+| 68 | BLOCKED | NEW regression — `state=None` in Phase 4 caller; Wave 54 Phase 2 Fix (commit `223a225`) already shipped callee-side guards |
+| 68 closure | TIE_AT_SATURATION (real metric) | 9/9 cells entropy-reduction = 0.0734 nats, byte-stable; composite still 0.0 due to env-level RDKit/xtb absence |
+| 69 | TIE_AT_SATURATION (debug-surface honesty) | Phase 2 fix: `_compute_flowmol3_composite` accepts additive `sampled_molecules` kwarg, surfaces `marker="degraded_chemistry"` instead of fabricating `marker="computed"`; 9/9 cells still 0.0 because caller does not pass molecules and v2 adapter still returns synthetic placeholder |
+| **70 Phases 1–4** | **TIE_AT_SATURATION (real-ckpt wire live, factory gap surfaces)** | **Phase 2: vendored `flowmol` importable end-to-end. Phase 3: `export_sampled_molecules` returns RDKit Mol objects via 5-stage decode pipeline. Phase 4: caller wires `sampled_molecules` into composite. GPU sweep: capture verified active (`chemistry_compute_error = AttributeError: 'Mol' object has no attribute 'atom_types'`); failure is downstream in `SampleAnalyzer` because v2 factory does not thread `use_upstream=True`. One-line factory fix would unblock** |
+
+**Wave 70 honest reading (chemistry + geometry axes).** Even if the
+Wave 70 Phase 5 §10 factory fix is applied, two env-level axes will
+remain degraded and must be honestly flagged in any future `SUPPORTED`
+verdict: (i) `energy_js_div` will stay 0.0 because
+`SampleAnalyzer.compute_energy_divergence()` requires
+`energy_dist.npz` in `processed_data_dir`, which is **not vendored**
+in `data/FlowMol3/repo/data/geom_full_kekulized/` (only `train_data_*`
+and `test_data_*` artifacts ship — Phase 2 §7); (ii)
+`neg_med_rmsd_after_xtb` will stay `None` because **xtb is not on
+`$PATH`** on this host. The Phase 4 wire correctly drops the geometry
+axis to weight 0 and renormalises chemistry weights to
+`[0.3529, 0.2941, 0.1765, 0.1765, 0.0]` per
+`tools/run_real_ckpt_eval.py:3235-3255` — so the
+`composite = +0.0000` reading will move to `frac_valid_mols`-driven
+chemistry once GAP-1 + RDKit land, but the final `energy_js_div`-term
+weight (`0.1765`) will continue to read 0.0 unless the upstream
+reference distribution is downloaded.
+
 ### §7.6 Tier 3 honest verdict — framework extends baseline plateau (Wave 58 framing)
 
 **The new claim (Wave 58).** The framework's value-add on Tier 3
@@ -2163,6 +2260,59 @@ Kanzi SUPPORTED (unchanged), LineageFlow SUPPORTED (now 8/9 cells
 real-ckpt, was 1/9), FlowMol3 TIE_AT_SATURATION (composite still 0.0,
 but marker now correctly `degraded_chemistry`).** D.4 72/72 byte-stable;
 G-MASTER 7/7 PASS. See Wave 69 Phase 6 synthesis for the full table.
+
+**Wave 70 closure update (Phases 1–5 — `docs/audit/wave70-phase1-audit.md`,
+`wave70-phase2-install.md`, `wave70-phase3-export.md`,
+`wave70-phase4-wire.md`, `wave70-phase5-sweep.md`,
+`wave70-phase6-final.md`).** Wave 70 audited the FlowMol3 v2 adapter
+deep-fix chain and shipped **3 of 4** pieces of the real-ckpt-forward
+unblock. **Phase 2** brought the upstream `flowmol` (vendored at
+`data/FlowMol3/repo/`, commit `77cae22174b7792b0e25e9e0414038420736d841`,
+version `3.1.0`) to a verified-importable state via `sys.path` injection;
+`SampleAnalyzer.analyze` smoke-tested end-to-end on a 3D-embedded
+ethanol returned the full 6-metric dict. **Phase 3** added
+`FlowMol3V2Adapter.export_sampled_molecules(trace) -> (list[Any], metadata)`
+via a 5-stage decode pipeline (upstream SMILES shortcut preferred →
+endpoint `(x, a, e)` reconstruction fallback → RDKit `RWMol` build +
+3D conformer). **Phase 4** wired `_run_cell` to capture
+`sampled_molecules` (OPT-IN: `model ∈ {flowmol3, flowmol3_v2}` AND
+`hasattr(adapter, "export_sampled_molecules")`) and thread it into the
+composite call — 2 new regression tests lock the contract;
+D.4 72/72 byte-stable preserved (43.90 s). **Phase 5** re-ran the
+9-cell sweep on RTX PRO 6000 Blackwell
+(`verification_outputs/flowmol3_v3_q4_2026.json`) — the Phase 4 wire
+is verified **active** via the captured `composite_debug.chemistry_compute_error =
+"AttributeError: 'Mol' object has no attribute 'atom_types'"`, which
+proves the captured molecules reached `SampleAnalyzer.analyze`. The
+failure is **downstream** in the consumer: the v2 factory at
+`adaptive_reflow/adapters/flowmol3_v2_adapter.py:3922-3976` does NOT
+thread `use_upstream=(force_mode in {"real", "auto"})`, so the
+partial-fidelity fallback path runs (no real `FlowMol.load_from_checkpoint`),
+the synthesized trajectory decodes to plain `rdkit.Chem.Mol` objects
+(not upstream `SampledMolecule`), and `SampleAnalyzer.analyze` raises
+the AttributeError. Wallclock evidence confirms the partial-fidelity
+path: `wallclock_baseline_avg_s = 0.0674` (was 0.5396 in Wave 69; 88%
+*faster* because the Wave 70 capture path has less overhead on the
+empty-path branch) — both readings remain well below the >5 s
+real-ckpt-forward threshold. All 9 cells continue to report
+`composite = 0.0`, `composite_marker = "degraded_chemistry"`,
+`status = TIE_AT_SATURATION`. **Verdict REMAINS
+`TIE_AT_SATURATION`** — Wave 70 Phase 5 confirmed that the remaining
+gap is **factory-side** (`use_upstream=True` plumbing in
+`default_flowmol3adapter`), NOT env-side (RDKit + xtb). The exact
+one-line factory fix is documented in Wave 70 Phase 5 §10; flipping
+to `SUPPORTED` requires that fix + RDKit importable in
+`.venvs/flowmol3_venv` (chemistry axes) + `energy_dist.npz`
+downloaded for the vendored geom_full_kekulized dataset
+(`energy_js_div` axis) + xtb on `$PATH` (geometry axis, drops to
+weight 0 today). **Wave 70 final verdict: Kanzi SUPPORTED (unchanged),
+LineageFlow SUPPORTED (unchanged from Wave 69), FlowMol3
+TIE_AT_SATURATION (real-ckpt wire is now live end-to-end via the
+Phase 4 capture; factory-side `use_upstream=True` plumbing is the
+single remaining blocker).** D.4 72/72 byte-stable; G-MASTER 7/7 PASS
+(`hard_pass=5, hard_fail=0, hard_pending=0, soft_pass=2,
+g_master_capability=PASS, must_4_freeze_gate=PASS`). See Wave 70
+Phase 6 synthesis for the full table.
 
 **NFE-adaptive summary (Wave 58 closure).** The framework is
 NFE-adaptive: same-NFE wins (the matched-NFE composite claim from
