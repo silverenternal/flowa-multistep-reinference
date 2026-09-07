@@ -644,3 +644,62 @@ class TestFlowMol3V2ObserveProtocol:
         assert hasattr(ep, "native_state_digest")
         assert ep.source_round == state.source_round + 1
         assert "flowmol3adapter_observed" in ep.provenance
+
+    def test_observe_with_state_none_returns_entropy_only(self) -> None:
+        """Regression (Wave 68 closure): ``state=None`` must not crash.
+
+        The metric helper ``_extract_observation`` in
+        ``tools/run_real_ckpt_eval.py`` historically passes ``state=None``
+        to ``adapter.observe(...)``. The Wave 68 Phase 4 refactor of
+        ``_compute_real_metric_via_observation`` made this the default
+        for all 4 model paths. The Wave 54 Phase 2 Fix (commit
+        ``223a225``) added the defensive ``state is not None`` guard in
+        the ``observe()`` callee side so the POSITION_ENTROPY_REDUCTION
+        shim can still produce a finite number via the trajectory-only
+        fallback when ``state`` is ``None``.
+        """
+        import numpy as np
+
+        from adaptive_reflow.framework.interfaces import ObservationKind
+
+        adapter, trace, _ = self._make_adapter_with_trace(num_steps=3)
+        results = adapter.observe(
+            trace,
+            None,                                          # state=None
+            paper_quantities=None,
+            strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+        )
+        assert len(results) == 1
+        result = results[0]
+        assert result.kind == ObservationKind.POSITION_ENTROPY_REDUCTION
+        assert isinstance(result.payload, float)
+        assert np.isfinite(result.payload)
+
+    def test_observe_as_dict_with_state_none_returns_entropy_kind(self) -> None:
+        """Regression (Wave 68 closure): ``observe_as_dict(..., state=None)`` is safe.
+
+        The metric helper's observe_as_dict branch (line 1597 of
+        ``tools/run_real_ckpt_eval.py``) calls this method with
+        ``state=None``. The Wave 54 Phase 2 Fix (commit ``223a225``)
+        added a defensive guard at the callee side so ENDPOINT_BUNDLE
+        is dropped from the requested strategies when ``state is None``
+        and POSITION_ENTROPY_REDUCTION still produces a finite number.
+        """
+        import numpy as np
+
+        from adaptive_reflow.framework.interfaces import ObservationKind
+
+        adapter, trace, _ = self._make_adapter_with_trace(num_steps=3)
+        obs_dict = adapter.observe_as_dict(
+            trace,
+            None,                                          # state=None
+            paper_quantities=None,
+            strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+        )
+        # ENDPOINT_BUNDLE is dropped when state is None (callee guard).
+        assert obs_dict[ObservationKind.ENDPOINT_BUNDLE] is None
+        # POSITION_ENTROPY_REDUCTION still produces a finite number.
+        entropy = obs_dict[ObservationKind.POSITION_ENTROPY_REDUCTION]
+        assert entropy is not None
+        assert isinstance(entropy.payload, float)
+        assert np.isfinite(entropy.payload)
