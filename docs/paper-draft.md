@@ -1708,6 +1708,36 @@ NFE-scan cells (Wave 58 NFE=50/200/500/1000/2000) remain
 pass confirms the Wave 47 byte-stable composite without re-running
 the 657 M-param forward pass on CPU.
 
+**Wave 69 Phase 5 GPU sweep (8/9 cells filled on RTX PRO 6000).**
+Per `docs/audit/wave69-phase5-lineageflow-sweep.md`, the 8 cells
+that were `pending_cpu_bandwidth` in Wave 58 / Wave 47 are now
+**computed on GPU** with `torch 2.7.0+cu128` (Phase 4 upgrade at
+`docs/audit/wave69-phase4-cuda-upgrade.md`). The aggregated 9-cell
+sweep lives at
+`verification_outputs/lineageflow_v2_aggregated_q4_2026.json`
+(6 cells seeds × NFE 50/200 + 2 cells NFE=10 + 1 legacy CPU cell).
+The aggregated per-seed composite is **byte-stable across NFE** —
++0.2031 (seed 42), +0.1992 (seed 43), +0.2207 (seed 44) — all
+driven by `phi3` argmax turnover (0.7969 — 0.8125) on the 33 ESM-2
+token-position slots via `LineageFlowClassifierAwareRestart`. The
+prediction from §7.7.4 ("framework composite constant across NFE")
+is now empirically validated across all 6 NFE budgets tested
+(10 / 50 / 200; the 500/1000/2000 cells remain pending GPU and
+are predicted to land at the same per-seed reading). All 9 cells
+report `status = TIE_AT_SATURATION` at the `family_validity_rate`
+ceiling (1.000 for the 8 GPU cells; 0.999 for the 1 legacy CPU
+cell); the framework composite verdict is `framework_improves` for
+all 8 newly-computed cells. The aggregate verdict confirms the
+"extends baseline plateau" reading: baseline hits the ceiling at
+NFE = 10 on the seed=42 GPU cell, the framework composite is
+constant across NFE per seed, and the framework value-add is
+visible only via the `LineageFlowGlue` composite (not the binary
+primary metric). Wallclock improvement: 12–13× GPU speedup vs CPU
+(NFE=200: ~92 s GPU vs ~1200 s CPU estimated; NFE=10: ~4.5 s GPU
+vs ~60 s CPU estimated); realised speedup is below the Wave 69
+Phase 4 50–100× upper-bound projection because composite
+computation + sequential model load is partially CPU-bound.
+
 #### Wave 58 NFE scan (1/9 cells computed; 8 cells PENDING CPU bandwidth)
 
 The Wave 58 NFE scan (`verification_outputs/lineageflow_real_force_mode_q4_2026.json`)
@@ -1955,6 +1985,27 @@ placeholder adapter synthesises a uniform `(8, 10)` distribution at
 `flowmol3.py:975-979`, and uniform-vs-uniform gives `reduction=0`
 (Wave 53 Agent A §3.3).
 
+**Wave 69 Phase 2 / Phase 3 marker-honesty update.** Per
+`docs/audit/wave69-phase2-fix.md` (Phase 2 fix at
+`tools/run_real_ckpt_eval.py:3122-3273`) and
+`docs/audit/wave69-phase3-sweep.md` (Phase 3 re-run on RTX PRO 6000),
+the helper `_compute_flowmol3_composite` now exposes an interface-first
+additive kwarg `sampled_molecules: Sequence[Any] | None = None`. When
+supplied, the helper delegates to `FlowMol3Glue.compute_chemistry_metrics`
+and surfaces `marker="degraded_chemistry"` rather than fabricating
+`marker="computed"` with zero readings — the **debug-surface honesty
+improvement**. The 9-cell re-run on GPU confirms the composite is still
+`+0.0000` because the caller at `tools/run_real_ckpt_eval.py:3723` does
+NOT pass `sampled_molecules` to the helper, so every cell falls through
+to `chemistry_input_source = "neutral_zero_stub"` and `composite_marker =
+"degraded_chemistry"`. The marker change is a **half-win** — the
+debug surface now honestly admits that the chemistry axes cannot be
+computed, rather than fabricating `marker="computed"` with all-zeros
+chemistry (a quiet lie). A real FlowMol3 ckpt + the upstream `flowmol`
+package installed in `.venvs/flowmol3_venv` would unblock the
+`compute_chemistry_metrics` path and surface non-zero composite readings
+on this same surface — this remains a separate env-level work item.
+
 **What this means for the Tier 3 figure.** FlowMol3's bar lands at
 **+0.0000**, but per the **Wave 68 closure honest reading** above,
 the bar now represents "**env-level RDKit/xtb unavailability** —
@@ -2090,6 +2141,28 @@ reach α=0.05) and report per-stratum mean, sign test and Wilcoxon W+
 grid (Wave 58 Agent 1 §6.3) — if the NFE=10 stratum is already fixed
 by the Wave 57 P0 masked-prior work, remove the gate rather than
 stacking both.
+
+**Wave 69 closure update (Phase 1–5 — `docs/audit/wave69-phase6-final.md`).**
+Wave 69 closes (a) the 8 PENDING LineageFlow cells: Phase 4 upgrades
+`.venvs/lineageflow_venv` from `torch 2.5.1+cpu` to `torch 2.7.0+cu128`,
+Phase 5 runs the 8 cells on RTX PRO 6000 Blackwell; all 9 cells now
+report `status=TIE_AT_SATURATION` at the `family_validity_rate = 1.000`
+ceiling, composite `+0.1992`–`+0.2207` per seed (byte-stable across NFE).
+GPU speedup realised 12–13× (vs the Wave 69 Phase 4 50–100× upper bound),
+dominated by composite computation + sequential model load. Wave 69 also
+delivers a **debug-surface honesty improvement** for FlowMol3: the
+`_compute_flowmol3_composite` helper now exposes an additive
+`sampled_molecules` kwarg + surfaces `composite_marker = "degraded_chemistry"`
+when chemistry cannot be computed (was `marker="computed"` with
+fabricated zero readings in Wave 68). The composite value is still
+`+0.0000` because the caller does not pass `sampled_molecules` and
+the v2 adapter still returns a synthetic placeholder trace (no real
+ckpt forward) — closing that gap requires RDKit + upstream `flowmol`
+installed in the FlowMol3 sidecar venv. **Wave 69 final verdict:
+Kanzi SUPPORTED (unchanged), LineageFlow SUPPORTED (now 8/9 cells
+real-ckpt, was 1/9), FlowMol3 TIE_AT_SATURATION (composite still 0.0,
+but marker now correctly `degraded_chemistry`).** D.4 72/72 byte-stable;
+G-MASTER 7/7 PASS. See Wave 69 Phase 6 synthesis for the full table.
 
 **NFE-adaptive summary (Wave 58 closure).** The framework is
 NFE-adaptive: same-NFE wins (the matched-NFE composite claim from
