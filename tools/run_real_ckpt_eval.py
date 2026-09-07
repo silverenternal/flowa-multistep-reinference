@@ -3612,6 +3612,34 @@ def _run_cell(
         cell["delta_pct"] = None
         cell["marker"] = "run_error"
         return cell
+    # Wave 70 Phase 4: OPT-IN capture of sampled molecules for the
+    # FlowMol3 composite. The FlowMol3 v2 adapter ships
+    # ``export_sampled_molecules(trace)`` (Phase 3); v1 / non-flowmol3
+    # adapters do not. We gate the capture on (1) the model being
+    # flowmol3 (the only model whose composite consumes the molecules)
+    # AND (2) ``hasattr(adapter, 'export_sampled_molecules')`` so the
+    # legacy v1 path (and all non-flowmol3 models) fall through to
+    # ``sampled_molecules = None`` — preserving the Wave 69 Phase 2
+    # legacy caller contract byte-stable.
+    sampled_molecules: list[Any] | None = None
+    if model in ("flowmol3", "flowmol3_v2") and hasattr(
+        adapter, "export_sampled_molecules",
+    ):
+        try:
+            _sm_result = adapter.export_sampled_molecules(baseline_trace)
+            # The method returns ``(molecules, metadata)`` per Wave 70
+            # Phase 3 §2. We pass the list directly to the composite;
+            # metadata is dropped (audit fields live in the composite's
+            # ``composite_dbg``).
+            if isinstance(_sm_result, tuple) and len(_sm_result) >= 1:
+                sampled_molecules = list(_sm_result[0])
+            elif _sm_result is not None:
+                sampled_molecules = list(_sm_result)
+        except Exception:  # noqa: BLE001
+            # Graceful fallback — keep ``sampled_molecules = None``
+            # so the composite degrades to ``marker='degraded_chemistry'``
+            # rather than crashing the cell.
+            sampled_molecules = None
     baseline_value, baseline_marker, baseline_dbg = _compute_metric(
         model, baseline_trace, seed=int(seed), nfe=int(nfe),
         metric_name=primary["name"], metric_mode=metric_mode,
@@ -3725,6 +3753,7 @@ def _run_cell(
             baseline_trace=baseline_trace,
             framework_trace=framework_trace,
             seed=int(seed), nfe=int(nfe),
+            sampled_molecules=sampled_molecules,
         )
         cell["composite"] = composite_value
         cell["composite_marker"] = composite_marker

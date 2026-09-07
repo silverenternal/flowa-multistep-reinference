@@ -1425,3 +1425,256 @@ def test_flowmol3_composite_with_sampled_molecules_invokes_glue() -> None:
         # degraded / legacy stub path
         assert marker == "degraded_chemistry"
 
+
+# ---------------------------------------------------------------------------
+# 7. Wave 70 Phase 4 — _run_cell wires sampled_molecules through
+# ---------------------------------------------------------------------------
+#
+# Wave 69 Phase 2 added ``sampled_molecules: Sequence[Any] | None = None``
+# to ``_compute_flowmol3_composite`` (the additive kwarg contract). The
+# caller at line 3723 (pre-Phase-4) never passed it — so v2's
+# ``export_sampled_molecules(trace)`` (Phase 3) had no path to reach the
+# composite helper.
+#
+# Phase 4 wires the wire: ``_run_cell`` now (1) calls
+# ``adapter.export_sampled_molecules(baseline_trace)`` when ``model in
+# {"flowmol3", "flowmol3_v2"}`` AND ``hasattr(adapter,
+# "export_sampled_molecules")`` and (2) threads the captured list (or
+# ``None`` for the legacy path) into the
+# ``_compute_flowmol3_composite(...)`` call.
+#
+# These two regression tests lock in the wire:
+#  - When the adapter ships ``export_sampled_molecules``, the captured
+#    list is threaded into the composite.
+#  - When the adapter does NOT ship ``export_sampled_molecules`` (v1
+#    placeholder, or any non-flowmol3 model), the wire degrades to
+#    ``sampled_molecules = None`` — preserving the Wave 69 Phase 2 legacy
+#    caller contract byte-stable.
+
+
+def test_run_cell_passes_sampled_molecules_for_flowmol3() -> None:
+    """`_run_cell` threads captured ``sampled_molecules`` into ``_compute_flowmol3_composite``.
+
+    Stubs the inner chain (``_solve_baseline``, ``_solve_framework``,
+    ``_compute_metric``) so the test focuses on the wire: when the
+    adapter ships ``export_sampled_molecules`` and the model is
+    ``flowmol3``, the list returned by the new export method is passed
+    verbatim into the composite call.
+
+    The stub adapter inherits the v1 placeholder's
+    ``build_initial_state`` / ``solve_ode`` surface (so
+    ``_resolve_adapter`` accepts it) and adds the new
+    ``export_sampled_molecules`` method. We monkey-patch the inner
+    chain so the test is independent of the real solver + metric
+    helpers (those have their own tests).
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic")
+    # Attach the new method the v1 placeholder does NOT ship. Use a
+    # tuple return (molecules, metadata) to match Wave 70 Phase 3 §2.
+    expected_molecules = [object(), object(), object()]
+
+    def _stub_export(self: Any, trace: Any) -> tuple[list[Any], dict[str, Any]]:
+        return expected_molecules, {"marker": "ok", "sanitize_status": "ok"}
+
+    adapter.export_sampled_molecules = _stub_export.__get__(  # type: ignore[method-assign]
+        adapter, type(adapter),
+    )
+
+    # Stub _resolve_adapter so _run_cell returns our pre-configured
+    # adapter (with the new method attached) instead of building a
+    # fresh v1 placeholder via the factory.
+    original_resolve = tools._resolve_adapter
+
+    def _stub_resolve(
+        model: str,
+        force_mode: str = "synthetic",
+        restart_min_nfe: int | None = None,
+        nfe_budget: int | None = None,
+    ) -> tuple[Any, str]:
+        return adapter, "synthetic"
+
+    tools._resolve_adapter = _stub_resolve  # type: ignore[assignment]
+
+    # Capture _compute_flowmol3_composite kwargs.
+    captured: dict[str, Any] = {}
+
+    def _capturing_compute(**kwargs: Any) -> tuple[float | None, str, dict[str, Any]]:
+        captured.update(kwargs)
+        return 0.0, "computed", {"chemistry_input_source": "neutral_zero_stub"}
+
+    # Short-circuit the inner chain so the test only exercises the wire.
+    _stub_trace = _make_placeholder_trace(adapter)
+    original_solve_baseline = tools._solve_baseline
+    original_solve_framework = tools._solve_framework
+    original_compute_metric = tools._compute_metric
+    original_compute_flowmol3 = tools._compute_flowmol3_composite
+
+    def _stub_solve_baseline(*args: Any, **kwargs: Any) -> tuple[Any, float]:
+        return _stub_trace, 0.0
+
+    def _stub_solve_framework(*args: Any, **kwargs: Any) -> tuple[Any, float]:
+        return _stub_trace, 0.0
+
+    def _stub_compute_metric(*args: Any, **kwargs: Any) -> tuple[Any, str, dict[str, Any]]:
+        return 1.0, "synthetic_fallback", {"value": 1.0}
+
+    tools._solve_baseline = _stub_solve_baseline  # type: ignore[assignment]
+    tools._solve_framework = _stub_solve_framework  # type: ignore[assignment]
+    tools._compute_metric = _stub_compute_metric  # type: ignore[assignment]
+    tools._compute_flowmol3_composite = _capturing_compute  # type: ignore[assignment]
+    try:
+        cell = tools._run_cell(
+            model="flowmol3",
+            seed=42,
+            nfe=10,
+            n_rounds=3,
+            force_mode="synthetic",
+            metric_mode="synthetic",
+            composite_metric="real",
+        )
+    finally:
+        tools._resolve_adapter = original_resolve  # type: ignore[assignment]
+        tools._solve_baseline = original_solve_baseline  # type: ignore[assignment]
+        tools._solve_framework = original_solve_framework  # type: ignore[assignment]
+        tools._compute_metric = original_compute_metric  # type: ignore[assignment]
+        tools._compute_flowmol3_composite = original_compute_flowmol3  # type: ignore[assignment]
+
+    # Wire contract: _compute_flowmol3_composite MUST have been called
+    # with sampled_molecules equal to the list returned by
+    # adapter.export_sampled_molecules (Phase 3 tuple[0]).
+    assert captured, (
+        "_compute_flowmol3_composite was not called by _run_cell; "
+        "the wire from _run_cell -> composite is broken."
+    )
+    assert "sampled_molecules" in captured, (
+        "_run_cell did NOT pass sampled_molecules to "
+        "_compute_flowmol3_composite; the Phase 4 wire is missing."
+    )
+    assert captured["sampled_molecules"] is not None, (
+        "sampled_molecules must NOT be None when the adapter ships "
+        "export_sampled_molecules (model='flowmol3')."
+    )
+    assert list(captured["sampled_molecules"]) == expected_molecules, (
+        f"sampled_molecules passed to composite must match the list "
+        f"returned by adapter.export_sampled_molecules; got "
+        f"{captured['sampled_molecules']!r}, expected "
+        f"{expected_molecules!r}"
+    )
+    # And the cell dict carries the composite_marker = 'computed' from
+    # the stub (sanity check that the cell completed end-to-end).
+    assert cell.get("composite_marker") == "computed", (
+        f"cell composite_marker must echo the stub marker, got "
+        f"{cell.get('composite_marker')!r}"
+    )
+
+
+def test_run_cell_handles_missing_export_sampled_molecules() -> None:
+    """`_run_cell` degrades to ``sampled_molecules = None`` for v1 (no export method).
+
+    Locks in the backward-compat contract: when the adapter does NOT
+    ship ``export_sampled_molecules`` (the v1 placeholder, or any
+    non-flowmol3 model), ``_run_cell`` MUST NOT raise and MUST thread
+    ``sampled_molecules = None`` into the composite call.
+
+    The v1 placeholder FlowMol3 adapter does NOT have
+    ``export_sampled_molecules`` — that is the entire byte-stable
+    contract we are locking in here.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic")
+    # Defensive: confirm the v1 placeholder truly lacks the method.
+    assert not hasattr(adapter, "export_sampled_molecules"), (
+        "The v1 FlowMol3 placeholder must NOT ship "
+        "export_sampled_molecules — only the v2 adapter does. If you "
+        "are seeing this assertion, v1 has been updated and the "
+        "backward-compat test below needs to be re-evaluated."
+    )
+
+    # Stub _resolve_adapter to return our pre-configured v1 adapter
+    # (which does NOT have export_sampled_molecules).
+    original_resolve = tools._resolve_adapter
+
+    def _stub_resolve(
+        model: str,
+        force_mode: str = "synthetic",
+        restart_min_nfe: int | None = None,
+        nfe_budget: int | None = None,
+    ) -> tuple[Any, str]:
+        return adapter, "synthetic"
+
+    tools._resolve_adapter = _stub_resolve  # type: ignore[assignment]
+
+    # Capture _compute_flowmol3_composite kwargs.
+    captured: dict[str, Any] = {}
+
+    def _capturing_compute(**kwargs: Any) -> tuple[float | None, str, dict[str, Any]]:
+        captured.update(kwargs)
+        return 0.0, "degraded_chemistry", {
+            "chemistry_input_source": "neutral_zero_stub",
+        }
+
+    # Short-circuit the inner chain (same approach as test 1).
+    _stub_trace = _make_placeholder_trace(adapter)
+    original_solve_baseline = tools._solve_baseline
+    original_solve_framework = tools._solve_framework
+    original_compute_metric = tools._compute_metric
+    original_compute_flowmol3 = tools._compute_flowmol3_composite
+
+    def _stub_solve_baseline(*args: Any, **kwargs: Any) -> tuple[Any, float]:
+        return _stub_trace, 0.0
+
+    def _stub_solve_framework(*args: Any, **kwargs: Any) -> tuple[Any, float]:
+        return _stub_trace, 0.0
+
+    def _stub_compute_metric(*args: Any, **kwargs: Any) -> tuple[Any, str, dict[str, Any]]:
+        return 1.0, "synthetic_fallback", {"value": 1.0}
+
+    tools._solve_baseline = _stub_solve_baseline  # type: ignore[assignment]
+    tools._solve_framework = _stub_solve_framework  # type: ignore[assignment]
+    tools._compute_metric = _stub_compute_metric  # type: ignore[assignment]
+    tools._compute_flowmol3_composite = _capturing_compute  # type: ignore[assignment]
+    try:
+        cell = tools._run_cell(
+            model="flowmol3",
+            seed=42,
+            nfe=10,
+            n_rounds=3,
+            force_mode="synthetic",
+            metric_mode="synthetic",
+            composite_metric="real",
+        )
+    finally:
+        tools._resolve_adapter = original_resolve  # type: ignore[assignment]
+        tools._solve_baseline = original_solve_baseline  # type: ignore[assignment]
+        tools._solve_framework = original_solve_framework  # type: ignore[assignment]
+        tools._compute_metric = original_compute_metric  # type: ignore[assignment]
+        tools._compute_flowmol3_composite = original_compute_flowmol3  # type: ignore[assignment]
+
+    # Backward-compat contract: v1 has no export_sampled_molecules,
+    # so sampled_molecules passed to the composite MUST be None
+    # (degrading to the Wave 69 Phase 2 legacy caller contract).
+    assert captured, (
+        "_compute_flowmol3_composite was not called by _run_cell; "
+        "the wire from _run_cell -> composite is broken."
+    )
+    assert "sampled_molecules" in captured, (
+        "_run_cell did NOT pass sampled_molecules to "
+        "_compute_flowmol3_composite; the Phase 4 wire is missing."
+    )
+    assert captured["sampled_molecules"] is None, (
+        f"sampled_molecules MUST be None for v1 (no export method), "
+        f"got {captured['sampled_molecules']!r}. The backward-compat "
+        f"contract from Wave 69 Phase 2 is regressed."
+    )
+    # Sanity: cell returns without crashing (legacy caller contract
+    # preserved — marker = 'degraded_chemistry').
+    assert cell.get("composite_marker") == "degraded_chemistry", (
+        f"v1 placeholder path must surface marker='degraded_chemistry' "
+        f"(no chemistry data), got {cell.get('composite_marker')!r}"
+    )
+
