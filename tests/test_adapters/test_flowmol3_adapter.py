@@ -1044,4 +1044,121 @@ class TestFlowMol3NfeAdaptiveRestartGate:
         assert _skip_codes(result) == []
 
 
+# ---------------------------------------------------------------------------
+# Wave 63 Agent 2 — Bug B regression: source_round must be bumped
+# ---------------------------------------------------------------------------
+
+
+class TestFlowMol3RestartBumpsSourceRound:
+    """Regression suite for Wave 63 Agent 1's Bug B.
+
+    Bug B (root cause: ``docs/audit/wave63-root-cause.md`` §3): the
+    :meth:`FlowMol3Adapter.apply_restart_distribution` path at
+    ``adaptive_reflow/adapters/flowmol3.py:910-919`` did NOT bump
+    ``state.source_round`` on the returned state. That meant the
+    "_graph_payload_for("fresh", batch, sample, source_round=state.source_round)"
+    seed on every subsequent restart boundary was identical to the
+    first round's seed, so the framework's "fresh" noise injection was
+    actually deterministic across rounds. The v2 adapter
+    (``flowmol3_v2_adapter.py:2138``) bumps ``source_round = int(next_round)``
+    on the same path, so the v1 behaviour was a divergence from the
+    v2 / self_flow convention.
+
+    The regression test below verifies that after a SUCCESSFUL blend
+    (i.e. the low-NFE gate does NOT fire and ``apply_restart_distribution``
+    runs the blend path), the returned bundle's ``source_round`` is
+    exactly one greater than the input's. It also verifies that the
+    blend path's payload is byte-different across two consecutive
+    restart calls on the same input — the symptom Agent 1 traced as
+    "constant_F drift" in §3.2 of the root-cause audit.
+    """
+
+    def test_blend_path_bumps_source_round_by_one(self, adapter) -> None:
+        """A successful blend must increment ``source_round`` by exactly 1.
+
+        Pre-fix: ``result.source_round == bundle.source_round`` (== 0)
+        because the ``replace(...)`` call at line 910-919 didn't touch
+        ``source_round`` — the rest of the wave's "fresh noise" was
+        drawn from a constant seed.
+        Post-fix: ``result.source_round == 1``.
+        """
+        bundle = adapter.build_initial_state(
+            batch_id="wave63-bugb", sample_id="wave63-bugb",
+        )
+        # Pre-condition: build_initial_state sets source_round=0.
+        assert bundle.source_round == 0
+
+        result = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=200,
+        )
+
+        # The blend ran (no skip audit code).
+        assert _skip_codes(result) == []
+        assert result.native_state_digest.startswith("flowmol3:restart:")
+        # The fix: source_round bumped by exactly 1.
+        assert result.source_round == bundle.source_round + 1
+        assert result.source_round == 1
+
+    def test_consecutive_blends_yield_distinct_fresh_payloads(
+        self, adapter,
+    ) -> None:
+        """Two consecutive restart calls must yield DIFFERENT
+        ``native_state_digest`` values.
+
+        Pre-fix: both calls threaded the same ``source_round=0`` through
+        ``_graph_payload_for("fresh", ...)``, so the "fresh" payload was
+        the same Python object — ``blended.digest()`` was identical, so
+        ``native_state_digest = f"flowmol3:restart:{blended.digest()}"``
+        was identical on both calls. That is the Bug B "constant_F
+        drift" Agent 1 described in §3.2: every restart pulled the
+        trajectory toward the same fresh payload, so the framework
+        drifted deterministically instead of injecting independent
+        noise.
+        Post-fix: round 2's ``source_round == 1`` changes the seed of
+        ``_graph_payload_for("fresh", batch, sample, source_round=1)``
+        so round 2's digest differs from round 1's.
+        """
+        bundle = adapter.build_initial_state(
+            batch_id="wave63-bugb-chain", sample_id="wave63-bugb-chain",
+        )
+
+        # Round 1: source_round 0 -> 1
+        round1 = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=200,
+        )
+        assert round1.source_round == 1
+        assert round1.native_state_digest.startswith("flowmol3:restart:")
+
+        # Round 2: source_round 1 -> 2 — must use a DIFFERENT fresh payload.
+        round2 = adapter.apply_restart_distribution(
+            round1, _restart_policy(), nfe_budget=200,
+        )
+        assert round2.source_round == 2
+        assert round2.source_round == round1.source_round + 1
+        # Bug B's smoking gun: the digests must DIFFER. If they are
+        # identical, the fresh payload is still constant across rounds.
+        assert round2.native_state_digest != round1.native_state_digest
+
+    def test_skipped_blend_does_NOT_bump_source_round(
+        self, adapter,
+    ) -> None:
+        """The low-NFE gate skips the blend, so ``source_round`` MUST stay.
+
+        This guards the orthogonal path: when the gate fires (nfe below
+        threshold), ``apply_restart_distribution`` returns ``state``
+        unchanged except for the skip audit code — including
+        ``source_round``. Bumping it on the skip path would be wrong:
+        no restart happened, so the round counter must not advance.
+        """
+        bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+        result = adapter.apply_restart_distribution(
+            bundle, _restart_policy(), nfe_budget=10,
+        )
+
+        assert len(_skip_codes(result)) == 1
+        # Skip path is unchanged by Bug B fix — source_round MUST stay 0.
+        assert result.source_round == bundle.source_round
+        assert result.source_round == 0
+
+
 __all__ = ()

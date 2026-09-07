@@ -916,6 +916,7 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
             provenance=state.provenance
             + ("flowmol3_restart_boundary",)
             + atom_audit,
+            source_round=int(state.source_round) + 1,
         )
 
     def compose_condition(
