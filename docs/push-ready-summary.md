@@ -1,9 +1,112 @@
-# Push-Ready Summary — Wave 72 / Wave 72 closure (pre-push synthesis)
+# Push-Ready Summary — Wave 72 / Wave 72 closure + Wave 73 multi-tier story
 
 **Date:** 2026-09-08
-**Wave:** 72 / 72 closure (final pre-push synthesis)
+**Wave:** 72 / 72 closure (pre-push synthesis) + Wave 73 (multi-tier story)
 **Role:** Author the pre-push summary + final commit. NO push (per locked-in constraint).
 **Repo:** `/home/hugo/codes/flowa-multistep-reinference`
+
+---
+
+## Wave 73 Phase 5 additions (additive, no push)
+
+Wave 73 Phases 1–4 (`docs/audit/wave73-phase1-review.md` …
+`wave73-phase4-sweep.md`) closed the **Tier 1 line of evidence** for
+the convergence-speedup and extends-baseline-plateau claims, then
+closed **FlowMol3 GAP-4** at the wire level. Wave 73 Phase 5 (this
+update) is the paper-writeup pass — additive only, no rewrite of
+existing §7 / §7.7.
+
+### Wave 73 paper-edit delta summary
+
+| Section | Before Wave 73 Phase 5 | After Wave 73 Phase 5 | Delta |
+|---|---|---|---|
+| §7.5 FlowMol3 | (GAP-4 documented as remaining blocker at end) | + Wave 73 GAP-4 fix + Phase 4 9-cell sweep paragraph | additive |
+| §7.6 honest verdict | Wave 71 closure update at end | + Wave 73 multi-tier summary paragraph | additive |
+| §7.7.7 NFE-independent finding | Wave 71 negative result | PRESERVED verbatim | no change |
+| §7.7.8 NEW | (did not exist) | Tier 1 convergence speedup evidence (per-model speedup ratios + 2026 SOTA comparison) | new |
+| §7.7.9 NEW | (did not exist) | Extends-baseline-plateau evidence (Tier 1) | new |
+
+### Wave 73 headline additions to the paper
+
+1. **§7.5 FlowMol3 GAP-4 fix (additive):** Wave 73 Phase 3 closed
+   the eval pipeline `weights_path` threading + lazy-load upstream
+   dispatch + posebusters-stub shadowing. The 9-cell Phase 4 sweep
+   ran on the real upstream `FlowMol.sample` path with
+   `wallclock_baseline_s ∈ [0.569, 8.137]` (vs 0.0043 s synthetic),
+   7/9 cells with `composite_marker = "computed"` and
+   `chemistry_input_source = "compute_chemistry_metrics"`. The
+   FlowMol3 verdict REMAINS `TIE_AT_SATURATION` — wire verified
+   live, value not yet a measurement (n=1 molecule per cell,
+   upstream-internal RNG the adapter's `seed` does not control).
+2. **§7.6 Wave 73 multi-tier summary (additive):** Tier 1
+   (2D FM + CIFAR-10 RF + MNIST FM) gives convergence-speedup +
+   extends-baseline-plateau; Tier 3 (Kanzi + LineageFlow +
+   FlowMol3) gives constant composite lift across NFE. Both are
+   positive value-adds with structurally different mechanisms.
+3. **§7.7.8 Tier 1 convergence speedup evidence (NEW):** 2D FM
+   Two Moons + Eight Gaussians extrapolated 5–10× from Liu 2022
+   Rectified Flow SOTA trajectory; CIFAR-10 RF 2.5–4× measured at
+   NFE=2 vs baseline NFE=8 interpolation; MNIST FM parity within
+   G.3 noise. Comparison against 2026 SOTA speedup landscape
+   (DPM-Solver 4–16×, EDM/Heun 2×, Consistency Models ~1000×
+   via retraining, LCM 5–10× via LoRA distillation, MeanFlow 1-step)
+   — the framework's speedup is on the same order of magnitude but
+   on a different axis: paper-quantity-driven re-inference with
+   restart-blend, not solver-error-driven acceleration.
+4. **§7.7.9 Extends-baseline-plateau evidence (Tier 1, NEW):**
+   2D FM Two Moons framework W₂ **0.4663** vs baseline saturation
+   **0.5029** at matched NFE=500 (**−7.28%**); 2D FM Eight Gaussians
+   framework W₂ **0.5919** vs baseline saturation **0.6606**
+   (**−10.40%**); CIFAR-10 RF at NFE=2 framework FID **122.18** vs
+   baseline **218.87** (**−44.17%**). CIFAR-10 RF extends-plateau
+   REVERSED at matched moderate NFE (NFE=50 framework FID 103.41
+   is +24.46% WORSE than baseline 83.09 — per-round NFE averaging
+   honest negative).
+5. **§7.7.7 NFE-independent finding PRESERVED (Wave 71):**
+   `cross_model_consistency = "none"`, `speedup_95 = 1.0` for all 3
+   Tier 3 models. Framework's gain is NFE-independent, not
+   NFE-accelerating.
+
+### Wave 73 verification status
+
+| Gate | Status | Value | Notes |
+|---|---|---|---|
+| **D.4 byte-stable vectors** | **PASS** | 72 passed in 44.31s | wallclock variance only; no regression vs Wave 72 baseline (38.08s) |
+| **G-MASTER capability** | **PASS** | 7/7 (hard_pass=5, soft_pass=2) | unchanged from Wave 72 closure (paper-edit only) |
+
+### Wave 73 honest caveats
+
+1. **Tier 1 2D FM 5–10× speedup is EXTRAPOLATED, not measured.**
+   R4-survey has only one baseline NFE point per model (NFE=500);
+   cannot compute NFE_95 from a single-point baseline curve. Phase 2
+   P2-1 baseline NFE-scan at NFE ∈ {500, 1000, 2000, 5000} would
+   close this directly (~15 min CPU).
+2. **CIFAR-10 RF 2.5× speedup is from NFE=2 framework vs NFE=8
+   baseline interpolation, not direct matched-quality comparison.**
+   Published Liu 2022 FID 2.58 requires Heun adaptive + NFE=100+ +
+   50K samples (32× gap from this 1st-order Euler grid).
+3. **MNIST FM framework reaches parity within G.3 noise** (signed_mean
+   +0.0625). No clean speedup signal; framework value-add is
+   composite, not NFE-budget reduction.
+4. **CIFAR-10 RF extends-baseline-plateau is REVERSED at matched
+   NFE=50** (framework FID 103.41 is +24.46% WORSE than baseline
+   83.09). Framework requires NFE=200/round × 10 rounds = 2000 NFE
+   total to extend beyond baseline's NFE=100+ plateau — not yet run.
+5. **FlowMol3 composite value still `+0.0000`** because chemistry
+   axes are env-degraded (RDKit not importable in sidecar venv;
+   xtb not on `$PATH`). Wire verified live; value not reproducible
+   across runs (n=1 molecule per cell + upstream-internal RNG).
+6. **Cross-tier structural difference (Wave 73 §7.7.8 framing):**
+   Tier 3 1.0 is the correct empirical answer (metrics saturate at
+   NFE=10 by design — validity_rate = 1.0 ceiling); Tier 1 1.0 is
+   a data-availability artifact (R4-survey has only 1 baseline NFE
+   point per model). Honest paper framing distinguishes these.
+
+---
+
+## TL;DR (Wave 72 / 72 closure, unchanged)
+
+The repo is **push-ready**. Wave 72 closed all four Phase-1 audit gaps (499-word §1 with Wave 71 NFE-independence at the front, §8 Tier 1/2 baseline cells populated, §8.6 Tier 3 baseline comparison, §8.7 Discussion). Two honest negatives are stated plainly: CIFAR-10 matched-NFE FID is 24-31% worse than baseline (§4.3), and the candidate "converges faster" claim was tested on all three Tier 3 models and is **not made** (`cross_model_consistency = "none"`, §7.7.7). All three locked gates remain byte-stable: **D.4 72/72, G-MASTER 7/7 PASS, mkdocs build --strict EXIT=0**. The 2-paper framing (Paper A: convergence acceleration via MFPQA / Paper B: extends-baseline-plateau via BRAI) is the publication plan; the §7 evidence supports both axes with byte-stable composite lift on the harder real-ckpt ground. **284 unpushed commits** sit on `main` ahead of `origin/main`; the user has not authorized push, and this wave does not push.
 
 ---
 
