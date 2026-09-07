@@ -3272,7 +3272,16 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             # uniform max-entropy reference (matches the v1
             # placeholder's synthetic-mode fallback).
             traj_entry = self._native_states.get(trace.native_state_digest)
-            prior_entry = self._native_states.get(state.native_state_digest)
+            # Wave 54 Phase 2 (defensive Option B): the metric helper
+            # historically passes ``state=None`` (Wave 68 Phase 5 §4.1).
+            # Skip the prior-entry lookup when state is None so the
+            # entropy shim still produces a finite number via the
+            # trajectory-only fallback path.
+            prior_entry = (
+                self._native_states.get(state.native_state_digest)
+                if state is not None
+                else None
+            )
             if theta_after is None:
                 theta_after_arr: NDArray[np.float64] | None = None
                 if traj_entry is not None:
@@ -3334,6 +3343,118 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 )
             )
         return tuple(results)
+
+    # ------------------------------------------------------------------
+    # 8d. observe_as_dict (Wave 54 Phase 2 — dict-keyed dispatch surface)
+    # ------------------------------------------------------------------
+
+    def observe_as_dict(
+        self,
+        trace: ODEIntegratorTrace,
+        state: StateBundle,
+        paper_quantities: Any = None,
+        *,
+        strategies: tuple[ObservationKind, ...] = (
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+            ObservationKind.TRAJECTORY_NATIVE,
+        ),
+        theta_before: NDArray[np.float64] | None = None,
+        theta_after: NDArray[np.float64] | None = None,
+    ) -> dict[ObservationKind, ObservationResult]:
+        """Dict-keyed view of :meth:`observe` — Wave 54 Phase 2 dispatch surface.
+
+        Returns the observation tuple from :meth:`observe` re-indexed as
+        ``dict[ObservationKind, ObservationResult]``. The metric helper
+        (``tools/run_real_ckpt_eval.py::_compute_real_metric_via_observation``)
+        consumes this dict so it can dispatch on ``ObservationKind`` directly
+        (instead of iterating the tuple to find the matching ``kind``).
+
+        Per the Wave 54 Phase 2 contract, the four canonical keys carry:
+
+        * ``ENDPOINT_BUNDLE`` — the native ``StateBundle`` from
+          :meth:`observe_endpoint` (closes the Wave 66 wire gap).
+        * ``POSITION_ENTROPY_REDUCTION`` — the per-atom atom-type
+          marginal reduction in nats (the v2-native entropy shim).
+        * ``DISCRETE_TOKENS`` — ``None`` (FlowMol3 has no native
+          per-token channel; Kanzi / LineageFlow are the natural
+          consumers).
+        * ``TRAJECTORY_NATIVE`` — ``None`` for v2 (the legacy
+          ``export_trajectory`` method is the source of truth).
+
+        Graceful fallback: missing keys resolve to ``None`` so the
+        metric helper can surface ``BLOCKED`` for that single metric
+        rather than crashing on the whole observation surface.
+
+        This method is ADDITIVE per Wave 11 / Wave 59 / Wave 68
+        interface-first constraint — it does NOT replace the typed-tuple
+        :meth:`observe` method. Both surfaces are exported; downstream
+        callers pick the one that matches their consumption pattern
+        (the metric helper prefers this dict; Protocol conformance tests
+        use the tuple).
+
+        Parameters
+        ----------
+        trace, state, paper_quantities, strategies, theta_before, theta_after
+            Forwarded to :meth:`observe` verbatim. See that method's
+            docstring for semantics.
+
+        Returns
+        -------
+        dict[ObservationKind, ObservationResult | None]
+            A dict whose keys are exactly the four canonical
+            :class:`ObservationKind` tags. Values are the
+            :class:`ObservationResult` from :meth:`observe` (or ``None``
+            when the adapter chose to skip that strategy).
+        """
+        # Wave 54 Phase 2 — defensive guard for ``state=None``. The
+        # metric helper historically passes ``state=None`` (per Wave 68
+        # Phase 5 §4.1) — v2's ``observe()`` accesses
+        # ``state.native_state_digest`` unconditionally. We split the
+        # call into two parts: POSITION_ENTROPY_REDUCTION only needs
+        # ``trace`` (the entropy shim derives the marginal from the
+        # cached trajectory); ENDPOINT_BUNDLE needs ``state`` (it
+        # re-validates the bundle). Skip ENDPOINT_BUNDLE when state is
+        # None so the metric helper can dispatch on the dict without
+        # crashing.
+        results: tuple[ObservationResult, ...]
+        if state is None:
+            # Defensive path: only request the trajectory-only kinds.
+            traj_only_strategies = tuple(
+                s for s in strategies
+                if s != ObservationKind.ENDPOINT_BUNDLE
+            ) or (
+                ObservationKind.POSITION_ENTROPY_REDUCTION,
+            )
+            results = self.observe(
+                trace,
+                state,
+                paper_quantities,
+                strategies=traj_only_strategies,
+                theta_before=theta_before,
+                theta_after=theta_after,
+            )
+        else:
+            results = self.observe(
+                trace,
+                state,
+                paper_quantities,
+                strategies=strategies,
+                theta_before=theta_before,
+                theta_after=theta_after,
+            )
+        # Build the full 4-key dict; missing kinds get None so the metric
+        # helper can dispatch on kind without crashing on absent keys.
+        out: dict[ObservationKind, ObservationResult | None] = {
+            ObservationKind.ENDPOINT_BUNDLE: None,
+            ObservationKind.DISCRETE_TOKENS: None,
+            ObservationKind.POSITION_ENTROPY_REDUCTION: None,
+            ObservationKind.TRAJECTORY_NATIVE: None,
+        }
+        for r in results:
+            out[r.kind] = r
+        return out
 
     # ------------------------------------------------------------------
     # 9. inject_forward_noise (optional — P0-7 close, r17-audit P-01)

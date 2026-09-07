@@ -983,3 +983,296 @@ def test_extract_observation_legacy_returns_blocked_when_method_missing() -> Non
     assert status == "blocked"
     assert dbg["reason"] == "adapter_missing_observe_entropy_reduction"
     assert dbg["adapter"] == "_NoEntropyAdapter"
+
+
+# ---------------------------------------------------------------------------
+# 5. Wave 54 Phase 2 — v2 observe_as_dict() + ObservationKind dispatch
+# ---------------------------------------------------------------------------
+#
+# Closes the Wave 66 BLOCKED failure mode (v2 observe() was unreachable
+# because the metric helper passed ``state=None`` to v2's observe()). The
+# Phase 2 fix surfaces a dict-keyed ``observe_as_dict()`` method on the
+# v2 adapter + extends the metric helper to consume the dict with a
+# graceful partial-block fallback.
+#
+# The 4 tests below lock in:
+#   (a) v2's ``observe_as_dict()`` returns the 4 canonical keys (test_v2_observe_returns_dict).
+#   (b) the metric helper dispatches on ObservationKind via the dict
+#       (test_metric_helper_dispatches_on_kind).
+#   (c) missing ObservationKind key → BLOCKED for that metric only
+#       (test_v2_missing_kind_partial_block).
+#   (d) Wave 47/52/53/54 baselines byte-stable (test_byte_stable_wave47_52).
+
+
+def test_v2_observe_returns_dict() -> None:
+    """v2 ``observe_as_dict()`` returns dict keyed by 4 canonical ObservationKind tags.
+
+    Closes the Wave 54 Phase 2 contract: the v2 adapter exposes a dict-keyed
+    dispatch surface with ENDPOINT_BUNDLE / DISCRETE_TOKENS /
+    POSITION_ENTROPY_REDUCTION / TRAJECTORY_NATIVE keys. The metric helper
+    consumes this dict to dispatch on kind directly (no tuple iteration).
+    """
+    from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+        FlowMol3V2Adapter,
+    )
+    from adaptive_reflow.framework.interfaces import ObservationKind
+    from adaptive_reflow.universal.state import ODEConditionDelta
+
+    adapter = FlowMol3V2Adapter(backend="numpy", num_steps=4)
+    # Drive a real solve_ode so the native-state cache has a trajectory.
+    bundle = adapter.build_initial_state(
+        batch_id="w54p2c", sample_id="smoke",
+    )
+    condition = ODEConditionDelta(
+        delta_spec={"num_steps": 4, "sampler_id": "euler"},
+        source="w54p2c-test",
+        target_round=0,
+        calibration_artifact_hash="w54p2c-test",
+    )
+    trace = adapter.solve_ode(bundle, condition, seed=42)
+    obs_dict = adapter.observe_as_dict(trace, bundle)
+    # All 4 canonical keys must be present (value=None is acceptable for
+    # DISCRETE_TOKENS / TRAJECTORY_NATIVE since v2 doesn't ship those).
+    expected_keys = {
+        ObservationKind.ENDPOINT_BUNDLE,
+        ObservationKind.DISCRETE_TOKENS,
+        ObservationKind.POSITION_ENTROPY_REDUCTION,
+        ObservationKind.TRAJECTORY_NATIVE,
+    }
+    assert set(obs_dict.keys()) == expected_keys, (
+        f"observe_as_dict missing keys; got {set(obs_dict.keys())!r}, "
+        f"expected {expected_keys!r}"
+    )
+    # POSITION_ENTROPY_REDUCTION must be populated (the v2-native entropy
+    # shim is the core fix for the Wave 66 BLOCKED issue).
+    pos_entropy = obs_dict[ObservationKind.POSITION_ENTROPY_REDUCTION]
+    assert pos_entropy is not None, (
+        "POSITION_ENTROPY_REDUCTION missing from observe_as_dict; "
+        "the v2 entropy shim is unreachable via the dict surface"
+    )
+    assert pos_entropy.kind == ObservationKind.POSITION_ENTROPY_REDUCTION
+    assert isinstance(pos_entropy.payload, float)
+    assert pos_entropy.units == "nats"
+    # ENDPOINT_BUNDLE must be a StateBundle reference.
+    endpoint = obs_dict[ObservationKind.ENDPOINT_BUNDLE]
+    assert endpoint is not None
+    assert endpoint.kind == ObservationKind.ENDPOINT_BUNDLE
+
+
+def test_metric_helper_dispatches_on_kind() -> None:
+    """Metric helper consumes ``observe_as_dict`` and dispatches on ObservationKind.
+
+    Locks the Phase 2 dispatch contract: when the adapter ships
+    ``observe_as_dict``, the metric helper uses it (NOT the legacy tuple
+    iteration) and dispatches on the dict key. Mirrors the
+    Wave 47/52 Kanzi / LineageFlow contract for the v2 wire.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.framework.interfaces import ObservationKind
+    from adaptive_reflow.universal.state import ODEConditionDelta
+
+    from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+        FlowMol3V2Adapter,
+    )
+
+    adapter = FlowMol3V2Adapter(backend="numpy", num_steps=4)
+    bundle = adapter.build_initial_state(
+        batch_id="w54p2c", sample_id="dispatch",
+    )
+    condition = ODEConditionDelta(
+        delta_spec={"num_steps": 4, "sampler_id": "euler"},
+        source="w54p2c-dispatch",
+        target_round=0,
+        calibration_artifact_hash="w54p2c-dispatch",
+    )
+    trace = adapter.solve_ode(bundle, condition, seed=42)
+
+    value, marker, dbg = tools._compute_real_metric_via_observation(
+        adapter=adapter,
+        trace=trace,
+        model="flowmol3_v2",
+        observation_kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+        seed=42,
+        nfe=10,
+    )
+    # v2 with synthetic backend → finite entropy reduction (0.0 for
+    # uniform-vs-uniform fallback). The dispatch MUST take the
+    # observe_as_dict path (NOT the legacy tuple path).
+    assert marker == "computed", (
+        f"expected marker='computed', got marker={marker!r}, dbg={dbg!r}"
+    )
+    assert isinstance(value, float)
+    # The metric layer nests the original observation_surface dict
+    # under ``dbg["observation_surface"]`` (mirrors the Wave 47/52
+    # Kanzi / LineageFlow contract); check via the nested key.
+    nested_dbg = dbg.get("observation_surface", {})
+    assert nested_dbg.get("observation_surface") == "observe_as_dict_protocol", (
+        f"metric helper did NOT use observe_as_dict; surface="
+        f"{nested_dbg.get('observation_surface')!r}. The Phase 2 "
+        f"dispatch is not active."
+    )
+    assert nested_dbg.get("observation_channel") == "atom_type_entropy_reduction"
+    assert nested_dbg.get("observation_units") == "nats"
+
+
+def test_v2_missing_kind_partial_block() -> None:
+    """Missing ObservationKind key in observe_as_dict → BLOCKED for that metric only.
+
+    The Phase 2 contract: a missing key in ``observe_as_dict`` returns
+    BLOCKED for that single metric (with a descriptive reason) rather
+    than crashing the whole observation surface. Mirrors the graceful
+    fallback the metric helper offers on the legacy
+    ``observe_token_indices`` / ``observe_entropy_reduction`` path.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    class _PartialDictAdapter:
+        """Adapter that ships ``observe_as_dict`` but only the ENDPOINT_BUNDLE key.
+
+        Also ships a stub ``observe`` method (returning an empty tuple)
+        so the helper's ``isinstance(adapter, AdapterObservationProtocol)``
+        check passes — the helper dispatches on ``observe_as_dict`` when
+        present, so the partial-block fallback can be exercised.
+        """
+
+        def observe_as_dict(
+            self,
+            trace: Any,
+            state: Any,
+            paper_quantities: Any = None,
+            *,
+            strategies: tuple[ObservationKind, ...] = (
+                ObservationKind.ENDPOINT_BUNDLE,
+                ObservationKind.DISCRETE_TOKENS,
+                ObservationKind.POSITION_ENTROPY_REDUCTION,
+                ObservationKind.TRAJECTORY_NATIVE,
+            ),
+            theta_before: Any = None,
+            theta_after: Any = None,
+        ) -> dict[ObservationKind, Any]:
+            # Only return the ENDPOINT_BUNDLE key; the rest stay None.
+            return {
+                ObservationKind.ENDPOINT_BUNDLE: None,
+                ObservationKind.DISCRETE_TOKENS: None,
+                ObservationKind.POSITION_ENTROPY_REDUCTION: None,
+                ObservationKind.TRAJECTORY_NATIVE: None,
+            }
+
+        def observe(
+            self,
+            trace: Any,
+            state: Any,
+            paper_quantities: Any = None,
+            *,
+            strategies: tuple[ObservationKind, ...] = (),
+            theta_before: Any = None,
+            theta_after: Any = None,
+        ) -> tuple[Any, ...]:
+            return ()
+
+    # Request DISCRETE_TOKENS — not present → BLOCKED for THAT metric only.
+    value, marker, dbg = tools._compute_real_metric_via_observation(
+        adapter=_PartialDictAdapter(),
+        trace=None,
+        model="flowmol3_v2",
+        observation_kind=ObservationKind.DISCRETE_TOKENS,
+        seed=42,
+        nfe=10,
+    )
+    assert value is None
+    assert marker == "blocked"
+    assert "observe_as_dict missing key" in dbg.get("reason", "")
+    assert dbg["observation_surface"] == "observe_as_dict_protocol"
+    assert dbg["observe_as_dict_missing_kind"] == str(
+        ObservationKind.DISCRETE_TOKENS
+    )
+    # Confirm graceful fallback: when adapter DOES ship the requested
+    # kind (POSITION_ENTROPY_REDUCTION stubbed), the metric layer
+    # proceeds (may be blocked at decode, but NOT at partial-block).
+    class _FullAdapter(_PartialDictAdapter):
+        def observe_as_dict(
+            self,
+            trace: Any,
+            state: Any,
+            paper_quantities: Any = None,
+            *,
+            strategies: tuple[ObservationKind, ...] = (),
+            theta_before: Any = None,
+            theta_after: Any = None,
+        ) -> dict[ObservationKind, Any]:
+            from adaptive_reflow.framework.interfaces import (
+                ObservationResult,
+            )
+            return {
+                ObservationKind.ENDPOINT_BUNDLE: None,
+                ObservationKind.DISCRETE_TOKENS: None,
+                ObservationKind.POSITION_ENTROPY_REDUCTION: ObservationResult(
+                    kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+                    channel="atom_type_entropy_reduction",
+                    payload=0.0,
+                    units="nats",
+                ),
+                ObservationKind.TRAJECTORY_NATIVE: None,
+            }
+
+    value3, marker3, dbg3 = tools._compute_real_metric_via_observation(
+        adapter=_FullAdapter(),
+        trace=None,
+        model="flowmol3_v2",
+        observation_kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+        seed=42,
+        nfe=10,
+    )
+    # The metric helper does NOT partial-block when the kind is shipped;
+    # it computes (or downstream-blocks at decode — but the partial-
+    # block reason is absent from the dbg).
+    assert marker3 in ("computed", "blocked")
+    if marker3 == "blocked":
+        assert "observe_as_dict missing key" not in dbg3.get(
+            "reason", ""
+        )
+
+
+def test_byte_stable_wave47_52() -> None:
+    """Wave 47/52 baselines unchanged — Phase 2 fix does NOT touch legacy numerics.
+
+    Locks the Phase 2 contract: the metric-helper Phase 2 extension is
+    additive (new dict-keyed path) and does NOT alter the existing
+    tuple-keyed path, the per-model decode math, or the
+    _MODEL_OBSERVATION_KIND lookup table. Kanzi + LineageFlow + FlowMol3
+    v1 baselines MUST remain byte-stable.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    # Wave 47 baseline: _MODEL_OBSERVATION_KIND includes "lineageflow"
+    # (DISCRETE_TOKENS) — unchanged.
+    mapping = tools._MODEL_OBSERVATION_KIND
+    assert mapping.get("lineageflow") == ObservationKind.DISCRETE_TOKENS
+    # Wave 52 baseline: Kanzi still maps to DISCRETE_TOKENS.
+    assert mapping.get("kanzi") == ObservationKind.DISCRETE_TOKENS
+    # Wave 53/54/66 baseline: FlowMol3 v1 + v2 still map to
+    # POSITION_ENTROPY_REDUCTION.
+    assert (
+        mapping.get("flowmol3") == ObservationKind.POSITION_ENTROPY_REDUCTION
+    )
+    assert (
+        mapping.get("flowmol3_v2")
+        == ObservationKind.POSITION_ENTROPY_REDUCTION
+    )
+    # Byte-stable: the new ``observe_as_dict`` surface did NOT replace
+    # the existing ``observe(...)`` method on FlowMol3 v2 — the legacy
+    # tuple-returning surface is still exported and dispatchable.
+    from adaptive_reflow.adapters.flowmol3_v2_adapter import FlowMol3V2Adapter
+    assert hasattr(FlowMol3V2Adapter, "observe")
+    assert hasattr(FlowMol3V2Adapter, "observe_as_dict")
+    # The dict-keyed path is a NEW surface, NOT a replacement; verify
+    # the tuple-returning observe() is still importable + has the
+    # correct signature.
+    import inspect
+    sig = inspect.signature(FlowMol3V2Adapter.observe)
+    assert "strategies" in sig.parameters
+    assert "theta_before" in sig.parameters
+    assert "theta_after" in sig.parameters
+

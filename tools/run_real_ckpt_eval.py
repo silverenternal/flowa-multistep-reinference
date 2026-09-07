@@ -1582,6 +1582,55 @@ def _extract_observation(
         "model": str(model),
     }
     # ---- 1. Try the new observe(...) path (AdapterObservationProtocol) ----
+    # Wave 54 Phase 2 — extend (not replace) to consume the dict-keyed
+    # dispatch surface when the adapter ships ``observe_as_dict()``.
+    # The metric helper dispatches on ``ObservationKind`` directly via
+    # the dict key — graceful fallback when the requested key is absent
+    # (returns ``BLOCKED`` for that single metric, NOT all metrics).
+    if (
+        ObservationKind is not None
+        and AdapterObservationProtocol is not None
+        and isinstance(adapter, AdapterObservationProtocol)
+        and hasattr(adapter, "observe_as_dict")
+    ):
+        try:
+            obs_dict = adapter.observe_as_dict(
+                trace,
+                None,
+                paper_quantities=paper_quantities,
+                strategies=(
+                    ObservationKind.ENDPOINT_BUNDLE,
+                    ObservationKind.DISCRETE_TOKENS,
+                    ObservationKind.POSITION_ENTROPY_REDUCTION,
+                    ObservationKind.TRAJECTORY_NATIVE,
+                ),
+                theta_before=theta_before,
+                theta_after=theta_after,
+            )
+        except Exception as exc:  # noqa: BLE001
+            dbg["observation_surface"] = "observe_as_dict_protocol"
+            dbg["reason"] = (
+                f"observe_as_dict raised: {type(exc).__name__}:{exc}"
+            )
+            return None, "blocked", dbg
+        obs_match = obs_dict.get(observation_kind)
+        if obs_match is not None:
+            dbg["observation_surface"] = "observe_as_dict_protocol"
+            dbg["observation_channel"] = str(obs_match.channel)
+            dbg["observation_units"] = str(obs_match.units)
+            return obs_match, "computed", dbg
+        # Adapter conforms but did not return the requested kind —
+        # BLOCK for that single metric, do NOT crash the whole surface.
+        dbg["observation_surface"] = "observe_as_dict_protocol"
+        dbg["observe_as_dict_returned_kinds"] = sorted(
+            str(k) for k, v in obs_dict.items() if v is not None
+        )
+        dbg["observe_as_dict_missing_kind"] = str(observation_kind)
+        dbg["reason"] = (
+            f"observe_as_dict missing key={observation_kind!r} for "
+            f"model={model!r}; graceful partial BLOCK"
+        )
+        return None, "blocked", dbg
     if (
         ObservationKind is not None
         and AdapterObservationProtocol is not None
