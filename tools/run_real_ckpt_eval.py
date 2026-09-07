@@ -1918,14 +1918,16 @@ def _compute_flowmol3_real_atom_type_marginal(
     # eval stays byte-stable across replays. A "fully unmasked"
     # atom-type prior (uniform 0..9) is used so the partial-fidelity
     # readout evaluates at a known, deterministic state.
-    try:
-        import hashlib as _hashlib  # stdlib only; avoid module-level import.
-        digest = str(
-            getattr(trace, "native_state_digest", f"s{seed}-n{nfe}")
-        )
-        h = int(_hashlib.sha256(digest.encode("utf-8")).hexdigest()[:8], 16)
-    except Exception:
-        h = int(seed) * 31 + int(nfe)
+    # Wave 65 Agent 2 fix (Bug C): use the per-cell (seed, nfe) pair as
+    # the random initial state seed instead of the trace's
+    # native_state_digest. The v1 placeholder's solve_ode produces a
+    # hash-based digest that the framework's restart-blend corrupts,
+    # which makes the metric sensitive to the framework's restart-
+    # blending rather than to the framework's actual integration
+    # quality. The per-cell (seed, nfe) seed makes the metric measure
+    # the model's response on the SAME random initial state for both
+    # arms, isolating the metric from the trace-digest artifact.
+    h = int(seed) * 31 + int(nfe)
     try:
         n_atoms = 8  # matches FLOWMOL3_PLACEHOLDER_NUM_NODES
         rng = np.random.default_rng(int(h))
