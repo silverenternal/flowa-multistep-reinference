@@ -3774,6 +3774,8 @@ def _run_cell(
     composite_metric: str = "auto",
     restart_min_nfe: int | None = None,
     n_molecules: int = 1,
+    paper_metrics_flag: bool = False,
+    paper_reference: str = "GEOM_DRUGS",
 ) -> dict[str, Any]:
     """Run one (model, seed, nfe_budget) cell.
 
@@ -3784,6 +3786,17 @@ def _run_cell(
     adapter's :meth:`solve_ode` so each cell produces
     ``n_molecules`` independent trajectories. Currently only consumed
     by the FlowMol3 v2 adapter (other adapters ignore it).
+
+    ``paper_metrics_flag`` + ``paper_reference`` (Wave 75 Agent 2) —
+    opt-in flags. When ``paper_metrics_flag=True`` AND
+    ``model in ("flowmol3", "flowmol3_v2")`` AND
+    ``sampled_molecules`` is non-empty, compute the 4 paper-parity
+    metrics (paper_validity_pct, paper_pb_validity_pct,
+    paper_fg_deviation, paper_ood_ring_rate) via
+    :func:`tools.paper_metrics.compute_all_paper_metrics` and surface
+    them on the cell dict. ``paper_reference`` selects the reference
+    distribution (``'GEOM_DRUGS'`` = paper parity, or
+    ``'NCI_first_5K_proxy'`` = legacy fallback).
     """
     spec = DOWNSTREAM_METRICS[model]
     cell: dict[str, Any] = {
@@ -4008,6 +4021,65 @@ def _run_cell(
         cell["composite_glue_class"] = composite_dbg.get(
             "glue_class", "FlowMol3Glue",
         )
+    # Wave 75 Agent 2: opt-in 4-paper-metric block. When
+    # ``--paper-metrics`` is set on the CLI, compute the 4 paper-parity
+    # metrics (paper_validity_pct / paper_pb_validity_pct /
+    # paper_fg_deviation / paper_ood_ring_rate) on the FlowMol3 baseline
+    # ``sampled_molecules`` and surface them on the cell's debug dict.
+    # Off by default to preserve byte-stability for legacy callers.
+    # Each metric calls an upstream ``SampleAnalyzer`` function or
+    # reads a vendored reference file (NO metric reimplementation, NO
+    # new metric definitions). See docs/audit/wave75-phase1-audit.md
+    # + docs/audit/wave75-phase2-paper-metrics.md.
+    if paper_metrics_flag and model in ("flowmol3", "flowmol3_v2"):
+        cell["paper_metrics_marker"] = "skipped"
+        cell["paper_metrics_debug"] = {
+            "reason": "not_run",
+            "paper_metrics_flag": bool(paper_metrics_flag),
+        }
+        if sampled_molecules:
+            try:
+                from tools.paper_metrics import (  # type: ignore  # noqa: PLC0415
+                    REFERENCE_GEOM_DRUGS,
+                    REFERENCE_NCI_FIRST_5K_PROXY,
+                    compute_all_paper_metrics,
+                )
+                ref_label = paper_reference or REFERENCE_GEOM_DRUGS
+                if ref_label not in (REFERENCE_GEOM_DRUGS, REFERENCE_NCI_FIRST_5K_PROXY):
+                    ref_label = REFERENCE_GEOM_DRUGS
+                paper_metrics_obj = compute_all_paper_metrics(
+                    list(sampled_molecules),
+                    reference=ref_label,
+                    full_pb=True,
+                    pb_workers=2,
+                )
+                cell["paper_validity_pct"] = paper_metrics_obj.paper_validity_pct
+                cell["paper_pb_validity_pct"] = paper_metrics_obj.paper_pb_validity_pct
+                cell["paper_fg_deviation"] = paper_metrics_obj.paper_fg_deviation
+                cell["paper_ood_ring_rate"] = paper_metrics_obj.paper_ood_ring_rate
+                cell["paper_metrics_marker"] = "computed"
+                cell["paper_metrics_debug"] = {
+                    "reference": ref_label,
+                    "n_sampled_molecules": len(list(sampled_molecules)),
+                    "full_pb": True,
+                    "paper_metrics_module": "tools.paper_metrics",
+                    "paper_metrics_class": "PaperMetricsResult",
+                }
+            except ImportError as exc:
+                cell["paper_metrics_marker"] = "blocked"
+                cell["paper_metrics_debug"] = {
+                    "reason": f"paper_metrics_import_failed: {type(exc).__name__}:{exc}",
+                }
+            except Exception as exc:  # noqa: BLE001
+                cell["paper_metrics_marker"] = "blocked"
+                cell["paper_metrics_debug"] = {
+                    "reason": f"paper_metrics_compute_failed: {type(exc).__name__}:{exc}",
+                }
+        else:
+            cell["paper_metrics_marker"] = "blocked"
+            cell["paper_metrics_debug"] = {
+                "reason": "no_sampled_molecules",
+            }
     # delta_pct: framework vs baseline, normalised so positive always means
     # "framework wins" (sign-normalization per the LOWER_IS_BETTER /
     # HIGHER_IS_BETTER convention in tools/capability_audit.py).
@@ -4335,6 +4407,37 @@ def build_argparser() -> argparse.ArgumentParser:
             "single-molecule-cell contract."
         ),
     )
+    p.add_argument(
+        "--paper-metrics", action="store_true",
+        help=(
+            "Wave 75: opt-in flag that adds the 4 paper-parity metrics "
+            "(paper_validity_pct / paper_pb_validity_pct / "
+            "paper_fg_deviation / paper_ood_ring_rate) to each "
+            "FlowMol3 / FlowMol3 v2 cell's debug dict. Computed via "
+            "tools.paper_metrics.compute_all_paper_metrics on the "
+            "sampled_molecules returned by adapter.export_sampled_molecules. "
+            "Off by default to preserve byte-stability for legacy "
+            "callers. Requires --force-mode real (or auto with a real "
+            "ckpt) and at least one sampled molecule. See "
+            "docs/audit/wave75-phase1-audit.md + "
+            "docs/audit/wave75-phase2-paper-metrics.md for the audit "
+            "and the implementation."
+        ),
+    )
+    p.add_argument(
+        "--paper-reference", type=str, default="GEOM_DRUGS",
+        choices=("GEOM_DRUGS", "NCI_first_5K_proxy"),
+        help=(
+            "Wave 75: reference distribution for paper_fg_deviation "
+            "+ paper_ood_ring_rate. 'GEOM_DRUGS' (default, paper "
+            "parity) reads the canonical "
+            "data/geom_full_kekulized/train_reos_ring_counts.pkl "
+            "(187 MB, vendored Wave 70+); 'NCI_first_5K_proxy' uses "
+            "the Wave 49 5K-mol NCI fallback (smaller reference, "
+            "different fg_dev number). Only consulted when "
+            "--paper-metrics is set."
+        ),
+    )
     return p
 
 
@@ -4372,6 +4475,8 @@ def main(argv: list[str] | None = None) -> int:
                 composite_metric=args.composite_metric,
                 restart_min_nfe=args.restart_min_nfe,
                 n_molecules=int(args.n_molecules),
+                paper_metrics_flag=bool(getattr(args, "paper_metrics", False)),
+                paper_reference=str(getattr(args, "paper_reference", "GEOM_DRUGS")),
             )
             cells.append(cell)
             print(
