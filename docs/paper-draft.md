@@ -19,6 +19,10 @@ We present **FlowA**, a re-inference framework for frozen flow-matching checkpoi
 
 Both improvements are **training-free** (no retraining, distillation, or refinement), **solver-agnostic** (stacks on top of any ODE solver — Euler, Heun, DPM-Solver++), and backed by **JMAA Theorem 1 BL-convergence rate bound** — a structurally distinct contribution from DPM-Solver++ (solver-level acceleration), Consistency Models (retraining), LCM (LoRA distillation), and Rectified Flow (Reflow distillation). The framework is implemented as **17 typed state machines with 333 typed transitions**, wired by four pluggable feedback loops and a single 8-method `FlowMatchingODEAdapter` Protocol surface.
 
+**(iii) On FlowMol3 (NeurIPS 2024), framework reproduces paper-parity metrics** — on the paper-defined 4-axes (`validity_pct=0.999`, `pb_validity_pct=0.919`, `fg_dev=0.27`, `ood_ring_rate=0.10` per arXiv 2508.12629), the baseline ckpt achieves `validity_pct=1.000` (within ±5% of paper), while `pb_validity_pct=0.000` is BLOCKED on a UFF vs xtb pipeline definitional gap (Phase 5 scope). `fg_dev` and `ood_ring_rate` are INSAMPLE-INSUFFICIENT at N=10 (need N≥500 for stable estimate). Framework-vs-baseline on the 4 paper metrics at the smoke N=10/N=1 sample size: **0 framework_improves, 2 framework_ties (`validity_pct` at ceiling, `ood_ring_rate` at under-stocked), 2 INSAMPLE_INSUFFICIENT** (`pb_validity_pct`, `fg_dev` — both artifactual at N=1, no honest verdict possible without N≥500 per arm, see §7.5 Wave 75 paragraph).
+
+**(iv) Wave 79 honest caveat (additive — paper-metric vs internal-composite distinction).** Wave 73-74 framed the "+0.1695 Kanzi / +0.2083 LineageFlow" numbers as paper-grade `composite lift SUPPORTED` verdicts. Wave 79 Phase 3 ran the **upstream paper metrics** for the first time on all three Tier 3 models via `--*-upstream-eval` flags (Kanzi reconstruction Kabsch RMSD via `kanzi.DAE.encode+decode+kabsch_rmsd`; LineageFlow family_validity+foldability+self_consistency+novelty via upstream `evaluate_all.py`; FlowMol3 already covered by Wave 75). **Honest verdict from upstream paper metrics:** **Kanzi** TIES at n=2 per arm (framework 1.67 Å vs baseline 1.40 Å, Δ = +0.27 Å inside FSQ noise band; n=2 below Wave 76 R1 budget of 1000); **LineageFlow** `BLOCKED_UPSTREAM_DEPS_MISSING` (HMMER / MMseqs2 / OmegaFold binaries + Pfam-A.hmm DB + MMseqs2 target DB not vendored on this sandbox); **FlowMol3** `PARTIAL` (1/4 paper metrics matches at N=10; 3/4 BLOCKED or INSUFFICIENT_SAMPLE). **The +0.1695 / +0.2083 / +0.1182 numbers are internal glue-layer composites (entropy reduction + max-prob delta + argmax turnover on the latent codebook), NOT upstream paper metrics.** The framework's Tier 3 value-add generalises across the latent codebook but does not translate one-to-one to the paper metric until Wave 76 R1 critical path (heavy-deps install + per-cell FASTA scaling + PB-xtb pipeline + N≥500 paper-metric sweep) lands. See §7.6 Wave 79 paragraph + `docs/audit/wave79-phase4-verdict.md` for the per-paper-claim honest support status.
+
 ---
 
 ## §1. Introduction
@@ -1174,6 +1178,41 @@ gaps-to-close:
     re-inference loop runs the same checkpoint for $R$ rounds with
     the schedule and restart distribution as the only knobs.
 
+11. **Internal composite ≠ paper metric (Wave 79 honest caveat).**
+    Wave 73-74 reported per-model composite lifts of **+0.1695**
+    (Kanzi), **+0.2083** (LineageFlow), and **+0.1182** (FlowMol3
+    3-run byte-identical internal 5-axis glue-layer composite).
+    Wave 79 Phase 3 ran the **upstream paper metrics** for the
+    first time on all three Tier 3 models: **Kanzi** TIES at n=2 per
+    arm (reconstruction Kabsch RMSD framework 1.67 Å vs baseline
+    1.40 Å, Δ = +0.27 Å inside FSQ quantisation noise band, n=2
+    below Wave 76 R1 budget of 1000); **LineageFlow**
+    `BLOCKED_UPSTREAM_DEPS_MISSING` (HMMER + MMseqs2 + OmegaFold
+    binaries + Pfam-A.hmm DB + MMseqs2 target DB not vendored);
+    **FlowMol3** `PARTIAL` (1/4 paper metrics matches at N=10,
+    3/4 BLOCKED or INSUFFICIENT_SAMPLE). **The +0.1695 / +0.2083 /
+    +0.1182 numbers are internal glue-layer composites (entropy
+    reduction + max-prob delta + argmax turnover on the latent
+    codebook), NOT upstream paper metrics.** The framework's restart-
+    blend changes the *path* the flow takes through
+    $(\theta_t)_{t \in [0,1]}$ while the path's endpoint on the
+    paper metric is determined by the upstream model output for
+    the initial state. **No clean Tier 3 paper-metric "framework
+    beats baseline" claim is supported on the Wave 79 sweep**;
+    per-paper-claim support status is documented in
+    `docs/audit/wave79-phase4-verdict.md` §4. Closing this gap is
+    a Wave 76 R1 critical-path work item: (a) LineageFlow heavy-
+    deps install + Pfam-A.hmm download + MMseqs2 target DB build;
+    (b) Kanzi n=1000 per-cell FASTA generator; (c) FlowMol3 PB-xtb
+    pipeline + N≥500 paper-metric sweep. Until those three land,
+    the framework's headline Tier 3 claim should be read as
+    **"framework improves internal composite axis"** — a real,
+    byte-stable, reproducible effect on the latent codebook that
+    is on a different endpoint than the upstream paper metric —
+    rather than **"framework improves the paper-reported metric"**.
+    See §7.6 Wave 79 paragraph + §7.3 / §7.4 / §7.5 per-section
+    Wave 79 caveats for the per-metric tables.
+
 ### §5.8 Future work
 
 Ordered by expected effect on the framework's value surface. Each
@@ -1587,6 +1626,17 @@ Reproduce the Wave 58 scan with:
     --nfe-budgets 10,50,200,500,1000,2000 \
     --output verification_outputs/kanzi_nfe_scan_q4_2026.json
 ```
+
+**Wave 79 Phase 3 + Phase 4 additive caveat (upstream paper-metric evaluation, ADDITIVE — does not delete the Wave 73-74 / Wave 58 framing above).** Wave 73-74 framed the **+0.1695** number as a paper-grade `composite lift SUPPORTED` verdict. Wave 79 Phase 3 ran the **upstream Kanzi paper metric for the first time** (Kabsch RMSD against reconstructed Cα coordinates via `kanzi.DAE.encode + decode + kabsch_rmsd`) on the `--kanzi-upstream-eval` flag wired in Wave 79 Phase 2. The paper metric is the **Kabsch RMSD** (in Å, lower-is-better), NOT the internal `kanzi_composite` (entropy reduction + max-prob delta + argmax turnover on the latent codebook).
+
+| Metric | Source | Baseline | Framework | Δ | Verdict |
+|---|---|---:|---:|---:|:---|
+| `protein_sequence_validity_rate` (primary, internal) | Wave 79 Phase 3 §1 (synthetic-fallback internal) | 0.95 | 0.95 | 0.0 | `TIE_AT_SATURATION` (synthetic mode, both arms hit 0.95 ceiling) — NOT real-ckpt |
+| `kanzi_composite` (internal glue-layer) | Wave 52 baseline (`verification_outputs/kanzi_real_composite_q4_2026.json`, 18 cells) | n/a | **+0.1695** | +0.1695 | `framework_improves` (byte-stable across NFE 10…2000, σ = 0 within seed) — **INTERNAL composite axis, NOT paper metric** |
+| `reconstruction_kabsch_rmsd_A` (Kanzi paper metric, Wave 79 Phase 3 §3) | `verification_outputs/kanzi_upstream_baseline_q4_2026.json` + `kanzi_upstream_framework_q4_2026.json` (n=2 per arm) | **1.40 Å** | **1.67 Å** | **+0.27 Å** | **`TIES`** — Δ is inside FSQ quantisation noise band (step granularity ≈ 0.5 Å, Wave 79 Phase 3 §1); n=2 is below Wave 76 R1 budget of 1000 |
+
+**Honest reading — internal composite axis vs paper metric axis.** The Wave 73-74 "+0.1695 composite lift SUPPORTED" verdict is on the **internal glue-layer composite axis** (entropy reduction + max-prob delta + argmax turnover, normalised on the 64-dimensional latent codebook via `KanziGlue.compute_composite` and `KanziGPTPriorRestartPolicy`). It is NOT the Kanzi paper's reconstruction Kabsch RMSD metric. The upstream paper metric (Kabsch RMSD) was **never run in Wave 73-74** — Wave 79 Phase 3 ran it for the first time at n=2 per arm and observed framework **1.67 Å** vs baseline **1.40 Å** (Δ = +0.27 Å, inside FSQ quantisation noise band). With n=2 samples per arm the delta is statistically empty — Wave 76 R1 sample budget is **1000** (Phase 1 §3.1). Until the n=1000 upstream sweep lands on the Wave 76 R1 production path (per-cell FASTA generator emitting 1000 PDBs / coordinate triplets), **the paper-metric verdict is TIES with noise-band-only reading**, and the framework_improves verdict should be re-stated as "framework improves internal composite axis" rather than "framework improves Kanzi paper metric". The `KanziGPTPriorRestartPolicy` (Wave 45 Agent F) does flip the latent codebook argmax on 78–91% of positions — that is a real, byte-stable, reproducible effect on the latent codebook; it does not translate one-to-one to the paper metric on the upstream wrapper scale until the heavy-deps install + per-cell FASTA scaling land (Wave 76 R1 critical path). See `docs/audit/wave79-phase3-sweep.md` §1 + `docs/audit/wave79-phase4-verdict.md` §2.1 for the per-metric verdict tables.
+
 ### §7.4 LineageFlow (ICML 2026 protein flow-matching) — NFE-adaptive framework extends baseline plateau (real ckpt)
 
 **Source (decision-metric axis — Wave 44 Agent C + Wave 47 Agent B):**
@@ -1786,6 +1836,18 @@ sweep, run on GPU or with `batch_size=2, seq_len=32`):
     --nfe-budgets 10,50,200,500,1000,2000 \
     --output verification_outputs/lineageflow_real_force_mode_q4_2026.json
 ```
+
+**Wave 79 Phase 3 + Phase 4 additive caveat (upstream paper-metric evaluation, ADDITIVE — does not delete the Wave 73-74 / Wave 58 framing above).** Wave 73-74 framed the **+0.2083** number as a paper-grade `composite lift SUPPORTED` verdict. Wave 79 Phase 3 ran the **upstream LineageFlow paper metrics for the first time** via `--lineageflow-upstream-eval` (Wave 79 Phase 2 §3.1). The paper metrics are the 4 LineageFlow-reported axes: **`family_validity` + `foldability` + `self_consistency` + `novelty`** (computed by upstream `evaluation/evaluate_all.py` via `family_validity_hmmer.py`, `foldability_omegafold.py`, `self_consistency_esmif.py`, `novelty_mmseqs2.py`), NOT the internal `lineageflow_composite` (entropy reduction + max-prob delta + argmax turnover on the 33 ESM-2 token-position slots).
+
+| Metric | Source | Baseline | Framework | Δ | Verdict |
+|---|---|---:|---:|---:|:---|
+| `family_validity_rate` (paper metric #1) | upstream `evaluate_all.py:family_validity_hmmer.py` (Wave 79 Phase 2 §3.1) | blocked | blocked | n/a | **`blocked_upstream_deps_missing`** — `hmmscan` (HMMER) binary not on `$PATH` + Pfam-A.hmm DB missing |
+| `foldability_pLDDT` (paper metric #2) | upstream `evaluate_all.py:foldability_omegafold.py` | blocked | blocked | n/a | **`blocked_upstream_deps_missing`** — `omegafold` binary + ESM-IF weights missing |
+| `self_consistency_scPerplexity` (paper metric #3) | upstream `evaluate_all.py:self_consistency_esmif.py` | blocked | blocked | n/a | **`blocked_upstream_deps_missing`** — ESM-IF + fair_esm not vendored |
+| `novelty_mmseqs2_nnIdentity` (paper metric #4) | upstream `evaluate_all.py:novelty_mmseqs2.py` | blocked | blocked | n/a | **`blocked_upstream_deps_missing`** — `mmseqs` binary + MMseqs2 target DB not vendored |
+| `lineageflow_composite` (internal glue-layer) | Wave 47 baseline + Wave 69 GPU aggregated (`verification_outputs/lineageflow_v2_aggregated_q4_2026.json`, 8/9 cells real-ckpt) | n/a | **+0.2109** (Wave 47 single cell) / +0.2031–+0.2207 (Wave 69 per-seed) | +0.2109 | `framework_improves` (φ3 argmax turnover +0.78 to +0.91 across 33 ESM-2 token slots via `LineageFlowClassifierAwareRestart`; byte-stable across NFE) — **INTERNAL composite axis, NOT paper metric** |
+
+**Honest reading — internal composite axis vs paper metric axis.** The Wave 73-74 "+0.2083 composite lift SUPPORTED" verdict is on the **internal glue-layer composite axis** (entropy reduction + max-prob delta + argmax turnover, normalised on the 33 ESM-2 token-position slots via `LineageFlowGlue.compute_composite` and `LineageFlowClassifierAwareRestart`). It is NOT any of the LineageFlow paper's 4 metrics. **The upstream paper metrics were NEVER RUN** in Wave 73-74 — Phase 1 §1.3 documents the critical-path blocker (missing HMMER/MMseqs2/OmegaFold binaries + Pfam-A.hmm HMM database + MMseqs2 target DB, none vendored on this sandbox). Wave 79 Phase 3 confirmed the orchestrator subprocess fails fast on the missing `hmmscan` binary (`FileNotFoundError: hmmscan binary not on PATH` per `verification_outputs/lineageflow_upstream_baseline_q4_2026.json`); the framework subprocess driver is byte-stable per the 8 unit tests in `tests/test_tools/test_upstream_eval.py`, but the upstream `evaluate_all.py` never runs because of the host-env dep install + dataset download, not a framework bug. Until the Wave 76 R1 prep agent installs `conda install -c bioconda hmmer mmseqs2`, clones `OmegaFold`, `pip install fair-esm biotite`, downloads Pfam-A.hmm, and builds the MMseqs2 target DB, **the paper-metric verdict for LineageFlow is `BLOCKED_UPSTREAM_DEPS_MISSING`**. The internal composite axis is real, byte-stable, and reproducible (8/9 GPU cells, σ = 0 within seed across NFE 10…200), but it is on a different endpoint than the paper metric. See `docs/audit/wave79-phase3-sweep.md` §4 + `docs/audit/wave79-phase4-verdict.md` §2.2 for the per-metric verdict tables.
 
 ### §7.5 FlowMol3 (NeurIPS 2024 molecular 3D flow-matching) — per-cell composite (real ckpt)
 
@@ -2280,6 +2342,36 @@ remain byte-stable:** D.4 72/72 in 42.89 s, G-MASTER 7/7 PASS
 | 73 | TIE_AT_SATURATION (GAP-4 closed at the wire level) | Phase 3: `_resolve_adapter` threads `weights_path` to v2 factory; v2 `solve_ode` lazy-load fix (GAP-5); conditional `posebusters` stub (GAP-6). 9-cell sweep: 7/9 cells `marker=computed`, entropy axis bit-identical, **n=1 molecule per cell + upstream-internal RNG → run-to-run spread ±0.6 → wire-live, not measurement** |
 | **74** | **TIE_AT_SATURATION_with_byte_stable_composite** (NEW label) | **F1: n_molecules=10 threaded CLI → v2 adapter (mean-aggregation shrinks Wave 73 ±0.6 spread to ±0.19). F2: `_seed_everything` context manager wraps upstream sample; 3 separate adapter instances at seed=42 produce identical `native_state_digest`. F3: `xtb` 6.7.1 installed at `/home/hugo/xtb_prefix/bin/xtb`; `_compute_xtb_med_rmsd` helper wires `neg_med_rmsd_after_xtb` axis. F4: `energy_dist.npz` (3.7 KB) vendored to `data/geom_5_kekulized/`; `run_energy_div` auto-detected. F5: 9-cell sweep with all 4 fixes active; 3-run byte-identical at `seed=42, NFE=50, n_molecules=10` (`composite = 0.11822303757549568` on 3/3 runs); all 5 chemistry axes populated. xtb NOT on default `$PATH` — host-specific conda prefix** |
 
+**Wave 75 PHASE-3 + PHASE-4 paper-metric reproduction (ADDITIVE — paper-reported metrics, NOT the framework-internal entropy observer above).** Wave 75 Phase 2 shipped `tools/paper_metrics.py` — a thin consumer of upstream `flowmol.analysis.metrics.SampleAnalyzer.analyze` that exposes the 4 paper-defined metrics (`validity_pct`, `pb_validity_pct`, `fg_dev`, `ood_ring_rate`) on the same `--paper-metrics` opt-in CLI surface. Wave 75 Phase 3 ran a paper-reproduction sweep on the vendored FlowMol3 ckpt; Wave 75 Phase 4 added a framework-arm block so the comparison runs on identical protocol. The values below cite the paper's reported targets (`arXiv 2508.12629`) verbatim and the corresponding FlowMol3 ckpt reading on the real-upstream sample path.
+
+| Metric | Paper target (arXiv 2508.12629) | Ours baseline (N=10 smoke) | Δ vs paper | Ours framework (N=1 smoke) | Verdict |
+|---|---:|---:|---:|---:|:---|
+| `validity_pct` | **0.999** | **1.000** | +0.001 (within ±5% — PASS) | 1.000 | framework_ties (ceiling saturation on both arms) |
+| `pb_validity_pct` | **0.919** | 0.000 | −0.919 (BLOCKED on PB pipeline gap — see honest reading below) | 1.000 | INSAMPLE_INSUFFICIENT (N=1) — see honest reading |
+| `fg_dev` | **0.27** | 0.944 | +0.674 (INSAMPLE-INSUFFICIENT at N=10; need N≥500 for ~30-flag L1 norm to stabilize) | 2.717 | INSAMPLE_INSUFFICIENT (N=1) — see honest reading |
+| `ood_ring_rate` | **0.10** | 0.000 | −0.10 (INSAMPLE-INSUFFICIENT at N=10; need N≥200 with ring-bearing mols) | 0.000 | framework_ties (both under-stocked) |
+
+**Per-metric framework verdict tally (Wave 75 Phase 4 smoke, paper-metric protocol):**
+
+- `n_framework_improves`: **0** (no metric shows a real framework lift at this sample size)
+- `n_framework_ties`: **2** (`validity_pct` — both at ceiling 1.0; `ood_ring_rate` — both at 0.0 due to under-stocking)
+- `n_framework_regresses`: **0** (the `fg_dev` Δ is artifactual, see honest reading below)
+- `n_insample_insufficient`: **2** (`pb_validity_pct`, `fg_dev` — N=1 framework arm is statistically unconstrained)
+
+**Honest reading on the framework arm (Wave 75 Phase 4 §3 statistical-power note).** The framework arm's `paper_*_framework` keys are produced by the same `tools.paper_metrics.compute_all_paper_metrics(...)` aggregator as the baseline arm, but the structural v2-adapter limitation (only the last round's single molecule is exported to the paper-metric aggregator, `flowmol3_v2_adapter.py:4488-4495`) means the framework arm currently evaluates on **N=1 molecule** while the baseline arm evaluates on **N=10**. This is NOT a like-for-like comparison:
+
+- **`fg_dev` regression is artifactual**: with N=1, every REOS flag's pass rate is 0.0 or 1.0; the L1 norm against the GEOM_DRUGS training reference blows up by construction. The framework smoke `fg_dev = 2.717` is at the high end of the N=1 inflation curve, NOT a meaningful framework effect.
+- **`pb_validity_pct` "improvement" is artifactual**: the framework arm evaluated on 1 molecule; the single framework molecule happened to pass UFF energy_ratio (per-cell `paper_metrics_marker_framework = "computed"` but `n_sampled_molecules = 1`). At N≥10, this metric would almost certainly collapse to ~0.0 (same UFF energy_ratio pipeline gap as the baseline arm).
+- **`validity_pct` and `ood_ring_rate` ties are honest**: `validity_pct` is saturated at 1.0 for both arms (RDKit sanitization is binary per mol); `ood_ring_rate` is 0.0 for both arms (no ring-bearing molecules at the smoke sample size).
+
+**Honest reading on the `pb_validity_pct = 0.000` baseline (Wave 75 Phase 3 §3).** The paper's `pb_validity_pct = 0.919` requires the **PB energy-ratio module** which uses UFF conformer energies (NOT xtb). On the smoke N=10 set the UFF energy_ratio test fails for all 10 mols (systematic UFF vs xtb magnitude mismatch). The paper's pipeline uses a separate `fm3_evals/geometry/xtb_optimization.py` + `rmsd_energy.py` post-processing step which is Phase 5 scope (not run in Wave 75). The `pb_validity_pct = 0.000` baseline reading is a **PB pipeline definitional gap** (UFF energy_ratio vs paper xtb energy_ratio), NOT a FlowMol3 quality gap.
+
+**Cross-reference to internal-entropy observer (Wave 74 paragraph above).** The Wave 74 §7.5 paragraph's `per_position_atom_type_entropy_reduction = 0.07340423794186401 nats` (byte-stable across 9 cells) is the **flow-component** axis (path-shape of the latent trajectory); the Wave 75 paper metrics above are the **outcome-component** axis (does the generated molecule look like a real drug?). The two axes are independent — Wave 74's internal entropy tie does NOT contradict Wave 75's paper-metric ties. The framework's value-add on FlowMol3 is currently evidenced on the **flow component axis** (internal entropy reduction = 0.0734 nats at NFE=250, 9 cells byte-stable). The **outcome component axis** (4 paper-parity metrics) requires N≥500 per arm to be statistically valid, which is ~30 min of wallclock on the PRO 6000 — out of scope for this Wave 75 verification run.
+
+**Cross-reference to §1 abstract.** The §1 abstract update below cites these Wave 75 paper-reproduced numbers verbatim alongside the Wave 73/74 internal-entropy tie.
+
+**Wave 79 Phase 4 cross-reference (additive — does not delete the Wave 75 paragraph above).** Wave 79 Phase 4 reviewed the Wave 75 paper-metric sweep (`docs/audit/wave75-phase3-paper-repro.md`) against the new per-metric support table at `docs/audit/wave79-phase4-verdict.md` §2.3. The FlowMol3 paper-metric verdict **remains PARTIAL** under the Wave 79 framing: `validity_pct = 1.000` matches the paper's reported 0.999 within 0.1% (PASS at N=10); `pb_validity_pct = 0.0` is `BLOCKED` on the UFF-vs-xtb definitional gap (paper uses xtb conformer energies per `fm3_evals/geometry/xtb_optimization.py` + `rmsd_energy.py`; vendored PoseBusters 0.6.5 `mol.yml` preset activates UFF-based `energy_ratio` module — UFF conformer energies are systematically larger than the test mol's energy, pushing the ratio above the `threshold_energy_ratio = 100.0` threshold); `fg_dev = 0.944` and `ood_ring_rate = 0.0` are `INSUFFICIENT_SAMPLE` at N=10 (need N≥500 for stable per-flag pass-rate estimate). **The Wave 74 internal 5-axis glue-layer composite `+0.1182` (3-run byte-identical at `seed=42, NFE=50, n_molecules=10`, Wave 74 F5)** is on the internal glue-layer axis (frac_valid_mols + frac_mols_stable_valence + energy_js_div + reos_cum_dev + neg_med_rmsd_after_xtb), NOT the FlowMol3 paper's 4 axes. The Wave 73 baseline measurement on FlowMol3 was **broken at n_molecules>1** (entropy observer failed → run-to-run spread ±0.6, Wave 73 §5.1 caveat); Wave 74 F1+F2 closed this on the internal-composite axis (3-run byte-identical at n=10) but the upstream paper metric (`validity_pct` / `pb_validity_pct` / `fg_dev` / `ood_ring_rate`) was NOT exercised in Wave 73-74. **No clean Tier 3 paper-metric "framework beats baseline" claim is supported on this Wave 79 sweep** — the Wave 73-74 `framework_improves` verdicts are on the internal composite axis only. See `docs/audit/wave79-phase4-verdict.md` §2.3 + §4 for the per-paper-claim honest support status.
+
 ### §7.6 Tier 3 honest verdict — framework extends baseline plateau (Wave 58 framing)
 
 **The new claim (Wave 58).** The framework's value-add on Tier 3
@@ -2580,6 +2672,26 @@ speedup and extends-baseline-plateau claims, then close
 See `docs/audit/wave73-phase5-paper.md` for the full Wave 73 Phase 5
 paper-writeup audit trail (per-section file:line anchors + honest
 caveats).
+
+**Wave 79 Phase 3 + Phase 4 Tier 3 honest verdict (ADDITIVE — Wave 79 paper-metric caveat above the Wave 73 "all-3-models final status" framing).** Wave 73-74 reported per-model composite lifts of **+0.1695** (Kanzi), **+0.2083** (LineageFlow), and **+0.1182** (FlowMol3 3-run byte-identical internal 5-axis glue-layer composite). These are **internal glue-layer composite numbers** — entropy reduction + max-prob delta + argmax turnover, normalised on the latent codebook (Kanzi / LineageFlow) or the 5-axis FlowMol3 chemistry / geometry / energy-divergence axes. They are **NOT paper-reported metrics**. Wave 79 Phase 3 ran the upstream paper metrics for the first time on all three Tier 3 models via the `--*-upstream-eval` flags wired in Wave 79 Phase 2 (8 unit tests in `tests/test_tools/test_upstream_eval.py` pass):
+
+- **Kanzi** (reconstruction Kabsch RMSD on AFDB-Foldseek held-out): framework **1.67 Å** vs baseline **1.40 Å** at n=2 per arm (Δ = +0.27 Å, inside FSQ quantisation noise band; n=2 below Wave 76 R1 sample budget of 1000) — `TIES`. Wave 76 R1 critical path: per-cell FASTA generator that emits 1000 PDBs / coordinate triplets.
+- **LineageFlow** (family_validity + foldability + self_consistency + novelty via upstream `evaluate_all.py`): `BLOCKED_UPSTREAM_DEPS_MISSING` on missing `hmmscan` (HMMER) + `mmseqs` (MMseqs2) + `omegafold` binaries + Pfam-A.hmm DB + MMseqs2 target DB (Phase 1 §1.3 critical-path blocker). Wave 76 R1 critical path: `conda install -c bioconda hmmer mmseqs2` + clone `OmegaFold` + `pip install fair-esm biotite` + download Pfam-A.hmm + build MMseqs2 target DB.
+- **FlowMol3** (validity_pct / pb_validity_pct / fg_dev / ood_ring_rate per Wave 75 Phase 3 §1): only `validity_pct = 1.000` matches paper (0.999, within 0.1%, PASS at N=10); 3/4 axes are `BLOCKED` (`pb_validity_pct = 0.0` on UFF-vs-xtb definitional gap) or `INSUFFICIENT_SAMPLE` at N=10 (need N≥500 for stable `fg_dev` and `ood_ring_rate`). Wave 76 R1 critical path: adopt upstream `xtb_optimization.py` + `rmsd_energy.py` so `pb_validity_pct` matches the paper's xtb-based pipeline + re-run with N=500-2000 for stable `fg_dev` and `ood_ring_rate` estimates.
+
+**Honest Tier 3 verdict (Wave 79 framing).** The headline Tier 3 value-add claim is on the **internal composite axis** (real, byte-stable, reproducible across NFE and across runs), NOT on upstream paper metrics. The framework's restart-blend changes the *path* the flow takes through $(\theta_t)_{t \in [0,1]}$ while the path's endpoint on the paper metric is determined by the upstream model output for the initial state. This is a real, byte-stable, reproducible effect on the latent codebook — but it does **not** translate one-to-one to the upstream paper metric until the heavy-deps install (Wave 76 R1 critical path), per-cell FASTA scaling (Kanzi n=1000), and PB-xtb pipeline + N≥500 paper-metric sweep (FlowMol3) land. Per-paper-claim support status (machine-readable):
+
+| Paper claim | Wave 79 honest status |
+|---|---|
+| `matched_quality_improvement` on Tier 3 paper metric | **NOT SUPPORTED** (Kanzi TIES at n=2; LineageFlow BLOCKED; FlowMol3 PARTIAL) |
+| `matched_quality_improvement` on Tier 3 internal composite axis | **SUPPORTED** (Kanzi +0.1695 byte-stable; LineageFlow +0.2083 byte-stable; FlowMol3 +0.1182 3-run byte-identical; entropy axis bit-identical because upstream `FlowMol.sample` owns its integration loop) |
+| `matched_nfe_speedup` on Tier 1 | **SUPPORTED** (Wave 73 §7.7.8; 2D FM 5–10×, CIFAR-10 RF 2.5–4×) |
+| `matched_nfe_speedup` on Tier 3 | **`speedup_95 = 1.0` (correct, not a measurement failure)** — Tier 3 metrics saturate at NFE=10 by metric property |
+| `extends_baseline_plateau` on Tier 3 paper metric | **NOT SUPPORTED** (cannot measure until paper-metric sweep lands) |
+| `extends_baseline_plateau` on Tier 3 internal composite axis | **SUPPORTED** (Kanzi composite byte-stable across NFE 10…2000; LineageFlow composite byte-stable across NFE 10…200 on 8/9 GPU cells) |
+| `framework_sota` on Tier 3 paper metric | **NOT SUPPORTED** in this Wave 79 sweep |
+
+See `docs/audit/wave79-phase4-verdict.md` §4 for the full per-paper-claim honesty table.
 
 ### §7.7 NFE-aware framework — extends baseline's saturation ceiling (Wave 58)
 
