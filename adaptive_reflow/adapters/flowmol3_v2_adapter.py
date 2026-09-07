@@ -47,6 +47,7 @@ Public surface
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import sys
 from collections.abc import Mapping
@@ -545,6 +546,74 @@ def _sample_native_state(seed: int) -> dict[str, Any]:
         "e": _sample_e0(int(seed), n_atoms),
         "n_atoms": int(n_atoms),
     }
+
+
+# ---------------------------------------------------------------------------
+# Upstream-RNG seed plumbing (Wave 74 F2)
+# ---------------------------------------------------------------------------
+
+
+@contextlib.contextmanager
+def _seed_everything(seed: int, device: str):
+    """Seed torch + numpy + cuda RNGs and restore them on exit.
+
+    Wave 74 F2: the upstream zavalab FlowMol3 ``FlowMol.sample``
+    function owns its own prior sampling, CTMC step, and integrate loop
+    — it has NO per-call ``seed=`` kwarg and consumes the *module-level*
+    torch / numpy RNG state at call time. Without seeding, three repeat
+    runs of the same upstream call produce different molecules (the
+    Wave 73 ±0.6 composite spread).
+
+    This context manager:
+
+    1. **Saves** the current ``torch.get_rng_state`` (+ ``cuda`` when
+       ``device.startswith('cuda')`` + ``np.random.get_state``).
+    2. **Seeds** torch (and cuda when applicable) and numpy to
+       ``int(seed)`` so the upstream sample is deterministic.
+    3. **Restores** the saved RNG state on exit so the framework
+       scheduler (which operates on a separate ``numpy.random.default_rng``
+       namespace, but may also call ``np.random.seed`` in test code)
+       is NOT affected by the seeding.
+
+    The helper is intentionally low-level: it does NOT log, does NOT
+    mutate module-level state outside the ``with`` block, and is safe
+    to nest (the outer save/restore pair wins on exit; the inner
+    pair wins on inner exit — semantics are equivalent to a
+    depth-2 save/restore stack).
+
+    Parameters
+    ----------
+    seed : int
+        Integer seed (cast to ``int``).
+    device : str
+        Device string (``"cpu"`` or ``"cuda:N"``); when ``cuda``,
+        ``torch.cuda.manual_seed_all`` and CUDA state save/restore
+        are added.
+
+    Yields
+    ------
+    None
+        The block of code inside the ``with`` statement runs with
+        deterministic RNG.
+    """
+    import torch as _torch  # lazy; keep adapter dep-light on numpy path.
+
+    state_torch = _torch.get_rng_state()
+    state_cuda = None
+    if str(device).startswith("cuda") and _torch.cuda.is_available():
+        state_cuda = _torch.cuda.get_rng_state_all()
+    state_numpy = np.random.get_state()
+    try:
+        _torch.manual_seed(int(seed))
+        if state_cuda is not None:
+            _torch.cuda.manual_seed_all(int(seed))
+        np.random.seed(int(seed))
+        yield
+    finally:
+        _torch.set_rng_state(state_torch)
+        if state_cuda is not None:
+            _torch.cuda.set_rng_state_all(state_cuda)
+        np.random.set_state(state_numpy)
 
 
 # ---------------------------------------------------------------------------
@@ -2481,13 +2550,23 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
 
         n_atoms_tensor = torch.as_tensor([int(n)], dtype=torch.long,
                                           device=dev)
-        with torch.no_grad():
-            sampled = self._model.sample(
-                n_atoms=n_atoms_tensor,
-                n_timesteps=int(num_steps),
-                device=str(self._device),
-                prior=prior_dict,
-            )
+        # Wave 74 F2: thread the seed into the upstream RNG so that
+        # three repeat calls at the same seed produce byte-identical
+        # upstream output (closes the Wave 73 ±0.6 composite-spread
+        # root cause: upstream ``FlowMol.sample`` consumes module-level
+        # torch / numpy state at call time and has no ``seed=`` kwarg).
+        # The framework scheduler's RNG (numpy ``default_rng`` instance)
+        # is unaffected: we save+restore ``np.random.get_state`` in
+        # the helper and the framework scheduler does not touch the
+        # legacy ``np.random.*`` API.
+        with _seed_everything(int(seed), str(self._device)):
+            with torch.no_grad():
+                sampled = self._model.sample(
+                    n_atoms=n_atoms_tensor,
+                    n_timesteps=int(num_steps),
+                    device=str(self._device),
+                    prior=prior_dict,
+                )
         # ``sampled`` is a list with one SampledMolecule (single-mol batch).
         mol = sampled[0]
         # The upstream ``SampledMolecule`` constructor already filters
@@ -2740,13 +2819,18 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         n_atoms_tensor = torch.as_tensor(
             [int(n)] * n_mol, dtype=torch.long, device=dev,
         )
-        with torch.no_grad():
-            sampled = self._model.sample(
-                n_atoms=n_atoms_tensor,
-                n_timesteps=int(num_steps),
-                device=str(self._device),
-                prior=prior_dict,
-            )
+        # Wave 74 F2 — see comment in :meth:`_solve_ode_upstream`. The
+        # batched upstream call also consumes module-level RNG state
+        # at call time; seeding via ``_seed_everything`` ensures the
+        # batch is reproducible across runs.
+        with _seed_everything(int(seed), str(self._device)):
+            with torch.no_grad():
+                sampled = self._model.sample(
+                    n_atoms=n_atoms_tensor,
+                    n_timesteps=int(num_steps),
+                    device=str(self._device),
+                    prior=prior_dict,
+                )
         if len(sampled) != n_mol:
             raise RuntimeError(
                 f"upstream_sample_returned_unexpected_count:"

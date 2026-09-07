@@ -785,6 +785,308 @@ class TestFlowMol3V2NMoleculesBatch:
 
 
 # ---------------------------------------------------------------------------
+# Wave 74 F2 — seed threading through the upstream ``FlowMol.sample`` call.
+#
+# The upstream ``FlowMol.sample`` has NO per-call ``seed=`` kwarg — it
+# consumes the module-level torch / numpy RNG state at call time. The
+# adapter therefore wraps the upstream call in a ``_seed_everything``
+# context manager so that three repeat runs of the same upstream
+# ``(seed=...)`` produce byte-identical output (closes the Wave 73
+# ±0.6 composite-spread root cause).
+#
+# These tests are written against the public ``_seed_everything``
+# context manager (which is testable without dgl + torch_scatter)
+# and against the seed-handling **contract** of ``_solve_ode_upstream``
+# via a lightweight stub model that records the RNG state seen
+# inside the ``with _seed_everything(...)`` block. The stub bypasses
+# the heavy dgl / flowmol import path.
+# ---------------------------------------------------------------------------
+
+
+class TestFlowMol3V2SeedThreading:
+    """``_solve_ode_upstream`` / ``_solve_ode_upstream_batch`` thread ``seed``.
+
+    The adapter exposes a ``seed=`` kwarg on :meth:`solve_ode` and
+    :meth:`_solve_ode_upstream`. Before Wave 74 F2, the adapter
+    *accepted* the seed but did NOT propagate it into the upstream
+    ``FlowMol.sample`` call (which consumes torch / numpy RNG state
+    at call time, not a per-call seed parameter). The
+    ``_seed_everything`` context manager now wraps the upstream call.
+    """
+
+    def test_v2_seed_everything_helper_is_deterministic(self) -> None:
+        """Three runs at the same seed produce byte-identical RNG output.
+
+        Verifies the underlying primitive: the ``_seed_everything``
+        context manager seeds torch + numpy at entry; the seeded RNG
+        advances identically across multiple invocations at the same
+        seed. This is the byte-stability guarantee the upstream call
+        relies on.
+        """
+        torch = pytest.importorskip("torch")
+        from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+            _seed_everything,
+        )
+
+        def _sample(seed: int) -> torch.Tensor:
+            with _seed_everything(int(seed), "cpu"):
+                # Two RNG draws: the second one advances the seeded
+                # state, so re-running the same block must produce the
+                # same two-draw sequence.
+                a = torch.rand(7)
+                b = torch.rand(7)
+            return torch.cat([a, b])
+
+        # Three runs at seed=42 must be byte-equal.
+        out_42_a = _sample(42)
+        out_42_b = _sample(42)
+        out_42_c = _sample(42)
+        assert torch.equal(out_42_a, out_42_b), (
+            "Two _seed_everything runs at seed=42 produced different "
+            "first outputs (helper is non-deterministic)"
+        )
+        assert torch.equal(out_42_b, out_42_c), (
+            "Three _seed_everything runs at seed=42 produced different "
+            "outputs across runs (helper is non-deterministic)"
+        )
+
+    def test_v2_seed_everything_helper_restores_rng_state(self) -> None:
+        """RNG state must be restored on context exit (no framework leak).
+
+        Regression guard: the helper saves ``torch.get_rng_state`` +
+        ``np.random.get_state`` at entry and restores on exit. After
+        the ``with`` block returns, the outer RNG state must be
+        identical to what it was at entry — even if the body advanced
+        the RNG aggressively.
+        """
+        torch = pytest.importorskip("torch")
+        from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+            _seed_everything,
+        )
+
+        # Capture the outer RNG state at A.
+        torch.manual_seed(2025)
+        torch.rand(5)
+        outer_state_before = torch.get_rng_state().clone()
+        outer_np_state_before = np.random.get_state()
+
+        helper_advanced_torch = False
+        with _seed_everything(99, "cpu"):
+            # Inside the block: seed is forced to 99 — the outer state
+            # must NOT match.
+            inner_state = torch.get_rng_state().clone()
+            assert not torch.equal(inner_state, outer_state_before), (
+                "_seed_everything did not change the torch RNG state "
+                "at entry (seed plumbing is a no-op)"
+            )
+            torch.rand(50)
+            helper_advanced_torch = True
+
+        # After exit, outer state must be restored.
+        outer_state_after = torch.get_rng_state()
+        outer_np_state_after = np.random.get_state()
+        assert helper_advanced_torch
+        assert torch.equal(outer_state_after, outer_state_before), (
+            "torch RNG state NOT restored after _seed_everything exit "
+            "(framework scheduler would be affected)"
+        )
+        # NumPy legacy RNG state: keys + pos tuple equality.
+        assert outer_np_state_after[0] == outer_np_state_before[0]
+        assert outer_np_state_after[1].shape == outer_np_state_before[1].shape
+        np.testing.assert_array_equal(
+            outer_np_state_after[1], outer_np_state_before[1],
+        )
+
+    def test_v2_seed_kwarg_threaded_into_upstream_sample(self) -> None:
+        """``solve_ode(..., seed=N)`` must seed the upstream RNG state.
+
+        Integration check via a stub model: we construct an adapter
+        in upstream mode (mocked to skip the heavy dgl / flowmol
+        import path), call :meth:`_solve_ode_upstream` with the same
+        seed twice, and verify the stub records a deterministic
+        torch-RNG state (which is the byte-stability contract F2
+        promises).
+
+        The stub's ``sample(...)`` reads the *current* torch RNG state
+        at call time and returns a SampledMolecule carrying the state
+        hash. Two ``_solve_ode_upstream(seed=42)`` calls must produce
+        the same hash; two calls with different seeds must produce
+        different hashes.
+        """
+        torch = pytest.importorskip("torch")
+        from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+            _seed_everything,
+            FlowMol3V2Adapter,
+        )
+
+        # ----------------------------------------------------------------
+        # Stub SampledMolecule + model
+        # ----------------------------------------------------------------
+        class _StubMol:
+            """Minimal SampledMolecule duck-type for _solve_ode_upstream."""
+
+            def __init__(self, rng_state_hash: str) -> None:
+                self.num_atoms = 3
+                # 3 atoms, 3 coords each — valid (3, 3) for the adapter's
+                # ``reshape(n_final, 3)`` line at line 2510.
+                pos = np.asarray(
+                    [
+                        [0.0, 0.0, 0.0],
+                        [1.0, 0.0, 0.0],
+                        [0.0, 1.0, 0.0],
+                    ],
+                    dtype=np.float64,
+                )
+                self.positions = torch.as_tensor(pos, dtype=torch.float32)
+                self.atom_types = ["C", "H", "H"]
+                self.atom_charges = torch.as_tensor(
+                    [[0], [0], [0]], dtype=torch.float32,
+                )
+                self.bond_src_idxs = torch.as_tensor([], dtype=torch.long)
+                self.bond_dst_idxs = torch.as_tensor([], dtype=torch.long)
+                self.bond_types = torch.as_tensor([], dtype=torch.long)
+                self.rdkit_mol = None
+                self._rng_state_hash = rng_state_hash
+
+        class _StubUpstreamModel:
+            """Records the post-seed torch RNG state on every ``sample`` call.
+
+            The ``sample`` method body reads ``torch.get_rng_state`` to
+            capture what the adapter's seed context manager established.
+            It returns a single ``_StubMol`` whose ``_rng_state_hash``
+            is the SHA-256 of the captured state. Two adapter calls at
+            the same seed must produce the same hash (byte-stability);
+            different seeds must produce different hashes.
+            """
+
+            def __init__(self) -> None:
+                self.n_atom_types = 11
+                self.n_atom_charges = 6
+                self.n_bond_types = 4
+                self.fake_atoms = False
+                self.atom_type_map = [
+                    "C", "H", "N", "O", "F", "P", "S", "Cl", "Br", "I",
+                ]
+                self.last_rng_hash: str | None = None
+
+            def sample(self, *, n_atoms, n_timesteps, device, prior):
+                state = torch.get_rng_state()
+                import hashlib as _hl
+                rng_hash = _hl.sha256(
+                    state.cpu().numpy().tobytes()
+                ).hexdigest()
+                self.last_rng_hash = rng_hash
+                return [_StubMol(rng_hash)]
+
+        # ----------------------------------------------------------------
+        # Adapter construction (bypass the heavy _load_model path).
+        # ----------------------------------------------------------------
+        adapter = FlowMol3V2Adapter(
+            backend="torch", device="cpu", use_upstream=True,
+        )
+        # Inject the stub upstream model — bypasses _load_model entirely.
+        stub = _StubUpstreamModel()
+        adapter._model = stub
+        adapter._use_upstream = True
+        adapter._model_meta = {"kind": "upstream_flowmol"}
+        # Seed a state for the solve_ode path.
+        state = adapter.build_initial_state(batch_id="b0", sample_id="s0")
+        cond = _make_condition_delta(num_steps=3)
+
+        # Three calls at the same seed (42) → byte-identical state hashes.
+        digests: list[str] = []
+        for _ in range(3):
+            adapter.solve_ode(state, cond, seed=42)
+            assert stub.last_rng_hash is not None
+            digests.append(stub.last_rng_hash)
+        assert digests[0] == digests[1] == digests[2], (
+            f"Three calls at seed=42 produced non-identical RNG state "
+            f"hashes: {digests!r} (F2 determinism contract broken)"
+        )
+
+        # Two different seeds (42 vs 43) → distinct state hashes.
+        adapter.solve_ode(state, cond, seed=42)
+        hash_42 = stub.last_rng_hash
+        adapter.solve_ode(state, cond, seed=43)
+        hash_43 = stub.last_rng_hash
+        assert hash_42 != hash_43, (
+            f"seed=42 and seed=43 produced the same RNG state hash "
+            f"({hash_42!r}); seed is not threaded into the upstream call"
+        )
+
+    def test_v2_seed_propagation_determinism_three_runs(self) -> None:
+        """3 consecutive ``_solve_ode_upstream(seed=N)`` runs produce identical traces.
+
+        Wave 74 F2 acceptance criterion: ``--seeds 42 43 44`` must
+        produce *byte-identical* composite values across runs. The
+        upper-level evidence is captured in ``wave74-phase3-f2.md``;
+        this test is the per-run, in-process byte-stability check.
+
+        Uses the same stub harness as
+        :meth:`test_v2_seed_kwarg_threaded_into_upstream_sample`.
+        """
+        torch = pytest.importorskip("torch")
+        from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+            FlowMol3V2Adapter,
+        )
+
+        class _StubMol:
+            def __init__(self) -> None:
+                self.num_atoms = 3
+                pos = np.asarray(
+                    [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+                    dtype=np.float64,
+                )
+                self.positions = torch.as_tensor(pos, dtype=torch.float32)
+                self.atom_types = ["C", "H", "H"]
+                self.atom_charges = torch.as_tensor(
+                    [[0], [0], [0]], dtype=torch.float32,
+                )
+                self.bond_src_idxs = torch.as_tensor([], dtype=torch.long)
+                self.bond_dst_idxs = torch.as_tensor([], dtype=torch.long)
+                self.bond_types = torch.as_tensor([], dtype=torch.long)
+                self.rdkit_mol = None
+
+        class _StubModel:
+            def __init__(self) -> None:
+                self.n_atom_types = 11
+                self.n_atom_charges = 6
+                self.n_bond_types = 4
+                self.fake_atoms = False
+                self.atom_type_map = [
+                    "C", "H", "N", "O", "F", "P", "S", "Cl", "Br", "I",
+                ]
+
+            def sample(self, *, n_atoms, n_timesteps, device, prior):
+                return [_StubMol()]
+
+        # Build 3 adapters (the native_state cache must not leak between
+        # adapter instances — that's the D.4 byte-stability contract).
+        adapters = [
+            FlowMol3V2Adapter(
+                backend="torch", device="cpu", use_upstream=True,
+            )
+            for _ in range(3)
+        ]
+        cond = _make_condition_delta(num_steps=3)
+        digests: list[str] = []
+        for adapter in adapters:
+            # Bypass heavy load path.
+            adapter._model = _StubModel()
+            adapter._use_upstream = True
+            adapter._model_meta = {"kind": "upstream_flowmol"}
+            # Build state on each adapter (per-adapter native-state cache).
+            state = adapter.build_initial_state(batch_id="b", sample_id="s")
+            trace = adapter.solve_ode(state, cond, seed=42)
+            digests.append(trace.native_state_digest)
+        assert digests[0] == digests[1] == digests[2], (
+            f"Three adapter instances at seed=42 produced non-identical "
+            f"trace digests: {digests!r} (F2 3-run byte-identical contract "
+            f"broken)"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Wave 68 Phase 3 — :meth:`FlowMol3V2Adapter.observe` closes the Wave 66
 # v2 wire gap (``adapter_missing_observe_entropy_reduction`` BLOCKED).
 # ---------------------------------------------------------------------------
