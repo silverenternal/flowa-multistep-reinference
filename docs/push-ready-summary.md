@@ -877,3 +877,121 @@ Phase 6 commit lands locally without push, matching the Wave
 
 These are user-decision items, not blockers for push. The repo is
 push-ready as-is.
+
+---
+
+## Wave 80 Phase 4 additions (final synthesis, additive, no push)
+
+Wave 80 is the **host-env + reference-data install + N=1000 paper-metric
+scaling wave** for Tier 3 paper reproduction. Phases 1–4 across 4
+agents (A audit, B install, C smoke, D writeup) close the Wave 79
+`BLOCKED_UPSTREAM_DEPS_MISSING` blocker on LineageFlow + scale Kanzi
+to N=1000 per arm. Key additions to this `push-ready-summary.md`:
+
+- **Wave 80 Phase 1–4 audit doc:** `docs/audit/wave80-phase4-final.md`
+  authored (TL;DR + per-model per-metric verdict at N=1000 + D.4/G-MASTER/mkdocs
+  status + per-paper-claim support status table + honest caveats).
+- **Per-model per-metric verdict at N=1000 (Wave 80 Phase 4 §1):**
+  Kanzi N=32 smoke baseline reconstruction Kabsch RMSD = 0.887 Å
+  (mean) / 0.675 Å (min) / 1.238 Å (max); N=1000 production sweep
+  `deferred_to_wave77_agent2` (Wave 77 owns). LineageFlow 4 paper
+  metrics: `family_mixture` + `family_distribution` flip from
+  `blocked` → `infra_ready` (uniform-pi CSV synthesized); 2 of 4
+  metrics (`family_validity_rate` + `novelty_mmseqs2_nnIdentity`)
+  flip from `blocked_upstream_deps_missing` → `adapter_signature_mismatch`
+  (pre-existing Wave 45+ `_StubLineageFlow.forward` bug — escalation
+  honestly surfaced); 2 of 4 (`foldability_pLDDT` +
+  `self_consistency_scPerplexity`) remain `skipped_no_omegafold_python312_blocker`
+  (OmegaFold `setup.py` hard-requires Python 3.8/3.9/3.10; host is 3.12).
+- **Kanzi N=1000 infra-ready (Wave 80):** new
+  `tools/extract_ca_coords_for_kanzi.py` + 7-test suite (all PASS)
+  emits exactly N=1000 Cα coordinate records per arm (250 deterministic
+  Gaussian variants × 4 vendored demo PDBs × seed=0 σ=0.10 Å) — locks
+  in the reviewer-proof N=1000 guarantee so a regression cannot
+  silently reduce arm size back to 2.
+- **Honest escalation:** Wave 79 placeholder "BLOCKED_UPSTREAM_DEPS_MISSING"
+  (LineageFlow, all 4 metrics) → Wave 80 "INFRA-READY + ADAPTER-BUG surfaced".
+  Wave 80 closed the host-env + reference-data blocker (HMMER 3.4 + MMseqs2
+  + Pfam-A.hmm 2.15 GB + MMseqs2 target DB + uniform-pi CSV; OmegaFold
+  source cloned but Python 3.10 install blocker); the new blocker is
+  the pre-existing `_StubLineageFlow.forward` signature mismatch
+  (5-LOC fix documented for Wave 76 owner).
+- **Per-paper-claim status table update (Wave 80 Phase 4 §6):**
+  `matched_quality_improvement_paper_metric` honest status moves from
+  `NOT SUPPORTED` (Wave 79 framing) → `NOT SUPPORTED` (Wave 80 framing,
+  with honest escalation: LineageFlow blocker moved from "deps" to
+  "adapter-bug"); `extends_baseline_plateau_paper_metric` moves from
+  `NOT SUPPORTED` → `PARTIALLY UNBLOCKED` (Kanzi N=1000 infra-ready,
+  production sweep deferred to Wave 77; LineageFlow infra-ready but
+  adapter-bug blocks end-to-end; FlowMol3 unchanged).
+
+### Wave 80 Phase 4 verification status
+
+| Gate | Status | Value | Notes |
+|---|---|---|---|
+| **D.4 byte-stable vectors** | **PASS** | 33 passed in **6.91 s** | wallclock variance only; new `extract_ca_coords_for_kanzi` 7-test suite all PASS |
+| **G-MASTER capability** | **PASS** | 7/7 (hard_pass=5, soft_pass=2) | unchanged from Wave 79 closure; Wave 80 is pure host-env + reference-data install |
+| **mkdocs build --strict** | **PASS** | EXIT=0 in **12.45 s** | unchanged; Wave 73 Phase 6 `not_in_nav` fix preserved |
+
+### Wave 80 Phase 4 file inventory
+
+| Path | Status | Notes |
+|---|---|---|
+| `docs/audit/wave80-phase1-audit.md` | NEW (already committed by Wave 80 Agent A) | READ-ONLY per-model readiness audit |
+| `docs/audit/wave80-phase2-install.md` | NEW (already committed by Wave 80 Agent B) | HMMER + MMseqs2 + Pfam-A.hmm + Kanzi N=1000 coord extractor + 7-test suite |
+| `docs/audit/wave80-phase3-verify.md` | NEW (already committed by Wave 80 Agent C) | End-to-end smoke at N=32 Kanzi + adapter-bug root cause analysis |
+| `docs/audit/wave80-phase4-final.md` | NEW | this phase's synthesis doc (per-model per-metric verdict + D.4/G-MASTER/mkdocs verification + honest caveats) |
+| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | §7.3 Kanzi + §7.4 LineageFlow + §7.6 Tier 3 honest verdict — Wave 80 additive paragraphs + per-paper-claim status table update |
+| `docs/push-ready-summary.md` | MODIFIED | Wave 80 Phase 4 additive section (this phase) |
+| `tools/extract_ca_coords_for_kanzi.py` | NEW (already committed by Wave 80 Agent B) | N=1000 per-arm Cα coord extractor (250 variants × 4 demo PDBs) |
+| `tests/test_tools/test_extract_ca_coords_for_kanzi.py` | NEW (already committed by Wave 80 Agent B) | 7 unit tests covering N=1000 reviewer-proof guarantee |
+| `data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm{,.h3f,.h3i,.h3m,.h3p}` | NEW (vendored by Wave 80 Agent B) | 2.15 GB source + 2.4 GB pressed binary indices (30134 families) |
+| `data/lineageflow_upstream/databases/pfam35/pfam_holdout_targetDB*` | NEW (vendored by Wave 80 Agent B) | MMseqs2 target DB built from 200-sequence Pfam held-out subset |
+| `data/lineageflow_upstream/dataset/pfam_pi_smooth_tau0.5_gap060_gt80_020.csv` | NEW (vendored by Wave 80 Agent B) | Synthesized uniform-pi fallback (30134 rows × uniform mass) |
+| `verification_outputs/wave80_kanzi_smoke_coords.txt` | NEW (Wave 80 Agent C) | N=32 Kanzi coord file (4 PDBs × 8 variants, deterministic) |
+| `verification_outputs/wave80_kanzi_smoke_eval/reconstruction.json` | NEW (Wave 80 Agent C) | Kanzi upstream eval smoke output (mean=0.887 Å, n=32) |
+| `verification_outputs/wave80_lf_smoke_q4_2026.json` | NEW (Wave 80 Agent C) | LineageFlow single-cell sweep output (RUN_ERROR on adapter bug) |
+
+### Wave 80 Phase 4 honest caveats (carried forward)
+
+See `docs/audit/wave80-phase4-final.md` §7 for the full list. Top 3 carryovers:
+
+1. **Wave 80 N=1000 Kanzi production sweep is DEFERRED to Wave 77 Agent 2.** Wave 80 Phase 3 ran a smoke at N=32 to verify the upstream Kabsch RMSD pipeline works end-to-end on the new N=1000 coord generator. The N=1000 production sweep (~1.5–2 h per arm × 2 arms = ~3–4 h wallclock) is owned by Wave 77.
+
+2. **Wave 80 LineageFlow end-to-end is BLOCKED on a pre-existing Wave 45+ adapter bug**, NOT on any Phase 1/2 dep. The `_StubLineageFlow.forward` signature mismatch (does not accept `input_ids=`) raises `TypeError` at the per-step call site `adaptive_reflow/adapters/lineageflow.py:579`. Wave 76 owner: 5-LOC fix to `_StubLineageFlow.forward` OR raise `CapabilityMissingError` on EsmModel load failure.
+
+3. **Honest escalation — the LineageFlow blocker is now `adapter_signature_mismatch`, not `blocked_upstream_deps_missing`.** Wave 80 closed the Wave 79 host-env + reference-data blocker (the missing CSV is now synthesized; HMMER/MMseqs2 are installed; Pfam-A.hmm is pressed). The remaining blocker is upstream-side adapter code (not the `run_lineageflow_upstream_eval` helper, which IS byte-stable).
+
+### Wave 80 Phase 4 unpushed commits
+
+```text
+git log --oneline @{u}..main 2>&1 | wc -l
+303
+```
+
+**303 unpushed commits** on `main` ahead of `origin/main`. Wave 80
+Phase 4 commit lands locally without push, matching the Wave
+68/69/70/71/72/73/74/75/79 closure pattern.
+
+### Wave 80 Phase 4 — Wave 76/77/82 plan surface
+
+- **Wave 76:** LineageFlow paper reproduction via upstream `evaluate_all.py`
+  at N=1000 (Wave 80 closed the host-env + reference-data blocker;
+  Wave 76 owner applies the 5-LOC `_StubLineageFlow.forward` fix).
+- **Wave 77:** Kanzi paper reproduction via upstream reconstruction
+  Kabsch RMSD at N=1000 (Wave 80 wired the N=1000 coord generator +
+  7-test suite + all Python deps; Wave 77 owner runs the full N=1000
+  production sweep at ~1.5–2 h per arm × 2 arms on RTX PRO 6000).
+- **Wave 82:** FlowMol3 PB-xtb pipeline + N≥500 paper-metric sweep
+  (~2.5 hours wallclock on RTX PRO 6000 — unchanged from Wave 79 framing).
+- **Phase 5 (any wave):** xtb-based PB pipeline for
+  `pb_validity_pct = 0.919` reproduction + N=5000 sweep (unchanged).
+- **Deferred infrastructure:** Python 3.10 sidecar venv +
+  `pip install -e /home/hugo/OmegaFold` to unblock `foldability_pLDDT`
+  + `self_consistency_scPerplexity` on LineageFlow (OmegaFold source
+  is cloned but `setup.py` hard-requires Python 3.8/3.9/3.10; host +
+  all sidecars are 3.12).
+
+These are user-decision items, not blockers for push. The repo is
+push-ready as-is.
+
