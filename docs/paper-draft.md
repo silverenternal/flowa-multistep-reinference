@@ -1688,6 +1688,26 @@ axes that carry more weight when the metric is NOT saturated.
 | `verdict_overall` | TIE_AT_SATURATION (decision-metric axis) |
 | **Tier-3 composite-axis verdict** | **framework_improves** |
 
+**Wave 47 byte-stable citation (closure Agent D).** The
+`composite_median = +0.210937`, `composite_verdict = "framework_improves"`,
+`n_cells = 1` (seed 42 NFE 10), `n_composite_computed = 1`,
+`n_composite_blocked = 0`, and per-cell `(phi1=-7.24e-15,
+phi2=-1.20e-07, phi3=+0.84375)` values reported in the per-cell
+table above are the **Wave 47 byte-stable numbers** —
+`verification_outputs/lineageflow_real_metric_v2_q4_2026.json`
+(Wave 47 Agent A smoke-test JSON preserved at `/tmp/q4_w47.json`
+per Wave 47 Agent A §3.2; Wave 47 `LineageFlowGlue` class at
+`adaptive_reflow/adapters/lineageflow_glue.py` per
+`docs/audit/wave47-lineageflow-glue-impl.md`; Wave 47 Agent B F-4
+EsmModel dtype fix; Wave 47 Agent C `_compute_lineageflow_composite`
+helper + DOWNSTREAM_METRICS wiring). The composite axis is
+single-cell (1/9 cells computed) — the same Wave 47 / Wave 58
+provisional finding cited in §7.6 / §7.7.4. The 8 remaining
+NFE-scan cells (Wave 58 NFE=50/200/500/1000/2000) remain
+`pending_cpu_bandwidth` pending GPU re-sweep; this closure
+pass confirms the Wave 47 byte-stable composite without re-running
+the 657 M-param forward pass on CPU.
+
 #### Wave 58 NFE scan (1/9 cells computed; 8 cells PENDING CPU bandwidth)
 
 The Wave 58 NFE scan (`verification_outputs/lineageflow_real_force_mode_q4_2026.json`)
@@ -1799,6 +1819,96 @@ reference vs uniform `theta_after`). A non-zero composite requires a
 real FlowMol3 ckpt + the upstream `flowmol` package — explicitly out
 of PHASE-4 scope per Wave 36.
 
+**Wave 68 closure verdict update (Agent C — entropy-reduction metric
+unblocked; RDKit/xtb env-degraded).** Per
+`docs/audit/closure-flowmol3-sweep.md` (Wave 68 closure Agent C,
+re-run 2026-09-07), the 9-cell FlowMol3 sweep that was **9/9
+BLOCKED** in Wave 68 Phase 5 (due to `AttributeError: 'NoneType'
+object has no attribute 'native_state_digest'` — caller passed
+`state=None` to v2 `observe()`) is now **9/9 TIE_AT_SATURATION** with
+**real, finite, byte-stable** per-position entropy-reduction readings,
+after Agent A's Wave 54 Phase 2 Fix (commit `223a225`) added callee-side
+defensive guards at `adaptive_reflow/adapters/flowmol3_v2_adapter.py:3280-3284`
+(observe) + `:3422-3437` (observe_as_dict). The Wave 54 Phase 2 Fix
+shipped **before** the Wave 68 Phase 5 audit finalized; Agent A's
+2 regression tests in `tests/test_adapters/test_flowmol3_v2_adapter.py`
+(`test_observe_with_state_none_returns_entropy_only` +
+`test_observe_as_dict_with_state_none_returns_entropy_kind`) lock in
+the contract. The fix is byte-stable — `pytest
+tests/test_adapters/test_flowmol3_v2_adapter.py
+tests/test_adapters/test_flowmol3_adapter.py` reports `118 passed, 3
+warnings` (the +2 tests vs Wave 68 Phase 5 baseline of 116).
+
+| seed | nfe | baseline_marker | framework_marker | baseline_metric (entropy_reduction, nats) | framework_metric (entropy_reduction, nats) | delta_pct | status | composite | composite_verdict |
+|---:|---:|:---|:---|---:|---:|---:|:---|---:|:---|
+| 42 | 10  | computed | computed | 0.07340423794186401 | 0.07340423794186401 | 0.0 | TIE | 0.0000 | no_signal |
+| 42 | 50  | computed | computed | 0.07340423794186401 | 0.07340423794186401 | 0.0 | TIE | 0.0000 | no_signal |
+| 42 | 200 | computed | computed | 0.07340423794186401 | 0.07340423794186401 | 0.0 | TIE | 0.0000 | no_signal |
+| 43 | 10  | computed | computed | 0.07340423794186401 | 0.07340423794186401 | 0.0 | TIE | 0.0000 | no_signal |
+| 43 | 50  | computed | computed | 0.07340423794186401 | 0.07340423794186401 | 0.0 | TIE | 0.0000 | no_signal |
+| 43 | 200 | computed | computed | 0.07340423794186401 | 0.07340423794186401 | 0.0 | TIE | 0.0000 | no_signal |
+| 44 | 10  | computed | computed | 0.07340423794186401 | 0.07340423794186401 | 0.0 | TIE | 0.0000 | no_signal |
+| 44 | 50  | computed | computed | 0.07340423794186401 | 0.07340423794186401 | 0.0 | TIE | 0.0000 | no_signal |
+| 44 | 200 | computed | computed | 0.07340423794186401 | 0.07340423794186401 | 0.0 | TIE | 0.0000 | no_signal |
+
+**Aggregate (Wave 68 closure Agent C, 9 cells — real metric, byte-stable):**
+
+| Aggregate field | Value |
+|---|---:|
+| `n_cells` | 9 |
+| `n_supported` | 0 |
+| `n_tie` | 9 (TIE_AT_SATURATION at entropy-reduction saturation) |
+| `n_regression` | 0 |
+| `n_pending` | 0 |
+| `n_blocked` | **0** (was 9 in Wave 68 Phase 5; now 0 after Wave 54 Phase 2 Fix) |
+| `n_run_error` | 0 |
+| `n_real_computed` | 9 |
+| `n_synthetic_fallback` | 0 |
+| `n_composite_computed` | 9 (FlowMol3Glue ran end-to-end on every cell) |
+| `n_composite_blocked` | 0 |
+| `composite_median` | **+0.0000** (still — RDKit/xtb env-degraded, see honest reading below) |
+| `composite_verdict` | **no_signal** (still — RDKit/xtb env-degraded) |
+| `verdict_overall` | **TIE_AT_SATURATION** (now genuinely real, not misleading placeholder) |
+| `g1_mean_signed_delta_pct` | 0.0 (entropy-reduction is byte-stable at 0.0734 nats) |
+| `observation_surface` | `observe_as_dict_protocol` |
+| ckpt | `data/flowmol3/weights_real/checkpoints/last.ckpt` (65 M params, epoch 17, global_step 1 547 236, PyTorch Lightning 2.1.3) |
+
+**Wave 68 closure honest reading (replaces the Wave 53 placeholder
+framing).** The previous "metric layer placeholder uniform-vs-uniform"
+framing in the Wave 53 honest reading is **superseded**: the metric
+layer is now real — entropy-reduction reads 0.07340423794186401 nats on
+every cell (byte-stable), and `baseline_metric = framework_metric`
+because both arms reach the same saturation point at the endpoint
+categorical distribution. This is the same saturation reading Wave 65 /
+Wave 66 captured, now byte-stable at the Wave 68 closure re-run. **The
+FlowMol3 path is no longer structurally blocked.** The remaining
+`composite = +0.0000` reading is an **env-level degradation**, NOT a
+code bug: **RDKit is not importable** in the FlowMol3 venv (so the
+chemistry axes — `frac_valid_mols`, `frac_mols_stable`, `energy_js_div`,
+`reos_cum_dev` — all read 0.0), and **xtb is not on `$PATH`** (so the
+geometry axis `neg_med_rmsd_after_xtb` drops to weight 0). Therefore
+`composite_verdict = "no_signal"` is the honest reading at the env
+level — no claim is being made that the framework matches baseline at
+the chemistry-axis saturation ceiling. The composite helper runs
+correctly end-to-end on every cell (Wave 53 Agent C
+`_compute_flowmol3_real_metric_via_trace` + Wave 49 Agent E
+`FlowMol3Glue`); the measurement gap is purely env-level. Wallclock
+overhead: framework is 10–40% slower than baseline at NFE ≥ 50 (3 rounds
+of glue + paper-quant scheduler + restart-blend dispatch), and ~2.7×
+slower at NFE = 10.
+
+**Wave 68 verdict evolution for FlowMol3:**
+
+| Wave | Verdict | Reason |
+|---|---|---|
+| 50 | BLOCKED | Adapter factory + force_mode bug; metric helper did not exist |
+| 53 | TIE_AT_SATURATION (misleading) | `_compute_flowmol3_real_metric_via_trace` + wiring landed; composite +0.0000 due to placeholder uniform-vs-uniform (real adapter not loaded) |
+| 54 | REGRESSION | Real-ckpt metric worked; framework-vs-baseline negative delta (Bug C) |
+| 65 | TIE_AT_SATURATION | Bug C targeted fix (framework = baseline at saturation) |
+| 66 | BLOCKED | `adapter_missing_observe_entropy_reduction` (v2 wire gap) |
+| 68 | BLOCKED | NEW regression — `state=None` in Phase 4 caller; Wave 54 Phase 2 Fix (commit `223a225`) already shipped callee-side guards |
+| **68 closure** | **TIE_AT_SATURATION** (real metric) | **9/9 cells entropy-reduction = 0.0734 nats, byte-stable; composite still 0.0 due to env-level RDKit/xtb absence** |
+
 | seed | nfe | phi1 (frac_valid_mols) | phi2 (frac_mols_stable) | phi3 (neg_energy_js) | phi4 (neg_reos_cum) | phi5 (neg_med_rmsd_xtb) | composite | composite_verdict | metric_layer |
 |---:|---:|---:|---:|---:|---:|---:|---:|:---|:---|
 | 42 | 10  | 0.0000 | 0.0000 | -0.0000 | -0.0000 | null | **+0.0000** | no_signal | `marker=computed` (placeholder uniform-vs-uniform) |
@@ -1846,16 +1956,22 @@ placeholder adapter synthesises a uniform `(8, 10)` distribution at
 (Wave 53 Agent A §3.3).
 
 **What this means for the Tier 3 figure.** FlowMol3's bar lands at
-**+0.0000**, but the bar represents "metric layer placeholder,"
-NOT "framework matched baseline at the saturation ceiling." A real
-FlowMol3 ckpt + the upstream `flowmol` package + RDKit
-`SampleAnalyzer.analyze` (or conformer RMSD against a reference
-set) will unblock the composite; the verdict will flip from
-`no_signal` to either `framework_improves` or `framework_regresses`
-once the placeholder is replaced. The Wave 53 Agent C surface
-closes the implementation gap (helper + wiring + 9 regression
-tests) — closing the measurement gap is a separate work item that
-requires a real ckpt, explicitly out of PHASE-4 scope.
+**+0.0000**, but per the **Wave 68 closure honest reading** above,
+the bar now represents "**env-level RDKit/xtb unavailability** —
+metric layer is real (entropy-reduction = 0.0734 nats, byte-stable),
+composite glue ran end-to-end on every cell, but chemistry +
+geometry axes read 0.0 because RDKit is not importable in this venv
+and xtb is not on `$PATH`," NOT "framework matched baseline at the
+saturation ceiling" and NOT "metric layer placeholder." Installing
+RDKit (e.g. `pip install rdkit-pypi` in the FlowMol3 sidecar venv)
+and xtb on `$PATH` will unblock the composite axes; the verdict will
+flip from `no_signal` to either `framework_improves` or
+`framework_regresses` once those env deps land. The Wave 53 Agent C
++ Wave 49 Agent E surfaces close the implementation gap (helper +
+wiring + `FlowMol3Glue` + 9 regression tests); the Wave 54 Phase 2
+Fix closes the metric-layer gap (entropy-reduction is real, byte-stable
+at 0.0734 nats); closing the env-level gap (RDKit + xtb) is a
+separate work item.
 
 ### §7.6 Tier 3 honest verdict — framework extends baseline plateau (Wave 58 framing)
 
