@@ -638,3 +638,125 @@ Per the Wave 71 closure pattern: `adaptive_reflow/adapters/hidream_i1.py`, `tool
 
 **Wave 72 / Phase 6 closed at:** 2026-09-08 (Wave 72 Agent 6)
 **Status:** PUSH-READY SUMMARY WRITTEN. Repo is push-ready as-is; user has not authorized push. 284 unpushed commits on `main` ahead of `origin/main`. All three locked gates byte-stable. NO push.
+
+---
+
+## Wave 75 Phase 6 additions (final synthesis, additive, no push)
+
+Wave 75 Phase 6 is the **final synthesis pass** after Phases 1–5. It
+closes the **FlowMol3 paper-reproduction alignment** by mapping the 4
+paper-defined metrics (`validity_pct`, `pb_validity_pct`, `fg_dev`,
+`ood_ring_rate` per arXiv 2508.12629) onto the existing eval pipeline
+via a new `--paper-metrics` opt-in CLI surface, running a paper-
+reproduction sweep on the real ckpt (Phase 3) and a framework-vs-baseline
+paper-metric comparison (Phase 4), and updating the paper §1 abstract +
+§7.5 with the new numbers (Phase 5). Key additions to this
+`push-ready-summary.md`:
+
+- **Wave 75 Phase 6 audit doc:** `docs/audit/wave75-phase6-final.md`
+  authored (TL;DR + Phases 1–6 work summary + all-3-models final status +
+  FlowMol3 paper reproduction + D.4/G-MASTER/mkdocs status + honest
+  caveats + open questions).
+- **`tools/paper_metrics.py` NEW:** 4 paper-metric helpers + aggregator +
+  frozen dataclass (~360 LOC). All 4 metrics delegate to upstream
+  functions or vendored reference files (DO NOT INVENT constraint).
+- **`--paper-metrics` + `--paper-reference` CLI flags:** opt-in surface
+  on `tools/run_real_ckpt_eval.py`; preserves D.4 byte-stability when
+  not set.
+- **§1 abstract paragraph (iii) + §7.5 Wave 75 paragraph:** additive only,
+  zero deletion of Wave 73/74 text. Cites the 4 paper metrics verbatim
+  with per-metric framework verdicts + honest statistical-power notes.
+- **Final verification (Phase 6):** D.4 72/72 in 56.60 s;
+  G-MASTER 7/7 PASS (hard_pass=5, soft_pass=2);
+  mkdocs build --strict EXIT=0 in 14.90 s.
+
+### Wave 75 Phase 6 verification status
+
+| Gate | Status | Value | Notes |
+|---|---|---|---|
+| **D.4 byte-stable vectors** | **PASS** | 72 passed in **56.60 s** | wallclock variance only; no regression vs Wave 74 Phase 6 (42.89 s) |
+| **G-MASTER capability** | **PASS** | 7/7 (hard_pass=5, soft_pass=2) | unchanged from Wave 74 closure (paper-edit only) |
+| **mkdocs build --strict** | **PASS** | EXIT=0 in **14.90 s** | unchanged; Wave 73 Phase 6 `not_in_nav` fix for `push-ready-summary.md` preserved |
+
+### Wave 75 Phase 6 file inventory
+
+| Path | Status | Notes |
+|---|---|---|
+| `docs/audit/wave75-phase1-audit.md` | NEW | READ-ONLY audit of upstream FlowMol3 eval pipeline |
+| `tools/paper_metrics.py` | NEW | 4 paper-metric helpers + aggregator + frozen dataclass + lazy upstream import shim (~360 LOC) |
+| `tools/run_real_ckpt_eval.py` | MODIFIED | +70 LOC — `--paper-metrics` + `--paper-reference` argparse flags; `_run_cell` accepts new params; paper-metric block at end of cell; `main()` forwards flags; +100 LOC — framework paper-metric block at end of `_run_cell` (Phase 4) |
+| `tests/test_tools/test_paper_metrics.py` | NEW | 6 unit tests covering 4 metrics + aggregator + error paths (~290 LOC) |
+| `docs/audit/wave75-phase2-paper-metrics.md` | NEW | Phase 2 audit doc |
+| `docs/audit/wave75-phase3-paper-repro.md` | NEW | Phase 3 paper-reproduction sweep audit doc |
+| `docs/audit/wave75-phase4-framework-paper.md` | NEW | Phase 4 framework paper-metric comparison audit doc |
+| `docs/audit/wave75-phase5-paper-update.md` | NEW | Phase 5 paper-writeup audit doc |
+| `docs/audit/wave75-phase6-final.md` | NEW | Final synthesis doc (this phase) |
+| `docs/paper-draft.md` | MODIFIED | §7.5 Wave 75 paragraph (+39 lines) + §1 abstract paragraph (iii) (+6 lines); zero deletion of Wave 73/74 text |
+| `docs/push-ready-summary.md` | MODIFIED | Wave 75 Phase 6 additive section (this phase) |
+
+### Wave 75 Phase 6 honest caveats (carried forward)
+
+See `docs/audit/wave75-phase6-final.md` §"Honest remaining caveats" for the
+full list. Top 3 carryovers from Phase 5:
+
+1. **`pb_validity_pct` is BLOCKED on a PB pipeline definitional gap**
+   (UFF energy_ratio vs paper xtb energy_ratio). Paper's
+   `pb_validity_pct = 0.919` uses xtb-based energy minimization
+   (`fm3_evals/geometry/xtb_optimization.py` + `rmsd_energy.py`), which is
+   a SEPARATE post-processing pipeline, not a single `analyze()` call.
+   Phase 5 scope (~100 LOC + 1 vendored `pb_config_with_energy_ratio.yaml`).
+
+2. **`fg_dev` and `ood_ring_rate` are INSAMPLE-INSUFFICIENT at the smoke
+   sample size (N=10).** Need N≥500 for stable REOS flag-rate L1 norm
+   (~30 flags, each contributes up to 0.1 L1 distance at N=5000 vs much
+   larger at N=10). Need N≥200 with ring-bearing molecules for stable
+   ChEMBL OOD rate.
+
+3. **Framework arm evaluates on N=1 molecule** (structural v2-adapter
+   limitation: `export_sampled_molecules` returns only the last round's
+   single molecule, keyed by the trace's `native_state_digest`). Baseline
+   arm evaluates on N=10. NOT a like-for-like comparison. Phase 5 scope
+   to extend v2 adapter (~10 LOC to aggregate mols across rounds).
+
+### Wave 75 Phase 6 unpushed commits
+
+```text
+git log --oneline @{u}..main 2>&1 | wc -l
+298
+```
+
+**298 unpushed commits** on `main` ahead of `origin/main`. Wave 75 Phase 6
+commit lands locally without push, matching the Wave 68/69/70/71/72/73/74
+closure pattern.
+
+### FlowMol3 paper-metric reproduction summary (N=10 smoke)
+
+| Metric | Paper (arXiv 2508.12629) | Baseline (N=10, real ckpt) | Framework (N=1, real ckpt) | Verdict |
+|---|---:|---:|---:|---|
+| `validity_pct` | 0.999 | **1.000** | 1.000 | framework_ties (ceiling) |
+| `pb_validity_pct` | 0.919 | 0.000 | 1.000 | INSAMPLE_INSUFFICIENT (N=1) |
+| `fg_dev` | 0.27 | 0.944 | 2.717 | INSAMPLE_INSUFFICIENT (N=1) |
+| `ood_ring_rate` | 0.10 | 0.000 | 0.000 | framework_ties (under-stocked) |
+
+**Honest verdict:** 1 of 4 paper metrics matches within ±5%, 1 of 4
+BLOCKED on PB pipeline gap, 2 of 4 INSAMPLE-INSUFFICIENT at the smoke N.
+Framework-vs-baseline paper-metric claim CANNOT be made at the smoke N
+— deferred to Phase 5 (xtb-based PB pipeline + v2 adapter export
+extension + N≥500 per arm).
+
+### Wave 75 Phase 6 — Wave 76/77/78 plan surface
+
+- **Wave 76:** LineageFlow paper reproduction via upstream
+  `evaluate_all.py` (BLOCKED_UPSTREAM_DEPS_MISSING — requires HMMER /
+  MMseqs2 / OmegaFold binaries + Pfam-A.hmm DB + MMseqs2 target DB).
+- **Wave 77:** Kanzi paper reproduction via upstream reconstruction
+  Kabsch RMSD (requires upstream Kanzi repo clone + paper-metric
+  adapter).
+- **Wave 78:** Cross-tier paper-metric synthesis + final push-ready
+  summary (waits for Wave 77).
+- **Phase 5 (any wave):** xtb-based PB pipeline for
+  `pb_validity_pct = 0.919` reproduction + N=5000 sweep (~2.5 hours
+  wallclock on PRO 6000).
+
+These are user-decision items, not blockers for push. The repo is
+push-ready as-is.
