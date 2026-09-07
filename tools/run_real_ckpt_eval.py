@@ -3103,6 +3103,127 @@ def _compute_kanzi_composite(
     return composite_value, "computed", debug
 
 
+def _compute_xtb_med_rmsd(
+    sampled_molecules: Sequence[Any],
+    *,
+    max_molecules: int = 2,
+    timeout_s: int = 30,
+) -> float | None:
+    """Compute median post-GFN2-XTB RMSD across up to ``max_molecules``.
+
+    Wave 74 Phase 4 F3 — light xtb wire. For each sampled molecule that
+    exposes a ``.positions`` ndarray of shape ``(N, 3)`` (Ångström) and a
+    ``.atom_types`` array of atomic numbers, we:
+
+      1. Write a temporary XYZ file.
+      2. Invoke ``xtb <xyz> --opt`` (GFN2-XTB geometry optimization).
+      3. Parse ``xtbopt.xyz`` (the optimized geometry written by xtb
+         in the same directory) and compute RMSD vs the input
+         coordinates (Ångström).
+      4. Return the median across successful molecules.
+
+    Returns ``None`` when no molecule successfully optimizes (or no
+    ``positions``/``atom_types`` attribute is exposed). The function is
+    intentionally tolerant — the caller treats ``None`` as "drop the
+    geometry axis" and the composite still computes from chemistry.
+    """
+    import shutil as _shutil
+    import subprocess as _subprocess
+    import tempfile as _tempfile
+    import pathlib as _pathlib
+    import numpy as _np
+
+    xtb_bin = _shutil.which("xtb")
+    if xtb_bin is None:
+        return None
+    if not sampled_molecules:
+        return None
+
+    # Atomic-number → element-symbol mapping (1..20 covers H..Ca; the
+    # GEOM-Drugs dataset sits in C/N/O/F/S/Cl/Br; extend for safety).
+    _Z_TO_SYMBOL = {
+        1: "H", 6: "C", 7: "N", 8: "O", 9: "F", 15: "P", 16: "S",
+        17: "Cl", 35: "Br", 53: "I",
+        14: "Si", 5: "B", 11: "Na", 12: "Mg",
+    }
+
+    rmsds: list[float] = []
+    taken = 0
+    for mol in sampled_molecules:
+        if taken >= int(max_molecules):
+            break
+        pos = getattr(mol, "positions", None)
+        atypes = getattr(mol, "atom_types", None)
+        if pos is None or atypes is None:
+            continue
+        try:
+            pos_arr = _np.asarray(pos, dtype=float)
+            atypes_arr = _np.asarray(atypes, dtype=int).reshape(-1)
+        except Exception:
+            continue
+        if pos_arr.ndim != 2 or pos_arr.shape[1] != 3:
+            continue
+        if atypes_arr.shape[0] != pos_arr.shape[0]:
+            continue
+        if pos_arr.shape[0] < 2:
+            continue
+        with _tempfile.TemporaryDirectory(prefix="flowmol3_xtb_") as tmpdir:
+            xyz_path = _pathlib.Path(tmpdir) / "input.xyz"
+            try:
+                with open(xyz_path, "w") as fh:
+                    fh.write(f"{pos_arr.shape[0]}\n\n")
+                    for z, (x, y, w) in zip(
+                        atypes_arr, pos_arr.tolist()
+                    ):
+                        sym = _Z_TO_SYMBOL.get(int(z), "C")
+                        fh.write(
+                            f"{sym} {x:.6f} {y:.6f} {w:.6f}\n"
+                        )
+            except Exception:
+                continue
+            try:
+                proc = _subprocess.run(
+                    [xtb_bin, "input.xyz", "--opt", "--chrg", "0",
+                     "--uhf", "0", "--gfn", "2"],
+                    cwd=tmpdir,
+                    capture_output=True,
+                    timeout=int(timeout_s),
+                )
+            except (_subprocess.TimeoutExpired, Exception):
+                continue
+            opt_xyz = _pathlib.Path(tmpdir) / "xtbopt.xyz"
+            if not opt_xyz.is_file():
+                continue
+            try:
+                # xtb writes the optimized geometry to xtbopt.xyz in
+                # the same format. Read the N+1 header line + blank +
+                # the N coordinate lines.
+                opt_lines = opt_xyz.read_text().splitlines()
+                if len(opt_lines) < pos_arr.shape[0] + 2:
+                    continue
+                opt_pos = _np.array(
+                    [
+                        list(map(float, line.split()[1:4]))
+                        for line in opt_lines[
+                            2:2 + pos_arr.shape[0]
+                        ]
+                    ],
+                    dtype=float,
+                )
+            except Exception:
+                continue
+            if opt_pos.shape != pos_arr.shape:
+                continue
+            diff = opt_pos - pos_arr
+            rmsd = float(_np.sqrt(_np.mean(_np.sum(diff * diff, axis=1))))
+            rmsds.append(rmsd)
+            taken += 1
+    if not rmsds:
+        return None
+    rmsds_arr = _np.asarray(rmsds, dtype=float)
+    return float(_np.median(rmsds_arr))
+
+
 def _compute_flowmol3_composite(
     *,
     adapter: Any,
@@ -3206,12 +3327,52 @@ def _compute_flowmol3_composite(
     }
     geometry: dict[str, float] | None = None
     xtb_present = bool(__import__("shutil").which("xtb"))
-    if xtb_present:
-        # The glue class reads ``med_rmsd`` from the geometry dict.
-        geometry = {"med_rmsd": 0.0}
     debug["chemistry_input"] = dict(chemistry)
-    debug["geometry_input"] = dict(geometry) if geometry else None
     debug["xtb_present"] = bool(xtb_present)
+    # Wave 74 Phase 4 F4: ``run_energy_div`` is gated on the presence
+    # of ``energy_dist.npz`` at ``FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR``
+    # (= ``data/geom_5_kekulized/``). When vendored (Wave 74 Agent 4
+    # copy from ``data/geom/``), upstream ``DivergenceCalculator``
+    # constructs without ``FileNotFoundError`` and the
+    # ``energy_js_div`` axis is non-zero. We auto-detect the file to
+    # keep the wire byte-stable when the npz is absent (Wave 73 7/9
+    # baseline case).
+    from adaptive_reflow.adapters.flowmol3_metrics_upstream import (  # type: ignore
+        FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR,
+    )
+    energy_dist_path = pathlib.Path(FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR) / "energy_dist.npz"
+    energy_dist_available = energy_dist_path.is_file()
+    debug["energy_dist_path"] = str(energy_dist_path)
+    debug["energy_dist_available"] = bool(energy_dist_available)
+    # Wave 74 Phase 4 F3: when ``xtb`` is on ``$PATH``, compute a
+    # real ``med_rmsd`` via GFN2-XTB optimization on a subset of
+    # ``sampled_molecules`` (skip when no molecules / xtb not present).
+    if xtb_present and sampled_molecules:
+        try:
+            med_rmsd_value = _compute_xtb_med_rmsd(
+                list(sampled_molecules),
+                max_molecules=2,
+                timeout_s=30,
+            )
+            if med_rmsd_value is not None:
+                geometry = {"med_rmsd": float(med_rmsd_value)}
+                debug["geometry_input"] = dict(geometry)
+                debug["geometry_source"] = "xtb_subprocess"
+            else:
+                debug["geometry_input"] = None
+                debug["geometry_source"] = "xtb_no_valid_molecules"
+        except Exception as exc:  # noqa: BLE001
+            # Graceful fallback — geometry axis stays None
+            debug["geometry_input"] = None
+            debug["geometry_source"] = "xtb_subprocess_failed"
+            debug["geometry_error"] = (
+                f"{type(exc).__name__}:{exc}"
+            )
+    else:
+        debug["geometry_input"] = None
+        debug["geometry_source"] = (
+            "xtb_unavailable" if not xtb_present else "no_sampled_molecules"
+        )
     # Wave 69 Phase 2: if the caller supplied sampled molecules,
     # delegate to ``compute_chemistry_metrics`` and merge the real
     # upstream readings into the chemistry stub. When the upstream
@@ -3219,6 +3380,9 @@ def _compute_flowmol3_composite(
     # empty dict — in that case we surface
     # ``marker="degraded_chemistry"`` rather than fabricating a 0.0
     # reading (per the Phase 1 audit §3.3 byte-stable contract).
+    # Wave 74 Phase 4 F4: flip ``run_energy_div`` to ``True`` when
+    # ``energy_dist.npz`` is vendored at the upstream-processed-data
+    # dir (auto-detected).
     chemistry_source = "neutral_zero_stub"
     if sampled_molecules is not None:
         try:
@@ -3227,7 +3391,7 @@ def _compute_flowmol3_composite(
                 list(sampled_molecules),
                 run_posebusters=True,
                 run_functional_validity=True,
-                run_energy_div=False,
+                run_energy_div=bool(energy_dist_available),
                 pb_workers=2,
             )
         except Exception as exc:  # noqa: BLE001
