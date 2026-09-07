@@ -1,10 +1,16 @@
 # `todo/INDEX.md` — Master entry point
 
-**Date:** 2026-09-07
+**Date:** 2026-09-08
 **Purpose:** curated entry point to the `todo/` working folder. New
 readers should start with the [Reading order](#reading-order-for-new-readers)
 section. Each section below groups files by purpose, links the most
 important ones, and links to related artifacts outside `todo/`.
+
+> **Folder layout (2026-09-08 archive sweep):** historical / completed
+> plan + wave-result files moved to `todo/completed/` (36); currently
+> active plans to `todo/inprogress/` (8); queued-but-not-started plans
+> to `todo/pending/` (3). This file plus `todo/STATUS.md` are the
+> cross-cutting entry points that stay at the `todo/` root.
 
 ---
 
@@ -52,32 +58,32 @@ landed; status in `STATUS.md`). Indexed here for traceability.
 
 | # | File | Status | Commit / Wave |
 |---|---|---|---|
-| 1 | [algo-improvement-assert_adapter_compliance.md](algo-improvement-assert_adapter_compliance.md) | CLOSED Wave 38 | `f7ee3ae` |
-| 2 | [algo-improvement-conformance-battery.md](algo-improvement-conformance-battery.md) | done Wave 15 C | `4d30f41` |
-| 3 | [algo-improvement-convergence-order.md](algo-improvement-convergence-order.md) | done Wave 18 C.6 + W20 P1 | `d7cd65b`, `53e5d52` |
-| 4 | [algo-improvement-D4-regression-vectors.md](algo-improvement-D4-regression-vectors.md) | CLOSED Wave 38 | `b88b32f` |
-| 5 | [algo-improvement-E1-claim-test-coupling-batch2.md](algo-improvement-E1-claim-test-coupling-batch2.md) | CLOSED Wave 38 | `7da571c` |
-| 6 | [algo-improvement-env-hash.md](algo-improvement-env-hash.md) | done Wave 15 P1 | `43b862d` |
-| 7 | [algo-improvement-expecttest-adoption.md](algo-improvement-expecttest-adoption.md) | CLOSED Wave 38 | `5e1731f` |
-| 8 | [algo-improvement-f2-reproduction.md](algo-improvement-f2-reproduction.md) | done Wave 15 F | `e397528` |
-| 9 | [algo-improvement-failure-modes.md](algo-improvement-failure-modes.md) | done Wave 17 P2 (Algo D) | — |
-| 10 | [algo-improvement-FlowMol3V2-restart-fix.md](algo-improvement-FlowMol3V2-restart-fix.md) | CLOSED Wave 38 | `b9ef18b` |
-| 11 | [algo-improvement-hf-model-card-pipeline.md](algo-improvement-hf-model-card-pipeline.md) | CLOSED Wave 38 | `7cbf085` |
-| 12 | [algo-improvement-host-fingerprint.md](algo-improvement-host-fingerprint.md) | CLOSED Wave 38 | `d55b601` |
-| 13 | [algo-improvement-hypothesis-derandomize.md](algo-improvement-hypothesis-derandomize.md) | CLOSED Wave 38 | `15621b7` |
-| 14 | [algo-improvement-mkdocs-strict-nav.md](algo-improvement-mkdocs-strict-nav.md) | CLOSED Wave 38 | `0674ac8` |
-| 15 | [algo-improvement-mutation-apply-survivor.md](algo-improvement-mutation-apply-survivor.md) | CLOSED Wave 38 | `5e1731f` |
-| 16 | [algo-improvement-mutation-testing.md](algo-improvement-mutation-testing.md) | done Wave 18 F.6 | `6ec3385` |
-| 17 | [algo-improvement-no-scipy-raise.md](algo-improvement-no-scipy-raise.md) | CLOSED Wave 38 | `89c088f` |
-| 18 | [algo-improvement-operating-regime.md](algo-improvement-operating-regime.md) | done Wave 17 P3 (CRITICAL gap) | — |
-| 19 | [algo-improvement-paper-quantities-threading.md](algo-improvement-paper-quantities-threading.md) | CLOSED Wave 38 | `ff56e55` |
-| 20 | [algo-improvement-planar-bl-repoint.md](algo-improvement-planar-bl-repoint.md) | done Wave 14 A | `6d12744` |
-| 21 | [algo-improvement-property-based-testing.md](algo-improvement-property-based-testing.md) | done Wave 17 P1 (B.7) | — |
-| 22 | [algo-improvement-rate-bound.md](algo-improvement-rate-bound.md) | done Wave 15 B | `f9d34e1` |
-| 23 | [algo-improvement-sbc.md](algo-improvement-sbc.md) | done Wave 18 C.7 | `c0e2fe2` |
-| 24 | [algo-improvement-stochastic-fm-orphan.md](algo-improvement-stochastic-fm-orphan.md) | done Wave 39 | (deleted) |
-| 25 | [algo-improvement-traceability-hardening.md](algo-improvement-traceability-hardening.md) | done Wave 15 A | `3ead25f` |
-| 26 | [algo-improvement-uplift-isolation.md](algo-improvement-uplift-isolation.md) | done Wave 14/15 rescue | `a1f8650` |
+| 1 | [algo-improvement-assert_adapter_compliance.md](completed/algo-improvement-assert_adapter_compliance.md) | CLOSED Wave 38 | `f7ee3ae` |
+| 2 | [algo-improvement-conformance-battery.md](completed/algo-improvement-conformance-battery.md) | done Wave 15 C | `4d30f41` |
+| 3 | [algo-improvement-convergence-order.md](completed/algo-improvement-convergence-order.md) | done Wave 18 C.6 + W20 P1 | `d7cd65b`, `53e5d52` |
+| 4 | [algo-improvement-D4-regression-vectors.md](completed/algo-improvement-D4-regression-vectors.md) | CLOSED Wave 38 | `b88b32f` |
+| 5 | [algo-improvement-E1-claim-test-coupling-batch2.md](completed/algo-improvement-E1-claim-test-coupling-batch2.md) | CLOSED Wave 38 | `7da571c` |
+| 6 | [algo-improvement-env-hash.md](completed/algo-improvement-env-hash.md) | done Wave 15 P1 | `43b862d` |
+| 7 | [algo-improvement-expecttest-adoption.md](completed/algo-improvement-expecttest-adoption.md) | CLOSED Wave 38 | `5e1731f` |
+| 8 | [algo-improvement-f2-reproduction.md](completed/algo-improvement-f2-reproduction.md) | done Wave 15 F | `e397528` |
+| 9 | [algo-improvement-failure-modes.md](completed/algo-improvement-failure-modes.md) | done Wave 17 P2 (Algo D) | — |
+| 10 | [algo-improvement-FlowMol3V2-restart-fix.md](completed/algo-improvement-FlowMol3V2-restart-fix.md) | CLOSED Wave 38 | `b9ef18b` |
+| 11 | [algo-improvement-hf-model-card-pipeline.md](completed/algo-improvement-hf-model-card-pipeline.md) | CLOSED Wave 38 | `7cbf085` |
+| 12 | [algo-improvement-host-fingerprint.md](completed/algo-improvement-host-fingerprint.md) | CLOSED Wave 38 | `d55b601` |
+| 13 | [algo-improvement-hypothesis-derandomize.md](completed/algo-improvement-hypothesis-derandomize.md) | CLOSED Wave 38 | `15621b7` |
+| 14 | [algo-improvement-mkdocs-strict-nav.md](completed/algo-improvement-mkdocs-strict-nav.md) | CLOSED Wave 38 | `0674ac8` |
+| 15 | [algo-improvement-mutation-apply-survivor.md](completed/algo-improvement-mutation-apply-survivor.md) | CLOSED Wave 38 | `5e1731f` |
+| 16 | [algo-improvement-mutation-testing.md](completed/algo-improvement-mutation-testing.md) | done Wave 18 F.6 | `6ec3385` |
+| 17 | [algo-improvement-no-scipy-raise.md](completed/algo-improvement-no-scipy-raise.md) | CLOSED Wave 38 | `89c088f` |
+| 18 | [algo-improvement-operating-regime.md](completed/algo-improvement-operating-regime.md) | done Wave 17 P3 (CRITICAL gap) | — |
+| 19 | [algo-improvement-paper-quantities-threading.md](completed/algo-improvement-paper-quantities-threading.md) | CLOSED Wave 38 | `ff56e55` |
+| 20 | [algo-improvement-planar-bl-repoint.md](completed/algo-improvement-planar-bl-repoint.md) | done Wave 14 A | `6d12744` |
+| 21 | [algo-improvement-property-based-testing.md](completed/algo-improvement-property-based-testing.md) | done Wave 17 P1 (B.7) | — |
+| 22 | [algo-improvement-rate-bound.md](completed/algo-improvement-rate-bound.md) | done Wave 15 B | `f9d34e1` |
+| 23 | [algo-improvement-sbc.md](completed/algo-improvement-sbc.md) | done Wave 18 C.7 | `c0e2fe2` |
+| 24 | [algo-improvement-stochastic-fm-orphan.md](completed/algo-improvement-stochastic-fm-orphan.md) | done Wave 39 | (deleted) |
+| 25 | [algo-improvement-traceability-hardening.md](completed/algo-improvement-traceability-hardening.md) | done Wave 15 A | `3ead25f` |
+| 26 | [algo-improvement-uplift-isolation.md](completed/algo-improvement-uplift-isolation.md) | done Wave 14/15 rescue | `a1f8650` |
 
 ### 2. Phase plans — `PHASE-1..4`
 
@@ -86,25 +92,25 @@ landed; status in `STATUS.md`). Indexed here for traceability.
 | [PHASE-1-framework-and-theory.md](PHASE-1-framework-and-theory.md) | done | Wave 11 + Wave 12 (commit `ebc0550` + `e0238ab`) |
 | [PHASE-2-model-complexity-analysis.md](PHASE-2-model-complexity-analysis.md) | done | Wave 19 P1A1 (`a6e574d`; 3 per-model analysis files + RANKING.md) |
 | [PHASE-3-glue-layer-improvement.md](PHASE-3-glue-layer-improvement.md) | done | Wave 24 + Wave 38 + Wave 39 (4 core glue modules + Protocol enforcement) |
-| [PHASE-4-model-integration-iteration.md](PHASE-4-model-integration-iteration.md) | in_progress | Kanzi + LineageFlow active; FreqFlow + MM-FM DEFERRED |
+| [PHASE-4-model-integration-iteration.md](completed/PHASE-4-model-integration-iteration.md) | in_progress | Kanzi + LineageFlow active; FreqFlow + MM-FM DEFERRED |
 
 ### 3. Wave result validations
 
 | File | Status | Outcome |
 |---|---|---|
-| [wave10-result-validation.md](wave10-result-validation.md) | done | LineageFlow integration shipped; "any FM improves" claim partial-evidence (binary saturation caveat) |
-| [wave11-result-validation.md](wave11-result-validation.md) | done | JMAA theory-driven refactor shipped; 10 Protocol surfaces + 52 conformance tests |
-| [wave12-result-validation.md](wave12-result-validation.md) | done | 7 A1 audit fixes (`e0238ab`, pushed) |
-| [wave13-metrics-research-result.md](wave13-metrics-research-result.md) | done | framework-internal-metrics rev 2 (research-aligned + adversarial verify) |
-| [wave14-result-validation.md](wave14-result-validation.md) | done | Algorithm improvement A + 9 baseline audits; Theorem1StatementChecker re-pointed (`6d12744`) |
+| [wave10-result-validation.md](completed/wave10-result-validation.md) | done | LineageFlow integration shipped; "any FM improves" claim partial-evidence (binary saturation caveat) |
+| [wave11-result-validation.md](completed/wave11-result-validation.md) | done | JMAA theory-driven refactor shipped; 10 Protocol surfaces + 52 conformance tests |
+| [wave12-result-validation.md](completed/wave12-result-validation.md) | done | 7 A1 audit fixes (`e0238ab`, pushed) |
+| [wave13-metrics-research-result.md](completed/wave13-metrics-research-result.md) | done | framework-internal-metrics rev 2 (research-aligned + adversarial verify) |
+| [wave14-result-validation.md](completed/wave14-result-validation.md) | done | Algorithm improvement A + 9 baseline audits; Theorem1StatementChecker re-pointed (`6d12744`) |
 
 ### 4. Master synthesis docs
 
 | File | Purpose |
 |---|---|
-| [wave43-problems-review.md](wave43-problems-review.md) | 6 concrete problems after Wave 41/42 + Wave 43 ultracode plan |
-| [wave45-adapter-fix-master-plan.md](wave45-adapter-fix-master-plan.md) | 3 adapter-layer fixes (Kanzi GPT-prior restart + entropy metric + LineageFlow classifier-aware restart) + F-1/F-2/F-3 prereqs |
-| [wave46-master-synthesis.md](wave46-master-synthesis.md) | **MASTER** — composite benchmark formula + LineageFlow glue + push-ready state (start here for the Tier 3 close-out story) |
+| [wave43-problems-review.md](completed/wave43-problems-review.md) | 6 concrete problems after Wave 41/42 + Wave 43 ultracode plan |
+| [wave45-adapter-fix-master-plan.md](completed/wave45-adapter-fix-master-plan.md) | 3 adapter-layer fixes (Kanzi GPT-prior restart + entropy metric + LineageFlow classifier-aware restart) + F-1/F-2/F-3 prereqs |
+| [wave46-master-synthesis.md](completed/wave46-master-synthesis.md) | **MASTER** — composite benchmark formula + LineageFlow glue + push-ready state (start here for the Tier 3 close-out story) |
 | `../docs/audit/wave52-kanzi-composite-ablation-synthesis.md` | 5-arm ablation matrix for Kanzi composite (per-component contribution) |
 
 For new readers of the recent Tier 3 work, **`wave46-master-synthesis.md`
@@ -140,11 +146,11 @@ state in one document.
 | [README.md](README.md) | directory structure + when to add new files + current focus |
 | [LOOP.md](LOOP.md) | per-model lifecycle + iteration mechanism + stop conditions |
 | [framework-internal-metrics.md](framework-internal-metrics.md) | rev 2 ship-ready; A-F metric groups + entry gates per phase |
-| [framework-internal-metrics-rev3-plan.md](framework-internal-metrics-rev3-plan.md) | rev 3 plan (research-aligned + capability group G folded in) |
+| [framework-internal-metrics-rev3-plan.md](completed/framework-internal-metrics-rev3-plan.md) | rev 3 plan (research-aligned + capability group G folded in) |
 | [framework-capability-metrics.md](framework-capability-metrics.md) | group G capability metrics (folded into rev 3 plan) |
-| [paper-writeup.md](paper-writeup.md) | paper writeup task (done Wave 19 P2 — `2f436f1`) |
-| [rerun-wave10-with-refactored-framework.md](rerun-wave10-with-refactored-framework.md) | Wave 19 P1A2 rerun (done; verdict=not_supported, decision metric saturated) |
-| [gap-plan-wave32.md](gap-plan-wave32.md) | 13 gap plans synthesized from Wave 32 Agent A/B/C audits; **all 14 gaps CLOSED in Wave 38** |
+| [paper-writeup.md](completed/paper-writeup.md) | paper writeup task (done Wave 19 P2 — `2f436f1`) |
+| [rerun-wave10-with-refactored-framework.md](completed/rerun-wave10-with-refactored-framework.md) | Wave 19 P1A2 rerun (done; verdict=not_supported, decision metric saturated) |
+| [gap-plan-wave32.md](completed/gap-plan-wave32.md) | 13 gap plans synthesized from Wave 32 Agent A/B/C audits; **all 14 gaps CLOSED in Wave 38** |
 
 ---
 
@@ -153,7 +159,7 @@ state in one document.
 1. **[README.md](README.md)** — directory structure + when to add new files + current focus
 2. **[STATUS.md](STATUS.md)** — current state + last completed wave + next actions
 3. **[framework-freeze-checklist.md](framework-freeze-checklist.md)** — MUST-1..5 freeze criteria (what "done" means)
-4. **[wave46-master-synthesis.md](wave46-master-synthesis.md)** — master synthesis of the Tier 3 / composite-benchmark / push-ready story (the load-bearing narrative)
+4. **[wave46-master-synthesis.md](completed/wave46-master-synthesis.md)** — master synthesis of the Tier 3 / composite-benchmark / push-ready story (the load-bearing narrative)
 
 After those four, branch by interest:
 - **Algorithm / theory depth:** [PHASE-1-framework-and-theory.md](PHASE-1-framework-and-theory.md) → [framework-internal-metrics.md](framework-internal-metrics.md) → `wave46-master-synthesis.md` §3 (composite formula)
