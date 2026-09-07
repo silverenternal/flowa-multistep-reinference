@@ -760,3 +760,120 @@ extension + N≥500 per arm).
 
 These are user-decision items, not blockers for push. The repo is
 push-ready as-is.
+
+---
+
+## Wave 79 Phase 6 additions (final synthesis, additive, no push)
+
+Wave 79 Phase 6 is the **final synthesis pass** after Phases 1–5. It
+closes the **Tier 3 paper-metric gap** by running the upstream paper
+metrics for the first time on all three Tier 3 models (Kanzi
+reconstruction Kabsch RMSD, LineageFlow `evaluate_all.py`, FlowMol3
+already covered Wave 75), caveatting the Wave 73-74 "composite lift
+SUPPORTED" framing as **internal glue-layer composite axis** (NOT
+paper metric), and committing the caveat additively to paper §1
+abstract (clause (iv)) + §7.3 Kanzi + §7.4 LineageFlow + §7.5
+FlowMol3 + §7.6 Tier 3 honest verdict + §5.7 Limitations (item #11).
+Key additions to this `push-ready-summary.md`:
+
+- **Wave 79 Phase 6 audit doc:** `docs/audit/wave79-phase6-final.md`
+  authored (TL;DR + Phases 1–6 work summary + all-3-models
+  per-paper-metric verdict table + Wave 73-74 overclaim caveat
+  + D.4/G-MASTER/mkdocs status + honest caveats + open questions).
+- **Per-paper-metric verdict table (Wave 79 Phase 4):** Kanzi TIES
+  (n=2, Kabsch RMSD framework 1.67 Å vs baseline 1.40 Å, Δ = +0.27 Å
+  inside FSQ noise band); LineageFlow BLOCKED_UPSTREAM_DEPS_MISSING
+  (HMMER/MMseqs2/OmegaFold binaries + Pfam-A.hmm DB + MMseqs2 target
+  DB not vendored); FlowMol3 PARTIAL (1/4 paper metrics match within
+  ±5%, 3/4 BLOCKED on UFF-vs-xtb definitional gap or INSUFFICIENT_SAMPLE
+  at N=10).
+- **Wave 73-74 overclaim caveat (Wave 79 Phase 4 + Phase 5):** committed
+  additively to paper §1 abstract (clause (iv)), §7.3, §7.4, §7.5,
+  §7.6, §5.7 Limitations (item #11). Verbatim text: "+0.1695 / +0.2083
+  / +0.1182 numbers are internal glue-layer composites (entropy
+  reduction + max-prob delta + argmax turnover on the latent codebook),
+  NOT upstream paper metrics."
+- **Final verification (Phase 6):** D.4 72/72 in **63.04 s**;
+  G-MASTER 7/7 PASS (hard_pass=5, soft_pass=2);
+  mkdocs build --strict EXIT=0 in **15.03 s**.
+
+### Wave 79 Phase 6 verification status
+
+| Gate | Status | Value | Notes |
+|---|---|---|---|
+| **D.4 byte-stable vectors** | **PASS** | 72 passed in **63.04 s** | wallclock variance only; no regression vs Wave 75 Phase 6 (56.60 s) |
+| **G-MASTER capability** | **PASS** | 7/7 (hard_pass=5, soft_pass=2) | unchanged from Wave 75 closure; Wave 79 paper-edit only |
+| **mkdocs build --strict** | **PASS** | EXIT=0 in **15.03 s** | unchanged; Wave 73 Phase 6 `not_in_nav` fix preserved |
+
+### Wave 79 Phase 6 file inventory
+
+| Path | Status | Notes |
+|---|---|---|
+| `docs/audit/wave79-phase1-audit.md` | NEW | READ-ONLY per-model readiness audit + Kanzi upstream clone (6.0 MB at `data/kanzi_upstream/`) |
+| `docs/audit/wave79-phase2-wire.md` | NEW | Per-model `--*-upstream-eval` flag wiring + 8 unit tests |
+| `docs/audit/wave79-phase3-sweep.md` | NEW | Upstream eval sweep (Kanzi Kabsch RMSD computed; LineageFlow BLOCKED) |
+| `docs/audit/wave79-phase4-verdict.md` | NEW | Per-model honest verdict + Wave 73-74 overclaim caveat |
+| `docs/audit/wave79-phase5-paper.md` | NEW | Paper §7 / §1 / §5 additive Wave 79 caveat + Wave 73-74 overclaim |
+| `docs/audit/wave79-phase6-final.md` | NEW | Final synthesis doc (this phase) |
+| `tools/upstream_eval.py` | NEW | Per-model upstream-eval subprocess shims (3 runner functions, ~410 LOC) |
+| `tests/test_tools/test_upstream_eval.py` | NEW | 8 unit tests covering 3 runners + module surface (~360 LOC) |
+| `tools/run_real_ckpt_eval.py` | MODIFIED | +4 CLI flags + 2 helpers + upstream-eval block in `_run_cell` |
+| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | §1 abstract (clause (iv)) + §7.3 Kanzi + §7.4 LineageFlow + §7.5 FlowMol3 + §7.6 Tier 3 honest verdict + §5.7 Limitations (item #11) |
+| `docs/push-ready-summary.md` | MODIFIED | Wave 79 Phase 6 additive section (this phase) |
+| `data/kanzi_upstream/` | NEW | 6.0 MB clone of `https://github.com/rdilip/kanzi.git` |
+| `verification_outputs/kanzi_upstream_baseline_q4_2026.json` | NEW | Kanzi baseline run; upstream Kabsch RMSD = 1.40 Å (n=2) |
+| `verification_outputs/kanzi_upstream_framework_q4_2026.json` | NEW | Kanzi framework run; upstream Kabsch RMSD = 1.67 Å (n=2) |
+| `verification_outputs/lineageflow_upstream_baseline_q4_2026.json` | NEW | LineageFlow baseline BLOCKED (heavy-deps missing) |
+| `verification_outputs/lineageflow_upstream_framework_q4_2026.json` | NEW | LineageFlow framework BLOCKED (heavy-deps missing) |
+
+### Wave 79 Phase 6 honest caveats (carried forward)
+
+See `docs/audit/wave79-phase6-final.md` §"Honest remaining caveats" for
+the full list. Top 3 carryovers from Phase 5:
+
+1. **No clean Tier 3 paper-metric "framework beats baseline" claim is
+   supported on this Wave 79 sweep.** Kanzi TIES at n=2 (insufficient
+   sample size for direction); LineageFlow BLOCKED on host-env deps
+   missing; FlowMol3 PARTIAL (1/4 metrics match, 3/4 unresolved at
+   N=10). The framework's value-add on Tier 3 is on the **internal
+   composite axis** (byte-stable across NFE and across runs), NOT on
+   upstream paper metrics.
+
+2. **Wave 76 R1 critical path is required to close the paper-metric
+   gap:** (a) LineageFlow heavy-deps install + Pfam-A.hmm download +
+   MMseqs2 target DB build; (b) Kanzi n=1000 per-cell FASTA generator;
+   (c) FlowMol3 PB-xtb pipeline + N≥500 paper-metric sweep.
+
+3. **`--help` CLI bug (pre-existing, unrelated to Wave 79):**
+   `tools/run_real_ckpt_eval.py --help` fails with `TypeError: must
+   be real number, not dict` from the `composite-metric` help
+   formatting. Eval invocations work; this is a documentation bug
+   only. Out of scope for Wave 79.
+
+### Wave 79 Phase 6 unpushed commits
+
+```text
+git log --oneline @{u}..main 2>&1 | wc -l
+301
+```
+
+**301 unpushed commits** on `main` ahead of `origin/main`. Wave 79
+Phase 6 commit lands locally without push, matching the Wave
+68/69/70/71/72/73/74/75 closure pattern.
+
+### Wave 79 Phase 6 — Wave 80/81/82 plan surface
+
+- **Wave 80:** LineageFlow paper reproduction via upstream
+  `evaluate_all.py` (BLOCKED_UPSTREAM_DEPS_MISSING — requires HMMER /
+  MMseqs2 / OmegaFold binaries + Pfam-A.hmm DB + MMseqs2 target DB).
+- **Wave 81:** Kanzi paper reproduction via upstream reconstruction
+  Kabsch RMSD (requires per-cell FASTA generator that emits 1000 PDBs
+  or coordinate triplets so the upstream Kabsch RMSD scales to the
+  Wave 76 R1 sample budget).
+- **Wave 82:** FlowMol3 PB-xtb pipeline + N≥500 paper-metric sweep
+  (~2.5 hours wallclock on RTX PRO 6000).
+- **Phase 5 (any wave):** xtb-based PB pipeline for
+  `pb_validity_pct = 0.919` reproduction + N=5000 sweep.
+
+These are user-decision items, not blockers for push. The repo is
+push-ready as-is.
