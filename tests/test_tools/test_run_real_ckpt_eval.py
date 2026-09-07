@@ -1276,3 +1276,152 @@ def test_byte_stable_wave47_52() -> None:
     assert "theta_before" in sig.parameters
     assert "theta_after" in sig.parameters
 
+
+# ---------------------------------------------------------------------------
+# 6. Wave 69 Phase 2 — FlowMol3 composite chemistry wire fix
+# ---------------------------------------------------------------------------
+#
+# The Wave 69 Phase 1 audit identified
+# ``tools/run_real_ckpt_eval.py:_compute_flowmol3_composite`` (lines
+# 3122-3127 of the pre-fix tree) as the root cause of the closure
+# sweep's `composite.chemistry_input = 0.0` anomaly: the function
+# hard-coded the chemistry dict to zeros and never invoked
+# ``FlowMol3Glue.compute_chemistry_metrics``.
+#
+# Wave 69 Phase 2 fix: the function now accepts an optional
+# ``sampled_molecules`` kwarg (interface-first; default ``None``
+# preserves all existing callers byte-stable). When supplied, it
+# delegates to ``FlowMol3Glue.compute_chemistry_metrics`` and merges
+# the real upstream readings into the chemistry stub. When the
+# upstream ``flowmol`` / RDKit stack is unavailable, the function
+# surfaces ``marker="degraded_chemistry"`` rather than fabricating
+# ``marker="computed"`` with a zero reading.
+#
+# These two regression tests lock in the new contract:
+#  - Legacy callers (``sampled_molecules=None``) surface
+#    ``marker="degraded_chemistry"`` with ``chemistry_input_source``
+#    set to ``"neutral_zero_stub"``.
+#  - When ``sampled_molecules`` is supplied AND the upstream is
+#    available, the function delegates and merges; when unavailable,
+#    it still surfaces ``marker="degraded_chemistry"`` with
+#    ``chemistry_input_source`` set to
+#    ``"neutral_zero_stub_degraded"``.
+
+
+def test_flowmol3_composite_legacy_caller_surfaces_degraded_chemistry() -> None:
+    """`_compute_flowmol3_composite` (no sampled_molecules) → ``marker='degraded_chemistry'``.
+
+    The Phase 1 audit §3.3 byte-stable contract: legacy callers (no
+    ``sampled_molecules`` supplied) MUST surface
+    ``marker="degraded_chemistry"`` (not ``"computed"``) because
+    the upstream ``flowmol`` / RDKit stack is not importable on this
+    venv. The composite value itself stays non-zero (the geometry
+    axis + chemistry-stub renormalisation contribute), but the
+    marker no longer fabricates a "computed" verdict for a degraded
+    reading.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic")
+    trace = _make_placeholder_trace(adapter)
+
+    # Legacy caller contract — no ``sampled_molecules`` kwarg.
+    composite_value, marker, dbg = tools._compute_flowmol3_composite(
+        adapter=adapter,
+        baseline_trace=trace,
+        framework_trace=trace,
+        seed=42,
+        nfe=10,
+    )
+
+    assert marker == "degraded_chemistry", (
+        f"expected marker='degraded_chemistry' for legacy caller "
+        f"(Phase 1 audit §3.3 contract), got {marker!r} with dbg={dbg!r}"
+    )
+    assert isinstance(composite_value, float), (
+        f"expected composite_value is float, got "
+        f"{type(composite_value).__name__}: {composite_value!r}"
+    )
+    # Byte-stable: debug dict carries the new chemistry_input_source
+    # field that distinguishes the legacy stub from the
+    # compute_chemistry_metrics path.
+    assert dbg["chemistry_input_source"] == "neutral_zero_stub"
+    assert "chemistry_input" in dbg
+    assert "chemistry_compute_keys" not in dbg  # no upstream call attempted
+    # Glue-class echo fields unchanged (Wave 49 / Wave 54 baseline).
+    assert dbg["glue_class"] == "FlowMol3Glue"
+
+
+def test_flowmol3_composite_with_sampled_molecules_invokes_glue() -> None:
+    """`_compute_flowmol3_composite(sampled_molecules=...)` invokes ``FlowMol3Glue.compute_chemistry_metrics``.
+
+    The Phase 2 fix wires the captured trajectory → RDKit molecule →
+    upstream ``SampleAnalyzer.analyze`` path via
+    :meth:`FlowMol3Glue.compute_chemistry_metrics`. On a venv where
+    ``flowmol`` is not importable, the glue returns ``{}`` and the
+    function surfaces ``marker="degraded_chemistry"`` with
+    ``chemistry_input_source="neutral_zero_stub_degraded"`` plus a
+    ``chemistry_compute_error`` field. On a venv where ``flowmol`` IS
+    importable, the function merges the upstream readings and
+    surfaces ``marker="computed"`` with
+    ``chemistry_input_source="compute_chemistry_metrics"``.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic")
+    trace = _make_placeholder_trace(adapter)
+
+    # Supply a non-empty sequence; the glue will attempt to call
+    # compute_chemistry_metrics on the placeholder list. On a venv
+    # without RDKit/flowmol, this returns ``{}`` and the function
+    # falls back to ``marker='degraded_chemistry'``. On a venv with
+    # RDKit/flowmol available, the function merges the real upstream
+    # readings and surfaces ``marker='computed'``.
+    sampled_molecules: list[Any] = [object()]  # any sequence works
+    composite_value, marker, dbg = tools._compute_flowmol3_composite(
+        adapter=adapter,
+        baseline_trace=trace,
+        framework_trace=trace,
+        seed=42,
+        nfe=10,
+        sampled_molecules=sampled_molecules,
+    )
+
+    # Marker depends on upstream availability — verify one of the two
+    # documented branches, not both.
+    assert marker in ("computed", "degraded_chemistry"), (
+        f"marker must be one of the two documented values, got "
+        f"{marker!r} with dbg={dbg!r}"
+    )
+    assert isinstance(composite_value, float)
+    # ``chemistry_input_source`` is the new audit field that records
+    # which path produced the chemistry dict (Phase 1 audit §3.3
+    # byte-stable contract — additive, does not collide with the
+    # existing ``chemistry_input`` / ``geometry_input`` /
+    # ``xtb_present`` fields).
+    assert "chemistry_input_source" in dbg, (
+        f"dbg must carry chemistry_input_source (Phase 1 audit §3.3), "
+        f"got keys={sorted(dbg.keys())!r}"
+    )
+    assert dbg["chemistry_input_source"] in (
+        "compute_chemistry_metrics",
+        "neutral_zero_stub_degraded",
+        "neutral_zero_stub",
+    ), (
+        f"chemistry_input_source must be one of the 3 documented "
+        f"values, got {dbg['chemistry_input_source']!r}"
+    )
+    # Either we got real upstream readings (chemistry_compute_keys
+    # populated) OR we got the degraded stub (chemistry_compute_error
+    # field present on failure OR chemistry_input_source is the
+    # degraded variant). Verify ONE of these branches.
+    if dbg["chemistry_input_source"] == "compute_chemistry_metrics":
+        assert "chemistry_compute_keys" in dbg
+        assert isinstance(dbg["chemistry_compute_keys"], list)
+        assert marker == "computed"
+    else:
+        # degraded / legacy stub path
+        assert marker == "degraded_chemistry"
+

@@ -157,7 +157,7 @@ import time
 # block), not an evaluation-path change.
 argparse.ArgumentParser._check_help = lambda self, action: None  # type: ignore[assignment]
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 # Make the project importable when running as ``python tools/run_real_ckpt_eval.py``
 # from any cwd (mirrors tools/run_synthetic_image_eval.py:60-62 pattern).
@@ -3049,6 +3049,7 @@ def _compute_flowmol3_composite(
     framework_trace: Any,
     seed: int,
     nfe: int,
+    sampled_molecules: Sequence[Any] | None = None,
 ) -> tuple[float | None, str, dict[str, Any]]:
     """Wave 49 Agent D — FlowMol3 5-axis composite on baseline + framework traces.
 
@@ -3059,6 +3060,10 @@ def _compute_flowmol3_composite(
     of:
 
       * ``"computed"`` — composite successfully computed (Wave 50 ship).
+      * ``"degraded_chemistry"`` — chemistry axes could not be computed
+        because the upstream ``flowmol`` / RDKit stack is not importable
+        on this host (Wave 69 Phase 2 fix — honest BLOCKED for the
+        chemistry axis rather than fabricating a 0.0 reading).
       * ``"blocked"`` — composite could not be computed (glue class
         not yet shipped, missing trace, missing chemistry dict, etc.).
       * ``"synthetic_fallback"`` — adapter is in synthetic mode; the
@@ -3073,11 +3078,19 @@ def _compute_flowmol3_composite(
        — keeps the cold-clone import surface clean). Until Wave 50
        ships the glue module, the import raises
        :class:`ImportError` and we degrade to ``marker=blocked``.
-    2. Build a synthetic chemistry dict (validity + stability + JS-div
-       + REOS + RMSD) from the per-cell trace's ``native_state_cache``
-       (when available) or fall back to neutral-0 defaults. The
-       composite scoring accepts the documented dict schema from
-       :func:`adaptive_reflow.adapters.flowmol3_metrics_upstream.compute_paper_metrics`.
+    2. Build the chemistry dict. Wave 69 Phase 2: when
+       ``sampled_molecules`` is supplied (interface-first kwarg; default
+       ``None`` preserves the Wave 49 caller contract), delegate to
+       :meth:`FlowMol3Glue.compute_chemistry_metrics` and merge the
+       returned ``{frac_valid_mols, frac_mols_stable_valence,
+       energy_js_div, reos_cum_dev}`` dict into the chemistry stub. The
+       synthetic chemistry stub (neutral-0) is used only when
+       ``sampled_molecules`` is ``None`` (legacy callers / Phase-3B
+       opt-in surface); in that case the chemistry axes are *flagged*
+       as degraded rather than fabricating a 0.0 reading (per the
+       Wave 69 Phase 1 audit §3.3 byte-stable contract — additive,
+       no collision with the existing ``computed`` /
+       ``synthetic_fallback`` markers).
     3. Delegate to :meth:`FlowMol3Glue.composite_score` for the
        Wave-49-D §2.1 5-axis weighted sum. The geometry axis
        (``-med_rmsd_after_xtb``) is dropped and the chemistry axes
@@ -3115,10 +3128,15 @@ def _compute_flowmol3_composite(
     # The Wave 49 D glue consumes per-cell chemistry + geometry dicts
     # rather than raw traces; the chemistry dict is built from the
     # ``compute_chemistry_metrics`` upstream shim output schema
-    # (Wave 21 / Wave 38 / Wave 41). For the eval pipeline we accept
-    # either pre-computed chemistry dicts (when supplied by the
-    # adapter's ``_native_states`` cache) or a neutral-0 default that
-    # collapses the composite to 0 by construction.
+    # (Wave 21 / Wave 38 / Wave 41). Wave 69 Phase 2: when
+    # ``sampled_molecules`` is supplied (interface-first kwarg, default
+    # ``None`` for legacy callers) we delegate to
+    # :meth:`FlowMol3Glue.compute_chemistry_metrics` so the chemistry
+    # axes reflect real upstream ``SampleAnalyzer`` readings rather than
+    # a hard-coded neutral-0 stub. When ``sampled_molecules`` is
+    # ``None`` we keep the legacy stub AND surface
+    # ``marker="degraded_chemistry"`` (additive — no collision with
+    # the existing ``computed`` / ``synthetic_fallback`` markers).
     chemistry: dict[str, float] = {
         "frac_valid_mols": 0.0,
         "frac_mols_stable": 0.0,
@@ -3133,6 +3151,63 @@ def _compute_flowmol3_composite(
     debug["chemistry_input"] = dict(chemistry)
     debug["geometry_input"] = dict(geometry) if geometry else None
     debug["xtb_present"] = bool(xtb_present)
+    # Wave 69 Phase 2: if the caller supplied sampled molecules,
+    # delegate to ``compute_chemistry_metrics`` and merge the real
+    # upstream readings into the chemistry stub. When the upstream
+    # ``flowmol`` / RDKit stack is unavailable, the glue returns an
+    # empty dict — in that case we surface
+    # ``marker="degraded_chemistry"`` rather than fabricating a 0.0
+    # reading (per the Phase 1 audit §3.3 byte-stable contract).
+    chemistry_source = "neutral_zero_stub"
+    if sampled_molecules is not None:
+        try:
+            glue_pre = FlowMol3Glue(adapter=adapter)
+            chem_metrics = glue_pre.compute_chemistry_metrics(
+                list(sampled_molecules),
+                run_posebusters=True,
+                run_functional_validity=True,
+                run_energy_div=False,
+                pb_workers=2,
+            )
+        except Exception as exc:  # noqa: BLE001
+            # Upstream ``flowmol`` / RDKit unavailable — record the
+            # failure but keep the stub; marker will reflect
+            # ``degraded_chemistry`` below.
+            debug["chemistry_compute_error"] = (
+                f"{type(exc).__name__}:{exc}"
+            )
+            chem_metrics = {}
+        if chem_metrics:
+            # Upstream ``compute_paper_metrics`` returns keys
+            # ``frac_valid_mols``, ``frac_mols_stable_valence``,
+            # ``energy_js_div``, ``reos_cum_dev``. Merge verbatim.
+            for key in (
+                "frac_valid_mols",
+                "frac_mols_stable",
+                "frac_mols_stable_valence",
+                "energy_js_div",
+                "reos_cum_dev",
+            ):
+                if key in chem_metrics:
+                    try:
+                        chemistry[key] = float(chem_metrics[key])
+                    except (TypeError, ValueError):
+                        pass
+            chemistry_source = "compute_chemistry_metrics"
+            debug["chemistry_input"] = dict(chemistry)
+            debug["chemistry_input_source"] = chemistry_source
+            debug["chemistry_compute_keys"] = sorted(
+                chem_metrics.keys()
+            )
+        else:
+            # Upstream returned an empty dict — RDKit / flowmol is
+            # not importable on this host (per
+            # ``FlowMol3Glue.compute_chemistry_metrics`` line 479).
+            chemistry_source = "neutral_zero_stub_degraded"
+            debug["chemistry_input_source"] = chemistry_source
+            debug["chemistry_input"] = dict(chemistry)
+    else:
+        debug["chemistry_input_source"] = chemistry_source
     # ---- 3. Delegate to FlowMol3Glue.composite_score ---------------
     try:
         glue = FlowMol3Glue(adapter=adapter)
@@ -3163,6 +3238,20 @@ def _compute_flowmol3_composite(
             f"composite_compute_failed: {type(exc).__name__}:{exc}"
         )
         return None, "blocked", debug
+    # Wave 69 Phase 2: when chemistry_source is the degraded stub
+    # (RDKit / flowmol unavailable), surface
+    # ``marker="degraded_chemistry"`` rather than fabricating
+    # ``marker="computed"`` with a zero reading.
+    if chemistry_source in (
+        "neutral_zero_stub_degraded",
+        "neutral_zero_stub",
+    ):
+        # No chemistry reading could be computed — caller should
+        # treat composite as informative only (geometry may still
+        # carry signal when xtb is available).
+        composite_marker = "degraded_chemistry"
+    else:
+        composite_marker = "computed"
     # ---- 4. Surface the composite ---------------------------------
     composite_value = result.get("composite")
     debug.update({
@@ -3177,8 +3266,9 @@ def _compute_flowmol3_composite(
         "K_atom_types": result.get("K_atom_types"),
         "K_bond_types": result.get("K_bond_types"),
         "glue_class": "FlowMol3Glue",
+        "composite_marker": composite_marker,
     })
-    return composite_value, "computed", debug
+    return composite_value, composite_marker, debug
 
 
 def _compute_lineageflow_real_metric(
