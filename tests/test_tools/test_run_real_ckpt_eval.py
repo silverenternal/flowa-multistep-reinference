@@ -345,3 +345,177 @@ def _make_placeholder_trace(adapter: Any) -> Any:
     class _TraceStub:
         native_state_digest = "wave53-flowmol3-metric-test-stub"
     return _TraceStub()
+
+
+# ---------------------------------------------------------------------------
+# 4. Bug A — `_solve_framework` returns integrated-endpoint trace (Wave 64)
+#
+# Background (docs/audit/wave63-root-cause.md §2 + §5.1):
+#   Pre-fix `_solve_framework` returned the LAST per-round `solve_ode` call,
+#   which carried `(seed=seed+r, steps=nfe_per_round)` — a different
+#   (seed, steps) axis than baseline's `(seed=seed, steps=nfe_total)`. The
+#   metric layer dispatches on `(seed, steps)` via `trace.native_state_digest`
+#   and `trace.steps`, so the framework arm differed from baseline at the
+#   digest level EVEN when the restart-blend was a no-op (m=0 at NFE=10
+#   below the gate threshold). The fix re-anchors the returned trace by
+#   running a final `solve_ode` on the integrated endpoint with the FULL
+#   NFE budget keyed on the ORIGINAL seed.
+#
+# The tests below lock in:
+#   (a) the per-round NFE sums to nfe_total exactly (Bug A.3);
+#   (b) the returned trace.steps == nfe_total (Bug A.1);
+#   (c) the framework arm and the baseline arm agree on `steps`
+#       (metric-layer axis match);
+#   (d) at low NFE (gate fires), the framework arm is byte-identical to
+#       baseline (the gate-skipped contract).
+# ---------------------------------------------------------------------------
+
+
+def test_solve_framework_steps_matches_nfe_total() -> None:
+    """`_solve_framework` returns a trace with `steps == nfe_total` (post Bug A fix).
+
+    Pre-fix: the returned trace was the last per-round `solve_ode` output,
+    which had ``steps == nfe_per_round`` (3 for nfe=10/n_rounds=3) —
+    different from baseline's ``steps == nfe_total`` (10). Post-fix: the
+    function runs the multi-round loop, then re-anchors with a final
+    ``solve_ode`` on the integrated endpoint with the FULL NFE budget, so
+    the returned trace has ``steps == nfe_total`` — same axis as baseline.
+
+    Regression guards against the pre-fix shape:
+      * ``steps != 3`` (per-round NFE for nfe=10/n_rounds=3 was 3)
+      * ``steps != 9`` (per-round total was 3*3=9, 1 step short of 10)
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic", nfe_budget=10)
+    framework_trace, _ = tools._solve_framework(
+        adapter, nfe=10, seed=42, n_rounds=3
+    )
+
+    assert framework_trace.steps == 10, (
+        f"expected framework trace.steps == 10 (post-Bug-A fix), "
+        f"got {framework_trace.steps!r}. This means the framework arm is "
+        f"still returning the last per-round trace with steps={framework_trace.steps}, "
+        f"not the integrated-endpoint trace with steps=nfe_total=10."
+    )
+    assert framework_trace.steps != 3, (
+        "framework trace.steps must NOT be 3 (pre-fix per-round NFE for "
+        "nfe=10/n_rounds=3 was round(10/3)=3, Bug A.1 symptom)"
+    )
+    assert framework_trace.steps != 9, (
+        "framework trace.steps must NOT be 9 (pre-fix per-round total was "
+        "3*3=9 for nfe=10/n_rounds=3, Bug A.3 symptom — 1 step short of "
+        "the baseline's 10)"
+    )
+
+
+def test_solve_framework_trace_axis_matches_baseline() -> None:
+    """Framework trace.steps == baseline trace.steps (metric-layer axis match).
+
+    The metric layer dispatches on ``(seed, steps)`` via
+    ``trace.native_state_digest`` and ``trace.steps``, so the framework arm
+    and the baseline arm must agree on ``steps`` for the metric layer to
+    compare them on the SAME axis. Pre-fix: framework.steps was 3 (last
+    per-round) and baseline.steps was 10 — different axes.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic", nfe_budget=10)
+    baseline_trace, _ = tools._solve_baseline(adapter, nfe=10, seed=42)
+    framework_trace, _ = tools._solve_framework(
+        adapter, nfe=10, seed=42, n_rounds=3
+    )
+
+    assert baseline_trace.steps == 10
+    assert framework_trace.steps == baseline_trace.steps, (
+        f"framework trace.steps ({framework_trace.steps}) must equal "
+        f"baseline trace.steps ({baseline_trace.steps}); the metric layer "
+        f"compares two arms on the same (seed, steps) axis."
+    )
+
+
+def test_solve_framework_distributes_nfe_per_round_to_sum_exactly() -> None:
+    """Per-round NFE sums to nfe_total (no 1-step excess at any NFE budget).
+
+    Pre-fix: ``nfe_per_round = round(nfe / n_rounds)`` gave 9 / 51 / 201
+    for 10 / 50 / 200 (Bug A.3, 1-step excess in 2 of 3 cells). Post-fix:
+    the per-round NFE is a list ``[base, base, ..., base+remainder]``
+    with sum equal to ``nfe`` exactly. For nfe=10, n_rounds=3 the
+    concrete shape is ``[3, 3, 4]`` (sum=10).
+
+    The 4th ``solve_ode`` call is the post-loop re-anchor at nfe_total.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic", nfe_budget=10)
+
+    # Wrap solve_ode to capture per-call `num_steps`. The wrapper delegates
+    # to the original method so the adapter's internal state advances
+    # correctly across calls.
+    captured_num_steps: list[int] = []
+    original_solve_ode = adapter.solve_ode
+
+    def recording_solve_ode(state, condition, *, seed):
+        captured_num_steps.append(int(condition.delta_spec["num_steps"]))
+        return original_solve_ode(state, condition, seed=seed)
+
+    adapter.solve_ode = recording_solve_ode  # type: ignore[assignment]
+
+    tools._solve_framework(adapter, nfe=10, seed=42, n_rounds=3)
+
+    # First `n_rounds=3` calls are the per-round split. Sum must equal 10.
+    per_round_nfes = captured_num_steps[:3]
+    assert sum(per_round_nfes) == 10, (
+        f"per-round NFE split {per_round_nfes} must sum to nfe_total=10, "
+        f"got sum={sum(per_round_nfes)}. Pre-fix gave 3*3=9 (1 step short)."
+    )
+    assert per_round_nfes == [3, 3, 4], (
+        f"expected per-round split [3, 3, 4] for nfe=10/n_rounds=3, "
+        f"got {per_round_nfes!r}"
+    )
+    # The 4th call is the post-loop re-anchor at nfe_total=10 (the
+    # integrated-endpoint trace returned to the metric layer).
+    assert captured_num_steps[-1] == 10, (
+        f"final re-anchor solve_ode must use nfe_total=10, "
+        f"got num_steps={captured_num_steps[-1]}"
+    )
+
+
+def test_solve_framework_gate_firing_yields_byte_identical_to_baseline() -> None:
+    """At NFE below the restart_min_nfe threshold, framework trace == baseline trace.
+
+    When the NFE-adaptive gate fires (nfe_budget < restart_min_nfe),
+    ``apply_restart_distribution`` returns the state unchanged, so the
+    integrated endpoint equals the original bundle. The final re-anchor
+    ``solve_ode`` then produces a trace that is byte-identical to what
+    ``_solve_baseline`` produces (same ``source=bundle.native_state_digest``,
+    same seed, same steps). This is the expected byte-stability contract
+    for the gate-skipped path: framework degenerates to baseline.
+
+    For nfe=10 / restart_min_nfe=20 the gate fires; this test asserts the
+    byte-identicality on the placeholder adapter.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    # nfe_budget=10 < restart_min_nfe=20, so the gate fires.
+    adapter = default_flowmol3_adapter(force_mode="synthetic", nfe_budget=10)
+    baseline_trace, _ = tools._solve_baseline(adapter, nfe=10, seed=42)
+    framework_trace, _ = tools._solve_framework(
+        adapter, nfe=10, seed=42, n_rounds=3
+    )
+
+    assert framework_trace.steps == baseline_trace.steps == 10
+    assert str(framework_trace.native_state_digest) == str(
+        baseline_trace.native_state_digest
+    ), (
+        f"with the gate firing (nfe=10 < restart_min_nfe=20), the "
+        f"framework's integrated-endpoint trace must be byte-identical "
+        f"to the baseline trace (the integrated endpoint equals the "
+        f"original bundle, so solve_ode produces the same digest). "
+        f"Got framework.digest={framework_trace.native_state_digest!r} "
+        f"vs baseline.digest={baseline_trace.native_state_digest!r}"
+    )

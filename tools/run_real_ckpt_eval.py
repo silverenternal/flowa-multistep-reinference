@@ -1077,7 +1077,18 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3) ->
     from adaptive_reflow.universal.state import ODEConditionDelta  # type: ignore
 
     bundle, _ = _build_initial_state_and_condition(adapter, seed=seed, nfe=nfe)
-    nfe_per_round = max(1, int(round(nfe / max(1, int(n_rounds)))))
+    # Wave 64 Agent 1 fix (Bug A.3): distribute the total NFE across
+    # rounds so the per-round sum equals ``nfe`` exactly. The previous
+    # ``round(nfe / n_rounds)`` formula gave 9 / 51 / 201 for
+    # 10 / 50 / 200 — a 1-step excess in 2 of 3 cells. The new formula
+    # puts the remainder in the LAST round so the per-round NFE list is
+    # ``[base, base, ..., base+remainder]`` with sum equal to ``nfe``.
+    n_rounds_int = max(1, int(n_rounds))
+    base_per_round = max(1, int(nfe) // n_rounds_int)
+    remainder_per_round = max(0, int(nfe) - base_per_round * n_rounds_int)
+    nfe_per_round_list: list[int] = [base_per_round] * n_rounds_int
+    if remainder_per_round > 0:
+        nfe_per_round_list[-1] += remainder_per_round
     t0 = time.monotonic()
     cur_bundle = bundle
     trace: Any = None
@@ -1088,8 +1099,9 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3) ->
     )
 
     for r in range(int(n_rounds)):
+        per_round_nfe = int(nfe_per_round_list[r])
         condition = ODEConditionDelta(
-            delta_spec={"num_steps": int(nfe_per_round), "sampler_id": "euler"},
+            delta_spec={"num_steps": per_round_nfe, "sampler_id": "euler"},
             source="run_real_ckpt_eval",
             target_round=int(r),
             calibration_artifact_hash="run_real_ckpt_eval:default",
@@ -1126,7 +1138,38 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3) ->
             # Restart path unavailable; degenerate to baseline.
             break
     wall = time.monotonic() - t0
-    return trace, wall
+    # Wave 64 Agent 1 fix (Bug A.1 + Bug A.2 — root cause in
+    # docs/audit/wave63-root-cause.md §2): the trace returned above is
+    # from the LAST per-round solve_ode call, which carries
+    # ``(seed=seed+r, steps=nfe_per_round)`` — a DIFFERENT (seed, steps)
+    # axis than baseline's ``(seed=seed, steps=nfe)``. The metric layer
+    # reads ``trace.native_state_digest`` and ``trace.steps`` to
+    # dispatch its chemistry dict, so the framework arm differs from
+    # baseline at the digest level EVEN when the restart-blend was a
+    # no-op (m=0 at NFE=10 below the gate threshold).
+    #
+    # The contract between ``_solve_framework`` (returns last-round
+    # trace) and ``_compute_metric`` (treats that trace as the
+    # integrated endpoint) is the load-bearing mismatch. We re-anchor
+    # the returned trace to the integrated endpoint by running a final
+    # ``solve_ode`` with the TOTAL NFE budget on the framework's
+    # integrated endpoint state, keyed on the ORIGINAL seed. The result
+    # has the same ``(seed=seed, steps=nfe)`` axis as the baseline trace
+    # so the metric layer compares framework vs baseline on the SAME
+    # axis. When the gate fires (low NFE), the integrated endpoint
+    # equals the original bundle, so the framework trace is
+    # byte-identical to the baseline trace — which is the honest
+    # reading for the gate-skipped path.
+    final_condition = ODEConditionDelta(
+        delta_spec={"num_steps": int(nfe), "sampler_id": "euler"},
+        source="run_real_ckpt_eval",
+        target_round=int(n_rounds),
+        calibration_artifact_hash="run_real_ckpt_eval:default",
+    )
+    integrated_trace = adapter.solve_ode(
+        cur_bundle, final_condition, seed=int(seed)
+    )
+    return integrated_trace, wall
 
 
 # ---------------------------------------------------------------------------
