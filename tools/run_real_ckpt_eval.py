@@ -201,6 +201,15 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 ENV_HASH_FILE = REPO_ROOT / "env_hash.txt"
 CAPABILITY_AUDIT = REPO_ROOT / "tools" / "capability_audit.py"
 
+#: Published FlowMol3 PyTorch Lightning checkpoint (65 MB, Wave 70
+#: Phase 2 install). Threaded into the flowmol3 v2 adapter factory by
+#: :func:`_resolve_adapter` when ``force_mode in {"real", "auto"}`` so
+#: the eval pipeline exercises the real upstream forward instead of the
+#: synthetic field (Wave 73 Agent 3 — GAP-4).
+FLOWMOL3_REAL_CKPT = (
+    REPO_ROOT / "data" / "flowmol3" / "weights_real" / "checkpoints" / "last.ckpt"
+)
+
 #: Cell-level status literal used when both arms sit at the saturation
 #: ceiling (i.e. the metric is already SOTA, so the framework cannot
 #: improve it but the baseline has not regressed either). Promoted to
@@ -893,6 +902,15 @@ def _resolve_adapter(
     are required for the NFE-adaptive restart gate to actually
     fire: ``restart_min_nfe`` is the threshold, ``nfe_budget`` is
     the *effective* NFE that the gate compares against it.
+
+    ``weights_path`` (Wave 73 Agent 3 — GAP-4) is threaded from
+    :data:`FLOWMOL3_REAL_CKPT` for the ``flowmol3`` / ``flowmol3_v2``
+    models when ``force_mode in {"real", "auto"}``, the factory accepts
+    the kwarg, and the ckpt exists on disk. Without it the v2 factory
+    defaults to ``weights_path=None`` and ``_load_model()`` returns
+    ``kind=synthetic`` — no real upstream forward, no SMILES cache,
+    chemistry composite pinned to 0
+    (docs/audit/wave71-phase3-sweep.md §4).
     """
     spec = DOWNSTREAM_METRICS[model]
     factory_path = spec["adapter_factory"]
@@ -944,6 +962,22 @@ def _resolve_adapter(
             kwargs["restart_min_nfe"] = int(restart_min_nfe)
         if nfe_budget is not None and "nfe_budget" in sig_params:
             kwargs["nfe_budget"] = int(nfe_budget)
+        # Wave 73 Agent 3 — close GAP-4 (docs/audit/wave71-phase3-sweep.md §4).
+        # The v2 FlowMol3 factory sets ``use_upstream=True`` for
+        # real/auto (Wave 71 GAP-1) but defaults ``weights_path=None``,
+        # so ``_load_model()`` returns ``kind=synthetic``: no real
+        # upstream forward, no SMILES cache, chemistry composite = 0.
+        # Thread the published ckpt path when it exists on disk. Scoped
+        # to the two flowmol3 model tokens + real/auto so every other
+        # model (and ``force_mode='synthetic'``) keeps the byte-stable
+        # pre-Wave-73 call shape.
+        if (
+            model in {"flowmol3", "flowmol3_v2"}
+            and force_mode in {"real", "auto"}
+            and "weights_path" in sig_params
+            and FLOWMOL3_REAL_CKPT.is_file()
+        ):
+            kwargs["weights_path"] = str(FLOWMOL3_REAL_CKPT)
         adapter = factory(**kwargs)
     except Exception as exc:  # noqa: BLE001
         return None, f"IMPORT_FAILED:{type(exc).__name__}:{exc}"

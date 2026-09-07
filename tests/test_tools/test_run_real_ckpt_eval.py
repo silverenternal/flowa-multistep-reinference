@@ -1678,3 +1678,145 @@ def test_run_cell_handles_missing_export_sampled_molecules() -> None:
         f"(no chemistry data), got {cell.get('composite_marker')!r}"
     )
 
+
+
+# ---------------------------------------------------------------------------
+# Wave 73 Agent 3 — GAP-4: _resolve_adapter threads ``weights_path``
+# ---------------------------------------------------------------------------
+#
+# Pre-fix (docs/audit/wave71-phase3-sweep.md §4): the v2 FlowMol3 factory
+# received ``use_upstream=True`` for force_mode real/auto (Wave 71 GAP-1)
+# but no ``weights_path``, so it defaulted to ``None`` and
+# ``_load_model()`` returned ``kind=synthetic``: no real upstream
+# forward, no SMILES cache, chemistry composite pinned to 0.0 with
+# ``composite_marker='degraded_chemistry'`` in all 9 sweep cells.
+#
+# Post-fix: ``_resolve_adapter`` passes ``weights_path=FLOWMOL3_REAL_CKPT``
+# when the model is flowmol3 / flowmol3_v2, force_mode is real / auto,
+# the factory signature accepts the kwarg, and the ckpt is on disk.
+# The synthetic path (and every other model) keeps the pre-Wave-73 call
+# shape byte-for-byte.
+
+
+def test_resolve_adapter_threads_weights_path_for_flowmol3_real() -> None:
+    """`_resolve_adapter('flowmol3', force_mode='real')` passes weights_path.
+
+    Asserts the GAP-4 fix at the call boundary: the kwargs handed to
+    the v2 factory carry ``weights_path`` pointing at the published
+    ckpt (``FLOWMOL3_REAL_CKPT``). Captured via a factory stub so the
+    test needs neither torch nor the ckpt bytes.
+    """
+    tools = _import_tools_module()
+    if not tools.FLOWMOL3_REAL_CKPT.is_file():
+        pytest.skip(
+            f"FlowMol3 ckpt not installed at {tools.FLOWMOL3_REAL_CKPT}; "
+            "the weights_path thread is gated on the file existing"
+        )
+    import adaptive_reflow.adapters.flowmol3_v2_adapter as _v2
+
+    captured: dict[str, Any] = {}
+    original_factory = _v2.default_flowmol3adapter
+
+    # NOTE: ``weights_path`` must appear *explicitly* in the stub
+    # signature — ``_resolve_adapter`` filters optional kwargs through
+    # ``inspect.signature(factory).parameters``, so a bare ``**kw`` stub
+    # would make the test fail for the wrong reason.
+    def _capturing_factory(
+        *, weights_path: Any = None, force_mode: str = "synthetic", **kw: Any
+    ) -> Any:
+        captured.update(kw)
+        captured["force_mode"] = force_mode
+        if weights_path is not None:
+            captured["weights_path"] = weights_path
+        # Drop the real-mode kwargs so the constructor succeeds in
+        # CPU-only / no-torch pytest envs; class identity is v2.
+        return original_factory(force_mode="synthetic", **kw)
+
+    _v2.default_flowmol3adapter = _capturing_factory  # type: ignore[assignment]
+    try:
+        adapter, mode = tools._resolve_adapter("flowmol3", force_mode="real")
+    finally:
+        _v2.default_flowmol3adapter = original_factory  # type: ignore[assignment]
+
+    if adapter is None and mode.startswith("IMPORT_FAILED"):
+        pytest.skip(f"_resolve_adapter import failed (env-specific): {mode!r}")
+    assert "weights_path" in captured, (
+        "_resolve_adapter did NOT pass weights_path to the flowmol3 v2 "
+        "factory for force_mode='real'. GAP-4 is open: the factory "
+        "defaults to weights_path=None, _load_model() returns "
+        "kind=synthetic, and the chemistry composite stays 0.0. "
+        f"kwargs seen: {sorted(captured)}"
+    )
+    assert captured["weights_path"] == str(tools.FLOWMOL3_REAL_CKPT), (
+        f"weights_path must point at the published ckpt "
+        f"{str(tools.FLOWMOL3_REAL_CKPT)!r}, got "
+        f"{captured['weights_path']!r}"
+    )
+
+
+def test_resolve_adapter_no_weights_path_for_synthetic_mode() -> None:
+    """Synthetic mode + unrelated models keep the pre-Wave-73 call shape.
+
+    Backward compatibility for the GAP-4 fix: ``force_mode='synthetic'``
+    must NOT receive ``weights_path`` (it routes to the v1 placeholder,
+    whose factory does not take the kwarg), and a non-flowmol3 model
+    (kanzi) must not receive it either even in real mode.
+    """
+    tools = _import_tools_module()
+    import adaptive_reflow.adapters.flowmol3 as _v1
+
+    captured: dict[str, Any] = {}
+    original_v1 = _v1.default_flowmol3_adapter
+
+    # ``weights_path`` explicit in the stub signature so the
+    # ``inspect.signature`` filter in ``_resolve_adapter`` WOULD pass it
+    # if the mode gate were wrong — the assertion below is then real.
+    def _capturing_v1(*, weights_path: Any = None, **kw: Any) -> Any:
+        captured.update(kw)
+        if weights_path is not None:
+            captured["weights_path"] = weights_path
+        return original_v1(**kw)
+
+    _v1.default_flowmol3_adapter = _capturing_v1  # type: ignore[assignment]
+    try:
+        adapter, mode = tools._resolve_adapter(
+            "flowmol3", force_mode="synthetic",
+        )
+    finally:
+        _v1.default_flowmol3_adapter = original_v1  # type: ignore[assignment]
+
+    assert adapter is not None, (
+        f"_resolve_adapter returned None for synthetic mode; mode={mode!r}"
+    )
+    assert "weights_path" not in captured, (
+        "force_mode='synthetic' must NOT receive weights_path — the v1 "
+        "placeholder factory does not accept it and the zero-dependency "
+        f"CI path must stay byte-stable. kwargs seen: {sorted(captured)}"
+    )
+
+    # And the wire must not leak to other models: kanzi in real mode.
+    kanzi_captured: dict[str, Any] = {}
+    import adaptive_reflow.adapters.kanzi as _kanzi
+
+    original_kanzi = _kanzi.default_kanzi_adapter
+
+    def _capturing_kanzi(*, weights_path: Any = None, **kw: Any) -> Any:
+        kanzi_captured.update(kw)
+        if weights_path is not None:
+            kanzi_captured["weights_path"] = weights_path
+        return original_kanzi(**{k: v for k, v in kw.items()
+                                if k != "force_mode"})
+
+    _kanzi.default_kanzi_adapter = _capturing_kanzi  # type: ignore[assignment]
+    try:
+        tools._resolve_adapter("kanzi", force_mode="real")
+    except Exception:  # noqa: BLE001 — env-specific (no ckpt / no torch).
+        pass
+    finally:
+        _kanzi.default_kanzi_adapter = original_kanzi  # type: ignore[assignment]
+
+    assert "weights_path" not in kanzi_captured, (
+        "the GAP-4 wire is over-broad: kanzi received weights_path. It "
+        "must be scoped to model in {'flowmol3', 'flowmol3_v2'}. "
+        f"kwargs seen: {sorted(kanzi_captured)}"
+    )

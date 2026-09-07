@@ -888,3 +888,111 @@ class TestFlowMol3V2ObserveProtocol:
         assert entropy is not None
         assert isinstance(entropy.payload, float)
         assert np.isfinite(entropy.payload)
+
+# ---------------------------------------------------------------------------
+# Wave 73 Agent 3 — GAP-5 + GAP-6 (surfaced by closing eval-pipeline GAP-4)
+# ---------------------------------------------------------------------------
+
+
+def test_solve_ode_forces_model_load_before_dispatch() -> None:
+    """`solve_ode` loads the model before the upstream/CTMC dispatch (GAP-5).
+
+    Pre-fix: the model loaded lazily inside the velocity field, so on the
+    first ``solve_ode`` call ``self._model is None`` and
+    ``_loaded_model_kind()`` answered ``"synthetic"``. The
+    ``use_upstream`` fast-path was therefore skipped and
+    ``_solve_ode_ctmc`` invoked the real-weights velocity field with
+    ``module=None``, raising
+    ``TypeError: 'NoneType' object is not callable``.
+
+    Post-fix: the torch backend loads before dispatch. This test asserts
+    the load hook fires — without needing real weights (``weights_path``
+    stays ``None``, so ``_load_model`` returns the ``"synthetic"``
+    sentinel and the numpy field runs as before).
+    """
+    from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+        _torch_is_available,
+        default_flowmol3adapter,
+    )
+
+    if not _torch_is_available():
+        pytest.skip("torch not importable in this env")
+
+    adapter = default_flowmol3adapter(backend="torch", num_steps=3)
+    calls: list[int] = []
+    original = adapter._load_model
+
+    def _counting_load() -> object:
+        calls.append(1)
+        return original()
+
+    adapter._load_model = _counting_load  # type: ignore[method-assign]
+    bundle = adapter.build_initial_state(batch_id="b", sample_id="s")
+    from adaptive_reflow.universal.state import ODEConditionDelta
+
+    condition = ODEConditionDelta(
+        delta_spec={"num_steps": 3, "sampler_id": "euler"},
+        source="test",
+        target_round=0,
+        calibration_artifact_hash="test:gap5",
+    )
+    trace = adapter.solve_ode(bundle, condition, seed=0)
+    assert calls, (
+        "solve_ode did NOT call _load_model before dispatch on the torch "
+        "backend. GAP-5 is open: _loaded_model_kind() reads 'synthetic' "
+        "while self._model is None, the upstream fast-path is skipped, "
+        "and the CTMC path calls the velocity module with None."
+    )
+    assert trace is not None
+
+
+def test_upstream_stub_does_not_shadow_real_posebusters() -> None:
+    """Stub install skips ``posebusters`` when the real package exists (GAP-6).
+
+    Pre-fix: ``_install_upstream_stubs`` unconditionally inserted a stub
+    whose ``bust()`` returns ``{}``. Upstream
+    ``SampleAnalyzer.analyze`` then does ``df_pb.mean().to_dict()`` on
+    that dict and raises ``AttributeError: 'dict' object has no
+    attribute 'mean'``, degrading the FlowMol3 chemistry composite to
+    0.0 / ``degraded_chemistry`` on exactly the hosts where the real
+    metrics COULD be computed (the sidecar venv ships posebusters).
+
+    Post-fix: the stub is installed only when the real package is not
+    importable. On a host without posebusters the stub still lands (so
+    ``FlowMol.__init__``'s eager analyzer construction keeps working).
+    """
+    import sys
+
+    from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+        _install_upstream_stubs,
+        _real_module_available,
+    )
+
+    had_real = _real_module_available("posebusters")
+    sys.modules.pop("posebusters", None)
+    _install_upstream_stubs._installed = False  # type: ignore[attr-defined]
+    try:
+        _install_upstream_stubs()
+        if had_real:
+            assert "posebusters" not in sys.modules or not isinstance(
+                getattr(sys.modules["posebusters"], "PoseBusters", None),
+                type(None),
+            ), "posebusters entry vanished"
+            mod = sys.modules.get("posebusters")
+            if mod is not None:
+                assert getattr(mod, "__file__", None) is not None, (
+                    "the real posebusters package was shadowed by the "
+                    "no-op stub (stub modules have __file__ = None). "
+                    "GAP-6 is open: upstream SampleAnalyzer.analyze calls "
+                    "df_pb.mean() on the stub's dict return and the "
+                    "chemistry composite degrades to 0.0."
+                )
+        else:
+            assert "posebusters" in sys.modules, (
+                "stub was NOT installed on a host without the real "
+                "package; FlowMol.__init__ eager analyzer construction "
+                "will fail on import"
+            )
+    finally:
+        sys.modules.pop("posebusters", None)
+        _install_upstream_stubs._installed = False  # type: ignore[attr-defined]

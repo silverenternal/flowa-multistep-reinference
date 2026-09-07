@@ -282,6 +282,22 @@ def _probe_dgl() -> bool:
     return True
 
 
+def _real_module_available(name: str) -> bool:
+    """Return ``True`` when ``name`` is importable as a real installed package.
+
+    Uses :func:`importlib.util.find_spec` so nothing is imported (and no
+    heavy dependency is pulled in) just to answer the question. Wave 73
+    Agent 3 — used by :func:`_install_upstream_stubs` to avoid shadowing
+    a genuinely installed package with a no-op stub.
+    """
+    import importlib.util as _ilu
+
+    try:
+        return _ilu.find_spec(name) is not None
+    except (ImportError, ValueError):  # pragma: no cover — defensive
+        return False
+
+
 def _install_upstream_stubs() -> None:
     """Install pure-Python stubs for ``torch_scatter`` and ``posebusters``.
 
@@ -337,7 +353,20 @@ def _install_upstream_stubs() -> None:
         ts_mod.segment_csr = _segment_csr
         sys.modules["torch_scatter"] = ts_mod
     # --- posebusters stub ---------------------------------------------------
-    if "posebusters" not in sys.modules:
+    # Wave 73 Agent 3 — GAP-6 (surfaced by closing GAP-4): the stub's
+    # ``bust()`` returns ``{}`` (a dict), but upstream
+    # ``SampleAnalyzer.analyze`` does ``df_pb.mean().to_dict()`` on the
+    # result — so whenever the real ``posebusters`` IS installed (the
+    # flowmol3 sidecar venv has 0.6.5) but the stub got into
+    # ``sys.modules`` first, the chemistry metrics raised
+    # ``AttributeError: 'dict' object has no attribute 'mean'`` and the
+    # composite degraded to 0.0 / ``degraded_chemistry``. Prefer the real
+    # package whenever it is importable; the stub stays the fallback for
+    # hosts without it (the documented "must be importable because
+    # ``FlowMol.__init__`` instantiates the analyzer eagerly" case).
+    if "posebusters" not in sys.modules and not _real_module_available(
+        "posebusters",
+    ):
         pb_mod = _types.ModuleType("posebusters")
 
         class _PoseBustersStub:  # noqa: D401 — minimal no-op API surface
@@ -2250,6 +2279,20 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # that. The per-step velocity-field bridge is only needed when
         # the upstream is unavailable (the partial-fidelity path) or the
         # caller asks for it explicitly (``ctmc_enabled=False``).
+        # Wave 73 Agent 3 — GAP-5 (surfaced by closing GAP-4): the model
+        # loads lazily, so on the first ``solve_ode`` call
+        # ``self._model is None`` and :meth:`_loaded_model_kind` answers
+        # ``"synthetic"``. The upstream dispatch below was therefore
+        # skipped and ``_solve_ode_ctmc`` called the real-weights
+        # velocity field with ``module=None`` →
+        # ``TypeError: 'NoneType' object is not callable``. Force the
+        # load here so both the dispatch and the CTMC path see the real
+        # module. No-op for ``backend='numpy'`` and for
+        # ``weights_path=None`` (``_load_model`` returns the
+        # ``"synthetic"`` sentinel), so every pre-Wave-73 configuration
+        # keeps its exact behaviour.
+        if self._backend == "torch" and self._model is None:
+            self._load_model()
         if self._use_upstream and self._loaded_model_kind() == "upstream_flowmol":
             return self._solve_ode_upstream(state, condition, seed=int(seed))
         if self.ctmc_enabled:
