@@ -187,6 +187,7 @@ not_in_nav: |
   lean/*.md
   lean_issue_re_inference_provenance.md
   paper-draft.md
+  push-ready-summary.md
   tables/*.md
   figures/*.md
   adr/*.md

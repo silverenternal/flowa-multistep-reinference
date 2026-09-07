@@ -1,9 +1,74 @@
-# Push-Ready Summary — Wave 72 / Wave 72 closure + Wave 73 multi-tier story
+# Push-Ready Summary — Wave 72 closure + Wave 73 multi-tier story
 
 **Date:** 2026-09-08
-**Wave:** 72 / 72 closure (pre-push synthesis) + Wave 73 (multi-tier story)
+**Wave:** 72 closure (pre-push synthesis) + Wave 73 (multi-tier story) — **final pre-push state**
 **Role:** Author the pre-push summary + final commit. NO push (per locked-in constraint).
 **Repo:** `/home/hugo/codes/flowa-multistep-reinference`
+
+---
+
+## Wave 73 Phase 6 additions (final synthesis, additive, no push)
+
+Wave 73 Phase 6 is the **final synthesis pass** after Phases 1–5. It
+closes the multi-tier paper story audit trail and re-runs all three
+locked gates. Key additions to this `push-ready-summary.md`:
+
+- **Wave 73 Phase 6 audit doc:** `docs/audit/wave73-phase6-final.md`
+  authored (TL;DR + all-3-models status + Wave 73 work summary +
+  multi-tier paper story + D.4/G-MASTER/mkdocs status + honest caveats).
+- **mkdocs `not_in_nav` 1-line fix:** added `push-ready-summary.md`
+  to `mkdocs.yml` `not_in_nav` block so `mkdocs build --strict` passes
+  (Wave 72 Phase 6 latent — surfaced by Wave 73 Phase 6 strict
+  verification).
+- **Final verification (Phase 6):** D.4 72/72 in 36.75 s;
+  G-MASTER 7/7 PASS (hard_pass=5, soft_pass=2);
+  mkdocs build --strict EXIT=0 in 11.59 s.
+
+**The Wave 73 multi-tier story is unchanged from Phase 5** (see
+additive Wave 73 Phase 5 additions below). Phase 6 adds the final
+audit doc + the mkdocs `not_in_nav` fix.
+
+### Wave 73 Phase 6 verification status
+
+| Gate | Status | Value | Notes |
+|---|---|---|---|
+| **D.4 byte-stable vectors** | **PASS** | 72 passed in **36.75s** | wallclock variance only; no regression vs Wave 72 Phase 6 baseline (38.08s) or Wave 73 Phase 5 (44.31s) |
+| **G-MASTER capability** | **PASS** | 7/7 (hard_pass=5, soft_pass=2) | unchanged from Wave 72 closure (paper-edit only) |
+| **mkdocs build --strict** | **PASS** | EXIT=0 in **11.59s** | 1-line `not_in_nav` fix for `push-ready-summary.md` (Wave 72 latent) |
+
+### Wave 73 Phase 6 file inventory
+
+| Path | Status | Notes |
+|---|---|---|
+| `docs/audit/wave73-phase6-final.md` | NEW | Final synthesis doc (this phase) |
+| `docs/push-ready-summary.md` | MODIFIED | Wave 73 Phase 6 additive section added (this phase) |
+| `mkdocs.yml` | MODIFIED | +1 line in `not_in_nav` block (this phase) |
+
+### Wave 73 Phase 6 honest caveats (carried forward)
+
+See `docs/audit/wave73-phase6-final.md` §"Honest caveats" for the full
+list. Top 3 carryovers from Phase 5:
+1. **Tier 1 2D FM 5–10× speedup is EXTRAPOLATED**, not measured.
+   Phase 2 P2-1 baseline NFE-scan at NFE ∈ {500, 1000, 2000, 5000}
+   would close this directly (~15 min CPU).
+2. **CIFAR-10 RF 2.5× speedup is from NFE=2 vs NFE=8 interpolation**,
+   not direct matched-quality comparison. Published Liu 2022 FID 2.58
+   requires Heun adaptive + NFE=100+ + 50K samples (32× gap).
+3. **FlowMol3 composite value still `+0.0000`** because chemistry axes
+   are env-degraded (RDKit not importable in sidecar venv; xtb not on
+   `$PATH`). Wire verified live (7/9 cells `marker=computed`); value
+   not reproducible at n=1 molecule per cell.
+
+### Wave 73 Phase 6 unpushed commits
+
+```text
+git log --oneline @{u}..main 2>&1 | wc -l
+287
+```
+
+**287 unpushed commits** on `main` ahead of `origin/main`. Wave 73
+Phase 6 commit lands locally without push, matching the Wave 68/69/70/71/72
+closure pattern.
 
 ---
 
@@ -101,6 +166,12 @@ existing §7 / §7.7.
    NFE=10 by design — validity_rate = 1.0 ceiling); Tier 1 1.0 is
    a data-availability artifact (R4-survey has only 1 baseline NFE
    point per model). Honest paper framing distinguishes these.
+
+---
+
+## TL;DR (Wave 72 closure + Wave 73 multi-tier story, FINAL)
+
+The repo is **push-ready**. Wave 72 closed all four Phase-1 audit gaps (499-word §1 with Wave 71 NFE-independence at the front, §8 Tier 1/2 baseline cells populated, §8.6 Tier 3 baseline comparison, §8.7 Discussion). Wave 73 added the **multi-tier paper story** (Phase 1: Tier 1 NFE-scan audit + 2026 SOTA web research; Phase 2: per-model NFE_95 + speedup_ratio + extends-plateau table; Phase 3: FlowMol3 GAP-4/5/6 fix; Phase 4: 9-cell FlowMol3 sweep on real upstream `FlowMol.sample`; Phase 5: additive paper writeup with §7.5 GAP-4 paragraph + §7.6 multi-tier summary + §7.7.8 NEW Tier 1 speedup evidence + §7.7.9 NEW Tier 1 extends-plateau evidence, **§7.7.7 NFE-independent finding preserved verbatim**; Phase 6: this final synthesis). Two honest negatives are stated plainly: CIFAR-10 matched-NFE FID is 24-31% worse than baseline (§4.3), and the candidate "converges faster" claim was tested on all three Tier 3 models and is **not made** (`cross_model_consistency = "none"`, §7.7.7). On Tier 1, the framework's 5–10× speedup on 2D FM is **extrapolated** from Liu 2022 Rectified Flow SOTA (R4 has only 1 baseline NFE point per model); CIFAR-10 RF shows framework reaching baseline-quality FID at NFE=2 vs baseline NFE=8 (~2.5–4× speedup); MNIST FM reaches parity within G.3 noise. All three locked gates remain byte-stable: **D.4 72/72, G-MASTER 7/7 PASS, mkdocs build --strict EXIT=0**. The 2-paper framing (Paper A: convergence acceleration via MFPQA / Paper B: extends-baseline-plateau via BRAI) is the publication plan; the §7 evidence supports both axes with byte-stable composite lift on the harder real-ckpt ground. **287 unpushed commits** sit on `main` ahead of `origin/main`; the user has not authorized push, and this wave does not push.
 
 ---
 
