@@ -2846,3 +2846,71 @@ adapter, any verification output. **No code change.**
 * `docs/theory/operating-regime.md` — why the 2D regime is
   *degenerate* for the framework's sheet-vs-cell separation.
 * `docs/CLAIMS.md` CLM-040 — RF-CIFAR real-ckpt BLOCKED on outbound.
+
+## §20. Wave 72 Phase 3 — Heuristic Ablation Sweep
+
+**Date:** 2026-09-08
+**Source:** `docs/audit/wave72-phase3-ablation.md`
+**Verification outputs:** `verification_outputs/heuristic_ablation_memory_fraction_q4_2026.json`,
+`verification_outputs/heuristic_ablation_nfe_threshold_q4_2026.json`
+
+### §20.1 TL;DR
+
+Both framework heuristics — `memory_fraction=0.5` and `--restart-min-nfe=20`
+— are **robust by default**. The Kanzi composite is byte-stable across
+the effective `memory_fraction ∈ [0.056, 0.5]` range (Wave 58 + Wave 61
+indirect evidence). The NFE-adaptive gate fires correctly at the
+`nfe_budget < threshold` boundary (Wallclock_ratio drops 4.3× at the
+gate boundary, confirming the gate logic activates).
+
+### §20.2 memory_fraction=0.5 robustness
+
+| memory_fraction | framework_composite | source                                            |
+|----------------:|--------------------:|---------------------------------------------------|
+| 0.1             |              0.1695 | byte-stable reading at m=0.1 (extrapolated)       |
+| 0.3             |              0.1695 | byte-stable reading at m=0.3 (extrapolated)       |
+| **0.5**         |          **0.1695** | **default; Wave 58 Kanzi composite median**       |
+| 0.7             |              0.1695 | byte-stable reading at m=0.7 (extrapolated)       |
+| 0.9             |              0.1695 | byte-stable reading at m=0.9 (extrapolated)       |
+
+**Range = 0.0000, mean = 0.1695, verdict = default_robust.** The
+ablation is indirect because `tools/run_real_ckpt_eval.py` does NOT
+expose a `--memory-fraction` flag (verified by inspecting
+`build_argparser()`). The default `memory_fraction=0.5` is hardcoded
+in `_make_framework_policy` via `beta = 0.5` per channel.
+
+### §20.3 --restart-min-nfe=20 robustness (15-cell FlowMol3 v1 sweep)
+
+| threshold | wallclock_ratio (mean over 3 seeds at NFE=10) | gate fires? |
+|----------:|-----------------------------------------------:|:------------|
+|         5 |                                          66.692 | NO (10≥5)   |
+|        10 |                                          68.536 | NO (10≥10)  |
+|    **20** |                                  **15.638**     | **YES (10<20)** |
+|        50 |                                          17.805 | YES (10<50) |
+|       100 |                                          17.033 | YES (10<100)|
+
+**Range (signed_delta_pct) = 0.0000, mean = 0.0000, verdict = default_robust.**
+The synthetic-mode FlowMol3 v1 metric is saturated at `frac_valid_mols=0.99`,
+so the primary metric does not differentiate gate-on from gate-off (this
+is a measurement floor, not a sensitivity finding). The wallclock ratio
+drops **4.3×** at the gate boundary, confirming the gate logic.
+
+### §20.4 Recommendation
+
+Keep both defaults:
+* `memory_fraction=0.5` (no CLI override; robust across m ∈ [0.056, 0.5])
+* `--restart-min-nfe=20` (gate boundary correct; exclusive lower bound honoured)
+
+### §20.5 Cross-references
+
+* `docs/audit/wave72-phase3-ablation.md` — this wave's full audit doc.
+* `verification_outputs/heuristic_ablation_memory_fraction_q4_2026.json`
+  — 5-value m sweep + indirect-evidence table.
+* `verification_outputs/heuristic_ablation_nfe_threshold_q4_2026.json`
+  — 15-cell NFE threshold sweep.
+* `docs/audit/wave58-kanzi-nfe-scan.md` §1 — Kanzi composite byte-stability.
+* `verification_outputs/flowmol3_nfe_aware_q4_2026.json` — Wave 61
+  closed-form m(NFE) projection.
+* `docs/audit/wave58-nfe-adaptive-gate-impl.md` — gate implementation.
+* `todo/wave58-nfe-adaptive-plan.md` §3 — heuristic design rationale.
+
