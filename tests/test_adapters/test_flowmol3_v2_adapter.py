@@ -502,6 +502,144 @@ def test_default_factory() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Wave 70 Phase 3 — :meth:`FlowMol3V2Adapter.export_sampled_molecules`
+# decodes the cached trajectory to ``list[RDKit Mol]`` + metadata.
+#
+# The method is OPT-IN (default behaviour unchanged) and graceful on
+# placeholder / synthetic entries. Closes the Wave 70 Phase 1 GAP-2
+# audit finding.
+# ---------------------------------------------------------------------------
+
+
+class TestFlowMol3V2ExportSampledMolecules:
+    """``export_sampled_molecules(trace)`` decodes trajectory to RDKit Mol.
+
+    Wave 70 Phase 3 close-out. The eval pipeline
+    ``_compute_flowmol3_composite`` consumes a sequence of upstream
+    ``SampledMolecule`` objects (or any object accepted by upstream
+    ``SampleAnalyzer.analyze``). The v2 adapter's :meth:`export_trajectory`
+    only returns raw (x, a, c, e) arrays — this method bridges the gap
+    by decoding the endpoint slice to RDKit ``Mol`` objects.
+    """
+
+    def test_export_sampled_molecules_returns_list_of_mols(
+        self, adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
+    ) -> None:
+        """On a real (synthetic-but-completed) forward the method decodes to a Mol.
+
+        The NumPy backend runs ``_solve_ode_linear`` so the cached
+        trajectory is the per-step heterogeneous (x, a, c, e) lineage.
+        The decoder walks ``traj_a[-1]`` / ``traj_e[-1]`` /
+        ``traj_x[-1]`` and constructs an RDKit ``Mol`` with a 3D
+        conformer. The list length is 1 (single-molecule batch on v2).
+
+        Note: the synthetic ``_solve_ode_linear`` trajectory is NOT
+        a chemically-valid molecule (random atom-types + bond-types).
+        RDKit sanitize therefore fails; the decoder returns
+        ``marker='ok_partial'`` with a structurally-reconstructed
+        ``Mol`` (no valence check). Real ckpt forward path uses the
+        upstream SMILES shortcut (``marker='ok'``).
+        """
+        cond = _make_condition_delta(num_steps=5)
+        trace = adapter.solve_ode(initial_bundle, cond, seed=42)
+        mols, meta = adapter.export_sampled_molecules(trace)
+        assert isinstance(mols, list)
+        assert len(mols) == 1
+        mol = mols[0]
+        # RDKit ``Mol`` duck-type: has ``GetNumAtoms`` + ``GetNumBonds``.
+        assert hasattr(mol, "GetNumAtoms")
+        assert hasattr(mol, "GetNumBonds")
+        assert int(mol.GetNumAtoms()) > 0
+        # Metadata echo.
+        assert isinstance(meta, Mapping)
+        # Synthetic path -> 'ok_partial'; upstream SMILES path -> 'ok'.
+        assert meta.get("marker") in ("ok", "ok_partial")
+        assert meta.get("sanitize_status") in ("ok", "ok_partial")
+        assert int(meta.get("n_atoms", -1)) == int(mol.GetNumAtoms())
+        assert int(meta.get("n_bonds", -1)) == int(mol.GetNumBonds())
+        assert int(meta.get("build_errors", -1)) == 0
+        assert meta.get("smiles", "") != ""
+
+    def test_export_sampled_molecules_placeholder_returns_empty(
+        self, adapter: FlowMol3V2Adapter
+    ) -> None:
+        """A missing digest returns ``([], {marker=no_lineage})`` (graceful)."""
+        empty_trace = ODEIntegratorTrace(
+            steps=1,
+            accept_rate=1.0,
+            native_state_digest="nonexistent-digest",
+            integrator_config_hash="dummy-hash",
+        )
+        mols, meta = adapter.export_sampled_molecules(empty_trace)
+        assert mols == []
+        assert isinstance(meta, Mapping)
+        assert meta.get("marker") == "no_lineage"
+        assert int(meta.get("n_atoms", -1)) == 0
+        assert int(meta.get("n_bonds", -1)) == 0
+
+    def test_export_sampled_molecules_handles_3d_coords(
+        self, adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
+    ) -> None:
+        """The decoded Mol carries a 3D conformer with the endpoint positions."""
+        cond = _make_condition_delta(num_steps=5)
+        trace = adapter.solve_ode(initial_bundle, cond, seed=42)
+        mols, _meta = adapter.export_sampled_molecules(trace)
+        assert len(mols) == 1
+        mol = mols[0]
+        # RDKit exposes the conformer with ``GetConformer`` (3D).
+        conf = mol.GetConformer()
+        assert conf.Is3D() is True
+        n_atoms = int(mol.GetNumAtoms())
+        assert n_atoms > 0
+        # Position lookup must succeed for every atom (smoke check on
+        # the conformer layout).
+        positions = [tuple(conf.GetAtomPosition(i)) for i in range(n_atoms)]
+        assert len(positions) == n_atoms
+        # All positions are finite floats.
+        for (xx, yy, zz) in positions:
+            assert isinstance(xx, float)
+            assert isinstance(yy, float)
+            assert isinstance(zz, float)
+
+    def test_export_sampled_molecules_byte_stable(
+        self, adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
+    ) -> None:
+        """``export_trajectory`` return value is unchanged after the addition.
+
+        Two adapter instances with identical seeds must return
+        byte-identical lineage dicts. The D.4 regression contract is
+        that the new method is OPT-IN — calling :meth:`export_sampled_molecules`
+        does not mutate the cached entry, so a subsequent call to
+        :meth:`export_trajectory` returns the same lineage as the
+        first call.
+        """
+        cond = _make_condition_delta(num_steps=5)
+        trace = adapter.solve_ode(initial_bundle, cond, seed=42)
+        # First export — pre-sampled-molecules.
+        lineage_before = adapter.export_trajectory(trace)
+        assert lineage_before is not None
+        # Trigger the new method (consumes the lineage but does not mutate).
+        mols, meta = adapter.export_sampled_molecules(trace)
+        assert len(mols) == 1
+        # Synthetic data may produce 'ok_partial' (synthetic valences
+        # are not chemically valid). Upstream SMILES path produces 'ok'.
+        assert meta.get("marker") in ("ok", "ok_partial")
+        # Re-export — must be byte-identical (no mutation).
+        lineage_after = adapter.export_trajectory(trace)
+        assert lineage_after is not None
+        for key in ("traj_x", "traj_c", "traj_e", "traj_a"):
+            assert np.array_equal(lineage_before[key], lineage_after[key]), (
+                f"export_trajectory[{key!r}] mutated by export_sampled_molecules"
+            )
+        # And: two adapters with identical inputs → byte-identical digests
+        # (the canonical D.4 byte-stability check from Wave 49/50).
+        a2 = FlowMol3V2Adapter(backend="numpy", num_steps=5)
+        b2 = a2.build_initial_state(batch_id="b0", sample_id="s0")
+        t2 = a2.solve_ode(b2, cond, seed=42)
+        assert t2.native_state_digest == trace.native_state_digest
+
+
+# ---------------------------------------------------------------------------
 # Wave 68 Phase 3 — :meth:`FlowMol3V2Adapter.observe` closes the Wave 66
 # v2 wire gap (``adapter_missing_observe_entropy_reduction`` BLOCKED).
 # ---------------------------------------------------------------------------

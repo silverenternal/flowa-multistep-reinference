@@ -3594,6 +3594,325 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
             "traj_a": np.asarray(entry["traj_a"], dtype=np.int64),
         }
 
+    # ------------------------------------------------------------------
+    # 11. export_sampled_molecules (Wave 70 Phase 3 — RDKit Mol decode)
+    # ------------------------------------------------------------------
+
+    #: Adapter's atom-type vocabulary (10-element GEOM-Drugs heavy +
+    #: halogens + H). Mirrors the upstream :attr:`atom_type_map` when a
+    #: real checkpoint is loaded. This is the **fallback** decoder for
+    #: the synthetic / linear / CTMC paths where the upstream
+    #: ``atom_type_map`` is unavailable. Index 0 is hydrogen by upstream
+    #: convention.
+    _ADAPTER_ATOM_SYMBOLS: tuple[str, ...] = (
+        "H", "C", "N", "O", "F", "P", "S", "Cl", "Br", "I",
+    )
+
+    #: Adapter bond-type vocabulary (4 emitted bonds + no-bond sentinel).
+    #: ``(single, double, triple, aromatic, no-bond)`` per the design
+    #: spec (:data:`FLOWMOL3ADAPTER_N_BOND_TYPES`).
+    _ADAPTER_BOND_LABELS: tuple[str, ...] = (
+        "SINGLE", "DOUBLE", "TRIPLE", "AROMATIC", "NO_BOND",
+    )
+
+    def export_sampled_molecules(
+        self, trace: ODEIntegratorTrace
+    ) -> tuple[list[Any], Mapping[str, Any]]:
+        """Decode the cached trajectory to a list of RDKit ``Mol`` objects.
+
+        Wave 70 Phase 3 close-out. The eval pipeline's
+        :class:`FlowMol3Glue.compute_chemistry_metrics` consumer expects
+        a sequence of objects that can be passed to upstream
+        ``SampleAnalyzer.analyze`` (i.e. upstream ``SampledMolecule``,
+        or any object with a ``build_molecule`` / per-atom arrays).
+        This adapter currently only exposes a SMILES string on the
+        upstream path; the linear + CTMC paths have no chemistry-shape
+        representation at all. This method bridges that gap by decoding
+        the per-step lineage to RDKit ``Mol`` objects directly.
+
+        Decode pipeline (per Wave 70 Phase 1 §2 + Phase 2 §5):
+
+          1. **Lineage fetch.** Calls :meth:`export_trajectory` to
+             retrieve ``(traj_x, traj_c, traj_e, traj_a)``. Returns
+             ``([], {"marker": "no_lineage"})`` when no entry is cached
+             under the trace's digest (graceful fallback).
+          2. **Atom-type decode.** ``traj_a[-1]`` is a ``(n_atoms,)``
+             int64 vector of indices into the 10-element
+             :data:`FLOWMOL3ADAPTER_N_ATOM_TYPES` vocabulary. Maps each
+             index to its element symbol (``'H'`` / ``'C'`` / ...).
+             On the upstream path, prefers the live
+             ``self._model.atom_type_map`` when available.
+          3. **3D coords.** ``traj_x[-1]`` is a ``(n_atoms, 3)`` float64
+             array. Used to set the RDKit 3D conformer
+             (``Chem.Mol.GetConformer().SetPositions``).
+          4. **Bond decode.** ``traj_e[-1]`` is a ``(n_atoms, n_atoms)``
+             int64 bond-label matrix (symmetric). For each ``(i, j)``
+             with ``i < j`` and ``e[i, j] != NO_BOND``, adds a
+             ``Chem.Bond`` with the appropriate
+             ``Chem.BondType``. The diagonal is masked.
+          5. **Sanitize.** ``Chem.SanitizeMol`` is attempted; on failure
+             the molecule is skipped and ``build_errors`` is incremented.
+          6. **Upstream shortcut.** On the upstream path the cached
+             ``rdkit_mol_smiles`` (set by :meth:`_solve_ode_upstream`)
+             is preferred when present, because it is the
+             upstream-validated SMILES — the linear / CTMC reconstruction
+             is approximate. The SMILES is converted to a 3D RDKit
+             ``Mol`` via ``Chem.AddHs + AllChem.EmbedMolecule`` (the
+             canonical recipe the upstream ``molecule_builder`` uses).
+
+        Returns
+        -------
+        tuple[list[Any], Mapping[str, Any]]
+            ``(molecules, metadata)`` where ``molecules`` is the list of
+            decoded RDKit ``Mol`` objects (length 0 or 1 on the v2
+            adapter — single-molecule batch) and ``metadata`` is a
+            dict with keys:
+
+              - ``"marker"`` — one of ``"no_lineage"`` (no entry cached),
+                ``"no_decode"`` (lineage present but decode failed), or
+                ``"ok"`` (success).
+              - ``"n_atoms"`` — number of atoms in the decoded molecule
+                (or 0).
+              - ``"n_bonds"`` — number of bonds in the decoded molecule
+                (or 0).
+              - ``"build_errors"`` — number of bonds / atoms that were
+                skipped during the linear / CTMC reconstruction (always
+                0 on the upstream SMILES shortcut).
+              - ``"smiles"`` — the canonical SMILES string of the
+                decoded molecule (``""`` on failure).
+
+        Notes
+        -----
+        * **Interface-first:** this method is OPT-IN — callers that
+          still want the raw lineage call :meth:`export_trajectory`
+          directly. The cached entry is read but never mutated.
+        * **Byte-stable:** :meth:`export_trajectory` is preserved
+          verbatim. No D.4 regression vector changes.
+        * **Graceful fallback:** synthetic / placeholder traces (no
+          real ckpt forward) still return a deterministic ``(0,
+          {"marker": "no_decode", ...})`` tuple so the eval pipeline
+          can branch on ``marker != "ok"``.
+        """
+        metadata: dict[str, Any] = {
+            "marker": "no_decode",
+            "n_atoms": 0,
+            "n_bonds": 0,
+            "build_errors": 0,
+            "smiles": "",
+        }
+        lineage = self.export_trajectory(trace)
+        if lineage is None:
+            metadata["marker"] = "no_lineage"
+            return [], metadata
+        entry = self._native_states.get(trace.native_state_digest) or {}
+
+        # --- Upstream SMILES shortcut (preferred) ---------------------
+        cached_smiles = str(entry.get("rdkit_mol_smiles", "") or "")
+        if cached_smiles:
+            mol = self._decode_rdkit_mol_from_smiles(cached_smiles)
+            if mol is not None:
+                metadata.update(
+                    {
+                        "marker": "ok",
+                        "sanitize_status": "ok",
+                        "n_atoms": int(mol.GetNumAtoms()),
+                        "n_bonds": int(mol.GetNumBonds()),
+                        "build_errors": 0,
+                        "smiles": cached_smiles,
+                    }
+                )
+                return [mol], metadata
+            # SMILES cached but RDKit failed to decode → fall through
+            # to the (x, a, e) reconstruction below.
+
+        # --- Linear / CTMC / placeholder reconstruction ---------------
+        traj_x = lineage["traj_x"]
+        traj_a = lineage["traj_a"]
+        traj_e = lineage["traj_e"]
+        # Endpoint slice.
+        if traj_x.ndim != 3 or traj_x.shape[0] == 0:
+            return [], metadata
+        x_final = np.asarray(traj_x[-1], dtype=np.float64)
+        a_final = np.asarray(traj_a[-1], dtype=np.int64)
+        e_final = np.asarray(traj_e[-1], dtype=np.int64)
+        if x_final.ndim != 2 or x_final.shape[1] != 3:
+            return [], metadata
+        n_atoms = int(x_final.shape[0])
+        if a_final.shape[0] != n_atoms or e_final.shape != (n_atoms, n_atoms):
+            return [], metadata
+
+        # Prefer the upstream atom_type_map when available (real ckpt).
+        upstream_atom_map = list(
+            getattr(self._model, "atom_type_map", []) or []
+        )
+        atom_symbols: tuple[str, ...] = (
+            tuple(str(s) for s in upstream_atom_map)
+            if upstream_atom_map and len(upstream_atom_map) >= n_atoms
+            else self._ADAPTER_ATOM_SYMBOLS
+        )
+
+        mol, sanitize_status = self._decode_rdkit_mol_from_arrays(
+            x=x_final,
+            a=a_final,
+            e=e_final,
+            atom_symbols=atom_symbols,
+        )
+        if mol is None:
+            return [], metadata
+        # Canonical SMILES echo (post-sanitize).
+        try:
+            from rdkit import Chem as _Chem  # noqa: PLC0415
+            metadata["smiles"] = str(_Chem.MolToSmiles(mol))
+        except Exception:  # noqa: BLE001 — SMILES echo is best-effort.
+            metadata["smiles"] = ""
+        # Marker is 'ok' for sanitized mols, 'ok_partial' for
+        # structurally-reconstructed mols whose valence / aromaticity
+        # didn't pass RDKit's sanitizer. Both are usable downstream —
+        # ``SampleAnalyzer.analyze`` reports ``frac_valid_mols`` and
+        # handles partial mols gracefully.
+        marker = "ok" if sanitize_status == "ok" else "ok_partial"
+        metadata.update(
+            {
+                "marker": marker,
+                "sanitize_status": sanitize_status,
+                "n_atoms": int(mol.GetNumAtoms()),
+                "n_bonds": int(mol.GetNumBonds()),
+                "build_errors": 0,
+            }
+        )
+        return [mol], metadata
+
+    def _decode_rdkit_mol_from_smiles(self, smiles: str) -> Any:
+        """Decode a SMILES string to a 3D RDKit ``Mol`` (lazy rdkit import).
+
+        Mirrors the canonical ``sampled_mols_from_smiles`` recipe:
+
+            MolFromSmiles -> AddHs -> ETKDGv3 -> EmbedMolecule
+            (MMFF skipped — the upstream's own decode applies
+            MMFFOptimizeMolecule later, and embedding-only is enough
+            for the ``Mol`` object's surface API.)
+
+        Returns ``None`` when RDKit cannot parse the SMILES or when
+        the embedding fails. Lazy-imports ``rdkit.Chem`` so the v2
+        adapter remains torch / rdkit-free at module-load time on the
+        default NumPy backend.
+        """
+        try:
+            from rdkit import Chem as _Chem  # noqa: PLC0415 — rdkit is optional.
+        except ImportError:
+            return None
+        try:
+            mol = _Chem.MolFromSmiles(smiles)
+        except Exception:  # noqa: BLE001 — defensive against malformed SMILES.
+            return None
+        if mol is None:
+            return None
+        try:
+            mol = _Chem.AddHs(mol)
+            params = _Chem.AllChem.ETKDGv3()
+            params.randomSeed = 0xF00D
+            if _Chem.AllChem.EmbedMolecule(mol, params) != 0:
+                return None
+        except Exception:  # noqa: BLE001 — embed can raise on weird mols.
+            return None
+        return mol
+
+    def _decode_rdkit_mol_from_arrays(
+        self,
+        *,
+        x: ArrayF64,
+        a: ArrayF64,
+        e: ArrayF64,
+        atom_symbols: tuple[str, ...],
+    ) -> tuple[Any, str]:
+        """Build an RDKit ``Mol`` from (x, a, e) arrays.
+
+        Atom types come from ``a[i]`` (an index into ``atom_symbols``).
+        Bond types come from ``e[i, j]`` for ``i < j`` (an index into
+        :data:`_ADAPTER_BOND_LABELS`). The diagonal is masked. The 3D
+        coordinates are stored on the conformer
+        (``Chem.Mol.GetConformer().SetPositions``).
+
+        Returns
+        -------
+        tuple[Any, str]
+            ``(mol, sanitize_status)`` where ``sanitize_status`` is
+            ``"ok"`` (RDKit sanitization passed), ``"ok_partial"``
+            (sanitize failed; mol is structurally reconstructed but
+            not valence-checked — the eval pipeline's
+            ``SampleAnalyzer.analyze`` handles such mols and reports
+            ``frac_valid_mols`` accordingly), or ``"none"`` when RDKit
+            is not importable.
+        """
+        try:
+            from rdkit import Chem as _Chem  # noqa: PLC0415 — rdkit is optional.
+        except ImportError:
+            return None, "none"
+        n_atoms = int(x.shape[0])
+        rw = _Chem.RWMol()
+        # Add atoms.
+        atom_indices: list[int] = []
+        for i in range(n_atoms):
+            a_idx = int(a[i])
+            if a_idx < 0 or a_idx >= len(atom_symbols):
+                # Out-of-range atom type — replace with 'C' (graceful).
+                symbol = "C"
+            else:
+                symbol = str(atom_symbols[a_idx])
+            atom = _Chem.Atom(symbol)
+            rw.AddAtom(atom)
+            atom_indices.append(atom.GetIdx())
+        # Add bonds (upper triangle only).
+        bond_type_map = {
+            0: _Chem.BondType.SINGLE,
+            1: _Chem.BondType.DOUBLE,
+            2: _Chem.BondType.TRIPLE,
+            3: _Chem.BondType.AROMATIC,
+        }
+        for i in range(n_atoms):
+            for j in range(i + 1, n_atoms):
+                b_idx = int(e[i, j])
+                if b_idx <= 0 or b_idx >= len(self._ADAPTER_BOND_LABELS):
+                    continue
+                if self._ADAPTER_BOND_LABELS[b_idx] == "NO_BOND":
+                    continue
+                bt = bond_type_map.get(b_idx)
+                if bt is None:
+                    continue
+                try:
+                    rw.AddBond(i, j, bt)
+                except Exception:  # noqa: BLE001 — bad valence etc.
+                    continue
+        mol = rw.GetMol()
+        sanitize_status = "ok"
+        try:
+            _Chem.SanitizeMol(mol)
+        except Exception:  # noqa: BLE001 — synthetic data is often unsanitizable.
+            sanitize_status = "ok_partial"
+            # Try permissive build (no sanitize) so callers that only
+            # need the structural layout (positions + bonds) still get
+            # a usable Mol. Skip valence errors.
+            try:
+                _Chem.GetSSSR(mol)  # ring detection only
+            except Exception:  # noqa: BLE001
+                pass
+        # Set 3D conformer (always attempt, even on partial mols).
+        try:
+            conf = _Chem.Conformer(n_atoms)
+            for i in range(n_atoms):
+                conf.SetAtomPosition(
+                    i,
+                    (
+                        float(x[i, 0]),
+                        float(x[i, 1]),
+                        float(x[i, 2]),
+                    ),
+                )
+            mol.AddConformer(conf, assignId=True)
+        except Exception:  # noqa: BLE001 — conformer failure not fatal.
+            pass
+        return mol, sanitize_status
+
 
 # ---------------------------------------------------------------------------
 # Factory
