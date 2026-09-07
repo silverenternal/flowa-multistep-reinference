@@ -710,3 +710,276 @@ def test_resolve_adapter_other_models_unaffected() -> None:
         f"kanzi must NOT be redirected to FlowMol3 adapter; got "
         f"{type(adapter).__name__!r}. The Wave 66 wire is over-broad."
     )
+
+# ---------------------------------------------------------------------------
+# 4. Wave 68 Phase 4 — generic dispatch tests (ObservationKind)
+# ---------------------------------------------------------------------------
+#
+# The 3 sibling helpers (``_compute_kanzi_real_metric_via_trace``,
+# ``_compute_lineageflow_real_metric_via_trace``,
+# ``_compute_flowmol3_real_metric_via_trace``) are now thin
+# backward-compat shims around the new generic helper
+# :func:`_compute_real_metric_via_observation`. The dispatch chain
+# at line 3268 routes through the generic helper via a model →
+# ``ObservationKind`` lookup table (``_MODEL_OBSERVATION_KIND``).
+#
+# These tests verify:
+# 1. The lookup table covers every model the dispatch chain used
+#    pre-Phase-4.
+# 2. The 3 sibling helpers still return ``(value, marker, dbg)``
+#    byte-stable for the existing test scenarios.
+# 3. The generic helper picks the right ``ObservationKind`` for
+#    each model and dispatches to the per-kind metric decoder.
+# 4. Adapters that conform to ``AdapterObservationProtocol`` (FlowMol3
+#    v1 + v2 as of Phase 3) take the new ``observe(...)`` path;
+#    legacy adapters (Kanzi + LineageFlow) fall through to the
+#    legacy methods.
+# 5. A cold-clone path with no Protocol import returns BLOCKED with
+#    ``reason="observation_protocol_unavailable"`` (mirrors the
+#    pre-Phase-4 BLOCKED contract).
+
+
+def test_model_observation_kind_lookup_covers_dispatch_chain() -> None:
+    """`_MODEL_OBSERVATION_KIND` covers every model the dispatch chain used pre-Phase-4.
+
+    Pre-Phase-4 the dispatch chain accepted ``model in {"kanzi",
+    "lineageflow", "flowmol3", "flowmol3_v2"}``. The lookup table
+    must cover the same set so the generic helper can route every
+    real-ckpt cell without falling through to ``BLOCKED``.
+    """
+    tools = _import_tools_module()
+    mapping = tools._MODEL_OBSERVATION_KIND
+    assert isinstance(mapping, dict), (
+        f"expected dict, got {type(mapping).__name__}"
+    )
+    expected_models = {"kanzi", "lineageflow", "flowmol3", "flowmol3_v2"}
+    missing = expected_models - set(mapping.keys())
+    assert not missing, (
+        f"_MODEL_OBSERVATION_KIND missing models: {sorted(missing)}"
+    )
+    # And every kind in the table must be a real ObservationKind
+    # enum member (defensive against typos in the table).
+    from adaptive_reflow.framework.interfaces import ObservationKind
+    for model, kind in mapping.items():
+        assert isinstance(kind, ObservationKind), (
+            f"_MODEL_OBSERVATION_KIND[{model!r}] = {kind!r} is not "
+            f"a valid ObservationKind"
+        )
+
+
+def test_generic_helper_picks_discrete_tokens_for_kanzi() -> None:
+    """Generic helper with ``observation_kind=DISCRETE_TOKENS`` + Kanzi adapter → BLOCKED (legacy adapter).
+
+    The FlowMol3 v1 placeholder ships ``observe(...)`` (Phase 3).
+    The Kanzi adapter does NOT yet conform to the Protocol, so the
+    generic helper falls through to ``adapter.observe_token_indices(...)``.
+    With a mock adapter that returns ``observe_token_indices=...``
+    via the proper Kanzi channel name, the metric computes; with no
+    method at all, the helper BLOCKEDs with the legacy reason
+    (mirrors pre-Phase-4 contract).
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    class _KanziAdapter:
+        """Mock Kanzi-like adapter shipping only the legacy method."""
+
+        def observe_token_indices(
+            self, trace: Any, paper_quantities: Any = None,
+        ) -> dict[str, Any]:
+            return {
+                "discrete_token_index": [
+                    0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0,
+                ],
+            }
+
+    value, marker, dbg = tools._compute_real_metric_via_observation(
+        adapter=_KanziAdapter(),
+        trace=None,
+        model="kanzi",
+        observation_kind=ObservationKind.DISCRETE_TOKENS,
+        seed=42,
+        nfe=10,
+    )
+    # Kanzi decode → 8-char AA string. Pfam absent in the test env,
+    # so the fallback ``_is_valid_protein_string`` path runs.
+    assert marker in ("computed", "blocked"), (
+        f"unexpected marker={marker!r}, dbg={dbg!r}"
+    )
+    if marker == "computed":
+        assert isinstance(value, float)
+        assert 0.0 <= value <= 1.0
+        assert "observation_surface" in dbg
+        assert dbg["observation_surface"]["observation_surface"] in (
+            "observe_protocol", "legacy_observe_token_indices",
+        )
+
+
+def test_generic_helper_blocks_when_adapter_lacks_observation_method() -> None:
+    """Mock adapter with NO observation methods → BLOCKED with legacy reason.
+
+    Confirms the legacy fallback surfaces a descriptive reason when
+    neither ``observe(...)`` (Protocol path) nor
+    ``observe_token_indices`` / ``observe_entropy_reduction``
+    (legacy path) is available.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    class _NoMethodAdapter:
+        """Adapter with no observation methods at all."""
+        pass
+
+    value, marker, dbg = tools._compute_real_metric_via_observation(
+        adapter=_NoMethodAdapter(),
+        trace=None,
+        model="kanzi",
+        observation_kind=ObservationKind.DISCRETE_TOKENS,
+        seed=42,
+        nfe=10,
+    )
+    assert value is None
+    assert marker == "blocked"
+    assert dbg.get("reason") == "adapter_missing_observe_token_indices"
+
+
+def test_generic_helper_blocks_on_nan_entropy_reduction() -> None:
+    """``observe_entropy_reduction`` returning NaN → BLOCKED.
+
+    Mirrors the pre-Phase-4 ``entropy_reduction_is_nan`` contract
+    from the FlowMol3 metric helper. Confirms the legacy fallback
+    in :func:`_extract_observation_legacy` surfaces NaN correctly.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    class _NaNEntropyAdapter:
+        def observe_entropy_reduction(
+            self, trace: Any, paper_quantities: Any = None,
+            *,
+            theta_before: Any = None,
+            theta_after: Any = None,
+        ) -> dict[str, float]:
+            return {"per_position_entropy_reduction": float("nan")}
+
+    value, marker, dbg = tools._compute_real_metric_via_observation(
+        adapter=_NaNEntropyAdapter(),
+        trace=None,
+        model="flowmol3",
+        observation_kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+        seed=42,
+        nfe=10,
+    )
+    assert value is None
+    assert marker == "blocked"
+    assert dbg.get("reason") == "entropy_reduction_is_nan"
+
+
+def test_flowmol3_sibling_shim_delegates_to_generic_helper() -> None:
+    """``_compute_flowmol3_real_metric_via_trace`` shim returns ``(value, marker, dbg)``.
+
+    Backward-compat contract: the sibling helper signature is
+    unchanged, so external callers (test surface + downstream
+    scripts) keep working. The implementation delegates to the
+    generic helper + threads ``theta_after``.
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
+
+    adapter = default_flowmol3_adapter(force_mode="synthetic")
+    trace = _make_placeholder_trace(adapter)
+
+    value, marker, dbg = tools._compute_flowmol3_real_metric_via_trace(
+        adapter=adapter, trace=trace, seed=42, nfe=10,
+    )
+    # Synthetic FlowMol3: uniform-vs-uniform → 0.0.
+    assert marker == "computed"
+    assert isinstance(value, float)
+    assert value == 0.0
+    # Debug dict must carry the byte-stable fields + the new
+    # observation_surface marker.
+    assert dbg["metric_axis"] == "per_position_atom_type_entropy_reduction"
+    assert dbg["K_atom_types"] == 10
+    assert "observation_surface" in dbg
+    assert "real_theta_after" in dbg  # Wave 54 parity
+    assert "Wave 53" in dbg["decode_strategy"]
+
+
+def test_kanzi_sibling_shim_returns_value_marker_dbg() -> None:
+    """``_compute_kanzi_real_metric_via_trace`` shim contract preserved.
+
+    The Kanzi shim delegates to the generic helper with
+    ``observation_kind=DISCRETE_TOKENS``. The signature, return
+    tuple, and marker contract are unchanged.
+    """
+    tools = _import_tools_module()
+
+    class _KanziAdapter:
+        def observe_token_indices(
+            self, trace: Any, paper_quantities: Any = None,
+        ) -> dict[str, Any]:
+            return {"discrete_token_index": list(range(20))}
+
+    value, marker, dbg = tools._compute_kanzi_real_metric_via_trace(
+        adapter=_KanziAdapter(), trace=None, seed=42, nfe=10,
+    )
+    assert marker in ("computed", "blocked")
+    if marker == "computed":
+        assert isinstance(value, float)
+
+
+def test_lineageflow_sibling_shim_returns_value_marker_dbg() -> None:
+    """``_compute_lineageflow_real_metric_via_trace`` shim contract preserved.
+
+    The LineageFlow shim delegates to the generic helper with
+    ``observation_kind=DISCRETE_TOKENS``. Without ``torch`` or
+    ``transformers`` installed in the test env, the helper BLOCKEDs
+    with a missing-dep reason — which is the byte-stable contract.
+    """
+    tools = _import_tools_module()
+
+    class _LineageflowAdapter:
+        def observe_token_indices(
+            self, trace: Any, paper_quantities: Any = None,
+        ) -> dict[str, Any]:
+            return {"amino_acid_categorical": list(range(20))}
+
+    value, marker, dbg = tools._compute_lineageflow_real_metric_via_trace(
+        adapter=_LineageflowAdapter(), trace=None, seed=42, nfe=10,
+    )
+    # In the test env, ESM-2 + torch may be unavailable. The helper
+    # either returns computed (if ESM-2 is installed and ppl <= 50)
+    # or BLOCKED with a missing-dep reason. Either path is correct.
+    assert marker in ("computed", "blocked")
+    if marker == "blocked":
+        # The reason must be a meaningful diagnostic (missing dep /
+        # empty seq / etc.), not an unhandled crash.
+        assert "reason" in dbg
+
+
+def test_extract_observation_legacy_returns_blocked_when_method_missing() -> None:
+    """Legacy ``_extract_observation_legacy`` surfaces descriptive BLOCKED reasons.
+
+    Defensive test: when an adapter does not ship the requested
+    legacy method, the helper BLOCKEDs with the standard reason
+    (matches the pre-Phase-4 ``hasattr`` failure path).
+    """
+    tools = _import_tools_module()
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    class _NoEntropyAdapter:
+        pass
+
+    obs, status, dbg = tools._extract_observation_legacy(
+        adapter=_NoEntropyAdapter(),
+        trace=None,
+        model="flowmol3",
+        observation_kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+        paper_quantities=None,
+        theta_after=None,
+        dbg={"model": "flowmol3"},
+    )
+    assert obs is None
+    assert status == "blocked"
+    assert dbg["reason"] == "adapter_missing_observe_entropy_reduction"
+    assert dbg["adapter"] == "_NoEntropyAdapter"

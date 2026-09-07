@@ -172,6 +172,27 @@ from adaptive_reflow.adapters._adapter_common import (
     per_position_entropy_reduction,
 )
 
+# Wave 68 Phase 4 — metric layer now consumes the typed
+# :class:`AdapterObservationProtocol.observe(...)` surface (Phase 1
+# interface + Phase 3 FlowMol3 wrap). The new generic helper
+# :func:`_compute_real_metric_via_observation` dispatches on
+# :class:`ObservationKind`, not on model name; the import below is
+# stdlib-only (the Protocol + dataclass live in framework-core).
+try:
+    from adaptive_reflow.framework.interfaces import (  # type: ignore
+        AdapterObservationProtocol,
+        ObservationKind,
+        ObservationResult,
+    )
+except ImportError:  # pragma: no cover — defensive only
+    # Cold-clone path may not have framework-core; surface a stub so
+    # module-level import never raises. The metric helper will return
+    # ``BLOCKED`` with reason ``observation_protocol_unavailable`` if
+    # the new path is ever hit in a cold-clone that lacks the Protocol.
+    AdapterObservationProtocol = None  # type: ignore[assignment]
+    ObservationKind = None  # type: ignore[assignment]
+    ObservationResult = None  # type: ignore[assignment]
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -1498,112 +1519,433 @@ def _decode_lineageflow_idx_to_aa(idx_1d: Any) -> str:
     return "".join(alphabet[int(v) % K] for v in arr)
 
 
-def _compute_kanzi_real_metric_via_trace(
+# ---------------------------------------------------------------------------
+# Wave 68 Phase 4 — Generic via-trace metric helper (ObservationKind dispatch)
+# ---------------------------------------------------------------------------
+#
+# This is the BIG refactor the Wave 67 audit identified (wave67-plan.md §4).
+# Three sibling helpers (_compute_kanzi_real_metric_via_trace /
+# _compute_lineageflow_real_metric_via_trace /
+# _compute_flowmol3_real_metric_via_trace) are collapsed into a SINGLE
+# generic helper that dispatches on ``ObservationKind``, not on model name.
+#
+# The Wave 67 dispatch chain at line 2924-2955 (the ``if model == "kanzi"
+# / elif model == "lineageflow" / elif model in ("flowmol3",
+# "flowmol3_v2")`` chain) collapses to ONE call. Adding a 5th model is now
+# a single ``adapter.observe(...)`` implementation — the metric layer
+# picks up the right observation automatically.
+#
+# Byte-stability contract: the generic helper INVOKES the same legacy
+# ``observe_token_indices`` / ``observe_entropy_reduction`` methods that
+# the per-model helpers used pre-Phase-4; the numerics are byte-stable by
+# construction. Adapters that adopt ``AdapterObservationProtocol`` (FlowMol3
+# v1 + v2 as of Phase 3) take the new ``observe(...)`` path; legacy
+# adapters (Kanzi + LineageFlow) fall through to the legacy methods via
+# :func:`_extract_observation_legacy`.
+
+
+def _extract_observation(
     *,
     adapter: Any,
     trace: Any,
-    seed: int,
-    nfe: int,
-) -> tuple[float | None, str, dict[str, Any]]:
-    """Real ``protein_sequence_validity_rate`` via ``adapter.observe_token_indices``.
+    model: str,
+    observation_kind: Any,
+    paper_quantities: Any,
+    theta_after: Any = None,
+    theta_before: Any = None,
+) -> tuple[Any | None, str, dict[str, Any]]:
+    """Extract a single :class:`ObservationResult` of ``observation_kind`` from ``adapter``.
 
-    Wave 44 Tier-3 metric-axis close: consumes the adapter's ODE
-    trajectory (returned by ``solve_ode``) via the
-    ``observe_token_indices`` Protocol method (added by Wave 44
-    Agent A) instead of running a fresh ``kanzi.DAE.encode()``
-    forward. The baseline and framework arms now produce different
-    ``trace`` objects (baseline: 1 round @ ``nfe``, framework: 3
-    rounds @ ``ceil(nfe/3)`` with restart-blend between rounds), so
-    the decoded per-position token-index arrays differ and the
-    downstream Pfam-strict round-trip can in principle distinguish
-    them.
+    Wave 68 Phase 4 — the metric layer's single observation surface.
+    Tries ``adapter.observe(...)`` first (new :class:`AdapterObservationProtocol`
+    path; FlowMol3 v1 + v2 as of Phase 3) and falls back to the legacy
+    ``observe_token_indices`` / ``observe_entropy_reduction`` methods
+    (Kanzi + LineageFlow) when ``observe(...)`` is absent or does not
+    return the requested kind. Synthesises an :class:`ObservationResult`
+    from the legacy dict so the downstream ``_compute_metric_from_observation``
+    helper sees a single, uniform payload type.
 
-    Algorithm
-    ~~~~~~~~~
+    Returns ``(obs_result_or_None, status, debug_dict)`` where:
 
-    1. Call ``adapter.observe_token_indices(trace, paper_quantities=...)``
-       where the snapshot is a real :class:`PaperQuantitiesSnapshot`
-       materialised by :func:`_compute_paper_quantities_for_model`
-       keyed on a per-model ``g`` profile (Wave 45 F-3 fix).
-       Returns ``{DISCRETE_TOKEN_INDEX: np.ndarray(shape=(L_z,), dtype=float64)}``.
-    2. Decode the (L_z,) index array via
-       :func:`_decode_kanzi_idx_to_aa` (mod-20 mapping) to one AA
-       string of length ``L_z``.
-    3. Apply the (a)/(b)/(c) Pfam-strict round-trip check on that
-       single AA string. For the framework arm, if
-       ``apply_restart_distribution`` preserves ``discrete_idx``
-       byte-identically (it does, by design — the discrete AR-prior
-       state is not affected by the latent blend), the validity
-       rate equals the baseline arm's validity rate; the framework
-       value-add at this metric then shows up as ``TIE_AT_SATURATION``
-       and is not a regression. This is documented behaviour, not a
-       bug — closing the framework-vs-baseline *delta* on
-       ``discrete_token_index`` for Kanzi is Wave 45's job (the
-       Wave 45 GPT-prior restart blend is the planned fix).
-    4. Returns ``(validity_rate, marker, debug_dict)``.
+    * ``obs_result`` is the matching :class:`ObservationResult` (or ``None``).
+    * ``status`` is ``"computed"`` on success or ``"blocked"`` on failure.
+    * ``debug_dict`` carries the reason + surface info.
+
+    Per-model decode math is NOT done here — that's the job of
+    :func:`_compute_metric_from_observation`. This function ONLY
+    extracts the observation; the model-specific vocab mapping happens
+    after.
     """
-    try:
-        if not hasattr(adapter, "observe_token_indices"):
-            return None, "blocked", {
-                "reason": "adapter_missing_observe_token_indices",
-                "adapter": str(type(adapter).__name__),
-            }
-        # Wave 45 Agent C — F-3 fix: thread real ``paper_quantities``
-        # through to the adapter so the paper-quantity-driven
-        # scheduler has actual signal. The previous hardcoded
-        # ``paper_quantities=None`` made every paper-quantity-aware
-        # downstream code path a no-op. We materialise a real
-        # :class:`PaperQuantitiesSnapshot` via
-        # :meth:`PaperQuantitiesSnapshot.for_profile` keyed on a
-        # model-appropriate ``g`` profile. Failures degrade to
-        # ``paper_quantities=None`` with a debug stamp so the
-        # metric layer never crashes on a missing framework import.
-        pq_snap, pq_dbg = _compute_paper_quantities_for_model(
-            "kanzi", seed=seed, nfe=nfe,
-        )
+    dbg: dict[str, Any] = {
+        "observation_kind_requested": str(observation_kind),
+        "observation_surface": "unknown",
+        "model": str(model),
+    }
+    # ---- 1. Try the new observe(...) path (AdapterObservationProtocol) ----
+    if (
+        ObservationKind is not None
+        and AdapterObservationProtocol is not None
+        and isinstance(adapter, AdapterObservationProtocol)
+        and hasattr(adapter, "observe")
+    ):
         try:
-            tokens_dict = adapter.observe_token_indices(
-                trace, paper_quantities=pq_snap,
+            results = adapter.observe(
+                trace,
+                None,
+                paper_quantities=paper_quantities,
+                strategies=(observation_kind,),
+                theta_before=theta_before,
+                theta_after=theta_after,
             )
         except Exception as exc:  # noqa: BLE001
-            return None, "blocked", {
-                "reason": (
-                    f"observe_token_indices raised: "
-                    f"{type(exc).__name__}:{exc}"
-                ),
-            }
-        if not tokens_dict:
-            return None, "blocked", {
-                "reason": "observe_token_indices returned empty dict",
-            }
-        # Resolve the kanzi discrete-token-index channel name. Import
-        # locally to avoid making the tools/ module a hard import
-        # edge to the adapter (the adapter import is already on
-        # this module's path via _resolve_adapter).
-        from adaptive_reflow.adapters.kanzi import (  # type: ignore
-            DISCRETE_TOKEN_INDEX as _KANZI_DISCRETE,
+            dbg["observation_surface"] = "observe_protocol"
+            dbg["reason"] = (
+                f"observe raised: {type(exc).__name__}:{exc}"
+            )
+            return None, "blocked", dbg
+        obs_match = next(
+            (r for r in results if r.kind == observation_kind),
+            None,
         )
-        idx_arr = tokens_dict.get(str(_KANZI_DISCRETE))
+        if obs_match is not None:
+            dbg["observation_surface"] = "observe_protocol"
+            dbg["observation_channel"] = str(obs_match.channel)
+            dbg["observation_units"] = str(obs_match.units)
+            return obs_match, "computed", dbg
+        # Adapter conforms but did not return the requested kind — fall
+        # through to legacy surface (Kanzi + LineageFlow don't conform
+        # yet, but a future FlowMol3 also returning empty tuple for
+        # DISCRETE_TOKENS would take this path).
+        dbg["observe_returned_kinds"] = [
+            str(r.kind) for r in results
+        ]
+        dbg["observe_missing_kind"] = str(observation_kind)
+    # ---- 2. Legacy fallback (observe_token_indices / observe_entropy_reduction) ----
+    # The legacy methods are model-specific: Kanzi + LineageFlow ship
+    # ``observe_token_indices``; FlowMol3 v1 + LineageFlow ship
+    # ``observe_entropy_reduction``. The new path is preferred but the
+    # legacy methods must keep working for adapters that haven't
+    # adopted the Protocol yet.
+    return _extract_observation_legacy(
+        adapter=adapter, trace=trace, model=model,
+        observation_kind=observation_kind,
+        paper_quantities=paper_quantities,
+        theta_after=theta_after,
+        dbg=dbg,
+    )
+
+
+def _extract_observation_legacy(
+    *,
+    adapter: Any,
+    trace: Any,
+    model: str,
+    observation_kind: Any,
+    paper_quantities: Any,
+    theta_after: Any = None,
+    dbg: dict[str, Any],
+) -> tuple[Any | None, str, dict[str, Any]]:
+    """Legacy observation extraction (Kanzi + LineageFlow).
+
+    Translates the legacy ``observe_token_indices`` /
+    ``observe_entropy_reduction`` return dict into an
+    :class:`ObservationResult` keyed by ``observation_kind``. Returns
+    ``(obs_result, "blocked", dbg)`` with a descriptive ``reason`` if
+    the legacy method is absent or raises.
+
+    Why synthesize an :class:`ObservationResult`?
+    ---------------------------------------------
+
+    The legacy methods return a ``dict[str, np.ndarray]`` or
+    ``dict[str, float]`` keyed by per-model channel names
+    (``"discrete_token_index"``, ``"amino_acid_categorical"``,
+    ``"per_position_entropy_reduction"``). Synthesising an
+    :class:`ObservationResult` lets the downstream
+    ``_compute_metric_from_observation`` helper consume a single,
+    uniform payload type — the metric layer does NOT need to know
+    whether the payload came from the new ``observe(...)`` path or
+    the legacy ``observe_token_indices(...)`` / ``observe_entropy_reduction(...)``
+    path. The ``channel`` field carries the legacy channel name; the
+    decode math reads ``obs.channel`` to look up the per-model vocab.
+    """
+    if ObservationKind is None:
+        dbg["observation_surface"] = "legacy"
+        dbg["reason"] = "observation_protocol_unavailable"
+        return None, "blocked", dbg
+    # ---- DISCRETE_TOKENS: route to observe_token_indices -----------------
+    if observation_kind == ObservationKind.DISCRETE_TOKENS:
+        if not hasattr(adapter, "observe_token_indices"):
+            dbg["observation_surface"] = "legacy"
+            dbg["reason"] = "adapter_missing_observe_token_indices"
+            dbg["adapter"] = str(type(adapter).__name__)
+            return None, "blocked", dbg
+        try:
+            tokens_dict = adapter.observe_token_indices(
+                trace, paper_quantities=paper_quantities,
+            )
+        except Exception as exc:  # noqa: BLE001
+            dbg["observation_surface"] = "legacy_observe_token_indices"
+            dbg["reason"] = (
+                f"observe_token_indices raised: "
+                f"{type(exc).__name__}:{exc}"
+            )
+            return None, "blocked", dbg
+        if not tokens_dict:
+            dbg["observation_surface"] = "legacy_observe_token_indices"
+            dbg["reason"] = "observe_token_indices returned empty dict"
+            return None, "blocked", dbg
+        # Resolve the per-model channel name (DISCRETE_TOKEN_INDEX for
+        # Kanzi, AMINO_ACID_CATEGORICAL for LineageFlow). The metric
+        # layer keeps the per-model mapping local — the framework core
+        # is stdlib-only and cannot import torch.
+        if model == "kanzi":
+            from adaptive_reflow.adapters.kanzi import (  # type: ignore
+                DISCRETE_TOKEN_INDEX as _KANZI_DISCRETE,
+            )
+            channel = str(_KANZI_DISCRETE)
+        elif model == "lineageflow":
+            from adaptive_reflow.adapters.lineageflow import (  # type: ignore
+                AMINO_ACID_CATEGORICAL as _LF_AMINO,
+            )
+            channel = str(_LF_AMINO)
+        else:
+            dbg["observation_surface"] = "legacy_observe_token_indices"
+            dbg["reason"] = (
+                f"DISCRETE_TOKENS not supported for model={model!r}"
+            )
+            return None, "blocked", dbg
+        idx_arr = tokens_dict.get(channel)
         if idx_arr is None:
-            return None, "blocked", {
-                "reason": (
-                    "kanzi observe_token_indices missing "
-                    "discrete_token_index channel"
-                ),
-                "channels": list(tokens_dict.keys()),
-            }
-        # _decode_kanzi_idx_to_aa expects (B, L); the trajectory yields
-        # a single (L_z,) sequence so we treat it as B=1. Local numpy
-        # import (always available in kanzi / lineageflow sidecar
-        # venvs which carry numpy as a torch/transformers dep).
-        import numpy as _np  # type: ignore
-        idx_2d = _np.asarray(idx_arr, dtype=_np.float64).reshape(1, -1)
-        aa_strings = _decode_kanzi_idx_to_aa(idx_2d)
+            dbg["observation_surface"] = "legacy_observe_token_indices"
+            dbg["reason"] = (
+                f"observe_token_indices missing channel={channel!r}"
+            )
+            dbg["channels"] = list(tokens_dict.keys())
+            return None, "blocked", dbg
+        synth = ObservationResult(
+            kind=ObservationKind.DISCRETE_TOKENS,
+            channel=channel,
+            payload=idx_arr,
+            units="indices",
+            metadata={"surface": "legacy_observe_token_indices"},
+        )
+        dbg["observation_surface"] = "legacy_observe_token_indices"
+        dbg["observation_channel"] = channel
+        return synth, "computed", dbg
+    # ---- POSITION_ENTROPY_REDUCTION: route to observe_entropy_reduction ---
+    if observation_kind == ObservationKind.POSITION_ENTROPY_REDUCTION:
+        if not hasattr(adapter, "observe_entropy_reduction"):
+            dbg["observation_surface"] = "legacy"
+            dbg["reason"] = "adapter_missing_observe_entropy_reduction"
+            dbg["adapter"] = str(type(adapter).__name__)
+            return None, "blocked", dbg
+        try:
+            entropy_dict = adapter.observe_entropy_reduction(
+                trace,
+                paper_quantities=paper_quantities,
+                theta_after=theta_after,
+            )
+        except Exception as exc:  # noqa: BLE001
+            dbg["observation_surface"] = "legacy_observe_entropy_reduction"
+            dbg["reason"] = (
+                f"observe_entropy_reduction raised: "
+                f"{type(exc).__name__}:{exc}"
+            )
+            return None, "blocked", dbg
+        if not entropy_dict:
+            dbg["observation_surface"] = "legacy_observe_entropy_reduction"
+            dbg["reason"] = "observe_entropy_reduction returned empty dict"
+            return None, "blocked", dbg
+        # The legacy entropy channel name lives on the FlowMol3
+        # adapter module (PER_POSITION_ENTROPY_REDUCTION =
+        # "per_position_entropy_reduction"); LineageFlow reuses the
+        # same string.
+        if model in ("flowmol3", "flowmol3_v2"):
+            from adaptive_reflow.adapters.flowmol3 import (  # type: ignore
+                PER_POSITION_ENTROPY_REDUCTION as _FM_ENTROPY_KEY,
+            )
+            channel = str(_FM_ENTROPY_KEY)
+        elif model == "lineageflow":
+            # LineageFlow uses the same channel name string as FlowMol3
+            # (both come from the shared Wave 45 entropy helper).
+            from adaptive_reflow.adapters.flowmol3 import (  # type: ignore
+                PER_POSITION_ENTROPY_REDUCTION as _FM_ENTROPY_KEY,
+            )
+            channel = str(_FM_ENTROPY_KEY)
+        else:
+            dbg["observation_surface"] = "legacy_observe_entropy_reduction"
+            dbg["reason"] = (
+                f"POSITION_ENTROPY_REDUCTION not supported for "
+                f"model={model!r}"
+            )
+            return None, "blocked", dbg
+        reduction_value = entropy_dict.get(channel)
+        if reduction_value is None:
+            dbg["observation_surface"] = "legacy_observe_entropy_reduction"
+            dbg["reason"] = (
+                f"observe_entropy_reduction missing channel={channel!r}"
+            )
+            dbg["channels"] = list(entropy_dict.keys())
+            return None, "blocked", dbg
+        try:
+            reduction_float = float(reduction_value)
+        except (TypeError, ValueError):
+            dbg["observation_surface"] = "legacy_observe_entropy_reduction"
+            dbg["reason"] = (
+                f"observe_entropy_reduction returned non-numeric "
+                f"reduction: {reduction_value!r}"
+            )
+            return None, "blocked", dbg
+        if reduction_float != reduction_float:  # NaN check
+            dbg["observation_surface"] = "legacy_observe_entropy_reduction"
+            dbg["reason"] = "entropy_reduction_is_nan"
+            dbg["reduction_value"] = reduction_float
+            return None, "blocked", dbg
+        synth = ObservationResult(
+            kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+            channel=channel,
+            payload=reduction_float,
+            units="nats",
+            metadata={
+                "surface": "legacy_observe_entropy_reduction",
+                "theta_after_supplied": theta_after is not None,
+            },
+        )
+        dbg["observation_surface"] = "legacy_observe_entropy_reduction"
+        dbg["observation_channel"] = channel
+        dbg["reduction_value"] = reduction_float
+        return synth, "computed", dbg
+    # ---- ENDPOINT_BUNDLE / TRAJECTORY_NATIVE: not in this helper ---------
+    dbg["observation_surface"] = "legacy"
+    dbg["reason"] = (
+        f"observation_kind={observation_kind!r} not consumed by legacy "
+        f"metric helper"
+    )
+    return None, "blocked", dbg
+
+
+def _compute_real_metric_via_observation(
+    *,
+    adapter: Any,
+    trace: Any,
+    model: str,
+    observation_kind: Any,
+    seed: int,
+    nfe: int,
+    theta_after: Any | None = None,
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Generic via-trace real-metric helper — dispatches on ``ObservationKind``.
+
+    Wave 68 Phase 4 — the BIG refactor (wave67-plan.md §4). Replaces the
+    three per-model ``_compute_*_real_metric_via_trace`` siblings with a
+    single helper that:
+
+    1. Materialises a per-model :class:`PaperQuantitiesSnapshot` via
+       :func:`_compute_paper_quantities_for_model` (Wave 45 F-3 fix
+       parity — the snapshot is threaded through to the adapter).
+    2. Extracts the requested :class:`ObservationKind` observation from
+       ``adapter`` via :func:`_extract_observation` (tries the new
+       ``observe(...)`` Protocol path first, then the legacy
+       ``observe_token_indices`` / ``observe_entropy_reduction``).
+    3. Computes the metric from the observation's payload using
+       per-model decode math (mod-20 mapping over vocab-specific K).
+
+    Per-model decode math is the ONLY thing that stays per-model. The
+    observation surface is generic — adding a 5th model is a single
+    ``adapter.observe(...)`` implementation, no metric-helper edits.
+
+    Returns ``(value, marker, debug_dict)`` mirroring the legacy helper
+    contract (``marker == "computed"`` on success, ``"blocked"`` on
+    failure). The debug dict is the UNION of the per-model payload,
+    the per-cell paper-quantities thread result, and the observation
+    surface info — every existing field is preserved byte-stable.
+    """
+    # ---- 1. Per-model paper_quantities snapshot (Wave 45 F-3 parity) -----
+    pq_snap, pq_dbg = _compute_paper_quantities_for_model(
+        model, seed=seed, nfe=nfe,
+    )
+    # ---- 2. Extract observation (new Protocol path OR legacy fallback) ---
+    obs_result, obs_status, obs_dbg = _extract_observation(
+        adapter=adapter, trace=trace, model=model,
+        observation_kind=observation_kind,
+        paper_quantities=pq_snap,
+        theta_after=theta_after,
+    )
+    if obs_result is None or obs_status != "computed":
+        # Merge paper-quantities thread result + observation error.
+        merged_dbg = dict(obs_dbg)
+        merged_dbg["paper_quantities"] = pq_dbg
+        merged_dbg["reason"] = obs_dbg.get(
+            "reason", f"no {observation_kind!r} observation"
+        )
+        return None, "blocked", merged_dbg
+    # ---- 3. Compute metric from observation payload (per-model decode) --
+    if observation_kind == ObservationKind.DISCRETE_TOKENS:
+        return _metric_via_discrete_tokens(
+            adapter=adapter, trace=trace, model=model,
+            obs_result=obs_result,
+            seed=seed, nfe=nfe,
+            pq_dbg=pq_dbg, obs_dbg=obs_dbg,
+        )
+    if observation_kind == ObservationKind.POSITION_ENTROPY_REDUCTION:
+        return _metric_via_entropy_reduction(
+            adapter=adapter, trace=trace, model=model,
+            obs_result=obs_result,
+            seed=seed, nfe=nfe,
+            pq_dbg=pq_dbg, obs_dbg=obs_dbg,
+        )
+    # ENDPOINT_BUNDLE / TRAJECTORY_NATIVE — not consumed by the metric
+    # layer today; surfacing the error keeps the helper honest.
+    merged_dbg = dict(obs_dbg)
+    merged_dbg["paper_quantities"] = pq_dbg
+    merged_dbg["reason"] = (
+        f"observation_kind={observation_kind!r} not consumed by "
+        f"generic metric helper"
+    )
+    return None, "blocked", merged_dbg
+
+
+def _metric_via_discrete_tokens(
+    *,
+    adapter: Any,
+    trace: Any,
+    model: str,
+    obs_result: Any,
+    seed: int,
+    nfe: int,
+    pq_dbg: dict[str, Any],
+    obs_dbg: dict[str, Any],
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Decode DISCRETE_TOKENS payload to an AA string + Pfam/ESM-2 validity.
+
+    Per-model vocab mapping:
+    * ``kanzi``        → ``_decode_kanzi_idx_to_aa`` (mod-20 over K=64)
+                         + Pfam-strict round-trip check.
+    * ``lineageflow``  → ``_decode_lineageflow_idx_to_aa`` (mod-20 over
+                         K=33) + ESM-2 PLL validity check.
+
+    This helper is the byte-stable replacement for the per-model
+    decode math that used to live inline in
+    ``_compute_kanzi_real_metric_via_trace`` and
+    ``_compute_lineageflow_real_metric_via_trace``. The decode logic
+    is unchanged; only the observation surface (which now goes
+    through ``_extract_observation``) is generic.
+    """
+    idx_arr = obs_result.payload
+    if model == "kanzi":
+        try:
+            import numpy as _np  # type: ignore
+            idx_2d = _np.asarray(idx_arr, dtype=_np.float64).reshape(1, -1)
+            aa_strings = _decode_kanzi_idx_to_aa(idx_2d)
+        except ImportError:
+            flat = list(idx_arr) if hasattr(idx_arr, "__iter__") else [idx_arr]
+            aa_strings = ["".join(
+                AMINO_ACID_ALPHABET[int(v) % len(AMINO_ACID_ALPHABET)]
+                for v in flat
+            )]
         n_seqs = len(aa_strings)
         s = aa_strings[0] if aa_strings else ""
-        # Pfam-strict round-trip check on the single trajectory-derived
-        # sequence. We use the same Pfam held-out reference subset
-        # when present (mirroring the fresh-forward path).
+        # Pfam-strict round-trip (Wave 44 Tier-3 close parity).
         pfam_path = KANZI_PFAM_HOLDOUT_PATH
         pfam_present = pfam_path.exists()
         round_trip_via = "aa_alphabet_only"
@@ -1611,7 +1953,6 @@ def _compute_kanzi_real_metric_via_trace(
         if pfam_present:
             try:
                 from Bio import SeqIO  # type: ignore
-
                 ref_chars: set[str] = set()
                 ref_lengths: list[int] = []
                 for rec in SeqIO.parse(str(pfam_path), "fasta"):
@@ -1635,7 +1976,10 @@ def _compute_kanzi_real_metric_via_trace(
                         valid_count = 1
             except Exception as exc:  # noqa: BLE001
                 return None, "blocked", {
-                    "reason": f"pfam round-trip failed: {type(exc).__name__}:{exc}",
+                    "reason": (
+                        f"pfam round-trip failed: "
+                        f"{type(exc).__name__}:{exc}"
+                    ),
                     "pfam_path": str(pfam_path),
                 }
         else:
@@ -1647,118 +1991,26 @@ def _compute_kanzi_real_metric_via_trace(
             "n_valid": int(valid_count),
             "validity_rate": validity_rate,
             "decode_strategy": (
-                "adapter.observe_token_indices + mod-20 AA proxy (Wave 44 Tier-3 close)"
+                "adapter.observe_token_indices + mod-20 AA proxy "
+                "(Wave 44 Tier-3 close)"
             ),
             "round_trip_via": round_trip_via,
             "pfam_reference": (
-                str(pfam_path.relative_to(REPO_ROOT)) if pfam_present else None
+                str(pfam_path.relative_to(REPO_ROOT)) if pfam_present
+                else None
             ),
             "trace_source": "captured_via_solve_ode",
             "seed": int(seed),
             "nfe_budget": int(nfe),
-            # Wave 45 Agent C — F-3 fix: surface the per-cell
-            # paper_quantities thread result. ``status="computed"``
-            # means the snapshot was successfully built; values are
-            # the four paper quantities + knobs so downstream
-            # consumers can correlate framework-vs-baseline deltas
-            # to the paper-quantity surface that was in effect.
             "paper_quantities": pq_dbg,
+            "observation_surface": obs_dbg,
         }
-    except Exception as exc:  # noqa: BLE001
-        return None, "blocked", {
-            "reason": (
-                f"kanzi via-trajectory metric failed: "
-                f"{type(exc).__name__}:{exc}"
-            ),
-        }
-
-
-def _compute_lineageflow_real_metric_via_trace(
-    *,
-    adapter: Any,
-    trace: Any,
-    seed: int,
-    nfe: int,
-) -> tuple[float | None, str, dict[str, Any]]:
-    """Real ``family_validity_rate`` via ``adapter.observe_token_indices``.
-
-    Wave 44 Tier-3 metric-axis close: consumes the adapter's ODE
-    trajectory (returned by ``solve_ode``) via
-    ``observe_token_indices`` (added by Wave 44 Agent A) instead of
-    sampling fresh uniform-random token sequences.
-
-    Algorithm
-    ~~~~~~~~~
-
-    1. Call ``adapter.observe_token_indices(trace, paper_quantities=...)``
-       where the snapshot is a real :class:`PaperQuantitiesSnapshot`
-       materialised by :func:`_compute_paper_quantities_for_model`
-       keyed on a per-model ``g`` profile (Wave 45 F-3 fix).
-       Returns ``{AMINO_ACID_CATEGORICAL: np.ndarray(shape=(L,), dtype=float64)}``.
-    2. Decode the (L,) array via :func:`_decode_lineageflow_idx_to_aa`
-       (mod-20 mapping matching the upstream
-       ``inference/trace_trajectory.py:_decode_argmax`` helper).
-    3. Compute ESM-2 PLL perplexity on the single trajectory-derived
-       sequence. Validity threshold: ``perplexity <= 50.0`` (matches
-       the Wave 43 fresh-forward path).
-    4. Returns ``(validity_rate, marker, debug_dict)``.
-
-    The framework arm produces a different ``trace`` than the
-    baseline (round-2 trajectory integrated from the restart-blended
-    per-position categorical), so ``argmax(theta_final, axis=-1)``
-    yields a different per-position token-index array. The
-    downstream ESM-2 PLL validity check can therefore distinguish
-    the two arms; framework_wins > 0 is the closing condition for
-    the Tier-3 lineageflow claim.
-    """
-    try:
-        if not hasattr(adapter, "observe_token_indices"):
-            return None, "blocked", {
-                "reason": "adapter_missing_observe_token_indices",
-                "adapter": str(type(adapter).__name__),
-            }
-        # Wave 45 Agent C — F-3 fix: thread real ``paper_quantities``
-        # through to the adapter (see the matching comment in
-        # :func:`_compute_kanzi_real_metric_via_trace` for the full
-        # rationale). Same per-model profile source as kanzi; the
-        # paper-quantity surface is identical at the framework layer
-        # even though the channel shape differs.
-        pq_snap, pq_dbg = _compute_paper_quantities_for_model(
-            "lineageflow", seed=seed, nfe=nfe,
-        )
-        try:
-            tokens_dict = adapter.observe_token_indices(
-                trace, paper_quantities=pq_snap,
-            )
-        except Exception as exc:  # noqa: BLE001
-            return None, "blocked", {
-                "reason": (
-                    f"observe_token_indices raised: "
-                    f"{type(exc).__name__}:{exc}"
-                ),
-            }
-        if not tokens_dict:
-            return None, "blocked", {
-                "reason": "observe_token_indices returned empty dict",
-            }
-        from adaptive_reflow.adapters.lineageflow import (  # type: ignore
-            AMINO_ACID_CATEGORICAL as _LF_AMINO,
-        )
-        idx_arr = tokens_dict.get(str(_LF_AMINO))
-        if idx_arr is None:
-            return None, "blocked", {
-                "reason": (
-                    "lineageflow observe_token_indices missing "
-                    "amino_acid_categorical channel"
-                ),
-                "channels": list(tokens_dict.keys()),
-            }
+    if model == "lineageflow":
         seq = _decode_lineageflow_idx_to_aa(idx_arr)
         if not seq:
             return None, "blocked", {
                 "reason": "trajectory-derived sequence is empty",
             }
-
         # Lazy-load ESM-2 (small enough that one load per runner is OK).
         try:
             import torch  # type: ignore
@@ -1767,7 +2019,9 @@ def _compute_lineageflow_real_metric_via_trace(
             )
         except ImportError as exc:  # noqa: BLE001
             return None, "blocked", {
-                "reason": f"missing dep: {type(exc).__name__}:{exc}",
+                "reason": (
+                    f"missing dep: {type(exc).__name__}:{exc}"
+                ),
             }
         esm_key = "facebook/esm2_t33_650M_UR50D"
         if esm_key not in _LINEAGEFLOW_ESM_CACHE:
@@ -1778,7 +2032,10 @@ def _compute_lineageflow_real_metric_via_trace(
                 _LINEAGEFLOW_ESM_CACHE[esm_key] = (tok, mdl)
             except Exception as exc:  # noqa: BLE001
                 return None, "blocked", {
-                    "reason": f"ESM-2 load failed: {type(exc).__name__}:{exc}",
+                    "reason": (
+                        f"ESM-2 load failed: "
+                        f"{type(exc).__name__}:{exc}"
+                    ),
                 }
         tok, esm = _LINEAGEFLOW_ESM_CACHE[esm_key]
         try:
@@ -1795,7 +2052,7 @@ def _compute_lineageflow_real_metric_via_trace(
             }
         threshold = 50.0
         valid_count = 1 if ppl <= threshold else 0
-        validity_rate = float(valid_count)  # 1 sample, so rate is 0 or 1
+        validity_rate = float(valid_count)
         return validity_rate, "computed", {
             "n_sequences": 1,
             "n_valid": int(valid_count),
@@ -1803,27 +2060,247 @@ def _compute_lineageflow_real_metric_via_trace(
             "perplexity_threshold": threshold,
             "per_seq_perplexity": [round(ppl, 4)],
             "decode_strategy": (
-                "adapter.observe_token_indices + mod-20 AA proxy + ESM-2 PLL "
-                "(Wave 44 Tier-3 close)"
+                "adapter.observe_token_indices + mod-20 AA proxy + "
+                "ESM-2 PLL (Wave 44 Tier-3 close)"
             ),
             "esm_model": esm_key,
             "seq_length": int(len(seq)),
             "trace_source": "captured_via_solve_ode",
             "seed": int(seed),
             "nfe_budget": int(nfe),
-            # Wave 45 Agent C — F-3 fix: surface the per-cell
-            # paper_quantities thread result (see
-            # _compute_kanzi_real_metric_via_trace for the matching
-            # comment).
             "paper_quantities": pq_dbg,
+            "observation_surface": obs_dbg,
         }
-    except Exception as exc:  # noqa: BLE001
-        return None, "blocked", {
-            "reason": (
-                f"lineageflow via-trajectory metric failed: "
-                f"{type(exc).__name__}:{exc}"
+    # Unknown model — observation extracted but no metric defined.
+    return None, "blocked", {
+        "reason": (
+            f"DISCRETE_TOKENS decode not defined for model={model!r}"
+        ),
+        "observation_surface": obs_dbg,
+        "paper_quantities": pq_dbg,
+    }
+
+
+def _metric_via_entropy_reduction(
+    *,
+    adapter: Any,
+    trace: Any,
+    model: str,
+    obs_result: Any,
+    seed: int,
+    nfe: int,
+    pq_dbg: dict[str, Any],
+    obs_dbg: dict[str, Any],
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Compute the POSITION_ENTROPY_REDUCTION metric.
+
+    Per-model channel:
+    * ``flowmol3`` / ``flowmol3_v2`` — per-atom atom-type entropy
+      reduction over the 10-way heavy-atom categorical. The bound is
+      ``log 10`` ≈ 2.303 nats. Wave 54 Agent A — when the adapter has
+      a real ckpt loaded, ``theta_after`` is computed from the
+      v2 partial-fidelity readout head (closing the Wave 53
+      placeholder gap).
+    * ``lineageflow`` — per-position categorical entropy reduction
+      over the 33-way AA vocabulary.
+
+    For now the FlowMol3 real-ckpt ``theta_after`` computation stays
+    in :func:`_compute_flowmol3_real_atom_type_marginal` (Wave 54
+    close). The caller threads the resulting ``theta_after`` through
+    the ``theta_after=`` kwarg; the legacy ``observe_entropy_reduction``
+    method picks it up.
+    """
+    reduction_float: float = float(obs_result.payload)
+    if model in ("flowmol3", "flowmol3_v2"):
+        try:
+            from adaptive_reflow.adapters.flowmol3 import (  # type: ignore
+                FLOWMOL3_ATOM_TYPE_VOCAB_SIZE,
+            )
+        except ImportError as exc:  # pragma: no cover
+            return None, "blocked", {
+                "reason": (
+                    f"flowmol3 import failed: "
+                    f"{type(exc).__name__}:{exc}"
+                ),
+            }
+        import math
+        log_K_bound = math.log(float(FLOWMOL3_ATOM_TYPE_VOCAB_SIZE))
+        return reduction_float, "computed", {
+            "metric_axis": "per_position_atom_type_entropy_reduction",
+            "metric_kind": "entropy_reduction",
+            "K_atom_types": int(FLOWMOL3_ATOM_TYPE_VOCAB_SIZE),
+            "reduction_value": reduction_float,
+            "log_K_bound": float(log_K_bound),
+            "decode_strategy": obs_dbg.get(
+                "decode_strategy",
+                "adapter.observe(..., strategies=(POSITION_ENTROPY_REDUCTION,)) "
+                "+ per_position_entropy_reduction (Wave 68 Phase 4 generic path)",
             ),
+            "trace_source": "captured_via_solve_ode",
+            "seed": int(seed),
+            "nfe_budget": int(nfe),
+            "paper_quantities": pq_dbg,
+            "observation_surface": obs_dbg,
         }
+    if model == "lineageflow":
+        # LineageFlow per-position entropy reduction over K=33.
+        # Future: per-model bound + domain check (mirrors FlowMol3).
+        return reduction_float, "computed", {
+            "metric_axis": "per_position_entropy_reduction",
+            "metric_kind": "entropy_reduction",
+            "reduction_value": reduction_float,
+            "decode_strategy": (
+                "adapter.observe(..., strategies=(POSITION_ENTROPY_REDUCTION,)) "
+                "+ per_position_entropy_reduction (Wave 68 Phase 4 generic path)"
+            ),
+            "trace_source": "captured_via_solve_ode",
+            "seed": int(seed),
+            "nfe_budget": int(nfe),
+            "paper_quantities": pq_dbg,
+            "observation_surface": obs_dbg,
+        }
+    return None, "blocked", {
+        "reason": (
+            f"POSITION_ENTROPY_REDUCTION metric not defined for "
+            f"model={model!r}"
+        ),
+        "observation_surface": obs_dbg,
+        "paper_quantities": pq_dbg,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Wave 68 Phase 4 — model → observation_kind lookup table
+# ---------------------------------------------------------------------------
+#
+# This dict is the ONLY remaining per-model coupling in the dispatch
+# chain. Each entry maps a model name to the natural
+# :class:`ObservationKind` the generic metric helper should consume.
+# Adding a 5th model is a single entry here + an ``observe(...)``
+# implementation on the adapter. No edits to the metric helper, no
+# edits to the dispatch chain.
+#
+# Built defensively against a missing :class:`ObservationKind`
+# import (cold-clone paths): when ``ObservationKind`` is ``None``,
+# the dict is empty and the dispatch chain returns BLOCKED with the
+# standard ``no real-ckpt metric implementation for model=...``
+# reason — matching pre-Phase-4 behaviour on cold-clone envs.
+
+_MODEL_OBSERVATION_KIND: dict[str, Any] = {}
+if ObservationKind is not None:
+    _MODEL_OBSERVATION_KIND = {
+        # Wave 44 Tier-3 close — protein-sequence-validity via the
+        # per-position discrete-token-index channel.
+        "kanzi": ObservationKind.DISCRETE_TOKENS,
+        # Wave 44 Tier-3 close — family-validity via the per-position
+        # AA categorical.
+        "lineageflow": ObservationKind.DISCRETE_TOKENS,
+        # Wave 53 / Wave 54 — per-atom atom-type entropy reduction.
+        # Wave 66 v2 wire: both v1 and v2 now ship ``observe(...)``
+        # with the POSITION_ENTROPY_REDUCTION strategy (Phase 3), so
+        # the dispatch chain collapses to a single entry.
+        "flowmol3": ObservationKind.POSITION_ENTROPY_REDUCTION,
+        "flowmol3_v2": ObservationKind.POSITION_ENTROPY_REDUCTION,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Wave 68 Phase 4 — backward-compat shims for the 3 sibling helpers
+# ---------------------------------------------------------------------------
+#
+# Per the Phase 4 spec: the 3 sibling helpers MUST stay callable so any
+# external caller (test surface, downstream script) that depends on the
+# old function names keeps working unchanged. The implementation
+# delegates to the new generic helper.
+#
+# Each shim preserves the exact signature of the original helper so
+# existing callers (test_run_real_ckpt_eval.py + the dispatch chain)
+# work byte-identically.
+
+
+def _compute_kanzi_real_metric_via_trace(
+    *,
+    adapter: Any,
+    trace: Any,
+    seed: int,
+    nfe: int,
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Backward-compat shim — delegates to :func:`_compute_real_metric_via_observation`.
+
+    Wave 68 Phase 4 — this function is now a thin wrapper that
+    forwards ``model="kanzi"`` + ``observation_kind=DISCRETE_TOKENS`` to
+    the new generic helper :func:`_compute_real_metric_via_observation`.
+    The pre-Phase-4 inline decode math (Pfam-strict round-trip,
+    mod-20 mapping over K=64) lives in :func:`_metric_via_discrete_tokens`
+    and is unchanged. The signature, return contract, and debug-dict
+    fields are byte-stable for any external caller (test surface +
+    downstream scripts).
+
+    Algorithm (unchanged from Wave 44 Tier-3 close; see Phase 4 audit doc):
+
+    1. Call ``adapter.observe(trace, ..., strategies=(DISCRETE_TOKENS,))``
+       (or the legacy ``adapter.observe_token_indices(...)`` fallback).
+    2. Decode the (L_z,) index array via
+       :func:`_decode_kanzi_idx_to_aa` (mod-20 mapping).
+    3. Apply the (a)/(b)/(c) Pfam-strict round-trip check.
+    4. Returns ``(validity_rate, marker, debug_dict)``.
+    """
+    if ObservationKind is None:  # cold-clone path; cold path is blocked.
+        return None, "blocked", {
+            "reason": "observation_protocol_unavailable",
+            "adapter": str(type(adapter).__name__),
+        }
+    return _compute_real_metric_via_observation(
+        adapter=adapter,
+        trace=trace,
+        model="kanzi",
+        observation_kind=ObservationKind.DISCRETE_TOKENS,
+        seed=seed,
+        nfe=nfe,
+    )
+
+
+def _compute_lineageflow_real_metric_via_trace(
+    *,
+    adapter: Any,
+    trace: Any,
+    seed: int,
+    nfe: int,
+) -> tuple[float | None, str, dict[str, Any]]:
+    """Backward-compat shim — delegates to :func:`_compute_real_metric_via_observation`.
+
+    Wave 68 Phase 4 — this function is now a thin wrapper that
+    forwards ``model="lineageflow"`` + ``observation_kind=DISCRETE_TOKENS``
+    to the new generic helper :func:`_compute_real_metric_via_observation`.
+    The pre-Phase-4 inline decode math (mod-20 mapping over K=33 +
+    ESM-2 PLL validity check) lives in :func:`_metric_via_discrete_tokens`
+    and is unchanged. The signature, return contract, and debug-dict
+    fields are byte-stable for any external caller.
+
+    Algorithm (unchanged from Wave 44 Tier-3 close; see Phase 4 audit doc):
+
+    1. Call ``adapter.observe(trace, ..., strategies=(DISCRETE_TOKENS,))``
+       (or the legacy ``adapter.observe_token_indices(...)`` fallback).
+    2. Decode the (L,) array via :func:`_decode_lineageflow_idx_to_aa`.
+    3. Compute ESM-2 PLL perplexity on the single trajectory-derived
+       sequence. Validity threshold: ``perplexity <= 50.0``.
+    4. Returns ``(validity_rate, marker, debug_dict)``.
+    """
+    if ObservationKind is None:  # cold-clone path; cold path is blocked.
+        return None, "blocked", {
+            "reason": "observation_protocol_unavailable",
+            "adapter": str(type(adapter).__name__),
+        }
+    return _compute_real_metric_via_observation(
+        adapter=adapter,
+        trace=trace,
+        model="lineageflow",
+        observation_kind=ObservationKind.DISCRETE_TOKENS,
+        seed=seed,
+        nfe=nfe,
+    )
+
+
 
 
 def _compute_flowmol3_real_atom_type_marginal(
@@ -2006,172 +2483,74 @@ def _compute_flowmol3_real_metric_via_trace(
     seed: int,
     nfe: int,
 ) -> tuple[float | None, str, dict[str, Any]]:
-    """Real ``per_position_atom_type_entropy_reduction`` via ``adapter.observe_entropy_reduction``.
+    """Backward-compat shim — delegates to :func:`_compute_real_metric_via_observation`.
 
-    Wave 53 Tier-3 metric-axis close (closes the Wave 50 Agent B
-    blocker): consumes the adapter's ODE trajectory (returned by
-    ``solve_ode``) via :meth:`FlowMol3Adapter.observe_entropy_reduction`
-    (Wave 49 Agent F P2-W33-C) instead of trying to materialise
-    decoded 3D molecules (the Wave 50 design that depended on
-    ``rdkit`` + upstream ``flowmol`` that we don't ship here).
+    Wave 68 Phase 4 — this function is now a thin wrapper that:
 
-    Wave 54 Agent A — close the real-ckpt metric gap: when
-    ``adapter._real_ckpt_meta`` is populated (the v1
-    ``force_mode='real'`` path loaded the shipped 65 MB Lightning
-    ckpt), this helper computes the real per-atom atom-type
-    marginal ``p_a`` at the END of the ODE via the v2 adapter's
-    partial-fidelity readout head (Wave 36 / Wave 38 partial-
-    fidelity path: real-weights ``token_embeddings``,
-    ``scalar_embedding``, ``node_output_head``,
-    ``to_edge_logits``). The marginal is then passed to
-    :meth:`adapter.observe_entropy_reduction` as ``theta_after``,
-    replacing the Wave 53 placeholder uniform-vs-uniform reference.
-    The composite is then non-zero by construction (real model
-    output is non-uniform; uniform reference is still uniform) so
-    ``verdict=framework_improves`` is reachable.
+    1. Computes the real ``theta_after`` via
+       :func:`_compute_flowmol3_real_atom_type_marginal` (Wave 54
+       close — the v2 partial-fidelity readout head).
+    2. Forwards ``model="flowmol3"`` + ``observation_kind=POSITION_ENTROPY_REDUCTION``
+       + ``theta_after`` to the new generic helper
+       :func:`_compute_real_metric_via_observation`.
 
-    The metric is the per-atom Shannon-entropy *reduction*
-    ``H(theta_before) - H(theta_after)`` over the
-    :data:`adaptive_reflow.adapters.flowmol3.FLOWMOL3_ATOM_TYPE_VOCAB_SIZE`
-    = 10-dim heavy-atom categorical. Bounded in
-    ``[-log 10, +log 10]`` ≈ ``[-2.303, +2.303]``. Positive = framework
-    sharpened the atom-type posterior relative to the baseline.
+    The pre-Phase-4 inline entropy math (``log K_atom`` bound,
+    metric-axis labelling, decode-strategy surfacing) lives in
+    :func:`_metric_via_entropy_reduction` and is unchanged.
+    The signature, return contract, and debug-dict fields are
+    byte-stable for any external caller.
 
-    Algorithm
-    ~~~~~~~~~
+    Algorithm (unchanged from Wave 53 / Wave 54 closes):
 
-    1. Compute the real ``theta_after`` via
-       :func:`_compute_flowmol3_real_atom_type_marginal` when the
-       adapter has a real ckpt loaded (Wave 54 close). On the
-       synthetic fallback the helper returns ``None`` and the
-       metric collapses to the Wave 53 placeholder reading.
-    2. Call :meth:`adapter.observe_entropy_reduction(trace,
-       paper_quantities=..., theta_after=theta_after)` where the
-       snapshot is a real :class:`PaperQuantitiesSnapshot`
-       materialised by :func:`_compute_paper_quantities_for_model`
-       keyed on a per-model ``g`` profile (Wave 45 F-3 fix parity).
-       Returns ``{PER_POSITION_ENTROPY_REDUCTION: <float>}``.
-    3. The reduction is surfaced as the metric. The sign convention
-       is "framework sharpens → positive" (mirrors LineageFlow /
-       Kanzi). A framework-vs-baseline delta of ``+0.5`` means the
-       framework arm's per-atom atom-type distribution has
-       ``0.5 / log 10 ≈ 22%`` lower entropy than the baseline.
+    1. Compute ``theta_after`` (real ckpt when loaded; uniform fallback
+       otherwise).
+    2. Call ``adapter.observe(trace, ..., strategies=(POSITION_ENTROPY_REDUCTION,),
+       theta_after=theta_after)`` (or the legacy
+       ``adapter.observe_entropy_reduction(...)`` fallback).
+    3. Surface the reduction as the metric; sign convention
+       "framework sharpens → positive".
     4. Returns ``(reduction_value, marker, debug_dict)``.
-
-    The helper is stdlib + numpy only; the entropy reduction is
-    computed inside the adapter via the shared
-    :func:`adaptive_reflow.adapters._adapter_common.per_position_entropy_reduction`
-    helper (Wave 45 P2-W33-C). The synthetic-mode fallback inside
-    :meth:`FlowMol3Adapter.observe_entropy_reduction` returns
-    ``0.0`` by construction (uniform-vs-uniform); this is the
-    placeholder's documented trivial reading (no real ``flowmol``
-    ckpt). With the Wave 54 close, the real-mode path produces a
-    strictly-negative ``reduction`` (``H(uniform) - H(real) > 0``)
-    that quantifies the real model's confidence on each atom-type
-    marginal.
     """
-    try:
-        if not hasattr(adapter, "observe_entropy_reduction"):
-            return None, "blocked", {
-                "reason": "adapter_missing_observe_entropy_reduction",
-                "adapter": str(type(adapter).__name__),
-            }
-        # Wave 45 Agent C — F-3 fix parity: thread real
-        # ``paper_quantities`` through to the adapter so the
-        # paper-quantity-driven scheduler has actual signal. Same
-        # per-model profile source as kanzi / lineageflow.
-        pq_snap, pq_dbg = _compute_paper_quantities_for_model(
-            "flowmol3", seed=seed, nfe=nfe,
-        )
-        # Wave 54 Agent A — compute real ``theta_after`` from the
-        # shipped ckpt. Returns ``None`` on the synthetic fallback;
-        # the Wave 53 path then collapses to uniform-vs-uniform
-        # (= 0.0).
-        theta_after, real_theta_dbg = _compute_flowmol3_real_atom_type_marginal(
-            adapter=adapter, trace=trace, seed=seed, nfe=nfe,
-        )
-        try:
-            entropy_dict = adapter.observe_entropy_reduction(
-                trace,
-                paper_quantities=pq_snap,
-                theta_after=theta_after,
-            )
-        except Exception as exc:  # noqa: BLE001
-            return None, "blocked", {
-                "reason": (
-                    f"observe_entropy_reduction raised: "
-                    f"{type(exc).__name__}:{exc}"
-                ),
-            }
-        if not entropy_dict:
-            return None, "blocked", {
-                "reason": "observe_entropy_reduction returned empty dict",
-            }
-        from adaptive_reflow.adapters.flowmol3 import (  # type: ignore
-            FLOWMOL3_ATOM_TYPE_VOCAB_SIZE,
-            PER_POSITION_ENTROPY_REDUCTION as _FLOWMOL3_ENTROPY_KEY,
-        )
-        reduction_value = entropy_dict.get(str(_FLOWMOL3_ENTROPY_KEY))
-        if reduction_value is None:
-            return None, "blocked", {
-                "reason": (
-                    "flowmol3 observe_entropy_reduction missing "
-                    "per_position_entropy_reduction channel"
-                ),
-                "channels": list(entropy_dict.keys()),
-            }
-        # NaN handling: per the helper's contract, degenerate inputs
-        # (fewer than 2 atoms in either arm) return ``nan``. Surface
-        # ``marker=blocked`` rather than fabricating a number so the
-        # eval pipeline can distinguish ``metric undefined`` from
-        # ``metric == 0``.
-        try:
-            reduction_float = float(reduction_value)
-        except (TypeError, ValueError):
-            return None, "blocked", {
-                "reason": (
-                    f"observe_entropy_reduction returned "
-                    f"non-numeric reduction: {reduction_value!r}"
-                ),
-            }
-        if reduction_float != reduction_float:  # NaN check
-            return None, "blocked", {
-                "reason": "entropy_reduction_is_nan",
-                "reduction_value": reduction_float,
-            }
-        import math  # stdlib only; avoid module-level import.
-        log_K_bound = math.log(float(FLOWMOL3_ATOM_TYPE_VOCAB_SIZE))
-        return reduction_float, "computed", {
-            "metric_axis": "per_position_atom_type_entropy_reduction",
-            "metric_kind": "entropy_reduction",
-            "K_atom_types": int(FLOWMOL3_ATOM_TYPE_VOCAB_SIZE),
-            "reduction_value": reduction_float,
-            "log_K_bound": float(log_K_bound),
-            "decode_strategy": (
+    if ObservationKind is None:  # cold-clone path; cold path is blocked.
+        return None, "blocked", {
+            "reason": "observation_protocol_unavailable",
+            "adapter": str(type(adapter).__name__),
+        }
+    # Wave 54 Agent A — compute real ``theta_after`` from the shipped
+    # ckpt. Returns ``None`` on the synthetic fallback; the Wave 53
+    # path then collapses to uniform-vs-uniform (= 0.0).
+    theta_after, real_theta_dbg = _compute_flowmol3_real_atom_type_marginal(
+        adapter=adapter, trace=trace, seed=seed, nfe=nfe,
+    )
+    value, marker, dbg = _compute_real_metric_via_observation(
+        adapter=adapter,
+        trace=trace,
+        model="flowmol3",
+        observation_kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+        seed=seed,
+        nfe=nfe,
+        theta_after=theta_after,
+    )
+    # Wave 54 Agent A — surface the real-ckpt forward result. We merge
+    # ``real_theta_after`` into the debug dict so existing callers see
+    # the byte-stable ``real_theta_after`` field plus the new
+    # ``observation_surface`` field.
+    if isinstance(dbg, dict):
+        dbg["real_theta_after"] = real_theta_dbg
+        # Mirror the Wave 53 / Wave 54 decode-strategy branching.
+        if real_theta_dbg.get("theta_after_source", "").startswith(
+            "real_ckpt_forward"
+        ):
+            dbg["decode_strategy"] = (
                 "real_ckpt_forward_v2_readout + per_position_entropy_reduction "
                 "(Wave 54 FlowMol3 metric-axis close)"
-                if real_theta_dbg.get("theta_after_source", "").startswith(
-                    "real_ckpt_forward"
-                )
-                else "adapter.observe_entropy_reduction + per_position_entropy_reduction "
+            )
+        else:
+            dbg["decode_strategy"] = (
+                "adapter.observe_entropy_reduction + per_position_entropy_reduction "
                 "(Wave 53 FlowMol3 metric layer — synthetic fallback)"
-            ),
-            "trace_source": "captured_via_solve_ode",
-            "seed": int(seed),
-            "nfe_budget": int(nfe),
-            # Wave 45 Agent C — F-3 fix parity: surface the per-cell
-            # paper_quantities thread result.
-            "paper_quantities": pq_dbg,
-            # Wave 54 Agent A — surface the real-ckpt forward result.
-            "real_theta_after": real_theta_dbg,
-        }
-    except Exception as exc:  # noqa: BLE001
-        return None, "blocked", {
-            "reason": (
-                f"flowmol3 via-trajectory metric failed: "
-                f"{type(exc).__name__}:{exc}"
-            ),
-        }
+            )
+    return value, marker, dbg
 
 
 def _compute_lineageflow_composite(
@@ -2921,38 +3300,27 @@ def _compute_metric(
         # fresh upstream forward, which is what closes the
         # framework-vs-baseline metric delta.
         if adapter is not None and trace is not None:
-            if model == "kanzi":
-                (
-                    real_value, real_marker, real_dbg,
-                ) = _compute_kanzi_real_metric_via_trace(
-                    adapter=adapter, trace=trace,
-                    seed=seed, nfe=nfe,
-                )
-            elif model == "lineageflow":
-                (
-                    real_value, real_marker, real_dbg,
-                ) = _compute_lineageflow_real_metric_via_trace(
-                    adapter=adapter, trace=trace,
-                    seed=seed, nfe=nfe,
-                )
-            elif model in ("flowmol3", "flowmol3_v2"):
-                # Wave 53 Agent C: closes the Wave 50 Agent B blocker
-                # (no real-ckpt metric implementation for flowmol3).
-                # The placeholder v1 + the real upstream v2 adapter
-                # both ship ``observe_entropy_reduction``; the helper
-                # returns the per-atom atom-type entropy reduction
-                # (continuous, framework-improving on Flow + CTMC).
-                # See docs/audit/wave53-flowmol3-metric-pattern-review.md §3.
-                (
-                    real_value, real_marker, real_dbg,
-                ) = _compute_flowmol3_real_metric_via_trace(
-                    adapter=adapter, trace=trace,
-                    seed=seed, nfe=nfe,
-                )
-            else:
+            # Wave 68 Phase 4 — the BIG refactor (wave67-plan.md §4).
+            # The 3-branch ``if model == "kanzi" / elif "lineageflow" /
+            # elif "flowmol3"`` chain collapses to a model → observation_kind
+            # lookup + a single call to the generic helper
+            # :func:`_compute_real_metric_via_observation`. Adding a 5th
+            # model now means (a) implementing an ``observe(...)`` method on
+            # the adapter + (b) adding one entry to ``_MODEL_OBSERVATION_KIND``
+            # below. The metric computation, decode dispatch, and
+            # observation extraction are all generic.
+            obs_kind = _MODEL_OBSERVATION_KIND.get(model)
+            if obs_kind is None:
                 return None, "blocked", {
                     "reason": f"no real-ckpt metric implementation for model={model!r}",
                 }
+            real_value, real_marker, real_dbg = (
+                _compute_real_metric_via_observation(
+                    adapter=adapter, trace=trace, model=model,
+                    observation_kind=obs_kind,
+                    seed=seed, nfe=nfe,
+                )
+            )
             if real_value is not None and real_marker == "computed":
                 return real_value, real_marker, real_dbg
             # Trajectory-aware path unavailable for this arm; fall
