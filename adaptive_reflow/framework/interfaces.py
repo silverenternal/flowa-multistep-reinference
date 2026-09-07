@@ -46,6 +46,10 @@ verifies the structural typing at import time.
   returns a fully populated :class:`Theorem1Statement`.
 * :class:`Theorem1StatementChecker` -- unified Theorem 1 statement.
 * :class:`PosteriorEvaluator` -- planar BL distance on ``R^2``.
+* :class:`AdapterObservationProtocol` -- single typed observation
+  surface every adapter satisfies (Wave 68). Returns a tuple of
+  :class:`ObservationResult` keyed by model-agnostic
+  :class:`ObservationKind` tags (NOT by per-model channel names).
 * :class:`AdapterCompliance` -- aggregate Protocol set enforcement.
 
 **Stdlib-only, no torch, no numpy.**
@@ -54,6 +58,8 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Protocol, runtime_checkable
 
 from adaptive_reflow.framework._compliance import (
@@ -85,6 +91,9 @@ __all__ = [
     "emit_theorem1_statement",
     "Theorem1StatementChecker",
     "PosteriorEvaluator",
+    "AdapterObservationProtocol",
+    "ObservationKind",
+    "ObservationResult",
     "AdapterCompliance",
     "implements",
     "assert_adapter_compliance",
@@ -440,6 +449,191 @@ class PosteriorEvaluator(Protocol):
         t: float,
     ) -> float:
         """Return ``nu_g`` density at ``(s, t)`` (paper formula line 82-83)."""
+        ...
+
+
+# ---------------------------------------------------------------------------
+# AdapterObservationProtocol (Wave 68)
+# ---------------------------------------------------------------------------
+
+
+class ObservationKind(str, Enum):
+    """Model-agnostic observation tags for :class:`AdapterObservationProtocol`.
+
+    Each tag identifies a *kind* of observation the adapter can return.
+    The metric layer dispatches on the tag, NOT on the model name (Wave 67
+    principle). The four kinds cover every existing per-model observation
+    method (Wave 67 §3):
+
+    * ``ENDPOINT_BUNDLE`` -- per-channel endpoint ``StateBundle``
+      (was ``observe_endpoint`` on every adapter).
+    * ``DISCRETE_TOKENS`` -- ``{channel: np.ndarray (L,)}`` of integer
+      token indices (was ``observe_token_indices`` on Kanzi +
+      LineageFlow).
+    * ``POSITION_ENTROPY_REDUCTION`` -- ``{channel: float}`` Shannon
+      entropy reduction ``H(theta_before) - H(theta_after)`` (was
+      ``observe_entropy_reduction`` on FlowMol3 v1 + LineageFlow).
+    * ``TRAJECTORY_NATIVE`` -- ``{channel: np.ndarray (T+1, ...)}`` of
+      the native trajectory (was ``export_trajectory`` on the universal
+      adapter).
+
+    ``str`` mixin makes the enum JSON-serialisable without a custom
+    encoder. Stdlib-only.
+    """
+
+    ENDPOINT_BUNDLE = "endpoint_bundle"
+    DISCRETE_TOKENS = "discrete_tokens"
+    POSITION_ENTROPY_REDUCTION = "position_entropy_reduction"
+    TRAJECTORY_NATIVE = "trajectory_native"
+
+
+@dataclass(frozen=True)
+class ObservationResult:
+    """A single tagged observation returned by ``AdapterObservationProtocol.observe``.
+
+    Frozen dataclass (Wave 11 / Wave 59 pattern: immutable, hashable, easy
+    to compare in tests). ``payload`` is typed by ``kind``:
+
+    * ``ENDPOINT_BUNDLE`` -- a per-channel endpoint ``StateBundle``
+      (opaque reference; downstream consumers re-derive whatever they
+      need from the bundle).
+    * ``DISCRETE_TOKENS`` -- ``numpy.ndarray`` of shape ``(L,)`` with
+      integer dtype.
+    * ``POSITION_ENTROPY_REDUCTION`` -- ``float`` in nats (or whatever
+      units the adapter reports; see ``units``).
+    * ``TRAJECTORY_NATIVE`` -- ``numpy.ndarray`` of shape ``(T+1, ...)``
+      giving the full native trajectory.
+
+    ``channel`` is the model-internal channel name (e.g. ``"discrete_idx"``
+    for Kanzi, ``"amino_acid_categorical"`` for LineageFlow,
+    ``"atom_type"`` for FlowMol3). It is opaque to the metric layer --
+    the metric layer reads ``result.channel`` rather than importing a
+    per-model constant.
+
+    ``units`` is a free-form string ("nats", "fraction", "indices",
+    "endpoint_refs", "trajectory") for human-readable debug output.
+
+    ``metadata`` carries free-form debug context (e.g. seed, nfe, theta
+    hash) without polluting the payload.
+
+    Stdlib-only (no torch, no numpy). The ``payload`` type is
+    :class:`typing.Any` because the framework core is stdlib-only; the
+    adapter implementations populate ``payload`` with the appropriate
+    concrete type at runtime.
+    """
+
+    kind: ObservationKind
+    channel: str
+    payload: Any
+    units: str = ""
+    # ``metadata`` is excluded from the dataclass ``__hash__`` and
+    # ``__eq__`` because the default ``dict`` is unhashable AND because
+    # metadata is a debug-only field that should not affect equality.
+    metadata: Mapping[str, Any] = field(
+        default_factory=dict,
+        compare=False,
+        hash=False,
+    )
+
+
+@runtime_checkable
+class AdapterObservationProtocol(Protocol):
+    """Single typed observation surface every adapter satisfies (Wave 68).
+
+    Mirrors the Wave 59 ``IntegratorProtocol`` pattern (interface-first,
+    no implementation required). Adapters opt in by adding an ``observe``
+    method that returns a tuple of :class:`ObservationResult` -- one per
+    observation strategy the adapter implements.
+
+    **Why this Protocol exists.** The Wave 67 audit found three
+    per-model observation methods (``observe_endpoint`` /
+    ``observe_token_indices`` / ``observe_entropy_reduction``) hard-coded
+    into the metric layer (``tools/run_real_ckpt_eval.py``) and chained
+    via ``if model == "kanzi" / elif ...``. Adding a 5th model meant
+    editing both the helper table and the dispatch chain. The
+    FlowMol3 v2 wire (Wave 66) hit the resulting gap -- v2 had
+    ``observe_endpoint`` only, so the metric helper returned ``BLOCKED``
+    on every real-ckpt FlowMol3 cell.
+
+    **Design.** ``observe(...)`` returns a tuple of
+    :class:`ObservationResult` tagged by :class:`ObservationKind`. The
+    metric layer consumes the result tuple generically:
+
+        >>> results = adapter.observe(trace, state, paper_quantities=pq)
+        >>> token_obs = next(
+        ...     (r for r in results if r.kind == ObservationKind.DISCRETE_TOKENS),
+        ...     None,
+        ... )
+
+    Adapters that don't carry a discrete channel skip
+    ``DISCRETE_TOKENS`` (Kanzi's continuous latent has no natural
+    per-position categorical). Adapters whose native state is not a
+    per-position categorical skip ``POSITION_ENTROPY_REDUCTION`` (every
+    protein adapter). An empty tuple is a valid response (synthetic /
+    ref / non-state adapters).
+
+    **Byte-stable migration.** The existing
+    ``observe_endpoint`` / ``observe_token_indices`` /
+    ``observe_entropy_reduction`` methods stay in place on every
+    adapter. The new ``observe(...)`` is ADDITIVE; existing call sites
+    keep working unchanged. The metric helper refactor (Wave 67 Phase D)
+    replaces the ``hasattr(adapter, "observe_entropy_reduction")``
+    checks with a single ``adapter.observe(...)`` call.
+
+    **Conformance.** Adopting the protocol is opt-in, like
+    :class:`IntegratorProtocol`. Use the :func:`implements` decorator
+    to declare it; :func:`assert_adapter_compliance` enforces
+    structural typing at import time.
+    """
+
+    def observe(
+        self,
+        trace: Any,
+        state: Any,
+        paper_quantities: Any = None,
+        *,
+        strategies: tuple[ObservationKind, ...] = (
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+            ObservationKind.TRAJECTORY_NATIVE,
+        ),
+        theta_before: Any = None,
+        theta_after: Any = None,
+    ) -> tuple[ObservationResult, ...]:
+        """Return a tuple of :class:`ObservationResult`, one per supported strategy.
+
+        Parameters
+        ----------
+        trace
+            The integration trace produced by the adapter's solve step
+            (opaque to the framework core; type depends on the adapter).
+        state
+            The integration state at t=1 (the endpoint). May be ``None``
+            for adapters that materialise state lazily.
+        paper_quantities
+            The :class:`PaperQuantitySnapshot` (or ``None`` if not
+            threaded through). Used by adapters that derive an
+            observation from paper-quantity context.
+        strategies
+            Tuple of :class:`ObservationKind` the caller wants. The
+            adapter MAY skip strategies it does not support; the result
+            tuple only contains the supported subset. The default tuple
+            requests all four strategies.
+        theta_before, theta_after
+            Optional entropy-reduction prior/posterior. Adapters that
+            support :attr:`ObservationKind.POSITION_ENTROPY_REDUCTION`
+            compute ``H(theta_before) - H(theta_after)`` when both are
+            supplied. Missing priors return ``None`` (the metric layer
+            treats ``None`` as ``BLOCKED`` and records the reason).
+
+        Returns
+        -------
+        tuple[ObservationResult, ...]
+            One :class:`ObservationResult` per supported strategy in
+            ``strategies``. Empty tuple is valid (adapter supports
+            none of the requested strategies).
+        """
         ...
 
 
