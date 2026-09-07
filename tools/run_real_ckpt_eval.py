@@ -877,6 +877,23 @@ def _resolve_adapter(
     factory_path = spec["adapter_factory"]
     if factory_path is None:
         return None, "BLOCKED"
+    # Wave 66 Agent 1 — wire v2 FlowMol3 adapter for real integration.
+    # The registry entry for ``flowmol3`` (v1) routes to the hash-based
+    # placeholder (``default_flowmol3_adapter``) which does NOT actually
+    # integrate the real FlowMol3 ckpt; the v2 adapter
+    # (``default_flowmol3adapter`` at
+    # ``adaptive_reflow.adapters.flowmol3_v2_adapter``) does. Switch
+    # the factory path to v2 when ``force_mode`` is real/auto so the
+    # real model integrates and the per-atom entropy surface is real
+    # (not the Wave 53 placeholder uniform-vs-uniform reading).
+    if (
+        model == "flowmol3"
+        and factory_path.endswith(":default_flowmol3_adapter")
+        and force_mode in {"real", "auto"}
+    ):
+        factory_path = (
+            "adaptive_reflow.adapters.flowmol3_v2_adapter:default_flowmol3adapter"
+        )
     module_path, attr = factory_path.rsplit(":", 1)
     # Wave 53 Agent C: per-model force-mode token translation.
     # Legacy adapters (kanzi, lineageflow, freqflow, hidream, lumina,

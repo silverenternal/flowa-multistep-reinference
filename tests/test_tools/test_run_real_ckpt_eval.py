@@ -519,3 +519,194 @@ def test_solve_framework_gate_firing_yields_byte_identical_to_baseline() -> None
         f"Got framework.digest={framework_trace.native_state_digest!r} "
         f"vs baseline.digest={baseline_trace.native_state_digest!r}"
     )
+
+
+# ---------------------------------------------------------------------------
+# 5. Bug D — flowmol3 v2 wiring for force_mode=real (Wave 66 Agent 1)
+#
+# Background (docs/audit/wave65-root-cause.md §5.1, alternative
+# recommendation): the registry entry for ``flowmol3`` historically
+# routed to the v1 placeholder adapter (``default_flowmol3_adapter``)
+# regardless of ``force_mode``. The v1 placeholder is a hash-stable
+# stub that does NOT actually integrate the real FlowMol3 ckpt — its
+# ``solve_ode`` returns a deterministic but content-free trace, so
+# the per-atom entropy surface is the Wave 53 uniform-vs-uniform
+# placeholder reading (every cell TIE_AT_SATURATION, zero SUPPORTED).
+# The v2 adapter (``default_flowmol3adapter`` from
+# ``adaptive_reflow.adapters.flowmol3_v2_adapter``) DOES integrate
+# the real FlowMol3 CTMC velocity field on the shipped 65 MB
+# Lightning ckpt. Wave 66 wires the v2 adapter in when
+# ``force_mode in {"real", "auto"}`` and keeps the v1 path for
+# ``force_mode="synthetic"`` so the placeholder shim still works in
+# CI without torch / without the upstream ckpt.
+#
+# The tests below lock in the wire:
+#   (a) when force_mode="synthetic", the v1 placeholder is constructed
+#       (class name contains "FlowMol3Adapter" but NOT "FlowMol3V2Adapter");
+#   (b) when force_mode="real" or force_mode="auto", the v2 adapter is
+#       constructed (class name is "FlowMol3V2Adapter");
+#   (c) the other 13 adapters are unaffected by the wire (the
+#       factory_path switch is gated on ``model == "flowmol3"``).
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_adapter_flowmol3_real_uses_v2() -> None:
+    """`_resolve_adapter('flowmol3', force_mode='real')` returns the v2 adapter.
+
+    Wave 66 Agent 1 wire: when force_mode is real (or auto) on the
+    ``flowmol3`` model, the factory switches from the v1 placeholder
+    to the v2 real-integration adapter so ``solve_ode`` actually runs
+    on the published FlowMol3 ckpt (when torch + ckpt are available).
+
+    Pre-fix: the v1 placeholder was used and every cell was
+    TIE_AT_SATURATION (uniform-vs-uniform reading). Post-fix: the v2
+    adapter is used and the per-atom entropy surface is real.
+
+    This test asserts the construction side: the returned adapter's
+    class name is ``FlowMol3V2Adapter``, not ``FlowMol3Adapter``.
+    """
+    tools = _import_tools_module()
+    try:
+        # Try the v2 import first — the test only makes sense if the
+        # v2 adapter module is importable in this env. In CI (CPU-only
+        # pytest envs) without torch, the v2 module may fail to import;
+        # in that case skip rather than fail.
+        from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+            FlowMol3V2Adapter as _V2Class,
+        )
+    except ImportError:
+        pytest.skip("flowmol3_v2_adapter not importable in this env")
+
+    # Run the resolution with force_mode=real. We monkey-patch the
+    # v2 factory to be tolerant of missing torch / missing ckpt so
+    # the test runs in CI without the sidecar venv.
+    import adaptive_reflow.adapters.flowmol3_v2_adapter as _v2
+
+    real_factory = _v2.default_flowmol3adapter
+
+    def _tolerant_factory(*, force_mode: str = "synthetic", **kw: Any) -> Any:
+        # Map to backend='numpy' (synthetic) so the v2 constructor
+        # succeeds in CPU-only / no-ckpt envs. The class identity
+        # is still v2 (FlowMol3V2Adapter).
+        return real_factory(force_mode="synthetic", **kw)
+
+    original_factory = _v2.default_flowmol3adapter
+    _v2.default_flowmol3adapter = _tolerant_factory  # type: ignore[assignment]
+    try:
+        adapter, mode = tools._resolve_adapter("flowmol3", force_mode="real")
+    finally:
+        _v2.default_flowmol3adapter = original_factory  # type: ignore[assignment]
+    if adapter is None and mode.startswith("IMPORT_FAILED"):
+        pytest.skip(
+            f"_resolve_adapter import failed (env-specific): {mode!r}"
+        )
+
+    assert adapter is not None, (
+        f"_resolve_adapter returned None; expected the v2 adapter instance. "
+        f"mode={mode!r}"
+    )
+    assert type(adapter).__name__ == "FlowMol3V2Adapter", (
+        f"expected v2 adapter class 'FlowMol3V2Adapter', got "
+        f"{type(adapter).__name__!r}. The Wave 66 v2 wire is not active; "
+        f"_resolve_adapter is still returning the v1 placeholder for "
+        f"force_mode='real'."
+    )
+
+
+def test_resolve_adapter_flowmol3_synthetic_uses_v1() -> None:
+    """`_resolve_adapter('flowmol3', force_mode='synthetic')` returns v1.
+
+    Wave 66 Agent 1 wire preserves the pre-Wave-66 behaviour for
+    ``force_mode='synthetic'``: the v1 placeholder adapter is
+    constructed so the zero-dep CI path keeps working.
+
+    This test asserts the construction side: the returned adapter's
+    class name is ``FlowMol3Adapter`` (v1), NOT ``FlowMol3V2Adapter``.
+    """
+    tools = _import_tools_module()
+    adapter, mode = tools._resolve_adapter(
+        "flowmol3", force_mode="synthetic"
+    )
+
+    assert adapter is not None, (
+        f"_resolve_adapter returned None for force_mode='synthetic'; "
+        f"mode={mode!r}"
+    )
+    assert type(adapter).__name__ != "FlowMol3V2Adapter", (
+        f"force_mode='synthetic' must NOT route to v2; got "
+        f"{type(adapter).__name__!r}. The Wave 66 wire incorrectly "
+        f"redirects synthetic traffic to the v2 adapter."
+    )
+    assert type(adapter).__name__ == "FlowMol3Adapter", (
+        f"expected v1 placeholder class 'FlowMol3Adapter', got "
+        f"{type(adapter).__name__!r}"
+    )
+
+
+def test_resolve_adapter_flowmol3_auto_uses_v2() -> None:
+    """`_resolve_adapter('flowmol3', force_mode='auto')` returns the v2 adapter.
+
+    The ``auto`` token has the same v2-wire semantics as ``real``
+    per Wave 66 Agent 1: when the sidecar venv has torch + ckpt,
+    the v2 adapter integrates; when it doesn't, the v2 adapter
+    degrades to its synthetic backend (the v2 adapter is itself
+    numpy-tractable via ``backend='numpy'``). Either way, the
+    adapter class identity must be ``FlowMol3V2Adapter``.
+    """
+    tools = _import_tools_module()
+    try:
+        from adaptive_reflow.adapters.flowmol3_v2_adapter import (  # noqa: F401
+            FlowMol3V2Adapter,
+        )
+    except ImportError:
+        pytest.skip("flowmol3_v2_adapter not importable in this env")
+
+    # Same tolerant wrapper as the real test (above) so the v2
+    # constructor succeeds in CPU-only / no-ckpt pytest envs.
+    import adaptive_reflow.adapters.flowmol3_v2_adapter as _v2
+
+    real_factory = _v2.default_flowmol3adapter
+
+    def _tolerant_factory(*, force_mode: str = "synthetic", **kw: Any) -> Any:
+        return real_factory(force_mode="synthetic", **kw)
+
+    original_factory = _v2.default_flowmol3adapter
+    _v2.default_flowmol3adapter = _tolerant_factory  # type: ignore[assignment]
+    try:
+        adapter, mode = tools._resolve_adapter("flowmol3", force_mode="auto")
+    finally:
+        _v2.default_flowmol3adapter = original_factory  # type: ignore[assignment]
+    if adapter is None and mode.startswith("IMPORT_FAILED"):
+        pytest.skip(f"_resolve_adapter import failed: {mode!r}")
+
+    assert adapter is not None, (
+        f"_resolve_adapter returned None; mode={mode!r}"
+    )
+    assert type(adapter).__name__ == "FlowMol3V2Adapter", (
+        f"expected v2 adapter class 'FlowMol3V2Adapter' for "
+        f"force_mode='auto', got {type(adapter).__name__!r}. "
+        f"The Wave 66 v2 wire is not active for the auto token."
+    )
+
+
+def test_resolve_adapter_other_models_unaffected() -> None:
+    """v2 wire is scoped to ``model == 'flowmol3'`` only.
+
+    Pre-fix and post-fix, the other 13 PHASE-4 candidate models
+    (kanzi, lineageflow, freqflow, ...) must resolve to their
+    respective factories without any v2-redirect. This guards
+    against an over-broad wire that accidentally routes non-FlowMol3
+    models to flowmol3_v2.
+    """
+    tools = _import_tools_module()
+    # kanzi is the cleanest "unrelated" model — it is the LineageFlow
+    # sibling and has its own real-ckpt pipeline that MUST NOT be
+    # touched by the Wave 66 wire.
+    adapter, mode = tools._resolve_adapter("kanzi", force_mode="synthetic")
+    assert adapter is not None, (
+        f"_resolve_adapter('kanzi', ...) returned None; mode={mode!r}"
+    )
+    assert "FlowMol3" not in type(adapter).__name__, (
+        f"kanzi must NOT be redirected to FlowMol3 adapter; got "
+        f"{type(adapter).__name__!r}. The Wave 66 wire is over-broad."
+    )
