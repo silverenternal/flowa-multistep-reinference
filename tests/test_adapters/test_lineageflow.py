@@ -1239,3 +1239,129 @@ def test_lineageflow_constructor_rejects_non_perturbation_policy() -> None:
     """A non-policy ``perturbation`` arg surfaces a ``TypeError``."""
     with pytest.raises(TypeError, match="perturbation_must_implement"):
         _make_adapter(perturbation="not-a-policy")  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# Wave 68 Phase 2 — AdapterObservationProtocol observe()
+# ---------------------------------------------------------------------------
+
+
+def test_lineageflow_observe_returns_all_four_kinds() -> None:
+    """``observe()`` returns ObservationResult tagged by all four kinds.
+
+    Verifies the Wave 68 Phase 2 surface: LineageFlow is the rare
+    protein adapter that supports ALL FOUR ``ObservationKind`` tags
+    — including ``POSITION_ENTROPY_REDUCTION`` (the per-position
+    amino-acid categorical is a real residue distribution; Wave 45
+    audit makes this distinction explicit).
+    """
+    from adaptive_reflow.framework.interfaces import (
+        AdapterObservationProtocol,
+        ObservationKind,
+    )
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w68p2", sample_id="s")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    # Conformance check.
+    assert isinstance(adapter, AdapterObservationProtocol)
+
+    results = adapter.observe(trace, bundle)
+    kinds = {r.kind for r in results}
+
+    # All four kinds supported for LineageFlow.
+    assert ObservationKind.ENDPOINT_BUNDLE in kinds
+    assert ObservationKind.DISCRETE_TOKENS in kinds
+    assert ObservationKind.POSITION_ENTROPY_REDUCTION in kinds
+    assert ObservationKind.TRAJECTORY_NATIVE in kinds
+
+
+def test_lineageflow_observe_endpoint_bundle_payload_matches_legacy() -> None:
+    """``observe(... ENDPOINT_BUNDLE)`` returns a StateBundle equal to
+    :meth:`observe_endpoint`.
+    """
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w68p2_eb", sample_id="s")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    legacy_endpoint = adapter.observe_endpoint(trace, bundle)
+    results = adapter.observe(
+        trace, bundle, strategies=(ObservationKind.ENDPOINT_BUNDLE,)
+    )
+
+    assert len(results) == 1
+    obs = results[0]
+    assert obs.kind == ObservationKind.ENDPOINT_BUNDLE
+    assert obs.channel == str(AMINO_ACID_CATEGORICAL)
+    assert obs.units == "state_bundle"
+    assert obs.payload.native_state_digest == legacy_endpoint.native_state_digest
+    assert obs.payload.source_round == legacy_endpoint.source_round
+
+
+def test_lineageflow_observe_entropy_reduction_payload_matches_legacy() -> None:
+    """``observe(... POSITION_ENTROPY_REDUCTION)`` returns a float
+    equal to :meth:`observe_entropy_reduction`.
+    """
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w68p2_ent", sample_id="s")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    legacy_entropy = adapter.observe_entropy_reduction(trace, None)
+    legacy_value = float(legacy_entropy[PER_POSITION_ENTROPY_REDUCTION])
+
+    results = adapter.observe(
+        trace, bundle, strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,)
+    )
+
+    assert len(results) == 1
+    obs = results[0]
+    assert obs.kind == ObservationKind.POSITION_ENTROPY_REDUCTION
+    assert obs.channel == PER_POSITION_ENTROPY_REDUCTION
+    assert obs.units == "nats"
+    # Byte-stable: typed payload equals legacy float.
+    assert obs.payload == pytest.approx(legacy_value, rel=1e-12, abs=1e-15)
+    assert np.isfinite(obs.payload)
+
+
+def test_lineageflow_observe_strategy_subset_filters_results() -> None:
+    """``strategies=(...)`` filters the returned ObservationResult tuple.
+
+    Demonstrates the per-call optimization: passing only
+    ``DISCRETE_TOKENS`` + ``POSITION_ENTROPY_REDUCTION`` must yield
+    exactly two results and no ``ENDPOINT_BUNDLE`` /
+    ``TRAJECTORY_NATIVE``.
+    """
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w68p2_sub", sample_id="s")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    results = adapter.observe(
+        trace,
+        bundle,
+        strategies=(
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+        ),
+    )
+
+    assert len(results) == 2
+    kinds_returned = {r.kind for r in results}
+    assert kinds_returned == {
+        ObservationKind.DISCRETE_TOKENS,
+        ObservationKind.POSITION_ENTROPY_REDUCTION,
+    }

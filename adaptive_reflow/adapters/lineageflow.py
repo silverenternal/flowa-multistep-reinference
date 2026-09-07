@@ -119,7 +119,12 @@ from adaptive_reflow.adapters._adapter_common import (
     per_position_entropy_reduction,
     seed_from_ids,
 )
-from adaptive_reflow.framework.interfaces import implements
+from adaptive_reflow.framework.interfaces import (
+    AdapterObservationProtocol,
+    ObservationKind,
+    ObservationResult,
+    implements,
+)
 from adaptive_reflow.algorithm.perturbation import (
     PerturbationPolicy,
     UniformFreshPerturbation,
@@ -1110,7 +1115,7 @@ class LineageFlowCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
-@implements(FlowMatchingODEAdapter)
+@implements(FlowMatchingODEAdapter, AdapterObservationProtocol)
 class LineageFlowAdapter(FlowMatchingODEAdapter):
     """LineageFlow protein flow-matching adapter (Wave 10 skeleton).
 
@@ -2245,6 +2250,144 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             _theta_to_logits(theta_before), _theta_to_logits(theta_final)
         )
         return {PER_POSITION_ENTROPY_REDUCTION: float(reduction)}
+
+    # ------------------------------------------------------------------
+    # 9c. observe (Wave 68 Phase 2 — AdapterObservationProtocol surface)
+    # ------------------------------------------------------------------
+
+    def observe(
+        self,
+        trace: ODEIntegratorTrace,
+        state: StateBundle,
+        paper_quantities: Any = None,
+        *,
+        strategies: tuple[ObservationKind, ...] = (
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+            ObservationKind.TRAJECTORY_NATIVE,
+        ),
+        theta_before: Any = None,
+        theta_after: Any = None,
+    ) -> tuple[ObservationResult, ...]:
+        """Single typed observation surface for :class:`AdapterObservationProtocol`.
+
+        Wraps the existing ``observe_endpoint`` /
+        ``observe_token_indices`` / ``observe_entropy_reduction`` /
+        ``export_trajectory`` methods into a tagged-tuple
+        :class:`ObservationResult` contract.
+
+        All four :class:`ObservationKind` tags are supported for
+        LineageFlow — unlike Kanzi, the per-position categorical is a
+        genuine amino-acid distribution, so
+        :attr:`ObservationKind.POSITION_ENTROPY_REDUCTION` IS a
+        meaningful chemical signal (Wave 67 §3, Wave 45
+        ``docs/audit/wave45-lineageflow-entropy-metric.md``).
+
+        Byte-stable migration (Wave 68 §1.3): the underlying methods
+        are unchanged. The result tuple contains exactly the
+        ``ObservationResult`` s the caller requested (in strategies
+        order) when the adapter supports them; otherwise an empty
+        tuple is returned for the missing kinds.
+
+        Parameters
+        ----------
+        trace
+            Forwarded to the underlying observation methods.
+        state
+            Forwarded to :meth:`observe_endpoint`.
+        paper_quantities
+            Forwarded to :meth:`observe_token_indices` and
+            :meth:`observe_entropy_reduction` (currently a no-op
+            consumer for both, per Wave 44 / Wave 45).
+        strategies
+            Tuple of :class:`ObservationKind` tags to include. The
+            default requests all four kinds.
+        theta_before, theta_after
+            Optional entropy-reduction prior/posterior. When
+            ``POSITION_ENTROPY_REDUCTION`` is in ``strategies``:
+
+            * Both ``None`` — within-trajectory mode:
+              ``H(trajectory[0]) - H(trajectory[-1])`` (the
+              adapter's default per Wave 45).
+            * ``theta_after`` given — the caller-supplied posterior
+              (e.g. baseline endpoint) replaces the adapter's
+              :meth:`observe_entropy_reduction` reference; the
+              adapter passes it through as ``reference_theta``.
+
+        Returns
+        -------
+        tuple[ObservationResult, ...]
+            Tagged-tuple view of the same numeric output the legacy
+            ``observe_*`` methods return. Payload types by ``kind``:
+
+            * ``ENDPOINT_BUNDLE`` — :class:`StateBundle`
+            * ``DISCRETE_TOKENS`` — ``numpy.ndarray`` of shape
+              ``(L,)``
+            * ``POSITION_ENTROPY_REDUCTION`` — ``float``
+            * ``TRAJECTORY_NATIVE`` — ``numpy.ndarray | None``
+        """
+        results: list[ObservationResult] = []
+        if ObservationKind.ENDPOINT_BUNDLE in strategies:
+            endpoint = self.observe_endpoint(trace, state)
+            results.append(
+                ObservationResult(
+                    kind=ObservationKind.ENDPOINT_BUNDLE,
+                    channel=str(AMINO_ACID_CATEGORICAL),
+                    payload=endpoint,
+                    units="state_bundle",
+                    metadata={"source_round": int(endpoint.source_round)},
+                )
+            )
+        if ObservationKind.DISCRETE_TOKENS in strategies:
+            token_map = self.observe_token_indices(trace, paper_quantities)
+            for ch_name, arr in token_map.items():
+                results.append(
+                    ObservationResult(
+                        kind=ObservationKind.DISCRETE_TOKENS,
+                        channel=str(ch_name),
+                        payload=arr,
+                        units="indices",
+                    )
+                )
+        if ObservationKind.POSITION_ENTROPY_REDUCTION in strategies:
+            # If the caller supplied a theta_after (e.g. a baseline
+            # endpoint), pass it through as the
+            # ``observe_entropy_reduction`` reference so the metric
+            # layer can compute framework-vs-baseline entropy gap
+            # directly via the typed Protocol. Falls through to
+            # within-trajectory mode when both priors are None.
+            reference_theta = theta_after
+            entropy_map = self.observe_entropy_reduction(
+                trace,
+                paper_quantities,
+                reference_theta=reference_theta,
+            )
+            for ch_name, value in entropy_map.items():
+                results.append(
+                    ObservationResult(
+                        kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+                        channel=str(ch_name),
+                        payload=float(value),
+                        units="nats",
+                        metadata={
+                            "theta_after": theta_after,
+                            "theta_before": theta_before,
+                        },
+                    )
+                )
+        if ObservationKind.TRAJECTORY_NATIVE in strategies:
+            traj = self.export_trajectory(trace)
+            if traj is not None:
+                results.append(
+                    ObservationResult(
+                        kind=ObservationKind.TRAJECTORY_NATIVE,
+                        channel=str(AMINO_ACID_CATEGORICAL),
+                        payload=traj,
+                        units="trajectory",
+                    )
+                )
+        return tuple(results)
 
     # ------------------------------------------------------------------
     # 10. inject_forward_noise

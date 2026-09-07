@@ -1191,3 +1191,130 @@ def test_kanzi_constructor_rejects_non_perturbation_policy() -> None:
     """A non-policy ``perturbation`` arg surfaces a ``TypeError``."""
     with pytest.raises(TypeError, match="perturbation_must_implement"):
         _make_adapter(perturbation="not-a-policy")  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# Wave 68 Phase 2 — AdapterObservationProtocol observe()
+# ---------------------------------------------------------------------------
+
+
+def test_kanzi_observe_returns_typed_protocol_results() -> None:
+    """``observe()`` returns :class:`ObservationResult` tagged by kind.
+
+    Verifies the Wave 68 Phase 2 surface: the adapter wraps its existing
+    ``observe_endpoint`` / ``observe_token_indices`` /
+    ``export_trajectory`` methods into a tagged tuple per
+    :class:`AdapterObservationProtocol`. Kanzi intentionally SKIPS
+    ``POSITION_ENTROPY_REDUCTION`` because its native state is a
+    continuous latent, not a per-position categorical (Wave 67 §3,
+    Wave 45 audit "Kanzi deferred").
+    """
+    from adaptive_reflow.framework.interfaces import (
+        AdapterObservationProtocol,
+        ObservationKind,
+    )
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w68p2", sample_id="s")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    # Conformance check.
+    assert isinstance(adapter, AdapterObservationProtocol)
+
+    results = adapter.observe(trace, bundle)
+    kinds = {r.kind for r in results}
+
+    # Kanzi supports ENDPOINT_BUNDLE + DISCRETE_TOKENS + TRAJECTORY_NATIVE.
+    assert ObservationKind.ENDPOINT_BUNDLE in kinds
+    assert ObservationKind.DISCRETE_TOKENS in kinds
+    assert ObservationKind.TRAJECTORY_NATIVE in kinds
+
+    # Kanzi does NOT support POSITION_ENTROPY_REDUCTION (continuous latent).
+    assert ObservationKind.POSITION_ENTROPY_REDUCTION not in kinds
+
+
+def test_kanzi_observe_endpoint_bundle_payload_matches_legacy() -> None:
+    """``observe(... ENDPOINT_BUNDLE)`` returns a StateBundle equal to
+    :meth:`observe_endpoint`.
+
+    Byte-stable invariant (Wave 68 §1.3): the typed Protocol surface
+    must NOT change the numeric content of any legacy call. We assert
+    the StateBundle ``native_state_digest`` round-trips through the
+    typed ``ObservationResult.payload`` unchanged.
+    """
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w68p2_eb", sample_id="s")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    legacy_endpoint = adapter.observe_endpoint(trace, bundle)
+    results = adapter.observe(
+        trace, bundle, strategies=(ObservationKind.ENDPOINT_BUNDLE,)
+    )
+
+    assert len(results) == 1
+    obs = results[0]
+    assert obs.kind == ObservationKind.ENDPOINT_BUNDLE
+    assert obs.channel == str(PROTEIN_LATENT)
+    assert obs.units == "state_bundle"
+    # Payload must be the same StateBundle object shape.
+    assert obs.payload.native_state_digest == legacy_endpoint.native_state_digest
+    assert obs.payload.source_round == legacy_endpoint.source_round
+
+
+def test_kanzi_observe_strategy_subset_filters_results() -> None:
+    """``strategies=(...)`` filters the returned ObservationResult tuple.
+
+    Passing only ``DISCRETE_TOKENS`` must yield exactly one result and
+    no ``ENDPOINT_BUNDLE``. This is the per-call optimization the
+    metric layer needs to skip expensive observations.
+    """
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w68p2_sub", sample_id="s")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    results = adapter.observe(
+        trace, bundle, strategies=(ObservationKind.DISCRETE_TOKENS,)
+    )
+
+    assert len(results) == 1
+    assert results[0].kind == ObservationKind.DISCRETE_TOKENS
+    assert results[0].channel == str(DISCRETE_TOKEN_INDEX)
+    assert results[0].units == "indices"
+    arr = np.asarray(results[0].payload, dtype=np.float64)
+    assert arr.shape == (int(KANZI_AR_SEQ_LENGTH),)
+    arr_int = arr.astype(np.int64)
+    assert arr_int.min() >= 0
+    assert arr_int.max() < int(KANZI_VOCAB_SIZE)
+
+
+def test_kanzi_observe_trajectory_native_returns_native_traj() -> None:
+    """``TRAJECTORY_NATIVE`` payload equals :meth:`export_trajectory`."""
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w68p2_traj", sample_id="s")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    legacy_traj = adapter.export_trajectory(trace)
+    results = adapter.observe(
+        trace, bundle, strategies=(ObservationKind.TRAJECTORY_NATIVE,)
+    )
+
+    assert len(results) == 1
+    obs = results[0]
+    assert obs.kind == ObservationKind.TRAJECTORY_NATIVE
+    assert obs.channel == str(PROTEIN_LATENT)
+    assert obs.units == "trajectory"
+    np.testing.assert_array_equal(np.asarray(obs.payload), legacy_traj)

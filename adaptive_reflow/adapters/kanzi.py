@@ -129,7 +129,12 @@ from adaptive_reflow.adapters._adapter_common import (
     seed_from_ids,
     torch_is_available as _adapter_common_torch_is_available,
 )
-from adaptive_reflow.framework.interfaces import implements
+from adaptive_reflow.framework.interfaces import (
+    AdapterObservationProtocol,
+    ObservationKind,
+    ObservationResult,
+    implements,
+)
 from adaptive_reflow.algorithm.perturbation import (
     PerturbationPolicy,
     UniformFreshPerturbation,
@@ -1056,7 +1061,7 @@ class KanziCapabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
-@implements(FlowMatchingODEAdapter)
+@implements(FlowMatchingODEAdapter, AdapterObservationProtocol)
 class KanziAdapter(FlowMatchingODEAdapter):
     """Kanzi protein flow-autoencoder adapter (Wave 21 skeleton).
 
@@ -2093,6 +2098,115 @@ class KanziAdapter(FlowMatchingODEAdapter):
             ).astype(np.float64)
 
         return {str(DISCRETE_TOKEN_INDEX): discrete_idx}
+
+    # ------------------------------------------------------------------
+    # 9b. observe (Wave 68 Phase 2 — AdapterObservationProtocol surface)
+    # ------------------------------------------------------------------
+
+    def observe(
+        self,
+        trace: ODEIntegratorTrace,
+        state: StateBundle,
+        paper_quantities: Any = None,
+        *,
+        strategies: tuple[ObservationKind, ...] = (
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.POSITION_ENTROPY_REDUCTION,
+            ObservationKind.TRAJECTORY_NATIVE,
+        ),
+        theta_before: Any = None,
+        theta_after: Any = None,
+    ) -> tuple[ObservationResult, ...]:
+        """Single typed observation surface for :class:`AdapterObservationProtocol`.
+
+        Wraps the existing ``observe_endpoint`` / ``observe_token_indices``
+        / ``export_trajectory`` methods into a tagged-tuple
+        :class:`ObservationResult` contract. ``POSITION_ENTROPY_REDUCTION``
+        is intentionally skipped — the Kanzi trajectory is a continuous
+        latent, so Shannon entropy along the trailing axis is not a
+        meaningful chemical signal (Wave 67 §3, Wave 45
+        ``docs/audit/wave45-lineageflow-entropy-metric.md`` §"Kanzi
+        deferred").
+
+        Byte-stable migration (Wave 68 §1.3): the underlying methods
+        are unchanged. The result tuple contains exactly the
+        ``ObservationResult`` s the caller requested (in strategies
+        order) when the adapter supports them; otherwise an empty
+        tuple is returned for the missing kinds.
+
+        Parameters
+        ----------
+        trace
+            Forwarded to the underlying observation methods.
+        state
+            Forwarded to :meth:`observe_endpoint`.
+        paper_quantities
+            Forwarded to :meth:`observe_token_indices` (currently a
+            no-op consumer per Wave 44).
+        strategies
+            Tuple of :class:`ObservationKind` tags to include. The
+            default requests all four kinds; unsupported ones are
+            silently skipped.
+        theta_before, theta_after
+            Accepted for protocol parity with :class:`LineageFlowAdapter`;
+            not consumed by Kanzi (POSITION_ENTROPY_REDUCTION is
+            skipped). Surfaced in metadata for downstream
+            introspection only.
+
+        Returns
+        -------
+        tuple[ObservationResult, ...]
+            Tagged-tuple view of the same numeric output the legacy
+            ``observe_*`` methods return. The payload type depends on
+            ``kind``: ``StateBundle`` for ``ENDPOINT_BUNDLE``,
+            ``numpy.ndarray`` for ``DISCRETE_TOKENS`` (a single
+            ``(L_z,)`` int array, even though the legacy method
+            returned a dict keyed by channel name), and
+            ``numpy.ndarray | None`` for ``TRAJECTORY_NATIVE``.
+        """
+        results: list[ObservationResult] = []
+        if ObservationKind.ENDPOINT_BUNDLE in strategies:
+            endpoint = self.observe_endpoint(trace, state)
+            results.append(
+                ObservationResult(
+                    kind=ObservationKind.ENDPOINT_BUNDLE,
+                    channel=str(PROTEIN_LATENT),
+                    payload=endpoint,
+                    units="state_bundle",
+                    metadata={"source_round": int(endpoint.source_round)},
+                )
+            )
+        if ObservationKind.DISCRETE_TOKENS in strategies:
+            token_map = self.observe_token_indices(trace, paper_quantities)
+            # ``observe_token_indices`` returns a dict keyed by the
+            # model-internal channel name (``DISCRETE_TOKEN_INDEX``).
+            # For the typed protocol the caller wants one
+            # ``ObservationResult`` per channel, so iterate the dict.
+            for ch_name, arr in token_map.items():
+                results.append(
+                    ObservationResult(
+                        kind=ObservationKind.DISCRETE_TOKENS,
+                        channel=str(ch_name),
+                        payload=arr,
+                        units="indices",
+                    )
+                )
+        # POSITION_ENTROPY_REDUCTION: intentionally skipped (continuous
+        # latent; no natural per-position categorical). See Wave 67 §3
+        # and docs/audit/wave45-lineageflow-entropy-metric.md.
+        if ObservationKind.TRAJECTORY_NATIVE in strategies:
+            traj = self.export_trajectory(trace)
+            if traj is not None:
+                results.append(
+                    ObservationResult(
+                        kind=ObservationKind.TRAJECTORY_NATIVE,
+                        channel=str(PROTEIN_LATENT),
+                        payload=traj,
+                        units="trajectory",
+                    )
+                )
+        return tuple(results)
 
     # ------------------------------------------------------------------
     # 10. inject_forward_noise (optional — P0-7 close)
