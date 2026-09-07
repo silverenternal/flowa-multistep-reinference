@@ -184,7 +184,7 @@ Agent 5 brief: paper-writeup only, single commit, no push).
   "files_modified": [
     "/home/hugo/codes/flowa-multistep-reinference/docs/paper-draft.md"
   ],
-  "commit_sha": "7cc9da34821f5277e8ab8d175c31efe0089f5a70",
+  "commit_sha": "f46e167",
   "caveat_inserted_for_wave73_74": true,
   "notes": [
     "Wave 79 Phase 5 (this) is paper-writeup only — 6 sections updated ADDITIVE: §1 abstract (new clause (iv) Wave 79 honest-caveat), §7.3 Kanzi (per-metric verdict table + Wave 73-74 caveat), §7.4 LineageFlow (per-metric verdict table + Wave 73-74 caveat + BLOCKED_UPSTREAM_DEPS_MISSING framing), §7.5 FlowMol3 (cross-reference to Wave 75 + Wave 79 PARTIAL framing), §7.6 Tier 3 honest verdict (Wave 79 honest verdict + per-paper-claim support status table), §5.7 Limitations (new item #11 'Internal composite ≠ paper metric').",
