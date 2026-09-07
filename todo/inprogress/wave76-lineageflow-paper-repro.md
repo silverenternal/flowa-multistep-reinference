@@ -1,8 +1,8 @@
 # Wave 76 — LineageFlow paper reproduction
 
 **Date:** 2026-09-08
-**Status:** PLANNED (waits for Wave 75)
-**Depends on:** Wave 75 commits landed
+**Status:** IN PROGRESS (Wave 75 committed; this wave activated 2026-09-08)
+**Depends on:** Wave 75 commits landed ✓ (verified SHAs 9998580 / 6cd6491 / 39c8cbb)
 **Blocks:** Wave 77 (Kanzi paper reproduction)
 
 > **Sample count strategy (revised 2026-09-08):** **N = 1000 samples per arm**
