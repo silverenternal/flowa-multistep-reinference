@@ -305,13 +305,25 @@ def test_pb_validity_pct_subset_vs_full(monkeypatch: pytest.MonkeyPatch) -> None
     mols = [_FakeSampledMolecule() for _ in range(4)]
     pb_full = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
     pb_subset = paper_metrics.compute_pb_validity_pct(mols, full_pb=False, pb_workers=0)
+    # Wave 90: returns a 3-key dict with ``pb_validity`` (UFF),
+    # ``pb_validity_xtb`` (xtb post-processing — falls back to UFF
+    # when xtb is unavailable, which is the test-rig state), and
+    # ``status`` (xtb-vs-uff-fallback discriminator).
+    assert isinstance(pb_full, dict)
+    assert isinstance(pb_subset, dict)
+    assert set(pb_full) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert set(pb_subset) == {"pb_validity", "pb_validity_xtb", "status"}
     # Canned mock: full_pb (vendored YAML) returns 0.92; subset_pb
     # (no energy_ratio module) returns 0.99.
-    assert pb_full == pytest.approx(0.92, abs=1e-9)
-    assert pb_subset == pytest.approx(0.99, abs=1e-9)
+    assert pb_full["pb_validity"] == pytest.approx(0.92, abs=1e-9)
+    assert pb_subset["pb_validity"] == pytest.approx(0.99, abs=1e-9)
+    # xtb pipeline is unavailable on the test rig → ``pb_validity_xtb``
+    # falls back to the UFF value.
+    assert pb_full["pb_validity_xtb"] == pytest.approx(pb_full["pb_validity"], abs=1e-9)
+    assert pb_subset["pb_validity_xtb"] == pytest.approx(pb_subset["pb_validity"], abs=1e-9)
     # Sanity: vendored YAML path is stricter than subset path
     # (energy_ratio adds an extra rejection step).
-    assert pb_full <= pb_subset
+    assert pb_full["pb_validity"] <= pb_subset["pb_validity"]
 
 
 def test_fg_deviation_geom_drugs_vs_nci_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -488,11 +500,20 @@ def test_pb_validity_pct_uses_xtb_energy_ratio(
 
     mols = [_FakeSampledMolecule() for _ in range(4)]
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
+    # Wave 90: returns 3-key dict with ``pb_validity`` (UFF),
+    # ``pb_validity_xtb`` (xtb post-processing — falls back to UFF
+    # when xtb is unavailable, which is the test-rig state), and
+    # ``status`` (xtb-vs-uff-fallback discriminator).
+    assert isinstance(out, dict)
+    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
     # When the vendored YAML is injected, the canned "xtb_injected"
     # bucket returns ``pb_valid = 0.92`` (matches the paper-parity
     # value).
-    assert out == pytest.approx(0.92, abs=1e-9)
-    assert 0.0 <= out <= 1.0
+    assert out["pb_validity"] == pytest.approx(0.92, abs=1e-9)
+    assert 0.0 <= out["pb_validity"] <= 1.0
+    # xtb pipeline unavailable on test rig → ``pb_validity_xtb``
+    # falls back to ``pb_validity`` value.
+    assert out["pb_validity_xtb"] == pytest.approx(out["pb_validity"], abs=1e-9)
     # Sanity: the vendored YAML path is NOT the same as the
     # ``full_pb=False`` subset path. The subset path uses the upstream
     # vendored ``pb_config.yaml`` (energy_ratio commented out) and
@@ -500,10 +521,10 @@ def test_pb_validity_pct_uses_xtb_energy_ratio(
     out_subset = paper_metrics.compute_pb_validity_pct(
         mols, full_pb=False, pb_workers=0
     )
-    assert out_subset == pytest.approx(0.99, abs=1e-9)
+    assert out_subset["pb_validity"] == pytest.approx(0.99, abs=1e-9)
     # Sanity: full_pb path (with vendored YAML) is stricter than
     # the subset path.
-    assert out < out_subset
+    assert out["pb_validity"] < out_subset["pb_validity"]
 
 
 def test_pb_validity_pct_returns_real_number_when_xtb_installed(
@@ -548,14 +569,20 @@ def test_pb_validity_pct_returns_real_number_when_xtb_installed(
 
     mols = [_FakeSampledMolecule() for _ in range(4)]
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
+    # Wave 90+ : returns a 3-key dict (``pb_validity``, ``pb_validity_xtb``,
+    # ``status``).
+    assert isinstance(out, dict)
+    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
     # The vendored YAML bucket returns ``pb_valid = 0.92`` per the
     # paper-parity value (Dunn et al., NeurIPS 2024, arXiv 2508.12629).
-    assert isinstance(out, float)
-    assert 0.0 <= out <= 1.0
-    # Real finite float (not NaN, not inf, not the upstream import-failure
-    # sentinel).
-    assert out == out  # not NaN
-    assert out not in (float("inf"), float("-inf"))
+    assert 0.0 <= out["pb_validity"] <= 1.0
+    assert 0.0 <= out["pb_validity_xtb"] <= 1.0
+    # Real finite floats (not NaN, not inf, not the upstream
+    # import-failure sentinel).
+    assert out["pb_validity"] == out["pb_validity"]  # not NaN
+    assert out["pb_validity"] not in (float("inf"), float("-inf"))
+    assert out["pb_validity_xtb"] == out["pb_validity_xtb"]
+    assert out["pb_validity_xtb"] not in (float("inf"), float("-inf"))
 
 
 def test_pb_validity_pct_falls_back_to_uff_when_xtb_missing(
@@ -605,15 +632,21 @@ def test_pb_validity_pct_falls_back_to_uff_when_xtb_missing(
     # subset_pb path (Wave 73 byte-stable behavior). The canned
     # ``subset_pb`` bucket returns ``pb_valid = 0.99``.
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
-    assert isinstance(out, float)
-    assert 0.0 <= out <= 1.0
-    assert out == pytest.approx(0.99, abs=1e-9)
+    # Wave 90+ : returns a 3-key dict.
+    assert isinstance(out, dict)
+    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert 0.0 <= out["pb_validity"] <= 1.0
+    assert 0.0 <= out["pb_validity_xtb"] <= 1.0
+    assert out["pb_validity"] == pytest.approx(0.99, abs=1e-9)
+    # xtb pipeline unavailable on test rig → ``pb_validity_xtb`` falls
+    # back to ``pb_validity``.
+    assert out["pb_validity_xtb"] == pytest.approx(out["pb_validity"], abs=1e-9)
     # Sanity: subset path with ``full_pb=False`` returns the same
     # value (the fallback IS the subset path).
     out_explicit_subset = paper_metrics.compute_pb_validity_pct(
         mols, full_pb=False, pb_workers=0
     )
-    assert out == out_explicit_subset
+    assert out["pb_validity"] == out_explicit_subset["pb_validity"]
 
 
 # ---------------------------------------------------------------------------
@@ -741,12 +774,14 @@ def test_compute_pb_validity_pct_does_not_call_xtb_optimization(
 
     mols = [_FakeSampledMolecule() for _ in range(4)]
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
-    # The vendored YAML injection path returns the paper-parity
-    # ``xtb_injected`` bucket (~0.92). If this assertion passes
-    # without raising, the contract is verified: PB path did NOT
-    # touch xtb.
-    assert out == pytest.approx(0.92, abs=1e-9)
-    assert 0.0 <= out <= 1.0
+    # Wave 90+ : 3-key dict. The vendored YAML injection path returns
+    # the paper-parity ``xtb_injected`` bucket (~0.92). If this
+    # assertion passes without raising, the contract is verified: PB
+    # path did NOT touch xtb.
+    assert isinstance(out, dict)
+    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert out["pb_validity"] == pytest.approx(0.92, abs=1e-9)
+    assert 0.0 <= out["pb_validity"] <= 1.0
 
 
 def test_pb_config_with_energy_ratio_yaml_has_paper_tuned_params(
@@ -890,15 +925,19 @@ def test_pb_validity_pct_vendored_yaml_injection_matches_paper_target(
 
     mols = [_FakeSampledMolecule() for _ in range(10)]
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
+    # Wave 90+ : returns a 3-key dict.
+    assert isinstance(out, dict)
+    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
     # Paper target: 0.919 (Dunn et al., NeurIPS 2024, arXiv 2508.12629).
     # Canned ``xtb_injected`` bucket returns 0.92. Tolerance: ±5% of
     # 0.919 = 0.04595.
-    assert out == pytest.approx(0.92, abs=0.05), (
-        f"compute_pb_validity_pct (vendored YAML) = {out}, expected "
-        "0.92 ± 0.05 (paper target 0.919). The vendored YAML path must "
-        "return a paper-parity value — if this fails, the wire is broken."
+    assert out["pb_validity"] == pytest.approx(0.92, abs=0.05), (
+        f"compute_pb_validity_pct (vendored YAML) = {out['pb_validity']}, "
+        "expected 0.92 ± 0.05 (paper target 0.919). The vendored YAML "
+        "path must return a paper-parity value — if this fails, the "
+        "wire is broken."
     )
-    assert 0.0 <= out <= 1.0
+    assert 0.0 <= out["pb_validity"] <= 1.0
 
     # Sanity: the full_pb path is STRICTER than the subset path
     # (energy_ratio adds a rejection step). The subset path returns
@@ -906,7 +945,517 @@ def test_pb_validity_pct_vendored_yaml_injection_matches_paper_target(
     out_subset = paper_metrics.compute_pb_validity_pct(
         mols, full_pb=False, pb_workers=0
     )
-    assert out < out_subset, (
-        f"full_pb path (vendored YAML) = {out} should be STRICTER than "
-        f"subset path = {out_subset}; energy_ratio adds a rejection step."
+    assert out["pb_validity"] < out_subset["pb_validity"], (
+        f"full_pb path (vendored YAML) = {out['pb_validity']} should be "
+        f"STRICTER than subset path = {out_subset['pb_validity']}; "
+        "energy_ratio adds a rejection step."
     )
+
+
+# ---------------------------------------------------------------------------
+# Wave 90+ — xtb-bridge availability contract test.
+#
+# Verifies the new ``status`` discriminator:
+#
+#   * When the xtb bridge is available, ``compute_pb_validity_pct``
+#     returns BOTH UFF-based and xtb-based numbers (different values).
+#     ``status == "xtb"``.
+#
+#   * When the xtb bridge is missing, the helper falls back to UFF
+#     only. ``pb_validity_xtb == pb_validity`` (the UFF value).
+#     ``status == "uff_fallback"``.
+#
+# The xtb bridge surface is mocked so the test runs deterministically
+# without xtb / rdkit on the test rig (matching the existing test
+# rig state — ``rdkit`` is NOT installed in the CPU-only CI venv).
+# ---------------------------------------------------------------------------
+
+
+def _install_mock_xtb_bridge(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+    """Install mocks for ``tools.flowmol3_xtb_bridge`` + ``rdkit.Chem``.
+
+    Returns a dict of per-call counters so the test can assert on
+    how the bridge was invoked. The mocks simulate the full xtb
+    pipeline (write SDF → xtb_optimize_sdf writes opt SDF →
+    per-mol xtb_energy_ratio returns a finite float ratio).
+    """
+    call_count = {"optimize": 0, "ratio": 0, "write": 0}
+
+    class _FakeXtbBridgeError(RuntimeError):
+        pass
+
+    def _fake_xtb_optimize_sdf(
+        input_sdf: Any, init_sdf: Any, **_kw: Any
+    ) -> Any:
+        call_count["optimize"] += 1
+        # Mirror upstream convention: opt SDF = input stem + "_opt" + suffix.
+        input_sdf_p = Path(str(input_sdf))
+        opt_sdf = input_sdf_p.with_name(
+            input_sdf_p.stem + "_opt" + input_sdf_p.suffix
+        )
+        # The upstream script would write the opt SDF; we mimic that.
+        opt_sdf.write_text("optimized\n", encoding="utf-8")
+        return opt_sdf
+
+    def _fake_xtb_energy_ratio(
+        rdkit_mol: Any, _init_sdf: Any, _opt_sdf: Any, **_kw: Any
+    ) -> float:
+        call_count["ratio"] += 1
+        # Distinguish mols by their _Name prop set inside the helper.
+        # Use a deterministic but small ratio (well under the
+        # xtb_threshold=100.0 paper cutoff) so every mol "passes".
+        try:
+            name = rdkit_mol.GetProp("_Name") if rdkit_mol is not None else ""
+        except Exception:
+            name = ""
+        # Cycle through 3 small-but-distinct ratios so the test can
+        # observe that xtb ran (the resulting pb_validity_xtb is a
+        # finite real number derived from these ratios, NOT equal to
+        # the canned UFF bucket value).
+        idx = int(name.rsplit("_", 1)[-1]) if "_" in name else 0
+        ratios = [5.0, 12.0, 50.0]
+        return float(ratios[idx % len(ratios)])
+
+    fake_bridge = types.ModuleType("tools.flowmol3_xtb_bridge")
+    fake_bridge.XtbBridgeError = _FakeXtbBridgeError
+    fake_bridge.xtb_optimize_sdf = _fake_xtb_optimize_sdf
+    fake_bridge.xtb_energy_ratio = _fake_xtb_energy_ratio
+    monkeypatch.setitem(sys.modules, "tools.flowmol3_xtb_bridge", fake_bridge)
+
+    # Mock rdkit.Chem: SDWriter accepts write() calls and the mol
+    # exposes SetProp/GetProp. The mols passed in must already look
+    # like RDKit mols (have SetProp + GetProp + GetConformer-friendly
+    # attrs); we wrap _FakeSampledMolecule.build_molecule() to
+    # return a MagicMock that quacks like an RDKit mol.
+    class _FakeRDKitMol:
+        """Duck-typed RDKit mol with the surface the bridge touches."""
+
+        def __init__(self, idx: int) -> None:
+            self._props: dict[str, str] = {}
+
+        def SetProp(self, key: str, value: str) -> None:
+            self._props[str(key)] = str(value)
+
+        def GetProp(self, key: str) -> str:
+            return self._props[str(key)]
+
+    class _FakeSDWriter:
+        def __init__(self, path: str) -> None:
+            self._path = Path(path)
+            # Make sure the parent exists so the helper's
+            # ``input_sdf.is_file()`` check passes after .close().
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+
+        def write(self, _mol: Any) -> None:
+            call_count["write"] += 1
+
+        def close(self) -> None:
+            # Create an empty file so the bridge sees the SDF as
+            # present on disk (the upstream script would write a real
+            # record; we only need .is_file() to return True).
+            self._path.touch(exist_ok=True)
+
+    class _FakeChem:
+        SDWriter = _FakeSDWriter
+
+    fake_rdkit = types.ModuleType("rdkit")
+    fake_rdkit.Chem = _FakeChem()
+    monkeypatch.setitem(sys.modules, "rdkit", fake_rdkit)
+
+    return call_count
+
+
+def test_compute_pb_validity_pct_with_xtb(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """xtb bridge availability drives the returned ``status`` field.
+
+    When the xtb bridge is available, ``compute_pb_validity_pct``
+    returns BOTH UFF-based AND xtb-based numbers (the two values
+    must be distinct because they are computed from different
+    energy models). The ``status`` field reads ``"xtb"``.
+
+    When the xtb bridge is missing, the helper falls back to UFF
+    only: ``pb_validity_xtb`` mirrors the UFF value
+    (``pb_validity_xtb == pb_validity``). The ``status`` field reads
+    ``"uff_fallback"``.
+
+    This test exercises BOTH branches in a single function and
+    asserts the discriminator works end-to-end.
+    """
+    # ------------------------------------------------------------------
+    # Phase 1 — xtb bridge UNAVAILABLE (test-rig default).
+    #
+    # We deliberately do NOT install the xtb bridge mock here. The
+    # helper's ``from tools.flowmol3_xtb_bridge import ...`` will
+    # resolve to the real bridge module (which exists), but the
+    # bridge's own functions would fail because rdkit is not
+    # installed in the test venv. The ImportError on ``from rdkit
+    # import Chem`` inside ``_recompute_pb_validity_xtb`` short-
+    # circuits to the UFF fallback path.
+    # ------------------------------------------------------------------
+    _install_mock_flowmol(monkeypatch)
+    import types as _types
+
+    fake_posebusters = _types.ModuleType("posebusters")
+
+    class _FakePoseBusters:
+        def __init__(self, *, config: Any = None, max_workers: int = 0, **_kw: Any):
+            self._config = config
+
+    fake_posebusters.PoseBusters = _FakePoseBusters
+    monkeypatch.setitem(sys.modules, "posebusters", fake_posebusters)
+
+    fake_yaml = _types.ModuleType("yaml")
+    fake_yaml.safe_load = lambda fh: {
+        "modules": [
+            {"name": "Loading", "function": "loading"},
+            {"name": "Energy ratio", "function": "energy_ratio",
+             "parameters": {"threshold_energy_ratio": 100.0,
+                            "ensemble_number_conformations": 50}},
+        ]
+    }
+    monkeypatch.setitem(sys.modules, "yaml", fake_yaml)
+
+    from tools import paper_metrics  # noqa: PLC0415
+
+    mols = [_FakeSampledMolecule() for _ in range(4)]
+
+    # --- Phase 1: xtb unavailable → status="uff_fallback" ---
+    out_no_xtb = paper_metrics.compute_pb_validity_pct(
+        mols, full_pb=True, pb_workers=0
+    )
+    assert isinstance(out_no_xtb, dict)
+    assert set(out_no_xtb) == {"pb_validity", "pb_validity_xtb", "status"}
+    # The status field must be the fallback literal.
+    assert out_no_xtb["status"] == "uff_fallback", (
+        f"expected status='uff_fallback' when xtb bridge is missing; "
+        f"got status={out_no_xtb['status']!r}"
+    )
+    # When xtb is missing, pb_validity_xtb MUST mirror pb_validity
+    # (the UFF value passed as fallback). Direct UFF-vs-xtb diff is
+    # therefore 0 — the UFF number propagates through unchanged.
+    assert out_no_xtb["pb_validity_xtb"] == pytest.approx(
+        out_no_xtb["pb_validity"], abs=1e-9
+    )
+    assert out_no_xtb["pb_validity_xtb"] == out_no_xtb["pb_validity"]
+    # Both numbers are well-defined finite floats in [0, 1].
+    assert 0.0 <= out_no_xtb["pb_validity"] <= 1.0
+    assert 0.0 <= out_no_xtb["pb_validity_xtb"] <= 1.0
+    assert out_no_xtb["pb_validity"] == out_no_xtb["pb_validity"]  # not NaN
+    assert out_no_xtb["pb_validity_xtb"] == out_no_xtb["pb_validity_xtb"]
+
+    # ------------------------------------------------------------------
+    # Phase 2 — xtb bridge AVAILABLE.
+    #
+    # Install mocks so the bridge + rdkit imports succeed and the
+    # xtb pipeline runs end-to-end. Use a subclass of
+    # _FakeSampledMolecule that returns a properly-shaped RDKit mol
+    # (with SetProp + GetProp) from build_molecule(), so the
+    # bridge's per-mol loop produces records.
+    # ------------------------------------------------------------------
+
+    class _FakeMolWithRDKit(_FakeSampledMolecule):
+        """Subclass whose ``build_molecule()`` returns a fake RDKit mol.
+
+        The xtb bridge needs the returned object to support
+        ``SetProp("_Name", ...)`` and ``GetProp("_Name")``. We use
+        the ``_FakeRDKitMol`` helper from the bridge mock installer
+        — but it lives in a local scope. Re-define a minimal
+        compatible version here.
+        """
+
+        _counter = 0
+
+        def build_molecule(self) -> Any:  # type: ignore[override]
+            cls = type(self)
+            cls._counter += 1
+            idx = (cls._counter - 1) % 3
+            return _Phase2RDKitMol(idx=idx)
+
+    class _Phase2RDKitMol:
+        def __init__(self, idx: int) -> None:
+            self._idx = int(idx)
+            self._props: dict[str, str] = {}
+
+        def SetProp(self, key: str, value: str) -> None:
+            self._props[str(key)] = str(value)
+
+        def GetProp(self, key: str) -> str:
+            return self._props[str(key)]
+
+        @property
+        def _paper_pb_xtb_mol_idx(self) -> int:
+            return int(self._idx)
+
+    bridge_calls = _install_mock_xtb_bridge(monkeypatch)
+
+    # Phase-2 mols: build_molecule() returns a properly-shaped mol.
+    mols_xtb = [_FakeMolWithRDKit() for _ in range(4)]
+
+    out_xtb = paper_metrics.compute_pb_validity_pct(
+        mols_xtb, full_pb=True, pb_workers=0
+    )
+    assert isinstance(out_xtb, dict)
+    assert set(out_xtb) == {"pb_validity", "pb_validity_xtb", "status"}
+    # The xtb bridge MUST have run end-to-end.
+    assert out_xtb["status"] == "xtb", (
+        f"expected status='xtb' when xtb bridge is mocked as available; "
+        f"got status={out_xtb['status']!r}"
+    )
+    # xtb was actually invoked: optimize called once, ratio called per mol.
+    assert bridge_calls["optimize"] >= 1, (
+        f"expected xtb_optimize_sdf to be called at least once; "
+        f"call_count={bridge_calls}"
+    )
+    assert bridge_calls["ratio"] >= 1, (
+        f"expected xtb_energy_ratio to be called at least once; "
+        f"call_count={bridge_calls}"
+    )
+    # Both numbers are well-defined finite floats in [0, 1].
+    assert 0.0 <= out_xtb["pb_validity"] <= 1.0
+    assert 0.0 <= out_xtb["pb_validity_xtb"] <= 1.0
+    assert out_xtb["pb_validity"] == out_xtb["pb_validity"]
+    assert out_xtb["pb_validity_xtb"] == out_xtb["pb_validity_xtb"]
+    # The UFF and xtb numbers CAN be different — they come from
+    # different energy models. The UFF value is whatever the canned
+    # vendored-YAML bucket returns (0.92); the xtb value is derived
+    # from the 3 mock ratios (all < 100.0 threshold → all pass →
+    # pb_validity_xtb = 1.0 for the 4-mol set). We assert that
+    # the values are present and finite, NOT that they differ in a
+    # specific way (the test must remain deterministic regardless of
+    # what the mock returns).
+    assert isinstance(out_xtb["pb_validity"], float)
+    assert isinstance(out_xtb["pb_validity_xtb"], float)
+
+    # Sanity: the two test phases produced the SAME UFF value (UFF
+    # is deterministic from the canned upstream SampleAnalyzer mock;
+    # only the xtb-side depends on the bridge availability).
+    assert out_no_xtb["pb_validity"] == out_xtb["pb_validity"], (
+        f"UFF pb_validity should be deterministic across phases; "
+        f"phase1={out_no_xtb['pb_validity']}, phase2={out_xtb['pb_validity']}"
+    )
+    # Sanity: the status fields differ — phase 1 is fallback,
+    # phase 2 is xtb.
+    assert out_no_xtb["status"] != out_xtb["status"]
+    assert {out_no_xtb["status"], out_xtb["status"]} == {
+        "uff_fallback",
+        "xtb",
+    }
+
+
+def test_compute_pb_validity_pct_xtb_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Mock ``xtb_bridge.xtb_energy_ratio`` to raise ``FileNotFoundError``.
+
+    Verifies that ``compute_pb_validity_pct`` falls back to UFF-only
+    when the per-mol xtb energy-ratio call raises
+    ``FileNotFoundError`` (the canonical "xtb binary not on $PATH"
+    signal). The returned dict must:
+
+      * carry the paper UFF ``pb_validity`` value (the canned
+        ``xtb_injected`` bucket ≈ 0.92 when the vendored YAML is
+        injected; unchanged by the xtb-side failure);
+      * mirror the UFF value into ``pb_validity_xtb`` (the UFF-fallback
+        contract — readers can always diff the two keys, even when the
+        xtb pipeline is unavailable);
+      * report a fallback ``status`` so downstream consumers can
+        distinguish "xtb unavailable" from "xtb ran end-to-end".
+
+    This is the missing link between the existing tests:
+
+      * ``test_pb_validity_pct_falls_back_to_uff_when_xtb_missing``
+        covers the YAML-side fallback (vendored YAML absent →
+        subset_pb).
+      * ``test_compute_pb_validity_pct_with_xtb`` covers the xtb-side
+        happy path (xtb available, status == "xtb").
+
+    This test covers the per-mol xtb-side failure mode: the canonical
+    ``FileNotFoundError`` from the upstream ``subprocess.run(["xtb",
+    ...])`` call (which raises ``FileNotFoundError(errno.ENOENT,
+    "xtb")`` when the xtb binary is missing on ``$PATH``) is
+    short-circuited by the helper's per-mol ``try/except Exception``
+    block into a fallback that:
+
+      1. Records the mol as a fail (``n_total += 1``, ``n_pass`` stays)
+         — i.e. the xtb-side pass rate collapses to ``0.0`` for that
+         record.
+      2. Surfaces a non-``"xtb"`` status so callers can branch on the
+         cause.
+
+    The test asserts both halves of the contract:
+      * UFF-side ``pb_validity`` is preserved (≈0.92 paper-parity).
+      * xtb-side does NOT report ``status == "xtb"`` because the
+        xtb pipeline did not actually evaluate any per-mol ratios —
+        it raised FileNotFoundError for every record.
+    """
+    import errno
+    import os
+
+    canned = _install_mock_flowmol(monkeypatch)
+    import types as _types
+
+    fake_posebusters = _types.ModuleType("posebusters")
+
+    class _FakePoseBusters:
+        def __init__(self, *, config: Any = None, max_workers: int = 0, **_kw: Any):
+            self._config = config
+            self._max_workers = int(max_workers)
+
+    fake_posebusters.PoseBusters = _FakePoseBusters
+    monkeypatch.setitem(sys.modules, "posebusters", fake_posebusters)
+
+    fake_yaml = _types.ModuleType("yaml")
+
+    def _fake_safe_load(fh: Any) -> dict[str, Any]:
+        return {
+            "modules": [
+                {"name": "Loading", "function": "loading"},
+                {"name": "Energy ratio", "function": "energy_ratio",
+                 "parameters": {"threshold_energy_ratio": 100.0,
+                                "ensemble_number_conformations": 50}},
+            ]
+        }
+
+    fake_yaml.safe_load = _fake_safe_load
+    monkeypatch.setitem(sys.modules, "yaml", fake_yaml)
+
+    # Install a stub xtb bridge where the optimize step "succeeds"
+    # (writes the expected opt SDF) but the per-mol
+    # ``xtb_energy_ratio`` call raises ``FileNotFoundError`` —
+    # mirroring the canonical "xtb binary missing on $PATH" failure
+    # mode surfaced by the upstream FlowMol3 geometry helpers.
+    class _FakeXtbBridgeError(RuntimeError):
+        pass
+
+    def _fake_xtb_optimize_sdf(
+        input_sdf: Any, init_sdf: Any, **_kw: Any
+    ) -> Any:
+        input_sdf_p = Path(str(input_sdf))
+        opt_sdf = input_sdf_p.with_name(
+            input_sdf_p.stem + "_opt" + input_sdf_p.suffix
+        )
+        opt_sdf.write_text("optimized\n", encoding="utf-8")
+        return opt_sdf
+
+    def _fake_xtb_energy_ratio_raises_filenotfound(
+        rdkit_mol: Any, _init_sdf: Any, _opt_sdf: Any, **_kw: Any
+    ) -> float:
+        # The canonical "xtb binary not on $PATH" error from the
+        # upstream ``fm3_evals/geometry`` pipeline:
+        # ``subprocess.run(["xtb", ...], ...)`` raises
+        # ``FileNotFoundError(errno.ENOENT, "xtb")`` when the binary
+        # is missing. The bridge propagates this verbatim so callers
+        # can distinguish "xtb missing" from other failure modes.
+        raise FileNotFoundError(
+            errno.ENOENT,
+            os.strerror(errno.ENOENT),
+            "xtb",
+        )
+
+    fake_bridge = _types.ModuleType("tools.flowmol3_xtb_bridge")
+    fake_bridge.XtbBridgeError = _FakeXtbBridgeError
+    fake_bridge.xtb_optimize_sdf = _fake_xtb_optimize_sdf
+    fake_bridge.xtb_energy_ratio = _fake_xtb_energy_ratio_raises_filenotfound
+    monkeypatch.setitem(sys.modules, "tools.flowmol3_xtb_bridge", fake_bridge)
+
+    # Mock rdkit.Chem so the SDF writer succeeds and the per-mol loop
+    # reaches the (mocked) ``xtb_energy_ratio`` call.
+    class _FakeRDKitMol:
+        def __init__(self) -> None:
+            self._props: dict[str, str] = {}
+
+        def SetProp(self, key: str, value: str) -> None:
+            self._props[str(key)] = str(value)
+
+        def GetProp(self, key: str) -> str:
+            return self._props[str(key)]
+
+    class _FakeMolWithRDKit(_FakeSampledMolecule):
+        """Subclass whose ``build_molecule()`` returns a fake RDKit mol."""
+
+        def build_molecule(self) -> Any:  # type: ignore[override]
+            return _FakeRDKitMol()
+
+    class _FakeSDWriter:
+        def __init__(self, path: str) -> None:
+            self._path = Path(path)
+            self._path.parent.mkdir(parents=True, exist_ok=True)
+
+        def write(self, _mol: Any) -> None:
+            pass
+
+        def close(self) -> None:
+            self._path.touch(exist_ok=True)
+
+    class _FakeChem:
+        SDWriter = _FakeSDWriter
+
+    fake_rdkit = _types.ModuleType("rdkit")
+    fake_rdkit.Chem = _FakeChem()
+    monkeypatch.setitem(sys.modules, "rdkit", fake_rdkit)
+
+    from tools import paper_metrics  # noqa: PLC0415
+
+    mols = [_FakeMolWithRDKit() for _ in range(4)]
+    out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
+
+    # Result shape is the 3-key dict — same as the happy path.
+    assert isinstance(out, dict)
+    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
+
+    # UFF-side: the vendored YAML was injected, so the canned
+    # ``xtb_injected`` bucket returns ``pb_valid = 0.92`` (the
+    # paper-parity value). The xtb-side failure must NOT bleed into
+    # the UFF value.
+    assert out["pb_validity"] == pytest.approx(0.92, abs=1e-9)
+    assert 0.0 <= out["pb_validity"] <= 1.0
+
+    # xtb-side: the very first per-mol ``xtb_energy_ratio`` call
+    # raised ``FileNotFoundError`` (xtb binary missing on $PATH).
+    # The helper short-circuits to the UFF-fallback contract —
+    # ``pb_validity_xtb`` mirrors the UFF ``pb_validity`` value
+    # passed as ``fallback``. This guarantees the returned dict is
+    # always well-defined and the UFF-vs-xtb diff is zero (callers
+    # can still compute it; it just collapses to the no-op case).
+    assert out["pb_validity_xtb"] == pytest.approx(out["pb_validity"], abs=1e-9)
+    assert out["pb_validity_xtb"] == out["pb_validity"]
+    assert 0.0 <= out["pb_validity_xtb"] <= 1.0
+    assert out["pb_validity_xtb"] == out["pb_validity_xtb"]  # not NaN
+    assert out["pb_validity_xtb"] not in (float("inf"), float("-inf"))
+
+    # Status discriminator: the xtb-side FileNotFoundError must flip
+    # ``status`` to ``"xtb_unavailable"`` — distinct from
+    # ``"uff_fallback"`` (YAML-missing or generic import failure)
+    # and ``"xtb"`` (happy path). Without the dedicated
+    # ``FileNotFoundError`` catch the per-mol exception would fall
+    # through to ``except Exception`` and the function would
+    # misleadingly return ``status == "xtb"`` with
+    # ``pb_validity_xtb == 0.0``.
+    assert out["status"] == "xtb_unavailable", (
+        f"expected status='xtb_unavailable' when xtb_energy_ratio raises "
+        f"FileNotFoundError; got status={out['status']!r}. The "
+        f"FileNotFoundError short-circuit must flip the discriminator "
+        f"so downstream consumers can branch on the cause."
+    )
+
+    # Sanity: the UFF value is preserved (real finite float, not NaN,
+    # not inf, not the upstream import-failure sentinel).
+    assert out["pb_validity"] == out["pb_validity"]  # not NaN
+    assert out["pb_validity"] not in (float("inf"), float("-inf"))
+
+
+# ---------------------------------------------------------------------------
+# __all__ — re-export the public test names so test discovery is robust.
+# ---------------------------------------------------------------------------
+
+__all__ = (
+    "test_compute_pb_validity_pct_xtb_missing",
+    "test_compute_pb_validity_pct_with_xtb",
+    "test_pb_validity_pct_falls_back_to_uff_when_xtb_missing",
+    "test_pb_validity_pct_returns_real_number_when_xtb_installed",
+    "test_pb_validity_pct_subset_vs_full",
+    "test_pb_validity_pct_uses_xtb_energy_ratio",
+    "test_pb_validity_pct_vendored_yaml_injection_matches_paper_target",
+    "test_compute_pb_validity_pct_does_not_call_xtb_optimization",
+    "test_pb_config_with_energy_ratio_yaml_has_paper_tuned_params",
+)

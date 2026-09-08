@@ -85,6 +85,8 @@ References (file:line citations from upstream vendored repo)
 from __future__ import annotations
 
 import logging
+import math
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
@@ -97,6 +99,18 @@ from adaptive_reflow.adapters.flowmol3_metrics_upstream import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Wave 90 — PB-xtb post-processing threshold (paper parity).
+#
+# The PoseBusters ``energy_ratio`` check rejects conformer ensembles where
+# any conformer's energy exceeds the lowest-energy conformer by more than
+# ``threshold_energy_ratio``. PB's default threshold is ``7.0`` (very
+# strict — over-rejects for FlowMol3-style latent samplers); the FlowMol3
+# paper uses ``threshold_energy_ratio=100.0`` to align with xtb single-
+# point energies. We mirror the paper value when re-evaluating with the
+# xtb-driven :func:`tools.flowmol3_xtb_bridge.xtb_energy_ratio`.
+PB_XTB_THRESHOLD_DEFAULT: float = 100.0
 
 # ---------------------------------------------------------------------------
 # Wave 82 — vendored PoseBusters config with energy_ratio UNCOMMENTED.
@@ -256,7 +270,8 @@ def compute_pb_validity_pct(
     *,
     full_pb: bool = True,
     pb_workers: int = 2,
-) -> float:
+    xtb_threshold: float = PB_XTB_THRESHOLD_DEFAULT,
+) -> dict[str, float]:
     """Compute ``pb_validity_pct`` per upstream ``SampleAnalyzer.analyze(posebusters=True)``.
 
     Paper path (``full_pb=True``, default): PoseBusters is invoked
@@ -275,15 +290,27 @@ def compute_pb_validity_pct(
     (``flowmol/analysis/metrics.py:154-166``). The ``full_pb`` flag
     selects between two upstream ``PoseBusters`` configurations.
 
-    IMPORTANT — xtb is NOT required for this check (Wave 87 Agent A
-    audit). PB 0.6.5's ``energy_ratio`` module is UFF-based
+    IMPORTANT — Wave 87 audit note (preserved + extended Wave 90):
+    PB 0.6.5's ``energy_ratio`` module is UFF-based
     (verified at
     ``.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14``,
-    which imports ``UFFGetMoleculeForceField`` from RDKit). This
-    function does NOT invoke ``fm3_evals/geometry/xtb_optimization.py``
-    because xtb is irrelevant to PoseBusters' ``energy_ratio`` check.
+    which imports ``UFFGetMoleculeForceField`` from RDKit). The UFF
+    result lands in the returned ``pb_validity`` key.
 
-    Cross-reference — xtb-driven metrics (``med_rmsd``,
+    Wave 90 — xtb-based re-evaluation (NEW): After the UFF-driven
+    ``analyze()`` returns, this function additionally calls
+    :func:`tools.flowmol3_xtb_bridge.xtb_energy_ratio` for each
+    successful mol and re-evaluates the energy-ratio criterion against
+    the xtb-flavoured ratio (using ``xtb_threshold=100.0`` paper value).
+    The xtb result lands in the returned ``pb_validity_xtb`` key.
+    When xtb is unavailable on the host, ``pb_validity_xtb`` falls
+    back to ``pb_validity`` (the UFF value) so the returned dict is
+    always well-defined; a debug log line records the fallback.
+    Direct UFF-vs-xtb comparison is therefore always possible without
+    extra plumbing — readers can diff the two keys to see how much
+    the choice of energy engine moves the PB validity number.
+
+    Cross-reference — xtb-driven geometry metrics (``med_rmsd``,
     ``med_energy_gain``, ``med_mmff_drop``) are computed by
     ``_compute_xtb_geometry_metrics`` in
     ``tools/run_real_ckpt_eval.py`` and consumed by the FlowMol3
@@ -322,16 +349,46 @@ def compute_pb_validity_pct(
         use the upstream vendored ``pb_config.yaml`` subset.
     pb_workers
         Number of PoseBusters worker processes; ``0`` = sequential.
+    xtb_threshold
+        Energy-ratio threshold for the xtb-based post-processing
+        re-evaluation (default ``100.0`` = paper value). Lower values
+        reject more mols (stricter); higher values are lenient.
 
     Returns
     -------
-    float
-        Fraction of mols that pass all PoseBusters checks ∈ ``[0.0, 1.0]``.
-        Returns ``0.0`` on upstream import failure.
+    dict[str, Any]
+        Three-key dict for direct UFF-vs-xtb comparison + status:
+
+          * ``pb_validity`` — UFF-based PB pass rate ∈ ``[0.0, 1.0]``
+            (the value PoseBusters 0.6.5 reports internally; preserved
+            from prior versions of this function for byte-stable
+            backward compatibility — callers that previously consumed
+            a ``float`` should read ``result['pb_validity']``).
+          * ``pb_validity_xtb`` — xtb-based PB pass rate ∈
+            ``[0.0, 1.0]`` computed via per-mol
+            :func:`tools.flowmol3_xtb_bridge.xtb_energy_ratio` with the
+            ``xtb_threshold`` cutoff. When xtb is unavailable on the
+            host, falls back to ``pb_validity`` (UFF) and logs a debug
+            line — this guarantees the returned dict is always
+            well-defined.
+          * ``status`` — one of:
+              - ``"xtb"``: xtb bridge ran end-to-end (imports OK + at
+                least one per-mol xtb energy ratio was evaluated).
+              - ``"uff_fallback"``: xtb bridge was unavailable or
+                failed upfront (import error, no mols, SDWriter setup
+                failure, xtb_optimize_sdf raise, opt SDF missing);
+                ``pb_validity_xtb`` mirrors the UFF value.
+
+        All three keys are ``0.0`` (or ``"uff_fallback"``) on
+        upstream import failure.
     """
     modules = _try_get_upstream()
     if modules is None:
-        return 0.0
+        return {
+            "pb_validity": 0.0,
+            "pb_validity_xtb": 0.0,
+            "status": "uff_fallback",
+        }
     SampleAnalyzer = modules["SampleAnalyzer"]
     mols = _coerce_sampled_mols(sampled_molecules)
     if full_pb:
@@ -401,8 +458,26 @@ def compute_pb_validity_pct(
                         "compute_pb_validity_pct: analyze() failed with "
                         "vendored YAML (%s); returning 0.0", exc,
                     )
-                    return 0.0
-                return float(out.get("pb_valid", 0.0))
+                    return {
+                        "pb_validity": 0.0,
+                        "pb_validity_xtb": 0.0,
+                        "status": "uff_fallback",
+                    }
+                pb_valid_uff = float(out.get("pb_valid", 0.0))
+                # Wave 90: per-mol xtb_energy_ratio post-processing.
+                # Wave 90+ : returns (value, status) so the caller can
+                # distinguish "xtb ran" from "uff fallback".
+                pb_valid_xtb, xtb_status = _recompute_pb_validity_xtb(
+                    mols,
+                    threshold=float(xtb_threshold),
+                    pb_workers=int(pb_workers),
+                    fallback=pb_valid_uff,
+                )
+                return {
+                    "pb_validity": pb_valid_uff,
+                    "pb_validity_xtb": pb_valid_xtb,
+                    "status": xtb_status,
+                }
     # Wave 73 subset path: pb_energy=False loads the upstream
     # vendored pb_config.yaml (energy_ratio commented out).
     analyzer = SampleAnalyzer(
@@ -416,7 +491,227 @@ def compute_pb_validity_pct(
         posebusters=True,
         energy_div=False,
     )
-    return float(out.get("pb_valid", 0.0))
+    pb_valid_uff = float(out.get("pb_valid", 0.0))
+    # Wave 90: per-mol xtb_energy_ratio post-processing (subset path
+    # also benefits from the xtb-vs-UFF side-by-side comparison).
+    # Wave 90+ : returns (value, status) so the caller can
+    # distinguish "xtb ran" from "uff fallback".
+    pb_valid_xtb, xtb_status = _recompute_pb_validity_xtb(
+        mols,
+        threshold=float(xtb_threshold),
+        pb_workers=int(pb_workers),
+        fallback=pb_valid_uff,
+    )
+    return {
+        "pb_validity": pb_valid_uff,
+        "pb_validity_xtb": pb_valid_xtb,
+        "status": xtb_status,
+    }
+
+
+def _recompute_pb_validity_xtb(
+    mols: Sequence[Any],
+    *,
+    threshold: float,
+    pb_workers: int = 2,
+    fallback: float = 0.0,
+) -> tuple[float, str]:
+    """Re-evaluate ``pb_validity`` using xtb-based per-mol energy ratio.
+
+    Wave 90 — mirrors the PoseBusters ``energy_ratio`` check
+    (Buttenschoen et al. 2024, default ``threshold=7.0``; paper
+    value ``100.0``) but with REAL xtb single-point energies instead
+    of UFF. For each mol:
+
+      1. Build the RDKit mol (``mol.build_molecule()``).
+      2. Write a temp SDF carrying the mol + a unique ``_Name``.
+      3. Run :func:`tools.flowmol3_xtb_bridge.xtb_optimize_sdf` to
+         produce the optimised SDF.
+      4. Call :func:`tools.flowmol3_xtb_bridge.xtb_energy_ratio` for
+         the mol against the (init, opt) pair.
+      5. Count the mol as "passes" if ``ratio < threshold``.
+
+    Returns the fraction of mols that pass.
+
+    Robustness contract
+    -------------------
+
+    On any failure (xtb missing, RDKit missing, SDF write error,
+    subprocess non-zero exit, etc.) this function returns
+    ``(fallback, "uff_fallback")`` so the caller always gets a
+    well-defined number in ``[0.0, 1.0]`` AND a clear status string
+    distinguishing "xtb ran" from "xtb unavailable". A debug log line
+    records the specific failure mode for debugging.
+
+    Parameters
+    ----------
+    mols
+        Sequence of upstream ``SampledMolecule`` (or duck-typed).
+    threshold
+        Energy-ratio cutoff. A mol with ``xtb_energy_ratio > threshold``
+        is rejected. Paper value: ``100.0`` (matches the PB YAML
+        ``threshold_energy_ratio`` field).
+    pb_workers
+        Unused for the xtb path (kept in the signature for API
+        symmetry with :func:`compute_pb_validity_pct`).
+    fallback
+        Value returned on any upfront failure (xtb missing, SDF
+        write error, etc.). Defaults to ``0.0``; callers typically
+        pass the UFF ``pb_valid`` so the returned ``pb_validity_xtb``
+        matches the UFF result when the xtb pipeline is unavailable.
+
+    Returns
+    -------
+    tuple[float, str]
+        ``(value, status)`` where:
+
+          * ``value`` — fraction of mols that pass the xtb-based
+            energy-ratio check ∈ ``[0.0, 1.0]`` (or ``fallback`` on
+            any upfront failure).
+          * ``status`` — ``"xtb"`` if the xtb bridge ran end-to-end
+            (at least one per-mol xtb energy ratio was evaluated),
+            ``"uff_fallback"`` otherwise (xtb bridge import failed,
+            no mols, SDF write error, ``xtb_optimize_sdf`` raise,
+            opt SDF missing).
+    """
+    _ = pb_workers  # API symmetry only — xtb is single-process per call.
+    # Lazy-import the bridge so cold-import paths do not pay the
+    # RDKit / xtb CLI discovery cost.
+    try:
+        from tools.flowmol3_xtb_bridge import (  # noqa: PLC0415
+            XtbBridgeError,
+            xtb_energy_ratio,
+            xtb_optimize_sdf,
+        )
+        from rdkit import Chem  # noqa: PLC0415
+    except ImportError as exc:
+        _LOGGER.debug(
+            "_recompute_pb_validity_xtb: xtb_bridge / rdkit import "
+            "failed (%s); returning fallback=%s",
+            exc, fallback,
+        )
+        return float(fallback), "uff_fallback"
+    if not mols:
+        return float(fallback), "uff_fallback"
+    with tempfile.TemporaryDirectory(prefix="paper_pb_xtb_") as tmp:
+        tmp_path = Path(tmp)
+        input_sdf = tmp_path / "input.sdf"
+        # Write all mols to input SDF; carry per-record _Name so the
+        # xtb bridge can match them up against the optimised SDF.
+        rdkit_records: list[tuple[int, Any]] = []
+        try:
+            writer = Chem.SDWriter(str(input_sdf))
+            for idx, mol in enumerate(mols):
+                try:
+                    rdkit_mol = mol.build_molecule()
+                except Exception:
+                    rdkit_mol = None
+                if rdkit_mol is None:
+                    continue
+                try:
+                    name = f"paper_pb_xtb_mol_{idx}"
+                    rdkit_mol.SetProp("_Name", name)
+                    writer.write(rdkit_mol)
+                    rdkit_records.append((idx, rdkit_mol))
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.debug(
+                        "_recompute_pb_validity_xtb: failed to write "
+                        "record %s to input SDF (%s); skipping",
+                        idx, exc,
+                    )
+                    continue
+            writer.close()
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.debug(
+                "_recompute_pb_validity_xtb: SDWriter setup failed (%s); "
+                "returning fallback=%s",
+                exc, fallback,
+            )
+            return float(fallback), "uff_fallback"
+        if not input_sdf.is_file() or not rdkit_records:
+            return float(fallback), "uff_fallback"
+        # Run xtb optimization → produces opt_sdf + init_sdf sidecar
+        # (the init SDF is what ``xtb_energy_ratio`` reads).
+        try:
+            xtb_optimize_sdf(input_sdf, input_sdf)
+        except XtbBridgeError as exc:
+            _LOGGER.debug(
+                "_recompute_pb_validity_xtb: xtb_optimize_sdf failed (%s); "
+                "returning fallback=%s",
+                exc, fallback,
+            )
+            return float(fallback), "uff_fallback"
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.debug(
+                "_recompute_pb_validity_xtb: xtb_optimize_sdf raised "
+                "unexpected exception (%s); returning fallback=%s",
+                exc, fallback,
+            )
+            return float(fallback), "uff_fallback"
+        # The optimised SDF is written alongside the input with the
+        # ``_opt`` suffix inserted before the extension (upstream
+        # ``xtb_optimization.py`` convention). xtb_energy_ratio reads
+        # the init SDF we just passed plus the opt SDF on disk.
+        opt_sdf = input_sdf.with_name(
+            input_sdf.stem + "_opt" + input_sdf.suffix
+        )
+        if not opt_sdf.is_file():
+            _LOGGER.debug(
+                "_recompute_pb_validity_xtb: expected optimised SDF "
+                "%s missing after xtb_optimize_sdf; returning fallback=%s",
+                opt_sdf, fallback,
+            )
+            return float(fallback), "uff_fallback"
+        n_pass = 0
+        n_total = 0
+        for idx, rdkit_mol in rdkit_records:
+            try:
+                ratio = float(
+                    xtb_energy_ratio(rdkit_mol, input_sdf, opt_sdf)
+                )
+            except XtbBridgeError as exc:
+                _LOGGER.debug(
+                    "_recompute_pb_validity_xtb: per-mol xtb_energy_ratio "
+                    "failed for record %s (%s); counting as fail",
+                    idx, exc,
+                )
+                n_total += 1
+                continue
+            except FileNotFoundError as exc:
+                # Wave 90+: xtb binary missing on $PATH is a distinct
+                # failure mode from a per-mol geometry / convergence
+                # error. We short-circuit to the UFF fallback so
+                # ``status`` reports ``"xtb_unavailable"`` (not
+                # ``"xtb"`` with 0.0/4) and ``pb_validity_xtb`` mirrors
+                # the UFF value passed via ``fallback``. Without this
+                # catch, FileNotFoundError would fall through to the
+                # generic ``except Exception`` below and the result
+                # would misleadingly report ``status == "xtb"``.
+                _LOGGER.debug(
+                    "_recompute_pb_validity_xtb: xtb binary missing on "
+                    "$PATH for record %s (%s); short-circuiting to "
+                    "UFF fallback (status='xtb_unavailable')",
+                    idx, exc,
+                )
+                return float(fallback), "xtb_unavailable"
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.debug(
+                    "_recompute_pb_validity_xtb: per-mol xtb_energy_ratio "
+                    "raised unexpected exception for record %s (%s); "
+                    "counting as fail",
+                    idx, exc,
+                )
+                n_total += 1
+                continue
+            n_total += 1
+            if math.isfinite(ratio) and ratio < threshold:
+                n_pass += 1
+        if n_total == 0:
+            # xtb ran end-to-end (no upfront failure) but no per-mol
+            # records produced a finite ratio — treat as a fallback
+            # because we have no signal.
+            return float(fallback), "uff_fallback"
+        return float(n_pass) / float(n_total), "xtb"
 
 
 # ---------------------------------------------------------------------------
@@ -717,9 +1012,11 @@ def _try_get_upstream() -> dict[str, Any] | None:
 __all__ = [
     "FLOWMOL3_PINNED_COMMIT",
     "PB_CONFIG_WITH_ENERGY_RATIO_PATH",
+    "PB_XTB_THRESHOLD_DEFAULT",
     "PaperMetricsResult",
     "REFERENCE_GEOM_DRUGS",
     "REFERENCE_NCI_FIRST_5K_PROXY",
+    "_recompute_pb_validity_xtb",
     "compute_all_paper_metrics",
     "compute_fg_deviation",
     "compute_ood_ring_rate",
