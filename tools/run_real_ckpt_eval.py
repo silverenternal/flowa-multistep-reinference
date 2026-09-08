@@ -1054,7 +1054,95 @@ def _solve_baseline(adapter: Any, *, nfe: int, seed: int, n_molecules: int = 1) 
     return trace, wall
 
 
-def _make_framework_policy(adapter: Any, *, target_round: int, seed: int) -> Any:
+def _compute_paper_quantities(
+    adapter: Any,
+    trace: Any,
+    *,
+    round_index: int,
+) -> dict[str, float] | None:
+    """Derive the per-round paper quantities dict from the just-completed trace.
+
+    Wave 86 Agent B — Pitfall #1 fix companion to
+    :func:`_make_framework_policy`. When the adapter exposes a
+    ``profile_residual_fn`` (either via :meth:`capabilities` or as a
+    direct attribute), compute the three paper-quantity primitives
+    the :class:`PaperRatioAdaptiveScheduler` consumes:
+
+        ``{"sheet_A": float, "packing_B": float,
+           "exterior_gap": float}``
+
+    Returns ``None`` when no ``profile_residual_fn`` is exposed (the
+    legacy constant-β path is then preserved **byte-identically**).
+    Defensive: any exception in the paper-quantity oracle falls back
+    to ``None`` so a broken oracle can NEVER poison the framework arm.
+
+    Parameters
+    ----------
+    adapter
+        The adapter whose profile residual we consult. May or may not
+        expose ``profile_residual_fn``; the helper is the single
+        canonical place where this lookup happens.
+    trace
+        The :class:`ODEIntegratorTrace` returned by the most recent
+        :meth:`solve_ode` call. Carried for symmetry with future
+        per-trace paper-quantity derivations; the current helper does
+        NOT consume it (the paper quantities come from the
+        adapter-level ``profile_residual_fn``).
+    round_index
+        Zero-based index of the round that just finished. Currently
+        informational; future revisions may condition the EMA
+        smoothing on round parity.
+    """
+    # Look up the profile-residual-fn via two defensive paths.
+    profile_residual_fn: Any = None
+    try:
+        caps = adapter.capabilities() if hasattr(adapter, "capabilities") else None
+    except Exception:
+        caps = None
+    if caps is not None:
+        profile_residual_fn = getattr(caps, "profile_residual_fn", None)
+    if profile_residual_fn is None:
+        profile_residual_fn = getattr(adapter, "profile_residual_fn", None)
+    if profile_residual_fn is None:
+        return None
+    if not callable(profile_residual_fn):
+        return None
+    try:
+        from adaptive_reflow.contracts import paper_quantities as _pq  # type: ignore
+    except Exception:
+        return None
+    try:
+        sheet_A = float(_pq.sheet_evidence_A(profile_residual_fn))
+    except Exception:
+        return None
+    try:
+        packing_B = float(_pq.root_cell_packing_B(profile_residual_fn))
+    except Exception:
+        return None
+    try:
+        exterior_gap = float(_pq.exterior_gap_e_rho())
+    except Exception:
+        return None
+    if (
+        not (sheet_A == sheet_A)  # NaN guard
+        or not (packing_B == packing_B)
+        or not (exterior_gap == exterior_gap)
+    ):
+        return None
+    return {
+        "sheet_A": float(sheet_A),
+        "packing_B": float(packing_B),
+        "exterior_gap": float(exterior_gap),
+    }
+
+
+def _make_framework_policy(
+    adapter: Any,
+    *,
+    target_round: int,
+    seed: int,
+    paper_quantities: dict[str, float] | None = None,
+) -> Any:
     """Build a fresh ``FinalRestartPolicy`` for one framework round.
 
     The policy's ``beta_by_channel`` covers every channel declared in
@@ -1068,6 +1156,28 @@ def _make_framework_policy(adapter: Any, *, target_round: int, seed: int) -> Any
     back to baseline. Building a real policy restores the multi-round
     restart-blend signal that Wave 31 / Wave 34 paper-quantity-aware
     schedulers were meant to drive.
+
+    Wave 86 Agent B — Pitfall #1 fix: when ``paper_quantities`` is
+    supplied, the per-round β is driven by the Wave 31
+    :class:`PaperRatioAdaptiveScheduler` (paper Lemma 2 / Lemma 3 /
+    Lemma 5 ground truth). When ``paper_quantities`` is ``None``
+    (legacy adapter without ``profile_residual_fn``), the
+    constant-0.5 fallback is preserved **byte-identically** to the
+    pre-Wave-86 contract. The two paths share the same
+    :class:`FinalRestartPolicy` constructor so the only
+    output-byte-impacting change is the ``beta_by_channel`` payload.
+
+    Sign convention
+    ---------------
+
+    The :class:`PaperRatioAdaptiveScheduler` exposes ``n_cap`` (the
+    fresh-noise capacity). The framework's restart-blend convention
+    is ``memory_fraction = 1 - β`` and ``β = 1 - n_cap`` — so a
+    high paper-ratio (sheet-dominant, low codimension) → high β →
+    more fresh noise → more exploration, and a low paper-ratio
+    (cell-dominant, high codimension) → low β → more memory →
+    exploitation. This matches the Wave 45 restart-blend convention
+    that the framework-side metric layer already keys off.
     """
     from dataclasses import replace as _dc_replace
 
@@ -1102,9 +1212,56 @@ def _make_framework_policy(adapter: Any, *, target_round: int, seed: int) -> Any
         # for the contract hash.
         channel_names = [ChannelName("latent")]
 
-    beta = 0.5  # constant beta per round; framework's scheduler drives
-                # the per-round beta in production, this value only
-                # shapes the restart blend math.
+    if paper_quantities is not None:
+        # ---- Pitfall #1 fix: paper-quantity-driven per-round β --------
+        # Build a fresh :class:`PaperRatioAdaptiveScheduler` per call
+        # (the scheduler's EMA + PID shift are mutable state; sharing
+        # across cells would couple unrelated framework passes). The
+        # cycle_length is anchored to a fixed canonical length of 20
+        # (the Wave 34 default) so the per-round n_cap varies
+        # naturally across rounds under the codimension-sheet
+        # scheduler's coarse-to-fine convention. A short cycle_length
+        # would collapse every round to the same n_cap value (the
+        # scheduler's cosine / sheet ratio saturates), masking the
+        # paper-quantity PID shift.
+        from adaptive_reflow.algorithm.scheduler import (  # type: ignore
+            CodimensionSheetScheduler,
+            PaperRatioAdaptiveScheduler,
+        )
+        scheduler = PaperRatioAdaptiveScheduler(
+            base=CodimensionSheetScheduler(
+                cycle_length=20,
+                n_min=0.0,
+                n_max=1.0,
+                eps_implicit=0.05,
+                eps_direction="decreasing",
+                seed=int(seed),
+            ),
+        )
+        # Push the per-round paper quantities into the EMA, then sample
+        # the per-round capacity. For round 0 (no prior history) the
+        # PID shift is zero and ``n_cap = n_cap_base(r=0)`` — the
+        # framework's coarse-to-fine base schedule — so β_round0 ≠ 1.0
+        # even on the first round. From the second round onwards the
+        # PID shift accumulates a per-paper-quantity correction.
+        scheduler.record_round_feedback(
+            round_in_cycle=int(target_round),
+            paper_quantities=dict(paper_quantities),
+        )
+        sample = scheduler.sample(
+            outer_cycle_id=0,
+            round_in_cycle=int(target_round),
+            target_round=int(target_round),
+        )
+        beta = float(1.0 - float(sample.n_cap))
+    else:
+        beta = 0.5  # legacy constant — preserved byte-identical for
+                    # adapters that don't expose paper_quantities.
+                    # Wave 45 / Wave 64 / Wave 82 hardcoded this value
+                    # per round; the framework's scheduler drives the
+                    # per-round β in production only via this entry
+                    # point, so byte-stability of the legacy path is
+                    # load-bearing for the D.4 vector suite.
     policy_id = PolicyId(
         f"run_real_ckpt_eval:framework:r{target_round}:s{seed}"
     )
@@ -1229,8 +1386,23 @@ def _solve_framework(adapter: Any, *, nfe: int, seed: int, n_rounds: int = 3, n_
             #       round_index=int(r))``
             # — TypeError because the Protocol expects
             # ``apply_restart_distribution(state, policy)``.
+            # Wave 86 Agent B — Pitfall #1 fix: derive per-round
+            # paper quantities from the just-completed trace's
+            # adapter-level profile_residual_fn (when available)
+            # and thread them into _make_framework_policy so the
+            # per-round β is paper-quantity-driven, NOT the legacy
+            # constant-0.5. When the adapter does not expose
+            # profile_residual_fn (legacy adapters / cold clones),
+            # the helper returns None and _make_framework_policy
+            # takes the byte-identical constant-β path.
+            pq = _compute_paper_quantities(
+                adapter, trace, round_index=int(r),
+            )
             policy = _make_framework_policy(
-                adapter, target_round=int(r), seed=int(seed)
+                adapter,
+                target_round=int(r),
+                seed=int(seed),
+                paper_quantities=pq,
             )
             cur_bundle = adapter.apply_restart_distribution(endpoint, policy)
         except CapabilityMissingError:
