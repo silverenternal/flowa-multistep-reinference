@@ -275,6 +275,23 @@ def compute_pb_validity_pct(
     (``flowmol/analysis/metrics.py:154-166``). The ``full_pb`` flag
     selects between two upstream ``PoseBusters`` configurations.
 
+    IMPORTANT — xtb is NOT required for this check (Wave 87 Agent A
+    audit). PB 0.6.5's ``energy_ratio`` module is UFF-based
+    (verified at
+    ``.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14``,
+    which imports ``UFFGetMoleculeForceField`` from RDKit). This
+    function does NOT invoke ``fm3_evals/geometry/xtb_optimization.py``
+    because xtb is irrelevant to PoseBusters' ``energy_ratio`` check.
+
+    Cross-reference — xtb-driven metrics (``med_rmsd``,
+    ``med_energy_gain``, ``med_mmff_drop``) are computed by
+    ``_compute_xtb_geometry_metrics`` in
+    ``tools/run_real_ckpt_eval.py`` and consumed by the FlowMol3
+    composite's ``-med_rmsd_after_xtb`` axis (a SEPARATE pipeline from
+    ``pb_validity_pct``). See Wave 82 Agent A audit
+    (``docs/audit/wave82-phase1-audit.md``) for the upstream
+    ``xtb_optimization.py`` + ``rmsd_energy.py`` wire details.
+
     Implementation note (Wave 82 Agent A audit §1-6):
 
     Upstream ``SampleAnalyzer.__init__`` accepts only

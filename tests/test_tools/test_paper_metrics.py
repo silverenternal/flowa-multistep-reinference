@@ -614,3 +614,299 @@ def test_pb_validity_pct_falls_back_to_uff_when_xtb_missing(
         mols, full_pb=False, pb_workers=0
     )
     assert out == out_explicit_subset
+
+
+# ---------------------------------------------------------------------------
+# Wave 87 — PB-xtb pipeline wire (FALSE POSITIVE) + FlowMol3 framework-arm
+# scope (Option (a)) regression tests.
+#
+# Wave 87 Agent A audit (`docs/audit/wave87-phase1-audit.md`) confirmed:
+#
+# 1. PB 0.6.5's ``energy_ratio`` module uses UFF INTERNALLY
+#    (RDKit's ``UFFGetMoleculeForceField``, verified at
+#    ``.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14``).
+#    It is NOT xtb-based. The parent agent's premise that "the
+#    paper's pb_validity_pct uses xtb" is a misreading of the literature.
+#
+# 2. ``compute_pb_validity_pct`` does NOT invoke
+#    ``fm3_evals/geometry/xtb_optimization.py`` because xtb is
+#    irrelevant to PoseBusters' ``energy_ratio`` check. xtb is for
+#    the SEPARATE composite geometry axis (``-med_rmsd_after_xtb``)
+#    which is already wired via ``_compute_xtb_geometry_metrics`` in
+#    ``tools/run_real_ckpt_eval.py``.
+#
+# 3. The vendored YAML at
+#    ``tools/pb_config_with_energy_ratio.yaml`` is already correctly
+#    configured with paper-tuned parameters
+#    (``threshold_energy_ratio=100.0``,
+#    ``ensemble_number_conformations=50``). No re-wiring required.
+#
+# These 3 tests document the CORRECT semantics (UFF-not-xtb) so
+# future readers do not re-flag the false-positive PB-xtb wire
+# question.
+# ---------------------------------------------------------------------------
+
+
+def test_compute_pb_validity_pct_does_not_call_xtb_optimization(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``compute_pb_validity_pct`` does NOT invoke the xtb pipeline.
+
+    Wave 87 Agent A audit (§1-3) confirmed that PB 0.6.5's
+    ``energy_ratio`` module uses UFF (RDKit's
+    ``UFFGetMoleculeForceField``) INTERNALLY — it is NOT xtb-based.
+    Therefore ``compute_pb_validity_pct`` must NOT invoke
+    ``fm3_evals/geometry/xtb_optimization.py`` or any xtb subprocess
+    call: xtb is irrelevant to PoseBusters' ``energy_ratio`` check.
+
+    This test verifies the contract by:
+      1. Mocking ``subprocess.run`` (the mechanism by which the xtb
+         pipeline would be invoked) so any call into xtb would raise
+         ``RuntimeError("xtb must not be called from compute_pb_validity_pct")``.
+      2. Patching ``sys.modules["data.FlowMol3.repo.fm3_evals.geometry.xtb_optimization"]``
+         with a sentinel that raises on import.
+      3. Running ``compute_pb_validity_pct`` and asserting it returns
+         the expected paper-parity ``pb_valid`` value (~0.92) WITHOUT
+         touching the xtb pipeline.
+
+    If a future refactor inadvertently wires xtb into the PB path,
+    this test will FAIL loudly.
+    """
+    canned = _install_mock_flowmol(monkeypatch)
+
+    # Sentinel 1: any subprocess.run call from inside
+    # compute_pb_validity_pct would be a violation (xtb is
+    # shell-invoked, not imported).
+    import subprocess as _subprocess  # noqa: PLC0415
+
+    def _fail_on_subprocess(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError(
+            "xtb must not be invoked from compute_pb_validity_pct; "
+            "PB 0.6.5's energy_ratio module is UFF-based (verified at "
+            "posebusters/modules/energy_ratio.py:6-14). xtb is for the "
+            "composite geometry axis (_compute_xtb_geometry_metrics), "
+            "not the PB axis. See Wave 87 Agent A audit "
+            "(docs/audit/wave87-phase1-audit.md) §1-3."
+        )
+
+    monkeypatch.setattr(_subprocess, "run", _fail_on_subprocess)
+
+    # Sentinel 2: any import of the xtb_optimization module from
+    # inside compute_pb_validity_pct would be a violation.
+    import types as _types  # noqa: PLC0415
+
+    def _fail_on_xtb_import(name: Any, *args: Any, **kwargs: Any) -> Any:
+        if "xtb_optimization" in str(name) or "fm3_evals" in str(name):
+            raise ImportError(
+                f"xtb module {name!r} must not be imported from "
+                "compute_pb_validity_pct; PB's energy_ratio is UFF-based. "
+                "See Wave 87 Agent A audit §1-3."
+            )
+        return _orig_import(name, *args, **kwargs)
+
+    import builtins as _builtins  # noqa: PLC0415
+
+    _orig_import = _builtins.__import__
+    monkeypatch.setattr(_builtins, "__import__", _fail_on_xtb_import)
+
+    # Set up the rest of the vendored-YAML injection path (same as
+    # test_pb_validity_pct_uses_xtb_energy_ratio).
+    import types as _types2  # noqa: PLC0415
+
+    fake_posebusters = _types2.ModuleType("posebusters")
+
+    class _FakePoseBusters:
+        def __init__(self, *, config: Any = None, max_workers: int = 0, **_kw: Any):
+            self._config = config
+            self._max_workers = int(max_workers)
+
+    fake_posebusters.PoseBusters = _FakePoseBusters
+    monkeypatch.setitem(sys.modules, "posebusters", fake_posebusters)
+
+    fake_yaml = _types2.ModuleType("yaml")
+
+    def _fake_safe_load(fh: Any) -> dict[str, Any]:
+        return {
+            "modules": [
+                {"name": "Loading", "function": "loading"},
+                {"name": "Energy ratio", "function": "energy_ratio",
+                 "chosen_binary_test_output": ["energy_ratio_passes"]},
+            ]
+        }
+
+    fake_yaml.safe_load = _fake_safe_load
+    monkeypatch.setitem(sys.modules, "yaml", fake_yaml)
+
+    from tools import paper_metrics  # noqa: PLC0415
+
+    mols = [_FakeSampledMolecule() for _ in range(4)]
+    out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
+    # The vendored YAML injection path returns the paper-parity
+    # ``xtb_injected`` bucket (~0.92). If this assertion passes
+    # without raising, the contract is verified: PB path did NOT
+    # touch xtb.
+    assert out == pytest.approx(0.92, abs=1e-9)
+    assert 0.0 <= out <= 1.0
+
+
+def test_pb_config_with_energy_ratio_yaml_has_paper_tuned_params(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The vendored YAML contains the paper-tuned energy_ratio parameters.
+
+    Wave 82 vendored the PoseBusters config with the ``energy_ratio``
+    module UNCOMMENTED. The paper-tuned parameters are:
+      - ``threshold_energy_ratio: 100.0`` (vs PB default 7.0)
+      - ``ensemble_number_conformations: 50``
+    These values match the upstream FlowMol3 paper's
+    ``pb_config.yaml:101-110`` (the upstream source has them
+    COMMENTED OUT at the same indentation; Wave 82 vendored an
+    uncommented copy).
+
+    This test asserts both values are present in the vendored YAML
+    on disk. If a future re-vendoring or hand-edit accidentally
+    reverts them, the test will FAIL.
+    """
+    from tools import paper_metrics  # noqa: PLC0415
+
+    yaml_path = paper_metrics.PB_CONFIG_WITH_ENERGY_RATIO_PATH
+    assert yaml_path.is_file(), (
+        f"Wave 82 vendored YAML missing at {yaml_path}; "
+        "Phase A vendoring is incomplete"
+    )
+
+    import yaml as _yaml  # noqa: PLC0415
+
+    with yaml_path.open("r") as fh:
+        pb_config = _yaml.safe_load(fh)
+
+    # The energy_ratio module must be UNCOMMENTED with paper-tuned
+    # parameters. Search the modules list for the energy_ratio entry.
+    assert "modules" in pb_config, (
+        f"PB YAML at {yaml_path} missing top-level 'modules' key"
+    )
+    modules_list = pb_config["modules"]
+    energy_ratio_module = None
+    for m in modules_list:
+        if m.get("function") == "energy_ratio":
+            energy_ratio_module = m
+            break
+
+    assert energy_ratio_module is not None, (
+        f"PB YAML at {yaml_path} does not contain an energy_ratio module. "
+        "Wave 82 Phase A vendoring is incomplete — the energy_ratio module "
+        "must be UNCOMMENTED with paper-tuned parameters "
+        "(threshold_energy_ratio=100.0, ensemble_number_conformations=50). "
+        "See Wave 82 Agent A audit §3 + Wave 87 Agent A audit §3."
+    )
+
+    params = energy_ratio_module.get("parameters", {})
+    assert params.get("threshold_energy_ratio") == 100.0, (
+        f"energy_ratio threshold_energy_ratio = {params.get('threshold_energy_ratio')!r}, "
+        "expected 100.0 (paper-tuned). The PB default 7.0 over-rejects "
+        "FlowMol3 mols; the paper uses 100.0. See Wave 82 Agent A audit §3."
+    )
+    assert params.get("ensemble_number_conformations") == 50, (
+        f"energy_ratio ensemble_number_conformations = "
+        f"{params.get('ensemble_number_conformations')!r}, expected 50. "
+        "The paper uses 50 conformations for the UFF ensemble. "
+        "See Wave 82 Agent A audit §3."
+    )
+    # PB's energy_ratio module is UFF-based (NOT xtb-based).
+    # Verify the function name is just "energy_ratio" (no xtb suffix).
+    assert energy_ratio_module.get("function") == "energy_ratio", (
+        f"energy_ratio function = {energy_ratio_module.get('function')!r}, "
+        "expected 'energy_ratio'. The function is UFF-based (RDKit's "
+        "UFFGetMoleculeForceField), NOT xtb-based. See Wave 87 Agent A "
+        "audit §1-3."
+    )
+
+
+def test_pb_validity_pct_vendored_yaml_injection_matches_paper_target(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Vendored-YAML injection path returns the paper-parity value (~0.92).
+
+    Paper value (Dunn et al., NeurIPS 2024, arXiv 2508.12629): ``pb_validity_pct ≈ 0.919``.
+
+    Wave 82 closes the gap between the paper's reported value and the
+    naive ``pb_valid ≈ 1.0`` reading (which lacked the energy_ratio
+    module). The fix: vendor a custom PoseBusters config at
+    ``tools/pb_config_with_energy_ratio.yaml`` with the energy_ratio
+    module UNCOMMENTED (paper-tuned params), then inject it via
+    ``analyzer.buster = posebusters.PoseBusters(config=<our_yaml_dict>)``
+    (PB 0.6.5 accepts either a preset name or a config dict — verified
+    at ``posebusters/posebusters.py:73-127``).
+
+    This test verifies the paper-parity value: when the vendored YAML
+    is injected, the canned ``xtb_injected`` bucket returns
+    ``pb_valid = 0.92``, matching the paper target ``0.919`` within
+    ±5% (tolerance: 0.0455).
+
+    Note: the test uses the canned ``xtb_injected`` bucket (which the
+    test fixture returns when ``analyzer.buster_config is not None``)
+    rather than running the real upstream PB. This is a deterministic
+    regression check on the wire (vendored YAML → analyzer.buster
+    assignment → canned ``pb_valid`` value); it does NOT exercise
+    PB's UFF energy_ratio math. A separate N=10 smoke test on the
+    real upstream would be needed to verify the UFF math itself,
+    which is out of scope for this regression test (real upstream
+    PB requires torch + dgl + RDKit + posebusters all installed and
+    is gated on the ``flowmol3_venv`` sidecar).
+    """
+    canned = _install_mock_flowmol(monkeypatch)
+
+    import types as _types  # noqa: PLC0415
+
+    fake_posebusters = _types.ModuleType("posebusters")
+
+    class _FakePoseBusters:
+        def __init__(self, *, config: Any = None, max_workers: int = 0, **_kw: Any):
+            self._config = config
+            self._max_workers = int(max_workers)
+
+    fake_posebusters.PoseBusters = _FakePoseBusters
+    monkeypatch.setitem(sys.modules, "posebusters", fake_posebusters)
+
+    fake_yaml = _types.ModuleType("yaml")
+
+    def _fake_safe_load(fh: Any) -> dict[str, Any]:
+        return {
+            "modules": [
+                {"name": "Loading", "function": "loading"},
+                {"name": "Energy ratio", "function": "energy_ratio",
+                 "parameters": {
+                     "threshold_energy_ratio": 100.0,
+                     "ensemble_number_conformations": 50,
+                 },
+                 "chosen_binary_test_output": ["energy_ratio_passes"]},
+            ]
+        }
+
+    fake_yaml.safe_load = _fake_safe_load
+    monkeypatch.setitem(sys.modules, "yaml", fake_yaml)
+
+    from tools import paper_metrics  # noqa: PLC0415
+
+    mols = [_FakeSampledMolecule() for _ in range(10)]
+    out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
+    # Paper target: 0.919 (Dunn et al., NeurIPS 2024, arXiv 2508.12629).
+    # Canned ``xtb_injected`` bucket returns 0.92. Tolerance: ±5% of
+    # 0.919 = 0.04595.
+    assert out == pytest.approx(0.92, abs=0.05), (
+        f"compute_pb_validity_pct (vendored YAML) = {out}, expected "
+        "0.92 ± 0.05 (paper target 0.919). The vendored YAML path must "
+        "return a paper-parity value — if this fails, the wire is broken."
+    )
+    assert 0.0 <= out <= 1.0
+
+    # Sanity: the full_pb path is STRICTER than the subset path
+    # (energy_ratio adds a rejection step). The subset path returns
+    # 0.99 in the canned bucket (no energy_ratio rejection).
+    out_subset = paper_metrics.compute_pb_validity_pct(
+        mols, full_pb=False, pb_workers=0
+    )
+    assert out < out_subset, (
+        f"full_pb path (vendored YAML) = {out} should be STRICTER than "
+        f"subset path = {out_subset}; energy_ratio adds a rejection step."
+    )

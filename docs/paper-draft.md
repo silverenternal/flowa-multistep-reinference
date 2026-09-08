@@ -1213,6 +1213,39 @@ gaps-to-close:
     See §7.6 Wave 79 paragraph + §7.3 / §7.4 / §7.5 per-section
     Wave 79 caveats for the per-metric tables.
 
+12. **FlowMol3 framework-arm scope (Wave 87 honest disclosure —
+    Option (a)).** The FlowMol3 upstream CTMC integrator owns the
+    entire trajectory construction (atom-type / charge / bond-edge
+    updates + mask-token management per step), and the upstream does
+    not expose per-step ``(x, a, c, e)`` tensors — only the final
+    graph state is returned via ``self._model.sample(...)``. The
+    framework therefore **cannot do in-round restart-blend on the
+    FlowMol3 v2 path**: the single ``self._model.sample(...)`` call
+    IS the trajectory (verified at
+    `flowmol3_v2_adapter.py:2409-2717`, `_solve_ode_upstream` body).
+    Wave 49 / Wave 70 attempts to extract
+    ``self._model.forward(g)`` per-step failed with the original
+    P-22 TypeError — ``FlowMol.forward`` expects a dgl graph, not a
+    tensor (documented at `flowmol3_v2_adapter.py:2417-2425`).
+    The framework's value surface on FlowMol3 is on the
+    **boundary conditions** (Gaussian prior perturbation σ=0.05
+    applied before each round) + **per-round policy**
+    (paper-quant-driven β via `PaperRatioAdaptiveScheduler`) +
+    **NFE allocation** (`NFEAwareMemoryScheduler`). This is
+    consistent with the Wave 70 / 71 / 73 / 82 framework-vs-baseline
+    sweep results: the framework reaches the baseline's saturation
+    at lower NFE (Wave 71 Phase 2 speedup analysis) without
+    intermediate trajectory inspection. Option (b) — extract the
+    upstream forward per step into the adapter — was explicitly
+    **rejected** (Wave 87 Agent A audit §6.2) because it would
+    duplicate the upstream GVP integration (forbidden by Wave 49
+    Agent A scope) AND it would NOT add in-round restart-blend
+    (the upstream CTMC step is deterministic given the prior — an
+    intermediate restart would just inject noise mid-flight,
+    equivalent to applying `inject_noise` post-hoc). See
+    `docs/audit/wave87-phase1-audit.md` §6 for the full Option (a)
+    / (b) decision.
+
 ### §5.8 Future work
 
 Ordered by expected effect on the framework's value surface. Each
@@ -3110,6 +3143,13 @@ See `docs/audit/wave82-phase4-final.md` for the full Wave 82 final synthesis wit
 | `framework_sota` on Tier 3 paper metric | **NOT SUPPORTED — UNCHANGED** | **NOT SUPPORTED — UNCHANGED** (Kanzi framework-arm N=1000 still deferred; LineageFlow framework-arm N=1000 still deferred; FlowMol3 xtb-pipeline closure still deferred) |
 
 **Wave 84 honest verdict (Tier 3 paper-metric framing, FINAL).** Wave 84 advances the **LineageFlow paper-metric data** from `Wave 81 N=2 (family_validity + novelty ties_at_zero_or_saturation) + Wave 80/81 foldability + self_consistency skipped_no_omegafold_python312_blocker` to **`Wave 84 N=5 smoke (foldability_pLDDT = 46.996 + self_consistency_scPerplexity = 15.423, both real numbers from the OmegaFold CPU + ESM-IF CPU pipeline) + Wave 81 N=2 (family_validity + novelty ties)`**. **Net change vs Wave 83: 2 additional paper metrics on LineageFlow move from `skipped_no_omegafold_python312_blocker` to `infra_ready_real_number_first_time`** — closing the final LineageFlow host-env + reference-data blocker. **ALL 3 Tier 3 models × ALL their paper metrics now have at least N=5 smoke or larger real numbers** (Kanzi N=200 baseline; LineageFlow N=5 foldability + self_consistency + N=2 family_validity + novelty; FlowMol3 N=1000 paper-parity). The honest reading is unchanged: **the framework-vs-baseline Tier 3 paper-metric story is `TIES / NOISY-BAND` on all 3 models at every available sample size**, with the **single exception** of FlowMol3 `fg_dev` (Wave 82: framework 0.6146 vs baseline 0.6381, Δ=−0.0235, 4.05σ statistically significant at α=0.05 power=0.8 — the framework's only clean paper-metric win). The internal composite axis (Wave 47/52/69) remains the framework's real, byte-stable, NFE-independent value-add — SUPPORTED on all 3 models. See `docs/audit/wave84-phase3-final.md` for the full Wave 84 final synthesis with per-metric numbers + D.4 / G-MASTER / mkdocs verification + per-paper-claim FINAL honest support status table.
+
+**Wave 87 Tier 3 honest verdict (ADDITIVE - does not delete prior framings above).** Wave 87 closes the **FlowMol3 framework-arm scope decision** (Option (a) per Wave 87 Agent A audit) and the **PB-xtb pipeline wire question** (FALSE POSITIVE per Wave 87 Agent A audit - the vendored `tools/pb_config_with_energy_ratio.yaml` is already correctly configured with `threshold_energy_ratio: 100.0` + `ensemble_number_conformations: 50`; PB 0.6.5's `energy_ratio` module is **UFF-based** (RDKit's `UFFGetMoleculeForceField`, verified at `.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14`), **NOT xtb-based**; xtb is for the SEPARATE composite geometry axis (`-med_rmsd_after_xtb`) and is already wired via `_compute_xtb_geometry_metrics` in `tools/run_real_ckpt_eval.py`). **Net Wave 87 outcome:**
+
+- **Pitfall #6 (PB-xtb pipeline wire) - FALSE POSITIVE confirmed.** No pipeline re-wiring was required. The `tools/paper_metrics.py:compute_pb_validity_pct` function correctly loads the vendored YAML via `yaml.safe_load` + `analyzer.buster = posebusters.PoseBusters(config=pb_config_dict, ...)`; `xtb_optimization.py` is NOT called because xtb is irrelevant to PB's `energy_ratio` check. Wave 87 added an explicit docstring clarification (`tools/paper_metrics.py:compute_pb_validity_pct` docstring) + 3 regression tests documenting the UFF-not-xtb semantics + D.4 byte-stable verification.
+- **Pitfall #1 (FlowMol3 framework-arm in-round restart-blend) - REJECTED Option (b), ACCEPTED Option (a).** The upstream `FlowMol.sample(...)` call is a single-shot method that owns the entire trajectory (`flowmol3_v2_adapter.py:2409-2717`); no in-round checkpoint is feasible without re-implementing the upstream CTMC integrate loop (forbidden by Wave 49 Agent A scope). The framework's value surface on FlowMol3 is on the **boundary conditions** (Gaussian prior perturbation sigma=0.05) + **per-round policy** (paper-quant-driven beta) + **NFE allocation** (`NFEAwareMemoryScheduler`). The Wave 70/71/73/82 framework-vs-baseline sweep results are consistent with this framing: framework reaches baseline's saturation at lower NFE without intermediate trajectory inspection. See section 5.7 limitation #12 for the full disclosure + `docs/audit/wave87-phase1-audit.md` section 6 for the Option (a) / (b) decision rationale.
+
+The honest reading is unchanged from Wave 84: **the framework-vs-baseline Tier 3 paper-metric story is `TIES / NOISY-BAND` on all 3 models at every available sample size**, with the **single exception** of FlowMol3 `fg_dev` (Wave 82). The internal composite axis (Wave 47/52/69) remains the framework's real, byte-stable, NFE-independent value-add - SUPPORTED on all 3 models. See `docs/audit/wave87-phase2-impl.md` for the Wave 87 implementation details + D.4 verification + LOC summary.
 
 ### §7.7 NFE-aware framework — extends baseline's saturation ceiling (Wave 58)
 
