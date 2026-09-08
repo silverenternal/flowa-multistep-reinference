@@ -969,6 +969,81 @@ def _install_checkpoint_compat() -> type:
     return SamplerConfig
 
 
+#: Module-level shape-only LineageFlow placeholder (Wave 81 fix-A).
+#: Used in venvs without ``transformers`` (e.g. ``flowmol3_venv`` per
+#: Wave 80 §7 caveat 2) as the smoke-test fallback so the per-step
+#: call at line 579 (``model(input_ids=ids)``) does not raise
+#: ``TypeError``. Mirrors the real ``transformers.EsmModel.forward``
+#: signature surface (``input_ids``, ``attention_mask``,
+#: ``inputs_embeds``, ``**kwargs``) and returns a zero (B, L, K)
+#: float32 tensor — never a real FM model.
+class _StubLineageFlow:
+    """Shape-only LineageFlow placeholder. See module-level comment.
+
+    A duck-typed nn.Module-compatible wrapper. The real
+    ``EsmModel.forward`` is invoked via ``model(input_ids=ids)``; the
+    PyTorch ``__call__`` machinery only kicks in for ``nn.Module``
+    subclasses, so this class also implements a ``__call__`` proxy
+    that delegates straight to ``forward()``. The interface (eval,
+    load_state_dict) matches the duck-typed contract used by
+    :func:`_load_torch_model` and :func:`_torch_velocity_field`.
+    """
+
+    def __init__(self, *, vocab_size: int, hidden_size: int) -> None:
+        # Local import keeps ``torch`` optional at the framework level.
+        import torch
+
+        self.vocab_size = int(vocab_size)
+        self.hidden_size = int(hidden_size)
+        # Cached for shape-only inference. Not a real nn.Module; the
+        # ``__call__`` proxy below routes invocation to ``forward``.
+        self._dummy = torch.zeros(1, dtype=torch.float32)
+        self._training = False  # mirrors ``nn.Module.training``.
+
+    def eval(self) -> "_StubLineageFlow":
+        self._training = False
+        return self
+
+    def train(self, mode: bool = True) -> "_StubLineageFlow":
+        self._training = bool(mode)
+        return self
+
+    def load_state_dict(self, *_a: object, **_k: object) -> "_StubLineageFlow":
+        # Stub forward is shape-only; state_dict is best-effort.
+        return self
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        return self.forward(*args, **kwargs)
+
+    def forward(
+        self,
+        input_ids: Any = None,
+        attention_mask: Any = None,  # noqa: ARG002 - accepted for API parity
+        inputs_embeds: Any = None,
+        **kwargs: Any,  # noqa: ARG002 - swallow unknown kwargs
+    ) -> Any:
+        # Return zeros of the right shape. Accept both ``input_ids``
+        # (the F-4-fix real EsmModel call site at line 579) and
+        # ``inputs_embeds`` (the upstream ``LineageFlowClassifier`` raw
+        # path in ``data/lineageflow_upstream/models/model.py:433``).
+        import torch
+
+        if input_ids is not None:
+            B = int(input_ids.shape[0])
+            L = int(input_ids.shape[1])
+        elif inputs_embeds is not None:
+            B = int(inputs_embeds.shape[0])
+            L = int(inputs_embeds.shape[1])
+        else:
+            # Defensive: caller passed neither; emit a zero-batch
+            # placeholder so the per-step call at line 579 still
+            # returns a (B, L, K) tensor of the right rank.
+            B, L = 1, int(LINEAGEFLOW_MAX_LENGTH)
+        return torch.zeros(
+            B, L, int(LINEAGEFLOW_VOCAB_SIZE), dtype=torch.float32,
+        )
+
+
 def _load_torch_model(weights_path: Path) -> Any:
     """Load the published LineageFlow ESM-2 + flow head from ``weights_path``.
 
@@ -1023,41 +1098,29 @@ def _load_torch_model(weights_path: Path) -> Any:
         model = EsmModel.from_pretrained(
             "facebook/esm2_t33_650M_UR50D", ignore_mismatched_sizes=True
         )
-    except Exception:
-        # Fallback: build a minimal nn.Module that exposes the
-        # input/output contract.
-        import torch.nn as nn
-
-        class _StubLineageFlow(nn.Module):
-            def __init__(self) -> None:
-                super().__init__()
-                self.vocab_size = vocab_size
-                self.hidden_size = hidden_size
-                self.register_parameter(
-                    "_dummy",
-                    nn.Parameter(
-                        torch.zeros(1, dtype=torch.float32), requires_grad=False
-                    ),
-                )
-
-            def forward(
-                self,
-                x: "torch.Tensor",
-                t: "torch.Tensor",
-                family: "torch.Tensor",
-            ) -> "torch.Tensor":
-                # Return zeros of the right shape - used only as a
-                # smoke-test stub when transformers' ESM-2 isn't
-                # available.
-                return torch.zeros(
-                    x.shape[0],
-                    int(x.shape[1]),
-                    int(x.shape[2]),
-                    dtype=x.dtype,
-                    device=x.device,
-                )
-
-        model = _StubLineageFlow()
+    except (ImportError, ModuleNotFoundError):
+        # transformers not installed in this venv (e.g. ``flowmol3_venv``
+        # per Wave 80 §7 caveat 2). Fall back to the shape-only stub so
+        # the synthetic-mode test surface can still exercise the
+        # ``model(input_ids=ids)`` call site at line 579 without raising
+        # ``TypeError``. The stub's forward signature mirrors real
+        # ``EsmModel.forward`` so the per-step call at line 579 is
+        # contract-compatible. ``_StubLineageFlow`` lives at module
+        # level (Wave 81 fix-A) so it is importable for direct unit
+        # tests.
+        model = _StubLineageFlow(
+            vocab_size=vocab_size, hidden_size=hidden_size,
+        )
+    except Exception as exc:
+        # transformers IS installed but ``EsmModel.from_pretrained``
+        # failed (HF cache empty, network blocked, ckpt SHA mismatch).
+        # Production-blocker: surface as ``CapabilityMissingError`` so
+        # the eval pipeline at line 579 / line 1804 catches it honestly
+        # rather than silently substituting the stub.
+        raise CapabilityMissingError(
+            "lineageflow_esm_load_failed",
+            context=f"{type(exc).__name__}:{exc}",
+        ) from exc
 
     try:
         model.load_state_dict(sd, strict=False)

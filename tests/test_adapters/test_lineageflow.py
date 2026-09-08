@@ -1365,3 +1365,164 @@ def test_lineageflow_observe_strategy_subset_filters_results() -> None:
         ObservationKind.DISCRETE_TOKENS,
         ObservationKind.POSITION_ENTROPY_REDUCTION,
     }
+
+
+# ---------------------------------------------------------------------------
+# Wave 81 Agent B — _StubLineageFlow.forward signature fix regression
+# ---------------------------------------------------------------------------
+#
+# The pre-Wave-81 stub took positional ``(x, t, family)`` which raises
+# ``TypeError: ... unexpected keyword argument 'input_ids'`` at the
+# F-4-fix call site ``model(input_ids=ids)`` (line 579). Wave 81 fix-A
+# rewrites the stub's forward to accept ``input_ids=None``,
+# ``attention_mask=None``, ``inputs_embeds=None``, ``**kwargs`` and
+# returns a zero (B, L, K) tensor. Fix-B replaces the bare
+# ``except Exception:`` with ``(ImportError, ModuleNotFoundError) ->
+# stub`` and ``Exception -> CapabilityMissingError``. These tests pin
+# the contract so a future regression cannot silently re-introduce the
+# bug.
+# ---------------------------------------------------------------------------
+
+
+def test_StubLineageFlow_accepts_input_ids_kwarg() -> None:
+    """``_StubLineageFlow.forward`` must accept ``input_ids=`` so the
+    F-4-fix call site ``model(input_ids=ids)`` (line 579) does not
+    raise ``TypeError`` when transformers is absent.
+
+    The pre-Wave-81 stub took positional ``(x, t, family)`` which
+    crashed on the ``input_ids=`` kwarg. Wave 81 fix-A rewrites the
+    signature to mirror real ``EsmModel.forward`` so the synthetic-mode
+    path in venvs without ``transformers`` (e.g. ``flowmol3_venv``)
+    still works.
+
+    The test does NOT ``importorskip("transformers")`` so it exercises
+    the stub path directly (the bug only surfaces in envs without
+    transformers).
+    """
+    pytest.importorskip("torch")
+
+    import torch  # noqa: F401  (guarded above)
+
+    from adaptive_reflow.adapters.lineageflow import (  # type: ignore[attr-defined]
+        LINEAGEFLOW_MAX_LENGTH,
+        LINEAGEFLOW_VOCAB_SIZE,
+        _StubLineageFlow,
+    )
+
+    stub = _StubLineageFlow(
+        vocab_size=LINEAGEFLOW_VOCAB_SIZE, hidden_size=1280,
+    )
+    ids = torch.zeros(1, LINEAGEFLOW_MAX_LENGTH, dtype=torch.long)
+    out = stub(input_ids=ids)
+    # Stub contract: (B, L, K) zero tensor, float32.
+    assert out.shape == (1, LINEAGEFLOW_MAX_LENGTH, LINEAGEFLOW_VOCAB_SIZE)
+    assert out.dtype == torch.float32
+    assert torch.equal(out, torch.zeros_like(out))
+
+    # Also accept ``inputs_embeds=`` (upstream LineageFlowClassifier path).
+    emb = torch.zeros(1, LINEAGEFLOW_MAX_LENGTH, 1280, dtype=torch.float32)
+    out2 = stub(inputs_embeds=emb)
+    assert out2.shape == (1, LINEAGEFLOW_MAX_LENGTH, LINEAGEFLOW_VOCAB_SIZE)
+    assert out2.dtype == torch.float32
+
+    # Also accept ``attention_mask=`` (EsmModel default kwarg).
+    mask = torch.ones(1, LINEAGEFLOW_MAX_LENGTH, dtype=torch.long)
+    out3 = stub(input_ids=ids, attention_mask=mask)
+    assert out3.shape == (1, LINEAGEFLOW_MAX_LENGTH, LINEAGEFLOW_VOCAB_SIZE)
+
+
+def test_real_LineageFlow_EsmModel_load_succeeds_in_lineageflow_venv() -> None:
+    """When ``transformers`` IS available and ``EsmModel.from_pretrained``
+    succeeds, the adapter path uses the real EsmModel (not the stub)
+    and the per-step call at line 579 returns a finite ``(L, K)`` array.
+
+    This pins the happy-path contract: the fix must not regress the
+    case where transformers is installed and the HF cache is populated.
+    Skips when transformers is not available (the dev-env / synthetic
+    path is covered by the other 22 tests).
+    """
+    pytest.importorskip("torch")
+    pytest.importorskip("transformers")
+
+    from transformers import EsmModel  # type: ignore[import-not-found]
+
+    from adaptive_reflow.adapters.lineageflow import (  # type: ignore[attr-defined]
+        LINEAGEFLOW_FAMILY_EMBED_DIM,
+        LINEAGEFLOW_STATE_SHAPE,
+        _torch_velocity_field,
+    )
+
+    torch = pytest.importorskip("torch")
+    model = EsmModel.from_pretrained(
+        "facebook/esm2_t33_650M_UR50D",
+        ignore_mismatched_sizes=True,
+    )
+    model.eval()
+
+    x = np.full(LINEAGEFLOW_STATE_SHAPE, 1.0 / LINEAGEFLOW_VOCAB_SIZE,
+                dtype=np.float64)
+    cache = {
+        "family_embed": np.zeros(LINEAGEFLOW_FAMILY_EMBED_DIM, dtype=np.float64),
+    }
+
+    out = _torch_velocity_field(
+        model=model,
+        x=x,
+        t=0.5,
+        dtype=torch.float32,
+        cache=cache,
+        guidance_scale=1.0,
+    )
+
+    assert out.shape == LINEAGEFLOW_STATE_SHAPE
+    assert out.dtype == np.float64
+    assert np.isfinite(out).all()
+
+
+def test_adapter_raises_CapabilityMissingError_on_esmmodel_load_failure(
+    tmp_path,
+) -> None:
+    """When ``transformers`` IS installed but ``EsmModel.from_pretrained``
+    raises (HF cache empty, network blocked, ckpt SHA mismatch),
+    ``_load_torch_model`` must surface a ``CapabilityMissingError``
+    rather than silently substituting the stub.
+
+    Pre-Wave-81 the bare ``except Exception:`` swallowed the failure
+    and substituted the stub, masking the production-blocker. Wave 81
+    fix-B routes the Exception branch to ``CapabilityMissingError`` so
+    the eval pipeline sees the honest error.
+
+    Skips entirely when transformers is not installed (the
+    (ImportError, ModuleNotFoundError) branch is the dev-env path,
+    which keeps the stub).
+    """
+    transformers = pytest.importorskip("transformers")
+
+    def _raise(*_a: object, **_k: object) -> None:
+        raise RuntimeError("simulated HF cache miss")
+
+    # Monkeypatch ``EsmModel.from_pretrained`` to raise so the
+    # production-load-failure branch is exercised.
+    original = transformers.EsmModel.from_pretrained
+    transformers.EsmModel.from_pretrained = classmethod(  # type: ignore[assignment]
+        lambda cls, *a, **k: _raise(*a, **k)
+    )
+    try:
+        from adaptive_reflow.adapters.lineageflow import (  # type: ignore[attr-defined]
+            _load_torch_model,
+        )
+        from adaptive_reflow.universal.adapter import (
+            CapabilityMissingError,
+        )
+
+        # ``_load_torch_model`` only takes the existence branch when
+        # the file at ``weights_path`` exists. Use a real file with
+        # placeholder bytes.
+        fake_ckpt = tmp_path / "fake.ckpt"
+        fake_ckpt.write_bytes(b"\x80\x02}q\x00.")  # minimal pickle
+
+        with pytest.raises(CapabilityMissingError) as excinfo:
+            _load_torch_model(fake_ckpt)
+        assert "lineageflow_esm_load_failed" in str(excinfo.value)
+    finally:
+        transformers.EsmModel.from_pretrained = original  # type: ignore[assignment]
