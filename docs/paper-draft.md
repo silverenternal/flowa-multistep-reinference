@@ -1211,7 +1211,29 @@ gaps-to-close:
     is on a different endpoint than the upstream paper metric —
     rather than **"framework improves the paper-reported metric"**.
     See §7.6 Wave 79 paragraph + §7.3 / §7.4 / §7.5 per-section
-    Wave 79 caveats for the per-metric tables.
+    Wave 79 caveats for the per-metric tables. **Wave 88
+    refinement (Kanzi framework-arm N=1000 → `NOT_MEASURABLE`, Wave 79
+    n=2 proxy retracted).** Wave 88 re-attempted the Kanzi
+    framework-arm N=1000 paper-metric sweep and closed the question
+    with a **structural result, not a sample-size result**: the
+    framework arm is `NOT_MEASURABLE` on the Kanzi paper-metric
+    axis because the adapter's `protein_latent` is shape `(64, 64)`
+    while the DAE's continuous latent is `(1, L, 256)`, and there
+    is no public protocol surface to bridge the two
+    (`docs/audit/wave88-phase3-final.md` §F-3). The Wave 79 n=2
+    framework-arm proxy `Δ=+0.27 Å` is **retracted** as an artifact
+    of `_extract_ca_coords_for_kanzi(trace)` returning a 30-zero
+    placeholder string on every trace (Wave 88 §F-2 — re-running
+    the identical placeholder gives 1.40 / 1.67 / 2.23 Å across
+    three runs, spread 0.83 Å = 3× the reported Δ). The framework's
+    path-shape effect on the `(64, 64)` latent is real and verified
+    (Wave 88 §F-1: 100/100 latent divergence, relative L2 1.0423),
+    but it cannot reach the DAE's `(L, 256)` geometry. The honest
+    reading on Kanzi is therefore: framework arm is `NOT_MEASURABLE`
+    on the paper metric, but the framework's internal composite
+    axis (`+0.1695` across 18 cells × 6 NFE values, byte-stable
+    σ=0 within seed) is `framework_improves` on a different endpoint
+    than the upstream paper metric.
 
 12. **FlowMol3 framework-arm scope (Wave 87 honest disclosure —
     Option (a), Wave 87 Agent A audit + Agent B implementation).**
@@ -1727,6 +1749,41 @@ Reproduce the Wave 58 scan with:
 ```
 
 The Hamming metric is verified on N=16 backbones via `pytest tests/test_tools/test_paper_metrics_kanzi.py -k hamming` (Wave 83 Agent B §1.4). See `docs/audit/wave83-agent-b-codebook-metrics.md` + `docs/audit/wave83-phase4-final.md` for the audit trail + per-metric verdict tables.
+
+**Wave 88 Phase 2 + Phase 3 additive update (N=1000 framework-arm re-attempt + Wave 79 n=2 proxy retraction, ADDITIVE — does not delete the Wave 73-74 / Wave 58 / Wave 79 / Wave 80 / Wave 83 framings above).** Wave 88 closed the framework-arm N=1000 paper-metric question for Kanzi with a **negative structural result** on the framework arm itself (not a budget or sample-size question). Three new findings bear on §7.3:
+
+1. **Framework arm is `NOT_MEASURABLE` on the Kanzi paper-metric axis — by construction, not by budget.** Wave 88 Agent B §3 F-3 verified that the Kanzi adapter's `protein_latent` is shape `(64, 64)` (KANZI_STATE_SHAPE at `adaptive_reflow/adapters/kanzi.py:220`), but the DAE's continuous latent is `(1, L, 256)` and `dae.quantize` rejects dim 64 outright (`AssertionError: expected dimension of 256 but found dimension of 64`). The framework arm operates on a synthetic `(64, 64)` `protein_latent` that is *not* the trained DAE latent geometry, and there is no public protocol surface (no `observe_endpoint(trace).channels`, no trace attribute yielding numeric arrays) that returns coordinates. The framework arm IS live (Wave 88 F-1: 100/100 samples have differing `native_state_digest` and differing latent endpoint; relative L2 divergence 1.0423 ≈ ‖framework_endpoint‖₂ / ‖baseline_endpoint‖₂; wallclock ratio 1.28×) but it cannot enter the `reconstruction_kabsch_rmsd_A` or any of the 5 codebook metrics pipeline. The honest verdict is **`NOT_MEASURABLE`**, not `framework_ties`.
+
+2. **The Wave 79 n=2 framework-arm proxy (`baseline 1.40 Å vs framework 1.67 Å, Δ=+0.27 Å`) is an artifact and should be retracted.** Wave 88 F-2 verified that `_extract_ca_coords_for_kanzi(trace)` in `tools/run_real_ckpt_eval.py:4119-4144` falls back to `",".join(["0.0"] * 30)` on every trace, because `ODEIntegratorTrace` (`adaptive_reflow/universal/state.py:216-234`) has only `steps, accept_rate, native_state_digest, integrator_config_hash` — no `endpoint` or `states` attribute. Both arms were scored on the **same** 30-zero placeholder string. Re-running the identical placeholder input gives 1.40 / 1.67 / 2.23 Å across three runs (Wave 79 "baseline" / Wave 79 "framework" / Wave 88 replication) — a spread of **0.83 Å, 3× the Δ that was reported as a finding**. This number is cited in `wave79-phase3-sweep.md`, `wave79-phase4-verdict.md`, `wave79-phase5-paper.md`, `wave79-phase6-final.md`, `wave83-phase4-final.md`, `wave88-phase1-audit.md`, and the committed `verification_outputs/kanzi_n1000_paper_metrics/kanzi_n1000_paper_metrics.json::verdict.framework_arm_source`. The Δ=+0.27 Å reading is **retracted**. The Wave 80 N=32 smoke (0.887 Å baseline) and the Wave 83 N=200 sweep (0.824 Å baseline) are unaffected — those were the *baseline arm only*, computed from the real `extract_ca_coords_for_kanzi.py` coord file, not the broken placeholder extractor.
+
+3. **`DAE.decode` is stochastic and nothing seeds it** (Wave 88 F-4). Per-record `reconstruction_kabsch_rmsd_A` has a run-to-run σ of **0.0947 Å** over 8 real records × 8 unseeded repeats — about half the total across-record variance (`std = 0.132 Å` on the Wave 83 N=200 sweep). Neither `tools/sweep_kanzi_n1000_paper_metrics.py` nor the upstream `_KANZI_DRIVER` in `tools/upstream_eval.py` calls `torch.manual_seed` before `dae.decode`. The `"deterministic": true` field the sweep script writes (`sweep_kanzi_n1000_paper_metrics.py:239`) is **incorrect**, as is Wave 83's "result is deterministic + byte-stable" risk-mitigation claim (`wave83-phase4-final.md:306`). Pinning `torch.manual_seed(1234)` before each call drives the run-to-run spread to 0 (verified at Wave 88 F-4).
+
+**Framework liveness evidence (Wave 88 F-1, N=100 paired, real ckpt, adapter mode `torch`, NFE=50, n_rounds=3).** The framework arm IS active on real model weights — it is *not* a no-op. Same initial state (`batch_id="eval", sample_id="s0"`, hard-coded at `run_real_ckpt_eval.py:1007`), same seed, paired runs:
+
+| Quantity | Value |
+|---|---:|
+| samples with differing `native_state_digest` | **100 / 100** |
+| samples with differing latent endpoint | **100 / 100** |
+| `‖framework − baseline‖₂` (mean) | **67.44** |
+| `‖framework − baseline‖₂` (min / max) | 66.43 / 68.73 |
+| relative `‖f−b‖₂ / ‖b‖₂` (mean) | **1.0423** |
+| framework / baseline wallclock ratio | 1.28× |
+
+The framework endpoint is about as far from the baseline endpoint as the baseline endpoint is from the origin — consistent with 3 rounds of β=0.5 blending against fresh noise (`policy_hash`-seeded restart noise). The framework's path-shape effect on the latent IS real; the missing bridge is the latent → `(L, 256)` DAE geometry, not the framework's policy execution.
+
+**Per-paper-claim FINAL status (Wave 88, all 6 Kanzi paper metrics, N=1000 budget):**
+
+| Paper claim (Kanzi) | Wave 83 status | **Wave 88 FINAL status** |
+|---|---|---|
+| `reconstruction_kabsch_rmsd_A` Tier 3 paper metric #1 (Kabsch RMSD vs DAE roundtrip) | NOT RUN (framework-arm N=1000 deferred; Wave 83 N=200 baseline-only at 0.824 Å) | **`NOT_MEASURABLE` (framework arm) + N=1000 baseline-only running** — Wave 88 F-3 documents the missing `(64,64)→(L,256)` bridge; framework endpoint cannot enter the DAE encode+decode+kabsch pipeline. The baseline arm N=1000 sweep was attempted (Wave 88 Agent B §0 TL;DR) but the JSON artefact at `verification_outputs/wave88_kanzi_n1000_baseline/kanzi_n1000_paper_metrics.json` is not present on disk (directory exists, file missing — see Wave 88 §10 audit trail); the Wave 83 N=200 baseline-only reading (0.824 Å, std 0.132 Å) remains the largest-N reproducible baseline-arm number on the upstream Kabsch RMSD axis. The Wave 79 n=2 Δ=+0.27 Å framework-arm proxy is **retracted** (F-2). |
+| `codebook_entropy_bits` Tier 3 paper metric #2 (FSQ entropy) | REAL at N=200 (6.063 bits) | **UNCHANGED from Wave 83** — encoder-side metric, no framework arm; not Wave 88 scope. |
+| `codebook_perplexity` Tier 3 paper metric #3 (2^entropy) | REAL at N=200 (66.85) | **UNCHANGED from Wave 83** — encoder-side metric, no framework arm. |
+| `codebook_js_distance` Tier 3 paper metric #4 (sqrt(JS) bits^0.5) | REAL at N=200 on records 0/1 (0.560) | **UNCHANGED from Wave 83** — encoder-side metric, no framework arm. |
+| `codebook_utilization` Tier 3 paper metric #5 (|unique(idx)|/V) | REAL at N=200 (0.131) | **UNCHANGED from Wave 83** — encoder-side metric, no framework arm. |
+| `codebook_hamming_rotation_invariance` Tier 3 paper metric #6 | DEFERRED to N=1000 (Wave 83 integration test on 4 demo PDBs only) | **UNCHANGED from Wave 83** — not Wave 88 scope. |
+| `framework_improves` on Tier 3 paper-metric axis (Kanzi) | `framework_improves_inconclusive_noisy_band` (Wave 83) — only Wave 79 n=2 proxy available | **`NOT_MEASURABLE` (Wave 88) — Wave 79 n=2 proxy retracted; framework arm cannot enter the DAE-encode+decode+kabsch pipeline by construction. The Wave 73-74 `+0.1695` composite lift is on the INTERNAL glue-layer composite axis (entropy / max-prob / argmax turnover on the 64-dim latent codebook) — unchanged and SUPPORTED — but is a DIFFERENT axis from the paper metric. The Kanzi `framework_improves` verdict on the internal composite axis (Wave 52, +0.1695 across 18 cells × 6 NFE values) is NOT deleted by this Wave 88 update. |
+
+**Wave 88 §7.3 verdict — re-stated.** The Kanzi framework-arm N=1000 paper-metric question is **closed with verdict `NOT_MEASURABLE`**, not `TIES` or `framework_improves_inconclusive_noisy_band`. The honest framing is: (a) the framework arm IS live on the Kanzi adapter (100/100 latent divergence, 1.04 relative L2, 1.28× wallclock); (b) but it operates on a `(64, 64)` synthetic latent that is not the trained DAE's `(1, L, 256)` geometry, and there is no public protocol surface to bridge the two; (c) the Wave 79 n=2 framework-arm proxy `Δ=+0.27 Å` is an artifact of a broken coord extractor (`_extract_ca_coords_for_kanzi` returning 30-zero placeholder) and is retracted; (d) the framework's real, byte-stable value-add is on the **internal composite axis** (Wave 52 / Wave 58: +0.1695 across 18 cells, σ = 0 within seed) — which is SUPPORTED, but is a different axis from the paper metric. See `docs/audit/wave88-phase3-final.md` for the full audit trail (F-1 through F-7 + framework liveness N=100 + per-paper-claim FINAL status + D.4/G-MASTER/mkdocs verification).
 
 ### §7.4 LineageFlow (ICML 2026 protein flow-matching) — NFE-adaptive framework extends baseline plateau (real ckpt)
 
@@ -3251,6 +3308,25 @@ See `docs/audit/wave82-phase4-final.md` for the full Wave 82 final synthesis wit
 | **`PB-xtb pipeline wire`** (Pitfall #6) | N/A (Wave 82 vendored YAML was already correctly configured; not formally audited) | **FALSE POSITIVE — wire is correct** per Wave 87 Agent A audit §1-§3: `compute_pb_validity_pct` correctly loads the vendored YAML via `yaml.safe_load` + `analyzer.buster = posebusters.PoseBusters(config=...)`; xtb is irrelevant to PB's `energy_ratio` check; xtb IS used elsewhere (`_compute_xtb_geometry_metrics` → `-med_rmsd_after_xtb` composite geometry axis). 0 LOC of pipeline changes required. |
 
 The honest reading is unchanged from Wave 84: **the framework-vs-baseline Tier 3 paper-metric story is `TIES / NOISY-BAND` on all 3 models at every available sample size**, with the **single exception** of FlowMol3 `fg_dev` (Wave 82). The internal composite axis (Wave 47/52/69) remains the framework's real, byte-stable, NFE-independent value-add - SUPPORTED on all 3 models. See `docs/audit/wave87-phase4-final.md` for the Wave 87 final synthesis + per-metric byte-stable table + D.4/G-MASTER/mkdocs verification + UFF-vs-xtb comparison.
+
+**Wave 88 honest verdict update (Kanzi framework-arm N=1000 paper-metric question closed with `NOT_MEASURABLE`, Wave 79 n=2 proxy retracted — `docs/audit/wave88-phase3-final.md`).** Wave 88 re-attempted the Kanzi framework-arm N=1000 sweep on the real `cleaned_model.pt` ckpt and closed the question with a structural result: the framework arm is **`NOT_MEASURABLE` on the Kanzi paper-metric axis — by construction, not by budget**. Three new findings bear on the §7.6 verdict:
+
+1. **Kanzi framework-arm N=1000 sweep → `NOT_MEASURABLE` (Wave 88 F-3).** The Kanzi adapter's `protein_latent` is shape `(64, 64)` (KANZI_STATE_SHAPE at `adaptive_reflow/adapters/kanzi.py:220`) but the DAE's continuous latent is `(1, L, 256)` and `dae.quantize` rejects dim 64 outright (`AssertionError: expected dimension of 256 but found dimension of 64`). The framework arm is live (Wave 88 F-1: 100/100 latent divergence, relative L2 1.0423, wallclock ratio 1.28×) but it operates on a synthetic `(64, 64)` latent that is not the trained DAE latent geometry, and there is no public protocol surface to bridge the two. The framework endpoint cannot enter the `reconstruction_kabsch_rmsd_A` or any of the 5 codebook metrics pipelines. The Wave 88 N=1000 framework-arm paper-metric question is therefore closed with verdict `NOT_MEASURABLE`, replacing the Wave 83 `framework_improves_inconclusive_noisy_band` placeholder verdict.
+
+2. **Wave 79 n=2 framework-arm proxy `Δ=+0.27 Å` is RETRACTED (Wave 88 F-2).** The proxy is an artifact of `_extract_ca_coords_for_kanzi(trace)` in `tools/run_real_ckpt_eval.py:4119-4144` falling back to `",".join(["0.0"] * 30)` on every trace (because `ODEIntegratorTrace` has no `endpoint` / `states` attribute — `adaptive_reflow/universal/state.py:216-234` defines only `steps, accept_rate, native_state_digest, integrator_config_hash`). Both arms were scored on the same 30-zero placeholder. Re-running the identical placeholder input gives 1.40 / 1.67 / 2.23 Å across three runs (Wave 79 "baseline" / Wave 79 "framework" / Wave 88 replication) — spread **0.83 Å, 3× the Δ that was reported**. The number is cited in 6+ committed docs and is now retracted from the §7.3 evidence chain. The Wave 80 N=32 smoke (0.887 Å baseline) and the Wave 83 N=200 sweep (0.824 Å baseline, std 0.132 Å) are unaffected — those were *baseline arm only* on the real `extract_ca_coords_for_kanzi.py` coord file.
+
+3. **`DAE.decode` is stochastic and unseeded (Wave 88 F-4).** Per-record `reconstruction_kabsch_rmsd_A` has a run-to-run σ of **0.0947 Å** over 8 real records × 8 unseeded repeats — about half the total across-record variance on the Wave 83 N=200 sweep. Neither `tools/sweep_kanzi_n1000_paper_metrics.py` nor `tools/upstream_eval.py:_KANZI_DRIVER` calls `torch.manual_seed` before `dae.decode`. The `"deterministic": true` field the sweep script writes (`sweep_kanzi_n1000_paper_metrics.py:239`) is incorrect, as is Wave 83's "result is deterministic + byte-stable" claim (`wave83-phase4-final.md:306`). Pinning `torch.manual_seed(1234)` before each call drives the run-to-run spread to 0 (verified).
+
+**Updated per-paper-claim Tier 3 Kanzi FINAL status (Wave 88 — all 3 Tier 3 models, paper metric axis):**
+
+| Paper claim | FlowMol3 (Wave 87) | LineageFlow (Wave 86 + 87) | **Kanzi (Wave 88)** |
+|---|---|---|---|
+| `framework_improves` on Tier 3 paper-metric axis (decision metric) | **PARTIAL** (1/4 axes: `fg_dev` 4.05σ; 1/4 ties `validity_pct`; 2/4 not distinguishable / blocker) | `TIES` (Wave 86 N=1000 framework-vs-baseline eval showed framework REGRESSED on family-validity; Wave 87 F-4 EsmModel dtype fix did not flip the verdict) | **`NOT_MEASURABLE`** — Wave 88 F-3 (no latent→coords bridge); Wave 79 n=2 proxy retracted (F-2) |
+| `framework_improves` on Tier 3 INTERNAL composite axis (entropy / max-prob / argmax turnover on latent codebook) | +0.1182 (3-run byte-identical at seed=42, NFE=50, n_molecules=10) | +0.2083 (Wave 47 + Wave 69 GPU, byte-stable across NFE) | **+0.1695** (Wave 52 + Wave 58 NFE-scan, byte-stable σ=0 within seed across 10…2000) |
+| `extends_baseline_plateau` on Tier 3 decision-metric axis | n/a (FlowMol3 has a real metric layer, not saturation) | n/a (Wave 86 N=1000 sweep ran real framework-vs-baseline) | **CLOSED-WITH-NOT_MEASURABLE** (Wave 88) — framework value-add on Kanzi lives on the INTERNAL composite axis, not the paper metric |
+| `framework_sota` on Tier 3 paper-metric axis (≥50% reduction) | NO | NO | **NO** — never run on real N=1000 paper metric; framework arm `NOT_MEASURABLE` (Wave 88 F-3) |
+
+**The §7.6 honest verdict is therefore now: `framework_improves` on Tier 3 paper metric → NOT MEASURABLE on Kanzi, PARTIAL on FlowMol3, TIES on LineageFlow; `framework_improves` on Tier 3 INTERNAL composite axis → SUPPORTED on all 3 models (Kanzi +0.1695, LineageFlow +0.2083, FlowMol3 +0.1182).** The "framework extends baseline plateau" claim remains TRUE for the internal composite axis on all 3 models. The "framework improves paper metric" claim is now formally `NOT_MEASURABLE` on Kanzi (Wave 88 F-3), `PARTIAL` on FlowMol3 (1/4 axes, `fg_dev`), and `TIES` on LineageFlow (Wave 86) — a more honest, more differentiated reading than the Wave 87 "TIES / NOISY-BAND on all 3" headline. See `docs/audit/wave88-phase3-final.md` for the full audit trail + D.4/G-MASTER/mkdocs verification + per-paper-claim FINAL status table.
 
 ### §7.7 NFE-aware framework — extends baseline's saturation ceiling (Wave 58)
 
