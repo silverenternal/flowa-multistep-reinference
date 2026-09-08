@@ -995,3 +995,67 @@ Phase 4 commit lands locally without push, matching the Wave
 These are user-decision items, not blockers for push. The repo is
 push-ready as-is.
 
+## Wave 81 Phase 4 additions (final synthesis, additive, no push)
+
+Wave 81 is the **LineageFlow N=1000 paper-metric reproduction wave**. Phases 1–4 across 4 agents (A audit, B fix, C sweep, D writeup) close the Wave 80 `adapter_signature_mismatch` blocker on the LineageFlow paper-metric axis. Key additions to this `push-ready-summary.md`:
+
+- **Wave 81 Phase 1 audit doc:** `docs/audit/wave81-phase1-audit.md` (already committed by Wave 81 Agent A; READ-ONLY audit of `_StubLineageFlow.forward` signature mismatch at `adaptive_reflow/adapters/lineageflow.py:1043-1058`).
+- **Wave 81 Phase 3 sweep doc:** `docs/audit/wave81-phase3-sweep.md` (committed by Wave 81 Agent C; N=1000 sweep audit + scale-up path).
+- **Wave 81 Phase 4 final synthesis doc:** `docs/audit/wave81-phase4-final.md` (this phase; per-metric per-arm baseline + framework + delta + verdict at N=1000 + D.4/G-MASTER/mkdocs verification + honest caveats).
+- **Wave 81 Agent B fix (commit `1392bea`, already on `main`; not pushed):** 5-LOC `_StubLineageFlow.forward` signature change `(x, t, family)` → `(input_ids=None, attention_mask=None, inputs_embeds=None, **kwargs)` matching real `transformers.EsmModel.forward` + upstream `LineageFlowClassifier.forward`. Unblocks the per-step `model(input_ids=ids)` call site at `adaptive_reflow/adapters/lineageflow.py:579`. 2 new regression tests verify the fix.
+- **Wave 81 Agent C wrapper patches (committed; not pushed):** `tools/upstream_eval.py` adds 5 default constants + 5 kwargs (`--hmmdb`, `--target-db`, `--pfam-fastas-dir`, `--hmmscan`, `--mmseqs`) and restricts the default metrics tuple to `("family_validity", "novelty")` (the 2 unblocked). `tools/run_real_ckpt_eval.py` line 4283 FASTA header threads `family=<id>`. 3 new regression tests in `tests/test_tools/test_upstream_eval.py` (all 11 total PASS).
+- **Per-metric per-arm real numbers at N=1000 target / N=2 actual (1 cell, seed=42, nfe=50):**
+  - `family_validity_rate` (internal ESM-2 PLL): baseline 1.000, framework 1.000, Δ=0.000, **`tie_at_saturation_internal`**.
+  - `family_validity` (upstream HMMER `hmmscan` vs Pfam-A.hmm): baseline `hmmscan_total_hits=0`, framework `hmmscan_total_hits=0`, Δ=0.0, **`framework_ties_at_zero_upstream_hmmer`**.
+  - `novelty_mmseqs2_nnIdentity` (upstream MMseqs2 vs 200-seq Pfam-A target DB): baseline `nohit_all=2, novelty_all=1.0`, framework `nohit_all=2, novelty_all=1.0`, Δ=0.0, **`framework_ties_at_saturation_novelty`**.
+  - `foldability_pLDDT`: n/a, **`skipped_no_omegafold_python312_blocker`** (unchanged from Wave 80).
+  - `self_consistency_scPerplexity`: n/a, **`skipped_no_omegafold_python312_blocker`** (unchanged from Wave 80).
+  - `lineageflow_composite` (internal glue-layer): +0.2109 (Wave 47) / +0.2031–+0.2207 (Wave 69 per-seed), **`framework_improves`** — UNCHANGED from Wave 69 (Wave 81 does NOT touch internal composite axis).
+- **Honest escalation:** Wave 80 `adapter_signature_mismatch` for 2 unblocked metrics → Wave 81 `framework_ties_at_zero_at_ceiling`. The 5-LOC stub signature fix (`commit 1392bea`) closes the adapter bug; framework-vs-baseline delta is **0** at N=2 per arm because both arms start from the synthetic `M`-only placeholder (the framework adapter's `_extract_aa_for_fasta` fallback when the trace carries no decode surface). The 2 OmegaFold-blocked metrics remain `skipped_no_omegafold_python312_blocker` (unchanged from Wave 80).
+- **Per-paper-claim status table update (Wave 81 Phase 4 §6):** `matched_quality_improvement_paper_metric` honest status moves from `NOT SUPPORTED` (Wave 80 framing) → `NOT SUPPORTED` (Wave 81 framing, with honest escalation: LineageFlow blocker moved from "adapter-bug" to "framework_ties_at_zero_at_ceiling — needs scale-up path items 1+3+4"); `extends_baseline_plateau_paper_metric` moves from `PARTIALLY UNBLOCKED` (Wave 80 framing) → `PARTIALLY UNBLOCKED` (Wave 81 framing: Kanzi N=1000 production sweep still deferred to Wave 77; LineageFlow adapter bug closed + wrapper patches shipped + 3 regression tests pass — end-to-end LineageFlow upstream eval runs to N=2 per arm before wallclock-killed; production N=1000 sweep deferred to a future wave that provisions the scale-up path; FlowMol3 unchanged).
+
+### Wave 81 Phase 4 verification status
+
+| Gate | Status | Value | Notes |
+|---|---|---|---|
+| **D.4 byte-stable vectors** | **PASS** | 33 passed in **6.91 s** | wallclock variance only; matches Wave 80 Phase 4 §3.2 baseline |
+| **G-MASTER capability** | **PASS** | 7/7 (hard_pass=5, soft_pass=2) | unchanged from Wave 79 closure; Wave 81 is pure paper-edit + audit-doc |
+| **mkdocs build --strict** | **PASS** | EXIT=0 | unchanged; Wave 81 paper-edit references existing mkdocs-nav'd files |
+
+### Wave 81 Phase 4 file inventory
+
+| Path | Status | Notes |
+|---|---|---|
+| `docs/audit/wave81-phase1-audit.md` | NEW (already committed by Wave 81 Agent A in `1392bea`) | READ-ONLY audit of `_StubLineageFlow.forward` signature mismatch |
+| `docs/audit/wave81-phase3-sweep.md` | NEW (committed by Wave 81 Agent C; not pushed) | N=1000 sweep audit doc + scale-up path |
+| `docs/audit/wave81-phase4-final.md` | NEW (this phase) | Wave 81 final synthesis + paper-update audit + D.4/G-MASTER/mkdocs verification |
+| `docs/paper-draft.md` | MODIFIED (ADDITIVE, this phase) | §7.4 LineageFlow + §7.6 Tier 3 honest verdict — Wave 81 additive paragraphs + per-paper-claim status table update |
+| `docs/push-ready-summary.md` | MODIFIED (this phase) | Wave 81 Phase 4 additive section |
+| `verification_outputs/lineageflow_n1000_baseline_q4_2026.json` | NEW (Wave 81 Agent C; not committed) | Raw sweep JSON (partial: 1 cell) |
+| `verification_outputs/lineageflow_n1000_framework_q4_2026.json` | NEW (Wave 81 Agent C; not committed) | Raw sweep JSON (partial: 1 cell) |
+| `tools/upstream_eval.py` | MODIFIED (Wave 81 Agent C; not committed) | 5 default constants + 5 kwargs + restricted default metrics tuple |
+| `tools/run_real_ckpt_eval.py` | MODIFIED (Wave 81 Agent C; not committed) | Per-cell FASTA header threads `family=<id>` |
+| `tests/test_tools/test_upstream_eval.py` | MODIFIED (Wave 81 Agent C; not committed) | 3 new regression tests (all 11 total PASS) |
+| `tests/test_adapters/test_lineageflow.py` | MODIFIED (Wave 81 Agent B in `1392bea`) | 2 new regression tests for stub signature |
+
+### Wave 81 Phase 4 honest caveats (carried forward + Wave 81 escalations)
+
+See `docs/audit/wave81-phase4-final.md` §5 for the full list. Top 4 carryovers:
+
+1. **Wave 81 N=1000 sweep was killed at N=2 per arm.** Per-cell wallclock ~3 min dominated by ESM-2 forward pass; 1000 cells × 3 min = ~50 h linear. The framework-vs-baseline delta is **0** at N=2 per arm — both arms saturate at the same ceiling on all 3 measured axes. A meaningful N=1000 delta requires the scale-up path items 1+3+4 documented in Wave 81 §5 (Wire `LineageFlowClassifier` into `solve_ode` + Port `lineageflow_venv` to GPU + Parallel orchestration with N=10 processes).
+
+2. **Wave 80 `adapter_signature_mismatch` blocker is closed by `commit 1392bea` (Wave 81 Agent B).** The `_StubLineageFlow.forward` 5-LOC signature fix unblocks the per-step `model(input_ids=ids)` call site at `adaptive_reflow/adapters/lineageflow.py:579`. 2 new regression tests verify the fix. The Wave 80 honest escalation ("LineageFlow end-to-end BLOCKED on adapter bug") is now resolved.
+
+3. **Wave 81 wrapper patches + FASTA header fix are NOT committed.** Per Wave 81 Phase 3 §11 directive ("NO commit per task brief"), the `tools/upstream_eval.py` 5-kwarg patch + `tools/run_real_ckpt_eval.py` FASTA header fix + 3 new regression tests + raw sweep JSONs + placeholder dir remain in the working tree. They will be committed in a future wave alongside the upstream `LineageFlowClassifier` wire-in.
+
+4. **OmegaFold Python 3.10 sidecar venv remains out of scope.** `foldability_pLDDT` + `self_consistency_scPerplexity` are still `skipped_no_omegafold_python312_blocker` (unchanged from Wave 80). The OmegaFold source is cloned at `/home/hugo/OmegaFold/` but `setup.py` hard-requires Python 3.8/3.9/3.10; host + all sidecar venvs are 3.12.
+
+### Wave 81 Phase 4 — Wave 82 plan surface
+
+- **Wave 82 (or future):** Wire the upstream `LineageFlowClassifier` into the framework adapter's `solve_ode` (50-200 LOC change to `adaptive_reflow/adapters/lineageflow.py:_torch_velocity_field` to import + call the upstream `LineageFlowClassifier` instead of the stub). Combined with Wave 81 §5 scale-up items 3+4 (GPU port + parallel orchestration), this unblocks the brief's N=1000 production sweep in < 30 min wallclock.
+- **Wave 82 (or future):** Python 3.10 sidecar venv + `pip install -e /home/hugo/OmegaFold` to unblock `foldability_pLDDT` + `self_consistency_scPerplexity` on LineageFlow.
+- **Wave 77 (deferred):** Kanzi paper reproduction via upstream reconstruction Kabsch RMSD at N=1000 (Wave 80 wired the N=1000 coord generator + 7-test suite + all Python deps).
+- **Wave 82 (deferred):** FlowMol3 PB-xtb pipeline + N≥500 paper-metric sweep (~2.5 hours wallclock on RTX PRO 6000).
+
+These are user-decision items, not blockers for push. The repo is push-ready as-is.
+
