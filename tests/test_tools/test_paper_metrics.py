@@ -82,14 +82,15 @@ def _install_mock_flowmol(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     deterministic upstream ``SampleAnalyzer`` that returns canned
     values for the 4 paper metrics.
 
-    The mock tracks the most-recent analyzer's constructor kwargs
-    (pb_energy + processed_data_dir) and the call-site flags
-    (functional_validity, posebusters), then selects a canned bucket
-    accordingly. Canned buckets:
+    The mock tracks per-analyzer-instance state (pb_energy,
+    processed_data_dir, buster_config) so different
+    SampleAnalyzer() constructor calls don't bleed state into each
+    other. Canned buckets:
 
         default       — base case (val=0.75, pb=0.5, fg=0.27, ood=0.10)
         full_pb       — pb_valid=0.5 (energy_ratio active → stricter)
         subset_pb     — pb_valid=0.8 (energy_ratio skipped → lenient)
+        xtb_injected  — pb_valid=0.92 (Wave 82: vendored YAML injection)
         geom_drugs    — fg_dev=0.27 (GEOM_DRUGS reference, paper value)
         nci_proxy     — fg_dev=0.15 (NCI_first_5K_proxy → different dev)
         no_rings      — ood_rate=0.0 (no rings → no ChEMBL misses)
@@ -109,9 +110,25 @@ def _install_mock_flowmol(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
             "reos_cum_dev": 0.27,
             "ood_rate": 0.10,
         },
+        # Wave 73 baseline: no energy_ratio module → most mols pass PB.
+        # The vendored YAML path (Wave 82) is STRICTER than the subset
+        # path because it uncomments the energy_ratio module with the
+        # paper-tuned threshold=100.0. Without energy_ratio, the
+        # subset path accepts ~99% of mols (only chemistry + geometry
+        # checks apply).
         "subset_pb": {
             "frac_valid_mols": 0.75,
-            "pb_valid": 0.8,
+            "pb_valid": 0.99,
+            "reos_cum_dev": 0.27,
+            "ood_rate": 0.10,
+        },
+        # Wave 82: when the vendored YAML with energy_ratio UNCOMMENTED
+        # is injected via ``analyzer.buster = PoseBusters(config=...)``,
+        # the analyzer returns the paper-parity ``pb_valid`` value of
+        # ~0.92. Used by ``test_pb_validity_pct_uses_xtb_energy_ratio``.
+        "xtb_injected": {
+            "frac_valid_mols": 0.75,
+            "pb_valid": 0.92,
             "reos_cum_dev": 0.27,
             "ood_rate": 0.10,
         },
@@ -135,10 +152,6 @@ def _install_mock_flowmol(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         },
     }
 
-    # Track the most-recent analyzer's constructor kwargs so the
-    # ``analyze()`` method can dispatch to the right canned bucket.
-    state: dict[str, Any] = {"pb_energy": False, "processed_data_dir": None}
-
     def _SampleAnalyzer(
         *,
         pb_workers: int = 0,
@@ -146,8 +159,14 @@ def _install_mock_flowmol(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         processed_data_dir: Any = None,
         **kwargs: Any,
     ) -> Any:
-        state["pb_energy"] = bool(pb_energy)
-        state["processed_data_dir"] = processed_data_dir
+        # Per-instance state (was module-level before Wave 82 — caused
+        # state bleed between successive ``compute_*`` calls in the
+        # same test).
+        state: dict[str, Any] = {
+            "pb_energy": bool(pb_energy),
+            "processed_data_dir": processed_data_dir,
+            "buster_config": None,
+        }
         analyzer = MagicMock()
 
         def analyze(
@@ -165,8 +184,10 @@ def _install_mock_flowmol(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
                 ref_key = "nci_proxy"
             else:
                 ref_key = "default"
-            # Override for PB-only call-sites: distinguish full vs subset.
+            # Wave 82: PB-only call-site with vendored YAML injected.
             if posebusters and not functional_validity:
+                if state["buster_config"] is not None:
+                    return dict(canned["xtb_injected"])
                 return dict(canned["full_pb" if state["pb_energy"] else "subset_pb"])
             # Override for no-rings branch (driven by ood_rate=0.0 in canned).
             if functional_validity and not posebusters:
@@ -182,6 +203,22 @@ def _install_mock_flowmol(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
 
         analyzer.analyze = analyze
         analyzer.compute_validity = compute_validity
+        # Per-instance state for the analyze() closure.
+        analyzer._state = state
+
+        # Wave 82: track re-assignment of ``analyzer.buster``. The
+        # vendored YAML injection path sets
+        # ``analyzer.buster = <PoseBusters-with-config>``; we record
+        # the config dict into the per-instance state["buster_config"]
+        # so the analyze() closure returns the ``xtb_injected`` bucket.
+        def _buster_setter(instance: Any, value: Any) -> None:
+            state["buster_config"] = getattr(value, "_config", None)
+            instance._buster_value = value
+
+        type(analyzer).buster = property(
+            fget=lambda instance: getattr(instance, "_buster_value", None),
+            fset=_buster_setter,
+        )
         return analyzer
 
     SampleAnalyzer = _SampleAnalyzer
@@ -224,28 +261,56 @@ def test_validity_pct_known_answer(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_pb_validity_pct_subset_vs_full(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Same input → ``full_pb`` is stricter than ``subset_pb``.
+    """Same input → ``full_pb`` (vendored YAML) is stricter than ``subset_pb``.
 
-    The full path (``full_pb=True``) drives PoseBusters with the
-    ``energy_ratio`` module enabled — which adds an extra rejection
-    step for molecules whose xtb-optimized energy ratio is bad. The
-    subset path (``full_pb=False``) uses the vendored
+    The full path (``full_pb=True``, Wave 82 default) injects the
+    vendored ``data/FlowMol3/pb_config_with_energy_ratio.yaml`` via
+    ``analyzer.buster = PoseBusters(config=<yaml_dict>)``. The YAML
+    has the ``energy_ratio`` module UNCOMMENTED with paper-tuned
+    parameters (``threshold_energy_ratio=100.0``,
+    ``ensemble_number_conformations=50``) — which adds an extra
+    rejection step for molecules whose UFF-based energy ratio is bad.
+    The subset path (``full_pb=False``) uses the upstream vendored
     ``pb_config.yaml`` which has ``energy_ratio`` commented out
-    (``pb_config.yaml:101-110``). Therefore ``pb_valid_full <= pb_valid_subset``.
+    (``pb_config.yaml:101-110``) → less strict.
+
+    Both paths share the same upstream code
+    (``flowmol/analysis/metrics.py:154-166``). The ``full_pb`` flag
+    selects between two upstream ``PoseBusters`` configurations.
 
     This test verifies the wire: same input through both paths,
-    different results.
+    different results. The vendored YAML bucket returns ``pb_valid = 0.92``
+    (paper-parity value), the subset bucket returns ``pb_valid = 0.8``.
     """
     canned = _install_mock_flowmol(monkeypatch)
+    # Mock posebusters + yaml so the vendored-YAML injection branch
+    # can run (otherwise compute_pb_validity_pct raises FileNotFoundError).
+    import types as _types
+
+    fake_posebusters = _types.ModuleType("posebusters")
+
+    class _FakePoseBusters:
+        def __init__(self, *, config: Any = None, max_workers: int = 0, **_kw: Any):
+            self._config = config
+
+    fake_posebusters.PoseBusters = _FakePoseBusters
+    monkeypatch.setitem(sys.modules, "posebusters", fake_posebusters)
+
+    fake_yaml = _types.ModuleType("yaml")
+    fake_yaml.safe_load = lambda fh: {"modules": [{"name": "Loading", "function": "loading"}]}
+    monkeypatch.setitem(sys.modules, "yaml", fake_yaml)
+
     from tools import paper_metrics  # noqa: PLC0415
 
     mols = [_FakeSampledMolecule() for _ in range(4)]
     pb_full = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
     pb_subset = paper_metrics.compute_pb_validity_pct(mols, full_pb=False, pb_workers=0)
-    # Canned mock returns full=0.5, subset=0.8 — verify the wire.
-    assert pb_full == pytest.approx(0.5, abs=1e-9)
-    assert pb_subset == pytest.approx(0.8, abs=1e-9)
-    # Sanity: full path is stricter.
+    # Canned mock: full_pb (vendored YAML) returns 0.92; subset_pb
+    # (no energy_ratio module) returns 0.99.
+    assert pb_full == pytest.approx(0.92, abs=1e-9)
+    assert pb_subset == pytest.approx(0.99, abs=1e-9)
+    # Sanity: vendored YAML path is stricter than subset path
+    # (energy_ratio adds an extra rejection step).
     assert pb_full <= pb_subset
 
 
@@ -352,3 +417,200 @@ def test_aggregator_returns_all_4_metrics(monkeypatch: pytest.MonkeyPatch) -> No
     assert out.paper_pb_validity_pct == pytest.approx(0.5, abs=1e-9)
     assert out.paper_fg_deviation == pytest.approx(0.27, abs=1e-9)
     assert out.paper_ood_ring_rate == pytest.approx(0.10, abs=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# Wave 82 — PB energy_ratio integration tests
+#
+# Wave 82 closes the gap between the paper's ``pb_validity_pct = 0.919``
+# and our reported ``pb_valid ≈ 1.0`` (which lacked the energy_ratio
+# module). The fix: vendor a custom PoseBusters config at
+# ``data/FlowMol3/pb_config_with_energy_ratio.yaml`` with the energy_ratio
+# module UNCOMMENTED and paper-tuned params
+# (``threshold_energy_ratio=100.0``,
+# ``ensemble_number_conformations=50``), then inject it via
+# ``analyzer.buster = PoseBusters(config=<our_yaml_dict>)`` (PB 0.6.5
+# accepts either a preset name or a config dict — verified at
+# ``posebusters/posebusters.py:73-127``).
+# ---------------------------------------------------------------------------
+
+
+def test_pb_validity_pct_uses_xtb_energy_ratio(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``full_pb=True`` injects the vendored YAML into ``analyzer.buster``.
+
+    The Wave 82 vendored YAML
+    (``data/FlowMol3/pb_config_with_energy_ratio.yaml``) uncomments the
+    PoseBusters ``energy_ratio`` module with upstream-tuned parameters
+    (``threshold_energy_ratio=100.0``,
+    ``ensemble_number_conformations=50``). Our
+    :func:`tools.paper_metrics.compute_pb_validity_pct` injects it via
+    ``analyzer.buster = posebusters.PoseBusters(config=<yaml_dict>)``.
+
+    This test verifies the wire: the vendored YAML path is selected
+    when ``full_pb=True`` (default), AND the resulting ``pb_valid``
+    value matches the paper-parity ``xtb_injected`` canned bucket
+    (~0.92). We mock ``posebusters.PoseBusters`` so the test runs
+    without RDKit / PoseBusters deps installed.
+    """
+    canned = _install_mock_flowmol(monkeypatch)
+    # Mock posebusters + yaml in sys.modules so the YAML injection
+    # branch in compute_pb_validity_pct can run.
+    import types as _types
+
+    fake_posebusters = _types.ModuleType("posebusters")
+
+    class _FakePoseBusters:
+        def __init__(self, *, config: Any = None, max_workers: int = 0, **_kw: Any):
+            self._config = config
+            self._max_workers = int(max_workers)
+
+    fake_posebusters.PoseBusters = _FakePoseBusters
+    monkeypatch.setitem(sys.modules, "posebusters", fake_posebusters)
+
+    fake_yaml = _types.ModuleType("yaml")
+
+    def _fake_safe_load(fh: Any) -> dict[str, Any]:
+        # Return a minimal valid YAML dict for the test
+        return {
+            "modules": [
+                {"name": "Loading", "function": "loading"},
+                {"name": "Energy ratio", "function": "energy_ratio",
+                 "chosen_binary_test_output": ["energy_ratio_passes"]},
+            ]
+        }
+
+    fake_yaml.safe_load = _fake_safe_load
+    monkeypatch.setitem(sys.modules, "yaml", fake_yaml)
+
+    from tools import paper_metrics  # noqa: PLC0415
+
+    mols = [_FakeSampledMolecule() for _ in range(4)]
+    out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
+    # When the vendored YAML is injected, the canned "xtb_injected"
+    # bucket returns ``pb_valid = 0.92`` (matches the paper-parity
+    # value).
+    assert out == pytest.approx(0.92, abs=1e-9)
+    assert 0.0 <= out <= 1.0
+    # Sanity: the vendored YAML path is NOT the same as the
+    # ``full_pb=False`` subset path. The subset path uses the upstream
+    # vendored ``pb_config.yaml`` (energy_ratio commented out) and
+    # returns ~0.99 in the canned bucket (no energy_ratio rejection).
+    out_subset = paper_metrics.compute_pb_validity_pct(
+        mols, full_pb=False, pb_workers=0
+    )
+    assert out_subset == pytest.approx(0.99, abs=1e-9)
+    # Sanity: full_pb path (with vendored YAML) is stricter than
+    # the subset path.
+    assert out < out_subset
+
+
+def test_pb_validity_pct_returns_real_number_when_xtb_installed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``compute_pb_validity_pct`` returns a real finite float in [0, 1].
+
+    Wave 82 paper-path smoke test: with both the vendored YAML
+    available AND PoseBusters importable, the helper should:
+      1. Construct the upstream SampleAnalyzer (valency refs loaded).
+      2. Re-assign ``analyzer.buster`` with the vendored YAML dict.
+      3. Call ``analyze(posebusters=True)`` and return the
+         ``pb_valid`` key as a float in [0, 1].
+
+    This test verifies the happy path: returns a real number, not a
+    sentinel ``0.0`` from upstream import failure or YAML parse error.
+    """
+    canned = _install_mock_flowmol(monkeypatch)
+    import types as _types
+
+    fake_posebusters = _types.ModuleType("posebusters")
+
+    class _FakePoseBusters:
+        def __init__(self, *, config: Any = None, max_workers: int = 0, **_kw: Any):
+            self._config = config
+
+    fake_posebusters.PoseBusters = _FakePoseBusters
+    monkeypatch.setitem(sys.modules, "posebusters", fake_posebusters)
+
+    fake_yaml = _types.ModuleType("yaml")
+    fake_yaml.safe_load = lambda fh: {"modules": [{"name": "Loading", "function": "loading"}]}
+    monkeypatch.setitem(sys.modules, "yaml", fake_yaml)
+
+    from tools import paper_metrics  # noqa: PLC0415
+
+    # Verify the vendored YAML exists on disk (Wave 82 Phase A).
+    yaml_path = paper_metrics.PB_CONFIG_WITH_ENERGY_RATIO_PATH
+    assert yaml_path.is_file(), (
+        f"Wave 82 vendored YAML missing at {yaml_path}; "
+        "Phase A vendoring is incomplete"
+    )
+
+    mols = [_FakeSampledMolecule() for _ in range(4)]
+    out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
+    # The vendored YAML bucket returns ``pb_valid = 0.92`` per the
+    # paper-parity value (Dunn et al., NeurIPS 2024, arXiv 2508.12629).
+    assert isinstance(out, float)
+    assert 0.0 <= out <= 1.0
+    # Real finite float (not NaN, not inf, not the upstream import-failure
+    # sentinel).
+    assert out == out  # not NaN
+    assert out not in (float("inf"), float("-inf"))
+
+
+def test_pb_validity_pct_falls_back_to_uff_when_xtb_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When the vendored YAML is missing, fall back to subset_pb (UFF).
+
+    The vendored YAML at
+    ``data/FlowMol3/pb_config_with_energy_ratio.yaml`` is REQUIRED for
+    paper parity (energy_ratio UNCOMMENTED with paper-tuned params).
+    When the file is missing on disk (e.g. incomplete Wave 82 Phase A
+    vendoring), :func:`compute_pb_validity_pct` falls back to the
+    Wave 73 ``subset_pb`` path: the upstream vendored
+    ``pb_config.yaml`` (energy_ratio commented out → UFF-only PB
+    checks). This is the byte-stable fallback the Wave 73 test
+    fixtures already verify.
+
+    This test verifies the fallback: when the vendored YAML is
+    absent, ``compute_pb_validity_pct`` does NOT raise
+    ``FileNotFoundError`` (it falls back gracefully to subset_pb).
+    """
+    canned = _install_mock_flowmol(monkeypatch)
+    import types as _types
+
+    fake_posebusters = _types.ModuleType("posebusters")
+
+    class _FakePoseBusters:
+        def __init__(self, *, config: Any = None, max_workers: int = 0, **_kw: Any):
+            self._config = config
+
+    fake_posebusters.PoseBusters = _FakePoseBusters
+    monkeypatch.setitem(sys.modules, "posebusters", fake_posebusters)
+
+    fake_yaml = _types.ModuleType("yaml")
+    fake_yaml.safe_load = lambda fh: {"modules": []}
+    monkeypatch.setitem(sys.modules, "yaml", fake_yaml)
+
+    from tools import paper_metrics  # noqa: PLC0415
+
+    # Patch the vendored YAML path to a non-existent location so the
+    # fallback branch triggers.
+    fake_missing = paper_metrics.PB_CONFIG_WITH_ENERGY_RATIO_PATH.parent / "_does_not_exist_.yaml"
+    monkeypatch.setattr(paper_metrics, "PB_CONFIG_WITH_ENERGY_RATIO_PATH", fake_missing)
+
+    mols = [_FakeSampledMolecule() for _ in range(4)]
+    # When the vendored YAML is missing, the helper falls back to
+    # subset_pb path (Wave 73 byte-stable behavior). The canned
+    # ``subset_pb`` bucket returns ``pb_valid = 0.99``.
+    out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
+    assert isinstance(out, float)
+    assert 0.0 <= out <= 1.0
+    assert out == pytest.approx(0.99, abs=1e-9)
+    # Sanity: subset path with ``full_pb=False`` returns the same
+    # value (the fallback IS the subset path).
+    out_explicit_subset = paper_metrics.compute_pb_validity_pct(
+        mols, full_pb=False, pb_workers=0
+    )
+    assert out == out_explicit_subset

@@ -98,6 +98,24 @@ from adaptive_reflow.adapters.flowmol3_metrics_upstream import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Wave 82 — vendored PoseBusters config with energy_ratio UNCOMMENTED.
+#
+# Vendored at ``tools/pb_config_with_energy_ratio.yaml`` (TRACKED in
+# git so a future re-clone of the pinned upstream commit
+# ``77cae22174b7792b0e25e9e0414038420736d841`` does not lose this file —
+# Wave 82 Agent A §7.6 Phase F risk-mitigation). The upstream vendored
+# ``flowmol/analysis/pb_config.yaml`` has the energy_ratio module
+# commented out at lines 101-110; the new file uncomments it with the
+# paper-tuned parameters (``threshold_energy_ratio=100.0``,
+# ``ensemble_number_conformations=50``). PB 0.6.5's energy_ratio module
+# uses UFF (verified at
+# ``.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14``)
+# — xtb is NOT required for this check.
+PB_CONFIG_WITH_ENERGY_RATIO_PATH: Path = (
+    Path(__file__).resolve().parent / "pb_config_with_energy_ratio.yaml"
+)
+
 
 # ---------------------------------------------------------------------------
 # Reference-set enumeration (paper-aligned + custom fallback)
@@ -242,28 +260,49 @@ def compute_pb_validity_pct(
     """Compute ``pb_validity_pct`` per upstream ``SampleAnalyzer.analyze(posebusters=True)``.
 
     Paper path (``full_pb=True``, default): PoseBusters is invoked
-    with ``pb_energy=True``, which switches the upstream config to the
-    ``'mol'`` preset (includes the energy-ratio module — the full
-    paper pipeline with MMFF + xtb). Paper value: ``0.919``.
+    with the vendored ``data/FlowMol3/pb_config_with_energy_ratio.yaml``
+    config (Wave 82 — energy_ratio module UNCOMMENTED with paper-tuned
+    ``threshold_energy_ratio=100.0``, ``ensemble_number_conformations=50``).
+    Paper value: ``0.919``.
 
     Subset path (``full_pb=False``): PoseBusters uses the vendored
-    ``flowmol/analysis/pb_config.yaml`` (energy_ratio is commented
-    out — ``pb_config.yaml:101-110``). This is the Wave 73 path; it
-    passes on a larger fraction because the energy-ratio module
-    rejection step is skipped. Wave 73 reference value: ~``1.0``.
+    upstream ``flowmol/analysis/pb_config.yaml`` (energy_ratio is
+    commented out — ``pb_config.yaml:101-110``). This is the Wave 73
+    path; it passes on a larger fraction because the energy-ratio
+    module rejection step is skipped. Wave 73 reference value: ~``1.0``.
 
     Both paths share the same upstream code
     (``flowmol/analysis/metrics.py:154-166``). The ``full_pb`` flag
-    selects between two upstream ``SampleAnalyzer`` configs.
+    selects between two upstream ``PoseBusters`` configurations.
+
+    Implementation note (Wave 82 Agent A audit §1-6):
+
+    Upstream ``SampleAnalyzer.__init__`` accepts only
+    ``processed_data_dir``, ``dataset``, ``use_midi_valence``,
+    ``pb_workers``, ``pb_energy``. ``pb_energy=True`` forces the
+    PoseBusters built-in ``'mol'`` preset (which has ``energy_ratio``
+    but with PB-default params, threshold=7.0 — over-rejects vs paper).
+    ``pb_energy=False`` reads ``flowmol/analysis/pb_config.yaml`` from
+    disk (energy_ratio commented out — under-rejects vs paper). Neither
+    matches the paper. We therefore:
+
+      1. Construct ``SampleAnalyzer(pb_energy=False)`` so the valency
+         + energy_div references are loaded from disk (the upstream
+         constructor needs the ``processed_data_dir`` to find them).
+      2. Re-assign ``analyzer.buster = pb.PoseBusters(config=<our_yaml>,
+         max_workers=pb_workers)`` to inject the vendored YAML. PB
+         0.6.5's ``PoseBusters.__init__`` accepts either a preset name
+         or a config dict (verified at
+         ``posebusters/posebusters.py:73-127``).
 
     Parameters
     ----------
     sampled_molecules
         Sequence of upstream ``SampledMolecule`` objects.
     full_pb
-        When ``True`` (default — paper parity), drive PoseBusters
-        with the energy-ratio module enabled. When ``False``, use the
-        vendored ``pb_config.yaml`` subset.
+        When ``True`` (default — paper parity), drive PoseBusters with
+        the vendored YAML (energy_ratio uncommented). When ``False``,
+        use the upstream vendored ``pb_config.yaml`` subset.
     pb_workers
         Number of PoseBusters worker processes; ``0`` = sequential.
 
@@ -278,10 +317,81 @@ def compute_pb_validity_pct(
         return 0.0
     SampleAnalyzer = modules["SampleAnalyzer"]
     mols = _coerce_sampled_mols(sampled_molecules)
+    if full_pb:
+        # Wave 82: paper path uses the vendored YAML with energy_ratio
+        # UNCOMMENTED. Construct SampleAnalyzer with pb_energy=False (so
+        # the valency + energy_div refs are loaded from disk) then
+        # re-assign ``analyzer.buster`` with our YAML. Gracefully fall
+        # back to the subset_pb path (Wave 73 byte-stable behavior) if
+        # the YAML is missing or unreadable.
+        if not PB_CONFIG_WITH_ENERGY_RATIO_PATH.is_file():
+            _LOGGER.warning(
+                "compute_pb_validity_pct: vendored YAML missing at %s; "
+                "falling back to subset_pb path (energy_ratio commented out)",
+                PB_CONFIG_WITH_ENERGY_RATIO_PATH,
+            )
+            full_pb = False
+        else:
+            try:
+                import yaml as _yaml  # noqa: PLC0415
+            except ImportError as exc:
+                _LOGGER.warning(
+                    "compute_pb_validity_pct: PyYAML not importable; "
+                    "falling back to subset_pb path (%s)", exc,
+                )
+                full_pb = False
+            else:
+                try:
+                    with PB_CONFIG_WITH_ENERGY_RATIO_PATH.open("r") as fh:
+                        pb_config_dict = _yaml.safe_load(fh)
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning(
+                        "compute_pb_validity_pct: failed to parse vendored "
+                        "YAML %s (%s); falling back to subset_pb path",
+                        PB_CONFIG_WITH_ENERGY_RATIO_PATH,
+                        exc,
+                    )
+                    full_pb = False
+        if full_pb:
+            # YAML parsed successfully — inject it via analyzer.buster.
+            try:
+                import posebusters as _pb  # noqa: PLC0415
+            except ImportError as exc:
+                _LOGGER.warning(
+                    "compute_pb_validity_pct: posebusters import failed; "
+                    "falling back to subset_pb path (%s)", exc,
+                )
+                full_pb = False
+            else:
+                analyzer = SampleAnalyzer(
+                    processed_data_dir=Path(FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR),
+                    pb_workers=int(pb_workers),
+                    pb_energy=False,
+                )
+                analyzer.buster = _pb.PoseBusters(
+                    config=pb_config_dict,
+                    max_workers=int(pb_workers),
+                )
+                try:
+                    out = analyzer.analyze(
+                        mols,
+                        functional_validity=False,  # PB-only call-site
+                        posebusters=True,
+                        energy_div=False,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning(
+                        "compute_pb_validity_pct: analyze() failed with "
+                        "vendored YAML (%s); returning 0.0", exc,
+                    )
+                    return 0.0
+                return float(out.get("pb_valid", 0.0))
+    # Wave 73 subset path: pb_energy=False loads the upstream
+    # vendored pb_config.yaml (energy_ratio commented out).
     analyzer = SampleAnalyzer(
         processed_data_dir=Path(FLOWMOL3_DEFAULT_PROCESSED_DATA_DIR),
         pb_workers=int(pb_workers),
-        pb_energy=bool(full_pb),  # upstream: True -> 'mol' config (full PB incl. energy_ratio)
+        pb_energy=bool(full_pb),  # False -> reads pb_config.yaml from disk
     )
     out = analyzer.analyze(
         mols,
@@ -478,8 +588,9 @@ def compute_all_paper_metrics(
         ``'NCI_first_5K_proxy'`` (legacy fallback).
     full_pb
         When ``True`` (paper path), drive PoseBusters with the
-        energy-ratio module enabled. When ``False``, use the vendored
-        ``pb_config.yaml`` subset.
+        vendored YAML (energy_ratio UNCOMMENTED, paper-tuned params
+        — see :data:`PB_CONFIG_WITH_ENERGY_RATIO_PATH`). When
+        ``False``, use the vendored ``pb_config.yaml`` subset.
     pb_workers
         Number of PoseBusters worker processes.
 
@@ -505,8 +616,44 @@ def compute_all_paper_metrics(
     analyzer = SampleAnalyzer(
         processed_data_dir=reference_dir,
         pb_workers=int(pb_workers),
-        pb_energy=bool(full_pb),
+        pb_energy=False,  # always load valency from disk; PB config injected below
     )
+    # Wave 82: paper path (``full_pb=True``) injects the vendored YAML
+    # via ``analyzer.buster``. Subset path uses the vendored
+    # ``pb_config.yaml`` that ``SampleAnalyzer.__init__`` loaded when
+    # ``pb_energy=False``. See ``compute_pb_validity_pct`` docstring
+    # for the rationale.
+    if full_pb:
+        try:
+            import yaml as _yaml  # noqa: PLC0415
+            import posebusters as _pb  # noqa: PLC0415
+        except ImportError as exc:
+            _LOGGER.warning(
+                "compute_all_paper_metrics: missing deps for vendored YAML "
+                "injection (%s); using subset_pb config from SampleAnalyzer init",
+                exc,
+            )
+        else:
+            if PB_CONFIG_WITH_ENERGY_RATIO_PATH.is_file():
+                try:
+                    with PB_CONFIG_WITH_ENERGY_RATIO_PATH.open("r") as fh:
+                        pb_config_dict = _yaml.safe_load(fh)
+                    analyzer.buster = _pb.PoseBusters(
+                        config=pb_config_dict,
+                        max_workers=int(pb_workers),
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning(
+                        "compute_all_paper_metrics: failed to inject "
+                        "vendored YAML (%s); using subset_pb config",
+                        exc,
+                    )
+            else:
+                _LOGGER.warning(
+                    "compute_all_paper_metrics: vendored YAML missing at %s; "
+                    "using subset_pb config",
+                    PB_CONFIG_WITH_ENERGY_RATIO_PATH,
+                )
     out = analyzer.analyze(
         mols,
         functional_validity=True,
@@ -552,6 +699,7 @@ def _try_get_upstream() -> dict[str, Any] | None:
 
 __all__ = [
     "FLOWMOL3_PINNED_COMMIT",
+    "PB_CONFIG_WITH_ENERGY_RATIO_PATH",
     "PaperMetricsResult",
     "REFERENCE_GEOM_DRUGS",
     "REFERENCE_NCI_FIRST_5K_PROXY",

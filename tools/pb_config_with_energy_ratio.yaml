@@ -1,0 +1,184 @@
+# Wave 82 — FlowMol3 PB config with energy_ratio module UNCOMMENTED.
+#
+# This is a near-clone of the upstream vendored
+# `data/FlowMol3/repo/flowmol/analysis/pb_config.yaml` with one
+# additive change: the `energy_ratio` PoseBusters module is
+# UNCOMMENTED and tuned with upstream's parameters
+# (`threshold_energy_ratio: 100.0`, `ensemble_number_conformations: 50`).
+#
+# WHY THIS EXISTS (verified Wave 82 Agent A audit §1-6)
+#
+# The paper's `pb_validity_pct = 0.919` (Dunn et al., NeurIPS 2024,
+# arXiv 2508.12629) is computed by PoseBusters WITH the
+# `energy_ratio` module enabled. The upstream vendored
+# `flowmol/analysis/pb_config.yaml` (lines 101-110) has the
+# `energy_ratio` module commented out. Our `tools/paper_metrics.py:
+# compute_pb_validity_pct` previously used `pb_energy=True` (→
+# PoseBusters built-in `'mol'` preset) which DOES include
+# `energy_ratio` but with PB's DEFAULT parameters
+# (`threshold_energy_ratio=7.0`, `ensemble_number_conformations=100`).
+# The default threshold 7.0 is FAR stricter than what the FlowMol3
+# distribution was tuned against — over-rejecting drug-like molecules
+# and producing `pb_valid` ~5-15% instead of the paper's 0.919.
+#
+# xtb-vs-UFF: PoseBusters 0.6.5's `energy_ratio` module uses UFF
+# force-field (verified at
+# `.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14`,
+# imports `UFFGetMoleculeForceField`). xtb is NOT required for PB's
+# `energy_ratio` check. xtb is only required for the SEPARATE
+# xtb_optimization.py + rmsd_energy.py post-processing pipeline that
+# drives the chemistry axis (`-med_rmsd_after_xtb` in the
+# composite — see tools/run_real_ckpt_eval.py:_compute_xtb_geometry_metrics).
+#
+# Location: vendored OUTSIDE the upstream repo
+# (`data/FlowMol3/pb_config_with_energy_ratio.yaml`) so a future
+# re-clone of the pinned commit
+# `77cae22174b7792b0e25e9e0414038420736d841` would NOT lose this
+# file (Wave 82 Agent A §7.6 risk-mitigation Phase F).
+#
+# Consumed by: tools.paper_metrics.compute_pb_validity_pct(full_pb=True)
+# which constructs an upstream `SampleAnalyzer(processed_data_dir=...,
+# pb_workers=..., pb_energy=False)` (to load valency + energy_div
+# refs from disk) and then re-assigns
+# `analyzer.buster = posebusters.PoseBusters(config=<this yaml dict>)`
+# to inject the uncommented energy_ratio module.
+
+modules:
+  - name: "Loading"
+    function: loading
+    chosen_binary_test_output:
+      - mol_pred_loaded
+    rename_outputs:
+      mol_pred_loaded: "MOL_PRED loaded"
+
+  - name: "Chemistry"
+    function: rdkit_sanity
+    chosen_binary_test_output:
+      - passes_rdkit_sanity_checks
+    rename_outputs:
+      passes_rdkit_sanity_checks: "Sanitization"
+
+  - name: "Chemistry"
+    function: inchi_convertible
+    chosen_binary_test_output:
+      - inchi_convertible
+    rename_outputs:
+      inchi_convertible: "InChI convertible"
+
+  - name: "Chemistry"
+    function: atoms_connected
+    chosen_binary_test_output:
+      - all_atoms_connected
+    rename_outputs:
+      all_atoms_connected: "All atoms connected"
+
+  - name: "Geometry"
+    function: "distance_geometry"
+    parameters:
+      bound_matrix_params:
+        set15bounds: True
+        scaleVDW: True
+        doTriangleSmoothing: True
+        useMacrocycle14config: False
+      threshold_bad_bond_length: 0.25
+      threshold_bad_angle: 0.25
+      threshold_clash: 0.3
+      ignore_hydrogens: True
+      sanitize: True
+    chosen_binary_test_output:
+      - bond_lengths_within_bounds
+      - bond_angles_within_bounds
+      - no_internal_clash
+    rename_outputs:
+      bond_lengths_within_bounds: "Bond lengths"
+      bond_angles_within_bounds: "Bond angles"
+      no_internal_clash: "Internal steric clash"
+
+  - name: "Ring flatness"
+    function: "flatness"
+    parameters:
+      flat_systems:
+        aromatic_5_membered_rings_sp2: "[ar5^2]1[ar5^2][ar5^2][ar5^2][ar5^2]1"
+        aromatic_6_membered_rings_sp2: "[ar6^2]1[ar6^2][ar6^2][ar6^2][ar6^2][ar6^2]1"
+      threshold_flatness: 0.25
+    chosen_binary_test_output:
+      - flatness_passes
+    rename_outputs:
+      num_systems_checked: number_aromatic_rings_checked
+      num_systems_passed: number_aromatic_rings_pass
+      max_distance: aromatic_ring_maximum_distance_from_plane
+      flatness_passes: "Aromatic ring flatness"
+
+  - name: "Ring non-flatness"
+    function: "flatness"
+    parameters:
+      check_nonflat: True
+      flat_systems:
+        non-aromatic_6_membered_rings: "[C,O,S,N;R1]~1[C,O,S,N;R1][C,O,S,N;R1][C,O,S,N;R1][C,O,S,N;R1][C,O,S,N;R1]1"
+        non-aromatic_6_membered_rings_db03_0: "[C;R1]~1[C;R1][C,O,S,N;R1]~[C,O,S,N;R1][C;R1][C;R1]1"
+        non-aromatic_6_membered_rings_db03_1: "[C;R1]~1[C;R1][C;R1]~[C;R1][C,O,S,N;R1][C;R1]1"
+        non-aromatic_6_membered_rings_db02_0: "[C;R1]~1[C;R1][C;R1][C,O,S,N;R1]~[C,O,S,N;R1][C;R1]1"
+        non-aromatic_6_membered_rings_db02_1: "[C;R1]~1[C,O,S,N;R1][C;R1]~[C;R1][C;R1]1"
+      threshold_flatness: 0.05
+    chosen_binary_test_output:
+      - flatness_passes
+    rename_outputs:
+      num_systems_checked: number_non-aromatic_rings_checked
+      num_systems_passed: number_non-aromatic_rings_pass
+      max_distance: non-aromatic_ring_maximum_distance_from_plane
+      flatness_passes: "Non-aromatic ring non-flatness"
+
+  - name: "Double bond flatness"
+    function: "flatness"
+    parameters:
+      flat_systems:
+        trigonal_planar_double_bonds: "[C;X3;^2](*)(*)=[C;X3;^2](*)(*)"
+      threshold_flatness: 0.25
+    chosen_binary_test_output:
+      - flatness_passes
+    rename_outputs:
+      num_systems_checked: number_double_bonds_checked
+      num_systems_passed: number_double_bonds_pass
+      max_distance: double_bond_maximum_distance_from_plane
+      flatness_passes: "Double bond flatness"
+
+  # Wave 82: UNCOMMENTED — `threshold_energy_ratio: 100.0` and
+  # `ensemble_number_conformations: 50` are the upstream FlowMol3
+  # paper-tuned parameters (vendored from
+  # `data/FlowMol3/repo/flowmol/analysis/pb_config.yaml:101-110` where
+  # they were originally COMMENTED OUT). PB 0.6.5's energy_ratio module
+  # uses UFF (not xtb) per
+  # `.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14`
+  # — xtb is NOT required for this check.
+  - name: "Energy ratio"
+    function: energy_ratio
+    parameters:
+      threshold_energy_ratio: 100.0
+      ensemble_number_conformations: 50
+      inchi_strict: False
+    chosen_binary_test_output:
+      - energy_ratio_passes
+    rename_outputs:
+      energy_ratio_passes: "Internal energy"
+
+# Options for loading molecule files with RDKit (identical to upstream
+# vendored `pb_config.yaml`).
+loading:
+  mol_pred:
+    cleanup: False
+    sanitize: False
+    add_hs: False
+    assign_stereo: False
+    load_all: True
+  mol_true:
+    cleanup: False
+    sanitize: False
+    add_hs: False
+    assign_stereo: False
+    load_all: True
+  mol_cond:
+    cleanup: False
+    sanitize: False
+    add_hs: False
+    assign_stereo: False
+    proximityBonding: False

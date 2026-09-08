@@ -3109,119 +3109,254 @@ def _compute_xtb_med_rmsd(
     max_molecules: int = 2,
     timeout_s: int = 30,
 ) -> float | None:
-    """Compute median post-GFN2-XTB RMSD across up to ``max_molecules``.
+    """Wave 74 light stub (kept for byte-stable backwards compat).
 
-    Wave 74 Phase 4 F3 — light xtb wire. For each sampled molecule that
-    exposes a ``.positions`` ndarray of shape ``(N, 3)`` (Ångström) and a
-    ``.atom_types`` array of atomic numbers, we:
+    Returns the ``med_rmsd`` key from
+    :func:`_compute_xtb_geometry_metrics` when the full upstream
+    pipeline is reachable, otherwise ``None``. The wider geometry
+    metrics (``med_energy_gain``, ``med_mmff_drop``) are computed by
+    :func:`_compute_xtb_geometry_metrics` and consumed by
+    ``_compute_flowmol3_composite``.
 
-      1. Write a temporary XYZ file.
-      2. Invoke ``xtb <xyz> --opt`` (GFN2-XTB geometry optimization).
-      3. Parse ``xtbopt.xyz`` (the optimized geometry written by xtb
-         in the same directory) and compute RMSD vs the input
-         coordinates (Ångström).
-      4. Return the median across successful molecules.
-
-    Returns ``None`` when no molecule successfully optimizes (or no
-    ``positions``/``atom_types`` attribute is exposed). The function is
-    intentionally tolerant — the caller treats ``None`` as "drop the
-    geometry axis" and the composite still computes from chemistry.
+    Wave 82 Agent B fix: the prior implementation called ``xtb``
+    directly via subprocess and computed RMSD in numpy. The upstream
+    pipeline (``data/FlowMol3/repo/fm3_evals/geometry/xtb_optimization.py``
+    + ``rmsd_energy.py``) handles many edge cases that the stub
+    missed (energy_gain extraction from the xtb output, MMFF drop
+    via RDKit, length assertions, etc.). This function now delegates
+    to :func:`_compute_xtb_geometry_metrics` for the actual work and
+    returns just the ``med_rmsd`` component for byte-stable callers.
     """
+    metrics = _compute_xtb_geometry_metrics(
+        sampled_molecules,
+        max_molecules=max_molecules,
+        timeout_s=timeout_s,
+    )
+    if metrics is None:
+        return None
+    return float(metrics.get("med_rmsd", float("nan")))
+
+
+def _compute_xtb_geometry_metrics(
+    sampled_molecules: Sequence[Any],
+    *,
+    max_molecules: int = 50,
+    timeout_s: int = 300,
+    xtb_binary: str | None = None,
+) -> dict[str, float] | None:
+    """Wave 82 — full upstream xtb pipeline (geometry + chemistry axes).
+
+    Replaces the prior ``_compute_xtb_med_rmsd`` stub with the full
+    upstream pipeline:
+
+      1. ``fm3_evals/geometry/xtb_optimization.py`` — runs GFN2-XTB
+         geometry optimization on each sampled molecule and writes
+         ``<tmp>/opt.sdf`` + ``<tmp>/init.sdf`` (Wave 82 Agent A §2.1).
+      2. ``fm3_evals/geometry/rmsd_energy.py`` — computes
+         ``med_rmsd``, ``med_energy_gain``, ``med_mmff_drop`` (Wave 82
+         Agent A §2.2).
+
+    The pipeline writes ``rmsd_energy_results.pkl`` to the temp dir;
+    we read it back as the result dict. The function returns
+    ``None`` when xtb is not on ``$PATH``, the upstream scripts are
+    not vendored, the SDF write fails, or any subprocess fails.
+
+    xtb is invoked via the absolute path
+    ``/home/hugo/xtb_prefix/bin/xtb`` by default — the Wave 82 Agent
+    A §2.4 audit verified that xtb is installed at this prefix but
+    NOT on the default ``$PATH`` for shell-level subprocess calls.
+    The function prepends the xtb prefix to ``$PATH`` in the subprocess
+    environment so both the explicit invocation AND the
+    ``xtb_optimization.py`` shell call (``xtb <xyz> --opt`` at line 28
+    of the script) work consistently.
+
+    Parameters
+    ----------
+    sampled_molecules
+        Sequence of sampled molecule objects. Each must expose
+        ``.rdkit_mol`` (an RDKit ``Chem.Mol`` with a 3D conformer) or
+        be an RDKit ``Chem.Mol`` directly. Mols without a 3D
+        conformer are silently skipped by the upstream pipeline.
+    max_molecules
+        Cap on the number of mols written to the input SDF (the prior
+        stub used 2; the full pipeline processes up to ``max_molecules``
+        to bound wallclock).
+    timeout_s
+        Per-subprocess timeout in seconds. The full N=50 optimization
+        takes ~1-3s/mol ≈ 50-150s; we default to 300s for the
+        optimization pass plus 120s for rmsd_energy.
+
+    Returns
+    -------
+    dict | None
+        ``{"med_rmsd": float, "med_energy_gain": float,
+        "med_mmff_drop": float, "n": int, ...}`` (matches the keys
+        produced by ``rmsd_energy.py``). Returns ``None`` when xtb is
+        unavailable or the pipeline fails.
+    """
+    import os as _os
     import shutil as _shutil
     import subprocess as _subprocess
     import tempfile as _tempfile
     import pathlib as _pathlib
-    import numpy as _np
 
-    xtb_bin = _shutil.which("xtb")
-    if xtb_bin is None:
-        return None
+    # Resolve xtb binary. Default to the Wave 74 F3 install prefix;
+    # override via ``xtb_binary`` kwarg for tests + sidecar hosts.
+    if xtb_binary is None:
+        xtb_binary = "/home/hugo/xtb_prefix/bin/xtb"
+    xtb_bin_path = _pathlib.Path(xtb_binary)
+    if not xtb_bin_path.is_file():
+        # Last-resort fallback: try $PATH
+        discovered = _shutil.which("xtb")
+        if discovered is None:
+            return None
+        xtb_bin_path = _pathlib.Path(discovered)
+
     if not sampled_molecules:
         return None
 
-    # Atomic-number → element-symbol mapping (1..20 covers H..Ca; the
-    # GEOM-Drugs dataset sits in C/N/O/F/S/Cl/Br; extend for safety).
-    _Z_TO_SYMBOL = {
-        1: "H", 6: "C", 7: "N", 8: "O", 9: "F", 15: "P", 16: "S",
-        17: "Cl", 35: "Br", 53: "I",
-        14: "Si", 5: "B", 11: "Na", 12: "Mg",
-    }
+    # Resolve the upstream xtb pipeline scripts (Wave 82 Agent A §2.1-2.3).
+    from adaptive_reflow.adapters.flowmol3_metrics_upstream import (  # type: ignore
+        FLOWMOL3_UPSTREAM_REPO,
+    )
 
-    rmsds: list[float] = []
-    taken = 0
-    for mol in sampled_molecules:
-        if taken >= int(max_molecules):
-            break
-        pos = getattr(mol, "positions", None)
-        atypes = getattr(mol, "atom_types", None)
-        if pos is None or atypes is None:
-            continue
-        try:
-            pos_arr = _np.asarray(pos, dtype=float)
-            atypes_arr = _np.asarray(atypes, dtype=int).reshape(-1)
-        except Exception:
-            continue
-        if pos_arr.ndim != 2 or pos_arr.shape[1] != 3:
-            continue
-        if atypes_arr.shape[0] != pos_arr.shape[0]:
-            continue
-        if pos_arr.shape[0] < 2:
-            continue
-        with _tempfile.TemporaryDirectory(prefix="flowmol3_xtb_") as tmpdir:
-            xyz_path = _pathlib.Path(tmpdir) / "input.xyz"
-            try:
-                with open(xyz_path, "w") as fh:
-                    fh.write(f"{pos_arr.shape[0]}\n\n")
-                    for z, (x, y, w) in zip(
-                        atypes_arr, pos_arr.tolist()
-                    ):
-                        sym = _Z_TO_SYMBOL.get(int(z), "C")
-                        fh.write(
-                            f"{sym} {x:.6f} {y:.6f} {w:.6f}\n"
-                        )
-            except Exception:
-                continue
-            try:
-                proc = _subprocess.run(
-                    [xtb_bin, "input.xyz", "--opt", "--chrg", "0",
-                     "--uhf", "0", "--gfn", "2"],
-                    cwd=tmpdir,
-                    capture_output=True,
-                    timeout=int(timeout_s),
-                )
-            except (_subprocess.TimeoutExpired, Exception):
-                continue
-            opt_xyz = _pathlib.Path(tmpdir) / "xtbopt.xyz"
-            if not opt_xyz.is_file():
-                continue
-            try:
-                # xtb writes the optimized geometry to xtbopt.xyz in
-                # the same format. Read the N+1 header line + blank +
-                # the N coordinate lines.
-                opt_lines = opt_xyz.read_text().splitlines()
-                if len(opt_lines) < pos_arr.shape[0] + 2:
-                    continue
-                opt_pos = _np.array(
-                    [
-                        list(map(float, line.split()[1:4]))
-                        for line in opt_lines[
-                            2:2 + pos_arr.shape[0]
-                        ]
-                    ],
-                    dtype=float,
-                )
-            except Exception:
-                continue
-            if opt_pos.shape != pos_arr.shape:
-                continue
-            diff = opt_pos - pos_arr
-            rmsd = float(_np.sqrt(_np.mean(_np.sum(diff * diff, axis=1))))
-            rmsds.append(rmsd)
-            taken += 1
-    if not rmsds:
+    upstream_root = _pathlib.Path(FLOWMOL3_UPSTREAM_REPO)
+    xtb_opt_script = upstream_root / "fm3_evals" / "geometry" / "xtb_optimization.py"
+    rmsd_energy_script = upstream_root / "fm3_evals" / "geometry" / "rmsd_energy.py"
+    if not xtb_opt_script.is_file() or not rmsd_energy_script.is_file():
         return None
-    rmsds_arr = _np.asarray(rmsds, dtype=float)
-    return float(_np.median(rmsds_arr))
+
+    # Subprocess env: prepend the xtb prefix to $PATH so the upstream
+    # shell call ``xtb <xyz> --opt`` (xtb_optimization.py:28) can
+    # find the binary. Add the script dir to PYTHONPATH so the
+    # upstream ``from geom_utils.utils import ...`` (rmsd_energy.py:10)
+    # resolves at runtime.
+    env = _os.environ.copy()
+    env["PATH"] = str(xtb_bin_path.parent) + ":" + env.get("PATH", "")
+    env["PYTHONPATH"] = (
+        str(xtb_opt_script.parent) + ":" + env.get("PYTHONPATH", "")
+    )
+
+    # Convert sampled molecules to RDKit mols with 3D conformers.
+    # Upstream ``xtb_optimization.py`` expects an SDF with at least
+    # one conformer per mol; mols without a conformer are silently
+    # skipped by the upstream pipeline.
+    try:
+        from rdkit import Chem  # type: ignore  # noqa: PLC0415
+    except ImportError:
+        return None
+
+    rdmols: list[Any] = []
+    for mol in sampled_molecules[: int(max_molecules)]:
+        if mol is None:
+            continue
+        rdmol = getattr(mol, "rdkit_mol", mol)
+        if rdmol is None:
+            continue
+        if not hasattr(rdmol, "GetNumConformers"):
+            continue
+        if rdmol.GetNumConformers() < 1:
+            continue
+        rdmols.append(rdmol)
+    if not rdmols:
+        return None
+
+    with _tempfile.TemporaryDirectory(prefix="flowmol3_xtb_") as tmp_str:
+        tmp = _pathlib.Path(tmp_str)
+        input_sdf = tmp / "input.sdf"
+        output_sdf = tmp / "opt.sdf"
+        init_sdf = tmp / "init.sdf"
+
+        # Write input SDF using RDKit SDWriter (matches upstream
+        # xtb_optimization.py:131-132 SDMolSupplier contract).
+        try:
+            writer = Chem.SDWriter(str(input_sdf))
+            for rdmol in rdmols:
+                writer.write(rdmol)
+            writer.close()
+        except Exception:
+            return None
+
+        # Step 1: run upstream xtb_optimization.py
+        try:
+            result_opt = _subprocess.run(
+                [
+                    "python",
+                    str(xtb_opt_script),
+                    "--input_sdf", str(input_sdf),
+                    "--output_sdf", str(output_sdf),
+                    "--init_sdf", str(init_sdf),
+                ],
+                env=env,
+                cwd=tmp_str,
+                capture_output=True,
+                timeout=int(timeout_s),
+            )
+        except (_subprocess.TimeoutExpired, FileNotFoundError, Exception):
+            return None
+        if result_opt.returncode != 0:
+            return None
+        if not output_sdf.is_file() or not init_sdf.is_file():
+            return None
+
+        # Step 2: run upstream rmsd_energy.py
+        rmsd_out_pkl = tmp / "rmsd_energy_results.pkl"
+        try:
+            result_rmsd = _subprocess.run(
+                [
+                    "python",
+                    str(rmsd_energy_script),
+                    "--init_sdf", str(init_sdf),
+                    "--opt_sdf", str(output_sdf),
+                    "--n_subsets", "1",
+                    "--output_file", str(tmp / "rmsd_energy"),
+                ],
+                env=env,
+                cwd=tmp_str,
+                capture_output=True,
+                timeout=120,
+            )
+        except (_subprocess.TimeoutExpired, FileNotFoundError, Exception):
+            return None
+        if result_rmsd.returncode != 0:
+            return None
+        if not rmsd_out_pkl.is_file():
+            # Upstream ``rmsd_energy.py:125-138`` writes the .pkl via
+            # ``--output_file`` path with .pkl suffix. If missing,
+            # fall back to the parent-dir default.
+            default_pkl = init_sdf.parent / "rmsd_energy_results.pkl"
+            if default_pkl.is_file():
+                rmsd_out_pkl = default_pkl
+            else:
+                return None
+
+        # Step 3: unpickle the result dict (rmsd_energy.py:58-66 keys)
+        try:
+            import pickle as _pickle  # noqa: PLC0415
+            result_dict = _pickle.loads(rmsd_out_pkl.read_bytes())
+        except Exception:
+            return None
+        if not isinstance(result_dict, dict):
+            return None
+
+        # Coerce to the canonical schema we expose to the composite:
+        # ``med_rmsd``, ``med_energy_gain``, ``med_mmff_drop``, ``n``.
+        out: dict[str, float] = {}
+        for key in ("med_rmsd", "med_energy_gain", "med_mmff_drop", "n"):
+            if key in result_dict:
+                try:
+                    out[key] = float(result_dict[key])
+                except (TypeError, ValueError):
+                    pass
+        if "med_rmsd" not in out:
+            # Pipeline ran but produced no RMSDs (all mols failed).
+            # Return None so the caller drops the geometry axis.
+            return None
+        # Pipeline count from the rmsd_energy.py output (number of
+        # pairs that successfully computed at least one metric).
+        if "n" not in out:
+            out["n"] = 0
+        return out
 
 
 def _compute_flowmol3_composite(
@@ -3347,15 +3482,27 @@ def _compute_flowmol3_composite(
     # Wave 74 Phase 4 F3: when ``xtb`` is on ``$PATH``, compute a
     # real ``med_rmsd`` via GFN2-XTB optimization on a subset of
     # ``sampled_molecules`` (skip when no molecules / xtb not present).
+    # Wave 82 Agent B: extended to compute ``med_energy_gain`` and
+    # ``med_mmff_drop`` via the upstream xtb_optimization.py +
+    # rmsd_energy.py pipeline. We raise ``max_molecules`` from 2 to 50
+    # so the pipeline can compute meaningful medians; the prior stub
+    # was a minimal N=2 fallback.
     if xtb_present and sampled_molecules:
         try:
-            med_rmsd_value = _compute_xtb_med_rmsd(
+            xtb_metrics = _compute_xtb_geometry_metrics(
                 list(sampled_molecules),
-                max_molecules=2,
-                timeout_s=30,
+                max_molecules=50,
+                timeout_s=300,
             )
-            if med_rmsd_value is not None:
-                geometry = {"med_rmsd": float(med_rmsd_value)}
+            if xtb_metrics is not None and "med_rmsd" in xtb_metrics:
+                # Pass the full dict so downstream ``composite_score``
+                # consumers can access ``med_energy_gain`` /
+                # ``med_mmff_drop`` via the geometry dict.
+                geometry = {
+                    k: float(v)
+                    for k, v in xtb_metrics.items()
+                    if isinstance(v, (int, float))
+                }
                 debug["geometry_input"] = dict(geometry)
                 debug["geometry_source"] = "xtb_subprocess"
             else:
@@ -4146,6 +4293,85 @@ def _run_cell(
             cell["paper_metrics_debug"] = {
                 "reason": "no_sampled_molecules",
             }
+        # Wave 75 Agent 4: framework paper-metric companion block. When
+        # ``--paper-metrics`` is set, ALSO run the 4 paper-parity metrics
+        # on the framework trace's decoded molecules so we get a
+        # baseline-vs-framework paper-metric comparison. Same protocol
+        # (NFE=250, N=5000 target), same reference, full_pb=True.
+        # Wire path mirrors the baseline block: opt-in via
+        # ``--paper-metrics``, only for flowmol3(_v2), only when the
+        # adapter ships ``export_sampled_molecules`` (v2 only — v1
+        # silently skips). Result keys are suffixed ``_framework``
+        # so the JSON consumer can distinguish them.
+        if (
+            hasattr(adapter, "export_sampled_molecules")
+            and model in ("flowmol3_v2",)
+        ):
+            framework_sampled: list[Any] | None = None
+            try:
+                _fw_sm_result = adapter.export_sampled_molecules(framework_trace)
+                if isinstance(_fw_sm_result, tuple) and len(_fw_sm_result) >= 1:
+                    framework_sampled = list(_fw_sm_result[0])
+                elif _fw_sm_result is not None:
+                    framework_sampled = list(_fw_sm_result)
+            except Exception:  # noqa: BLE001
+                framework_sampled = None
+            cell["paper_metrics_marker_framework"] = "skipped"
+            cell["paper_metrics_debug_framework"] = {
+                "reason": "not_run",
+                "paper_metrics_flag": bool(paper_metrics_flag),
+            }
+            if framework_sampled:
+                try:
+                    from tools.paper_metrics import (  # type: ignore  # noqa: PLC0415
+                        REFERENCE_GEOM_DRUGS as _REF_GEOM,  # noqa: PLC0415
+                        REFERENCE_NCI_FIRST_5K_PROXY as _REF_NCI,  # noqa: PLC0415
+                        compute_all_paper_metrics as _compute_paper,  # noqa: PLC0415
+                    )
+                    ref_label_fw = paper_reference or _REF_GEOM
+                    if ref_label_fw not in (_REF_GEOM, _REF_NCI):
+                        ref_label_fw = _REF_GEOM
+                    paper_metrics_obj_fw = _compute_paper(
+                        list(framework_sampled),
+                        reference=ref_label_fw,
+                        full_pb=True,
+                        pb_workers=2,
+                    )
+                    cell["paper_validity_pct_framework"] = (
+                        paper_metrics_obj_fw.paper_validity_pct
+                    )
+                    cell["paper_pb_validity_pct_framework"] = (
+                        paper_metrics_obj_fw.paper_pb_validity_pct
+                    )
+                    cell["paper_fg_deviation_framework"] = (
+                        paper_metrics_obj_fw.paper_fg_deviation
+                    )
+                    cell["paper_ood_ring_rate_framework"] = (
+                        paper_metrics_obj_fw.paper_ood_ring_rate
+                    )
+                    cell["paper_metrics_marker_framework"] = "computed"
+                    cell["paper_metrics_debug_framework"] = {
+                        "reference": ref_label_fw,
+                        "n_sampled_molecules": len(list(framework_sampled)),
+                        "full_pb": True,
+                        "paper_metrics_module": "tools.paper_metrics",
+                        "paper_metrics_class": "PaperMetricsResult",
+                    }
+                except ImportError as exc:
+                    cell["paper_metrics_marker_framework"] = "blocked"
+                    cell["paper_metrics_debug_framework"] = {
+                        "reason": f"paper_metrics_import_failed: {type(exc).__name__}:{exc}",
+                    }
+                except Exception as exc:  # noqa: BLE001
+                    cell["paper_metrics_marker_framework"] = "blocked"
+                    cell["paper_metrics_debug_framework"] = {
+                        "reason": f"paper_metrics_compute_failed: {type(exc).__name__}:{exc}",
+                    }
+            else:
+                cell["paper_metrics_marker_framework"] = "blocked"
+                cell["paper_metrics_debug_framework"] = {
+                    "reason": "no_sampled_molecules",
+                }
     # Wave 79 Agent 2: opt-in per-model upstream-eval subprocess block.
     # When the user passes ``--<model>-upstream-eval`` we invoke the
     # upstream eval directly via :mod:`tools.upstream_eval` (NOT a
@@ -4201,10 +4427,26 @@ def _run_cell(
                 # repeating the seed (acceptable for the smoke /
                 # upstream-subprocess contract — the Wave 76 R1
                 # production path uses a per-cell FASTA generator).
+                #
+                # Wave 81 — FASTA headers carry ``family=<id>`` so the
+                # upstream ``family_validity_hmmer.py`` script (which
+                # parses headers for the conditioning family) accepts
+                # our records. Default family ID comes from
+                # ``LINEAGEFLOW_FAMILY_ID_DEFAULT`` when the adapter
+                # is the lineageflow v1 shim (it is, today).
+                family_id = "PF00005.27"
+                try:
+                    if model == "lineageflow":
+                        from adaptive_reflow.adapters.lineageflow import (
+                            LINEAGEFLOW_FAMILY_ID_DEFAULT,
+                        )
+                        family_id = str(LINEAGEFLOW_FAMILY_ID_DEFAULT)
+                except Exception:  # noqa: BLE001
+                    pass
                 fasta_lines: list[str] = [
-                    f">baseline_seed{seed}",
+                    f">baseline_seed{seed}|family={family_id}",
                     _extract_aa_for_fasta(baseline_trace, model),
-                    f">framework_seed{seed}",
+                    f">framework_seed{seed}|family={family_id}",
                     _extract_aa_for_fasta(framework_trace, model),
                 ]
                 fasta_path = upstream_out_dir / "samples.fasta"
