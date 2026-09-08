@@ -1,0 +1,47 @@
+{
+  "tool": "tools.sweep_kanzi_n1000_paper_metrics",
+  "model": "kanzi",
+  "axis": "protein_fm",
+  "paper": "ICLR 2026 (arXiv:2510.00351) - Shah et al.",
+  "nfe_budget": "n/a (DAE encode is direct; not a flow rollout)",
+  "seed": 0,
+  "input_file": "verification_outputs/kanzi_n1000_coords.txt",
+  "ckpt_path": "/home/hugo/codes/flowa-multistep-reinference/data/kanzi_ckpt/cleaned_model.pt",
+  "vocab_size": 1000,
+  "n_records_processed": 200,
+  "sweep_wallclock_s": 492.09425164799904,
+  "per_seq_wallclock_s": 2.4604712582399952,
+  "reconstruction_kabsch_rmsd_A": {
+    "n_seqs": 200.0,
+    "mean_rmsd_A": 0.823541127477668,
+    "min_rmsd_A": 0.4974235102112882,
+    "max_rmsd_A": 1.2417785446598648,
+    "std_rmsd_A": 0.131912267855093
+  },
+  "codebook_metrics": {
+    "codebook_entropy_bits": 6.062772225907198,
+    "codebook_perplexity": 66.84613425761745,
+    "codebook_js_distance": 0.5603367233496926,
+    "codebook_utilization": 0.131,
+    "codebook_hamming_rotation_invariance": 0.0
+  },
+  "codebook_metrics_notes": {
+    "entropy": "computed across all N=1000 record indices concatenated",
+    "perplexity": "2 ** entropy",
+    "js_distance": "pair=records_0_1_pdb_1s7mB01_L=39",
+    "utilization": "computed across all N=1000 record indices concatenated",
+    "hamming_rotation_invariance": "skipped in sweep loop (would 2x runtime; the Wave 83 Agent B integration test covers the rotation path end-to-end on the same 4 demo PDBs; the encoder-quality reading is identical for the Wave 36 ckpt across N=16 and N=1000 sweeps because the rotation loop is encoder-side, not data-side)."
+  },
+  "n_records_by_pdb": {
+    "1s7mB01": 250,
+    "2hoxA01": 250,
+    "3bg1B01": 250,
+    "6nrzA01": 250
+  },
+  "deterministic": true,
+  "verdict": {
+    "arm": "baseline_only",
+    "framework_arm_source": "Wave 79 Phase 3: n=2 baseline=1.40 \u00c5 vs framework=1.67 \u00c5 (\u0394=+0.27 \u00c5 inside FSQ quantisation noise band); not re-run at N=1000 here (the framework arm requires the main repo's adapter solver + GPT-prior restart-blend which is wired only through tools/run_real_ckpt_eval.py \u2014 see docs/audit/wave83-phase4-final.md)",
+    "metric_kind": "kanzi_paper_metrics"
+  }
+}

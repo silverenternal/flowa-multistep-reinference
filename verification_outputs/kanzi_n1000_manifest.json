@@ -1,0 +1,15 @@
+{
+  "n_records": 1000,
+  "n_per_pdb": {
+    "1s7mB01": 250,
+    "2hoxA01": 250,
+    "3bg1B01": 250,
+    "6nrzA01": 250
+  },
+  "reference_pdbs_dir": "data/kanzi_upstream/pdbs",
+  "seed": 0,
+  "noise_sigma": 0.1,
+  "reference_pdbs_sha256": "5cdef987839e37ea17a7f40951fcf51a60dbc9f5b3da61640181397b74fe99c6",
+  "output_path": "verification_outputs/kanzi_n1000_coords.txt",
+  "driver_consumes_lines": "one record per line; comma-separated x,y,z floats in \u00c5"
+}
