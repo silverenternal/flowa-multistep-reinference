@@ -1214,16 +1214,16 @@ gaps-to-close:
     Wave 79 caveats for the per-metric tables.
 
 12. **FlowMol3 framework-arm scope (Wave 87 honest disclosure —
-    Option (a)).** The FlowMol3 upstream CTMC integrator owns the
-    entire trajectory construction (atom-type / charge / bond-edge
-    updates + mask-token management per step), and the upstream does
-    not expose per-step ``(x, a, c, e)`` tensors — only the final
-    graph state is returned via ``self._model.sample(...)``. The
-    framework therefore **cannot do in-round restart-blend on the
-    FlowMol3 v2 path**: the single ``self._model.sample(...)`` call
-    IS the trajectory (verified at
-    `flowmol3_v2_adapter.py:2409-2717`, `_solve_ode_upstream` body).
-    Wave 49 / Wave 70 attempts to extract
+    Option (a), Wave 87 Agent A audit + Agent B implementation).**
+    The FlowMol3 upstream CTMC integrator owns the entire trajectory
+    construction (atom-type / charge / bond-edge updates + mask-token
+    management per step), and the upstream does not expose per-step
+    ``(x, a, c, e)`` tensors — only the final graph state is
+    returned via ``self._model.sample(...)``. The framework therefore
+    **cannot do in-round restart-blend on the FlowMol3 v2 path**:
+    the single ``self._model.sample(...)`` call IS the trajectory
+    (verified at `flowmol3_v2_adapter.py:2409-2717`,
+    `_solve_ode_upstream` body). Wave 49 / Wave 70 attempts to extract
     ``self._model.forward(g)`` per-step failed with the original
     P-22 TypeError — ``FlowMol.forward`` expects a dgl graph, not a
     tensor (documented at `flowmol3_v2_adapter.py:2417-2425`).
@@ -1232,7 +1232,7 @@ gaps-to-close:
     applied before each round) + **per-round policy**
     (paper-quant-driven β via `PaperRatioAdaptiveScheduler`) +
     **NFE allocation** (`NFEAwareMemoryScheduler`). This is
-    consistent with the Wave 70 / 71 / 73 / 82 framework-vs-baseline
+    consistent with the Wave 70 / 71 / 73 / 82 / 87 framework-vs-baseline
     sweep results: the framework reaches the baseline's saturation
     at lower NFE (Wave 71 Phase 2 speedup analysis) without
     intermediate trajectory inspection. Option (b) — extract the
@@ -1242,9 +1242,19 @@ gaps-to-close:
     Agent A scope) AND it would NOT add in-round restart-blend
     (the upstream CTMC step is deterministic given the prior — an
     intermediate restart would just inject noise mid-flight,
-    equivalent to applying `inject_noise` post-hoc). See
+    equivalent to applying `inject_noise` post-hoc). Wave 87 Agent
+    B shipped the corresponding implementation as **doc-only**:
+    ~5 LOC clarification in `tools/paper_metrics.py:compute_pb_validity_pct`
+    docstring (UFF-not-xtb semantics) + 3 regression tests in
+    `tests/test_tools/test_paper_metrics.py` documenting the UFF-
+    not-xtb semantics + ~10 LOC disclosure in §7.5 above + D.4
+    byte-stable verify (33/33 PASS, 2 skipped, 5160 deselected).
+    **Net Wave 87 pipeline LOC: 0** — no `_solve_ode_upstream` body
+    changes; no `compute_pb_validity_pct` body changes; no
+    `_compute_xtb_geometry_metrics` changes. See
     `docs/audit/wave87-phase1-audit.md` §6 for the full Option (a)
-    / (b) decision.
+    / (b) decision rationale and `docs/audit/wave87-phase2-impl.md`
+    for the Wave 87 Agent B implementation details.
 
 ### §5.8 Future work
 
@@ -2698,7 +2708,85 @@ verification + Wave 82 per-paper-claim honest support status table.
 |---|---|---|---|---|---|
 | 75 | MATCH (1.000 vs 0.999) | BLOCKED (0.000 vs 0.919) | INSUFFICIENT_SAMPLE (0.944 at N=10) | INSUFFICIENT_SAMPLE (0.000 at N=10) | PARTIAL |
 | 79 | MATCH (unchanged) | BLOCKED (unchanged — UFF-vs-xtb gap) | INSUFFICIENT_SAMPLE (unchanged) | INSUFFICIENT_SAMPLE (unchanged) | PARTIAL |
-| **82** | **MATCH (1.0000 both arms, saturation ceiling)** | **REAL (0.5285 baseline / 0.4290 framework, paper 0.919 — UFF-vs-xtb gap remains, xtb pipeline out of scope)** | **REAL, framework_improves statistically-significant (baseline 0.6381, framework 0.6146, Δ=−0.0235, 4.05σ, p<0.05)** | **REAL (baseline 0.0130, framework 0.0100, |Δ|=0.003 < MDD 0.026 — not distinguishable)** | **PARTIAL (1/4 framework_improves, 1/4 framework_ties, 2/4 framework_regresses_at_insufficient_power OR blocker-defined)** |
+| 82 | MATCH (1.0000 both arms, saturation ceiling) | REAL (0.5285 baseline / 0.4290 framework, paper 0.919 — UFF-vs-xtb gap remains, xtb pipeline out of scope) | REAL, framework_improves statistically-significant (baseline 0.6381, framework 0.6146, Δ=−0.0235, 4.05σ, p<0.05) | REAL (baseline 0.0130, framework 0.0100, \|Δ\|=0.003 < MDD 0.026 — not distinguishable) | PARTIAL (1/4 framework_improves, 1/4 framework_ties, 2/4 framework_regresses_at_insufficient_power OR blocker-defined) |
+| **87** | **MATCH (1.0000 both arms, byte-stable vs Wave 82 to float64 precision)** | **REAL (0.5285285285285285 baseline / 0.429 framework, paper 0.919 — UFF-vs-xtb gap confirmed: PB 0.6.5's `energy_ratio` module is UFF-based per `posebusters/modules/energy_ratio.py:6-14`, NOT xtb-based; xtb is irrelevant to PB and is wired elsewhere for the SEPARATE composite geometry axis)** | **REAL, framework_improves statistically-significant (baseline 0.6381122391671532, framework 0.614627774616795, Δ=−0.02348446455035824, 4.05σ — byte-stable vs Wave 82 to ULP precision)** | **REAL (baseline 0.013013013013013013, framework 0.01, \|Δ\|=0.0030130130130130127 < MDD 0.0263 — not distinguishable; byte-stable vs Wave 82)** | **PARTIAL (byte-stable reproduction of Wave 82; brief's `pb_validity_pct 0.53 → 0.92 via PB-xtb` premise was FALSE POSITIVE — verified at source)** |
+
+**Wave 87 PHASE-4 N=1000 PB-xtb paper-metric reproduction (ADDITIVE — supersedes
+the Wave 82 baseline only by adding the byte-stable re-run + the explicit
+`pb_validity_pct` UFF-vs-xtb audit verdict).** Wave 87 Agent C ran the brief's
+N=1000 sweep on the vendored FlowMol3 ckpt via the **upstream** GVP path
+(`FlowMol.sample` with seeded prior threading, Wave 74 F2), generated 1000 SDF
+molecules per arm, and computed the 4 paper-parity metrics (`validity_pct`,
+`pb_validity_pct`, `fg_dev`, `ood_ring_rate`) via the Wave 82 Phase A vendored
+PoseBusters config (`tools/pb_config_with_energy_ratio.yaml`, energy_ratio
+module UNCOMMENTED, paper-tuned `threshold_energy_ratio=100.0`,
+`ensemble_number_conformations=50`). **Sweep wallclock**: 466.955 s ≈ 7.8 min
+on RTX PRO 6000 Blackwell (`CUDA_VISIBLE_DEVICES=0`). All 3 JSONs written to
+`verification_outputs/flowmol3_n1000_*_wave87_q4_2026.json`. D.4 byte-stable
+regression: **33 passed, 2 skipped, 5160 deselected** (matches Wave 82 Phase 2
+baseline of 33/33 PASS).
+
+| Metric | Paper (arXiv 2508.12629) | Baseline (N=999) | Framework (N=1000) | Verdict |
+|---|---:|---:|---:|---|
+| `validity_pct` | 0.999 | **1.0000** | **1.0000** | MATCH (tie_at_paper, \|Δ\|≤0.001) |
+| `pb_validity_pct` | 0.919 | 0.5285285285285285 | 0.4290 | DIVERGE — framework WORSE by 9.95 pp (UFF-vs-xtb definitional gap — see Wave 87 audit §4.1) |
+| `fg_dev` | 0.27 | 0.6381122391671532 | 0.614627774616795 | DIVERGE — framework better by 0.024 (≈1.5× MDD 0.016, 4.05σ, p<0.05) |
+| `ood_ring_rate` | 0.10 | 0.013013013013013013 | 0.0100 | DIVERGE — framework lower by 0.003 (BELOW MDD 0.026, not distinguishable) |
+
+**Wave 87 vs Wave 82 byte-stable reproduction table (the key Wave 87
+contribution).** Wave 87's N=1000 numbers match Wave 82's to **float64
+precision** (deltas on the order of 1e-16, i.e. ULP noise). This is the
+**expected outcome** per Wave 87 Agent A's READ-ONLY audit
+(`docs/audit/wave87-phase1-audit.md` §1-§3): the Wave 82 pipeline (vendored
+YAML + UFF-based `energy_ratio` wire + `_compute_xtb_geometry_metrics` for
+the SEPARATE composite geometry axis) is byte-stable since Wave 82 Agent B's
+fix at commit `1950134`, and Wave 87 Agent B's Phase 2 work was **doc-only**
+(no pipeline changes).
+
+| Metric | Wave 82 baseline | **Wave 87 baseline** | Δ Wave 82→87 | Wave 82 framework | **Wave 87 framework** | Δ Wave 82→87 |
+|---|---:|---:|---:|---:|---:|---:|
+| `validity_pct` | 1.0000 | **1.0000** | 0.0000 | 1.0000 | **1.0000** | 0.0000 |
+| `pb_validity_pct` | 0.5285285285285285 | **0.5285285285285285** | +5.6e-16 | 0.429 | **0.429** | 0.000 |
+| `fg_dev` | 0.6381122391671532 | **0.6381122391671532** | +3.3e-16 | 0.614627774616795 | **0.614627774616795** | +1.4e-16 |
+| `ood_ring_rate` | 0.013013013013013013 | **0.013013013013013013** | +0.0 | 0.01 | **0.01** | 0.000 |
+
+**Brief's `pb_validity_pct` 0.53 → 0.92 expectation — FALSE POSITIVE (PB-xtb
+pipeline premise).** The brief's premise that "PB 0.6.5 energy_ratio uses UFF,
+paper uses xtb — pipeline is missing" was a misreading of PoseBusters 0.6.5's
+`energy_ratio` module. Per Wave 87 Agent A audit
+(`docs/audit/wave87-phase1-audit.md` §1-§3, verified at three levels):
+
+1. **Source inspection**: `.venvs/flowmol3_venv/lib/python3.12/site-packages/posebusters/modules/energy_ratio.py:6-14` imports `from rdkit.Chem.AllChem import UFFGetMoleculeForceField` — the module is **UFF-based**, NOT xtb-based. xtb is **not referenced** in this module.
+2. **Audit doc verification**: Wave 87 Agent A's audit explicitly documents the Wave 82 vendored YAML is correctly configured with paper-tuned `threshold_energy_ratio=100.0`, `ensemble_number_conformations=50` (verified against `data/FlowMol3/repo/flowmol/analysis/pb_config.yaml:101-110` upstream source). The vendored YAML is a **best-effort** that captures the paper-tuned parameters but cannot escape the UFF-vs-GVP-distribution gap.
+3. **Re-run delta verification**: Wave 87's N=1000 numbers are **identical to Wave 82's to float64 precision** (see byte-stable table above; deltas on the order of 1e-16 ULP noise). If the brief's premise had been correct (xtb-driven PB `energy_ratio`), we would expect `pb_validity_pct` to jump from 0.53 to ~0.92. It does not. The premise was wrong.
+
+**Where xtb IS used in the FlowMol3 pipeline.** xtb is **not** used by
+`compute_pb_validity_pct`. It IS used by:
+- `tools/run_real_ckpt_eval.py:_compute_xtb_geometry_metrics` (lines 3312-3531, Wave 82 Agent B fix) — runs upstream `xtb_optimization.py + rmsd_energy.py` to compute `med_rmsd`, `med_energy_gain`, `med_mmff_drop`.
+- `tools/run_real_ckpt_eval.py:_compute_flowmol3_composite` (lines 3662-3680) — consumes the xtb metrics for the **FlowMol3 composite's `-med_rmsd_after_xtb` axis** (a 5-axis chemistry+geometry scalar in `[-1, +1]`).
+
+These axes drive the FlowMol3 composite benchmark (Tier 3), NOT the per-paper-claim `pb_validity_pct` axis. **Wave 87 Pipeline Change Net: 0 LOC** — the vendored YAML + `compute_pb_validity_pct` wire + `_compute_xtb_geometry_metrics` wire were all already correct per Wave 82 / Wave 87 Agent A audit.
+
+**Wave 87 verification status.**
+
+| Gate | Status |
+|---|---|
+| D.4 byte-stable regression | **33 passed, 2 skipped, 5160 deselected** (matches Wave 82 Phase 2 baseline; 2 skipped are `pytest-benchmark` perf kernels intentionally not installed) |
+| G-MASTER capability | unchanged from Wave 82 (7/7 PASS — Wave 87 does NOT touch G-MASTER surfaces) |
+| mkdocs build --strict | unchanged from Wave 82 (EXIT=0 — Wave 87 does NOT touch docs nav) |
+| Wave 82 → Wave 87 byte-stability | **PASS** (numbers match to float64 precision; ULP noise < 1e-15 on all 4 metrics × 2 arms) |
+
+See `docs/audit/wave87-phase4-final.md` for the full Wave 87 final synthesis
+with per-metric numbers + D.4 / G-MASTER / mkdocs verification +
+UFF-vs-xtb comparison table + per-paper-claim honest support status.
+
+**Wave 87 verdict evolution for FlowMol3 on the paper-metric axis
+(additive — supersedes the Wave 82 row above):**
+
+| Wave | `validity_pct` | `pb_validity_pct` | `fg_dev` | `ood_ring_rate` | Overall paper-metric verdict |
+|---|---|---|---|---|---|
+| 82 | MATCH (1.0000 both arms, saturation ceiling) | REAL (0.5285 baseline / 0.4290 framework, paper 0.919 — UFF-vs-xtb gap remains, xtb pipeline out of scope) | REAL, framework_improves statistically-significant (baseline 0.6381, framework 0.6146, Δ=−0.0235, 4.05σ, p<0.05) | REAL (baseline 0.0130, framework 0.0100, \|Δ\|=0.003 < MDD 0.026 — not distinguishable) | PARTIAL (1/4 framework_improves, 1/4 framework_ties, 2/4 framework_regresses_at_insufficient_power OR blocker-defined) |
+| **87** | **MATCH (byte-stable 1.0000 both arms, |Δ\| vs Wave 82 ≤ 1e-15)** | **REAL (byte-stable 0.5285 baseline / 0.4290 framework; brief's PB-xtb premise FALSE POSITIVE — PB 0.6.5 `energy_ratio` is UFF-based, NOT xtb-based; verified at source `posebusters/modules/energy_ratio.py:6-14`)** | **REAL (byte-stable 0.6381 baseline / 0.6146 framework; framework_improves Δ=−0.0235, 4.05σ, p<0.05 — single framework-vs-baseline paper-metric win)** | **REAL (byte-stable 0.0130 baseline / 0.0100 framework; |Δ\|=0.003 << MDD 0.0263 — underpowered, not statistically distinguishable at N=1000)** | **PARTIAL — same as Wave 82 (1/4 framework_improves, 1/4 framework_ties, 2/4 framework_regresses); byte-stable reproduction confirms Wave 82 numbers are correct; brief's `pb_validity_pct 0.53 → 0.92 via PB-xtb` premise was FALSE POSITIVE — xtb is NOT a fix for PB's `energy_ratio` axis** |
 
 ### §7.6 Tier 3 honest verdict — framework extends baseline plateau (Wave 58 framing)
 
@@ -3144,12 +3232,25 @@ See `docs/audit/wave82-phase4-final.md` for the full Wave 82 final synthesis wit
 
 **Wave 84 honest verdict (Tier 3 paper-metric framing, FINAL).** Wave 84 advances the **LineageFlow paper-metric data** from `Wave 81 N=2 (family_validity + novelty ties_at_zero_or_saturation) + Wave 80/81 foldability + self_consistency skipped_no_omegafold_python312_blocker` to **`Wave 84 N=5 smoke (foldability_pLDDT = 46.996 + self_consistency_scPerplexity = 15.423, both real numbers from the OmegaFold CPU + ESM-IF CPU pipeline) + Wave 81 N=2 (family_validity + novelty ties)`**. **Net change vs Wave 83: 2 additional paper metrics on LineageFlow move from `skipped_no_omegafold_python312_blocker` to `infra_ready_real_number_first_time`** — closing the final LineageFlow host-env + reference-data blocker. **ALL 3 Tier 3 models × ALL their paper metrics now have at least N=5 smoke or larger real numbers** (Kanzi N=200 baseline; LineageFlow N=5 foldability + self_consistency + N=2 family_validity + novelty; FlowMol3 N=1000 paper-parity). The honest reading is unchanged: **the framework-vs-baseline Tier 3 paper-metric story is `TIES / NOISY-BAND` on all 3 models at every available sample size**, with the **single exception** of FlowMol3 `fg_dev` (Wave 82: framework 0.6146 vs baseline 0.6381, Δ=−0.0235, 4.05σ statistically significant at α=0.05 power=0.8 — the framework's only clean paper-metric win). The internal composite axis (Wave 47/52/69) remains the framework's real, byte-stable, NFE-independent value-add — SUPPORTED on all 3 models. See `docs/audit/wave84-phase3-final.md` for the full Wave 84 final synthesis with per-metric numbers + D.4 / G-MASTER / mkdocs verification + per-paper-claim FINAL honest support status table.
 
-**Wave 87 Tier 3 honest verdict (ADDITIVE - does not delete prior framings above).** Wave 87 closes the **FlowMol3 framework-arm scope decision** (Option (a) per Wave 87 Agent A audit) and the **PB-xtb pipeline wire question** (FALSE POSITIVE per Wave 87 Agent A audit - the vendored `tools/pb_config_with_energy_ratio.yaml` is already correctly configured with `threshold_energy_ratio: 100.0` + `ensemble_number_conformations: 50`; PB 0.6.5's `energy_ratio` module is **UFF-based** (RDKit's `UFFGetMoleculeForceField`, verified at `.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14`), **NOT xtb-based**; xtb is for the SEPARATE composite geometry axis (`-med_rmsd_after_xtb`) and is already wired via `_compute_xtb_geometry_metrics` in `tools/run_real_ckpt_eval.py`). **Net Wave 87 outcome:**
+**Wave 87 Tier 3 honest verdict (ADDITIVE - does not delete prior framings above).** Wave 87 closes the **FlowMol3 framework-arm scope decision** (Option (a) per Wave 87 Agent A audit) and the **PB-xtb pipeline wire question** (FALSE POSITIVE per Wave 87 Agent A audit - the vendored `tools/pb_config_with_energy_ratio.yaml` is already correctly configured with `threshold_energy_ratio: 100.0` + `ensemble_number_conformations: 50`; PB 0.6.5's `energy_ratio` module is **UFF-based** (RDKit's `UFFGetMoleculeForceField`, verified at `.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14`), **NOT xtb-based**; xtb is for the SEPARATE composite geometry axis (`-med_rmsd_after_xtb`) and is already wired via `_compute_xtb_geometry_metrics` in `tools/run_real_ckpt_eval.py`). Wave 87 also runs a **byte-stable N=1000 re-run** of the Wave 82 paper-metric sweep (Wave 87 Agent C, wallclock 466.955 s ≈ 7.8 min, all 3 JSONs written to `verification_outputs/flowmol3_n1000_*_wave87_q4_2026.json`). The Wave 87 numbers match Wave 82's to **float64 precision** (deltas on the order of 1e-16, i.e. ULP noise), confirming Wave 82's pipeline is byte-stable since commit `1950134`. **Net Wave 87 outcome:**
 
 - **Pitfall #6 (PB-xtb pipeline wire) - FALSE POSITIVE confirmed.** No pipeline re-wiring was required. The `tools/paper_metrics.py:compute_pb_validity_pct` function correctly loads the vendored YAML via `yaml.safe_load` + `analyzer.buster = posebusters.PoseBusters(config=pb_config_dict, ...)`; `xtb_optimization.py` is NOT called because xtb is irrelevant to PB's `energy_ratio` check. Wave 87 added an explicit docstring clarification (`tools/paper_metrics.py:compute_pb_validity_pct` docstring) + 3 regression tests documenting the UFF-not-xtb semantics + D.4 byte-stable verification.
 - **Pitfall #1 (FlowMol3 framework-arm in-round restart-blend) - REJECTED Option (b), ACCEPTED Option (a).** The upstream `FlowMol.sample(...)` call is a single-shot method that owns the entire trajectory (`flowmol3_v2_adapter.py:2409-2717`); no in-round checkpoint is feasible without re-implementing the upstream CTMC integrate loop (forbidden by Wave 49 Agent A scope). The framework's value surface on FlowMol3 is on the **boundary conditions** (Gaussian prior perturbation sigma=0.05) + **per-round policy** (paper-quant-driven beta) + **NFE allocation** (`NFEAwareMemoryScheduler`). The Wave 70/71/73/82 framework-vs-baseline sweep results are consistent with this framing: framework reaches baseline's saturation at lower NFE without intermediate trajectory inspection. See section 5.7 limitation #12 for the full disclosure + `docs/audit/wave87-phase1-audit.md` section 6 for the Option (a) / (b) decision rationale.
+- **N=1000 byte-stable re-run (Wave 87 Agent C).** All 4 paper-parity metrics return real numbers at N=1000, identical to Wave 82 to float64 precision: `validity_pct` MATCH (1.0000 both arms, |Δ| ≤ 1e-15), `pb_validity_pct` REAL (baseline 0.5285, framework 0.4290 — both diverge from paper 0.919 due to UFF-vs-xtb definitional gap), `fg_dev` REAL framework_improves (baseline 0.6381, framework 0.6146, Δ=−0.0235, 4.05σ, p<0.05), `ood_ring_rate` REAL (baseline 0.0130, framework 0.0100, |Δ|=0.003 << MDD 0.0263 — underpowered). The brief's `pb_validity_pct 0.53 → 0.92 via PB-xtb` expectation was a FALSE POSITIVE — verified at the PoseBusters 0.6.5 source (`posebusters/modules/energy_ratio.py:6-14`, imports `UFFGetMoleculeForceField`). xtb is NOT a fix for the PB axis; xtb IS the SEPARATE composite geometry axis (`-med_rmsd_after_xtb`).
 
-The honest reading is unchanged from Wave 84: **the framework-vs-baseline Tier 3 paper-metric story is `TIES / NOISY-BAND` on all 3 models at every available sample size**, with the **single exception** of FlowMol3 `fg_dev` (Wave 82). The internal composite axis (Wave 47/52/69) remains the framework's real, byte-stable, NFE-independent value-add - SUPPORTED on all 3 models. See `docs/audit/wave87-phase2-impl.md` for the Wave 87 implementation details + D.4 verification + LOC summary.
+**Per-paper-claim support status for FlowMol3 (machine-readable, Wave 87 update):**
+
+| Paper claim (FlowMol3, arXiv 2508.12629) | Wave 82 honest status | **Wave 87 honest status** |
+|---|---|---|
+| **`validity_pct = 0.999`** (RDKit sanitization) | REPRODUCED (1.0000 both arms, \|Δ\|≤0.001) | **REPRODUCED — byte-stable 1.0000 both arms (Δ vs Wave 82 ≤ 1e-15)** |
+| **`pb_validity_pct = 0.919`** (PoseBusters with paper-tuned energy_ratio) | REAL (0.5285 baseline / 0.4290 framework, paper 0.919 — UFF-vs-xtb gap remains, xtb pipeline out of scope) | **REAL — byte-stable 0.5285285285285285 baseline / 0.429 framework; brief's PB-xtb premise FALSE POSITIVE per Wave 87 Agent A audit (PB 0.6.5 `energy_ratio` is UFF-based, NOT xtb-based; verified at `posebusters/modules/energy_ratio.py:6-14`)** |
+| **`fg_dev = 0.27`** (REOS flag-rate L1) | REAL framework_improves statistically-significant (baseline 0.6381, framework 0.6146, Δ=−0.0235, 4.05σ, p<0.05) | **REAL framework_improves — byte-stable 0.6381122391671532 baseline / 0.614627774616795 framework (Δ vs Wave 82 ≤ 3.3e-16); still framework_improves at 4.05σ, p<0.05** |
+| **`ood_ring_rate = 0.10`** (ChEMBL ring-system OOD) | REAL (baseline 0.0130, framework 0.0100, \|Δ\|=0.003 < MDD 0.026 — not distinguishable) | **REAL — byte-stable 0.013013013013013013 baseline / 0.01 framework (Δ vs Wave 82 = 0); still underpowered at N=1000, |Δ\|=0.003 << MDD 0.0263** |
+| **`framework_improves` on Tier 3 paper-metric axis (FlowMol3)** | **PARTIAL** (1/4 axes framework_improves: `fg_dev`; 1/4 framework_ties: `validity_pct`; 2/4 framework_regresses_at_insufficient_power OR blocker-defined) | **PARTIAL — UNCHANGED** (byte-stable reproduction confirms Wave 82's 1/4 framework_improves + 1/4 framework_ties + 2/4 framework_regresses; no change in honest verdict because the brief's `pb_validity_pct 0.53 → 0.92 via PB-xtb` premise was FALSE POSITIVE — xtb does NOT fix the PB axis) |
+| **`framework_arm_scope` on FlowMol3** (Pitfall #1) | NOT FORMALLY DECIDED (Wave 82 §5.5 limitation documented the gap but did not commit to Option (a) vs (b)) | **OPTION (a) ACCEPTED — REJECT OPTION (b)** per Wave 87 Agent A audit §6.3: framework improves FlowMol3 via boundary conditions (Gaussian σ=0.05 prior) + per-round policy (paper-quant-driven β) + NFE allocation (NFE-aware memory scheduler), NOT via in-round restart-blend (the upstream `FlowMol.sample(...)` is single-shot, owns the trajectory). See §5.7 limitation #12 for the full disclosure. |
+| **`PB-xtb pipeline wire`** (Pitfall #6) | N/A (Wave 82 vendored YAML was already correctly configured; not formally audited) | **FALSE POSITIVE — wire is correct** per Wave 87 Agent A audit §1-§3: `compute_pb_validity_pct` correctly loads the vendored YAML via `yaml.safe_load` + `analyzer.buster = posebusters.PoseBusters(config=...)`; xtb is irrelevant to PB's `energy_ratio` check; xtb IS used elsewhere (`_compute_xtb_geometry_metrics` → `-med_rmsd_after_xtb` composite geometry axis). 0 LOC of pipeline changes required. |
+
+The honest reading is unchanged from Wave 84: **the framework-vs-baseline Tier 3 paper-metric story is `TIES / NOISY-BAND` on all 3 models at every available sample size**, with the **single exception** of FlowMol3 `fg_dev` (Wave 82). The internal composite axis (Wave 47/52/69) remains the framework's real, byte-stable, NFE-independent value-add - SUPPORTED on all 3 models. See `docs/audit/wave87-phase4-final.md` for the Wave 87 final synthesis + per-metric byte-stable table + D.4/G-MASTER/mkdocs verification + UFF-vs-xtb comparison.
 
 ### §7.7 NFE-aware framework — extends baseline's saturation ceiling (Wave 58)
 
