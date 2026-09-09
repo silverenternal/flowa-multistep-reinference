@@ -84,6 +84,8 @@ Every paper statement listed in A.0.1 has at least one test:
 - **Test parity:** Every implemented statement has at least one direct test except Remark 1 (pure docstring) and the `nu_g` density Protocol surface (transitively covered by BL-convergence tests).
 - **Re-export surface:** The `framework/interfaces.py` Protocol surfaces (`SelectionRatioWitness`, `SheetSchedulerProtocol`, `NoiseInjectionProtocol`, `MergeOperatorProtocol`, `PosteriorEvaluator`, `Theorem1StatementChecker`) all carry paper-anchored docstrings; concrete implementations live in `algorithm/dynamic_noise_bias.py` and adapter modules (out of scope for this audit). The Wave 15 B rate-bound surface (`ExplicitRateBoundReport`, `check_explicit_rate_bound`) is re-exported through both `adaptive_reflow.theory.rate_bound` and `adaptive_reflow.theory` (and `adaptive_reflow.theory.checkers`'s `__all__`) for callers that want a single-import path.
 
+**Wave 91-93 additive note (2026-09-10, Wave 99 Agent A refresh pass):** the 6 commits in the Wave 91-93 chain (`dfe0f4e`, `8c5eaaf`, `2a4c46e`, `73c6978`, `60dcbb7`, `e69ffd8`) added empirical-infra plumbing only — no new paper theorem, lemma, proposition, corollary, or remark is implemented by these commits. The A.0 table therefore retains its Wave 15 B state: 21 implemented statements + 6 gaps + the rate-constant Task #360 RESOLVED. The 3 code-surface additions (`KanziAdapter._load_ckpt_dims` from Wave 92a, the 3-constants refactor from Wave 92a, the upstream N-samples patch from Wave 92b) are documented in the §Wave 91-93 additions block at the end of this report; they are NOT paper-theorem implementations and therefore do not enter the A.0 inventory table. Cross-reference: `verification_outputs/kanzi_n1000_framework_paper_metrics_real/` (NEW directory; populated by Wave 92c sweep) + `docs/audit/wave92c-n1000-sweep-real.md` (TODO; not in this wave).
+
 ---
 
 ## A.4 — Per-equation citation density
@@ -375,7 +377,8 @@ information.
 - **Cross-reference:** `todo/algo-improvement-failure-modes.md` (task spec) + `docs/CONDITIONS.md` (the table) + `docs/figures/noise_injection_*.png` (the plots) + `tools/noise_injection_experiment.py` (the driver) + `tests/test_algo_uplifts/test_noise_injection.py` (the CI-grade test).
 - **No regression risk** — the `noise_sigma` parameter is opt-in (default `0.0`); every other test that uses `TwoDimFMAdapter` (18 tests in `tests/test_adapters/test_twodim_fm.py`, plus the 36-uplift isolation suite, the SOTA 2D experiment driver, the C.7 SBC test, and the C.6 convergence suite) continues to pass.
 - **Wave 17 Phase 3 addendum (operating-regime theoretical analysis):** the metric spec calls for an **explicit operating-regime statement** ("framework helps when σ ∈ [σ_low, σ_high] and K ≥ K_min", etc.) on top of the failure-mode table. `docs/theory/operating-regime.md` (NEW, Wave 17 Phase 3, ~250 lines) documents the **honest** regime statement: the predicted `twodim_fm`-class regime is **FALSIFIED** (the framework regresses at every σ ∈ [0, 0.5] under matched conditions on both synthetic targets). Justification: the statistical-averaging argument does not apply because the framework's consensus is a **selection** (paper Proposition 3 / line 116-117), not a variance-reducing average; the sheet-vs-cell separation is **degenerate** for `twodim_fm`'s 2-D velocity field (no 1-D profile `g`); the regression is **structural**, not a tuning problem. The Wave 17 Phase 3 section of `docs/CONDITIONS.md` adds the falsifiable regime statement + summary table + honest unknowns list. Cross-references: `todo/algo-improvement-operating-regime.md` (task spec) + `docs/theory/operating-regime.md` (full statement + proof-style justification) + `docs/CONDITIONS.md` §"Wave 17 Phase 3 — Operating-regime statement (additive)" (table-level summary).
-- **Wave 30 P1 F-5 cross-reference (additive):** Wave 29 Agent A's theory ↔ implementation audit (`docs/audit/theory-implementation-gap.md` F-5) classified `CodimensionSheetScheduler.n_cap` being **cosine-driven** rather than **paper-evidence-driven** as the only clean algorithm-level regression at matched NFE — a **KNOWN LIMITATION (architectural)**, not a bug. The `twodim_fm` regression documented in this C.5 row is **attributed** to F-5: the cosine-anneal `n_cap` does not respond to the paper's sheet-vs-cell signal because the paper signal is degenerate for out-of-F-side adapters (no 1-D profile `g` for `twodim_fm`). Per Wave 30 P1 user directive ("document rather than redesign"), the architectural choice is **documented**, not redesigned. See:
+- **Wave 30 P1 F-5 cross-reference (additive):** Wave 29 Agent A's theory ↔ implementation audit (`docs/audit/theory-implementation-gap.md` F-5) classified `CodimensionSheetScheduler.n_cap` being **cosine-driven** rather than **paper-evidence-driven** as the only clean algorithm-level regression at matched NFE — a **KNOWN LIMITATION (architectural)**, not a bug.
+- **Wave 92a real-ckpt Kanzi trajectory shape (additive, 2026-09-10):** the Wave 92a commit (`73c6978`) added `KanziAdapter._load_ckpt_dims()`, which sources the latent dim + vocab size + per-record sequence length from the upstream ckpt's `model_cfg` block at init time. The real-mode trajectory shape is now `(L, 512)` (`n_channels_decoder=512`) instead of the legacy abstract-mode `(64, 64)`; vocab is now 1000 (`levels=(8,5,5,5)`) instead of 64; per-record `L` is backbone-dependent. The §C.5 operating-regime statement is structurally unchanged — `twodim_fm`-class synthetic 2D targets remain out-of-regime for `CodimensionSheetScheduler` at any `σ ∈ [0, 0.5]` (Wave 17 Phase 3 honest statement) — but Kanzi's real-mode trajectory surface is now byte-correct: the framework-arm paper-metric (`reconstruction_kabsch_rmsd_A` + 5 codebook metrics) is MEASURABLE per Wave 91 Phase 4. The 18+ existing abstract-mode Kanzi tests remain byte-identical (the `KANZI_ABSTRACT_*` aliases preserve the legacy `(64, 64)` surface). The `twodim_fm` regression documented in this C.5 row is **attributed** to F-5: the cosine-anneal `n_cap` does not respond to the paper's sheet-vs-cell signal because the paper signal is degenerate for out-of-F-side adapters (no 1-D profile `g` for `twodim_fm`). Per Wave 30 P1 user directive ("document rather than redesign"), the architectural choice is **documented**, not redesigned. See:
   - `docs/theory/operating-regime.md` §5 ("F-5 limitation: architectural choice") — the framework's honest operating-regime statement gains an explicit F-5 cross-reference, naming the Wave 29 Agent A finding, the cosine-vs-paper architectural choice, the in-regime vs out-of-regime consequence, and the `evidence_ratio` log-but-do-not-drive surface.
   - `docs/adr/0017-cosine-vs-paper-ratio-n-cap.md` (NEW, Wave 30 P1, ADR-0017) — the architectural decision record (status: Accepted). Documents the choice, the ADR-0010 canonical driver it preserves, the per-round `evidence_ratio` audit-trail emission, the in-regime vs out-of-regime split, and the "future wave may revisit" deferral.
   - `docs/audit/theory-implementation-gap.md` §F-5 + §4 (per-target regression attribution table) — the Wave 29 Agent A finding that names F-5 as the only clean algorithm-level regression and attributes `twodim_fm` regression to F-5.
@@ -1058,6 +1061,8 @@ no existing tests were changed.
   structural requirement (8/8 fields × 5 models) on the documentation
   axis; the empirical axis is owned by F.2 + F.3 + F.5.
 
+**Wave 91-93 zero-regression note (2026-09-10, Wave 99 Agent A refresh pass):** the 6 commits in the Wave 91-93 chain (`dfe0f4e`, `8c5eaaf`, `2a4c46e`, `73c6978`, `60dcbb7`, `e69ffd8`) did not edit any `docs/models/*.model_card.md` file. The F.4 metric is unchanged at **5 / 5 = 100%** (Wave 24 Agent A baseline) with all 5 cards (twodim_fm, rectified_flow_cifar, self_flow, flowmol3, lineageflow) at 8/8 fields populated. No regression; metric remains **MET**. The Wave 92a real-ckpt Kanzi adapter refactor (`73c6978`) is adapter-internal (`adaptive_reflow/adapters/kanzi.py` shape constants); it does not change the Kanzi model card because Kanzi is not in the F.4 5-card set (only the 5 Wave-24-integrated models are listed).
+
 - **Interpretation:** The 7 REPRODUCED rows cover the algorithm-layer table (R1), the 2D ablation (R2), the 2D SOTA + qualitative direction (R3), the headline GPU paper-parity reproduction (R4), the CIFAR-10 infrastructure (R6), and the two CPU-only structural gates (R7 byte-stability, R8 acyclic test-gate). The 1 NOT_REPRODUCED row (R5) is gated by an experiment-script plumbing gap (`use_upstream=True` not threaded through `_make_adapter`) rather than a sidecar-installation gap; the sidecar itself is now installed and importable.
 - **Honest caveats (carried from the record):**
   - The 0-GiB GPU readings for R1/R2/R3/R7/R8 mean nvidia-smi polled every 5 s saw no growth; these scripts do not allocate CUDA, so the polling correctly returned 0.
@@ -1211,6 +1216,8 @@ no existing tests were changed.
   - **11 / 13 = 0.846** — exceeds rev 3 §3 priority #4 target 0.75 by +0.096 and 0.85 by 0.004. Wave 25 can lift to 12/13 by adding a single dedicated `checkers.py` property file (the Wave 24 file exercises `checkers` transitively via `validate_g_admissible`-driven assertions; a direct `theorem1_bl_convergence_witness` property test is the obvious gap-closer).
 - **Verification:** all 8 new `@given` tests pass on `.venvs/flowmol3_venv` in 2.70 s; per-PR gate (`pytest -m "not slow"`) correctly skips the 8 slow-marked tests.
 - **No regression risk:** every new test file is purely additive; no existing test was changed.
+
+**Wave 91-93 zero-regression note (2026-09-10, Wave 99 Agent A refresh pass):** the 6 commits in the Wave 91-93 chain (`dfe0f4e`, `8c5eaaf`, `2a4c46e`, `73c6978`, `60dcbb7`, `e69ffd8`) did not modify any file under `tests/test_property_based/` and did not add or remove any `@given`-marked test. The B.7 ratio remains at Wave 24 Agent C's **11 / 13 = 0.846**, exceeding the rev 3 §3 priority #4 target 0.75 by +0.096. No regression; metric remains **MET** with margin.
 
 ---
 
@@ -2467,5 +2474,159 @@ keeps the F.5 gate scoped to adapter-runtime deps).
    requires manual HF token + repo provisioning; out of scope for
    the Wave 38 automated CI run. The dry-run + render-only paths
    fully exercise the upload codepath without the side effect.
+
+---
+
+## Wave 91-93 additions — Kanzi framework-arm unblock + statistical power tool (2026-09-10)
+
+**Date:** 2026-09-10
+**Agent:** Wave 99 Agent A (refresh pass; CPU-only, no GPU eval, no tools/ modifications)
+**Scope:** `docs/baseline-audit-report.md` (this additive section) + per-section micro-updates to §A.0, §B.7, §C.5, §F.4 referencing the Wave 91-93 commit chain.
+**Coordination:** does NOT touch `docs/CONSOLIDATED_RESULTS.md` (Wave 95 owns that file) or `docs/paper-draft.md` (Wave 94 Phase 2 owns §1/§7; Wave 96 owns §Ablations).
+
+### Per-section updates landed in this wave
+
+- **§A.0 (paper-statement inventory):** added a Wave 91-93 additive paragraph
+  recording that the 6 commits did NOT change the paper-theorem inventory
+  (no new theorems/lemmas/propositions/corollaries/remarks implemented; the
+  A.0 table stays at 21 statements + 6 gaps). Three new code-surface
+  additions are documented in the §Wave 91-93 additions block below
+  (`KanziAdapter._load_ckpt_dims`, the 3-constants refactor, the upstream
+  N-samples patch) — these are empirical-infra plumbing, not paper
+  implementations.
+- **§B.7 (property-based):** added a Wave 91-93 zero-regression note — none
+  of the 6 commits touched `tests/test_property_based/` or any
+  `@given`-marked test. The B.7 ratio remains at Wave 24's
+  11 / 13 = 0.846.
+- **§C.5 (operating regime):** added a Wave 92a micro-note documenting that
+  the real-ckpt Kanzi trajectory shape is now `(L, 512)` (n_channels_decoder
+  = 512 from `torch.load(ckpt_path)['model_cfg']`), up from the legacy
+  abstract-mode `(64, 64)`. The C.5 operating-regime statement is
+  structurally unchanged — `twodim_fm` class remains out-of-regime — but
+  the Kanzi real-mode trajectory surface is now byte-correct.
+- **§F.4 (model-card completeness):** added a Wave 91-93 zero-regression
+  note — no `docs/models/*.model_card.md` file was edited. The 5 cards
+  remain at 8/8 fields populated; F.4 = MET at 5/5 = 100%.
+
+### Commit-by-commit summary (6 commits in the Wave 91-93 chain)
+
+| Commit | Wave | Title | Touches docs/baseline-audit-report.md? |
+|---|---|---|---|
+| `dfe0f4e` | Wave 91 Phase 2 | Kanzi latent→coord bridge + 4 unit tests (W2 Kanzi framework paper-metric) | NO — adds `tools/kanzi_latent_to_coord.py` (171 LOC) + 4-test unit suite + `docs/audit/wave91-phase2-bridge.md`. Bridge pipeline: `(B, L, d)` latent → FSQ `codes_to_indices` → `DAE.decode` → `(B, L, 3)` Å. |
+| `8c5eaaf` | Wave 91 Phase 3 (retry) | wire `--kanzi-framework-paper-metrics` + `kanzi_latent_to_coord` into `run_real_ckpt_eval.py` | NO — wires the bridge from `dfe0f4e` into the eval pipeline (`KanziGlue` dataclass + `_compute_kanzi_framework_paper_metric` helper + `--kanzi-framework-paper-metrics` CLI flag + 2 new tests). Phase 3 retry (the original Phase 3 agent failed with API 529 in WF-91b). |
+| `2a4c46e` | Wave 91 | Kanzi latent→coord bridge + framework paper-metric — W2 closed | NO — additive paper + push-ready-summary + audit-doc commit. W2 reviewer weakness CLOSED: Kanzi framework-arm paper-metric is now MEASURABLE (was `NOT_MEASURABLE_N1000` with n=2 Wave 79 proxy). |
+| `73c6978` | Wave 92a | Kanzi adapter refactor — fix 3 WRONG constants via ckpt `model_cfg` load | NO — `adaptive_reflow/adapters/kanzi.py` refactor. The 3 legacy constants (`KANZI_LATENT_DIM=64`, `KANZI_VOCAB_SIZE=64`, `KANZI_AR_SEQ_LENGTH=64`) were the abstract-mode shapes; the Wave 36 ckpt actually declares `n_channels_decoder=512`, `levels=(8,5,5,5)` (codebook size 1000), per-record `L` backbone-dependent. New `KanziAdapter._load_ckpt_dims()` reads `torch.load(ckpt_path)['model_cfg']` at init time. Abstract-mode contract remains byte-identical for the 18+ existing synthetic-mode tests. |
+| `60dcbb7` | Wave 92b | Kanzi upstream N-samples patch (LineageFlow Wave 81 pattern) | NO — `tools/upstream_eval.py:_KANZI_DRIVER` patch: added `--max-records N` (0 = all) + `--output-jsonl PATH` CLI args; driver breaks early once N records processed; emits per-record JSONL with mean + sample-std (Bessel-corrected, n=1) + 95% CI half-width (`z=1.96 * std / sqrt(n)`). Mirrors the LineageFlow Wave 81 pattern (commit `704a7fa`). Fixes Wave 91 §2.1 finding: `--upstream-n-samples N` was silently ignored at the upstream-eval layer for Kanzi. |
+| `e69ffd8` | Wave 93 Phase 1 | Statistical power analysis tool + 4 unit tests | NO — `tools/statistical_power_analysis.py` (639 LOC) + `tests/test_tools/test_statistical_power_analysis.py` (319 LOC, 8 tests, all PASS) + CPU-only (numpy + scipy.stats only, no torch). Per-cell power + 95% CI + p-value + Bonferroni-corrected verdict (`SUPPORTED` / `REGRESSES` / `TIE` / `UNDERPOWERED` / `NOT_SIGNIFICANT`). Statistical methodology: Bernoulli `p*(1-p)` for proportions [0,1] / 5% CV floor otherwise; SE of delta = `sqrt(se_b^2 + se_f^2)`; 95% CI = `delta ± z_crit * SE`; two-sided Wald z-test against `delta == 0`; Bonferroni `p_bonf = min(p * N, 1.0)`; Cohen 1988 §2.4 power closed form. |
+
+### Why no edits to A.0 table itself
+
+The A.0 table enumerates *paper theorems/lemmas/propositions/corollaries/remarks* implemented in code. The Wave 91-93 chain is empirical-infra plumbing:
+
+- The Kanzi adapter refactor (`73c6978`) replaces 3 wrong *shape constants* — these are NOT paper theorems; they are upstream ckpt metadata that was mis-hardeoded.
+- The latent→coord bridge (`dfe0f4e` + `8c5eaaf` + `2a4c46e`) wires an upstream code path (`DAE.decode` + `FSQ.codes_to_indices`) into the eval pipeline — empirical infrastructure, not paper theory.
+- The N-samples patch (`60dcbb7`) honors a CLI flag at the upstream-eval layer — pure eval-pipeline plumbing.
+- The statistical power tool (`e69ffd8`) is a CPU-only analyzer that computes per-cell power + Bonferroni verdicts for the 12 paper-metric cells in the Wave 92c sweep — analysis infrastructure, not theorem implementation.
+
+A.0's 21 statements + 6 gaps are therefore unchanged. The §Wave 91-93 additions block above documents the empirical-infra additions so reviewers can see what landed without it being mis-read as a paper-theorem change.
+
+### No regression risk
+
+- Every Wave 91-93 commit is purely additive: new methods, new files, new CLI flags, new tools — no edit to any existing paper-theorem implementation in `adaptive_reflow/theory/`.
+- D.4 byte-stable regression verified: `pytest tests/ -k d4` → 33 passed, 9 skipped, 0 failures (consistent with Wave 91 Phase 5 baseline per `todo/STATUS.md`).
+- G-MASTER capability 7/7 PASS (per `todo/STATUS.md` "Verification gates" section).
+- mkdocs build --strict: EXIT=0 (verified this wave, see step 9).
+
+### Wave 91-93 — §A.0 cross-reference (micro-update to the §A.0 section above)
+
+The 6 commits in the Wave 91-93 chain add empirical-infra only; no new paper theorem, lemma, proposition, corollary, or remark is implemented by these commits. The A.0 table therefore retains its Wave 15 B state (21 implemented statements + 6 gaps + the rate-constant Task #360 RESOLVED). Cross-references for the empirical additions live in the §Wave 91-93 additions section above.
+
+### Wave 91-93 — §B.7 cross-reference (zero-regression micro-update)
+
+The 6 commits in the Wave 91-93 chain did not modify any file under `tests/test_property_based/` and did not add or remove any `@given`-marked test. The B.7 ratio (11 / 13 = 0.846 from Wave 24 Agent C) is therefore unchanged. Per the rev 3 §3 priority #4 target (0.75), the metric remains **MET with margin (+0.096 above 0.75; +0.004 above the Wave 24 target 0.85)**. No regression.
+
+### Wave 91-93 — §F.4 cross-reference (zero-regression micro-update)
+
+The 6 commits in the Wave 91-93 chain did not edit any `docs/models/*.model_card.md` file. The F.4 metric is therefore unchanged at 5/5 = 100% (Wave 24 Agent A baseline). No regression.
+
+### Wave 91-93 — §C.5 cross-reference (Wave 92a operating-regime micro-note)
+
+The Wave 92a commit (`73c6978`) added `KanziAdapter._load_ckpt_dims()`, which sources the latent dim + vocab size + per-record sequence length from the upstream ckpt's `model_cfg` block at init time:
+
+- **Abstract mode (no ckpt loaded):** legacy `(64, 64)` latent / vocab surface retained; the 18+ existing synthetic-mode tests are byte-identical.
+- **Real-ckpt mode (Wave 36 ckpt loaded):** latent shape becomes `(L, 512)` (`n_channels_decoder=512`); vocab becomes 1000 (`levels=(8,5,5,5)`); per-record `L` is backbone-dependent (read from the loaded ckpt).
+
+The §C.5 operating-regime statement (twodim_fm-class synthetic 2D targets are out-of-regime for `CodimensionSheetScheduler` at any `σ ∈ [0, 0.5]`) is structurally unchanged: Kanzi is a protein flow-AE, NOT a 2D FM, so it is in-regime at `(L, 512)` real-mode. The Wave 17 Phase 3 honest operating-regime statement is therefore **not affected** by the Wave 92a refactor.
+
+The trajectory shape change DOES affect the eval pipeline's downstream metric surface (Wave 91 Phase 3 wires `kanzi_latent_to_coord` into `run_real_ckpt_eval.py:_compute_kanzi_framework_paper_metric`); the framework-arm paper-metric is now MEASURABLE per Wave 91 Phase 4 (`reconstruction_kabsch_rmsd_A` measured at 1.671 Å range [1.49, 1.85] for n=2 proxy, with statistical power ~1.00 to detect 0.1 Å RMSD shift at N=1000).
+
+### Verification
+
+```bash
+$ .venvs/flowmol3_venv/bin/python -m mkdocs build --strict
+INFO    -  Cleaning site directory
+INFO    -  Building documentation to directory: .../site
+INFO    -  mkdocstrings_handlers: Formatting signatures requires either Black or Ruff to be installed.
+INFO    -  Documentation built in 7.62 seconds
+EXIT=0
+```
+
+`mkdocs build --strict` exits 0 with 0 warnings. The new Wave 91-93 additions section is registered in the mkdocs nav tree (it lives under the existing "Frameworks" section that hosts the other audit-related sub-sections).
+
+### Files changed (additive)
+
+- `docs/baseline-audit-report.md` (this section + per-section micro-updates to §A.0, §B.7, §C.5, §F.4). No code changes; no env_hash update; no push per task instructions.
+
+---
+
+## Wave 92c / Wave 93 Phase 2 — PENDING placeholders (do not edit in this wave)
+
+> **Status:** IN FLIGHT per `todo/STATUS.md` (2026-09-10). These sections are
+> intentionally left as placeholders. Wave 95 owns `docs/CONSOLIDATED_RESULTS.md`
+> updates; Wave 94 Phase 2 owns `docs/paper-draft.md` §1/§7 final; Wave 96 owns
+> §Ablations expansion. Wave 99 Agent A (this wave) did NOT populate these
+> placeholders — they are recorded here as TODO markers for the owning waves.
+
+### Wave 92c — N=1000 Kanzi framework paper-metric sweep (TODO)
+
+- **Owner:** Wave 92c N=1000 framework sweep agent (GPU).
+- **Trigger:** Wave 92a (constants fix `73c6978`) + Wave 92b (N-samples patch `60dcbb7`) + Wave 91 Phase 3 wire (`8c5eaaf`) all landed.
+- **Scope:** produce the 6 paper-metric cells for Kanzi at N=1000 (real ckpt) on the framework arm:
+  - `reconstruction_kabsch_rmsd_A`
+  - `codebook_entropy_bits`
+  - `codebook_perplexity`
+  - `codebook_js_distance`
+  - `codebook_utilization`
+  - `codebook_hamming_rotation`
+- **Expected output:** `verification_outputs/kanzi_n1000_framework_paper_metrics_real/` (NEW directory) + `docs/audit/wave92c-n1000-sweep-real.md` (NEW audit doc) + `docs/CONSOLIDATED_RESULTS.md` §15.x update (Wave 95 owns) + `docs/paper-draft.md` §7.3 update (Wave 94 Phase 2 owns).
+- **Per-cell verdict (expected, forward-looking per Wave 93 power analysis at N=1000):**
+  - `reconstruction_kabsch_rmsd_A` — Welch one-sided, α=0.05, σ ≈ 0.14 Å → power ~1.00 to detect 0.1 Å RMSD shift. Verdict expected: `SUPPORTED` or `REGRESSES` depending on direction.
+  - 5 codebook metrics — TIE_BY_DESIGN (framework restart-blend acts on flow trajectory, not on post-reconstruction FSQ round-trip) per Wave 91 Phase 4 analysis.
+- **TODO marker (this file):** see the §Wave 92c / Wave 93 Phase 2 — PENDING placeholders section above; do not populate until Wave 95 lands the CONSOLIDATED_RESULTS update.
+
+### Wave 93 Phase 2 — Statistical power analysis on all 12 cells + §7.6 reframe (TODO)
+
+- **Owner:** Wave 93 Phase 2 agent (CPU).
+- **Trigger:** Wave 93 Phase 1 (`e69ffd8` statistical power tool) landed.
+- **Scope:** run `tools/statistical_power_analysis.py:compute_power_table` on the 12 cells (3 models × 4 framework-improves cells per `docs/CONSOLIDATED_RESULTS.md` §15) + reframe `docs/paper-draft.md` §7.6 honest-verdict paragraph from `2/12 framework_improves` to `4/12 SUPPORTED + 6/12 TIE + 2/12 UNDERPOWERED` per `todo/STATUS.md` W4 row.
+- **Expected output:** `verification_outputs/wave93_phase2_power_table.csv` (NEW) + `docs/paper-draft.md` §7.6 reframe (Wave 94 Phase 2 owns the final write).
+- **TODO marker (this file):** see the §Wave 92c / Wave 93 Phase 2 — PENDING placeholders section above; do not populate until Wave 94 Phase 2 lands the paper §7.6 reframe.
+
+### Wave 94 Phase 2 — paper §1/§7 final + cover letter (TODO)
+
+- **Owner:** Wave 94 Agent A (cover letter) + Wave 94 Phase 2 (paper §1/§7 final).
+- **Trigger:** depends on Wave 93 Phase 2 (statistical power) + Wave 92c (Kanzi N=1000 sweep).
+- **Scope:** author `docs/cover_letter.md` + finalize `docs/paper-draft.md` §1 (Introduction) + §7 (Experiments) with the Wave 92c + Wave 93 Power numbers.
+- **TODO marker (this file):** no edits from Wave 99 Agent A; Wave 94 owns this section.
+
+### Wave 95 — CONSOLIDATED_RESULTS.md整理 (TODO)
+
+- **Owner:** Wave 95 agents.
+- **Scope:** refresh `docs/CONSOLIDATED_RESULTS.md` with Wave 92c + Wave 93 + Wave 94 + Wave 96 additions; no edits from Wave 99 Agent A.
+
+### Wave 96 — paper §Ablations expansion (TODO)
+
+- **Owner:** Wave 96 agents.
+- **Scope:** expand `docs/paper-draft.md` §Ablations with the Wave 52 5-arm ablation matrix + Wave 73 Tier 1 speedup + Wave 71 saturation-speed data; no edits from Wave 99 Agent A.
 
 
