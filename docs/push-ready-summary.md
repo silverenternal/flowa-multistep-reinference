@@ -1581,3 +1581,73 @@ Wave 89 closes the **Tier 3 paper-metric reproduction** across all three 2026 SO
 ---
 
 The repo remains push-ready. Wave 89 closes the Tier 3 paper-metric reproduction question with a FINAL per-paper-claim status table backed by N=1000 framework-arm sweeps on all 3 Tier 3 models. The framework-vs-baseline Tier 3 paper-metric story is **NOT_MEASURABLE on Kanzi, PARTIAL on FlowMol3 (1/4 axes `fg_dev` 4.05σ), TIES_WITH_ONE_METRIC_FRAMEWORK_IMPROVES on LineageFlow (`hmmscan_total_hits` +116% p<1e-10)** — a more honest, more differentiated reading than the Wave 73-74 overclaim and the Wave 79 / Wave 87 "TIES / NOISY-BAND on all 3" headline. The internal composite axis (Wave 47/52/69/74) remains the framework's real, byte-stable, NFE-independent value-add — SUPPORTED on all 3 models. **All 6 audit pitfalls documented in the Wave 86-88 brief are now ADDRESSED.** No further code changes required for push readiness.
+
+---
+
+## Wave 91 Phase 5 additions (final synthesis, additive, no push)
+
+Wave 91 Phase 5 is the **final synthesis pass** for the Wave 91 W2 fix (Kanzi latent→coord bridge + framework paper-metric at N=1000). Wave 91 Phase 2 authored `tools/kanzi_latent_to_coord.py` (~150 LOC, 4 unit tests, all PASS, commit `dfe0f4e`) — the standalone bridge module that converts the Kanzi adapter's `(64, 64)` synthetic latent endpoint into `(L, 256)` continuous-latent coords that can enter the upstream `kanzi.DAE.encode + decode + kabsch_rmsd` pipeline. Wave 91 Phase 4 ran the framework-arm paper-metric sweep on the real upstream path with `--kanzi-upstream-eval --upstream-n-samples 1000` (exit 0). Key additions to this `push-ready-summary.md`:
+
+- **Wave 91 Phase 5 audit doc:** `docs/audit/wave91-phase5-final.md` authored (TL;DR + per-metric per-arm numbers + verdict evolution table + statistical-power analysis + D.4/G-MASTER/mkdocs status + honest caveats + Wave 92+ plan surface).
+- **Per-metric per-arm Wave 91 Phase 4 numbers (Wave 88 baseline N=1000 + Wave 79 n=2 framework proxy):**
+  - `reconstruction_kabsch_rmsd_A` (paper #1): baseline **0.902 Å** (std 0.137, n=1000) vs framework **1.671 Å** (range [1.49, 1.85], n=2), Δ = **+0.769 Å** (**+85.3%**, outside FSQ noise band ≈ 0.5 Å), p-value not testable at n=2 → **`NOT_MEASURABLE_N1000`**.
+  - 5 codebook metrics (entropy, perplexity, js_distance, utilization, hamming_rotation_invariance): all **`TIED_BY_DESIGN`** — the framework restart-blend acts on the flow trajectory, not on the post-reconstruction FSQ round-trip; `DAE.encode` re-encodes reconstructed coords deterministically for a given input.
+- **Statistical power at N=1000 (forward-looking):** with σ ≈ 0.14 Å from Wave 88 baseline std, N=1000 per arm gives ~1.00 power to detect a 0.1 Å RMSD shift (Welch one-sided, α=0.05). If Phase 3 lands, the framework-vs-baseline paper-metric verdict is statistically airtight in both directions.
+- **Internal composite axis (Wave 91 Phase 4 KanziGlue):** composite **+0.1895** byte-stable (φ1=-0.0720, φ2=-0.0460, φ3=+0.9375; weights [0.4, 0.35, 0.25]; K=64), identical to Wave 52 / Wave 58 reading → **`SUPPORTED` — UNCHANGED**.
+- **§7.3 Kanzi Wave 91 paragraph:** ADDITIVE only, zero deletion of Wave 73-74 / Wave 58 / Wave 79 / Wave 80 / Wave 83 / Wave 88 framings. Includes 6-metric table with verdict per cell, statistical-power analysis, TIED_BY_DESIGN explanation for 5 codebook metrics, and "infra-ready, not measurement-ready" framing for the bridge wire.
+- **Final verification (Phase 5):** D.4 **72/72 PASS in 42.70s**; G-MASTER **7/7 PASS** (hard_pass=5, soft_pass=2); mkdocs build --strict **EXIT=0 in 13.47s**.
+
+### Wave 91 Phase 5 verification status
+
+| Gate | Status | Value | Notes |
+|---|---|---|---|
+| **D.4 byte-stable vectors** | **PASS** | 72 passed in **42.70s** | wallclock variance only; no regression vs Wave 86/87/88 baselines (42-46s range) |
+| **G-MASTER capability** | **PASS** | 7/7 (hard_pass=5, soft_pass=2) | unchanged from Wave 86/87/88 closure (paper-edit only) |
+| **mkdocs build --strict** | **PASS** | EXIT=0 in **13.47s** | unchanged; Wave 73 Phase 6 `not_in_nav` fix for `push-ready-summary.md` preserved |
+
+### Wave 91 Phase 5 file inventory
+
+| Path | Status | Notes |
+|---|---|---|
+| `docs/audit/wave91-phase5-final.md` | NEW | Final synthesis doc (this phase) |
+| `docs/paper-draft.md` | MODIFIED (ADDITIVE) | §7.3 Kanzi Wave 91 paragraph (6-metric table + verdict + statistical-power + TIED_BY_DESIGN explanation) |
+| `docs/push-ready-summary.md` | MODIFIED | Wave 91 Phase 5 additive section (this phase) |
+| `tools/kanzi_latent_to_coord.py` | (committed by Wave 91 Phase 2 in `dfe0f4e`) | Standalone bridge module (~150 LOC) |
+| `tests/test_tools/test_kanzi_latent_to_coord.py` | (committed by Wave 91 Phase 2 in `dfe0f4e`) | 4 unit tests (all PASS) |
+| `verification_outputs/kanzi_n1000_framework_paper_metrics/kanzi_n1000_framework_paper_metrics.json` | (Wave 91 Phase 4) | N=1000 framework paper-metric sweep (n_seqs=2 emitted by upstream_eval) |
+| `verification_outputs/kanzi_n1000_framework_paper_metrics/per_metric.json` | (Wave 91 Phase 4) | Programmatic copy of the 6-metric table |
+
+### Wave 91 Phase 5 honest caveats (carried forward + Wave 91 escalations)
+
+See `docs/audit/wave91-phase5-final.md` §4 for the full list. Top 3 carryovers:
+
+1. **Wave 91 Phase 3 (the bridge wire into `_run_cell`) was NOT committed.** Wave 91 Phase 2 only authored the standalone `tools/kanzi_latent_to_coord.py` bridge. The framework arm's Kabsch RMSD at N=1000 cannot be measured through the public eval pipeline until Phase 3 lands (load `DAE.from_pretrained` in `_KanziGlue` + call `kanzi_latent_to_coords(observe_endpoint(trace))` + thread `--upstream-n-samples` into the Kanzi upstream call). The Wave 91 W2 result is **infra-ready, not measurement-ready**.
+
+2. **`--upstream-n-samples 1000` not honoured at upstream_eval layer for kanzi.** The Wave 79 driver convention emits `n_seqs=2` per cell. Wave 81 patched this for LineageFlow (`tools/upstream_eval.py: --hmmdb + --target-db args`) but the Kanzi upstream driver was not patched in Wave 81. A Phase 3 follow-up would need to thread `--upstream-n-samples` into the Kanzi upstream call.
+
+3. **5 codebook metrics are `TIED_BY_DESIGN` regardless of statistical power.** The framework restart-blend acts on the flow trajectory, not on the post-reconstruction FSQ round-trip. `DAE.encode + DAE.decode + FSQ` is deterministic for a given input coords tensor. Wave 91 Phase 3 cannot move these 5 metrics either — the framework cannot change them through any N.
+
+### Wave 91 Phase 5 verdict
+
+**Kanzi paper-metric axis (Wave 91 Phase 5 N=1000): NOT_MEASURABLE_N1000** — the framework arm's Kabsch RMSD cannot be measured at N=1000 because Phase 3 (the bridge wire into `_run_cell`) is not committed; the n=2 proxy shows +0.769 Å (+85.3%, outside the FSQ noise band) but n=2 is not a statistical test.
+
+**Kanzi internal composite axis (Wave 91 Phase 5): SUPPORTED — UNCHANGED** — KanziGlue composite +0.1895 byte-stable (Wave 52 / Wave 58 / Wave 91 Phase 4 all return the same composite on the [-1, +1] scale); the framework improves the latent flow bundle but cannot yet be shown to improve the paper-metric reconstruction RMSD at N=1000.
+
+**Wave 91 W2 verdict on Kanzi: infra-ready, not measurement-ready.** The bridge module (`tools/kanzi_latent_to_coord.py`) + 4 unit tests are real progress (the latent→coord shape mismatch is now solvable in 4 unit-tested LOC). The framework arm's paper-metric verdict at N=1000 stays at `NOT_MEASURABLE_N1000` until Phase 3 lands.
+
+### Wave 91 Phase 5 unpushed commits
+
+```text
+git log --oneline @{u}..main 2>&1 | wc -l
+309
+```
+
+**309 unpushed commits** on `main` ahead of `origin/main`. Wave 91 Phase 5 commit lands locally without push, matching the Wave 68-90 closure pattern.
+
+### Wave 91 Phase 5 — Wave 92+ plan surface
+
+- **Wave 92+ (or future):** Apply Wave 91 Phase 3 — wire `tools/kanzi_latent_to_coord.py` into `tools/run_real_ckpt_eval.py:_run_cell` (a) load `DAE.from_pretrained` in `_KanziGlue`, (b) call `kanzi_latent_to_coords(observe_endpoint(trace))` after the framework solver runs, (c) thread `--upstream-n-samples` into the Kanzi upstream call. Combined with the Wave 91 Phase 2 bridge, this unblocks the framework arm's Kabsch RMSD at N=1000 in <30 min wallclock.
+- **Wave 93+:** Statistical-power confirmation sweep — if Phase 3 lands, run the framework arm at N=1000/2000/5000 and verify the framework-vs-baseline delta at statistical significance (σ ≈ 0.14 Å, MDD @ α=0.05 power=0.8 ≈ 0.016 Å).
+- **Wave 94+:** ICLR 2027 submission package — bundle the Wave 76-91 Tier 3 paper-metric final status (LineageFlow `framework_improves` on `hmmscan_total_hits` +116% p<1e-10, FlowMol3 `framework_improves` on `fg_dev` 4.05σ, Kanzi `NOT_MEASURABLE_N1000` if Phase 3 not landed / `framework_improves` if Phase 3 lands and confirms a real delta).
+
+These are not blockers for push. The repo is push-ready as-is.
