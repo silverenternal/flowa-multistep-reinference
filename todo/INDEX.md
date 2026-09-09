@@ -1,53 +1,62 @@
 # `todo/INDEX.md` — Master entry point
 
-**Date:** 2026-09-08
+**Date:** 2026-09-10 (refreshed for Wave 93)
 **Purpose:** curated entry point to the `todo/` working folder. New
 readers should start with the [Reading order](#reading-order-for-new-readers)
 section. Each section below groups files by purpose, links the most
 important ones, and links to related artifacts outside `todo/`.
 
-> **Folder layout (2026-09-08 archive sweep):** historical / completed
-> plan + wave-result files moved to `todo/completed/` (36); currently
-> active plans to `todo/inprogress/` (8); queued-but-not-started plans
-> to `todo/pending/` (3). This file plus `todo/STATUS.md` are the
-> cross-cutting entry points that stay at the `todo/` root.
+> **Folder layout (2026-09-10 sweep):** historical / completed plan +
+> wave-result files in `todo/completed/` (47); `todo/inprogress/`
+> holds 3 stale Wave 75-78 docs (cascade already landed — should
+> archive); `todo/pending/` is empty (Wave 77/78 already done in
+> Wave 83/89); `todo/planned/` holds 6 plans + 1 design doc for
+> Wave 91-94 (most have already landed). This file plus
+> `todo/STATUS.md` are the cross-cutting entry points that stay at
+> the `todo/` root.
 
 ---
 
 ## Current state summary
 
-> **As of 2026-09-07: 5/5 G-MASTER PASS, 41/41 CLM claims, 18/18 regression
-> vectors, 107 algorithm uplifts. Tier 3: Kanzi + LineageFlow
-> `composite_verdict=framework_improves`, FlowMol3 metric-axis implementation
-> closed (measurement in flight). 225+ unpushed commits, `push_risk` LOW.**
+> **As of 2026-09-10 (Wave 93 Phase 1 landed): 4 一区 reviewer weaknesses
+> closed (W1 ✅ Wave 90 / W2 ✅ Wave 91+92a+b / W3 defer / W4 🔄 reframing).
+> Wave 92a (Kanzi adapter constants fix `73c6978`) + Wave 92b (upstream
+> N-samples patch `60dcbb7`) + Wave 93 Phase 1 (`tools/statistical_power_analysis.py`
+> + 4 unit tests `e69ffd8`) all landed. Wave 92c (N=1000 Kanzi
+> framework paper-metric sweep) in flight. 326 unpushed commits,
+> `push_risk = LOW` (user-gated).**
 
-| Bucket | Status (2026-09-07) |
+| Bucket | Status (2026-09-10) |
 |---|---|
-| **G-MASTER gate** | 5/5 HARD PASS (G.1 / G.3 / G.4 / G.6 / G.7) + G.2 SOFT-PASS + G.5 SOFT-FAIL |
-| **CLM claims** | 41/41 = 100 % test-coupled (target ≥ 70 % cleared with margin) |
-| **D.4 regression vectors** | 18/18 = 100 % pinned across all 18 integrated adapters |
-| **D.5 conformance battery** | 90/90 passed (8 checks × 14 adapters) |
-| **Algorithm uplifts** | 107 hit target (Round 1 + Round 2) |
-| **B.7 property-based** | ≥ 40 % ratio achieved across `tests/test_property_based/` |
-| **C.7 SBC** | 6/6 stochastic algorithms pass χ² at N=200 + N=1000 |
-| **Tier 3 real-ckpt** | Kanzi + LineageFlow `composite_verdict = framework_improves`; FlowMol3 composite landed (Wave 53) + measurement in flight |
-| **Push state** | 225+ unpushed commits; `push_risk = LOW` (per `wave46-master-synthesis.md` §6) |
-| **MUST-1..5** | MUST-1/2/4 = PASS; MUST-3 = PARTIAL (≥5 adapters on core pending); MUST-5 = user-gated push |
+| **G-MASTER gate** | 5/5 HARD PASS (unchanged since Wave 56) |
+| **CLM claims** | 41/41 = 100% test-coupled |
+| **D.4 regression vectors** | 18/18 = 100% pinned |
+| **D.5 conformance battery** | 90/90 passed |
+| **Algorithm uplifts** | 107 hit target |
+| **B.7 / C.7** | ≥40% property-based + 6/6 SBC pass |
+| **Tier 3 composite** | Kanzi + LineageFlow + FlowMol3 all `framework_improves` (Wave 52 byte-stable) |
+| **Tier 3 paper-metric N=1000** | FlowMol3 1/4 + LineageFlow 1/4 framework_improves; **Kanzi in flight** (Wave 92c) |
+| **W1 (PB-xtb)** | ✅ CLOSED (Wave 90) |
+| **W2 (Kanzi framework)** | ✅ CLOSED infra + measurement (Wave 91 + 92a/b; 92c in flight) |
+| **W3 (N=1000 small)** | ⚠️ DEFER (Wave 92d N=5000, OPT-IN) |
+| **W4 (2/12 mixed)** | 🔄 REFRAMING (Wave 93 statistical power + Bonferroni) |
+| **Push state** | 326 unpushed commits; `push_risk = LOW` |
+| **MUST-1..5** | MUST-1/2/4 = PASS; MUST-3 = PASS (5 adapters on core); MUST-5 = user-gated push |
 
-**Tier 3 model roster (active):** Kanzi (ICLR 2026, protein) · LineageFlow (ICML 2026, protein) · FlowMol3 (molecule, in flight).
-**Tier 3 model roster (deferred per 2026-09-05 directive):** FreqFlow · MM-FM (no upstream ckpt / no shipped adapter).
+**Tier 3 model roster (active):** Kanzi (ICLR 2026, protein) · LineageFlow (ICML 2026, protein) · FlowMol3 (molecule).
+**Tier 3 model roster (deferred):** FreqFlow · MM-FM (no upstream ckpt / no shipped adapter — indefinitely deferred per Wave 36).
 
-**Open gaps (post-push follow-ups):**
-1. FlowMol3 real-ckpt eval (`composite_verdict` measurement runs in flight; final numbers depend on Wave 53 audit)
-2. FreqFlow / MM-FM (no upstream ckpt — indefinitely deferred)
-3. MUST-3 formal flip to PASS in `framework-freeze-checklist.md` (5+ adapters on core; final verify pending)
-4. Tier 3 paper §Tier 3 + figure regeneration after Wave 53 closes
-5. CI dashboard — composite-aware check on `tools/capability_audit.py`
+**Open follow-ups:**
+1. **Wave 92c** (in flight): N=1000 Kanzi framework paper-metric — finally real W2 numbers
+2. **Wave 93 Phase 2** (in flight): per-cell CI + Bonferroni + reframe §7.6 — W4 close
+3. **Wave 94**: ICLR 2027 submission package (cover letter + paper §1/§7 + supplementary + checklist)
+4. **Wave 92d (OPT-IN)**: N=5000 sweep on all 3 Tier 3 models — W3 close
+5. FreqFlow / MM-FM: indefinitely deferred
+6. CI dashboard: composite-aware check in `tools/capability_audit.py`
 
-See `wave46-master-synthesis.md` §7 for the full risk register and
-`wave46-master-synthesis.md` §8 for the full follow-up list.
-
----
+See `planned/tier3-final-close-master-plan.md` §7 for the W91-94 risk
+register and §8 for the follow-up list.
 
 ## Sections
 

@@ -1,10 +1,8 @@
 # Wave 92 (W3) — N=5000 paper-metric sweep on all 3 Tier 3 models (OPT-IN)
 
-**Date:** 2026-09-09
-**Status:** PLANNED (1 agent, ~4-8h wall-clock, single commit, **OPT-IN**)
+**Date:** 2026-09-09 (updated 2026-09-10)
+**Status:** ⏸ **OPT-IN PENDING** (waits for Wave 92c/93 results + user decision)
 **Closes:** reviewer weakness W3 (N=1000 too small)
-**Depends on:** Wave 91 (Kanzi bridge) committed
-**Blocks:** Wave 93 (statistical power), Wave 94 (ICLR package)
 
 > **OPT-IN clause:** This wave is **optional** — user decides whether to run. Honest N=1000 is defensible (per Wave 75-78 master plan §5b). N=5000 closes the reviewer "statistical power insufficient" objection but adds 4-8h GPU time. Recommend running if Wave 91 framework-vs-baseline deltas are small (<1pp) where N=1000 CI is too wide.
 

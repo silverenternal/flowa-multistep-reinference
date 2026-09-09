@@ -1,10 +1,14 @@
 # Wave 91 (W2) — Kanzi latent→coord bridge + framework paper-metric measurement
 
-**Date:** 2026-09-09
-**Status:** PLANNED (1 agent, ~3-5h wall-clock, single commit)
-**Closes:** reviewer weakness W2 (Kanzi framework arm NOT_MEASURABLE)
+**Date:** 2026-09-09 (updated 2026-09-10)
+**Status:** ✅ **DONE** (all 5 phases landed via Wave 91a/b)
+**Commits:**
+- `dfe0f4e` (Phase 2): `tools/kanzi_latent_to_coord.py` bridge + 4 unit tests
+- `8c5eaaf` (Phase 3 retry): `--kanzi-framework-paper-metrics` flag wire into `run_real_ckpt_eval.py`
+- `2a4c46e` (Phase 5): paper §7.3 + push-ready-summary update
+
+**Closes:** W2 (Kanzi framework arm infra-ready; W2 measurement closed by Wave 92c in flight)
 **Depends on:** Wave 90 commit `fe95293` (PB-xtb) — DONE
-**Blocks:** Wave 92 (N=5000 sweep, optional), Wave 93 (statistical power)
 
 > **Why this matters:** Kanzi framework arm was previously NOT_MEASURABLE because there's no way to go from framework's restart-blended latent distribution back to Kanzi's 3D-coordinate space (Kanzi encodes latents → FSQ codebook → decoder to coords). Wave 91 builds the missing bridge so framework paper-metric becomes measurable.
 

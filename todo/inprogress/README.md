@@ -1,39 +1,30 @@
 # `todo/inprogress/` — Active plans only
 
-**Date:** 2026-09-08
+**Date:** 2026-09-10 (after Wave 75-78 archive sweep)
 
-This folder holds plans for waves currently in flight. Anything archived
-(closed-but-still-cited, strategy exploration superseded by later decisions,
-or historical problem-review docs) lives in `../completed/`.
+> **As of 2026-09-10, this folder is empty.** All previously "in-flight"
+> Wave 75-78 cascade plans have been archived to `completed/` because:
+> - Wave 75 (FlowMol3 paper-metric reproduction) — landed commit `9998580`/`6cd6491`/`39c8cbb`
+> - Wave 76 (LineageFlow paper-metric reproduction) — landed commit `704a7fa` + Wave 81/82/83 follow-ups
+> - Wave 77 (Kanzi paper-metric) — superseded by Wave 79-83 + Wave 91-92 (vendor + upstream eval path)
+> - Wave 78 (cross-tier synthesis) — superseded by Wave 89 final synthesis (commit `e77d2d4`)
 
 ## What's here
 
-| File | Status | What it does |
-|---|---|---|
-| [wave75-flowmol3-paper-repro.md](wave75-flowmol3-paper-repro.md) | **IN FLIGHT** (workflow `w9sveok4w`) | FlowMol3 paper-metric reproduction via upstream `SampleAnalyzer.analyze` (vendored at `data/FlowMol3/repo/`) |
-| [wave75-78-master-plan.md](wave75-78-master-plan.md) | **IN FLIGHT** (Wave 75 active; 76/77/78 cascade) | Cascade plan for Tier 3 paper-metric reproduction across Kanzi / LineageFlow / FlowMol3 |
+(none — all in-flight plans have landed or are now in `planned/`)
 
-## Decision evolution (why some plans moved to `completed/`)
+## Decision evolution
 
-These plans were in `inprogress/` until the 2026-09-08 archive sweep and
-were moved here because their content is now **historical** rather than
-**active**:
+- **2026-09-08**: Wave 75-78 master plan created with cascade "Wave 75 → 76 → 77 → 78"
+- **2026-09-08**: Wave 79 reframed the cascade to use **upstream eval** (not paper-metric from scratch) — Wave 77/78 became redundant
+- **2026-09-08**: Wave 80 + 81 + 82 + 83 + 84 landed upstream-eval sweeps for all 3 models
+- **2026-09-09**: Wave 89 final synthesis = Wave 78 equivalent (cross-tier)
+- **2026-09-10**: This archive sweep — Wave 75-78 docs move to `completed/` for traceability
+- **Current** (2026-09-10): Active work is in `planned/` (Wave 91-94 cascade) + in-flight workflows (Wave 92c + 93 Phase 2 + 94)
 
-| Archived plan | Why it moved |
-|---|---|
-| `PHASE-4-model-integration-iteration.md` | Kanzi + LineageFlow + FlowMol3 close-outs landed in Wave 47-74. FreqFlow + MM-FM deferred indefinitely (no upstream ckpt). Future model additions (if any) will get a fresh plan file. |
-| `wave43-problems-review.md` | All 6 problems were closed by Wave 45-52 work. Retained as historical traceability only. |
-| `wave45-adapter-fix-master-plan.md` | Wave 47-52 LineageFlow glue + Wave 52 Kanzi composite + Wave 53 FlowMol3 metric layer closed every item. |
-| `wave58-nfe-adaptive-plan.md` | Wave 58 implementation landed (NFE-adaptive gate + 6-point Kanzi NFE scan + paper §7.9). Plan doc retained for traceability. |
-| `two-paper-algo-design.md` | Strategic exploration that has been **superseded** by the single-paper framing (see Wave 78 caveat update). |
-| `two-paper-strategy.md` | Same as above — design exploration; current framing is single-paper: **framework SOTA at inference time on frozen ckpt**, toy evidence (mechanism) + chemistry evidence (sanity check). |
+## Cross-references
 
-## When to add to `inprogress/`
-
-Add a new plan here only when:
-1. It corresponds to a wave that has been launched but not yet completed
-2. OR it's a master plan that orchestrates multiple in-flight waves
-
-Move to `../completed/` once the wave lands (commit on disk + final
-audit doc authored). The trigger is **wave lands**, not **wave plan
-fully consumed**.
+- `todo/STATUS.md` — current state
+- `todo/INDEX.md` — master entry point
+- `todo/planned/` — Wave 91-94 cascade plans
+- `todo/completed/wave75-78-master-plan.md` — historical cascade plan
