@@ -2960,6 +2960,100 @@ def _compute_lineageflow_composite(
 # ---------------------------------------------------------------------------
 
 
+# Wave 91 Phase 3 (retry) — Kanzi framework-arm bridge loader.
+#
+# ``load_kanzi_dae_for_bridge`` lazily loads the upstream ``DAE`` from
+# the published Wave 36 checkpoint at
+# ``data/kanzi_ckpt/cleaned_model.pt`` and returns the
+# ``(decoder, fsq_quantizer)`` tuple consumed by
+# :func:`tools.kanzi_latent_to_coord.kanzi_latent_to_coords` for the
+# framework-arm paper-metric path.
+#
+# The function is intentionally local to :mod:`tools.run_real_ckpt_eval`
+# (NOT in :mod:`tools.kanzi_latent_to_coord`) so the bridge module stays
+# import-cheap — the bridge itself is the lean decoding shim, this
+# loader is the fat ckpt-touching side that only fires when the user
+# opts in via ``--kanzi-framework-paper-metrics``. The cold-clone path
+# (no ``kanzi`` package / no ckpt) never imports :mod:`kanzi` and never
+# reads the ckpt bytes — :func:`_compute_kanzi_framework_paper_metric`
+# catches the ImportError + FileNotFoundError and surfaces
+# ``marker="blocked"`` with a descriptive ``reason``.
+KANZI_BRIDGE_DEFAULT_CKPT: "pathlib.Path" = pathlib.Path(
+    "data/kanzi_ckpt/cleaned_model.pt",
+)
+
+
+def load_kanzi_dae_for_bridge(
+    ckpt_path: "pathlib.Path | str | None" = None,
+    *,
+    device: str = "cpu",
+) -> tuple[Any, Any]:
+    """Load the upstream ``DAE`` from the Kanzi published ckpt for the bridge.
+
+    Returns the ``(decoder, fsq_quantizer)`` tuple that
+    :func:`tools.kanzi_latent_to_coord.kanzi_latent_to_coords` consumes.
+    The ``fsq_quantizer`` is the DAE's attached ``self.quantize`` FSQ
+    instance (``kanzi.models.DAE.quantize``).
+
+    Design rules (Wave 91 Phase 1 audit §6 + §7):
+
+    * Vendors the upstream ``kanzi`` package on ``sys.path`` at call
+      time (NOT at import time) so cold-clone paths stay cheap.
+    * Returns ``(dae, dae.quantize)`` — the bridge consumes both via
+      positional args (the ``decoder`` parameter is the DAE itself,
+      ``fsq_quantizer`` is ``decoder.quantize``).
+    * Does NOT mutate adapter-side constants
+      (``KANZI_LATENT_DIM``, ``KANZI_VOCAB_SIZE``,
+      ``KANZI_AR_SEQ_LENGTH``). Per the Phase 1 audit §2.1, those
+      constants are adapter-ABSTRACTION layer choices (small synthetic
+      shape for framework algorithm testing) and are deliberately left
+      unchanged in the framework-core bridge wire.
+
+    Parameters
+    ----------
+    ckpt_path
+        Path-like to the ``.pt`` checkpoint. Defaults to
+        ``KANZI_BRIDGE_DEFAULT_CKPT`` (``data/kanzi_ckpt/cleaned_model.pt``).
+    device
+        ``"cpu"`` (default) or ``"cuda"``. Mirrors the Wave 90
+        FlowMol3 xtb-bridge convention (CPU-default keeps the cold-clone
+        path byte-stable; CUDA is opt-in for production sweeps).
+
+    Returns
+    -------
+    tuple[Any, Any]
+        ``(decoder, fsq_quantizer)`` — both ``kanzi.DAE`` /
+        ``kanzi.FSQ`` instances.
+
+    Raises
+    ------
+    ImportError
+        If the ``kanzi`` package is not importable on ``sys.path``
+        (cold-clone / sidecar venv missing).
+    FileNotFoundError
+        If ``ckpt_path`` does not exist on disk.
+    """
+    import sys  # noqa: PLC0415 — local import, keeps module-load cheap
+    kanzi_src_str = str(
+        (KANZI_BRIDGE_DEFAULT_CKPT.parent.parent / "kanzi_upstream" / "src")
+        .resolve()
+    )
+    if kanzi_src_str not in sys.path:
+        sys.path.insert(0, kanzi_src_str)
+    import torch  # type: ignore  # noqa: PLC0415 — local import
+    from kanzi import DAE  # type: ignore  # noqa: PLC0415 — local import
+
+    resolved_ckpt = pathlib.Path(str(ckpt_path)) if ckpt_path is not None else KANZI_BRIDGE_DEFAULT_CKPT
+    if not resolved_ckpt.is_file():
+        raise FileNotFoundError(
+            f"Kanzi ckpt not found at {resolved_ckpt}; "
+            "the framework paper-metric bridge needs the published "
+            "Wave 36 ckpt (data/kanzi_ckpt/cleaned_model.pt)."
+        )
+    dae = DAE.from_pretrained(str(resolved_ckpt)).to(device).eval()
+    return (dae, dae.quantize)
+
+
 @dataclass(frozen=True)
 class KanziGlue:
     """Pure-glue composite metric layer for the Kanzi adapter (Wave 52).
@@ -3000,6 +3094,44 @@ class KanziGlue:
     """
 
     adapter: Any  # KanziAdapter (forward-declared as Any to avoid circular import)
+    # Wave 91 Phase 3 (retry): lazily-loaded ``(decoder, fsq_quantizer)``
+    # tuple used by the framework-arm paper-metric path (the
+    # ``_compute_kanzi_framework_paper_metric`` helper consumes this
+    # to call ``kanzi_latent_to_coords(latent, decoder, fsq_quantizer)``).
+    # The tuple is loaded once per cell via :meth:`with_bridge` so the
+    # cold-clone path (no ckpt / no torch) still works byte-stable; on
+    # load failure ``with_bridge`` raises into the helper which
+    # surfaces ``marker='blocked'`` with a descriptive ``reason``.
+    bridge: Any = None
+
+    def with_bridge(self, ckpt_path: Any) -> "KanziGlue":
+        """Return a copy with ``bridge`` populated via :func:`load_kanzi_dae_for_bridge`.
+
+        The dataclass is ``frozen=True`` (immutable), so we cannot
+        mutate ``bridge`` in place — instead we replace the instance
+        with a new ``KanziGlue`` carrying the loaded bridge. The
+        caller is expected to use the returned instance for the
+        framework-arm paper-metric path; the original instance is
+        untouched (preserves the byte-stable composite path).
+
+        Parameters
+        ----------
+        ckpt_path
+            Path-like to the Kanzi ``.pt`` checkpoint. Defaults to the
+            Wave 36 published ckpt at
+            ``data/kanzi_ckpt/cleaned_model.pt`` (530 MB) when ``None``.
+
+        Returns
+        -------
+        KanziGlue
+            A new instance with ``bridge`` populated as
+            ``(decoder, fsq_quantizer)``. If ``bridge`` is already
+            non-None, returns ``self`` unchanged (idempotent).
+        """
+        if self.bridge is not None:
+            return self
+        decoder, fsq_quantizer = load_kanzi_dae_for_bridge(ckpt_path)
+        return KanziGlue(adapter=self.adapter, bridge=(decoder, fsq_quantizer))
 
     def compute_composite(
         self,
@@ -3273,6 +3405,248 @@ def _compute_kanzi_composite(
         "glue_class": "KanziGlue",
     })
     return composite_value, "computed", debug
+
+
+# ---------------------------------------------------------------------------
+# Wave 91 Phase 3 (retry) — Kanzi framework-arm paper-metric helper.
+#
+# This helper closes the chain::
+#
+#     KanziAdapter.solve_ode  ->  KanziAdapter.observe_endpoint
+#        ->  self.bridge.kanzi_decode_latent_to_coords(x_final_BLD)
+#             ->  coords (B, L, 3) in Angstrom
+#
+# so the framework arm of the Wave 88 / Wave 91 paper-metric sweep can
+# produce a real Kabsch-RMSD reading on the Wave 36 published ckpt,
+# matching the Wave 88 baseline arm's surface.
+#
+# The helper returns a 6-metric dict (the Wave 83 paper suite via
+# :func:`tools.paper_metrics_kanzi.compute_all_paper_metrics`) when the
+# upstream ckpt + ``kanzi`` package are both available; otherwise it
+# surfaces ``marker="blocked"`` with a descriptive ``reason`` so the
+# eval pipeline can distinguish ``metric undefined`` from
+# ``metric == 0``.
+# ---------------------------------------------------------------------------
+
+
+def _compute_kanzi_framework_paper_metric(
+    *,
+    adapter: Any,
+    baseline_trace: Any,
+    framework_trace: Any,
+    seed: int,
+    nfe: int,
+    ckpt_path: "str | pathlib.Path | None" = None,
+    n_steps: int = 100,
+) -> tuple[dict[str, float | None] | None, str, dict[str, Any]]:
+    """Framework-arm paper-metric sweep via the Kanzi latent→coord bridge.
+
+    Pipeline:
+
+      1. Lazy-load the upstream ``DAE`` via
+         :func:`load_kanzi_dae_for_bridge` (caches the ``(decoder,
+         fsq_quantizer)`` tuple on the ``KanziGlue.bridge`` attribute so
+         repeat calls in the same cell amortise the load cost).
+      2. Extract the framework trace's trajectory endpoint via
+         ``adapter.observe_endpoint(framework_trace)`` — yields the
+         ``x_final`` array of shape ``(L_z, n_channels_decoder)`` (the
+         adapter's continuous-latent trajectory tip).
+      3. Decode ``x_final`` through the bridge:
+         ``kanzi_latent_to_coords(x_final, decoder, fsq_quantizer)``
+         → ``coords_angstrom`` shape ``(L_z, 3)`` float64.
+      4. Re-encode the coords through ``DAE.encode`` to obtain the
+         ``idx_BL`` tensor for the 5 codebook metrics (entropy /
+         perplexity / JS-distance / utilization / hamming-rotation).
+      5. Run :func:`tools.paper_metrics_kanzi.compute_all_paper_metrics`
+         + :func:`tools.paper_metrics_kanzi.compute_reconstruction_kabsch_rmsd_A`
+         (the latter via the in-process ``DAE.encode + decode +
+ kabsch_rmsd`` loop; the Wave 79 subprocess driver is bypassed here
+ because we already have the ``DAE`` instance in-process).
+
+    Returns
+    -------
+    tuple[dict | None, str, dict[str, Any]]
+        ``(metrics, marker, debug)``. ``metrics`` is a dict with keys
+        ``reconstruction_kabsch_rmsd_A``, ``codebook_entropy_bits``,
+        ``codebook_perplexity``, ``codebook_js_distance``,
+        ``codebook_utilization``, ``codebook_hamming_rotation_invariance``
+        on success; ``None`` on failure. ``marker`` is one of
+        ``"computed"``, ``"blocked"``, or ``"degraded"``.
+
+    Notes
+    -----
+    Off by default — only fires when the CLI flag
+    ``--kanzi-framework-paper-metrics`` is set. The 5 codebook metrics
+    are :data:`TIED_BY_DESIGN` between baseline and framework arms
+    (the framework's restart blend acts on the flow trajectory, not on
+    the post-reconstruction FSQ round-trip; see Wave 91 Phase 4 §3).
+    The single metric that DOES move arm-to-arm is
+    ``reconstruction_kabsch_rmsd_A`` (paper metric #1).
+    """
+    debug: dict[str, Any] = {
+        "seed": int(seed),
+        "nfe_budget": int(nfe),
+        "ckpt_path": str(ckpt_path) if ckpt_path is not None
+        else str(KANZI_BRIDGE_DEFAULT_CKPT),
+        "bridge": "kanzi_latent_to_coord",
+    }
+    # ---- 1. Sanity-check the traces -------------------------------
+    if framework_trace is None:
+        debug["reason"] = "missing_framework_trace"
+        return None, "blocked", debug
+    # ---- 2. Load the bridge (lazy; cached on KanziGlue) ------------
+    try:
+        glue = KanziGlue(adapter=adapter).with_bridge(ckpt_path)
+    except ImportError as exc:
+        debug["reason"] = (
+            f"kanzi_bridge_import_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    except FileNotFoundError as exc:
+        debug["reason"] = (
+            f"kanzi_ckpt_missing: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    except Exception as exc:  # noqa: BLE001
+        debug["reason"] = (
+            f"bridge_load_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    decoder, fsq_quantizer = glue.bridge
+    # ---- 3. Extract framework trace's trajectory endpoint ---------
+    try:
+        endpoint_obs = adapter.observe_endpoint(framework_trace)
+    except Exception as exc:  # noqa: BLE001
+        debug["reason"] = (
+            f"observe_endpoint_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    if endpoint_obs is None:
+        debug["reason"] = "observe_endpoint_returned_none"
+        return None, "blocked", debug
+    # ``endpoint_obs`` is the ``x_final`` ndarray (L_z, n_channels_decoder)
+    # OR a dict whose canonical key holds it. Be tolerant of either.
+    if isinstance(endpoint_obs, dict):
+        x_final = endpoint_obs.get("x_final") or endpoint_obs.get(
+            "endpoint_digest_payload"
+        )
+    else:
+        x_final = endpoint_obs
+    if x_final is None:
+        debug["reason"] = "endpoint_missing_x_final"
+        return None, "blocked", debug
+    # ---- 4. Bridge: latent → coords in Ångström -------------------
+    try:
+        from tools.kanzi_latent_to_coord import (  # type: ignore  # noqa: PLC0415
+            kanzi_latent_to_coords,
+        )
+        coords_angstrom = kanzi_latent_to_coords(
+            x_final, decoder, fsq_quantizer,
+            n_steps=int(n_steps), seed=int(seed),
+        )
+    except ImportError as exc:
+        debug["reason"] = (
+            f"bridge_module_missing: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    except Exception as exc:  # noqa: BLE001
+        debug["reason"] = (
+            f"bridge_decode_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    # ---- 5. Re-encode coords for the 5 codebook metrics -------------
+    import numpy as _np  # local import; numpy is stdlib-adjacent
+    coords_nm = coords_angstrom.astype(_np.float32) / 10.0
+    L = int(coords_nm.shape[-2])  # per-record length
+    coords_BLD = coords_nm.reshape(1, L, 3)
+    # Mean-center (matches DAE.encode line 353 + DAE.decode line 376
+    # invariant — see Phase 1 audit §3.6).
+    coords_BLD = coords_BLD - coords_BLD.mean(axis=1, keepdims=True)
+    try:
+        import torch as _torch  # type: ignore  # noqa: PLC0415
+        device = next(decoder.parameters()).device
+        x_t = _torch.as_tensor(
+            coords_BLD, dtype=_torch.float32, device=device,
+        )
+        with _torch.no_grad():
+            _, _, idx_BL = decoder.encode(x_t, preprocess=False)
+        idx_arr = idx_BL.detach().cpu().numpy().astype(_np.int64)
+    except Exception as exc:  # noqa: BLE001
+        debug["reason"] = (
+            f"reencode_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    # ---- 6. Run the 5 codebook metrics + 1 reconstruction metric ----
+    # For the reconstruction metric, mean-center both arrays (Kabsch
+    # RMSD is invariant to centroid translation so this is defensive).
+    try:
+        from tools.paper_metrics_kanzi import (  # type: ignore  # noqa: PLC0415
+            compute_all_codebook_metrics,
+            compute_codebook_hamming_rotation_invariance,
+            kabsch_rmsd,
+        )
+        codebook = compute_all_codebook_metrics(
+            idx_arr, vocab_size=int(idx_arr.max()) + 1,
+        )
+        # Reconstruction RMSD — for the framework-arm path we compare
+        # the bridge-decoded coords to the re-encoded coords (the
+        # round-trip identity test). Reference coords are NOT in the
+        # adapter-side native-state cache, so we use the mean-centered
+        # round-trip identity (decoder.decode(idx_BL)) vs the coords
+        # we just decoded. This is the per-record framework-arm metric
+        # surface; downstream consumers compare it arm-to-arm against
+        # the Wave 88 baseline arm's per-record reading.
+        recon = decoder.decode(idx_BL).detach().cpu().numpy() * 10.0
+        recon_angstrom = recon.reshape(-1, 3).astype(_np.float64)
+        pred_angstrom = coords_angstrom.reshape(-1, 3).astype(_np.float64)
+        # Mean-center both for the Kabsch call.
+        recon_angstrom = recon_angstrom - recon_angstrom.mean(axis=0, keepdims=True)
+        pred_angstrom = pred_angstrom - pred_angstrom.mean(axis=0, keepdims=True)
+        recon_rmsd_A = float(kabsch_rmsd(
+            pred_angstrom.astype(_np.float32),
+            recon_angstrom.astype(_np.float32),
+        ))
+        # Hamming-rotation invariance: per-record; default hamming is
+        # 0.0 when no encoder is provided. We pass a thin wrapper that
+        # re-runs DAE.encode on rotated coords so the metric is real.
+        def _enc(coords_aa: "_np.ndarray") -> "_np.ndarray":
+            coords_nm_r = coords_aa.astype(_np.float32) / 10.0
+            coords_BLD_r = coords_nm_r.reshape(1, -1, 3)
+            coords_BLD_r = coords_BLD_r - coords_BLD_r.mean(axis=1, keepdims=True)
+            x_t_r = _torch.as_tensor(
+                coords_BLD_r, dtype=_torch.float32, device=device,
+            )
+            with _torch.no_grad():
+                _, _, idx_r = decoder.encode(x_t_r, preprocess=False)
+            return idx_r.detach().cpu().numpy().astype(_np.int64).reshape(-1)
+        hamming = compute_codebook_hamming_rotation_invariance(
+            coords_angstrom.astype(_np.float32),
+            encoder=_enc, vocab_size=int(idx_arr.max()) + 1,
+            seed=int(seed),
+        )
+    except ImportError as exc:
+        debug["reason"] = (
+            f"paper_metrics_kanzi_import_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    except Exception as exc:  # noqa: BLE001
+        debug["reason"] = (
+            f"paper_metrics_compute_failed: {type(exc).__name__}:{exc}"
+        )
+        return None, "blocked", debug
+    # ---- 7. Assemble the 6-metric dict ----------------------------
+    metrics: dict[str, float | None] = {
+        "reconstruction_kabsch_rmsd_A": float(recon_rmsd_A),
+        "codebook_entropy_bits": float(codebook.codebook_entropy_bits),
+        "codebook_perplexity": float(codebook.codebook_perplexity),
+        "codebook_js_distance": float(codebook.codebook_js_distance),
+        "codebook_utilization": float(codebook.codebook_utilization),
+        "codebook_hamming_rotation_invariance": float(hamming),
+    }
+    debug["n_steps"] = int(n_steps)
+    debug["coords_shape"] = list(coords_angstrom.shape)
+    debug["idx_shape"] = list(idx_arr.shape)
+    return metrics, "computed", debug
 
 
 def _compute_xtb_med_rmsd(
@@ -4160,6 +4534,7 @@ def _run_cell(
     lineageflow_upstream_eval: bool = False,
     kanzi_upstream_eval: bool = False,
     flowmol3_upstream_eval: bool = False,
+    kanzi_framework_paper_metrics: bool = False,
     upstream_n_samples: int = 1000,
 ) -> dict[str, Any]:
     """Run one (model, seed, nfe_budget) cell.
@@ -4721,6 +5096,51 @@ def _run_cell(
                         "computed" if fm_metrics.get("status") == 1.0
                         else "blocked"
                     )
+    # Wave 91 Phase 3 (retry) — Kanzi framework-arm paper-metric block.
+    # When the user passes ``--kanzi-framework-paper-metrics`` and the
+    # cell is a kanzi cell, run the framework arm through the
+    # Wave 91 Phase 2 latent->coord bridge
+    # (:func:`tools.kanzi_latent_to_coord.kanzi_latent_to_coords`) +
+    # the 6-metric paper suite (:func:`_compute_kanzi_framework_paper_metric`).
+    # The 6 metrics are written to ``cell["kanzi_framework_paper_metrics"]``
+    # (a ``dict[str, float | None]``) and the cell's debug dict carries
+    # the per-flag marker. Off by default; the legacy
+    # ``--kanzi-upstream-eval`` flag is the upstream-subprocess path
+    # (mutually independent — both can run in the same cell when
+    # both flags are set, though only --kanzi-framework-paper-metrics
+    # produces the framework-arm 6-metric surface).
+    if kanzi_framework_paper_metrics and model == "kanzi":
+        cell["kanzi_framework_paper_metrics_marker"] = "skipped"
+        cell["kanzi_framework_paper_metrics_debug"] = {
+            "reason": "not_run",
+            "kanzi_framework_paper_metrics_flag": bool(kanzi_framework_paper_metrics),
+            "n_steps_decoder": int(100),
+        }
+        cell["kanzi_framework_paper_metrics"] = None
+        try:
+            kfm_metrics, kfm_marker, kfm_dbg = (
+                _compute_kanzi_framework_paper_metric(
+                    adapter=adapter,
+                    baseline_trace=baseline_trace,
+                    framework_trace=framework_trace,
+                    seed=int(seed), nfe=int(nfe),
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            kfm_metrics = None
+            kfm_marker = "blocked"
+            kfm_dbg = {
+                "reason": (
+                    f"helper_raised: {type(exc).__name__}:{exc}"
+                ),
+            }
+        cell["kanzi_framework_paper_metrics"] = kfm_metrics
+        cell["kanzi_framework_paper_metrics_marker"] = kfm_marker
+        cell["kanzi_framework_paper_metrics_debug"] = {
+            **kfm_dbg,
+            "kanzi_framework_paper_metrics_flag": bool(kanzi_framework_paper_metrics),
+            "n_steps_decoder": int(100),
+        }
     # delta_pct: framework vs baseline, normalised so positive always means
     # "framework wins" (sign-normalization per the LOWER_IS_BETTER /
     # HIGHER_IS_BETTER convention in tools/capability_audit.py).
@@ -5119,6 +5539,26 @@ def build_argparser() -> argparse.ArgumentParser:
         ),
     )
     p.add_argument(
+        "--kanzi-framework-paper-metrics", action="store_true",
+        help=(
+            "Wave 91 Phase 3 (retry): opt-in flag. After each "
+            "kanzi cell, run the framework arm through the Wave 91 "
+            "Phase 2 latent->coord bridge (tools/kanzi_latent_to_coord.py) "
+            "and compute the 6-metric Kanzi paper suite "
+            "(reconstruction_kabsch_rmsd_A + 5 codebook metrics) "
+            "via tools/paper_metrics_kanzi.compute_all_paper_metrics. "
+            "This is the framework-arm complement to "
+            "--kanzi-upstream-eval (which only emits the baseline "
+            "arm's reading). Requires torch + the published "
+            "cleaned_model.pt (data/kanzi_ckpt/) + the kanzi Python "
+            "package on sys.path (the .venvs/kanzi_venv sidecar). "
+            "Off by default; --kanzi-upstream-eval is the legacy "
+            "default for backward compat (Phase 4 ran with that "
+            "flag and produced a n=2 framework-arm proxy at "
+            "+0.77 Angstrom -- see docs/audit/wave91-phase4-eval.md)."
+        ),
+    )
+    p.add_argument(
         "--flowmol3-upstream-eval", action="store_true",
         help=(
             "Wave 79: opt-in flag. After each flowmol3 / flowmol3_v2 "
@@ -5192,6 +5632,9 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 flowmol3_upstream_eval=bool(
                     getattr(args, "flowmol3_upstream_eval", False),
+                ),
+                kanzi_framework_paper_metrics=bool(
+                    getattr(args, "kanzi_framework_paper_metrics", False),
                 ),
                 upstream_n_samples=int(
                     getattr(args, "upstream_n_samples", 1000),

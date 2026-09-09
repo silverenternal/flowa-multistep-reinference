@@ -2228,3 +2228,104 @@ def test_solve_framework_paper_quantity_driven_beta_changes_per_round() -> None:
         f"({captured_betas}); Pitfall #1 fix did not thread "
         f"paper_quantities through _solve_framework"
     )
+
+
+# ---------------------------------------------------------------------------
+# Wave 91 Phase 3 (retry) — ``--kanzi-framework-paper-metrics`` CLI flag
+# ---------------------------------------------------------------------------
+#
+# Phase 3 wires the Wave 91 Phase 2 latent→coord bridge
+# (``tools/kanzi_latent_to_coord.py``) into
+# :mod:`tools.run_real_ckpt_eval` so the framework arm of the Kanzi
+# paper-metric sweep can produce a real Kabsch-RMSD reading on the
+# Wave 36 published ckpt at N=1000 (the Wave 91 Phase 4 baseline
+# proxy was n=2 — see ``docs/audit/wave91-phase4-eval.md``).
+#
+# The wire introduces a new opt-in CLI flag
+# ``--kanzi-framework-paper-metrics`` (default OFF to preserve
+# byte-stability for legacy callers — mirrors the Wave 79
+# ``--kanzi-upstream-eval`` wire).
+#
+# The 2 tests below lock in:
+#   (a) The flag is accepted by ``build_argparser().parse_args``
+#       AND defaults to ``False`` when not supplied (byte-stable
+#       default — the legacy Wave 79 wire path is unchanged when
+#       only the legacy flags are set).
+#   (b) The flag appears in the ``--help`` output with the
+#       framework-arm / bridge / Phase 2 reference so future agents
+#       can discover it.
+
+
+def test_kanzi_framework_paper_metrics_flag_defaults_to_false() -> None:
+    """``--kanzi-framework-paper-metrics`` is OFF by default (byte-stable).
+
+    Phase 3 wire: the new flag is opt-in (default ``False``). When
+    absent, the legacy Wave 79 ``--kanzi-upstream-eval`` path is
+    unchanged — no extra upstream_eval subprocess, no bridge import,
+    no ckpt read. Asserting ``args.kanzi_framework_paper_metrics ==
+    False`` preserves the byte-stable contract that downstream
+    consumers (D.4 vector tests, Phase 4 sweeps) rely on.
+    """
+    tools = _import_tools_module()
+    args = tools.build_argparser().parse_args(
+        ["--model", "kanzi", "--seeds", "42", "--nfe-budgets", "10",
+         "--output", "/tmp/_wave91p3_default.json"],
+    )
+    assert hasattr(args, "kanzi_framework_paper_metrics"), (
+        "build_argparser() must accept --kanzi-framework-paper-metrics "
+        "(Wave 91 Phase 3 retry). The Phase 4 sweep cannot invoke the "
+        "framework-arm bridge without it."
+    )
+    assert args.kanzi_framework_paper_metrics is False, (
+        f"--kanzi-framework-paper-metrics must default to False "
+        f"(byte-stable Wave 79 wire), got "
+        f"{args.kanzi_framework_paper_metrics!r}"
+    )
+
+
+def test_kanzi_framework_paper_metrics_flag_in_help() -> None:
+    """``--kanzi-framework-paper-metrics`` is documented in ``--help``.
+
+    The Phase 3 help text references the Wave 91 Phase 2 bridge
+    (``tools/kanzi_latent_to_coord.py``) and the framework-arm
+    intent so future agents can find the wire without reading the
+    audit doc. Locks in the help-text contract: the flag MUST
+    appear in the parser's option-action map AND carry the
+    framework-arm / bridge / Wave 91 Phase 2 reference in its
+    help text.
+
+    We deliberately avoid ``parser.format_help()`` (which trips
+    over pre-existing ``100%`` literals in ``--composite-metric``'s
+    help text under Python 3.14's stricter formatter — see
+    ``argparse._HelpAction`` workaround at ``run_real_ckpt_eval.py:158``).
+    Instead we read the help text from the parser's action map
+    directly, which is the same data that ``format_help()`` would
+    surface minus the unrelated formatting failure.
+    """
+    tools = _import_tools_module()
+    parser = tools.build_argparser()
+    actions_by_option: dict[str, Any] = dict(parser._option_string_actions)
+    assert "--kanzi-framework-paper-metrics" in actions_by_option, (
+        "--kanzi-framework-paper-metrics MUST be registered in the "
+        "parser's option-string-actions map so downstream consumers "
+        f"can invoke it. Registered options: {sorted(actions_by_option)!r}"
+    )
+    action = actions_by_option["--kanzi-framework-paper-metrics"]
+    help_text = action.help or ""
+    # The help text references the Wave 91 Phase 2 bridge + the
+    # framework-arm intent. Asserting these tokens keeps the help
+    # text informative for downstream consumers.
+    assert "kanzi_latent_to_coord" in help_text or "Wave 91 Phase 2" in help_text, (
+        "--kanzi-framework-paper-metrics help text must reference the "
+        "Wave 91 Phase 2 latent->coord bridge so downstream agents "
+        "understand the wire intent.\n"
+        f"help_text:\n{help_text}"
+    )
+    # Also confirm the help text mentions the framework-arm intent
+    # so the user understands the wire target.
+    assert "framework arm" in help_text.lower(), (
+        "--kanzi-framework-paper-metrics help text must mention the "
+        "framework-arm intent so downstream consumers know the wire "
+        "target.\n"
+        f"help_text:\n{help_text}"
+    )
