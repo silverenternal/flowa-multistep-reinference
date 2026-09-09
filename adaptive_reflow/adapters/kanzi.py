@@ -2408,6 +2408,13 @@ class KanziAdapter(FlowMatchingODEAdapter):
             ``numpy.ndarray | None`` for ``TRAJECTORY_NATIVE``.
         """
         results: list[ObservationResult] = []
+        # Wave 95 Phase 2.A: defensive guard — the Protocol explicitly
+        # permits ``state=None`` (interfaces.py:617-619). The metric helper
+        # ``_extract_observation`` historically passes ``state=None`` when
+        # the caller wants only non-endpoint strategies. Return early
+        # before touching ``observe_endpoint`` to avoid AttributeError.
+        if state is None:
+            return tuple()
         if ObservationKind.ENDPOINT_BUNDLE in strategies:
             endpoint = self.observe_endpoint(trace, state)
             results.append(

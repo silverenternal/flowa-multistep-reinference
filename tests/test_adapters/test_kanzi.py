@@ -1318,3 +1318,62 @@ def test_kanzi_observe_trajectory_native_returns_native_traj() -> None:
     assert obs.channel == str(PROTEIN_LATENT)
     assert obs.units == "trajectory"
     np.testing.assert_array_equal(np.asarray(obs.payload), legacy_traj)
+
+
+# ---------------------------------------------------------------------------
+# Wave 95 Phase 2.A — defensive state=None guard in observe()
+# ---------------------------------------------------------------------------
+
+
+def test_observe_with_state_none_returns_empty_tuple() -> None:
+    """Regression (Wave 95 Phase 2.A): ``observe(..., state=None)`` is safe.
+
+    The :class:`AdapterObservationProtocol` (Wave 67) explicitly permits
+    ``state=None`` (interfaces.py:617-619 — ``May be None for adapters
+    that materialise state lazily``). The metric helper
+    ``_extract_observation`` in ``tools/run_real_ckpt_eval.py``
+    historically passes ``state=None`` (Wave 68 Phase 5 §4.1 regression).
+
+    Pre-fix: ``observe_endpoint(trace, None)`` raised ``AttributeError``
+    because the KanziAdapter's ``observe_endpoint`` accesses
+    ``state.source_round`` unconditionally.
+
+    Post-fix: ``observe()`` short-circuits with ``return tuple()`` before
+    touching ``observe_endpoint``. The metric helper then sees a clean
+    empty tuple and can move on without crashing the eval pipeline.
+    """
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(batch_id="w95a_none", sample_id="s")
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    # All four strategies — state=None should still produce empty tuple.
+    results_all = adapter.observe(
+        trace,
+        None,                                          # state=None
+        paper_quantities=None,
+    )
+    assert results_all == ()
+    assert isinstance(results_all, tuple)
+
+    # Explicit strategies subset — also empty tuple.
+    results_subset = adapter.observe(
+        trace,
+        None,                                          # state=None
+        paper_quantities=None,
+        strategies=(
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.TRAJECTORY_NATIVE,
+        ),
+    )
+    assert results_subset == ()
+
+    # Sanity: with a real state, observe() still works (non-regression).
+    results_real = adapter.observe(trace, bundle)
+    kinds_real = {r.kind for r in results_real}
+    assert ObservationKind.ENDPOINT_BUNDLE in kinds_real
+    assert ObservationKind.DISCRETE_TOKENS in kinds_real
