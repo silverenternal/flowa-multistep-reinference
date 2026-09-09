@@ -111,7 +111,12 @@ from adaptive_reflow.adapters._adapter_common import (
     make_ref,
     memory_fraction_for,
 )
-from adaptive_reflow.framework.interfaces import implements
+from adaptive_reflow.framework.interfaces import (
+    AdapterObservationProtocol,
+    ObservationKind,
+    ObservationResult,
+    implements,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -783,7 +788,7 @@ class HiDreamI1Capabilities(AdapterCapabilities):
 # ---------------------------------------------------------------------------
 
 
-@implements(FlowMatchingODEAdapter)
+@implements(FlowMatchingODEAdapter, AdapterObservationProtocol)
 class HiDreamI1Adapter(FlowMatchingODEAdapter):
     """HiDream-I1 latent flow-matching text-to-image adapter (R17 skeleton).
 
@@ -1697,6 +1702,105 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             provenance=tuple(state.provenance) + (AUDIT_HIDREAM_I1_OBSERVED,),
             capability_token=self.capabilities(),
         )
+
+    # ------------------------------------------------------------------
+    # 8b. observe (Wave 95 Phase 2.B — AdapterObservationProtocol surface)
+    # ------------------------------------------------------------------
+
+    def observe(
+        self,
+        trace: ODEIntegratorTrace,
+        state: StateBundle,
+        paper_quantities: Any = None,
+        *,
+        strategies: tuple[ObservationKind, ...] = (
+            ObservationKind.ENDPOINT_BUNDLE,
+            ObservationKind.TRAJECTORY_NATIVE,
+        ),
+        theta_before: Any = None,
+        theta_after: Any = None,
+    ) -> tuple[ObservationResult, ...]:
+        """Single typed observation surface for :class:`AdapterObservationProtocol`.
+
+        Wraps the existing :meth:`observe_endpoint` / :meth:`export_trajectory`
+        methods into a tagged-tuple :class:`ObservationResult` contract so
+        the metric layer can dispatch on :class:`ObservationKind` rather
+        than on the model name (Wave 67 principle; Wave 68
+        ``docs/audit/wave68-phase5.md`` §3).
+
+        Only two of the four kinds are meaningful for HiDream I1. The
+        native state is a continuous ``(16, 128, 128)`` FLUX.1-VAE latent,
+        so there is no per-position categorical:
+
+        * :attr:`ObservationKind.DISCRETE_TOKENS` — skipped (no discrete
+          channel; same rationale as Kanzi's continuous latent).
+        * :attr:`ObservationKind.POSITION_ENTROPY_REDUCTION` — skipped
+          (``theta_before`` / ``theta_after`` are accepted for Protocol
+          signature conformance but are not consumed).
+
+        Byte-stable migration (Wave 68 §1.3): the underlying methods are
+        unchanged and existing call sites keep working. Requested kinds
+        the adapter does not support are simply absent from the result
+        tuple; an empty tuple is a valid response.
+
+        Parameters
+        ----------
+        trace
+            Forwarded to :meth:`observe_endpoint` / :meth:`export_trajectory`.
+        state
+            Forwarded to :meth:`observe_endpoint`. ``None`` is permitted by
+            the Protocol (``interfaces.py:617-619``) and returns an empty
+            tuple.
+        paper_quantities
+            Accepted for Protocol conformance; not consumed (HiDream I1
+            derives no observation from paper-quantity context).
+        strategies
+            Tuple of :class:`ObservationKind` tags to include. The default
+            requests the two kinds HiDream I1 supports.
+        theta_before, theta_after
+            Accepted for Protocol conformance; not consumed (see above).
+
+        Returns
+        -------
+        tuple[ObservationResult, ...]
+            Tagged-tuple view of the same numeric output the legacy
+            ``observe_*`` methods return. Payload types by ``kind``:
+
+            * ``ENDPOINT_BUNDLE`` — :class:`StateBundle`
+            * ``TRAJECTORY_NATIVE`` — ``numpy.ndarray`` of shape
+              ``(T + 1, 16, 128, 128)``
+        """
+        results: list[ObservationResult] = []
+        # Defensive guard — the Protocol explicitly permits ``state=None``
+        # (interfaces.py:617-619) and the metric helper
+        # ``_extract_observation`` passes ``state=None`` when the caller
+        # wants only non-endpoint strategies. Return early before touching
+        # ``observe_endpoint`` to avoid a validate_state_bundle failure.
+        if state is None:
+            return tuple()
+        if ObservationKind.ENDPOINT_BUNDLE in strategies:
+            endpoint = self.observe_endpoint(trace, state)
+            results.append(
+                ObservationResult(
+                    kind=ObservationKind.ENDPOINT_BUNDLE,
+                    channel=str(ChannelName("image_latent")),
+                    payload=endpoint,
+                    units="state_bundle",
+                    metadata={"source_round": int(endpoint.source_round)},
+                )
+            )
+        if ObservationKind.TRAJECTORY_NATIVE in strategies:
+            traj = self.export_trajectory(trace)
+            if traj is not None:
+                results.append(
+                    ObservationResult(
+                        kind=ObservationKind.TRAJECTORY_NATIVE,
+                        channel=str(ChannelName("image_latent")),
+                        payload=traj,
+                        units="trajectory",
+                    )
+                )
+        return tuple(results)
 
     # ------------------------------------------------------------------
     # 9. export_trajectory (P0-7 — public trajectory export)

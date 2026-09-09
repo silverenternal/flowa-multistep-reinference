@@ -717,3 +717,87 @@ def test_ablation_style_with_post_p0_p1_toggles(_twodim_adapter) -> None:
         f"expected final-round W2 ({w2[-1]:.4f}) < "
         f"first-round W2 ({w2[0]:.4f}); trajectory = {w2!r}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Wave 95 Phase 1.A — default early_termination=True (E1)
+# ---------------------------------------------------------------------------
+
+
+def test_default_early_termination_terminates_on_plateau(
+    twodim_fm_weights_path,
+) -> None:
+    """Wave 95 Phase 1.A (E1): default-constructed ``BatchedRunnerConfig``
+    must enable ``early_termination``, so the runner stops the round loop
+    on a plateau without the caller opting in.
+
+    Builds a config that omits the ``early_termination`` kwarg entirely,
+    so it picks up the dataclass default; pairs it with a
+    :class:`CodimensionSheetScheduler` whose ``early_stop_plateau_rel_tol``
+    is loose enough to trigger well before ``cycle_length``; and asserts
+    that ``rounds_run`` is strictly less than ``cycle_length`` AND that
+    ``early_terminated`` is ``True`` AND that the rounds it did run are a
+    prefix of the open-loop control's rounds (truncation, not
+    perturbation).
+    """
+    from adaptive_reflow.algorithm import CodimensionSheetScheduler
+
+    adapter = TwoDimFMAdapter(
+        weights_path=twodim_fm_weights_path, target="two_moons"
+    )
+    cycle_length = 10
+    base_kwargs = dict(
+        cycle_length=cycle_length,
+        trajectories_per_round=4,
+        endpoints_per_trajectory=8,
+        seed=11,
+    )
+
+    # Sanity check the dataclass default itself — independent of any
+    # scheduler wiring. If this fails, the 1-LOC flip on
+    # ``batched_runner.py:317`` regressed.
+    assert BatchedRunnerConfig(
+        scheduler=CodimensionSheetScheduler(cycle_length=cycle_length),
+        **base_kwargs,
+    ).early_termination is True, (
+        "BoundedRunnerConfig.early_termination default must be True "
+        "post-Wave-95 (E1)"
+    )
+
+    # Default config (no early_termination kwarg) terminates on plateau.
+    sched = CodimensionSheetScheduler(
+        cycle_length=cycle_length, early_stop_plateau_rel_tol=0.2
+    )
+    cfg_default = BatchedRunnerConfig(scheduler=sched, **base_kwargs)
+    result = BatchedTrajectoryRunner(cfg_default, adapter).run()
+    assert result.early_terminated is True, (
+        "default early_termination=True must trip when the scheduler "
+        "reports a plateau"
+    )
+    assert result.rounds_run < cycle_length, (
+        f"default-constructed runner must stop early on plateau; "
+        f"ran {result.rounds_run}/{cycle_length} rounds"
+    )
+
+    # Opting OUT (early_termination=False) keeps the legacy open-loop
+    # behaviour bit-for-bit — full cycle, no truncation.
+    sched_open = CodimensionSheetScheduler(
+        cycle_length=cycle_length, early_stop_plateau_rel_tol=0.2
+    )
+    cfg_open = BatchedRunnerConfig(
+        scheduler=sched_open, early_termination=False, **base_kwargs
+    )
+    result_open = BatchedTrajectoryRunner(cfg_open, adapter).run()
+    assert result_open.early_terminated is False
+    assert result_open.rounds_run == cycle_length
+
+    # Truncation must not perturb the schedule: the early-stop run is
+    # a strict prefix of the open-loop control.
+    assert np.allclose(
+        result.per_round_n_cap,
+        result_open.per_round_n_cap[: result.rounds_run],
+    )
+    assert np.allclose(
+        result.per_round_w2,
+        result_open.per_round_w2[: result.rounds_run],
+    )

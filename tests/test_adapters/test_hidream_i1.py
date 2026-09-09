@@ -779,3 +779,98 @@ def test_resolution_weights_path_missing_returns_none(tmp_path: Path) -> None:
     safetensors = tmp_path / "hidream_i1_full.safetensors"
     safetensors.write_bytes(b"\x00")
     assert hidream_i1_resolve_weights_path("full", tmp_path) == safetensors
+
+
+# ---------------------------------------------------------------------------
+# 23. Typed observe() — AdapterObservationProtocol conformance (Wave 95 P2.B)
+# ---------------------------------------------------------------------------
+
+
+def test_observe_endpoint_bundle(hidream_adapter: object) -> None:
+    """``observe`` returns tagged ENDPOINT_BUNDLE + TRAJECTORY_NATIVE results."""
+    from adaptive_reflow.framework.interfaces import (
+        AdapterObservationProtocol,
+        ObservationKind,
+    )
+
+    assert isinstance(hidream_adapter, AdapterObservationProtocol)
+    bundle = hidream_adapter.build_initial_state(
+        batch_id="batch-hidream-obs-1", sample_id="sample-hidream-obs-1",
+    )
+    delta = _make_condition_delta(target_round=0, num_steps=3)
+    composed = hidream_adapter.compose_condition(bundle, delta)
+    trace = hidream_adapter.solve_ode(bundle, composed, seed=0)
+    results = hidream_adapter.observe(trace, bundle)
+    kinds = [r.kind for r in results]
+    assert kinds == [
+        ObservationKind.ENDPOINT_BUNDLE,
+        ObservationKind.TRAJECTORY_NATIVE,
+    ]
+    endpoint_obs, traj_obs = results
+    # ENDPOINT_BUNDLE payload is byte-identical to the legacy method.
+    legacy_endpoint = hidream_adapter.observe_endpoint(trace, bundle)
+    assert endpoint_obs.channel == "image_latent"
+    assert endpoint_obs.units == "state_bundle"
+    assert (
+        endpoint_obs.payload.native_state_digest
+        == legacy_endpoint.native_state_digest
+    )
+    assert endpoint_obs.metadata["source_round"] == legacy_endpoint.source_round
+    # TRAJECTORY_NATIVE payload is byte-identical to ``export_trajectory``.
+    assert traj_obs.channel == "image_latent"
+    assert traj_obs.units == "trajectory"
+    assert traj_obs.payload.shape == (4, 16, 128, 128)
+    np.testing.assert_array_equal(
+        traj_obs.payload, hidream_adapter.export_trajectory(trace)
+    )
+
+
+def test_observe_with_state_none(hidream_adapter: object) -> None:
+    """``observe`` returns an empty tuple when ``state`` is ``None``.
+
+    The Protocol permits ``state=None`` (``interfaces.py:617-619``); the
+    metric helper passes it when only non-endpoint strategies are wanted.
+    """
+    bundle = hidream_adapter.build_initial_state(
+        batch_id="batch-hidream-obs-2", sample_id="sample-hidream-obs-2",
+    )
+    delta = _make_condition_delta(target_round=0, num_steps=2)
+    composed = hidream_adapter.compose_condition(bundle, delta)
+    trace = hidream_adapter.solve_ode(bundle, composed, seed=0)
+    assert hidream_adapter.observe(trace, None) == ()
+
+
+def test_observe_skips_unsupported_kinds(hidream_adapter: object) -> None:
+    """DISCRETE_TOKENS / POSITION_ENTROPY_REDUCTION are skipped (continuous latent)."""
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    bundle = hidream_adapter.build_initial_state(
+        batch_id="batch-hidream-obs-3", sample_id="sample-hidream-obs-3",
+    )
+    delta = _make_condition_delta(target_round=0, num_steps=2)
+    composed = hidream_adapter.compose_condition(bundle, delta)
+    trace = hidream_adapter.solve_ode(bundle, composed, seed=0)
+    # Requesting only the unsupported kinds yields an empty tuple.
+    assert (
+        hidream_adapter.observe(
+            trace,
+            bundle,
+            strategies=(
+                ObservationKind.DISCRETE_TOKENS,
+                ObservationKind.POSITION_ENTROPY_REDUCTION,
+            ),
+        )
+        == ()
+    )
+    # A mixed request returns only the supported subset.
+    mixed = hidream_adapter.observe(
+        trace,
+        bundle,
+        strategies=(
+            ObservationKind.DISCRETE_TOKENS,
+            ObservationKind.ENDPOINT_BUNDLE,
+        ),
+        theta_before=None,
+        theta_after=None,
+    )
+    assert [r.kind for r in mixed] == [ObservationKind.ENDPOINT_BUNDLE]

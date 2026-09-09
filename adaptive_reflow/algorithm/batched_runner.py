@@ -310,11 +310,12 @@ class BatchedRunnerConfig:
     #: ``True`` and the scheduler exposes ``should_terminate_round``,
     #: the runner stops the round loop as soon as the scheduler reports
     #: that the cycle's metric has plateaued, instead of always paying
-    #: ``cycle_length * nfe_per_round``. ``False`` (default) preserves
-    #: the legacy open-loop behaviour exactly, so no existing run or
-    #: pinned vector changes. See
+    #: ``cycle_length * nfe_per_round``. Wave 95 Phase 1.A (E1): default
+    #: flipped to ``True`` so the framework reaches its theoretical bound
+    #: via early round termination; opt out with ``early_termination=False``
+    #: to recover the legacy open-loop behaviour bit-for-bit. See
     #: ``docs/audit/saturation-improvement-plan.md`` §2 FIX-2.
-    early_termination: bool = False
+    early_termination: bool = True
 
     def __post_init__(self) -> None:
         """Emit deprecation warnings for unused legacy slots.
