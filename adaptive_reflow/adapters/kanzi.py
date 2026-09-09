@@ -145,28 +145,70 @@ from adaptive_reflow.algorithm.perturbation import (
 # Module-level constants
 # ---------------------------------------------------------------------------
 
-#: Latent dimension. The Kanzi flow autoencoder compresses a length-``L``
-#: protein sequence into ``L_z`` continuous latent tokens each of dim
-#: ``d=64``. Matches the paper's reported bottleneck size for the
-#: Pfam-family subset.
-KANZI_LATENT_DIM: int = 64
+#: Latent dimension — **abstract / synthetic-mode default**.
+#:
+#: In synthetic mode (no torch ckpt loaded; the default for tests
+#: and the framework-algorithm integration tier) the adapter's
+#: continuous latent has dim ``d=64``. This is the **abstract**
+#: shape the framework algorithms exercise — it is NOT the real
+#: Kanzi ckpt's latent dim. The real dim is sourced from the
+#: checkpoint's ``model_cfg["n_channels_decoder"]`` at
+#: :meth:`KanziAdapter._load_ckpt_dims` time (Wave 36 ckpt value:
+#: ``512``).
+KANZI_ABSTRACT_LATENT_DIM: int = 64
 
-#: AR sequence length (number of latent tokens sampled by the AR prior).
-#: The published checkpoint uses ``L_z <= 128``; the adapter defaults to
-#: ``L_z = 64`` (a typical Pfam-domain length).
-KANZI_AR_SEQ_LENGTH: int = 64
+#: AR sequence length — **abstract / synthetic-mode default**.
+#:
+#: ``L_z = 64`` for synthetic-mode tests. The real ckpt's ``L`` is
+#: backbone-dependent (Wave 36 ckpt: 39..155); the adapter does not
+#: fix ``L`` at init time. See
+#: :attr:`KanziAdapter._real_seq_length`.
+KANZI_ABSTRACT_AR_SEQ_LENGTH: int = 64
 
-#: Per-position vocabulary size for the AR prior. The AR prior samples
-#: a discrete token index per latent position; the per-position
-#: vocabulary size is the number of distinct latent-token IDs. We use
-#: ``K = 64`` to match the latent-dim cardinality (the Kanzi paper
-#: quantises the continuous latent into ``K`` discrete codes; we use
-#: ``K = latent_dim`` for symmetry with the continuous side). The
-#: adapter treats the per-position categorical as opaque (the actual
-#: codebook is a model-internal detail; the framework only sees the
-#: per-position probabilities via the :data:`DISCRETE_TOKEN_INDEX`
-#: channel).
-KANZI_VOCAB_SIZE: int = 64
+#: Per-position vocabulary size — **abstract / synthetic-mode
+#: default**.
+#:
+#: ``K = 64`` for synthetic-mode tests. The real Kanzi ckpt's
+#: codebook size is ``prod(levels) = 1000`` (FSQ basis
+#: ``(8, 5, 5, 5)``); the real vocab is sourced from
+#: ``model_cfg["levels"]`` at :meth:`KanziAdapter._load_ckpt_dims`
+#: time.
+KANZI_ABSTRACT_VOCAB_SIZE: int = 64
+
+#: Default real-mode latent dim (Wave 36 ckpt, from
+#: ``model_cfg["n_channels_decoder"] = 512``).
+KANZI_DEFAULT_REAL_LATENT_DIM: int = 512
+
+#: Default real-mode vocab size (Wave 36 ckpt, from
+#: ``prod(model_cfg["levels"]) = 8 * 5 * 5 * 5 = 1000``).
+KANZI_DEFAULT_REAL_VOCAB_SIZE: int = 1000
+
+#: Native latent state shape — **abstract / synthetic-mode default**.
+#:
+#: Matches the per-position latent ``(L_z, d) = (64, 64)`` surface
+#: that the synthetic velocity field predicts. The real-mode shape
+#: is ``(L_per_record, 512)`` and is surfaced via the instance
+#: attribute :attr:`KanziAdapter.state_shape` after
+#: :meth:`KanziAdapter._load_ckpt_dims` runs.
+KANZI_ABSTRACT_STATE_SHAPE: tuple[int, ...] = (
+    KANZI_ABSTRACT_AR_SEQ_LENGTH,
+    KANZI_ABSTRACT_LATENT_DIM,
+)
+
+#: Flat latent dim — **abstract / synthetic-mode default**.
+KANZI_ABSTRACT_FLAT_LATENT_DIM: int = int(np.prod(KANZI_ABSTRACT_STATE_SHAPE))
+
+#: Backwards-compat aliases. The 18+ existing tests reference these
+#: names; we keep the same identifier pointing at the abstract
+#: values so the synthetic-mode contract is byte-identical to the
+#: pre-Wave-92 release. Real-mode readers (the bridge, the eval
+#: pipeline) should consume :attr:`KanziAdapter.state_shape`
+#: instead.
+KANZI_LATENT_DIM: int = KANZI_ABSTRACT_LATENT_DIM
+KANZI_AR_SEQ_LENGTH: int = KANZI_ABSTRACT_AR_SEQ_LENGTH
+KANZI_VOCAB_SIZE: int = KANZI_ABSTRACT_VOCAB_SIZE
+KANZI_STATE_SHAPE: tuple[int, ...] = KANZI_ABSTRACT_STATE_SHAPE
+KANZI_FLAT_LATENT_DIM: int = KANZI_ABSTRACT_FLAT_LATENT_DIM
 
 #: Channel vocabulary.
 #:
@@ -592,23 +634,46 @@ def _random_init_synthetic_weights(
     }
 
 
-def _synthesize_latent_like_tensor(rng: np.random.Generator) -> ArrayF64:
-    """Sample a latent-shape ``(L_z, d) = (64, 64)`` array from ``N(0, I)``."""
-    return rng.standard_normal(KANZI_STATE_SHAPE).astype(np.float64)
+def _synthesize_latent_like_tensor(
+    rng: np.random.Generator,
+    shape: tuple[int, ...] = KANZI_STATE_SHAPE,
+) -> ArrayF64:
+    """Sample a latent-shape array from ``N(0, I)``.
+
+    Default shape is the abstract ``(L_z, d) = (64, 64)`` (used by
+    synthetic-mode tests). In real mode, callers pass the
+    :attr:`KanziAdapter._real_state_shape` tuple so the latent
+    matches the real ckpt's ``(L, n_channels_decoder)`` shape and
+    the resulting trajectory feeds the bridge correctly.
+    """
+    return rng.standard_normal(shape).astype(np.float64)
 
 
-def _synthesize_discrete_token_indices(rng: np.random.Generator) -> ArrayF64:
-    """Sample a discrete-token-index array of shape ``(L_z,)`` over ``K=64`` vocab.
+def _synthesize_discrete_token_indices(
+    rng: np.random.Generator,
+    vocab_size: int | None = None,
+    seq_length: int | None = None,
+) -> ArrayF64:
+    """Sample a discrete-token-index array of shape ``(L_z,)``.
 
     Returns a float64 array of uniformly-distributed integer indices
-    in ``[0, KANZI_VOCAB_SIZE)``. The adapter treats the per-position
+    in ``[0, vocab_size)``. The adapter treats the per-position
     categorical as opaque (a real Kanzi codebook would map these
     indices into a learned discrete latent codebook; the framework
     only sees the per-position probabilities via the
     :data:`DISCRETE_TOKEN_INDEX` channel).
+
+    Wave 92 — the ``vocab_size`` arg defaults to the abstract
+    :data:`KANZI_ABSTRACT_VOCAB_SIZE = 64` for synthetic-mode tests
+    and is set to ``self._real_vocab_size = 1000`` (FSQ basis
+    ``(8, 5, 5, 5)``) when a real ckpt is loaded.
     """
+    if vocab_size is None:
+        vocab_size = int(KANZI_ABSTRACT_VOCAB_SIZE)
+    if seq_length is None:
+        seq_length = int(KANZI_ABSTRACT_AR_SEQ_LENGTH)
     return rng.integers(
-        0, int(KANZI_VOCAB_SIZE), size=int(KANZI_AR_SEQ_LENGTH)
+        0, int(vocab_size), size=int(seq_length)
     ).astype(np.float64)
 
 
@@ -905,26 +970,32 @@ def _torch_velocity_field(
     dtype: Any,
     cache: Mapping[str, Any],
     guidance_scale: float,
+    state_shape: tuple[int, ...] = KANZI_STATE_SHAPE,
 ) -> ArrayF64:
     """Call the PyTorch Kanzi encoder velocity field ``v_theta(x, t, family)``.
 
     The function is intentionally NOT wrapped in a public class — it
     is invoked by :meth:`KanziAdapter.solve_ode` only when the adapter
-    is in ``torch`` mode. The NumPy ``(L_z, d) = (64, 64)`` latent is
-    converted to ``torch.float32`` (matching the published checkpoint
-    dtype), the encoder is called inside ``torch.no_grad()``
-    (inference-only determinism), and the result is cast back to a
-    NumPy ``(64, 64)`` float64 array.
+    is in ``torch`` mode. The NumPy latent is converted to
+    ``torch.float32`` (matching the published checkpoint dtype), the
+    encoder is called inside ``torch.no_grad()`` (inference-only
+    determinism), and the result is cast back to a NumPy float64 array
+    of shape ``state_shape``.
+
+    The ``state_shape`` arg is wired by :meth:`KanziAdapter._velocity_field`
+    to :attr:`KanziAdapter._real_state_shape` in real mode and to
+    :data:`KANZI_ABSTRACT_STATE_SHAPE` in abstract mode — the
+    default ``KANZI_STATE_SHAPE = (64, 64)`` is kept for backwards
+    compatibility with any direct test seam.
 
     NOTE — this is the protocol-boundary call. The internal 1D
     convolution stack, family-id MLP, and AR prior codebook are
     implementation details; the adapter treats them as opaque.
 
-    The encoder ingests ``(1, L_z, d) = (1, 64, 64)`` per protein
-    and emits a velocity field of the same shape. The AR prior
-    (discrete sampler) is OUT of scope for the ODE loop — it is
-    invoked separately on the ODE endpoint to decode the latent into
-    a protein sequence.
+    The encoder ingests ``(1, L_z, d)`` per protein and emits a
+    velocity field of the same shape. The AR prior (discrete sampler)
+    is OUT of scope for the ODE loop — it is invoked separately on
+    the ODE endpoint to decode the latent into a protein sequence.
     """
     import torch  # local import — torch is optional at the framework level.
 
@@ -941,7 +1012,7 @@ def _torch_velocity_field(
         v = model(x_t, t_t, family=family_t)
         out = np.asarray(v.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
 
-    return out.reshape(KANZI_STATE_SHAPE)
+    return out.reshape(state_shape)
 
 
 def _load_torch_model(weights_path: Path) -> Any:
@@ -1033,7 +1104,11 @@ class KanziCapabilities(AdapterCapabilities):
     continuous tensor).
     """
 
-    def __init__(self) -> None:  # noqa: D401 — dataclass __init__ override
+    def __init__(
+        self,
+        *,
+        state_shape: tuple[int, ...] = KANZI_STATE_SHAPE,
+    ) -> None:  # noqa: D401 — dataclass __init__ override
         super().__init__(
             has_ode_integration_surface=True,
             has_prior_export=True,
@@ -1045,7 +1120,7 @@ class KanziCapabilities(AdapterCapabilities):
             has_trajectory_digest=True,
             has_deterministic_seed=True,
             has_materialization_route=True,
-            state_shape=KANZI_STATE_SHAPE,
+            state_shape=state_shape,
             supported_channels=KANZI_CHANNELS,
             channel_domains=KANZI_CHANNEL_DOMAINS,
             required_mixer=NoOpMixer,
@@ -1112,7 +1187,11 @@ class KanziAdapter(FlowMatchingODEAdapter):
     # F14: expose the adapter's state shape as both a class attribute
     # and an instance attribute so the runner's ``getattr(state_shape,
     # (2,))`` fallback is never exercised for this adapter.
-    state_shape: tuple[int, ...] = KANZI_STATE_SHAPE
+    # Wave 92 — the class attribute is the abstract shape (64, 64);
+    # the instance attribute is overridden in ``__init__`` to either
+    # the abstract shape (synthetic / no-ckpt) or the real
+    # ``(L_abstract, n_channels_decoder)`` shape (real ckpt loaded).
+    state_shape: tuple[int, ...] = KANZI_ABSTRACT_STATE_SHAPE
     # Mechanism ID — used as the leading entry of every bundle's
     # ``provenance`` tuple so the audit trail can trace a round back
     # to this adapter implementation.
@@ -1227,11 +1306,37 @@ class KanziAdapter(FlowMatchingODEAdapter):
         else:
             raise ValueError(f"unknown_force_mode:{force_mode}")
 
+        # Real-mode dim state (Wave 92). All ``None`` = abstract / synthetic
+        # mode; populated by :meth:`_load_ckpt_dims` when the real ckpt is
+        # loadable. ``_real_seq_length`` stays ``None`` because the real
+        # ckpt's ``L`` is per-record (backbone-dependent 39..155) — it is
+        # not fixed at adapter init time.
+        self._real_latent_dim: int | None = None
+        self._real_vocab_size: int | None = None
+        self._real_seq_length: int | None = None
+        self._real_levels: tuple[int, ...] | None = None
+
         # Backend handles.
         self._model: Any = None
         self._torch_dtype: Any = None
         self._synthetic_weights: dict[str, ArrayF64] | None = None
         if self._mode == "torch":
+            # Try to load real ckpt dims FIRST so :meth:`_load_ckpt_dims`
+            # can populate the real_* attributes before any consumer
+            # queries ``self.state_shape``. A load failure falls back
+            # silently to abstract dims — the synthetic-mode tests must
+            # keep passing even when the ckpt blob is malformed.
+            try:
+                self._load_ckpt_dims(self._weights_path)
+            except Exception:
+                # Defensive: a malformed ckpt must NEVER break the
+                # synthetic-mode tests. Real-mode consumers should
+                # assert ``self._abstract_mode is False`` before
+                # trusting the real_* attributes.
+                self._real_latent_dim = None
+                self._real_vocab_size = None
+                self._real_seq_length = None
+                self._real_levels = None
             self._model = _load_torch_model(self._weights_path)
             try:
                 import torch as _torch  # local.
@@ -1261,7 +1366,19 @@ class KanziAdapter(FlowMatchingODEAdapter):
         self._conditioning_cache: NativeStateCache = NativeStateCache(
             self._conditioning_cache_size
         )
-        self._caps = KanziCapabilities()
+        # Instance state_shape: abstract in synthetic / no-ckpt mode,
+        # ``(L_abstract, real_latent_dim)`` when a real ckpt loaded. The
+        # ``L_abstract = 64`` is the abstract L placeholder; per-record
+        # the solver uses the actual backbone L (39..155) — see
+        # :meth:`solve_ode`.
+        if self._abstract_mode:
+            self.state_shape = KANZI_ABSTRACT_STATE_SHAPE
+        else:
+            self.state_shape = (
+                int(KANZI_ABSTRACT_AR_SEQ_LENGTH),
+                int(self._real_latent_dim),
+            )
+        self._caps = KanziCapabilities(state_shape=self.state_shape)
 
     # ------------------------------------------------------------------
     # 1. capability handshake
@@ -1269,6 +1386,93 @@ class KanziAdapter(FlowMatchingODEAdapter):
 
     def capabilities(self) -> AdapterCapabilities:
         return self._caps
+
+    # ------------------------------------------------------------------
+    # 1b. mode dispatch helpers (Wave 92)
+    # ------------------------------------------------------------------
+
+    @property
+    def _abstract_mode(self) -> bool:
+        """``True`` iff no real ckpt was successfully loaded at init.
+
+        When ``True``, all shape constants resolve to the abstract
+        ``KANZI_ABSTRACT_*`` values (used by the framework-algorithm
+        synthetic-shape integration tier — see the 18+ tests in
+        :mod:`tests.test_adapters.test_kanzi`). When ``False``, the
+        adapter operates on the real Kanzi ckpt's ``(L, 512)`` latent
+        space with codebook size ``prod(levels) = 1000`` and the
+        bridge can decode ``observe_endpoint`` outputs through
+        ``FSQ.codes_to_indices`` + ``DAE.decode``.
+        """
+        return self._real_latent_dim is None
+
+    @property
+    def _real_state_shape(self) -> tuple[int, ...]:
+        """Per-record state shape for the real ckpt.
+
+        Returns ``(L_abstract, n_channels_decoder)`` when in real
+        mode. The ``L_abstract = 64`` is a placeholder matching the
+        abstract default; per-record ``solve_ode`` overrides ``L``
+        from the prior entry if the per-record backbone length is
+        stashed there (a Wave 92+ follow-up — currently all real-mode
+        integrations run with ``L = L_abstract``).
+        """
+        if self._abstract_mode or self._real_latent_dim is None:
+            return KANZI_ABSTRACT_STATE_SHAPE
+        return (
+            int(KANZI_ABSTRACT_AR_SEQ_LENGTH),
+            int(self._real_latent_dim),
+        )
+
+    def _load_ckpt_dims(self, ckpt_path: Path) -> None:
+        """Load ``n_channels_decoder`` + ``prod(levels)`` from the ckpt's ``model_cfg``.
+
+        Sets the four ``_real_*`` instance attributes:
+
+        * ``self._real_latent_dim`` — ``int(model_cfg["n_channels_decoder"])``
+          (Wave 36 ckpt: ``512``). The FSQ ``project_out`` output dim
+          and the per-row velocity-field width.
+        * ``self._real_vocab_size`` — ``int(np.prod(model_cfg["levels"]))``
+          (Wave 36 ckpt: ``prod(8, 5, 5, 5) = 1000``). The FSQ
+          codebook size; per-position discrete-token-index range.
+        * ``self._real_levels`` — ``tuple(int(x) for x in model_cfg["levels"])``
+          (Wave 36 ckpt: ``(8, 5, 5, 5)``). The FSQ basis; kept for
+          downstream ``FSQ.codes_to_indices`` round-trips.
+        * ``self._real_seq_length`` — ``None``. The real ckpt's
+          per-record ``L`` is backbone-dependent (39..155) and is not
+          fixed at adapter init time. ``solve_ode`` falls back to
+          ``L_abstract = 64`` when no per-record value is stashed on
+          the prior entry.
+
+        This is the **ROOT CAUSE FIX** for Wave 92 W2: the three
+        module-level constants
+        (:data:`KANZI_LATENT_DIM`, :data:`KANZI_VOCAB_SIZE`,
+        :data:`KANZI_AR_SEQ_LENGTH`) previously claimed ``(64, 64, 64)``
+        for the real Wave 36 model whose :class:`DAEConfig` actually
+        specifies ``(512, 1000, backbone-dependent)``. Loading these
+        values from the checkpoint's ``model_cfg`` at init time closes
+        the shape mismatch between the adapter solver trajectory
+        (previously ``(T, 64, 64)``) and the upstream ``DAE.decode``
+        input (expects ``(B, L, 512)``).
+
+        The load is silent on success and never mutates the
+        ``_real_*`` attributes on failure — a corrupt or missing ckpt
+        simply leaves the adapter in abstract mode, preserving the
+        synthetic-mode contract for the 18+ existing tests.
+        """
+        import torch  # local import — torch is optional at the framework level.
+
+        ckpt_blob = torch.load(
+            str(ckpt_path), map_location="cpu", weights_only=False,
+        )
+        cfg = ckpt_blob["model_cfg"]
+        self._real_latent_dim = int(cfg["n_channels_decoder"])
+        levels_raw = cfg["levels"]
+        levels = tuple(int(x) for x in levels_raw)
+        self._real_levels = levels
+        self._real_vocab_size = int(np.prod(levels))
+        # Per-record L is backbone-dependent; not fixable at init.
+        self._real_seq_length = None
 
     # ------------------------------------------------------------------
     # 0. helpers — LRU-bounded native_states + conditioning cache
@@ -1323,11 +1527,23 @@ class KanziAdapter(FlowMatchingODEAdapter):
             int(self._seed_offset) + 0,
         )
         rng = np.random.default_rng(seed)
-        x0 = _synthesize_latent_like_tensor(rng)
+        # Wave 92 — in real mode the latent has shape
+        # ``(L_abstract, n_channels_decoder)`` instead of the
+        # abstract ``(64, 64)``. This ensures the trajectory the
+        # solver produces matches the upstream DAE decoder input.
+        x0 = _synthesize_latent_like_tensor(
+            rng, shape=self._real_state_shape,
+        )
         # Sample the discrete-token-index side channel as a fresh
         # AR prior state. The real Kanzi AR prior would condition
-        # on this; here we sample uniformly.
-        discrete_idx = _synthesize_discrete_token_indices(rng)
+        # on this; here we sample uniformly. Wave 92 — vocab_size
+        # matches the real FSQ codebook size (1000) in real mode
+        # so the indices round-trip cleanly through the bridge.
+        discrete_idx = _synthesize_discrete_token_indices(
+            rng,
+            vocab_size=self._real_vocab_size,
+            seq_length=int(KANZI_ABSTRACT_AR_SEQ_LENGTH),
+        )
 
         # Build the conditioning cache for the *default* family ID.
         # The framework can override the family ID per-round via
@@ -1359,7 +1575,9 @@ class KanziAdapter(FlowMatchingODEAdapter):
         self._native_states.put(
             digest,
             {
-                "x0": np.asarray(x0, dtype=np.float64).reshape(KANZI_STATE_SHAPE),
+                "x0": np.asarray(x0, dtype=np.float64).reshape(
+                    self._real_state_shape,
+                ),
                 "discrete_idx": np.asarray(discrete_idx, dtype=np.float64),
                 "source_round": 0,
                 "mode": self._mode,
@@ -1463,7 +1681,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         beta, memory_fraction = memory_fraction_for(policy, ChannelName("protein_latent"))
 
         prior_x = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
-            KANZI_STATE_SHAPE
+            self._real_state_shape
         )
         next_round = int(state.source_round) + 1
         restart_seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
@@ -1484,7 +1702,11 @@ class KanziAdapter(FlowMatchingODEAdapter):
             if offset:
                 seed = (seed + offset) & 0xFFFF_FFFF
             fresh_rng = np.random.default_rng(seed)
-            fresh_x = _synthesize_latent_like_tensor(fresh_rng)
+            # Wave 92 — use real state shape in real mode so the
+            # restart preserves ``(L, 512)`` shape end-to-end.
+            fresh_x = _synthesize_latent_like_tensor(
+                fresh_rng, shape=self._real_state_shape,
+            )
             perturbation_audit: tuple[str, ...] = ()
         else:
             # Opt-in path. ``paper_quantities`` is read from the prior
@@ -1499,7 +1721,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                     float(prior_entry.get("t", 0.0)),
                 ),
                 dtype=np.float64,
-            ).reshape(KANZI_STATE_SHAPE)
+            ).reshape(self._real_state_shape)
             perturbation_audit = (AUDIT_KANZI_PERTURBATION_POLICY,)
 
         m_base = max(0.0, min(1.0, float(memory_fraction)))
@@ -1517,12 +1739,12 @@ class KanziAdapter(FlowMatchingODEAdapter):
                     prior_entry, base_m=m_base,
                 ),
                 dtype=np.float64,
-            ).reshape(int(KANZI_AR_SEQ_LENGTH))
+            ).reshape(int(KANZI_ABSTRACT_AR_SEQ_LENGTH))
             # Broadcast over the latent dimension ``d`` so each
             # position has a scalar ``m`` shared across the ``d``
             # channels of that position.
             m_vec_full = np.broadcast_to(
-                m_vec[:, None], KANZI_STATE_SHAPE,
+                m_vec[:, None], self._real_state_shape,
             )
             blended = (
                 m_vec_full * prior_x + (1.0 - m_vec_full) * fresh_x
@@ -1747,6 +1969,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 dtype=self._torch_dtype,
                 cache=conditioning,
                 guidance_scale=float(guidance_scale),
+                state_shape=self._real_state_shape,
             )
         assert self._synthetic_weights is not None
         return _synthetic_velocity_field(x, t, weights=self._synthetic_weights)
@@ -1801,7 +2024,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
             )
 
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
-            KANZI_STATE_SHAPE
+            self._real_state_shape if not self._abstract_mode else KANZI_ABSTRACT_STATE_SHAPE
         )
         # Deterministic Euler/Heun integration is reproducible for fixed
         # x0, conditioning, and integrator config. To honour the
@@ -1817,7 +2040,13 @@ class KanziAdapter(FlowMatchingODEAdapter):
         t_grid = np.linspace(
             0.0, float(KANZI_T_END), num_steps + 1, dtype=np.float64
         )
-        traj = np.empty((t_grid.size, *KANZI_STATE_SHAPE), dtype=np.float64)
+        traj = np.empty(
+            (t_grid.size, *(
+                self._real_state_shape if not self._abstract_mode
+                else KANZI_ABSTRACT_STATE_SHAPE
+            )),
+            dtype=np.float64,
+        )
         traj[0] = x0.copy()
         x_cur = x0.copy()
         for i in range(1, t_grid.size):
@@ -1921,8 +2150,11 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=trace.native_state_digest
             )
         trajectory = np.asarray(traj_entry["trajectory"], dtype=np.float64)
+        # Wave 92 — use the real state shape in real mode so the
+        # endpoint ``x_final`` is compatible with the upstream DAE
+        # decoder input (expect ``(L, 512)`` not ``(64, 64)``).
         x_final = np.asarray(trajectory[-1], dtype=np.float64).reshape(
-            KANZI_STATE_SHAPE
+            self._real_state_shape
         )
         endpoint_digest = digest_state(
             {
@@ -1940,7 +2172,9 @@ class KanziAdapter(FlowMatchingODEAdapter):
         self._native_states.put(
             endpoint_digest,
             {
-                "x": np.asarray(x_final, dtype=np.float64).reshape(KANZI_STATE_SHAPE),
+                "x": np.asarray(x_final, dtype=np.float64).reshape(
+                    self._real_state_shape,
+                ),
                 "t": float(KANZI_T_END),
                 "mode": self._mode,
                 "conditioning_hash": str(traj_entry.get("conditioning_hash", "")),
@@ -2091,10 +2325,18 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 16,
             )
             fallback_rng = np.random.default_rng(fallback_seed)
+            # Wave 92 — vocab range respects real ckpt's
+            # ``prod(levels)`` (1000) when loaded; abstract (64)
+            # otherwise.
+            vocab_size = (
+                int(self._real_vocab_size)
+                if self._real_vocab_size is not None
+                else int(KANZI_ABSTRACT_VOCAB_SIZE)
+            )
             discrete_idx = fallback_rng.integers(
                 0,
-                int(KANZI_VOCAB_SIZE),
-                size=int(KANZI_AR_SEQ_LENGTH),
+                vocab_size,
+                size=int(KANZI_ABSTRACT_AR_SEQ_LENGTH),
             ).astype(np.float64)
 
         return {str(DISCRETE_TOKEN_INDEX): discrete_idx}
@@ -2231,10 +2473,10 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=bundle.native_state_digest
             )
         x_prior = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
-            KANZI_STATE_SHAPE
+            self._real_state_shape
         )
         x_new_arr = np.asarray(injected, dtype=np.float64).reshape(
-            KANZI_STATE_SHAPE
+            self._real_state_shape
         )
         x_new = np.clip(x_prior + x_new_arr, -KANZI_LATENT_CLAMP, KANZI_LATENT_CLAMP)
         new_digest = digest_state(
@@ -2256,7 +2498,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "discrete_idx": np.asarray(
                     prior_entry.get(
                         "discrete_idx",
-                        np.zeros(KANZI_AR_SEQ_LENGTH, dtype=np.float64),
+                        np.zeros(KANZI_ABSTRACT_AR_SEQ_LENGTH, dtype=np.float64),
                     ),
                     dtype=np.float64,
                 ),
@@ -2332,12 +2574,19 @@ __all__ = [
     "ERR_KANZI_NUM_STEPS",
     "ERR_KANZI_WEIGHTS_MISSING",
     "GPT_PRIOR_PATCH_MARKER",
+    "KANZI_ABSTRACT_AR_SEQ_LENGTH",
+    "KANZI_ABSTRACT_FLAT_LATENT_DIM",
+    "KANZI_ABSTRACT_LATENT_DIM",
+    "KANZI_ABSTRACT_STATE_SHAPE",
+    "KANZI_ABSTRACT_VOCAB_SIZE",
     "KANZI_AR_SEQ_LENGTH",
     "KANZI_CHANNEL_DOMAINS",
     "KANZI_CHANNELS",
     "KANZI_CFG_SCALE_DEFAULT",
     "KANZI_CONFIG_HASH",
     "KANZI_CONFIG_VERSION",
+    "KANZI_DEFAULT_REAL_LATENT_DIM",
+    "KANZI_DEFAULT_REAL_VOCAB_SIZE",
     "KANZI_FAMILY_ID_DEFAULT",
     "KANZI_FLAT_LATENT_DIM",
     "KANZI_INTEGRATORS",

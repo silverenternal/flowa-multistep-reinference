@@ -67,6 +67,7 @@ from adaptive_reflow.adapters.kanzi import (
     KANZI_LATENT_CLAMP,
     KANZI_LATENT_DIM,
     KANZI_STATE_SHAPE,
+    KANZI_VOCAB_SIZE,
     KanziAdapter,
     KanziCapabilities,
     kanzi_resolve_weights_path,
@@ -345,7 +346,10 @@ def test_real_adapter_capabilities_match_synthetic() -> None:
     assert caps.has_ode_integration_surface
     assert caps.has_discrete_channels
     assert caps.has_continuous_channels
-    assert caps.state_shape == KANZI_STATE_SHAPE
+    # Wave 92 — capabilities reflect the per-instance state_shape
+    # (real-mode: (64, 512)) rather than the module-level abstract.
+    assert caps.state_shape == (64, 512)
+    assert caps.state_shape == adapter.state_shape
     assert caps.supported_channels == KANZI_CHANNELS
     assert caps.native_config_hash == KANZI_CONFIG_HASH
 
@@ -403,7 +407,12 @@ def test_real_adapter_smoke_round_trip(
 
     traj = adapter.export_trajectory(trace)
     assert traj is not None
-    assert traj.shape == (3, *KANZI_STATE_SHAPE)
+    # Wave 92 — real-mode trajectory uses the ckpt-derived shape
+    # (T, L_abstract, n_channels_decoder) = (3, 64, 512). Pre-Wave-92
+    # the trajectory had shape ``(T, 64, 64)`` and the upstream DAE
+    # decode call raised a shape mismatch on the first sample.
+    assert traj.shape == (3, 64, 512)
+    assert traj.shape == (3, *adapter.state_shape)
     import numpy as np
     assert np.isfinite(traj).all(), (
         "real-ckpt torch-mode trajectory must be finite everywhere"
@@ -438,7 +447,8 @@ def test_real_adapter_heun_solver_smoke(
     import numpy as np
     traj = adapter.export_trajectory(trace)
     assert traj is not None
-    assert traj.shape == (3, *KANZI_STATE_SHAPE)
+    # Wave 92 — Heun real-mode trajectory also uses ckpt shape.
+    assert traj.shape == (3, 64, 512)
     assert np.isfinite(traj).all()
 
 
@@ -570,7 +580,19 @@ def test_real_ckpt_conformance_battery(
 
 
 def test_real_adapter_state_shape_matches_synthetic() -> None:
-    """The torch-mode adapter advertises the same state shape as synthetic."""
+    """Wave 92 — abstract (synthetic) and real (ckpt-loaded) adapters
+    advertise DIFFERENT state shapes. The synthetic adapter
+    advertises the abstract ``(L, d) = (64, 64)`` (used by the
+    framework-algorithm integration tier); the real adapter
+    advertises the ckpt-derived ``(L_abstract, n_channels_decoder) =
+    (64, 512)`` so the trajectory endpoint can be fed into the
+    upstream :class:`DAE.decode` bridge.
+
+    Pre-Wave-92 the real adapter inherited the abstract
+    ``KANZI_STATE_SHAPE``; the upstream decode call expected
+    ``(B, L, 512)`` and the shape mismatch made the framework-arm
+    paper-metric unmeasurable at N=1000 (Wave 91 §3).
+    """
     if _REAL_CKPT_SKIP_REASON is not None:
         pytest.skip(_REAL_CKPT_SKIP_REASON)
     resolved = kanzi_resolve_weights_path()
@@ -579,8 +601,12 @@ def test_real_adapter_state_shape_matches_synthetic() -> None:
         weights_path=resolved, force_mode="torch", num_steps=2,
     )
     synthetic = KanziAdapter(force_mode="synthetic", num_steps=2)
-    assert real.state_shape == synthetic.state_shape == KANZI_STATE_SHAPE
-    assert real.state_shape == (KANZI_AR_SEQ_LENGTH, KANZI_LATENT_DIM)
+    # Synthetic mode: abstract shape preserved (no regression).
+    assert synthetic.state_shape == KANZI_STATE_SHAPE == (64, 64)
+    # Real mode: ckpt-derived shape; the latent dim matches the
+    # upstream DAEConfig ``n_channels_decoder = 512``.
+    assert real.state_shape == (64, 512)
+    assert real.state_shape != synthetic.state_shape
 
 
 def test_real_adapter_empty_batch_handled(
@@ -611,3 +637,93 @@ def test_real_adapter_zero_noise_boundary(
     delta = kanzi_real_adapter.compose_condition(bundle, delta)
     trace = kanzi_real_adapter.solve_ode(bundle, delta, seed=0)
     assert trace.steps >= 1
+
+
+# ---------------------------------------------------------------------------
+# 7. Wave 92 — ckpt model_cfg load + abstract-vs-real mode split
+# ---------------------------------------------------------------------------
+
+
+def test_load_ckpt_dims_round_trip() -> None:
+    """Wave 92 — ``_load_ckpt_dims`` correctly extracts real dims from ckpt.
+
+    The 3 WRONG constants
+    (:data:`KANZI_LATENT_DIM = 64`,
+    :data:`KANZI_VOCAB_SIZE = 64`,
+    :data:`KANZI_AR_SEQ_LENGTH = 64`)
+    previously claimed the Wave 36 ckpt had ``(64, 64, 64)`` shape.
+    The ckpt's ``model_cfg`` actually specifies ``n_channels_decoder =
+    512`` and ``levels = (8, 5, 5, 5)`` (codebook size 1000). This
+    test asserts the load surfaces the correct values.
+    """
+    if _REAL_CKPT_SKIP_REASON is not None:
+        pytest.skip(_REAL_CKPT_SKIP_REASON)
+    resolved = kanzi_resolve_weights_path()
+    assert resolved is not None
+    adapter = KanziAdapter(
+        weights_path=resolved, force_mode="torch", num_steps=2,
+    )
+    # After ``_load_ckpt_dims`` the four ``_real_*`` attributes are
+    # populated from the ckpt's ``model_cfg`` (not the abstract
+    # constants).
+    assert adapter._real_latent_dim == 512
+    assert adapter._real_vocab_size == 1000
+    assert adapter._real_levels == (8, 5, 5, 5)
+    # ``_real_seq_length`` is None (per-record backbone-dependent).
+    assert adapter._real_seq_length is None
+    assert adapter._abstract_mode is False
+
+
+def test_state_shape_abstract_vs_real() -> None:
+    """Wave 92 — abstract and real adapters return distinct state shapes.
+
+    Abstract (synthetic / no-ckpt): ``(L, d) = (64, 64)``.
+    Real (ckpt loaded): ``(L, n_channels_decoder) = (64, 512)``.
+    """
+    syn = KanziAdapter(force_mode="synthetic", num_steps=2)
+    assert syn._abstract_mode is True
+    assert syn.state_shape == (64, 64)
+    assert syn._real_state_shape == (64, 64)
+
+    if _REAL_CKPT_SKIP_REASON is not None:
+        pytest.skip(_REAL_CKPT_SKIP_REASON)
+    resolved = kanzi_resolve_weights_path()
+    assert resolved is not None
+    real = KanziAdapter(
+        weights_path=resolved, force_mode="torch", num_steps=2,
+    )
+    assert real._abstract_mode is False
+    assert real.state_shape == (64, 512)
+    assert real._real_state_shape == (64, 512)
+
+
+def test_abstract_constants_unchanged_for_back_compat() -> None:
+    """Wave 92 — KANZI_LATENT_DIM / KANZI_VOCAB_SIZE / KANZI_AR_SEQ_LENGTH
+    alias the ABSTRACT values so the 18+ existing synthetic-mode
+    tests are byte-identical.
+
+    The existing adapter constant names point at the abstract
+    defaults (``(64, 64, 64)``). The real values are surfaced via
+    :attr:`KanziAdapter._real_*` attributes and the new
+    :data:`KANZI_DEFAULT_REAL_LATENT_DIM` /
+    :data:`KANZI_DEFAULT_REAL_VOCAB_SIZE` module constants.
+    """
+    # Existing names: still point at abstract defaults.
+    assert KANZI_LATENT_DIM == 64
+    assert KANZI_VOCAB_SIZE == 64
+    assert KANZI_AR_SEQ_LENGTH == 64
+    assert KANZI_STATE_SHAPE == (64, 64)
+    # New names: abstract / real split is explicit.
+    from adaptive_reflow.adapters.kanzi import (
+        KANZI_ABSTRACT_LATENT_DIM,
+        KANZI_ABSTRACT_VOCAB_SIZE,
+        KANZI_ABSTRACT_STATE_SHAPE,
+        KANZI_DEFAULT_REAL_LATENT_DIM,
+        KANZI_DEFAULT_REAL_VOCAB_SIZE,
+    )
+    assert KANZI_ABSTRACT_LATENT_DIM == 64
+    assert KANZI_ABSTRACT_VOCAB_SIZE == 64
+    assert KANZI_ABSTRACT_STATE_SHAPE == (64, 64)
+    # Real defaults match the Wave 36 ckpt values.
+    assert KANZI_DEFAULT_REAL_LATENT_DIM == 512
+    assert KANZI_DEFAULT_REAL_VOCAB_SIZE == 1000
