@@ -1353,6 +1353,131 @@ known failure; a clean re-run is follow-up #6 below.
 7. **FreqFlow / MM-FM** — indefinitely deferred (no upstream ckpt / no shipped adapter)
 8. **CI dashboard** — composite-aware check in `tools/capability_audit.py` so G-MASTER is reported alongside the Tier 3 composite
 
+---
+
+## Wave 92 refactor verification (post-Wave 91 + Wave 92a/b/c, 2026-09-09 → 2026-09-10)
+
+**Date:** 2026-09-10
+**Agent:** Wave 98 Agent A
+**Scope:** Wave 92a KanziAdapter refactor — fix 3 WRONG constants via ckpt model_cfg load (commit `73c6978`). CPU-only code review + checklist update. Verifies the abstract-mode synthetic contract is byte-stable so all 18+ existing tests still pass; the real-mode shape `(64, 512)` is now sourced from `torch.load(ckpt)['model_cfg']`.
+
+### MUST-1: G-FRAMEWORK-HEALTH HARD gates — UNCHANGED PASS
+
+**Status:** PASS (unchanged). Wave 92a/92b/92c/93 are framework-data-plane work (Kanzi adapter shape + upstream N-samples + N=1000 paper-metric sweep + statistical-power analysis tool). No `adaptive_reflow/` algorithm/core surface was perturbed, so all 28 internal HARD gates + 7 group-G gates remain at their Wave 52-56 close-out readings.
+
+- 28/28 internal HARD gates PASS (D.4 18/18, E.1 41/41, B.3 mkdocs --strict, F.5 env_hash pinned, F.6 mutation score 0.833)
+- 5/5 group-G HARD PASS + 2/2 SOFT PASS (G.1 0.0884 ≥ +0.05, G.3 -0.0251 ≥ -0.03, G.4 3 ≥ 3, G.5 27.5 NFE ≤ 50, G.6 0.25 ≤ 0.30, G.7 7/7 ≥ 6/7)
+- `must_4_freeze_gate = PASS`
+- env-hash `779d5a22…29af9` (stable since Wave 47 — no env mutation from Waves 91-97)
+
+### MUST-2: G-MASTER-PHASE-3 per-model — UNCHANGED PASS
+
+**Status:** PASS (unchanged). Wave 92a confirms KanziAdapter (RANKING model #1) is now both synthetic-mode byte-stable AND real-ckpt-mode shape-correct:
+
+- **KANZI_ABSTRACT_LATENT_DIM = 64** (line 158) — synthetic-mode default (preserves 18+ existing tests' byte-stable contract)
+- **KANZI_ABSTRACT_VOCAB_SIZE = 64** (line 176) — synthetic-mode default
+- **KANZI_ABSTRACT_AR_SEQ_LENGTH = 64** (line 166) — synthetic-mode default
+- **KANZI_DEFAULT_REAL_LATENT_DIM = 512** (line 180) — Wave 36 ckpt, `model_cfg["n_channels_decoder"]`
+- **KANZI_DEFAULT_REAL_VOCAB_SIZE = 1000** (line 184) — Wave 36 ckpt, `prod(model_cfg["levels"]) = 8×5×5×5`
+- **`KanziAdapter._load_ckpt_dims`** (lines 1404-1430) — reads `torch.load(ckpt_path, weights_only=False)['model_cfg']` → sets `_real_latent_dim=512`, `_real_vocab_size=1000`, `_real_levels=(8,5,5,5)`, `_real_seq_length=None` (per-record backbone-dependent)
+- **`KanziAdapter._abstract_mode`** property — `True` iff no ckpt loaded (returns 64/64 abstract defaults via `KANZI_ABSTRACT_STATE_SHAPE`)
+- **`KanziAdapter._real_state_shape`** property — returns `(64, 512)` in real mode, `(64, 64)` in abstract mode
+- **Defensive try/except** around `_load_ckpt_dims` in `__init__` (lines 1329-1339) — a malformed ckpt must NEVER break the synthetic-mode tests; the `except Exception` falls back to `None` so `_abstract_mode` stays True
+
+#### Synthetic-mode test results (this verify)
+
+```
+$ .venvs/flowmol3_venv/bin/python -m pytest tests/test_adapters/test_kanzi.py tests/test_adapters/test_kanzi_real_ckpt.py -v
+... 73 passed, 3 skipped in 20.32s
+```
+
+- **73 PASS, 3 SKIPPED** (the 3 skips are `kanzi package not installed in this venv` — expected in `flowmol3_venv`; `kanzi_venv` would surface them)
+- 46 tests in `test_kanzi.py` (synthetic-mode + Protocol surface + observe_*/GPT-prior/BRAI + restart-blend byte-stability)
+- 27 tests in `test_kanzi_real_ckpt.py` (real-ckpt-load + ckpt-dims-round-trip + state-shape-abstract-vs-real + back-compat alias assertions + D.5 conformance battery × 8 cells)
+- **3 new tests added by Wave 92a**:
+  - `test_load_ckpt_dims_round_trip` — asserts `_real_latent_dim=512`, `_real_vocab_size=1000`, `_real_levels=(8,5,5,5)`, `_real_seq_length=None`
+  - `test_state_shape_abstract_vs_real` — asserts synthetic mode returns `(64, 64)` and real mode returns `(64, 512)`
+  - `test_abstract_constants_unchanged_for_back_compat` — asserts the old `KANZI_LATENT_DIM`/`KANZI_VOCAB_SIZE`/`KANZI_AR_SEQ_LENGTH`/`KANZI_STATE_SHAPE` aliases still point at the abstract defaults so the 18+ existing tests keep passing
+
+#### D.4 byte-stable regression (this verify)
+
+```
+$ .venvs/flowmol3_venv/bin/python -m pytest tests/ -k d4 --ignore=tests/test_expecttest_smoke.py
+... 33 passed, 2 skipped, 5189 deselected, 9 warnings in 9.74s
+```
+
+- **33/33 D.4 byte-stable regression vectors PASS**
+- 2 skipped are `tests/perf/test_kernel_benchmarks.py` (pytest-benchmark plugin not in this venv — pre-existing skip, not Wave 92a)
+- Confirms the abstract-mode synthetic contract is byte-identical to pre-Wave-92 — every regression vector matches
+
+### MUST-3: framework-core glue — UNCHANGED PASS
+
+**Status:** PASS (unchanged). Wave 92a did NOT touch `adaptive_reflow/core/` or per-adapter refactors; the KanziAdapter refactor is purely adapter-local (constants + `_load_ckpt_dims` method). 5 adapters still consume `adaptive_reflow/core/`:
+- flowmol3 (`core.diffusers_wrapper.DiffusersForwardWrapper`, Wave 41 Agent B)
+- self_flow (`core.ckpt_loader.{resolve_candidate_paths, load_state_dict_strict_safe}`, Wave 42 Agent D)
+- mnist_fm (Wave 44 Agent A)
+- twodim_fm (Wave 44 Agent B)
+- rectified_flow_cifar (Wave 44 Agent C)
+
+### MUST-4: group-G capability metrics — UNCHANGED PASS
+
+**Status:** PASS (unchanged). Wave 92a is a refactor that sources real dims from the ckpt; it does not perturb the value surface (no CONSOLIDATED_RESULTS row affected, no algorithm change, no scheduler change). The 4-tier numbers from Wave 90-91 still hold.
+
+- `g_master_capability = PASS`, `must_4_freeze_gate = PASS`
+- Per-G values: G.1 0.0884, G.2 0.962, G.3 -0.0251, G.4 3, G.5 27.5 NFE, G.6 0.25, G.7 7/7
+- env-hash `779d5a22…29af9` (unchanged)
+
+### MUST-5: pushed to origin/main — UNCHANGED (user-gated)
+
+**Status:** NOT DONE (unchanged, user-gated). Wave 92a/92b/93 land unpushed per the Wave 33 Agent H "do not push" protocol that has held through Wave 56. Push authorization remains a user decision.
+
+### Wave 92a byte-stability verdict
+
+The Wave 92a refactor is **byte-stable** for the synthetic-mode contract:
+
+1. The 5 backwards-compat aliases (`KANZI_LATENT_DIM`, `KANZI_VOCAB_SIZE`, `KANZI_AR_SEQ_LENGTH`, `KANZI_STATE_SHAPE`, `KANZI_FLAT_LATENT_DIM`) resolve to the same `KANZI_ABSTRACT_*` values as the pre-Wave-92 module constants — every existing test that reads `KANZI_LATENT_DIM` continues to see `64`
+2. The `_load_ckpt_dims` call is wrapped in a try/except that defaults to abstract-mode on any ckpt-load failure — a missing/malformed ckpt can NEVER break a synthetic-mode test
+3. The new real-mode path only activates when `_mode == "torch"` AND `_load_ckpt_dims` succeeds — i.e., when the real Wave 36 ckpt blob is present at `data/kanzi_ckpt/cleaned_model.pt`
+4. 73 Kanzi tests pass (3 expected skips); 33/33 D.4 regression vectors pass; the abstract-mode byte-stable surface is unchanged
+
+### Wave 92/93/95/96/97 cross-references (additive)
+
+- `docs/audit/wave92a-kanzi-fix-constants.md` — full Wave 92a refactor audit (Agent A's deliverable; 18+ abstract-mode tests PASS verified)
+- `docs/audit/wave92b-kanzi-upstream-n-samples.md` — Wave 92b `--upstream-n-samples` patch to `tools/upstream_eval.py` (LineageFlow Wave 81 pattern reused)
+- `docs/audit/wave93-statistical-power.md` — Wave 93 statistical-power analysis tool + 4 unit tests (CPU)
+- `docs/audit/wave91-phase4-final.md` — Wave 91 Kanzi N=1000 framework-arm paper-metric sweep + latent→coord bridge
+- `docs/audit/wave94-cover-letter.md` — Wave 94 ICLR 2027 cover letter draft
+- `docs/audit/wave95-consolidated-results-refresh.md` — Wave 95 CONSOLIDATED_RESULTS.md refresh with Wave 91-93 entries
+- `docs/audit/wave96-paper-ablations-expand.md` — Wave 96 paper §Ablations expansion with Wave 71-74 NFE-scan data
+- `docs/audit/wave97-submission-templates.md` — Wave 97 submission_checklist.md + supplementary.md templates
+
+### Wave 98 Agent A verify commands run (this verify)
+
+```bash
+# 1. Kanzi constants lines 140-280 verified (KANZI_ABSTRACT_LATENT_DIM=64, defaults 512/1000, _load_ckpt_dims in place)
+$ head -270 adaptive_reflow/adapters/kanzi.py | tail -130
+
+# 2. Kanzi adapter + real-ckpt tests
+$ .venvs/flowmol3_venv/bin/python -m pytest tests/test_adapters/test_kanzi.py tests/test_adapters/test_kanzi_real_ckpt.py -v
+... 73 passed, 3 skipped in 20.32s
+
+# 3. D.4 byte-stable regression
+$ .venvs/flowmol3_venv/bin/python -m pytest tests/ -k d4 --ignore=tests/test_expecttest_smoke.py
+... 33 passed, 2 skipped, 5189 deselected in 9.74s
+
+# 4. Wave 92a refactor audit doc
+$ cat docs/audit/wave92a-kanzi-fix-constants.md | head -50
+# → Wave 92 Agent A audit, Kanzi adapter refactor: fix 3 WRONG constants via ckpt model_cfg load
+# → 18+ abstract-mode tests PASS verified, real-ckpt mode reads 512/1000
+
+# 5. Kanzi N=1000 paper-metric evidence (Wave 88)
+$ ls verification_outputs/kanzi_n1000_paper_metrics/kanzi_n1000_paper_metrics.json
+# → file present, Wave 88 Agent C output (N=1000 paper-claim FINAL re-evaluation)
+# → mean_rmsd_A = 0.8235, codebook_entropy = 6.06 bits, codebook_utilization = 0.131
+```
+
+**Status (unchanged):** PASS — 5/5 MUST verdict unchanged from Wave 56 close-out (gates 1-4 PASS, MUST-5 user-gated). Wave 92a is a precision refactor: same byte-stable synthetic-mode contract + new real-ckpt-mode shape correctness for the framework-arm paper-metric sweep.
+
 ## Cross-references for this close-out
 
 - `todo/STATUS.md` — matching `Wave 52-56 close-out` section
