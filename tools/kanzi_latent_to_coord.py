@@ -53,6 +53,21 @@ import numpy as np
 # Upstream-side paths (resolved at call time, not import time).
 KANZI_UPSTREAM_SRC: str = "data/kanzi_upstream/src"
 
+# Wave 95 Phase 3.B — Path B (train inverse). The bridge replaces the
+# Wave 92c ``torch.cdist`` nearest-neighbour (NN) projection with a
+# trained ``Linear(512 → 4)`` inverse of the FSQ ``project_out`` map.
+# See ``docs/audit/wave95-phase3-pin-probe.md`` for the decision-tree
+# output (col-space residual > 0.01 fires the NEED-TO-TRAIN path even
+# though the Moore-Penrose identity is algebraically valid) and
+# ``tools/_kanzi_project_out_inv_train.py`` for the training script.
+#
+# The state_dict is ~8 KB and lives next to the bridge so the module is
+# self-contained at runtime. Loaded LAZILY on the first ``kanzi_latent_to_coords``
+# call so module import stays cheap (matches the existing local-import
+# pattern for ``torch`` + ``kanzi``).
+_PROJECT_OUT_INV_PATH: str = "tools/_kanzi_project_out_inv.pt"
+_PROJECT_OUT_INV_CACHE: dict[str, Any] | None = None
+
 
 def kanzi_latent_to_coords(
     latent: "np.ndarray | Any",
@@ -160,69 +175,53 @@ def kanzi_latent_to_coords(
     #
     # Wave 92c workaround: ``FSQ.implicit_codebook`` is built by
     # ``indices_to_codes(torch.arange(self.codebook_size),
-    # project_out=True)`` at __init__ time, yielding the full
-    # ``(1000, n_channels_decoder=512)`` post-``project_out`` codebook.
-    # We do a nearest-neighbour L2 projection of each ``x_final`` row
-    # onto this codebook to recover ``idx_BL`` — the bridge now goes
-    # ``(L, 512) -> (L,) argmin over 1000 codes`` instead of forcing the
-    # upstream ``FSQ`` to ingest the wrong-shape input. This is the
-    # closest deterministic surrogate to ``quantize(project_in(x_final))``
-    # available without adding a new trained inverse projection layer
-    # (Wave 93+ work; see docs/audit/wave92c-n1000-sweep-real.md).
+    # project_out=False)`` at __init__ time, yielding the full
+    # ``(1000, codebook_dim=4)`` pre-``project_out`` codebook.
+    # Wave 95 Phase 3.B: we now apply a *trained* ``Linear(512 → 4)``
+    # inverse of ``project_out`` (see ``tools/_kanzi_project_out_inv.pt``)
+    # to each ``x_final`` row to get a 4-d latent estimate, then
+    # argmin over the 1000 4-d codebook entries. This is the
+    # algebraically-faithful inverse path (vs. the Wave 92c 512-d
+    # ``torch.cdist`` nearest-neighbour surrogate). See
+    # ``docs/audit/wave95-phase3-pin-probe.md`` for the decision-tree
+    # output and the rationale for choosing Path B (5-min training)
+    # over Path A (Moore-Penrose identity).
     with torch.no_grad():
-        # Resolve the implicit codebook deterministically.
-        # Production path: the real upstream ``FSQ`` builds
+        # Resolve the 4-d implicit codebook. The upstream FSQ stores
         # ``implicit_codebook`` at ``__init__`` (line 89:
-        # ``indices_to_codes(torch.arange(codebook_size),
-        # project_out=True)``) — shape ``(1000, n_channels_decoder)``.
-        # Test path: the test FSQ mock also exposes a deterministic
-        # ``(1000, d)`` tensor on ``fsq_quantizer.implicit_codebook``.
-        # If neither is present (or the shape mismatches), fall back
-        # to ``fsq_quantizer.indices_to_codes`` (used in
-        # synthetic-mode unit tests where ``implicit_codebook`` is
-        # not pre-built).
-        #
-        # We need ``codes_1K`` of shape ``(K, d)`` where ``d ==
-        # x_t.shape[-1]``. ``torch.cdist`` requires both inputs to
-        # have the same ``d``; we reshape ``x_t`` to ``(B, L, d)``
-        # so the batch+sequence dims are explicit.
-        # Resolve the implicit codebook deterministically. Note:
-        # we use direct attribute access (not ``getattr``) because the
-        # MagicMock auto-attr machinery in unit tests can shadow
-        # explicitly-set attributes. The production FSQ always sets
-        # ``implicit_codebook`` at ``__init__`` line 89.
+        # ``indices_to_codes(arange(codebook_size), project_out=False)``)
+        # with shape ``(1000, codebook_dim=4)``. We use direct attribute
+        # access (not ``getattr``) because the MagicMock auto-attr
+        # machinery in unit tests can shadow explicitly-set attributes.
         implicit_codebook = fsq_quantizer.implicit_codebook
         if (
             implicit_codebook is None
             or not isinstance(implicit_codebook, torch.Tensor)
-            or implicit_codebook.shape[-1] != x_t.shape[-1]
+            or implicit_codebook.shape[-1] != 4
         ):
-            # Defensive fallback: rebuild the implicit codebook by
-            # running ``indices_to_codes`` with ``project_out=True``
-            # so the projection target matches ``x_final``'s
-            # n_channels_decoder dim.
-            codes_1K = fsq_quantizer.indices_to_codes(
+            # Defensive fallback: rebuild the 4-d implicit codebook by
+            # running ``indices_to_codes`` with ``project_out=False``.
+            codes_4d = fsq_quantizer.indices_to_codes(
                 torch.arange(
                     int(fsq_quantizer.codebook_size),
                     device=device,
                 ),
-                project_out=True,
-            )  # (1000, n_channels_decoder)
+                project_out=False,
+            )  # (1000, 4)
         else:
-            codes_1K = implicit_codebook
-        # General-shape NN projection: ``x_t`` may be ``(B, L, d)`` or
-        # ``(1, L, d)`` (after the unsqueeze above). Reshape to
-        # ``(B, L, d)`` and compute pairwise L2 against
-        # ``codes_1K (K, d)`` → ``dists (B, L, K)`` → argmin → ``idx_BL
-        # (B, L)``. ``torch.cdist`` needs both inputs as ``(N, d)`` per
-        # batch — we collapse ``(B, L, d) → (B*L, d)`` for the call
-        # and reshape the result back to ``(B, L, K)``.
+            codes_4d = implicit_codebook.float()
+
+        # Wave 95 Phase 3.B trained-inverse path. Project each
+        # post-``project_out`` row ``x_t[B, L, 512]`` through the
+        # trained ``Linear(512 → 4)`` to get a 4-d latent estimate,
+        # then argmin over the 1000 4-d codebook entries.
         B_dim = int(x_t.shape[0])
         L_dim = int(x_t.shape[1])
-        x_flat = x_t.reshape(B_dim * L_dim, -1).float()  # (B*L, d)
+        x_flat = x_t.reshape(B_dim * L_dim, -1).float()  # (B*L, 512)
+        x_4d = _apply_project_out_inv(x_flat)  # (B*L, 4)
         dists = torch.cdist(
-            x_flat, codes_1K.float(),  # (B*L, d) vs (K, d)
-        )  # (B*L, K)
+            x_4d, codes_4d.float(),  # (B*L, 4) vs (1000, 4)
+        )  # (B*L, 1000)
         idx_BL = dists.argmin(dim=-1).to(torch.int64).reshape(
             B_dim, L_dim,
         )  # (B, L)
@@ -237,6 +236,76 @@ def kanzi_latent_to_coords(
     # Step 4: nm → Angstrom, float64 (matches adapter numpy contract).
     out = x_pred.detach().cpu().numpy() * 10.0
     return out.astype(np.float64)
+
+
+# ---------------------------------------------------------------------------
+# Wave 95 Phase 3.B — trained Linear(512 → 4) inverse of FSQ ``project_out``.
+# ---------------------------------------------------------------------------
+
+
+def _load_project_out_inv() -> dict[str, Any]:
+    """Lazy-load the Wave 95 Phase 3.B trained inverse.
+
+    Returns a dict with keys ``state_dict`` (nn.Linear weights),
+    ``input_dim``, ``output_dim``, ``levels``, and ``schema_version``.
+    Cached module-level so repeated bridge calls re-use the same
+    loaded object.
+
+    Raises
+    ------
+    FileNotFoundError
+        If ``tools/_kanzi_project_out_inv.pt`` is missing (run
+        ``tools/_kanzi_project_out_inv_train.py`` first).
+    """
+    global _PROJECT_OUT_INV_CACHE
+    if _PROJECT_OUT_INV_CACHE is not None:
+        return _PROJECT_OUT_INV_CACHE
+    import torch  # local import — keep module-load cheap
+    from pathlib import Path as _Path  # noqa: WPS433 — local import by design
+
+    # Resolve relative to this module file (works under spec_from_file_location
+    # and direct ``python -m tools.kanzi_latent_to_coord`` alike).
+    try:
+        module_dir = _Path(__file__).resolve().parent
+    except NameError:
+        module_dir = None
+    inv_path = (
+        module_dir / "_kanzi_project_out_inv.pt"
+        if module_dir is not None else _Path(_PROJECT_OUT_INV_PATH)
+    )
+    if not inv_path.exists():
+        # Fallback to CWD-relative (the test hermetic import path).
+        inv_path = _Path(_PROJECT_OUT_INV_PATH)
+    if not inv_path.exists():
+        raise FileNotFoundError(
+            f"Wave 95 Phase 3.B trained inverse not found at {inv_path}. "
+            f"Run tools/_kanzi_project_out_inv_train.py to generate it."
+        )
+    blob = torch.load(str(inv_path), map_location="cpu", weights_only=False)
+    _PROJECT_OUT_INV_CACHE = blob
+    return blob
+
+
+def _apply_project_out_inv(x_t: "torch.Tensor") -> "torch.Tensor":
+    """Apply the trained ``Linear(512 → 4)`` inverse to ``x_t``.
+
+    Mirrors the structure of the original Wave 92c NN step but replaces
+    ``torch.cdist(x_t, codes_1K_512d)`` with a two-stage projection:
+    ``inv_linear(x_t) → (B*L, 4)`` followed by argmin over the 1000
+    4-d basis codes (``implicit_codebook`` with ``project_out=False``).
+    See ``docs/audit/wave95-phase3-pin-probe.md`` for the algebraic
+    justification and Wave 95 Phase 3.B commit for the training recipe.
+    """
+    import torch  # local import — keep module-load cheap
+
+    inv_blob = _load_project_out_inv()
+    state = inv_blob["state_dict"]
+    # Reconstruct the Linear at call time so callers don't need torch.nn
+    # at module-import time.
+    weight = state["weight"].float().to(device=x_t.device)
+    bias = state["bias"].float().to(device=x_t.device)
+    # Linear(x) = x @ weight.T + bias — matches nn.Linear semantics.
+    return torch.nn.functional.linear(x_t, weight, bias)
 
 
 __all__ = [
