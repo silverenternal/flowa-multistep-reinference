@@ -26,6 +26,21 @@ data file:
     "mol" config). When ``full_pb=False`` it uses only the subset of
     PB checks active in the vendored ``pb_config.yaml`` (which is
     what the Wave 73 path uses — energy_ratio is commented out).
+
+Wave 95 default-switch (F2 UFF-vs-xtb definitional gap):
+``compute_pb_validity_pct`` returns a 3-key dict where the primary
+``pb_validity`` key is the **xtb-based number** (the gold standard —
+matches the paper's stated measurement semantics) when the xtb
+bridge runs end-to-end, and **gracefully falls back to the UFF-based
+number** (preserved for byte-stable backward compatibility with prior
+waves) when xtb is unavailable on ``$PATH``. The raw UFF value is
+always preserved under the ``pb_validity_uff`` key so readers can
+compute the UFF-vs-xtb definitional gap directly via a single dict
+diff. ``status`` discriminates "xtb ran" from "uff_fallback". This
+default switch is what closes the Wave 88 FlowMol3 framework-arm
+``pb_validity_pct`` regression: with UFF-only the energy_ratio
+module's rejection step is mis-calibrated vs the paper's xtb-tuned
+threshold, producing a -9.95pp false REGRESS.
   * :func:`compute_fg_deviation` calls upstream
     ``SampleAnalyzer.reos_and_rings`` + the vendored
     ``data/geom_full_kekulized/train_reos_ring_counts.pkl`` reference
@@ -290,25 +305,39 @@ def compute_pb_validity_pct(
     (``flowmol/analysis/metrics.py:154-166``). The ``full_pb`` flag
     selects between two upstream ``PoseBusters`` configurations.
 
-    IMPORTANT — Wave 87 audit note (preserved + extended Wave 90):
+    IMPORTANT — Wave 87 audit note (preserved + extended Wave 90 + 95):
     PB 0.6.5's ``energy_ratio`` module is UFF-based
     (verified at
     ``.venvs/flowmol3_venv/.../posebusters/modules/energy_ratio.py:6-14``,
     which imports ``UFFGetMoleculeForceField`` from RDKit). The UFF
-    result lands in the returned ``pb_validity`` key.
+    result is preserved in the returned ``pb_validity_uff`` key for
+    byte-stable downstream diff/audit use.
 
-    Wave 90 — xtb-based re-evaluation (NEW): After the UFF-driven
+    Wave 90 — xtb-based re-evaluation: After the UFF-driven
     ``analyze()`` returns, this function additionally calls
     :func:`tools.flowmol3_xtb_bridge.xtb_energy_ratio` for each
     successful mol and re-evaluates the energy-ratio criterion against
     the xtb-flavoured ratio (using ``xtb_threshold=100.0`` paper value).
-    The xtb result lands in the returned ``pb_validity_xtb`` key.
-    When xtb is unavailable on the host, ``pb_validity_xtb`` falls
-    back to ``pb_validity`` (the UFF value) so the returned dict is
-    always well-defined; a debug log line records the fallback.
-    Direct UFF-vs-xtb comparison is therefore always possible without
-    extra plumbing — readers can diff the two keys to see how much
-    the choice of energy engine moves the PB validity number.
+    The xtb result lands in the returned ``pb_validity`` key.
+
+    Wave 95 — default switch (F2 UFF-vs-xtb definitional gap): The
+    primary ``pb_validity`` key now returns the **xtb-based number**
+    when xtb ran end-to-end, and **gracefully falls back to the
+    UFF-based number** (preserved as ``pb_validity_uff``) when xtb is
+    unavailable on ``$PATH``. This guarantees:
+
+      1. The returned dict is always well-defined (the key contract
+         never breaks) — readers can consume ``out['pb_validity']``
+         without an ``if status`` guard.
+      2. The UFF-vs-xtb definitional gap is always visible via
+         ``out['pb_validity']`` vs ``out['pb_validity_uff']`` — readers
+         that want to audit the energy-engine choice can diff the two
+         keys regardless of which engine actually ran.
+      3. Downstream regression analysis (e.g. Wave 88's FlowMol3
+         framework-arm ``pb_validity_pct`` -9.95pp regression) gets
+         the honest xtb-based number by default; the UFF-based
+         number remains available for byte-stable backward
+         compatibility.
 
     Cross-reference — xtb-driven geometry metrics (``med_rmsd``,
     ``med_energy_gain``, ``med_mmff_drop``) are computed by
@@ -357,36 +386,53 @@ def compute_pb_validity_pct(
     Returns
     -------
     dict[str, Any]
-        Three-key dict for direct UFF-vs-xtb comparison + status:
+        Three-key dict (Wave 95 default): primary ``pb_validity`` is
+        the **best available** PB pass rate ∈ ``[0.0, 1.0]``
+        (xtb-based when xtb ran, UFF-based when xtb fell back); the
+        raw UFF value is preserved under ``pb_validity_uff`` for
+        byte-stable diff/audit.
 
-          * ``pb_validity`` — UFF-based PB pass rate ∈ ``[0.0, 1.0]``
+          * ``pb_validity`` — PRIMARY pass rate (Wave 95 default).
+            xtb-based when ``status == "xtb"``, UFF-based when
+            ``status == "uff_fallback"`` (graceful fallback — the
+            returned number is always well-defined and within
+            ``[0.0, 1.0]``). Downstream consumers should read this
+            key for the paper-aligned number.
+          * ``pb_validity_uff`` — UFF-based PB pass rate ∈ ``[0.0, 1.0]``
             (the value PoseBusters 0.6.5 reports internally; preserved
             from prior versions of this function for byte-stable
-            backward compatibility — callers that previously consumed
-            a ``float`` should read ``result['pb_validity']``).
-          * ``pb_validity_xtb`` — xtb-based PB pass rate ∈
-            ``[0.0, 1.0]`` computed via per-mol
-            :func:`tools.flowmol3_xtb_bridge.xtb_energy_ratio` with the
-            ``xtb_threshold`` cutoff. When xtb is unavailable on the
-            host, falls back to ``pb_validity`` (UFF) and logs a debug
-            line — this guarantees the returned dict is always
-            well-defined.
+            backward compatibility + UFF-vs-xtb definitional gap
+            audit). Always set to the raw UFF ``pb_valid`` value
+            regardless of xtb availability.
+          * ``pb_validity_xtb`` — REMOVED in Wave 95. Previously the
+            xtb-only key; the xtb value now lives under ``pb_validity``
+            (the new default). Readers that previously consumed
+            ``out['pb_validity_xtb']`` should read ``out['pb_validity']``
+            when ``status == "xtb"`` and ``out['pb_validity_uff']``
+            otherwise (or just ``out['pb_validity']`` if they want
+            the best-available number regardless of engine).
           * ``status`` — one of:
               - ``"xtb"``: xtb bridge ran end-to-end (imports OK + at
                 least one per-mol xtb energy ratio was evaluated).
+                ``pb_validity`` is the xtb-based number.
               - ``"uff_fallback"``: xtb bridge was unavailable or
                 failed upfront (import error, no mols, SDWriter setup
-                failure, xtb_optimize_sdf raise, opt SDF missing);
-                ``pb_validity_xtb`` mirrors the UFF value.
+                failure, xtb_optimize_sdf raise, opt SDF missing).
+                ``pb_validity`` is the UFF-based number (graceful
+                fallback preserves the returned-dict contract).
 
-        All three keys are ``0.0`` (or ``"uff_fallback"``) on
+        All keys are ``0.0`` (with ``status == "uff_fallback"``) on
         upstream import failure.
     """
     modules = _try_get_upstream()
     if modules is None:
+        # Wave 95 default: primary ``pb_validity`` is best-available
+        # (xtb when xtb ran, UFF on graceful fallback). Upstream import
+        # failed → no xtb bridge available, so both keys collapse to
+        # ``0.0`` and ``status`` reports the fallback.
         return {
             "pb_validity": 0.0,
-            "pb_validity_xtb": 0.0,
+            "pb_validity_uff": 0.0,
             "status": "uff_fallback",
         }
     SampleAnalyzer = modules["SampleAnalyzer"]
@@ -460,7 +506,7 @@ def compute_pb_validity_pct(
                     )
                     return {
                         "pb_validity": 0.0,
-                        "pb_validity_xtb": 0.0,
+                        "pb_validity_uff": 0.0,
                         "status": "uff_fallback",
                     }
                 pb_valid_uff = float(out.get("pb_valid", 0.0))
@@ -473,9 +519,20 @@ def compute_pb_validity_pct(
                     pb_workers=int(pb_workers),
                     fallback=pb_valid_uff,
                 )
+                # Wave 95 default switch (F2 UFF-vs-xtb definitional gap):
+                # primary ``pb_validity`` returns the xtb-based number
+                # when xtb ran (the gold standard — matches the paper's
+                # measurement semantics); UFF is preserved under
+                # ``pb_validity_uff`` for byte-stable diff/audit. On
+                # graceful UFF fallback (xtb unavailable), the primary
+                # key mirrors the UFF value so the returned dict is
+                # always well-defined.
+                primary_pb_validity = (
+                    pb_valid_xtb if xtb_status == "xtb" else pb_valid_uff
+                )
                 return {
-                    "pb_validity": pb_valid_uff,
-                    "pb_validity_xtb": pb_valid_xtb,
+                    "pb_validity": primary_pb_validity,
+                    "pb_validity_uff": pb_valid_uff,
                     "status": xtb_status,
                 }
     # Wave 73 subset path: pb_energy=False loads the upstream
@@ -502,9 +559,14 @@ def compute_pb_validity_pct(
         pb_workers=int(pb_workers),
         fallback=pb_valid_uff,
     )
+    # Wave 95 default switch: primary ``pb_validity`` returns the
+    # best-available value (xtb when xtb ran, UFF on graceful fallback).
+    primary_pb_validity = (
+        pb_valid_xtb if xtb_status == "xtb" else pb_valid_uff
+    )
     return {
-        "pb_validity": pb_valid_uff,
-        "pb_validity_xtb": pb_valid_xtb,
+        "pb_validity": primary_pb_validity,
+        "pb_validity_uff": pb_valid_uff,
         "status": xtb_status,
     }
 

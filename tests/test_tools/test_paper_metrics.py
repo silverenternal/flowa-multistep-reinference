@@ -305,22 +305,24 @@ def test_pb_validity_pct_subset_vs_full(monkeypatch: pytest.MonkeyPatch) -> None
     mols = [_FakeSampledMolecule() for _ in range(4)]
     pb_full = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
     pb_subset = paper_metrics.compute_pb_validity_pct(mols, full_pb=False, pb_workers=0)
-    # Wave 90: returns a 3-key dict with ``pb_validity`` (UFF),
-    # ``pb_validity_xtb`` (xtb post-processing — falls back to UFF
-    # when xtb is unavailable, which is the test-rig state), and
-    # ``status`` (xtb-vs-uff-fallback discriminator).
+    # Wave 95 default: 3-key dict with ``pb_validity`` (PRIMARY —
+    # xtb when xtb ran, UFF on graceful fallback), ``pb_validity_uff``
+    # (preserved UFF value for byte-stable diff/audit), and ``status``
+    # (xtb-vs-uff-fallback discriminator).
     assert isinstance(pb_full, dict)
     assert isinstance(pb_subset, dict)
-    assert set(pb_full) == {"pb_validity", "pb_validity_xtb", "status"}
-    assert set(pb_subset) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert set(pb_full) == {"pb_validity", "pb_validity_uff", "status"}
+    assert set(pb_subset) == {"pb_validity", "pb_validity_uff", "status"}
     # Canned mock: full_pb (vendored YAML) returns 0.92; subset_pb
-    # (no energy_ratio module) returns 0.99.
+    # (no energy_ratio module) returns 0.99. xtb pipeline unavailable
+    # on the test rig → primary ``pb_validity`` mirrors the UFF value
+    # via the graceful fallback path.
     assert pb_full["pb_validity"] == pytest.approx(0.92, abs=1e-9)
     assert pb_subset["pb_validity"] == pytest.approx(0.99, abs=1e-9)
-    # xtb pipeline is unavailable on the test rig → ``pb_validity_xtb``
-    # falls back to the UFF value.
-    assert pb_full["pb_validity_xtb"] == pytest.approx(pb_full["pb_validity"], abs=1e-9)
-    assert pb_subset["pb_validity_xtb"] == pytest.approx(pb_subset["pb_validity"], abs=1e-9)
+    # UFF is always preserved under ``pb_validity_uff`` regardless of
+    # xtb availability (byte-stable diff/audit guarantee).
+    assert pb_full["pb_validity_uff"] == pytest.approx(0.92, abs=1e-9)
+    assert pb_subset["pb_validity_uff"] == pytest.approx(0.99, abs=1e-9)
     # Sanity: vendored YAML path is stricter than subset path
     # (energy_ratio adds an extra rejection step).
     assert pb_full["pb_validity"] <= pb_subset["pb_validity"]
@@ -500,20 +502,20 @@ def test_pb_validity_pct_uses_xtb_energy_ratio(
 
     mols = [_FakeSampledMolecule() for _ in range(4)]
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
-    # Wave 90: returns 3-key dict with ``pb_validity`` (UFF),
-    # ``pb_validity_xtb`` (xtb post-processing — falls back to UFF
-    # when xtb is unavailable, which is the test-rig state), and
-    # ``status`` (xtb-vs-uff-fallback discriminator).
+    # Wave 95 default: 3-key dict with ``pb_validity`` (PRIMARY —
+    # xtb when xtb ran, UFF on graceful fallback), ``pb_validity_uff``
+    # (preserved UFF value for byte-stable diff/audit), and ``status``
+    # (xtb-vs-uff-fallback discriminator).
     assert isinstance(out, dict)
-    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert set(out) == {"pb_validity", "pb_validity_uff", "status"}
     # When the vendored YAML is injected, the canned "xtb_injected"
     # bucket returns ``pb_valid = 0.92`` (matches the paper-parity
-    # value).
+    # value). xtb pipeline unavailable on the test rig → primary
+    # ``pb_validity`` mirrors the UFF value via the graceful fallback
+    # path; ``pb_validity_uff`` is also 0.92.
     assert out["pb_validity"] == pytest.approx(0.92, abs=1e-9)
+    assert out["pb_validity_uff"] == pytest.approx(0.92, abs=1e-9)
     assert 0.0 <= out["pb_validity"] <= 1.0
-    # xtb pipeline unavailable on test rig → ``pb_validity_xtb``
-    # falls back to ``pb_validity`` value.
-    assert out["pb_validity_xtb"] == pytest.approx(out["pb_validity"], abs=1e-9)
     # Sanity: the vendored YAML path is NOT the same as the
     # ``full_pb=False`` subset path. The subset path uses the upstream
     # vendored ``pb_config.yaml`` (energy_ratio commented out) and
@@ -569,20 +571,20 @@ def test_pb_validity_pct_returns_real_number_when_xtb_installed(
 
     mols = [_FakeSampledMolecule() for _ in range(4)]
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
-    # Wave 90+ : returns a 3-key dict (``pb_validity``, ``pb_validity_xtb``,
+    # Wave 95 default: 3-key dict (``pb_validity``, ``pb_validity_uff``,
     # ``status``).
     assert isinstance(out, dict)
-    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert set(out) == {"pb_validity", "pb_validity_uff", "status"}
     # The vendored YAML bucket returns ``pb_valid = 0.92`` per the
     # paper-parity value (Dunn et al., NeurIPS 2024, arXiv 2508.12629).
     assert 0.0 <= out["pb_validity"] <= 1.0
-    assert 0.0 <= out["pb_validity_xtb"] <= 1.0
+    assert 0.0 <= out["pb_validity_uff"] <= 1.0
     # Real finite floats (not NaN, not inf, not the upstream
     # import-failure sentinel).
     assert out["pb_validity"] == out["pb_validity"]  # not NaN
     assert out["pb_validity"] not in (float("inf"), float("-inf"))
-    assert out["pb_validity_xtb"] == out["pb_validity_xtb"]
-    assert out["pb_validity_xtb"] not in (float("inf"), float("-inf"))
+    assert out["pb_validity_uff"] == out["pb_validity_uff"]
+    assert out["pb_validity_uff"] not in (float("inf"), float("-inf"))
 
 
 def test_pb_validity_pct_falls_back_to_uff_when_xtb_missing(
@@ -632,15 +634,17 @@ def test_pb_validity_pct_falls_back_to_uff_when_xtb_missing(
     # subset_pb path (Wave 73 byte-stable behavior). The canned
     # ``subset_pb`` bucket returns ``pb_valid = 0.99``.
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
-    # Wave 90+ : returns a 3-key dict.
+    # Wave 95 default: 3-key dict (``pb_validity``, ``pb_validity_uff``,
+    # ``status``).
     assert isinstance(out, dict)
-    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert set(out) == {"pb_validity", "pb_validity_uff", "status"}
     assert 0.0 <= out["pb_validity"] <= 1.0
-    assert 0.0 <= out["pb_validity_xtb"] <= 1.0
+    assert 0.0 <= out["pb_validity_uff"] <= 1.0
     assert out["pb_validity"] == pytest.approx(0.99, abs=1e-9)
-    # xtb pipeline unavailable on test rig → ``pb_validity_xtb`` falls
-    # back to ``pb_validity``.
-    assert out["pb_validity_xtb"] == pytest.approx(out["pb_validity"], abs=1e-9)
+    # xtb pipeline unavailable on test rig → primary ``pb_validity``
+    # mirrors the UFF value via graceful fallback; ``pb_validity_uff``
+    # is also 0.99.
+    assert out["pb_validity_uff"] == pytest.approx(out["pb_validity"], abs=1e-9)
     # Sanity: subset path with ``full_pb=False`` returns the same
     # value (the fallback IS the subset path).
     out_explicit_subset = paper_metrics.compute_pb_validity_pct(
@@ -774,13 +778,15 @@ def test_compute_pb_validity_pct_does_not_call_xtb_optimization(
 
     mols = [_FakeSampledMolecule() for _ in range(4)]
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
-    # Wave 90+ : 3-key dict. The vendored YAML injection path returns
-    # the paper-parity ``xtb_injected`` bucket (~0.92). If this
+    # Wave 95 default: 3-key dict. The vendored YAML injection path
+    # returns the paper-parity ``xtb_injected`` bucket (~0.92). If this
     # assertion passes without raising, the contract is verified: PB
-    # path did NOT touch xtb.
+    # path did NOT touch xtb. Primary ``pb_validity`` mirrors the UFF
+    # value via graceful fallback (xtb unavailable on test rig).
     assert isinstance(out, dict)
-    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert set(out) == {"pb_validity", "pb_validity_uff", "status"}
     assert out["pb_validity"] == pytest.approx(0.92, abs=1e-9)
+    assert out["pb_validity_uff"] == pytest.approx(0.92, abs=1e-9)
     assert 0.0 <= out["pb_validity"] <= 1.0
 
 
@@ -925,9 +931,11 @@ def test_pb_validity_pct_vendored_yaml_injection_matches_paper_target(
 
     mols = [_FakeSampledMolecule() for _ in range(10)]
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
-    # Wave 90+ : returns a 3-key dict.
+    # Wave 95 default: 3-key dict (``pb_validity``, ``pb_validity_uff``,
+    # ``status``). Primary ``pb_validity`` mirrors the UFF value via
+    # graceful fallback (xtb unavailable on test rig).
     assert isinstance(out, dict)
-    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert set(out) == {"pb_validity", "pb_validity_uff", "status"}
     # Paper target: 0.919 (Dunn et al., NeurIPS 2024, arXiv 2508.12629).
     # Canned ``xtb_injected`` bucket returns 0.92. Tolerance: ±5% of
     # 0.919 = 0.04595.
@@ -1126,24 +1134,26 @@ def test_compute_pb_validity_pct_with_xtb(
         mols, full_pb=True, pb_workers=0
     )
     assert isinstance(out_no_xtb, dict)
-    assert set(out_no_xtb) == {"pb_validity", "pb_validity_xtb", "status"}
+    # Wave 95 default: 3-key dict (``pb_validity``, ``pb_validity_uff``,
+    # ``status``).
+    assert set(out_no_xtb) == {"pb_validity", "pb_validity_uff", "status"}
     # The status field must be the fallback literal.
     assert out_no_xtb["status"] == "uff_fallback", (
         f"expected status='uff_fallback' when xtb bridge is missing; "
         f"got status={out_no_xtb['status']!r}"
     )
-    # When xtb is missing, pb_validity_xtb MUST mirror pb_validity
-    # (the UFF value passed as fallback). Direct UFF-vs-xtb diff is
+    # When xtb is missing, primary ``pb_validity`` mirrors the UFF
+    # value via the graceful fallback path. Direct UFF-vs-xtb diff is
     # therefore 0 — the UFF number propagates through unchanged.
-    assert out_no_xtb["pb_validity_xtb"] == pytest.approx(
+    assert out_no_xtb["pb_validity_uff"] == pytest.approx(
         out_no_xtb["pb_validity"], abs=1e-9
     )
-    assert out_no_xtb["pb_validity_xtb"] == out_no_xtb["pb_validity"]
+    assert out_no_xtb["pb_validity_uff"] == out_no_xtb["pb_validity"]
     # Both numbers are well-defined finite floats in [0, 1].
     assert 0.0 <= out_no_xtb["pb_validity"] <= 1.0
-    assert 0.0 <= out_no_xtb["pb_validity_xtb"] <= 1.0
+    assert 0.0 <= out_no_xtb["pb_validity_uff"] <= 1.0
     assert out_no_xtb["pb_validity"] == out_no_xtb["pb_validity"]  # not NaN
-    assert out_no_xtb["pb_validity_xtb"] == out_no_xtb["pb_validity_xtb"]
+    assert out_no_xtb["pb_validity_uff"] == out_no_xtb["pb_validity_uff"]
 
     # ------------------------------------------------------------------
     # Phase 2 — xtb bridge AVAILABLE.
@@ -1197,7 +1207,9 @@ def test_compute_pb_validity_pct_with_xtb(
         mols_xtb, full_pb=True, pb_workers=0
     )
     assert isinstance(out_xtb, dict)
-    assert set(out_xtb) == {"pb_validity", "pb_validity_xtb", "status"}
+    # Wave 95 default: 3-key dict (``pb_validity``, ``pb_validity_uff``,
+    # ``status``).
+    assert set(out_xtb) == {"pb_validity", "pb_validity_uff", "status"}
     # The xtb bridge MUST have run end-to-end.
     assert out_xtb["status"] == "xtb", (
         f"expected status='xtb' when xtb bridge is mocked as available; "
@@ -1214,26 +1226,41 @@ def test_compute_pb_validity_pct_with_xtb(
     )
     # Both numbers are well-defined finite floats in [0, 1].
     assert 0.0 <= out_xtb["pb_validity"] <= 1.0
-    assert 0.0 <= out_xtb["pb_validity_xtb"] <= 1.0
+    assert 0.0 <= out_xtb["pb_validity_uff"] <= 1.0
     assert out_xtb["pb_validity"] == out_xtb["pb_validity"]
-    assert out_xtb["pb_validity_xtb"] == out_xtb["pb_validity_xtb"]
-    # The UFF and xtb numbers CAN be different — they come from
-    # different energy models. The UFF value is whatever the canned
-    # vendored-YAML bucket returns (0.92); the xtb value is derived
-    # from the 3 mock ratios (all < 100.0 threshold → all pass →
-    # pb_validity_xtb = 1.0 for the 4-mol set). We assert that
-    # the values are present and finite, NOT that they differ in a
-    # specific way (the test must remain deterministic regardless of
-    # what the mock returns).
+    assert out_xtb["pb_validity_uff"] == out_xtb["pb_validity_uff"]
+    # Wave 95 default-switch contract: when xtb ran, primary
+    # ``pb_validity`` is the **xtb-based** number; ``pb_validity_uff``
+    # remains the UFF value. The two are now allowed to differ because
+    # the primary key has switched engines.
+    #   * UFF value (pb_validity_uff) = canned vendored-YAML bucket
+    #     returns 0.92 (deterministic from the mock upstream
+    #     SampleAnalyzer).
+    #   * xtb value (pb_validity) = derived from the 3 mock ratios
+    #     (all < 100.0 threshold → all pass → 1.0 for the 4-mol set).
+    # We assert that the values are present and finite, NOT that they
+    # differ in a specific way (the test must remain deterministic
+    # regardless of what the mock returns).
     assert isinstance(out_xtb["pb_validity"], float)
-    assert isinstance(out_xtb["pb_validity_xtb"], float)
+    assert isinstance(out_xtb["pb_validity_uff"], float)
 
-    # Sanity: the two test phases produced the SAME UFF value (UFF
-    # is deterministic from the canned upstream SampleAnalyzer mock;
-    # only the xtb-side depends on the bridge availability).
-    assert out_no_xtb["pb_validity"] == out_xtb["pb_validity"], (
-        f"UFF pb_validity should be deterministic across phases; "
-        f"phase1={out_no_xtb['pb_validity']}, phase2={out_xtb['pb_validity']}"
+    # Sanity (Wave 95): the two test phases produce the SAME UFF value
+    # under ``pb_validity_uff`` (UFF is deterministic from the canned
+    # upstream SampleAnalyzer mock; only the xtb-side depends on the
+    # bridge availability).
+    assert out_no_xtb["pb_validity_uff"] == out_xtb["pb_validity_uff"], (
+        f"UFF pb_validity_uff should be deterministic across phases; "
+        f"phase1={out_no_xtb['pb_validity_uff']}, "
+        f"phase2={out_xtb['pb_validity_uff']}"
+    )
+    # Sanity (Wave 95): primary ``pb_validity`` DIFFERS across phases
+    # because the default now switches engines when xtb is available
+    # (Phase 1 = UFF fallback = 0.92; Phase 2 = xtb = 1.0).
+    assert out_no_xtb["pb_validity"] != out_xtb["pb_validity"], (
+        f"Wave 95 default switch: primary pb_validity should differ "
+        f"across phases (Phase 1 = UFF fallback, Phase 2 = xtb). "
+        f"phase1={out_no_xtb['pb_validity']}, "
+        f"phase2={out_xtb['pb_validity']}"
     )
     # Sanity: the status fields differ — phase 1 is fallback,
     # phase 2 is xtb.
@@ -1400,28 +1427,32 @@ def test_compute_pb_validity_pct_xtb_missing(monkeypatch: pytest.MonkeyPatch) ->
     out = paper_metrics.compute_pb_validity_pct(mols, full_pb=True, pb_workers=0)
 
     # Result shape is the 3-key dict — same as the happy path.
+    # Wave 95 default: ``pb_validity`` (primary, best-available),
+    # ``pb_validity_uff`` (always UFF), ``status`` discriminator.
     assert isinstance(out, dict)
-    assert set(out) == {"pb_validity", "pb_validity_xtb", "status"}
+    assert set(out) == {"pb_validity", "pb_validity_uff", "status"}
 
     # UFF-side: the vendored YAML was injected, so the canned
     # ``xtb_injected`` bucket returns ``pb_valid = 0.92`` (the
     # paper-parity value). The xtb-side failure must NOT bleed into
     # the UFF value.
     assert out["pb_validity"] == pytest.approx(0.92, abs=1e-9)
+    assert out["pb_validity_uff"] == pytest.approx(0.92, abs=1e-9)
     assert 0.0 <= out["pb_validity"] <= 1.0
 
     # xtb-side: the very first per-mol ``xtb_energy_ratio`` call
     # raised ``FileNotFoundError`` (xtb binary missing on $PATH).
     # The helper short-circuits to the UFF-fallback contract —
-    # ``pb_validity_xtb`` mirrors the UFF ``pb_validity`` value
-    # passed as ``fallback``. This guarantees the returned dict is
+    # primary ``pb_validity`` mirrors the UFF value (via the
+    # ``status != "xtb"`` branch), and ``pb_validity_uff`` always
+    # holds the raw UFF number. This guarantees the returned dict is
     # always well-defined and the UFF-vs-xtb diff is zero (callers
     # can still compute it; it just collapses to the no-op case).
-    assert out["pb_validity_xtb"] == pytest.approx(out["pb_validity"], abs=1e-9)
-    assert out["pb_validity_xtb"] == out["pb_validity"]
-    assert 0.0 <= out["pb_validity_xtb"] <= 1.0
-    assert out["pb_validity_xtb"] == out["pb_validity_xtb"]  # not NaN
-    assert out["pb_validity_xtb"] not in (float("inf"), float("-inf"))
+    assert out["pb_validity_uff"] == pytest.approx(out["pb_validity"], abs=1e-9)
+    assert out["pb_validity_uff"] == out["pb_validity"]
+    assert 0.0 <= out["pb_validity_uff"] <= 1.0
+    assert out["pb_validity_uff"] == out["pb_validity_uff"]  # not NaN
+    assert out["pb_validity_uff"] not in (float("inf"), float("-inf"))
 
     # Status discriminator: the xtb-side FileNotFoundError must flip
     # ``status`` to ``"xtb_unavailable"`` — distinct from
@@ -1445,12 +1476,86 @@ def test_compute_pb_validity_pct_xtb_missing(monkeypatch: pytest.MonkeyPatch) ->
 
 
 # ---------------------------------------------------------------------------
+# Wave 95 Phase 2.D — pb_validity default switch (F2 UFF-vs-xtb gap)
+#
+# Regression test for the Wave 95 default switch: the primary
+# ``pb_validity`` key must return the **xtb-based number** when the xtb
+# bridge runs end-to-end (the gold standard — matches the paper's
+# stated measurement semantics), and gracefully fall back to the
+# UFF-based number when xtb is unavailable on ``$PATH``. The raw UFF
+# value is always preserved under ``pb_validity_uff`` for byte-stable
+# diff/audit.
+# ---------------------------------------------------------------------------
+
+
+def test_pb_validity_default_is_xtb(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Wave 95 default switch: ``pb_validity`` returns xtb when xtb ran.
+
+    Verifies the contract:
+      * When xtb runs end-to-end (``status == "xtb"``), the primary
+        ``pb_validity`` key returns the xtb-based number (not UFF).
+      * The UFF-based value is preserved under ``pb_validity_uff``
+        (byte-stable diff/audit guarantee).
+      * When xtb is unavailable (``status == "uff_fallback"``), the
+        primary ``pb_validity`` key mirrors the UFF value via the
+        graceful fallback path — the returned dict stays well-defined.
+    """
+    # ------------------------------------------------------------------
+    # Phase 1 — xtb bridge AVAILABLE (default-switch case)
+    # ------------------------------------------------------------------
+    _install_mock_flowmol(monkeypatch)
+    import types as _types
+
+    fake_posebusters = _types.ModuleType("posebusters")
+
+    class _FakePoseBusters:
+        def __init__(self, *, config: Any = None, max_workers: int = 0, **_kw: Any):
+            self._config = config
+
+    fake_posebusters.PoseBusters = _FakePoseBusters
+    monkeypatch.setitem(sys.modules, "posebusters", fake_posebusters)
+
+    fake_yaml = _types.ModuleType("yaml")
+    fake_yaml.safe_load = lambda fh: {"modules": [{"name": "Loading",
+                                                  "function": "loading"}]}
+    monkeypatch.setitem(sys.modules, "yaml", fake_yaml)
+    _install_mock_xtb_bridge(monkeypatch)
+
+    from tools import paper_metrics  # noqa: PLC0415
+
+    class _RDKitMol:  # noqa: D401 — minimal duck-typed RDKit mol
+        def __init__(self) -> None:
+            self._props: dict[str, str] = {}
+
+        def SetProp(self, key: str, value: str) -> None:
+            self._props[str(key)] = str(value)
+
+        def GetProp(self, key: str) -> str:
+            return self._props[str(key)]
+
+    class _MolXtb(_FakeSampledMolecule):
+        def build_molecule(self) -> Any:  # type: ignore[override]
+            return _RDKitMol()
+
+    out_xtb = paper_metrics.compute_pb_validity_pct(
+        [_MolXtb() for _ in range(4)], full_pb=True, pb_workers=0
+    )
+    assert out_xtb["status"] == "xtb"  # xtb ran end-to-end
+    assert out_xtb["pb_validity"] == pytest.approx(1.0, abs=1e-9)
+    # xtb-based number ≠ UFF-based number — the primary key switched
+    # engines. UFF is preserved for diff/audit under ``pb_validity_uff``.
+    assert out_xtb["pb_validity_uff"] == pytest.approx(0.92, abs=1e-9)
+    assert out_xtb["pb_validity"] != out_xtb["pb_validity_uff"]
+
+
+# ---------------------------------------------------------------------------
 # __all__ — re-export the public test names so test discovery is robust.
 # ---------------------------------------------------------------------------
 
 __all__ = (
     "test_compute_pb_validity_pct_xtb_missing",
     "test_compute_pb_validity_pct_with_xtb",
+    "test_pb_validity_default_is_xtb",
     "test_pb_validity_pct_falls_back_to_uff_when_xtb_missing",
     "test_pb_validity_pct_returns_real_number_when_xtb_installed",
     "test_pb_validity_pct_subset_vs_full",
