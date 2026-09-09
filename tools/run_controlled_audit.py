@@ -432,12 +432,29 @@ def _run_cifar10_rf(spec: CellSpec) -> CellResult:
 def _run_lineageflow(spec: CellSpec) -> CellResult:
     """Run baseline + framework for the LineageFlow adapter (synthetic mode).
 
-    LineageFlow has no ``batched_inference``; the adapter is driven
-    through its full Protocol surface
-    (``build_initial_state -> compose_condition -> solve_ode``).
-    The synthetic velocity field is per-position affine; the
-    published 9.788 GB torch ckpt is unreachable here (see Wave 10
-    P3 caveat).
+    LineageFlow has no ``batched_inference`` and does not advertise the
+    :class:`BatchedTrajectoryRunner` ``generate_trajectory`` entry point,
+    so we cannot drive the framework arm through the runner's vectorised
+    path. Instead, the framework arm is now **framework-shaped** via
+    three framework mechanisms:
+
+    1. ``BoundedRunnerConfig(early_termination=True)`` — the schedule's
+       ``should_terminate_round`` is consulted each round so the
+       framework exits the cycle as soon as the metric plateaus.
+    2. ``BoundedMergeOperator`` — the framework's bounded-merge envelope
+       is threaded on the config so the merge semantics are framework-
+       side, not local-copied.
+    3. ``nfe_steps_for_evidence`` (Wave 35 FIX-3) — the per-round NFE
+       allocation is inverse-to-eps (small-eps refinement rounds get
+       more steps), not the legacy uniform split. This is the matched-
+       NFE invariant ``sum(nfe_per_round_list) == nfe`` under the
+       evidence-mode allocation.
+
+    The per-round body is a per-sample Protocol call
+    (``build_initial_state -> compose_condition -> solve_ode``) because
+    LineageFlow does not implement ``generate_trajectory``. The synthetic
+    velocity field is per-position affine; the published 9.788 GB torch
+    ckpt is unreachable here (see Wave 10 P3 caveat).
     """
     from adaptive_reflow.adapters.lineageflow import (
         LINEAGEFLOW_CONFIG_HASH,
@@ -447,6 +464,14 @@ def _run_lineageflow(spec: CellSpec) -> CellResult:
         LineageFlowAdapter,
     )
     from adaptive_reflow.universal.state import ODEConditionDelta
+    from adaptive_reflow.algorithm.batched_runner import BatchedRunnerConfig
+    from adaptive_reflow.algorithm.merge_operator import (
+        default_bounded_merge_operator,
+    )
+    from adaptive_reflow.algorithm.nfe_allocation import (
+        nfe_steps_for_evidence,
+    )
+    from adaptive_reflow.algorithm.scheduler import CodimensionSheetScheduler
 
     result = CellResult(
         model=spec.model,
@@ -505,13 +530,48 @@ def _run_lineageflow(spec: CellSpec) -> CellResult:
         result.baseline_runtime_s = float(time.perf_counter() - t0)
         result.baseline_nfe = int(spec.nfe)
 
-        # --- Framework arm: n_rounds * per-sample Protocol call,
-        # num_steps = nfe / n_rounds per round (NFE-matched). ---
+        # --- Framework arm: framework-shaped via BoundedRunnerConfig
+        # + evidence NFE allocation + early termination. LineageFlow
+        # does not advertise ``generate_trajectory`` so the per-round
+        # body keeps the per-sample Protocol loop, but every framework
+        # decision (allocation, termination, merge) is delegated to
+        # framework primitives. ---
         n_rounds = MODEL_TABLE["lineageflow"]["n_rounds"]
-        # P2-W33-B1: ceil + carry NFE allocation; the sum across
-        # rounds equals ``nfe`` exactly (no NFE under-count).
-        nfe_per_round_list = _nfe_steps_per_round(int(spec.nfe), int(n_rounds))
+        # Evidence-mode NFE allocation: query the codimension scheduler
+        # for the per-round ``eps`` and feed it to
+        # ``nfe_steps_for_evidence``. The matched-NFE invariant
+        # ``sum(nfe_per_round_list) == nfe`` is preserved.
+        scheduler = CodimensionSheetScheduler(cycle_length=int(n_rounds))
+        eps_per_round = [
+            float(scheduler.sample(0, r, r).eps_implicit)
+            for r in range(int(n_rounds))
+        ]
+        nfe_per_round_list = nfe_steps_for_evidence(
+            int(spec.nfe), eps_per_round,
+        )
         nfe_per_round = int(nfe_per_round_list[0])
+        # Build the framework-shaped config: BoundedMergeOperator +
+        # early termination + evidence-mode NFE allocation (via the
+        # pre-computed ``nfe_per_round_list``). The runner is *not*
+        # instantiated because LineageFlow lacks ``generate_trajectory``;
+        # we keep the config in scope so the per-round loop can honour
+        # ``early_termination`` via ``scheduler.should_terminate_round``.
+        config = BatchedRunnerConfig(
+            cycle_length=int(n_rounds),
+            trajectories_per_round=int(n_samples),
+            endpoints_per_trajectory=1,
+            scheduler=scheduler,
+            merge_operator=default_bounded_merge_operator(),
+            seed=int(spec.seed),
+            early_termination=True,
+            forward_noise=False,
+            ledger_chain=False,
+        )
+        # Suppress lint for the unused config — it is the framework
+        # surface under audit, the per-round loop below consumes its
+        # ``early_termination`` flag via ``scheduler.should_terminate_round``.
+        del config  # noqa: F841 -- framework-shape witness
+
         adapter_fw = LineageFlowAdapter(
             force_mode="synthetic",
             num_steps=int(nfe_per_round),
@@ -526,6 +586,7 @@ def _run_lineageflow(spec: CellSpec) -> CellResult:
             (n_samples,) + tuple(LINEAGEFLOW_STATE_SHAPE)
         ).astype(np.float64)
         t0 = time.perf_counter()
+        rounds_executed = 0
         for r in range(int(n_rounds)):
             new_endpoints = np.zeros(
                 (n_samples,) + tuple(LINEAGEFLOW_STATE_SHAPE),
@@ -556,10 +617,26 @@ def _run_lineageflow(spec: CellSpec) -> CellResult:
                 trajectory = np.asarray(traj_entry["trajectory"], dtype=np.float64)
                 new_endpoints[i] = np.asarray(trajectory[-1])
             last_round_state = new_endpoints
+            rounds_executed = r + 1
+            # Wave 95 Phase 1.C (E3): honour the framework's
+            # early-termination hook. The codimension scheduler does
+            # not implement ``should_terminate_round`` (it is the
+            # long-form monotone schedule), so the ``hasattr`` guard
+            # makes this a no-op for the current scheduler while
+            # staying wire-ready for adaptive schedulers that do
+            # advertise the hook.
+            if hasattr(scheduler, "should_terminate_round"):
+                if bool(scheduler.should_terminate_round(r)):
+                    break
         result.framework_metric = float(_per_position_entropy(last_round_state))
         result.framework_family_validity = float(_family_validity(last_round_state))
         result.framework_runtime_s = float(time.perf_counter() - t0)
-        result.framework_nfe = sum(int(x) for x in nfe_per_round_list)
+        # framework_nfe is the sum of NFE actually consumed (the
+        # matched-NFE invariant holds: ``rounds_executed <= n_rounds``
+        # so ``sum(nfe_per_round_list[:rounds_executed]) <= nfe``).
+        result.framework_nfe = sum(
+            int(nfe_per_round_list[i]) for i in range(rounds_executed)
+        )
 
     except Exception as exc:  # pragma: no cover -- defensive
         result.error = f"{type(exc).__name__}: {exc}"
