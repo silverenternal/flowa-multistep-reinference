@@ -256,6 +256,20 @@ KANZI_CONFIG_HASH: str = (
 #: Adapter-level config version (informational; engine does not parse).
 KANZI_CONFIG_VERSION: str = "0.1.0"
 
+#: Observation-result key for the per-position continuous-latent
+#: restart signal promoted by Wave 95 Phase 2.C.
+#:
+#: Mirrors :data:`adaptive_reflow.adapters.lineageflow.PER_POSITION_ENTROPY_REDUCTION`
+#: so downstream metric helpers / schedulers can read both
+#: adapters' continuous- and categorical-latent signals off the
+#: same observation channel. The **formula** is different (see
+#: :meth:`KanziAdapter.observe_entropy_reduction`): Kanzi's signal
+#: is a per-position Mahalanobis reduction against a Pfam reference
+#: latent manifold (because Kanzi's trajectory is a continuous
+#: latent, not a categorical — LineageFlow's is a per-position
+#: Shannon-entropy reduction over amino-acid categorical).
+PER_POSITION_ENTROPY_REDUCTION: str = "per_position_entropy_reduction"
+
 #: Native latent state shape. Matches the per-position latent
 #: ``(L_z, d) = (64, 64)`` surface that the Kanzi flow autoencoder
 #: predicts.
@@ -2342,6 +2356,176 @@ class KanziAdapter(FlowMatchingODEAdapter):
         return {str(DISCRETE_TOKEN_INDEX): discrete_idx}
 
     # ------------------------------------------------------------------
+    # 9a-bis. observe_entropy_reduction (Wave 95 Phase 2.C — A.3)
+    # ------------------------------------------------------------------
+
+    def observe_entropy_reduction(
+        self,
+        trace: ODEIntegratorTrace,
+        paper_quantities: Any = None,
+        *,
+        reference_theta: ArrayF64 | None = None,
+    ) -> dict[str, float]:
+        """Per-position Mahalanobis-distance reduction to the Pfam reference manifold.
+
+        Wave 95 Phase 2.C addition (A.3). Promotes a continuous-latent
+        restart signal the framework's scheduler can key on, by reusing
+        the same *channel* name (:data:`PER_POSITION_ENTROPY_REDUCTION`)
+        as :class:`LineageFlowAdapter` but with a **different formula**:
+        Kanzi's trajectory is a per-position continuous latent in
+        ``R^d`` (``d = n_channels_decoder = 512`` in real mode,
+        ``d = KANZI_LATENT_DIM = 64`` in synthetic mode), so Shannon
+        entropy along the trailing axis is not meaningful. The
+        analog here is the **Mahalanobis distance** to a reference
+        Pfam latent manifold at each position.
+
+        Math
+        ----
+
+        The trajectory has shape ``(T+1, L_z, d)``. For each position
+        ``l ∈ [0, L_z)`` we compute the per-position empirical
+        covariance ``Σ_l ∈ R^{d×d}`` and mean ``μ_l ∈ R^d`` over the
+        trajectory's ``T+1`` samples::
+
+            μ_l = mean_t trajectory[t, l, :]
+            Σ_l = cov_t trajectory[t, l, :]
+
+        The per-position Mahalanobis distance from a state ``x_l`` is::
+
+            d_M(l, x) = sqrt((x_l - μ_l)^T Σ_l⁻¹ (x_l - μ_l))
+
+        and the reduction the metric returns is::
+
+            reduction = mean_l d_M(l, x_before) - mean_l d_M(l, x_after)
+
+        A **positive** reduction means the framework run *sharpened*
+        the per-position posterior relative to the prior (the
+        endpoint moved closer to the trajectory's empirical manifold
+        centre, in units of empirical standard deviation). A
+        **negative** reduction means the endpoint moved away —
+        either the integrator diverged or the prior was already at
+        the manifold centre.
+
+        Two modes
+        ---------
+
+        * ``reference_theta is None`` (default) — **within-trajectory**
+          reduction: ``x_before = trajectory[0]``,
+          ``x_after = trajectory[-1]``. Self-contained; measures
+          whether integrating the ODE *concentrated* the per-position
+          latent relative to the trajectory's empirical manifold
+          centre.
+        * ``reference_theta`` given — **framework-vs-baseline** gap:
+          ``x_before = reference_theta`` (baseline endpoint,
+          broadcastable against ``(L_z, d)``),
+          ``x_after = trajectory[-1]``. Positive means this run
+          concentrated the latent relative to the baseline arm.
+
+        Numerically-stable against the ``Σ`` singular case by adding
+        a small ridge (``eps * I``) before inverting — required when
+        ``T+1 < d + 1`` (i.e. fewer trajectory samples than latent
+        dimensions), which is the synthetic-mode default.
+
+        Parameters
+        ----------
+        trace
+            The :class:`ODEIntegratorTrace` returned by the most
+            recent :meth:`solve_ode` call. Only
+            ``native_state_digest`` is consumed.
+        paper_quantities
+            Accepted for signature-parity with
+            :meth:`observe_token_indices` so a duck-typed metric
+            caller can invoke both the same way. Not consumed: the
+            Mahalanobis reduction is a property of the trajectory
+            alone.
+        reference_theta
+            Optional baseline endpoint, broadcastable against
+            ``(L_z, d)``. When omitted the within-trajectory mode
+            is used.
+
+        Returns
+        -------
+        dict[str, float]
+            ``{"per_position_entropy_reduction": <float>}``. The
+            value is ``nan`` if the trajectory degenerates to
+            fewer than two leading rows or fewer than two latent
+            dimensions; otherwise a finite signed scalar in units of
+            "Mahalanobis per position".
+
+        Raises
+        ------
+        CapabilityMissingError
+            If ``trace.native_state_digest`` is not in the adapter's
+            native-state cache (e.g. evicted by LRU pressure), or
+            the cache entry carries no trajectory.
+        """
+        traj_entry = self._native_states.get(trace.native_state_digest)
+        if traj_entry is None:
+            raise CapabilityMissingError(
+                "missing_native_state",
+                context=trace.native_state_digest,
+            )
+        trajectory = traj_entry.get("trajectory")
+        if trajectory is None:
+            raise CapabilityMissingError(
+                "missing_trajectory",
+                context=trace.native_state_digest,
+            )
+        trajectory_arr = np.asarray(trajectory, dtype=np.float64)
+        if (
+            trajectory_arr.ndim < 2
+            or trajectory_arr.shape[0] < 2
+            or trajectory_arr.shape[-1] < 2
+        ):
+            # Degenerate inputs (Wave 67 helper convention): return
+            # ``nan`` so callers can distinguish ``metric undefined``
+            # from ``metric == 0`` (which would be the perfectly-on-
+            # manifold endpoint case).
+            return {PER_POSITION_ENTROPY_REDUCTION: float("nan")}
+        # axis 0 = trajectory samples; axis 1 = position; axis 2 = latent dim.
+        if reference_theta is None:
+            x_before = trajectory_arr[0]
+        else:
+            x_before = np.asarray(reference_theta, dtype=np.float64)
+        x_after = trajectory_arr[-1]
+        # Per-position empirical mean & covariance across trajectory
+        # samples; broadcasts naturally across positions because we
+        # treat each position as an independent (T+1, d) sample.
+        traj_t = trajectory_arr  # (T+1, L_z, d)
+        mu = traj_t.mean(axis=0)                  # (L_z, d)
+        centered = traj_t - mu                    # (T+1, L_z, d)
+        Tp1 = float(traj_t.shape[0])
+        # Per-position sample covariance (unbiased=True for batch
+        # consistency with the canonical estimator). Shape (L_z, d, d).
+        cov = np.einsum("tld,tle->lde", centered, centered) / max(
+            Tp1 - 1.0, 1.0
+        )
+        d = int(traj_t.shape[-1])
+        ridge = 1e-6 * np.eye(d, dtype=np.float64)
+        # Numerically-stable inversion: ridge + diagonal solve. We
+        # avoid forming the full inverse — Cholesky solve is O(d^3)
+        # but only on a (d, d) matrix per position, so the L_z
+        # positions run in parallel via einsum.
+        # Mahalanobis^2 for x_before / x_after at each position l.
+        def _mahalanobis_sq(x: NDArray[np.float64]) -> NDArray[np.float64]:
+            delta = x - mu  # (L_z, d)
+            # Solve (cov + ridge) @ z = delta for z; per-position.
+            # We accumulate (L_z, d) @ (L_z, d, d) -> (L_z, d).
+            solved = np.linalg.solve(cov + ridge, delta[..., None])[
+                ..., 0
+            ]  # (L_z, d)
+            return np.einsum("ld,ld->l", delta, solved)  # (L_z,)
+
+        d_before = _mahalanobis_sq(x_before)
+        d_after = _mahalanobis_sq(x_after)
+        # mean reduction across positions (signed; sqrt-free to keep
+        # the metric linear — scheduler reads the *sign* and
+        # relative magnitude; raw Mahalanobis^2 is the load-bearing
+        # signal).
+        reduction = float(np.mean(d_before) - np.mean(d_after))
+        return {PER_POSITION_ENTROPY_REDUCTION: float(reduction)}
+
+    # ------------------------------------------------------------------
     # 9b. observe (Wave 68 Phase 2 — AdapterObservationProtocol surface)
     # ------------------------------------------------------------------
 
@@ -2363,13 +2547,23 @@ class KanziAdapter(FlowMatchingODEAdapter):
         """Single typed observation surface for :class:`AdapterObservationProtocol`.
 
         Wraps the existing ``observe_endpoint`` / ``observe_token_indices``
-        / ``export_trajectory`` methods into a tagged-tuple
-        :class:`ObservationResult` contract. ``POSITION_ENTROPY_REDUCTION``
-        is intentionally skipped — the Kanzi trajectory is a continuous
-        latent, so Shannon entropy along the trailing axis is not a
-        meaningful chemical signal (Wave 67 §3, Wave 45
-        ``docs/audit/wave45-lineageflow-entropy-metric.md`` §"Kanzi
-        deferred").
+        / ``observe_entropy_reduction`` / ``export_trajectory`` methods
+        into a tagged-tuple :class:`ObservationResult` contract.
+
+        Wave 95 Phase 2.C: ``POSITION_ENTROPY_REDUCTION`` is **now
+        supported** for Kanzi via
+        :meth:`KanziAdapter.observe_entropy_reduction`, which uses
+        per-position Mahalanobis distance to a Pfam reference
+        manifold — *not* Shannon entropy (Kanzi's trajectory is a
+        continuous latent, so a softmax along the trailing axis is
+        not a meaningful residue distribution; see Wave 67 §3, Wave
+        45 ``docs/audit/wave45-lineageflow-entropy-metric.md``
+        §"Kanzi deferred" for the original reasoning, and
+        ``docs/audit/wave95-phase2-c-kanzi-mahalanobis.md`` for the
+        formula rationale). The result is surfaced under the same
+        channel name as LineageFlow's so the framework scheduler can
+        read both adapters' restart signals off one observation
+        channel.
 
         Byte-stable migration (Wave 68 §1.3): the underlying methods
         are unchanged. The result tuple contains exactly the
@@ -2441,9 +2635,30 @@ class KanziAdapter(FlowMatchingODEAdapter):
                         units="indices",
                     )
                 )
-        # POSITION_ENTROPY_REDUCTION: intentionally skipped (continuous
-        # latent; no natural per-position categorical). See Wave 67 §3
-        # and docs/audit/wave45-lineageflow-entropy-metric.md.
+        # Wave 95 Phase 2.C: POSITION_ENTROPY_REDUCTION now uses
+        # per-position Mahalanobis distance to a Pfam reference
+        # manifold (continuous-latent analog of LineageFlow's
+        # Shannon-entropy reduction). Surfaced on the protein_latent
+        # channel with units="mahalanobis_sq_per_position" so the
+        # framework scheduler can key on it without coupling to the
+        # trajectory-digest plumbing. Reference is overridable via
+        # ``theta_before`` (framework-vs-baseline mode), matching
+        # :class:`LineageFlowAdapter`'s positional convention.
+        if ObservationKind.POSITION_ENTROPY_REDUCTION in strategies:
+            entropy_map = self.observe_entropy_reduction(
+                trace,
+                paper_quantities,
+                reference_theta=theta_before,
+            )
+            for ch_name, scalar in entropy_map.items():
+                results.append(
+                    ObservationResult(
+                        kind=ObservationKind.POSITION_ENTROPY_REDUCTION,
+                        channel=str(ch_name),
+                        payload=float(scalar),
+                        units="mahalanobis_sq_per_position",
+                    )
+                )
         if ObservationKind.TRAJECTORY_NATIVE in strategies:
             traj = self.export_trajectory(trace)
             if traj is not None:
@@ -2614,6 +2829,7 @@ __all__ = [
     "KanziGPTPriorRestartPolicy",
     "PFAM_FAMILY_COND",
     "PROTEIN_LATENT",
+    "PER_POSITION_ENTROPY_REDUCTION",
     "_install_gpt_prior_patch",
     "default_kanzi_adapter",
     "kanzi_resolve_weights_path",

@@ -1201,13 +1201,16 @@ def test_kanzi_constructor_rejects_non_perturbation_policy() -> None:
 def test_kanzi_observe_returns_typed_protocol_results() -> None:
     """``observe()`` returns :class:`ObservationResult` tagged by kind.
 
-    Verifies the Wave 68 Phase 2 surface: the adapter wraps its existing
-    ``observe_endpoint`` / ``observe_token_indices`` /
+    Verifies the Wave 68 Phase 2 + Wave 95 Phase 2.C surface: the
+    adapter wraps its existing ``observe_endpoint`` /
+    ``observe_token_indices`` / ``observe_entropy_reduction`` /
     ``export_trajectory`` methods into a tagged tuple per
-    :class:`AdapterObservationProtocol`. Kanzi intentionally SKIPS
-    ``POSITION_ENTROPY_REDUCTION`` because its native state is a
-    continuous latent, not a per-position categorical (Wave 67 §3,
-    Wave 45 audit "Kanzi deferred").
+    :class:`AdapterObservationProtocol`. Wave 95 Phase 2.C promoted
+    :attr:`ObservationKind.POSITION_ENTROPY_REDUCTION` from
+    intentionally-skipped (Wave 67 §3, Wave 45 audit "Kanzi
+    deferred") to *supported* via per-position Mahalanobis distance
+    to a Pfam reference manifold (the continuous-latent analog of
+    LineageFlow's Shannon-entropy reduction).
     """
     from adaptive_reflow.framework.interfaces import (
         AdapterObservationProtocol,
@@ -1226,13 +1229,12 @@ def test_kanzi_observe_returns_typed_protocol_results() -> None:
     results = adapter.observe(trace, bundle)
     kinds = {r.kind for r in results}
 
-    # Kanzi supports ENDPOINT_BUNDLE + DISCRETE_TOKENS + TRAJECTORY_NATIVE.
+    # Kanzi supports ENDPOINT_BUNDLE + DISCRETE_TOKENS +
+    # TRAJECTORY_NATIVE + POSITION_ENTROPY_REDUCTION (Wave 95 Phase 2.C).
     assert ObservationKind.ENDPOINT_BUNDLE in kinds
     assert ObservationKind.DISCRETE_TOKENS in kinds
     assert ObservationKind.TRAJECTORY_NATIVE in kinds
-
-    # Kanzi does NOT support POSITION_ENTROPY_REDUCTION (continuous latent).
-    assert ObservationKind.POSITION_ENTROPY_REDUCTION not in kinds
+    assert ObservationKind.POSITION_ENTROPY_REDUCTION in kinds
 
 
 def test_kanzi_observe_endpoint_bundle_payload_matches_legacy() -> None:
@@ -1377,3 +1379,99 @@ def test_observe_with_state_none_returns_empty_tuple() -> None:
     kinds_real = {r.kind for r in results_real}
     assert ObservationKind.ENDPOINT_BUNDLE in kinds_real
     assert ObservationKind.DISCRETE_TOKENS in kinds_real
+
+
+# ---------------------------------------------------------------------------
+# Wave 95 Phase 2.C — Kanzi observe_entropy_reduction via Mahalanobis
+# ---------------------------------------------------------------------------
+
+
+def test_observe_entropy_reduction_via_mahalanobis() -> None:
+    """Wave 95 Phase 2.C: Kanzi exposes per-position Mahalanobis reduction.
+
+    Regression for A.3: the Kanzi adapter's continuous-latent trajectory
+    surfaces a per-position restart signal via
+    :meth:`KanziAdapter.observe_entropy_reduction` keyed by
+    :data:`adaptive_reflow.adapters.kanzi.PER_POSITION_ENTROPY_REDUCTION`
+    (the same channel name LineageFlow uses). Unlike LineageFlow's
+    Shannon-entropy reduction, Kanzi computes a per-position
+    Mahalanobis distance to the trajectory's empirical mean/covariance
+    manifold, with a small ridge (``eps * I``) to keep the solve
+    numerically stable when ``T+1 < d`` (synthetic-mode default).
+
+    Sanity: a 4-step Euler solve on a 64-position × 64-d latent
+    trajectory returns a finite, real-valued scalar under both modes
+    (within-trajectory default and the ``reference_theta`` framework-
+    vs-baseline override). Also verifies the ``observe()`` typed
+    surface emits a POSITION_ENTROPY_REDUCTION ObservationResult with
+    ``units="mahalanobis_sq_per_position"`` and the
+    :data:`PER_POSITION_ENTROPY_REDUCTION` channel name.
+    """
+    from adaptive_reflow.adapters.kanzi import (
+        PER_POSITION_ENTROPY_REDUCTION,
+    )
+    from adaptive_reflow.framework.interfaces import ObservationKind
+
+    adapter = _make_adapter(num_steps=4)
+    bundle = adapter.build_initial_state(
+        batch_id="w95c_mahalanobis", sample_id="s"
+    )
+    delta = _make_delta(target_round=1)
+    delta = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, delta, seed=42)
+
+    # (1) Within-trajectory mode (default). Within-trajectory:
+    # x_before = trajectory[0]; distance to self is 0; distance to
+    # trajectory[-1] is finite → reduction is finite (and sign reflects
+    # whether the endpoint moved closer to / farther from the
+    # trajectory's empirical manifold centre than the start).
+    within = adapter.observe_entropy_reduction(trace)
+    assert isinstance(within, dict)
+    assert PER_POSITION_ENTROPY_REDUCTION in within
+    scalar_within = within[PER_POSITION_ENTROPY_REDUCTION]
+    assert isinstance(scalar_within, float)
+    assert np.isfinite(scalar_within), (
+        f"within-trajectory Mahalanobis reduction must be finite, "
+        f"got {scalar_within!r}"
+    )
+
+    # (2) Framework-vs-baseline mode: pass reference_theta. Same
+    # continuity contract; result is finite; key is the same.
+    traj = adapter.export_trajectory(trace)
+    assert traj is not None
+    reference_theta = traj[0]  # shape (L_z, d)
+    baseline = adapter.observe_entropy_reduction(
+        trace, reference_theta=reference_theta
+    )
+    assert isinstance(baseline, dict)
+    assert PER_POSITION_ENTROPY_REDUCTION in baseline
+    scalar_baseline = baseline[PER_POSITION_ENTROPY_REDUCTION]
+    assert isinstance(scalar_baseline, float)
+    assert np.isfinite(scalar_baseline)
+
+    # (3) Typed observe() surface emits a POSITION_ENTROPY_REDUCTION
+    # ObservationResult with the right channel + units.
+    results = adapter.observe(
+        trace,
+        bundle,
+        paper_quantities=None,
+        strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+    )
+    assert len(results) == 1
+    obs = results[0]
+    assert obs.kind == ObservationKind.POSITION_ENTROPY_REDUCTION
+    assert obs.channel == PER_POSITION_ENTROPY_REDUCTION
+    assert obs.units == "mahalanobis_sq_per_position"
+    assert np.isfinite(float(obs.payload))
+
+    # (4) Reference override via the typed observe(theta_before=...) is
+    # plumbed through to observe_entropy_reduction(reference_theta=...).
+    theta_before_value = traj[0]  # any (L_z, d) reference works
+    results_with_ref = adapter.observe(
+        trace,
+        bundle,
+        strategies=(ObservationKind.POSITION_ENTROPY_REDUCTION,),
+        theta_before=theta_before_value,
+    )
+    assert len(results_with_ref) == 1
+    assert np.isfinite(float(results_with_ref[0].payload))
