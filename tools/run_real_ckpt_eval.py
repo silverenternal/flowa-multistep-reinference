@@ -5038,6 +5038,13 @@ def _run_cell(
                     kz_metrics = run_kanzi_upstream_eval(
                         sequences_path=str(coords_path),
                         output_dir=str(upstream_out_dir / "kz_out"),
+                        # Wave 92b: honor --upstream-n-samples at the
+                        # upstream-eval layer. The wrapper caps the input
+                        # at min(n_samples, file_record_count) so a
+                        # single subprocess call processes all N records
+                        # (instead of N subprocess invocations from the
+                        # upstream caller).
+                        n_samples=int(upstream_n_samples),
                     )
                 except Exception as exc:  # noqa: BLE001
                     kz_metrics = {

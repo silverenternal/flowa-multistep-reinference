@@ -141,6 +141,135 @@ def test_upstream_eval_lineageflow_smoke() -> None:
         assert "--metrics" in call_args
 
 
+def test_upstream_eval_lineageflow_passes_hmmdb_target_db_pfam_fastas_dir_and_bins() -> None:
+    """Wave 81 — wrapper must pass --hmmdb + --target-db + --pfam-fastas-dir
+    + --hmmscan + --mmseqs to the orchestrator so the ``family_validity``
+    + ``novelty`` paths pass their ``_require_path`` checks. Pre-Wave-81
+    the wrapper omitted these args and the orchestrator exited with
+    ``error: --hmmdb is required`` the moment ``family_validity`` was
+    in the metrics list."""
+    upstream = _import_tools_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = pathlib.Path(tmp)
+        fasta_path = tmp_path / "samples.fasta"
+        fasta_path.write_text(">seq1\nMKTII\n", encoding="utf-8")
+        outdir = tmp_path / "lf_out"
+        outdir.mkdir(parents=True, exist_ok=True)
+        (outdir / "summary.json").write_text(
+            json.dumps({
+                "family_validity": {"n_records": 1.0},
+                "novelty": {"mean_max_identity_to_train": 0.0},
+            }),
+            encoding="utf-8",
+        )
+        fake_proc = subprocess.CompletedProcess(
+            args=[], returncode=0, stderr="", stdout="",
+        )
+        with mock.patch.object(
+            upstream.subprocess, "run", return_value=fake_proc,
+        ) as _mock_run:
+            upstream.run_lineageflow_upstream_eval(
+                fasta_path=str(fasta_path),
+                output_dir=str(outdir),
+            )
+        call_args = _mock_run.call_args.args[0]
+        assert "--hmmdb" in call_args
+        assert "--target-db" in call_args
+        assert "--pfam-fastas-dir" in call_args
+        assert "--hmmscan" in call_args
+        assert "--mmseqs" in call_args
+        # Default paths are non-None (the vendored Pfam-A.hmm + 200-seq
+        # MMseqs2 target DB) — values must be in the cmd.
+        i = call_args.index("--hmmdb")
+        assert call_args[i + 1].endswith("Pfam-A.hmm")
+        j = call_args.index("--target-db")
+        assert call_args[j + 1].endswith("pfam_holdout_targetDB")
+        k = call_args.index("--pfam-fastas-dir")
+        assert call_args[k + 1].endswith("pfam_fastas_clean")
+
+
+def test_upstream_eval_lineageflow_default_metrics_restricted_to_unblocked_two() -> None:
+    """Wave 81 — default metrics tuple is restricted to
+    ``('family_validity', 'novelty')``. The 2 OmegaFold-blocked metrics
+    (``foldability`` + ``self_consistency``) require Python 3.10 + ESM-IF
+    on the host Python 3.12, which the OmegaFold ``setup.py`` hard-blocks.
+    Including them in the default tuple would fail every invocation with
+    ``Could not find ``omegafold`` in PATH. Callers wanting the full
+    4-metric pipeline pass the full tuple explicitly."""
+    upstream = _import_tools_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = pathlib.Path(tmp)
+        fasta_path = tmp_path / "samples.fasta"
+        fasta_path.write_text(">seq1\nMKTII\n", encoding="utf-8")
+        outdir = tmp_path / "lf_out"
+        outdir.mkdir(parents=True, exist_ok=True)
+        (outdir / "summary.json").write_text("{}", encoding="utf-8")
+        fake_proc = subprocess.CompletedProcess(
+            args=[], returncode=0, stderr="", stdout="",
+        )
+        with mock.patch.object(
+            upstream.subprocess, "run", return_value=fake_proc,
+        ) as _mock_run:
+            upstream.run_lineageflow_upstream_eval(
+                fasta_path=str(fasta_path),
+                output_dir=str(outdir),
+            )
+        call_args = _mock_run.call_args.args[0]
+        i = call_args.index("--metrics")
+        # Read until the next flag (anything starting with ``--``).
+        metrics_passed = []
+        for arg in call_args[i + 1:]:
+            if arg.startswith("--"):
+                break
+            metrics_passed.append(arg)
+        assert "family_validity" in metrics_passed
+        assert "novelty" in metrics_passed
+        assert "foldability" not in metrics_passed, (
+            f"foldability should be omitted from default metrics (OmegaFold "
+            f"Python 3.12 blocker); got {metrics_passed!r}"
+        )
+        assert "self_consistency" not in metrics_passed, (
+            f"self_consistency should be omitted from default metrics "
+            f"(depends on OmegaFold); got {metrics_passed!r}"
+        )
+
+
+def test_upstream_eval_lineageflow_none_kwargs_skip_arg() -> None:
+    """Wave 81 — passing ``None`` for any of ``hmmdb`` / ``target_db`` /
+    ``pfam_fastas_dir`` / ``hmmscan`` / ``mmseqs`` must skip the
+    corresponding ``--arg`` (lets the orchestrator fall back to its
+    own default). Mirrors the existing failure-mode contract."""
+    upstream = _import_tools_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = pathlib.Path(tmp)
+        fasta_path = tmp_path / "samples.fasta"
+        fasta_path.write_text(">seq1\nMKTII\n", encoding="utf-8")
+        outdir = tmp_path / "lf_out"
+        outdir.mkdir(parents=True, exist_ok=True)
+        (outdir / "summary.json").write_text("{}", encoding="utf-8")
+        fake_proc = subprocess.CompletedProcess(
+            args=[], returncode=0, stderr="", stdout="",
+        )
+        with mock.patch.object(
+            upstream.subprocess, "run", return_value=fake_proc,
+        ) as _mock_run:
+            upstream.run_lineageflow_upstream_eval(
+                fasta_path=str(fasta_path),
+                output_dir=str(outdir),
+                hmmdb=None,
+                target_db=None,
+                pfam_fastas_dir=None,
+                hmmscan=None,
+                mmseqs=None,
+            )
+        call_args = _mock_run.call_args.args[0]
+        assert "--hmmdb" not in call_args
+        assert "--target-db" not in call_args
+        assert "--pfam-fastas-dir" not in call_args
+        assert "--hmmscan" not in call_args
+        assert "--mmseqs" not in call_args
+
+
 def test_upstream_eval_lineageflow_subprocess_failure() -> None:
     """When the orchestrator subprocess exits non-zero, the helper
     returns ``status=0.0`` + a ``reason`` key (graceful degradation
@@ -277,6 +406,338 @@ def test_upstream_eval_kanzi_subprocess_timeout() -> None:
         assert result["status"] == 0.0
         assert "timeout" in result["reason"].lower()
         assert result["metric_kind"] == "reconstruction_kabsch_rmsd_A"
+
+
+# ---------------------------------------------------------------------------
+# 2b. Kanzi Wave 92b — honor --upstream-n-samples (N records in 1 call)
+# ---------------------------------------------------------------------------
+
+
+def _fake_kanzi_subprocess_success(
+    n_records: int,
+    *,
+    rmsd_values: list[float] | None = None,
+    output_jsonl_lines: list[str] | None = None,
+):
+    """Helper — build a fake subprocess.run side effect that simulates
+    the Kanzi driver writing a ``reconstruction.json`` summary for
+    ``n_records`` records (using ``rmsd_values`` if provided, otherwise
+    a deterministic sequence of n_records floats). Returns a tuple of
+    (CompletedProcess, output_json_path, output_jsonl_path) so the
+    caller can assert what was written.
+    """
+    if rmsd_values is None:
+        # Default: deterministic pseudo-RMSDs that make mean=1.0,
+        # std=0.1 so the test can assert the math.
+        rmsd_values = [
+            round(1.0 + 0.1 * ((-1) ** i) * (i % 5), 6)
+            for i in range(n_records)
+        ]
+    summary = {
+        "n_seqs": float(n_records),
+        "mean_rmsd_A": float(sum(rmsd_values) / len(rmsd_values)),
+        "min_rmsd_A": float(min(rmsd_values)),
+        "max_rmsd_A": float(max(rmsd_values)),
+    }
+    if n_records > 1:
+        mean = summary["mean_rmsd_A"]
+        variance = sum((x - mean) ** 2 for x in rmsd_values) / (n_records - 1)
+        summary["std_rmsd_A"] = float(variance ** 0.5)
+        sem = summary["std_rmsd_A"] / (n_records ** 0.5)
+        summary["ci_95_low_A"] = float(mean - 1.96 * sem)
+        summary["ci_95_high_A"] = float(mean + 1.96 * sem)
+    else:
+        summary["std_rmsd_A"] = 0.0
+        summary["ci_95_low_A"] = summary["mean_rmsd_A"]
+        summary["ci_95_high_A"] = summary["mean_rmsd_A"]
+    summary["max_records_arg"] = float(n_records)
+    per_seq = {
+        f"seq_{i}": rmsd_values[i] for i in range(n_records)
+    }
+
+    def _side_effect(cmd, *args, **kwargs):
+        # Write the output JSON the wrapper expects to read back.
+        # cmd shape: [sys.executable, "-c", driver, "--input", ...,
+        # "--ckpt", ..., "--output", out_json, "--max-records", N,
+        # optional "--output-jsonl", out_jsonl]
+        out_idx = cmd.index("--output")
+        out_json = pathlib.Path(cmd[out_idx + 1])
+        out_json.parent.mkdir(parents=True, exist_ok=True)
+        out_json.write_text(
+            json.dumps({"per_seq": per_seq, "summary": summary}),
+            encoding="utf-8",
+        )
+        if "--output-jsonl" in cmd:
+            jl_idx = cmd.index("--output-jsonl")
+            out_jsonl = pathlib.Path(cmd[jl_idx + 1])
+            out_jsonl.parent.mkdir(parents=True, exist_ok=True)
+            if output_jsonl_lines is None:
+                lines = [
+                    json.dumps({"seq_id": f"seq_{i}", "rmsd_A": rmsd_values[i]})
+                    for i in range(n_records)
+                ]
+            else:
+                lines = output_jsonl_lines
+            out_jsonl.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return subprocess.CompletedProcess(
+            args=cmd, returncode=0, stderr="", stdout="",
+        )
+    return _side_effect
+
+
+def test_upstream_eval_kanzi_wave92b_n_records_in_single_call() -> None:
+    """Wave 92b — Test 1: Kanzi N=1000 path produces 1 RMSD metric ×
+    N records in a SINGLE subprocess call. Pre-Wave-92b the wrapper
+    always passed the full input file to the driver regardless of
+    ``--upstream-n-samples`` (the knob from
+    ``tools.run_real_ckpt_eval`` was ignored at this layer). After the
+    Wave 92b patch, the wrapper caps records at min(n_samples,
+    file_count) and writes mean + std + 95% CI for N records.
+    """
+    upstream = _import_tools_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = pathlib.Path(tmp)
+        coords_path = tmp_path / "samples.ca.txt"
+        # 100 valid 9-float records (3 Cα coords × 3 records per line).
+        # Note: each line in the input file is one record (comma-sep
+        # float list divisible by 3). We write 100 records to make the
+        # cap observable.
+        coords_path.write_text(
+            "\n".join(
+                ",".join(
+                    f"{x:.4f}" for x in (
+                        0.1 * i, 0.2 * i, 0.3 * i,
+                        0.4 * i, 0.5 * i, 0.6 * i,
+                        0.7 * i, 0.8 * i, 0.9 * i,
+                    )
+                )
+                for i in range(1, 101)
+            ) + "\n",
+            encoding="utf-8",
+        )
+        outdir = tmp_path / "kz_out"
+        outdir.mkdir(parents=True, exist_ok=True)
+        side_effect = _fake_kanzi_subprocess_success(
+            n_records=100,
+            rmsd_values=[
+                round(1.0 + 0.001 * i, 6) for i in range(100)
+            ],
+        )
+        with mock.patch.object(
+            upstream.subprocess, "run", side_effect=side_effect,
+        ) as _mock_run:
+            result = upstream.run_kanzi_upstream_eval(
+                sequences_path=str(coords_path),
+                output_dir=str(outdir),
+                n_samples=1000,  # request N=1000
+            )
+        # Subprocess called exactly once — NOT 1000 times.
+        assert _mock_run.call_count == 1
+        # The wrapper honored n_samples=1000 by passing
+        # ``--max-records 100`` (= min(n_samples, file_count)) to the
+        # driver (file has 100 records).
+        call_args = _mock_run.call_args.args[0]
+        assert "--max-records" in call_args
+        idx = call_args.index("--max-records")
+        assert int(call_args[idx + 1]) == 100, (
+            f"expected --max-records 100 (= min(1000, file_count=100)), "
+            f"got {call_args[idx + 1]}"
+        )
+        # Summary stats computed end-to-end (mean / std / 95% CI).
+        assert result["status"] == 1.0
+        assert result["n_seqs"] == 100.0
+        assert "mean_rmsd_A" in result
+        assert "std_rmsd_A" in result
+        assert "ci_95_low_A" in result
+        assert "ci_95_high_A" in result
+        # n_samples bookkeeping surfaced.
+        assert result["n_samples_requested"] == 1000.0
+        assert result["n_samples_file"] == 100.0
+        assert result["n_samples_effective"] == 100.0
+        assert (
+            result.get("upstream_orchestrator")
+            == "kanzi.DAE.encode+decode+kabsch_rmsd"
+        )
+
+
+def test_upstream_eval_kanzi_wave92b_n_samples_knob_honored() -> None:
+    """Wave 92b — Test 2: ``--upstream-n-samples N`` knob is honored.
+    A file with N=100 records and ``n_samples=10`` cap must produce
+    ``--max-records 10`` in the subprocess call (not 100, not 0).
+    The pre-Wave-92b wrapper ignored the flag entirely and passed
+    the full file.
+    """
+    upstream = _import_tools_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = pathlib.Path(tmp)
+        coords_path = tmp_path / "samples.ca.txt"
+        # 100 valid records (9 floats each).
+        coords_path.write_text(
+            "\n".join(
+                ",".join(
+                    f"{x:.4f}" for x in (
+                        0.1 * i, 0.2 * i, 0.3 * i,
+                        0.4 * i, 0.5 * i, 0.6 * i,
+                        0.7 * i, 0.8 * i, 0.9 * i,
+                    )
+                )
+                for i in range(1, 101)
+            ) + "\n",
+            encoding="utf-8",
+        )
+        outdir = tmp_path / "kz_out"
+        outdir.mkdir(parents=True, exist_ok=True)
+        # Subprocess simulates only processing 10 records.
+        side_effect = _fake_kanzi_subprocess_success(n_records=10)
+        with mock.patch.object(
+            upstream.subprocess, "run", side_effect=side_effect,
+        ) as _mock_run:
+            result = upstream.run_kanzi_upstream_eval(
+                sequences_path=str(coords_path),
+                output_dir=str(outdir),
+                n_samples=10,
+            )
+        call_args = _mock_run.call_args.args[0]
+        idx = call_args.index("--max-records")
+        # Cap = min(n_samples=10, file_count=100) = 10.
+        assert int(call_args[idx + 1]) == 10, (
+            f"expected --max-records 10 (= min(10, 100)), "
+            f"got {call_args[idx + 1]}"
+        )
+        assert result["n_seqs"] == 10.0
+        assert result["n_samples_requested"] == 10.0
+        assert result["n_samples_file"] == 100.0
+        assert result["n_samples_effective"] == 10.0
+        # Edge case: n_samples=0 means "all records".
+        with mock.patch.object(
+            upstream.subprocess, "run", side_effect=side_effect,
+        ) as _mock_run_all:
+            result_all = upstream.run_kanzi_upstream_eval(
+                sequences_path=str(coords_path),
+                output_dir=str(outdir),
+                n_samples=0,
+            )
+        call_args2 = _mock_run_all.call_args.args[0]
+        idx2 = call_args2.index("--max-records")
+        assert int(call_args2[idx2 + 1]) == 100, (
+            "n_samples=0 should mean 'process all records' (= file_count)"
+        )
+        assert result_all["n_samples_effective"] == 100.0
+        # Edge case: n_samples larger than file_count caps at file_count.
+        with mock.patch.object(
+            upstream.subprocess, "run", side_effect=side_effect,
+        ) as _mock_run_over:
+            result_over = upstream.run_kanzi_upstream_eval(
+                sequences_path=str(coords_path),
+                output_dir=str(outdir),
+                n_samples=10000,
+            )
+        call_args3 = _mock_run_over.call_args.args[0]
+        idx3 = call_args3.index("--max-records")
+        assert int(call_args3[idx3 + 1]) == 100, (
+            "n_samples=10000 should cap at file_count=100"
+        )
+
+
+def test_upstream_eval_kanzi_wave92b_mean_std_ci_math() -> None:
+    """Wave 92b — Test 3: mean + std + 95% CI are computed correctly.
+    Use synthetic RMSDs [1.0, 2.0, 3.0, 4.0, 5.0]:
+        mean = 3.0
+        std (sample, n-1) = sqrt(2.5) ≈ 1.5811
+        sem = 1.5811 / sqrt(5) ≈ 0.7071
+        ci_95_low = 3.0 - 1.96 * 0.7071 ≈ 1.6140
+        ci_95_high = 3.0 + 1.96 * 0.7071 ≈ 4.3860
+    """
+    upstream = _import_tools_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = pathlib.Path(tmp)
+        coords_path = tmp_path / "samples.ca.txt"
+        # 5 records (3 floats each).
+        coords_path.write_text(
+            "0,0,0\n1,0,0\n2,0,0\n3,0,0\n4,0,0\n", encoding="utf-8",
+        )
+        outdir = tmp_path / "kz_out"
+        outdir.mkdir(parents=True, exist_ok=True)
+        side_effect = _fake_kanzi_subprocess_success(
+            n_records=5,
+            rmsd_values=[1.0, 2.0, 3.0, 4.0, 5.0],
+        )
+        with mock.patch.object(
+            upstream.subprocess, "run", side_effect=side_effect,
+        ):
+            result = upstream.run_kanzi_upstream_eval(
+                sequences_path=str(coords_path),
+                output_dir=str(outdir),
+                n_samples=5,
+            )
+        assert result["status"] == 1.0
+        assert result["n_seqs"] == 5.0
+        # Mean
+        assert result["mean_rmsd_A"] == pytest.approx(3.0, rel=1e-6)
+        # Std (Bessel-corrected sample std)
+        assert result["std_rmsd_A"] == pytest.approx(2.5 ** 0.5, rel=1e-4)
+        # 95% CI (z=1.96)
+        import math as _math
+        expected_sem = (2.5 ** 0.5) / _math.sqrt(5)
+        expected_ci_low = 3.0 - 1.96 * expected_sem
+        expected_ci_high = 3.0 + 1.96 * expected_sem
+        assert result["ci_95_low_A"] == pytest.approx(expected_ci_low, rel=1e-4)
+        assert result["ci_95_high_A"] == pytest.approx(expected_ci_high, rel=1e-4)
+        # CI half-width ≈ 1.96 * std / sqrt(n) and CI brackets the mean.
+        assert result["ci_95_low_A"] < result["mean_rmsd_A"]
+        assert result["ci_95_high_A"] > result["mean_rmsd_A"]
+        # Min / max preserved.
+        assert result["min_rmsd_A"] == 1.0
+        assert result["max_rmsd_A"] == 5.0
+
+
+def test_upstream_eval_kanzi_wave92b_output_jsonl_honored() -> None:
+    """Wave 92b — Test 4: ``output_jsonl`` flag passes ``--output-jsonl``
+    to the driver and surfaces ``output_jsonl=1.0`` in the result dict.
+    Pre-Wave-92b the wrapper had no JSONL output path; downstream
+    codebook-metric helpers in :mod:`tools.paper_metrics_kanzi` can
+    now consume the per-record encoded indices without re-running
+    ``DAE.encode``.
+    """
+    upstream = _import_tools_module()
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = pathlib.Path(tmp)
+        coords_path = tmp_path / "samples.ca.txt"
+        coords_path.write_text(
+            "0,0,0\n1,0,0\n", encoding="utf-8",
+        )
+        outdir = tmp_path / "kz_out"
+        outdir.mkdir(parents=True, exist_ok=True)
+        side_effect = _fake_kanzi_subprocess_success(
+            n_records=2, rmsd_values=[1.5, 2.5],
+        )
+        with mock.patch.object(
+            upstream.subprocess, "run", side_effect=side_effect,
+        ) as _mock_run:
+            jsonl_path = tmp_path / "per_record.jsonl"
+            result = upstream.run_kanzi_upstream_eval(
+                sequences_path=str(coords_path),
+                output_dir=str(outdir),
+                n_samples=2,
+                output_jsonl=jsonl_path,
+            )
+        call_args = _mock_run.call_args.args[0]
+        assert "--output-jsonl" in call_args
+        idx = call_args.index("--output-jsonl")
+        assert call_args[idx + 1] == str(jsonl_path)
+        # Wrapper surfaces that JSONL was written.
+        assert result["output_jsonl"] == 1.0
+        # The driver wrote the JSONL — verify the file exists with the
+        # expected per-record lines.
+        assert jsonl_path.is_file(), f"expected {jsonl_path} to exist"
+        lines = jsonl_path.read_text(encoding="utf-8").strip().split("\n")
+        assert len(lines) == 2
+        rec0 = json.loads(lines[0])
+        rec1 = json.loads(lines[1])
+        assert rec0["seq_id"] == "seq_0"
+        assert rec0["rmsd_A"] == pytest.approx(1.5, rel=1e-6)
+        assert rec1["seq_id"] == "seq_1"
+        assert rec1["rmsd_A"] == pytest.approx(2.5, rel=1e-6)
 
 
 # ---------------------------------------------------------------------------

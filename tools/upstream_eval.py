@@ -105,6 +105,49 @@ FLOWMOL3_UPSTREAM: pathlib.Path = (
 #: 1000 PDBs is ~1.5-4 h (Phase 1 §2.7) so the timeout is generous.
 DEFAULT_TIMEOUT_S: int = 1800
 
+#: Wave 81 — Pfam-A.hmm reference DB for the ``family_validity``
+#: upstream metric (HMMER ``hmmscan``). Vendored in Wave 80 Agent B
+#: at ``data/lineageflow_upstream/databases/pfam35/Pfam-A.hmm`` plus
+#: pressed indices ``.h3{f,i,m,p}``. Defaults to that path; can be
+#: overridden via the ``hmmdb`` kwarg.
+DEFAULT_HMMDB: pathlib.Path = (
+    LINEAGEFLOW_UPSTREAM / "databases" / "pfam35" / "Pfam-A.hmm"
+)
+
+#: Wave 81 — MMseqs2 target DB for the ``novelty`` upstream metric
+#: (closest-pfam-train hit identity). Built by Wave 80 Agent B from
+#: 200 sequences in ``data/pfam_holdout/random_clan.fasta``. Required
+#: by ``evaluate_all.py --metrics novelty``.
+DEFAULT_TARGET_DB: pathlib.Path = (
+    LINEAGEFLOW_UPSTREAM / "databases" / "pfam35" / "pfam_holdout_targetDB"
+)
+
+#: Wave 81 — Pfam per-family FASTA dir for the ``novelty`` upstream
+#: metric. The vendored LineageFlow tree does NOT ship the full Pfam
+#: training corpus (it's HF-dataset-only upstream per Wave 79 §1.4).
+#: We point at an empty placeholder directory under the vendored
+#: ``dataset/`` so ``evaluate_all.py --pfam-fastas-dir <abs>`` passes
+#: its ``_require_path`` check. The novelty script only falls into
+#: the ``build_reference_fasta`` branch when ``_db_exists(target_db)``
+#: is False; since Wave 80 Agent B prebuilt ``pfam_holdout_targetDB``
+#: the placeholder is never read. The novelty metric then runs against
+#: the prebuilt 200-seq MMseqs2 DB.
+DEFAULT_PFAM_FASTAS_DIR: pathlib.Path = (
+    LINEAGEFLOW_UPSTREAM / "dataset" / "pfam_fastas_clean"
+)
+
+#: Wave 81 — path to the ``hmmscan`` binary (HMMER 3.4, vendored by
+#: Wave 80 Agent B at ``/home/hugo/hmmer_build/bin/hmmscan``). Falls
+#: back to the bare command name (``hmmscan``) so a system-installed
+#: binary works out-of-the-box.
+DEFAULT_HMMSCAN: str = "/home/hugo/hmmer_build/bin/hmmscan"
+
+#: Wave 81 — path to the ``mmseqs`` binary (MMseqs2, vendored by
+#: Wave 80 Agent B at ``/home/hugo/bin/mmseqs``). Falls back to the
+#: bare command name (``mmseqs``) so a system-installed binary works
+#: out-of-the-box.
+DEFAULT_MMSEQS: str = "/home/hugo/bin/mmseqs"
+
 
 # ---------------------------------------------------------------------------
 # LineageFlow upstream eval
@@ -116,17 +159,30 @@ def run_lineageflow_upstream_eval(
     output_dir: str | pathlib.Path,
     *,
     metrics: tuple[str, ...] = (
-        "family_validity", "foldability", "self_consistency", "novelty",
+        # Wave 81 — restrict default to the 2 unblocked metrics.
+        # ``foldability`` + ``self_consistency`` require OmegaFold +
+        # ESM-IF on Python 3.10 (the OmegaFold ``setup.py`` hard-blocks
+        # 3.12), neither of which we have on the host. See
+        # docs/audit/wave80-phase1-audit.md §3.1 for the blocker.
+        # Callers wanting the full 4-metric pipeline can override the
+        # tuple explicitly.
+        "family_validity", "novelty",
     ),
     timeout_s: int = DEFAULT_TIMEOUT_S,
+    hmmdb: str | pathlib.Path | None = DEFAULT_HMMDB,
+    target_db: str | pathlib.Path | None = DEFAULT_TARGET_DB,
+    pfam_fastas_dir: str | pathlib.Path | None = DEFAULT_PFAM_FASTAS_DIR,
+    hmmscan: str | None = DEFAULT_HMMSCAN,
+    mmseqs: str | None = DEFAULT_MMSEQS,
 ) -> dict[str, float]:
     """Invoke LineageFlow's upstream ``evaluate_all.py`` on ``fasta_path``.
 
     Subprocess invocation: ``python evaluate_all.py --fasta <fasta>
-    --outdir <outdir> --metrics <space-separated metrics>``. The
-    orchestrator writes a ``summary.json`` to ``<outdir>``; we read it
-    after the subprocess completes and flatten the per-metric dicts
-    into a single ``{metric_name: float}`` dict.
+    --outdir <outdir> --hmmdb <pfam> --target-db <db>
+    --hmmscan <bin> --mmseqs <bin> --metrics <space-separated metrics>``.
+    The orchestrator writes a ``summary.json`` to ``<outdir>``; we
+    read it after the subprocess completes and flatten the per-metric
+    dicts into a single ``{metric_name: float}`` dict.
 
     Parameters
     ----------
@@ -145,6 +201,14 @@ def run_lineageflow_upstream_eval(
         blocked dict.
     timeout_s
         Wall-clock cap. Default 1800 s (30 min).
+    hmmdb, target_db, hmmscan, mmseqs
+        Wave 81: pass-through args required by ``evaluate_all.py`` for
+        ``--metrics family_validity novelty``. Defaults point at the
+        Wave 80-vendored paths under
+        ``data/lineageflow_upstream/databases/pfam35/`` + the
+        Wave 80-installed ``/home/hugo/hmmer_build/bin/hmmscan`` +
+        ``/home/hugo/bin/mmseqs``. Passing ``None`` skips the arg
+        (lets the orchestrator fall back to its own defaults).
 
     Returns
     -------
@@ -167,6 +231,20 @@ def run_lineageflow_upstream_eval(
         "--outdir", str(output_dir),
         "--metrics", *metrics,
     ]
+    # Wave 81: pass --hmmdb + --target-db + --hmmscan + --mmseqs when
+    # the caller supplied (or kept) the defaults. Without these the
+    # orchestrator exits with "error: --hmmdb is required" the moment
+    # ``family_validity`` or ``novelty`` appears in --metrics.
+    if hmmdb is not None:
+        cmd += ["--hmmdb", str(hmmdb)]
+    if target_db is not None:
+        cmd += ["--target-db", str(target_db)]
+    if pfam_fastas_dir is not None:
+        cmd += ["--pfam-fastas-dir", str(pfam_fastas_dir)]
+    if hmmscan is not None:
+        cmd += ["--hmmscan", str(hmmscan)]
+    if mmseqs is not None:
+        cmd += ["--mmseqs", str(mmseqs)]
     try:
         proc = subprocess.run(
             cmd, check=False, capture_output=True, text=True,
@@ -237,8 +315,20 @@ def run_lineageflow_upstream_eval(
 #: Writes the per-sequence RMSDs to ``<output_dir>/reconstruction.json``
 #: and returns exit 0. On any failure, writes the error to stderr +
 #: exit 1.
+#:
+#: Wave 92b — added ``--max-records N`` to honor the upstream-eval
+#: ``--upstream-n-samples`` knob from
+#: :mod:`tools.run_real_ckpt_eval`. The wrapper caps records at
+#: ``min(N, file_count)`` before invoking the subprocess so a single
+#: ``run_kanzi_upstream_eval`` call processes all N records (instead
+#: of N subprocess invocations from the upstream caller). Also added
+#: ``--output-jsonl PATH`` for per-record JSONL output (parallel to
+#: the summary JSON) so downstream codebook metric helpers in
+#: :mod:`tools.paper_metrics_kanzi` can consume the encoded indices
+#: without re-running encode.
 _KANZI_DRIVER: str = """\
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -251,45 +341,106 @@ import torch  # noqa: E402
 from kanzi import DAE, kabsch_rmsd  # noqa: E402
 
 # Parse CLI: --input <fasta> --ckpt <pt> --output <json>
+#           [--max-records N] [--output-jsonl <path>]
 import argparse  # noqa: E402
 p = argparse.ArgumentParser()
 p.add_argument("--input", required=True)
 p.add_argument("--ckpt", required=True)
 p.add_argument("--output", required=True)
+p.add_argument("--max-records", type=int, default=0,
+               help="Cap on records to process (0 = all).")
+p.add_argument("--output-jsonl", default=None,
+               help="Optional per-record JSONL output path.")
 args = p.parse_args()
 
 raw = DAE.from_pretrained(args.ckpt).eval()
 rmsd_by_seq = {{}}
-with open(args.input, encoding="utf-8") as f:
-    for line in f:
-        line = line.strip()
-        if not line or line.startswith(">"):
-            continue
-        # Each line is a comma-separated ``x,y,z`` list of Å floats.
-        vals = [float(t) for t in line.split(",") if t.strip()]
-        if len(vals) < 3 or len(vals) % 3 != 0:
-            continue
-        coords = torch.tensor(vals, dtype=torch.float32).reshape(-1, 3)
-        coords = (coords - coords.mean(dim=-2, keepdim=True)) / 10.0  # Å -> nm
-        x = coords.unsqueeze(0)  # (1, L, 3)
-        with torch.no_grad():
-            *_, idx = raw.encode(x, preprocess=False)
-            recon = raw.decode(idx)
-        recon_angstrom = recon.cpu().reshape(-1, 3) * 10.0
-        x_angstrom = x.reshape(-1, 3) * 10.0
-        rmsd = float(kabsch_rmsd(recon_angstrom, x_angstrom))
-        rmsd_by_seq[f"seq_{{len(rmsd_by_seq)}}"] = rmsd
+per_record = []  # for optional JSONL output
 
+def _flush_jsonl():
+    if not args.output_jsonl:
+        return
+    with open(args.output_jsonl, "w", encoding="utf-8") as jf:
+        for rec in per_record:
+            jf.write(json.dumps(rec) + "\\n")
+
+n_processed = 0
+try:
+    with open(args.input, encoding="utf-8") as f:
+        for line in f:
+            if args.max_records and n_processed >= args.max_records:
+                break
+            line = line.strip()
+            if not line or line.startswith(">"):
+                continue
+            # Each line is a comma-separated ``x,y,z`` list of Å floats.
+            vals = [float(t) for t in line.split(",") if t.strip()]
+            if len(vals) < 3 or len(vals) % 3 != 0:
+                continue
+            coords = torch.tensor(vals, dtype=torch.float32).reshape(-1, 3)
+            coords = (coords - coords.mean(dim=-2, keepdim=True)) / 10.0  # Å -> nm
+            x = coords.unsqueeze(0)  # (1, L, 3)
+            with torch.no_grad():
+                *_, idx = raw.encode(x, preprocess=False)
+                recon = raw.decode(idx)
+            recon_angstrom = recon.cpu().reshape(-1, 3) * 10.0
+            x_angstrom = x.reshape(-1, 3) * 10.0
+            rmsd = float(kabsch_rmsd(recon_angstrom, x_angstrom))
+            seq_id = f"seq_{{n_processed}}"
+            rmsd_by_seq[seq_id] = rmsd
+            per_record.append({{
+                "seq_id": seq_id,
+                "rmsd_A": rmsd,
+                "length": int(coords.shape[0]),
+            }})
+            n_processed += 1
+except Exception as exc:
+    # Persist partial output before propagating the error so the
+    # caller can still read n_seqs / mean for whatever records did
+    # complete (useful when --max-records caps mid-stream).
+    _flush_jsonl()
+    print(f"kanzi_driver_exception:{{type(exc).__name__}}:{{exc}}", file=sys.stderr)
+    raise
+
+# Write JSONL first so partial-failure visibility is preserved.
+_flush_jsonl()
+
+# Compute summary statistics: mean, std (sample), 95% CI half-width.
+# Std uses Bessel's correction (n-1) so CI matches scipy.stats.sem
+# up to the 1.96 normal quantile.
 if rmsd_by_seq:
     values = list(rmsd_by_seq.values())
+    n = len(values)
+    mean = sum(values) / n
+    if n > 1:
+        variance = sum((x - mean) ** 2 for x in values) / (n - 1)
+        std = math.sqrt(variance)
+        sem = std / math.sqrt(n)
+    else:
+        std = 0.0
+        sem = 0.0
+    ci_half = 1.96 * sem
     summary = {{
-        "n_seqs": float(len(values)),
-        "mean_rmsd_A": float(sum(values) / len(values)),
+        "n_seqs": float(n),
+        "mean_rmsd_A": float(mean),
+        "std_rmsd_A": float(std),
+        "ci_95_low_A": float(mean - ci_half),
+        "ci_95_high_A": float(mean + ci_half),
         "min_rmsd_A": float(min(values)),
         "max_rmsd_A": float(max(values)),
+        "max_records_arg": float(args.max_records),
     }}
 else:
-    summary = {{"n_seqs": 0.0, "mean_rmsd_A": 0.0, "min_rmsd_A": 0.0, "max_rmsd_A": 0.0}}
+    summary = {{
+        "n_seqs": 0.0,
+        "mean_rmsd_A": 0.0,
+        "std_rmsd_A": 0.0,
+        "ci_95_low_A": 0.0,
+        "ci_95_high_A": 0.0,
+        "min_rmsd_A": 0.0,
+        "max_rmsd_A": 0.0,
+        "max_records_arg": float(args.max_records),
+    }}
 
 with open(args.output, "w", encoding="utf-8") as f:
     json.dump({{"per_seq": rmsd_by_seq, "summary": summary}}, f, indent=2)
@@ -302,6 +453,8 @@ def run_kanzi_upstream_eval(
     *,
     ckpt_path: str | pathlib.Path | None = None,
     timeout_s: int = DEFAULT_TIMEOUT_S,
+    n_samples: int = 0,
+    output_jsonl: str | pathlib.Path | None = None,
 ) -> dict[str, float]:
     """Invoke Kanzi's upstream ``DAE.encode → decode → kabsch_rmsd`` loop.
 
@@ -332,15 +485,34 @@ def run_kanzi_upstream_eval(
         and we surface a blocked dict).
     timeout_s
         Wall-clock cap. Default 1800 s (30 min).
+    n_samples
+        Wave 92b: cap on records to process from ``sequences_path``.
+        Defaults to 0 (= process every record in the file). When the
+        caller passes ``--upstream-n-samples 1000`` from
+        :mod:`tools.run_real_ckpt_eval`, this kwarg is set so the
+        single subprocess call evaluates all N records (instead of
+        the upstream caller invoking the wrapper N times). Effective
+        value is ``min(n_samples, file_record_count)`` — i.e. the
+        smaller of the two.
+    output_jsonl
+        Wave 92b: optional path for per-record JSONL output
+        (one ``{"seq_id", "rmsd_A", "length"}`` object per line).
+        Parallel to the summary ``reconstruction.json``. Consumed by
+        downstream codebook-metric helpers in
+        :mod:`tools.paper_metrics_kanzi` so they can run codebook
+        statistics over the encoded indices without re-running
+        ``DAE.encode``. Defaults to ``None`` (no JSONL written).
 
     Returns
     -------
     dict[str, float]
         ``{"status": 1.0, "n_seqs": <float>, "mean_rmsd_A": <float>,
-        "min_rmsd_A": <float>, "max_rmsd_A": <float>, ...}`` on
-        success. On subprocess failure (missing kanzi / missing
-        checkpoint / torch import error / timeout), returns
-        ``{"status": 0.0, "reason": "<error>"}``.
+        "std_rmsd_A": <float>, "ci_95_low_A": <float>,
+        "ci_95_high_A": <float>, "min_rmsd_A": <float>,
+        "max_rmsd_A": <float>, ...}`` on success. On subprocess
+        failure (missing kanzi / missing checkpoint / torch import
+        error / timeout), returns ``{"status": 0.0, "reason":
+        "<error>"}``.
     """
     if ckpt_path is None:
         # Default to the published Wave 36 ckpt when present.
@@ -350,6 +522,21 @@ def run_kanzi_upstream_eval(
     output_dir = pathlib.Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     output_json = output_dir / "reconstruction.json"
+    # Wave 92b: pre-count records in the input file so the subprocess
+    # caps at min(n_samples, file_count). This honors the
+    # ``--upstream-n-samples`` knob from :mod:`tools.run_real_ckpt_eval`
+    # at the upstream-eval layer (was previously ignored — the wrapper
+    # silently processed all records regardless of the flag).
+    file_record_count = 0
+    if sequences_path.is_file():
+        with open(sequences_path, encoding="utf-8") as _f:
+            for _line in _f:
+                _stripped = _line.strip()
+                if _stripped and not _stripped.startswith(">"):
+                    _vals = [float(t) for t in _stripped.split(",") if t.strip()]
+                    if len(_vals) >= 3 and len(_vals) % 3 == 0:
+                        file_record_count += 1
+    effective_n = file_record_count if int(n_samples) <= 0 else min(int(n_samples), file_record_count)
     driver_source = _KANZI_DRIVER.format(kanzi_src=str(KANZI_SRC))
     cmd: list[str] = [
         sys.executable,
@@ -357,7 +544,13 @@ def run_kanzi_upstream_eval(
         "--input", str(sequences_path),
         "--ckpt", str(ckpt_path),
         "--output", str(output_json),
+        "--max-records", str(int(effective_n)),
     ]
+    jsonl_path = None
+    if output_jsonl is not None:
+        jsonl_path = pathlib.Path(output_jsonl)
+        jsonl_path.parent.mkdir(parents=True, exist_ok=True)
+        cmd += ["--output-jsonl", str(jsonl_path)]
     try:
         proc = subprocess.run(
             cmd, check=False, capture_output=True, text=True,
@@ -368,12 +561,16 @@ def run_kanzi_upstream_eval(
             "status": 0.0,
             "reason": f"kanzi_eval_timeout:{exc}",
             "metric_kind": "reconstruction_kabsch_rmsd_A",
+            "n_samples_requested": float(int(n_samples)),
+            "n_samples_file": float(file_record_count),
         }
     except Exception as exc:  # noqa: BLE001
         return {
             "status": 0.0,
             "reason": f"kanzi_eval_subprocess_failed:{type(exc).__name__}:{exc}",
             "metric_kind": "reconstruction_kabsch_rmsd_A",
+            "n_samples_requested": float(int(n_samples)),
+            "n_samples_file": float(file_record_count),
         }
     if proc.returncode != 0:
         return {
@@ -383,12 +580,16 @@ def run_kanzi_upstream_eval(
                 f"{proc.stderr.strip()[:400]}"
             ),
             "metric_kind": "reconstruction_kabsch_rmsd_A",
+            "n_samples_requested": float(int(n_samples)),
+            "n_samples_file": float(file_record_count),
         }
     if not output_json.is_file():
         return {
             "status": 0.0,
             "reason": "kanzi_eval_no_reconstruction_json",
             "metric_kind": "reconstruction_kabsch_rmsd_A",
+            "n_samples_requested": float(int(n_samples)),
+            "n_samples_file": float(file_record_count),
         }
     try:
         raw = json.loads(output_json.read_text(encoding="utf-8"))
@@ -397,6 +598,8 @@ def run_kanzi_upstream_eval(
             "status": 0.0,
             "reason": f"kanzi_reconstruction_parse_failed:{type(exc).__name__}:{exc}",
             "metric_kind": "reconstruction_kabsch_rmsd_A",
+            "n_samples_requested": float(int(n_samples)),
+            "n_samples_file": float(file_record_count),
         }
     summary = raw.get("summary", {}) if isinstance(raw, dict) else {}
     flat: dict[str, float] = {"status": 1.0, "metric_kind": "reconstruction_kabsch_rmsd_A"}
@@ -405,6 +608,14 @@ def run_kanzi_upstream_eval(
             flat[key] = float(value)
         except (TypeError, ValueError):
             continue
+    # Wave 92b: surface the n_samples bookkeeping so the caller can
+    # detect if their --upstream-n-samples knob was honored (effective
+    # n_seqs == n_samples_requested when file had >= n_samples records).
+    flat["n_samples_requested"] = float(int(n_samples))
+    flat["n_samples_file"] = float(file_record_count)
+    flat["n_samples_effective"] = float(effective_n)
+    if jsonl_path is not None:
+        flat["output_jsonl"] = float(1.0)
     flat["upstream_orchestrator"] = "kanzi.DAE.encode+decode+kabsch_rmsd"
     return flat
 
