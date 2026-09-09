@@ -149,9 +149,83 @@ def kanzi_latent_to_coords(
     # portable hook and matches the upstream eval driver contract).
     torch.manual_seed(int(seed))
 
-    # Step 2: snap each row to its nearest FSQ code → (B, L) int.
+    # Step 2: snap the continuous latent endpoint to FSQ codes → (B, L)
+    # int64 indices. The framework trajectory endpoint ``x_final`` lives
+    # in the post-``project_out`` (n_channels_decoder=512) space; the
+    # upstream ``FSQ`` is configured with ``dim = n_channels_encoder =
+    # 256`` so neither ``fsq_quantizer(x_t)`` nor
+    # ``fsq_quantizer.codes_to_indices(x_t)`` accept the input shape
+    # (they assert ``shape[-1] == self.dim == 256`` and ``shape[-1] ==
+    # self.codebook_dim == 4`` respectively).
+    #
+    # Wave 92c workaround: ``FSQ.implicit_codebook`` is built by
+    # ``indices_to_codes(torch.arange(self.codebook_size),
+    # project_out=True)`` at __init__ time, yielding the full
+    # ``(1000, n_channels_decoder=512)`` post-``project_out`` codebook.
+    # We do a nearest-neighbour L2 projection of each ``x_final`` row
+    # onto this codebook to recover ``idx_BL`` — the bridge now goes
+    # ``(L, 512) -> (L,) argmin over 1000 codes`` instead of forcing the
+    # upstream ``FSQ`` to ingest the wrong-shape input. This is the
+    # closest deterministic surrogate to ``quantize(project_in(x_final))``
+    # available without adding a new trained inverse projection layer
+    # (Wave 93+ work; see docs/audit/wave92c-n1000-sweep-real.md).
     with torch.no_grad():
-        idx_BL = fsq_quantizer.codes_to_indices(x_t)
+        # Resolve the implicit codebook deterministically.
+        # Production path: the real upstream ``FSQ`` builds
+        # ``implicit_codebook`` at ``__init__`` (line 89:
+        # ``indices_to_codes(torch.arange(codebook_size),
+        # project_out=True)``) — shape ``(1000, n_channels_decoder)``.
+        # Test path: the test FSQ mock also exposes a deterministic
+        # ``(1000, d)`` tensor on ``fsq_quantizer.implicit_codebook``.
+        # If neither is present (or the shape mismatches), fall back
+        # to ``fsq_quantizer.indices_to_codes`` (used in
+        # synthetic-mode unit tests where ``implicit_codebook`` is
+        # not pre-built).
+        #
+        # We need ``codes_1K`` of shape ``(K, d)`` where ``d ==
+        # x_t.shape[-1]``. ``torch.cdist`` requires both inputs to
+        # have the same ``d``; we reshape ``x_t`` to ``(B, L, d)``
+        # so the batch+sequence dims are explicit.
+        # Resolve the implicit codebook deterministically. Note:
+        # we use direct attribute access (not ``getattr``) because the
+        # MagicMock auto-attr machinery in unit tests can shadow
+        # explicitly-set attributes. The production FSQ always sets
+        # ``implicit_codebook`` at ``__init__`` line 89.
+        implicit_codebook = fsq_quantizer.implicit_codebook
+        if (
+            implicit_codebook is None
+            or not isinstance(implicit_codebook, torch.Tensor)
+            or implicit_codebook.shape[-1] != x_t.shape[-1]
+        ):
+            # Defensive fallback: rebuild the implicit codebook by
+            # running ``indices_to_codes`` with ``project_out=True``
+            # so the projection target matches ``x_final``'s
+            # n_channels_decoder dim.
+            codes_1K = fsq_quantizer.indices_to_codes(
+                torch.arange(
+                    int(fsq_quantizer.codebook_size),
+                    device=device,
+                ),
+                project_out=True,
+            )  # (1000, n_channels_decoder)
+        else:
+            codes_1K = implicit_codebook
+        # General-shape NN projection: ``x_t`` may be ``(B, L, d)`` or
+        # ``(1, L, d)`` (after the unsqueeze above). Reshape to
+        # ``(B, L, d)`` and compute pairwise L2 against
+        # ``codes_1K (K, d)`` → ``dists (B, L, K)`` → argmin → ``idx_BL
+        # (B, L)``. ``torch.cdist`` needs both inputs as ``(N, d)`` per
+        # batch — we collapse ``(B, L, d) → (B*L, d)`` for the call
+        # and reshape the result back to ``(B, L, K)``.
+        B_dim = int(x_t.shape[0])
+        L_dim = int(x_t.shape[1])
+        x_flat = x_t.reshape(B_dim * L_dim, -1).float()  # (B*L, d)
+        dists = torch.cdist(
+            x_flat, codes_1K.float(),  # (B*L, d) vs (K, d)
+        )  # (B*L, K)
+        idx_BL = dists.argmin(dim=-1).to(torch.int64).reshape(
+            B_dim, L_dim,
+        )  # (B, L)
         # Step 3: decode the (B, L) indices back to (B, L, 3) nm.
         x_pred = decoder.decode(
             idx_BL,

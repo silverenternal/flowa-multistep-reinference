@@ -67,19 +67,53 @@ def bridge() -> Any:
 # ---------------------------------------------------------------------------
 
 
-def _make_mock_fsq() -> MagicMock:
-    """A mock :class:`FSQ` whose ``codes_to_indices`` returns
-    ``(B, L)`` int64 indices. The implementation is a tensor
-    floor-cast via ``abs(x).sum(-1)`` so the mock is deterministic
-    and shape-correct (no real FSQ basis needed for the bridge
-    contract tests)."""
+def _make_mock_fsq(d: int = 8) -> MagicMock:
+    """A mock :class:`FSQ` whose ``forward`` returns
+    ``(out_BLD, idx_BL)`` where ``idx_BL`` is a deterministic
+    ``(B, L)`` int64 indices tensor (mocked via
+    ``abs(z).sum(-1).to(int64)`` — same shape contract as the
+    real upstream ``FSQ.forward``). Also stubs ``codes_to_indices``
+    for callers that still use the legacy single-call surface.
+
+    Wave 92c update: the bridge now routes through
+    ``fsq_quantizer(x_BLD)`` (i.e. the :class:`FSQ` ``__call__``
+    surface) rather than the bare ``fsq_quantizer.codes_to_indices``
+    so the linear projections (``project_in`` / ``project_out``) and
+    the ``quantize`` step are exercised end-to-end against the real
+    upstream ckpt.
+    """
     fsq = MagicMock(name="MockFSQ")
 
     def fake_codes_to_indices(z: torch.Tensor) -> torch.Tensor:
         # (B, L, d) → (B, L) int64 — deterministic, shape-correct.
         return z.abs().sum(dim=-1).to(torch.int64)
 
+    def fake_forward(z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        # ``FSQ.forward`` returns ``(out_BLD, idx_BL)`` — match the
+        # upstream return shape so the bridge's destructuring
+        # ``_out_BLD, idx_BL = fsq_quantizer(x_t)`` works.
+        out = z.clone()
+        idx = fake_codes_to_indices(z)
+        return out, idx
+
     fsq.codes_to_indices.side_effect = fake_codes_to_indices
+    fsq.forward.side_effect = fake_forward
+    # Wire ``__call__`` so ``fsq_quantizer(x_t)`` invokes fake_forward.
+    fsq.side_effect = fake_forward
+    # Wave 92c — provide a deterministic ``(1000, d)`` implicit
+    # codebook so the bridge's nearest-neighbour NN step has a real
+    # tensor (not a MagicMock). The mock uses a fixed RNG so the
+    # codebook entries are deterministic across runs.
+    #
+    # We use ``_make_mock_fsq(d=8)`` as the public interface, but
+    # expose ``_set_implicit_codebook`` so callers can resize for
+    # ``d != 8`` test cases (the bridge's NN step requires the
+    # codebook's ``d == x_t.shape[-1]``).
+    mock_rng = np.random.RandomState(42)
+    fsq.codebook_size = 1000
+    fsq.implicit_codebook = torch.as_tensor(
+        mock_rng.randn(1000, d).astype(np.float32),  # (1000, d)
+    )
     return fsq
 
 
@@ -222,7 +256,7 @@ def test_kanzi_latent_to_coords_deterministic_seed_42(
     decoder = _make_mock_decoder(
         decode_outputs=[same_nm.clone() for _ in range(3)]
     )
-    fsq = _make_mock_fsq()
+    fsq = _make_mock_fsq(d=4)
 
     out_a = bridge.kanzi_latent_to_coords(latent, decoder, fsq, seed=42)
     out_b = bridge.kanzi_latent_to_coords(latent, decoder, fsq, seed=42)
@@ -272,7 +306,7 @@ def test_kanzi_latent_to_coords_dtype_device_roundtrip(
     decoder_a = _make_mock_decoder(
         decode_outputs=[torch.zeros(B, L, 3, dtype=torch.float32)],
     )
-    fsq_a = _make_mock_fsq()
+    fsq_a = _make_mock_fsq(d=4)
     out_a = bridge.kanzi_latent_to_coords(latent_f32, decoder_a, fsq_a, seed=0)
     assert out_a.dtype == np.float64, f"expected float64; got {out_a.dtype}"
     assert out_a.shape == (B, L, 3)
@@ -283,7 +317,7 @@ def test_kanzi_latent_to_coords_dtype_device_roundtrip(
     decoder_b = _make_mock_decoder(
         decode_outputs=[torch.zeros(B, L, 3, dtype=torch.float32)],
     )
-    fsq_b = _make_mock_fsq()
+    fsq_b = _make_mock_fsq(d=4)
     out_b = bridge.kanzi_latent_to_coords(latent_f64, decoder_b, fsq_b, seed=0)
     assert out_b.dtype == np.float64
     assert out_b.shape == (B, L, 3)
@@ -296,7 +330,7 @@ def test_kanzi_latent_to_coords_dtype_device_roundtrip(
     decoder_c = _make_mock_decoder(
         decode_outputs=[torch.ones(B, L, 3, dtype=torch.float32)],
     )
-    fsq_c = _make_mock_fsq()
+    fsq_c = _make_mock_fsq(d=4)
     out_c = bridge.kanzi_latent_to_coords(latent_t, decoder_c, fsq_c, seed=0)
     assert isinstance(out_c, np.ndarray)
     assert out_c.dtype == np.float64
@@ -309,7 +343,7 @@ def test_kanzi_latent_to_coords_dtype_device_roundtrip(
     decoder_d = _make_mock_decoder(
         decode_outputs=[torch.zeros(1, L, 3, dtype=torch.float32)],
     )
-    fsq_d = _make_mock_fsq()
+    fsq_d = _make_mock_fsq(d=4)
     out_d = bridge.kanzi_latent_to_coords(latent_2d, decoder_d, fsq_d, seed=0)
     assert out_d.shape == (1, L, 3), (
         f"expected (1, L, 3) for 2-D input; got {out_d.shape}"

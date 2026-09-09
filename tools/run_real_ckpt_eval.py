@@ -3437,7 +3437,7 @@ def _compute_kanzi_framework_paper_metric(
     seed: int,
     nfe: int,
     ckpt_path: "str | pathlib.Path | None" = None,
-    n_steps: int = 100,
+    n_steps: int = 20,
 ) -> tuple[dict[str, float | None] | None, str, dict[str, Any]]:
     """Framework-arm paper-metric sweep via the Kanzi latent→coord bridge.
 
@@ -3514,26 +3514,25 @@ def _compute_kanzi_framework_paper_metric(
         return None, "blocked", debug
     decoder, fsq_quantizer = glue.bridge
     # ---- 3. Extract framework trace's trajectory endpoint ---------
+    # Wave 92c fix: ``KanziAdapter.observe_endpoint(trace, state)`` is a
+    # 2-arg method that requires a :class:`StateBundle` we don't have
+    # in the eval pipeline (the solver passes ``trace`` only). The glue
+    # class already extracts ``theta = trajectory[-1]`` directly from
+    # the adapter's ``_native_states[digest]['trajectory']`` cache via
+    # :meth:`KanziGlue._extract_endpoint` — the same path
+    # ``_compute_kanzi_composite`` uses. Bypass ``observe_endpoint`` and
+    # pull ``x_final = (L_z, n_channels_decoder)`` via the glue class so
+    # the bridge receives a correctly-shaped ``x_final`` ndarray
+    # regardless of the adapter signature drift.
     try:
-        endpoint_obs = adapter.observe_endpoint(framework_trace)
+        x_final = glue._extract_endpoint(framework_trace)
     except Exception as exc:  # noqa: BLE001
         debug["reason"] = (
-            f"observe_endpoint_failed: {type(exc).__name__}:{exc}"
+            f"glue_extract_endpoint_failed: {type(exc).__name__}:{exc}"
         )
         return None, "blocked", debug
-    if endpoint_obs is None:
-        debug["reason"] = "observe_endpoint_returned_none"
-        return None, "blocked", debug
-    # ``endpoint_obs`` is the ``x_final`` ndarray (L_z, n_channels_decoder)
-    # OR a dict whose canonical key holds it. Be tolerant of either.
-    if isinstance(endpoint_obs, dict):
-        x_final = endpoint_obs.get("x_final") or endpoint_obs.get(
-            "endpoint_digest_payload"
-        )
-    else:
-        x_final = endpoint_obs
     if x_final is None:
-        debug["reason"] = "endpoint_missing_x_final"
+        debug["reason"] = "glue_extract_endpoint_returned_none"
         return None, "blocked", debug
     # ---- 4. Bridge: latent → coords in Ångström -------------------
     try:
@@ -3583,8 +3582,13 @@ def _compute_kanzi_framework_paper_metric(
         from tools.paper_metrics_kanzi import (  # type: ignore  # noqa: PLC0415
             compute_all_codebook_metrics,
             compute_codebook_hamming_rotation_invariance,
-            kabsch_rmsd,
         )
+        # Wave 92c fix: ``kabsch_rmsd`` lives in the upstream
+        # ``kanzi.utils`` package (vendored at
+        # ``data/kanzi_upstream/src/kanzi/utils.py``), NOT in
+        # ``tools.paper_metrics_kanzi``. Import it from the upstream
+        # package via the already-loaded decoder module path.
+        from kanzi.utils import kabsch_rmsd  # type: ignore  # noqa: PLC0415
         codebook = compute_all_codebook_metrics(
             idx_arr, vocab_size=int(idx_arr.max()) + 1,
         )
@@ -3621,7 +3625,18 @@ def _compute_kanzi_framework_paper_metric(
             return idx_r.detach().cpu().numpy().astype(_np.int64).reshape(-1)
         hamming = compute_codebook_hamming_rotation_invariance(
             coords_angstrom.astype(_np.float32),
-            encoder=_enc, vocab_size=int(idx_arr.max()) + 1,
+            encoder=_enc,
+            # Wave 92c fix: use the upstream FSQ's actual vocab_size
+            # (1000 = prod([8, 5, 5, 5]) per the Wave 36 ckpt) rather
+            # than ``idx_arr.max() + 1`` — the rotation-paired encoder
+            # may legitimately emit indices that exceed the
+            # single-record max because rotations explore the FSQ
+            # quantization boundary differently than the round-trip
+            # identity test. Using ``idx_arr.max() + 1`` raised
+            # ``ValueError`` for ~50% of cells under the Wave 92c
+            # implicit-codebook NN projection (where rotations tend to
+            # land on the edges of the implicit codebook).
+            vocab_size=1000,
             seed=int(seed),
         )
     except ImportError as exc:
