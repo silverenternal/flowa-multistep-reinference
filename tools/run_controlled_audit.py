@@ -98,7 +98,7 @@ DEFAULT_SIGMAS: tuple[float, ...] = (0.0, 0.1, 0.5)
 #: refinement rounds get more integration steps. See
 #: :func:`_nfe_steps_per_round` and
 #: ``docs/audit/saturation-improvement-plan.md`` §2 FIX-3.
-NFE_ALLOCATION: str = "uniform"
+NFE_ALLOCATION: str = "evidence"
 
 #: Models under audit. Each entry is the adapter module + adapter class
 #: + synthetic_mode flag + sigma_support flag + metric family + an

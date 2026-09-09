@@ -308,22 +308,27 @@ def test_allocation_rejects_invalid_budgets(args: tuple) -> None:
         nfe_steps_for_evidence(*args)
 
 
-def test_audit_tool_default_allocation_unchanged() -> None:
-    """No-degradation: the audit grid's default split is still uniform."""
+def test_audit_tool_default_allocation_is_evidence_w95() -> None:
+    """Wave 95: default flipped to evidence (E2). Uniform still opt-in."""
     import tools.run_controlled_audit as audit
 
-    assert audit.NFE_ALLOCATION == "uniform"
-    assert audit._nfe_steps_per_round(275, 5) == [55] * 5
-
-
-def test_audit_tool_evidence_allocation_opt_in(monkeypatch) -> None:
-    import tools.run_controlled_audit as audit
-
-    monkeypatch.setattr(audit, "NFE_ALLOCATION", "evidence")
+    assert audit.NFE_ALLOCATION == "evidence"
+    # The default is now "evidence"; the result must sum to nfe exactly
+    # and allocate more steps to later (small-eps) rounds.
     steps = audit._nfe_steps_per_round(275, 5)
     assert sum(steps) == 275
     assert steps != [55] * 5
     assert steps == sorted(steps)
+
+
+def test_audit_tool_uniform_allocation_opt_in(monkeypatch) -> None:
+    """Wave 35 kept: uniform is still available via module-global flip."""
+    import tools.run_controlled_audit as audit
+
+    monkeypatch.setattr(audit, "NFE_ALLOCATION", "uniform")
+    assert audit._nfe_steps_per_round(275, 5) == [55] * 5
+    assert audit._nfe_steps_per_round(50, 4) == [13, 13, 12, 12]
+    assert audit._nfe_steps_per_round(11, 4) == [3, 3, 3, 2]
 
 
 # ---------------------------------------------------------------------------
