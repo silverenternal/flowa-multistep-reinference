@@ -18,6 +18,7 @@ from adaptive_reflow.algorithm import (
     ExponentialScheduler,
     LinearScheduler,
     NFEAwareMemoryScheduler,
+    PaperRatioAdaptiveScheduler,
     PolynomialScheduler,
     SchedulerProtocol,
     ScheduleSample,
@@ -2516,4 +2517,33 @@ def test_nfe_aware_scheduler_u_r_progress_monotonic() -> None:
         assert curr > prev
     assert u_rs[0] == pytest.approx(0.0)
     assert u_rs[-1] == pytest.approx(1.0)
+
+
+# Wave 95 Phase 1.D — widen shift_max default from 0.15 to 0.30 so the
+# framework has more dynamic range to adapt to per-round evidence (the
+# pre-Wave-95 ceiling clipped legitimate PID corrections on rounds
+# whose per-cell sheet-evidence ratio dipped well below 1.0). Both
+# adaptive schedulers in :mod:`adaptive_reflow.algorithm.scheduler._core`
+# share the same default; the regression test below locks the new
+# value on both classes so future drift fails CI.
+def test_shift_max_default_is_030() -> None:
+    """The default ``shift_max`` on both adaptive schedulers is 0.30.
+
+    Wave 95 Phase 1.D widen: pre-Wave-95 the default was 0.15, which
+    clipped legitimate PID corrections on rounds whose per-cell
+    sheet-evidence ratio dipped below ~0.7 (the canonical operating
+    point for framework-armed framework-vs-baseline eval). Bumping to
+    0.30 doubles the dynamic range without changing the call shape,
+    so this is a pure behaviour-widen, no API surface change.
+    """
+    convergence = ConvergenceAdaptiveScheduler()
+    assert convergence.shift_max == pytest.approx(0.30), (
+        f"ConvergenceAdaptiveScheduler default shift_max is "
+        f"{convergence.shift_max!r}; expected 0.30 (Wave 95 widen)."
+    )
+    paper_ratio = PaperRatioAdaptiveScheduler()
+    assert paper_ratio.shift_max == pytest.approx(0.30), (
+        f"PaperRatioAdaptiveScheduler default shift_max is "
+        f"{paper_ratio.shift_max!r}; expected 0.30 (Wave 95 widen)."
+    )
 

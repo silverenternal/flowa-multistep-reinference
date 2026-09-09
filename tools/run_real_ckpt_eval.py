@@ -171,6 +171,15 @@ if str(REPO_ROOT_HERE) not in sys.path:
 from adaptive_reflow.adapters._adapter_common import (
     per_position_entropy_reduction,
 )
+# Wave 95 Phase 1.D — thread ``weights_path`` symmetrically into the
+# kanzi / lineageflow / hidream_i1 SOTA factories. The resolvers are
+# stdlib + pathlib only (no torch / no upstream packages), so they are
+# safe to import at module level.
+from adaptive_reflow.adapters import (
+    hidream_i1_resolve_weights_path,
+    kanzi_resolve_weights_path,
+    lineageflow_resolve_weights_path,
+)
 
 # Wave 68 Phase 4 — metric layer now consumes the typed
 # :class:`AdapterObservationProtocol.observe(...)` surface (Phase 1
@@ -978,6 +987,39 @@ def _resolve_adapter(
             and FLOWMOL3_REAL_CKPT.is_file()
         ):
             kwargs["weights_path"] = str(FLOWMOL3_REAL_CKPT)
+        # Wave 95 Phase 1.D — symmetrically thread ``weights_path`` into
+        # the kanzi / lineageflow / hidream_i1 SOTA factories so the
+        # per-cell framework-vs-baseline eval can exercise real
+        # checkpoints instead of the synthetic field. Each entry is
+        # gated by ``weights_path in sig_params`` (mirror line 977) so
+        # pre-existing factories whose signature does NOT accept the
+        # kwarg keep their byte-stable call shape. The kanzi /
+        # lineageflow resolvers take no arguments; hidream_i1 needs the
+        # ``variant`` token to match the published HF sub-repo names.
+        if (
+            model == "kanzi"
+            and force_mode in {"real", "auto"}
+            and "weights_path" in sig_params
+        ):
+            kanzi_ckpt = kanzi_resolve_weights_path()
+            if kanzi_ckpt is not None:
+                kwargs["weights_path"] = str(kanzi_ckpt)
+        if (
+            model == "lineageflow"
+            and force_mode in {"real", "auto"}
+            and "weights_path" in sig_params
+        ):
+            lineageflow_ckpt = lineageflow_resolve_weights_path()
+            if lineageflow_ckpt is not None:
+                kwargs["weights_path"] = str(lineageflow_ckpt)
+        if (
+            model == "hidream_i1"
+            and force_mode in {"real", "auto"}
+            and "weights_path" in sig_params
+        ):
+            hidream_ckpt = hidream_i1_resolve_weights_path("full")
+            if hidream_ckpt is not None:
+                kwargs["weights_path"] = str(hidream_ckpt)
         adapter = factory(**kwargs)
     except Exception as exc:  # noqa: BLE001
         return None, f"IMPORT_FAILED:{type(exc).__name__}:{exc}"

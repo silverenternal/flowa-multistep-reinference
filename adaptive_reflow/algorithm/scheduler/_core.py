@@ -1926,7 +1926,7 @@ class ConvergenceAdaptiveScheduler:
         base: CosineAnnealScheduler | None = None,
         kp: float = 0.10,
         kd: float = 0.05,
-        shift_max: float = 0.15,
+        shift_max: float = 0.30,
         ema: float = 0.3,
         metric_weights: Mapping[str, float] | None = None,
         paper_quantity_weights: Mapping[str, float] | None = None,
@@ -3881,7 +3881,7 @@ class PaperRatioAdaptiveScheduler:
         base: CodimensionSheetScheduler | None = None,
         kp: float = 0.10,
         kd: float = 0.05,
-        shift_max: float = 0.15,
+        shift_max: float = 0.30,
         ema: float = 0.3,
     ) -> None:
         """Construct the paper-ratio adaptive scheduler.
