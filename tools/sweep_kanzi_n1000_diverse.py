@@ -95,6 +95,12 @@ from tools._sweep_assertion import (  # noqa: E402
 )
 from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # noqa: E402
 
+# Wave 98.A — GPU utilization watchdog. Wraps the sweep loop so a
+# stuck-process scenario (util.gpu==0 while memory.used>100 MiB for
+# >30s) emits a WARNING to stderr. The diagnostic that should have
+# caught the Wave 96.E stuck sweep earlier.
+from tools._gpu_watchdog import gpu_watchdog  # noqa: E402
+
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -151,7 +157,13 @@ def main(argv: list[str] | None = None) -> int:
     skip_reasons: dict[str, int] = {}
     t_sweep = time.monotonic()
 
-    with args.input.open(encoding="utf-8") as fh, \
+    # Wave 98.A — GPU utilization watchdog. Fires a WARNING to stderr
+    # if util.gpu stays at 0% for >30s while memory.used > 100 MiB.
+    # The diagnostic that should have caught the Wave 96.E stuck
+    # sweep earlier — wraps the per-record inner loop only (not the
+    # DAE / KanziAdapter construction above).
+    with gpu_watchdog(threshold_seconds=30, sample_interval=5), \
+         args.input.open(encoding="utf-8") as fh, \
          jsonl_path.open("w", encoding="utf-8") as fh_jsonl:
         seq_idx = 0
         for line in fh:

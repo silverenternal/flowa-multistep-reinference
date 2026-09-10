@@ -79,6 +79,13 @@ from tools._sweep_assertion import (  # noqa: E402
     write_summary_with_n_keys,
 )
 
+# Wave 98.A — GPU utilization watchdog. Fires a WARNING to stderr if
+# util.gpu stays at 0% for >30s while memory.used > 100 MiB. The
+# diagnostic that should have caught the Wave 96.E stuck-process
+# scenario (a sweep that held VRAM but never advanced). Stdlib-only +
+# no-op when nvidia-smi is missing (legacy non-GPU callers unaffected).
+from tools._gpu_watchdog import gpu_watchdog  # noqa: E402
+
 
 # Repo root (one level above ``tools/``). Used to anchor absolute paths
 # for vendored upstream packages + reference data.
@@ -233,6 +240,26 @@ def run_lineageflow_upstream_eval(
     fasta_path = pathlib.Path(fasta_path)
     output_dir = pathlib.Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    # Wave 98.A — GPU utilization watchdog. Fires a WARNING to stderr
+    # if util.gpu stays at 0% for >30s while memory.used > 100 MiB.
+    with gpu_watchdog(threshold_seconds=30, sample_interval=5):
+        return _run_lineageflow_upstream_eval_impl(
+            fasta_path, output_dir, metrics, timeout_s,
+            hmmdb, target_db, pfam_fastas_dir, hmmscan, mmseqs,
+        )
+
+
+def _run_lineageflow_upstream_eval_impl(
+    fasta_path: pathlib.Path,
+    output_dir: pathlib.Path,
+    metrics: tuple[str, ...],
+    timeout_s: int,
+    hmmdb: str | pathlib.Path | None,
+    target_db: str | pathlib.Path | None,
+    pfam_fastas_dir: str | pathlib.Path | None,
+    hmmscan: str | None,
+    mmseqs: str | None,
+) -> dict[str, float]:
     cmd: list[str] = [
         sys.executable,
         str(LINEAGEFLOW_EVALUATE_ALL),
@@ -578,6 +605,22 @@ def run_kanzi_upstream_eval(
     ckpt_path = pathlib.Path(ckpt_path)
     sequences_path = pathlib.Path(sequences_path)
     output_dir = pathlib.Path(output_dir)
+    # Wave 98.A — GPU utilization watchdog.
+    with gpu_watchdog(threshold_seconds=30, sample_interval=5):
+        return _run_kanzi_upstream_eval_impl(
+            sequences_path, output_dir, ckpt_path, timeout_s,
+            n_samples, output_jsonl,
+        )
+
+
+def _run_kanzi_upstream_eval_impl(
+    sequences_path: pathlib.Path,
+    output_dir: pathlib.Path,
+    ckpt_path: pathlib.Path,
+    timeout_s: int,
+    n_samples: int,
+    output_jsonl: str | pathlib.Path | None,
+) -> dict[str, float]:
     output_dir.mkdir(parents=True, exist_ok=True)
     output_json = output_dir / "reconstruction.json"
     # Wave 92b: pre-count records in the input file so the subprocess
@@ -815,6 +858,22 @@ def run_flowmol3_upstream_eval(
     output_dir = pathlib.Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     output_json = output_dir / "sample_analyzer.json"
+    # Wave 98.A — GPU utilization watchdog.
+    with gpu_watchdog(threshold_seconds=30, sample_interval=5):
+        return _run_flowmol3_upstream_eval_impl(
+            smiles_list, output_dir, output_json, reference, pb_workers,
+            timeout_s,
+        )
+
+
+def _run_flowmol3_upstream_eval_impl(
+    smiles_list: pathlib.Path,
+    output_dir: pathlib.Path,
+    output_json: pathlib.Path,
+    reference: str,
+    pb_workers: int,
+    timeout_s: int,
+) -> dict[str, float]:
     driver_source = _FLOWMOL3_DRIVER.format(flowmol3_root=str(FLOWMOL3_UPSTREAM))
     cmd: list[str] = [
         sys.executable,

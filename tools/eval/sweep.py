@@ -48,6 +48,11 @@ from tools.eval.framework import (  # type: ignore  # noqa: F401
     _solve_framework,
 )
 
+# Wave 98.A — GPU utilization watchdog. Wraps each per-cell run so a
+# stuck-process scenario (util.gpu==0 while memory.used>100 MiB for
+# >30s) emits a WARNING to stderr. See tools/_gpu_watchdog.py.
+from tools._gpu_watchdog import gpu_watchdog  # type: ignore  # noqa: E402
+
 
 def _resolve_metric(name: str) -> Any:
     """Look up a metric helper via the ``tools.run_real_ckpt_eval`` shim.
@@ -89,6 +94,47 @@ def _run_cell(
     Returns a single dict ready to drop into the ``evidence[]`` list of
     a capability_audit-style report.
     """
+    # Wave 98.A — watchdog: detect 0% GPU compute + memory-occupied
+    # scenarios that should not be silent (the Wave 96.E failure mode).
+    # The context manager is a no-op when no GPU is present (nvidia-smi
+    # missing) so legacy non-GPU callers are unaffected.
+    with gpu_watchdog(threshold_seconds=30, sample_interval=5):
+        return _run_cell_impl(
+            model, seed, nfe, n_rounds=n_rounds,
+            force_mode=force_mode, metric_mode=metric_mode,
+            composite_metric=composite_metric,
+            restart_min_nfe=restart_min_nfe, n_molecules=n_molecules,
+            paper_metrics_flag=paper_metrics_flag,
+            paper_reference=paper_reference,
+            lineageflow_upstream_eval=lineageflow_upstream_eval,
+            kanzi_upstream_eval=kanzi_upstream_eval,
+            flowmol3_upstream_eval=flowmol3_upstream_eval,
+            kanzi_framework_paper_metrics=kanzi_framework_paper_metrics,
+            upstream_n_samples=upstream_n_samples,
+        )
+
+
+def _run_cell_impl(
+    model: str,
+    seed: int,
+    nfe: int,
+    *,
+    n_rounds: int = 3,
+    force_mode: str = "synthetic",
+    metric_mode: str = "synthetic",
+    composite_metric: str = "auto",
+    restart_min_nfe: int | None = None,
+    n_molecules: int = 1,
+    paper_metrics_flag: bool = False,
+    paper_reference: str = "GEOM_DRUGS",
+    lineageflow_upstream_eval: bool = False,
+    kanzi_upstream_eval: bool = False,
+    flowmol3_upstream_eval: bool = False,
+    kanzi_framework_paper_metrics: bool = False,
+    upstream_n_samples: int = 1000,
+) -> dict[str, Any]:
+    """Inner implementation of :func:`_run_cell` — split for Wave 98.A
+    watchdog wrapping without changing the public signature."""
     spec = DOWNSTREAM_METRICS[model]
     cell: dict[str, Any] = {
         "model": model,

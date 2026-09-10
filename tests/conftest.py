@@ -45,6 +45,16 @@ import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DATA_DIR = _REPO_ROOT / "data"
+
+# Wave 98.A — disable the GPU utilization watchdog during the test
+# suite. The watchdog's background thread invokes nvidia-smi every
+# 5 seconds, which collides with tests that mock subprocess.run
+# (e.g. test_upstream_eval.py's smoke tests assert ``call_count == 1``
+# on the mocked subprocess.run). Tests that exercise the watchdog
+# itself (tests/test_tools/test_gpu_watchdog.py) override this via
+# monkeypatch and do not rely on real nvidia-smi availability.
+os.environ.setdefault("GPU_WATCHDOG_DISABLED", "1")
+
 _POCKET_MODULES_ROOT: Path | None = None
 for parent in _REPO_ROOT.resolve().parents:
     if (parent / "pocket_modules").is_dir():
