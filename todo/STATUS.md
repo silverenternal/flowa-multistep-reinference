@@ -1,18 +1,18 @@
 # `todo/STATUS.md` — single source of truth
 
-**Last updated:** 2026-09-10 (Wave 93 Phase 1 landed; Wave 92a/b in; Wave 92c in flight)
-**Wave:** Wave 92a (constants fix) → Wave 92b (N-samples patch) → Wave 93 (statistical power) → Wave 92c (N=1000 sweep)
-**Push state:** 326 unpushed commits on `main`, `push_risk = LOW` (user-gated)
+**Last updated:** 2026-09-10 (Wave 99.D — real N=1000 Kanzi final synthesis)
+**Wave:** Wave 99.D final synthesis (this wave) — closes W2 ON MEASURABILITY+DIRECTION; DEFER on magnitude pending Wave 100+ N=1000 framework arm
+**Push state:** 327 unpushed commits on `main`, `push_risk = LOW` (user-gated)
 
 ---
 
 ## One-line current verdict
 
-> **4 一区 reviewer weaknesses closed (W1 ✅ W2 ✅ W3 — defer W4 — final).** Wave 92a (Kanzi adapter constants fix `73c6978`) + Wave 92b (upstream N-samples patch `60dcbb7`) + Wave 93 Phase 1 (`tools/statistical_power_analysis.py` + 4 tests `e69ffd8`) all landed. Wave 92c (N=1000 Kanzi framework paper-metric sweep) in flight — currently the only blocking work. ICLR 2027 submission package plan finalized in `planned/`.
+> **W2 = PARTIALLY CLOSED** (measurability + direction closed at N=10 framework arm; magnitude deferred to Wave 100+). Wave 99.B verdict: Kanzi `reconstruction_kabsch_rmsd_A` REGRESSES_BY_+0.864_Å (Bonferroni p = 4.6e-7 ≪ 0.0083) at N=10 framework arm vs N=1000 baseline; 5 codebook metrics NOT_SIGNIFICANT at Bonferroni α=0.0083. Architectural explanation (Wave 92c §5): framework's continuous-latent endpoint lives in post-`project_out` (n_channels_decoder=512) space, and the nearest-neighbour L2 projection onto `FSQ.implicit_codebook` loses ~0.86 Å vs canonical `DAE.encode → DAE.decode`. Forward projection at N=1000 framework arm: 95% CI of Δ tightens ±0.19 Å → ±0.02 Å — enough to defend a magnitude claim. Wave 100+ queued (~16.7 hours wall-clock on `kanzi_venv` CPU sidecar).
 
 ---
 
-## What's landed (Wave 90-93)
+## What's landed (Wave 90-99)
 
 | Wave | Commit | Purpose |
 |---|---|---|
@@ -22,7 +22,14 @@
 | **Wave 92a** (planned: w2b-kanzi-adapter-refactor) | `73c6978` | Kanzi adapter refactor: 3 WRONG constants → ckpt model_cfg load (512/1000/backbone-dependent) |
 | **Wave 92b** (planned: w2b-kanzi-adapter-refactor) | `60dcbb7` | Kanzi upstream N-samples patch (mirror LineageFlow Wave 81): --max-records N + --output-jsonl + mean/std/95%CI |
 | **Wave 93 Phase 1** | `e69ffd8` | Statistical power analysis tool + 4 unit tests (Bonferroni + power + verdict thresholds) |
-| **Wave 92c** (in flight) | TBD | N=1000 Kanzi framework paper-metric sweep (the missing real N=1000 numbers) |
+| **Wave 95** | `378dc4a` + `1b17dfa` | project_out⁻¹ architectural fix wired into kanzi_latent_to_coord.py + re-sweep |
+| **Wave 96** | `a7b97d2` + `1f26bf6` + `80f7fa8` + `bed3284` + `8656030` + `d616f6b` + `c53aa10` | Endpoint-collapse root-cause + targeted fix + diverse-endpoint sweep + reality check + production sweep (N=10 framework arm) |
+| **Wave 97** | `f17fcc5` + `603f4fd` + `b88cb13` + `facb94e` + `c4b176b` | Routing collapse (5 routing problems) + tools/eval/ split + glue collapse + N=1000 hard assertion + final audit |
+| **Wave 98** | `99834d9` + `ae2327b` + `3856f28` + `eb05d7d` | GPU watchdog + SOTA config alignment audit + paper-parity defaults enforcement + final synthesis |
+| **Wave 99.A** | `1f6bab5` | Docs-only refresh of baseline-audit-report.md (Wave 91-93 additive notes) |
+| **Wave 99.B** | `9893710` | Real N=1000 Kanzi verdict + statistical power analysis (uses Wave 96.E N=10 framework arm) |
+| **Wave 99.C** | `06f0505` | Update paper §7.3 + CONSOLIDATED_RESULTS §15 + 12-cell table with Wave 99.B verdict |
+| **Wave 99.D** | (this commit) | Final synthesis — W2 PARTIALLY CLOSED, cover letter + baseline-audit + STATUS updates |
 
 ---
 
@@ -30,10 +37,10 @@
 
 | Model | Composite axis (designed) | Paper axis N=1000 |
 |---|---|---|
-| **FlowMol3** | **+0.1182 SUPPORTED** (Wave 52 byte-stable) | 1/4 framework_improves (`fg_dev` -0.0235, 4.05σ) |
+| **FlowMol3** | **+0.1182 SUPPORTED** (Wave 52 byte-stable) | 1/4 framework_improves (`fg_dev` -0.0235, 4.05σ), 1/4 REGRESSES (`pb_validity_pct` UFF-vs-xtb definitional gap) |
 | **LineageFlow** | **+0.2083 SUPPORTED** (Wave 52 byte-stable) | 1/4 framework_improves (`hmmscan_total_hits` +116%, p<1e-10) |
-| **Kanzi** | **+0.1895 SUPPORTED** (Wave 52 byte-stable) | Wave 92c in flight (was NOT_MEASURABLE_N1000, n=2 proxy only) |
-| **3/3 composite axis** ✅ | | **2-3/12 paper-metric cells framework_improves** |
+| **Kanzi** | **+0.1895 SUPPORTED** (Wave 52 byte-stable) | **Wave 99.B: 1/6 REGRESSES_BY_+0.86_Å on `reconstruction_kabsch_rmsd_A`** (Bonferroni p = 4.6e-7, N=10 framework arm) + 4/6 NOT_SIGNIFICANT + 1/6 BORDERLINE on `codebook_utilization` |
+| **3/3 composite axis** ✅ | | **2-3/14 paper-metric cells framework_improves, 1/14 REGRESSES_BY_+0.86_Å on Kanzi (architectural cost, Wave 92c §5)** |
 
 ---
 
@@ -41,19 +48,18 @@
 
 | Wave | Task | Status | Wall-clock |
 |---|---|---|---|
-| **Wave 92c** | N=1000 Kanzi framework paper-metric sweep | in flight (Task `wlc4t3ou8`) | ~30-60 min |
-| **Wave 93 Phase 2** | Run analysis on all 12 cells + reframe §7.6 | in flight (Task `w2ap73xhs`) | ~2-3h |
-| **Wave 94** | Cover letter + paper §1/§7 final + supplementary + checklist | waiting for Wave 93 | ~2-3h |
+| **Wave 100+** | N=1000 Kanzi framework paper-metric sweep (close W2 magnitude) | queued (~16.7h on kanzi_venv CPU) | ~17h |
+| **Wave 94** | Cover letter + paper §1/§7 final + supplementary + checklist | partial — Wave 99.D updated cover letter; Wave 94 closes §7 final | ~2-3h |
 | Wave 92d (OPT-IN) | N=5000 sweep on all 3 Tier 3 models | waiting for user OK | ~4-8h |
 
 ---
 
-## Verification gates (all PASS as of last commit `e69ffd8`)
+## Verification gates (all PASS as of Wave 99.D)
 
-- **D.4 byte-stable:** 33/33 PASS (matches Wave 91 Phase 5 baseline)
+- **D.4 byte-stable:** 18/18 adapters PASS (162 vectors, 9 per adapter) via `tools/run_regression_vector_audit.py verify`
 - **G-MASTER capability:** 7/7 PASS (hard_pass=5, soft_pass=2)
 - **mkdocs build --strict:** EXIT=0
-- **Per-test suites touched in Wave 91-93:** all PASS
+- **Per-test suites touched in Wave 99.D:** all PASS (docs-only this wave)
 
 ---
 
@@ -62,7 +68,7 @@
 | # | Weakness | Status | Closed by |
 |---|---|---|---|
 | **W1** | FlowMol3 `pb_validity_pct = 0.43` vs paper `0.919` | ✅ **CLOSED** | Wave 90 (PB-xtb pipeline real wire, commit `fe95293`) |
-| **W2** | Kanzi framework arm NOT_MEASURABLE | ✅ **CLOSED** | Wave 91 (bridge `dfe0f4e`) + Wave 92a (constants fix `73c6978`) + Wave 92b (N-samples `60dcbb7`) |
+| **W2** | Kanzi framework arm NOT_MEASURABLE | ⚠️ **PARTIALLY CLOSED** (measurability+direction closed; magnitude DEFERRED to Wave 100+ N=1000 framework arm) | Wave 91 (bridge `dfe0f4e`) + Wave 92a (constants fix `73c6978`) + Wave 92b (N-samples `60dcbb7`) + Wave 95 (project_out⁻¹ `378dc4a`) + Wave 96 (diverse endpoints + reality check + production N=10 sweep) + Wave 97 (N=1000 hard assertion) + Wave 98 (GPU watchdog + SOTA defaults) + Wave 99.B/C/D (verdict + paper + cover letter + STATUS update) |
 | **W3** | N=1000 too small | ⚠️ **DEFER (OPT-IN)** | Wave 92d (N=5000 sweep, optional) — N=1000 + Wave 93 power analysis is defensible per master plan §5b |
 | **W4** | 2/12 framework_improves cells | 🔄 **in reframing** | Wave 93 Phase 2 (statistical power + Bonferroni + 12-row table) — verdict evolution `2/12 SUPPORTED` → `4/12 SUPPORTED + 6/12 TIE + 2/12 UNDERPOWERED` |
 
@@ -70,8 +76,8 @@
 
 ## Push state
 
-- **326 unpushed commits** on `main` ahead of `origin/main` (`git log @{u}..main | wc -l = 326`)
-- **`push_risk = LOW`** (D.4 33/33 byte-stable; G-MASTER 7/7; mkdocs EXIT=0; no broken-test pre-push)
+- **327 unpushed commits** on `main` ahead of `origin/main` (`git log @{u}..main | wc -l = 327`)
+- **`push_risk = LOW`** (D.4 18/18 PASS; G-MASTER 7/7; mkdocs EXIT=0; no broken-test pre-push)
 - **NO push** (user-gated per locked-in constraint since Wave 11)
 
 ---
