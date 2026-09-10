@@ -84,7 +84,6 @@ Tasks satisfied
 from __future__ import annotations
 
 import hashlib
-from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -112,7 +111,9 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
     digest_state,
+    kaiming_uniform,
     make_adapter_capabilities,
     make_ref,
     memory_fraction_for,
@@ -448,11 +449,12 @@ def _random_init_synthetic_weights(
     )
 
     def kaiming(fan_in: int, fan_out: int) -> ArrayF64:
-        bound = np.sqrt(6.0 / float(fan_in))
-        return np.asarray(
-            rng.uniform(-bound, bound, size=(fan_in, fan_out)),
-            dtype=np.float64,
-        )
+        # Wave 97.C: delegate to the framework-shared He-uniform helper
+        # in :mod:`adaptive_reflow.adapters._adapter_common`. The local
+        # closure used the same ``bound = sqrt(6/fan_in)`` recipe as the
+        # 7 pre-Wave-44 inline copies; the helper reproduces that exact
+        # value so the synthetic weights stay byte-stable.
+        return kaiming_uniform(rng, fan_in, fan_out)
 
     return {
         "W1": kaiming(in_dim, hidden_w),
@@ -1336,8 +1338,18 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         # RectifiedFlowCIFAR). The cache holds the (latent,
         # conditioning) tuple per digest + trajectory / endpoint
         # entries; the conditioning-only cache is bounded separately.
-        self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
-        self._conditioning_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        # Wave 97.C: both caches delegate to the framework-shared
+        # :class:`NativeStateCache` from
+        # :mod:`adaptive_reflow.adapters._adapter_common`, which
+        # exposes the OrderedDict surface used by the four call sites
+        # in :file:`tests/test_adapters/test_lineageflow.py` and by
+        # ``adapters/_inject_forward_noise.py``.
+        self._native_states: NativeStateCache = NativeStateCache(
+            LINEAGEFLOW_NATIVE_STATES_MAXSIZE,
+        )
+        self._conditioning_cache: NativeStateCache = NativeStateCache(
+            self._conditioning_cache_size,
+        )
         self._caps = LineageFlowCapabilities()
 
         # Wave 45 Agent G — opt-in classifier-aware restart policy.
@@ -1386,27 +1398,20 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
     # ------------------------------------------------------------------
     # 0. helpers - LRU-bounded native_states + conditioning cache
     # ------------------------------------------------------------------
+    # Wave 97.C: thin wrappers preserved so the existing call sites
+    # (and the ``adapters/_inject_forward_noise.py`` direct read
+    # sites) keep working unchanged; the wrappers now delegate to
+    # :class:`NativeStateCache.put` / ``.evict`` so the LRU policy is
+    # implemented exactly once in the framework-core helper.
 
     def _put_native_state(self, digest: str, entry: dict[str, Any]) -> None:
-        if digest in self._native_states:
-            self._native_states[digest] = entry
-            self._native_states.move_to_end(digest)
-            return
-        self._native_states[digest] = entry
-        while len(self._native_states) > LINEAGEFLOW_NATIVE_STATES_MAXSIZE:
-            self._native_states.popitem(last=False)
+        self._native_states.put(digest, entry)
 
     def _evict_native_state(self, digest: str) -> None:
-        self._native_states.pop(digest, None)
+        self._native_states.evict(digest)
 
     def _put_conditioning(self, cache_hash: str, entry: dict[str, Any]) -> None:
-        if cache_hash in self._conditioning_cache:
-            self._conditioning_cache[cache_hash] = entry
-            self._conditioning_cache.move_to_end(cache_hash)
-            return
-        self._conditioning_cache[cache_hash] = entry
-        while len(self._conditioning_cache) > self._conditioning_cache_size:
-            self._conditioning_cache.popitem(last=False)
+        self._conditioning_cache.put(cache_hash, entry)
 
     def _resolve_conditioning(
         self, *, family_id: str, seed: int
@@ -1420,7 +1425,11 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         cache_hash = _family_id_cache_hash(family_id)
         existing = self._conditioning_cache.get(cache_hash)
         if existing is not None:
-            self._conditioning_cache.move_to_end(cache_hash)
+            # Promote to MRU; :meth:`NativeStateCache.put` performs
+            # the ``move_to_end`` internally. Re-inserting the same
+            # dict object keeps the cached entry byte-identical
+            # while refreshing the LRU order.
+            self._conditioning_cache.put(cache_hash, existing)
             return existing
         entry = _synthetic_family_conditioning(
             family_id=family_id, seed=int(seed),
