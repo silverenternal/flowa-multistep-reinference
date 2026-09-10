@@ -288,11 +288,11 @@ KANZI_FLAT_LATENT_DIM: int = int(np.prod(KANZI_STATE_SHAPE))
 #: Self-Flow latent clamp convention).
 KANZI_LATENT_CLAMP: float = 6.0
 
-#: Default number of integration steps. The Kanzi paper's headline
-#: Pfam designability run uses 100 NFE on the encoder; the framework
-#: defaults to ``num_steps=50`` and the per-round
+#: Default number of integration steps. Aligned with the Kanzi paper's
+#: headline Pfam designability run (100 NFE on the encoder, paper §5
+#: + Wave 21 docstring). The per-round
 #: ``condition.delta_spec["num_steps"]`` can override.
-KANZI_NUM_STEPS_DEFAULT: int = 50
+KANZI_NUM_STEPS_DEFAULT: int = 100
 
 #: ``t=1`` (final integration endpoint). Kanzi integrates over the
 #: latent flow-matching interval ``[0, 1]`` with the linear
@@ -308,11 +308,11 @@ KANZI_INTEGRATORS: tuple[str, ...] = ("euler", "heun")
 KANZI_INTEGRATOR_EULER: str = "euler"
 KANZI_INTEGRATOR_HEUN: str = "heun"
 
-#: Default CFG scale. Kanzi's Pfam-family designability runs report
-#: best results with CFG in the 1.0 - 2.0 range; we default to 1.0
-#: as a defensible unconditional-flow choice. The framework's
-#: per-round ``condition.delta_spec["guidance_scale"]`` can override.
-KANZI_CFG_SCALE_DEFAULT: float = 1.0
+#: Default CFG scale. Aligned with the Kanzi paper §4 Pfam designability
+#: best result (CFG=2.0 for the autoregressive decoder prior). The
+#: framework's per-round ``condition.delta_spec["guidance_scale"]``
+#: can override.
+KANZI_CFG_SCALE_DEFAULT: float = 2.0
 
 #: Default Pfam family ID. Kanzi runs condition on a Pfam family ID
 #: string; the framework defaults to ``"PF00001.21"`` (the canonical

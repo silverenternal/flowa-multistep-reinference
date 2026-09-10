@@ -1,7 +1,7 @@
 {
   "schema_version": "d4.v1",
-  "captured_at": "2026-09-05T11:22:56Z",
-  "git_sha": "6dcc7e1",
+  "captured_at": "2026-09-10T10:06:24Z",
+  "git_sha": "ae2327b",
   "host_fingerprint": "3bbab6fef2471772a5d49834419b40c43a45104a7f9bd865eb708aa48ff73ed0",
   "env_composite_hash": "3bbab6fef2471772a5d49834419b40c43a45104a7f9bd865eb708aa48ff73ed0",
   "adapter": "kanzi",
@@ -32,8 +32,8 @@
         "kind": "integrator_trace",
         "steps": 5,
         "accept_rate": 1.0,
-        "native_state_digest": "b95fcf5f4764ea721777a85ac9da262be90d7ebeda7adfc53f8c9dcb114ed05e",
-        "integrator_config_hash": "5a3ec8ff1e44b0d1172ed400fc3a8ec4b132198dff86df47345be22dc214f503"
+        "native_state_digest": "d0d1ce254da66803ebc750efc86dcdea4b46ad61b4189831846bf24e4d1b2f4c",
+        "integrator_config_hash": "1715520de290c21d5f4dccd8cd12200ea99c4244007cb36d3b0972357a412acf"
       },
       "endpoint": {
         "kind": "state_bundle",
@@ -43,7 +43,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "4f95e1348bd5ef43666077c8bbdc70212b60ce90caec3b676df7864abeeb0ce5",
+        "native_state_digest": "c677c7d44752eb3f99591b13dc9fa72236bb7ca355b41a7220b5988ba4bc3304",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -66,7 +66,7 @@
         "sha256": "e77c34e8cacf3f0dd8e13e785266325fd139f55abb8a8669b7eed07d7a504531",
         "finite": true
       },
-      "output_sha256": "d16481cd44caba2a7870a738e7cc25243c4eb59b0c9247a3831a6296245c9d5a"
+      "output_sha256": "39ff65a204112bc822e0d19c64c119f6fc0d1e657792f18fdd39ec0a86ac83b5"
     },
     {
       "adapter": "kanzi",
@@ -82,8 +82,8 @@
         "kind": "integrator_trace",
         "steps": 10,
         "accept_rate": 1.0,
-        "native_state_digest": "e93f057024024d1982627eed132fff4c1f369b6709dd9d64ffa42823a990af94",
-        "integrator_config_hash": "484251374275683878ee519d43dabf60a9ebc6e0cd4acf66342eb99d591bb4dc"
+        "native_state_digest": "7661056a22e31c1e530419fc3790ba8c041a26daada12c4fa97c4b73dc3bd9c4",
+        "integrator_config_hash": "7143e192471f61a6daffd43f96e5069e0582ce4cec4c7b8dcfea2999ff61f5ed"
       },
       "endpoint": {
         "kind": "state_bundle",
@@ -93,7 +93,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "a080c513933e51b6c797cbaf64dcfc2f3440aaa8f236ff4112bd567ef798695a",
+        "native_state_digest": "bafbb3059249ef830c1cf821c9465c270a1db13b37776ac1f429d3c7fca54402",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -116,7 +116,7 @@
         "sha256": "8b2d03f4c59aff7503fff02fe5c63ea3f5af7b825c4dd8166076741fa2dd50b8",
         "finite": true
       },
-      "output_sha256": "04406c9a6489fcea167324d2f1a7f5696eeb619c99d2cf125cebd0979365af36"
+      "output_sha256": "f3bcba97f8fae82b86981bccf9b52bfc406500a8d061f5729c9c8ef897652435"
     },
     {
       "adapter": "kanzi",
@@ -132,8 +132,8 @@
         "kind": "integrator_trace",
         "steps": 50,
         "accept_rate": 1.0,
-        "native_state_digest": "74abb674a3d2208b673f8f48a46f2b6f43b9d9647b8313c9e6e98699a7ed85f0",
-        "integrator_config_hash": "2a0f50d7cfc6380f77f98433ccde781c498e30ec1cbbd716ce75e904bb0ff061"
+        "native_state_digest": "0fd02c15b9d504633f3a65c1e361a2152433181ae39470ebddd0233ab4d3e2de",
+        "integrator_config_hash": "4806c5395e7fe92907eddb11e905e91cfc9d7b65e9ade013a42175cc06052be2"
       },
       "endpoint": {
         "kind": "state_bundle",
@@ -143,7 +143,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "6e522489add1e060164f493e95fc814e67b63830d9a9a7d028eb4f1064a33280",
+        "native_state_digest": "06b8c4218a5b9eb60f5eb9fd25f3ee0765ff1d2f51de2d241e0579a9a75f19fd",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -166,7 +166,7 @@
         "sha256": "b0206faae03cf6c4f4e3a18779a7dd8917054b4ddf4048829259874d42fae7db",
         "finite": true
       },
-      "output_sha256": "7388b522ac0922431872d493bd454fa408b21e9106c934ad9d09ecccd43b32f3"
+      "output_sha256": "f1544bb8ae5e1f3f01ae9fe08d1eaf14b87843a1c69e0da8d00c68047b6f6c00"
     },
     {
       "adapter": "kanzi",
@@ -182,8 +182,8 @@
         "kind": "integrator_trace",
         "steps": 5,
         "accept_rate": 1.0,
-        "native_state_digest": "7a68b084c19ccc6db9f2466dfc866650c5ca304bf843664ed19c25a37e38727f",
-        "integrator_config_hash": "1dbfe9a0452bbf519bef267997958ea6b812edd6d8631fda971792fffc5fe042"
+        "native_state_digest": "76713a2554a9096ed8d44b071c6d0ed4b00ffb0e0b936d8a5d91cda55bcce9ea",
+        "integrator_config_hash": "0896973c4e05cec6f823d86a9b80f3fab3091e728247c0d2d32dff3395784df3"
       },
       "endpoint": {
         "kind": "state_bundle",
@@ -193,7 +193,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "c533d16466188e3940c9732a6968b2bd8bc94e7da2e02480045bf9a1eb42ac71",
+        "native_state_digest": "0b31d181e2cae7f7cbe7341ba67b74a34ea154ba4d22cc55253c1d8ec56a7ea9",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -216,7 +216,7 @@
         "sha256": "3a948bfc1fc456bcb1e2782186673082a72df6ae933baae5e3ca72919915d680",
         "finite": true
       },
-      "output_sha256": "78f03c8b613d58328e4514969ef3cf9e58039cf429d678a79119754708f1c5d2"
+      "output_sha256": "4a9c9d5d613a1565de3ad9016b8257e8d22e4a1f040077651275a02fa8413ecc"
     },
     {
       "adapter": "kanzi",
@@ -232,8 +232,8 @@
         "kind": "integrator_trace",
         "steps": 10,
         "accept_rate": 1.0,
-        "native_state_digest": "60977c8532b8c652a8e610b68a89b2dc5c847e4c34918ae9c42567f8a0f42966",
-        "integrator_config_hash": "9943395bd718d6105161e0af52650d1f6e6c55536ea4e2551ab5e821c8cae6c3"
+        "native_state_digest": "d99031b0912f7724275eeb92df0f0c61fe2dd99f585b923dcf418edcbb19fc24",
+        "integrator_config_hash": "8e9c19aeb0184e388b1a59c252bef4b9cf441eaabf630b891221c871a592abbc"
       },
       "endpoint": {
         "kind": "state_bundle",
@@ -243,7 +243,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "bd51d92cfb9741b363ba076f8956a382c12521ff4bd9876cd2a3d425995b5cf1",
+        "native_state_digest": "96875437bf31500331c46bf65bf34f9ecfc87ee6ab244ef874644930a7445ee6",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -266,7 +266,7 @@
         "sha256": "e90d8345ce0907fd1aa720dc385b12219142dc2ece9582479a3a74eb907e91a3",
         "finite": true
       },
-      "output_sha256": "e0fafb5d977ca86d3c76b31257bcc80d1de6669100798dbeeb57c98b1701ea21"
+      "output_sha256": "b7cee3fa3c9e71ff3e4eb0eed8a5c644f0c1216724419d0f307aaac84057d3e4"
     },
     {
       "adapter": "kanzi",
@@ -282,8 +282,8 @@
         "kind": "integrator_trace",
         "steps": 50,
         "accept_rate": 1.0,
-        "native_state_digest": "4c3c3b492c3c1ff5ffca4e63ad8be1d5cfa30d4858c14dc2393fb2e305ebb0ab",
-        "integrator_config_hash": "6fa2ce8798b5cbbdba37e6b453217cdf9243840ec4331235247a3ef2a319853a"
+        "native_state_digest": "74514d758fb36e17e6c68381e54b3a67ec4b29e04a38f3f95e0763a37f731aa2",
+        "integrator_config_hash": "6ed2cc87453e1ca74eb1ff05532e41c001b8ab57f6d139d610cb48e0e4aeb883"
       },
       "endpoint": {
         "kind": "state_bundle",
@@ -293,7 +293,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "02ef2e37f3e9b9c6816a708428207b3e7b6fbf2b1cd25ce03a9a7085ae4aa846",
+        "native_state_digest": "cabcec747d4d95dcd483c9c01e92ff587c9794ecdeeddf0768b997fb1b5524cf",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -316,7 +316,7 @@
         "sha256": "559a049c06e66baba45c489589f48d4cab16a33ba2d3d6be6155294438766295",
         "finite": true
       },
-      "output_sha256": "7d41c1fddbed52920d8c1c0e7ac472f70ddfde65329f8fced0c96a7aeb86140e"
+      "output_sha256": "edb61ceb032ed2e33feb3e66bfa0764216b6819e8942f8d9ad124292b27e1bc7"
     },
     {
       "adapter": "kanzi",
@@ -332,8 +332,8 @@
         "kind": "integrator_trace",
         "steps": 5,
         "accept_rate": 1.0,
-        "native_state_digest": "694193410426be4667bdde5ec9fab5b7af4fec55a6c241400ca2fa632a41027a",
-        "integrator_config_hash": "82bf158ff12eac13e97622988bcdb925b3057138f0ae0e861c79c09985cc5074"
+        "native_state_digest": "2f68925972a9fcf31eab088cf62d95e88744fe8cd6eefc7ec2f219d31e2f17af",
+        "integrator_config_hash": "c5a30ea6ac5f98b7e57b6c1fb4d5e3c436f1b7a035708b6b47c8e604b2d74585"
       },
       "endpoint": {
         "kind": "state_bundle",
@@ -343,7 +343,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "3cc012329a7d04aa085259789abafed91dd49db335f74fa6370d823a62e014e1",
+        "native_state_digest": "1bf630138004f09c6894f8c4bf9f79c410054bf3d5e16bd69616eec152f520d4",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -366,7 +366,7 @@
         "sha256": "56e38fbc7e5ae0b540c7012c7853955b20573758c5cad49813bd78872c480964",
         "finite": true
       },
-      "output_sha256": "9a6ce7859685634257e7f70f71ee0f4d677ab162fe2bae32f6e8ab952b84e1f9"
+      "output_sha256": "3f36bc25de08c87ae03ed43925d69d54d4d9da9e5d4569c20317d471be35cde8"
     },
     {
       "adapter": "kanzi",
@@ -382,8 +382,8 @@
         "kind": "integrator_trace",
         "steps": 10,
         "accept_rate": 1.0,
-        "native_state_digest": "e550935372d1645b1a2b5938fd21496aef0d08399a161484901d3b60eb13ad1f",
-        "integrator_config_hash": "032fe6fa9608ba94f0ee32293118d0d8c38ecd5966f8107567efe22e35b2e140"
+        "native_state_digest": "f96f98a3bc013c702f630522c912ba4bbd06cbcdcf140dddd825c9a7c15e7dd5",
+        "integrator_config_hash": "135ead5edc3e666f45ddc0760ae854dc145530f6a7a9af7290ab1ca818b61bfc"
       },
       "endpoint": {
         "kind": "state_bundle",
@@ -393,7 +393,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "49779626aa9d04368cec8f6297afa9e4d9a30386bb357c89e7f6ddca3ee6ab35",
+        "native_state_digest": "d09bc6a792323f9c231c7af09b72351ece2288a7e48648c5c2c79727a4488f44",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -416,7 +416,7 @@
         "sha256": "89ea7c0f204d6b21ef8145fc8427f9c371f7a6b6b9f5dc64d306aaaf211d439c",
         "finite": true
       },
-      "output_sha256": "d6b3382eeb4d46e8469a26e9f748f17082e4e12af33d9f2c83ef4e3ef3c5550b"
+      "output_sha256": "3b4466c32e9b38131c1ae2a4ff8a78d3ebb59ef893d0bbb7b221c438f43fb877"
     },
     {
       "adapter": "kanzi",
@@ -432,8 +432,8 @@
         "kind": "integrator_trace",
         "steps": 50,
         "accept_rate": 1.0,
-        "native_state_digest": "135d7368b90c69622231bdf9660d199fd5898d9ce63a60f0bb3851f9b0f65216",
-        "integrator_config_hash": "3dba8a3d517bb1e858379eabd91d9e85f4274a3539d72540b249a05647ad5c89"
+        "native_state_digest": "3f1071934a46dda06f634fc03359694a84b2d68d566de802b35cae9766bdb2ce",
+        "integrator_config_hash": "92df6208986c7954383684da7de9caaebbfd2d1a21c971564e42b6fe7256d123"
       },
       "endpoint": {
         "kind": "state_bundle",
@@ -443,7 +443,7 @@
         "normalization": "none",
         "source_round": 1,
         "detach_proof": true,
-        "native_state_digest": "705b74e15938620365989e539e3c69e62c0d1d43bb7a58bd0c91a94af468f152",
+        "native_state_digest": "2d0fc8d2bcd835f658f1dda758d601cefa0c750a8316099289a7e51356533d5b",
         "channels": [
           "discrete_token_index",
           "pfam_family_cond",
@@ -466,7 +466,7 @@
         "sha256": "e5c645c547ceff1a80b9b084f25fef1c2dfd93262002e6df7f1dbd5d24faf915",
         "finite": true
       },
-      "output_sha256": "ed07d19b532817ef9adcd4e7de8ed482156c8decfcb6fd0daacdaeed6b41f38c"
+      "output_sha256": "4ee5d78064a48cae5c06f9b2894fb75b16d2b65292acde9a1ab19ef64b54a86d"
     }
   ]
 }

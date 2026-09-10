@@ -217,11 +217,10 @@ LINEAGEFLOW_STATE_SHAPE: tuple[int, ...] = (
 #: synthetic field emits values strictly inside this envelope.
 LINEAGEFLOW_CLAMP: float = 1.0
 
-#: Default number of integration steps. The LineageFlow paper's
-#: headline runs use 100 NFE; the framework defaults to 50 (a
-#: conservative mid-range) and the per-round
+#: Default number of integration steps. Aligned with the LineageFlow
+#: paper's headline Pfam-RP55 run (100 NFE, paper §5). The per-round
 #: ``condition.delta_spec["num_steps"]`` can override.
-LINEAGEFLOW_NUM_STEPS_DEFAULT: int = 50
+LINEAGEFLOW_NUM_STEPS_DEFAULT: int = 100
 
 #: ``t=1`` (final integration endpoint). LineageFlow integrates over
 #: the linear interpolation ``[0, 1]`` flow-matching interval.

@@ -204,7 +204,9 @@ FLOWMOL3_BONDED_SEPARATION_A: float = 1.45
 FLOWMOL3_NONBONDED_SEPARATION_A: float = 3.2
 
 #: Default number of integration steps on ``[0, 1]`` for ``solve_ode``.
-FLOWMOL3ADAPTER_NUM_STEPS_DEFAULT: int = 100
+#: Aligned with the FlowMol3 paper headline GEOM-DRUGS run (250 NFE,
+#: paper §5 + Wave 82 sweep at NFE=250).
+FLOWMOL3ADAPTER_NUM_STEPS_DEFAULT: int = 250
 
 #: Maximum size of the LRU-bounded ``_native_states`` cache.
 FLOWMOL3ADAPTER_NATIVE_STATES_MAXSIZE: int = 64
@@ -801,8 +803,9 @@ def _load_flowmol3_config(weights_path: Any) -> dict[str, Any]:
         "atom_map": ("C", "H", "N", "O", "F", "P", "S", "Cl", "Br", "I"),
         "dataset_name": "geom",
         "parameterization": "ctmc",
-        "distort_p": 0.7,
-        "distort_t": 0.25,
+        # Paper-tuned (NeurIPS 2024 §5) — used when config.yaml is missing.
+        "distort_p": 0.5,
+        "distort_t": 0.5,
         "explicit_aromaticity": False,
         "vector_field": {},
         "config_path": None,
