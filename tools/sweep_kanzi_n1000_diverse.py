@@ -129,8 +129,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[wave96e] loading DAE from {args.ckpt} ...", file=sys.stderr)
     t0 = time.monotonic()
     dae = DAE.from_pretrained(str(args.ckpt)).eval()
-    print(f"[wave96e] DAE loaded in {time.monotonic() - t0:.1f} s",
-          file=sys.stderr)
+    # Wave 99.A → 99.E root-cause fix: DAE was on CPU. Bridge auto-coerces
+    # latent to the decoder's parameter device, so the entire 100-step
+    # diffusion ran on CPU nn.Linear (~95% of runtime per py-spy profile,
+    # >500h wall for N=1000). Move DAE to CUDA so .decode() lands on GPU.
+    dae = dae.to("cuda")
+    print(f"[wave96e] DAE loaded + moved to {next(dae.parameters()).device} "
+          f"in {time.monotonic() - t0:.1f} s", file=sys.stderr)
 
     vocab_size = int(getattr(dae.quantize, "codebook_size", 1000))
     n_decoder = int(dae.quantize.project_out.weight.shape[0])  # 512
