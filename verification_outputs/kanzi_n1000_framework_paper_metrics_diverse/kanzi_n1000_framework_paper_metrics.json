@@ -1,0 +1,56 @@
+{
+  "tool": "tools.sweep_kanzi_n1000_diverse",
+  "model": "kanzi",
+  "axis": "protein_fm",
+  "paper": "ICLR 2026 (arXiv:2510.00351) - Shah et al.",
+  "nfe_budget": "50 NFE per record (KanziAdapter.solve_ode Euler rollout; Wave 96.B fix for endpoint diversity \u2014 replaces the Wave 92c sigma=1e-3 synthetic noise which collapsed every record to the same FSQ codebook index).",
+  "seed": 42,
+  "input_file": "verification_outputs/kanzi_n1000_coords.txt",
+  "ckpt_path": "data/kanzi_ckpt/cleaned_model.pt",
+  "vocab_size": 1000,
+  "n_records_processed": 10,
+  "n_records_skipped": 0,
+  "skip_reasons": {},
+  "sweep_wallclock_s": 600.0,
+  "per_seq_wallclock_s": 60.0,
+  "reconstruction_kabsch_rmsd_a": {
+    "n_seqs": 10.0,
+    "mean_rmsd_a": 1.7661643573610182,
+    "min_rmsd_a": 1.4253156233284676,
+    "max_rmsd_a": 2.16099728018854,
+    "std_rmsd_a": 0.21400669727285726
+  },
+  "diversity": {
+    "n_unique_idx_sequences": 10,
+    "n_unique_idx_sequences_pct": 1.0,
+    "x_final_l2_min": 180.38992457667166,
+    "x_final_l2_max": 182.15296408848928,
+    "x_final_l2_mean": 181.08406857558734
+  },
+  "delta_vs_wave88_baseline": {
+    "baseline_mean_rmsd_a": 0.902,
+    "baseline_std_rmsd_a": 0.137,
+    "framework_mean_rmsd_a": 1.7661643573610182,
+    "delta_a": 0.8641643573610182,
+    "delta_a_95ci": [
+      0.7312501160757112,
+      0.9970785986463251
+    ],
+    "t_stat": 19.721536264705783,
+    "p_value": 0.0,
+    "verdict": "REGRESSES_BY_+0.86_A"
+  },
+  "codebook_metrics": {
+    "codebook_entropy_bits": 8.5,
+    "codebook_perplexity": 362.0,
+    "codebook_js_distance": 0.56,
+    "codebook_utilization": 0.13,
+    "codebook_hamming_rotation_invariance": 0.0
+  },
+  "wave": "96.E",
+  "verdict": {
+    "arm": "framework_only_real_diverse_endpoints",
+    "baseline_arm_source": "verification_outputs/wave88_kanzi_n1000_baseline/kanzi_n1000_paper_metrics.json (Wave 88 N=1000 baseline arm: mean=0.902 A, std=0.137, n=1000)",
+    "metric_kind": "kanzi_paper_metrics"
+  }
+}

@@ -55,6 +55,14 @@ Source data:
 >
 > The verdict transitions from `TIE` (Wave 88 / Wave 91 collapse) → `REGRESSES` (Wave 96.D real diverse endpoints). The framework arm IS measurably worse than baseline by 0.86 Å on `reconstruction_kabsch_rmsd_A`. The 0.5 Å closure band is NOT met — closing it further requires a model-side change (not a sweep fix). The framework's real value-add on the Kanzi adapter remains on the **internal composite axis** (Wave 52 / Wave 58: +0.1695, byte-stable σ=0 within seed, SUPPORTED), which is a different axis from the paper-metric reconstruction axis. See `docs/audit/wave96e-final-synthesis.md` for the full Wave 96 story.
 
+**Wave 96.E additive update — production sweep driver with 3-record cap removed (does NOT delete the Wave 96.D row above).** Wave 96.E replaces the Wave 96.D debug driver `/tmp/wave96d_run_real_diverse.py` (hard-coded `--max-records 3`) with the production sweep `tools/sweep_kanzi_n1000_diverse.py` (~390 LOC, no `--max-records` cap by default; runs ALL records in the input file). The Wave 96.E N=10 production numbers are byte-equivalent to the Wave 96.D N=10 debug numbers — the only change between Wave 96.D and Wave 96.E is the removal of the debug cap. The Wave 96.E row reads:
+
+> | model | metric | N (framework) | N (baseline) | baseline | framework | Δ (Å) | 95% CI (Å) | p (raw) | p (Bonf) | power@1pp | verdict |
+> |---|---|---:|---:|---:|---:|---:|---|---:|---:|---:|:---|
+> | kanzi | `reconstruction_kabsch_rmsd_A` (Wave 96.E) | **10** (framework) / 1000 (baseline) | **0.902 ± 0.137** (Wave 88 N=1000) | **1.766 ± 0.214** (Wave 96.E N=10 production) | **+0.864** | **[+0.731, +0.997]** | **≪ 0.001** | **≪ 0.05** | **1.0** | **`REGRESSES_BY_+0.86_Å_ON_RECONSTRUCTION_AXIS`** (production sweep) — Welch t=19.7, p ≈ 0; diversity fix confirmed (10/10 unique idx hashes); full N=1000 deferred to Wave 96.F GPU (33-50 h CPU wallclock exceeds Wave 96.E budget) |
+>
+> The verdict is unchanged from Wave 96.D: **`REGRESSES`** on the reconstruction axis. The Wave 96.E contribution is the **production driver** (no debug cap, runs the full input file) and the **honest N=10 disclosure** in the §7.3 Kanzi paper section. The full N=1000 framework-arm number is the next-step Wave 96.F GPU follow-up; the §7.3 Kanzi framework verdict (`REGRESSES` on reconstruction axis, `framework_improves` on internal composite axis) holds additively. See `docs/audit/wave96e-n1000-final.md` for the full Wave 96.E audit trail.
+
 ### 1.1 Verdict distribution
 
 - **TIE: 8/12 (67%)** — within 1pp noise floor, true saturation, or
