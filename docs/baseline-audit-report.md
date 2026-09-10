@@ -2579,6 +2579,83 @@ EXIT=0
 
 ---
 
+## R — Routing consolidation (Wave 97, 2026-09-10)
+
+**Date:** 2026-09-10
+**Agent:** Wave 97 Agent E
+**Scope:** routing-state-of-the-union consolidation. 1 new audit doc
+(`docs/audit/wave97-routing-final.md`) + this row in the §R section.
+NO code changes in this audit. The routing fixes themselves (Agent B's
+`tools/run_real_ckpt_eval.py` → `tools/eval/` split, Agent C's glue
+collapse, Agent D's N=1000 enforcement via `tools/_sweep_assertion.py`)
+already landed in earlier commits.
+
+### What closed
+
+| Routing problem | Wave | Closure mechanism | Audit doc |
+|---|---|---|---|
+| `tools/run_real_ckpt_eval.py` 5740-LOC monolith | Wave 97.B | 5-LOC shim → `tools/eval/` package (6 files, ~2200 LOC total) | `docs/audit/wave97-routing-final.md` §3 Closed-1 |
+| 3 parallel "Kanzi latent → coords" implementations | Wave 97.C | `tools/eval/bridges/kanzi.py::KanziBridge` (single entry point) | `docs/audit/wave97-routing-final.md` §3 Closed-2 |
+| Standalone Kanzi sweep drivers | Wave 96.E | `tools/sweep_kanzi_n1000_diverse.py` (with Wave 96.B fix) | `docs/audit/wave97-routing-final.md` §3 Closed-3 |
+| N≤10 smoke masquerading as N=1000 | Wave 97.D | `tools/_sweep_assertion.py` hard gate (5 sweep drivers wired) | `docs/audit/wave97-routing-final.md` §3 Closed-4 |
+| Inlined glue duplication in 3 adapters | Wave 97.C | Per-model glue classes in `tools/eval/glue/` (mirror `KanziGlue`/`FlowMol3Glue` shape) | `docs/audit/wave97-routing-final.md` §3 Closed-3 |
+
+### What remains open
+
+| Routing problem | Why open | Future wave |
+|---|---|---|
+| `--paper-metric-mode` enum (replaces 6 CLI flags) | Not blocking; clean enum collapse deferred | Wave 98+ |
+| `KanziBridge` accepts `adapter` not `adapter_factory` | Adapter lifecycle tied to `_resolve_adapter` serialization | Wave 98+ (when GPU-isolation patterns need it) |
+| Per-model glue lives in `tools/eval/glue/` not adapter module | Architectural choice — circular-import constraint | Documented as correct as-is |
+| `tools/sweep_kanzi_n1000_diverse.py` retained as fork | `--per-metric-jsonl` flag not yet on `tools/eval/__main__.py` | Add flag + deprecate fork |
+| No end-to-end test for the `tools/eval/` package | Agent B's split was verified via shim re-exports + D.4; no full-flow test | Wave 98 — add `tests/test_tools/test_eval_package.py` |
+
+### Per-model owner count after Wave 97
+
+| Model | Sweep | Bridge | Glue | Adapter | Paper metrics | Total owners |
+|---|---|---|---|---|---|---|
+| Kanzi | Wave 96.E | Wave 95 P3.B + 97.C | Wave 52.A | Wave 95 P2.C | Wave 83.B | 5 |
+| LineageFlow | Wave 79 | Wave 97.C | Wave 47.A | Wave 49.A | upstream `evaluate_all.py` | 4 |
+| FlowMol3 | Wave 82 | Wave 90 + 97.C | Wave 49.E | Wave 66 | Wave 75 | 5 |
+
+### N=1000 enforcement status
+
+- `tools/_sweep_assertion.py` (Wave 97.D, ~40 LOC) is the hard gate.
+- Wired into 5 sweep drivers: `sweep_kanzi_n1000_diverse.py`,
+  `sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py` (superseded),
+  `gen_lineageflow_n1000_fastas.py`,
+  `tools/upstream_eval.py:run_flowmol3_upstream_eval`,
+  `tools/upstream_eval.py:run_lineageflow_upstream_eval`.
+- Smoke-test escape hatch: explicit `--smoke-test` flag with stderr warning.
+- The "smoke-test masquerade" failure mode of Waves 92c / 95 P3.C / 96.D
+  is structurally blocked from this point forward.
+
+### Cross-references
+
+- `docs/audit/wave97-routing-audit.md` — Agent A's Kanzi sweep routing
+  topology (6 layers → 2-3, top 5 problems, recommended split).
+- `docs/audit/wave97-routing-final.md` — this consolidation (TL;DR +
+  OWNERSHIP + closed/open + N=1000 enforcement).
+- `docs/audit/wave96-status-reality-check.md` — the reality check that
+  triggered Wave 97 (N≤10 smoke → N=1000 claim).
+- `docs/audit/wave96e-n1000-final.md` — Wave 96.E honest Kanzi N=1000
+  paper-metric synthesis.
+- `docs/audit/wave95-phase3-kanzi-inverse-rerun.md` — Wave 95 P3.C
+  Kanzi project_out⁻¹ architectural fix.
+
+### No regression risk
+
+- Wave 97 routing fixes (Agent A's audit, Agent B's split, Agent C's
+  glue collapse, Agent D's N=1000 enforcement) all landed as separate
+  commits and each was verified individually via `pytest tests/ -k d4`
+  (33/33 PASS) + `mkdocs build --strict` (EXIT=0).
+- This Agent E row + `docs/audit/wave97-routing-final.md` are docs-only
+  — no source touched.
+- D.4 byte-stable regression verified post-Wave-97-B-split per
+  `docs/audit/wave97-routing-final.md` §7.
+
+---
+
 ## Wave 92c / Wave 93 Phase 2 — PENDING placeholders (do not edit in this wave)
 
 > **Status:** IN FLIGHT per `todo/STATUS.md` (2026-09-10). These sections are
