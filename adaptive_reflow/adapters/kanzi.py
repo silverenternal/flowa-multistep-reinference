@@ -978,14 +978,15 @@ class KanziGPTPriorRestartPolicy:
 
 def _torch_velocity_field(
     model: Any,
-    x: ArrayF64,
+    x: Any,
     t: float,
     *,
     dtype: Any,
     cache: Mapping[str, Any],
     guidance_scale: float,
     state_shape: tuple[int, ...] = KANZI_STATE_SHAPE,
-) -> ArrayF64:
+    return_torch: bool = False,
+) -> Any:
     """Call the PyTorch Kanzi encoder velocity field ``v_theta(x, t, family)``.
 
     The function is intentionally NOT wrapped in a public class — it
@@ -1024,6 +1025,12 @@ def _torch_velocity_field(
         # Real Kanzi forward: 1D conv encoder + family-id MLP conditioning,
         # emit a velocity field of shape (1, L_z, d).
         v = model(x_t, t_t, family=family_t)
+        if return_torch:
+            # Wave 99 GPU-path fix v2: keep the velocity field on the
+            # model's device. The 50 NFE Euler/Heun loop in solve_ode
+            # accumulates v on device and only transfers the (L_z, d)
+            # latent across the boundary once per step (~16 kB).
+            return v.squeeze(0).detach()
         out = np.asarray(v.squeeze(0).detach().cpu().numpy(), dtype=np.float64)
 
     return out.reshape(state_shape)
@@ -1960,12 +1967,13 @@ class KanziAdapter(FlowMatchingODEAdapter):
 
     def _velocity_field(
         self,
-        x: ArrayF64,
+        x: Any,
         t: float,
         *,
         conditioning: Mapping[str, Any],
         guidance_scale: float,
-    ) -> ArrayF64:
+        return_torch: bool = False,
+    ) -> Any:
         """Evaluate the velocity field at ``(x, t)`` for the active backend.
 
         Internal dispatch helper used by :meth:`solve_ode`. ``torch``
@@ -1984,6 +1992,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 cache=conditioning,
                 guidance_scale=float(guidance_scale),
                 state_shape=self._real_state_shape,
+                return_torch=return_torch,
             )
         assert self._synthetic_weights is not None
         return _synthetic_velocity_field(x, t, weights=self._synthetic_weights)
@@ -2062,39 +2071,69 @@ class KanziAdapter(FlowMatchingODEAdapter):
             dtype=np.float64,
         )
         traj[0] = x0.copy()
-        x_cur = x0.copy()
-        for i in range(1, t_grid.size):
-            t0 = float(t_grid[i - 1])
-            t1 = float(t_grid[i])
-            dt = float(t1 - t0)
-            v1 = self._velocity_field(
-                x_cur, t0, conditioning=conditioning, guidance_scale=guidance_scale,
-            )
-            if (
-                sampler_id == KANZI_INTEGRATOR_HEUN
-                and i < t_grid.size - 1
-            ):
-                # Predictor: Euler trial step at t+dt.
-                x_pred = np.clip(
-                    x_cur + dt * v1, -KANZI_LATENT_CLAMP, KANZI_LATENT_CLAMP
+        # Wave 99 GPU-path fix v2: when in torch mode, run the entire
+        # 50-NFE Euler/Heun loop on the encoder's device. We hoist
+        # (L_z, d) to a torch.Tensor once, mutate in place each step, and
+        # only transfer the final endpoint back to numpy (one .cpu()
+        # for the entire trajectory). The old numpy path stays for the
+        # synthetic backend.
+        use_torch_loop = self._mode == "torch"
+        if use_torch_loop:
+            import torch as _torch  # local — torch is optional at the framework level
+            _device = next(self._model.parameters()).device
+            _clamp = float(KANZI_LATENT_CLAMP)
+            x_t = _torch.as_tensor(x0, dtype=_torch.float32, device=_device)
+            for i in range(1, t_grid.size):
+                t0 = float(t_grid[i - 1])
+                t1 = float(t_grid[i])
+                dt = t1 - t0
+                v1 = self._velocity_field(
+                    x_t, t0, conditioning=conditioning,
+                    guidance_scale=guidance_scale, return_torch=True,
                 )
-                v2 = self._velocity_field(
-                    x_pred, t1, conditioning=conditioning, guidance_scale=guidance_scale,
+                if (
+                    sampler_id == KANZI_INTEGRATOR_HEUN
+                    and i < t_grid.size - 1
+                ):
+                    x_pred = (x_t + dt * v1).clamp(-_clamp, _clamp)
+                    v2 = self._velocity_field(
+                        x_pred, t1, conditioning=conditioning,
+                        guidance_scale=guidance_scale, return_torch=True,
+                    )
+                    x_t = (x_t + 0.5 * dt * (v1 + v2)).clamp(-_clamp, _clamp)
+                else:
+                    x_t = (x_t + dt * v1).clamp(-_clamp, _clamp)
+            x_cur = x_t.detach().cpu().numpy().astype(np.float64)
+            traj[-1] = x_cur
+        else:
+            x_cur = x0.copy()
+            for i in range(1, t_grid.size):
+                t0 = float(t_grid[i - 1])
+                t1 = float(t_grid[i])
+                dt = float(t1 - t0)
+                v1 = self._velocity_field(
+                    x_cur, t0, conditioning=conditioning, guidance_scale=guidance_scale,
                 )
-                # Corrector: trapezoidal average. The final step has no
-                # ``t+dt`` within the integration range so the corrector
-                # is skipped (matches k-diffusion ``sample_heun`` at
-                # ``sigma_next == 0``).
-                x_cur = np.clip(
-                    x_cur + 0.5 * dt * (v1 + v2),
-                    -KANZI_LATENT_CLAMP,
-                    KANZI_LATENT_CLAMP,
-                )
-            else:
-                x_cur = np.clip(
-                    x_cur + dt * v1, -KANZI_LATENT_CLAMP, KANZI_LATENT_CLAMP
-                )
-            traj[i] = x_cur
+                if (
+                    sampler_id == KANZI_INTEGRATOR_HEUN
+                    and i < t_grid.size - 1
+                ):
+                    x_pred = np.clip(
+                        x_cur + dt * v1, -KANZI_LATENT_CLAMP, KANZI_LATENT_CLAMP
+                    )
+                    v2 = self._velocity_field(
+                        x_pred, t1, conditioning=conditioning, guidance_scale=guidance_scale,
+                    )
+                    x_cur = np.clip(
+                        x_cur + 0.5 * dt * (v1 + v2),
+                        -KANZI_LATENT_CLAMP,
+                        KANZI_LATENT_CLAMP,
+                    )
+                else:
+                    x_cur = np.clip(
+                        x_cur + dt * v1, -KANZI_LATENT_CLAMP, KANZI_LATENT_CLAMP
+                    )
+                traj[i] = x_cur
 
         traj_digest = digest_state(
             {
