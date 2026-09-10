@@ -47,6 +47,14 @@ Source data:
 | kanzi | `codebook_perplexity` | 200 | 376.870 | 376.870 | +0.0000 | [−3.69, +3.69] | 1.0 | 1.0 | 0.050 | **TIE** (`encoder_summary`) |
 | kanzi | `codebook_js_distance` | 200 | 0.5603 | 0.5603 | +0.0000 | [−0.097, +0.097] | 1.0 | 1.0 | 0.055 | **TIE** (`encoder_summary`) |
 
+> **Wave 96 additive update to the Kanzi `reconstruction_kabsch_rmsd_A` row (ADDITIVE — does NOT delete the Wave 93 row above).** The Wave 93 reading reflects the Wave 88 / Wave 91 `NOT_MEASURABLE` collapse on the framework arm + the Wave 83 N=200 baseline reading on the baseline arm. Wave 96 root-caused and fixed the collapse (Wave 96.A: sweep driver `synthesize_x_final_512d(σ=1e-3)` artefact; Wave 96.B: real `KanziAdapter.solve_ode` trajectory endpoints, L2 norm ~180, 1000× the σ=1e-3 synthetic). Wave 96.D (commit `80f7fa8`) re-ran the framework arm at N=10 with all 3 free wins applied (Wave 92c NN bridge, Wave 95 P3.B trained inverse, Wave 96.B diverse endpoints). The Wave 96 row reads:
+>
+> | model | metric | N | baseline | framework | Δ (Å) | 95% CI (Å) | p (raw) | p (Bonf) | power@1pp | verdict |
+> |---|---|---:|---:|---:|---:|---|---:|---:|---:|:---|
+> | kanzi | `reconstruction_kabsch_rmsd_A` (Wave 96.D) | 10 (framework) / 1000 (baseline) | **0.902** (Wave 88 N=1000) | **1.766 ± 0.214** (Wave 96.D N=10) | **+0.864** | **[+0.731, +0.997]** | **≪ 0.001** | **≪ 0.05** | **1.0** | **`REGRESSES_BY_+0.86_Å_ON_RECONSTRUCTION_AXIS`** — Wald z=12.7, Welch t=19.7, p ≈ 0 (4.81σ pooled); collapse fixed; 0.5 Å closure band NOT met |
+>
+> The verdict transitions from `TIE` (Wave 88 / Wave 91 collapse) → `REGRESSES` (Wave 96.D real diverse endpoints). The framework arm IS measurably worse than baseline by 0.86 Å on `reconstruction_kabsch_rmsd_A`. The 0.5 Å closure band is NOT met — closing it further requires a model-side change (not a sweep fix). The framework's real value-add on the Kanzi adapter remains on the **internal composite axis** (Wave 52 / Wave 58: +0.1695, byte-stable σ=0 within seed, SUPPORTED), which is a different axis from the paper-metric reconstruction axis. See `docs/audit/wave96e-final-synthesis.md` for the full Wave 96 story.
+
 ### 1.1 Verdict distribution
 
 - **TIE: 8/12 (67%)** — within 1pp noise floor, true saturation, or

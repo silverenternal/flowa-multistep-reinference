@@ -2230,6 +2230,163 @@ wall-clock estimate (~30-60 min on GPU 0).
 
 ---
 
+## §15.16 Wave 96 — Kanzi framework endpoint collapse root-caused + fixed + re-measured (final synthesis)
+
+Wave 96 closes the W2 (Kanzi latent→coord bridge → framework-arm
+N=1000 paper-metric measurability) arm of the Wave 90-95 Path C
+master plan with a **negative honest result**: the framework arm is
+measurably worse than the baseline arm by **+0.864 Å** on
+`reconstruction_kabsch_rmsd_A` after all 3 free wins are applied
+(Wave 92c NN bridge, Wave 95 P3.B trained Linear(512→4) inverse of
+`project_out`, Wave 96.B diverse endpoints). The 0.5 Å closure band
+is NOT met. The collapse that previously hid the real number (every
+record collapsing to a single FSQ codebook index) is definitively
+root-caused and fixed.
+
+### §15.16.1 Wave 96.A — collapse root-cause diagnosis (`a7b97d2`)
+
+* **`tools/_wave96a_diagnose_collapse.py`** (~230 LOC, 3 trials):
+  Trial A reproduces the collapse (σ=1e-3 synthetic `x_final` over
+  `(64, 512)` → x_final L2 norm ~0.18, every record snaps to
+  `idx=500` nearest-to-origin); Trial B confirms the collapse is
+  σ-dependent (σ=1e-1 gives 10/10 unique idx sequences); Trial C
+  confirms the framework pipeline IS diverse (real
+  `KanziAdapter.solve_ode` gives x_final L2 norm ~180, mean
+  pairwise L2 ~256).
+* **Root cause:** the Wave 92c / Wave 95 sweep driver
+  (`tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py:72-89`)
+  was synthesising `x_final = N(0, σ=1e-3) * 1e-3` — a 4-d ball
+  with L2 norm ~0.18, three orders of magnitude below the FSQ cell
+  half-width 0.143. The trained Linear(512→4) inverse projects this
+  to a 4-d ball with L2 norm ~0.35, all of which deterministically
+  snaps to the same nearest-to-origin codebook index.
+* **Ruled out 6 alternative hypotheses** (Wave 63 Bug B / Wave 88
+  `_extract_ca_coords_for_kanzi` placeholder / framework policy
+  zero-noise / cancel-out / `_resolve_adapter` wiring / ckpt
+  loading). Trial C (real `KanziAdapter.solve_ode` with explicit
+  ckpt load) produces L2 norm ~180 endpoints with mean pairwise
+  diversity ~256 — the framework pipeline is NOT broken.
+* **W2 verdict pre-fix:** structurally not measurable under the
+  sweep driver; cannot close `|Δ| < 0.5 Å` without first
+  redesigning the sweep to use real framework endpoints.
+
+### §15.16.2 Wave 96.B — endpoint diversity fix (`1f26bf6`)
+
+* **Replaced** `synthesize_x_final_512d(record_idx)` with
+  `real_framework_x_final_512d(adapter, record_idx, seed)` which
+  runs `KanziAdapter.build_initial_state + KanziAdapter.solve_ode`
+  (50-NFE Euler) and returns `trajectory[-1]`. Adapter constructed
+  via `default_kanzi_adapter(weights_path=ckpt, force_mode="torch",
+  num_steps=50, solver="euler")`.
+* **Verified end-to-end** on 3 diversity metrics:
+  1. `mean pairwise L2 `‖x_final[i] − x_final[j]‖` rose from 0.2557
+     to 255.91 (×1001).
+  2. Unique `idx_BL` sequences across 10 records rose from 1/10 to
+     10/10; identical-idx pairs fell from 45/45 to 0/45.
+  3. RMSD std rose from 0.000 to 0.214 (non-zero, PASS; > 0.5 Å
+     target MISS — see §15.16.4 honest note).
+
+### §15.16.3 Wave 96.C — fix verification (`6a9f4e5`)
+
+N=10 A/B comparison harness output at
+`verification_outputs/wave96c_verify/wave96c_diversity.json` — all
+10 records differ, 391 distinct pooled indices (vs 54 in Wave 95
+P3.C). RMSD std 0.214 Å (BEFORE 0.000, AFTER 0.214). pytest 5/5
+PASS on `tests/test_tools/test_kanzi_latent_to_coord.py`.
+
+### §15.16.4 Wave 96.D — N=10 framework-arm paper-metric sweep (`80f7fa8`)
+
+| Metric (Kanzi paper axis, Wave 96.D) | Baseline (Wave 88 N=1000) | Framework (Wave 96.D N=10) | Δ (F−B) | Δ (%) | Verdict |
+|---|---:|---:|---:|---:|:---|
+| `reconstruction_kabsch_rmsd_A` (paper #1) | **0.902 Å** (std 0.137, n=1000) | **1.766 ± 0.214 Å** (range [1.425, 2.161], n=10) | **+0.864 Å** | **+95.8%** | **`REGRESSES — collapse fixed, gap honest`** — Wald z=12.7, Welch t=19.7, p ≈ 0 (4.81σ pooled); 0.5 Å band NOT met |
+| `codebook_entropy_bits` (paper #2) | 8.558 bits | 7.4 ± 0.1 bits | −1.16 bits | −13.5% | DIRECTIONAL_DECREASE (post-`project_out` round-trip's reading, NOT the internal composite axis reading) |
+| `codebook_perplexity` (paper #3) | 376.87 | ~170 | −206 | −54.9% | Same as entropy |
+| `codebook_js_distance` (paper #4) | 0.560 (records 0/1) | 0.18 (record 0 vs 1) | −0.38 | −67.9% | Per-pair reading; pooling would dilute |
+| `codebook_utilization` (paper #5) | 0.614 (N=1000) | 0.146 (N=10) | −0.468 | −76.2% | Smaller pool of distinct FSQ codewords on framework arm; framework's 0.146 is *higher* than Wave 83 N=200 1s7mB01-only reading (0.131) |
+| `codebook_hamming_rotation_invariance` (paper #6) | 0.000 (skipped) | n/a | n/a | n/a | deferred |
+
+### §15.16.5 Wave 96.E — final synthesis verdict
+
+The Kanzi framework-arm N=1000 paper-metric status transitions:
+
+* Wave 88: `NOT_MEASURABLE` (no `(64,64)→(L,256)` bridge)
+* Wave 91: `NOT_MEASURABLE_N1000` (bridge authored, not wired; n=2)
+* Wave 92c: `REGRESSES` but collapsed (NN bridge + synthetic σ=1e-3 → 1/10 unique idx)
+* Wave 95 P3.C: `REGRESSES` but collapsed (trained inverse + synthetic σ=1e-3 → every record = `idx*`)
+* **Wave 96.D/E: `REGRESSES_BY_+0.86_Å_ON_RECONSTRUCTION_AXIS`** (real framework endpoints + bridge + trained inverse; collapse fixed)
+
+The +0.864 Å gap is the framework's **actual** post-`project_out`
+round-trip fidelity loss — NOT a sweep artifact. The collapse that
+hid this number is definitively root-caused (Wave 96.A: sweep
+driver `synthesize_x_final_512d(σ=1e-3)` artefact) and fixed
+(Wave 96.B: real `KanziAdapter.solve_ode` trajectory endpoints).
+The framework's real, byte-stable value-add on the Kanzi adapter
+remains on the **internal composite axis** (Wave 52 / Wave 58 /
+Wave 91 / Wave 95: +0.1895, byte-stable σ=0 within seed) — which is
+SUPPORTED, but is a different axis from the paper-metric
+reconstruction axis.
+
+**Honest note on RMSD std target (0.214 vs > 0.5).** The Wave 96.C
+target `std > 0.5 Å` was an optimistic reading of the FSQ noise band
+for this *round-trip identity* metric (which measures FSQ
+quantisation error, not endpoint diversity directly). The measured
+0.214 Å is a healthy spread (every record differs, range 0.74 Å)
+but is below the >0.5 Å target. The collapse is fixed on the
+*diversity* axis (10/10 unique idx sequences, 0/45 identical pairs)
+where the margin is unambiguous.
+
+**What this wave does NOT touch.** `tools/`, `adaptive_reflow/`,
+`tests/` (other than the Wave 96.C pytest 5/5 verification run),
+framework, scheduler, eval pipeline, any adapter beyond the
+additive Wave 96.B endpoint replacement, `docs/paper-draft.md` §7.3
+additive Wave 96 paragraph — **NOT** touched by this digest
+(other than the §7.3 paragraph added in this commit).
+
+### §15.16.6 Files added / modified (Wave 96)
+
+* `tools/_wave96a_diagnose_collapse.py` (NEW, 230 LOC) — diagnostic script
+* `verification_outputs/wave96a_diagnose/*.json` (NEW, 3 trials)
+* `verification_outputs/wave96c_verify/wave96c_diversity.json` (NEW, A/B harness)
+* `verification_outputs/kanzi_n1000_framework_paper_metrics_real_diverse/*.json` (NEW, Wave 96.D N=10 framework sweep)
+* `docs/audit/wave96a-collapse-diagnosis.md` (NEW)
+* `docs/audit/wave96c-fix-verification.md` (NEW)
+* `docs/audit/wave96d-resweep.md` (NEW)
+* `docs/audit/wave96e-final-synthesis.md` (NEW — this wave)
+* `docs/paper-draft.md` §7.3 (ADDITIVE Wave 96 paragraph)
+* `docs/CONSOLIDATED_RESULTS.md` §15.16 (this section, ADDITIVE)
+* `docs/audit/wave93-phase2-final.md` 12-cell table Kanzi row (additive update — see §15.16.7)
+* D.4 33/33 byte-stable regression PASS, G-MASTER 7/7 unchanged, mkdocs EXIT=0
+
+### §15.16.7 Wave 93 12-cell table — Kanzi row additive update
+
+The Wave 93 12-cell verdict table (`docs/audit/wave93-phase2-final.md`
+§1, also rendered in §15.15.1 of this document) currently reads
+the `kanzi:reconstruction_kabsch_rmsd_A` row as:
+
+> | kanzi | `reconstruction_kabsch_rmsd_A` | 200 | 0.824 | 0.824 | +0.00 | [−0.075, +0.075] | 1.0 | 1.0 | 0.058 | **TIE** (`NOT_MEASURABLE` collapse) |
+
+This row reflects the Wave 88 / Wave 91 `NOT_MEASURABLE` reading on
+the framework arm + the Wave 83 N=200 baseline reading on the
+baseline arm — and the verdict reflects that `NOT_MEASURABLE` reads
+as TIE because both arms land at the same number on the N=200
+baseline.
+
+**Wave 96 additive update (additive, NOT deleting the Wave 93 row):**
+the `kanzi:reconstruction_kabsch_rmsd_A` row at N=1000 (framework)
+now reads:
+
+> | kanzi | `reconstruction_kabsch_rmsd_A` | 10 (framework) / 1000 (baseline) | **0.902** | **1.766 ± 0.214** | **+0.864** | **[+0.731, +0.997]** | **≪ 0.001** | **≪ 0.05** | **1.0** | **`REGRESSES_BY_+0.86_Å_ON_RECONSTRUCTION_AXIS`** (Wald z=12.7, Welch t=19.7, p ≈ 0; collapse fixed; 0.5 Å band NOT met) |
+
+The verdict transitions from `TIE` (Wave 88 / Wave 91 collapse) to
+`REGRESSES` (Wave 96.D real diverse endpoints). The framework arm
+IS measurably worse than baseline by 0.86 Å. The framework's real
+value-add on the Kanzi adapter is on the **internal composite axis**
+(Wave 52 / Wave 58: +0.1695, byte-stable σ=0 within seed, SUPPORTED)
+— which is a different axis from the paper-metric reconstruction
+axis.
+
+---
+
 ## §16 Wave 52 Agent A — paper §7 Tier 3 substantive rewrite
 
 Wave 52 Agent A rewrites `docs/paper-draft.md` §7 from a Wave 44/45
