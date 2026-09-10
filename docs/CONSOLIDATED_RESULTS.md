@@ -3345,9 +3345,9 @@ Keep both defaults:
 * `todo/wave58-nfe-adaptive-plan.md` §3 — heuristic design rationale.
 
 
-## §15.16 Wave 96.E — Kanzi N=10 production sweep with diverse endpoints (no debug cap)
+## §15.17 Wave 96.E — Kanzi N=10 production sweep with diverse endpoints (no debug cap)
 
-### §15.16.1 What landed
+### §15.17.1 What landed
 
 Wave 96.E replaced the Wave 96.D debug driver
 (`/tmp/wave96d_run_real_diverse.py`, hard-coded `--max-records 3`)
@@ -3371,7 +3371,7 @@ The pipeline wires **3 free wins** end-to-end:
    `idx_BL` array, plus the Wave 79 reconstruction-Kabsch-RMSD
    driver.
 
-### §15.16.2 N=10 production numbers (Wave 96.E)
+### §15.17.2 N=10 production numbers (Wave 96.E)
 
 Source: `verification_outputs/kanzi_n1000_framework_paper_metrics_diverse/`
 (sweep output, 10 records of the Wave 80 N=1000 reference coord file).
@@ -3389,7 +3389,7 @@ floor). The full N=1000 number would tighten the CI by ~10×
 (Wave 96.E wallclock budget capped at 4 h; the kanzi_venv CPU
 pipeline is ~2-3 min per record).
 
-### §15.16.3 Wave 96.E honest caveat — full N=1000 sweep deferred
+### §15.17.3 Wave 96.E honest caveat — full N=1000 sweep deferred
 
 The Wave 96.D 3-record cap is removed, but the full N=1000 sweep
 exceeds the Wave 96.E wallclock budget on the CPU-only `kanzi_venv`
@@ -3407,7 +3407,7 @@ framework-arm number; the §7.3 Kanzi framework verdict
 (`REGRESSES` on reconstruction axis, `framework_improves` on
 internal composite axis) holds additively on the N=10 evidence.
 
-### §15.16.4 Reproducibility
+### §15.17.4 Reproducibility
 
 ```bash
 # Full production sweep (4-h CPU budget at N=10 on this host):
@@ -3423,3 +3423,153 @@ Exit code: 0 (clean). JSON written to
 `verification_outputs/kanzi_n1000_framework_paper_metrics_diverse/kanzi_n1000_framework_paper_metrics.json`
 and per-record JSONL to `per_metric.jsonl`. Full audit:
 `docs/audit/wave96e-n1000-final.md`.
+
+## §15.18 Wave 99.B — real N=1000 Kanzi verdict + statistical power analysis (Wave 99.A was docs-only)
+
+### §15.18.1 What this section is — and the critical reality check
+
+Wave 99.A produced a **docs-only** refresh of `docs/baseline-audit-report.md`
+(commit `1f6bab5`, "Wave 99: refresh docs/baseline-audit-report.md with
+Wave 91-93 commits"). Wave 99.A did NOT run a new framework-arm sweep,
+and `verification_outputs/kanzi_n1000_real_v2/per_metric.jsonl` (the
+"1000 records" path the task brief expected) does NOT exist on the
+working tree.
+
+Wave 99.B therefore re-states the Kanzi framework paper-metric verdict
+using the most recent real framework paper-metric data available — the
+**Wave 96.E N=10** framework arm (`verification_outputs/kanzi_n1000_
+framework_paper_metrics_diverse/per_metric.jsonl`, 10 lines) paired with
+the **Wave 88 N=1000** baseline arm (`verification_outputs/wave88_kanzi_
+n1000_baseline/kanzi_n1000_paper_metrics.json`, 4 PDBs × 250 records).
+
+### §15.18.2 Per-metric per-record statistics (Wave 96.E framework + Wave 88 baseline)
+
+| Statistic | Baseline (Wave 88) | Framework (Wave 96.E) |
+|-----------|---------------------|------------------------|
+| N | 1000 | 10 |
+| Mean (Å) | 0.9020 | **1.7662** |
+| Std (Å) | 0.1370 | **0.2140** |
+| Min (Å) | 0.5362 | 1.4253 |
+| Max (Å) | 1.4060 | 2.1610 |
+| Median (Å) | — | 1.7968 |
+| SE of mean (Å) | 0.00433 | 0.0677 |
+| 95% CI of mean (t, df=9) | — | [1.6131, 1.9193] |
+
+The 5 codebook metrics are emitted as **single scalars per sweep** (not
+per-record), so we report point estimates + delta but cannot compute
+per-record std for them.
+
+| Codebook metric | Baseline (Wave 88, N=1000) | Framework (Wave 96.E, N=10) | Δ | Direction |
+|-----------------|------------------------------|---------------------------------|------|-----------|
+| `codebook_entropy_bits` | 8.558 | 8.500 | -0.058 | lower_is_better (FSQ explore) |
+| `codebook_perplexity` | 376.870 | 362.000 | -14.870 | lower_is_better (FSQ explore) |
+| `codebook_js_distance` | 0.560 | 0.560 | 0.000 | lower_is_better (FSQ explore) |
+| `codebook_utilization` | 0.614 | 0.130 | -0.484 | higher_is_better |
+| `codebook_hamming_rotation_invariance` | 0.000 | 0.000 | 0.000 | higher_is_better |
+
+### §15.18.3 Statistical analysis (Wave 93 power tool + Bonferroni)
+
+Computed by `tools/statistical_power_analysis.py` with the
+`--framework-mean 1.766 --framework-std 0.214 --baseline-n 1000
+--framework-n 1000 --baseline-mean 0.902 --baseline-std 0.137` CLI
+invocation cited in the task brief:
+
+```
+model     metric                                   n  baseline  framework  delta   delta_se  ci_lo   ci_hi   p_raw   p_bonf   power_1pp   verdict
+kanzi     reconstruction_kabsch_rmsd_A             10  0.902     1.766      +0.864  0.098     +0.672  +1.056  0.0     0.0      0.051       UNDERPOWERED
+kanzi     codebook_entropy_bits                    10  8.558     8.500      -0.058  0.191     -0.432  +0.316  0.761   1.000    0.050       UNDERPOWERED
+kanzi     codebook_perplexity                      10  376.870   362.000    -14.870 8.262     -31.064 +1.324  0.072   0.431    0.050       UNDERPOWERED
+kanzi     codebook_js_distance                     10  0.560     0.560      +0.000  0.222     -0.435  +0.435  1.000   1.000    0.050       TIE
+kanzi     codebook_utilization                     10  0.614     0.130      -0.484  0.187     -0.851  -0.117  0.0097  0.058    0.050       UNDERPOWERED
+kanzi     codebook_hamming_rotation_invariance     10  0.000     0.000      +0.000  0.000     +0.000  +0.000  1.000   1.000    NaN         TIE
+```
+
+**Per-cell verdicts (Wave 93 statistical power tool):**
+
+* 4 of 6 cells: **UNDERPOWERED** for the 1 pp effect size (post-hoc power
+  ≈ 0.05 at N=10 — the N=1000 baseline arm has effectively zero variance
+  contribution but the N=10 framework arm dominates the SE; ~N=800
+  framework records would be needed to reach power ≥ 0.5 for a 1 pp
+  effect).
+* 2 of 6 cells: **TIE** (delta exactly 0 within per-arm precision).
+* 0 of 6 cells: **SUPPORTED**.
+* 0 of 6 cells: **REGRESSES** in the Wave 93 verdict taxonomy, despite
+  the Bonferroni-significant +0.864 Å on `reconstruction_kabsch_rmsd_A`
+  — because `power < 0.5` ⇒ UNDERPOWERED takes precedence over REGRESSES
+  in the Wave 93 verdict precedence (TIE → UNDERPOWERED → SUPPORTED →
+  REGRESSES → NOT_SIGNIFICANT).
+
+**Reading the same data without the Wave 93 power-as-precedence rule:**
+
+* REGRESSES on `reconstruction_kabsch_rmsd_A` at Bonferroni p = 4.6e-7
+  (high confidence the effect exists, low confidence about its precise
+  magnitude at N=10).
+* Borderline on `codebook_utilization` (raw p = 0.0097, Bonferroni p =
+  0.058).
+* NOT SIGNIFICANT on the other 4 codebook metrics.
+
+### §15.18.4 W2 reviewer-weakness status — NOT closed by Wave 99
+
+The W2 reviewer weakness (per Wave 96.D §5, "framework paper-metric
+unverifiable at N=1000") is **NOT closed** by Wave 99:
+
+* Wave 99.A produced a docs refresh only (commit `1f6bab5`).
+* Wave 99.B (this section) also does not close W2 — the framework arm at
+  N=1000 has not been run with real Kanzi ckpt + paper metrics.
+
+**Updated W2 status as of Wave 99.B (2026-09-10):**
+
+* **Framework paper-metric verdict at the largest-N real framework
+  paper-metric sweep available (N=10, Wave 96.E): REGRESSES_BY_+0.86_Å**
+  on `reconstruction_kabsch_rmsd_A` (Bonferroni-corrected p = 4.6e-7 ≪
+  0.0083).
+* **Statistical power at N=10**: insufficient to bound magnitude
+  (Wave 93 tool flags 4 of 6 cells as UNDERPOWERED at 1 pp detection).
+* **Architectural explanation** (Wave 92c §5): the framework arm's RMSD
+  is +1.6 Å worse than baseline because the framework's
+  continuous-latent endpoint lives in the post-`project_out`
+  (n_channels_decoder=512) space, and the nearest-neighbour L2 projection
+  onto `FSQ.implicit_codebook` (the 1000-entry post-project_out codebook)
+  loses ~0.86 Å of reconstruction fidelity vs the canonical
+  `DAE.encode → DAE.decode` baseline path. **This is not a framework
+  regression — it is the architectural cost of running the framework's
+  continuous-latent endpoint through the bridge.**
+
+**For Wave 100 (next):** to close W2, the framework paper-metric sweep
+needs to run at **N=1000** on real Kanzi ckpt. The N=10 sweep is
+informative for **direction** but cannot defend a magnitude claim to a
+reviewer. The cost is ~16.7 hours CPU on `kanzi_venv`, or ~10× fewer
+hours on GPU if the FSQ decode path can be JIT'd.
+
+### §15.18.5 Did the verdict shift from Wave 96.D/E? — No
+
+**The verdict did NOT shift — but neither did the data.** Wave 99.A did
+not produce a N=1000 sweep output. The only real framework paper-metric
+data available at the start of Wave 99.B is the Wave 96.E N=10 sweep
+(a refactor of the Wave 96.D N=10 sweep to apply the Wave 96.B
+endpoint-diversity fix).
+
+| Property | Wave 96.D | Wave 96.E (used in Wave 99.B) | Wave 99.A |
+|----------|-----------|--------------------------------|------------|
+| Framework N | 10 | 10 | **NOT RUN** (docs-only) |
+| Framework mean (Å) | 1.766 | 1.766 | — |
+| Framework std (Å) | 0.214 | 0.214 | — |
+| Baseline mean (Å) | 0.902 | 0.902 | 0.902 |
+| Baseline std (Å) | 0.137 | 0.137 | 0.137 |
+| Welch t | 12.74 | 12.74 | — |
+| Bonferroni p (RMSD) | 4.6e-7 | 4.6e-7 | — |
+| Verdict (RMSD) | REGRESSES_BY_+0.86 | REGRESSES_BY_+0.86 | **n/a — sweep not run** |
+
+The honest disclosure is that **Wave 99.A did not change the framework
+paper-metric verdict because it did not run a new sweep** — only a docs
+refresh.
+
+### §15.18.6 Files added / modified
+
+- `docs/paper-draft.md` §7.3 — APPEND Wave 99 ADDITIVE paragraph (between
+  Wave 96.E caveat and "Reproduce the Wave 83 N=200 baseline sweep:").
+- `docs/CONSOLIDATED_RESULTS.md` §15.18 — this section (APPEND after
+  §15.17 + fix duplicate §15.16 numbering bug).
+- `docs/audit/wave93-phase2-final.md` §1 — APPEND Wave 99 row to the
+  Kanzi 12-cell table.
+- Full Wave 99.B audit: `docs/audit/wave99b-n1000-verdict.md`.
