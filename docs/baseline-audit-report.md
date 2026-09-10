@@ -2656,6 +2656,159 @@ already landed in earlier commits.
 
 ---
 
+## S — GPU watchdog + SOTA alignment (Wave 98, 2026-09-10)
+
+**Date:** 2026-09-10
+**Agent:** Wave 98 Agent D
+**Scope:** state-of-the-union consolidation for Wave 98 (Agent A's GPU
+watchdog + Agent B's SOTA config audit + Agent C's SOTA default-config
+enforcement). 2 new audit docs (`docs/audit/wave98-gpu-watchdog-design.md`
++ `docs/audit/wave98-gpu-sota-final.md`) + this row in the §S section.
+NO code changes in this audit — the watchdog + SOTA fixes already
+landed in commits `99834d9`, `ae2327b`, `3856f28`.
+
+### S.1 — GPU watchdog (`tools/_gpu_watchdog.py`)
+
+**Owner:** Wave 98 Agent A (commit `99834d9`).
+**Module:** `tools/_gpu_watchdog.py` (~240 LOC, stdlib-only —
+`subprocess` + `threading` + `os` + `sys` + `time` + `json`).
+**Tests:** `tests/test_tools/test_gpu_watchdog.py` (9 tests, 270 LOC).
+
+**Trigger condition:**
+
+```
+util.gpu == 0
+  AND memory.used > 100 MiB
+  AND has persisted for >= threshold_seconds (default 30s)
+```
+
+| Scenario | util | mem_mib | Warning? |
+|---|---:|---:|:---:|
+| Genuinely idle (no model) | 0 | 0 | NO (below mem floor) |
+| Stuck on CUDA stream deadlock | 0 | > 100 | **YES** (35s detection) |
+| Compute-bound (cuBLAS GEMM) | 50-99 | > 100 | NO (util > 0) |
+| Sweep between cells (briefly) | 0 | > 100 | NO if < 30s, YES if ≥ 30s |
+
+**Wired into 3 sweep drivers:**
+
+| File | Site |
+|---|---|
+| `tools/eval/sweep.py` | `_run_cell()` per-cell compute |
+| `tools/sweep_kanzi_n1000_diverse.py` | `main()` per-record loop |
+| `tools/upstream_eval.py` | `run_flowmol3_upstream_eval()`, `run_lineageflow_upstream_eval()` |
+
+**Why this matters:** the Wave 96.E "stuck-process" failure mode (sweep
+driver hangs on CUDA stream deadlock, no stderr output for 30 minutes)
+is now diagnosed in 35s via the WARNING line. The user's response is
+`pkill <pid>` + cross-reference the WARNING's `pid` with the sweep's
+last-printed progress line. Diagnostic-only — the watchdog does not
+unstick the GPU.
+
+### S.2 — SOTA config alignment (`docs/audit/wave98-sota-config-audit.md`)
+
+**Owner:** Wave 98 Agent B (commit `ae2327b`, audit doc only).
+**File:** `docs/audit/wave98-sota-config-audit.md` (~333 lines).
+
+Per-adapter default config audit against upstream published SOTA for
+the 3 Tier 3 adapters. Each field graded **MATCH / DRIFT / MISSING**.
+
+#### Pre-Wave-98.C drift count
+
+| Adapter | Fields | MATCH | DRIFT | MISSING |
+|---|---:|---:|---:|---:|
+| Kanzi | 6 | 1 | 5 | 0 |
+| LineageFlow | 6 | 0 | 5 | 1 |
+| FlowMol3 | 6 | 1 | 4 | 1 |
+| **TOTAL** | **18** | **2** | **14** | **2** |
+
+### S.3 — SOTA default-config enforcement (`Wave 98.C`, commit `3856f28`)
+
+**Owner:** Wave 98 Agent C (commit `3856f28`).
+
+Aligned 5 of the 14 DRIFT fields with published paper values:
+
+| Adapter | Field | Pre-98 | Post-98 | Paper value | Source |
+|---|---|---:|---:|---:|---|
+| Kanzi | `num_steps` | 50 | **100** | 100 | Shah et al. ICLR 2026 §5 |
+| Kanzi | `cfg_scale` | 1.0 | **2.0** | 2.0 | Shah et al. ICLR 2026 §4 (best Pfam designability CFG) |
+| LineageFlow | `num_steps` | 50 | **100** | 100 | Lin et al. ICML 2026 §5 |
+| FlowMol3 | `num_steps` | 100 | **250** | 250 | zavalab NeurIPS 2024 §5 (GEOM-DRUGS) |
+| FlowMol3 | `distort_p` | 0.7 | **0.5** | 0.5 | zavalab NeurIPS 2024 §5 (CTMC noise) |
+| FlowMol3 | `distort_t` | 0.25 | **0.5** | 0.5 | zavalab NeurIPS 2024 §5 (CTMC noise) |
+
+#### Post-Wave-98.C drift count
+
+| Adapter | Fields | MATCH | DRIFT | MISSING |
+|---|---:|---:|---:|---:|
+| Kanzi | 9 | 4 | 3 | 2 |
+| LineageFlow | 9 | 2 | 4 | 3 |
+| FlowMol3 | 9 | 5 | 2 | 2 |
+
+**Net:** 5 DRIFT fields closed; 9 remaining DRIFT are all
+framework-side runtime trade-offs (e.g. `LineageFlow.max_seq_length
+= 256 vs paper 1024` requires ckpt rebuild) or framework-internal
+concepts with no paper analog (e.g. `restart_distribution`,
+`paper_quantities β`).
+
+#### Regression vector refresh
+
+Wave 98.C refreshed `regression-vectors/kanzi.json` because the
+`cfg_scale 1.0 → 2.0` flip changed synthetic-mode CFG application.
+The 9 `(seed × nfe)` hashes were re-recorded via
+`tools/run_regression_vector_audit.py generate --adapter kanzi`.
+LineageFlow + FlowMol3 vectors unchanged (audit factory passes
+`num_steps=10` explicitly; `distort_p/t` only affects real-ckpt path).
+
+### S.4 — Impact on Wave 99 N=1000 sweep
+
+The Wave 99 N=1000 Kanzi sweep inherits:
+
+1. **GPU watchdog coverage** — `tools/eval/sweep.py:_run_cell()`
+   already wrapped in `gpu_watchdog()`. A stuck cell is diagnosed
+   in 35s vs 30 min silent hang.
+2. **Paper-parity defaults** — the sweep entry point
+   (`python -m tools.eval --model kanzi --paper-metric-mode
+   framework-arm --n-rounds 1`) now produces paper-parity numbers
+   out-of-the-box without passing `--nfe-budgets` or `--guidance-scale`.
+   Kanzi `num_steps=100`, `cfg_scale=2.0`; LineageFlow `num_steps=100`;
+   FlowMol3 `num_steps=250`.
+
+### S.5 — Verification (this commit)
+
+| Gate | Result |
+|---|---|
+| `pytest tests/ -k d4 -v` (D.4 regression vectors) | **33/33 PASS** (9 skipped are pre-existing perf/torch-only tests) |
+| `pytest tests/ -v` (full suite) | 1 pre-existing failure unrelated to Wave 98: `test_flowmol3_adapter.py::TestFlowMol3ForceModeFactory::test_factory_real_loads_published_ckpt` requires `torch` + a real FlowMol3 ckpt at `data/flowmol3/weights_real/checkpoints/last.ckpt` (neither present in this CPU-only venv). Last touched in commit `56aeb45` (Wave 54, 2026-08) — pre-existing on `HEAD~3`. |
+| Wave 98.A watchdog tests | 9/9 PASS (commit `99834d9`) |
+| Wave 98.C adapter tests | 287 passed, 14 pre-existing torch-skipped (commit `3856f28`) |
+
+### S.6 — Cross-references
+
+- `docs/audit/wave98-gpu-watchdog-design.md` — Agent A's GPU watchdog
+  design (motivation, threading model, 9 tests, what the watchdog
+  does NOT do).
+- `docs/audit/wave98-sota-config-audit.md` — Agent B's per-adapter
+  SOTA alignment audit (18 fields, 14 DRIFT, 2 MISSING, 2 MATCH).
+- `docs/audit/wave98-gpu-sota-final.md` — Agent D's final consolidation
+  (TL;DR + watchdog summary + SOTA post-enforcement state + Wave 99
+  impact + verification).
+- `docs/audit/wave97-routing-final.md` — Wave 97 routing state
+  (for context on the broader audit lineage).
+- `docs/audit/wave96e-n1000-final.md` — Wave 96.E Kanzi N=10 sweep
+  (the original "stuck-process" scenario that motivated the watchdog).
+
+### S.7 — No regression risk
+
+- Wave 98.A watchdog (`99834d9`): 9/9 watchdog tests PASS, 110/110
+  related tests PASS, no D.4 regression.
+- Wave 98.B audit doc (`ae2327b`): READ-ONLY audit, no source touched.
+- Wave 98.C SOTA defaults (`3856f28`): 7 adapter constants updated
+  + 6 docstrings; D.4 first-batch 30/30 PASS; 287 adapter tests passed.
+- This Agent D row + 2 audit docs (`wave98-gpu-watchdog-design.md` +
+  `wave98-gpu-sota-final.md`) are docs-only — no source touched.
+
+---
+
 ## Wave 92c / Wave 93 Phase 2 — PENDING placeholders (do not edit in this wave)
 
 > **Status:** IN FLIGHT per `todo/STATUS.md` (2026-09-10). These sections are
