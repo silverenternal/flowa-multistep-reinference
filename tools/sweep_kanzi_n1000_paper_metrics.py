@@ -251,6 +251,30 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     out_path = args.output_dir / "kanzi_n1000_paper_metrics.json"
+    # Wave 97.D — hard N-record assertion (closes the Wave 96
+    # reality-check gap). When --limit is explicitly set (>0) and the
+    # sweep produced fewer records than the cap, raise RuntimeError
+    # rather than writing a smaller-than-requested summary.
+    from tools._sweep_assertion import (  # noqa: E402  (lazy import)
+        assert_n_records_match,
+        write_summary_with_n_keys,
+    )
+    assert_n_records_match(
+        n_records_actual=int(n_processed),
+        n_records_requested=int(args.limit) if args.limit else 0,
+        sweep_name="sweep_kanzi_n1000_paper_metrics",
+        context={
+            "input_file": str(args.input),
+        },
+    )
+    # Wave 97.D — write the 2 N-contract keys so downstream can verify
+    # the sweep honored its requested N without re-parsing the loop.
+    write_summary_with_n_keys(
+        output,
+        n_records_actual=int(n_processed),
+        n_records_requested=int(args.limit) if args.limit else 0,
+        sweep_name="sweep_kanzi_n1000_paper_metrics",
+    )
     out_path.write_text(json.dumps(output, indent=2), encoding="utf-8")
     print(f"[wave83] wrote {out_path}", file=sys.stderr)
     print(json.dumps(output, indent=2))

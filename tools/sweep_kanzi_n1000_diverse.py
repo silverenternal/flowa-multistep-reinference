@@ -84,6 +84,15 @@ from tools.paper_metrics_kanzi import (  # noqa: E402
     compute_codebook_perplexity,
     compute_codebook_utilization,
 )
+# Wave 97.D — hard N-record assertion + summary JSON contract (closes
+# the Wave 96 reality-check gap: agents silently wrote N<=10 sweeps and
+# claimed N=1000). No default change — agents can still pass
+# --max-records=5 for debug runs; the assertion only fires when the
+# requested cap was positive but the sweep produced fewer records.
+from tools._sweep_assertion import (  # noqa: E402
+    assert_n_records_match,
+    write_summary_with_n_keys,
+)
 from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # noqa: E402
 
 
@@ -397,6 +406,28 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     out_path = args.output_dir / "kanzi_n1000_framework_paper_metrics.json"
+    # Wave 97.D — hard N-record assertion (closes the Wave 96
+    # reality-check gap). When --max-records is explicitly set (>0)
+    # and the sweep produced fewer records than the cap, raise
+    # RuntimeError rather than writing a smaller-than-requested summary.
+    assert_n_records_match(
+        n_records_actual=int(n_processed),
+        n_records_requested=int(args.max_records),
+        sweep_name="sweep_kanzi_n1000_diverse",
+        context={
+            "input_file": str(args.input),
+            "skip_reasons": skip_reasons,
+            "n_records_skipped": int(n_skipped),
+        },
+    )
+    # Wave 97.D — write the 2 N-contract keys so downstream can verify
+    # the sweep honored its requested N without re-parsing the loop.
+    write_summary_with_n_keys(
+        output,
+        n_records_actual=int(n_processed),
+        n_records_requested=int(args.max_records),
+        sweep_name="sweep_kanzi_n1000_diverse",
+    )
     out_path.write_text(json.dumps(output, indent=2, sort_keys=False) + "\n",
                         encoding="utf-8")
     print(f"[wave96e] wrote {out_path}", file=sys.stderr)

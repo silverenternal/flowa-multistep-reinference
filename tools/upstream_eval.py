@@ -70,6 +70,15 @@ import subprocess
 import sys
 from typing import Any
 
+# Wave 97.D — hard N-record assertion + summary JSON contract (closes
+# the Wave 96 reality-check gap: agents silently wrote N<=10 sweeps and
+# claimed N=1000). Imported lazily inside the upstream-eval wrappers so
+# the stdlib-only helper doesn't pollute the cold-import path.
+from tools._sweep_assertion import (  # noqa: E402
+    assert_n_records_match_with_file_count,
+    write_summary_with_n_keys,
+)
+
 
 # Repo root (one level above ``tools/``). Used to anchor absolute paths
 # for vendored upstream packages + reference data.
@@ -300,6 +309,55 @@ def run_lineageflow_upstream_eval(
                 continue
     flat["metric_kind"] = "family_validity+foldability+self_consistency+novelty"
     flat["upstream_orchestrator"] = str(LINEAGEFLOW_EVALUATE_ALL)
+    # Wave 97.D — hard N-record assertion (file-aware variant). The
+    # orchestrator writes per-family ``n_records`` into summary.json;
+    # we use the minimum across all reported metrics as the actual
+    # count. ``file_record_count`` is the number of records the user
+    # gave us in the FASTA (= the natural cap). The assertion fires
+    # only when (a) the FASTA had >= 1 record, (b) at least one
+    # per-metric ``n_records`` was reported (i.e. the orchestrator
+    # actually ran the eval, not the empty-summary success path),
+    # AND (c) min per-metric N < file_record_count — i.e. the
+    # orchestrator silently produced a short N sweep.
+    family_n_records: list[float] = []
+    for _metric_name, metric_dict in raw_summary.items():
+        if not isinstance(metric_dict, dict):
+            continue
+        nr = metric_dict.get("n_records")
+        if isinstance(nr, (int, float)):
+            family_n_records.append(float(nr))
+    min_n_records = (
+        min(family_n_records) if family_n_records else 0.0
+    )
+    file_record_count = 0
+    if fasta_path.is_file():
+        with open(fasta_path, encoding="utf-8") as _f:
+            for _line in _f:
+                if _line.strip().startswith(">"):
+                    file_record_count += 1
+    if (
+        int(file_record_count) > 0
+        and int(min_n_records) > 0
+    ):
+        assert_n_records_match_with_file_count(
+            n_records_actual=int(min_n_records),
+            n_records_requested=int(file_record_count),
+            file_record_count=int(file_record_count),
+            sweep_name="run_lineageflow_upstream_eval",
+            context={
+                "fasta_path": str(fasta_path),
+                "metrics": list(raw_summary.keys()),
+                "family_n_records": family_n_records,
+            },
+        )
+    # Wave 97.D — write the 2 N-contract keys so downstream consumers
+    # can verify the eval honored its requested N.
+    write_summary_with_n_keys(
+        flat,
+        n_records_actual=int(min_n_records),
+        n_records_requested=int(file_record_count) if int(file_record_count) > 0 else 0,
+        sweep_name="run_lineageflow_upstream_eval",
+    )
     return flat
 
 
@@ -617,6 +675,30 @@ def run_kanzi_upstream_eval(
     if jsonl_path is not None:
         flat["output_jsonl"] = float(1.0)
     flat["upstream_orchestrator"] = "kanzi.DAE.encode+decode+kabsch_rmsd"
+    # Wave 97.D — hard N-record assertion (file-aware variant: only
+    # fires when the file had >= n_samples records but the driver
+    # processed fewer). Closes the Wave 96 reality-check gap where
+    # agents passed ``--upstream-n-samples 1000`` but the upstream
+    # eval silently ran on a 10-record subset.
+    assert_n_records_match_with_file_count(
+        n_records_actual=int(flat.get("n_seqs", 0)),
+        n_records_requested=int(n_samples),
+        file_record_count=int(file_record_count),
+        sweep_name="run_kanzi_upstream_eval",
+        context={
+            "sequences_path": str(sequences_path),
+            "n_samples_requested": int(n_samples),
+            "n_samples_effective": int(effective_n),
+        },
+    )
+    # Wave 97.D — write the 2 N-contract keys so downstream consumers
+    # can verify the eval honored its requested N.
+    write_summary_with_n_keys(
+        flat,
+        n_records_actual=int(flat.get("n_seqs", 0)),
+        n_records_requested=int(n_samples),
+        sweep_name="run_kanzi_upstream_eval",
+    )
     return flat
 
 

@@ -519,6 +519,35 @@ def _run_cell(
                             "status": 0.0,
                             "reason": f"runner_exception:{type(exc).__name__}:{exc}",
                         }
+                    # Wave 97.D — hard N-record assertion (file-aware
+                    # variant). Only fires when the SMILES file had >=
+                    # upstream_n_samples records (file was supposed to
+                    # satisfy the cap) but the upstream eval processed
+                    # fewer. When the file is the binding cap (e.g.
+                    # n_molecules=1 yields 1 SMILES), the assertion is
+                    # skipped automatically.
+                    from tools._sweep_assertion import (  # noqa: E402  (lazy)
+                        assert_n_records_match_with_file_count,
+                        write_summary_with_n_keys,
+                    )
+                    fm_n_processed = int(fm_metrics.get("n_molecules", 0))
+                    assert_n_records_match_with_file_count(
+                        n_records_actual=fm_n_processed,
+                        n_records_requested=int(upstream_n_samples),
+                        file_record_count=int(len(smiles_lines)),
+                        sweep_name="run_real_ckpt_eval.flowmol3",
+                        context={
+                            "smiles_path": str(smiles_path),
+                            "model": model,
+                            "n_molecules_per_cell": int(n_molecules),
+                        },
+                    )
+                    write_summary_with_n_keys(
+                        fm_metrics,
+                        n_records_actual=fm_n_processed,
+                        n_records_requested=int(upstream_n_samples),
+                        sweep_name="run_real_ckpt_eval.flowmol3",
+                    )
                     cell["upstream_eval_metrics"].update(fm_metrics)
                     cell["upstream_eval_debug"]["flowmol3"] = (
                         "computed" if fm_metrics.get("status") == 1.0

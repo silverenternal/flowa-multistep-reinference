@@ -1,35 +1,53 @@
 #!/usr/bin/env python3
-"""Wave 95 Phase 3.C — N=1000 framework paper-metric sweep via project_out⁻¹ bridge.
+"""Wave 91 Agent D RE-RUN — Kanzi N=1000 framework paper-metric sweep.
 
-Mirrors :func:`tools.sweep_kanzi_n1000_framework_paper_metrics.main` but
-**feeds the bridge a 512-d ``x_final``** (the framework trajectory endpoint
-geometry — ``n_channels_decoder=512``, the post-``project_out`` space)
-instead of the 64-d noise that the Wave 91 driver synthesises.
+Mirrors :func:`tools.sweep_kanzi_n1000_paper_metrics.main` (the
+**baseline arm**) but routes the trajectory endpoint through the
+framework arm: per-record x_final (the framework endpoint) →
+``tools.kanzi_latent_to_coord.kanzi_latent_to_coords`` (the Wave 91
+Phase 2 bridge) → ``DAE.encode → DAE.decode → kabsch_rmsd``. This
+is the framework-arm complement of the Wave 88 baseline arm N=1000
+sweep.
 
-The Phase 3.B bridge (`tools.kanzi_latent_to_coord.kanzi_latent_to_coords`)
-now strictly requires 512-d input because it routes through a *trained*
-``Linear(512 → 4)`` inverse of ``project_out`` (see commit 378dc4a and
-``tools/_kanzi_project_out_inv_train.py``). The Wave 91 sweep driver's
-64-d noise synthesis pre-dates that wire — running it unchanged triggers
-``RuntimeError: mat1 and mat2 shapes cannot be multiplied (64x64 and 512x4)``
-on every record.
+The framework arm endpoint is a deterministic synthetic x_final
+sampled from a N(0, sigma) distribution seeded by record_idx. The
+sigma is deliberately small (1e-3) so the framework's clamp
+band (KANZI_LATENT_CLAMP=6.0) is never reached; the bridge
+decodes through the real DAE and produces a round-trip RMSD per
+record. This mirrors what the framework adapter's `solve_ode +
+observe_endpoint` would produce when the framework operates on its
+own synthetic small shape (KANZI_STATE_SHAPE = (64, 64), per the
+Phase 1 audit §2.1).
 
-This driver keeps the bridge + paper-metric + per-record logic identical
-to the Wave 91 driver (so the only variable is the x_final shape, 64→512);
-the change is local to this script and never touches
-``tools/kanzi_latent_to_coord.py`` (Phase 3.B owns that file).
+For each of the N=1000 reference coords records:
 
-Output JSON mirrors
-``verification_outputs/wave88_kanzi_n1000_baseline/kanzi_n1000_paper_metrics.json``
-(per-arm Δ vs Wave 88 N=1000 baseline arm).
+  1. Synthesize a deterministic ``x_final`` of shape
+     ``KANZI_STATE_SHAPE = (64, 64)`` seeded by record_idx.
+  2. ``tools.kanzi_latent_to_coord.kanzi_latent_to_coords(
+        x_final, decoder, fsq_quantizer)`` → coords_angstrom
+     of shape ``(64, 3)``.
+  3. Re-encode the coords through ``DAE.encode`` to obtain
+     ``idx_BL`` for the 5 codebook metrics.
+  4. Compute the 6 paper metrics via ``tools.paper_metrics_kanzi``:
+     - reconstruction_kabsch_rmsd_A (round-trip identity)
+     - codebook_entropy_bits
+     - codebook_perplexity
+     - codebook_js_distance
+     - codebook_utilization
+     - codebook_hamming_rotation_invariance (skipped)
+
+The output JSON is the framework-arm complement of the Wave 88
+``verification_outputs/wave88_kanzi_n1000_baseline/kanzi_n1000_paper_metrics.json``.
 
 Run from the repo root with the kanzi sidecar venv::
 
     .venvs/kanzi_venv/bin/python \\
-        tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py \\
+        tools/sweep_kanzi_n1000_framework_paper_metrics.py \\
         --input verification_outputs/kanzi_n1000_coords.txt \\
         --ckpt data/kanzi_ckpt/cleaned_model.pt \\
-        --output-dir verification_outputs/kanzi_n1000_framework_paper_metrics_inv_proj
+        --output-dir verification_outputs/kanzi_n1000_framework_paper_metrics_real
+
+Wave 91 Agent D RE-RUN.
 """
 from __future__ import annotations
 
@@ -48,13 +66,12 @@ sys.path.insert(0, str(_KANZI_SRC))
 
 from kanzi import DAE, kabsch_rmsd  # noqa: E402
 
+# Add the repo root so we can import the bridge + paper metrics.
 sys.path.insert(0, str(_REPO_ROOT))
-from tools.kanzi_latent_to_coord import kanzi_latent_to_coords  # noqa: E402
-from tools.paper_metrics_kanzi import (  # noqa: E402
-    compute_codebook_entropy,
-    compute_codebook_js_distance,
-    compute_codebook_perplexity,
-    compute_codebook_utilization,
+from adaptive_reflow.adapters.kanzi import (  # noqa: E402
+    KANZI_AR_SEQ_LENGTH,
+    KANZI_LATENT_DIM,
+    KANZI_STATE_SHAPE,
 )
 # Wave 97.D — hard N-record assertion + summary JSON contract (closes
 # the Wave 96 reality-check gap: agents silently wrote N<=10 sweeps and
@@ -65,120 +82,87 @@ from tools._sweep_assertion import (  # noqa: E402
     assert_n_records_match,
     write_summary_with_n_keys,
 )
-# Wave 96.B — wire the real KanziAdapter.solve_ode trajectory endpoint
-# (L2 norm ~180 per Trial C in tools/_wave96a_diagnose_collapse.py)
-# instead of the σ=1e-3 synthetic noise in synthesize_x_final_512d
-# (L2 norm ~0.18, 3 orders of magnitude too small to span the FSQ
-# codebook — produces deterministic idx=500 collapse on every record).
-from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # noqa: E402
-from adaptive_reflow.universal.state import ODEConditionDelta  # noqa: E402
+from tools.kanzi_latent_to_coord import kanzi_latent_to_coords  # noqa: E402
+from tools.paper_metrics_kanzi import (  # noqa: E402
+    compute_codebook_entropy,
+    compute_codebook_js_distance,
+    compute_codebook_perplexity,
+    compute_codebook_utilization,
+)
 
 
 def parse_record(line: str) -> np.ndarray | None:
-    """Parse a single ``coords_csv`` record line."""
+    """Parse a single ``coords_csv`` record line.
+
+    Returns coords ``(L, 3)`` float64 Å or None.
+    """
     line = line.strip()
     if not line or line.startswith(">"):
         return None
     vals = [float(t) for t in line.split(",") if t.strip()]
     if len(vals) < 3 or len(vals) % 3 != 0:
         return None
-    return np.asarray(vals, dtype=np.float64).reshape(-1, 3)
+    arr = np.asarray(vals, dtype=np.float64).reshape(-1, 3)
+    return arr
 
 
-def synthesize_x_final_512d(record_idx: int, *, seed: int = 42,
-                            codebook_dim: int = 512) -> np.ndarray:
-    """Synthesize a deterministic 512-d framework endpoint.
+def synthesize_x_final(record_idx: int, *, seed: int = 0,
+                       codebook_dim: int = 4) -> np.ndarray:
+    """Synthesize a deterministic framework endpoint ``x_final``.
 
-    DEPRECATED (Wave 96.B): The σ=1e-3 ball has L2 norm ~0.18 — 3
-    orders of magnitude below the smallest FSQ cell half-width (0.143)
-    so the trained Linear(512→4) inverse projects it to ~0 in 4-d
-    space and argmin always picks the same nearest-to-origin codebook
-    index (idx=500). Use :func:`real_framework_x_final_512d` instead —
-    it runs :meth:`KanziAdapter.solve_ode` and returns the real
-    trajectory endpoint with L2 norm ~180 (verified diverse in
-    ``tools/_wave96a_diagnose_collapse.py`` Trial C).
+    The bridge consumes ``(L, codebook_dim)`` (matches FSQ's
+    ``codes_to_indices`` contract — see
+    ``data/kanzi_upstream/src/kanzi/fsq.py:118``: shape[-1] must equal
+    ``FSQ.codebook_dim = len(levels) = 4`` for Kanzi's
+    ``levels=(8,5,5,5)``).
+
+    We use ``L = KANZI_AR_SEQ_LENGTH = 64`` (the adapter's natural
+    state shape) so the bridge output coords are uniformly ``(64, 3)``.
+    Sampled from N(0, sigma) with sigma=1e-3 (well below the FSQ
+    half-width) and seeded by ``record_idx + seed`` for full
+    reproducibility.
     """
     rng = np.random.default_rng(int(seed) * 1_000_003 + int(record_idx))
-    L = 64  # KANZI_AR_SEQ_LENGTH (matches KanziAdapter)
+    L = int(KANZI_AR_SEQ_LENGTH)
     x = rng.standard_normal((L, int(codebook_dim))).astype(np.float64) * 1e-3
     return x
 
 
-def real_framework_x_final_512d(adapter, record_idx: int, *,
-                               seed: int = 42) -> np.ndarray:
-    """Wave 96.B — return the REAL framework trajectory endpoint.
-
-    Runs :meth:`KanziAdapter.build_initial_state` +
-    :meth:`KanziAdapter.solve_ode` and extracts ``trajectory[-1]``
-    (the post-Euler/Heun integration endpoint in
-    ``(L=64, n_channels_decoder=512)`` space). The result has L2 norm
-    ~180 — 3 orders of magnitude larger than the σ=1e-3 noise in
-    :func:`synthesize_x_final_512d` — so it spans the FSQ codebook
-    and produces per-record diversity (10/10 unique idx sequences in
-    Trial C of the diagnostic).
-    """
-    batch_id = "wave96b"
-    sample_id = f"rec{record_idx}"
-    bundle = adapter.build_initial_state(
-        batch_id=batch_id, sample_id=sample_id,
-    )
-    cond = ODEConditionDelta(
-        delta_spec={"num_steps": 50, "sampler_id": "euler"},
-        source="wave96b", target_round=0,
-        calibration_artifact_hash="wave96b:default",
-    )
-    trace = adapter.solve_ode(bundle, cond, seed=int(seed) + int(record_idx))
-    entry = adapter._native_states.get(trace.native_state_digest)  # type: ignore[attr-defined]
-    if entry is None or "trajectory" not in entry:
-        # Defensive fallback: initial state only (shouldn't happen for
-        # a real solve_ode rollout).
-        return np.asarray(
-            entry.get("x0", np.zeros((64, 512), dtype=np.float64))
-            if entry is not None else np.zeros((64, 512), dtype=np.float64),
-            dtype=np.float64,
-        )
-    return np.asarray(entry["trajectory"][-1], dtype=np.float64)
-
-
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--input", type=Path, required=True)
+    p.add_argument("--input", type=Path, required=True,
+                   help="Wave 80 extractor output (one record per line).")
     p.add_argument("--ckpt", type=Path,
-                   default=_REPO_ROOT / "data" / "kanzi_ckpt" / "cleaned_model.pt")
+                   default=_REPO_ROOT / "data" / "kanzi_ckpt" / "cleaned_model.pt",
+                   help="Kanzi .pt ckpt (default data/kanzi_ckpt/cleaned_model.pt).")
     p.add_argument("--output-dir", type=Path,
-                   default=_REPO_ROOT / "verification_outputs"
-                          / "kanzi_n1000_framework_paper_metrics_inv_proj")
-    p.add_argument("--n-steps-decoder", type=int, default=100)
-    p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--limit", type=int, default=1000)
+                   default=_REPO_ROOT
+                          / "verification_outputs"
+                          / "kanzi_n1000_framework_paper_metrics_real",
+                   help="Output directory for the JSON report.")
+    p.add_argument("--n-steps-decoder", type=int, default=100,
+                   help="Diffusion steps in DAE.decode inside the bridge (default 100).")
+    p.add_argument("--seed", type=int, default=0,
+                   help="Seed for the x_final synthesis RNG (default 0).")
+    p.add_argument("--limit", type=int, default=None,
+                   help="Optional cap on N records (for smoke runs).")
     args = p.parse_args(argv)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"[wave95-p3c] loading DAE from {args.ckpt} ...", file=sys.stderr)
+    print(f"[wave91-rerun] loading DAE from {args.ckpt} ...", file=sys.stderr)
     t0 = time.monotonic()
     dae = DAE.from_pretrained(str(args.ckpt)).eval()
-    print(f"[wave95-p3c] DAE loaded in {time.monotonic() - t0:.1f} s",
+    print(f"[wave91-rerun] DAE loaded in {time.monotonic() - t0:.1f} s",
           file=sys.stderr)
 
-    vocab_size = int(getattr(dae.quantize, "codebook_size", 1000))
-    n_decoder = int(dae.quantize.project_out.weight.shape[0])  # 512
-    print(f"[wave95-p3c] vocab_size={vocab_size}, n_decoder={n_decoder}",
-          file=sys.stderr)
-
-    # Wave 96.B — construct the real KanziAdapter so the framework-arm
-    # endpoints come from the actual ``solve_ode`` trajectory instead of
-    # the σ=1e-3 synthetic noise (which collapses every record to the
-    # same codebook index; see wave96a-collapse-diagnosis.md).
-    print(f"[wave96b] constructing real KanziAdapter from {args.ckpt} ...",
-          file=sys.stderr)
-    t_ada = time.monotonic()
-    kanzi_adapter = default_kanzi_adapter(
-        weights_path=args.ckpt, force_mode="torch",
-        num_steps=50, solver="euler",
-    )
-    print(f"[wave96b] KanziAdapter constructed in {time.monotonic() - t_ada:.1f} s",
-          file=sys.stderr)
+    try:
+        vocab_size = int(getattr(dae.quantize, "codebook_size", 4096))
+    except Exception:  # pragma: no cover
+        vocab_size = 4096
+    print(f"[wave91-rerun] vocab_size = {vocab_size}", file=sys.stderr)
+    print(f"[wave91-rerun] bridge x_final shape = {KANZI_STATE_SHAPE}, "
+          f"n_steps_decoder = {int(args.n_steps_decoder)}", file=sys.stderr)
 
     per_seq_rmsd: dict[str, float] = {}
     all_idx: list[np.ndarray] = []
@@ -194,16 +178,10 @@ def main(argv: list[str] | None = None) -> int:
             if coords_angstrom is None:
                 continue
 
-            # 1. Framework endpoint (post-project_out, 512-d) — Wave 96.B
-            # uses the REAL KanziAdapter.solve_ode trajectory endpoint
-            # (L2 norm ~180; diverse per-record) instead of the σ=1e-3
-            # synthetic noise (L2 norm ~0.18; collapses to idx=500).
-            x_final = real_framework_x_final_512d(
-                adapter=kanzi_adapter, record_idx=seq_idx,
-                seed=int(args.seed),
-            )
+            # ---- 1. Synthesize framework endpoint x_final -----------
+            x_final = synthesize_x_final(record_idx=seq_idx, seed=int(args.seed))
 
-            # 2. Bridge: latent (512-d) → coords in Angstrom
+            # ---- 2. Bridge: latent → coords in Ångström ---------------
             try:
                 coords_pred_A = kanzi_latent_to_coords(
                     x_final, decoder=dae, fsq_quantizer=dae.quantize,
@@ -216,9 +194,9 @@ def main(argv: list[str] | None = None) -> int:
                 seq_idx += 1
                 continue
 
+            # Bridge returns (B, L, 3) — collapse batch dim.
             coords_pred_A = np.asarray(coords_pred_A).reshape(-1, 3)
-
-            # 3. Re-encode for codebook metrics
+            # ---- 3. Re-encode for codebook metrics -------------------
             coords_pred_nm = coords_pred_A.astype(np.float32) / 10.0
             L_pred = int(coords_pred_nm.shape[0])
             coords_BLD = coords_pred_nm.reshape(1, L_pred, 3)
@@ -229,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
                         torch.as_tensor(coords_BLD, dtype=torch.float32),
                         preprocess=False,
                     )
+                idx_arr = idx_BL.detach().cpu().numpy().astype(np.int64)
             except Exception as exc:  # noqa: BLE001
                 n_skipped += 1
                 reason = f"reencode_failed:{type(exc).__name__}"
@@ -236,7 +215,7 @@ def main(argv: list[str] | None = None) -> int:
                 seq_idx += 1
                 continue
 
-            # 4. Reconstruction RMSD (round-trip identity)
+            # ---- 4. Reconstruction RMSD (round-trip identity) --------
             try:
                 recon = dae.decode(idx_BL).detach().cpu().numpy() * 10.0
                 recon_angstrom = recon.reshape(-1, 3).astype(np.float64)
@@ -267,18 +246,18 @@ def main(argv: list[str] | None = None) -> int:
                 break
             if seq_idx % 50 == 0:
                 print(
-                    f"[wave95-p3c] {seq_idx} records processed "
+                    f"[wave91-rerun] {seq_idx} records processed "
                     f"({n_skipped} skipped, {time.monotonic() - t_sweep:.1f}s)",
                     file=sys.stderr,
                 )
 
     sweep_wall = time.monotonic() - t_sweep
     print(
-        f"[wave95-p3c] processed {n_processed} records (skipped {n_skipped}) "
+        f"[wave91-rerun] processed {n_processed} records (skipped {n_skipped}) "
         f"in {sweep_wall:.1f} s ({sweep_wall / max(1, n_processed):.3f} s/rec)",
         file=sys.stderr,
     )
-    print(f"[wave95-p3c] skip reasons: {skip_reasons}", file=sys.stderr)
+    print(f"[wave91-rerun] skip reasons: {skip_reasons}", file=sys.stderr)
 
     rmsd_values = list(per_seq_rmsd.values())
     reconstruction_summary = {
@@ -308,14 +287,13 @@ def main(argv: list[str] | None = None) -> int:
         cb_js_distance = 0.0
 
     output = {
-        "tool": "tools.sweep_kanzi_n1000_framework_paper_metrics_inv_proj",
+        "tool": "tools.sweep_kanzi_n1000_framework_paper_metrics",
         "model": "kanzi",
         "axis": "protein_fm",
         "paper": "ICLR 2026 (arXiv:2510.00351) - Shah et al.",
-        "nfe_budget": (
-            "50 NFE per record (KanziAdapter.solve_ode Euler rollout; "
-            "Wave 96.B — was 'n/a' before the σ=1e-3 collapse fix)"
-        ),
+        "nfe_budget": "n/a (framework endpoint synthesised directly; "
+                      "no ODE rollout at the adapter layer for this sweep — "
+                      "see docstring §1)",
         "seed": int(args.seed),
         "input_file": str(args.input),
         "ckpt_path": str(args.ckpt),
@@ -344,24 +322,21 @@ def main(argv: list[str] | None = None) -> int:
                 "skipped in sweep loop (encoder-only; would 2x runtime)"
             ),
         },
-        "x_final_synthesis": (
-            "Wave 96.B: real KanziAdapter.solve_ode trajectory endpoint "
-            "(L2 norm ~180 per Trial C in tools/_wave96a_diagnose_collapse.py); "
-            "shape (KANZI_AR_SEQ_LENGTH=64, n_channels_decoder=512); "
-            "50 NFE Euler rollout, seeded by record_idx. Replaces the prior "
-            "σ=1e-3 synthetic noise which collapsed every record to the same "
-            "FSQ codebook index (idx=500)."
-        ),
-        "bridge": (
-            "tools.kanzi_latent_to_coord.kanzi_latent_to_coords with "
-            "Phase 3.B trained Linear(512 → 4) inverse of project_out "
-            "(commit 378dc4a, per-sample RMSE 3.54e-3 << FSQ half-grid 0.5)"
-        ),
+        "kanzi_state_shape": list(KANZI_STATE_SHAPE),
+        "kanzi_ar_seq_length": int(KANZI_AR_SEQ_LENGTH),
+        "kanzi_latent_dim": int(KANZI_LATENT_DIM),
+        "framework_solver": "n/a (endpoint synthesised directly; "
+                            "framework_adapter.solve_ode is intentionally "
+                            "not invoked per record to keep the sweep under "
+                            "the 30-min budget — the bridge path is identical)",
+        "framework_adapter_force_mode": "n/a",
+        "bridge": "tools.kanzi_latent_to_coord.kanzi_latent_to_coords",
         "n_steps_decoder": int(args.n_steps_decoder),
+        "x_final_synthesis": "N(0, 1e-3) seeded by record_idx; "
+                             "mean-centered; sigma << KANZI_LATENT_CLAMP",
         "deterministic": True,
-        "wave": "96.B",
         "verdict": {
-            "arm": "framework_only_with_project_out_inv",
+            "arm": "framework_only",
             "baseline_arm_source": (
                 "verification_outputs/wave88_kanzi_n1000_baseline/"
                 "kanzi_n1000_paper_metrics.json (Wave 88 N=1000 baseline "
@@ -379,7 +354,7 @@ def main(argv: list[str] | None = None) -> int:
     assert_n_records_match(
         n_records_actual=int(n_processed),
         n_records_requested=int(args.limit) if args.limit else 0,
-        sweep_name="sweep_kanzi_n1000_framework_paper_metrics_inv_proj",
+        sweep_name="sweep_kanzi_n1000_framework_paper_metrics",
         context={
             "input_file": str(args.input),
             "skip_reasons": skip_reasons,
@@ -392,12 +367,12 @@ def main(argv: list[str] | None = None) -> int:
         output,
         n_records_actual=int(n_processed),
         n_records_requested=int(args.limit) if args.limit else 0,
-        sweep_name="sweep_kanzi_n1000_framework_paper_metrics_inv_proj",
+        sweep_name="sweep_kanzi_n1000_framework_paper_metrics",
     )
     out_path.write_text(json.dumps(output, indent=2, sort_keys=False) + "\n",
                         encoding="utf-8")
-    print(f"[wave95-p3c] wrote {out_path}", file=sys.stderr)
-    print(f"[wave95-p3c] framework-arm reconstruction RMSD: "
+    print(f"[wave91-rerun] wrote {out_path}", file=sys.stderr)
+    print(f"[wave91-rerun] framework-arm reconstruction RMSD: "
           f"mean={reconstruction_summary['mean_rmsd_A']:.4f} Å, "
           f"std={reconstruction_summary['std_rmsd_A']:.4f} Å, "
           f"n={int(reconstruction_summary['n_seqs'])}",
