@@ -12,11 +12,8 @@ We pin:
     3. `n_min` is preserved through `to_config`/`from_config` round-trip.
 """
 from __future__ import annotations
-
+from tests.test_claims._claim_template import default_cosine_scheduler
 import math
-
-from adaptive_reflow.algorithm.scheduler._core import default_cosine_scheduler
-
 
 def test_claim_010_cosine_scheduler_config_carries_positive_n_min() -> None:
     """`_config.n_min` is the structural noise-floor guarantee."""
@@ -25,7 +22,6 @@ def test_claim_010_cosine_scheduler_config_carries_positive_n_min() -> None:
     assert n_min_value > 0.0, f"n_min = {n_min_value!r} not positive"
     assert math.isclose(n_min_value, 0.05, abs_tol=1e-9)
 
-
 def test_claim_010_last_round_n_cap_equals_n_min() -> None:
     """At round L-1 the cosine ramp reaches its `n_min` floor."""
     sch = default_cosine_scheduler(cycle_length=10, n_min=0.07, n_max=1.0)
@@ -33,7 +29,6 @@ def test_claim_010_last_round_n_cap_equals_n_min() -> None:
     assert math.isclose(float(sample.n_cap), 0.07, abs_tol=1e-9)
     # Sample carries `n_min` explicitly for audit.
     assert math.isclose(float(sample.n_min), 0.07, abs_tol=1e-9)
-
 
 def test_claim_010_n_min_survives_round_trip_via_config() -> None:
     """`n_min` is preserved through `to_config`/`from_config` round-trip."""

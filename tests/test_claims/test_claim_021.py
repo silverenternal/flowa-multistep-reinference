@@ -12,21 +12,17 @@ We pin:
        sub-scheduler's n_cap (not the second's).
 """
 from __future__ import annotations
-
-from adaptive_reflow.algorithm.scheduler._core import default_cosine_scheduler
+from tests.test_claims._claim_template import default_cosine_scheduler
 from adaptive_reflow.algorithm.sequential import SequentialScheduler
-
 
 def test_claim_021_sequential_class_importable() -> None:
     assert SequentialScheduler is not None
-
 
 def test_claim_021_two_slot_chain_cycle_length_is_sum() -> None:
     sub_a = default_cosine_scheduler(cycle_length=4, n_min=0.0, n_max=1.0)
     sub_b = default_cosine_scheduler(cycle_length=6, n_min=0.0, n_max=1.0)
     chain = SequentialScheduler(schedulers=[(sub_a, 4), (sub_b, 6)])
     assert int(chain.cycle_length()) == 10
-
 
 def test_claim_021_slot_zero_serves_first_subscheduler() -> None:
     """Rounds in [0, 4) sample from sub_a (cycle_length=4 -> n_max at r=0)."""

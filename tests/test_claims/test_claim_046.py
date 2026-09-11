@@ -14,7 +14,7 @@ We pin:
     3. NaN/inf `eps_schedule` raises ValueError on the first call.
 """
 from __future__ import annotations
-
+from tests.test_claims._claim_template import (AdapterCapabilities, ChannelName, StateBundle, TensorRef)
 import inspect
 import math
 
@@ -23,26 +23,17 @@ import pytest
 from adaptive_reflow.eval.posterior_selection_evaluator import (
     EvidenceScaleGapMetric,
 )
-from adaptive_reflow.universal.state import (
-    ChannelName,
-    StateBundle,
-    TensorRef,
-)
-from adaptive_reflow.universal.adapter import AdapterCapabilities
-
 
 def test_claim_046_constructor_accepts_paper_math_flags() -> None:
     sig = inspect.signature(EvidenceScaleGapMetric.__init__)
     assert "use_quadratic_eps_scaling" in sig.parameters
     assert "apply_lemma4_exponential_suppression" in sig.parameters
 
-
 def test_claim_046_paper_math_flags_default_false() -> None:
     """Both flags default to False (backward-compatible)."""
     sig = inspect.signature(EvidenceScaleGapMetric.__init__)
     assert sig.parameters["use_quadratic_eps_scaling"].default is False
     assert sig.parameters["apply_lemma4_exponential_suppression"].default is False
-
 
 def test_claim_046_nan_eps_round_raises_value_error() -> None:
     """A NaN `eps_round` to oracle_at_round raises ValueError (A-02.M3)."""
@@ -82,7 +73,6 @@ def test_claim_046_nan_eps_round_raises_value_error() -> None:
             bundle, channel=xy, seed=42, round_index=0,
             eps_round=float("nan"),
         )
-
 
 def test_claim_046_inf_eps_round_raises_value_error() -> None:
     """An inf `eps_round` to oracle_at_round raises ValueError (A-02.M3)."""

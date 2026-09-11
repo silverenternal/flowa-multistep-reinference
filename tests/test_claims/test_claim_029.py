@@ -10,27 +10,21 @@ We pin:
     3. The scheduler's `schedule_family()` returns `freetraj`.
 """
 from __future__ import annotations
-
-from adaptive_reflow.algorithm.protocol_registry import registered_families
-from adaptive_reflow.algorithm.scheduler._core import default_cosine_scheduler
+from tests.test_claims._claim_template import (default_cosine_scheduler, registered_families)
 from adaptive_reflow.algorithm.scheduler.freetraj import FreeTrajScheduler
-
 
 def test_claim_029_freetraj_class_importable() -> None:
     assert FreeTrajScheduler is not None
 
-
 def test_claim_029_freetraj_in_protocol_registry() -> None:
     families = registered_families()
     assert "freetraj" in families.get("SchedulerProtocol", ())
-
 
 def test_claim_029_freetraj_schedule_family_key() -> None:
     """FreeTrajScheduler advertises `freetraj` as its schedule_family."""
     cfg = default_cosine_scheduler(cycle_length=10, n_min=0.05, n_max=1.0).config
     sch = FreeTrajScheduler(cfg)
     assert str(sch.schedule_family()) == "freetraj"
-
 
 def test_claim_029_freetraj_conforms_to_protocol() -> None:
     for method in (

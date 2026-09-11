@@ -11,17 +11,9 @@ eps_implicit=0.05), the two_moons replay ratio strictly exceeds the
 eight_gaussians replay ratio.
 """
 from __future__ import annotations
-
-from adaptive_reflow.universal.state import (
-    ChannelName,
-    StateBundle,
-    TensorRef,
-)
-from adaptive_reflow.universal.adapter import AdapterCapabilities
-
+from tests.test_claims._claim_template import (AdapterCapabilities, ChannelName, StateBundle, TensorRef)
 
 _XY = ChannelName("xy")
-
 
 def _bundle(digest: str) -> StateBundle:
     return StateBundle(
@@ -50,7 +42,6 @@ def _bundle(digest: str) -> StateBundle:
             channel_domains={_XY: "continuous"},
         ),
     )
-
 
 def test_claim_009_two_moons_ratio_strictly_exceeds_eight_gaussians() -> None:
     """two_moons > eight_gaussians plateau, paper Lemma 3 direction."""

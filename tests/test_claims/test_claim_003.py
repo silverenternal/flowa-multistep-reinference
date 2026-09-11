@@ -13,17 +13,9 @@ the legacy `oracle` path (the replay-based metric that ignores
 `eps_round` and `eps_schedule`).
 """
 from __future__ import annotations
-
-from adaptive_reflow.universal.state import (
-    ChannelName,
-    StateBundle,
-    TensorRef,
-)
-from adaptive_reflow.universal.adapter import AdapterCapabilities
-
+from tests.test_claims._claim_template import (AdapterCapabilities, ChannelName, StateBundle, TensorRef)
 
 _XY = ChannelName("xy")
-
 
 def _bundle(digest: str = "claim-003-schedule-invariant") -> StateBundle:
     return StateBundle(
@@ -53,7 +45,6 @@ def _bundle(digest: str = "claim-003-schedule-invariant") -> StateBundle:
         ),
     )
 
-
 def _metric(target: str, *, eps_schedule):
     """Construct an EvidenceScaleGapMetric at fixed noise replay."""
     # Lazy import keeps the module-level import graph stable across
@@ -67,7 +58,6 @@ def _metric(target: str, *, eps_schedule):
         eps_implicit=0.05,
         eps_schedule=eps_schedule,
     )
-
 
 def test_claim_003_selection_ratio_invariant_under_schedule_swap() -> None:
     """Two metrics with different schedules -> identical oracle ratio."""

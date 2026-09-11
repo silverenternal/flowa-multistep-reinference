@@ -13,17 +13,9 @@ strictly below 1 on canonical 2D targets (paper predicts 1 in the
 asymptotic limit; framework's fixed-noise replay never reaches it).
 """
 from __future__ import annotations
-
-from adaptive_reflow.universal.state import (
-    ChannelName,
-    StateBundle,
-    TensorRef,
-)
-from adaptive_reflow.universal.adapter import AdapterCapabilities
-
+from tests.test_claims._claim_template import (AdapterCapabilities, ChannelName, StateBundle, TensorRef)
 
 _XY = ChannelName("xy")
-
 
 def _bundle(digest: str = "claim-004-plateau") -> StateBundle:
     return StateBundle(
@@ -53,7 +45,6 @@ def _bundle(digest: str = "claim-004-plateau") -> StateBundle:
         ),
     )
 
-
 def test_claim_004_selection_ratio_plateau_below_one_on_two_moons() -> None:
     """On two_moons, the oracle replay ratio is strictly below 1.0."""
     from adaptive_reflow.eval.posterior_selection_evaluator import (
@@ -66,7 +57,6 @@ def test_claim_004_selection_ratio_plateau_below_one_on_two_moons() -> None:
     ratio = metric.oracle(bundle, channel=_XY, seed=42)["selection_ratio"]
     assert ratio < 1.0, f"oracle ratio = {ratio!r} reached 1 (no plateau)"
     assert ratio > 0.0, f"oracle ratio = {ratio!r} non-positive"
-
 
 def test_claim_004_selection_ratio_independent_of_round_index() -> None:
     """Without eps_round, oracle_at_round returns the plateau ratio."""

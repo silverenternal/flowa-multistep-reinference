@@ -11,35 +11,28 @@ We pin:
     3. The class has a `record_round_feedback` hook (per SchedulerProtocol).
 """
 from __future__ import annotations
-
-from adaptive_reflow.algorithm.protocol_registry import registered_families
-from adaptive_reflow.algorithm.scheduler._core import default_cosine_scheduler
+from tests.test_claims._claim_template import (default_cosine_scheduler, registered_families)
 from adaptive_reflow.algorithm.scheduler.evidence_driven import (
     EvidenceDrivenScheduler,
 )
-
 
 def _default_cfg(cycle_length: int):
     return default_cosine_scheduler(
         cycle_length=cycle_length, n_min=0.05, n_max=1.0,
     ).config
 
-
 def test_claim_027_evidence_driven_class_importable() -> None:
     assert EvidenceDrivenScheduler is not None
-
 
 def test_claim_027_evidence_driven_in_protocol_registry() -> None:
     families = registered_families()
     assert "evidence_driven" in families.get("SchedulerProtocol", ())
-
 
 def test_claim_027_evidence_driven_has_feedback_hook() -> None:
     """record_round_feedback is the canonical feedback hook for Loop 2."""
     cfg = _default_cfg(cycle_length=10)
     sch = EvidenceDrivenScheduler(cfg)
     assert hasattr(sch, "record_round_feedback")
-
 
 def test_claim_027_evidence_driven_conforms_to_protocol() -> None:
     """Every SchedulerProtocol method is present on the class."""
