@@ -94,12 +94,26 @@ def parse_record(line: str) -> np.ndarray | None:
 
 
 def _synthesize_x_final_synthetic(record_idx: int, *, seed: int,
-                                  codebook_dim: int = 4) -> np.ndarray:
-    """Wave 91 framework-arm synthetic endpoint (N(0, 1e-3), 64×4).
+                                  codebook_dim: int = 512) -> np.ndarray:
+    """Wave 91 framework-arm synthetic endpoint (N(0, 1e-3), 64×512).
 
     Sigma is well below the FSQ half-width so the bridge's argmax
     produces stable codebook indices per record. Seeded by
     ``record_idx`` for byte-stability.
+
+    Wave 110.A — default ``codebook_dim`` flipped from 4 → 512. The
+    Wave 95.P3.C bridge rewrite now unconditionally applies the
+    trained ``_apply_project_out_inv`` (Linear 512→4) to the input
+    (see ``tools/kanzi_latent_to_coord.py:218-227``); 4-d inputs crash
+    on the matmul shape mismatch. Emitting 512-d (post-``project_out``,
+    ``n_channels_decoder``) codes is the Wave 96.B-equivalent fix for
+    the synthetic arm — matches the shape contract that
+    ``_synthesize_x_final_real`` (line 111-140) already honours.
+    The σ=1e-3 noise floor is preserved: well below
+    ``KANZI_LATENT_CLAMP=6.0`` and produces diverse post-``project_out``
+    codes that the trained Linear(512→4) maps to non-trivial 4-d
+    codes (Wave 96.A diagnostic showed scale-up eliminates the
+    collapse).
     """
     rng = np.random.default_rng(int(seed) * 1_000_003 + int(record_idx))
     from adaptive_reflow.adapters.kanzi import KANZI_AR_SEQ_LENGTH
@@ -179,7 +193,9 @@ def _mode_metadata(mode: str) -> dict[str, Any]:
                 "see docstring §1)"
             ),
             "x_final_synthesis": (
-                "N(0, 1e-3) seeded by record_idx; "
+                "N(0, 1e-3) seeded by record_idx; shape (L=64, n_channels_decoder=512); "
+                "post-project_out codes (Wave 110.A — was (64, 4) pre-project_out "
+                "which crashed on Wave 95.P3.C bridge contract); "
                 "mean-centered; sigma << KANZI_LATENT_CLAMP"
             ),
             "bridge": "tools.kanzi_latent_to_coord.kanzi_latent_to_coords",
@@ -207,7 +223,14 @@ def _mode_metadata(mode: str) -> dict[str, Any]:
                 "shape (KANZI_AR_SEQ_LENGTH=64, n_channels_decoder=512); "
                 "50 NFE Euler rollout, seeded by record_idx. Replaces the prior "
                 "σ=1e-3 synthetic noise which collapsed every record to the same "
-                "FSQ codebook index (idx=500)."
+                "FSQ codebook index (idx=500). Wave 110.B: requires "
+                "`force_mode=\"torch\"` (kanzi factory native token; equivalent to "
+                "CLI `force_mode=\"real\"` via `_ADAPTER_FORCE_MODE_ALIAS[\"kanzi\"]`) "
+                "so the real torch-mode encoder loads and `_real_state_shape` is "
+                "set to (KANZI_ABSTRACT_AR_SEQ_LENGTH, n_channels_decoder=512); "
+                "absence of a real Kanzi ckpt at --ckpt raises FileNotFoundError "
+                "from `_resolve_mode` instead of silently producing an off-shape "
+                "velocity field that crashed the bridge on a matmul shape mismatch."
             ),
             "bridge": (
                 "tools.kanzi_latent_to_coord.kanzi_latent_to_coords with "
