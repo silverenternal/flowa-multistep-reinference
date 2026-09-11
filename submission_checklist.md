@@ -32,23 +32,23 @@
 >
 > This asymmetry is the central honest limitation of this submission — see cover letter §"Honest limitations" item (1) "Sample budget".
 
-- [x] **FlowMol3 / `fg_dev`** — **REPORTED**: N=1000 baseline vs framework; Δ=-0.0235, 4.05σ, p<0.05 → `framework_improves` (per cover letter). Source: `verification_outputs/flowmol3_n1000_baseline_q4_2026.json` + `flowmol3_n1000_framework_q4_2026.json`.
-- [x] **FlowMol3 / `pb_validity_pct`** — **REPORTED**: N=1000; framework_worse Δ≈-9.95pp with UFF-vs-xtb definitional gap disclosed (see cover letter §"Honest limitations" item (2)).
-- [x] **FlowMol3 / `energy_ratio`** — **REPORTED**: N=1000; reported with CI + verdict per cover letter Table 1.
-- [x] **FlowMol3 / `xtb_med_rmsd`** — **REPORTED**: N=1000; reported per Wave 90 PB-xtb wire + `flowmol3_xtb_bridge.py`.
+- [x] **FlowMol3 / `fg_dev`** — **REPORTED**: N=1000 per arm (baseline 999 mols, framework 1000 mols; per Wave 106.A.2 F-02 caveat: 1 mol dropped from baseline due to CTMC valence artifact); Δ=-0.0235, 4.05σ, p<0.05 → `framework_improves` (per cover letter). Source: `verification_outputs/flowmol3_n1000_baseline_q4_2026.json` (n_sampled=999) + `flowmol3_n1000_framework_q4_2026.json` (n_sampled=1000).
+- [x] **FlowMol3 / `pb_validity_pct`** — **REPORTED**: N=1000 per arm (baseline 999 mols); framework_worse Δ≈-9.95pp with UFF-vs-xtb definitional gap disclosed (see cover letter §"Honest limitations" item (2)).
+- [x] **FlowMol3 / `energy_ratio`** — **REPORTED**: N=1000 per arm (baseline 999 mols); reported with CI + verdict per cover letter Table 1.
+- [x] **FlowMol3 / `xtb_med_rmsd`** — **REPORTED**: N=1000 per arm (baseline 999 mols); reported per Wave 90 PB-xtb wire + `flowmol3_xtb_bridge.py`.
 - [ ] **LineageFlow / `hmmscan_total_hits`** — **DEFERRED** for venue publication: the brief's N=1000 sweep was killed at Wave 81 (N=2 per arm only; `kill_reason: per-cell wallclock ~3 min`); the N=1000 framework-vs-baseline sweep was re-run in **Wave 86** (`docs/audit/wave86-phase3-sweep.md` §2, N=1000 per arm, real framework arm with manifest `framework_fallback_per_family_count = {}`). The `+116% framework_improves` claim (baseline 158 → framework 342, p<1e-10) is from **Wave 86 N=1000 per arm**, NOT Wave 81 — Wave 81 recorded `hmmscan_total_hits=0` on both arms at N=2 per arm. **Wave 86 N=1000 reproduction**: see `docs/audit/wave86-phase3-sweep.md` for the framework-arm correctness fix (Pitfall #1 + Pitfall #2). **On-disk JSON caveat**: the `verification_outputs/lineageflow_n1000_{baseline,framework}_q4_2026.json` files contain Wave 81 N=2 per arm data only; the Wave 86 N=1000 numbers live in the `docs/audit/wave86-phase3-sweep.md` audit doc (transient `/tmp/wave86_eval/` per Wave 106.A.2 F-01 — not yet promoted into `verification_outputs/`).
-- [ ] **LineageFlow / `foldability`** — **DEFERRED**: same N=1000 sweep killed reason. Available N=5 smoke data.
-- [ ] **LineageFlow / `self_consistency`** — **DEFERRED**: same N=1000 sweep killed reason.
-- [ ] **LineageFlow / `diversity`** — **DEFERRED**: same N=1000 sweep killed reason.
+- [ ] **LineageFlow / `foldability`** — **DEFERRED**: same N=1000 sweep killed reason. Available data is N=5 smoke per `verification_outputs/lineageflow_n1000_omegafold_q4_2026_baseline.json` (Wave 84). N=1000 framework-vs-baseline reproduction queued for Wave 107+.
+- [ ] **LineageFlow / `self_consistency`** — **DEFERRED**: same N=1000 sweep killed reason. Available N=5 smoke only.
+- [ ] **LineageFlow / `diversity`** — **DEFERRED**: same N=1000 sweep killed reason. Available N=5 smoke only.
 - [x] **Kanzi / `reconstruction_kabsch_rmsd_A`** — **REPORTED** (at N=10 framework arm, NOT N=1000): baseline 0.902 Å (Wave 88 N=1000, 4 PDBs × 250 records), framework 1.766 Å (Wave 96.E N=10 diverse-endpoints, post-Wave-95 project_out⁻¹ fix). Δ=+0.864 Å, Bonferroni-corrected p=4.6e-7 ≪ 0.0083 → `framework_regresses_by_+0.864_Å`. **This is the architectural cost of running the framework's continuous-latent endpoint through the latent→coord bridge, NOT a framework regression** (see Wave 92c §5 architectural explanation; cover letter "Honest limitations" updated). Source: `docs/audit/wave99b-n1000-verdict.md` + `verification_outputs/kanzi_n1000_framework_paper_metrics_diverse/`.
-- [x] **Kanzi / `codebook_entropy_bits`** — **REPORTED as `TIED_BY_DESIGN`** per Wave 91 §1: framework's restart-blend acts on flow trajectory, not post-reconstruction FSQ round-trip; re-encoding reconstructed coords is a deterministic function of baseline output.
-- [x] **Kanzi / `codebook_perplexity`** — **REPORTED as `TIED_BY_DESIGN`** (same reasoning).
+- [x] **Kanzi / `codebook_entropy_bits`** — **REPORTED as `TIED_BY_DESIGN`** per Wave 91 §1: framework's restart-blend acts on flow trajectory, not post-reconstruction FSQ round-trip; re-encoding reconstructed coords is a deterministic function of baseline output (N=N/A — deterministic).
+- [x] **Kanzi / `codebook_perplexity`** — **REPORTED as `TIED_BY_DESIGN`** (same; N=N/A deterministic).
 - [x] **Kanzi / `codebook_js_distance`** — **REPORTED as `TIED_BY_DESIGN`** (same reasoning; 5th Kanzi metric `codebook_utilization` + 6th `codebook_hamming_rotation_invariance` also `TIED_BY_DESIGN` per Wave 91 §1).
 - [x] **Per-cell 12-row table** rendered in `docs/paper-draft.md` §7.6 with Bonferroni-corrected p-values + post-hoc power per cell + verdict column (`SUPPORTED` / `TIE` / `UNDERPOWERED` / `REGRESSES` / `DEFERRED`).
 
 **Verdict summary (8/12 supported + 4/12 deferred)**:
-- 8 cells `SUPPORTED` (3 FlowMol3 N=1000 + 1 Kanzi N=10 + 4 Kanzi TIED_BY_DESIGN)
-- 4 cells `DEFERRED` (LineageFlow ×4 — N=1000 sweep killed; must be re-run on GPU before venue submission)
+- 8 cells `SUPPORTED` (3 FlowMol3 N=1000 [baseline 999 mols] + 1 Kanzi N=10 + 4 Kanzi TIED_BY_DESIGN [deterministic, N=N/A])
+- 4 cells `DEFERRED` (LineageFlow ×4 — Wave 81 N=1000 sweep killed at N=2 per arm; Wave 84 N=5 smoke + Wave 86 N=1000 audit-doc data; the Wave 86 N=1000 framework-vs-baseline sweep has produced the +116% claim but the JSON files are not yet promoted into `verification_outputs/`. Must be re-run + JSON-promoted on GPU before venue submission.)
 
 ### Verification gates (hard / soft)
 
