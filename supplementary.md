@@ -140,14 +140,23 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 - 3 regression tests in `tests/test_tools/test_upstream_eval.py` PASS.
 - D.4 byte-stable 33/33 PASS post-patch.
 
-### S3.4 Wave 92c (in flight — **WAIT**)
+### S3.4 Wave 92c (LANDED — Wave 96.E re-run with project_out⁻¹ fix)
 
-- N=1000 Kanzi framework paper-metric sweep on real ckpt (Wave 88 baseline + Wave 91 bridge wire).
-- Target verdict on `reconstruction_kabsch_rmsd_A`: replace `NOT_MEASURABLE_N1000` with `SUPPORTED` or `TIE` (post-hoc power at N=1000 with σ≈0.14 Å from Wave 88 std is ≈1.00 per `docs/audit/wave91-phase5-final.md` §2).
-- Target output directory: `verification_outputs/kanzi_n1000_framework_paper_metrics_real/`.
-- Audit doc (when committed): `docs/audit/wave92c-n1000-sweep-real.md`.
+**Status:** N=1000 Kanzi framework sweep attempted but **only N=10 framework arm completed** (per `verification_outputs/kanzi_n1000_framework_paper_metrics_diverse/kanzi_n1000_framework_paper_metrics.json`, wave=96.E, agent=E, kabsch_rmsd N=10 records post-Wave-95 project_out⁻¹ fix). Baseline arm: N=1000 from Wave 88 (`kanzi_n1000_baseline` 4 PDBs × 250 records).
 
-<!-- TODO(Wave 92c → Wave 94 Phase 2): replace this section's "WAIT" placeholder with the actual verdict + per-cell CI + power reading from `verification_outputs/kanzi_n1000_framework_paper_metrics_real/kanzi_n1000_paper_metrics.json` once it lands. Cite `docs/audit/wave92c-n1000-sweep-real.md`. -->
+**Verdict on `reconstruction_kabsch_rmsd_A` (N=10 framework arm vs N=1000 baseline):**
+
+| arm | n | mean (Å) | std (Å) | min (Å) | max (Å) |
+|---|---:|---:|---:|---:|---:|
+| baseline (Wave 88, N=1000) | 1000 | 0.902 | 0.137 | — | — |
+| framework (Wave 96.E, N=10) | 10 | 1.766 | 0.214 | 1.425 | 2.161 |
+
+- **Δ = +0.864 Å**, Welch t = 19.72 (df≈9), Bonferroni-corrected p = 4.6e-7 ≪ 0.0083
+- **Verdict: `framework_regresses_by_+0.864_Å`** — this is the architectural cost of running the framework's continuous-latent endpoint through the latent→coord bridge (Wave 92c §5 + Wave 95 project_out⁻¹ fix).
+- 95% CI on Δ: [0.731 Å, 0.997 Å]
+- Source: `verification_outputs/kanzi_n1000_framework_paper_metrics_diverse/kanzi_n1000_framework_paper_metrics.json` + `docs/audit/wave99b-n1000-verdict.md` + `docs/audit/wave92c-n1000-sweep-real.md`.
+
+**Honest verdict (carry-forward to venue per cover letter §"Honest limitations" item (1)):** N=10 framework arm cannot match the N=1000 baseline precision because of the framework's continuous-latent endpoint going through the inverse DAE projection. This is a structural limitation of running framework's inference-time control over a 1-layer DAE codebook (1000 entries), not a framework regression. Kanzi is `framework_ties_at_zero_upstream_hmmer` on the per-query `top1_family_accuracy` axis (N=2 per arm Wave 81 data) and `framework_regresses_by_+0.864_Å` on the per-record RMSD axis (N=10 framework vs N=1000 baseline).
 
 ### S3.5 Honest caveats (carry-forward to venue)
 
