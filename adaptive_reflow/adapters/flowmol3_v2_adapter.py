@@ -257,6 +257,24 @@ FLOWMOL3ADAPTER_UPSTREAM_KIND: str = "upstream_flowmol"
 #: needs DGL on the ``use_upstream=True`` path.
 FLOWMOL3ADAPTER_DGL_PROBE: str = "dgl_available"
 
+
+class _SyntheticBackend:
+    """Sentinel class stored on ``self._model`` when no real weights are loaded.
+
+    Replaces the historical ``"synthetic"`` string sentinel (Wave 103 P3-A):
+    a class-typed singleton gives an unambiguous identity check
+    (``self._model is _SYNTHETIC_BACKEND``) that cannot collide with a
+    real PyTorch module instance, a ``str`` user-supplied ``weights_path``
+    alias, or a future ``kind`` label added to ``model_metadata``.
+    """
+
+    __slots__ = ()
+
+
+#: Module-level singleton of :class:`_SyntheticBackend`. Use ``is``
+#: identity comparison at every call site (do NOT use ``==``).
+_SYNTHETIC_BACKEND: _SyntheticBackend = _SyntheticBackend()
+
 # Local type alias to keep numpy dependency off hot annotation paths.
 ArrayF64 = NDArray[np.float64]
 
@@ -1781,7 +1799,8 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         partial-fidelity path so the adapter stays runnable.
 
         When no ``weights_path`` was supplied the model handle is the
-        sentinel string ``"synthetic"`` and
+        sentinel instance :data:`_SYNTHETIC_BACKEND` (a
+        :class:`_SyntheticBackend` singleton) and
         :meth:`_velocity_field_ex` keeps using the deterministic NumPy
         field (so ``backend='torch'`` without weights stays a valid,
         reproducible configuration).
@@ -1799,7 +1818,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 "model_load_called_with_numpy_backend; this is a logic bug"
             )
         if self._weights_path is None:
-            self._model = "synthetic"
+            self._model = _SYNTHETIC_BACKEND
             self._model_meta = {
                 "kind": "synthetic",
                 "weights_path": None,
@@ -1912,7 +1931,7 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         """
         if (
             self._backend == "torch"
-            and self._load_model() != "synthetic"
+            and self._load_model() is not _SYNTHETIC_BACKEND
             and a is not None
         ):
             return _real_velocity_field(
