@@ -122,6 +122,7 @@ from adaptive_reflow.universal.state import (
 
 from adaptive_reflow.adapters._adapter_common import (
     NativeStateCache,
+    _resolve_mode,
     digest_state,
     kaiming_uniform,
     make_ref,
@@ -1360,23 +1361,12 @@ class KanziAdapter(FlowMatchingODEAdapter):
         )
 
         # Decide operating mode.
-        if force_mode == "auto":
-            if self._weights_path.exists() and torch_is_available():
-                self._mode: Mode = "torch"
-            else:
-                self._mode = "synthetic"
-        elif force_mode == "torch":
-            if not torch_is_available():
-                raise RuntimeError("torch requested but not installed")
-            if not self._weights_path.exists():
-                raise FileNotFoundError(
-                    f"{ERR_KANZI_WEIGHTS_MISSING}:{self._weights_path}"
-                )
-            self._mode = "torch"
-        elif force_mode == "synthetic":
-            self._mode = "synthetic"
-        else:
-            raise ValueError(f"unknown_force_mode:{force_mode}")
+        self._mode: Mode = _resolve_mode(
+            force_mode,
+            self._weights_path,
+            weights_missing_err=ERR_KANZI_WEIGHTS_MISSING,
+            torch_available=torch_is_available(),
+        )
 
         # Real-mode dim state (Wave 92). All ``None`` = abstract / synthetic
         # mode; populated by :meth:`_load_ckpt_dims` when the real ckpt is

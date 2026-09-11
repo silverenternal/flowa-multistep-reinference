@@ -14,7 +14,8 @@ from __future__ import annotations
 import hashlib
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import Any
+from pathlib import Path
+from typing import Any, Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -325,6 +326,45 @@ def per_position_entropy_reduction(
         return float(np.mean(per_position))
 
     return _entropy(theta_before) - _entropy(theta_after)
+
+
+def _resolve_mode(
+    force_mode: str,
+    weights_path: Path,
+    *,
+    weights_missing_err: str,
+    ckpt_exists: bool | None = None,
+    torch_available: bool | None = None,
+) -> Literal["torch", "synthetic"]:
+    """Map ``force_mode`` + environment onto ``"torch"`` / ``"synthetic"``.
+
+    Wave 103 P1-B: this body is the byte-identical extraction of the
+    ``if force_mode == "auto": ... elif ...`` ladder that was typed
+    verbatim in kanzi / lineageflow / hidream_i1. Same branch order, same
+    exception classes, same message strings — only the per-family
+    ``weights_missing_err`` sentinel differs.
+
+    ``ckpt_exists`` / ``torch_available`` default to
+    ``weights_path.exists()`` / :func:`torch_is_available` and exist so
+    callers with a cheaper probe can pass it in.
+
+    Module-private (``_`` prefix): not exported via ``__all__``.
+    """
+    exists = weights_path.exists() if ckpt_exists is None else bool(ckpt_exists)
+    has_torch = (
+        torch_is_available() if torch_available is None else bool(torch_available)
+    )
+    if force_mode == "auto":
+        return "torch" if (exists and has_torch) else "synthetic"
+    if force_mode == "torch":
+        if not has_torch:
+            raise RuntimeError("torch requested but not installed")
+        if not exists:
+            raise FileNotFoundError(f"{weights_missing_err}:{weights_path}")
+        return "torch"
+    if force_mode == "synthetic":
+        return "synthetic"
+    raise ValueError(f"unknown_force_mode:{force_mode}")
 
 
 __all__ = [
