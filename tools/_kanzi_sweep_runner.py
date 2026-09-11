@@ -338,6 +338,12 @@ def run_kanzi_sweep(
     print(f"[{prefix}] loading DAE from {ckpt} ...", file=sys.stderr)
     t0 = time.monotonic()
     dae = DAE.from_pretrained(str(ckpt)).eval()
+    # Wave 112.C-1 (RC-1): DAE was on CPU. Bridge auto-coerces latent to
+    # the decoder's parameter device, so the entire 100-step diffusion ran
+    # on CPU nn.Linear (~95% of runtime per py-spy profile, >500h wall
+    # for N=1000). Move DAE to CUDA so .decode() lands on GPU.
+    if torch.cuda.is_available():
+        dae = dae.to("cuda")
     print(f"[{prefix}] DAE loaded in {time.monotonic() - t0:.1f} s",
           file=sys.stderr)
 
