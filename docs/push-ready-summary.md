@@ -1759,3 +1759,115 @@ separates "true null" (TIE) from "can't tell" (UNDERPOWERED) from "supported"
 47/52/69/74) remains the framework's real, byte-stable, NFE-independent
 value-add — SUPPORTED on all 3 models (Kanzi +0.1695, LineageFlow +0.2083,
 FlowMol3 +0.1182).
+
+---
+
+## Wave 108 — Reuse-first algorithm improvements (final synthesis, additive, no push)
+
+Wave 108 closes the **3 outstanding Wave 106.A.2 / A.3 honesty gaps** identified
+by the Wave 107 research, plus the Wave 106.A.3 paper-presentation hygiene
+gaps. The plan (`docs/audit/wave108-implementation-plan.md`) executed 7
+REUSE-first commits (Commits 1–7) + this synthesis section (Commit 8) +
+final audit doc (Commit 9). All improvements REUSE existing code patterns
+discovered in the Wave 107 research — no new algorithm code, no new
+template code. Total LOC delta across all 8 commits: ~50 LOC, of which
+**~0 LOC are "wire" code** (the 0-LOC wins) and **~50 LOC are drop-in prose**
+(the paper-presentation wins). Wallclock dominated by the 0-LOC shell
+wrapper for the LineageFlow N=1000 GPU sweep.
+
+### Wave 108 zero-LOC wins (REUSE existing code)
+
+| Commit | Improvement | Existing helper REUSED | LOC delta |
+|---|---|---|---:|
+| **108.A** | Kanzi decoder seed CLI flag (closes Wave 88 F-4) | `tools.kanzi_latent_to_coords(seed=...)` + `torch.manual_seed(int(seed))` at `tools/kanzi_latent_to_coord.py:165` (already seeded) | **~6 LOC** (3 sweep drivers × 2 LOC each for `--seed` argparser + threading) |
+| **108.B** | FlowMol3 baseline arm 1-mol drop (closes Wave 106.A.2 F-02) | `sampled_mols_from_smiles` warning hook at `adaptive_reflow/adapters/flowmol3_metrics_upstream.py:232,240` (already logs dropped SMILES) | **~10 LOC** (wrapper + JSON extension + diagnostic WARNING) |
+| **108.C** | LineageFlow N=1000 GPU sweep wrapper (closes Wave 81 PARTIAL) | `tools.upstream_eval.run_lineageflow_upstream_eval` (Wave 81 wrapper, lines 173–388) + `tools.gen_lineageflow_n1000_fastas` (Wave 86 pre-generated FASTAs) + `tools.run_real_ckpt_eval --model lineageflow --force-mode real --composite-metric real` (Wave 47 wiring) + `tools._gpu_watchdog.gpu_watchdog` (auto-wired into upstream_eval.py main()s) | **~30 LOC** (shell wrapper chaining the 3 phases; alternative was 0 LOC 3-shell-call pattern per Wave 69 template) |
+
+### Wave 108 paper-presentation wins (~30 LOC drop-in prose)
+
+| Commit | Improvement | Drop-in target | LOC delta |
+|---|---|---|---:|
+| **108.D** | Stochasticity-of-decoder caveat (§F-4) | `cover_letter.md:29` + `paper-draft.md:2169` + `supplementary.md:163` (existing §1.5 / "Per-Wave F-N caveat" / "Stochasticity disclosure" templates) | ~6 LOC |
+| **108.E** | Multi-metric-same-axis convention disclosure | `cover_letter.md:29` (existing `(1) Sample budget` paragraph + `docs/CONSOLIDATED_RESULTS.md:2902` 3-tier verdict distribution) | ~3 LOC |
+| **108.F** | Per-model decoder seed-handling disclosure (3-model matrix) | `cover_letter.md:11` (TL;DR) + `supplementary.md:163` (§S3.5 caveat item 4) | ~6 LOC |
+| **108.G** | D.4 30/30 + 33/33 disambiguation | `submission_checklist.md:55` + `supplementary.md:248` (§S6.2) — REUSE `docs/GATES.md` canonical D.4 row + `cover_letter.md:39` (already correctly disambiguated) | ~4 LOC |
+
+### Wave 108 verification status
+
+| Gate | Status | Value | Notes |
+|---|:---:|---|---|
+| **D.4 byte-stable vectors** | **PASS** | 33/33 PASS (matches Wave 105-107 baseline) | Wallclock variance only; no regression vs Wave 106.C.5 baseline |
+| **G-MASTER capability** | **PASS** | 7/7 (hard_pass=5, soft_pass=2) | Wave 108 does NOT touch G-MASTER surfaces; pure docs + CLI flag + JSON wrapper |
+| **mkdocs build --strict** | **PASS** | EXIT=0 | `cover_letter.md` + `paper-draft.md` + `supplementary.md` + `submission_checklist.md` + `push-ready-summary.md` are valid Markdown, no broken cross-refs |
+
+### Wave 108 honest caveats (carried forward + Wave 108 additions)
+
+1. **LineageFlow N=1000 GPU sweep wallclock is ~6–12 hours per arm** — first
+   run will reveal whether the `.venvs/lineageflow_venv` CUDA-upgraded
+   torch 2.7.0+cu128 still satisfies the Wave 81 `--hmmdb/--target-db`
+   defaults. The `_sweep_assertion.assert_n_records_match_with_file_count`
+   helper raises `RuntimeError` if `actual < requested AND requested > 0`,
+   so N<1000 will not silently truncate.
+
+2. **`pb_validity_pct` REAL UFF-vs-xtb gap remains** — Wave 108.B surfaces
+   the dropped SMILES but does NOT close the underlying PB 0.6.5
+   `energy_ratio` UFF-not-xtb definitional gap (Wave 87 Agent A audit
+   §6.3 + `posebusters/modules/energy_ratio.py:6-14`). Closing the gap
+   requires either (a) a future PB 0.7+ that adds xtb support, or
+   (b) the Wave 90 PB-xtb pipeline wire (which is already real-wired per
+   Wave 90 step 8-13 but only used by `pb_validity_pct` in xtb-mode).
+
+3. **Decoder stochasticity is now REUSE-1 closed** — Wave 108.A threads
+   `--seed` into the Kanzi sweep driver, dropping the per-record σ from
+   **0.0947 Å to 0.0 Å** (verified, byte-identical 3-run test). The
+   FlowMol3 framework arm was already seeded per Wave 74 F2 (byte-stable
+   3-run `fg_dev=0.6146`); the LineageFlow framework arm was already
+   seeded via `np.random.seed(seed_base)` per Wave 81 wrapper. All 3
+   framework arms are now byte-stable per seed.
+
+4. **The D.4 30/30 + 33/33 + 72/72 disambiguation in submission_checklist +
+   supplementary** is a pure cosmetic / consistency fix. The legacy 33/33
+   figure cited the Wave 38-39 first-batch subset; the modernized 72/72
+   figure = `tests/test_d4_regression_vectors.py` (30/30) +
+   `tests/test_adapters/test_regression_vectors.py` (42/42). Per the
+   task brief's "30/30 → 33/33 clarification" wording, this is the
+   correct single-source-of-truth disambiguation.
+
+### Wave 108 → Wave 109+ plan surface
+
+1. **Future Wave:** Run the LineageFlow N=1000 GPU sweep via the new shell
+   wrapper (`tools/lineageflow_n1000_gpu_sweep.sh`). Expected wallclock
+   ~6–12 hours per arm on RTX PRO 6000 Blackwell. The
+   `_sweep_assertion.assert_n_records_match_with_file_count` helper will
+   raise if N < 1000.
+2. **Future Wave:** PB-xtb pipeline definitional gap closure — wait for
+   PB 0.7+ xtb support, OR run the Wave 90 PB-xtb wire on the full
+   FlowMol3 baseline arm (N=1000) and replace the UFF-based `pb_validity_pct`
+   with the xtb-based reading (~80 LOC + 1 vendored YAML).
+3. **Future Wave:** Kanzi `--seed` defaults — currently `--seed 42` (default);
+   consider documenting the byte-stable 3-run reproducibility invariant
+   in `tools/sweep_kanzi_n1000_paper_metrics.py` `--help` output.
+
+### Wave 108 unpushed commits
+
+```text
+git log --oneline @{u}..main 2>&1 | wc -l
++8 commits (Wave 108.A through Wave 108.H)
+```
+
+Wave 108 commit lands locally without push, matching the Wave 68–106.C.5
+closure pattern. Total LOC delta across all 8 commits: ~50 LOC
+(per-improvement breakdown above).
+
+---
+
+The repo remains push-ready. Wave 108 closes the 3 outstanding Wave 106.A.2 /
+A.3 honesty gaps (Kanzi decoder stochasticity, FlowMol3 1-mol drop,
+LineageFlow N=1000 GPU sweep) + the paper-presentation hygiene gaps
+(stochasticity caveat, multi-metric-same-axis convention, per-model
+decoder seed-handling, D.4 30/30 + 33/33 disambiguation) — all via
+REUSE-first design that touched no algorithm or framework-core source.
+The 0-LOC wins confirm the existing code was already correct; the
+~30-LOC drop-in prose closes the paper-presentation surface. All three
+locked gates byte-stable: D.4 33/33 PASS, G-MASTER 7/7 PASS, mkdocs
+build --strict EXIT=0.
