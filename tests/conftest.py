@@ -319,6 +319,43 @@ def requires_network() -> bool:
     return True
 
 
+# ---------------------------------------------------------------------------
+# Shared fixtures used by tests/test_adapters/ and tests/test_algorithm/
+# (Wave 104 P0-B dedup). Centralized here so the autouse weight-materi­alizer
+# fires for every test that depends on the canonical 2D FM weights file,
+# and so that ``twodim_fm_weights_path`` / ``twodim_fm_eight_gaussians_weights_path``
+# have a single definition across both subtrees.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _materialize_twodim_fm_weights() -> None:
+    """Ensure ``data/twodim_fm_*.npz`` exist for the test session.
+
+    Session-scoped and autouse so every test in
+    ``tests/test_adapters/`` and ``tests/test_algorithm/`` that touches
+    the 2D FM adapter sees a populated weights file. The materializer
+    is idempotent: when the canonical files are already on disk the
+    fixture is a no-op. Previously duplicated in both sub-conftest
+    files; unified here in Wave 104 P0-B.
+    """
+    from tools.materialize_twodim_fm import ensure_canonical_files
+
+    ensure_canonical_files(steps=300)
+
+
+@pytest.fixture(scope="session")
+def twodim_fm_weights_path() -> Path:
+    """Return the canonical ``data/twodim_fm_two_moons.npz`` path."""
+    return _REPO_ROOT / "data" / "twodim_fm_two_moons.npz"
+
+
+@pytest.fixture(scope="session")
+def twodim_fm_eight_gaussians_weights_path() -> Path:
+    """Return the canonical ``data/twodim_fm_eight_gaussians.npz`` path."""
+    return _REPO_ROOT / "data" / "twodim_fm_eight_gaussians.npz"
+
+
 __all__ = (
     "requires_network",
     "requires_torch",
