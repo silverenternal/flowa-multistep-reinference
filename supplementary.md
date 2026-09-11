@@ -186,7 +186,20 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 - `tools/paper_metrics_kanzi.py` authored; 4 unit tests + 4 integration tests; D.4 33/33 PASS.
 - 5 Kanzi codebook metrics (`codebook_entropy_bits`, `codebook_perplexity`, `codebook_js_distance`, `codebook_utilization`, `codebook_hamming_rotation_invariance`) all `TIED_BY_DESIGN` (cross-cited in §S3.5 above).
 
-<!-- TODO(Wave 94 Phase 2): add Wave 84 LineageFlow `foldability` + `self_consistency` N=1000 numbers from `docs/audit/wave84-phase3-final.md` if committed; otherwise mark as `WAIT Wave 84 audit`. -->
+### S4.3a Wave 84 (LineageFlow foldability + self_consistency — N=5 smoke)
+
+- **Status:** N=5 smoke per arm; full N=1000 **DEFERRED** due to CPU wallclock (>40 hours per arm estimated for OmegaFold + ESM-IF; see `verification_outputs/lineageflow_n1000_omegafold_q4_2026_{baseline,framework}.json`).
+- **Environment:** `omegafold_venv` (Python 3.10.20, OmegaFold 0.0.0 editable, torch 1.13.1+cpu).
+- **Synthetic 4-Pfam-family AA sequences** (4 families × 250 seqs at full N=1000; N=5 subset per family at smoke).
+- **N=5 smoke numbers** (per `paper_metric_summary` in both JSON files):
+
+| Metric | Direction | Baseline | Framework | Δ | Verdict |
+|---|---|---:|---:|---:|:--|
+| `foldability_pLDDT` (mean over 5 seqs) | higher better | 46.996 | 46.996 | 0.0 | `TIE_AT_SATURATION` (N=5 underpowered; MDD at N=5 = 21.4 pp vs SEM=7.55) |
+| `self_consistency_scPerplexity` (mean over 5 seqs) | lower better | 15.423 | 15.423 | 0.0 | `TIE_AT_SATURATION` (N=5 underpowered; same reason) |
+
+- **Statistical power at N=5:** SEM=7.55 pLDDT, MDD=21.4 pLDDT → 95% power requires N~1000 per arm for detecting a 1.4 pp delta. The N=5 smoke confirms pipeline correctness (OmegaFold CPU ~45s/seq + ESM-IF ~30s/seq) but cannot detect framework uplift.
+- **Honest disclosure:** Foldability + self_consistency cells are `DEFERRED` in the Tier 3 12-cell table (see `submission_checklist.md` §Tier 3). N=1000 framework-vs-baseline reproduction queued for Wave 107+ (GPU).
 
 ### S4.4 Honest caveats
 
