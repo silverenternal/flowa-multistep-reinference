@@ -101,6 +101,50 @@ Changelog = "https://github.com/silverenternal/flowa-multistep-reinference/blob/
 [project.scripts]
 claims-consistency = "tools.check_claims_consistency:main"
 
+# Dependency-pinning rationale (Layer-4 docs/config hygiene — Wave 101 P0-A / Wave 102).
+#
+# The top-level ``[project]`` metadata block above and the
+# ``[project.optional-dependencies]`` block below are intentionally
+# **unpinned**: only ``>=`` floors are declared where a documented reason
+# exists (e.g. ``numpy>=2.0,<2.5`` for the mypy 1.x PEP 695
+# ``__init__.pyi`` break). Heavy-dependency FM models — Kanzi,
+# LineageFlow, FlowMol3, HiDream-i1, MM-FM, ProtBFN, etc. — each pin
+# **specific** torch + CUDA + scientific-stack versions inside their own
+# sidecar venv under ``.venvs/`` because those versions are mutually
+# incompatible across models:
+#
+#   * Kanzi — ``requirements-kanzi.txt`` -> ``.venvs/kanzi_venv``:
+#     ``torch>=2.1,<3.0`` + ``diffusers>=0.27,<1.0`` +
+#     ``biopython>=1.81,<2.0`` + ``numpy>=1.24,<2.2`` (CPU wheel from
+#     the pytorch CPU index to keep the sidecar ~200 MB instead of
+#     ~800 MB).
+#   * LineageFlow — ``requirements-lineageflow.txt`` ->
+#     ``.venvs/lineageflow_venv``: ``torch==2.5.1+cpu`` (exact pin) +
+#     ``transformers>=4.40,<5`` + ``huggingface_hub>=0.23,<1`` +
+#     ``biopython>=1.81`` (CPU wheel — upstream source is
+#     ``data/lineageflow_upstream/`` on ``sys.path[0]`` rather than
+#     pip-installed, see ``tools/run_lineageflow_real_ckpt.py``).
+#   * FlowMol3 / HiDream-i1 / MM-FM / ProtBFN — each has its own
+#     ``.venvs/<model>_venv`` populated with the exact torch + CUDA +
+#     scientific stack the upstream release pins (CPU-only for the
+#     protein / molecule models; CUDA for the image / video models).
+#
+# Forcing a single pinned torch at the top level would (a) break a
+# per-model sidecar the moment that model needs a different torch major
+# (e.g. Kanzi at ``torch>=2.1`` vs LineageFlow at ``torch==2.5.1``) and
+# (b) prevent ``pip install -e .`` from succeeding on machines that only
+# need the framework core, which is stdlib-only except for the
+# ``[dev]`` / ``[chemistry]`` / ``[flow_matching]`` / ``[test]`` /
+# ``[image-fid]`` extras below. The top-level ``requirements-lock.txt``
+# at the repo root is the canonical lockfile for the framework core
+# install; per-model ``requirements-<model>.txt`` files override it
+# inside each sidecar venv.
+#
+# See ``docs/environments.md`` §3 for the full VENV_MATRIX (which tool
+# routes to which venv) and ``docs/audit/wave101-review-layer4-docs-config.md``
+# §4 for the dep-vs-lock-vs-per-model-requirements consistency audit
+# that motivated this comment.
+
 [project.optional-dependencies]
 # Doc-build dev toolchain. ``mkdocstrings[python]`` pulls in the Python
 # handler that auto-renders module-level docstrings + typed signatures
