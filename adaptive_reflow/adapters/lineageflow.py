@@ -115,6 +115,7 @@ from adaptive_reflow.adapters._adapter_common import (
     _resolve_mode,
     digest_state,
     kaiming_uniform,
+    load_real_weights,
     make_adapter_capabilities,
     make_ref,
     memory_fraction_for,
@@ -1063,6 +1064,20 @@ def _load_torch_model(weights_path: Path) -> Any:
     ``weights_path`` existing; both gates are enforced by the adapter
     constructor before this function is called.
 
+    Wave 103 P2-A: this is a thin shim over the shared
+    :func:`adaptive_reflow.adapters._adapter_common.load_real_weights`
+    trait. ``_install_checkpoint_compat`` is threaded as the
+    ``compat_shim`` so the safe-globals shim is installed BEFORE
+    ``torch.load`` (LineageFlow-specific pickle handling). When the
+    ``transformers`` library is missing, the builder returns the
+    shape-only :class:`_StubLineageFlow` directly; when it IS
+    installed but ``EsmModel.from_pretrained`` fails (HF cache empty,
+    network blocked, ckpt SHA mismatch), the propagated exception is
+    surfaced as a :class:`CapabilityMissingError` with the
+    ``lineageflow_esm_load_failed`` upstream label — the eval pipeline
+    then sees the honest error rather than a silent stub
+    substitution.
+
     NOTE (Wave 39 / Wave 36 Agent C): the upstream
     ``_install_checkpoint_compat()`` shim installs an empty
     ``core.sampler.SamplerConfig`` class so ``torch.load`` can resolve
@@ -1073,67 +1088,78 @@ def _load_torch_model(weights_path: Path) -> Any:
     function falls back to a shape-only stub (mirrors Wave 10).
     """
     import torch  # local import - torch is optional.
-    _install_checkpoint_compat()  # safe-globals shim before torch.load.
 
-    state = torch.load(
-        str(weights_path), map_location="cpu", weights_only=False
-    )
-    sd = state.get("state_dict", state)
+    def _builder(p: Path) -> Any:
+        """Build the real LineageFlow ESM-2 + flow head (or shape-only stub).
 
-    # Inspect key shapes to derive the model config.
-    try:
-        word_emb_shape = sd.get(
-            "model.encoder.embeddings.word_embeddings.weight"
-        ) or sd.get("encoder.embeddings.word_embeddings.weight")
-        if word_emb_shape is not None:
-            vocab_size = int(word_emb_shape.shape[0])
-            hidden_size = int(word_emb_shape.shape[1])
-        else:
+        Re-runs ``torch.load`` so the local ``sd`` variable can be
+        passed to :meth:`EsmModel.load_state_dict`. The shim is still
+        installed by :func:`load_real_weights` so the pickle resolution
+        succeeds.
+
+        Returns the stub only on ``ImportError`` /
+        ``ModuleNotFoundError`` (transformers is not installed in this
+        venv); any other exception propagates so
+        :func:`load_real_weights` surfaces it as a
+        :class:`CapabilityMissingError`.
+        """
+        state = torch.load(str(p), map_location="cpu", weights_only=False)
+        sd = state.get("state_dict", state)
+
+        # Inspect key shapes to derive the model config.
+        try:
+            word_emb_shape = sd.get(
+                "model.encoder.embeddings.word_embeddings.weight"
+            ) or sd.get("encoder.embeddings.word_embeddings.weight")
+            if word_emb_shape is not None:
+                vocab_size = int(word_emb_shape.shape[0])
+                hidden_size = int(word_emb_shape.shape[1])
+            else:
+                vocab_size = LINEAGEFLOW_VOCAB_SIZE
+                hidden_size = 1280
+        except Exception:
             vocab_size = LINEAGEFLOW_VOCAB_SIZE
             hidden_size = 1280
-    except Exception:
-        vocab_size = LINEAGEFLOW_VOCAB_SIZE
-        hidden_size = 1280
 
-    # Try to instantiate via transformers' ESM-2 (when available).
-    try:
-        from transformers import EsmModel  # type: ignore[import-not-found]
+        try:
+            from transformers import EsmModel  # type: ignore[import-not-found]
 
-        model = EsmModel.from_pretrained(
-            "facebook/esm2_t33_650M_UR50D", ignore_mismatched_sizes=True
-        )
-    except (ImportError, ModuleNotFoundError):
-        # transformers not installed in this venv (e.g. ``flowmol3_venv``
-        # per Wave 80 §7 caveat 2). Fall back to the shape-only stub so
-        # the synthetic-mode test surface can still exercise the
-        # ``model(input_ids=ids)`` call site at line 579 without raising
-        # ``TypeError``. The stub's forward signature mirrors real
-        # ``EsmModel.forward`` so the per-step call at line 579 is
-        # contract-compatible. ``_StubLineageFlow`` lives at module
-        # level (Wave 81 fix-A) so it is importable for direct unit
-        # tests.
-        model = _StubLineageFlow(
-            vocab_size=vocab_size, hidden_size=hidden_size,
-        )
-    except Exception as exc:
-        # transformers IS installed but ``EsmModel.from_pretrained``
-        # failed (HF cache empty, network blocked, ckpt SHA mismatch).
-        # Production-blocker: surface as ``CapabilityMissingError`` so
-        # the eval pipeline at line 579 / line 1804 catches it honestly
-        # rather than silently substituting the stub.
-        raise CapabilityMissingError(
-            "lineageflow_esm_load_failed",
-            context=f"{type(exc).__name__}:{exc}",
-        ) from exc
+            model = EsmModel.from_pretrained(
+                "facebook/esm2_t33_650M_UR50D", ignore_mismatched_sizes=True
+            )
+        except (ImportError, ModuleNotFoundError):
+            # transformers not installed in this venv (e.g. ``flowmol3_venv``
+            # per Wave 80 §7 caveat 2). Fall back to the shape-only stub so
+            # the synthetic-mode test surface can still exercise the
+            # ``model(input_ids=ids)`` call site at line 579 without raising
+            # ``TypeError``. The stub's forward signature mirrors real
+            # ``EsmModel.forward`` so the per-step call at line 579 is
+            # contract-compatible. ``_StubLineageFlow`` lives at module
+            # level (Wave 81 fix-A) so it is importable for direct unit
+            # tests.
+            return _StubLineageFlow(
+                vocab_size=vocab_size, hidden_size=hidden_size,
+            )
+        # Any other exception (HF cache empty, network blocked, ckpt SHA
+        # mismatch, etc.) propagates to ``load_real_weights`` where it is
+        # surfaced as ``CapabilityMissingError("lineageflow_esm_load_failed")``.
 
-    try:
-        model.load_state_dict(sd, strict=False)
-    except Exception:
-        # Stub fallback: copy nothing - the stub's forward is
-        # shape-only and the load is best-effort.
-        pass
-    model.eval()
-    return model
+        try:
+            model.load_state_dict(sd, strict=False)
+        except Exception:
+            # Stub fallback: copy nothing - the stub's forward is
+            # shape-only and the load is best-effort.
+            pass
+        model.eval()
+        return model
+
+    return load_real_weights(
+        weights_path,
+        builder=_builder,
+        stub_factory=None,  # capability-missing semantics preserved
+        upstream_label="lineageflow_esm_load_failed",
+        compat_shim=_install_checkpoint_compat,
+    )
 
 
 # ---------------------------------------------------------------------------

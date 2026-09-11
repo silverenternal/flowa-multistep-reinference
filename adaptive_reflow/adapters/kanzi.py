@@ -125,6 +125,7 @@ from adaptive_reflow.adapters._adapter_common import (
     _resolve_mode,
     digest_state,
     kaiming_uniform,
+    load_real_weights,
     make_ref,
     memory_fraction_for,
     seed_from_ids,
@@ -1069,6 +1070,14 @@ def _load_torch_model(weights_path: Path) -> Any:
     "we have the model weights, just connect the official project code
     with our framework, don't reinvent the wheel."
 
+    Wave 103 P2-A: this is a thin shim over the shared
+    :func:`adaptive_reflow.adapters._adapter_common.load_real_weights`
+    trait. The actual loading lives in the ``_builder`` closure below;
+    when it raises (e.g. the upstream ``kanzi.models.DAE`` import path
+    isn't vendored), ``load_real_weights`` falls back to
+    ``_stub_factory()`` which returns the deterministic zero-velocity
+    stub used when no real Kanzi weights are available.
+
     The official ``kanzi.models.DAE.from_pretrained(...)`` factory
     loads the same checkpoint the upstream repo uses. We wrap it in a
     thin ``forward(x, t, family) -> v`` shim that exposes the
@@ -1083,32 +1092,78 @@ def _load_torch_model(weights_path: Path) -> Any:
     constructor before this function is called.
     """
     import torch  # local import — torch is optional.
-    import torch.nn as _nn  # used by both the stub fallback + the shim below.
+    import torch.nn as _nn  # used by the stub fallback + the shim below.
 
-    # Wave 99 followup: load the official upstream DAE directly. The
-    # factory at ``data/kanzi_upstream/src/kanzi/models.py:335`` reads
-    # ``ckpt["model"]`` (Wave 80 key) and ``ckpt["model_cfg"]`` and
-    # returns a fully-wired ``DAE`` with the trained encoder + flow net
-    # + FSQ codebook + ``project_out`` head. The upstream ``sys.path``
-    # pattern (matches ``tools/upstream_eval.py:420-422``) is to
-    # vendor ``data/kanzi_upstream/src`` so ``from kanzi.models import
-    # DAE`` resolves cleanly.
-    try:
+    class _KanziDAEShim(_nn.Module):
+        """Wrap upstream :class:`DAE` to expose the adapter's call contract.
+
+        :func:`_torch_velocity_field` calls
+        ``model(x_t, t_t, family=family_t) -> (B, L_z, d)``. Upstream
+        ``DAE.net`` takes ``(x_BLD, t, z_BLD=...)`` where ``z_BLD`` is the
+        codebook-quantized latent. We recover ``z_BLD`` on the fly by
+        running ``DAE.encode`` (which is the actual encoder the user
+        asked us to reuse), then call ``DAE.net`` with the resulting
+        ``z_BLD``. The ``family`` kwarg from the adapter call site is
+        accepted but unused here — Kanzi conditions on Pfam family via
+        ``DAE.pair_embedder`` inside ``encode``, not at the ``net`` level.
+
+        Nested inside :func:`_load_torch_model` so it captures the
+        function-local ``torch`` + ``_nn`` imports without polluting
+        the module-level namespace (Wave 100 delivery). The class
+        name ``_KanziDAEShim`` is what the Wave 99 regression test in
+        ``tests/test_adapters/test_kanzi.py`` checks on
+        ``type(shim).__name__`` to confirm the real upstream DAE was
+        wired in (and not the random-weights stub).
+        """
+
+        def __init__(self, dae: Any) -> None:
+            super().__init__()
+            self._dae = dae
+
+        def forward(self, x: "torch.Tensor", t: "torch.Tensor", family: "torch.Tensor" = None) -> "torch.Tensor":
+            with torch.no_grad():
+                # Encode: x_BLD -> (s_BLD, c_BLD, idx_BL); c_BLD is the
+                # post-quantizer latent that ``DAE.net`` conditions on.
+                _s, c_BLD, _idx = self._dae.encode(x, preprocess=False)
+                # Run the upstream flow net (DiT) with codebook conditioning.
+                vt = self._dae.net(x, t, z_BLD=c_BLD)
+            return vt
+
+    def _builder(p: Path) -> Any:
+        """Build the real ``_KanziDAEShim`` from ``p`` (Wave 99 followup).
+
+        The factory at ``data/kanzi_upstream/src/kanzi/models.py:335``
+        reads ``ckpt["model"]`` (Wave 80 key) and ``ckpt["model_cfg"]``
+        and returns a fully-wired ``DAE`` with the trained encoder +
+        flow net + FSQ codebook + ``project_out`` head. The upstream
+        ``sys.path`` pattern (matches ``tools/upstream_eval.py:420-422``)
+        is to vendor ``data/kanzi_upstream/src`` so ``from
+        kanzi.models import DAE`` resolves cleanly. Any exception here
+        propagates to :func:`load_real_weights`, which falls back to
+        ``_stub_factory()``.
+        """
         import sys as _sys
         from pathlib import Path as _Path
+
         _KANZI_SRC = _Path(__file__).resolve().parent.parent.parent / "data" / "kanzi_upstream" / "src"
         if str(_KANZI_SRC) not in _sys.path:
             _sys.path.insert(0, str(_KANZI_SRC))
         from kanzi.models import DAE  # type: ignore[import-not-found]
-        dae = DAE.from_pretrained(str(weights_path))
+
+        dae = DAE.from_pretrained(str(p))
         dae.eval()
-    except Exception:
-        # If the upstream import path isn't on sys.path (some test
-        # environments) we still need a callable that returns something
-        # well-shaped. Fall back to a stub that mirrors the random-weights
-        # bug behaviour so the test seam keeps the same contract — but
-        # never silently on a real ``weights_path`` (the adapter already
-        # verified the file exists + torch is available).
+        return _KanziDAEShim(dae)
+
+    def _stub_factory() -> Any:
+        """Deterministic zero-velocity stub used when upstream ``DAE`` is unavailable.
+
+        Mirrors the shape contract expected by
+        :func:`_torch_velocity_field` (``forward(x, t, family) -> v``
+        of shape ``(B, L, d)``) so test seams can exercise the call
+        site without a real ckpt. Never silently on a real
+        ``weights_path`` (the adapter constructor already verified the
+        file exists + torch is available).
+        """
 
         class _StubKanzi(_nn.Module):
             def __init__(self) -> None:
@@ -1128,34 +1183,13 @@ def _load_torch_model(weights_path: Path) -> Any:
 
         return _StubKanzi()
 
-    class _KanziDAEShim(_nn.Module):
-        """Wrap upstream :class:`DAE` to expose the adapter's call contract.
-
-        :func:`_torch_velocity_field` calls
-        ``model(x_t, t_t, family=family_t) -> (B, L_z, d)``. Upstream
-        ``DAE.net`` takes ``(x_BLD, t, z_BLD=...)`` where ``z_BLD`` is the
-        codebook-quantized latent. We recover ``z_BLD`` on the fly by
-        running ``DAE.encode`` (which is the actual encoder the user
-        asked us to reuse), then call ``DAE.net`` with the resulting
-        ``z_BLD``. The ``family`` kwarg from the adapter call site is
-        accepted but unused here — Kanzi conditions on Pfam family via
-        ``DAE.pair_embedder`` inside ``encode``, not at the ``net`` level.
-        """
-
-        def __init__(self, dae: Any) -> None:
-            super().__init__()
-            self._dae = dae
-
-        def forward(self, x: "torch.Tensor", t: "torch.Tensor", family: "torch.Tensor" = None) -> "torch.Tensor":
-            with torch.no_grad():
-                # Encode: x_BLD -> (s_BLD, c_BLD, idx_BL); c_BLD is the
-                # post-quantizer latent that ``DAE.net`` conditions on.
-                _s, c_BLD, _idx = self._dae.encode(x, preprocess=False)
-                # Run the upstream flow net (DiT) with codebook conditioning.
-                vt = self._dae.net(x, t, z_BLD=c_BLD)
-            return vt
-
-    return _KanziDAEShim(dae)
+    return load_real_weights(
+        weights_path,
+        builder=_builder,
+        stub_factory=_stub_factory,
+        upstream_label="kanzi_dae_load_failed",
+        compat_shim=None,
+    )
 
 
 # ---------------------------------------------------------------------------

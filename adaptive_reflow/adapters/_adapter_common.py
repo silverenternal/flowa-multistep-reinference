@@ -328,6 +328,74 @@ def per_position_entropy_reduction(
     return _entropy(theta_before) - _entropy(theta_after)
 
 
+def load_real_weights(
+    weights_path: Any,
+    *,
+    builder: Any,
+    stub_factory: Any = None,
+    upstream_label: str,
+    compat_shim: Any = None,
+    map_location: str = "cpu",
+) -> Any:
+    """Shared loader trait for SOTA adapters (Wave 103 P2-A).
+
+    Loads a checkpoint from ``weights_path`` and returns a model
+    instance via the canonical ``builder`` callable. If ``compat_shim``
+    is provided it is invoked BEFORE ``torch.load`` so adapters can
+    install pickle-safe-globals shims (e.g. LineageFlow's
+    ``_install_checkpoint_compat``).
+
+    On any exception raised by ``builder``:
+    - if ``stub_factory`` is ``None`` (default), surface as
+      :class:`CapabilityMissingError` with ``upstream_label`` and the
+      original exception's repr (``context=``).
+    - if ``stub_factory`` is provided, return ``stub_factory()``.
+
+    Directory-shaped weights (HiDream-I1 diffusers pipeline layout)
+    are detected via :func:`Path.is_file` — ``torch.load`` is skipped
+    for directories because it would raise ``IsADirectoryError`` on
+    Linux. The builder is then responsible for its own per-component
+    loading.
+
+    Module-private (``_`` prefix): not exported via ``__all__``.
+
+    Stdlib + numpy only at module level. ``torch`` is imported lazily so
+    the framework does not require it at import time. ``CapabilityMissingError``
+    is imported lazily from :mod:`adaptive_reflow.universal.adapter`
+    because that module pulls in protocol surfaces the adapter-common
+    module does not otherwise depend on.
+    """
+    import torch  # noqa: PLC0415 — lazy: torch is optional at the framework layer.
+
+    if compat_shim is not None:
+        compat_shim()
+
+    weights_path_p = Path(weights_path)
+    # torch.load is only meaningful for file-shaped checkpoints (kanzi
+    # .pt, lineageflow .ckpt). Directory-shaped weights (hidream_i1
+    # diffusers layout) must skip torch.load because the builder is
+    # the one that knows how to load per-component sub-dirs.
+    if weights_path_p.is_file():
+        torch.load(
+            str(weights_path_p),
+            map_location=map_location,
+            weights_only=False,
+        )
+
+    try:
+        return builder(weights_path_p)
+    except Exception as exc:
+        if stub_factory is None:
+            # Lazy import — keeps _adapter_common stdlib+numpy only at module level.
+            from adaptive_reflow.universal.adapter import CapabilityMissingError  # noqa: PLC0415
+
+            raise CapabilityMissingError(
+                upstream_label,
+                context=f"{type(exc).__name__}:{exc}",
+            ) from exc
+        return stub_factory()
+
+
 def _resolve_mode(
     force_mode: str,
     weights_path: Path,

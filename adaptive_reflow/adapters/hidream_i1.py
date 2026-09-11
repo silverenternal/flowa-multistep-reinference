@@ -110,6 +110,7 @@ from adaptive_reflow.adapters._adapter_common import (
     NativeStateCache,
     _resolve_mode,
     digest_state,
+    load_real_weights,
     make_ref,
     memory_fraction_for,
     seed_from_ids,
@@ -478,11 +479,31 @@ def _load_torch_pipeline(variant: str, weights_path: Path) -> Any:
     degenerate. The Dev variant uses 28 NFE + ``guidance_scale=1.0`` so
     no classifier-free-guidance concatenation is needed.
 
+    Wave 103 P2-A: this is a thin shim over the shared
+    :func:`adaptive_reflow.adapters._adapter_common.load_real_weights`
+    trait. The HiDream-I1 ``weights_path`` is a *directory* (diffusers
+    layout: ``model_index.json`` + per-component sub-dirs), so the
+    shared trait's ``torch.load`` call is automatically skipped via
+    :func:`Path.is_file` detection. There is no shape-only stub for
+    HiDream-I1 (its checkpoint is too large to provide a useful
+    fallback), so a builder failure surfaces as a
+    :class:`CapabilityMissingError` with the ``hidream_i1_load_failed``
+    upstream label — preserving the original no-stub behaviour.
+
     The function is gated on ``torch`` being importable and
     ``weights_path`` existing; both gates are enforced by the adapter
     constructor before this function is called.
     """
-    return _load_diffusion_pipeline(str(variant), Path(weights_path))
+    def _builder(p: Path) -> Any:
+        return _load_diffusion_pipeline(str(variant), p)
+
+    return load_real_weights(
+        weights_path,
+        builder=_builder,
+        stub_factory=None,  # no shape-only stub for HiDream-I1 (preserves original)
+        upstream_label="hidream_i1_load_failed",
+        compat_shim=None,
+    )
 
 
 def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
