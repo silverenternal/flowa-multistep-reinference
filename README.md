@@ -9,8 +9,9 @@ Adaptive reflow 和多步复推理控制：round orchestration、restart memory�
 - Stage: prototype, active development
 - Self-assessment: B+ (algorithm depth + engineering discipline; not ready
   for production use)
-- Test count: 1235 passing / 7 skipped (torch-gated)
-- Last audit: 2026-08-28 (see [`docs/INSIGHTS.md`](docs/INSIGHTS.md) and
+- Test count: **2165 passed / 9 skipped / 3 pre-existing FAILED** (torch-gated; per latest `pytest_results.txt` snapshot at commit `f97ec1c`). The 3 pre-existing FAILED tests (`test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction`, `test_check_docs_against_code.py::test_no_false_positives_on_current_repo`, `test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit`) are unrelated to the framework's algorithm logic and have been tracked since Wave 48/49. The earlier "1235 passing / 7 skipped" figure predates Wave 38-106 test additions.
+- D.4 pinned regression vectors: **72/72 PASS** (`tests/test_d4_regression_vectors.py` + `tests/test_adapters/test_regression_vectors.py`); the legacy "33/33 PASS" figure referred to the Wave 38-39 first-batch regression suite (pre-Wave 32 batch 2/3/4 additions).
+- Last audit: 2026-09-11 (see [`docs/INSIGHTS.md`](docs/INSIGHTS.md) and
   [`docs/ABLATION.md`](docs/ABLATION.md))
 - Honest gaps: see [`docs/lean/GAPS.md`](docs/lean/GAPS.md)
 
@@ -369,9 +370,7 @@ on every CI run.
 PYTHONPATH=. ./.venv/Scripts/python.exe -m pytest tests/ --no-header -q
 ```
 
-Current state on this tree: 1235 tests pass, 7 skipped (torch-gated
-molecular mixer tests). The suite includes the AST-level guard that
-asserts `universal/` has zero molecule-specific imports.
+Current state on this tree: **2165 tests pass, 9 skipped, 3 pre-existing FAILED** (per `pytest_results.txt` at commit `f97ec1c`). The D.4 pinned regression vectors (`tests/test_d4_regression_vectors.py` + `tests/test_adapters/test_regression_vectors.py`) are **72/72 PASS**; the legacy "33/33 PASS" figure referred to the Wave 38-39 first-batch subset only. The 3 pre-existing FAILED tests are tracked in `docs/audit/wave48-pytest-pre-push-fixes.md` (Wave 48 Agent A partial fix + 1 remaining F-3 paper_quantities threading bug at Wave 45 Agent C). The suite includes the AST-level guard that asserts `universal/` has zero molecule-specific imports.
 
 ## Why this framework matters
 
