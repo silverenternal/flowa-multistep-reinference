@@ -11,10 +11,14 @@ from .runner.sequential import (
     SEQUENTIAL_FAMILY,
     SequentialScheduler,
     SequentialSlot,
+    _dispatch_scheduler_config,
+    _validate_positive_int,
 )
 
 __all__ = [
     "SEQUENTIAL_FAMILY",
     "SequentialScheduler",
     "SequentialSlot",
+    "_dispatch_scheduler_config",
+    "_validate_positive_int",
 ]
