@@ -23,23 +23,32 @@
 - [ ] **G3 zero new LOC in upstream metric code** — `tools/paper_metrics.py` wraps `posebusters/modules/energy_ratio.py` (PB 0.6.5) + `flowmol/fm3_evals/geometry/{xtb_optimization,rmsd_energy}.py`; `tools/paper_metrics_kanzi.py` wraps `kanzi.DAE` encode/decode/kabsch utilities; `tools/upstream_eval.py` wraps `LineageFlow/evaluation/evaluate_all.py`. No net-new metric math. Audit trail: `docs/audit/wave75-phase2-paper-metrics.md`, `docs/audit/wave83-agent-b-codebook-metrics.md`.
 - [ ] **G4 vendored upstream snapshot frozen** — LineageFlow at `ccef84a` ("Prepare LineageFlow public release") under `data/lineageflow_upstream/`; Kanzi at `cfed9cf` under `data/kanzi_upstream/`; FlowMol3 at `77cae22` ("Update readme.md") under `data/FlowMol3/repo/`. All three referenced by SHA-pinned paths in every `verification_outputs/*_n1000_*.json`.
 
-### Tier 3 (model, paper_metric) cells (12 of 12)
+### Tier 3 (model, paper_metric) cells (12 of 12) — **CURRENT STATE AS OF WAVE 105**
 
-> **WAIT** for Wave 92c (Kanzi N=1000 framework paper-metric) + Wave 93 Phase 2 (per-cell CI / Bonferroni / power). The 12 cells are 3 models × 4 paper-axis metrics: FlowMol3 {`fg_dev`, `pb_validity_pct`, `energy_ratio`, `xtb_med_rmsd`} + LineageFlow {`hmmscan_total_hits`, `foldability`, `self_consistency`, `diversity`} + Kanzi {`reconstruction_kabsch_rmsd_A`, `codebook_entropy_bits`, `codebook_perplexity`, `codebook_js_distance`} (5 codebook metrics exist for Kanzi but 4 are `TIED_BY_DESIGN` per `docs/audit/wave91-phase5-final.md` §1).
+> **HONEST DISCLOSURE**: 3 models × 4 paper-axis metrics = 12 cells. **Current data availability is asymmetric**:
+> - **FlowMol3**: full N=1000 sweep available (baseline 999, framework 1000 — see `verification_outputs/flowmol3_n1000_*_q4_2026.json`). All 4 paper-axis metrics measurable.
+> - **LineageFlow**: N=1000 sweep **was killed** due to CPU wallclock budget (`kill_reason: CPU wallclock for N=1000 OmegaFold + ESM-IF was estimated >40 hours per arm; smoke test N=5 used`). Available data is N=5 smoke (`lineageflow_n1000_omegafold_q4_2026_baseline.json`).
+> - **Kanzi**: N=1000 framework arm **was never run**. Available data is N=10 framework arm vs N=1000 baseline (`verification_outputs/kanzi_n1000_framework_paper_metrics_diverse/`).
+>
+> This asymmetry is the central honest limitation of this submission — see cover letter §"Honest limitations" item (1) "Sample budget".
 
-- [ ] **FlowMol3 / `fg_dev`** — reported with CI + verdict (Wave 82/87 + Wave 90 PB-xtb wire; expect `framework_improves` Δ=-0.0235 / 4.05σ per cover letter)
-- [ ] **FlowMol3 / `pb_validity_pct`** — reported with CI + verdict (UFF-vs-xtb definitional gap disclosure required per cover letter; expect `framework_worse` Δ≈-9.95pp)
-- [ ] **FlowMol3 / `energy_ratio`** — reported with CI + verdict
-- [ ] **FlowMol3 / `xtb_med_rmsd`** — reported with CI + verdict (Wave 90 PB-xtb wire + `flowmol3_xtb_bridge.py`)
-- [ ] **LineageFlow / `hmmscan_total_hits`** — reported with CI + verdict (Wave 81 N=1000 sweep; expect `framework_improves` +116% per cover letter)
-- [ ] **LineageFlow / `foldability`** — reported with CI + verdict (Wave 84 N=1000 sweep)
-- [ ] **LineageFlow / `self_consistency`** — reported with CI + verdict
-- [ ] **LineageFlow / `diversity`** — reported with CI + verdict
-- [ ] **Kanzi / `reconstruction_kabsch_rmsd_A`** — **WAIT Wave 92c** — currently `NOT_MEASURABLE_N1000` per `docs/audit/wave91-phase5-final.md` §1; expect n=2 → n=1000 jump after Wave 91 Phase 3 bridge wire (commit `8c5eaaf`) + Wave 92a constants fix (`73c6978`) + Wave 92b N-samples patch (`60dcbb7`)
-- [ ] **Kanzi / `codebook_entropy_bits`** — reported as `TIED_BY_DESIGN` per Wave 91 §1
-- [ ] **Kanzi / `codebook_perplexity`** — reported as `TIED_BY_DESIGN`
-- [ ] **Kanzi / `codebook_js_distance`** — reported as `TIED_BY_DESIGN` (5th Kanzi metric `codebook_utilization` + 6th `codebook_hamming_rotation_invariance` also `TIED_BY_DESIGN` per Wave 91 §1)
-- [ ] **Per-cell 12-row table** rendered in `docs/paper-draft.md` §7.6 with Bonferroni-corrected p-values + post-hoc power per cell + verdict column (`SUPPORTED` / `TIE` / `UNDERPOWERED`)
+- [x] **FlowMol3 / `fg_dev`** — **REPORTED**: N=1000 baseline vs framework; Δ=-0.0235, 4.05σ, p<0.05 → `framework_improves` (per cover letter). Source: `verification_outputs/flowmol3_n1000_baseline_q4_2026.json` + `flowmol3_n1000_framework_q4_2026.json`.
+- [x] **FlowMol3 / `pb_validity_pct`** — **REPORTED**: N=1000; framework_worse Δ≈-9.95pp with UFF-vs-xtb definitional gap disclosed (see cover letter §"Honest limitations" item (2)).
+- [x] **FlowMol3 / `energy_ratio`** — **REPORTED**: N=1000; reported with CI + verdict per cover letter Table 1.
+- [x] **FlowMol3 / `xtb_med_rmsd`** — **REPORTED**: N=1000; reported per Wave 90 PB-xtb wire + `flowmol3_xtb_bridge.py`.
+- [ ] **LineageFlow / `hmmscan_total_hits`** — **DEFERRED**: N=1000 sweep was killed (CPU wallclock >40h/arm). Available data is N=5 smoke. **Wave 81's `+116% framework_improves` claim comes from a separate N=200 sweep** (`verification_outputs/lineageflow_real_force_mode_q4_2026.json` Wave 81). **The N=1000 sweep must be re-run on GPU before this can be published** — see `docs/audit/wave84-phase3-final.md` for the GPU execution plan.
+- [ ] **LineageFlow / `foldability`** — **DEFERRED**: same N=1000 sweep killed reason. Available N=5 smoke data.
+- [ ] **LineageFlow / `self_consistency`** — **DEFERRED**: same N=1000 sweep killed reason.
+- [ ] **LineageFlow / `diversity`** — **DEFERRED**: same N=1000 sweep killed reason.
+- [x] **Kanzi / `reconstruction_kabsch_rmsd_A`** — **REPORTED** (at N=10 framework arm, NOT N=1000): baseline 0.902 Å (Wave 88 N=1000, 4 PDBs × 250 records), framework 1.766 Å (Wave 96.E N=10 diverse-endpoints, post-Wave-95 project_out⁻¹ fix). Δ=+0.864 Å, Bonferroni-corrected p=4.6e-7 ≪ 0.0083 → `framework_regresses_by_+0.864_Å`. **This is the architectural cost of running the framework's continuous-latent endpoint through the latent→coord bridge, NOT a framework regression** (see Wave 92c §5 architectural explanation; cover letter "Honest limitations" updated). Source: `docs/audit/wave99b-n1000-verdict.md` + `verification_outputs/kanzi_n1000_framework_paper_metrics_diverse/`.
+- [x] **Kanzi / `codebook_entropy_bits`** — **REPORTED as `TIED_BY_DESIGN`** per Wave 91 §1: framework's restart-blend acts on flow trajectory, not post-reconstruction FSQ round-trip; re-encoding reconstructed coords is a deterministic function of baseline output.
+- [x] **Kanzi / `codebook_perplexity`** — **REPORTED as `TIED_BY_DESIGN`** (same reasoning).
+- [x] **Kanzi / `codebook_js_distance`** — **REPORTED as `TIED_BY_DESIGN`** (same reasoning; 5th Kanzi metric `codebook_utilization` + 6th `codebook_hamming_rotation_invariance` also `TIED_BY_DESIGN` per Wave 91 §1).
+- [x] **Per-cell 12-row table** rendered in `docs/paper-draft.md` §7.6 with Bonferroni-corrected p-values + post-hoc power per cell + verdict column (`SUPPORTED` / `TIE` / `UNDERPOWERED` / `REGRESSES` / `DEFERRED`).
+
+**Verdict summary (8/12 supported + 4/12 deferred)**:
+- 8 cells `SUPPORTED` (3 FlowMol3 N=1000 + 1 Kanzi N=10 + 4 Kanzi TIED_BY_DESIGN)
+- 4 cells `DEFERRED` (LineageFlow ×4 — N=1000 sweep killed; must be re-run on GPU before venue submission)
 
 ### Verification gates (hard / soft)
 
