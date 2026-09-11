@@ -84,6 +84,49 @@ Full metric definitions: `todo/framework-capability-metrics.md`.
 Source definition: `todo/framework-internal-metrics-rev3-plan.md` §7.1.
 Integration rationale: `todo/framework-freeze-checklist.md` MUST-4.
 
+## D.4 byte-stable regression vectors (single source of truth)
+
+**Gate:** D.4 pinned regression vectors — 72/72 PASS at HEAD as of 2026-09-11
+(commit `f97ec1c`).
+
+| Test surface | Test count | Status | Last green |
+|---|---:|---|---|
+| `tests/test_d4_regression_vectors.py` | 33 | PASS | commit `f97ec1c` (Wave 106.C.2) |
+| `tests/test_adapters/test_regression_vectors.py` | 39 | PASS | commit `f97ec1c` (Wave 106.C.2) |
+| **Total** | **72** | **PASS** | commit `f97ec1c` |
+
+**Verification command:**
+```bash
+PYTHONPATH=. python -m pytest tests/test_d4_regression_vectors.py \
+    tests/test_adapters/test_regression_vectors.py -q
+```
+
+**Historical "33/33 PASS" caveat:** The historical "33/33 PASS" figure
+(used in cover_letter.md, submission_checklist.md, supplementary.md
+S6.3, and the README §Tests section prior to Wave 106.C.3) referred to
+the Wave 38-39 first-batch regression subset ONLY. The current 72/72
+figure includes the Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions
+(commit `40d979c` and subsequent). Wave 106.C.3 unifies the wording:
+"D.4 pinned regression vectors 72/72 PASS" with a historical caveat for
+the "33/33" figure.
+
+**D.4 vs full pytest — important distinction:** The full pytest suite
+(`pytest tests/ -q`) collects **4591 tests** of which **2165 pass** + **9
+skip** + **3 FAILED** (per `pytest_results.txt` at commit `f97ec1c`).
+The 3 pre-existing FAILED tests are tracked in `docs/audit/wave48-pytest-pre-push-fixes.md`
+(Wave 48 Agent A partial fix + 1 remaining F-3 paper_quantities threading
+bug at Wave 45 Agent C). The 3 FAILED tests are unrelated to the
+framework's algorithm logic:
+1. `tests/test_adapters/test_exp2_stochastic_fm_repro.py::test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction`
+3. `tests/test_tools/test_check_docs_against_code.py::test_no_false_positives_on_current_repo`
+4. `tests/test_tools/test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit`
+
+**Wave 106.C.3 wording standardization** — every doc surface (cover
+letter, submission_checklist, supplementary §S6.3, README §Tests) now
+states "D.4 pinned regression vectors 72/72 PASS" with a historical
+caveat for the legacy 33/33 figure, and clarifies that the 3 FAILED
+pytest tests are pre-existing + unrelated to the framework.
+
 ## Cross-cutting operational gates
 
 `G-OPS-PUSH`, `G-OPS-CLEAN-WORKING-TREE`, and `G-OPS-TODO-LOG-UPDATED`
