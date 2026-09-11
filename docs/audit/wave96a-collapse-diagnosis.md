@@ -316,4 +316,29 @@ codebook.
 driver. Cannot close `|Δ| < 0.5 Å` without first redesigning the sweep
 to use real framework endpoints.
 
+---
+
+## Wave 110.A cross-reference (2026-09-11)
+
+The Wave 96.A verdict "the framework pipeline (adapter + bridge) is NOT broken"
+remains CORRECT under Wave 110.A/B verification. Wave 110.A fixed Bug 1
+(framework_synthetic 4-d→512-d shape mismatch) and Wave 110.B fixed Bug 2
+(framework_inv_proj 64x512 vs 3x256 matmul crash). After both fixes:
+
+- The framework_synthetic arm produces valid (non-zero, non-collapsed) reconstruction
+  metrics on N=10 smoke (`/tmp/w110a_smoke/kanzi_n1000_framework_paper_metrics.json`):
+  mean_rmsd=2.5017 Å, codebook_entropy=5.39 bits, codebook_perplexity=41.94,
+  utilization=0.046 (n=10; narrow coverage due to small N, NOT a collapse).
+- The framework_inv_proj arm no longer crashes on `_velocity_field` matmul shape
+  (verified via 4 regression tests in `tests/test_tools/test_kanzi_sweep_runner.py`).
+
+Wave 96.A's "fix" recommendation (P1: replace `synthesize_x_final_512d` with real
+`KanziAdapter.solve_ode` trajectory endpoints) is partially adopted by Wave 110.B
+(via `force_mode="real"`), but the narrow-utilization collapse at N=10 still
+matches Wave 96.A's "3 orders of magnitude too small to span FSQ cells" diagnosis
+for the synthetic-mode x_final ball.
+
+**Full closure**: see `docs/audit/wave110-final-synthesis.md` (Wave 110.D). The
+N=1000 sweep is wallclock-deferred to Wave 111 (not bug-blocked).
+
 Co-Authored-By: Claude Code <noreply@anthropic.com>

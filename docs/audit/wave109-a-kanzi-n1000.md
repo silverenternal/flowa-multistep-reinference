@@ -197,6 +197,39 @@ framework modes. ~6 hours wallclock.
 
 Total Wave 110 budget: ~12-15 hours wallclock + ~6 hours CPU + audit doc + commit.
 
+---
+
+## Wave 110 follow-up: closed
+
+**Closed at**: Wave 110.D commit (this Wave 110.D authored `docs/audit/wave110-final-synthesis.md`).
+**Status**: Code + test level CLOSED; N=1000 sweep wallclock deferred to Wave 111.
+
+The 3 latent bugs surfaced by Wave 109.A (`36fd031`) are now FIXED:
+
+| Bug | Wave commit | Fix |
+|---|---|---|
+| Bug 1: `framework_synthetic` 4-d→512-d shape mismatch | Wave 110.A | Default `codebook_dim=4` → `codebook_dim=512` in `_synthesize_x_final_synthetic` (`tools/_kanzi_sweep_runner.py:96-108`); 2 regression tests in `tests/test_tools/test_kanzi_sweep_runner.py`. |
+| Bug 2: `framework_inv_proj` 64x512 and 3x256 shape crash | Wave 110.B (commit `4f7e3c7`) | Replace broken `_KanziDAEShim.forward` in `adaptive_reflow/adapters/kanzi.py` (19 LOC); force `KanziAdapter(..., force_mode="real")` in sweep runner (31 LOC); 4 regression tests total in `tests/test_tools/test_kanzi_sweep_runner.py`. |
+| Wave 110.C sweep wallclock exhaustion | Wave 110.D | Documented PARTIAL in `docs/audit/wave110-c-sweep-results.md`; framework arms produce valid data per smoke N=10 (`/tmp/w110a_smoke/`); N=1000 sweep deferred to Wave 111 per §Wave 111 follow-up plan. |
+
+**Verification (Wave 110.D)**:
+- `pytest tests/ -k d4 -q` → 33/33 PASS (D.4 byte-stable regression)
+- `.venvs/flowmol3_venv/bin/mkdocs build --strict` → EXIT=0
+- `PYTHONPATH=. .venvs/kanzi_venv/bin/python tools/capability_audit.py` → G-MASTER 7/7 PASS
+
+**Wave 109.A verdict status update**: Bug 1 and Bug 2 are CLOSED. The Wave 109.A retry
+Part 1 (`--seed 42` baseline arm) was deferred behind the bug fixes (the bug fixes are
+necessary for the framework arms to produce valid data; the baseline arm sweep is
+independent but was bundled into Wave 110.C for context). Wave 111 must run the full
+N=1000 sweep to produce per-metric Δ + Bonferroni p-values for the paper §7.3 Kanzi
+section. See `docs/audit/wave110-final-synthesis.md` §5, §10 for full closure details.
+
+**Cross-references added in Wave 110.D**:
+- `docs/audit/wave96a-collapse-diagnosis.md` — APPEND cross-reference to wave110-final-synthesis.md
+  (the Wave 96.A diagnosis verdict "framework pipeline is NOT broken" remains correct; Wave 110.A's
+  smoke confirms the bug was sweep-driver-shape, not framework-core).
+
+
 ## Files referenced
 
 - `/tmp/w109a_kanzi_baseline_seed42/kanzi_n1000_paper_metrics.json` — baseline seed=42 (PENDING)
