@@ -164,6 +164,7 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 - Phase 3 sweep (`docs/audit/wave81-phase3-sweep.md`): N=200 (100-cell × 2-arm) LineageFlow upstream eval sweep with `--hmmdb` + `--target-db` patched into `tools/upstream_eval.py`.
 - Phase 4 final (`docs/audit/wave81-phase4-final.md`): `hmmscan_total_hits` baseline 158 → framework 342 (+116%, p<1e-10) → `framework_improves` (cited in cover letter).
 - Single commit Wave 81 N=1000 reproduction; D.4 + G-MASTER + mkdocs verified green.
+- **Data-state note (Wave 106.A.2 audit)**: the `+116%` / `158` / `342` numbers are sourced from Wave 86 N=1000 per arm sweep (`docs/audit/wave86-phase3-sweep.md` §2, real framework arm with manifest `framework_fallback_per_family_count = {}`); the on-disk `verification_outputs/lineageflow_n1000_{baseline,framework}_q4_2026.json` files contain Wave 81 N=2 per arm data (with `hmmscan_total_hits=0` both arms, `verdict_overall="TIE_AT_SATURATION"`). The lineageflow_real_force_mode_q4_2026.json referenced above has 9 cells at synthetic_fallback + TIE/PENDING — no `hmmscan_total_hits` field.
 
 ### S4.2 Wave 82 (FlowMol3; cross-cited for upstream pattern)
 
