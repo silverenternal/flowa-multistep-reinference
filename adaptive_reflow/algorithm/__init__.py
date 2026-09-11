@@ -9,6 +9,20 @@ are the default implementations; linear ramp, exponential decay, and
 constant schedules can be substituted by conforming to the same
 Protocol; constant-``beta`` and adaptive ``beta`` drivers can be
 substituted via :class:`PolicyDriverProtocol`.
+
+Wave 105 P2-C note
+==================
+
+The algorithm top-level was grouped into 4 subpackages
+(:mod:`adaptive_reflow.algorithm.runner`,
+:mod:`adaptive_reflow.algorithm.blender`,
+:mod:`adaptive_reflow.algorithm.merge`,
+:mod:`adaptive_reflow.algorithm.perturbation`) on 2026-09-11.
+The historical top-level module paths (``adaptive_reflow.algorithm.batched_runner``,
+``adaptive_reflow.algorithm.blender``, …) are preserved as thin
+re-export shims; this :mod:`__init__` continues to expose the full
+public surface, but now sources each symbol from its canonical
+subpackage path.
 """
 from .batched_runner import (
     BatchedRunnerConfig,

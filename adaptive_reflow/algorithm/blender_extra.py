@@ -1,36 +1,18 @@
-"""Backward-compat re-export shim for :mod:`adaptive_reflow.algorithm.blender_extra`.
+"""Backward-compat shim — canonical module lives at :mod:`adaptive_reflow.algorithm.blender.blender_extra`.
 
-All canonical implementations were merged into
-:mod:`adaptive_reflow.algorithm.blender` in Wave 105 P2-B. This module
-remains as a thin re-export so legacy ``from .blender_extra import
-...`` statements continue to resolve unchanged.
-
-See :mod:`adaptive_reflow.algorithm.blender` for the merged surface.
+Wave 105 P2-C grouped the algorithm top-level into subpackages.
+This shim preserves ``from adaptive_reflow.algorithm.blender_extra import ...``
+for downstream tools and tests.
 """
+
 from __future__ import annotations
 
-from .blender import (
-    BarycentricBlender,
-    DEFAULT_MEMORY_FRACTION_FALLBACK,
-    DerivationContext,
-    DerivationRule,
-    JointOTLinearBlender,
+from .blender.blender_extra import (
     MultiTemperatureDistanceDecayBlender,
     OTLinearBlender,
-    PolyakMemoryFraction,
-    derive_default_memory_fraction,
-    make_derivation_context,
 )
 
 __all__ = [
-    "BarycentricBlender",
-    "DEFAULT_MEMORY_FRACTION_FALLBACK",
-    "DerivationContext",
-    "DerivationRule",
-    "JointOTLinearBlender",
     "MultiTemperatureDistanceDecayBlender",
     "OTLinearBlender",
-    "PolyakMemoryFraction",
-    "derive_default_memory_fraction",
-    "make_derivation_context",
 ]
