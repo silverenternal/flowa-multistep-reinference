@@ -107,6 +107,8 @@ from adaptive_reflow.eval.fid import (  # noqa: E402  P0-1 dedup
 )
 from adaptive_reflow.universal.state import ODEConditionDelta  # noqa: E402
 
+from tools._sota_common import add_sota_common_args  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -1049,11 +1051,14 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         default="cpu",
         help="Inference device (default: cpu).",
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=DEFAULT_OUT_DIR,
-        help=f"Output directory (default: {DEFAULT_OUT_DIR}).",
+    # --output-dir is shared with the other 7 ``tools/run_sota_*.py``
+    # drivers; see ``tools/_sota_common.py``. This script threads
+    # seed=0 internally; --seed is omitted.
+    add_sota_common_args(
+        parser,
+        output_dir_default=DEFAULT_OUT_DIR,
+        output_dir_required=False,
+        include_seed=False,
     )
     parser.add_argument(
         "--ref-npz",

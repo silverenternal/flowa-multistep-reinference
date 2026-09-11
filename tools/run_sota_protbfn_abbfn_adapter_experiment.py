@@ -54,6 +54,14 @@ from typing import Any
 
 import numpy as np
 
+# Make the project importable when running as
+# ``python tools/run_sota_protbfn_abbfn_adapter_experiment.py``.
+REPO_ROOT: Path = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from tools._sota_common import add_sota_common_args  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Helpers - amino-acid vocabulary (canonical ProtBFN/AbBFN tokenizer).
 # ---------------------------------------------------------------------------
@@ -656,17 +664,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Paper-reported baseline NFE budget for unconditional "
         "ProtBFN sampling (default 250).",
     )
-    parser.add_argument(
-        "--output-dir",
-        type=str,
-        required=True,
-        help="Directory to write FASTA + JSON outputs to.",
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=0,
-        help="Master seed for the experiment (default 0).",
+    # --output-dir + --seed are shared with the other 7
+    # ``tools/run_sota_*.py`` drivers; see ``tools/_sota_common.py``.
+    # This script marks ``--output-dir`` required (no safe default for
+    # protein experiments; we do not want to write to a random path).
+    add_sota_common_args(
+        parser,
+        output_dir_default=None,
+        output_dir_required=True,
+        seed_default=0,
+        include_seed=True,
     )
     parser.add_argument(
         "--reference-fasta",

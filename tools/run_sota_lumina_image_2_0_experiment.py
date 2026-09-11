@@ -92,6 +92,7 @@ REPO_ROOT: Path = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from tools._sota_common import add_sota_common_args  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -852,14 +853,13 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "samples is written and documented in summary.json."
         ),
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=DEFAULT_OUTPUT_DIR,
-        help=(
-            "Output directory for samples, eval JSONs, and "
-            "comparison.md."
-        ),
+    # --output-dir is shared with the other 7 ``tools/run_sota_*.py``
+    # drivers; see ``tools/_sota_common.py``.
+    add_sota_common_args(
+        parser,
+        output_dir_default=DEFAULT_OUTPUT_DIR,
+        output_dir_required=False,
+        include_seed=True,
     )
     parser.add_argument(
         "--device",
@@ -878,12 +878,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         choices=("bf16", "fp16", "fp32"),
         help="Model dtype for the pipeline (default: bf16).",
     )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=0,
-        help="Deterministic seed for the prompt-sampler + RNG chain.",
-    )
+    # --seed is added by ``add_sota_common_args`` (see above).
     parser.add_argument(
         "--skip-eval",
         action="store_true",

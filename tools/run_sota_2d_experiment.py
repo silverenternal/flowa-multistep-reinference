@@ -90,6 +90,8 @@ from adaptive_reflow.eval.posterior_selection_evaluator import (  # noqa: E402
 )
 from adaptive_reflow.eval.twodim_fm_evaluator import analytic_samples  # noqa: E402
 
+from tools._sota_common import add_sota_common_args  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -1131,11 +1133,14 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "Overrides --n-samples, --n-rounds, --n-seeds."
         ),
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=DEFAULT_OUT_DIR,
-        help=f"Output directory (default: {DEFAULT_OUT_DIR}).",
+    # --output-dir is shared with the other 7 ``tools/run_sota_*.py``
+    # drivers; see ``tools/_sota_common.py``. This script threads
+    # ``--n-seeds`` instead of ``--seed``, so the seed flag is suppressed.
+    add_sota_common_args(
+        parser,
+        output_dir_default=DEFAULT_OUT_DIR,
+        output_dir_required=False,
+        include_seed=False,
     )
     parser.add_argument(
         "--trajectories-per-round",

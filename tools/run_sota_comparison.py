@@ -95,6 +95,8 @@ from adaptive_reflow.eval.posterior_selection_evaluator import (  # noqa: E402
 )
 from adaptive_reflow.universal import FlowMatchingODEAdapter  # noqa: E402
 
+from tools._sota_common import add_sota_common_args  # noqa: E402
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -592,23 +594,16 @@ def _build_parser() -> argparse.ArgumentParser:
             "sample for the four multi-round configurations (>= 1)."
         ),
     )
-    parser.add_argument(
-        "--output-dir",
-        required=True,
-        type=Path,
-        help=(
-            "Directory to write {config}_samples.npz files and "
-            "comparison.md into. Created if missing."
-        ),
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=DEFAULT_SEED,
-        help=(
-            "Master seed threaded through every random source "
-            f"(default: {DEFAULT_SEED})."
-        ),
+    # --output-dir is shared with the other 7 ``tools/run_sota_*.py``
+    # drivers; see ``tools/_sota_common.py``. This script marks
+    # ``--output-dir`` required and threads the canonical 2D-FM seed
+    # (DEFAULT_SEED = 42).
+    add_sota_common_args(
+        parser,
+        output_dir_default=None,
+        output_dir_required=True,
+        seed_default=DEFAULT_SEED,
+        include_seed=True,
     )
     parser.add_argument(
         "--channels",

@@ -76,6 +76,7 @@ REPO_ROOT: Path = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from tools._sota_common import add_sota_common_args  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -939,15 +940,13 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "framework's total NFE matches the baseline."
         ),
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=DEFAULT_OUTPUT_DIR,
-        help=(
-            "Output directory (default: "
-            f"{DEFAULT_OUTPUT_DIR}). comparison.md and summary.json "
-            "are written here."
-        ),
+    # --output-dir is shared with the other 7 ``tools/run_sota_*.py``
+    # drivers; see ``tools/_sota_common.py``.
+    add_sota_common_args(
+        parser,
+        output_dir_default=DEFAULT_OUTPUT_DIR,
+        output_dir_required=False,
+        include_seed=True,
     )
     parser.add_argument(
         "--reference-smiles",
@@ -973,12 +972,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
             "Dataset tag for the eval JSON. Default: geom_drugs."
         ),
     )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=0,
-        help="Base seed for both arms (default: 0).",
-    )
+    # --seed is added by ``add_sota_common_args`` (see above).
     parser.add_argument(
         "--device",
         type=str,
