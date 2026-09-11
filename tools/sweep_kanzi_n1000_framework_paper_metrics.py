@@ -146,6 +146,10 @@ def main(argv: list[str] | None = None) -> int:
                    help="Seed for the x_final synthesis RNG (default 0).")
     p.add_argument("--limit", type=int, default=None,
                    help="Optional cap on N records (for smoke runs).")
+    p.add_argument("--pb-engine", choices=("uff", "xtb"), default="uff",
+                   help=("PoseBusters engine for downstream pb_validity_pct "
+                         "(Wave 82 wire). Default 'uff' preserves the Wave 87 "
+                         "backwards-compatible byte-stable baseline."))
     args = p.parse_args(argv)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -334,6 +338,12 @@ def main(argv: list[str] | None = None) -> int:
         "n_steps_decoder": int(args.n_steps_decoder),
         "x_final_synthesis": "N(0, 1e-3) seeded by record_idx; "
                              "mean-centered; sigma << KANZI_LATENT_CLAMP",
+        "pb_engine": str(args.pb_engine),
+        "pb_engine_note": (
+            "PoseBusters engine for downstream pb_validity_pct "
+            "(Wave 82 wire). 'uff' = Wave 87 backwards-compatible "
+            "byte-stable baseline; 'xtb' = Wave 90 PB-xtb bridge."
+        ),
         "deterministic": True,
         "verdict": {
             "arm": "framework_only",

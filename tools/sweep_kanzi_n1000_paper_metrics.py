@@ -77,6 +77,10 @@ def main(argv: list[str] | None = None) -> int:
                    help="Output directory for the JSON report.")
     p.add_argument("--limit", type=int, default=None,
                    help="Optional cap on N records (for smoke runs).")
+    p.add_argument("--pb-engine", choices=("uff", "xtb"), default="uff",
+                   help=("PoseBusters engine for downstream pb_validity_pct "
+                         "(Wave 82 wire). Default 'uff' preserves the Wave 87 "
+                         "backwards-compatible byte-stable baseline."))
     args = p.parse_args(argv)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -237,6 +241,12 @@ def main(argv: list[str] | None = None) -> int:
             "6nrzA01": 250,
         },
         "deterministic": True,
+        "pb_engine": str(args.pb_engine),
+        "pb_engine_note": (
+            "PoseBusters engine for downstream pb_validity_pct "
+            "(Wave 82 wire). 'uff' = Wave 87 backwards-compatible "
+            "byte-stable baseline; 'xtb' = Wave 90 PB-xtb bridge."
+        ),
         "verdict": {
             "arm": "baseline_only",
             "framework_arm_source": (
