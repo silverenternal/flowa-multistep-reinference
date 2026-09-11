@@ -243,7 +243,7 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 
 A reviewer can re-verify with the `sha256` field of each `verification_outputs/*.json` and the manifest in `verification_outputs/kanzi_n1000_manifest.json`.
 
-<!-- TODO(Wave 94 Phase 2): re-hash every ckpt listed in the table above at ship time; assert equality against the values in `verification_outputs/ckpt_sha256.json` if that consolidated file exists (currently no such file at the top level — consider generating as part of Wave 94 Phase 2). -->
+<!-- Ship-time re-hash instruction (Wave 106.C.1 + A.3 F-02): `verification_outputs/ckpt_sha256.json` now exists (commit `d7daf90`); every ckpt listed in the table above was SHA-256-pinned at Wave 106.C.1. Re-hash at ship time to confirm equality against `verification_outputs/ckpt_sha256.json`. -->
 
 ### S6.3 D.4 byte-stable regression vectors
 

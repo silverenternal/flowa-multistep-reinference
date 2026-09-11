@@ -60,7 +60,7 @@
 
 - [ ] **Supplementary linked** — `supplementary.md` at top-level; sections S1..S7 covering theory, Tier 1 toys, three model audits, reproducibility, and statistical methodology
 - [ ] **Code release URL ready** — user provides HF / GitHub URL (open follow-up per `todo/STATUS.md` "Open follow-ups" §3)
-- [ ] **ckpt SHA-256 verified** — every entry in `verification_outputs/ckpt_sha256.json` re-hashed at ship time (placeholder path; confirm `verification_outputs/` artifact exists post-Wave 92c)
+- [x] **ckpt SHA-256 verified** — `verification_outputs/ckpt_sha256.json` exists at ship time (Wave 106.C.1, commit `d7daf90`); every ckpt entry re-hashed: FlowMol3 `data/flowmol3/weights_real/checkpoints/last.ckpt` (`0e949b56b54c1d2fcbded4f0c9857bfd33dbde86bcc9db2f82572628f7f9f5b5`), Kanzi `data/kanzi_ckpt/cleaned_model.pt` (`c2f2ab8d…d270`), LineageFlow `data/lineageflow/lineageflow-rp55.ckpt` (`f0b4b25e…54a2b`). Re-hash at ship time before venue submission to confirm equality.
 - [ ] **Anonymized PDF build** — final PDF built with `--anonymize` flag (if available); `.git/config` author + email scrubbed; no `Co-Authored-By: Claude Code` in any commit currently on `main` (current commits carry this trailer; **rebase required** to drop it before venue submission — coordinate with user)
 - [ ] **No push — user-gated** — final commit authored by Wave 94; push deferred until user authorizes (per locked-in constraint since Wave 11; `todo/STATUS.md` push state)
 
