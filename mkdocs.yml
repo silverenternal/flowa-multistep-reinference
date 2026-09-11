@@ -51,6 +51,8 @@ nav:
       - Tutorial: TUTORIAL.md
       - Plug in your model: PLUG_IN_YOUR_MODEL.md
       - Algorithms catalog: ALGORITHMS.md
+  - Reference:
+      - Run profiles (configs/runs/): configs.md
   - API reference:
       - Contracts: api/adaptive_reflow.contracts.md
       - Universal: api/adaptive_reflow.universal.md
