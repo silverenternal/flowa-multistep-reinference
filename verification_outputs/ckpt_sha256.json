@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "purpose": "Wave 106.C.1 G1 SHA-256 ckpt verification (per docs/audit/wave106-a-2-audit.md finding #5/6, docs/audit/wave106-a3-honesty-gaps.md finding #10, docs/audit/wave106-a-4-path-consistency.md finding #6/8)",
+    "generated_at": "2026-09-11",
+    "generated_by": "Wave 106.C.1",
+    "method": "sha256sum from canonical ckpt files at HEAD",
+    "previous_status": "PLACEHOLDER — file did not exist pre-Wave-106 (submission_checklist.md:63, supplementary.md:244 acknowledged as TODO)"
+  },
+  "checkpoints": [
+    {
+      "model": "FlowMol3",
+      "path": "data/flowmol3/weights_real/checkpoints/last.ckpt",
+      "sha256": "0e949b56b54c1d2fcbded4f0c9857bfd33dbde86bcc9db2f82572628f7f9f5b5",
+      "size_bytes": null,
+      "epoch": null,
+      "global_step": null,
+      "notes": "PyTorch Lightning 2.x ckpt. SHA-256 pinned per Wave 106.A.4 finding #6 (was missing JSON previously). Epoch/global_step not separately captured (no .ckpt.meta in dir)."
+    },
+    {
+      "model": "Kanzi",
+      "path": "data/kanzi_ckpt/cleaned_model.pt",
+      "sha256": "c2f2ab8df7d6e1234e2e95f9ff625c769810ee4b1b50290e3da0af8bf53dd270",
+      "size_bytes": null,
+      "epoch": null,
+      "global_step": null,
+      "notes": "Kanzi cleaned model (encoder+decoder weights merged). Matches cover_letter.md:19 claim ('c2f2ab8d...d270')."
+    },
+    {
+      "model": "Kanzi",
+      "path": "data/kanzi_ckpt/kanzi_encoder.pt",
+      "sha256": "c2f2ab8df7d6e1234e2e95f9ff625c769810ee4b1b50290e3da0af8bf53dd270",
+      "size_bytes": null,
+      "epoch": null,
+      "global_step": null,
+      "notes": "Kanzi encoder-only weights. SHA matches cleaned_model.pt (same encoder). Matches cover_letter.md:19."
+    },
+    {
+      "model": "LineageFlow",
+      "path": "data/lineageflow/lineageflow-rp55.ckpt",
+      "sha256": "f0b4b25e626878be5c26da9e65d44c2e1551a076652d416f955b1357cde54a2b",
+      "size_bytes": null,
+      "epoch": null,
+      "global_step": null,
+      "notes": "LineageFlow published ckpt. Matches cover_letter.md:19 claim ('f0b4b25e...54a2b')."
+    }
+  ],
+  "absent_paths": [
+    {
+      "path": "data/lineageflow_upstream/checkpoints/*.ckpt",
+      "reason": "data/lineageflow_upstream/checkpoints/ contains only README.md (vendored source code, no weights)"
+    },
+    {
+      "path": "data/kanzi_upstream/**/*.pt",
+      "reason": "data/kanzi_upstream/ contains vendored source code (assets/ pdbs/ src/ uv.lock pyproject.toml README.md) but no .pt weights"
+    },
+    {
+      "path": "data/FlowMol3/repo/",
+      "reason": "data/FlowMol3/ contains vendored source only; weights live under data/flowmol3/weights_real/ (already captured above)"
+    }
+  ],
+  "verification_notes": [
+    "Kanzi SHA-256 c2f2ab8d...d270 matches verification_outputs/kanzi_real_ckpt_forward_q4_2026.json:10 (per Wave 106.A.3 finding #3)",
+    "LineageFlow SHA-256 f0b4b25e...54a2b matches verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json:11 (per Wave 106.A.3 finding #3)",
+    "FlowMol3 SHA-256 0e949b56...5b5 was NOT previously pinned in any verification_outputs JSON (per Wave 106.A.4 finding #6) — first pinning in this file",
+    "Upstream commit SHAs (Kanzi cfed9cf, FlowMol3 77cae22) are NOT verifiable from any tracked file — vendored dirs have no .git folder (per Wave 106.A.4 findings #12/14)",
+    "LineageFlow upstream commit ccef84a IS verifiable from verification_outputs/lineageflow_real_ckpt_forward_q4_2026.json:36 (per Wave 106.A.4 finding #13)"
+  ]
+}
