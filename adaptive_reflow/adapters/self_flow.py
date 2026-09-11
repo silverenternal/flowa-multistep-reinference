@@ -530,6 +530,18 @@ def _load_torch_model(weights_path: Path) -> Any:
         import torch.nn as nn
 
         class _StubSiT(nn.Module):
+            """Smoke-test stub fallback when diffusers SiT constructor fails.
+
+            Wave 106.C.1 F-09 gating note: this stub is the inner
+            except-clause fallback inside ``_load_torch_model`` when the
+            SiT constructor raises (lines 524-527). It is NOT gated by
+            ``stub_factory``; it IS the smoke-test branch — diffusers
+            SiT is always loaded when importable. Returns zeros of the
+            right shape so unit tests can exercise the velocity-field
+            pipeline. See ``docs/audit/wave106-a-1-adapter-stubs.md``
+            §2.2 finding #9.
+            """
+
             def __init__(self) -> None:
                 super().__init__()
                 self.in_channels = in_channels
