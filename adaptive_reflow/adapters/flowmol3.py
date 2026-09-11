@@ -638,6 +638,15 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
     would replace the body of ``build_initial_state`` /
     ``export_endpoint`` / ``solve_ode`` with calls into FlowMol3 at the
     pinned commit.
+
+    Wave 106.C.1 F-04 gating note: ``force_mode="synthetic"`` (the default)
+    is the canonical surface for tests; ``force_mode="real"`` routes to
+    :class:`FlowMol3V2Adapter` (which loads the upstream ckpt); the
+    ``"auto"`` value picks the real adapter only when the ckpt SHA
+    matches ``FLOWMOL3_PINNED_COMMIT``. The placeholder is NEVER silently
+    substituted on a real ckpt load (constructor ``force_mode in
+    {"synthetic","real","auto"}`` + ``real_ckpt_loaded`` marker gate).
+    See ``docs/audit/wave106-a-1-adapter-stubs.md`` §2.2 finding #4.
     """
 
     pinned_commit: str = FLOWMOL3_PINNED_COMMIT
