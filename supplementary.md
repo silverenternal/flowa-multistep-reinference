@@ -291,6 +291,7 @@ A reviewer can re-verify with the `sha256` field of each `verification_outputs/*
 - **Status:** **72/72 PASS** at HEAD commit `f97ec1c` (33 in `tests/test_d4_regression_vectors.py` + 39 in `tests/test_adapters/test_regression_vectors.py`); see `docs/GATES.md` "D.4 byte-stable regression vectors" section (single source of truth).
 - **Legacy 33/33 PASS caveat:** The "33/33 PASS" figure used historically referred to the Wave 38-39 first-batch regression subset only. The current 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions.
 - **D.4 vs full pytest — important distinction:** Full pytest (`pytest tests/ -q`) collects **4591 tests** of which **2165 pass** + **9 skip** + **3 FAILED** (per `pytest_results.txt` at `f97ec1c`). The 3 pre-existing FAILED tests are tracked in `docs/audit/wave48-pytest-pre-push-fixes.md` and are unrelated to framework logic.
+- **Wave 108.G clarification (30/30 + 33/33):** D.4 30/30 PASS = `tests/test_d4_regression_vectors.py` (full file); D.4 33/33 PASS = `pytest -k d4` selected-pattern subset. Full pytest has 3 pre-existing FAILED tests unrelated to framework (see `docs/audit/wave48-pytest-pre-push-fixes.md`).
 - **Reference run baseline:** `docs/audit/wave91-phase5-final.md` §0 (re-confirmed post every Wave 75-105 commit)
 - **Last green:** commit `f97ec1c` (Wave 106.C.2 final synthesis)
 
