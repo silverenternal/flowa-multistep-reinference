@@ -313,6 +313,13 @@ class ReferenceFlowAAdapter(FlowMatchingODEAdapter):
         the round's metric dict under ``endpoint_export_failed``; the
         endpoint row is left as ``NaN`` so the caller can detect
         "endpoint not captured" via ``np.isnan``.
+
+        Wave 106.C.1 F-05 gating note: the reference adapter is the
+        canonical stdlib-only placeholder (no torch, no native tensor).
+        It is wired via ``ReferenceFlowAAdapter`` instantiation only —
+        there is no production code path that silently substitutes a
+        real ckpt onto this class. See
+        ``docs/audit/wave106-a-1-adapter-stubs.md`` §2.2 finding #5.
         """
         raise NotImplementedError(
             "ReferenceFlowAAdapter does not preserve a native trajectory"
