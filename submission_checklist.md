@@ -23,7 +23,7 @@
 - [ ] **G3 zero new LOC in upstream metric code** — `tools/paper_metrics.py` wraps `posebusters/modules/energy_ratio.py` (PB 0.6.5) + `flowmol/fm3_evals/geometry/{xtb_optimization,rmsd_energy}.py`; `tools/paper_metrics_kanzi.py` wraps `kanzi.DAE` encode/decode/kabsch utilities; `tools/upstream_eval.py` wraps `LineageFlow/evaluation/evaluate_all.py`. No net-new metric math. Audit trail: `docs/audit/wave75-phase2-paper-metrics.md`, `docs/audit/wave83-agent-b-codebook-metrics.md`.
 - [ ] **G4 vendored upstream snapshot frozen** — LineageFlow at `ccef84a` ("Prepare LineageFlow public release") under `data/lineageflow_upstream/`; Kanzi at `cfed9cf` under `data/kanzi_upstream/`; FlowMol3 at `77cae22` ("Update readme.md") under `data/FlowMol3/repo/`. All three referenced by SHA-pinned paths in every `verification_outputs/*_n1000_*.json`.
 
-### Tier 3 (model, paper_metric) cells (12 of 12) — **CURRENT STATE AS OF WAVE 105**
+### Tier 3 (model, paper_metric) cells (12 of 12) — **CURRENT STATE AS OF WAVE 101/102** (per commit `d692583`; updated by Wave 106.A.3 audit)
 
 > **HONEST DISCLOSURE**: 3 models × 4 paper-axis metrics = 12 cells. **Current data availability is asymmetric**:
 > - **FlowMol3**: full N=1000 sweep available (baseline 999, framework 1000 — see `verification_outputs/flowmol3_n1000_*_q4_2026.json`). All 4 paper-axis metrics measurable.
