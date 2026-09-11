@@ -80,7 +80,6 @@ Tasks satisfied
 from __future__ import annotations
 
 import hashlib
-from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -108,6 +107,7 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
     make_ref,
     memory_fraction_for,
 )
@@ -949,8 +949,20 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         # RectifiedFlowCIFAR). The cache holds the (latent, conditioning)
         # tuple per digest + trajectory / endpoint entries; the
         # conditioning-only cache is bounded separately.
-        self._native_states: OrderedDict[str, dict[str, Any]] = OrderedDict()
-        self._conditioning_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        # Wave 103 P0-A: both caches delegate to the framework-shared
+        # :class:`NativeStateCache` from
+        # :mod:`adaptive_reflow.adapters._adapter_common`, mirroring the
+        # Wave 97.C lineageflow pattern. This exposes the LRU policy
+        # exactly once (in the framework helper) and the
+        # OrderedDict-compatible surface (``.get`` / ``__setitem__`` /
+        # ``__contains__`` / ``__len__``) that
+        # ``adapters/_inject_forward_noise.py`` reaches through.
+        self._native_states: NativeStateCache = NativeStateCache(
+            HIDREAM_I1_NATIVE_STATES_MAXSIZE,
+        )
+        self._conditioning_cache: NativeStateCache = NativeStateCache(
+            self._conditioning_cache_size,
+        )
         self._caps = HiDreamI1Capabilities()
 
     # ------------------------------------------------------------------
@@ -1098,26 +1110,21 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             images.extend(getattr(result, "images", []) or [])
         return images
 
+    # Wave 103 P0-A: thin wrappers preserved so the existing call
+    # sites (and the ``adapters/_inject_forward_noise.py`` direct
+    # read sites) keep working unchanged; the wrappers now delegate
+    # to :class:`NativeStateCache.put` / ``.evict`` so the LRU
+    # policy is implemented exactly once in the framework-core
+    # helper (mirror of Wave 97.C lineageflow pattern).
+
     def _put_native_state(self, digest: str, entry: dict[str, Any]) -> None:
-        if digest in self._native_states:
-            self._native_states[digest] = entry
-            self._native_states.move_to_end(digest)
-            return
-        self._native_states[digest] = entry
-        while len(self._native_states) > HIDREAM_I1_NATIVE_STATES_MAXSIZE:
-            self._native_states.popitem(last=False)
+        self._native_states.put(digest, entry)
 
     def _evict_native_state(self, digest: str) -> None:
-        self._native_states.pop(digest, None)
+        self._native_states.evict(digest)
 
     def _put_conditioning(self, cache_hash: str, entry: dict[str, Any]) -> None:
-        if cache_hash in self._conditioning_cache:
-            self._conditioning_cache[cache_hash] = entry
-            self._conditioning_cache.move_to_end(cache_hash)
-            return
-        self._conditioning_cache[cache_hash] = entry
-        while len(self._conditioning_cache) > self._conditioning_cache_size:
-            self._conditioning_cache.popitem(last=False)
+        self._conditioning_cache.put(cache_hash, entry)
 
     def _resolve_conditioning(
         self, *, prompt: str, negative_prompt: str, seed: int
@@ -1133,7 +1140,11 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         cache_hash = _conditioning_cache_hash(prompt, negative_prompt)
         existing = self._conditioning_cache.get(cache_hash)
         if existing is not None:
-            self._conditioning_cache.move_to_end(cache_hash)
+            # Promote to MRU; :meth:`NativeStateCache.put` performs the
+            # ``move_to_end`` internally. Re-inserting the same dict
+            # object keeps the cached entry byte-identical while
+            # refreshing the LRU order (mirror of lineageflow:1431).
+            self._conditioning_cache.put(cache_hash, existing)
             return existing
         entry = _synthetic_text_conditioning(
             prompt=prompt, negative_prompt=negative_prompt, seed=int(seed),
