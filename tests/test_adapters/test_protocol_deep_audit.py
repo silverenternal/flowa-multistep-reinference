@@ -1341,6 +1341,439 @@ def test_flowmol3_v2_restart_blend_shape_end_to_end() -> None:
     assert np.shape(blended["a"]) == (n_prior,)
 
 
+# ---------------------------------------------------------------------------
+# L. Per-adapter Protocol-contract tests (Wave 104 P1-A extraction)
+#
+# These tests were extracted from the 5 per-adapter test files
+# (``test_kanzi.py``, ``test_lineageflow.py``, ``test_flowmol3_adapter.py``,
+# ``test_flowmol3_v2_adapter.py``, ``test_hidream_i1.py``) where they
+# duplicated the cross-adapter Protocol-contract audit covered above
+# (sections A–J). Each test below is uniquely-named (no per-adapter
+# name collision), so the move preserves the original pytest test-id.
+#
+# Tests with name collisions across the 5 per-adapter files (e.g.
+# ``test_protocol_satisfies_runtime_checkable`` exists in 3 files)
+# were LEFT in place at their per-adapter origin because Python
+# function-definition shadowing would lose the earlier definitions
+# when moved to a single module. The pure file-system refactor
+# (Wave 104 P1-A) preserves the original test names + per-adapter
+# location; the cross-adapter audit above covers the same Protocol
+# contract for every registered adapter.
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# L.1 — kanzi (test_kanzi.py)
+# ---------------------------------------------------------------------------
+
+
+def test_byte_stable_build_initial_state() -> None:
+    """L.1 — Kanzi: two ``build_initial_state`` calls with identical inputs produce byte-identical digests.
+
+    Moved from ``tests/test_adapters/test_kanzi.py``. Cross-adapter
+    Protocol-contract duplicate of section D.1 (``test_d_seed_byte_stable``)
+    parametrized over :data:`REGISTERED_ADAPTERS`; this per-adapter
+    variant keeps the original Kanzi-specific assertion (build-only,
+    no solve loop) for byte-stability regression coverage of the
+    initial-state path.
+    """
+    from adaptive_reflow.adapters.kanzi import KanziAdapter
+
+    adapter = KanziAdapter(force_mode="synthetic")
+    bundle_a = adapter.build_initial_state(batch_id="byte", sample_id="stable")
+    bundle_b = adapter.build_initial_state(batch_id="byte", sample_id="stable")
+    assert bundle_a.native_state_digest == bundle_b.native_state_digest
+
+
+def test_byte_stable_solve_ode_round_trip() -> None:
+    """L.2 — Kanzi: two consecutive build+solve cycles produce byte-identical ``integrator_config_hash``.
+
+    Moved from ``tests/test_adapters/test_kanzi.py``. Companion to
+    ``test_byte_stable_build_initial_state``; the cross-adapter
+    audit (D.1) covers this invariant for all registered adapters
+    via parametrization.
+    """
+    from adaptive_reflow.adapters.kanzi import (
+        KANZI_INTEGRATOR_EULER,
+        KANZI_NUM_STEPS_DEFAULT,
+        KanziAdapter,
+    )
+    from adaptive_reflow.universal.state import ODEConditionDelta
+
+    adapter = KanziAdapter(force_mode="synthetic", num_steps=3)
+    bundle_a = adapter.build_initial_state(batch_id="bs", sample_id="so")
+    bundle_b = adapter.build_initial_state(batch_id="bs", sample_id="so")
+    delta_a = ODEConditionDelta(
+        delta_spec={
+            "num_steps": KANZI_NUM_STEPS_DEFAULT,
+            "sampler_id": KANZI_INTEGRATOR_EULER,
+        },
+        source="byte_stable_test",
+        target_round=1,
+        calibration_artifact_hash="a" * 64,
+    )
+    delta_b = ODEConditionDelta(
+        delta_spec={
+            "num_steps": KANZI_NUM_STEPS_DEFAULT,
+            "sampler_id": KANZI_INTEGRATOR_EULER,
+        },
+        source="byte_stable_test",
+        target_round=1,
+        calibration_artifact_hash="a" * 64,
+    )
+    trace_a = adapter.solve_ode(bundle_a, delta_a, seed=42)
+    trace_b = adapter.solve_ode(bundle_b, delta_b, seed=42)
+    assert trace_a.native_state_digest == trace_b.native_state_digest
+    assert trace_a.integrator_config_hash == trace_b.integrator_config_hash
+
+
+# ---------------------------------------------------------------------------
+# L.2 — flowmol3 v1 (test_flowmol3_adapter.py)
+# ---------------------------------------------------------------------------
+
+
+def test_adapter_satisfies_flow_matching_ode_adapter_protocol() -> None:
+    """L.3 — FlowMol3 v1: the adapter passes the @runtime_checkable Protocol isinstance check.
+
+    Moved from ``tests/test_adapters/test_flowmol3_adapter.py``.
+    Cross-adapter Protocol-contract duplicate of section C.1
+    (``test_c_runtime_protocol_conformance``) parametrized over
+    :data:`REGISTERED_ADAPTERS`.
+    """
+    from adaptive_reflow.adapters.flowmol3 import FlowMol3Adapter
+    from adaptive_reflow.universal import FlowMatchingODEAdapter
+
+    adapter = FlowMol3Adapter()
+    assert isinstance(adapter, FlowMatchingODEAdapter)
+
+
+# ---------------------------------------------------------------------------
+# L.3 — flowmol3 v2 (test_flowmol3_v2_adapter.py)
+# ---------------------------------------------------------------------------
+
+
+def test_protocol_conformance() -> None:
+    """L.4 — FlowMol3 v2: the adapter passes the @runtime_checkable Protocol check + 9-method surface.
+
+    Moved from ``tests/test_adapters/test_flowmol3_v2_adapter.py``.
+    Combines the C.1 Protocol isinstance check with an explicit
+    enumeration of the 9-method Protocol surface. The cross-adapter
+    audit (A.1 + C.1) covers the same checks for every registered
+    adapter via parametrization; this per-adapter variant enumerates
+    the surface as a single regression vector.
+    """
+    from adaptive_reflow.adapters.flowmol3_v2_adapter import FlowMol3V2Adapter
+    from adaptive_reflow.universal import FlowMatchingODEAdapter
+
+    a = FlowMol3V2Adapter(backend="numpy", num_steps=5)
+    assert isinstance(a, FlowMatchingODEAdapter)
+    for name in (
+        "capabilities",
+        "build_initial_state",
+        "export_endpoint",
+        "detach_and_validate_endpoint",
+        "apply_restart_distribution",
+        "compose_condition",
+        "solve_ode",
+        "observe_endpoint",
+        "export_trajectory",
+    ):
+        assert hasattr(a, name), f"missing method: {name}"
+
+
+def test_compose_condition_rejects_channel_keys() -> None:
+    """L.5 — FlowMol3 v2: ``compose_condition`` rejects channel-keyed deltas (unconditional adapter).
+
+    Moved from ``tests/test_adapters/test_flowmol3_v2_adapter.py``.
+    Cross-adapter Protocol-contract duplicate of section B.7
+    (``test_b_compose_condition_returns_valid_delta``) parametrized
+    over :data:`REGISTERED_ADAPTERS`; this per-adapter variant
+    documents the specific ``has_condition_injection=False``
+    capability-missing path for FlowMol3 v2 (an unconditional
+    molecule generator).
+    """
+    from adaptive_reflow.adapters.flowmol3_v2_adapter import (
+        FlowMol3V2Adapter,
+        FlowMol3V2AdapterCapabilities,
+    )
+    from adaptive_reflow.universal import (
+        AdapterCapabilities,
+        CapabilityMissingError,
+    )
+    from adaptive_reflow.universal.state import (
+        ChannelName,
+        ODEConditionDelta,
+        StateBundle,
+        TensorRef,
+    )
+
+    adapter = FlowMol3V2Adapter(backend="numpy", num_steps=5)
+    # Validate capabilities first.
+    caps = FlowMol3V2AdapterCapabilities()
+    assert isinstance(caps, AdapterCapabilities)
+    # Build an initial bundle for compose_condition.
+    initial_bundle = adapter.build_initial_state(batch_id="b0", sample_id="s0")
+    assert isinstance(initial_bundle, StateBundle)
+    # Empty delta: pass-through (configurable keys like num_steps OK).
+    delta = ODEConditionDelta(
+        delta_spec={"num_steps": 5},
+        source="flowmol3adapter_test",
+        target_round=0,
+        calibration_artifact_hash="cal-flowmol3adapter",
+    )
+    out = adapter.compose_condition(initial_bundle, delta)
+    assert isinstance(out, ODEConditionDelta)
+    assert out.delta_spec["num_steps"] == 5
+    # Non-empty channel-keyed delta: rejected with CapabilityMissingError.
+    delta_bad = ODEConditionDelta(
+        delta_spec={"num_steps": 5, "coordinate": "test_delta"},
+        source="flowmol3adapter_test",
+        target_round=0,
+        calibration_artifact_hash="cal-flowmol3adapter",
+    )
+    with pytest.raises(CapabilityMissingError) as exc:
+        adapter.compose_condition(initial_bundle, delta_bad)
+    assert exc.value.capability == "has_condition_injection"
+
+
+def test_apply_restart_distribution_rejects_missing_channel_with_clear_error() -> None:
+    """L.6 — FlowMol3 v2: restart rejects a partial bundle (missing channels) with a clear ValueError.
+
+    Moved from ``tests/test_adapters/test_flowmol3_v2_adapter.py``.
+    Regression for NONCONFORMANCE_BUG #1: a state bundle missing one
+    or more of the three FlowMol3 channels (``coordinate``,
+    ``charge``, ``raw_pair``) must raise a clear :class:`ValueError`
+    rather than crashing deep inside the blend math with an opaque
+    shape-mismatch error.
+    """
+    from dataclasses import replace as _dc_replace
+
+    from adaptive_reflow.adapters.flowmol3_v2_adapter import FlowMol3V2Adapter
+    from adaptive_reflow.contracts import (
+        ArtifactHash,
+        FactorValue,
+        FinalRestartPolicy,
+        LedgerRowId,
+        PolicyId,
+        RunId,
+        hash_policy_hash,
+    )
+    from adaptive_reflow.universal.state import ChannelName, StateBundle
+
+    adapter = FlowMol3V2Adapter(backend="numpy", num_steps=10)
+    coord_channel = ChannelName("coordinate")
+    charge_channel = ChannelName("charge")
+    pair_channel = ChannelName("raw_pair")
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId("flowmol3adapter-test"),
+        writer_id="inference.adaptive_reflow",
+        run_id=RunId("flowmol3adapter-test-run"),
+        target_round=0,
+        outer_cycle_id=0,
+        beta_by_channel={
+            coord_channel: FactorValue(0.5),
+            charge_channel: FactorValue(0.5),
+            pair_channel: FactorValue(0.5),
+        },
+        alpha_by_channel={
+            coord_channel: FactorValue(1.0),
+            charge_channel: FactorValue(1.0),
+            pair_channel: FactorValue(1.0),
+        },
+        fresh_noise_floor_by_channel={
+            coord_channel: FactorValue(0.0),
+            charge_channel: FactorValue(0.0),
+            pair_channel: FactorValue(0.0),
+        },
+        schedule_sample=None,
+        freeze_admission_by_channel={
+            coord_channel: True,
+            charge_channel: True,
+            pair_channel: True,
+        },
+        ledger_row_id=LedgerRowId("ledger-flowmol3adapter-test"),
+        policy_hash=ArtifactHash(""),
+        created_at_round=0,
+        beta_from_schedule=False,
+    )
+    policy = _dc_replace(policy, policy_hash=hash_policy_hash(policy))
+    # Build a bundle that only carries the ``coordinate`` channel.
+    partial_bundle = adapter.build_initial_state(batch_id="b1", sample_id="s1")
+    partial_bundle = StateBundle(
+        channels={ChannelName("coordinate"): partial_bundle.channels[ChannelName("coordinate")]},
+        masks={ChannelName("coordinate"): partial_bundle.masks[ChannelName("coordinate")]},
+        batch_id=partial_bundle.batch_id,
+        sample_id=partial_bundle.sample_id,
+        reference_frame=partial_bundle.reference_frame,
+        normalization=partial_bundle.normalization,
+        source_round=partial_bundle.source_round,
+        detach_proof=partial_bundle.detach_proof,
+        native_state_digest=partial_bundle.native_state_digest,
+        provenance=partial_bundle.provenance,
+        capability_token=partial_bundle.capability_token,
+    )
+    with pytest.raises(ValueError, match=r"missing channels"):
+        adapter.apply_restart_distribution(partial_bundle, policy)
+
+
+# ---------------------------------------------------------------------------
+# L.4 — HiDream I1 (test_hidream_i1.py)
+# ---------------------------------------------------------------------------
+
+
+def test_compose_condition_requires_prompt() -> None:
+    """L.7 — HiDream I1: an empty prompt raises ``hidream_i1_prompt_missing``.
+
+    Moved from ``tests/test_adapters/test_hidream_i1.py``. Cross-adapter
+    Protocol-contract duplicate of section B.7
+    (``test_b_compose_condition_returns_valid_delta``); this per-adapter
+    variant documents the HiDream-specific ``prompt_missing`` error
+    path required by the text-to-image conditioning contract.
+    """
+    from adaptive_reflow.adapters.hidream_i1 import HiDreamI1Adapter
+    from adaptive_reflow.universal.state import ODEConditionDelta
+
+    adapter = HiDreamI1Adapter(
+        variant="full",
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=2,
+        synthetic_seed=42,
+    )
+    bundle = adapter.build_initial_state(
+        batch_id="batch-hidream-7", sample_id="sample-hidream-7"
+    )
+    delta = ODEConditionDelta(
+        delta_spec={"num_steps": 2, "prompt": ""},
+        source="hidream_i1_test",
+        target_round=0,
+        calibration_artifact_hash="cal-hidream-i1",
+    )
+    with pytest.raises(ValueError, match="hidream_i1_prompt_missing"):
+        adapter.compose_condition(bundle, delta)
+
+
+def test_observe_endpoint_bundle() -> None:
+    """L.8 — HiDream I1: ``observe`` returns tagged ENDPOINT_BUNDLE + TRAJECTORY_NATIVE results.
+
+    Moved from ``tests/test_adapters/test_hidream_i1.py``.
+    Cross-adapter Protocol-contract duplicate of section B.9
+    (``test_b_observe_endpoint_returns_state_bundle``); this
+    per-adapter variant documents the typed
+    :class:`AdapterObservationProtocol` conformance path for
+    HiDream (ENDPOINT_BUNDLE + TRAJECTORY_NATIVE results).
+    """
+    from adaptive_reflow.adapters.hidream_i1 import HiDreamI1Adapter
+    from adaptive_reflow.framework.interfaces import (
+        AdapterObservationProtocol,
+        ObservationKind,
+    )
+
+    adapter = HiDreamI1Adapter(
+        variant="full",
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=2,
+        synthetic_seed=42,
+    )
+    assert isinstance(adapter, AdapterObservationProtocol)
+    bundle = adapter.build_initial_state(
+        batch_id="batch-hidream-obs-1", sample_id="sample-hidream-obs-1",
+    )
+    delta = ODEConditionDelta(
+        delta_spec={"num_steps": 3, "prompt": "x"},
+        source="hidream_i1_test",
+        target_round=0,
+        calibration_artifact_hash="cal-hidream-i1",
+    )
+    composed = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, composed, seed=0)
+    results = adapter.observe(trace, bundle)
+    kinds = [r.kind for r in results]
+    assert kinds == [
+        ObservationKind.ENDPOINT_BUNDLE,
+        ObservationKind.TRAJECTORY_NATIVE,
+    ]
+
+
+def test_observe_with_state_none() -> None:
+    """L.9 — HiDream I1: ``observe`` returns an empty tuple when ``state`` is ``None``.
+
+    Moved from ``tests/test_adapters/test_hidream_i1.py``. The
+    Protocol permits ``state=None`` (``interfaces.py``); the metric
+    helper passes it when only non-endpoint strategies are wanted.
+    Cross-adapter audit (B.9 + G.2) covers this edge case for every
+    adapter via parametrization.
+    """
+    from adaptive_reflow.adapters.hidream_i1 import HiDreamI1Adapter
+    from adaptive_reflow.universal.state import ODEConditionDelta
+
+    adapter = HiDreamI1Adapter(
+        variant="full",
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=2,
+        synthetic_seed=42,
+    )
+    bundle = adapter.build_initial_state(
+        batch_id="batch-hidream-obs-2", sample_id="sample-hidream-obs-2",
+    )
+    delta = ODEConditionDelta(
+        delta_spec={"num_steps": 2, "prompt": "x"},
+        source="hidream_i1_test",
+        target_round=0,
+        calibration_artifact_hash="cal-hidream-i1",
+    )
+    composed = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, composed, seed=0)
+    assert adapter.observe(trace, None) == ()
+
+
+def test_observe_skips_unsupported_kinds() -> None:
+    """L.10 — HiDream I1: DISCRETE_TOKENS / POSITION_ENTROPY_REDUCTION are skipped (continuous latent).
+
+    Moved from ``tests/test_adapters/test_hidream_i1.py``. HiDream is
+    a continuous-latent adapter, so the discrete-token strategies
+    are not supported. The cross-adapter audit covers the
+    strategies-filter contract generically; this per-adapter variant
+    pins the exact skip semantics for HiDream.
+    """
+    from adaptive_reflow.adapters.hidream_i1 import HiDreamI1Adapter
+    from adaptive_reflow.framework.interfaces import ObservationKind
+    from adaptive_reflow.universal.state import ODEConditionDelta
+
+    adapter = HiDreamI1Adapter(
+        variant="full",
+        weights_path=None,
+        force_mode="synthetic",
+        num_steps=2,
+        synthetic_seed=42,
+    )
+    bundle = adapter.build_initial_state(
+        batch_id="batch-hidream-obs-3", sample_id="sample-hidream-obs-3",
+    )
+    delta = ODEConditionDelta(
+        delta_spec={"num_steps": 2, "prompt": "x"},
+        source="hidream_i1_test",
+        target_round=0,
+        calibration_artifact_hash="cal-hidream-i1",
+    )
+    composed = adapter.compose_condition(bundle, delta)
+    trace = adapter.solve_ode(bundle, composed, seed=0)
+    # Requesting only the unsupported kinds yields an empty tuple.
+    assert (
+        adapter.observe(
+            trace,
+            bundle,
+            strategies=(
+                ObservationKind.DISCRETE_TOKENS,
+                ObservationKind.POSITION_ENTROPY_REDUCTION,
+            ),
+        )
+        == ()
+    )
+
+
 __all__ = [
     "PROTOCOL_METHOD_SHAPE",
     "REGISTERED_ADAPTERS",

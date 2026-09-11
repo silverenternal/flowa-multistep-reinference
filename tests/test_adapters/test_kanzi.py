@@ -266,29 +266,6 @@ def test_determinism() -> None:
     np.testing.assert_array_equal(traj_a, traj_b)
 
 
-def test_byte_stable_build_initial_state() -> None:
-    """Two consecutive build_initial_state calls with identical inputs produce byte-identical digests."""
-    adapter = _make_adapter()
-    bundle_a = adapter.build_initial_state(batch_id="byte", sample_id="stable")
-    bundle_b = adapter.build_initial_state(batch_id="byte", sample_id="stable")
-    assert bundle_a.native_state_digest == bundle_b.native_state_digest
-
-
-def test_byte_stable_solve_ode_round_trip() -> None:
-    """Two consecutive build+solve cycles produce byte-identical integrator_config_hash."""
-    adapter = _make_adapter(num_steps=3)
-    bundle_a = adapter.build_initial_state(batch_id="bs", sample_id="so")
-    bundle_b = adapter.build_initial_state(batch_id="bs", sample_id="so")
-    delta_a = _make_delta(target_round=1)
-    delta_b = _make_delta(target_round=1)
-    delta_a = adapter.compose_condition(bundle_a, delta_a)
-    delta_b = adapter.compose_condition(bundle_b, delta_b)
-    trace_a = adapter.solve_ode(bundle_a, delta_a, seed=42)
-    trace_b = adapter.solve_ode(bundle_b, delta_b, seed=42)
-    assert trace_a.native_state_digest == trace_b.native_state_digest
-    assert trace_a.integrator_config_hash == trace_b.integrator_config_hash
-
-
 # ---------------------------------------------------------------------------
 # Condition injection
 # ---------------------------------------------------------------------------

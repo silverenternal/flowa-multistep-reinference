@@ -252,12 +252,6 @@ class TestFlowMol3InjectForwardNoise:
 # ---------------------------------------------------------------------------
 
 
-def test_adapter_satisfies_flow_matching_ode_adapter_protocol(
-    adapter: FlowMol3Adapter,
-) -> None:
-    assert isinstance(adapter, FlowMatchingODEAdapter)
-
-
 # ---------------------------------------------------------------------------
 # Wave 49 Agent F — atom-type entropy restart policy + metric
 # ---------------------------------------------------------------------------

@@ -336,25 +336,6 @@ def test_velocity_field_lazy_loads_torch_if_required() -> None:
         fma._torch_is_available = orig  # type: ignore[assignment]
 
 
-def test_protocol_conformance() -> None:
-    """The adapter passes the @runtime_checkable Protocol isinstance check."""
-    a = FlowMol3V2Adapter(backend="numpy", num_steps=5)
-    assert isinstance(a, FlowMatchingODEAdapter)
-    # Required methods present.
-    for name in (
-        "capabilities",
-        "build_initial_state",
-        "export_endpoint",
-        "detach_and_validate_endpoint",
-        "apply_restart_distribution",
-        "compose_condition",
-        "solve_ode",
-        "observe_endpoint",
-        "export_trajectory",
-    ):
-        assert hasattr(a, name), f"missing method: {name}"
-
-
 def test_restart_blend_channel_aware(
     adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
 ) -> None:
@@ -377,37 +358,6 @@ def test_restart_blend_channel_aware(
     assert "flowmol3adapter_restart_blend" in entry.get("audit", ())
     # Provenance tag.
     assert AUDIT_FLOWMOL3_RESTART_BLEND in next_bundle.provenance
-
-
-def test_apply_restart_distribution_rejects_missing_channel_with_clear_error(
-    adapter: FlowMol3V2Adapter,
-) -> None:
-    """Regression — NONCONFORMANCE_BUG #1.
-
-    A state bundle that is missing one or more of the three
-    FlowMol3 channels (``coordinate``, ``charge``, ``raw_pair``)
-    must raise a clear :class:`ValueError` rather than crashing
-    deep inside the blend math with an opaque shape-mismatch
-    error.
-    """
-    # Build a bundle that only carries the ``coordinate`` channel.
-    partial_bundle = adapter.build_initial_state(batch_id="b1", sample_id="s1")
-    partial_bundle = StateBundle(
-        channels={ChannelName("coordinate"): partial_bundle.channels[ChannelName("coordinate")]},
-        masks={ChannelName("coordinate"): partial_bundle.masks[ChannelName("coordinate")]},
-        batch_id=partial_bundle.batch_id,
-        sample_id=partial_bundle.sample_id,
-        reference_frame=partial_bundle.reference_frame,
-        normalization=partial_bundle.normalization,
-        source_round=partial_bundle.source_round,
-        detach_proof=partial_bundle.detach_proof,
-        native_state_digest=partial_bundle.native_state_digest,
-        provenance=partial_bundle.provenance,
-        capability_token=partial_bundle.capability_token,
-    )
-    policy = _make_final_policy(beta=0.5)
-    with pytest.raises(ValueError, match=r"missing channels"):
-        adapter.apply_restart_distribution(partial_bundle, policy)
 
 
 def test_apply_restart_distribution_happy_path_all_channels(
@@ -438,22 +388,6 @@ def test_apply_restart_distribution_happy_path_all_channels(
     entry = adapter._native_states[next_bundle.native_state_digest]
     assert "flowmol3adapter_restart_blend" in entry.get("audit", ())
     assert AUDIT_FLOWMOL3_RESTART_BLEND in next_bundle.provenance
-
-
-def test_compose_condition_rejects_channel_keys(
-    adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
-) -> None:
-    """``compose_condition`` rejects channel-keyed deltas (unconditional)."""
-    # Empty delta: pass-through (configurable keys like num_steps OK).
-    delta = _make_condition_delta(channel_keys=())
-    out = adapter.compose_condition(initial_bundle, delta)
-    assert isinstance(out, ODEConditionDelta)
-    assert out.delta_spec["num_steps"] == 5
-    # Non-empty channel-keyed delta: rejected with CapabilityMissingError.
-    delta_bad = _make_condition_delta(channel_keys=("coordinate",))
-    with pytest.raises(CapabilityMissingError) as exc:
-        adapter.compose_condition(initial_bundle, delta_bad)
-    assert exc.value.capability == "has_condition_injection"
 
 
 def test_export_trajectory_returns_lineage(
