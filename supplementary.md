@@ -309,7 +309,7 @@ A reviewer can re-verify with the `sha256` field of each `verification_outputs/*
 
 ### S6.7 Commit count + push state
 
-- **19 unpushed commits** on `main` ahead of `origin/main` as of 2026-09-11 (post-Wave-106.C.2 commit `f97ec1c`). The earlier "327 unpushed commits" cited at Wave 93 Phase 1 anchor `e69ffd8` predates the Wave 94-106 audit/doc/hygiene commits that landed locally; most Wave 75-105 sweep infrastructure, byte-stable regression vectors, and audit trails are already on `origin/main`. The 19 unpushed commits are local Wave 106 hygiene + audit fixes (no algorithm/source-code edits).
+- **34 unpushed commits** on `main` ahead of `origin/main` as of 2026-09-11 (post-Wave-106.C.4 INSTALL_REPORT.md + supplementary.md S3/S4/S5 fills at commit `d104067`; updated from earlier "19 unpushed" cite at Wave 106.C.2 anchor `f97ec1c` and "327 unpushed" at Wave 93 Phase 1 anchor `e69ffd8`). Most Wave 75-105 sweep infrastructure, byte-stable regression vectors, and audit trails are already on `origin/main`. The 34 unpushed commits are local Wave 106 hygiene + audit fixes (no algorithm/source-code edits).
 - `push_risk = LOW` per `todo/STATUS.md` push state.
 - Submission will land as a single tagged release after user authorizes push (locked-in constraint since Wave 11).
 
