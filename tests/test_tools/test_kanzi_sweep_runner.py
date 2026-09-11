@@ -258,13 +258,20 @@ def test_torch_velocity_field_emits_512d_shape(runner: Any) -> None:
 
     # Pin (a): the broken forward path is gone — no
     # `self._dae.encode(x, preprocess=False)` followed by
-    # `self._dae.net(x, t, z_BLD=c_BLD)` inside the shim. We assert
-    # the shim returns `torch.zeros_like(x)` (the Wave 110.B fix).
-    assert "return torch.zeros_like(x)" in src_text, (
-        "Wave 110.B pin: the shim's `forward()` MUST return "
-        "`torch.zeros_like(x)` so the adapter's state-shape "
-        "contract is preserved without crashing on the latent→coord "
-        "shape mismatch inside `_dae.encode`."
+    # `self._dae.net(x, t, z_BLD=c_BLD)` inside the shim. Wave 112.C-2
+    # fail-fasts the placeholder (the Wave 110.B fix returned
+    # `torch.zeros_like(x)` and made the framework arm a silent
+    # no-op). The synthetic-mode caller short-circuits before the
+    # shim is ever invoked; real-mode callers now surface a
+    # NotImplementedError instead of silently corrupting the
+    # trajectory endpoint.
+    assert "raise NotImplementedError" in src_text, (
+        "Wave 112.C-2 pin: the shim's `forward()` MUST raise "
+        "`NotImplementedError` (the Wave 110.B placeholder is now "
+        "fail-fast). The synthetic-mode path "
+        "(`self._synthetic_weights is not None`) short-circuits "
+        "before this shim is invoked, so framework_synthetic sweeps "
+        "are unaffected."
     )
 
     # Pin (b): the `_torch_velocity_field` docstring claims the
