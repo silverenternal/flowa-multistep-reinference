@@ -10,9 +10,11 @@ from __future__ import annotations
 from .blender.blender_extra import (
     MultiTemperatureDistanceDecayBlender,
     OTLinearBlender,
+    derive_default_memory_fraction,
 )
 
 __all__ = [
     "MultiTemperatureDistanceDecayBlender",
     "OTLinearBlender",
+    "derive_default_memory_fraction",
 ]
