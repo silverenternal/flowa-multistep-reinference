@@ -75,6 +75,83 @@ def _ensure_sys_path() -> None:
         sys.path.insert(0, repo_root_str)
 
 
+def apply_kanzi_profile_defaults(
+    args: argparse.Namespace,
+    parser: argparse.ArgumentParser,
+    profile: dict[str, Any] | None,
+) -> argparse.Namespace:
+    """Overlay YAML profile values on argparse defaults (Wave 112.C-6).
+
+    Resolution order per docs/audit/wave111-data-linkage-plan.md §5:
+    CLI flag > YAML value > module default. We detect "user provided on
+    the CLI" by comparing each argparse value against the parser
+    default; if equal, the YAML wins; if different, the CLI wins.
+
+    Args:
+        args
+            Parsed argparse Namespace. The caller is expected to have
+            set ``args._parser = parser`` so the helper can recover the
+            default for each action.
+        parser
+            The argparse.ArgumentParser used to parse ``args``.
+        profile
+            YAML profile dict from :func:`tools.eval.config.load_run_profile`,
+            or ``None`` for the no-profile path.
+
+    Returns
+    -------
+    argparse.Namespace
+        The same ``args`` with YAML values overlaid on parser defaults.
+    """
+    if profile is None:
+        return args
+    defaults = {a.dest: a.default for a in parser._actions}
+    _yaml_to_arg: tuple[tuple[str, str], ...] = (
+        ("seed", "seed"),
+        ("pb_engine", "pb_engine"),
+    )
+    for yaml_key, arg_dest in _yaml_to_arg:
+        if yaml_key not in profile:
+            continue
+        cli_value = getattr(args, arg_dest, None)
+        parser_default = defaults.get(arg_dest)
+        cli_provided = (cli_value != parser_default)
+        if cli_provided:
+            continue  # CLI wins
+        setattr(args, arg_dest, profile[yaml_key])
+    # Adapter-level knobs (Wave 111 F-A004 closure).
+    _adapter_map: tuple[tuple[str, str], ...] = (
+        ("adapter_force_mode", "adapter_force_mode"),
+        ("adapter_num_steps", "adapter_num_steps"),
+        ("adapter_solver", "adapter_solver"),
+    )
+    for yaml_key, arg_dest in _adapter_map:
+        if yaml_key not in profile:
+            continue
+        cli_value = getattr(args, arg_dest, None)
+        parser_default = defaults.get(arg_dest)
+        cli_provided = (cli_value != parser_default)
+        if cli_provided:
+            continue
+        setattr(args, arg_dest, profile[yaml_key])
+    # nfe_budgets[0] threads through n_steps_decoder (the bridge's nfe
+    # knob). Driver 1 hardcoded this; drivers 2+3 already expose it.
+    if "nfe_budgets" in profile and isinstance(
+        profile["nfe_budgets"], list,
+    ) and profile["nfe_budgets"]:
+        cli_value = getattr(args, "n_steps_decoder", None)
+        parser_default = defaults.get("n_steps_decoder")
+        if (cli_value == parser_default):
+            setattr(args, "n_steps_decoder", int(profile["nfe_budgets"][0]))
+    if "max_records" in profile:
+        cli_value = getattr(args, "limit", None)
+        parser_default = defaults.get("limit")
+        if cli_value == parser_default:
+            n = int(profile["max_records"])
+            setattr(args, "limit", n if n > 0 else None)
+    return args
+
+
 def parse_record(line: str) -> np.ndarray | None:
     """Parse a single ``coords_csv`` record line.
 
@@ -260,6 +337,9 @@ def run_kanzi_sweep(
     input_path: Path | None = None,
     ckpt_path: Path | None = None,
     pb_engine: str = "uff",
+    adapter_force_mode: str = "torch",
+    adapter_num_steps: int = 50,
+    adapter_solver: str = "euler",
 ) -> None:
     """Run the shared Kanzi N=1000 sweep loop body.
 
@@ -365,8 +445,10 @@ def run_kanzi_sweep(
               file=sys.stderr)
         t_ada = time.monotonic()
         kanzi_adapter = default_kanzi_adapter(
-            weights_path=ckpt, force_mode="torch",
-            num_steps=50, solver="euler",
+            weights_path=ckpt,
+            force_mode=str(adapter_force_mode),
+            num_steps=int(adapter_num_steps),
+            solver=str(adapter_solver),
         )
         print(f"[{prefix}] KanziAdapter constructed in "
               f"{time.monotonic() - t_ada:.1f} s", file=sys.stderr)

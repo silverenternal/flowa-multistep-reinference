@@ -48,11 +48,22 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from tools._kanzi_sweep_runner import run_kanzi_sweep  # noqa: E402
+from tools._kanzi_sweep_runner import (  # noqa: E402
+    apply_kanzi_profile_defaults,
+    run_kanzi_sweep,
+)
+from tools.eval.config import load_run_profile  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p.add_argument("--config", type=Path, default=None,
+                   help=("Wave 112.C-6: optional path to a run-profile YAML "
+                         "(configs/runs/<model>_<purpose>.yaml). Loads the "
+                         "schema in tools/eval/config.py; resolution order "
+                         "CLI flag > YAML value > module default. Omitting "
+                         "--config preserves the legacy CLI-default surface "
+                         "byte-stable. Prints [PROFILE] summary on load."))
     p.add_argument("--input", type=Path, required=True)
     p.add_argument("--ckpt", type=Path,
                    default=Path(__file__).resolve().parent.parent
@@ -64,7 +75,29 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--n-steps-decoder", type=int, default=100)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--limit", type=int, default=1000)
+    p.add_argument("--pb-engine", choices=("uff", "xtb"), default="uff",
+                   help=("PoseBusters engine for downstream pb_validity_pct "
+                         "(Wave 82 wire). Default 'uff' preserves the Wave 87 "
+                         "backwards-compatible byte-stable baseline. Wave 112.C-6 "
+                         "(F-A001 / F-B002 closure): driver 3 (inv_proj) now "
+                         "exposes --pb-engine; previously omitted (Wave 105 P0-B)."))
+    p.add_argument("--adapter-force-mode", default="torch",
+                   help=("KanziAdapter force_mode (Wave 111 F-A004 closure; "
+                         "default 'torch' = real torch mode). One of "
+                         "{torch, real, auto, synthetic}."))
+    p.add_argument("--adapter-num-steps", type=int, default=50,
+                   help="KanziAdapter ODE num_steps (Wave 111 F-A004 closure; default 50).")
+    p.add_argument("--adapter-solver", default="euler",
+                   help="KanziAdapter ODE solver (Wave 111 F-A004 closure; default 'euler').")
     args = p.parse_args(argv)
+    profile = None
+    if args.config is not None:
+        try:
+            profile = load_run_profile(args.config)
+        except Exception as exc:  # ConfigError + OSError + yaml.YAMLError
+            print(f"[ERROR] --config load failed: {exc}", file=sys.stderr)
+            return 2
+        args = apply_kanzi_profile_defaults(args, p, profile)
 
     run_kanzi_sweep(
         mode="framework_inv_proj",
@@ -75,6 +108,10 @@ def main(argv: list[str] | None = None) -> int:
         nfe_steps=int(args.n_steps_decoder),
         input_path=args.input,
         ckpt_path=args.ckpt,
+        pb_engine=str(args.pb_engine),
+        adapter_force_mode=str(args.adapter_force_mode),
+        adapter_num_steps=int(args.adapter_num_steps),
+        adapter_solver=str(args.adapter_solver),
     )
     return 0
 

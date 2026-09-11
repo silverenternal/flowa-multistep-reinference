@@ -47,11 +47,22 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from tools._kanzi_sweep_runner import run_kanzi_sweep  # noqa: E402
+from tools._kanzi_sweep_runner import (  # noqa: E402
+    apply_kanzi_profile_defaults,
+    run_kanzi_sweep,
+)
+from tools.eval.config import load_run_profile  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p.add_argument("--config", type=Path, default=None,
+                   help=("Wave 112.C-6: optional path to a run-profile YAML "
+                         "(configs/runs/<model>_<purpose>.yaml). Loads the "
+                         "schema in tools/eval/config.py; resolution order "
+                         "CLI flag > YAML value > module default. Omitting "
+                         "--config preserves the legacy CLI-default surface "
+                         "byte-stable. Prints [PROFILE] summary on load."))
     p.add_argument("--input", type=Path, required=True,
                    help="Wave 80 extractor output (one record per line).")
     p.add_argument("--ckpt", type=Path,
@@ -63,8 +74,9 @@ def main(argv: list[str] | None = None) -> int:
                                   / "verification_outputs"
                                   / "kanzi_n1000_paper_metrics",
                    help="Output directory for the JSON report.")
-    p.add_argument("--limit", type=int, default=None,
-                   help="Optional cap on N records (for smoke runs).")
+    p.add_argument("--limit", type=int, default=1000,
+                   help="Optional cap on N records (for smoke runs). Default 1000 "
+                        "(Wave 111 F-A002 closure; 0 = all records).")
     p.add_argument("--seed", type=int, default=42,
                    help=("Seed for the bridge decoder (Wave 108.A — closes "
                          "Wave 88 F-4 by ensuring DAE.decode stochasticity "
@@ -74,17 +86,41 @@ def main(argv: list[str] | None = None) -> int:
                    help=("PoseBusters engine for downstream pb_validity_pct "
                          "(Wave 82 wire). Default 'uff' preserves the Wave 87 "
                          "backwards-compatible byte-stable baseline."))
+    p.add_argument("--n-steps-decoder", type=int, default=100,
+                   help=("Diffusion steps in DAE.decode inside the bridge "
+                         "(Wave 111 F-A003 closure; replaces the prior "
+                         "hardcoded nfe_steps=100). Default 100 matches the "
+                         "Wave 87 baseline contract."))
+    p.add_argument("--adapter-force-mode", default="torch",
+                   help=("KanziAdapter force_mode (Wave 111 F-A004 closure; "
+                         "default 'torch' = real torch mode). One of "
+                         "{torch, real, auto, synthetic}."))
+    p.add_argument("--adapter-num-steps", type=int, default=50,
+                   help="KanziAdapter ODE num_steps (Wave 111 F-A004 closure; default 50).")
+    p.add_argument("--adapter-solver", default="euler",
+                   help="KanziAdapter ODE solver (Wave 111 F-A004 closure; default 'euler').")
     args = p.parse_args(argv)
+    profile = None
+    if args.config is not None:
+        try:
+            profile = load_run_profile(args.config)
+        except Exception as exc:  # ConfigError + OSError + yaml.YAMLError
+            print(f"[ERROR] --config load failed: {exc}", file=sys.stderr)
+            return 2
+        args = apply_kanzi_profile_defaults(args, p, profile)
 
     run_kanzi_sweep(
         mode="baseline",
         output_dir=str(args.output_dir),
         seed=int(args.seed),
         max_records=int(args.limit) if args.limit is not None else 0,
-        nfe_steps=100,
+        nfe_steps=int(args.n_steps_decoder),
         input_path=args.input,
         ckpt_path=args.ckpt,
         pb_engine=str(args.pb_engine),
+        adapter_force_mode=str(args.adapter_force_mode),
+        adapter_num_steps=int(args.adapter_num_steps),
+        adapter_solver=str(args.adapter_solver),
     )
     return 0
 
