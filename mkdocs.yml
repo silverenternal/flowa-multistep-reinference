@@ -87,6 +87,7 @@ nav:
       - 04 — test + CI audit: governance/04-test-ci-audit.md
       - 05 — fix plan: governance/05-fix-plan.md
       - 06 — verification report: governance/06-verification-report.md
+      - Per-wave audit index (Wave 1-101): audit/INDEX.md
   - Paper-supporting survey (r4-survey):
       - Phase-4 code review: r4-survey/18-comprehensive-code-review.md
       - Phase-4 fix plan: r4-survey/19-fix-plan.md
@@ -192,7 +193,34 @@ not_in_nav: |
   figures/*.md
   adr/*.md
   INSIGHTS.md
-  audit/*.md
+  audit/wave*.md
+  audit/EPSILON_DIRECTION.md
+  audit/ROOT_CAUSE_ANALYSIS.md
+  audit/adapter-conformance-deep-dive.md
+  audit/algorithm-gap-investigation.md
+  audit/algorithm-saturation-review.md
+  audit/closure-flowmol3-sweep.md
+  audit/closure-s7.4-s7.5.md
+  audit/closure-s7.7.md
+  audit/closure-state-none-fix.md
+  audit/closure-t3-final.md
+  audit/empirical-conditions.md
+  audit/framework-code-review.md
+  audit/g1-spec-literal-review.md
+  audit/gap-audit.md
+  audit/lineageflow-upstream-investigation.md
+  audit/metric-methodology.md
+  audit/mm-fm-unblock-investigation.md
+  audit/per-adapter-value-verification.md
+  audit/phase-4-blocker-investigation.md
+  audit/phase-4-eval-pipeline.md
+  audit/pytest-failure-analysis.md
+  audit/saturation-improvement-plan.md
+  audit/theory-implementation-gap.md
+  audit/web-research-2026.md
+  audit/web-research-fm-restart-2026.md
+  audit/web-research-robust-aggregators-2026.md
+  audit/web-research-saturation-2026.md
   review/*.md
   distinguishing-from-reflow.md
   schedule-theory.md
