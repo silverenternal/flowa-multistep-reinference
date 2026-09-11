@@ -1,0 +1,32 @@
+# configs/runs/lineageflow_n1000_gpu.yaml
+# Purpose: Wave 109.B-equivalent LineageFlow N=1000 GPU framework-vs-baseline sweep.
+# Profile version: 2026-09-11 (Wave 111).
+# Consumed by: tools/lineageflow_n1000_gpu_sweep.sh (thin launcher — reads
+# NFE/SEEDS/N_SAMPLES/VENV_PY/TIMEOUT from this YAML instead of hardcoding).
+#
+# NOTE: this YAML is NOT loaded via tools/eval/config.load_run_profile
+# (which has a strict schema). The shell wrapper parses it via a tiny
+# inline Python -c helper (yaml.safe_load, no schema validation) because
+# the shell-launcher knobs (venv_py, timeout_s) are out-of-schema. The
+# remaining keys mirror the schema for human readability.
+model: lineageflow
+
+# --- §1. RNG / determinism (Wave 74 F2 byte-stable seed) ---
+seed: 42                                # Wave 74 F2 byte-stable seed
+nfe_budgets: [250]                      # FlowMol3 paper NFE (LineageFlow
+                                       # shares the upstream paper-parity NFE)
+max_records: 1000                       # N=1000 records per arm
+
+# --- §2. Adapter-level knobs (mirror canonical CLI schema) ---
+force_mode: real                        # Wave 50.A factory fix
+metric_mode: real                       # Wave 53 Agent B real→torch wiring
+composite_metric: real                  # Wave 47 Agent A lineageflow_composite
+lineageflow_upstream_eval: true         # Wave 81 wrapper path
+upstream_n_samples: 1000                # N=1000 per arm (Wave 108.C default)
+
+# --- §3. Shell-launcher knobs (Wave 112.D-3 — out-of-schema; the
+# shell uses yaml.safe_load directly so these don't go through the
+# canonical CLI schema validator). ---
+venv_py: .venvs/lineageflow_venv/bin/python
+timeout_s: 7200
+output_filename: lineageflow_n1000_${arm}_q4_2026_v2.json

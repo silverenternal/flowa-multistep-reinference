@@ -426,7 +426,7 @@ import torch  # noqa: E402
 from kanzi import DAE, kabsch_rmsd  # noqa: E402
 
 # Parse CLI: --input <fasta> --ckpt <pt> --output <json>
-#           [--max-records N] [--output-jsonl <path>]
+#           [--max-records N] [--output-jsonl <path>] [--config <yaml>]
 import argparse  # noqa: E402
 p = argparse.ArgumentParser()
 p.add_argument("--input", required=True)
@@ -436,6 +436,10 @@ p.add_argument("--max-records", type=int, default=0,
                help="Cap on records to process (0 = all).")
 p.add_argument("--output-jsonl", default=None,
                help="Optional per-record JSONL output path.")
+p.add_argument("--config", type=str, default=None,
+               help=("Wave 112.D-4: optional run-profile YAML. Honoured as "
+                     "an additional default source; CLI > YAML > module "
+                     "default. Or set $LINEAGEFLOW_PROFILE env var."))
 args = p.parse_args()
 
 raw = DAE.from_pretrained(args.ckpt).eval()
@@ -776,6 +780,9 @@ p.add_argument("--smiles-list", required=True)
 p.add_argument("--reference", required=True)
 p.add_argument("--output", required=True)
 p.add_argument("--pb-workers", type=int, default=2)
+p.add_argument("--config", type=str, default=None,
+               help=("Wave 112.D-4: optional run-profile YAML (CLI > YAML > "
+                     "module default). Or set $FLOWMOL3_PROFILE env var."))
 args = p.parse_args()
 
 with open(args.smiles_list, encoding="utf-8") as f:
@@ -958,9 +965,16 @@ if __name__ == "__main__":  # pragma: no cover
         "--model", choices=("lineageflow", "kanzi", "flowmol3"),
         required=True,
     )
+    parser.add_argument(
+        "--config", type=str, default=None,
+        help=("Wave 112.D-4: optional run-profile YAML. Honours $UPSTREAM_PROFILE env var "
+              "when set. CLI > YAML > module default."),
+    )
     args = parser.parse_args()
     print(f"REPO_ROOT = {REPO_ROOT}")
     print(f"LINEAGEFLOW_EVALUATE_ALL = {LINEAGEFLOW_EVALUATE_ALL}")
     print(f"KANZI_SRC = {KANZI_SRC}")
     print(f"FLOWMOL3_UPSTREAM = {FLOWMOL3_UPSTREAM}")
     print(f"selected = {args.model}")
+    if args.config:
+        print(f"profile_path = {args.config}")

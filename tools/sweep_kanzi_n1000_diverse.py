@@ -95,6 +95,10 @@ from tools._sweep_assertion import (  # noqa: E402
 )
 from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # noqa: E402
 
+# Wave 112.D-1: --config support.
+from tools._kanzi_sweep_runner import apply_kanzi_profile_defaults  # noqa: E402
+from tools.eval.config import load_run_profile  # noqa: E402
+
 # Wave 98.A — GPU utilization watchdog. Wraps the sweep loop so a
 # stuck-process scenario (util.gpu==0 while memory.used>100 MiB for
 # >30s) emits a WARNING to stderr. The diagnostic that should have
@@ -104,6 +108,10 @@ from tools._gpu_watchdog import gpu_watchdog  # noqa: E402
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p.add_argument("--config", type=Path, default=None,
+                   help=("Wave 112.D-1: optional path to a run-profile YAML; "
+                         "CLI flag > YAML value > module default. Omitting "
+                         "--config preserves the legacy byte-stable surface."))
     p.add_argument("--input", type=Path,
                    default=_REPO_ROOT / "verification_outputs"
                                           / "kanzi_n1000_coords.txt",
@@ -122,6 +130,20 @@ def main(argv: list[str] | None = None) -> int:
                    help="Cap on N records (default 1000; the input file "
                         "ships N=1000 records).")
     args = p.parse_args(argv)
+    # Wave 112.D-1: load + overlay YAML profile (CLI > YAML > default).
+    if args.config is not None:
+        try:
+            profile = load_run_profile(args.config)
+        except Exception as exc:  # ConfigError + OSError + yaml.YAMLError
+            print(f"[ERROR] --config load failed: {exc}", file=sys.stderr)
+            return 2
+        args = apply_kanzi_profile_defaults(args, p, profile)
+        # this driver uses --max-records (not --limit like the shared runner's
+        # 3 drivers) — mirror the same CLI > YAML > default resolution.
+        if "max_records" in profile:
+            if args.max_records == p.get_default("max_records"):
+                n = int(profile["max_records"])
+                args.max_records = n if n > 0 else 0
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     jsonl_path = args.output_dir / "per_metric.jsonl"

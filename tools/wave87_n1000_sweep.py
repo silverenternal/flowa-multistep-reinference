@@ -32,6 +32,7 @@ Output:
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import math
@@ -67,9 +68,12 @@ from tools.paper_metrics import (  # noqa: E402
     compute_all_paper_metrics,
 )
 
+# Wave 112.D-2: --config support.
+from tools.eval.config import load_run_profile  # noqa: E402
+
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants (DEFAULTS — overridden via CLI flags / --config; see main())
 # ---------------------------------------------------------------------------
 
 N_TOTAL = 1000
@@ -152,6 +156,12 @@ def _generate_arm(
     arm_name: str,
     perturbation_sigma: float,
     seed_base: int,
+    n_total: int,
+    nfe: int,
+    nfe_batch: int,
+    weights_path: Path,
+    upstream_repo: Path,
+    device: str,
     output_json: Path,
 ) -> dict[str, Any]:
     """Generate 1000 SDF molecules for one arm (baseline or framework).
@@ -164,11 +174,11 @@ def _generate_arm(
     from adaptive_reflow.adapters.flowmol3_v2_adapter import FlowMol3V2Adapter
     adapter = FlowMol3V2Adapter(
         backend="torch",
-        num_steps=NFE,
-        weights_path=str(WEIGHTS_PATH),
-        device=DEVICE,
+        num_steps=nfe,
+        weights_path=str(weights_path),
+        device=device,
         use_upstream=True,
-        upstream_repo_dir=str(UPSTREAM_REPO),
+        upstream_repo_dir=str(upstream_repo),
     )
     load_seconds = round(time.perf_counter() - t0, 3)
     print(f"[{arm_name}] adapter constructor completed in {load_seconds}s", flush=True)
@@ -192,7 +202,8 @@ def _generate_arm(
     # ``sampled_mols_from_smiles`` (CTMC valence artifact, ~0.1% rate).
     dropped_smiles_total: list[str] = []
     t_total = time.perf_counter()
-    for batch_idx in range(N_BATCHES):
+    n_batches = n_total // nfe_batch
+    for batch_idx in range(n_batches):
         seed = int(seed_base + batch_idx)
         batch_id = f"{arm_name}-batch{batch_idx}-seed{seed}"
         # 1. Build canonical prior.
@@ -205,9 +216,9 @@ def _generate_arm(
                 perturbation_sigma=perturbation_sigma,
                 seed=seed,
             )
-        # 3. Solve via upstream (n_molecules=NFE_BATCH).
+        # 3. Solve via upstream (n_molecules=nfe_batch).
         cond = ODEConditionDelta(
-            delta_spec={"num_steps": NFE},
+            delta_spec={"num_steps": nfe},
             source=f"wave82_agent_c_{arm_name}",
             target_round=0,
             calibration_artifact_hash=f"wave82_q4_2026",
@@ -215,7 +226,7 @@ def _generate_arm(
         t_batch = time.perf_counter()
         try:
             trace = adapter.solve_ode(
-                bundle, cond, seed=int(seed), n_molecules=NFE_BATCH,
+                bundle, cond, seed=int(seed), n_molecules=nfe_batch,
             )
         except Exception as exc:
             errors.append(f"batch{batch_idx}:{type(exc).__name__}:{exc}")
@@ -244,7 +255,7 @@ def _generate_arm(
                 [s for s in cached_smiles_batch if isinstance(s, str) and s]
             )
         print(
-            f"[{arm_name}] batch {batch_idx + 1}/{N_BATCHES}: "
+            f"[{arm_name}] batch {batch_idx + 1}/{n_batches}: "
             f"{len(sampled_batch)} mols in {per_batch_seconds}s "
             f"(running total {len(sampled_mols)})",
             flush=True,
@@ -272,7 +283,7 @@ def _generate_arm(
     out = {
         "schema_version": "1.0.0",
         "arm": arm_name,
-        "n_target": int(N_TOTAL),
+        "n_target": int(n_total),
         "n_sampled": int(len(sampled_mols)),
         "n_smiles": int(len(smiles_list)),
         "n_errors": int(len(errors)),
@@ -282,10 +293,10 @@ def _generate_arm(
         "load_seconds": float(load_seconds),
         "perturbation_sigma": float(perturbation_sigma),
         "seed_base": int(seed_base),
-        "nfe": int(NFE),
-        "nfe_batch": int(NFE_BATCH),
-        "device": str(DEVICE),
-        "weights_path": str(WEIGHTS_PATH),
+        "nfe": int(nfe),
+        "nfe_batch": int(nfe_batch),
+        "device": str(device),
+        "weights_path": str(weights_path),
         "smiles_list": smiles_list[:200],  # cap for the JSON dump
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
@@ -358,6 +369,57 @@ def _compute_metrics(sampled_mols: list[Any], *, arm_name: str) -> dict[str, Any
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry — runs baseline + framework arms at N=1000."""
+    # Wave 112.D-2: argparse migration of module constants + --config.
+    # Guard: if --config is None, keep the legacy module-level defaults
+    # (no breaking change). YAML values overlay on argparse defaults when
+    # --config is provided (CLI > YAML > module default).
+    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p.add_argument("--config", type=Path, default=None,
+                   help=("Wave 112.D-2: optional run-profile path "
+                         "(configs/runs/<model>_<purpose>.yaml); CLI > YAML > "
+                         "module default. Omitting preserves legacy surface."))
+    p.add_argument("--n-total", type=int, default=N_TOTAL,
+                   help=f"Total mols per arm (default {N_TOTAL}).")
+    p.add_argument("--nfe", type=int, default=NFE,
+                   help=f"FlowMol3 paper NFE (default {NFE}).")
+    p.add_argument("--nfe-batch", type=int, default=NFE_BATCH,
+                   help=f"Mols per upstream batched call (default {NFE_BATCH}).")
+    p.add_argument("--seed-base", type=int, default=SEED_BASE,
+                   help=f"Base seed for trajectory (default {SEED_BASE}).")
+    p.add_argument("--weights-path", type=Path, default=WEIGHTS_PATH,
+                   help="Path to FlowMol3 .ckpt.")
+    p.add_argument("--upstream-repo", type=Path, default=UPSTREAM_REPO,
+                   help="Path to vendored FlowMol3 upstream repo.")
+    p.add_argument("--device", default=DEVICE,
+                   help=f"Torch device (default {DEVICE}).")
+    args = p.parse_args(argv)
+    if args.config is not None:
+        try:
+            profile = load_run_profile(args.config)
+        except Exception as exc:
+            print(f"[ERROR] --config load failed: {exc}", file=sys.stderr)
+            return 2
+        # Overlay YAML on argparse defaults (CLI > YAML > module default).
+        for key in ("seed", "max_records"):
+            if key in profile:
+                pass  # not 1:1 with these flags
+        # NFE / N_BATCHES: profile.nfe_budgets[0] maps to --nfe.
+        if "nfe_budgets" in profile and profile["nfe_budgets"]:
+            if args.nfe == p.get_default("nfe"):
+                args.nfe = int(profile["nfe_budgets"][0])
+        # max_records maps to --n-total.
+        if "max_records" in profile and args.n_total == p.get_default("n_total"):
+            args.n_total = int(profile["max_records"])
+
+    n_total = int(args.n_total)
+    nfe = int(args.nfe)
+    nfe_batch = int(args.nfe_batch)
+    seed_base = int(args.seed_base)
+    weights_path = Path(args.weights_path)
+    upstream_repo = Path(args.upstream_repo)
+    device = str(args.device)
+    n_batches = n_total // nfe_batch
+
     out_dir = REPO_ROOT / "verification_outputs"
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -384,7 +446,13 @@ def main(argv: list[str] | None = None) -> int:
     baseline_result = _generate_arm(
         arm_name="baseline",
         perturbation_sigma=0.0,
-        seed_base=SEED_BASE,
+        seed_base=seed_base,
+        n_total=n_total,
+        nfe=nfe,
+        nfe_batch=nfe_batch,
+        weights_path=weights_path,
+        upstream_repo=upstream_repo,
+        device=device,
         output_json=baseline_json,
     )
     baseline_metrics = _compute_metrics(
@@ -396,7 +464,13 @@ def main(argv: list[str] | None = None) -> int:
     framework_result = _generate_arm(
         arm_name="framework",
         perturbation_sigma=0.05,
-        seed_base=SEED_BASE,
+        seed_base=seed_base,
+        n_total=n_total,
+        nfe=nfe,
+        nfe_batch=nfe_batch,
+        weights_path=weights_path,
+        upstream_repo=upstream_repo,
+        device=device,
         output_json=framework_json,
     )
     framework_metrics = _compute_metrics(
@@ -408,7 +482,7 @@ def main(argv: list[str] | None = None) -> int:
     # ~ 0.018, MDD @ a=0.05 power=0.8 ~ 5.6%; ood_ring_rate SEM ~ 1.4%,
     # MDD ~ 0.8%.
     n_flags = 30  # canonical REOS flag count for FlowMol3 paper
-    n = float(N_TOTAL)
+    n = float(n_total)
     fg_dev_sem = 1.0 / math.sqrt(n_flags * n)
     fg_dev_mdd_80 = 1.96 * math.sqrt(2.0) * fg_dev_sem  # 2-sided, alpha=0.05, power=0.8
     # ood_ring_rate SEM at p_hat=0.10 (paper target)
@@ -417,7 +491,7 @@ def main(argv: list[str] | None = None) -> int:
     ood_ring_mdd_80 = 1.96 * math.sqrt(2.0 * p_hat * (1.0 - p_hat)) / math.sqrt(n)
 
     stats = {
-        "n_total_per_arm": int(N_TOTAL),
+        "n_total_per_arm": int(n_total),
         "fg_dev_sem": round(fg_dev_sem, 5),
         "fg_dev_mdd_alpha0.05_power0.8": round(fg_dev_mdd_80, 5),
         "ood_ring_rate_sem_at_p0.10": round(ood_ring_sem, 5),
@@ -459,13 +533,13 @@ def main(argv: list[str] | None = None) -> int:
         "schema_version": "1.0.0",
         "sweep_id": "wave87_agent_c_n1000_paper_metric_repro",
         "model": "flowmol3",
-        "checkpoint": str(WEIGHTS_PATH),
-        "n_total_per_arm": int(N_TOTAL),
-        "nfe": int(NFE),
-        "nfe_batch": int(NFE_BATCH),
-        "n_batches": int(N_BATCHES),
-        "seed_base": int(SEED_BASE),
-        "device": str(DEVICE),
+        "checkpoint": str(weights_path),
+        "n_total_per_arm": int(n_total),
+        "nfe": int(nfe),
+        "nfe_batch": int(nfe_batch),
+        "n_batches": int(n_batches),
+        "seed_base": int(seed_base),
+        "device": str(device),
         "paper_targets": PAPER_TARGETS,
         "baseline": {
             "perturbation_sigma": 0.0,
