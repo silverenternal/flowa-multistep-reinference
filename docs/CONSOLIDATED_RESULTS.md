@@ -6,6 +6,11 @@
 
 ---
 
+> **Current verdict (as of Wave 100):** Framework value is real and measured (Kanzi real ckpt now loads cleanly via the Wave 100 upstream-DAE fix: 44M params, velocity std=1.7078 on real input), but Kanzi paper-metric at the latest N=10 framework arm REGRESSES_BY_+0.86_Å (Bonferroni p=4.6e-7) due to the post-`project_out` bridge architecture — not a framework code regression.
+> Numbers: 27+80 algorithm uplifts all hit; 2D FM rel Δ 0.5% (parity); Kanzi composite_median +0.170 (`framework_improves`, 9/9 cells); Wave 92c framework RMSD 1.766 Å vs Wave 88 baseline 0.902 Å (N=10 vs N=1000); 4/6 paper-metric cells UNDERPOWERED at 1 pp detection (Wave 93 statistical power tool).
+> Status: Tier 3 N=1000 framework paper-metric verdict NOT yet measurable (synthetic endpoint at σ=1e-3 collapses all records to one codebook index; W2 reviewer weakness remains open).
+> See [`docs/audit/wave99b-n1000-verdict.md`](audit/wave99b-n1000-verdict.md) + [`wave100-kanzi-load-torch-fix.md`](audit/wave100-kanzi-load-torch-fix.md) + [`wave95-phase3-kanzi-inverse-rerun.md`](audit/wave95-phase3-kanzi-inverse-rerun.md).
+
 ## 1. TL;DR
 
 `adaptive_reflow` is a typed-contracts framework for flow matching ODE re-inference.
@@ -250,6 +255,11 @@ Script changes committed: `tools/experiments/run_mnist_migration.py` (inception 
 ---
 
 ## 7. Toy framework comparison (vanilla PyTorch vs `adaptive_reflow`)
+
+> **Current verdict (as of Wave 100):** Tier 1 toy framework comparison: 2D FM matches vanilla at parity (rel Δ 0.5%), MNIST -15% FID on one checkpoint (Heun NFE=100 vs Euler), `partial` on smol-rectified-flow ADM UNet; Tier 3 Kanzi composite_median = +0.170 (`framework_improves` on 9/9 cells).
+> Numbers: toy 2D W2 = 0.148 (parity), MNIST FID 347.75 vs 409.18 (-15%), Kanzi composite_median +0.170, Wave 95 phase-3 framework RMSD 3.178 Å (degenerate-synthetic-endpoint) vs Wave 88 baseline 0.902 Å.
+> Status: Tier 3 framework paper-metric at N=1000 not closed (W2 reviewer weakness); N=10 framework arm REGRESSES_BY_+0.86_Å at Bonferroni p=4.6e-7.
+> See [`docs/audit/wave95-phase3-kanzi-inverse-rerun.md`](audit/wave95-phase3-kanzi-inverse-rerun.md) + [`wave99b-n1000-verdict.md`](audit/wave99b-n1000-verdict.md).
 
 Two ultracode runs (`toy-fm-framework-validation` and `toy-fm-framework-validation-pretrained`),
 strict before/after at matched seed + NFE.
@@ -931,6 +941,11 @@ Kanzi adapter and the eval runner as its disjoint scope.
 ---
 
 ## 15. Wave 41 Agent B — `--force-mode real` end-to-end on real Kanzi ckpt
+
+> **Current verdict (as of Wave 100):** §15 captures the Wave 86-93 Kanzi real-ckpt framework-vs-baseline close-out: Wave 88 baseline N=1000 RMSD = 0.902 Å, Wave 92c framework N=10 RMSD = 1.766 Å (Δ +0.86 Å, Bonferroni p=4.6e-7), 4/6 paper-metric cells UNDERPOWERED per the Wave 93 statistical-power tool.
+> Numbers: 6 cells × 2-arm Wave 92c framework-vs-baseline; framework-arm N=10 mean 1.766 Å ± 0.214, 95% CI [1.613, 1.919]; baseline-arm N=1000 mean 0.902 Å ± 0.137; 4 UNDERPOWERED + 2 TIE + 0 SUPPORTED + 0 REGRESSES (Wave 93 verdict precedence).
+> Status: W2 reviewer weakness ("framework paper-metric unverifiable at N=1000") NOT closed by Wave 99; framework arm at N=1000 has not been run on real Kanzi ckpt + paper metrics.
+> See [`docs/audit/wave99b-n1000-verdict.md`](audit/wave99b-n1000-verdict.md).
 
 ### 15.1 What landed
 
@@ -2689,6 +2704,11 @@ verification output.
 ---
 
 ## §18 Wave 54 Agent B — final paper rewrite (all real Tier 3 numbers)
+
+> **Current verdict (as of Wave 100):** §18 NFE-adaptive framing (Wave 58 Agent 5) replaces "framework_improves" with "framework extends baseline saturation ceiling, NFE-aware"; Wave 95 phase-3.C retry showed NFE-aware framework at N=10 RMSD = 3.178 Å (degenerate-synthetic-endpoint, all records collapse to one codebook index) vs Wave 88 baseline 0.902 Å.
+> Numbers: §18.11 three-mode verdict classification (TIE 8/12, UNDERPOWERED 2/12, SUPPORTED 1/12, REGRESSES 1/12); §18.10 NFE scan extends-baseline-plateau framing (not yet N=1000-validated on real Kanzi paper-metric).
+> Status: ceiling-extension claim is not yet N=1000-validated; framework paper-metric remains REGRESSES_BY_+0.86_Å at the latest N=10 measurement.
+> See [`docs/audit/wave95-phase3-kanzi-inverse-rerun.md`](audit/wave95-phase3-kanzi-inverse-rerun.md) + [`wave99b-n1000-verdict.md`](audit/wave99b-n1000-verdict.md).
 
 Wave 54 Agent B is the **final paper-side digest** wave that
 consolidates the Wave 47 / Wave 49 / Wave 50 / Wave 52 / Wave 53
