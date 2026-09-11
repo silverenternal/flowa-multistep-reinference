@@ -247,9 +247,11 @@ A reviewer can re-verify with the `sha256` field of each `verification_outputs/*
 
 ### S6.3 D.4 byte-stable regression vectors
 
-- **Status:** **33/33 PASS** (`tests/test_d4_regression_vectors.py` + `tests/test_adapters/test_regression_vectors.py`)
-- **Reference run baseline:** `docs/audit/wave91-phase5-final.md` §0 (re-confirmed post every Wave 75-93 commit)
-- **Last green:** commit `e69ffd8` (Wave 93 Phase 1 statistical power analysis)
+- **Status:** **72/72 PASS** at HEAD commit `f97ec1c` (33 in `tests/test_d4_regression_vectors.py` + 39 in `tests/test_adapters/test_regression_vectors.py`); see `docs/GATES.md` "D.4 byte-stable regression vectors" section (single source of truth).
+- **Legacy 33/33 PASS caveat:** The "33/33 PASS" figure used historically referred to the Wave 38-39 first-batch regression subset only. The current 72/72 figure includes Wave 32 batches 2/3/4 + Wave 33 batch 2/3 additions.
+- **D.4 vs full pytest — important distinction:** Full pytest (`pytest tests/ -q`) collects **4591 tests** of which **2165 pass** + **9 skip** + **3 FAILED** (per `pytest_results.txt` at `f97ec1c`). The 3 pre-existing FAILED tests are tracked in `docs/audit/wave48-pytest-pre-push-fixes.md` and are unrelated to framework logic.
+- **Reference run baseline:** `docs/audit/wave91-phase5-final.md` §0 (re-confirmed post every Wave 75-105 commit)
+- **Last green:** commit `f97ec1c` (Wave 106.C.2 final synthesis)
 
 ### S6.4 G-MASTER capability gate
 

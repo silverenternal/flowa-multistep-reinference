@@ -52,7 +52,7 @@
 
 ### Verification gates (hard / soft)
 
-- [ ] **D.4 byte-stable regression** — **33/33 PASS** (`tests/test_d4_regression_vectors.py` + `tests/test_adapters/test_regression_vectors.py`); reference run baseline `docs/audit/wave91-phase5-final.md` §0
+- [ ] **D.4 byte-stable regression** — **72/72 PASS** at HEAD commit `f97ec1c` (33 in `tests/test_d4_regression_vectors.py` + 39 in `tests/test_adapters/test_regression_vectors.py`); reference run baseline `docs/audit/wave91-phase5-final.md` §0. Legacy "33/33 PASS" figure referred to the Wave 38-39 first-batch regression subset only. Full pytest has 3 pre-existing FAILED tests unrelated to framework logic (tracked in `docs/audit/wave48-pytest-pre-push-fixes.md`); see `docs/GATES.md` "D.4 byte-stable regression vectors" section for the single source of truth.
 - [ ] **G-MASTER capability gate** — **7/7 PASS** (hard_pass=5, soft_pass=2; `tools/capability_audit.py --robust`)
 - [ ] **`mkdocs build --strict`** — **EXIT=0** (verify before commit; per `todo/STATUS.md` last green at commit `e69ffd8`)
 
