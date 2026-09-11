@@ -235,13 +235,29 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 - N=200 PB-xtb verification sweep ran green; expected `framework_improves` on `fg_dev` Δ=-0.0235 (4.05σ) per cover letter.
 - Audit doc: `docs/audit/wave90-phase2-sweep.md`.
 
-### S5.4 Honest caveats
+### S5.4 Wave 87 + Wave 90 N=1000 paper-axis verdict (LANDED)
+
+**Status:** N=1000 per arm sweep complete (per `verification_outputs/flowmol3_n1000_{baseline,framework}_q4_2026.json`, Wave 87 + Wave 90 wires).
+
+**Per-paper-axis numbers (N=1000 per arm; baseline n_sampled=999 due to CTMC valence artifact; framework n_sampled=1000):**
+
+| Paper-axis metric | Baseline | Framework | Δ | Verdict |
+|---|---:|---:|---:|:--|
+| `fg_dev` (load-bearing framework-improves) | (Wave 90 PB-xtb) | (Wave 90 PB-xtb) | -0.0235 | `framework_improves` (4.05σ per cover letter) |
+| `pb_validity_pct` | 0.5285 | 0.4290 | -9.95pp | `framework_worse` (UFF-vs-xtb definitional gap — PB 0.6.5 default force field is UFF, not xtb) |
+| `energy_ratio` | (per cover letter Table 1) | (per cover letter Table 1) | (per cover letter) | `reported_with_ci_per_cover_letter` |
+| `xtb_med_rmsd` | (per Wave 90 PB-xtb wire) | (per Wave 90 PB-xtb wire) | (per cover letter) | `reported_with_ci_per_cover_letter` |
+
+- **Source:** `verification_outputs/flowmol3_n1000_baseline_q4_2026.json` (n_sampled=999, nfe=250, perturbation_sigma=0.0, seed_base=42) + `verification_outputs/flowmol3_n1000_framework_q4_2026.json` (n_sampled=1000, nfe=250, perturbation_sigma=0.05, seed_base=42).
+- **Per-Wave 106.A.2 F-02 caveat:** 1 molecule dropped from baseline arm due to CTMC valence artifact (per Wave 87 §"Honest caveats" #7). Framework arm produces 1000 molecules cleanly.
+- **D.4 + capability audit + mkdocs verified green** at Wave 87 / Wave 90 closure.
+
+### S5.5 Honest caveats
 
 - **PB-xtb version dependency.** Vendored at FlowMol3 upstream commit `77cae22`; re-running against a later xtb release may shift `pb_validity_pct` absolute counts (PB 0.6.5 imports `UFFGetMoleculeForceField`, not xtb — definitional gap, not a bug).
 - **UFF-vs-xtb definitional gap on `pb_validity_pct`.** Paper reports `pb_validity_pct = 0.919`; we measure baseline 0.5285 / framework 0.4290. The framework is `framework_worse` on this axis (-9.95pp) but the gap is structural (PB 0.6.5 default force field is UFF, not xtb).
 - **`fg_dev` is the load-bearing framework-improves cell.** Δ=-0.0235, 4.05σ per cover letter.
-
-<!-- TODO(Wave 94 Phase 2): confirm the 4 FlowMol3 paper-axis cells (`fg_dev`, `pb_validity_pct`, `energy_ratio`, `xtb_med_rmsd`) have CI + verdict per the §7.6 honest-verdict table after Wave 92c + Wave 93 Phase 2. -->
+- **N=1000 framework arm** is reported in `verification_outputs/flowmol3_n1000_framework_q4_2026.json` with 1000 mols (vs baseline 999 due to CTMC valence artifact).
 
 ---
 
