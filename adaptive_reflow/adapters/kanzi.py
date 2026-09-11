@@ -1163,6 +1163,14 @@ def _load_torch_model(weights_path: Path) -> Any:
         site without a real ckpt. Never silently on a real
         ``weights_path`` (the adapter constructor already verified the
         file exists + torch is available).
+
+        Wave 106.C.1 F-06 gating note: this stub is fail-closed via
+        the Wave 103 P2-A ``load_real_weights(..., stub_factory=_stub_factory)``
+        trait on ``_adapter_common``. The trait is reached ONLY when the
+        upstream ``kanzi.models.DAE`` import fails (network/cache/SHA
+        miss). Constructor verifies the file exists BEFORE invoking
+        this path. See ``docs/audit/wave106-a-1-adapter-stubs.md``
+        §2.2 finding #6.
         """
 
         class _StubKanzi(_nn.Module):
