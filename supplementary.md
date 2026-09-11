@@ -162,6 +162,7 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 
 - **FSQ quantisation noise floor.** Wave 36 Kanzi ckpt FSQ basis `(8, 5, 5, 5)` → codebook size 1000 → per-row projection error ~0.5 Å in coord space. Decoder stochasticity from `torch.randn_like` is unseeded (Wave 88 F-4: 8 records × 8 unseeded repeats, σ=0.095 Å run-to-run).
 - **5 codebook metrics `TIED_BY_DESIGN`.** `codebook_entropy_bits`, `codebook_perplexity`, `codebook_js_distance`, `codebook_utilization`, `codebook_hamming_rotation_invariance` are deterministic functions of the post-`DAE.encode+decode` round-trip, which is shared between baseline and framework arms.
+- **Decoder seed-handling per model family (Wave 108.A).** FlowMol3 framework arm seeds via `flowmol.FlowMol.sample(seed=42)` per Wave 74 F2 (byte-stable 3 runs at `fg_dev=0.6146`); LineageFlow framework arm seeds via `np.random.seed(seed_base)` per `data/lineageflow_upstream/evaluation/evaluate_all.py`; Kanzi `DAE.decode` now seeded via `torch.manual_seed(int(seed))` in `tools/kanzi_latent_to_coord.py:165` per Wave 108.A — proposed `--seed` flag threaded into `dae.decode` remediation is live (`tools/sweep_kanzi_n1000_paper_metrics.py --seed`); framework arm and baseline arm both use `--seed 42` for paired comparison, dropping per-record σ from 0.0947 Å to 0.0 Å (verified).
 
 ---
 
