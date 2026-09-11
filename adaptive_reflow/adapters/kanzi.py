@@ -1044,11 +1044,19 @@ def _torch_velocity_field(
     import torch  # local import — torch is optional at the framework level.
 
     with torch.no_grad():
-        x_t = torch.as_tensor(x, dtype=dtype).unsqueeze(0)  # (1, L_z, d)
-        t_t = torch.tensor([float(t)], dtype=dtype)
+        # Wave 112.C-3 (RC-4): derive the device from the model's
+        # parameters once so all input tensors land on the same device
+        # as the model (post Wave 112.C-1 the model is on CUDA when
+        # available). Without this, ``torch.as_tensor`` defaults to CPU
+        # and the upstream ``DAE.net`` forward raises a device-mismatch
+        # error on \`x_t.device != model.device\`.
+        device = next(model.parameters()).device
+        x_t = torch.as_tensor(x, dtype=dtype, device=device).unsqueeze(0)  # (1, L_z, d)
+        t_t = torch.tensor([float(t)], dtype=dtype, device=device)
         family_t = torch.as_tensor(
             cache.get("family_embed", np.zeros(1152, dtype=np.float64)),
             dtype=dtype,
+            device=device,
         ).unsqueeze(0)  # (1, 1152)
 
         # Real Kanzi forward: 1D conv encoder + family-id MLP conditioning,
