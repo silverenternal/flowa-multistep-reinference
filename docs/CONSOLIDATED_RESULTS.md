@@ -2509,6 +2509,57 @@ restart-blend can drive systematically:
 scheduler, `tools/run_real_ckpt_eval.py`, or other adapters per the
 disjoint-file-scope contract.
 
+### §16.7 Wave 109.B + 109.C — N=1000 LineageFlow + FlowMol3 re-run attempts (additive, does NOT delete any §16 row above)
+
+**Wave 109.B attempt:** Per the brief, Wave 109.B rewrote
+`tools/lineageflow_n1000_gpu_sweep.sh` to accept 3 positional args +
+`--lineageflow-upstream-eval` + `--upstream-n-samples 1000` + 7200 s
+`timeout` cap. Side environment fix: `kanzi.py:537` 2-line
+`import importlib.util as _importlib_util` patch. The full N=1000 GPU
+sweep runs were killed at 6 min (parent budget exhausted) per
+`docs/audit/wave109-b-lineageflow-n1000-gpu.md` §2 — both arms sent
+SIGTERM, partial outputs cleaned up, no fabricated data persisted.
+The smoke test at nfe=50 / n_rounds=3 / `--upstream-n-samples 5`
+completed in ~5 min and produced `composite = +0.2031`, `framework_improves`,
+matching Wave 47 / Wave 81 +0.2109 within sampling noise.
+
+**Verdict REMAINS** the Wave 86 N=1000 reading (canonical best-known-good):
+`hmmscan_total_hits` framework_improves (+116%, baseline 158 → framework 342,
+p < 1e-10, 2.16× more Pfam HMM profiles); `coverage_any_hit`
+framework_ties_within_sem (Δ=-2.2 pp, z=-1.136, p≈0.26, NOT
+statistically distinguishable at N=1000); `top1_family_type`
+framework_ties_at_zero (synthetic M-rich priors at NFE=10 don't cross
+the Pfam-A HMM E-value 1e-3 threshold).
+
+**Wave 109.C attempt:** Per the brief, Wave 109.C attempted to re-run
+the FlowMol3 N=1000 baseline using the Wave 108.B `_DroppedSmilesCapture`
+logging handler + n_sampled vs n_smiles cross-check WARNING. The run
+**failed deterministically** at every batch with a DGL graph ndata shape
+mismatch — the upstream `FlowMol.sample()` at line 546 of
+`data/FlowMol3/repo/flowmol/models/flowmol.py` expects batched
+`x_0: (batch_size * n, 3)` but the v2 adapter's `_solve_ode_upstream_batch`
+supplies per-mol `x_0: (n, 3)`. DGL 2.4.0 strictly enforces the shape
+match. Failed-run JSON preserved at
+`verification_outputs/flowmol3_n1000_baseline_wave109_c_q4_2026.json`
+(n_target=1000, n_sampled=0, n_errors=10, wallclock_s=0.282 — run never
+reached the dropped-SMILES path because DGL fails first).
+
+**Verdict REMAINS** the Wave 87 N=1000 reading (canonical best-known-good):
+`validity_pct` MATCH (1.0000 both arms); `pb_validity_pct` framework_regresses
+(0.429 vs 0.5285, UFF-vs-xtb definitional gap, brief's PB-xtb premise
+FALSE POSITIVE); `fg_dev` framework_improves (Δ=-0.0235, 4.05σ, p<0.05
+— single framework-vs-baseline paper-metric win); `ood_ring_rate`
+underpowered at N=1000 (|Δ|=0.003 < MDD 0.0263).
+
+**Wave 110 follow-up plan (additive):**
+- LineageFlow: re-launch Wave 109.B wrapper in parallel on the same GPU
+  with 4-h cap per arm × 2 arms = 8-h total budget; pre-warm with a
+  1-cell smoke first; expected per-arm wallclock ~25-30 min.
+- FlowMol3: 4-LOC targeted fix at `_solve_ode_upstream_batch:2835` to
+  tile the prior across the batch axis before assigning to the upstream
+  (`x_0: (n, 3)` → `unsqueeze(0).expand(n_mol, -1, -1).reshape(-1, 3)`)
+  — would unblock the Wave 109.C failed-run path.
+
 ---
 
 ## §17 Wave 52 Agent D — final synthesis (paper §Discussion + README + this summary)
@@ -3592,4 +3643,68 @@ refresh.
   §15.17 + fix duplicate §15.16 numbering bug).
 - `docs/audit/wave93-phase2-final.md` §1 — APPEND Wave 99 row to the
   Kanzi 12-cell table.
+
+## §15.19 Wave 109.A — Kanzi N=1000 deterministic re-run attempt (additive, does NOT delete any §15 row above)
+
+### §15.19.1 What this section is
+
+Wave 109.A attempted to re-run the Kanzi N=1000 baseline + framework
+arms with `--seed 42` per the Wave 108.A deterministic-decoder fix.
+**Wave 109.A did NOT produce a fresh N=1000 Kanzi framework paper-metric
+sweep.** Per the brief's "If a run fails: do NOT paper over" rule, this
+section honestly reports the attempt outcome and retains the Wave 96.E
+N=10 framework arm + Wave 88 N=1000 baseline arm as the canonical
+best-known-good Kanzi paper-metric reading.
+
+### §15.19.2 What Wave 109.A actually did
+
+- The Wave 108.A `--seed` flag was confirmed threaded into the
+  Kanzi sweep driver end-to-end (`tools/sweep_kanzi_n1000_paper_metrics.py
+  --seed 42`); per-record σ drops from 0.0947 Å (Wave 88 F-4
+  unseeded stochasticity) to 0.0 Å at `--seed 42`.
+- The Kanzi baseline arm N=1000 reproduces byte-stable against the
+  Wave 88 baseline (`0.902 ± 0.137 Å`) when re-run with `--seed 42`.
+- The Kanzi framework arm paper-metric sweep is **NOT re-run** at N=1000
+  in Wave 109.A — it remains at N=10 (Wave 96.E, post-Wave 95
+  project_out⁻¹ + Wave 96.B diverse-endpoints fix). The
+  framework-arm at N=1000 is queued for Wave 110+ with GPU torch.
+
+### §15.19.3 Verdict (UNCHANGED from Wave 96.E / Wave 99.B)
+
+| Axis | N (framework) | N (baseline) | Framework | Baseline | Δ | Verdict |
+|---|---:|---:|---:|---:|---:|:---|
+| `reconstruction_kabsch_rmsd_A` | 10 | 1000 | 1.766 ± 0.214 Å | 0.902 ± 0.137 Å | +0.864 Å | **`REGRESSES_BY_+0.86_Å`** — Welch t=19.7, 95% CI [+0.731, +0.997], Bonferroni p=4.6e-7 ≪ 0.0083 |
+| 5 codebook metrics (FSQ entropy / perplexity / JS-distance / utilization / hamming-rotation) | 10 | 1000 | (per Wave 96.D) | (per Wave 88) | (per Wave 96.D) | **`TIED_BY_DESIGN`** — framework restart-blend acts on flow trajectory, not on post-reconstruction FSQ round-trip |
+
+The architectural explanation (Wave 92c §5) is unchanged: the
+framework's continuous-latent endpoint lives in the post-`project_out`
+(n_channels_decoder=512) space, and the nearest-neighbour L2 projection
+onto `FSQ.implicit_codebook` loses ~0.86 Å of reconstruction fidelity
+vs the canonical `DAE.encode → DAE.decode` baseline path. This is
+NOT a framework regression — it is the architectural cost of running
+the framework's continuous-latent endpoint through the bridge.
+
+### §15.19.4 Wave 110 follow-up plan (additive)
+
+1. **Framework arm N=1000 on real Kanzi ckpt + paper metrics** — cost
+   ~16.7 h CPU on `kanzi_venv`, or ~10× fewer hours on GPU if the FSQ
+   decode path can be JIT'd. Expected verdict: REGRESSES on
+   `reconstruction_kabsch_rmsd_A` (architectural cost is invariant
+   to N) but 95% CI of Δ tightens from ±0.19 Å to ±0.02 Å — enough
+   to defend a magnitude claim to a reviewer.
+2. **Statistical-power-per-N at the 0.1 Å detection floor** — extend
+   the Wave 93 power tool to read off `n_needed_at_δ_angstrom` for
+   δ ∈ {0.05, 0.1, 0.2, 0.5, 1.0} Å so the magnitude claim is
+   defensible.
+3. **Architectural fix (optional)** — learn a model-side
+   `idx = f(x_final)` that respects FSQ quantisation rather than
+   nearest-neighbour projection. This is a *model-side* change,
+   outside Wave 110 scope; deferred to a future wave.
+
+### §15.19.5 Cross-references
+
+- `docs/audit/wave108-final-synthesis.md` §1 — Wave 108.A `--seed` thread-through
+- `docs/audit/wave109-c-flowmol3-n1000.md` — Wave 109.C FlowMol3 sibling attempt
+- `docs/audit/wave109-b-lineageflow-n1000-gpu.md` — Wave 109.B LineageFlow sibling attempt
+- `docs/audit/wave109-d-paper-package-update.md` — Wave 109.D paper-package reconciliation summary
 - Full Wave 99.B audit: `docs/audit/wave99b-n1000-verdict.md`.

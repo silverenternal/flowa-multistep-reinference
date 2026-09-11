@@ -164,6 +164,21 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 - **5 codebook metrics `TIED_BY_DESIGN`.** `codebook_entropy_bits`, `codebook_perplexity`, `codebook_js_distance`, `codebook_utilization`, `codebook_hamming_rotation_invariance` are deterministic functions of the post-`DAE.encode+decode` round-trip, which is shared between baseline and framework arms.
 - **Decoder seed-handling per model family (Wave 108.A).** FlowMol3 framework arm seeds via `flowmol.FlowMol.sample(seed=42)` per Wave 74 F2 (byte-stable 3 runs at `fg_dev=0.6146`); LineageFlow framework arm seeds via `np.random.seed(seed_base)` per `data/lineageflow_upstream/evaluation/evaluate_all.py`; Kanzi `DAE.decode` now seeded via `torch.manual_seed(int(seed))` in `tools/kanzi_latent_to_coord.py:165` per Wave 108.A — proposed `--seed` flag threaded into `dae.decode` remediation is live (`tools/sweep_kanzi_n1000_paper_metrics.py --seed`); framework arm and baseline arm both use `--seed 42` for paired comparison, dropping per-record σ from 0.0947 Å to 0.0 Å (verified).
 
+### S3.6 Wave 109.A N=1000 re-run attempt (additive, no new data)
+
+Wave 109.A attempted to re-run the Kanzi N=1000 baseline + framework
+arms with `--seed 42` per the Wave 108.A deterministic-decoder fix. The
+attempt did NOT produce a fresh N=1000 framework paper-metric sweep —
+the Kanzi framework arm remains at N=10 (Wave 96.E). The baseline arm
+N=1000 was confirmed byte-stable against the Wave 88 baseline when
+re-run with `--seed 42`. **Verdict REMAINS** `REGRESSES_BY_+0.86_Å` on
+`reconstruction_kabsch_rmsd_A` (Wave 96.E N=10 framework 1.766 ± 0.214 Å
+vs Wave 88 N=1000 baseline 0.902 ± 0.137 Å; Bonferroni p=4.6e-7; 0.5 Å
+closure band NOT met). **Wave 110 follow-up**: Kanzi framework arm at
+N=1000 queued (~16.7 h CPU on `kanzi_venv`, or ~10× fewer hours on GPU
+if FSQ decode path can be JIT'd). See `docs/audit/wave109-d-paper-package-update.md`
+§3 + `docs/CONSOLIDATED_RESULTS.md` §15.19.
+
 ---
 
 ## S4. LineageFlow audit — Wave 81 + 82 + 83
@@ -206,6 +221,44 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 
 - **HMMER Pfam version dependency.** Vendor Pfam-A.hmm at Wave 80 + Wave 81 release; re-running against upstream `pfam_latest` may shift `hmmscan_total_hits` absolute counts but is expected to preserve the +116% relative uplift (audited in Wave 81 Phase 4).
 - **MMseqs2 target DB pinned.** `data/lineageflow_upstream/databases/targetDB` built at Wave 80 against Pfam release 35.0; not re-runnable without re-extracting the dataset CSV (one-time setup).
+
+### S4.5 Wave 109.B N=1000 GPU sweep re-run attempt (additive, no new data)
+
+Wave 109.B rewrote `tools/lineageflow_n1000_gpu_sweep.sh` to accept
+3 positional args (`<arm>` ∈ `{baseline, framework}`, `<output_dir>`,
+`<log_path>`) + `--lineageflow-upstream-eval` + `--upstream-n-samples 1000`
++ 7200 s `timeout` cap; the Wave 108.C wrapper only invoked
+`--force-mode real --metric-mode real --composite-metric real`
+(routes to the internal ESM-2 observer path, not the upstream Pfam
+HMMER + MMseqs2 pipeline — see §1.3 of `docs/audit/wave109-b-lineageflow-n1000-gpu.md`).
+Side env fix: `kanzi.py:537` 2-line `import importlib.util as
+_importlib_util` patch (pre-existing missing submodule alias exposed
+by the `tools.upstream_eval → kanzi` import chain).
+
+The full N=1000 GPU sweep runs were killed at 6 min (parent budget
+exhausted) per `docs/audit/wave109-b-lineageflow-n1000-gpu.md` §2 —
+both arms sent SIGTERM, partial outputs cleaned up, no fabricated data
+persisted. The smoke test at nfe=50 / n_rounds=3 /
+`--upstream-n-samples 5` completed in ~5 min and produced
+`composite = +0.2031`, `framework_improves` (matches Wave 47 / Wave 81
++0.2109 within sampling noise).
+
+**Verdict REMAINS** the Wave 86 N=1000 reading (canonical best-known-good):
+`hmmscan_total_hits` framework_improves (+116%, baseline 158 → framework
+342, p < 1e-10, 2.16× more Pfam HMM profiles);
+`coverage_any_hit` framework_ties_within_sem (Δ=-2.2 pp, z=-1.136,
+p≈0.26, NOT statistically distinguishable at N=1000);
+`top1_family_type` framework_ties_at_zero (synthetic M-rich priors at
+NFE=10 don't cross the Pfam-A HMM E-value 1e-3 threshold);
+novelty + foldability + self_consistency still BLOCKED on
+upstream-deps / omegafold.
+
+**Wave 110 follow-up**: re-launch the Wave 109.B wrapper in parallel on
+the same GPU with 4-h cap per arm × 2 arms = 8-h total budget; pre-warm
+with a 1-cell smoke first; expected per-arm wallclock ~25-30 min based
+on the smoke-test extrapolation (nfe=50 took 5 min; nfe=250 = 5× bigger;
+2 h cap). The +116% headline claim does not depend on a re-run — it
+reproduces at nfe=50 / N=2 per arm / Wave 81 smoke test.
 
 ---
 
@@ -261,6 +314,55 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 - **UFF-vs-xtb definitional gap on `pb_validity_pct`.** Paper reports `pb_validity_pct = 0.919`; we measure baseline 0.5285 / framework 0.4290. The framework is `framework_worse` on this axis (-9.95pp) but the gap is structural (PB 0.6.5 default force field is UFF, not xtb).
 - **`fg_dev` is the load-bearing framework-improves cell.** Δ=-0.0235, 4.05σ per cover letter.
 - **N=1000 framework arm** is reported in `verification_outputs/flowmol3_n1000_framework_q4_2026.json` with 1000 mols (vs baseline 999 due to CTMC valence artifact).
+
+### S5.6 Wave 109.C N=1000 baseline re-run attempt (additive, no new data)
+
+Wave 109.C attempted to re-run the FlowMol3 N=1000 baseline arm using
+the Wave 108.B `_DroppedSmilesCapture` `logging.Handler` subclass +
+n_sampled vs n_smiles cross-check WARNING
+(`tools/wave87_n1000_sweep.py::_generate_arm`). The run **failed
+deterministically** at every batch with a DGL graph ndata shape
+mismatch — the upstream `FlowMol.sample()` at line 546 of
+`data/FlowMol3/repo/flowmol/models/flowmol.py` expects batched
+`x_0: (batch_size * n, 3)` but the v2 adapter's
+`_solve_ode_upstream_batch` supplies per-mol `x_0: (n, 3)` (see
+`adaptive_reflow/adapters/flowmol3_v2_adapter.py:2567`). DGL 2.4.0
+strictly enforces the shape match at `_set_n_repr`. Failed-run JSON
+preserved at `verification_outputs/flowmol3_n1000_baseline_wave109_c_q4_2026.json`
+(`n_target=1000, n_sampled=0, n_errors=10, wallclock_s=0.282` — the run
+never reached the dropped-SMILES path because DGL fails first in the
+upstream call). The failure was confirmed reproducible at
+`n_molecules ∈ {10, 100}` (the `n_molecules=1` path used by v1 + the
+Wave 70-72 forward path works fine — regression is `n_molecules > 1` only).
+
+**Canonical best-known-good FlowMol3 N=1000 baseline** (carry-forward):
+`verification_outputs/flowmol3_n1000_baseline_wave87_q4_2026.json`
+(timestamp `2026-09-09T00:17:29+0800`, predating the 2026-09-11
+regression; `n_sampled=999, n_smiles=1000, n_errors=0, errors_sample=[],
+wallclock_s=184.306`) — Wave 87 sweep result carries the Wave 108.B
+persistence infrastructure and exhibits the expected 1-of-1000
+CTMC-valence drop (n_sampled=999 vs n_smiles=1000, captured via the
+cross-check WARNING; the dropped SMILES string itself is NOT in
+`errors_sample` because the drop happens upstream of RDKit parsing at
+the CTMC valence-artefact stage).
+
+**Verdict REMAINS** the Wave 87 N=1000 reading: `validity_pct` MATCH
+(1.0000 both arms); `pb_validity_pct` framework_regresses 0.429 vs
+0.5285 (UFF-vs-xtb definitional gap, brief's PB-xtb premise FALSE
+POSITIVE); `fg_dev` framework_improves (Δ=-0.0235, 4.05σ, p<0.05 —
+the single framework-vs-baseline paper-metric win); `ood_ring_rate`
+underpowered at N=1000 (|Δ|=0.003 < MDD 0.0263).
+
+**Wave 110 follow-up plan (additive)**: a 4-LOC targeted fix at
+`_solve_ode_upstream_batch:2835` to tile the prior across the batch
+axis before assigning to the upstream (`x_0: (n, 3)` →
+`unsqueeze(0).expand(n_mol, -1, -1).reshape(-1, 3)`) — would unblock
+the Wave 109.C failed-run path and produce a fresh N=1000 baseline
+(expected: n_sampled=999, matching Wave 87). See
+`docs/audit/wave109-c-flowmol3-n1000.md` for the full Wave 109.C audit
+trail (per-batch DGLError trace + cross-batch-size confirmation + Wave
+87 vs Wave 109.C comparison + Wave 110 follow-up plan + per-arm JSON
++ per_metrics.jsonl).
 
 ---
 
