@@ -992,6 +992,16 @@ class _StubLineageFlow:
     that delegates straight to ``forward()``. The interface (eval,
     load_state_dict) matches the duck-typed contract used by
     :func:`_load_torch_model` and :func:`_torch_velocity_field`.
+
+    Wave 106.C.1 F-07 gating note: this stub is reachable ONLY by
+    direct unit-test import. ``load_real_weights`` is wired with
+    ``stub_factory=None`` (NOT ``stub_factory=_stub_factory``), so the
+    production ckpt-loading path raises
+    :class:`adaptive_reflow.contracts.capability.CapabilityMissingError`
+    on upstream failure rather than silently falling back to this stub.
+    The stub is unit-tested directly to satisfy the per-step call at
+    line 579 without raising TypeError. See
+    ``docs/audit/wave106-a-1-adapter-stubs.md`` §2.2 finding #7.
     """
 
     def __init__(self, *, vocab_size: int, hidden_size: int) -> None:
