@@ -1122,20 +1122,24 @@ def _load_torch_model(weights_path: Path) -> Any:
             self._dae = dae
 
         def forward(self, x: "torch.Tensor", t: "torch.Tensor", family: "torch.Tensor" = None) -> "torch.Tensor":
-            # Wave 110.B — Bug 2 fix: the adapter threads ``x`` of shape
-            # ``(B, L, n_channels_decoder) = (1, 64, 512)`` (the
-            # post-``project_out`` latent). Upstream
-            # ``DAE.encode`` and ``DAE.net`` both require ``(B, L, 3)``
-            # backbone coords, so calling them on the latent input
-            # crashes with ``mat1 and mat2 shapes cannot be multiplied
-            # (64x512 and 3x256)`` (the first Linear in ``DAE.up``
-            # projects 3 → n_channels_encoder). Until the adapter's
-            # state is migrated to backbone-coord space, return a
-            # zero-velocity field of the input shape so the trajectory
-            # endpoint (≈ initial state) satisfies the bridge's
-            # ``(B, L, n_channels_decoder)`` contract without raising.
-            with torch.no_grad():
-                return torch.zeros_like(x)
+            # Wave 112.C-2 (RC-2 option B) — fail-fast. The Wave 110.B
+            # placeholder returned ``torch.zeros_like(x)`` (Bug 2 fix),
+            # making the framework arm a silent no-op regardless of
+            # CUDA. Upstream ``DAE.encode`` and ``DAE.net`` both require
+            # ``(B, L, 3)`` backbone coords; the adapter currently
+            # threads ``(B, L, n_channels_decoder) = (1, 64, 512)``
+            # (the post-``project_out`` latent). Until the backbone-coord
+            # migration lands (Wave 112.D follow-up), surface the
+            # placeholder as a hard error so the silent no-op is
+            # observable. The synthetic-mode caller
+            # (``self._synthetic_weights is not None`` short-circuits
+            # before this shim is ever invoked) is unaffected.
+            raise NotImplementedError(
+                "_KanziDAEShim.forward is a Wave 110.B placeholder; "
+                "backbone-coord migration is tracked under Wave 112.D "
+                "follow-up. Use framework_synthetic mode (σ=1e-3 N(0,1) "
+                "noise injection) for the framework arm until then."
+            )
 
     def _builder(p: Path) -> Any:
         """Build the real ``_KanziDAEShim`` from ``p`` (Wave 99 followup).
