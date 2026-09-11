@@ -35,7 +35,7 @@ C.4 addresses:
 | `3c411ef` | `supplementary.md` | F-7-S3: S3.4 Kanzi N=10 framework fill |
 | `bf60980` | `supplementary.md` | F-7-S4: S4.3a LineageFlow N=5 smoke fill |
 | `d104067` | `supplementary.md` | F-7-S5: S5.4-S5.5 FlowMol3 N=1000 paper-axis fill |
-| `c73d034` | `cover_letter.md` + `supplementary.md` | M-16: unpushed count 19 → 34 |
+| `c73d034` | `cover_letter.md` + `supplementary.md` | M-16: unpushed count 19 → 35 |
 
 ---
 
@@ -144,11 +144,11 @@ UFF-vs-xtb definitional gap.
 **Audit doc finding #16/25:** cover_letter.md:39 + supplementary.md:312 cite
 stale "19 unpushed commits" from Wave 106.C.2 anchor `f97ec1c`. Actual count
 after Wave 106.C.3 (9 commits) + Wave 106.C.4 (5 commits including the 4
-fixes + INSTALL_REPORT.md):
-`git log origin/main..HEAD --oneline | wc -l` = 35 (after M-16 commit).
+fixes + INSTALL_REPORT.md + final synthesis):
+`git log origin/main..HEAD --oneline | wc -l` = 36 (after final synthesis commit).
 
-**Fix (commit `c73d034`):** Updated both docs to "34 unpushed commits"
-(preserving the historical chain 327 → 19 → 34 with explicit anchor commits).
+**Fix (commit `c73d034`):** Updated both docs to "35 unpushed commits"
+(preserving the historical chain 327 → 19 → 35 with explicit anchor commits).
 
 **Cross-doc consistency:** All 3 places (cover_letter, supplementary, INSTALL_REPORT)
 now cite the same chain with the same anchor commit references.
@@ -306,7 +306,7 @@ audit-trail references.
     "F-7-S3": "3c411ef (HIGH) — supplementary.md S3.4 Kanzi N=10 framework arm fill (Δ=+0.864 Å, Welch t=19.72, p=4.6e-7, 95% CI [0.731, 0.997])",
     "F-7-S4": "bf60980 (HIGH) — supplementary.md S4.3a LineageFlow N=5 OmegaFold smoke fill (TIE_AT_SATURATION, N=5 underpowered)",
     "F-7-S5": "d104067 (HIGH) — supplementary.md S5.4-S5.5 FlowMol3 N=1000 paper-axis fill (fg_dev framework_improves + pb_validity_pct framework_worse UFF-vs-xtb gap)",
-    "M-16": "c73d034 (MEDIUM) — unpushed commit count 19 → 34 in cover_letter.md + supplementary.md (post Wave 106.C.3 + C.4 commits)"
+    "M-16": "c73d034 (MEDIUM) — unpushed commit count 19 → 35 in cover_letter.md + supplementary.md (post Wave 106.C.3 + C.4 commits)"
   },
   "fixes_skipped": [
     "#6 (MEDIUM) — FlowMol3 SHA-256 — RESOLVED by Wave 106.C.1 (ckpt_sha256.json)",
@@ -332,7 +332,8 @@ audit-trail references.
     "d4_regression_vectors": "72/72 PASS (single source of truth: docs/GATES.md 'D.4 byte-stable regression vectors' section)",
     "mkdocs_build_strict": "mkdocs not installed in env; last-green invariant preserved by no source code edits (only doc edits + 1 new doc file)",
     "install_report_sha256": "manual re-hash instruction provided in INSTALL_REPORT.md §5",
-    "grep_verification": "327 unpushed / 33/33 PASS / Wave 81 N=1000 now appear only in honest-disclosure form or in pre-existing historical audit-trail references"
+    "grep_verification": "327 unpushed / 33/33 PASS / Wave 81 N=1000 now appear only in honest-disclosure form or in pre-existing historical audit-trail references",
+    "final_unpushed_count": "36 commits (post final synthesis commit 92a136c)"
   },
   "no_push": true,
   "no_source_code_edits": true,
