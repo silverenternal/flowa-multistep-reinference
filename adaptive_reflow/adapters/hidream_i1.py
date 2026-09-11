@@ -108,8 +108,10 @@ from adaptive_reflow.universal.state import (
 
 from adaptive_reflow.adapters._adapter_common import (
     NativeStateCache,
+    digest_state,
     make_ref,
     memory_fraction_for,
+    seed_from_ids,
 )
 from adaptive_reflow.framework.interfaces import (
     AdapterObservationProtocol,
@@ -280,22 +282,9 @@ def hidream_i1_resolve_weights_path(
 # Private helpers — hashing + state-shape integrity
 # ---------------------------------------------------------------------------
 
-
-def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """SHA-256-derived 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
-    return int(hashlib.sha256(blob).hexdigest()[:8], 16)
-
-
-def _digest_state(payload: Mapping[str, Any]) -> str:
-    """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
-    blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode("utf-8")
-    return hashlib.sha256(blob).hexdigest()
-
-
-def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Deterministic hash-stable :class:`TensorRef`."""
-    return make_ref(f"hidream_i1:{label}", label, **parts)
+# ``seed_from_ids``, ``digest_state`` and ``make_ref`` are imported from
+# :mod:`adaptive_reflow.adapters._adapter_common` (Wave 33 / Wave 44 D.1
+# shrink + Wave 103 P0-B dedup). The call sites use the canonical names.
 
 
 def _validate_state_shape(x: ArrayF64) -> ArrayF64:
@@ -1162,7 +1151,7 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         batch_id: str,
         sample_id: str,
     ) -> StateBundle:
-        seed = _seed_from_ids(
+        seed = seed_from_ids(
             str(batch_id),
             str(sample_id),
             int(self._seed_offset) + 0,
@@ -1181,7 +1170,7 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             seed=int(seed),
         )
 
-        digest = _digest_state(
+        digest = digest_state(
             {
                 "kind": "initial",
                 "batch_id": str(batch_id),
@@ -1208,13 +1197,15 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         )
         bundle = StateBundle(
             channels={
-                ChannelName("image_latent"): _make_ref(
+                ChannelName("image_latent"): make_ref(
+                    "hidream_i1:",
                     "latent:initial",
                     batch=batch_id,
                     sample=sample_id,
                     variant=str(self._variant),
                 ),
-                ChannelName("text_cond"): _make_ref(
+                ChannelName("text_cond"): make_ref(
+                    "hidream_i1:",
                     "cond",
                     cache_hash=str(cond["cache_hash"]),
                 ),
@@ -1316,7 +1307,7 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         # optimisation that keeps re-inference rounds cheap.
         cond_hash = str(prior_entry.get("conditioning_hash", ""))
 
-        next_digest = _digest_state(
+        next_digest = digest_state(
             {
                 "kind": "restart",
                 "src_digest": state.native_state_digest,
@@ -1345,7 +1336,8 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         )
         return StateBundle(
             channels={
-                ChannelName("image_latent"): _make_ref(
+                ChannelName("image_latent"): make_ref(
+                    "hidream_i1:",
                     "latent:restart",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
@@ -1354,7 +1346,8 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
                 ),
                 # Preserve the conditioning reference across the restart
                 # boundary so the text-encoder cache is reused.
-                ChannelName("text_cond"): _make_ref(
+                ChannelName("text_cond"): make_ref(
+                    "hidream_i1:",
                     "cond",
                     cache_hash=str(cond_hash),
                 ),
@@ -1590,7 +1583,7 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
                 )
             traj[i] = x_cur
 
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
@@ -1659,7 +1652,7 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         x_final = np.asarray(trajectory[-1], dtype=np.float64).reshape(
             HIDREAM_I1_STATE_SHAPE
         )
-        endpoint_digest = _digest_state(
+        endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": trace.native_state_digest,
@@ -1691,13 +1684,15 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             channels={
                 ChannelName("image_latent"): dict(state.channels).get(
                     ChannelName("image_latent"),
-                    _make_ref(
+                    make_ref(
+                        "hidream_i1:",
                         "latent:endpoint",
                         traj_digest=str(trace.native_state_digest),
                         src_digest=str(state.native_state_digest),
                     ),
                 ),
-                ChannelName("text_cond"): _make_ref(
+                ChannelName("text_cond"): make_ref(
+                    "hidream_i1:",
                     "cond",
                     cache_hash=str(cond_hash),
                 ),
@@ -1856,7 +1851,7 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             HIDREAM_I1_STATE_SHAPE
         )
         x_new = np.clip(x_prior + x_new_arr, -HIDREAM_I1_CLAMP, HIDREAM_I1_CLAMP)
-        new_digest = _digest_state(
+        new_digest = digest_state(
             {
                 "kind": "forward_noise",
                 "src_digest": bundle.native_state_digest,

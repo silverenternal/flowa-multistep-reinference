@@ -369,10 +369,9 @@ def lineageflow_resolve_weights_path(
 # Private helpers - hashing + state-shape integrity
 # ---------------------------------------------------------------------------
 
-
-def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Deterministic hash-stable :class:`TensorRef`."""
-    return make_ref(f"lineageflow:{label}", label, **parts)
+# ``seed_from_ids``, ``digest_state`` and ``make_ref`` are imported from
+# :mod:`adaptive_reflow.adapters._adapter_common` (Wave 33 / Wave 44 D.1
+# shrink + Wave 103 P0-B dedup). The call sites use the canonical names.
 
 
 def _validate_state_shape(x: ArrayF64) -> ArrayF64:
@@ -1490,12 +1489,14 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         )
         bundle = StateBundle(
             channels={
-                AMINO_ACID_CATEGORICAL: _make_ref(
+                AMINO_ACID_CATEGORICAL: make_ref(
+                    "lineageflow:",
                     "initial",
                     batch=batch_id,
                     sample=sample_id,
                 ),
-                PFAM_FAMILY_COND: _make_ref(
+                PFAM_FAMILY_COND: make_ref(
+                    "lineageflow:",
                     "cond",
                     cache_hash=str(cond["cache_hash"]),
                 ),
@@ -1711,7 +1712,8 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
         )
         return StateBundle(
             channels={
-                AMINO_ACID_CATEGORICAL: _make_ref(
+                AMINO_ACID_CATEGORICAL: make_ref(
+                    "lineageflow:",
                     "restart",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
@@ -1719,7 +1721,8 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
                 ),
                 # Preserve the conditioning reference across the restart
                 # boundary so the family-encoder cache is reused.
-                PFAM_FAMILY_COND: _make_ref(
+                PFAM_FAMILY_COND: make_ref(
+                    "lineageflow:",
                     "cond",
                     cache_hash=str(cond_hash),
                 ),

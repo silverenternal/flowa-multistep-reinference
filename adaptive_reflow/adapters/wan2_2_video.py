@@ -82,8 +82,10 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
     make_ref,
     memory_fraction_for,
+    seed_from_ids,
 )
 from adaptive_reflow.framework.interfaces import implements
 
@@ -248,22 +250,9 @@ def wan22_resolve_weights_path(
 # Private helpers — hashing + state-shape integrity
 # ---------------------------------------------------------------------------
 
-
-def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """SHA-256-derived 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
-    return int(hashlib.sha256(blob).hexdigest()[:8], 16)
-
-
-def _digest_state(payload: Mapping[str, Any]) -> str:
-    """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
-    blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode("utf-8")
-    return hashlib.sha256(blob).hexdigest()
-
-
-def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Deterministic hash-stable :class:`TensorRef`."""
-    return make_ref(f"wan22:{label}", label, **parts)
+# ``seed_from_ids``, ``digest_state`` and ``make_ref`` are imported from
+# :mod:`adaptive_reflow.adapters._adapter_common` (Wave 33 / Wave 44 D.1
+# shrink + Wave 103 P0-B dedup). The call sites use the canonical names.
 
 
 def _state_shape_for_variant(variant: Variant) -> tuple[int, ...]:
@@ -882,7 +871,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         batch_id: str,
         sample_id: str,
     ) -> StateBundle:
-        seed = _seed_from_ids(
+        seed = seed_from_ids(
             str(batch_id),
             str(sample_id),
             int(self._seed_offset) + 0,
@@ -898,7 +887,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         # denoising" semantic at t=0 and let ``solve_ode`` re-route
         # per-step using the spec rule.)
         moe_route = "high"
-        digest = _digest_state(
+        digest = digest_state(
             {
                 "kind": "initial",
                 "batch_id": str(batch_id),
@@ -926,31 +915,36 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         )
         bundle = StateBundle(
             channels={
-                ChannelName("video_latent"): _make_ref(
+                ChannelName("video_latent"): make_ref(
+                    "wan22:",
                     "initial",
                     batch=batch_id,
                     sample=sample_id,
                     variant=self._variant,
                 ),
-                ChannelName("text_embedding"): _make_ref(
+                ChannelName("text_embedding"): make_ref(
+                    "wan22:",
                     "text",
                     batch=batch_id,
                     sample=sample_id,
                     variant=self._variant,
                 ),
-                ChannelName("timestep"): _make_ref(
+                ChannelName("timestep"): make_ref(
+                    "wan22:",
                     "t",
                     batch=batch_id,
                     sample=sample_id,
                     round=0,
                 ),
-                ChannelName("moe_route"): _make_ref(
+                ChannelName("moe_route"): make_ref(
+                    "wan22:",
                     "route",
                     batch=batch_id,
                     sample=sample_id,
                     route=moe_route,
                 ),
-                ChannelName("vae_pixel_video"): _make_ref(
+                ChannelName("vae_pixel_video"): make_ref(
+                    "wan22:",
                     "vae",
                     batch=batch_id,
                     sample=sample_id,
@@ -1051,7 +1045,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
                 fresh_component, -clamp, clamp
             )
 
-        next_digest = _digest_state(
+        next_digest = digest_state(
             {
                 "kind": "restart",
                 "src_digest": state.native_state_digest,
@@ -1081,28 +1075,33 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         )
         return StateBundle(
             channels={
-                ChannelName("video_latent"): _make_ref(
+                ChannelName("video_latent"): make_ref(
+                    "wan22:",
                     "restart",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
                     source_round=int(next_round),
                 ),
-                ChannelName("text_embedding"): _make_ref(
+                ChannelName("text_embedding"): make_ref(
+                    "wan22:",
                     "text",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
                 ),
-                ChannelName("timestep"): _make_ref(
+                ChannelName("timestep"): make_ref(
+                    "wan22:",
                     "t",
                     src_digest=str(state.native_state_digest),
                     source_round=int(next_round),
                 ),
-                ChannelName("moe_route"): _make_ref(
+                ChannelName("moe_route"): make_ref(
+                    "wan22:",
                     "route",
                     src_digest=str(state.native_state_digest),
                     route="high",
                 ),
-                ChannelName("vae_pixel_video"): _make_ref(
+                ChannelName("vae_pixel_video"): make_ref(
+                    "wan22:",
                     "vae",
                     src_digest=str(state.native_state_digest),
                     route="high",
@@ -1305,7 +1304,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         clamp = WAN22_CLAMP_STD * sigma_est
         traj = np.clip(traj, -clamp, clamp)
 
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
@@ -1390,7 +1389,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
                 (int(WAN22_TEXT_SEQ_LEN), int(WAN22_TEXT_DIM)), dtype=np.float64
             )
         )
-        endpoint_digest = _digest_state(
+        endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": trace.native_state_digest,
@@ -1477,7 +1476,7 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         sigma_est = float(np.std(x_prior)) + 1e-12
         clamp = WAN22_CLAMP_STD * sigma_est
         x_new = np.clip(x_prior + x_new_arr, -clamp, clamp)
-        new_digest = _digest_state(
+        new_digest = digest_state(
             {
                 "kind": "forward_noise",
                 "src_digest": bundle.native_state_digest,
@@ -1627,7 +1626,8 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         np.savez(str(output_path), trajectory=traj.astype(np.float64))
-        return _make_ref(
+        return make_ref(
+            "wan22:",
             "trajectory_file",
             digest=str(trace.native_state_digest),
             path=str(output_path),
@@ -1684,7 +1684,8 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
                 normalize=True,
                 value_range=(-1.0, 1.0),
             )
-            return _make_ref(
+            return make_ref(
+                "wan22:",
                 "vae_pixels",
                 digest=str(trace.native_state_digest),
                 variant=str(self._variant),
@@ -1693,7 +1694,8 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
         # Synthetic path: surface the channel as an opaque TensorRef
         # so downstream observers can record the materialization
         # boundary without doing any actual decode.
-        return _make_ref(
+        return make_ref(
+            "wan22:",
             "vae_pixels",
             digest=str(trace.native_state_digest),
             variant=str(self._variant),

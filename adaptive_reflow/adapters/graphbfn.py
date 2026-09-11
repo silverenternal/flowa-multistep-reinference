@@ -96,7 +96,9 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
     make_ref,
+    seed_from_ids,
 )
 from adaptive_reflow.framework.interfaces import implements
 
@@ -232,22 +234,9 @@ def graphbfn_resolve_weights_path(
 # Private helpers — hashing, seeding, and graph-shaped tensor blending
 # ---------------------------------------------------------------------------
 
-
-def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """SHA-256-derived 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
-    return int(hashlib.sha256(blob).hexdigest()[:8], 16)
-
-
-def _digest_state(payload: Mapping[str, Any]) -> str:
-    """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
-    blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode("utf-8")
-    return hashlib.sha256(blob).hexdigest()
-
-
-def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Deterministic hash-stable :class:`TensorRef` for GraphBFN."""
-    return make_ref(f"graphbfn:{label}", label, **parts)
+# ``seed_from_ids``, ``digest_state`` and ``make_ref`` are imported from
+# :mod:`adaptive_reflow.adapters._adapter_common` (Wave 33 / Wave 44 D.1
+# shrink + Wave 103 P0-B dedup). The call sites use the canonical names.
 
 
 def _memory_fraction_for(policy: RestartPolicy, channel: ChannelName) -> float:
@@ -746,7 +735,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         adapter's ``_native_states`` cache; the bundle's channels are
         :data:`TensorRef` opaque handles.
         """
-        seed = _seed_from_ids(
+        seed = seed_from_ids(
             str(batch_id), str(sample_id), int(self._seed_offset) + 0
         )
         rng = np.random.default_rng(seed)
@@ -762,7 +751,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         charge = np.zeros((0,), dtype=np.float64)
         valence = np.zeros((0,), dtype=np.float64)
 
-        digest = _digest_state(
+        digest = digest_state(
             {
                 "kind": "initial",
                 "batch_id": str(batch_id),
@@ -787,7 +776,8 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
             },
         )
         channels = {
-            ch: _make_ref(
+            ch: make_ref(
+                "graphbfn:",
                 "initial",
                 channel=str(ch),
                 batch=batch_id,
@@ -800,8 +790,12 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         bundle = StateBundle(
             channels=channels,
             masks={
-                ch: _make_ref(
-                    "mask", channel=str(ch), batch=batch_id, sample=sample_id
+                ch: make_ref(
+                    "graphbfn:",
+                    "mask",
+                    channel=str(ch),
+                    batch=batch_id,
+                    sample=sample_id,
                 )
                 for ch in GRAPHBFN_CHANNELS
             },
@@ -927,7 +921,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
             prior_entry["charge"], fresh_charge, m_chg
         )
 
-        next_digest = _digest_state(
+        next_digest = digest_state(
             {
                 "kind": "restart",
                 "src_digest": state.native_state_digest,
@@ -959,7 +953,8 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         )
         return StateBundle(
             channels={
-                ch: _make_ref(
+                ch: make_ref(
+                    "graphbfn:",
                     "restart",
                     channel=str(ch),
                     src_digest=str(state.native_state_digest),
@@ -1102,7 +1097,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         # variable-node-count setup.
         if n_nodes == 0:
             rng = np.random.default_rng(
-                int(seed) ^ int(_seed_from_ids(str(state.batch_id), str(state.sample_id), 0))
+                int(seed) ^ int(seed_from_ids(str(state.batch_id), str(state.sample_id), 0))
             )
             n_nodes = int(rng.integers(1, max(2, self._max_nodes)))
             n_edges = int(rng.integers(1, max(2, 2 * n_nodes)))
@@ -1149,7 +1144,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
             theta_node = theta_node - theta_node.max(axis=-1, keepdims=True)
             theta_edge = theta_edge - theta_edge.max(axis=-1, keepdims=True)
 
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
@@ -1233,7 +1228,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
             vocab_bond=self._bond_vocab_size,
         )
 
-        endpoint_digest = _digest_state(
+        endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": trace.native_state_digest,
@@ -1276,7 +1271,8 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         next_round = int(state.source_round) + 1
         return StateBundle(
             channels={
-                ch: _make_ref(
+                ch: make_ref(
+                    "graphbfn:",
                     "endpoint",
                     channel=str(ch),
                     traj_digest=str(trace.native_state_digest),
@@ -1360,7 +1356,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
             -10.0,
             10.0,
         )
-        new_digest = _digest_state(
+        new_digest = digest_state(
             {
                 "kind": "forward_noise",
                 "src_digest": bundle.native_state_digest,
@@ -1384,7 +1380,8 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         )
         return StateBundle(
             channels={
-                ch: _make_ref(
+                ch: make_ref(
+                    "graphbfn:",
                     "forward_noise",
                     channel=str(ch),
                     src_digest=str(bundle.native_state_digest),

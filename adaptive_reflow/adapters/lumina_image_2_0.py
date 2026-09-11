@@ -91,8 +91,10 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
     make_ref,
     memory_fraction_for,
+    seed_from_ids,
 )
 from adaptive_reflow.framework.interfaces import implements
 
@@ -258,22 +260,9 @@ def transformers_is_available() -> bool:
 # Private helpers -- hashing + state-shape integrity
 # ---------------------------------------------------------------------------
 
-
-def _seed_from_ids(batch_id: str, sample_id: str, source_round: int) -> int:
-    """SHA-256-derived 32-bit seed from ``(batch_id, sample_id, source_round)``."""
-    blob = repr((str(batch_id), str(sample_id), int(source_round))).encode("utf-8")
-    return int(hashlib.sha256(blob).hexdigest()[:8], 16)
-
-
-def _digest_state(payload: Mapping[str, Any]) -> str:
-    """SHA-256 hex digest of a payload (sorted keys, repr'd)."""
-    blob = repr((sorted(payload.items(), key=lambda kv: str(kv[0])),)).encode("utf-8")
-    return hashlib.sha256(blob).hexdigest()
-
-
-def _make_ref(label: str, **parts: Any) -> TensorRef:
-    """Deterministic hash-stable :class:`TensorRef`."""
-    return make_ref(f"lumina_image_2_0:{label}", label, **parts)
+# ``seed_from_ids``, ``digest_state`` and ``make_ref`` are imported from
+# :mod:`adaptive_reflow.adapters._adapter_common` (Wave 33 / Wave 44 D.1
+# shrink + Wave 103 P0-B dedup). The call sites use the canonical names.
 
 
 def _validate_state_shape(x: ArrayF64) -> ArrayF64:
@@ -1005,14 +994,14 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         batch_id: str,
         sample_id: str,
     ) -> StateBundle:
-        seed = _seed_from_ids(
+        seed = seed_from_ids(
             str(batch_id),
             str(sample_id),
             int(self._seed_offset) + 0,
         )
         rng = np.random.default_rng(seed)
         x0 = _synthesize_latent_like_tensor(rng)
-        digest = _digest_state(
+        digest = digest_state(
             {
                 "kind": "initial",
                 "batch_id": str(batch_id),
@@ -1037,7 +1026,8 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         )
         bundle = StateBundle(
             channels={
-                ChannelName("latent"): _make_ref(
+                ChannelName("latent"): make_ref(
+                    "lumina_image_2_0:",
                     "initial",
                     batch=batch_id,
                     sample=sample_id,
@@ -1047,7 +1037,8 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 # ``self._text_embed_cache``. The engine never inspects
                 # the ref's contents; it only propagates the opaque
                 # handle.
-                ChannelName("text_condition"): _make_ref(
+                ChannelName("text_condition"): make_ref(
+                    "lumina_image_2_0:",
                     "text_initial",
                     batch=batch_id,
                     sample=sample_id,
@@ -1128,7 +1119,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         blended = (m * prior_x + (1.0 - m) * fresh_x).astype(np.float64)
         blended = np.clip(blended, -LUMINA_IMAGE_2_0_CLAMP, LUMINA_IMAGE_2_0_CLAMP)
 
-        next_digest = _digest_state(
+        next_digest = digest_state(
             {
                 "kind": "restart",
                 "src_digest": state.native_state_digest,
@@ -1153,7 +1144,8 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         )
         return StateBundle(
             channels={
-                ChannelName("latent"): _make_ref(
+                ChannelName("latent"): make_ref(
+                    "lumina_image_2_0:",
                     "restart",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
@@ -1162,7 +1154,8 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 # Text condition is NOT blended -- it is condition, not
                 # state. The ref propagates unchanged from the prior so
                 # the engine's restart math is state-only.
-                ChannelName("text_condition"): _make_ref(
+                ChannelName("text_condition"): make_ref(
+                    "lumina_image_2_0:",
                     "text_restart",
                     src_digest=str(state.native_state_digest),
                     policy_hash=str(policy.policy_hash),
@@ -1599,7 +1592,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
                 )
             traj[i] = x_cur
 
-        traj_digest = _digest_state(
+        traj_digest = digest_state(
             {
                 "kind": "trajectory",
                 "src_digest": state.native_state_digest,
@@ -1664,7 +1657,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         x_final = np.asarray(trajectory[-1], dtype=np.float64).reshape(
             LUMINA_IMAGE_2_0_STATE_SHAPE
         )
-        endpoint_digest = _digest_state(
+        endpoint_digest = digest_state(
             {
                 "kind": "endpoint",
                 "traj_digest": trace.native_state_digest,
@@ -1748,7 +1741,7 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
             -LUMINA_IMAGE_2_0_CLAMP,
             LUMINA_IMAGE_2_0_CLAMP,
         )
-        new_digest = _digest_state(
+        new_digest = digest_state(
             {
                 "kind": "forward_noise",
                 "src_digest": bundle.native_state_digest,
