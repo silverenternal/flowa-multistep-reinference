@@ -33,6 +33,7 @@ Output:
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 import sys
@@ -79,6 +80,9 @@ SEED_BASE = 42  # Wave 74 F2 byte-stable seed
 WEIGHTS_PATH = REPO_ROOT / "data" / "flowmol3" / "weights_real" / "checkpoints" / "last.ckpt"
 UPSTREAM_REPO = REPO_ROOT / "data" / "FlowMol3" / "repo"
 DEVICE = "cuda:0"
+
+# Wave 108.B — REUSE-2: logger for the n_sampled vs n_smiles cross-check.
+_sweep_logger = logging.getLogger(__name__)
 
 # Paper targets (arXiv 2508.12629)
 PAPER_TARGETS = {
@@ -184,6 +188,9 @@ def _generate_arm(
     sampled_mols: list[Any] = []
     smiles_list: list[str] = []
     errors: list[str] = []
+    # Wave 108.B — REUSE-2: aggregate dropped SMILES from
+    # ``sampled_mols_from_smiles`` (CTMC valence artifact, ~0.1% rate).
+    dropped_smiles_total: list[str] = []
     t_total = time.perf_counter()
     for batch_idx in range(N_BATCHES):
         seed = int(seed_base + batch_idx)
@@ -223,6 +230,12 @@ def _generate_arm(
             )
             continue
         sampled_mols.extend(sampled_batch)
+        # Wave 108.B — capture dropped SMILES (max 5 in JSON via
+        # ``errors[:5]`` + count via ``n_dropped``) for honest
+        # disclosure of the 1-of-1000 CTMC valence drop.
+        batch_dropped = metadata.get("dropped_smiles") or []
+        if batch_dropped:
+            dropped_smiles_total.extend(batch_dropped)
         # Capture per-mol SMILES from the cached batch entry.
         entry = adapter._native_states.get(trace.native_state_digest) or {}
         cached_smiles_batch = entry.get("rdkit_mol_smiles_batch") or []
@@ -239,6 +252,22 @@ def _generate_arm(
 
     wallclock_s = round(time.perf_counter() - t_total, 3)
 
+    # Wave 108.B — cross-check: n_sampled should equal n_smiles.
+    # If they diverge, the drop is silent (no exception); surface a
+    # WARNING so future drift doesn't get buried.
+    if len(sampled_mols) != len(smiles_list):
+        _sweep_logger.warning(
+            "[%s] n_sampled=%d != n_smiles=%d (delta=%d, dropped=%d); "
+            "CTMC valence artifact per docs/audit/wave107-a2-flowmol3-drop.md",
+            arm_name, len(sampled_mols), len(smiles_list),
+            len(sampled_mols) - len(smiles_list), len(dropped_smiles_total),
+        )
+    # Wave 108.B — REUSE-2: persist dropped SMILES (max 5 via
+    # ``errors[:5]``) + count via ``n_dropped`` JSON field for
+    # honest disclosure.
+    for smi in dropped_smiles_total[:5]:
+        errors.append(f"dropped_smiles:{smi}")
+
     # Persist arm output JSON (raw, before metrics are computed).
     out = {
         "schema_version": "1.0.0",
@@ -247,6 +276,7 @@ def _generate_arm(
         "n_sampled": int(len(sampled_mols)),
         "n_smiles": int(len(smiles_list)),
         "n_errors": int(len(errors)),
+        "n_dropped": int(len(dropped_smiles_total)),  # Wave 108.B REUSE-2
         "errors_sample": errors[:5],
         "wallclock_s": float(wallclock_s),
         "load_seconds": float(load_seconds),

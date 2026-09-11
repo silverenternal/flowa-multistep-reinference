@@ -49,6 +49,7 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import logging
 import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -4546,7 +4547,29 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                 smiles_list = [
                     s for s in cached_smiles_batch if isinstance(s, str) and s
                 ]
-                sampled = _sampled_mols_from_smiles(smiles_list)
+                # Wave 108.B — REUSE-2: capture dropped SMILES from the
+                # existing _LOGGER.warning hooks in
+                # ``sampled_mols_from_smiles`` (line 232 / 240) so the
+                # caller can persist them to ``errors_sample`` JSON.
+                class _DroppedSmilesCapture(logging.Handler):
+                    def __init__(self) -> None:
+                        super().__init__(level=logging.WARNING)
+                        self.dropped: list[str] = []
+
+                    def emit(self, record: logging.LogRecord) -> None:
+                        if record.args and isinstance(record.args[0], str):
+                            self.dropped.append(record.args[0])
+
+                _capture = _DroppedSmilesCapture()
+                _upstream_logger = logging.getLogger(
+                    _sampled_mols_from_smiles.__module__
+                )
+                _upstream_logger.addHandler(_capture)
+                try:
+                    sampled = _sampled_mols_from_smiles(smiles_list)
+                finally:
+                    _upstream_logger.removeHandler(_capture)
+                dropped_smiles = _capture.dropped
             except Exception as exc:  # noqa: BLE001 — upstream may fail.
                 upstream_decode_error = f"{type(exc).__name__}:{exc}"
             if sampled:
@@ -4575,6 +4598,8 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
                             if cached_smiles_batch else ""
                         ),
                         "n_molecules": int(cached_n_molecules),
+                        "dropped_smiles": dropped_smiles,  # Wave 108.B REUSE-2
+                        "n_dropped": int(len(dropped_smiles)),
                     }
                 )
                 return list(sampled), metadata
