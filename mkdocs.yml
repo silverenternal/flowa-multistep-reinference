@@ -88,6 +88,53 @@ nav:
       - 05 — fix plan: governance/05-fix-plan.md
       - 06 — verification report: governance/06-verification-report.md
       - Per-wave audit index (Wave 1-101): audit/INDEX.md
+      - Wave 46 — Kanzi composite benchmark: audit/wave46-benchmark-design.md
+      - Wave 48 — pre-push pytest fixes: audit/wave48-benchmark-uplifts-fix.md
+      - Wave 50 — FlowMol3 factory fix: audit/wave50-flowmol3-factory-fix.md
+      - Wave 51 — tool harness pytest fixes: audit/wave51-hidream-fix.md
+      - Wave 53 — FlowMol3 metric layer: audit/wave53-flowmol3-final-summary.md
+      - Wave 54 — FlowMol3 real metric + paper rewrite: audit/wave54-final-synthesis.md
+      - Wave 56 — Wave 55+51 finalize: audit/wave56-final-synthesis.md
+      - Wave 57 — FlowMol3 gap research: audit/wave57-nfe-adaptive-research.md
+      - Wave 58 — NFE-adaptive gate + scan: audit/wave58-nfe-adaptive-gate-impl.md
+      - Wave 59 — MFPQA + BRAI: audit/wave59-brai-impl.md
+      - Wave 60 — pytest bloat fix: audit/wave60-pytest-bloat-cleanup.md
+      - Wave 61 — NFE-aware scheduler: audit/wave61-nfe-aware-scheduler.md
+      - Wave 62 — pytest bloat phase 2: audit/wave62-pytest-bloat-phase2.md
+      - Wave 63 — NFE root-cause: audit/wave63-root-cause.md
+      - Wave 64 — Bug A fix: audit/wave64-bug-a-fix.md
+      - Wave 65 — Bug C root-cause: audit/wave65-bug-c-root-cause.md
+      - Wave 66 — v2 wire result: audit/wave66-v2-wire-result.md
+      - Wave 67 — AdapterObservationProtocol plan: audit/wave67-plan.md
+      - Wave 68 — AdapterObservation (5 phases): audit/wave68-phase5.md
+      - Wave 69 — composite + CUDA + NFE: audit/wave69-phase6-final.md
+      - Wave 70 — FlowMol3 v2 gaps: audit/wave70-phase6-final.md
+      - Wave 71 — NFE saturation speedup: audit/wave71-phase6-final.md
+      - Wave 72 — paper §1/§7 rewrite: audit/wave72-phase5-verification.md
+      - Wave 73 — multi-tier speedup: audit/wave73-phase6-final.md
+      - Wave 74 — FlowMol3 closure: audit/wave74-phase6-final.md
+      - Wave 75 — paper metrics reproduction: audit/wave75-phase6-final.md
+      - Wave 79 — upstream eval caveat: audit/wave79-phase6-final.md
+      - Wave 80 — Pfam + OmegaFold install: audit/wave80-phase4-final.md
+      - Wave 81 — LineageFlow upstream: audit/wave81-phase4-final.md
+      - Wave 82 — FlowMol3 PB-xtb: audit/wave82-phase4-final.md
+      - Wave 83 — Kanzi codebook metrics: audit/wave83-phase4-final.md
+      - Wave 84 — Python 3.10 sidecar: audit/wave84-phase3-final.md
+      - Wave 86 — framework-loop bug fix: audit/wave86-phase3-sweep.md
+      - Wave 87 — FlowMol3 PB-xtb real: audit/wave87-phase4-final.md
+      - Wave 88 — Kanzi framework-arm: audit/wave88-phase3-final.md
+      - Wave 89 — final synthesis: audit/wave89-phase1-final.md
+      - Wave 90 — xtb bridge: audit/wave90-phase2-sweep.md
+      - Wave 91 — Kanzi latent bridge: audit/wave91-phase5-final.md
+      - Wave 92 — Kanzi constants + N=1000: audit/wave92c-n1000-sweep-real.md
+      - Wave 93 — statistical power: audit/wave93-phase2-final.md
+      - Wave 95 — CONSOLIDATED refresh: audit/wave95-phase3-kanzi-inverse-rerun.md
+      - Wave 96 — endpoint collapse: audit/wave96e-final-synthesis.md
+      - Wave 97 — routing consolidation: audit/wave97-routing-final.md
+      - Wave 98 — GPU + SOTA alignment: audit/wave98-gpu-sota-final.md
+      - Wave 99 — N=1000 Kanzi verdict: audit/wave99-n1000-final.md
+      - Wave 100 — Kanzi load torch fix: audit/wave100-kanzi-load-torch-fix.md
+      - Wave 101 — Layer-4 docs/config review: audit/wave101-review-layer4-docs-config.md
   - Paper-supporting survey (r4-survey):
       - Phase-4 code review: r4-survey/18-comprehensive-code-review.md
       - Phase-4 fix plan: r4-survey/19-fix-plan.md
