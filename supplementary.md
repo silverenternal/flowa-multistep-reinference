@@ -10,7 +10,7 @@
 > - **S1** Theory details — JMAA Theorem 1 + Lemmas 2-5
 > - **S2** Tier 1 toy benchmarks — 2D Two Moons + CIFAR-10 + MNIST FM
 > - **S3** Kanzi audit — Wave 91 + 92a + 92b + 92c (when available)
-> - **S4** LineageFlow audit — Wave 81 + 82 + 83
+> - **S4** LineageFlow audit — Wave 81 + Wave 82 (FlowMol3 cross-cited) + Wave 84 (OmegaFold LineageFlow foldability N=5 smoke)
 > - **S5** FlowMol3 audit — Wave 82 + 87 + 90
 > - **S6** Reproducibility — ckpt SHA-256 + vendored hashes + D.4 + G-MASTER
 > - **S7** Statistical methodology — Wave 93 power analysis (placeholder for Phase 2 output)
@@ -164,7 +164,7 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 - Phase 3 sweep (`docs/audit/wave81-phase3-sweep.md`): N=200 (100-cell × 2-arm) LineageFlow upstream eval sweep with `--hmmdb` + `--target-db` patched into `tools/upstream_eval.py`. **Wave 81 sweep was actually N=2 per arm at completion** (`kill_reason: per-cell wallclock ~3 min`); the brief's N=1000 sweep was killed after 1 of 100 cells.
 - Phase 4 final (`docs/audit/wave81-phase4-final.md`): Wave 81 recorded `hmmscan_total_hits=0` on both arms at N=2 per arm (`verdict_overall="TIE_AT_SATURATION"`).
 - **The `+116% framework_improves` claim** (baseline 158 → framework 342, p<1e-10) is sourced from **Wave 86 N=1000 per arm sweep** (`docs/audit/wave86-phase3-sweep.md` §2, real framework arm with manifest `framework_fallback_per_family_count = {}`, after Pitfall #1 + Pitfall #2 framework-loop bug fixes), NOT from Wave 81. Cover letter citation is correct in attributing the +116% to Wave 86 N=1000 per arm.
-- Single commit Wave 81 N=1000 reproduction; D.4 + G-MASTER + mkdocs verified green.
+- Wave 81 attempted an N=1000 reproduction sweep but was **killed at N=2 per arm** (`kill_reason: per-cell wallclock ~3 min`); the actual `+116% / 158 / 342` numbers are sourced from **Wave 86 N=1000 per arm** (single commit `1392bea`, per `docs/audit/wave86-phase3-sweep.md` §2). D.4 + G-MASTER + mkdocs verified green at Wave 86 closure.
 - **Data-state note (Wave 106.A.2 audit)**: the `+116%` / `158` / `342` numbers are sourced from Wave 86 N=1000 per arm sweep (`docs/audit/wave86-phase3-sweep.md` §2, real framework arm with manifest `framework_fallback_per_family_count = {}`); the on-disk `verification_outputs/lineageflow_n1000_{baseline,framework}_q4_2026.json` files contain Wave 81 N=2 per arm data (with `hmmscan_total_hits=0` both arms, `verdict_overall="TIE_AT_SATURATION"`). The lineageflow_real_force_mode_q4_2026.json referenced above has 9 cells at synthetic_fallback + TIE/PENDING — no `hmmscan_total_hits` field.
 
 ### S4.2 Wave 82 (FlowMol3; cross-cited for upstream pattern)
