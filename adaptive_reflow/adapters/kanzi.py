@@ -534,7 +534,8 @@ def _gpt_prior_already_installed() -> bool:
     or the marker attribute is absent on the class.
     """
     import importlib
-    if importlib.util.find_spec("kanzi") is None:
+    import importlib.util as _importlib_util
+    if _importlib_util.find_spec("kanzi") is None:
         return False
     _km_gpt = getattr(importlib.import_module("kanzi.models"), "GPT", None)
     return bool(getattr(_km_gpt, _GPT_PRIOR_PATCH_MARKER, False))
