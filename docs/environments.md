@@ -76,6 +76,61 @@ Driver / hardware:
 | **ProtBFN / AbBFN** | HuggingFace `InstaDeepAI/protein-sequence-bfn` (6.4 MB) | `.venvs/protbfn_venv` | transformers + biopython; BFN refiner is framework-internal |
 | **GraphBFN** | N/A (HTTP 401 from HF; AlgoMole/GraphBFN GitHub-only) | — | deferred per P-10 |
 
+## Venv Activation Matrix (frozen 2026-09-11, Wave 102)
+
+Eleven sidecar venvs plus the project venv (12 total). Each row
+identifies which venv a given workflow MUST be launched from; cross-
+venv launches break because the upstream deps (torch, mmcv-full,
+biotite, transformers, jax) are not installed in the project venv.
+
+Activation pattern: source the bin/activate (or call the venv's
+`bin/python` directly to avoid shell state pollution). Each row also
+lists a representative `tools/<X>.py` invocation so the reader does
+not have to grep.
+
+| Venv | Owner model | Purpose | Activate with | Example tool to invoke |
+|---|---|---|---|---|
+| `.venv` | project | framework dev/test/docs (stdlib-only by design — `tests/test_universal/test_no_molecular_import.py` guards `universal/` ⊄ molecules) | `source .venv/bin/activate` | `pytest tests/`, `mkdocs build --strict`, `python -m adaptive_reflow` |
+| `.venvs/flowmol3_venv` | FlowMol3 (Pitt pretrained, partial-fidelity GVP) | molecule FM eval + paper-metric PB-xtb + posebusters | `source .venvs/flowmol3_venv/bin/activate` | `.venvs/flowmol3_venv/bin/python tools/run_mol_eval.py` · `tools/paper_metrics.py` · `tools/flowmol3_xtb_bridge.py` |
+| `.venvs/kanzi_venv` | Kanzi (ICLR 2026 protein flow-AE) | protein FM real-ckpt forward + N=1000 sweeps + GPT-prior restart | `source .venvs/kanzi_venv/bin/activate` | `.venvs/kanzi_venv/bin/python tools/run_kanzi_real_ckpt.py` · `tools/run_kanzi_gpt_prior.py` · `tools/sweep_kanzi_n1000_*.py` |
+| `.venvs/lineageflow_venv` | LineageFlow (ICML 2026 protein) | protein FM real-ckpt forward + N=1000 upstream eval + foldability | `source .venvs/lineageflow_venv/bin/activate` | `.venvs/lineageflow_venv/bin/python tools/run_lineageflow_real_ckpt.py` · `tools/run_lineageflow_n1000_foldability_omegafold.py` · `tools/upstream_eval.py` (LineageFlow branch) |
+| `.venvs/hidream_venv` | HiDream-I1 (17B Dev, HF safetensors) | image FM diffusion — SOTA-2 / framework-arm experiments | `source .venvs/hidream_venv/bin/activate` | `.venvs/hidream_venv/bin/python tools/run_sota_hidream_i1_experiment.py` |
+| `.venvs/lumina_venv` | Lumina-Image 2.0 (HF LFS, ~52 GB) | image FM diffusion — SOTA-2 / framework-arm experiments | `source .venvs/lumina_venv/bin/activate` | `.venvs/lumina_venv/bin/python tools/run_sota_lumina_image_2_0_experiment.py` |
+| `.venvs/wan2_2_venv` | Wan2.2-T2V-A14B (HF LFS, ~130 GB) | video FM diffusion — SOTA-2 / framework-arm experiments | `source .venvs/wan2_2_venv/bin/activate` | `.venvs/wan2_2_venv/bin/python tools/run_sota_wan2_2_video_experiment.py` |
+| `.venvs/protbfn_venv` | ProtBFN / AbBFN (InstaDeep JAX shim + framework torch reimpl) | protein BFN — JAX upstream-shim route + torch adapter path | `source .venvs/protbfn_venv/bin/activate` | `.venvs/protbfn_venv/bin/python tools/run_sota_protbfn_abbfn_adapter_experiment.py` · `tools/upstream_eval.py` (ProtBFN branch) |
+| `.venvs/geva_venv` | GEVA / djghosh13/geneval (mmcv-full + mmdet + Mask2Former Swin-S) | Tier-2 image-eval: GenEval harness (CPU-only inference path, slow but correct) | `source .venvs/geva_venv/bin/activate` | `python tools/run_image_eval.py --geneval-binary .venvs/geva_venv/bin/python …` |
+| `.venvs/hpsv2_venv` | HPSv2 (human preference score v2) | Tier-2 image-eval: HPSv2 scorer on `(image, prompt)` pairs | `source .venvs/hpsv2_venv/bin/activate` | `python tools/run_image_eval.py --hpsv2-binary .venvs/hpsv2_venv/bin/python …` |
+| `.venvs/image_reward_venv` | ImageReward (BLIP + MedBLIP reward model) | Tier-2 image-eval: BLIP-anchored reward score | `source .venvs/image_reward_venv/bin/activate` | `python tools/run_image_eval.py --image-reward-binary .venvs/image_reward_venv/bin/python …` |
+| `.venvs/dpg_venv` | DPG / MiniCPM-V judge model | dp-not-diffusion judge model (NOT YET PROVISIONED — see `docs/r17-survey/dpg-bench-judge-decision.md`) | (none — install deferred) | reserved for `tools/run_dpg_bench_metric()` once Q1 in `dpg-bench-judge-decision.md` is resolved |
+
+Notes on the matrix:
+
+- The five **GPU model venvs** (flowmol3, hidream, lumina, wan2_2,
+  protbfn) ship with `torch` and run on the sm_120 GPUs; flowmol3 is
+  pinned to cu121 torch 2.2.0 (see top-of-page table + "Open venv
+  limitations" section).
+- The two **protein paper-metric venvs** (kanzi, lineageflow) ship
+  with `biotite + esm + torchdiffeq`; lineageflow additionally has
+  `fair-esm` and OmegaFold in `repo/`; kanzi has `jaxtyping + loguru
+  + timm + fastpdb` and an xTB bridge for energy evaluation.
+- The three **Tier-2 image-eval venvs** (geva, hpsv2, image_reward)
+  are invoked as subprocesses from the project venv via
+  `tools/run_image_eval.py`; the `DEFAULT_*_VENV_PYTHON` constants
+  in that file pin the interpreter path. Each venv is CPU-only
+  inference at present (geva is mmcv-full 1.7.2 CPU path; hpsv2 and
+  image_reward are CPU by design).
+- The `.venvs/dpg_venv` row is reserved but currently unprovisioned;
+  install attempts were paused pending the judge-model decision in
+  `docs/r17-survey/dpg-bench-judge-decision.md`. See that doc for
+  the exact `uv venv --python 3.12 .venvs/dpg_venv --seed` recipe
+  once Q1 is resolved.
+
+If a tool is not listed above, grep its header docstring for
+`.venvs/<name>_venv/bin/python` to confirm which interpreter to use;
+each per-venv tool explicitly names its required venv at the top of
+its file (e.g., `tools/run_kanzi_real_ckpt.py` line 1 says
+"runs inside the `.venvs/kanzi_venv` sidecar (created in this wave)").
+
 ## Why each model has its own venv
 
 The five families of upstream SOTA models have incompatible dependency
