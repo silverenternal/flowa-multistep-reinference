@@ -36,10 +36,7 @@ from __future__ import annotations
 import json
 import os
 
-import matplotlib
-import matplotlib.pyplot as plt
-
-matplotlib.use("Agg")
+from tools._figures_common import OUT_DIR, plt, save_figure
 
 # Brand-neutral palette, augmented with tier color mapping
 PALETTE = {
@@ -57,9 +54,6 @@ PALETTE = {
     "tier2": "#27AE60",   # green
     "tier3": "#E67E22",   # orange
 }
-
-OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "docs", "figures")
-os.makedirs(OUT_DIR, exist_ok=True)
 
 AUDIT_JSON = os.path.join(
     os.path.dirname(__file__),
@@ -438,8 +432,7 @@ def main() -> str:
     fig.subplots_adjust(bottom=0.40)
 
     out = os.path.join(OUT_DIR, "tier3_real_ckpt_signed_mean.png")
-    fig.savefig(out, dpi=150, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+    save_figure(fig, out)
     return out
 
 

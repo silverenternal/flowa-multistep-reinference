@@ -15,11 +15,9 @@ from __future__ import annotations
 import math
 import os
 
-import matplotlib
 import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 
-matplotlib.use("Agg")
+from tools._figures_common import OUT_DIR, _FIGURE_DPI, plt, save_figure
 
 # Brand-neutral palette (dataviz skill). All figures share this.
 PALETTE = {
@@ -38,9 +36,6 @@ PALETTE = {
     "bar_baseline": "#888888",
     "bar_framework": "#0077B6",
 }
-
-OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "docs", "figures")
-os.makedirs(OUT_DIR, exist_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -139,8 +134,7 @@ def fig1_protocol() -> str:
             ha="center", va="center", fontsize=8, color=PALETTE["ink"], style="italic")
 
     out = os.path.join(OUT_DIR, "fig1-protocol.png")
-    fig.savefig(out, dpi=150, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+    save_figure(fig, out)
     return out
 
 
@@ -224,8 +218,7 @@ def fig2_loops() -> str:
             ha="center", va="center", fontsize=8, color=PALETTE["ink"], style="italic")
 
     out = os.path.join(OUT_DIR, "fig2-loops.png")
-    fig.savefig(out, dpi=150, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+    save_figure(fig, out)
     return out
 
 
@@ -301,8 +294,7 @@ def fig3_selection_ratio() -> str:
             fontsize=8, color=PALETTE["ink"], style="italic")
 
     out = os.path.join(OUT_DIR, "fig3-selection-ratio.png")
-    fig.savefig(out, dpi=150, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+    save_figure(fig, out)
     return out
 
 
@@ -373,8 +365,7 @@ def fig4_cifar_fid() -> str:
             fontsize=8, color=PALETTE["ink"], style="italic")
 
     out = os.path.join(OUT_DIR, "fig4-cifar-fid.png")
-    fig.savefig(out, dpi=150, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+    save_figure(fig, out)
     return out
 
 

@@ -29,10 +29,7 @@ import math
 from pathlib import Path
 from typing import Any
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+from tools._figures_common import _FIGURE_DPI, plt, save_figure
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 VO = REPO_ROOT / "verification_outputs"
@@ -353,8 +350,7 @@ def _plot(kanzi: dict[str, Any], lineageflow: dict[str, Any]) -> None:
         fontweight="bold",
     )
     fig.tight_layout(rect=(0, 0, 1, 0.94))
-    fig.savefig(FIG_OUT, bbox_inches="tight")
-    plt.close(fig)
+    save_figure(fig, FIG_OUT, dpi=_FIGURE_DPI, facecolor=None)
 
 
 def main() -> None:

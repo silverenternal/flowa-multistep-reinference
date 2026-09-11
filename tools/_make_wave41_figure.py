@@ -12,10 +12,7 @@ from __future__ import annotations
 import json
 import os
 
-import matplotlib
-import matplotlib.pyplot as plt
-
-matplotlib.use("Agg")
+from tools._figures_common import OUT_DIR, plt, save_figure
 
 # Brand-neutral palette (dataviz skill, consistent with tools/_make_figures.py)
 PALETTE = {
@@ -28,9 +25,6 @@ PALETTE = {
     "background": "#EEEEEE",
     "text": "#393E46",
 }
-
-OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "docs", "figures")
-os.makedirs(OUT_DIR, exist_ok=True)
 
 AUDIT_JSON = os.path.join(
     os.path.dirname(__file__),
@@ -169,8 +163,7 @@ def fig8_per_family_signed_mean() -> str:
     fig.subplots_adjust(bottom=0.30)
 
     out = os.path.join(OUT_DIR, "fig8-per-family-signed-mean.png")
-    fig.savefig(out, dpi=150, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+    save_figure(fig, out)
     return out
 
 
