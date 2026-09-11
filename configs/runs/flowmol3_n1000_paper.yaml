@@ -1,0 +1,25 @@
+# configs/runs/flowmol3_n1000_paper.yaml
+# Purpose: Wave 87-equivalent FlowMol3 N=1000 PB-xtb paper-metric sweep.
+# Profile version: 2026-09-11 (Wave 111).
+model: flowmol3_v2
+
+seed: 42
+force_mode: real                        # Wave 50.A factory fix
+metric_mode: real                       # Wave 53 Agent B real→torch wiring
+composite_metric: real                  # Wave 49 Agent D 5-axis chemistry
+
+nfe_budgets: [250]                      # FlowMol3 paper NFE
+max_records: 1000
+n_rounds: 3
+n_molecules: 4                          # Wave 74 F1 multi-mol
+
+pb_engine: xtb                          # Wave 74 F3 — xtb path only
+restart_min_nfe: 20                     # FlowMol3 v1 is the only consumer
+
+paper_metrics: true                     # Wave 75 4-metric paper-parity
+paper_reference: GEOM_DRUGS
+flowmol3_upstream_eval: false           # Wave 79 — use --paper-metrics instead
+upstream_n_samples: 1000
+
+# Adapter-level knobs not applicable to FlowMol3 (uses upstream subprocess).
+output_filename: flowmol3_n1000_paper_wave87_q4_2026.json

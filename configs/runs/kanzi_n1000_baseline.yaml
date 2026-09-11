@@ -1,0 +1,41 @@
+# configs/runs/kanzi_n1000_baseline.yaml
+# Purpose: Wave 109.A-equivalent Kanzi N=1000 baseline-arm paper-metric sweep.
+# Profile version: 2026-09-11 (Wave 111). Authoritative defaults — any CLI
+# override is byte-stable per Wave 105 P1-A refactor.
+model: kanzi                            # drives --model in eval/cli.py
+
+# --- §1. RNG / determinism (closes Wave 88 F-4) ---
+seed: 42                                # Kanzi DAE.decode stochasticity
+                                       # (Wave 108.A — closes Wave 88 F-4)
+
+# --- §2. Adapter operating mode (Wave 41.B + Wave 50) ---
+force_mode: synthetic                   # synthetic|real|auto
+metric_mode: synthetic                  # synthetic|real|auto (Wave 43)
+composite_metric: auto                  # synthetic|real|auto (Wave 47+49)
+
+# --- §3. Sweep axes ---
+nfe_budgets: [100]                      # DAE.decode diffusion steps
+max_records: 1000                       # N records (cap; 0 = all)
+n_rounds: 3                             # framework rounds per cell
+n_molecules: 1                          # Wave 74 F1 (Kanzi honors single)
+
+# --- §4. Per-model engine knob (Wave 95.1.D + Wave 105 P0-B) ---
+pb_engine: uff                          # uff|xtb (PoseBusters downstream)
+
+# --- §5. Algorithm-tier (framework knobs) ---
+restart_min_nfe: 20                     # Wave 58 NFE-adaptive gate
+
+# --- §6. Paper-metric tier (Wave 75 + Wave 79) ---
+paper_metrics: false                    # opt-in 4 paper-parity metrics
+paper_reference: GEOM_DRUGS             # GEOM_DRUGS|NCI_first_5K_proxy
+kanzi_upstream_eval: true               # Wave 79 subprocess opt-in
+kanzi_framework_paper_metrics: true     # Wave 91 Phase 3 framework arm
+upstream_n_samples: 1000                # Wave 92b upstream N
+
+# --- §7. Adapter-level knobs (Wave 111 F-A004 closure) ---
+adapter_force_mode: torch               # _kanzi_sweep_runner KanziAdapter constructor
+adapter_num_steps: 50                   # framework ODE num_steps
+adapter_solver: euler                   # euler|heun (heun not yet exposed)
+
+# --- §8. Output naming (Wave 111 F-A008 closure) ---
+output_filename: kanzi_n1000_paper_metrics.json
