@@ -1215,6 +1215,8 @@ math (`adaptive_reflow/eval/fid.py::InceptionV3FIDEvaluator`) is
 unchanged and remains the single source of truth for Fréchet
 arithmetic.
 
+**Decoder seed-handling (Wave 108.F).** Framework arm seed (default 42) applies uniformly across Kanzi / LineageFlow / FlowMol3 per Wave 108 commit 1 (`tools/sweep_kanzi_n1000_paper_metrics.py --seed`); per-model deterministic decoders (e.g., `flowmol.FlowMol.sample(seed=42)` per Wave 74 F2) are seeded separately — see cover_letter §"(4) Decoder stochasticity (Wave 108.A)" for the per-model matrix.
+
 ### §5.2 What is *not yet* proven at the trained-FM level
 
 The headline claim — "framework improves FM model outputs" — is
