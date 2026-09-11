@@ -522,19 +522,40 @@ def _install_gpt_prior_patch() -> bool:
 GPT_PRIOR_PATCH_MARKER: str = _GPT_PRIOR_PATCH_MARKER
 
 
+def _gpt_prior_already_installed() -> bool:
+    """Return ``True`` iff ``kanzi.models.GPT`` carries the patch marker.
+
+    Used as a module-level early-return guard so the install path can
+    skip when a prior import / module reload has already applied the
+    monkey-patch. Returns ``False`` when ``kanzi`` is not importable
+    or the marker attribute is absent on the class.
+    """
+    import importlib
+    if importlib.util.find_spec("kanzi") is None:
+        return False
+    _km_gpt = getattr(importlib.import_module("kanzi.models"), "GPT", None)
+    return bool(getattr(_km_gpt, _GPT_PRIOR_PATCH_MARKER, False))
+
+
 # Install the GPT-prior monkey-patch at module-load time. The helper
 # is idempotent (returns ``False`` when ``kanzi`` is unavailable, so
 # synthetic-only mode is unaffected) and never raises; any exception
 # during installation is silently swallowed because the adapter's
 # synthetic-mode path must remain import-safe regardless of the
 # upstream package's state.
-try:
-    _install_gpt_prior_patch()
-except Exception:
-    # Defensive: a failing monkey-patch must never break the
-    # synthetic-mode adapter import path. Tests verify the patch
-    # behaviour on a best-effort basis.
-    pass
+#
+# Module-level early-return: skip install when ``kanzi.models.GPT``
+# already carries the patch marker (set by a prior import / reload).
+# Avoids the importlib round-trip inside ``_install_gpt_prior_patch``
+# on every module reload.
+if not _gpt_prior_already_installed():
+    try:
+        _install_gpt_prior_patch()
+    except Exception:
+        # Defensive: a failing monkey-patch must never break the
+        # synthetic-mode adapter import path. Tests verify the patch
+        # behaviour on a best-effort basis.
+        pass
 
 
 def kanzi_resolve_weights_path(

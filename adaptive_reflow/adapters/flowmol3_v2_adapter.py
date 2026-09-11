@@ -450,11 +450,11 @@ def _try_import_upstream_flowmol(
 # Pure helpers — hashing
 # ---------------------------------------------------------------------------
 #
-# ``_seed_from_ids`` / ``_digest_state`` / ``_make_ref`` are no longer inlined
-# here — they delegate to ``adaptive_reflow.adapters._adapter_common``
-# (Wave 44 D.1 shrink). The local ``_make_ref`` historically used the
-# ``"flowmol3adapter:"`` namespace; the wrapper below pre-bakes that prefix
-# so the TensorRef digest is byte-identical to the prior inlined form.
+# ``_seed_from_ids`` / ``_digest_state`` are imported from
+# ``adaptive_reflow.adapters._adapter_common`` (Wave 44 D.1 shrink). The
+# local ``_make_ref`` (below) is a 1-line wrapper that pre-bakes the
+# ``flowmol3adapter:`` namespace prefix so the TensorRef digest is
+# byte-identical to the prior inlined form.
 
 
 def _make_ref(label: str, **parts: Any) -> TensorRef:

@@ -1757,14 +1757,12 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
             Forwarded to :meth:`observe_endpoint`. ``None`` is permitted by
             the Protocol (``interfaces.py:617-619``) and returns an empty
             tuple.
-        paper_quantities
-            Accepted for Protocol conformance; not consumed (HiDream I1
-            derives no observation from paper-quantity context).
+        paper_quantities, theta_before, theta_after
+            Accepted for Protocol conformance but ignored (HiDream I1
+            implements no observation derived from paper quantities).
         strategies
             Tuple of :class:`ObservationKind` tags to include. The default
             requests the two kinds HiDream I1 supports.
-        theta_before, theta_after
-            Accepted for Protocol conformance; not consumed (see above).
 
         Returns
         -------
