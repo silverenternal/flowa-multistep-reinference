@@ -65,6 +65,11 @@ def main(argv: list[str] | None = None) -> int:
                    help="Output directory for the JSON report.")
     p.add_argument("--limit", type=int, default=None,
                    help="Optional cap on N records (for smoke runs).")
+    p.add_argument("--seed", type=int, default=42,
+                   help=("Seed for the bridge decoder (Wave 108.A — closes "
+                         "Wave 88 F-4 by ensuring DAE.decode stochasticity "
+                         "is seeded via tools.kanzi_latent_to_coord at "
+                         "kanzi_latent_to_coord.py:165). Default 42."))
     p.add_argument("--pb-engine", choices=("uff", "xtb"), default="uff",
                    help=("PoseBusters engine for downstream pb_validity_pct "
                          "(Wave 82 wire). Default 'uff' preserves the Wave 87 "
@@ -74,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
     run_kanzi_sweep(
         mode="baseline",
         output_dir=str(args.output_dir),
-        seed=0,
+        seed=int(args.seed),
         max_records=int(args.limit) if args.limit is not None else 0,
         nfe_steps=100,
         input_path=args.input,

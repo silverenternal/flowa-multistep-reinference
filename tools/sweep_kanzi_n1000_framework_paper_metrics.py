@@ -81,8 +81,11 @@ def main(argv: list[str] | None = None) -> int:
                    help="Output directory for the JSON report.")
     p.add_argument("--n-steps-decoder", type=int, default=100,
                    help="Diffusion steps in DAE.decode inside the bridge (default 100).")
-    p.add_argument("--seed", type=int, default=0,
-                   help="Seed for the x_final synthesis RNG (default 0).")
+    p.add_argument("--seed", type=int, default=42,
+                   help=("Seed for the x_final synthesis RNG + bridge decoder "
+                         "(Wave 108.A — closes Wave 88 F-4 by seeding "
+                         "DAE.decode stochasticity via "
+                         "tools.kanzi_latent_to_coord at line 165). Default 42."))
     p.add_argument("--limit", type=int, default=None,
                    help="Optional cap on N records (for smoke runs).")
     p.add_argument("--pb-engine", choices=("uff", "xtb"), default="uff",
