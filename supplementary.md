@@ -161,8 +161,9 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 ### S4.1 Wave 81 (Phase 1-4)
 
 - Phase 1 audit (`docs/audit/wave81-phase1-audit.md`): 5-LOC `_StubLineageFlow.forward` signature fix for `transformers` version divergence between `lineageflow_venv` and `flowmol3_venv`.
-- Phase 3 sweep (`docs/audit/wave81-phase3-sweep.md`): N=200 (100-cell × 2-arm) LineageFlow upstream eval sweep with `--hmmdb` + `--target-db` patched into `tools/upstream_eval.py`.
-- Phase 4 final (`docs/audit/wave81-phase4-final.md`): `hmmscan_total_hits` baseline 158 → framework 342 (+116%, p<1e-10) → `framework_improves` (cited in cover letter).
+- Phase 3 sweep (`docs/audit/wave81-phase3-sweep.md`): N=200 (100-cell × 2-arm) LineageFlow upstream eval sweep with `--hmmdb` + `--target-db` patched into `tools/upstream_eval.py`. **Wave 81 sweep was actually N=2 per arm at completion** (`kill_reason: per-cell wallclock ~3 min`); the brief's N=1000 sweep was killed after 1 of 100 cells.
+- Phase 4 final (`docs/audit/wave81-phase4-final.md`): Wave 81 recorded `hmmscan_total_hits=0` on both arms at N=2 per arm (`verdict_overall="TIE_AT_SATURATION"`).
+- **The `+116% framework_improves` claim** (baseline 158 → framework 342, p<1e-10) is sourced from **Wave 86 N=1000 per arm sweep** (`docs/audit/wave86-phase3-sweep.md` §2, real framework arm with manifest `framework_fallback_per_family_count = {}`, after Pitfall #1 + Pitfall #2 framework-loop bug fixes), NOT from Wave 81. Cover letter citation is correct in attributing the +116% to Wave 86 N=1000 per arm.
 - Single commit Wave 81 N=1000 reproduction; D.4 + G-MASTER + mkdocs verified green.
 - **Data-state note (Wave 106.A.2 audit)**: the `+116%` / `158` / `342` numbers are sourced from Wave 86 N=1000 per arm sweep (`docs/audit/wave86-phase3-sweep.md` §2, real framework arm with manifest `framework_fallback_per_family_count = {}`); the on-disk `verification_outputs/lineageflow_n1000_{baseline,framework}_q4_2026.json` files contain Wave 81 N=2 per arm data (with `hmmscan_total_hits=0` both arms, `verdict_overall="TIE_AT_SATURATION"`). The lineageflow_real_force_mode_q4_2026.json referenced above has 9 cells at synthetic_fallback + TIE/PENDING — no `hmmscan_total_hits` field.
 
