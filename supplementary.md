@@ -249,6 +249,8 @@ where $z \sim \mathcal{N}(0,1)$, and the bound is $g$-independent (depends only 
 | `energy_ratio` | (per cover letter Table 1) | (per cover letter Table 1) | (per cover letter) | `reported_with_ci_per_cover_letter` |
 | `xtb_med_rmsd` | (per Wave 90 PB-xtb wire) | (per Wave 90 PB-xtb wire) | (per cover letter) | `reported_with_ci_per_cover_letter` |
 
+- **Multi-metric-same-axis convention (Wave 108.E).** `framework_improves` vs `framework_ties` are NOT mutually exclusive; both can apply to the same cell on different metrics (e.g., `framework_improves` on `fg_dev` while `framework_ties` on `pb_validity_pct` per-cell).
+
 - **Source:** `verification_outputs/flowmol3_n1000_baseline_q4_2026.json` (n_sampled=999, nfe=250, perturbation_sigma=0.0, seed_base=42) + `verification_outputs/flowmol3_n1000_framework_q4_2026.json` (n_sampled=1000, nfe=250, perturbation_sigma=0.05, seed_base=42).
 - **Per-Wave 106.A.2 F-02 caveat:** 1 molecule dropped from baseline arm due to CTMC valence artifact (per Wave 87 §"Honest caveats" #7). Framework arm produces 1000 molecules cleanly.
 - **D.4 + capability audit + mkdocs verified green** at Wave 87 / Wave 90 closure.

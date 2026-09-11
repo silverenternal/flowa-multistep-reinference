@@ -48,6 +48,7 @@
 
 **Verdict summary (8/12 supported + 4/12 deferred)**:
 - 8 cells `SUPPORTED` (3 FlowMol3 N=1000 [baseline 999 mols] + 1 Kanzi N=10 + 4 Kanzi TIED_BY_DESIGN [deterministic, N=N/A])
+- **Tier-3 cell explanations (Wave 108.E) must distinguish metric-level vs verdict-level `framework_improves`/`ties`**: a single cell may carry `framework_improves` on one paper metric and `framework_ties_within_sem` on a different paper metric within the same cell (multi-metric-same-axis convention).
 - 4 cells `DEFERRED` (LineageFlow ×4 — Wave 81 N=1000 sweep killed at N=2 per arm; Wave 84 N=5 smoke + Wave 86 N=1000 audit-doc data; the Wave 86 N=1000 framework-vs-baseline sweep has produced the +116% claim but the JSON files are not yet promoted into `verification_outputs/`. Must be re-run + JSON-promoted on GPU before venue submission.)
 
 ### Verification gates (hard / soft)
