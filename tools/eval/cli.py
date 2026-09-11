@@ -25,6 +25,12 @@ from tools.eval.io import (  # type: ignore
 )
 from tools.eval.sweep import _run_cell  # type: ignore
 
+# Wave 112.B Agent — Commit C-4. Optional YAML profile loader. The profile is
+# additive (CLI flags still work without --config); resolution order is
+# **CLI flag > YAML value > module-level default** (see
+# docs/audit/wave111-data-linkage-plan.md §3 C-4 + tools/eval/config.py).
+from tools.eval.config import load_run_profile as _load_run_profile  # type: ignore
+
 
 def build_argparser() -> argparse.ArgumentParser:
     """Return the canonical CLI argument parser."""
@@ -245,6 +251,20 @@ def build_argparser() -> argparse.ArgumentParser:
         ),
     )
     p.add_argument(
+        "--config", type=pathlib.Path, default=None,
+        help=(
+            "Wave 111.B: optional path to a run-profile YAML "
+            "(configs/runs/<model>_<purpose>.yaml). Loads the schema in "
+            "tools/eval/config.py — required keys are "
+            "model/seed/nfe_budgets/max_records/force_mode/metric_mode. "
+            "Resolution order is CLI flag > YAML value > module default; "
+            "omitting --config preserves the legacy CLI-default surface "
+            "byte-stable (Wave 97.B contract). Prints [PROFILE] summary "
+            "on load. See docs/audit/wave111-b-config-scattering-audit.md "
+            "§4 for the design notes."
+        ),
+    )
+    p.add_argument(
         "--upstream-n-samples", type=int, default=1000,
         help=(
             "Wave 79: number of sequences / molecules / SMILES to "
@@ -261,7 +281,59 @@ def build_argparser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point. Returns 0 on success, 1 on per-cell error, 2 on tool error."""
-    args = build_argparser().parse_args(argv)
+    parser = build_argparser()
+    args = parser.parse_args(argv)
+    # ------------------------------------------------------------------
+    # Wave 112.B Agent — Commit C-4. Optional --config YAML loader.
+    # Resolution order: CLI flag > YAML value > module default. The CLI
+    # parser has the module defaults baked in, so we detect "user provided
+    # on the CLI" by comparing each argparse value against the parser
+    # default; if equal, the YAML wins; if different, the CLI wins.
+    # ------------------------------------------------------------------
+    if args.config is not None:
+        try:
+            _profile = _load_run_profile(args.config)
+        except Exception as exc:  # ConfigError + OSError + yaml.YAMLError
+            print(f"[ERROR] --config load failed: {exc}", file=sys.stderr)
+            return 2
+        # Per-flag resolution (only the keys the YAML schema exposes).
+        # seed: YAML (int) overrides parser default (None for --seeds CSV).
+        # We thread YAML['seed'] as a single-seed CSV so --seeds stays required.
+        # Force-mode / metric-mode / composite-metric: YAML overrides parser
+        # default only when the user did NOT pass --<flag> on the CLI.
+        # paper_metrics / paper_reference / upstream-eval flags / etc: same.
+        defaults = {a.dest: a.default for a in parser._actions}
+        _yaml_to_arg = (
+            ("force_mode", "force_mode"),
+            ("metric_mode", "metric_mode"),
+            ("composite_metric", "composite_metric"),
+            ("n_rounds", "n_rounds"),
+            ("n_molecules", "n_molecules"),
+            ("restart_min_nfe", "restart_min_nfe"),
+            ("paper_metrics", "paper_metrics"),
+            ("paper_reference", "paper_reference"),
+            ("upstream_n_samples", "upstream_n_samples"),
+            ("kanzi_upstream_eval", "kanzi_upstream_eval"),
+            ("flowmol3_upstream_eval", "flowmol3_upstream_eval"),
+            ("lineageflow_upstream_eval", "lineageflow_upstream_eval"),
+            ("kanzi_framework_paper_metrics", "kanzi_framework_paper_metrics"),
+        )
+        for yaml_key, arg_dest in _yaml_to_arg:
+            if yaml_key not in _profile:
+                continue
+            cli_value = getattr(args, arg_dest, None)
+            parser_default = defaults.get(arg_dest)
+            # CLI was provided iff it differs from the parser default
+            # (works for str/int/bool where defaults are sentinel-stable).
+            cli_provided = (cli_value != parser_default)
+            if cli_provided:
+                continue  # CLI wins
+            setattr(args, arg_dest, _profile[yaml_key])
+        # Special-case: --seeds is required-CSV; YAML seed threads through as
+        # a single-seed CSV iff user did not pass --seeds on the CLI. We
+        # detect "did not pass --seeds" by checking the parser default (None).
+        if "seed" in _profile and args.seeds is None:
+            args.seeds = str(int(_profile["seed"]))
     if args.n_rounds <= 0:
         print("[ERROR] --n-rounds must be positive", file=sys.stderr)
         return 2
