@@ -624,6 +624,15 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
         encode_prompt signature is satisfied. The contribution to the
         DiT residual is zero by construction — the residual still
         flows through the T5 branch.
+
+        Wave 106.C.1 F-08 gating note: this stub is activated only when
+        the upstream diffusers snapshot lacks the LlamaForCausalLM ckpt
+        (``text_encoder_4 = _StubLlama()`` at line 731). When the real
+        diffusers ``from_pretrained`` succeeds, the stub is replaced
+        with the loaded weights via the ``text_encoder_4`` constructor.
+        Constructor comment at line 503: 'no shape-only stub for
+        HiDream-I1 (preserves original)'. See
+        ``docs/audit/wave106-a-1-adapter-stubs.md`` §2.2 finding #8.
         """
 
         NUM_LAYERS = 32
