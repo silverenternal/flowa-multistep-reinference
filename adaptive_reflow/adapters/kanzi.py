@@ -129,6 +129,7 @@ from adaptive_reflow.adapters._adapter_common import (
     seed_from_ids,
     torch_is_available as _adapter_common_torch_is_available,
 )
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
 from adaptive_reflow.framework.interfaces import (
     AdapterObservationProtocol,
     ObservationKind,
@@ -564,6 +565,11 @@ def kanzi_resolve_weights_path(
 ) -> Path | None:
     """Return the candidate Kanzi weights path.
 
+    Thin adapter wrapper over
+    :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths` —
+    delegates the per-adapter subdir probes (the canonical ``kanzi/``
+    GitHub-release layout + the Wave 36 ``kanzi_ckpt/`` integration
+    layout) and the flat-file fallback to the framework-core helper.
     Resolves (in order) to:
 
     1. ``data_dir / "kanzi" / "kanzi_encoder.pt"`` — canonical
@@ -579,17 +585,17 @@ def kanzi_resolve_weights_path(
     Returns ``None`` when no candidate exists. Mirrors
     :func:`adaptive_reflow.adapters.rectified_flow_cifar.rectified_flow_cifar_resolve_weights_path`.
     """
-    base = Path(data_dir) if data_dir is not None else Path("data")
-    sub = base / "kanzi" / "kanzi_encoder.pt"
-    if sub.exists():
-        return sub
-    ckpt_dir = base / "kanzi_ckpt" / "kanzi_encoder.pt"
-    if ckpt_dir.exists():
-        return ckpt_dir
-    flat = base / "kanzi_encoder.pt"
-    if flat.exists():
-        return flat
-    return None
+    data_dirs_kw = [data_dir] if data_dir is not None else None
+    for name in ("kanzi", "kanzi_ckpt"):
+        candidates = resolve_candidate_paths(
+            name, "kanzi_encoder.pt", data_dirs=data_dirs_kw,
+        )
+        if candidates:
+            return candidates[0]
+    candidates = resolve_candidate_paths(
+        "", "kanzi_encoder.pt", data_dirs=data_dirs_kw,
+    )
+    return candidates[0] if candidates else None
 
 
 # ---------------------------------------------------------------------------

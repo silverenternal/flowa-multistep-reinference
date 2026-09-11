@@ -87,6 +87,7 @@ from adaptive_reflow.adapters._adapter_common import (
     memory_fraction_for,
     seed_from_ids,
 )
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
 from adaptive_reflow.framework.interfaces import implements
 
 
@@ -217,6 +218,13 @@ def wan22_resolve_weights_path(
     while the dependency blockers listed in the design spec remain
     open). Used by the adapter factory to decide between ``upstream``
     mode and the NumPy ``synthetic`` mode.
+
+    Thin adapter wrapper over
+    :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths` —
+    delegates the legacy per-variant ``.safetensors`` probe to the
+    framework-core shim. The ``data_dir`` and ``project_root/data/wan2_2/weights``
+    branches are intentionally not delegated because they resolve to
+    caller-specified paths (not filename candidates).
     """
     if data_dir is not None:
         candidate = Path(data_dir)
@@ -228,22 +236,22 @@ def wan22_resolve_weights_path(
     if candidate.exists():
         return candidate
     # Legacy fallback: keep the old per-variant safetensors probe so
-    # older data layouts still resolve.
-    base = Path("data")
-    legacy_candidates = (
-        ("wan2_2_t2v_a14b.safetensors",)
+    # older data layouts still resolve. The shim handles both the
+    # ``data/wan2_2/wan2_2_<variant>.safetensors`` subdir probe and
+    # the flat ``data/wan2_2_<variant>.safetensors`` fallback.
+    legacy_stem = (
+        "wan2_2_t2v_a14b.safetensors"
         if variant == "t2v_a14b"
         else (
-            ("wan2_2_ti2v_5b.safetensors",)
+            "wan2_2_ti2v_5b.safetensors"
             if variant == "ti2v_5b"
-            else ("wan2_2_i2v_a14b.safetensors",)
+            else "wan2_2_i2v_a14b.safetensors"
         )
     )
-    for name in legacy_candidates:
-        legacy = base / name
-        if legacy.exists():
-            return legacy
-    return None
+    hits = resolve_candidate_paths(
+        "wan2_2", legacy_stem, data_dirs=[Path("data")],
+    )
+    return hits[0] if hits else None
 
 
 # ---------------------------------------------------------------------------

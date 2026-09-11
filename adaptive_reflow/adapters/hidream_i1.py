@@ -113,6 +113,7 @@ from adaptive_reflow.adapters._adapter_common import (
     memory_fraction_for,
     seed_from_ids,
 )
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
 from adaptive_reflow.framework.interfaces import (
     AdapterObservationProtocol,
     ObservationKind,
@@ -263,19 +264,24 @@ def hidream_i1_resolve_weights_path(
 ) -> Path | None:
     """Return the candidate ``HiDream-I1-{variant}`` weights path.
 
-    Resolves to ``data_dir / f"hidream_i1_{variant}.safetensors"`` or
-    ``data_dir / f"hidream_i1_{variant}.pt"`` in priority order.
-    Returns ``None`` when neither candidate exists. Mirrors
+    Thin adapter wrapper over
+    :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths` —
+    probes ``.safetensors`` before ``.pt`` (preserving the original
+    priority order) in both the per-adapter subdir and the flat-file
+    layout. The framework-core helper handles the ``.safetensors`` /
+    ``.pt`` extension priority via the ``extensions=`` kwarg. Returns
+    ``None`` when neither candidate exists. Mirrors
     :func:`adaptive_reflow.adapters.rectified_flow_cifar.rectified_flow_cifar_resolve_weights_path`.
     """
     if str(variant) not in HIDREAM_VARIANTS:
         raise ValueError(f"{ERR_HIDREAM_I1_VARIANT_UNKNOWN}:{variant!r}")
-    base = Path(data_dir) if data_dir is not None else Path("data")
-    for name in (f"hidream_i1_{variant}.safetensors", f"hidream_i1_{variant}.pt"):
-        candidate = base / name
-        if candidate.exists():
-            return candidate
-    return None
+    candidates = resolve_candidate_paths(
+        "hidream_i1",
+        f"hidream_i1_{variant}",
+        extensions=[".safetensors", ".pt"],
+        data_dirs=[data_dir] if data_dir is not None else None,
+    )
+    return candidates[0] if candidates else None
 
 
 # ---------------------------------------------------------------------------

@@ -111,6 +111,7 @@ from adaptive_reflow.adapters._adapter_common import (
     memory_fraction_for,
     seed_from_ids,
 )
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
 from adaptive_reflow.framework.interfaces import implements
 
 
@@ -283,7 +284,12 @@ def freqflow_resolve_weights_path(
 ) -> Path | None:
     """Return the candidate ``nnet_ema.pth`` weights path.
 
-    Resolution order (first existing wins):
+    Thin adapter wrapper over
+    :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths` —
+    delegates the per-adapter subdir probes (Wave 36 ``freqflow_ckpt/``
+    canonical layout + Wave 21 ``freqflow/`` legacy layout) and the
+    flat-file fallback to the framework-core helper. Resolution order
+    (first existing wins):
 
     1. ``$FREQFLOW_CKPT`` — explicit override. May point either at the
        ``nnet_ema.pth`` file itself or at a directory containing it.
@@ -314,14 +320,13 @@ def freqflow_resolve_weights_path(
         if env_path.exists():
             return env_path
 
-    base = Path(data_dir) if data_dir is not None else Path("data")
-    for candidate in (
-        base / "freqflow_ckpt" / FREQ_FLOW_CKPT_FILENAME,
-        base / "freqflow" / FREQ_FLOW_CKPT_FILENAME,
-        base / FREQ_FLOW_CKPT_FILENAME,
-    ):
-        if candidate.exists():
-            return candidate
+    data_dirs_kw = [data_dir] if data_dir is not None else None
+    for name in ("freqflow_ckpt", "freqflow", ""):
+        candidates = resolve_candidate_paths(
+            name, FREQ_FLOW_CKPT_FILENAME, data_dirs=data_dirs_kw,
+        )
+        if candidates:
+            return candidates[0]
     return None
 
 

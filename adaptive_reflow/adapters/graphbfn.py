@@ -100,6 +100,7 @@ from adaptive_reflow.adapters._adapter_common import (
     make_ref,
     seed_from_ids,
 )
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
 from adaptive_reflow.framework.interfaces import implements
 
 
@@ -219,14 +220,21 @@ def graphbfn_resolve_weights_path(
 ) -> Path | None:
     """Return the first existing candidate weights path under ``data_dir``.
 
-    Returns ``None`` when none of the candidates exist (the adapter
-    then falls back to ``synthetic`` mode when ``force_mode="auto"``).
+    Thin adapter wrapper over
+    :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths` —
+    probes each candidate filename in probe-order and returns the
+    first existing path. The framework-core helper handles the
+    per-adapter subdir probe and the flat-file fallback. Returns
+    ``None`` when none of the candidates exist (the adapter then
+    falls back to ``synthetic`` mode when ``force_mode="auto"``).
     """
-    base = Path(data_dir) if data_dir is not None else Path("data")
-    for name in candidates:
-        candidate = base / name
-        if candidate.exists():
-            return candidate
+    data_dirs_kw = [data_dir] if data_dir is not None else None
+    for stem in candidates:
+        hits = resolve_candidate_paths(
+            "", stem, data_dirs=data_dirs_kw,
+        )
+        if hits:
+            return hits[0]
     return None
 
 

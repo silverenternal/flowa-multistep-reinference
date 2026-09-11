@@ -120,6 +120,7 @@ from adaptive_reflow.adapters._adapter_common import (
     per_position_entropy_reduction,
     seed_from_ids,
 )
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
 from adaptive_reflow.framework.interfaces import (
     AdapterObservationProtocol,
     ObservationKind,
@@ -350,19 +351,21 @@ def lineageflow_resolve_weights_path(
 ) -> Path | None:
     """Return the candidate ``lineageflow-rp55.ckpt`` weights path.
 
-    Resolves to ``data_dir / "lineageflow" / "lineageflow-rp55.ckpt"``
-    (the only filename the LineageFlow authors publish on HF). Returns
-    ``None`` when no candidate exists. Mirrors
+    Thin adapter wrapper over
+    :func:`adaptive_reflow.core.ckpt_loader.resolve_candidate_paths` —
+    probes ``data_dir / "lineageflow" / "lineageflow-rp55.ckpt"`` first,
+    then the flat ``data_dir / "lineageflow-rp55.ckpt"`` fallback. The
+    framework-core helper handles both the per-adapter subdir probe and
+    the flat-file probe in one call. Returns ``None`` when no candidate
+    exists. Mirrors
     :func:`adaptive_reflow.adapters.self_flow.self_flow_resolve_weights_path`.
     """
-    base = Path(data_dir) if data_dir is not None else Path("data")
-    candidate = base / "lineageflow" / "lineageflow-rp55.ckpt"
-    if candidate.exists():
-        return candidate
-    flat = base / "lineageflow-rp55.ckpt"
-    if flat.exists():
-        return flat
-    return None
+    candidates = resolve_candidate_paths(
+        "lineageflow",
+        "lineageflow-rp55.ckpt",
+        data_dirs=[data_dir] if data_dir is not None else None,
+    )
+    return candidates[0] if candidates else None
 
 
 # ---------------------------------------------------------------------------
