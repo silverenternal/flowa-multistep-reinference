@@ -178,6 +178,22 @@ settings.register_profile(
     verbosity=Verbosity.verbose,
 )
 
+# Wave 113.A.5 Fix 3 — ``shape_property`` profile for adapter
+# shape-contract fuzzing (see
+# ``tests/test_property_based/test_adapter_shape_contract.py``).
+# The Wave 113.A bug was structurally a shape mismatch; fuzz testing
+# with Hypothesis shrinks to the minimal failing tuple that breaks
+# the (rank in {2,3}, dims in [1, 1024]) invariant. We deliberately
+# cap ``max_examples=50`` and ``deadline=200`` to keep the CI run
+# bounded — a true shape mismatch surfaces in <20 examples for any
+# adapter whose ``state_shape`` is malformed.
+settings.register_profile(
+    "shape_property",
+    max_examples=50,
+    deadline=200,
+    derandomize=True,
+)
+
 # Load the ``ci`` profile as the default. ``load_profile`` raises if
 # the named profile does not exist; the explicit registration above
 # guarantees that.
