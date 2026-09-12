@@ -335,7 +335,14 @@ def _synthesize_x_final_synthetic(record_idx: int, *, seed: int,
     return x
 
 
-def _synthesize_x_final_real(adapter, record_idx: int, *, seed: int) -> np.ndarray:
+def _synthesize_x_final_real(
+    adapter,
+    record_idx: int,
+    *,
+    seed: int,
+    decoder: Any | None = None,
+    mode: str | None = None,
+) -> np.ndarray:
     """Wave 96.B real framework trajectory endpoint (L2 ~180).
 
     Runs :meth:`KanziAdapter.solve_ode` and returns
@@ -343,6 +350,27 @@ def _synthesize_x_final_real(adapter, record_idx: int, *, seed: int) -> np.ndarr
     ``(L=64, n_channels_decoder=512)`` space). Replaces the σ=1e-3
     synthetic noise in ``_synthesize_x_final_synthetic`` which
     collapsed every record to the same FSQ codebook index.
+
+    Wave 122 Phase 2 — For the ``framework_inv_proj`` arm only,
+    transform the initial state ``(L, 512)`` latent → ``(L, 3)``
+    backbone coords via the Wave 95.P3.B trained-inverse bridge
+    BEFORE the ``solve_ode`` loop so the velocity field shim's
+    ``DAE.encode(x)`` call (which expects ``(B, L, 3)`` raw backbone
+    coords — see ``data/kanzi_upstream/src/kanzi/models.py:346-362``
+    + the ``DAE.up`` ``nn.Linear(3, 256)`` at line 292) does not
+    crash on a matmul shape mismatch
+    (``RuntimeError: mat1 and mat2 shapes cannot be multiplied
+    (64x512 and 3x256)`` — Wave 121 P4 NEW deeper bug, distinct
+    from the Wave 120 shape-validator bug fixed in
+    ``kanzi.py:1085``). The bridge call is the same
+    :func:`tools.kanzi_latent_to_coord.kanzi_latent_to_coords` used
+    elsewhere in :func:`run_kanzi_sweep`, so the Linear(512→4)
+    inverse is shared. The ``decoder`` + ``mode`` kwargs default to
+    ``None`` so existing call sites (and the existing Wave 110.A
+    shape-contract regression test for ``_synthesize_x_final_synthetic``)
+    remain byte-identical — the inverse projection is ONLY
+    activated for the ``framework_inv_proj`` arm when both
+    ``decoder`` and ``mode="framework_inv_proj"`` are supplied.
     """
     from adaptive_reflow.universal.state import ODEConditionDelta
     batch_id = "wave96b"
@@ -355,6 +383,39 @@ def _synthesize_x_final_real(adapter, record_idx: int, *, seed: int) -> np.ndarr
         source="wave96b", target_round=0,
         calibration_artifact_hash="wave96b:default",
     )
+
+    # Wave 122 Phase 2 — pre-loop inverse projection for framework_inv_proj.
+    # The adapter builds x0 in (L=64, n_channels_decoder=512) latent space
+    # (post-`project_out`); the velocity field shim's
+    # `_KanziDAEShim.forward` calls `self._dae.encode(x)` which feeds
+    # `_dae.up` (`nn.Linear(3, 256)`) that requires `(B, L, 3)` backbone
+    # coords. Without the inverse projection, every Euler step crashes
+    # on the matmul shape mismatch — the framework_inv_proj arm
+    # produces 0 records (Wave 121 P4 NEW deeper bug). The bridge
+    # applies the trained Linear(512→4) inverse, then `DAE.decode`
+    # to produce `(B=1, L, 3)` backbone coords in Angstrom; we convert
+    # back to nm (the upstream DAE's input scale) so the velocity
+    # field sees the right units.
+    if decoder is not None and mode == "framework_inv_proj":
+        from tools.kanzi_latent_to_coord import kanzi_latent_to_coords
+        prior_entry = adapter._native_states.get(bundle.native_state_digest)  # type: ignore[attr-defined]
+        if prior_entry is not None:
+            x0_latent = np.asarray(prior_entry["x0"], dtype=np.float64)
+            x0_coords_A = kanzi_latent_to_coords(
+                x0_latent,
+                decoder=decoder,
+                fsq_quantizer=decoder.quantize,
+                n_steps=50,
+                seed=int(seed) + int(record_idx),
+            )
+            # kanzi_latent_to_coords returns (B, L, 3) Angstrom; reshape
+            # to (L, 3) and convert to nm so DAE.encode sees the
+            # canonical backbone coord scale.
+            x0_coords_nm = np.asarray(
+                x0_coords_A, dtype=np.float64,
+            ).reshape(-1, 3) / 10.0
+            prior_entry["x0"] = x0_coords_nm
+
     trace = adapter.solve_ode(bundle, cond, seed=int(seed) + int(record_idx))
     entry = adapter._native_states.get(trace.native_state_digest)  # type: ignore[attr-defined]
     if entry is None or "trajectory" not in entry:
@@ -617,9 +678,21 @@ def run_kanzi_sweep(
                         record_idx=seq_idx, seed=int(seed),
                     )
                 else:  # framework_inv_proj
+                    # Wave 122 Phase 2 — wire the Wave 95.P3.B
+                    # trained-inverse bridge into the
+                    # framework_inv_proj arm. The bridge transforms
+                    # the initial-state latent `(L, 512)` →
+                    # backbone coords `(L, 3)` BEFORE
+                    # `adapter.solve_ode` so the velocity field
+                    # shim's `DAE.encode(x)` (which expects
+                    # `(B, L, 3)` raw coords) does not crash on the
+                    # matmul shape mismatch that blocked the
+                    # framework_inv_proj arm since Wave 121 P4.
                     x_final = _synthesize_x_final_real(
                         adapter=kanzi_adapter, record_idx=seq_idx,
                         seed=int(seed),
+                        decoder=dae,
+                        mode="framework_inv_proj",
                     )
                 # Bridge: latent → coords in Ångström
                 try:

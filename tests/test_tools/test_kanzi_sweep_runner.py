@@ -724,3 +724,301 @@ def test_run_kanzi_sweep_end_to_end_n1_no_attribute_error(
         f"`n_skipped` incremented instead of propagating. Got "
         f"n_records_processed={summary['n_records_processed']}."
     )
+
+
+# ---------------------------------------------------------------------------
+# Test 8 (Wave 122 Phase 2 — regression test for the framework_inv_proj
+# pre-loop inverse-projection fix):
+# `_synthesize_x_final_real(mode="framework_inv_proj", decoder=...)` MUST
+# call `kanzi_latent_to_coords()` BEFORE `adapter.solve_ode(...)` to
+# convert the initial state `(L, 512)` latent → `(L, 3)` backbone coords
+# so the velocity field shim's `DAE.encode(x)` (which expects `(B, L, 3)`
+# raw backbone coords) does not crash on a matmul shape mismatch
+# (`RuntimeError: mat1 and mat2 shapes cannot be multiplied (64x512
+# and 3x256)` — Wave 121 P4 NEW deeper bug, distinct from the Wave 120
+# shape-validator bug fixed in `kanzi.py:1085`).
+#
+# The fix is **additive**: the `decoder` + `mode` kwargs default to
+# `None`, so existing call sites (and the existing Wave 110.A
+# shape-contract regression test for `_synthesize_x_final_synthetic`)
+# remain byte-identical. The inverse projection is ONLY activated when
+# BOTH `decoder is not None` AND `mode="framework_inv_proj"` are passed.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.usefixtures("requires_torch")
+def test_synthesize_x_final_real_inv_proj_calls_latent_to_coords_bridge(
+    runner: Any,
+) -> None:
+    """Regression for Wave 121 P4 architectural mismatch: framework_inv_proj
+    arm must call kanzi_latent_to_coords() before solve_ode to convert
+    latent → backbone coords.
+
+    Pre-Wave 122 Phase 2, ``_synthesize_x_final_real`` called
+    ``adapter.solve_ode(...)`` directly with the ``(L, 512)`` latent
+    initial state, which crashed inside ``DAE.encode(self.up)`` with
+    ``RuntimeError: mat1 and mat2 shapes cannot be multiplied (64x512
+    and 3x256)`` (Wave 121 P4 NEW deeper bug). The Phase 2 fix
+    transforms the initial state to ``(L, 3)`` backbone coords via the
+    Wave 95.P3.B trained-inverse bridge BEFORE ``solve_ode`` so the
+    velocity field shim receives ``(B, L, 3)`` input (which
+    ``DAE.encode`` accepts).
+
+    The test patches ``tools.kanzi_latent_to_coord.kanzi_latent_to_coords``
+    to a mock that records call args + returns a ``(1, 64, 3)`` array,
+    and uses a minimal fake adapter whose ``solve_ode`` method records
+    the bundle it received (so we can introspect the ``x0`` shape
+    stored in ``_native_states[digest]["x0"]``). Asserts:
+
+      1. ``kanzi_latent_to_coords`` was called at least once.
+      2. ``adapter.solve_ode`` was called.
+      3. The ``x0`` shape at solve_ode time is ``(64, 3)`` (NOT
+         ``(64, 512)``), confirming the inverse projection ran.
+
+    The test is stdlib + numpy + pytest only — no DAE / GPU / network
+    required (the DAE is replaced by a minimal fake; the bridge is
+    replaced by a mock that returns a deterministic ``(1, 64, 3)``
+    array).
+    """
+    import dataclasses
+    import sys as _sys
+
+    # ---- 1. Build a minimal fake adapter that records solve_ode inputs ----
+    # We need a real StateBundle + ODEIntegratorTrace for the runner to
+    # unpack cleanly. Use the production dataclasses (frozen, so we
+    # build via the constructor).
+
+    # ChannelName and TensorRef are imported by the runner via local
+    # import inside ``_synthesize_x_final_real`` — but for the fake
+    # adapter below we need them too. Import them here so the test
+    # is self-contained.
+    # Avoid hard-coded imports that would couple the test to the
+    # full adapter module chain — only pull in what's strictly needed
+    # to build StateBundle / ODEIntegratorTrace.
+    from adaptive_reflow.adapters._adapter_common import make_ref
+    from adaptive_reflow.universal.state import (
+        ODEIntegratorTrace,
+        StateBundle,
+    )
+
+    class _FakeAdapter:
+        """Minimal adapter stand-in for the framework_inv_proj regression test.
+
+        Surfaces consumed by ``_synthesize_x_final_real``:
+
+          * ``build_initial_state(batch_id, sample_id)`` — populates
+            ``_native_states[digest]["x0"]`` with a ``(64, 512)``
+            deterministic seeded random latent; returns a minimal
+            ``StateBundle`` whose ``native_state_digest`` matches the
+            cache key.
+          * ``solve_ode(bundle, cond, *, seed)`` — records the
+            bundle's ``native_state_digest`` so the test can look up
+            the post-inverse-projection ``x0`` shape; returns a
+            minimal ``ODEIntegratorTrace`` whose
+            ``native_state_digest`` is distinct from the bundle's
+            (so the runner takes the defensive-fallback path and
+            returns the (now (64, 3) coords) x0 unchanged).
+
+        We deliberately use a NEW ``digest`` for the trace so the
+        runner's defensive-fallback branch returns the post-projection
+        ``x0`` (which now has shape (64, 3)) — this avoids needing to
+        populate the trajectory cache.
+        """
+
+        def __init__(self) -> None:
+            # dict (NOT NativeStateCache) for simplicity — the runner
+            # only calls .get(), which both support identically.
+            self._native_states: dict[str, dict[str, Any]] = {}
+            self._solve_ode_input: dict[str, Any] | None = None
+            self._call_count = {"solve_ode": 0}
+
+        def build_initial_state(
+            self, *, batch_id: str, sample_id: str,
+        ) -> StateBundle:
+            # Deterministic seeded random latent (L=64, n_channels_decoder=512).
+            # The shape (64, 512) matches the post-`project_out` space
+            # that the real KanziAdapter.build_initial_state emits.
+            seed = abs(hash((batch_id, sample_id))) % (2**31)
+            x0 = (
+                np.random.default_rng(seed)
+                .standard_normal((64, 512))
+                .astype(np.float64)
+            )
+            digest = f"fake_digest::{batch_id}::{sample_id}"
+            self._native_states[digest] = {"x0": x0}
+            bundle = StateBundle(
+                channels={
+                    # The actual ChannelName / TensorRef content
+                    # doesn't matter — the runner doesn't introspect
+                    # them in this codepath.
+                    "protein_latent": make_ref(
+                        "fake:kanzi:latent:initial",
+                        "latent:initial",
+                        batch=batch_id, sample=sample_id,
+                    ),
+                },
+                masks={},
+                batch_id=batch_id,
+                sample_id=sample_id,
+                reference_frame="world",
+                normalization="none",
+                source_round=0,
+                detach_proof=True,
+                native_state_digest=digest,
+                provenance=("wave122-p2-fake",),
+            )
+            return bundle
+
+        def solve_ode(
+            self, state: StateBundle, cond: Any, *, seed: int,
+        ) -> ODEIntegratorTrace:
+            self._call_count["solve_ode"] += 1
+            x0 = self._native_states.get(
+                state.native_state_digest, {},
+            ).get("x0", np.zeros((0,), dtype=np.float64))
+            self._solve_ode_input = {
+                "digest": state.native_state_digest,
+                "x0_shape": tuple(x0.shape),
+            }
+            # Use a DIFFERENT digest so the runner takes the
+            # defensive-fallback path and returns the post-projection
+            # x0 (which is now (64, 3) coords in nm after the
+            # inverse-projection block ran).
+            traj_digest = f"traj_digest::{state.native_state_digest}"
+            self._native_states[traj_digest] = {
+                "x0": x0,  # echo the post-projection x0
+            }
+            return ODEIntegratorTrace(
+                steps=1,
+                accept_rate=1.0,
+                native_state_digest=traj_digest,
+                integrator_config_hash="fake:wave122-p2",
+            )
+
+    # ---- 2. Patch kanzi_latent_to_coords at the tools module level ----
+    # The runner does ``from tools.kanzi_latent_to_coord import
+    # kanzi_latent_to_coords`` LOCALLY inside the inverse-projection
+    # block — patching the attribute on the source module still
+    # works because Python imports are by module attribute lookup.
+    bridge_calls: list[dict[str, Any]] = []
+
+    def _mock_kanzi_latent_to_coords(latent, decoder, fsq_quantizer, **kwargs):
+        # Record what was passed so the test can assert call-site args.
+        bridge_calls.append({
+            "latent_shape": tuple(np.asarray(latent).shape),
+            "decoder_is_decoder": decoder is _decoder_obj,
+            "n_steps": kwargs.get("n_steps"),
+            "seed": kwargs.get("seed"),
+        })
+        # Return (1, L=64, 3) coords in Angstrom — the standard bridge
+        # output shape. The runner will reshape to (-1, 3) and divide
+        # by 10.0 to get nm, so the final stored x0 shape is (64, 3).
+        return np.zeros((1, 64, 3), dtype=np.float64)
+
+    # A trivial decoder stand-in (the mock bridge only needs to see
+    # that it was passed the same object).
+    class _FakeDecoder:
+        quantize = None  # never touched by the mock bridge
+
+    _decoder_obj = _FakeDecoder()
+
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        monkeypatch.setattr(
+            "tools.kanzi_latent_to_coord.kanzi_latent_to_coords",
+            _mock_kanzi_latent_to_coords,
+        )
+
+        # ---- 3. Call _synthesize_x_final_real ----
+        fake_adapter = _FakeAdapter()
+        out = runner._synthesize_x_final_real(
+            adapter=fake_adapter, record_idx=0,
+            seed=42, decoder=_decoder_obj, mode="framework_inv_proj",
+        )
+    finally:
+        monkeypatch.undo()
+
+    # ---- 4. Assert kanzi_latent_to_coords was called ----
+    assert len(bridge_calls) >= 1, (
+        "Wave 122 Phase 2 pin: framework_inv_proj arm MUST call "
+        "`tools.kanzi_latent_to_coord.kanzi_latent_to_coords` BEFORE "
+        "`adapter.solve_ode` to convert the initial-state (L, 512) "
+        "latent → (L, 3) backbone coords (the Wave 95.P3.B "
+        "trained-inverse bridge path). Pre-fix the function called "
+        "`adapter.solve_ode` directly with the (L, 512) latent, which "
+        "crashed inside `DAE.encode(self.up)` with "
+        "`RuntimeError: mat1 and mat2 shapes cannot be multiplied "
+        "(64x512 and 3x256)` (Wave 121 P4 NEW deeper bug). The fix "
+        f"is ADDITIVE — the `decoder` + `mode` kwargs default to "
+        f"`None`. Got {len(bridge_calls)} bridge call(s)."
+    )
+    # Assert the bridge received the original (L, 512) latent (NOT
+    # anything pre-processed) and the same decoder the caller passed.
+    assert bridge_calls[0]["latent_shape"] == (64, 512), (
+        "Wave 122 Phase 2 pin: the bridge MUST receive the raw "
+        f"(L=64, n_channels_decoder=512) initial-state latent — got "
+        f"latent_shape={bridge_calls[0]['latent_shape']}. The bridge "
+        f"applies the Wave 95.P3.B Linear(512→4) trained inverse to "
+        f"this latent and then `DAE.decode` to produce (B=1, L, 3) "
+        f"backbone coords in Angstrom."
+    )
+    assert bridge_calls[0]["decoder_is_decoder"], (
+        "Wave 122 Phase 2 pin: the bridge MUST receive the same "
+        "`decoder` object the caller passed (so the Linear(512→4) "
+        f"weights + DAE.decode weights are coherent). Got "
+        f"decoder_is_decoder={bridge_calls[0]['decoder_is_decoder']}."
+    )
+
+    # ---- 5. Assert adapter.solve_ode was called ----
+    assert fake_adapter._call_count["solve_ode"] == 1, (
+        "Wave 122 Phase 2 pin: `adapter.solve_ode` MUST be called "
+        "exactly once per `_synthesize_x_final_real` invocation. "
+        f"Got {fake_adapter._call_count['solve_ode']} call(s)."
+    )
+    assert fake_adapter._solve_ode_input is not None, (
+        "Wave 122 Phase 2 pin: `adapter.solve_ode` MUST be called "
+        "and record the bundle's `native_state_digest` so the test "
+        "can introspect the post-inverse-projection `x0` shape. "
+        "Got `None` (solve_ode was never invoked)."
+    )
+
+    # ---- 6. Assert adapter.solve_ode received (L, 3) x0 input ----
+    # The whole point of the Wave 122 Phase 2 fix: solve_ode must see
+    # (L, 3) backbone coords (so the velocity field's `DAE.encode(x)`
+    # accepts the input) — NOT the raw (L, 512) latent that the
+    # adapter's `build_initial_state` emits.
+    x0_shape_at_solve_ode = fake_adapter._solve_ode_input["x0_shape"]
+    assert x0_shape_at_solve_ode == (64, 3), (
+        "Wave 122 Phase 2 pin: `adapter.solve_ode` MUST receive "
+        f"`(L=64, 3)` backbone coords as the initial state — NOT the "
+        f"raw `(L=64, 512)` post-`project_out` latent. Pre-fix the "
+        f"`x0` was `(64, 512)` and `DAE.encode(x)` crashed inside "
+        f"`DAE.up` (`nn.Linear(3, 256)`) on a matmul shape mismatch. "
+        f"Got x0_shape={x0_shape_at_solve_ode}. The fix applies the "
+        f"Wave 95.P3.B trained Linear(512→4) inverse + `DAE.decode` "
+        f"to convert (L, 512) latent → (L, 3) backbone coords BEFORE "
+        f"`adapter.solve_ode` is called."
+    )
+
+    # ---- 7. Assert the returned x_final is the post-projection coords ----
+    # The runner's defensive-fallback path returns `entry["x0"]` when
+    # no `"trajectory"` key is present in the trace's native_states
+    # entry. The fake `solve_ode` echoes the (now (64, 3) coords)
+    # `x0` into the trace's `_native_states`, so the returned
+    # `x_final` should be (64, 3) — confirming the inverse projection
+    # end-to-end propagated through the integration.
+    assert out.shape == (64, 3), (
+        "Wave 122 Phase 2 pin: the `_synthesize_x_final_real` "
+        "return value MUST carry the post-inverse-projection "
+        f"`(L=64, 3)` coords shape end-to-end. Got out.shape="
+        f"{out.shape}. This is the shape that the downstream "
+        f"`kanzi_latent_to_coords` bridge call in `run_kanzi_sweep` "
+        f"line 626 receives as `x_final` — note that the runner's "
+        f"second bridge call expects the raw (L, 512) latent "
+        f"contract (the bridge applies the Linear(512→4) inverse + "
+        f"`DAE.decode`), so a future wave may also need to skip the "
+        f"second bridge call for the framework_inv_proj arm; for "
+        f"Wave 122 Phase 2 the focus is the pre-loop inverse "
+        f"projection that unblocks `adapter.solve_ode` from the "
+        f"matmul shape mismatch."
+    )
