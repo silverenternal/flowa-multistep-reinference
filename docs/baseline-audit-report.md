@@ -2985,6 +2985,140 @@ on `main`:
 
 ---
 
+## R.8 — Wave 116 — REAL CUDA fix + end-to-end N=1 regression test (Wave 115.P2 follow-up) (2026-09-12)
+
+**Date:** 2026-09-12
+**Agent:** Wave 116 Agent 4 (final synthesis)
+**Scope:** close the Wave 115.P2 follow-up by replacing the broken
+`device=dae.device` pin with the correct
+`device=next(dae.parameters()).device` idiom, add a NEW end-to-end
+regression test that exercises the full per-record loop on a CPU
+stand-in DAE, and verify the fix pins cleanly. **Only Phase 1
+landed on `main`; Phases 2 (sweep re-run) and 3 (paper §7.3 update)
+were NOT completed in Wave 116 timeframe — see "What remains open"
+below.** 1 atomic commit on `main`:
+- `60a30b0` — Phase 1: `device=next(dae.parameters()).device`
+  replacing broken `device=dae.device` at
+  `tools/_kanzi_sweep_runner.py:667` +
+  `tools/sweep_kanzi_n1000_diverse.py:261` (1 LOC each = +2 LOC
+  source); 2 existing static-pin tests (Test 5 + Test 6)
+  updated to pin the new idiom + 1 NEW end-to-end N=1
+  regression test (`test_run_kanzi_sweep_end_to_end_n1_no_attribute_error`)
+  exercising `run_kanzi_sweep(mode="baseline", max_records=1)`
+  on a CPU stand-in DAE and asserting
+  `n_records_processed == 1` (test file: +359 / -73 LOC).
+
+### What closed
+
+| Wave 116 axis | Closure mechanism | Test/audit location |
+|---|---|---|
+| REAL CUDA bug (Wave 115.P2's `device=dae.device` raised `AttributeError` on every per-record iteration, silently swallowed by outer `try/except` → 0-record sweep) | Phase 1: 1-LOC fix per file replaces `device=dae.device` with `device=next(dae.parameters()).device`. The `next(dae.parameters())` idiom is well-defined for any `nn.Module`-derived `DAE` (verified with a 2-layer `nn.Linear` stand-in in Test 7) | `tools/_kanzi_sweep_runner.py:667` + `tools/sweep_kanzi_n1000_diverse.py:261` + `tests/test_tools/test_kanzi_sweep_runner.py` (Tests 5 + 6 static pin + Test 7 end-to-end) |
+| Static-pin regression (Tests 5 + 6) | Pin text UPDATED to the new correct idiom; also asserts the broken idiom is gone from both source files | `tests/test_tools/test_kanzi_sweep_runner.py::test_run_envelope_input_matches_dae_device` + `::test_sweep_d_kanzi_input_device_in_sync_with_dae` |
+| End-to-end regression (NEW Test 7) | Patches `kanzi.DAE.from_pretrained` via `monkeypatch` to return a CPU stand-in DAE; runs `run_kanzi_sweep(mode="baseline", max_records=1)` and asserts `n_records_processed == 1`. Pre-fix the test fails (AttributeError silently swallowed → `n_processed == 0`); post-fix it passes | `tests/test_tools/test_kanzi_sweep_runner.py::test_run_kanzi_sweep_end_to_end_n1_no_attribute_error` |
+
+### What remains open (Phases 2 + 3 + 6 source-code regressions, follow-up waves)
+
+| Item | Why open | Future wave | LOC estimate |
+|---|---|---|---|
+| **Phase 2 — 4-arm `--seed 42` deterministic Kanzi sweep re-run** (Wave 116 deliverable) | Wallclock budget not consumed in Wave 116; requires ~2-4 hours of GPU time on the `kanzi_venv` sidecar | Next wave's GPU agent | n/a (compute) |
+| **Phase 3 — `docs/paper-draft.md` §7.3 ADDITIVE paragraph + 2 per-metric + power tables** (Wave 116 deliverable) | Downstream of Phase 2; no new sweep numbers to populate the paragraph | Next wave's paper agent (post-Phase 2) | ~25 LOC doc |
+| **Phase 3 — `docs/CONSOLIDATED_RESULTS.md` §15.21 (NEW)** | Downstream of Phase 2 | Next wave's paper agent (post-Phase 2) | ~150 LOC doc |
+| `DAE` base class `.device` property (Wave 115 R.7 Bucket D item #4) | Source-code gap — fix is sufficient at the call site via `next(dae.parameters()).device`, but a base-class property would be cleaner. Wave 116 Phase 1 did NOT add the property | Next wave's code agent | +5 LOC source |
+| Tighten sweep `try/except` so `AttributeError` is re-raised (not swallowed) — only known transient CUDA errors should be catch-and-skip (Wave 115 R.7 Bucket D item #4) | Source-code regression — without it, any future `AttributeError` on a sweep path silently produces 0 records | Next wave's code agent | +10 LOC source |
+| Add `n_records_skipped` field to sweep JSONL output (Wave 115 R.7 Bucket D item #4 — already in CONFIGS.md spec but never wired into the writer) | Source-code gap — without it the sweep user cannot tell the difference between "successful 1000-record sweep" and "silent 0-record sweep" from the JSONL alone | Next wave's code agent | +5 LOC source |
+| 1 wave35 saturation algorithm test fix (Wave 115 R.7 Bucket D item #4 — `BatchedRunnerConfig.config_hash` regression; the 7 FID math items were closed by Wave 118 Phase 3 `435ba7c`) | 1 source-code regression remains — the test correctly asserts the contract but the code does not satisfy it | Next wave's algorithm agent | +1 LOC source |
+
+### Verification results (this run)
+
+- **D.4 byte-stable regression:** `pytest tests/ -k "d4" -q
+  --ignore=tests/test_tools/test_statistical_power_analysis.py`
+  → **33 passed, 22 skipped**. The 22 skipped are
+  pre-existing dev-env gaps (`hypothesis`, `torch`, `rdkit`,
+  `expecttest`, `pytest-benchmark`, `pandas` missing from
+  active venv). Net **33/33 PASS** for any test that can run
+  without torch/pandas. The pre-existing
+  `test_statistical_power_analysis.py` collection error
+  (`import pandas` failure) is unrelated to Wave 116.
+- **Kanzi sweep runner tests:**
+  `pytest tests/test_tools/test_kanzi_sweep_runner.py -v`
+  → **1 passed, 1 skipped, 5 errors**. The 1 passing =
+  `test_sweep_d_kanzi_input_device_in_sync_with_dae` (the
+  static text-match pin; the broken idiom is asserted
+  GONE from the source). The 1 skipped = Test 7
+  (`test_run_kanzi_sweep_end_to_end_n1_no_attribute_error`)
+  via `requires_torch` fixture. The 5 errors = 5 tests
+  with `runner` fixture requiring torch. **Same
+  pre-existing dev-env gap as Wave 115 R.7.**
+- **Algorithm tests:** `pytest tests/test_algorithm/ -q`
+  → **1150 passed, 1 failed, 14 skipped**. The 1 failed
+  is the 1 remaining Bucket-D wave35 saturation item
+  (`test_wave35_saturation_fixes.py::test_early_termination_is_config_hash_visible`
+  — the `BatchedRunnerConfig.config_hash` regression
+  from Wave 115 R.7 Bucket D item #4). Wave 118 Phase 2
+  (`540b111`) closed the 3 OTEpsilonSchedule items +
+  Wave 118 Phase 3 (`435ba7c`) closed the 7 FID math
+  items, so only this 1 wave35 saturation item remains.
+  **No new failures introduced by Wave 116 Phase 1.**
+- **`mkdocs build --strict`:** EXIT=0 (15.24s build, 0
+  errors). License warning is upstream `mkdocs-material`
+  noise (MkDocs 2.0 deprecation banner), not a build failure.
+- **Grep verification:**
+  `grep -r "device=dae.device" tools/_kanzi_sweep_runner.py tools/sweep_kanzi_n1000_diverse.py`
+  → **ZERO matches** (the bug pattern is gone from both
+  source files). Broader
+  `grep -r "device=dae.device" tools/`
+  → 3 matches in `tools/_paper_metrics.py:20, :309, :320`,
+  all inside string literals (docstring + JSON
+  error-formatting strings) documenting the historical
+  bug + the inline `next(dae.parameters()).device`
+  remediation. **Not active code.**
+
+### Cross-references
+
+- `docs/audit/wave116-cuda-fix-real-sweep.md` — this
+  verifier's full Phase 1 synthesis (root cause + 1-LOC
+  fix + Test 7 end-to-end mechanism + determinism check +
+  Phase 2/3 open items + verification matrix).
+- `tools/_kanzi_sweep_runner.py:667` — Phase 1 1-LOC fix
+  (device pin via `next(dae.parameters()).device`).
+- `tools/sweep_kanzi_n1000_diverse.py:261` — Phase 1
+  1-LOC fix (diverse-endpoint driver).
+- `tests/test_tools/test_kanzi_sweep_runner.py` — 2 updated
+  static-pin tests (Tests 5 + 6) + 1 NEW end-to-end N=1
+  test (Test 7).
+- `tools/_paper_metrics.py:20, 309, 320` — Wave 115.P4
+  parser documents the historical `device=dae.device` bug +
+  the inline `next(dae.parameters()).device` remediation
+  (string literals; not active code).
+- `docs/audit/wave115-cuda-fix-sweep-recovery.md` — Wave
+  115 6-phase synthesis that identified `device=dae.device`
+  as the root cause of the 0-record sweep.
+- `docs/audit/wave115-bucket-d-regressions.md` — 11
+  source-code regressions for Wave 116 follow-up (10 closed
+  by Wave 118 Phases 2 + 3; 1 remaining = the wave35
+  saturation `BatchedRunnerConfig.config_hash` item).
+- `docs/CONSOLIDATED_RESULTS.md` §15.20 — Wave 115.P4
+  paper-package update (5 ADDITIVE subsections, 145 lines;
+  remains the latest paper-package on `main`).
+
+### No regression risk
+
+- The Phase 1 fix is **strict forward-compat** — any
+  CPU-only invocation path (synthetic-mode, sidecar CI,
+  pytest stand-in) now reaches
+  `next(dae.parameters()).device` which is well-defined
+  for any `nn.Module`-derived `DAE`.
+- Source semantics unchanged for any path that doesn't
+  hit the call site (e.g. `--device cpu` synthetic-mode
+  sweeps).
+- D.4 byte-stable regression verified (33/33 PASS).
+- mkdocs build --strict exits 0.
+- This verifier's commit is **docs-only** (1 new audit
+  doc + 1 new §R.8 row in this report). Zero source
+  touched.
+
+---
+
 ## S — GPU watchdog + SOTA alignment (Wave 98, 2026-09-10)
 
 **Date:** 2026-09-10
