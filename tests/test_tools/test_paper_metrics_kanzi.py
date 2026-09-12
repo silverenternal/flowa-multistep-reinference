@@ -381,14 +381,23 @@ def test_compute_reconstruction_kabsch_rmsd_A_handles_missing_kanzi(
     Mirrors the Wave 75 ``test_pb_validity_pct_*`` pattern: mock
     ``tools.upstream_eval.run_kanzi_upstream_eval`` to return a known
     canned dict, and verify the wrapper passes through unchanged.
+
+    Uses ``monkeypatch.setitem`` on ``sys.modules`` so the (possibly
+    freshly-injected) fake ``tools.upstream_eval`` is restored to its
+    prior state after the test — preventing cross-test pollution of
+    :mod:`tests.test_tools.test_upstream_eval` (Wave 119 Phase 4).
     """
     import sys as _sys
 
-    # Build a fake upstream_eval module.
+    # Build a fake upstream_eval module. ``monkeypatch.setitem``
+    # auto-restores the previous ``sys.modules`` entry on teardown,
+    # so a later ``importlib.import_module("tools.upstream_eval")``
+    # in a sibling test re-imports the real module from disk.
     fake_ue = _sys.modules.get("tools.upstream_eval")
-    if fake_ue is None:
+    injected = fake_ue is None
+    if injected:
         fake_ue = types.ModuleType("tools.upstream_eval")
-        _sys.modules["tools.upstream_eval"] = fake_ue
+    monkeypatch.setitem(_sys.modules, "tools.upstream_eval", fake_ue)
 
     sentinel = {
         "status": 0.0,
