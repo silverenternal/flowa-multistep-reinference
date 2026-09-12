@@ -213,8 +213,8 @@ def test_every_site_yields_compilable_distinct_source() -> None:
     """No site may produce a no-op or an uncompilable mutant.
 
     As of the MergeOperatorProtocol refactor, ``frame/merge.py`` is a
-    thin wrapper around ``algorithm/merge_operator.py``. The bulk of
-    the bounded-merge mutation surface moved to the algorithm layer
+    thin wrapper around ``algorithm/merge/merge_operator.py``. The bulk
+    of the bounded-merge mutation surface moved to the algorithm layer
     (see :func:`test_algorithm_merge_operator_has_substantial_surface`).
     The threshold here is set to match the new wrapper responsibilities
     (envelope / floor / cap helpers + delegating call site).
@@ -236,9 +236,14 @@ def test_algorithm_merge_operator_has_substantial_surface() -> None:
     operator's merge logic, validation, and audit emission must
     produce a substantial mutation surface — this is the canonical
     location for bounded-merge mutation testing.
+
+    Wave 105 P2-B moved ``merge_operator.py`` into the
+    ``merge/`` subpackage; the top-level ``algorithm/merge_operator.py``
+    is now a thin re-export shim with near-zero mutation surface, so
+    the test points at the canonical subpackage module.
     """
     source = Path(
-        "adaptive_reflow/algorithm/merge_operator.py"
+        "adaptive_reflow/algorithm/merge/merge_operator.py"
     ).read_text(encoding="utf-8")
     applied = 0
     for site in ast_mutator.collect_sites(source):
