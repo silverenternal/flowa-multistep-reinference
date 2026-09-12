@@ -450,3 +450,208 @@ def test_per_position_entropy_reduction_export_via_dunder_all() -> None:
 
     assert "per_position_entropy_reduction" in mod.__all__
     assert hasattr(mod, "per_position_entropy_reduction")
+
+
+# ---------------------------------------------------------------------------
+# Wave 113.A.6 Phase 4 — base-class-level regression tests for the
+# construction-time shape-guard helper.
+# ---------------------------------------------------------------------------
+# The shared helper ``_run_construction_shape_guard`` lives in
+# ``adaptive_reflow.adapters._adapter_common`` and is invoked at
+# adapter construction by all 8 SOTA adapters (Wave 113.A.6 Phase 3).
+# It catches the Wave 113.A bug class (silent-zero stub that passes
+# smoke tests but breaks the N=1000 sweep) within 1s of import
+# instead of 90 minutes into GPU compute.
+#
+# These tests prove the helper catches all four bug classes without
+# instantiating any of the real adapters (which would force a torch +
+# checkpoint import on every test run):
+#
+# 1. wrong-shape shim output,
+# 2. all-zeros shim output,
+# 3. synthetic-mode opt-out,
+# 4. no-checkpoint opt-out,
+#
+# plus the importability smoke test (5).
+#
+# The torch-dependent tests (1, 2) use ``@pytest.mark.usefixtures
+# ("requires_torch")`` so they skip cleanly on CPU-only sandboxes
+# where torch is not vendored — the helper itself short-circuits
+# on the same condition (``not torch_is_available()``) so there is
+# no observable behaviour to test.
+
+
+class _StubAdapter:
+    """Minimal stub adapter with the four attributes the shape guard reads.
+
+    Built fresh per-test (no shared mutable state). The shim callable
+    is bound via ``_model`` so each test can plug in its own wrong-shape
+    or all-zeros implementation without polluting the others.
+    """
+
+    __slots__ = ("_mode", "_real_ckpt_path", "_weights_path", "_device", "_model")
+
+    def __init__(
+        self,
+        *,
+        mode: str,
+        real_ckpt_path: object,
+        weights_path: object,
+        device: object = None,
+        model: object = None,
+    ) -> None:
+        self._mode = mode
+        self._real_ckpt_path = real_ckpt_path
+        self._weights_path = weights_path
+        self._device = device
+        self._model = model
+
+
+# Use an existing vendored checkpoint file for the ``_weights_path``
+# attribute so the helper does NOT short-circuit on
+# ``not Path(_weights_path).exists()``. The path is never opened by
+# the helper itself — it only checks ``.is_file()`` — but the helper
+# also calls ``torch.load`` via ``_load_real_weights`` if a ``_model``
+# is set... wait, no: ``_run_construction_shape_guard`` does not load
+# the weights; it only constructs ``x = torch.randn(...)`` and calls
+# ``adapter._model(x, t)``. So the file only needs to exist on disk
+# for the helper to pass its skip-guards; it is never read.
+_FAKE_WEIGHTS_PATH = (
+    __import__("pathlib").Path(__file__).resolve().parent.parent.parent
+    / "data"
+    / "lineageflow"
+    / "lineageflow-rp55.ckpt"
+)
+
+
+@pytest.mark.usefixtures("requires_torch")
+def test_shape_guard_catches_wrong_shape() -> None:
+    """Bug class 1: shim returns a tensor with a different shape than input.
+
+    Construct a stub whose ``_model`` returns a tensor whose final dim
+    is halved (8 instead of 32); the helper MUST raise
+    :class:`RuntimeError` naming the adapter class + actual + expected
+    shape (the diffusers / BentoML input-spec pattern).
+    """
+    import torch
+
+    from adaptive_reflow.adapters._adapter_common import (
+        _run_construction_shape_guard,
+    )
+
+    class _WrongShapeModel:
+        def __call__(self, x: torch.Tensor, t: torch.Tensor, **kwargs: object) -> torch.Tensor:
+            # Wrong shape: collapse the trailing dim from 32 to 8.
+            return torch.zeros(x.shape[:-1] + (8,), dtype=x.dtype, device=x.device)
+
+    stub = _StubAdapter(
+        mode="torch",
+        real_ckpt_path="/tmp/whatever.pt",
+        weights_path=_FAKE_WEIGHTS_PATH,
+        device="cpu",
+        model=_WrongShapeModel(),
+    )
+    with pytest.raises(RuntimeError, match="Wave 113.A.6"):
+        _run_construction_shape_guard(stub, (1, 4, 32, 32))
+
+
+@pytest.mark.usefixtures("requires_torch")
+def test_shape_guard_catches_all_zeros() -> None:
+    """Bug class 2: shim returns an all-zeros velocity tensor.
+
+    Construct a stub whose ``_model`` returns zeros of the *correct*
+    shape; the helper MUST raise :class:`RuntimeError` naming the
+    adapter class and the "all-zeros velocity" sentinel — this is the
+    exact failure mode the Wave 113.A bug class produced (silent-zero
+    stub that passed smoke tests).
+    """
+    import torch
+
+    from adaptive_reflow.adapters._adapter_common import (
+        _run_construction_shape_guard,
+    )
+
+    class _ZerosModel:
+        def __call__(self, x: torch.Tensor, t: torch.Tensor, **kwargs: object) -> torch.Tensor:
+            return torch.zeros_like(x)
+
+    stub = _StubAdapter(
+        mode="torch",
+        real_ckpt_path="/tmp/whatever.pt",
+        weights_path=_FAKE_WEIGHTS_PATH,
+        device="cpu",
+        model=_ZerosModel(),
+    )
+    with pytest.raises(RuntimeError, match="all-zeros velocity"):
+        _run_construction_shape_guard(stub, (1, 4, 32, 32))
+
+
+def test_shape_guard_skips_synthetic_mode() -> None:
+    """Skip-guard: ``_mode == "synthetic"`` ⇒ helper is a no-op (no exception).
+
+    Synthetic adapters have no torch forward to validate, so the
+    helper MUST return ``None`` silently regardless of what
+    ``_model`` / ``_real_ckpt_path`` / ``_weights_path`` look like.
+    """
+    from adaptive_reflow.adapters._adapter_common import (
+        _run_construction_shape_guard,
+    )
+
+    class _ExplodingModel:
+        def __call__(self, x: object, t: object, **kwargs: object) -> object:
+            raise AssertionError(
+                "_model must NOT be called when _mode == 'synthetic'"
+            )
+
+    stub = _StubAdapter(
+        mode="synthetic",
+        real_ckpt_path=None,
+        weights_path="synthetic",
+        device="cpu",
+        model=_ExplodingModel(),
+    )
+    # No exception ⇒ silent skip. We assert it returns None explicitly
+    # so a future regression that turns this into an explicit raise
+    # (or into a forward call) is caught.
+    assert _run_construction_shape_guard(stub, (1, 4, 32, 32)) is None
+
+
+def test_shape_guard_skips_no_ckpt() -> None:
+    """Skip-guard: ``_real_ckpt_path is None`` ⇒ helper is a no-op.
+
+    When the adapter was constructed without a real checkpoint
+    (e.g. synthetic test path), the helper MUST return ``None``
+    silently — never call ``_model``, never raise.
+    """
+    from adaptive_reflow.adapters._adapter_common import (
+        _run_construction_shape_guard,
+    )
+
+    class _ExplodingModel:
+        def __call__(self, x: object, t: object, **kwargs: object) -> object:
+            raise AssertionError(
+                "_model must NOT be called when _real_ckpt_path is None"
+            )
+
+    stub = _StubAdapter(
+        mode="torch",
+        real_ckpt_path=None,
+        weights_path=_FAKE_WEIGHTS_PATH,
+        device="cpu",
+        model=_ExplodingModel(),
+    )
+    assert _run_construction_shape_guard(stub, (1, 4, 32, 32)) is None
+
+
+def test_helper_importable_from_adapter_common() -> None:
+    """Importability: ``_run_construction_shape_guard`` is callable from its home module.
+
+    This is the API-contract smoke test that protects against a
+    future refactor renaming or relocating the helper (every adapter
+    imports it by name from ``adaptive_reflow.adapters._adapter_common``).
+    """
+    from adaptive_reflow.adapters._adapter_common import (
+        _run_construction_shape_guard,
+    )
+
+    assert callable(_run_construction_shape_guard)
