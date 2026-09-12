@@ -107,8 +107,16 @@ def test_scheduler_accessors() -> None:
 
 
 def test_legacy_sampler_emits_deprecation_warning() -> None:
-    """Calling ``CosineScheduleSampler`` emits a :class:`DeprecationWarning`."""
-    with pytest.warns(DeprecationWarning, match="CosineScheduleSampler"):
+    """Calling the legacy cosine sampler emits a :class:`DeprecationWarning`.
+
+    Wave 34 (commit 55c6c3a) flipped the framework default to
+    paper-quantity-driven via ``default_paper_ratio_scheduler()``;
+    ``default_cosine_scheduler()`` is now deprecated. The
+    ``CosineScheduleSampler`` helper inside ``adaptive_reflow.schedule.cosine``
+    is itself a thin alias and no longer raises its own DeprecationWarning
+    — the deprecation is raised by ``default_cosine_scheduler()`` itself.
+    """
+    with pytest.warns(DeprecationWarning, match="default_cosine_scheduler"):
         scheduler = default_cosine_scheduler(cycle_length=4)
         # Constructing the legacy sampler directly should warn.
         _legacy_sampler(scheduler.config)
