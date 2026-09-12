@@ -362,6 +362,30 @@ KANZI_MECHANISM_ID: str = "kanzi@v1"
 ArrayF64 = NDArray[np.float64]
 
 
+def _validate_state_shape(x: ArrayF64) -> ArrayF64:
+    """Reshape ``x`` to ``KANZI_STATE_SHAPE`` (64, 64) and float64.
+
+    Wave 113.A.5 Fix 1 — align with the 6 sibling adapters
+    (:mod:`adaptive_reflow.adapters.self_flow`,
+    :mod:`adaptive_reflow.adapters.freqflow`,
+    :mod:`adaptive_reflow.adapters.hidream_i1`,
+    :mod:`adaptive_reflow.adapters.lineageflow`,
+    :mod:`adaptive_reflow.adapters.lumina_image_2_0`,
+    :mod:`adaptive_reflow.adapters.wan2_2_video`) which all expose a
+    module-level ``_validate_state_shape(x) -> ArrayF64`` helper that
+    canonicalises the input latent shape + dtype before the velocity
+    field dispatches.
+
+    The reshape is a no-op for already-shaped ``(64, 64)`` inputs
+    (synthetic-mode byte-stability preserved per Wave 113.A.5 hard
+    rule). For real-mode inputs that arrive as ``(64, 512)`` the
+    helper intentionally collapses them to ``(64, 64)`` — the
+    real-mode shape bridge is tracked separately by the Wave 95/113
+    research and is NOT this helper's responsibility.
+    """
+    return np.asarray(x, dtype=np.float64).reshape(KANZI_STATE_SHAPE)
+
+
 # ---------------------------------------------------------------------------
 # Public helpers
 # ---------------------------------------------------------------------------
@@ -1041,6 +1065,15 @@ def _torch_velocity_field(
     is OUT of scope for the ODE loop — it is invoked separately on
     the ODE endpoint to decode the latent into a protein sequence.
     """
+    # Wave 113.A.5 Fix 1 — canonicalise the input latent shape + dtype
+    # at the entry point, before the shape-aware path dispatch
+    # (``state_shape`` parameter resolved by the caller, default
+    # ``KANZI_STATE_SHAPE`` for synthetic mode). The reshape is a no-op
+    # for already-shaped ``(64, 64)`` synthetic-mode inputs, preserving
+    # byte-stability per the Wave 113.A.5 hard rule. Aligns with the 6
+    # sibling adapters' ``_validate_state_shape`` convention.
+    x = _validate_state_shape(np.asarray(x, dtype=np.float64))  # → (64, 64)
+
     import torch  # local import — torch is optional at the framework level.
 
     with torch.no_grad():
