@@ -1022,3 +1022,309 @@ def test_synthesize_x_final_real_inv_proj_calls_latent_to_coords_bridge(
         f"projection that unblocks `adapter.solve_ode` from the "
         f"matmul shape mismatch."
     )
+
+
+# ---------------------------------------------------------------------------
+# Test 9 (Wave 122 Phase 4 — DAE FSQ stochasticity seeding regression):
+# The runner MUST set ``torch.manual_seed(int(seed) * 1_000_003 + int(...))``
+# before each DAE forward pass (encode / decode / bridge) so that the
+# FSQ stochasticity inside the DAE is reproducible per
+# ``(seed, record_idx)`` pair.
+#
+# Background (Wave 121 P2 root-cause):
+#   Pre-Wave 122 Phase 4 the runner seeded the global torch RNG once at
+#   sweep entry (``torch.manual_seed(int(seed))`` — Wave 108.A) but the
+#   DAE's FSQ stochasticity is sample-dependent and re-sampled per
+#   record. Two runs with ``--seed 42`` vs ``--seed 7`` therefore drifted
+#   by up to 0.131 Å on the max-outlier RMSD field (only the max outlier
+#   drifts; aggregate means stay within 0.004 Å). The fix threads a
+#   per-record ``torch.manual_seed(int(seed) * 1_000_003 + int(...))``
+#   call before each DAE call site, mirroring the existing
+#   ``np.random.default_rng(int(seed) * 1_000_003 + int(record_idx))``
+#   pattern at ``tools/_kanzi_sweep_runner.py:331``.
+#
+# The pin is a runtime behavioural test: the test mocks the
+# ``kanzi_latent_to_coords`` bridge to capture
+# ``torch.initial_seed()`` at entry (BEFORE the bridge's own internal
+# ``torch.manual_seed(int(seed))`` call which is inside the real bridge),
+# then calls ``_synthesize_x_final_real(seed=42, record_idx=0,1,2)``
+# three times and asserts:
+#
+#   1. The captured torch seed differs across record_idx (per-record
+#      seeding, not global seeding).
+#   2. The captured torch seed is deterministic for the same
+#      ``(seed, record_idx)`` pair across calls (byte-stable).
+#   3. The captured torch seed follows the
+#      ``int(seed) * 1_000_003 + int(record_idx)`` pattern (matches
+#      the np.random.default_rng contract at line 331).
+#
+# The test is hermetic — stdlib + numpy + pytest + torch only; no DAE /
+# GPU / network required (the DAE is replaced by a minimal fake; the
+# bridge is replaced by a mock that captures the torch seed at entry
+# and returns a deterministic ``(1, 64, 3)`` array).
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.usefixtures("requires_torch")
+def test_dae_seed_threading_is_per_record(
+    runner: Any,
+) -> None:
+    """Regression for Wave 122 P4 DAE FSQ stochasticity: torch.manual_seed
+    must be set per ``(seed, record_idx)`` before DAE call so that the
+    max-outlier RMSD is reproducible across ``--seed`` values.
+
+    The test mocks the ``kanzi_latent_to_coords`` bridge to capture
+    ``torch.initial_seed()`` at entry (before the bridge's internal
+    ``torch.manual_seed(int(seed))`` reseeds), calls
+    ``_synthesize_x_final_real`` with ``seed=42`` and three different
+    ``record_idx`` values, then asserts the captured seeds follow the
+    ``int(seed) * 1_000_003 + int(record_idx)`` pattern and are
+    deterministic across repeated calls.
+    """
+    import torch
+
+    from adaptive_reflow.adapters._adapter_common import make_ref
+    from adaptive_reflow.universal.state import (
+        ODEIntegratorTrace,
+        StateBundle,
+    )
+
+    # ---- 1. Build a minimal fake adapter (same pattern as Test 8) ----
+    class _FakeAdapter:
+        """Minimal adapter stand-in for the per-record seeding test.
+
+        Surfaces consumed by ``_synthesize_x_final_real``:
+
+          * ``build_initial_state(batch_id, sample_id)`` — populates
+            ``_native_states[digest]["x0"]`` with a ``(64, 512)``
+            deterministic seeded random latent; returns a minimal
+            ``StateBundle``.
+          * ``solve_ode(bundle, cond, *, seed)`` — returns a minimal
+            ``ODEIntegratorTrace`` whose ``native_state_digest`` is
+            distinct from the bundle's (so the runner takes the
+            defensive-fallback path and returns the post-bridge ``x0``
+            unchanged).
+        """
+
+        def __init__(self) -> None:
+            self._native_states: dict[str, dict[str, Any]] = {}
+
+        def build_initial_state(
+            self, *, batch_id: str, sample_id: str,
+        ) -> StateBundle:
+            x0 = (
+                np.random.default_rng(
+                    abs(hash((batch_id, sample_id))) % (2**31),
+                )
+                .standard_normal((64, 512))
+                .astype(np.float64)
+            )
+            digest = f"fake_digest::{batch_id}::{sample_id}"
+            self._native_states[digest] = {"x0": x0}
+            bundle = StateBundle(
+                channels={
+                    "protein_latent": make_ref(
+                        "fake:kanzi:latent:initial",
+                        "latent:initial",
+                        batch=batch_id, sample=sample_id,
+                    ),
+                },
+                masks={},
+                batch_id=batch_id,
+                sample_id=sample_id,
+                reference_frame="world",
+                normalization="none",
+                source_round=0,
+                detach_proof=True,
+                native_state_digest=digest,
+                provenance=("wave122-p4-seed-fake",),
+            )
+            return bundle
+
+        def solve_ode(
+            self, state: StateBundle, cond: Any, *, seed: int,
+        ) -> ODEIntegratorTrace:
+            traj_digest = f"traj_digest::{state.native_state_digest}"
+            x0 = self._native_states.get(
+                state.native_state_digest, {},
+            ).get("x0", np.zeros((0,), dtype=np.float64))
+            self._native_states[traj_digest] = {"x0": x0}
+            return ODEIntegratorTrace(
+                steps=1,
+                accept_rate=1.0,
+                native_state_digest=traj_digest,
+                integrator_config_hash="fake:wave122-p4-seed",
+            )
+
+    # ---- 2. Mock the bridge to capture torch.initial_seed() at entry ----
+    # The runner does ``from tools.kanzi_latent_to_coord import
+    # kanzi_latent_to_coords`` LOCALLY inside the framework_inv_proj
+    # block — patching the attribute on the source module works because
+    # Python imports are by module attribute lookup. The mock captures
+    # the torch seed at entry (BEFORE the real bridge would have
+    # called its own internal ``torch.manual_seed(int(seed))`` reseed)
+    # so we can verify the runner's per-record seeding is in effect.
+    captured_seeds: list[int] = []
+
+    def _mock_kanzi_latent_to_coords(latent, decoder, fsq_quantizer, **kwargs):
+        captured_seeds.append(int(torch.initial_seed()))
+        # Return (1, L=64, 3) coords in Angstrom — the standard bridge
+        # output shape. The runner will reshape to (-1, 3) and divide
+        # by 10.0 to get nm, so the final stored x0 shape is (64, 3).
+        return np.zeros((1, 64, 3), dtype=np.float64)
+
+    class _FakeDecoder:
+        quantize = None  # never touched by the mock bridge
+
+    _decoder_obj = _FakeDecoder()
+
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        monkeypatch.setattr(
+            "tools.kanzi_latent_to_coord.kanzi_latent_to_coords",
+            _mock_kanzi_latent_to_coords,
+        )
+
+        # ---- 3. Call _synthesize_x_final_real with record_idx=0,1,2 ----
+        for record_idx in (0, 1, 2):
+            runner._synthesize_x_final_real(
+                adapter=_FakeAdapter(), record_idx=record_idx,
+                seed=42, decoder=_decoder_obj, mode="framework_inv_proj",
+            )
+    finally:
+        monkeypatch.undo()
+
+    # ---- 4. Assert the captured seeds differ per record_idx ----
+    assert len(captured_seeds) == 3, (
+        "Wave 122 Phase 4 pin: the runner MUST call the DAE forward "
+        "pass once per ``_synthesize_x_final_real`` invocation "
+        f"(expected 3 bridge calls for record_idx=0,1,2). Got "
+        f"{len(captured_seeds)} call(s) — the per-record seeding fix "
+        f"is only effective if the DAE call site is exercised per "
+        f"record."
+    )
+    assert captured_seeds[0] != captured_seeds[1], (
+        "Wave 122 Phase 4 pin: torch seed MUST differ across "
+        f"record_idx (per-record seeding, not global). Got "
+        f"captured_seeds[0]={captured_seeds[0]} == "
+        f"captured_seeds[1]={captured_seeds[1]} — the runner is "
+        f"NOT setting torch.manual_seed per record before the DAE "
+        f"forward pass, so FSQ stochasticity collapses to a global "
+        f"seed and the max-outlier RMSD drifts across --seed values."
+    )
+    assert captured_seeds[1] != captured_seeds[2], (
+        "Wave 122 Phase 4 pin: torch seed MUST differ across "
+        f"record_idx (per-record seeding, not global). Got "
+        f"captured_seeds[1]={captured_seeds[1]} == "
+        f"captured_seeds[2]={captured_seeds[2]}."
+    )
+    assert captured_seeds[0] != captured_seeds[2], (
+        "Wave 122 Phase 4 pin: torch seed MUST differ across "
+        f"record_idx (per-record seeding, not global). Got "
+        f"captured_seeds[0]={captured_seeds[0]} == "
+        f"captured_seeds[2]={captured_seeds[2]}."
+    )
+
+    # ---- 5. Assert the captured seeds follow the np pattern ----
+    # The np.random.default_rng pattern at line 331 is
+    # ``int(seed) * 1_000_003 + int(record_idx)``. The torch
+    # counterpart MUST match so the two RNGs stay aligned across
+    # the sweep.
+    expected_seeds = [
+        42 * 1_000_003 + 0,
+        42 * 1_000_003 + 1,
+        42 * 1_000_003 + 2,
+    ]
+    assert captured_seeds == expected_seeds, (
+        "Wave 122 Phase 4 pin: the torch seed threading MUST follow "
+        "the ``int(seed) * 1_000_003 + int(record_idx)`` pattern "
+        "to match the np.random.default_rng contract at line 331. "
+        f"Got captured_seeds={captured_seeds}, expected={expected_seeds}. "
+        f"A drift of >0 here would mean the torch and np RNGs are "
+        f"no longer aligned across the sweep loop."
+    )
+
+    # ---- 6. Assert determinism: same (seed, record_idx) → same seed ----
+    # Re-run the same calls and confirm the captured seeds are
+    # byte-identical. This is the "byte-stable" contract the sweep
+    # loop relies on for regression verification.
+    captured_seeds_run2: list[int] = []
+
+    def _mock_kanzi_latent_to_coords_run2(
+        latent, decoder, fsq_quantizer, **kwargs,
+    ):
+        captured_seeds_run2.append(int(torch.initial_seed()))
+        return np.zeros((1, 64, 3), dtype=np.float64)
+
+    monkeypatch2 = pytest.MonkeyPatch()
+    try:
+        monkeypatch2.setattr(
+            "tools.kanzi_latent_to_coord.kanzi_latent_to_coords",
+            _mock_kanzi_latent_to_coords_run2,
+        )
+        for record_idx in (0, 1, 2):
+            runner._synthesize_x_final_real(
+                adapter=_FakeAdapter(), record_idx=record_idx,
+                seed=42, decoder=_decoder_obj, mode="framework_inv_proj",
+            )
+    finally:
+        monkeypatch2.undo()
+
+    assert captured_seeds_run2 == captured_seeds, (
+        "Wave 122 Phase 4 pin: the per-record torch seed MUST be "
+        "byte-stable across repeated invocations with the same "
+        f"``(seed, record_idx)`` pair. Got run1={captured_seeds} vs "
+        f"run2={captured_seeds_run2}. A drift here means the torch "
+        f"seed threading depends on hidden global state (e.g., the "
+        f"call counter or wall-clock) instead of being a pure "
+        f"function of ``(seed, record_idx)``."
+    )
+
+    # ---- 7. Assert a different --seed produces a different seed pattern ----
+    # The whole point of the fix is to make the torch seed depend on
+    # ``--seed`` (so different --seed values produce different
+    # stochasticity). For seed=7 vs seed=42, the captured seeds MUST
+    # differ.
+    captured_seeds_seed7: list[int] = []
+
+    def _mock_kanzi_latent_to_coords_seed7(
+        latent, decoder, fsq_quantizer, **kwargs,
+    ):
+        captured_seeds_seed7.append(int(torch.initial_seed()))
+        return np.zeros((1, 64, 3), dtype=np.float64)
+
+    monkeypatch3 = pytest.MonkeyPatch()
+    try:
+        monkeypatch3.setattr(
+            "tools.kanzi_latent_to_coord.kanzi_latent_to_coords",
+            _mock_kanzi_latent_to_coords_seed7,
+        )
+        for record_idx in (0, 1, 2):
+            runner._synthesize_x_final_real(
+                adapter=_FakeAdapter(), record_idx=record_idx,
+                seed=7, decoder=_decoder_obj, mode="framework_inv_proj",
+            )
+    finally:
+        monkeypatch3.undo()
+
+    expected_seeds_seed7 = [
+        7 * 1_000_003 + 0,
+        7 * 1_000_003 + 1,
+        7 * 1_000_003 + 2,
+    ]
+    assert captured_seeds_seed7 != captured_seeds, (
+        "Wave 122 Phase 4 pin: the per-record torch seed MUST depend "
+        "on the ``--seed`` CLI flag. Got identical captured seeds "
+        f"for seed=7 vs seed=42: run_seed7={captured_seeds_seed7} vs "
+        f"run_seed42={captured_seeds}. This means the torch seed "
+        f"threading is not consuming the ``seed`` kwarg at all — the "
+        f"FSQ stochasticity would be identical regardless of "
+        f"``--seed``, which is the exact Wave 121 P2 regression."
+    )
+    assert captured_seeds_seed7 == expected_seeds_seed7, (
+        "Wave 122 Phase 4 pin: the per-record torch seed for seed=7 "
+        "MUST follow the ``int(seed) * 1_000_003 + int(record_idx)`` "
+        "pattern. Got "
+        f"captured_seeds_seed7={captured_seeds_seed7}, "
+        f"expected={expected_seeds_seed7}."
+    )

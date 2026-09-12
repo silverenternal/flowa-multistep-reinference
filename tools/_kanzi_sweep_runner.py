@@ -401,6 +401,13 @@ def _synthesize_x_final_real(
         prior_entry = adapter._native_states.get(bundle.native_state_digest)  # type: ignore[attr-defined]
         if prior_entry is not None:
             x0_latent = np.asarray(prior_entry["x0"], dtype=np.float64)
+            # Wave 122 Phase 4 — per-record torch seed before DAE
+            # forward pass so FSQ stochasticity is reproducible per
+            # (seed, record_idx) pair. Mirrors the
+            # ``np.random.default_rng(int(seed)*1_000_003+int(record_idx))``
+            # pattern at line 331. Closes the Wave 121 P2 max-outlier
+            # RMSD drift across --seed values.
+            torch.manual_seed(int(seed) * 1_000_003 + int(record_idx))
             x0_coords_A = kanzi_latent_to_coords(
                 x0_latent,
                 decoder=decoder,
@@ -696,6 +703,16 @@ def run_kanzi_sweep(
                     )
                 # Bridge: latent → coords in Ångström
                 try:
+                    # Wave 122 Phase 4 — per-record torch seed before
+                    # the bridge's DAE.decode() forward pass so FSQ
+                    # stochasticity is reproducible per (seed,
+                    # seq_idx) pair (mirrors the
+                    # ``np.random.default_rng(int(seed)*1_000_003+int(seq_idx))``
+                    # pattern at line 331 — the inner loop's record
+                    # counter is named ``seq_idx`` here, ``record_idx``
+                    # in the helper functions). Closes the Wave 121 P2
+                    # max-outlier RMSD drift across --seed values.
+                    torch.manual_seed(int(seed) * 1_000_003 + int(seq_idx))
                     coords_pred_A = kanzi_latent_to_coords(
                         x_final, decoder=dae, fsq_quantizer=dae.quantize,
                         n_steps=int(nfe_steps), seed=int(seed),
@@ -733,6 +750,17 @@ def run_kanzi_sweep(
                     # every per-record iteration of the inner loop, was
                     # caught by the outer ``try/except``, and silently
                     # produced a 0-record sweep.
+                    #
+                    # Wave 122 Phase 4 — per-record torch seed before
+                    # the DAE.encode() forward pass so FSQ stochasticity
+                    # is reproducible per (seed, seq_idx) pair (the
+                    # inner loop's record counter is named ``seq_idx``
+                    # here, ``record_idx`` in the helper functions).
+                    # Mirrors the
+                    # ``np.random.default_rng(int(seed)*1_000_003+int(seq_idx))``
+                    # pattern at line 331. Closes the Wave 121 P2
+                    # max-outlier RMSD drift across --seed values.
+                    torch.manual_seed(int(seed) * 1_000_003 + int(seq_idx))
                     *_, idx_BL = dae.encode(
                         torch.as_tensor(
                             coords_BLD,
@@ -751,6 +779,16 @@ def run_kanzi_sweep(
 
             # ---- 3. Reconstruction RMSD (round-trip identity) ----
             try:
+                # Wave 122 Phase 4 — per-record torch seed before
+                # the DAE.decode() round-trip so FSQ stochasticity
+                # is reproducible per (seed, seq_idx) pair (the
+                # inner loop's record counter is named ``seq_idx``
+                # here, ``record_idx`` in the helper functions).
+                # Mirrors the
+                # ``np.random.default_rng(int(seed)*1_000_003+int(seq_idx))``
+                # pattern at line 331. Closes the Wave 121 P2
+                # max-outlier RMSD drift across --seed values.
+                torch.manual_seed(int(seed) * 1_000_003 + int(seq_idx))
                 recon = dae.decode(idx_BL).detach().cpu().numpy() * 10.0
                 recon_angstrom = recon.reshape(-1, 3).astype(np.float64)
                 pred_angstrom = coords_pred_A.reshape(-1, 3).astype(np.float64)
