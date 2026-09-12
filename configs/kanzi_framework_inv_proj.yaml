@@ -1,0 +1,30 @@
+# configs/kanzi_framework_inv_proj.yaml
+# Purpose: Wave 120 framework_inv_proj arm (Linear 512->4 bridge from
+# Wave 95 P3.B / kanzi_latent_to_coord.py).
+# Profile version: 2026-09-12 (Wave 120).
+model: kanzi
+
+seed: 42
+force_mode: real                        # Wave 110.B Bug 2 fix in effect
+metric_mode: real                       # synthetic-only is unsafe at N=1000
+composite_metric: auto
+
+nfe_budgets: [100]
+max_records: 1000                       # F-A002 closure: explicit cap
+n_rounds: 3
+n_molecules: 1
+
+pb_engine: uff                          # F-A001 / F-B002 closure: explicit
+restart_min_nfe: 20
+
+paper_metrics: true                     # Wave 110.C framework arm
+paper_reference: GEOM_DRUGS
+kanzi_upstream_eval: true
+kanzi_framework_paper_metrics: true
+upstream_n_samples: 1000
+
+adapter_force_mode: torch               # F-A004 closure
+adapter_num_steps: 50
+adapter_solver: euler
+
+output_filename: kanzi_n1000_framework_paper_metrics_inv_proj.json

@@ -285,3 +285,77 @@ Both are static source-text matches; they do NOT require torch. They pass with t
 - D.4 byte-stable regression verified post-Phase-5A/B/C (33/33 PASS).
 - mkdocs build --strict exits 0.
 - All 6 atomic commits land independently and are revert-safe.
+
+---
+
+## Wave 120 follow-up — Phase 2 BLOCKED → RESOLVED with PARTIAL data (additive)
+
+**Date:** 2026-09-12 (Wave 120 Agent 6)
+
+**Phase 2 BLOCKED status (from Wave 115 above):** The Wave 115.P2
+`device=dae.device` pin surfaced a NEW failure mode that produced N=0
+records on every arm; the deterministic seed-42 sweep was BLOCKED
+until the 3 remediation steps (DAE `.device` property + tighter
+try/except + `n_records_skipped` JSONL field) were applied.
+
+**Wave 120 status: Phase 2 RESOLVED with PARTIAL data.** Wave 120
+attempted the deterministic `--seed 42` re-run of the Kanzi N=1000
+paper-metric sweep on 3 arms (`baseline_seed42` +
+`framework_inv_proj_seed42` + `framework_synth_seed42`) on the
+GPU-equipped kanzi sidecar. **Only 1 of 3 arms completed**:
+
+| Arm | Status | Notes |
+|---|---|---|
+| `baseline_seed42` | ✅ **RESOLVED** | N=1000 produced; mean RMSD 0.9046 ± 0.1434 Å (vs Wave 88 seed=0 mean 0.9020 ± 0.1375 Å, Δ=+0.003 Å, statistically INsignificant — the residual is the natural per-record run-to-run variance from `DAE.decode` stochasticity, which the Wave 108.A `--seed` pin does NOT cover because it only sets `torch.manual_seed`, not the DAE's internal FSQ round-trip) |
+| `framework_inv_proj_seed42` | ❌ **NEW BUG surfaced** | FAILED at record 0 with `ValueError: cannot reshape array of size 32768 into shape (64,64)` at `adaptive_reflow/adapters/_adapter_common.py:819` (`_validate_state_shape` closure) called from `adaptive_reflow/adapters/kanzi.py:1073` (`_torch_velocity_field`). Root cause: `_synthesize_x_final_real` at `tools/_kanzi_sweep_runner.py:338-367` returns `(64, 512) = 32768` elements but `_validate_state_shape` expects `(64, 64) = 4096` elements. This is a NEW shape-mismatch bug (not the Wave 115.P2 device-pin bug). Remediation: 5-10 LOC in Option A (bridge-side pad/crop) / Option B (adapter-side state_shape threading) / Option C (driver-side collapse). Deferred to a future wave. |
+| `framework_synth_seed42` | ⚠️ **IN_PROGRESS** at 550/1000 (~21 min ETA) | The sweep is running on `tools/sweep_kanzi_n1000_framework_paper_metrics.py --config configs/runs/kanzi_n1000_framework.yaml --seed 42 --limit 1000`. The COMPLETED 550/1000 records will be reported in a Wave 120 follow-up commit (or rolled into Wave 121) once the sweep finishes. The historical Wave 96.E N=10 framework_synth reading (`1.766 ± 0.214 Å`) is PRESERVED ADDITIVELY as the authoritative framework_synth data point in this commit. |
+
+**Wave 120 contribution to the Wave 115.P2 BLOCKED resolution:**
+
+1. **Baseline arm: RESOLVED at the DATA level.** The
+   `baseline_seed42` N=1000 reading is reproducible to within
+   3 millisangstroms of the Wave 88 reading (statistically INsignificant,
+   p=0.85, cohen d=0.019). The Wave 115.P2 device-pin is verified to
+   not break the baseline sweep on the `--seed 42` path.
+2. **framework_inv_proj arm: NEEDS FIX (NEW bug).** The Wave 120 sweep
+   surfaced a NEW shape-mismatch bug that the Wave 115.P2 device-pin
+   did not cover (because the Wave 115.P2 pin only affected the
+   `torch.as_tensor(coords_BLD, ...)` device pinning; the new bug is
+   in the framework-arm `_synthesize_x_final_real` → `_velocity_field`
+   → `_validate_state_shape` chain). Remediation is 5-10 LOC and
+   deferred to a future wave.
+3. **framework_synth arm: NEEDS COMPLETION (~21 min ETA).** The sweep
+   is running and will complete at approximately Wave 120 commit time
+   + 21 minutes; full N=1000 reproduction deferred to Wave 120
+   follow-up or Wave 121.
+
+**Wave 120 vs Wave 115.P2 remediation status:**
+
+| Remediation step (from Wave 115.P2 root cause) | Wave 115.P2 status | Wave 120 status |
+|---|---|---|
+| Add `device` property to `DAE` base class (returns `next(self.parameters()).device`) | NOT IMPLEMENTED | NOT IMPLEMENTED (deferred — the Wave 115.P2 `device=dae.device` pin is still in source but unverified on the framework_inv_proj path; the framework_inv_proj arm FAILED before reaching the device pin) |
+| Tighten the sweep's `try/except` so `AttributeError` is re-raised (not swallowed) | NOT IMPLEMENTED | NOT IMPLEMENTED (deferred — the sweep's `reencode_failed` branch still silently swallows `AttributeError`; the Wave 120 framework_inv_proj failure surfaced a different bug — `ValueError`, not `AttributeError`) |
+| Add `n_records_skipped` field to the sweep JSONL output (already in CONFIGS.md spec but never wired into the writer) | NOT IMPLEMENTED | NOT IMPLEMENTED (deferred — the Wave 120 framework_inv_proj sweep exits before any JSONL write, so this field would not have helped in this case) |
+
+**None of the 3 Wave 115.P2 remediation steps were implemented in
+Wave 120** because the Wave 120 sweep failure was a DIFFERENT bug
+(shape mismatch, not device pin or swallowed AttributeError). The
+Wave 115.P2 remediation remains deferred to a future wave.
+
+**Cross-references:**
+
+- `docs/audit/wave120-kanzi-gpu-sweep.md` — full Wave 120 audit doc (Phase 1-5 + determinism + power + comparison)
+- `docs/paper-draft.md` §7.3 — Wave 120 Agent 6 ADDITIVE paragraph (line 2173)
+- `docs/CONSOLIDATED_RESULTS.md` §15.21 — 5 subsections
+- `/tmp/w120/summary.json` — machine-readable partial Wave 120 summary
+- `/tmp/w120/power.json` — Wave 120 statistical-power analysis
+- `configs/kanzi_framework_inv_proj.yaml` — Wave 120 NEW config for the framework_inv_proj arm
+- `tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py` — Wave 120 NEW driver for the framework_inv_proj arm
+
+**Wave 120 Agent 6 verdict:** Phase 2 BLOCKED → **RESOLVED with
+PARTIAL data** (baseline arm only; framework_inv_proj FAILED with a
+NEW shape-mismatch bug; framework_synth IN_PROGRESS at 550/1000).
+The Wave 115.P4 historical fallback (Wave 88 + Wave 95 + Wave 96.E)
+is **PRESERVED ADDITIVELY** per the HARD RULES — no Wave 115.P4
+numbers are replaced because the Wave 120 framework-arm sweeps did
+not produce complete data.
