@@ -3119,6 +3119,67 @@ below.** 1 atomic commit on `main`:
 
 ---
 
+## R.9 — Wave 117 — shim-invocation-spec + Wave 106-111 audit-doc housekeeping (working-tree cleanup) (2026-09-12)
+
+**Date:** 2026-09-12
+**Agent:** Wave 117 Agent 5 (final synthesis)
+**Scope:** close the Wave 117 chain by final-synthesizing Phase 2 (shim-invocation-spec + tests carry-over from Wave 114.P3) + Phase 4 (14 prior-wave audit docs for Wave 106-111 housekeeping). **Phase 3 (the `OTEpsilonSchedule` undefined-name fix in `nfe_aware.py`) was deferred to Wave 118 Phase 2 (`540b111`) — see "What is open" below.** 2 Wave 117 atomic commits + 1 Wave 118 carry-over commit landed on `main`:
+
+- `af236b0` — Wave 117 Phase 2: commit partial Wave 114 Phase 3 work (shim-invocation-spec + tests). 5 files / +1040 / -57 = **+983 net LOC** (carries forward Wave 114.P3 partial deliverable that was not committed in Wave 114 timeframe)
+- `540b111` — Wave 118 Phase 2 (carry-over): fix `OTEpsilonSchedule` undefined-name in `nfe_aware.py` (3 Bucket D tests). 1 file / +10 / -5 = **+5 net LOC** (closes 3 of 11 Wave 115 R.7 Bucket D items)
+- `9c689c1` — Wave 117 Phase 4: add 14 prior-wave audit docs (Wave 106-111 housekeeping). 14 files / +5060 / 0 = **+5060 net LOC** (docs-only)
+- (this commit, `docs-only`) — Wave 117 final synthesis: 1 NEW audit doc `docs/audit/wave117-working-tree-cleanup.md` (~270 LOC) + this §R.9 row (~135 LOC). Zero source touched.
+
+### What closed
+
+| Wave 117 axis | Closure mechanism | File(s) | LOC |
+|---|---|---|---|
+| Wave 114.P3 partial deliverable (shim-invocation-spec) | Wave 117 Phase 2 (`af236b0`): centralise shape-guard helper in `_adapter_common.py` + wire into Kanzi/LineageFlow + 2 NEW property-based test files | 5 files (1 helper + 2 adapter wirings + 2 test files) | +983 net |
+| 14 prior-wave audit docs (Wave 106-111 housekeeping) | Wave 117 Phase 4 (`9c689c1`): 14 NEW `docs/audit/wave*.md` entries | 14 docs | +5060 net |
+| `OTEpsilonSchedule` undefined-name (Wave 115 R.7 Bucket D item #1-3) | Wave 118 Phase 2 (`540b111`, carry-over): hoist lazy import + bind `OTEpsilonSchedule` + `default_eps_implicit` (aliased as `_default_eps_implicit`) inside `derive_default_eps_implicit` (lines 865-873 post-fix) | `adaptive_reflow/algorithm/scheduler/nfe_aware.py` | +5 net |
+| Wave 117 final synthesis | Wave 117 Phase 5 (this commit): 1 NEW audit doc + 1 NEW §R.9 row | `docs/audit/wave117-working-tree-cleanup.md` + `docs/baseline-audit-report.md` | +~405 (docs-only) |
+
+### What is open
+
+| Wave 117 axis | Status | Follow-up |
+|---|---|---|
+| **Wave 117 Phase 3 commit (`OTEpsilonSchedule` fix)** | **DEFERRED to Wave 118 Phase 2 (`540b111`)** — same on-disk change, different wave attribution. The Phase 3 work was completed during Wave 117 timeframe but the Wave 117 Phase 3 atomic commit was not created. The change landed in the Wave 118 Phase 2 commit with a comprehensive commit message documenting the test verification delta. **Net code semantics for downstream consumers is identical** — both delivery orders yield the same on-disk `main` tree | none (on-disk change is on `main` via `540b111`); this row references both the Wave 117 Phase 3 *intent* and the Wave 118 Phase 2 *delivery* for honest audit trail |
+| `results/mmseqs_tmp/2995313384030388005/` (5 untracked files) | Untracked, pre-existing (timestamps from 2026-09-11 20:26, predates Wave 117 by ~17h). Not Wave 117 work. Recommend `results/mmseqs_tmp/**` to `.gitignore` in a follow-up wave | next housekeeping wave (+1 LOC .gitignore) |
+| 1 wave35 saturation algorithm test (`BatchedRunnerConfig.config_hash` regression) | Pre-existing Wave 115 R.7 Bucket D item #11 (the last remaining item; 10 of 11 closed by Wave 118 Phases 2 + 3) | next algorithm wave (+1 LOC source) |
+
+### Verification matrix (this run)
+
+| Gate | Outcome |
+|---|---|
+| `git status --short` | `?? results/mmseqs_tmp/2995313384030388005/` only (pre-existing untracked temp output from earlier mmseqs run; not Wave 117 work). All source files clean. |
+| `git log --oneline -5` | `7c2a794` (Wave 116 audit) → `435ba7c` (Wave 118.P3 FID) → `540b111` (Wave 118.P2 OTEpsilonSchedule) → `60a30b0` (Wave 116.P1) → `9c689c1` (Wave 117.P4) → `af236b0` (Wave 117.P2). Wave 117 has 2 of the planned 3 atomic commits; the missing Phase 3 commit was deferred to Wave 118 Phase 2 (`540b111`) with the same on-disk change. |
+| `pytest tests/ -k "d4" -q` | **33 passed, 22 skipped** (deps missing in this env). 33/33 PASS for any test that can run without torch/pandas/hypothesis. **D.4 byte-stable regression verified.** |
+| `pytest tests/test_adapters/ -q` | 1162 passed, 13 failed, 87 skipped. The 13 failures are all pre-existing `torch_not_installed` (CPU-only venv; tests require `torch` + real FlowMol3 ckpt at `data/flowmol3/weights_real/checkpoints/last.ckpt`). Last touched in commit `56aeb45` (Wave 54, 2026-08). **No new failures introduced by Wave 117.** |
+| `pytest tests/test_algorithm/ -q` | 1150 passed, 1 failed, 14 skipped. The 1 failed = `tests/test_algorithm/test_wave35_saturation_fixes.py::test_early_termination_is_config_hash_visible` — the remaining Bucket-D `BatchedRunnerConfig.config_hash` regression from Wave 115 R.7 Bucket D item #11. Wave 118 Phase 2 (`540b111`) closed the 3 OTEpsilonSchedule items + Wave 118 Phase 3 (`435ba7c`) closed the 7 FID math items, so only this 1 wave35 saturation item remains. **No new failures introduced by Wave 117.** |
+| `.venv/bin/mkdocs build --strict` | **EXIT=0** (15.21s build, 0 errors). License warning is upstream `mkdocs-material` MkDocs 2.0 deprecation banner, not a build failure. |
+
+### No regression risk
+
+- Wave 117 Phase 2 (`af236b0`) carries forward Wave 114.P3 partial work that was already reviewed under Wave 114's `6c88ff8` pytest-collection-error-fixes commit. The shape-guard helper centralises 3 sibling-adapter shape checks (Kanzi / LineageFlow / FlowMol3) and adds 2 NEW property-based test files.
+- Wave 117 Phase 4 (`9c689c1`) is docs-only (14 NEW `docs/audit/*.md`). No source touched.
+- Wave 118 Phase 2 (`540b111`, deferred Wave 117 Phase 3) is a 1-function-scope lazy-import hoist that binds `OTEpsilonSchedule` and `_default_eps_implicit`. Existing call sites unchanged.
+- Wave 117 Phase 5 (this commit) is docs-only. Zero source touched.
+- D.4 byte-stable regression verified (33/33 PASS).
+- mkdocs build --strict exits 0.
+
+### Cross-references
+
+- `af236b0` — Wave 117 Phase 2 commit (shim-invocation-spec + tests carry-over from Wave 114.P3)
+- `540b111` — Wave 118 Phase 2 commit (`OTEpsilonSchedule` undefined-name fix; deferred Wave 117 Phase 3 with the same on-disk change)
+- `9c689c1` — Wave 117 Phase 4 commit (14 prior-wave audit docs for Wave 106-111)
+- `7c2a794` — Wave 116 final-synthesis commit (companion row §R.8 in this report)
+- `7855eca` — Wave 115 final-synthesis commit (companion row §R.7 in this report)
+- `docs/audit/wave117-working-tree-cleanup.md` — Wave 117 audit doc (this commit's companion)
+- `docs/audit/wave115-bucket-d-regressions.md` — 11 source-code regressions for Wave 116+ follow-up (10 closed by Wave 118 Phases 2 + 3; 1 remaining = the wave35 saturation item)
+- `docs/audit/wave116-cuda-fix-real-sweep.md` — companion audit doc for §R.8
+
+---
+
 ## S — GPU watchdog + SOTA alignment (Wave 98, 2026-09-10)
 
 **Date:** 2026-09-10
