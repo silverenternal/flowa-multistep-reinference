@@ -465,6 +465,24 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         #   convergence derivation). Doc-only metric labels (the
         #   per-model NFE-grid readout is a paper-table concept, not
         #   a project-internal Python symbol).
+        # * ``DETERMINISM_PASS`` — verdict status code for the
+        #   Wave 121 Kanzi N=1000 cross-seed determinism audit
+        #   (paired with the existing ``NOT_MEASURABLE`` /
+        #   ``TIED_BY_DESIGN`` verdict-status block). Marks
+        #   within-natural-variance cross-seed comparisons in the
+        #   Wave 120 / Wave 121 / Wave 88 seed-pair tables across
+        #   ``docs/CONSOLIDATED_RESULTS.md`` §7.3,
+        #   ``docs/baseline-audit-report.md`` §Kanzi sweep, and
+        #   ``docs/paper-draft.md`` Table A2.
+        # * ``KANZI_INV_PROJ_STATE_SHAPE`` — verdict-label suffix
+        #   for the proposed future state-shape constant to thread
+        #   into ``adaptive_reflow/adapters/kanzi.py`` inv_proj sweep
+        #   path (Wave 121 §7.3 remediation Option B). Referenced
+        #   inline in ``docs/CONSOLIDATED_RESULTS.md`` §7.3 as a
+        #   forward-dep pointer alongside the existing
+        #   ``KANZI_ABSTRACT_STATE_SHAPE`` constant; not yet
+        #   implemented, denylisted as a forward-planning pointer
+        #   (paired with the existing ``OracleAtRound`` block).
         # * ``OracleAtRound`` — Wave 100+ aspirational interface name
         #   referenced inline in ``docs/paper-draft.md`` Table A1 as
         #   the future "value the scheduler emits when writing
@@ -485,6 +503,8 @@ PROSE_SYMBOL_DENYLIST: frozenset[str] = frozenset(
         "Handler", "DGLError",
         "HF_HOME",
         "NFE_95", "NFE_99",
+        "DETERMINISM_PASS",
+        "KANZI_INV_PROJ_STATE_SHAPE",
         "OracleAtRound",
     }
 )
