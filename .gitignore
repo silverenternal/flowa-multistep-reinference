@@ -63,6 +63,14 @@ dist/
 .verify_outputs/
 verification_outputs/
 
+# Per-tool ephemeral scratch directories. Tools occasionally drop transient
+# working files under results/<tool>_tmp/ (e.g. results/mmseqs_tmp/<pid>/
+# from protbfn blastp.sh intermediate scratch). The directory is recreated
+# on every tool invocation, never an input to anything, and was carried
+# as an untracked working-tree leak through Wave 117 → Wave 118 → Wave 119
+# before this rule landed. Exclude any *_tmp/ subdir under results/.
+results/*_tmp/
+
 # Claude Code workspace (workflow scripts, journals, scratch).
 # Regenerated on every workflow run; not part of the framework source.
 .claude/

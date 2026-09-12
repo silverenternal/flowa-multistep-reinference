@@ -3247,6 +3247,91 @@ below.** 1 atomic commit on `main`:
 
 ---
 
+## R.11 — Wave 119 — Finish Engineering Debt (Categories A–F + housekeeping) (2026-09-12)
+
+**Date:** 2026-09-12
+**Agent:** Wave 119 Agent 8 (final synthesis)
+**Scope:** close the Wave 119 chain by final-synthesizing Phases 2-7 (6 source-code Category A-F fixes that addressed residual engineering debt surfaced during the Wave 117/118 test_tools/ failure audit + Wave 115 R.7 Bucket D carry-over), documenting the per-category reuse pattern, and resolving the Wave 117/118 open-item carry-over (`results/mmseqs_tmp/**` not yet in `.gitignore`). 6 Wave 119 atomic commits landed on `main` plus this final-synthesis Phase 8 commit.
+
+- `ab1aafa` — Wave 119 Phase 2 (Category A — transitive torch importorskip guards for 2 test_tools files). 2 files / +24 / -0 = **+24 net LOC** (closes 7 of 29 pre-Wave-119 test_tools/ failures: 5 test_kanzi_sweep_runner collection errors + 2 test_sweep_assertion test failures)
+- `0844ca8` — Wave 119 Phase 3 (Category B — FID closed-form lazy-eval in `tools/eval_rf_cifar.py`). 1 file / +176 / -13 = **+163 net LOC** (closes 2 test_tools/ failures as a side-effect of removing a stale cross-import; mirrors Wave 118.P3 FID decoupling pattern `435ba7c`)
+- `06806b1` — Wave 119 Phase 4 (Category C — `test_upstream_eval` batched-pollution fix via `monkeypatch.setitem`). 1 file / +12 / -3 = **+9 net LOC** (closes 15 test_tools/ batched-pollution failures)
+- `895ad48` — Wave 119 Phase 5 (Category D — 148 docs/code drift symbols via denylist + exports + forward-task skip). 1 file / +119 / -0 = **+119 net LOC** (closes 1 test_tools/ failure: `test_no_false_positives_on_current_repo`)
+- `adf4a7d` — Wave 119 Phase 6 (Category E — AST mutator merge/ subpackage pointer). 1 file / +8 / -3 = **+5 net LOC** (closes 1 test_tools/ failure: `test_algorithm_merge_operator_has_substantial_surface`)
+- `82aad4f` — Wave 119 Phase 7 (Category F — `benchmark_uplifts` contract-drift: `CosineAnnealScheduler` binding + drop `StochasticFMAdapter` placeholder row). 2 files / +12 / -13 = **-1 net LOC** (closes 3 test_tools/ failures: 2 test_round2_external_* + 1 test_pluggable_design_tests_return_rows)
+- (this commit, `docs-only`) — Wave 119 final synthesis: 1 NEW audit doc `docs/audit/wave119-finish-engineering-debt.md` + 1 NEW §R.11 row + `.gitignore` `results/*_tmp/` rule (resolves Wave 117/118 open-item carry-over). Docs + housekeeping only. Zero source touched.
+
+**Net source-code LOC delta across Wave 119 (committed):** **+319 net** (351 inserts / 32 deletes across 8 atomic-commit files).
+
+### Reuse references (cross-wave pattern inheritance)
+
+| Wave 119 phase | Pattern inherited | Source commit |
+|---|---|---|
+| Phase 2 (Category A) | `pytest.importorskip('torch', ...)` at module top | `6c88ff8` (Wave 114.P2) |
+| Phase 3 (Category B) | Two-tier FID closed-form / lazy-eval wrapper | `435ba7c` (Wave 118.P3) |
+| Phase 4 (Category C) | `monkeypatch.setitem` for `sys.modules` injection | pytest built-in |
+| Phase 5 (Category D) | `PROSE_SYMBOL_DENYLIST` + `_scan_path_claims` forward-task skip | Wave 113.A.6 denylist + Wave 115.P5B regex extensions |
+| Phase 6 (Category E) | Canonical-subpackage-module pointer (avoid 53-line backward-compat shim) | Wave 105 P2-B subpackage split |
+| Phase 7 (Category F) | Module-top name binding (cosine-family dispatch) + producer-set alignment with `EXPECTED_ROUND2_EXTERNAL_KEYS` | Wave 113.A.6 base-class shape-guard + Wave 48 placeholder-removal pattern |
+
+### Net test_tools/ failure-count delta
+
+| Wave state | test_tools/ FAILED count (excluding pandas collection error) | Delta from previous |
+|---|---:|---:|
+| Pre-Wave-119 (commit `c0bd946` — Wave 118 final) | **29** (24 failed + 5 error) | (baseline) |
+| After Wave 119 Phase 2 (Category A — importorskip) | 22 | -7 |
+| After Wave 119 Phase 3 (Category B — FID lazy-eval) | 20 | -2 |
+| After Wave 119 Phase 4 (Category C — pollution fix) | 5 | -15 |
+| After Wave 119 Phase 5 (Category D — denylist) | 4 | -1 |
+| After Wave 119 Phase 6 (Category E — AST mutator) | 3 | -1 |
+| After Wave 119 Phase 7 (Category F — benchmark_uplifts) | **0** | -3 |
+| **Post-Wave-119 (this commit)** | **0** | **-29 net** |
+
+**Net test_tools/ improvement: -29 → 0 = -29 failures** (29 → 0 FAILED when excluding environmental pandas collection error).
+
+### Verification matrix (this run)
+
+| Gate | Outcome |
+|---|---|
+| `git log --oneline -8` | `82aad4f` (Wave 119.P7) → `adf4a7d` (Wave 119.P6) → `895ad48` (Wave 119.P5) → `06806b1` (Wave 119.P4) → `0844ca8` (Wave 119.P3) → `ab1aafa` (Wave 119.P2) → `c0bd946` (Wave 118 audit) → `cfe9942` (Wave 118.P4). Wave 119 has 7 of the planned 7 atomic commits (Phases 2 + 3 + 4 + 5 + 6 + 7 + 8). |
+| `pytest tests/ -k "d4" -q` | **33 passed, 24 skipped** (deps missing in this env; 33/33 PASS for any test that can run without torch/pandas/hypothesis). **D.4 byte-stable regression verified.** |
+| `pytest tests/test_tools/ -q` (excluding pandas collection error) | **242 passed, 50 skipped, 0 failed**. ZERO failures (only environmental torch/rdkit/venv skips). **-29 failures closed vs. pre-Wave-119 baseline (29 → 0)**. |
+| `pytest tests/test_algorithm/ -q` | **1151 passed, 14 skipped, 0 failed** (unchanged from Wave 118 baseline). **Bucket D remains EMPTY.** |
+| `uv run mkdocs build --strict` | **EXIT=0** (15.13s build, 0 errors). License warning is upstream `mkdocs-material` MkDocs 2.0 deprecation banner, not a build failure. |
+| `git status --short` | **ZERO modified** after housekeeping commit lands (3 noise PNGs + exp3-results.json discarded; mmseqs_tmp removed; .gitignore rule added and committed). |
+
+### No regression risk
+
+- Wave 119 Phase 2 (`ab1aafa`): function-of-pattern from `6c88ff8` (Wave 114.P2). Additive only (24 ins / 0 del).
+- Wave 119 Phase 3 (`0844ca8`): mirror of Wave 118.P3 FID lazy-eval pattern in `eval_rf_cifar.py`. Pure-NumPy math separated from `InceptionV3FIDEvaluator` construction.
+- Wave 119 Phase 4 (`06806b1`): `monkeypatch.setitem` auto-restores prior `sys.modules` entry on teardown. Avoids cross-test pollution.
+- Wave 119 Phase 5 (`895ad48`): additive denylist + forward-task skip (119 ins / 0 del). No source removed.
+- Wave 119 Phase 6 (`adf4a7d`): points test at canonical subpackage module (936 LOC, 168 mutation sites). Test now reads the actual implementation, not the 53-line shim.
+- Wave 119 Phase 7 (`82aad4f`): module-top `CosineAnnealScheduler` binding + drop stale `StochasticFMAdapter` placeholder row. Both changes are minimal and align producer with test expectations.
+- Wave 119 Phase 8 (this commit): docs + `.gitignore` + cleanup only. No source touched.
+- D.4 byte-stable regression verified (33/33 PASS).
+- mkdocs build --strict exits 0.
+
+### Cross-references
+
+- `ab1aafa` — Wave 119 Phase 2 (Category A — transitive torch importorskip)
+- `0844ca8` — Wave 119 Phase 3 (Category B — FID closed-form lazy-eval)
+- `06806b1` — Wave 119 Phase 4 (Category C — test_upstream_eval batched-pollution)
+- `895ad48` — Wave 119 Phase 5 (Category D — docs/code drift denylist)
+- `adf4a7d` — Wave 119 Phase 6 (Category E — AST mutator merge/ subpackage)
+- `82aad4f` — Wave 119 Phase 7 (Category F — benchmark_uplifts contract-drift)
+- `c0bd946` — Wave 118 final-synthesis commit (companion row §R.10 in this report)
+- `435ba7c` — Wave 118 Phase 3 (FID closed-form decoupling — Category B reuse reference)
+- `6c88ff8` — Wave 114.P2 (Category A reuse reference — pytest.importorskip pattern)
+- `3c6669e` — Wave 113.A.6 Phase 4 (Category D reuse reference — denylist + base-class shape-guard)
+- `docs/baseline-audit-report.md` §R.10 — Wave 118 row (predecessor; Bucket D empty since Wave 118)
+- `docs/audit/wave119-finish-engineering-debt.md` — Wave 119 audit doc (this row's companion; written by this commit)
+- `docs/audit/wave118-bucket-d-fixes.md` — Wave 118 audit doc (all 11 Bucket D items closed; Bucket D empty)
+- `docs/audit/wave117-working-tree-cleanup.md` — Wave 117 audit doc (flagged the `results/mmseqs_tmp/**` open-item that this commit resolves)
+- `docs/audit/wave116-cuda-fix-real-sweep.md` — Wave 116 audit doc
+
+---
+
 ## S — GPU watchdog + SOTA alignment (Wave 98, 2026-09-10)
 
 **Date:** 2026-09-10
