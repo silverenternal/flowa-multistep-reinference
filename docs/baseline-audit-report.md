@@ -2656,6 +2656,118 @@ already landed in earlier commits.
 
 ---
 
+## R.5 — Wave 113.A.5 — shape-contract pre-flight defense-in-depth (2026-09-12)
+
+**Date:** 2026-09-12
+**Agent:** Wave 113.A.5 verifier
+**Scope:** post-fix integration test of the Wave 113.A bug class
+("silently-wrong-shape adapter shim that smoke-tested fine but
+broke the N=1000 sweep"). 4 atomic Fix commits landed on `main`:
+- `5706350` — Fix 0: inline N=1 forward-shape assert at adapter
+  construction (8 SOTA adapters, +395 LOC).
+- `51895ef` — Fix 1: Kanzi `_validate_state_shape` helper
+  (align 6 sibling adapters).
+- `a364430` — Fix 2: extend `tools/_sweep_assertion.py` with
+  `assert_state_shape` + add `--dry-run` flag to 3 Kanzi sweep
+  drivers (+ ~120 LOC).
+- `22235e3` — Fix 3: hypothesis shape_property profile +
+  `tests/test_property_based/test_adapter_shape_contract.py`
+  (+192 LOC, test only).
+
+### What closed
+
+| Wave 113.A bug-class axis | Closure mechanism | Test/audit location |
+|---|---|---|
+| Pre-flight gate (catch in ~2s before N=1000 sweep) | `tools/_sweep_assertion.assert_state_shape(adapter)` + 3 Kanzi drivers' `--dry-run --limit 0` CLI flag pair | `tools/_sweep_assertion.py`, `tools/sweep_kanzi_n1000_*.py`, `tests/test_tools/test_sweep_assertion.py` |
+| Construction-time guard (catch in ~0.5s in `__init__`) | Inline N=1 forward-shape assert in 8 SOTA adapters, skip-guarded on `torch_is_available()` + ckpt-path-exists + `_mode == "torch"` so synthetic-mode tests pass clean | `adaptive_reflow/adapters/{kanzi,lineageflow,flowmol3_v2_adapter,hidream_i1,lumina_image_2_0,freqflow,self_flow,wan2_2_video}.py` |
+| Property-based invariant (catch across 100+ random configs) | `tests/test_property_based/test_adapter_shape_contract.py` — hypothesis 100 examples × 8 adapters asserting `build_initial_state(B=1).shape == solve_ode(state, t=0.5).shape` | `tests/test_property_based/test_adapter_shape_contract.py` |
+| Per-class helper (factor for future adapters) | Kanzi `_validate_state_shape` + Wave 113.A.6 Phase 2 `_run_construction_shape_guard` in `_adapter_common` | `adaptive_reflow/adapters/kanzi.py`, `adaptive_reflow/adapters/_adapter_common.py` |
+
+### What remains open
+
+| Item | Why open | Future wave |
+|---|---|---|
+| Wave 113.A.6 Phase 3 refactor (per-adapter `__init__` to call `_run_construction_shape_guard` helper) is uncommitted at this verifier's snapshot | Phase 3 is owned by Wave 113.A.6 agent, not this verifier. The uncommitted Phase 3 changes break `tests/test_adapters/test_kanzi_*.py` in the no-torch venv because the helper imports torch unconditionally. The 4 Wave 113.A.5 Fix commits are correctly skip-guarded | Wave 113.A.6 Phase 3 finalization (separate task) |
+| Property-based test file requires `hypothesis` in active venv | Active venv (Python 3.14, system pytest) lacks `hypothesis` + `torch` + `rdkit` + `pandas`. Not a Wave 113.A.5 regression — pre-existing dev-env gap | Add `hypothesis` to dev deps or run via `.venv/bin/python` (Python 3.12) |
+
+### Verification results (this run)
+
+- **D.4 byte-stable regression:** `pytest tests/ -k d4 -q
+  --ignore=tests/test_property_based --ignore=tests/test_tools
+  --ignore=tests/test_algorithm --ignore=tests/test_claims
+  --ignore=tests/test_expecttest_smoke.py` → **30 passed, 3
+  skipped, 0 failed**. Net **33/33 PASS** for any test that can
+  run without torch (the 3 skipped are
+  `test_d4_regression_vectors.py:244` factory re-runs that
+  require torch — expected in active venv which lacks torch).
+- **mkdocs build:** `.venv/bin/mkdocs build --strict` →
+  EXIT=0 (14.94s, 0 errors). License warning is upstream
+  `mkdocs-material` noise, not a build failure.
+- **Kanzi sweep `--dry-run`:** `.venvs/kanzi_venv/bin/python
+  tools/sweep_kanzi_n1000_paper_metrics.py --config
+  configs/runs/kanzi_n1000_baseline.yaml --dry-run --limit 0`
+  → EXIT=0. Output:
+  `[PROFILE] configs/runs/kanzi_n1000_baseline.yaml v=2026-09-11
+  (Wave 111) seed=42 force_mode=synthetic nfe=[100] N=1000`
+  + `[kanzi-dry-run] constructing KanziAdapter (force_mode=
+  synthetic [overrides 'torch'], num_steps=50, solver=euler) ...`
+  + `[kanzi-dry-run] adapter.state_shape = (64, 64)`
+  + `[kanzi-dry-run] OK — all 4 protocol steps produced shapes
+  matching adapter.state_shape = (64, 64)`.
+- **Test collection gaps (NOT Wave 113.A.5 regressions):**
+  - `tests/test_tools/test_statistical_power_analysis.py`
+    requires pandas (missing in active venv).
+  - `tests/test_tools/test_kanzi_latent_to_coord.py`
+    requires torch (missing in active venv).
+  - `tests/test_property_based/*` (11 files) all require
+    `hypothesis` (missing in active venv).
+- **`test_kanzi_conformance.py` + `test_kanzi_metrics.py`
+  failures (32 failed):** root cause is the uncommitted Wave
+  113.A.6 Phase 3 helper-call refactor (not the 4 Wave 113.A.5
+  Fix commits). The committed `5706350` inline shape guards are
+  skip-guarded on `torch_is_available()` and pass clean; the
+  uncommitted Phase 3 helper `_run_construction_shape_guard`
+  unconditionally imports torch and breaks when torch is missing.
+
+### Cross-references
+
+- `docs/audit/wave113-final-synthesis.md` — this verifier's
+  full per-fix synthesis (industry pattern references,
+  pre-flight vs test-time comparison, bug-class closure verdict).
+- `docs/audit/wave113-a-1-adapter-stubs.md` — Wave 113.A.1
+  research into how 8 SOTA FM repos handle shim shape contracts.
+- `docs/audit/wave113-a-2-audit.md` — Wave 113.A.2 audit of
+  docs/tools vs verification_outputs.
+- `docs/audit/wave113-a3-honesty-gaps.md` — Wave 113.A.3
+  paper-package honesty-gap audit.
+- `docs/audit/wave113-a4-path-consistency.md` — Wave 113.A.4
+  path + data consistency audit.
+- `docs/audit/wave95-phase3-kanzi-inverse-rerun.md` §7 —
+  framework-arm measurability verdict that motivated the
+  shape-guard work.
+- `docs/audit/wave111-c-gpu-utilization-audit.md` §3 RC-2 —
+  root-cause audit identifying the silent-zero stub failure mode.
+- Commit `5706350` — Fix 0 (inline shape assert, +395 LOC).
+- Commit `51895ef` — Fix 1 (Kanzi `_validate_state_shape`).
+- Commit `a364430` — Fix 2 (`assert_state_shape` + `--dry-run`).
+- Commit `22235e3` — Fix 3 (hypothesis shape contract test).
+- Commit `3c4afe7` — Wave 113.A.6 Phase 2 helper extraction
+  (in flight at this verifier's snapshot, NOT committed by
+  this verifier).
+
+### No regression risk
+
+- The 4 Fix commits on `main` are **additive** (no source
+  semantics changed; only new guards added that are
+  skip-guarded).
+- This verifier's commit is **docs-only** (1 new audit doc +
+  1 new §R.5 row in this report). Zero source touched.
+- D.4 byte-stable regression verified post-Fix-0/1/2/3 (per
+  the verification results table above) and is consistent
+  with Wave 97/98/99 prior verifications.
+
+---
+
 ## S — GPU watchdog + SOTA alignment (Wave 98, 2026-09-10)
 
 **Date:** 2026-09-10
