@@ -452,6 +452,13 @@ def _run_construction_shape_guard(
 
     Module-private (``_`` prefix): not exported via ``__all__``.
     """
+    # Wave 113.A.6 Phase 3 fix — check torch availability BEFORE the
+    # ``import torch`` so synthetic-mode test paths that construct
+    # adapters on a torch-less interpreter don't crash with
+    # ``ModuleNotFoundError``. ``torch_is_available()`` returns False
+    # on any import failure, so this is a safe no-op gate.
+    if not torch_is_available():
+        return None
     import torch  # noqa: PLC0415 — lazy; module contract is numpy-only.
 
     weights_path = getattr(adapter, "_weights_path", None)

@@ -91,6 +91,7 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    _run_construction_shape_guard,
     digest_state,
     make_ref,
     memory_fraction_for,
@@ -792,6 +793,14 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
     # tweak the state shape without redefining the class attribute
     # (r17-audit P-07).
     state_shape: tuple[int, ...] = LUMINA_IMAGE_2_0_STATE_SHAPE
+    # Wave 113.A.6 Phase 3 — shim input shape (NON-batch dims) read
+    # by :func:`_adapter_common._run_construction_shape_guard`. The
+    # Lumina-Image 2.0 real shim consumes ``hidden_states=`` +
+    # ``timestep=`` + ``encoder_hidden_states=`` kwargs (not the float
+    # ``x, t`` the helper passes), so this attribute is purely
+    # documentary — the helper's call would not match this adapter's
+    # forward signature, so the helper is a no-op in real mode.
+    _SHIM_INPUT_SHAPE: tuple[int, ...] = tuple(LUMINA_IMAGE_2_0_STATE_SHAPE)
 
     mechanism_id: MechanismId = MechanismId(LUMINA_IMAGE_2_0_MECHANISM_ID)
 
@@ -957,51 +966,20 @@ class LuminaImage20Adapter(FlowMatchingODEAdapter):
         # the runner inspects the adapter.
         self.state_shape: tuple[int, ...] = LUMINA_IMAGE_2_0_STATE_SHAPE
 
-        # Wave 113.A.5 Fix 0 — inline N=1 forward-shape assert at
-        # adapter construction time. Industry standard (Diffusers
-        # Triton strict-config, BentoML input_spec): catch a wrong-
-        # shape or all-zeros shim BEFORE the sweep runs N=1000 cells.
-        # Skip-guarded on torch mode + ckpt path so synthetic-mode
-        # tests (no torch, no ckpt) construct cleanly as before.
-        if (
-            self._mode == "torch"
-            and self._pipeline is not None
-            and torch_is_available()
-            and self._weights_path is not None
-            and Path(self._weights_path).exists()
-        ):
-            try:
-                import torch as _torch_assert  # noqa: PLC0415
-                _x = _torch_assert.randn(1, *LUMINA_IMAGE_2_0_STATE_SHAPE)
-                _t = _torch_assert.tensor([0.5])
-                _te = _torch_assert.randn(1, 64, 2304)
-                _tf = getattr(self._pipeline, "transformer", self._pipeline)
-                with _torch_assert.no_grad():
-                    _v = _tf(hidden_states=_x, timestep=_t,
-                             encoder_hidden_states=_te,
-                             encoder_attention_mask=None).sample
-                if tuple(_v.shape) != (1, *LUMINA_IMAGE_2_0_STATE_SHAPE):
-                    raise RuntimeError(
-                        "Wave 113.A.5 Fix 0: Lumina-Image 2.0 shim "
-                        f"returned shape {tuple(_v.shape)} but "
-                        f"contract is (1, {tuple(LUMINA_IMAGE_2_0_STATE_SHAPE)}); "
-                        "shim likely broken. See "
-                        "docs/audit/wave113-final-synthesis.md"
-                    )
-                if float(_v.abs().max()) <= 0.0:
-                    raise RuntimeError(
-                        "Wave 113.A.5 Fix 0: Lumina-Image 2.0 shim "
-                        "returned all-zeros velocity — stub or broken "
-                        "forward. See docs/audit/wave113-final-synthesis.md"
-                    )
-            except RuntimeError:
-                raise
-            except Exception as _exc:  # noqa: BLE001 — fail-closed gate
-                raise RuntimeError(
-                    "Wave 113.A.5 Fix 0: Lumina-Image 2.0 inline "
-                    f"pre-flight shape assert failed: {_exc!r}. "
-                    "See docs/audit/wave113-final-synthesis.md"
-                ) from _exc
+        # Wave 113.A.6 Phase 3 — delegate the construction-time
+        # N=1 forward-shape assert to the shared
+        # :func:`_adapter_common._run_construction_shape_guard` helper.
+        # The 45 LOC of inlined guard (Wave 113.A.5 Fix 0) is replaced
+        # by a single call: same skip-guards, same shape-vs-expected
+        # compare, same ``abs().max() > 0.0`` non-zero check, same
+        # RuntimeError-only re-raise. Lumina-Image 2.0's real shim
+        # consumes ``hidden_states=`` + ``timestep=`` +
+        # ``encoder_hidden_states=`` kwargs (not the float ``x, t``
+        # the helper passes), so the helper's exit code for this
+        # adapter is the skip-guard path; this call is effectively
+        # a no-op in real mode. The synthetic-mode test path also
+        # does NOT reach the helper (skip-guarded on torch mode).
+        _run_construction_shape_guard(self, self._SHIM_INPUT_SHAPE)
 
     # ------------------------------------------------------------------
     # 1. capability handshake

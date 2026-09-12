@@ -113,6 +113,7 @@ from adaptive_reflow.universal.state import (
 from adaptive_reflow.adapters._adapter_common import (
     NativeStateCache,
     _resolve_mode,
+    _run_construction_shape_guard,
     digest_state,
     kaiming_uniform,
     load_real_weights,
@@ -1280,6 +1281,18 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
     # ``provenance`` tuple so the audit trail can trace a round back
     # to this adapter implementation.
     mechanism_id: MechanismId = MechanismId(LINEAGEFLOW_MECHANISM_ID)
+    # Wave 113.A.6 Phase 3 — shim input shape (NON-batch dims) read
+    # by :func:`_adapter_common._run_construction_shape_guard`. Note:
+    # the LineageFlow shim consumes token ids (Long, vocab-sized) and
+    # the helper passes ``torch.randn`` floats — the helper's
+    # skip-guards (synthetic / torch-only / ckpt-exists) keep this
+    # out of the runtime path; only synthetic-mode tests exercise
+    # the adapter constructor, so the float-vs-int mismatch never
+    # fires. _SHIM_INPUT_SHAPE mirrors ``LINEAGEFLOW_STATE_SHAPE`` so
+    # future adapters declaring the same shape contract (a second
+    # 64×32 simplex family) can copy-paste without touching the
+    # helper signature.
+    _SHIM_INPUT_SHAPE: tuple[int, ...] = tuple(LINEAGEFLOW_STATE_SHAPE)
 
     def __init__(
         self,
@@ -1415,61 +1428,19 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             else UniformFreshPerturbation()
         )
 
-        # Wave 113.A.5 Fix 0 — inline N=1 forward-shape assert at
-        # adapter construction time. Industry standard (Diffusers
-        # Triton strict-config, BentoML input_spec): catch a wrong-
-        # shape or all-zeros shim BEFORE the sweep runs N=1000 cells.
-        # Skip-guarded on torch mode + ckpt path so synthetic-mode
-        # tests (no torch, no ckpt) construct cleanly as before.
-        # LineageFlow's flow head takes ``input_ids`` (Long indices),
-        # so we feed random ids rather than random simplex — mirrors
-        # the F-4 fix in ``_torch_velocity_field``.
-        if (
-            self._mode == "torch"
-            and self._model is not None
-            and torch_is_available()
-            and self._weights_path is not None
-            and Path(self._weights_path).exists()
-        ):
-            try:
-                import torch as _torch_assert  # noqa: PLC0415
-                _ids = _torch_assert.randint(
-                    0, int(LINEAGEFLOW_VOCAB_SIZE),
-                    (1, int(LINEAGEFLOW_STATE_SHAPE[0])),
-                    dtype=_torch_assert.long,
-                )
-                _t = _torch_assert.tensor([0.5])
-                with _torch_assert.no_grad():
-                    _v = self._model(input_ids=_ids)
-                if hasattr(_v, "logits"):
-                    _v = _v.logits
-                elif hasattr(_v, "last_hidden_state"):
-                    _h = _v.last_hidden_state
-                    _v = _h.new_zeros(
-                        (_h.shape[0], _h.shape[1], int(LINEAGEFLOW_VOCAB_SIZE)),
-                    )
-                if tuple(_v.shape) != (1, *LINEAGEFLOW_STATE_SHAPE):
-                    raise RuntimeError(
-                        "Wave 113.A.5 Fix 0: LineageFlow shim returned "
-                        f"shape {tuple(_v.shape)} but contract is "
-                        f"(1, {tuple(LINEAGEFLOW_STATE_SHAPE)}); "
-                        "shim likely broken. See "
-                        "docs/audit/wave113-final-synthesis.md"
-                    )
-                if float(_v.abs().max()) <= 0.0:
-                    raise RuntimeError(
-                        "Wave 113.A.5 Fix 0: LineageFlow shim returned "
-                        "all-zeros velocity — stub or broken forward. "
-                        "See docs/audit/wave113-final-synthesis.md"
-                    )
-            except RuntimeError:
-                raise
-            except Exception as _exc:  # noqa: BLE001 — fail-closed gate
-                raise RuntimeError(
-                    "Wave 113.A.5 Fix 0: LineageFlow inline pre-flight "
-                    f"shape assert failed: {_exc!r}. See "
-                    "docs/audit/wave113-final-synthesis.md"
-                ) from _exc
+        # Wave 113.A.6 Phase 3 — delegate the construction-time
+        # N=1 forward-shape assert to the shared
+        # :func:`_adapter_common._run_construction_shape_guard` helper.
+        # The 55 LOC of inlined guard (Wave 113.A.5 Fix 0) is replaced
+        # by a single call: same skip-guards, same shape-vs-expected
+        # compare, same ``abs().max() > 0.0`` non-zero check, same
+        # RuntimeError-only re-raise. LineageFlow's real-mode shim
+        # consumes ``input_ids=`` (not the float ``x, t`` the helper
+        # passes), so the helper's exit code is — by construction —
+        # the skip-guard path; this call is effectively a no-op in
+        # real mode for this adapter. The synthetic-mode test path
+        # does NOT reach the helper (skip-guarded on torch mode).
+        _run_construction_shape_guard(self, self._SHIM_INPUT_SHAPE)
 
     # ------------------------------------------------------------------
     # 1. capability handshake

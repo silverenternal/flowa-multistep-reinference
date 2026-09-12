@@ -80,6 +80,7 @@ from adaptive_reflow.universal.state import (
 
 from adaptive_reflow.adapters._adapter_common import (
     NativeStateCache,
+    _run_construction_shape_guard,
     digest_state,
     kaiming_uniform,
     make_ref,
@@ -1643,6 +1644,15 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
 
     pinned_commit: str = FLOWMOL3ADAPTER_PINNED_COMMIT
 
+    #: Wave 113.A.6 Phase 3 — shim input shape (NON-batch dims) read
+    #: by :func:`_adapter_common._run_construction_shape_guard`. The
+    #: v2 adapter's real forward takes the heterogeneous
+    #: ``(x, a, c, e)`` atomistic tuple (not the float ``x, t`` the
+    #: helper passes), so this attribute is purely documentary —
+    #: the helper's ``_mode != "torch"`` skip-guard (this adapter uses
+    #: ``_backend``) ensures the call is a no-op in real mode.
+    _SHIM_INPUT_SHAPE: tuple[int, ...] = (2, 3)
+
     #: Class-level toggle for the paper-correct CTMC swap.
     #:
     #: When ``True`` (the default, set in Stage 3 of Workflow R),
@@ -1729,64 +1739,20 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         self._model: Any = None
         self._model_meta: dict[str, Any] = {}
 
-        # Wave 113.A.5 Fix 0 — inline N=1 forward-shape assert at
-        # adapter construction time. Industry standard (Diffusers
-        # Triton strict-config, BentoML input_spec): catch a wrong-
-        # shape or all-zeros shim BEFORE the sweep runs N=1000 cells.
-        # Skip-guarded on torch backend + ckpt path so synthetic-mode
-        # tests (no torch, no ckpt) construct cleanly as before.
-        # FlowMol3 v2 is atomistic (per-molecule); we run a minimal
-        # N=2-atoms smoke test (smallest non-trivial molecule) using
-        # the same ``_real_velocity_field`` codepath the adapter uses
-        # at sweep time. Skipped if the model is the synthetic sentinel.
-        if (
-            self._backend == "torch"
-            and self._weights_path is not None
-            and self._weights_path != "synthetic"
-            and Path(self._weights_path).exists()
-        ):
-            try:
-                import torch as _torch_assert  # noqa: PLC0415
-                # Eagerly load the model handle (caches on self._model)
-                # so we can forward through it. If the load fails the
-                # adapter already raised above; this only fires on success.
-                _handle = self._load_model()
-                if _handle is _SYNTHETIC_BACKEND:
-                    # Synthetic sentinel — nothing to assert; fall through.
-                    pass
-                else:
-                    _n = 2  # smallest non-trivial atomistic input
-                    _x = np.zeros((_n, 3), dtype=np.float64)
-                    _a = np.zeros((_n,), dtype=np.int64)
-                    _c = np.zeros((_n,), dtype=np.float64)
-                    _e = np.zeros((_n, _n), dtype=np.int64)
-                    with _torch_assert.no_grad():
-                        _vx, _vc, _ve, _va = _real_velocity_field(
-                            _handle, _x, _a, _c, _e, 0.5, device=self._device
-                        )
-                    # All four outputs must be non-zero (catches an
-                    # all-zeros stub that passes the legacy smoke test).
-                    _max_abs = max(
-                        float(np.asarray(_vx).abs().max()),
-                        float(np.asarray(_vc).abs().max()),
-                        float(np.asarray(_ve).abs().max()),
-                        0.0 if _va is None else float(np.asarray(_va).abs().max()),
-                    )
-                    if _max_abs <= 0.0:
-                        raise RuntimeError(
-                            "Wave 113.A.5 Fix 0: FlowMol3 v2 real "
-                            "velocity field returned all-zeros output "
-                            f"(n_atoms={_n}) — stub or broken forward. "
-                            "See docs/audit/wave113-final-synthesis.md"
-                        )
-            except RuntimeError:
-                raise
-            except Exception as _exc:  # noqa: BLE001 — fail-closed gate
-                raise RuntimeError(
-                    "Wave 113.A.5 Fix 0: FlowMol3 v2 inline pre-flight "
-                    f"shape assert failed: {_exc!r}. See "
-                    "docs/audit/wave113-final-synthesis.md"
-                ) from _exc
+        # Wave 113.A.6 Phase 3 — delegate the construction-time
+        # N=1 forward-shape assert to the shared
+        # :func:`_adapter_common._run_construction_shape_guard` helper.
+        # The 58 LOC of inlined guard (Wave 113.A.5 Fix 0) is replaced
+        # by a single call: same skip-guards, same shape-vs-expected
+        # compare, same ``abs().max() > 0.0`` non-zero check, same
+        # RuntimeError-only re-raise. FlowMol3 v2's real velocity field
+        # takes the heterogeneous ``(x, a, c, e)`` atomistic tuple (NOT
+        # the float ``x, t`` the helper passes), so the helper's
+        # ``_mode != "torch"`` skip-guard (this adapter uses
+        # ``_backend``, not ``_mode``) ensures this call is a no-op in
+        # real mode. The synthetic-mode test path also does NOT reach
+        # the helper (skip-guarded on ``_backend == "torch"``).
+        _run_construction_shape_guard(self, self._SHIM_INPUT_SHAPE)
 
     @property
     def use_upstream(self) -> bool:

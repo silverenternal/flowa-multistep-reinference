@@ -115,6 +115,7 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    _run_construction_shape_guard,
     make_ref,
     memory_fraction_for,
     seed_from_ids,
@@ -675,6 +676,13 @@ class SelfFlowAdapter(FlowMatchingODEAdapter):
     # and an instance attribute so the runner's ``getattr(state_shape,
     # (2,))`` fallback is never exercised for this adapter.
     state_shape: tuple[int, ...] = SELF_FLOW_STATE_SHAPE
+    # Wave 113.A.6 Phase 3 — shim input shape (NON-batch dims) +
+    # Pfam-family dim read by
+    # :func:`_adapter_common._run_construction_shape_guard`. SelfFlow's
+    # shim takes ``family`` as the third positional arg with the same
+    # 1152-dim embed shape the helper's ``_FAMILY_DIM`` kwarg injects.
+    _SHIM_INPUT_SHAPE: tuple[int, ...] = tuple(SELF_FLOW_STATE_SHAPE)
+    _FAMILY_DIM: int = 1152
     # Mechanism ID — used as the leading entry of every bundle's
     # ``provenance`` tuple so the audit trail can trace a round back
     # to this adapter implementation.
@@ -771,47 +779,21 @@ class SelfFlowAdapter(FlowMatchingODEAdapter):
         self._conditioning_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._caps = SelfFlowCapabilities()
 
-        # Wave 113.A.5 Fix 0 — inline N=1 forward-shape assert at
-        # adapter construction time. Industry standard (Diffusers
-        # Triton strict-config, BentoML input_spec): catch a wrong-
-        # shape or all-zeros shim BEFORE the sweep runs N=1000 cells.
-        # Skip-guarded on torch mode + ckpt path so synthetic-mode
-        # tests (no torch, no ckpt) construct cleanly as before.
-        if (
-            self._mode == "torch"
-            and self._model is not None
-            and torch_is_available()
-            and self._weights_path is not None
-            and Path(self._weights_path).exists()
-        ):
-            try:
-                import torch as _torch_assert  # noqa: PLC0415
-                _x = _torch_assert.randn(1, *SELF_FLOW_STATE_SHAPE)
-                _t = _torch_assert.tensor([0.5])
-                with _torch_assert.no_grad():
-                    _v = self._model(_x, _t, _x.new_zeros(1, 1152))
-                if tuple(_v.shape) != tuple(_x.shape):
-                    raise RuntimeError(
-                        "Wave 113.A.5 Fix 0: SelfFlow shim returned "
-                        f"shape {tuple(_v.shape)} but contract is "
-                        f"{tuple(_x.shape)} (state_shape="
-                        f"{SELF_FLOW_STATE_SHAPE}); shim likely broken. "
-                        "See docs/audit/wave113-final-synthesis.md"
-                    )
-                if float(_v.abs().max()) <= 0.0:
-                    raise RuntimeError(
-                        "Wave 113.A.5 Fix 0: SelfFlow shim returned "
-                        "all-zeros velocity — stub or broken forward. "
-                        "See docs/audit/wave113-final-synthesis.md"
-                    )
-            except RuntimeError:
-                raise
-            except Exception as _exc:  # noqa: BLE001 — fail-closed gate
-                raise RuntimeError(
-                    "Wave 113.A.5 Fix 0: SelfFlow inline pre-flight "
-                    f"shape assert failed: {_exc!r}. See "
-                    "docs/audit/wave113-final-synthesis.md"
-                ) from _exc
+        # Wave 113.A.6 Phase 3 — delegate the construction-time
+        # N=1 forward-shape assert to the shared
+        # :func:`_adapter_common._run_construction_shape_guard` helper.
+        # The 41 LOC of inlined guard (Wave 113.A.5 Fix 0) is replaced
+        # by a single call: same skip-guards, same shape-vs-expected
+        # compare, same ``abs().max() > 0.0`` non-zero check, same
+        # RuntimeError-only re-raise. SelfFlow's shim takes ``family``
+        # as the third positional arg with the same 1152-dim embed
+        # shape the helper's ``_FAMILY_DIM`` kwarg would inject.
+        # The helper's ``family=torch.zeros(1, 1152, device=...)``
+        # kwarg matches by parameter name, so the helper call is a
+        # true equivalent for the real-mode path. Synthetic-mode
+        # test path does NOT reach the helper (skip-guarded on torch
+        # mode).
+        _run_construction_shape_guard(self, self._SHIM_INPUT_SHAPE)
 
     # ------------------------------------------------------------------
     # 1. capability handshake

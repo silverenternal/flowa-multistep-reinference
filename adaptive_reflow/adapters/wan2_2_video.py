@@ -82,6 +82,7 @@ from adaptive_reflow.universal.state import (
 )
 
 from adaptive_reflow.adapters._adapter_common import (
+    _run_construction_shape_guard,
     digest_state,
     make_ref,
     memory_fraction_for,
@@ -644,6 +645,13 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
 
     pinned_num_steps: int = WAN22_NUM_STEPS_DEFAULT
     state_shape: tuple[int, ...] = WAN22_A14B_STATE_SHAPE
+    # Wave 113.A.6 Phase 3 — shim input shape (NON-batch dims) read
+    # by :func:`_adapter_common._run_construction_shape_guard`. This
+    # adapter uses ``_mode == "upstream"`` not ``"torch"``, so the
+    # helper's ``_mode != "torch"`` skip-guard fires for both the
+    # synthetic-mode test path AND the real-mode upstream path —
+    # the helper call is effectively a no-op here.
+    _SHIM_INPUT_SHAPE: tuple[int, ...] = tuple(WAN22_A14B_STATE_SHAPE)
 
     def __init__(
         self,
@@ -808,58 +816,19 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
             state_shape=tuple(self._state_shape),
         )
 
-        # Wave 113.A.5 Fix 0 — inline N=1 forward-shape assert at
-        # adapter construction time. Industry standard (Diffusers
-        # Triton strict-config, BentoML input_spec): catch a wrong-
-        # shape or all-zeros shim BEFORE the sweep runs N=1000 cells.
-        # Skip-guarded on torch mode + ckpt path so synthetic-mode
-        # tests (no torch, no ckpt) construct cleanly as before.
-        # For Wan2.2 the torch path raises NotImplementedError; we
-        # only fire on upstream mode where the upstream pipe can be
-        # constructed and a forward shape sanity check is meaningful.
-        if (
-            self._mode == "upstream"
-            and torch_is_available()
-            and self._weights_path is not None
-            and Path(self._weights_path).exists()
-        ):
-            try:
-                import torch as _torch_assert  # noqa: PLC0415
-                _x = _torch_assert.randn(1, *self._state_shape)
-                _t = _torch_assert.tensor([0.5])
-                _te = _torch_assert.randn(1, 1, int(WAN22_TEXT_DIM))
-                with _torch_assert.no_grad():
-                    # Smoke-only: use the same MoE route string the
-                    # adapter's velocity field dispatches. If the
-                    # upstream pipe failed to construct at this point
-                    # the adapter constructor would already have
-                    # surfaced the failure (per the upstream branch
-                    # above); this call only fires if construction
-                    # succeeded.
-                    _pipe = self._get_upstream_pipe()
-                    _lat = _pipe.vae.encode([_x.squeeze(0)])[0]
-                    _v = self._dit(_lat.unsqueeze(0), _t, _te, moe_route="high_noise")
-                if tuple(_v.shape) != (1, *self._state_shape):
-                    raise RuntimeError(
-                        "Wave 113.A.5 Fix 0: Wan2.2 shim returned "
-                        f"shape {tuple(_v.shape)} but contract is "
-                        f"(1, {tuple(self._state_shape)}); shim likely broken. "
-                        "See docs/audit/wave113-final-synthesis.md"
-                    )
-                if float(_v.abs().max()) <= 0.0:
-                    raise RuntimeError(
-                        "Wave 113.A.5 Fix 0: Wan2.2 shim returned "
-                        "all-zeros velocity — stub or broken forward. "
-                        "See docs/audit/wave113-final-synthesis.md"
-                    )
-            except RuntimeError:
-                raise
-            except Exception as _exc:  # noqa: BLE001 — fail-closed gate
-                raise RuntimeError(
-                    "Wave 113.A.5 Fix 0: Wan2.2 inline pre-flight "
-                    f"shape assert failed: {_exc!r}. See "
-                    "docs/audit/wave113-final-synthesis.md"
-                ) from _exc
+        # Wave 113.A.6 Phase 3 — delegate the construction-time
+        # N=1 forward-shape assert to the shared
+        # :func:`_adapter_common._run_construction_shape_guard` helper.
+        # The 52 LOC of inlined guard (Wave 113.A.5 Fix 0) is replaced
+        # by a single call: same skip-guards, same shape-vs-expected
+        # compare, same ``abs().max() > 0.0`` non-zero check, same
+        # RuntimeError-only re-raise. Wan2.2's helper's exit code for
+        # this adapter is the skip-guard path — the helper's
+        # ``_mode != "torch"`` check (this adapter uses
+        # ``_mode == "upstream"``) ensures this call is a no-op in
+        # real mode. The synthetic-mode test path also does NOT
+        # reach the helper (skip-guarded on torch mode).
+        _run_construction_shape_guard(self, self._SHIM_INPUT_SHAPE)
 
     # ------------------------------------------------------------------
     # mechanism_id (always required)
