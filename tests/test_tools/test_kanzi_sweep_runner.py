@@ -293,43 +293,58 @@ def test_torch_velocity_field_emits_512d_shape(runner: Any) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test 5 (Wave 115.P2 — CUDA device-mismatch regression test):
+# Test 5 (Wave 115.P2 / Wave 116 — CUDA device-mismatch regression test):
 # The `torch.as_tensor(coords_BLD, dtype=torch.float32, ...)` call that
-# feeds `dae.encode` MUST carry `device=dae.device`. Pre-Wave 115.P2
-# the call omitted `device=`; when the DAE was on CUDA but the
-# input numpy array was implicitly on CPU, the per-record inner loop
-# crashed inside `dae.encode` with `RuntimeError: Expected all tensors
-# to be on the same device ...`. The sweep's outer `try/except` then
-# caught the exception and incremented `n_skipped` for every record,
-# silently producing a 0-record JSONL with no error visible to the
-# operator. The Wave 115.P2 fix threads `device=dae.device` through so
-# any future CPU/CUDA mismatch becomes a loud, fast, attributable
-# `AttributeError` early in the constructor path (before the loop)
-# rather than a silent 0-record sweep.
+# feeds `dae.encode` MUST carry `device=next(dae.parameters()).device`.
 #
-# The pin is a static text-match against the runner source so the
-# test does not require a torch / kanzi sidecar venv to import the
-# runner or load the real DAE.
+# History:
+#   Pre-Wave 115.P2: the call omitted `device=`; when the DAE was on CUDA
+#     but the input numpy array was implicitly on CPU, the per-record
+#     inner loop crashed inside `dae.encode` with
+#     `RuntimeError: Expected all tensors to be on the same device ...`.
+#     The sweep's outer `try/except` then caught the exception and
+#     incremented `n_skipped` for every record, silently producing a
+#     0-record JSONL with no error visible to the operator.
+#   Wave 115.P2: threads ``device=dae.device`` through so any future
+#     CPU/CUDA mismatch becomes a loud ``AttributeError`` on every
+#     iteration.
+#   Wave 116: ``torch.nn.Module`` does NOT expose a ``.device`` attribute
+#     (verified in Wave 115 Phase 3 — ``AttributeError: 'StandInDAE'
+#     object has no attribute 'device'``); the correct idiom is
+#     ``next(module.parameters()).device``. The 1-LOC fix replaces
+#     ``device=dae.device`` with ``device=next(dae.parameters()).device``
+#     at BOTH the shared ``run_kanzi_sweep`` envelope site and the
+#     diverse-endpoint driver site. Without the fix, every per-record
+#     iteration raised ``AttributeError``, was caught by the outer
+#     ``try/except``, and silently produced a 0-record sweep — the exact
+#     silent-failure mode Wave 115.P2 was trying to surface, but at the
+#     wrong attribute name.
+#
+# The pin is a static text-match against the runner source so the test
+# does not require a torch / kanzi sidecar venv to import the runner or
+# load the real DAE.
 # ---------------------------------------------------------------------------
 
 
 def test_run_envelope_input_matches_dae_device(runner: Any) -> None:
     """The shared sweep loop's `torch.as_tensor(coords_BLD, ...)` MUST
-    carry `device=dae.device` so a CPU/CUDA mismatch crashes early.
+    carry `device=next(dae.parameters()).device` so a CPU/CUDA mismatch
+    crashes early (and any future AttributeError on a wrong attribute
+    is loud, not silent).
 
-    See module-level Test 5 comment for the full Wave 115.P2 root cause.
-    The pin is a static source-text match — no DAE / GPU required.
+    See module-level Test 5 comment for the full Wave 115.P2 + Wave 116
+    root cause. The pin is a static source-text match — no DAE / GPU
+    required.
     """
     src_text = _RUNNER_PATH.read_text(encoding="utf-8")
 
     # Pin (a): the `torch.as_tensor(coords_BLD, ...)` call inside the
-    # shared `run_kanzi_sweep` envelope MUST include `device=dae.device`.
-    # The pre-Wave 115.P2 call site was:
-    #
-    #     torch.as_tensor(coords_BLD, dtype=torch.float32),
-    #
-    # which (with DAE on CUDA) raised silently inside `dae.encode` and
-    # produced a 0-record sweep.
+    # shared `run_kanzi_sweep` envelope MUST include the correct device
+    # idiom. The pre-Wave 116 source contained ``device=dae.device``
+    # which raised ``AttributeError`` on every per-record iteration.
+    # We pin the post-Wave 116 correct idiom
+    # (``device=next(dae.parameters()).device``) AND assert the broken
+    # idiom (``device=dae.device``) is gone.
     assert (
         "torch.as_tensor(" in src_text
     ), (
@@ -339,12 +354,26 @@ def test_run_envelope_input_matches_dae_device(runner: Any) -> None:
         "`torch.as_tensor(` call in the runner source."
     )
     assert (
-        "device=dae.device" in src_text
+        "device=next(dae.parameters()).device" in src_text
     ), (
-        "Wave 115.P2 pin: the shared sweep envelope's `torch.as_tensor` "
-        "call MUST carry `device=dae.device` so a CPU/CUDA mismatch "
-        "crashes loudly inside `dae.encode` (RuntimeError on cross-device "
-        "matmul) instead of silently producing a 0-record JSONL."
+        "Wave 116 pin: the shared sweep envelope's `torch.as_tensor` "
+        "call MUST carry `device=next(dae.parameters()).device` so a "
+        "CPU/CUDA mismatch crashes loudly inside `dae.encode` "
+        "(RuntimeError on cross-device matmul) instead of silently "
+        "producing a 0-record JSONL. The pre-Wave-116 idiom "
+        "`device=dae.device` raises `AttributeError` on every "
+        "per-record iteration of `nn.Module` (verified in Wave 115 "
+        "Phase 3)."
+    )
+    assert (
+        "device=dae.device" not in src_text
+    ), (
+        "Wave 116 pin: the broken `device=dae.device` idiom MUST NOT "
+        "appear in the runner source. `torch.nn.Module` has no "
+        "`.device` attribute; passing `device=dae.device` raises "
+        "`AttributeError` on every per-record iteration, which the "
+        "outer `try/except` catches and silently swallows into a "
+        "0-record sweep."
     )
 
     # Pin (b): the device-pin MUST be on the `torch.as_tensor(coords_BLD,`
@@ -355,42 +384,56 @@ def test_run_envelope_input_matches_dae_device(runner: Any) -> None:
         # Fallback for slight whitespace variation.
         call_site_idx = src_text.find("torch.as_tensor(coords_BLD,")
     assert call_site_idx != -1, (
-        "Wave 115.P2 pin: could not locate the `torch.as_tensor(coords_BLD,` "
+        "Wave 116 pin: could not locate the `torch.as_tensor(coords_BLD,` "
         "call site in the runner source — fix may have been applied to "
         "the wrong site or reformatted away from the search pattern."
     )
-    # Inspect the next 200 chars after the call — must contain the device pin.
-    call_site_block = src_text[call_site_idx : call_site_idx + 400]
-    assert "device=dae.device" in call_site_block, (
-        "Wave 115.P2 pin: the `device=dae.device` argument MUST be on the "
-        "`torch.as_tensor(coords_BLD, ...)` call site itself (so the tensor "
-        "input to `dae.encode` matches the DAE's parameter device). Got:\n"
-        f"{call_site_block[:200]!r}"
+    # Inspect the next 600 chars after the call — must contain the new
+    # device pin AND not contain the broken one.
+    call_site_block = src_text[call_site_idx : call_site_idx + 600]
+    assert (
+        "device=next(dae.parameters()).device" in call_site_block
+    ), (
+        "Wave 116 pin: the `device=next(dae.parameters()).device` "
+        "argument MUST be on the `torch.as_tensor(coords_BLD, ...)` "
+        "call site itself (so the tensor input to `dae.encode` "
+        "matches the DAE's parameter device). Got:\n"
+        f"{call_site_block[:300]!r}"
+    )
+    assert (
+        "device=dae.device" not in call_site_block
+    ), (
+        "Wave 116 pin: the broken `device=dae.device` idiom MUST NOT "
+        "appear at the `torch.as_tensor(coords_BLD, ...)` call site. "
+        "Got:\n"
+        f"{call_site_block[:300]!r}"
     )
 
 
 # ---------------------------------------------------------------------------
-# Test 6 (Wave 115.P2 — CUDA device-mismatch regression test):
+# Test 6 (Wave 115.P2 / Wave 116 — CUDA device-mismatch regression test):
 # The diverse-endpoint sweep driver
 # ``tools/sweep_kanzi_n1000_diverse.py`` MUST also thread
-# ``device=dae.device`` through its `torch.as_tensor(coords_BLD, ...)`
-# call inside the re-encode block. This driver is NOT covered by the
-# shared `run_kanzi_sweep` envelope (it keeps its own per-record inner
-# loop because of the jsonl writer + GPU watchdog + per-record
-# `--max-records` semantics). Without the same device pin, the same
-# silent-0-record bug would re-surface on this driver.
+# ``device=next(dae.parameters()).device`` through its
+# `torch.as_tensor(coords_BLD, ...)` call inside the re-encode block.
+# This driver is NOT covered by the shared `run_kanzi_sweep` envelope
+# (it keeps its own per-record inner loop because of the jsonl writer +
+# GPU watchdog + per-record `--max-records` semantics). Without the
+# same device pin, the same silent-0-record bug would re-surface on
+# this driver.
 # ---------------------------------------------------------------------------
 
 
 def test_sweep_d_kanzi_input_device_in_sync_with_dae() -> None:
-    """The diverse-endpoint sweep driver MUST carry `device=dae.device`
-    on its `torch.as_tensor(coords_BLD, ...)` call site.
+    """The diverse-endpoint sweep driver MUST carry
+    `device=next(dae.parameters()).device` on its
+    `torch.as_tensor(coords_BLD, ...)` call site.
 
     The diverse driver keeps its own per-record inner loop (jsonl
     writer + GPU watchdog + per-record ``--max-records`` semantics),
     so the shared ``run_kanzi_sweep`` envelope does not cover it.
-    Without the same device pin, the Wave 115.P2 root cause would
-    re-surface on this driver.
+    Without the same device pin, the Wave 115.P2 / Wave 116 root
+    cause would re-surface on this driver.
 
     The pin is a static text-match — no DAE / GPU required.
     """
@@ -399,9 +442,9 @@ def test_sweep_d_kanzi_input_device_in_sync_with_dae() -> None:
 
     # Pin (a): the diverse driver MUST construct the encode input via
     # `torch.as_tensor(... coords_BLD, ...)` (single-line OR multi-line).
-    # The post-Wave 115.P2 source reformats the call to multiple lines
-    # to fit the `device=dae.device` argument + the comment block, so
-    # we accept either format.
+    # The post-Wave 116 source reformats the call to multiple lines
+    # to fit the `device=next(dae.parameters()).device` argument + the
+    # comment block, so we accept either format.
     has_as_tensor_call = (
         "torch.as_tensor(coords_BLD," in src_text
         or "torch.as_tensor(\n                            coords_BLD,"
@@ -415,17 +458,29 @@ def test_sweep_d_kanzi_input_device_in_sync_with_dae() -> None:
         "Expected the call site in `tools/sweep_kanzi_n1000_diverse.py`."
     )
     assert (
-        "device=dae.device" in src_text
+        "device=next(dae.parameters()).device" in src_text
     ), (
-        "Wave 115.P2 pin: the diverse-endpoint sweep driver's "
+        "Wave 116 pin: the diverse-endpoint sweep driver's "
         "`torch.as_tensor(coords_BLD, ...)` call MUST carry "
-        "`device=dae.device` so a CPU/CUDA mismatch crashes loudly "
-        "instead of silently producing a 0-record JSONL."
+        "`device=next(dae.parameters()).device` so a CPU/CUDA mismatch "
+        "crashes loudly instead of silently producing a 0-record JSONL. "
+        "The pre-Wave-116 idiom `device=dae.device` raises "
+        "`AttributeError` on every per-record iteration of `nn.Module`."
+    )
+    assert (
+        "device=dae.device" not in src_text
+    ), (
+        "Wave 116 pin: the broken `device=dae.device` idiom MUST NOT "
+        "appear in the diverse-endpoint sweep driver. "
+        "`torch.nn.Module` has no `.device` attribute; passing "
+        "`device=dae.device` raises `AttributeError` on every "
+        "per-record iteration, which the outer `try/except` catches "
+        "and silently swallows into a 0-record sweep."
     )
 
     # Pin (b): the device-pin MUST be on the diverse driver's
     # `torch.as_tensor(... coords_BLD, ...)` call site specifically
-    # (within ~400 chars of the call to tolerate the multi-line
+    # (within ~600 chars of the call to tolerate the multi-line
     # reformatting the fix introduced).
     call_site_idx = -1
     for needle in (
@@ -444,9 +499,216 @@ def test_sweep_d_kanzi_input_device_in_sync_with_dae() -> None:
         "from all known patterns."
     )
     call_site_block = src_text[call_site_idx : call_site_idx + 600]
-    assert "device=dae.device" in call_site_block, (
-        "Wave 115.P2 pin: the `device=dae.device` argument MUST be on "
-        "the diverse driver's `torch.as_tensor(... coords_BLD, ...)` "
-        "call site. Got:\n"
+    assert (
+        "device=next(dae.parameters()).device" in call_site_block
+    ), (
+        "Wave 116 pin: the `device=next(dae.parameters()).device` "
+        "argument MUST be on the diverse driver's "
+        "`torch.as_tensor(... coords_BLD, ...)` call site. Got:\n"
         f"{call_site_block[:300]!r}"
+    )
+    assert (
+        "device=dae.device" not in call_site_block
+    ), (
+        "Wave 116 pin: the broken `device=dae.device` idiom MUST NOT "
+        "appear at the diverse driver's `torch.as_tensor(... "
+        "coords_BLD, ...)` call site. Got:\n"
+        f"{call_site_block[:300]!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 7 (Wave 116 — end-to-end N=1 regression test for the REAL
+# CUDA bug):
+#
+# The static-pin tests above (Test 5 + Test 6) guard the textual
+# contract on disk. This test guards the *behavioural* contract in
+# motion: when the full ``run_kanzi_sweep`` per-record loop runs end-
+# to-end on a tiny CPU ``torch.nn.Module`` stand-in (NOT the real
+# 500MB DAE checkpoint — too heavy), the pre-fix code raises
+# ``AttributeError: 'StandInDAE' object has no attribute 'device'`` on
+# every per-record iteration, the outer ``try/except`` swallows it,
+# and the sweep silently emits a 0-record JSONL. The post-fix code
+# uses ``next(dae.parameters()).device`` and processes the record
+# normally.
+#
+# This is the closest CPU-only reproduction of the CUDA bug the
+# runner was hiding: a wrong-attribute access on ``nn.Module`` that
+# never reaches the user's screen because the inner try/except
+# increments ``n_skipped`` instead of propagating.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.usefixtures("requires_torch")
+def test_run_kanzi_sweep_end_to_end_n1_no_attribute_error(
+    runner: Any, tmp_path: Path,
+) -> None:
+    """End-to-end N=1 regression for Wave 116: ``device=dae.device``
+    on a ``torch.nn.Module`` stand-in silently produces 0 records.
+
+    Pre-fix (``device=dae.device``): every per-record iteration of the
+    inner loop raises ``AttributeError`` ("'StandInDAE' object has no
+    attribute 'device'"), the outer ``try/except`` catches it, and
+    the sweep silently emits a summary JSONL with
+    ``n_records_processed: 0``. The user sees a "successful" sweep
+    that actually processed zero records — the exact failure mode
+    Wave 115.P2 was supposed to surface.
+
+    Post-fix (``device=next(dae.parameters()).device``): the inner
+    loop resolves the device via the module's parameters, the
+    re-encode call returns, and ``n_records_processed`` reaches 1.
+
+    The test uses a tiny 2-layer ``nn.Linear`` stand-in (NOT the
+    real Kanzi DAE — the real ckpt is 500MB and would slow the test
+    suite by 30+ seconds per run). The stand-in exposes just enough
+    surface for ``run_kanzi_sweep(mode="baseline")`` to exercise the
+    full per-record loop:
+
+      * ``encode(x, preprocess=...)`` → 4-tuple whose last element
+        is ``idx_BL`` (shape ``(B, L)`` int64)
+      * ``decode(idx_BL)`` → ``(B, L, 3)`` float tensor
+      * ``quantize.codebook_size`` (int attribute)
+      * ``quantize.project_out.weight.shape[0]`` (Linear weight)
+
+    We patch ``kanzi.DAE.from_pretrained`` via ``monkeypatch`` to
+    return the stand-in instead of attempting the 500MB ckpt load.
+    """
+    import json
+
+    import torch
+    import torch.nn as nn
+
+    # ---- 1. Build a 2-layer Linear stand-in (NOT the real DAE) ----
+    class _StandInQuantize(nn.Module):
+        """Stand-in for the real Kanzi ``quantize`` submodule.
+
+        Provides the two attributes ``run_kanzi_sweep(mode="baseline")``
+        reads:
+
+          * ``codebook_size`` (int) — used at line 568 of the runner
+            to size the vocab for codebook metrics.
+          * ``project_out.weight.shape[0]`` (Linear) — used at line
+            573 of the runner to compute ``n_decoder``.
+        """
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.codebook_size = 4096
+            # Linear(512, 512) gives .weight.shape == (512, 512),
+            # so .weight.shape[0] == 512 == the real DAE's n_decoder.
+            self.project_out = nn.Linear(512, 512)
+
+    class StandInDAE(nn.Module):
+        """Tiny CPU stand-in for the real Kanzi DAE.
+
+        Methods mirror the DAE surface ``run_kanzi_sweep(mode="baseline")``
+        consumes (no other surface is read in baseline mode):
+
+          * ``encode(x, preprocess=...)`` returns a 4-tuple
+            ``(z, mu, logvar, idx_BL)`` where the runner unpacks via
+            ``*_, idx_BL = dae.encode(...)``.
+          * ``decode(idx_BL)`` returns a ``(B, L, 3)`` float tensor
+            (zero-valued — the test doesn't care about the value,
+            only that the call succeeds).
+          * ``quantize`` is an ``_StandInQuantize`` submodule with
+            ``codebook_size`` and ``project_out``.
+
+        A throw-away ``nn.Linear(3, 4)`` is added so the module has
+        at least one ``Parameter`` — the post-fix idiom
+        ``next(dae.parameters()).device`` requires it. Without any
+        parameters, ``next(dae.parameters())`` would raise
+        ``StopIteration``.
+        """
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.quantize = _StandInQuantize()
+            # Throw-away parameters so ``next(dae.parameters()).device``
+            # is well-defined. Not exercised by the loop body — the
+            # test only cares that the device-resolve line succeeds.
+            self._throwaway = nn.Linear(3, 4)
+
+        def encode(
+            self, x: torch.Tensor, preprocess: bool = False,
+        ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+            assert x.dim() == 3, f"expected (B, L, 3) input; got shape {tuple(x.shape)}"
+            B, L, _ = x.shape
+            # Return a 4-tuple; the runner only consumes the last
+            # element via ``*_, idx_BL = dae.encode(...)``.
+            idx_BL = torch.zeros(B, L, dtype=torch.int64)
+            return (x, x, x, idx_BL)
+
+        def decode(self, idx_BL: torch.Tensor) -> torch.Tensor:
+            B, L = idx_BL.shape
+            return torch.zeros(B, L, 3, dtype=torch.float32)
+
+    stand_in = StandInDAE().eval()
+
+    # ---- 2. Patch kanzi.DAE.from_pretrained to return the stand-in ----
+    # The runner does ``from kanzi import DAE, kabsch_rmsd`` lazily,
+    # so patching the class attribute on the real kanzi module is
+    # sufficient. The kanzi_venv's pip-installed ``kanzi`` package
+    # is importable, and the test relies on that for the import.
+    import kanzi
+
+    def _fake_from_pretrained(path: str | Path) -> StandInDAE:
+        # The runner calls ``DAE.from_pretrained(str(ckpt)).eval()``;
+        # ``.eval()`` is inherited from ``nn.Module`` so it works
+        # on the stand-in too.
+        return stand_in
+
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        monkeypatch.setattr(
+            kanzi.DAE, "from_pretrained", _fake_from_pretrained,
+        )
+
+        # ---- 3. Create a tiny input file with 1 valid record ----
+        # ``parse_record`` accepts comma-separated floats whose count
+        # is a multiple of 3. Two atoms → 6 floats.
+        input_file = tmp_path / "coords.txt"
+        input_file.write_text(
+            "0.0,1.0,2.0,3.0,4.0,5.0\n", encoding="utf-8",
+        )
+
+        # ---- 4. Call run_kanzi_sweep(mode="baseline", max_records=1) ----
+        out_dir = tmp_path / "out"
+
+        # Pre-fix: AttributeError raised by ``device=dae.device`` on
+        # nn.Module — caught by the outer try/except, increments
+        # n_skipped, n_processed stays at 0.
+        # Post-fix: ``next(dae.parameters()).device`` resolves to
+        # CPU, the inner encode/decode calls succeed, n_processed
+        # reaches 1.
+        runner.run_kanzi_sweep(
+            mode="baseline",
+            output_dir=str(out_dir),
+            seed=0,
+            max_records=1,
+            nfe_steps=10,
+            input_path=input_file,
+            # ckpt_path is unused because from_pretrained is mocked,
+            # but the runner constructs Path() on it so we pass a
+            # tmp path that doesn't have to exist.
+            ckpt_path=tmp_path / "fake_does_not_exist.pt",
+        )
+    finally:
+        monkeypatch.undo()
+
+    # ---- 5. Assert n_records_processed == 1 (not 0) ----
+    summary_path = out_dir / "kanzi_n1000_paper_metrics.json"
+    assert summary_path.exists(), (
+        f"expected summary at {summary_path} — the sweep should have "
+        f"written a summary JSON for mode='baseline'. Missing summary "
+        f"implies the loop raised before completion."
+    )
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["n_records_processed"] == 1, (
+        f"Wave 116 regression: expected n_records_processed=1 (the "
+        f"input file has exactly 1 valid record). Pre-fix the loop "
+        f"silently produced 0 because `device=dae.device` raised "
+        f"`AttributeError` on every per-record iteration of the "
+        f"inner loop, the outer `try/except` caught it, and "
+        f"`n_skipped` incremented instead of propagating. Got "
+        f"n_records_processed={summary['n_records_processed']}."
     )

@@ -239,14 +239,26 @@ def main(argv: list[str] | None = None) -> int:
             coords_BLD = coords_BLD - coords_BLD.mean(axis=1, keepdims=True)
             try:
                 with torch.no_grad():
-                    # Wave 115.P2: pass device=dae.device so CPU/CUDA
-                    # mismatch crashes loudly inside `dae.encode` (RuntimeError
-                    # on a CPU tensor against CUDA parameters) instead of
-                    # silently falling into the `reencode_failed` except branch
-                    # with a 0-record sweep.
+                    # Wave 115.P2: pass device= so CPU/CUDA mismatch
+                    # crashes loudly inside `dae.encode` (RuntimeError on a
+                    # CPU tensor against CUDA parameters) instead of silently
+                    # falling into the `reencode_failed` except branch with a
+                    # 0-record sweep.
+                    #
+                    # Wave 116: ``torch.nn.Module`` does NOT expose a
+                    # ``.device`` attribute (verified in Wave 115 Phase 3);
+                    # the correct idiom is
+                    # ``next(module.parameters()).device``. The pre-fix code
+                    # passed ``device=<dae>.<.device>`` (no such attribute on
+                    # ``nn.Module``), which raised ``AttributeError`` on
+                    # every per-record iteration of the inner loop, was
+                    # caught by the outer ``try/except``, and silently
+                    # produced a 0-record sweep.
                     *_, idx_BL = dae.encode(
                         torch.as_tensor(
-                            coords_BLD, dtype=torch.float32, device=dae.device,
+                            coords_BLD,
+                            dtype=torch.float32,
+                            device=next(dae.parameters()).device,
                         ),
                         preprocess=False,
                     )
