@@ -3708,3 +3708,148 @@ the framework's continuous-latent endpoint through the bridge.
 - `docs/audit/wave109-b-lineageflow-n1000-gpu.md` — Wave 109.B LineageFlow sibling attempt
 - `docs/audit/wave109-d-paper-package-update.md` — Wave 109.D paper-package reconciliation summary
 - Full Wave 99.B audit: `docs/audit/wave99b-n1000-verdict.md`.
+
+### §15.20 Wave 115 Phase 4 — parse + analyze + paper §7.3 additive update (2026-09-12)
+
+**Source (this section, ADDITIVE — does NOT delete any Wave above).**
+Wave 115 Agent 4 parses the most recent real N=1000 Kanzi paper-metric
+data and computes per-metric deltas + statistical power with the new
+helper `tools/_paper_metrics.py` (Wave 115.P4 — stdlib + numpy
+only, hermetic, no DAE / GPU / network). The Phase 3 sweep that
+was expected to produce fresh N=1000 JSONLs from a deterministic
+seed-42 re-run **produced N=0 records** due to a Wave 115 Phase 2
+bug (`device=dae.device` — `DAE` has no `.device` attribute; the
+encode `AttributeError` was silently swallowed by the
+`if mode != "baseline"` gate in the `reencode_failed` except
+branch). The Phase 3 sweep dirs (`/tmp/w115/{baseline_seed42,
+baseline_seed7,framework_inv_proj_seed42,framework_synthetic_seed42}`)
+are empty. The Phase 4 tool therefore falls back to the existing
+real-N data (Wave 88 baseline N=1000 + Wave 95 framework_inv_proj
+N=1000 + Wave 96.E framework_synthetic N=10) — see
+`/tmp/w115_analysis/w115_summary.json` for the machine-readable
+summary, and `tools/_paper_metrics.py` for the source loader +
+bootstrap CI + Welch t-test helper.
+
+### §15.20.1 Per-metric Δ + bootstrap CI (B=1000, seed=42)
+
+The Phase 4 helper parses the 3 source JSONs and computes 5 per-metric
+deltas (`reconstruction_kabsch_rmsd_A` is per-record; the 4 codebook
+metrics are point-estimate aggregates — only the framework_inv_proj
+arm has a codebook reading). The bootstrap CI uses B=1000 resamples
+of the per-record framework_synth data (N=10); baseline + inv_proj
+use analytic SEM-based CIs from the published std (baseline std=0.137
+at N=1000; inv_proj std=0 by construction at N=1000).
+
+| Metric | Source | Baseline | Framework arm | Δ (F−B) | 95% CI (Δ) | Welch p | Verdict |
+|---|---|---:|---:|---:|---:|:---|:---|
+| `reconstruction_kabsch_rmsd_A` (synth) | Wave 96.E N=10 vs Wave 88 N=1000 | **0.902 ± 0.137 Å** | **1.766 ± 0.214 Å** (N=10) | **+0.864 Å** | [+0.731, +0.997] | 4.26e-07 | **`REGRESSES_BY_+0.86_Å`** (unchanged from Wave 96.E / Wave 99.B / Wave 109.A) |
+| `reconstruction_kabsch_rmsd_A` (inv_proj) | Wave 95 N=1000 vs Wave 88 N=1000 | **0.902 ± 0.137 Å** | **2.502 ± 0.000 Å** (N=1000, std=0 by construction) | **+1.600 Å** | [+1.591, +1.609] | 0.0 (sentinel) | **`REGRESSES_BY_+1.60_Å`** — std=0 because synthesized `x_final = N(0, 1e-3)` is byte-stable across records (Wave 95.P3.B Linear(512→4) inverse + σ=1e-3 → all records collapse to the same reconstruction within float32 resolution) |
+| `codebook_entropy_bits` (inv_proj) | Wave 95 N=1000 | 8.558 bits | 5.390 bits | −3.168 bits | n/a (point estimate) | n/a | `SCALAR_SHIFT` — framework endpoint collapses onto a small FSQ subset (utilization 0.046 vs 0.614); **TIED_BY_DESIGN** on the framework-vs-baseline decision axis (Wave 92c §3: restart-blend acts on flow trajectory, not on the post-reconstruction FSQ round-trip) |
+| `codebook_perplexity` (inv_proj) | Wave 95 N=1000 | 376.87 | 41.94 | −334.93 | n/a | n/a | (same — `SCALAR_SHIFT`, `TIED_BY_DESIGN`) |
+| `codebook_js_distance` (inv_proj) | Wave 95 N=1000 | 0.560 bits^0.5 | 0.000 bits^0.5 | −0.560 | n/a | n/a | (same) |
+| `codebook_utilization` (inv_proj) | Wave 95 N=1000 | 0.614 | 0.046 | −0.568 | n/a | n/a | (same) |
+
+The two REGRESSES rows on `reconstruction_kabsch_rmsd_A` agree on
+**direction** (framework worse) and **order of magnitude** (Δ > 0.5 Å,
+well above the FSQ step ≈ 0.5 Å). The inv_proj arm at N=1000 reveals
+the magnitude is **larger** than the synth arm's N=10 reading
+suggests (+1.60 Å vs +0.86 Å) — the Wave 95 Linear(512→4) bridge
+amplifies the reconstruction gap by routing every record through
+the same nearest-quantization direction. This is consistent with
+the Wave 92c §5 architectural explanation (post-`project_out`
+endpoint → nearest-neighbour projection loses 0.86–1.60 Å of
+reconstruction fidelity vs the canonical `DAE.encode → DAE.decode`
+baseline path).
+
+### §15.20.2 Statistical power (N=1000, α=0.05)
+
+The Phase 4 power analysis (using scipy.stats.t for Welch + Cohen's d
++ noncentral-t power; the Wave 93 `tools/statistical_power_analysis.py`
+requires pandas which is not in the kanzi_venv, so the Wave 115.P4
+power numbers are computed in-process by the
+`tools/_paper_metrics.py` helper — see
+`/tmp/w115_analysis/power_analysis.json`):
+
+| Cell | Effect (Δ) | Cohen's d | Welch p | Power @ α=0.05 | Flagged low power? |
+|---|---:|---:|---:|---:|:---|
+| `reconstruction_kabsch_rmsd_A` synth N=10 | +0.864 Å | 6.25 | 4.26e-07 | **1.000** | No (effect >> detection floor) |
+| `reconstruction_kabsch_rmsd_A` inv_proj N=1000 | +1.600 Å | 16.46 | 0.0 (sentinel) | **1.000** | No (effect >> detection floor) |
+| `reconstruction_kabsch_rmsd_A` synth hypothetical N=1000 | +0.864 Å | 5.97 | 0.0 | **1.000** | No (hypothetical: if synth had N=1000 with observed std, power is still 1.0) |
+
+**No cell is flagged low power.** The framework-vs-baseline effect
+on `reconstruction_kabsch_rmsd_A` is **5.97σ–16.46σ** (Cohen's d
+pooled), well above the 1pp detection floor and well above the FSQ
+quantization step ≈ 0.5 Å. **The Wave 99.B "4/6 UNDERPOWERED" verdict
+on the codebook metrics is preserved** — the codebook metrics are
+single-point aggregates (one value per arm, no per-record variance)
+so the Welch t-test is degenerate; the Wave 93 verdict precedence
+(TIE → UNDERPOWERED) applies. This Wave 115.P4 analysis is
+informative for the reconstruction axis (REGRESSES with
+high-magnitude confidence) and preserves the Wave 92c / 99.B
+TIED_BY_DESIGN reading on the 4 codebook metrics.
+
+### §15.20.3 Verdict (UNCHANGED from Wave 96.E / Wave 99.B / Wave 109.A)
+
+The Kanzi paper-metric verdict on `reconstruction_kabsch_rmsd_A`
+remains **`REGRESSES_BY_+0.86_Å` to `REGRESSES_BY_+1.60_Å`** at
+N=1000 (architectural cost is invariant to N; the inv_proj N=1000
+reading is the more representative magnitude). The framework's
+real, byte-stable value-add on the Kanzi adapter remains on the
+**internal composite axis** (Wave 52 / Wave 58 / Wave 91 / Wave 95:
++0.1695 to +0.1895, byte-stable σ=0 within seed) — which is
+SUPPORTED, but is a different axis from the paper-metric
+reconstruction axis. The §7.3 paper-package additive update
+preserves the Wave 73-74 / Wave 79 / Wave 80 / Wave 83 / Wave 88 /
+Wave 96 / Wave 99 / Wave 109 framing and adds a Wave 115.P4
+paragraph quoting the new bootstrap CIs + power numbers.
+
+### §15.20.4 Wave 115.P2 root-cause + Phase 3 failure remediation
+
+The Phase 3 sweep that was expected to produce fresh seed-42
+deterministic JSONLs failed silently with N=0 records. Root cause
+(`/tmp/w115/baseline_seed42.log` traceback + manual DAE probe):
+
+```
+File "tools/_kanzi_sweep_runner.py", line 645, in run_kanzi_sweep
+    *_, idx_BL = dae.encode(
+        torch.as_tensor(
+            coords_BLD, dtype=torch.float32, device=dae.device,
+        ),
+        preprocess=False,
+    )
+AttributeError: 'DAE' object has no attribute 'device'
+```
+
+`DAE` is not a standard `nn.Module` and has no `.device` attribute
+(verified: `hasattr(dae, 'device') == False` after
+`DAE.from_pretrained(ckpt).eval().to('cuda')`). The
+`reencode_failed` except branch is gated by `if mode != "baseline"`
+so the baseline arm's failure is silently swallowed (no
+`n_skipped` increment, no `skip_reasons` entry). The
+`assert_n_records_match` Wave 96 reality-check then fires with
+`n_records_actual=0` vs `n_records_requested=1000`.
+
+**Remediation (deferred to a future wave):**
+
+1. Replace `device=dae.device` with a one-shot
+   `dae_device = next(dae.parameters()).device` captured after the
+   `dae.to('cuda' if torch.cuda.is_available() else 'cpu')` line,
+   then `device=dae_device` at the `torch.as_tensor` call site.
+2. Remove the `if mode != "baseline"` gate from the
+   `reencode_failed` (and `rmsd_failed`) except branches so failures
+   show up in `n_records_skipped` rather than vanishing silently.
+3. Update the Wave 115.P2 regression tests
+   (`tests/test_tools/test_kanzi_sweep_runner.py` Tests 5/6) to
+   pin the new `device=dae_device` pattern instead of the literal
+   `device=dae.device` string. The current tests pass only because
+   they check for the literal source-text substring, not the
+   runtime behaviour.
+
+### §15.20.5 Cross-references
+
+- `tools/_paper_metrics.py` (Wave 115.P4 — parser + bootstrap CI + Welch helper)
+- `/tmp/w115_analysis/w115_summary.json` (machine-readable Phase 4 summary)
+- `/tmp/w115_analysis/power_analysis.json` (Phase 4 power analysis)
+- `/tmp/w115/baseline_seed42.log` (Phase 3 sweep failure traceback)
+- `docs/paper-draft.md` §7.3 (Wave 115.P4 additive update — citation of bootstrap CIs + power numbers)
+- `docs/audit/wave99b-n1000-verdict.md` (Wave 99.B baseline for the power tool verdict precedence)
