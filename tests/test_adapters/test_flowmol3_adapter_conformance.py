@@ -348,6 +348,13 @@ class TestFlowMol3ForceModeFactory:
         ``global_step=1547236``. We don't decode the tensors — only the
         envelope — to stay byte-stable on torch version drift.
         """
+        pytest.importorskip(
+            "torch",
+            reason=(
+                "FlowMol3 real-ckpt loader requires torch "
+                "(install via \`uv pip install torch\`)"
+            ),
+        )
         if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
             pytest.skip(
                 f"FlowMol3 real ckpt not shipped at {FLOWMOL3_REAL_CKPT_PATH}"
@@ -366,6 +373,13 @@ class TestFlowMol3ForceModeFactory:
 
     def test_factory_auto_loads_real_when_available(self) -> None:
         """``force_mode='auto'`` tries real, succeeds when shipped."""
+        pytest.importorskip(
+            "torch",
+            reason=(
+                "FlowMol3 real-ckpt loader requires torch "
+                "(install via \`uv pip install torch\`)"
+            ),
+        )
         if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
             pytest.skip(
                 f"FlowMol3 real ckpt not shipped at {FLOWMOL3_REAL_CKPT_PATH}"
@@ -425,6 +439,13 @@ class TestFlowMol3ForceModeFactory:
 
     def test_try_load_real_ckpt_helper_returns_meta_on_success(self) -> None:
         """Direct unit test of the internal loader."""
+        pytest.importorskip(
+            "torch",
+            reason=(
+                "FlowMol3 real-ckpt loader requires torch "
+                "(install via \`uv pip install torch\`)"
+            ),
+        )
         if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
             pytest.skip(
                 f"FlowMol3 real ckpt not shipped at {FLOWMOL3_REAL_CKPT_PATH}"
@@ -453,6 +474,13 @@ class TestFlowMol3ForceModeFactory:
         guards against a future refactor accidentally regressing that
         separation of concerns.
         """
+        pytest.importorskip(
+            "torch",
+            reason=(
+                "FlowMol3 real-ckpt loader requires torch "
+                "(install via \`uv pip install torch\`)"
+            ),
+        )
         if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
             pytest.skip(
                 f"FlowMol3 real ckpt not shipped at {FLOWMOL3_REAL_CKPT_PATH}"
