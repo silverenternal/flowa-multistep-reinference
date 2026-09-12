@@ -63,6 +63,7 @@ from .protocols import (
 )
 from .simple import (
     ConstantScheduler,
+    CosineAnnealScheduler,
     ExponentialScheduler,
     LinearScheduler,
     PolynomialScheduler,

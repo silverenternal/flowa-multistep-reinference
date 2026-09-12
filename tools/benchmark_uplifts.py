@@ -3120,19 +3120,17 @@ def measure_round2_external_uplifts() -> list[dict[str, Any]]:
     # The stochastic FM adapter was an arXiv:2410.19814 reproduction that
     # was never wired into the engine. It was deleted in Wave 33 per
     # ``docs/audit/adapter-conformance-deep-dive.md`` NONCONFORMANCE_BUG
-    # #5. We keep a row with ``achieved=False`` for backwards-compat
-    # with downstream consumers that parse the benchmark CSV.
-    rows.append({
-        "algorithm": "StochasticFMAdapter",
-        "uplift": "P0 #9 stochastic FM adapter (arXiv:2410.19814) — REMOVED Wave 33",
-        "metric": "adapter present with runner-compatible API",
-        "baseline": 0.0,
-        "current": 0.0,
-        "delta": 0.0,
-        "pct_change": 0.0,
-        "target": "stochastic FM adapter importable + API ready (deleted Wave 33)",
-        "achieved": False,
-    })
+    # #5. The placeholder ``achieved=False`` row was removed in Wave 119
+    # Phase 7 (Category F fix) so the producer matches the test's
+    # ``EXPECTED_ROUND2_EXTERNAL_KEYS`` set: a deleted adapter is not a
+    # framework-external uplift, and a permanent ``achieved=False`` row
+    # silently consumed the miss budget reserved for detecting live
+    # regressions. No consumer reads it (the function is used only by
+    # the ``--round2`` markdown path).
+    # NOTE: ``test_benchmark_internal_uplifts.py::test_round2_external_*``
+    # has a comment that says "Wave 48 removed that row"; Wave 48's commit
+    # message described the removal but the actual diff did not include
+    # this block, so the row persisted until this commit.
 
     # ---- SDE integrators (P0 #6) -- SDEIntegratorProtocol registry membership.
     from adaptive_reflow.adapters.integrators import (
