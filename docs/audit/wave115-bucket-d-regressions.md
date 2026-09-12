@@ -1,31 +1,44 @@
 # Wave 115 Bucket D: Actual Source-Code Regressions (Not Fixed in This Wave)
 
+> **Wave 118 update (2026-09-12):** **All 11 Bucket D items RESOLVED.**
+> Wave 118 Phase 2 (`540b111`) closed the 3 OTEpsilonSchedule items,
+> Wave 118 Phase 3 (`435ba7c`) closed the 7 FID math items, and
+> Wave 118 Phase 4 (`cfe9942`) closed the last 1 wave35 saturation item
+> (`BatchedRunnerConfig.config_hash`). Bucket D is now EMPTY.
+> See `docs/audit/wave118-bucket-d-fixes.md` for the Wave 118 audit doc
+> and `docs/baseline-audit-report.md §R.10` for the companion baseline-audit row.
+
 ## Summary
 
 Wave 115 Agent 5 audit identified **20 pre-existing algorithm test failures**
 (verified to predate Wave 114, confirmed via `git stash` + re-run on `2b142ef`
 baseline per Wave 114 Phase 2 commit `6c88ff8`). 9 of those 20 failures were
 fixed in Phases 5A / 5B / 5C (contract-drift / scheduler-default-flip /
-framework-fix-change buckets). The remaining **11 failures** are documented
+framework-fix-change buckets). The remaining **11 failures** were documented
 here as **Bucket D — actual source-code regressions** that the Wave 115
 rules forbid fixing (Phase 5 hard rule: "DO NOT modify source code").
-They are tracked for **Wave 116 follow-up**.
+They were tracked for Wave 116+ follow-up and have now all been closed
+by Wave 118 (see status column in the inventory table below).
 
 ## Bucket D Inventory
 
-| # | Test | File | Source bug | Follow-up |
-|---|------|------|-----------|-----------|
-| 1 | `test_derived_hparams_match_handset_baseline_on_2d_oracle` | `tests/test_algorithm/test_hparam_derived_2d_oracle.py:363` | `adaptive_reflow/algorithm/scheduler/nfe_aware.py:866` references undefined `OTEpsilonSchedule()` | Wave 116 Agent 1 |
-| 2 | `test_derived_hparams_with_full_context_drive_convergence` | `tests/test_algorithm/test_hparam_derived_2d_oracle.py:463` | same `nfe_aware.py:866` undefined-name bug | Wave 116 Agent 1 |
-| 3 | `test_derive_default_eps_implicit_backcompat_on_2d_oracle` | `tests/test_algorithm/test_hparam_derived_2d_oracle.py:534` | same `nfe_aware.py:866` undefined-name bug | Wave 116 Agent 1 |
-| 4 | `test_two_feature_two_sample_closed_form_diagonal` | `tests/test_algorithm/test_image_algorithm_math.py` | `compute_frechet_distance` requires torch (purity regression) | Wave 116 Agent 2 |
-| 5 | `test_two_feature_two_sample_closed_form_identity` | `tests/test_algorithm/test_image_algorithm_math.py` | same | Wave 116 Agent 2 |
-| 6 | `test_zero_mean_zero_covariance_is_zero` | `tests/test_algorithm/test_image_algorithm_math.py` | same | Wave 116 Agent 2 |
-| 7 | `test_fid_nonnegative_for_random_inputs` | `tests/test_algorithm/test_image_algorithm_math.py` | same | Wave 116 Agent 2 |
-| 8 | `test_compute_from_precomputed_matches_closed_form_2d` | `tests/test_algorithm/test_image_algorithm_math.py` | same | Wave 116 Agent 2 |
-| 9 | `test_fid_symmetric_in_arguments` | `tests/test_algorithm/test_image_algorithm_math.py` | same | Wave 116 Agent 2 |
-| 10 | `test_fid_sqrtm_trace_matches_explicit_2x2` | `tests/test_algorithm/test_image_algorithm_math.py` | same | Wave 116 Agent 2 |
-| 11 | `test_early_termination_is_config_hash_visible` | `tests/test_algorithm/test_wave35_saturation_fixes.py:239` | `early_termination` field absent from `BatchedRunnerConfig.config_hash` | Wave 116 Agent 3 |
+| # | Test | File | Source bug | Status | Closed by |
+|---|------|------|-----------|--------|-----------|
+| 1 | `test_derived_hparams_match_handset_baseline_on_2d_oracle` | `tests/test_algorithm/test_hparam_derived_2d_oracle.py:363` | `adaptive_reflow/algorithm/scheduler/nfe_aware.py:866` references undefined `OTEpsilonSchedule()` | **RESOLVED** (Wave 118) | Wave 118 Phase 2 (`540b111`) |
+| 2 | `test_derived_hparams_with_full_context_drive_convergence` | `tests/test_algorithm/test_hparam_derived_2d_oracle.py:463` | same `nfe_aware.py:866` undefined-name bug | **RESOLVED** (Wave 118) | Wave 118 Phase 2 (`540b111`) |
+| 3 | `test_derive_default_eps_implicit_backcompat_on_2d_oracle` | `tests/test_algorithm/test_hparam_derived_2d_oracle.py:534` | same `nfe_aware.py:866` undefined-name bug | **RESOLVED** (Wave 118) | Wave 118 Phase 2 (`540b111`) |
+| 4 | `test_two_feature_two_sample_closed_form_diagonal` | `tests/test_algorithm/test_image_algorithm_math.py` | `compute_frechet_distance` requires torch (purity regression) | **RESOLVED** (Wave 118) | Wave 118 Phase 3 (`435ba7c`) |
+| 5 | `test_two_feature_two_sample_closed_form_identity` | `tests/test_algorithm/test_image_algorithm_math.py` | same | **RESOLVED** (Wave 118) | Wave 118 Phase 3 (`435ba7c`) |
+| 6 | `test_zero_mean_zero_covariance_is_zero` | `tests/test_algorithm/test_image_algorithm_math.py` | same | **RESOLVED** (Wave 118) | Wave 118 Phase 3 (`435ba7c`) |
+| 7 | `test_fid_nonnegative_for_random_inputs` | `tests/test_algorithm/test_image_algorithm_math.py` | same | **RESOLVED** (Wave 118) | Wave 118 Phase 3 (`435ba7c`) |
+| 8 | `test_compute_from_precomputed_matches_closed_form_2d` | `tests/test_algorithm/test_image_algorithm_math.py` | same | **RESOLVED** (Wave 118) | Wave 118 Phase 3 (`435ba7c`) |
+| 9 | `test_fid_symmetric_in_arguments` | `tests/test_algorithm/test_image_algorithm_math.py` | same | **RESOLVED** (Wave 118) | Wave 118 Phase 3 (`435ba7c`) |
+| 10 | `test_fid_sqrtm_trace_matches_explicit_2x2` | `tests/test_algorithm/test_image_algorithm_math.py` | same | **RESOLVED** (Wave 118) | Wave 118 Phase 3 (`435ba7c`) |
+| 11 | `test_early_termination_is_config_hash_visible` | `tests/test_algorithm/test_wave35_saturation_fixes.py:239` | `early_termination` field absent from `BatchedRunnerConfig.config_hash` | **RESOLVED** (Wave 118) | Wave 118 Phase 4 (`cfe9942`) |
+
+**Bucket D status (post-Wave 118):** **EMPTY.** All 11 items closed. Zero regressions documented for Wave 119 (the next wave's bucket-D audit starts at zero).
+
+See `docs/audit/wave118-bucket-d-fixes.md` for the Wave 118 audit doc + `docs/baseline-audit-report.md §R.10` for the companion baseline-audit row.
 
 ## Detailed Regression Reports
 

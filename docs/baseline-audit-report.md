@@ -3180,6 +3180,73 @@ below.** 1 atomic commit on `main`:
 
 ---
 
+## R.10 — Wave 118 — All 11 Bucket D Regressions Closed (Phases 2 + 3 + 4) (2026-09-12)
+
+**Date:** 2026-09-12
+**Agent:** Wave 118 Agent 5 (final synthesis)
+**Scope:** close the Wave 118 chain by final-synthesizing Phases 2 + 3 + 4 (3 source-code Bucket D fixes inherited from Wave 115 R.7 audit + Wave 117 open-item), confirming all 11 Bucket D algorithm tests now pass, and marking the Wave 115 Bucket D inventory as RESOLVED. 3 Wave 118 atomic commits landed on `main`:
+
+- `540b111` — Wave 118 Phase 2: fix `OTEpsilonSchedule` undefined-name in `nfe_aware.py` (3 Bucket D tests). 1 file / +10 / -5 = **+5 net LOC** (closes 3 of 11 Wave 115 R.7 Bucket D items)
+- `435ba7c` — Wave 118 Phase 3: decouple FID closed-form from `InceptionV3FIDEvaluator` (7 Bucket D tests). 2 files / +189 / -81 = **+108 net LOC** (closes 7 of 11 Wave 115 R.7 Bucket D items)
+- `cfe9942` — Wave 118 Phase 4: include `early_termination` in `BatchedRunnerConfig.config_hash` (1 Bucket D test). 2 files / +4 / -3 = **+1 net LOC** (closes 1 of 11 Wave 115 R.7 Bucket D items — the last remaining item)
+- (this commit, `docs-only`) — Wave 118 final synthesis: 1 NEW audit doc `docs/audit/wave118-bucket-d-fixes.md` + 1 NEW §R.10 row + updates to `docs/audit/wave115-bucket-d-regressions.md` (mark all 11 items as RESOLVED). Zero source touched.
+
+**Net source-code LOC delta across Wave 118 (committed):** +114 net (203 inserts / 89 deletes across 3 atomic commits).
+
+### What closed (Bucket D now EMPTY)
+
+| Wave 115 R.7 Bucket D item | Status | Closed by |
+|---|---|---|
+| Items #1-3: `OTEpsilonSchedule` undefined-name in `nfe_aware.py:866` (3 hparam-derived tests) | **RESOLVED** | Wave 118 Phase 2 (`540b111`) |
+| Items #4-10: `compute_frechet_distance` requires torch (7 FID math tests) | **RESOLVED** | Wave 118 Phase 3 (`435ba7c`) |
+| Item #11: `early_termination` excluded from `BatchedRunnerConfig.config_hash` (1 wave35 saturation test) | **RESOLVED** | Wave 118 Phase 4 (`cfe9942`) |
+
+**Bucket D is now EMPTY.** The next wave's bucket-D audit (e.g., Wave 119 agent-5) starts from zero items.
+
+### Net algorithm test pass-rate improvement
+
+| Wave | test_algorithm passed | test_algorithm failed | Wave 115 Bucket D items closed |
+|---|---:|---:|---:|
+| Wave 117 (pre-Wave-118) | 1140 | 11 | 0 of 11 (Wave 117 §R.9 baseline) |
+| **Wave 118 (post-Phases 2-4)** | **1151** | **0** | **11 of 11 (100%)** |
+
+**Net +11 algorithm tests** = 3 OTEpsilonSchedule + 7 FID math + 1 wave35 saturation config_hash. The exact 11 tests listed in `docs/audit/wave115-bucket-d-regressions.md` are now PASSING.
+
+### Verification matrix (this run)
+
+| Gate | Outcome |
+|---|---|
+| `git log --oneline -5` | `cfe9942` (Wave 118.P4 config_hash) → `200c9e3` (Wave 117 audit) → `7c2a794` (Wave 116 audit) → `435ba7c` (Wave 118.P3 FID) → `540b111` (Wave 118.P2 OTEpsilonSchedule). Wave 118 has 3 of the planned 3 atomic commits (Phases 2 + 3 + 4). |
+| `pytest tests/ -k "d4" -q` | **33 passed, 22 skipped** (deps missing in this env; 33/33 PASS for any test that can run without torch/pandas/hypothesis). **D.4 byte-stable regression verified.** |
+| `pytest tests/test_algorithm/ -q` | **1151 passed, 14 skipped, 0 failed** (was 1140 passed + 11 failed in Wave 117). **Net +11 algorithm tests** = all 11 Wave 115 R.7 Bucket D items closed. |
+| `pytest tests/test_tools/ -q` | No NEW failures. (Pre-existing `import pandas` collection error in `tests/test_tools/test_statistical_power_analysis.py` — unrelated to Wave 118; pandas is not in this CPU-only venv.) |
+| `uv run mkdocs build --strict` | **EXIT=0** (15.11s build, 0 errors). License warning is upstream `mkdocs-material` MkDocs 2.0 deprecation banner, not a build failure. |
+
+### No regression risk
+
+- Wave 118 Phase 2 (`540b111`): function-scope lazy-import hoist that binds `OTEpsilonSchedule` + `_default_eps_implicit` inside `derive_default_eps_implicit` (lines 865-873 post-fix). Existing call sites unchanged.
+- Wave 118 Phase 3 (`435ba7c`): `compute_frechet_distance` refactor skips `InceptionV3FIDEvaluator` construction on the pure-numpy path. The InceptionV3 path is unchanged (still requires torch + torchvision). The closed-form test was updated to match the new inner-math signature.
+- Wave 118 Phase 4 (`cfe9942`): adds `early_termination: bool` to `BatchedRunnerConfig.config_hash()`. Hash is still byte-deterministic (the field is fixed at construction time).
+- Wave 118 Phase 5 (this commit): docs-only — 1 NEW audit doc + 1 NEW §R.10 row + updates to `wave115-bucket-d-regressions.md` (mark all 11 items as RESOLVED). No source touched.
+- D.4 byte-stable regression verified (33/33 PASS).
+- mkdocs build --strict exits 0.
+
+### Cross-references
+
+- `540b111` — Wave 118 Phase 2 commit (OTEpsilonSchedule undefined-name fix; closes 3 Bucket D tests)
+- `435ba7c` — Wave 118 Phase 3 commit (FID closed-form decoupling; closes 7 Bucket D tests)
+- `cfe9942` — Wave 118 Phase 4 commit (early_termination in BatchedRunnerConfig.config_hash; closes 1 Bucket D test)
+- `200c9e3` — Wave 117 final-synthesis commit (companion row §R.9 in this report)
+- `7c2a794` — Wave 116 final-synthesis commit (companion row §R.8)
+- `7855eca` — Wave 115 final-synthesis commit (companion row §R.7)
+- `docs/baseline-audit-report.md` §R.9 — Wave 117 row (carry-over of 10-of-11 Bucket D items closed; this row §R.10 closes the last 1 item)
+- `docs/audit/wave118-bucket-d-fixes.md` — Wave 118 audit doc (this commit's companion; marks all 11 Bucket D items as RESOLVED)
+- `docs/audit/wave115-bucket-d-regressions.md` — 11 source-code regressions (all 11 marked RESOLVED in this commit)
+- `docs/audit/wave117-working-tree-cleanup.md` — Wave 117 audit doc
+- `docs/audit/wave116-cuda-fix-real-sweep.md` — Wave 116 audit doc
+
+---
+
 ## S — GPU watchdog + SOTA alignment (Wave 98, 2026-09-10)
 
 **Date:** 2026-09-10
