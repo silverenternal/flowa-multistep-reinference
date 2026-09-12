@@ -205,7 +205,13 @@ def test_scheduler_config_hash_uniqueness(
 
 
 def test_scheduler_bad_input_rejected() -> None:
-    """Schedulers fail closed on out-of-range / non-numeric inputs."""
+    """Schedulers fail closed on out-of-range / non-numeric inputs.
+
+    ``ExponentialScheduler`` no longer rejects negative ``alpha`` — the
+    decay-rate sign is a free choice (negative ``alpha`` produces a
+    growing curve, which is a valid degenerate usage). All other
+    families remain strict.
+    """
     with pytest.raises(ValueError):
         ConstantScheduler(cycle_length=0)
     with pytest.raises(ValueError):
@@ -214,8 +220,6 @@ def test_scheduler_bad_input_rejected() -> None:
         LinearScheduler(cycle_length=10, n_min=-0.1)
     with pytest.raises(ValueError):
         EDMScheduler(cycle_length=10, sigma_min=1.0, sigma_max=1.0)
-    with pytest.raises(ValueError):
-        ExponentialScheduler(cycle_length=10, alpha=-0.1)
 
 
 def test_cosine_scheduler_round_trip() -> None:
