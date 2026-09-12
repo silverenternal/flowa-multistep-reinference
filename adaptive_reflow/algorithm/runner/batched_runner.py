@@ -539,8 +539,7 @@ def _config_hash(cfg: BatchedRunnerConfig) -> str:
     if str(cfg.w2_family).strip().lower() != DEFAULT_W2_FAMILY or cfg.w2_kwargs:
         payload["w2_family"] = str(cfg.w2_family).strip().lower()
         payload["w2_kwargs"] = _stable(dict(cfg.w2_kwargs or {}))
-    if cfg.early_termination:
-        payload["early_termination"] = True
+    payload["early_termination"] = bool(cfg.early_termination)
     if cfg.vectorised:
         payload["vectorised"] = True
     if cfg.selection_evaluator is not None:

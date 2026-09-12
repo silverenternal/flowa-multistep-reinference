@@ -224,7 +224,9 @@ def test_early_termination_is_config_hash_visible(twodim_fm_weights_path) -> Non
     )
     off = BatchedTrajectoryRunner(
         BatchedRunnerConfig(
-            scheduler=CodimensionSheetScheduler(cycle_length=4), **common
+            scheduler=CodimensionSheetScheduler(cycle_length=4),
+            early_termination=False,
+            **common,
         ),
         _adapter(twodim_fm_weights_path),
     ).run()
