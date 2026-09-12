@@ -1130,24 +1130,29 @@ def _load_torch_model(weights_path: Path) -> Any:
             self._dae = dae
 
         def forward(self, x: "torch.Tensor", t: "torch.Tensor", family: "torch.Tensor" = None) -> "torch.Tensor":
-            # Wave 112.C-2 (RC-2 option B) — fail-fast. The Wave 110.B
-            # placeholder returned ``torch.zeros_like(x)`` (Bug 2 fix),
-            # making the framework arm a silent no-op regardless of
-            # CUDA. Upstream ``DAE.encode`` and ``DAE.net`` both require
-            # ``(B, L, 3)`` backbone coords; the adapter currently
-            # threads ``(B, L, n_channels_decoder) = (1, 64, 512)``
-            # (the post-``project_out`` latent). Until the backbone-coord
-            # migration lands (Wave 112.D follow-up), surface the
-            # placeholder as a hard error so the silent no-op is
-            # observable. The synthetic-mode caller
-            # (``self._synthetic_weights is not None`` short-circuits
-            # before this shim is ever invoked) is unaffected.
-            raise NotImplementedError(
-                "_KanziDAEShim.forward is a Wave 110.B placeholder; "
-                "backbone-coord migration is tracked under Wave 112.D "
-                "follow-up. Use framework_synthetic mode (σ=1e-3 N(0,1) "
-                "noise injection) for the framework arm until then."
-            )
+            # Wave 113.A: Real backbone-coord migration. Replaces the
+            # Wave 112.C-2 fail-fast placeholder (RC-2 option B) with the
+            # two-call upstream pipeline:
+            #
+            #   1. ``DAE.encode(x)`` runs the trained encoder + FSQ
+            #      codebook, returning ``(s_BLD, c_BLD, idx_BL)`` — the
+            #      pre-projection latent, the codebook-quantized latent
+            #      (which conditions the velocity field), and the
+            #      discrete codebook indices.
+            #   2. ``DAE.net(x, t, z_BLD=z)`` is the DiT velocity field
+            #      itself; it consumes the backbone coords ``x``,
+            #      the time scalar ``t``, and the codebook-quantized
+            #      conditioning latent ``c_BLD`` (= ``z_BLD``).
+            #
+            # Input is backbone coords ``(B, L, 3)`` (the upstream
+            # ``DAE`` has ``channels_in=3`` per ``RnFlowMatcherConfig``
+            # and consumes the centered backbone directly). The
+            # ``family`` kwarg from the adapter call site is accepted but
+            # unused here — Kanzi conditions on Pfam family via
+            # ``DAE.pair_embedder`` inside ``encode``, not at the ``net``
+            # level (see Wave 80 model_cfg.pair_embedder_dim=1152).
+            _, z, _ = self._dae.encode(x)        # (B, L, d_z) codebook-quantized
+            return self._dae.net(x, t, z_BLD=z)  # (B, L, 3) velocity field
 
     def _builder(p: Path) -> Any:
         """Build the real ``_KanziDAEShim`` from ``p`` (Wave 99 followup).

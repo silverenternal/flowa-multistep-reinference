@@ -727,3 +727,207 @@ def test_abstract_constants_unchanged_for_back_compat() -> None:
     # Real defaults match the Wave 36 ckpt values.
     assert KANZI_DEFAULT_REAL_LATENT_DIM == 512
     assert KANZI_DEFAULT_REAL_VOCAB_SIZE == 1000
+
+
+# ---------------------------------------------------------------------------
+# 8. Wave 113.A — _KanziDAEShim.forward backbone-coord migration
+# ---------------------------------------------------------------------------
+#
+# Replaces the Wave 112.C-2 fail-fast ``NotImplementedError`` placeholder
+# (RC-2 option B, commit 87d46ec) with the real two-call upstream pipeline:
+#   1. ``DAE.encode(x)``  → ``z_BLD`` (codebook-quantized latent)
+#   2. ``DAE.net(x, t, z_BLD=z)`` → velocity field ``(B, L, d)``
+#
+# Acceptance: shim returns non-zero output, deterministic in eval mode,
+# shape & device match the input contract used by _torch_velocity_field.
+
+
+def test_kanzi_shim_real_dae_wired() -> None:
+    """Wave 113.A — shim instance is the real ``_KanziDAEShim`` (not stub).
+
+    The Wave 99 regression test at :func:`test_load_torch_model_returns_real_dae_for_real_ckpt`
+    asserts the same property; this duplicate copy makes the Wave 113.A
+    intent explicit and is the test name referenced in the audit doc.
+    """
+    import sys
+
+    if _REAL_CKPT_SKIP_REASON is not None:
+        pytest.skip(_REAL_CKPT_SKIP_REASON)
+    resolved = kanzi_resolve_weights_path()
+    if resolved is None or not Path(resolved).exists():
+        pytest.skip(_REAL_CKPT_SKIP_REASON or "ckpt missing")
+    # The kanzi_venv may not be on sys.path in some CI shards — vendor it.
+    _KANZI_SRC = REPO_ROOT / "data" / "kanzi_upstream" / "src"
+    if str(_KANZI_SRC) not in sys.path:
+        sys.path.insert(0, str(_KANZI_SRC))
+
+    adapter = KanziAdapter(
+        weights_path=resolved, force_mode="torch", num_steps=2,
+    )
+    shim = adapter._model  # constructed in __init__ via _load_torch_model
+    assert shim is not None
+    # The real upstream DAE was wired in (not the random-weights stub).
+    assert type(shim).__name__ == "_KanziDAEShim", (
+        f"Expected _KanziDAEShim, got {type(shim).__name__}"
+    )
+
+
+def test_kanzi_shim_forward_returns_nonzero_output() -> None:
+    """Wave 113.A — shim forward returns a non-zero tensor (real backbone work).
+
+    The Wave 112.C-2 placeholder raised ``NotImplementedError`` (no work),
+    so the framework arm was a silent no-op. After Wave 113.A, the shim
+    runs the real ``DAE.encode`` + ``DAE.net`` pipeline, producing a
+    non-zero velocity field whose ``abs().max() > 0`` and whose
+    ``std() > 0.05`` distinguishes it from the constant-zeros stub.
+
+    Note: input shape is ``(B=1, L=64, 3)`` — the upstream
+    ``DAE.encode``/``DAE.net`` consume backbone coords with
+    ``channels_in=3`` (``RnFlowMatcherConfig.channels_in=3`` default).
+    The adapter's ``(L, n_channels_decoder) = (64, 512)`` state shape
+    is the post-``project_out`` space and is the OUTPUT of ``DAE.net``,
+    not the input — a projection bridge (``project_out⁻¹``) is a
+    Wave 112.D follow-up.
+    """
+    import sys
+
+    if _REAL_CKPT_SKIP_REASON is not None:
+        pytest.skip(_REAL_CKPT_SKIP_REASON)
+    resolved = kanzi_resolve_weights_path()
+    if resolved is None or not Path(resolved).exists():
+        pytest.skip(_REAL_CKPT_SKIP_REASON or "ckpt missing")
+    _KANZI_SRC = REPO_ROOT / "data" / "kanzi_upstream" / "src"
+    if str(_KANZI_SRC) not in sys.path:
+        sys.path.insert(0, str(_KANZI_SRC))
+
+    import torch as _torch  # local — torch_is_available() is in skip guard
+
+    adapter = KanziAdapter(
+        weights_path=resolved, force_mode="torch", num_steps=2,
+    )
+    shim = adapter._model  # constructed in __init__ via _load_torch_model
+    assert shim is not None
+
+    # Real backbone-coord-shaped input: (B=1, L=64, 3) backbone coords.
+    _torch.manual_seed(0)
+    x = _torch.randn(1, 64, 3)
+    t = _torch.tensor([0.5])
+    family = _torch.zeros(1, 1152)  # pair_embedder_dim — accepted, unused
+
+    shim.eval()
+    with _torch.no_grad():
+        v = shim(x, t, family=family)
+
+    # Acceptance #1: non-zero output (NOT zeros_like(x)).
+    assert _torch.abs(v).max().item() > 0.0, (
+        f"BUG REGRESSION: shim returned all-zeros velocity (abs.max=0). "
+        "Backbone-coord migration is broken — DAE.encode + DAE.net "
+        "did not run."
+    )
+    # Same threshold used by test_load_torch_model_returns_real_dae_for_real_ckpt
+    assert v.std().item() > 0.05, (
+        f"BUG REGRESSION: velocity field std={v.std().item():.6f} — "
+        "shim is producing zeros / random noise, not a real upstream DAE forward."
+    )
+
+
+def test_kanzi_shim_forward_shape_and_device() -> None:
+    """Wave 113.A — output shape and device match the input contract.
+
+    Upstream ``DAE.net`` is a DiT with ``channels_in=3`` and the
+    ``FinalLinear(n_channels, channels_in=3)`` projects the velocity
+    field back to backbone-coord space — so input and output are both
+    ``(B, L, 3)``. The Wave 112.C-3 device wire ensures tensors stay
+    on CUDA when available.
+    """
+    import sys
+
+    if _REAL_CKPT_SKIP_REASON is not None:
+        pytest.skip(_REAL_CKPT_SKIP_REASON)
+    resolved = kanzi_resolve_weights_path()
+    if resolved is None or not Path(resolved).exists():
+        pytest.skip(_REAL_CKPT_SKIP_REASON or "ckpt missing")
+    _KANZI_SRC = REPO_ROOT / "data" / "kanzi_upstream" / "src"
+    if str(_KANZI_SRC) not in sys.path:
+        sys.path.insert(0, str(_KANZI_SRC))
+
+    import torch as _torch  # local — torch_is_available() is in skip guard
+
+    adapter = KanziAdapter(
+        weights_path=resolved, force_mode="torch", num_steps=2,
+    )
+    shim = adapter._model  # constructed in __init__ via _load_torch_model
+    assert shim is not None
+
+    # Move shim to CUDA if available (matches Wave 112.A RC-1 fix).
+    if _torch.cuda.is_available():
+        shim = shim.to("cuda")
+
+    x = _torch.randn(
+        1, 64, 3,
+        device=("cuda" if _torch.cuda.is_available() else "cpu"),
+    )
+    t = _torch.tensor(
+        [0.5],
+        device=("cuda" if _torch.cuda.is_available() else "cpu"),
+    )
+    family = _torch.zeros(
+        1, 1152,
+        device=("cuda" if _torch.cuda.is_available() else "cpu"),
+    )
+
+    shim.eval()
+    with _torch.no_grad():
+        v = shim(x, t, family=family)
+
+    # Acceptance #2: shape (B, L, channels_in=3) = (1, 64, 3).
+    assert tuple(v.shape) == (1, 64, 3), (
+        f"Bad velocity shape: {tuple(v.shape)} — expected (1, 64, 3)"
+    )
+    # Acceptance #4: device matches input.
+    assert v.device == x.device, (
+        f"Device mismatch: shim returned {v.device} but input was {x.device}"
+    )
+
+
+def test_kanzi_shim_forward_deterministic_in_eval_mode() -> None:
+    """Wave 113.A — same (x, t) yields identical output (eval mode determinism).
+
+    The upstream ``DAE.encode`` uses FSQ (no stochastic sampling) and
+    ``DAE.net`` is a deterministic DiT; in eval mode the shim must be
+    deterministic across repeated calls with the same input.
+    """
+    import sys
+
+    if _REAL_CKPT_SKIP_REASON is not None:
+        pytest.skip(_REAL_CKPT_SKIP_REASON)
+    resolved = kanzi_resolve_weights_path()
+    if resolved is None or not Path(resolved).exists():
+        pytest.skip(_REAL_CKPT_SKIP_REASON or "ckpt missing")
+    _KANZI_SRC = REPO_ROOT / "data" / "kanzi_upstream" / "src"
+    if str(_KANZI_SRC) not in sys.path:
+        sys.path.insert(0, str(_KANZI_SRC))
+
+    import torch as _torch  # local — torch_is_available() is in skip guard
+
+    adapter = KanziAdapter(
+        weights_path=resolved, force_mode="torch", num_steps=2,
+    )
+    shim = adapter._model  # constructed in __init__ via _load_torch_model
+    assert shim is not None
+
+    _torch.manual_seed(0)
+    x = _torch.randn(1, 64, 3)
+    t = _torch.tensor([0.5])
+    family = _torch.zeros(1, 1152)
+
+    shim.eval()
+    with _torch.no_grad():
+        v1 = shim(x, t, family=family)
+        v2 = shim(x, t, family=family)
+
+    # Acceptance #3: same x + same t → identical output (eval mode).
+    assert _torch.allclose(v1, v2, atol=1e-6), (
+        "shim is non-deterministic in eval mode — DAE.encode/DAE.net "
+        "have an unwanted stochastic source (FSQ dropout? pair noise?)."
+    )
