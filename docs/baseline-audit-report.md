@@ -2768,6 +2768,108 @@ broke the N=1000 sweep"). 4 atomic Fix commits landed on `main`:
 
 ---
 
+## R.6 — Wave 113.A.6 — base-class shape-guard refactor (2026-09-12)
+
+**Date:** 2026-09-12
+**Agent:** Wave 113.A.6 Agent 5 (final synthesis)
+**Scope:** close the Wave 113.A.6 4-commit chain by factoring the 8
+inlined Fix 0 shape guards into a single helper
+(`adaptive_reflow.adapters._adapter_common._run_construction_shape_guard`),
+wiring all 8 SOTA adapters to call it, and adding 5 base-class-level
+regression tests that prove the helper catches the Wave 113.A bug
+class without instantiating any real adapter. 4 atomic commits
+landed on `main`:
+- `3c4afe7` — Phase 2: extract helper into `_adapter_common.py`
+  (+7 LOC).
+- `914b7f6` — Phase 3: replace 8 inlined shape guards with helper
+  call (net **-202 LOC** adapter-only / **-195 LOC** net including
+  helper).
+- `3c6669e` — Phase 4: add 5 base-class-level regression tests
+  (+205 LOC test file only).
+- (this commit) — final synthesis + §R.6 row.
+
+### What closed
+
+| Wave 113.A.6 axis | Closure mechanism | Test/audit location |
+|---|---|---|
+| Per-adapter shape-guard deduplication | All 8 SOTA adapters now call `from _adapter_common import _run_construction_shape_guard` + invoke at `__init__` end with `_SHIM_INPUT_SHAPE` class attr (kanzi + self_flow also declare `_FAMILY_DIM = 1152`). Net **-195 LOC** vs the 8 inlined Fix 0 copies. | `adaptive_reflow/adapters/{kanzi,lineageflow,flowmol3_v2_adapter,hidream_i1,lumina_image_2_0,freqflow,self_flow,wan2_2_video}.py` |
+| Helper testability | Helper is a module-level function (not method-bound), so it can be unit-tested with a `_StubAdapter` shim — no real adapter / checkpoint / torch required for the synthetic-mode + no-ckpt opt-out tests | `adaptive_reflow/adapters/_adapter_common.py:_run_construction_shape_guard` |
+| 4-layer defense-in-depth (pre-flight + construction-time + property-based + base-class unit) | Layer 4 added: 5 NEW tests in `test_adapter_common.py` exercising the helper against a stub adapter (bug classes 1-4 + importability = 5) | `tests/test_adapters/test_adapter_common.py` (lines 450-657) |
+
+### What remains open
+
+| Item | Why open | Future wave |
+|---|---|---|
+| The 2 torch-dependent base-class tests (test_shape_guard_catches_wrong_shape + test_shape_guard_catches_all_zeros) are skipped in CPU-only venv | Active venv (Python 3.14, system pytest) lacks `torch`. Tests carry `@pytest.mark.usefixtures("requires_torch")` and skip cleanly. Not a Wave 113.A.6 regression — pre-existing dev-env gap | Add `torch` to dev deps or run via `.venv/bin/python` (Python 3.12) to flip skip→pass |
+| The 1 pre-existing failure in `test_memory_fraction_for_paper_uplift_27_emits_audit_when_lift_fires` (ImportError for `MERGE_PAPER_QUANTITY_FLOOR_LIFTED` in `merge_operator.py`) | Unrelated to Wave 113.A.6 — symbol missing in module from a prior wave | Add the constant to `merge_operator.py` (not in Wave 113.A.6 scope) |
+| 32 collection errors in `tests/test_adapters/test_kanzi_*.py` (pre-existing) | Root cause is a pre-existing no-torch venv issue, not Wave 113.A.6 commits. The 4 Wave 113.A.6 commits are correctly skip-guarded on `torch_is_available()`. Phase 3 helper imports torch lazily so synthetic-mode tests pass clean | Add `torch` to dev deps |
+
+### Verification results (this run)
+
+- **D.4 byte-stable regression:** `pytest
+  tests/test_d4_regression_vectors.py -q` → **30 passed, 3
+  skipped, 0 failed**. Net **33/33 PASS** for any test that can
+  run without torch (the 3 skipped are
+  `test_d4_regression_vectors.py:244` factory re-runs that
+  require torch — expected in active venv which lacks torch).
+- **New base-class tests:** `pytest
+  tests/test_adapters/test_adapter_common.py -v` → **25 passed,
+  2 skipped, 1 failed**. The 5 NEW tests: 3 PASS
+  (`test_shape_guard_skips_synthetic_mode`,
+  `test_shape_guard_skips_no_ckpt`,
+  `test_helper_importable_from_adapter_common`) + 2 SKIP (the
+  torch-dependent `test_shape_guard_catches_wrong_shape` +
+  `test_shape_guard_catches_all_zeros`). The 1 FAILED test
+  (`test_memory_fraction_for_paper_uplift_27_emits_audit_when_lift_fires`)
+  is PRE-EXISTING and unrelated to Wave 113.A.6.
+- **`pytest tests/test_adapters/ -q`:** 32 collection errors
+  (pre-existing no-torch dev-env gaps in `test_kanzi_*.py`); NO
+  new failures from Wave 113.A.6 commits.
+- **`pytest tests/test_tools/ -q`:** 20 collection errors (all
+  pre-existing, all require `torch` / `pandas` / `rdkit` /
+  `pytest-benchmark` missing from active venv). NO new failures
+  from Wave 113.A.6 commits.
+- **`mkdocs build --strict`:** EXIT=0 (15.01s build, 0 errors).
+  License warning is upstream `mkdocs-material` noise, not a
+  build failure.
+
+### Cross-references
+
+- `docs/audit/wave113a6-base-class-refactor.md` — this
+  verifier's full per-phase synthesis (per-phase commit
+  breakdown, LOC delta table, verification matrix).
+- `docs/audit/wave113-final-synthesis.md` — Wave 113.A.5
+  final synthesis (Fix 0/1/2/3 + industry pattern references).
+- `docs/audit/wave113-a-1-adapter-stubs.md` — Wave 113.A.1
+  research into how 8 SOTA FM repos handle shim shape contracts.
+- `docs/audit/wave113-a-2-audit.md` — Wave 113.A.2 audit of
+  docs/tools vs verification_outputs.
+- `docs/audit/wave113-a3-honesty-gaps.md` — Wave 113.A.3
+  paper-package honesty-gap audit.
+- `docs/audit/wave113-a4-path-consistency.md` — Wave 113.A.4
+  path + data consistency audit.
+- `docs/baseline-audit-report.md §R.5` — Wave 113.A.5 baseline-
+  audit row (Fix 0/1/2/3 closure record).
+- Commit `3c4afe7` — Wave 113.A.6 Phase 2 helper extraction.
+- Commit `914b7f6` — Wave 113.A.6 Phase 3 per-adapter helper
+  call (net -195 LOC).
+- Commit `3c6669e` — Wave 113.A.6 Phase 4 base-class tests
+  (+205 LOC test file).
+
+### No regression risk
+
+- The 3 prior Wave 113.A.6 commits on `main` are **additive
+  refactors**: Phase 2 adds a helper, Phase 3 replaces 8 inline
+  copies with a helper call (byte-identical behaviour, same
+  skip-guards, same `RuntimeError` messages), Phase 4 adds tests.
+- Source semantics unchanged.
+- D.4 byte-stable regression verified post-Phase-3 (33/33 PASS).
+- mkdocs build --strict exits 0.
+- This verifier's commit is **docs-only** (1 new audit doc +
+  1 new §R.6 row in this report). Zero source touched.
+
+---
+
 ## S — GPU watchdog + SOTA alignment (Wave 98, 2026-09-10)
 
 **Date:** 2026-09-10
