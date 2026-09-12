@@ -980,6 +980,51 @@ class HiDreamI1Adapter(FlowMatchingODEAdapter):
         )
         self._caps = HiDreamI1Capabilities()
 
+        # Wave 113.A.5 Fix 0 — inline N=1 forward-shape assert at
+        # adapter construction time. Industry standard (Diffusers
+        # Triton strict-config, BentoML input_spec): catch a wrong-
+        # shape or all-zeros shim BEFORE the sweep runs N=1000 cells.
+        # Skip-guarded on torch mode + ckpt path so synthetic-mode
+        # tests (no torch, no ckpt) construct cleanly as before.
+        if (
+            self._mode == "torch"
+            and self._pipeline is not None
+            and torch_is_available()
+            and self._weights_path is not None
+            and Path(self._weights_path).exists()
+        ):
+            try:
+                import torch as _torch_assert  # noqa: PLC0415
+                _x = _torch_assert.randn(1, *HIDREAM_I1_STATE_SHAPE)
+                _t = _torch_assert.tensor([0.5])
+                _cond = {"t5_tokens": _torch_assert.randn(1, 64, 4096),
+                         "clip_l_pool": _torch_assert.randn(1, 768),
+                         "clip_g_pool": _torch_assert.randn(1, 1280)}
+                with _torch_assert.no_grad():
+                    _v = self._pipeline(_x, _t, conditioning=_cond,
+                                        cfg_scale=float(self._cfg_scale))
+                if tuple(_v.shape) != (1, *HIDREAM_I1_STATE_SHAPE):
+                    raise RuntimeError(
+                        "Wave 113.A.5 Fix 0: HiDream-I1 shim returned "
+                        f"shape {tuple(_v.shape)} but contract is "
+                        f"(1, {tuple(HIDREAM_I1_STATE_SHAPE)}); shim likely broken. "
+                        "See docs/audit/wave113-final-synthesis.md"
+                    )
+                if float(_v.abs().max()) <= 0.0:
+                    raise RuntimeError(
+                        "Wave 113.A.5 Fix 0: HiDream-I1 shim returned "
+                        "all-zeros velocity — stub or broken forward. "
+                        "See docs/audit/wave113-final-synthesis.md"
+                    )
+            except RuntimeError:
+                raise
+            except Exception as _exc:  # noqa: BLE001 — fail-closed gate
+                raise RuntimeError(
+                    "Wave 113.A.5 Fix 0: HiDream-I1 inline pre-flight "
+                    f"shape assert failed: {_exc!r}. See "
+                    "docs/audit/wave113-final-synthesis.md"
+                ) from _exc
+
     # ------------------------------------------------------------------
     # 1. capability handshake
     # ------------------------------------------------------------------

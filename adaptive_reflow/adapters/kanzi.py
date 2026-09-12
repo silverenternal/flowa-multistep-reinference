@@ -1509,6 +1509,58 @@ class KanziAdapter(FlowMatchingODEAdapter):
             )
         self._caps = KanziCapabilities(state_shape=self.state_shape)
 
+        # Wave 113.A.5 Fix 0 — inline N=1 forward-shape assert at
+        # adapter construction time. Industry standard (Diffusers
+        # Triton strict-config, BentoML input_spec): catch a wrong-
+        # shape or all-zeros shim BEFORE the sweep runs N=1000 cells.
+        # Skip-guarded on torch mode + ckpt path so synthetic-mode
+        # tests (no torch, no ckpt) construct cleanly as before.
+        # Kanzi's shim consumes backbone coords ``(B=1, L=64, 3)`` and
+        # returns a velocity field of the same shape — the published
+        # DAE.net FinalLinear projects back to ``channels_in=3``. The
+        # adapter's nominal ``state_shape=(64, 512)`` is post-project_out
+        # and is the OUTPUT of DAE.net via the velocity_field wrapper,
+        # not the shim call site.
+        if (
+            self._mode == "torch"
+            and self._model is not None
+            and torch_is_available()
+            and self._weights_path is not None
+            and self._weights_path != Path("synthetic")
+            and Path(self._weights_path).exists()
+        ):
+            try:
+                import torch as _torch_assert  # noqa: PLC0415
+                _x = _torch_assert.randn(
+                    1, int(KANZI_ABSTRACT_AR_SEQ_LENGTH), 3
+                )
+                _t = _torch_assert.tensor([0.5])
+                _family = _torch_assert.zeros(1, 1152)
+                with _torch_assert.no_grad():
+                    _v = self._model(_x, _t, family=_family)
+                if tuple(_v.shape) != (1, int(KANZI_ABSTRACT_AR_SEQ_LENGTH), 3):
+                    raise RuntimeError(
+                        "Wave 113.A.5 Fix 0: Kanzi shim returned "
+                        f"shape {tuple(_v.shape)} but contract is "
+                        f"(1, {int(KANZI_ABSTRACT_AR_SEQ_LENGTH)}, 3) "
+                        "(backbone-coord shape); shim likely broken. "
+                        "See docs/audit/wave113-final-synthesis.md"
+                    )
+                if float(_v.abs().max()) <= 0.0:
+                    raise RuntimeError(
+                        "Wave 113.A.5 Fix 0: Kanzi shim returned "
+                        "all-zeros velocity — stub or broken forward. "
+                        "See docs/audit/wave113-final-synthesis.md"
+                    )
+            except RuntimeError:
+                raise
+            except Exception as _exc:  # noqa: BLE001 — fail-closed gate
+                raise RuntimeError(
+                    "Wave 113.A.5 Fix 0: Kanzi inline pre-flight "
+                    f"shape assert failed: {_exc!r}. See "
+                    "docs/audit/wave113-final-synthesis.md"
+                ) from _exc
+
     # ------------------------------------------------------------------
     # 1. capability handshake
     # ------------------------------------------------------------------

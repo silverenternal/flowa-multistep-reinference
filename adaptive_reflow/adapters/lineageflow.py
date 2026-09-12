@@ -1415,6 +1415,62 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
             else UniformFreshPerturbation()
         )
 
+        # Wave 113.A.5 Fix 0 — inline N=1 forward-shape assert at
+        # adapter construction time. Industry standard (Diffusers
+        # Triton strict-config, BentoML input_spec): catch a wrong-
+        # shape or all-zeros shim BEFORE the sweep runs N=1000 cells.
+        # Skip-guarded on torch mode + ckpt path so synthetic-mode
+        # tests (no torch, no ckpt) construct cleanly as before.
+        # LineageFlow's flow head takes ``input_ids`` (Long indices),
+        # so we feed random ids rather than random simplex — mirrors
+        # the F-4 fix in ``_torch_velocity_field``.
+        if (
+            self._mode == "torch"
+            and self._model is not None
+            and torch_is_available()
+            and self._weights_path is not None
+            and Path(self._weights_path).exists()
+        ):
+            try:
+                import torch as _torch_assert  # noqa: PLC0415
+                _ids = _torch_assert.randint(
+                    0, int(LINEAGEFLOW_VOCAB_SIZE),
+                    (1, int(LINEAGEFLOW_STATE_SHAPE[0])),
+                    dtype=_torch_assert.long,
+                )
+                _t = _torch_assert.tensor([0.5])
+                with _torch_assert.no_grad():
+                    _v = self._model(input_ids=_ids)
+                if hasattr(_v, "logits"):
+                    _v = _v.logits
+                elif hasattr(_v, "last_hidden_state"):
+                    _h = _v.last_hidden_state
+                    _v = _h.new_zeros(
+                        (_h.shape[0], _h.shape[1], int(LINEAGEFLOW_VOCAB_SIZE)),
+                    )
+                if tuple(_v.shape) != (1, *LINEAGEFLOW_STATE_SHAPE):
+                    raise RuntimeError(
+                        "Wave 113.A.5 Fix 0: LineageFlow shim returned "
+                        f"shape {tuple(_v.shape)} but contract is "
+                        f"(1, {tuple(LINEAGEFLOW_STATE_SHAPE)}); "
+                        "shim likely broken. See "
+                        "docs/audit/wave113-final-synthesis.md"
+                    )
+                if float(_v.abs().max()) <= 0.0:
+                    raise RuntimeError(
+                        "Wave 113.A.5 Fix 0: LineageFlow shim returned "
+                        "all-zeros velocity — stub or broken forward. "
+                        "See docs/audit/wave113-final-synthesis.md"
+                    )
+            except RuntimeError:
+                raise
+            except Exception as _exc:  # noqa: BLE001 — fail-closed gate
+                raise RuntimeError(
+                    "Wave 113.A.5 Fix 0: LineageFlow inline pre-flight "
+                    f"shape assert failed: {_exc!r}. See "
+                    "docs/audit/wave113-final-synthesis.md"
+                ) from _exc
+
     # ------------------------------------------------------------------
     # 1. capability handshake
     # ------------------------------------------------------------------
