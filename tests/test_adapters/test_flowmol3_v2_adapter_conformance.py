@@ -205,11 +205,25 @@ class TestFlowMol3V2ExportSampledMolecules:
     ``SampleAnalyzer.analyze``). The v2 adapter's :meth:`export_trajectory`
     only returns raw (x, a, c, e) arrays — this method bridges the gap
     by decoding the endpoint slice to RDKit ``Mol`` objects.
+
+    Wave 122: every test in this class is gated by rdkit availability
+    via a per-method ``pytest.importorskip('rdkit')`` because the
+    decoder (``_decode_rdkit_mol_from_arrays``) returns ``(None,
+    'none')`` when ``from rdkit import Chem`` fails, which causes
+    ``export_sampled_molecules`` to return ``[]`` — a false
+    regression signal on rdkit-less CI envs.
     """
 
     def test_export_sampled_molecules_returns_list_of_mols(
         self, adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
     ) -> None:
+        pytest.importorskip(
+            "rdkit",
+            reason=(
+                "RDKit is required to decode trajectory to Mol objects "
+                "(install via 'uv pip install rdkit')"
+            ),
+        )
         """On a real (synthetic-but-completed) forward the method decodes to a Mol.
 
         The NumPy backend runs ``_solve_ode_linear`` so the cached
@@ -266,6 +280,13 @@ class TestFlowMol3V2ExportSampledMolecules:
         self, adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
     ) -> None:
         """The decoded Mol carries a 3D conformer with the endpoint positions."""
+        pytest.importorskip(
+            "rdkit",
+            reason=(
+                "RDKit is required to decode trajectory to Mol objects "
+                "(install via 'uv pip install rdkit')"
+            ),
+        )
         cond = _make_condition_delta(num_steps=5)
         trace = adapter.solve_ode(initial_bundle, cond, seed=42)
         mols, _meta = adapter.export_sampled_molecules(trace)
@@ -298,6 +319,13 @@ class TestFlowMol3V2ExportSampledMolecules:
         :meth:`export_trajectory` returns the same lineage as the
         first call.
         """
+        pytest.importorskip(
+            "rdkit",
+            reason=(
+                "RDKit is required to decode trajectory to Mol objects "
+                "(install via 'uv pip install rdkit')"
+            ),
+        )
         cond = _make_condition_delta(num_steps=5)
         trace = adapter.solve_ode(initial_bundle, cond, seed=42)
         # First export — pre-sampled-molecules.
@@ -345,6 +373,13 @@ class TestFlowMol3V2NMoleculesBatch:
         self, adapter: FlowMol3V2Adapter, initial_bundle: StateBundle
     ) -> None:
         """n_molecules=4 returns 4 molecules via ``export_sampled_molecules``."""
+        pytest.importorskip(
+            "rdkit",
+            reason=(
+                "RDKit is required to decode batched trajectory to Mol "
+                "objects (install via 'uv pip install rdkit')"
+            ),
+        )
         cond = _make_condition_delta(num_steps=3)
         trace = adapter.solve_ode(
             initial_bundle, cond, seed=42, n_molecules=4,
@@ -382,6 +417,13 @@ class TestFlowMol3V2NMoleculesBatch:
         most (cutting the ±0.6 spread to ±0.2 at n=10 requires using
         the sample-mean estimator, not a robust median).
         """
+        pytest.importorskip(
+            "rdkit",
+            reason=(
+                "RDKit is required to decode batched trajectory to Mol "
+                "objects (install via 'uv pip install rdkit')"
+            ),
+        )
         cond = _make_condition_delta(num_steps=3)
         trace = adapter.solve_ode(
             initial_bundle, cond, seed=42, n_molecules=5,
@@ -404,6 +446,13 @@ class TestFlowMol3V2NMoleculesBatch:
         output length is 1 molecule. ``export_sampled_molecules``
         returns ``marker='ok'`` (or ``'ok_partial'`` for synthetic data).
         """
+        pytest.importorskip(
+            "rdkit",
+            reason=(
+                "RDKit is required to decode trajectory to Mol objects "
+                "(install via 'uv pip install rdkit')"
+            ),
+        )
         cond = _make_condition_delta(num_steps=5)
         # Default n_molecules.
         trace = adapter.solve_ode(initial_bundle, cond, seed=42)
