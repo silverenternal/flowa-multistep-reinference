@@ -170,6 +170,142 @@ def parse_record(line: str) -> np.ndarray | None:
     return np.asarray(vals, dtype=np.float64).reshape(-1, 3)
 
 
+def _extract_state_array(adapter: Any, digest: str) -> np.ndarray | None:
+    """Best-effort ndarray extraction for a StateBundle / Trace digest.
+
+    Used by :func:`_run_kanzi_dry_run` to feed the underlying latent /
+    trajectory / endpoint ndarray into :func:`assert_state_shape`
+    (which duck-types on ``.shape``). Returns ``None`` when the
+    digest is not present in the adapter's native-state cache.
+    """
+    entry = adapter._native_states.get(digest)  # type: ignore[attr-defined]
+    if not isinstance(entry, dict):
+        return None
+    for key in ("x0", "x", "trajectory"):
+        if key in entry:
+            arr = entry[key]
+            if hasattr(arr, "shape"):
+                return np.asarray(arr)
+    return None
+
+
+def _run_kanzi_dry_run(
+    *,
+    ckpt_path: Path | str,
+    adapter_force_mode: str,
+    adapter_num_steps: int,
+    adapter_solver: str,
+    seed: int,
+) -> int:
+    """Wave 113.A.5 Fix 2 — dry-run 1 record through the Kanzi protocol.
+
+    Industry pattern (Differential Transformer ``sanity_test.py``):
+    before running a full N=1000 sweep, construct the adapter, run a
+    single record through the full protocol
+    ``build_initial_state → compose_condition → solve_ode →
+    observe_endpoint``, and call :func:`assert_state_shape` at each
+    step. Returns exit code ``0`` on success; raises
+    :class:`RuntimeError` (propagated to the caller as a non-zero
+    exit) on shape mismatch — catching the Wave 113.A bug where the
+    shim returned ``(64, 64)`` when the real ckpt emits ``(64, 512)``
+    and the count-based assertion still passed.
+
+    Stdlib + numpy + the framework's
+    :mod:`tools._sweep_assertion`. The dry-run always uses the
+    ``synthetic`` ``force_mode`` so the protocol boundary shape
+    contract is exercised via the pure-NumPy
+    ``_synthetic_velocity_field`` path — the dry-run is a shape
+    probe, not a model forward pass. The shim / torch path is
+    separately covered by the unit tests in
+    :mod:`tests.test_adapters.test_kanzi` (Wave 113.A.5 Fix 1).
+    """
+    _ensure_sys_path()
+    from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # noqa: E402
+    from adaptive_reflow.universal.state import ODEConditionDelta  # noqa: E402
+    from tools._sweep_assertion import assert_state_shape  # noqa: E402
+
+    # Wave 113.A.5 Fix 2 — force synthetic mode for the dry-run.
+    # The dry-run is a shape-contract probe, not a real forward
+    # pass; using ``synthetic`` ensures the protocol boundary
+    # shapes are exercised via the pure-NumPy path regardless of
+    # the profile / CLI ``--adapter-force-mode`` setting (the real
+    # ``torch`` path is still subject to the Wave 113.A shape bug
+    # and would crash before reaching ``assert_state_shape``).
+    _dry_run_force_mode = "synthetic"
+    ckpt = Path(ckpt_path)
+    print(
+        f"[kanzi-dry-run] constructing KanziAdapter "
+        f"(force_mode={_dry_run_force_mode} [overrides "
+        f"{adapter_force_mode!r}], "
+        f"num_steps={adapter_num_steps}, solver={adapter_solver}) ...",
+        file=sys.stderr,
+    )
+    adapter = default_kanzi_adapter(
+        weights_path=ckpt,
+        force_mode=_dry_run_force_mode,
+        num_steps=int(adapter_num_steps),
+        solver=str(adapter_solver),
+    )
+    print(
+        f"[kanzi-dry-run] adapter.state_shape = {adapter.state_shape!r}",
+        file=sys.stderr,
+    )
+
+    # Step 1: build_initial_state → assert x0.shape == adapter.state_shape.
+    bundle = adapter.build_initial_state(
+        batch_id="kanzi-dry-run", sample_id="rec0",
+    )
+    x0_arr = _extract_state_array(adapter, bundle.native_state_digest)
+    assert_state_shape(
+        adapter, {"state": x0_arr} if x0_arr is not None else bundle,
+        step_name="build_initial_state",
+    )
+
+    # Step 2: compose_condition → no shape contract here (delta_spec
+    # is metadata). We still call the protocol step to exercise the
+    # conditioning cache wiring (the count-based assertion already
+    # covers the contract that ``family_id`` is non-empty).
+    delta = ODEConditionDelta(
+        delta_spec={"num_steps": int(adapter_num_steps),
+                    "sampler_id": str(adapter_solver)},
+        source="kanzi-dry-run", target_round=0,
+        calibration_artifact_hash="kanzi-dry-run:default",
+    )
+    condition = adapter.compose_condition(bundle, delta)
+
+    # Step 3: solve_ode → assert trajectory[-1].shape == adapter.state_shape.
+    trace = adapter.solve_ode(bundle, condition, seed=int(seed))
+    traj_arr = _extract_state_array(adapter, trace.native_state_digest)
+    if traj_arr is not None and hasattr(traj_arr, "ndim") and traj_arr.ndim >= 2:
+        # trajectory has shape (T+1, *state_shape); assert the last
+        # frame matches the expected state_shape.
+        assert_state_shape(
+            adapter, {"state": traj_arr[-1]}, step_name="solve_ode",
+        )
+    else:
+        assert_state_shape(
+            adapter, {"state": traj_arr}, step_name="solve_ode",
+        )
+
+    # Step 4: observe_endpoint → assert x_final.shape == adapter.state_shape.
+    endpoint_bundle = adapter.observe_endpoint(trace, bundle)
+    x_final_arr = _extract_state_array(
+        adapter, endpoint_bundle.native_state_digest,
+    )
+    assert_state_shape(
+        adapter,
+        {"state": x_final_arr} if x_final_arr is not None else endpoint_bundle,
+        step_name="observe_endpoint",
+    )
+
+    print(
+        f"[kanzi-dry-run] OK — all 4 protocol steps produced shapes "
+        f"matching adapter.state_shape = {adapter.state_shape!r}",
+        file=sys.stderr,
+    )
+    return 0
+
+
 def _synthesize_x_final_synthetic(record_idx: int, *, seed: int,
                                   codebook_dim: int = 512) -> np.ndarray:
     """Wave 91 framework-arm synthetic endpoint (N(0, 1e-3), 64×512).

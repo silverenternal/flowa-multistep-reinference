@@ -51,8 +51,17 @@ if str(_REPO_ROOT) not in sys.path:
 from tools._kanzi_sweep_runner import (  # noqa: E402
     apply_kanzi_profile_defaults,
     run_kanzi_sweep,
+    _run_kanzi_dry_run,
 )
 from tools.eval.config import load_run_profile  # noqa: E402
+
+
+# Wave 113.A.5 Fix 2 — env-no-config gate exit code (matches the
+# Autotools / sysexits.h convention: 78 = "configuration error").
+# Returned when ``--dry-run`` is paired with ``--no-config`` to skip
+# the shape contract probe (the caller is explicitly opting out of
+# any config-driven dry-run verification).
+_EXIT_ENV_NO_CONFIG = 78
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -64,7 +73,9 @@ def main(argv: list[str] | None = None) -> int:
                          "CLI flag > YAML value > module default. Omitting "
                          "--config preserves the legacy CLI-default surface "
                          "byte-stable. Prints [PROFILE] summary on load."))
-    p.add_argument("--input", type=Path, required=True)
+    p.add_argument("--input", type=Path, required=False,
+                   help=("Wave 80 extractor output (one record per line). "
+                         "Optional when --dry-run is set."))
     p.add_argument("--ckpt", type=Path,
                    default=Path(__file__).resolve().parent.parent
                                   / "data" / "kanzi_ckpt" / "cleaned_model.pt")
@@ -89,7 +100,28 @@ def main(argv: list[str] | None = None) -> int:
                    help="KanziAdapter ODE num_steps (Wave 111 F-A004 closure; default 50).")
     p.add_argument("--adapter-solver", default="euler",
                    help="KanziAdapter ODE solver (Wave 111 F-A004 closure; default 'euler').")
+    # Wave 113.A.5 Fix 2 — dry-run flag for shape contract probe.
+    p.add_argument("--dry-run", action="store_true",
+                   help=("Wave 113.A.5 Fix 2: dry-run 1 record through "
+                         "the full Kanzi protocol + call "
+                         "assert_state_shape at each step. Exits 0 on "
+                         "success; raises RuntimeError on shape "
+                         "mismatch. Pairing with --no-config returns "
+                         "exit 78 (SKIP, env-no-config gate)."))
+    # Wave 113.A.5 Fix 2 — explicit opt-out flag for the
+    # config-driven path.
+    p.add_argument("--no-config", action="store_true",
+                   help=("Wave 113.A.5 Fix 2: explicitly bypass any "
+                         "config-driven code path. When combined with "
+                         "--dry-run, exits 78 (env-no-config gate, "
+                         "SKIP)."))
     args = p.parse_args(argv)
+    # Enforce --input for the full sweep path (the dry-run bypass
+    # does not need the input file).
+    if not args.dry_run and args.input is None:
+        print("[ERROR] --input is required when --dry-run is not set",
+              file=sys.stderr)
+        return 2
     profile = None
     if args.config is not None:
         try:
@@ -98,6 +130,25 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[ERROR] --config load failed: {exc}", file=sys.stderr)
             return 2
         args = apply_kanzi_profile_defaults(args, p, profile)
+
+    # Wave 113.A.5 Fix 2 — handle --dry-run BEFORE entering the full
+    # sweep. --dry-run --no-config → exit 78 (SKIP). --dry-run →
+    # construct adapter + run 1 record through the protocol.
+    if args.dry_run:
+        if args.no_config:
+            print(
+                "[kanzi-dry-run] --dry-run --no-config → exit "
+                f"{_EXIT_ENV_NO_CONFIG} (SKIP, env-no-config gate).",
+                file=sys.stderr,
+            )
+            return _EXIT_ENV_NO_CONFIG
+        return _run_kanzi_dry_run(
+            ckpt_path=args.ckpt,
+            adapter_force_mode=str(args.adapter_force_mode),
+            adapter_num_steps=int(args.adapter_num_steps),
+            adapter_solver=str(args.adapter_solver),
+            seed=int(args.seed),
+        )
 
     run_kanzi_sweep(
         mode="framework_inv_proj",

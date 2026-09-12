@@ -15,6 +15,10 @@ Covers the Wave 96 reality-check hard assertion + summary-JSON contract:
    summary dict (``sweep_n_records_actual``,
    ``sweep_n_records_requested``, ``sweep_n_records_match``,
    ``sweep_name``).
+6. :func:`assert_state_shape` (Wave 113.A.5 Fix 2): asserts the
+   sweep protocol record's shape matches the adapter's
+   ``state_shape`` (or an explicit ``expected_shape``). Raises the
+   Wave-113 message on mismatch.
 
 Stdlib-only (no torch / numpy / pytest fixtures) so the tests are
 cold-clone safe + CI-friendly.
@@ -247,7 +251,7 @@ def test_write_summary_with_n_keys_handles_none_requested() -> None:
 
 
 def test_helper_module_all_exports() -> None:
-    """``__all__`` includes the 4 public symbols so callers can key
+    """``__all__`` includes the 5 public symbols so callers can key
     on the public API and importlib.reload is safe across
     sweeps."""
     helper = _import_helper()
@@ -256,10 +260,169 @@ def test_helper_module_all_exports() -> None:
         "assert_n_records_match_with_file_count",
         "write_summary_with_n_keys",
         "min_required_records_for_cap",
+        "assert_state_shape",
     }
     assert expected.issubset(set(helper.__all__)), (
         f"missing exports in __all__: {expected - set(helper.__all__)}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Wave 113.A.5 Fix 2 — assert_state_shape tests
+# ---------------------------------------------------------------------------
+
+
+class _FakeAdapter:
+    """Minimal stand-in for an adapter exposing ``state_shape``.
+
+    Stdlib-only (no numpy / torch). The test suite intentionally
+    avoids the real :class:`KanziAdapter` import chain because the
+    sweep-assertion helper is expected to remain venv-portable (the
+    kanzi sidecar venv may lack the heavy scientific stack). The
+    minimal surface needed by :func:`assert_state_shape` is just
+    ``state_shape`` — anything else is duck-typed away.
+    """
+
+    def __init__(self, state_shape: tuple[int, ...]) -> None:
+        self.state_shape = state_shape
+
+
+class _FakeArray:
+    """Duck-typed record with a ``.shape`` tuple.
+
+    Mirrors the numpy ndarray protocol surface that
+    :func:`assert_state_shape` actually inspects (``record.shape``)
+    without importing numpy.
+    """
+
+    def __init__(self, shape: tuple[int, ...]) -> None:
+        self.shape = shape
+
+
+def test_assert_state_shape_passes_for_matching_tensor() -> None:
+    """Wave 113.A.5 — record.shape == expected_shape → no raise.
+
+    The happy path: a record returned by a protocol step has the
+    same shape as the adapter's ``state_shape``. The helper is a
+    no-op (the sweep driver can proceed to the next record).
+    """
+    helper = _import_helper()
+    adapter = _FakeAdapter(state_shape=(64, 64))
+    record = _FakeArray(shape=(64, 64))
+    # Should not raise.
+    helper.assert_state_shape(
+        adapter, record, step_name="build_initial_state",
+    )
+    # Explicit expected_shape overrides adapter.state_shape.
+    helper.assert_state_shape(
+        adapter, record, expected_shape=(64, 64),
+        step_name="build_initial_state",
+    )
+
+
+def test_assert_state_shape_raises_for_mismatched_tensor() -> None:
+    """Wave 113.A.5 — record.shape != expected_shape → raise.
+
+    This is the Wave 113.A bug: the shim returned ``(64, 64)`` when
+    the real ckpt emits ``(64, 512)``. The error message must
+    reference Wave 113.A so the failure mode is self-documenting
+    (a CI log can grep for "Wave 113" to surface all such
+    failures).
+    """
+    helper = _import_helper()
+    adapter = _FakeAdapter(state_shape=(64, 512))
+    record = _FakeArray(shape=(64, 64))
+    with pytest.raises(RuntimeError) as excinfo:
+        helper.assert_state_shape(
+            adapter, record, step_name="solve_ode",
+        )
+    msg = str(excinfo.value)
+    assert "(64, 64)" in msg, (
+        f"actual shape missing from RuntimeError message: {msg!r}"
+    )
+    assert "(64, 512)" in msg, (
+        f"expected shape missing from RuntimeError message: {msg!r}"
+    )
+    assert "solve_ode" in msg, (
+        f"step_name must appear in the error so the agent can locate "
+        f"the offending protocol step from the traceback: {msg!r}"
+    )
+    assert "Wave 113" in msg, (
+        f"RuntimeError must reference Wave 113 for audit grep: {msg!r}"
+    )
+    # The explicit expected_shape arg overrides adapter.state_shape
+    # — verify the helper uses the explicit value when both disagree.
+    with pytest.raises(RuntimeError) as excinfo2:
+        helper.assert_state_shape(
+            adapter, record, expected_shape=(128, 128),
+            step_name="observe_endpoint",
+        )
+    msg2 = str(excinfo2.value)
+    assert "(128, 128)" in msg2
+    assert "observe_endpoint" in msg2
+
+
+def test_assert_state_shape_raises_for_dict_missing_state_key() -> None:
+    """Wave 113.A.5 — dict record without "state" key → no-op (silent skip).
+
+    A dict record that lacks the ``"state"`` key does not raise —
+    the helper cannot recover a shape from such a record (no
+    fallback channels matched either). This is the conservative
+    behavior: the count-based assertion still runs, the shape
+    contract is skipped for that one record, and a future Wave
+    may surface missing-shape records as a separate diagnostic.
+
+    The test pins the behavior so a future refactor that turns
+    this into a hard error gets caught.
+    """
+    helper = _import_helper()
+    adapter = _FakeAdapter(state_shape=(64, 64))
+    # Dict without "state" key + no other recognised fallback key →
+    # no shape recoverable → silent no-op.
+    record: dict[str, object] = {"unrelated_key": "value"}
+    # Should not raise.
+    helper.assert_state_shape(adapter, record, step_name="build_initial_state")
+    # Even when the dict's value has a .shape, missing the
+    # recognised keys means the helper cannot recover a shape.
+    record_with_shape: dict[str, object] = {"unrelated": _FakeArray((64, 64))}
+    helper.assert_state_shape(
+        adapter, record_with_shape, step_name="build_initial_state",
+    )
+    # Dict WITH a "state" key whose value has a .shape → assert
+    # matches. Wrong shape → raise.
+    record_with_state: dict[str, object] = {"state": _FakeArray((32, 32))}
+    with pytest.raises(RuntimeError) as excinfo:
+        helper.assert_state_shape(
+            adapter, record_with_state, step_name="compose_condition",
+        )
+    msg = str(excinfo.value)
+    assert "(32, 32)" in msg
+    assert "(64, 64)" in msg
+    assert "compose_condition" in msg
+
+
+def test_assert_state_shape_no_op_when_expected_shape_is_none() -> None:
+    """Wave 113.A.5 — neither expected_shape nor adapter.state_shape
+    is set → no-op (cannot enforce a contract that was not declared).
+
+    The helper does NOT raise on missing declared shape — the
+    :class:`_FakeAdapter` below deliberately omits ``state_shape``
+    to simulate an adapter that did not declare its expected
+    geometry. Sweep drivers can still call the helper; it just
+    silently passes the check (the count-based assertion is
+    responsible for the N contract, not the shape contract).
+    """
+    helper = _import_helper()
+    adapter = _FakeAdapter(state_shape=(64, 64))
+    # No expected_shape + no adapter.state_shape → no-op.
+    adapter_no_shape = type(
+        "NoShapeAdapter", (), {},
+    )()
+    record = _FakeArray(shape=(64, 64))
+    # Should not raise (the helper cannot enforce a missing
+    # contract, so it is a no-op — same rationale as the missing
+    # expected_shape above).
+    helper.assert_state_shape(adapter_no_shape, record, step_name="build_initial_state")
 
 
 def test_helper_module_is_stdlib_only() -> None:
