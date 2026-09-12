@@ -29,6 +29,18 @@ from typing import Any
 import numpy as np
 import pytest
 
+# torch is only present in torch-bearing venvs (Wave 80 Kanzi sidecar,
+# wave39_kanzi_venv, etc.). Skip the entire module when missing so the
+# rest of the suite still collects on CPU-only / torch-free hosts.
+_torch_spec = pytest.importorskip(
+    "torch",
+    reason=(
+        "torch not in venv "
+        "(install via `uv pip install torch torchvision diffusers "
+        "transformers accelerate`)"
+    ),
+)
+
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent.parent
 _RUNNER_PATH: Path = REPO_ROOT / "tools" / "_kanzi_sweep_runner.py"
 
