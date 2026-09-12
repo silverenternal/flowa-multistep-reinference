@@ -862,6 +862,15 @@ def derive_default_eps_implicit(
     abstract :class:`DerivationRule` protocol with its own concrete
     subclass.
     """
+    # Lazy import: ``adaptive_reflow.algorithm._derivation`` triggers a
+    # partial-import cycle if loaded at module top (see the module-level
+    # NOTE above). Defer the lookup until this entry point runs so the
+    # ``OTEpsilonSchedule`` default on the next line resolves at call time.
+    from adaptive_reflow.algorithm._derivation import (
+        OTEpsilonSchedule,
+        default_eps_implicit as _default_eps_implicit,
+        make_derivation_context,
+    )
     chosen: DerivationRule = (
         rule if rule is not None else OTEpsilonSchedule()
     )
@@ -871,17 +880,13 @@ def derive_default_eps_implicit(
     # wrapper that promotes caller-side scalars into a
     # DerivationContext when one is missing.
     if context is None:
-        from adaptive_reflow.algorithm._derivation import (
-            make_derivation_context,
-        )
-
         context = make_derivation_context(
             eps_implicit=eps_implicit,
             t=t,
             c_g=c_g,
         )
     return float(
-        default_eps_implicit(
+        _default_eps_implicit(
             context, eps_implicit=eps_implicit, rule=chosen
         )
     )
