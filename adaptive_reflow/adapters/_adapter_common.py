@@ -396,6 +396,115 @@ def load_real_weights(
         return stub_factory()
 
 
+# Wave 113.A.6 Phase 2: opt-out + shape-declaration class-level
+# defaults. Adapters that do NOT want the construction-time shape
+# guard flip ``_SKIP_CONSTRUCTION_SHAPE_GUARD = True`` on their
+# class; each adapter that DOES want the guard declares its own
+# ``_SHIM_INPUT_SHAPE`` as a tuple of ints on the class (the helper
+# reads ``type(adapter)._SHIM_INPUT_SHAPE`` when ``shim_input_shape``
+# is omitted, and uses the explicit argument otherwise).
+_SKIP_CONSTRUCTION_SHAPE_GUARD: bool = False
+_SHIM_INPUT_SHAPE: tuple[int, ...] | None = None
+
+
+def _run_construction_shape_guard(
+    adapter: Any,
+    shim_input_shape: tuple[int, ...],
+    time_scalar: float = 0.5,
+) -> None:
+    """Wave 113.A.6 Phase 2: shared N=1 forward-shape assert.
+
+    Industry standard (Diffusers Triton strict-config, BentoML
+    input_spec): catch a wrong-shape or all-zeros shim BEFORE the
+    sweep runs N=1000 cells. Mirrors the 8 inline Wave 113.A.5 Fix 0
+    copies exactly: same skip-guards, same shape-vs-expected compare,
+    same ``abs().max() <= 0.0`` all-zeros check, same
+    RuntimeError-only re-raise vs. RuntimeError-wrapping for any
+    other exception.
+
+    Skip-guards (returns ``None`` silently):
+    - ``torch`` is not importable,
+    - ``adapter._mode != "torch"``,
+    - ``adapter._real_ckpt_path`` is ``None``,
+    - ``adapter._weights_path`` is ``None`` or
+      ``str(adapter._weights_path) == "synthetic"``,
+    - the weights path does not exist on disk.
+
+    When the guards pass, builds ``x = torch.randn(1, *shim_input_shape,
+    device=adapter._device)`` and ``t = torch.tensor([time_scalar],
+    device=adapter._device)``. If ``type(adapter)`` declares a
+    ``_FAMILY_DIM`` class attribute (Kanzi: ``1152``), passes
+    ``family=torch.zeros(1, _FAMILY_DIM, device=...)`` to the shim.
+    Then calls ``adapter._model(x, t, family=...)`` under
+    ``torch.no_grad()`` and asserts:
+
+    1. ``tuple(v.shape) == tuple(x.shape)`` — otherwise RuntimeError
+       naming the adapter class + expected + actual shape.
+    2. ``float(v.abs().max()) > 0.0`` — otherwise RuntimeError
+       naming the adapter class and ``"all-zeros velocity"``.
+
+    RuntimeError fires re-raise directly; any other exception is
+    wrapped as ``RuntimeError(repr(exc))`` so the failure mode is
+    uniform across the 8 call sites. ``torch`` is imported lazily so
+    the helper does not introduce a torch dependency at module
+    import time (the module's contract is stdlib + numpy only at
+    module level).
+
+    Module-private (``_`` prefix): not exported via ``__all__``.
+    """
+    import torch  # noqa: PLC0415 — lazy; module contract is numpy-only.
+
+    weights_path = getattr(adapter, "_weights_path", None)
+    if (
+        not torch_is_available()
+        or getattr(adapter, "_mode", None) != "torch"
+        or getattr(adapter, "_real_ckpt_path", None) is None
+        or weights_path is None
+        or str(weights_path) == "synthetic"
+        or not Path(weights_path).exists()
+    ):
+        return None
+
+    class_name = type(adapter).__name__
+    device = getattr(adapter, "_device", None)
+    try:
+        x = torch.randn(1, *shim_input_shape, device=device)
+        t = torch.tensor([time_scalar], device=device)
+        call_kwargs: dict[str, Any] = {}
+        family_dim = getattr(type(adapter), "_FAMILY_DIM", None)
+        if family_dim is not None:
+            call_kwargs["family"] = torch.zeros(1, int(family_dim), device=device)
+        model = getattr(adapter, "_model", None)
+        if model is None:
+            return None
+        with torch.no_grad():
+            v = model(x, t, **call_kwargs)
+        if tuple(v.shape) != tuple(x.shape):
+            raise RuntimeError(
+                "Wave 113.A.6: "
+                + class_name
+                + " shim returned shape "
+                + str(tuple(v.shape))
+                + " but contract is "
+                + str(tuple(x.shape))
+                + "; shim likely broken. "
+                + "See docs/audit/wave113-final-synthesis.md"
+            )
+        if float(v.abs().max()) <= 0.0:
+            raise RuntimeError(
+                "Wave 113.A.6: "
+                + class_name
+                + " shim returned all-zeros velocity "
+                + "— stub or broken forward. "
+                + "See docs/audit/wave113-final-synthesis.md"
+            )
+    except RuntimeError:
+        raise
+    except Exception as exc:  # noqa: BLE001 — fail-closed gate
+        raise RuntimeError(repr(exc)) from exc
+    return None
+
+
 def _resolve_mode(
     force_mode: str,
     weights_path: Path,
