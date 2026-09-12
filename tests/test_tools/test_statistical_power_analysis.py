@@ -27,6 +27,17 @@ from pathlib import Path
 
 import pytest
 
+# pandas is required by tools.statistical_power_analysis (it returns
+# pd.DataFrame). Skip the entire module when missing so the rest of
+# the suite still collects on pandas-less hosts (Wave 122 venv).
+_pandas_spec = pytest.importorskip(
+    "pandas",
+    reason=(
+        "pandas not in venv "
+        "(install via `uv pip install pandas`)"
+    ),
+)
+
 REPO_ROOT: Path = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
