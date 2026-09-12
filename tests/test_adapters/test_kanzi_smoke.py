@@ -521,6 +521,98 @@ def test_handles_zero_noise_boundary() -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_torch_velocity_field_validates_against_per_call_state_shape() -> None:
+    """Wave 121 Phase 1 regression: ``_torch_velocity_field`` must validate
+    the input ``x`` against the per-call ``state_shape`` parameter,
+    NOT the module-global ``KANZI_STATE_SHAPE = (64, 64)``.
+
+    Wave 120 Phase 4 discovered a ValueError in real-mode sweeps:
+    ``ValueError: cannot reshape array of size 32768 into shape (64, 64)``.
+    The pre-fix code bound a module-global validator to ``(64, 64)`` and
+    invoked it inside ``_torch_velocity_field`` even though real-mode
+    passes ``state_shape=self._real_state_shape = (64, 512)`` (= 32768
+    elements). The fix builds a per-call validator closure via
+    ``make_validate_state_shape(state_shape)`` so the validator honors
+    the per-call shape.
+
+    This test exercises BOTH the synthetic-mode default ``(64, 64)``
+    (regression guard for byte-stability) AND the real-mode ``(64, 512)``
+    (the actual bug). It uses a stub ``nn.Module`` so no real DAE
+    checkpoint is required — the regression is at the validator step
+    which runs BEFORE ``model.forward`` is invoked.
+    """
+    pytest.importorskip("torch", reason="torch is required for the stub DAE model")
+
+    import torch as _torch  # local import; gated by importorskip above
+    from adaptive_reflow.adapters.kanzi import _torch_velocity_field
+
+    class _StubDae(_torch.nn.Module):
+        """Minimal stub matching the ``_torch_velocity_field`` call contract.
+
+        Returns ``torch.zeros_like(x_t)`` so the post-forward
+        ``v.squeeze(0).cpu().numpy().reshape(state_shape)`` is a no-op
+        (total element count matches). Holds a single 1-element
+        ``Parameter`` so ``next(model.parameters())`` works on CPU/CUDA.
+        """
+
+        def __init__(self) -> None:
+            super().__init__()
+            self._dummy = _torch.nn.Parameter(_torch.zeros(1))
+
+        def forward(self, x, t, family=None):  # noqa: D401 — stub signature
+            return _torch.zeros_like(x)
+
+    model = _StubDae()
+    cache = {
+        "family_embed": np.zeros(1152, dtype=np.float64),
+    }
+
+    # --- Real-mode path: state_shape=(64, 512) = 32768 elements ---
+    # Pre-fix this would raise ValueError from the global validator.
+    x_real = np.random.default_rng(0).standard_normal((64, 512)).astype(np.float64)
+    out_real = _torch_velocity_field(
+        model=model,
+        x=x_real,
+        t=0.5,
+        dtype=_torch.float64,
+        cache=cache,
+        guidance_scale=1.0,
+        state_shape=(64, 512),
+    )
+    assert out_real.shape == (64, 512)
+    assert out_real.dtype == np.float64
+    assert np.isfinite(out_real).all()
+
+    # --- Synthetic-mode path: state_shape=(64, 64) (default KANZI_STATE_SHAPE) ---
+    # Must remain a no-op reshape for byte-stability per Wave 113.A.5
+    # hard rule.
+    x_syn = np.random.default_rng(1).standard_normal((64, 64)).astype(np.float64)
+    out_syn = _torch_velocity_field(
+        model=model,
+        x=x_syn,
+        t=0.5,
+        dtype=_torch.float64,
+        cache=cache,
+        guidance_scale=1.0,
+        state_shape=(64, 64),
+    )
+    assert out_syn.shape == (64, 64)
+    assert out_syn.dtype == np.float64
+
+    # --- Default-state_shape path: caller omits state_shape → defaults to
+    # KANZI_STATE_SHAPE = (64, 64). Confirms backward compatibility with
+    # direct test seams that don't pass state_shape. ---
+    out_default = _torch_velocity_field(
+        model=model,
+        x=x_syn,
+        t=0.5,
+        dtype=_torch.float64,
+        cache=cache,
+        guidance_scale=1.0,
+    )
+    assert out_default.shape == (64, 64)
+
+
 def test_module_constants_consistent() -> None:
     """Module-level constants must be coherent with each other."""
     assert KANZI_STATE_SHAPE == (KANZI_AR_SEQ_LENGTH, KANZI_LATENT_DIM)

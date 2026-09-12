@@ -1070,7 +1070,19 @@ def _torch_velocity_field(
     # for already-shaped ``(64, 64)`` synthetic-mode inputs, preserving
     # byte-stability per the Wave 113.A.5 hard rule. Aligns with the 6
     # sibling adapters' ``_validate_state_shape`` convention.
-    x = _validate_state_shape(np.asarray(x, dtype=np.float64))  # → (64, 64)
+    #
+    # Wave 121 Phase 1 — build a per-call validator closure bound to
+    # THIS call's ``state_shape`` (e.g. ``(64, 512)`` in real mode via
+    # :attr:`KanziAdapter._real_state_shape`), NOT the module-global
+    # ``_validate_state_shape`` which is hardcoded to
+    # ``KANZI_STATE_SHAPE = (64, 64)`` for synthetic-mode byte-stability.
+    # The global validator would raise ``ValueError: cannot reshape array
+    # of size 32768 into shape (64, 64)`` on a real-mode trajectory
+    # (Wave 120 Phase 4 discovered bug). Using the per-call closure is
+    # the 1-LOC additive fix: synthetic-mode byte-stability is preserved
+    # because the closure sees ``KANZI_STATE_SHAPE`` as the default;
+    # real-mode calls now validate against ``(64, 512)`` correctly.
+    x = make_validate_state_shape(state_shape)(np.asarray(x, dtype=np.float64))
 
     import torch  # local import — torch is optional at the framework level.
 
