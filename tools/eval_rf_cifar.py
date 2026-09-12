@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 import time
 from pathlib import Path
@@ -89,8 +90,7 @@ DEFAULT_REFERENCE_FEATURES: str = "data/cifar10_inception_features.npz"
 
 
 # ---------------------------------------------------------------------------
-# FID computation — thin back-compat wrapper around the canonical
-# :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator`.
+# FID computation — closed-form NumPy helper + lazy public wrapper
 # ---------------------------------------------------------------------------
 #
 # Behaviour change: the legacy :func:`compute_fid` returned
@@ -100,6 +100,112 @@ DEFAULT_REFERENCE_FEATURES: str = "data/cifar10_inception_features.npz"
 # when the sample covariance is degenerate). Callers that need to
 # distinguish "undefined" from a finite-but-large FID should branch on
 # ``math.isnan(...)`` / ``math.isfinite(...)``.
+#
+# Wave 119 Phase 3 (Category B): reuse the Wave 118 closed-form
+# decoupling pattern (``adaptive_reflow/eval/fid.py:539-609``). The
+# pure-NumPy Fréchet arithmetic was always independent of the InceptionV3
+# feature extractor, but the historical eager
+# :class:`InceptionV3FIDEvaluator` construction forced the closed-form
+# path to drag in ``torch`` + ``torchvision``. The two-tier structure
+# below mirrors the Wave 118 commit (``435ba7c``):
+#
+#   1. :func:`_compute_frechet_distance_inner` — pure-NumPy helper
+#      (scipy.linalg.sqrtm → eigen-clipping retry → pure-NumPy fallback).
+#   2. :func:`compute_fid` — public lazy wrapper that fits the Gaussians
+#      and delegates to the inner helper. The InceptionV3 evaluator is
+#      no longer constructed on this path, so the function works in
+#      environments without ``torch`` / ``torchvision`` (CPU-only CI,
+#      synthetic-mode smoke tests).
+#   3. :data:`compute_frechet_distance_closed_form` — public alias of
+#      the inner helper, provided so external callers can reuse the
+#      closed-form math without importing this module's
+#      ``InceptionV3FIDEvaluator`` import surface.
+
+
+def _compute_frechet_distance_inner(
+    sigma_real: np.ndarray,
+    sigma_fake: np.ndarray,
+    mu_real: np.ndarray,
+    mu_fake: np.ndarray,
+    *,
+    eps: float = 1e-6,
+) -> float:
+    """Pure-NumPy closed-form Fréchet distance (no torch / torchvision).
+
+    Implements::
+
+        FID = ||μ_real - μ_fake||^2 + Tr(Σ_real + Σ_fake - 2 (Σ_real Σ_fake)^{1/2})
+
+    with the three-tier numerical fallback used by the canonical
+    :func:`adaptive_reflow.eval.fid._frechet_distance_closed_form`
+    (scipy.linalg.sqrtm → eigen-clipping retry ``+ eps * I`` →
+    pure-NumPy eigendecomposition). Returns ``float('nan')`` when the
+    result is non-finite after all three guards; the result is clipped
+    to ``>= 0`` otherwise.
+
+    The argument order (``sigma_real, sigma_fake, mu_real, mu_fake``)
+    matches :func:`tools.compute_cifar_fid._compute_frechet_distance_inner`
+    so the closed-form math is byte-identical across tools.
+    """
+    sig_r = np.asarray(sigma_real, dtype=np.float64)
+    sig_f = np.asarray(sigma_fake, dtype=np.float64)
+    mu_r = np.asarray(mu_real, dtype=np.float64)
+    mu_f = np.asarray(mu_fake, dtype=np.float64)
+
+    if sig_r.shape != sig_f.shape:
+        raise ValueError(
+            f"sigma shapes must match: {sig_r.shape} vs {sig_f.shape}"
+        )
+    if mu_r.shape != mu_f.shape:
+        raise ValueError(
+            f"mu shapes must match: {mu_r.shape} vs {mu_f.shape}"
+        )
+
+    # Tier 1: scipy.linalg.sqrtm when scipy is importable. Retry with
+    # the ``+ eps * I`` offset on non-finite output (canonical
+    # pytorch-fid eigen-clipping pattern).
+    try:
+        from scipy.linalg import sqrtm as _scipy_sqrtm  # local import
+
+        covmean = np.asarray(_scipy_sqrtm(sig_r @ sig_f), dtype=np.complex128)
+        if not bool(np.all(np.isfinite(covmean))):
+            dim = int(sig_r.shape[0])
+            offset = np.eye(dim, dtype=np.float64) * float(eps)
+            covmean = np.asarray(
+                _scipy_sqrtm((sig_r + offset) @ (sig_f + offset)),
+                dtype=np.complex128,
+            )
+    except ImportError:
+        # Tier 3: pure-NumPy eigendecomposition. Clips eigenvalues at
+        # ``eps`` so the floor is non-negative (standard pytorch-fid
+        # "clipped FID" surrogate).
+        prod = sig_r @ sig_f
+        eigvals, eigvecs = np.linalg.eigh(prod)
+        eigvals_clipped = np.clip(eigvals, float(eps), None)
+        covmean = eigvecs @ np.diag(np.sqrt(eigvals_clipped)) @ eigvecs.T
+
+    # Complex-valued result → keep real part (mirrors tools.run_image_eval).
+    if np.iscomplexobj(covmean):
+        covmean = np.real(covmean)
+
+    diff = mu_r - mu_f
+    fid_value = float(
+        float(np.dot(diff, diff))
+        + float(np.trace(sig_r))
+        + float(np.trace(sig_f))
+        - 2.0 * float(np.trace(covmean))
+    )
+    # FID is non-negative by construction; numerical noise may push
+    # the value to a tiny negative. Clip to zero for safety.
+    if not math.isfinite(fid_value):
+        return float("nan")
+    return float(max(fid_value, 0.0))
+
+
+# Public alias for closed-form callers (Wave 118 pattern). The two
+# names route through the single source of truth above so the numerical
+# contract is identical.
+compute_frechet_distance_closed_form = _compute_frechet_distance_inner
 
 
 def compute_fid(
@@ -110,9 +216,9 @@ def compute_fid(
 ) -> float:
     """Compute the Fréchet Inception Distance (FID) between two feature sets.
 
-    Thin back-compat wrapper around
-    :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator
-    .compute_from_features`. The standard FID formula is::
+    Public lazy wrapper around :func:`_compute_frechet_distance_inner`
+    (pure NumPy, no torch / torchvision dependency). The standard FID
+    formula is::
 
         FID = ||μ_r - μ_g||^2 + Tr(Σ_r + Σ_g - 2 (Σ_r Σ_g)^{1/2})
 
@@ -128,20 +234,77 @@ def compute_fid(
     sentinel used to be ``float('inf')`` — the legacy call sites in
     :mod:`tools.run_sota_cifar_experiment` already branch on
     ``math.isfinite`` so they keep working.
+
+    Note — Wave 119 Phase 3 (Category B): the historical implementation
+    eagerly constructed an :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator`
+    (which requires ``torch`` + ``torchvision``), so the closed-form path
+    failed loud with an :class:`ImportError` in CPU-only environments
+    even though the Fréchet arithmetic was always pure-NumPy. The
+    function now fits Gaussians locally and delegates to the pure-NumPy
+    :func:`_compute_frechet_distance_inner` helper. Callers who want
+    the canonical InceptionV3-evaluated FID can still import
+    :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator` directly
+    and call ``compute_from_features``.
     """
     if generated_feats.ndim != 2 or reference_feats.ndim != 2:
         raise ValueError("features_must_be_2d")
     if generated_feats.shape[1] != reference_feats.shape[1]:
         raise ValueError("feature_dims_must_match")
-    evaluator = InceptionV3FIDEvaluator(
-        feature_dim=int(generated_feats.shape[1]),
-        eigenclip_eps=float(eps),
+    gen64 = generated_feats.astype(np.float64, copy=False)
+    ref64 = reference_feats.astype(np.float64, copy=False)
+    if gen64.shape[0] < 2 or ref64.shape[0] < 2:
+        return float("nan")
+
+    # Fit Gaussians locally (no InceptionV3 construction).
+    mu_g = np.asarray(np.mean(gen64, axis=0), dtype=np.float64)
+    mu_r = np.asarray(np.mean(ref64, axis=0), dtype=np.float64)
+    sigma_g = np.asarray(np.cov(gen64, rowvar=False), dtype=np.float64)
+    sigma_r = np.asarray(np.cov(ref64, rowvar=False), dtype=np.float64)
+
+    return _compute_frechet_distance_inner(
+        sigma_real=sigma_r,
+        sigma_fake=sigma_g,
+        mu_real=mu_r,
+        mu_fake=mu_g,
+        eps=float(eps),
     )
-    return float(
-        evaluator.compute_from_features(
-            reference_feats.astype(np.float64, copy=False),
-            generated_feats.astype(np.float64, copy=False),
-        ).value
+
+
+# Public lazy wrapper (Wave 118 pattern). Takes pre-computed
+# Gaussian statistics and routes them through the closed-form inner
+# helper — the InceptionV3 evaluator is **never** instantiated on this
+# path. Provided so external callers (and the user's verification
+# import-check ``from tools.eval_rf_cifar import compute_frechet_distance,
+# compute_frechet_distance_closed_form``) can reuse the canonical FID
+# arithmetic without dragging in ``torch`` / ``torchvision``.
+def compute_frechet_distance(
+    sigma_real: np.ndarray,
+    sigma_fake: np.ndarray,
+    mu_real: np.ndarray,
+    mu_fake: np.ndarray,
+    *,
+    eps: float = 1e-6,
+) -> float:
+    """Closed-form Fréchet distance between two pre-computed Gaussians.
+
+    Thin lazy wrapper around :func:`_compute_frechet_distance_inner`
+    (pure NumPy). The argument order matches the canonical
+    :func:`adaptive_reflow.eval.fid.compute_frechet_distance` so
+    legacy call sites that import the FID math from this module
+    continue to work unchanged.
+
+    Wave 119 Phase 3 (Category B): the canonical InceptionV3 evaluator
+    is **not** constructed on this path. Callers who need the
+    InceptionV3-evaluated FID should import
+    :class:`adaptive_reflow.eval.fid.InceptionV3FIDEvaluator` directly
+    and call ``compute_from_features``.
+    """
+    return _compute_frechet_distance_inner(
+        sigma_real=sigma_real,
+        sigma_fake=sigma_fake,
+        mu_real=mu_real,
+        mu_fake=mu_fake,
+        eps=float(eps),
     )
 
 
