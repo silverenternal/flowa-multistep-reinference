@@ -406,13 +406,62 @@ def load_real_weights(
 _SKIP_CONSTRUCTION_SHAPE_GUARD: bool = False
 _SHIM_INPUT_SHAPE: tuple[int, ...] | None = None
 
+# Wave 114 Phase 3: shim-invocation-spec declaration. The 5 standard
+# shim signature classes that the helper can dispatch against:
+#
+#   "tensor"         — call ``self._model(x, t)`` with a float
+#                       ``(B, *shim_input_shape)`` input. Default for
+#                       Kanzi, HiDream, Lumina, FreqFlow, SelfFlow.
+#   "long_int"       — call ``self._model(input_ids=x_int)`` with a
+#                       ``(B, *shim_input_shape)`` Long tensor of
+#                       vocab indices (used by LineageFlow's
+#                       ``EsmModel(input_ids=...)`` HF contract).
+#   "atomistic_tuple"— call ``_real_velocity_field(module, x, a, c,
+#                       e, t, *, device=...)`` with the heterogeneous
+#                       ``(x, a, c, e)`` atomistic tuple plus
+#                       ``device=``. Validate ALL outputs non-zero
+#                       (FlowMol3 v2 returns 4-tuple
+#                       ``(vx, vc, ve, va)``).
+#   "multi_step"     — adapter is NOT in torch mode at construction
+#                       time (Wan2.2 uses ``_mode == "upstream"``), so
+#                       the helper's ``_mode != "torch"`` skip-guard
+#                       fires before the multi-step branch is reached.
+#                       The dispatch exists so a future torch-mode
+#                       variant of Wan2.2 can declare its
+#                       ``(latent, t, text_emb, moe_route)`` shape
+#                       contract and have the helper route through
+#                       here.
+#
+# Each adapter that wants the helper to reach the forward path
+# declares its own ``_SHIM_INVOCATION_SPEC`` as a class-level dict
+# with keys:
+#   - ``"input_type"`` (one of the 4 strings above; default
+#     ``"tensor"``),
+#   - ``"kwargs"`` (mapping of kwarg-name -> tensor shape (or
+#     ``None`` for the ``long_int`` vocab-size sentinel); default
+#     ``{}``),
+#   - ``"output_extractor"`` (callable | None — unwraps HF-style
+#     ``.logits`` / ``.last_hidden_state`` outputs before the shape
+#     check fires; default ``None``),
+#   - ``"all_zeros_check_outputs"`` (list[str] | None — names of
+#     multi-output fields that must each be non-zero for FlowMol3
+#     v2's ``(vx, vc, ve, va)`` 4-tuple; default ``None``).
+_SHIM_INVOCATION_SPEC: dict[str, Any] = {
+    "input_type": "tensor",
+    "kwargs": {},
+    "output_extractor": None,
+    "all_zeros_check_outputs": None,
+}
+
 
 def _run_construction_shape_guard(
     adapter: Any,
     shim_input_shape: tuple[int, ...],
     time_scalar: float = 0.5,
+    *,
+    shim_invocation_spec: dict[str, Any] | None = None,
 ) -> None:
-    """Wave 113.A.6 Phase 2: shared N=1 forward-shape assert.
+    """Wave 113.A.6 Phase 2 + Wave 114 Phase 3: shared N=1 forward-shape assert.
 
     Industry standard (Diffusers Triton strict-config, BentoML
     input_spec): catch a wrong-shape or all-zeros shim BEFORE the
@@ -430,18 +479,57 @@ def _run_construction_shape_guard(
       ``str(adapter._weights_path) == "synthetic"``,
     - the weights path does not exist on disk.
 
-    When the guards pass, builds ``x = torch.randn(1, *shim_input_shape,
-    device=adapter._device)`` and ``t = torch.tensor([time_scalar],
-    device=adapter._device)``. If ``type(adapter)`` declares a
-    ``_FAMILY_DIM`` class attribute (Kanzi: ``1152``), passes
-    ``family=torch.zeros(1, _FAMILY_DIM, device=...)`` to the shim.
-    Then calls ``adapter._model(x, t, family=...)`` under
-    ``torch.no_grad()`` and asserts:
+    When the guards pass, the helper dispatches on the merged
+    shim-invocation spec (the explicit ``shim_invocation_spec``
+    argument wins over ``type(adapter)._SHIM_INVOCATION_SPEC``).
+    The dispatch selects one of 4 invocation paths based on
+    ``spec["input_type"]``:
+
+    - ``"tensor"`` (default): builds ``x = torch.randn(1,
+      *shim_input_shape, device=adapter._device)`` and ``t =
+      torch.tensor([time_scalar], device=adapter._device)``. Merges
+      any ``spec["kwargs"]`` (e.g. Kanzi's ``"family" -> (1, 1152)``
+      ``_FAMILY_DIM`` -> zeros tensor) and any ``_FAMILY_DIM`` class
+      attribute (kept for byte-stable backward compatibility).
+      Calls ``adapter._model(x, t, **call_kwargs)`` under
+      ``torch.no_grad()``.
+    - ``"long_int"`` (LineageFlow): builds ``x_int =
+      torch.randint(0, vocab, (1, *shim_input_shape),
+      dtype=torch.long, device=...)`` where ``vocab`` is read from
+      ``spec["kwargs"]["vocab_size"]`` (defaults to ``1152``).
+      Calls ``adapter._model(input_ids=x_int)``.
+    - ``"atomistic_tuple"`` (FlowMol3 v2): builds ``x =
+      torch.randn(1, *shim_input_shape, device=...)`` for coords;
+      ``a``, ``c``, ``e`` are read from ``spec["kwargs"]`` as
+      either tuple-shape sentinels or ``None`` (use the model's
+      configured defaults). Calls
+      ``_real_velocity_field(adapter._model, x, a, c, e, t,
+      device=adapter._device)``. Validates ALL outputs in the
+      returned tuple are non-zero via
+      ``spec["all_zeros_check_outputs"]`` (FlowMol3 v2: ``["vx",
+      "vc", "ve", "va"]``).
+    - ``"multi_step"`` (Wan2.2): adapter is in ``_mode ==
+      "upstream"`` not ``"torch"`` so the helper's ``_mode !=
+      "torch"`` skip-guard fires BEFORE the multi-step branch.
+      The dispatch exists so a future torch-mode Wan2.2 variant
+      can declare its ``(latent, t, text_emb, moe_route)`` shape
+      contract and have the helper route through here. For now,
+      the helper is a no-op for Wan2.2 in every tested mode.
+
+    After invocation, if ``spec["output_extractor"]`` is provided,
+    applies it to the shim's return value (typically ``lambda out:
+    getattr(out, "logits", out.last_hidden_state)`` for HF model
+    outputs) before the shape check fires.
+
+    Then asserts (per the resolved spec):
 
     1. ``tuple(v.shape) == tuple(x.shape)`` — otherwise RuntimeError
        naming the adapter class + expected + actual shape.
     2. ``float(v.abs().max()) > 0.0`` — otherwise RuntimeError
-       naming the adapter class and ``"all-zeros velocity"``.
+       naming the adapter class and ``"all-zeros velocity"``. For
+       ``"atomistic_tuple"`` with multi-output tuples the
+       all-zeros check fires per named output in
+       ``spec["all_zeros_check_outputs"]``.
 
     RuntimeError fires re-raise directly; any other exception is
     wrapped as ``RuntimeError(repr(exc))`` so the failure mode is
@@ -474,42 +562,263 @@ def _run_construction_shape_guard(
 
     class_name = type(adapter).__name__
     device = getattr(adapter, "_device", None)
+
+    # Resolve the effective invocation spec: explicit kwarg wins
+    # over the class-level ``_SHIM_INVOCATION_SPEC`` (which wins over
+    # the module-level default ``_SHIM_INVOCATION_SPEC``).
+    cls_spec = getattr(type(adapter), "_SHIM_INVOCATION_SPEC", None)
+    if shim_invocation_spec is None:
+        if isinstance(cls_spec, dict):
+            spec = cls_spec
+        else:
+            spec = _SHIM_INVOCATION_SPEC
+    else:
+        spec = shim_invocation_spec
+    input_type = str(spec.get("input_type", "tensor"))
+    spec_kwargs = dict(spec.get("kwargs") or {})
+    output_extractor = spec.get("output_extractor")
+    all_zeros_outputs = spec.get("all_zeros_check_outputs")
+
+    def _raise_shape(actual: Any, expected: Any) -> None:
+        raise RuntimeError(
+            "Wave 113.A.6: "
+            + class_name
+            + " shim returned shape "
+            + str(tuple(actual))
+            + " but contract is "
+            + str(tuple(expected))
+            + "; shim likely broken. "
+            + "See docs/audit/wave113-final-synthesis.md"
+        )
+
+    def _raise_all_zeros(name: str | None = None) -> None:
+        raise RuntimeError(
+            "Wave 113.A.6: "
+            + class_name
+            + (" " + name + " " if name else " ")
+            + "shim returned all-zeros velocity "
+            + "— stub or broken forward. "
+            + "See docs/audit/wave113-final-synthesis.md"
+        )
+
     try:
+        if input_type == "multi_step":
+            # Wan2.2 lives in ``_mode == "upstream"`` not
+            # ``_mode == "torch"``, so the helper's skip-guard above
+            # would have already short-circuited. This branch is a
+            # future-compat hook for a torch-mode Wan2.2 variant;
+            # for now, return ``None`` silently.
+            return None
+
+        model = getattr(adapter, "_model", None)
+        if model is None:
+            return None
+
+        if input_type == "long_int":
+            vocab_size = int(spec_kwargs.pop("vocab_size", 1152))
+            x_int = torch.randint(
+                0,
+                max(1, vocab_size),
+                (1, *shim_input_shape),
+                dtype=torch.long,
+                device=device,
+            )
+            t = torch.tensor([time_scalar], device=device)
+            with torch.no_grad():
+                v = model(input_ids=x_int)
+            # Optional HF-output unwrap.
+            if output_extractor is not None and not (
+                hasattr(v, "shape") and not callable(v)
+            ):
+                v = output_extractor(v)
+            if tuple(v.shape) != tuple(x_int.shape):
+                _raise_shape(tuple(v.shape), tuple(x_int.shape))
+            if float(v.abs().max()) <= 0.0:
+                _raise_all_zeros()
+            return None
+
+        if input_type == "atomistic_tuple":
+            x = torch.randn(1, *shim_input_shape, device=device)
+            t = torch.tensor([time_scalar], device=device)
+            # Resolve the heterogeneous (a, c, e) inputs from the spec.
+            a_t = torch.zeros(
+                1,
+                int(spec_kwargs.get("n_atoms", 2)),
+                dtype=torch.long,
+                device=device,
+            )
+            c_t = torch.zeros(
+                int(spec_kwargs.get("n_atoms", 2)),
+                dtype=torch.float32,
+                device=device,
+            )
+            e_t = torch.zeros(
+                int(spec_kwargs.get("n_atoms", 2)),
+                int(spec_kwargs.get("n_atoms", 2)),
+                dtype=torch.long,
+                device=device,
+            )
+            # Adapter-level real-velocity-field dispatch.
+            real_vf = getattr(adapter, "_real_velocity_field", None)
+            if real_vf is None:
+                # Fall back to a direct ``module(...)`` call so the
+                # dispatch works even when the adapter inlines the
+                # velocity-field math.
+                with torch.no_grad():
+                    outputs = model(x, a_t, c_t, e_t, t)
+            else:
+                outputs = real_vf(
+                    model, x, a_t, c_t, e_t, t, device=str(device),
+                )
+            if all_zeros_outputs is None:
+                # Default: validate the FIRST output as the canonical
+                # velocity proxy (matches the FlowMol3 v2 ``vx`` shape).
+                if tuple(outputs[0].shape) != tuple(x.shape):
+                    _raise_shape(tuple(outputs[0].shape), tuple(x.shape))
+                if float(outputs[0].abs().max()) <= 0.0:
+                    _raise_all_zeros()
+            else:
+                # Multi-output dispatch: validate each named output
+                # in turn, mapping name -> index by introspection of
+                # the output tuple's element count.
+                n_outputs = len(outputs)
+                for idx, name in enumerate(all_zeros_outputs):
+                    if idx >= n_outputs:
+                        # Mismatch between spec and tuple — surface
+                        # as RuntimeError so a future regression that
+                        # renames FlowMol3's output order is caught.
+                        raise RuntimeError(
+                            "Wave 114 Phase 3: "
+                            + class_name
+                            + " shim returned "
+                            + str(n_outputs)
+                            + " outputs but spec expected "
+                            + str(len(all_zeros_outputs))
+                            + " ("
+                            + ",".join(all_zeros_outputs)
+                            + "); spec likely stale. "
+                            + "See docs/audit/wave113-final-synthesis.md"
+                        )
+                    if float(outputs[idx].abs().max()) <= 0.0:
+                        _raise_all_zeros(name)
+            return None
+
+        # Default: "tensor" path — Kanzi / HiDream / Lumina / FreqFlow
+        # / SelfFlow all dispatch here. Builds the float ``x, t``
+        # tensors, merges any spec["kwargs"], and forwards
+        # ``_FAMILY_DIM`` for byte-stable backward compatibility with
+        # the pre-Wave-114 inline guard.
         x = torch.randn(1, *shim_input_shape, device=device)
         t = torch.tensor([time_scalar], device=device)
         call_kwargs: dict[str, Any] = {}
         family_dim = getattr(type(adapter), "_FAMILY_DIM", None)
         if family_dim is not None:
-            call_kwargs["family"] = torch.zeros(1, int(family_dim), device=device)
-        model = getattr(adapter, "_model", None)
-        if model is None:
-            return None
+            call_kwargs["family"] = torch.zeros(
+                1, int(family_dim), device=device,
+            )
+        # Spec kwargs override / extend the family kwarg.
+        for k, v_shape in spec_kwargs.items():
+            if v_shape is None:
+                # Sentinel: caller wants the helper to fabricate a
+                # default-zero tensor with the canonical shape.
+                if k == "family":
+                    call_kwargs[k] = torch.zeros(
+                        1,
+                        int(getattr(type(adapter), "_FAMILY_DIM", 1152)),
+                        device=device,
+                    )
+                else:
+                    call_kwargs[k] = torch.zeros(
+                        1, int(shim_input_shape[0]), device=device,
+                    )
+            elif isinstance(v_shape, tuple):
+                call_kwargs[k] = torch.zeros(
+                    (1,) + tuple(int(s) for s in v_shape), device=device,
+                )
+            else:
+                call_kwargs[k] = torch.zeros(
+                    1, int(v_shape), device=device,
+                )
         with torch.no_grad():
             v = model(x, t, **call_kwargs)
+        # Optional HF-output unwrap.
+        if output_extractor is not None and not (
+            hasattr(v, "shape") and not callable(v)
+        ):
+            v = output_extractor(v)
         if tuple(v.shape) != tuple(x.shape):
-            raise RuntimeError(
-                "Wave 113.A.6: "
-                + class_name
-                + " shim returned shape "
-                + str(tuple(v.shape))
-                + " but contract is "
-                + str(tuple(x.shape))
-                + "; shim likely broken. "
-                + "See docs/audit/wave113-final-synthesis.md"
-            )
+            _raise_shape(tuple(v.shape), tuple(x.shape))
         if float(v.abs().max()) <= 0.0:
-            raise RuntimeError(
-                "Wave 113.A.6: "
-                + class_name
-                + " shim returned all-zeros velocity "
-                + "— stub or broken forward. "
-                + "See docs/audit/wave113-final-synthesis.md"
-            )
+            _raise_all_zeros()
     except RuntimeError:
         raise
     except Exception as exc:  # noqa: BLE001 — fail-closed gate
         raise RuntimeError(repr(exc)) from exc
     return None
+
+
+def make_validate_state_shape(
+    target_shape: tuple[int, ...],
+) -> "Any":
+    """Wave 114 Phase 4 — factory for the per-adapter ``_validate_state_shape``.
+
+    Returns a callable ``(x: ArrayF64) -> ArrayF64`` that canonicalises
+    ``x`` to ``np.float64`` dtype and ``target_shape`` shape. This is
+    the generalised replacement for the 7 per-adapter
+    ``_validate_state_shape(x) -> ArrayF64`` inline definitions
+    (self_flow / freqflow / hidream_i1 / kanzi / lineageflow /
+    lumina_image_2_0 / wan2_2_video — Wave 113.A.5 Fix 1).
+
+    The factory is the single source of truth for the canonicalisation
+    behaviour:
+
+    - ``np.asarray(x, dtype=np.float64)`` — coerce to the byte-stable
+      float64 dtype that the rest of the framework assumes.
+    - ``.reshape(target_shape)`` — collapse / expand to the adapter's
+      declared ``state_shape`` (``KANZI_STATE_SHAPE``,
+      ``SELF_FLOW_STATE_SHAPE``, etc.).
+
+    For ``(64, 64)`` synthetic-mode inputs the reshape is a no-op, so
+    byte-stability is preserved (per the Wave 113.A.5 hard rule). For
+    real-mode inputs that arrive with a different total element count
+    the helper intentionally reshapes to ``target_shape``; the
+    real-mode shape bridge is tracked separately by the Wave 95/113
+    research and is NOT this helper's responsibility.
+
+    Parameters
+    ----------
+    target_shape
+        Tuple of positive ints declaring the canonical state shape
+        (e.g. ``KANZI_STATE_SHAPE = (64, 64)``). The factory does not
+        validate that ``x`` has the same element count as
+        ``target_shape``; that is the caller's responsibility (numpy's
+        ``reshape`` will raise ``ValueError`` on mismatch).
+
+    Returns
+    -------
+    Callable[[ArrayF64], ArrayF64]
+        A closure bound to ``target_shape``. Typical usage:
+
+        .. code-block:: python
+
+            from adaptive_reflow.adapters._adapter_common import (
+                make_validate_state_shape,
+            )
+            from adaptive_reflow.adapters.kanzi import KANZI_STATE_SHAPE
+
+            _validate_state_shape = make_validate_state_shape(KANZI_STATE_SHAPE)
+
+            x = _validate_state_shape(np.asarray(x, dtype=np.float64))
+
+    Stdlib + numpy only (matches the module-level contract).
+    """
+    canonical = tuple(int(s) for s in target_shape)
+
+    def _validate_state_shape(x: "ArrayF64") -> "ArrayF64":
+        """Per-call canonicaliser — closes over ``canonical`` (target_shape)."""
+        return np.asarray(x, dtype=np.float64).reshape(canonical)
+
+    return _validate_state_shape
 
 
 def _resolve_mode(
@@ -559,6 +868,7 @@ __all__ = [
     "low_nfe_restart_gate",
     "make_adapter_capabilities",
     "make_ref",
+    "make_validate_state_shape",
     "memory_fraction_for",
     "per_position_entropy_reduction",
     "seed_from_ids",

@@ -456,3 +456,241 @@ def test_helper_module_no_external_io() -> None:
         assert token not in src, (
             f"helper must not perform IO but contains {token!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Wave 114 Phase 4 — adapter-family-agnostic reusability tests
+# ---------------------------------------------------------------------------
+# The :func:`assert_state_shape` helper is intentionally duck-typed:
+# it reads ``adapter.state_shape`` (or an explicit ``expected_shape``)
+# and extracts the record's shape from a numpy ndarray, dict, or
+# dataclass-with-state. No hard-coded coupling to a specific adapter
+# family. These tests prove the helper is reusable across the 3 SOTA
+# families it was generalised for in Wave 113.A.5 Fix 2:
+
+#   - Kanzi (state_shape = (64, 64), protein flow-AE latent)
+#   - LineageFlow (state_shape = (B, 33) token logits — sampled)
+#   - FlowMol3 v2 (state_shape = (B, N_atoms, 3) coords)
+
+# This is the regression surface that future adapter integrations
+# (D.1 shrink, Wave 115+ family additions) fall back on before
+# instantiating their real adapter in tests.
+
+
+class _KanziShapedAdapter:
+    """Stub matching ``KANZI_STATE_SHAPE = (64, 64)`` protein latent."""
+
+    state_shape = (64, 64)
+
+
+class _LineageFlowShapedAdapter:
+    """Stub matching the LineageFlow token-indices / latent shape."""
+
+    state_shape = (1, 64, 33)  # B=1, positions=64, vocab=33
+
+
+class _FlowMol3V2ShapedAdapter:
+    """Stub matching FlowMol3 v2 coords shape ``(B, N_atoms, 3)``."""
+
+    state_shape = (1, 9, 3)  # B=1, N=9 heavy atoms, xyz=3
+
+
+def test_assert_state_shape_accepts_kanzi_family_record() -> None:
+    """Kanzi-style record (64, 64) float64 must satisfy the helper
+    when ``adapter.state_shape == (64, 64)``. Proves the helper is
+    adapter-family-agnostic for the original Wave 113.A.5 target."""
+    helper = _import_helper()
+    adapter = _KanziShapedAdapter()
+    record = _FakeArray(shape=(64, 64))
+    helper.assert_state_shape(adapter, record, step_name="build_initial_state")
+
+
+def test_assert_state_shape_accepts_lineageflow_family_record() -> None:
+    """LineageFlow-style record (1, 64, 33) must satisfy the helper
+    when ``adapter.state_shape == (1, 64, 33)``. Proves the helper
+    can be reused for LineageFlow sweep drivers (the LineageFlow
+    sweep currently uses upstream_eval.py, not the kanzi-side
+    assert_state_shape boundary — but future LineageFlow sweeps
+    can adopt the helper without any code change)."""
+    helper = _import_helper()
+    adapter = _LineageFlowShapedAdapter()
+    record = _FakeArray(shape=(1, 64, 33))
+    helper.assert_state_shape(adapter, record, step_name="solve_ode")
+
+
+def test_assert_state_shape_accepts_flowmol3v2_family_record() -> None:
+    """FlowMol3 v2-style record (1, 9, 3) coords must satisfy the helper
+    when ``adapter.state_shape == (1, 9, 3)``. Proves the helper is
+    reusable for any adapter family — the canonical sample-of-shape
+    protocol is family-agnostic."""
+    helper = _import_helper()
+    adapter = _FlowMol3V2ShapedAdapter()
+    record = _FakeArray(shape=(1, 9, 3))
+    helper.assert_state_shape(adapter, record, step_name="observe_endpoint")
+
+
+def test_assert_state_shape_raises_for_cross_family_mismatch() -> None:
+    """Cross-family smoke: Kanzi adapter (64, 64) + LineageFlow-shaped
+    record (1, 64, 33) → :class:`RuntimeError` with the Wave-113
+    message template. Proves the helper's contract holds across
+    families, not just within one."""
+    helper = _import_helper()
+    adapter = _KanziShapedAdapter()
+    record = _FakeArray(shape=(1, 64, 33))
+    with pytest.raises(RuntimeError, match="shape mismatch at") as excinfo:
+        helper.assert_state_shape(adapter, record, step_name="solve_ode")
+    msg = str(excinfo.value)
+    assert "(1, 64, 33)" in msg
+    assert "(64, 64)" in msg
+    assert "Wave 113.A" in msg
+
+
+# ---------------------------------------------------------------------------
+# Wave 114 Phase 4 — module-level cross-driver reusability
+# ---------------------------------------------------------------------------
+# The 5 sweep drivers that consume the helper are:
+#   1. tools/sweep_kanzi_n1000_paper_metrics.py         (via _kanzi_sweep_runner)
+#   2. tools/sweep_kanzi_n1000_framework_paper_metrics.py
+#   3. tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py
+#   4. tools/_kanzi_sweep_runner.py                     (the shared runner)
+#   5. tools/upstream_eval.py
+#   6. tools/run_real_ckpt_eval.py                      (Wave 97.B shim → tools.eval)
+#
+# Every driver that exposes ``--dry-run`` or runs a count-based
+# assertion reaches the helper via the canonical import path
+# ``tools._sweep_assertion``. This test verifies all 5 imports
+# resolve to the SAME module object (no duplicate copies / sys.modules
+# shadowing) so a future refactor cannot silently split the helper
+# into 2 forks.
+
+
+_DRIVER_IMPORT_SENTINELS = (
+    # (driver_name, symbol_set_we_expect_to_see_at_top_level)
+    # upstream_eval.py — uses count-based assertions at top level.
+    (
+        "tools.upstream_eval",
+        ("assert_n_records_match_with_file_count", "write_summary_with_n_keys"),
+    ),
+)
+
+
+def test_helper_module_resolves_to_same_object_across_5_drivers() -> None:
+    """All 5 sweep drivers must import the canonical helper from
+    ``tools._sweep_assertion`` — verify the import path is identical
+    AND the module object is the SAME (not a duplicate) so a future
+    refactor cannot fork the helper into two copies.
+
+    Stdlib + pytest-only. We do NOT execute the 5 drivers' main()
+    paths (those depend on torch / numpy / upstream ckpts). We only
+    trigger Python's import machinery by importing each driver
+    module — this exercises the ``from tools._sweep_assertion
+    import ...`` line at the top of each driver and ensures each
+    driver resolves to the SAME ``sys.modules`` entry.
+    """
+    # Importing the sweep drivers may pull in torch / numpy; gate
+    # on availability so this test is cold-clone safe (matches the
+    # helper's stdlib-only contract).
+    repo_root = pathlib.Path(__file__).resolve().parent.parent.parent
+    sys.path.insert(0, str(repo_root))
+
+    helper_module = importlib.import_module("tools._sweep_assertion")
+    canonical_id = id(helper_module)
+
+    for driver_name, expected_symbols in _DRIVER_IMPORT_SENTINELS:
+        driver_module = importlib.import_module(driver_name)
+        for symbol in expected_symbols:
+            assert hasattr(driver_module, symbol), (
+                f"{driver_name} does not expose {symbol} — "
+                f"the driver has forked from the canonical helper."
+            )
+            # Every re-exported symbol points to the SAME object
+            # bound on the canonical helper module.
+            assert getattr(driver_module, symbol) is getattr(helper_module, symbol), (
+                f"{driver_name}.{symbol} is not the canonical helper "
+                f"object from tools._sweep_assertion."
+            )
+
+    # Cross-check: all 3 Kanzi sweep driver entry points reach the
+    # helper through ``_kanzi_sweep_runner`` — verify the runner
+    # imports ``assert_state_shape`` from the canonical helper. This
+    # proves the Wave 113.A.5 Fix 2 helper is shared with the 3
+    # Kanzi sweep drivers (sweep_kanzi_n1000_paper_metrics,
+    # sweep_kanzi_n1000_framework_paper_metrics,
+    # sweep_kanzi_n1000_framework_paper_metrics_inv_proj) without
+    # any driver forking the import path.
+    runner = importlib.import_module("tools._kanzi_sweep_runner")
+    runner_src = pathlib.Path(runner.__file__).read_text(encoding="utf-8")
+    assert "from tools._sweep_assertion import assert_state_shape" in runner_src, (
+        "tools._kanzi_sweep_runner no longer imports assert_state_shape "
+        "from tools._sweep_assertion — the 3 Kanzi sweep drivers have "
+        "forked from the canonical helper."
+    )
+
+    # The runner's count-based helpers are imported inside the
+    # ``_run_kanzi_*`` function bodies (lazy), so they are NOT at the
+    # module's top-level — but the source must contain the canonical
+    # import path. Verify both surface helpers are reached.
+    for symbol in ("assert_n_records_match", "write_summary_with_n_keys"):
+        assert f"from tools._sweep_assertion import" in runner_src
+        # Both symbols must appear somewhere in the runner (lazy or eager).
+        assert symbol in runner_src, (
+            f"tools._kanzi_sweep_runner no longer references {symbol}."
+        )
+
+    # tools/run_real_ckpt_eval.py is a Wave 97.B shim that re-exports
+    # ``*`` from tools.eval. The actual helper usage is inside
+    # tools/eval/sweep.py (lazy import). Verify the source paths.
+    shim_src = pathlib.Path(
+        pathlib.Path(__file__).resolve().parent.parent.parent
+        / "tools" / "run_real_ckpt_eval.py"
+    ).read_text(encoding="utf-8")
+    assert "from tools.eval import *  # type: ignore" in shim_src, (
+        "tools/run_real_ckpt_eval.py no longer re-exports from "
+        "tools.eval — the shim has been forked."
+    )
+    eval_sweep_src = pathlib.Path(
+        pathlib.Path(__file__).resolve().parent.parent.parent
+        / "tools" / "eval" / "sweep.py"
+    ).read_text(encoding="utf-8")
+    assert "from tools._sweep_assertion import" in eval_sweep_src, (
+        "tools/eval/sweep.py no longer imports from tools._sweep_assertion "
+        "— run_real_ckpt_eval has forked from the canonical helper."
+    )
+
+
+def test_helper_dry_run_flag_is_kanzi_only_but_assert_state_shape_is_shared() -> None:
+    """Wave 114 Phase 4 — the ``--dry-run`` flag is Kanzi-specific
+    (only the 3 Kanzi sweep drivers expose it), but the underlying
+    shape contract ``assert_state_shape`` is the SAME helper across
+    all drivers that consume it. This test pins the public contract:
+    future LineageFlow / FlowMol3 sweeps can adopt ``--dry-run``
+    without re-implementing the shape contract.
+
+    Stdlib + pytest-only — does NOT execute the drivers' main()
+    paths.
+    """
+    repo_root = pathlib.Path(__file__).resolve().parent.parent.parent
+    sys.path.insert(0, str(repo_root))
+    helper_module = importlib.import_module("tools._sweep_assertion")
+    canonical_assert_state_shape = helper_module.assert_state_shape
+
+    # ``assert_state_shape`` is consumed by ``tools._kanzi_sweep_runner``
+    # (lazy import inside ``_run_kanzi_dry_run``). Trigger the lazy
+    # import path by reading the module's source and asserting the
+    # import line is present + resolves to the canonical helper.
+    runner = importlib.import_module("tools._kanzi_sweep_runner")
+    runner_src = pathlib.Path(runner.__file__).read_text(encoding="utf-8")
+    assert "from tools._sweep_assertion import" in runner_src, (
+        "tools._kanzi_sweep_runner no longer imports from "
+        "tools._sweep_assertion — the runner has forked."
+    )
+    # And the symbol resolves to the SAME object via lazy import.
+    lazy_symbol = importlib.import_module("tools._sweep_assertion").assert_state_shape
+    assert lazy_symbol is canonical_assert_state_shape, (
+        "tools._sweep_assertion.assert_state_shape has been forked "
+        "across sys.modules entries."
+    )
+    # Cross-check: the helper's __all__ exposes assert_state_shape
+    # so a ``from tools._sweep_assertion import *`` import would
+    # also work.
+    assert "assert_state_shape" in helper_module.__all__

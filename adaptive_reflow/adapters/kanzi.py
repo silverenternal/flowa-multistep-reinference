@@ -128,6 +128,7 @@ from adaptive_reflow.adapters._adapter_common import (
     kaiming_uniform,
     load_real_weights,
     make_ref,
+    make_validate_state_shape,
     memory_fraction_for,
     seed_from_ids,
     torch_is_available as _adapter_common_torch_is_available,
@@ -363,28 +364,24 @@ KANZI_MECHANISM_ID: str = "kanzi@v1"
 ArrayF64 = NDArray[np.float64]
 
 
-def _validate_state_shape(x: ArrayF64) -> ArrayF64:
-    """Reshape ``x`` to ``KANZI_STATE_SHAPE`` (64, 64) and float64.
-
-    Wave 113.A.5 Fix 1 — align with the 6 sibling adapters
-    (:mod:`adaptive_reflow.adapters.self_flow`,
-    :mod:`adaptive_reflow.adapters.freqflow`,
-    :mod:`adaptive_reflow.adapters.hidream_i1`,
-    :mod:`adaptive_reflow.adapters.lineageflow`,
-    :mod:`adaptive_reflow.adapters.lumina_image_2_0`,
-    :mod:`adaptive_reflow.adapters.wan2_2_video`) which all expose a
-    module-level ``_validate_state_shape(x) -> ArrayF64`` helper that
-    canonicalises the input latent shape + dtype before the velocity
-    field dispatches.
-
-    The reshape is a no-op for already-shaped ``(64, 64)`` inputs
-    (synthetic-mode byte-stability preserved per Wave 113.A.5 hard
-    rule). For real-mode inputs that arrive as ``(64, 512)`` the
-    helper intentionally collapses them to ``(64, 64)`` — the
-    real-mode shape bridge is tracked separately by the Wave 95/113
-    research and is NOT this helper's responsibility.
-    """
-    return np.asarray(x, dtype=np.float64).reshape(KANZI_STATE_SHAPE)
+# Wave 114 Phase 4 — generate the per-adapter canonicaliser once at
+# module-import time via the shared factory. The closure is the
+# single source of truth for the canonical (KANZI_STATE_SHAPE, float64)
+# pair; future adapters that follow the Wave 113.A.5 Fix 1 pattern can
+# call ``make_validate_state_shape(their_STATE_SHAPE)`` and get the
+# same semantic. Re-binding the variable name ``_validate_state_shape``
+# preserves the historical public API of this module so existing
+# callers (e.g. tests/test_adapters/test_kanzi.py) need not change.
+#
+# Original Wave 113.A.5 Fix 1 docstring (kept for downstream readers):
+#   Reshape ``x`` to ``KANZI_STATE_SHAPE`` (64, 64) and float64.
+#   The reshape is a no-op for already-shaped ``(64, 64)`` inputs
+#   (synthetic-mode byte-stability preserved per Wave 113.A.5 hard
+#   rule). For real-mode inputs that arrive as ``(64, 512)`` the
+#   helper intentionally collapses them to ``(64, 64)`` — the
+#   real-mode shape bridge is tracked separately by the Wave 95/113
+#   research and is NOT this helper's responsibility.
+_validate_state_shape = make_validate_state_shape(KANZI_STATE_SHAPE)
 
 
 # ---------------------------------------------------------------------------
@@ -1383,6 +1380,21 @@ class KanziAdapter(FlowMatchingODEAdapter):
         3,
     )
     _FAMILY_DIM: int = 1152
+    # Wave 114 Phase 3 — shim-invocation-spec declaration read by
+    # :func:`_adapter_common._run_construction_shape_guard`. Kanzi's
+    # real shim is ``_model(x, t, family=...)`` (3-arg call with a
+    # ``family`` zero-tensor of shape ``(1, _FAMILY_DIM)``), so the
+    # spec declares ``input_type="tensor"`` and a ``family`` kwarg
+    # with shape ``(1152,)`` so the helper's spec-driven kwargs path
+    # is the canonical source of truth (the ``_FAMILY_DIM`` class
+    # attribute is still read for byte-stable back-compat with
+    # pre-Wave-114 call sites).
+    _SHIM_INVOCATION_SPEC: dict = {
+        "input_type": "tensor",
+        "kwargs": {"family": (1152,)},
+        "output_extractor": None,
+        "all_zeros_check_outputs": None,
+    }
 
     def __init__(
         self,

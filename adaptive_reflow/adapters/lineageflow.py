@@ -291,6 +291,18 @@ ERR_LINEAGEFLOW_L_OUT_OF_RANGE: str = "lineageflow_L_out_of_range"
 ERR_LINEAGEFLOW_VOCAB_OUT_OF_RANGE: str = "lineageflow_vocab_out_of_range"
 ERR_LINEAGEFLOW_FAMILY_ID_INVALID: str = "lineageflow_family_id_invalid"
 
+
+#: Module-level HF ``ModelOutput`` unwrap callable for the
+#: Wave 114 Phase 3 ``_SHIM_INVOCATION_SPEC.output_extractor``
+#: field. Mirrors the inline unwrap at line 586-592 (``hasattr(v,
+#: "logits") / hasattr(v, "last_hidden_state")``) used by
+#: :func:`_torch_velocity_field`. Module-scope so the class-body
+#: dict literal can reference it directly (Python class bodies do
+#: not allow ``lambda`` definitions).
+_LINEAGEFLOW_HF_OUTPUT_EXTRACTOR = staticmethod(  # type: ignore[var-annotated]
+    lambda out: getattr(out, "logits", out.last_hidden_state)
+)
+
 Mode = Literal["torch", "synthetic"]
 
 #: Provenance marker / mechanism_id token. Used both as a class-level
@@ -1293,6 +1305,25 @@ class LineageFlowAdapter(FlowMatchingODEAdapter):
     # 64×32 simplex family) can copy-paste without touching the
     # helper signature.
     _SHIM_INPUT_SHAPE: tuple[int, ...] = tuple(LINEAGEFLOW_STATE_SHAPE)
+    # Wave 114 Phase 3 — shim-invocation-spec declaration read by
+    # :func:`_adapter_common._run_construction_shape_guard`.
+    # LineageFlow's real shim is ``EsmModel(input_ids=...)`` — it
+    # consumes Long token ids (vocab=33, matching
+    # ``LINEAGEFLOW_VOCAB_SIZE``), NOT a float ``(B, L, K)``
+    # simplex. The spec declares ``input_type="long_int"`` so the
+    # helper builds ``torch.randint(0, vocab, (1, *shim_input_shape),
+    # dtype=torch.long)`` and the HF ``BaseModelOutputWith...`` /
+    # ``ModelOutput`` wrapper is unwrapped via ``output_extractor``
+    # (``getattr(out, "logits", out.last_hidden_state)``) before the
+    # shape-vs-input check fires. ``shim_input_shape`` is
+    # ``LINEAGEFLOW_STATE_SHAPE == (256, 33)`` so the unwrapped
+    # output's leading two dims must match the input.
+    _SHIM_INVOCATION_SPEC: dict = {
+        "input_type": "long_int",
+        "kwargs": {"vocab_size": int(LINEAGEFLOW_VOCAB_SIZE)},
+        "output_extractor": _LINEAGEFLOW_HF_OUTPUT_EXTRACTOR,
+        "all_zeros_check_outputs": None,
+    }
 
     def __init__(
         self,
