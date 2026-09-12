@@ -63,6 +63,7 @@ __all__ = [
     "FIDProtocol",
     "InceptionV3FIDEvaluator",
     "compute_frechet_distance",
+    "compute_frechet_distance_closed_form",
 ]
 
 
@@ -415,57 +416,23 @@ class InceptionV3FIDEvaluator(FIDProtocol):
     ) -> float:
         """Fréchet distance between two fitted Gaussians.
 
-        Implements::
+        Thin wrapper around the module-level pure-NumPy
+        :func:`_frechet_distance_closed_form` (no torch / torchvision
+        dependency). Kept as an instance method so the
+        :class:`FIDProtocol` interface is byte-stable; the
+        :attr:`eigenclip_eps` is forwarded as a kwarg.
 
-            FID = ||μ_s - μ_r||^2 + Tr(Σ_s + Σ_r - 2 (Σ_s Σ_r)^{1/2})
-
-        with three numerical guards, applied in order:
-
-        1. :func:`scipy.linalg.sqrtm` when scipy is importable.
-        2. Eigen-clipping retry ``+ eps * I`` when the primary result
-           contains non-finite entries (the canonical pytorch-fid
-           pattern; mirrored by ``tools.compute_cifar_fid`` and
-           ``tools.run_image_eval``).
-        3. Pure-NumPy eigendecomposition when scipy is unavailable
-           entirely (matches the ``tools.eval_rf_cifar`` fallback).
-
-        Returns ``float('nan')`` when the result is non-finite after
-        all three guards, so the caller can distinguish "FID is
-        undefined" from "FID == 0".
+        See :func:`_frechet_distance_closed_form` for the full
+        numerical contract (scipy.linalg.sqrtm → eigen-clipping retry
+        → pure-NumPy fallback).
         """
-        if mu_s.shape != mu_r.shape:
-            raise ValueError(
-                f"mu shapes must match: {mu_s.shape} vs {mu_r.shape}"
-            )
-        if sigma_s.shape != sigma_r.shape:
-            raise ValueError(
-                f"sigma shapes must match: {sigma_s.shape} vs {sigma_r.shape}"
-            )
-        if sigma_s.ndim != 2 or sigma_s.shape[0] != sigma_s.shape[1]:
-            raise ValueError(
-                f"sigma_s must be a square 2-D matrix; got shape {sigma_s.shape}"
-            )
-
-        diff = mu_s - mu_r
-        dim = int(sigma_s.shape[0])
-
-        covmean = _sqrtm_with_eigenclip(sigma_s, sigma_r, eps=self._eigenclip_eps)
-        # Guard 2: complex-valued result → keep real part (per
-        # tools.eval_rf_cifar and tools.run_image_eval pattern).
-        if np.iscomplexobj(covmean):
-            covmean = np.real(covmean)
-
-        fid_value = float(
-            float(np.dot(diff, diff))
-            + float(np.trace(sigma_s))
-            + float(np.trace(sigma_r))
-            - 2.0 * float(np.trace(covmean))
+        return _frechet_distance_closed_form(
+            mu_s,
+            sigma_s,
+            mu_r,
+            sigma_r,
+            eigenclip_eps=self._eigenclip_eps,
         )
-        # FID is non-negative by construction; numerical noise may push
-        # the value to a tiny negative. Clip to zero for safety.
-        if not math.isfinite(fid_value):
-            return float("nan")
-        return float(max(fid_value, 0.0))
 
     def config_hash(self) -> str:
         """Stable digest binding family + hyperparameters + torchvision version.
@@ -500,24 +467,142 @@ def compute_frechet_distance(
     sigma_r: NDArray[np.float64],
     eigenclip_eps: float = FID_EIGENCLIP_EPS_DEFAULT,
 ) -> float:
-    """Functional form of :meth:`InceptionV3FIDEvaluator._compute_frechet_distance_inner`.
+    """Functional form of the closed-form Fréchet distance (no torch deps).
 
-    Provided so legacy call sites can migrate without instantiating an
-    evaluator. Returns ``float('nan')`` when the result is
-    non-finite; the result is clipped to ``>= 0`` otherwise.
+    Public alias for :func:`compute_frechet_distance_closed_form` —
+    both names delegate to the same module-level pure-NumPy helper
+    :func:`_frechet_distance_closed_form`. The signature is preserved
+    from earlier versions so legacy call sites continue to work
+    unchanged; the only behavioral change is that this function no
+    longer eagerly constructs an :class:`InceptionV3FIDEvaluator`
+    (which requires ``torch`` + ``torchvision``). The Fréchet
+    arithmetic was always pure-NumPy — the eager evaluator
+    construction was a side-effect of routing through the InceptionV3
+    class for historical reasons.
+
+    Returns ``float('nan')`` when the result is non-finite after all
+    three numerical guards; the result is clipped to ``>= 0``
+    otherwise.
+
+    See Also
+    --------
+    compute_frechet_distance_closed_form : Identical function under a
+        more explicit name. Prefer the new name in new code.
     """
-    evaluator = InceptionV3FIDEvaluator(
-        feature_dim=int(mu_s.shape[0]),
+    return _frechet_distance_closed_form(
+        np.asarray(mu_s, dtype=np.float64),
+        np.asarray(sigma_s, dtype=np.float64),
+        np.asarray(mu_r, dtype=np.float64),
+        np.asarray(sigma_r, dtype=np.float64),
         eigenclip_eps=float(eigenclip_eps),
     )
-    return float(
-        evaluator._compute_frechet_distance_inner(  # noqa: SLF001 — internal API
-            np.asarray(mu_s, dtype=np.float64),
-            np.asarray(sigma_s, dtype=np.float64),
-            np.asarray(mu_r, dtype=np.float64),
-            np.asarray(sigma_r, dtype=np.float64),
-        )
+
+
+def compute_frechet_distance_closed_form(
+    *,
+    mu_s: NDArray[np.float64],
+    sigma_s: NDArray[np.float64],
+    mu_r: NDArray[np.float64],
+    sigma_r: NDArray[np.float64],
+    eigenclip_eps: float = FID_EIGENCLIP_EPS_DEFAULT,
+) -> float:
+    """Closed-form Fréchet distance — pure NumPy, no torch / torchvision.
+
+    Public alias for the module-level pure-NumPy Fréchet arithmetic
+    :func:`_frechet_distance_closed_form`. Provided so the closed-form
+    math can be exercised in environments where the canonical
+    :class:`InceptionV3FIDEvaluator` cannot be constructed (e.g.
+    CPU-only CI without ``torch`` / ``torchvision``).
+
+    Implements::
+
+        FID = ||μ_s - μ_r||^2 + Tr(Σ_s + Σ_r - 2 (Σ_s Σ_r)^{1/2})
+
+    with three numerical guards (scipy.linalg.sqrtm → eigen-clipping
+    retry ``+ eps * I`` → pure-NumPy eigendecomposition fallback).
+    Returns ``float('nan')`` when the result is non-finite after all
+    three guards; the result is clipped to ``>= 0`` otherwise.
+
+    See Also
+    --------
+    compute_frechet_distance : Legacy alias with the same signature.
+    """
+    return _frechet_distance_closed_form(
+        np.asarray(mu_s, dtype=np.float64),
+        np.asarray(sigma_s, dtype=np.float64),
+        np.asarray(mu_r, dtype=np.float64),
+        np.asarray(sigma_r, dtype=np.float64),
+        eigenclip_eps=float(eigenclip_eps),
     )
+
+
+def _frechet_distance_closed_form(
+    mu_s: NDArray[np.float64],
+    sigma_s: NDArray[np.float64],
+    mu_r: NDArray[np.float64],
+    sigma_r: NDArray[np.float64],
+    *,
+    eigenclip_eps: float = FID_EIGENCLIP_EPS_DEFAULT,
+) -> float:
+    """Pure-NumPy closed-form Fréchet distance (no torch / torchvision).
+
+    Implements::
+
+        FID = ||μ_s - μ_r||^2 + Tr(Σ_s + Σ_r - 2 (Σ_s Σ_r)^{1/2})
+
+    with three numerical guards, applied in order:
+
+    1. :func:`scipy.linalg.sqrtm` when scipy is importable.
+    2. Eigen-clipping retry ``+ eps * I`` when the primary result
+       contains non-finite entries (the canonical pytorch-fid
+       pattern; mirrored by ``tools.compute_cifar_fid`` and
+       ``tools.run_image_eval``).
+    3. Pure-NumPy eigendecomposition when scipy is unavailable
+       entirely (matches the ``tools.eval_rf_cifar`` fallback).
+
+    Returns ``float('nan')`` when the result is non-finite after
+    all three guards, so the caller can distinguish "FID is
+    undefined" from "FID == 0".
+
+    This function is the single source of truth for the Fréchet
+    arithmetic. Both :class:`InceptionV3FIDEvaluator` (canonical
+    InceptionV3 path) and the module-level functional forms
+    :func:`compute_frechet_distance` / :func:`compute_frechet_distance_closed_form`
+    delegate here so the numerical contract is identical across
+    paths.
+    """
+    if mu_s.shape != mu_r.shape:
+        raise ValueError(
+            f"mu shapes must match: {mu_s.shape} vs {mu_r.shape}"
+        )
+    if sigma_s.shape != sigma_r.shape:
+        raise ValueError(
+            f"sigma shapes must match: {sigma_s.shape} vs {sigma_r.shape}"
+        )
+    if sigma_s.ndim != 2 or sigma_s.shape[0] != sigma_s.shape[1]:
+        raise ValueError(
+            f"sigma_s must be a square 2-D matrix; got shape {sigma_s.shape}"
+        )
+
+    diff = mu_s - mu_r
+
+    covmean = _sqrtm_with_eigenclip(sigma_s, sigma_r, eps=float(eigenclip_eps))
+    # Guard 2: complex-valued result → keep real part (per
+    # tools.eval_rf_cifar and tools.run_image_eval pattern).
+    if np.iscomplexobj(covmean):
+        covmean = np.real(covmean)
+
+    fid_value = float(
+        float(np.dot(diff, diff))
+        + float(np.trace(sigma_s))
+        + float(np.trace(sigma_r))
+        - 2.0 * float(np.trace(covmean))
+    )
+    # FID is non-negative by construction; numerical noise may push
+    # the value to a tiny negative. Clip to zero for safety.
+    if not math.isfinite(fid_value):
+        return float("nan")
+    return float(max(fid_value, 0.0))
 
 
 # ---------------------------------------------------------------------------

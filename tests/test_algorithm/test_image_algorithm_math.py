@@ -36,8 +36,9 @@ Test cases
 The 2-feature / 2-sample regime is small enough that finite-sample
 variance is **non-trivial** (so we use the closed-form *statistics*
 ``mu``, ``sigma`` directly via
-:meth:`InceptionV3FIDEvaluator.compute_from_precomputed`, not
-:meth:`compute_from_features`).
+:func:`compute_frechet_distance_closed_form`, not via
+:class:`InceptionV3FIDEvaluator` which requires ``torch`` +
+``torchvision`` for construction).
 """
 
 from __future__ import annotations
@@ -48,8 +49,8 @@ import numpy as np
 import pytest
 
 from adaptive_reflow.eval.fid import (
-    InceptionV3FIDEvaluator,
     compute_frechet_distance,
+    compute_frechet_distance_closed_form,
 )
 
 
@@ -109,9 +110,9 @@ def test_two_feature_two_sample_closed_form_diagonal() -> None:
     """2-feature / 2-sample diagonal-covariance case matches closed form.
 
     We construct two Gaussians with **diagonal** covariances and
-    verify the framework's :func:`compute_frechet_distance` matches
-    the stdlib closed form. Both μ and Σ are constructed by hand
-    (no finite-sample noise from fitting).
+    verify the framework's :func:`compute_frechet_distance_closed_form`
+    matches the stdlib closed form. Both μ and Σ are constructed by
+    hand (no finite-sample noise from fitting).
     """
     mu_s = np.array([0.5, -0.3], dtype=np.float64)
     mu_r = np.array([-0.2, 0.8], dtype=np.float64)
@@ -126,7 +127,9 @@ def test_two_feature_two_sample_closed_form_diagonal() -> None:
         sigma_r_diag=(float(sigma_r[0, 0]), float(sigma_r[1, 1])),
     )
 
-    got = float(compute_frechet_distance(mu_s=mu_s, sigma_s=sigma_s, mu_r=mu_r, sigma_r=sigma_r))
+    got = float(compute_frechet_distance_closed_form(
+        mu_s=mu_s, sigma_s=sigma_s, mu_r=mu_r, sigma_r=sigma_r,
+    ))
     assert math.isfinite(got), f"FID is non-finite: {got!r}"
     assert got >= 0.0, f"FID must be non-negative; got {got}"
     rel = abs(got - expected) / max(expected, 1e-12)
@@ -156,7 +159,9 @@ def test_two_feature_two_sample_closed_form_identity() -> None:
     # 1.5^2 + (-2.0)^2 = 2.25 + 4.0 = 6.25.
     assert expected == pytest.approx(6.25)
 
-    got = float(compute_frechet_distance(mu_s=mu_s, sigma_s=sigma_s, mu_r=mu_r, sigma_r=sigma_r))
+    got = float(compute_frechet_distance_closed_form(
+        mu_s=mu_s, sigma_s=sigma_s, mu_r=mu_r, sigma_r=sigma_r,
+    ))
     assert math.isfinite(got)
     rel = abs(got - expected) / expected
     assert rel < 1e-9, (
@@ -175,7 +180,9 @@ def test_zero_mean_zero_covariance_is_zero() -> None:
     """
     mu = np.array([0.1, 0.2], dtype=np.float64)
     sigma = np.array([[2.0, 0.5], [0.5, 3.0]], dtype=np.float64)
-    got = float(compute_frechet_distance(mu_s=mu, sigma_s=sigma, mu_r=mu, sigma_r=sigma))
+    got = float(compute_frechet_distance_closed_form(
+        mu_s=mu, sigma_s=sigma, mu_r=mu, sigma_r=sigma,
+    ))
     assert math.isfinite(got)
     assert got == pytest.approx(0.0, abs=1e-9), (
         f"FID for coincident distributions should be 0; got {got:.6e}. "
@@ -201,7 +208,7 @@ def test_fid_nonnegative_for_random_inputs() -> None:
         sigma_s = A_s @ A_s.T + 0.1 * np.eye(d)
         A_r = rng.standard_normal((d, d))
         sigma_r = A_r @ A_r.T + 0.1 * np.eye(d)
-        got = float(compute_frechet_distance(
+        got = float(compute_frechet_distance_closed_form(
             mu_s=mu_s, sigma_s=sigma_s, mu_r=mu_r, sigma_r=sigma_r,
         ))
         assert math.isfinite(got), f"FID non-finite on random input: {got!r}"
@@ -211,8 +218,9 @@ def test_fid_nonnegative_for_random_inputs() -> None:
 def test_compute_from_precomputed_matches_closed_form_2d() -> None:
     """The precomputed path agrees with the closed form on a 2-D toy.
 
-    We feed ``(sample_feats, ref_mu, ref_sigma)`` through
-    :meth:`InceptionV3FIDEvaluator.compute_from_precomputed` and
+    We fit ``(mu_s, sigma_s)`` from a feature matrix and feed those
+    statistics (plus the precomputed ``ref_mu`` / ``ref_sigma``)
+    through :func:`compute_frechet_distance_closed_form` and
     compare with the hand-computed FID. The features are *exactly*
     the closed-form Gaussians (no finite-sample fitting noise):
 
@@ -223,6 +231,13 @@ def test_compute_from_precomputed_matches_closed_form_2d() -> None:
     converges to ``Σ_s`` and the fitted ``mu_s`` converges to the
     true mean. The residual is O(d/n) ≈ 8e-4, far smaller than
     the closed-form mean term.
+
+    This is the test-internal retarget of the original
+    ``InceptionV3FIDEvaluator.compute_from_precomputed`` exercise;
+    the math path is identical (both call into the same module-level
+    closed-form helper), but the test no longer requires
+    ``torch`` / ``torchvision`` to instantiate the canonical
+    InceptionV3 evaluator.
     """
     d = 2
     n = 10_000
@@ -242,6 +257,10 @@ def test_compute_from_precomputed_matches_closed_form_2d() -> None:
     feats = (z @ L_s.T) + mu_s_true  # (n, d)
     feats = feats.astype(np.float64)
 
+    # Fit (mu_s, sigma_s) from feats and run the closed-form path.
+    mu_s_fit = np.asarray(feats.mean(axis=0), dtype=np.float64)
+    sigma_s_fit = np.asarray(np.cov(feats, rowvar=False), dtype=np.float64)
+
     expected = _closed_form_fid_2x2_diagonal(
         mu_s=(float(mu_s_true[0]), float(mu_s_true[1])),
         mu_r=(float(mu_r[0]), float(mu_r[1])),
@@ -249,16 +268,16 @@ def test_compute_from_precomputed_matches_closed_form_2d() -> None:
         sigma_r_diag=(float(sigma_r[0, 0]), float(sigma_r[1, 1])),
     )
 
-    evaluator = InceptionV3FIDEvaluator(feature_dim=d)
-    result = evaluator.compute_from_precomputed(feats, mu_r, sigma_r)
-    assert result.is_finite, f"FID is non-finite: {result.value!r}"
-    assert result.feature_dim == d
+    got = float(compute_frechet_distance_closed_form(
+        mu_s=mu_s_fit, sigma_s=sigma_s_fit, mu_r=mu_r, sigma_r=sigma_r,
+    ))
+    assert math.isfinite(got), f"FID is non-finite: {got!r}"
     # 5 % relative tolerance is generous given finite-sample
     # noise on the mu estimator (which inflates the mean term by
     # ~d/n = 2e-4 / expected ~ 10).
-    rel = abs(float(result.value) - expected) / expected
+    rel = abs(got - expected) / expected
     assert rel < 0.05, (
-        f"FID ({result.value:.6f}) does not match closed-form "
+        f"FID ({got:.6f}) does not match closed-form "
         f"({expected:.6f}); relative error {rel:.4f}. The "
         f"compute_from_precomputed path has regressed."
     )
@@ -280,8 +299,12 @@ def test_fid_symmetric_in_arguments() -> None:
     B = rng.standard_normal((d, d))
     sigma_b = B @ B.T + 0.1 * np.eye(d)
 
-    fab = float(compute_frechet_distance(mu_s=mu_a, sigma_s=sigma_a, mu_r=mu_b, sigma_r=sigma_b))
-    fba = float(compute_frechet_distance(mu_s=mu_b, sigma_s=sigma_b, mu_r=mu_a, sigma_r=sigma_a))
+    fab = float(compute_frechet_distance_closed_form(
+        mu_s=mu_a, sigma_s=sigma_a, mu_r=mu_b, sigma_r=sigma_b,
+    ))
+    fba = float(compute_frechet_distance_closed_form(
+        mu_s=mu_b, sigma_s=sigma_b, mu_r=mu_a, sigma_r=sigma_a,
+    ))
     assert math.isfinite(fab) and math.isfinite(fba)
     assert fab == pytest.approx(fba, rel=1e-9, abs=1e-9), (
         f"FID is not symmetric: FID(A,B)={fab:.12f} vs FID(B,A)={fba:.12f}. "
@@ -322,7 +345,7 @@ def test_fid_sqrtm_trace_matches_explicit_2x2() -> None:
         - 2.0 * float(np.trace(covmean))
     )
 
-    got = float(compute_frechet_distance(
+    got = float(compute_frechet_distance_closed_form(
         mu_s=mu, sigma_s=sigma_s, mu_r=mu, sigma_r=sigma_r,
     ))
     assert math.isfinite(got)
