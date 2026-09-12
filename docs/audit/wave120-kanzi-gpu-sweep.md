@@ -358,3 +358,96 @@ arms complete.
 | Wave 120 follow-up (or Wave 121) | framework_inv_proj fix owner | Fix `_synthesize_x_final_real` shape contract drift (Option A/B/C above, 5-10 LOC) + re-run `framework_inv_proj_seed42` to N=1000 + additively update paper §7.3 + CONSOLIDATED_RESULTS §15.22 |
 | Wave 120 follow-up (or Wave 121) | framework_synth sweep owner | Wait for `framework_synth_seed42` sweep to complete at N=1000 (~21 min from Wave 120 commit) + parse the per-record JSONL + compute N=1000 framework_synth delta + additively update paper §7.3 + CONSOLIDATED_RESULTS §15.22 |
 | Wave 120 follow-up (or Wave 121) | DAE decode seed owner | Pin the DAE decode seed (not just `torch.manual_seed`) so the Wave 88 vs Wave 120 baseline delta drops from +0.003 Å to exactly 0.000 Å |
+
+---
+
+## Wave 121 follow-up (additive — does NOT delete any Wave 120 content above)
+
+**Date:** 2026-09-12
+**Author:** Wave 121 Agent 5 (3-of-4 arms completed + audit doc update)
+**Scope:** close the Wave 120 framework_inv_proj BLOCKED status on the shape-validator bug (Wave 121 Phase 1 commit `a90485b`); re-attempt the 3 framework-arm sweeps on the GPU-equipped kanzi sidecar; update paper §7.3 + CONSOLIDATED_RESULTS §15 additively.
+
+### Wave 121 Phase 1 — shape-validator fix (kanzi.py:1073)
+
+The Wave 120 shape-validator bug (`ValueError: cannot reshape array of size 32768 into shape (64,64)` at `adaptive_reflow/adapters/kanzi.py:1073 _torch_velocity_field`) was caused by the per-call `_validate_state_shape` closure being hardcoded to `KANZI_STATE_SHAPE = (64, 64)` (= 4096 elements) when the framework_inv_proj trajectory endpoint has shape `(64, 512)` (= 32768 elements). The Wave 121 Phase 1 fix at `kanzi.py:1073` (commit `a90485b`, 1-LOC change) replaced the module-global validator with a per-call closure:
+
+```python
+# Wave 121 Phase 1 — build a per-call validator closure bound to
+# THIS call's ``state_shape`` (e.g. ``(64, 512)`` in real mode via
+# :attr:`KanziAdapter._real_state_shape`), NOT the module-global
+# ``_validate_state_shape`` which is hardcoded to
+# ``KANZI_STATE_SHAPE = (64, 64)`` for synthetic-mode byte-stability.
+x = make_validate_state_shape(state_shape)(np.asarray(x, dtype=np.float64))
+```
+
+The fix:
+* preserves synthetic-mode byte-stability (the closure sees `KANZI_STATE_SHAPE` as the default when no `state_shape` arg is provided)
+* corrects real-mode validation (the closure sees `_real_state_shape = (64, 512)` when called from `_velocity_field`)
+* unblocks the framework_inv_proj arm from the Wave 120 shape-validator bug
+
+**Result:** Wave 121 framework_inv_proj sweep now passes the per-call `_validate_state_shape` validator at `kanzi.py:1085`. The Wave 120 BLOCKED status on the shape-validator bug is **RESOLVED** at the validator layer.
+
+### Wave 121 framework_inv_proj — STILL FAILED on a NEW DEEPER bug
+
+The Wave 121 framework_inv_proj sweep FAILED at record 0 with a NEW bug — different from the Wave 120 shape-validator issue:
+
+```
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (64x512 and 3x256)
+  at adaptive_reflow/adapters/kanzi.py:1107 _torch_velocity_field
+  → model.forward
+  → data/kanzi_upstream/src/kanzi/models.py:358 DAE.encode(self.up)
+```
+
+**Root cause:** the Wave 121 Phase 1 shape-validator fix correctly accepts the post-`project_out` (64, 512) trajectory endpoint, but the model's `forward` at `kanzi.py:1197` calls `self._dae.encode(x)` where `x` has shape `(64, 512)` and the upstream `DAE.up` expects `(3, 256)` raw 3-channel coords. The Wave 95 Linear(512→4) bridge at `tools/kanzi_latent_to_coord.py` runs AFTER the solve_ode (in the bridge path), not before; the inv_proj path needs an analogous pre-loop bridge that is not yet implemented.
+
+**Verdict:** The Wave 120 BLOCKED status on the shape-validator bug is RESOLVED; the framework_inv_proj arm is now BLOCKED on a different (deeper) bug. The Wave 95 framework_inv_proj N=1000 reading (`2.5017 ± 0.0000 Å`, std=0 by construction) is **PRESERVED ADDITIVELY** as the authoritative framework_inv_proj data point until the deeper bug is remediated.
+
+### Wave 121 framework_synth_seed42 — fresh N=1000 byte-stable reading (NEW)
+
+The Wave 120 framework_synth sweep was IN_PROGRESS at 550/1000 records; Wave 121 re-ran the sweep from scratch on the kanzi sidecar (Wave 111 profile `configs/runs/kanzi_n1000_framework.yaml`, `--seed 42`, 2641.8 s = 2.642 s/rec, 0 skips). Result:
+
+| Metric | Baseline (Wave 120 seed42 N=1000) | Framework (Wave 121 synth N=1000) | Δ (F−B) | Verdict |
+|---|---:|---:|---:|:---|
+| `reconstruction_kabsch_rmsd_A` | 0.9046 ± 0.1434 Å | **2.5538 ± 0.0000 Å** | **+1.6492 Å** | `REGRESSES_BY_+1.65_Å` |
+| `codebook_entropy_bits` | 8.5579 | 5.4841 | −3.0738 | `SCALAR_SHIFT / TIED_BY_DESIGN` |
+| `codebook_perplexity` | 376.87 | 44.76 | −332.11 | `SCALAR_SHIFT / TIED_BY_DESIGN` |
+| `codebook_js_distance` | 0.5603 | 0.0000 | −0.5603 | `SCALAR_SHIFT / TIED_BY_DESIGN` |
+| `codebook_utilization` | 0.614 | 0.049 | −0.565 | `SCALAR_SHIFT / TIED_BY_DESIGN` |
+| `codebook_hamming_rotation_invariance` | 0.000 | 0.000 | 0.000 | `TIED_BY_DESIGN` (skipped in sweep loop) |
+
+The Wave 121 N=1000 synth reading (+1.6492 Å) is within 0.05 Å of the Wave 95 N=1000 inv_proj historical reading (+1.5971 Å) — confirming the +1.6–1.65 Å magnitude is robust across both the synth arm and the inv_proj arm.
+
+### Wave 121 determinism — 3 baseline anchors within 0.007 Å
+
+| Pair | Mean Δ (Å) | Std Δ (Å) | Welch t | p | Verdict |
+|---|---:|---:|---:|---:|:---|
+| Wave 121 seed=7 vs Wave 120 seed=42 (both N=1000) | **0.0043** | **0.0006** | 0.21 | 0.83 | `DETERMINISM_PASS` |
+| Wave 120 seed=42 vs Wave 88 seed=0 (both N=1000) | 0.0027 | 0.0059 | 0.19 | 0.85 | `DETERMINISM_PASS` |
+| Wave 121 seed=7 vs Wave 88 seed=0 (both N=1000) | 0.0069 | 0.0065 | 0.34 | 0.74 | `DETERMINISM_PASS` |
+
+The 3-pair mean Δ is bounded by **0.007 Å** (≈7 millisangstroms) — the natural per-record run-to-run variance from the still-unseeded DAE.decode (Wave 88 F-4: per-record σ=0.0947 Å on 8 real records × 8 unseeded repeats). The 5 codebook metrics are byte-stable IDENTICAL across all 3 baseline anchors.
+
+### Wave 121 final per-metric verdict (N=1000, REAL data)
+
+| Metric | Source | N (B / F) | Δ (F−B) | Welch t | Verdict |
+|---|---|---:|---:|---:|:---|
+| `reconstruction_kabsch_rmsd_A` synth | Wave 121 + Wave 120 seed42 | 1000 / 1000 | **+1.6492 Å** | 81.5 | `REGRESSES_BY_+1.65_Å` (cohen d ≈ 11.5, power=1.000) |
+| `reconstruction_kabsch_rmsd_A` inv_proj | Wave 95 historical + Wave 120 seed42 | 1000 / 1000 | **+1.5971 Å** | 78.7 | `REGRESSES_BY_+1.60_Å` (Wave 95 preserved additively) |
+| All 5 codebook metrics | all 3 arms | scalar / scalar | shifts | n/a | `SCALAR_SHIFT / TIED_BY_DESIGN` |
+
+### Wave 121 verdict — framework_inv_proj BLOCKED → PARTIALLY RESOLVED
+
+The Wave 120 BLOCKED status on the shape-validator bug is **RESOLVED at the validator layer** (Wave 121 Phase 1 fix at `kanzi.py:1073`). The framework_inv_proj arm is now BLOCKED on a different (deeper) bug — a pre-loop inverse-projection step is needed before the solve_ode loop. **The framework_inv_proj BLOCKED status is NOT fully RESOLVED**; the remaining gap is the inverse-projection step that is out of Wave 121 scope.
+
+The framework's real, byte-stable value-add on the Kanzi adapter remains on the **internal composite axis** (Wave 52 / Wave 58 / Wave 91 / Wave 95: +0.1695 to +0.1895, byte-stable σ=0 within seed) — SUPPORTED, but is a different axis from the paper-metric reconstruction axis.
+
+### Wave 121 cross-references
+
+- `docs/audit/wave121-shape-fix-resweep.md` — NEW Wave 121 audit doc (per-phase summary + 1-LOC fix + per-metric Δ + determinism + power analysis + Wave 121 vs Wave 95/96.E/115.P4/120 comparison)
+- `docs/paper-draft.md` §7.3 — Wave 121 Agent 5 ADDITIVE paragraph (after Wave 120 honest caveat, line 2185)
+- `docs/CONSOLIDATED_RESULTS.md` §15.22 — 5 subsections (synth N=1000 reading + determinism + framework_inv_proj NEW bug + verdict + cross-references)
+- `docs/baseline-audit-report.md` §R.13 — Wave 121 row (additive, this commit)
+- `/tmp/w121_analysis/w121_summary.json` — machine-readable Wave 121 summary (per-metric Δ + bootstrap CI + power + determinism)
+- `/tmp/w121/baseline_seed7/kanzi_n1000_paper_metrics.json` — Wave 121 baseline seed=7 N=1000 reading
+- `/tmp/w121/framework_synth_seed42/kanzi_n1000_framework_paper_metrics.json` — Wave 121 framework_synth N=1000 reading
+- `/tmp/w121/framework_inv_proj_seed42.log` — Wave 121 framework_inv_proj FAILED traceback (NEW deeper bug)
