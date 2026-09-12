@@ -450,8 +450,8 @@ def test_blender_extra_default_memory_fraction_fallback_constant() -> None:
     grep this constant in the framework's provenance trail.
     """
     assert DEFAULT_MEMORY_FRACTION_FALLBACK == "adr0010_cosine_driven"
-    # Re-exported through blender_extra.
-    from adaptive_reflow.algorithm.blender_extra import (
+    # Re-exported through the canonical blender_extra module (Wave 105 P2-B merge).
+    from adaptive_reflow.algorithm.blender.blender_extra import (
         DEFAULT_MEMORY_FRACTION_FALLBACK as _re,
     )
     assert _re == DEFAULT_MEMORY_FRACTION_FALLBACK
@@ -630,7 +630,10 @@ def test_blender_extra_re_exports_derivation_helpers() -> None:
     derive_default_memory_fraction`` without a separate import
     from ``_derivation``.
     """
-    from adaptive_reflow.algorithm import blender_extra
+    # Wave 105 P2-B: blender_extra was merged into blender.blender_extra.
+    # The legacy top-level blender_extra shim only re-exports a subset; the
+    # canonical (post-merge) module carries the full surface.
+    from adaptive_reflow.algorithm.blender import blender_extra
 
     for name in (
         "PolyakMemoryFraction",

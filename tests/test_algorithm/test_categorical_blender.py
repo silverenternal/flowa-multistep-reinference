@@ -165,7 +165,9 @@ def test_softmax_renormalisation() -> None:
 
 
 def test_gumbel_anneal_sample_shape_and_finite() -> None:
-    from adaptive_reflow.algorithm.categorical_blender import _gumbel_anneal_sample
+    # Wave 105 P2-C grouped categorical_blender into blender/ subpackage.
+    # Private helpers live in the canonical module.
+    from adaptive_reflow.algorithm.blender.categorical_blender import _gumbel_anneal_sample
     probs = np.array([[0.7, 0.2, 0.1]])
     out = _gumbel_anneal_sample(probs=probs, temperature=0.5, eps_log=1e-30)
     assert out.shape == probs.shape
@@ -214,7 +216,8 @@ def test_tau_floor_argmax_emits_audit_code(blender) -> None:
 
 def test_graphbfn_sentinel_passthrough_emits_audit_code(blender) -> None:
     """-inf diagonal sentinel is detected and passed through without math."""
-    from adaptive_reflow.algorithm.categorical_blender import (
+    # Wave 105 P2-C: import private helpers from canonical subpackage.
+    from adaptive_reflow.algorithm.blender.categorical_blender import (
         _logit_space_blend,
         _sentinel_short_circuit,
     )
@@ -250,7 +253,8 @@ def test_flowmol3_mask_fresh_fallback_emits_audit_code(blender) -> None:
     entry per row. The padded atom index is replaced by the fresh
     draw.
     """
-    from adaptive_reflow.algorithm.categorical_blender import (
+    # Wave 105 P2-C: import private helpers from canonical subpackage.
+    from adaptive_reflow.algorithm.blender.categorical_blender import (
         _logit_space_blend,
         _masked_categorical_blend,
     )

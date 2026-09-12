@@ -1229,7 +1229,11 @@ def test_runner_f10_does_not_read_scheduler_private_attributes(
                 allowed = False
                 while frame is not None:
                     fname = frame.f_code.co_filename or ""
-                    if fname.endswith("_core.py"):
+                    # Wave 105 P2-A split scheduler/_core.py into 4 submodules
+                    # (adaptive.py / simple.py / nfe_aware.py / protocols.py);
+                    # the CodimensionSheetScheduler implementation now lives
+                    # in adaptive.py.
+                    if fname.endswith(("adaptive.py", "_core.py")):
                         allowed = True
                         break
                     frame = frame.f_back
