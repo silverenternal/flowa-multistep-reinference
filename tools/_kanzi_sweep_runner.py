@@ -645,8 +645,15 @@ def run_kanzi_sweep(
                 coords_BLD = coords_BLD - coords_BLD.mean(axis=1, keepdims=True)
             try:
                 with torch.no_grad():
+                    # Wave 115.P2: pass device=dae.device so CPU/CUDA
+                    # mismatch crashes loudly inside `dae.encode` (RuntimeError
+                    # on a CPU tensor against CUDA parameters) instead of
+                    # silently falling into the `reencode_failed` except branch
+                    # with a 0-record sweep.
                     *_, idx_BL = dae.encode(
-                        torch.as_tensor(coords_BLD, dtype=torch.float32),
+                        torch.as_tensor(
+                            coords_BLD, dtype=torch.float32, device=dae.device,
+                        ),
                         preprocess=False,
                     )
             except Exception as exc:  # noqa: BLE001

@@ -290,3 +290,163 @@ def test_torch_velocity_field_emits_512d_shape(runner: Any) -> None:
         "_apply_project_out_inv receives the correct (B, L, 512) "
         "post-project_out latent."
     )
+
+
+# ---------------------------------------------------------------------------
+# Test 5 (Wave 115.P2 — CUDA device-mismatch regression test):
+# The `torch.as_tensor(coords_BLD, dtype=torch.float32, ...)` call that
+# feeds `dae.encode` MUST carry `device=dae.device`. Pre-Wave 115.P2
+# the call omitted `device=`; when the DAE was on CUDA but the
+# input numpy array was implicitly on CPU, the per-record inner loop
+# crashed inside `dae.encode` with `RuntimeError: Expected all tensors
+# to be on the same device ...`. The sweep's outer `try/except` then
+# caught the exception and incremented `n_skipped` for every record,
+# silently producing a 0-record JSONL with no error visible to the
+# operator. The Wave 115.P2 fix threads `device=dae.device` through so
+# any future CPU/CUDA mismatch becomes a loud, fast, attributable
+# `AttributeError` early in the constructor path (before the loop)
+# rather than a silent 0-record sweep.
+#
+# The pin is a static text-match against the runner source so the
+# test does not require a torch / kanzi sidecar venv to import the
+# runner or load the real DAE.
+# ---------------------------------------------------------------------------
+
+
+def test_run_envelope_input_matches_dae_device(runner: Any) -> None:
+    """The shared sweep loop's `torch.as_tensor(coords_BLD, ...)` MUST
+    carry `device=dae.device` so a CPU/CUDA mismatch crashes early.
+
+    See module-level Test 5 comment for the full Wave 115.P2 root cause.
+    The pin is a static source-text match — no DAE / GPU required.
+    """
+    src_text = _RUNNER_PATH.read_text(encoding="utf-8")
+
+    # Pin (a): the `torch.as_tensor(coords_BLD, ...)` call inside the
+    # shared `run_kanzi_sweep` envelope MUST include `device=dae.device`.
+    # The pre-Wave 115.P2 call site was:
+    #
+    #     torch.as_tensor(coords_BLD, dtype=torch.float32),
+    #
+    # which (with DAE on CUDA) raised silently inside `dae.encode` and
+    # produced a 0-record sweep.
+    assert (
+        "torch.as_tensor(" in src_text
+    ), (
+        "Wave 115.P2 pin: the shared sweep envelope MUST construct the "
+        "encode input via `torch.as_tensor(...)` (not `torch.tensor(...)` "
+        "or manual numpy→Tensor conversion). Expected at least one "
+        "`torch.as_tensor(` call in the runner source."
+    )
+    assert (
+        "device=dae.device" in src_text
+    ), (
+        "Wave 115.P2 pin: the shared sweep envelope's `torch.as_tensor` "
+        "call MUST carry `device=dae.device` so a CPU/CUDA mismatch "
+        "crashes loudly inside `dae.encode` (RuntimeError on cross-device "
+        "matmul) instead of silently producing a 0-record JSONL."
+    )
+
+    # Pin (b): the device-pin MUST be on the `torch.as_tensor(coords_BLD,`
+    # call site (the only one that feeds `dae.encode`), not somewhere
+    # unrelated. Scan the call site specifically.
+    call_site_idx = src_text.find("torch.as_tensor(\n                            coords_BLD,")
+    if call_site_idx == -1:
+        # Fallback for slight whitespace variation.
+        call_site_idx = src_text.find("torch.as_tensor(coords_BLD,")
+    assert call_site_idx != -1, (
+        "Wave 115.P2 pin: could not locate the `torch.as_tensor(coords_BLD,` "
+        "call site in the runner source — fix may have been applied to "
+        "the wrong site or reformatted away from the search pattern."
+    )
+    # Inspect the next 200 chars after the call — must contain the device pin.
+    call_site_block = src_text[call_site_idx : call_site_idx + 400]
+    assert "device=dae.device" in call_site_block, (
+        "Wave 115.P2 pin: the `device=dae.device` argument MUST be on the "
+        "`torch.as_tensor(coords_BLD, ...)` call site itself (so the tensor "
+        "input to `dae.encode` matches the DAE's parameter device). Got:\n"
+        f"{call_site_block[:200]!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 6 (Wave 115.P2 — CUDA device-mismatch regression test):
+# The diverse-endpoint sweep driver
+# ``tools/sweep_kanzi_n1000_diverse.py`` MUST also thread
+# ``device=dae.device`` through its `torch.as_tensor(coords_BLD, ...)`
+# call inside the re-encode block. This driver is NOT covered by the
+# shared `run_kanzi_sweep` envelope (it keeps its own per-record inner
+# loop because of the jsonl writer + GPU watchdog + per-record
+# `--max-records` semantics). Without the same device pin, the same
+# silent-0-record bug would re-surface on this driver.
+# ---------------------------------------------------------------------------
+
+
+def test_sweep_d_kanzi_input_device_in_sync_with_dae() -> None:
+    """The diverse-endpoint sweep driver MUST carry `device=dae.device`
+    on its `torch.as_tensor(coords_BLD, ...)` call site.
+
+    The diverse driver keeps its own per-record inner loop (jsonl
+    writer + GPU watchdog + per-record ``--max-records`` semantics),
+    so the shared ``run_kanzi_sweep`` envelope does not cover it.
+    Without the same device pin, the Wave 115.P2 root cause would
+    re-surface on this driver.
+
+    The pin is a static text-match — no DAE / GPU required.
+    """
+    diverse_path: Path = REPO_ROOT / "tools" / "sweep_kanzi_n1000_diverse.py"
+    src_text = diverse_path.read_text(encoding="utf-8")
+
+    # Pin (a): the diverse driver MUST construct the encode input via
+    # `torch.as_tensor(... coords_BLD, ...)` (single-line OR multi-line).
+    # The post-Wave 115.P2 source reformats the call to multiple lines
+    # to fit the `device=dae.device` argument + the comment block, so
+    # we accept either format.
+    has_as_tensor_call = (
+        "torch.as_tensor(coords_BLD," in src_text
+        or "torch.as_tensor(\n                            coords_BLD,"
+        in src_text
+        or "torch.as_tensor(\n                        coords_BLD,"
+        in src_text
+    )
+    assert has_as_tensor_call, (
+        "Wave 115.P2 pin: the diverse-endpoint sweep driver MUST construct "
+        "the encode input via `torch.as_tensor(... coords_BLD, ...)`. "
+        "Expected the call site in `tools/sweep_kanzi_n1000_diverse.py`."
+    )
+    assert (
+        "device=dae.device" in src_text
+    ), (
+        "Wave 115.P2 pin: the diverse-endpoint sweep driver's "
+        "`torch.as_tensor(coords_BLD, ...)` call MUST carry "
+        "`device=dae.device` so a CPU/CUDA mismatch crashes loudly "
+        "instead of silently producing a 0-record JSONL."
+    )
+
+    # Pin (b): the device-pin MUST be on the diverse driver's
+    # `torch.as_tensor(... coords_BLD, ...)` call site specifically
+    # (within ~400 chars of the call to tolerate the multi-line
+    # reformatting the fix introduced).
+    call_site_idx = -1
+    for needle in (
+        "torch.as_tensor(coords_BLD,",
+        "torch.as_tensor(\n                            coords_BLD,",
+        "torch.as_tensor(\n                        coords_BLD,",
+        "torch.as_tensor(\n                        coords_BLD, dtype=torch.float32,",
+    ):
+        call_site_idx = src_text.find(needle)
+        if call_site_idx != -1:
+            break
+    assert call_site_idx != -1, (
+        "Wave 115.P2 pin: could not locate the diverse driver's "
+        "`torch.as_tensor(... coords_BLD, ...)` call site — fix may "
+        "have been applied to the wrong site or reformatted away "
+        "from all known patterns."
+    )
+    call_site_block = src_text[call_site_idx : call_site_idx + 600]
+    assert "device=dae.device" in call_site_block, (
+        "Wave 115.P2 pin: the `device=dae.device` argument MUST be on "
+        "the diverse driver's `torch.as_tensor(... coords_BLD, ...)` "
+        "call site. Got:\n"
+        f"{call_site_block[:300]!r}"
+    )
