@@ -12,6 +12,7 @@ from .merge.merge_operator_v3 import (
     MEANFLOW_DEGENERATE_EPS,
     MEANFLOW_PAIR_INVALID,
     MeanFlowMergeOperator,
+    derive_default_alpha_grad,
 )
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "MEANFLOW_DEGENERATE_EPS",
     "MEANFLOW_PAIR_INVALID",
     "MeanFlowMergeOperator",
+    "derive_default_alpha_grad",
 ]

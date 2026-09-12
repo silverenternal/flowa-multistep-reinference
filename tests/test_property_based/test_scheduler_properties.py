@@ -27,6 +27,15 @@ import math
 from collections.abc import Mapping
 
 import pytest
+import pytest
+
+# hypothesis is only present in test/dev venvs.
+# Skip the entire module when missing so the rest of the suite still collects.
+_hypothesis_spec = pytest.importorskip(
+    "hypothesis",
+    reason="hypothesis not in venv (install via `uv pip install hypothesis`)",
+)
+
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 

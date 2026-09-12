@@ -10,6 +10,7 @@ from __future__ import annotations
 from .merge.merge_operator_extra import (
     BayesianMergeOperator,
     KalmanBoundedMergeOperator,
+    MultiSourceKalmanMergeOperator,
     PIDIdentityOperator,
     ScheduleAwareEMAOperator,
 )
@@ -17,6 +18,7 @@ from .merge.merge_operator_extra import (
 __all__ = [
     "BayesianMergeOperator",
     "KalmanBoundedMergeOperator",
+    "MultiSourceKalmanMergeOperator",
     "PIDIdentityOperator",
     "ScheduleAwareEMAOperator",
 ]

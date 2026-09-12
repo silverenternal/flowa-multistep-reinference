@@ -66,7 +66,15 @@ import importlib.util
 import sys
 from pathlib import Path
 
-from expecttest import Expect
+import pytest
+
+# expecttest is only present in test/dev venvs (Wave 38 Agent C adoption).
+# Skip the entire module when missing so the rest of the suite still collects.
+_expecttest = pytest.importorskip(
+    "expecttest",
+    reason="expecttest not in venv (install via `uv pip install expecttest`)",
+)
+Expect = _expecttest.Expect
 
 # ---------------------------------------------------------------------------
 # expecttest config (R-1 Phase C: mirror the conftest setting locally so the

@@ -17,6 +17,7 @@ from .runner.batched_runner import (
     BatchedRunnerConfig,
     BatchedTrajectoryResult,
     BatchedTrajectoryRunner,
+    BatchedVectorisedAdapterProtocol,
     _w2_to_mode_centres,
 )
 
@@ -25,5 +26,6 @@ __all__ = [
     "BatchedRunnerConfig",
     "BatchedTrajectoryResult",
     "BatchedTrajectoryRunner",
+    "BatchedVectorisedAdapterProtocol",
     "_w2_to_mode_centres",  # private — exposed only for test_batched_runner.py
 ]

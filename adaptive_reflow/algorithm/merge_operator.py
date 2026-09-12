@@ -21,12 +21,14 @@ from .merge.merge_operator import (
     MERGE_FLOOR_OUT_OF_RANGE,
     MERGE_NONFINITE_DYNAMIC_CLIPPED,
     MERGE_NONFINITE_PREV_CLIPPED,
+    MERGE_PAPER_QUANTITY_FLOOR_LIFTED,
     MERGE_PREV_ANCHORED_TO_LAST_EMITTED,
     BoundedMergeOperator,
     EMAOperator,
     IdentityOperator,
     MergeAuthorityError,
     MergeOperatorProtocol,
+    _ERR_CAP_BELOW_FLOOR,
     default_bounded_merge_operator,
 )
 
@@ -38,11 +40,13 @@ __all__ = [
     "MERGE_FLOOR_OUT_OF_RANGE",
     "MERGE_NONFINITE_DYNAMIC_CLIPPED",
     "MERGE_NONFINITE_PREV_CLIPPED",
+    "MERGE_PAPER_QUANTITY_FLOOR_LIFTED",
     "MERGE_PREV_ANCHORED_TO_LAST_EMITTED",
     "BoundedMergeOperator",
     "EMAOperator",
     "IdentityOperator",
     "MergeAuthorityError",
     "MergeOperatorProtocol",
+    "_ERR_CAP_BELOW_FLOOR",
     "default_bounded_merge_operator",
 ]

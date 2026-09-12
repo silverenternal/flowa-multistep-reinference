@@ -16,6 +16,7 @@ from .blender.categorical_blender import (
     DEFAULT_CATEGORICAL_AWARE_CONFIG_HASH,
     DEFAULT_TAU_FLOOR,
     DEFAULT_TAU_SCHEDULE_KIND,
+    _logit_space_blend,
     default_categorical_blender,
 )
 
@@ -28,5 +29,6 @@ __all__ = [
     "DEFAULT_CATEGORICAL_AWARE_CONFIG_HASH",
     "DEFAULT_TAU_FLOOR",
     "DEFAULT_TAU_SCHEDULE_KIND",
+    "_logit_space_blend",
     "default_categorical_blender",
 ]

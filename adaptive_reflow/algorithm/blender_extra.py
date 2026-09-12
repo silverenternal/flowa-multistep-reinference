@@ -8,12 +8,16 @@ for downstream tools and tests.
 from __future__ import annotations
 
 from .blender.blender_extra import (
+    BarycentricBlender,
+    JointOTLinearBlender,
     MultiTemperatureDistanceDecayBlender,
     OTLinearBlender,
     derive_default_memory_fraction,
 )
 
 __all__ = [
+    "BarycentricBlender",
+    "JointOTLinearBlender",
     "MultiTemperatureDistanceDecayBlender",
     "OTLinearBlender",
     "derive_default_memory_fraction",
