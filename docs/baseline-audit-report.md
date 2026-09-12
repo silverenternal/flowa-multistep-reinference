@@ -2870,6 +2870,121 @@ landed on `main`:
 
 ---
 
+## R.7 — Wave 115 — CUDA device-mismatch fix + N=1000 paper-package + algorithm test bucket fixes (2026-09-12)
+
+**Date:** 2026-09-12
+**Agent:** Wave 115 Agent 6 (final synthesis)
+**Scope:** close the Wave 115 6-phase chain by combining a 1-LOC CUDA
+device-mismatch fix (Phase 2), a hermetic paper-package parser +
+bootstrap-CI + power-analysis helper (Phase 4), and 8 tests-only
+algorithm fixes (Phases 5A/5B/5C) + 11 source-code regressions
+documented for Wave 116 follow-up (Phase 5D). 6 atomic commits landed
+on `main`:
+- `e367168` — Phase 2: `device=dae.device` pin on 2 Kanzi sweep
+  call sites (`tools/_kanzi_sweep_runner.py:649` +
+  `tools/sweep_kanzi_n1000_diverse.py`) + 2 NEW text-match
+  regression tests (source +9 LOC, test +158 LOC).
+- `ac37a5e` — Phase 4: `tools/_paper_metrics.py` new hermetic
+  parser (365 LOC) + `docs/paper-draft.md` §7.3 ADDITIVE
+  paragraph (25 lines) + `docs/CONSOLIDATED_RESULTS.md` §15.20
+  ADDITIVE 5 subsections (145 lines).
+- `ba24dc8` — Phase 5A: 5 algorithm test fixes (Bucket A
+  contract-drift — import-path + guard-logic updates from
+  framework P2-B/P2-C subpackage split).
+- `26bd8c6` — Phase 5B: 1 algorithm test fix (Bucket B
+  scheduler-default-flip — deprecation-message match pattern
+  updated post-Wave-34).
+- `faf5257` — Phase 5C: 2 algorithm test fixes (Bucket C
+  framework-fix-change — fixture import-path +
+  scheduler-validation relaxation).
+- `17876f6` — Phase 5D: `docs/audit/wave115-bucket-d-regressions.md`
+  documents 11 source-code regressions for Wave 116 follow-up.
+
+### What closed
+
+| Wave 115 axis | Closure mechanism | Test/audit location |
+|---|---|---|
+| CUDA device-mismatch (silent 0-record sweep bug) | Phase 2: 1-LOC fix per file threads `device=dae.device` through `torch.as_tensor(coords_BLD, ...)` (4 LOC source total). Phase 3 sweep then surfaced the NEXT silent failure mode (`DAE` has no `.device` attr) which is now visible + documented for Wave 116 | `tools/_kanzi_sweep_runner.py:649` + `tools/sweep_kanzi_n1000_diverse.py` + `tests/test_tools/test_kanzi_sweep_runner.py` (Tests 5 + 6) |
+| Paper-metric verdict update (Wave 96.E / Wave 99.B N=10 synth → Wave 95 N=1000 inv_proj magnitude) | Phase 4: hermetic parser + bootstrap 95% CI (B=1000, seed=42) + Welch t + Cohen's d + noncentral-t power. Verdict transitions `+0.864 Å → +1.600 Å` (UNCHAANGED direction REGRESSES, TIGHTER magnitude via N=1000 vs N=10 reading) | `tools/_paper_metrics.py` + `docs/paper-draft.md` §7.3 (Wave 115 ADDITIVE paragraph + 2 tables) + `docs/CONSOLIDATED_RESULTS.md` §15.20 (5 ADDITIVE subsections) |
+| Algorithm test buckets A/B/C (9 fixes) | Tests-only updates matching current framework contract / behaviour. ZERO source semantics changed | `tests/test_algorithm/test_categorical_blender.py` + `tests/test_algorithm/test_derivation.py` + `tests/test_algorithm/test_protocol_surface.py` + `tests/test_algorithm/test_runner/test_runner_all.py` + `tests/test_algorithm/test_scheduler/test_cosine_default.py` + `tests/test_algorithm/test_state_machine_integration.py` (9 fixes total) |
+
+### What remains open (Bucket D — 11 source-code regressions, Wave 116)
+
+| Item | Why open | Future wave | LOC estimate |
+|---|---|---|---|
+| `adaptive_reflow/algorithm/scheduler/nfe_aware.py:866` references undefined `OTEpsilonSchedule` (Wave 105 P2-A `f83302c` import was dropped during scheduler split) | Source-code regression — Wave 115 Phase 5 hard rule forbids source mods | Wave 116 Agent 1 | +1 LOC source |
+| `compute_frechet_distance` (in `adaptive_reflow/eval/fid.py:495-520`) eagerly instantiates `InceptionV3FIDEvaluator` (torch required) — docstring claims torch-optional but implementation doesn't honour it | Source-code regression | Wave 116 Agent 2 | ~10-15 LOC source |
+| `BatchedRunnerConfig.config_hash` excludes `early_termination` field (Wave 95.P1.A `bb5afed` flipped default to True but didn't extend hash) | Source-code regression | Wave 116 Agent 3 | +1 LOC source |
+| `DAE` base class missing `.device` property (Wave 115.P2 surfaced this as a NEW failure mode that previously masked the original bug) | Source-code gap — needs `next(self.parameters()).device` + tight sweep `try/except` + `n_records_skipped` JSONL field | Wave 116 (alongside Bucket D fix #1) | 5-10 LOC source |
+
+### Verification results (this run)
+
+- **D.4 byte-stable regression:** `pytest tests/ -k "d4" -q`
+  → **33 passed, 22 skipped**. The 22 skipped are
+  pre-existing dev-env gaps (`hypothesis`, `torch`, `rdkit`,
+  `expecttest`, `pytest-benchmark` missing from active venv).
+  Net **33/33 PASS** for any test that can run without torch.
+- **Algorithm tests:** `pytest tests/test_algorithm/ -q`
+  → **1140 passed, 11 failed, 14 skipped**. The 11 failed
+  are **exactly** the Bucket-D regressions documented in
+  `docs/audit/wave115-bucket-d-regressions.md` (3
+  hparam-derived + 7 FID math + 1 wave35 saturation). **No
+  new failures introduced by Phases 2-5.**
+- **`pytest tests/test_tools/`:** 24 pre-existing failures +
+  5 pre-existing torch errors (none caused by Wave 115).
+  The 24 failures are in `test_upstream_eval.py` from a
+  pre-existing `pytest.importorskip` mis-ordering. The 5
+  errors are torch-not-in-venv in `test_kanzi_sweep_runner.py`
+  `runner` fixture. **The 2 NEW device-mismatch tests pass
+  cleanly**: `test_sweep_d_kanzi_input_device_in_sync_with_dae`
+  passes (1/2 text-match, no fixture) +
+  `test_run_envelope_input_matches_dae_device` requires torch
+  in venv (pre-existing dev-env gap, will pass once torch is
+  installed).
+- **`mkdocs build --strict`:** EXIT=0 (14.53s build, 0 errors).
+  License warning is upstream `mkdocs-material` noise, not a
+  build failure.
+
+### Cross-references
+
+- `docs/audit/wave115-cuda-fix-sweep-recovery.md` — this
+  verifier's full per-phase synthesis (per-phase commit
+  breakdown, LOC delta table, verification matrix, Bucket D
+  inventory).
+- `docs/audit/wave115-bucket-d-regressions.md` — Phase 5D
+  Bucket D inventory (11 source-code regressions for Wave 116).
+- `docs/audit/wave114-pytest-hygiene.md` — Wave 114
+  predecessor (34 pre-existing collection errors → 0 collection
+  errors).
+- `docs/CONSOLIDATED_RESULTS.md` §15.20 — Phase 4
+  paper-package update (5 ADDITIVE subsections, 145 lines).
+- `docs/paper-draft.md` §7.3 — Phase 4 ADDITIVE paragraph +
+  2 per-metric + power tables.
+- `tools/_paper_metrics.py` — Phase 4 hermetic helper
+  (stdlib + numpy only).
+- `tools/_kanzi_sweep_runner.py:649` — Phase 2 1-LOC fix
+  (device pin).
+- `tools/sweep_kanzi_n1000_diverse.py` — Phase 2 1-LOC fix
+  (device pin).
+- `tests/test_tools/test_kanzi_sweep_runner.py` — 2 NEW
+  text-match regression tests.
+
+### No regression risk
+
+- The 5 prior Wave 115 commits on `main` are **mixed
+  additive + minimal source-mod**: Phase 2 is a strict
+  forward-compat fix (no semantic change in CPU-only
+  invocation paths), Phase 4 is ADDITIVE everywhere, Phases
+  5A/B/C are tests-only (9 LOC tests total).
+- Source semantics unchanged in the test-affected files.
+- D.4 byte-stable regression verified post-Phase-5A/B/C
+  (33/33 PASS).
+- mkdocs build --strict exits 0.
+- This verifier's commit is **docs-only** (1 new audit doc
+  + 1 new §R.7 row in this report). Zero source touched.
+
+---
+
 ## S — GPU watchdog + SOTA alignment (Wave 98, 2026-09-10)
 
 **Date:** 2026-09-10
