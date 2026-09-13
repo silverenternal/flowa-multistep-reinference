@@ -49,8 +49,18 @@ from typing import Any, Literal, TypeAlias
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
+    digest_state,
+    make_adapter_capabilities,
+    make_ref,
+    memory_fraction_for,
+    seed_from_ids,
+)
 from adaptive_reflow.algorithm.blender import LinearBlender, RestartBlenderProtocol
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
+from adaptive_reflow.framework.interfaces import implements
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -66,19 +76,8 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
-from adaptive_reflow.adapters._adapter_common import (
-    NativeStateCache,
-    digest_state,
-    make_adapter_capabilities,
-    make_ref,
-    memory_fraction_for,
-    seed_from_ids,
-)
-from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
-from adaptive_reflow.framework.interfaces import implements
 
 from .mnist_fm_train import (  # noqa: E402 — runtime numpy dep, opt-in extra
-    
     MNIST_FLAT_DIM,
     load_weights,
     velocity_field_forward,

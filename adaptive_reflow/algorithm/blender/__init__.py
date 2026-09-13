@@ -21,6 +21,11 @@ new path) or the historical top-level shims
 
 from __future__ import annotations
 
+# Alias-import the ``blender`` submodule so the subpackage's own name
+# does not shadow it. ``from .blender import X`` would be a self-import
+# (the subpackage itself), which causes a partial-init error. Bind the
+# module to a local alias instead.
+from . import blender as _blender_mod
 from .blender_extra import (
     MultiTemperatureDistanceDecayBlender,
     OTLinearBlender,
@@ -30,10 +35,10 @@ from .categorical_blender import (
     CATEGORICAL_BLEND_MASK_FRESH_FALLBACK,
     CATEGORICAL_BLEND_SENTINEL_PASSTHROUGH,
     CATEGORICAL_BLEND_TAU_FLOOR_HIT,
-    CategoricalAwareBlender,
     DEFAULT_CATEGORICAL_AWARE_CONFIG_HASH,
     DEFAULT_TAU_FLOOR,
     DEFAULT_TAU_SCHEDULE_KIND,
+    CategoricalAwareBlender,
     default_categorical_blender,
 )
 from .per_channel_blender import (
@@ -42,34 +47,28 @@ from .per_channel_blender import (
     DEFAULT_TAU_DEFAULT,
     DEFAULT_TAU_FLOOR,
     EPS_LOG,
-    GUMBEL_FAMILY,
     GRAPH_FAMILY,
-    GumbelBlend,
+    GUMBEL_FAMILY,
     LINEAR_FAMILY,
-    LinearBlend,
     LOGIT_FAMILY,
-    LogitBlend,
     MASKED_FAMILY,
-    MaskedBlend,
     PER_CHANNEL_BLEND_FALLTHROUGH,
-    PER_CHANNEL_BLEND_MASK_FRESH_FALLBACK,
     PER_CHANNEL_BLEND_M_ONE_SHORTCIRCUIT,
     PER_CHANNEL_BLEND_M_ZERO_SHORTCIRCUIT,
+    PER_CHANNEL_BLEND_MASK_FRESH_FALLBACK,
     PER_CHANNEL_BLEND_SENTINEL_PASSTHROUGH,
     PER_CHANNEL_BLEND_TAU_FLOOR_HIT,
-    PerChannelBlender,
-    BlendStrategy,
     SAMPLE_FAMILY,
-    SampleBlend,
+    BlendStrategy,
     GraphBlend,
+    GumbelBlend,
+    LinearBlend,
+    LogitBlend,
+    MaskedBlend,
+    PerChannelBlender,
+    SampleBlend,
     default_per_channel_blender,
 )
-
-# Alias-import the ``blender`` submodule so the subpackage's own name
-# does not shadow it. ``from .blender import X`` would be a self-import
-# (the subpackage itself), which causes a partial-init error. Bind the
-# module to a local alias instead.
-from . import blender as _blender_mod
 
 DEFAULT_DISTANCE_DECAY_CONFIG_HASH = _blender_mod.DEFAULT_DISTANCE_DECAY_CONFIG_HASH
 DEFAULT_DISTANCE_DECAY_TEMPERATURE = _blender_mod.DEFAULT_DISTANCE_DECAY_TEMPERATURE

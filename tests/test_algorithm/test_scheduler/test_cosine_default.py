@@ -14,15 +14,15 @@ import pytest
 from adaptive_reflow.algorithm import (
     SCHEDULER_REGISTRY,
     CodimensionSheetScheduler,
-    ConvergenceAdaptiveScheduler,
     ConstantScheduler,
+    ConvergenceAdaptiveScheduler,
     CosineAnnealScheduler,
     ExponentialScheduler,
     LinearScheduler,
+    PolynomialScheduler,
     SchedulerProtocol,
     ScheduleSample,
     SigmoidScheduler,
-    PolynomialScheduler,
     default_cosine_scheduler,
     default_paper_ratio_scheduler,
 )

@@ -103,8 +103,34 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
+    _resolve_mode,
+    _run_construction_shape_guard,
+    digest_state,
+    kaiming_uniform,
+    load_real_weights,
+    make_ref,
+    make_validate_state_shape,
+    memory_fraction_for,
+    seed_from_ids,
+)
+from adaptive_reflow.adapters._adapter_common import (
+    torch_is_available as _adapter_common_torch_is_available,
+)
+from adaptive_reflow.algorithm.perturbation import (
+    PerturbationPolicy,
+    UniformFreshPerturbation,
+)
 from adaptive_reflow.contracts import MechanismId
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
+from adaptive_reflow.framework.interfaces import (
+    AdapterObservationProtocol,
+    ObservationKind,
+    ObservationResult,
+    implements,
+)
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -119,32 +145,6 @@ from adaptive_reflow.universal.state import (
     StateBundle,
     validate_state_bundle,
 )
-
-from adaptive_reflow.adapters._adapter_common import (
-    NativeStateCache,
-    _resolve_mode,
-    _run_construction_shape_guard,
-    digest_state,
-    kaiming_uniform,
-    load_real_weights,
-    make_ref,
-    make_validate_state_shape,
-    memory_fraction_for,
-    seed_from_ids,
-    torch_is_available as _adapter_common_torch_is_available,
-)
-from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
-from adaptive_reflow.framework.interfaces import (
-    AdapterObservationProtocol,
-    ObservationKind,
-    ObservationResult,
-    implements,
-)
-from adaptive_reflow.algorithm.perturbation import (
-    PerturbationPolicy,
-    UniformFreshPerturbation,
-)
-
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -1172,7 +1172,7 @@ def _load_torch_model(weights_path: Path) -> Any:
             super().__init__()
             self._dae = dae
 
-        def forward(self, x: "torch.Tensor", t: "torch.Tensor", family: "torch.Tensor" = None) -> "torch.Tensor":
+        def forward(self, x: torch.Tensor, t: torch.Tensor, family: torch.Tensor = None) -> torch.Tensor:
             # Wave 113.A: Real backbone-coord migration. Replaces the
             # Wave 112.C-2 fail-fast placeholder (RC-2 option B) with the
             # two-call upstream pipeline:

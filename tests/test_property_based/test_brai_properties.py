@@ -60,7 +60,6 @@ from adaptive_reflow.algorithm.perturbation import (
     PerturbationConfigError,
 )
 
-
 # ---------------------------------------------------------------------------
 # Strategies
 # ---------------------------------------------------------------------------

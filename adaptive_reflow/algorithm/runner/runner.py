@@ -1227,8 +1227,8 @@ class ReInferenceRunner:
         next_phase: PhaseState,
         state_bundle_at_round_start: StateBundle,
         engine_version: str,
-        path: "str | Path",
-        native_payload_paths: "Mapping[str, str] | None" = None,
+        path: str | Path,
+        native_payload_paths: Mapping[str, str] | None = None,
         calibration_manifest: Any | None = None,
     ) -> Any:
         """Persist a round's state to ``path`` via the engine.
@@ -1250,7 +1250,7 @@ class ReInferenceRunner:
             calibration_manifest=calibration_manifest,
         )
 
-    def resume_round(self, *, path: "str | Path") -> Any:
+    def resume_round(self, *, path: str | Path) -> Any:
         """Restore a :class:`Checkpoint` through the engine. Raises on tamper."""
         from pathlib import Path as _Path
 

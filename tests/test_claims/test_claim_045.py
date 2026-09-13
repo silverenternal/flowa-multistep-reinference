@@ -16,7 +16,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 MERGE_OP = ROOT / "adaptive_reflow" / "algorithm" / "merge_operator.py"
 SCHEDULER_CORE = ROOT / "adaptive_reflow" / "algorithm" / "scheduler" / "_core.py"

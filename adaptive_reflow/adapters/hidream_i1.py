@@ -88,8 +88,25 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
-from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
+    _resolve_mode,
+    _run_construction_shape_guard,
+    digest_state,
+    load_real_weights,
+    make_ref,
+    memory_fraction_for,
+    seed_from_ids,
+)
 from adaptive_reflow.contracts import MechanismId
+from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
+from adaptive_reflow.framework.interfaces import (
+    AdapterObservationProtocol,
+    ObservationKind,
+    ObservationResult,
+    implements,
+)
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -105,25 +122,6 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
-
-from adaptive_reflow.adapters._adapter_common import (
-    NativeStateCache,
-    _resolve_mode,
-    _run_construction_shape_guard,
-    digest_state,
-    load_real_weights,
-    make_ref,
-    memory_fraction_for,
-    seed_from_ids,
-)
-from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
-from adaptive_reflow.framework.interfaces import (
-    AdapterObservationProtocol,
-    ObservationKind,
-    ObservationResult,
-    implements,
-)
-
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -660,19 +658,19 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
             )
 
         @property
-        def device(self) -> "torch.device":
+        def device(self) -> torch.device:
             """Return the dummy parameter's device (mirrors ModuleUtilsMixin)."""
             return self._dummy.device
 
         @property
-        def dtype(self) -> "torch.dtype":
+        def dtype(self) -> torch.dtype:
             """Return the dummy parameter's dtype (mirrors ModuleUtilsMixin)."""
             return self._dummy.dtype
 
         def forward(  # noqa: D401 — nn.Module forward signature
             self,
-            input_ids: "torch.Tensor",
-            attention_mask: "torch.Tensor | None" = None,
+            input_ids: torch.Tensor,
+            attention_mask: torch.Tensor | None = None,
             output_hidden_states: bool = True,
             output_attentions: bool = False,
             **_: Any,
@@ -733,13 +731,13 @@ def _load_diffusion_pipeline(variant: str, weights_path: Path) -> Any:
             class _BatchEncoding:
                 """Minimal BatchEncoding stand-in (attribute access)."""
 
-                def __init__(self, ids: "torch.Tensor", mask: "torch.Tensor") -> None:
+                def __init__(self, ids: torch.Tensor, mask: torch.Tensor) -> None:
                     self.input_ids = ids
                     self.attention_mask = mask
 
             return _BatchEncoding(input_ids, attention_mask)
 
-        def batch_decode(self, ids: "torch.Tensor", **_: Any) -> list[str]:
+        def batch_decode(self, ids: torch.Tensor, **_: Any) -> list[str]:
             return ["" for _ in range(int(ids.shape[0]))]
 
     text_encoder_4 = _StubLlama()

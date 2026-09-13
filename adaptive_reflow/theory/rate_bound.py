@@ -24,8 +24,8 @@ flag is for callers who want the bound state without the F-side gate).
 """
 from __future__ import annotations
 
-import math
 import dataclasses
+import math
 from collections.abc import Callable
 
 # Paper Theorem 1 (line 87-92) plus the constant from the synchronous

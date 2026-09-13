@@ -49,12 +49,11 @@ from adaptive_reflow.contracts import (
 from adaptive_reflow.schedule.cosine import n_cap_for_round
 
 from .protocols import (
-    ScheduleSample,
     SchedulerProtocol,
+    ScheduleSample,
     _coerce_int_nonneg,
 )
 from .simple import CosineAnnealScheduler, default_cosine_scheduler
-
 
 # ---------------------------------------------------------------------------
 # Convergence-adaptive scheduler — default multi-metric feedback weights

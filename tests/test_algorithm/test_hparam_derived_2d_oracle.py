@@ -41,9 +41,10 @@ from typing import Optional
 import pytest
 
 from adaptive_reflow.algorithm._derivation import (
+    PAPER_QUANTITY_E_RHO_FLOOR_DIVISOR,
     BLConvergenceEpsilonSchedule,
-    BoundedMergeFloorRule,
     BoundaryConditionRule,
+    BoundedMergeFloorRule,
     ConvergenceAdaptivePolyRule,
     DerivationContext,
     EMAInverseVarianceRule,
@@ -59,7 +60,6 @@ from adaptive_reflow.algorithm._derivation import (
     MidpointBetaRule,
     MinGumbelTempRule,
     OTEpsilonSchedule,
-    PAPER_QUANTITY_E_RHO_FLOOR_DIVISOR,
     PolyakMemoryFraction,
     PolynomialPowerRule,
     SigmoidMidpointSteepnessRule,
@@ -113,7 +113,6 @@ from adaptive_reflow.algorithm.scheduler._core import (
     default_cosine_scheduler,
     derive_default_eps_implicit,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers (mirroring test_algorithm_on_2d_oracle.py)
@@ -196,7 +195,7 @@ def _run_derived_trajectory(
     prior: GaussianMeanCov,
     target: GaussianVsMixtureOracle,
     n_rounds: int,
-    derivation_context: Optional[DerivationContext] = None,
+    derivation_context: DerivationContext | None = None,
     delta_cap_up: float = 0.5,
     delta_cap_down: float = 0.5,
     floor_n: float = 0.0,
@@ -590,9 +589,8 @@ def test_all_five_entry_points_are_importable() -> None:
         "derive_default_eps_threshold",
         "derive_default_handoff_window",
     )
-    from adaptive_reflow.algorithm import blender_extra, evidence_driver
+    from adaptive_reflow.algorithm import blender_extra, evidence_driver, merge_operator_v3
     from adaptive_reflow.algorithm import handoff as handoff_mod
-    from adaptive_reflow.algorithm import merge_operator_v3
     from adaptive_reflow.algorithm.scheduler import _core as core_mod
 
     module_map = {

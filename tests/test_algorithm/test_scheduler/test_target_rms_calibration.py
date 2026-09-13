@@ -33,13 +33,12 @@ import math
 import pytest
 
 from adaptive_reflow.algorithm.scheduler.adaptive import (
-    CodimensionSheetScheduler,
     _REF_N_CAP,
     _REF_RMSD,
+    CodimensionSheetScheduler,
     adjust_n_cap_for_target_rms,
     paper_quantity_driven_beta,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test 1 — paper_quantity_driven_beta respects target_rms_threshold kwarg

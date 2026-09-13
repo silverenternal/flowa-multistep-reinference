@@ -198,7 +198,7 @@ def tiny_inception_v3(monkeypatch: pytest.MonkeyPatch) -> Any:
                 )
             return out
 
-        def eval(self) -> "_TinyInceptionV3":  # type: ignore[override]
+        def eval(self) -> _TinyInceptionV3:  # type: ignore[override]
             self.eval_called = True
             return super().eval()
 

@@ -53,9 +53,10 @@ import os
 import shlex
 import subprocess
 import sys
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -146,7 +147,7 @@ class FlowMol3CompositeWeights:
             float(self.neg_med_rmsd_after_xtb),
         )
 
-    def renormalize_for_geometry(self, has_geometry: bool) -> "FlowMol3CompositeWeights":
+    def renormalize_for_geometry(self, has_geometry: bool) -> FlowMol3CompositeWeights:
         """Drop the geometry axis and renormalize chemistry axes to sum to 1.
 
         Returns ``self`` when ``has_geometry=True`` (no change). When

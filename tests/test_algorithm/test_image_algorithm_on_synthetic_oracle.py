@@ -169,7 +169,7 @@ def stub_inception_v3(monkeypatch: pytest.MonkeyPatch) -> None:
                 + torch.sin(k).unsqueeze(0) / 2048.0
             return out
 
-        def eval(self) -> "_LinearInceptionStub":
+        def eval(self) -> _LinearInceptionStub:
             return super().eval()
 
     monkeypatch.setattr(

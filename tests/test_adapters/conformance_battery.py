@@ -520,7 +520,7 @@ def test_registry_enrollment_is_complete() -> None:
     # The deck is sourced from the registry directly, so the assertion
     # is vacuously true today; the test exists as a trip-wire for a
     # future refactor that hard-codes the list.
-    assert REGISTERED_ADAPTER_NAMES == tuple(sorted(ADAPTER_REGISTRY))
+    assert tuple(sorted(ADAPTER_REGISTRY)) == REGISTERED_ADAPTER_NAMES
     assert REGISTERED_ADAPTER_NAMES, "ADAPTER_REGISTRY must be non-empty"
 
 

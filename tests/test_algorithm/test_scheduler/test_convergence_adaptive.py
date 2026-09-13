@@ -18,7 +18,6 @@ from adaptive_reflow.algorithm import (
 )
 from adaptive_reflow.algorithm.scheduler import build_scheduler_from_config
 
-
 # Shared test traces (same as the original monolithic test file).
 _W2_TRACE = (0.90, 0.82, 0.79, 0.77, 0.76)
 _COVERAGE_TRACE = (0.40, 0.55, 0.62, 0.68, 0.71)

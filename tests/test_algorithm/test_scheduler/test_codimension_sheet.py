@@ -19,7 +19,6 @@ from adaptive_reflow.algorithm import (
 )
 from adaptive_reflow.algorithm.scheduler import _paper_evidence_balance
 
-
 # ---------------------------------------------------------------------------
 # Shared helpers (moved from the monolithic test_scheduler.py)
 # ---------------------------------------------------------------------------

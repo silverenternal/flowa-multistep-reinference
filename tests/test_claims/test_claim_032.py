@@ -16,7 +16,13 @@ We pin:
        stays low (cells still dominate).
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import (AdapterCapabilities, ChannelName, StateBundle, TensorRef)
+
+from tests.test_claims._claim_template import (
+    AdapterCapabilities,
+    ChannelName,
+    StateBundle,
+    TensorRef,
+)
 
 _XY = ChannelName("xy")
 

@@ -33,11 +33,11 @@ from typing import Any, Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from adaptive_reflow.algorithm.scheduler import ScheduleSample
 from adaptive_reflow.algorithm._derivation import (
     DerivationContext,
     default_handoff_window,
 )
+from adaptive_reflow.algorithm.scheduler import ScheduleSample
 from adaptive_reflow.contracts import CosineScheduleSample
 from adaptive_reflow.contracts.hashes import hash_artifact as _hash_artifact_global
 
@@ -291,8 +291,8 @@ def _dispatch_to_sub(config: Any) -> Any:
 
 def derive_default_handoff_window(
     *,
-    handoff_window: Optional[int] = None,
-    context: Optional[DerivationContext] = None,
+    handoff_window: int | None = None,
+    context: DerivationContext | None = None,
 ) -> int:
     """Return the per-round handoff window from a derivation rule.
 

@@ -27,13 +27,15 @@ PROTOCOL_METHODS = (
 
 
 def _adapter_classes():
-    from adaptive_reflow.adapters import flowmol3, mnist_fm, rectified_flow_cifar
     from adaptive_reflow.adapters import (
+        flowmol3,
         flowmol3_v2_adapter,
         graphbfn,
         hidream_i1,
         lumina_image_2_0,
+        mnist_fm,
         protbfn_abbfn_adapter,
+        rectified_flow_cifar,
         reference_flowa,
         synthetic,
         toy_gaussian,

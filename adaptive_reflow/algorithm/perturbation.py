@@ -29,8 +29,8 @@ from .perturbation.perturbation import *  # noqa: F401,F403
 # level so callers can continue using e.g.
 # ``adaptive_reflow.algorithm.perturbation.UniformFreshPerturbation``).
 from .perturbation.perturbation import (
-    UniformFreshPerturbation,
     PaperQuantityAttractorInversion,
+    UniformFreshPerturbation,
 )
 
 __all__ = getattr(_perturbation_module, "__all__", []) + [

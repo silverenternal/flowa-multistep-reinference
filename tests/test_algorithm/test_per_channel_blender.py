@@ -23,31 +23,30 @@ from adaptive_reflow.algorithm.per_channel_blender import (
     BLEND_FAMILY_BY_CHANNEL,
     DEFAULT_BLEND_FAMILY_BY_CHANNEL,
     DEFAULT_TAU_FLOOR,
-    GUMBEL_FAMILY,
     GRAPH_FAMILY,
-    GumbelBlend,
+    GUMBEL_FAMILY,
     LINEAR_FAMILY,
-    LinearBlend,
     LOGIT_FAMILY,
-    LogitBlend,
     MASKED_FAMILY,
-    MaskedBlend,
     PER_CHANNEL_BLEND_FALLTHROUGH,
-    PER_CHANNEL_BLEND_MASK_FRESH_FALLBACK,
     PER_CHANNEL_BLEND_M_ONE_SHORTCIRCUIT,
     PER_CHANNEL_BLEND_M_ZERO_SHORTCIRCUIT,
+    PER_CHANNEL_BLEND_MASK_FRESH_FALLBACK,
     PER_CHANNEL_BLEND_SENTINEL_PASSTHROUGH,
     PER_CHANNEL_BLEND_TAU_FLOOR_HIT,
-    PerChannelBlender,
     SAMPLE_FAMILY,
-    SampleBlend,
     BlendStrategy,
     GraphBlend,
+    GumbelBlend,
+    LinearBlend,
+    LogitBlend,
+    MaskedBlend,
+    PerChannelBlender,
+    SampleBlend,
     default_per_channel_blender,
 )
 from adaptive_reflow.contracts.state_channel import STATE_CHANNELS, StateChannel
 from adaptive_reflow.contracts.types import ChannelName
-
 
 # ---------------------------------------------------------------------------
 # Concrete strategies — direct tests

@@ -37,7 +37,6 @@ from adaptive_reflow.algorithm.batched_runner import (
     _w2_to_mode_centres,
 )
 
-
 _PROPERTY_SETTINGS = settings(
     max_examples=20,
     deadline=2000,

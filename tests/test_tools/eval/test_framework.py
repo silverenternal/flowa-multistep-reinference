@@ -13,7 +13,6 @@ from typing import Any
 
 import pytest
 
-
 _TOOLS = "tools.run_real_ckpt_eval"
 
 
@@ -340,8 +339,9 @@ def test_compute_paper_quantities_returns_dict_when_profile_fn_supplied() -> Non
     ``sheet_A``, ``packing_B``, ``exterior_gap``.
     """
     tools = _import_tools_module()
-    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
     import math as _math
+
+    from adaptive_reflow.adapters.flowmol3 import default_flowmol3_adapter
 
     adapter = default_flowmol3_adapter(force_mode="synthetic", nfe_budget=10)
     adapter.profile_residual_fn = lambda x: 0.5 * _math.sin(x)  # type: ignore[attr-defined]

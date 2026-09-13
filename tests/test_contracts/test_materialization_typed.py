@@ -24,10 +24,10 @@ import hashlib
 import pytest
 
 from adaptive_reflow.contracts.materialization import (
+    MATERIALIZER_NOOP_DIGEST,
     EnvelopeStateBundle,
     LegacyProtocolAdapter,
     LossTolerance,
-    MATERIALIZER_NOOP_DIGEST,
     MaterializationRoute,
     MaterializerHandle,
     NativeChannelAccessor,
@@ -51,9 +51,10 @@ from adaptive_reflow.molecular.materializer import (
 )
 from adaptive_reflow.universal.materialization import (
     MaterializationRouteProtocol as LegacyMaterializationRoute,
+)
+from adaptive_reflow.universal.materialization import (
     NativeStateBundle as LegacyNativeStateBundle,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures + helpers

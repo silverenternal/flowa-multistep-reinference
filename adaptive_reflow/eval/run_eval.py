@@ -31,9 +31,9 @@ dispatched per-metric via the ``_METRIC_PROBES`` registry below.
 """
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
-import time
 from typing import Any
 
 from adaptive_reflow.eval.result import (

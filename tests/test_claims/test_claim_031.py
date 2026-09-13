@@ -23,7 +23,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 # The r3-survey/ doc was relocated to ARCHIVE/ during Wave 16 doc
 # organisation. Both paths are valid; either one must exist.

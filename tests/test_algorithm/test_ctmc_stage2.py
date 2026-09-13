@@ -29,7 +29,6 @@ from adaptive_reflow.algorithm.dynamics import (
 )
 from adaptive_reflow.algorithm.solver import CTMCEulerHeunSolver
 
-
 # ---------------------------------------------------------------------------
 # Test 1 — Rate matrix shape + PSD off-diagonal (Stage 2 supplement 1)
 # ---------------------------------------------------------------------------

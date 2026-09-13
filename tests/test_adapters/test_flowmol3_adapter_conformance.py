@@ -36,12 +36,12 @@ import pytest
 from adaptive_reflow.adapters import (
     AUDIT_FLOWMOL3_ATOM_TYPE_ENTROPY_RESTART,
     FLOWMOL3_ATOM_TYPE_VOCAB_SIZE,
-    FLOWMOL3_CHANNELS,
     FLOWMOL3_CHANNEL_DOMAINS,
+    FLOWMOL3_CHANNELS,
+    PER_POSITION_ENTROPY_REDUCTION,
     FlowMol3Adapter,
     FlowMol3AtomTypeEntropyRestartPolicy,
     FlowMol3Capabilities,
-    PER_POSITION_ENTROPY_REDUCTION,
     default_flowmol3_adapter,
     flowmol3_registry_entry,
 )
@@ -65,7 +65,6 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 from adaptive_reflow.writer.registry import FLOWMOL3_PINNED_COMMIT
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -352,7 +351,7 @@ class TestFlowMol3ForceModeFactory:
             "torch",
             reason=(
                 "FlowMol3 real-ckpt loader requires torch "
-                "(install via \`uv pip install torch\`)"
+                r"(install via \`uv pip install torch\`)"
             ),
         )
         if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
@@ -377,7 +376,7 @@ class TestFlowMol3ForceModeFactory:
             "torch",
             reason=(
                 "FlowMol3 real-ckpt loader requires torch "
-                "(install via \`uv pip install torch\`)"
+                r"(install via \`uv pip install torch\`)"
             ),
         )
         if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
@@ -443,7 +442,7 @@ class TestFlowMol3ForceModeFactory:
             "torch",
             reason=(
                 "FlowMol3 real-ckpt loader requires torch "
-                "(install via \`uv pip install torch\`)"
+                r"(install via \`uv pip install torch\`)"
             ),
         )
         if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):
@@ -478,7 +477,7 @@ class TestFlowMol3ForceModeFactory:
             "torch",
             reason=(
                 "FlowMol3 real-ckpt loader requires torch "
-                "(install via \`uv pip install torch\`)"
+                r"(install via \`uv pip install torch\`)"
             ),
         )
         if not os.path.isfile(FLOWMOL3_REAL_CKPT_PATH):

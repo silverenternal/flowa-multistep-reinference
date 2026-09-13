@@ -163,7 +163,7 @@ class LatentShape:
         return (3, self.pixel_height, self.pixel_width)
 
     @classmethod
-    def sd_vae_256(cls) -> "LatentShape":
+    def sd_vae_256(cls) -> LatentShape:
         """Pre-canned SD-VAE latent at the 256x256 pixel resolution."""
         return cls(
             channels=LATENT_SHAPE_SD_VAE_256[0],
@@ -174,7 +174,7 @@ class LatentShape:
         )
 
     @classmethod
-    def flux_vae_1024(cls) -> "LatentShape":
+    def flux_vae_1024(cls) -> LatentShape:
         """Pre-canned FLUX.1-VAE latent at the 1024x1024 pixel resolution."""
         return cls(
             channels=LATENT_SHAPE_FLUX_VAE_1024[0],
@@ -185,7 +185,7 @@ class LatentShape:
         )
 
     @classmethod
-    def dcae_256(cls) -> "LatentShape":
+    def dcae_256(cls) -> LatentShape:
         """Pre-canned DC-AE latent at the 256x256 pixel resolution."""
         return cls(
             channels=LATENT_SHAPE_DCAE_256[0],
@@ -196,7 +196,7 @@ class LatentShape:
         )
 
     @classmethod
-    def hidream_1024(cls) -> "LatentShape":
+    def hidream_1024(cls) -> LatentShape:
         """Pre-canned HiDream-I1 VAE latent at the 1024x1024 pixel resolution."""
         return cls(
             channels=LATENT_SHAPE_HIDREAM_1024[0],
@@ -531,7 +531,7 @@ class DiffusersVAEWrapper:
         shape: LatentShape,
         dtype: VAEDType = "float32",
         symbol: str = "diffusers:AutoencoderKL",
-    ) -> "DiffusersVAEWrapper":
+    ) -> DiffusersVAEWrapper:
         """Construct a wrapper from a diffusers VAE on disk.
 
         Tries to import ``symbol`` (``module:attribute``) and

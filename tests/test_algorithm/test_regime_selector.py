@@ -31,8 +31,8 @@ from adaptive_reflow.algorithm.scheduler.evidence_driven import (
 from adaptive_reflow.algorithm.scheduler.regime_selector import (
     DEFAULT_REGIME_SLACK,
     EPS_FLOOR,
-    CosineAnnealRegimeSelector,
     ConvergenceAdaptiveRegimeSelector,
+    CosineAnnealRegimeSelector,
     RegimeAwareEpsSelector,
     RegimeSelection,
     default_e_rho_provider,
@@ -40,14 +40,13 @@ from adaptive_reflow.algorithm.scheduler.regime_selector import (
     regime_holds,
 )
 from adaptive_reflow.contracts import (
+    LEMMA4_REGIME_SLACK,
     ArtifactHash,
     CosineScheduleConfig,
     FactorValue,
-    LEMMA4_REGIME_SLACK,
     RegimeAwareSchedulerProtocol,
     RegimeGate,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

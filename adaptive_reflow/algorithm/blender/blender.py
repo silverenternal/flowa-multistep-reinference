@@ -59,12 +59,6 @@ import math
 from collections.abc import Mapping
 from typing import Any, ClassVar, Optional, Protocol, runtime_checkable
 
-from adaptive_reflow.universal.state import (
-    ChannelName,
-    StateBundle,
-    TensorRef,
-    validate_state_bundle,
-)
 from adaptive_reflow.algorithm._derivation import (
     DEFAULT_MEMORY_FRACTION_FALLBACK,
     DerivationContext,
@@ -74,6 +68,12 @@ from adaptive_reflow.algorithm._derivation import (
     default_distance_decay_temperature,
     default_memory_fraction,
     make_derivation_context,
+)
+from adaptive_reflow.universal.state import (
+    ChannelName,
+    StateBundle,
+    TensorRef,
+    validate_state_bundle,
 )
 
 # ---------------------------------------------------------------------------
@@ -710,10 +710,10 @@ def default_blender() -> LinearBlender:
 
 def derive_default_distance_decay_temperature(
     *,
-    l_e: Optional[float] = None,
-    n_rounds: Optional[int] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    l_e: float | None = None,
+    n_rounds: int | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``DEFAULT_DISTANCE_DECAY_TEMPERATURE`` from a derivation rule.
 
@@ -786,9 +786,9 @@ def _canonical_json_default(obj: Any) -> Any:
 
 def derive_default_memory_fraction(
     *,
-    n_cap: Optional[float] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    n_cap: float | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the per-round ``memory_fraction`` from a derivation rule.
 

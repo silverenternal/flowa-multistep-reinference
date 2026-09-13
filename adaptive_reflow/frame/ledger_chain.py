@@ -337,7 +337,7 @@ class ParallelLedgerChain:
         return chain
 
 
-def verify_checkpoint_chain(checkpoint: Any, *, path: str | None = None) -> "ChainVerification":
+def verify_checkpoint_chain(checkpoint: Any, *, path: str | None = None) -> ChainVerification:
     """Validate that ``checkpoint``'s ledger row sits at the chain head.
 
     Walks the row's ``prev_ledger_row_hash`` linkage by replaying

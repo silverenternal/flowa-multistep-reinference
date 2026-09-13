@@ -68,14 +68,14 @@ from __future__ import annotations
 
 from .test_problems import (
     AnalyticProblem,
-    linear_drift,
-    nonlinear_drift,
-    stiff_drift,
-    linear_exact,
-    nonlinear_exact,
-    stiff_exact,
-    integrate_at_nfe,
     fit_log_log_slope,
+    integrate_at_nfe,
+    linear_drift,
+    linear_exact,
+    nonlinear_drift,
+    nonlinear_exact,
+    stiff_drift,
+    stiff_exact,
 )
 
 __all__ = (

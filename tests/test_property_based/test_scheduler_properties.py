@@ -27,7 +27,6 @@ import math
 from collections.abc import Mapping
 
 import pytest
-import pytest
 
 # hypothesis is only present in test/dev venvs.
 # Skip the entire module when missing so the rest of the suite still collects.
@@ -51,7 +50,6 @@ from adaptive_reflow.algorithm.scheduler._core import (
 from adaptive_reflow.algorithm.scheduler._core import (
     default_cosine_scheduler as _default_cosine_scheduler,
 )
-
 
 # ---------------------------------------------------------------------------
 # Strategies

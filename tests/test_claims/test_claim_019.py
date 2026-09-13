@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from adaptive_reflow.algorithm.scheduler._core import SCHEDULER_REGISTRY
 
-
 EXPECTED_NINE = (
     "cosine",
     "constant",

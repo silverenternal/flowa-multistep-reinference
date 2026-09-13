@@ -51,7 +51,11 @@ from typing import TYPE_CHECKING, Any, NewType
 if TYPE_CHECKING:
     from adaptive_reflow.contracts.condition import (
         Condition as _Condition,
+    )
+    from adaptive_reflow.contracts.condition import (
         MappingConditionAdapter as _MappingConditionAdapter,
+    )
+    from adaptive_reflow.contracts.condition import (
         validate_condition as _validate_condition,
     )
 
@@ -199,6 +203,8 @@ class ODEConditionDelta:
         """
         from adaptive_reflow.contracts.condition import (
             Condition as _Condition_runtime,
+        )
+        from adaptive_reflow.contracts.condition import (
             MappingConditionAdapter as _MappingConditionAdapter_runtime,
         )
 
@@ -338,7 +344,11 @@ def validate_condition_delta(delta: ODEConditionDelta) -> tuple[bool, tuple[str,
     # ``state.py`` ↔ ``contracts/condition.py`` ↔ ``contracts/__init__.py``.
     from adaptive_reflow.contracts.condition import (
         Condition as _Condition,
+    )
+    from adaptive_reflow.contracts.condition import (
         MappingConditionAdapter as _MappingConditionAdapter,
+    )
+    from adaptive_reflow.contracts.condition import (
         validate_condition as _validate_condition,
     )
 

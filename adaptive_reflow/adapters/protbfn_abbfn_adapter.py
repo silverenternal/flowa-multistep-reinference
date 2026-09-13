@@ -42,8 +42,19 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
+    digest_state,
+    kaiming_uniform,
+    make_ref,
+    seed_from_ids,
+)
+from adaptive_reflow.adapters._adapter_common import (
+    torch_is_available as _adapter_common_torch_is_available,
+)
 from adaptive_reflow.contracts import MechanismId
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.framework.interfaces import implements
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -58,17 +69,6 @@ from adaptive_reflow.universal.state import (
     StateBundle,
     validate_state_bundle,
 )
-
-from adaptive_reflow.adapters._adapter_common import (
-    NativeStateCache,
-    digest_state,
-    kaiming_uniform,
-    make_ref,
-    seed_from_ids,
-    torch_is_available as _adapter_common_torch_is_available,
-)
-from adaptive_reflow.framework.interfaces import implements
-
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -978,11 +978,12 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         ``trajectory`` shape matches the protocol's expectation.
         """
         # Lazy-import the upstream shim + JAX stack.
+        import jax  # local — only when ``upstream_jax`` mode is active
+        import jax.numpy as jnp  # local
+
         from adaptive_reflow.adapters.protbfn_abbfn_upstream_shim import (
             ProtBFNUpstreamLoadResult,
         )
-        import jax  # local — only when ``upstream_jax`` mode is active
-        import jax.numpy as jnp  # local
 
         # 1. Build the upstream sampler.
         loader = ProtBFNUpstreamLoadResult()
@@ -1615,7 +1616,7 @@ class ProtBFNAbBFNAdapter(FlowMatchingODEAdapter):
         # 5. FASTA I/O via Bio.SeqIO.
         out_path: str | None = None
         try:
-            from Bio import SeqIO, Seq  # local import — biopython is in venv
+            from Bio import Seq, SeqIO  # local import — biopython is in venv
         except Exception:
             SeqIO = None
             Seq = None

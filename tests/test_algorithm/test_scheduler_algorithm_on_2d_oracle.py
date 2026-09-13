@@ -42,7 +42,6 @@ from adaptive_reflow.algorithm.scheduler._core import (
 )
 from adaptive_reflow.contracts import paper_quantities as pq
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

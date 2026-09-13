@@ -32,7 +32,6 @@ from adaptive_reflow.adapters.lineageflow import (
 )
 from adaptive_reflow.universal.state import ODEConditionDelta
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

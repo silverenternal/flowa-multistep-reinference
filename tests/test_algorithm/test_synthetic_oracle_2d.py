@@ -59,7 +59,6 @@ from adaptive_reflow.algorithm._synthetic_oracle import (
     w2_squared_two_gaussians,
 )
 
-
 # ---------------------------------------------------------------------------
 # (1) SyntheticOracle protocol
 # ---------------------------------------------------------------------------

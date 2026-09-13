@@ -59,12 +59,13 @@ _CI_REFERENCE_N: int = 2048  # match the full sweep
 
 
 def _import_deps() -> tuple[Any, Any, Any, Any]:
+    from scipy.stats import wasserstein_distance
+
     from adaptive_reflow.adapters.twodim_fm import (
         TwoDimFMAdapter,
         _batched_integrate_rk4,
     )
     from adaptive_reflow.eval.twodim_fm_evaluator import analytic_samples
-    from scipy.stats import wasserstein_distance
 
     return TwoDimFMAdapter, _batched_integrate_rk4, analytic_samples, wasserstein_distance
 
@@ -230,7 +231,7 @@ def test_baseline_w2_matches_csv_goldens_within_tolerance() -> None:
     if not csv_path.exists():
         pytest.skip(f"full-sweep CSV not found at {csv_path}; run tools/noise_injection_experiment.py first")
     rows: list[dict[str, str]] = []
-    with open(csv_path, "r") as f:
+    with open(csv_path) as f:
         rows = list(csv.DictReader(f))
     # Map (sigma, nfe) -> [W2 values across seeds]
     by_cell: dict[tuple[float, int], list[float]] = {}
@@ -295,9 +296,9 @@ def test_full_experiment_quick_smoke() -> None:
     assert base_csv.exists(), f"baseline CSV missing at {base_csv}"
     assert fw_csv.exists(), f"framework CSV missing at {fw_csv}"
     # Both CSVs must have >= 1 row
-    with open(base_csv, "r") as f:
+    with open(base_csv) as f:
         base_rows = list(csv.DictReader(f))
-    with open(fw_csv, "r") as f:
+    with open(fw_csv) as f:
         fw_rows = list(csv.DictReader(f))
     assert len(base_rows) >= 6, f"baseline CSV too small: {len(base_rows)} rows"
     assert len(fw_rows) >= 2, f"framework CSV too small: {len(fw_rows)} rows"

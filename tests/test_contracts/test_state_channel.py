@@ -32,7 +32,6 @@ from adaptive_reflow.contracts.state_channel import (
 )
 from adaptive_reflow.contracts.types import ChannelName
 
-
 # ---------------------------------------------------------------------------
 # StateChannel — closed enum
 # ---------------------------------------------------------------------------

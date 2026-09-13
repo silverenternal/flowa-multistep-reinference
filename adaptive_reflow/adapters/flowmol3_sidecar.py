@@ -354,7 +354,7 @@ class FlowMol3SidecarProcess:
     # Dunder
     # ------------------------------------------------------------------
 
-    def __enter__(self) -> "FlowMol3SidecarProcess":
+    def __enter__(self) -> FlowMol3SidecarProcess:
         self.start()
         return self
 

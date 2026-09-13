@@ -29,7 +29,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 EXPERIMENT_SCRIPT = ROOT / "tools" / "run_sota_2d_experiment.py"
 RESULTS_DOC = ROOT / "docs" / "r4-survey" / "10-sota-2d-experiment-results.md"

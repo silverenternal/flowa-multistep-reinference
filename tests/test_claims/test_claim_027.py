@@ -11,10 +11,12 @@ We pin:
     3. The class has a `record_round_feedback` hook (per SchedulerProtocol).
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import (default_cosine_scheduler, registered_families)
+
 from adaptive_reflow.algorithm.scheduler.evidence_driven import (
     EvidenceDrivenScheduler,
 )
+from tests.test_claims._claim_template import default_cosine_scheduler, registered_families
+
 
 def _default_cfg(cycle_length: int):
     return default_cosine_scheduler(

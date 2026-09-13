@@ -45,7 +45,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-
 GRAPHBFN_TEST_CHANNELS: tuple[str, ...] = (
     "atoms",
     "bonds",
@@ -77,7 +76,7 @@ def _make_final_policy(
     beta: float,
     channels: tuple[str, ...] = GRAPHBFN_TEST_CHANNELS,
     target_round: int = 0,
-) -> "FinalRestartPolicy":
+) -> FinalRestartPolicy:
     """Build a :class:`FinalRestartPolicy` with per-channel ``beta``."""
     from adaptive_reflow.contracts import (
         ArtifactHash,
@@ -119,7 +118,7 @@ def _make_condition_delta(
     calibration_artifact_hash: str = "cal-graphbfn",
     condition_kind: str = "unconditional",
     property_value: float | None = None,
-) -> "ODEConditionDelta":
+) -> ODEConditionDelta:
     from adaptive_reflow.frame import ODEConditionDelta
 
     delta_spec: dict[str, object] = {
@@ -160,8 +159,8 @@ def _compute_fresh_param(rng_seed_blob: str, shape: tuple[int, int]) -> np.ndarr
 def test_capabilities_handshake() -> None:
     """The adapter's capability surface is well-formed and exhaustive."""
     from adaptive_reflow.adapters.graphbfn import (
-        GRAPHBFN_CHANNELS,
         GRAPHBFN_CHANNEL_DOMAINS,
+        GRAPHBFN_CHANNELS,
         GRAPHBFN_CONFIG_HASH_ICLR,
         GraphBFNAdapter,
     )

@@ -24,7 +24,6 @@ from __future__ import annotations
 import time
 
 import numpy as np
-
 from _hidream_helpers import (
     _make_condition_delta,
     _make_final_policy,
@@ -32,7 +31,6 @@ from _hidream_helpers import (
     _validate_round_trace,
     hidream_adapter,
 )
-
 
 # ---------------------------------------------------------------------------
 # 17. Conditioning cache reuses the same prompt

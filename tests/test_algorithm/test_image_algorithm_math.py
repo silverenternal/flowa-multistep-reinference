@@ -53,7 +53,6 @@ from adaptive_reflow.eval.fid import (
     compute_frechet_distance_closed_form,
 )
 
-
 # ---------------------------------------------------------------------------
 # Closed-form helpers (stdlib-only — no scipy / numpy.linalg)
 # ---------------------------------------------------------------------------

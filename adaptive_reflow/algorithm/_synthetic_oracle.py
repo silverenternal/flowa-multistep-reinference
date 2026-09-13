@@ -887,7 +887,7 @@ class GaussianVsGaussianOracle:
         mu_1: Sequence[float],
         sigma_1: Sequence[Sequence[float]],
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         self._target = GaussianMeanCov(
             mu=tuple(float(m) for m in mu_1),
@@ -961,7 +961,7 @@ class GaussianVsMixtureOracle:
         mus: Sequence[Sequence[float]],
         sigmas: Sequence[Sequence[Sequence[float]]],
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         n_samples: int = DEFAULT_MC_SAMPLES,
         seed: int = DEFAULT_MC_SEED,
     ) -> None:
@@ -1070,7 +1070,7 @@ class GaussianMixtureKLOracle:
     provides a clean protocol surface today.
     """
 
-    def __init__(self, target: GaussianMixture, *, name: Optional[str] = None) -> None:
+    def __init__(self, target: GaussianMixture, *, name: str | None = None) -> None:
         self._target = target
         d = target.dim
         weights = list(target.weights)

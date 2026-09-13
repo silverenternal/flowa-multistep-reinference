@@ -219,6 +219,8 @@ def test_run_eval_writes_to_output_dir(tmp_path: Path):
 
 def test_legacy_compute_fid_still_works():
     """Back-compat: tools.eval_rf_cifar.compute_fid remains importable."""
+    import numpy as np
+
     from tools.eval_rf_cifar import (
         PUBLISHED_BASELINE_FID,
         compute_fid,
@@ -226,7 +228,6 @@ def test_legacy_compute_fid_still_works():
         random_inception_features,
         run_baseline,
     )
-    import numpy as np
 
     assert callable(compute_fid)
     assert callable(extract_inception_features)
@@ -244,8 +245,8 @@ def test_legacy_mol_eval_functions_still_importable():
     """Back-compat: tools.run_mol_eval helpers remain importable."""
     from tools.run_mol_eval import (
         OUTPUT_SCHEMA_VERSION,
-        compute_flowmol3_paper_metrics,
         _compute_fg_deviation_eq4_block,
+        compute_flowmol3_paper_metrics,
     )
     assert callable(compute_flowmol3_paper_metrics)
     assert callable(_compute_fg_deviation_eq4_block)
@@ -255,9 +256,15 @@ def test_legacy_mol_eval_functions_still_importable():
 def test_run_eval_canonical_imports():
     """Top-level re-exports work."""
     from adaptive_reflow.eval import (
-        EvalResult as TopEval,
-        MetricResult as TopMetric,
         SCHEMA_VERSION as TopSv,
+    )
+    from adaptive_reflow.eval import (
+        EvalResult as TopEval,
+    )
+    from adaptive_reflow.eval import (
+        MetricResult as TopMetric,
+    )
+    from adaptive_reflow.eval import (
         run_eval as TopRunEval,
     )
     assert TopEval is EvalResult

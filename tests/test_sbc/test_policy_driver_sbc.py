@@ -35,13 +35,11 @@ from __future__ import annotations
 import pytest
 
 from adaptive_reflow.algorithm.policy_driver import AdaptivePolicyDriver
-
 from tests.test_sbc.sbc_helpers import (
     assert_calibrated,
     run_sbc,
     uniform_prior,
 )
-
 
 _TARGET_ESTIMATE = 0.5
 

@@ -436,6 +436,7 @@ def test_runner_state_machine_default_factory() -> None:
     remains IDLE before any round is run.
     """
     from adaptive_reflow.algorithm.runner import ReInferenceRunner
+
     # Wave 104 P2-B split test_runner.py into per-class sub-files; the
     # _twodim_adapter fixture moved to test_batched_runner.py.
     from tests.test_algorithm.test_batched_runner import _twodim_adapter  # type: ignore

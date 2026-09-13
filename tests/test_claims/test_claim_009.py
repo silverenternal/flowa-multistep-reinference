@@ -11,7 +11,13 @@ eps_implicit=0.05), the two_moons replay ratio strictly exceeds the
 eight_gaussians replay ratio.
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import (AdapterCapabilities, ChannelName, StateBundle, TensorRef)
+
+from tests.test_claims._claim_template import (
+    AdapterCapabilities,
+    ChannelName,
+    StateBundle,
+    TensorRef,
+)
 
 _XY = ChannelName("xy")
 

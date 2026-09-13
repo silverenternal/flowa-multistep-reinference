@@ -1243,7 +1243,7 @@ class FlowMol3Adapter(FlowMatchingODEAdapter):
             # the same trace return the same value).
             seed = int(
                 hashlib.sha256(
-                    f"flowmol3:entropy:{trace.native_state_digest}".encode("utf-8")
+                    f"flowmol3:entropy:{trace.native_state_digest}".encode()
                 ).hexdigest()[:8],
                 16,
             )

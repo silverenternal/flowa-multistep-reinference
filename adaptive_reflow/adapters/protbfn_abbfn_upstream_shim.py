@@ -49,8 +49,9 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,7 +89,7 @@ def _try_import_upstream() -> dict[str, Any]:
     _install_upstream_path()
     try:
         from model import get_transformer_fn  # noqa: PLC0415
-        from sample import make_sample_fn, make_loss_fn  # noqa: PLC0415
+        from sample import make_loss_fn, make_sample_fn  # noqa: PLC0415
     except BaseException as exc:  # noqa: BLE001
         _UPSTREAM_IMPORT_ERROR = exc
         _LOGGER.warning(

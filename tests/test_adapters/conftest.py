@@ -20,10 +20,10 @@ import pytest
 # files that import them via ``tests.test_adapters.conftest`` continue
 # to resolve. Wave 104 P0-B unification.
 from tests.conftest import (  # noqa: F401 — re-export
-    _probe_mnist_mirror,
     _materialize_twodim_fm_weights,
-    twodim_fm_weights_path,
+    _probe_mnist_mirror,
     twodim_fm_eight_gaussians_weights_path,
+    twodim_fm_weights_path,
 )
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent

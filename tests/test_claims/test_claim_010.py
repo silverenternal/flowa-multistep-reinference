@@ -12,8 +12,11 @@ We pin:
     3. `n_min` is preserved through `to_config`/`from_config` round-trip.
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import default_cosine_scheduler
+
 import math
+
+from tests.test_claims._claim_template import default_cosine_scheduler
+
 
 def test_claim_010_cosine_scheduler_config_carries_positive_n_min() -> None:
     """`_config.n_min` is the structural noise-floor guarantee."""

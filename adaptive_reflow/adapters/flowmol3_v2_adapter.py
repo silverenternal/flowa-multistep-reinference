@@ -60,8 +60,27 @@ from typing import Any, cast
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
+    _run_construction_shape_guard,
+    digest_state,
+    kaiming_uniform,
+    make_ref,
+    per_position_entropy_reduction,
+    seed_from_ids,
+)
+from adaptive_reflow.adapters._adapter_common import (
+    torch_is_available as _torch_is_available,
+)
 from adaptive_reflow.algorithm.blender import LinearBlender, RestartBlenderProtocol
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.framework.interfaces import (
+    AdapterObservationProtocol,
+    FlowMatchingODEAdapterWithObservation,
+    ObservationKind,
+    ObservationResult,
+    implements,
+)
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -76,24 +95,6 @@ from adaptive_reflow.universal.state import (
     StateBundle,
     TensorRef,
     validate_state_bundle,
-)
-
-from adaptive_reflow.adapters._adapter_common import (
-    NativeStateCache,
-    _run_construction_shape_guard,
-    digest_state,
-    kaiming_uniform,
-    make_ref,
-    per_position_entropy_reduction,
-    seed_from_ids,
-    torch_is_available as _torch_is_available,
-)
-from adaptive_reflow.framework.interfaces import (
-    AdapterObservationProtocol,
-    FlowMatchingODEAdapterWithObservation,
-    ObservationKind,
-    ObservationResult,
-    implements,
 )
 
 # ---------------------------------------------------------------------------
@@ -411,12 +412,13 @@ def _install_upstream_stubs() -> None:
     # is the standard torch-supported way to allow that single global.
     try:
         import pathlib as _pathlib
+
         import torch as _torch
 
         _torch.serialization.add_safe_globals([_pathlib.PosixPath])
     except Exception:  # noqa: BLE001 - if torch isn't importable we don't care
         pass
-    setattr(_install_upstream_stubs, "_installed", True)
+    _install_upstream_stubs._installed = True
 
 
 def _try_import_upstream_flowmol(
@@ -2607,14 +2609,13 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # is unaffected: we save+restore ``np.random.get_state`` in
         # the helper and the framework scheduler does not touch the
         # legacy ``np.random.*`` API.
-        with _seed_everything(int(seed), str(self._device)):
-            with torch.no_grad():
-                sampled = self._model.sample(
-                    n_atoms=n_atoms_tensor,
-                    n_timesteps=int(num_steps),
-                    device=str(self._device),
-                    prior=prior_dict,
-                )
+        with _seed_everything(int(seed), str(self._device)), torch.no_grad():
+            sampled = self._model.sample(
+                n_atoms=n_atoms_tensor,
+                n_timesteps=int(num_steps),
+                device=str(self._device),
+                prior=prior_dict,
+            )
         # ``sampled`` is a list with one SampledMolecule (single-mol batch).
         mol = sampled[0]
         # The upstream ``SampledMolecule`` constructor already filters
@@ -2871,14 +2872,13 @@ class FlowMol3V2Adapter(FlowMatchingODEAdapter):
         # batched upstream call also consumes module-level RNG state
         # at call time; seeding via ``_seed_everything`` ensures the
         # batch is reproducible across runs.
-        with _seed_everything(int(seed), str(self._device)):
-            with torch.no_grad():
-                sampled = self._model.sample(
-                    n_atoms=n_atoms_tensor,
-                    n_timesteps=int(num_steps),
-                    device=str(self._device),
-                    prior=prior_dict,
-                )
+        with _seed_everything(int(seed), str(self._device)), torch.no_grad():
+            sampled = self._model.sample(
+                n_atoms=n_atoms_tensor,
+                n_timesteps=int(num_steps),
+                device=str(self._device),
+                prior=prior_dict,
+            )
         if len(sampled) != n_mol:
             raise RuntimeError(
                 f"upstream_sample_returned_unexpected_count:"

@@ -178,12 +178,6 @@ from .archive import (
     validate_archive_quota,
 )
 
-# ---- D4: Dynamic noise bias typed contracts ----
-from .dynamic_noise_bias import (
-    DynamicNoiseBiasResult,
-    PaperQuantitiesSnapshot,
-)
-
 # ---- DTB-S1 contract ----
 from .authority import (
     FinalRestartPolicy,
@@ -191,9 +185,57 @@ from .authority import (
     RestartPolicyAuthorityContract,
     validate_final_restart_policy,
 )
+
+# ---- D8: Typed Condition discriminated union ----
+from .condition import (
+    CONDITION_KINDS,
+    BFNInpaintCondition,
+    CFGCondition,
+    Condition,
+    ConditionKind,
+    InpaintingCondition,
+    MappingConditionAdapter,
+    NullCondition,
+    PropertyCondition,
+    condition_kind_of,
+    condition_to_mapping,
+    validate_condition,
+    wrap_condition,
+)
+
+# ---- D4: Dynamic noise bias typed contracts ----
+from .dynamic_noise_bias import (
+    DynamicNoiseBiasResult,
+    PaperQuantitiesSnapshot,
+)
+
+# ---- D10: Typed materialization route (Design #4) ----
+from .materialization import (
+    MATERIALIZER_NOOP_DIGEST,
+    EnvelopeStateBundle,
+    LegacyProtocolAdapter,
+    LossTolerance,
+    MaterializationRoute,
+    MaterializerHandle,
+    NativeChannelAccessor,
+    NativeStateBundle,
+    NoOpMaterializer,
+    default_materializer_route,
+)
 from .operations import (
     CommutatorResidualDiagnostic,
     OperationCompositionContract,
+)
+
+# ---- D5: Per-channel state-type + shape contracts (Design #3) ----
+from .state_channel import (
+    STATE_CHANNELS,
+    StateChannel,
+    StateChannelKind,
+    StateShape,
+    validate_channel_types,
+    validate_state_channel,
+    validate_state_shape,
 )
 
 # ---- Generic state machine library (PEP 695, stdlib-only) ----
@@ -209,48 +251,6 @@ from .state_machine import (
     TransitionGuardedBuilder,
     TransitionKind,
     TransitionLog,
-)
-
-# ---- D8: Typed Condition discriminated union ----
-from .condition import (
-    BFNInpaintCondition,
-    CFGCondition,
-    CONDITION_KINDS,
-    Condition,
-    ConditionKind,
-    InpaintingCondition,
-    MappingConditionAdapter,
-    NullCondition,
-    PropertyCondition,
-    condition_kind_of,
-    condition_to_mapping,
-    validate_condition,
-    wrap_condition,
-)
-
-# ---- D5: Per-channel state-type + shape contracts (Design #3) ----
-from .state_channel import (
-    STATE_CHANNELS,
-    StateChannel,
-    StateChannelKind,
-    StateShape,
-    validate_channel_types,
-    validate_state_channel,
-    validate_state_shape,
-)
-
-# ---- D10: Typed materialization route (Design #4) ----
-from .materialization import (
-    EnvelopeStateBundle,
-    LegacyProtocolAdapter,
-    LossTolerance,
-    MATERIALIZER_NOOP_DIGEST,
-    MaterializationRoute,
-    MaterializerHandle,
-    NativeChannelAccessor,
-    NativeStateBundle,
-    NoOpMaterializer,
-    default_materializer_route,
 )
 
 # ---------------------------------------------------------------------------

@@ -62,8 +62,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,7 +77,6 @@ from adaptive_reflow.eval.fg_deviation import (  # noqa: E402
     _parse_smiles_list,
     count_fg_hits,
 )
-
 
 # ---------------------------------------------------------------------------
 # Instance-count aggregation (paper eq.21 normalization)

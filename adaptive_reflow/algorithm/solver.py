@@ -142,7 +142,7 @@ class IntegratorProtocol(Protocol):
     def to_config(self) -> dict[str, Any]: ...
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "IntegratorProtocol": ...
+    def from_config(cls, config: dict[str, Any]) -> IntegratorProtocol: ...
 
 
 # ---------------------------------------------------------------------------
@@ -206,7 +206,7 @@ class EulerSolver:
         return {"family": self.FAMILY}
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "EulerSolver":
+    def from_config(cls, config: dict[str, Any]) -> EulerSolver:
         if config.get("family") != cls.FAMILY:
             raise ValueError(
                 f"EulerSolver.from_config: bad family {config.get('family')!r}"
@@ -321,7 +321,7 @@ class RK4Solver:
         return {"family": self.FAMILY}
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "RK4Solver":
+    def from_config(cls, config: dict[str, Any]) -> RK4Solver:
         if config.get("family") != cls.FAMILY:
             raise ValueError(
                 f"RK4Solver.from_config: bad family {config.get('family')!r}"
@@ -416,7 +416,7 @@ class HeunSolver:
         return {"family": self.FAMILY}
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "HeunSolver":
+    def from_config(cls, config: dict[str, Any]) -> HeunSolver:
         if config.get("family") != cls.FAMILY:
             raise ValueError(
                 f"HeunSolver.from_config: bad family {config.get('family')!r}"
@@ -558,7 +558,7 @@ class AdaptiveRK4Solver:
         }
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "AdaptiveRK4Solver":
+    def from_config(cls, config: dict[str, Any]) -> AdaptiveRK4Solver:
         if config.get("family") != cls.FAMILY:
             raise ValueError(
                 f"AdaptiveRK4Solver.from_config: bad family {config.get('family')!r}"
@@ -681,7 +681,7 @@ class CTMCEulerHeunSolver:
         }
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "CTMCEulerHeunSolver":
+    def from_config(cls, config: dict[str, Any]) -> CTMCEulerHeunSolver:
         if config.get("family") != cls.FAMILY:
             raise ValueError(
                 f"CTMCEulerHeunSolver.from_config: bad family {config.get('family')!r}"
@@ -782,7 +782,7 @@ class BFNSolver:
         return {"family": self.FAMILY}
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "BFNSolver":
+    def from_config(cls, config: dict[str, Any]) -> BFNSolver:
         if config.get("family") != cls.FAMILY:
             raise ValueError(
                 f"BFNSolver.from_config: bad family {config.get('family')!r}"

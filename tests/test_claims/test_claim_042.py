@@ -29,7 +29,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 PLAN_DOC = ROOT / "docs" / "r4-survey" / "21-fix-v2-plan.md"
 RESULTS_DOC = ROOT / "docs" / "r4-survey" / "22-fix-v2-results.md"

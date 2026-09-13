@@ -35,7 +35,6 @@ from typing import Any
 
 import pytest
 
-
 _HELPER = "tools._gpu_watchdog"
 
 

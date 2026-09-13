@@ -24,7 +24,6 @@ from adaptive_reflow.adapters.lineageflow_glue import (
     LineageFlowGlue,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers — fake adapter + fake trace (no torch, no real adapter)
 # ---------------------------------------------------------------------------

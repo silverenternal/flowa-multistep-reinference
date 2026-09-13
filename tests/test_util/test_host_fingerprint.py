@@ -16,7 +16,6 @@ from adaptive_reflow.util.host_fingerprint import (
     with_host_fingerprint,
 )
 
-
 # ---------------------------------------------------------------------------
 # compute_host_fingerprint / capture_host_fingerprint
 # ---------------------------------------------------------------------------

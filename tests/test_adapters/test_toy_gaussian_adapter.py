@@ -24,11 +24,11 @@ import pytest
 from adaptive_reflow.adapters.toy_gaussian import (
     EULER_DT,
     EULER_NUM_STEPS,
-    GaussianAdapterCapabilities,
     INITIAL_MEANS,
     INITIAL_STDDEVS,
     INITIAL_WEIGHTS,
     SUPPORTED_CHANNELS,
+    GaussianAdapterCapabilities,
     ToyGaussianAdapter,
     default_toy_gaussian_adapter,
     gauss_score,
@@ -50,7 +50,6 @@ from adaptive_reflow.universal.state import (
     ODEConditionDelta,
     validate_state_bundle,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

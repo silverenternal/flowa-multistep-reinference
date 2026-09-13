@@ -28,15 +28,15 @@ from adaptive_reflow.adapters.kanzi import (
     ERR_KANZI_INTEGRATOR_UNKNOWN,
     ERR_KANZI_NUM_STEPS,
     KANZI_AR_SEQ_LENGTH,
+    KANZI_CFG_SCALE_DEFAULT,
     KANZI_CHANNEL_DOMAINS,
     KANZI_CHANNELS,
-    KANZI_CFG_SCALE_DEFAULT,
     KANZI_CONFIG_HASH,
     KANZI_FAMILY_ID_DEFAULT,
     KANZI_FLAT_LATENT_DIM,
-    KANZI_INTEGRATORS,
     KANZI_INTEGRATOR_EULER,
     KANZI_INTEGRATOR_HEUN,
+    KANZI_INTEGRATORS,
     KANZI_LATENT_CLAMP,
     KANZI_LATENT_DIM,
     KANZI_MECHANISM_ID,
@@ -45,11 +45,11 @@ from adaptive_reflow.adapters.kanzi import (
     KANZI_STATE_SHAPE,
     KANZI_T_END,
     KANZI_VOCAB_SIZE,
+    PFAM_FAMILY_COND,
+    PROTEIN_LATENT,
     KanziAdapter,
     KanziCapabilities,
     KanziGPTPriorRestartPolicy,
-    PFAM_FAMILY_COND,
-    PROTEIN_LATENT,
     default_kanzi_adapter,
     kanzi_resolve_weights_path,
     torch_is_available,
@@ -57,6 +57,14 @@ from adaptive_reflow.adapters.kanzi import (
 from adaptive_reflow.algorithm.perturbation import (
     PaperQuantityAttractorInversion,
     UniformFreshPerturbation,
+)
+from adaptive_reflow.contracts import (
+    ArtifactHash,
+    FactorValue,
+    FinalRestartPolicy,
+    LedgerRowId,
+    PolicyId,
+    RunId,
 )
 from adaptive_reflow.framework._compliance import implements
 from adaptive_reflow.universal import FlowMatchingODEAdapter
@@ -67,15 +75,6 @@ from adaptive_reflow.universal.state import (
     StateBundle,
     validate_state_bundle,
 )
-from adaptive_reflow.contracts import (
-    ArtifactHash,
-    FactorValue,
-    FinalRestartPolicy,
-    LedgerRowId,
-    PolicyId,
-    RunId,
-)
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -138,8 +137,8 @@ def test_gpt_prior_patch_idempotent_when_kanzi_present() -> None:
         pytest.skip("kanzi package not installed in this venv")
 
     from adaptive_reflow.adapters.kanzi import (
-        _install_gpt_prior_patch,
         GPT_PRIOR_PATCH_MARKER,
+        _install_gpt_prior_patch,
     )
 
     # First call (idempotent against the at-import-time install).
@@ -155,6 +154,7 @@ def test_gpt_prior_patch_idempotent_when_kanzi_present() -> None:
 def test_gpt_prior_patch_returns_false_when_kanzi_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     """When ``kanzi`` is not importable, the patch helper is a no-op."""
     import importlib.util as _il
+
     from adaptive_reflow.adapters import kanzi as _kanzi_adapter
 
     # Override find_spec for the three modules the patch checks, so it
@@ -189,8 +189,9 @@ def test_gpt_prior_patch_runs_gpt_forward_end_to_end() -> None:
     if not _il.find_spec("torch"):
         pytest.skip("torch not installed in this venv")
 
-    import torch  # noqa: E402  — local import gated on availability.
     import kanzi.models as _km  # noqa: E402
+    import torch  # noqa: E402  — local import gated on availability.
+
     from adaptive_reflow.adapters.kanzi import (  # noqa: E402
         _install_gpt_prior_patch,
     )
@@ -242,8 +243,9 @@ def test_gpt_prior_patch_runs_dae_gpt_prior_branch() -> None:
     if not _il.find_spec("torch"):
         pytest.skip("torch not installed in this venv")
 
-    import torch  # noqa: E402
     import kanzi.models as _km  # noqa: E402
+    import torch  # noqa: E402
+
     from adaptive_reflow.adapters.kanzi import (  # noqa: E402
         _install_gpt_prior_patch,
     )

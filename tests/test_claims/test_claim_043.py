@@ -29,7 +29,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 AUDIT_DOC = ROOT / "docs" / "audit" / "PHASE4_DOCSTRING_AUDIT.md"
 CLAIMS_VERIFIER = ROOT / "tools" / "check_claims_consistency.py"

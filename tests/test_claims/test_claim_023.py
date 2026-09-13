@@ -23,7 +23,6 @@ from adaptive_reflow.eval.coverage_r2 import (
     support_coverage_score,
 )
 
-
 _KDE_SUPPORT_KEY: str = CoverageFamily.KDE_SUPPORT
 
 

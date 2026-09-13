@@ -71,9 +71,9 @@ from adaptive_reflow.adapters.self_flow import (
     SELF_FLOW_CHANNELS,
     SELF_FLOW_CLAMP,
     SELF_FLOW_CONFIG_HASH,
-    SELF_FLOW_INTEGRATORS,
     SELF_FLOW_INTEGRATOR_EULER,
     SELF_FLOW_INTEGRATOR_HEUN,
+    SELF_FLOW_INTEGRATORS,
     SELF_FLOW_MECHANISM_ID,
     SELF_FLOW_NUM_STEPS_DEFAULT,
     SELF_FLOW_STATE_SHAPE,
@@ -84,13 +84,6 @@ from adaptive_reflow.adapters.self_flow import (
     self_flow_resolve_weights_path,
     torch_is_available,
 )
-from adaptive_reflow.universal import FlowMatchingODEAdapter
-from adaptive_reflow.universal.state import (
-    ChannelName,
-    ODEConditionDelta,
-    StateBundle,
-    validate_state_bundle,
-)
 from adaptive_reflow.contracts import (
     ArtifactHash,
     FactorValue,
@@ -99,7 +92,13 @@ from adaptive_reflow.contracts import (
     PolicyId,
     RunId,
 )
-
+from adaptive_reflow.universal import FlowMatchingODEAdapter
+from adaptive_reflow.universal.state import (
+    ChannelName,
+    ODEConditionDelta,
+    StateBundle,
+    validate_state_bundle,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers

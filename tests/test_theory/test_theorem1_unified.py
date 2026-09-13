@@ -197,6 +197,7 @@ def test_theorem1_statement_checker_bl_distance_is_planar_R2():
     from adaptive_reflow.contracts.dynamic_noise_bias import (
         PaperQuantitiesSnapshot,
     )
+
     # Wave 15 C: direct import of the planar witness (the importlib
     # bypass has been removed in :mod:`theory.checkers`).
     from adaptive_reflow.eval.lipschitz_diagnostic import (

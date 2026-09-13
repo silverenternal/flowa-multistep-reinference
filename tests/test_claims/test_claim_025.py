@@ -15,8 +15,8 @@ We pin:
 from __future__ import annotations
 
 from adaptive_reflow.algorithm.merge_operator import (
-    BoundedMergeOperator,
     _ERR_CAP_BELOW_FLOOR,
+    BoundedMergeOperator,
 )
 
 

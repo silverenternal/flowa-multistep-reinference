@@ -34,12 +34,14 @@ time ``adaptive_reflow.algorithm`` has finished initialising.
 
 from __future__ import annotations
 
+# Alias-import the ``perturbation`` submodule so the subpackage's own
+# name does not shadow it. ``from .perturbation import X`` would be a
+# self-import (the subpackage itself), which causes a partial-init
+# error. Bind the module to a local alias instead.
+from . import perturbation as _perturbation_mod
 from .dynamic_noise_bias import (
-    CategoricalDynamicNoiseBias,
     DEFAULT_DECAY_KIND,
     DEFAULT_MIN_GUMBEL_TEMP,
-    DynamicNoiseBiasProtocol,
-    IdentityDynamicNoiseBias,
     NEW_DYNAMIC_NOISE_BIAS_COMPUTED,
     NEW_DYNAMIC_NOISE_BIAS_DIGEST_ONLY,
     NEW_DYNAMIC_NOISE_BIAS_EPSILON_FLOORED_BY_PAPER_EXTERIOR_GAP,
@@ -49,6 +51,9 @@ from .dynamic_noise_bias import (
     NEW_DYNAMIC_NOISE_BIAS_NO_MATERIALIZER,
     NEW_DYNAMIC_NOISE_BIAS_PREV_ANCHORED_TO_PREV_ENDPOINT,
     NEW_DYNAMIC_NOISE_BIAS_SHEET_NONPOSITIVE,
+    CategoricalDynamicNoiseBias,
+    DynamicNoiseBiasProtocol,
+    IdentityDynamicNoiseBias,
     Theorem1DynamicNoiseBias,
     default_dynamic_noise_bias,
 )
@@ -59,12 +64,6 @@ from .rotation_policy import (
     RoundRobinRotationPolicy,
     build_rotation_policy,
 )
-
-# Alias-import the ``perturbation`` submodule so the subpackage's own
-# name does not shadow it. ``from .perturbation import X`` would be a
-# self-import (the subpackage itself), which causes a partial-init
-# error. Bind the module to a local alias instead.
-from . import perturbation as _perturbation_mod
 
 PaperQuantitiesPerturbationSnapshotProtocol = (
     _perturbation_mod.PaperQuantitiesPerturbationSnapshotProtocol

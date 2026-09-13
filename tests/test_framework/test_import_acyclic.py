@@ -38,7 +38,6 @@ import sys
 
 import pytest
 
-
 _RELEVANT_MODULES = (
     "adaptive_reflow",
     "adaptive_reflow.universal",

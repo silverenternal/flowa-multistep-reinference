@@ -66,6 +66,13 @@ from typing import Any
 
 import numpy as np
 
+from adaptive_reflow.universal.state import (
+    ChannelName,
+    StateBundle,
+    TensorRef,
+    validate_state_bundle,
+)
+
 from .blender import (
     BLENDER_MEMORY_FRACTION_CLIPPED,
     DistanceDecayBlender,
@@ -74,12 +81,6 @@ from .blender import (
     _coerce_memory_fraction,
     _extract_channel_value,
     _make_blend_bundle,
-)
-from adaptive_reflow.universal.state import (
-    ChannelName,
-    StateBundle,
-    TensorRef,
-    validate_state_bundle,
 )
 
 # ---------------------------------------------------------------------------

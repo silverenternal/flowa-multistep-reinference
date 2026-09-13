@@ -10,8 +10,11 @@ We pin three anchors via CosineAnnealScheduler.sample:
     r = (L-1)/2 -> n_cap = midpoint   (cos(pi/2) = 0)
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import default_cosine_scheduler
+
 import math
+
+from tests.test_claims._claim_template import default_cosine_scheduler
+
 
 def test_claim_005_round_zero_yields_n_max() -> None:
     sch = default_cosine_scheduler(cycle_length=20, n_min=0.05, n_max=1.0)

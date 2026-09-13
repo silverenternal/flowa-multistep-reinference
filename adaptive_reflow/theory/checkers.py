@@ -66,11 +66,6 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from adaptive_reflow.theory.paper_quantities import (
-    paper_selection_ratio,
-    sheet_evidence_A,
-)
-
 # Wave 15 C: the importlib.util bypass (Wave 14 A hack) has been
 # removed. This module now does a direct import of the planar BL
 # witness; the eval package's ``__init__`` lazy-loads rdkit-dependent
@@ -80,12 +75,16 @@ from adaptive_reflow.eval.lipschitz_diagnostic import (
     PlanarBLConvergenceReport,
     planar_bl_convergence_witness,
 )
+from adaptive_reflow.theory.paper_quantities import (
+    paper_selection_ratio,
+    sheet_evidence_A,
+)
+
 # Wave 15 B additive re-export — explicit rate bound theorem.
 from adaptive_reflow.theory.rate_bound import (
     ExplicitRateBoundReport,
     check_explicit_rate_bound,
 )
-
 
 __all__ = [
     "Theorem1Statement",
@@ -154,7 +153,7 @@ class Theorem1Statement:
         bl_distance: float,
         root_cell_mass: float,
         posterior_evidence: float,
-    ) -> "Theorem1Statement":
+    ) -> Theorem1Statement:
         """Build a :class:`Theorem1Statement` from explicit numeric parts.
 
         Example
@@ -235,9 +234,9 @@ class Theorem1StatementChecker:
         if not eps_sequence:
             raise ValueError("eps_sequence must be non-empty")
 
-        sheet_A = float(getattr(paper_qty, "sheet_A"))
-        packing_B = float(getattr(paper_qty, "packing_B"))
-        cell_C = float(getattr(paper_qty, "cell_C"))
+        sheet_A = float(paper_qty.sheet_A)
+        packing_B = float(paper_qty.packing_B)
+        cell_C = float(paper_qty.cell_C)
         # posterior_evidence is the A_g paper quantity (re-confirmed at
         # the smallest eps); the formula is consistent at any finite
         # eps because paper_selection_ratio -> 1 as eps -> 0.
@@ -274,7 +273,7 @@ class Theorem1StatementChecker:
         g: Callable[[float], float],
         eps: float,
         phi: Callable[[float, float], float],
-    ) -> "SheetTubeEvidence":
+    ) -> SheetTubeEvidence:
         """Lemma 2 LHS witness (single ``eps``).
 
         See :func:`sheet_tube_evidence`.

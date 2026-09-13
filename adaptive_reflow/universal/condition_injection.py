@@ -57,7 +57,6 @@ from adaptive_reflow.universal.state import (
     validate_condition_delta,
 )
 
-
 # ---------------------------------------------------------------------------
 # Literal type for the condition-injector kind identifier
 # ---------------------------------------------------------------------------

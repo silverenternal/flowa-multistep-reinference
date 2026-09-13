@@ -60,7 +60,6 @@ import pytest
 from adaptive_reflow.theory.checkers import Theorem1Statement
 from adaptive_reflow.theory.f_side_validator import validate_f_side
 
-
 # ---------------------------------------------------------------------------
 # SM survivors (BoolOp -> and/or swap) in Theorem1Statement.__post_init__
 # ---------------------------------------------------------------------------

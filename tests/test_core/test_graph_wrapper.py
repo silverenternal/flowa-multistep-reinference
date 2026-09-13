@@ -16,10 +16,10 @@ import numpy as np
 import pytest
 
 from adaptive_reflow.core.graph_wrapper import (
-    DGLGraphBridge,
     DEFAULT_EDGE_FEATURE_DIM,
     DEFAULT_GRAPH_FEATURE_DIM,
     DEFAULT_NODE_FEATURE_DIM,
+    DGLGraphBridge,
     EdgeIndexDType,
     GraphBackendProbe,
     GraphBatch,
@@ -31,7 +31,6 @@ from adaptive_reflow.core.graph_wrapper import (
     random_graph_payload,
     split_graph_batch,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test 1: GraphPayload validation

@@ -716,8 +716,8 @@ def test_abstract_constants_unchanged_for_back_compat() -> None:
     # New names: abstract / real split is explicit.
     from adaptive_reflow.adapters.kanzi import (
         KANZI_ABSTRACT_LATENT_DIM,
-        KANZI_ABSTRACT_VOCAB_SIZE,
         KANZI_ABSTRACT_STATE_SHAPE,
+        KANZI_ABSTRACT_VOCAB_SIZE,
         KANZI_DEFAULT_REAL_LATENT_DIM,
         KANZI_DEFAULT_REAL_VOCAB_SIZE,
     )
@@ -820,7 +820,7 @@ def test_kanzi_shim_forward_returns_nonzero_output() -> None:
 
     # Acceptance #1: non-zero output (NOT zeros_like(x)).
     assert _torch.abs(v).max().item() > 0.0, (
-        f"BUG REGRESSION: shim returned all-zeros velocity (abs.max=0). "
+        "BUG REGRESSION: shim returned all-zeros velocity (abs.max=0). "
         "Backbone-coord migration is broken — DAE.encode + DAE.net "
         "did not run."
     )

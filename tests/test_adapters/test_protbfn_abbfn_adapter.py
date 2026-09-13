@@ -251,8 +251,8 @@ def test_build_initial_state_returns_correct_shape(
     )
     theta = _native_theta(protbfn_adapter, bundle.native_state_digest)
     L, K = theta.shape
-    assert L == int(protbfn_adapter._max_seq_length)  # noqa: SLF001
-    assert K == int(protbfn_adapter._vocab_size)  # noqa: SLF001
+    assert int(protbfn_adapter._max_seq_length) == L  # noqa: SLF001
+    assert int(protbfn_adapter._vocab_size) == K  # noqa: SLF001
     # Per-position categorical: rows sum to 1 (probability distribution).
     np.testing.assert_allclose(
         theta.sum(axis=1), np.ones(L), atol=1e-12
@@ -307,8 +307,8 @@ def test_endpoint_round_trip(protbfn_adapter: object) -> None:
     endpoint_bundle = protbfn_adapter.observe_endpoint(trace, bundle)
     theta = _native_theta(protbfn_adapter, endpoint_bundle.native_state_digest)
     L, K = theta.shape
-    assert L == int(protbfn_adapter._max_seq_length)  # noqa: SLF001
-    assert K == int(protbfn_adapter._vocab_size)  # noqa: SLF001
+    assert int(protbfn_adapter._max_seq_length) == L  # noqa: SLF001
+    assert int(protbfn_adapter._vocab_size) == K  # noqa: SLF001
     # The endpoint bundle increments source_round.
     assert endpoint_bundle.source_round == bundle.source_round + 1
     # ``observe`` adds an audit tag.

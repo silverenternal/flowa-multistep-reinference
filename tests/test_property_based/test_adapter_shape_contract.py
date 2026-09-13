@@ -385,7 +385,7 @@ def test_property_shim_input_shape(state_shape: tuple[int, ...]) -> None:
         if shim_input is None:
             continue  # adapter does not participate in shim guard
         shim_input_t = tuple(int(s) for s in shim_input)
-        state_shape_t = tuple(int(s) for s in getattr(cls, "state_shape"))
+        state_shape_t = tuple(int(s) for s in cls.state_shape)
         assert len(shim_input_t) == len(state_shape_t), (
             f"{cls.__name__} has _SHIM_INPUT_SHAPE={shim_input_t} "
             f"(rank {len(shim_input_t)}) but state_shape={state_shape_t} "
@@ -455,6 +455,7 @@ def test_registered_adapter_solve_ode_shape_preservation(family: str) -> None:
     through observation; ref-only adapters retain the channel/mask structure.
     """
     import inspect
+
     import numpy as np
 
     from adaptive_reflow.adapters import build_adapter

@@ -12,8 +12,10 @@ We pin:
        sub-scheduler's n_cap (not the second's).
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import default_cosine_scheduler
+
 from adaptive_reflow.algorithm.sequential import SequentialScheduler
+from tests.test_claims._claim_template import default_cosine_scheduler
+
 
 def test_claim_021_sequential_class_importable() -> None:
     assert SequentialScheduler is not None

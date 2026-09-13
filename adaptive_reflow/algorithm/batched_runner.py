@@ -19,9 +19,9 @@ from .runner.batched_runner import (
     BatchedTrajectoryResult,
     BatchedTrajectoryRunner,
     BatchedVectorisedAdapterProtocol,
+    _config_hash,
     _w2_to_mode_centres,
     should_skip_restart_small_sigma,
-    _config_hash,
 )
 
 __all__ = [

@@ -157,7 +157,7 @@ def stub_inception(monkeypatch: pytest.MonkeyPatch) -> None:
             out = out + 0.001 * arange
             return out
 
-        def eval(self) -> "_TinyInception":
+        def eval(self) -> _TinyInception:
             return super().eval()
 
     def _factory(**kwargs: Any) -> _TinyInception:

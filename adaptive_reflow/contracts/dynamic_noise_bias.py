@@ -48,7 +48,6 @@ from typing import Any, Literal
 
 from adaptive_reflow.universal.state import ChannelName
 
-
 # ---------------------------------------------------------------------------
 # PaperQuantitiesSnapshot — typed carrier for the four paper quantities.
 # ---------------------------------------------------------------------------

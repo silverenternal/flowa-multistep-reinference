@@ -125,7 +125,6 @@ from adaptive_reflow.contracts.types import (  # noqa: E402
     MOLECULE_CHANNEL_TO_METRIC,
 )
 
-
 # ---------------------------------------------------------------------------
 # Default target scores (legacy literal constants)
 # ---------------------------------------------------------------------------

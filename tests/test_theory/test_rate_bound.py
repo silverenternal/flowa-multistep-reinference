@@ -25,7 +25,6 @@ from adaptive_reflow.theory.rate_bound import (
 )
 from adaptive_reflow.theory.validation import NotInFsideClassError
 
-
 # ---------------------------------------------------------------------------
 # Positives: constant + admissible profiles
 # ---------------------------------------------------------------------------
@@ -38,8 +37,8 @@ def test_default_analytic_constant_matches_sqrt_2_over_pi():
     (Wave 12 A1-high-3; paper Theorem 1 line 87-92).
     """
     expected = math.sqrt(2.0 / math.pi)
-    assert DEFAULT_ANALYTIC_CONSTANT == pytest.approx(expected, rel=1e-15)
-    assert DEFAULT_ANALYTIC_CONSTANT == pytest.approx(0.7978845608028654, rel=1e-12)
+    assert pytest.approx(expected, rel=1e-15) == DEFAULT_ANALYTIC_CONSTANT
+    assert pytest.approx(0.7978845608028654, rel=1e-12) == DEFAULT_ANALYTIC_CONSTANT
 
 
 def test_check_explicit_rate_bound_on_canonical_g_a_at_small_eps():

@@ -63,7 +63,6 @@ from adaptive_reflow.adapters.freqflow import (
     torch_is_available,
 )
 from adaptive_reflow.universal.state import ODEConditionDelta
-
 from tests.test_adapters.conformance_battery import CHECKS
 
 # ---------------------------------------------------------------------------

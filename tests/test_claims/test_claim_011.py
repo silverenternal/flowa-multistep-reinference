@@ -17,7 +17,6 @@ from __future__ import annotations
 import adaptive_reflow.contracts.paper_quantities as pq
 from adaptive_reflow.theory import paper_quantities as canonical
 
-
 REQUIRED_NAMES = (
     "sheet_evidence_A",
     "root_cell_packing_B",

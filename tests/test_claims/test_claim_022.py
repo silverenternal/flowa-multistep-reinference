@@ -28,7 +28,6 @@ from adaptive_reflow.eval.posterior_selection_evaluator import (
     EvidenceScaleGapMetric,
 )
 
-
 ROOT = Path(__file__).resolve().parents[2]
 BENCHMARK_SCRIPT = ROOT / "tools" / "benchmark_uplifts.py"
 RESULTS_DOC = ROOT / "docs" / "r4-survey" / "10-sota-2d-experiment-results.md"

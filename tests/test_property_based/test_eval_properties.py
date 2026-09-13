@@ -41,7 +41,6 @@ from adaptive_reflow.eval.w2 import (
     _pairwise_distances,
 )
 
-
 _PROPERTY_SETTINGS = settings(
     max_examples=20,
     deadline=2000,

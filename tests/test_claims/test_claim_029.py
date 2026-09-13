@@ -10,8 +10,10 @@ We pin:
     3. The scheduler's `schedule_family()` returns `freetraj`.
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import (default_cosine_scheduler, registered_families)
+
 from adaptive_reflow.algorithm.scheduler.freetraj import FreeTrajScheduler
+from tests.test_claims._claim_template import default_cosine_scheduler, registered_families
+
 
 def test_claim_029_freetraj_class_importable() -> None:
     assert FreeTrajScheduler is not None

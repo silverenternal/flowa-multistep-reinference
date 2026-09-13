@@ -55,7 +55,6 @@ from adaptive_reflow.algorithm.dynamic_noise_bias import (
 )
 from adaptive_reflow.contracts.dynamic_noise_bias import PaperQuantitiesSnapshot
 from adaptive_reflow.universal.state import ChannelName
-
 from tests.test_sbc.sbc_helpers import (
     assert_calibrated,
     run_sbc,

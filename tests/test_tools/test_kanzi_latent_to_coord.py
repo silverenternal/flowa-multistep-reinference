@@ -421,6 +421,7 @@ def test_project_out_inv_closes_rmsd_gap(
     we extract. Runs in ~2 s on CPU.
     """
     import sys
+
     import torch
 
     # Skip gracefully if the upstream FSQ module is unavailable

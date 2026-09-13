@@ -45,7 +45,6 @@ from adaptive_reflow.algorithm.merge_operator import (
 )
 from adaptive_reflow.contracts import paper_quantities as pq
 
-
 # ---------------------------------------------------------------------------
 # Per_cell_coefficient_C + exterior_gap_e_rho (paper quantities)
 # ---------------------------------------------------------------------------
@@ -64,7 +63,7 @@ def test_per_cell_coefficient_C_is_finite_positive() -> None:
     assert C > 0.0
     # Closed-form sanity check.
     expected = math.exp(0.005) / (0.9 ** 2)
-    assert C == pytest.approx(expected, rel=1e-12)
+    assert pytest.approx(expected, rel=1e-12) == C
 
 
 def test_exterior_gap_e_rho_is_finite_positive() -> None:

@@ -108,7 +108,7 @@ def _probe_mnist_mirror(
         with socket.create_connection((host, port), timeout=timeout) as sock:
             sock.close()
         return True
-    except (OSError, socket.timeout):
+    except (TimeoutError, OSError):
         return False
 
 

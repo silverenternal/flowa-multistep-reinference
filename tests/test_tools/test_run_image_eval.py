@@ -148,7 +148,7 @@ def tiny_inception_v3(monkeypatch: pytest.MonkeyPatch) -> None:
         def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore[override]
             return torch.zeros((int(x.shape[0]), 2048), dtype=torch.float32)
 
-        def eval(self) -> "_TinyInceptionV3":  # type: ignore[override]
+        def eval(self) -> _TinyInceptionV3:  # type: ignore[override]
             return super().eval()
 
     monkeypatch.setattr(
@@ -184,17 +184,17 @@ def fake_clip(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class _FakeCLIPModel(nn.Module):
         @classmethod
-        def from_pretrained(cls, model_id: str, *args: Any, **kwargs: Any) -> "_FakeCLIPModel":
+        def from_pretrained(cls, model_id: str, *args: Any, **kwargs: Any) -> _FakeCLIPModel:
             return cls()
 
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__()
             self.dummy = nn.Parameter(torch.zeros(1))
 
-        def eval(self) -> "_FakeCLIPModel":  # type: ignore[override]
+        def eval(self) -> _FakeCLIPModel:  # type: ignore[override]
             return super().eval()
 
-        def to(self, device: Any) -> "_FakeCLIPModel":  # type: ignore[override]
+        def to(self, device: Any) -> _FakeCLIPModel:  # type: ignore[override]
             return self
 
         def forward(  # type: ignore[override]
@@ -217,7 +217,7 @@ def fake_clip(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class _FakeProcessor:
         @classmethod
-        def from_pretrained(cls, model_id: str, *args: Any, **kwargs: Any) -> "_FakeProcessor":
+        def from_pretrained(cls, model_id: str, *args: Any, **kwargs: Any) -> _FakeProcessor:
             return cls()
 
         def __call__(  # type: ignore[no-untyped-def]
@@ -340,7 +340,7 @@ def test_graceful_fallback(
     class _RaisingModule(types.ModuleType):
         def __getattr__(self, name: str) -> Any:  # type: ignore[no-untyped-def]
             raise ImportError(
-                f"No module named 'transformers' (synthetic fallback in test)"
+                "No module named 'transformers' (synthetic fallback in test)"
             )
 
     # Remove any existing transformers entry so our raising stub takes

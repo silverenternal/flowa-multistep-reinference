@@ -103,14 +103,13 @@ from adaptive_reflow.universal.adapter import (
 )
 from adaptive_reflow.universal.state import (
     NORMALIZATION_KINDS,
+    REFERENCE_FRAMES,
     ODEConditionDelta,
     ODEIntegratorTrace,
-    REFERENCE_FRAMES,
     StateBundle,
     TensorRef,
     validate_state_bundle,
 )
-
 
 # ---------------------------------------------------------------------------
 # Adapter surface
@@ -245,6 +244,8 @@ def _make_minimal_restart_policy(channels: tuple[str, ...] = ()) -> Any:
     populate the minimum field set and let ``hash_policy_hash``
     recompute the deterministic hash.
     """
+    from dataclasses import replace
+
     from adaptive_reflow.contracts import (
         ArtifactHash,
         ChannelName,
@@ -255,7 +256,6 @@ def _make_minimal_restart_policy(channels: tuple[str, ...] = ()) -> Any:
         RunId,
         hash_policy_hash,
     )
-    from dataclasses import replace
 
     channel_names: tuple[ChannelName, ...] = tuple(
         ChannelName(ch) for ch in channels
@@ -1287,7 +1287,6 @@ def test_flowmol3_v2_restart_blend_shape_end_to_end() -> None:
     import numpy as np
 
     import adaptive_reflow.adapters.flowmol3_v2_adapter as flowmol3_v2
-
     from adaptive_reflow.contracts import PolicyId, hash_policy_hash
 
     try:

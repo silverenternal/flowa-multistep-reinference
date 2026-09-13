@@ -21,7 +21,6 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from baselines import _flowmol3_helpers as h  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Constants — pin to FlowMol3Glue defaults (Wave 49 Agent D §0)
 # ---------------------------------------------------------------------------

@@ -52,7 +52,6 @@ from adaptive_reflow.contracts import (
     hash_policy_hash,
 )
 
-
 _PROPERTY_SETTINGS = settings(
     max_examples=20,
     deadline=2000,

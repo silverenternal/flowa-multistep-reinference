@@ -132,13 +132,13 @@ from adaptive_reflow.contracts import (
     MechanismId,
     ProvenanceChain,
 )
-from adaptive_reflow.universal.adapter import AdapterCapabilities  # noqa: F401
 from adaptive_reflow.data.target_distributions import (
     EIGHT_GAUSSIANS_POSTERIOR_CELLS,
     EIGHT_GAUSSIANS_POSTERIOR_SHEET,
     TWO_MOONS_POSTERIOR_CELLS,
     TWO_MOONS_POSTERIOR_SHEET,
 )
+from adaptive_reflow.universal.adapter import AdapterCapabilities  # noqa: F401
 from adaptive_reflow.universal.state import (
     ODEConditionDelta,
     StateBundle,
@@ -529,7 +529,7 @@ class EvidenceScaleGapMetric:
 
     # ---- capability handshake --------------------------------------
 
-    def capabilities(self) -> "AdapterCapabilities":
+    def capabilities(self) -> AdapterCapabilities:
         """Return the full :class:`AdapterCapabilities` of the wrapped adapter."""
         return self._adapter.capabilities()
 

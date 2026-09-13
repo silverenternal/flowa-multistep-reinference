@@ -77,7 +77,6 @@ from adaptive_reflow.algorithm.scheduler._core import (
     default_cosine_scheduler,
 )
 
-
 # ---------------------------------------------------------------------------
 # 2D Gaussian-mixture oracle constants
 # ---------------------------------------------------------------------------
@@ -104,13 +103,13 @@ def _build_2d_context(
     *,
     t: float = 2.0,
     eps_implicit: float = 0.05,
-    delta_t: Optional[float] = None,
-    cycle_length: Optional[int] = None,
-    n_steps: Optional[int] = 20,
-    tol: Optional[float] = None,
-    err: Optional[float] = None,
-    l_e: Optional[float] = 0.5,
-    f_trace: Optional[float] = 1.0,
+    delta_t: float | None = None,
+    cycle_length: int | None = None,
+    n_steps: int | None = 20,
+    tol: float | None = None,
+    err: float | None = None,
+    l_e: float | None = 0.5,
+    f_trace: float | None = 1.0,
     d: int = 2,
 ) -> DerivationContext:
     """Return a :class:`DerivationContext` populated from the 2D oracle.
@@ -685,10 +684,10 @@ def test_framework_trajectory_under_derived_hparams_with_w2_inputs_drives_conver
         d=2,
     )
     # Add W2 inputs so PolyakMemoryFraction fires.
-    n_steps_val: Optional[int]
+    n_steps_val: int | None
     raw_n_steps = ctx.scheduler_state.get("n_steps")
     n_steps_val = int(raw_n_steps) if raw_n_steps is not None else None
-    d_val: Optional[int]
+    d_val: int | None
     raw_d = ctx.local_curvature.get("d")
     d_val = int(raw_d) if raw_d is not None else None
     ctx = make_derivation_context(

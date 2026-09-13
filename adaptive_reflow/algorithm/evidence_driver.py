@@ -58,10 +58,6 @@ from typing import Any, Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from adaptive_reflow.algorithm.scheduler import (
-    SchedulerProtocol,
-    ScheduleSample,
-)
 from adaptive_reflow.algorithm._derivation import (
     BLConvergenceEpsilonSchedule,
     DerivationContext,
@@ -70,6 +66,10 @@ from adaptive_reflow.algorithm._derivation import (
     MinGumbelTempRule,
     default_eps_implicit,
     default_min_gumbel_temp,
+)
+from adaptive_reflow.algorithm.scheduler import (
+    SchedulerProtocol,
+    ScheduleSample,
 )
 from adaptive_reflow.contracts import CosineScheduleSample
 
@@ -448,10 +448,10 @@ def warn_if_heuristic_evidence_mode(
 
 def derive_default_eps_threshold(
     *,
-    e_rho: Optional[float] = None,
-    delta_t: Optional[float] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    e_rho: float | None = None,
+    delta_t: float | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the BL-convergence-derived ``eps_threshold``.
 
@@ -520,9 +520,9 @@ def derive_default_eps_threshold(
 
 def derive_default_min_gumbel_temp(
     *,
-    e_rho: Optional[float] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    e_rho: float | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``DEFAULT_MIN_GUMBEL_TEMP`` from a derivation rule.
 
@@ -552,8 +552,8 @@ def derive_default_min_gumbel_temp(
 
 def derive_default_strength(
     *,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``EvidenceDrivenScheduler.strength`` (theorem-fixed at 1.0).
 

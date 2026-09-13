@@ -9,8 +9,10 @@ We pin:
     2. The PROTOCOL_REGISTRY exposes the family key `meanflow`.
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import registered_families
+
 from adaptive_reflow.algorithm.merge_operator_v3 import MeanFlowMergeOperator
+from tests.test_claims._claim_template import registered_families
+
 
 def test_claim_030_meanflow_class_importable() -> None:
     assert MeanFlowMergeOperator is not None

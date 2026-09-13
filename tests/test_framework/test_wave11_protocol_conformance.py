@@ -28,7 +28,6 @@ from adaptive_reflow.theory.paper_quantities import (
     paper_selection_ratio,
 )
 
-
 # --- Adapters below are minimal fixtures, not real adapters ---
 
 

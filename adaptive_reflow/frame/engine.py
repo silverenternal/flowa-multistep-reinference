@@ -731,7 +731,7 @@ def _check_capabilities_advertise_dispatch(
 def _state_bundle_to_native(
     bundle: StateBundle,
     caps: AdapterCapabilities,
-) -> "NativeStateBundle":
+) -> NativeStateBundle:
     """Project a detached :class:`StateBundle` to a typed
     :class:`adaptive_reflow.contracts.materialization.NativeStateBundle`
     for materializer invocation (D10 typed surface).
@@ -1842,7 +1842,7 @@ class Engine:
         path: str | Path,
         native_payload_paths: Mapping[str, str] | None = None,
         calibration_manifest: Any | None = None,
-    ) -> "Any":
+    ) -> Any:
         """Persist a round's state to ``path``. Stdlib-only.
 
         The caller decides cadence (no auto-checkpoint inside
@@ -1856,8 +1856,14 @@ class Engine:
         """
         from adaptive_reflow.universal.checkpoint import (
             DEFAULT_BUNDLE_FORMAT_VERSION,
+        )
+        from adaptive_reflow.universal.checkpoint import (
             Checkpoint as _Checkpoint,
+        )
+        from adaptive_reflow.universal.checkpoint import (
             IsoTimestamp as _IsoTimestamp,
+        )
+        from adaptive_reflow.universal.checkpoint import (
             save_checkpoint as _save,
         )
 
@@ -1868,6 +1874,8 @@ class Engine:
             # the framework's import surface does not need eagerly).
             from adaptive_reflow.eval.calibration import (
                 CalibrationManifest as _CalibrationManifest,
+            )
+            from adaptive_reflow.eval.calibration import (
                 manifest_digest as _manifest_digest,
             )
 
@@ -1905,7 +1913,7 @@ class Engine:
         _save(cp, path)
         return cp
 
-    def resume_round(self, path: str | Path) -> "Any":
+    def resume_round(self, path: str | Path) -> Any:
         """Load a checkpoint from ``path`` and re-validate the chain.
 
         Re-derives :attr:`Checkpoint.engine_digest_seed`, walks the
@@ -1916,7 +1924,11 @@ class Engine:
         """
         from adaptive_reflow.universal.checkpoint import (
             CheckpointError as _CPError,
+        )
+        from adaptive_reflow.universal.checkpoint import (
             load_checkpoint as _load,
+        )
+        from adaptive_reflow.universal.checkpoint import (
             verify_checkpoint as _verify,
         )
 

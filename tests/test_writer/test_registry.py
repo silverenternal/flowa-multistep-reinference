@@ -25,8 +25,8 @@ from adaptive_reflow.frame import (
     StateBundle,
     validate_state_bundle,
 )
-from adaptive_reflow.universal.state import ODEConditionDelta
 from adaptive_reflow.molecular.domain import MOLECULE_DOMAIN_BY_CHANNEL
+from adaptive_reflow.universal.state import ODEConditionDelta
 from adaptive_reflow.writer import (
     DEFAULT_AUDIT_TEMPLATE,
     FLOWMOL3_PINNED_COMMIT,

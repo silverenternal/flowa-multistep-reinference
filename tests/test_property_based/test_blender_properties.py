@@ -41,7 +41,6 @@ from adaptive_reflow.algorithm.blender import (
     _sigmoid,
 )
 
-
 _PROPERTY_SETTINGS = settings(
     max_examples=30,
     deadline=2000,

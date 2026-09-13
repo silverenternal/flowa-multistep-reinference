@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 ROUND2 = ROOT / "docs" / "benchmark-round2-uplifts.md"
 CHANGELOG = ROOT / "CHANGELOG.md"

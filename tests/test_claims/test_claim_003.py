@@ -13,7 +13,13 @@ the legacy `oracle` path (the replay-based metric that ignores
 `eps_round` and `eps_schedule`).
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import (AdapterCapabilities, ChannelName, StateBundle, TensorRef)
+
+from tests.test_claims._claim_template import (
+    AdapterCapabilities,
+    ChannelName,
+    StateBundle,
+    TensorRef,
+)
 
 _XY = ChannelName("xy")
 

@@ -106,10 +106,10 @@ def _try_import_upstream() -> dict[str, Any]:
         return _UPSTREAM_MODULES
     _install_upstream_path()
     try:  # noqa: BLE001 — we want to capture *any* import error here.
-        from flowmol.models.flowmol import FlowMol  # noqa: PLC0415
-        from flowmol.model_utils.load import model_from_config  # noqa: PLC0415
-        from flowmol.analysis.molecule_builder import SampledMolecule  # noqa: PLC0415
         from flowmol.analysis.metrics import SampleAnalyzer  # noqa: PLC0415
+        from flowmol.analysis.molecule_builder import SampledMolecule  # noqa: PLC0415
+        from flowmol.model_utils.load import model_from_config  # noqa: PLC0415
+        from flowmol.models.flowmol import FlowMol  # noqa: PLC0415
     except BaseException as exc:  # noqa: BLE001
         _UPSTREAM_IMPORT_ERROR = exc
         _LOGGER.warning(

@@ -28,15 +28,15 @@ from adaptive_reflow.adapters.kanzi import (
     ERR_KANZI_INTEGRATOR_UNKNOWN,
     ERR_KANZI_NUM_STEPS,
     KANZI_AR_SEQ_LENGTH,
+    KANZI_CFG_SCALE_DEFAULT,
     KANZI_CHANNEL_DOMAINS,
     KANZI_CHANNELS,
-    KANZI_CFG_SCALE_DEFAULT,
     KANZI_CONFIG_HASH,
     KANZI_FAMILY_ID_DEFAULT,
     KANZI_FLAT_LATENT_DIM,
-    KANZI_INTEGRATORS,
     KANZI_INTEGRATOR_EULER,
     KANZI_INTEGRATOR_HEUN,
+    KANZI_INTEGRATORS,
     KANZI_LATENT_CLAMP,
     KANZI_LATENT_DIM,
     KANZI_MECHANISM_ID,
@@ -45,11 +45,11 @@ from adaptive_reflow.adapters.kanzi import (
     KANZI_STATE_SHAPE,
     KANZI_T_END,
     KANZI_VOCAB_SIZE,
+    PFAM_FAMILY_COND,
+    PROTEIN_LATENT,
     KanziAdapter,
     KanziCapabilities,
     KanziGPTPriorRestartPolicy,
-    PFAM_FAMILY_COND,
-    PROTEIN_LATENT,
     default_kanzi_adapter,
     kanzi_resolve_weights_path,
     torch_is_available,
@@ -57,6 +57,14 @@ from adaptive_reflow.adapters.kanzi import (
 from adaptive_reflow.algorithm.perturbation import (
     PaperQuantityAttractorInversion,
     UniformFreshPerturbation,
+)
+from adaptive_reflow.contracts import (
+    ArtifactHash,
+    FactorValue,
+    FinalRestartPolicy,
+    LedgerRowId,
+    PolicyId,
+    RunId,
 )
 from adaptive_reflow.framework._compliance import implements
 from adaptive_reflow.universal import FlowMatchingODEAdapter
@@ -67,15 +75,6 @@ from adaptive_reflow.universal.state import (
     StateBundle,
     validate_state_bundle,
 )
-from adaptive_reflow.contracts import (
-    ArtifactHash,
-    FactorValue,
-    FinalRestartPolicy,
-    LedgerRowId,
-    PolicyId,
-    RunId,
-)
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -544,6 +543,7 @@ def test_torch_velocity_field_validates_against_per_call_state_shape() -> None:
     pytest.importorskip("torch", reason="torch is required for the stub DAE model")
 
     import torch as _torch  # local import; gated by importorskip above
+
     from adaptive_reflow.adapters.kanzi import _torch_velocity_field
 
     class _StubDae(_torch.nn.Module):

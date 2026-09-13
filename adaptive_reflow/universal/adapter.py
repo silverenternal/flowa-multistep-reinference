@@ -60,7 +60,9 @@ from .state import (
 
 if TYPE_CHECKING:
     from adaptive_reflow.contracts.authority import FinalRestartPolicy as FinalRestartPolicy
-    from adaptive_reflow.contracts.materialization import MaterializationRoute as MaterializationRoute
+    from adaptive_reflow.contracts.materialization import (
+        MaterializationRoute as MaterializationRoute,
+    )
     RestartPolicy: TypeAlias = FinalRestartPolicy
 
 # Runtime placeholder so ``universal/__init__.py`` can re-export the name
@@ -191,15 +193,15 @@ class AdapterCapabilities:
     # carrier convention. Default ``None`` preserves the 2356-test
     # back-compat invariant; adapters that opt in via this field keep
     # the same ``has_materialization_route`` boolean flag set.
-    materializer_instance: "MaterializationRoute | None" = field(default=None)
+    materializer_instance: MaterializationRoute | None = field(default=None)
     # D5 — per-channel state-type table (Design #3 — LMAA LCM coverage).
     # Replaces the single ``state_shape`` carrier with a typed per-channel
     # declaration so the engine can route each channel to the correct
     # :class:`BlendStrategy`. Default empty mapping preserves the 2356-test
     # back-compat invariant: adapters that don't declare per-channel types
     # fall back to the single-tuple ``state_shape`` carrier.
-    channel_types: "Mapping[ChannelName, str]" = field(default_factory=dict)
-    channel_shapes: "Mapping[ChannelName, tuple[tuple[int, ...], tuple[int, ...]]]" = field(default_factory=dict)
+    channel_types: Mapping[ChannelName, str] = field(default_factory=dict)
+    channel_shapes: Mapping[ChannelName, tuple[tuple[int, ...], tuple[int, ...]]] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------

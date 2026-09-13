@@ -21,13 +21,14 @@ from typing import Any, ClassVar
 
 import numpy as np
 
+from adaptive_reflow.contracts import hash_artifact
+
 from .merge_operator import (
     MERGE_DEGENERATE_INTERVAL,
     MERGE_NONFINITE_DYNAMIC_CLIPPED,
     MERGE_NONFINITE_PREV_CLIPPED,
     _coerce_unit_real_clip,
 )
-from adaptive_reflow.contracts import hash_artifact
 
 MULTI_SOURCE_KALMAN_FAMILY: str = "multi_source_kalman"
 """Registry key for :class:`MultiSourceKalmanMergeOperator` (P1)."""

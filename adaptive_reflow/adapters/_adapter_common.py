@@ -759,7 +759,7 @@ def _run_construction_shape_guard(
 
 def make_validate_state_shape(
     target_shape: tuple[int, ...],
-) -> "Any":
+) -> Any:
     """Wave 114 Phase 4 — factory for the per-adapter ``_validate_state_shape``.
 
     Returns a callable ``(x: ArrayF64) -> ArrayF64`` that canonicalises
@@ -814,7 +814,7 @@ def make_validate_state_shape(
     """
     canonical = tuple(int(s) for s in target_shape)
 
-    def _validate_state_shape(x: "ArrayF64") -> "ArrayF64":
+    def _validate_state_shape(x: ArrayF64) -> ArrayF64:
         """Per-call canonicaliser — closes over ``canonical`` (target_shape)."""
         return np.asarray(x, dtype=np.float64).reshape(canonical)
 

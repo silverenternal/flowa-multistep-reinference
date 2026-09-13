@@ -39,9 +39,9 @@ from .claim_gate import (
 )
 from .clip_score import (
     CLIPSCORE_PAPER_SCALE,
+    DEFAULT_CLIP_MODEL_NAME,
     CLIPScoreProtocol,
     CLIPScoreResult,
-    DEFAULT_CLIP_MODEL_NAME,
     HFCosineClipScoreEvaluator,
 )
 from .fid import (
@@ -76,6 +76,7 @@ from .metric_panel import (
     build_default_layered_metric_panel,
     enforce_separation,
 )
+
 # Wave 41 Agent C: the seventeen ``posterior_selection_evaluator``
 # symbols below used to be imported eagerly at module load time. That
 # form broke ``tests/test_algo_uplifts/`` collection (the conftest
@@ -111,6 +112,14 @@ from .protocol import (
     TargetPocketHash,
     evaluator_guard_digest,
 )
+
+# P1-6: unified eval orchestrator + typed result shape.
+from .result import (  # noqa: E402
+    SCHEMA_VERSION,
+    EvalResult,
+    MetricKind,
+    MetricResult,
+)
 from .rollback import (
     DEFAULT_DISABLED_REASON,
     RollbackArgumentError,
@@ -119,6 +128,8 @@ from .rollback import (
     apply_rollback,
     build_disabled_rollback_flag,
 )
+from .run_eval import run_eval  # noqa: E402
+
 # Wave 44 Agent A: the fourteen ``twodim_fm_evaluator`` symbols below used
 # to be imported eagerly at module load time. That form broke the cold
 # import of :mod:`adaptive_reflow.theory` (``from .twodim_fm_evaluator
@@ -143,15 +154,6 @@ from .w2 import (
     build_w2_estimator,
     compute_w2,
 )
-
-# P1-6: unified eval orchestrator + typed result shape.
-from .result import (  # noqa: E402
-    SCHEMA_VERSION,
-    EvalResult,
-    MetricKind,
-    MetricResult,
-)
-from .run_eval import run_eval  # noqa: E402
 
 # Note: ``PosteriorSelectionEvaluator`` is the deprecated alias for
 # :class:`EvidenceScaleGapMetric`. Accessing it on

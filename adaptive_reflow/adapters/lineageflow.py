@@ -92,8 +92,32 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
+    _resolve_mode,
+    _run_construction_shape_guard,
+    digest_state,
+    kaiming_uniform,
+    load_real_weights,
+    make_adapter_capabilities,
+    make_ref,
+    memory_fraction_for,
+    per_position_entropy_reduction,
+    seed_from_ids,
+)
+from adaptive_reflow.algorithm.perturbation import (
+    PerturbationPolicy,
+    UniformFreshPerturbation,
+)
 from adaptive_reflow.contracts import MechanismId
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
+from adaptive_reflow.framework.interfaces import (
+    AdapterObservationProtocol,
+    ObservationKind,
+    ObservationResult,
+    implements,
+)
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -109,32 +133,6 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
-
-from adaptive_reflow.adapters._adapter_common import (
-    NativeStateCache,
-    _resolve_mode,
-    _run_construction_shape_guard,
-    digest_state,
-    kaiming_uniform,
-    load_real_weights,
-    make_adapter_capabilities,
-    make_ref,
-    memory_fraction_for,
-    per_position_entropy_reduction,
-    seed_from_ids,
-)
-from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
-from adaptive_reflow.framework.interfaces import (
-    AdapterObservationProtocol,
-    ObservationKind,
-    ObservationResult,
-    implements,
-)
-from adaptive_reflow.algorithm.perturbation import (
-    PerturbationPolicy,
-    UniformFreshPerturbation,
-)
-
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -1032,15 +1030,15 @@ class _StubLineageFlow:
         self._dummy = torch.zeros(1, dtype=torch.float32)
         self._training = False  # mirrors ``nn.Module.training``.
 
-    def eval(self) -> "_StubLineageFlow":
+    def eval(self) -> _StubLineageFlow:
         self._training = False
         return self
 
-    def train(self, mode: bool = True) -> "_StubLineageFlow":
+    def train(self, mode: bool = True) -> _StubLineageFlow:
         self._training = bool(mode)
         return self
 
-    def load_state_dict(self, *_a: object, **_k: object) -> "_StubLineageFlow":
+    def load_state_dict(self, *_a: object, **_k: object) -> _StubLineageFlow:
         # Stub forward is shape-only; state_dict is best-effort.
         return self
 

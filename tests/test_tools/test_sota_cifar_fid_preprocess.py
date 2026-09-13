@@ -27,6 +27,6 @@ def test_tfport_receives_zero_one_images_with_its_own_preprocessing(monkeypatch)
     ref = -gen
     assert cli._compute_fid_tfport_inline(gen, ref) == 0.0
     assert [len(x) for x in captured] == [32, 3, 32, 3]
-    expected = torch.from_numpy(((gen.astype(np.float32) + 1) / 2))
+    expected = torch.from_numpy((gen.astype(np.float32) + 1) / 2)
     torch.testing.assert_close(torch.cat(captured[:2]), expected)
     torch.testing.assert_close(torch.cat(captured[2:]), 1-expected)

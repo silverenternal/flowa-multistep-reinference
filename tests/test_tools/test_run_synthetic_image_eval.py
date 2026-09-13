@@ -142,7 +142,7 @@ def tiny_inception_v3(monkeypatch: pytest.MonkeyPatch) -> None:
                 (int(x.shape[0]), 2048), dtype=torch.float32,
             )
 
-        def eval(self) -> "_TinyInceptionV3":  # type: ignore[override]
+        def eval(self) -> _TinyInceptionV3:  # type: ignore[override]
             return super().eval()
 
     monkeypatch.setattr(

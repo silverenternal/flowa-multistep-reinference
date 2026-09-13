@@ -60,8 +60,8 @@ from adaptive_reflow.adapters.flowmol3_v2_adapter import (
     FLOWMOL3ADAPTER_N_ATOM_TYPES,
     FLOWMOL3ADAPTER_PINNED_COMMIT,
     FLOWMOL3ADAPTER_STATE_SHAPE,
-    FlowMol3V2AdapterCapabilities,
     FlowMol3V2Adapter,
+    FlowMol3V2AdapterCapabilities,
     default_flowmol3adapter,
 )
 from adaptive_reflow.universal import (

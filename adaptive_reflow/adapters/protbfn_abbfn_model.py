@@ -312,12 +312,12 @@ class ProtBFNTransformer(nn.Module):
     @classmethod
     def load_from_pytree(
         cls,
-        pytree: "ProtBFNParamTree",  # type: ignore[name-defined]
+        pytree: ProtBFNParamTree,  # type: ignore[name-defined]
         *,
         config: ProtBFNModelConfig | None = None,
         device: str | torch.device = "cpu",
         dtype: torch.dtype = torch.float32,
-    ) -> "ProtBFNTransformer":
+    ) -> ProtBFNTransformer:
         """Construct a :class:`ProtBFNTransformer` and bind it from a :class:`ProtBFNParamTree`.
 
         The binding is name-driven: every entry in ``pytree`` is

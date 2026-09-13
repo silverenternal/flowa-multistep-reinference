@@ -26,7 +26,6 @@ from adaptive_reflow.algorithm import (
     default_cosine_scheduler,
 )
 
-
 # ---------------------------------------------------------------------------
 # from_config / to_config round-trip (P1-1)
 # ---------------------------------------------------------------------------

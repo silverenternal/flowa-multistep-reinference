@@ -24,7 +24,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
 from _hidream_helpers import (
     _endpoint_from_trace,
     _make_condition_delta,
@@ -32,7 +31,6 @@ from _hidream_helpers import (
     _native_x0,
     hidream_adapter,
 )
-
 
 # ---------------------------------------------------------------------------
 # 1. Capability handshake

@@ -78,7 +78,8 @@ unchanged.
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping, Optional, Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import Any, Optional, Protocol, runtime_checkable
 
 from adaptive_reflow.contracts import hash_artifact
 
@@ -251,7 +252,7 @@ class IntegratorProtocol(Protocol):
         x: Any,
         v_pred: Any,
         t: float,
-        paper_quantities: Optional[Mapping[str, Any]],
+        paper_quantities: Mapping[str, Any] | None,
         m: Any,
     ) -> Any:
         """Return the next state after one integration step.
@@ -310,7 +311,7 @@ class IntegratorProtocol(Protocol):
         ...
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "IntegratorProtocol":
+    def from_config(cls, config: dict[str, Any]) -> IntegratorProtocol:
         """Build an integrator from a ``to_config`` dict (P1-1 round-trip).
 
         ``cls`` is the concrete implementation class — call sites that
@@ -353,7 +354,7 @@ def _lookup_paper_quantity(
     snapshot: Any,
     key: str,
     t: float,
-) -> tuple[Optional[float], bool]:
+) -> tuple[float | None, bool]:
     """Best-effort lookup of ``key`` at ``t`` in ``snapshot``.
 
     Supports three shapes (in this priority order):
@@ -466,7 +467,7 @@ class EulerStep:
         x: Any,
         v_pred: Any,
         t: float,
-        paper_quantities: Optional[Mapping[str, Any]],
+        paper_quantities: Mapping[str, Any] | None,
         m: Any,
     ) -> Any:
         """Return ``x + base_dt * v_pred`` (PRESERVED legacy arithmetic).
@@ -495,7 +496,7 @@ class EulerStep:
         }
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "EulerStep":
+    def from_config(cls, config: dict[str, Any]) -> EulerStep:
         """Build an :class:`EulerStep` from ``config`` (P1-1 round-trip)."""
         if not isinstance(config, dict):
             raise TypeError(
@@ -645,7 +646,7 @@ class MultiFidelityPaperQuantityStep:
         x: Any,
         v_pred: Any,
         t: float,
-        paper_quantities: Optional[Mapping[str, Any]],
+        paper_quantities: Mapping[str, Any] | None,
         m: Any,
         *,
         audit_codes: list[str] | None = None,
@@ -729,7 +730,7 @@ class MultiFidelityPaperQuantityStep:
         }
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "MultiFidelityPaperQuantityStep":
+    def from_config(cls, config: dict[str, Any]) -> MultiFidelityPaperQuantityStep:
         """Build an :class:`MultiFidelityPaperQuantityStep` from ``config``.
 
         P1-1 round-trip — two ``from_config(to_config())`` calls always

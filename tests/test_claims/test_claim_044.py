@@ -16,7 +16,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 ALGORITHM_DIR = ROOT / "adaptive_reflow" / "algorithm"
 
@@ -41,8 +40,8 @@ def test_claim_044_four_substitution_point_protocols_importable() -> None:
     """The four canonical Protocols are importable from their module
     surfaces (CLM-044 enumerates the algorithm layer's substitution
     axes)."""
-    from adaptive_reflow.algorithm.scheduler._core import (  # noqa: F401
-        SchedulerProtocol,
+    from adaptive_reflow.algorithm.blender import (  # noqa: F401
+        RestartBlenderProtocol,
     )
     from adaptive_reflow.algorithm.merge_operator import (  # noqa: F401
         MergeOperatorProtocol,
@@ -50,8 +49,8 @@ def test_claim_044_four_substitution_point_protocols_importable() -> None:
     from adaptive_reflow.algorithm.policy_driver import (  # noqa: F401
         PolicyDriverProtocol,
     )
-    from adaptive_reflow.algorithm.blender import (  # noqa: F401
-        RestartBlenderProtocol,
+    from adaptive_reflow.algorithm.scheduler._core import (  # noqa: F401
+        SchedulerProtocol,
     )
     for cls in (
         SchedulerProtocol,

@@ -66,7 +66,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol, runtime_checkable
 
-
 # ---------------------------------------------------------------------------
 # Literal type for the condition-kind discriminator
 # ---------------------------------------------------------------------------
@@ -426,7 +425,7 @@ class MappingConditionAdapter:
         # sees the original (possibly kind-less) keys.
 
     @classmethod
-    def from_mapping(cls, mapping: Mapping[str, Any]) -> "MappingConditionAdapter":
+    def from_mapping(cls, mapping: Mapping[str, Any]) -> MappingConditionAdapter:
         """Build a :class:`MappingConditionAdapter` from a raw mapping."""
         return cls(_data=dict(mapping))
 

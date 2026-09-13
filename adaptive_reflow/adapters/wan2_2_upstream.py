@@ -214,8 +214,8 @@ def run_upstream_t2v(
     Returns the path to the written mp4. ``out_path=None`` writes to
     ``data/wan2_2/cache/<uuid>.mp4`` (created if missing).
     """
-    from wan.utils.utils import save_video  # noqa: WPS433
     import torch  # noqa: WPS433
+    from wan.utils.utils import save_video  # noqa: WPS433
 
     pipe = load_upstream_wan_t2v(
         ckpt_dir,

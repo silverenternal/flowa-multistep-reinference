@@ -400,7 +400,7 @@ class TwoDimFMEvaluator:
 
     # ---- capability handshake --------------------------------------
 
-    def capabilities(self) -> "AdapterCapabilities":
+    def capabilities(self) -> AdapterCapabilities:
         """Return the full :class:`AdapterCapabilities` of the wrapped adapter."""
         return self._adapter.capabilities()
 

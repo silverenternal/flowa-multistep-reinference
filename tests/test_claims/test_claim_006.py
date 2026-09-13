@@ -12,11 +12,13 @@ We pin:
     3. The scheduler conforms to SchedulerProtocol.
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import registered_families
+
 from adaptive_reflow.algorithm.scheduler._core import (
     SCHEDULER_REGISTRY,
     CodimensionSheetScheduler,
 )
+from tests.test_claims._claim_template import registered_families
+
 
 def test_claim_006_codimension_sheet_in_scheduler_registry() -> None:
     """`codimension_sheet` family is registered in SCHEDULER_REGISTRY."""

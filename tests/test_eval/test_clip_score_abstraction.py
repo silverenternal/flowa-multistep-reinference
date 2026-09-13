@@ -26,12 +26,11 @@ import pytest
 
 from adaptive_reflow.eval.clip_score import (
     CLIPSCORE_PAPER_SCALE,
+    DEFAULT_CLIP_MODEL_NAME,
     CLIPScoreProtocol,
     CLIPScoreResult,
-    DEFAULT_CLIP_MODEL_NAME,
     HFCosineClipScoreEvaluator,
 )
-
 
 # ---------------------------------------------------------------------------
 # Tests
@@ -244,4 +243,4 @@ def test_protocol_is_abstract() -> None:
 def test_paper_scale_constant() -> None:
     """``CLIPSCORE_PAPER_SCALE`` is the canonical Hessel-et-al 2021 100x scale."""
     assert isinstance(CLIPSCORE_PAPER_SCALE, float)
-    assert CLIPSCORE_PAPER_SCALE == pytest.approx(100.0)
+    assert pytest.approx(100.0) == CLIPSCORE_PAPER_SCALE

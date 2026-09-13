@@ -53,7 +53,6 @@ from hypothesis import strategies as st
 
 from adaptive_reflow.algorithm.scheduler import paper_quantity_driven_beta
 
-
 # ---------------------------------------------------------------------------
 # Strategies
 # ---------------------------------------------------------------------------

@@ -44,7 +44,7 @@ def test_claim_034_orchestrator_states_constant_documented() -> None:
     )
     assert hasattr(mod, "ORCHESTRATOR_STATES"), "ORCHESTRATOR_STATES missing"
     # The constant should be a tuple/list/set of state names.
-    states = getattr(mod, "ORCHESTRATOR_STATES")
+    states = mod.ORCHESTRATOR_STATES
     assert len(states) >= 3, (
         f"ORCHESTRATOR_STATES has only {len(states)} entries; expected >=3"
     )

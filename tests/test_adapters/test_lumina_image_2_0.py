@@ -450,9 +450,9 @@ def test_mechanism_id_is_lumina_image_2_0(lumina_adapter: object) -> None:
     )
 
     assert LUMINA_IMAGE_2_0_MECHANISM_ID == "lumina_image_2_0_flow_matching"
-    assert getattr(LuminaImage20Adapter, "mechanism_id") == (
+    assert LuminaImage20Adapter.mechanism_id == (
         "lumina_image_2_0_flow_matching"
-    ) or str(getattr(LuminaImage20Adapter, "mechanism_id")) == (
+    ) or str(LuminaImage20Adapter.mechanism_id) == (
         "lumina_image_2_0_flow_matching"
     )
 

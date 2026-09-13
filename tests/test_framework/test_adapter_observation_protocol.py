@@ -31,7 +31,6 @@ from adaptive_reflow.framework.interfaces import (
     implements,
 )
 
-
 # --- Adapters below are minimal fixtures, not real adapters ---
 
 

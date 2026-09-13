@@ -36,7 +36,6 @@ import pytest
 
 from adaptive_reflow.algorithm.merge_operator import BoundedMergeOperator
 
-
 # ---------------------------------------------------------------------------
 # _nfe_steps_per_round tests (the audit tool's NFE accounting helper)
 # ---------------------------------------------------------------------------

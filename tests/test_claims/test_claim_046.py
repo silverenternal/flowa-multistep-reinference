@@ -14,7 +14,7 @@ We pin:
     3. NaN/inf `eps_schedule` raises ValueError on the first call.
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import (AdapterCapabilities, ChannelName, StateBundle, TensorRef)
+
 import inspect
 import math
 
@@ -23,6 +23,13 @@ import pytest
 from adaptive_reflow.eval.posterior_selection_evaluator import (
     EvidenceScaleGapMetric,
 )
+from tests.test_claims._claim_template import (
+    AdapterCapabilities,
+    ChannelName,
+    StateBundle,
+    TensorRef,
+)
+
 
 def test_claim_046_constructor_accepts_paper_math_flags() -> None:
     sig = inspect.signature(EvidenceScaleGapMetric.__init__)

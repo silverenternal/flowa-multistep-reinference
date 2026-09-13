@@ -55,7 +55,23 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.adapters._adapter_common import (
+    NativeStateCache,
+    digest_state,
+    kaiming_uniform,
+    make_ref,
+    memory_fraction_for,
+    seed_from_ids,
+)
+from adaptive_reflow.adapters._adapter_common import (
+    torch_is_available as _adapter_common_torch_is_available,
+)
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.core.ckpt_loader import (
+    load_state_dict_strict_safe,
+    resolve_candidate_paths,
+)
+from adaptive_reflow.framework.interfaces import implements
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -70,22 +86,6 @@ from adaptive_reflow.universal.state import (
     StateBundle,
     validate_state_bundle,
 )
-
-from adaptive_reflow.adapters._adapter_common import (
-    NativeStateCache,
-    digest_state,
-    kaiming_uniform,
-    make_ref,
-    memory_fraction_for,
-    seed_from_ids,
-    torch_is_available as _adapter_common_torch_is_available,
-)
-from adaptive_reflow.core.ckpt_loader import (
-    load_state_dict_strict_safe,
-    resolve_candidate_paths,
-)
-from adaptive_reflow.framework.interfaces import implements
-
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -682,7 +682,7 @@ class RectifiedFlowCIFARAdapter(FlowMatchingODEAdapter):
         self._enable_paper_uplift_27: bool = bool(enable_paper_uplift_27)
         if paper_uplift_27_e_rho is None:
             # Paper defaults: rho=0.1, eta=0.1 -> e_rho = min(rho**4, (1-rho)**2 * eta**2) = 1e-4.
-            self._paper_uplift_27_e_rho: float | None = float(1e-4) if self._enable_paper_uplift_27 else None
+            self._paper_uplift_27_e_rho: float | None = 1e-4 if self._enable_paper_uplift_27 else None
         else:
             self._paper_uplift_27_e_rho = float(paper_uplift_27_e_rho) if float(paper_uplift_27_e_rho) > 0.0 else None
         if self._enable_paper_uplift_27 and self._paper_uplift_27_e_rho is None:

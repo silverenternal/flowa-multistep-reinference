@@ -202,6 +202,7 @@ def test_verify_checkpoint_chain_matches_persisted_head(tmp_path) -> None:
     """``verify_checkpoint_chain`` accepts a checkpoint whose
     ``ledger_chain_head_hash`` matches the row's ``row_hash``."""
     from adaptive_reflow.frame.ledger_chain import verify_checkpoint_chain
+    from adaptive_reflow.universal.adapter import AdapterCapabilities
     from adaptive_reflow.universal.checkpoint import (
         DEFAULT_BUNDLE_FORMAT_VERSION,
         Checkpoint,
@@ -209,7 +210,6 @@ def test_verify_checkpoint_chain_matches_persisted_head(tmp_path) -> None:
         load_checkpoint,
         save_checkpoint,
     )
-    from adaptive_reflow.universal.adapter import AdapterCapabilities
     from adaptive_reflow.universal.state import (
         ChannelName,
         StateBundle,
@@ -270,12 +270,12 @@ def test_verify_checkpoint_chain_rejects_external_head_drift(tmp_path) -> None:
     """A checkpoint whose ``ledger_chain_head_hash`` does not match the
     row's ``row_hash`` fails closed via ``verify_checkpoint_chain``."""
     from adaptive_reflow.frame.ledger_chain import verify_checkpoint_chain
+    from adaptive_reflow.universal.adapter import AdapterCapabilities
     from adaptive_reflow.universal.checkpoint import (
         DEFAULT_BUNDLE_FORMAT_VERSION,
         Checkpoint,
         IsoTimestamp,
     )
-    from adaptive_reflow.universal.adapter import AdapterCapabilities
     from adaptive_reflow.universal.state import (
         ChannelName,
         StateBundle,

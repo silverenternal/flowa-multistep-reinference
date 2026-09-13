@@ -30,7 +30,6 @@ from adaptive_reflow.core.diffusers_wrapper import (
     diffusers_preprocess,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fake torch shim — a minimal subset of the torch surface that satisfies
 # the diffusers_wrapper import-time and runtime contracts.
@@ -72,26 +71,26 @@ class _FakeTensor:
         self._dtype = dtype
         self._device = device
 
-    def detach(self) -> "_FakeTensor":
+    def detach(self) -> _FakeTensor:
         return self
 
-    def cpu(self) -> "_FakeTensor":
+    def cpu(self) -> _FakeTensor:
         return self
 
     def numpy(self) -> np.ndarray:
         return np.asarray(self._arr, dtype=np.float64)
 
-    def squeeze(self, dim: int | None = None) -> "_FakeTensor":
+    def squeeze(self, dim: int | None = None) -> _FakeTensor:
         if dim is None:
             new = self._arr.squeeze()
         else:
             new = self._arr.squeeze(axis=dim)
         return _FakeTensor(new, dtype=self._dtype, device=self._device)
 
-    def unsqueeze(self, dim: int) -> "_FakeTensor":
+    def unsqueeze(self, dim: int) -> _FakeTensor:
         return _FakeTensor(np.expand_dims(self._arr, axis=dim), dtype=self._dtype, device=self._device)
 
-    def to(self, dtype: Any = None, device: Any = None) -> "_FakeTensor":
+    def to(self, dtype: Any = None, device: Any = None) -> _FakeTensor:
         return _FakeTensor(self._arr, dtype=dtype, device=device)
 
     @property
@@ -101,30 +100,30 @@ class _FakeTensor:
     def ndim(self) -> int:  # matches torch.Tensor.ndim as a method
         return int(self._arr.ndim)
 
-    def __getitem__(self, key: Any) -> "_FakeTensor":
+    def __getitem__(self, key: Any) -> _FakeTensor:
         return _FakeTensor(self._arr[key], dtype=self._dtype, device=self._device)
 
     # Arithmetic operators — needed for CFG interpolation
     # (``v_uncond + cfg * (v_cond - v_uncond)``).
-    def __add__(self, other: Any) -> "_FakeTensor":
+    def __add__(self, other: Any) -> _FakeTensor:
         if isinstance(other, _FakeTensor):
             return _FakeTensor(self._arr + other._arr, dtype=self._dtype, device=self._device)
         return _FakeTensor(self._arr + np.asarray(other), dtype=self._dtype, device=self._device)
 
-    def __radd__(self, other: Any) -> "_FakeTensor":
+    def __radd__(self, other: Any) -> _FakeTensor:
         return self.__add__(other)
 
-    def __sub__(self, other: Any) -> "_FakeTensor":
+    def __sub__(self, other: Any) -> _FakeTensor:
         if isinstance(other, _FakeTensor):
             return _FakeTensor(self._arr - other._arr, dtype=self._dtype, device=self._device)
         return _FakeTensor(self._arr - np.asarray(other), dtype=self._dtype, device=self._device)
 
-    def __mul__(self, other: Any) -> "_FakeTensor":
+    def __mul__(self, other: Any) -> _FakeTensor:
         if isinstance(other, _FakeTensor):
             return _FakeTensor(self._arr * other._arr, dtype=self._dtype, device=self._device)
         return _FakeTensor(self._arr * np.asarray(other), dtype=self._dtype, device=self._device)
 
-    def __rmul__(self, other: Any) -> "_FakeTensor":
+    def __rmul__(self, other: Any) -> _FakeTensor:
         return self.__mul__(other)
 
     @property
@@ -212,7 +211,7 @@ class _FakeModel:
         """The wrapper calls the model as a callable."""
         return self.forward(x, t, y, **kwargs)
 
-    def eval(self) -> "_FakeModel":
+    def eval(self) -> _FakeModel:
         return self
 
 

@@ -64,7 +64,16 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.adapters._adapter_common import (
+    _run_construction_shape_guard,
+    digest_state,
+    make_ref,
+    memory_fraction_for,
+    seed_from_ids,
+)
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
+from adaptive_reflow.framework.interfaces import implements
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -80,17 +89,6 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
-
-from adaptive_reflow.adapters._adapter_common import (
-    _run_construction_shape_guard,
-    digest_state,
-    make_ref,
-    memory_fraction_for,
-    seed_from_ids,
-)
-from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
-from adaptive_reflow.framework.interfaces import implements
-
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -798,9 +796,9 @@ class Wan22VideoAdapter(FlowMatchingODEAdapter):
             self._torch_dtype = _torch.bfloat16
             self._upstream_offload = True
             self._upstream_seq_len = (
-                ((int(WAN22_A14B_STATE_SHAPE[2]) * int(WAN22_A14B_STATE_SHAPE[3]))
+                (int(WAN22_A14B_STATE_SHAPE[2]) * int(WAN22_A14B_STATE_SHAPE[3]))
                  // (st.patch_size[1] * st.patch_size[2])
-                 * int(WAN22_A14B_STATE_SHAPE[1]))
+                 * int(WAN22_A14B_STATE_SHAPE[1])
             )
         else:
             self._synthetic_weights = _random_init_synthetic_weights(

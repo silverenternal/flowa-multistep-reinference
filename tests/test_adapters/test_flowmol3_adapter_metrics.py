@@ -36,12 +36,12 @@ import pytest
 from adaptive_reflow.adapters import (
     AUDIT_FLOWMOL3_ATOM_TYPE_ENTROPY_RESTART,
     FLOWMOL3_ATOM_TYPE_VOCAB_SIZE,
-    FLOWMOL3_CHANNELS,
     FLOWMOL3_CHANNEL_DOMAINS,
+    FLOWMOL3_CHANNELS,
+    PER_POSITION_ENTROPY_REDUCTION,
     FlowMol3Adapter,
     FlowMol3AtomTypeEntropyRestartPolicy,
     FlowMol3Capabilities,
-    PER_POSITION_ENTROPY_REDUCTION,
     default_flowmol3_adapter,
     flowmol3_registry_entry,
 )
@@ -65,7 +65,6 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 from adaptive_reflow.writer.registry import FLOWMOL3_PINNED_COMMIT
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -416,9 +415,9 @@ class TestFlowMol3BugCMetricSeedIsCellKey:
             seed=44, nfe=200,
             digest_value="anything-goes-here",
         )
-        assert captured == int(44) * 31 + int(200) == 1564, (
+        assert captured == 44 * 31 + 200 == 1564, (
             f"Bug C fix is not the per-cell key: "
-            f"captured={captured}, expected={int(44)*31+int(200)}"
+            f"captured={captured}, expected={44*31+200}"
         )
 
     def test_different_nfe_yields_different_captured_seed(self) -> None:
@@ -444,8 +443,8 @@ class TestFlowMol3BugCMetricSeedIsCellKey:
             "produced the same captured RNG seed."
         )
         # And the per-cell key matches the documented formula.
-        assert seed_50 == int(43) * 31 + 50
-        assert seed_200 == int(43) * 31 + 200
+        assert seed_50 == 43 * 31 + 50
+        assert seed_200 == 43 * 31 + 200
 
 
 # ---------------------------------------------------------------------------

@@ -44,13 +44,11 @@ from adaptive_reflow.algorithm.scheduler._core import (
     default_cosine_scheduler,
 )
 from adaptive_reflow.contracts import CosineScheduleConfig, FactorValue
-
 from tests.test_sbc.sbc_helpers import (
     assert_calibrated,
     run_sbc,
     uniform_prior,
 )
-
 
 _DT = 0.1
 

@@ -122,7 +122,7 @@ def stub_inception_v3(monkeypatch: pytest.MonkeyPatch) -> None:
                     + means.unsqueeze(1) * (idx + 2.0).unsqueeze(0)
             return out
 
-        def eval(self) -> "_DeterministicInceptionStub":
+        def eval(self) -> _DeterministicInceptionStub:
             return super().eval()
 
     monkeypatch.setattr(

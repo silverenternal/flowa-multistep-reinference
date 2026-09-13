@@ -27,12 +27,12 @@ from adaptive_reflow.algorithm.dynamics import (
     BFN_FAMILY,
     CONTINUOUS_FM_FAMILY,
     CTMC_FAMILY,
-    BFNDynamics,
-    ContinuousFMDynamics,
-    CTMCDynamics,
     DEFAULT_BFN_CONFIG_HASH,
     DEFAULT_CONTINUOUS_FM_CONFIG_HASH,
     DEFAULT_CTMC_CONFIG_HASH,
+    BFNDynamics,
+    ContinuousFMDynamics,
+    CTMCDynamics,
     DynamicsProtocol,
     DynamicsTrajectory,
     FlowMol3Dynamics,
@@ -66,7 +66,6 @@ from adaptive_reflow.algorithm.solver import (
     default_heun_solver,
     default_rk4_solver,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test 1 — Euler + ContinuousFMDynamics reproduces sine-wave ODE

@@ -34,7 +34,6 @@ import pytest
 from adaptive_reflow.algorithm.scheduler_extra import (
     JitteredConstantScheduler,
 )
-
 from tests.test_sbc.sbc_helpers import (
     assert_calibrated,
     run_sbc,

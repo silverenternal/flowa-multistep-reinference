@@ -68,7 +68,6 @@ from adaptive_reflow.molecular.envelope import (  # noqa: F401
     validate_tail_budget_row as _validate_tail_budget_row,
 )
 
-
 # ---------------------------------------------------------------------------
 # DeprecationWarning re-exports — PEP 562 module-level shim pattern.
 # ---------------------------------------------------------------------------

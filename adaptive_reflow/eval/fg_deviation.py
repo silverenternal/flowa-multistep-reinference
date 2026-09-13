@@ -82,9 +82,10 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -336,7 +337,7 @@ def _smiles_or_mol_to_mol(item: Any) -> Any | None:
     # Heuristic: an RDKit Mol has ``GetNumAtoms``; everything else is
     # treated as a SMILES string. This mirrors the upstream
     # ``useful_rdkit_utils.reos.REOS.process_smiles`` behaviour.
-    if hasattr(item, "GetNumAtoms") and callable(getattr(item, "GetNumAtoms")):
+    if hasattr(item, "GetNumAtoms") and callable(item.GetNumAtoms):
         try:
             from rdkit import Chem  # noqa: PLC0415
             return Chem.Mol(item)

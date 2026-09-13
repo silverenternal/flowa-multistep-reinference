@@ -48,8 +48,7 @@ import hashlib
 import platform
 import socket
 import sys
-from datetime import datetime, timezone
-
+from datetime import UTC, datetime, timezone
 
 # ---------------------------------------------------------------------------
 # Core fingerprint computation.
@@ -85,7 +84,7 @@ def compute_host_fingerprint() -> dict[str, str]:
         "python": sys.version.split()[0],  # e.g. "3.11.5"
         "platform": platform.platform(),
         "hostname_hash": hostname_hash,
-        "captured_at": datetime.now(timezone.utc).isoformat(),
+        "captured_at": datetime.now(UTC).isoformat(),
     }
     try:
         import torch  # type: ignore[import-untyped]

@@ -26,18 +26,17 @@ from adaptive_reflow.core.vae_decoder import (
     LATENT_SHAPE_FLUX_VAE_1024,
     LATENT_SHAPE_HIDREAM_1024,
     LATENT_SHAPE_SD_VAE_256,
-    LatentShape,
-    SyntheticVAE,
     VAE_FAMILY_FLUX_VAE,
     VAE_FAMILY_HIDREAM,
     VAE_FAMILY_SD_VAE,
     VAE_FAMILY_SYNTHETIC,
+    LatentShape,
+    SyntheticVAE,
     default_synthetic_vae,
     latent_to_pixel_shape,
     pixel_to_latent_shape,
     vae_for_family,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test 1: shape arithmetic

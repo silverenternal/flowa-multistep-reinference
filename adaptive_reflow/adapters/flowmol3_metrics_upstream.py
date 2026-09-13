@@ -55,8 +55,9 @@ import logging
 import os
 import sys
 import types
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -142,8 +143,8 @@ def _try_import_upstream() -> dict[str, Any]:
     _install_upstream_path()
     _stub_flowmol_namespace()
     try:  # noqa: BLE001 — we want to capture *any* import error here.
-        from flowmol.analysis.molecule_builder import SampledMolecule  # noqa: PLC0415
         from flowmol.analysis.metrics import SampleAnalyzer  # noqa: PLC0415
+        from flowmol.analysis.molecule_builder import SampledMolecule  # noqa: PLC0415
     except BaseException as exc:  # noqa: BLE001
         _UPSTREAM_IMPORT_ERROR = exc
         _LOGGER.warning(

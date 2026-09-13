@@ -128,7 +128,7 @@ class CLIPScoreResult:
         return bool(math.isfinite(float(self.mean)) and math.isfinite(float(self.std)))
 
     @classmethod
-    def nan_result(cls, *, n_pairs: int, model_name: str) -> "CLIPScoreResult":
+    def nan_result(cls, *, n_pairs: int, model_name: str) -> CLIPScoreResult:
         """Build a graceful-NaN :class:`CLIPScoreResult`.
 
         Used when the :mod:`transformers` dependency is missing or the
@@ -288,8 +288,8 @@ class HFCosineClipScoreEvaluator(CLIPScoreProtocol):
         if self._load_attempted and self._load_error is not None:
             raise self._load_error
         try:
-            from transformers import AutoModel, AutoProcessor  # noqa: F401
             import torch  # noqa: F401
+            from transformers import AutoModel, AutoProcessor  # noqa: F401
         except ImportError as exc:
             self._load_attempted = True
             self._load_error = exc
@@ -297,8 +297,8 @@ class HFCosineClipScoreEvaluator(CLIPScoreProtocol):
         # Import resolved; load lazily. We re-resolve inside the try
         # block so the raised ImportError has the right traceback.
         try:
-            from transformers import AutoModel, AutoProcessor
             import torch
+            from transformers import AutoModel, AutoProcessor
         except ImportError as exc:  # pragma: no cover — defensive
             self._load_attempted = True
             self._load_error = exc

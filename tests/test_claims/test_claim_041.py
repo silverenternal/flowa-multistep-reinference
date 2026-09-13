@@ -21,7 +21,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 REVIEW_DOC = ROOT / "docs" / "r4-survey" / "18-comprehensive-code-review.md"
 FIX_PLAN_DOC = ROOT / "docs" / "r4-survey" / "19-fix-plan.md"

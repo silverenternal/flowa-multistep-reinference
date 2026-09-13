@@ -48,10 +48,9 @@ Numerical contract
 from __future__ import annotations
 
 import math
-from typing import ClassVar
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 from numpy.typing import NDArray
@@ -166,7 +165,7 @@ class FIDResult:
         *,
         feature_dim: int,
         n_samples: int,
-    ) -> "FIDResult":
+    ) -> FIDResult:
         """Build an :class:`FIDResult` from a raw float value."""
         return cls(
             value=float(value),

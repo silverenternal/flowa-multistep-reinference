@@ -29,9 +29,9 @@ from collections.abc import Mapping
 import pytest
 
 from adaptive_reflow.contracts.condition import (
+    CONDITION_KINDS,
     BFNInpaintCondition,
     CFGCondition,
-    CONDITION_KINDS,
     Condition,
     InpaintingCondition,
     MappingConditionAdapter,
@@ -43,7 +43,6 @@ from adaptive_reflow.contracts.condition import (
     wrap_condition,
 )
 from adaptive_reflow.universal.state import ODEConditionDelta, validate_condition_delta
-
 
 # ---------------------------------------------------------------------------
 # (1) Concrete Condition subclasses — discriminator + wire form

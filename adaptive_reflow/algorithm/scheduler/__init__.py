@@ -27,14 +27,14 @@ Public surface
 from __future__ import annotations
 
 from ._core import (
+    DEFAULT_NFE_AWARE_MAX,
+    DEFAULT_NFE_AWARE_THRESHOLD,
     SCHEDULER_REGISTRY,
     CodimensionSheetScheduler,
     ConstantScheduler,
     ConvergenceAdaptiveScheduler,
     CosineAnnealScheduler,
     CosineScheduleConfig,
-    DEFAULT_NFE_AWARE_MAX,
-    DEFAULT_NFE_AWARE_THRESHOLD,
     ExponentialScheduler,
     LinearScheduler,
     NFEAwareMemoryScheduler,
@@ -58,8 +58,8 @@ from .evidence_driven import (
     EVIDENCE_PID_SATURATED,
     EVIDENCE_RATIO_MISSING,
     EVIDENCE_REGIME_GATED,
-    EvidenceDrivenScheduler,
     REGIME_VIOLATION_WARNING,
+    EvidenceDrivenScheduler,
 )
 from .freetraj import FREETRAJ_SUBSTEP_AUDIT, FreeTrajScheduler
 from .regime_selector import (

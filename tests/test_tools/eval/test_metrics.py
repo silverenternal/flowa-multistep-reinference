@@ -13,7 +13,6 @@ from typing import Any
 
 import pytest
 
-
 _TOOLS = "tools.run_real_ckpt_eval"
 
 
@@ -682,12 +681,11 @@ def test_metric_helper_dispatches_on_kind() -> None:
     Wave 47/52 Kanzi / LineageFlow contract for the v2 wire.
     """
     tools = _import_tools_module()
-    from adaptive_reflow.framework.interfaces import ObservationKind
-    from adaptive_reflow.universal.state import ODEConditionDelta
-
     from adaptive_reflow.adapters.flowmol3_v2_adapter import (
         FlowMol3V2Adapter,
     )
+    from adaptive_reflow.framework.interfaces import ObservationKind
+    from adaptive_reflow.universal.state import ODEConditionDelta
 
     adapter = FlowMol3V2Adapter(backend="numpy", num_steps=4)
     bundle = adapter.build_initial_state(

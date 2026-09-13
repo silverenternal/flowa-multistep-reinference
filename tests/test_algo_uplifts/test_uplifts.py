@@ -69,11 +69,11 @@ from adaptive_reflow.algorithm import (  # noqa: E402
     SigmoidScheduler,
     default_cosine_scheduler,
 )
-from adaptive_reflow.algorithm.blender import DistanceDecayBlender  # noqa: E402
 from adaptive_reflow.algorithm.batched_runner import (  # noqa: E402
     BatchedRunnerConfig,
     BatchedTrajectoryRunner,
 )
+from adaptive_reflow.algorithm.blender import DistanceDecayBlender  # noqa: E402
 from adaptive_reflow.algorithm.evidence_driver import (  # noqa: E402
     EvidenceDrivenScheduler,
 )
@@ -82,8 +82,6 @@ from adaptive_reflow.algorithm.scheduler import (  # noqa: E402
     ConstantScheduler,
 )
 from adaptive_reflow.algorithm.sequential import SequentialScheduler  # noqa: E402
-
-from adaptive_reflow.contracts import paper_quantities as _pq  # noqa: E402
 from adaptive_reflow.contracts import (  # noqa: E402
     ArtifactHash,
     ChannelName,
@@ -95,8 +93,7 @@ from adaptive_reflow.contracts import (  # noqa: E402
     RunId,
     hash_policy_hash,
 )
-from adaptive_reflow.frame.engine import build_ledger_row  # noqa: E402
-from adaptive_reflow.frame.ledger_chain import LedgerChain  # noqa: E402
+from adaptive_reflow.contracts import paper_quantities as _pq  # noqa: E402
 from adaptive_reflow.eval.coverage import (  # noqa: E402
     energy_distance_with_ci,
     weighted_coverage_score,
@@ -116,12 +113,13 @@ from adaptive_reflow.eval.twodim_fm_evaluator import (  # noqa: E402
     voronoi_grid,
 )
 from adaptive_reflow.eval.w2 import build_w2_estimator  # noqa: E402
+from adaptive_reflow.frame.engine import build_ledger_row  # noqa: E402
+from adaptive_reflow.frame.ledger_chain import LedgerChain  # noqa: E402
 from adaptive_reflow.universal.mixer_ot import (  # noqa: E402
     displacement_blend,
     displacement_scale,
     rms,
 )
-
 
 DEFAULT_SEED: int = 42
 DEFAULT_CYCLE_LENGTH: int = 20

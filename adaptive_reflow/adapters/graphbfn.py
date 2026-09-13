@@ -78,7 +78,14 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
+    make_ref,
+    seed_from_ids,
+)
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
+from adaptive_reflow.framework.interfaces import implements
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -94,15 +101,6 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
-
-from adaptive_reflow.adapters._adapter_common import (
-    digest_state,
-    make_ref,
-    seed_from_ids,
-)
-from adaptive_reflow.core.ckpt_loader import resolve_candidate_paths
-from adaptive_reflow.framework.interfaces import implements
-
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -1026,7 +1024,7 @@ class GraphBFNAdapter(FlowMatchingODEAdapter):
         # scalar in [0, 1] (the canonical property range for logP /
         # QED / SA after normalisation).
         if cond_kind != "unconditional":
-            target = new_spec.get("property_value", None)
+            target = new_spec.get("property_value")
             if target is None:
                 raise ValueError(
                     "property_value_required_for_conditioned_generation"

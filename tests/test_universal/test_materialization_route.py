@@ -5,16 +5,15 @@ from __future__ import annotations
 import pytest
 
 from adaptive_reflow.universal.materialization import (
+    MATERIALIZER_NOOP_DIGEST,
     EnvelopeState,
     HeterogeneousCategoricalMaterializer,
-    MATERIALIZER_NOOP_DIGEST,
     MaterializationRouteProtocol,
     MaterializerHandle,
     NativeStateBundle,
     NoOpMaterializer,
     default_materializer,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures + helpers

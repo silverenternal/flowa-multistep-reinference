@@ -1,4 +1,4 @@
-"""CLM-013: Paper Corollary 1 yields `Z_{g,eps} >= C_1 * eps`.
+r"""CLM-013: Paper Corollary 1 yields `Z_{g,eps} >= C_1 * eps`.
 
 Asserted by docs/CLAIMS.md:232-247.
 Paper Corollary 1 deduces the normalisation lower bound

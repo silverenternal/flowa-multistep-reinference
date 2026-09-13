@@ -29,7 +29,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 CIFAR_DRIVER = ROOT / "tools" / "run_sota_cifar_experiment.py"
 CIFAR_FID_SCRIPT = ROOT / "tools" / "compute_cifar_fid.py"

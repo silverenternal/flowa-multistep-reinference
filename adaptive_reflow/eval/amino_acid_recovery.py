@@ -60,8 +60,9 @@ Public surface
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 __all__ = [
     "IMGT_VH_LENGTH",

@@ -45,7 +45,6 @@ from adaptive_reflow.universal.state import (
     validate_state_bundle,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -188,8 +187,10 @@ def test_tau_floor_argmax_emits_audit_code(blender) -> None:
     probs to produce a per-row argmax.
     """
     from adaptive_reflow.algorithm.categorical_blender import (
-        _logit_space_blend,
         CategoricalAwareBlender as _CAB,
+    )
+    from adaptive_reflow.algorithm.categorical_blender import (
+        _logit_space_blend,
     )
     # Simulate the post-blend degeneracy check in CategoricalAwareBlender.
     probs_2d = np.array([[0.7, 0.2, 0.1]])

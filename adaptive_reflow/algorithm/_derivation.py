@@ -331,44 +331,44 @@ class DerivationContext:
         prior and fresh endpoints; ``None`` when not measured).
     """
 
-    paper_quantities: Mapping[str, Optional[float]]
-    local_curvature: Mapping[str, Optional[float]]
-    scheduler_state: Mapping[str, Optional[float]]
+    paper_quantities: Mapping[str, float | None]
+    local_curvature: Mapping[str, float | None]
+    scheduler_state: Mapping[str, float | None]
     ot_metrics: Mapping[str, Any]
 
 
 def make_derivation_context(
     *,
-    n_cap: Optional[float] = None,
-    n_min: Optional[float] = None,
-    n_max: Optional[float] = None,
-    cycle_length: Optional[int] = None,
-    n_rounds: Optional[int] = None,
-    w2_round_t: Optional[float] = None,
-    w2_round_0: Optional[float] = None,
-    e_rho: Optional[float] = None,
-    a_g: Optional[float] = None,
-    b_g: Optional[float] = None,
-    c_g: Optional[float] = None,
-    l_e: Optional[float] = None,
-    f_best: Optional[float] = None,
-    grad_var: Optional[float] = None,
-    grad_mean: Optional[float] = None,
-    fisher_information: Optional[float] = None,
-    w2_history: Optional[tuple[float, ...]] = None,
-    metric_variances: Optional[Mapping[str, tuple[float, ...]]] = None,
-    t: Optional[float] = None,
-    s: Optional[float] = None,
-    kl_prior_fresh: Optional[float] = None,
-    eps_implicit: Optional[float] = None,
-    delta_t: Optional[float] = None,
-    n_steps: Optional[int] = None,
-    err: Optional[float] = None,
-    tol: Optional[float] = None,
-    f_trace: Optional[float] = None,
-    d: Optional[int] = None,
-    alpha: Optional[float] = None,
-    handoff_window: Optional[int] = None,
+    n_cap: float | None = None,
+    n_min: float | None = None,
+    n_max: float | None = None,
+    cycle_length: int | None = None,
+    n_rounds: int | None = None,
+    w2_round_t: float | None = None,
+    w2_round_0: float | None = None,
+    e_rho: float | None = None,
+    a_g: float | None = None,
+    b_g: float | None = None,
+    c_g: float | None = None,
+    l_e: float | None = None,
+    f_best: float | None = None,
+    grad_var: float | None = None,
+    grad_mean: float | None = None,
+    fisher_information: float | None = None,
+    w2_history: tuple[float, ...] | None = None,
+    metric_variances: Mapping[str, tuple[float, ...]] | None = None,
+    t: float | None = None,
+    s: float | None = None,
+    kl_prior_fresh: float | None = None,
+    eps_implicit: float | None = None,
+    delta_t: float | None = None,
+    n_steps: int | None = None,
+    err: float | None = None,
+    tol: float | None = None,
+    f_trace: float | None = None,
+    d: int | None = None,
+    alpha: float | None = None,
+    handoff_window: int | None = None,
 ) -> DerivationContext:
     """Build a :class:`DerivationContext` from the caller's kwargs.
 
@@ -1167,10 +1167,10 @@ class FisherMemoryFraction:
 
 
 def default_memory_fraction(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    n_cap: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    n_cap: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the per-round ``memory_fraction`` for a restart blend.
 
@@ -1225,10 +1225,10 @@ def default_memory_fraction(
 
 
 def default_eps_implicit(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    eps_implicit: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    eps_implicit: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the per-round ``eps_implicit`` from a derivation rule.
 
@@ -1269,10 +1269,10 @@ def default_eps_implicit(
 
 
 def default_lipschitz_step(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    n_steps: Optional[int] = None,
-    rule: Optional[DerivationRule] = None,
+    n_steps: int | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the per-round ODE step ``h_t`` from a derivation rule.
 
@@ -1318,10 +1318,10 @@ def default_lipschitz_step(
 
 
 def default_alpha_grad(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    e_rho: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    e_rho: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the per-round ``alpha_grad`` for the MeanFlow EMA proxy.
 
@@ -1373,9 +1373,9 @@ def default_alpha_grad(
 
 
 def default_handoff_window(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    handoff_window: Optional[int] = None,
+    handoff_window: int | None = None,
 ) -> int:
     """Return the sequential handoff window ``k`` (rounds).
 
@@ -2518,11 +2518,11 @@ class BoundedMergeFloorRule:
 
 
 def default_tolerance(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    n_min: Optional[float] = None,
-    n_cap: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    n_min: float | None = None,
+    n_cap: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``MeanFlowMergeOperator.tolerance`` from a derivation rule.
 
@@ -2552,11 +2552,11 @@ def default_tolerance(
 
 
 def default_machine_eps(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    t: Optional[float] = None,
-    s: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    t: float | None = None,
+    s: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the MeanFlow degenerate-pair ``eps`` from a derivation rule.
 
@@ -2580,11 +2580,11 @@ def default_machine_eps(
 
 
 def default_ema_alpha(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    grad_var: Optional[float] = None,
-    grad_mean: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    grad_var: float | None = None,
+    grad_mean: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``EMAOperator.alpha`` from a derivation rule.
 
@@ -2618,11 +2618,11 @@ def default_ema_alpha(
 
 
 def default_distance_decay_temperature(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    l_e: Optional[float] = None,
-    n_rounds: Optional[int] = None,
-    rule: Optional[DerivationRule] = None,
+    l_e: float | None = None,
+    n_rounds: int | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``DistanceDecayBlender.temperature`` from a derivation rule.
 
@@ -2654,10 +2654,10 @@ def default_distance_decay_temperature(
 
 
 def default_min_gumbel_temp(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    e_rho: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    e_rho: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``DEFAULT_MIN_GUMBEL_TEMP`` from a derivation rule.
 
@@ -2682,10 +2682,10 @@ def default_min_gumbel_temp(
 
 
 def default_eps_log(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    e_rho: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    e_rho: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``CategoricalAwareBlender.eps_log`` from a derivation rule.
 
@@ -2710,12 +2710,12 @@ def default_eps_log(
 
 
 def default_exponential_alpha(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    n_min: Optional[float] = None,
-    n_max: Optional[float] = None,
-    cycle_length: Optional[int] = None,
-    rule: Optional[DerivationRule] = None,
+    n_min: float | None = None,
+    n_max: float | None = None,
+    cycle_length: int | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ExponentialScheduler.alpha`` from a derivation rule.
 
@@ -2752,10 +2752,10 @@ def default_exponential_alpha(
 
 
 def default_polynomial_power(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    cycle_length: Optional[int] = None,
-    rule: Optional[DerivationRule] = None,
+    cycle_length: int | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``PolynomialScheduler.power`` from a derivation rule.
 
@@ -2782,11 +2782,11 @@ def default_polynomial_power(
 
 
 def default_sigmoid_midpoint(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    n_min: Optional[float] = None,
-    n_max: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    n_min: float | None = None,
+    n_max: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``SigmoidScheduler.midpoint`` from a derivation rule."""
     chosen: DerivationRule = (
@@ -2812,10 +2812,10 @@ def default_sigmoid_midpoint(
 
 
 def default_sigmoid_steepness(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    fisher_information: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    fisher_information: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``SigmoidScheduler.steepness`` from a derivation rule."""
     chosen: DerivationRule = (
@@ -2838,10 +2838,10 @@ def default_sigmoid_steepness(
 
 
 def default_convergence_adaptive_kp(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    w2_history: Optional[tuple[float, ...]] = None,
-    rule: Optional[DerivationRule] = None,
+    w2_history: tuple[float, ...] | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ConvergenceAdaptiveScheduler.kp`` from a derivation rule."""
     chosen: DerivationRule = (
@@ -2864,10 +2864,10 @@ def default_convergence_adaptive_kp(
 
 
 def default_convergence_adaptive_kd(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    w2_history: Optional[tuple[float, ...]] = None,
-    rule: Optional[DerivationRule] = None,
+    w2_history: tuple[float, ...] | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ConvergenceAdaptiveScheduler.kd`` from a derivation rule."""
     chosen: DerivationRule = (
@@ -2890,10 +2890,10 @@ def default_convergence_adaptive_kd(
 
 
 def default_convergence_adaptive_shift_max(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    w2_history: Optional[tuple[float, ...]] = None,
-    rule: Optional[DerivationRule] = None,
+    w2_history: tuple[float, ...] | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ConvergenceAdaptiveScheduler.shift_max`` from a derivation rule."""
     chosen: DerivationRule = (
@@ -2916,10 +2916,10 @@ def default_convergence_adaptive_shift_max(
 
 
 def default_convergence_adaptive_ema(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    cycle_length: Optional[int] = None,
-    rule: Optional[DerivationRule] = None,
+    cycle_length: int | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ConvergenceAdaptiveScheduler.ema`` from a derivation rule."""
     chosen: DerivationRule = (
@@ -2942,10 +2942,10 @@ def default_convergence_adaptive_ema(
 
 
 def default_metric_weights(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    metric_variances: Optional[Mapping[str, tuple[float, ...]]] = None,
-    rule: Optional[DerivationRule] = None,
+    metric_variances: Mapping[str, tuple[float, ...]] | None = None,
+    rule: DerivationRule | None = None,
 ) -> dict[str, float]:
     """Return the multi-metric feedback weights from a derivation rule.
 
@@ -2980,11 +2980,11 @@ def default_metric_weights(
 
 
 def default_jitter_std(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    n_cap: Optional[float] = None,
-    n_rounds: Optional[int] = None,
-    rule: Optional[DerivationRule] = None,
+    n_cap: float | None = None,
+    n_rounds: int | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``JitteredConstantScheduler.jitter_std`` from a derivation rule.
 
@@ -3016,11 +3016,11 @@ def default_jitter_std(
 
 
 def default_constant_beta(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    n_min: Optional[float] = None,
-    n_max: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    n_min: float | None = None,
+    n_max: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``DEFAULT_CONSTANT_BETA`` from a derivation rule.
 
@@ -3050,11 +3050,11 @@ def default_constant_beta(
 
 
 def default_adaptive_target_estimate(
-    context: Optional[DerivationContext],
+    context: DerivationContext | None,
     *,
-    n_min: Optional[float] = None,
-    n_max: Optional[float] = None,
-    rule: Optional[DerivationRule] = None,
+    n_min: float | None = None,
+    n_max: float | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``DEFAULT_ADAPTIVE_TARGET_ESTIMATE`` from a derivation rule.
 
@@ -3100,7 +3100,7 @@ def _coerce_finite(x: Any, name: str) -> float:
     return f
 
 
-def _adr0010_fallback(n_cap: Optional[float]) -> float:
+def _adr0010_fallback(n_cap: float | None) -> float:
     """Return the ADR-0010 cosine-driven memory fraction ``1 - n_cap``.
 
     When ``n_cap`` is ``None``, return the documented mid-cycle

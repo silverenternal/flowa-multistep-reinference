@@ -126,7 +126,7 @@ def _try_import_upstream() -> dict[str, Any]:
             NextDiT_4B_GQA_patch2_Adaln_Refiner,
             NextDiT_7B_GQA_patch2_Adaln_Refiner,
         )
-        from transport import create_transport, Sampler  # noqa: PLC0415
+        from transport import Sampler, create_transport  # noqa: PLC0415
     except BaseException as exc:  # noqa: BLE001
         _UPSTREAM_IMPORT_ERROR = exc
         _LOGGER.warning(

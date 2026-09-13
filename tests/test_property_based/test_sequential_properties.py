@@ -38,7 +38,6 @@ from adaptive_reflow.algorithm.scheduler._core import (
 )
 from adaptive_reflow.algorithm.sequential import SequentialScheduler
 
-
 _PROPERTY_SETTINGS = settings(
     max_examples=20,
     deadline=2000,

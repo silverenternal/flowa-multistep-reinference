@@ -26,7 +26,6 @@ from adaptive_reflow.eval.freq_l1 import (
     per_position_freq_l1,
 )
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BUNDLED_FASTA = REPO_ROOT / BUNDLED_NATURAL_FASTA
 

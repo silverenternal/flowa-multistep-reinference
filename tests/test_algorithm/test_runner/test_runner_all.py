@@ -2642,7 +2642,7 @@ def test_restart_policy_skips_when_sigma_below_threshold() -> None:
 
     # And the default threshold is the documented
     # :data:`DEFAULT_RESTART_SIGMA_THRESHOLD = 1e-2`.
-    assert DEFAULT_RESTART_SIGMA_THRESHOLD == pytest.approx(1e-2)
+    assert pytest.approx(1e-2) == DEFAULT_RESTART_SIGMA_THRESHOLD
 
 
 def test_restart_policy_restarts_when_sigma_is_normal() -> None:

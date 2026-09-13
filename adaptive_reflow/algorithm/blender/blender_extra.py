@@ -10,8 +10,8 @@ See :mod:`adaptive_reflow.algorithm.blender` for the merged surface.
 from __future__ import annotations
 
 from .blender import (
-    BarycentricBlender,
     DEFAULT_MEMORY_FRACTION_FALLBACK,
+    BarycentricBlender,
     DerivationContext,
     DerivationRule,
     JointOTLinearBlender,

@@ -77,6 +77,22 @@ Tasks satisfied:
 """
 from __future__ import annotations
 
+from adaptive_reflow.contracts.condition import (
+    CONDITION_KINDS,
+    BFNInpaintCondition,
+    CFGCondition,
+    Condition,
+    ConditionKind,
+    InpaintingCondition,
+    MappingConditionAdapter,
+    NullCondition,
+    PropertyCondition,
+    condition_kind_of,
+    condition_to_mapping,
+    validate_condition,
+    wrap_condition,
+)
+
 from .adapter import (
     AdapterCapabilities,
     CapabilityMismatchError,
@@ -86,6 +102,7 @@ from .adapter import (
     RestartPolicy,
     validate_capabilities,
 )
+
 # D8: typed Condition discriminated union (eagerly imported; the
 # ``molecular -> universal.evaluator`` cycle was severed by the local
 # Protocol declared in ``molecular.calibration_protocols``).
@@ -97,21 +114,6 @@ from .condition_injection import (
     PassthroughConditionInjector,
     default_null_injector,
     validate_condition_injector,
-)
-from adaptive_reflow.contracts.condition import (
-    BFNInpaintCondition,
-    CFGCondition,
-    CONDITION_KINDS,
-    Condition,
-    ConditionKind,
-    InpaintingCondition,
-    MappingConditionAdapter,
-    NullCondition,
-    PropertyCondition,
-    condition_kind_of,
-    condition_to_mapping,
-    validate_condition,
-    wrap_condition,
 )
 from .envelope import (
     ArtifactHash,
@@ -131,10 +133,10 @@ from .evaluator import (
     validate_evaluator_artifact_hash,
 )
 from .materialization import (
+    MATERIALIZER_NOOP_DIGEST,
     EnvelopeState,
     HeterogeneousCategoricalMaterializer,
     LossTolerance,
-    MATERIALIZER_NOOP_DIGEST,
     MaterializationRouteProtocol,
     MaterializerHandle,
     NativeStateBundle,

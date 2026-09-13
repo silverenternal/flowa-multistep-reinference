@@ -76,10 +76,9 @@ def test_bounded_lipschitz_distance_2d_input_validation_runs_before_scipy_check(
     :class:`ValueError` — not be masked by the ImportError. This keeps
     the diagnostic surface stable regardless of environment.
     """
-    with patch.dict(sys.modules, {"scipy.optimize": None}):
-        with pytest.raises(ValueError):
-            bounded_lipschitz_distance_2d(
-                left=[[0.0, 0.0]],
-                right=[[0.0, 0.0]],
-                bound=0.0,
-            )
+    with patch.dict(sys.modules, {"scipy.optimize": None}), pytest.raises(ValueError):
+        bounded_lipschitz_distance_2d(
+            left=[[0.0, 0.0]],
+            right=[[0.0, 0.0]],
+            bound=0.0,
+        )

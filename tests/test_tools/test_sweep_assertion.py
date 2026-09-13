@@ -643,7 +643,7 @@ def test_helper_module_resolves_to_same_object_across_5_drivers() -> None:
     # module's top-level — but the source must contain the canonical
     # import path. Verify both surface helpers are reached.
     for symbol in ("assert_n_records_match", "write_summary_with_n_keys"):
-        assert f"from tools._sweep_assertion import" in runner_src
+        assert "from tools._sweep_assertion import" in runner_src
         # Both symbols must appear somewhere in the runner (lazy or eager).
         assert symbol in runner_src, (
             f"tools._kanzi_sweep_runner no longer references {symbol}."

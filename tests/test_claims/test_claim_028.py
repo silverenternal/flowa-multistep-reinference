@@ -24,7 +24,6 @@ from adaptive_reflow.manifest import (
     enumerate_ports,
 )
 
-
 EXPECTED_EIGHT = (
     SchedulerPort,
     PolicyDriverPort,

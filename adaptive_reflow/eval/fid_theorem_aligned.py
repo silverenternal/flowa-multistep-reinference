@@ -145,7 +145,7 @@ class PaperQuantitiesSnapshot:
         h: float = _DEFAULT_H,
         d: float = 1.0,
         validate: bool = False,
-    ) -> "PaperQuantitiesSnapshot":
+    ) -> PaperQuantitiesSnapshot:
         """Build the snapshot by calling the four paper-quantity evaluators.
 
         Stdlib-only computation; byte-stable: two calls with identical

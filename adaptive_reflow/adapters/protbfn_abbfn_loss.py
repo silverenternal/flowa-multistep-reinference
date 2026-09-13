@@ -27,12 +27,11 @@ Public surface
 from __future__ import annotations
 
 import math
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 import torch
 from numpy.typing import NDArray
-
 
 # ---------------------------------------------------------------------------
 # Constants — mirror data/protbfn_abbfn/repo/loss.py
@@ -146,10 +145,10 @@ def _softmax(z: NDArray[np.float64], axis: int = -1) -> NDArray[np.float64]:
 
 
 def transformer_to_numpy_fn(
-    torch_model: "torch.nn.Module",
+    torch_model: torch.nn.Module,
     *,
-    device: "torch.device | None" = None,
-    dtype: "torch.dtype | None" = None,
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
 ) -> Callable[[NDArray[np.float64]], NDArray[np.float64]]:
     """Wrap a :class:`ProtBFNTransformer` as a NumPy forward fn.
 

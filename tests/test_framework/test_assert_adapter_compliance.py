@@ -48,7 +48,6 @@ from adaptive_reflow.framework.interfaces import (
 )
 from adaptive_reflow.universal.adapter import FlowMatchingODEAdapter
 
-
 # ---------------------------------------------------------------------------
 # HIGH-4 regression test
 # ---------------------------------------------------------------------------

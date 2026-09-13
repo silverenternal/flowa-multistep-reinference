@@ -24,6 +24,7 @@ from adaptive_reflow.adapters.integrators import (
     adaptive_integrate,
     build_integrator,
 )
+
 # StochasticFMAdapter removed in Wave 33 (orphan; see
 # docs/audit/adapter-conformance-deep-dive.md NONCONFORMANCE_BUG #5).
 # The P0 #9 tests below are now archive-only documentation of the

@@ -13,7 +13,13 @@ strictly below 1 on canonical 2D targets (paper predicts 1 in the
 asymptotic limit; framework's fixed-noise replay never reaches it).
 """
 from __future__ import annotations
-from tests.test_claims._claim_template import (AdapterCapabilities, ChannelName, StateBundle, TensorRef)
+
+from tests.test_claims._claim_template import (
+    AdapterCapabilities,
+    ChannelName,
+    StateBundle,
+    TensorRef,
+)
 
 _XY = ChannelName("xy")
 

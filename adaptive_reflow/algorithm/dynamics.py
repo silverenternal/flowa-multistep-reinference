@@ -260,7 +260,7 @@ class DynamicsProtocol(Protocol):
     def to_config(self) -> dict[str, Any]: ...
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "DynamicsProtocol": ...
+    def from_config(cls, config: dict[str, Any]) -> DynamicsProtocol: ...
 
 
 # ---------------------------------------------------------------------------
@@ -315,7 +315,7 @@ class ContinuousFMDynamics:
         return {"family": self.FAMILY}
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "ContinuousFMDynamics":
+    def from_config(cls, config: dict[str, Any]) -> ContinuousFMDynamics:
         if config.get("family") != cls.FAMILY:
             raise ValueError(
                 f"ContinuousFMDynamics.from_config: bad family {config.get('family')!r}"
@@ -487,7 +487,7 @@ class CTMCDynamics:
             return self._Q @ state_t
         if state_t.ndim == 2:
             n_atoms, K = state_t.shape
-            if K != self._Q.shape[0]:
+            if self._Q.shape[0] != K:
                 raise ValueError(
                     f"CTMCDynamics.step: state K={K!r} does not match "
                     f"rate matrix K={self._Q.shape[0]!r}"
@@ -519,7 +519,7 @@ class CTMCDynamics:
         }
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "CTMCDynamics":
+    def from_config(cls, config: dict[str, Any]) -> CTMCDynamics:
         if config.get("family") != cls.FAMILY:
             raise ValueError(
                 f"CTMCDynamics.from_config: bad family {config.get('family')!r}"
@@ -754,7 +754,7 @@ class BFNDynamics:
         return {"family": self.FAMILY}
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "BFNDynamics":
+    def from_config(cls, config: dict[str, Any]) -> BFNDynamics:
         if config.get("family") != cls.FAMILY:
             raise ValueError(
                 f"BFNDynamics.from_config: bad family {config.get('family')!r}"
@@ -849,7 +849,7 @@ class FlowMol3Dynamics:
         }
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "FlowMol3Dynamics":
+    def from_config(cls, config: dict[str, Any]) -> FlowMol3Dynamics:
         coord = None
         atom = None
         bond = None
@@ -913,7 +913,7 @@ class ProtBFNDynamics:
         return {"family": self.family(), "bfn": self._bfn.to_config()}
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "ProtBFNDynamics":
+    def from_config(cls, config: dict[str, Any]) -> ProtBFNDynamics:
         bfn_cfg = config.get("bfn")
         if not isinstance(bfn_cfg, dict):
             raise ValueError("ProtBFNDynamics.from_config: bfn config required")

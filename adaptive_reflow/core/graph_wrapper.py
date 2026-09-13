@@ -526,8 +526,8 @@ class DGLGraphBridge:
         if not self._probe.has_pyg:
             return None
         try:
-            from torch_geometric.data import Data  # local import.
             import torch  # local import.
+            from torch_geometric.data import Data  # local import.
         except ImportError:
             return None
         data = Data(

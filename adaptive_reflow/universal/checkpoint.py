@@ -349,7 +349,11 @@ def _decode_checkpoint_payload(payload: Mapping[str, Any]) -> Checkpoint:
     from adaptive_reflow.universal.adapter import AdapterCapabilities
     from adaptive_reflow.universal.state import (
         ChannelName as _ChannelName,
+    )
+    from adaptive_reflow.universal.state import (
         StateBundle as _StateBundle,
+    )
+    from adaptive_reflow.universal.state import (
         TensorRef as _TensorRef,
     )
 

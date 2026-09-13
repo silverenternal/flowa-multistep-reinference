@@ -46,6 +46,12 @@ from adaptive_reflow.contracts import (
     hash_artifact,
 )
 
+from .adaptive import (
+    CodimensionSheetScheduler,
+    ConvergenceAdaptiveScheduler,
+    PaperRatioAdaptiveScheduler,
+)
+
 # NOTE: ``adaptive_reflow.algorithm._derivation`` is imported lazily
 # inside each :func:`derive_default_*` body and inside
 # :func:`derive_default_eps_implicit`. Importing it at module top would
@@ -55,10 +61,9 @@ from adaptive_reflow.contracts import (
 # by the absence of ``CosineAnnealScheduler`` on the still-loading
 # ``scheduler.nfe_aware`` namespace. The deferred import matches the
 # pattern already used inside the function bodies themselves.
-
 from .protocols import (
-    ScheduleSample,
     SchedulerProtocol,
+    ScheduleSample,
     _coerce_int_nonneg,
 )
 from .simple import (
@@ -70,12 +75,6 @@ from .simple import (
     SigmoidScheduler,
     default_cosine_scheduler,
 )
-from .adaptive import (
-    CodimensionSheetScheduler,
-    ConvergenceAdaptiveScheduler,
-    PaperRatioAdaptiveScheduler,
-)
-
 
 DEFAULT_NFE_AWARE_THRESHOLD: int = 10
 """Default NFE-per-round threshold at which ``memory_fraction`` saturates at
@@ -807,11 +806,11 @@ def build_scheduler_from_config(config: dict[str, Any]) -> SchedulerProtocol:
 
 def derive_default_eps_implicit(
     *,
-    eps_implicit: Optional[float] = None,
-    t: Optional[float] = None,
-    c_g: Optional[float] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    eps_implicit: float | None = None,
+    t: float | None = None,
+    c_g: float | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the per-round ``eps_implicit`` from a derivation rule.
 
@@ -869,8 +868,10 @@ def derive_default_eps_implicit(
     # ``OTEpsilonSchedule`` default on the next line resolves at call time.
     from adaptive_reflow.algorithm._derivation import (
         OTEpsilonSchedule,
-        default_eps_implicit as _default_eps_implicit,
         make_derivation_context,
+    )
+    from adaptive_reflow.algorithm._derivation import (
+        default_eps_implicit as _default_eps_implicit,
     )
     chosen: DerivationRule = (
         rule if rule is not None else OTEpsilonSchedule()
@@ -900,11 +901,11 @@ def derive_default_eps_implicit(
 
 def derive_default_exponential_alpha(
     *,
-    n_min: Optional[float] = None,
-    n_max: Optional[float] = None,
-    cycle_length: Optional[int] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    n_min: float | None = None,
+    n_max: float | None = None,
+    cycle_length: int | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ExponentialScheduler.alpha`` from a derivation rule.
 
@@ -926,9 +927,9 @@ def derive_default_exponential_alpha(
 
 def derive_default_polynomial_power(
     *,
-    cycle_length: Optional[int] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    cycle_length: int | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``PolynomialScheduler.power`` from a derivation rule.
 
@@ -943,10 +944,10 @@ def derive_default_polynomial_power(
 
 def derive_default_sigmoid_midpoint(
     *,
-    n_min: Optional[float] = None,
-    n_max: Optional[float] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    n_min: float | None = None,
+    n_max: float | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``SigmoidScheduler.midpoint`` from a derivation rule.
 
@@ -961,9 +962,9 @@ def derive_default_sigmoid_midpoint(
 
 def derive_default_sigmoid_steepness(
     *,
-    fisher_information: Optional[float] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    fisher_information: float | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``SigmoidScheduler.steepness`` from a derivation rule.
 
@@ -982,9 +983,9 @@ def derive_default_sigmoid_steepness(
 
 def derive_default_convergence_adaptive_kp(
     *,
-    w2_history: Optional[tuple[float, ...]] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    w2_history: tuple[float, ...] | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ConvergenceAdaptiveScheduler.kp`` from a derivation rule."""
     from adaptive_reflow.algorithm._derivation import (
@@ -995,9 +996,9 @@ def derive_default_convergence_adaptive_kp(
 
 def derive_default_convergence_adaptive_kd(
     *,
-    w2_history: Optional[tuple[float, ...]] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    w2_history: tuple[float, ...] | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ConvergenceAdaptiveScheduler.kd`` from a derivation rule."""
     from adaptive_reflow.algorithm._derivation import (
@@ -1008,9 +1009,9 @@ def derive_default_convergence_adaptive_kd(
 
 def derive_default_convergence_adaptive_shift_max(
     *,
-    w2_history: Optional[tuple[float, ...]] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    w2_history: tuple[float, ...] | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ConvergenceAdaptiveScheduler.shift_max`` from a derivation rule."""
     from adaptive_reflow.algorithm._derivation import (
@@ -1021,9 +1022,9 @@ def derive_default_convergence_adaptive_shift_max(
 
 def derive_default_convergence_adaptive_ema(
     *,
-    cycle_length: Optional[int] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    cycle_length: int | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``ConvergenceAdaptiveScheduler.ema`` from a derivation rule."""
     from adaptive_reflow.algorithm._derivation import (
@@ -1034,9 +1035,9 @@ def derive_default_convergence_adaptive_ema(
 
 def derive_default_metric_weights(
     *,
-    metric_variances: Optional[Mapping[str, tuple[float, ...]]] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    metric_variances: Mapping[str, tuple[float, ...]] | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> dict[str, float]:
     """Return the multi-metric feedback weights from a derivation rule.
 

@@ -24,7 +24,6 @@ import tempfile
 import numpy as np
 import pytest
 
-
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 TOOL_PATH = REPO_ROOT / "tools" / "extract_ca_coords_for_kanzi.py"
 

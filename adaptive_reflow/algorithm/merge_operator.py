@@ -17,6 +17,7 @@ takes precedence when imported as ``adaptive_reflow.algorithm.merge``).
 from __future__ import annotations
 
 from .merge.merge_operator import (
+    _ERR_CAP_BELOW_FLOOR,
     ERR_PREV_REQUIRED,
     MERGE_CAP_OUT_OF_RANGE,
     MERGE_DEGENERATE_INTERVAL,
@@ -31,9 +32,8 @@ from .merge.merge_operator import (
     IdentityOperator,
     MergeAuthorityError,
     MergeOperatorProtocol,
-    _ERR_CAP_BELOW_FLOOR,
-    default_bounded_merge_operator,
     _coerce_finite_real,
+    default_bounded_merge_operator,
 )
 
 __all__ = [

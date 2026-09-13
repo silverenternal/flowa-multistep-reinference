@@ -2077,8 +2077,8 @@ def test_engine_checkpoint_round_and_resume(tmp_path) -> None:
         DEFAULT_BUNDLE_FORMAT_VERSION,
     )
     from adaptive_reflow.universal.state import (
-        StateBundle,
         ChannelName,
+        StateBundle,
         TensorRef,
     )
 
@@ -2148,13 +2148,13 @@ def test_engine_checkpoint_round_and_resume(tmp_path) -> None:
 
 def test_engine_resume_rejects_tampered_chain(tmp_path) -> None:
     """Engine.resume_round raises CheckpointError on a tampered ledger row hash."""
+    from adaptive_reflow.frame.engine import build_ledger_row
     from adaptive_reflow.universal.checkpoint import CheckpointError
     from adaptive_reflow.universal.state import (
-        StateBundle,
         ChannelName,
+        StateBundle,
         TensorRef,
     )
-    from adaptive_reflow.frame.engine import build_ledger_row
 
     engine = Engine()
     caps = ReferenceFlowAAdapter().capabilities()
@@ -2223,13 +2223,13 @@ def test_engine_resume_rejects_tampered_chain(tmp_path) -> None:
 
 def test_engine_checkpoint_round_persists_to_disk(tmp_path) -> None:
     """Engine.checkpoint_round writes a file that ``load_checkpoint`` can read."""
+    from adaptive_reflow.frame.engine import build_ledger_row
     from adaptive_reflow.universal.checkpoint import load_checkpoint
     from adaptive_reflow.universal.state import (
-        StateBundle,
         ChannelName,
+        StateBundle,
         TensorRef,
     )
-    from adaptive_reflow.frame.engine import build_ledger_row
 
     engine = Engine()
     caps = ReferenceFlowAAdapter().capabilities()

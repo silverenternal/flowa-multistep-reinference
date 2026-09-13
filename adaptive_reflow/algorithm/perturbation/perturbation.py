@@ -88,7 +88,8 @@ from __future__ import annotations
 
 import hashlib
 import math
-from typing import Any, Callable, Mapping, Optional, Protocol, runtime_checkable
+from collections.abc import Callable, Mapping
+from typing import Any, Optional, Protocol, runtime_checkable
 
 from adaptive_reflow.contracts import hash_artifact
 
@@ -294,7 +295,7 @@ class PerturbationPolicy(Protocol):
     def propose(
         self,
         x_saturated: Any,
-        paper_quantities: Optional[Mapping[str, Any]],
+        paper_quantities: Mapping[str, Any] | None,
         t: float,
     ) -> Any:
         """Return the perturbed state for one saturation round.
@@ -349,7 +350,7 @@ class PerturbationPolicy(Protocol):
         ...
 
     @classmethod
-    def from_config(cls, config: dict[str, Any]) -> "PerturbationPolicy":
+    def from_config(cls, config: dict[str, Any]) -> PerturbationPolicy:
         """Build a perturbation policy from a ``to_config`` dict (P1-1).
 
         ``cls`` is the concrete implementation class — call sites
@@ -392,7 +393,7 @@ class PaperQuantitiesPerturbationSnapshotProtocol(Protocol):
     ) -> float: ...
 
 
-def _lookup_e_rho(snapshot: Any, t: float) -> tuple[Optional[float], bool]:
+def _lookup_e_rho(snapshot: Any, t: float) -> tuple[float | None, bool]:
     """Best-effort lookup of ``e_rho`` at ``t`` in ``snapshot``.
 
     Supports two shapes (in priority order):
@@ -423,7 +424,7 @@ def _lookup_e_rho(snapshot: Any, t: float) -> tuple[Optional[float], bool]:
     return None, False
 
 
-def _lookup_log_p_qty(snapshot: Any, x: Any, t: float) -> tuple[Optional[float], bool]:
+def _lookup_log_p_qty(snapshot: Any, x: Any, t: float) -> tuple[float | None, bool]:
     """Best-effort lookup of ``log_p_qty(x, t)`` in ``snapshot``.
 
     Supports the canonical callable shape
@@ -655,7 +656,7 @@ class UniformFreshPerturbation:
     def propose(
         self,
         x_saturated: Any,
-        paper_quantities: Optional[Mapping[str, Any]],
+        paper_quantities: Mapping[str, Any] | None,
         t: float,
     ) -> Any:
         """Return deterministic ``standard_normal(x_saturated.shape)``.
@@ -702,7 +703,7 @@ class UniformFreshPerturbation:
     @classmethod
     def from_config(
         cls, config: dict[str, Any]
-    ) -> "UniformFreshPerturbation":
+    ) -> UniformFreshPerturbation:
         """Build a :class:`UniformFreshPerturbation` from ``config``.
 
         P1-1 round-trip — two ``from_config(to_config())`` calls
@@ -822,8 +823,8 @@ class PaperQuantityAttractorInversion:
         *,
         eps_scale: float = DEFAULT_BRAI_EPS_SCALE,
         grad_eps: float = DEFAULT_BRAI_GRAD_EPS,
-        log_p_qty: Optional[Callable[[Any, float], float]] = None,
-        grad_log_p_qty: Optional[Callable[[Any, float, float], Any]] = None,
+        log_p_qty: Callable[[Any, float], float] | None = None,
+        grad_log_p_qty: Callable[[Any, float, float], Any] | None = None,
         default_sigma: float = DEFAULT_BRAI_SIGMA,
     ) -> None:
         self._eps_scale = _coerce_positive_real(eps_scale, name="eps_scale")
@@ -888,11 +889,11 @@ class PaperQuantityAttractorInversion:
     def propose(
         self,
         x_saturated: Any,
-        paper_quantities: Optional[Mapping[str, Any]],
+        paper_quantities: Mapping[str, Any] | None,
         t: float,
         *,
         audit_codes: list[str] | None = None,
-        magnitude: Optional[float] = None,
+        magnitude: float | None = None,
     ) -> Any:
         """Return ``x_saturated + eps_scale * (-grad log P_qty)``.
 
@@ -1032,7 +1033,7 @@ class PaperQuantityAttractorInversion:
     @classmethod
     def from_config(
         cls, config: dict[str, Any]
-    ) -> "PaperQuantityAttractorInversion":
+    ) -> PaperQuantityAttractorInversion:
         """Build a :class:`PaperQuantityAttractorInversion` from ``config``.
 
         P1-1 round-trip — two ``from_config(to_config())`` calls

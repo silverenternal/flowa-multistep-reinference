@@ -43,18 +43,20 @@ import math
 from typing import Any, Optional
 
 from adaptive_reflow.algorithm._derivation import (
-    BoundaryConditionRule,
     DEFAULT_MEANFLOW_EPS_FALLBACK,
     DEFAULT_MEANFLOW_TOLERANCE_FALLBACK,
+    BoundaryConditionRule,
     DerivationContext,
     DerivationRule,
     FisherMemoryFraction,
-    MeanFlowToleranceRule,
     MachineEpsilonRule,
+    MeanFlowToleranceRule,
     default_alpha_grad,
     default_machine_eps,
     default_tolerance,
 )
+from adaptive_reflow.contracts import hash_artifact
+
 from .merge_operator import (
     _ERR_CAP_BELOW_FLOOR,
     MERGE_DEGENERATE_INTERVAL,
@@ -62,7 +64,6 @@ from .merge_operator import (
     MergeOperatorProtocol,
     default_bounded_merge_operator,
 )
-from adaptive_reflow.contracts import hash_artifact
 
 # ---------------------------------------------------------------------------
 # Module-level constants (canonical audit codes)
@@ -355,9 +356,9 @@ _ = MERGE_DEGENERATE_INTERVAL
 
 def derive_default_alpha_grad(
     *,
-    e_rho: Optional[float] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    e_rho: float | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the per-round ``alpha_grad`` from a derivation rule.
 
@@ -405,10 +406,10 @@ def derive_default_alpha_grad(
 
 def derive_default_tolerance(
     *,
-    n_min: Optional[float] = None,
-    n_cap: Optional[float] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    n_min: float | None = None,
+    n_cap: float | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return ``MeanFlowMergeOperator.tolerance`` from a derivation rule.
 
@@ -449,10 +450,10 @@ def derive_default_tolerance(
 
 def derive_default_machine_eps(
     *,
-    t: Optional[float] = None,
-    s: Optional[float] = None,
-    context: Optional[DerivationContext] = None,
-    rule: Optional[DerivationRule] = None,
+    t: float | None = None,
+    s: float | None = None,
+    context: DerivationContext | None = None,
+    rule: DerivationRule | None = None,
 ) -> float:
     """Return the MeanFlow degenerate-pair ``eps`` from a derivation rule.
 
@@ -473,9 +474,9 @@ def derive_default_machine_eps(
 
 
 def derive_default_boundary_conditions(
-    context: Optional[DerivationContext] = None,
+    context: DerivationContext | None = None,
     *,
-    rule: Optional[DerivationRule] = None,
+    rule: DerivationRule | None = None,
 ) -> tuple[float, float]:
     """Return the MeanFlow ``(t, s)`` boundary conditions from Theorem 1.
 
@@ -498,7 +499,7 @@ def derive_default_boundary_conditions(
     )
 
 
-def _empty_ctx_local() -> "DerivationContext":
+def _empty_ctx_local() -> DerivationContext:
     """Return an empty DerivationContext for fallback paths."""
     from adaptive_reflow.algorithm._derivation import _empty_context
     return _empty_context()

@@ -26,7 +26,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, cast
 
+from adaptive_reflow.adapters._adapter_common import (
+    digest_state,
+    make_ref,
+    seed_from_ids,
+)
 from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.framework.interfaces import implements
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     ArtifactHash,
@@ -36,7 +42,6 @@ from adaptive_reflow.universal import (
     NoOpMixer,
 )
 from adaptive_reflow.universal.state import (
-    
     ChannelName,
     ODEConditionDelta,
     ODEIntegratorTrace,
@@ -44,14 +49,6 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
-
-from adaptive_reflow.adapters._adapter_common import (
-    digest_state,
-    make_ref,
-    seed_from_ids,
-)
-from adaptive_reflow.framework.interfaces import implements
-
 
 # ---------------------------------------------------------------------------
 # Constants

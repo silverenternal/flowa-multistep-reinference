@@ -44,7 +44,6 @@ from adaptive_reflow.algorithm._synthetic_oracle import (
 from adaptive_reflow.algorithm.blender import LinearBlender
 from adaptive_reflow.algorithm.categorical_blender import CategoricalAwareBlender
 
-
 # ---------------------------------------------------------------------------
 # Carriers
 # ---------------------------------------------------------------------------

@@ -45,7 +45,6 @@ from adaptive_reflow.algorithm.perturbation import (
     default_uniform_fresh_perturbation,
 )
 
-
 # ---------------------------------------------------------------------------
 # Test 1 — UniformFreshPerturbation preserved (byte-stable legacy behaviour)
 # ---------------------------------------------------------------------------

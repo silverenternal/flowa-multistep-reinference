@@ -96,8 +96,26 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
-from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.adapters._adapter_common import (
+    _run_construction_shape_guard,
+    digest_state,
+    make_ref,
+    memory_fraction_for,
+    seed_from_ids,
+)
 from adaptive_reflow.contracts import MechanismId
+from adaptive_reflow.contracts.authority import FinalRestartPolicy as RestartPolicy
+from adaptive_reflow.core.ckpt_loader import (
+    load_state_dict_strict_safe,
+    resolve_candidate_paths,
+)
+from adaptive_reflow.core.diffusers_wrapper import (
+    DiffusersForwardSignature,
+    DiffusersForwardWrapper,
+    diffusers_postprocess,
+    diffusers_preprocess,
+)
+from adaptive_reflow.framework.interfaces import implements
 from adaptive_reflow.universal import (
     AdapterCapabilities,
     CapabilityMissingError,
@@ -113,26 +131,6 @@ from adaptive_reflow.universal.state import (
     TensorRef,
     validate_state_bundle,
 )
-
-from adaptive_reflow.adapters._adapter_common import (
-    _run_construction_shape_guard,
-    make_ref,
-    memory_fraction_for,
-    seed_from_ids,
-    digest_state,
-)
-from adaptive_reflow.core.ckpt_loader import (
-    load_state_dict_strict_safe,
-    resolve_candidate_paths,
-)
-from adaptive_reflow.core.diffusers_wrapper import (
-    DiffusersForwardSignature,
-    DiffusersForwardWrapper,
-    diffusers_postprocess,
-    diffusers_preprocess,
-)
-from adaptive_reflow.framework.interfaces import implements
-
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -554,7 +552,7 @@ def _load_torch_model(weights_path: Path) -> Any:
                     nn.Parameter(torch.zeros(1, dtype=torch.float32), requires_grad=False),
                 )
 
-            def forward(self, x: "torch.Tensor", t: "torch.Tensor", y: "torch.Tensor") -> "torch.Tensor":
+            def forward(self, x: torch.Tensor, t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
                 # Return zeros of the right shape — used only as a
                 # smoke-test stub when diffusers' SiT isn't available.
                 return torch.zeros(

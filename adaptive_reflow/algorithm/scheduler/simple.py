@@ -34,7 +34,14 @@ from __future__ import annotations
 import math
 import warnings
 from collections.abc import Callable, Mapping
-from typing import Any
+
+# Local imports of *adaptive* siblings, only used by the
+# ``default_paper_ratio_scheduler`` factory. Kept lazy-ish via a
+# forward-declared type annotation so that ``adaptive.py`` can in turn
+# reference classes from this module (the cycle is broken at *call*
+# time, not import time, mirroring the cycle-avoidance pattern already
+# documented for ``_register_extra_scheduler_families``).
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -52,18 +59,10 @@ from adaptive_reflow.schedule.cosine import (
 )
 
 from .protocols import (
-    ScheduleSample,
     SchedulerProtocol,
+    ScheduleSample,
     _coerce_int_nonneg,
 )
-
-# Local imports of *adaptive* siblings, only used by the
-# ``default_paper_ratio_scheduler`` factory. Kept lazy-ish via a
-# forward-declared type annotation so that ``adaptive.py`` can in turn
-# reference classes from this module (the cycle is broken at *call*
-# time, not import time, mirroring the cycle-avoidance pattern already
-# documented for ``_register_extra_scheduler_families``).
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .adaptive import CodimensionSheetScheduler
@@ -313,7 +312,7 @@ def default_paper_ratio_scheduler(
     eps_implicit: float = 0.05,
     seed: int = 0,
     profile_residual_fn: Callable[[float], float] | None = None,
-) -> "CodimensionSheetScheduler":
+) -> CodimensionSheetScheduler:
     """Build the framework-default paper-quantity-driven scheduler.
 
     Wave 34 — closure of the 2026-09-05 user constraint that the
@@ -1484,7 +1483,7 @@ class SigmoidScheduler:
                 raise ValueError(f"midpoint must be finite, got {midpoint!r}")
             self._midpoint = float(midpoint)
         if steepness is None:
-            self._steepness = float(10.0)
+            self._steepness = 10.0
         else:
             if isinstance(steepness, bool) or not isinstance(
                 steepness, (int, float)

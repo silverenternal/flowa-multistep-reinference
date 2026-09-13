@@ -32,19 +32,19 @@ from adaptive_reflow.adapters.lineageflow import (
     LINEAGEFLOW_CLAMP,
     LINEAGEFLOW_CONFIG_HASH,
     LINEAGEFLOW_FAMILY_ID_DEFAULT,
-    LINEAGEFLOW_INTEGRATORS,
     LINEAGEFLOW_INTEGRATOR_EULER,
     LINEAGEFLOW_INTEGRATOR_HEUN,
-    LINEAGEFLOW_MECHANISM_ID,
+    LINEAGEFLOW_INTEGRATORS,
     LINEAGEFLOW_MAX_LENGTH,
+    LINEAGEFLOW_MECHANISM_ID,
     LINEAGEFLOW_NUM_STEPS_DEFAULT,
     LINEAGEFLOW_STATE_SHAPE,
     LINEAGEFLOW_T_END,
     LINEAGEFLOW_VOCAB_SIZE,
-    LineageFlowAdapter,
-    LineageFlowCapabilities,
     PER_POSITION_ENTROPY_REDUCTION,
     PFAM_FAMILY_COND,
+    LineageFlowAdapter,
+    LineageFlowCapabilities,
     default_lineageflow_adapter,
     lineageflow_resolve_weights_path,
     torch_is_available,
@@ -52,14 +52,6 @@ from adaptive_reflow.adapters.lineageflow import (
 from adaptive_reflow.algorithm.perturbation import (
     PaperQuantityAttractorInversion,
     UniformFreshPerturbation,
-)
-from adaptive_reflow.universal.adapter import CapabilityMissingError
-from adaptive_reflow.universal import FlowMatchingODEAdapter
-from adaptive_reflow.universal.state import (
-    ChannelName,
-    ODEConditionDelta,
-    StateBundle,
-    validate_state_bundle,
 )
 from adaptive_reflow.contracts import (
     ArtifactHash,
@@ -69,7 +61,14 @@ from adaptive_reflow.contracts import (
     PolicyId,
     RunId,
 )
-
+from adaptive_reflow.universal import FlowMatchingODEAdapter
+from adaptive_reflow.universal.adapter import CapabilityMissingError
+from adaptive_reflow.universal.state import (
+    ChannelName,
+    ODEConditionDelta,
+    StateBundle,
+    validate_state_bundle,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers

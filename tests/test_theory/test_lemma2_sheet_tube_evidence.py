@@ -24,7 +24,6 @@ import pytest
 from adaptive_reflow.theory import sheet_tube_evidence as ratio_witness
 from adaptive_reflow.theory.checkers import sheet_tube_evidence
 
-
 # ---------------------------------------------------------------------------
 # Wave 11 -- checkers.sheet_tube_evidence (dataclass witness)
 # ---------------------------------------------------------------------------

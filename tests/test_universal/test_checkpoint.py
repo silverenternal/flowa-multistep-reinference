@@ -44,7 +44,6 @@ from adaptive_reflow.universal.state import (
     TensorRef,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -303,7 +302,7 @@ def test_checkpoint_default_in_sync_with_engine() -> None:
 
     sample = _Sample()
     np_val = np.float64(0.5)
-    assert _canonical_json_default(sample) == float(0.5)
+    assert _canonical_json_default(sample) == 0.5
     # Both encoders should produce the same JSON-stable representation
     # for a numpy scalar.
     a = _canonical_json_default(np_val)

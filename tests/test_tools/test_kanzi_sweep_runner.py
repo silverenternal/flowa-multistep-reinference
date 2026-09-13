@@ -845,7 +845,6 @@ def test_synthesize_x_final_real_inv_proj_calls_latent_to_coords_bridge(
     # We need a real StateBundle + ODEIntegratorTrace for the runner to
     # unpack cleanly. Use the production dataclasses (frozen, so we
     # build via the constructor).
-
     # ChannelName and TensorRef are imported by the runner via local
     # import inside ``_synthesize_x_final_real`` — but for the fake
     # adapter below we need them too. Import them here so the test

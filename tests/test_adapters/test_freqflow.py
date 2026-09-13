@@ -30,9 +30,9 @@ from adaptive_reflow.adapters.freqflow import (
     FREQ_FLOW_CLAMP,
     FREQ_FLOW_CONFIG_HASH,
     FREQ_FLOW_FREQ_MIX_DEFAULT,
-    FREQ_FLOW_INTEGRATORS,
     FREQ_FLOW_INTEGRATOR_EULER,
     FREQ_FLOW_INTEGRATOR_HEUN,
+    FREQ_FLOW_INTEGRATORS,
     FREQ_FLOW_MECHANISM_ID,
     FREQ_FLOW_NUM_STEPS_DEFAULT,
     FREQ_FLOW_STATE_SHAPE,
@@ -43,14 +43,6 @@ from adaptive_reflow.adapters.freqflow import (
     freqflow_resolve_weights_path,
     torch_is_available,
 )
-from adaptive_reflow.universal import FlowMatchingODEAdapter
-from adaptive_reflow.universal.state import (
-    ChannelName,
-    ODEConditionDelta,
-    ODEIntegratorTrace,
-    StateBundle,
-    validate_state_bundle,
-)
 from adaptive_reflow.contracts import (
     ArtifactHash,
     FactorValue,
@@ -59,7 +51,14 @@ from adaptive_reflow.contracts import (
     PolicyId,
     RunId,
 )
-
+from adaptive_reflow.universal import FlowMatchingODEAdapter
+from adaptive_reflow.universal.state import (
+    ChannelName,
+    ODEConditionDelta,
+    ODEIntegratorTrace,
+    StateBundle,
+    validate_state_bundle,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -35,17 +35,16 @@ from adaptive_reflow.eval.fid import (
     InceptionV3FIDEvaluator,
 )
 from adaptive_reflow.eval.fid_theorem_aligned import (
+    REGIME_VIOLATION_AUDIT_CODE,
     ConvergenceDiagnostic,
     FIDPerRoundResult,
     InceptionV3TheoremAlignedFIDEvaluator,
     NuGReferenceRegistry,
     PaperQuantitiesSnapshot,
     PerRoundFIDTracker,
-    REGIME_VIOLATION_AUDIT_CODE,
     TheoremAlignedFIDReport,
     TheoremAlignedFIDResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -64,7 +63,7 @@ def _constant_g(_x: float) -> float:
 
 def _make_features(
     *, n: int, d: int, mean: np.ndarray, cov_scale: float, seed: int
-) -> "np.typing.NDArray[np.float64]":
+) -> np.typing.NDArray[np.float64]:
     """Sample ``(n, d)`` features from ``N(mean, cov_scale * I_d)``."""
     rng = np.random.default_rng(int(seed))
     base = rng.standard_normal((int(n), int(d)))

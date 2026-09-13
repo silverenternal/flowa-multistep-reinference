@@ -30,20 +30,19 @@ from adaptive_reflow.algorithm.integrator import (
     DEFAULT_BASE_DT,
     DEFAULT_MFPQA_ALPHA,
     DEFAULT_MFPQA_BETA,
-    EulerStep,
-    IntegratorConfigError,
-    IntegratorProtocol,
     MFPQA_DT_FLOORED_TO_BASE,
     MFPQA_FALLBACK_FIELDS_MISSING,
     MFPQA_NO_PAPER_QUANTITIES,
     MFPQA_NONFINITE_QUANTITY_COERCED,
+    EulerStep,
+    IntegratorConfigError,
+    IntegratorProtocol,
     MultiFidelityPaperQuantityStep,
     PaperQuantitiesSnapshotProtocol,
     build_integrator_from_config,
     default_euler_step,
     default_mfpqa_step,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test 1 — EulerStep preserved (byte-identical legacy behaviour)

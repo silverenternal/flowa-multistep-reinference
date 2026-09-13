@@ -53,7 +53,6 @@ from tools.statistical_power_analysis import (  # noqa: E402
     compute_power_table,
 )
 
-
 # ---------------------------------------------------------------------------
 # Test 1: known distribution → correct CI bounds
 # ---------------------------------------------------------------------------

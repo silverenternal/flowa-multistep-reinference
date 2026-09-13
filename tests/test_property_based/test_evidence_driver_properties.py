@@ -33,7 +33,6 @@ from adaptive_reflow.algorithm.evidence_driver import (
     check_evidence_mode,
 )
 
-
 _PROPERTY_SETTINGS = settings(
     max_examples=20,
     deadline=2000,

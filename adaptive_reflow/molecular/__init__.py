@@ -132,14 +132,6 @@ from .channels import (
     RawPairChannelRef,
 )
 from .domain import MOLECULE_DOMAIN_BY_CHANNEL
-from .materializer import (
-    FLOWMOL3_ENVELOPE_KEYS,
-    GRAPHBFN_ENVELOPE_KEYS,
-    ConcreteFlowMol3Materializer,
-    ConcreteGraphBFNMaterializer,
-    default_flowmol3_materializer,
-    default_graphbfn_materializer,
-)
 from .envelope import (
     MoleculeEnvelopeClassification,
     MoleculeEnvelopeLayer,
@@ -147,6 +139,14 @@ from .envelope import (
     MoleculeTailBudgetRow,
     validate_molecule_envelope_manifest,
     validate_molecule_tail_budget_row,
+)
+from .materializer import (
+    FLOWMOL3_ENVELOPE_KEYS,
+    GRAPHBFN_ENVELOPE_KEYS,
+    ConcreteFlowMol3Materializer,
+    ConcreteGraphBFNMaterializer,
+    default_flowmol3_materializer,
+    default_graphbfn_materializer,
 )
 from .mixer import (
     MIXER_RMS_PRECEDENCE_FAIL,

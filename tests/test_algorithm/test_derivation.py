@@ -47,13 +47,15 @@ from typing import Any
 import pytest
 
 from adaptive_reflow.algorithm._derivation import (
+    DEFAULT_EPSILON_SCHEDULE_FALLBACK,
+    DEFAULT_LIPSCHITZ_STEP_FALLBACK,
+    DEFAULT_MEMORY_FRACTION_FALLBACK,
+    NAMESPACE_ALGORITHM_POSTERIOR,
+    PAPER_QUANTITY_E_RHO_FLOOR_DIVISOR,
     BLConvergenceEpsilonSchedule,
     BoundaryConditionRule,
     BoundedMergeFloorRule,
     ConvergenceAdaptivePolyRule,
-    DEFAULT_EPSILON_SCHEDULE_FALLBACK,
-    DEFAULT_LIPSCHITZ_STEP_FALLBACK,
-    DEFAULT_MEMORY_FRACTION_FALLBACK,
     DerivationContext,
     DerivationCycleError,
     DerivationRule,
@@ -69,9 +71,7 @@ from adaptive_reflow.algorithm._derivation import (
     MetricWeightRule,
     MidpointBetaRule,
     MinGumbelTempRule,
-    NAMESPACE_ALGORITHM_POSTERIOR,
     OTEpsilonSchedule,
-    PAPER_QUANTITY_E_RHO_FLOOR_DIVISOR,
     PolyakMemoryFraction,
     PolynomialPowerRule,
     SigmoidMidpointSteepnessRule,
@@ -82,6 +82,7 @@ from adaptive_reflow.algorithm._derivation import (
     default_convergence_adaptive_kd,
     default_convergence_adaptive_kp,
     default_convergence_adaptive_shift_max,
+    default_distance_decay_temperature,
     default_ema_alpha,
     default_eps_implicit,
     default_eps_log,
@@ -97,13 +98,11 @@ from adaptive_reflow.algorithm._derivation import (
     default_sigmoid_midpoint,
     default_sigmoid_steepness,
     default_tolerance,
-    default_distance_decay_temperature,
     make_derivation_context,
 )
 from adaptive_reflow.algorithm.blender_extra import (
     derive_default_memory_fraction,
 )
-
 
 # ---------------------------------------------------------------------------
 # (1) DerivationRule abstract protocol

@@ -59,7 +59,6 @@ from __future__ import annotations
 import math
 
 import pytest
-import pytest
 
 # hypothesis is only present in test/dev venvs.
 # Skip the entire module when missing so the rest of the suite still collects.
@@ -77,7 +76,6 @@ from adaptive_reflow.theory.validation import (
     validate_f_side,
     validate_g_admissible,
 )
-
 
 # Settings shared across this module. `derandomize=True` keeps the
 # shrunk-counter-example reproducible across runs (Research 4 pitfall).

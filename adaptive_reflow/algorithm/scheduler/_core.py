@@ -50,6 +50,17 @@ exposes ``SchedulerProtocol`` even if the next import
 
 from __future__ import annotations
 
+# Re-export ``CosineScheduleConfig`` from :mod:`adaptive_reflow.contracts`
+# (already imported at module top in the simple / adaptive submodules).
+# Listed below so downstream modules can
+# ``from adaptive_reflow.algorithm.scheduler._core import
+#  CosineScheduleConfig`` via this module's surface.
+from adaptive_reflow.contracts import CosineScheduleConfig  # noqa: F401
+
+from .adaptive import *  # noqa: F401, F403
+from .adaptive import _paper_evidence_balance  # noqa: F401
+from .nfe_aware import *  # noqa: F401, F403
+
 # Import protocols FIRST so the partial module exposes SchedulerProtocol
 # (and ScheduleSample + ScheduleSampleProtocol + the private
 # :func:`_coerce_int_nonneg` validator) before any later import can
@@ -63,21 +74,9 @@ from __future__ import annotations
 # the historical ``__init__.py`` re-exports it via the explicit
 # ``from ._core import _coerce_int_nonneg`` line.
 from .protocols import (  # noqa: F401
+    SchedulerProtocol,
     ScheduleSample,
     ScheduleSampleProtocol,
-    SchedulerProtocol,
     _coerce_int_nonneg,
 )
-
-# Re-export ``CosineScheduleConfig`` from :mod:`adaptive_reflow.contracts`
-# (already imported at module top in the simple / adaptive submodules).
-# Listed below so downstream modules can
-# ``from adaptive_reflow.algorithm.scheduler._core import
-#  CosineScheduleConfig`` via this module's surface.
-from adaptive_reflow.contracts import CosineScheduleConfig  # noqa: F401
-
-from .adaptive import _paper_evidence_balance  # noqa: F401
-
-from .adaptive import *  # noqa: F401, F403
-from .nfe_aware import *  # noqa: F401, F403
 from .simple import *  # noqa: F401, F403
