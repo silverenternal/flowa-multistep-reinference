@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/home/hugo/codes/flowa-multistep-reinference/.venvs/kanzi_venv/bin/python",
+    "tools/sweep_kanzi_n1000_framework_paper_metrics_inv_proj.py",
+    "--input",
+    "verification_outputs/kanzi_n1000_coords.txt",
+    "--ckpt",
+    "data/kanzi_ckpt/cleaned_model.pt",
+    "--output-dir",
+    "verification_outputs/kanzi_inv_proj_n20_20260913_corrected",
+    "--seed",
+    "42",
+    "--limit",
+    "20",
+    "--n-steps-decoder",
+    "100",
+    "--adapter-num-steps",
+    "50",
+    "--adapter-solver",
+    "euler",
+    "--adapter-force-mode",
+    "torch"
+  ],
+  "git_head": "85b5080391123c8f39d4a28d064f190410728b67",
+  "started_unix": 1789304943.6267526,
+  "cuda_visible_devices": "0",
+  "omp_num_threads": 2,
+  "gpu": "0, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, GPU-9421eb6c-1bc6-f610-a5b6-1d9f4dc4bf36, 97249 MiB\n1, NVIDIA GeForce RTX 5090, GPU-f892839a-1afa-463e-ff88-6cc5ceeabddf, 32110 MiB\n",
+  "scope": "single-rollout generated-coordinate roundtrip diagnostic, not multi-round acceptance"
+}
