@@ -157,6 +157,7 @@ nav:
           - TODO status correction: audit/todo-status-correction-2026-09-13.md
           - TODO status reconciliation: audit/todo-status-reconciliation-2026-09-13.md
           - TODO task inventory: audit/todo-task-inventory-2026-09-13.md
+          - Twodim restart sigma=0.5 smoke: audit/twodim-restart-sigma05-smoke-2026-09-13.md
           - MkDocs navigation fix: audit/mkdocs-nav-current-audits-2026-09-13.md
       - Development workflow: FLOWA_WORKFLOW.md
   - Paper-supporting survey (r4-survey):
