@@ -282,8 +282,8 @@ def test_freetraj_scheduler_only_microbenchmark() -> None:
 def test_freetraj_wallclock_reduction(tmp_path: pathlib.Path) -> None:
     """EXP-3 headline — Cosine vs FreeTraj, 10 trials x 20 rounds.
 
-    Emits ``docs/r4-survey/exp3-results.json`` (plan §7 sidecar), with
-    a ``tmp_path`` fallback per plan §5.5. The 15% threshold is
+    Emits an isolated ``tmp_path/exp3-results.json`` sidecar. The test
+    must not overwrite recorded research evidence. The 15% threshold is
     *recorded* in the sidecar rather than asserted, so the sidecar is
     produced even when the claim fails (the plan's rubric needs the
     number in every branch, including REFUTED).
@@ -369,14 +369,8 @@ def test_freetraj_wallclock_reduction(tmp_path: pathlib.Path) -> None:
         f"verdict={verdict}"
     )
 
-    out = pathlib.Path("docs/r4-survey/exp3-results.json")
-    try:
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    except OSError:  # plan §5.5 fallback
-        out = tmp_path / "exp3-results.json"
-        out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        print(f"EXP-3 sidecar fell back to {out}")
+    out = tmp_path / "exp3-results.json"
+    out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     assert out.is_file()
     assert -1.0 < reduction < 1.0

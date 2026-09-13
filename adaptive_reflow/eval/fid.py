@@ -251,6 +251,10 @@ class FIDProtocol(ABC):
 class InceptionV3FIDEvaluator(FIDProtocol):
     """Canonical InceptionV3-based FID evaluator.
 
+    Consumes features or reference statistics supplied by the caller; it
+    never constructs an image feature extractor. Torch and torchvision are
+    therefore optional for every feature dimension, including 2048.
+
     The Fréchet distance is computed from activation Gaussians fitted
     on InceptionV3 pool3 features (``d = 2048`` by default). The matrix
     square root uses :func:`scipy.linalg.sqrtm` with an eigen-clipping
@@ -270,13 +274,10 @@ class InceptionV3FIDEvaluator(FIDProtocol):
 
     FAMILY: str = "inceptionv3"
 
-    #: Hard dependency expectation for the canonical InceptionV3
-    #: construction (P0-1). The lazy ``__getattr__`` hook at the top of
-    #: this module surfaces a clear error if ``torchvision`` is not
-    #: importable when an evaluator instance is constructed via the
-    #: canonical feature-extractor surface. The :class:`FIDProtocol`
-    #: base deliberately does NOT advertise this — sibling families
-    #: (random projection, pytorch-fid TF port) have different deps.
+    #: Dependency metadata for the upstream canonical image extractor,
+    #: retained for compatibility. This evaluator operates on precomputed
+    #: features and does not import or construct that extractor; dependency
+    #: checks belong at the image-extraction boundary, not here.
     requires: ClassVar[frozenset[str]] = frozenset({"torchvision", "torch"})
 
     def __init__(
@@ -285,23 +286,6 @@ class InceptionV3FIDEvaluator(FIDProtocol):
         feature_dim: int = INCEPTION_POOL3_FEATURE_DIM,
         eigenclip_eps: float = FID_EIGENCLIP_EPS_DEFAULT,
     ) -> None:
-        # P0-1: gate construction on the canonical ``requires`` set so a
-        # caller who instantiates the canonical InceptionV3 evaluator in
-        # an environment without torchvision (or torch) fails loud with a
-        # descriptive ImportError. The check is cheap (a few importlib.util
-        # lookups) and runs once per construction.
-        # Feature-only evaluation is intentionally dependency-free.  The
-        # canonical 2048-D surface may construct an Inception extractor,
-        # whereas reduced dimensions are used by analytic/unit-test callers
-        # that only exercise the Fréchet computation.
-        missing = _missing_requires(self.requires) if int(feature_dim) == INCEPTION_POOL3_FEATURE_DIM else []
-        if missing:
-            raise ImportError(
-                f"InceptionV3FIDEvaluator requires {sorted(self.requires)} "
-                f"to construct the canonical InceptionV3 feature extractor; "
-                f"missing: {missing}. Install with "
-                f"`pip install -e .[image-fid]`."
-            )
         if isinstance(feature_dim, bool) or not isinstance(feature_dim, int):
             raise ValueError(
                 f"feature_dim must be an int, got {type(feature_dim).__name__}"
@@ -479,7 +463,7 @@ def compute_frechet_distance(
     from earlier versions so legacy call sites continue to work
     unchanged; the only behavioral change is that this function no
     longer eagerly constructs an :class:`InceptionV3FIDEvaluator`
-    (which requires ``torch`` + ``torchvision``). The Fréchet
+    (which is itself a feature-only evaluator). The Fréchet
     arithmetic was always pure-NumPy — the eager evaluator
     construction was a side-effect of routing through the InceptionV3
     class for historical reasons.
@@ -740,20 +724,3 @@ def _torchvision_version_or_unknown() -> str:
     if not isinstance(version, str) or not version:
         return "unknown"
     return version
-
-
-def _missing_requires(requires: "frozenset[str] | set[str] | tuple[str, ...]") -> list[str]:
-    """Return the sorted list of names from ``requires`` that are not importable.
-
-    Used by :class:`InceptionV3FIDEvaluator.__init__` to fail loud when
-    the canonical feature-extractor construction cannot succeed. Uses
-    :func:`importlib.util.find_spec` to avoid actually importing the
-    dep — only a quick lookup.
-    """
-    import importlib.util
-
-    missing: list[str] = []
-    for name in sorted(requires):
-        if importlib.util.find_spec(name) is None:
-            missing.append(name)
-    return missing

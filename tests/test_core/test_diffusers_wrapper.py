@@ -136,8 +136,8 @@ class _FakeTensor:
         return self._device
 
 
-def _install_fake_torch() -> None:
-    """Install a fake ``torch`` module so the wrappers can run on CPU-only sandboxes."""
+def _install_fake_torch(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Install a test-scoped fake; teardown restores the previous module."""
     existing = sys.modules.get("torch")
     if existing is not None and not getattr(existing, "_is_fake", False):
         # Real torch present — leave it alone.
@@ -171,7 +171,7 @@ def _install_fake_torch() -> None:
         def __exit__(self, *_: Any) -> bool:
             return False
 
-    sys.modules["torch"] = fake
+    monkeypatch.setitem(sys.modules, "torch", fake)
 
 
 @dataclass
@@ -217,10 +217,37 @@ class _FakeModel:
 
 
 @pytest.fixture(autouse=True)
-def _ensure_fake_torch() -> None:
+def _ensure_fake_torch(monkeypatch: pytest.MonkeyPatch) -> None:
     """Make sure ``torch`` resolves to the fake shim before each test."""
     if not _has_real_torch():
-        _install_fake_torch()
+        _install_fake_torch(monkeypatch)
+
+
+def test_fake_torch_install_restores_previous_module() -> None:
+    """A scoped fake must restore both absent and pre-existing module states."""
+    with pytest.MonkeyPatch.context() as outer:
+        outer.delitem(sys.modules, "torch", raising=False)
+        with pytest.MonkeyPatch.context() as scope:
+            _install_fake_torch(scope)
+            assert sys.modules["torch"]._is_fake
+        assert "torch" not in sys.modules
+
+        previous = types.ModuleType("torch")
+        previous._is_fake = True
+        outer.setitem(sys.modules, "torch", previous)
+        with pytest.MonkeyPatch.context() as scope:
+            _install_fake_torch(scope)
+            assert sys.modules["torch"] is not previous
+        assert sys.modules["torch"] is previous
+
+
+def test_fake_torch_install_preserves_existing_real_module() -> None:
+    """An already-loaded non-fake torch is never replaced."""
+    with pytest.MonkeyPatch.context() as scope:
+        existing = types.ModuleType("torch")
+        scope.setitem(sys.modules, "torch", existing)
+        _install_fake_torch(scope)
+        assert sys.modules["torch"] is existing
 
 
 # ---------------------------------------------------------------------------

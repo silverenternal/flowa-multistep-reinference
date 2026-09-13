@@ -40,6 +40,7 @@ Tests
 from __future__ import annotations
 
 import math
+import sys
 
 import numpy as np
 import pytest
@@ -91,6 +92,49 @@ def _is_nan(value: float) -> bool:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("feature_dim", [4, 2048])
+def test_precomputed_features_work_without_image_dependencies(
+    monkeypatch: pytest.MonkeyPatch, feature_dim: int
+) -> None:
+    """Feature shape never determines whether image dependencies are needed."""
+    monkeypatch.setitem(sys.modules, "torch", None)
+    monkeypatch.setitem(sys.modules, "torchvision", None)
+    evaluator = InceptionV3FIDEvaluator(feature_dim=feature_dim)
+    # One observation exercises both public input boundaries without a costly
+    # 2048-D matrix square root; finite arithmetic is covered below.
+    features = np.zeros((1, feature_dim))
+    results = [
+        evaluator.compute_from_features(features, features),
+        evaluator.compute_from_precomputed(
+            features, np.zeros(feature_dim), np.zeros((feature_dim, feature_dim))
+        ),
+    ]
+    for result in results:
+        assert result.feature_dim == feature_dim
+        assert math.isnan(result.value)
+
+
+@pytest.mark.parametrize(
+    "feature_dim", [True, False, None, "2048", 2048.0, [], {}, float("nan"), float("inf"), 0, -1]
+)
+def test_invalid_dimension_raises_value_error_without_image_dependencies(
+    monkeypatch: pytest.MonkeyPatch, feature_dim: object
+) -> None:
+    monkeypatch.setitem(sys.modules, "torch", None)
+    monkeypatch.setitem(sys.modules, "torchvision", None)
+    with pytest.raises(ValueError, match="feature_dim"):
+        InceptionV3FIDEvaluator(feature_dim=feature_dim)  # type: ignore[arg-type]
+
+
+def test_dimension_validation_does_not_coerce_custom_objects() -> None:
+    class IntLike:
+        def __int__(self) -> int:
+            raise AssertionError("dimension validation must not invoke __int__")
+
+    with pytest.raises(ValueError, match="feature_dim"):
+        InceptionV3FIDEvaluator(feature_dim=IntLike())  # type: ignore[arg-type]
 
 
 def test_known_golden_input() -> None:
