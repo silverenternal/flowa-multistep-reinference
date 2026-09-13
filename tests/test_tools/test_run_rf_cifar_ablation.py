@@ -238,3 +238,11 @@ def test_plot_rf_cifar_load_ablation_missing() -> None:
 
     with pytest.raises(SystemExit):
         _load_ablation(Path("/nonexistent/ablation.json"))
+
+
+def test_run_rf_cifar_ablation_resume_flag_is_opt_in() -> None:
+    """Resume remains opt-in and is exposed without changing defaults."""
+    from tools.run_rf_cifar_ablation import _build_argparser
+    parser = _build_argparser()
+    assert parser.parse_args([]).resume is False
+    assert parser.parse_args(["--resume"]).resume is True
