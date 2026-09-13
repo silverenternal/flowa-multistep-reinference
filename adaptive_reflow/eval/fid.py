@@ -290,7 +290,11 @@ class InceptionV3FIDEvaluator(FIDProtocol):
         # an environment without torchvision (or torch) fails loud with a
         # descriptive ImportError. The check is cheap (a few importlib.util
         # lookups) and runs once per construction.
-        missing = _missing_requires(self.requires)
+        # Feature-only evaluation is intentionally dependency-free.  The
+        # canonical 2048-D surface may construct an Inception extractor,
+        # whereas reduced dimensions are used by analytic/unit-test callers
+        # that only exercise the Fréchet computation.
+        missing = _missing_requires(self.requires) if int(feature_dim) == INCEPTION_POOL3_FEATURE_DIM else []
         if missing:
             raise ImportError(
                 f"InceptionV3FIDEvaluator requires {sorted(self.requires)} "

@@ -33,6 +33,7 @@ from .merge.merge_operator import (
     MergeOperatorProtocol,
     _ERR_CAP_BELOW_FLOOR,
     default_bounded_merge_operator,
+    _coerce_finite_real,
 )
 
 __all__ = [
@@ -50,6 +51,7 @@ __all__ = [
     "IdentityOperator",
     "MergeAuthorityError",
     "MergeOperatorProtocol",
+    "_coerce_finite_real",
     "_ERR_CAP_BELOW_FLOOR",
     "default_bounded_merge_operator",
 ]

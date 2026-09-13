@@ -866,7 +866,7 @@ def _format_markdown(
     lines.append("# CIFAR-10 Rectified Flow — baseline vs FlowA multi-round")
     lines.append("")
     lines.append(
-        f"Configuration: baseline = {n_samples} samples × 1-NFE Euler; "
+        f"Configuration: baseline = {n_samples} samples × {baseline_num_steps}-NFE Euler; "
         f"framework = 4 schedulers × {n_rounds} rounds × {framework_samples} "
         f"chains (= {framework_samples} samples per scheduler). "
         f"Total wall-clock: {total_wall:.1f}s."
@@ -876,7 +876,7 @@ def _format_markdown(
     lines.append("|---|---:|---:|---:|---:|---:|")
     base_row = next(r for r in rows if r["name"] == "baseline")
     lines.append(
-        f"| baseline (2-NFE Euler) | {baseline_fid:.4f} | — | — | "
+        f"| baseline ({baseline_num_steps}-NFE Euler) | {baseline_fid:.4f} | — | — | "
         f"{float(base_row.get('sel_ratio_last', float('nan'))):.4f} | "
         f"{float(base_row['wall_clock_s']):.1f} |"
     )
