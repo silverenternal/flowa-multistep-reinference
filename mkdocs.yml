@@ -147,6 +147,7 @@ nav:
           - Kanzi inverse projection follow-up: audit/kanzi-inv-proj-bridge-followup-2026-09-13.md
           - Open requirements: audit/open-requirements.md
           - Paper quantity beta calibration: audit/paper-quantity-beta-calibration-cpu-audit.md
+          - Paper beta twodim smoke: audit/paper-beta-twodim-smoke-2026-09-13.md
           - Registry placeholder audit: audit/registry-placeholder-audit-2026-09-13.md
           - Restart policy collapse: audit/restart-policy-collapse-fix-2026-09-13.md
           - RF CIFAR ablation resume: audit/rf-cifar-ablation-resume-2026-09-13.md
