@@ -46,10 +46,12 @@ from ._core import (
     SigmoidScheduler,
     _coerce_int_nonneg,
     _paper_evidence_balance,
+    adjust_n_cap_for_target_rms,
     build_scheduler,
     build_scheduler_from_config,
     default_cosine_scheduler,
     default_paper_ratio_scheduler,
+    paper_quantity_driven_beta,
 )
 from .evidence_driven import (
     EVIDENCE_PID_ADJUSTED,
@@ -114,12 +116,14 @@ __all__ = [
     "SchedulerProtocol",
     "_coerce_int_nonneg",
     "_paper_evidence_balance",
+    "adjust_n_cap_for_target_rms",
     "build_regime_selector",
     "build_scheduler",
     "build_scheduler_from_config",
     "default_cosine_scheduler",
     "default_e_rho_provider",
     "default_paper_ratio_scheduler",
+    "paper_quantity_driven_beta",
     "regime_ceiling",
     "regime_holds",
 ]

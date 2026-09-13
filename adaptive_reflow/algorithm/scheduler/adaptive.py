@@ -2441,3 +2441,191 @@ class PaperRatioAdaptiveScheduler:
         return memory_fraction_from_schedule(sample.as_cosine_schedule_sample())
 
 
+
+
+# ---------------------------------------------------------------------------
+# Wave 125 Phase 4 — target-RMS calibration for paper-quantity-driven β
+# ---------------------------------------------------------------------------
+
+
+#: Reference RMSD (Å) that maps to :data:`_REF_N_CAP` in
+#: :func:`adjust_n_cap_for_target_rms`. Picked as the canonical
+#: "medium-quality protein backbone" target so the calibration is
+#: centred on a sensible working point. Callers can override via the
+#: ``ref_rmsd`` kwarg.
+_REF_RMSD: float = 2.5
+
+#: Reference ``n_cap`` value associated with :data:`_REF_RMSD`. With the
+#: defaults the calibration maps ``1.0 Å -> 0.2``, ``2.5 Å -> 0.5`` and
+#: ``5.0 Å -> 1.0`` (clipped). Callers can override via the ``ref_n_cap``
+#: kwarg.
+_REF_N_CAP: float = 0.5
+
+
+def adjust_n_cap_for_target_rms(
+    target_rms_threshold: float,
+    *,
+    ref_rmsd: float = _REF_RMSD,
+    ref_n_cap: float = _REF_N_CAP,
+) -> float:
+    """Return a calibrated ``n_cap`` based on a target RMSD threshold (Å).
+
+    Wave 125 Phase 4 (paper-quantity-driven ``n_cap`` calibration; see
+    ``todo/algo-improvement-paper-quantity-beta-calibration.md``). The
+    paper-quantity-driven scheduler's :class:`CodimensionSheetScheduler`
+    ``n_cap`` may sit too high or too low for a given protein-reconstruction
+    RMSD target; this helper exposes the *calibration knob* so a caller
+    can request a specific RMSD target and receive a calibrated ``n_cap``
+    in return.
+
+    The mapping is intentionally simple and monotone: with the default
+    reference constants,
+
+        n_cap = clip(ref_n_cap * (target_rms_threshold / ref_rmsd), 0, 1)
+
+    so a smaller target RMSD (tighter quality) lowers the ``n_cap`` (less
+    fresh-noise injection, more memory-dominated refinement) and a larger
+    target RMSD (looser quality) raises it. The defaults are calibrated
+    so that
+
+        target_rms_threshold = 1.0 Å  → n_cap ≈ 0.20 (low fresh noise)
+        target_rms_threshold = 2.5 Å  → n_cap = 0.50  (reference)
+        target_rms_threshold = 5.0 Å  → n_cap = 1.00  (max fresh noise)
+
+    :param target_rms_threshold: target RMSD in Angstroms (must be
+        ``> 0`` and finite). A value of ``0`` is rejected because the
+        identity transform would otherwise silently map to ``n_cap = 0``
+        (full memory dominance, no fresh noise).
+    :param ref_rmsd: reference RMSD in Å that maps to ``ref_n_cap``
+        (default ``2.5``). Must be finite and ``> 0``; the calibration
+        rescales linearly against it.
+    :param ref_n_cap: ``n_cap`` value associated with ``ref_rmsd``
+        (default ``0.5``). Must lie in ``[0, 1]``; the calibration
+        scales linearly from this anchor point.
+    :returns: a finite ``n_cap`` in ``[0, 1]``.
+    :raises TypeError: when ``target_rms_threshold`` is not a real number.
+    :raises ValueError: when ``target_rms_threshold`` is non-positive,
+        non-finite, or when ``ref_rmsd`` / ``ref_n_cap`` are out of
+        domain.
+    """
+    if isinstance(target_rms_threshold, bool) or not isinstance(
+        target_rms_threshold, (int, float)
+    ):
+        raise TypeError(
+            "target_rms_threshold must be a real number, got "
+            f"{target_rms_threshold!r}"
+        )
+    target_f = float(target_rms_threshold)
+    if not math.isfinite(target_f):
+        raise ValueError(
+            f"target_rms_threshold must be finite, got {target_f!r}"
+        )
+    if target_f <= 0.0:
+        raise ValueError(
+            "target_rms_threshold must be > 0 (a zero target would "
+            "silently collapse the schedule to full memory dominance), "
+            f"got {target_f!r}"
+        )
+    if isinstance(ref_rmsd, bool) or not isinstance(ref_rmsd, (int, float)):
+        raise TypeError(f"ref_rmsd must be a real number, got {ref_rmsd!r}")
+    ref_rmsd_f = float(ref_rmsd)
+    if not math.isfinite(ref_rmsd_f) or ref_rmsd_f <= 0.0:
+        raise ValueError(
+            f"ref_rmsd must be finite and > 0, got {ref_rmsd_f!r}"
+        )
+    if isinstance(ref_n_cap, bool) or not isinstance(
+        ref_n_cap, (int, float)
+    ):
+        raise TypeError(
+            f"ref_n_cap must be a real number, got {ref_n_cap!r}"
+        )
+    ref_n_cap_f = float(ref_n_cap)
+    if not math.isfinite(ref_n_cap_f) or not (0.0 <= ref_n_cap_f <= 1.0):
+        raise ValueError(
+            "ref_n_cap must be finite and lie in [0, 1], got "
+            f"{ref_n_cap_f!r}"
+        )
+    n_cap = ref_n_cap_f * (target_f / ref_rmsd_f)
+    # The clip is defensive: a very large target_rms_threshold can
+    # push the linear scaling above 1; the ``n_cap`` envelope must
+    # stay inside the canonical [0, 1] range.
+    return float(max(0.0, min(1.0, n_cap)))
+
+
+def paper_quantity_driven_beta(
+    *,
+    target_rms_threshold: float | None = None,
+    eps_implicit: float = 0.05,
+    n_min: float = 0.0,
+    n_max: float = 1.0,
+    round_in_cycle: int = 0,
+    cycle_length: int = 20,
+) -> float:
+    """Return a paper-quantity-driven ``n_cap`` value, optionally RMSD-calibrated.
+
+    Wave 125 Phase 4 — paper-quantity-driven ``n_cap`` calibration via a
+    target RMSD threshold. The function returns a single ``n_cap`` value
+    suitable for plugging into a restart-policy framework (e.g.
+    :class:`~adaptive_reflow.algorithm.merge.merge_operator.BoundedMergeOperator`'s
+    ``beta_by_channel``). The default behaviour (no threshold) preserves
+    the pre-Wave-125 paper-quantity-driven scheduler by delegating to
+    :class:`CodimensionSheetScheduler` and returning the same ``n_cap``
+    the scheduler would emit — so existing callers see byte-identical
+    output until they explicitly opt in to the calibration.
+
+    When ``target_rms_threshold`` is supplied, the function delegates
+    directly to :func:`adjust_n_cap_for_target_rms` so the calibration
+    is reproducible, deterministic, and independent of the
+    ``eps_implicit`` / ``cycle_length`` knobs the scheduler would
+    otherwise consume. The rationale (per
+    ``todo/algo-improvement-paper-quantity-beta-calibration.md``) is
+    that the paper-quantity-driven ``n_cap`` may sit too high or too
+    low for protein-reconstruction RMSD; the calibration knob lets the
+    caller request a *target* RMSD and receive the corresponding
+    ``n_cap`` without having to reason about the scheduler's internal
+    paper-quantity constants.
+
+    :param target_rms_threshold: optional target RMSD in Å. When
+        supplied the function returns
+        ``adjust_n_cap_for_target_rms(target_rms_threshold)`` directly
+        (and the remaining kwargs are ignored — the calibration is
+        pure). ``None`` (the default) preserves the pre-Wave-125
+        paper-quantity-driven behaviour by delegating to
+        :class:`CodimensionSheetScheduler`.
+    :param eps_implicit: implicit noise scale in evidence units;
+        forwarded to the codimension scheduler when
+        ``target_rms_threshold is None``. Must be ``> 0``.
+    :param n_min: capacity floor (output lower bound); must lie in
+        ``[0, 1]``. Forwarded to the codimension scheduler.
+    :param n_max: capacity ceiling (output upper bound); must lie in
+        ``[0, 1]``. Forwarded to the codimension scheduler.
+    :param round_in_cycle: round index the ``n_cap`` is being sampled
+        for (used only when ``target_rms_threshold is None``).
+    :param cycle_length: number of rounds in one outer cycle (used only
+        when ``target_rms_threshold is None``).
+    :returns: a finite ``n_cap`` in ``[0, 1]``.
+    """
+    if target_rms_threshold is not None:
+        # Calibration path: pure function of the threshold; ignore the
+        # scheduler-shape kwargs. This is the additive Wave 125
+        # behaviour — the kwargs are accepted only for forward
+        # compatibility (callers can pass both ``target_rms_threshold``
+        # and the scheduler shape; the threshold always wins).
+        return adjust_n_cap_for_target_rms(target_rms_threshold)
+
+    # Backward-compat path: delegate to the existing
+    # paper-quantity-driven scheduler so the default ``n_cap``
+    # matches the pre-Wave-125 default at the same round / cycle.
+    # We construct a fresh :class:`CodimensionSheetScheduler` here
+    # rather than depending on a shared instance because the helper
+    # is a pure function of its inputs (no hidden state).
+    helper_scheduler = CodimensionSheetScheduler(
+        cycle_length=int(cycle_length),
+        n_min=float(n_min),
+        n_max=float(n_max),
+        eps_implicit=float(eps_implicit),
+    )
+    helper_sample = helper_scheduler.sample(
+        0, int(round_in_cycle), int(round_in_cycle)
+    )
+    return float(helper_sample.n_cap)
