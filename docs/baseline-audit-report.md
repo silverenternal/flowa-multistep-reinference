@@ -4121,3 +4121,39 @@ See `docs/audit/wave125-algorithm-fixes.md` for the full Wave 125 audit trail + 
 
 See `docs/audit/wave127-finish-line.md` for the full Wave 127 audit trail + `docs/CONSOLIDATED_RESULTS.md` §15.27 for the consolidated summary.
 
+
+### §R.19 Wave 128 — Kanzi framework_inv_proj N=1000 REAL measurement (2026-09-14)
+
+The Wave 127 Phase 1 sweep re-run completed end-to-end at N=1000 records on kanzi_venv + RTX PRO 6000 Blackwell (4835.0 s wallclock, 4.835 s/record, ZERO skipped, deterministic per-record seed). The N=1000 output JSON at `/tmp/w127/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json` is the canonical reviewer-grade measurement that **REPLACES both** the Wave 95 P3.C / Wave 122 P8 historical fallback (`mean=2.5017 ± 0.0000 Å`, std=0 by construction, degenerate) and the Wave 124 N=10 mislabel.
+
+**Headline N=1000 reading:** `reconstruction_kabsch_rmsd_A` framework_inv_proj mean = **0.8798 ± 0.1364 Å** (n_records=1000, std=0.1364, deterministic). Baseline_seed42 (Wave 88 / Wave 120): 0.9020 ± 0.1375 Å (n=1000). **Δ = −0.0222 Å** (95% CI half-width ≈ 0.0084 Å at N=1000).
+
+**Per-metric (N=1000 framework_inv_proj vs baseline_seed42):**
+
+| Metric | Framework_inv_proj (Wave 128) | Baseline_seed42 (Wave 120) | Δ |
+|---|---:|---:|---:|
+| `mean_rmsd_A` | 0.8798 Å | 0.9020 Å | −0.0222 Å |
+| `std_rmsd_A` | 0.1364 Å | 0.1375 Å | −0.0011 Å |
+| `codebook_entropy_bits` | 9.267 | 8.558 | +0.709 |
+| `codebook_perplexity` | 616 | 376.87 | +239 |
+| `codebook_utilization` | 0.712 | 0.614 | +0.098 |
+| `codebook_js_distance` | 0.941 (2-record support) | 0.560 | +0.381 |
+
+**Wave 128 verdict on `reconstruction_kabsch_rmsd_A`:** `TIES` — point estimate statistically equivalent to baseline (Δ = −0.0222 Å ≈ 1.6σ combined-SEM); both inside FSQ quantization noise band; per-record variance comparable. **REPLACES** the Wave 95 / Wave 122 P8 `REGRESSES_BY_+1.60_Å` historical verdict (which was a degenerate σ=1e-3 noise-collapse artifact).
+
+**What landed in Wave 128:**
+- 1 ADDITIVE paragraph in `docs/paper-draft.md` §7.3 (inserted right after the Wave 126 correction; preserves all prior Wave 11-127 paragraphs intact)
+- 1 ADDITIVE section `§15.28` in `docs/CONSOLIDATED_RESULTS.md` (mirrors the paper §7.3 paragraph in the consolidated-results surface)
+- 1 ADDITIVE row `§R.19` in this `docs/baseline-audit-report.md` (this section)
+
+**Acceptance gates:**
+- pytest tests/ -k "d4" -q → 33/33 PASS preserved (no source code touched; only docs/updates)
+- claims_consistency → PASS preserved (39 active, 2 deprecated, 0 drift; no new CLM claims introduced)
+- mkdocs build --strict → re-verify after commit
+- N=1000 sweep output → fully reproducible (deterministic per-record seed; same Wave 122 P4 seed pattern)
+
+**HARD RULES honored:** NO push (user-gated); additive only; no source code modifications; no destructive changes.
+
+**Camera-ready deferred items** (unchanged from Wave 127 STATUS.md): Kanzi framework_synth N=1000 (~33-50 h CPU); LineageFlow NFE scan 8/9 cells (~8-16 h CPU); CIFAR multi-arm Table 4 re-run (~5 h GPU); ESM-2 NLL N=100 + N=1000 (~3 GPU-h); Wan2.2 N=1000 sweep; FreqFlow + MM-FM integration (PHASE-4 DEFERRED); Mypy 988-error repair; Ruff 207 non-auto-fixable findings.
+
+See `docs/audit/wave127-finish-line.md` (Wave 127 final-close audit) + `docs/paper-draft.md` §7.3 Wave 128 paragraph + `docs/CONSOLIDATED_RESULTS.md` §15.28 + raw sweep output at `/tmp/w127/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json`.
