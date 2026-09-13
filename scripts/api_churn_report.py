@@ -106,6 +106,12 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+# Allow direct execution from a source checkout without requiring
+# ``pip install -e .`` first; this script imports the local host fingerprint
+# helper for reproducibility metadata.
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+
 from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
 
 SCHEMA_VERSION = "1.0"

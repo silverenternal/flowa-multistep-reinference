@@ -6,6 +6,10 @@ Status: insight document (narrative, not a load-bearing governance record).
 Audience: maintainers, reviewers, and newcomers asking "why does the algorithm layer look like it does?"
 Related: ADR-0013 (`docs/adr/0013-posterior-selection-drives-algorithm.md`), ADR-0010, ADR-0011, ADR-0012, `docs/ABLATION.md`, `docs/CHANGELOG.md`.
 
+The CIFAR-10 reproduction and its scheduler-discrimination limits are
+tracked in the claims ledger as [CLM-040](CLAIMS.md#CLM-040); the associated
+R3/R11 bug review and gate verification are tracked as [CLM-041](CLAIMS.md#CLM-041).
+
 ---
 
 ## 1. Summary

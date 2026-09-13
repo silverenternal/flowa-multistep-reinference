@@ -4,6 +4,9 @@ Wave 105 P2-C grouped the algorithm top-level into subpackages.
 This shim preserves ``from adaptive_reflow.algorithm.merge_operator import ...``
 for downstream tools and tests.
 
+CLM-042 derivation note: the canonical implementation enforces the paper
+``e_rho / 4`` merge floor; this compatibility shim intentionally re-exports it.
+
 Note: do not confuse this top-level shim with the
 :mod:`adaptive_reflow.algorithm.merge` subpackage — both names exist
 because Python's import system allows a module ``merge_operator`` and a

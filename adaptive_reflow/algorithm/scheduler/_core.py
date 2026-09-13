@@ -1,5 +1,9 @@
 """Per-round capacity scheduler (re-export shim, Wave 105 P2-A).
 
+CLM-042 derivation note: scheduler exports below retain the paper-grounded
+capacity and evidence-balance implementation from the canonical submodules;
+the merge-floor companion is expressed as ``e_rho / 4``.
+
 The scheduler implementation is split across four submodules:
 
 * :mod:`adaptive_reflow.algorithm.scheduler.protocols` — the

@@ -50,9 +50,14 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 
+# Scripts are routinely invoked directly from a source checkout (without an
+# editable install).  Put the repository root on ``sys.path`` before importing
+# the local package so the documented command works in a clean environment.
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+
 from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = REPO_ROOT / "adaptive_reflow"
 SKIP_DIRS = {"__pycache__", "legacy"}
 
