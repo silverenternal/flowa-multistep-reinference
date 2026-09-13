@@ -361,6 +361,7 @@ def _load_torch_unet(weights_path: Path, *, device: Any) -> Any:
             state_dict_key="state_dict",
             map_location=str(device),
         )
+    state_dict = _extract_checkpoint_state_dict(state_dict)
     # Gnobitab detection: relies on the canonical ``module.all_modules.``
     # key prefix in the state dict (the ``format`` marker written by the
     # weights-acquisition phase is at the raw-ckpt top level and is not
@@ -384,6 +385,29 @@ def _load_torch_unet(weights_path: Path, *, device: Any) -> Any:
     for p in unet.parameters():
         p.requires_grad_(False)
     return unet
+
+
+def _extract_checkpoint_state_dict(payload: Any) -> Mapping[str, Any]:
+    """Return model weights from a raw state dict or explicit training bundle.
+
+    Training checkpoints commonly wrap weights under ``ema`` or ``model``;
+    EMA is preferred when both are present.  Other nested structures are
+    rejected so a typo cannot silently load optimizer metadata as weights.
+    """
+    if not isinstance(payload, Mapping):
+        raise RuntimeError("CIFAR checkpoint must be a mapping of tensor weights")
+    if payload and all(isinstance(k, str) for k in payload):
+        nested = [k for k in ("ema", "model") if k in payload]
+        if nested:
+            chosen = "ema" if "ema" in nested else "model"
+            candidate = payload[chosen]
+            if not isinstance(candidate, Mapping) or not candidate:
+                raise RuntimeError(f"CIFAR checkpoint key {chosen!r} is not a state_dict")
+            return candidate
+        # Raw state dicts have string parameter names and tensor values.
+        if all(hasattr(v, "shape") for v in payload.values()):
+            return payload
+    raise RuntimeError("unsupported CIFAR checkpoint structure; expected raw state_dict or ema/model bundle")
 
 
 def _build_torch_unet_ddpmpp() -> Any:
