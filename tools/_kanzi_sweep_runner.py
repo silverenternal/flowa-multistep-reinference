@@ -709,29 +709,71 @@ def run_kanzi_sweep(
                         decoder=dae,
                         mode="framework_inv_proj",
                     )
+                    # Wave 124 Agent 5 — ``x_final`` from the
+                    # ``framework_inv_proj`` arm is ALREADY backbone
+                    # coords ``(L=64, n_channels=3)`` in nm (the bridge
+                    # ran INSIDE ``_synthesize_x_final_real`` at line
+                    # 411). The framework_inv_proj path therefore
+                    # SKIPS the outer ``kanzi_latent_to_coords`` call
+                    # below (which expects a ``(L, 512)`` latent input
+                    # for ``_apply_project_out_inv``) — instead we just
+                    # convert nm → Å directly. Without this branch the
+                    # outer call crashes with
+                    # ``RuntimeError: mat1 and mat2 shapes cannot be
+                    # multiplied (64x3 and 512x4)`` at
+                    # ``kanzi_latent_to_coord.py:308`` and the sweep
+                    # silently marks every record as
+                    # ``bridge_failed:RuntimeError``.
+                    try:
+                        torch.manual_seed(
+                            int(seed) * 1_000_003 + int(seq_idx),
+                        )
+                        coords_pred_A = (
+                            np.asarray(x_final, dtype=np.float64) * 10.0
+                        ).reshape(-1, 3)
+                    except Exception as exc:  # noqa: BLE001
+                        n_skipped += 1
+                        reason = f"bridge_failed:{type(exc).__name__}"
+                        skip_reasons[reason] = (
+                            skip_reasons.get(reason, 0) + 1
+                        )
+                        seq_idx += 1
+                        continue
                 # Bridge: latent → coords in Ångström
-                try:
-                    # Wave 122 Phase 4 — per-record torch seed before
-                    # the bridge's DAE.decode() forward pass so FSQ
-                    # stochasticity is reproducible per (seed,
-                    # seq_idx) pair (mirrors the
-                    # ``np.random.default_rng(int(seed)*1_000_003+int(seq_idx))``
-                    # pattern at line 331 — the inner loop's record
-                    # counter is named ``seq_idx`` here, ``record_idx``
-                    # in the helper functions). Closes the Wave 121 P2
-                    # max-outlier RMSD drift across --seed values.
-                    torch.manual_seed(int(seed) * 1_000_003 + int(seq_idx))
-                    coords_pred_A = kanzi_latent_to_coords(
-                        x_final, decoder=dae, fsq_quantizer=dae.quantize,
-                        n_steps=int(nfe_steps), seed=int(seed),
-                    )
-                except Exception as exc:  # noqa: BLE001
-                    n_skipped += 1
-                    reason = f"bridge_failed:{type(exc).__name__}"
-                    skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
-                    seq_idx += 1
-                    continue
-                coords_pred_A = np.asarray(coords_pred_A).reshape(-1, 3)
+                # Wave 124 Agent 5 — only the framework_synthetic arm
+                # needs the outer ``kanzi_latent_to_coords`` call
+                # (its ``x_final`` is a synthetic ``(L, 512)`` latent);
+                # the framework_inv_proj arm produces ``(L, 3)`` coords
+                # already and skips this branch via the ``continue``
+                # above (no, wait — the framework_inv_proj branch falls
+                # through here. We use ``mode`` to gate the call).
+                if mode == "framework_synthetic":
+                    try:
+                        # Wave 122 Phase 4 — per-record torch seed before
+                        # the bridge's DAE.decode() forward pass so FSQ
+                        # stochasticity is reproducible per (seed,
+                        # seq_idx) pair (mirrors the
+                        # ``np.random.default_rng(int(seed)*1_000_003+int(seq_idx))``
+                        # pattern at line 331 — the inner loop's record
+                        # counter is named ``seq_idx`` here, ``record_idx``
+                        # in the helper functions). Closes the Wave 121 P2
+                        # max-outlier RMSD drift across --seed values.
+                        torch.manual_seed(int(seed) * 1_000_003 + int(seq_idx))
+                        coords_pred_A = kanzi_latent_to_coords(
+                            x_final, decoder=dae, fsq_quantizer=dae.quantize,
+                            n_steps=int(nfe_steps), seed=int(seed),
+                        )
+                        coords_pred_A = np.asarray(
+                            coords_pred_A,
+                        ).reshape(-1, 3)
+                    except Exception as exc:  # noqa: BLE001
+                        n_skipped += 1
+                        reason = f"bridge_failed:{type(exc).__name__}"
+                        skip_reasons[reason] = (
+                            skip_reasons.get(reason, 0) + 1
+                        )
+                        seq_idx += 1
+                        continue
 
             # ---- 2. Re-encode for codebook metrics ----
             coords_pred_nm = coords_pred_A.astype(np.float32) / 10.0

@@ -1795,8 +1795,19 @@ class KanziAdapter(FlowMatchingODEAdapter):
         # ``(L_abstract, n_channels_decoder)`` instead of the
         # abstract ``(64, 64)``. This ensures the trajectory the
         # solver produces matches the upstream DAE decoder input.
+        # Wave 124 Agent 5 — ``build_initial_state`` always produces the
+        # canonical ``_real_state_shape`` latent (``(64, 512)`` in real
+        # mode). The per-call ``_traj_shape_override`` (set by the
+        # framework_inv_proj arm in ``tools/_kanzi_sweep_runner.py:432``)
+        # is meant to describe the trajectory shape AFTER the bridge's
+        # ``kanzi_latent_to_coords`` overwrite of ``prior_entry["x0"]``,
+        # NOT the initial-state shape. Honouring the override here would
+        # make record N+1's ``build_initial_state`` emit a ``(64, 3)``
+        # ``x0`` (the carry-over from record N's framework_inv_proj
+        # overwrite) which crashes ``kanzi_latent_to_coords`` (expects
+        # ``(64, 512)``) on the ``_apply_project_out_inv`` Linear matmul.
         x0 = _synthesize_latent_like_tensor(
-            rng, shape=self._effective_traj_shape(),
+            rng, shape=self._real_state_shape,
         )
         # Sample the discrete-token-index side channel as a fresh
         # AR prior state. The real Kanzi AR prior would condition
@@ -1839,8 +1850,15 @@ class KanziAdapter(FlowMatchingODEAdapter):
         self._native_states.put(
             digest,
             {
+                # Wave 124 Agent 5 — always store ``x0`` in the canonical
+                # ``_real_state_shape`` (``(64, 512)`` in real mode). The
+                # framework_inv_proj arm in ``tools/_kanzi_sweep_runner.py``
+                # overwrites this entry with ``(64, 3)`` backbone coords
+                # AFTER the bridge's ``kanzi_latent_to_coords`` call, then
+                # calls ``adapter.set_traj_shape((64, 3))`` to tell
+                # ``solve_ode`` to honor the new shape.
                 "x0": np.asarray(x0, dtype=np.float64).reshape(
-                    self._effective_traj_shape(),
+                    self._real_state_shape,
                 ),
                 "discrete_idx": np.asarray(discrete_idx, dtype=np.float64),
                 "source_round": 0,
@@ -2226,6 +2244,13 @@ class KanziAdapter(FlowMatchingODEAdapter):
         """
         if self._mode == "torch":
             assert self._model is not None
+            # Wave 124 Agent 5 — honor the per-call ``_traj_shape_override``
+            # so the framework_inv_proj arm's ``(L=64, n_channels=3)`` x0
+            # round-trips through the velocity field without the
+            # ``ValueError: cannot reshape array of size 192 into shape
+            # (64, 512)`` crash at kanzi.py:1085. ``_real_state_shape``
+            # is still used when no override is set (default byte-stable
+            # backward compat).
             return _torch_velocity_field(
                 self._model,
                 x,
@@ -2233,7 +2258,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 dtype=self._torch_dtype,
                 cache=conditioning,
                 guidance_scale=float(guidance_scale),
-                state_shape=self._real_state_shape,
+                state_shape=self._effective_traj_shape(),
             )
         assert self._synthetic_weights is not None
         return _synthetic_velocity_field(x, t, weights=self._synthetic_weights)
@@ -2414,8 +2439,12 @@ class KanziAdapter(FlowMatchingODEAdapter):
         # Wave 92 — use the real state shape in real mode so the
         # endpoint ``x_final`` is compatible with the upstream DAE
         # decoder input (expect ``(L, 512)`` not ``(64, 64)``).
+        # Wave 124 Agent 5 — honor the per-call ``_traj_shape_override``
+        # (set by the framework_inv_proj call site in
+        # ``tools/_kanzi_sweep_runner.py:432``) so the endpoint reshapes
+        # to the actual trajectory shape, not the default ``(64, 512)``.
         x_final = np.asarray(trajectory[-1], dtype=np.float64).reshape(
-            self._real_state_shape
+            self._effective_traj_shape()
         )
         endpoint_digest = digest_state(
             {
@@ -2434,7 +2463,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
             endpoint_digest,
             {
                 "x": np.asarray(x_final, dtype=np.float64).reshape(
-                    self._real_state_shape,
+                    self._effective_traj_shape(),
                 ),
                 "t": float(KANZI_T_END),
                 "mode": self._mode,
@@ -2942,10 +2971,10 @@ class KanziAdapter(FlowMatchingODEAdapter):
                 "missing_native_state", context=bundle.native_state_digest
             )
         x_prior = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
-            self._real_state_shape
+            self._effective_traj_shape()
         )
         x_new_arr = np.asarray(injected, dtype=np.float64).reshape(
-            self._real_state_shape
+            self._effective_traj_shape()
         )
         x_new = np.clip(x_prior + x_new_arr, -KANZI_LATENT_CLAMP, KANZI_LATENT_CLAMP)
         new_digest = digest_state(
