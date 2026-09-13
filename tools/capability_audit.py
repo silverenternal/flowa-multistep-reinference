@@ -62,13 +62,17 @@ import subprocess
 import sys
 from typing import Any
 
+# Support the documented direct-from-checkout invocation without requiring an
+# editable install first.
+REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
 from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
 
 # ---------------------------------------------------------------------------
 # Paths (anchored to repo root)
 # ---------------------------------------------------------------------------
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 CONSOLIDATED = REPO_ROOT / "docs" / "CONSOLIDATED_RESULTS.md"
 CONDITIONS = REPO_ROOT / "docs" / "CONDITIONS.md"
 BASELINE_AUDIT = REPO_ROOT / "docs" / "baseline-audit-report.md"

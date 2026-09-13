@@ -39,7 +39,15 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import torch
+
+# Keep CLI discovery (`--help`) usable in the lightweight framework
+# environment.  Torch is required only when a sweep or dry-run is executed;
+# importing it eagerly made all three drivers fail before argparse could
+# render usage on hosts that intentionally use the Kanzi sidecar venv.
+try:  # pragma: no cover - exercised in environments without torch
+    import torch
+except ImportError:  # pragma: no cover - dependency-gated runtime path
+    torch = None  # type: ignore[assignment]
 
 # Repo-root + kanzi sidecar src must be on sys.path so the upstream
 # ``kanzi`` package + ``tools.*`` modules import cleanly. This mirrors
