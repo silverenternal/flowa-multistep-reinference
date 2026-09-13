@@ -112,4 +112,4 @@ Each commit has a single audit-doc reference in its body and a `D.4 byte-stable:
 
 ---
 
-Status: PLANNED. Awaiting execution kickoff.
+Status: AUDIT COMPLETE (P0/P1 and structural feasibility verified; risky merges deferred).

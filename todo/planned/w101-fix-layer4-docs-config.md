@@ -93,4 +93,4 @@ Each commit has a single audit-doc reference in its body and `mkdocs --strict: P
 
 ---
 
-Status: PLANNED. Awaiting execution kickoff.
+Status: AUDIT COMPLETE (archive/config checks recorded; remaining external-resource items deferred).

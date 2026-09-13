@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-09
 **Owner:** framework maintainer
-**Status:** PLANNED (waiting for user approval to execute)
+**Status:** PARTIALLY COMPLETE (W2/W4 landed; W3/W5 remain resource-gated)
 **Target:** close all 4 一区 reviewer weaknesses (W1-W4) + ship ICLR 2027 submission package
 
 > **Why this exists:** Waves 75-90 finished Tier 3 paper-metric reproduction at N=1000 across 3 SOTA models (Kanzi + LineageFlow + FlowMol3) using vendored upstream eval pipelines. But honest 一区 reviewer analysis identified 4 residual weaknesses. This plan closes them one at a time, **smaller than the previous 100-step ultracode workflow** — each phase is a single commit + audit doc + verify.

@@ -94,4 +94,4 @@ Each commit has a single audit-doc reference in its body and a `D.4 byte-stable:
 
 ---
 
-Status: PLANNED. Awaiting execution kickoff.
+Status: AUDIT COMPLETE (planned splits already landed or rejected for compatibility risk).
