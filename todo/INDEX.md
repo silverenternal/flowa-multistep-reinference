@@ -17,7 +17,15 @@ important ones, and links to related artifacts outside `todo/`.
 
 ---
 
-## Current state summary
+## Current execution (2026-09-13)
+
+Start with [STATUS.md](STATUS.md) and the
+[open requirements](../docs/audit/open-requirements.md). Engineering repair
+and execution of the active plans are authorized. Scientific acceptance is
+still open; the historical tables below do not establish current CI readiness
+or complete the six root plans. Push remains user-gated.
+
+## Historical state summary (2026-09-10)
 
 > **As of 2026-09-10 (Wave 93 Phase 1 landed): 4 一区 reviewer weaknesses
 > closed (W1 ✅ Wave 90 / W2 ✅ Wave 91+92a+b / W3 defer / W4 🔄 reframing).

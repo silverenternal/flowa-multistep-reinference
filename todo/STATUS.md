@@ -1,4 +1,43 @@
-# `todo/STATUS.md` — single source of truth
+# `todo/STATUS.md` — current execution status
+
+**Updated:** 2026-09-13. Engineering repair and TODO execution are authorized;
+the goal remains active. No push has been authorized.
+
+## Current evidence and next gates
+
+- Engineering fixes through `fee9352` cover import isolation, feature-only
+  FID, fail-closed real Kanzi loading, resumable sweeps and bounded protocol
+  property tests. See [engineering audit](../docs/audit/engineering-audit-2026-09-13.md).
+- Full default-thread pytest completed: **5155 passed, 196 skipped**, exit 0
+  in 588.37 seconds, through `fee9352`. A completed
+  two-thread run had 5154 passed, 196 skipped and one Lumina byte-hash failure;
+  an isolated default-thread repeat passed. Golden vectors were not changed.
+- CI static checks are not green: Ruff 0.15.22 reports 926 findings across
+  source/tests, including missing names. Mypy against the project interpreter
+  reports 988 errors in 70 files. Earlier all-PASS gate tables
+  below are historical, not current readiness evidence.
+- Kanzi real N=20 single-rollout diagnostic and actual resume succeeded.
+  This does not satisfy calibrated bridge, independent held-out proteins,
+  multi-round reconstruction or N=1000 scientific acceptance.
+- Twodim controlled protocol correction is being validated in an isolated
+  worktree: continuous state, measured velocity queries, exact sample count,
+  joint W2 and restart-guard comparison. Old quick outputs are exploratory.
+- BRAI model/ESM-2 resources and execution protocol are under audit. CIFAR
+  N=200 matched-NFE=50 produced regression, not the planned improvement.
+
+The six active root plans and unmet acceptance requirements are listed in
+[open requirements](../docs/audit/open-requirements.md). Execution order:
+finish engineering gates, verify corrected experiment protocols, run bounded
+controls and acceptance sweeps, then update dependent synthesis/submission
+material. A negative result must be recorded without changing the acceptance
+threshold or silently marking the hypothesis supported.
+
+The following snapshot is preserved for provenance. Its commit counts,
+resource estimates, directory listing and gate verdicts are not current.
+
+---
+
+# Historical Wave 99.D snapshot
 
 **Last updated:** 2026-09-10 (Wave 99.D — real N=1000 Kanzi final synthesis)
 **Wave:** Wave 99.D final synthesis (this wave) — closes W2 ON MEASURABILITY+DIRECTION; DEFER on magnitude pending Wave 100+ N=1000 framework arm
