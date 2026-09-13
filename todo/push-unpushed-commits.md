@@ -1,7 +1,7 @@
 # Push unpushed commits to origin
 
-**Status:** done (Wave 12 commit `e0238ab` pushed 2026-09-05; origin/main matches local HEAD)
-**Date:** 2026-09-05
+**Status:** DEFERRED (historical Wave 12 push completed; current branch has later user-gated commits)
+**Date:** 2026-09-13 (state correction)
 **Owner:** framework maintainer
 **Goal:** push the 5+ unpushed commits from Wave 6 → Wave 12 to `origin/main`.
 
@@ -27,14 +27,16 @@ c4e4f46 FIX-4 (P0)
 7193135 Wave 6 reproducibility validation
 ```
 
-`git log origin/main..HEAD --oneline` returns empty.
-`git log -1 --oneline origin/main` = `e0238ab` (matches local HEAD).
+The statements above describe the 2026-09-05 snapshot only. They are no
+longer a current acceptance claim: subsequent waves added local commits and
+the maintainer's user-gated push policy remains in force. See `todo/STATUS.md`
+for the current ahead count and gate state.
 
 ## Acceptance
 
-- [x] `git log origin/main..HEAD --oneline` returns empty.
-- [x] GitHub shows the commits on `main` branch.
-- [x] `todo/STATUS.md` updated.
+- [x] Historical Wave 12 push recorded.
+- [ ] Current post-Wave-12 commits pushed (user-gated; intentionally deferred).
+- [x] `todo/STATUS.md` records the current push state.
 
 ## Acceptance gate
 
@@ -42,7 +44,7 @@ c4e4f46 FIX-4 (P0)
 
 **Pre-condition:** user explicit go-ahead
 **Pass conditions:**
-- [x] Push executed: `13859de..e0238ab main -> main`
-- [x] `git log origin/main..HEAD --oneline` returns empty
-- [x] `git log -1 --oneline origin/main` matches local HEAD (`e0238ab`)
+- [x] Historical push executed: `13859de..e0238ab main -> main`
+- [ ] Current `git log origin/main..HEAD` is empty (deferred; user-gated)
+- [ ] Current remote HEAD matches local HEAD (deferred; user-gated)
 - [x] `todo/STATUS.md` is updated

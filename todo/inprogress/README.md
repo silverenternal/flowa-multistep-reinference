@@ -1,6 +1,6 @@
 # `todo/inprogress/` — Active plans only
 
-**Date:** 2026-09-10 (after Wave 75-78 archive sweep)
+**Date:** 2026-09-13 (status audit)
 
 > **As of 2026-09-10, this folder is empty.** All previously "in-flight"
 > Wave 75-78 cascade plans have been archived to `completed/` because:
@@ -11,7 +11,9 @@
 
 ## What's here
 
-(none — all in-flight plans have landed or are now in `planned/`)
+(none — all in-flight plans have landed or are now in `planned/`). The three
+historical Wave 75–78 files referenced by older `STATUS.md` snapshots are
+already archived under `todo/completed/`; they are not active work.
 
 ## Decision evolution
 
