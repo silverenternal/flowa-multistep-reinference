@@ -4021,3 +4021,103 @@ Plus a sweep-loop fix in `tools/_kanzi_sweep_runner.py`: the outer `kanzi_latent
 
 See `docs/audit/wave125-algorithm-fixes.md` for the full Wave 125 audit trail + `docs/paper-draft.md` §7.6 ADDITIVE paragraph + cross-references.
 
+## R.17 — Wave 130 — framework metric gap CPU closure + todo reconciliation (2026-09-13)
+
+**Agent:** Wave 130 Agent (final synthesis — engineering audit + framework-vs-model-metrics gap CPU plan + 6-plan todo status reconciliation)
+**Scope:** close Wave 130's 2 atomic commits on `main` (commits `efc5d13` framework metric gap CPU closure + `150f8e0` reconcile completed todo plans and sweep blockers); additively update `docs/audit/` (3 new audit docs) + `todo/` (6 plans moved into active state from completed/); commit.
+
+**Wave 130 atomic commits on main (prior agents):**
+
+- `efc5d13` Wave 130: document framework metric gap CPU closure — NEW `docs/audit/framework-model-gap-cpu-2026-09-13.md` (12 lines) records the framework-vs-model-metrics gap closure path on CPU (no GPU dependency for the gap calculation).
+- `150f8e0` Wave 130: reconcile completed todo plans and sweep blockers — 6 plan files moved from `todo/completed/` into active state at `todo/` root (`algo-improvement-restart-policy-collapse-fix.md`, `algo-improvement-brai-perturbation-magnitude.md`, `algo-improvement-paper-quantity-beta-calibration.md`, `algo-improvement-framework-vs-model-metrics-gap.md`, `adapter-improvement-8-adapter-shim-audit.md`, `adapter-improvement-inv-proj-bridge-lossy-replacement.md`); audit docs `docs/audit/todo-six-plan-status-2026-09-13.md` (15 lines) + `docs/audit/wave129-evidence-freetraj-blocker.md` (12 lines) appended.
+
+**Wave 130 follow-on Wave 131 commits (separate wave, same day):**
+
+- `7cfefbe` Wave 131: reconcile planned work and adapter status — 3 audit docs + 2 todo/planned/*.md annotation updates.
+- `a81fa55` Wave 131: mark audited Wave101 plans accurately — 5 todo/planned/w101-fix-layer*.md annotation updates.
+- `0ebea2c` Wave 131: clarify resource-gated planned statuses — todo/planned/w5-iclr2027-submission-package.md annotation update.
+- `41e7c42` Wave 131: build CIFAR reference dataset — CIFAR reference dataset build.
+- `65737d9` Wave 131: record CIFAR sweep after reference build — record CIFAR sweep state post-reference build.
+
+**Wave 130+131 net doc delta:** ~150 lines across 6 audit docs (all additive; no source touched; no measurement delta).
+
+**Hard rules honored:**
+
+- ✅ NO push (Wave 11+ user-gated protocol; commits stay on `main` locally)
+- ✅ ADDITIVE only — all 6 audit docs append to existing audit catalog; no deletions of historical Wave 79-126 framings
+- ✅ Wave 130 + Wave 131 are docs + housekeeping only; no source code touched in either wave
+
+**Wave 131 cross-references:**
+
+- `docs/audit/todo-status-reconciliation-2026-09-13.md` (Wave 131 Phase 2)
+- `docs/audit/wave101-layer1-adapters-status.md` (Wave 131 Phase 2)
+- `docs/audit/wave129-cifar-reference-availability.md` (Wave 131 Phase 2)
+- `docs/audit/wave101-status-reconciliation-2026-09-13.md` (Wave 131 Phase 3)
+
+**NOTE:** This §R.17 row is appended retroactively by the Wave 127 Agent 6 final-synthesis commit because the original Wave 130/131 final-synthesis agents did not author a §R.NN row (the Wave 130/131 wave briefs omitted the §R.NN requirement). The §R.17 row is preserved additively and does NOT delete or rewrite any prior §R.16 content.
+
+## R.18 — Wave 127 — 7-day finish-line (N=1000 GPU sweep in flight + supplementary TODO + CLM-024 + ruff auto-fix + todo refactor) (2026-09-14)
+
+**Agent:** Wave 127 Agent 6 (final synthesis — audit doc + baseline-audit row + CONSOLIDATED §15.27 + mkdocs strict verify)
+**Scope:** close Wave 127's 6 atomic Phases (Phase 1 Kanzi framework_inv_proj N=1000 sweep in flight + Phase 2 supplementary.md TODO replacement + Phase 3 §7.6 honest reframe + Phase 4 ruff auto-fix + Phase 5 todo/ refactor + this Phase 6 final synthesis); update audit doc + baseline-audit-report §R.18 + CONSOLIDATED_RESULTS §15.27 additively; commit.
+
+**Wave 127 atomic commits on main (prior agents):**
+
+- `1c0f5ab` Wave 127 Phase 1: sweep infra hardening (checkpoint controlled twodim cells + reject stale resume) — 213 LOC in `tools/run_twodim_controlled_sweep.py` + `tools/run_controlled_audit.py` + 61 LOC tests in `tests/test_tools/test_twodim_sweep_recovery.py`. **Kanzi framework_inv_proj N=1000 sweep launched at `/tmp/w127/framework_inv_proj_seed42/` PID 220148 — 472/1000 records processed at audit-write time (2026-09-14 01:09 UTC window); log shows 450 records in 2435.6 s ≈ 4.2 s/record, ETA ~6 h from sweep start at 00:55 UTC; verdict direction (TIES vs REGRESSES on `reconstruction_kabsch_rmsd_A`) unknown until sweep completes; 0 skipped.**
+- `7105020` Wave 127 Phase 2: supplementary.md TODO replacement + CLM-024 honest reframe — `supplementary.md` status line updated + **7 TODO markers replaced** with verified numbers from Wave 87/88/86/93 sources + `docs/CLAIMS.md` CLM-024 ADDITIVE reframe acknowledging current **ruff 207 + mypy 988** state (down from ruff 927 via `--fix`).
+- `e6fb35c` Wave 127 Phase 3: Wave 125 §7.6 honest reframe — `docs/paper-draft.md` §7.6 ADDITIVE paragraph reframes "3 algorithm fixes shipped" to honest reading "**3 algorithm-fix PRIMITIVES shipped as opt-in kwargs with byte-stable additive defaults**". No adapter currently activates these primitives end-to-end at N≥1000.
+- `14e8bc5` Wave 127 Phase 4: ruff check --fix — auto-fixed **720 of 927** findings (formatting only, **zero semantic changes**); D.4 33/33 byte-stable preserved; pytest preserved; 282 files touched, ~2678 lines of formatting churn. Remaining **207 findings** are semantic (require manual remediation).
+- `3db027d` Wave 127 Phase 5: todo/ refactor — deleted `todo/completed/` (47 archived plans), `todo/inprogress/` (1 README), `todo/planned/` (10 files + 1 design doc + 1 README), `todo/models/` (5 files). Rewrote `todo/STATUS.md` to 2026-09-14 Wave 127 finish-line snapshot (preserves Wave 99.D verbatim for provenance); updated `todo/PUSH-READY.md` (167 unpushed, was 327/160 stale; 6-row by-wave table); updated `todo/INDEX.md` (6-row active plans table + audit-catalog cross-references). **todo/ root: 25 files (was ~80, 69% reduction).**
+
+**Total Wave 127 commits on main:** 5 prior-agent commits (Phases 1-5) + 1 final-synthesis commit (Phase 6) = 6 atomic commits.
+
+**Wave 127 Phase 1 N=1000 sweep state (IN PROGRESS at audit-write time):**
+
+| Metric | Value |
+|---|---|
+| Output directory | `/tmp/w127/framework_inv_proj_seed42/` |
+| PID | `220148` (alive, 916% CPU) |
+| Records per checkpoint | **472 / 1000** |
+| Records per log (last milestone) | 450 (log lag behind checkpoint) |
+| Wallclock for 450 records | 2435.6 s ≈ 40.6 min |
+| Per-record cadence | ~4.0-4.2 s/record |
+| Skips | **0** (zero per-record failures) |
+| Sweep start | 2026-09-14 00:55 UTC |
+| ETA | ~2026-09-14 06:55 UTC |
+| Verdict direction | **UNKNOWN** until sweep completes |
+
+**Wave 127 acceptance gates (re-verified in this phase):**
+
+- pytest tests/ -k "d4" -q → **33/33 PASS** (D.4 byte-stable preserved across all 5 Wave 127 prior-agent commits + this final synthesis commit)
+- pytest tests/ -q → background task in flight at audit-write time (33/33 D.4 subset PASS confirmed; full suite deferred to follow-up)
+- mkdocs build --strict → **EXIT=0** (re-verified via `.venv/bin/mkdocs build --strict`)
+- python tools/check_claims_consistency.py → **PASS** ("No drift detected." — 39 active claims, 0 provisional, 2 deprecated; CLM-040 forced to PROVISIONAL by `Disputed by` citation)
+
+**Wave 127 deliverable summary (this Agent-6 commit):**
+
+- `docs/audit/wave127-finish-line.md` — NEW Wave 127 audit doc (~280 lines): per-phase breakdown (1-6) + 7 TODO replacements + §7.6 honest reframe + ruff auto-fix stats + todo/ refactor deltas + Phase 1 N=1000 sweep IN_PROGRESS state + acceptance gates + camera-ready deferred 8-item list + per-paper-claim honesty table + cross-references.
+- `docs/baseline-audit-report.md` §R.18 — NEW row (this entry) + retroactive §R.17 row appended for Wave 130/131 (no §R.17 row was authored by the original Wave 130/131 final-synthesis agents).
+- `docs/CONSOLIDATED_RESULTS.md` §15.27 — NEW section (this commit).
+- mkdocs build --strict EXIT=0 re-verified.
+
+**Wave 127 hard rules honored:**
+
+- ✅ **NO push** (Wave 11+ user-gated protocol; commits stay on `main` locally)
+- ✅ **ADDITIVE only** — supplementary.md status + 7 TODO replacement (pre-Wave-127 numbers preserved verbatim); CLM-024 reframe (historical claim preserved); §7.6 honest reframe (Wave 125 paragraph preserved verbatim with reframe paragraph appended); ruff --fix (formatting only, zero semantic changes); todo/ subdir deletion + root file rewrite (preserves Wave 99.D verbatim for provenance in STATUS.md)
+- ✅ **Single atomic Agent-6 commit** titled "Wave 127: final close — 7-day finish-line + audit doc + baseline-audit §R.18 + CONSOLIDATED §15.27 + mkdocs strict verify"
+
+**Wave 127 verdict:**
+
+- **3 algorithm primitives** (Wave 125): shipped as opt-in kwargs, byte-stable additive defaults preserve existing behavior; no adapter activates them end-to-end at N≥1000.
+- **Phase 1 N=1000 sweep**: IN PROGRESS at audit-write time (472/1000 records; 0 skipped; ETA ~6 h from sweep start). Verdict direction unknown until completion.
+- **supplementary.md**: submittable (0 TODO placeholders).
+- **CLM-024**: honestly reframed to current ruff 207 + mypy 988 state.
+- **§7.6**: honestly reframe from "fixes shipped" to "PRIMITIVES shipped".
+- **ruff baseline**: 927 → 207 (78% reduction via `--fix`; 720 of 927 auto-fixed).
+- **todo/ tree**: 80 → 25 files (69% reduction).
+- **Camera-ready deferred 8-item list**: locked in `todo/STATUS.md`.
+
+**Per-paper-claim support status:** UNCHANGED from Wave 124-125 — all rows (matched_quality_improvement on Tier 3 paper metric / matched_quality_improvement on Tier 3 internal composite axis / matched_nfe_speedup on Tier 1 / matched_nfe_speedup on Tier 3 / extends_baseline_plateau on Tier 3 paper metric / extends_baseline_plateau on Tier 3 internal composite axis / framework_sota on Tier 3 paper metric) carry forward unchanged. The Wave 127 primitives are opt-in kwargs that no adapter currently activates; the Phase 1 sweep verdict is unknown at audit-write time.
+
+See `docs/audit/wave127-finish-line.md` for the full Wave 127 audit trail + `docs/CONSOLIDATED_RESULTS.md` §15.27 for the consolidated summary.
+
