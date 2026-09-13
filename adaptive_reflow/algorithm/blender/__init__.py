@@ -82,6 +82,8 @@ RestartBlenderProtocol = _blender_mod.RestartBlenderProtocol
 BLENDER_MEMORY_FRACTION_CLIPPED = _blender_mod.BLENDER_MEMORY_FRACTION_CLIPPED
 _canonical_json_default = _blender_mod._canonical_json_default
 _linear_blend_arrays = _blender_mod._linear_blend_arrays
+_coerce_memory_fraction = _blender_mod._coerce_memory_fraction
+_sigmoid = _blender_mod._sigmoid
 default_blender = _blender_mod.default_blender
 del _blender_mod
 
@@ -90,6 +92,8 @@ __all__ = [
     "BLENDER_MEMORY_FRACTION_CLIPPED",
     "_canonical_json_default",  # private — exposed only for test_blender.py
     "_linear_blend_arrays",  # private — exposed only for test_blender_delegation.py
+    "_coerce_memory_fraction",  # private compatibility helper
+    "_sigmoid",
     "CATEGORICAL_AWARE_FAMILY",
     "CATEGORICAL_BLEND_MASK_FRESH_FALLBACK",
     "CATEGORICAL_BLEND_SENTINEL_PASSTHROUGH",
