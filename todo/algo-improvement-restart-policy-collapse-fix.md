@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis; no implementation in Wave 123)
-**Status:** DONE (small-sigma restart guard landed in commit `4fbf135`)
+**Status:** IN PROGRESS (restart guard landed; twodim/CIFAR acceptance sweeps unmet)
 **Wave:** Wave 123+ candidate (this plan is detailed enough that a future
 wave can pick it up and ship)
 **Closes:** Wave 33 audit A1+A2 (`docs/audit/algorithm-gap-investigation.md`
@@ -259,7 +259,7 @@ After this plan ships:
 ## 9. Wave 123 close-out (placeholder)
 
 This plan is authored in Wave 123 but NOT executed. Status:
-**PLANNED, waiting for user approval**. To execute:
+**Execution authorized; remaining work is experiment-gated.** To execute:
 
 1. Read this plan end-to-end (already done if you're the executor).
 2. Read Wave 35 saturation plan + Wave 33 audit to understand the

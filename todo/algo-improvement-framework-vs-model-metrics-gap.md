@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis)
-**Status:** DONE (synthesis actions landed across Waves 124–126; see commits `f2ddea9` and `1d40531`)
+**Status:** IN PROGRESS (code actions landed; dependent metric/sweep acceptance remains open)
 **Wave:** Wave 123 (this doc)
 **Scope:** High-level synthesis of *why* the framework does not consistently
 improve Tier 3 paper metrics, distilled from 4 prior audits + 5 hypothesis

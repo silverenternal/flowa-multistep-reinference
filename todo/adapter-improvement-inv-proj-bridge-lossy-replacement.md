@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis; no implementation in Wave 123)
-**Status:** DONE (implementation landed in Waves 122–125; see `docs/audit/kanzi-inv-proj-bridge-followup-2026-09-13.md`)
+**Status:** IN PROGRESS (bridge code landed; N=20/N=1000 acceptance sweeps remain)
 **Wave:** Wave 123+ candidate (this plan is detailed enough that a future
 wave can pick it up and ship)
 **Closes:** Wave 92c §5 (Kanzi framework arm NOT_MEASURABLE due to lossy
@@ -376,7 +376,7 @@ After this plan ships:
 ## 9. Wave 123 close-out (placeholder)
 
 This plan is authored in Wave 123 but NOT executed. Status:
-**PLANNED, waiting for user approval**. To execute:
+**Execution authorized; remaining work is sidecar/compute-gated.** To execute:
 
 1. Read this plan end-to-end (already done if you're the executor).
 2. Read Wave 92c §5 + Wave 95 P3.C + Wave 121 Phase 4 audit docs

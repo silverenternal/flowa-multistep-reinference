@@ -40,9 +40,12 @@ and ``1`` only on hard errors (missing argument, bad path, etc.).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
+import os
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -379,6 +382,62 @@ def extract_inception_features(
 # ---------------------------------------------------------------------------
 
 
+def build_reference_features(
+    samples_path: Path, output_path: Path, *, device: str = "cpu", batch_size: int = 64
+) -> Path:
+    """Extract real features with the same pretrained network as generated images.
+
+    The source must be an NCHW CIFAR image archive in [-1, 1]. No random
+    projection fallback is permitted. Test-set torchvision features are useful
+    for within-project comparisons, not a reproduction of published TF FID.
+    """
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
+    if output_path.exists():
+        raise FileExistsError(f"reference output already exists: {output_path}")
+    with samples_path.open("rb") as stream:
+        source_sha256 = hashlib.file_digest(stream, "sha256").hexdigest()
+    with np.load(samples_path, allow_pickle=False) as data:
+        if "samples" not in data:
+            raise ValueError("reference source must contain a 'samples' array")
+        samples = np.asarray(data["samples"])
+    if samples.ndim != 4 or samples.shape[1:] != (3, 32, 32) or len(samples) < 2:
+        raise ValueError("reference samples must have shape (N>=2, 3, 32, 32)")
+    if not np.issubdtype(samples.dtype, np.floating):
+        raise ValueError("reference samples must be floating point in [-1, 1]")
+    if not np.isfinite(samples).all() or samples.min() < -1 or samples.max() > 1:
+        raise ValueError("reference samples must be finite and in [-1, 1]")
+    # Use the canonical extractor directly: its import/load errors propagate.
+    features = tools_run_image_eval.extract_inception_features_for_image_eval(
+        samples, device=device, batch_size=batch_size,
+    )
+    features = np.asarray(features, dtype=np.float32)
+    if features.shape != (len(samples), 2048) or not np.isfinite(features).all():
+        raise ValueError("extractor must return finite (N, 2048) features")
+    metadata = {
+        "schema_version": 1,
+        "source": str(samples_path.resolve()),
+        "source_sha256": source_sha256,
+        "sample_count": len(samples),
+        "extractor": "torchvision.inception_v3.IMAGENET1K_V1.pool3",
+        "preprocessing": "NCHW [-1,1]; bilinear 299x299; ImageNet mean/std",
+        "device": device,
+        "batch_size": batch_size,
+        "published_tf_fid_comparable": False,
+    }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=output_path.parent, suffix=".npz", delete=False) as stream:
+            temp_path = Path(stream.name)
+            np.savez(stream, features=features, metadata=json.dumps(metadata, sort_keys=True))
+        os.replace(temp_path, output_path)
+    finally:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+    return output_path
+
+
 def run_baseline(
     *,
     num_samples: int,
@@ -522,6 +581,12 @@ def _build_argparser() -> argparse.ArgumentParser:
     )
     p.add_argument("--num-samples", type=int, default=64,
                    help="Number of samples to generate (paper uses 50000).")
+    p.add_argument("--extract-reference-features", action="store_true",
+                   help="Build reference features from --reference-samples, then exit.")
+    p.add_argument("--reference-samples", default="data/cifar10_test_ref.npz",
+                   help="NPZ containing normalized CIFAR images under 'samples'.")
+    p.add_argument("--feature-device", default="cpu",
+                   help="Torch device for reference extraction, e.g. cuda:0.")
     p.add_argument("--nfe", type=int, default=2,
                    help="Number of Euler integration steps (paper uses 2).")
     p.add_argument("--batch-size", type=int, default=64,
@@ -542,6 +607,18 @@ def main(argv: list[str] | None = None) -> int:
     weights = Path(args.weights_path) if args.weights_path else None
     ref = Path(args.reference_features) if args.reference_features else None
     output = Path(args.output_dir)
+
+    if args.extract_reference_features:
+        try:
+            built = build_reference_features(
+                Path(args.reference_samples), Path(args.reference_features),
+                device=args.feature_device, batch_size=args.batch_size,
+            )
+        except Exception as exc:
+            print(f"[ERROR] reference extraction failed: {exc!r}", file=sys.stderr)
+            return 1
+        print(f"[DONE] reference features -> {built}")
+        return 0
 
     try:
         summary = run_baseline(

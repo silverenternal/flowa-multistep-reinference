@@ -42,7 +42,9 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import math
 import sys
 import time
 from dataclasses import replace
@@ -100,6 +102,60 @@ from tools.eval_rf_cifar import (  # noqa: E402
 
 CANONICAL_CHANNELS: tuple[str, ...] = ("image",)
 RF_CIFAR_RUN_ID: str = "rf_cifar_ablation"
+_ABLATION_IMPL_VERSION = "2026-09-13-resume-v2"
+
+def _arm_fingerprint(name, n_rounds, samples, nfe, weights, reference, *, mode="auto"):
+    h = hashlib.sha256()
+    h.update(Path(__file__).read_bytes())
+    # Changes in the imported implementation also invalidate an arm.
+    for source in sorted((REPO_ROOT / "adaptive_reflow").rglob("*.py")):
+        h.update(str(source.relative_to(REPO_ROOT)).encode())
+        h.update(source.read_bytes())
+    for source in ("tools/eval_rf_cifar.py", "tools/run_image_eval.py"):
+        h.update((REPO_ROOT / source).read_bytes())
+    parts = [name, str(n_rounds), str(samples), str(nfe), _ABLATION_IMPL_VERSION,
+             mode, sys.version, np.__version__]
+    for path in (weights, reference):
+        if path and path.exists() and path.is_file():
+            with path.open("rb") as stream:
+                digest = hashlib.file_digest(stream, "sha256").hexdigest()
+            parts.append(f"{path.resolve()}:{digest}")
+        else:
+            parts.append(f"{path}:missing")
+    h.update("|".join(parts).encode())
+    return h.hexdigest()
+
+
+def _valid_cached_arm(cached, name, fingerprint, n_rounds):
+    """Only reuse complete finite results produced for identical inputs."""
+    if not isinstance(cached, dict) or "error" in cached:
+        return False
+    if cached.get("scheduler") != name or cached.get("fingerprint") != fingerprint:
+        return False
+    try:
+        for key in ("fid_curve", "selection_curve", "merged_beta_curve", "nfe_curve"):
+            values = cached[key]
+            if not isinstance(values, list) or len(values) != n_rounds:
+                return False
+            if not all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                       and math.isfinite(v) for v in values):
+                return False
+        for key in ("mean_fid", "best_round_fid", "wall_clock_per_round_seconds",
+                    "selection_ratio_round_0", "selection_ratio_round_last"):
+            if not math.isfinite(float(cached[key])):
+                return False
+        rows = cached["per_round"]
+        if not isinstance(rows, list) or len(rows) != n_rounds:
+            return False
+        for i, row in enumerate(rows):
+            if row["round"] != i or row["fid"] != cached["fid_curve"][i]:
+                return False
+            if not all(math.isfinite(float(row[k])) for k in
+                       ("fid", "nfe", "merged_beta", "selection_ratio")):
+                return False
+        return True
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
 
 
 def _make_cosine_schedule_config(
@@ -451,11 +507,10 @@ def _maybe_load_reference(path: Path | None) -> np.ndarray | None:
     """Load the real CIFAR-10 InceptionV3 features ``.npz`` file."""
     if path is None or not path.exists():
         return None
-    data = np.load(path)
-    if "features" not in data.files:
-        return None
-    arr = np.asarray(data["features"], dtype=np.float32)
-    return arr  # type: ignore[no-any-return]
+    with np.load(path, allow_pickle=False) as data:
+        if "features" not in data.files:
+            return None
+        return np.asarray(data["features"], dtype=np.float32)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -467,59 +522,55 @@ def main(argv: list[str] | None = None) -> int:
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
 
-    adapter = RectifiedFlowCIFARAdapter(
-        weights_path=weights,
-        force_mode="auto",
-        num_steps=int(args.nfe),
-    )
-    print(
-        f"[{'SYNTHETIC' if adapter._mode == 'synthetic' else 'TORCH'} ABLATION] "
-        f"mode={adapter._mode} weights={adapter._weights_path} "
-        f"n_rounds={args.n_rounds} samples_per_round={args.samples_per_round}"
-    )
-    if not torch_is_available():
-        print(
-            "[CAVEAT] torch not installed — falling back to synthetic mode + "
-            "random-projection Inception features. FID numbers are NOT "
-            "paper-comparable."
-        )
-
-    reference = _maybe_load_reference(ref)
-    if args.require_reference:
-        if reference is None:
-            print(
-                "[ERROR] --require-reference needs an .npz containing a "
-                "2-D 'features' array; generate it with tools/eval_rf_cifar.py "
-                "--extract-reference-features.", file=sys.stderr,
-            )
-            return 2
-        if reference.ndim != 2 or reference.shape[0] == 0 or reference.shape[1] != 2048:
-            print(
-                f"[ERROR] reference features have invalid shape {reference.shape}; "
-                "regenerate with tools/eval_rf_cifar.py --extract-reference-features.",
-                file=sys.stderr,
-            )
-            return 2
-    if reference is None:
-        print(
-            f"[CAVEAT] No real CIFAR-10 features at {ref}. FID will be "
-            "synthetic-vs-random — not paper-comparable."
-        )
-
+    if args.n_rounds < 1 or args.nfe < 1 or args.samples_per_round < 1:
+        parser.error("rounds, samples and NFE must be positive")
+    if args.require_reference and args.samples_per_round < 2:
+        parser.error("FID requires at least two generated samples per round")
     schedulers = _build_schedulers(n_rounds=int(args.n_rounds))
     requested = tuple(s.strip() for s in str(args.schedulers).split(",") if s.strip())
     unknown = set(requested) - set(schedulers)
     if unknown:
-        raise ValueError(f"unknown scheduler(s): {sorted(unknown)}")
+        parser.error(f"unknown scheduler(s): {sorted(unknown)}")
     if requested:
         schedulers = {k: v for k, v in schedulers.items() if k in requested}
+    try:
+        reference = _maybe_load_reference(ref)
+    except (OSError, ValueError, TypeError) as exc:
+        print(f"[ERROR] cannot read reference {ref}: {exc}", file=sys.stderr)
+        return 2
+    if args.require_reference:
+        if (reference is None or reference.ndim != 2 or reference.shape[0] < 2
+                or reference.shape[1] != 2048 or not np.isfinite(reference).all()):
+            print(
+                "[ERROR] --require-reference needs >=2 finite 2048-D features; "
+                "generate with tools/eval_rf_cifar.py --extract-reference-features.",
+                file=sys.stderr,
+            )
+            return 2
+        if not torch_is_available():
+            print("[ERROR] real reference evaluation requires torch; random projections are invalid",
+                  file=sys.stderr)
+            return 2
+    elif reference is None:
+        print(f"[CAVEAT] No real features at {ref}; random-reference smoke only.")
+
+    adapter = RectifiedFlowCIFARAdapter(
+        weights_path=weights,
+        force_mode="torch" if args.require_reference else "auto",
+        num_steps=int(args.nfe),
+    )
+    # Bind the resolved checkpoint, including when --weights-path is omitted.
+    weights = adapter._weights_path
+    print(f"[ABLATION] mode={adapter._mode} weights={weights} "
+          f"n_rounds={args.n_rounds} samples_per_round={args.samples_per_round}")
     summaries: list[dict[str, Any]] = []
     for name, scheduler in schedulers.items():
         arm_path = output / f"{name}.json"
+        fingerprint = _arm_fingerprint(name, args.n_rounds, args.samples_per_round, args.nfe, weights, ref, mode=adapter._mode)
         if args.resume and arm_path.is_file():
             try:
                 cached = json.loads(arm_path.read_text(encoding="utf-8"))
-                if cached.get("scheduler") == name and "error" not in cached:
+                if _valid_cached_arm(cached, name, fingerprint, int(args.n_rounds)):
                     print(f"  -> {name}: RESUME cached arm")
                     summaries.append(cached)
                     continue
@@ -550,16 +601,24 @@ def main(argv: list[str] | None = None) -> int:
                 "selection_ratio_round_last": 0.0,
                 "per_round": [],
             }
+        summary["fingerprint"] = fingerprint
         if reference is None:
             summary["fallback_reference"] = True
         summaries.append(summary)
         # Persist per-row JSON so the operator can inspect each
         # scheduler's curve in isolation.
-        arm_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+        tmp = arm_path.with_suffix(arm_path.suffix + ".tmp")
+        tmp.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+        tmp.replace(arm_path)
 
     md = _render_markdown_table(summaries, baseline_fid=float(PUBLISHED_BASELINE_FID))
     (output / "ablation.md").write_text(md)
     (output / "ablation.json").write_text(json.dumps(summaries, indent=2, sort_keys=True))
+    if any("error" in row for row in summaries) or (
+        args.require_reference and any(not math.isfinite(float(row["mean_fid"])) for row in summaries)
+    ):
+        print("[INCOMPLETE] one or more scheduler arms failed or have invalid FID", file=sys.stderr)
+        return 1
     print(f"[DONE] {len(summaries)} scheduler rows -> {output}/ablation.{{md,json}}")
     return 0
 

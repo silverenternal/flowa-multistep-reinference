@@ -359,15 +359,9 @@ def _compute_fid_tfport_inline(
                 batch = torch.from_numpy(
                     np.asarray(samples[i : i + 32], dtype=np.float32)
                 )
-                # CIFAR-10 is already 3-channel; map [-1, 1] -> [0, 1] then
-                # upsample to 299×299 and apply ImageNet normalisation.
+                # pytorch_fid's InceptionV3 owns resize and input scaling;
+                # provide [0, 1] pixels and avoid a second normalization.
                 x = (batch + 1.0) / 2.0
-                x = torch.nn.functional.interpolate(
-                    x, size=(299, 299), mode="bilinear", align_corners=False
-                )
-                mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-                std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
-                x = (x - mean) / std
                 pred = model(x)[0].squeeze(3).squeeze(2)
                 out[i : i + int(batch.shape[0])] = pred.cpu().numpy()
         return out

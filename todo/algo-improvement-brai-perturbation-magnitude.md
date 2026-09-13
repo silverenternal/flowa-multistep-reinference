@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-12
 **Author:** Wave 123 Agent 6 (READ-ONLY synthesis; no implementation in Wave 123)
-**Status:** DONE (per-call BRAI magnitude landed in commit `ae33583`)
+**Status:** IN PROGRESS (per-call magnitude landed; ESM-2 N=100 and N=1000 acceptance unmet)
 **Wave:** Wave 123+ candidate (this plan is detailed enough that a future
 wave can pick it up and ship)
 **Closes:** Wave 33 audit Gap C (LineageFlow `family_validity=1.0`
@@ -325,7 +325,7 @@ After this plan ships:
 ## 9. Wave 123 close-out (placeholder)
 
 This plan is authored in Wave 123 but NOT executed. Status:
-**PLANNED, waiting for user approval**. To execute:
+**Execution authorized; remaining work is ESM-2/compute-gated.** To execute:
 
 1. Read this plan end-to-end (already done if you're the executor).
 2. Read Wave 33 audit Gap C + Wave 35 saturation plan Rec 1 to

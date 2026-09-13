@@ -394,28 +394,40 @@ def _extract_checkpoint_state_dict(payload: Any) -> Mapping[str, Any]:
     EMA is preferred when both are present.  Other nested structures are
     rejected so a typo cannot silently load optimizer metadata as weights.
     """
+    def is_state_dict(value: Any) -> bool:
+        return (isinstance(value, Mapping) and bool(value)
+                and all(isinstance(k, str) and hasattr(v, "shape") for k, v in value.items()))
+
     if not isinstance(payload, Mapping):
         raise RuntimeError("CIFAR checkpoint must be a mapping of tensor weights")
-    if payload and all(isinstance(k, str) for k in payload):
-        nested = [k for k in ("ema", "model") if k in payload]
-        if nested:
-            # Some EMA wrappers store metadata plus a list of shadow tensors;
-            # that is not directly loadable, so fall back to model weights.
-            chosen = "ema" if "ema" in nested else "model"
-            candidate = payload[chosen]
-            if not (
-                isinstance(candidate, Mapping)
-                and candidate
-                and all(hasattr(v, "shape") for v in candidate.values())
-            ):
-                if chosen == "ema" and "model" in payload:
-                    chosen, candidate = "model", payload["model"]
-                else:
-                    raise RuntimeError(f"CIFAR checkpoint key {chosen!r} is not a state_dict")
-            return candidate
-        # Raw state dicts have string parameter names and tensor values.
-        if all(hasattr(v, "shape") for v in payload.values()):
-            return payload
+    if "ema" in payload:
+        ema = payload["ema"]
+        if isinstance(ema, Mapping) and "shadow_params" in ema:
+            model = payload.get("model")
+            shadows = ema["shadow_params"]
+            if not is_state_dict(model) or not isinstance(shadows, (list, tuple)):
+                raise RuntimeError("CIFAR EMA requires a tensor model mapping and shadow_params sequence")
+            # Match tools/mirror_score_sde_ckpt.py: the released gnobitab
+            # state dict's only non-trainable buffer is module.sigmas.
+            keys = [k for k in model if k != "module.sigmas"]
+            if not keys or len(keys) != len(shadows):
+                raise RuntimeError("CIFAR EMA shadow_params count does not match model")
+            if any(not hasattr(v, "shape") or tuple(v.shape) != tuple(model[k].shape)
+                   for k, v in zip(keys, shadows)):
+                raise RuntimeError("CIFAR EMA shadow_params shapes do not match model")
+            out = dict(zip(keys, shadows))
+            if "module.sigmas" in model:
+                out["module.sigmas"] = model["module.sigmas"]
+            return out
+        if not is_state_dict(ema):
+            raise RuntimeError("CIFAR EMA bundle is malformed or not tensor weights")
+        return ema
+    if "model" in payload:
+        if not is_state_dict(payload["model"]):
+            raise RuntimeError("CIFAR checkpoint model entry is not a tensor state_dict")
+        return payload["model"]
+    if is_state_dict(payload):
+        return payload
     raise RuntimeError("unsupported CIFAR checkpoint structure; expected raw state_dict or ema/model bundle")
 
 
