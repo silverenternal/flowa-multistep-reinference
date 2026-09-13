@@ -28,6 +28,8 @@ from .batched_runner import (
     BatchedRunnerConfig,
     BatchedTrajectoryResult,
     BatchedTrajectoryRunner,
+    DEFAULT_RESTART_SIGMA_THRESHOLD,
+    should_skip_restart_small_sigma,
 )
 from .blender import (
     DEFAULT_DISTANCE_DECAY_CONFIG_HASH,

@@ -141,6 +141,110 @@ def _scheduler_accepts_metrics(scheduler: Any) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Restart-policy gate (Wave 125 Phase 2 — H1 hypothesis fix)
+# ---------------------------------------------------------------------------
+
+
+#: Default ``sigma`` threshold for :func:`should_skip_restart_small_sigma`.
+#: Below this scale the trajectory endpoint lives in a tiny neighborhood
+#: of the prior; restarting from such an endpoint yields a bit-identical
+#: trajectory (FSQ / quantizer collapses every record to the same
+#: codebook index). The threshold ``1e-2`` mirrors the sweep driver's
+#: ``σ=1e-3`` pathology regime described in
+#: ``todo/algo-improvement-restart-policy-collapse-fix.md`` (H1).
+DEFAULT_RESTART_SIGMA_THRESHOLD: float = 1e-2
+
+
+def should_skip_restart_small_sigma(
+    *,
+    sigma: float,
+    current_n_restarts: int,
+    threshold: float = DEFAULT_RESTART_SIGMA_THRESHOLD,
+) -> bool:
+    """Return ``True`` when the framework should skip the per-round restart.
+
+    Wave 125 Phase 2 — H1 hypothesis fix (per
+    ``todo/algo-improvement-restart-policy-collapse-fix.md``).
+
+    The framework's per-round restart blends ``x_final`` with fresh
+    noise (``memory_fraction * prior + (1 - memory_fraction) * fresh``)
+    and feeds the result into the next round's solver. When
+    ``x_final`` lives in a tiny neighborhood of the origin (or any
+    fixed reference) — the canonical pathology is the
+    ``σ=1e-3`` synthetic endpoint regime documented in
+    :mod:`tools._wave96a_diagnose_collapse` and the corresponding
+    ``Wave 95 P3.C`` framework-arm collapse (``reconstruction_kabsch_rmsd_A
+    = 2.5017 ± 0.0000`` at ``N=1000``) — restarting from such a
+    point is mathematically equivalent to **not restarting**: the
+    quantizer / FSQ codebook collapse forces every record to the
+    same nearest index, defeating the framework's
+    exploration-vs-refinement intent. The framework therefore
+    benefits from **skipping** the restart on subsequent rounds so
+    the initial trajectory is trusted.
+
+    The helper implements the H1 gate per the planning doc §3.1::
+
+        if sigma < threshold and current_n_restarts > 0:
+            skip_restart = True
+
+    i.e. the gate only fires when:
+
+    * ``sigma`` is strictly below ``threshold`` (the trajectory lives
+      in the tiny-neighborhood regime), AND
+    * ``current_n_restarts > 0`` (we have already restarted at least
+      once; the first restart is always permitted because there is
+      no prior trajectory to "trust").
+
+    Parameters
+    ----------
+    sigma
+        Per-position standard deviation of ``x_final`` (the per-round
+        trajectory endpoint). The helper coerces non-finite values to
+        ``+inf`` (the gate fails closed — the framework proceeds with
+        the restart it would have done without this check).
+    current_n_restarts
+        Number of restarts already performed on the current trajectory.
+        Strictly positive is required for the gate to fire.
+    threshold
+        Strict lower bound on ``sigma`` below which the gate fires.
+        Defaults to :data:`DEFAULT_RESTART_SIGMA_THRESHOLD = 1e-2`.
+
+    Returns
+    -------
+    bool
+        ``True`` when the framework should skip the restart for this
+        round; ``False`` when the framework should perform its normal
+        restart blend.
+
+    Notes
+    -----
+    This helper is **additive** (Wave 125 Phase 2 HARD RULE) — it does
+    not modify any existing restart code path. Callers wire it into
+    the engine's restart path explicitly; legacy callers that do not
+    thread the new arguments see byte-identical behaviour.
+    """
+    try:
+        sigma_f = float(sigma)
+    except (TypeError, ValueError):
+        # Non-numeric sigma fails closed: caller proceeds with the
+        # restart it would have done without this gate.
+        return False
+    if not np.isfinite(sigma_f):
+        return False
+    try:
+        restarts_i = int(current_n_restarts)
+    except (TypeError, ValueError):
+        return False
+    if restarts_i <= 0:
+        return False
+    try:
+        thresh_f = float(threshold)
+    except (TypeError, ValueError):
+        thresh_f = DEFAULT_RESTART_SIGMA_THRESHOLD
+    return sigma_f < thresh_f
+
+
+# ---------------------------------------------------------------------------
 # Duck-typed adapter surface used by the batched runner
 # ---------------------------------------------------------------------------
 
@@ -1089,5 +1193,7 @@ __all__ = [
     "BatchedTrajectoryResult",
     "BatchedTrajectoryRunner",
     "BatchedVectorisedAdapterProtocol",
+    "DEFAULT_RESTART_SIGMA_THRESHOLD",
     "DEFAULT_W2_FAMILY",
+    "should_skip_restart_small_sigma",
 ]

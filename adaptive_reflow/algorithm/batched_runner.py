@@ -13,19 +13,23 @@ NOT depend on these symbols.
 from __future__ import annotations
 
 from .runner.batched_runner import (
+    DEFAULT_RESTART_SIGMA_THRESHOLD,
     DEFAULT_W2_FAMILY,
     BatchedRunnerConfig,
     BatchedTrajectoryResult,
     BatchedTrajectoryRunner,
     BatchedVectorisedAdapterProtocol,
     _w2_to_mode_centres,
+    should_skip_restart_small_sigma,
 )
 
 __all__ = [
+    "DEFAULT_RESTART_SIGMA_THRESHOLD",
     "DEFAULT_W2_FAMILY",
     "BatchedRunnerConfig",
     "BatchedTrajectoryResult",
     "BatchedTrajectoryRunner",
     "BatchedVectorisedAdapterProtocol",
     "_w2_to_mode_centres",  # private — exposed only for test_batched_runner.py
+    "should_skip_restart_small_sigma",
 ]

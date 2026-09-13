@@ -29,6 +29,10 @@ from adaptive_reflow.algorithm import (
     default_paper_ratio_scheduler,
     default_policy_driver,
 )
+from adaptive_reflow.algorithm.batched_runner import (
+    DEFAULT_RESTART_SIGMA_THRESHOLD,
+    should_skip_restart_small_sigma,
+)
 from adaptive_reflow.contracts import (
     ArtifactHash,
     ChannelName,
@@ -2588,3 +2592,143 @@ def test_runner_resets_inner_components_between_runs(_twodim_adapter) -> None:
     # traces. The second run's reproducibility is what F-33 guarantees.
     assert len(result_a.round_traces) == n_rounds
     assert len(result_b.round_traces) == n_rounds
+
+
+# ---------------------------------------------------------------------------
+# Wave 125 Phase 2 — H1 restart-policy gate (per
+# ``todo/algo-improvement-restart-policy-collapse-fix.md``).
+# ---------------------------------------------------------------------------
+
+
+def test_restart_policy_skips_when_sigma_below_threshold() -> None:
+    """Restart policy must NOT restart when sigma is small AND we have
+    already restarted once.
+
+    Wave 125 Phase 2 (H1 fix): the framework's per-round restart
+    blend collapses to a single trajectory when the trajectory
+    endpoint ``x_final`` lives in a tiny neighborhood of the prior
+    (the canonical ``σ=1e-3`` synthetic-endpoint pathology reported
+    in ``docs/CONSOLIDATED_RESULTS.md`` §6 — every record collapses
+    to the same FSQ codebook index). The framework therefore
+    benefits from **skipping** the restart on subsequent rounds so
+    the initial trajectory is trusted.
+
+    The gate is closed-form: it fires iff ``sigma < threshold`` AND
+    ``current_n_restarts > 0``. This test pins the H1 gate so the
+    Wave 95 P3.C regression (``reconstruction_kabsch_rmsd_A =
+    2.5017 ± 0.0000`` at ``N=1000``) cannot silently re-appear via
+    a future refactor.
+    """
+    # The pathological regime: ``sigma = 1e-3`` << ``threshold =
+    # 1e-2``, with one restart already performed.
+    skip = should_skip_restart_small_sigma(
+        sigma=1e-3, current_n_restarts=1
+    )
+    assert skip is True, (
+        f"Wave 125 H1 gate must skip restart when sigma=1e-3 < "
+        f"threshold=1e-2 and current_n_restarts=1; got skip={skip!r}"
+    )
+
+    # A second restart on the same tiny-neighborhood trajectory MUST
+    # also be skipped (the gate fires every round once
+    # ``current_n_restarts > 0``).
+    skip_later = should_skip_restart_small_sigma(
+        sigma=1e-3, current_n_restarts=5
+    )
+    assert skip_later is True, (
+        f"Wave 125 H1 gate must continue skipping on round 5; "
+        f"got skip={skip_later!r}"
+    )
+
+    # And the default threshold is the documented
+    # :data:`DEFAULT_RESTART_SIGMA_THRESHOLD = 1e-2`.
+    assert DEFAULT_RESTART_SIGMA_THRESHOLD == pytest.approx(1e-2)
+
+
+def test_restart_policy_restarts_when_sigma_is_normal() -> None:
+    """Restart policy SHOULD restart when sigma is normal (sanity check).
+
+    Symmetric sanity for the Wave 125 Phase 2 H1 gate: the gate
+    must NOT fire on the happy path (normal-scale trajectory,
+    regardless of restart count) — callers rely on the normal
+    restart-blend math producing diverse trajectories.
+
+    The test pins three "must restart" regimes:
+
+    * ``sigma`` at the documented default ``σ=1e0`` (the legacy
+      ablation regime): the gate fires ``False`` regardless of
+      ``current_n_restarts``.
+    * ``sigma`` exactly at the threshold ``σ=1e-2``: the strict ``<``
+      comparison fires ``False`` (boundary preserved — the gate is
+      NOT a clamp, it is a strict-lower-bound predicate).
+    * ``sigma`` above the threshold but with ``current_n_restarts ==
+      0`` (the first round): the gate fires ``False`` because the
+      H1 hypothesis requires ``current_n_restarts > 0`` (no prior
+      trajectory exists to "trust" on the first restart).
+    """
+    # Normal-scale trajectory: restart regardless of restart count.
+    for n_restarts in (0, 1, 5, 100):
+        skip = should_skip_restart_small_sigma(
+            sigma=1e0, current_n_restarts=n_restarts
+        )
+        assert skip is False, (
+            f"sigma=1e0 (normal) must NOT skip restart regardless of "
+            f"n_restarts={n_restarts}; got skip={skip!r}"
+        )
+
+    # Boundary case: ``sigma == threshold`` is treated as "not
+    # small" because the gate uses strict ``<``.
+    skip_boundary = should_skip_restart_small_sigma(
+        sigma=DEFAULT_RESTART_SIGMA_THRESHOLD,
+        current_n_restarts=1,
+    )
+    assert skip_boundary is False, (
+        f"sigma == threshold must NOT skip restart (strict-lower-bound "
+        f"predicate); got skip={skip_boundary!r}"
+    )
+
+    # First restart (``current_n_restarts == 0``): the gate requires
+    # ``current_n_restarts > 0`` so the very first restart always
+    # proceeds.
+    skip_first_restart = should_skip_restart_small_sigma(
+        sigma=1e-3,
+        current_n_restarts=0,
+    )
+    assert skip_first_restart is False, (
+        f"first restart (current_n_restarts=0) must NOT skip "
+        f"restart; got skip={skip_first_restart!r}"
+    )
+
+    # Non-finite sigma fails closed: callers proceed with the restart
+    # they would have done without the gate (no silent skip on
+    # ``nan`` / ``inf``).
+    assert should_skip_restart_small_sigma(
+        sigma=float("nan"), current_n_restarts=1
+    ) is False
+    assert should_skip_restart_small_sigma(
+        sigma=float("inf"), current_n_restarts=1
+    ) is False
+
+
+def test_restart_policy_gate_default_threshold_in_documented_band() -> None:
+    """Wave 125 default ``sigma`` threshold lives in the H1 band.
+
+    Pins the default :data:`DEFAULT_RESTART_SIGMA_THRESHOLD = 1e-2`
+    so the documented "tiny neighborhood" regime (any
+    ``sigma <= 1e-3`` from the synthetic-endpoint pathology) is
+    captured by the gate. A future refactor that drops the
+    threshold below ``1e-3`` would silently regress the Wave 95
+    P3.C ``N=1000`` collapse; the test rejects such a refactor.
+    """
+    # Pathological sigma must trip the default gate.
+    assert should_skip_restart_small_sigma(
+        sigma=1e-3, current_n_restarts=1
+    ) is True
+    # Normal sigma must NOT trip the default gate.
+    assert should_skip_restart_small_sigma(
+        sigma=1e0, current_n_restarts=1
+    ) is False
+    # The default lives above the pathological band and below the
+    # normal band so the gate is selective.
+    assert DEFAULT_RESTART_SIGMA_THRESHOLD >= 1e-3
+    assert DEFAULT_RESTART_SIGMA_THRESHOLD <= 1e-1
