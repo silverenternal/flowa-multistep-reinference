@@ -1,11 +1,6 @@
-# ARCHIVED — r17-survey
+# Archived survey materials
 
-This survey directory is **superseded by the Wave 16 documentation sweep**
-(see `docs/audit/wave16-docs-organize.md`); contents are preserved here
-for historical reference only and are no longer the canonical record.
+This directory contains historical R17 survey inputs and audit artifacts. It
+is retained for traceability and is not part of the active experiment queue.
+Current work is tracked under `todo/STATUS.md` and `todo/planned/`.
 
-For the current audit, see `docs/baseline-audit-report.md`. For the
-canonical paper draft and current results, see `docs/paper-draft.md` and
-`docs/CONSOLIDATED_RESULTS.md`.
-
-Do not add new content under `r17-survey/`.
