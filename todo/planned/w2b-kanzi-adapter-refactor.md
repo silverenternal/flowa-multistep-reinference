@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-09 (updated 2026-09-10)
 **Owner:** framework maintainer
-**Status:** 🔄 **IN PROGRESS** (Wave 92a ✅ + Wave 92b ✅ + Wave 92c in flight)
+**Status:** ✅ **DONE / PARTIAL MAGNITUDE** (Wave 92a–c landed; Wave 100+ magnitude sweep deferred)
 **Target:** close W2 honestly — fix 3 adapter constants + add upstream N-samples patch, then re-run N=1000 framework paper-metric sweep
 
 > **Update 2026-09-10**: Wave 92a (constants fix `73c6978`) and Wave 92b (N-samples patch `60dcbb7`) **both landed**. Wave 92c (N=1000 Kanzi framework sweep) **in flight** (Task `wlc4t3ou8`).

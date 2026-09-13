@@ -1,7 +1,7 @@
 # Wave 93 (W4) — Statistical power analysis + per-cell CI + honest narrative
 
 **Date:** 2026-09-09 (updated 2026-09-10)
-**Status:** 🔄 **IN PROGRESS** (Phase 1 tool landed `e69ffd8`; Phase 2 in flight Task `w2ap73xhs`)
+**Status:** ✅ **DONE** (Phase 1 `e69ffd8`; Phase 2 narrative/results landed in Wave 125)
 **Closes:** reviewer weakness W4 (2/12 framework_improves cells honest reframing)
 
 > **Why this matters:** The previous honest result was "2/12 cells framework_improves with stat-sig" — this looks like a loss to a casual reviewer. Wave 93 reframes this with rigorous statistical power analysis: which cells have enough power to detect 1pp difference, which don't, and what the mixed result means under multiple-testing correction.

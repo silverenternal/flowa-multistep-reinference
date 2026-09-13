@@ -1,6 +1,6 @@
 # `todo/planned/` — Plans ready to execute (waiting for user go-ahead)
 
-**Date:** 2026-09-09
+**Date:** 2026-09-13 (status reconciliation)
 **Purpose:** This folder holds plans for the **next 4 一区 reviewer weaknesses** to close + ICLR 2027 submission package. Each plan is **sequential (1 agent per wave, not 25-agent parallel ultracode)**, with single commit + audit doc per wave. No workflow launches until user approves.
 
 ## Why this folder exists (2026-09-09)
@@ -13,10 +13,10 @@ Translation: Previous workflows (100-step ultracode) were too long. Switch to: *
 
 | File | Wave | Closes | Wall-clock | Status |
 |---|---|---|---|---|
-| [tier3-final-close-master-plan.md](tier3-final-close-master-plan.md) | 91-94 cascade | (overview) | 11-19h | PLANNED |
-| [w2-kanzi-latent-coord-bridge.md](w2-kanzi-latent-coord-bridge.md) | Wave 91 | W2 (Kanzi framework NOT_MEASURABLE) | 3-5h | PLANNED |
+| [tier3-final-close-master-plan.md](tier3-final-close-master-plan.md) | 91-94 cascade | (overview) | 11-19h | HISTORICAL / PARTIAL |
+| [w2-kanzi-latent-coord-bridge.md](w2-kanzi-latent-coord-bridge.md) | Wave 91 | W2 (Kanzi framework NOT_MEASURABLE) | 3-5h | DONE |
 | [w3-n5000-paper-metric-sweep.md](w3-n5000-paper-metric-sweep.md) | Wave 92 | W3 (N=1000 too small) | 4-8h | PLANNED (OPT-IN) |
-| [w4-statistical-power-analysis.md](w4-statistical-power-analysis.md) | Wave 93 | W4 (2/12 framework_improves) | 2-3h | PLANNED |
+| [w4-statistical-power-analysis.md](w4-statistical-power-analysis.md) | Wave 93 | W4 (2/12 framework_improves) | 2-3h | DONE |
 | [w5-iclr2027-submission-package.md](w5-iclr2027-submission-package.md) | Wave 94 | (final ship) | 2-3h | PLANNED |
 
 ## Reading order for user approval
