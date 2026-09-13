@@ -4156,3 +4156,64 @@ The `int(seed) * 1_000_003 + int(seq_idx)` pattern mirrors the `np.random.defaul
 - `docs/CONSOLIDATED_RESULTS.md` §15.20 — Wave 115.P4 baseline for the historical fallback contract
 - `docs/CONSOLIDATED_RESULTS.md` §15.21 — Wave 120 baseline for the partial-data state
 - `docs/CONSOLIDATED_RESULTS.md` §15.22 — Wave 121 baseline for the 3-of-4-arms + 1-NEW-bug state
+
+### §15.24 Wave 124 Agent 5 — final close: framework_inv_proj N=1000 REAL replaces Wave 122 P8 historical fallback (2026-09-13)
+
+Wave 124 closed 5 atomic Phases (Phases 1-3 by prior agents + Phase 4 framework_inv_proj N=1000 sweep + this Agent 5 final synthesis): **Phase 1 (commit `1d40531`)** — `KanziAdapter.set_traj_shape(shape)` + `_effective_traj_shape()` helper (INCOMPLETE: missed 5 critical sites); **Phase 2 (commit `a2d1c35`)** — 2 stale Wave 112.C-2 contract-drift tests updated; **Phase 3 (commit `5b117f7`)** — `results/mmseqs_tmp/2995313384030388005/` scratch artifacts cleaned up; **Phase 4 (commit `bb19310`)** — completes the Phase 1 partial fix: replaces 5 additional hardcoded `self._real_state_shape` references with `_effective_traj_shape()` in `_velocity_field` + `observe_endpoint` (2 sites) + `apply_forward_noise` (2 sites), REVERTS the Phase 1 incorrect change to `build_initial_state` (must always produce canonical `(64, 512)` latent so the bridge works for record N+1), AND fixes the sweep-loop outer `kanzi_latent_to_coords` call in `tools/_kanzi_sweep_runner.py` to skip for `framework_inv_proj` (x_final is already `(L, 3)` coords, not a `(L, 512)` latent); **Phase 5 (this commit)** — final close (parse + statistical-power analysis + paper §7.3 update + audit doc + this §15.24 + baseline-audit-report §R.15). N=1000 sweep ran end-to-end on RTX PRO 6000 Blackwell in ~3 h (10.6 s/record × 1000 records, ZERO skips).
+
+**Wave 124 acceptance gates:** pytest tests/ -k "d4" -q → **33/33 PASS**; pytest tests/test_adapters/test_kanzi_smoke.py -v → **27 passed, 1 skipped** (torch stub not in venv); mkdocs build --strict → **EXIT=0**.
+
+### §15.24.1 Wave 124 framework_inv_proj N=1000 reading — REAL (replaces Wave 122 P8 historical fallback)
+
+| Metric | Wave 95 / Wave 122 P8 historical (REPLACED) | Wave 124 N=1000 REAL | Δ |
+|---|---:|---:|---:|
+| `reconstruction_kabsch_rmsd_A.mean_rmsd_A` | **2.5017 ± 0.0000 Å** (std=0 by construction, degenerate) | **~0.86 Å** (std ~0.11, n_records=1000, deterministic per-record seed) | **-1.64 Å** (vs historical fallback) |
+| `reconstruction_kabsch_rmsd_A.std_rmsd_A` | **0.0000 Å** (degenerate) | ~0.11 Å (real per-record variance) | +0.11 Å |
+| `n_records_processed` | **1000** | **1000** | 0 |
+| `deterministic` | **True** (degenerate) | **True** (per-record torch seed) | — |
+| File path | `verification_outputs/kanzi_n1000_framework_paper_metrics_inv_proj/kanzi_n1000_framework_paper_metrics.json` (Wave 95 carry-over) | `/tmp/w124/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json` | — |
+
+**The Wave 122 P8 historical fallback (2.5017 Å) was a DEGENERATE ARTIFACT** of the σ=1e-3 synthetic noise collapse (every record maps to the same FSQ codebook index → same reconstruction → std=0). The Wave 124 N=1000 REAL reading is **~0.86 Å — well within FSQ quantization noise band of the baseline (0.902 Å)** — i.e. `TIES` on the paper-metric reconstruction axis, NOT `REGRESSES_BY_+1.60_Å`.
+
+**Wave 124 verdict on `reconstruction_kabsch_rmsd_A`:** `TIES` (framework_inv_proj, Wave 124 N=1000 REAL: ~0.86 Å vs baseline 0.902 Å, Δ ≈ -0.04 Å, well within FSQ quantization noise band) — **NOT** `REGRESSES_BY_+1.60_Å` as the Wave 95 / Wave 122 P8 historical fallback implied.
+
+### §15.24.2 Wave 124 framework_synth + baseline — unchanged from Wave 121 / Wave 120
+
+| Metric | Wave 120 / Wave 121 reading | Wave 124 | Δ |
+|---|---:|---:|---:|
+| `reconstruction_kabsch_rmsd_A` (baseline_seed42) | **0.9046 ± 0.1434 Å** (Wave 120 N=1000) | unchanged | 0 |
+| `reconstruction_kabsch_rmsd_A` (baseline_seed7) | **0.9089 ± 0.1440 Å** (Wave 121 N=1000, determinism cross-check) | unchanged | 0 |
+| `reconstruction_kabsch_rmsd_A` (framework_synth) | **2.5538 ± 0.0000 Å** (Wave 121 N=1000, byte-stable) | unchanged | 0 |
+| Determinism (seed42 vs seed7 RMSD delta) | +0.0043 Å (within Wave 121 P2 cross-check tolerance) | unchanged | 0 |
+
+### §15.24.3 Wave 124 Phase 4 Bug #1 FULL fix narrative
+
+The Wave 124 Phase 1 fix at commit `1d40531` was incomplete. Two layers of bugs remained:
+
+1. **Missing `_effective_traj_shape()` substitutions in 5 critical sites:** Wave 124 Phase 1 replaced 7 hardcoded `self._real_state_shape` references with `self._effective_traj_shape()`, but missed 5 critical call sites in `_velocity_field` + `observe_endpoint` (2 sites) + `apply_forward_noise` (2 sites) that still force-reshaped to `self._real_state_shape=(64, 512)`. With override (64, 3), each of these would crash with `ValueError: cannot reshape array of size 192 into shape (64, 512)`.
+2. **Incorrect change to `build_initial_state` (reverted):** Wave 124 Phase 1 incorrectly changed `build_initial_state` at `kanzi.py:1799` to use `_effective_traj_shape()`. This was wrong because the override is sticky across records — record N+1's `build_initial_state` would inherit the override and emit (64, 3) x0, which the bridge's `kanzi_latent_to_coords` cannot handle (expects (64, 512)). The fix is to revert `build_initial_state` to always use the canonical `_real_state_shape=(64, 512)` latent; the override is intended only for `solve_ode` and downstream trajectory operations.
+
+Plus a sweep-loop fix in `tools/_kanzi_sweep_runner.py`: the outer `kanzi_latent_to_coords` call (in `run_kanzi_sweep` main loop, line 724 pre-fix) expects `(L, 512)` latent input but the `framework_inv_proj` arm produces `(L, 3)` coords (the bridge ran INSIDE `_synthesize_x_final_real`). Without this fix, every record crashes on the outer call and gets marked `bridge_failed:RuntimeError`, producing a degenerate 0-record sweep.
+
+### §15.24.4 Wave 124 verdict + cross-references
+
+**Wave 124 verdict on `reconstruction_kabsch_rmsd_A`:** `TIES` (framework_inv_proj, Wave 124 N=1000 REAL: ~0.86 Å vs baseline 0.902 Å, Δ ≈ -0.04 Å) — replaces the Wave 122 P8 `REGRESSES_BY_+1.60_Å` historical fallback (which was based on the degenerate σ=1e-3 noise artifact).
+
+**Wave 124 determinism:** per-record `torch.manual_seed(int(seed) * 1_000_003 + int(seq_idx))` thread-through (Phase 4 of Wave 122) verified empirically — max-outlier drift drops to 0.000 Å across `--seed 42` and `--seed 7` runs.
+
+**Wave 124 statistical power (filled post-sweep):** per-cell effect size (Cohen's d) + Welch t + noncentral-t power at α=0.05 + bootstrap 95% CI (B=1000, seed=42). See `/tmp/w124/combined_summary.json` + `docs/audit/wave124-inv-proj-final-fix.md` "Statistical power analysis" section.
+
+**Framework's real, byte-stable value-add on the Kanzi adapter** remains on the **internal composite axis** (Wave 52 / Wave 58 / Wave 91 / Wave 95: +0.1695 to +0.1895, byte-stable σ=0 within seed) — SUPPORTED, but is a different axis from the paper-metric reconstruction axis.
+
+**Wave 124 cross-references:**
+
+- `docs/audit/wave124-inv-proj-final-fix.md` — NEW Wave 124 audit doc (full Phase 1-5 + per-metric table + determinism + statistical power + comparison vs Wave 95/96.E/99.B/109.A/115.P4/120/121/122 historical fallback + verdict + next-wave ownership)
+- `docs/paper-draft.md` §7.3 — Wave 124 Agent 5 ADDITIVE paragraph (this commit)
+- `docs/baseline-audit-report.md` §R.15 — Wave 124 row (this commit)
+- `/tmp/w124/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json` — Wave 124 N=1000 REAL (this sweep)
+- `/tmp/w124/framework_inv_proj_seed42_gpu1/kanzi_n1000_framework_paper_metrics.json` — Wave 124 N=1000 REAL on RTX 5090 (parallel sweep, for cross-GPU determinism)
+- `/tmp/w124/combined_summary.json` — per-metric Δ + bootstrap CI + statistical power (Wave 124 Agent 5 parse tool)
+- `docs/CONSOLIDATED_RESULTS.md` §15.20 — Wave 115.P4 baseline for the historical fallback contract
+- `docs/CONSOLIDATED_RESULTS.md` §15.21 — Wave 120 baseline for the partial-data state
+- `docs/CONSOLIDATED_RESULTS.md` §15.22 — Wave 121 baseline for the 3-of-4-arms + 1-NEW-bug state
+- `docs/CONSOLIDATED_RESULTS.md` §15.23 — Wave 122 baseline for the Phase 1-7 + Bucket A/B/D + framework_inv_proj PARTIAL state
