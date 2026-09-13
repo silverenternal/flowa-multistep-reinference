@@ -926,11 +926,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"({sweep['elapsed_seconds']:.1f}s)"
         )
         if not args.skip_plots:
-            paths = _generate_plots(target, sweep, FIGURES_DIR)
-            plot_paths.extend(paths.values())
-            print(
-                f"[noise_injection]   plots: {', '.join(p.name for p in paths.values())}"
-            )
+            try:
+                paths = _generate_plots(target, sweep, FIGURES_DIR)
+            except ModuleNotFoundError as exc:
+                if exc.name != "matplotlib":
+                    raise
+                print("[noise_injection]   matplotlib unavailable; skipping plots")
+            else:
+                plot_paths.extend(paths.values())
+                print(
+                    f"[noise_injection]   plots: {', '.join(p.name for p in paths.values())}"
+                )
 
     # JSON dump of the raw per-seed per-sigma metrics.
     ts = int(time.time())

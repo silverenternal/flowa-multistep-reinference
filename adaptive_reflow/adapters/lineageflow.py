@@ -328,7 +328,11 @@ def torch_is_available() -> bool:
     """
     import importlib.util as _il
 
-    return _il.find_spec("torch") is not None
+    try:
+        return _il.find_spec("torch") is not None
+    except (ImportError, ValueError):
+        # Test doubles may register a sentinel module without a ModuleSpec.
+        return False
 
 
 def _theta_to_logits(theta: ArrayF64, eps: float = 1e-12) -> ArrayF64:
