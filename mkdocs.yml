@@ -140,6 +140,7 @@ nav:
       - Current audit records:
           - BRAI perturbation magnitude: audit/brai-perturbation-magnitude-2026-09-13.md
           - CIFAR evaluation corrections: audit/cifar-evaluation-corrections.md
+          - CIFAR FID performance audit: audit/cifar-fid-performance-audit.md
           - Docs evidence audit: audit/docs-evidence-audit-2026-09-13.md
           - Engineering audit: audit/engineering-audit-2026-09-13.md
           - Framework/model gap CPU audit: audit/framework-model-gap-cpu-2026-09-13.md
