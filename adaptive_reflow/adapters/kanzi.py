@@ -1516,6 +1516,17 @@ class KanziAdapter(FlowMatchingODEAdapter):
         self._real_seq_length: int | None = None
         self._real_levels: tuple[int, ...] | None = None
 
+        # Wave 124 Agent 1 — per-call trajectory-shape override. ``None``
+        # means "use ``_real_state_shape``" (the default, byte-stable
+        # backward-compat path). Callers (e.g. the Wave 122 P2 wired
+        # framework_inv_proj arm in ``tools/_kanzi_sweep_runner.py``)
+        # call :meth:`set_traj_shape` BEFORE :meth:`solve_ode` so the
+        # solver honors the actual shape of ``prior_entry["x0"]``
+        # instead of force-reshaping to ``(64, 512)`` — which crashes
+        # on the Wave 95.P3.B bridge's ``(L=64, n_channels=3)``
+        # backbone-coords projection.
+        self._traj_shape_override: tuple[int, ...] | None = None
+
         # Backend handles.
         self._model: Any = None
         self._torch_dtype: Any = None
@@ -1635,6 +1646,48 @@ class KanziAdapter(FlowMatchingODEAdapter):
             int(self._real_latent_dim),
         )
 
+    # ------------------------------------------------------------------
+    # 1c. per-call trajectory-shape override (Wave 124 Agent 1)
+    # ------------------------------------------------------------------
+
+    def set_traj_shape(self, shape: tuple[int, ...] | None) -> None:
+        """Override the trajectory shape used by ``solve_ode``.
+
+        Wave 124 Agent 1 — :meth:`solve_ode` and friends must honor
+        the actual shape of ``prior_entry["x0"]`` instead of
+        force-reshaping to ``_real_state_shape``. The Wave 122 P2
+        bridge in :func:`tools._kanzi_sweep_runner._synthesize_x_final_real`
+        stashes ``(L=64, n_channels=3)`` backbone coords in
+        ``prior_entry["x0"]`` for the framework_inv_proj arm, so the
+        caller must invoke ``adapter.set_traj_shape((64, 3))`` BEFORE
+        :meth:`solve_ode`. Passing ``None`` restores the default
+        (``self._real_state_shape``) so byte-stable call paths keep
+        working unchanged.
+        """
+        if shape is not None:
+            normalized = tuple(int(s) for s in shape)
+            if len(normalized) < 1:
+                raise ValueError("traj_shape_override_must_be_non_empty")
+            self._traj_shape_override = normalized
+        else:
+            self._traj_shape_override = None
+
+    def _effective_traj_shape(self) -> tuple[int, ...]:
+        """Return the trajectory shape used by ``solve_ode``.
+
+        Wave 124 Agent 1 — prefers the per-call override set via
+        :meth:`set_traj_shape` and falls back to
+        ``self._real_state_shape`` (which itself returns
+        ``KANZI_ABSTRACT_STATE_SHAPE`` in abstract mode). Centralising
+        this lookup here means the 7 hard-coded
+        ``self._real_state_shape`` references in ``solve_ode`` /
+        ``apply_restart_distribution`` / ``build_initial_state`` /
+        ``observe_endpoint`` resolve to the same shape end-to-end.
+        """
+        if self._traj_shape_override is not None:
+            return self._traj_shape_override
+        return self._real_state_shape
+
     def _load_ckpt_dims(self, ckpt_path: Path) -> None:
         """Load ``n_channels_decoder`` + ``prod(levels)`` from the ckpt's ``model_cfg``.
 
@@ -1743,7 +1796,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         # abstract ``(64, 64)``. This ensures the trajectory the
         # solver produces matches the upstream DAE decoder input.
         x0 = _synthesize_latent_like_tensor(
-            rng, shape=self._real_state_shape,
+            rng, shape=self._effective_traj_shape(),
         )
         # Sample the discrete-token-index side channel as a fresh
         # AR prior state. The real Kanzi AR prior would condition
@@ -1787,7 +1840,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
             digest,
             {
                 "x0": np.asarray(x0, dtype=np.float64).reshape(
-                    self._real_state_shape,
+                    self._effective_traj_shape(),
                 ),
                 "discrete_idx": np.asarray(discrete_idx, dtype=np.float64),
                 "source_round": 0,
@@ -1892,7 +1945,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
         beta, memory_fraction = memory_fraction_for(policy, ChannelName("protein_latent"))
 
         prior_x = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
-            self._real_state_shape
+            self._effective_traj_shape()
         )
         next_round = int(state.source_round) + 1
         restart_seed_blob = repr((str(policy.policy_hash), next_round)).encode("utf-8")
@@ -1916,7 +1969,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
             # Wave 92 — use real state shape in real mode so the
             # restart preserves ``(L, 512)`` shape end-to-end.
             fresh_x = _synthesize_latent_like_tensor(
-                fresh_rng, shape=self._real_state_shape,
+                fresh_rng, shape=self._effective_traj_shape(),
             )
             perturbation_audit: tuple[str, ...] = ()
         else:
@@ -1932,7 +1985,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
                     float(prior_entry.get("t", 0.0)),
                 ),
                 dtype=np.float64,
-            ).reshape(self._real_state_shape)
+            ).reshape(self._effective_traj_shape())
             perturbation_audit = (AUDIT_KANZI_PERTURBATION_POLICY,)
 
         m_base = max(0.0, min(1.0, float(memory_fraction)))
@@ -1955,7 +2008,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
             # position has a scalar ``m`` shared across the ``d``
             # channels of that position.
             m_vec_full = np.broadcast_to(
-                m_vec[:, None], self._real_state_shape,
+                m_vec[:, None], self._effective_traj_shape(),
             )
             blended = (
                 m_vec_full * prior_x + (1.0 - m_vec_full) * fresh_x
@@ -2235,7 +2288,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
             )
 
         x0 = np.asarray(prior_entry["x0"], dtype=np.float64).reshape(
-            self._real_state_shape if not self._abstract_mode else KANZI_ABSTRACT_STATE_SHAPE
+            self._effective_traj_shape()
         )
         # Deterministic Euler/Heun integration is reproducible for fixed
         # x0, conditioning, and integrator config. To honour the
@@ -2252,10 +2305,7 @@ class KanziAdapter(FlowMatchingODEAdapter):
             0.0, float(KANZI_T_END), num_steps + 1, dtype=np.float64
         )
         traj = np.empty(
-            (t_grid.size, *(
-                self._real_state_shape if not self._abstract_mode
-                else KANZI_ABSTRACT_STATE_SHAPE
-            )),
+            (t_grid.size, *self._effective_traj_shape()),
             dtype=np.float64,
         )
         traj[0] = x0.copy()

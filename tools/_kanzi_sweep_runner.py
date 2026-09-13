@@ -423,6 +423,14 @@ def _synthesize_x_final_real(
             ).reshape(-1, 3) / 10.0
             prior_entry["x0"] = x0_coords_nm
 
+            # Wave 124 Agent 1 — the inverse-projected ``(L, 3)`` x0
+            # differs from the adapter's default ``(L, 512)`` real
+            # state shape. Tell ``KanziAdapter.solve_ode`` to honor
+            # the actual shape instead of force-reshaping, otherwise
+            # we crash with ``ValueError: cannot reshape array of
+            # size 192 into shape (64, 512)`` at kanzi.py:2237-2239.
+            adapter.set_traj_shape(x0_coords_nm.shape)
+
     trace = adapter.solve_ode(bundle, cond, seed=int(seed) + int(record_idx))
     entry = adapter._native_states.get(trace.native_state_digest)  # type: ignore[attr-defined]
     if entry is None or "trajectory" not in entry:
