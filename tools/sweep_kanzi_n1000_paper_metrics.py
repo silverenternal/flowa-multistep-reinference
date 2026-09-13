@@ -143,6 +143,7 @@ def main(argv: list[str] | None = None) -> int:
                          "SKIP). Without --dry-run, the flag is a "
                          "no-op (the legacy default path already "
                          "ignores --config)."))
+    p.add_argument("--resume", action="store_true", help="Resume validated per-record checkpoints in the output directory.")
     args = p.parse_args(argv)
     # Enforce --input for the full sweep path (the dry-run bypass
     # does not need the input file — it constructs a synthetic
@@ -193,6 +194,7 @@ def main(argv: list[str] | None = None) -> int:
         adapter_force_mode=str(args.adapter_force_mode),
         adapter_num_steps=int(args.adapter_num_steps),
         adapter_solver=str(args.adapter_solver),
+        resume=bool(args.resume),
     )
     return 0
 

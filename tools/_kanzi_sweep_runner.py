@@ -352,6 +352,9 @@ def _synthesize_x_final_real(
     seed: int,
     decoder: Any | None = None,
     mode: str | None = None,
+    num_steps: int = 50,
+    solver: str = "euler",
+    decoder_steps: int = 50,
 ) -> np.ndarray:
     """Wave 96.B real framework trajectory endpoint (L2 ~180).
 
@@ -385,11 +388,13 @@ def _synthesize_x_final_real(
     from adaptive_reflow.universal.state import ODEConditionDelta
     batch_id = "wave96b"
     sample_id = f"rec{record_idx}"
+    if mode == "framework_inv_proj" and decoder is None:
+        raise ValueError("framework_inv_proj requires a decoder")
     bundle = adapter.build_initial_state(
         batch_id=batch_id, sample_id=sample_id,
     )
     cond = ODEConditionDelta(
-        delta_spec={"num_steps": 50, "sampler_id": "euler"},
+        delta_spec={"num_steps": num_steps, "sampler_id": solver},
         source="wave96b", target_round=0,
         calibration_artifact_hash="wave96b:default",
     )
@@ -409,6 +414,8 @@ def _synthesize_x_final_real(
     if decoder is not None and mode == "framework_inv_proj":
         from tools.kanzi_latent_to_coord import kanzi_latent_to_coords
         prior_entry = adapter._native_states.get(bundle.native_state_digest)  # type: ignore[attr-defined]
+        if prior_entry is None or "x0" not in prior_entry:
+            raise RuntimeError("Kanzi initial state is missing from the native cache")
         if prior_entry is not None:
             x0_latent = np.asarray(prior_entry["x0"], dtype=np.float64)
             # Wave 122 Phase 4 — per-record torch seed before DAE
@@ -422,7 +429,7 @@ def _synthesize_x_final_real(
                 x0_latent,
                 decoder=decoder,
                 fsq_quantizer=decoder.quantize,
-                n_steps=50,
+                n_steps=decoder_steps,
                 seed=int(seed) + int(record_idx),
             )
             # kanzi_latent_to_coords returns (B, L, 3) Angstrom; reshape
@@ -443,14 +450,12 @@ def _synthesize_x_final_real(
 
     trace = adapter.solve_ode(bundle, cond, seed=int(seed) + int(record_idx))
     entry = adapter._native_states.get(trace.native_state_digest)  # type: ignore[attr-defined]
-    if entry is None or "trajectory" not in entry:
-        # Defensive fallback: initial state only.
-        return np.asarray(
-            entry.get("x0", np.zeros((64, 512), dtype=np.float64))
-            if entry is not None else np.zeros((64, 512), dtype=np.float64),
-            dtype=np.float64,
-        )
-    return np.asarray(entry["trajectory"][-1], dtype=np.float64)
+    if entry is None or "trajectory" not in entry or len(entry["trajectory"]) == 0:
+        raise RuntimeError("Kanzi solve_ode did not produce a trajectory")
+    endpoint = np.asarray(entry["trajectory"][-1], dtype=np.float64)
+    if endpoint.size == 0 or not np.isfinite(endpoint).all():
+        raise RuntimeError("Kanzi solve_ode produced an empty or non-finite endpoint")
+    return endpoint
 
 
 def _mode_metadata(mode: str) -> dict[str, Any]:
@@ -562,6 +567,7 @@ def run_kanzi_sweep(
     adapter_force_mode: str = "torch",
     adapter_num_steps: int = 50,
     adapter_solver: str = "euler",
+    resume: bool = False,
 ) -> None:
     """Run the shared Kanzi N=1000 sweep loop body.
 
@@ -580,7 +586,7 @@ def run_kanzi_sweep(
     seed
         Seed for the framework trajectory / x_final synthesis RNG.
     max_records
-        Hard cap on the number of records to process. ``0`` means
+        Hard cap on the number of parsed records to attempt. ``0`` means
         "process every record in the input file" (Wave 97.D debug
         semantics — ``assert_n_records_match`` is a no-op in this
         case).
@@ -608,6 +614,15 @@ def run_kanzi_sweep(
         raise ValueError(
             f"unknown mode={mode!r}; expected one of {sorted(_ALLOWED_MODES)}"
         )
+
+    if isinstance(max_records, bool) or not isinstance(max_records, int) or max_records < 0:
+        raise ValueError("max_records must be a non-negative integer")
+    if isinstance(nfe_steps, bool) or not isinstance(nfe_steps, int) or nfe_steps < 2:
+        raise ValueError("nfe_steps must be an integer >= 2 for DAE.decode")
+    if isinstance(adapter_num_steps, bool) or not isinstance(adapter_num_steps, int) or adapter_num_steps < 1:
+        raise ValueError("adapter_num_steps must be a positive integer")
+    if adapter_solver not in {"euler", "heun"}:
+        raise ValueError("adapter_solver must be euler or heun")
 
     if torch is None:
         raise RuntimeError("Kanzi execution requires PyTorch; install the Kanzi sidecar dependencies")
@@ -638,6 +653,33 @@ def run_kanzi_sweep(
 
     input_file = Path(input_path) if input_path is not None else _DEFAULT_INPUT
     ckpt = Path(ckpt_path) if ckpt_path is not None else _DEFAULT_CKPT
+
+    from tools._kanzi_checkpoint import SweepCheckpoint, file_sha256
+    source_files = [
+        Path(__file__).resolve(),
+        _REPO_ROOT / "tools/_kanzi_checkpoint.py",
+        _REPO_ROOT / "tools/kanzi_latent_to_coord.py",
+        _REPO_ROOT / "tools/paper_metrics_kanzi.py",
+        _REPO_ROOT / "adaptive_reflow/adapters/kanzi.py",
+        _REPO_ROOT / "adaptive_reflow/adapters/_adapter_common.py",
+        *sorted(_KANZI_SRC.rglob("*.py")),
+    ]
+    if mode != "baseline":
+        source_files.append(_REPO_ROOT / "tools/_kanzi_project_out_inv.pt")
+    protocol = {
+        "mode": mode, "projector": projector, "seed": int(seed),
+        "max_records": int(max_records), "decoder_steps": int(nfe_steps),
+        "adapter_steps": int(adapter_num_steps), "adapter_solver": str(adapter_solver),
+        "adapter_force_mode": str(adapter_force_mode), "pb_engine": str(pb_engine),
+        "input_sha256": file_sha256(input_file), "checkpoint_sha256": file_sha256(ckpt),
+        "source_sha256": {str(p.relative_to(_REPO_ROOT)): file_sha256(p) for p in source_files},
+        "python": sys.version, "torch": torch.__version__, "numpy": np.__version__,
+        "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
+    }
+    if not resume and list(out_dir.glob("kanzi_n1000*metrics.json")):
+        raise FileExistsError(f"existing Kanzi summary in {out_dir}; choose a new output directory")
+    checkpoint = SweepCheckpoint(out_dir / "checkpoint.json", protocol, resume=resume)
+    resumed_records = len(checkpoint.records)
 
     print(f"[{prefix}] loading DAE from {ckpt} ...", file=sys.stderr)
     t0 = time.monotonic()
@@ -683,12 +725,27 @@ def run_kanzi_sweep(
     n_skipped = 0
     skip_reasons: dict[str, int] = {}
     t_sweep = time.monotonic()
+    for record in checkpoint.records.values():
+        if (max_records > 0 and record["index"] >= max_records
+                or any(code >= vocab_size for code in record["codebook_indices"])):
+            raise ValueError("Kanzi checkpoint record exceeds configured record/codebook bounds")
 
     with input_file.open(encoding="utf-8") as fh:
         seq_idx = 0
         for line in fh:
+            if max_records > 0 and seq_idx >= max_records:
+                break
             coords_angstrom = parse_record(line)
             if coords_angstrom is None:
+                continue
+            if not np.isfinite(coords_angstrom).all():
+                raise ValueError(f"non-finite input coordinates at record {seq_idx}")
+            cached = checkpoint.records.get(seq_idx)
+            if cached is not None:
+                per_seq_rmsd[f"seq_{seq_idx}"] = cached["rmsd_A"]
+                all_idx.append(np.asarray(cached["codebook_indices"], dtype=np.int32))
+                n_processed += 1
+                seq_idx += 1
                 continue
 
             # ---- 1. x_final synthesis (mode-specific) ----
@@ -720,6 +777,9 @@ def run_kanzi_sweep(
                         seed=int(seed),
                         decoder=dae,
                         mode="framework_inv_proj",
+                        num_steps=int(adapter_num_steps),
+                        solver=str(adapter_solver),
+                        decoder_steps=int(nfe_steps),
                     )
                     # Wave 124 Agent 5 — ``x_final`` from the
                     # ``framework_inv_proj`` arm is ALREADY backbone
@@ -789,6 +849,8 @@ def run_kanzi_sweep(
 
             # ---- 2. Re-encode for codebook metrics ----
             coords_pred_nm = coords_pred_A.astype(np.float32) / 10.0
+            if not np.isfinite(coords_pred_nm).all():
+                raise ValueError(f"non-finite predicted coordinates at record {seq_idx}")
             L_pred = int(coords_pred_nm.shape[0])
             coords_BLD = coords_pred_nm.reshape(1, L_pred, 3)
             # Baseline arm already mean-centred above; framework arms
@@ -832,10 +894,9 @@ def run_kanzi_sweep(
                         preprocess=False,
                     )
             except Exception as exc:  # noqa: BLE001
-                if mode != "baseline":
-                    n_skipped += 1
-                    reason = f"reencode_failed:{type(exc).__name__}"
-                    skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
+                n_skipped += 1
+                reason = f"reencode_failed:{type(exc).__name__}"
+                skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
                 seq_idx += 1
                 continue
 
@@ -851,7 +912,7 @@ def run_kanzi_sweep(
                 # pattern at line 331. Closes the Wave 121 P2
                 # max-outlier RMSD drift across --seed values.
                 torch.manual_seed(int(seed) * 1_000_003 + int(seq_idx))
-                recon = dae.decode(idx_BL).detach().cpu().numpy() * 10.0
+                recon = dae.decode(idx_BL, n_steps=int(nfe_steps)).detach().cpu().numpy() * 10.0
                 recon_angstrom = recon.reshape(-1, 3).astype(np.float64)
                 pred_angstrom = coords_pred_A.reshape(-1, 3).astype(np.float64)
                 recon_angstrom = (
@@ -865,15 +926,19 @@ def run_kanzi_sweep(
                     torch.from_numpy(recon_angstrom.astype(np.float32)),
                 ))
             except Exception as exc:  # noqa: BLE001
-                if mode != "baseline":
-                    n_skipped += 1
-                    reason = f"rmsd_failed:{type(exc).__name__}"
-                    skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
+                n_skipped += 1
+                reason = f"rmsd_failed:{type(exc).__name__}"
+                skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
                 seq_idx += 1
                 continue
 
+            if not np.isfinite(rmsd_val) or rmsd_val < 0:
+                raise ValueError(f"invalid reconstruction RMSD at record {seq_idx}: {rmsd_val}")
             per_seq_rmsd[f"seq_{seq_idx}"] = rmsd_val
             idx_np = idx_BL.detach().cpu().reshape(-1).to(torch.int32).numpy()
+            if idx_np.size == 0 or np.any(idx_np < 0) or np.any(idx_np >= vocab_size):
+                raise ValueError(f"invalid codebook indices at record {seq_idx}")
+            checkpoint.add(seq_idx, rmsd_val, idx_np.tolist())
             all_idx.append(idx_np)
             seq_idx += 1
             n_processed += 1
@@ -887,6 +952,11 @@ def run_kanzi_sweep(
                 )
 
     sweep_wall = time.monotonic() - t_sweep
+    if n_processed == 0 or n_skipped:
+        raise RuntimeError(
+            f"Kanzi sweep incomplete: {n_processed} succeeded, {n_skipped} failed; "
+            f"reasons={skip_reasons}. Successful records are checkpointed for --resume."
+        )
     if mode != "baseline":
         print(
             f"[{prefix}] processed {n_processed} records (skipped {n_skipped}) "
@@ -924,7 +994,7 @@ def run_kanzi_sweep(
         cb_js_distance = compute_codebook_js_distance(
             idx_pair, vocab_size=vocab_size)
     else:
-        cb_js_distance = 0.0
+        cb_js_distance = None
 
     output: dict[str, Any] = {
         "tool": meta["tool_name"],
@@ -943,9 +1013,9 @@ def run_kanzi_sweep(
         "codebook_metrics": {
             "codebook_entropy_bits": float(cb_entropy_bits),
             "codebook_perplexity": float(cb_perplexity),
-            "codebook_js_distance": float(cb_js_distance),
+            "codebook_js_distance": float(cb_js_distance) if cb_js_distance is not None else None,
             "codebook_utilization": float(cb_utilization),
-            "codebook_hamming_rotation_invariance": 0.0,
+            "codebook_hamming_rotation_invariance": None,
         },
         "codebook_metrics_notes": {
             "entropy": "computed across all N record indices concatenated",
@@ -958,10 +1028,26 @@ def run_kanzi_sweep(
                 "skipped in sweep loop (encoder-only; would 2x runtime)"
             ),
         },
+        "codebook_metric_sample_counts": {
+            "codebook_entropy_bits": n_processed,
+            "codebook_perplexity": n_processed,
+            "codebook_utilization": n_processed,
+            "codebook_js_distance": 2 if cb_js_distance is not None else 0,
+            "codebook_hamming_rotation_invariance": 0,
+        },
         "x_final_synthesis": meta["x_final_synthesis"],
         "bridge": meta["bridge"],
         "n_steps_decoder": int(nfe_steps),
         "deterministic": True,
+        "per_seq_rmsd_A": per_seq_rmsd,
+        "n_records_attempted": int(seq_idx),
+        "n_records_skipped": int(n_skipped),
+        "skip_reasons": skip_reasons,
+        "resumed_records": resumed_records,
+        "measurement_scope": (
+            "input-coordinate autoencoder roundtrip" if mode == "baseline"
+            else "generated-coordinate autoencoder roundtrip; not paired input reconstruction or multi-round refinement"
+        ),
         "wave": meta["wave_marker"],
         "verdict": {
             "arm": meta["verdict_arm"],
@@ -971,9 +1057,8 @@ def run_kanzi_sweep(
 
     # Per-mode JSON extras (preserve original driver contract).
     if mode == "baseline":
-        output["n_records_by_pdb"] = {
-            "1s7mB01": 250, "2hoxA01": 250, "3bg1B01": 250, "6nrzA01": 250,
-        }
+        output["n_records_by_pdb"] = None
+        output["n_records_by_pdb_note"] = "Input coordinate lines do not contain PDB identifiers."
         output["pb_engine"] = str(pb_engine)
         output["pb_engine_note"] = (
             "PoseBusters engine for downstream pb_validity_pct "
@@ -1006,6 +1091,17 @@ def run_kanzi_sweep(
         )
         summary_path = out_dir / "kanzi_n1000_framework_paper_metrics.json"
     else:  # framework_inv_proj
+        output["nfe_budget"] = {
+            "adapter_solver": str(adapter_solver),
+            "adapter_steps": int(adapter_num_steps),
+            "adapter_velocity_evaluations": int(adapter_num_steps) * (2 if adapter_solver == "heun" else 1),
+            "pre_loop_decode_steps": int(nfe_steps),
+            "roundtrip_decode_steps": int(nfe_steps),
+        }
+        output["x_final_synthesis"] = (
+            "seeded (64,512) latent -> inverse projection and DAE decode -> "
+            "(64,3) nm coordinates -> configured single adapter rollout"
+        )
         output["n_records_skipped"] = int(n_skipped)
         output["skip_reasons"] = skip_reasons
         output["verdict"]["baseline_arm_source"] = (
@@ -1034,7 +1130,7 @@ def run_kanzi_sweep(
         sweep_name=meta["tool_name"].replace("tools.", ""),
     )
     summary_path.write_text(
-        json.dumps(output, indent=2, sort_keys=False) + "\n",
+        json.dumps(output, indent=2, sort_keys=False, allow_nan=False) + "\n",
         encoding="utf-8",
     )
     print(f"[{prefix}] wrote {summary_path}", file=sys.stderr)

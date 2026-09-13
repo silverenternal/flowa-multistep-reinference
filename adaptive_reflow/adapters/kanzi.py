@@ -1126,12 +1126,12 @@ def _load_torch_model(weights_path: Path) -> Any:
     :func:`adaptive_reflow.adapters._adapter_common.load_real_weights`
     trait. The actual loading lives in the ``_builder`` closure below;
     when it raises (e.g. the upstream ``kanzi.models.DAE`` import path
-    isn't vendored), ``load_real_weights`` falls back to
-    ``_stub_factory()`` which returns the deterministic zero-velocity
-    stub used when no real Kanzi weights are available.
+    is not vendored), loading fails with ``CapabilityMissingError``.
+    Synthetic execution requires explicit ``force_mode="synthetic"``;
+    a real checkpoint must never silently become a zero-velocity model.
 
-    The official ``kanzi.models.DAE.from_pretrained(...)`` factory
-    loads the same checkpoint the upstream repo uses. We wrap it in a
+    The official ``DAE`` and ``DAEConfig`` constructors load the upstream
+    checkpoint on CPU, including checkpoints saved on CUDA. We wrap it in a
     thin ``forward(x, t, family) -> v`` shim that exposes the
     ``(B, L_z, d)`` velocity field contract expected by
     :func:`_torch_velocity_field`. No new training, no architecture
@@ -1144,7 +1144,7 @@ def _load_torch_model(weights_path: Path) -> Any:
     constructor before this function is called.
     """
     import torch  # local import — torch is optional.
-    import torch.nn as _nn  # used by the stub fallback + the shim below.
+    import torch.nn as _nn  # used by the upstream shim below.
 
     class _KanziDAEShim(_nn.Module):
         """Wrap upstream :class:`DAE` to expose the adapter's call contract.
@@ -1200,15 +1200,14 @@ def _load_torch_model(weights_path: Path) -> Any:
     def _builder(p: Path) -> Any:
         """Build the real ``_KanziDAEShim`` from ``p`` (Wave 99 followup).
 
-        The factory at ``data/kanzi_upstream/src/kanzi/models.py:335``
-        reads ``ckpt["model"]`` (Wave 80 key) and ``ckpt["model_cfg"]``
-        and returns a fully-wired ``DAE`` with the trained encoder +
-        flow net + FSQ codebook + ``project_out`` head. The upstream
+        Uses the same config and strict state loading as upstream
+        ``DAE.from_pretrained``, with explicit CPU deserialization because
+        the upstream factory does not accept ``map_location``. The upstream
         ``sys.path`` pattern (matches ``tools/upstream_eval.py:420-422``)
         is to vendor ``data/kanzi_upstream/src`` so ``from
         kanzi.models import DAE`` resolves cleanly. Any exception here
-        propagates to :func:`load_real_weights`, which falls back to
-        ``_stub_factory()``.
+        propagates to :func:`load_real_weights`, which raises a typed
+        ``CapabilityMissingError``.
         """
         import sys as _sys
         from pathlib import Path as _Path
@@ -1216,56 +1215,31 @@ def _load_torch_model(weights_path: Path) -> Any:
         _KANZI_SRC = _Path(__file__).resolve().parent.parent.parent / "data" / "kanzi_upstream" / "src"
         if str(_KANZI_SRC) not in _sys.path:
             _sys.path.insert(0, str(_KANZI_SRC))
-        from kanzi.models import DAE  # type: ignore[import-not-found]
+        from kanzi.models import DAE, DAEConfig  # type: ignore[import-not-found]
 
-        dae = DAE.from_pretrained(str(p))
+        checkpoint = torch.load(str(p), map_location="cpu", weights_only=True)
+        dae = DAE(DAEConfig(**checkpoint["model_cfg"]))
+        dae.load_state_dict(checkpoint["model"], strict=True)
         dae.eval()
         return _KanziDAEShim(dae)
 
-    def _stub_factory() -> Any:
-        """Deterministic zero-velocity stub used when upstream ``DAE`` is unavailable.
-
-        Mirrors the shape contract expected by
-        :func:`_torch_velocity_field` (``forward(x, t, family) -> v``
-        of shape ``(B, L, d)``) so test seams can exercise the call
-        site without a real ckpt. Never silently on a real
-        ``weights_path`` (the adapter constructor already verified the
-        file exists + torch is available).
-
-        Wave 106.C.1 F-06 gating note: this stub is fail-closed via
-        the Wave 103 P2-A ``load_real_weights(..., stub_factory=_stub_factory)``
-        trait on ``_adapter_common``. The trait is reached ONLY when the
-        upstream ``kanzi.models.DAE`` import fails (network/cache/SHA
-        miss). Constructor verifies the file exists BEFORE invoking
-        this path. See ``docs/audit/wave106-a-1-adapter-stubs.md``
-        §2.2 finding #6.
-        """
-
-        class _StubKanzi(_nn.Module):
-            def __init__(self) -> None:
-                super().__init__()
-                self.in_channels = KANZI_LATENT_DIM
-                self.out_channels = KANZI_LATENT_DIM
-                self.register_parameter(
-                    "_dummy",
-                    _nn.Parameter(torch.zeros(1, dtype=torch.float32), requires_grad=False),
-                )
-
-            def forward(self, x: "torch.Tensor", t: "torch.Tensor", family: "torch.Tensor") -> "torch.Tensor":
-                return torch.zeros(
-                    x.shape[0], x.shape[1], x.shape[2],
-                    dtype=x.dtype, device=x.device,
-                )
-
-        return _StubKanzi()
-
-    return load_real_weights(
-        weights_path,
-        builder=_builder,
-        stub_factory=_stub_factory,
-        upstream_label="kanzi_dae_load_failed",
-        compat_shim=None,
-    )
+    try:
+        return load_real_weights(
+            weights_path,
+            builder=_builder,
+            upstream_label="kanzi_dae_load_failed",
+            compat_shim=None,
+        )
+    except CapabilityMissingError:
+        raise
+    except Exception as exc:
+        # The shared loader's checkpoint preflight precedes its builder
+        # exception handler. Normalize corrupt/unreadable files here too,
+        # without changing other adapters' loader policies.
+        raise CapabilityMissingError(
+            "kanzi_dae_load_failed",
+            context=f"{type(exc).__name__}:{exc}",
+        ) from exc
 
 
 # ---------------------------------------------------------------------------

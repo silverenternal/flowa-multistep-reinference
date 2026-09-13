@@ -700,7 +700,7 @@ def test_run_kanzi_sweep_end_to_end_n1_no_attribute_error(
             idx_BL = torch.zeros(B, L, dtype=torch.int64)
             return (x, x, x, idx_BL)
 
-        def decode(self, idx_BL: torch.Tensor) -> torch.Tensor:
+        def decode(self, idx_BL: torch.Tensor, n_steps: int = 100) -> torch.Tensor:
             B, L = idx_BL.shape
             return torch.zeros(B, L, 3, dtype=torch.float32)
 
@@ -735,6 +735,8 @@ def test_run_kanzi_sweep_end_to_end_n1_no_attribute_error(
 
         # ---- 4. Call run_kanzi_sweep(mode="baseline", max_records=1) ----
         out_dir = tmp_path / "out"
+        checkpoint_file = tmp_path / "fake.pt"
+        checkpoint_file.write_bytes(b"stand-in model checkpoint")
 
         # Pre-fix: AttributeError raised by ``device=dae.device`` on
         # nn.Module — caught by the outer try/except, increments
@@ -749,10 +751,14 @@ def test_run_kanzi_sweep_end_to_end_n1_no_attribute_error(
             max_records=1,
             nfe_steps=10,
             input_path=input_file,
-            # ckpt_path is unused because from_pretrained is mocked,
-            # but the runner constructs Path() on it so we pass a
-            # tmp path that doesn't have to exist.
-            ckpt_path=tmp_path / "fake_does_not_exist.pt",
+            ckpt_path=checkpoint_file,
+        )
+        def no_recomputation(*args, **kwargs):
+            raise AssertionError("completed records must be recovered without model evaluation")
+        monkeypatch.setattr(StandInDAE, "encode", no_recomputation)
+        runner.run_kanzi_sweep(
+            mode="baseline", output_dir=str(out_dir), seed=0, max_records=1,
+            nfe_steps=10, input_path=input_file, ckpt_path=checkpoint_file, resume=True,
         )
     finally:
         monkeypatch.undo()
@@ -765,6 +771,8 @@ def test_run_kanzi_sweep_end_to_end_n1_no_attribute_error(
         f"implies the loop raised before completion."
     )
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["resumed_records"] == 1
+    assert summary["codebook_metrics"]["codebook_hamming_rotation_invariance"] is None
     assert summary["n_records_processed"] == 1, (
         f"Wave 116 regression: expected n_records_processed=1 (the "
         f"input file has exactly 1 valid record). Pre-fix the loop "
@@ -954,13 +962,11 @@ def test_synthesize_x_final_real_inv_proj_calls_latent_to_coords_bridge(
                 "digest": state.native_state_digest,
                 "x0_shape": tuple(x0.shape),
             }
-            # Use a DIFFERENT digest so the runner takes the
-            # defensive-fallback path and returns the post-projection
-            # x0 (which is now (64, 3) coords in nm after the
-            # inverse-projection block ran).
+            # Store an explicit trajectory under the trace digest.
             traj_digest = f"traj_digest::{state.native_state_digest}"
             self._native_states[traj_digest] = {
-                "x0": x0,  # echo the post-projection x0
+                "x0": x0,
+                "trajectory": np.stack([x0, x0]),
             }
             return ODEIntegratorTrace(
                 steps=1,
@@ -1074,13 +1080,7 @@ def test_synthesize_x_final_real_inv_proj_calls_latent_to_coords_bridge(
         f"`adapter.solve_ode` is called."
     )
 
-    # ---- 7. Assert the returned x_final is the post-projection coords ----
-    # The runner's defensive-fallback path returns `entry["x0"]` when
-    # no `"trajectory"` key is present in the trace's native_states
-    # entry. The fake `solve_ode` echoes the (now (64, 3) coords)
-    # `x0` into the trace's `_native_states`, so the returned
-    # `x_final` should be (64, 3) — confirming the inverse projection
-    # end-to-end propagated through the integration.
+    # The endpoint is read from the explicit trajectory, not initial-state fallback.
     assert out.shape == (64, 3), (
         "Wave 122 Phase 2 pin: the `_synthesize_x_final_real` "
         "return value MUST carry the post-inverse-projection "
@@ -1244,7 +1244,7 @@ def test_dae_seed_threading_is_per_record(
             x0 = self._native_states.get(
                 state.native_state_digest, {},
             ).get("x0", np.zeros((0,), dtype=np.float64))
-            self._native_states[traj_digest] = {"x0": x0}
+            self._native_states[traj_digest] = {"x0": x0, "trajectory": np.stack([x0, x0])}
             return ODEIntegratorTrace(
                 steps=1,
                 accept_rate=1.0,

@@ -115,6 +115,7 @@ def main(argv: list[str] | None = None) -> int:
                          "config-driven code path. When combined with "
                          "--dry-run, exits 78 (env-no-config gate, "
                          "SKIP)."))
+    p.add_argument("--resume", action="store_true", help="Resume validated per-record checkpoints in the output directory.")
     args = p.parse_args(argv)
     # Enforce --input for the full sweep path (the dry-run bypass
     # does not need the input file).
@@ -163,6 +164,7 @@ def main(argv: list[str] | None = None) -> int:
         adapter_force_mode=str(args.adapter_force_mode),
         adapter_num_steps=int(args.adapter_num_steps),
         adapter_solver=str(args.adapter_solver),
+        resume=bool(args.resume),
     )
     return 0
 
