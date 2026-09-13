@@ -492,6 +492,12 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     schedulers = _build_schedulers(n_rounds=int(args.n_rounds))
+    requested = tuple(s.strip() for s in str(args.schedulers).split(",") if s.strip())
+    unknown = set(requested) - set(schedulers)
+    if unknown:
+        raise ValueError(f"unknown scheduler(s): {sorted(unknown)}")
+    if requested:
+        schedulers = {k: v for k, v in schedulers.items() if k in requested}
     summaries: list[dict[str, Any]] = []
     for name, scheduler in schedulers.items():
         try:
@@ -551,6 +557,8 @@ def _build_argparser() -> argparse.ArgumentParser:
                    help="Path to .npz with real CIFAR-10 InceptionV3 features.")
     p.add_argument("--output-dir", type=str, default="data/rf_ablation",
                    help="Where to save the per-scheduler JSON + markdown.")
+    p.add_argument("--schedulers", type=str, default="",
+                   help="Optional comma-separated scheduler names; empty runs all.")
     return p
 
 
