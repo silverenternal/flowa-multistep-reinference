@@ -227,6 +227,8 @@ def _run_kanzi_dry_run(
     separately covered by the unit tests in
     :mod:`tests.test_adapters.test_kanzi` (Wave 113.A.5 Fix 1).
     """
+    if torch is None:
+        raise RuntimeError("Kanzi execution requires PyTorch; install the Kanzi sidecar dependencies")
     _ensure_sys_path()
     from adaptive_reflow.adapters.kanzi import default_kanzi_adapter  # noqa: E402
     from adaptive_reflow.universal.state import ODEConditionDelta  # noqa: E402
@@ -607,6 +609,8 @@ def run_kanzi_sweep(
             f"unknown mode={mode!r}; expected one of {sorted(_ALLOWED_MODES)}"
         )
 
+    if torch is None:
+        raise RuntimeError("Kanzi execution requires PyTorch; install the Kanzi sidecar dependencies")
     _ensure_sys_path()
     from kanzi import DAE, kabsch_rmsd  # noqa: E402
     from tools.kanzi_latent_to_coord import kanzi_latent_to_coords  # noqa: E402

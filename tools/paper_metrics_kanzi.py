@@ -896,4 +896,17 @@ __all__ = [
     "compute_codebook_utilization",
     "compute_reconstruction_kabsch_rmsd_A",
     "kanzi_available",
+    "compute_pb_validity_pct",
 ]
+
+
+def compute_pb_validity_pct(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Compatibility re-export of the canonical PoseBusters metric helper.
+
+    Kanzi callers historically imported paper metrics from this module. Keep
+    that import path stable while delegating implementation to
+    :mod:`tools.paper_metrics` and its dependency-isolated loader.
+    """
+    from tools.paper_metrics import compute_pb_validity_pct as _compute
+
+    return _compute(*args, **kwargs)
