@@ -611,3 +611,158 @@ def test_brai_eps_scale_zero_is_rejected_but_tiny_is_accepted() -> None:
     x_perturbed = brai.propose(x, paper_quantities=pq, t=0.0)
     # The push is tiny but the policy MUST NOT crash.
     assert math.isfinite(x_perturbed[0])
+
+
+# ---------------------------------------------------------------------------
+# Test 6 — Wave 125 H2 fix: per-call ``magnitude`` kwarg override
+# ---------------------------------------------------------------------------
+#
+# Per todo/algo-improvement-brai-perturbation-magnitude.md (Wave 123
+# plan H2), the canonical ``eps_scale = 0.1`` default may over- or
+# under-perturb relative to the optimal RMSD-improvement sweet spot
+# for some model families (protein, image, audio, graph). To allow
+# per-model-family tuning WITHOUT changing the global default, the
+# ``propose`` method now accepts a ``magnitude`` kwarg that, when
+# supplied, overrides ``eps_scale`` for that single call only. The
+# instance's ``eps_scale`` is NOT mutated, so a subsequent call
+# without ``magnitude`` reverts to the configured default
+# (backward-compatible legacy behaviour).
+#
+# These tests guard the new contract.
+
+
+def test_brai_perturbation_magnitude_respects_kwarg() -> None:
+    """BRAI perturbation magnitude must respect the magnitude kwarg.
+
+    Constructed with the canonical default ``eps_scale = 0.1``,
+    the policy MUST use ``magnitude = 0.05`` (not ``0.1``) when the
+    caller passes ``magnitude = 0.05`` to ``propose``. The push
+    ``x_perturbed - x_saturated`` is therefore ``0.05 * (-grad)``
+    rather than ``0.1 * (-grad)`` — i.e. the per-call kwarg
+    overrides the constructor default (no silent override).
+
+    Test geometry: unit-vector saturated state along the x-axis
+    with the analytic Gaussian prior (``sigma = 1.0``) gives
+    ``-grad = x / sigma^2 = x``, so the perturbation vector
+    equals ``magnitude * x``. For ``x = [1.0, 0.0, 0.0]`` and
+    ``magnitude = 0.05`` the perturbation is ``[0.05, 0.0, 0.0]``
+    exactly.
+    """
+    brai = PaperQuantityAttractorInversion(
+        eps_scale=DEFAULT_BRAI_EPS_SCALE,  # 0.1
+        default_sigma=1.0,
+    )
+    x_sat = np.array([1.0, 0.0, 0.0], dtype=np.float64)
+    pq = {"e_rho": 1.0}
+    x_perturbed = brai.propose(
+        x_sat, paper_quantities=pq, t=0.0, magnitude=0.05
+    )
+    # Perturbation vector = magnitude * (-grad) = 0.05 * x.
+    np.testing.assert_allclose(
+        x_perturbed - x_sat, 0.05 * x_sat, atol=1e-12
+    )
+    # And the magnitude kwarg MUST NOT have been silently ignored
+    # in favour of the constructor eps_scale=0.1 (which would have
+    # produced x_perturbed = [1.1, 0, 0], not [1.05, 0, 0]).
+    assert abs(x_perturbed[0] - 1.05) < 1e-12
+    assert x_perturbed[0] != pytest.approx(1.1)
+
+
+def test_brai_perturbation_default_magnitude_unchanged() -> None:
+    """BRAI default magnitude must remain backward-compatible.
+
+    Without the ``magnitude`` kwarg, the policy MUST use the
+    constructor-configured ``eps_scale`` (pre-Wave-125 default =
+    ``DEFAULT_BRAI_EPS_SCALE = 0.1``). The perturbation vector
+    therefore equals ``0.1 * x`` for the unit-vector test point
+    — i.e. the byte-stable legacy behaviour is preserved.
+
+    This test guards against a silent breaking change: a future
+    edit that flips the default magnitude or that interprets the
+    new kwarg differently would fail this assertion.
+    """
+    brai = PaperQuantityAttractorInversion(
+        eps_scale=DEFAULT_BRAI_EPS_SCALE,  # 0.1
+        default_sigma=1.0,
+    )
+    x_sat = np.array([1.0, 0.0, 0.0], dtype=np.float64)
+    pq = {"e_rho": 1.0}
+    # No ``magnitude`` kwarg: must use the constructor default.
+    x_perturbed = brai.propose(x_sat, paper_quantities=pq, t=0.0)
+    # Perturbation vector = eps_scale * (-grad) = 0.1 * x.
+    np.testing.assert_allclose(
+        x_perturbed - x_sat, DEFAULT_BRAI_EPS_SCALE * x_sat, atol=1e-12
+    )
+    assert x_perturbed[0] == pytest.approx(1.0 + DEFAULT_BRAI_EPS_SCALE)
+
+
+def test_brai_perturbation_magnitude_kwarg_does_not_mutate_eps_scale() -> None:
+    """A ``magnitude`` kwarg MUST NOT mutate the instance's ``eps_scale``.
+
+    The per-call override is a one-shot knob: the next call
+    without ``magnitude`` must use the constructor default. This
+    guards against an accidental in-place update that would make
+    later calls under- or over-perturb relative to the
+    configured default.
+    """
+    brai = PaperQuantityAttractorInversion(
+        eps_scale=DEFAULT_BRAI_EPS_SCALE,  # 0.1
+        default_sigma=1.0,
+    )
+    eps_before = brai.eps_scale
+    x_sat = np.array([1.0, 0.0, 0.0], dtype=np.float64)
+    pq = {"e_rho": 1.0}
+    # Call with magnitude=0.05 (override).
+    _ = brai.propose(x_sat, paper_quantities=pq, t=0.0, magnitude=0.05)
+    # The instance's eps_scale MUST be unchanged.
+    assert brai.eps_scale == pytest.approx(eps_before)
+    # Subsequent call without magnitude MUST use the original
+    # eps_scale (0.1), not the override.
+    x_perturbed = brai.propose(x_sat, paper_quantities=pq, t=0.0)
+    np.testing.assert_allclose(
+        x_perturbed - x_sat, eps_before * x_sat, atol=1e-12
+    )
+
+
+def test_brai_perturbation_magnitude_kwarg_rejects_non_positive() -> None:
+    """BRAI ``magnitude`` kwarg MUST reject non-positive / non-finite input.
+
+    Same boundary contract as the constructor's ``eps_scale``:
+    ``magnitude = 0`` would freeze the trajectory, and negative
+    or non-finite values are numerically meaningless.
+    """
+    brai = PaperQuantityAttractorInversion(default_sigma=1.0)
+    x_sat = np.array([1.0, 0.0], dtype=np.float64)
+    pq = {"e_rho": 1.0}
+    with pytest.raises(PerturbationConfigError):
+        brai.propose(x_sat, paper_quantities=pq, t=0.0, magnitude=0.0)
+    with pytest.raises(PerturbationConfigError):
+        brai.propose(x_sat, paper_quantities=pq, t=0.0, magnitude=-0.05)
+    with pytest.raises(PerturbationConfigError):
+        brai.propose(x_sat, paper_quantities=pq, t=0.0, magnitude=float("nan"))
+
+
+def test_brai_perturbation_magnitude_kwarg_overrides_constructor_eps_scale() -> None:
+    """``magnitude`` kwarg overrides the constructor ``eps_scale``.
+
+    Constructed with a non-default ``eps_scale = 0.5`` and called
+    with ``magnitude = 0.02``, the policy MUST use ``0.02`` (not
+    ``0.5``) for this call. This proves the kwarg is a true
+    override (not a fallback when ``eps_scale`` is the canonical
+    default).
+    """
+    brai = PaperQuantityAttractorInversion(
+        eps_scale=0.5, default_sigma=1.0
+    )
+    x_sat = np.array([1.0, 0.0, 0.0], dtype=np.float64)
+    pq = {"e_rho": 1.0}
+    x_perturbed = brai.propose(
+        x_sat, paper_quantities=pq, t=0.0, magnitude=0.02
+    )
+    np.testing.assert_allclose(
+        x_perturbed - x_sat, 0.02 * x_sat, atol=1e-12
+    )
+    # Constructed eps_scale=0.5 MUST NOT have leaked through
+    # (would have produced x_perturbed[0] = 1.5, not 1.02).
+    assert abs(x_perturbed[0] - 1.02) < 1e-12
+    assert x_perturbed[0] != pytest.approx(1.5)

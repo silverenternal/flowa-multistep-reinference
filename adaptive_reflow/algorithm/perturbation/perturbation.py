@@ -892,6 +892,7 @@ class PaperQuantityAttractorInversion:
         t: float,
         *,
         audit_codes: list[str] | None = None,
+        magnitude: Optional[float] = None,
     ) -> Any:
         """Return ``x_saturated + eps_scale * (-grad log P_qty)``.
 
@@ -911,7 +912,37 @@ class PaperQuantityAttractorInversion:
         No analytic gradient supplied but ``log_p_qty`` is →
         finite-difference (audit
         :data:`BRAI_GRAD_FALLBACK_TO_FD`).
+
+        Parameters
+        ----------
+        magnitude:
+            Optional per-call override for the push-magnitude
+            scale (Wave 125 H2 fix). When ``None`` (the default),
+            the constructor-configured :attr:`eps_scale` is used
+            (backward-compatible legacy behaviour). When a positive
+            finite real is supplied, that value is used INSTEAD OF
+            :attr:`eps_scale` for this single call only — the
+            instance's :attr:`eps_scale` is NOT mutated, so a
+            subsequent call without ``magnitude`` reverts to the
+            configured default. Non-positive / non-finite inputs
+            raise :exc:`PerturbationConfigError`. This per-call
+            knob lets callers tune BRAI's push magnitude per
+            model-family (protein, image, audio, graph) without
+            having to construct a new policy instance.
         """
+        # -- 0. Per-call magnitude override (Wave 125 H2 fix). --
+        # When ``magnitude`` is supplied, it overrides the
+        # constructor-configured ``eps_scale`` for this single call
+        # only. The instance's ``eps_scale`` is NOT mutated so a
+        # subsequent call without ``magnitude`` reverts to the
+        # configured default (backward-compatible).
+        if magnitude is None:
+            effective_eps_scale = float(self._eps_scale)
+        else:
+            effective_eps_scale = _coerce_positive_real(
+                magnitude, name="magnitude"
+            )
+
         # -- 1. Missing / partial paper_quantities -> uniform-fresh. --
         if paper_quantities is None:
             if audit_codes is not None:
@@ -974,7 +1005,7 @@ class PaperQuantityAttractorInversion:
             grad_arr = _np.where(_np.isfinite(grad_arr), grad_arr, 0.0)
 
         x_arr = _np.asarray(x_saturated, dtype=_np.float64)
-        return x_arr + float(self._eps_scale) * (-grad_arr)
+        return x_arr + float(effective_eps_scale) * (-grad_arr)
 
     def config_hash(self) -> str:
         """Return a stable digest of the perturbation config.
