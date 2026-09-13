@@ -26,8 +26,14 @@ The cell sweep is:
   = 27 cells per model = 81 cells total
   = 162 single-cell calls (baseline + framework per cell)
 
-For twodim_fm the noise sigma is plumbed through the adapter's
-``noise_sigma`` constructor argument. For CIFAR-10 / LineageFlow the
+For twodim_fm, both arms use Heun with actual velocity-call counting
+(two calls per step), paired initial states and trained local weights.
+Framework states are chained across rounds with a CodimensionSheet schedule;
+``--no-restart-guard`` disables the small-sigma blend guard for comparison.
+The metric is exact empirical joint W2 against the training target sampler,
+not the historical marginal-W1 proxy. Budgets must be even and provide at
+least two calls per round. ``--n-samples 100`` selects exactly 100 samples.
+Noise sigma is plumbed through the adapter's ``noise_sigma`` argument. For CIFAR-10 / LineageFlow the
 adapter does not support a noise sigma on the velocity field, so we
 record sigma=0 only and document the gap (the metric extraction +
 NFE bookkeeping remain comparable).
@@ -52,6 +58,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import statistics
 import sys
@@ -107,7 +114,7 @@ MODEL_TABLE: dict[str, dict[str, Any]] = {
     "twodim_fm": {
         "display_name": "twodim_fm (two_moons)",
         "supports_sigma": True,
-        "metric_family": "wasserstein_2d",
+        "metric_family": "empirical_joint_w2_equal_weight",
         "framework_scheduler": "codimension_sheet",
         "n_samples": 128,
         "n_rounds": 5,
@@ -148,6 +155,9 @@ class CellSpec:
     seed: int
     nfe: int
     sigma: float
+    n_samples: int | None = None
+    restart_guard: bool = True
+    twodim_weights: str | None = None
 
 
 @dataclass
@@ -176,6 +186,7 @@ class CellResult:
     metric_extractor_matched: bool = True
     error: str = ""
     notes: tuple[str, ...] = field(default_factory=tuple)
+    protocol: dict[str, Any] = field(default_factory=dict)
 
     @property
     def delta(self) -> float:
@@ -204,129 +215,201 @@ class CellResult:
 # ---------------------------------------------------------------------------
 
 
-def _run_twodim_fm(spec: CellSpec) -> CellResult:
-    """Run baseline + framework for the ``twodim_fm`` adapter.
+def _twodim_restart_policy(*, sample_id: str, round_index: int, beta: float) -> Any:
+    """Build the actual single-channel restart policy consumed by TwoDimFM."""
+    from dataclasses import replace
+    from adaptive_reflow.contracts import (
+        ArtifactHash, ChannelName, FactorValue, FinalRestartPolicy, LedgerRowId,
+        PolicyId, RunId, hash_policy_hash,
+    )
+    channel = ChannelName("xy")
+    policy = FinalRestartPolicy(
+        policy_id=PolicyId(f"controlled-{sample_id}-{round_index}"),
+        writer_id="inference.adaptive_reflow", run_id=RunId("controlled-twodim"),
+        target_round=round_index, outer_cycle_id=0,
+        beta_by_channel={channel: FactorValue(beta)},
+        alpha_by_channel={channel: FactorValue(1.0)},
+        fresh_noise_floor_by_channel={channel: FactorValue(0.0)},
+        schedule_sample=None, freeze_admission_by_channel={channel: True},
+        ledger_row_id=LedgerRowId(f"controlled-{sample_id}-{round_index}"),
+        policy_hash=ArtifactHash(""), created_at_round=round_index,
+        beta_from_schedule=False,
+    )
+    return replace(policy, policy_hash=hash_policy_hash(policy))
 
-    The 2D adapter is the simplest controlled setting: both arms are
-    byte-deterministic under a fixed seed and the metric is the
-    closed-form 2D Wasserstein.
+
+def _solve_twodim_counted(adapter: Any, state: Any, condition: Any, seed: int) -> tuple[Any, int]:
+    """Count actual velocity queries, including sigma=0, in this serial driver.
+
+    The adapter's noise counter counts *only* noisy queries. A scoped wrapper
+    counts the shared velocity implementation instead, restoring it on failure.
+    This worker must not be called concurrently in threads in the same process.
     """
-    from adaptive_reflow.adapters.twodim_fm import (
-        TWODIM_FM_NUM_STEPS,
-        TwoDimFMAdapter,
-    )
-    from adaptive_reflow.algorithm.batched_runner import (
-        BatchedRunnerConfig,
-        BatchedTrajectoryRunner,
-    )
+    from adaptive_reflow.adapters import twodim_fm
+    velocity = twodim_fm._velocity_field
+    calls = 0
 
-    result = CellResult(
-        model=spec.model,
-        seed=spec.seed,
-        nfe=spec.nfe,
-        sigma=spec.sigma,
-    )
+    def counted(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        return velocity(*args, **kwargs)
 
+    twodim_fm._velocity_field = counted
     try:
-        # --- Baseline arm: single-pass RK4 with `num_steps = nfe`. ---
-        adapter = TwoDimFMAdapter(
-            target="two_moons",
-            integrator="rk4",
-            num_steps=int(spec.nfe),
-            seed_offset=int(spec.seed),
-            noise_sigma=float(spec.sigma),
-            noise_seed=0xC0FFEE,
-        )
-        rng = np.random.default_rng(int(spec.seed) + 1)
-        x0 = rng.standard_normal((MODEL_TABLE["twodim_fm"]["n_samples"], 2)).astype(
-            np.float64
-        )
-        t0 = time.perf_counter()
-        # Direct RK4 call so we match the noise-injection code path
-        # used in ``tools/noise_injection_experiment.py``.
-        from adaptive_reflow.adapters.twodim_fm import _batched_integrate_rk4
+        trace = adapter.solve_ode(state, condition, seed=seed)
+    finally:
+        twodim_fm._velocity_field = velocity
+    return trace, calls
 
-        endpoints = _batched_integrate_rk4(
-            adapter._weights,
-            x0,
-            int(spec.nfe),
-            noise_sigma=float(adapter._noise_sigma),
-            noise_seed=int(adapter._noise_seed),
-            noise_counter=[int(adapter._noise_call_count)],
-        )
-        result.baseline_metric = float(_wasserstein_2d(np.asarray(endpoints)))
-        result.baseline_runtime_s = float(time.perf_counter() - t0)
-        result.baseline_nfe = int(spec.nfe)
 
-        # --- Framework arm: single round, num_steps = nfe (NFE-matched). ---
-        # We intentionally use a *single* round with num_steps = nfe so
-        # the per-endpoint NFE budget is identical to the baseline arm.
-        # This isolates the algorithm-only signal (no NFE averaging).
-        TwoDimFMAdapter(  # adapter_fw not needed; the BatchedRunnerConfig carries the scheduler knobs
-            target="two_moons",
-            integrator="rk4",
-            num_steps=int(spec.nfe),
-            seed_offset=int(spec.seed),
-            noise_sigma=float(spec.sigma),
-            noise_seed=0xC0FFEE,
-        )
-        # Use a no-op scheduler that emits a single-step plan.
-        from adaptive_reflow.algorithm.scheduler._core import (
-            default_cosine_scheduler,
-        )
+def _empirical_joint_w2(endpoints: np.ndarray, reference: np.ndarray) -> float:
+    """Exact empirical joint W2 for equally weighted, equal-size 2D samples."""
+    from scipy.optimize import linear_sum_assignment
+    from scipy.spatial.distance import cdist
+    if endpoints.shape != reference.shape or endpoints.ndim != 2 or endpoints.shape[1] != 2:
+        raise ValueError("joint W2 needs equal-size (N, 2) populations")
+    if len(endpoints) < 2 or not np.all(np.isfinite(endpoints)) or not np.all(np.isfinite(reference)):
+        raise ValueError("joint W2 needs finite populations with N >= 2")
+    costs = cdist(endpoints, reference, metric="sqeuclidean")
+    rows, cols = linear_sum_assignment(costs)
+    return float(np.sqrt(costs[rows, cols].mean()))
 
-        scheduler = default_cosine_scheduler(
-            cycle_length=1,
-            n_min=0.0,
-            n_max=1.0,
-            schedule_family="cosine_no_restart",
-        )
-        n_rounds = MODEL_TABLE["twodim_fm"]["n_rounds"]
-        # For matched-NFE interpretation, the framework runs
-        # ``n_rounds`` rounds *with each round costing ``nfe_per_round``
-        # integration steps*. We allocate NFE / n_rounds per round so the
-        # total per-endpoint NFE matches the baseline.
-        # P2-W33-B1: ceil + carry so the sum equals ``nfe`` exactly.
-        nfe_per_round_list = _nfe_steps_per_round(int(spec.nfe), int(n_rounds))
-        nfe_per_round = int(nfe_per_round_list[0])
-        adapter_fw_pinned = TwoDimFMAdapter(
-            target="two_moons",
-            integrator="rk4",
-            num_steps=int(nfe_per_round),
-            seed_offset=int(spec.seed),
-            noise_sigma=float(spec.sigma),
-            noise_seed=0xC0FFEE,
-        )
-        config = BatchedRunnerConfig(
-            cycle_length=int(n_rounds),
-            trajectories_per_round=8,
-            endpoints_per_trajectory=MODEL_TABLE["twodim_fm"]["n_samples"] // 8,
-            scheduler=scheduler,
-            seed=int(spec.seed),
-        )
-        runner = BatchedTrajectoryRunner(config=config, adapter=adapter_fw_pinned)
-        t0 = time.perf_counter()
-        bundled = runner.run()
-        last_round = np.asarray(bundled.per_round_endpoints[-1], dtype=np.float64)
-        if last_round.ndim == 3:
-            last_round = last_round.reshape(-1, 2)
-        result.framework_metric = float(_wasserstein_2d(last_round))
-        result.framework_runtime_s = float(time.perf_counter() - t0)
-        # Effective per-endpoint NFE in the multi-round arm.
-        result.framework_nfe = sum(int(x) for x in nfe_per_round_list)
 
-    except Exception as exc:  # pragma: no cover -- defensive
+def _run_twodim_fm(spec: CellSpec) -> CellResult:
+    """Paired continuous protocol trajectories with counted Heun velocity NFE.
+
+    Each framework round consumes its predecessor's observed endpoint, with
+    an actual schedule-driven restart at enabled boundaries. The guard skips
+    the restart blend only; it never discards integration or budget. Both
+    arms start at byte-identical priors and use the same trained weights.
+    Target-RMS calibration is not applied: its Angstrom units do not describe
+    this toy task. This driver does not claim beta-calibration acceptance.
+    """
+    from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter, sample_two_moons
+    from adaptive_reflow.algorithm.batched_runner import should_skip_restart_small_sigma
+    from adaptive_reflow.algorithm.scheduler import CodimensionSheetScheduler
+    from adaptive_reflow.frame import ODEConditionDelta
+
+    result = CellResult(model=spec.model, seed=spec.seed, nfe=spec.nfe, sigma=spec.sigma)
+    try:
+        count = spec.n_samples if spec.n_samples is not None else MODEL_TABLE["twodim_fm"]["n_samples"]
+        rounds = int(MODEL_TABLE["twodim_fm"]["n_rounds"])
+        if count < 2:
+            raise ValueError("twodim n_samples must be >= 2")
+        if spec.nfe % 2 or spec.nfe < 2 * rounds:
+            raise ValueError("Heun requires an even NFE budget and at least 2 NFE per round")
+        if not np.isfinite(spec.sigma) or spec.sigma < 0:
+            raise ValueError("sigma must be finite and nonnegative")
+        steps = _nfe_steps_per_round(spec.nfe // 2, rounds)
+        scheduler = CodimensionSheetScheduler(cycle_length=rounds)
+        schedule = [scheduler.sample(0, r, r) for r in range(rounds)]
+        baseline_points, framework_points, samples = [], [], []
+        for i in range(count):
+            sample_id = f"seed-{spec.seed}-sample-{i}"
+            kwargs = dict(
+                target="two_moons", integrator="heun", num_steps=1,
+                seed_offset=int(spec.seed), noise_sigma=float(spec.sigma),
+                noise_seed=(int(spec.seed) * 100_003 + i) & 0xFFFFFFFF,
+            )
+            if spec.twodim_weights is not None:
+                kwargs["weights_path"] = Path(spec.twodim_weights)
+            baseline, framework = TwoDimFMAdapter(**kwargs), TwoDimFMAdapter(**kwargs)
+            if i == 0:
+                weights_digest = hashlib.sha256()
+                for name in sorted(baseline._weights):
+                    array = np.ascontiguousarray(baseline._weights[name])
+                    weights_digest.update(name.encode())
+                    weights_digest.update(str((array.shape, array.dtype.str)).encode())
+                    weights_digest.update(array.tobytes())
+                weights_sha256 = weights_digest.hexdigest()
+                weights_path = str(baseline._weights_path)
+            bstate = baseline.build_initial_state(batch_id="controlled-twodim", sample_id=sample_id)
+            fstate = framework.build_initial_state(batch_id="controlled-twodim", sample_id=sample_id)
+            initial = np.array(baseline._native_states[bstate.native_state_digest]["x0"], copy=True)
+            if not np.array_equal(initial, framework._native_states[fstate.native_state_digest]["x0"]):
+                raise RuntimeError("paired initial states differ")
+            def condition(adapter: Any, state: Any, r: int, num_steps: int) -> Any:
+                return adapter.compose_condition(state, ODEConditionDelta(
+                    delta_spec={"num_steps": num_steps}, source="controlled-twodim",
+                    target_round=r, calibration_artifact_hash="controlled-twodim",
+                ))
+            start = time.perf_counter()
+            btrace, baseline_calls = _solve_twodim_counted(
+                baseline, bstate, condition(baseline, bstate, 0, spec.nfe // 2), spec.seed,
+            )
+            bend = baseline.observe_endpoint(btrace, bstate)
+            baseline_points.append(baseline._native_states[bend.native_state_digest]["x0"].copy())
+            result.baseline_runtime_s += time.perf_counter() - start
+            round_records, restarts, framework_calls = [], 0, 0
+            start = time.perf_counter()
+            for r, round_steps in enumerate(steps):
+                previous_digest = fstate.native_state_digest
+                previous = np.array(framework._native_states[previous_digest]["x0"], copy=True)
+                skip = r > 0 and spec.restart_guard and should_skip_restart_small_sigma(
+                    sigma=spec.sigma, current_n_restarts=restarts,
+                )
+                beta = float(schedule[r].n_cap)
+                policy_hash = None
+                if r > 0 and not skip:
+                    policy = _twodim_restart_policy(
+                        sample_id=sample_id, round_index=r, beta=beta,
+                    )
+                    fstate = framework.apply_restart_distribution(fstate, policy)
+                    policy_hash = str(policy.policy_hash)
+                    restarts += 1
+                solve_initial = np.array(framework._native_states[fstate.native_state_digest]["x0"], copy=True)
+                trace, calls = _solve_twodim_counted(
+                    framework, fstate, condition(framework, fstate, r, round_steps), spec.seed,
+                )
+                if calls != 2 * round_steps or trace.steps != round_steps:
+                    raise RuntimeError("executed Heun round differs from planned steps/NFE")
+                framework_calls += calls
+                trajectory = framework.export_trajectory(trace)
+                if trajectory is None or not np.array_equal(trajectory[0], solve_initial):
+                    raise RuntimeError("solve trajectory does not start at chained state")
+                fstate = framework.observe_endpoint(trace, fstate)
+                endpoint = np.array(framework._native_states[fstate.native_state_digest]["x0"], copy=True)
+                round_records.append(dict(
+                    round=r, steps=int(trace.steps), actual_nfe=calls,
+                    planned_steps=round_steps, planned_nfe=2 * round_steps,
+                    applied_policy_hash=policy_hash,
+                    restart_applied=r > 0 and not skip, restart_skipped=bool(skip),
+                    performed_restarts=restarts, beta=beta, eps=float(schedule[r].eps_implicit),
+                    previous_endpoint=previous.tolist(), solve_initial=solve_initial.tolist(),
+                    endpoint=endpoint.tolist(), previous_digest=previous_digest,
+                    endpoint_digest=fstate.native_state_digest,
+                ))
+            result.framework_runtime_s += time.perf_counter() - start
+            framework_points.append(endpoint)
+            if baseline_calls != spec.nfe or framework_calls != spec.nfe:
+                raise RuntimeError(f"actual NFE mismatch: {baseline_calls}, {framework_calls}, budget={spec.nfe}")
+            samples.append(dict(sample_id=sample_id, initial=initial.tolist(),
+                                baseline_endpoint=baseline_points[-1].tolist(),
+                                baseline_nfe=baseline_calls, framework_nfe=framework_calls,
+                                rounds=round_records))
+        reference = sample_two_moons(count, rng=np.random.default_rng(0xBEEF))
+        result.baseline_metric = _empirical_joint_w2(np.asarray(baseline_points), reference)
+        result.framework_metric = _empirical_joint_w2(np.asarray(framework_points), reference)
+        result.baseline_nfe = samples[0]["baseline_nfe"]
+        result.framework_nfe = samples[0]["framework_nfe"]
+        result.nfe_matched = True
+        result.protocol = dict(
+            version="twodim-chained-heun-v1", metric_family="empirical_joint_w2_equal_weight",
+            n_samples=count, integrator="heun", velocity_queries_per_step=2,
+            nfe_unit="actual_velocity_queries_per_final_sample", n_rounds=rounds,
+            scheduler_family="codimension_sheet", scheduler_config=scheduler.to_config(),
+            nfe_allocation=NFE_ALLOCATION, per_round_steps=steps,
+            restart_guard=spec.restart_guard, target_rms_calibration=False,
+            samples=samples, reference_seed=0xBEEF,
+            reference_family="two_moons_training_sampler",
+            weights_path=weights_path, weights_sha256=weights_sha256,
+            restart_applied_count=sum(r["restart_applied"] for s in samples for r in s["rounds"]),
+            restart_skipped_count=sum(r["restart_skipped"] for s in samples for r in s["rounds"]),
+        )
+    except Exception as exc:
+        result.nfe_matched = False
         result.error = f"{type(exc).__name__}: {exc}"
         result.notes = (traceback.format_exc(limit=2).splitlines()[-1],)
-
-    # Matched-check: NFE must be within 1 step of the target budget.
-    result.nfe_matched = bool(
-        result.baseline_nfe > 0
-        and result.framework_nfe > 0
-        and abs(result.framework_nfe - result.baseline_nfe)
-        <= max(1, int(0.05 * spec.nfe))
-    )
-
     return result
 
 
@@ -1072,7 +1155,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             "eps, giving the small-eps refinement rounds more steps."
         ),
     )
+    parser.add_argument("--n-samples", type=int, default=None,
+                        help="Exact twodim sample count (other model drivers retain their defaults).")
+    parser.add_argument("--restart-guard", action=argparse.BooleanOptionalAction, default=True,
+                        help="Enable/disable the twodim small-sigma restart guard.")
+    parser.add_argument("--twodim-weights", type=str, default=None,
+                        help="Explicit local trained TwoDimFM checkpoint.")
     args = parser.parse_args(argv)
+    if args.n_samples is not None and args.n_samples < 2:
+        parser.error("--n-samples must be >= 2")
 
     global NFE_ALLOCATION
     NFE_ALLOCATION = str(args.nfe_allocation)
@@ -1100,6 +1191,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 for sigma in sigmas:
                     spec = CellSpec(
                         model=model, seed=seed, nfe=nfe, sigma=sigma,
+                        n_samples=args.n_samples, restart_guard=args.restart_guard,
+                        twodim_weights=args.twodim_weights,
                     )
                     print(
                         f"[controlled-audit] running cell "
