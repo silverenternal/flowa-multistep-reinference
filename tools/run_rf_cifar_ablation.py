@@ -500,6 +500,16 @@ def main(argv: list[str] | None = None) -> int:
         schedulers = {k: v for k, v in schedulers.items() if k in requested}
     summaries: list[dict[str, Any]] = []
     for name, scheduler in schedulers.items():
+        arm_path = output / f"{name}.json"
+        if args.resume and arm_path.is_file():
+            try:
+                cached = json.loads(arm_path.read_text(encoding="utf-8"))
+                if cached.get("scheduler") == name and "error" not in cached:
+                    print(f"  -> {name}: RESUME cached arm")
+                    summaries.append(cached)
+                    continue
+            except (OSError, json.JSONDecodeError, AttributeError):
+                pass
         try:
             summary = _run_one_scheduler(
                 adapter=adapter,
@@ -530,7 +540,7 @@ def main(argv: list[str] | None = None) -> int:
         summaries.append(summary)
         # Persist per-row JSON so the operator can inspect each
         # scheduler's curve in isolation.
-        (output / f"{name}.json").write_text(json.dumps(summary, indent=2, sort_keys=True))
+        arm_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
 
     md = _render_markdown_table(summaries, baseline_fid=float(PUBLISHED_BASELINE_FID))
     (output / "ablation.md").write_text(md)
@@ -559,6 +569,8 @@ def _build_argparser() -> argparse.ArgumentParser:
                    help="Where to save the per-scheduler JSON + markdown.")
     p.add_argument("--schedulers", type=str, default="",
                    help="Optional comma-separated scheduler names; empty runs all.")
+    p.add_argument("--resume", action="store_true",
+                   help="Reuse completed per-scheduler JSON arms in output-dir.")
     return p
 
 
