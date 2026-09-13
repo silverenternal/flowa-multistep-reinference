@@ -1,7 +1,7 @@
 # Wave 94 (W5) — ICLR 2027 submission package
 
 **Date:** 2026-09-09 (updated 2026-09-10)
-**Status:** ⏸ **WAITING** for Wave 92c (N=1000 Kanzi sweep) + Wave 93 Phase 2 (power analysis)
+**Status:** ⏸ **DEFERRED / RESOURCE-GATED** — depends on final Kanzi magnitude evidence and submission-material review.
 **Final step:** ship paper to venue
 
 > **Why this matters:** All technical work (W1-W4 close) is done. Wave 94 ships a submission-ready package: anonymized cover letter, final paper §1 abstract, final §7 Tier 3 section, supplementary material with all 3 model audit docs, reproducibility checklist.

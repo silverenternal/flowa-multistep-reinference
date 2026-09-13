@@ -17,7 +17,7 @@ Translation: Previous workflows (100-step ultracode) were too long. Switch to: *
 | [w2-kanzi-latent-coord-bridge.md](w2-kanzi-latent-coord-bridge.md) | Wave 91 | W2 (Kanzi framework NOT_MEASURABLE) | 3-5h | DONE |
 | [w3-n5000-paper-metric-sweep.md](w3-n5000-paper-metric-sweep.md) | Wave 92 | W3 (N=1000 too small) | 4-8h | PLANNED (OPT-IN) |
 | [w4-statistical-power-analysis.md](w4-statistical-power-analysis.md) | Wave 93 | W4 (2/12 framework_improves) | 2-3h | DONE |
-| [w5-iclr2027-submission-package.md](w5-iclr2027-submission-package.md) | Wave 94 | (final ship) | 2-3h | PLANNED |
+| [w5-iclr2027-submission-package.md](w5-iclr2027-submission-package.md) | Wave 94 | (final ship) | 2-3h | DEFERRED / RESOURCE-GATED |
 
 ## Reading order for user approval
 

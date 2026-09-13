@@ -1,5 +1,7 @@
 # Wave 101 — Layer-2 Algorithm + Tools Hygiene Fix Plan
 
+**Current status:** NO-OP / DEFERRED (audit complete; risky structural merges deferred).
+
 Companion to `docs/audit/wave101-review-layer2-algorithm-tools.md`. READ-ONLY audit
 identified 9 issues; this plan describes the **execution order** to close them with
 minimum risk.

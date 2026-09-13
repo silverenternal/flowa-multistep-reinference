@@ -1,5 +1,7 @@
 # Wave 101 — Layer-4 Docs + Config Hygiene Fix Plan
 
+**Current status:** DONE (docs/config audit and safe additive notes complete).
+
 Companion to `docs/audit/wave101-review-layer4-docs-config.md`. READ-ONLY audit
 identified 7 issues; this plan describes the **execution order** to close them.
 

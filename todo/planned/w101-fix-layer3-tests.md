@@ -1,5 +1,7 @@
 # Wave 101 — Layer-3 Tests Hygiene Fix Plan
 
+**Current status:** NO-OP / DEFERRED (audit complete; planned splits are unnecessary or compatibility-risky).
+
 Companion to `docs/audit/wave101-review-layer3-tests.md`. READ-ONLY audit
 identified 6 issues; this plan describes the **execution order** to close them.
 

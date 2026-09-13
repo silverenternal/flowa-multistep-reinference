@@ -1,5 +1,7 @@
 # Wave 101 — Layer-1 Adapter Hygiene Fix Plan
 
+**Current status:** DONE (audit complete); remaining refactors DEFERRED for compatibility.
+
 Companion to `docs/audit/wave101-review-layer1-adapters.md`. READ-ONLY audit identified 10 issues; this plan describes the **execution order** to close them with minimum risk.
 
 ## Section 1 — Goal
