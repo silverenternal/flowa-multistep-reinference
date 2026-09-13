@@ -46,6 +46,12 @@ or reported as reproduction of a published FID. `pytorch-fid==0.3.0` was
 installed into the existing Kanzi sidecar and its pretrained TF-port weights
 loaded successfully for the separate matched-NFE experiment.
 
+The corrected loader was also checked against the pre-existing cleaned
+`data/cifar10_rf.pth`: after removing the DataParallel `module.` prefix,
+all 565 keys and all tensor values match exactly (zero mismatches). Thus
+the shadow-parameter conversion preserves the existing published EMA
+conversion, rather than merely producing a loadable model.
+
 The six root TODO plans have been reopened where experiment acceptance is
 missing; [open-requirements.md](open-requirements.md) records the remaining
 conditions. Previous `DONE` labels based only on code commits were premature.

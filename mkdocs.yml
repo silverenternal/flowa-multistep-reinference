@@ -137,6 +137,26 @@ nav:
       - Wave 99 — N=1000 Kanzi verdict: audit/wave99-n1000-final.md
       - Wave 100 — Kanzi load torch fix: audit/wave100-kanzi-load-torch-fix.md
       - Wave 101 — Layer-4 docs/config review: audit/wave101-review-layer4-docs-config.md
+      - Current audit records:
+          - BRAI perturbation magnitude: audit/brai-perturbation-magnitude-2026-09-13.md
+          - CIFAR evaluation corrections: audit/cifar-evaluation-corrections.md
+          - Docs evidence audit: audit/docs-evidence-audit-2026-09-13.md
+          - Engineering audit: audit/engineering-audit-2026-09-13.md
+          - Framework/model gap CPU audit: audit/framework-model-gap-cpu-2026-09-13.md
+          - Kanzi inverse projection follow-up: audit/kanzi-inv-proj-bridge-followup-2026-09-13.md
+          - Open requirements: audit/open-requirements.md
+          - Paper quantity beta calibration: audit/paper-quantity-beta-calibration-cpu-audit.md
+          - Registry placeholder audit: audit/registry-placeholder-audit-2026-09-13.md
+          - Restart policy collapse: audit/restart-policy-collapse-fix-2026-09-13.md
+          - RF CIFAR ablation resume: audit/rf-cifar-ablation-resume-2026-09-13.md
+          - RF CIFAR reference gate: audit/rf-cifar-reference-gate-2026-09-13.md
+          - TODO experiment smoke: audit/todo-experiment-smoke-2026-09-13.md
+          - TODO six-plan status: audit/todo-six-plan-status-2026-09-13.md
+          - TODO status correction: audit/todo-status-correction-2026-09-13.md
+          - TODO status reconciliation: audit/todo-status-reconciliation-2026-09-13.md
+          - TODO task inventory: audit/todo-task-inventory-2026-09-13.md
+          - MkDocs navigation fix: audit/mkdocs-nav-current-audits-2026-09-13.md
+      - Development workflow: FLOWA_WORKFLOW.md
   - Paper-supporting survey (r4-survey):
       - Phase-4 code review: r4-survey/18-comprehensive-code-review.md
       - Phase-4 fix plan: r4-survey/19-fix-plan.md

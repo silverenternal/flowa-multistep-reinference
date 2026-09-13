@@ -21,6 +21,7 @@ from .runner.batched_runner import (
     BatchedVectorisedAdapterProtocol,
     _w2_to_mode_centres,
     should_skip_restart_small_sigma,
+    _config_hash,
 )
 
 __all__ = [
@@ -32,4 +33,5 @@ __all__ = [
     "BatchedVectorisedAdapterProtocol",
     "_w2_to_mode_centres",  # private — exposed only for test_batched_runner.py
     "should_skip_restart_small_sigma",
+    "_config_hash",
 ]
