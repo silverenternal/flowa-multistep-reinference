@@ -194,37 +194,67 @@ def test_framework_inv_proj_construction_uses_real_mode(runner: Any) -> None:
     """
     src_text = _RUNNER_PATH.read_text(encoding="utf-8")
 
-    # The pin: the construction in `run_kanzi_sweep` MUST pass
-    # either `force_mode="real"` (the CLI-native token from Wave 41.B,
-    # which is translated via _ADAPTER_FORCE_MODE_ALIAS to "torch" for
-    # the kanzi factory) OR `force_mode="torch"` (the kanzi adapter's
-    # native token). Either is acceptable because they both select the
-    # real torch mode via the same adapter path.
-    real_mode_present = (
-        'force_mode="real"' in src_text or 'force_mode="torch"' in src_text
-    )
-    assert real_mode_present, (
-        "Wave 110.B pin: framework_inv_proj arm MUST construct the "
-        "KanziAdapter in real (torch) mode via either `force_mode=\"real\"` "
-        "(CLI-native token — translated via _ADAPTER_FORCE_MODE_ALIAS) "
-        "or `force_mode=\"torch\"` (kanzi adapter's native token). The "
-        "synthetic fallback path is incompatible with the Wave 95.P3.C "
-        "bridge which requires (B, L, n_channels_decoder=512)."
-    )
-
     # The construction site MUST be inside the framework-mode branch
     # (so the baseline arm is unaffected — Wave 87 baseline byte-stability).
     inv_proj_block = src_text.split(
         'if mode in {"framework_synthetic", "framework_inv_proj"}',
     )[1].split("per_seq_rmsd")[0]
-    assert real_mode_present and (
-        'force_mode="real"' in inv_proj_block
-        or 'force_mode="torch"' in inv_proj_block
-    ), (
-        "Wave 110.B pin: the `force_mode=\"real\"` (or `force_mode=\"torch\"`) "
-        "MUST be inside the "
-        "`if mode in {\"framework_synthetic\", \"framework_inv_proj\"}` "
+
+    # Pin (a) — Wave 124 Phase 2 contract-drift fix (was Wave 110.B):
+    # The framework_inv_proj arm MUST pass a ``force_mode=`` kwarg at the
+    # ``default_kanzi_adapter(...)`` call site (so the real torch-mode
+    # encoder loads and ``_real_state_shape`` is correct). The runner now
+    # threads ``adapter_force_mode`` (a function parameter) instead of a
+    # literal ``"real"`` / ``"torch"`` string — see Pin (c) for the
+    # default-value check.
+    assert "default_kanzi_adapter(" in inv_proj_block, (
+        "Wave 124 Phase 2 pin: framework_inv_proj arm MUST call "
+        "`default_kanzi_adapter(...)` (the real-mode factory). The "
+        "synthetic fallback path is incompatible with the Wave 95.P3.C "
+        "bridge which requires (B, L, n_channels_decoder=512)."
+    )
+    assert "force_mode=" in inv_proj_block, (
+        "Wave 124 Phase 2 pin: the `default_kanzi_adapter(...)` call "
+        "MUST pass a `force_mode=...` kwarg (the real torch-mode "
+        "encoder selection). The synthetic fallback path is incompatible "
+        "with the Wave 95.P3.C bridge which requires "
+        "(B, L, n_channels_decoder=512)."
+    )
+
+    # Pin (b) — Wave 124 Phase 2: the `force_mode=...` kwarg MUST live
+    # INSIDE the framework-mode branch so the baseline arm is unaffected
+    # (Wave 87 baseline byte-stability). Already verified by the
+    # `inv_proj_block` slice above; re-pin for clarity.
+    real_mode_present = (
+        "force_mode=" in inv_proj_block
+    )
+    assert real_mode_present, (
+        "Wave 124 Phase 2 pin: the `force_mode=` kwarg MUST be inside "
+        "the `if mode in {\"framework_synthetic\", \"framework_inv_proj\"}` "
         "branch so the baseline arm's byte-stability is preserved."
+    )
+
+    # Pin (c) — Wave 124 Phase 2: the `run_kanzi_sweep(...)` function
+    # signature MUST default `adapter_force_mode` to `"torch"` (the
+    # kanzi adapter's native token for "real checkpoint loaded";
+    # equivalent to the CLI-native `"real"` token after translation
+    # via ``_ADAPTER_FORCE_MODE_ALIAS["kanzi"] = {"real": "torch"}`` —
+    # see ``tools/eval/baseline.py:33``).
+    sig_idx = src_text.find("def run_kanzi_sweep(")
+    assert sig_idx != -1, (
+        "Wave 124 Phase 2 pin: could not locate `def run_kanzi_sweep(` "
+        "in the runner source — the framework-mode branch check above "
+        "would be meaningless without a function signature to default."
+    )
+    sig_block = src_text[sig_idx : sig_idx + 1500]
+    assert 'adapter_force_mode: str = "torch"' in sig_block, (
+        "Wave 124 Phase 2 pin: the `run_kanzi_sweep(...)` function "
+        "signature MUST default `adapter_force_mode` to `\"torch\"` "
+        "(real-mode native token — equivalent to the CLI-native "
+        "`\"real\"` token via `_ADAPTER_FORCE_MODE_ALIAS`). A change "
+        "to `\"synthetic\"` or any other abstract-mode default would "
+        "silently fall back to (B, L, 64) — incompatible with the "
+        "Wave 95.P3.C bridge."
     )
 
 
@@ -252,11 +282,15 @@ def test_torch_velocity_field_emits_512d_shape(runner: Any) -> None:
     shape mismatch: ``mat1 and mat2 shapes cannot be multiplied
     (64x512 and 3x256)``.
 
-    The Wave 110.B fix replaces the broken forward with a zero-return
-    that preserves the input shape. The trajectory endpoint is then
-    equal to the initial state (zeros perturbation + zero velocity),
-    which still satisfies the bridge's `(B, L, n_channels_decoder=512)`
-    contract without raising.
+    The Wave 110.B fix replaced the broken forward with a zero-return
+    that preserved the input shape. Wave 112.C-2 then fail-fasted the
+    placeholder (``raise NotImplementedError``). Wave 113.A finally
+    replaced the placeholder with the real backbone-coord migration:
+    ``self._dae.encode(x)`` runs on backbone coords ``(B, L, 3)`` and
+    returns the codebook-quantized latent ``z`` that the velocity
+    field ``self._dae.net(x, t, z_BLD=z)`` consumes. The trajectory
+    endpoint then satisfies the bridge's
+    ``(B, L, n_channels_decoder=512)`` contract end-to-end.
 
     The pin is a static text-match against the upstream adapter
     source so the test does not require a torch / kanzi sidecar
@@ -268,22 +302,38 @@ def test_torch_velocity_field_emits_512d_shape(runner: Any) -> None:
     )
     src_text = kanzi_path.read_text(encoding="utf-8")
 
-    # Pin (a): the broken forward path is gone — no
-    # `self._dae.encode(x, preprocess=False)` followed by
-    # `self._dae.net(x, t, z_BLD=c_BLD)` inside the shim. Wave 112.C-2
-    # fail-fasts the placeholder (the Wave 110.B fix returned
-    # `torch.zeros_like(x)` and made the framework arm a silent
-    # no-op). The synthetic-mode caller short-circuits before the
-    # shim is ever invoked; real-mode callers now surface a
-    # NotImplementedError instead of silently corrupting the
-    # trajectory endpoint.
-    assert "raise NotImplementedError" in src_text, (
-        "Wave 112.C-2 pin: the shim's `forward()` MUST raise "
-        "`NotImplementedError` (the Wave 110.B placeholder is now "
-        "fail-fast). The synthetic-mode path "
-        "(`self._synthetic_weights is not None`) short-circuits "
-        "before this shim is invoked, so framework_synthetic sweeps "
-        "are unaffected."
+    # Pin (a) — Wave 124 Phase 2 contract-drift fix (was Wave 112.C-2):
+    # The shim's `forward()` MUST wire the real Wave 113.A
+    # backbone-coord migration (the two-call upstream pipeline
+    # ``self._dae.encode(x)`` -> codebook latent ``z`` -> ``self._dae.net(x, t, z_BLD=z)``).
+    # Pre-Wave 113.A the shim raised ``NotImplementedError`` (Wave 112.C-2
+    # fail-fast placeholder) — replaced by the Wave 113.A real
+    # implementation. The synthetic-mode caller short-circuits before
+    # the shim is ever invoked; real-mode callers now run the real
+    # backbone-coord pipeline instead of fail-fasting.
+    shim_idx = src_text.find("class _KanziDAEShim(")
+    assert shim_idx != -1, (
+        f"Wave 124 Phase 2 pin: expected `_KanziDAEShim` class in "
+        f"{kanzi_path.relative_to(repo_root)} — the shim is what "
+        f"`_torch_velocity_field` invokes."
+    )
+    shim_block = src_text[shim_idx : shim_idx + 3000]
+    assert "self._dae.encode(" in shim_block, (
+        "Wave 124 Phase 2 pin: the shim's `forward()` MUST call "
+        "`self._dae.encode(...)` (the trained encoder + FSQ codebook "
+        "step of the Wave 113.A backbone-coord migration). Pre-Wave "
+        "113.A this raised `NotImplementedError` (Wave 112.C-2 "
+        "fail-fast placeholder); post-Wave 113.A the shim threads the "
+        "trained encoder so the velocity field gets a real "
+        "codebook-quantized conditioning latent."
+    )
+    assert "self._dae.net(" in shim_block and "z_BLD=" in shim_block, (
+        "Wave 124 Phase 2 pin: the shim's `forward()` MUST call "
+        "`self._dae.net(x, t, z_BLD=z)` (the DiT velocity field "
+        "consuming the codebook-quantized conditioning latent). "
+        "Pre-Wave 113.A this raised `NotImplementedError` (Wave "
+        "112.C-2 fail-fast placeholder); post-Wave 113.A the shim "
+        "returns the real velocity field instead of fail-fasting."
     )
 
     # Pin (b): the `_torch_velocity_field` docstring claims the
@@ -294,7 +344,7 @@ def test_torch_velocity_field_emits_512d_shape(runner: Any) -> None:
         "expected `_torch_velocity_field` definition in "
         f"{kanzi_path.relative_to(repo_root)}"
     )
-    torch_vf_block = src_text[torch_vf_idx : torch_vf_idx + 4000]
+    torch_vf_block = src_text[torch_vf_idx : torch_vf_idx + 5000]
     assert "out.reshape(state_shape)" in torch_vf_block, (
         "Wave 110.B pin: `_torch_velocity_field` MUST reshape its "
         "output to `state_shape` (the adapter's per-record state "
@@ -831,6 +881,30 @@ def test_synthesize_x_final_real_inv_proj_calls_latent_to_coords_bridge(
             self._native_states: dict[str, dict[str, Any]] = {}
             self._solve_ode_input: dict[str, Any] | None = None
             self._call_count = {"solve_ode": 0}
+            # Wave 124 Agent 1 — Wave 122 P2 inverse-projection fix
+            # makes the runner call ``adapter.set_traj_shape(...)``
+            # before ``adapter.solve_ode(...)`` so the solver honors
+            # the actual ``(L, 3)`` backbone-coord shape instead of
+            # force-reshaping to ``_real_state_shape``. The fake
+            # adapter accepts but ignores the override (its
+            # ``solve_ode`` echoes whatever ``x0`` was stored).
+            self._traj_shape_override: tuple[int, ...] | None = None
+
+        def set_traj_shape(
+            self, shape: tuple[int, ...] | None,
+        ) -> None:
+            """Wave 124 Agent 1 stub — accept and ignore the shape.
+
+            Mirrors :meth:`KanziAdapter.set_traj_shape`'s signature so
+            the runner's call site doesn't raise
+            ``AttributeError: '_FakeAdapter' object has no attribute
+            'set_traj_shape'``. The fake ``solve_ode`` below does NOT
+            introspect the override (it echoes ``x0`` verbatim), so
+            a no-op stub is correct.
+            """
+            self._traj_shape_override = (
+                tuple(int(s) for s in shape) if shape is not None else None
+            )
 
         def build_initial_state(
             self, *, batch_id: str, sample_id: str,
@@ -1108,6 +1182,28 @@ def test_dae_seed_threading_is_per_record(
 
         def __init__(self) -> None:
             self._native_states: dict[str, dict[str, Any]] = {}
+            # Wave 124 Agent 1 — see Test 8 ``_FakeAdapter`` for the
+            # rationale. The runner's call site
+            # (``adapter.set_traj_shape(x0_coords_nm.shape)`` at
+            # ``tools/_kanzi_sweep_runner.py:432``) requires the fake
+            # adapter to expose the method; the per-record seeding
+            # test does NOT introspect the override so a no-op stub
+            # is correct.
+            self._traj_shape_override: tuple[int, ...] | None = None
+
+        def set_traj_shape(
+            self, shape: tuple[int, ...] | None,
+        ) -> None:
+            """Wave 124 Agent 1 stub — accept and ignore the shape.
+
+            Mirrors :meth:`KanziAdapter.set_traj_shape`'s signature so
+            the runner's call site doesn't raise
+            ``AttributeError: '_FakeAdapter' object has no attribute
+            'set_traj_shape'``.
+            """
+            self._traj_shape_override = (
+                tuple(int(s) for s in shape) if shape is not None else None
+            )
 
         def build_initial_state(
             self, *, batch_id: str, sample_id: str,
