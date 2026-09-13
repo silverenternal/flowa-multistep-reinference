@@ -399,10 +399,19 @@ def _extract_checkpoint_state_dict(payload: Any) -> Mapping[str, Any]:
     if payload and all(isinstance(k, str) for k in payload):
         nested = [k for k in ("ema", "model") if k in payload]
         if nested:
+            # Some EMA wrappers store metadata plus a list of shadow tensors;
+            # that is not directly loadable, so fall back to model weights.
             chosen = "ema" if "ema" in nested else "model"
             candidate = payload[chosen]
-            if not isinstance(candidate, Mapping) or not candidate:
-                raise RuntimeError(f"CIFAR checkpoint key {chosen!r} is not a state_dict")
+            if not (
+                isinstance(candidate, Mapping)
+                and candidate
+                and all(hasattr(v, "shape") for v in candidate.values())
+            ):
+                if chosen == "ema" and "model" in payload:
+                    chosen, candidate = "model", payload["model"]
+                else:
+                    raise RuntimeError(f"CIFAR checkpoint key {chosen!r} is not a state_dict")
             return candidate
         # Raw state dicts have string parameter names and tensor values.
         if all(hasattr(v, "shape") for v in payload.values()):
