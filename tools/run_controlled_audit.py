@@ -72,14 +72,14 @@ from typing import Any
 
 import numpy as np
 
-from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
-
 # Make ``adaptive_reflow`` importable when the script is invoked as
 # ``python tools/run_controlled_audit.py``.
 _HERE = Path(__file__).resolve().parent
 _REPO_ROOT = _HERE.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
+
+from adaptive_reflow.util.host_fingerprint import with_host_fingerprint
 
 
 # ---------------------------------------------------------------------------
