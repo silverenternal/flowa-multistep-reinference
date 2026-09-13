@@ -246,3 +246,10 @@ def test_run_rf_cifar_ablation_resume_flag_is_opt_in() -> None:
     parser = _build_argparser()
     assert parser.parse_args([]).resume is False
     assert parser.parse_args(["--resume"]).resume is True
+
+
+def test_require_reference_flag_defaults_false() -> None:
+    from tools.run_rf_cifar_ablation import _build_argparser
+    parser = _build_argparser()
+    assert parser.parse_args([]).require_reference is False
+    assert parser.parse_args(["--require-reference"]).require_reference is True

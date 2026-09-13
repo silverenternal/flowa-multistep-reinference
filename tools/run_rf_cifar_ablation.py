@@ -485,6 +485,21 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     reference = _maybe_load_reference(ref)
+    if args.require_reference:
+        if reference is None:
+            print(
+                "[ERROR] --require-reference needs an .npz containing a "
+                "2-D 'features' array; generate it with tools/eval_rf_cifar.py "
+                "--extract-reference-features.", file=sys.stderr,
+            )
+            return 2
+        if reference.ndim != 2 or reference.shape[0] == 0 or reference.shape[1] != 2048:
+            print(
+                f"[ERROR] reference features have invalid shape {reference.shape}; "
+                "regenerate with tools/eval_rf_cifar.py --extract-reference-features.",
+                file=sys.stderr,
+            )
+            return 2
     if reference is None:
         print(
             f"[CAVEAT] No real CIFAR-10 features at {ref}. FID will be "
@@ -571,6 +586,8 @@ def _build_argparser() -> argparse.ArgumentParser:
                    help="Optional comma-separated scheduler names; empty runs all.")
     p.add_argument("--resume", action="store_true",
                    help="Reuse completed per-scheduler JSON arms in output-dir.")
+    p.add_argument("--require-reference", action="store_true",
+                   help="Fail closed unless reference_features.npz contains a valid features array.")
     return p
 
 
