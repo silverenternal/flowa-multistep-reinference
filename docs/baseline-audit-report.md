@@ -3976,7 +3976,7 @@ Plus a sweep-loop fix in `tools/_kanzi_sweep_runner.py`: the outer `kanzi_latent
 
 | Fix | File | Kwarg / Function | Activation | Behavior change |
 |---|---|---|---|---|
-| **Restart policy gate (H1)** | `adaptive_reflow/algorithm/runner/batched_runner.py` | `should_skip_restart_small_sigma(sigma, n_restarts, threshold=1e-2) -> bool` | opt-in via new kwarg on `BatchedRunner` call site | gate fires when `sigma < threshold AND n_restarts > 0`, skipping redundant restart |
+| **Restart policy gate (H1)** | `adaptive_reflow/algorithm/runner/batched_runner.py` | `should_skip_restart_small_sigma(sigma, n_restarts, threshold=1e-2) -> bool` | opt-in via new kwarg on `BatchedTrajectoryRunner` call site | gate fires when `sigma < threshold AND n_restarts > 0`, skipping redundant restart |
 | **BRAI magnitude (H2)** | `adaptive_reflow/algorithm/perturbation/perturbation.py` | `magnitude` kwarg on `PaperQuantityAttractorInversion.propose` | opt-in via new kwarg on BRAI call sites (kanzi.py:1982, lineageflow.py:1703) | overrides `eps_scale` for single call only (no mutation of `self.eps_scale`) |
 | **β scheduler calibration (H1)** | `adaptive_reflow/algorithm/scheduler/adaptive.py` | `target_rms_threshold` kwarg on `paper_quantity_driven_beta(*, target_rms_threshold=None, ...)` | opt-in via new kwarg on scheduler call site | when supplied, delegates to `adjust_n_cap_for_target_rms`; otherwise preserves pre-Wave-125 default via `CodimensionSheetScheduler` |
 
@@ -4020,5 +4020,4 @@ Plus a sweep-loop fix in `tools/_kanzi_sweep_runner.py`: the outer `kanzi_latent
 4. **Author a Wave 126+ audit doc** with the empirical N=1000 reading on all 3 kwargs activated.
 
 See `docs/audit/wave125-algorithm-fixes.md` for the full Wave 125 audit trail + `docs/paper-draft.md` §7.6 ADDITIVE paragraph + cross-references.
-
 

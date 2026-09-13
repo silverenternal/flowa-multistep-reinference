@@ -47,11 +47,11 @@ Wave 114 Phase 4 (the 6 added property tests):
    changes one without the other (the Wave 113.A bug) is caught
    by this property test.
 
-5. ``test_property_solve_ode_shape_preservation`` — for every
-   adapter, ``solve_ode`` is the function that the engine calls
-   per round; the test asserts that the input shape propagates
-   unchanged through the canonical stub. (For adapters that
-   don't expose ``solve_ode``, the test is skipped.)
+5. ``test_property_solve_ode_shape_preservation`` — exercise the
+   CPU TwoDimFM adapter through state, condition, integration trace,
+   and observed endpoint over two rounds. Vary seeds, integration
+   methods and bounded step counts; no checkpoints are needed. A separate
+   parametrized test runs all registered adapters in explicit local modes.
 
 6. ``test_property_sweep_record_shape`` — ``assert_state_shape``
    must accept a dict / tensor / dataclass record with shape
@@ -97,6 +97,7 @@ _hypothesis_spec = pytest.importorskip(
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
+from adaptive_reflow.adapters import ADAPTER_REGISTRY
 from tools._sweep_assertion import (
     assert_state_shape,
     min_required_records_for_cap,
@@ -281,6 +282,15 @@ _STATE_SHAPE_FULL: Any = st.one_of(
 )
 
 
+# Metadata fuzzing above intentionally includes shapes too large to allocate.
+# Numerical tests use a separate strategy: at most 32,768 elements (256 KiB
+# per float64 array), including the historical Kanzi (64, 512) boundary.
+_ALLOCATABLE_STATE_SHAPE: Any = st.one_of(
+    st.lists(st.integers(min_value=1, max_value=8), min_size=0, max_size=4).map(tuple),
+    st.sampled_from([(1024,), (64, 64), (64, 512), (4, 32, 32), (2, 4, 8, 8)]),
+)
+
+
 def _enum_adapters_with_state_shape() -> list[type]:
     """Return every concrete adapter class that declares ``state_shape``.
 
@@ -384,43 +394,157 @@ def test_property_shim_input_shape(state_shape: tuple[int, ...]) -> None:
         )
 
 
-@settings(
-    max_examples=50,
-    deadline=200,
-    derandomize=True,
-    suppress_health_check=[HealthCheck.too_slow],
+@settings(max_examples=50, deadline=None, derandomize=True)
+@given(
+    seed=st.integers(min_value=0, max_value=2**32 - 1),
+    num_steps=st.integers(min_value=1, max_value=8),
+    integrator=st.sampled_from(["rk4", "heun", "dpm_solver", "unipc"]),
 )
-@given(state_shape=_STATE_SHAPE_FULL)
-def test_property_solve_ode_shape_preservation(state_shape: tuple[int, ...]) -> None:
-    """Property test #5 — for every adapter that exposes
-    ``solve_ode``, the function must accept a batched state tensor
-    of shape ``(B, *state_shape)`` and return a state tensor of
-    the SAME shape.
+def test_property_solve_ode_shape_preservation(
+    seed: int, num_steps: int, integrator: str,
+) -> None:
+    """Run the actual CPU adapter protocol, preserving (2,) across rounds.
 
-    The engine calls ``adapter.solve_ode(state, t0, t1, ...step`` to
-    advance the ODE loop. If the return shape drifts from the
-    input shape, every downstream consumer (the restart policy,
-    the entropy metric, the Kabsch RMSD) silently produces
-    nonsense. We test the stub ``solve_ode`` (when present) and
-    skip adapters that don't expose one.
+    ``solve_ode`` is an instance method taking a StateBundle and condition;
+    it returns an ODEIntegratorTrace, not an ndarray. Random checkpoint-free
+    weights exercise real integration without claiming trained-model quality.
+    Broad rank/dimension coverage belongs to the metadata and factory tests.
     """
     import numpy as np
 
-    for cls in _enum_adapters_with_state_shape():
-        if not hasattr(cls, "solve_ode"):
-            continue
-        # Build a representative batched state of shape (B, *state_shape).
-        # We pick B=2 to mirror the engine's typical mini-batch size.
-        x_in = np.zeros((2,) + tuple(int(s) for s in state_shape), dtype=np.float64)
-        # The class-level solve_ode is a stub that returns ``x_in``
-        # unchanged (the byte-stable identity contract). Future
-        # refactors that change the shape must be caught here.
-        out = cls.solve_ode(x_in)
-        assert out.shape == x_in.shape, (
-            f"{cls.__name__}.solve_ode returned shape {out.shape} "
-            f"but input was {x_in.shape}; the engine requires "
-            f"shape-preservation across the ODE loop."
+    from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
+    from adaptive_reflow.frame import ODEConditionDelta, ODEIntegratorTrace
+
+    adapter = TwoDimFMAdapter(
+        init_random_weights=True, init_seed=seed, hidden_width=8,
+        num_steps=num_steps, integrator=integrator,
+    )
+    state = adapter.build_initial_state(batch_id="shape-contract", sample_id=str(seed))
+    for round_index in range(2):
+        initial = np.array(adapter._native_states[state.native_state_digest]["x0"], copy=True)
+        assert initial.shape == (2,)
+        condition = adapter.compose_condition(state, ODEConditionDelta(
+            delta_spec={"num_steps": num_steps}, source="shape-contract",
+            target_round=round_index, calibration_artifact_hash="shape-contract",
+        ))
+        trace = adapter.solve_ode(state, condition, seed=seed)
+        assert isinstance(trace, ODEIntegratorTrace)
+        assert trace.steps == num_steps
+        trajectory = adapter.export_trajectory(trace)
+        assert trajectory is not None
+        assert trajectory.shape == (num_steps + 1, *initial.shape)
+        assert np.all(np.isfinite(trajectory))
+        np.testing.assert_array_equal(trajectory[0], initial)
+        endpoint = adapter.observe_endpoint(trace, state)
+        native_endpoint = adapter._native_states[endpoint.native_state_digest]["x0"]
+        assert native_endpoint.shape == initial.shape
+        np.testing.assert_array_equal(native_endpoint, trajectory[-1])
+        assert endpoint.source_round == state.source_round + 1
+        np.testing.assert_array_equal(
+            adapter._native_states[state.native_state_digest]["x0"], initial,
         )
+        state = endpoint
+
+
+@pytest.mark.parametrize("family", sorted(ADAPTER_REGISTRY))
+def test_registered_adapter_solve_ode_shape_preservation(family: str) -> None:
+    """Each registry adapter runs its real protocol with bounded local inputs.
+
+    Explicit synthetic/NumPy modes prevent checkpoint discovery or remote loads.
+    MNIST and TwoDim use random local weights. Native arrays retain their shape
+    through observation; ref-only adapters retain the channel/mask structure.
+    """
+    import inspect
+    import numpy as np
+
+    from adaptive_reflow.adapters import build_adapter
+    from adaptive_reflow.frame import ODEConditionDelta, ODEIntegratorTrace, StateBundle
+    from adaptive_reflow.universal.state import validate_state_bundle
+
+    if family == "mnist_fm":
+        from adaptive_reflow.adapters.mnist_fm import MnistFmAdapter
+        adapter = MnistFmAdapter(init_random_weights=True, base_channels=8, num_steps=1)
+    elif family == "twodim_fm":
+        from adaptive_reflow.adapters.twodim_fm import TwoDimFMAdapter
+        adapter = TwoDimFMAdapter(init_random_weights=True, hidden_width=8, num_steps=1)
+    else:
+        parameters = inspect.signature(ADAPTER_REGISTRY[family]).parameters
+        kwargs = {}
+        if "force_mode" in parameters:
+            kwargs["force_mode"] = "synthetic"
+        if "num_steps" in parameters:
+            kwargs["num_steps"] = 1
+        if family == "flowmol3_v2":
+            kwargs["backend"] = "numpy"
+        adapter = build_adapter(family, **kwargs)
+    initial = adapter.build_initial_state(batch_id="shape-contract", sample_id="sample-0")
+    assert isinstance(initial, StateBundle)
+    valid, errors = validate_state_bundle(initial)
+    assert valid, errors
+    native_states = getattr(adapter, "_native_states", {})
+    initial_native = native_states.get(initial.native_state_digest, {})
+    initial_shapes = {
+        key: value.shape for key, value in initial_native.items()
+        if isinstance(value, np.ndarray)
+    }
+    declared_shape = getattr(adapter, "state_shape", None)
+    if declared_shape and "x0" in initial_shapes:
+        assert initial_shapes["x0"] == declared_shape, family
+    # All factory configurations are bounded; even video latents remain below
+    # 2 million elements. Never allocate arrays from metadata fuzz dimensions.
+    assert all(np.prod(shape) <= 2_000_000 for shape in initial_shapes.values())
+    delta_spec = {"num_steps": 1}
+    if family in {"hidream_i1", "lumina_image_2_0", "wan2_2_video"}:
+        delta_spec["prompt"] = "shape contract test"
+    condition = ODEConditionDelta(
+        delta_spec=delta_spec, source="shape-contract", target_round=0,
+        calibration_artifact_hash="shape-contract",
+    )
+    if adapter.capabilities().has_condition_injection:
+        condition = adapter.compose_condition(initial, condition)
+    assert isinstance(condition, ODEConditionDelta)
+    trace = adapter.solve_ode(initial, condition, seed=42)
+    assert isinstance(trace, ODEIntegratorTrace)
+    assert trace.steps >= 1
+    endpoint = adapter.observe_endpoint(trace, initial)
+    assert isinstance(endpoint, StateBundle)
+    valid, errors = validate_state_bundle(endpoint)
+    assert valid, errors
+    assert set(endpoint.channels) == set(initial.channels)
+    assert set(endpoint.masks) == set(initial.masks)
+    endpoint_native = native_states.get(endpoint.native_state_digest, {})
+    for key, shape in initial_shapes.items():
+        # Continuous adapters call their initial latent x0 and endpoint x.
+        endpoint_key = "x" if key == "x0" and "x" in endpoint_native else key
+        if family == "kanzi" and key == "discrete_idx":
+            # AR indices live in lineage, not the continuous endpoint cache.
+            tokens = adapter.observe_token_indices(trace, paper_quantities=None)
+            assert len(tokens) == 1
+            value = next(iter(tokens.values()))
+        else:
+            assert endpoint_key in endpoint_native, (family, key)
+            value = endpoint_native[endpoint_key]
+        if family == "graphbfn":
+            # The empty prior deliberately grows a graph; vocabulary dimensions
+            # and node/edge consistency, rather than node count, are invariant.
+            assert value.ndim == len(shape), (family, key)
+            if key in {"theta_node", "theta_edge"}:
+                assert value.shape[1] == shape[1]
+        else:
+            assert value.shape == shape, (family, key, shape, value.shape)
+        if family == "graphbfn" and key == "adjacency_logits":
+            # Self-edges are intentionally forbidden with a -inf diagonal.
+            assert np.all(np.isneginf(np.diag(value)))
+            assert np.all(np.isfinite(value[~np.eye(value.shape[0], dtype=bool)]))
+        else:
+            assert np.all(np.isfinite(value)), (family, key)
+    if family == "graphbfn":
+        nodes = endpoint_native["theta_node"].shape[0]
+        assert 1 <= nodes <= adapter._max_nodes
+        assert endpoint_native["adjacency_logits"].shape == (nodes, nodes)
+        assert endpoint_native["charge"].shape == (nodes,)
+        assert endpoint_native["valence"].shape == (nodes,)
+
 
 
 @settings(
@@ -535,7 +659,7 @@ def test_property_kabsch_rmsd_shape(batch: int, n_atoms: int) -> None:
     derandomize=True,
     suppress_health_check=[HealthCheck.too_slow],
 )
-@given(state_shape=_STATE_SHAPE_FULL)
+@given(state_shape=_ALLOCATABLE_STATE_SHAPE)
 def test_property_make_validate_state_shape_factory(
     state_shape: tuple[int, ...],
 ) -> None:
@@ -562,7 +686,9 @@ def test_property_make_validate_state_shape_factory(
 
     # Build an input array whose shape matches ``state_shape`` (the
     # reshape is a no-op case — preserved by byte-stability).
-    x = np.arange(int(np.prod(state_shape)), dtype=np.float32).reshape(state_shape)
+    size = int(np.prod(state_shape))
+    assert size <= 32_768
+    x = np.arange(size, dtype=np.float32).reshape(state_shape)
     y1 = canonicaliser(x)
     y2 = canonicaliser(x)
     assert tuple(y1.shape) == tuple(state_shape), (
@@ -573,15 +699,18 @@ def test_property_make_validate_state_shape_factory(
         f"make_validate_state_shape closure produced dtype {y1.dtype}; "
         f"expected float64 (the byte-stable dtype contract)."
     )
+    np.testing.assert_array_equal(y1, x)
+    # A flat carrier with the same element count must reshape successfully;
+    # a different count must fail instead of silently broadcasting data.
+    np.testing.assert_array_equal(canonicaliser(x.ravel()), y1)
+    with pytest.raises(ValueError):
+        canonicaliser(np.zeros(size + 1, dtype=np.float32))
     # Repeatable: two calls on the same input yield byte-identical
     # output (the Wave 113.A.5 byte-stability invariant).
     assert np.array_equal(y1, y2), (
         "make_validate_state_shape closure is not deterministic — "
         "calling it twice on the same input produced different output."
     )
-    # And the closure must be the SAME function object on each call
-    # to ``make_validate_state_shape`` (i.e. factory is pure —
-    # not a closure that captures mutable state).
     canonicaliser_2 = make_validate_state_shape(state_shape)
     # Same target_shape → the closure must be a NEW callable (no
     # caching) so a future refactor that adds internal state cannot

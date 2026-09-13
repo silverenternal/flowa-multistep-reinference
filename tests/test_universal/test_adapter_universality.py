@@ -76,6 +76,7 @@ class _NonMoleculeAdapter:
     """
 
     def __init__(self) -> None:
+        self._topology_indices = (0, 1, 0, 1)
         self._caps = AdapterCapabilities(
             has_ode_integration_surface=True,
             has_prior_export=True,
@@ -172,6 +173,11 @@ class _NonMoleculeAdapter:
         adapter does not preserve a native trajectory."""
         return None
 
+    def observe_token_indices(self, trace: ODEIntegratorTrace, paper_quantities: Any) -> dict[str, Any]:
+        """Expose the fixture's unchanged discrete topology channel."""
+        import numpy as np
+        return {"topology": np.asarray(self._topology_indices, dtype=np.int64)}
+
 
 # ---------------------------------------------------------------------------
 # Tests
@@ -247,6 +253,16 @@ class TestNonMoleculeAdapter:
         adapter = _NonMoleculeAdapter()
         # runtime_checkable Protocol — isinstance() must succeed.
         assert isinstance(adapter, FlowMatchingODEAdapter)
+
+    def test_discrete_topology_indices_are_observable(self) -> None:
+        adapter = _NonMoleculeAdapter()
+        state = adapter.build_initial_state(batch_id="b", sample_id="s")
+        delta = ODEConditionDelta(delta_spec={}, source="test", target_round=0,
+                                  calibration_artifact_hash="test")
+        trace = adapter.solve_ode(state, adapter.compose_condition(state, delta), seed=0)
+        tokens = adapter.observe_token_indices(trace, None)
+        assert set(tokens) == {"topology"}
+        assert tokens["topology"].tolist() == [0, 1, 0, 1]
 
     def test_capabilities_advertise_non_molecule_channels(self) -> None:
         """Capabilities MUST list the non-molecule channels only."""
