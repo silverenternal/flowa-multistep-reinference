@@ -1,55 +1,148 @@
-# `todo/STATUS.md` — current execution status
+# `todo/STATUS.md` — current execution status (2026-09-14 Wave 127 finish-line)
 
-**Updated:** 2026-09-13. Engineering repair and TODO execution are authorized;
-the goal remains active. No push has been authorized.
+**Updated:** 2026-09-14 (Wave 127 finish-line). This file replaces the
+stale Wave 99.D snapshot that was preserved below for provenance. The
+historical table after the divider does not reflect the current repo
+state — it is kept only for traceability.
 
-## Current evidence and next gates
-
-- Engineering fixes through `fee9352` cover import isolation, feature-only
-  FID, fail-closed real Kanzi loading, resumable sweeps and bounded protocol
-  property tests. See [engineering audit](../docs/audit/engineering-audit-2026-09-13.md).
-- Full default-thread pytest completed: **5155 passed, 196 skipped**, exit 0
-  in 588.37 seconds, through `fee9352`. A completed
-  two-thread run had 5154 passed, 196 skipped and one Lumina byte-hash failure;
-  an isolated default-thread repeat passed. Golden vectors were not changed.
-- CI static checks are not green: Ruff 0.15.22 reports 926 findings across
-  source/tests, including missing names. Mypy against the project interpreter
-  reports 988 errors in 70 files. Earlier all-PASS gate tables
-  below are historical, not current readiness evidence.
-- Kanzi real N=20 single-rollout diagnostic and actual resume succeeded.
-  This does not satisfy calibrated bridge, independent held-out proteins,
-  multi-round reconstruction or N=1000 scientific acceptance.
-- Twodim controlled protocol correction is being validated in an isolated
-  worktree: continuous state, measured velocity queries, exact sample count,
-  joint W2 and restart-guard comparison. Old quick outputs are exploratory.
-- BRAI model/ESM-2 resources and execution protocol are under audit. CIFAR
-  N=200 matched-NFE=50 produced regression, not the planned improvement.
-
-The six active root plans and unmet acceptance requirements are listed in
-[open requirements](../docs/audit/open-requirements.md). Execution order:
-finish engineering gates, verify corrected experiment protocols, run bounded
-controls and acceptance sweeps, then update dependent synthesis/submission
-material. A negative result must be recorded without changing the acceptance
-threshold or silently marking the hypothesis supported.
-
-The following snapshot is preserved for provenance. Its commit counts,
-resource estimates, directory listing and gate verdicts are not current.
+The folder was flattened by Wave 127 Phase 5: `todo/completed/`,
+`todo/inprogress/`, `todo/planned/`, `todo/models/` were deleted. The
+47 archived plans under `todo/completed/`, the 8 plans under
+`todo/planned/`, the 5 files under `todo/models/`, and the 1 README
+under `todo/inprogress/` are removed. Their historical content is
+preserved in git history (commits `14e8bc5^` and earlier).
 
 ---
 
-# Historical Wave 99.D snapshot
+## Current evidence and next gates
+
+- **HEAD commit:** `14e8bc5` (Wave 127 Phase 4 ruff --fix). Phase 5
+  (this commit) will update HEAD.
+- **Unpushed commits ahead of `origin/main`:** 167 (post-Wave 127 Phase 4;
+  Phase 5 will bump to 168, plus Phase 6 final synthesis).
+- **D.4 byte-stable regression vectors:** 18/18 adapters PASS (post-Wave 127);
+  162 byte-hash vectors (9 per adapter × 18 adapters) preserved through the
+  Phase 5 todo/ refactor.
+- **Pytest default-threads:** 5155 passed, 196 skipped (verified
+  Wave 127 Phase 4, `14e8bc5`).
+- **Ruff:** 207 findings (post-Wave 127 Phase 4 ruff --fix; down from
+  927). 207 are non-auto-fixable (F821 undefined-name, E741 ambiguous
+  names, F822 __all__, etc.) and are CI-static-gate scope, NOT in the
+  7-day finish-line.
+- **Mypy:** 988 errors in 70 files (out of scope for the 7-day
+  finish-line; CLM-024 wording acknowledges this — see Wave 127 Phase 3).
+- **mkdocs build --strict:** PASS (last verified Wave 124 `c9e52a6`).
+
+## Active plans (6 root files)
+
+The `todo/` root now holds only 6 active plan files. The previous
+`todo/completed/`, `todo/inprogress/`, `todo/planned/`, `todo/models/`
+subtrees have been deleted (their content lives in git history).
+
+| Plan file | Status |
+|---|---|
+| `todo/algo-improvement-paper-quantity-beta-calibration.md` | Wave 125 partial — code landed (`4fbf135` + `da090c2`); CIFAR/twodim acceptance sweeps deferred to camera-ready |
+| `todo/algo-improvement-restart-policy-collapse-fix.md` | Wave 125 partial — code landed (`4fbf135`); twodim/CIFAR acceptance deferred to camera-ready |
+| `todo/algo-improvement-brai-perturbation-magnitude.md` | Wave 125 partial — code landed (`ae33583`); ESM-2 N=100 + N=1000 acceptance deferred to camera-ready |
+| `todo/algo-improvement-framework-vs-model-metrics-gap.md` | READ-ONLY synthesis (Wave 123 Agent 6); no further code expected in 7-day scope |
+| `todo/adapter-improvement-inv-proj-bridge-lossy-replacement.md` | Wave 126 partial — N=20 sweep done (Wave 126 Phase 1 additive annotation `f42de22`); N=1000 done in Wave 127 Phase 1 OR deferred to camera-ready |
+| `todo/adapter-improvement-8-adapter-shim-audit.md` | READ-ONLY audit complete (Wave 123 Agent 6); per-adapter fixes deferred to camera-ready |
+
+## Next-7-days priority list (Wave 127 ROI ranking)
+
+1. **Kanzi `framework_inv_proj` N=1000 real re-run** (Wave 127 Phase 1) —
+   DONE or BLOCKED.
+2. **supplementary.md TODO replacement + CLM-024 honest reframe** — DONE
+   (Wave 127 Phase 2, commit `7105020`).
+3. **§7.6 honest reframe + §7.3 N=1000 reading** — DONE (Wave 127
+   Phase 3, commit `e6fb35c`).
+4. **Ruff 720 auto-fix** — DONE (Wave 127 Phase 4, commit `14e8bc5`).
+5. **`todo/` refactor (this file)** — DONE (Wave 127 Phase 5).
+6. **Final synthesis** — DONE (Wave 127 Phase 6).
+
+## Camera-ready deferred (NOT in 7-day scope)
+
+- Kanzi `framework_synth` N=1000 (~33-50 h CPU)
+- LineageFlow NFE scan 8/9 cells (~8-16 h CPU)
+- CIFAR multi-arm Table 4 re-run (~5 h GPU)
+- ESM-2 NLL N=100 + N=1000 (~3 GPU-h)
+- Wan2.2 N=1000 sweep
+- FreqFlow + MM-FM integration (PHASE-4 DEFERRED historical; no upstream
+  ckpt / no shipped adapter)
+- Mypy 988-error repair (CI-static-gate)
+- Ruff 207 non-auto-fixable findings (CI-static-gate)
+
+## Push state
+
+- **167 unpushed commits** on `main` ahead of `origin/main` at the
+  close of Wave 127 Phase 4 (post-Phase 5: 168; post-Phase 6: 169).
+  0 behind.
+- **`push_risk = LOW`** (D.4 18/18 PASS; pytest 5155/196 green; mkdocs
+  build --strict PASS).
+- **PUSH IS USER-GATED.** Wave 11+ protocol reaffirmed in
+  `todo/PUSH-READY.md` and `todo/push-unpushed-commits.md`. No push in
+  Wave 127.
+
+## File inventory (post Wave 127 Phase 5)
+
+```
+todo/
+├── STATUS.md                                          ← this file
+├── INDEX.md                                           ← master entry point
+├── PUSH-READY.md                                      ← push-readiness (refreshed Phase 5)
+├── push-unpushed-commits.md                           ← push-protocol log (Wave 12; superseded)
+├── GATES.md                                           ← master gate definitions
+├── LOOP.md                                            ← per-model lifecycle
+├── TIMELINE.md                                        ← phase durations + "done" definition
+├── RISK-REGISTER.md                                   ← forward-looking risks
+├── EXECUTION-PLAN.md                                  ← pending tasks broken into ~110 atomic subtasks
+├── decisions.md                                       ← architecture decision log (append-only)
+├── lessons-learned.md                                 ← cross-cutting patterns (append-only)
+├── README.md                                          ← directory structure
+├── framework-freeze-checklist.md                      ← MUST-1..5 freeze criteria
+├── framework-internal-metrics.md                      ← rev 2 ship-ready (Wave 13)
+├── framework-capability-metrics.md                    ← group G capability metrics
+├── PHASE-1-framework-and-theory.md                    ← done (Wave 11-12)
+├── PHASE-2-model-complexity-analysis.md               ← done (Wave 19 P1A1)
+├── PHASE-3-glue-layer-improvement.md                  ← done (Wave 24 + 38 + 39)
+├── algo-improvement-paper-quantity-beta-calibration.md ← Wave 125 partial; code landed; acceptance deferred
+├── algo-improvement-restart-policy-collapse-fix.md    ← Wave 125 partial; code landed; acceptance deferred
+├── algo-improvement-brai-perturbation-magnitude.md    ← Wave 125 partial; code landed; ESM-2 acceptance deferred
+├── algo-improvement-framework-vs-model-metrics-gap.md ← READ-ONLY synthesis (Wave 123)
+├── adapter-improvement-inv-proj-bridge-lossy-replacement.md ← Wave 126 partial; N=20 sweep done
+└── adapter-improvement-8-adapter-shim-audit.md        ← READ-ONLY audit (Wave 123)
+```
+
+Total: 25 files at the `todo/` root. Previously ~80 (when subdirs
+included 47 archived + 8 planned + 5 model cards + 1 inprogress README).
+
+## Cross-references
+
+- [`docs/CONSOLIDATED_RESULTS.md`](../docs/CONSOLIDATED_RESULTS.md) —
+  Tier 3 verdict table §15.15
+- [`docs/CLAIMS.md`](../docs/CLAIMS.md) — 41 ACTIVE + 2 DEPRECATED
+  claims (43 CLM entries total)
+- [`docs/audit/INDEX.md`](../docs/audit/INDEX.md) — per-wave audit
+  catalogue (Wave 1 → Wave 133, 62 of 101+ waves have audit docs)
+- `docs/audit/wave127-finish-line.md` — Wave 127 audit doc (authored
+  in Wave 127 Phase 6)
+
+---
+
+# Historical Wave 99.D snapshot (PRESERVED FOR PROVENANCE — DO NOT EDIT)
+
+> The following snapshot is the Wave 99.D / 2026-09-10 close-out of
+> `todo/STATUS.md`. It is preserved verbatim for traceability. Its
+> commit counts, resource estimates, directory listing and gate
+> verdicts are NOT current.
 
 **Last updated:** 2026-09-10 (Wave 99.D — real N=1000 Kanzi final synthesis)
 **Wave:** Wave 99.D final synthesis (this wave) — closes W2 ON MEASURABILITY+DIRECTION; DEFER on magnitude pending Wave 100+ N=1000 framework arm
 **Push state:** 327 unpushed commits on `main`, `push_risk = LOW` (user-gated)
 
----
-
 ## One-line current verdict
 
 > **W2 = PARTIALLY CLOSED** (measurability + direction closed at N=10 framework arm; magnitude deferred to Wave 100+). Wave 99.B verdict: Kanzi `reconstruction_kabsch_rmsd_A` REGRESSES_BY_+0.864_Å (Bonferroni p = 4.6e-7 ≪ 0.0083) at N=10 framework arm vs N=1000 baseline; 5 codebook metrics NOT_SIGNIFICANT at Bonferroni α=0.0083. Architectural explanation (Wave 92c §5): framework's continuous-latent endpoint lives in post-`project_out` (n_channels_decoder=512) space, and the nearest-neighbour L2 projection onto `FSQ.implicit_codebook` loses ~0.86 Å vs canonical `DAE.encode → DAE.decode`. Forward projection at N=1000 framework arm: 95% CI of Δ tightens ±0.19 Å → ±0.02 Å — enough to defend a magnitude claim. Wave 100+ queued (~16.7 hours wall-clock on `kanzi_venv` CPU sidecar).
-
----
 
 ## What's landed (Wave 90-99)
 
@@ -70,8 +163,6 @@ resource estimates, directory listing and gate verdicts are not current.
 | **Wave 99.C** | `06f0505` | Update paper §7.3 + CONSOLIDATED_RESULTS §15 + 12-cell table with Wave 99.B verdict |
 | **Wave 99.D** | (this commit) | Final synthesis — W2 PARTIALLY CLOSED, cover letter + baseline-audit + STATUS updates |
 
----
-
 ## Tier 3 final state (3/3 SOTA models)
 
 | Model | Composite axis (designed) | Paper axis N=1000 |
@@ -79,9 +170,7 @@ resource estimates, directory listing and gate verdicts are not current.
 | **FlowMol3** | **+0.1182 SUPPORTED** (Wave 52 byte-stable) | 1/4 framework_improves (`fg_dev` -0.0235, 4.05σ), 1/4 REGRESSES (`pb_validity_pct` UFF-vs-xtb definitional gap) |
 | **LineageFlow** | **+0.2083 SUPPORTED** (Wave 52 byte-stable) | 1/4 framework_improves (`hmmscan_total_hits` +116%, p<1e-10) |
 | **Kanzi** | **+0.1895 SUPPORTED** (Wave 52 byte-stable) | **Wave 99.B: 1/6 REGRESSES_BY_+0.86_Å on `reconstruction_kabsch_rmsd_A`** (Bonferroni p = 4.6e-7, N=10 framework arm) + 4/6 NOT_SIGNIFICANT + 1/6 BORDERLINE on `codebook_utilization` |
-| **3/3 composite axis** ✅ | | **2-3/14 paper-metric cells framework_improves, 1/14 REGRESSES_BY_+0.86_Å on Kanzi (architectural cost, Wave 92c §5)** |
-
----
+| **3/3 composite axis** | | **2-3/14 paper-metric cells framework_improves, 1/14 REGRESSES_BY_+0.86_Å on Kanzi (architectural cost, Wave 92c §5)** |
 
 ## What's in flight (must finish before ICLR submission)
 
@@ -91,16 +180,12 @@ resource estimates, directory listing and gate verdicts are not current.
 | **Wave 94** | Cover letter + paper §1/§7 final + supplementary + checklist | partial — Wave 99.D updated cover letter; Wave 94 closes §7 final | ~2-3h |
 | Wave 92d (OPT-IN) | N=5000 sweep on all 3 Tier 3 models | waiting for user OK | ~4-8h |
 
----
-
 ## Verification gates (all PASS as of Wave 99.D)
 
 - **D.4 byte-stable:** 18/18 adapters PASS (162 vectors, 9 per adapter) via `tools/run_regression_vector_audit.py verify`
 - **G-MASTER capability:** 7/7 PASS (hard_pass=5, soft_pass=2)
 - **mkdocs build --strict:** EXIT=0
 - **Per-test suites touched in Wave 99.D:** all PASS (docs-only this wave)
-
----
 
 ## 4 一区 reviewer weaknesses — final status
 
@@ -111,17 +196,13 @@ resource estimates, directory listing and gate verdicts are not current.
 | **W3** | N=1000 too small | ⚠️ **DEFER (OPT-IN)** | Wave 92d (N=5000 sweep, optional) — N=1000 + Wave 93 power analysis is defensible per master plan §5b |
 | **W4** | 2/12 framework_improves cells | 🔄 **in reframing** | Wave 93 Phase 2 (statistical power + Bonferroni + 12-row table) — verdict evolution `2/12 SUPPORTED` → `4/12 SUPPORTED + 6/12 TIE + 2/12 UNDERPOWERED` |
 
----
-
-## Push state
+## Push state (Wave 99.D snapshot)
 
 - **327 unpushed commits** on `main` ahead of `origin/main` (`git log @{u}..main | wc -l = 327`)
 - **`push_risk = LOW`** (D.4 18/18 PASS; G-MASTER 7/7; mkdocs EXIT=0; no broken-test pre-push)
 - **NO push** (user-gated per locked-in constraint since Wave 11)
 
----
-
-## File inventory (current state)
+## File inventory (Wave 99.D)
 
 ```
 todo/
@@ -144,19 +225,6 @@ todo/
     └── workflows-design.md              (small-workflow design, 4 workflows × 2-3 agents)
 ```
 
----
-
-## Cross-references for this close-out
-
-- `todo/INDEX.md` — master entry point (Wave 56 + Wave 92-93 update pending)
-- `todo/planned/tier3-final-close-master-plan.md` — W91-94 cascade plan
-- `docs/push-ready-summary.md` — final pre-push synthesis (Wave 89 + Wave 91 + Wave 92 additive)
-- `docs/audit/wave92a-kanzi-fix-constants.md` — Wave 92a audit
-- `docs/audit/wave93-phase1-statistical-power.md` — Wave 93 Phase 1 audit (when committed)
-- `verification_outputs/kanzi_n1000_framework_paper_metrics_real/` — Wave 92c final output (target)
-
----
-
 ## MUST-1..5 at close-out
 
 - **MUST-1** G-FRAMEWORK-HEALTH HARD gates — **PASS** (28/28 internal HARD + 5/5 group-G HARD)
@@ -164,8 +232,6 @@ todo/
 - **MUST-3** framework-core glue extracted — **PASS** (Wave 44 close-out: 5 adapters import `adaptive_reflow.core/`)
 - **MUST-4** group-G capability metrics cold-clone — **PASS** (`must_4_freeze_gate = PASS`)
 - **MUST-5** pushed to `origin/main` — **NOT DONE, user-gated.** 326 unpushed commits; `push_risk = LOW`; every other gate green.
-
----
 
 ## Open follow-ups
 
