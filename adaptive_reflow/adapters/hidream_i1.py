@@ -258,7 +258,11 @@ def torch_is_available() -> bool:
     """
     import importlib.util as _il
 
-    return _il.find_spec("torch") is not None
+    try:
+        return _il.find_spec("torch") is not None
+    except (ImportError, ValueError):
+        # A test double may be present in sys.modules without a ModuleSpec.
+        return False
 
 
 def hidream_i1_resolve_weights_path(
