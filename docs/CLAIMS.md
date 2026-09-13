@@ -549,7 +549,7 @@ How it works:
 ## CLM-024: Round-2 type/lint cleanup brings mypy 33→0 and ruff 32→0 across 118 source files {#CLM-024}
 
 - Status: ACTIVE
-- Date: 2026-08-29
+- Date: 2026-08-29 (original); additive reframe appended 2026-09-14 (Wave 127)
 - Source:
   [`docs/benchmark-round2-uplifts.md`](benchmark-round2-uplifts.md)
   §4 (Type-checker and lint-cleanup delta table)
@@ -568,13 +568,33 @@ How it works:
   numbers); the Round-2 cleanup landed every reported error in
   this single commit and verified the zero-error state on every
   subsequent gate run.
+
+  **Wave 127 additive reframe (2026-09-14, ADDITIVE only — historical
+  claim is preserved):** As of CLM-024 commit (historical), ruff
+  32→0 across 118 source files. Current tree (2026-09-14,
+  post-Wave 127 Phase 4) shows **ruff 207 findings** (down from
+  927 via `ruff --fix`) + **mypy 988 errors** (out of scope for
+  7-day finish-line). See
+  [`docs/audit/engineering-audit-2026-09-13.md`](audit/engineering-audit-2026-09-13.md)
+  §"Static CI gates reopened" for the current state and the
+  in-progress repair worktree (Ruff 0.15.22 reports 926 findings
+  baseline, 988 mypy errors in 70 files across 222 files checked;
+  subsequent `ruff --fix` pass dropped ruff to 207 findings; pytest
+  5155 passed + 196 skipped via Wave 127 Phase 4 isolation).
+  **CLM-024 historical claim is preserved additively**; the current
+  ruff/mypy state is acknowledged in Wave 127 with an explicit
+  isolation worktree and 7-day scope-out — neither invalidates the
+  Round-2 historical claim nor masks the current CI static-gate
+  state.
 - Evidence:
   `docs/benchmark-round2-uplifts.md:115-118`
   (the mypy / ruff baseline-vs-current table),
-  `python -m mypy adaptive_reflow` (current
+  `python -m mypy adaptive_reflow` (historical
   run: `Success: no issues found in 118 source files`),
-  `python -m ruff check .` (current run:
-  `All checks passed!`).
+  `python -m ruff check .` (historical run:
+  `All checks passed!`),
+  `docs/audit/engineering-audit-2026-09-13.md` §"Static CI gates
+  reopened" (current state: ruff 207 / mypy 988 as of 2026-09-14).
 - Test: tests/test_claims/test_claim_024.py
 
 ## CLM-025: `BoundedMergeOperator` fails closed on `cap < floor` (post-clip) {#CLM-025}
