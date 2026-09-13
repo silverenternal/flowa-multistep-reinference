@@ -286,6 +286,10 @@ def test_exponential_n_cap_nonnegative(
     """Exponential scheduler never returns n_cap < 0 (clipped)."""
     if length <= 1:
         return
+    if n_max < 0.01:  # Default positive lower bound of the exponential family.
+        with pytest.raises(ValueError, match="n_max must be >= n_min"):
+            ExponentialScheduler(cycle_length=length, n_max=n_max, alpha=alpha)
+        return
     sched = ExponentialScheduler(cycle_length=length, n_max=n_max, alpha=alpha)
     for r in range(length):
         n_cap = sched.sample(0, r, 0).n_cap
@@ -302,6 +306,10 @@ def test_exponential_alpha_zero_equals_constant(
 ) -> None:
     """alpha == 0 collapses the exponential family to the constant family at n_max."""
     if length <= 1:
+        return
+    if n_max < 0.01:
+        with pytest.raises(ValueError, match="n_max must be >= n_min"):
+            ExponentialScheduler(cycle_length=length, n_max=n_max, alpha=0.0)
         return
     sched = ExponentialScheduler(cycle_length=length, n_max=n_max, alpha=0.0)
     for r in range(length):
@@ -327,6 +335,10 @@ def test_polynomial_power_one_matches_linear(
 ) -> None:
     """PolynomialScheduler with power=1 should match LinearScheduler."""
     if length <= 1:
+        return
+    if n_max < n_min:
+        with pytest.raises(ValueError, match="n_max must be >= n_min"):
+            PolynomialScheduler(cycle_length=length, n_min=n_min, n_max=n_max, power=1.0)
         return
     poly = PolynomialScheduler(
         cycle_length=length, n_min=n_min, n_max=n_max, power=1.0
@@ -357,6 +369,10 @@ def test_sigmoid_steepness_zero_is_midpoint(
     if length <= 1:
         return
     mid = 0.5 * (n_min + n_max)
+    if n_max < n_min:
+        with pytest.raises(ValueError, match="n_max must be >= n_min"):
+            SigmoidScheduler(cycle_length=length, n_min=n_min, n_max=n_max, steepness=0.0)
+        return
     sched = SigmoidScheduler(
         cycle_length=length, n_min=n_min, n_max=n_max,
         steepness=0.0, midpoint=0.5,
