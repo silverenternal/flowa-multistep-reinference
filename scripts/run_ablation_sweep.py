@@ -990,11 +990,61 @@ def build_argparser() -> argparse.ArgumentParser:
             "per-model defaults. Useful for stress-testing the sweep."
         ),
     )
+    p.add_argument(
+        "--force-mode", choices=("synthetic", "real"), default="synthetic",
+        help=(
+            "Force mode forwarded to per-model adapter factories. "
+            "Default 'synthetic' keeps the CI-friendly shim path "
+            "(Wave 52 Agent B backward-compat). Pass 'real' to "
+            "exercise the real-ckpt path on supported adapters "
+            "(kanzi, lineageflow)."
+        ),
+    )
+    p.add_argument(
+        "--metric-mode", choices=("synthetic", "real"), default="synthetic",
+        help=(
+            "Metric computation mode. Default 'synthetic' uses the "
+            "stdlib-only toy metric helpers (numpy). Pass 'real' to "
+            "route through per-model real-ckpt metrics."
+        ),
+    )
+    p.add_argument(
+        "--limit", type=int, default=0,
+        help=(
+            "Optional per-cell record cap. Default 0 = no cap "
+            "(forward-compat hook; not yet threaded into the "
+            "synthetic-mode cells which compute one number per arm)."
+        ),
+    )
+    p.add_argument(
+        "--model", choices=("twodim_fm", "cifar10_rf", "lineageflow", "kanzi"),
+        default=None,
+        help=(
+            "Optional model filter; when set only the matching "
+            "MODELS entry is run (forward-compat hook for "
+            "single-model sweeps)."
+        ),
+    )
+    p.add_argument(
+        "--ckpt", type=pathlib.Path, default=None,
+        help=(
+            "Optional checkpoint path forwarded to the adapter "
+            "factory (forward-compat hook; only used when --force-mode "
+            "= real and --model selects a real-ckpt adapter)."
+        ),
+    )
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_argparser().parse_args(argv)
+    # K1 RC4 fix: override the hardcoded 'synthetic' literals at
+    # MODELS:199-238 with CLI-driven values so the script can target
+    # real-ckpt paths without source-code patches. Backward-compat
+    # preserved because both flags default to 'synthetic'.
+    for m in MODELS:
+        m["force_mode"] = args.force_mode
+        m["metric_mode"] = args.metric_mode
     if args.nfe_budgets:
         nfe_list = [
             int(s.strip()) for s in args.nfe_budgets.split(",") if s.strip()
