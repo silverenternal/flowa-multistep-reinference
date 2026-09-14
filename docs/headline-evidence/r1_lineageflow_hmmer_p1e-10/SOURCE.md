@@ -45,3 +45,27 @@ can be reproduced on the freeze-marker commit `39a65a7f` by:
 
 Camera-ready re-run (~30 min) is on the deferred list
 (see `todo/STATUS.md` "Camera-ready deferred" section).
+
+---
+
+## Post-Wave-151 P5 audit reconciliation note (2026-09-14)
+
+The prose-text audit-doc references in this SOURCE.md (lines 6, 16, 19, 40,
+43) point to `docs/audit/wave86-phase3-sweep.md`, `docs/audit/wave81-phase4-final.md`,
+and `docs/audit/wave86-phase1-audit.md`. **Wave 137 Phase 1 (commit `3f4a09e`)
+archived all Wave 1-99 audit docs** from `docs/audit/` to
+`docs/ARCHIVE/audit-waves-1-99/`. The canonical paths are now:
+
+- `docs/ARCHIVE/audit-waves-1-99/wave86-phase3-sweep.md` (the R1 source-of-truth, N=1000 sweep audit)
+- `docs/ARCHIVE/audit-waves-1-99/wave81-phase4-final.md` (the Wave 81 Phase 4 final)
+- `docs/ARCHIVE/audit-waves-1-99/wave86-phase1-audit.md` (the Wave 86 Agent A audit)
+
+The `source_audit_doc.md` symlink in this directory correctly points to
+the canonical ARCHIVE path, so directory-level discovery works. This
+note is **ADDITIVE only** — the existing prose references above are
+preserved verbatim per the Wave 137 archive invariant (no destructive
+edits to historical SOURCE.md text). The headline numbers (158 → 342,
++116%, p<1e-10) are byte-stable across Waves 135-151.
+
+See `docs/audit/wave151-headline-evidence-audit.md` for the per-R
+audit ledger and fix inventory.

@@ -26,3 +26,28 @@ The headline 0.6381 -> 0.6146 reading is reproducible from these JSON files
 
 On freeze-marker commit `39a65a7f`, byte-stable reproduction verified at delta < 1e-15
 per `docs/audit/wave89-phase1-final.md` and the Wave 87 audit doc.
+
+---
+
+## Post-Wave-151 P5 audit reconciliation note (2026-09-14)
+
+The prose-text audit-doc reference in this SOURCE.md (line 27) points to
+`docs/audit/wave89-phase1-final.md`. **Wave 137 Phase 1 (commit `3f4a09e`)
+archived all Wave 1-99 audit docs** from `docs/audit/` to
+`docs/ARCHIVE/audit-waves-1-99/`. The canonical path is now:
+
+- `docs/ARCHIVE/audit-waves-1-99/wave89-phase1-final.md` (R2 byte-stable reproduction audit)
+
+Note: this directory (R2) does NOT have a separate `source_audit.md` file
+because the SOURCE.md is self-sufficient — it cites all 6 sweep JSONs by
+name (which all resolve via symlinks to `verification_outputs/`). The
+Wave 135 Phase 3 (`docs/audit/wave135-headline-evidence.md`) explicitly
+documents this design choice.
+
+This note is **ADDITIVE only** — the existing prose reference above is
+preserved verbatim per the Wave 137 archive invariant (no destructive
+edits to historical SOURCE.md text). The headline numbers
+(0.6381 → 0.6146, -0.0235, 4.05σ) are byte-stable across Waves 135-151.
+
+See `docs/audit/wave151-headline-evidence-audit.md` for the per-R
+audit ledger and fix inventory.
