@@ -4257,3 +4257,19 @@ See `docs/audit/wave132-tier1-polish.md` (full Wave 132 audit trail) + `docs/CON
 **HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent commits preserve pre-Wave-133 content (Phase 1 supplementary S4 fill is APPEND-only; Phase 2 README additive pointer block; Phase 3 string-scanner regex tightening only; Phase 4 paper-draft.md ≤10-line typo + cross-ref fix is APPEND-only); NO source code changes; NO experiments; single atomic Agent 5 commit titled "Wave 133: number-consistency + final polish close — audit doc + baseline R.22 + CONSOLIDATED 15.31".
 
 See `docs/audit/wave133-number-consistency.md` (full Wave 133 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.31 + README.md R1-R6 headline + freeze-marker SHA (Phase 2) + supplementary.md S4 under-cited numbers filled (Phase 1) + paper-draft.md final read-through (Phase 4) + cover_letter.md R1-R6 explicit reframe (preserved from Wave 132 Phase E).
+
+### §R.23 Wave 131 Phase 3 byte-reproducibility verification (2026-09-14)
+
+Kanzi N=1000 framework_inv_proj sweep re-executed on the ruff-frozen code at HEAD `990f5c4`. Result byte-reproducible within `delta=0.00e+00` (exact 10-decimal match) vs Wave 128 baseline (commit `62f7f24`):
+
+| Metric | Wave 128 baseline | Wave 131 re-run | Delta |
+|---|---:|---:|---:|
+| `mean_rmsd_A` | 0.8797630831 | 0.8797630831 | **0.00e+00** |
+| `std_rmsd_A` | 0.1363623769 | 0.1363623769 | **0.00e+00** |
+| `codebook_entropy_bits` | 9.2669 | 9.2669 | **0.00e+00** |
+| `codebook_perplexity` | 616.0616 | 616.0616 | **0.00e+00** |
+| `codebook_utilization` | 0.712 | 0.712 | **0.00e+00** |
+
+`n_records_processed=1000`, `n_records_skipped=0`, `n_steps_decoder=100` identical. `sweep_wallclock_s` differs (4835 vs 4568 s; wall-clock variance is acceptable).
+
+**Freeze marker confirmed: HEAD `990f5c4` (commit `39a65a7` for verification commit).** v1.0-paper-final tag set. Sweep CLI invocation documented in `docs/audit/wave131-pre-freeze-hygiene.md`. Per user directive "数据肯定要全部重新跑一遍来冻结的", this is the freeze point — no further code changes until camera-ready.

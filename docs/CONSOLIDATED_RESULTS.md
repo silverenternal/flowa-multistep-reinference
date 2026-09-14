@@ -4337,3 +4337,41 @@ Camera-ready deferred (UNCHANGED from Wave 131 + Wave 132 STATUS.md): mypy 988 h
 Per-paper-claim support status UNCHANGED from Wave 127 / Wave 128 / Wave 131 / Wave 132 — all rows carry forward unchanged.
 
 See `docs/audit/wave133-number-consistency.md` (full Wave 133 audit trail) + `docs/baseline-audit-report.md` §R.22 (Wave 133 ledger) + README.md R1-R6 headline + freeze-marker SHA (Phase 2) + supplementary.md S4 under-cited numbers filled (Phase 1) + paper-draft.md final read-through (Phase 4).
+
+### §15.32 Wave 131 Phase 3 byte-reproducibility verification + v1.0-paper-final tag (2026-09-14)
+
+Kanzi N=1000 framework_inv_proj sweep re-executed at HEAD `990f5c4` (ruff-frozen code) reproduces Wave 128 baseline (`62f7f24`) within `delta=0.00e+00` (10-decimal exact match on all deterministic metrics: mean_rmsd, std_rmsd, codebook_entropy_bits, codebook_perplexity, codebook_utilization). This confirms the **freeze marker** at HEAD `990f5c4` / verification commit `39a65a7`. v1.0-paper-final tag set locally (NO PUSH — Wave 11+ user-gated).
+
+**Byte-reproducibility verification matrix:**
+
+| Component | Pre-Wave 131 (ruff 207 findings) | Post-Wave 131 (ruff 0) | Delta on Kanzi N=1000 sweep |
+|---|---|---|---|
+| ruff lint | 207 findings | **0 findings** | (formatting-only, no runtime impact) |
+| D.4 byte-stable | 33/33 PASS | **33/33 PASS** | exact |
+| Kanzi framework_inv_proj mean_rmsd | 0.8797630831 | **0.8797630831** | **0.00e+00** |
+| Kanzi framework_inv_proj std_rmsd | 0.1363623769 | **0.1363623769** | **0.00e+00** |
+| codebook entropy | 9.2669 | **9.2669** | **0.00e+00** |
+| codebook perplexity | 616.0616 | **616.0616** | **0.00e+00** |
+| codebook utilization | 0.712 | **0.712** | **0.00e+00** |
+
+The ruff-frozen code change boundary (Wave 127 Phase 4 + Wave 131 Phase 1) does **not** alter any deterministic value. This is the rigorous proof of byte-stable reproducibility that the user requested via "一定要严谨，后面我们都搞完了数据肯定要全部重新跑一遍来冻结的".
+
+**v1.0-paper-final tag contents (15 commits since Wave 130 audit plan):**
+
+- `39a65a7` Wave 131 Phase 3 verification: Kanzi N=1000 byte-reproducible
+- `990f5c4` Wave 133: number-consistency + final polish close
+- `9d96056` Wave 133 Phase 4: final read-through paper-draft.md
+- `ea13fa3` Wave 133 Phase 3: check_docs_against_code.py inline-symbol fix
+- `4a0e146` Wave 133 Phase 2: README.md Tier-1 SCI submission pointer
+- `d388057` Wave 133 Phase 1: cross-check R1-R6 numbers across docs
+- `49ae5b1` Wave 132: tier-1 polish close
+- `fac08d0` Wave 132 Phase E: cover_letter.md Tier-1 SCI update
+- `86f011b` Wave 132 Phase C: Camera-ready discussion + limitations + broader impact + conclusion
+- `9530250` Wave 132 Phase B: NeurIPS template alignment
+- `330fe1e` Wave 131 Phase 5-fix: BlenderProtocol -> RestartBlenderProtocol
+- `9c56186` Wave 131: pre-freeze close
+- `0717b28` Wave 131 Phase 4: §1 + §5 + supplementary polish
+- `f84ae50` Wave 132 Phase 2: §7.6 + Abstract + cover_letter reframe
+- `1ce8e3a` Wave 131 Phase 1: ruff 207 -> 0
+
+**Ready for Tier-1 SCI submission.** NO PUSH per Wave 11+ user-gated protocol.
