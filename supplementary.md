@@ -133,6 +133,13 @@ Headline numbers (already cited in §S2.1 / §S2.2 above): Eight Gaussians W2 2.
 
 ### S2.3 CIFAR-10 Rectified Flow
 
+**Provenance note:** The on-disk `verification_outputs/cifar_n200_nfe50_ema_corrected/comparison.md`
+is a **separate** N=200 EMA-corrected sweep (baseline FID 130.14; framework 4 schedulers
+regress +221-226% at matched NFE=50 due to cosine ramp halving effective NFE).
+Table 9 in the main paper cites the separate N=500 v4 sweep (baseline FID 83.09; framework
++24-31% at matched NFE=50), which is the number carried into the headline. The two v4
+numbers are NOT comparable: different N, different EMA pre-processing, different sweep driver.
+
 | Metric | Heun NFE 100 baseline | framework (Heun + paper-quant scheduler) NFE 100 | Δ | Verdict |
 |---|---:|---:|---:|:--|
 | FID (matched NFE) | (paper baseline, see v2 table) | -44.17% vs baseline at 2-NFE | -44% | `framework_improves` (v2 record); `framework_ties_at_NFE` (v4 record) |
