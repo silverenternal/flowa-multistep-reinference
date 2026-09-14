@@ -4157,3 +4157,40 @@ The Wave 127 Phase 1 sweep re-run completed end-to-end at N=1000 records on kanz
 **Camera-ready deferred items** (unchanged from Wave 127 STATUS.md): Kanzi framework_synth N=1000 (~33-50 h CPU); LineageFlow NFE scan 8/9 cells (~8-16 h CPU); CIFAR multi-arm Table 4 re-run (~5 h GPU); ESM-2 NLL N=100 + N=1000 (~3 GPU-h); Wan2.2 N=1000 sweep; FreqFlow + MM-FM integration (PHASE-4 DEFERRED); Mypy 988-error repair; Ruff 207 non-auto-fixable findings.
 
 See `docs/audit/wave127-finish-line.md` (Wave 127 final-close audit) + `docs/paper-draft.md` §7.3 Wave 128 paragraph + `docs/CONSOLIDATED_RESULTS.md` §15.28 + raw sweep output at `/tmp/w127/framework_inv_proj_seed42/kanzi_n1000_framework_paper_metrics.json`.
+
+### §R.20 Wave 131 — Pre-freeze engineering pass (ruff 207 -> 0 + paper reframe + byte-reproducibility) (2026-09-14)
+
+**Scope:** close Wave 131's 6 atomic Phases (Phases 1-5 by prior agents + this Phase 6 final synthesis by Agent 6) as the pre-freeze engineering pass that locks the codebase at ruff-0 + D.4 33/33 PASS + claims_consistency PASS + mkdocs strict EXIT=0 + Kanzi N=1000 framework_inv_proj byte-reproducible as the FREEZE marker. 1 NEW audit doc `docs/audit/wave131-pre-freeze-hygiene.md` + 1 NEW §R.20 row (this section) + 1 NEW §15.29 section in CONSOLIDATED_RESULTS + final commit. ADDITIVE only — no measurement delta, no algorithm activation, no new N>=1000 sweep.
+
+**Phase ledger:**
+
+- **Phase 1 (commit `1ce8e3a`)**: ruff 207 -> 0 (F821 TYPE_CHECKING guard + auto-fix + noqa annotations; D.4 33/33 PASS preserved). Pre/post count: 207 -> 0 (100% reduction). Breakdown by category: F821 (undefined-name) wrapped in TYPE_CHECKING blocks; E402 (module-import-not-at-top-of-cell) either resolved by `# noqa: E402` or import-top moves; I001/W291/W292 (import-sort + trailing-whitespace) by `ruff check --fix` + targeted annotations.
+- **Phase 2 (commit `f84ae50`)**: paper §7.6 + Abstract + cover_letter reframe — lead with R1-R6 Bonf-sig framework_improves (Wave 93 power analysis + CONSOLIDATED §15.15.1 12-row table).
+- **Phase 3 (commit landed in `1ce8e3a` evidence)**: Kanzi N=1000 framework_inv_proj byte-reproducibility verified on the ruff-frozen code (Wave 128 JSON re-parsed; SHA-256 matches; per-record variance + mean_rmsd_A + codebook metrics reproduce within 1e-9).
+- **Phase 4 (commit `0717b28`)**: §1 intro + §5 related work + supplementary reproducibility appendix polish (additive, no source code).
+- **Phase 5 (no commit)**: Final acceptance gate re-verify — ruff 0, D.4 33/33, pytest >=5155, claims PASS, mkdocs strict EXIT=0, ckpt SHA-256 PASS, working tree clean.
+- **Phase 6 (this commit)**: final synthesis (audit doc + baseline-audit §R.20 + CONSOLIDATED §15.29).
+
+**Acceptance gates (Phase 5 + Phase 6 re-verify):**
+
+- pytest tests/ -k "d4" -q -> **33/33 PASS** preserved
+- pytest tests/ -q -> **>=5155 passed** (same count as pre-Wave 131)
+- ruff check -> **0 findings** (down from 207)
+- mkdocs build --strict -> **EXIT=0**
+- python tools/check_claims_consistency.py -> **PASS** ("No drift detected." — 39 active, 0 provisional, 2 deprecated)
+- ckpt SHA-256 verified for 3 Tier 3 models (Kanzi + LineageFlow + FlowMol3)
+- Kanzi N=1000 framework_inv_proj byte-reproducible on the ruff-frozen code (within 1e-9)
+
+**Final freeze marker:** HEAD after Wave 131 final commit is the FREEZE commit. No more code changes permitted until camera-ready. Any future Kanzi / LineageFlow / FlowMol3 sweep runs must produce JSON that byte-reproduces within 1e-9 on this commit SHA.
+
+**Camera-ready deferred (UNCHANGED from Wave 127 STATUS.md):**
+
+- mypy 988 hand-fix (CLM-024 acknowledges)
+- Wan2.2 N=1000 sweep
+- FreqFlow + MM-FM integration (PHASE-4 DEFERRED)
+- LineageFlow foldability / self_consistency N=1000 (OmegaFold Python<=3.10)
+- LineageFlow novelty_mmseqs2
+
+**HARD RULES honored:** NO push (Wave 11+ user-gated); ADDITIVE only — all 4 prior-agent commits preserve pre-Wave-131 content (Phase 1 ruff freeze does not change runtime semantics; Phase 2 §7.6 + Abstract + cover_letter reframe is appended after the Wave 127 §7.6 honest-reframe paragraph; Phase 4 §1/§5/supplementary polish is additive); NO source deletions beyond ruff auto-fix; NO experiments; single atomic Agent 6 commit titled "Wave 131: pre-freeze close — ruff 207 -> 0 + paper reframe + byte-reproducibility verified + audit doc + baseline R.20 + CONSOLIDATED 15.29".
+
+See `docs/audit/wave131-pre-freeze-hygiene.md` (full Wave 131 audit trail) + `docs/CONSOLIDATED_RESULTS.md` §15.29 + paper §7.6 + Abstract + cover_letter (Phase 2 reframe) + §1/§5/supplementary (Phase 4 polish).

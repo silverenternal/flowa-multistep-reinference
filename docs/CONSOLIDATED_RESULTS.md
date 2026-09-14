@@ -4283,3 +4283,22 @@ This verdict **REPLACES the Wave 95 P3.C / Wave 122 P8 historical fallback of `R
 **D.4 33/33 PASS preserved** through Wave 127 Phase 4 ruff auto-fix + Phase 5 todo/ refactor.
 
 See `docs/audit/wave127-finish-line.md` (full Wave 127 audit trail) + `docs/baseline-audit-report.md` §R.19 (Wave 128 ledger) + `docs/paper-draft.md` §7.3 Wave 128 paragraph (this §15.28 mirrors that paragraph in the consolidated results surface).
+
+### §15.29 Wave 131 — Pre-freeze engineering pass (2026-09-14)
+
+Wave 131 is the **pre-freeze engineering pass** that takes the codebase from the ruff-207 / mypy-988 debt inherited from Wave 127 to a **ruff 0 / D.4 33/33 PASS / claims_consistency PASS / mkdocs strict EXIT=0 / pytest >=5155** snapshot, and locks that snapshot as the FREEZE marker. 6 atomic Phases (Phases 1-5 by prior agents + Phase 6 final synthesis by Agent 6):
+
+- **Phase 1 (commit `1ce8e3a`)**: ruff 207 -> 0 (F821 TYPE_CHECKING guard + auto-fix + noqa annotations; D.4 33/33 PASS preserved). Pre/post count: 207 -> 0 (100% reduction).
+- **Phase 2 (commit `f84ae50`)**: paper §7.6 + Abstract + cover_letter reframe — lead with R1-R6 Bonf-sig framework_improves (Wave 93 power analysis + this §15.15.1 12-row table).
+- **Phase 3 (commit landed in `1ce8e3a` evidence)**: Kanzi N=1000 framework_inv_proj byte-reproducibility verified on the ruff-frozen code (Wave 128 JSON re-parsed; SHA-256 matches; per-record variance + mean_rmsd_A + codebook metrics reproduce within 1e-9).
+- **Phase 4 (commit `0717b28`)**: §1 intro + §5 related work + supplementary reproducibility appendix polish (additive, no source code).
+- **Phase 5 (no commit)**: Final acceptance gate re-verify — ruff 0, D.4 33/33, pytest >=5155, claims PASS, mkdocs strict EXIT=0, ckpt SHA-256 PASS, working tree clean.
+- **Phase 6 (this commit)**: final synthesis (audit doc `wave131-pre-freeze-hygiene.md` + baseline-audit §R.20 + this §15.29).
+
+All acceptance gates green. **Freeze marker at HEAD**: no more code changes until camera-ready. Any future Kanzi / LineageFlow / FlowMol3 sweep runs must produce JSON that byte-reproduces within 1e-9 on this commit SHA.
+
+Camera-ready deferred (UNCHANGED from Wave 127 STATUS.md): mypy 988 hand-fix (CLM-024 acknowledges); Wan2.2 N=1000; FreqFlow + MM-FM integration (PHASE-4 DEFERRED); LineageFlow foldability / self_consistency N=1000 (OmegaFold Python<=3.10); LineageFlow novelty_mmseqs2.
+
+Per-paper-claim support status UNCHANGED from Wave 127 / Wave 128 — all rows carry forward unchanged.
+
+See `docs/audit/wave131-pre-freeze-hygiene.md` (full Wave 131 audit trail) + `docs/baseline-audit-report.md` §R.20 (Wave 131 ledger) + paper §7.6 + Abstract + cover_letter (Phase 2 reframe) + §1/§5/supplementary (Phase 4 polish).
