@@ -6,7 +6,12 @@ Adaptive reflow 和多步复推理控制：round orchestration、restart memory�
 
 ## Status
 
-- Stage: prototype, active development
+**Submission status:** Tier-1 SCI submission-ready (2026-09-14 freeze marker).
+HEAD at freeze: `d3880573bf7faeb0ee559b75f446ed948c8f3a17`. See
+[`docs/audit/wave131-pre-freeze-hygiene.md`](docs/audit/wave131-pre-freeze-hygiene.md)
+for the freeze ledger.
+
+- Stage: prototype, active development (Tier-1 SCI submission in progress)
 - Self-assessment: B+ (algorithm depth + engineering discipline; not ready
   for production use)
 - Test count: **2165 passed / 9 skipped / 3 pre-existing FAILED** (torch-gated; per latest `pytest_results.txt` snapshot at commit `f97ec1c`). The 3 pre-existing FAILED tests (`test_exp2_stochastic_fm_w2_ratio_reproduces_25pct_reduction`, `test_check_docs_against_code.py::test_no_false_positives_on_current_repo`, `test_check_docs_against_code.py::test_self_test_quiet_mode_returns_zero_exit`) are unrelated to the framework's algorithm logic and have been tracked since Wave 48/49. The earlier "1235 passing / 7 skipped" figure predates Wave 38-106 test additions.
@@ -14,6 +19,37 @@ Adaptive reflow 和多步复推理控制：round orchestration、restart memory�
 - Last audit: 2026-09-11 (see [`docs/INSIGHTS.md`](docs/INSIGHTS.md) and
   [`docs/ABLATION.md`](docs/ABLATION.md))
 - Honest gaps: see [`docs/lean/GAPS.md`](docs/lean/GAPS.md)
+
+## Headline results (6 Bonferroni-significant `framework_improves` + 3 byte-stable composite)
+
+Tier 3 real-checkpoint experiments (N=1000 per arm):
+
+- LineageFlow `hmmscan_total_hits`: 158 → 342 (+116%, p<1e-10)
+- FlowMol3 `fg_dev`: 0.6381 → 0.6146 (-0.0235, 4.05σ, p<0.05)
+
+Tier 1 + Tier 2 pretrained + synthetic (matched-NFE / matched-quality):
+
+- CIFAR-10 RF v2 FID: 218.87 → 122.18 (-44.17%)
+- 2D Two Moons W₂: 0.5029 → 0.4663 (-7.28%)
+- 2D Eight Gaussians W₂: 0.6606 → 0.5919 (-10.40%)
+- MNIST FM FID: 409.18 → 347.75 (-15.01%)
+
+Internal composite axis (3/3 Tier 3 models byte-stable):
+
+- Kanzi +0.1695 (σ=0 across 18 cells)
+- LineageFlow +0.2083 (across 8 GPU cells)
+- FlowMol3 +0.1182 (3-run byte-identical)
+
+## Submission package
+
+- [`docs/paper-draft.md`](docs/paper-draft.md) — 5000+ line paper
+- [`docs/supplementary.md`](docs/supplementary.md) — reproducibility appendix
+- [`cover_letter.md`](cover_letter.md) — submission cover letter
+- [`submission_checklist.md`](submission_checklist.md) — submission checklist
+- [`docs/CLAIMS.md`](docs/CLAIMS.md) — 39 active claims + test-coupled evidence
+- [`docs/CONSOLIDATED_RESULTS.md`](docs/CONSOLIDATED_RESULTS.md) — per-cell verdict table
+- [`docs/baseline-audit-report.md`](docs/baseline-audit-report.md) — per-wave ledger
+- [`docs/audit/wave131-pre-freeze-hygiene.md`](docs/audit/wave131-pre-freeze-hygiene.md) — freeze-marker audit
 
 ## Architecture at a glance
 
