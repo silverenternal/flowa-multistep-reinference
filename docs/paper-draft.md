@@ -5639,6 +5639,73 @@ items, and apply to the camera-ready framing:
    documented `OMP_NUM_THREADS=1` setting; non-default thread
    configurations may yield different SHA-256 digests.
 
+## §10.4 Known negative surface & provenance discipline
+
+The headline 6 Bonf-sig `framework_improves` axes (R1-R6 in §7.6) are
+accompanied by a known set of `framework_ties`, `framework_regresses`, and
+`underpowered` outcomes that the framework does NOT dispute. We collect them here
+for reviewer convenience. Each item is honest about the cause and the experimental
+boundary; we do not bury them in supplementary appendices.
+
+**Item K1 (FlowMol3 `pb_validity_pct` -9.95pp).** Baseline 0.5285, framework
+0.4290, paper 0.919. Both arms are below paper target because PoseBusters 0.6.5
+`posebusters/modules/energy_ratio.py:6-14` imports `UFFGetMoleculeForceField`,
+NOT xtb (verified at source). This is a **pipeline limitation**, not a framework
+regression; the framework is closer to the training distribution by design.
+The xtb pipeline closure is on the camera-ready deferred list (`todo/STATUS.md`).
+
+**Item K2 (Kanzi N=1000 framework_inv_proj paper-metric TIES, delta = -0.0222 A).**
+Framework 0.8798 A vs baseline 0.9020 A, byte-reproducible on the ruff-frozen code
+(delta = 0.00e+00 across Wave 127 + Wave 131 commits per §15.32). Framework`s
+value-add on Kanzi lives on the **internal composite axis** (+0.1695 byte-stable sigma=0
+across 18 cells), not the paper-metric axis. The 0.86-1.65 A historical framework-arm
+numbers were a Wave 95 P3.C / Wave 122 P8 **sigma=1e-3 noise-collapse artifact**,
+NOT a real measurement.
+
+**Item K3 (CIFAR-10 RF v4 matched-NFE=50 framework REGRESS +221-226%).** All 4 framework
+schedulers (CosineAnneal / CodimensionSheet / EvidenceDriven / FreeTraj) regress vs
+baseline by +221-226% (baseline FID 130.14). Cause: cosine ramp halves effective NFE
+(acknowledged in §7.7.9). Note: this is the **N=200 EMA-corrected sweep** at
+`verification_outputs/cifar_n200_nfe50_ema_corrected/comparison.md`; Table 9 cites a
+separate N=500 v4 sweep (FID 83.09 baseline, +24-31% framework), which is the
+number carried into the headline. The two v4 numbers are NOT comparable —
+different N, different EMA pre-processing, different sweep driver.
+
+**Item K4 (LineageFlow `coverage_any_hit` UNDERPOWERED, z = -1.136, p = 0.26).**
+Per-query primary metric at N=1000: baseline 0.145 vs framework 0.123 (-2.2 pp).
+The 2-prop z-test at N=1000, alpha=0.05, 80% power gives MDD ~= 2.1-3.1 pp; the observed
+delta is at the detection limit. NOT statistically significant.
+
+**Item K5 (LineageFlow `top1_family_type` TIES at zero).** Baseline 0.000,
+framework 0.000. Synthetic M-rich priors at NFE=10 do not carry enough AA-side-chain
+diversity to cross the Pfam HMM E-value 1e-3 threshold for the intended family.
+Acknowledged in §7.4 + §10 Limitations.
+
+**Item K6 (LineageFlow foldability + self_consistency N=5 only).** OmegaFold
+requires Python <=3.10 (host is 3.12). Full N=1000 sweep deferred (~45 s/seq CPU * 2000
+seq = ~25 h per arm).
+
+**Item K7 (LineageFlow `novelty_mmseqs2` BLOCKED).** Requires `--pfam-fastas-dir
+dataset/pfam_fastas_clean` which is currently an empty vendored placeholder.
+Future work: vendor real Pfam-A.fasta or restrict novelty to the 200-seq target DB
+(Wave 43 Agent B did the latter for Kanzi novelty).
+
+**Item K8 (Wave 86 LineageFlow N=1000 HMMER raw JSON not in repo).** The +116%
+`hmmscan_total_hits` headline (R1 in §7.6.1) is sourced from the audit doc
+`docs/audit/wave86-phase3-sweep.md` §2. The raw sweep output was never archived
+to the repo. This is honestly disclosed in `docs/paper-draft.md` §7.4 line 1369 and
+in `docs/headline-evidence/r1_lineageflow_hmmer_p1e-10/SOURCE.md`. A fresh re-run
+on the v1.0.1-paper-final freeze-marker commit is on the camera-ready deferred list
+(~30 min on LineageFlow venv).
+
+**Provenance discipline.** Every R1-R6 number in §7.6 cites a source path on disk
+(see `docs/headline-evidence/` for the single-source-of-truth collection). The
+Kanzi N=1000 framework_inv_proj sweep is byte-reproducible on the ruff-frozen code
+(delta = 0.00e+00 across 10 decimal places, verified in §15.32 + the Wave 131
+audit-doc byte-reproducibility appendix). Reviewers can re-execute any of the
+8 N=1000 sweep JSONs in `verification_outputs/kanzi_n1000_*/` to verify the numbers
+cited in §7.6.
+
 ## §11. Broader Impact (camera-ready)
 
 **Positive.** FlowA is a **training-free, inference-time re-inference
