@@ -398,6 +398,18 @@ Every claim in these docs is verified against the source tree by
 [`tools/check_docs_against_code.py`](tools/check_docs_against_code.py)
 on every CI run.
 
+## Docstring coverage
+
+Current state (Wave 140, 2026-09-14): see [`docs/audit/wave140-docstring-audit.md`](docs/audit/wave140-docstring-audit.md).
+The Wave 38 PHASE4_DOCSTRING_AUDIT baseline + Wave 140 refresh cover the public API surface
+added between Wave 1 and Wave 137 (4 Protocols + 17 state machines + 30+ helpers across
+`adaptive_reflow/algorithm/` + `adaptive_reflow/adapters/` + `tools/`). Docstring gaps
+are identified in the audit but not patched (camera-ready scope, frozen code).
+
+For the Tier-1 SCI submission deadline: existing docstrings (Wave 38 baseline + Wave 131/132
+additions) are sufficient. Camera-ready remediation: add docstrings for the F1-F5 items
+in `wave140-docstring-audit.md` (~2-3 hours work).
+
 ## Tests
 
 ```bash
