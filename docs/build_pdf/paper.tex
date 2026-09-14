@@ -15,6 +15,10 @@
 \usepackage{longtable}
 \usepackage{array}
 \usepackage{tabularx}
+\usepackage{fancyvrb}
+
+% Allow verbatim blocks to break long shell-command lines (Wave 151: fixes 4/5 overfulls)
+\RecustomVerbatimEnvironment{verbatim}{Verbatim}{breaklines=true,breakanywhere=true}
 
 % Tighter column padding to reduce overfull hbox warnings on long-content tables
 \setlength{\tabcolsep}{3pt}
@@ -2007,7 +2011,7 @@ The framework endpoint is about as far from the baseline endpoint as the baselin
 
 \{\}textbf\{Wave 91 Phase 5 additive update (Kanzi latentcoord bridge + framework paper-metric at N=1000, ADDITIVE  does not delete the Wave 73-74 / Wave 58 / Wave 79 / Wave 80 / Wave 83 / Wave 88 framings above).\} Wave 91 Phase 2 authored \path{tools/kanzi\_latent\_to\_coord.py} (\textasciitilde{}150 LOC, 4 unit tests, all PASS, commit \texttt{dfe0f4e})  the standalone bridge module that converts the Kanzi adapter's \texttt{(64, 64)} synthetic latent endpoint into \texttt{(L, 256)} continuous-latent coords that can enter the upstream \path{kanzi.DAE.encode + decode + kabsch\_rmsd} pipeline. The bridge is \{\}textbf\{infra-ready, not measurement-ready\}: Wave 91 Phase 3 (the wire into \path{tools/run\_real\_ckpt\_eval.py:\_run\_cell}) was not committed, so the framework arm's Kabsch RMSD at N=1000 still cannot be measured through the public eval pipeline.
 
-\sloppy Wave 91 Phase 4 ran the framework-arm paper-metric sweep on the real upstream path (\path{tools/run\_real\_ckpt\_eval.py --model kanzi --seeds 0 --nfe-budgets 250 --output verification\_outputs/kanzi\_n1000\_framework\_paper\_metrics/kanzi\_n1000\_framework\_paper\_metrics.json --force-mode real --metric-mode real --kanzi-upstream-eval --upstream-n-samples 1000}, exit 0). The 6-metric table cross-references Wave 88 baseline (commit \texttt{6add1b9}) and the Wave 79 n=2 framework-arm proxy:
+\sloppy Wave 91 Phase 4 ran the framework-arm paper-metric sweep on the real upstream path (\path{tools/run\_real\_ckpt\_eval.py --model kanzi} \path{--seeds 0 --nfe-budgets 250 --output} \path{verification\_outputs/kanzi\_n1000\_framework\_paper\_metrics/} \path{kanzi\_n1000\_framework\_paper\_metrics.json} \path{--force-mode real --metric-mode real} \path{--kanzi-upstream-eval --upstream-n-samples 1000}, exit 0). The 6-metric table cross-references Wave 88 baseline (commit \texttt{6add1b9}) and the Wave 79 n=2 framework-arm proxy:
 
 \begin{table}[ht]
 \centering
